@@ -1,26 +1,29 @@
 {
   "name": "synthetix-v3",
-  "version": "1.0.0",
+  "version": "3.0.0",
   "description": "",
-  "main": "index.js",
-  "scripts": {
-    "lint-js": "eslint --fix '**/*.js'",
-    "lint-sol": "solhint --fix 'contracts/**/*.sol'"
-  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Synthetixio/synthetix-v3.git"
   },
-  "workspaces": [
-    "packages/*"
-  ],
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
   "bugs": {
     "url": "https://github.com/Synthetixio/synthetix-v3/issues"
   },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
   "homepage": "https://github.com/Synthetixio/synthetix-v3#readme",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "lint-js": "prettier --write '**/*.js' && eslint --fix '**/*.js'",
+    "lint-sol": "prettier --write 'contracts/**/*.sol' && solhint --fix 'contracts/**/*.sol'",
+    "lint": "npm run lint-js && npm run lint-sol"
+  },
+  "pre-commit": {
+    "lint"
+  },
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "^2.0.1",
     "@nomiclabs/hardhat-waffle": "^2.0.1",
@@ -29,6 +32,9 @@
     "ethereum-waffle": "^3.2.2",
     "ethers": "^5.0.31",
     "hardhat": "^2.0.10",
+    "pre-commit": "^1.2.2",
+    "prettier": "^2.2.1",
+    "prettier-plugin-solidity": "^1.0.0-beta.5",
     "solhint": "^3.3.2"
   }
 }
