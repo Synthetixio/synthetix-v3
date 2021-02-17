@@ -12,7 +12,7 @@ packages
 ├── deployer
 │   └── package.json
 └── cli
-		└── package.json
+    └── package.json
 hardhat.config.js
 package.json
 ```
