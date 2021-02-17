@@ -21,9 +21,9 @@
     "lint-sol": "prettier --write 'contracts/**/*.sol' && solhint --fix 'contracts/**/*.sol'",
     "lint": "npm run lint-js && npm run lint-sol"
   },
-  "pre-commit": {
+  "pre-commit": [
     "lint"
-  },
+  ],
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "^2.0.1",
     "@nomiclabs/hardhat-waffle": "^2.0.1",
