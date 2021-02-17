@@ -3,6 +3,9 @@
 	"plugins": [],
 	"rules": {
 		"compiler-version": ["error", "^0.7.0"],
+		"private-vars-leading-underscore": ["error", {
+			"strict": true
+		}],
 		"func-visibility": ["error", {
 			"ignoreConstructors": true
 		}]
