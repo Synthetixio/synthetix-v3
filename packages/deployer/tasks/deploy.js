@@ -1,11 +1,22 @@
-const { task } = require('hardhat/config');
-const { DEPLOY_TASK, DEPLOY_MODULES_SUBTASK } = require('../task-names');
+const { task, types } = require('hardhat/config');
+const { TASK_COMPILE } = require('hardhat/builtin-tasks/task-names');
+const { TASK_DEPLOY, SUBTASK_DEPLOY_MODULES } = require('../task-names');
+const logger = require('../utils/logger');
+const prompter = require('../utils/prompter');
 
 task(
-  DEPLOY_TASK,
+  TASK_DEPLOY,
   'Deploys all modules that changed, and generates and deploys a router for those modules'
-).setAction(async (taskArguments, hre) => {
-  console.log('deploying...');
+)
+  .addFlag('noConfirm', 'Skip confirmations', false, types.boolean)
+  .addOptionalParam('logLevel', '1 = minimal, 2 = descriptive, 3 = debug', 1, types.int)
+  .setAction(async (taskArguments, hre) => {
+    await hre.run(TASK_COMPILE, taskArguments);
 
-  await hre.run(DEPLOY_MODULES_SUBTASK, taskArguments);
-});
+    logger.logLevel = taskArguments.logLevel;
+    prompter.noConfirm = taskArguments.noConfirm;
+
+    logger.log('Deploying system...');
+
+    await hre.run(SUBTASK_DEPLOY_MODULES, taskArguments);
+  });

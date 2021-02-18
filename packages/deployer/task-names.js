@@ -1,4 +1,4 @@
 module.exports = {
-  DEPLOY_TASK: 'deploy',
-  DEPLOY_MODULES_SUBTASK: 'deploy-modules',
+  TASK_DEPLOY: 'deploy',
+  SUBTASK_DEPLOY_MODULES: 'deploy-modules',
 };

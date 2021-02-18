@@ -7,19 +7,22 @@ function readDeploymentFile() {
   return JSON.parse(fs.readFileSync(_getDeploymentFilePath()));
 }
 
-function saveDeploymentFile(data) {
+function saveDeploymentFile({ data }) {
   fs.writeFileSync(_getDeploymentFilePath(), JSON.stringify(data, null, 2));
 }
 
 function _getDeploymentFilePath() {
-  return path.join(_getDeploymentsDirectoryPath(), `${network.name}.json`);
+  // eslint-disable-next-line no-undef
+  return path.join(_getDeploymentsDirectoryPath(), `${hre.network.name}.json`);
 }
 
 function _getDeploymentsDirectoryPath() {
+  // eslint-disable-next-line no-undef
   return hre.config.deployer.paths.deployments;
 }
 
 function _createDeploymentFileIfNeeded() {
+  // eslint-disable-next-line no-undef
   const directoryPath = hre.config.deployer.paths.deployments;
 
   if (!fs.existsSync(_getDeploymentsDirectoryPath())) {

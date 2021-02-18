@@ -9,4 +9,10 @@ module.exports = {
       deployments: 'deployments',
     },
   },
+  defaultNetwork: 'local',
+  networks: {
+    local: {
+      url: 'http://localhost:8545',
+    },
+  },
 };
