@@ -28,3 +28,9 @@ Hardhat plugin that provides tasks for the router proxy architecture of the root
 #### CLI package
 
 Hardhat plugin that provides tasks for interacting with deployed instances of the synthetix via the command line.
+
+### Troubleshooting
+
+*package/* not found*
+
+Make sure that you've run `npm install` at the project root, and that you're using version 7+ of npm.
