@@ -4,10 +4,8 @@ module.exports = {
   log: function (msg, level = 1) {
     const diff = this.logLevel - level;
 
-    const tab = '  ';
-
     if (diff >= 0) {
-      console.log(tab.repeat(level), msg);
+      console.log(`${'  '.repeat(level - 1)}${msg}`);
     }
   },
 };

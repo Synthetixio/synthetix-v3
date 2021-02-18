@@ -1,0 +1,43 @@
+//SPDX-License-Identifier: Unlicense
+pragma solidity ^0.7.0;
+
+// --------------------------------------------------------------------------------
+// --------------------------------------------------------------------------------
+// GENERATED CODE - do not edit manually
+// --------------------------------------------------------------------------------
+// --------------------------------------------------------------------------------
+
+contract Router_@network {@modules
+
+    fallback() external {
+        // Lookup table: Function selector => implementation contract
+        bytes4 sig4 = msg.sig;
+        address implementation;
+        assembly {
+            let sig32 := shr(224, sig4)
+
+            function findImplementation(sig) -> result {@selectors
+            }
+
+            implementation := findImplementation(sig32)
+        }
+
+        require(implementation != address(0), "Unknown selector");
+
+        // Delegatecall to the implementation contract
+        assembly {
+            calldatacopy(0, 0, calldatasize())
+
+            let result := delegatecall(gas(), implementation, 0, calldatasize(), 0, 0)
+            returndatacopy(0, 0, returndatasize())
+
+            switch result
+            case 0 {
+                revert(0, returndatasize())
+            }
+            default {
+                return(0, returndatasize())
+            }
+        }
+    }
+}

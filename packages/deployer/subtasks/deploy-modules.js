@@ -1,26 +1,27 @@
 const fs = require('fs');
-const path = require('path');
 const logger = require('../utils/logger');
 const prompter = require('../utils/prompter');
 const chalk = require('chalk');
 const { subtask } = require('hardhat/config');
-const { readDeploymentFile, saveDeploymentFile } = require('../utils/deploymentFile');
+const { readCurrentDeploymentData, saveCurrentDeploymentData } = require('../utils/deploymentFile');
+const { getSourceModules } = require('../utils/getSourceModules');
 const { SUBTASK_DEPLOY_MODULES } = require('../task-names');
 
-subtask(SUBTASK_DEPLOY_MODULES).setAction(async (_, hre) => {
-  logger.log(chalk.cyan('Deploying modules...'));
+subtask(SUBTASK_DEPLOY_MODULES).setAction(async (taskArguments, hre) => {
+  logger.log(chalk.cyan('Deploying system modules'));
 
-  const deploymentData = _getDeploymentData({ hre });
-  const sourceModules = _getSourceModules({ hre });
+  const deploymentData = readCurrentDeploymentData({ hre });
+  const sourceModules = getSourceModules({ hre });
 
   _cleanupModules({ deploymentData, sourceModules });
 
-  await _deployModules({ deploymentData, sourceModules, hre });
+  const force = taskArguments.force;
+  await _deployModules({ force, deploymentData, sourceModules, hre });
 
-  _saveDeploymentData({ deploymentData, hre });
+  saveCurrentDeploymentData({ deploymentData, hre });
 });
 
-async function _deployModules({ deploymentData, sourceModules, hre }) {
+async function _deployModules({ force, deploymentData, sourceModules, hre }) {
   // Collect info about which modules need to be deployed
   const deployInfo = {
     deploymentsNeeded: [],
@@ -30,24 +31,27 @@ async function _deployModules({ deploymentData, sourceModules, hre }) {
 
     const info = {};
 
-    let needsDeployment = false;
+    if (!info.needsDeployment && force) {
+      info.needsDeployment = true;
+      info.reason = '--force is true';
+    }
 
-    if (!needsDeployment && hre.network.name === 'hardhat') {
+    if (!info.eedsDeployment && hre.network.name === 'hardhat') {
       info.needsDeployment = true;
       info.reason = 'Always deploy in hardhat network';
     }
 
-    if (!needsDeployment && !moduleData.deployedAddress) {
+    if (!info.needsDeployment && !moduleData.deployedAddress) {
       info.needsDeployment = true;
-      info.reason = 'No address found';
+      info.reason = 'No deployed address found';
     }
 
     const sourceBytecodeHash = _getModuleBytecodeHash({ moduleName, hre });
     const storedBytecodeHash = moduleData.bytecodeHash;
     const bytecodeChanged = sourceBytecodeHash !== storedBytecodeHash;
-    if (!needsDeployment && bytecodeChanged) {
+    if (!info.needsDeployment && bytecodeChanged) {
       info.needsDeployment = true;
-      info.reason = 'Bytecode changed';
+      info.reason = 'Contract bytecode changed';
     }
 
     deployInfo[moduleName] = info;
@@ -123,45 +127,6 @@ function _getModuleBytecodeHash({ moduleName, hre }) {
   return hre.ethers.utils.sha256(data.bytecode);
 }
 
-function _saveDeploymentData({ deploymentData, hre }) {
-  const commitHash = _getGitCommitHash();
-
-  const deploymentFile = readDeploymentFile({ hre });
-  deploymentFile[commitHash] = deploymentData;
-
-  saveDeploymentFile({ data: deploymentFile, hre });
-}
-
-// Retrieve saved data about this deployment.
-// Note: Deployments are tracked by the hash of the current
-// commit in the source code.
-function _getDeploymentData({ hre }) {
-  const commitHash = _getGitCommitHash();
-
-  const deploymentFile = readDeploymentFile({ hre });
-  if (!deploymentFile[commitHash]) {
-    deploymentFile[commitHash] = {};
-  }
-
-  const deploymentData = deploymentFile[commitHash];
-  if (!deploymentData.modules) {
-    deploymentData.modules = {};
-  }
-
-  return deploymentData;
-}
-
-// Read contracts/modules/*
-function _getSourceModules({ hre }) {
-  const modulesPath = hre.config.deployer.paths.modules;
-  return fs.readdirSync(modulesPath).map((file) => {
-    const filePath = path.parse(file);
-    if (filePath.ext === '.sol') {
-      return filePath.name;
-    }
-  });
-}
-
 // Syncs modules found in contracts/modules/*
 // with entries found in deployment.modules
 function _cleanupModules({ deploymentData, sourceModules }) {
@@ -169,7 +134,7 @@ function _cleanupModules({ deploymentData, sourceModules }) {
   // included in the current sources
   Object.keys(deploymentData.modules).map((deployedModule) => {
     if (!sourceModules.some((sourceModule) => deployedModule === sourceModule)) {
-      deploymentData.modules[deployedModule] = null;
+      delete deploymentData.modules[deployedModule];
     }
   });
 
@@ -183,8 +148,4 @@ function _cleanupModules({ deploymentData, sourceModules }) {
       };
     }
   });
-}
-
-function _getGitCommitHash() {
-  return require('child_process').execSync('git rev-parse HEAD').toString().slice(0, 40);
 }

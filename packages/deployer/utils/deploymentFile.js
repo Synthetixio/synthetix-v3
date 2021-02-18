@@ -11,6 +11,43 @@ function saveDeploymentFile({ data, hre }) {
   fs.writeFileSync(_getDeploymentFilePath({ hre }), JSON.stringify(data, null, 2));
 }
 
+// Retrieve saved data about this deployment.
+// Note: Deployments are tracked by the hash of the current
+// commit in the source code.
+function readCurrentDeploymentData({ hre }) {
+  const commitHash = _getGitCommitHash();
+
+  const deploymentFile = readDeploymentFile({ hre });
+  if (!deploymentFile[commitHash]) {
+    deploymentFile[commitHash] = {};
+  }
+
+  const deploymentData = deploymentFile[commitHash];
+
+  if (!deploymentData.commitHash) {
+    deploymentData.commitHash = commitHash;
+  }
+
+  if (!deploymentData.modules) {
+    deploymentData.modules = {};
+  }
+
+  return deploymentData;
+}
+
+function saveCurrentDeploymentData({ deploymentData, hre }) {
+  const commitHash = _getGitCommitHash();
+
+  const deploymentFile = readDeploymentFile({ hre });
+  deploymentFile[commitHash] = deploymentData;
+
+  saveDeploymentFile({ data: deploymentFile, hre });
+}
+
+function _getGitCommitHash() {
+  return require('child_process').execSync('git rev-parse HEAD').toString().slice(0, 40);
+}
+
 function _getDeploymentFilePath({ hre }) {
   return path.join(_getDeploymentsDirectoryPath({ hre }), `${hre.network.name}.json`);
 }
@@ -37,4 +74,6 @@ function _createDeploymentFileIfNeeded({ hre }) {
 module.exports = {
   readDeploymentFile,
   saveDeploymentFile,
+  readCurrentDeploymentData,
+  saveCurrentDeploymentData,
 };
