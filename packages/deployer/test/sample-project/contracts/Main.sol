@@ -4,7 +4,7 @@ pragma solidity ^0.7.0;
 import "@openzeppelin/contracts/proxy/UpgradeableProxy.sol";
 
 
-contract Synthetix is UpgradeableProxy {
+contract Main is UpgradeableProxy {
     constructor(address firstImplementation)
         UpgradeableProxy(
             firstImplementation,
