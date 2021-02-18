@@ -3,25 +3,24 @@ const path = require('path');
 const logger = require('../utils/logger');
 const prompter = require('../utils/prompter');
 const chalk = require('chalk');
-const ethers = require('ethers');
 const { subtask } = require('hardhat/config');
 const { readDeploymentFile, saveDeploymentFile } = require('../utils/deploymentFile');
 const { SUBTASK_DEPLOY_MODULES } = require('../task-names');
 
-subtask(SUBTASK_DEPLOY_MODULES).setAction(async () => {
+subtask(SUBTASK_DEPLOY_MODULES).setAction(async (_, hre) => {
   logger.log(chalk.cyan('Deploying modules...'));
 
-  const deploymentData = _getDeploymentData();
-  const sourceModules = _getSourceModules();
+  const deploymentData = _getDeploymentData({ hre });
+  const sourceModules = _getSourceModules({ hre });
 
   _cleanupModules({ deploymentData, sourceModules });
 
-  await _deployModules({ deploymentData, sourceModules });
+  await _deployModules({ deploymentData, sourceModules, hre });
 
-  _saveDeploymentData({ deploymentData });
+  _saveDeploymentData({ deploymentData, hre });
 });
 
-async function _deployModules({ deploymentData, sourceModules }) {
+async function _deployModules({ deploymentData, sourceModules, hre }) {
   // Collect info about which modules need to be deployed
   const deployInfo = {
     deploymentsNeeded: [],
@@ -33,7 +32,6 @@ async function _deployModules({ deploymentData, sourceModules }) {
 
     let needsDeployment = false;
 
-    // eslint-disable-next-line no-undef
     if (!needsDeployment && hre.network.name === 'hardhat') {
       info.needsDeployment = true;
       info.reason = 'Always deploy in hardhat network';
@@ -44,7 +42,7 @@ async function _deployModules({ deploymentData, sourceModules }) {
       info.reason = 'No address found';
     }
 
-    const sourceBytecodeHash = _getModuleBytecodeHash(moduleName);
+    const sourceBytecodeHash = _getModuleBytecodeHash({ moduleName, hre });
     const storedBytecodeHash = moduleData.bytecodeHash;
     const bytecodeChanged = sourceBytecodeHash !== storedBytecodeHash;
     if (!needsDeployment && bytecodeChanged) {
@@ -93,7 +91,7 @@ async function _deployModules({ deploymentData, sourceModules }) {
     if (info.needsDeployment) {
       logger.log(chalk.yellow(`Deploying ${moduleName}...`), 1);
 
-      const factory = await ethers.getContractFactory(moduleName);
+      const factory = await hre.ethers.getContractFactory(moduleName);
       const module = await factory.deploy();
 
       if (!module.address) {
@@ -106,7 +104,7 @@ async function _deployModules({ deploymentData, sourceModules }) {
 
       moduleData.deployedAddress = module.address;
 
-      const sourceBytecodeHash = _getModuleBytecodeHash(moduleName);
+      const sourceBytecodeHash = _getModuleBytecodeHash({ moduleName, hre });
       moduleData.bytecodeHash = sourceBytecodeHash;
     } else {
       logger.log(chalk.gray(`No need to deploy ${moduleName}`), 2);
@@ -118,29 +116,29 @@ async function _deployModules({ deploymentData, sourceModules }) {
   );
 }
 
-function _getModuleBytecodeHash(moduleName) {
+function _getModuleBytecodeHash({ moduleName, hre }) {
   const file = fs.readFileSync(`artifacts/contracts/modules/${moduleName}.sol/${moduleName}.json`);
   const data = JSON.parse(file);
 
-  return ethers.utils.sha256(data.bytecode);
+  return hre.ethers.utils.sha256(data.bytecode);
 }
 
-function _saveDeploymentData({ deploymentData }) {
+function _saveDeploymentData({ deploymentData, hre }) {
   const commitHash = _getGitCommitHash();
 
-  const deploymentFile = readDeploymentFile();
+  const deploymentFile = readDeploymentFile({ hre });
   deploymentFile[commitHash] = deploymentData;
 
-  saveDeploymentFile({ data: deploymentFile });
+  saveDeploymentFile({ data: deploymentFile, hre });
 }
 
 // Retrieve saved data about this deployment.
 // Note: Deployments are tracked by the hash of the current
 // commit in the source code.
-function _getDeploymentData() {
+function _getDeploymentData({ hre }) {
   const commitHash = _getGitCommitHash();
 
-  const deploymentFile = readDeploymentFile();
+  const deploymentFile = readDeploymentFile({ hre });
   if (!deploymentFile[commitHash]) {
     deploymentFile[commitHash] = {};
   }
@@ -154,8 +152,7 @@ function _getDeploymentData() {
 }
 
 // Read contracts/modules/*
-function _getSourceModules() {
-  // eslint-disable-next-line no-undef
+function _getSourceModules({ hre }) {
   const modulesPath = hre.config.deployer.paths.modules;
   return fs.readdirSync(modulesPath).map((file) => {
     const filePath = path.parse(file);
