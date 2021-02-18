@@ -6,6 +6,7 @@ const { subtask } = require('hardhat/config');
 const { SUBTASK_GENERATE_ROUTER_SOURCE } = require('../task-names');
 const { getSelectors } = require('../utils/getSelectors');
 const { readCurrentDeploymentData } = require('../utils/deploymentFile');
+const { getCommit, getBranch } = require('../utils/git');
 
 const TAB = '    ';
 
@@ -19,7 +20,13 @@ subtask(SUBTASK_GENERATE_ROUTER_SOURCE).setAction(async (taskArguments, hre) => 
 
   const binaryData = _buildBinaryData({ selectors });
 
+  const package = _readPackageJson({ hre });
+
   const generatedSource = _readRouterTemplate()
+    .replace('@project', package.name)
+    .replace('@repo', package.repository.url)
+    .replace('@branch', getBranch())
+    .replace('@commit', getCommit())
     .replace('@network', hre.network.name)
     .replace('@modules', _renderModules({ modules }))
     .replace('@selectors', _renderSelectors({ binaryData }));
@@ -28,6 +35,10 @@ subtask(SUBTASK_GENERATE_ROUTER_SOURCE).setAction(async (taskArguments, hre) => 
 
   logger.log(chalk.green('Router code generated'));
 });
+
+function _readPackageJson({ hre }) {
+  return JSON.parse(fs.readFileSync(path.join(hre.config.paths.root, 'package.json')));
+}
 
 function _renderSelectors({ binaryData }) {
   let selectorsStr = '';

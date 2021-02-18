@@ -3,20 +3,27 @@ pragma solidity ^0.7.0;
 
 // --------------------------------------------------------------------------------
 // --------------------------------------------------------------------------------
-// GENERATED CODE - do not edit manually
+// sample-project
+//
+// Source code generated from
+// Repository: git+https://github.com/Synthetixio/synthetix-v3.git
+// Branch: basic-deployer
+// Commit: 72134e865ab71effa8175b4f185ee576ea1a172
+//
+// GENERATED CODE - do not edit manually!!
 // --------------------------------------------------------------------------------
 // --------------------------------------------------------------------------------
 
 contract Router_local {
-    address constant AModule = 0x8A791620dd6260079BF849Dc5567aDC3F2FdC318;
-    address constant AnotherDummyModule = 0x610178dA211FEF7D417bC0e6FeD39F05609AD788;
-    address constant BModule = 0xB7f8BC63BbcaD18155201308C8f3540b07f84F5e;
-    address constant DummyModule = 0xA51c1fc2f0D1a1b8494Ed1FE312d7C3a78Ed91C0;
-    address constant OwnerModule = 0x0DCd1Bf9A1b36cE34237eEaFef220932846BCD82;
-    address constant SettingsModule = 0x9A676e781A523b5d0C0e43731313A708CB607508;
-    address constant StatusModule = 0x0B306BF915C4d645ff596e518fAf3F9669b97016;
-    address constant UpgradeModule = 0x959922bE3CAee4b8Cd9a407cc3ac1C251C2007B1;
-    address constant YetAnotherDummyModule = 0x9A9f2CCfdE556A7E9Ff0848998Aa4a0CFD8863AE;
+    address constant AModule = 0x851356ae760d987E095750cCeb3bC6014560891C;
+    address constant AnotherDummyModule = 0xf5059a5D33d5853360D16C683c16e67980206f36;
+    address constant BModule = 0x95401dc811bb5740090279Ba06cfA8fcF6113778;
+    address constant DummyModule = 0x998abeb3E57409262aE5b751f60747921B33613E;
+    address constant OwnerModule = 0x70e0bA845a1A0F2DA3359C97E0285013525FFC49;
+    address constant SettingsModule = 0x4826533B4897376654Bb4d4AD88B7faFD0C98528;
+    address constant StatusModule = 0x99bbA657f2BbC93c02D617f8bA121cB8Fc104Acf;
+    address constant UpgradeModule = 0x0E801D84Fa97b50751Dbf25036d067dCf18858bF;
+    address constant YetAnotherDummyModule = 0x8f86403A4DE0BB5791fa46B8e795C547942fE4Cf;
 
     fallback() external {
         // Lookup table: Function selector => implementation contract

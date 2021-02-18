@@ -1,5 +1,6 @@
 const fs = require('fs');
 const path = require('path');
+const { getCommit } = require('./git');
 
 function readDeploymentFile({ hre }) {
   _createDeploymentFileIfNeeded({ hre });
@@ -15,7 +16,7 @@ function saveDeploymentFile({ data, hre }) {
 // Note: Deployments are tracked by the hash of the current
 // commit in the source code.
 function readCurrentDeploymentData({ hre }) {
-  const commitHash = _getGitCommitHash();
+  const commitHash = getCommit();
 
   const deploymentFile = readDeploymentFile({ hre });
   if (!deploymentFile[commitHash]) {
@@ -36,16 +37,12 @@ function readCurrentDeploymentData({ hre }) {
 }
 
 function saveCurrentDeploymentData({ deploymentData, hre }) {
-  const commitHash = _getGitCommitHash();
+  const commitHash = getCommit();
 
   const deploymentFile = readDeploymentFile({ hre });
   deploymentFile[commitHash] = deploymentData;
 
   saveDeploymentFile({ data: deploymentFile, hre });
-}
-
-function _getGitCommitHash() {
-  return require('child_process').execSync('git rev-parse HEAD').toString().slice(0, 40);
 }
 
 function _getDeploymentFilePath({ hre }) {
