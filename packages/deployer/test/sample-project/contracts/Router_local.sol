@@ -8,22 +8,22 @@ pragma solidity ^0.7.0;
 // Source code generated from
 // Repository: git+https://github.com/Synthetixio/synthetix-v3.git
 // Branch: basic-deployer
-// Commit: 72134e865ab71effa8175b4f185ee576ea1a172
+// Commit: 60146d2376bf25dc8f0ccd6059c96d0b8474e6a
 //
 // GENERATED CODE - do not edit manually!!
 // --------------------------------------------------------------------------------
 // --------------------------------------------------------------------------------
 
 contract Router_local {
-    address constant AModule = 0x851356ae760d987E095750cCeb3bC6014560891C;
-    address constant AnotherDummyModule = 0xf5059a5D33d5853360D16C683c16e67980206f36;
-    address constant BModule = 0x95401dc811bb5740090279Ba06cfA8fcF6113778;
-    address constant DummyModule = 0x998abeb3E57409262aE5b751f60747921B33613E;
-    address constant OwnerModule = 0x70e0bA845a1A0F2DA3359C97E0285013525FFC49;
-    address constant SettingsModule = 0x4826533B4897376654Bb4d4AD88B7faFD0C98528;
-    address constant StatusModule = 0x99bbA657f2BbC93c02D617f8bA121cB8Fc104Acf;
-    address constant UpgradeModule = 0x0E801D84Fa97b50751Dbf25036d067dCf18858bF;
-    address constant YetAnotherDummyModule = 0x8f86403A4DE0BB5791fa46B8e795C547942fE4Cf;
+    address constant AModule = 0x9d4454B023096f34B160D6B654540c56A1F81688;
+    address constant AnotherDummyModule = 0x5eb3Bc0a489C5A8288765d2336659EbCA68FCd00;
+    address constant BModule = 0x36C02dA8a0983159322a80FFE9F24b1acfF8B570;
+    address constant DummyModule = 0x809d550fca64d94Bd9F66E60752A544199cfAC3D;
+    address constant OwnerModule = 0x4c5859f0F772848b2D91F1D83E2Fe57935348029;
+    address constant SettingsModule = 0x1291Be112d480055DaFd8a610b7d1e203891C274;
+    address constant StatusModule = 0x5f3f1dBD7B74C6B46e8c44f98792A1dAf8d69154;
+    address constant UpgradeModule = 0xb7278A61aa25c888815aFC32Ad3cC52fF24fE575;
+    address constant YetAnotherDummyModule = 0xCD8a1C3ba11CF5ECfa6267617243239504a98d90;
 
     fallback() external {
         // Lookup table: Function selector => implementation contract

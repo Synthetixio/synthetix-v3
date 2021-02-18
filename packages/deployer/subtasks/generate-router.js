@@ -7,6 +7,7 @@ const { SUBTASK_GENERATE_ROUTER_SOURCE } = require('../task-names');
 const { getSelectors } = require('../utils/getSelectors');
 const { readCurrentDeploymentData } = require('../utils/deploymentFile');
 const { getCommit, getBranch } = require('../utils/git');
+const { readPackageJson } = require('../utils/package');
 
 const TAB = '    ';
 
@@ -20,7 +21,7 @@ subtask(SUBTASK_GENERATE_ROUTER_SOURCE).setAction(async (taskArguments, hre) => 
 
   const binaryData = _buildBinaryData({ selectors });
 
-  const package = _readPackageJson({ hre });
+  const package = readPackageJson({ hre });
 
   const generatedSource = _readRouterTemplate()
     .replace('@project', package.name)
@@ -35,10 +36,6 @@ subtask(SUBTASK_GENERATE_ROUTER_SOURCE).setAction(async (taskArguments, hre) => 
 
   logger.log(chalk.green('Router code generated'));
 });
-
-function _readPackageJson({ hre }) {
-  return JSON.parse(fs.readFileSync(path.join(hre.config.paths.root, 'package.json')));
-}
 
 function _renderSelectors({ binaryData }) {
   let selectorsStr = '';

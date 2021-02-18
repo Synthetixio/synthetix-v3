@@ -80,7 +80,7 @@ async function _deployModules({ force, deploymentData, sourceModules, hre }) {
   // Confirm
   if (!prompter.noConfirm) {
     await prompter.confirmAction({
-      message: `Deploy ${deployInfo.deploymentsNeeded.length} modules`,
+      message: `Deploy these ${deployInfo.deploymentsNeeded.length} modules`,
     });
   }
 
