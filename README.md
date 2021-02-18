@@ -23,8 +23,8 @@ Hardhat project which contains all the Synthetix smart contract code, tests, etc
 
 #### Deployer package
 
-Hardhat plugin that provides tasks for the router proxy architecture of the root package focused around deplyments, upgrades, etc.
+Hardhat plugin that provides tasks for the router proxy architecture of the root package, including contract deployment, upgrades, etc.
 
 #### CLI package
 
-Hardhat plugin that provides tasks for interacting with deployed instances of the system via the command line.
+Hardhat plugin that provides tasks for interacting with deployed instances of the synthetix via the command line.
