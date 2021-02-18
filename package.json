@@ -13,9 +13,6 @@
   "author": "",
   "license": "ISC",
   "homepage": "https://github.com/Synthetixio/synthetix-v3#readme",
-  "workspaces": [
-    "packages/*"
-  ],
   "scripts": {
     "lint-js": "prettier --write '**/*.js' && eslint --fix '**/*.js'",
     "lint-sol": "prettier --write 'contracts/**/*.sol' && solhint --fix 'contracts/**/*.sol'",
@@ -23,6 +20,9 @@
   },
   "pre-commit": [
     "lint"
+  ],
+  "workspaces": [
+    "packages/*"
   ],
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "^2.0.1",
