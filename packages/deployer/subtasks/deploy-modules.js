@@ -68,7 +68,9 @@ async function _deployModules({ force, deploymentData, sourceModules, hre }) {
   if (numDeployments > 0) {
     logger.log(chalk.green('Modules to deploy:'));
     deployInfo.deploymentsNeeded.map((moduleName) => {
-      logger.log(chalk.green(`  > ${moduleName} - Deployment reason: ${deployInfo[moduleName].reason}`));
+      logger.log(
+        chalk.green(`  > ${moduleName} - Deployment reason: ${deployInfo[moduleName].reason}`)
+      );
     });
   }
 
