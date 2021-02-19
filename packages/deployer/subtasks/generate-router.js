@@ -11,7 +11,7 @@ const { readPackageJson } = require('../utils/package');
 
 const TAB = '    ';
 
-subtask(SUBTASK_GENERATE_ROUTER_SOURCE).setAction(async (taskArguments, hre) => {
+subtask(SUBTASK_GENERATE_ROUTER_SOURCE).setAction(async (_, hre) => {
   logger.log(chalk.cyan('Generating router source'));
 
   const deploymentData = readDeploymentFile({ hre });

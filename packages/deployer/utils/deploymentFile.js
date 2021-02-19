@@ -4,11 +4,20 @@ const path = require('path');
 function readDeploymentFile({ hre }) {
   _createDeploymentFileIfNeeded({ hre });
 
-  return JSON.parse(fs.readFileSync(_getDeploymentFilePath({ hre })));
+  const deploymentData = JSON.parse(fs.readFileSync(_getDeploymentFilePath({ hre })));
+  _patchDeploymentData({ deploymentData });
+
+  return deploymentData;
 }
 
 function saveDeploymentFile({ deploymentData, hre }) {
   fs.writeFileSync(_getDeploymentFilePath({ hre }), JSON.stringify(deploymentData, null, 2));
+}
+
+function _patchDeploymentData({ deploymentData }) {
+  if (!deploymentData.modules) {
+    deploymentData.modules = {};
+  }
 }
 
 function _getDeploymentFilePath({ hre }) {

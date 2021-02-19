@@ -7,25 +7,24 @@ const { readDeploymentFile, saveDeploymentFile } = require('../utils/deploymentF
 const { getSourceModules } = require('../utils/getSourceModules');
 const { SUBTASK_DEPLOY_MODULES } = require('../task-names');
 
-subtask(SUBTASK_DEPLOY_MODULES).setAction(async (taskArguments, hre) => {
-  logger.log(chalk.cyan('Deploying system modules'));
+subtask(SUBTASK_DEPLOY_MODULES).setAction(async ({ force }, hre) => {
+  logger.log(chalk.cyan('Deploying modules'));
 
   const deploymentData = readDeploymentFile({ hre });
   const sourceModules = getSourceModules({ hre });
 
-  _cleanupModules({ deploymentData, sourceModules });
-
-  const force = taskArguments.force;
-  await _deployModules({ force, deploymentData, sourceModules, hre });
+  const deploymentInfo = await _getDeploymentInfo({ force, deploymentData, sourceModules, hre });
+  await _printAndConfirm({ deploymentInfo });
+  await _deployModules({ deploymentInfo, deploymentData, sourceModules, hre });
 
   saveDeploymentFile({ deploymentData, hre });
 });
 
-async function _deployModules({ force, deploymentData, sourceModules, hre }) {
-  // Collect info about which modules need to be deployed
-  const deployInfo = {
+async function _getDeploymentInfo({ force, deploymentData, sourceModules, hre }) {
+  const deploymentInfo = {
     deploymentsNeeded: [],
   };
+
   for (let moduleName of sourceModules) {
     const moduleData = deploymentData.modules[moduleName];
 
@@ -46,7 +45,7 @@ async function _deployModules({ force, deploymentData, sourceModules, hre }) {
       info.reason = 'No deployed address found';
     }
 
-    const sourceBytecodeHash = _getModuleBytecodeHash({ moduleName, hre });
+    const sourceBytecodeHash = _getContractBytecodeHash({ moduleName, hre });
     const storedBytecodeHash = moduleData.bytecodeHash;
     const bytecodeChanged = sourceBytecodeHash !== storedBytecodeHash;
     if (!info.needsDeployment && bytecodeChanged) {
@@ -54,22 +53,26 @@ async function _deployModules({ force, deploymentData, sourceModules, hre }) {
       info.reason = 'Contract bytecode changed';
     }
 
-    deployInfo[moduleName] = info;
+    deploymentInfo[moduleName] = info;
 
     if (info.needsDeployment) {
-      deployInfo.deploymentsNeeded.push(moduleName);
+      deploymentInfo.deploymentsNeeded.push(moduleName);
     }
   }
 
-  const numDeployments = deployInfo.deploymentsNeeded.length;
+  return deploymentInfo;
+}
+
+async function _printAndConfirm({ deploymentInfo }) {
+  const numDeployments = deploymentInfo.deploymentsNeeded.length;
 
   // Print out summary of what needs to be done
   logger.log(chalk[numDeployments > 0 ? 'green' : 'gray'](`Deployments needed: ${numDeployments}`));
   if (numDeployments > 0) {
     logger.log(chalk.green('Modules to deploy:'));
-    deployInfo.deploymentsNeeded.map((moduleName) => {
+    deploymentInfo.deploymentsNeeded.map((moduleName) => {
       logger.log(
-        chalk.green(`  > ${moduleName} - Deployment reason: ${deployInfo[moduleName].reason}`)
+        chalk.green(`  > ${moduleName} - Deployment reason: ${deploymentInfo[moduleName].reason}`)
       );
     });
   }
@@ -80,12 +83,12 @@ async function _deployModules({ force, deploymentData, sourceModules, hre }) {
   }
 
   // Confirm
-  if (!prompter.noConfirm) {
-    await prompter.confirmAction({
-      message: `Deploy these ${deployInfo.deploymentsNeeded.length} modules`,
-    });
-  }
+  await prompter.confirmAction({
+    message: `Deploy these ${deploymentInfo.deploymentsNeeded.length} modules`,
+  });
+}
 
+async function _deployModules({ deploymentInfo, deploymentData, sourceModules, hre }) {
   // Deploy the modules
   let numDeployedModules = 0;
   for (let moduleName of sourceModules) {
@@ -93,7 +96,7 @@ async function _deployModules({ force, deploymentData, sourceModules, hre }) {
 
     logger.log(chalk.gray(`> ${moduleName}`), 2);
 
-    const info = deployInfo[moduleName];
+    const info = deploymentInfo[moduleName];
     if (info.needsDeployment) {
       logger.log(chalk.yellow(`Deploying ${moduleName}...`), 1);
 
@@ -110,7 +113,7 @@ async function _deployModules({ force, deploymentData, sourceModules, hre }) {
 
       moduleData.deployedAddress = module.address;
 
-      const sourceBytecodeHash = _getModuleBytecodeHash({ moduleName, hre });
+      const sourceBytecodeHash = _getContractBytecodeHash({ moduleName, hre });
       moduleData.bytecodeHash = sourceBytecodeHash;
     } else {
       logger.log(chalk.gray(`No need to deploy ${moduleName}`), 2);
@@ -122,36 +125,9 @@ async function _deployModules({ force, deploymentData, sourceModules, hre }) {
   );
 }
 
-function _getModuleBytecodeHash({ moduleName, hre }) {
+function _getContractBytecodeHash({ moduleName, hre }) {
   const file = fs.readFileSync(`artifacts/contracts/modules/${moduleName}.sol/${moduleName}.json`);
   const data = JSON.parse(file);
 
   return hre.ethers.utils.sha256(data.bytecode);
-}
-
-// Syncs modules found in contracts/modules/*
-// with entries found in deployment.modules
-function _cleanupModules({ deploymentData, sourceModules }) {
-  if (!deploymentData.modules) {
-    deploymentData.modules = {};
-  }
-
-  // Remove entries from the file that are not
-  // included in the current sources
-  Object.keys(deploymentData.modules).map((deployedModule) => {
-    if (!sourceModules.some((sourceModule) => deployedModule === sourceModule)) {
-      delete deploymentData.modules[deployedModule];
-    }
-  });
-
-  // Make sure all modules found in sources
-  // have an entry in the file
-  sourceModules.map((sourceModule) => {
-    if (!deploymentData.modules[sourceModule]) {
-      deploymentData.modules[sourceModule] = {
-        deployedAddress: '',
-        bytecodeHash: '',
-      };
-    }
-  });
 }

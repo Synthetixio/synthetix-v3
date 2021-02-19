@@ -10,6 +10,7 @@ const {
   TASK_DEPLOY,
   SUBTASK_DEPLOY_MODULES,
   SUBTASK_GENERATE_ROUTER_SOURCE,
+  SUBTASK_SYNC_SOURCES,
 } = require('../task-names');
 
 task(
@@ -24,38 +25,36 @@ task(
     1,
     types.int
   )
-  .setAction(async (taskArguments, hre) => {
-    await hre.run(TASK_COMPILE, taskArguments);
+  .setAction(async ({ force, logLevel, noConfirm }, hre) => {
+    logger.logLevel = logLevel;
+    prompter.noConfirm = noConfirm;
 
-    logger.logLevel = taskArguments.logLevel;
-    prompter.noConfirm = taskArguments.noConfirm;
-
-    _printInfo({ taskArguments, hre });
+    _printInfo({ force, logLevel }, hre);
 
     // Confirm!
-    if (!prompter.noConfirm) {
-      await prompter.confirmAction({
-        message: 'Proceed with deployment?',
-      });
-    }
+    await prompter.confirmAction({
+      message: 'Proceed with deployment?',
+    });
 
-    await hre.run(SUBTASK_DEPLOY_MODULES, taskArguments);
-    await hre.run(SUBTASK_GENERATE_ROUTER_SOURCE, taskArguments);
+    await hre.run(TASK_COMPILE, { force: true });
+    await hre.run(SUBTASK_SYNC_SOURCES, {});
+    await hre.run(SUBTASK_DEPLOY_MODULES, { force });
+    await hre.run(SUBTASK_GENERATE_ROUTER_SOURCE, {});
   });
 
-function _printInfo({ taskArguments, hre }) {
+function _printInfo({ force, logLevel }, hre) {
   const package = readPackageJson({ hre });
   const network = hre.network.name;
   const branch = getBranch();
   const commit = getCommit();
 
+  console.log(chalk.blue.bold(`Deploying ** ${package.name} **`));
   console.log(chalk.yellow('------------------------------------------------------------'));
-  console.log(chalk.blue(`Deploying ${package.name}`));
   console.log(chalk.gray(`Commit: ${commit}`));
   console.log(chalk[branch !== 'master' ? 'red' : 'gray'](`Branch: ${branch}`));
   console.log(chalk[network.includes('mainnet') ? 'red' : 'gray'](`Network: ${network}`));
-  console.log(chalk.gray(`Log level: ${taskArguments.logLevel}`));
-  if (taskArguments.force)
+  console.log(chalk.gray(`Log level: ${logLevel}`));
+  if (force)
     console.log(chalk.red('--force is true - This will override all existing deployments'));
   console.log(chalk.yellow('------------------------------------------------------------'));
 }
