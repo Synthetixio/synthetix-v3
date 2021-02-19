@@ -3,7 +3,7 @@ const inquirer = require('inquirer');
 module.exports = {
   noConfirm: false,
 
-  confirmAction: async function ({ message = 'Confirm' }) {
+  confirmAction: async function (message) {
     if (this.noConfirm) {
       return;
     }
