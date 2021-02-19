@@ -3,14 +3,14 @@ const logger = require('../utils/logger');
 const prompter = require('../utils/prompter');
 const chalk = require('chalk');
 const { subtask } = require('hardhat/config');
-const { readCurrentDeploymentData, saveCurrentDeploymentData } = require('../utils/deploymentFile');
+const { readDeploymentFile, saveDeploymentFile } = require('../utils/deploymentFile');
 const { getSourceModules } = require('../utils/getSourceModules');
 const { SUBTASK_DEPLOY_MODULES } = require('../task-names');
 
 subtask(SUBTASK_DEPLOY_MODULES).setAction(async (taskArguments, hre) => {
   logger.log(chalk.cyan('Deploying system modules'));
 
-  const deploymentData = readCurrentDeploymentData({ hre });
+  const deploymentData = readDeploymentFile({ hre });
   const sourceModules = getSourceModules({ hre });
 
   _cleanupModules({ deploymentData, sourceModules });
@@ -18,7 +18,7 @@ subtask(SUBTASK_DEPLOY_MODULES).setAction(async (taskArguments, hre) => {
   const force = taskArguments.force;
   await _deployModules({ force, deploymentData, sourceModules, hre });
 
-  saveCurrentDeploymentData({ deploymentData, hre });
+  saveDeploymentFile({ deploymentData, hre });
 });
 
 async function _deployModules({ force, deploymentData, sourceModules, hre }) {
@@ -68,7 +68,7 @@ async function _deployModules({ force, deploymentData, sourceModules, hre }) {
   if (numDeployments > 0) {
     logger.log(chalk.green('Modules to deploy:'));
     deployInfo.deploymentsNeeded.map((moduleName) => {
-      logger.log(chalk.green(`  > ${moduleName} (${deployInfo[moduleName].reason})`));
+      logger.log(chalk.green(`  > ${moduleName} - Deployment reason: ${deployInfo[moduleName].reason}`));
     });
   }
 
@@ -130,6 +130,10 @@ function _getModuleBytecodeHash({ moduleName, hre }) {
 // Syncs modules found in contracts/modules/*
 // with entries found in deployment.modules
 function _cleanupModules({ deploymentData, sourceModules }) {
+  if (!deploymentData.modules) {
+    deploymentData.modules = {};
+  }
+
   // Remove entries from the file that are not
   // included in the current sources
   Object.keys(deploymentData.modules).map((deployedModule) => {

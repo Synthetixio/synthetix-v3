@@ -5,7 +5,7 @@ const chalk = require('chalk');
 const { subtask } = require('hardhat/config');
 const { SUBTASK_GENERATE_ROUTER_SOURCE } = require('../task-names');
 const { getSelectors } = require('../utils/getSelectors');
-const { readCurrentDeploymentData } = require('../utils/deploymentFile');
+const { readDeploymentFile } = require('../utils/deploymentFile');
 const { getCommit, getBranch } = require('../utils/git');
 const { readPackageJson } = require('../utils/package');
 
@@ -14,7 +14,7 @@ const TAB = '    ';
 subtask(SUBTASK_GENERATE_ROUTER_SOURCE).setAction(async (taskArguments, hre) => {
   logger.log(chalk.cyan('Generating router source'));
 
-  const deploymentData = readCurrentDeploymentData({ hre });
+  const deploymentData = readDeploymentFile({ hre });
 
   const modules = _collectModules({ deploymentData });
   const selectors = await _collectSelectors({ modules, hre });
