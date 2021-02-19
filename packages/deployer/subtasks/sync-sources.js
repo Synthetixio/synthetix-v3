@@ -25,7 +25,7 @@ async function _removeDeletedSources({ deploymentData, sourceModules }) {
     if (!sourceModules.some((sourceModule) => deployedModule === sourceModule)) {
       logger.log(
         chalk.red(
-          `Previously deployed module ${deployedModule} was not found in sources, so it will not be included in the deployment`
+          `Previously deployed module "${deployedModule}" was not found in sources, so it will not be included in the deployment`
         )
       );
 
@@ -45,7 +45,7 @@ async function _addNewSources({ deploymentData, sourceModules }) {
 
   sourceModules.map((sourceModule) => {
     if (!deploymentData.modules[sourceModule]) {
-      logger.log(chalk.yellow(`Found new module ${sourceModule}, including it for deployment`));
+      logger.log(chalk.green(`Found new module "${sourceModule}", including it for deployment`));
 
       someAddition = true;
 
