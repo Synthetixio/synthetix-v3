@@ -30,6 +30,9 @@ subtask(SUBTASK_DEPLOY_ROUTER).setAction(async (_, hre) => {
 });
 
 function _isDeploymentNeeded({ data, routerName }) {
+  let needsDeployment = false;
+  let reason = '';
+
   if (data[routerName]) {
     const sourceBytecodeHash = getContractBytecodeHash({
       contractName: routerName,
@@ -39,15 +42,15 @@ function _isDeploymentNeeded({ data, routerName }) {
     const storedBytecodeHash = data[routerName].bytecodeHash;
     const bytecodeChanged = sourceBytecodeHash !== storedBytecodeHash;
     if (bytecodeChanged) {
-      logger.log(chalk.yellow(`${routerName} bytecode changed`), 1);
-
-      return true;
+      reason = 'bytecode changed';
+      needsDeployment = true;
     }
   } else {
-    logger.log(chalk.yellow(`No ${routerName} deployment found`), 1);
-
-    return true;
+    reason = 'no previous deployment found';
+    needsDeployment = true;
   }
 
-  return false;
+  logger.log(chalk.yellow(`  > ${routerName} needs deployment - reason: ${reason}`), 1);
+
+  return needsDeployment;
 }

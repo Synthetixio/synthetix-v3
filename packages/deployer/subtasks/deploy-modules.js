@@ -38,17 +38,17 @@ async function _getDeploymentInfo({ force, data, sources }) {
 
     if (!info.needsDeployment && force) {
       info.needsDeployment = true;
-      info.reason = '--force is true';
+      info.reason = 'force is set to true';
     }
 
     if (!info.eedsDeployment && _hre.network.name === 'hardhat') {
       info.needsDeployment = true;
-      info.reason = 'Always deploy in hardhat network';
+      info.reason = 'always deploy in hardhat network';
     }
 
     if (!info.needsDeployment && !moduleData.deployedAddress) {
       info.needsDeployment = true;
-      info.reason = 'No deployed address found';
+      info.reason = 'no previous deployment found';
     }
 
     const sourceBytecodeHash = getContractBytecodeHash({
@@ -60,7 +60,7 @@ async function _getDeploymentInfo({ force, data, sources }) {
     const bytecodeChanged = sourceBytecodeHash !== storedBytecodeHash;
     if (!info.needsDeployment && bytecodeChanged) {
       info.needsDeployment = true;
-      info.reason = 'Contract bytecode changed';
+      info.reason = 'bytecode changed';
     }
 
     deploymentInfo[moduleName] = info;
@@ -79,11 +79,9 @@ async function _printAndConfirm({ deploymentInfo }) {
   // Print out summary of what needs to be done
   logger.log(chalk[numDeployments > 0 ? 'green' : 'gray'](`Deployments needed: ${numDeployments}`));
   if (numDeployments > 0) {
-    logger.log(chalk.green('Modules to deploy:'));
+    logger.log(chalk.yellow('Modules to deploy:'));
     deploymentInfo.deploymentsNeeded.map((moduleName) => {
-      logger.log(
-        chalk.green(`  > ${moduleName} - Deployment reason: ${deploymentInfo[moduleName].reason}`)
-      );
+      logger.log(chalk.yellow(`  > ${moduleName} - reason: ${deploymentInfo[moduleName].reason}`));
     });
   }
 
