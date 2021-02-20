@@ -20,6 +20,7 @@ contract Router_@network {@modules
         // Lookup table: Function selector => implementation contract
         bytes4 sig4 = msg.sig;
         address implementation;
+
         assembly {
             let sig32 := shr(224, sig4)
 
