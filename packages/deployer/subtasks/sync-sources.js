@@ -7,10 +7,10 @@ const { getSourceModules } = require('../utils/getSourceModules');
 const { SUBTASK_SYNC_SOURCES } = require('../task-names');
 
 /*
-  * Synchronizes the deployment file with the latest module sources.
-  * I.e. if a module was removed from the sources, the associated entry
-  * is deleted from the deployment file, and viceversa.
-  * */
+ * Synchronizes the deployment file with the latest module sources.
+ * I.e. if a module was removed from the sources, the associated entry
+ * is deleted from the deployment file, and viceversa.
+ * */
 subtask(SUBTASK_SYNC_SOURCES).setAction(async (_, hre) => {
   logger.log(chalk.cyan('Syncing sources'));
 

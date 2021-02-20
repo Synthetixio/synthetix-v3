@@ -13,10 +13,7 @@ const {
   SUBTASK_SYNC_SOURCES,
 } = require('../task-names');
 
-task(
-  TASK_DEPLOY,
-  'Deploys all system modules and upgrades the main proxy with a new router'
-)
+task(TASK_DEPLOY, 'Deploys all system modules and upgrades the main proxy with a new router')
   .addFlag('noConfirm', 'Skip all confirmation prompts', false)
   .addFlag('force', 'Force deploy all modules', false)
   .addOptionalParam(

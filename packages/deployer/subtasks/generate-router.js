@@ -12,9 +12,9 @@ const { readPackageJson } = require('../utils/package');
 const TAB = '    ';
 
 /*
-  * Reads deployed modules from the deployment data file
-  * and generates the source for a new router contract.
-  * */
+ * Reads deployed modules from the deployment data file
+ * and generates the source for a new router contract.
+ * */
 subtask(SUBTASK_GENERATE_ROUTER_SOURCE).setAction(async (_, hre) => {
   logger.log(chalk.cyan('Generating router source'));
 

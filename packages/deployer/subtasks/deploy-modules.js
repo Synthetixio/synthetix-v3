@@ -8,9 +8,9 @@ const { getSourceModules } = require('../utils/getSourceModules');
 const { SUBTASK_DEPLOY_MODULES } = require('../task-names');
 
 /*
-  * Deploys all modules found in sources, and stores
-  * the new addresses and associated data in the deployment file.
-  * */
+ * Deploys all modules found in sources, and stores
+ * the new addresses and associated data in the deployment file.
+ * */
 subtask(SUBTASK_DEPLOY_MODULES).setAction(async ({ force }, hre) => {
   logger.log(chalk.cyan('Deploying modules'));
 
