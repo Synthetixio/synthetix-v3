@@ -42,7 +42,7 @@ subtask(SUBTASK_GENERATE_ROUTER_SOURCE).setAction(async (_, hre) => {
 
   fs.writeFileSync(`contracts/Router_${_hre.network.name}.sol`, generatedSource);
 
-  logger.log(chalk.green('Router code generated'));
+  logger.log(chalk.gray('Router code generated'), 2);
 });
 
 function _renderSelectors({ binaryData }) {

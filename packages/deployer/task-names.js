@@ -4,4 +4,5 @@ module.exports = {
   SUBTASK_GENERATE_ROUTER_SOURCE: 'generate-router-source',
   SUBTASK_SYNC_SOURCES: 'sync-sources',
   SUBTASK_DEPLOY_CONTRACT: 'deploy-contract',
+  SUBTASK_DEPLOY_ROUTER: 'deploy-router',
 };
