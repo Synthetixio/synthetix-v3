@@ -11,17 +11,21 @@ const { readPackageJson } = require('../utils/package');
 
 const TAB = '    ';
 
+let _hre;
+
 /*
  * Reads deployed modules from the deployment data file
  * and generates the source for a new router contract.
  * */
 subtask(SUBTASK_GENERATE_ROUTER_SOURCE).setAction(async (_, hre) => {
+  _hre = hre;
+
   logger.log(chalk.cyan('Generating router source'));
 
   const data = readDeploymentFile({ hre });
 
   const modules = _collectModules({ data });
-  const selectors = await _collectSelectors({ modules, hre });
+  const selectors = await _collectSelectors({ modules });
 
   const binaryData = _buildBinaryData({ selectors });
 
@@ -32,11 +36,11 @@ subtask(SUBTASK_GENERATE_ROUTER_SOURCE).setAction(async (_, hre) => {
     .replace('@repo', package.repository.url)
     .replace('@branch', getBranch())
     .replace('@commit', getCommit())
-    .replace('@network', hre.network.name)
+    .replace('@network', _hre.network.name)
     .replace('@modules', _renderModules({ modules }))
     .replace('@selectors', _renderSelectors({ binaryData }));
 
-  fs.writeFileSync(`contracts/Router_${hre.network.name}.sol`, generatedSource);
+  fs.writeFileSync(`contracts/Router_${_hre.network.name}.sol`, generatedSource);
 
   logger.log(chalk.green('Router code generated'));
 });
@@ -136,11 +140,11 @@ function _collectModules({ data }) {
   });
 }
 
-async function _collectSelectors({ modules, hre }) {
+async function _collectSelectors({ modules }) {
   let allSelectors = [];
 
   for (let module of modules) {
-    let selectors = await getSelectors({ contractName: module.name, hre });
+    let selectors = await getSelectors({ contractName: module.name, hre: _hre });
 
     selectors.map((s) => (s.module = module.name));
 

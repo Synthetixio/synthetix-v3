@@ -1,17 +1,23 @@
 const fs = require('fs');
 const path = require('path');
 
-function readDeploymentFile({ hre }) {
-  _createDeploymentFileIfNeeded({ hre });
+let _hre;
 
-  const data = JSON.parse(fs.readFileSync(_getDeploymentFilePath({ hre })));
+function readDeploymentFile({ hre }) {
+  _hre = hre;
+
+  _createDeploymentFileIfNeeded();
+
+  const data = JSON.parse(fs.readFileSync(_getDeploymentFilePath()));
   _patchDeploymentData({ data });
 
   return data;
 }
 
 function saveDeploymentFile({ data, hre }) {
-  fs.writeFileSync(_getDeploymentFilePath({ hre }), JSON.stringify(data, null, 2));
+  _hre = hre;
+
+  fs.writeFileSync(_getDeploymentFilePath(), JSON.stringify(data, null, 2));
 }
 
 function _patchDeploymentData({ data }) {
@@ -20,22 +26,22 @@ function _patchDeploymentData({ data }) {
   }
 }
 
-function _getDeploymentFilePath({ hre }) {
-  return path.join(_getDeploymentsDirectoryPath({ hre }), `${hre.network.name}.json`);
+function _getDeploymentFilePath() {
+  return path.join(_getDeploymentsDirectoryPath(), `${_hre.network.name}.json`);
 }
 
-function _getDeploymentsDirectoryPath({ hre }) {
-  return hre.config.deployer.paths.deployments;
+function _getDeploymentsDirectoryPath() {
+  return _hre.config.deployer.paths.deployments;
 }
 
-function _createDeploymentFileIfNeeded({ hre }) {
-  const directoryPath = hre.config.deployer.paths.deployments;
+function _createDeploymentFileIfNeeded() {
+  const directoryPath = _hre.config.deployer.paths.deployments;
 
-  if (!fs.existsSync(_getDeploymentsDirectoryPath({ hre }))) {
+  if (!fs.existsSync(_getDeploymentsDirectoryPath())) {
     fs.mkdirSync(directoryPath);
   }
 
-  const filePath = _getDeploymentFilePath({ hre });
+  const filePath = _getDeploymentFilePath();
   if (!fs.existsSync(filePath)) {
     fs.appendFileSync(filePath, '{}');
   }
