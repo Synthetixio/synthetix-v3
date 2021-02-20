@@ -16,7 +16,7 @@ pragma solidity ^0.7.0;
 
 contract Router_@network {@modules
 
-    fallback() external {
+    fallback() external payable {
         // Lookup table: Function selector => implementation contract
         bytes4 sig4 = msg.sig;
         address implementation;

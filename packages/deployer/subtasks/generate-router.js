@@ -70,9 +70,9 @@ function _renderSelectors({ binaryData }) {
     } else {
       selectorsStr += `\n${TAB.repeat(4 + indent)}switch sig`;
       for (const s of node.selectors) {
-        selectorsStr += `\n${TAB.repeat(4 + indent)}case ${s.selector} { result := ${
-          s.module
-        } } // ${s.module}.${s.name}()`;
+        selectorsStr += `\n${TAB.repeat(4 + indent)}case ${
+          s.selector
+        } { result := _${s.module.toUpperCase()} } // ${s.module}.${s.name}()`;
       }
       selectorsStr += `\n${TAB.repeat(4 + indent)}leave`;
     }
@@ -89,7 +89,9 @@ function _renderModules({ modules }) {
   for (let i = 0; i < modules.length; i++) {
     const module = modules[i];
 
-    modulesStr += `\n${TAB.repeat(1)}address constant ${module.name} = ${module.address};`;
+    modulesStr += `\n${TAB.repeat(1)}address private constant _${module.name.toUpperCase()} = ${
+      module.address
+    };`;
   }
 
   return modulesStr;

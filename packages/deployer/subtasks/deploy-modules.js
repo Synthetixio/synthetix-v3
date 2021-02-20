@@ -1,11 +1,11 @@
-const fs = require('fs');
 const logger = require('../utils/logger');
 const prompter = require('../utils/prompter');
 const chalk = require('chalk');
 const { subtask } = require('hardhat/config');
-const { readDeploymentFile, saveDeploymentFile } = require('../utils/deploymentFile');
+const { readDeploymentFile } = require('../utils/deploymentFile');
 const { getSourceModules } = require('../utils/getSourceModules');
-const { SUBTASK_DEPLOY_MODULES } = require('../task-names');
+const { getContractBytecodeHash } = require('../utils/getBytecodeHash');
+const { SUBTASK_DEPLOY_MODULES, SUBTASK_DEPLOY_CONTRACT } = require('../task-names');
 
 let _hre;
 
@@ -23,9 +23,7 @@ subtask(SUBTASK_DEPLOY_MODULES).setAction(async ({ force }, hre) => {
 
   const deploymentInfo = await _getDeploymentInfo({ force, data, sources });
   await _printAndConfirm({ deploymentInfo });
-  await _deployModules({ deploymentInfo, data, sources });
-
-  saveDeploymentFile({ data, hre });
+  await _deployModules({ deploymentInfo, sources });
 });
 
 async function _getDeploymentInfo({ force, data, sources }) {
@@ -53,7 +51,11 @@ async function _getDeploymentInfo({ force, data, sources }) {
       info.reason = 'No deployed address found';
     }
 
-    const sourceBytecodeHash = _getContractBytecodeHash({ moduleName });
+    const sourceBytecodeHash = getContractBytecodeHash({
+      contractName: moduleName,
+      isModule: true,
+      hre: _hre,
+    });
     const storedBytecodeHash = moduleData.bytecodeHash;
     const bytecodeChanged = sourceBytecodeHash !== storedBytecodeHash;
     if (!info.needsDeployment && bytecodeChanged) {
@@ -94,35 +96,16 @@ async function _printAndConfirm({ deploymentInfo }) {
   await prompter.confirmAction(`Deploy these ${deploymentInfo.deploymentsNeeded.length} modules`);
 }
 
-async function _deployModules({ deploymentInfo, data, sources }) {
+async function _deployModules({ deploymentInfo, sources }) {
   // Deploy the modules
   let numDeployedModules = 0;
   for (let moduleName of sources) {
-    const moduleData = data.modules[moduleName];
-
-    logger.log(chalk.gray(`> ${moduleName}`), 2);
-
     const info = deploymentInfo[moduleName];
+
     if (info.needsDeployment) {
-      logger.log(chalk.yellow(`Deploying ${moduleName}...`), 1);
-
-      const factory = await _hre.ethers.getContractFactory(moduleName);
-      const module = await factory.deploy();
-
-      if (!module.address) {
-        throw new Error(`Error deploying ${moduleName}`);
-      }
+      await _hre.run(SUBTASK_DEPLOY_CONTRACT, { contractName: moduleName, isModule: true });
 
       numDeployedModules++;
-
-      logger.log(chalk.green(`Deployed ${moduleName} to ${module.address}`), 1);
-
-      moduleData.deployedAddress = module.address;
-
-      const sourceBytecodeHash = _getContractBytecodeHash({ moduleName });
-      moduleData.bytecodeHash = sourceBytecodeHash;
-
-      saveDeploymentFile({ data, hre: _hre });
     } else {
       logger.log(chalk.gray(`No need to deploy ${moduleName}`), 2);
     }
@@ -131,11 +114,4 @@ async function _deployModules({ deploymentInfo, data, sources }) {
   logger.log(
     chalk[numDeployedModules > 0 ? 'green' : 'gray'](`Deployed modules: ${numDeployedModules}`)
   );
-}
-
-function _getContractBytecodeHash({ moduleName }) {
-  const file = fs.readFileSync(`artifacts/contracts/modules/${moduleName}.sol/${moduleName}.json`);
-  const data = JSON.parse(file);
-
-  return _hre.ethers.utils.sha256(data.bytecode);
 }
