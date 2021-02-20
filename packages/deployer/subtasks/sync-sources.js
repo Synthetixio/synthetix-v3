@@ -6,23 +6,28 @@ const { readDeploymentFile, saveDeploymentFile } = require('../utils/deploymentF
 const { getSourceModules } = require('../utils/getSourceModules');
 const { SUBTASK_SYNC_SOURCES } = require('../task-names');
 
+/*
+  * Synchronizes the deployment file with the latest module sources.
+  * I.e. if a module was removed from the sources, the associated entry
+  * is deleted from the deployment file, and viceversa.
+  * */
 subtask(SUBTASK_SYNC_SOURCES).setAction(async (_, hre) => {
   logger.log(chalk.cyan('Syncing sources'));
 
-  const deploymentData = readDeploymentFile({ hre });
-  const sourceModules = getSourceModules({ hre });
+  const data = readDeploymentFile({ hre });
+  const sources = getSourceModules({ hre });
 
-  await _removeDeletedSources({ deploymentData, sourceModules });
-  await _addNewSources({ deploymentData, sourceModules });
+  await _removeDeletedSources({ data, sources });
+  await _addNewSources({ data, sources });
 
-  saveDeploymentFile({ deploymentData, hre });
+  saveDeploymentFile({ data, hre });
 });
 
-async function _removeDeletedSources({ deploymentData, sourceModules }) {
+async function _removeDeletedSources({ data, sources }) {
   let someDeletion = false;
 
-  Object.keys(deploymentData.modules).map((deployedModule) => {
-    if (!sourceModules.some((sourceModule) => deployedModule === sourceModule)) {
+  Object.keys(data.modules).map((deployedModule) => {
+    if (!sources.some((source) => deployedModule === source)) {
       logger.log(
         chalk.red(
           `Previously deployed module "${deployedModule}" was not found in sources, so it will not be included in the deployment`
@@ -31,7 +36,7 @@ async function _removeDeletedSources({ deploymentData, sourceModules }) {
 
       someDeletion = true;
 
-      delete deploymentData.modules[deployedModule];
+      delete data.modules[deployedModule];
     }
   });
 
@@ -40,16 +45,16 @@ async function _removeDeletedSources({ deploymentData, sourceModules }) {
   }
 }
 
-async function _addNewSources({ deploymentData, sourceModules }) {
+async function _addNewSources({ data, sources }) {
   let someAddition = false;
 
-  sourceModules.map((sourceModule) => {
-    if (!deploymentData.modules[sourceModule]) {
-      logger.log(chalk.green(`Found new module "${sourceModule}", including it for deployment`));
+  sources.map((source) => {
+    if (!data.modules[source]) {
+      logger.log(chalk.green(`Found new module "${source}", including it for deployment`));
 
       someAddition = true;
 
-      deploymentData.modules[sourceModule] = {
+      data.modules[source] = {
         deployedAddress: '',
         bytecodeHash: '',
       };

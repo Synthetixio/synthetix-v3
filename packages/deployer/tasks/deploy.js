@@ -15,10 +15,10 @@ const {
 
 task(
   TASK_DEPLOY,
-  'Deploys all modules that changed, and generates and deploys a router for those modules'
+  'Deploys all system modules and upgrades the main proxy with a new router'
 )
-  .addFlag('noConfirm', 'Skip all confirmations', false)
-  .addFlag('force', 'Ignore all previously deployed contracts', false)
+  .addFlag('noConfirm', 'Skip all confirmation prompts', false)
+  .addFlag('force', 'Force deploy all modules', false)
   .addOptionalParam(
     'logLevel',
     'Control stdout output level: 1 = minimal, 2 = descriptive, 3 = debug',

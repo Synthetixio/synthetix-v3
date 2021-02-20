@@ -11,12 +11,16 @@ const { readPackageJson } = require('../utils/package');
 
 const TAB = '    ';
 
+/*
+  * Reads deployed modules from the deployment data file
+  * and generates the source for a new router contract.
+  * */
 subtask(SUBTASK_GENERATE_ROUTER_SOURCE).setAction(async (_, hre) => {
   logger.log(chalk.cyan('Generating router source'));
 
-  const deploymentData = readDeploymentFile({ hre });
+  const data = readDeploymentFile({ hre });
 
-  const modules = _collectModules({ deploymentData });
+  const modules = _collectModules({ data });
   const selectors = await _collectSelectors({ modules, hre });
 
   const binaryData = _buildBinaryData({ selectors });
@@ -121,9 +125,9 @@ function _buildBinaryData({ selectors }) {
   return binarySplit(binaryData);
 }
 
-function _collectModules({ deploymentData }) {
-  return Object.keys(deploymentData.modules).map((moduleName) => {
-    const { deployedAddress } = deploymentData.modules[moduleName];
+function _collectModules({ data }) {
+  return Object.keys(data.modules).map((moduleName) => {
+    const { deployedAddress } = data.modules[moduleName];
 
     return {
       name: moduleName,

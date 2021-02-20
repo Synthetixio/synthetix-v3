@@ -7,26 +7,30 @@ const { readDeploymentFile, saveDeploymentFile } = require('../utils/deploymentF
 const { getSourceModules } = require('../utils/getSourceModules');
 const { SUBTASK_DEPLOY_MODULES } = require('../task-names');
 
+/*
+  * Deploys all modules found in sources, and stores
+  * the new addresses and associated data in the deployment file.
+  * */
 subtask(SUBTASK_DEPLOY_MODULES).setAction(async ({ force }, hre) => {
   logger.log(chalk.cyan('Deploying modules'));
 
-  const deploymentData = readDeploymentFile({ hre });
-  const sourceModules = getSourceModules({ hre });
+  const data = readDeploymentFile({ hre });
+  const sources = getSourceModules({ hre });
 
-  const deploymentInfo = await _getDeploymentInfo({ force, deploymentData, sourceModules, hre });
+  const deploymentInfo = await _getDeploymentInfo({ force, data, sources, hre });
   await _printAndConfirm({ deploymentInfo });
-  await _deployModules({ deploymentInfo, deploymentData, sourceModules, hre });
+  await _deployModules({ deploymentInfo, data, sources, hre });
 
-  saveDeploymentFile({ deploymentData, hre });
+  saveDeploymentFile({ data, hre });
 });
 
-async function _getDeploymentInfo({ force, deploymentData, sourceModules, hre }) {
+async function _getDeploymentInfo({ force, data, sources, hre }) {
   const deploymentInfo = {
     deploymentsNeeded: [],
   };
 
-  for (let moduleName of sourceModules) {
-    const moduleData = deploymentData.modules[moduleName];
+  for (let moduleName of sources) {
+    const moduleData = data.modules[moduleName];
 
     const info = {};
 
@@ -86,11 +90,11 @@ async function _printAndConfirm({ deploymentInfo }) {
   await prompter.confirmAction(`Deploy these ${deploymentInfo.deploymentsNeeded.length} modules`);
 }
 
-async function _deployModules({ deploymentInfo, deploymentData, sourceModules, hre }) {
+async function _deployModules({ deploymentInfo, data, sources, hre }) {
   // Deploy the modules
   let numDeployedModules = 0;
-  for (let moduleName of sourceModules) {
-    const moduleData = deploymentData.modules[moduleName];
+  for (let moduleName of sources) {
+    const moduleData = data.modules[moduleName];
 
     logger.log(chalk.gray(`> ${moduleName}`), 2);
 
@@ -113,6 +117,8 @@ async function _deployModules({ deploymentInfo, deploymentData, sourceModules, h
 
       const sourceBytecodeHash = _getContractBytecodeHash({ moduleName, hre });
       moduleData.bytecodeHash = sourceBytecodeHash;
+
+      saveDeploymentFile({ data, hre });
     } else {
       logger.log(chalk.gray(`No need to deploy ${moduleName}`), 2);
     }
