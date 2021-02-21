@@ -21,7 +21,7 @@ subtask(SUBTASK_SYNC_SOURCES).setAction(async (_, hre) => {
   const someAddition = await _addNewSources({ data, sources });
 
   if (!someDeletion && !someAddition) {
-    console.log(chalk.gray(`✓ Deployment data is in sync with sources`));
+    console.log(chalk.gray('✓ Deployment data is in sync with sources'));
   }
 
   saveDeploymentFile({ data, hre });

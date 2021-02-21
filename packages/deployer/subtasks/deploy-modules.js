@@ -90,7 +90,7 @@ async function _printAndConfirm({ deploymentInfo }) {
     return;
   }
 
-  await prompter.confirmAction(`Deploy these modules`);
+  await prompter.confirmAction('Deploy these modules');
 }
 
 async function _deployModules({ deploymentInfo, sources }) {
