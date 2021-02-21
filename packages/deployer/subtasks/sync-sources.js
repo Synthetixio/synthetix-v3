@@ -12,13 +12,17 @@ const { SUBTASK_SYNC_SOURCES } = require('../task-names');
  * is deleted from the deployment file, and viceversa.
  * */
 subtask(SUBTASK_SYNC_SOURCES).setAction(async (_, hre) => {
-  logger.log(chalk.cyan('Syncing sources'));
+  logger.subtitle('Syncing solidity sources with deployment data');
 
   const data = readDeploymentFile({ hre });
   const sources = getSourceModules({ hre });
 
-  await _removeDeletedSources({ data, sources });
-  await _addNewSources({ data, sources });
+  const someDeletion = await _removeDeletedSources({ data, sources });
+  const someAddition = await _addNewSources({ data, sources });
+
+  if (!someDeletion && !someAddition) {
+    console.log(chalk.gray(`✓ Deployment data is in sync with sources`));
+  }
 
   saveDeploymentFile({ data, hre });
 });
@@ -43,6 +47,8 @@ async function _removeDeletedSources({ data, sources }) {
   if (someDeletion) {
     await prompter.confirmAction('Do you confirm removing these modules');
   }
+
+  return someDeletion;
 }
 
 async function _addNewSources({ data, sources }) {
@@ -64,4 +70,6 @@ async function _addNewSources({ data, sources }) {
   if (someAddition) {
     await prompter.confirmAction('Do you confirm these new modules');
   }
+
+  return someAddition;
 }

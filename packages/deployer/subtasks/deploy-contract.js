@@ -9,7 +9,7 @@ const { SUBTASK_DEPLOY_CONTRACT } = require('../task-names');
  * Deploys a single contract.
  * */
 subtask(SUBTASK_DEPLOY_CONTRACT).setAction(async ({ contractName, isModule }, hre) => {
-  logger.log(chalk.green(`Deploying ${contractName}...`));
+  logger.notice(`Deploying ${contractName}...`);
 
   const factory = await hre.ethers.getContractFactory(contractName);
   const contract = await factory.deploy();
@@ -18,7 +18,7 @@ subtask(SUBTASK_DEPLOY_CONTRACT).setAction(async ({ contractName, isModule }, hr
     throw new Error(`Error deploying ${contractName}`);
   }
 
-  logger.log(chalk.green(`Deployed ${contractName} to ${contract.address}`), 1);
+  logger.success(`Deployed ${contractName} to ${contract.address}`);
 
   const data = readDeploymentFile({ hre });
   const target = isModule ? data.modules : data;

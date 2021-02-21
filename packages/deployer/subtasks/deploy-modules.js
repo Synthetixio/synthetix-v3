@@ -16,7 +16,7 @@ let _hre;
 subtask(SUBTASK_DEPLOY_MODULES).setAction(async ({ force }, hre) => {
   _hre = hre;
 
-  logger.log(chalk.cyan('Deploying modules'));
+  logger.subtitle('Deploying system modules');
 
   const data = readDeploymentFile({ hre });
   const sources = getSourceModules({ hre });
@@ -76,26 +76,24 @@ async function _getDeploymentInfo({ force, data, sources }) {
 async function _printAndConfirm({ deploymentInfo }) {
   const numDeployments = deploymentInfo.deploymentsNeeded.length;
 
-  // Print out summary of what needs to be done
-  logger.log(chalk[numDeployments > 0 ? 'green' : 'gray'](`Deployments needed: ${numDeployments}`));
   if (numDeployments > 0) {
-    logger.log(chalk.yellow('Modules to deploy:'));
-    deploymentInfo.deploymentsNeeded.map((moduleName) => {
-      logger.log(chalk.yellow(`  > ${moduleName} - reason: ${deploymentInfo[moduleName].reason}`));
-    });
+    logger.notice(`${numDeployments} modules need to be deployed:`);
+    for (let i = 0; i < deploymentInfo.deploymentsNeeded.length; i++) {
+      const moduleName = deploymentInfo.deploymentsNeeded[i];
+      logger.notice(`${i + 1}. ${moduleName} - reason: ${deploymentInfo[moduleName].reason}`, 1);
+    }
+  } else {
+    logger.checked('No modules need to be deployed');
   }
 
-  // Skip if nothing needs to be done
   if (numDeployments === 0) {
     return;
   }
 
-  // Confirm
-  await prompter.confirmAction(`Deploy these ${deploymentInfo.deploymentsNeeded.length} modules`);
+  await prompter.confirmAction(`Deploy these modules`);
 }
 
 async function _deployModules({ deploymentInfo, sources }) {
-  // Deploy the modules
   let numDeployedModules = 0;
   for (let moduleName of sources) {
     const info = deploymentInfo[moduleName];
@@ -105,11 +103,9 @@ async function _deployModules({ deploymentInfo, sources }) {
 
       numDeployedModules++;
     } else {
-      logger.log(chalk.gray(`No need to deploy ${moduleName}`), 2);
+      logger.checked(`Skipping deployment of ${moduleName}`);
     }
   }
 
-  logger.log(
-    chalk[numDeployedModules > 0 ? 'green' : 'gray'](`Deployed modules: ${numDeployedModules}`)
-  );
+  logger.complete(`Deployed ${numDeployedModules} modules successfully!`);
 }

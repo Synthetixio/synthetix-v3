@@ -20,7 +20,7 @@ let _hre;
 subtask(SUBTASK_GENERATE_ROUTER_SOURCE).setAction(async (_, hre) => {
   _hre = hre;
 
-  logger.log(chalk.cyan('Generating router source'));
+  logger.subtitle('Generating router source');
 
   const data = readDeploymentFile({ hre });
 
@@ -42,7 +42,7 @@ subtask(SUBTASK_GENERATE_ROUTER_SOURCE).setAction(async (_, hre) => {
 
   fs.writeFileSync(`contracts/Router_${_hre.network.name}.sol`, generatedSource);
 
-  logger.log(chalk.gray('Router code generated'), 2);
+  logger.complete('Router code generated!');
 });
 
 function _renderSelectors({ binaryData }) {
@@ -157,9 +157,7 @@ async function _collectSelectors({ modules }) {
     return parseInt(a.selector, 16) - parseInt(b.selector, 16);
   });
 
-  logger.log(
-    chalk.gray(`Found ${modules.length} modules with ${allSelectors.length} selectors in total`)
-  );
+  logger.info(`Found ${modules.length} modules with ${allSelectors.length} selectors in total`);
 
   return allSelectors;
 }
