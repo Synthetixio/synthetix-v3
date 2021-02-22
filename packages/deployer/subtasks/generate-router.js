@@ -1,7 +1,6 @@
 const fs = require('fs');
 const path = require('path');
 const logger = require('../utils/logger');
-const chalk = require('chalk');
 const { subtask } = require('hardhat/config');
 const { SUBTASK_GENERATE_ROUTER_SOURCE } = require('../task-names');
 const { getSelectors } = require('../utils/getSelectors');
@@ -31,6 +30,7 @@ subtask(SUBTASK_GENERATE_ROUTER_SOURCE).setAction(async (_, hre) => {
 
   const package = readPackageJson({ hre });
 
+  const currentSource = _readRouterSource();
   const generatedSource = _readRouterTemplate()
     .replace('@project', package.name)
     .replace('@repo', package.repository.url)
@@ -40,10 +40,25 @@ subtask(SUBTASK_GENERATE_ROUTER_SOURCE).setAction(async (_, hre) => {
     .replace('@modules', _renderModules({ modules }))
     .replace('@selectors', _renderSelectors({ binaryData }));
 
-  fs.writeFileSync(`contracts/Router_${_hre.network.name}.sol`, generatedSource);
+  if (currentSource !== generatedSource) {
+    fs.writeFileSync(`contracts/Router_${_hre.network.name}.sol`, generatedSource);
 
-  logger.complete('Router code generated!');
+    logger.complete('Router code generated!');
+  } else {
+    logger.checked('Router source did not change');
+  }
 });
+
+function _readRouterSource() {
+  const routerName = `Router_${_hre.network.name}.sol`;
+  const routerPath = `contracts/${routerName}`;
+
+  if (fs.existsSync(routerPath)) {
+    return fs.readFileSync(routerPath, 'utf8');
+  }
+
+  return '';
+}
 
 function _renderSelectors({ binaryData }) {
   let selectorsStr = '';

@@ -1,17 +1,17 @@
 const chalk = require('chalk');
 const logger = require('../utils/logger');
 const prompter = require('../utils/prompter');
-const { task, types } = require('hardhat/config');
+const { getSourceModules } = require('../utils/getSourceModules');
+const { task } = require('hardhat/config');
 const { TASK_COMPILE } = require('hardhat/builtin-tasks/task-names');
 const { readPackageJson } = require('../utils/package');
 const { getCommit, getBranch } = require('../utils/git');
 
 const {
   TASK_DEPLOY,
-  SUBTASK_DEPLOY_MODULES,
   SUBTASK_GENERATE_ROUTER_SOURCE,
   SUBTASK_SYNC_SOURCES,
-  SUBTASK_DEPLOY_ROUTER,
+  SUBTASK_DEPLOY_CONTRACTS,
 } = require('../task-names');
 
 task(TASK_DEPLOY, 'Deploys all system modules and upgrades the main proxy with a new router')
@@ -19,22 +19,30 @@ task(TASK_DEPLOY, 'Deploys all system modules and upgrades the main proxy with a
   .addFlag('force', 'Force deploy all modules', false)
   .addFlag('debug', 'Display debug logs', false)
   .setAction(async ({ force, debug, noConfirm }, hre) => {
-    logger.debug = debug;
+    logger.debugging = debug;
     prompter.noConfirm = noConfirm;
 
     _printInfo({ force, debug }, hre);
 
-    // Confirm!
     await prompter.confirmAction('Proceed with deployment?');
 
-    await hre.run(TASK_COMPILE, { force: true });
+    await hre.run(TASK_COMPILE, { force: true, quiet: true });
     await hre.run(SUBTASK_SYNC_SOURCES, {});
-    await hre.run(SUBTASK_DEPLOY_MODULES, { force });
+
+    logger.subtitle('Deploying system modules');
+    const sources = getSourceModules({ hre });
+    await hre.run(SUBTASK_DEPLOY_CONTRACTS, { contractNames: sources, areModules: true, force });
 
     await hre.run(SUBTASK_GENERATE_ROUTER_SOURCE, {});
+
     // TODO: Validate router here
 
-    await hre.run(SUBTASK_DEPLOY_ROUTER, { force });
+    logger.subtitle('Deploying router');
+    await hre.run(TASK_COMPILE, { force: false, quiet: true });
+    await hre.run(SUBTASK_DEPLOY_CONTRACTS, {
+      contractNames: [`Router_${hre.network.name}`],
+      force,
+    });
   });
 
 function _printInfo({ force, debug }, hre) {

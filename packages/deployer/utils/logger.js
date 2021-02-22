@@ -3,7 +3,7 @@ const chalk = require('chalk');
 const TAB = '  ';
 
 module.exports = {
-  debug: false,
+  debudding: false,
 
   log: function (msg, indent = 0) {
     console.log(`${TAB.repeat(indent)}${msg}`);
@@ -42,7 +42,7 @@ module.exports = {
   },
 
   debug: function (msg, indent) {
-    if (!this.debug) {
+    if (!this.debugging) {
       return;
     }
 
