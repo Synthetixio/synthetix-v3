@@ -28,17 +28,22 @@ async function _evaluateDeployments({ contractNames, areModules, force }) {
   data = areModules ? data.modules : data;
 
   for (let contractName of contractNames) {
+    logger.debug(`${contractName}`);
+
+    logger.debug(`force: ${force}`);
     if (force) {
       deploymentsInfo[contractName] = 'force is set to true';
       continue;
     }
 
+    logger.debug(`network: ${_hre.network.name}`);
     if (_hre.network.name === 'hardhat') {
       deploymentsInfo[contractName] = 'always deploy in hardhat network';
       continue;
     }
 
     const deployedData = data[contractName];
+    logger.debug(`deployedData: ${deployedData}`);
     if (!deployedData.deployedAddress) {
       deploymentsInfo[contractName] = 'no previous deployment found';
       continue;
@@ -49,7 +54,9 @@ async function _evaluateDeployments({ contractNames, areModules, force }) {
       isModule: areModules,
       hre: _hre,
     });
+    logger.debug(`source bytecodehash: ${sourceBytecodeHash}`);
     const storedBytecodeHash = deployedData.bytecodeHash;
+    logger.debug(`stored bytecodeHash: ${sourceBytecodeHash}`);
     const bytecodeChanged = sourceBytecodeHash !== storedBytecodeHash;
     if (bytecodeChanged) {
       deploymentsInfo[contractName] = 'bytecode changed';

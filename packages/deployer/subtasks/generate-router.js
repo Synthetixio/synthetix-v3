@@ -40,6 +40,8 @@ subtask(SUBTASK_GENERATE_ROUTER_SOURCE).setAction(async (_, hre) => {
     .replace('@modules', _renderModules({ modules }))
     .replace('@selectors', _renderSelectors({ binaryData }));
 
+  logger.debug(`generated source: ${generatedSource}`);
+
   if (currentSource !== generatedSource) {
     fs.writeFileSync(`contracts/Router_${_hre.network.name}.sol`, generatedSource);
 
@@ -143,11 +145,15 @@ function _buildBinaryData({ selectors }) {
     children: [],
   };
 
-  return binarySplit(binaryData);
+  const finalData = binarySplit(binaryData);
+
+  logger.debug(`binary tree: ${JSON.stringify(finalData, null, 2)}`);
+
+  return finalData;
 }
 
 function _collectModules({ data }) {
-  return Object.keys(data.modules).map((moduleName) => {
+  const allModules = Object.keys(data.modules).map((moduleName) => {
     const { deployedAddress } = data.modules[moduleName];
 
     return {
@@ -155,6 +161,10 @@ function _collectModules({ data }) {
       address: deployedAddress,
     };
   });
+
+  logger.debug(`modules: ${JSON.stringify(allModules, null, 2)}`);
+
+  return allModules;
 }
 
 async function _collectSelectors({ modules }) {
@@ -172,6 +182,7 @@ async function _collectSelectors({ modules }) {
     return parseInt(a.selector, 16) - parseInt(b.selector, 16);
   });
 
+  logger.debug(`selectors: ${JSON.stringify(allSelectors, null, 2)}`);
   logger.info(`Found ${modules.length} modules with ${allSelectors.length} selectors in total`);
 
   return allSelectors;
