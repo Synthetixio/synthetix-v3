@@ -40,7 +40,7 @@ async function _selectorsExistInSource() {
         throw new Error(`Expected to find ${module.name} in the selector case: ${match}`);
       }
 
-      logger.checked(`${module.name}.${moduleSelector.name} selector found in the router`);
+      logger.debug(`${module.name}.${moduleSelector.name} selector found in the router`);
     });
   }
 }

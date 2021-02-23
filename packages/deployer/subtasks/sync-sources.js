@@ -1,6 +1,5 @@
 const logger = require('../utils/logger');
 const prompter = require('../utils/prompter');
-const chalk = require('chalk');
 const { subtask } = require('hardhat/config');
 const { readDeploymentFile, saveDeploymentFile } = require('../utils/deploymentFile');
 const { getSourceModules } = require('../utils/getSourceModules');
@@ -21,7 +20,7 @@ subtask(SUBTASK_SYNC_SOURCES).setAction(async (_, hre) => {
   const someAddition = await _addNewSources({ data, sources });
 
   if (!someDeletion && !someAddition) {
-    console.log(chalk.gray('✓ Deployment data is in sync with sources'));
+    logger.checked('✓ Deployment data is in sync with sources');
   }
 
   saveDeploymentFile({ data, hre });
@@ -32,10 +31,8 @@ async function _removeDeletedSources({ data, sources }) {
 
   Object.keys(data.modules).map((deployedModule) => {
     if (!sources.some((source) => deployedModule === source)) {
-      logger.log(
-        chalk.red(
-          `Previously deployed module "${deployedModule}" was not found in sources, so it will not be included in the deployment`
-        )
+      logger.notice(
+        `Previously deployed module "${deployedModule}" was not found in sources, so it will not be included in the deployment`
       );
 
       someDeletion = true;
@@ -56,7 +53,7 @@ async function _addNewSources({ data, sources }) {
 
   sources.map((source) => {
     if (!data.modules[source]) {
-      logger.log(chalk.green(`Found new module "${source}", including it for deployment`));
+      logger.notice(`Found new module "${source}", including it for deployment`);
 
       someAddition = true;
 
