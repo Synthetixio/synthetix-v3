@@ -46,9 +46,10 @@ subtask(SUBTASK_GENERATE_ROUTER_SOURCE).setAction(async (_, hre) => {
   logger.debug(`generated source: ${generatedSource}`);
 
   if (currentSource !== generatedSource) {
-    fs.writeFileSync(`contracts/Router_${_hre.network.name}.sol`, generatedSource);
+    const routerPath = path.join(_hre.config.paths.sources, `Router_${_hre.network.name}.sol`);
+    fs.writeFileSync(routerPath, generatedSource);
 
-    logger.complete('Router code generated!');
+    logger.complete(`Router code generated and written to ${routerPath}`);
   } else {
     logger.checked('Router source did not change');
   }

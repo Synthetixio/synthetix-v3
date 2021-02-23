@@ -81,7 +81,7 @@ async function _upgradeProxy({ implementationAddress }) {
     const tx = await upgradeable.upgradeTo(implementationAddress);
     await tx.wait();
 
-    logger.success(`Main proy upgraded to ${await upgradeable.getImplementation()}`);
+    logger.success(`Main proxy upgraded to ${await upgradeable.getImplementation()}`);
   } else {
     logger.checked('No need to upgrade the main proxy');
   }
