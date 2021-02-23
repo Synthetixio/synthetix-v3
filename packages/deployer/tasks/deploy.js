@@ -13,6 +13,7 @@ const {
   SUBTASK_SYNC_SOURCES,
   SUBTASK_DEPLOY_CONTRACTS,
   SUBTASK_VALIDATE_ROUTER,
+  SUBTASK_UPGRADE_PROXY,
 } = require('../task-names');
 
 task(TASK_DEPLOY, 'Deploys all system modules and upgrades the main proxy with a new router')
@@ -44,8 +45,7 @@ task(TASK_DEPLOY, 'Deploys all system modules and upgrades the main proxy with a
       force,
     });
 
-    // TODO: Deploy proxy if needed
-    // TODO: Upgrade main proxy
+    await hre.run(SUBTASK_UPGRADE_PROXY, {});
   });
 
 function _printInfo({ force, debug }, hre) {

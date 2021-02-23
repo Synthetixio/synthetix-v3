@@ -16,6 +16,7 @@ module.exports = {
       modules: 'contracts/modules',
       deployments: 'deployments',
     },
+    proxyName: 'Synthetix',
   },
   defaultNetwork: 'local',
   networks: {

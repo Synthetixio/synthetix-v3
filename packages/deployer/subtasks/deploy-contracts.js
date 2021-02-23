@@ -11,13 +11,13 @@ let _hre;
  * Deploys a single contract.
  * */
 subtask(SUBTASK_DEPLOY_CONTRACTS).setAction(
-  async ({ contractNames, areModules = false, force = false }, hre) => {
+  async ({ contractNames, constructorArgs, areModules = false, force = false }, hre) => {
     _hre = hre;
 
     const deploymentsInfo = await _evaluateDeployments({ contractNames, areModules, force });
     await _confirmDeployments({ contractNames, deploymentsInfo });
 
-    await _deployContracts({ contractNames, areModules, deploymentsInfo });
+    await _deployContracts({ contractNames, constructorArgs, areModules, deploymentsInfo });
   }
 );
 
@@ -42,7 +42,11 @@ async function _evaluateDeployments({ contractNames, areModules, force }) {
       continue;
     }
 
+    if (!data[contractName]) {
+      data[contractName] = {};
+    }
     const deployedData = data[contractName];
+
     logger.debug(`deployedData: ${deployedData}`);
     if (!deployedData.deployedAddress) {
       deploymentsInfo[contractName] = 'no previous deployment found';
@@ -86,10 +90,13 @@ async function _confirmDeployments({ contractNames, deploymentsInfo }) {
   await prompter.confirmAction('Deploy these contracts');
 }
 
-async function _deployContracts({ contractNames, deploymentsInfo, areModules }) {
-  for (let contractName of contractNames) {
+async function _deployContracts({ contractNames, constructorArgs, deploymentsInfo, areModules }) {
+  for (let i = 0; i < contractNames.length; i++) {
+    const contractName = contractNames[i];
+    const args = constructorArgs ? constructorArgs[i] || [] : [];
+
     const factory = await _hre.ethers.getContractFactory(contractName);
-    const contract = await factory.deploy();
+    const contract = await factory.deploy(...args);
 
     const reason = deploymentsInfo[contractName];
     if (!reason) {
