@@ -12,6 +12,7 @@ const {
   SUBTASK_GENERATE_ROUTER_SOURCE,
   SUBTASK_SYNC_SOURCES,
   SUBTASK_DEPLOY_CONTRACTS,
+  SUBTASK_VALIDATE_ROUTER,
 } = require('../task-names');
 
 task(TASK_DEPLOY, 'Deploys all system modules and upgrades the main proxy with a new router')
@@ -24,7 +25,7 @@ task(TASK_DEPLOY, 'Deploys all system modules and upgrades the main proxy with a
 
     _printInfo({ force, debug }, hre);
 
-    await prompter.confirmAction('Proceed with deployment?');
+    await prompter.confirmAction('Proceed with deployment');
 
     await hre.run(TASK_COMPILE, { force: true, quiet: true });
     await hre.run(SUBTASK_SYNC_SOURCES, {});
@@ -34,8 +35,7 @@ task(TASK_DEPLOY, 'Deploys all system modules and upgrades the main proxy with a
     await hre.run(SUBTASK_DEPLOY_CONTRACTS, { contractNames: sources, areModules: true, force });
 
     await hre.run(SUBTASK_GENERATE_ROUTER_SOURCE, {});
-
-    // TODO: Validate router here
+    await hre.run(SUBTASK_VALIDATE_ROUTER, {});
 
     logger.subtitle('Deploying router');
     await hre.run(TASK_COMPILE, { force: false, quiet: true });
@@ -43,6 +43,9 @@ task(TASK_DEPLOY, 'Deploys all system modules and upgrades the main proxy with a
       contractNames: [`Router_${hre.network.name}`],
       force,
     });
+
+    // TODO: Deploy proxy if needed
+    // TODO: Upgrade main proxy
   });
 
 function _printInfo({ force, debug }, hre) {

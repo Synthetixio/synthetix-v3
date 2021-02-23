@@ -3,10 +3,11 @@ const path = require('path');
 const logger = require('../utils/logger');
 const { subtask } = require('hardhat/config');
 const { SUBTASK_GENERATE_ROUTER_SOURCE } = require('../task-names');
-const { getSelectors } = require('../utils/getSelectors');
-const { readDeploymentFile } = require('../utils/deploymentFile');
+const { getModules } = require('../utils/getModules');
+const { getAllSelectors } = require('../utils/getSelectors');
 const { getCommit, getBranch } = require('../utils/git');
 const { readPackageJson } = require('../utils/package');
+const { readRouterSource } = require('../utils/routerSource');
 
 const TAB = '    ';
 
@@ -21,16 +22,18 @@ subtask(SUBTASK_GENERATE_ROUTER_SOURCE).setAction(async (_, hre) => {
 
   logger.subtitle('Generating router source');
 
-  const data = readDeploymentFile({ hre });
+  const modules = getModules({ hre });
+  logger.debug(`modules: ${JSON.stringify(modules, null, 2)}`);
 
-  const modules = _collectModules({ data });
-  const selectors = await _collectSelectors({ modules });
+  const selectors = await getAllSelectors({ hre });
+  logger.debug(`selectors: ${JSON.stringify(selectors, null, 2)}`);
+  logger.info(`Found ${modules.length} modules with ${selectors.length} selectors in total`);
 
   const binaryData = _buildBinaryData({ selectors });
 
   const package = readPackageJson({ hre });
 
-  const currentSource = _readRouterSource();
+  const currentSource = readRouterSource({ hre });
   const generatedSource = _readRouterTemplate()
     .replace('@project', package.name)
     .replace('@repo', package.repository.url)
@@ -50,17 +53,6 @@ subtask(SUBTASK_GENERATE_ROUTER_SOURCE).setAction(async (_, hre) => {
     logger.checked('Router source did not change');
   }
 });
-
-function _readRouterSource() {
-  const routerName = `Router_${_hre.network.name}.sol`;
-  const routerPath = `contracts/${routerName}`;
-
-  if (fs.existsSync(routerPath)) {
-    return fs.readFileSync(routerPath, 'utf8');
-  }
-
-  return '';
-}
 
 function _renderSelectors({ binaryData }) {
   let selectorsStr = '';
@@ -150,42 +142,6 @@ function _buildBinaryData({ selectors }) {
   logger.debug(`binary tree: ${JSON.stringify(finalData, null, 2)}`);
 
   return finalData;
-}
-
-function _collectModules({ data }) {
-  const allModules = Object.keys(data.modules).map((moduleName) => {
-    const { deployedAddress } = data.modules[moduleName];
-
-    return {
-      name: moduleName,
-      address: deployedAddress,
-    };
-  });
-
-  logger.debug(`modules: ${JSON.stringify(allModules, null, 2)}`);
-
-  return allModules;
-}
-
-async function _collectSelectors({ modules }) {
-  let allSelectors = [];
-
-  for (let module of modules) {
-    let selectors = await getSelectors({ contractName: module.name, hre: _hre });
-
-    selectors.map((s) => (s.module = module.name));
-
-    allSelectors = allSelectors.concat(selectors);
-  }
-
-  allSelectors = allSelectors.sort((a, b) => {
-    return parseInt(a.selector, 16) - parseInt(b.selector, 16);
-  });
-
-  logger.debug(`selectors: ${JSON.stringify(allSelectors, null, 2)}`);
-  logger.info(`Found ${modules.length} modules with ${allSelectors.length} selectors in total`);
-
-  return allSelectors;
 }
 
 function _readRouterTemplate() {
