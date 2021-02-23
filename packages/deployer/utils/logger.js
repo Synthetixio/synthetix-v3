@@ -46,6 +46,6 @@ module.exports = {
       return;
     }
 
-    this.log(chalk.gray(`ƒ ${msg}`), indent);
+    this.log(chalk.magenta(`${msg}`), indent);
   },
 };

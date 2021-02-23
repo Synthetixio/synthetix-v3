@@ -47,7 +47,7 @@ async function _evaluateDeployments({ contractNames, areModules, force }) {
     }
     const deployedData = data[contractName];
 
-    logger.debug(`deployedData: ${deployedData}`);
+    logger.debug(`deployedData: ${JSON.stringify(deployedData, null, 2)}`);
     if (!deployedData.deployedAddress) {
       deploymentsInfo[contractName] = 'no previous deployment found';
       continue;

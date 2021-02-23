@@ -66,5 +66,7 @@ function _printInfo({ force, debug }, hre) {
   } else {
     console.log(chalk.gray('force: false'));
   }
+  logger.debug('Deployer configuration:');
+  logger.debug(JSON.stringify(hre.config.deployer, null, 2));
   console.log(chalk.yellow('------------------------------------------------------------'));
 }
