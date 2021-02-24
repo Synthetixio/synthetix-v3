@@ -3,7 +3,6 @@ const path = require('path');
 const logger = require('../utils/logger');
 const prompter = require('../utils/prompter');
 const { subtask } = require('hardhat/config');
-const { saveDeploymentFile } = require('../utils/io');
 const { SUBTASK_SYNC_SOURCES } = require('../task-names');
 
 /*
@@ -24,7 +23,7 @@ subtask(SUBTASK_SYNC_SOURCES).setAction(async (_, hre) => {
     logger.checked('Deployment data is in sync with sources');
   }
 
-  saveDeploymentFile({ data, hre });
+  hre.deployer.save();
 });
 
 function _getSources({ hre }) {

@@ -1,6 +1,5 @@
 const logger = require('../utils/logger');
 const prompter = require('../utils/prompter');
-const { saveDeploymentFile } = require('../utils/io');
 const { getContractBytecodeHash } = require('../utils/contracts');
 const { subtask } = require('hardhat/config');
 const { SUBTASK_DEPLOY_CONTRACTS } = require('../task-names');
@@ -117,6 +116,6 @@ async function _deployContracts({ contractNames, constructorArgs, deploymentsInf
       bytecodeHash: getContractBytecodeHash({ contractName, isModule: areModules, hre: _hre }),
     };
 
-    saveDeploymentFile({ data, hre: _hre });
+    _hre.deployer.save();
   }
 }
