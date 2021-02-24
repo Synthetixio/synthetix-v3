@@ -17,6 +17,8 @@ function readDeploymentFile({ hre }) {
 function saveDeploymentFile({ data, hre }) {
   _hre = hre;
 
+  hre.deployer.data = data;
+
   fs.writeFileSync(_getDeploymentFilePath(), JSON.stringify(data, null, 2));
 }
 

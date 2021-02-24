@@ -1,6 +1,6 @@
 const logger = require('../utils/logger');
 const prompter = require('../utils/prompter');
-const { readDeploymentFile, saveDeploymentFile } = require('../utils/deploymentFile');
+const { saveDeploymentFile } = require('../utils/deploymentFile');
 const { getContractBytecodeHash } = require('../utils/getBytecodeHash');
 const { subtask } = require('hardhat/config');
 const { SUBTASK_DEPLOY_CONTRACTS } = require('../task-names');
@@ -24,7 +24,7 @@ subtask(SUBTASK_DEPLOY_CONTRACTS).setAction(
 async function _evaluateDeployments({ contractNames, areModules, force }) {
   const deploymentsInfo = {};
 
-  let data = readDeploymentFile({ hre: _hre });
+  let data = _hre.deployer.data;
   data = areModules ? data.modules : data;
 
   for (let contractName of contractNames) {
@@ -109,7 +109,7 @@ async function _deployContracts({ contractNames, constructorArgs, deploymentsInf
 
     logger.success(`Deployed ${contractName} to ${contract.address}`);
 
-    const data = readDeploymentFile({ hre: _hre });
+    const data = _hre.deployer.data;
     const target = areModules ? data.modules : data;
 
     target[contractName] = {

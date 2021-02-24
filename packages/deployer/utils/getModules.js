@@ -1,7 +1,5 @@
-const { readDeploymentFile } = require('../utils/deploymentFile');
-
 function getModules({ hre }) {
-  const data = readDeploymentFile({ hre });
+  const data = hre.deployer.data;
 
   const allModules = Object.keys(data.modules).map((moduleName) => {
     const { deployedAddress } = data.modules[moduleName];

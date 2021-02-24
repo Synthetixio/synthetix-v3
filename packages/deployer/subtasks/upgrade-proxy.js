@@ -1,7 +1,6 @@
 const logger = require('../utils/logger');
 const prompter = require('../utils/prompter');
 const { subtask } = require('hardhat/config');
-const { readDeploymentFile } = require('../utils/deploymentFile');
 const { SUBTASK_UPGRADE_PROXY, SUBTASK_DEPLOY_CONTRACTS } = require('../task-names');
 
 const UPGRADE_ABI = [
@@ -44,7 +43,7 @@ subtask(SUBTASK_UPGRADE_PROXY).setAction(async (_, hre) => {
 
   logger.subtitle('Upgrading main proxy');
 
-  const data = readDeploymentFile({ hre });
+  const data = hre.deployer.data;
 
   const implementationAddress = data[`Router_${hre.network.name}`].deployedAddress;
   logger.info(`Target implementation: ${implementationAddress}`);
@@ -62,7 +61,7 @@ async function _deployProxy({ implementationAddress }) {
 }
 
 async function _upgradeProxy({ implementationAddress }) {
-  const data = readDeploymentFile({ hre: _hre });
+  const data = _hre.deployer.data;
   const proxyAddress = data[_hre.config.deployer.proxyName].deployedAddress;
 
   const upgradeable = await _hre.ethers.getContractAt(UPGRADE_ABI, proxyAddress);

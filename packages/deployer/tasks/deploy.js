@@ -14,6 +14,7 @@ const {
   SUBTASK_DEPLOY_CONTRACTS,
   SUBTASK_VALIDATE_ROUTER,
   SUBTASK_UPGRADE_PROXY,
+  SUBTASK_PREPARE_DEPLOYMENT,
 } = require('../task-names');
 
 task(TASK_DEPLOY, 'Deploys all system modules and upgrades the main proxy with a new router')
@@ -27,6 +28,8 @@ task(TASK_DEPLOY, 'Deploys all system modules and upgrades the main proxy with a
     _printInfo({ force, debug }, hre);
 
     await prompter.confirmAction('Proceed with deployment');
+
+    await hre.run(SUBTASK_PREPARE_DEPLOYMENT, {});
 
     await hre.run(TASK_COMPILE, { force: true, quiet: true });
     await hre.run(SUBTASK_SYNC_SOURCES, {});

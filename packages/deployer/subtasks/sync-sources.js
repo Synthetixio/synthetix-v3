@@ -1,7 +1,7 @@
 const logger = require('../utils/logger');
 const prompter = require('../utils/prompter');
 const { subtask } = require('hardhat/config');
-const { readDeploymentFile, saveDeploymentFile } = require('../utils/deploymentFile');
+const { saveDeploymentFile } = require('../utils/deploymentFile');
 const { getSourceModules } = require('../utils/getSourceModules');
 const { SUBTASK_SYNC_SOURCES } = require('../task-names');
 
@@ -13,7 +13,7 @@ const { SUBTASK_SYNC_SOURCES } = require('../task-names');
 subtask(SUBTASK_SYNC_SOURCES).setAction(async (_, hre) => {
   logger.subtitle('Syncing solidity sources with deployment data');
 
-  const data = readDeploymentFile({ hre });
+  const data = hre.deployer.data;
   const sources = getSourceModules({ hre });
 
   const someDeletion = await _removeDeletedSources({ data, sources });
