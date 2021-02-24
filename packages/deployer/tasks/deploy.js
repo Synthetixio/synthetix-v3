@@ -1,7 +1,6 @@
 const chalk = require('chalk');
 const logger = require('../utils/logger');
 const prompter = require('../utils/prompter');
-const { getSourceModules } = require('../utils/getSourceModules');
 const { task } = require('hardhat/config');
 const { TASK_COMPILE } = require('hardhat/builtin-tasks/task-names');
 const { readPackageJson } = require('../utils/package');
@@ -35,8 +34,11 @@ task(TASK_DEPLOY, 'Deploys all system modules and upgrades the main proxy with a
     await hre.run(SUBTASK_SYNC_SOURCES, {});
 
     logger.subtitle('Deploying system modules');
-    const sources = getSourceModules({ hre });
-    await hre.run(SUBTASK_DEPLOY_CONTRACTS, { contractNames: sources, areModules: true, force });
+    await hre.run(SUBTASK_DEPLOY_CONTRACTS, {
+      contractNames: hre.deployer.sources,
+      areModules: true,
+      force,
+    });
 
     await hre.run(SUBTASK_GENERATE_ROUTER_SOURCE, {});
     await hre.run(SUBTASK_VALIDATE_ROUTER, {});
