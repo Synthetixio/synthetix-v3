@@ -3,7 +3,7 @@ const path = require('path');
 const logger = require('../utils/logger');
 const prompter = require('../utils/prompter');
 const { subtask } = require('hardhat/config');
-const { saveDeploymentFile } = require('../utils/deploymentFile');
+const { saveDeploymentFile } = require('../utils/io');
 const { SUBTASK_SYNC_SOURCES } = require('../task-names');
 
 /*

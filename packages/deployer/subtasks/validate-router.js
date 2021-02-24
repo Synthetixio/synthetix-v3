@@ -1,8 +1,8 @@
 const logger = require('../utils/logger');
 const { subtask } = require('hardhat/config');
-const { getContractSelectors } = require('../utils/getSelectors');
+const { getContractSelectors } = require('../utils/contracts');
 const { SUBTASK_VALIDATE_ROUTER } = require('../task-names');
-const { readRouterSource } = require('../utils/routerSource');
+const { readRouterSource } = require('../utils/io');
 
 let _hre;
 

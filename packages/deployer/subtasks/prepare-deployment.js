@@ -1,7 +1,7 @@
 const logger = require('../utils/logger');
 const prompter = require('../utils/prompter');
 const { subtask } = require('hardhat/config');
-const { readDeploymentFile } = require('../utils/deploymentFile');
+const { readDeploymentFile } = require('../utils/io');
 const { SUBTASK_PREPARE_DEPLOYMENT } = require('../task-names');
 
 /*

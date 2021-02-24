@@ -1,7 +1,7 @@
 const logger = require('../utils/logger');
 const prompter = require('../utils/prompter');
-const { saveDeploymentFile } = require('../utils/deploymentFile');
-const { getContractBytecodeHash } = require('../utils/getBytecodeHash');
+const { saveDeploymentFile } = require('../utils/io');
+const { getContractBytecodeHash } = require('../utils/contracts');
 const { subtask } = require('hardhat/config');
 const { SUBTASK_DEPLOY_CONTRACTS } = require('../task-names');
 

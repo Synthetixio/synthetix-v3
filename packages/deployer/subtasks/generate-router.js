@@ -3,10 +3,10 @@ const path = require('path');
 const logger = require('../utils/logger');
 const { subtask } = require('hardhat/config');
 const { SUBTASK_GENERATE_ROUTER_SOURCE } = require('../task-names');
-const { getAllSelectors } = require('../utils/getSelectors');
 const { getCommit, getBranch } = require('../utils/git');
 const { readPackageJson } = require('../utils/package');
-const { readRouterSource } = require('../utils/routerSource');
+const { getContractSelectors } = require('../utils/contracts');
+const { readRouterSource } = require('../utils/io');
 
 const TAB = '    ';
 
@@ -24,7 +24,7 @@ subtask(SUBTASK_GENERATE_ROUTER_SOURCE).setAction(async (_, hre) => {
   const sources = hre.deployer.sources;
   logger.debug(`modules: ${JSON.stringify(sources, null, 2)}`);
 
-  const selectors = await getAllSelectors({ hre });
+  const selectors = await _getAllSelectors();
   logger.debug(`selectors: ${JSON.stringify(selectors, null, 2)}`);
   logger.info(`Found ${sources.length} modules with ${selectors.length} selectors in total`);
 
@@ -104,6 +104,24 @@ function _renderModules({ modules }) {
   }
 
   return modulesStr;
+}
+
+async function _getAllSelectors() {
+  let allSelectors = [];
+
+  for (let module of _hre.deployer.sources) {
+    let selectors = await getContractSelectors({ contractName: module, hre: _hre });
+
+    selectors.map((s) => (s.module = module));
+
+    allSelectors = allSelectors.concat(selectors);
+  }
+
+  allSelectors = allSelectors.sort((a, b) => {
+    return parseInt(a.selector, 16) - parseInt(b.selector, 16);
+  });
+
+  return allSelectors;
 }
 
 function _buildBinaryData({ selectors }) {
