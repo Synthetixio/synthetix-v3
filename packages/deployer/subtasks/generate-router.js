@@ -3,7 +3,6 @@ const path = require('path');
 const logger = require('../utils/logger');
 const { subtask } = require('hardhat/config');
 const { SUBTASK_GENERATE_ROUTER_SOURCE } = require('../task-names');
-const { getModules } = require('../utils/getModules');
 const { getAllSelectors } = require('../utils/getSelectors');
 const { getCommit, getBranch } = require('../utils/git');
 const { readPackageJson } = require('../utils/package');
@@ -22,12 +21,12 @@ subtask(SUBTASK_GENERATE_ROUTER_SOURCE).setAction(async (_, hre) => {
 
   logger.subtitle('Generating router source');
 
-  const modules = getModules({ hre });
-  logger.debug(`modules: ${JSON.stringify(modules, null, 2)}`);
+  const sources = hre.deployer.sources;
+  logger.debug(`modules: ${JSON.stringify(sources, null, 2)}`);
 
   const selectors = await getAllSelectors({ hre });
   logger.debug(`selectors: ${JSON.stringify(selectors, null, 2)}`);
-  logger.info(`Found ${modules.length} modules with ${selectors.length} selectors in total`);
+  logger.info(`Found ${sources.length} modules with ${selectors.length} selectors in total`);
 
   const binaryData = _buildBinaryData({ selectors });
 
@@ -40,7 +39,7 @@ subtask(SUBTASK_GENERATE_ROUTER_SOURCE).setAction(async (_, hre) => {
     .replace('@branch', getBranch())
     .replace('@commit', getCommit())
     .replace('@network', _hre.network.name)
-    .replace('@modules', _renderModules({ modules }))
+    .replace('@modules', _renderModules({ modules: sources }))
     .replace('@selectors', _renderSelectors({ binaryData }));
 
   logger.debug(`generated source: ${generatedSource}`);
@@ -99,8 +98,8 @@ function _renderModules({ modules }) {
   for (let i = 0; i < modules.length; i++) {
     const module = modules[i];
 
-    modulesStr += `\n${TAB.repeat(1)}address private constant _${module.name.toUpperCase()} = ${
-      module.address
+    modulesStr += `\n${TAB.repeat(1)}address private constant _${module.toUpperCase()} = ${
+      _hre.deployer.data.modules[module].deployedAddress
     };`;
   }
 

@@ -1,6 +1,5 @@
 const logger = require('../utils/logger');
 const { subtask } = require('hardhat/config');
-const { getModules } = require('../utils/getModules');
 const { getContractSelectors } = require('../utils/getSelectors');
 const { SUBTASK_VALIDATE_ROUTER } = require('../task-names');
 const { readRouterSource } = require('../utils/routerSource');
@@ -16,15 +15,16 @@ subtask(SUBTASK_VALIDATE_ROUTER).setAction(async (_, hre) => {
   logger.subtitle('Validating router');
 
   await _selectorsExistInSource();
+
+  logger.checked('Router is valid');
 });
 
 async function _selectorsExistInSource() {
   const source = readRouterSource({ hre: _hre });
-  const modules = getModules({ hre: _hre });
 
-  for (let i = 0; i < modules.length; i++) {
-    const module = modules[i];
-    const moduleSelectors = await getContractSelectors({ contractName: module.name, hre: _hre });
+  for (let i = 0; i < _hre.deployer.sources.length; i++) {
+    const module = _hre.deployer.sources[i];
+    const moduleSelectors = await getContractSelectors({ contractName: module, hre: _hre });
 
     moduleSelectors.map((moduleSelector) => {
       const regex = `^.*case ${moduleSelector.selector}.*$`;
@@ -36,11 +36,11 @@ async function _selectorsExistInSource() {
       }
 
       const match = matches[0];
-      if (!match.includes(module.name)) {
-        throw new Error(`Expected to find ${module.name} in the selector case: ${match}`);
+      if (!match.includes(module)) {
+        throw new Error(`Expected to find ${module} in the selector case: ${match}`);
       }
 
-      logger.debug(`${module.name}.${moduleSelector.name} selector found in the router`);
+      logger.debug(`${module}.${moduleSelector.name} selector found in the router`);
     });
   }
 }

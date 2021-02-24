@@ -1,14 +1,10 @@
-const { getModules } = require('./getModules');
-
 async function getAllSelectors({ hre }) {
-  const modules = getModules({ hre });
-
   let allSelectors = [];
 
-  for (let module of modules) {
-    let selectors = await getContractSelectors({ contractName: module.name, hre });
+  for (let module of hre.deployer.sources) {
+    let selectors = await getContractSelectors({ contractName: module, hre });
 
-    selectors.map((s) => (s.module = module.name));
+    selectors.map((s) => (s.module = module));
 
     allSelectors = allSelectors.concat(selectors);
   }

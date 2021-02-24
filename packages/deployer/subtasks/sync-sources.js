@@ -1,3 +1,5 @@
+const fs = require('fs');
+const path = require('path');
 const logger = require('../utils/logger');
 const prompter = require('../utils/prompter');
 const { subtask } = require('hardhat/config');
@@ -13,17 +15,28 @@ subtask(SUBTASK_SYNC_SOURCES).setAction(async (_, hre) => {
   logger.subtitle('Syncing solidity sources with deployment data');
 
   const data = hre.deployer.data;
-  const sources = hre.deployer.sources;
+  const sources = (hre.deployer.sources = _getSources({ hre }));
 
   const someDeletion = await _removeDeletedSources({ data, sources });
   const someAddition = await _addNewSources({ data, sources });
 
   if (!someDeletion && !someAddition) {
-    logger.checked('✓ Deployment data is in sync with sources');
+    logger.checked('Deployment data is in sync with sources');
   }
 
   saveDeploymentFile({ data, hre });
 });
+
+function _getSources({ hre }) {
+  const modulesPath = hre.config.deployer.paths.modules;
+
+  return fs.readdirSync(modulesPath).map((file) => {
+    const filePath = path.parse(file);
+    if (filePath.ext === '.sol') {
+      return filePath.name;
+    }
+  });
+}
 
 async function _removeDeletedSources({ data, sources }) {
   let someDeletion = false;
