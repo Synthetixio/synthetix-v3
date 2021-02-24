@@ -8,10 +8,14 @@ function readDeploymentFile({ hre }) {
 
   _createDeploymentFileIfNeeded();
 
-  const data = JSON.parse(fs.readFileSync(_getDeploymentFilePath()));
+  const file = _getDeploymentFilePath();
+  const data = JSON.parse(fs.readFileSync(file));
   _patchDeploymentData({ data });
 
-  return data;
+  return {
+    file,
+    data,
+  };
 }
 
 function saveDeploymentFile({ data, hre }) {
