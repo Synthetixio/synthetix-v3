@@ -1,8 +1,9 @@
+const fs = require('fs');
+const path = require('path');
 const logger = require('../utils/logger');
 const { subtask } = require('hardhat/config');
 const { getContractSelectors } = require('../utils/contracts');
 const { SUBTASK_VALIDATE_ROUTER } = require('../task-names');
-const { readRouterSource } = require('../utils/io');
 
 let _hre;
 
@@ -20,7 +21,8 @@ subtask(SUBTASK_VALIDATE_ROUTER).setAction(async (_, hre) => {
 });
 
 async function _selectorsExistInSource() {
-  const source = readRouterSource({ hre: _hre });
+  const routerPath = path.join(_hre.config.paths.sources, `Router_${_hre.network.name}.sol`);
+  const source = fs.existsSync(routerPath) ? fs.readFileSync(routerPath, 'utf8') : '';
 
   for (let i = 0; i < _hre.deployer.sources.length; i++) {
     const module = _hre.deployer.sources[i];

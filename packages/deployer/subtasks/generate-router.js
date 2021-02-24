@@ -6,7 +6,6 @@ const { SUBTASK_GENERATE_ROUTER_SOURCE } = require('../task-names');
 const { getCommit, getBranch } = require('../utils/git');
 const { readPackageJson } = require('../utils/package');
 const { getContractSelectors } = require('../utils/contracts');
-const { readRouterSource } = require('../utils/io');
 
 const TAB = '    ';
 
@@ -32,7 +31,9 @@ subtask(SUBTASK_GENERATE_ROUTER_SOURCE).setAction(async (_, hre) => {
 
   const package = readPackageJson({ hre });
 
-  const currentSource = readRouterSource({ hre });
+  const routerPath = path.join(hre.config.paths.sources, `Router_${hre.network.name}.sol`);
+  const currentSource = fs.existsSync(routerPath) ? fs.readFileSync(routerPath, 'utf8') : '';
+
   const generatedSource = _readRouterTemplate()
     .replace('@project', package.name)
     .replace('@repo', package.repository.url)
