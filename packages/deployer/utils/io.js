@@ -6,11 +6,8 @@ let _hre;
 function readDeploymentFile({ hre }) {
   _hre = hre;
 
-  _createDeploymentFileIfNeeded();
-
   const file = _getDeploymentFilePath();
   const data = JSON.parse(fs.readFileSync(file));
-  _patchDeploymentData({ data });
 
   return {
     file,
@@ -37,9 +34,18 @@ function readRouterSource({ hre }) {
   return '';
 }
 
-function _patchDeploymentData({ data }) {
-  if (!data.modules) {
-    data.modules = {};
+function createDeploymentFileIfNeeded({ data, hre }) {
+  _hre = hre;
+
+  const directoryPath = hre.config.deployer.paths.deployments;
+
+  if (!fs.existsSync(_getDeploymentsDirectoryPath())) {
+    fs.mkdirSync(directoryPath);
+  }
+
+  const filePath = _getDeploymentFilePath();
+  if (!fs.existsSync(filePath)) {
+    fs.appendFileSync(filePath, JSON.stringify(data, null, 2));
   }
 }
 
@@ -51,20 +57,8 @@ function _getDeploymentsDirectoryPath() {
   return _hre.config.deployer.paths.deployments;
 }
 
-function _createDeploymentFileIfNeeded() {
-  const directoryPath = _hre.config.deployer.paths.deployments;
-
-  if (!fs.existsSync(_getDeploymentsDirectoryPath())) {
-    fs.mkdirSync(directoryPath);
-  }
-
-  const filePath = _getDeploymentFilePath();
-  if (!fs.existsSync(filePath)) {
-    fs.appendFileSync(filePath, '{}');
-  }
-}
-
 module.exports = {
+  createDeploymentFileIfNeeded,
   readDeploymentFile,
   saveDeploymentFile,
   readRouterSource,

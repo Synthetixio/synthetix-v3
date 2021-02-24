@@ -4,7 +4,7 @@ const prompter = require('../utils/prompter');
 const { subtask } = require('hardhat/config');
 const { readPackageJson } = require('../utils/package');
 const { getCommit, getBranch } = require('../utils/git');
-const { readDeploymentFile } = require('../utils/io');
+const { readDeploymentFile, createDeploymentFileIfNeeded } = require('../utils/io');
 const { SUBTASK_PREPARE_DEPLOYMENT } = require('../task-names');
 
 let _hre;
@@ -18,6 +18,14 @@ subtask(SUBTASK_PREPARE_DEPLOYMENT).setAction(async (taskArguments, hre) => {
   const package = readPackageJson({ hre: _hre });
   logger.title(`Deploying ** ${package.name} **`);
 
+  const data = {
+    properties: {
+      completed: false,
+    },
+    modules: {},
+  };
+
+  createDeploymentFileIfNeeded({ data, hre });
   const deploymentFile = readDeploymentFile({ hre });
 
   if (!hre.deployer) {
