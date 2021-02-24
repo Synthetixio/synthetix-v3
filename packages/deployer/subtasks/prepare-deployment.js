@@ -19,23 +19,23 @@ subtask(SUBTASK_PREPARE_DEPLOYMENT).setAction(async (taskArguments, hre) => {
   const package = readPackageJson({ hre: _hre });
   logger.title(`Deploying ** ${package.name} **`);
 
-  _ensureFoldersExist();
-
   if (!hre.deployer) {
     hre.deployer = {};
   }
 
   hre.deployer.file = _determineTargetDeploymentFile();
+
+  await _printInfo(taskArguments);
+  await prompter.confirmAction('Proceed with deployment');
+
+  _ensureFoldersExist();
+
   _createDeploymentFileIfNeeded();
 
   hre.deployer.data = JSON.parse(fs.readFileSync(hre.deployer.file));
 
   hre.deployer.save = () =>
     fs.writeFileSync(hre.deployer.file, JSON.stringify(hre.deployer.data, null, 2));
-
-  await _printInfo(taskArguments);
-
-  await prompter.confirmAction('Proceed with deployment');
 });
 
 function _createDeploymentFileIfNeeded() {
@@ -135,7 +135,11 @@ function _printInfo(taskArguments) {
 
   console.log(chalk.gray(`debug: ${taskArguments.debug}`));
 
-  console.log(chalk.gray(`deployment file: ${_hre.deployer.file}`));
+  if (fs.existsSync(_hre.deployer.file)) {
+    console.log(chalk.gray(`deployment file: ${_hre.deployer.file}`));
+  } else {
+    console.log(chalk.green(`new deployment file: ${_hre.deployer.file}`));
+  }
 
   if (taskArguments.force) {
     console.log(chalk.red('force: true - This will override all existing deployments!'));
