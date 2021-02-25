@@ -45,7 +45,7 @@ subtask(SUBTASK_GENERATE_ROUTER_SOURCE).setAction(async (_, hre) => {
     const routerPath = path.join(hre.config.paths.sources, `Router_${hre.network.name}.sol`);
     fs.writeFileSync(routerPath, generatedSource);
 
-    logger.complete(`Router code generated and written to ${routerPath}`);
+    logger.success(`Router code generated and written to ${routerPath}`);
   } else {
     logger.checked('Router source did not change');
   }

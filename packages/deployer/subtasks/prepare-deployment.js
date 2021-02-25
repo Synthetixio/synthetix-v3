@@ -151,7 +151,7 @@ function _ensureFoldersExist() {
   }
 }
 
-function _printInfo(taskArguments) {
+async function _printInfo(taskArguments) {
   console.log(chalk.yellow('\nPLEASE CONFIRM THESE PARAMETERS'));
   console.log(chalk.yellow('------------------------------------------------------------'));
 
@@ -179,6 +179,13 @@ function _printInfo(taskArguments) {
 
   logger.debug('Deployer configuration:');
   logger.debug(JSON.stringify(hre.config.deployer, null, 2));
+
+  const signer = (await hre.ethers.getSigners())[0];
+  const balance = hre.ethers.utils.formatEther(
+    await hre.ethers.provider.getBalance(signer.address)
+  );
+  console.log(chalk.gray(`signer: ${signer.address}`));
+  console.log(chalk.gray(`signer balance: ${balance} ETH`));
 
   console.log(chalk.yellow('------------------------------------------------------------'));
 }
