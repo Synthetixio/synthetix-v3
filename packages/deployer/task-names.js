@@ -6,4 +6,5 @@ module.exports = {
   SUBTASK_DEPLOY_CONTRACTS: 'deploy-contracts',
   SUBTASK_UPGRADE_PROXY: 'upgrade-proxy',
   SUBTASK_PREPARE_DEPLOYMENT: 'prepare-deployment',
+  SUBTASK_FINALIZE_DEPLOYMENT: 'finalize-deployment',
 };

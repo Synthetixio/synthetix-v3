@@ -45,7 +45,14 @@ subtask(SUBTASK_UPGRADE_PROXY).setAction(async (_, hre) => {
   logger.info(`Target implementation: ${implementationAddress}`);
 
   await _deployProxy({ implementationAddress });
-  await _upgradeProxy({ implementationAddress });
+
+  // TODO: For some very strange reason, hre within _upgradeProxy is undefined.
+  // This only seems to happen if _deployProxy was called first!
+  // Hardhat seems to loose hre from the global context as soon as
+  // a third depth level of subtasks is reached.
+  // The workaround is to pass hre which is still maintained in the scope of
+  // the subtask.
+  await _upgradeProxy({ implementationAddress, hre });
 });
 
 async function _deployProxy({ implementationAddress }) {
@@ -56,7 +63,7 @@ async function _deployProxy({ implementationAddress }) {
   });
 }
 
-async function _upgradeProxy({ implementationAddress }) {
+async function _upgradeProxy({ implementationAddress, hre }) {
   const data = hre.deployer.data;
   const proxyAddress = data[hre.config.deployer.proxyName].deployedAddress;
 

@@ -1,4 +1,3 @@
-const fs = require('fs');
 const logger = require('../utils/logger');
 const prompter = require('../utils/prompter');
 const { task } = require('hardhat/config');
@@ -12,6 +11,7 @@ const {
   SUBTASK_VALIDATE_ROUTER,
   SUBTASK_UPGRADE_PROXY,
   SUBTASK_PREPARE_DEPLOYMENT,
+  SUBTASK_FINALIZE_DEPLOYMENT,
 } = require('../task-names');
 
 task(TASK_DEPLOY, 'Deploys all system modules and upgrades the main proxy with a new router')
@@ -48,12 +48,5 @@ task(TASK_DEPLOY, 'Deploys all system modules and upgrades the main proxy with a
 
     await hre.run(SUBTASK_UPGRADE_PROXY, {});
 
-    if (JSON.stringify(hre.deployer.data) === JSON.stringify(hre.deployer.previousData)) {
-      logger.info('Deployment did not produce any changes, deleting temp file');
-
-      fs.unlinkSync(hre.deployer.file);
-    } else {
-      hre.deployer.data.properties.completed = true;
-      hre.deployer.save();
-    }
+    await hre.run(SUBTASK_FINALIZE_DEPLOYMENT, {});
   });
