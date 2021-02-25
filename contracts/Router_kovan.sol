@@ -8,15 +8,15 @@ pragma solidity ^0.7.0;
 // Source code generated from
 // Repository: git+https://github.com/Synthetixio/synthetix-v3.git
 // Branch: basic-deployer
-// Commit: 8319f8a1524232a945d6eaefffaaa1215dcdefe
+// Commit: dfc55cc875e59ab010d60bb5cc45d5bfbc0988e
 //
 // GENERATED CODE - do not edit manually!!
 // --------------------------------------------------------------------------------
 // --------------------------------------------------------------------------------
 
 contract Router_kovan {
-    address private constant _OWNERMODULE = 0xdcB9244F6B3f12C69fB8C025ddBb17b1A31155ab;
-    address private constant _UPGRADEMODULE = 0x14D549e0421C14e25AE7F776360b10f1f6b885De;
+    address private constant _OWNERMODULE = 0xB368473F9F225c05C255ddff0fC20eb71236E4b8;
+    address private constant _UPGRADEMODULE = 0xE855ECd303E4842f7ADF3FaA131A7B0CEaDca867;
 
     fallback() external payable {
         // Lookup table: Function selector => implementation contract

@@ -86,10 +86,10 @@ async function _upgradeProxy({ implementationAddress, hre }) {
     logger.notice(`Upgrading main proxy to ${implementationAddress}`);
 
     const tx = await upgradeable.upgradeTo(implementationAddress);
-    processTransaction(tx);
+    processTransaction({ transaction: tx });
 
     const receipt = await tx.wait();
-    processReceipt(receipt);
+    processReceipt({ receipt, hre });
 
     logger.success(`Main proxy upgraded to ${await upgradeable.getImplementation()}`);
   } else {
