@@ -54,13 +54,15 @@ async function _monitorAllTransactions({ hre }) {
     const estimateGas = transaction.gasPrice.mul(transaction.gasLimit);
     hre.deployer.data.transactions[transaction.hash] = {
       mined: false,
-      estimateGas,
+      estimateGas: estimateGas.toString(),
     };
 
-    const totalGasEstimate = hre.ethers.BigNumber.from(hre.deployer.properties.totalGasEstimate);
-    hre.deployer.properties.totalGasEstimate = totalGasEstimate.add(estimateGas).toNumber();
+    const totalGasEstimate = hre.ethers.BigNumber.from(
+      hre.deployer.data.properties.totalGasEstimate
+    );
+    hre.deployer.data.properties.totalGasEstimate = totalGasEstimate.add(estimateGas).toString();
 
-    logger.info(`Total gas estimate: ${hre.deployer.properties.totalGasEstimate.toNumber()}`);
+    logger.info(`Total gas estimate: ${hre.deployer.data.properties.totalGasEstimate.toString()}`);
 
     hre.ethers.provider.once(transaction.hash, (transaction) => {
       logger.info(`Transaction mined: ${transaction.hash}`);
@@ -68,12 +70,12 @@ async function _monitorAllTransactions({ hre }) {
       hre.deployer.data.transactions[transaction.hash].mined = true;
 
       const gasUsed = transaction.gasUsed;
-      hre.deployer.data.transactions[transaction.hash].gasUsed = gasUsed;
+      hre.deployer.data.transactions[transaction.hash].gasUsed = gasUsed.toString();
 
-      const totalGasUsed = hre.ethers.BigNumber.from(hre.deployer.properties.totalGasUsed);
-      hre.deployer.properties.totalGasUsed = totalGasUsed.add(gasUsed).toNumber();
+      const totalGasUsed = hre.ethers.BigNumber.from(hre.deployer.data.properties.totalGasUsed);
+      hre.deployer.data.properties.totalGasUsed = totalGasUsed.add(gasUsed).toString();
 
-      logger.info(`Total gas used: ${hre.deployer.properties.totalGasUsed.toNumber()}`);
+      logger.info(`Total gas used: ${hre.deployer.data.properties.totalGasUsed.toString()}`);
     });
   });
 }
