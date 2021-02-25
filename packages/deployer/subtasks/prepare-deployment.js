@@ -25,6 +25,8 @@ subtask(SUBTASK_PREPARE_DEPLOYMENT).setAction(async (taskArguments, hre) => {
   const package = readPackageJson();
   logger.title(`Deploying ** ${package.name} **`);
 
+  _ensureFoldersExist();
+
   if (!hre.deployer) {
     hre.deployer = {};
   }
@@ -34,7 +36,6 @@ subtask(SUBTASK_PREPARE_DEPLOYMENT).setAction(async (taskArguments, hre) => {
   await _printInfo(taskArguments);
   await prompter.confirmAction('Proceed with deployment');
 
-  _ensureFoldersExist();
   _createDeploymentFileIfNeeded();
 
   hre.deployer.data = _setupAutosaveProxy({ hre });
