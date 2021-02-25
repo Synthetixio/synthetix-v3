@@ -8,6 +8,16 @@ const { readPackageJson } = require('../utils/package');
 const { getCommit, getBranch } = require('../utils/git');
 const { SUBTASK_PREPARE_DEPLOYMENT } = require('../task-names');
 
+const DEPLOYMENT_SCHEMA = {
+  properties: {
+    completed: false,
+    totalGasEstimate: 0,
+    totalGasUsed: 0,
+  },
+  transactions: {},
+  modules: {},
+};
+
 /*
  * Prepares the deployment file associated with the active deployment.
  * */
@@ -27,10 +37,48 @@ subtask(SUBTASK_PREPARE_DEPLOYMENT).setAction(async (taskArguments, hre) => {
   _ensureFoldersExist();
   _createDeploymentFileIfNeeded();
 
-  hre.deployer.data = _setupAutosaveProxy();
+  hre.deployer.data = _setupAutosaveProxy({ hre });
+
+  await _monitorAllTransactions({ hre });
 });
 
-function _setupAutosaveProxy() {
+async function _monitorAllTransactions({ hre }) {
+  hre.ethers.provider.on('pending', (transaction) => {
+    logger.info(`Submitting transaction: ${transaction.hash}`);
+    logger.debug(JSON.stringify(transaction, null, 2));
+
+    if (!hre.deployer.data.transactions) {
+      hre.deployer.data.transactions = {};
+    }
+
+    const estimateGas = transaction.gasPrice.mul(transaction.gasLimit);
+    hre.deployer.data.transactions[transaction.hash] = {
+      mined: false,
+      estimateGas,
+    };
+
+    const totalGasEstimate = hre.ethers.BigNumber.from(hre.deployer.properties.totalGasEstimate);
+    hre.deployer.properties.totalGasEstimate = totalGasEstimate.add(estimateGas).toNumber();
+
+    logger.info(`Total gas estimate: ${hre.deployer.properties.totalGasEstimate.toNumber()}`);
+
+    hre.ethers.provider.once(transaction.hash, (transaction) => {
+      logger.info(`Transaction mined: ${transaction.hash}`);
+
+      hre.deployer.data.transactions[transaction.hash].mined = true;
+
+      const gasUsed = transaction.gasUsed;
+      hre.deployer.data.transactions[transaction.hash].gasUsed = gasUsed;
+
+      const totalGasUsed = hre.ethers.BigNumber.from(hre.deployer.properties.totalGasUsed);
+      hre.deployer.properties.totalGasUsed = totalGasUsed.add(gasUsed).toNumber();
+
+      logger.info(`Total gas used: ${hre.deployer.properties.totalGasUsed.toNumber()}`);
+    });
+  });
+}
+
+function _setupAutosaveProxy({ hre }) {
   const data = JSON.parse(fs.readFileSync(hre.deployer.file));
 
   const handler = {
@@ -81,12 +129,7 @@ function _createDeploymentFileIfNeeded() {
     }
 
     if (!data) {
-      data = {
-        properties: {
-          completed: false,
-        },
-        modules: {},
-      };
+      data = DEPLOYMENT_SCHEMA;
     }
 
     logger.success(`New deployment file created: ${hre.deployer.file}`);
