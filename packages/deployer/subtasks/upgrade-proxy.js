@@ -36,7 +36,7 @@ const UPGRADE_ABI = [
  * Checks if the main proxy needs to be deployed,
  * and upgrades it if needed.
  * */
-subtask(SUBTASK_UPGRADE_PROXY).setAction(async (_, hre) => {
+subtask(SUBTASK_UPGRADE_PROXY).setAction(async ({ force }, hre) => {
   logger.subtitle('Upgrading main proxy');
 
   const data = hre.deployer.data;
@@ -44,7 +44,7 @@ subtask(SUBTASK_UPGRADE_PROXY).setAction(async (_, hre) => {
   const implementationAddress = data[`Router_${hre.network.name}`].deployedAddress;
   logger.info(`Target implementation: ${implementationAddress}`);
 
-  await _deployProxy({ implementationAddress });
+  await _deployProxy({ implementationAddress, force });
 
   // TODO: For some very strange reason, hre within _upgradeProxy is undefined.
   // This only seems to happen if _deployProxy was called first!
@@ -55,10 +55,10 @@ subtask(SUBTASK_UPGRADE_PROXY).setAction(async (_, hre) => {
   await _upgradeProxy({ implementationAddress, hre });
 });
 
-async function _deployProxy({ implementationAddress }) {
+async function _deployProxy({ implementationAddress, force }) {
   await hre.run(SUBTASK_DEPLOY_CONTRACTS, {
     contractNames: [hre.config.deployer.proxyName],
-    force: false,
+    force,
     constructorArgs: [[implementationAddress]],
   });
 }

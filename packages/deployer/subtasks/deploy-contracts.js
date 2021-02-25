@@ -109,6 +109,7 @@ async function _deployContracts({ contractNames, constructorArgs, deploymentsInf
 
     target[contractName] = {
       deployedAddress: contract.address,
+      deployTransaction: contract.deployTransaction.hash,
       bytecodeHash: getContractBytecodeHash({ contractName, isModule: areModules }),
     };
   }

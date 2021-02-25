@@ -46,7 +46,7 @@ task(TASK_DEPLOY, 'Deploys all system modules and upgrades the main proxy with a
       force,
     });
 
-    await hre.run(SUBTASK_UPGRADE_PROXY, {});
+    await hre.run(SUBTASK_UPGRADE_PROXY, { force });
 
     await hre.run(SUBTASK_FINALIZE_DEPLOYMENT, {});
   });
