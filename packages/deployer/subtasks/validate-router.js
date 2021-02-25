@@ -5,14 +5,10 @@ const { subtask } = require('hardhat/config');
 const { getContractSelectors } = require('../utils/contracts');
 const { SUBTASK_VALIDATE_ROUTER } = require('../task-names');
 
-let _hre;
-
 /*
  * Runs a series of calidations against a generated router source.
  * */
-subtask(SUBTASK_VALIDATE_ROUTER).setAction(async (_, hre) => {
-  _hre = hre;
-
+subtask(SUBTASK_VALIDATE_ROUTER).setAction(async () => {
   logger.subtitle('Validating router');
 
   await _selectorsExistInSource();
@@ -21,12 +17,12 @@ subtask(SUBTASK_VALIDATE_ROUTER).setAction(async (_, hre) => {
 });
 
 async function _selectorsExistInSource() {
-  const routerPath = path.join(_hre.config.paths.sources, `Router_${_hre.network.name}.sol`);
+  const routerPath = path.join(hre.config.paths.sources, `Router_${hre.network.name}.sol`);
   const source = fs.existsSync(routerPath) ? fs.readFileSync(routerPath, 'utf8') : '';
 
-  for (let i = 0; i < _hre.deployer.sources.length; i++) {
-    const module = _hre.deployer.sources[i];
-    const moduleSelectors = await getContractSelectors({ contractName: module, hre: _hre });
+  for (let i = 0; i < hre.deployer.sources.length; i++) {
+    const module = hre.deployer.sources[i];
+    const moduleSelectors = await getContractSelectors({ contractName: module });
 
     moduleSelectors.map((moduleSelector) => {
       const regex = `^.*case ${moduleSelector.selector}.*$`;

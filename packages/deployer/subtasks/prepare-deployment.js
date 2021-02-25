@@ -8,15 +8,11 @@ const { readPackageJson } = require('../utils/package');
 const { getCommit, getBranch } = require('../utils/git');
 const { SUBTASK_PREPARE_DEPLOYMENT } = require('../task-names');
 
-let _hre;
-
 /*
  * Prepares the deployment file associated with the active deployment.
  * */
 subtask(SUBTASK_PREPARE_DEPLOYMENT).setAction(async (taskArguments, hre) => {
-  _hre = hre;
-
-  const package = readPackageJson({ hre: _hre });
+  const package = readPackageJson();
   logger.title(`Deploying ** ${package.name} **`);
 
   if (!hre.deployer) {
@@ -39,17 +35,17 @@ subtask(SUBTASK_PREPARE_DEPLOYMENT).setAction(async (taskArguments, hre) => {
 });
 
 function _createDeploymentFileIfNeeded() {
-  if (!fs.existsSync(_hre.deployer.file)) {
+  if (!fs.existsSync(hre.deployer.file)) {
     const deployments = _getPastDeployments();
 
     let data;
     for (let deployment of deployments) {
-      _hre.deployer.previousData = JSON.parse(fs.readFileSync(deployment));
+      hre.deployer.previousData = JSON.parse(fs.readFileSync(deployment));
 
-      if (_hre.deployer.previousData.properties.completed) {
+      if (hre.deployer.previousData.properties.completed) {
         logger.info(`Starting new deployment where previous deployment left off: ${deployment}`);
 
-        data = _hre.deployer.previousData;
+        data = hre.deployer.previousData;
 
         break;
       }
@@ -64,14 +60,14 @@ function _createDeploymentFileIfNeeded() {
       };
     }
 
-    logger.success(`New deployment file created: ${_hre.deployer.file}`);
+    logger.success(`New deployment file created: ${hre.deployer.file}`);
 
-    fs.appendFileSync(_hre.deployer.file, JSON.stringify(data, null, 2));
+    fs.appendFileSync(hre.deployer.file, JSON.stringify(data, null, 2));
   }
 }
 
 function _getPastDeployments() {
-  const targetFolder = path.join(_hre.config.deployer.paths.deployments, _hre.network.name);
+  const targetFolder = path.join(hre.config.deployer.paths.deployments, hre.network.name);
 
   return fs
     .readdirSync(targetFolder)
@@ -80,19 +76,19 @@ function _getPastDeployments() {
 }
 
 function _determineTargetDeploymentFile() {
-  const targetFolder = path.join(_hre.config.deployer.paths.deployments, _hre.network.name);
+  const targetFolder = path.join(hre.config.deployer.paths.deployments, hre.network.name);
 
   const deployments = _getPastDeployments();
 
   function __getNewDeploymentFileName() {
     return path.join(
       targetFolder,
-      `${_hre.network.name}_${Math.floor(new Date().getTime() / 1000)}.json`
+      `${hre.network.name}_${Math.floor(new Date().getTime() / 1000)}.json`
     );
   }
 
   if (deployments.length === 0) {
-    logger.notice(`No previous deployment file found for ${_hre.network.name}`);
+    logger.notice(`No previous deployment file found for ${hre.network.name}`);
 
     return __getNewDeploymentFileName();
   }
@@ -101,7 +97,7 @@ function _determineTargetDeploymentFile() {
   const data = JSON.parse(fs.readFileSync(file));
 
   if (data.properties.completed) {
-    logger.checked(`Previous deployment on ${_hre.network.name} was completed`);
+    logger.checked(`Previous deployment on ${hre.network.name} was completed`);
 
     return __getNewDeploymentFileName();
   } else {
@@ -110,12 +106,12 @@ function _determineTargetDeploymentFile() {
 }
 
 function _ensureFoldersExist() {
-  const deploymentsFolder = _hre.config.deployer.paths.deployments;
+  const deploymentsFolder = hre.config.deployer.paths.deployments;
   if (!fs.existsSync(deploymentsFolder)) {
     fs.mkdirSync(deploymentsFolder);
   }
 
-  const networkFolder = path.join(deploymentsFolder, _hre.network.name);
+  const networkFolder = path.join(deploymentsFolder, hre.network.name);
   if (!fs.existsSync(networkFolder)) {
     fs.mkdirSync(networkFolder);
   }
@@ -130,15 +126,15 @@ function _printInfo(taskArguments) {
   const branch = getBranch();
   console.log(chalk[branch !== 'master' ? 'red' : 'gray'](`branch: ${branch}`));
 
-  const network = _hre.network.name;
+  const network = hre.network.name;
   console.log(chalk[network.includes('mainnet') ? 'red' : 'gray'](`network: ${network}`));
 
   console.log(chalk.gray(`debug: ${taskArguments.debug}`));
 
-  if (fs.existsSync(_hre.deployer.file)) {
-    console.log(chalk.gray(`deployment file: ${_hre.deployer.file}`));
+  if (fs.existsSync(hre.deployer.file)) {
+    console.log(chalk.gray(`deployment file: ${hre.deployer.file}`));
   } else {
-    console.log(chalk.green(`new deployment file: ${_hre.deployer.file}`));
+    console.log(chalk.green(`new deployment file: ${hre.deployer.file}`));
   }
 
   if (taskArguments.force) {
@@ -148,7 +144,7 @@ function _printInfo(taskArguments) {
   }
 
   logger.debug('Deployer configuration:');
-  logger.debug(JSON.stringify(_hre.config.deployer, null, 2));
+  logger.debug(JSON.stringify(hre.config.deployer, null, 2));
 
   console.log(chalk.yellow('------------------------------------------------------------'));
 }

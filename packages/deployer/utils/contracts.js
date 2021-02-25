@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 
-function getContractBytecodeHash({ contractName, isModule = false, hre }) {
+function getContractBytecodeHash({ contractName, isModule = false }) {
   const artifactsPath = hre.config.paths.artifacts;
   const sourcesPath = hre.config.paths.sources;
   const modulesPath = hre.config.deployer.paths.modules;
@@ -19,7 +19,7 @@ function getContractBytecodeHash({ contractName, isModule = false, hre }) {
   return hre.ethers.utils.sha256(data.bytecode);
 }
 
-async function getContractSelectors({ contractName, hre }) {
+async function getContractSelectors({ contractName }) {
   const contract = await hre.ethers.getContractAt(
     contractName,
     '0x0000000000000000000000000000000000000001'

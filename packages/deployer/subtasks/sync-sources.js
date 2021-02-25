@@ -26,7 +26,7 @@ subtask(SUBTASK_SYNC_SOURCES).setAction(async (_, hre) => {
   hre.deployer.save();
 });
 
-function _getSources({ hre }) {
+function _getSources() {
   const modulesPath = hre.config.deployer.paths.modules;
 
   return fs.readdirSync(modulesPath).map((file) => {

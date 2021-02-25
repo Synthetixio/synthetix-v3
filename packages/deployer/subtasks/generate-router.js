@@ -9,15 +9,11 @@ const { getContractSelectors } = require('../utils/contracts');
 
 const TAB = '    ';
 
-let _hre;
-
 /*
  * Reads deployed modules from the deployment data file
  * and generates the source for a new router contract.
  * */
 subtask(SUBTASK_GENERATE_ROUTER_SOURCE).setAction(async (_, hre) => {
-  _hre = hre;
-
   logger.subtitle('Generating router source');
 
   const sources = hre.deployer.sources;
@@ -29,7 +25,7 @@ subtask(SUBTASK_GENERATE_ROUTER_SOURCE).setAction(async (_, hre) => {
 
   const binaryData = _buildBinaryData({ selectors });
 
-  const package = readPackageJson({ hre });
+  const package = readPackageJson();
 
   const routerPath = path.join(hre.config.paths.sources, `Router_${hre.network.name}.sol`);
   const currentSource = fs.existsSync(routerPath) ? fs.readFileSync(routerPath, 'utf8') : '';
@@ -39,14 +35,14 @@ subtask(SUBTASK_GENERATE_ROUTER_SOURCE).setAction(async (_, hre) => {
     .replace('@repo', package.repository.url)
     .replace('@branch', getBranch())
     .replace('@commit', getCommit())
-    .replace('@network', _hre.network.name)
+    .replace('@network', hre.network.name)
     .replace('@modules', _renderModules({ modules: sources }))
     .replace('@selectors', _renderSelectors({ binaryData }));
 
   logger.debug(`generated source: ${generatedSource}`);
 
   if (currentSource !== generatedSource) {
-    const routerPath = path.join(_hre.config.paths.sources, `Router_${_hre.network.name}.sol`);
+    const routerPath = path.join(hre.config.paths.sources, `Router_${hre.network.name}.sol`);
     fs.writeFileSync(routerPath, generatedSource);
 
     logger.complete(`Router code generated and written to ${routerPath}`);
@@ -100,7 +96,7 @@ function _renderModules({ modules }) {
     const module = modules[i];
 
     modulesStr += `\n${TAB.repeat(1)}address private constant _${module.toUpperCase()} = ${
-      _hre.deployer.data.modules[module].deployedAddress
+      hre.deployer.data.modules[module].deployedAddress
     };`;
   }
 
@@ -110,8 +106,8 @@ function _renderModules({ modules }) {
 async function _getAllSelectors() {
   let allSelectors = [];
 
-  for (let module of _hre.deployer.sources) {
-    let selectors = await getContractSelectors({ contractName: module, hre: _hre });
+  for (let module of hre.deployer.sources) {
+    let selectors = await getContractSelectors({ contractName: module });
 
     selectors.map((s) => (s.module = module));
 

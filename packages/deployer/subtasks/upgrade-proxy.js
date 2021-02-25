@@ -32,15 +32,11 @@ const UPGRADE_ABI = [
   },
 ];
 
-let _hre;
-
 /*
  * Checks if the main proxy needs to be deployed,
  * and upgrades it if needed.
  * */
 subtask(SUBTASK_UPGRADE_PROXY).setAction(async (_, hre) => {
-  _hre = hre;
-
   logger.subtitle('Upgrading main proxy');
 
   const data = hre.deployer.data;
@@ -53,18 +49,18 @@ subtask(SUBTASK_UPGRADE_PROXY).setAction(async (_, hre) => {
 });
 
 async function _deployProxy({ implementationAddress }) {
-  await _hre.run(SUBTASK_DEPLOY_CONTRACTS, {
-    contractNames: [_hre.config.deployer.proxyName],
+  await hre.run(SUBTASK_DEPLOY_CONTRACTS, {
+    contractNames: [hre.config.deployer.proxyName],
     force: false,
     constructorArgs: [[implementationAddress]],
   });
 }
 
 async function _upgradeProxy({ implementationAddress }) {
-  const data = _hre.deployer.data;
-  const proxyAddress = data[_hre.config.deployer.proxyName].deployedAddress;
+  const data = hre.deployer.data;
+  const proxyAddress = data[hre.config.deployer.proxyName].deployedAddress;
 
-  const upgradeable = await _hre.ethers.getContractAt(UPGRADE_ABI, proxyAddress);
+  const upgradeable = await hre.ethers.getContractAt(UPGRADE_ABI, proxyAddress);
   const activeImplementationAddress = await upgradeable.getImplementation();
   logger.info(`Active implementation: ${activeImplementationAddress}`);
 

@@ -4,6 +4,9 @@ module.exports = {
     mocha: true,
     node: true,
   },
+  globals: {
+    hre: 'writable',
+  },
   parserOptions: {
     ecmaVersion: 12,
   },

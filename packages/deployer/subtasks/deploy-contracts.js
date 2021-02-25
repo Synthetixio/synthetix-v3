@@ -4,15 +4,12 @@ const { getContractBytecodeHash } = require('../utils/contracts');
 const { subtask } = require('hardhat/config');
 const { SUBTASK_DEPLOY_CONTRACTS } = require('../task-names');
 
-let _hre;
-
 /*
- * Deploys a single contract.
+ * Deploys a list of contracts, avoiding contracts that do not need to be compiled,
+ * and prompting the user for confirmation.
  * */
 subtask(SUBTASK_DEPLOY_CONTRACTS).setAction(
-  async ({ contractNames, constructorArgs, areModules = false, force = false }, hre) => {
-    _hre = hre;
-
+  async ({ contractNames, constructorArgs, areModules = false, force = false }) => {
     const deploymentsInfo = await _evaluateDeployments({ contractNames, areModules, force });
     await _confirmDeployments({ contractNames, deploymentsInfo });
 
@@ -23,7 +20,7 @@ subtask(SUBTASK_DEPLOY_CONTRACTS).setAction(
 async function _evaluateDeployments({ contractNames, areModules, force }) {
   const deploymentsInfo = {};
 
-  let data = _hre.deployer.data;
+  let data = hre.deployer.data;
   data = areModules ? data.modules : data;
 
   for (let contractName of contractNames) {
@@ -35,8 +32,8 @@ async function _evaluateDeployments({ contractNames, areModules, force }) {
       continue;
     }
 
-    logger.debug(`network: ${_hre.network.name}`);
-    if (_hre.network.name === 'hardhat') {
+    logger.debug(`network: ${hre.network.name}`);
+    if (hre.network.name === 'hardhat') {
       deploymentsInfo[contractName] = 'always deploy in hardhat network';
       continue;
     }
@@ -55,7 +52,6 @@ async function _evaluateDeployments({ contractNames, areModules, force }) {
     const sourceBytecodeHash = getContractBytecodeHash({
       contractName: contractName,
       isModule: areModules,
-      hre: _hre,
     });
     logger.debug(`source bytecodehash: ${sourceBytecodeHash}`);
     const storedBytecodeHash = deployedData.bytecodeHash;
@@ -94,7 +90,7 @@ async function _deployContracts({ contractNames, constructorArgs, deploymentsInf
     const contractName = contractNames[i];
     const args = constructorArgs ? constructorArgs[i] || [] : [];
 
-    const factory = await _hre.ethers.getContractFactory(contractName);
+    const factory = await hre.ethers.getContractFactory(contractName);
     const contract = await factory.deploy(...args);
 
     const reason = deploymentsInfo[contractName];
@@ -108,14 +104,14 @@ async function _deployContracts({ contractNames, constructorArgs, deploymentsInf
 
     logger.success(`Deployed ${contractName} to ${contract.address}`);
 
-    const data = _hre.deployer.data;
+    const data = hre.deployer.data;
     const target = areModules ? data.modules : data;
 
     target[contractName] = {
       deployedAddress: contract.address,
-      bytecodeHash: getContractBytecodeHash({ contractName, isModule: areModules, hre: _hre }),
+      bytecodeHash: getContractBytecodeHash({ contractName, isModule: areModules }),
     };
 
-    _hre.deployer.save();
+    hre.deployer.save();
   }
 }
