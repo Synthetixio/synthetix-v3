@@ -111,7 +111,5 @@ async function _deployContracts({ contractNames, constructorArgs, deploymentsInf
       deployedAddress: contract.address,
       bytecodeHash: getContractBytecodeHash({ contractName, isModule: areModules }),
     };
-
-    hre.deployer.save();
   }
 }

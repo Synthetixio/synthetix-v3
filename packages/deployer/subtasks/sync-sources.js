@@ -14,7 +14,7 @@ subtask(SUBTASK_SYNC_SOURCES).setAction(async (_, hre) => {
   logger.subtitle('Syncing solidity sources with deployment data');
 
   const data = hre.deployer.data;
-  const sources = (hre.deployer.sources = _getSources({ hre }));
+  const sources = (hre.deployer.sources = _getSources());
 
   const someDeletion = await _removeDeletedSources({ data, sources });
   const someAddition = await _addNewSources({ data, sources });
@@ -22,8 +22,6 @@ subtask(SUBTASK_SYNC_SOURCES).setAction(async (_, hre) => {
   if (!someDeletion && !someAddition) {
     logger.checked('Deployment data is in sync with sources');
   }
-
-  hre.deployer.save();
 });
 
 function _getSources() {

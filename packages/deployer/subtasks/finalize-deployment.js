@@ -17,6 +17,5 @@ subtask(SUBTASK_FINALIZE_DEPLOYMENT).setAction(async (_, hre) => {
     logger.complete('Deployment marked as completed');
 
     hre.deployer.data.properties.completed = true;
-    hre.deployer.save();
   }
 });

@@ -25,14 +25,42 @@ subtask(SUBTASK_PREPARE_DEPLOYMENT).setAction(async (taskArguments, hre) => {
   await prompter.confirmAction('Proceed with deployment');
 
   _ensureFoldersExist();
-
   _createDeploymentFileIfNeeded();
 
-  hre.deployer.data = JSON.parse(fs.readFileSync(hre.deployer.file));
-
-  hre.deployer.save = () =>
-    fs.writeFileSync(hre.deployer.file, JSON.stringify(hre.deployer.data, null, 2));
+  hre.deployer.data = _setupAutosaveProxy();
 });
+
+function _setupAutosaveProxy() {
+  const data = JSON.parse(fs.readFileSync(hre.deployer.file));
+
+  const handler = {
+    get: (target, key) => {
+      if (typeof target[key] === 'object' && target[key] !== null) {
+        return new Proxy(target[key], handler);
+      } else {
+        return target[key];
+      }
+    },
+
+    set: (target, key, value) => {
+      logger.debug('Setting property in deployer.data:');
+      logger.debug(`  > key: ${key}`);
+      logger.debug(`  > value: ${JSON.stringify(value)}`);
+
+      if (target[key] === value) {
+        logger.debug('No changes - skipping write to deployment file');
+      } else {
+        target[key] = value;
+
+        fs.writeFileSync(hre.deployer.file, JSON.stringify(hre.deployer.data, null, 2));
+
+        logger.info('Deployment file saved');
+      }
+    },
+  };
+
+  return new Proxy(data, handler);
+}
 
 function _createDeploymentFileIfNeeded() {
   if (!fs.existsSync(hre.deployer.file)) {
@@ -46,6 +74,7 @@ function _createDeploymentFileIfNeeded() {
         logger.info(`Starting new deployment where previous deployment left off: ${deployment}`);
 
         data = hre.deployer.previousData;
+        data.properties.completed = false;
 
         break;
       }
