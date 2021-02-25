@@ -11,7 +11,6 @@ const { SUBTASK_PREPARE_DEPLOYMENT } = require('../task-names');
 const DEPLOYMENT_SCHEMA = {
   properties: {
     completed: false,
-    totalGasEstimate: 0,
     totalGasUsed: 0,
   },
   transactions: {},
@@ -39,47 +38,7 @@ subtask(SUBTASK_PREPARE_DEPLOYMENT).setAction(async (taskArguments, hre) => {
   _createDeploymentFileIfNeeded();
 
   hre.deployer.data = _setupAutosaveProxy({ hre });
-
-  await _monitorAllTransactions({ hre });
 });
-
-async function _monitorAllTransactions({ hre }) {
-  hre.ethers.provider.on('pending', (transaction) => {
-    logger.info(`Submitting transaction: ${transaction.hash}`);
-    logger.debug(JSON.stringify(transaction, null, 2));
-
-    if (!hre.deployer.data.transactions) {
-      hre.deployer.data.transactions = {};
-    }
-
-    const estimateGas = transaction.gasPrice.mul(transaction.gasLimit);
-    hre.deployer.data.transactions[transaction.hash] = {
-      mined: false,
-      estimateGas: estimateGas.toString(),
-    };
-
-    const totalGasEstimate = hre.ethers.BigNumber.from(
-      hre.deployer.data.properties.totalGasEstimate
-    );
-    hre.deployer.data.properties.totalGasEstimate = totalGasEstimate.add(estimateGas).toString();
-
-    logger.info(`Total gas estimate: ${hre.deployer.data.properties.totalGasEstimate.toString()}`);
-
-    hre.ethers.provider.once(transaction.hash, (transaction) => {
-      logger.info(`Transaction mined: ${transaction.hash}`);
-
-      hre.deployer.data.transactions[transaction.hash].mined = true;
-
-      const gasUsed = transaction.gasUsed;
-      hre.deployer.data.transactions[transaction.hash].gasUsed = gasUsed.toString();
-
-      const totalGasUsed = hre.ethers.BigNumber.from(hre.deployer.data.properties.totalGasUsed);
-      hre.deployer.data.properties.totalGasUsed = totalGasUsed.add(gasUsed).toString();
-
-      logger.info(`Total gas used: ${hre.deployer.data.properties.totalGasUsed.toString()}`);
-    });
-  });
-}
 
 function _setupAutosaveProxy({ hre }) {
   const data = JSON.parse(fs.readFileSync(hre.deployer.file));

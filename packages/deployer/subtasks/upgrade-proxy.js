@@ -1,6 +1,7 @@
 const logger = require('../utils/logger');
 const prompter = require('../utils/prompter');
 const { subtask } = require('hardhat/config');
+const { processTransaction, processReceipt } = require('../utils/transactions');
 const { SUBTASK_UPGRADE_PROXY, SUBTASK_DEPLOY_CONTRACTS } = require('../task-names');
 
 const UPGRADE_ABI = [
@@ -85,7 +86,10 @@ async function _upgradeProxy({ implementationAddress, hre }) {
     logger.notice(`Upgrading main proxy to ${implementationAddress}`);
 
     const tx = await upgradeable.upgradeTo(implementationAddress);
-    await tx.wait();
+    processTransaction(tx);
+
+    const receipt = await tx.wait();
+    processReceipt(receipt);
 
     logger.success(`Main proxy upgraded to ${await upgradeable.getImplementation()}`);
   } else {

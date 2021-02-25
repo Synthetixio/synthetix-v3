@@ -1,9 +1,9 @@
 const logger = require('../utils/logger');
 const prompter = require('../utils/prompter');
 const { getContractBytecodeHash } = require('../utils/contracts');
+const { processTransaction, processReceipt } = require('../utils/transactions');
 const { subtask } = require('hardhat/config');
 const { SUBTASK_DEPLOY_CONTRACTS } = require('../task-names');
-
 /*
  * Deploys a list of contracts, avoiding contracts that do not need to be compiled,
  * and prompting the user for confirmation.
@@ -90,15 +90,16 @@ async function _deployContracts({ contractNames, constructorArgs, deploymentsInf
 
   for (let i = 0; i < contractNames.length; i++) {
     const contractName = contractNames[i];
-    const args = constructorArgs ? constructorArgs[i] || [] : [];
-
-    const factory = await hre.ethers.getContractFactory(contractName);
-    const contract = await factory.deploy(...args);
 
     const reason = deploymentsInfo[contractName];
     if (!reason) {
       continue;
     }
+
+    const args = constructorArgs ? constructorArgs[i] || [] : [];
+
+    const factory = await hre.ethers.getContractFactory(contractName);
+    const contract = await factory.deploy(...args);
 
     if (!contract.address) {
       throw new Error(`Error deploying ${contractName}`);
@@ -106,12 +107,18 @@ async function _deployContracts({ contractNames, constructorArgs, deploymentsInf
 
     logger.success(`Deployed ${contractName} to ${contract.address}`);
 
+    const transaction = contract.deployTransaction;
+    processTransaction(transaction);
+
+    const receipt = await hre.ethers.provider.getTransactionReceipt(transaction.hash);
+    processReceipt(receipt);
+
     const data = hre.deployer.data;
     const target = areModules ? data.modules : data;
 
     target[contractName] = {
       deployedAddress: contract.address,
-      deployTransaction: contract.deployTransaction.hash,
+      deployTransaction: transaction.hash,
       bytecodeHash: getContractBytecodeHash({ contractName, isModule: areModules }),
     };
 
