@@ -13,7 +13,7 @@ subtask(SUBTASK_DEPLOY_CONTRACTS).setAction(
     const deploymentsInfo = await _evaluateDeployments({ contractNames, areModules, force });
     await _confirmDeployments({ contractNames, deploymentsInfo });
 
-    await _deployContracts({ contractNames, constructorArgs, areModules, deploymentsInfo });
+    return await _deployContracts({ contractNames, constructorArgs, areModules, deploymentsInfo });
   }
 );
 
@@ -86,6 +86,8 @@ async function _confirmDeployments({ contractNames, deploymentsInfo }) {
 }
 
 async function _deployContracts({ contractNames, constructorArgs, deploymentsInfo, areModules }) {
+  const deployed = [];
+
   for (let i = 0; i < contractNames.length; i++) {
     const contractName = contractNames[i];
     const args = constructorArgs ? constructorArgs[i] || [] : [];
@@ -112,5 +114,9 @@ async function _deployContracts({ contractNames, constructorArgs, deploymentsInf
       deployTransaction: contract.deployTransaction.hash,
       bytecodeHash: getContractBytecodeHash({ contractName, isModule: areModules }),
     };
+
+    deployed.push(contract);
   }
+
+  return deployed;
 }
