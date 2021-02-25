@@ -1,3 +1,5 @@
+require('dotenv').config();
+
 require('@nomiclabs/hardhat-waffle');
 require('@synthetixio/deployer');
 
@@ -22,6 +24,12 @@ module.exports = {
   networks: {
     local: {
       url: 'http://localhost:9545',
+    },
+    kovan: {
+      url: `https://kovan.infura.io/v3/${process.env.INFURA_KEY}`,
+      accounts: {
+        mnemonic: process.env.MNEMONIC,
+      },
     },
   },
 };
