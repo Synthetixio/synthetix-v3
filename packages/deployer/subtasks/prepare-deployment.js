@@ -64,7 +64,7 @@ function _setupAutosaveProxy({ hre }) {
 
         fs.writeFileSync(hre.deployer.file, JSON.stringify(hre.deployer.data, null, 2));
 
-        logger.info(`Deployment file saved: ${hre.deployer.file}`);
+        logger.debug(`Deployment file saved: ${hre.deployer.file}`);
       }
     },
   };
