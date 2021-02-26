@@ -1,6 +1,6 @@
 const logger = require('./logger');
 
-function processTransaction({ transaction }) {
+function processTransaction({ transaction, hre }) {
   logger.info(`Transaction hash: ${transaction.hash}`);
   logger.debug(`Transaction: ${JSON.stringify(transaction, null, 2)}`);
 

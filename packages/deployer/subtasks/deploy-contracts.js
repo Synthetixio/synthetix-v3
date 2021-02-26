@@ -102,7 +102,7 @@ async function _deployContracts({ contractNames, constructorArgs, deploymentsInf
     logger.success(`Deployed ${contractName} to ${contract.address}`);
 
     const transaction = contract.deployTransaction;
-    processTransaction({ transaction });
+    processTransaction({ transaction, hre });
 
     const receipt = await hre.ethers.provider.getTransactionReceipt(transaction.hash);
     processReceipt({ receipt, hre });
