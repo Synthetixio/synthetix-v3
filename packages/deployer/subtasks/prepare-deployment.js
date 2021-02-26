@@ -84,7 +84,10 @@ function _createDeploymentFileIfNeeded() {
         logger.info(`Starting new deployment where previous deployment left off: ${deployment}`);
 
         data = hre.deployer.previousData;
+
         data.properties.completed = false;
+        data.properties.totalGasUsed = 0;
+        data.transactions = {};
 
         break;
       }

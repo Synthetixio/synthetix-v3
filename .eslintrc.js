@@ -7,6 +7,7 @@ module.exports = {
   globals: {
     hre: 'writable',
     Proxy: 'readonly',
+    Promise: 'readonly',
   },
   parserOptions: {
     ecmaVersion: 12,

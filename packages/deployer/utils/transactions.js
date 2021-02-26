@@ -3,6 +3,10 @@ const logger = require('./logger');
 function processTransaction({ transaction }) {
   logger.info(`Transaction hash: ${transaction.hash}`);
   logger.debug(`Transaction: ${JSON.stringify(transaction, null, 2)}`);
+
+  hre.deployer.data.transactions[transaction.hash] = {
+    status: 'pending',
+  };
 }
 
 function processReceipt({ receipt, hre }) {
@@ -15,6 +19,9 @@ function processReceipt({ receipt, hre }) {
   logger.info(`Gas used: ${receipt.gasUsed} (Total: ${totalGasUsed})`);
 
   hre.deployer.data.properties.totalGasUsed = totalGasUsed.toString();
+
+  hre.deployer.data.transactions[receipt.transactionHash].status =
+    receipt.status === 1 ? 'confirmed' : 'failed';
 }
 
 module.exports = {
