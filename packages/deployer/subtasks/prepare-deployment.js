@@ -174,12 +174,6 @@ async function _printInfo(taskArguments) {
     logger.log(chalk.green(`new deployment file: ${hre.deployer.file}`));
   }
 
-  if (taskArguments.force) {
-    logger.log(chalk.red('force: true - This will override all existing deployments!'));
-  } else {
-    logger.log(chalk.gray('force: false'));
-  }
-
   const signer = (await hre.ethers.getSigners())[0];
   const balance = hre.ethers.utils.formatEther(
     await hre.ethers.provider.getBalance(signer.address)

@@ -9,15 +9,15 @@ const { SUBTASK_DEPLOY_CONTRACTS } = require('../task-names');
  * and prompting the user for confirmation.
  * */
 subtask(SUBTASK_DEPLOY_CONTRACTS).setAction(
-  async ({ contractNames, constructorArgs, areModules = false, force = false }) => {
-    const deploymentsInfo = await _evaluateDeployments({ contractNames, areModules, force });
+  async ({ contractNames, constructorArgs, areModules = false }) => {
+    const deploymentsInfo = await _evaluateDeployments({ contractNames, areModules });
     await _confirmDeployments({ contractNames, deploymentsInfo });
 
     return await _deployContracts({ contractNames, constructorArgs, areModules, deploymentsInfo });
   }
 );
 
-async function _evaluateDeployments({ contractNames, areModules, force }) {
+async function _evaluateDeployments({ contractNames, areModules }) {
   const deploymentsInfo = {};
 
   let data = hre.deployer.data;
@@ -25,12 +25,6 @@ async function _evaluateDeployments({ contractNames, areModules, force }) {
 
   for (let contractName of contractNames) {
     logger.debug(`${contractName}`);
-
-    logger.debug(`force: ${force}`);
-    if (force) {
-      deploymentsInfo[contractName] = 'force is set to true';
-      continue;
-    }
 
     logger.debug(`network: ${hre.network.name}`);
     if (hre.network.name === 'hardhat') {

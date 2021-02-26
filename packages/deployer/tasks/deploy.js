@@ -16,10 +16,9 @@ const {
 
 task(TASK_DEPLOY, 'Deploys all system modules and upgrades the main proxy with a new router')
   .addFlag('noConfirm', 'Skip all confirmation prompts', false)
-  .addFlag('force', 'Force deploy all modules', false)
   .addFlag('debug', 'Display debug logs', false)
   .setAction(async (taskArguments, hre) => {
-    const { force, debug, noConfirm } = taskArguments;
+    const { debug, noConfirm } = taskArguments;
 
     logger.debugging = debug;
     prompter.noConfirm = noConfirm;
@@ -33,7 +32,6 @@ task(TASK_DEPLOY, 'Deploys all system modules and upgrades the main proxy with a
     await hre.run(SUBTASK_DEPLOY_CONTRACTS, {
       contractNames: hre.deployer.sources,
       areModules: true,
-      force,
     });
 
     await hre.run(SUBTASK_GENERATE_ROUTER_SOURCE, {});
@@ -43,10 +41,9 @@ task(TASK_DEPLOY, 'Deploys all system modules and upgrades the main proxy with a
     await hre.run(TASK_COMPILE, { force: false, quiet: true });
     await hre.run(SUBTASK_DEPLOY_CONTRACTS, {
       contractNames: [`Router_${hre.network.name}`],
-      force,
     });
 
-    await hre.run(SUBTASK_UPGRADE_PROXY, { force });
+    await hre.run(SUBTASK_UPGRADE_PROXY, {});
 
     await hre.run(SUBTASK_FINALIZE_DEPLOYMENT, {});
   });
