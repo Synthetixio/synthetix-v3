@@ -20,7 +20,7 @@ subtask(SUBTASK_DEPLOY_CONTRACTS).setAction(
 async function _evaluateDeployments({ contractNames, areModules }) {
   const deploymentsInfo = {};
 
-  let data = hre.deployer.data;
+  let data = hre.deployer.data.contracts;
   data = areModules ? data.modules : data;
 
   for (let contractName of contractNames) {
@@ -107,10 +107,10 @@ async function _deployContracts({ contractNames, constructorArgs, deploymentsInf
     const receipt = await hre.ethers.provider.getTransactionReceipt(transaction.hash);
     processReceipt({ receipt, hre });
 
-    const data = hre.deployer.data;
-    const target = areModules ? data.modules : data;
+    let data = hre.deployer.data.contracts;
+    data = areModules ? data.modules : data;
 
-    target[contractName] = {
+    data[contractName] = {
       deployedAddress: contract.address,
       deployTransaction: transaction.hash,
       bytecodeHash: getContractBytecodeHash({ contractName, isModule: areModules }),

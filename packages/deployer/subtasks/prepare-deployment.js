@@ -3,6 +3,7 @@ const path = require('path');
 const chalk = require('chalk');
 const logger = require('../utils/logger');
 const prompter = require('../utils/prompter');
+const rimraf = require('rimraf');
 const { subtask } = require('hardhat/config');
 const { readPackageJson } = require('../utils/package');
 const { getCommit, getBranch } = require('../utils/git');
@@ -14,7 +15,9 @@ const DEPLOYMENT_SCHEMA = {
     totalGasUsed: 0,
   },
   transactions: {},
-  modules: {},
+  contracts: {
+    modules: {},
+  },
 };
 
 /*
@@ -23,6 +26,11 @@ const DEPLOYMENT_SCHEMA = {
 subtask(SUBTASK_PREPARE_DEPLOYMENT).setAction(async (taskArguments, hre) => {
   const package = readPackageJson();
   logger.title(`Deploying ** ${package.name} **`);
+
+  const { clear } = taskArguments;
+  if (clear) {
+    await _clearPreviousDeploymentData();
+  }
 
   _ensureFoldersExist();
 
@@ -39,6 +47,18 @@ subtask(SUBTASK_PREPARE_DEPLOYMENT).setAction(async (taskArguments, hre) => {
 
   hre.deployer.data = _setupAutosaveProxy({ hre });
 });
+
+async function _clearPreviousDeploymentData() {
+  logger.warn('Received --clear parameter. This will delete all previous deployment data.');
+  await prompter.confirmAction('Clear all data');
+
+  const deploymentsFolder = hre.config.deployer.paths.deployments;
+  const networkFolder = path.join(deploymentsFolder, hre.network.name);
+
+  if (fs.existsSync(networkFolder)) {
+    rimraf.sync(networkFolder);
+  }
+}
 
 function _setupAutosaveProxy({ hre }) {
   const data = JSON.parse(fs.readFileSync(hre.deployer.file));
@@ -180,6 +200,10 @@ async function _printInfo(taskArguments) {
   );
   logger.log(chalk.gray(`signer: ${signer.address}`));
   logger.log(chalk.gray(`signer balance: ${balance} ETH`));
+
+  if (taskArguments.clear) {
+    logger.log(chalk.red('clear: true'));
+  }
 
   logger.boxEnd();
 

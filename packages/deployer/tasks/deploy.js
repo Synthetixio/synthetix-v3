@@ -17,9 +17,9 @@ const {
 task(TASK_DEPLOY, 'Deploys all system modules and upgrades the main proxy with a new router')
   .addFlag('noConfirm', 'Skip all confirmation prompts', false)
   .addFlag('debug', 'Display debug logs', false)
+  .addFlag('clear', 'Clear all previous deployment data for the selected network', false)
   .setAction(async (taskArguments, hre) => {
     const { debug, noConfirm } = taskArguments;
-
     logger.debugging = debug;
     prompter.noConfirm = noConfirm;
 

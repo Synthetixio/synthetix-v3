@@ -38,7 +38,7 @@ function _getSources() {
 async function _removeDeletedSources({ data, sources }) {
   let someDeletion = false;
 
-  Object.keys(data.modules).map((deployedModule) => {
+  Object.keys(data.contracts.modules).map((deployedModule) => {
     if (!sources.some((source) => deployedModule === source)) {
       logger.notice(
         `Previously deployed module "${deployedModule}" was not found in sources, so it will not be included in the deployment`
@@ -46,7 +46,7 @@ async function _removeDeletedSources({ data, sources }) {
 
       someDeletion = true;
 
-      delete data.modules[deployedModule];
+      delete data.contracts.modules[deployedModule];
     }
   });
 
@@ -61,12 +61,12 @@ async function _addNewSources({ data, sources }) {
   let someAddition = false;
 
   sources.map((source) => {
-    if (!data.modules[source]) {
+    if (!data.contracts.modules[source]) {
       logger.notice(`Found new module "${source}", including it for deployment`);
 
       someAddition = true;
 
-      data.modules[source] = {
+      data.contracts.modules[source] = {
         deployedAddress: '',
         bytecodeHash: '',
       };

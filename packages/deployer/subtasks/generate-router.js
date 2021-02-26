@@ -96,7 +96,7 @@ function _renderModules({ modules }) {
     const module = modules[i];
 
     modulesStr += `\n${TAB.repeat(1)}address private constant _${module.toUpperCase()} = ${
-      hre.deployer.data.modules[module].deployedAddress
+      hre.deployer.data.contracts.modules[module].deployedAddress
     };`;
   }
 

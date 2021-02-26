@@ -18,10 +18,4 @@ subtask(SUBTASK_FINALIZE_DEPLOYMENT).setAction(async (_, hre) => {
 
     hre.deployer.data.properties.completed = true;
   }
-
-  await _wait(5);
 });
-
-async function _wait(seconds) {
-  return new Promise((resolve) => setTimeout(resolve, seconds * 1000));
-}
