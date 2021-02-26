@@ -1,5 +1,6 @@
 const fs = require('fs');
 const path = require('path');
+const figlet = require('figlet');
 const chalk = require('chalk');
 const logger = require('../utils/logger');
 const prompter = require('../utils/prompter');
@@ -24,8 +25,14 @@ const DEPLOYMENT_SCHEMA = {
  * Prepares the deployment file associated with the active deployment.
  * */
 subtask(SUBTASK_PREPARE_DEPLOYMENT).setAction(async (taskArguments, hre) => {
-  const package = readPackageJson();
-  logger.title(`Deploying ** ${package.name} **`);
+  await _printTitle();
+
+  if (!hre.deployer) {
+    hre.deployer = {};
+  }
+
+  hre.deployer.file = _determineTargetDeploymentFile();
+  await _printInfo(taskArguments);
 
   const { clear } = taskArguments;
   if (clear) {
@@ -34,13 +41,6 @@ subtask(SUBTASK_PREPARE_DEPLOYMENT).setAction(async (taskArguments, hre) => {
 
   _ensureFoldersExist();
 
-  if (!hre.deployer) {
-    hre.deployer = {};
-  }
-
-  hre.deployer.file = _determineTargetDeploymentFile();
-
-  await _printInfo(taskArguments);
   await prompter.confirmAction('Proceed with deployment');
 
   _createDeploymentFileIfNeeded();
@@ -48,8 +48,25 @@ subtask(SUBTASK_PREPARE_DEPLOYMENT).setAction(async (taskArguments, hre) => {
   hre.deployer.data = _setupAutosaveProxy({ hre });
 });
 
+async function _printTitle() {
+  logger.log(chalk.gray('Deploying'));
+
+  const msg = readPackageJson().name;
+  const font = 'Slant';
+  return new Promise((resolve) => {
+    figlet.text(msg, { font }, function (err, formattedMsg) {
+      if (err) {
+        throw new Error(err);
+      }
+
+      console.log(chalk.red(formattedMsg));
+      resolve();
+    });
+  });
+}
+
 async function _clearPreviousDeploymentData() {
-  logger.warn('Received --clear parameter. This will delete all previous deployment data.');
+  logger.warn('Received --clear parameter. This will delete all previous deployment data!');
   await prompter.confirmAction('Clear all data');
 
   const deploymentsFolder = hre.config.deployer.paths.deployments;
@@ -145,8 +162,6 @@ function _determineTargetDeploymentFile() {
   }
 
   if (deployments.length === 0) {
-    logger.notice(`No previous deployment file found for ${hre.network.name}`);
-
     return __getNewDeploymentFileName();
   }
 
@@ -154,8 +169,6 @@ function _determineTargetDeploymentFile() {
   const data = JSON.parse(fs.readFileSync(file));
 
   if (data.properties.completed) {
-    logger.checked(`Previous deployment on ${hre.network.name} was completed`);
-
     return __getNewDeploymentFileName();
   } else {
     return file;
@@ -175,7 +188,7 @@ function _ensureFoldersExist() {
 }
 
 async function _printInfo(taskArguments) {
-  logger.log(chalk.yellow('\nPLEASE CONFIRM THESE PARAMETERS'));
+  logger.log(chalk.yellow('\nPlease confirm these deployment parameters:'));
   logger.boxStart();
 
   logger.log(chalk.gray(`commit: ${getCommit()}`));
