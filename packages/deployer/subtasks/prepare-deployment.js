@@ -180,9 +180,6 @@ async function _printInfo(taskArguments) {
     logger.log(chalk.gray('force: false'));
   }
 
-  logger.debug('Deployer configuration:');
-  logger.debug(JSON.stringify(hre.config.deployer, null, 2));
-
   const signer = (await hre.ethers.getSigners())[0];
   const balance = hre.ethers.utils.formatEther(
     await hre.ethers.provider.getBalance(signer.address)
@@ -191,4 +188,7 @@ async function _printInfo(taskArguments) {
   logger.log(chalk.gray(`signer balance: ${balance} ETH`));
 
   logger.boxEnd();
+
+  logger.debug('Deployer configuration:');
+  logger.debug(JSON.stringify(hre.config.deployer, null, 2));
 }
