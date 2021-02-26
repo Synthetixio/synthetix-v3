@@ -23,7 +23,7 @@ module.exports = {
   defaultNetwork: 'local',
   networks: {
     local: {
-      url: 'http://localhost:9545',
+      url: 'http://localhost:8545',
     },
     kovan: {
       url: `https://kovan.infura.io/v3/${process.env.INFURA_KEY}`,

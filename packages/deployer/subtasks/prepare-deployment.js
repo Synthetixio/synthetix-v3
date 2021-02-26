@@ -152,29 +152,29 @@ function _ensureFoldersExist() {
 }
 
 async function _printInfo(taskArguments) {
-  console.log(chalk.yellow('\nPLEASE CONFIRM THESE PARAMETERS'));
-  console.log(chalk.yellow('------------------------------------------------------------'));
+  logger.log(chalk.yellow('\nPLEASE CONFIRM THESE PARAMETERS'));
+  logger.boxStart();
 
-  console.log(chalk.gray(`commit: ${getCommit()}`));
+  logger.log(chalk.gray(`commit: ${getCommit()}`));
 
   const branch = getBranch();
-  console.log(chalk[branch !== 'master' ? 'red' : 'gray'](`branch: ${branch}`));
+  logger.log(chalk[branch !== 'master' ? 'red' : 'gray'](`branch: ${branch}`));
 
   const network = hre.network.name;
-  console.log(chalk[network.includes('mainnet') ? 'red' : 'gray'](`network: ${network}`));
+  logger.log(chalk[network.includes('mainnet') ? 'red' : 'gray'](`network: ${network}`));
 
-  console.log(chalk.gray(`debug: ${taskArguments.debug}`));
+  logger.log(chalk.gray(`debug: ${taskArguments.debug}`));
 
   if (fs.existsSync(hre.deployer.file)) {
-    console.log(chalk.gray(`deployment file: ${hre.deployer.file}`));
+    logger.log(chalk.gray(`deployment file: ${hre.deployer.file}`));
   } else {
-    console.log(chalk.green(`new deployment file: ${hre.deployer.file}`));
+    logger.log(chalk.green(`new deployment file: ${hre.deployer.file}`));
   }
 
   if (taskArguments.force) {
-    console.log(chalk.red('force: true - This will override all existing deployments!'));
+    logger.log(chalk.red('force: true - This will override all existing deployments!'));
   } else {
-    console.log(chalk.gray('force: false'));
+    logger.log(chalk.gray('force: false'));
   }
 
   logger.debug('Deployer configuration:');
@@ -184,8 +184,8 @@ async function _printInfo(taskArguments) {
   const balance = hre.ethers.utils.formatEther(
     await hre.ethers.provider.getBalance(signer.address)
   );
-  console.log(chalk.gray(`signer: ${signer.address}`));
-  console.log(chalk.gray(`signer balance: ${balance} ETH`));
+  logger.log(chalk.gray(`signer: ${signer.address}`));
+  logger.log(chalk.gray(`signer balance: ${balance} ETH`));
 
-  console.log(chalk.yellow('------------------------------------------------------------'));
+  logger.boxEnd();
 }

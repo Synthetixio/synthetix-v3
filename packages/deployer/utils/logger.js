@@ -1,12 +1,33 @@
 const chalk = require('chalk');
 
 const TAB = '  ';
+const BOX_WIDTH = 70;
 
 module.exports = {
   debudding: false,
+  prepend: '',
+  postpend: '',
+  boxing: false,
+
+  boxStart: function () {
+    this.log(chalk.yellow(`┏${'━'.repeat(BOX_WIDTH)}┑`));
+    this.boxing = true;
+    this.prepend = chalk.yellow('┃ ');
+    this.postpend = chalk.yellow(' ┃');
+  },
+
+  boxEnd: function () {
+    this.boxing = false;
+    this.prepend = '';
+    this.postpend = '';
+    this.log(chalk.yellow(`┗${'━'.repeat(BOX_WIDTH)}┛`));
+  },
 
   log: function (msg, indent = 0) {
-    console.log(`${TAB.repeat(indent)}${msg}`);
+    const indentStr = TAB.repeat(indent);
+    const completeLen = Math.max(BOX_WIDTH + 8 - msg.length, 0);
+    const completeStr = this.boxing ? chalk.gray('.'.repeat(completeLen)) : '';
+    console.log(`${this.prepend}${indentStr}${msg}${completeStr}${this.postpend}`);
   },
 
   title: function (msg, indent) {
