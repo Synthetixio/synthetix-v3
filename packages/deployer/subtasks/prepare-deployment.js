@@ -49,20 +49,21 @@ subtask(SUBTASK_PREPARE_DEPLOYMENT).setAction(async (taskArguments, hre) => {
 });
 
 async function _printTitle() {
-  logger.log(chalk.gray('Deploying'));
+  async function figPring(msg, font = 'Slant') {
+    return new Promise((resolve) => {
+      figlet.text(msg, { font }, function (err, formattedMsg) {
+        if (err) {
+          throw new Error(err);
+        }
 
-  const msg = readPackageJson().name;
-  const font = 'Slant';
-  return new Promise((resolve) => {
-    figlet.text(msg, { font }, function (err, formattedMsg) {
-      if (err) {
-        throw new Error(err);
-      }
-
-      console.log(chalk.red(formattedMsg));
-      resolve();
+        console.log(chalk.red(formattedMsg));
+        resolve();
+      });
     });
-  });
+  }
+
+  await figPring(readPackageJson().name);
+  await figPring('           deployer');
 }
 
 async function _clearPreviousDeploymentData() {

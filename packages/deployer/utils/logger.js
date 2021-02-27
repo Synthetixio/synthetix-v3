@@ -1,72 +1,73 @@
 const chalk = require('chalk');
 
-const TAB = '  ';
 const BOX_WIDTH = 70;
 
 module.exports = {
-  debudding: false,
+  debugging: false,
   prepend: '',
   postpend: '',
   boxing: false,
 
   boxStart: function () {
-    this.log(chalk.yellow(`┏${'━'.repeat(BOX_WIDTH)}┑`));
+    this.log(chalk.cyan.bold(`┏${'━'.repeat(BOX_WIDTH)}┓`));
+
     this.boxing = true;
-    this.prepend = chalk.yellow('┃ ');
-    this.postpend = chalk.yellow(' ┃');
+    this.prepend = chalk.cyan.bold('┃ ');
+    this.postpend = chalk.cyan.bold(' ┃');
   },
 
   boxEnd: function () {
     this.boxing = false;
     this.prepend = '';
     this.postpend = '';
-    this.log(chalk.yellow(`┗${'━'.repeat(BOX_WIDTH)}┛`));
+
+    this.log(chalk.cyan.bold(`┗${'━'.repeat(BOX_WIDTH)}┛`));
   },
 
-  log: function (msg, indent = 0) {
-    const indentStr = TAB.repeat(indent);
-    const completeLen = Math.max(BOX_WIDTH + 8 - msg.length, 0);
+  log: function (msg) {
+    const completeLen = Math.max(BOX_WIDTH + 8 - [...msg].length, 0);
     const completeStr = this.boxing ? chalk.gray('.'.repeat(completeLen)) : '';
-    console.log(`${this.prepend}${indentStr}${msg}${completeStr}${this.postpend}`);
+
+    console.log(`${this.prepend}${msg}${completeStr}${this.postpend}`);
   },
 
-  title: function (msg, indent) {
-    this.log(chalk.blue.bold.inverse(msg), indent);
+  subtitle: function (msg) {
+    console.log('\n');
+
+    this.boxStart();
+    this.log(chalk.cyan(`‣ ${msg}`));
+    this.boxEnd();
   },
 
-  subtitle: function (msg, indent) {
-    this.log(chalk.cyan.bold(`‣ ${msg}`), indent);
+  info: function (msg) {
+    this.log(chalk.gray(`ⓘ  ${msg}`));
   },
 
-  info: function (msg, indent) {
-    this.log(chalk.gray(`ⓘ  ${msg}`), indent);
+  notice: function (msg) {
+    this.log(chalk.yellow(`> ${msg}`));
   },
 
-  notice: function (msg, indent) {
-    this.log(chalk.yellow(`> ${msg}`), indent);
+  warn: function (msg) {
+    this.log(chalk.yellow.bold.inverse(`⚠⚠⚠ ${msg} ⚠⚠⚠`));
   },
 
-  warn: function (msg, indent) {
-    this.log(chalk.yellow.bold.inverse(`⚠ ${msg}`), indent);
+  checked: function (msg) {
+    this.log(chalk.gray(`✓ ${msg}`));
   },
 
-  checked: function (msg, indent) {
-    this.log(chalk.gray(`✓ ${msg}`), indent);
+  success: function (msg) {
+    this.log(chalk.green(`✅ ${msg}`));
   },
 
-  success: function (msg, indent) {
-    this.log(chalk.green(`✅ ${msg}`), indent);
+  complete: function (msg) {
+    this.log(chalk.green.bold(`💯 ${msg}`));
   },
 
-  complete: function (msg, indent) {
-    this.log(chalk.green.bold(`💯 ${msg}`), indent);
-  },
-
-  debug: function (msg, indent) {
+  debug: function (msg) {
     if (!this.debugging) {
       return;
     }
 
-    this.log(chalk.magenta(`${msg}`), indent);
+    this.log(chalk.magenta(`${msg}`));
   },
 };
