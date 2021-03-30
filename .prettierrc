@@ -24,7 +24,7 @@
     {
       "files": ["*.js", "*.json"],
       "options": {
-        "useTabs": true
+        "useTabs": false
       }
     },
     {

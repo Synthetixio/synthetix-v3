@@ -1,22 +1,49 @@
-const { task, types } = require('hardhat/config');
-const { TASK_COMPILE } = require('hardhat/builtin-tasks/task-names');
-const { TASK_DEPLOY, SUBTASK_DEPLOY_MODULES } = require('../task-names');
 const logger = require('../utils/logger');
 const prompter = require('../utils/prompter');
+const { task } = require('hardhat/config');
+const { TASK_COMPILE } = require('hardhat/builtin-tasks/task-names');
 
-task(
+const {
   TASK_DEPLOY,
-  'Deploys all modules that changed, and generates and deploys a router for those modules'
-)
-  .addFlag('noConfirm', 'Skip confirmations', false, types.boolean)
-  .addOptionalParam('logLevel', '1 = minimal, 2 = descriptive, 3 = debug', 1, types.int)
+  SUBTASK_GENERATE_ROUTER_SOURCE,
+  SUBTASK_SYNC_SOURCES,
+  SUBTASK_DEPLOY_CONTRACTS,
+  SUBTASK_VALIDATE_ROUTER,
+  SUBTASK_UPGRADE_PROXY,
+  SUBTASK_PREPARE_DEPLOYMENT,
+  SUBTASK_FINALIZE_DEPLOYMENT,
+} = require('../task-names');
+
+task(TASK_DEPLOY, 'Deploys all system modules and upgrades the main proxy with a new router')
+  .addFlag('noConfirm', 'Skip all confirmation prompts', false)
+  .addFlag('debug', 'Display debug logs', false)
+  .addFlag('clear', 'Clear all previous deployment data for the selected network', false)
   .setAction(async (taskArguments, hre) => {
-    await hre.run(TASK_COMPILE, taskArguments);
+    const { debug, noConfirm } = taskArguments;
+    logger.debugging = debug;
+    prompter.noConfirm = noConfirm;
 
-    logger.logLevel = taskArguments.logLevel;
-    prompter.noConfirm = taskArguments.noConfirm;
+    await hre.run(SUBTASK_PREPARE_DEPLOYMENT, taskArguments);
 
-    logger.log('Deploying system...');
+    await hre.run(TASK_COMPILE, { force: true, quiet: true });
+    await hre.run(SUBTASK_SYNC_SOURCES, {});
 
-    await hre.run(SUBTASK_DEPLOY_MODULES, taskArguments);
+    logger.subtitle('Deploying system modules');
+    await hre.run(SUBTASK_DEPLOY_CONTRACTS, {
+      contractNames: hre.deployer.sources,
+      areModules: true,
+    });
+
+    await hre.run(SUBTASK_GENERATE_ROUTER_SOURCE, {});
+    await hre.run(SUBTASK_VALIDATE_ROUTER, {});
+
+    logger.subtitle('Deploying router');
+    await hre.run(TASK_COMPILE, { force: false, quiet: true });
+    await hre.run(SUBTASK_DEPLOY_CONTRACTS, {
+      contractNames: [`Router_${hre.network.name}`],
+    });
+
+    await hre.run(SUBTASK_UPGRADE_PROXY, {});
+
+    await hre.run(SUBTASK_FINALIZE_DEPLOYMENT, {});
   });

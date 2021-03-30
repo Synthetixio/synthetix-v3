@@ -4,6 +4,11 @@ module.exports = {
     mocha: true,
     node: true,
   },
+  globals: {
+    hre: 'writable',
+    Proxy: 'readonly',
+    Promise: 'readonly',
+  },
   parserOptions: {
     ecmaVersion: 12,
   },
@@ -12,5 +17,6 @@ module.exports = {
     'linebreak-style': ['error', 'unix'],
     quotes: ['error', 'single'],
     semi: ['error', 'always'],
+    'no-inner-declarations': 'off',
   },
 };

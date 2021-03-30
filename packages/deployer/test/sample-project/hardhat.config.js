@@ -1,7 +1,5 @@
-require('dotenv').config();
-
 require('@nomiclabs/hardhat-waffle');
-require('@synthetixio/deployer');
+require('../../index');
 
 module.exports = {
   solidity: {
@@ -18,18 +16,12 @@ module.exports = {
       modules: 'contracts/modules',
       deployments: 'deployments',
     },
-    proxyName: 'Synthetix',
+    proxyName: 'Main',
   },
   defaultNetwork: 'local',
   networks: {
     local: {
       url: 'http://localhost:8545',
-    },
-    kovan: {
-      url: `https://kovan.infura.io/v3/${process.env.INFURA_KEY}`,
-      accounts: {
-        mnemonic: process.env.MNEMONIC,
-      },
     },
   },
 };

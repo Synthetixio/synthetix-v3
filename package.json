@@ -16,9 +16,11 @@
   "scripts": {
     "lint-js": "prettier --write '**/*.js' && eslint --fix '**/*.js'",
     "lint-sol": "prettier --write 'contracts/**/*.sol' && solhint --fix 'contracts/**/*.sol'",
+    "lint-quick": "pretty-quick --staged",
     "lint": "npm run lint-js && npm run lint-sol"
   },
   "pre-commit": [
+    "lint-quick",
     "lint"
   ],
   "workspaces": [
@@ -27,16 +29,21 @@
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "^2.0.1",
     "@nomiclabs/hardhat-waffle": "^2.0.1",
+    "@openzeppelin/contracts": "^3.4.0",
     "chai": "^4.3.0",
     "chalk": "^2.4.2",
+    "dotenv": "^8.2.0",
     "eslint": "^7.20.0",
     "ethereum-waffle": "^3.2.2",
     "ethers": "^5.0.31",
-    "hardhat": "^2.0.10",
+    "figlet": "^1.5.0",
+    "hardhat": "^2.0.11",
     "inquirer": "^6.5.2",
     "pre-commit": "^1.2.2",
     "prettier": "^2.2.1",
     "prettier-plugin-solidity": "^1.0.0-beta.5",
+    "pretty-quick": "^3.1.0",
+    "rimraf": "^2.7.1",
     "solhint": "^3.3.2"
   }
 }

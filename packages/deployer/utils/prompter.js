@@ -3,7 +3,11 @@ const inquirer = require('inquirer');
 module.exports = {
   noConfirm: false,
 
-  confirmAction: async function ({ message }) {
+  confirmAction: async function (message) {
+    if (this.noConfirm) {
+      return;
+    }
+
     const { confirmation } = await inquirer.prompt([
       {
         type: 'confirm',
