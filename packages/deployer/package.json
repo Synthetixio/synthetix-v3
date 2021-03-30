@@ -10,6 +10,6 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "hardhat": "^2.0.10"
+    "hardhat": "^2.1.2"
   }
 }

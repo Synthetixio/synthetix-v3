@@ -37,7 +37,7 @@
     "ethereum-waffle": "^3.2.2",
     "ethers": "^5.0.31",
     "figlet": "^1.5.0",
-    "hardhat": "^2.0.11",
+    "hardhat": "^2.1.2",
     "inquirer": "^6.5.2",
     "pre-commit": "^1.2.2",
     "prettier": "^2.2.1",

@@ -5,9 +5,10 @@ const { TASK_COMPILE } = require('hardhat/builtin-tasks/task-names');
 
 const {
   TASK_DEPLOY,
+  SUBTASK_DEPLOY_MODULES,
+  SUBTASK_DEPLOY_ROUTER,
   SUBTASK_GENERATE_ROUTER_SOURCE,
   SUBTASK_SYNC_SOURCES,
-  SUBTASK_DEPLOY_CONTRACTS,
   SUBTASK_VALIDATE_ROUTER,
   SUBTASK_UPGRADE_PROXY,
   SUBTASK_PREPARE_DEPLOYMENT,
@@ -20,30 +21,17 @@ task(TASK_DEPLOY, 'Deploys all system modules and upgrades the main proxy with a
   .addFlag('clear', 'Clear all previous deployment data for the selected network', false)
   .setAction(async (taskArguments, hre) => {
     const { debug, noConfirm } = taskArguments;
+
     logger.debugging = debug;
     prompter.noConfirm = noConfirm;
 
     await hre.run(SUBTASK_PREPARE_DEPLOYMENT, taskArguments);
-
     await hre.run(TASK_COMPILE, { force: true, quiet: true });
     await hre.run(SUBTASK_SYNC_SOURCES, {});
-
-    logger.subtitle('Deploying system modules');
-    await hre.run(SUBTASK_DEPLOY_CONTRACTS, {
-      contractNames: hre.deployer.sources,
-      areModules: true,
-    });
-
+    await hre.run(SUBTASK_DEPLOY_MODULES, {});
     await hre.run(SUBTASK_GENERATE_ROUTER_SOURCE, {});
     await hre.run(SUBTASK_VALIDATE_ROUTER, {});
-
-    logger.subtitle('Deploying router');
-    await hre.run(TASK_COMPILE, { force: false, quiet: true });
-    await hre.run(SUBTASK_DEPLOY_CONTRACTS, {
-      contractNames: [`Router_${hre.network.name}`],
-    });
-
+    await hre.run(SUBTASK_DEPLOY_ROUTER, {});
     await hre.run(SUBTASK_UPGRADE_PROXY, {});
-
     await hre.run(SUBTASK_FINALIZE_DEPLOYMENT, {});
   });

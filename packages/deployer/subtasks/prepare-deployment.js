@@ -31,15 +31,15 @@ subtask(SUBTASK_PREPARE_DEPLOYMENT).setAction(async (taskArguments, hre) => {
     hre.deployer = {};
   }
 
-  hre.deployer.file = _determineTargetDeploymentFile();
-  await _printInfo(taskArguments);
-
   const { clear } = taskArguments;
   if (clear) {
     await _clearPreviousDeploymentData();
   }
 
   _ensureFoldersExist();
+
+  hre.deployer.file = _determineTargetDeploymentFile();
+  await _printInfo(taskArguments);
 
   await prompter.confirmAction('Proceed with deployment');
 
@@ -183,9 +183,14 @@ function _ensureFoldersExist() {
   }
 
   const networkFolder = path.join(deploymentsFolder, hre.network.name);
+  console.log(networkFolder);
+  console.log('>', fs.existsSync(networkFolder));
   if (!fs.existsSync(networkFolder)) {
+    console.log('CREATE');
     fs.mkdirSync(networkFolder);
   }
+
+  console.log('>', fs.existsSync(networkFolder));
 }
 
 async function _printInfo(taskArguments) {
