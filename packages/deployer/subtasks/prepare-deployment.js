@@ -1,13 +1,9 @@
 const fs = require('fs');
 const path = require('path');
-const figlet = require('figlet');
-const chalk = require('chalk');
 const logger = require('../utils/logger');
 const prompter = require('../utils/prompter');
 const rimraf = require('rimraf');
 const { subtask } = require('hardhat/config');
-const { readPackageJson } = require('../utils/package');
-const { getCommit, getBranch } = require('../utils/git');
 const { SUBTASK_PREPARE_DEPLOYMENT } = require('../task-names');
 
 const DEPLOYMENT_SCHEMA = {
@@ -25,8 +21,6 @@ const DEPLOYMENT_SCHEMA = {
  * Prepares the deployment file associated with the active deployment.
  * */
 subtask(SUBTASK_PREPARE_DEPLOYMENT).setAction(async (taskArguments, hre) => {
-  await _printTitle();
-
   if (!hre.deployer) {
     hre.deployer = {};
   }
@@ -39,32 +33,11 @@ subtask(SUBTASK_PREPARE_DEPLOYMENT).setAction(async (taskArguments, hre) => {
   _ensureFoldersExist();
 
   hre.deployer.file = _determineTargetDeploymentFile();
-  await _printInfo(taskArguments);
-
-  await prompter.confirmAction('Proceed with deployment');
 
   _createDeploymentFileIfNeeded();
 
   hre.deployer.data = _setupAutosaveProxy({ hre });
 });
-
-async function _printTitle() {
-  async function figPring(msg, font = 'Slant') {
-    return new Promise((resolve) => {
-      figlet.text(msg, { font }, function (err, formattedMsg) {
-        if (err) {
-          throw new Error(err);
-        }
-
-        console.log(chalk.red(formattedMsg));
-        resolve();
-      });
-    });
-  }
-
-  await figPring(readPackageJson().name);
-  await figPring('           deployer');
-}
 
 async function _clearPreviousDeploymentData() {
   logger.warn('Received --clear parameter. This will delete all previous deployment data!');
@@ -183,49 +156,7 @@ function _ensureFoldersExist() {
   }
 
   const networkFolder = path.join(deploymentsFolder, hre.network.name);
-  console.log(networkFolder);
-  console.log('>', fs.existsSync(networkFolder));
   if (!fs.existsSync(networkFolder)) {
-    console.log('CREATE');
     fs.mkdirSync(networkFolder);
   }
-
-  console.log('>', fs.existsSync(networkFolder));
-}
-
-async function _printInfo(taskArguments) {
-  logger.log(chalk.yellow('\nPlease confirm these deployment parameters:'));
-  logger.boxStart();
-
-  logger.log(chalk.gray(`commit: ${getCommit()}`));
-
-  const branch = getBranch();
-  logger.log(chalk[branch !== 'master' ? 'red' : 'gray'](`branch: ${branch}`));
-
-  const network = hre.network.name;
-  logger.log(chalk[network.includes('mainnet') ? 'red' : 'gray'](`network: ${network}`));
-
-  logger.log(chalk.gray(`debug: ${taskArguments.debug}`));
-
-  if (fs.existsSync(hre.deployer.file)) {
-    logger.log(chalk.gray(`deployment file: ${hre.deployer.file}`));
-  } else {
-    logger.log(chalk.green(`new deployment file: ${hre.deployer.file}`));
-  }
-
-  const signer = (await hre.ethers.getSigners())[0];
-  const balance = hre.ethers.utils.formatEther(
-    await hre.ethers.provider.getBalance(signer.address)
-  );
-  logger.log(chalk.gray(`signer: ${signer.address}`));
-  logger.log(chalk.gray(`signer balance: ${balance} ETH`));
-
-  if (taskArguments.clear) {
-    logger.log(chalk.red('clear: true'));
-  }
-
-  logger.boxEnd();
-
-  logger.debug('Deployer configuration:');
-  logger.debug(JSON.stringify(hre.config.deployer, null, 2));
 }

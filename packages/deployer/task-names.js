@@ -9,4 +9,5 @@ module.exports = {
   SUBTASK_UPGRADE_PROXY: 'upgrade-proxy',
   SUBTASK_PREPARE_DEPLOYMENT: 'prepare-deployment',
   SUBTASK_FINALIZE_DEPLOYMENT: 'finalize-deployment',
+  SUBTASK_PRINT_INFO: 'print-info',
 };
