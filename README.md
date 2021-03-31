@@ -1,5 +1,8 @@
 ## Synthetix-v3
 
+**IMPORTANT**
+This repository is still unofficial, and very much a work in progress.
+
 ### Project structure
 
 This repository consists of a main hardhat project at the project root, and sub-packages in `packages/*`.
@@ -31,6 +34,6 @@ Hardhat plugin that provides tasks for interacting with deployed instances of th
 
 ### Troubleshooting
 
-*package/* not found*
+_package/_ not found\*
 
 Make sure that you've run `npm install` at the project root, and that you're using version 7+ of npm.
