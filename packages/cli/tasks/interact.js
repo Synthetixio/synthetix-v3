@@ -11,6 +11,7 @@ const inquirer = require('inquirer');
 const autocomplete = require('inquirer-autocomplete-prompt');
 const figlet = require('figlet');
 const levenshtein = require('js-levenshtein');
+const ethers = require('ethers');
 const { yellow, green, red, cyan, gray } = require('chalk');
 
 const synthetix = require('synthetix');
@@ -19,6 +20,7 @@ const branchName = require('current-git-branch');
 const package = require('../package.json');
 const synthetixPackage = require('synthetix/package.json');
 
+const { sendTx, confirmTx } = require('../utils/runTx');
 const { setupProvider } = require('../utils/setupProvider');
 const { logReceipt, logError } = require('../utils/prettyLog');
 const {
@@ -126,33 +128,23 @@ function printCheatsheet({ activeContract, recentContracts, wallet }) {
 
 task(TASK_INTERACT_NAME, TASK_INTERACT_DESC, async function (args, hre) {
   // ------------------
-  // Get args
-  // ------------------
-  ({
-    useOvmParam,
-    networkParam,
-    providerUrl,
-    useForkParam,
-    gasPrice,
-    gasLimitParam,
-    privateKey,
-  } = args);
-
-  // ------------------
-  // Apply defaults to args
-  // ------------------
-  const useOvm = useOvmParam || false;
-  const useFork = useForkParam || false;
-  const network = networkParam || 'mainnet';
-  const gasLimit = gasLimitParam || 8000000;
-
-  // ------------------
   // Default values per network
   // ------------------
   const key = `${network}${useOvm ? '-ovm' : ''}`;
   const defaults = DEFAULTS[key];
-  providerUrl = providerUrl || defaults.providerUrl;
-  gasPrice = gasPrice || defaults.gasPrice;
+
+  // ------------------
+  // Get args (apply defaults)
+  // ------------------
+  var {
+    useOvm = false,
+    network = 'mainnet',
+    providerUrl = defaults.providerUrl,
+    useFork = false,
+    gasPrice = defaults.gasPrice,
+    gasLimit = 8000000,
+    privateKey,
+  } = args;
 
   // ------------------
   // Setup
@@ -389,7 +381,7 @@ task(TASK_INTERACT_NAME, TASK_INTERACT_DESC, async function (args, hre) {
             try {
               processed = JSON.parse(processed);
             } catch (err) {
-              console.log(red(`Error parsing array input. Please use the indicated syntax.`));
+              console.log(red('Error parsing array input. Please use the indicated syntax.'));
 
               await pickFunction();
             }
@@ -455,7 +447,7 @@ task(TASK_INTERACT_NAME, TASK_INTERACT_DESC, async function (args, hre) {
         try {
           preview = await contract.populateTransaction[abiItemName](...inputs, overrides);
         } catch (err) {
-          console.log(yellow(`Warning: tx will probably fail!`));
+          console.log(yellow('Warning: tx will probably fail!'));
         }
         if (preview && preview.data) {
           console.log(gray(`  > calldata: ${preview.data}`));
@@ -517,7 +509,7 @@ task(TASK_INTERACT_NAME, TASK_INTERACT_DESC, async function (args, hre) {
 
         if (abiItem.stateMutability === 'view' && result !== undefined) {
           if (Array.isArray(result) && result.length === 0) {
-            console.log(gray(`  ↪ Call returned no data`));
+            console.log(gray('  ↪ Call returned no data'));
           } else {
             if (abiItem.outputs.length > 1) {
               for (let i = 0; i < abiItem.outputs.length; i++) {
