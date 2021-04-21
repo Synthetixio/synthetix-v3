@@ -33,9 +33,14 @@ function logError(error) {
     if (typeof error === 'string') {
       return error;
     } else {
-      if (Object.prototype.hasOwnProperty.call(error, reason)) {
+      // if (Object.prototype.hasOwnProperty.call(error, reason)) {
+      //   return error.reason;
+      // } else if (Object.prototype.hasOwnProperty.call(error, error)) {
+      //   return findReason(error.error);
+      // }
+      if (Object.prototype.hasOwnProperty.call(error, 'reason')) {
         return error.reason;
-      } else if (Object.prototype.hasOwnProperty.call(error, error)) {
+      } else if (Object.prototype.hasOwnProperty.call(error, 'error')) {
         return findReason(error.error);
       }
     }

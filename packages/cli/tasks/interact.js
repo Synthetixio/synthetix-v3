@@ -128,23 +128,25 @@ function printCheatsheet({ activeContract, recentContracts, wallet }) {
 
 task(TASK_INTERACT_NAME, TASK_INTERACT_DESC, async function (args, hre) {
   // ------------------
-  // Default values per network
-  // ------------------
-  const key = `${network}${useOvm ? '-ovm' : ''}`;
-  const defaults = DEFAULTS[key];
-
-  // ------------------
   // Get args (apply defaults)
   // ------------------
   var {
     useOvm = false,
     network = 'mainnet',
-    providerUrl = defaults.providerUrl,
+    providerUrl,
     useFork = false,
-    gasPrice = defaults.gasPrice,
+    gasPrice,
     gasLimit = 8000000,
     privateKey,
   } = args;
+
+  // ------------------
+  // Default values per network
+  // ------------------
+  const key = `${network}${useOvm ? '-ovm' : ''}`;
+  const defaults = DEFAULTS[key];
+  providerUrl = providerUrl || defaults.providerUrl;
+  gasPrice = gasPrice || defaults.gasPrice;
 
   // ------------------
   // Setup
