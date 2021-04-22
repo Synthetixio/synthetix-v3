@@ -7,22 +7,22 @@ require('dotenv').config();
 const fs = require('fs');
 const path = require('path');
 
+const { types } = require('hardhat/config');
+const ethers = require('ethers');
 const inquirer = require('inquirer');
 const autocomplete = require('inquirer-autocomplete-prompt');
 const figlet = require('figlet');
 const levenshtein = require('js-levenshtein');
-const ethers = require('ethers');
 const { yellow, green, red, cyan, gray } = require('chalk');
+const branchName = require('current-git-branch');
 
 const synthetix = require('synthetix');
-
-const branchName = require('current-git-branch');
 const package = require('../package.json');
 const synthetixPackage = require('synthetix/package.json');
 
-const { sendTx, confirmTx } = require('../utils/runTx');
-const { setupProvider } = require('../utils/setupProvider');
-const { logReceipt, logError } = require('../utils/prettyLog');
+const { sendTx, confirmTx } = require('@synthetixio/core-js/utils/runTx');
+const { setupProvider } = require('@synthetixio/core-js/utils/setupProvider');
+const { logReceipt, logError } = require('@synthetixio/core-js/utils/prettyLog');
 const {
   TASK_INTERACT_NAME,
   TASK_INTERACT_DESC,
@@ -126,417 +126,421 @@ function printCheatsheet({ activeContract, recentContracts, wallet }) {
   }
 }
 
-task(TASK_INTERACT_NAME, TASK_INTERACT_DESC, async function (args, hre) {
-  // ------------------
-  // Get args (apply defaults)
-  // ------------------
-  var {
-    useOvm = false,
-    network = 'mainnet',
-    providerUrl,
-    useFork = false,
-    gasPrice,
-    gasLimit = 8000000,
-    privateKey,
-  } = args;
+task(TASK_INTERACT_NAME, TASK_INTERACT_DESC)
+  .addFlag('useFork', 'Use a local fork')
+  .addFlag('useOvm', 'Use an Optimism chain')
+  .addOptionalParam('instance', 'Instance of the network', 'test')
+  .addOptionalParam('privateKey', 'Private key to use to sign txs')
+  .addOptionalParam('gasPrice', 'Gas price to set when performing transfers')
+  .addOptionalParam('gasLimit', 'Max gas to use when signing transactions', 8000000, types.int)
+  .addOptionalParam('providerUrl', 'The http provider to use for communicating with the blockchain')
+  .addOptionalParam('deploymentPath', 'Specify the path to the deployment data directory')
 
-  // ------------------
-  // Default values per network
-  // ------------------
-  const key = `${network}${useOvm ? '-ovm' : ''}`;
-  const defaults = DEFAULTS[key];
-  providerUrl = providerUrl || defaults.providerUrl;
-  gasPrice = gasPrice || defaults.gasPrice;
+  .setAction(async function (args, hre) {
+    // ------------------
+    // Get args (apply defaults)
+    // ------------------
+    const { useOvm, useFork, gasLimit } = args;
+    var { providerUrl, gasPrice, privateKey } = args;
+    const network = hre.network.name;
 
-  // ------------------
-  // Setup
-  // ------------------
+    // ------------------
+    // Default values per network
+    // ------------------
+    const key = `${network}${useOvm ? '-ovm' : ''}`;
+    const defaults = DEFAULTS[key];
+    providerUrl = providerUrl || defaults.providerUrl;
+    gasPrice = gasPrice || defaults.gasPrice;
 
-  // Wrap Synthetix utils for current network
-  const { getPathToNetwork, getUsers, getTarget, getSource } = synthetix.wrap({
-    network,
-    useOvm,
-    fs,
-    path,
-  });
+    // ------------------
+    // Setup
+    // ------------------
 
-  // Derive target build path and retrieve deployment artifacts
-  const deploymentPath = hre.config.cli.artifacts;
-  const file = synthetix.constants.DEPLOYMENT_FILENAME;
-  let deploymentFilePath;
-  if (deploymentPath) {
-    deploymentFilePath = path.join(deploymentPath, file);
-  } else {
-    deploymentFilePath = getPathToNetwork({ network, useOvm, file });
-  }
-  const deploymentData = JSON.parse(fs.readFileSync(deploymentFilePath));
+    // Wrap Synthetix utils for current network
+    const { getPathToNetwork, getUsers, getTarget, getSource } = synthetix.wrap({
+      network,
+      useOvm,
+      fs,
+      path,
+    });
 
-  // Determine private/public keys
-  let publicKey;
-  if (useFork) {
-    if (!privateKey) {
-      publicKey = getUsers({ user: 'owner' }).address;
-    }
-  }
-  if (!privateKey && process.env.PRIVATE_KEY) {
-    privateKey = process.env.PRIVATE_KEY;
-  }
-
-  // Determine provider url
-  if (useFork) {
-    providerUrl = 'http://localhost:8545';
-  }
-  if (!providerUrl && process.env.PROVIDER_URL) {
-    const envProviderUrl = process.env.PROVIDER_URL;
-    if (envProviderUrl.includes('infura')) {
-      providerUrl = process.env.PROVIDER_URL.replace('network', network);
+    // Derive target build path and retrieve deployment artifacts
+    const deploymentPath = hre.config.cli.artifacts;
+    const file = synthetix.constants.DEPLOYMENT_FILENAME;
+    let deploymentFilePath;
+    if (deploymentPath) {
+      deploymentFilePath = path.join(deploymentPath, file);
     } else {
-      providerUrl = envProviderUrl;
+      deploymentFilePath = getPathToNetwork({ network, useOvm, file });
     }
-  }
+    const deploymentData = JSON.parse(fs.readFileSync(deploymentFilePath));
 
-  // Construct provider and signer
-  const { provider, wallet } = setupProvider({
-    providerUrl,
-    privateKey,
-    publicKey,
-  });
-
-  // Set up inquirer
-  inquirer.registerPrompt('autocomplete', autocomplete);
-
-  // Set up cache
-  const activeContract = {};
-  const recentContracts = [];
-
-  // -----------------
-  // Start interaction
-  // -----------------
-
-  await printHeader({ useOvm, providerUrl, network, gasPrice, deploymentFilePath, wallet });
-
-  async function pickContract() {
-    const targets = Object.keys(deploymentData.targets);
-
-    function prioritizeTarget(itemName) {
-      targets.splice(targets.indexOf(itemName), 1);
-      targets.unshift(itemName);
+    // Determine private/public keys
+    let publicKey;
+    if (useFork) {
+      if (!privateKey) {
+        publicKey = getUsers({ user: 'owner' }).address;
+      }
+    }
+    if (!privateKey && process.env.PRIVATE_KEY) {
+      privateKey = process.env.PRIVATE_KEY;
     }
 
-    prioritizeTarget('Synthetix');
-
-    async function searchTargets(matches, query = '') {
-      matches;
-
-      return new Promise((resolve) => {
-        resolve(targets.filter((target) => target.toLowerCase().includes(query.toLowerCase())));
-      });
+    // Determine provider url
+    if (useFork) {
+      providerUrl = 'http://localhost:8545';
+    }
+    if (!providerUrl && process.env.PROVIDER_URL) {
+      const envProviderUrl = process.env.PROVIDER_URL;
+      if (envProviderUrl.includes('infura')) {
+        providerUrl = process.env.PROVIDER_URL.replace('network', network);
+      } else {
+        providerUrl = envProviderUrl;
+      }
     }
 
-    const { contractName } = await inquirer.prompt([
-      {
-        type: 'autocomplete',
-        name: 'contractName',
-        message: 'Pick a CONTRACT:',
-        source: (matches, query) => searchTargets(matches, query),
-      },
-    ]);
-
-    const target = await getTarget({
-      contract: contractName,
-      network,
-      useOvm,
-      deploymentPath,
-    });
-    const source = await getSource({
-      contract: target.source,
-      network,
-      useOvm,
-      deploymentPath,
+    // Construct provider and signer
+    const { provider, wallet } = setupProvider({
+      providerUrl,
+      privateKey,
+      publicKey,
     });
 
-    activeContract.name = contractName;
-    activeContract.address = target.address;
-    if (!recentContracts.some((entry) => entry.name === contractName)) {
-      recentContracts.push({ ...activeContract });
-    }
+    // Set up inquirer
+    inquirer.registerPrompt('autocomplete', autocomplete);
 
-    printCheatsheet({ activeContract, recentContracts, wallet });
-
-    const contract = new ethers.Contract(target.address, source.abi, wallet || provider);
-    if (source.bytecode === '') {
-      const code = await provider.getCode(target.address);
-      console.log(red(`  > No code at ${target.address}, code: ${code}`));
-    }
+    // Set up cache
+    const activeContract = {};
+    const recentContracts = [];
 
     // -----------------
-    // Pick a function
+    // Start interaction
     // -----------------
 
-    async function pickFunction() {
-      function combineNameAndType(items) {
-        const combined = [];
-        if (items && items.length > 0) {
-          items.map((item) => {
-            if (item.name) combined.push(`${item.type} ${item.name}`);
-            else combined.push(item.type);
-          });
-        }
+    await printHeader({ useOvm, providerUrl, network, gasPrice, deploymentFilePath, wallet });
 
-        return combined;
+    async function pickContract() {
+      const targets = Object.keys(deploymentData.targets);
+
+      function prioritizeTarget(itemName) {
+        targets.splice(targets.indexOf(itemName), 1);
+        targets.unshift(itemName);
       }
 
-      function reduceSignature(item) {
-        const inputs = combineNameAndType(item.inputs);
-        const inputPart = `${item.name}(${inputs.join(', ')})`;
+      prioritizeTarget('Synthetix');
 
-        const outputs = combineNameAndType(item.outputs);
-        let outputPart = outputs.length > 0 ? ` returns(${outputs.join(', ')})` : '';
-        outputPart = item.stateMutability === 'view' ? ` view${outputPart}` : outputPart;
-
-        return `${inputPart}${outputPart}`;
-      }
-
-      const escItem = '↩ BACK';
-
-      async function searchAbi(matches, query = '') {
+      async function searchTargets(matches, query = '') {
         matches;
 
         return new Promise((resolve) => {
-          let abiMatches = source.abi.filter((item) => {
-            if (item.name && item.type === 'function') {
-              return item.name.toLowerCase().includes(query.toLowerCase());
-            }
-            return false;
-          });
-
-          // Sort matches by proximity to query
-          abiMatches = abiMatches.sort((a, b) => {
-            const aProximity = levenshtein(a.name, query);
-            const bProximity = levenshtein(b.name, query);
-            return aProximity - bProximity;
-          });
-
-          const signatures = abiMatches.map((match) => reduceSignature(match));
-          if (query === '') {
-            signatures.splice(0, 0, escItem);
-          }
-
-          resolve(signatures);
+          resolve(targets.filter((target) => target.toLowerCase().includes(query.toLowerCase())));
         });
       }
 
-      // Prompt function to call
-      const prompt = inquirer.prompt([
+      const { contractName } = await inquirer.prompt([
         {
           type: 'autocomplete',
-          name: 'abiItemSignature',
-          message: '>>> Pick a FUNCTION:',
-          source: (matches, query) => searchAbi(matches, query),
+          name: 'contractName',
+          message: 'Pick a CONTRACT:',
+          source: (matches, query) => searchTargets(matches, query),
         },
       ]);
-      const { abiItemSignature } = await prompt;
 
-      if (abiItemSignature === escItem) {
-        prompt.ui.close();
+      const target = await getTarget({
+        contract: contractName,
+        network,
+        useOvm,
+        deploymentPath,
+      });
+      const source = await getSource({
+        contract: target.source,
+        network,
+        useOvm,
+        deploymentPath,
+      });
 
-        await pickContract();
-        // TODO Add Exit to pickContract
+      activeContract.name = contractName;
+      activeContract.address = target.address;
+      if (!recentContracts.some((entry) => entry.name === contractName)) {
+        recentContracts.push({ ...activeContract });
       }
 
-      const abiItemName = abiItemSignature.split('(')[0];
-      const abiItem = source.abi.find((item) => item.name === abiItemName);
+      printCheatsheet({ activeContract, recentContracts, wallet });
 
-      // -----------------
-      // Process inputs
-      // -----------------
-
-      // Prompt inputs for function
-      const inputs = [];
-      if (abiItem.inputs.length > 0) {
-        for (const input of abiItem.inputs) {
-          const name = input.name || input.type;
-
-          let message = name;
-
-          const requiresBytes32Util = input.type.includes('bytes32');
-          const isArray = input.type.includes('[]');
-
-          if (requiresBytes32Util) {
-            message = `${message} (uses toBytes32${
-              isArray ? ' - if array, use ["a","b","c"] syntax' : ''
-            })`;
-          }
-
-          const answer = await inquirer.prompt([
-            {
-              type: 'input',
-              message,
-              name,
-            },
-          ]);
-
-          let processed = answer[name];
-          console.log(gray('  > raw inputs:', processed));
-
-          if (isArray) {
-            try {
-              processed = JSON.parse(processed);
-            } catch (err) {
-              console.log(red('Error parsing array input. Please use the indicated syntax.'));
-
-              await pickFunction();
-            }
-          }
-
-          function bytes32ify(value) {
-            if (ethers.utils.isHexString(value)) {
-              console.log('isHex');
-              return value;
-            } else {
-              return synthetix.toBytes32(value);
-            }
-          }
-          if (requiresBytes32Util) {
-            if (isArray) {
-              processed = processed.map((item) => bytes32ify(item));
-            } else {
-              processed = bytes32ify(processed);
-            }
-          }
-
-          // Avoid 'false' and '0' being interpreted as bool = true
-          function boolify(value) {
-            if (value === 'false' || value === '0') return 0;
-            return value;
-          }
-          if (isArray) {
-            processed = processed.map((value) => boolify(value));
-          } else {
-            processed = boolify(processed);
-          }
-          console.log(
-            gray(`  > processed inputs (${isArray ? processed.length : '1'}):`, processed)
-          );
-
-          inputs.push(processed);
-        }
+      const contract = new ethers.Contract(target.address, source.abi, wallet || provider);
+      if (source.bytecode === '') {
+        const code = await provider.getCode(target.address);
+        console.log(red(`  > No code at ${target.address}, code: ${code}`));
       }
 
       // -----------------
-      // Call function
+      // Pick a function
       // -----------------
 
-      // Call function
-      let result, error;
-      // READ ONLY
-      if (abiItem.stateMutability === 'view') {
-        console.log(gray('  > Querying...'));
+      async function pickFunction() {
+        function combineNameAndType(items) {
+          const combined = [];
+          if (items && items.length > 0) {
+            items.map((item) => {
+              if (item.name) combined.push(`${item.type} ${item.name}`);
+              else combined.push(item.type);
+            });
+          }
 
-        try {
-          result = await contract[abiItemName](...inputs);
-        } catch (err) {
-          error = err;
-        }
-        // SEND TX
-      } else {
-        const overrides = {
-          gasPrice: ethers.utils.parseUnits(`${gasPrice}`, 'gwei'),
-          gasLimit,
-        };
-
-        let preview;
-        try {
-          preview = await contract.populateTransaction[abiItemName](...inputs, overrides);
-        } catch (err) {
-          console.log(yellow('Warning: tx will probably fail!'));
-        }
-        if (preview && preview.data) {
-          console.log(gray(`  > calldata: ${preview.data}`));
+          return combined;
         }
 
-        const { confirmation } = await inquirer.prompt([
+        function reduceSignature(item) {
+          const inputs = combineNameAndType(item.inputs);
+          const inputPart = `${item.name}(${inputs.join(', ')})`;
+
+          const outputs = combineNameAndType(item.outputs);
+          let outputPart = outputs.length > 0 ? ` returns(${outputs.join(', ')})` : '';
+          outputPart = item.stateMutability === 'view' ? ` view${outputPart}` : outputPart;
+
+          return `${inputPart}${outputPart}`;
+        }
+
+        const escItem = '↩ BACK';
+
+        async function searchAbi(matches, query = '') {
+          matches;
+
+          return new Promise((resolve) => {
+            let abiMatches = source.abi.filter((item) => {
+              if (item.name && item.type === 'function') {
+                return item.name.toLowerCase().includes(query.toLowerCase());
+              }
+              return false;
+            });
+
+            // Sort matches by proximity to query
+            abiMatches = abiMatches.sort((a, b) => {
+              const aProximity = levenshtein(a.name, query);
+              const bProximity = levenshtein(b.name, query);
+              return aProximity - bProximity;
+            });
+
+            const signatures = abiMatches.map((match) => reduceSignature(match));
+            if (query === '') {
+              signatures.splice(0, 0, escItem);
+            }
+
+            resolve(signatures);
+          });
+        }
+
+        // Prompt function to call
+        const prompt = inquirer.prompt([
           {
-            type: 'confirm',
-            name: 'confirmation',
-            message: 'Send transaction?',
+            type: 'autocomplete',
+            name: 'abiItemSignature',
+            message: '>>> Pick a FUNCTION:',
+            source: (matches, query) => searchAbi(matches, query),
           },
         ]);
-        if (!confirmation) {
-          await pickFunction();
+        const { abiItemSignature } = await prompt;
 
-          return;
+        if (abiItemSignature === escItem) {
+          prompt.ui.close();
+
+          await pickContract();
+          // TODO Add Exit to pickContract
         }
 
-        console.log(gray(`  > Staging transaction... ${new Date()}`));
-        const txPromise = contract[abiItemName](...inputs, overrides);
-        result = await sendTx({
-          txPromise,
-          provider,
-        });
+        const abiItemName = abiItemSignature.split('(')[0];
+        const abiItem = source.abi.find((item) => item.name === abiItemName);
 
-        if (result.success) {
-          console.log(gray(`  > Sending transaction... ${result.tx.hash}`));
-          result = await confirmTx({
-            tx: result.tx,
+        // -----------------
+        // Process inputs
+        // -----------------
+
+        // Prompt inputs for function
+        const inputs = [];
+        if (abiItem.inputs.length > 0) {
+          for (const input of abiItem.inputs) {
+            const name = input.name || input.type;
+
+            let message = name;
+
+            const requiresBytes32Util = input.type.includes('bytes32');
+            const isArray = input.type.includes('[]');
+
+            if (requiresBytes32Util) {
+              message = `${message} (uses toBytes32${
+                isArray ? ' - if array, use ["a","b","c"] syntax' : ''
+              })`;
+            }
+
+            const answer = await inquirer.prompt([
+              {
+                type: 'input',
+                message,
+                name,
+              },
+            ]);
+
+            let processed = answer[name];
+            console.log(gray('  > raw inputs:', processed));
+
+            if (isArray) {
+              try {
+                processed = JSON.parse(processed);
+              } catch (err) {
+                console.log(red('Error parsing array input. Please use the indicated syntax.'));
+
+                await pickFunction();
+              }
+            }
+
+            function bytes32ify(value) {
+              if (ethers.utils.isHexString(value)) {
+                console.log('isHex');
+                return value;
+              } else {
+                return synthetix.toBytes32(value);
+              }
+            }
+            if (requiresBytes32Util) {
+              if (isArray) {
+                processed = processed.map((item) => bytes32ify(item));
+              } else {
+                processed = bytes32ify(processed);
+              }
+            }
+
+            // Avoid 'false' and '0' being interpreted as bool = true
+            function boolify(value) {
+              if (value === 'false' || value === '0') return 0;
+              return value;
+            }
+            if (isArray) {
+              processed = processed.map((value) => boolify(value));
+            } else {
+              processed = boolify(processed);
+            }
+            console.log(
+              gray(`  > processed inputs (${isArray ? processed.length : '1'}):`, processed)
+            );
+
+            inputs.push(processed);
+          }
+        }
+
+        // -----------------
+        // Call function
+        // -----------------
+
+        // Call function
+        let result, error;
+        // READ ONLY
+        if (abiItem.stateMutability === 'view') {
+          console.log(gray('  > Querying...'));
+
+          try {
+            result = await contract[abiItemName](...inputs);
+          } catch (err) {
+            error = err;
+          }
+          // SEND TX
+        } else {
+          const overrides = {
+            gasPrice: ethers.utils.parseUnits(`${gasPrice}`, 'gwei'),
+            gasLimit,
+          };
+
+          let preview;
+          try {
+            preview = await contract.populateTransaction[abiItemName](...inputs, overrides);
+          } catch (err) {
+            console.log(yellow('Warning: tx will probably fail!'));
+          }
+          if (preview && preview.data) {
+            console.log(gray(`  > calldata: ${preview.data}`));
+          }
+
+          const { confirmation } = await inquirer.prompt([
+            {
+              type: 'confirm',
+              name: 'confirmation',
+              message: 'Send transaction?',
+            },
+          ]);
+          if (!confirmation) {
+            await pickFunction();
+
+            return;
+          }
+
+          console.log(gray(`  > Staging transaction... ${new Date()}`));
+          const txPromise = contract[abiItemName](...inputs, overrides);
+          result = await sendTx({
+            txPromise,
             provider,
           });
 
           if (result.success) {
-            result = result.receipt;
+            console.log(gray(`  > Sending transaction... ${result.tx.hash}`));
+            result = await confirmTx({
+              tx: result.tx,
+              provider,
+            });
+
+            if (result.success) {
+              result = result.receipt;
+            } else {
+              error = result.error;
+            }
           } else {
             error = result.error;
           }
-        } else {
-          error = result.error;
         }
-      }
 
-      function printReturnedValue(value) {
-        if (ethers.BigNumber.isBigNumber(value)) {
-          return `${value.toString()} (${ethers.utils.formatEther(value)})`;
-        } else if (Array.isArray(value)) {
-          return value.map((item) => `${item}`);
-        } else {
-          return value;
-        }
-      }
-
-      console.log(gray(`  > Transaction sent... ${new Date()}`));
-
-      if (error) {
-        logError(error);
-      } else {
-        logReceipt(result, contract);
-
-        if (abiItem.stateMutability === 'view' && result !== undefined) {
-          if (Array.isArray(result) && result.length === 0) {
-            console.log(gray('  ↪ Call returned no data'));
+        function printReturnedValue(value) {
+          if (ethers.BigNumber.isBigNumber(value)) {
+            return `${value.toString()} (${ethers.utils.formatEther(value)})`;
+          } else if (Array.isArray(value)) {
+            return value.map((item) => `${item}`);
           } else {
-            if (abiItem.outputs.length > 1) {
-              for (let i = 0; i < abiItem.outputs.length; i++) {
-                const output = abiItem.outputs[i];
-                console.log(
-                  cyan(`  ↪${output.name}(${output.type}):`),
-                  printReturnedValue(result[i])
-                );
-              }
+            return value;
+          }
+        }
+
+        console.log(gray(`  > Transaction sent... ${new Date()}`));
+
+        if (error) {
+          logError(error);
+        } else {
+          logReceipt(result, contract);
+
+          if (abiItem.stateMutability === 'view' && result !== undefined) {
+            if (Array.isArray(result) && result.length === 0) {
+              console.log(gray('  ↪ Call returned no data'));
             } else {
-              const output = abiItem.outputs[0];
-              console.log(cyan(`  ↪${output.name}(${output.type}):`), printReturnedValue(result));
+              if (abiItem.outputs.length > 1) {
+                for (let i = 0; i < abiItem.outputs.length; i++) {
+                  const output = abiItem.outputs[i];
+                  console.log(
+                    cyan(`  ↪${output.name}(${output.type}):`),
+                    printReturnedValue(result[i])
+                  );
+                }
+              } else {
+                const output = abiItem.outputs[0];
+                console.log(cyan(`  ↪${output.name}(${output.type}):`), printReturnedValue(result));
+              }
             }
           }
         }
+
+        // Call indefinitely
+        await pickFunction();
       }
 
-      // Call indefinitely
+      // First function pick
       await pickFunction();
     }
 
-    // First function pick
-    await pickFunction();
-  }
-
-  // First contract pick
-  await pickContract();
-});
+    // First contract pick
+    await pickContract();
+  });

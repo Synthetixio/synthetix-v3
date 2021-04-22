@@ -1,13 +1,9 @@
 {
-  "name": "hh-cli",
+  "name": "@synthetixio/hh-cli",
   "version": "1.0.0",
   "description": "Synthetix CLI interactive UI as Hardhat plugin",
   "main": "index.js",
   "scripts": {
-    "lint-js": "prettier --write '**/*.js' && eslint --fix '**/*.js'",
-    "lint-sol": "prettier --write 'contracts/**/*.sol' && solhint --fix 'contracts/**/*.sol'",
-    "lint-quick": "pretty-quick --staged",
-    "lint": "npm run lint-js",
     "test": "mocha --exit --recursive 'test/**/*.test.js'"
   },
   "author": "Leonardo Massazza",
@@ -17,22 +13,20 @@
   },
   "devDependencies": {
     "chai": "^4.3.4",
+    "chalk": "^4.1.0",
+    "current-git-branch": "^1.1.0",
     "dotenv": "^6.1.0",
     "eslint": "^7.24.0",
     "ethers": "^5.0.17",
+    "figlet": "^1.5.0",
     "hardhat": "^2.2.0",
+    "inquirer": "^7.3.3",
+    "inquirer-autocomplete-prompt": "^1.3.0",
+    "js-levenshtein": "^1.1.6",
     "mocha": "^8.3.2",
     "prettier": "^2.2.1",
     "prettier-plugin-solidity": "*",
     "pretty-quick": "^3.1.0",
     "synthetix": "2.41.0"
-  },
-  "dependencies": {
-    "chalk": "^4.1.0",
-    "current-git-branch": "^1.1.0",
-    "figlet": "^1.5.0",
-    "inquirer": "^7.3.3",
-    "inquirer-autocomplete-prompt": "^1.3.0",
-    "js-levenshtein": "^1.1.6"
   }
 }

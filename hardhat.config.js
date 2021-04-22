@@ -2,6 +2,7 @@ require('dotenv').config();
 
 require('@nomiclabs/hardhat-waffle');
 require('@synthetixio/deployer');
+require('@synthetixio/hh-cli');
 
 module.exports = {
   solidity: {
