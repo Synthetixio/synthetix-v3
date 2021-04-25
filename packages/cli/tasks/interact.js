@@ -1,28 +1,33 @@
+'use strict';
+
 /*global task*/
 /*eslint no-undef: "error"*/
 /*eslint no-unused-vars: ["error", { "varsIgnorePattern": "[NAME,DESC]" }]*/
 
 require('dotenv').config();
 
-const fs = require('fs');
-const path = require('path');
-
 const { types } = require('hardhat/config');
 const ethers = require('ethers');
+const w3utils = require('web3-utils');
+
 const inquirer = require('inquirer');
 const autocomplete = require('inquirer-autocomplete-prompt');
 const figlet = require('figlet');
 const levenshtein = require('js-levenshtein');
 const { yellow, green, red, cyan, gray } = require('chalk');
-const branchName = require('current-git-branch');
 
-const synthetix = require('synthetix');
-const package = require('../package.json');
-const synthetixPackage = require('synthetix/package.json');
+const packageJson = require('../package.json');
 
 const { sendTx, confirmTx } = require('@synthetixio/core-js/utils/runTx');
 const { setupProvider } = require('@synthetixio/core-js/utils/setupProvider');
 const { logReceipt, logError } = require('@synthetixio/core-js/utils/prettyLog');
+const {
+  getDeploymentFilePath,
+  getDeploymentData,
+  getTarget,
+  getSource,
+} = require('@synthetixio/core-js/utils/deploymentHelper');
+
 const {
   TASK_INTERACT_NAME,
   TASK_INTERACT_DESC,
@@ -34,35 +39,44 @@ const {
   TASK_STATUS_DESC,
 } = require('../tasks-info');
 
-const DEFAULTS = {
-  mainnet: {
-    gasPrice: 200,
-  },
-  'mainnet-ovm': {
-    providerUrl: 'https://mainnet.optimism.io',
-    gasPrice: 0,
-  },
-  kovan: {
-    gasPrice: 1,
-  },
-  'kovan-ovm': {
-    providerUrl: 'https://kovan.optimism.io',
-    gasPrice: 0,
-  },
-  local: {
-    gasPrice: 1,
-    providerUrl: 'http://localhost:9545',
-  },
-  'local-ovm': {
-    providerUrl: 'http://localhost:8545',
-    gasPrice: 0,
-  },
-  rinkeby: {
-    gasPrice: 1,
-  },
-};
+// const DEFAULTS = {
+//   mainnet: {
+//     gasPrice: 200,
+//   },
+//   'mainnet-ovm': {
+//     providerUrl: 'https://mainnet.optimism.io',
+//     gasPrice: 0,
+//   },
+//   kovan: {
+//     gasPrice: 1,
+//   },
+//   'kovan-ovm': {
+//     providerUrl: 'https://kovan.optimism.io',
+//     gasPrice: 0,
+//   },
+//   local: {
+//     gasPrice: 1,
+//     providerUrl: 'http://localhost:9545',
+//   },
+//   'local-ovm': {
+//     providerUrl: 'http://localhost:8545',
+//     gasPrice: 0,
+//   },
+//   rinkeby: {
+//     gasPrice: 1,
+//   },
+// };
 
-async function printHeader({ useOvm, providerUrl, network, gasPrice, deploymentFilePath, wallet }) {
+const ARTIFACTS_JSON_NAME = 'deployment.json';
+
+async function printHeader({
+  providerUrl,
+  network,
+  instance,
+  gasPrice,
+  deploymentFilePath,
+  wallet,
+}) {
   console.clear();
 
   async function figprint(msg, font) {
@@ -75,18 +89,11 @@ async function printHeader({ useOvm, providerUrl, network, gasPrice, deploymentF
       });
     });
   }
-  const msg = await figprint(`SYNTHETIX-CLI${useOvm ? ' *L2*' : ''}`, 'Slant');
-  const synthetixPath = './node_modules/synthetix';
-  const stats = fs.lstatSync(synthetixPath);
-  console.log(useOvm ? red(msg) : green(msg));
-  console.log(green(`v${package.version}`), green(`(Synthetix v${synthetixPackage.version})`));
-  if (stats.isSymbolicLink()) {
-    const realPath = fs.realpathSync(synthetixPath);
-    const branch = branchName({ altPath: realPath });
-    console.log(cyan(`LINKED to ${realPath}${branch ? ` on ${branch}` : ''}`));
-  } else {
-    console.log(gray('not linked to a local synthetix project'));
-  }
+  const msg = await figprint('SYNTHETIX-CLI', 'Slant');
+  // const synthetixPath = './node_modules/synthetix';
+  // const stats = fs.lstatSync(synthetixPath);
+  console.log(green(msg));
+  console.log(green(`v${packageJson.version}`));
 
   console.log('\n');
   console.log(gray('Please review this information before you interact with the system:'));
@@ -95,13 +102,18 @@ async function printHeader({ useOvm, providerUrl, network, gasPrice, deploymentF
   );
   console.log(
     gray(
-      `> Provider: ${providerUrl ? `${providerUrl.slice(0, 25)}...` : 'Ethers default provider'}`
+      `> Provider: ${
+        providerUrl
+          ? `${providerUrl.slice(0, 25)}${providerUrl.length > 25 ? '...' : ''}`
+          : 'Ethers default provider'
+      }`
     )
   );
   console.log(gray(`> Network: ${network}`));
+  console.log(gray(`> Instance: ${instance}`));
   console.log(gray(`> Gas price: ${gasPrice}`));
-  console.log(gray(`> OVM: ${useOvm}`));
-  console.log(yellow(`> Target deployment: ${path.dirname(deploymentFilePath)}`));
+  console.log(yellow(`> Target deployment: ${deploymentFilePath}`));
+  // console.log(yellow(`> Target deployment: ${path.dirname(deploymentFilePath)}`));
 
   if (wallet) {
     console.log(yellow(`> Signer: ${wallet.address || wallet}`));
@@ -126,78 +138,57 @@ function printCheatsheet({ activeContract, recentContracts, wallet }) {
   }
 }
 
+function hostUrl(completeUrl) {
+  const url = new URL(completeUrl);
+  return `${url.protocol}//${url.host}`;
+}
+
+const toBytes32 = (key) => w3utils.rightPad(w3utils.asciiToHex(key), 64);
+// const fromBytes32 = (key) => w3utils.hexToAscii(key);
+
 task(TASK_INTERACT_NAME, TASK_INTERACT_DESC)
-  .addFlag('useFork', 'Use a local fork')
-  .addFlag('useOvm', 'Use an Optimism chain')
-  .addOptionalParam('instance', 'Instance of the network', 'test')
-  .addOptionalParam('privateKey', 'Private key to use to sign txs')
-  .addOptionalParam('gasPrice', 'Gas price to set when performing transfers')
+  .addOptionalParam('instance', 'Instance of the network', 'official')
+  // .addOptionalParam('gasPrice', 'Gas price to set when performing transfers', 200, types.int)
   .addOptionalParam('gasLimit', 'Max gas to use when signing transactions', 8000000, types.int)
-  .addOptionalParam('providerUrl', 'The http provider to use for communicating with the blockchain')
-  .addOptionalParam('deploymentPath', 'Specify the path to the deployment data directory')
+
+  // .addFlag('useFork', 'Use a local fork')
+  // .addFlag('useOvm', 'Use an Optimism chain')
+  // .addOptionalParam('privateKey', 'Private key to use to sign txs')
+  // .addOptionalParam('providerUrl', 'The http provider to use for communicating with the blockchain')
+  // .addOptionalParam('deploymentPath', 'Specify the path to the deployment data directory')
 
   .setAction(async function (args, hre) {
     // ------------------
     // Get args (apply defaults)
     // ------------------
-    const { useOvm, useFork, gasLimit } = args;
-    var { providerUrl, gasPrice, privateKey } = args;
+    const { instance, gasLimit } = args;
+    var gasPrice;
     const network = hre.network.name;
 
     // ------------------
     // Default values per network
     // ------------------
-    const key = `${network}${useOvm ? '-ovm' : ''}`;
-    const defaults = DEFAULTS[key];
-    providerUrl = providerUrl || defaults.providerUrl;
-    gasPrice = gasPrice || defaults.gasPrice;
 
     // ------------------
     // Setup
     // ------------------
 
-    // Wrap Synthetix utils for current network
-    const { getPathToNetwork, getUsers, getTarget, getSource } = synthetix.wrap({
+    // Derive target build path and retrieve deployment artifacts
+    const deploymentFilePath = getDeploymentFilePath({
+      artifactsPath: hre.config.cli.artifacts,
       network,
-      useOvm,
-      fs,
-      path,
+      instance,
+      jsonName: ARTIFACTS_JSON_NAME,
     });
 
-    // Derive target build path and retrieve deployment artifacts
-    const deploymentPath = hre.config.cli.artifacts;
-    const file = synthetix.constants.DEPLOYMENT_FILENAME;
-    let deploymentFilePath;
-    if (deploymentPath) {
-      deploymentFilePath = path.join(deploymentPath, file);
-    } else {
-      deploymentFilePath = getPathToNetwork({ network, useOvm, file });
-    }
-    const deploymentData = JSON.parse(fs.readFileSync(deploymentFilePath));
+    const deploymentData = getDeploymentData({ deploymentFilePath });
 
     // Determine private/public keys
     let publicKey;
-    if (useFork) {
-      if (!privateKey) {
-        publicKey = getUsers({ user: 'owner' }).address;
-      }
-    }
-    if (!privateKey && process.env.PRIVATE_KEY) {
-      privateKey = process.env.PRIVATE_KEY;
-    }
+    const privateKey = process.env.PRIVATE_KEY;
 
     // Determine provider url
-    if (useFork) {
-      providerUrl = 'http://localhost:8545';
-    }
-    if (!providerUrl && process.env.PROVIDER_URL) {
-      const envProviderUrl = process.env.PROVIDER_URL;
-      if (envProviderUrl.includes('infura')) {
-        providerUrl = process.env.PROVIDER_URL.replace('network', network);
-      } else {
-        providerUrl = envProviderUrl;
-      }
-    }
+    const providerUrl = hostUrl(hre.network.config.url);
 
     // Construct provider and signer
     const { provider, wallet } = setupProvider({
@@ -217,7 +208,8 @@ task(TASK_INTERACT_NAME, TASK_INTERACT_DESC)
     // Start interaction
     // -----------------
 
-    await printHeader({ useOvm, providerUrl, network, gasPrice, deploymentFilePath, wallet });
+    // await printHeader({ useOvm, providerUrl, network, gasPrice, deploymentFilePath, wallet });
+    await printHeader({ providerUrl, network, instance, gasPrice, deploymentFilePath, wallet });
 
     async function pickContract() {
       const targets = Object.keys(deploymentData.targets);
@@ -246,17 +238,13 @@ task(TASK_INTERACT_NAME, TASK_INTERACT_DESC)
         },
       ]);
 
-      const target = await getTarget({
+      const target = getTarget({
+        deploymentData: deploymentData,
         contract: contractName,
-        network,
-        useOvm,
-        deploymentPath,
       });
-      const source = await getSource({
+      const source = getSource({
+        deploymentData: deploymentData,
         contract: target.source,
-        network,
-        useOvm,
-        deploymentPath,
       });
 
       activeContract.name = contractName;
@@ -398,7 +386,7 @@ task(TASK_INTERACT_NAME, TASK_INTERACT_DESC)
                 console.log('isHex');
                 return value;
               } else {
-                return synthetix.toBytes32(value);
+                return toBytes32(value);
               }
             }
             if (requiresBytes32Util) {

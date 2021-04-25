@@ -2,7 +2,6 @@ require('dotenv').config();
 
 require('@nomiclabs/hardhat-waffle');
 require('@synthetixio/deployer');
-require('@synthetixio/hh-cli');
 
 module.exports = {
   solidity: {
@@ -21,7 +20,7 @@ module.exports = {
     },
     proxyName: 'Synthetix',
   },
-  defaultNetwork: 'local',
+  defaultNetwork: 'kovan',
   networks: {
     local: {
       url: 'http://localhost:8545',

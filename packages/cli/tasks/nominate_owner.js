@@ -13,6 +13,6 @@ const {
   TASK_STATUS_DESC,
 } = require('../tasks-info');
 
-task(TASK_NOMINATE_OWNER_NAME, TASK_NOMINATE_OWNER_DESC, async function (args, hre) {
-  console.log('Hi from task ', TASK_NOMINATE_OWNER_NAME, ' at ', hre.config.cli.artifacts);
+task(TASK_NOMINATE_OWNER_NAME, TASK_NOMINATE_OWNER_DESC, async function () {
+  console.log('Task Not Implemented: ', TASK_NOMINATE_OWNER_NAME);
 });
