@@ -20,7 +20,7 @@ module.exports = {
     },
     proxyName: 'Synthetix',
   },
-  defaultNetwork: 'kovan',
+  defaultNetwork: 'local',
   networks: {
     local: {
       url: 'http://localhost:8545',
