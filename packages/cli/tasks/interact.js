@@ -1,8 +1,6 @@
 'use strict';
 
 /*global task*/
-/*eslint no-undef: "error"*/
-/*eslint no-unused-vars: ["error", { "varsIgnorePattern": "[NAME,DESC]" }]*/
 
 require('dotenv').config();
 
@@ -18,9 +16,10 @@ const { yellow, green, red, cyan, gray } = require('chalk');
 
 const packageJson = require('../package.json');
 
+const { logReceipt, logError } = require('../utils/prettyLog');
+
 const { sendTx, confirmTx } = require('@synthetixio/core-js/utils/runTx');
 const { setupProvider } = require('@synthetixio/core-js/utils/setupProvider');
-const { logReceipt, logError } = require('@synthetixio/core-js/utils/prettyLog');
 const {
   getDeploymentFilePath,
   getDeploymentData,
@@ -28,44 +27,7 @@ const {
   getSource,
 } = require('@synthetixio/core-js/utils/deploymentHelper');
 
-const {
-  TASK_INTERACT_NAME,
-  TASK_INTERACT_DESC,
-  TASK_NOMINATE_OWNER_NAME,
-  TASK_NOMINATE_OWNER_DESC,
-  TASK_ACCEPT_OWNERSHIP_NAME,
-  TASK_ACCEPT_OWNERSHIP_DESC,
-  TASK_STATUS_NAME,
-  TASK_STATUS_DESC,
-} = require('../tasks-info');
-
-// const DEFAULTS = {
-//   mainnet: {
-//     gasPrice: 200,
-//   },
-//   'mainnet-ovm': {
-//     providerUrl: 'https://mainnet.optimism.io',
-//     gasPrice: 0,
-//   },
-//   kovan: {
-//     gasPrice: 1,
-//   },
-//   'kovan-ovm': {
-//     providerUrl: 'https://kovan.optimism.io',
-//     gasPrice: 0,
-//   },
-//   local: {
-//     gasPrice: 1,
-//     providerUrl: 'http://localhost:9545',
-//   },
-//   'local-ovm': {
-//     providerUrl: 'http://localhost:8545',
-//     gasPrice: 0,
-//   },
-//   rinkeby: {
-//     gasPrice: 1,
-//   },
-// };
+const { TASK_INTERACT_NAME, TASK_INTERACT_DESC } = require('../tasks-info');
 
 const ARTIFACTS_JSON_NAME = 'deployment.json';
 
@@ -90,8 +52,7 @@ async function printHeader({
     });
   }
   const msg = await figprint('SYNTHETIX-CLI', 'Slant');
-  // const synthetixPath = './node_modules/synthetix';
-  // const stats = fs.lstatSync(synthetixPath);
+
   console.log(green(msg));
   console.log(green(`v${packageJson.version}`));
 
@@ -113,7 +74,6 @@ async function printHeader({
   console.log(gray(`> Instance: ${instance}`));
   console.log(gray(`> Gas price: ${gasPrice}`));
   console.log(yellow(`> Target deployment: ${deploymentFilePath}`));
-  // console.log(yellow(`> Target deployment: ${path.dirname(deploymentFilePath)}`));
 
   if (wallet) {
     console.log(yellow(`> Signer: ${wallet.address || wallet}`));
@@ -139,6 +99,9 @@ function printCheatsheet({ activeContract, recentContracts, wallet }) {
 }
 
 function hostUrl(completeUrl) {
+  if (!completeUrl) {
+    return '';
+  }
   const url = new URL(completeUrl);
   return `${url.protocol}//${url.host}`;
 }
@@ -151,12 +114,6 @@ task(TASK_INTERACT_NAME, TASK_INTERACT_DESC)
   // .addOptionalParam('gasPrice', 'Gas price to set when performing transfers', 200, types.int)
   .addOptionalParam('gasLimit', 'Max gas to use when signing transactions', 8000000, types.int)
 
-  // .addFlag('useFork', 'Use a local fork')
-  // .addFlag('useOvm', 'Use an Optimism chain')
-  // .addOptionalParam('privateKey', 'Private key to use to sign txs')
-  // .addOptionalParam('providerUrl', 'The http provider to use for communicating with the blockchain')
-  // .addOptionalParam('deploymentPath', 'Specify the path to the deployment data directory')
-
   .setAction(async function (args, hre) {
     // ------------------
     // Get args (apply defaults)
@@ -164,10 +121,6 @@ task(TASK_INTERACT_NAME, TASK_INTERACT_DESC)
     const { instance, gasLimit } = args;
     var gasPrice;
     const network = hre.network.name;
-
-    // ------------------
-    // Default values per network
-    // ------------------
 
     // ------------------
     // Setup
@@ -208,7 +161,6 @@ task(TASK_INTERACT_NAME, TASK_INTERACT_DESC)
     // Start interaction
     // -----------------
 
-    // await printHeader({ useOvm, providerUrl, network, gasPrice, deploymentFilePath, wallet });
     await printHeader({ providerUrl, network, instance, gasPrice, deploymentFilePath, wallet });
 
     async function pickContract() {

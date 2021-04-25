@@ -14,7 +14,6 @@ function getSource({ deploymentData, contract }) {
 }
 
 function getDeploymentFilePath({ artifactsPath, network, instance, jsonName }) {
-  console.log({ artifactsPath, network, instance, jsonName });
   return path.join(artifactsPath, network, instance, jsonName);
 }
 function getDeploymentData({ deploymentFilePath }) {
