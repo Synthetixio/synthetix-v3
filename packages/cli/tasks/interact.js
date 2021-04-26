@@ -111,15 +111,14 @@ const toBytes32 = (key) => w3utils.rightPad(w3utils.asciiToHex(key), 64);
 
 task(TASK_INTERACT_NAME, TASK_INTERACT_DESC)
   .addOptionalParam('instance', 'Instance of the network', 'official')
-  // .addOptionalParam('gasPrice', 'Gas price to set when performing transfers', 200, types.int)
+  .addOptionalParam('gasPrice', 'Gas price to set when performing transfers', 0, types.int)
   .addOptionalParam('gasLimit', 'Max gas to use when signing transactions', 8000000, types.int)
 
   .setAction(async function (args, hre) {
     // ------------------
     // Get args (apply defaults)
     // ------------------
-    const { instance, gasLimit } = args;
-    var gasPrice;
+    const { instance, gasLimit, gasPrice } = args;
     const network = hre.network.name;
 
     // ------------------
@@ -139,7 +138,6 @@ task(TASK_INTERACT_NAME, TASK_INTERACT_DESC)
     // Determine private/public keys
     let publicKey;
     const privateKey = process.env.PRIVATE_KEY;
-
     // Determine provider url
     const providerUrl = hostUrl(hre.network.config.url);
 
