@@ -5,3 +5,4 @@ artifacts
 deployments/hardhat*
 deployments/local*
 contracts/Router_local.sol
+**/nogit*

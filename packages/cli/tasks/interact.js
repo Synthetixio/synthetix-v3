@@ -98,14 +98,6 @@ function printCheatsheet({ activeContract, recentContracts, wallet }) {
   }
 }
 
-function hostUrl(completeUrl) {
-  if (!completeUrl) {
-    return '';
-  }
-  const url = new URL(completeUrl);
-  return `${url.protocol}//${url.host}`;
-}
-
 const toBytes32 = (key) => w3utils.rightPad(w3utils.asciiToHex(key), 64);
 // const fromBytes32 = (key) => w3utils.hexToAscii(key);
 
@@ -138,8 +130,7 @@ task(TASK_INTERACT_NAME, TASK_INTERACT_DESC)
     // Determine private/public keys
     let publicKey;
     const privateKey = process.env.PRIVATE_KEY;
-    // Determine provider url
-    const providerUrl = hostUrl(hre.network.config.url);
+    const providerUrl = hre.network.config.url;
 
     // Construct provider and signer
     const { provider, wallet } = setupProvider({
