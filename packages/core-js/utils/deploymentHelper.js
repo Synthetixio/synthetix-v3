@@ -16,9 +16,11 @@ function getSource({ deploymentData, contract }) {
 function getDeploymentFilePath({ artifactsPath, network, instance, jsonName }) {
   return path.join(artifactsPath, network, instance, jsonName);
 }
+
 function getDeploymentData({ deploymentFilePath }) {
   return JSON.parse(fs.readFileSync(deploymentFilePath));
 }
+
 module.exports = {
   getDeploymentFilePath,
   getDeploymentData,

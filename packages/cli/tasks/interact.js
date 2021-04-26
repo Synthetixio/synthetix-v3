@@ -98,11 +98,13 @@ function printCheatsheet({ activeContract, recentContracts, wallet }) {
   }
 }
 
+// TODO remove w3utils -> find how to do it with ethers
 const toBytes32 = (key) => w3utils.rightPad(w3utils.asciiToHex(key), 64);
 // const fromBytes32 = (key) => w3utils.hexToAscii(key);
 
 task(TASK_INTERACT_NAME, TASK_INTERACT_DESC)
   .addOptionalParam('instance', 'Instance of the network', 'official')
+  //TODO think about get gasPrice at lower level
   .addOptionalParam('gasPrice', 'Gas price to set when performing transfers', 0, types.int)
   .addOptionalParam('gasLimit', 'Max gas to use when signing transactions', 8000000, types.int)
 
@@ -188,6 +190,7 @@ task(TASK_INTERACT_NAME, TASK_INTERACT_DESC)
         contract: target.source,
       });
 
+      // Cheatsheet
       activeContract.name = contractName;
       activeContract.address = target.address;
       if (!recentContracts.some((entry) => entry.name === contractName)) {
