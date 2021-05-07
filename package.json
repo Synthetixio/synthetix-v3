@@ -15,7 +15,7 @@
   "homepage": "https://github.com/Synthetixio/synthetix-v3#readme",
   "scripts": {
     "lint-js": "prettier --write '**/*.js' && eslint --fix '**/*.js'",
-    "lint-sol": "prettier --write 'contracts/**/*.sol' && solhint --fix 'contracts/**/*.sol'",
+    "lint-sol": "prettier --write '**/contracts/**/*.sol' && solhint --fix 'contracts/**/*.sol'",
     "lint-quick": "pretty-quick --staged",
     "lint": "npm run lint-js && npm run lint-sol"
   },

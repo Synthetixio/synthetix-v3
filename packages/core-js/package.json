@@ -1,0 +1,16 @@
+{
+  "name": "@synthetixio/core-js",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha --exit --recursive 'test/**/*.test.js'"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "chalk": "^4.1.0",
+    "ethers": "^5.0.17"
+  }
+}
