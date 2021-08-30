@@ -7,17 +7,7 @@
     "no-complex-fallback": "off",
     "no-inline-assembly": "off",
     "avoid-low-level-calls": "off",
-    "private-vars-leading-underscore": [
-      "error",
-      {
-        "strict": true
-      }
-    ],
-    "func-visibility": [
-      "error",
-      {
-        "ignoreConstructors": true
-      }
-    ]
+    "private-vars-leading-underscore": ["error", { "strict": true }],
+    "func-visibility": ["error", { "ignoreConstructors": true }]
   }
 }
