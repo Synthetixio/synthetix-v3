@@ -17,8 +17,8 @@
   "scripts": {
     "lint:js": "prettier --check '**/*.js' && eslint '**/*.js'",
     "lint:js:fix": "prettier --write '**/*.js' && eslint --fix '**/*.js'",
-    "lint:sol": "prettier --check 'packages/**/*.sol' && solhint 'packages/**/*.sol'",
-    "lint:sol:fix": "prettier --write 'packages/**/*.sol' && solhint --fix 'packages/**/*.sol'",
+    "lint:sol": "prettier --check 'packages/**/contracts/*.sol' && solhint 'packages/**/contracts/*.sol'",
+    "lint:sol:fix": "prettier --write 'packages/**/contracts/*.sol' && solhint --fix 'packages/**/contracts/*.sol'",
     "lint:quick": "pretty-quick --check --staged --pattern '**/*.(js|sol)'",
     "lint:fix": "npm run lint:js:fix && npm run lint:sol:fix",
     "lint": "npm run lint:js && npm run lint:sol"
