@@ -2,7 +2,7 @@
   "extends": ["solhint:recommended"],
   "plugins": [],
   "rules": {
-    "compiler-version": ["error", "^0.7.0"],
+    "compiler-version": ["error", "^0.8.0"],
     "contract-name-camelcase": "off",
     "no-complex-fallback": "off",
     "no-inline-assembly": "off",
