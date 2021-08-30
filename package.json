@@ -15,14 +15,16 @@
   "license": "MIT",
   "homepage": "https://github.com/Synthetixio/synthetix-v3#readme",
   "scripts": {
-    "lint-js": "prettier --write '**/*.js' && eslint --fix '**/*.js'",
-    "lint-sol": "prettier --write 'packages/**/*.sol' && solhint --fix 'packages/**/*.sol'",
-    "lint-quick": "pretty-quick --staged",
-    "lint": "npm run lint-js && npm run lint-sol"
+    "lint:js": "prettier --check '**/*.js' && eslint '**/*.js'",
+    "lint:js:fix": "prettier --write '**/*.js' && eslint --fix '**/*.js'",
+    "lint:sol": "prettier --check 'packages/**/*.sol' && solhint 'packages/**/*.sol'",
+    "lint:sol:fix": "prettier --write 'packages/**/*.sol' && solhint --fix 'packages/**/*.sol'",
+    "lint:quick": "pretty-quick --check --staged --pattern '**/*.(js|sol)'",
+    "lint:fix": "npm run lint:js:fix && npm run lint:sol:fix",
+    "lint": "npm run lint:js && npm run lint:sol"
   },
   "pre-commit": [
-    "lint-quick",
-    "lint"
+    "lint:quick"
   ],
   "workspaces": [
     "packages/*"
