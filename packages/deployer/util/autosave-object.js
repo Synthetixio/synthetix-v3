@@ -1,0 +1,48 @@
+const fs = require('fs');
+const logger = require('./logger');
+
+/**
+ * Create or load an object from a JSON file, and update the file on any changes
+ * @param {string} file
+ * @param {Object} [initialState] optional initial data if file does not exist
+ * @returns {Object}
+ */
+module.exports = function autosaveObject(file, initialState = {}) {
+  if (!file) {
+    throw new Error('Missing filepath');
+  }
+
+  logger.debug(`Opening file: ${file}`);
+
+  if (!fs.existsSync(file)) {
+    fs.writeFileSync(file, JSON.stringify(initialState));
+  }
+
+  const data = JSON.parse(fs.readFileSync(file));
+
+  const handler = {
+    get: (target, key) => {
+      if (typeof target[key] === 'object' && target[key] !== null) {
+        return new Proxy(target[key], handler);
+      } else {
+        return target[key];
+      }
+    },
+
+    set: (target, key, value) => {
+      logger.debug('Setting property:');
+      logger.debug(`  > key: ${key}`);
+      logger.debug(`  > value: ${JSON.stringify(value)}`);
+
+      if (target[key] === value) {
+        logger.debug('No changes - skipping write to file');
+      } else {
+        target[key] = value;
+        fs.writeFileSync(file, JSON.stringify(data, null, 2));
+        logger.debug(`File saved: ${file}`);
+      }
+    },
+  };
+
+  return new Proxy(data, handler);
+};
