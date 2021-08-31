@@ -7,6 +7,6 @@ contract ModulesMixin is ProxyNamespace {
     /* VIEW FUNCTIONS */
 
     function _getRouter() internal view returns (address) {
-        return _getImplementation();
+        return _proxyStorage().implementation;
     }
 }
