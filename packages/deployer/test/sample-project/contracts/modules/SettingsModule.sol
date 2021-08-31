@@ -1,19 +1,19 @@
 //SPDX-License-Identifier: Unlicense
 pragma solidity ^0.8.0;
 
-import "../storage/SettingsStorage.sol";
+import "../storage/SettingsNamespace.sol";
 import "../mixins/OwnerMixin.sol";
 
-contract SettingsModule is SettingsStorageNamespace, OwnerMixin {
+contract SettingsModule is SettingsNamespace, OwnerMixin {
     /* MUTATIVE FUNCTIONS */
 
-    function setMinCollateralRatio(uint newMinCollateralRatio) public onlyOwner {
-        _settingsStorage().minCollateralRatio = newMinCollateralRatio;
+    function setASettingValue(uint newSettingValue) public onlyOwner {
+        _settingsStorage().aSettingValue = newSettingValue;
     }
 
     /* VIEW FUNCTIONS */
 
-    function getMinCollateralRatio() public view returns (uint) {
-        return _settingsStorage().minCollateralRatio;
+    function getASettingValue() public view returns (uint) {
+        return _settingsStorage().aSettingValue;
     }
 }

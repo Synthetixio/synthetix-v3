@@ -1,9 +1,9 @@
 //SPDX-License-Identifier: Unlicense
 pragma solidity ^0.8.0;
 
-contract SettingsStorageNamespace {
+contract SettingsNamespace {
     struct SettingsStorage {
-        uint minCollateralRatio;
+        uint aSettingValue;
     }
 
     function _settingsStorage() internal pure returns (SettingsStorage storage store) {

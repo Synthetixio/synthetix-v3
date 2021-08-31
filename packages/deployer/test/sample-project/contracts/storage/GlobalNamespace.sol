@@ -1,9 +1,10 @@
 //SPDX-License-Identifier: Unlicense
 pragma solidity ^0.8.0;
 
-contract GlobalStorageNamespace {
+contract GlobalNamespace {
     struct GlobalStorage {
         uint value;
+        uint someValue;
     }
 
     function _globalStorage() internal pure returns (GlobalStorage storage store) {
