@@ -3,7 +3,9 @@ pragma solidity ^0.8.0;
 
 import "../mixins/OwnerMixin.sol";
 import "../storage/ProxyNamespace.sol";
-
+////////////////////////////////////////////////////////////////
+// WARNING DON'T USE THIS CONTRACT IN PRODUCTION ENVIRONMENTS //
+////////////////////////////////////////////////////////////////
 contract UpgradeModule is ProxyNamespace, OwnerMixin {
 
     /* INTERNAL VIEW FUNCTIONS */
