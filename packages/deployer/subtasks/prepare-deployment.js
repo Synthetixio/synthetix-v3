@@ -1,8 +1,9 @@
 const fs = require('fs');
+const path = require('path');
 const glob = require('glob');
-const { subtask } = require('hardhat/config');
 const mkdirp = require('mkdirp');
 const rimraf = require('rimraf');
+const { subtask } = require('hardhat/config');
 
 const logger = require('../util/logger');
 const prompter = require('../util/prompter');
@@ -10,7 +11,7 @@ const autosaveObject = require('../util/autosave-object');
 const { SUBTASK_PREPARE_DEPLOYMENT } = require('../task-names');
 
 // Regex for deployment file formats, e.g.: 2021-08-31-00-sirius.json
-const DEPLOYMENT_FILE_FORMAT = /^[0-9]{4}-[0-9]{2}-[0-9]{2}-[0-9]{2,}(?:-[a-z]+)?\.json$/;
+const DEPLOYMENT_FILE_FORMAT = /^[0-9]{4}-[0-9]{2}-[0-9]{2}-[0-9]{2,}(?:-[a-z0-9]+)?\.json$/;
 
 const DEPLOYMENT_SCHEMA = {
   properties: {
@@ -35,7 +36,7 @@ subtask(
 
   mkdirp.sync(hre.deployer.paths.instance);
 
-  hre.deployer.file = _determineDeploymentFile(hre.deployer.paths.instance, alias);
+  hre.deployer.file = await _determineDeploymentFile(hre.deployer.paths.instance, alias);
   hre.deployer.data = autosaveObject(hre.deployer.file, DEPLOYMENT_SCHEMA);
 });
 
@@ -60,7 +61,7 @@ async function _clearDeploymentData(folder) {
 async function _determineDeploymentFile(folder, alias) {
   const deployments = glob
     .sync(`${folder}/*.json`)
-    .filter((file) => DEPLOYMENT_FILE_FORMAT.test(file));
+    .filter((file) => DEPLOYMENT_FILE_FORMAT.test(path.basename(file)));
 
   // Check if there is an unfinished deployment and prompt the user if we should
   // continue with it, instead of create a new one.
@@ -69,7 +70,7 @@ async function _determineDeploymentFile(folder, alias) {
 
     if (!data.properties.completed) {
       const use = await prompter.ask(
-        `Do you wish to continue the unfinished deployment "${file}"?`
+        `Do you wish to continue the unfinished deployment "${path.basename(file)}"?`
       );
 
       if (use) {
@@ -82,7 +83,9 @@ async function _determineDeploymentFile(folder, alias) {
   if (alias) {
     const file = deployments.find((file) => file.endsWith(`-${alias}.json`));
     if (file) {
-      throw new Error(`The alias "${alias}" is already used by the deployment "${file}"`);
+      throw new Error(
+        `The alias "${alias}" is already used by the deployment "${path.basename(file)}"`
+      );
     }
   }
 
@@ -91,15 +94,17 @@ async function _determineDeploymentFile(folder, alias) {
 
   // Calculate the next deployment number from today
   let number = '00';
-  const fromToday = deployments.filter((file) => file.startsWith(`${today}-`));
+  const fromToday = deployments.filter((file) => path.basename(file).startsWith(`${today}-`));
   if (fromToday.length > 0) {
     const [last] = fromToday
-      .map((file) => Number.parseInt(file.slice(11, 13)))
+      .map((file) => Number.parseInt(path.basename(file).slice(11, 13)))
       .sort((a, b) => b - a);
     number = `${last + 1}`.padStart(2, '0');
   }
 
-  return `${today}-${number}${alias ? `-${alias}` : ''}.json`;
+  const file = `${today}-${number}${alias ? `-${alias}` : ''}.json`;
+
+  return path.join(folder, file);
 }
 
 function _getDate() {

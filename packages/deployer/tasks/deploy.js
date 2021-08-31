@@ -22,7 +22,7 @@ task(TASK_DEPLOY, 'Deploys all system modules')
     logger.debugging = debug;
     prompter.noConfirm = noConfirm;
 
-    if (!/[a-z]+/.test(instance)) {
+    if (!/^[a-z0-9]+$/.test(instance)) {
       throw new Error('Invalid --instance parameter value, it can only be a lowercase word');
     }
 

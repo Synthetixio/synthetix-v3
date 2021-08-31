@@ -1,6 +1,8 @@
 const fs = require('fs');
 const logger = require('./logger');
 
+const write = (file, data) => fs.writeFileSync(file, JSON.stringify(data, null, 2));
+
 /**
  * Create or load an object from a JSON file, and update the file on any changes
  * @param {string} file
@@ -15,7 +17,7 @@ module.exports = function autosaveObject(file, initialState = {}) {
   logger.debug(`Opening file: ${file}`);
 
   if (!fs.existsSync(file)) {
-    fs.writeFileSync(file, JSON.stringify(initialState));
+    write(file, initialState);
   }
 
   const data = JSON.parse(fs.readFileSync(file));
@@ -38,7 +40,7 @@ module.exports = function autosaveObject(file, initialState = {}) {
         logger.debug('No changes - skipping write to file');
       } else {
         target[key] = value;
-        fs.writeFileSync(file, JSON.stringify(data, null, 2));
+        write(file, data);
         logger.debug(`File saved: ${file}`);
       }
     },
