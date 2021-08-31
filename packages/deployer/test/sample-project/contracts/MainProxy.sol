@@ -14,17 +14,20 @@ contract MainProxy is ProxyNamespace {
             returndatacopy(0, 0, returndatasize())
 
             switch result
-
-            case 0 { revert(0, returndatasize()) }
-            default { return(0, returndatasize()) }
+            case 0 {
+                revert(0, returndatasize())
+            }
+            default {
+                return(0, returndatasize())
+            }
         }
     }
 
-    fallback () external payable virtual {
+    fallback() external payable virtual {
         _fallback(_getImplementation());
     }
 
-    receive () external payable virtual {
+    receive() external payable virtual {
         _fallback(_getImplementation());
     }
 
