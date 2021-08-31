@@ -6,7 +6,7 @@ import "../storage/OwnerNamespace.sol";
 contract OwnerMixin is OwnerNamespace {
     /* MODIFIERS */
 
-    modifier onlyOwner {
+    modifier onlyOwner() {
         address owner = _ownerStorage().owner;
         if (owner != address(0)) {
             require(msg.sender == _ownerStorage().owner, "Only owner allowed");

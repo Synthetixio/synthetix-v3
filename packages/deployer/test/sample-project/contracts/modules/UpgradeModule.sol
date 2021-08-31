@@ -8,7 +8,6 @@ import "../storage/ProxyNamespace.sol";
 // WARNING DON'T USE THIS CONTRACT IN PRODUCTION ENVIRONMENTS //
 ////////////////////////////////////////////////////////////////
 contract UpgradeModule is ProxyNamespace, OwnerMixin {
-
     /* INTERNAL VIEW FUNCTIONS */
 
     function _isContract(address account) internal view returns (bool) {
@@ -24,7 +23,7 @@ contract UpgradeModule is ProxyNamespace, OwnerMixin {
     function upgradeTo(address newImplementation) public onlyOwner {
         require(newImplementation != address(0), "Invalid: zero address");
         require(_isContract(newImplementation), "Invalid: not a contract");
-        // WARNING: This contract is brickable. 
+        // WARNING: This contract is brickable.
         // In production you should check the newImplementation is upgradeable too
 
         _setImplementation(newImplementation);
