@@ -26,16 +26,12 @@ contract UpgradeModule is ProxyNamespace, OwnerMixin {
         // WARNING: This contract is brickable.
         // In production you should check the newImplementation is upgradeable too
 
-        _setImplementation(newImplementation);
+        _proxyStorage().implementation = newImplementation;
     }
 
     /* VIEW FUNCTIONS */
 
-    function isUpgradeable() public pure returns (bool) {
-        return true;
-    }
-
     function getImplementation() public view returns (address) {
-        return _getImplementation();
+        return _proxyStorage().implementation;
     }
 }

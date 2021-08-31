@@ -4,12 +4,13 @@ pragma solidity ^0.8.0;
 import "./storage/ProxyNamespace.sol";
 
 contract MainProxy is ProxyNamespace {
-    function _fallback(address implementation) internal virtual {
+    fallback() external payable virtual {
+        address impl = _proxyStorage().implementation;
         // solhint-disable-next-line no-inline-assembly
         assembly {
             calldatacopy(0, 0, calldatasize())
 
-            let result := delegatecall(gas(), implementation, 0, calldatasize(), 0, 0)
+            let result := delegatecall(gas(), impl, 0, calldatasize(), 0, 0)
 
             returndatacopy(0, 0, returndatasize())
 
@@ -23,15 +24,7 @@ contract MainProxy is ProxyNamespace {
         }
     }
 
-    fallback() external payable virtual {
-        _fallback(_getImplementation());
-    }
-
-    receive() external payable virtual {
-        _fallback(_getImplementation());
-    }
-
     constructor(address firstImplementation) payable {
-        _setImplementation(firstImplementation);
+        _proxyStorage().implementation = firstImplementation;
     }
 }
