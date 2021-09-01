@@ -1,9 +1,10 @@
 const path = require('path');
 const { task } = require('hardhat/config');
+const { TASK_COMPILE } = require('hardhat/builtin-tasks/task-names');
 
-const { TASK_DEPLOY, SUBTASK_PREPARE_DEPLOYMENT } = require('../task-names');
-const logger = require('../util/logger');
-const prompter = require('../util/prompter');
+const { SUBTASK_PREPARE_DEPLOYMENT, SUBTASK_PRINT_INFO, TASK_DEPLOY } = require('../task-names');
+const logger = require('../utils/logger');
+const prompter = require('../utils/prompter');
 
 const isWord = (str) => /^[\w\d]+$/.test(str);
 
@@ -39,4 +40,6 @@ task(TASK_DEPLOY, 'Deploys all system modules')
     paths.extended = path.join(paths.instance, 'extended');
 
     await hre.run(SUBTASK_PREPARE_DEPLOYMENT, taskArguments);
+    await hre.run(SUBTASK_PRINT_INFO, taskArguments);
+    await hre.run(TASK_COMPILE, { force: true, quiet: true });
   });
