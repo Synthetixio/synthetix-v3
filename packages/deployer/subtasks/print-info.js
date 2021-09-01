@@ -10,10 +10,7 @@ const { getCommit, getBranch } = require('../utils/git');
 const { readPackageJson } = require('../utils/package');
 const { SUBTASK_PRINT_INFO } = require('../task-names');
 
-/*
- * Prints info about a deployment.
- * */
-subtask(SUBTASK_PRINT_INFO).setAction(async (taskArguments) => {
+subtask(SUBTASK_PRINT_INFO, 'Prints info about a deployment.').setAction(async (taskArguments) => {
   await _printTitle();
   await _printInfo(taskArguments);
 
