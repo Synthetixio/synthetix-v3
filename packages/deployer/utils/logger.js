@@ -1,6 +1,6 @@
 const chalk = require('chalk');
 
-const BOX_WIDTH = 70;
+const BOX_WIDTH = 90;
 
 module.exports = {
   debugging: false,

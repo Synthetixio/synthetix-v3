@@ -5,9 +5,9 @@ const mkdirp = require('mkdirp');
 const rimraf = require('rimraf');
 const { subtask } = require('hardhat/config');
 
-const logger = require('../util/logger');
-const prompter = require('../util/prompter');
-const autosaveObject = require('../util/autosave-object');
+const logger = require('../utils/logger');
+const prompter = require('../utils/prompter');
+const autosaveObject = require('../utils/autosave-object');
 const { SUBTASK_PREPARE_DEPLOYMENT } = require('../task-names');
 
 // Regex for deployment file formats, e.g.: 2021-08-31-00-sirius.json

@@ -1,5 +1,6 @@
 const fs = require('fs');
 const logger = require('./logger');
+const relativePath = require('./relative-path');
 
 const write = (file, data) => fs.writeFileSync(file, JSON.stringify(data, null, 2));
 
@@ -14,7 +15,7 @@ module.exports = function autosaveObject(file, initialState = {}) {
     throw new Error('Missing filepath');
   }
 
-  logger.debug(`Opening file: ${file}`);
+  logger.debug(`Opened: ${relativePath(file)}`);
 
   if (!fs.existsSync(file)) {
     write(file, initialState);
@@ -41,7 +42,7 @@ module.exports = function autosaveObject(file, initialState = {}) {
       } else {
         target[key] = value;
         write(file, data);
-        logger.debug(`File saved: ${file}`);
+        logger.debug(`File saved: ${relativePath(file)}`);
       }
     },
   };
