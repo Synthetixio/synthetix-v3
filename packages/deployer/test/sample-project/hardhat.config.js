@@ -1,4 +1,4 @@
-require('@nomiclabs/hardhat-waffle');
+require('@nomiclabs/hardhat-ethers');
 require('../../index');
 
 module.exports = {
