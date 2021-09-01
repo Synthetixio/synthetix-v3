@@ -1,5 +1,6 @@
 const path = require('path');
 const { task } = require('hardhat/config');
+const { TASK_COMPILE } = require('hardhat/builtin-tasks/task-names');
 
 const { SUBTASK_PREPARE_DEPLOYMENT, SUBTASK_PRINT_INFO, TASK_DEPLOY } = require('../task-names');
 const logger = require('../utils/logger');
@@ -40,4 +41,5 @@ task(TASK_DEPLOY, 'Deploys all system modules')
 
     await hre.run(SUBTASK_PREPARE_DEPLOYMENT, taskArguments);
     await hre.run(SUBTASK_PRINT_INFO, taskArguments);
+    await hre.run(TASK_COMPILE, { force: true, quiet: true });
   });
