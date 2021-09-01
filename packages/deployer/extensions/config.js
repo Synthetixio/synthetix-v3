@@ -13,11 +13,11 @@ extendConfig((config, userConfig) => {
 
   config.deployer = {
     proxyName: '',
+    ...userConfig.deployer,
     paths: {
       modules: 'contracts/modules',
       deployments: 'deployments',
       ...(userConfig.deployer.paths || {}),
     },
-    ...userConfig.deployer,
   };
 });
