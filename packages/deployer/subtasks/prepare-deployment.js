@@ -64,7 +64,7 @@ async function _determineDeploymentFile(folder, alias) {
     .filter((file) => DEPLOYMENT_FILE_FORMAT.test(path.basename(file)));
 
   // Check if there is an unfinished deployment and prompt the user if we should
-  // continue with it, instead of create a new one.
+  // continue with it, instead of creating a new one.
   for (const file of deployments) {
     const data = JSON.parse(fs.readFileSync(file));
 
@@ -92,7 +92,7 @@ async function _determineDeploymentFile(folder, alias) {
   // Get the date with format `YYYY-mm-dd`
   const today = _getDate();
 
-  // Calculate the next deployment number from today
+  // Calculate the next deployment number
   let number = '00';
   const fromToday = deployments.filter((file) => path.basename(file).startsWith(`${today}-`));
   if (fromToday.length > 0) {

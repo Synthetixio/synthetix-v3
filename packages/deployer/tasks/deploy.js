@@ -1,29 +1,34 @@
 const path = require('path');
-const { task, types } = require('hardhat/config');
+const { task } = require('hardhat/config');
 
 const { TASK_DEPLOY, SUBTASK_PREPARE_DEPLOYMENT } = require('../task-names');
 const logger = require('../util/logger');
 const prompter = require('../util/prompter');
+
+const isWord = (str) => /^[\w\d]+$/.test(str);
 
 task(TASK_DEPLOY, 'Deploys all system modules')
   .addFlag('noConfirm', 'Skip all confirmation prompts', false)
   .addFlag('debug', 'Display debug logs', false)
   .addFlag('clear', 'Clear all previous deployment data for the selected network', false)
   .addOptionalParam('alias', 'The alias name for the deployment')
-  .addOptionalParam(
-    'instance',
-    'The name of the target instance for deployment',
-    'official',
-    types.string
-  )
+  .addOptionalParam('instance', 'The name of the target instance for deployment', 'official')
   .setAction(async (taskArguments, hre) => {
-    const { instance, debug, noConfirm } = taskArguments;
+    const { alias, instance, debug, noConfirm } = taskArguments;
 
     logger.debugging = debug;
     prompter.noConfirm = noConfirm;
 
-    if (!/^[a-z0-9]+$/.test(instance)) {
-      throw new Error('Invalid --instance parameter value, it can only be a lowercase word');
+    if (!isWord(instance)) {
+      throw new Error(
+        'Invalid --instance parameter value, it can only be a lowercase word with numbers'
+      );
+    }
+
+    if (alias && !isWord(alias)) {
+      throw new Error(
+        'Invalid --alias parameter value, it can only be a lowercase word with numbers'
+      );
     }
 
     const { paths } = hre.deployer;
