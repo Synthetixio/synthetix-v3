@@ -9,7 +9,14 @@
   "keywords": [],
   "author": "",
   "license": "MIT",
-  "devDependencies": {
-    "hardhat": "2.6.1"
+  "peerDependencies": {
+    "hardhat": "^2.0.0"
+  },
+  "dependencies": {
+    "chalk": "4.1.2",
+    "glob": "7.1.7",
+    "inquirer": "8.1.2",
+    "mkdirp": "1.0.4",
+    "rimraf": "3.0.2"
   }
 }
