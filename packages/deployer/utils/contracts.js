@@ -2,7 +2,7 @@ const fs = require('fs');
 const path = require('path');
 
 function getContractNameFromPath(contractPath) {
-  return path.basename(contractPath).replace(new RegExp(/\.sol$/), '');
+  return path.basename(contractPath, '.sol');
 }
 
 async function getAddressBytecodeHash(address) {
