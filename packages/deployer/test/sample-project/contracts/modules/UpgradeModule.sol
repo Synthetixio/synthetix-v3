@@ -4,9 +4,6 @@ pragma solidity ^0.8.0;
 import "../mixins/OwnerMixin.sol";
 import "../storage/ProxyNamespace.sol";
 
-////////////////////////////////////////////////////////////////
-// WARNING DON'T USE THIS CONTRACT IN PRODUCTION ENVIRONMENTS //
-////////////////////////////////////////////////////////////////
 contract UpgradeModule is ProxyNamespace, OwnerMixin {
     /* INTERNAL VIEW FUNCTIONS */
 
@@ -23,10 +20,27 @@ contract UpgradeModule is ProxyNamespace, OwnerMixin {
     function upgradeTo(address newImplementation) public onlyOwner {
         require(newImplementation != address(0), "Invalid: zero address");
         require(_isContract(newImplementation), "Invalid: not a contract");
-        // WARNING: This contract is brickable.
-        // In production you should check the newImplementation is upgradeable too
 
+        address oldImplementation = getImplementation();
+
+        // Do initial upgrade
         _proxyStorage().implementation = newImplementation;
+
+        // Perform rollback if not doint it right now
+        if(!_proxyStorage().rollbackTesting) {
+            // Do the rollback
+            _proxyStorage().rollbackTesting = true;
+            (bool success, bytes memory returndata) = newImplementation.delegatecall(abi.encodeWithSignature("upgradeTo(address)", oldImplementation));
+            require(success, "UpgradeMod.: brick upgrade call");
+            _proxyStorage().rollbackTesting = false;
+
+            // Check rollback was effective
+            require(oldImplementation == getImplementation(), "UpgradeMod.: brick upgrade");
+
+            // Finally reset to the new implementation and log the upgrade
+            _proxyStorage().implementation = newImplementation;
+            emit Upgraded(newImplementation);
+        }
     }
 
     /* VIEW FUNCTIONS */
@@ -34,4 +48,8 @@ contract UpgradeModule is ProxyNamespace, OwnerMixin {
     function getImplementation() public view returns (address) {
         return _proxyStorage().implementation;
     }
+
+    /* EVENTS */
+
+    event Upgraded(address implementation);
 }
