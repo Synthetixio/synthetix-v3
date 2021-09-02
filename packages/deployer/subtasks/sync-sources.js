@@ -52,13 +52,10 @@ async function _removeDeletedSources({ sources, previousData }) {
 
 async function _addNewSources({ sources, data, previousData }) {
   const toAdd = sources.filter((source) => {
-    const exists = !!previousData?.contracts.modules[source];
-
-    data.contracts.modules[source] = exists
-      ? previousData.contracts.modules[source]
-      : { deployedAddress: '', bytecodeHash: '' };
-
-    return !exists;
+    const previousModule = previousData?.contracts.modules[source];
+    data.contracts.modules[source] = data.contracts.modules[source] ||
+      previousModule || { deployedAddress: '', bytecodeHash: '' };
+    return !previousModule;
   });
 
   if (toAdd.length > 0) {
