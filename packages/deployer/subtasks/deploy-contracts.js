@@ -100,7 +100,7 @@ async function _processContracts(contracts) {
 }
 
 /**
- * Deploy the give contract using ethers.js
+ * Deploy the given contract using ethers.js
  */
 async function _createAndDeployContract(contractName) {
   logger.success(`Deploying ${contractName}`);
