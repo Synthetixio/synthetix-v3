@@ -27,10 +27,12 @@ contract UpgradeModule is ProxyNamespace, OwnerMixin {
         _proxyStorage().implementation = newImplementation;
 
         // Perform rollback if not doint it right now
-        if(!_proxyStorage().rollbackTesting) {
+        if (!_proxyStorage().rollbackTesting) {
             // Do the rollback
             _proxyStorage().rollbackTesting = true;
-            (bool success, bytes memory returndata) = newImplementation.delegatecall(abi.encodeWithSignature("upgradeTo(address)", oldImplementation));
+            (bool success, ) = newImplementation.delegatecall(
+                abi.encodeWithSignature("upgradeTo(address)", oldImplementation)
+            );
             require(success, "UpgradeMod.: brick upgrade call");
             _proxyStorage().rollbackTesting = false;
 
