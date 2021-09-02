@@ -1,4 +1,3 @@
-const fs = require('fs');
 const path = require('path');
 const glob = require('glob');
 const { subtask } = require('hardhat/config');
@@ -18,60 +17,55 @@ subtask(
 ).setAction(async (_, hre) => {
   logger.subtitle('Syncing solidity sources with deployment data');
 
-  hre.deployer.sources = glob
-    .sync(path.join(hre.deployer.paths.modules, '**/*.sol'))
-    .map(relativePath);
+  hre.deployer.sources = _getSources(hre.deployer.paths.modules);
 
-  const { data, sources } = hre.deployer;
-  const someDeletion = await _removeDeletedSources({ data, sources });
-  const someAddition = await _addNewSources({ data, sources });
+  const { data, sources, previousData } = hre.deployer;
+  const removed = await _removeDeletedSources({ sources, previousData });
+  const added = await _addNewSources({ sources, data, previousData });
 
-  if (!someDeletion && !someAddition) {
+  if (!removed && !added) {
     logger.checked('Deployment data is in sync with sources');
   }
 });
 
-async function _removeDeletedSources({ data, sources }) {
-  let someDeletion = false;
-
-  Object.keys(data.contracts.modules).map((deployedModule) => {
-    if (!sources.some((source) => deployedModule === source)) {
-      logger.notice(
-        `Previously deployed module "${deployedModule}" was not found in sources, so it will not be included in the deployment`
-      );
-
-      someDeletion = true;
-
-      delete data.contracts.modules[deployedModule];
-    }
-  });
-
-  if (someDeletion) {
-    await prompter.confirmAction('Do you confirm removing these modules');
-  }
-
-  return someDeletion;
+function _getSources(folder) {
+  return glob.sync(path.join(folder, '**/*.sol')).map(relativePath);
 }
 
-async function _addNewSources({ data, sources }) {
-  let someAddition = false;
+async function _removeDeletedSources({ sources, previousData }) {
+  if (!previousData) return false;
 
-  sources.map((source) => {
-    if (!data.contracts.modules[source]) {
-      logger.notice(`Found new module "${source}", including it for deployment`);
+  const toRemove = Object.keys(previousData.contracts.modules).filter(
+    (deployedModule) => !sources.some((source) => deployedModule === source)
+  );
 
-      someAddition = true;
-
-      data.contracts.modules[source] = {
-        deployedAddress: '',
-        bytecodeHash: '',
-      };
-    }
-  });
-
-  if (someAddition) {
-    await prompter.confirmAction('Do you confirm these new modules');
+  if (toRemove.length > 0) {
+    logger.notice(
+      'The following modules are not present in sources anymore, they will not be included on the deployment:'
+    );
+    toRemove.forEach((source) => logger.notice(`  ${source}`));
+    await prompter.confirmAction('Do you confirm removing these modules?');
   }
 
-  return someAddition;
+  return toRemove.length > 0;
+}
+
+async function _addNewSources({ sources, data, previousData }) {
+  const toAdd = sources.filter((source) => {
+    const exists = !!previousData?.contracts.modules[source];
+
+    data.contracts.modules[source] = exists
+      ? previousData.contracts.modules[source]
+      : { deployedAddress: '', bytecodeHash: '' };
+
+    return !exists;
+  });
+
+  if (toAdd.length > 0) {
+    logger.notice('The following modules are going to be deployed for the first time:');
+    toAdd.forEach((source) => logger.notice(`  ${source}`));
+    await prompter.confirmAction('Do you confirm these new modules?');
+  }
+
+  return toAdd.length > 0;
 }
