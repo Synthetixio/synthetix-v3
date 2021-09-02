@@ -68,7 +68,7 @@ async function _clearDeploymentData(folder) {
  * Initialize a new deployment file, or, if existant, try to continue using it.
  * @param {string} folder deployment folder where to find files
  * @param {string} [alias]
- * @returns {{ previous: string, current: string }}
+ * @returns {{ currentFile: string, previousFile: string }}
  */
 async function _determineDeploymentFiles(folder, alias) {
   const deployments = glob

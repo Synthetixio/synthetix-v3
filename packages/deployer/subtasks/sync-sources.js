@@ -54,15 +54,9 @@ async function _addNewSources({ sources, data, previousData }) {
   const toAdd = sources.filter((source) => {
     const previousModule = previousData?.contracts.modules[source];
     data.contracts.modules[source] = data.contracts.modules[source] ||
-      previousModule || { deployedAddress: '', bytecodeHash: '' };
+      previousModule || { deployedAddress: '', deployTransaction: '', bytecodeHash: '' };
     return !previousModule;
   });
-
-  if (toAdd.length > 0) {
-    logger.notice('The following modules are going to be deployed for the first time:');
-    toAdd.forEach((source) => logger.notice(`  ${source}`));
-    await prompter.confirmAction('Do you confirm these new modules?');
-  }
 
   return toAdd.length > 0;
 }
