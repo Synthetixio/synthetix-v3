@@ -27,9 +27,9 @@ contract UpgradeModule is ProxyNamespace, OwnerMixin {
 
         if (!_proxyStorage().validatingUpgrade) {
             _validateUpgrade(newImplementation, oldImplementation);
+            emit Upgraded(newImplementation);
         }
 
-        emit Upgraded(newImplementation);
     }
 
     function _validateUpgrade(address newImplementation, address oldImplementation) private {
