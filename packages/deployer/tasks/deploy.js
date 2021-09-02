@@ -2,7 +2,12 @@ const path = require('path');
 const { task } = require('hardhat/config');
 const { TASK_COMPILE } = require('hardhat/builtin-tasks/task-names');
 
-const { SUBTASK_PREPARE_DEPLOYMENT, SUBTASK_PRINT_INFO, TASK_DEPLOY } = require('../task-names');
+const {
+  SUBTASK_PREPARE_DEPLOYMENT,
+  SUBTASK_PRINT_INFO,
+  SUBTASK_SYNC_SOURCES,
+  TASK_DEPLOY,
+} = require('../task-names');
 const logger = require('../utils/logger');
 const prompter = require('../utils/prompter');
 
@@ -35,6 +40,7 @@ task(TASK_DEPLOY, 'Deploys all system modules')
     const { paths } = hre.deployer;
 
     paths.deployments = path.resolve(hre.config.paths.root, hre.config.deployer.paths.deployments);
+    paths.modules = path.resolve(hre.config.paths.root, hre.config.deployer.paths.modules);
     paths.network = path.join(paths.deployments, hre.network.name);
     paths.instance = path.join(paths.network, instance);
     paths.extended = path.join(paths.instance, 'extended');
@@ -42,4 +48,5 @@ task(TASK_DEPLOY, 'Deploys all system modules')
     await hre.run(SUBTASK_PREPARE_DEPLOYMENT, taskArguments);
     await hre.run(SUBTASK_PRINT_INFO, taskArguments);
     await hre.run(TASK_COMPILE, { force: true, quiet: true });
+    await hre.run(SUBTASK_SYNC_SOURCES, {});
   });

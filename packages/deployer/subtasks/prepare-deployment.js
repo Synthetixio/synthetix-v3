@@ -3,6 +3,7 @@ const path = require('path');
 const glob = require('glob');
 const mkdirp = require('mkdirp');
 const rimraf = require('rimraf');
+const naturalCompare = require('string-natural-compare');
 const { subtask } = require('hardhat/config');
 
 const logger = require('../utils/logger');
@@ -37,8 +38,18 @@ subtask(
 
   mkdirp.sync(hre.deployer.paths.instance);
 
-  hre.deployer.file = await _determineDeploymentFile(hre.deployer.paths.instance, alias);
+  const { previousFile, currentFile } = await _determineDeploymentFiles(
+    hre.deployer.paths.instance,
+    alias
+  );
+
+  hre.deployer.file = currentFile;
   hre.deployer.data = autosaveObject(hre.deployer.file, DEPLOYMENT_SCHEMA);
+
+  if (previousFile) {
+    hre.deployer.previousFile = previousFile;
+    hre.deployer.previousData = JSON.parse(fs.readFileSync(previousFile));
+  }
 });
 
 /**
@@ -57,25 +68,31 @@ async function _clearDeploymentData(folder) {
  * Initialize a new deployment file, or, if existant, try to continue using it.
  * @param {string} folder deployment folder where to find files
  * @param {string} [alias]
- * @returns {string} path to deployment file
+ * @returns {{ previous: string, current: string }}
  */
-async function _determineDeploymentFile(folder, alias) {
+async function _determineDeploymentFiles(folder, alias) {
   const deployments = glob
     .sync(`${folder}/*.json`)
-    .filter((file) => DEPLOYMENT_FILE_FORMAT.test(path.basename(file)));
+    .filter((file) => DEPLOYMENT_FILE_FORMAT.test(path.basename(file)))
+    .sort(naturalCompare);
+
+  const previousFile = deployments.length > 0 ? deployments[deployments.length - 1] : null;
 
   // Check if there is an unfinished deployment and prompt the user if we should
   // continue with it, instead of creating a new one.
-  for (const file of deployments) {
-    const data = JSON.parse(fs.readFileSync(file));
+  if (previousFile) {
+    const previousData = JSON.parse(fs.readFileSync(previousFile));
 
-    if (!data.properties.completed) {
+    if (!previousData.properties.completed) {
       const use = await prompter.ask(
-        `Do you wish to continue the unfinished deployment "${relativePath(file)}"?`
+        `Do you wish to continue the unfinished deployment "${relativePath(previousFile)}"?`
       );
 
       if (use) {
-        return file;
+        return {
+          currentFile: previousFile,
+          previousFile: deployments.length > 1 ? deployments[deployments.length - 2] : null,
+        };
       }
     }
   }
@@ -93,19 +110,19 @@ async function _determineDeploymentFile(folder, alias) {
   // Get the date with format `YYYY-mm-dd`
   const today = _getDate();
 
-  // Calculate the next deployment number
+  // Calculate the next deployment number based on the previous one
   let number = '00';
-  const fromToday = deployments.filter((file) => path.basename(file).startsWith(`${today}-`));
-  if (fromToday.length > 0) {
-    const [last] = fromToday
-      .map((file) => Number.parseInt(path.basename(file).slice(11, 13)))
-      .sort((a, b) => b - a);
-    number = `${last + 1}`.padStart(2, '0');
+  if (previousFile && previousFile.startsWith(today)) {
+    const previousNumber = path.basename(previousFile).slice(11, 13);
+    number = `${previousNumber + 1}`.padStart(2, '0');
   }
 
-  const file = `${today}-${number}${alias ? `-${alias}` : ''}.json`;
+  const currentFile = path.join(folder, `${today}-${number}${alias ? `-${alias}` : ''}.json`);
 
-  return path.join(folder, file);
+  return {
+    previousFile,
+    currentFile,
+  };
 }
 
 function _getDate() {

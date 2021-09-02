@@ -33,6 +33,7 @@ module.exports = function autosaveObject(file, initialState = {}) {
     },
 
     set: (target, key, value) => {
+      const now = Date.now();
       logger.debug('Setting property:');
       logger.debug(`  > key: ${key}`);
       logger.debug(`  > value: ${JSON.stringify(value)}`);
@@ -42,7 +43,7 @@ module.exports = function autosaveObject(file, initialState = {}) {
       } else {
         target[key] = value;
         write(file, data);
-        logger.debug(`File saved: ${relativePath(file)}`);
+        logger.debug(`File saved (${Date.now() - now}ms): ${relativePath(file)}`);
       }
     },
   };
