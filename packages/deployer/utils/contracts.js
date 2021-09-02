@@ -2,7 +2,11 @@ const fs = require('fs');
 const path = require('path');
 
 function getContractNameFromPath(contractPath) {
+<<<<<<< HEAD
   return path.basename(contractPath, '.sol');
+=======
+  return path.basename(contractPath).replace(new RegExp(/\.sol$/), '');
+>>>>>>> 0a0746d (add deploy modules subtask)
 }
 
 async function getAddressBytecodeHash(address) {
@@ -23,8 +27,33 @@ function getContractBytecodeHash(contractPath) {
   return hre.ethers.utils.sha256(data.deployedBytecode);
 }
 
+<<<<<<< HEAD
+=======
+async function getContractSelectors({ contractName }) {
+  const contract = await hre.ethers.getContractAt(
+    contractName,
+    '0x0000000000000000000000000000000000000001'
+  );
+
+  return contract.interface.fragments.reduce((selectors, fragment) => {
+    if (fragment.type === 'function') {
+      selectors.push({
+        name: fragment.name,
+        selector: contract.interface.getSighash(fragment),
+      });
+    }
+
+    return selectors;
+  }, []);
+}
+
+>>>>>>> 0a0746d (add deploy modules subtask)
 module.exports = {
   getContractNameFromPath,
   getAddressBytecodeHash,
   getContractBytecodeHash,
+<<<<<<< HEAD
+=======
+  getContractSelectors,
+>>>>>>> 0a0746d (add deploy modules subtask)
 };
