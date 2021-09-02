@@ -7,6 +7,7 @@ const { subtask } = require('hardhat/config');
 
 const logger = require('../utils/logger');
 const prompter = require('../utils/prompter');
+const relativePath = require('../utils/relative-path');
 const autosaveObject = require('../utils/autosave-object');
 const { SUBTASK_PREPARE_DEPLOYMENT } = require('../task-names');
 
@@ -70,7 +71,7 @@ async function _determineDeploymentFile(folder, alias) {
 
     if (!data.properties.completed) {
       const use = await prompter.ask(
-        `Do you wish to continue the unfinished deployment "${path.basename(file)}"?`
+        `Do you wish to continue the unfinished deployment "${relativePath(file)}"?`
       );
 
       if (use) {
@@ -84,7 +85,7 @@ async function _determineDeploymentFile(folder, alias) {
     const file = deployments.find((file) => file.endsWith(`-${alias}.json`));
     if (file) {
       throw new Error(
-        `The alias "${alias}" is already used by the deployment "${path.basename(file)}"`
+        `The alias "${alias}" is already used by the deployment "${relativePath(file)}"`
       );
     }
   }
