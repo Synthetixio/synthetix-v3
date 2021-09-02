@@ -23,26 +23,31 @@ contract UpgradeModule is ProxyNamespace, OwnerMixin {
 
         address oldImplementation = getImplementation();
 
-        // Do initial upgrade
         _proxyStorage().implementation = newImplementation;
 
-        // Perform rollback if not doint it right now
-        if (!_proxyStorage().rollbackTesting) {
-            // Do the rollback
-            _proxyStorage().rollbackTesting = true;
-            (bool success, ) = newImplementation.delegatecall(
-                abi.encodeWithSignature("upgradeTo(address)", oldImplementation)
-            );
-            require(success, "UpgradeMod.: brick upgrade call");
-            _proxyStorage().rollbackTesting = false;
-
-            // Check rollback was effective
-            require(oldImplementation == getImplementation(), "UpgradeMod.: brick upgrade");
-
-            // Finally reset to the new implementation and log the upgrade
-            _proxyStorage().implementation = newImplementation;
-            emit Upgraded(newImplementation);
+        if (!_proxyStorage().validatingUpgrade) {
+            _validateUpgrade(newImplementation, oldImplementation);
         }
+
+        emit Upgraded(newImplementation);
+    }
+
+    function _validateUpgrade(address newImplementation, address oldImplementation) private {
+        _proxyStorage().validatingUpgrade = true;
+
+        // Check that the new implementation would be
+        // capable of upgrading to the old implementation.
+        // Notice that this will call upgradeTo() again, but validatingUpgrade will be false.
+        (bool success, ) = newImplementation.delegatecall(
+            abi.encodeWithSignature("upgradeTo(address)", oldImplementation)
+        );
+        require(success, "UpgradeMod.: brick upgrade call");
+        require(oldImplementation == getImplementation(), "UpgradeMod.: brick upgrade");
+
+        // Ok to upgrade to the new implementation
+        _proxyStorage().implementation = newImplementation;
+
+        _proxyStorage().validatingUpgrade = false;
     }
 
     /* VIEW FUNCTIONS */
