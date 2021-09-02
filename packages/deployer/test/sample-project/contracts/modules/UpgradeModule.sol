@@ -38,9 +38,7 @@ contract UpgradeModule is ProxyNamespace, OwnerMixin {
         // Check that the new implementation would be
         // capable of upgrading to the old implementation.
         // Notice that this will call upgradeTo() again, but validatingUpgrade will be false.
-        (bool success, ) = newImplementation.delegatecall(
-            abi.encodeWithSignature("upgradeTo(address)", oldImplementation)
-        );
+        (bool success, ) = newImplementation.delegatecall(abi.encodeWithSignature("upgradeTo(address)", oldImplementation));
         require(success, "UpgradeMod.: brick upgrade call");
         require(oldImplementation == getImplementation(), "UpgradeMod.: brick upgrade");
 
