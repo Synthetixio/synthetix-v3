@@ -110,7 +110,7 @@ async function _getAllSelectors(contractsPaths) {
 
   for (const contractPath of contractsPaths) {
     const contractName = getContractNameFromPath(contractPath);
-    const selectors = await getContractSelectors({ contractName });
+    const selectors = await getContractSelectors(contractName);
 
     allSelectors.push(...selectors.map((s) => ({ ...s, contractName })));
   }
