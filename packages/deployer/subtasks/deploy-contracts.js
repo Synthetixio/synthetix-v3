@@ -10,7 +10,7 @@ const { SUBTASK_DEPLOY_CONTRACTS } = require('../task-names');
 
 subtask(
   SUBTASK_DEPLOY_CONTRACTS,
-  'Deploys a list of contracts, avoiding contracts that do not need to be compiled, and prompting the user for confirmation.'
+  'Deploys a list of contracts, avoiding contracts that do not need to be deployed, and prompting the user for confirmation.'
 ).setAction(async ({ contracts }, hre) => {
   const { toSkip, toUpdate, toCreate } = await _processContracts(contracts);
 
