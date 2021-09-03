@@ -22,22 +22,20 @@ subtask(
   logger.debug(`selectors: ${JSON.stringify(selectors, null, 2)}`);
   logger.info(`Found ${modulesPaths.length} modules with ${selectors.length} selectors in total`);
 
-  return;
-
   const binaryData = _buildBinaryData({ selectors });
 
   const package = readPackageJson();
 
   const routerPath = path.join(hre.config.paths.sources, `Router_${hre.network.name}.sol`);
-  const currentSource = fs.existsSync(routerPath) ? fs.readFileSync(routerPath, 'utf8') : '';
+  const currentSource = fs.existsSync(routerPath) ? fs.readFileSync(routerPath) : '';
 
   const generatedSource = _readRouterTemplate()
     .replace('@project', package.name)
-    .replace('@repo', package.repository.url)
+    .replace('@repo', package.repository?.url || '')
     .replace('@branch', getBranch())
     .replace('@commit', getCommit())
     .replace('@network', hre.network.name)
-    .replace('@modules', _renderModules({ modules: modulesPaths }))
+    .replace('@modules', _renderModules(hre.deployer.data.contracts.modules))
     .replace('@selectors', _renderSelectors({ binaryData }));
 
   logger.debug(`generated source: ${generatedSource}`);
@@ -90,18 +88,21 @@ function _renderSelectors({ binaryData }) {
   return selectorsStr;
 }
 
-function _renderModules({ modules }) {
-  let modulesStr = '';
-
-  for (let i = 0; i < modules.length; i++) {
-    const module = modules[i];
-
-    modulesStr += `\n${TAB.repeat(1)}address private constant _${module.toUpperCase()} = ${
-      hre.deployer.data.contracts.modules[module].deployedAddress
-    };`;
-  }
-
-  return modulesStr;
+/**
+ * Get a string of modules constants with its deployedAddresses.
+ * E.g.:
+ *   address private constant _ANOTHERMODULE = 0xAA...;
+ *   address private constant _OWNERMODULE = 0x5c..;
+ */
+function _renderModules(modules) {
+  return Object.entries(modules).reduce((modulesStr, [modulePath, moduleData]) => {
+    const moduleName = getContractNameFromPath(modulePath);
+    const { deployedAddress } = moduleData;
+    return (
+      modulesStr +
+      `\n${TAB}address private constant _${moduleName.toUpperCase()} = ${deployedAddress};`
+    );
+  }, '');
 }
 
 async function _getAllSelectors(contractsPaths) {
@@ -158,5 +159,5 @@ function _buildBinaryData({ selectors }) {
 }
 
 function _readRouterTemplate() {
-  return fs.readFileSync(path.join(__dirname, '../templates/Router'));
+  return fs.readFileSync(path.resolve(__dirname, '../templates/Router.sol.template')).toString();
 }

@@ -2,6 +2,10 @@
   "name": "sample-project",
   "version": "1.0.0",
   "description": "",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Synthetixio/synthetix.git"
+  },
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
