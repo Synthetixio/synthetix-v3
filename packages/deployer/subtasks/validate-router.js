@@ -12,7 +12,7 @@ subtask(
   logger.subtitle('Validating router');
 
   await _selectorsExistInSource({
-    routerPath: path.join(hre.config.paths.sources, `Router_${hre.network.name}.sol`),
+    routerPath: hre.config.paths.routerPath,
     modules: Object.keys(hre.deployer.data.contracts.modules).map(getContractNameFromPath),
   });
 

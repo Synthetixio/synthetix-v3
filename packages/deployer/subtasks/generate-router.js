@@ -26,9 +26,6 @@ subtask(
 
   const package = readPackageJson();
 
-  const routerPath = path.join(hre.config.paths.sources, `Router_${hre.network.name}.sol`);
-  const currentSource = fs.existsSync(routerPath) ? fs.readFileSync(routerPath) : '';
-
   const generatedSource = _readRouterTemplate()
     .replace('@project', package.name)
     .replace('@repo', package.repository?.url || '')
@@ -40,10 +37,10 @@ subtask(
 
   logger.debug(`generated source: ${generatedSource}`);
 
+  const { routerPath } = hre.config.paths;
+  const currentSource = fs.existsSync(routerPath) ? fs.readFileSync(routerPath) : '';
   if (currentSource !== generatedSource) {
-    const routerPath = path.join(hre.config.paths.sources, `Router_${hre.network.name}.sol`);
     fs.writeFileSync(routerPath, generatedSource);
-
     logger.success(`Router code generated and written to ${routerPath}`);
   } else {
     logger.checked('Router source did not change');
