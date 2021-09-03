@@ -4,7 +4,7 @@
   "description": "",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Synthetixio/synthetix.git"
+    "url": "git+https://github.com/Synthetixio/synthetix-v3.git"
   },
   "main": "index.js",
   "scripts": {
