@@ -37,7 +37,7 @@ subtask(
 
   logger.debug(`generated source: ${generatedSource}`);
 
-  const { routerPath } = hre.config.paths;
+  const { routerPath } = hre.deployer.paths;
   const currentSource = fs.existsSync(routerPath) ? fs.readFileSync(routerPath) : '';
   if (currentSource !== generatedSource) {
     fs.writeFileSync(routerPath, generatedSource);

@@ -10,6 +10,6 @@ subtask(SUBTASK_DEPLOY_ROUTER).setAction(async (_, hre) => {
   await hre.run(TASK_COMPILE, { force: false, quiet: true });
 
   await hre.run(SUBTASK_DEPLOY_CONTRACTS, {
-    contractNames: [`Router_${hre.network.name}`],
+    contracts: { [hre.deployer.paths.routerPath]: {} },
   });
 });

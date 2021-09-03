@@ -1,5 +1,4 @@
 const fs = require('fs');
-const path = require('path');
 const logger = require('../utils/logger');
 const { subtask } = require('hardhat/config');
 const { getContractNameFromPath, getContractSelectors } = require('../utils/contracts');
@@ -12,7 +11,7 @@ subtask(
   logger.subtitle('Validating router');
 
   await _selectorsExistInSource({
-    routerPath: hre.config.paths.routerPath,
+    routerPath: hre.deployer.paths.routerPath,
     modules: Object.keys(hre.deployer.data.contracts.modules).map(getContractNameFromPath),
   });
 
