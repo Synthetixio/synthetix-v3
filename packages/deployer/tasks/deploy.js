@@ -9,6 +9,7 @@ const {
   SUBTASK_PREPARE_DEPLOYMENT,
   SUBTASK_PRINT_INFO,
   SUBTASK_SYNC_SOURCES,
+  SUBTASK_UPGRADE_PROXY,
   SUBTASK_VALIDATE_ROUTER,
   TASK_DEPLOY,
 } = require('../task-names');
@@ -65,4 +66,5 @@ task(TASK_DEPLOY, 'Deploys all system modules')
     await hre.run(SUBTASK_GENERATE_ROUTER_SOURCE);
     await hre.run(SUBTASK_VALIDATE_ROUTER);
     await hre.run(SUBTASK_DEPLOY_ROUTER);
+    await hre.run(SUBTASK_UPGRADE_PROXY);
   });
