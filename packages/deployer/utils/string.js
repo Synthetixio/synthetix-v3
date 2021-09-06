@@ -5,6 +5,6 @@ module.exports = {
    * @returns {string}
    */
   capitalize(str) {
-    return str.charAt(0).toUpperCase() + str.substring(1);
+    return str.charAt(0).toUpperCase() + str.substring(1) || '';
   },
 };
