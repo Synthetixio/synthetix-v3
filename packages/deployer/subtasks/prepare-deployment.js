@@ -1,19 +1,15 @@
 const fs = require('fs');
 const path = require('path');
-const glob = require('glob');
 const mkdirp = require('mkdirp');
 const rimraf = require('rimraf');
-const naturalCompare = require('string-natural-compare');
 const { subtask } = require('hardhat/config');
 
 const logger = require('../utils/logger');
 const prompter = require('../utils/prompter');
 const relativePath = require('../utils/relative-path');
 const autosaveObject = require('../utils/autosave-object');
+const { getDeploymentFiles } = require('../utils/deployments');
 const { SUBTASK_PREPARE_DEPLOYMENT } = require('../task-names');
-
-// Regex for deployment file formats, e.g.: 2021-08-31-00-sirius.json
-const DEPLOYMENT_FILE_FORMAT = /^[0-9]{4}-[0-9]{2}-[0-9]{2}-[0-9]{2,}(?:-[a-z0-9]+)?\.json$/;
 
 const DEPLOYMENT_SCHEMA = {
   properties: {
@@ -38,10 +34,7 @@ subtask(
 
   mkdirp.sync(hre.deployer.paths.instance);
 
-  const { previousFile, currentFile } = await _determineDeploymentFiles(
-    hre.deployer.paths.instance,
-    alias
-  );
+  const { previousFile, currentFile } = await _determineDeploymentFiles(alias);
 
   hre.deployer.file = currentFile;
   hre.deployer.data = autosaveObject(hre.deployer.file, DEPLOYMENT_SCHEMA);
@@ -70,12 +63,10 @@ async function _clearDeploymentData(folder) {
  * @param {string} [alias]
  * @returns {{ currentFile: string, previousFile: string }}
  */
-async function _determineDeploymentFiles(folder, alias) {
-  const deployments = glob
-    .sync(`${folder}/*.json`)
-    .filter((file) => DEPLOYMENT_FILE_FORMAT.test(path.basename(file)))
-    .sort(naturalCompare);
+async function _determineDeploymentFiles(instance, alias) {
+  const folder = hre.deployer.paths.instance;
 
+  const deployments = getDeploymentFiles(instance);
   const previousFile = deployments.length > 0 ? deployments[deployments.length - 1] : null;
 
   // Check if there is an unfinished deployment and prompt the user if we should
