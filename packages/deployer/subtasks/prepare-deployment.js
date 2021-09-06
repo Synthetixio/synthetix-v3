@@ -18,7 +18,7 @@ const DEPLOYMENT_FILE_FORMAT = /^[0-9]{4}-[0-9]{2}-[0-9]{2}-[0-9]{2,}(?:-[a-z0-9
 const DEPLOYMENT_SCHEMA = {
   properties: {
     completed: false,
-    totalGasUsed: 0,
+    totalGasUsed: '0',
   },
   transactions: {},
   contracts: {

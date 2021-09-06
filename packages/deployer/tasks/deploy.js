@@ -5,10 +5,12 @@ const { TASK_COMPILE } = require('hardhat/builtin-tasks/task-names');
 const {
   SUBTASK_DEPLOY_MODULES,
   SUBTASK_DEPLOY_ROUTER,
+  SUBTASK_FINALIZE_DEPLOYMENT,
   SUBTASK_GENERATE_ROUTER_SOURCE,
   SUBTASK_PREPARE_DEPLOYMENT,
   SUBTASK_PRINT_INFO,
   SUBTASK_SYNC_SOURCES,
+  SUBTASK_UPGRADE_PROXY,
   SUBTASK_VALIDATE_ROUTER,
   TASK_DEPLOY,
 } = require('../task-names');
@@ -56,6 +58,9 @@ task(TASK_DEPLOY, 'Deploys all system modules')
     paths.routerPath = relativePath(
       path.join(hre.config.paths.sources, `${hre.deployer.routerModule}.sol`)
     );
+    paths.proxyPath = relativePath(
+      path.join(hre.config.paths.sources, `${hre.config.deployer.proxyName}.sol`)
+    );
 
     await hre.run(SUBTASK_PREPARE_DEPLOYMENT, taskArguments);
     await hre.run(SUBTASK_PRINT_INFO, taskArguments);
@@ -65,4 +70,6 @@ task(TASK_DEPLOY, 'Deploys all system modules')
     await hre.run(SUBTASK_GENERATE_ROUTER_SOURCE);
     await hre.run(SUBTASK_VALIDATE_ROUTER);
     await hre.run(SUBTASK_DEPLOY_ROUTER);
+    await hre.run(SUBTASK_UPGRADE_PROXY);
+    await hre.run(SUBTASK_FINALIZE_DEPLOYMENT);
   });
