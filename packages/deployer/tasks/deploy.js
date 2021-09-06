@@ -4,13 +4,17 @@ const { TASK_COMPILE } = require('hardhat/builtin-tasks/task-names');
 
 const {
   SUBTASK_DEPLOY_MODULES,
+  SUBTASK_DEPLOY_ROUTER,
+  SUBTASK_GENERATE_ROUTER_SOURCE,
   SUBTASK_PREPARE_DEPLOYMENT,
   SUBTASK_PRINT_INFO,
   SUBTASK_SYNC_SOURCES,
+  SUBTASK_VALIDATE_ROUTER,
   TASK_DEPLOY,
 } = require('../task-names');
 const logger = require('../utils/logger');
 const prompter = require('../utils/prompter');
+const relativePath = require('../utils/relative-path');
 
 const isWord = (str) => /^[\w\d]+$/.test(str);
 
@@ -45,10 +49,16 @@ task(TASK_DEPLOY, 'Deploys all system modules')
     paths.network = path.join(paths.deployments, hre.network.name);
     paths.instance = path.join(paths.network, instance);
     paths.extended = path.join(paths.instance, 'extended');
+    paths.routerPath = relativePath(
+      path.join(hre.config.paths.sources, `Router_${hre.network.name}.sol`)
+    );
 
     await hre.run(SUBTASK_PREPARE_DEPLOYMENT, taskArguments);
     await hre.run(SUBTASK_PRINT_INFO, taskArguments);
     await hre.run(TASK_COMPILE, { force: true, quiet: true });
     await hre.run(SUBTASK_SYNC_SOURCES);
     await hre.run(SUBTASK_DEPLOY_MODULES);
+    await hre.run(SUBTASK_GENERATE_ROUTER_SOURCE);
+    await hre.run(SUBTASK_VALIDATE_ROUTER);
+    await hre.run(SUBTASK_DEPLOY_ROUTER);
   });
