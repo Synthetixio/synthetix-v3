@@ -1,33 +1,31 @@
 const logger = require('../utils/logger');
-const { getContractNameFromPath, getContractBytecodeHash } = require('../utils/contracts');
+const {
+  getContractNameFromPath,
+  getContractBytecodeHash,
+  alreadyDeployed,
+} = require('../utils/contracts');
+const { processTransaction, processReceipt } = require('../utils/transactions');
 const { subtask } = require('hardhat/config');
 const { SUBTASK_DEPLOY_CONTRACT } = require('../task-names');
 
 subtask(
   SUBTASK_DEPLOY_CONTRACT,
   'Deploys the given contract and update the contractData object.'
-).setAction(async ({ contractPath, contractData, constructorArgs = [] }, hre) => {
+).setAction(async ({ contractPath, contractData, constructorArgs = [] }) => {
+  const isAlreadyDeployed = await alreadyDeployed(contractPath, contractData);
+  if (isAlreadyDeployed) return false;
+
   const contractName = getContractNameFromPath(contractPath);
   const sourceBytecodeHash = getContractBytecodeHash(contractPath);
 
   // Create contract & start the transaction on the network
   const { contract, transaction } = await _createAndDeployContract(contractName, constructorArgs);
 
-  hre.deployer.data.transactions[transaction.hash] = { status: 'pending' };
-
-  // Wait for the transaction to finish
-  const { gasUsed, status } = await _waitForTransaction(transaction);
-
-  hre.deployer.data.transactions[transaction.hash].status = status;
-
-  const totalGasUsed = hre.ethers.BigNumber.from(hre.deployer.data.properties.totalGasUsed)
-    .add(gasUsed)
-    .toString();
-  hre.deployer.data.properties.totalGasUsed = totalGasUsed;
-
   contractData.deployedAddress = contract.address;
   contractData.deployTransaction = transaction.hash;
   contractData.bytecodeHash = sourceBytecodeHash;
+
+  return true;
 });
 
 /**
@@ -43,19 +41,11 @@ async function _createAndDeployContract(contractName, constructorArgs = []) {
     throw new Error(`Error deploying ${contractName}`);
   }
 
-  return { contract, transaction: contract.deployTransaction };
-}
+  const transaction = contract.deployTransaction;
 
-/**
- * Given a transaction, wait for it to finish and return the state with the gas used.
- */
-async function _waitForTransaction(transaction) {
+  processTransaction(transaction, hre);
   const receipt = await hre.ethers.provider.getTransactionReceipt(transaction.hash);
-  const { gasUsed } = receipt;
-  const status = receipt.status === 1 ? 'confirmed' : 'failed';
+  processReceipt(receipt, hre);
 
-  logger.info(`Transaction hash: ${transaction.hash}`);
-  logger.info(`Status: ${status} - Gas used: ${gasUsed}`);
-
-  return { gasUsed, status };
+  return { contract, transaction };
 }

@@ -1,8 +1,8 @@
 const logger = require('../utils/logger');
 const prompter = require('../utils/prompter');
 const { subtask } = require('hardhat/config');
-// const { processTransaction, processReceipt } = require('../utils/transactions');
-const { SUBTASK_UPGRADE_PROXY, SUBTASK_DEPLOY_CONTRACTS } = require('../task-names');
+const { processTransaction, processReceipt } = require('../utils/transactions');
+const { SUBTASK_UPGRADE_PROXY, SUBTASK_DEPLOY_CONTRACT } = require('../task-names');
 
 const UPGRADE_ABI = [
   {
@@ -40,55 +40,62 @@ const UPGRADE_ABI = [
 subtask(SUBTASK_UPGRADE_PROXY).setAction(async (_, hre) => {
   logger.subtitle('Upgrading main proxy');
 
-  const routerData = hre.deployer.data.contracts[hre.deployer.paths.routerPath];
-  const { deployedAddress: implementationAddress } = routerData;
+  const routerAddress = _getDeployedAddress(hre.config.deployer.routerPath);
 
-  logger.info(`Target implementation: ${implementationAddress}`);
+  logger.info(`Target implementation: ${routerAddress}`);
 
-  const wasProxyDeployed = await _deployProxy({ implementationAddress });
+  const wasProxyDeployed = await _deployProxy(routerAddress);
 
-  // TODO: For some very strange reason, hre within _upgradeProxy is undefined.
-  // This only seems to happen if _deployProxy was called first!
-  // Hardhat seems to loose hre from the global context as soon as
-  // a third depth level of subtasks is reached.
-  // The workaround is to pass hre which is still maintained in the scope of
-  // the subtask.
   if (!wasProxyDeployed) {
-    await _upgradeProxy({ implementationAddress, hre });
+    const proxyAddress = _getDeployedAddress(hre.config.deployer.proxyName);
+
+    await _upgradeProxy({ proxyAddress, routerAddress, hre });
   }
 });
 
-async function _deployProxy({ implementationAddress }) {
-  const deployed = await hre.run(SUBTASK_DEPLOY_CONTRACTS, {
-    contractNames: [hre.config.deployer.proxyName],
-    constructorArgs: [[implementationAddress]],
-  });
-
-  return deployed.length > 0;
+function _getDeployedAddress(contractPath, hre) {
+  return hre.deployer.data.contracts[contractPath].deployedAddress;
 }
 
-async function _upgradeProxy({ implementationAddress, hre }) {
-  const data = hre.deployer.data.contracts;
-  const proxyAddress = data[hre.config.deployer.proxyName].deployedAddress;
+async function _deployProxy(routerAddress) {
+  const contractPath = hre.deployer.paths.proxyPath;
+  let contractData = hre.deployer.data.contracts[contractPath];
 
+  if (!contractData) {
+    hre.deployer.data.contracts[contractPath] = {
+      deployedAddress: '',
+      deployTransaction: '',
+      bytecodeHash: '',
+    };
+    contractData = hre.deployer.data.contracts[contractPath];
+  }
+
+  return await hre.run(SUBTASK_DEPLOY_CONTRACT, {
+    contractPath,
+    contractData,
+    constructorArgs: [routerAddress],
+  });
+}
+
+async function _upgradeProxy({ proxyAddress, routerAddress, hre }) {
   const upgradeable = await hre.ethers.getContractAt(UPGRADE_ABI, proxyAddress);
   const activeImplementationAddress = await upgradeable.getImplementation();
   logger.info(`Active implementation: ${activeImplementationAddress}`);
 
-  if (activeImplementationAddress !== implementationAddress) {
+  if (activeImplementationAddress !== routerAddress) {
     logger.notice(
       `Proxy upgrade needed - Main proxy implementation ${activeImplementationAddress} is different from the target implementation`
     );
 
     await prompter.confirmAction('Upgrade system');
 
-    logger.notice(`Upgrading main proxy to ${implementationAddress}`);
+    logger.notice(`Upgrading main proxy to ${routerAddress}`);
 
-    const tx = await upgradeable.upgradeTo(implementationAddress);
-    processTransaction({ transaction: tx, hre });
+    const transaction = await upgradeable.upgradeTo(routerAddress);
 
-    const receipt = await tx.wait();
-    processReceipt({ receipt, hre });
+    processTransaction(transaction, hre);
+    const receipt = await transaction.wait();
+    processReceipt(receipt, hre);
 
     logger.success(`Main proxy upgraded to ${await upgradeable.getImplementation()}`);
   } else {

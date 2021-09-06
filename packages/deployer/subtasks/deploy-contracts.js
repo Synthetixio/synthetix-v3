@@ -1,6 +1,6 @@
 const logger = require('../utils/logger');
 const prompter = require('../utils/prompter');
-const { getContractBytecodeHash, getAddressBytecodeHash } = require('../utils/contracts');
+const { alreadyDeployed } = require('../utils/contracts');
 const { subtask } = require('hardhat/config');
 const { SUBTASK_DEPLOY_CONTRACTS, SUBTASK_DEPLOY_CONTRACT } = require('../task-names');
 
@@ -64,10 +64,7 @@ async function _processContracts(contracts) {
     if (hre.network.name === 'hardhat' || !contractData.deployedAddress) {
       toCreate.push([contractPath, contractData]);
     } else {
-      const sourceBytecodeHash = getContractBytecodeHash(contractPath);
-      const remoteBytecodeHash = await getAddressBytecodeHash(contractData.deployedAddress);
-
-      if (sourceBytecodeHash === remoteBytecodeHash) {
+      if (await alreadyDeployed(contractPath, contractData)) {
         toSkip.push([contractPath, contractData]);
       } else {
         toUpdate.push([contractPath, contractData]);

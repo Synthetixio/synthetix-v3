@@ -57,6 +57,9 @@ task(TASK_DEPLOY, 'Deploys all system modules')
     paths.routerPath = relativePath(
       path.join(hre.config.paths.sources, `${hre.deployer.routerModule}.sol`)
     );
+    paths.proxyPath = relativePath(
+      path.join(hre.config.paths.sources, `${hre.config.deployer.proxyName}.sol`)
+    );
 
     await hre.run(SUBTASK_PREPARE_DEPLOYMENT, taskArguments);
     await hre.run(SUBTASK_PRINT_INFO, taskArguments);

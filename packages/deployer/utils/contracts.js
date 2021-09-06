@@ -41,9 +41,19 @@ async function getContractSelectors(contractName) {
   }, []);
 }
 
+async function alreadyDeployed(contractPath, contractData) {
+  if (!contractData.deployedAddress) return false;
+
+  const sourceBytecodeHash = getContractBytecodeHash(contractPath);
+  const remoteBytecodeHash = await getAddressBytecodeHash(contractData.deployedAddress);
+
+  return sourceBytecodeHash === remoteBytecodeHash;
+}
+
 module.exports = {
   getContractNameFromPath,
   getAddressBytecodeHash,
   getContractBytecodeHash,
   getContractSelectors,
+  alreadyDeployed,
 };
