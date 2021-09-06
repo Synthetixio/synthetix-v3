@@ -94,7 +94,7 @@ function _renderSelectors({ binaryData }) {
  */
 function _renderModules(modules) {
   return Object.entries(modules)
-    .reduce((lines, [modulePath, moduleData], index) => {
+    .reduce((lines, [modulePath, moduleData]) => {
       const moduleName = getContractNameFromPath(modulePath).toUpperCase();
       const { deployedAddress } = moduleData;
       lines.push(`${TAB}address private constant _${moduleName} = ${deployedAddress};`);
