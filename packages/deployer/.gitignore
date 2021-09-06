@@ -1,2 +1,2 @@
 test/sample-project/deployments
-test/sample-project/contracts/Router_*.sol
+test/sample-project/contracts/GenRouter*.sol
