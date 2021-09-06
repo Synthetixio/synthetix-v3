@@ -3,18 +3,19 @@ pragma solidity ^0.8.0;
 
 // --------------------------------------------------------------------------------
 // --------------------------------------------------------------------------------
-// @project
+// {{{project}}}
 //
 // Source code generated from
-// Repository: @repo
-// Branch: @branch
-// Commit: @commit
+// Repository: {{{repo}}}
+// Branch: {{{branch}}}
+// Commit: {{{commit}}}
 //
 // GENERATED CODE - do not edit manually!!
 // --------------------------------------------------------------------------------
 // --------------------------------------------------------------------------------
 
-contract Router_@network {@modules
+contract {{{moduleName}}} {
+    {{{modules}}}
 
     fallback() external payable {
         // Lookup table: Function selector => implementation contract
@@ -24,7 +25,8 @@ contract Router_@network {@modules
         assembly {
             let sig32 := shr(224, sig4)
 
-            function findImplementation(sig) -> result {@selectors
+            function findImplementation(sig) -> result {
+                {{{selectors}}}
             }
 
             implementation := findImplementation(sig32)

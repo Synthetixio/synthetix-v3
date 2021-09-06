@@ -1,11 +1,11 @@
 const fs = require('fs');
-const path = require('path');
 const logger = require('../utils/logger');
 const { subtask } = require('hardhat/config');
 const { SUBTASK_GENERATE_ROUTER_SOURCE } = require('../task-names');
 const { getCommit, getBranch } = require('../utils/git');
 const { readPackageJson } = require('../utils/package');
 const { getContractSelectors, getContractNameFromPath } = require('../utils/contracts');
+const renderTemplate = require('../utils/render-template');
 
 const TAB = '    ';
 
@@ -26,14 +26,15 @@ subtask(
 
   const package = readPackageJson();
 
-  const generatedSource = _readRouterTemplate()
-    .replace('@project', package.name)
-    .replace('@repo', package.repository?.url || '')
-    .replace('@branch', getBranch())
-    .replace('@commit', getCommit())
-    .replace('@network', hre.network.name)
-    .replace('@modules', _renderModules(hre.deployer.data.contracts.modules))
-    .replace('@selectors', _renderSelectors({ binaryData }));
+  const generatedSource = renderTemplate(hre.deployer.paths.routerTemplate, {
+    project: package.name,
+    repo: package.repository?.url || '',
+    branch: getBranch(),
+    commit: getCommit(),
+    moduleName: hre.deployer.routerModule,
+    modules: _renderModules(hre.deployer.data.contracts.modules),
+    selectors: _renderSelectors({ binaryData }),
+  });
 
   logger.debug(`generated source: ${generatedSource}`);
 
@@ -82,7 +83,7 @@ function _renderSelectors({ binaryData }) {
 
   renderNode(binaryData, 0);
 
-  return selectorsStr;
+  return selectorsStr.trim();
 }
 
 /**
@@ -92,14 +93,15 @@ function _renderSelectors({ binaryData }) {
  *   address private constant _OWNERMODULE = 0x5c..;
  */
 function _renderModules(modules) {
-  return Object.entries(modules).reduce((modulesStr, [modulePath, moduleData]) => {
-    const moduleName = getContractNameFromPath(modulePath);
-    const { deployedAddress } = moduleData;
-    return (
-      modulesStr +
-      `\n${TAB}address private constant _${moduleName.toUpperCase()} = ${deployedAddress};`
-    );
-  }, '');
+  return Object.entries(modules)
+    .reduce((lines, [modulePath, moduleData], index) => {
+      const moduleName = getContractNameFromPath(modulePath).toUpperCase();
+      const { deployedAddress } = moduleData;
+      lines.push(`${TAB}address private constant _${moduleName} = ${deployedAddress};`);
+      return lines;
+    }, [])
+    .join('\n')
+    .trim();
 }
 
 async function _getAllSelectors(contractsPaths) {
@@ -153,8 +155,4 @@ function _buildBinaryData({ selectors }) {
   logger.debug(`binary tree: ${JSON.stringify(finalData, null, 2)}`);
 
   return finalData;
-}
-
-function _readRouterTemplate() {
-  return fs.readFileSync(path.resolve(__dirname, '../templates/Router.sol.template')).toString();
 }

@@ -15,6 +15,7 @@ const {
 const logger = require('../utils/logger');
 const prompter = require('../utils/prompter');
 const relativePath = require('../utils/relative-path');
+const { capitalize } = require('../utils/string');
 
 const isWord = (str) => /^[\w\d]+$/.test(str);
 
@@ -42,6 +43,8 @@ task(TASK_DEPLOY, 'Deploys all system modules')
       );
     }
 
+    hre.deployer.routerModule = ['Router', hre.network.name, instance].map(capitalize).join('');
+
     const { paths } = hre.deployer;
 
     paths.deployments = path.resolve(hre.config.paths.root, hre.config.deployer.paths.deployments);
@@ -49,8 +52,9 @@ task(TASK_DEPLOY, 'Deploys all system modules')
     paths.network = path.join(paths.deployments, hre.network.name);
     paths.instance = path.join(paths.network, instance);
     paths.extended = path.join(paths.instance, 'extended');
+    paths.routerTemplate = path.resolve(__dirname, '../templates/Router.sol.mustache');
     paths.routerPath = relativePath(
-      path.join(hre.config.paths.sources, `Router_${hre.network.name}.sol`)
+      path.join(hre.config.paths.sources, `${hre.deployer.routerModule}.sol`)
     );
 
     await hre.run(SUBTASK_PREPARE_DEPLOYMENT, taskArguments);
