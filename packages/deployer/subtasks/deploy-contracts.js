@@ -77,33 +77,3 @@ async function _processContracts(contracts) {
 
   return { toSkip, toUpdate, toCreate };
 }
-
-/**
- * Deploy the given contract using ethers.js
- */
-async function _createAndDeployContract(contractName) {
-  logger.success(`Deploying ${contractName}`);
-
-  const factory = await hre.ethers.getContractFactory(contractName);
-  const contract = await factory.deploy();
-
-  if (!contract.address) {
-    throw new Error(`Error deploying ${contractName}`);
-  }
-
-  return { contract, transaction: contract.deployTransaction };
-}
-
-/**
- * Given a transaction, wait for it to finish and return the state with the gas used.
- */
-async function _waitForTransaction(transaction) {
-  const receipt = await hre.ethers.provider.getTransactionReceipt(transaction.hash);
-  const { gasUsed } = receipt;
-  const status = receipt.status === 1 ? 'confirmed' : 'failed';
-
-  logger.info(`Transaction hash: ${transaction.hash}`);
-  logger.info(`Status: ${status} - Gas used: ${gasUsed}`);
-
-  return { gasUsed, status };
-}
