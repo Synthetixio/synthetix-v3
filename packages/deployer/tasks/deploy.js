@@ -43,7 +43,7 @@ task(TASK_DEPLOY, 'Deploys all system modules')
       );
     }
 
-    hre.deployer.routerModule = ['Router', hre.network.name, instance].map(capitalize).join('');
+    hre.deployer.routerModule = ['GenRouter', hre.network.name, instance].map(capitalize).join('');
 
     const { paths } = hre.deployer;
 
@@ -52,7 +52,7 @@ task(TASK_DEPLOY, 'Deploys all system modules')
     paths.network = path.join(paths.deployments, hre.network.name);
     paths.instance = path.join(paths.network, instance);
     paths.extended = path.join(paths.instance, 'extended');
-    paths.routerTemplate = path.resolve(__dirname, '../templates/Router.sol.mustache');
+    paths.routerTemplate = path.resolve(__dirname, '../templates/GenRouter.sol.mustache');
     paths.routerPath = relativePath(
       path.join(hre.config.paths.sources, `${hre.deployer.routerModule}.sol`)
     );
