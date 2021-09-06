@@ -5,6 +5,7 @@ const { TASK_COMPILE } = require('hardhat/builtin-tasks/task-names');
 const {
   SUBTASK_DEPLOY_MODULES,
   SUBTASK_DEPLOY_ROUTER,
+  SUBTASK_FINALIZE_DEPLOYMENT,
   SUBTASK_GENERATE_ROUTER_SOURCE,
   SUBTASK_PREPARE_DEPLOYMENT,
   SUBTASK_PRINT_INFO,
@@ -69,5 +70,6 @@ task(TASK_DEPLOY, 'Deploys all system modules')
     await hre.run(SUBTASK_GENERATE_ROUTER_SOURCE);
     await hre.run(SUBTASK_VALIDATE_ROUTER);
     await hre.run(SUBTASK_DEPLOY_ROUTER);
-    // await hre.run(SUBTASK_UPGRADE_PROXY);
+    await hre.run(SUBTASK_UPGRADE_PROXY);
+    await hre.run(SUBTASK_FINALIZE_DEPLOYMENT);
   });

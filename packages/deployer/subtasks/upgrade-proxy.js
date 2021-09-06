@@ -40,15 +40,14 @@ const UPGRADE_ABI = [
 subtask(SUBTASK_UPGRADE_PROXY).setAction(async (_, hre) => {
   logger.subtitle('Upgrading main proxy');
 
-  const routerAddress = _getDeployedAddress(hre.config.deployer.routerPath);
+  const routerAddress = _getDeployedAddress(hre.deployer.paths.routerPath, hre);
 
   logger.info(`Target implementation: ${routerAddress}`);
 
-  const wasProxyDeployed = await _deployProxy(routerAddress);
+  const wasProxyDeployed = await _deployProxy(routerAddress, hre);
 
   if (!wasProxyDeployed) {
-    const proxyAddress = _getDeployedAddress(hre.config.deployer.proxyName);
-
+    const proxyAddress = _getDeployedAddress(hre.deployer.paths.proxyPath, hre);
     await _upgradeProxy({ proxyAddress, routerAddress, hre });
   }
 });
@@ -57,7 +56,7 @@ function _getDeployedAddress(contractPath, hre) {
   return hre.deployer.data.contracts[contractPath].deployedAddress;
 }
 
-async function _deployProxy(routerAddress) {
+async function _deployProxy(routerAddress, hre) {
   const contractPath = hre.deployer.paths.proxyPath;
   let contractData = hre.deployer.data.contracts[contractPath];
 
