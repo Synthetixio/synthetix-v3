@@ -1,12 +1,8 @@
 const logger = require('../utils/logger');
 const prompter = require('../utils/prompter');
-const {
-  getContractNameFromPath,
-  getContractBytecodeHash,
-  getAddressBytecodeHash,
-} = require('../utils/contracts');
+const { getContractBytecodeHash, getAddressBytecodeHash } = require('../utils/contracts');
 const { subtask } = require('hardhat/config');
-const { SUBTASK_DEPLOY_CONTRACTS } = require('../task-names');
+const { SUBTASK_DEPLOY_CONTRACTS, SUBTASK_DEPLOY_CONTRACT } = require('../task-names');
 
 subtask(
   SUBTASK_DEPLOY_CONTRACTS,
@@ -23,27 +19,10 @@ subtask(
 
   // Update & create the contracts
   for (const [contractPath, contractData] of [...toUpdate, ...toCreate]) {
-    const contractName = getContractNameFromPath(contractPath);
-    const sourceBytecodeHash = getContractBytecodeHash(contractPath);
-
-    // Create contract & start the transaction on the network
-    const { contract, transaction } = await _createAndDeployContract(contractName);
-
-    hre.deployer.data.transactions[transaction.hash] = { status: 'pending' };
-
-    // Wait for the transaction to finish
-    const { gasUsed, status } = await _waitForTransaction(transaction);
-
-    hre.deployer.data.transactions[transaction.hash].status = status;
-
-    const totalGasUsed = hre.ethers.BigNumber.from(hre.deployer.data.properties.totalGasUsed)
-      .add(gasUsed)
-      .toString();
-    hre.deployer.data.properties.totalGasUsed = totalGasUsed;
-
-    contractData.deployedAddress = contract.address;
-    contractData.deployTransaction = transaction.hash;
-    contractData.bytecodeHash = sourceBytecodeHash;
+    await hre.run(SUBTASK_DEPLOY_CONTRACT, {
+      contractPath,
+      contractData,
+    });
   }
 });
 

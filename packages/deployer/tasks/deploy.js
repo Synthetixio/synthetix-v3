@@ -66,5 +66,5 @@ task(TASK_DEPLOY, 'Deploys all system modules')
     await hre.run(SUBTASK_GENERATE_ROUTER_SOURCE);
     await hre.run(SUBTASK_VALIDATE_ROUTER);
     await hre.run(SUBTASK_DEPLOY_ROUTER);
-    await hre.run(SUBTASK_UPGRADE_PROXY);
+    // await hre.run(SUBTASK_UPGRADE_PROXY);
   });

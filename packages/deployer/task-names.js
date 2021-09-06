@@ -1,4 +1,5 @@
 module.exports = {
+  SUBTASK_DEPLOY_CONTRACT: 'deploy-contract',
   SUBTASK_DEPLOY_CONTRACTS: 'deploy-contracts',
   SUBTASK_DEPLOY_MODULES: 'generate-deploy-modules',
   SUBTASK_DEPLOY_ROUTER: 'generate-deploy-router',

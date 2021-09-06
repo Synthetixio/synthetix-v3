@@ -2,7 +2,7 @@ const logger = require('../utils/logger');
 const { subtask } = require('hardhat/config');
 const { TASK_COMPILE } = require('hardhat/builtin-tasks/task-names');
 
-const { SUBTASK_DEPLOY_CONTRACTS, SUBTASK_DEPLOY_ROUTER } = require('../task-names');
+const { SUBTASK_DEPLOY_CONTRACT, SUBTASK_DEPLOY_ROUTER } = require('../task-names');
 
 subtask(SUBTASK_DEPLOY_ROUTER).setAction(async (_, hre) => {
   logger.subtitle('Deploying router');
@@ -21,7 +21,8 @@ subtask(SUBTASK_DEPLOY_ROUTER).setAction(async (_, hre) => {
     contractData = hre.deployer.data.contracts[contractPath];
   }
 
-  await hre.run(SUBTASK_DEPLOY_CONTRACTS, {
-    contracts: { [contractPath]: contractData },
+  await hre.run(SUBTASK_DEPLOY_CONTRACT, {
+    contractPath,
+    contractData,
   });
 });

@@ -1,7 +1,7 @@
 const logger = require('../utils/logger');
 const prompter = require('../utils/prompter');
 const { subtask } = require('hardhat/config');
-const { processTransaction, processReceipt } = require('../utils/transactions');
+// const { processTransaction, processReceipt } = require('../utils/transactions');
 const { SUBTASK_UPGRADE_PROXY, SUBTASK_DEPLOY_CONTRACTS } = require('../task-names');
 
 const UPGRADE_ABI = [
@@ -40,9 +40,9 @@ const UPGRADE_ABI = [
 subtask(SUBTASK_UPGRADE_PROXY).setAction(async (_, hre) => {
   logger.subtitle('Upgrading main proxy');
 
-  const data = hre.deployer.data.contracts;
+  const routerData = hre.deployer.data.contracts[hre.deployer.paths.routerPath];
+  const { deployedAddress: implementationAddress } = routerData;
 
-  const implementationAddress = data[`Router_${hre.network.name}`].deployedAddress;
   logger.info(`Target implementation: ${implementationAddress}`);
 
   const wasProxyDeployed = await _deployProxy({ implementationAddress });
