@@ -26,7 +26,7 @@ subtask(
   SUBTASK_PREPARE_DEPLOYMENT,
   'Prepares the deployment file associated with the active deployment.'
 ).setAction(async (taskArguments, hre) => {
-  const { clear, alias } = taskArguments;
+  const { clear, alias, instance } = taskArguments;
 
   if (clear) {
     await _clearDeploymentData(hre.deployer.paths.instance);
@@ -34,7 +34,7 @@ subtask(
 
   mkdirp.sync(hre.deployer.paths.instance);
 
-  const { previousFile, currentFile } = await _determineDeploymentFiles(alias);
+  const { previousFile, currentFile } = await _determineDeploymentFiles(instance, alias);
 
   hre.deployer.file = currentFile;
   hre.deployer.data = autosaveObject(hre.deployer.file, DEPLOYMENT_SCHEMA);
