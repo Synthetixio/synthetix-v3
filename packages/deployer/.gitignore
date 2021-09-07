@@ -1,2 +1,3 @@
 test/sample-project/deployments
 test/sample-project/contracts/GenRouter*.sol
+test/sample-project/contracts/mixins/GenIMCMixin.sol

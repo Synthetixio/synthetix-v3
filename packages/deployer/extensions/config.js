@@ -16,6 +16,7 @@ extendConfig((config, userConfig) => {
     ...userConfig.deployer,
     paths: {
       modules: 'contracts/modules',
+      mixins: 'contracts/mixins',
       deployments: 'deployments',
       ...(userConfig.deployer.paths || {}),
     },

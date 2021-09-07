@@ -59,6 +59,10 @@ module.exports = {
     this.log(chalk.green(`✅ ${msg}`));
   },
 
+  fail(msg) {
+    this.log(chalk.red(`💣 ${msg}`));
+  },
+
   complete(msg) {
     this.log(chalk.green.bold(`💯 ${msg}`));
   },

@@ -6,11 +6,13 @@ const {
   SUBTASK_DEPLOY_MODULES,
   SUBTASK_DEPLOY_ROUTER,
   SUBTASK_FINALIZE_DEPLOYMENT,
+  SUBTASK_GENERATE_IMC_SOURCE,
   SUBTASK_GENERATE_ROUTER_SOURCE,
   SUBTASK_PREPARE_DEPLOYMENT,
   SUBTASK_PRINT_INFO,
   SUBTASK_SYNC_SOURCES,
   SUBTASK_UPGRADE_PROXY,
+  SUBTASK_VALIDATE_IMC,
   SUBTASK_VALIDATE_ROUTER,
   TASK_DEPLOY,
 } = require('../task-names');
@@ -45,6 +47,7 @@ task(TASK_DEPLOY, 'Deploys all system modules')
       );
     }
 
+    hre.deployer.imcMixinModule = 'GenIMCMixin';
     hre.deployer.routerModule = ['GenRouter', hre.network.name, instance].map(capitalize).join('');
 
     const { paths } = hre.deployer;
@@ -54,6 +57,10 @@ task(TASK_DEPLOY, 'Deploys all system modules')
     paths.network = path.join(paths.deployments, hre.network.name);
     paths.instance = path.join(paths.network, instance);
     paths.extended = path.join(paths.instance, 'extended');
+    paths.imcMixinTemplate = path.resolve(__dirname, '../templates/GenIMCMixin.sol.mustache');
+    paths.imcMixinPath = relativePath(
+      path.join(hre.config.deployer.paths.mixins, `${hre.deployer.imcMixinModule}.sol`)
+    );
     paths.routerTemplate = path.resolve(__dirname, '../templates/GenRouter.sol.mustache');
     paths.routerPath = relativePath(
       path.join(hre.config.paths.sources, `${hre.deployer.routerModule}.sol`)
@@ -64,9 +71,11 @@ task(TASK_DEPLOY, 'Deploys all system modules')
 
     await hre.run(SUBTASK_PREPARE_DEPLOYMENT, taskArguments);
     await hre.run(SUBTASK_PRINT_INFO, taskArguments);
-    await hre.run(TASK_COMPILE, { force: true, quiet: true });
     await hre.run(SUBTASK_SYNC_SOURCES);
+    await hre.run(SUBTASK_GENERATE_IMC_SOURCE, taskArguments);
+    await hre.run(TASK_COMPILE, { force: true, quiet: true });
     await hre.run(SUBTASK_DEPLOY_MODULES);
+    await hre.run(SUBTASK_VALIDATE_IMC, taskArguments);
     await hre.run(SUBTASK_GENERATE_ROUTER_SOURCE);
     await hre.run(SUBTASK_VALIDATE_ROUTER);
     await hre.run(SUBTASK_DEPLOY_ROUTER);
