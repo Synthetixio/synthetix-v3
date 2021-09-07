@@ -8,7 +8,9 @@ subtask(
 ).setAction(async () => {
   logger.subtitle('Validating IMCMixin');
 
-  const match = Object.entries(hre.deployer.data.contracts.modules).every((module) => module[1].preCalculatedAddress ===  module[1].deployedAddress )
+  const match = Object.entries(hre.deployer.data.contracts.modules).every(
+    (module) => module[1].preCalculatedAddress === module[1].deployedAddress
+  );
 
   if (!match) {
     logger.fail('IMCMixin is valid');
