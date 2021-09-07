@@ -17,32 +17,24 @@ const logger = require('../utils/logger');
 const prompter = require('../utils/prompter');
 const { getDeploymentPaths } = require('../utils/deployments');
 const { capitalize } = require('../utils/string');
-
-const isWord = (str) => /^[\w\d]+$/.test(str);
+const types = require('../utils/argument-types');
 
 task(TASK_DEPLOY, 'Deploys all system modules')
   .addFlag('noConfirm', 'Skip all confirmation prompts', false)
   .addFlag('debug', 'Display debug logs', false)
   .addFlag('clear', 'Clear all previous deployment data for the selected network', false)
-  .addOptionalParam('alias', 'The alias name for the deployment')
-  .addOptionalParam('instance', 'The name of the target instance for deployment', 'official')
+  .addOptionalParam('alias', 'The alias name for the deployment', undefined, types.alphanumeric)
+  .addOptionalParam(
+    'instance',
+    'The name of the target instance for deployment',
+    'official',
+    types.alphanumeric
+  )
   .setAction(async (taskArguments, hre) => {
-    const { alias, instance, debug, noConfirm } = taskArguments;
+    const { instance, debug, noConfirm } = taskArguments;
 
     logger.debugging = debug;
     prompter.noConfirm = noConfirm;
-
-    if (!isWord(instance)) {
-      throw new Error(
-        'Invalid --instance parameter value, it can only be a lowercase word with numbers'
-      );
-    }
-
-    if (alias && !isWord(alias)) {
-      throw new Error(
-        'Invalid --alias parameter value, it can only be a lowercase word with numbers'
-      );
-    }
 
     hre.deployer.routerModule = ['GenRouter', hre.network.name, instance].map(capitalize).join('');
 
