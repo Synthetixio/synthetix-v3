@@ -1,4 +1,3 @@
-const path = require('path');
 const { task } = require('hardhat/config');
 const { TASK_COMPILE } = require('hardhat/builtin-tasks/task-names');
 
@@ -16,7 +15,7 @@ const {
 } = require('../task-names');
 const logger = require('../utils/logger');
 const prompter = require('../utils/prompter');
-const relativePath = require('../utils/relative-path');
+const { getDeploymentPaths } = require('../utils/deployments');
 const { capitalize } = require('../utils/string');
 
 const isWord = (str) => /^[\w\d]+$/.test(str);
@@ -47,20 +46,7 @@ task(TASK_DEPLOY, 'Deploys all system modules')
 
     hre.deployer.routerModule = ['GenRouter', hre.network.name, instance].map(capitalize).join('');
 
-    const { paths } = hre.deployer;
-
-    paths.deployments = path.resolve(hre.config.paths.root, hre.config.deployer.paths.deployments);
-    paths.modules = path.resolve(hre.config.paths.root, hre.config.deployer.paths.modules);
-    paths.network = path.join(paths.deployments, hre.network.name);
-    paths.instance = path.join(paths.network, instance);
-    paths.extended = path.join(paths.instance, 'extended');
-    paths.routerTemplate = path.resolve(__dirname, '../templates/GenRouter.sol.mustache');
-    paths.routerPath = relativePath(
-      path.join(hre.config.paths.sources, `${hre.deployer.routerModule}.sol`)
-    );
-    paths.proxyPath = relativePath(
-      path.join(hre.config.paths.sources, `${hre.config.deployer.proxyName}.sol`)
-    );
+    hre.deployer.paths = getDeploymentPaths(instance);
 
     await hre.run(SUBTASK_PREPARE_DEPLOYMENT, taskArguments);
     await hre.run(SUBTASK_PRINT_INFO, taskArguments);
