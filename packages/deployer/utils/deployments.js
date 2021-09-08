@@ -56,6 +56,9 @@ function getDeploymentPaths(instance = 'official') {
   paths.proxyPath = relativePath(
     path.join(hre.config.paths.sources, `${hre.config.deployer.proxyName}.sol`)
   );
+  paths.mixins = path.resolve(hre.config.paths.root, hre.config.deployer.paths.mixins);
+  paths.imcMixinTemplate = path.resolve(__dirname, '../templates/GenIMCMixin.sol.mustache');
+  paths.imcMixinPath = path.join(paths.mixins, `${hre.deployer.imcMixinModule}.sol`);
 
   return paths;
 }

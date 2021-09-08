@@ -39,6 +39,7 @@ task(TASK_DEPLOY, 'Deploys all system modules')
     prompter.noConfirm = noConfirm;
 
     hre.deployer.routerModule = ['GenRouter', hre.network.name, instance].map(capitalize).join('');
+    hre.deployer.imcMixinModule = 'GenIMCMixin';
 
     hre.deployer.paths = getDeploymentPaths(instance);
 
