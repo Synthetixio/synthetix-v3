@@ -31,19 +31,19 @@ task(TASK_DEPLOY, 'Deploys all system modules')
     types.alphanumeric
   )
   .setAction(async (taskArguments, hre) => {
-    const { instance, debug, noConfirm } = taskArguments;
+    const { instance, clear, debug, noConfirm } = taskArguments;
 
     logger.debugging = debug;
     prompter.noConfirm = noConfirm;
+
+    if (clear) {
+      await hre.run(SUBTASK_CLEAR_DEPLOYMENTS);
+    }
 
     hre.deployer.paths = getDeploymentPaths(hre.config, {
       instance,
       network: hre.network.name,
     });
-
-    if (taskArguments.clear) {
-      await hre.run(SUBTASK_CLEAR_DEPLOYMENTS);
-    }
 
     await hre.run(SUBTASK_PREPARE_DEPLOYMENT, taskArguments);
     await hre.run(SUBTASK_PRINT_INFO, taskArguments);
