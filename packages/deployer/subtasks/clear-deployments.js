@@ -4,10 +4,10 @@ const { subtask } = require('hardhat/config');
 const logger = require('../utils/logger');
 const prompter = require('../utils/prompter');
 const { getGeneratedContractPaths } = require('../utils/deployments');
-const { SUBTASK_CLEAR_DEPLOYMENT } = require('../task-names');
+const { SUBTASK_CLEAR_DEPLOYMENTS } = require('../task-names');
 
 subtask(
-  SUBTASK_CLEAR_DEPLOYMENT,
+  SUBTASK_CLEAR_DEPLOYMENTS,
   'Delete all previous deployment data on the current environment'
 ).setAction(async (_, hre) => {
   const deploymentsFolder = hre.config.deployer.paths.deployments;

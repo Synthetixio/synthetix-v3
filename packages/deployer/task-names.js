@@ -1,5 +1,5 @@
 module.exports = {
-  SUBTASK_CLEAR_DEPLOYMENT: 'clear-deployment',
+  SUBTASK_CLEAR_DEPLOYMENTS: 'clear-deployments',
   SUBTASK_DEPLOY_CONTRACT: 'deploy-contract',
   SUBTASK_DEPLOY_CONTRACTS: 'deploy-contracts',
   SUBTASK_DEPLOY_MODULES: 'generate-deploy-modules',
