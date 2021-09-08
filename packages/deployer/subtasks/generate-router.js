@@ -26,12 +26,12 @@ subtask(
 
   const package = readPackageJson();
 
-  const generatedSource = renderTemplate(hre.deployer.paths.routerTemplate, {
+  const generatedSource = renderTemplate(hre.config.deployer.paths.routerTemplate, {
     project: package.name,
     repo: package.repository?.url || '',
     branch: getBranch(),
     commit: getCommit(),
-    moduleName: hre.deployer.routerModule,
+    moduleName: getContractNameFromPath(hre.deployer.paths.routerPath),
     modules: _renderModules(hre.deployer.data.contracts.modules),
     selectors: _renderSelectors({ binaryData }),
   });
