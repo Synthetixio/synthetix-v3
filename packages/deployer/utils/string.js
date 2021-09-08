@@ -16,11 +16,11 @@ module.exports = {
    *   startsWithWord('SomeModule', 'Gen') // false
    *   startsWithWord('GenerationalModule', 'Gen') // false
    * @param {string} str
-   * @param {string} prefix
+   * @param {string} word
    * @returns {string}
    */
-  startsWithWord(str, prefix) {
-    if (str === prefix) return true;
-    return new RegExp(`^${prefix}[A-Z]`).test(str);
+  startsWithWord(str, word) {
+    if (str === word) return true;
+    return new RegExp(`^${word}[A-Z]`).test(str);
   },
 };
