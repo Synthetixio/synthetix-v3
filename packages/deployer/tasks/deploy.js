@@ -35,7 +35,10 @@ task(TASK_DEPLOY, 'Deploys all system modules')
     logger.debugging = debug;
     prompter.noConfirm = noConfirm;
 
-    hre.deployer.paths = getDeploymentPaths(instance);
+    hre.deployer.paths = getDeploymentPaths(hre.config, {
+      instance,
+      network: hre.network.name,
+    });
 
     await hre.run(SUBTASK_PREPARE_DEPLOYMENT, taskArguments);
     await hre.run(SUBTASK_PRINT_INFO, taskArguments);

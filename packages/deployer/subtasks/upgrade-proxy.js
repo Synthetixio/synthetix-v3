@@ -2,6 +2,7 @@ const logger = require('../utils/logger');
 const prompter = require('../utils/prompter');
 const { subtask } = require('hardhat/config');
 const { processTransaction, processReceipt } = require('../utils/transactions');
+const { getProxyPath } = require('../utils/deployments');
 const { SUBTASK_UPGRADE_PROXY, SUBTASK_DEPLOY_CONTRACT } = require('../task-names');
 
 const UPGRADE_ABI = [
@@ -33,21 +34,25 @@ const UPGRADE_ABI = [
   },
 ];
 
-/*
- * Checks if the main proxy needs to be deployed,
- * and upgrades it if needed.
- * */
-subtask(SUBTASK_UPGRADE_PROXY).setAction(async (_, hre) => {
+subtask(
+  SUBTASK_UPGRADE_PROXY,
+  'Checks if the main proxy needs to be deployed, and upgrades it if needed.'
+).setAction(async (_, hre) => {
   logger.subtitle('Upgrading main proxy');
 
+  const proxyPath = getProxyPath(hre.config);
   const routerAddress = _getDeployedAddress(hre.deployer.paths.routerPath, hre);
 
   logger.info(`Target implementation: ${routerAddress}`);
 
-  const wasProxyDeployed = await _deployProxy(routerAddress, hre);
+  const wasProxyDeployed = await _deployProxy({
+    proxyPath,
+    routerAddress,
+    hre,
+  });
 
   if (!wasProxyDeployed) {
-    const proxyAddress = _getDeployedAddress(hre.deployer.paths.proxyPath, hre);
+    const proxyAddress = _getDeployedAddress(proxyPath, hre);
     await _upgradeProxy({ proxyAddress, routerAddress, hre });
   }
 });
@@ -56,22 +61,21 @@ function _getDeployedAddress(contractPath, hre) {
   return hre.deployer.data.contracts[contractPath].deployedAddress;
 }
 
-async function _deployProxy(routerAddress, hre) {
-  const contractPath = hre.deployer.paths.proxyPath;
-  let contractData = hre.deployer.data.contracts[contractPath];
+async function _deployProxy({ proxyPath, routerAddress, hre }) {
+  let proxyData = hre.deployer.data.contracts[proxyPath];
 
-  if (!contractData) {
-    hre.deployer.data.contracts[contractPath] = {
+  if (!proxyData) {
+    hre.deployer.data.contracts[proxyPath] = {
       deployedAddress: '',
       deployTransaction: '',
       bytecodeHash: '',
     };
-    contractData = hre.deployer.data.contracts[contractPath];
+    proxyData = hre.deployer.data.contracts[proxyPath];
   }
 
   return await hre.run(SUBTASK_DEPLOY_CONTRACT, {
-    contractPath,
-    contractData,
+    contractPath: proxyPath,
+    contractData: proxyData,
     constructorArgs: [routerAddress],
   });
 }

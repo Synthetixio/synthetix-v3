@@ -42,20 +42,19 @@ function getDeploymentFiles(instance = 'official') {
     .sort(naturalCompare);
 }
 
-function getDeploymentPaths(instance = 'official') {
-  const { name: network } = hre.network;
+function getProxyPath(config) {
+  return relativePath(path.join(config.paths.sources, `${config.deployer.proxyName}.sol`));
+}
+
+function getDeploymentPaths(config, { network = 'local', instance = 'official' }) {
   const paths = {};
 
-  paths.network = path.join(hre.config.deployer.paths.deployments, network);
+  paths.network = path.join(config.deployer.paths.deployments, network);
   paths.instance = path.join(paths.network, instance);
   paths.extended = path.join(paths.instance, 'extended');
 
-  paths.proxyPath = relativePath(
-    path.join(hre.config.paths.sources, `${hre.config.deployer.proxyName}.sol`)
-  );
-
   const routerModule = ['GenRouter', network, instance].map(capitalize).join('');
-  paths.routerPath = relativePath(path.join(hre.config.paths.sources, `${routerModule}.sol`));
+  paths.routerPath = relativePath(path.join(config.paths.sources, `${routerModule}.sol`));
 
   return paths;
 }
@@ -66,4 +65,5 @@ module.exports = {
   getDeploymentFiles,
   getDeploymentData,
   getDeploymentPaths,
+  getProxyPath,
 };
