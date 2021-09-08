@@ -29,7 +29,7 @@ task(TASK_DUMMY_IMC, 'Deploys all system modules')
     paths.imcMixinTemplate = path.resolve(__dirname, '../templates/GenIMCMixin.sol.mustache');
     paths.imcMixinPath = path.join(paths.mixins, `${hre.deployer.imcMixinModule}.sol`);
 
-    hre.deployer.data = { contracts: { modules :{} } };
+    hre.deployer.data = { contracts: { modules: {} } };
     await hre.run(SUBTASK_SYNC_SOURCES);
     await hre.run(SUBTASK_GENERATE_IMC_SOURCE, { dummyImc: true });
   });

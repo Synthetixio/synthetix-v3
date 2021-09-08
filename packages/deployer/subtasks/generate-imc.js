@@ -14,7 +14,7 @@ subtask(
   SUBTASK_GENERATE_IMC_SOURCE,
   'Pre-calculates the modules addresses and generates the source for a new IMCMixin contract.'
 ).setAction(async ({ dummyImc }, hre) => {
-  logger.subtitle(`Generating ${dummyImc ? 'fake ' : '' }IMCMixin source`);
+  logger.subtitle(`Generating ${dummyImc ? 'fake ' : ''}IMCMixin source`);
   const modules = hre.deployer.data.contracts.modules;
 
   const { toUpdate, toCreate } = await processContracts(modules);
@@ -24,7 +24,7 @@ subtask(
     initialNonce,
     [...toUpdate, ...toCreate],
     modules,
-    dummyImc ? ethers.Wallet.createRandom() : undefined
+    dummyImc ? hre.ethers.Wallet.createRandom() : undefined
   );
 
   const modulesPaths = Object.keys(modules);
