@@ -1,5 +1,5 @@
 const fs = require('fs');
-const logger = require('../utils/logger');
+const logger = require('@synthetixio/core-js/utils/logger');
 const { subtask } = require('hardhat/config');
 const { SUBTASK_FINALIZE_DEPLOYMENT } = require('../task-names');
 

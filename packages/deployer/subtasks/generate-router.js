@@ -1,9 +1,9 @@
 const fs = require('fs');
-const logger = require('../utils/logger');
+const logger = require('@synthetixio/core-js/utils/logger');
 const { subtask } = require('hardhat/config');
 const { SUBTASK_GENERATE_ROUTER_SOURCE } = require('../task-names');
-const { getCommit, getBranch } = require('../utils/git');
-const { readPackageJson } = require('../utils/package');
+const { getCommit, getBranch } = require('@synthetixio/core-js/utils/git');
+const { readPackageJson } = require('@synthetixio/core-js/utils/package');
 const { getContractSelectors, getContractNameFromPath } = require('../utils/contracts');
 const renderTemplate = require('../utils/render-template');
 

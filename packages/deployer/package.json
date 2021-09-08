@@ -16,9 +16,7 @@
     "chalk": "4.1.2",
     "figlet": "1.5.2",
     "glob": "7.1.7",
-    "inquirer": "8.1.2",
     "mkdirp": "1.0.4",
-    "mustache": "4.2.0",
     "rimraf": "3.0.2",
     "string-natural-compare": "3.0.1"
   }

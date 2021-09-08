@@ -1,5 +1,5 @@
-const logger = require('../utils/logger');
-const prompter = require('../utils/prompter');
+const logger = require('@synthetixio/core-js/utils/logger');
+const prompter = require('@synthetixio/core-js/utils/prompter');
 const { alreadyDeployed } = require('../utils/contracts');
 const { subtask } = require('hardhat/config');
 const { SUBTASK_DEPLOY_CONTRACTS, SUBTASK_DEPLOY_CONTRACT } = require('../task-names');
