@@ -11,10 +11,10 @@ subtask(
   const { toSkip, toUpdate, toCreate } = await _processContracts(contracts);
 
   if (toUpdate.length === 0 && toCreate.length === 0) {
-    logger.info('No contracts need to be deployed, continuing...');
-    return;
+    return false;
   } else {
-    await _confirmDeployments({ toSkip, toUpdate, toCreate });
+    const yes = await _confirmDeployments({ toSkip, toUpdate, toCreate });
+    if (!yes) return false;
   }
 
   // Update & create the contracts
@@ -24,6 +24,8 @@ subtask(
       contractData,
     });
   }
+
+  return true;
 });
 
 /**
@@ -47,7 +49,7 @@ async function _confirmDeployments({ toSkip, toUpdate, toCreate }) {
     toCreate.forEach(([source]) => logger.notice(`  ${source}`));
   }
 
-  await prompter.confirmAction('Are you sure you want to make these changes?');
+  return await prompter.ask('Are you sure you want to make these changes?');
 }
 
 /**

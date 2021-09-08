@@ -9,6 +9,10 @@ module.exports = {
    * @returns {boolean}
    */
   async ask(message) {
+    if (this.noConfirm) {
+      return true;
+    }
+
     const { confirmation } = await inquirer.prompt([
       {
         type: 'confirm',
