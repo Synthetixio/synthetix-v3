@@ -114,9 +114,29 @@ async function _getAllSelectors(contractsPaths) {
     allSelectors.push(...selectors.map((s) => ({ ...s, contractName })));
   }
 
+  _findDuplicateSelectors(allSelectors);
+
   return allSelectors.sort((a, b) => {
     return Number.parseInt(a.selector, 16) - Number.parseInt(b.selector, 16);
   });
+}
+
+function _findDuplicateSelectors(selectors) {
+  const duplicates = selectors
+    .map((s) => s.selector)
+    .filter((s, index, selectors) => selectors.indexOf(s) !== index);
+
+  if (duplicates.length > 0) {
+    const ocurrences = [];
+    duplicates.map((duplicate) => {
+      const cases = selectors.filter((s) => s.selector === duplicate);
+      ocurrences.push(
+        `  > ${cases[0].name} found in modules ${cases.map((c) => c.contractName)} - ${duplicate}\n`
+      );
+    });
+
+    throw new Error(`Duplicate selectors found!\n${ocurrences.join('')}`);
+  }
 }
 
 function _buildBinaryData({ selectors }) {
