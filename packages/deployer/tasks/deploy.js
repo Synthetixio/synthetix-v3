@@ -47,7 +47,6 @@ task(TASK_DEPLOY, 'Deploys all system modules')
       );
     }
 
-    hre.deployer.imcMixinModule = 'GenIMCMixin';
     hre.deployer.routerModule = ['GenRouter', hre.network.name, instance].map(capitalize).join('');
 
     const { paths } = hre.deployer;
@@ -57,10 +56,6 @@ task(TASK_DEPLOY, 'Deploys all system modules')
     paths.network = path.join(paths.deployments, hre.network.name);
     paths.instance = path.join(paths.network, instance);
     paths.extended = path.join(paths.instance, 'extended');
-    paths.imcMixinTemplate = path.resolve(__dirname, '../templates/GenIMCMixin.sol.mustache');
-    paths.imcMixinPath = relativePath(
-      path.join(hre.config.deployer.paths.mixins, `${hre.deployer.imcMixinModule}.sol`)
-    );
     paths.routerTemplate = path.resolve(__dirname, '../templates/GenRouter.sol.mustache');
     paths.routerPath = relativePath(
       path.join(hre.config.paths.sources, `${hre.deployer.routerModule}.sol`)
@@ -68,14 +63,19 @@ task(TASK_DEPLOY, 'Deploys all system modules')
     paths.proxyPath = relativePath(
       path.join(hre.config.paths.sources, `${hre.config.deployer.proxyName}.sol`)
     );
+    // IMC Mixin
+    hre.deployer.imcMixinModule = 'GenIMCMixin';
+    paths.mixins = path.resolve(hre.config.paths.root, hre.config.deployer.paths.mixins);
+    paths.imcMixinTemplate = path.resolve(__dirname, '../templates/GenIMCMixin.sol.mustache');
+    paths.imcMixinPath = path.join(paths.mixins, `${hre.deployer.imcMixinModule}.sol`);
 
     await hre.run(SUBTASK_PREPARE_DEPLOYMENT, taskArguments);
     await hre.run(SUBTASK_PRINT_INFO, taskArguments);
     await hre.run(SUBTASK_SYNC_SOURCES);
-    await hre.run(SUBTASK_GENERATE_IMC_SOURCE, taskArguments);
+    await hre.run(SUBTASK_GENERATE_IMC_SOURCE);
     await hre.run(TASK_COMPILE, { force: true, quiet: true });
     await hre.run(SUBTASK_DEPLOY_MODULES);
-    await hre.run(SUBTASK_VALIDATE_IMC, taskArguments);
+    await hre.run(SUBTASK_VALIDATE_IMC);
     await hre.run(SUBTASK_GENERATE_ROUTER_SOURCE);
     await hre.run(SUBTASK_VALIDATE_ROUTER);
     await hre.run(SUBTASK_DEPLOY_ROUTER);

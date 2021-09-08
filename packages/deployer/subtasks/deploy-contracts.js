@@ -1,6 +1,6 @@
 const logger = require('../utils/logger');
 const prompter = require('../utils/prompter');
-const { alreadyDeployed } = require('../utils/contracts');
+const { processContracts } = require('../utils/contracts');
 const { subtask } = require('hardhat/config');
 const { SUBTASK_DEPLOY_CONTRACTS, SUBTASK_DEPLOY_CONTRACT } = require('../task-names');
 
@@ -8,7 +8,7 @@ subtask(
   SUBTASK_DEPLOY_CONTRACTS,
   'Deploys a list of contracts, avoiding contracts that do not need to be deployed, and prompting the user for confirmation.'
 ).setAction(async ({ contracts }, hre) => {
-  const { toSkip, toUpdate, toCreate } = await _processContracts(contracts);
+  const { toSkip, toUpdate, toCreate } = await processContracts(contracts);
 
   if (toUpdate.length === 0 && toCreate.length === 0) {
     logger.info('No contracts need to be deployed, continuing...');
@@ -48,29 +48,4 @@ async function _confirmDeployments({ toSkip, toUpdate, toCreate }) {
   }
 
   await prompter.confirmAction('Are you sure you want to make these changes?');
-}
-
-/**
- * Sort contracts by the ones that doesn't need deployment, the ones that are going
- * to be re-deployed with updated code, and the ones that are going to be deployed
- * for the first time.
- */
-async function _processContracts(contracts) {
-  const toSkip = [];
-  const toUpdate = [];
-  const toCreate = [];
-
-  for (const [contractPath, contractData] of Object.entries(contracts)) {
-    if (hre.network.name === 'hardhat' || !contractData.deployedAddress) {
-      toCreate.push([contractPath, contractData]);
-    } else {
-      if (await alreadyDeployed(contractPath, contractData)) {
-        toSkip.push([contractPath, contractData]);
-      } else {
-        toUpdate.push([contractPath, contractData]);
-      }
-    }
-  }
-
-  return { toSkip, toUpdate, toCreate };
 }

@@ -50,10 +50,36 @@ async function alreadyDeployed(contractPath, contractData) {
   return sourceBytecodeHash === remoteBytecodeHash;
 }
 
+/**
+ * Sort contracts by the ones that doesn't need deployment, the ones that are going
+ * to be re-deployed with updated code, and the ones that are going to be deployed
+ * for the first time.
+ */
+async function processContracts(contracts) {
+  const toSkip = [];
+  const toUpdate = [];
+  const toCreate = [];
+
+  for (const [contractPath, contractData] of Object.entries(contracts)) {
+    if (hre.network.name === 'hardhat' || !contractData.deployedAddress) {
+      toCreate.push([contractPath, contractData]);
+    } else {
+      if (await alreadyDeployed(contractPath, contractData)) {
+        toSkip.push([contractPath, contractData]);
+      } else {
+        toUpdate.push([contractPath, contractData]);
+      }
+    }
+  }
+
+  return { toSkip, toUpdate, toCreate };
+}
+
 module.exports = {
   getContractNameFromPath,
   getAddressBytecodeHash,
   getContractBytecodeHash,
   getContractSelectors,
   alreadyDeployed,
+  processContracts,
 };

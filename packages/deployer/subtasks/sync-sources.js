@@ -53,6 +53,7 @@ async function _removeDeletedSources({ sources, previousData }) {
 async function _addNewSources({ sources, data, previousData }) {
   const toAdd = sources.filter((source) => {
     const previousModule = previousData?.contracts.modules[source];
+    // if data.contracts.modules[source] is undefined at execution time will use the previousModule or the default one.
     data.contracts.modules[source] = data.contracts.modules[source] ||
       previousModule || { deployedAddress: '', deployTransaction: '', bytecodeHash: '' };
     return !previousModule;

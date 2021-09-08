@@ -4,7 +4,7 @@ const { subtask } = require('hardhat/config');
 const { SUBTASK_GENERATE_IMC_SOURCE } = require('../task-names');
 const { getCommit, getBranch } = require('../utils/git');
 const { readPackageJson } = require('../utils/package');
-const { getContractNameFromPath } = require('../utils/contracts');
+const { getContractNameFromPath, processContracts } = require('../utils/contracts');
 const { getNonce, nextNonce, evaluateNextDeployedContractAddress } = require('../utils/provider');
 const renderTemplate = require('../utils/render-template');
 
@@ -13,13 +13,21 @@ const TAB = '    ';
 subtask(
   SUBTASK_GENERATE_IMC_SOURCE,
   'Pre-calculates the modules addresses and generates the source for a new IMCMixin contract.'
-).setAction(async (_, hre) => {
-  logger.subtitle('Generating IMCMixin source');
+).setAction(async ({ dummyImc }, hre) => {
+  logger.subtitle(`Generating ${dummyImc ? 'fake ' : '' }IMCMixin source`);
+  const modules = hre.deployer.data.contracts.modules;
 
-  const initialNonce = await getNonce();
-  await _preCalculateModuleAddresses(hre.deployer.data.contracts.modules, initialNonce);
+  const { toUpdate, toCreate } = await processContracts(modules);
 
-  const modulesPaths = Object.keys(hre.deployer.data.contracts.modules);
+  const initialNonce = dummyImc ? 1 : await getNonce();
+  await _preCalculateModuleAddresses(
+    initialNonce,
+    [...toUpdate, ...toCreate],
+    modules,
+    dummyImc ? ethers.Wallet.createRandom() : undefined
+  );
+
+  const modulesPaths = Object.keys(modules);
   logger.debug(`modules: ${JSON.stringify(modulesPaths, null, 2)}`);
 
   const package = readPackageJson();
@@ -30,7 +38,8 @@ subtask(
     branch: getBranch(),
     commit: getCommit(),
     moduleName: hre.deployer.imcMixinModule,
-    modulesAddress: _renderModules(hre.deployer.data.contracts.modules),
+    modulesAddress: _renderModules(modules),
+    is_fake: dummyImc,
   });
 
   logger.debug(`generated source: ${generatedSource}`);
@@ -63,12 +72,11 @@ function _renderModules(modules) {
     .trim();
 }
 
-async function _preCalculateModuleAddresses(modules, initialNonce) {
+async function _preCalculateModuleAddresses(initialNonce, modulesToDeploy, modules, signer) {
   let nonce = initialNonce;
-  const modulesList = Object.entries(modules);
-  for (let i = 0; i < modulesList.length; i++) {
-    const key = modulesList[i][0];
-    const address = await evaluateNextDeployedContractAddress(nonce);
+  for (let i = 0; i < modulesToDeploy.length; i++) {
+    const key = modulesToDeploy[i][0];
+    const address = await evaluateNextDeployedContractAddress(nonce, signer);
     modules[key].preCalculatedAddress = address;
     nonce = nextNonce(nonce);
   }

@@ -15,6 +15,15 @@ pragma solidity ^0.8.0;
 // --------------------------------------------------------------------------------
 
 contract {{{moduleName}}} {
-    // solhint-disable private-vars-leading-underscore
+    {{#is_fake}}
+
+    // --------------------------------------------------------------------------------
+    // --------------------------------------------------------------------------------
+    // THIS IS A DUMMY MODULE GENERATED WITH RANDOM DATA. DON'T USE IN A DEPLOYMENT
+    // --------------------------------------------------------------------------------
+    // --------------------------------------------------------------------------------
+    
+    {{/is_fake}}
+    // solhint-disable private-vars-leading-underscore,const-name-snakecase
     {{{modulesAddress}}}
 }
