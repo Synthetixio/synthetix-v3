@@ -57,11 +57,8 @@ function getDeploymentPaths(config, { network = 'local', instance = 'official' }
   return {
     deployments: path.join(config.deployer.paths.deployments, network, instance),
     router: relativePath(
-      path.join(
-        config.paths.sources,
-        `${getRouterName({ network, instance })}.sol`,
-        config.paths.root
-      )
+      path.join(config.paths.sources, `${getRouterName({ network, instance })}.sol`),
+      config.paths.root
     ),
   };
 }
