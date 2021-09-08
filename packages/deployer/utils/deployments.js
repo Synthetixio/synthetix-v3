@@ -3,7 +3,7 @@ const path = require('path');
 const glob = require('glob');
 const naturalCompare = require('string-natural-compare');
 const relativePath = require('./relative-path');
-const { capitalize } = require('./string');
+const { capitalize, startsWithWord } = require('./string');
 
 // Regex for deployment file formats, e.g.: 2021-08-31-00-sirius.json
 const DEPLOYMENT_FILE_FORMAT = /^[0-9]{4}-[0-9]{2}-[0-9]{2}-[0-9]{2,}(?:-[a-z0-9]+)?\.json$/;
@@ -42,6 +42,12 @@ function getModulesPaths(config) {
     .map((source) => relativePath(source, hre.config.paths.root));
 }
 
+function getGeneratedContractPaths(config) {
+  return glob
+    .sync(path.join(config.paths.sources, 'Gen*.sol'))
+    .filter((file) => startsWithWord(path.basename(file), 'Gen'));
+}
+
 function getProxyPath(config) {
   return relativePath(
     path.join(config.paths.sources, `${config.deployer.proxyName}.sol`),
@@ -71,5 +77,6 @@ module.exports = {
   getDeploymentPaths,
   getRouterName,
   getModulesPaths,
+  getGeneratedContractPaths,
   getProxyPath,
 };
