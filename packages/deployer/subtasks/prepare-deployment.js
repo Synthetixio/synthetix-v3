@@ -24,7 +24,7 @@ subtask(
   SUBTASK_PREPARE_DEPLOYMENT,
   'Prepares the deployment file associated with the active deployment.'
 ).setAction(async (taskArguments, hre) => {
-  const { clear, alias } = taskArguments;
+  const { alias } = taskArguments;
 
   const deploymentsFolder = hre.config.deployer.paths.deployments;
 

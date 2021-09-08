@@ -1,5 +1,5 @@
 const fs = require('fs');
-const path= require('path');
+const path = require('path');
 const logger = require('../utils/logger');
 const { subtask } = require('hardhat/config');
 const { SUBTASK_GENERATE_ROUTER_SOURCE } = require('../task-names');
