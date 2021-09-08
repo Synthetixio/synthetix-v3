@@ -8,7 +8,7 @@ const prompter = require('../utils/prompter');
 const relativePath = require('../utils/relative-path');
 const autosaveObject = require('../utils/autosave-object');
 const { getDeploymentFiles } = require('../utils/deployments');
-const { SUBTASK_PREPARE_DEPLOYMENT, SUBTASK_CLEAR_DEPLOYMENT } = require('../task-names');
+const { SUBTASK_PREPARE_DEPLOYMENT } = require('../task-names');
 
 const DEPLOYMENT_SCHEMA = {
   properties: {
@@ -24,15 +24,10 @@ const DEPLOYMENT_SCHEMA = {
 subtask(
   SUBTASK_PREPARE_DEPLOYMENT,
   'Prepares the deployment file associated with the active deployment.'
-).setAction(async (taskArguments, hre) => {
-  const { clear, alias } = taskArguments;
-
+).setAction(async ({ alias }, hre) => {
   const deploymentsFolder = hre.deployer.paths.deployments;
 
-  if (clear) {
-    await _clearDeploymentData(deploymentsFolder);
-  }
-
+  // Make sure the deployments folder exists
   mkdirp.sync(deploymentsFolder);
 
   const { previousFile, currentFile } = await _determineDeploymentFiles(deploymentsFolder, alias);
@@ -44,18 +39,6 @@ subtask(
     hre.deployer.previousData = JSON.parse(fs.readFileSync(previousFile));
   }
 });
-
-/**
- * Delete the given folder, optionally prompting the user
- * @param {string} folder
- */
-async function _clearDeploymentData(folder) {
-  logger.warn(
-    'Received --clear parameter. This will delete all previous deployment data on the given instance!'
-  );
-  await prompter.confirmAction(`Clear all data on ${folder}`);
-  await hre.run(SUBTASK_CLEAR_DEPLOYMENT);
-}
 
 /**
  * Initialize a new deployment file, or, if existant, try to continue using it.
