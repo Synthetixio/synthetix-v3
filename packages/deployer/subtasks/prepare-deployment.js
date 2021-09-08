@@ -26,21 +26,22 @@ subtask(
   SUBTASK_PREPARE_DEPLOYMENT,
   'Prepares the deployment file associated with the active deployment.'
 ).setAction(async (taskArguments, hre) => {
-  const { clear, alias, instance } = taskArguments;
+  const { clear, alias } = taskArguments;
+
+  const deploymentsFolder = hre.deployer.paths.deployments;
 
   if (clear) {
-    await _clearDeploymentData(hre.deployer.paths.instance);
+    await _clearDeploymentData(deploymentsFolder);
   }
 
-  mkdirp.sync(hre.deployer.paths.instance);
+  mkdirp.sync(deploymentsFolder);
 
-  const { previousFile, currentFile } = await _determineDeploymentFiles(instance, alias);
+  const { previousFile, currentFile } = await _determineDeploymentFiles(deploymentsFolder, alias);
 
   hre.deployer.file = currentFile;
   hre.deployer.data = autosaveObject(hre.deployer.file, DEPLOYMENT_SCHEMA);
 
   if (previousFile) {
-    hre.deployer.previousFile = previousFile;
     hre.deployer.previousData = JSON.parse(fs.readFileSync(previousFile));
   }
 });
@@ -63,10 +64,8 @@ async function _clearDeploymentData(folder) {
  * @param {string} [alias]
  * @returns {{ currentFile: string, previousFile: string }}
  */
-async function _determineDeploymentFiles(instance, alias) {
-  const folder = hre.deployer.paths.instance;
-
-  const deployments = getDeploymentFiles(instance);
+async function _determineDeploymentFiles(deploymentsFolder, alias) {
+  const deployments = getDeploymentFiles(deploymentsFolder);
   const previousFile = deployments.length > 0 ? deployments[deployments.length - 1] : null;
 
   // Check if there is an unfinished deployment and prompt the user if we should
@@ -108,7 +107,10 @@ async function _determineDeploymentFiles(instance, alias) {
     number = `${previousNumber + 1}`.padStart(2, '0');
   }
 
-  const currentFile = path.join(folder, `${today}-${number}${alias ? `-${alias}` : ''}.json`);
+  const currentFile = path.join(
+    deploymentsFolder,
+    `${today}-${number}${alias ? `-${alias}` : ''}.json`
+  );
 
   return {
     previousFile,

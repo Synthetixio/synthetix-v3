@@ -1,23 +1,32 @@
+const path = require('path');
 const { extendConfig } = require('hardhat/config');
 
-extendConfig((config, userConfig) => {
-  if (!userConfig.deployer) {
-    throw new Error('Deployer plugin config not found in hardhat.config.js');
-  }
+const DEFAULTS = {
+  proxyName: 'MainProxy',
+  paths: {
+    routerTemplate: path.resolve(__dirname, '../templates/GenRouter.sol.mustache'),
+    modules: 'contracts/modules',
+    deployments: 'deployments',
+  },
+};
 
-  if (!userConfig.deployer.proxyName) {
-    throw new Error(
-      'Please specify a "deployer.proxyName" in your hardhat configuration file. This is the main entry point of the system, and should be a proxy that forwards calls to an implementation that has an `upgradeTo` function.'
-    );
+extendConfig((config, userConfig) => {
+  const { root } = config.paths;
+  const { deployer: givenConfig = {} } = userConfig;
+
+  // Resolve the absolute path from the root of the configurable path
+  function resolvePath(key) {
+    return path.resolve(root, givenConfig?.paths?.[key] || DEFAULTS.paths[key]);
   }
 
   config.deployer = {
-    proxyName: '',
-    ...userConfig.deployer,
+    ...DEFAULTS,
+    ...givenConfig,
     paths: {
-      modules: 'contracts/modules',
-      deployments: 'deployments',
-      ...(userConfig.deployer.paths || {}),
+      ...DEFAULTS.paths,
+      routerTemplate: resolvePath('routerTemplate'),
+      modules: resolvePath('modules'),
+      deployments: resolvePath('deployments'),
     },
   };
 });

@@ -9,7 +9,7 @@ subtask(SUBTASK_DEPLOY_ROUTER).setAction(async (_, hre) => {
 
   await hre.run(TASK_COMPILE, { force: false, quiet: true });
 
-  const contractPath = hre.deployer.paths.routerPath;
+  const contractPath = hre.deployer.paths.router;
   let contractData = hre.deployer.data.contracts[contractPath];
 
   if (!contractData) {

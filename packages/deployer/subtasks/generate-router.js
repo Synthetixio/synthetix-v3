@@ -13,7 +13,10 @@ subtask(
   SUBTASK_GENERATE_ROUTER_SOURCE,
   'Reads deployed modules from the deployment data file and generates the source for a new router contract.'
 ).setAction(async (_, hre) => {
+  const routerPath = hre.deployer.paths.router;
+
   logger.subtitle('Generating router source');
+  logger.info(`location: ${routerPath}`);
 
   const modulesPaths = Object.keys(hre.deployer.data.contracts.modules);
   logger.debug(`modules: ${JSON.stringify(modulesPaths, null, 2)}`);
@@ -26,19 +29,18 @@ subtask(
 
   const package = readPackageJson();
 
-  const generatedSource = renderTemplate(hre.deployer.paths.routerTemplate, {
+  const generatedSource = renderTemplate(hre.config.deployer.paths.routerTemplate, {
     project: package.name,
     repo: package.repository?.url || '',
     branch: getBranch(),
     commit: getCommit(),
-    moduleName: hre.deployer.routerModule,
+    moduleName: getContractNameFromPath(routerPath),
     modules: _renderModules(hre.deployer.data.contracts.modules),
     selectors: _renderSelectors({ binaryData }),
   });
 
-  logger.debug(`generated source: ${generatedSource}`);
+  logger.debug(`Generated source: ${generatedSource}`);
 
-  const { routerPath } = hre.deployer.paths;
   const currentSource = fs.existsSync(routerPath) ? fs.readFileSync(routerPath) : '';
   if (currentSource !== generatedSource) {
     fs.writeFileSync(routerPath, generatedSource);
