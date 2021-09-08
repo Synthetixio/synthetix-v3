@@ -3,7 +3,6 @@ const path = require('path');
 const mkdirp = require('mkdirp');
 const { subtask } = require('hardhat/config');
 
-const logger = require('../utils/logger');
 const prompter = require('../utils/prompter');
 const relativePath = require('../utils/relative-path');
 const autosaveObject = require('../utils/autosave-object');
