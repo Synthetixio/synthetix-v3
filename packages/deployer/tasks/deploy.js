@@ -16,7 +16,6 @@ const {
 const logger = require('../utils/logger');
 const prompter = require('../utils/prompter');
 const { getDeploymentPaths } = require('../utils/deployments');
-const { capitalize } = require('../utils/string');
 const types = require('../utils/argument-types');
 
 task(TASK_DEPLOY, 'Deploys all system modules')
@@ -35,8 +34,6 @@ task(TASK_DEPLOY, 'Deploys all system modules')
 
     logger.debugging = debug;
     prompter.noConfirm = noConfirm;
-
-    hre.deployer.routerModule = ['GenRouter', hre.network.name, instance].map(capitalize).join('');
 
     hre.deployer.paths = getDeploymentPaths(instance);
 

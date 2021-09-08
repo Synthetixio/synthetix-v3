@@ -17,7 +17,7 @@ subtask(
 ).setAction(async (_, hre) => {
   logger.subtitle('Syncing solidity sources with deployment data');
 
-  hre.deployer.sources = _getSources(hre.deployer.paths.modules);
+  hre.deployer.sources = _getSources(hre.config.deployer.paths.modules);
 
   const { data, sources, previousData } = hre.deployer;
   const removed = await _removeDeletedSources({ sources, previousData });
