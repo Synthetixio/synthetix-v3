@@ -1,6 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const logger = require('../utils/logger');
+const relativePath = require('../utils/relative-path');
 const { subtask } = require('hardhat/config');
 const { getContractNameFromPath, getContractSelectors } = require('../utils/contracts');
 const { getRouterName } = require('../utils/router');
@@ -13,7 +14,7 @@ subtask(
   logger.subtitle('Validating router');
 
   const routerPath = path.join(
-    hre.config.paths.sources,
+    relativePath(hre.config.paths.sources, hre.config.paths.root),
     getRouterName({ network: hre.network.name, instance })
   );
 

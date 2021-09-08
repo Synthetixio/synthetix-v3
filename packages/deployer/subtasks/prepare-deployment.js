@@ -24,9 +24,13 @@ subtask(
   SUBTASK_PREPARE_DEPLOYMENT,
   'Prepares the deployment file associated with the active deployment.'
 ).setAction(async (taskArguments, hre) => {
-  const { alias } = taskArguments;
+  const { instance, alias } = taskArguments;
 
-  const deploymentsFolder = hre.config.deployer.paths.deployments;
+  const deploymentsFolder = path.join(
+    hre.config.deployer.paths.deployments,
+    hre.network.name,
+    instance
+  );
 
   // Make sure the deployments folder exists
   mkdirp.sync(deploymentsFolder);

@@ -44,7 +44,7 @@ subtask(
   logger.subtitle('Upgrading main proxy');
 
   const routerPath = path.join(
-    relativePath(hre.config.paths.sources),
+    relativePath(hre.config.paths.sources, hre.config.paths.root),
     getRouterName({ network: hre.network.name, instance })
   );
 

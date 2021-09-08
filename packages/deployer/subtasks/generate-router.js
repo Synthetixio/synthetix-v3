@@ -7,6 +7,7 @@ const { getCommit, getBranch } = require('../utils/git');
 const { readPackageJson } = require('../utils/package');
 const { getRouterName } = require('../utils/router');
 const { getContractSelectors, getContractNameFromPath } = require('../utils/contracts');
+const relativePath = require('../utils/relative-path');
 const renderTemplate = require('../utils/render-template');
 
 const TAB = '    ';
@@ -16,7 +17,7 @@ subtask(
   'Reads deployed modules from the deployment data file and generates the source for a new router contract.'
 ).setAction(async ({ instance }, hre) => {
   const routerPath = path.join(
-    hre.config.paths.sources,
+    relativePath(hre.config.paths.sources, hre.config.paths.root),
     getRouterName({ network: hre.network.name, instance })
   );
 
