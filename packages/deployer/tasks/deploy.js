@@ -15,7 +15,6 @@ const {
 } = require('../task-names');
 const logger = require('../utils/logger');
 const prompter = require('../utils/prompter');
-const { getDeploymentPaths } = require('../utils/deployments');
 const types = require('../utils/argument-types');
 
 task(TASK_DEPLOY, 'Deploys all system modules')
@@ -35,19 +34,14 @@ task(TASK_DEPLOY, 'Deploys all system modules')
     logger.debugging = debug;
     prompter.noConfirm = noConfirm;
 
-    hre.deployer.paths = getDeploymentPaths(hre.config, {
-      instance,
-      network: hre.network.name,
-    });
-
     await hre.run(SUBTASK_PREPARE_DEPLOYMENT, taskArguments);
     await hre.run(SUBTASK_PRINT_INFO, taskArguments);
     await hre.run(TASK_COMPILE, { force: true, quiet: true });
     await hre.run(SUBTASK_SYNC_SOURCES);
     await hre.run(SUBTASK_DEPLOY_MODULES);
-    await hre.run(SUBTASK_GENERATE_ROUTER_SOURCE);
-    await hre.run(SUBTASK_VALIDATE_ROUTER);
-    await hre.run(SUBTASK_DEPLOY_ROUTER);
-    await hre.run(SUBTASK_UPGRADE_PROXY);
+    await hre.run(SUBTASK_GENERATE_ROUTER_SOURCE, taskArguments);
+    await hre.run(SUBTASK_VALIDATE_ROUTER, taskArguments);
+    await hre.run(SUBTASK_DEPLOY_ROUTER, taskArguments);
+    await hre.run(SUBTASK_UPGRADE_PROXY, taskArguments);
     await hre.run(SUBTASK_FINALIZE_DEPLOYMENT);
   });

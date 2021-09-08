@@ -28,7 +28,7 @@ subtask(
 ).setAction(async (taskArguments, hre) => {
   const { clear, alias } = taskArguments;
 
-  const deploymentsFolder = hre.deployer.paths.deployments;
+  const deploymentsFolder = hre.config.deployer.paths.deployments;
 
   if (clear) {
     await _clearDeploymentData(deploymentsFolder);

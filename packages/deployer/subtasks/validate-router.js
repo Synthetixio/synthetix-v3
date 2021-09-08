@@ -1,17 +1,24 @@
 const fs = require('fs');
+const path = require('path');
 const logger = require('../utils/logger');
 const { subtask } = require('hardhat/config');
 const { getContractNameFromPath, getContractSelectors } = require('../utils/contracts');
+const { getRouterName } = require('../utils/router');
 const { SUBTASK_VALIDATE_ROUTER } = require('../task-names');
 
 subtask(
   SUBTASK_VALIDATE_ROUTER,
   'Runs a series of validations against a generated router source.'
-).setAction(async () => {
+).setAction(async ({ instance }, hre) => {
   logger.subtitle('Validating router');
 
+  const routerPath = path.join(
+    hre.config.paths.sources,
+    getRouterName({ network: hre.network.name, instance })
+  );
+
   await _selectorsExistInSource({
-    routerPath: hre.deployer.paths.router,
+    routerPath,
     modules: Object.keys(hre.deployer.data.contracts.modules).map(getContractNameFromPath),
   });
 
