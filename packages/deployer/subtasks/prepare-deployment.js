@@ -42,7 +42,6 @@ subtask(
   hre.deployer.data = autosaveObject(hre.deployer.file, DEPLOYMENT_SCHEMA);
 
   if (previousFile) {
-    hre.deployer.previousFile = previousFile;
     hre.deployer.previousData = JSON.parse(fs.readFileSync(previousFile));
   }
 });
