@@ -1,10 +1,8 @@
 const fs = require('fs');
 const path = require('path');
 const mkdirp = require('mkdirp');
-const rimraf = require('rimraf');
 const { subtask } = require('hardhat/config');
 
-const logger = require('../utils/logger');
 const prompter = require('../utils/prompter');
 const relativePath = require('../utils/relative-path');
 const autosaveObject = require('../utils/autosave-object');
@@ -25,15 +23,10 @@ const DEPLOYMENT_SCHEMA = {
 subtask(
   SUBTASK_PREPARE_DEPLOYMENT,
   'Prepares the deployment file associated with the active deployment.'
-).setAction(async (taskArguments, hre) => {
-  const { clear, alias } = taskArguments;
-
+).setAction(async ({ alias }, hre) => {
   const deploymentsFolder = hre.deployer.paths.deployments;
 
-  if (clear) {
-    await _clearDeploymentData(deploymentsFolder);
-  }
-
+  // Make sure the deployments folder exists
   mkdirp.sync(deploymentsFolder);
 
   const { previousFile, currentFile } = await _determineDeploymentFiles(deploymentsFolder, alias);
@@ -45,18 +38,6 @@ subtask(
     hre.deployer.previousData = JSON.parse(fs.readFileSync(previousFile));
   }
 });
-
-/**
- * Delete the given folder, optionally prompting the user
- * @param {string} folder
- */
-async function _clearDeploymentData(folder) {
-  logger.warn(
-    'Received --clear parameter. This will delete all previous deployment data on the given instance!'
-  );
-  await prompter.confirmAction(`Clear all data on ${folder}`);
-  rimraf.sync(folder);
-}
 
 /**
  * Initialize a new deployment file, or, if existant, try to continue using it.
@@ -102,9 +83,9 @@ async function _determineDeploymentFiles(deploymentsFolder, alias) {
 
   // Calculate the next deployment number based on the previous one
   let number = '00';
-  if (previousFile && previousFile.startsWith(today)) {
+  if (previousFile && path.basename(previousFile).startsWith(today)) {
     const previousNumber = path.basename(previousFile).slice(11, 13);
-    number = `${previousNumber + 1}`.padStart(2, '0');
+    number = `${Number.parseInt(previousNumber) + 1}`.padStart(2, '0');
   }
 
   const currentFile = path.join(
