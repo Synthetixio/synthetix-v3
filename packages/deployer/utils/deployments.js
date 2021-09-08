@@ -36,8 +36,17 @@ function getDeploymentFiles(deploymentsFolder) {
     .sort(naturalCompare);
 }
 
+function getModulesPaths(config) {
+  return glob
+    .sync(path.join(config.deployer.paths.modules, '**/*.sol'))
+    .map((source) => relativePath(source, hre.config.paths.root));
+}
+
 function getProxyPath(config) {
-  return relativePath(path.join(config.paths.sources, `${config.deployer.proxyName}.sol`));
+  return relativePath(
+    path.join(config.paths.sources, `${config.deployer.proxyName}.sol`),
+    config.paths.root
+  );
 }
 
 function getRouterName({ network = 'local', instance = 'official' } = {}) {
@@ -48,7 +57,11 @@ function getDeploymentPaths(config, { network = 'local', instance = 'official' }
   return {
     deployments: path.join(config.deployer.paths.deployments, network, instance),
     router: relativePath(
-      path.join(config.paths.sources, `${getRouterName({ network, instance })}.sol`)
+      path.join(
+        config.paths.sources,
+        `${getRouterName({ network, instance })}.sol`,
+        config.paths.root
+      )
     ),
   };
 }
@@ -60,5 +73,6 @@ module.exports = {
   getDeploymentData,
   getDeploymentPaths,
   getRouterName,
+  getModulesPaths,
   getProxyPath,
 };

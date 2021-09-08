@@ -1,10 +1,8 @@
-const path = require('path');
-const glob = require('glob');
 const { subtask } = require('hardhat/config');
 const logger = require('../utils/logger');
 const prompter = require('../utils/prompter');
+const { getModulesPaths } = require('../utils/deployments');
 const { SUBTASK_SYNC_SOURCES } = require('../task-names');
-const relativePath = require('../utils/relative-path');
 
 /**
  * Synchronizes the deployment file with the latest module sources.
@@ -17,7 +15,7 @@ subtask(
 ).setAction(async (_, hre) => {
   logger.subtitle('Syncing solidity sources with deployment data');
 
-  hre.deployer.sources = _getSources(hre.config.deployer.paths.modules);
+  hre.deployer.sources = getModulesPaths(hre.config.deployer.paths.modules);
 
   const { data, sources, previousData } = hre.deployer;
   const removed = await _removeDeletedSources({ sources, previousData });
@@ -27,10 +25,6 @@ subtask(
     logger.checked('Deployment data is in sync with sources');
   }
 });
-
-function _getSources(folder) {
-  return glob.sync(path.join(folder, '**/*.sol')).map(relativePath);
-}
 
 async function _removeDeletedSources({ sources, previousData }) {
   if (!previousData) return false;
