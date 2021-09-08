@@ -1,7 +1,6 @@
 const fs = require('fs');
 const path = require('path');
 const mkdirp = require('mkdirp');
-const rimraf = require('rimraf');
 const { subtask } = require('hardhat/config');
 
 const logger = require('../utils/logger');
@@ -9,7 +8,7 @@ const prompter = require('../utils/prompter');
 const relativePath = require('../utils/relative-path');
 const autosaveObject = require('../utils/autosave-object');
 const { getDeploymentFiles } = require('../utils/deployments');
-const { SUBTASK_PREPARE_DEPLOYMENT } = require('../task-names');
+const { SUBTASK_PREPARE_DEPLOYMENT, SUBTASK_CLEAR_DEPLOYMENT } = require('../task-names');
 
 const DEPLOYMENT_SCHEMA = {
   properties: {
@@ -55,7 +54,7 @@ async function _clearDeploymentData(folder) {
     'Received --clear parameter. This will delete all previous deployment data on the given instance!'
   );
   await prompter.confirmAction(`Clear all data on ${folder}`);
-  rimraf.sync(folder);
+  await hre.run(SUBTASK_CLEAR_DEPLOYMENT);
 }
 
 /**

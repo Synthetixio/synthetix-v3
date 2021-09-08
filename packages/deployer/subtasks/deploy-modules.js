@@ -1,12 +1,21 @@
-const logger = require('../utils/logger');
 const { subtask } = require('hardhat/config');
 
-const { SUBTASK_DEPLOY_CONTRACTS, SUBTASK_DEPLOY_MODULES } = require('../task-names');
+const logger = require('../utils/logger');
+const {
+  SUBTASK_CLEAR_DEPLOYMENT,
+  SUBTASK_DEPLOY_CONTRACTS,
+  SUBTASK_DEPLOY_MODULES,
+} = require('../task-names');
 
 subtask(SUBTASK_DEPLOY_MODULES).setAction(async (_, hre) => {
   logger.subtitle('Deploying modules');
 
-  await hre.run(SUBTASK_DEPLOY_CONTRACTS, {
+  const deployedSomething = await hre.run(SUBTASK_DEPLOY_CONTRACTS, {
     contracts: hre.deployer.data.contracts.modules,
   });
+
+  if (!deployedSomething) {
+    logger.info('No modules need to be deployed...');
+    await hre.run(SUBTASK_CLEAR_DEPLOYMENT);
+  }
 });
