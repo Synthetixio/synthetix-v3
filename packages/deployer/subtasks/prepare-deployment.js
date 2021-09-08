@@ -83,9 +83,9 @@ async function _determineDeploymentFiles(deploymentsFolder, alias) {
 
   // Calculate the next deployment number based on the previous one
   let number = '00';
-  if (previousFile && previousFile.startsWith(today)) {
+  if (previousFile && path.basename(previousFile).startsWith(today)) {
     const previousNumber = path.basename(previousFile).slice(11, 13);
-    number = `${previousNumber + 1}`.padStart(2, '0');
+    number = `${Number.parseInt(previousNumber) + 1}`.padStart(2, '0');
   }
 
   const currentFile = path.join(
