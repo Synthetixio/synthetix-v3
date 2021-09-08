@@ -30,7 +30,7 @@ task(TASK_DEPLOY, 'Deploys all system modules')
     types.alphanumeric
   )
   .setAction(async (taskArguments, hre) => {
-    const { alias, clear, debug, noConfirm } = taskArguments;
+    const { clear, debug, noConfirm } = taskArguments;
 
     logger.debugging = debug;
     prompter.noConfirm = noConfirm;
