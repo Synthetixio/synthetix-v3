@@ -41,7 +41,7 @@ subtask(
   logger.subtitle('Upgrading main proxy');
 
   const proxyPath = getProxyPath(hre.config);
-  const routerAddress = _getDeployedAddress(hre.deployer.paths.routerPath, hre);
+  const routerAddress = _getDeployedAddress(hre.deployer.paths.router, hre);
 
   logger.info(`Target implementation: ${routerAddress}`);
 

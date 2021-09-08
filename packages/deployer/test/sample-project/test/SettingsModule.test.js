@@ -1,6 +1,6 @@
 const hre = require('hardhat');
 const assert = require('assert');
-const { ethers } = hre;
+const { config, ethers } = hre;
 const { getMainProxyAddress } = require('../../../utils/deployments');
 
 describe('SettingsModule', () => {
@@ -13,8 +13,7 @@ describe('SettingsModule', () => {
   });
 
   before('identify modules', async () => {
-    const proxyAddress = getMainProxyAddress();
-
+    const proxyAddress = getMainProxyAddress(config);
     SettingsModule = await ethers.getContractAt('SettingsModule', proxyAddress);
   });
 
