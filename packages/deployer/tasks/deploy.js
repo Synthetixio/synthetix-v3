@@ -17,7 +17,6 @@ const {
 
 const logger = require('@synthetixio/core-js/utils/logger');
 const prompter = require('@synthetixio/core-js//utils/prompter');
-const { getDeploymentPaths } = require('../utils/deployments');
 const types = require('../utils/argument-types');
 
 task(TASK_DEPLOY, 'Deploys all system modules')
