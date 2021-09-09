@@ -1,9 +1,10 @@
 const fs = require('fs');
-const logger = require('@synthetixio/core-js/utils/logger');
 const path = require('path');
-const relativePath = require('@synthetixio/core-js/utils/relative-path');
 const { subtask } = require('hardhat/config');
+const logger = require('@synthetixio/core-js/utils/logger');
+const relativePath = require('@synthetixio/core-js/utils/relative-path');
 const { getSelectors } = require('@synthetixio/core-js/utils/contracts');
+const filterObject = require('../internal/filter-object');
 const { SUBTASK_VALIDATE_ROUTER } = require('../task-names');
 
 subtask(
@@ -17,18 +18,21 @@ subtask(
     'Router.sol'
   );
 
+  const modules = filterObject(hre.deployer.data.contracts, (c) => c.isModule);
+  const modulesNames = Object.keys(modules);
+
   await _selectorsExistInSource({
     routerPath,
-    modules: Object.keys(hre.deployer.data.contracts.modules).map((c) => path.basename(c, '.sol')),
+    modulesNames,
   });
 
   logger.checked('Router is valid');
 });
 
-async function _selectorsExistInSource({ routerPath, modules }) {
+async function _selectorsExistInSource({ routerPath, modulesNames }) {
   const source = fs.readFileSync(routerPath).toString();
 
-  for (const moduleName of modules) {
+  for (const moduleName of modulesNames) {
     const moduleArtifacts = await hre.artifacts.readArtifact(moduleName);
     const moduleSelectors = await getSelectors(moduleArtifacts.abi);
 

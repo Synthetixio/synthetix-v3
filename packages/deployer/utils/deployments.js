@@ -13,11 +13,7 @@ function getProxyAddress({
   deploymentsFolder = defaults.paths.deployments,
 } = {}) {
   const data = getCurrentDeploymentDataForInstance({ network, instance, deploymentsFolder });
-
-  // TODO remove key constant and use proxyName when contracts key is changed from path to contract name
-  const proxyName = 'Proxy.sol';
-  const key = `contracts/${proxyName}`;
-  return data.contracts[key].deployedAddress;
+  return data.contracts['Proxy'].deployedAddress;
 }
 
 function getCurrentDeploymentDataForInstance({

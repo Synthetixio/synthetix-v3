@@ -18,9 +18,9 @@ subtask(
   }
 
   // Update & create the contracts
-  for (const [contractPath, contractData] of [...toUpdate, ...toCreate]) {
+  for (const [contractName, contractData] of [...toUpdate, ...toCreate]) {
     await hre.run(SUBTASK_DEPLOY_CONTRACT, {
-      contractPath,
+      contractName,
       contractData,
     });
   }
@@ -34,19 +34,19 @@ subtask(
 async function _confirmDeployments({ toSkip, toUpdate, toCreate }) {
   if (toSkip.length > 0) {
     logger.info(`There are ${toSkip.length} contracts that are already up-to-date:`);
-    toSkip.forEach(([source]) => logger.notice(`  ${source}`));
+    toSkip.forEach(([contractName]) => logger.notice(`  ${contractName}`));
   }
 
   if (toUpdate.length > 0) {
     logger.info(`The following ${toUpdate.length} contracts are going to be updated:`);
-    toUpdate.forEach(([source]) => logger.notice(`  ${source}`));
+    toUpdate.forEach(([contractName]) => logger.notice(`  ${contractName}`));
   }
 
   if (toCreate.length > 0) {
     logger.info(
       `The following ${toCreate.length} contracts are going to be deployed for the first time:`
     );
-    toCreate.forEach(([source]) => logger.notice(`  ${source}`));
+    toCreate.forEach(([contractName]) => logger.notice(`  ${contractName}`));
   }
 
   return await prompter.ask('Are you sure you want to make these changes?');
@@ -62,14 +62,14 @@ async function _processContracts(contracts) {
   const toUpdate = [];
   const toCreate = [];
 
-  for (const [contractPath, contractData] of Object.entries(contracts)) {
+  for (const [contractName, contractData] of Object.entries(contracts)) {
     if (hre.network.name === 'hardhat' || !contractData.deployedAddress) {
-      toCreate.push([contractPath, contractData]);
+      toCreate.push([contractName, contractData]);
     } else {
-      if (await isAlreadyDeployed(contractPath, contractData)) {
-        toSkip.push([contractPath, contractData]);
+      if (await isAlreadyDeployed(contractName, contractData)) {
+        toSkip.push([contractName, contractData]);
       } else {
-        toUpdate.push([contractPath, contractData]);
+        toUpdate.push([contractName, contractData]);
       }
     }
   }

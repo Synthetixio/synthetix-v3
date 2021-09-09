@@ -8,7 +8,7 @@ extendEnvironment((hre) => {
 
   hre.deployer = {
     paths: {
-      routerTemplate: path.resolve(__dirname, '../templates/GenRouter.sol.mustache'),
+      routerTemplate: path.resolve(__dirname, '../templates/Router.sol.mustache'),
     },
     data: null,
   };

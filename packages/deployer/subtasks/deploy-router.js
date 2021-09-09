@@ -11,24 +11,26 @@ subtask(SUBTASK_DEPLOY_ROUTER).setAction(async (_, hre) => {
 
   await hre.run(TASK_COMPILE, { force: false, quiet: true });
 
-  const contractPath = path.join(
+  const contractName = 'Router';
+  const conntractPath = path.join(
     relativePath(hre.config.paths.sources, hre.config.paths.root),
-    'Router.sol'
+    `${contractName}.sol`
   );
 
-  let contractData = hre.deployer.data.contracts[contractPath];
+  let contractData = hre.deployer.data.contracts[contractName];
 
   if (!contractData) {
-    hre.deployer.data.contracts[contractPath] = {
+    hre.deployer.data.contracts[contractName] = {
+      source: conntractPath,
       deployedAddress: '',
       deployTransaction: '',
       bytecodeHash: '',
     };
-    contractData = hre.deployer.data.contracts[contractPath];
+    contractData = hre.deployer.data.contracts[contractName];
   }
 
   await hre.run(SUBTASK_DEPLOY_CONTRACT, {
-    contractPath,
+    contractName,
     contractData,
   });
 });

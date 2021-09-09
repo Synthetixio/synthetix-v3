@@ -41,50 +41,50 @@ subtask(
 ).setAction(async (_, hre) => {
   logger.subtitle('Upgrading main proxy');
 
-  const routerPath = path.join(
-    relativePath(hre.config.paths.sources, hre.config.paths.root),
-    'Router.sol'
-  );
+  const routerName = 'Router';
+  const proxyName = 'Proxy';
 
-  const proxyPath = path.join(
-    relativePath(hre.config.paths.sources, hre.config.paths.root),
-    'Proxy.sol'
-  );
-
-  const routerAddress = _getDeployedAddress(routerPath, hre);
+  const routerAddress = _getDeployedAddress(routerName, hre);
 
   logger.info(`Target implementation: ${routerAddress}`);
 
+  const proxyPath = path.join(
+    relativePath(hre.config.paths.sources, hre.config.paths.root),
+    `${proxyName}.sol`
+  );
+
   const wasProxyDeployed = await _deployProxy({
+    proxyName,
     proxyPath,
     routerAddress,
     hre,
   });
 
   if (!wasProxyDeployed) {
-    const proxyAddress = _getDeployedAddress(proxyPath, hre);
+    const proxyAddress = _getDeployedAddress(proxyName, hre);
     await _upgradeProxy({ proxyAddress, routerAddress, hre });
   }
 });
 
-function _getDeployedAddress(contractPath, hre) {
-  return hre.deployer.data.contracts[contractPath].deployedAddress;
+function _getDeployedAddress(contractName, hre) {
+  return hre.deployer.data.contracts[contractName].deployedAddress;
 }
 
-async function _deployProxy({ proxyPath, routerAddress, hre }) {
-  let proxyData = hre.deployer.data.contracts[proxyPath];
+async function _deployProxy({ proxyName, proxyPath, routerAddress, hre }) {
+  let proxyData = hre.deployer.data.contracts[proxyName];
 
   if (!proxyData) {
-    hre.deployer.data.contracts[proxyPath] = {
+    hre.deployer.data.contracts[proxyName] = {
+      source: proxyPath,
       deployedAddress: '',
       deployTransaction: '',
       bytecodeHash: '',
     };
-    proxyData = hre.deployer.data.contracts[proxyPath];
+    proxyData = hre.deployer.data.contracts[proxyName];
   }
 
   return await hre.run(SUBTASK_DEPLOY_CONTRACT, {
-    contractPath: proxyPath,
+    contractName: proxyName,
     contractData: proxyData,
     constructorArgs: [routerAddress],
   });

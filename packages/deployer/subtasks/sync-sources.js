@@ -1,7 +1,9 @@
+const path = require('path');
 const { subtask } = require('hardhat/config');
 const logger = require('@synthetixio/core-js/utils/logger');
 const prompter = require('@synthetixio/core-js/utils/prompter');
 const { getModulesPaths } = require('../internal/path-finder');
+const filterObject = require('../internal/filter-object');
 const { SUBTASK_SYNC_SOURCES } = require('../task-names');
 
 /**
@@ -29,7 +31,10 @@ subtask(
 async function _removeDeletedSources({ sources, previousData }) {
   if (!previousData) return false;
 
-  const toRemove = Object.keys(previousData.contracts.modules).filter(
+  const modules = filterObject(previousData.contracts, (c) => c.isModule);
+  const modulesPaths = Object.values(modules).map((c) => c.source);
+
+  const toRemove = modulesPaths.filter(
     (deployedModule) => !sources.some((source) => deployedModule === source)
   );
 
@@ -44,13 +49,27 @@ async function _removeDeletedSources({ sources, previousData }) {
   return toRemove.length > 0;
 }
 
-async function _addNewSources({ sources, data, previousData }) {
-  const toAdd = sources.filter((source) => {
-    const previousModule = previousData?.contracts.modules[source];
-    data.contracts.modules[source] = data.contracts.modules[source] ||
-      previousModule || { deployedAddress: '', deployTransaction: '', bytecodeHash: '' };
-    return !previousModule;
-  });
+const _createModuleData = ({ source }) => ({
+  source,
+  isModule: true,
+  deployedAddress: '',
+  deployTransaction: '',
+  bytecodeHash: '',
+});
 
-  return toAdd.length > 0;
+async function _addNewSources({ sources, data, previousData }) {
+  let created = false;
+
+  // Initialize cotract data, using previous deployed one, or empty data.
+  for (const source of sources) {
+    const contractName = path.basename(source, '.sol');
+    const previousModule = previousData?.contracts[contractName];
+
+    data.contracts[contractName] =
+      data.contracts[contractName] || previousModule || _createModuleData({ source });
+
+    if (!previousModule) created = true;
+  }
+
+  return created;
 }
