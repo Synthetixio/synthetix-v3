@@ -28,3 +28,7 @@ extendConfig((config, userConfig) => {
     },
   };
 });
+
+module.exports = {
+  defaults: DEFAULTS,
+};

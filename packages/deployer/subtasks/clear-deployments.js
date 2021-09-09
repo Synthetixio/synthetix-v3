@@ -4,7 +4,7 @@ const { subtask } = require('hardhat/config');
 
 const logger = require('@synthetixio/core-js/utils/logger');
 const prompter = require('@synthetixio/core-js/utils/prompter');
-const { getGeneratedContractPaths } = require('../utils/deployments');
+const { getGeneratedContractPaths } = require('../internal/generate-contracts');
 const { SUBTASK_CLEAR_DEPLOYMENTS } = require('../task-names');
 
 subtask(

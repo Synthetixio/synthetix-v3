@@ -6,12 +6,9 @@ const { getCommit, getBranch } = require('@synthetixio/core-js/utils/git');
 const { readPackageJson } = require('@synthetixio/core-js/utils/package');
 const path = require('path');
 const { getRouterName } = require('../utils/router');
-const {
-  getContractSelectors,
-  getContractNameFromPath,
-} = require('@synthetixio/core-js/utils/contracts');
+const { getSelectors } = require('@synthetixio/core-js/utils/contracts');
 const relativePath = require('@synthetixio/core-js/utils/relative-path');
-const renderTemplate = require('../utils/render-template');
+const { renderTemplate } = require('../internal/generate-contracts');
 
 const TAB = '    ';
 
@@ -43,7 +40,7 @@ subtask(
     repo: package.repository?.url || '',
     branch: getBranch(),
     commit: getCommit(),
-    moduleName: getContractNameFromPath(routerPath),
+    moduleName: path.basename(routerPath, '.sol'),
     modules: _renderModules(hre.deployer.data.contracts.modules),
     selectors: _renderSelectors({ binaryData }),
   });
@@ -106,7 +103,7 @@ function _renderSelectors({ binaryData }) {
 function _renderModules(modules) {
   return Object.entries(modules)
     .reduce((lines, [modulePath, moduleData]) => {
-      const moduleName = getContractNameFromPath(modulePath).toUpperCase();
+      const moduleName = path.basename(modulePath, '.sol').toUpperCase();
       const { deployedAddress } = moduleData;
       lines.push(`${TAB}address private constant _${moduleName} = ${deployedAddress};`);
       return lines;
@@ -119,8 +116,9 @@ async function _getAllSelectors(contractsPaths) {
   const allSelectors = [];
 
   for (const contractPath of contractsPaths) {
-    const contractName = getContractNameFromPath(contractPath);
-    const selectors = await getContractSelectors(contractName);
+    const contractName = path.basename(contractPath, '.sol');
+    const contractArtifacts = await hre.artifacts.readArtifact(contractName);
+    const selectors = await getSelectors(contractArtifacts.abi);
 
     allSelectors.push(...selectors.map((s) => ({ ...s, contractName })));
   }

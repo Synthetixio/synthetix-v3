@@ -3,9 +3,9 @@ const prompter = require('@synthetixio/core-js/utils/prompter');
 const path = require('path');
 const relativePath = require('@synthetixio/core-js//utils/relative-path');
 const { subtask } = require('hardhat/config');
-const { processTransaction, processReceipt } = require('../utils/transactions');
+const { processTransaction, processReceipt } = require('../internal/process-transactions');
 const { getRouterName } = require('../utils/router');
-const { getProxyPath } = require('../utils/deployments');
+const { getProxyPath } = require('../internal/path-finder');
 const { SUBTASK_UPGRADE_PROXY, SUBTASK_DEPLOY_CONTRACT } = require('../task-names');
 
 const UPGRADE_ABI = [

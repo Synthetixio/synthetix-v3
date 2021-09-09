@@ -5,8 +5,8 @@ const { subtask } = require('hardhat/config');
 
 const prompter = require('@synthetixio/core-js/utils/prompter');
 const relativePath = require('@synthetixio/core-js/utils/relative-path');
-const autosaveObject = require('../utils/autosave-object');
-const { getDeploymentFiles } = require('../utils/deployments');
+const autosaveObject = require('../internal/autosave-object');
+const { getAllDeploymentsFilesForInstance } = require('../utils/deployments');
 const { SUBTASK_PREPARE_DEPLOYMENT } = require('../task-names');
 
 const DEPLOYMENT_SCHEMA = {
@@ -52,22 +52,22 @@ subtask(
  * @returns {{ currentFile: string, previousFile: string }}
  */
 async function _determineDeploymentFiles(deploymentsFolder, alias) {
-  const deployments = getDeploymentFiles(deploymentsFolder);
-  const previousFile = deployments.length > 0 ? deployments[deployments.length - 1] : null;
+  const deployments = getAllDeploymentsFilesForInstance(deploymentsFolder);
+  const latestFile = deployments.length > 0 ? deployments[deployments.length - 1] : null;
 
   // Check if there is an unfinished deployment and prompt the user if we should
   // continue with it, instead of creating a new one.
-  if (previousFile) {
-    const previousData = JSON.parse(fs.readFileSync(previousFile));
+  if (latestFile) {
+    const latestData = JSON.parse(fs.readFileSync(latestFile));
 
-    if (!previousData.properties.completed) {
+    if (!latestData.properties.completed) {
       const use = await prompter.ask(
-        `Do you wish to continue the unfinished deployment "${relativePath(previousFile)}"?`
+        `Do you wish to continue the unfinished deployment "${relativePath(latestFile)}"?`
       );
 
       if (use) {
         return {
-          currentFile: previousFile,
+          currentFile: latestFile,
           previousFile: deployments.length > 1 ? deployments[deployments.length - 2] : null,
         };
       }
@@ -89,8 +89,8 @@ async function _determineDeploymentFiles(deploymentsFolder, alias) {
 
   // Calculate the next deployment number based on the previous one
   let number = '00';
-  if (previousFile && path.basename(previousFile).startsWith(today)) {
-    const previousNumber = path.basename(previousFile).slice(11, 13);
+  if (latestFile && path.basename(latestFile).startsWith(today)) {
+    const previousNumber = path.basename(latestFile).slice(11, 13);
     number = `${Number.parseInt(previousNumber) + 1}`.padStart(2, '0');
   }
 
@@ -100,7 +100,7 @@ async function _determineDeploymentFiles(deploymentsFolder, alias) {
   );
 
   return {
-    previousFile,
+    previousFile: latestFile,
     currentFile,
   };
 }

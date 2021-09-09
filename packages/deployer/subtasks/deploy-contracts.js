@@ -1,6 +1,6 @@
 const logger = require('@synthetixio/core-js/utils/logger');
 const prompter = require('@synthetixio/core-js/utils/prompter');
-const { alreadyDeployed } = require('../utils/contracts');
+const { isAlreadyDeployed } = require('../internal/contract-helper');
 const { subtask } = require('hardhat/config');
 const { SUBTASK_DEPLOY_CONTRACTS, SUBTASK_DEPLOY_CONTRACT } = require('../task-names');
 
@@ -66,7 +66,7 @@ async function _processContracts(contracts) {
     if (hre.network.name === 'hardhat' || !contractData.deployedAddress) {
       toCreate.push([contractPath, contractData]);
     } else {
-      if (await alreadyDeployed(contractPath, contractData)) {
+      if (await isAlreadyDeployed(contractPath, contractData)) {
         toSkip.push([contractPath, contractData]);
       } else {
         toUpdate.push([contractPath, contractData]);
