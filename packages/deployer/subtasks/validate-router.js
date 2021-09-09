@@ -1,9 +1,12 @@
 const fs = require('fs');
 const logger = require('@synthetixio/core-js/utils/logger');
 const path = require('path');
-const relativePath = require('@synthetixio/core-js//utils/relative-path');
+const relativePath = require('@synthetixio/core-js/utils/relative-path');
 const { subtask } = require('hardhat/config');
-const { getContractNameFromPath, getContractSelectors } = require('../utils/contracts');
+const {
+  getContractNameFromPath,
+  getContractSelectors,
+} = require('@synthetixio/core-js/utils/contracts');
 const { getRouterName } = require('../utils/router');
 const { SUBTASK_VALIDATE_ROUTER } = require('../task-names');
 
