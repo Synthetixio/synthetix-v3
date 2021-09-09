@@ -19,7 +19,7 @@ subtask(
 
   const modulesNames = Object.entries(hre.deployer.data.contracts)
     .filter(([, c]) => c.isModule)
-    .map(([modulePath]) => path.basename(modulePath, '.sol'));
+    .map(([moduleName]) => moduleName);
 
   await _selectorsExistInSource({
     routerPath,
