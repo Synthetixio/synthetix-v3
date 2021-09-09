@@ -25,13 +25,13 @@ subtask(
   logger.subtitle('Generating router source');
   logger.info(`location: ${routerPath}`);
 
-  const modules = filterObject(hre.deployer.data.contracts, (o) => o.isModule);
-  const modulesPaths = Object.keys(modules);
-  logger.debug(`modules: ${JSON.stringify(modulesPaths, null, 2)}`);
+  const modules = filterObject(hre.deployer.data.contracts, (c) => c.isModule);
+  const modulesNames = Object.keys(modules);
+  logger.debug(`modules: ${JSON.stringify(modulesNames, null, 2)}`);
 
-  const selectors = await _getAllSelectors(modulesPaths);
+  const selectors = await _getAllSelectors(modulesNames);
   logger.debug(`selectors: ${JSON.stringify(selectors, null, 2)}`);
-  logger.info(`Found ${modulesPaths.length} modules with ${selectors.length} selectors in total`);
+  logger.info(`Found ${modulesNames.length} modules with ${selectors.length} selectors in total`);
 
   const binaryData = _buildBinaryData({ selectors });
 
@@ -104,21 +104,21 @@ function _renderSelectors({ binaryData }) {
  */
 function _renderModules(modules) {
   return Object.entries(modules)
-    .reduce((lines, [modulePath, moduleData]) => {
-      const moduleName = path.basename(modulePath, '.sol').toUpperCase();
+    .reduce((lines, [moduleName, moduleData]) => {
       const { deployedAddress } = moduleData;
-      lines.push(`${TAB}address private constant _${moduleName} = ${deployedAddress};`);
+      lines.push(
+        `${TAB}address private constant _${moduleName.toUpperCase()} = ${deployedAddress};`
+      );
       return lines;
     }, [])
     .join('\n')
     .trim();
 }
 
-async function _getAllSelectors(contractsPaths) {
+async function _getAllSelectors(contractsNames) {
   const allSelectors = [];
 
-  for (const contractPath of contractsPaths) {
-    const contractName = path.basename(contractPath, '.sol');
+  for (const contractName of contractsNames) {
     const contractArtifacts = await hre.artifacts.readArtifact(contractName);
     const selectors = await getSelectors(contractArtifacts.abi);
 

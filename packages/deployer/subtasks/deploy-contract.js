@@ -1,4 +1,3 @@
-const path = require('path');
 const logger = require('@synthetixio/core-js/utils/logger');
 const { isAlreadyDeployed } = require('../internal/contract-helper');
 const { getBytecodeHash } = require('@synthetixio/core-js/utils/contracts');
@@ -9,12 +8,11 @@ const { SUBTASK_DEPLOY_CONTRACT } = require('../task-names');
 subtask(
   SUBTASK_DEPLOY_CONTRACT,
   'Deploys the given contract and update the contractData object.'
-).setAction(async ({ contractPath, contractData, constructorArgs = [] }) => {
-  if (await isAlreadyDeployed(contractPath, contractData)) {
+).setAction(async ({ contractName, contractData, constructorArgs = [] }) => {
+  if (await isAlreadyDeployed(contractName, contractData)) {
     return false;
   }
 
-  const contractName = path.basename(contractPath, '.sol');
   const contractArtifacts = await hre.artifacts.readArtifact(contractName);
   const sourceBytecodeHash = getBytecodeHash(contractArtifacts.deployedBytecode);
 

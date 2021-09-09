@@ -1,3 +1,4 @@
+const path = require('path');
 const { subtask } = require('hardhat/config');
 const logger = require('@synthetixio/core-js/utils/logger');
 const prompter = require('@synthetixio/core-js/utils/prompter');
@@ -31,7 +32,7 @@ async function _removeDeletedSources({ sources, previousData }) {
 
   const modulesPaths = Object.entries(previousData.contracts)
     .filter(([, c]) => c.isModule)
-    .map(([modulePath]) => modulePath);
+    .map(([, { path }]) => path);
 
   const toRemove = modulesPaths.filter(
     (deployedModule) => !sources.some((source) => deployedModule === source)
@@ -60,9 +61,10 @@ async function _addNewSources({ sources, data, previousData }) {
 
   // Initialize cotract data, using previous deployed one, or empty data.
   for (const source of sources) {
-    const previousModule = previousData?.contracts[source];
+    const name = path.basename(source, '.sol');
+    const previousModule = previousData?.contracts[name];
 
-    data.contracts[source] = data.contracts[source] || previousModule || _createModuleData();
+    data.contracts[name] = data.contracts[name] || previousModule || _createModuleData();
 
     if (!previousModule) created = true;
   }
