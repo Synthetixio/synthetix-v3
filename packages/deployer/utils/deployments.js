@@ -4,6 +4,7 @@ const glob = require('glob');
 const naturalCompare = require('string-natural-compare');
 const relativePath = require('@synthetixio/core-js/utils/relative-path');
 const { getRouterName } = require('./router');
+const { startsWithWord } = require('@synthetixio/core-js/utils/string');
 
 // Regex for deployment file formats, e.g.: 2021-08-31-00-sirius.json
 const DEPLOYMENT_FILE_FORMAT = /^[0-9]{4}-[0-9]{2}-[0-9]{2}-[0-9]{2,}(?:-[a-z0-9]+)?\.json$/;
