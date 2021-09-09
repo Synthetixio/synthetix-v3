@@ -48,8 +48,14 @@ subtask(
 
   logger.info(`Target implementation: ${routerAddress}`);
 
+  const proxyPath = path.join(
+    relativePath(hre.config.paths.sources, hre.config.paths.root),
+    `${proxyName}.sol`
+  );
+
   const wasProxyDeployed = await _deployProxy({
     proxyName,
+    proxyPath,
     routerAddress,
     hre,
   });
@@ -64,11 +70,12 @@ function _getDeployedAddress(contractName, hre) {
   return hre.deployer.data.contracts[contractName].deployedAddress;
 }
 
-async function _deployProxy({ proxyName, routerAddress, hre }) {
+async function _deployProxy({ proxyName, proxyPath, routerAddress, hre }) {
   let proxyData = hre.deployer.data.contracts[proxyName];
 
   if (!proxyData) {
     hre.deployer.data.contracts[proxyName] = {
+      path: proxyPath,
       deployedAddress: '',
       deployTransaction: '',
       bytecodeHash: '',

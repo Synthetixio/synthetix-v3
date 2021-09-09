@@ -32,7 +32,7 @@ async function _removeDeletedSources({ sources, previousData }) {
 
   const modulesPaths = Object.entries(previousData.contracts)
     .filter(([, c]) => c.isModule)
-    .map(([, { path }]) => path);
+    .map(([, c]) => c.source);
 
   const toRemove = modulesPaths.filter(
     (deployedModule) => !sources.some((source) => deployedModule === source)
@@ -49,7 +49,8 @@ async function _removeDeletedSources({ sources, previousData }) {
   return toRemove.length > 0;
 }
 
-const _createModuleData = () => ({
+const _createModuleData = ({ path }) => ({
+  path,
   isModule: true,
   deployedAddress: '',
   deployTransaction: '',
@@ -61,10 +62,11 @@ async function _addNewSources({ sources, data, previousData }) {
 
   // Initialize cotract data, using previous deployed one, or empty data.
   for (const source of sources) {
-    const name = path.basename(source, '.sol');
-    const previousModule = previousData?.contracts[name];
+    const contractName = path.basename(source, '.sol');
+    const previousModule = previousData?.contracts[contractName];
 
-    data.contracts[name] = data.contracts[name] || previousModule || _createModuleData();
+    data.contracts[contractName] =
+      data.contracts[contractName] || previousModule || _createModuleData({ path: source });
 
     if (!previousModule) created = true;
   }
