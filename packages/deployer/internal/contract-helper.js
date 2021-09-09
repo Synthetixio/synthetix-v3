@@ -1,3 +1,5 @@
+const fs = require('fs');
+const path = require('path');
 const { deployedContractHasBytescode } = require('@synthetixio/core-js/utils/contracts');
 
 async function isAlreadyDeployed(contractPath, deploymentData) {
@@ -5,17 +7,13 @@ async function isAlreadyDeployed(contractPath, deploymentData) {
     return false;
   }
 
-  const artifactsPath = path.join(
-    hre.config.paths.artifacts,
-    contractPath,
-    `${path.basename(contractPath, '.sol')}`
-  );
-
-  const contractArtifacts = JSON.parse(fs.readFileSync(artifactsPath));
+  const contractName = path.basename(contractPath, '.sol');
+  const contractArtifacts = await hre.artifacts.readArtifact(contractName);
 
   return deployedContractHasBytescode(
     deploymentData.deployedAddress,
-    contractArtifacts.deployedBytecode
+    contractArtifacts.deployedBytecode,
+    hre.ethers.provider
   );
 }
 

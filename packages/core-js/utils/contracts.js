@@ -2,9 +2,9 @@ const fs = require('fs');
 const path = require('path');
 const ethers = require('ethers');
 
-async function deployedContractHasBytescode(contractAddress, bytecode) {
+async function deployedContractHasBytescode(contractAddress, bytecode, provider) {
   const sourceBytecodeHash = getBytecodeHash(bytecode);
-  const remoteBytecodeHash = getBytecodeHash(await getRemoteBytecode(contractAddress));
+  const remoteBytecodeHash = getBytecodeHash(await getRemoteBytecode(contractAddress, provider));
 
   return sourceBytecodeHash === remoteBytecodeHash;
 }
@@ -13,8 +13,8 @@ function getBytecodeHash(bytecode) {
   return ethers.utils.sha256(bytecode);
 }
 
-async function getRemoteBytecode(address) {
-  return await ethers.provider.getCode(address);
+async function getRemoteBytecode(address, provider) {
+  return await (provider || ethers.provider).getCode(address);
 }
 
 async function getSelectors(contractAbi) {
