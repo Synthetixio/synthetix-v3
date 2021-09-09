@@ -7,17 +7,16 @@ const { defaults } = require('../extensions/config');
 // Regex for deployment file formats, e.g.: 2021-08-31-00-sirius.json
 const DEPLOYMENT_FILE_FORMAT = /^[0-9]{4}-[0-9]{2}-[0-9]{2}-[0-9]{2,}(?:-[a-z0-9]+)?\.json$/;
 
-function getMainProxyAddress({
+function getProxyAddress({
   network = 'local',
   instance = 'official',
   deploymentsFolder = defaults.paths.deployments,
 } = {}) {
   const data = getCurrentDeploymentDataForInstance({ network, instance, deploymentsFolder });
 
-  // TODO: This should just be "MainProxy" after
-  // we remove the ability to rename it('', async () => {}.);
-  const key = Object.keys(data.contracts).find((id) => id.includes('Proxy'));
-
+  // TODO remove key constant and use proxyName when contracts key is changed from path to contract name
+  const proxyName = 'Proxy.sol';
+  const key = `contracts/${proxyName}`;
   return data.contracts[key].deployedAddress;
 }
 
@@ -70,5 +69,5 @@ module.exports = {
   getAllDeploymentsFilesForInstance,
   getCurrentDeploymentFileForInstance,
   getCurrentDeploymentDataForInstance,
-  getMainProxyAddress,
+  getProxyAddress,
 };

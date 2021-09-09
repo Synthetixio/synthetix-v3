@@ -4,18 +4,17 @@ const path = require('path');
 const relativePath = require('@synthetixio/core-js/utils/relative-path');
 const { subtask } = require('hardhat/config');
 const { getSelectors } = require('@synthetixio/core-js/utils/contracts');
-const { getRouterName } = require('../utils/router');
 const { SUBTASK_VALIDATE_ROUTER } = require('../task-names');
 
 subtask(
   SUBTASK_VALIDATE_ROUTER,
   'Runs a series of validations against a generated router source.'
-).setAction(async ({ instance }, hre) => {
+).setAction(async (_, hre) => {
   logger.subtitle('Validating router');
 
   const routerPath = path.join(
     relativePath(hre.config.paths.sources, hre.config.paths.root),
-    getRouterName({ network: hre.network.name, instance })
+    'GenRouter.sol'
   );
 
   await _selectorsExistInSource({
