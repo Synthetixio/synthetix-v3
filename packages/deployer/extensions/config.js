@@ -4,7 +4,6 @@ const { extendConfig } = require('hardhat/config');
 const DEFAULTS = {
   proxyName: 'MainProxy',
   paths: {
-    routerTemplate: path.resolve(__dirname, '../templates/GenRouter.sol.mustache'),
     modules: 'contracts/modules',
     deployments: 'deployments',
   },
@@ -24,7 +23,6 @@ extendConfig((config, userConfig) => {
     ...givenConfig,
     paths: {
       ...DEFAULTS.paths,
-      routerTemplate: resolvePath('routerTemplate'),
       modules: resolvePath('modules'),
       deployments: resolvePath('deployments'),
     },
