@@ -1,7 +1,7 @@
+const logger = require('@synthetixio/core-js/utils/logger');
+const prompter = require('@synthetixio/core-js/utils/prompter');
 const path = require('path');
-const logger = require('../utils/logger');
-const prompter = require('../utils/prompter');
-const relativePath = require('../utils/relative-path');
+const relativePath = require('@synthetixio/core-js//utils/relative-path');
 const { subtask } = require('hardhat/config');
 const { processTransaction, processReceipt } = require('../utils/transactions');
 const { getRouterName } = require('../utils/router');

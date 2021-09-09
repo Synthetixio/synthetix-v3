@@ -9,5 +9,9 @@
   "keywords": [],
   "author": "",
   "license": "MIT",
-  "devDependencies": {}
+  "devDependencies": {},
+  "dependencies": {
+    "chalk": "4.1.2",
+    "inquirer": "8.1.2"
+  }
 }

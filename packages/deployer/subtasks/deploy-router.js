@@ -1,5 +1,5 @@
+const logger = require('@synthetixio/core-js/utils/logger');
 const path = require('path');
-const logger = require('../utils/logger');
 const { subtask } = require('hardhat/config');
 const { TASK_COMPILE } = require('hardhat/builtin-tasks/task-names');
 const { getRouterName } = require('../utils/router');

@@ -2,7 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const glob = require('glob');
 const naturalCompare = require('string-natural-compare');
-const relativePath = require('./relative-path');
+const relativePath = require('@synthetixio/core-js//utils/relative-path');
 const { getRouterName } = require('router');
 
 // Regex for deployment file formats, e.g.: 2021-08-31-00-sirius.json

@@ -2,8 +2,8 @@ const path = require('path');
 const rimraf = require('rimraf');
 const { subtask } = require('hardhat/config');
 
-const logger = require('../utils/logger');
-const prompter = require('../utils/prompter');
+const logger = require('@synthetixio/core-js/utils/logger');
+const prompter = require('@synthetixio/core-js/utils/prompter');
 const { getGeneratedContractPaths } = require('../utils/deployments');
 const { SUBTASK_CLEAR_DEPLOYMENTS } = require('../task-names');
 

@@ -14,8 +14,9 @@ const {
   SUBTASK_VALIDATE_ROUTER,
   TASK_DEPLOY,
 } = require('../task-names');
-const logger = require('../utils/logger');
-const prompter = require('../utils/prompter');
+
+const logger = require('@synthetixio/core-js/utils/logger');
+const prompter = require('@synthetixio/core-js//utils/prompter');
 const types = require('../utils/argument-types');
 
 task(TASK_DEPLOY, 'Deploys all system modules')

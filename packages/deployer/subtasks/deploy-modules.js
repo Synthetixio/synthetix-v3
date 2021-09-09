@@ -1,7 +1,7 @@
 const rimraf = require('rimraf');
 const { subtask } = require('hardhat/config');
 
-const logger = require('../utils/logger');
+const logger = require('@synthetixio/core-js/utils/logger');
 const { SUBTASK_DEPLOY_CONTRACTS, SUBTASK_DEPLOY_MODULES } = require('../task-names');
 
 subtask(SUBTASK_DEPLOY_MODULES).setAction(async (_, hre) => {
