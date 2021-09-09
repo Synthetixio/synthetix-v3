@@ -3,7 +3,7 @@ const path = require('path');
 const { subtask } = require('hardhat/config');
 const { TASK_COMPILE } = require('hardhat/builtin-tasks/task-names');
 const { getRouterName } = require('../utils/router');
-const relativePath = require('../utils/relative-path');
+const relativePath = require('@synthetixio/core-js/utils/relative-path');
 
 const { SUBTASK_DEPLOY_CONTRACT, SUBTASK_DEPLOY_ROUTER } = require('../task-names');
 

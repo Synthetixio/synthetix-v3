@@ -7,7 +7,7 @@ const { readPackageJson } = require('@synthetixio/core-js/utils/package');
 const path = require('path');
 const { getRouterName } = require('../utils/router');
 const { getContractSelectors, getContractNameFromPath } = require('../utils/contracts');
-const relativePath = require('../utils/relative-path');
+const relativePath = require('@synthetixio/core-js/utils/relative-path');
 const renderTemplate = require('../utils/render-template');
 
 const TAB = '    ';
