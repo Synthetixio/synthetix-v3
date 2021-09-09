@@ -6,7 +6,7 @@ const { getCommit, getBranch } = require('@synthetixio/core-js/utils/git');
 const { readPackageJson } = require('@synthetixio/core-js/utils/package');
 const path = require('path');
 const { getRouterName } = require('../utils/router');
-const { getContractSelectors, getContractNameFromPath } = require('../utils/contracts');
+const { getContractSelectors, getContractNameFromPath } = require('@synthetixio/core-js/utils/contracts');
 const relativePath = require('@synthetixio/core-js/utils/relative-path');
 const renderTemplate = require('../utils/render-template');
 
