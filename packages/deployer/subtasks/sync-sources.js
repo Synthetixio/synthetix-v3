@@ -49,8 +49,8 @@ async function _removeDeletedSources({ sources, previousData }) {
   return toRemove.length > 0;
 }
 
-const _createModuleData = ({ path }) => ({
-  path,
+const _createModuleData = ({ source }) => ({
+  source,
   isModule: true,
   deployedAddress: '',
   deployTransaction: '',
@@ -66,7 +66,7 @@ async function _addNewSources({ sources, data, previousData }) {
     const previousModule = previousData?.contracts[contractName];
 
     data.contracts[contractName] =
-      data.contracts[contractName] || previousModule || _createModuleData({ path: source });
+      data.contracts[contractName] || previousModule || _createModuleData({ source });
 
     if (!previousModule) created = true;
   }

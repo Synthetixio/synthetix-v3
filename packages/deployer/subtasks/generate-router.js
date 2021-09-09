@@ -16,7 +16,7 @@ subtask(
   SUBTASK_GENERATE_ROUTER_SOURCE,
   'Reads deployed modules from the deployment data file and generates the source for a new router contract.'
 ).setAction(async (_, hre) => {
-  const routerName = 'GenRouter';
+  const routerName = 'Router';
   const routerPath = path.join(
     relativePath(hre.config.paths.sources, hre.config.paths.root),
     `${routerName}.sol`
@@ -115,10 +115,10 @@ function _renderModules(modules) {
     .trim();
 }
 
-async function _getAllSelectors(contractsNames) {
+async function _getAllSelectors(contractNames) {
   const allSelectors = [];
 
-  for (const contractName of contractsNames) {
+  for (const contractName of contractNames) {
     const contractArtifacts = await hre.artifacts.readArtifact(contractName);
     const selectors = await getSelectors(contractArtifacts.abi);
 

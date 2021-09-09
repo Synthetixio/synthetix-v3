@@ -41,7 +41,7 @@ subtask(
 ).setAction(async (_, hre) => {
   logger.subtitle('Upgrading main proxy');
 
-  const routerName = 'GenRouter';
+  const routerName = 'Router';
   const proxyName = 'Proxy';
 
   const routerAddress = _getDeployedAddress(routerName, hre);
@@ -75,7 +75,7 @@ async function _deployProxy({ proxyName, proxyPath, routerAddress, hre }) {
 
   if (!proxyData) {
     hre.deployer.data.contracts[proxyName] = {
-      path: proxyPath,
+      source: proxyPath,
       deployedAddress: '',
       deployTransaction: '',
       bytecodeHash: '',
