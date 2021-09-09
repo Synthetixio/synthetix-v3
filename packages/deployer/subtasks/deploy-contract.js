@@ -1,7 +1,5 @@
 const logger = require('@synthetixio/core-js/utils/logger');
-const {
-  alreadyDeployed,
-} = require('../utils/contracts');
+const { alreadyDeployed } = require('../utils/contracts');
 const {
   getContractNameFromPath,
   getContractBytecodeHash,
