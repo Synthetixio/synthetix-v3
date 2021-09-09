@@ -1,13 +1,14 @@
 const fs = require('fs');
-const logger = require('@synthetixio/core-js/utils/logger');
+const path = require('path');
 const { subtask } = require('hardhat/config');
-const { SUBTASK_GENERATE_ROUTER_SOURCE } = require('../task-names');
+const logger = require('@synthetixio/core-js/utils/logger');
 const { getCommit, getBranch } = require('@synthetixio/core-js/utils/git');
 const { readPackageJson } = require('@synthetixio/core-js/utils/package');
-const path = require('path');
 const { getSelectors } = require('@synthetixio/core-js/utils/contracts');
 const relativePath = require('@synthetixio/core-js/utils/relative-path');
 const { renderTemplate } = require('../internal/generate-contracts');
+const filterObject = require('../internal/filter-object');
+const { SUBTASK_GENERATE_ROUTER_SOURCE } = require('../task-names');
 
 const TAB = '    ';
 
@@ -15,15 +16,17 @@ subtask(
   SUBTASK_GENERATE_ROUTER_SOURCE,
   'Reads deployed modules from the deployment data file and generates the source for a new router contract.'
 ).setAction(async (_, hre) => {
+  const routerName = 'GenRouter';
   const routerPath = path.join(
     relativePath(hre.config.paths.sources, hre.config.paths.root),
-    'Router.sol'
+    `${routerName}.sol`
   );
 
   logger.subtitle('Generating router source');
   logger.info(`location: ${routerPath}`);
 
-  const modulesPaths = Object.keys(hre.deployer.data.contracts.modules);
+  const modules = filterObject(hre.deployer.data.contracts, (o) => o.isModule);
+  const modulesPaths = Object.keys(modules);
   logger.debug(`modules: ${JSON.stringify(modulesPaths, null, 2)}`);
 
   const selectors = await _getAllSelectors(modulesPaths);
@@ -39,8 +42,8 @@ subtask(
     repo: package.repository?.url || '',
     branch: getBranch(),
     commit: getCommit(),
-    moduleName: path.basename(routerPath, '.sol'),
-    modules: _renderModules(hre.deployer.data.contracts.modules),
+    moduleName: routerName,
+    modules: _renderModules(modules),
     selectors: _renderSelectors({ binaryData }),
   });
 

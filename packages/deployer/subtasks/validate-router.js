@@ -17,18 +17,22 @@ subtask(
     'Router.sol'
   );
 
+  const modulesNames = Object.entries(hre.deployer.data.contracts)
+    .filter(([, c]) => c.isModule)
+    .map(([modulePath]) => path.basename(modulePath, '.sol'));
+
   await _selectorsExistInSource({
     routerPath,
-    modules: Object.keys(hre.deployer.data.contracts.modules).map((c) => path.basename(c, '.sol')),
+    modulesNames,
   });
 
   logger.checked('Router is valid');
 });
 
-async function _selectorsExistInSource({ routerPath, modules }) {
+async function _selectorsExistInSource({ routerPath, modulesNames }) {
   const source = fs.readFileSync(routerPath).toString();
 
-  for (const moduleName of modules) {
+  for (const moduleName of modulesNames) {
     const moduleArtifacts = await hre.artifacts.readArtifact(moduleName);
     const moduleSelectors = await getSelectors(moduleArtifacts.abi);
 

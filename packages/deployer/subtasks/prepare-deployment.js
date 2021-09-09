@@ -15,9 +15,7 @@ const DEPLOYMENT_SCHEMA = {
     totalGasUsed: '0',
   },
   transactions: {},
-  contracts: {
-    modules: {},
-  },
+  contracts: {},
 };
 
 subtask(
