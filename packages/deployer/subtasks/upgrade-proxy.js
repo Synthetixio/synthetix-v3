@@ -43,7 +43,7 @@ subtask(
 
   const routerPath = path.join(
     relativePath(hre.config.paths.sources, hre.config.paths.root),
-    'GenRouter.sol'
+    'Router.sol'
   );
 
   const proxyPath = path.join(
