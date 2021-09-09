@@ -4,7 +4,10 @@ const { subtask } = require('hardhat/config');
 const { SUBTASK_GENERATE_ROUTER_SOURCE } = require('../task-names');
 const { getCommit, getBranch } = require('@synthetixio/core-js/utils/git');
 const { readPackageJson } = require('@synthetixio/core-js/utils/package');
+const path = require('path');
+const { getRouterName } = require('../utils/router');
 const { getContractSelectors, getContractNameFromPath } = require('../utils/contracts');
+const relativePath = require('../utils/relative-path');
 const renderTemplate = require('../utils/render-template');
 
 const TAB = '    ';
@@ -12,8 +15,11 @@ const TAB = '    ';
 subtask(
   SUBTASK_GENERATE_ROUTER_SOURCE,
   'Reads deployed modules from the deployment data file and generates the source for a new router contract.'
-).setAction(async (_, hre) => {
-  const routerPath = hre.deployer.paths.router;
+).setAction(async ({ instance }, hre) => {
+  const routerPath = path.join(
+    relativePath(hre.config.paths.sources, hre.config.paths.root),
+    getRouterName({ network: hre.network.name, instance })
+  );
 
   logger.subtitle('Generating router source');
   logger.info(`location: ${routerPath}`);

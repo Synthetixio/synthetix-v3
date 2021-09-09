@@ -4,6 +4,7 @@ const glob = require('glob');
 const naturalCompare = require('string-natural-compare');
 const relativePath = require('@synthetixio/core-js//utils/relative-path');
 const { capitalize, startsWithWord } = require('@synthetixio/core-js//utils/string');
+const { getRouterName } = require('router');
 
 // Regex for deployment file formats, e.g.: 2021-08-31-00-sirius.json
 const DEPLOYMENT_FILE_FORMAT = /^[0-9]{4}-[0-9]{2}-[0-9]{2}-[0-9]{2,}(?:-[a-z0-9]+)?\.json$/;
@@ -42,21 +43,11 @@ function getModulesPaths(config) {
     .map((source) => relativePath(source, hre.config.paths.root));
 }
 
-function getGeneratedContractPaths(config) {
-  return glob
-    .sync(path.join(config.paths.sources, 'Gen*.sol'))
-    .filter((file) => startsWithWord(path.basename(file, '.sol'), 'Gen'));
-}
-
 function getProxyPath(config) {
   return relativePath(
     path.join(config.paths.sources, `${config.deployer.proxyName}.sol`),
     config.paths.root
   );
-}
-
-function getRouterName({ network = 'local', instance = 'official' } = {}) {
-  return ['GenRouter', network, instance].map(capitalize).join('');
 }
 
 function getDeploymentPaths(config, { network = 'local', instance = 'official' } = {}) {
@@ -75,8 +66,6 @@ module.exports = {
   getDeploymentFiles,
   getDeploymentData,
   getDeploymentPaths,
-  getRouterName,
   getModulesPaths,
-  getGeneratedContractPaths,
   getProxyPath,
 };

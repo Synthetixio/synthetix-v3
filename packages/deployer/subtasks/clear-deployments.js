@@ -1,3 +1,4 @@
+const path = require('path');
 const rimraf = require('rimraf');
 const { subtask } = require('hardhat/config');
 
@@ -9,8 +10,12 @@ const { SUBTASK_CLEAR_DEPLOYMENTS } = require('../task-names');
 subtask(
   SUBTASK_CLEAR_DEPLOYMENTS,
   'Delete all previous deployment data on the current environment'
-).setAction(async (_, hre) => {
-  const deploymentsFolder = hre.config.deployer.paths.deployments;
+).setAction(async ({ instance }, hre) => {
+  const deploymentsFolder = path.join(
+    hre.config.deployer.paths.deployments,
+    hre.network.name,
+    instance
+  );
   const generatedContracts = getGeneratedContractPaths(hre.config);
 
   const toDelete = [deploymentsFolder, ...generatedContracts];
