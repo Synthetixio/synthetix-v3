@@ -4,7 +4,7 @@ const {
   getContractBytecodeHash,
   alreadyDeployed,
 } = require('../utils/contracts');
-const { processTransaction, processReceipt } = require('../utils/transactions');
+const { processTransaction, processReceipt } = require('../internal/process-transactions');
 const { subtask } = require('hardhat/config');
 const { SUBTASK_DEPLOY_CONTRACT } = require('../task-names');
 

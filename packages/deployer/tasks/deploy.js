@@ -17,7 +17,7 @@ const {
 
 const logger = require('@synthetixio/core-js/utils/logger');
 const prompter = require('@synthetixio/core-js//utils/prompter');
-const types = require('../utils/argument-types');
+const types = require('../internal/argument-types');
 
 task(TASK_DEPLOY, 'Deploys all system modules')
   .addFlag('noConfirm', 'Skip all confirmation prompts', false)

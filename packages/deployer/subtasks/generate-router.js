@@ -8,7 +8,7 @@ const path = require('path');
 const { getRouterName } = require('../utils/router');
 const { getContractSelectors, getContractNameFromPath } = require('../utils/contracts');
 const relativePath = require('@synthetixio/core-js/utils/relative-path');
-const renderTemplate = require('../utils/render-template');
+const { renderTemplate } = require('../internal/generate-contracts');
 
 const TAB = '    ';
 

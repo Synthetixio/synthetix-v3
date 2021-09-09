@@ -5,7 +5,7 @@ const { subtask } = require('hardhat/config');
 
 const prompter = require('@synthetixio/core-js/utils/prompter');
 const relativePath = require('@synthetixio/core-js/utils/relative-path');
-const autosaveObject = require('../utils/autosave-object');
+const autosaveObject = require('../internal/autosave-object');
 const { getDeploymentFiles } = require('../utils/deployments');
 const { SUBTASK_PREPARE_DEPLOYMENT } = require('../task-names');
 
