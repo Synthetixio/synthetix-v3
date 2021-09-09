@@ -5,7 +5,6 @@ const { SUBTASK_GENERATE_ROUTER_SOURCE } = require('../task-names');
 const { getCommit, getBranch } = require('@synthetixio/core-js/utils/git');
 const { readPackageJson } = require('@synthetixio/core-js/utils/package');
 const path = require('path');
-const { getRouterName } = require('../utils/router');
 const { getSelectors } = require('@synthetixio/core-js/utils/contracts');
 const relativePath = require('@synthetixio/core-js/utils/relative-path');
 const { renderTemplate } = require('../internal/generate-contracts');
@@ -15,10 +14,10 @@ const TAB = '    ';
 subtask(
   SUBTASK_GENERATE_ROUTER_SOURCE,
   'Reads deployed modules from the deployment data file and generates the source for a new router contract.'
-).setAction(async ({ instance }, hre) => {
+).setAction(async (_, hre) => {
   const routerPath = path.join(
     relativePath(hre.config.paths.sources, hre.config.paths.root),
-    getRouterName({ network: hre.network.name, instance })
+    'GenRouter.sol'
   );
 
   logger.subtitle('Generating router source');

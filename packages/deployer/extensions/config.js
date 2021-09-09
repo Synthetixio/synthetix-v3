@@ -2,7 +2,6 @@ const path = require('path');
 const { extendConfig } = require('hardhat/config');
 
 const DEFAULTS = {
-  proxyName: 'MainProxy',
   paths: {
     modules: 'contracts/modules',
     deployments: 'deployments',

@@ -4,8 +4,6 @@ const path = require('path');
 const relativePath = require('@synthetixio/core-js//utils/relative-path');
 const { subtask } = require('hardhat/config');
 const { processTransaction, processReceipt } = require('../internal/process-transactions');
-const { getRouterName } = require('../utils/router');
-const { getProxyPath } = require('../internal/path-finder');
 const { SUBTASK_UPGRADE_PROXY, SUBTASK_DEPLOY_CONTRACT } = require('../task-names');
 
 const UPGRADE_ABI = [
@@ -40,15 +38,19 @@ const UPGRADE_ABI = [
 subtask(
   SUBTASK_UPGRADE_PROXY,
   'Checks if the main proxy needs to be deployed, and upgrades it if needed.'
-).setAction(async ({ instance }, hre) => {
+).setAction(async (_, hre) => {
   logger.subtitle('Upgrading main proxy');
 
   const routerPath = path.join(
     relativePath(hre.config.paths.sources, hre.config.paths.root),
-    getRouterName({ network: hre.network.name, instance })
+    'GenRouter.sol'
   );
 
-  const proxyPath = getProxyPath(hre.config);
+  const proxyPath = path.join(
+    relativePath(hre.config.paths.sources, hre.config.paths.root),
+    'Proxy.sol'
+  );
+
   const routerAddress = _getDeployedAddress(routerPath, hre);
 
   logger.info(`Target implementation: ${routerAddress}`);
