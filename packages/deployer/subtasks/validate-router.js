@@ -3,10 +3,7 @@ const logger = require('@synthetixio/core-js/utils/logger');
 const path = require('path');
 const relativePath = require('@synthetixio/core-js/utils/relative-path');
 const { subtask } = require('hardhat/config');
-const {
-  getContractNameFromPath,
-  getContractSelectors,
-} = require('@synthetixio/core-js/utils/contracts');
+const { getSelectors } = require('@synthetixio/core-js/utils/contracts');
 const { getRouterName } = require('../utils/router');
 const { SUBTASK_VALIDATE_ROUTER } = require('../task-names');
 
@@ -23,7 +20,7 @@ subtask(
 
   await _selectorsExistInSource({
     routerPath,
-    modules: Object.keys(hre.deployer.data.contracts.modules).map(getContractNameFromPath),
+    modules: Object.keys(hre.deployer.data.contracts.modules).map((c) => path.basename(c, '.sol')),
   });
 
   logger.checked('Router is valid');
@@ -33,7 +30,8 @@ async function _selectorsExistInSource({ routerPath, modules }) {
   const source = fs.readFileSync(routerPath).toString();
 
   for (const moduleName of modules) {
-    const moduleSelectors = await getContractSelectors(moduleName);
+    const moduleArtifacts = await hre.artifacts.readArtifact(moduleName);
+    const moduleSelectors = await getSelectors(moduleArtifacts.abi);
 
     moduleSelectors.forEach((moduleSelector) => {
       const regex = `(:?\\s|^)case ${moduleSelector.selector}\\s.+`;

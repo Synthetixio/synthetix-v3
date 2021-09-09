@@ -1,7 +1,7 @@
 const { subtask } = require('hardhat/config');
 const logger = require('@synthetixio/core-js/utils/logger');
 const prompter = require('@synthetixio/core-js/utils/prompter');
-const { getModulesPaths } = require('../utils/deployments');
+const { getModulesPaths } = require('../internal/path-finder');
 const { SUBTASK_SYNC_SOURCES } = require('../task-names');
 
 /**

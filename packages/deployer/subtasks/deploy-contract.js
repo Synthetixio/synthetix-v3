@@ -1,6 +1,7 @@
+const path = require('path');
 const logger = require('@synthetixio/core-js/utils/logger');
-const { alreadyDeployed } = require('../utils/contracts');
-const { getContractNameFromPath, getContractBytecodeHash } = require('@synthetixio/core-js/utils/contracts');
+const { isAlreadyDeployed } = require('../internal/contract-helper');
+const { getBytecodeHash } = require('@synthetixio/core-js/utils/contracts');
 const { processTransaction, processReceipt } = require('../internal/process-transactions');
 const { subtask } = require('hardhat/config');
 const { SUBTASK_DEPLOY_CONTRACT } = require('../task-names');
@@ -9,11 +10,13 @@ subtask(
   SUBTASK_DEPLOY_CONTRACT,
   'Deploys the given contract and update the contractData object.'
 ).setAction(async ({ contractPath, contractData, constructorArgs = [] }) => {
-  const isAlreadyDeployed = await alreadyDeployed(contractPath, contractData);
-  if (isAlreadyDeployed) return false;
+  if (await isAlreadyDeployed(contractPath, contractData)) {
+    return false;
+  }
 
-  const contractName = getContractNameFromPath(contractPath);
-  const sourceBytecodeHash = getContractBytecodeHash(contractPath);
+  const contractName = path.basename(contractPath, '.sol');
+  const contractArtifacts = await hre.artifacts.readArtifact(contractName);
+  const sourceBytecodeHash = getBytecodeHash(contractArtifacts.deployedBytecode);
 
   // Create contract & start the transaction on the network
   const { contract, transaction } = await _createAndDeployContract(contractName, constructorArgs);

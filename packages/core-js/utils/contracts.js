@@ -1,32 +1,26 @@
 const fs = require('fs');
 const path = require('path');
+const ethers = require('ethers');
 
-function getContractNameFromPath(contractPath) {
-  return path.basename(contractPath, '.sol');
+async function deployedContractHasBytescode(contractAddress, bytecode) {
+  const sourceBytecodeHash = getBytecodeHash(bytecode);
+  const remoteBytecodeHash = getBytecodeHash(await getRemoteBytecode(contractAddress));
+
+  return sourceBytecodeHash === remoteBytecodeHash;
 }
 
-async function getAddressBytecodeHash(address) {
-  const bytecode = await hre.ethers.provider.getCode(address);
-  return hre.ethers.utils.sha256(bytecode);
+function getBytecodeHash(bytecode) {
+  return ethers.utils.sha256(bytecode);
 }
 
-function getContractBytecodeHash(contractPath) {
-  const artifactsPath = hre.config.paths.artifacts;
-
-  const filePath = path.join(
-    artifactsPath,
-    contractPath,
-    `${getContractNameFromPath(contractPath)}.json`
-  );
-
-  const data = JSON.parse(fs.readFileSync(filePath));
-  return hre.ethers.utils.sha256(data.deployedBytecode);
+async function getRemoteBytecode(address) {
+  return await ethers.provider.getCode(address);
 }
 
-async function getContractSelectors(contractName) {
-  const contract = await hre.ethers.getContractAt(
-    contractName,
-    '0x0000000000000000000000000000000000000001'
+async function getSelectors(contractAbi) {
+  const contract = await new ethers.Contract(
+    '0x0000000000000000000000000000000000000001',
+    contractAbi,
   );
 
   return contract.interface.fragments.reduce((selectors, fragment) => {
@@ -42,8 +36,8 @@ async function getContractSelectors(contractName) {
 }
 
 module.exports = {
-  getContractNameFromPath,
-  getAddressBytecodeHash,
-  getContractBytecodeHash,
-  getContractSelectors,
+  deployedContractHasBytescode,
+  getBytecodeHash,
+  getRemoteBytecode,
+  getSelectors,
 };

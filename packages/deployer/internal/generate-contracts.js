@@ -2,6 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const glob = require('glob');
 const Mustache = require('mustache');
+const { startsWithWord } = require('@synthetixio/core-js/utils/string');
 
 function getGeneratedContractPaths(config) {
   return glob

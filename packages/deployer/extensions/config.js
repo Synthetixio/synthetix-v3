@@ -30,5 +30,5 @@ extendConfig((config, userConfig) => {
 });
 
 module.exports = {
-  defaults: DEFAULTS;
+  defaults: DEFAULTS,
 };

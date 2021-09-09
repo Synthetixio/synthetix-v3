@@ -6,7 +6,7 @@ const { subtask } = require('hardhat/config');
 const prompter = require('@synthetixio/core-js/utils/prompter');
 const relativePath = require('@synthetixio/core-js/utils/relative-path');
 const autosaveObject = require('../internal/autosave-object');
-const { getDeploymentFiles } = require('../utils/deployments');
+const { getAllDeploymentsFilesForInstance } = require('../utils/deployments');
 const { SUBTASK_PREPARE_DEPLOYMENT } = require('../task-names');
 
 const DEPLOYMENT_SCHEMA = {
@@ -52,7 +52,7 @@ subtask(
  * @returns {{ currentFile: string, previousFile: string }}
  */
 async function _determineDeploymentFiles(deploymentsFolder, alias) {
-  const deployments = getDeploymentFiles(deploymentsFolder);
+  const deployments = getAllDeploymentsFilesForInstance(deploymentsFolder);
   const previousFile = deployments.length > 0 ? deployments[deployments.length - 1] : null;
 
   // Check if there is an unfinished deployment and prompt the user if we should
