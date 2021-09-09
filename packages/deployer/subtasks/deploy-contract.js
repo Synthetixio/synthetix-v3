@@ -1,9 +1,6 @@
 const logger = require('@synthetixio/core-js/utils/logger');
-const {
-  getContractNameFromPath,
-  getContractBytecodeHash,
-  alreadyDeployed,
-} = require('../utils/contracts');
+const { alreadyDeployed } = require('../utils/contracts');
+const { getContractNameFromPath, getContractBytecodeHash } = require('@synthetixio/core-js/utils/contracts');
 const { processTransaction, processReceipt } = require('../internal/process-transactions');
 const { subtask } = require('hardhat/config');
 const { SUBTASK_DEPLOY_CONTRACT } = require('../task-names');
