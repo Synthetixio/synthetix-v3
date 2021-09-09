@@ -1,4 +1,3 @@
-const fs = require('fs');
 const path = require('path');
 const { deployedContractHasBytescode } = require('@synthetixio/core-js/utils/contracts');
 

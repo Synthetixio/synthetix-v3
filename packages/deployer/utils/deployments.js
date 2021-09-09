@@ -2,8 +2,6 @@ const fs = require('fs');
 const path = require('path');
 const glob = require('glob');
 const naturalCompare = require('string-natural-compare');
-const relativePath = require('@synthetixio/core-js/utils/relative-path');
-const { getRouterName } = require('./router');
 const { defaults } = require('../extensions/config');
 
 // Regex for deployment file formats, e.g.: 2021-08-31-00-sirius.json
@@ -18,7 +16,7 @@ function getMainProxyAddress({
 
   // TODO: This should just be "MainProxy" after
   // we remove the ability to rename it('', async () => {}.);
-  const key = Object.keys(data.contracts).find(id => id.includes('Proxy'));
+  const key = Object.keys(data.contracts).find((id) => id.includes('Proxy'));
 
   return data.contracts[key].deployedAddress;
 }
@@ -28,7 +26,7 @@ function getCurrentDeploymentDataForInstance({
   instance = 'official',
   deploymentsFolder = defaults.paths.deployments,
 } = {}) {
-  const file = getCurrentDeploymentFileForInstance(deploymentsFolder);
+  const file = getCurrentDeploymentFileForInstance({ network, instance, deploymentsFolder });
 
   if (!file) {
     throw new Error(`No deployment file found on "${deploymentsFolder}".`);
@@ -42,7 +40,7 @@ function getCurrentDeploymentFileForInstance({
   instance = 'official',
   deploymentsFolder = defaults.paths.deployments,
 } = {}) {
-  const deployments = getAllDeploymentsFilesForInstance(deploymentsFolder);
+  const deployments = getAllDeploymentsFilesForInstance({ network, instance, deploymentsFolder });
 
   return deployments.length > 0 ? deployments[deployments.length - 1] : null;
 }
@@ -55,7 +53,7 @@ function getAllDeploymentsFilesForInstance({
   const instanceFolder = getDeploymentFolderForInstance({ network, instance, deploymentsFolder });
 
   return glob
-    .sync(`${deploymentsFolder}/*.json`)
+    .sync(`${instanceFolder}/*.json`)
     .filter((file) => DEPLOYMENT_FILE_FORMAT.test(path.basename(file)))
     .sort(naturalCompare);
 }
@@ -70,4 +68,7 @@ function getDeploymentFolderForInstance({
 
 module.exports = {
   getAllDeploymentsFilesForInstance,
+  getCurrentDeploymentFileForInstance,
+  getCurrentDeploymentDataForInstance,
+  getMainProxyAddress,
 };

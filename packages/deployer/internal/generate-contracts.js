@@ -13,7 +13,7 @@ function getGeneratedContractPaths(config) {
 function renderTemplate(filepath, data = {}) {
   const template = fs.readFileSync(filepath).toString();
   return Mustache.render(template, data);
-};
+}
 
 module.exports = {
   renderTemplate,
