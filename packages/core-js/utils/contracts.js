@@ -20,7 +20,7 @@ async function getRemoteBytecode(address, provider) {
 async function getSelectors(contractAbi) {
   const contract = await new ethers.Contract(
     '0x0000000000000000000000000000000000000001',
-    contractAbi,
+    contractAbi
   );
 
   return contract.interface.fragments.reduce((selectors, fragment) => {
