@@ -6,7 +6,6 @@ extendEnvironment((hre) => {
   }
 
   hre.deployer = {
-    paths: {},
     data: null,
   };
 });

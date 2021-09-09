@@ -1,7 +1,10 @@
+const path = require('path');
 const logger = require('../utils/logger');
 const prompter = require('../utils/prompter');
+const relativePath = require('../utils/relative-path');
 const { subtask } = require('hardhat/config');
 const { processTransaction, processReceipt } = require('../utils/transactions');
+const { getRouterName } = require('../utils/router');
 const { getProxyPath } = require('../utils/deployments');
 const { SUBTASK_UPGRADE_PROXY, SUBTASK_DEPLOY_CONTRACT } = require('../task-names');
 
@@ -37,11 +40,16 @@ const UPGRADE_ABI = [
 subtask(
   SUBTASK_UPGRADE_PROXY,
   'Checks if the main proxy needs to be deployed, and upgrades it if needed.'
-).setAction(async (_, hre) => {
+).setAction(async ({ instance }, hre) => {
   logger.subtitle('Upgrading main proxy');
 
+  const routerPath = path.join(
+    relativePath(hre.config.paths.sources, hre.config.paths.root),
+    getRouterName({ network: hre.network.name, instance })
+  );
+
   const proxyPath = getProxyPath(hre.config);
-  const routerAddress = _getDeployedAddress(hre.deployer.paths.router, hre);
+  const routerAddress = _getDeployedAddress(routerPath, hre);
 
   logger.info(`Target implementation: ${routerAddress}`);
 
