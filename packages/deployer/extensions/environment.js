@@ -1,3 +1,4 @@
+const path = require('path');
 const { extendEnvironment } = require('hardhat/config');
 
 extendEnvironment((hre) => {
@@ -6,6 +7,9 @@ extendEnvironment((hre) => {
   }
 
   hre.deployer = {
+    paths: {
+      routerTemplate: path.resolve(__dirname, '../templates/GenRouter.sol.mustache'),
+    },
     data: null,
   };
 });
