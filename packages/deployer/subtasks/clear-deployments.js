@@ -16,6 +16,7 @@ subtask(
     hre.network.name,
     instance
   );
+
   const generatedContracts = getGeneratedContractPaths(hre.config);
 
   const toDelete = [deploymentsFolder, ...generatedContracts];

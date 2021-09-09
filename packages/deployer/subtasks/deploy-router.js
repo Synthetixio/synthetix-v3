@@ -13,7 +13,7 @@ subtask(SUBTASK_DEPLOY_ROUTER).setAction(async (_, hre) => {
 
   const contractPath = path.join(
     relativePath(hre.config.paths.sources, hre.config.paths.root),
-    'GenRouter.sol'
+    'Router.sol'
   );
 
   let contractData = hre.deployer.data.contracts[contractPath];
