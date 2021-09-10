@@ -4,7 +4,7 @@ const { subtask } = require('hardhat/config');
 const logger = require('@synthetixio/core-js/utils/logger');
 const relativePath = require('@synthetixio/core-js/utils/relative-path');
 const { getSelectors } = require('@synthetixio/core-js/utils/contracts');
-const filterObject = require('../internal/filter-object');
+const filterValues = require('filter-values');
 const { SUBTASK_VALIDATE_ROUTER } = require('../task-names');
 
 subtask(
@@ -18,7 +18,7 @@ subtask(
     'Router.sol'
   );
 
-  const modules = filterObject(hre.deployer.deployment.contracts, (c) => c.isModule);
+  const modules = filterValues(hre.deployer.deployment.contracts, (c) => c.isModule);
   const modulesNames = Object.keys(modules);
 
   await _selectorsExistInSource({
