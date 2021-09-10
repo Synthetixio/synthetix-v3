@@ -85,7 +85,7 @@ function _renderSelectors({ binaryData }) {
       for (const s of node.selectors) {
         selectorsStr += `\n${TAB.repeat(4 + indent)}case ${
           s.selector
-        } { result := _${s.contractName.toUpperCase()} } // ${s.contractName}.${s.name}()`;
+        } { result := ${_toPrivateConstantCase(s.contractName)} } // ${s.contractName}.${s.name}()`;
       }
       selectorsStr += `\n${TAB.repeat(4 + indent)}leave`;
     }
@@ -99,20 +99,31 @@ function _renderSelectors({ binaryData }) {
 /**
  * Get a string of modules constants with its deployedAddresses.
  * E.g.:
- *   address private constant _ANOTHERMODULE = 0xAA...;
- *   address private constant _OWNERMODULE = 0x5c..;
+ *   address private constant _ANOTHER_MODULE = 0xAA...;
+ *   address private constant _OWNER_MODULE = 0x5c..;
  */
 function _renderModules(modules) {
   return Object.entries(modules)
     .reduce((lines, [moduleName, moduleData]) => {
       const { deployedAddress } = moduleData;
       lines.push(
-        `${TAB}address private constant _${moduleName.toUpperCase()} = ${deployedAddress};`
+        `${TAB}address private constant ${_toPrivateConstantCase(moduleName)} = ${deployedAddress};`
       );
       return lines;
     }, [])
     .join('\n')
     .trim();
+}
+
+/**
+ * Converts the contracts name to private _CONSTANT_CASE format.
+ * E.g.:
+ *   'BearableModule' => '_BEARABLE_MODULE'
+ *   'Proxy' => '_PROXY'
+ *   'ERC20Token' => '_ERC20_TOKEN'
+ */
+function _toPrivateConstantCase(name) {
+  return name.replace(/(?<![A-Z])[A-Z]/g, '_$&').toUpperCase();
 }
 
 async function _getAllSelectors(contractNames) {
