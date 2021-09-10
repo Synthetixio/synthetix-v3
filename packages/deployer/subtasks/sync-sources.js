@@ -17,21 +17,21 @@ subtask(
 ).setAction(async (_, hre) => {
   logger.subtitle('Syncing solidity sources with deployment data');
 
-  const { data, previousData } = hre.deployer;
+  const { deployment, previousDeployment } = hre.deployer;
   const sources = getModulesPaths(hre.config);
 
-  const removed = await _removeDeletedSources({ sources, previousData });
-  const added = await _addNewSources({ sources, data, previousData });
+  const removed = await _removeDeletedSources({ sources, previousDeployment });
+  const added = await _addNewSources({ sources, deployment, previousDeployment });
 
   if (!removed && !added) {
     logger.checked('Deployment data is in sync with sources');
   }
 });
 
-async function _removeDeletedSources({ sources, previousData }) {
-  if (!previousData) return false;
+async function _removeDeletedSources({ sources, previousDeployment }) {
+  if (!previousDeployment) return false;
 
-  const modules = filterObject(previousData.contracts, (c) => c.isModule);
+  const modules = filterObject(previousDeployment.contracts, (c) => c.isModule);
   const modulesPaths = Object.values(modules).map((c) => c.source);
 
   const toRemove = modulesPaths.filter(
@@ -57,16 +57,16 @@ const _createModuleData = ({ source }) => ({
   bytecodeHash: '',
 });
 
-async function _addNewSources({ sources, data, previousData }) {
+async function _addNewSources({ sources, deployment, previousDeployment }) {
   let created = false;
 
   // Initialize cotract data, using previous deployed one, or empty data.
   for (const source of sources) {
     const contractName = path.basename(source, '.sol');
-    const previousModule = previousData?.contracts[contractName];
+    const previousModule = previousDeployment?.contracts[contractName];
 
-    data.contracts[contractName] =
-      data.contracts[contractName] || previousModule || _createModuleData({ source });
+    deployment.contracts[contractName] =
+      deployment.contracts[contractName] || previousModule || _createModuleData({ source });
 
     if (!previousModule) created = true;
   }

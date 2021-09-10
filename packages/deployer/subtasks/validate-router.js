@@ -18,7 +18,7 @@ subtask(
     'Router.sol'
   );
 
-  const modules = filterObject(hre.deployer.data.contracts, (c) => c.isModule);
+  const modules = filterObject(hre.deployer.deployment.contracts, (c) => c.isModule);
   const modulesNames = Object.keys(modules);
 
   await _selectorsExistInSource({

@@ -16,6 +16,7 @@ const DEPLOYMENT_SCHEMA = {
   },
   transactions: {},
   contracts: {},
+  file: null,
 };
 
 subtask(
@@ -35,11 +36,11 @@ subtask(
 
   const { previousFile, currentFile } = await _determineDeploymentFiles(deploymentsFolder, alias);
 
-  hre.deployer.file = currentFile;
-  hre.deployer.data = autosaveObject(hre.deployer.file, DEPLOYMENT_SCHEMA);
+  hre.deployer.deployment = autosaveObject(currentFile, DEPLOYMENT_SCHEMA);
+  hre.deployer.deployment.file = relativePath(currentFile);
 
   if (previousFile) {
-    hre.deployer.previousData = JSON.parse(fs.readFileSync(previousFile));
+    hre.deployer.previousDeployment = JSON.parse(fs.readFileSync(previousFile));
   }
 });
 

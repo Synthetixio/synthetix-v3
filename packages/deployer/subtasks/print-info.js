@@ -5,7 +5,6 @@ const { subtask } = require('hardhat/config');
 
 const logger = require('@synthetixio/core-js/utils/logger');
 const prompter = require('@synthetixio/core-js/utils/prompter');
-const relativePath = require('@synthetixio/core-js/utils/relative-path');
 const { getCommit, getBranch } = require('@synthetixio/core-js/utils/git');
 const { readPackageJson } = require('@synthetixio/core-js/utils/package');
 const { SUBTASK_PRINT_INFO } = require('../task-names');
@@ -41,7 +40,7 @@ async function _printInfo(taskArguments) {
 
   logger.log(chalk.gray(`instance: ${taskArguments.instance}`));
   logger.log(chalk.gray(`debug: ${taskArguments.debug}`));
-  logger.log(chalk.gray(`deployment file: ${relativePath(hre.deployer.file)}`));
+  logger.log(chalk.gray(`deployment file: ${hre.deployer.deployment.file}`));
 
   const signer = (await hre.ethers.getSigners())[0];
   const balance = hre.ethers.utils.formatEther(

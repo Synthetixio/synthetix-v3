@@ -45,6 +45,8 @@ module.exports = function autosaveObject(file, initialState = {}) {
         write(file, data);
         logger.debug(`File saved (${Date.now() - now}ms): ${relativePath(file)}`);
       }
+
+      return true;
     },
   };
 

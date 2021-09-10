@@ -25,7 +25,7 @@ subtask(
   logger.subtitle('Generating router source');
   logger.info(`location: ${routerPath}`);
 
-  const modules = filterObject(hre.deployer.data.contracts, (c) => c.isModule);
+  const modules = filterObject(hre.deployer.deployment.contracts, (c) => c.isModule);
   const modulesNames = Object.keys(modules);
   logger.debug(`modules: ${JSON.stringify(modulesNames, null, 2)}`);
 
@@ -35,11 +35,11 @@ subtask(
 
   const binaryData = _buildBinaryData({ selectors });
 
-  const package = readPackageJson();
+  const packageJson = readPackageJson();
 
   const generatedSource = renderTemplate(hre.deployer.paths.routerTemplate, {
-    project: package.name,
-    repo: package.repository?.url || '',
+    project: packageJson.name,
+    repo: packageJson.repository?.url || '',
     branch: getBranch(),
     commit: getCommit(),
     moduleName: routerName,
