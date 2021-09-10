@@ -35,11 +35,11 @@ subtask(
 
   const binaryData = _buildBinaryData({ selectors });
 
-  const package = readPackageJson();
+  const packageJson = readPackageJson();
 
   const generatedSource = renderTemplate(hre.deployer.paths.routerTemplate, {
-    project: package.name,
-    repo: package.repository?.url || '',
+    project: packageJson.name,
+    repo: packageJson.repository?.url || '',
     branch: getBranch(),
     commit: getCommit(),
     moduleName: routerName,

@@ -13,4 +13,8 @@ extendEnvironment((hre) => {
     data: null,
     previousData: null
   };
+
+  // Prevent any properties being added to hre.deployer
+  // other than those defined above.
+  Object.preventExtensions(hre.deployer);
 });
