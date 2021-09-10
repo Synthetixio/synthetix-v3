@@ -10,13 +10,13 @@ const { SUBTASK_FINALIZE_DEPLOYMENT } = require('../task-names');
 subtask(SUBTASK_FINALIZE_DEPLOYMENT).setAction(async (_, hre) => {
   logger.subtitle('Finalizing deployment');
 
-  if (hre.deployer.data.properties.totalGasUsed === '0') {
+  if (hre.deployer.deployment.properties.totalGasUsed === '0') {
     logger.checked('Deployment did not produce any changes, deleting temp file');
 
-    fs.unlinkSync(path.resolve(hre.config.paths.root, hre.deployer.data.file));
+    fs.unlinkSync(path.resolve(hre.config.paths.root, hre.deployer.deployment.file));
   } else {
     logger.complete('Deployment marked as completed');
 
-    hre.deployer.data.properties.completed = true;
+    hre.deployer.deployment.properties.completed = true;
   }
 });

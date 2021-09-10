@@ -10,8 +10,8 @@ extendEnvironment((hre) => {
     paths: {
       routerTemplate: path.resolve(__dirname, '../templates/Router.sol.mustache'),
     },
-    data: null,
-    previousData: null
+    deployment: null,
+    previousDeployment: null,
   };
 
   // Prevent any properties being added to hre.deployer
