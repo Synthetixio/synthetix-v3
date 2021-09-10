@@ -85,7 +85,7 @@ function _renderSelectors({ binaryData }) {
       for (const s of node.selectors) {
         selectorsStr += `\n${TAB.repeat(4 + indent)}case ${
           s.selector
-        } { result := ${_contractConstantName(s.contractName)} } // ${s.contractName}.${s.name}()`;
+        } { result := ${_toPrivateConstantCase(s.contractName)} } // ${s.contractName}.${s.name}()`;
       }
       selectorsStr += `\n${TAB.repeat(4 + indent)}leave`;
     }
@@ -107,7 +107,7 @@ function _renderModules(modules) {
     .reduce((lines, [moduleName, moduleData]) => {
       const { deployedAddress } = moduleData;
       lines.push(
-        `${TAB}address private constant ${_contractConstantName(moduleName)} = ${deployedAddress};`
+        `${TAB}address private constant ${_toPrivateConstantCase(moduleName)} = ${deployedAddress};`
       );
       return lines;
     }, [])
@@ -122,7 +122,7 @@ function _renderModules(modules) {
  *   'Proxy' => '_PROXY'
  *   'ERC20Token' => '_ERC20_TOKEN'
  */
-function _contractConstantName(name) {
+function _toPrivateConstantCase(name) {
   return name.replace(/(?<![A-Z])[A-Z]/g, '_$&').toUpperCase();
 }
 
