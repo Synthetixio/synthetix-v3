@@ -1,3 +1,4 @@
+const path = require('path');
 const rimraf = require('rimraf');
 const { subtask } = require('hardhat/config');
 
@@ -16,8 +17,8 @@ subtask(SUBTASK_DEPLOY_MODULES).setAction(async (_, hre) => {
 
   if (!deployedSomething) {
     logger.info('No modules need to be deployed, clearing generated files and exiting...');
-    logger.info(`Deleting ${hre.deployer.file}`);
-    rimraf.sync(hre.deployer.file);
+    logger.info(`Deleting ${hre.deployer.data.file}`);
+    rimraf.sync(path.resolve(hre.config.paths.root, hre.deployer.data.file));
     process.exit(0);
   }
 });

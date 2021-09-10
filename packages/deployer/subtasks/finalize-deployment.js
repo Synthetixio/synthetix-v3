@@ -1,4 +1,5 @@
 const fs = require('fs');
+const path = require('path');
 const logger = require('@synthetixio/core-js/utils/logger');
 const { subtask } = require('hardhat/config');
 const { SUBTASK_FINALIZE_DEPLOYMENT } = require('../task-names');
@@ -12,7 +13,7 @@ subtask(SUBTASK_FINALIZE_DEPLOYMENT).setAction(async (_, hre) => {
   if (hre.deployer.data.properties.totalGasUsed === '0') {
     logger.checked('Deployment did not produce any changes, deleting temp file');
 
-    fs.unlinkSync(hre.deployer.file);
+    fs.unlinkSync(path.resolve(hre.config.paths.root, hre.deployer.data.file));
   } else {
     logger.complete('Deployment marked as completed');
 

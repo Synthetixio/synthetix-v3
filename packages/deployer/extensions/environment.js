@@ -11,5 +11,6 @@ extendEnvironment((hre) => {
       routerTemplate: path.resolve(__dirname, '../templates/Router.sol.mustache'),
     },
     data: null,
+    previousData: null
   };
 });
