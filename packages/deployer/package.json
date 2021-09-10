@@ -15,6 +15,7 @@
   "dependencies": {
     "chalk": "4.1.2",
     "figlet": "1.5.2",
+    "filter-values": "0.4.1",
     "glob": "7.1.7",
     "mkdirp": "1.0.4",
     "mustache": "4.2.0",

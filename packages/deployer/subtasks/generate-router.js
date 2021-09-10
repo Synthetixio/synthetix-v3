@@ -7,7 +7,7 @@ const { readPackageJson } = require('@synthetixio/core-js/utils/package');
 const { getSelectors } = require('@synthetixio/core-js/utils/contracts');
 const relativePath = require('@synthetixio/core-js/utils/relative-path');
 const { renderTemplate } = require('../internal/generate-contracts');
-const filterObject = require('../internal/filter-object');
+const filterValues = require('filter-values');
 const { SUBTASK_GENERATE_ROUTER_SOURCE } = require('../task-names');
 
 const TAB = '    ';
@@ -25,7 +25,7 @@ subtask(
   logger.subtitle('Generating router source');
   logger.info(`location: ${routerPath}`);
 
-  const modules = filterObject(hre.deployer.deployment.contracts, (c) => c.isModule);
+  const modules = filterValues(hre.deployer.deployment.contracts, (c) => c.isModule);
   const modulesNames = Object.keys(modules);
   logger.debug(`modules: ${JSON.stringify(modulesNames, null, 2)}`);
 

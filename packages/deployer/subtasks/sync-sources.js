@@ -3,7 +3,7 @@ const { subtask } = require('hardhat/config');
 const logger = require('@synthetixio/core-js/utils/logger');
 const prompter = require('@synthetixio/core-js/utils/prompter');
 const { getModulesPaths } = require('../internal/path-finder');
-const filterObject = require('../internal/filter-object');
+const filterValues = require('filter-values');
 const { SUBTASK_SYNC_SOURCES } = require('../task-names');
 
 /**
@@ -31,7 +31,7 @@ subtask(
 async function _removeDeletedSources({ sources, previousDeployment }) {
   if (!previousDeployment) return false;
 
-  const modules = filterObject(previousDeployment.contracts, (c) => c.isModule);
+  const modules = filterValues(previousDeployment.contracts, (c) => c.isModule);
   const modulesPaths = Object.values(modules).map((c) => c.source);
 
   const toRemove = modulesPaths.filter(
