@@ -1,9 +1,9 @@
 const hre = require('hardhat');
 const assert = require('assert');
-const { config, ethers } = hre;
+const { ethers } = hre;
 const { getProxyAddress } = require('../../../utils/deployments');
 const { assertRevert } = require('@synthetixio/core-js/utils/assertions');
-const { bootstrap, initializeSystem } = require('./helpers/initializer');
+const { bootstrap } = require('./helpers/initializer');
 
 describe('OwnerModule', () => {
   bootstrap();
@@ -24,10 +24,7 @@ describe('OwnerModule', () => {
 
   describe('before an owner is set or nominated', () => {
     it('shows that no owner is set', async () => {
-      assert.equal(
-        await OwnerModule.getOwner(),
-        '0x0000000000000000000000000000000000000000'
-      );
+      assert.equal(await OwnerModule.getOwner(), '0x0000000000000000000000000000000000000000');
     });
 
     it('shows that no owner is nominated', async () => {
@@ -45,10 +42,7 @@ describe('OwnerModule', () => {
     });
 
     it('shows that the address is nominated', async () => {
-      assert.equal(
-        await OwnerModule.getNominatedOwner(),
-        owner.address
-      );
+      assert.equal(await OwnerModule.getNominatedOwner(), owner.address);
     });
 
     describe('when the address accepts ownership', () => {
@@ -60,16 +54,13 @@ describe('OwnerModule', () => {
       });
 
       it('emitted an OwnerChanged event', async () => {
-        const event = receipt.events.find(e => e.event === 'OwnerChanged');
+        const event = receipt.events.find((e) => e.event === 'OwnerChanged');
 
         assert.equal(event.args.newOwner, owner.address);
       });
 
       it('shows that the address is the new owner', async () => {
-        assert.equal(
-          await OwnerModule.getOwner(),
-          owner.address
-        );
+        assert.equal(await OwnerModule.getOwner(), owner.address);
       });
 
       it('shows that the address is no longer nominated', async () => {
@@ -95,10 +86,7 @@ describe('OwnerModule', () => {
         });
 
         it('shows that the user is nominated', async () => {
-          assert.equal(
-            await OwnerModule.getNominatedOwner(),
-            user.address
-          );
+          assert.equal(await OwnerModule.getNominatedOwner(), user.address);
         });
 
         describe('when the owner rejects the nomination', () => {

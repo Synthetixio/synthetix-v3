@@ -33,6 +33,19 @@ function getProxyAddress(info) {
 }
 
 /**
+ * Retrieves the address of the target instance's deployed router
+ * @param {DeploymentInfo} info See DeploymentInfo above
+ * @returns {address} The address of the router
+ */
+function getRouterAddress(info) {
+  info = _populateDetauls(info);
+
+  const deployment = getDeployment(info);
+
+  return deployment.contracts.Router.deployedAddress;
+}
+
+/**
  * Retrieves an object with the latest deployment json data for an instance
  * @param {DeploymentInfo} info See DeploymentInfo above
  * @returns {Object} An object with deployment schema
@@ -95,6 +108,7 @@ function _populateDetauls(info) {
 
 module.exports = {
   getProxyAddress,
+  getRouterAddress,
   getDeployment,
   getDeploymentFile,
   getAllDeploymentFiles,

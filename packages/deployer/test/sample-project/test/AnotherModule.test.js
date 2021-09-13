@@ -1,8 +1,7 @@
 const hre = require('hardhat');
 const assert = require('assert');
-const { config, ethers } = hre;
+const { ethers } = hre;
 const { getProxyAddress } = require('../../../utils/deployments');
-const { assertRevert } = require('@synthetixio/core-js/utils/assertions');
 const { printGasUsed } = require('@synthetixio/core-js/utils/tests');
 const { bootstrap, initializeSystem } = require('./helpers/initializer');
 
@@ -33,7 +32,7 @@ describe('AnotherModule', () => {
       await (await SomeModule.setSomeValue(1)).wait();
     });
 
-    it('using casting', async function() {
+    it('using casting', async function () {
       const tx = await AnotherModule.connect(owner).setSomeValueRouter(42);
       const receipt = await tx.wait();
 
@@ -42,7 +41,7 @@ describe('AnotherModule', () => {
       assert.equal(await SomeModule.getSomeValue(), 42);
     });
 
-    it('using the router', async function() {
+    it('using the router', async function () {
       const tx = await AnotherModule.connect(owner).setSomeValueCast(1337);
       const receipt = await tx.wait();
 

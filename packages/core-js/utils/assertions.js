@@ -21,5 +21,5 @@ async function assertRevert(tx, expectedMessage) {
 }
 
 module.exports = {
-  assertRevert
+  assertRevert,
 };
