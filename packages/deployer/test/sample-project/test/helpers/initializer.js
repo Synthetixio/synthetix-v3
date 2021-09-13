@@ -1,14 +1,49 @@
 const hre = require('hardhat');
 const { ethers } = hre;
-const { getProxyAddress } = require('../../../../utils/deployments');
+const { getProxyAddress, getDeployment } = require('../../../../utils/deployments');
+const { takeSnapshot, restoreSnapshot } = require('@synthetixio/core-js/utils/rpc');
 
-async function initializeSystem({ owner }) {
-  const proxyAddress = getProxyAddress();
+let snapshotId;
+let proxyAddress;
 
-  await _setFirstOwner({ owner, proxyAddress });
+function bootstrap() {
+  before('deploy system only once if needed', async () => {
+    if (!proxyAddress) {
+      const deployment = getDeployment();
+
+      if (!deployment) {
+        await deploySystem();
+      } else {
+        proxyAddress = getProxyAddress();
+      }
+    }
+  });
+
+  before('take a snapshot', async () => {
+    snapshotId = await takeSnapshot(ethers.provider);
+  });
+
+  after('restore the snapshot', async () => {
+    await restoreSnapshot(snapshotId, ethers.provider);
+  });
 }
 
-async function _setFirstOwner({ owner, proxyAddress }) {
+async function deploySystem() {
+  await hre.run('deploy', {
+    network: hre.config.network,
+    noConfirm: true,
+    clear: true,
+    quiet: true,
+  });
+
+  proxyAddress = getProxyAddress();
+}
+
+async function initializeSystem({ owner }) {
+  await initializeOwner({ owner });
+}
+
+async function initializeOwner({ owner }) {
   let tx;
 
   const OwnerModule = await ethers.getContractAt('OwnerModule', proxyAddress);
@@ -21,5 +56,8 @@ async function _setFirstOwner({ owner, proxyAddress }) {
 }
 
 module.exports = {
+  bootstrap,
+  deploySystem,
   initializeSystem,
+  initializeOwner,
 };

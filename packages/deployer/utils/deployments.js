@@ -24,7 +24,9 @@ const DeploymentInfo = {
  * @param {DeploymentInfo} info See DeploymentInfo above
  * @returns {address} The address of the proxy
  */
-function getProxyAddress(info = DeploymentInfo) {
+function getProxyAddress(info) {
+  info = _populateDetauls(info);
+
   const deployment = getDeployment(info);
 
   return deployment.contracts.Proxy.deployedAddress;
@@ -35,11 +37,13 @@ function getProxyAddress(info = DeploymentInfo) {
  * @param {DeploymentInfo} info See DeploymentInfo above
  * @returns {Object} An object with deployment schema
  */
-function getDeployment(info = DeploymentInfo) {
+function getDeployment(info) {
+  info = _populateDetauls(info);
+
   const file = getDeploymentFile(info);
 
   if (!file) {
-    throw new Error(`No deployment file found on "${info.folder}".`);
+    return null;
   }
 
   return JSON.parse(fs.readFileSync(file, 'utf8'));
@@ -50,7 +54,9 @@ function getDeployment(info = DeploymentInfo) {
  * @param {DeploymentInfo} info See DeploymentInfo above
  * @returns {string} The path of the file
  */
-function getDeploymentFile(info = DeploymentInfo) {
+function getDeploymentFile(info) {
+  info = _populateDetauls(info);
+
   const deployments = getAllDeploymentFiles(info);
 
   return deployments.length > 0 ? deployments[deployments.length - 1] : null;
@@ -61,7 +67,9 @@ function getDeploymentFile(info = DeploymentInfo) {
  * @param {DeploymentInfo} info See DeploymentInfo above
  * @returns {array} An array of paths for the files
  */
-function getAllDeploymentFiles(info = DeploymentInfo) {
+function getAllDeploymentFiles(info) {
+  info = _populateDetauls(info);
+
   const instanceFolder = getDeploymentFolder(info);
 
   return glob
@@ -75,8 +83,14 @@ function getAllDeploymentFiles(info = DeploymentInfo) {
  * @param {DeploymentInfo} info See DeploymentInfo above
  * @returns {string} The path of the folder
  */
-function getDeploymentFolder(info = DeploymentInfo) {
+function getDeploymentFolder(info) {
+  info = _populateDetauls(info);
+
   return path.join(info.folder, info.network, info.instance);
+}
+
+function _populateDetauls(info) {
+  return { ...info, ...DeploymentInfo };
 }
 
 module.exports = {

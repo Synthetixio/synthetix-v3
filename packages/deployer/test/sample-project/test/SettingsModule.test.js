@@ -3,9 +3,11 @@ const assert = require('assert');
 const { config, ethers } = hre;
 const { getProxyAddress } = require('../../../utils/deployments');
 const { assertRevert } = require('@synthetixio/core-js/utils/assertions');
-const { initializeSystem } = require('./helpers/initializer');
+const { bootstrap, initializeSystem } = require('./helpers/initializer');
 
 describe('SettingsModule', () => {
+  bootstrap();
+
   let SettingsModule;
 
   let owner, user;
