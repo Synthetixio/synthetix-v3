@@ -8,21 +8,7 @@ let proxyAddress;
 
 function bootstrap() {
   before('deploy system only once if needed', async () => {
-    if (!proxyAddress) {
-      const deployment = getDeployment();
-
-      if (!deployment) {
-        await deploySystem();
-      } else {
-        proxyAddress = getProxyAddress();
-
-        const proxyCode = await ethers.provider.getCode(proxyAddress);
-
-        if (proxyCode === '0x') {
-          await deploySystem();
-        }
-      }
-    }
+    await deploySystemIfNeeded();
   });
 
   before('take a snapshot', async () => {
@@ -32,6 +18,24 @@ function bootstrap() {
   after('restore the snapshot', async () => {
     await restoreSnapshot(snapshotId, ethers.provider);
   });
+}
+
+async function deploySystemIfNeeded() {
+  if (!proxyAddress) {
+    const deployment = getDeployment();
+
+    if (!deployment) {
+      await deploySystem();
+    } else {
+      proxyAddress = getProxyAddress();
+
+      const proxyCode = await ethers.provider.getCode(proxyAddress);
+
+      if (proxyCode === '0x') {
+        await deploySystem();
+      }
+    }
+  }
 }
 
 async function deploySystem() {
@@ -64,6 +68,7 @@ async function initializeOwner({ owner }) {
 module.exports = {
   bootstrap,
   deploySystem,
+  deploySystemIfNeeded,
   initializeSystem,
   initializeOwner,
 };
