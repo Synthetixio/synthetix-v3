@@ -13,7 +13,8 @@ describe('SettingsModule', () => {
   });
 
   before('identify modules', async () => {
-    const proxyAddress = getProxyAddress(config);
+    const proxyAddress = getProxyAddress();
+
     SettingsModule = await ethers.getContractAt('SettingsModule', proxyAddress);
   });
 
