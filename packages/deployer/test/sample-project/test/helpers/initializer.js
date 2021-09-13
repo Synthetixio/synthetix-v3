@@ -15,6 +15,12 @@ function bootstrap() {
         await deploySystem();
       } else {
         proxyAddress = getProxyAddress();
+
+        const proxyCode = await ethers.provider.getCode(proxyAddress);
+
+        if (proxyCode === '0x') {
+          await deploySystem();
+        }
       }
     }
   });
