@@ -2,20 +2,35 @@ const hre = require('hardhat');
 const assert = require('assert');
 const { config, ethers } = hre;
 const { getProxyAddress } = require('../../../utils/deployments');
+const { assertRevert } = require('@synthetixio/core-js/utils/assertions');
+const { initializeSystem } = require('./helpers/initializer');
 
 describe('SettingsModule', () => {
   let SettingsModule;
 
-  let owner;
+  let owner, user;
 
   before('identify signers', async () => {
-    [owner] = await ethers.getSigners();
+    [owner, user] = await ethers.getSigners();
+  });
+
+  before('initialize the system', async () => {
+    await initializeSystem({ owner });
   });
 
   before('identify modules', async () => {
     const proxyAddress = getProxyAddress();
 
     SettingsModule = await ethers.getContractAt('SettingsModule', proxyAddress);
+  });
+
+  describe('when a regular user tries to set a value', () => {
+    it('reverts', async () => {
+      await assertRevert(
+        SettingsModule.connect(user).setASettingValue(1),
+        'Only owner allowed'
+      );
+    });
   });
 
   describe('when the owner sets a value', () => {
