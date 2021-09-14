@@ -36,9 +36,7 @@ task(TASK_DEPLOY, 'Deploys all system modules')
   .setAction(async (taskArguments, hre) => {
     const { clear, debug, quiet, noConfirm } = taskArguments;
 
-    if (quiet) {
-      _forceSilenceHardhat(true);
-    }
+    _forceSilenceHardhat(true, quiet);
 
     logger.quiet = quiet;
     logger.debugging = debug;
@@ -59,7 +57,7 @@ task(TASK_DEPLOY, 'Deploys all system modules')
     await hre.run(SUBTASK_UPGRADE_PROXY);
     await hre.run(SUBTASK_FINALIZE_DEPLOYMENT);
 
-    _forceSilenceHardhat(false);
+    _forceSilenceHardhat(false, quiet);
   });
 
 /*
@@ -67,7 +65,11 @@ task(TASK_DEPLOY, 'Deploys all system modules')
  * it stil prints some output. This is a hack to completely silence
  * output during deployment.
  * */
-function _forceSilenceHardhat(silence) {
+function _forceSilenceHardhat(silence, quiet) {
+  if (!quiet) {
+    return;
+  }
+
   if (silence) {
     logCache = console.log;
     console.log = () => {};
