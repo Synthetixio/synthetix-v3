@@ -32,6 +32,15 @@ describe('AnotherModule', () => {
       await (await SomeModule.setSomeValue(1)).wait();
     });
 
+    it('directly', async function () {
+      const tx = await SomeModule.setSomeValue(2);
+      const receipt = await tx.wait();
+
+      printGasUsed({ test: this, gasUsed: receipt.cumulativeGasUsed });
+
+      assert.equal(await SomeModule.getSomeValue(), 2);
+    });
+
     it('using casting', async function () {
       const tx = await AnotherModule.connect(owner).setSomeValueCast(42);
       const receipt = await tx.wait();
