@@ -5,6 +5,7 @@ const { subtask } = require('hardhat/config');
 
 const prompter = require('@synthetixio/core-js/utils/prompter');
 const relativePath = require('@synthetixio/core-js/utils/relative-path');
+const getDate = require('@synthetixio/core-js/utils/date');
 const autosaveObject = require('../internal/autosave-object');
 const { getAllDeploymentFiles } = require('../utils/deployments');
 const { SUBTASK_PREPARE_DEPLOYMENT } = require('../task-names');
@@ -84,7 +85,7 @@ async function _determineDeploymentFiles(deploymentsFolder, alias) {
   }
 
   // Get the date with format `YYYY-mm-dd`
-  const today = _getDate();
+  const today = getDate();
 
   // Calculate the next deployment number based on the previous one
   let number = '00';
@@ -102,12 +103,4 @@ async function _determineDeploymentFiles(deploymentsFolder, alias) {
     previousFile: latestFile,
     currentFile,
   };
-}
-
-function _getDate() {
-  const now = new Date();
-  const year = `${now.getUTCFullYear()}`;
-  const month = `${now.getUTCMonth() + 1}`.padStart(2, '0');
-  const day = `${now.getUTCDate()}`.padStart(2, '0');
-  return `${year}-${month}-${day}`;
 }
