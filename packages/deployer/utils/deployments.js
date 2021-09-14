@@ -5,7 +5,11 @@ const naturalCompare = require('string-natural-compare');
 const { defaults } = require('../extensions/config');
 
 // Regex for deployment file formats, e.g.: 2021-08-31-00-sirius.json
-const DEPLOYMENT_FILE_FORMAT = /^[0-9]{4}-[0-9]{2}-[0-9]{2}-[0-9]{2,}(?:-[a-z0-9]+)?\.json$/;
+const DEPLOYMENT_FILE_FORMAT = /^[0-9]{4}-[0-9]{2}-[0-9]{2}-[0-9]{2,}(?:-[a-z0-9]+)?$/;
+
+function _isValidDeploymentName(name) {
+  return DEPLOYMENT_FILE_FORMAT.test(name);
+}
 
 /**
  * @param {Object} info An object describing which deployment to retrieve
@@ -87,7 +91,7 @@ function getAllDeploymentFiles(info) {
 
   return glob
     .sync(`${instanceFolder}/*.json`)
-    .filter((file) => DEPLOYMENT_FILE_FORMAT.test(path.basename(file)))
+    .filter((file) => _isValidDeploymentName(path.basename(file, '.json')))
     .sort(naturalCompare);
 }
 
