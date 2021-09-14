@@ -47,8 +47,12 @@ module.exports = {
     this.log(chalk.yellow(`> ${msg}`));
   },
 
+  error(msg) {
+    this.log(chalk.red.bold.inverse(`☠ ${msg}`));
+  },
+
   warn(msg) {
-    this.log(chalk.yellow.bold.inverse(`⚠⚠⚠ ${msg} ⚠⚠⚠`));
+    this.log(chalk.yellow.bold.inverse(`⚠ ${msg}`));
   },
 
   checked(msg) {
