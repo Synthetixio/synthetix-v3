@@ -1,5 +1,4 @@
 const { task } = require('hardhat/config');
-const { TASK_COMPILE } = require('hardhat/builtin-tasks/task-names');
 
 const {
   SUBTASK_CLEAR_DEPLOYMENTS,
@@ -49,7 +48,6 @@ task(TASK_DEPLOY, 'Deploys all system modules')
 
     await hre.run(SUBTASK_PREPARE_DEPLOYMENT, taskArguments);
     await hre.run(SUBTASK_PRINT_INFO, taskArguments);
-    await hre.run(TASK_COMPILE, { force: true, quiet: true });
     await hre.run(SUBTASK_SYNC_SOURCES);
     await hre.run(SUBTASK_VALIDATE_MODULES);
     await hre.run(SUBTASK_DEPLOY_MODULES);

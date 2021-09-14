@@ -1,9 +1,10 @@
 const path = require('path');
+const filterValues = require('filter-values');
 const { subtask } = require('hardhat/config');
 const logger = require('@synthetixio/core-js/utils/logger');
 const prompter = require('@synthetixio/core-js/utils/prompter');
+const { TASK_COMPILE } = require('hardhat/builtin-tasks/task-names');
 const { getModulesPaths } = require('../internal/path-finder');
-const filterValues = require('filter-values');
 const { SUBTASK_SYNC_SOURCES } = require('../task-names');
 
 /**
@@ -16,6 +17,8 @@ subtask(
   'Synchronizes the deployment file with the latest module sources.'
 ).setAction(async (_, hre) => {
   logger.subtitle('Syncing solidity sources with deployment data');
+
+  await hre.run(TASK_COMPILE, { force: false, quiet: true });
 
   const { deployment, previousDeployment } = hre.deployer;
   const sources = getModulesPaths(hre.config);
