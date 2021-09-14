@@ -15,6 +15,8 @@ const {
   TASK_DEPLOY,
 } = require('../task-names');
 
+let logCache;
+
 const logger = require('@synthetixio/core-js/utils/logger');
 const prompter = require('@synthetixio/core-js//utils/prompter');
 const types = require('../internal/argument-types');
@@ -22,6 +24,7 @@ const types = require('../internal/argument-types');
 task(TASK_DEPLOY, 'Deploys all system modules')
   .addFlag('noConfirm', 'Skip all confirmation prompts', false)
   .addFlag('debug', 'Display debug logs', false)
+  .addFlag('quiet', 'Silence all output', false)
   .addFlag('clear', 'Clear all previous deployment data for the selected network', false)
   .addOptionalParam('alias', 'The alias name for the deployment', undefined, types.alphanumeric)
   .addOptionalParam(
@@ -31,8 +34,11 @@ task(TASK_DEPLOY, 'Deploys all system modules')
     types.alphanumeric
   )
   .setAction(async (taskArguments, hre) => {
-    const { clear, debug, noConfirm } = taskArguments;
+    const { clear, debug, quiet, noConfirm } = taskArguments;
 
+    _forceSilenceHardhat(true, quiet);
+
+    logger.quiet = quiet;
     logger.debugging = debug;
     prompter.noConfirm = noConfirm;
 
@@ -50,4 +56,24 @@ task(TASK_DEPLOY, 'Deploys all system modules')
     await hre.run(SUBTASK_DEPLOY_ROUTER);
     await hre.run(SUBTASK_UPGRADE_PROXY);
     await hre.run(SUBTASK_FINALIZE_DEPLOYMENT);
+
+    _forceSilenceHardhat(false, quiet);
   });
+
+/*
+ * Note: Even though hardhat's compile task has a quiet option,
+ * it stil prints some output. This is a hack to completely silence
+ * output during deployment.
+ * */
+function _forceSilenceHardhat(silence, quiet) {
+  if (!quiet) {
+    return;
+  }
+
+  if (silence) {
+    logCache = console.log;
+    console.log = () => {};
+  } else {
+    console.log = logCache;
+  }
+}

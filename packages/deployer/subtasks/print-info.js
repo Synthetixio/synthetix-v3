@@ -10,6 +10,12 @@ const { readPackageJson } = require('@synthetixio/core-js/utils/package');
 const { SUBTASK_PRINT_INFO } = require('../task-names');
 
 subtask(SUBTASK_PRINT_INFO, 'Prints info about a deployment.').setAction(async (taskArguments) => {
+  const { quiet } = taskArguments;
+
+  if (quiet) {
+    return;
+  }
+
   await _printTitle();
   await _printInfo(taskArguments);
 
