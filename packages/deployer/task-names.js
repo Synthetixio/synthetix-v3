@@ -10,5 +10,6 @@ module.exports = {
   SUBTASK_SYNC_SOURCES: 'sync-sources',
   SUBTASK_UPGRADE_PROXY: 'upgrade-proxy',
   SUBTASK_VALIDATE_ROUTER: 'validate-router',
+  SUBTASK_VALIDATE_MODULES: 'validate-modules',
   TASK_DEPLOY: 'deploy',
 };

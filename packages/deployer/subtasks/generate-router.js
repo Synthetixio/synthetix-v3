@@ -1,13 +1,13 @@
 const fs = require('fs');
 const path = require('path');
+const filterValues = require('filter-values');
 const { subtask } = require('hardhat/config');
 const logger = require('@synthetixio/core-js/utils/logger');
 const { getCommit, getBranch } = require('@synthetixio/core-js/utils/git');
 const { readPackageJson } = require('@synthetixio/core-js/utils/package');
-const { getSelectors } = require('@synthetixio/core-js/utils/contracts');
 const relativePath = require('@synthetixio/core-js/utils/relative-path');
 const { renderTemplate } = require('../internal/generate-contracts');
-const filterValues = require('filter-values');
+const { getAllSelectors } = require('../internal/contract-helper');
 const { SUBTASK_GENERATE_ROUTER_SOURCE } = require('../task-names');
 
 const TAB = '    ';
@@ -29,7 +29,7 @@ subtask(
   const modulesNames = Object.keys(modules);
   logger.debug(`modules: ${JSON.stringify(modulesNames, null, 2)}`);
 
-  const selectors = await _getAllSelectors(modulesNames);
+  const selectors = await getAllSelectors(modulesNames);
   logger.debug(`selectors: ${JSON.stringify(selectors, null, 2)}`);
   logger.info(`Found ${modulesNames.length} modules with ${selectors.length} selectors in total`);
 
@@ -124,41 +124,6 @@ function _renderModules(modules) {
  */
 function _toPrivateConstantCase(name) {
   return name.replace(/(?<![A-Z])[A-Z]/g, '_$&').toUpperCase();
-}
-
-async function _getAllSelectors(contractNames) {
-  const allSelectors = [];
-
-  for (const contractName of contractNames) {
-    const contractArtifacts = await hre.artifacts.readArtifact(contractName);
-    const selectors = await getSelectors(contractArtifacts.abi);
-
-    allSelectors.push(...selectors.map((s) => ({ ...s, contractName })));
-  }
-
-  _findDuplicateSelectors(allSelectors);
-
-  return allSelectors.sort((a, b) => {
-    return Number.parseInt(a.selector, 16) - Number.parseInt(b.selector, 16);
-  });
-}
-
-function _findDuplicateSelectors(selectors) {
-  const duplicates = selectors
-    .map((s) => s.selector)
-    .filter((s, index, selectors) => selectors.indexOf(s) !== index);
-
-  if (duplicates.length > 0) {
-    const ocurrences = [];
-    duplicates.map((duplicate) => {
-      const cases = selectors.filter((s) => s.selector === duplicate);
-      ocurrences.push(
-        `  > ${cases[0].name} found in modules ${cases.map((c) => c.contractName)} - ${duplicate}\n`
-      );
-    });
-
-    throw new Error(`Duplicate selectors found!\n${ocurrences.join('')}`);
-  }
 }
 
 function _buildBinaryData({ selectors }) {
