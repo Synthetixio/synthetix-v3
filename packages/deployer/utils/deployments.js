@@ -5,10 +5,14 @@ const naturalCompare = require('string-natural-compare');
 const { defaults } = require('../extensions/config');
 
 // Regex for deployment file formats, e.g.: 2021-08-31-00-sirius.json
-const DEPLOYMENT_FILE_FORMAT = /^[0-9]{4}-[0-9]{2}-[0-9]{2}-[0-9]{2,}(?:-[a-z0-9]+)?$/;
+const DEPLOYMENT_NAME_FORMAT = /^[0-9]{4}-[0-9]{2}-[0-9]{2}-[0-9]{2,}(?:-[a-z0-9]+)?$/;
 
 function _isValidDeploymentName(name) {
-  return DEPLOYMENT_FILE_FORMAT.test(name);
+  return DEPLOYMENT_NAME_FORMAT.test(name);
+}
+
+function getDeploymentName(file) {
+  return typeof file === 'string' ? path.basename(file, '.json') : null;
 }
 
 /**
@@ -91,7 +95,7 @@ function getAllDeploymentFiles(info) {
 
   return glob
     .sync(`${instanceFolder}/*.json`)
-    .filter((file) => _isValidDeploymentName(path.basename(file, '.json')))
+    .filter((file) => _isValidDeploymentName(getDeploymentName(file)))
     .sort(naturalCompare);
 }
 
@@ -111,6 +115,7 @@ function _populateDefaults(info) {
 }
 
 module.exports = {
+  getDeploymentName,
   getProxyAddress,
   getRouterAddress,
   getDeployment,
