@@ -17,8 +17,8 @@ subtask(SUBTASK_DEPLOY_MODULES).setAction(async (_, hre) => {
 
   if (!deployedSomething) {
     logger.info('No modules need to be deployed, clearing generated files and exiting...');
-    logger.info(`Deleting ${relativePath(hre.deployer.deployment.file)}`);
-    rimraf.sync(hre.deployer.deployment.file);
+    logger.info(`Deleting ${relativePath(hre.deployer.paths.deployment)}`);
+    rimraf.sync(hre.deployer.paths.deployment);
     process.exit(0);
   }
 });

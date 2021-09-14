@@ -12,7 +12,7 @@ subtask(SUBTASK_FINALIZE_DEPLOYMENT).setAction(async (_, hre) => {
   if (hre.deployer.deployment.data.properties.totalGasUsed === '0') {
     logger.checked('Deployment did not produce any changes, deleting temp file');
 
-    fs.unlinkSync(hre.deployer.deployment.file);
+    fs.unlinkSync(hre.deployer.paths.deployment);
   } else {
     logger.complete('Deployment marked as completed');
 

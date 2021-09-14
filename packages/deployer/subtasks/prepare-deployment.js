@@ -34,15 +34,23 @@ subtask(
   // Make sure the deployments folder exists
   await mkdirp(deploymentsFolder);
 
-  const { previousFile, currentFile } = await _determineDeploymentFiles(deploymentsFolder, alias);
+  const { currentName, currentFile, previousName, previousFile } = await _determineDeploymentFiles(
+    deploymentsFolder,
+    alias
+  );
+
+  hre.deployer.paths.deployment = currentFile;
 
   hre.deployer.deployment = {
-    file: currentFile,
+    name: currentName,
     data: autosaveObject(currentFile, DEPLOYMENT_SCHEMA),
   };
 
   if (previousFile) {
-    hre.deployer.previousDeployment = JSON.parse(fs.readFileSync(previousFile));
+    hre.deployer.previousDeployment = {
+      name: previousName,
+      data: JSON.parse(fs.readFileSync(previousFile)),
+    };
   }
 });
 

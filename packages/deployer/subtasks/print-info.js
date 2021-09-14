@@ -47,7 +47,7 @@ async function _printInfo(taskArguments) {
 
   logger.log(chalk.gray(`instance: ${taskArguments.instance}`));
   logger.log(chalk.gray(`debug: ${taskArguments.debug}`));
-  logger.log(chalk.gray(`deployment file: ${relativePath(hre.deployer.deployment.file)}`));
+  logger.log(chalk.gray(`deployment: ${relativePath(hre.deployer.paths.deployment)}`));
 
   const signer = (await hre.ethers.getSigners())[0];
   const balance = hre.ethers.utils.formatEther(

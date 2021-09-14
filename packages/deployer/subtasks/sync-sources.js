@@ -31,7 +31,7 @@ subtask(
 async function _removeDeletedSources({ sources, previousDeployment }) {
   if (!previousDeployment) return false;
 
-  const modules = filterValues(previousDeployment.contracts, (c) => c.isModule);
+  const modules = filterValues(previousDeployment.data.contracts, (c) => c.isModule);
   const modulesPaths = Object.values(modules).map((c) => c.source);
 
   const toRemove = modulesPaths.filter(
@@ -63,7 +63,7 @@ async function _addNewSources({ sources, deployment, previousDeployment }) {
   // Initialize cotract data, using previous deployed one, or empty data.
   for (const source of sources) {
     const contractName = path.basename(source, '.sol');
-    const previousModule = previousDeployment?.contracts[contractName];
+    const previousModule = previousDeployment?.data.contracts[contractName];
 
     deployment.data.contracts[contractName] =
       deployment.data.contracts[contractName] || previousModule || _createModuleData({ source });
