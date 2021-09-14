@@ -25,7 +25,7 @@ const DeploymentInfo = {
  * @returns {address} The address of the proxy
  */
 function getProxyAddress(info) {
-  info = _populateDetauls(info);
+  info = _populateDefaults(info);
 
   const deployment = getDeployment(info);
 
@@ -38,7 +38,7 @@ function getProxyAddress(info) {
  * @returns {address} The address of the router
  */
 function getRouterAddress(info) {
-  info = _populateDetauls(info);
+  info = _populateDefaults(info);
 
   const deployment = getDeployment(info);
 
@@ -51,7 +51,7 @@ function getRouterAddress(info) {
  * @returns {Object} An object with deployment schema
  */
 function getDeployment(info) {
-  info = _populateDetauls(info);
+  info = _populateDefaults(info);
 
   const file = getDeploymentFile(info);
 
@@ -68,7 +68,7 @@ function getDeployment(info) {
  * @returns {string} The path of the file
  */
 function getDeploymentFile(info) {
-  info = _populateDetauls(info);
+  info = _populateDefaults(info);
 
   const deployments = getAllDeploymentFiles(info);
 
@@ -81,7 +81,7 @@ function getDeploymentFile(info) {
  * @returns {array} An array of paths for the files
  */
 function getAllDeploymentFiles(info) {
-  info = _populateDetauls(info);
+  info = _populateDefaults(info);
 
   const instanceFolder = getDeploymentFolder(info);
 
@@ -97,12 +97,12 @@ function getAllDeploymentFiles(info) {
  * @returns {string} The path of the folder
  */
 function getDeploymentFolder(info) {
-  info = _populateDetauls(info);
+  info = _populateDefaults(info);
 
   return path.join(info.folder, info.network, info.instance);
 }
 
-function _populateDetauls(info) {
+function _populateDefaults(info) {
   return { ...info, ...DeploymentInfo };
 }
 

@@ -33,7 +33,7 @@ describe('AnotherModule', () => {
     });
 
     it('using casting', async function () {
-      const tx = await AnotherModule.connect(owner).setSomeValueRouter(42);
+      const tx = await AnotherModule.connect(owner).setSomeValueCast(42);
       const receipt = await tx.wait();
 
       printGasUsed({ test: this, gasUsed: receipt.cumulativeGasUsed });
@@ -42,7 +42,7 @@ describe('AnotherModule', () => {
     });
 
     it('using the router', async function () {
-      const tx = await AnotherModule.connect(owner).setSomeValueCast(1337);
+      const tx = await AnotherModule.connect(owner).setSomeValueRouter(1337);
       const receipt = await tx.wait();
 
       printGasUsed({ test: this, gasUsed: receipt.cumulativeGasUsed });
