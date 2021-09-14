@@ -9,7 +9,7 @@ const { SUBTASK_DEPLOY_CONTRACTS, SUBTASK_DEPLOY_MODULES } = require('../task-na
 subtask(SUBTASK_DEPLOY_MODULES).setAction(async (_, hre) => {
   logger.subtitle('Deploying modules');
 
-  const modules = filterValues(hre.deployer.deployment.contracts, (c) => c.isModule);
+  const modules = filterValues(hre.deployer.deployment.data.contracts, (c) => c.isModule);
 
   const deployedSomething = await hre.run(SUBTASK_DEPLOY_CONTRACTS, {
     contracts: modules,

@@ -17,16 +17,16 @@ subtask(SUBTASK_DEPLOY_ROUTER).setAction(async (_, hre) => {
     `${contractName}.sol`
   );
 
-  let contractData = hre.deployer.deployment.contracts[contractName];
+  let contractData = hre.deployer.deployment.data.contracts[contractName];
 
   if (!contractData) {
-    hre.deployer.deployment.contracts[contractName] = {
+    hre.deployer.deployment.data.contracts[contractName] = {
       source: conntractPath,
       deployedAddress: '',
       deployTransaction: '',
       bytecodeHash: '',
     };
-    contractData = hre.deployer.deployment.contracts[contractName];
+    contractData = hre.deployer.deployment.data.contracts[contractName];
   }
 
   await hre.run(SUBTASK_DEPLOY_CONTRACT, {

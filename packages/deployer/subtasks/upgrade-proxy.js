@@ -67,20 +67,20 @@ subtask(
 });
 
 function _getDeployedAddress(contractName, hre) {
-  return hre.deployer.deployment.contracts[contractName].deployedAddress;
+  return hre.deployer.deployment.data.contracts[contractName].deployedAddress;
 }
 
 async function _deployProxy({ proxyName, proxyPath, routerAddress, hre }) {
-  let proxyData = hre.deployer.deployment.contracts[proxyName];
+  let proxyData = hre.deployer.deployment.data.contracts[proxyName];
 
   if (!proxyData) {
-    hre.deployer.deployment.contracts[proxyName] = {
+    hre.deployer.deployment.data.contracts[proxyName] = {
       source: proxyPath,
       deployedAddress: '',
       deployTransaction: '',
       bytecodeHash: '',
     };
-    proxyData = hre.deployer.deployment.contracts[proxyName];
+    proxyData = hre.deployer.deployment.data.contracts[proxyName];
   }
 
   return await hre.run(SUBTASK_DEPLOY_CONTRACT, {

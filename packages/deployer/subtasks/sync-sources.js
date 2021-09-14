@@ -65,8 +65,8 @@ async function _addNewSources({ sources, deployment, previousDeployment }) {
     const contractName = path.basename(source, '.sol');
     const previousModule = previousDeployment?.contracts[contractName];
 
-    deployment.contracts[contractName] =
-      deployment.contracts[contractName] || previousModule || _createModuleData({ source });
+    deployment.data.contracts[contractName] =
+      deployment.data.contracts[contractName] || previousModule || _createModuleData({ source });
 
     if (!previousModule) created = true;
   }
