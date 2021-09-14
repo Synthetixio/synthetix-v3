@@ -37,7 +37,7 @@ subtask(
   const { previousFile, currentFile } = await _determineDeploymentFiles(deploymentsFolder, alias);
 
   hre.deployer.deployment = {
-    file: relativePath(currentFile, hre.config.paths.root),
+    file: currentFile,
     data: autosaveObject(currentFile, DEPLOYMENT_SCHEMA),
   };
 

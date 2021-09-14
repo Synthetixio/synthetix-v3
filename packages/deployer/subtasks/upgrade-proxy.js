@@ -1,7 +1,7 @@
 const logger = require('@synthetixio/core-js/utils/logger');
 const prompter = require('@synthetixio/core-js/utils/prompter');
 const path = require('path');
-const relativePath = require('@synthetixio/core-js//utils/relative-path');
+const relativePath = require('@synthetixio/core-js/utils/relative-path');
 const { subtask } = require('hardhat/config');
 const { processTransaction, processReceipt } = require('../internal/process-transactions');
 const { SUBTASK_UPGRADE_PROXY, SUBTASK_DEPLOY_CONTRACT } = require('../task-names');
