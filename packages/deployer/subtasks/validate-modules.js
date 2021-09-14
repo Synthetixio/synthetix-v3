@@ -24,4 +24,6 @@ subtask(SUBTASK_VALIDATE_MODULES).setAction(async (_, hre) => {
     rimraf.sync(path.resolve(hre.config.paths.root, hre.deployer.deployment.file));
     process.exit(0);
   }
+
+  logger.checked('Modules are valid');
 });
