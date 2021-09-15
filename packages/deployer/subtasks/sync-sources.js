@@ -1,3 +1,4 @@
+const fs = require('fs');
 const path = require('path');
 const filterValues = require('filter-values');
 const { subtask } = require('hardhat/config');
@@ -5,6 +6,7 @@ const logger = require('@synthetixio/core-js/utils/logger');
 const prompter = require('@synthetixio/core-js/utils/prompter');
 const { TASK_COMPILE } = require('hardhat/builtin-tasks/task-names');
 const { getModulesPaths } = require('../internal/path-finder');
+const { getContractMetadata } = require('../internal/contract-helper');
 const { SUBTASK_SYNC_SOURCES } = require('../task-names');
 
 /**
@@ -24,7 +26,7 @@ subtask(
   const sources = getModulesPaths(hre.config);
 
   const removed = await _removeDeletedSources({ sources, previousDeployment });
-  const added = await _addNewSources({ sources, deployment, previousDeployment });
+  const added = await _addNewSources({ sources, deployment, previousDeployment, hre });
 
   if (!removed && !added) {
     logger.checked('Deployment data is in sync with sources');
@@ -70,6 +72,15 @@ async function _addNewSources({ sources, deployment, previousDeployment }) {
 
     deployment.data.contracts[contractName] =
       deployment.data.contracts[contractName] || previousModule || _createModuleData({ source });
+
+    const metadata = await getContractMetadata(contractName);
+
+    deployment.abis[contractName] = metadata.abi;
+    deployment.sources[contractName] = {
+      bytecode: metadata.bytecode,
+      deployedBytecode: metadata.deployedBytecode,
+      sourceCode: metadata.sourceCode,
+    };
 
     if (!previousModule) created = true;
   }

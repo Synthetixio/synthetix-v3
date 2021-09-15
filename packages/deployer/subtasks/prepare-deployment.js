@@ -49,8 +49,8 @@ subtask(
 
   hre.deployer.deployment = {
     data: autosaveObject(currentFile, DEPLOYMENT_SCHEMA),
-    sources: autosaveObject(sources, []),
-    abis: autosaveObject(abis, []),
+    sources: autosaveObject(sources, {}),
+    abis: autosaveObject(abis, {}),
     txs: autosaveObject(txs, []),
   };
 
