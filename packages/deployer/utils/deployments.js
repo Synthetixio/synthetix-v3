@@ -24,21 +24,6 @@ function _isValidDeploymentName(name) {
 }
 
 /**
- * Get the deployment name from a given deployment file
- * @param {string} file
- * @returns {string} e.g.: 2021-12-23-sirius
- */
-function getDeploymentName(file) {
-  const name = typeof file === 'string' ? path.basename(file, '.json') : null;
-
-  if (!_isValidDeploymentName(name)) {
-    throw new Error(`Invalid deployment file "${file}"`);
-  }
-
-  return typeof file === 'string' ? path.basename(file, '.json') : null;
-}
-
-/**
  * Get the paths to the extended files for a given deployment
  * @param {string} file location of the deployment file
  */
@@ -142,7 +127,6 @@ function _populateDefaults(info) {
 
 module.exports = {
   getDeploymentExtendedFiles,
-  getDeploymentName,
   getProxyAddress,
   getRouterAddress,
   getDeployment,

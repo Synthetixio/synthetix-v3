@@ -1,4 +1,3 @@
-const fs = require('fs');
 const path = require('path');
 const filterValues = require('filter-values');
 const { subtask } = require('hardhat/config');
@@ -6,7 +5,7 @@ const logger = require('@synthetixio/core-js/utils/logger');
 const prompter = require('@synthetixio/core-js/utils/prompter');
 const { TASK_COMPILE } = require('hardhat/builtin-tasks/task-names');
 const { getModulesPaths } = require('../internal/path-finder');
-const { getContractMetadata } = require('../internal/contract-helper');
+const { initContractData } = require('../internal/process-contracts');
 const { SUBTASK_SYNC_SOURCES } = require('../task-names');
 
 /**
@@ -22,11 +21,11 @@ subtask(
 
   await hre.run(TASK_COMPILE, { force: false, quiet: true });
 
-  const { deployment, previousDeployment } = hre.deployer;
+  const { previousDeployment } = hre.deployer;
   const sources = getModulesPaths(hre.config);
 
   const removed = await _removeDeletedSources({ sources, previousDeployment });
-  const added = await _addNewSources({ sources, deployment, previousDeployment, hre });
+  const added = await _addNewSources({ sources, previousDeployment });
 
   if (!removed && !added) {
     logger.checked('Deployment data is in sync with sources');
@@ -37,7 +36,7 @@ async function _removeDeletedSources({ sources, previousDeployment }) {
   if (!previousDeployment) return false;
 
   const modules = filterValues(previousDeployment.data.contracts, (c) => c.isModule);
-  const modulesPaths = Object.values(modules).map((c) => c.source);
+  const modulesPaths = Object.values(modules).map((c) => c.sourceName);
 
   const toRemove = modulesPaths.filter(
     (deployedModule) => !sources.some((source) => deployedModule === source)
@@ -54,35 +53,20 @@ async function _removeDeletedSources({ sources, previousDeployment }) {
   return toRemove.length > 0;
 }
 
-const _createModuleData = ({ source }) => ({
-  source,
-  isModule: true,
-  deployedAddress: '',
-  deployTransaction: '',
-  bytecodeHash: '',
-});
-
-async function _addNewSources({ sources, deployment, previousDeployment }) {
+async function _addNewSources({ sources, previousDeployment }) {
   let created = false;
 
   // Initialize cotract data, using previous deployed one, or empty data.
   for (const source of sources) {
     const contractName = path.basename(source, '.sol');
-    const previousModule = previousDeployment?.data.contracts[contractName];
+    const previousData = previousDeployment?.data.contracts[contractName];
 
-    deployment.data.contracts[contractName] =
-      deployment.data.contracts[contractName] || previousModule || _createModuleData({ source });
+    await initContractData(contractName, {
+      ...(previousData || {}),
+      isModule: true,
+    });
 
-    const metadata = await getContractMetadata(contractName);
-
-    deployment.abis[contractName] = metadata.abi;
-    deployment.sources[contractName] = {
-      bytecode: metadata.bytecode,
-      deployedBytecode: metadata.deployedBytecode,
-      sourceCode: metadata.sourceCode,
-    };
-
-    if (!previousModule) created = true;
+    if (!previousData) created = true;
   }
 
   return created;

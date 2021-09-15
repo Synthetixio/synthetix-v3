@@ -1,5 +1,3 @@
-const fs = require('fs/promises');
-const path = require('path');
 const { deployedContractHasBytescode } = require('@synthetixio/core-js/utils/contracts');
 const { getSelectors } = require('@synthetixio/core-js/utils/contracts');
 
@@ -53,21 +51,8 @@ function findDuplicateSelectors(selectors) {
   return ocurrences.length > 0 ? ocurrences : null;
 }
 
-async function getContractMetadata(contractName) {
-  const { sourceName, abi, bytecode, deployedBytecode } = await hre.artifacts.readArtifact(
-    contractName
-  );
-
-  const sourceCode = (
-    await fs.readFile(path.resolve(hre.config.paths.root, sourceName))
-  ).toString();
-
-  return { abi, bytecode, deployedBytecode, sourceCode };
-}
-
 module.exports = {
   isAlreadyDeployed,
   getAllSelectors,
   findDuplicateSelectors,
-  getContractMetadata,
 };

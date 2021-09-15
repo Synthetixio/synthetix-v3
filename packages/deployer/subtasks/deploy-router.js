@@ -1,8 +1,7 @@
 const logger = require('@synthetixio/core-js/utils/logger');
-const path = require('path');
 const { subtask } = require('hardhat/config');
 const { TASK_COMPILE } = require('hardhat/builtin-tasks/task-names');
-const relativePath = require('@synthetixio/core-js/utils/relative-path');
+const { initContractData } = require('../internal/process-contracts');
 
 const { SUBTASK_DEPLOY_CONTRACT, SUBTASK_DEPLOY_ROUTER } = require('../task-names');
 
@@ -12,25 +11,13 @@ subtask(SUBTASK_DEPLOY_ROUTER).setAction(async (_, hre) => {
   await hre.run(TASK_COMPILE, { force: false, quiet: true });
 
   const contractName = 'Router';
-  const conntractPath = path.join(
-    relativePath(hre.config.paths.sources, hre.config.paths.root),
-    `${contractName}.sol`
-  );
 
-  let contractData = hre.deployer.deployment.data.contracts[contractName];
-
-  if (!contractData) {
-    hre.deployer.deployment.data.contracts[contractName] = {
-      source: conntractPath,
-      deployedAddress: '',
-      deployTransaction: '',
-      bytecodeHash: '',
-    };
-    contractData = hre.deployer.deployment.data.contracts[contractName];
+  if (!hre.deployer.deployment.data.contracts[contractName]) {
+    await initContractData(contractName);
   }
 
   await hre.run(SUBTASK_DEPLOY_CONTRACT, {
     contractName,
-    contractData,
+    contractData: hre.deployer.deployment.data.contracts[contractName],
   });
 });

@@ -1,8 +1,7 @@
 const logger = require('@synthetixio/core-js/utils/logger');
 const prompter = require('@synthetixio/core-js/utils/prompter');
-const path = require('path');
-const relativePath = require('@synthetixio/core-js/utils/relative-path');
 const { subtask } = require('hardhat/config');
+const { initContractData } = require('../internal/process-contracts');
 const { processTransaction, processReceipt } = require('../internal/process-transactions');
 const { SUBTASK_UPGRADE_PROXY, SUBTASK_DEPLOY_CONTRACT } = require('../task-names');
 
@@ -48,14 +47,8 @@ subtask(
 
   logger.info(`Target implementation: ${routerAddress}`);
 
-  const proxyPath = path.join(
-    relativePath(hre.config.paths.sources, hre.config.paths.root),
-    `${proxyName}.sol`
-  );
-
   const wasProxyDeployed = await _deployProxy({
     proxyName,
-    proxyPath,
     routerAddress,
     hre,
   });
@@ -70,22 +63,14 @@ function _getDeployedAddress(contractName, hre) {
   return hre.deployer.deployment.data.contracts[contractName].deployedAddress;
 }
 
-async function _deployProxy({ proxyName, proxyPath, routerAddress, hre }) {
-  let proxyData = hre.deployer.deployment.data.contracts[proxyName];
-
-  if (!proxyData) {
-    hre.deployer.deployment.data.contracts[proxyName] = {
-      source: proxyPath,
-      deployedAddress: '',
-      deployTransaction: '',
-      bytecodeHash: '',
-    };
-    proxyData = hre.deployer.deployment.data.contracts[proxyName];
+async function _deployProxy({ proxyName, routerAddress, hre }) {
+  if (!hre.deployer.deployment.data.contracts[proxyName]) {
+    await initContractData(proxyName);
   }
 
   return await hre.run(SUBTASK_DEPLOY_CONTRACT, {
     contractName: proxyName,
-    contractData: proxyData,
+    contractData: hre.deployer.deployment.data.contracts[proxyName],
     constructorArgs: [routerAddress],
   });
 }

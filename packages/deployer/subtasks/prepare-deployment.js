@@ -7,11 +7,7 @@ const prompter = require('@synthetixio/core-js/utils/prompter');
 const relativePath = require('@synthetixio/core-js/utils/relative-path');
 const getDate = require('@synthetixio/core-js/utils/get-date');
 const autosaveObject = require('../internal/autosave-object');
-const {
-  getDeploymentName,
-  getAllDeploymentFiles,
-  getDeploymentExtendedFiles,
-} = require('../utils/deployments');
+const { getAllDeploymentFiles, getDeploymentExtendedFiles } = require('../utils/deployments');
 const { SUBTASK_PREPARE_DEPLOYMENT } = require('../task-names');
 
 const DEPLOYMENT_SCHEMA = {
