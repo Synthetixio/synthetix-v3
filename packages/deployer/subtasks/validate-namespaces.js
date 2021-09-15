@@ -20,8 +20,8 @@ subtask(SUBTASK_VALIDATE_NAMESPACES).setAction(async (_, hre) => {
   debugFiles.forEach((file) => {
     const { contractName, contractPath } = getContractDataFromDebugFile(file);
     const debugDataFile = getDebugDataFile(file, contractPath);
-    const address = getSlotAddress(contractName, debugDataFile.output.sources);
-    slots.push({ contractName, slotAddress: address });
+    const slotAddress = getSlotAddress(contractName, debugDataFile.output.sources);
+    slots.push({ contractName, slotAddress });
   });
 
   const duplicates = findDuplicateSlots(slots);
