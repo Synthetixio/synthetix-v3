@@ -16,8 +16,5 @@ subtask(SUBTASK_DEPLOY_ROUTER).setAction(async (_, hre) => {
     await initContractData(contractName);
   }
 
-  await hre.run(SUBTASK_DEPLOY_CONTRACT, {
-    contractName,
-    contractData: hre.deployer.deployment.data.contracts[contractName],
-  });
+  await hre.run(SUBTASK_DEPLOY_CONTRACT, { contractName });
 });

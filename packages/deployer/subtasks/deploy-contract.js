@@ -8,7 +8,13 @@ const { SUBTASK_DEPLOY_CONTRACT } = require('../task-names');
 subtask(
   SUBTASK_DEPLOY_CONTRACT,
   'Deploys the given contract and update the contractData object.'
-).setAction(async ({ contractName, contractData, constructorArgs = [] }) => {
+).setAction(async ({ contractName, constructorArgs = [] }) => {
+  const contractData = hre.deployer.deployment.data.contracts[contractName];
+
+  if (!contractData) {
+    throw new Error(`Cotract ${contractName} cannot be deployed because is not initialized.`);
+  }
+
   if (await isAlreadyDeployed(contractName, contractData)) {
     return false;
   }

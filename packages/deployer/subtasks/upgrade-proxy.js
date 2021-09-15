@@ -70,7 +70,6 @@ async function _deployProxy({ proxyName, routerAddress, hre }) {
 
   return await hre.run(SUBTASK_DEPLOY_CONTRACT, {
     contractName: proxyName,
-    contractData: hre.deployer.deployment.data.contracts[proxyName],
     constructorArgs: [routerAddress],
   });
 }
