@@ -4,6 +4,18 @@ const glob = require('glob');
 const naturalCompare = require('string-natural-compare');
 const { defaults } = require('../extensions/config');
 
+/**
+ * @typedef {Object} DeploymentInfo An object describing which deployment to retrieve
+ * @property {string} network The network of the target deployment
+ * @property {string} instance The instance name of the target deployment
+ * @property {string} folder The path to the folder where deployment files are stored
+ */
+const DeploymentInfo = {
+  network: 'local',
+  instance: 'official',
+  folder: defaults.paths.deployments,
+};
+
 // Regex for deployment file formats, e.g.: 2021-08-31-00-sirius.json
 const DEPLOYMENT_NAME_FORMAT = /^[0-9]{4}-[0-9]{2}-[0-9]{2}-[0-9]{2,}(?:-[a-z0-9]+)?$/;
 
@@ -11,21 +23,35 @@ function _isValidDeploymentName(name) {
   return DEPLOYMENT_NAME_FORMAT.test(name);
 }
 
+/**
+ * Get the deployment name from a given deployment file
+ * @param {string} file
+ * @returns {string} e.g.: 2021-12-23-sirius
+ */
 function getDeploymentName(file) {
+  const name = typeof file === 'string' ? path.basename(file, '.json') : null;
+
+  if (!_isValidDeploymentName(name)) {
+    throw new Error(`Invalid deployment file "${file}"`);
+  }
+
   return typeof file === 'string' ? path.basename(file, '.json') : null;
 }
 
 /**
- * @param {Object} info An object describing which deployment to retrieve
- * @param {string} info.network The network of the target deployment
- * @param {string} info.instance The instance name of the target deployment
- * @param {string} info.folder The path to the folder where deployment files are stored
+ * Get the paths to the extended files for a given deployment
+ * @param {string} file location of the deployment file
  */
-const DeploymentInfo = {
-  network: 'local',
-  instance: 'official',
-  folder: defaults.paths.deployments,
-};
+function getDeploymentExtendedFiles(file) {
+  const folder = path.dirname(file);
+  const name = path.basename(file, '.json');
+
+  return {
+    sources: path.resolve(folder, 'extended', `${name}.sources.json`),
+    abis: path.resolve(folder, 'extended', `${name}.abis.json`),
+    txs: path.resolve(folder, 'extended', `${name}.txs.json`),
+  };
+}
 
 /**
  * Retrieves the address of the target instance's deployed proxy
@@ -115,6 +141,7 @@ function _populateDefaults(info) {
 }
 
 module.exports = {
+  getDeploymentExtendedFiles,
   getDeploymentName,
   getProxyAddress,
   getRouterAddress,

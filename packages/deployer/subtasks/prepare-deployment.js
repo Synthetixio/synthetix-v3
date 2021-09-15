@@ -7,7 +7,11 @@ const prompter = require('@synthetixio/core-js/utils/prompter');
 const relativePath = require('@synthetixio/core-js/utils/relative-path');
 const getDate = require('@synthetixio/core-js/utils/get-date');
 const autosaveObject = require('../internal/autosave-object');
-const { getDeploymentName, getAllDeploymentFiles } = require('../utils/deployments');
+const {
+  getDeploymentName,
+  getAllDeploymentFiles,
+  getDeploymentExtendedFiles,
+} = require('../utils/deployments');
 const { SUBTASK_PREPARE_DEPLOYMENT } = require('../task-names');
 
 const DEPLOYMENT_SCHEMA = {
@@ -33,22 +37,25 @@ subtask(
 
   // Make sure the deployments folder exists
   await mkdirp(deploymentsFolder);
+  await mkdirp(path.join(deploymentsFolder, 'extended'));
 
-  const { currentName, currentFile, previousName, previousFile } = await _determineDeploymentFiles(
-    deploymentsFolder,
-    alias
-  );
+  const { currentFile, previousFile } = await _determineDeploymentFiles(deploymentsFolder, alias);
+  const { sources, abis, txs } = getDeploymentExtendedFiles(currentFile);
 
   hre.deployer.paths.deployment = currentFile;
+  hre.deployer.paths.sources = sources;
+  hre.deployer.paths.abis = abis;
+  hre.deployer.paths.txs = txs;
 
   hre.deployer.deployment = {
-    name: currentName,
     data: autosaveObject(currentFile, DEPLOYMENT_SCHEMA),
+    sources: autosaveObject(sources, []),
+    abis: autosaveObject(abis, []),
+    txs: autosaveObject(txs, []),
   };
 
   if (previousFile) {
     hre.deployer.previousDeployment = {
-      name: previousName,
       data: JSON.parse(fs.readFileSync(previousFile)),
     };
   }
@@ -68,7 +75,7 @@ subtask(
 async function _determineDeploymentFiles(deploymentsFolder, alias) {
   const deployments = getAllDeploymentFiles({ folder: deploymentsFolder });
   const latestFile = deployments.length > 0 ? deployments[deployments.length - 1] : null;
-  const latestName = getDeploymentName(latestFile);
+  const latestFileName = latestFile && path.basename(latestFile, '.json');
 
   // Check if there is an unfinished deployment and prompt the user if we should
   // continue with it, instead of creating a new one.
@@ -81,13 +88,10 @@ async function _determineDeploymentFiles(deploymentsFolder, alias) {
       );
 
       const previousFile = deployments.length > 1 ? deployments[deployments.length - 2] : null;
-      const previousName = getDeploymentName(previousFile);
 
       if (use) {
         return {
-          currentName: latestName,
           currentFile: latestFile,
-          previousName,
           previousFile,
         };
       }
@@ -109,8 +113,8 @@ async function _determineDeploymentFiles(deploymentsFolder, alias) {
 
   // Calculate the next deployment number based on the previous one
   let number = '00';
-  if (latestName && latestName.startsWith(today)) {
-    const previousNumber = latestName.slice(11, 13);
+  if (latestFileName && latestFileName.startsWith(today)) {
+    const previousNumber = latestFileName.slice(11, 13);
     number = `${Number.parseInt(previousNumber) + 1}`.padStart(2, '0');
   }
 
@@ -118,9 +122,7 @@ async function _determineDeploymentFiles(deploymentsFolder, alias) {
   const currentFile = path.join(deploymentsFolder, `${currentName}.json`);
 
   return {
-    currentName,
     currentFile,
-    previousName: latestName,
     previousFile: latestFile,
   };
 }
