@@ -27,8 +27,6 @@ contract AnotherModule is CommsMixin {
     /* MUTATIVE FUNCTIONS */
 
     function setSomeValueOnSomeModule(uint newValue) public {
-        _intermoduleCall(
-            abi.encodeWithSelector(SomeModule.setSomeValue.selector, newValue)
-        );
+        _intermoduleCall(abi.encodeWithSelector(SomeModule.setSomeValue.selector, newValue));
     }
 }
