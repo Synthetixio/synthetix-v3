@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 import "./storage/ProxyNamespace.sol";
 
 contract Proxy is ProxyNamespace {
-    fallback() external payable virtual {
+    fallback() external payable {
         address impl = _proxyStorage().implementation;
         // solhint-disable-next-line no-inline-assembly
         assembly {

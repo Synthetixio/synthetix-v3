@@ -4,6 +4,7 @@ const { ethers } = hre;
 const { getProxyAddress, getRouterAddress, getDeployment } = require('../../../utils/deployments');
 const { assertRevert } = require('@synthetixio/core-js/utils/assertions');
 const { bootstrap, initializeSystem } = require('./helpers/initializer');
+const { findEvent } = require('@synthetixio/core-js/utils/events');
 
 describe('UpgradeModule', () => {
   bootstrap();
@@ -70,7 +71,7 @@ describe('UpgradeModule', () => {
     });
 
     it('emitted an Upgraded event', async () => {
-      const event = receipt.events.find((e) => e.event === 'Upgraded');
+      const event = findEvent({ receipt, eventName: 'Upgraded' });
 
       assert.equal(event.args.implementation, routerAddress);
     });
