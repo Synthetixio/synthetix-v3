@@ -1,6 +1,6 @@
 const hre = require('hardhat');
 const { ethers } = hre;
-const { getProxyAddress, getDeployment } = require('../../../../utils/deployments');
+const { getProxyAddress } = require('../../../../utils/deployments');
 const { takeSnapshot, restoreSnapshot } = require('@synthetixio/core-js/utils/rpc');
 
 let snapshotId;
@@ -22,19 +22,7 @@ function bootstrap() {
 
 async function deploySystemIfNeeded() {
   if (!proxyAddress) {
-    const deployment = getDeployment();
-
-    if (!deployment) {
-      await deploySystem();
-    } else {
-      proxyAddress = getProxyAddress();
-
-      const proxyCode = await ethers.provider.getCode(proxyAddress);
-
-      if (proxyCode === '0x') {
-        await deploySystem();
-      }
-    }
+    await deploySystem();
   }
 }
 
