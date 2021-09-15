@@ -3,6 +3,7 @@ const assert = require('assert');
 const { ethers } = hre;
 const { getProxyAddress } = require('../../../utils/deployments');
 const { assertRevert } = require('@synthetixio/core-js/utils/assertions');
+const { findEvent } = require('@synthetixio/core-js/utils/events');
 const { bootstrap } = require('./helpers/initializer');
 
 describe('OwnerModule', () => {
@@ -54,7 +55,7 @@ describe('OwnerModule', () => {
       });
 
       it('emitted an OwnerChanged event', async () => {
-        const event = receipt.events.find((e) => e.event === 'OwnerChanged');
+        const event = findEvent({ receipt, eventName: 'OwnerChanged' });
 
         assert.equal(event.args.newOwner, owner.address);
       });

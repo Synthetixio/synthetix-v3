@@ -8,10 +8,14 @@ contract SomeModule is GlobalNamespace {
 
     function setValue(uint newValue) public {
         _globalStorage().value = newValue;
+
+        emit ValueSet(msg.sender, newValue);
     }
 
     function setSomeValue(uint newSomeValue) public {
         _globalStorage().someValue = newSomeValue;
+
+        emit ValueSet(msg.sender, newSomeValue);
     }
 
     /* VIEW FUNCTIONS */
@@ -23,4 +27,8 @@ contract SomeModule is GlobalNamespace {
     function getSomeValue() public view returns (uint) {
         return _globalStorage().someValue;
     }
+
+    /* EVENTS */
+
+    event ValueSet(address sender, uint value);
 }
