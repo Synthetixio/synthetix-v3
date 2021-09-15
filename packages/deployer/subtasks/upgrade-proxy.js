@@ -64,10 +64,7 @@ function _getDeployedAddress(contractName, hre) {
 }
 
 async function _deployProxy({ proxyName, routerAddress, hre }) {
-  if (!hre.deployer.deployment.data.contracts[proxyName]) {
-    await initContractData(proxyName);
-  }
-
+  await initContractData(proxyName);
   return await hre.run(SUBTASK_DEPLOY_CONTRACT, {
     contractName: proxyName,
     constructorArgs: [routerAddress],

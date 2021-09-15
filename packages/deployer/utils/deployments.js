@@ -30,7 +30,6 @@ function getDeploymentExtendedFiles(file) {
   return {
     sources: path.resolve(folder, 'extended', `${name}.sources.json`),
     abis: path.resolve(folder, 'extended', `${name}.abis.json`),
-    txs: path.resolve(folder, 'extended', `${name}.txs.json`),
   };
 }
 
@@ -66,8 +65,6 @@ function getRouterAddress(info) {
  * @returns {Object} An object with deployment schema
  */
 function getDeployment(info) {
-  info = _populateDefaults(info);
-
   const file = getDeploymentFile(info);
 
   if (!file) {
@@ -83,10 +80,7 @@ function getDeployment(info) {
  * @returns {string} The path of the file
  */
 function getDeploymentFile(info) {
-  info = _populateDefaults(info);
-
   const deployments = getAllDeploymentFiles(info);
-
   return deployments.length > 0 ? deployments[deployments.length - 1] : null;
 }
 
@@ -96,13 +90,11 @@ function getDeploymentFile(info) {
  * @returns {array} An array of paths for the files
  */
 function getAllDeploymentFiles(info) {
-  info = _populateDefaults(info);
-
   const instanceFolder = getDeploymentFolder(info);
 
   return glob
     .sync(`${instanceFolder}/*.json`)
-    .filter((file) => DEPLOYMENT_FILE_FORMAT.test(file))
+    .filter((file) => DEPLOYMENT_FILE_FORMAT.test(path.basename(file)))
     .sort(naturalCompare);
 }
 
@@ -112,13 +104,12 @@ function getAllDeploymentFiles(info) {
  * @returns {string} The path of the folder
  */
 function getDeploymentFolder(info) {
-  info = _populateDefaults(info);
-
-  return path.join(info.folder, info.network, info.instance);
+  const { folder, network, instance } = _populateDefaults(info);
+  return path.resolve(folder, network, instance);
 }
 
 function _populateDefaults(info) {
-  return { ...info, ...DeploymentInfo };
+  return { ...DeploymentInfo, ...info };
 }
 
 module.exports = {

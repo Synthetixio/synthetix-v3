@@ -54,20 +54,21 @@ async function _removeDeletedSources({ sources, previousDeployment }) {
 }
 
 async function _addNewSources({ sources, previousDeployment }) {
-  let created = false;
+  const toAdd = [];
 
   // Initialize cotract data, using previous deployed one, or empty data.
   for (const source of sources) {
     const contractName = path.basename(source, '.sol');
-    const previousData = previousDeployment?.data.contracts[contractName];
 
-    await initContractData(contractName, {
-      ...(previousData || {}),
-      isModule: true,
-    });
+    await initContractData(contractName, { isModule: true });
 
-    if (!previousData) created = true;
+    if (!previousDeployment?.data.contracts[contractName]) {
+      toAdd.push(source);
+    }
   }
 
-  return created;
+  logger.notice('The following modules are going to be deployed for the first time:');
+  toAdd.forEach((source) => logger.notice(`  ${source}`));
+
+  return toAdd.length > 0;
 }

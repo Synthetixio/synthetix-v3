@@ -7,7 +7,11 @@ const prompter = require('@synthetixio/core-js/utils/prompter');
 const relativePath = require('@synthetixio/core-js/utils/relative-path');
 const getDate = require('@synthetixio/core-js/utils/get-date');
 const autosaveObject = require('../internal/autosave-object');
-const { getAllDeploymentFiles, getDeploymentExtendedFiles } = require('../utils/deployments');
+const {
+  getDeploymentFolder,
+  getAllDeploymentFiles,
+  getDeploymentExtendedFiles,
+} = require('../utils/deployments');
 const { SUBTASK_PREPARE_DEPLOYMENT } = require('../task-names');
 
 const DEPLOYMENT_SCHEMA = {
@@ -25,29 +29,34 @@ subtask(
 ).setAction(async (taskArguments, hre) => {
   const { instance, alias } = taskArguments;
 
-  const deploymentsFolder = path.join(
-    hre.config.deployer.paths.deployments,
-    hre.network.name,
-    instance
-  );
+  const info = {
+    folder: path.resolve(hre.config.paths.root, hre.config.deployer.paths.deployments),
+    network: hre.network.name,
+    instance,
+  };
 
-  // Make sure the deployments folder exists
+  const deploymentsFolder = getDeploymentFolder(info);
+  const deployments = getAllDeploymentFiles(info);
+
+  // Make sure the deployments folders exists
   await mkdirp(deploymentsFolder);
   await mkdirp(path.join(deploymentsFolder, 'extended'));
 
-  const { currentFile, previousFile } = await _determineDeploymentFiles(deploymentsFolder, alias);
-  const { sources, abis, txs } = getDeploymentExtendedFiles(currentFile);
+  const { currentFile, previousFile } = await _determineDeploymentFiles({
+    deployments,
+    deploymentsFolder,
+    alias,
+  });
+  const { sources, abis } = getDeploymentExtendedFiles(currentFile);
 
   hre.deployer.paths.deployment = currentFile;
   hre.deployer.paths.sources = sources;
   hre.deployer.paths.abis = abis;
-  hre.deployer.paths.txs = txs;
 
   hre.deployer.deployment = {
     data: autosaveObject(currentFile, DEPLOYMENT_SCHEMA),
     sources: autosaveObject(sources, {}),
     abis: autosaveObject(abis, {}),
-    txs: autosaveObject(txs, []),
   };
 
   if (previousFile) {
@@ -68,8 +77,7 @@ subtask(
  *   previousFile: string
  * }}
  */
-async function _determineDeploymentFiles(deploymentsFolder, alias) {
-  const deployments = getAllDeploymentFiles({ folder: deploymentsFolder });
+async function _determineDeploymentFiles({ deploymentsFolder, deployments, alias }) {
   const latestFile = deployments.length > 0 ? deployments[deployments.length - 1] : null;
 
   // Check if there is an unfinished deployment and prompt the user if we should

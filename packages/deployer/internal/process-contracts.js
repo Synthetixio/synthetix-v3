@@ -7,7 +7,7 @@ const path = require('path');
  * @param {object} [data={}] initial contract metadata, e.g.: { isModule: true }
  */
 async function initContractData(contractName, data = {}) {
-  const { deployment } = hre.deployer;
+  const { deployment, previousDeployment } = hre.deployer;
   const { sourceName, abi, bytecode, deployedBytecode } = await hre.artifacts.readArtifact(
     contractName
   );
@@ -16,10 +16,13 @@ async function initContractData(contractName, data = {}) {
     await fs.readFile(path.resolve(hre.config.paths.root, sourceName))
   ).toString();
 
+  const previousData = previousDeployment?.data.contracts[contractName] || {};
+
   deployment.data.contracts[contractName] = {
     deployedAddress: '',
     deployTransaction: '',
     bytecodeHash: '',
+    ...previousData,
     ...data,
     sourceName,
   };
