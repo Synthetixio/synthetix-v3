@@ -15,12 +15,12 @@ contract Proxy is ProxyNamespace {
             returndatacopy(0, 0, returndatasize())
 
             switch result
-                case 0 {
-                    revert(0, returndatasize())
-                }
-                default {
-                    return(0, returndatasize())
-                }
+            case 0 {
+                revert(0, returndatasize())
+            }
+            default {
+                return(0, returndatasize())
+            }
         }
     }
 
