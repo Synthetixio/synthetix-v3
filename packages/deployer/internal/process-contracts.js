@@ -1,6 +1,11 @@
 const fs = require('fs/promises');
 const path = require('path');
 
+/**
+ * Initialize contract metadata on hre.deployer.deployment.*
+ * @param {string} contractName
+ * @param {object} [data={}] initial contract metadata, e.g.: { isModule: true }
+ */
 async function initContractData(contractName, data = {}) {
   const { deployment } = hre.deployer;
   const { sourceName, abi, bytecode, deployedBytecode } = await hre.artifacts.readArtifact(

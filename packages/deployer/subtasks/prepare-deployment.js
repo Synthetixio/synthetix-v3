@@ -71,7 +71,6 @@ subtask(
 async function _determineDeploymentFiles(deploymentsFolder, alias) {
   const deployments = getAllDeploymentFiles({ folder: deploymentsFolder });
   const latestFile = deployments.length > 0 ? deployments[deployments.length - 1] : null;
-  const latestFileName = latestFile && path.basename(latestFile, '.json');
 
   // Check if there is an unfinished deployment and prompt the user if we should
   // continue with it, instead of creating a new one.
@@ -109,6 +108,7 @@ async function _determineDeploymentFiles(deploymentsFolder, alias) {
 
   // Calculate the next deployment number based on the previous one
   let number = '00';
+  const latestFileName = latestFile && path.basename(latestFile);
   if (latestFileName && latestFileName.startsWith(today)) {
     const previousNumber = latestFileName.slice(11, 13);
     number = `${Number.parseInt(previousNumber) + 1}`.padStart(2, '0');

@@ -17,11 +17,7 @@ const DeploymentInfo = {
 };
 
 // Regex for deployment file formats, e.g.: 2021-08-31-00-sirius.json
-const DEPLOYMENT_NAME_FORMAT = /^[0-9]{4}-[0-9]{2}-[0-9]{2}-[0-9]{2,}(?:-[a-z0-9]+)?$/;
-
-function _isValidDeploymentName(name) {
-  return DEPLOYMENT_NAME_FORMAT.test(name);
-}
+const DEPLOYMENT_FILE_FORMAT = /^[0-9]{4}-[0-9]{2}-[0-9]{2}-[0-9]{2,}(?:-[a-z0-9]+)?\.json$/;
 
 /**
  * Get the paths to the extended files for a given deployment
@@ -106,7 +102,7 @@ function getAllDeploymentFiles(info) {
 
   return glob
     .sync(`${instanceFolder}/*.json`)
-    .filter((file) => _isValidDeploymentName(getDeploymentName(file)))
+    .filter((file) => DEPLOYMENT_FILE_FORMAT.test(file))
     .sort(naturalCompare);
 }
 
