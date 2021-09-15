@@ -2,6 +2,7 @@
   "extends": ["solhint:recommended"],
   "plugins": [],
   "rules": {
+    "reason-string": ["error", { "maxLength": 32 }],
     "compiler-version": ["error", "^0.8.0"],
     "contract-name-camelcase": "off",
     "no-complex-fallback": "off",
