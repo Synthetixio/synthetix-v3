@@ -46,8 +46,7 @@ describe('AnotherModule', () => {
       assert.equal(event.args.value, 2);
     });
 
-    // TODO: Will fail because msg.sender = proxy
-    it.skip('using casting', async function () {
+    it('using casting', async function () {
       const tx = await AnotherModule.connect(owner).setSomeValueCast(42);
       const receipt = await tx.wait();
 
@@ -60,8 +59,7 @@ describe('AnotherModule', () => {
       assert.equal(event.args.value, 42);
     });
 
-    // TODO: Will fail because msg.sender = proxy
-    it.skip('using the router', async function () {
+    it('using the router', async function () {
       const tx = await AnotherModule.connect(owner).setSomeValueRouter(1337);
       const receipt = await tx.wait();
 

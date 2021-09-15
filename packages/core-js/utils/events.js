@@ -19,7 +19,6 @@ function findEvent({ receipt, eventName, contract = undefined }) {
     }
 
     events = parseLogs({ contract, logs: events });
-    console.log(events);
   }
 
   return events.find((e) => e.event === eventName);
