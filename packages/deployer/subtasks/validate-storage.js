@@ -1,15 +1,14 @@
-const path = require('path');
-const rimraf = require('rimraf');
 const { subtask } = require('hardhat/config');
 const logger = require('@synthetixio/core-js/utils/logger');
 
 const { getSlotAddresses, findDuplicateSlots } = require('../internal/ast-helper');
-const { SUBTASK_VALIDATE_STORAGE } = require('../task-names');
+const { SUBTASK_VALIDATE_STORAGE, SUBTASK_CANCEL_DEPLOYMENT } = require('../task-names');
 
 subtask(SUBTASK_VALIDATE_STORAGE).setAction(async (_, hre) => {
   logger.subtitle('Validating Storage usage');
 
   const { contracts } = await _getSourcesAST(hre);
+
   let errorsFound;
   errorsFound = _findDuplicateStorageNamespaces(contracts) || errorsFound;
   errorsFound = _findRegularStorageSlots() || errorsFound;
@@ -17,9 +16,7 @@ subtask(SUBTASK_VALIDATE_STORAGE).setAction(async (_, hre) => {
 
   if (errorsFound) {
     logger.error('Storate usage is not valid');
-    logger.info(`Deleting ${hre.deployer.deployment.file}`);
-    rimraf.sync(path.resolve(hre.config.paths.root, hre.deployer.deployment.file));
-    process.exit(0);
+    return await hre.run(SUBTASK_CANCEL_DEPLOYMENT);
   }
   logger.checked('Namespaces are valid');
 });
