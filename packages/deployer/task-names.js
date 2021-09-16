@@ -11,6 +11,6 @@ module.exports = {
   SUBTASK_UPGRADE_PROXY: 'upgrade-proxy',
   SUBTASK_VALIDATE_ROUTER: 'validate-router',
   SUBTASK_VALIDATE_MODULES: 'validate-modules',
-  SUBTASK_VALIDATE_NAMESPACES: 'validate-namespaces',
+  SUBTASK_VALIDATE_STORAGE: 'validate-storage',
   TASK_DEPLOY: 'deploy',
 };
