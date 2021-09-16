@@ -1,4 +1,5 @@
 module.exports = {
+  SUBTASK_CANCEL_DEPLOYMENT: 'cancel-deployment',
   SUBTASK_CLEAR_DEPLOYMENTS: 'clear-deployments',
   SUBTASK_DEPLOY_CONTRACT: 'deploy-contract',
   SUBTASK_DEPLOY_CONTRACTS: 'deploy-contracts',
@@ -9,7 +10,7 @@ module.exports = {
   SUBTASK_PRINT_INFO: 'print-info',
   SUBTASK_SYNC_SOURCES: 'sync-sources',
   SUBTASK_UPGRADE_PROXY: 'upgrade-proxy',
-  SUBTASK_VALIDATE_ROUTER: 'validate-router',
   SUBTASK_VALIDATE_MODULES: 'validate-modules',
+  SUBTASK_VALIDATE_ROUTER: 'validate-router',
   TASK_DEPLOY: 'deploy',
 };

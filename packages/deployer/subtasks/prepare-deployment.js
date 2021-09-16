@@ -30,7 +30,7 @@ subtask(
   const { instance, alias } = taskArguments;
 
   const info = {
-    folder: path.resolve(hre.config.paths.root, hre.config.deployer.paths.deployments),
+    folder: hre.config.deployer.paths.deployments,
     network: hre.network.name,
     instance,
   };
