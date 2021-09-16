@@ -14,6 +14,7 @@
   },
   "dependencies": {
     "chalk": "4.1.2",
+    "del": "6.0.0",
     "figlet": "1.5.2",
     "filter-values": "0.4.1",
     "glob": "7.1.7",

@@ -4,20 +4,34 @@ const glob = require('glob');
 const naturalCompare = require('string-natural-compare');
 const { defaults } = require('../extensions/config');
 
-// Regex for deployment file formats, e.g.: 2021-08-31-00-sirius.json
-const DEPLOYMENT_FILE_FORMAT = /^[0-9]{4}-[0-9]{2}-[0-9]{2}-[0-9]{2,}(?:-[a-z0-9]+)?\.json$/;
-
 /**
- * @param {Object} info An object describing which deployment to retrieve
- * @param {string} info.network The network of the target deployment
- * @param {string} info.instance The instance name of the target deployment
- * @param {string} info.folder The path to the folder where deployment files are stored
+ * @typedef {Object} DeploymentInfo An object describing which deployment to retrieve
+ * @property {string} network The network of the target deployment
+ * @property {string} instance The instance name of the target deployment
+ * @property {string} folder The path to the folder where deployment files are stored
  */
 const DeploymentInfo = {
   network: 'local',
   instance: 'official',
   folder: defaults.paths.deployments,
 };
+
+// Regex for deployment file formats, e.g.: 2021-08-31-00-sirius.json
+const DEPLOYMENT_FILE_FORMAT = /^[0-9]{4}-[0-9]{2}-[0-9]{2}-[0-9]{2,}(?:-[a-z0-9]+)?\.json$/;
+
+/**
+ * Get the paths to the extended files for a given deployment
+ * @param {string} file location of the deployment file
+ */
+function getDeploymentExtendedFiles(file) {
+  const folder = path.dirname(file);
+  const name = path.basename(file, '.json');
+
+  return {
+    sources: path.resolve(folder, 'extended', `${name}.sources.json`),
+    abis: path.resolve(folder, 'extended', `${name}.abis.json`),
+  };
+}
 
 /**
  * Retrieves the address of the target instance's deployed proxy
@@ -51,8 +65,6 @@ function getRouterAddress(info) {
  * @returns {Object} An object with deployment schema
  */
 function getDeployment(info) {
-  info = _populateDefaults(info);
-
   const file = getDeploymentFile(info);
 
   if (!file) {
@@ -68,10 +80,7 @@ function getDeployment(info) {
  * @returns {string} The path of the file
  */
 function getDeploymentFile(info) {
-  info = _populateDefaults(info);
-
   const deployments = getAllDeploymentFiles(info);
-
   return deployments.length > 0 ? deployments[deployments.length - 1] : null;
 }
 
@@ -81,8 +90,6 @@ function getDeploymentFile(info) {
  * @returns {array} An array of paths for the files
  */
 function getAllDeploymentFiles(info) {
-  info = _populateDefaults(info);
-
   const instanceFolder = getDeploymentFolder(info);
 
   return glob
@@ -97,16 +104,16 @@ function getAllDeploymentFiles(info) {
  * @returns {string} The path of the folder
  */
 function getDeploymentFolder(info) {
-  info = _populateDefaults(info);
-
-  return path.join(info.folder, info.network, info.instance);
+  const { folder, network, instance } = _populateDefaults(info);
+  return path.resolve(folder, network, instance);
 }
 
 function _populateDefaults(info) {
-  return { ...info, ...DeploymentInfo };
+  return { ...DeploymentInfo, ...info };
 }
 
 module.exports = {
+  getDeploymentExtendedFiles,
   getProxyAddress,
   getRouterAddress,
   getDeployment,

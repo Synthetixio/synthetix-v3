@@ -25,7 +25,7 @@ subtask(
   logger.subtitle('Generating router source');
   logger.info(`location: ${routerPath}`);
 
-  const modules = filterValues(hre.deployer.deployment.contracts, (c) => c.isModule);
+  const modules = filterValues(hre.deployer.deployment.general.contracts, (c) => c.isModule);
   const modulesNames = Object.keys(modules);
   logger.debug(`modules: ${JSON.stringify(modulesNames, null, 2)}`);
 
