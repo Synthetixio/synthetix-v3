@@ -35,7 +35,7 @@ subtask(
 async function _removeDeletedSources({ sources, previousDeployment }) {
   if (!previousDeployment) return false;
 
-  const modules = filterValues(previousDeployment.data.contracts, (c) => c.isModule);
+  const modules = filterValues(previousDeployment.general.contracts, (c) => c.isModule);
   const modulesPaths = Object.values(modules).map((c) => c.sourceName);
 
   const toRemove = modulesPaths.filter(
@@ -62,7 +62,7 @@ async function _addNewSources({ sources, previousDeployment }) {
 
     await initContractData(contractName, { isModule: true });
 
-    if (!previousDeployment?.data.contracts[contractName]) {
+    if (!previousDeployment?.general.contracts[contractName]) {
       toAdd.push(source);
     }
   }

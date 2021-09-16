@@ -60,7 +60,7 @@ subtask(
 });
 
 function _getDeployedAddress(contractName, hre) {
-  return hre.deployer.deployment.data.contracts[contractName].deployedAddress;
+  return hre.deployer.deployment.general.contracts[contractName].deployedAddress;
 }
 
 async function _deployProxy({ proxyName, routerAddress, hre }) {

@@ -54,14 +54,14 @@ subtask(
   hre.deployer.paths.abis = abis;
 
   hre.deployer.deployment = {
-    data: autosaveObject(currentFile, DEPLOYMENT_SCHEMA),
+    general: autosaveObject(currentFile, DEPLOYMENT_SCHEMA),
     sources: autosaveObject(sources, {}),
     abis: autosaveObject(abis, {}),
   };
 
   if (previousFile) {
     hre.deployer.previousDeployment = {
-      data: JSON.parse(fs.readFileSync(previousFile)),
+      general: JSON.parse(fs.readFileSync(previousFile)),
     };
   }
 });

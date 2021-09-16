@@ -9,7 +9,7 @@ subtask(
   SUBTASK_DEPLOY_CONTRACT,
   'Deploys the given contract and update the contractData object.'
 ).setAction(async ({ contractName, constructorArgs = [] }) => {
-  const contractData = hre.deployer.deployment.data.contracts[contractName];
+  const contractData = hre.deployer.deployment.general.contracts[contractName];
 
   if (!contractData) {
     throw new Error(`Cotract ${contractName} cannot be deployed because is not initialized.`);
