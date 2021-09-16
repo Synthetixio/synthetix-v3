@@ -1,9 +1,10 @@
 const path = require('path');
+const filterValues = require('filter-values');
 const { subtask } = require('hardhat/config');
 const logger = require('@synthetixio/core-js/utils/logger');
 const prompter = require('@synthetixio/core-js/utils/prompter');
 const { getModulesPaths } = require('../internal/path-finder');
-const filterValues = require('filter-values');
+const { initContractData } = require('../internal/process-contracts');
 const { SUBTASK_SYNC_SOURCES } = require('../task-names');
 
 /**
@@ -17,11 +18,11 @@ subtask(
 ).setAction(async (_, hre) => {
   logger.subtitle('Syncing solidity sources with deployment data');
 
-  const { deployment, previousDeployment } = hre.deployer;
+  const { previousDeployment } = hre.deployer;
   const sources = getModulesPaths(hre.config);
 
   const removed = await _removeDeletedSources({ sources, previousDeployment });
-  const added = await _addNewSources({ sources, deployment, previousDeployment });
+  const added = await _addNewSources({ sources, previousDeployment });
 
   if (!removed && !added) {
     logger.checked('Deployment data is in sync with sources');
@@ -31,8 +32,8 @@ subtask(
 async function _removeDeletedSources({ sources, previousDeployment }) {
   if (!previousDeployment) return false;
 
-  const modules = filterValues(previousDeployment.contracts, (c) => c.isModule);
-  const modulesPaths = Object.values(modules).map((c) => c.source);
+  const modules = filterValues(previousDeployment.general.contracts, (c) => c.isModule);
+  const modulesPaths = Object.values(modules).map((c) => c.sourceName);
 
   const toRemove = modulesPaths.filter(
     (deployedModule) => !sources.some((source) => deployedModule === source)
@@ -49,27 +50,22 @@ async function _removeDeletedSources({ sources, previousDeployment }) {
   return toRemove.length > 0;
 }
 
-const _createModuleData = ({ source }) => ({
-  source,
-  isModule: true,
-  deployedAddress: '',
-  deployTransaction: '',
-  bytecodeHash: '',
-});
-
-async function _addNewSources({ sources, deployment, previousDeployment }) {
-  let created = false;
+async function _addNewSources({ sources, previousDeployment }) {
+  const toAdd = [];
 
   // Initialize cotract data, using previous deployed one, or empty data.
   for (const source of sources) {
     const contractName = path.basename(source, '.sol');
-    const previousModule = previousDeployment?.contracts[contractName];
 
-    deployment.contracts[contractName] =
-      deployment.contracts[contractName] || previousModule || _createModuleData({ source });
+    await initContractData(contractName, { isModule: true });
 
-    if (!previousModule) created = true;
+    if (!previousDeployment?.general.contracts[contractName]) {
+      toAdd.push(source);
+    }
   }
 
-  return created;
+  logger.notice('The following modules are going to be deployed for the first time:');
+  toAdd.forEach((source) => logger.notice(`  ${source}`));
+
+  return toAdd.length > 0;
 }

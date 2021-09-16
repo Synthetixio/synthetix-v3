@@ -18,10 +18,9 @@ subtask(
   }
 
   // Update & create the contracts
-  for (const [contractName, contractData] of [...toUpdate, ...toCreate]) {
+  for (const contractName of [...toUpdate, ...toCreate]) {
     await hre.run(SUBTASK_DEPLOY_CONTRACT, {
       contractName,
-      contractData,
     });
   }
 
@@ -34,19 +33,19 @@ subtask(
 async function _confirmDeployments({ toSkip, toUpdate, toCreate }) {
   if (toSkip.length > 0) {
     logger.info(`There are ${toSkip.length} contracts that are already up-to-date:`);
-    toSkip.forEach(([contractName]) => logger.notice(`  ${contractName}`));
+    toSkip.forEach((contractName) => logger.notice(`  ${contractName}`));
   }
 
   if (toUpdate.length > 0) {
     logger.info(`The following ${toUpdate.length} contracts are going to be updated:`);
-    toUpdate.forEach(([contractName]) => logger.notice(`  ${contractName}`));
+    toUpdate.forEach((contractName) => logger.notice(`  ${contractName}`));
   }
 
   if (toCreate.length > 0) {
     logger.info(
       `The following ${toCreate.length} contracts are going to be deployed for the first time:`
     );
-    toCreate.forEach(([contractName]) => logger.notice(`  ${contractName}`));
+    toCreate.forEach((contractName) => logger.notice(`  ${contractName}`));
   }
 
   return await prompter.ask('Are you sure you want to make these changes?');
@@ -64,12 +63,12 @@ async function _processContracts(contracts) {
 
   for (const [contractName, contractData] of Object.entries(contracts)) {
     if (hre.network.name === 'hardhat' || !contractData.deployedAddress) {
-      toCreate.push([contractName, contractData]);
+      toCreate.push(contractName);
     } else {
       if (await isAlreadyDeployed(contractName, contractData)) {
-        toSkip.push([contractName, contractData]);
+        toSkip.push(contractName);
       } else {
-        toUpdate.push([contractName, contractData]);
+        toUpdate.push(contractName);
       }
     }
   }

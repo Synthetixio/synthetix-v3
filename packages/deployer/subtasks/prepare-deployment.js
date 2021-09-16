@@ -5,8 +5,13 @@ const { subtask } = require('hardhat/config');
 
 const prompter = require('@synthetixio/core-js/utils/prompter');
 const relativePath = require('@synthetixio/core-js/utils/relative-path');
+const getDate = require('@synthetixio/core-js/utils/get-date');
 const autosaveObject = require('../internal/autosave-object');
-const { getAllDeploymentFiles } = require('../utils/deployments');
+const {
+  getDeploymentFolder,
+  getAllDeploymentFiles,
+  getDeploymentExtendedFiles,
+} = require('../utils/deployments');
 const { SUBTASK_PREPARE_DEPLOYMENT } = require('../task-names');
 
 const DEPLOYMENT_SCHEMA = {
@@ -16,7 +21,6 @@ const DEPLOYMENT_SCHEMA = {
   },
   transactions: {},
   contracts: {},
-  file: null,
 };
 
 subtask(
@@ -25,22 +29,40 @@ subtask(
 ).setAction(async (taskArguments, hre) => {
   const { instance, alias } = taskArguments;
 
-  const deploymentsFolder = path.join(
-    hre.config.deployer.paths.deployments,
-    hre.network.name,
-    instance
-  );
+  const info = {
+    folder: hre.config.deployer.paths.deployments,
+    network: hre.network.name,
+    instance,
+  };
 
-  // Make sure the deployments folder exists
-  mkdirp.sync(deploymentsFolder);
+  const deploymentsFolder = getDeploymentFolder(info);
+  const deployments = getAllDeploymentFiles(info);
 
-  const { previousFile, currentFile } = await _determineDeploymentFiles(deploymentsFolder, alias);
+  // Make sure the deployments folders exists
+  await mkdirp(deploymentsFolder);
+  await mkdirp(path.join(deploymentsFolder, 'extended'));
 
-  hre.deployer.deployment = autosaveObject(currentFile, DEPLOYMENT_SCHEMA);
-  hre.deployer.deployment.file = relativePath(currentFile);
+  const { currentFile, previousFile } = await _determineDeploymentFiles({
+    deployments,
+    deploymentsFolder,
+    alias,
+  });
+  const { sources, abis } = getDeploymentExtendedFiles(currentFile);
+
+  hre.deployer.paths.deployment = currentFile;
+  hre.deployer.paths.sources = sources;
+  hre.deployer.paths.abis = abis;
+
+  hre.deployer.deployment = {
+    general: autosaveObject(currentFile, DEPLOYMENT_SCHEMA),
+    sources: autosaveObject(sources, {}),
+    abis: autosaveObject(abis, {}),
+  };
 
   if (previousFile) {
-    hre.deployer.previousDeployment = JSON.parse(fs.readFileSync(previousFile));
+    hre.deployer.previousDeployment = {
+      general: JSON.parse(fs.readFileSync(previousFile)),
+    };
   }
 });
 
@@ -48,10 +70,14 @@ subtask(
  * Initialize a new deployment file, or, if existant, try to continue using it.
  * @param {string} folder deployment folder where to find files
  * @param {string} [alias]
- * @returns {{ currentFile: string, previousFile: string }}
+ * @returns {{
+ *   currentName: string,
+ *   currentFile: string,
+ *   previousName: string
+ *   previousFile: string
+ * }}
  */
-async function _determineDeploymentFiles(deploymentsFolder, alias) {
-  const deployments = getAllDeploymentFiles({ folder: deploymentsFolder });
+async function _determineDeploymentFiles({ deploymentsFolder, deployments, alias }) {
   const latestFile = deployments.length > 0 ? deployments[deployments.length - 1] : null;
 
   // Check if there is an unfinished deployment and prompt the user if we should
@@ -64,10 +90,12 @@ async function _determineDeploymentFiles(deploymentsFolder, alias) {
         `Do you wish to continue the unfinished deployment "${relativePath(latestFile)}"?`
       );
 
+      const previousFile = deployments.length > 1 ? deployments[deployments.length - 2] : null;
+
       if (use) {
         return {
           currentFile: latestFile,
-          previousFile: deployments.length > 1 ? deployments[deployments.length - 2] : null,
+          previousFile,
         };
       }
     }
@@ -75,39 +103,30 @@ async function _determineDeploymentFiles(deploymentsFolder, alias) {
 
   // Check that the given alias is available
   if (alias) {
-    const file = deployments.find((file) => file.endsWith(`-${alias}.json`));
-    if (file) {
+    const exists = deployments.some((file) => file.endsWith(`-${alias}.json`));
+    if (exists) {
       throw new Error(
-        `The alias "${alias}" is already used by the deployment "${relativePath(file)}"`
+        `The alias "${alias}" is already used by the deployment "${relativePath(exists)}"`
       );
     }
   }
 
   // Get the date with format `YYYY-mm-dd`
-  const today = _getDate();
+  const today = getDate();
 
   // Calculate the next deployment number based on the previous one
   let number = '00';
-  if (latestFile && path.basename(latestFile).startsWith(today)) {
-    const previousNumber = path.basename(latestFile).slice(11, 13);
+  const latestFileName = latestFile && path.basename(latestFile);
+  if (latestFileName && latestFileName.startsWith(today)) {
+    const previousNumber = latestFileName.slice(11, 13);
     number = `${Number.parseInt(previousNumber) + 1}`.padStart(2, '0');
   }
 
-  const currentFile = path.join(
-    deploymentsFolder,
-    `${today}-${number}${alias ? `-${alias}` : ''}.json`
-  );
+  const currentName = `${today}-${number}${alias ? `-${alias}` : ''}`;
+  const currentFile = path.join(deploymentsFolder, `${currentName}.json`);
 
   return {
-    previousFile: latestFile,
     currentFile,
+    previousFile: latestFile,
   };
-}
-
-function _getDate() {
-  const now = new Date();
-  const year = `${now.getUTCFullYear()}`;
-  const month = `${now.getUTCMonth() + 1}`.padStart(2, '0');
-  const day = `${now.getUTCDate()}`.padStart(2, '0');
-  return `${year}-${month}-${day}`;
 }
