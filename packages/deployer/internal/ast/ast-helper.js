@@ -1,5 +1,17 @@
 const { findAll } = require('solidity-ast/utils');
 
+function findContractNode(nodeOrAst, contractName) {
+  const contractDefs = findAll('ContractDefinition', nodeOrAst);
+  if (contractDefs) {
+    for (const contract of contractDefs) {
+      if (contract.name === contractName) {
+        return contract;
+      }
+    }
+  }
+  return null;
+}
+
 function getSlotAddresses(contractName, ast) {
   const contractNode = findContractNode(ast, contractName);
   if (!contractNode) {
@@ -14,18 +26,6 @@ function getSlotAddresses(contractName, ast) {
   }
 
   return slots ? slots : null;
-}
-
-function findContractNode(nodeOrAst, contractName) {
-  const contractDefs = findAll('ContractDefinition', nodeOrAst);
-  if (contractDefs) {
-    for (const contract of contractDefs) {
-      if (contract.name === contractName) {
-        return contract;
-      }
-    }
-  }
-  return null;
 }
 
 function findDuplicateSlots(slots) {
