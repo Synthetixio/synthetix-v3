@@ -3,42 +3,34 @@ name: "Check package-lock.json file creation"
 on: [pull_request]
 
 jobs:
-  core-js:
+  package-lock-check:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v1
-      - name: Check file existence
-        id: check_files
+
+      - name: Check core-js
+        id: core-js
         uses: andstor/file-existence-action@v1
         with:
           files: "packages/core-js/package-lock.json"
-      - name: File exists
-        if: steps.check_files.outputs.files_exists == 'true'
-        run: echo 'Should not add package-lock.jso file to a package.'; exit 1;
-  deployer:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v1
-      - name: Check file existence
-        id: check_files
+      - name: Check deployer
+        id: deployer
         uses: andstor/file-existence-action@v1
         with:
           files: "packages/deployer/package-lock.json"
-      - name: File exists
-        if: steps.check_files.outputs.files_exists == 'true'
-        run: echo 'Should not add package-lock.jso file to a package.'; exit 1;
-  synthetix-core:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v1
-      - name: Check file existence
-        id: check_files
+      - name: Check synthetix-core
+        id: synthetix-core
         uses: andstor/file-existence-action@v1
         with:
           files: "packages/synthetix-core/package-lock.json"
-      - name: File exists
-        if: steps.check_files.outputs.files_exists == 'true'
-        run: echo 'Should not add package-lock.jso file to a package.'; exit 1;
+
+      - name: File exists on core-js
+        if: steps['core-js'].outputs.files_exists == 'true'
+        run: echo 'Should not add package-lock.json file'; exit 1;
+      - name: File exists on deployer
+        if: steps['deployer'].outputs.files_exists == 'true'
+        run: echo 'Should not add package-lock.json file'; exit 1;
+      - name: File exists on synthetix-core
+        if: steps['synthetix-core'].outputs.files_exists == 'true'
+        run: echo 'Should not add package-lock.json file'; exit 1;
