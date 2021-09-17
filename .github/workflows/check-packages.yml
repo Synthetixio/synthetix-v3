@@ -1,6 +1,6 @@
 name: "Packages dependencies definitions"
 
-on: [push, pull_request]
+on: [pull_request]
 
 jobs:
   core-js:
