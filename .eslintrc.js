@@ -18,5 +18,6 @@ module.exports = {
     quotes: ['error', 'single'],
     semi: ['error', 'always'],
     'no-inner-declarations': 'off',
+    'max-len': ['error', { code: 160, comments: 100 }],
   },
 };
