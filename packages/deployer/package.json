@@ -20,7 +20,6 @@
     "glob": "7.1.7",
     "mkdirp": "1.0.4",
     "mustache": "4.2.0",
-    "rimraf": "3.0.2",
     "solidity-ast": "0.4.26",
     "string-natural-compare": "3.0.1",
     "use-strict": "1.0.1"
