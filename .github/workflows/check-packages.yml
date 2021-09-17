@@ -1,4 +1,4 @@
-name: "Packages dependencies definitions"
+name: "Check package-lock.json file creation"
 
 on: [pull_request]
 
