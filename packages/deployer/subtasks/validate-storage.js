@@ -6,7 +6,7 @@ const {
   findDuplicateStorageNamespaces,
   findRegularStorageSlots,
   findInvalidMutationsOnNamespaces,
-} = require('../internal/ast/namespaces-validator');
+} = require('../internal/ast/storage-validator');
 const { SUBTASK_VALIDATE_STORAGE, SUBTASK_CANCEL_DEPLOYMENT } = require('../task-names');
 
 subtask(SUBTASK_VALIDATE_STORAGE).setAction(async (_, hre) => {
