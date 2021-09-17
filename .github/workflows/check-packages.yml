@@ -1,9 +1,9 @@
-name: "Check package-lock.json file creation"
+name: "Workspaces package-lock.json files"
 
 on: [pull_request]
 
 jobs:
-  package-lock-check:
+  check:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
