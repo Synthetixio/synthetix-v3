@@ -6,31 +6,5 @@ jobs:
   check:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v1
-
-      - name: Check core-js
-        id: core-js
-        uses: andstor/file-existence-action@v1
-        with:
-          files: "packages/core-js/package-lock.json"
-      - name: Check deployer
-        id: deployer
-        uses: andstor/file-existence-action@v1
-        with:
-          files: "packages/deployer/package-lock.json"
-      - name: Check synthetix-core
-        id: synthetix-core
-        uses: andstor/file-existence-action@v1
-        with:
-          files: "packages/synthetix-core/package-lock.json"
-
-      - name: File exists on core-js
-        if: steps['core-js'].outputs.files_exists == 'true'
-        run: echo 'Should not add package-lock.json file'; exit 1;
-      - name: File exists on deployer
-        if: steps['deployer'].outputs.files_exists == 'true'
-        run: echo 'Should not add package-lock.json file'; exit 1;
-      - name: File exists on synthetix-core
-        if: steps['synthetix-core'].outputs.files_exists == 'true'
-        run: echo 'Should not add package-lock.json file'; exit 1;
+      - uses: actions/checkout@v2
+      - run: bin/check-packages
