@@ -1,0 +1,10 @@
+name: "Workspaces package-lock.json files"
+
+on: [pull_request]
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - run: bin/check-packages
