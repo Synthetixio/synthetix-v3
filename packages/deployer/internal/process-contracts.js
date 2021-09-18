@@ -1,6 +1,8 @@
 const fs = require('fs/promises');
 const path = require('path');
 
+const { getContractAST } = require('./ast/ast-sources');
+
 /**
  * Initialize contract metadata on hre.deployer.deployment.*
  * @param {string} contractName
@@ -15,6 +17,7 @@ async function initContractData(contractName, general = {}) {
   const sourceCode = (
     await fs.readFile(path.resolve(hre.config.paths.root, sourceName))
   ).toString();
+  const ast = await getContractAST({ sourceName, contractName });
 
   const previousData = previousDeployment?.general.contracts[contractName] || {};
 
@@ -33,6 +36,7 @@ async function initContractData(contractName, general = {}) {
     bytecode,
     deployedBytecode,
     sourceCode,
+    ast,
   };
 }
 
