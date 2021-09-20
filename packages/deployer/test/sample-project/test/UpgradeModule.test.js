@@ -9,10 +9,10 @@ const { findEvent } = require('@synthetixio/core-js/utils/events');
 describe('UpgradeModule', () => {
   bootstrap();
 
-  let UpgradeModule;
+  let UpgradeModule, OwnerModule;
 
   let owner, user;
-  let routerAddress;
+  let proxyAddress, routerAddress;
 
   before('identify signers', async () => {
     [owner, user] = await ethers.getSigners();
@@ -24,9 +24,10 @@ describe('UpgradeModule', () => {
 
   before('identify modules', async () => {
     routerAddress = getRouterAddress();
-    const proxyAddress = getProxyAddress();
+    proxyAddress = getProxyAddress();
 
     UpgradeModule = await ethers.getContractAt('UpgradeModule', proxyAddress);
+    OwnerModule = await ethers.getContractAt('OwnerModule', proxyAddress);
   });
 
   describe('when the system is deployed', () => {
@@ -78,6 +79,68 @@ describe('UpgradeModule', () => {
 
     it('shows that the current implementation is correct', async () => {
       assert.equal(await UpgradeModule.getImplementation(), routerAddress);
+    });
+  });
+
+  describe('when attempting to destroy the implementation with a malicious contract', () => {
+    let destroyer;
+
+    let OwnerModuleImpl, UpgradeModuleImpl;
+
+    before('deploy the malicious contract', async () => {
+      const factory = await ethers.getContractFactory('Destroyer');
+      destroyer = await factory.deploy();
+    });
+
+    before('identify implementation modules', async () => {
+      OwnerModuleImpl = await ethers.getContractAt('OwnerModule', routerAddress);
+      UpgradeModuleImpl = await ethers.getContractAt('UpgradeModule', routerAddress);
+    });
+
+    it('shows that the owner of the implementation is address(0)', async () => {
+      assert.equal(await OwnerModuleImpl.getOwner(), '0x0000000000000000000000000000000000000000');
+    });
+
+    it('shows that the implementation of the implementation is address(0)', async () => {
+      assert.equal(await UpgradeModuleImpl.getImplementation(), '0x0000000000000000000000000000000000000000');
+    });
+
+    describe('when owning the implementation', () => {
+      before('own the implementation', async function() {
+        let tx;
+
+        tx = await OwnerModuleImpl.connect(user).nominateOwner(user.address);
+        await tx.wait();
+
+        tx = await OwnerModuleImpl.connect(user).acceptOwnership();
+        await tx.wait();
+      });
+
+      it('shows that the user is now the owner of the implementation', async () => {
+        assert.equal(await OwnerModuleImpl.getOwner(), user.address);
+      });
+
+      describe('when upgrading the implementation of the implementation to the destroyer', () => {
+        before('upgrade the implementation', async () => {
+          const tx = await UpgradeModuleImpl.connect(user).upgradeTo(destroyer.address);
+          await tx.wait();
+        });
+
+        it('shows that the code of the implementation is null', async () => {
+          const code = await ethers.provider.getCode(routerAddress);
+
+          assert.equal(code, '0x');
+        });
+
+        describe('when trying to read the owner from the proxy', () => {
+          it('reverts', async () => {
+            await assertRevert(
+              OwnerModule.getOwner(),
+              'call revert exception'
+            );
+          });
+        });
+      });
     });
   });
 });
