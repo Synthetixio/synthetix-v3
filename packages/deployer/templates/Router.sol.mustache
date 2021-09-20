@@ -13,9 +13,18 @@ pragma solidity ^0.8.0;
 // GENERATED CODE - do not edit manually!!
 // --------------------------------------------------------------------------------
 // --------------------------------------------------------------------------------
+import "./IRouter.sol"; 
 
-contract {{{moduleName}}} {
+contract {{{moduleName}}} is IRouter{
     {{{modules}}}
+
+    {{{moduleNames}}}
+
+    function getModuleAddress(bytes32 name) external override pure returns (address) {
+        {{{resolver}}}
+
+        revert("Unknown ID");
+    }
 
     fallback() external payable {
         // Lookup table: Function selector => implementation contract

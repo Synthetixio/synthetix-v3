@@ -45,6 +45,8 @@ subtask(
     moduleName: routerName,
     modules: _renderModules(modules),
     selectors: _renderSelectors({ binaryData }),
+    moduleNames: _renderModuleNames(modules),
+    resolver: _renderResolver(modules),
   });
 
   logger.debug(`Generated source: ${generatedSource}`);
@@ -108,6 +110,30 @@ function _renderModules(modules) {
       const { deployedAddress } = moduleData;
       lines.push(
         `${TAB}address private constant ${_toPrivateConstantCase(moduleName)} = ${deployedAddress};`
+      );
+      return lines;
+    }, [])
+    .join('\n')
+    .trim();
+}
+
+function _renderModuleNames(modules) {
+  return Object.entries(modules)
+    .reduce((lines, [moduleName]) => {
+      lines.push(
+        `${TAB}bytes32 private constant ${_toPrivateConstantCase(moduleName+'Name')} = "${moduleName}";`
+      );
+      return lines;
+    }, [])
+    .join('\n')
+    .trim();
+}
+
+function _renderResolver(modules) {
+  return Object.entries(modules)
+    .reduce((lines, [moduleName]) => {
+      lines.push(
+        `${TAB}${TAB}if (name == ${_toPrivateConstantCase(moduleName+'Name')} ) return ${_toPrivateConstantCase(moduleName)};`
       );
       return lines;
     }, [])

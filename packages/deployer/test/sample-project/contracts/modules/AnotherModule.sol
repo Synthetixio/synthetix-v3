@@ -1,9 +1,9 @@
 //SPDX-License-Identifier: Unlicense
 pragma solidity ^0.8.0;
 
-import "../storage/GlobalNamespace.sol";
 import "../mixins/CommsMixin.sol";
 import "./SomeModule.sol";
+import "../IRouter.sol";
 
 contract AnotherModule is CommsMixin {
     /*
@@ -26,7 +26,25 @@ contract AnotherModule is CommsMixin {
 
     /* MUTATIVE FUNCTIONS */
 
+    bytes32 private constant _SOME_MODULE_NAME = "SomeModule";
+
+    function _bytesToAddress(bytes memory bytesAddress) private pure returns (address addr) {
+        assembly {
+            addr := mload(add(bytesAddress, 32))
+        } 
+    }
+
+    function _getModuleAddress() private view returns (address addr) {
+        (,bytes memory data) =
+                address(this).staticcall(abi.encodeWithSelector(IRouter.getModuleAddress.selector, _SOME_MODULE_NAME));
+
+        addr = _bytesToAddress(data);
+    }
+
     function setSomeValueOnSomeModule(uint newValue) public {
-        _intermoduleCall(abi.encodeWithSelector(SomeModule.setSomeValue.selector, newValue));
+
+        (bool success,) = _getModuleAddress().delegatecall(abi.encodeWithSelector(SomeModule.setSomeValue.selector, newValue));
+
+        require(success, "Intermodule call failed");
     }
 }
