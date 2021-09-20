@@ -31,19 +31,21 @@ contract AnotherModule is CommsMixin {
     function _bytesToAddress(bytes memory bytesAddress) private pure returns (address addr) {
         assembly {
             addr := mload(add(bytesAddress, 32))
-        } 
+        }
     }
 
     function _getModuleAddress() private view returns (address addr) {
-        (,bytes memory data) =
-                address(this).staticcall(abi.encodeWithSelector(IRouter.getModuleAddress.selector, _SOME_MODULE_NAME));
+        (, bytes memory data) = address(this).staticcall(
+            abi.encodeWithSelector(IRouter.getModuleAddress.selector, _SOME_MODULE_NAME)
+        );
 
         addr = _bytesToAddress(data);
     }
 
     function setSomeValueOnSomeModule(uint newValue) public {
-
-        (bool success,) = _getModuleAddress().delegatecall(abi.encodeWithSelector(SomeModule.setSomeValue.selector, newValue));
+        (bool success, ) = _getModuleAddress().delegatecall(
+            abi.encodeWithSelector(SomeModule.setSomeValue.selector, newValue)
+        );
 
         require(success, "Intermodule call failed");
     }

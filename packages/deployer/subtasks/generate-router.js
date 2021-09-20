@@ -121,7 +121,9 @@ function _renderModuleNames(modules) {
   return Object.entries(modules)
     .reduce((lines, [moduleName]) => {
       lines.push(
-        `${TAB}bytes32 private constant ${_toPrivateConstantCase(moduleName+'Name')} = "${moduleName}";`
+        `${TAB}bytes32 private constant ${_toPrivateConstantCase(
+          moduleName + 'Name'
+        )} = "${moduleName}";`
       );
       return lines;
     }, [])
@@ -133,7 +135,9 @@ function _renderResolver(modules) {
   return Object.entries(modules)
     .reduce((lines, [moduleName]) => {
       lines.push(
-        `${TAB}${TAB}if (name == ${_toPrivateConstantCase(moduleName+'Name')} ) return ${_toPrivateConstantCase(moduleName)};`
+        `${TAB}${TAB}if (name == ${_toPrivateConstantCase(
+          moduleName + 'Name'
+        )} ) return ${_toPrivateConstantCase(moduleName)};`
       );
       return lines;
     }, [])
