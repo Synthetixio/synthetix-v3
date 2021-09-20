@@ -4,15 +4,25 @@ pragma solidity ^0.8.0;
 import "../mixins/OwnerMixin.sol";
 
 contract OwnerModule is OwnerMixin {
+    /* MODIFIERS */
+
+    modifier onlyOwnerIfSet() {
+        address owner = _ownerStorage().owner;
+        if (owner != address(0)) {
+            require(msg.sender == _ownerStorage().owner, "Only owner allowed");
+        }
+        _;
+    }
+
     /* MUTATIVE FUNCTIONS */
 
-    function nominateOwner(address newNominatedOwner) public onlyOwner {
+    function nominateOwner(address newNominatedOwner) public onlyOwnerIfSet {
         require(newNominatedOwner != address(0), "Invalid nominated owner address");
 
         _ownerStorage().nominatedOwner = newNominatedOwner;
     }
 
-    function rejectNomination() public onlyOwner {
+    function rejectNomination() public onlyOwnerIfSet {
         OwnerStorage storage store = _ownerStorage();
 
         require(store.nominatedOwner != address(0), "No nomination to reject");

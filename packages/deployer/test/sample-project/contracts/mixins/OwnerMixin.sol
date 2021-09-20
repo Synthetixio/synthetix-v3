@@ -7,10 +7,7 @@ contract OwnerMixin is OwnerNamespace {
     /* MODIFIERS */
 
     modifier onlyOwner() {
-        address owner = _ownerStorage().owner;
-        if (owner != address(0)) {
-            require(msg.sender == _ownerStorage().owner, "Only owner allowed");
-        }
+        require(msg.sender == _ownerStorage().owner, "Only owner allowed");
         _;
     }
 }
