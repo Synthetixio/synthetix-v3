@@ -7,7 +7,8 @@
     "utils/*"
   ],
   "scripts": {
-    "test": "mocha --parallel 'test/**/*.test.js'"
+    "test": "mocha",
+    "test:watch": "mocha --watch"
   },
   "keywords": [],
   "author": "",
