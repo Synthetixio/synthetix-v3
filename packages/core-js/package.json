@@ -3,8 +3,11 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
+  "files": [
+    "utils/*"
+  ],
   "scripts": {
-    "test": "echo \"Warning: no test specified on @synthetixio/core-js\""
+    "test": "mocha --parallel 'test/**/*.test.js'"
   },
   "keywords": [],
   "author": "",
@@ -13,5 +16,8 @@
     "chalk": "4.1.2",
     "ethers": "5.4.6",
     "inquirer": "8.1.2"
+  },
+  "devDependencies": {
+    "mocha": "9.1.1"
   }
 }
