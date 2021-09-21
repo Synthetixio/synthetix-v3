@@ -23,6 +23,18 @@ const logger = require('@synthetixio/core-js/utils/logger');
 const prompter = require('@synthetixio/core-js//utils/prompter');
 const types = require('../internal/argument-types');
 
+async function traceBalance(msg, hre) {
+  console.log(msg);
+
+  const signers = await hre.ethers.getSigners();
+  const signer = signers[0];
+  const balance = await hre.ethers.provider.getBalance(signer.address);
+  console.log(
+    signer.address,
+    ethers.utils.formatEther(balance)
+  );
+}
+
 task(TASK_DEPLOY, 'Deploys all system modules')
   .addFlag('noConfirm', 'Skip all confirmation prompts', false)
   .addFlag('debug', 'Display debug logs', false)
@@ -48,6 +60,8 @@ task(TASK_DEPLOY, 'Deploys all system modules')
       await hre.run(SUBTASK_CLEAR_DEPLOYMENTS, taskArguments);
     }
 
+    await traceBalance(1, hre);
+
     await hre.run(SUBTASK_PREPARE_DEPLOYMENT, taskArguments);
     await hre.run(SUBTASK_PRINT_INFO, taskArguments);
     await hre.run(TASK_COMPILE, { force: false, quiet: true });
@@ -55,9 +69,15 @@ task(TASK_DEPLOY, 'Deploys all system modules')
     await hre.run(SUBTASK_VALIDATE_STORAGE);
     await hre.run(SUBTASK_VALIDATE_MODULES);
     await hre.run(SUBTASK_DEPLOY_MODULES);
+
+    await traceBalance(2, hre);
+
     await hre.run(SUBTASK_GENERATE_ROUTER_SOURCE);
     await hre.run(SUBTASK_VALIDATE_ROUTER);
     await hre.run(TASK_COMPILE, { force: false, quiet: true });
+
+    await traceBalance(3, hre);
+
     await hre.run(SUBTASK_DEPLOY_ROUTER);
     await hre.run(SUBTASK_UPGRADE_PROXY);
     await hre.run(SUBTASK_FINALIZE_DEPLOYMENT);
