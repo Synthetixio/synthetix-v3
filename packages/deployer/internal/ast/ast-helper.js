@@ -1,6 +1,6 @@
 const { findAll } = require('solidity-ast/utils');
 
-function findContractNode(nodeOrAst, contractName) {
+function findContractNode(contractName, nodeOrAst) {
   const contractDefs = findAll('ContractDefinition', nodeOrAst);
   if (contractDefs) {
     for (const contract of contractDefs) {
@@ -13,7 +13,7 @@ function findContractNode(nodeOrAst, contractName) {
 }
 
 function getSlotAddresses(contractName, ast) {
-  const contractNode = findContractNode(ast, contractName);
+  const contractNode = findContractNode(contractName, ast);
   if (!contractNode) {
     return null;
   }
@@ -47,7 +47,25 @@ function findDuplicateSlots(slots) {
 
   return ocurrences.length > 0 ? ocurrences : null;
 }
+
+function getCaseSelectors(contractName, ast) {
+  const contractNode = findContractNode(contractName, ast);
+  if (!contractNode) {
+    return null;
+  }
+
+  const items = [];
+  for (const assignment of findAll('YulCase', contractNode)) {
+    if (assignment.value === 'default') continue;
+    if (assignment.value.value === '0') continue;
+    items.push(assignment.value.value);
+  }
+
+  return items ? items : null;
+}
+
 module.exports = {
-  getSlotAddresses,
   findDuplicateSlots,
+  getCaseSelectors,
+  getSlotAddresses,
 };
