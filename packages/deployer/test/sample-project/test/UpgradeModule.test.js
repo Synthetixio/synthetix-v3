@@ -46,7 +46,7 @@ describe('UpgradeModule', () => {
     it('reverts', async () => {
       await assertRevert(
         UpgradeModule.connect(owner).upgradeTo(owner.address),
-        'Invalid: not a contract'
+        'Implementation not a contract'
       );
     });
   });
@@ -58,7 +58,7 @@ describe('UpgradeModule', () => {
 
       await assertRevert(
         UpgradeModule.connect(owner).upgradeTo(someSterileContractAddress),
-        'brick upgrade'
+        'Implementation cannot upgrade'
       );
     });
   });
@@ -102,11 +102,14 @@ describe('UpgradeModule', () => {
     });
 
     it('shows that the implementation of the implementation is address(0)', async () => {
-      assert.equal(await UpgradeModuleImpl.getImplementation(), '0x0000000000000000000000000000000000000000');
+      assert.equal(
+        await UpgradeModuleImpl.getImplementation(),
+        '0x0000000000000000000000000000000000000000'
+      );
     });
 
     describe('when owning the implementation', () => {
-      before('own the implementation', async function() {
+      before('own the implementation', async function () {
         let tx;
 
         tx = await OwnerModuleImpl.connect(user).nominateOwner(user.address);
@@ -120,25 +123,22 @@ describe('UpgradeModule', () => {
         assert.equal(await OwnerModuleImpl.getOwner(), user.address);
       });
 
-      describe('when upgrading the implementation of the implementation to the destroyer', () => {
-        before('upgrade the implementation', async () => {
-          const tx = await UpgradeModuleImpl.connect(user).upgradeTo(destroyer.address);
-          await tx.wait();
+      describe('when trying to upgrade the implementation of the implementation to the destroyer', () => {
+        it('reverts', async () => {
+          await assertRevert(
+            UpgradeModuleImpl.connect(user).upgradeTo(destroyer.address),
+            'Implementation is sterile'
+          );
         });
 
-        it('shows that the code of the implementation is null', async () => {
+        it('shows that the code of the implementation is not null', async () => {
           const code = await ethers.provider.getCode(routerAddress);
 
-          assert.equal(code, '0x');
+          assert.notEqual(code, '0x');
         });
 
-        describe('when trying to read the owner from the proxy', () => {
-          it('reverts', async () => {
-            await assertRevert(
-              OwnerModule.getOwner(),
-              'call revert exception'
-            );
-          });
+        it('shows that the proxy is still responsive', async () => {
+          assert.equal(await OwnerModule.getOwner(), owner.address);
         });
       });
     });
