@@ -58,7 +58,7 @@ describe('UpgradeModule', () => {
 
       await assertRevert(
         UpgradeModule.connect(owner).upgradeTo(someSterileContractAddress),
-        'Implementation cannot upgrade'
+        'Implementation is sterile'
       );
     });
   });
