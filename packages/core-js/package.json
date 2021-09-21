@@ -7,7 +7,7 @@
     "utils/*"
   ],
   "scripts": {
-    "test": "mocha",
+    "test": "nyc mocha",
     "test:watch": "mocha --watch"
   },
   "keywords": [],
@@ -19,6 +19,7 @@
     "inquirer": "8.1.2"
   },
   "devDependencies": {
-    "mocha": "9.1.1"
+    "mocha": "9.1.1",
+    "nyc": "15.1.0"
   }
 }
