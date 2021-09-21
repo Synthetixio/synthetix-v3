@@ -1,5 +1,4 @@
 {
-  "all": true,
   "include": ["utils/**/*.js"],
   "check-coverage": true
 }
