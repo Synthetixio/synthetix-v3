@@ -2,11 +2,15 @@ const { subtask } = require('hardhat/config');
 const logger = require('@synthetixio/core-js/utils/logger');
 const { getSourcesAST } = require('../internal/ast/ast-sources');
 const {
-  findDuplicateSelectorsCompiled,
-  findMissingSelectors,
-  findMissingSelectorsCompiled,
-  findUnreachableSelectorsCompiled,
+  findDuplicateSelectorsInAST,
+  findMissingSelectorsInAST,
+  findUnreachableSelectorsInAST,
 } = require('../internal/ast/router-validator');
+const {
+  findMissingSelectorsInSource,
+  findRepeatedSelectorsInSource,
+  findWrongSelectorsInSource,
+} = require('../internal/router-source-validator');
 
 const { SUBTASK_VALIDATE_ROUTER, SUBTASK_CANCEL_DEPLOYMENT } = require('../task-names');
 
@@ -18,13 +22,21 @@ subtask(
 
   const { contracts } = await getSourcesAST(hre);
 
-  let errorsFound;
-  errorsFound = (await findMissingSelectors()) || errorsFound;
-  errorsFound = (await findMissingSelectorsCompiled(contracts)) || errorsFound;
-  errorsFound = (await findUnreachableSelectorsCompiled(contracts)) || errorsFound;
-  errorsFound = (await findDuplicateSelectorsCompiled(contracts)) || errorsFound;
+  let errorsFound = [];
+  // Source Code checking
+  errorsFound.push(...(await findMissingSelectorsInSource()));
+  errorsFound.push(...(await findRepeatedSelectorsInSource()));
+  errorsFound.push(...(await findWrongSelectorsInSource()));
 
-  if (errorsFound) {
+  // AST checking
+  errorsFound.push(...(await findMissingSelectorsInAST(contracts)));
+  errorsFound.push(...(await findUnreachableSelectorsInAST(contracts)));
+  errorsFound.push(...(await findDuplicateSelectorsInAST(contracts)));
+
+  if (errorsFound.length > 0) {
+    errorsFound.forEach((error) => {
+      logger.error(error.msg);
+    });
     logger.error('Router is not valid');
     return await hre.run(SUBTASK_CANCEL_DEPLOYMENT);
   }
