@@ -5,7 +5,7 @@ const {
   findDuplicateSelectorsInAST,
   findMissingSelectorsInAST,
   findUnreachableSelectorsInAST,
-} = require('../internal/ast/router-validator');
+} = require('../internal/ast/router-ast-validator');
 const {
   findMissingSelectorsInSource,
   findRepeatedSelectorsInSource,
@@ -22,23 +22,34 @@ subtask(
 
   const { contracts } = await getSourcesAST(hre);
 
-  let errorsFound = [];
+  let sourceErrorsFound = [];
+  let astErrorsFound = [];
   // Source Code checking
-  errorsFound.push(...(await findMissingSelectorsInSource()));
-  errorsFound.push(...(await findRepeatedSelectorsInSource()));
-  errorsFound.push(...(await findWrongSelectorsInSource()));
-
-  // AST checking
-  errorsFound.push(...(await findMissingSelectorsInAST(contracts)));
-  errorsFound.push(...(await findUnreachableSelectorsInAST(contracts)));
-  errorsFound.push(...(await findDuplicateSelectorsInAST(contracts)));
-
-  if (errorsFound.length > 0) {
-    errorsFound.forEach((error) => {
+  logger.info('Validating Router source code');
+  sourceErrorsFound.push(...(await findMissingSelectorsInSource()));
+  sourceErrorsFound.push(...(await findRepeatedSelectorsInSource()));
+  sourceErrorsFound.push(...(await findWrongSelectorsInSource()));
+  if (sourceErrorsFound.length > 0) {
+    sourceErrorsFound.forEach((error) => {
       logger.error(error.msg);
     });
+  }
+
+  // AST checking
+  logger.info('Validating Router compiled code');
+  astErrorsFound.push(...(await findMissingSelectorsInAST(contracts)));
+  astErrorsFound.push(...(await findUnreachableSelectorsInAST(contracts)));
+  astErrorsFound.push(...(await findDuplicateSelectorsInAST(contracts)));
+  if (astErrorsFound.length > 0) {
+    astErrorsFound.forEach((error) => {
+      logger.error(error.msg);
+    });
+  }
+
+  if (sourceErrorsFound.length > 0 || astErrorsFound.length > 0) {
     logger.error('Router is not valid');
     return await hre.run(SUBTASK_CANCEL_DEPLOYMENT);
   }
+
   logger.checked('Router is valid');
 });

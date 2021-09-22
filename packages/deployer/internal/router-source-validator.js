@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const relativePath = require('@synthetixio/core-js/utils/relative-path');
-const { getContractSelectors } = require('./contract-helper');
+const { getModulesSelectors } = require('./contract-helper');
 
 function getRouterSource() {
   const routerPath = path.join(
@@ -14,20 +14,20 @@ function getRouterSource() {
 }
 
 async function findRepeatedSelectorsInSource() {
-  const moduleSelectors = await getContractSelectors(true);
+  const moduleSelectors = await getModulesSelectors();
   const source = getRouterSource();
 
   const errors = [];
   moduleSelectors.forEach((moduleSelector) => {
-    const regex = `(:?\\s|^)case ${moduleSelector.selector.selector}\\s.+`;
+    const regex = `(:?\\s|^)case ${moduleSelector.selector}\\s.+`;
     const matches = source.match(new RegExp(regex, 'gm'));
 
     if (matches && matches.length > 1) {
-      if (!errors.some((value) => value.selector === moduleSelector.selector.selector)) {
+      if (!errors.some((value) => value.selector === moduleSelector.selector)) {
         errors.push({
-          msg: `Selector case found ${matches.length} times instead of the expected single time. Regex: ${regex}. Matches: ${matches}`,
+          msg: `Selector case ${moduleSelector.selector} found ${matches.length} times instead of the expected single time. Matches: ${matches}`,
           repeatedInRouter: true,
-          selector: moduleSelector.selector.selector,
+          selector: moduleSelector.selector,
         });
       }
     }
@@ -36,17 +36,17 @@ async function findRepeatedSelectorsInSource() {
 }
 
 async function findMissingSelectorsInSource() {
-  const moduleSelectors = await getContractSelectors(true);
+  const moduleSelectors = await getModulesSelectors();
   const source = getRouterSource();
 
   const errors = [];
   moduleSelectors.forEach((moduleSelector) => {
-    const regex = `(:?\\s|^)case ${moduleSelector.selector.selector}\\s.+`;
+    const regex = `(:?\\s|^)case ${moduleSelector.selector}\\s.+`;
     const matches = source.match(new RegExp(regex, 'gm'));
 
     if (!matches || matches.length < 1) {
       errors.push({
-        msg: `Selector for ${moduleSelector.contractName}.${moduleSelector.selector.name} not found in router`,
+        msg: `Selector for ${moduleSelector.contractName}.${moduleSelector.name} not found in router`,
         moduleSelector,
         missingInRouter: true,
       });
@@ -56,12 +56,12 @@ async function findMissingSelectorsInSource() {
 }
 
 async function findWrongSelectorsInSource() {
-  const moduleSelectors = await getContractSelectors(true);
+  const moduleSelectors = await getModulesSelectors();
   const source = getRouterSource();
 
   const errors = [];
   moduleSelectors.forEach((moduleSelector) => {
-    const regex = `(:?\\s|^)case ${moduleSelector.selector.selector}\\s.+`;
+    const regex = `(:?\\s|^)case ${moduleSelector.selector}\\s.+`;
     const matches = source.match(new RegExp(regex, 'gm'));
 
     if (!matches) return;

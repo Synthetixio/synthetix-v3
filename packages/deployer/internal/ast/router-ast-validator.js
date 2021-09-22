@@ -1,17 +1,16 @@
 const { getCaseSelectors } = require('./ast-helper');
-const { getContractSelectors } = require('../contract-helper');
+const { getModulesSelectors } = require('../contract-helper');
 const logger = require('@synthetixio/core-js/utils/logger');
 
 async function findMissingSelectorsInAST(contracts) {
-  const contractsSelectors = await getContractSelectors(true);
-
+  const contractsSelectors = await getModulesSelectors();
   const routerSelectors = getCaseSelectors('Router', contracts['Router']);
 
   const errors = [];
   contractsSelectors.forEach((contractSelector) => {
-    if (!routerSelectors.includes(contractSelector.selector.selector)) {
+    if (!routerSelectors.includes(contractSelector.selector)) {
       errors.push({
-        msg: `${contractSelector.moduleName}.${contractSelector.selector.name} selector not found in the router`,
+        msg: `Selector for ${contractSelector.contractName}.${contractSelector.name} not found in the router`,
         contractSelector,
         missingInRouter: true,
       });
@@ -19,9 +18,9 @@ async function findMissingSelectorsInAST(contracts) {
   });
 
   routerSelectors.forEach((routerSelector) => {
-    if (!contractsSelectors.some((item) => item.selector.selector === routerSelector)) {
+    if (!contractsSelectors.some((item) => item.selector === routerSelector)) {
       errors.push({
-        msg: `${routerSelector} selector in router not found in contracts`,
+        msg: `Selector ${routerSelector} is present in router but not found in contracts`,
         routerSelector,
         onlyInRouter: true,
       });

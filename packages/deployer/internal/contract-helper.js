@@ -31,6 +31,12 @@ async function getAllSelectors(contractNames) {
   });
 }
 
+async function getModulesSelectors() {
+  const contracts = filterValues(hre.deployer.deployment.general.contracts, (c) => c.isModule);
+  const contractsNames = Object.keys(contracts);
+  return await getAllSelectors(contractsNames);
+}
+
 function findDuplicateSelectors(selectors) {
   const duplicates = selectors
     .map((s) => s.selector)
@@ -52,26 +58,10 @@ function findDuplicateSelectors(selectors) {
   return ocurrences.length > 0 ? ocurrences : null;
 }
 
-async function getContractSelectors(onlyModules) {
-  const contracts = onlyModules
-    ? filterValues(hre.deployer.deployment.general.contracts, (c) => c.isModule)
-    : hre.deployer.deployment.general.contracts;
-  const contractsNames = Object.keys(contracts);
-
-  const contractSelectors = [];
-  for (const contractName of contractsNames) {
-    const contractArtifacts = await hre.artifacts.readArtifact(contractName);
-    const selectors = await getSelectors(contractArtifacts.abi);
-    selectors.forEach((selector) => {
-      contractSelectors.push({ selector, contractName });
-    });
-  }
-  return contractSelectors;
-}
 
 module.exports = {
   findDuplicateSelectors,
   getAllSelectors,
-  getContractSelectors,
+  getModulesSelectors,
   isAlreadyDeployed,
 };
