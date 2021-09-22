@@ -8,7 +8,7 @@
   ],
   "scripts": {
     "test": "mocha",
-    "test:coverage": "nyc --reporter=lcov mocha",
+    "test:coverage": "nyc -r lcov -r text mocha",
     "test:watch": "mocha --watch"
   },
   "keywords": [],
