@@ -7,7 +7,8 @@
     "utils/*"
   ],
   "scripts": {
-    "test": "nyc mocha",
+    "test": "mocha",
+    "test:coverage": "nyc --reporter=lcov mocha",
     "test:watch": "mocha --watch"
   },
   "keywords": [],
