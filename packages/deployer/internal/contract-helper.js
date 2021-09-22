@@ -1,5 +1,6 @@
 const { deployedContractHasBytescode } = require('@synthetixio/core-js/utils/contracts');
 const { getSelectors } = require('@synthetixio/core-js/utils/contracts');
+const filterValues = require('filter-values');
 
 async function isAlreadyDeployed(contractName, deploymentData) {
   if (!deploymentData.deployedAddress) {
@@ -30,6 +31,12 @@ async function getAllSelectors(contractNames) {
   });
 }
 
+async function getModulesSelectors() {
+  const contracts = filterValues(hre.deployer.deployment.general.contracts, (c) => c.isModule);
+  const contractsNames = Object.keys(contracts);
+  return await getAllSelectors(contractsNames);
+}
+
 function findDuplicateSelectors(selectors) {
   const duplicates = selectors
     .map((s) => s.selector)
@@ -52,7 +59,8 @@ function findDuplicateSelectors(selectors) {
 }
 
 module.exports = {
-  isAlreadyDeployed,
-  getAllSelectors,
   findDuplicateSelectors,
+  getAllSelectors,
+  getModulesSelectors,
+  isAlreadyDeployed,
 };
