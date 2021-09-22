@@ -23,10 +23,13 @@ async function findRepeatedSelectorsInSource() {
     const matches = source.match(new RegExp(regex, 'gm'));
 
     if (matches && matches.length > 1) {
-      errors.push({
-        msg: `Selector case found ${matches.length} times instead of the expected single time. Regex: ${regex}. Matches: ${matches}`,
-        repeatedInRouter: true,
-      });
+      if (!errors.some((value) => value.selector === moduleSelector.selector.selector)){
+        errors.push({
+          msg: `Selector case found ${matches.length} times instead of the expected single time. Regex: ${regex}. Matches: ${matches}`,
+          repeatedInRouter: true,
+          selector: moduleSelector.selector.selector,
+        });  
+      }
     }
   });
   return errors;
