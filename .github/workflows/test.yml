@@ -10,4 +10,7 @@ jobs:
           node-version: "16.8.0"
           cache: "npm"
       - run: npm ci
-      - run: npm run --workspaces test
+      - name: Execute tests
+        run: npm run --workspaces test
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v2
