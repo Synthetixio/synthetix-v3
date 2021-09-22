@@ -14,14 +14,18 @@ subtask(SUBTASK_VALIDATE_STORAGE).setAction(async (_, hre) => {
 
   const { contracts } = await getSourcesAST(hre);
 
-  let errorsFound;
-  errorsFound = findDuplicateStorageNamespaces(contracts) || errorsFound;
-  errorsFound = findRegularStorageSlots(contracts) || errorsFound;
-  errorsFound = findInvalidMutationsOnNamespaces(contracts) || errorsFound;
+  let errorsFound = [];
+  errorsFound.push(... findDuplicateStorageNamespaces(contracts));
+  errorsFound.push(... findRegularStorageSlots(contracts));
+  errorsFound.push(... findInvalidMutationsOnNamespaces(contracts));
 
-  if (errorsFound) {
-    logger.error('Storate usage is not valid');
+  if (errorsFound.length > 0) {
+    errorsFound.forEach((error) => {
+      logger.error(error.msg);
+    });
+
     return await hre.run(SUBTASK_CANCEL_DEPLOYMENT);
   }
+
   logger.checked('Namespaces are valid');
 });

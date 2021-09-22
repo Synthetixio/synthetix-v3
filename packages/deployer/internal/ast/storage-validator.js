@@ -11,28 +11,33 @@ function findDuplicateStorageNamespaces(contracts) {
   }
   const duplicates = findDuplicateSlots(slots);
 
+  const errors = [];
   if (duplicates) {
     const details = duplicates.map(
       (d) => `  > ${d.address} found in storage contracts ${d.contracts}\n`
     );
 
-    logger.error(`Duplicate Namespaces found!\n${details.join('')}`);
+    errors.push({
+      msg: `Duplicate Namespaces found!\n${details.join('')}`,
+    });
   }
-  return duplicates;
+
+  return errors;
 }
 
 function findRegularStorageSlots() {
-  logger.warn(
+  logger.info(
     'Storage definition is reserved to namespace mixins. BE AWARE THIS IS NOT NOT AUTOMATICALLY VERIFIED AT THE MOMENT'
   );
-  return null;
+
+  return [];
 }
 
 function findInvalidMutationsOnNamespaces() {
-  logger.warn(
+  logger.info(
     'Append is the only update enabled on Namespaces. BE AWARE THIS IS NOT NOT AUTOMATICALLY VERIFIED AT THE MOMENT'
   );
-  return null;
+  return [];
 }
 
 module.exports = {
