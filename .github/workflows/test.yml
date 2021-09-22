@@ -15,4 +15,4 @@ jobs:
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v2
         with:
-          directory: packages/*
+          files: packages/core-js/coverage/lcov.info
