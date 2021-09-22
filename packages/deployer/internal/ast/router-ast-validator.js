@@ -31,12 +31,12 @@ async function findMissingSelectorsInAST(contracts) {
 }
 
 async function findUnreachableSelectorsInAST() {
-  logger.info('Unreachable selectors not checked yet in compiled router');
+  logger.info('  Unreachable selectors not checked yet in compiled router');
   return [];
 }
 
 async function findDuplicateSelectorsInAST() {
-  logger.info('Duplicated selectors not checked yet in compiled router');
+  logger.info('  Duplicated selectors not checked yet in compiled router');
   return [];
 }
 

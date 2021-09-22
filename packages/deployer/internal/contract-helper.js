@@ -58,7 +58,6 @@ function findDuplicateSelectors(selectors) {
   return ocurrences.length > 0 ? ocurrences : null;
 }
 
-
 module.exports = {
   findDuplicateSelectors,
   getAllSelectors,
