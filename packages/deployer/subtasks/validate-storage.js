@@ -26,5 +26,5 @@ subtask(SUBTASK_VALIDATE_STORAGE).setAction(async (_, hre) => {
     return await hre.run(SUBTASK_CANCEL_DEPLOYMENT);
   }
 
-  logger.checked('Namespaces are valid');
+  logger.checked('Storage layout is valid');
 });

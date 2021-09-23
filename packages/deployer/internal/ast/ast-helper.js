@@ -14,7 +14,7 @@ function findContractNode(contractName, nodeOrAst) {
 
 function findContractNodeWithId(contractId, contracts) {
   for (var [contractName, contractAST] of Object.entries(contracts)) {
-    const contractNode = findContractNode(contractName, contracts[contractName]);
+    const contractNode = findContractNode(contractName, contractAST);
 
     if (contractNode.id === contractId) {
       return contractNode;
@@ -111,10 +111,11 @@ function getCaseSelectors(contractName, ast) {
 }
 
 module.exports = {
-  findContractNode,
   findDuplicateSlots,
   getCaseSelectors,
   getSlotAddresses,
+  findContractNode,
+  findContractNodeWithId,
   findStateVariables,
   findDependenciesOf,
 };
