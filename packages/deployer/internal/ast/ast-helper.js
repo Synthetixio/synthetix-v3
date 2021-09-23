@@ -130,11 +130,11 @@ async function getContractsStructMap(contractNodes) {
 
 module.exports = {
   findDuplicateSlots,
-  getContractsStructMap,
   getCaseSelectors,
   getSlotAddresses,
   findContractNode,
   findContractNodeWithId,
   findStateVariables,
   findDependenciesOf,
+  getContractsStructMap,
 };
