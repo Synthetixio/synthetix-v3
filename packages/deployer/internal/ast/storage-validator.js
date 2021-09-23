@@ -53,7 +53,7 @@ function findUnsafeStorageUsageInModules(contracts) {
   candidates.forEach((contractName) => {
     const vars = findStateVariables(contractName, contracts[contractName]);
     if (vars) {
-      vars.map((node) => {
+      vars.forEach((node) => {
         errors.push({
           msg: `Unsafe state variable declaration in ${contractName}: "${node.typeName.name} ${node.name}"`,
         });
