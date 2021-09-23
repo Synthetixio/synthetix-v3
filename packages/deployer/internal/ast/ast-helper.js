@@ -35,8 +35,6 @@ function findStateVariables(contractName, ast) {
     return null;
   }
 
-  // console.log(contractNode.baseContracts);
-
   const variables = [];
   for (const node of findAll('VariableDeclaration', contractNode)) {
     if (node.stateVariable) {
