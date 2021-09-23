@@ -13,7 +13,7 @@ function findContractNode(contractName, nodeOrAst) {
 }
 
 function findContractNodeWithId(contractId, contracts) {
-  for (var [contractName, contractAST] of Object.entries(contracts)) {
+  for (const [contractName, contractAST] of Object.entries(contracts)) {
     const contractNode = findContractNode(contractName, contractAST);
 
     if (contractNode.id === contractId) {
