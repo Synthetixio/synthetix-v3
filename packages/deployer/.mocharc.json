@@ -1,0 +1,10 @@
+{
+  "spec": ["test/**/*.spec.js"],
+  "parallel": true,
+  "watch-files": [
+    "utils/**/*.js",
+    "tasks/**/*.js",
+    "subtasks/**/*.js",
+    "internal/**/*.js"
+  ]
+}

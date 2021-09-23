@@ -4,7 +4,9 @@
   "description": "Synthetix deployer",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Warning: no test specified on @synthetixio/deployer\""
+    "test": "mocha",
+    "test:coverage": "nyc -r lcov -r text mocha",
+    "test:watch": "mocha --watch"
   },
   "keywords": [],
   "author": "",
@@ -23,5 +25,9 @@
     "solidity-ast": "0.4.26",
     "string-natural-compare": "3.0.1",
     "use-strict": "1.0.1"
+  },
+  "devDependencies": {
+    "mocha": "9.1.1",
+    "nyc": "15.1.0"
   }
 }
