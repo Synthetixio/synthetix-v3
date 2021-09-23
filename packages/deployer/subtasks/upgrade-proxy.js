@@ -72,7 +72,7 @@ async function _deployProxy({ proxyName, routerAddress, hre }) {
 }
 
 async function _upgradeProxy({ proxyAddress, routerAddress, hre }) {
-  const signer = (await ethers.getSigners())[0];
+  const signer = (await hre.ethers.getSigners())[0];
 
   const upgradeable = await hre.ethers.getContractAt(UPGRADE_ABI, proxyAddress, signer);
   const activeImplementationAddress = await upgradeable.getImplementation();
