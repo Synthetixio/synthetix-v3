@@ -42,7 +42,7 @@ function findUnsafeStorageUsageInModules(contracts) {
   let candidates = [];
   for (const moduleName of moduleNames) {
     const deps = findDependenciesOf(moduleName, contracts).map((dep) => dep.name);
-    deps.map((dep) => {
+    deps.forEach((dep) => {
       if (!candidates.includes(dep)) {
         candidates.push(dep);
       }
