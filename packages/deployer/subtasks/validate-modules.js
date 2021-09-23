@@ -14,10 +14,10 @@ subtask(SUBTASK_VALIDATE_MODULES).setAction(async (_, hre) => {
 
   if (duplicates) {
     const details = duplicates.map(
-      (d) => `  > ${d.fn} found in modules ${d.contracts} - ${d.selector}\n`
+      (d) => `  > ${d.fn} found in modules ${d.contracts} - ${d.selector}`
     );
 
-    logger.error(`Duplicate selectors found!\n${details.join('')}`);
+    logger.error(`Duplicate selectors found!\n${details.join('\n')}`);
     return await hre.run(SUBTASK_CANCEL_DEPLOYMENT);
   }
 
