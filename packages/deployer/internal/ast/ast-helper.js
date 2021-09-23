@@ -32,7 +32,7 @@ function findDependenciesOf(contractName, contracts) {
 
   let dependencies = [];
 
-  contractNode.linearizedBaseContracts.map((baseContractId) => {
+  contractNode.linearizedBaseContracts.forEach((baseContractId) => {
     const dependency = findContractNodeWithId(baseContractId, contracts);
     if (dependency) {
       dependencies.push(dependency);
