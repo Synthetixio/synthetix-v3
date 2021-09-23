@@ -1,5 +1,6 @@
-const { getSlotAddresses, findDuplicateSlots } = require('./ast-helper');
+const { findInheritorsOf, getSlotAddresses, findDuplicateSlots, findStateVariables } = require('./ast-helper');
 const logger = require('@synthetixio/core-js/utils/logger');
+const filterValues = require('filter-values');
 
 function findDuplicateStorageNamespaces(contracts) {
   const slots = [];
@@ -25,23 +26,44 @@ function findDuplicateStorageNamespaces(contracts) {
   return errors;
 }
 
-function findRegularStorageSlots() {
-  logger.info(
-    'Storage definition is reserved to namespace mixins. BE AWARE THIS IS NOT NOT AUTOMATICALLY VERIFIED AT THE MOMENT'
-  );
+function findUnsafeStorageUsageInModules(contracts) {
+  const errors = [];
 
-  return [];
+  const moduleNames = Object.keys(filterValues(hre.deployer.deployment.general.contracts, (c) => c.isModule));
+
+  Object.entries(contracts).map(([name, contract]) => {
+    const vars = findStateVariables(name, contract);
+    if (vars) {
+      if (moduleNames.includes(name)) {
+        vars.map((node) => {
+          errors.push({
+            msg: `Unsafe state variable declaration in ${name}: "${node.typeName.name} ${node.name}"`,
+          });
+        });
+      } else {
+        const inheritors = findInheritorsOf(name, contracts).filter((i) => moduleNames.includes(i));
+        vars.map((node) => {
+          errors.push({
+            msg: `Unsafe state variable declaration in ${name} (inherited by ${inheritors}): "${node.typeName.name} ${node.name}"`,
+          });
+        });
+      }
+    }
+  });
+
+  return errors;
 }
 
 function findInvalidMutationsOnNamespaces() {
   logger.info(
     'Append is the only update enabled on Namespaces. BE AWARE THIS IS NOT NOT AUTOMATICALLY VERIFIED AT THE MOMENT'
   );
+
   return [];
 }
 
 module.exports = {
   findDuplicateStorageNamespaces,
-  findRegularStorageSlots,
+  findUnsafeStorageUsageInModules,
   findInvalidMutationsOnNamespaces,
 };

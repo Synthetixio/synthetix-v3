@@ -12,6 +12,41 @@ function findContractNode(contractName, nodeOrAst) {
   return null;
 }
 
+function findInheritorsOf(contractName, contracts) {
+  const inheritors = [];
+
+  Object.entries(contracts).map(([name, contract]) => {
+    const contractNode = findContractNode(name, contract);
+    if (contractNode) {
+      contractNode.baseContracts.map((b) => {
+        if (b.baseName.name === contractName) {
+          inheritors.push(name);
+        }
+      });
+    }
+  });
+
+  return inheritors;
+}
+
+function findStateVariables(contractName, ast) {
+  const contractNode = findContractNode(contractName, ast);
+  if (!contractNode) {
+    return null;
+  }
+
+  // console.log(contractNode.baseContracts);
+
+  const variables = [];
+  for (const node of findAll('VariableDeclaration', contractNode)) {
+    if (node.stateVariable) {
+      variables.push(node);
+    }
+  }
+
+  return variables.length > 0 ? variables : null;
+}
+
 function getSlotAddresses(contractName, ast) {
   const contractNode = findContractNode(contractName, ast);
   if (!contractNode) {
@@ -65,7 +100,10 @@ function getCaseSelectors(contractName, ast) {
 }
 
 module.exports = {
+  findContractNode,
   findDuplicateSlots,
   getCaseSelectors,
   getSlotAddresses,
+  findStateVariables,
+  findInheritorsOf,
 };

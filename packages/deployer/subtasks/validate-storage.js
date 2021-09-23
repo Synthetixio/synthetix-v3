@@ -1,10 +1,9 @@
 const { subtask } = require('hardhat/config');
 const logger = require('@synthetixio/core-js/utils/logger');
-
 const { getSourcesAST } = require('../internal/ast/ast-sources');
 const {
   findDuplicateStorageNamespaces,
-  findRegularStorageSlots,
+  findUnsafeStorageUsageInModules,
   findInvalidMutationsOnNamespaces,
 } = require('../internal/ast/storage-validator');
 const { SUBTASK_VALIDATE_STORAGE, SUBTASK_CANCEL_DEPLOYMENT } = require('../task-names');
@@ -15,9 +14,9 @@ subtask(SUBTASK_VALIDATE_STORAGE).setAction(async (_, hre) => {
   const { contracts } = await getSourcesAST(hre);
 
   let errorsFound = [];
-  errorsFound.push(... findDuplicateStorageNamespaces(contracts));
-  errorsFound.push(... findRegularStorageSlots(contracts));
-  errorsFound.push(... findInvalidMutationsOnNamespaces(contracts));
+  errorsFound.push(...findDuplicateStorageNamespaces(contracts));
+  errorsFound.push(...findUnsafeStorageUsageInModules(contracts));
+  errorsFound.push(...findInvalidMutationsOnNamespaces(contracts));
 
   if (errorsFound.length > 0) {
     errorsFound.forEach((error) => {

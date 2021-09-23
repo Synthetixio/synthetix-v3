@@ -7,7 +7,7 @@ const { SUBTASK_VALIDATE_MODULES, SUBTASK_CANCEL_DEPLOYMENT } = require('../task
 subtask(SUBTASK_VALIDATE_MODULES).setAction(async (_, hre) => {
   logger.subtitle('Validating modules');
 
-  const modules = filterValues(hre.deployer.deployment.contracts, (c) => c.isModule);
+  const modules = filterValues(hre.deployer.deployment.general.contracts, (c) => c.isModule);
   const moduleNames = Object.keys(modules);
   const selectors = await getAllSelectors(moduleNames);
   const duplicates = findDuplicateSelectors(selectors);
