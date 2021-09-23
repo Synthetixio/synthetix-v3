@@ -124,6 +124,19 @@ function getCaseSelectors(contractName, ast) {
   return items ? items : null;
 }
 
+function findFunctionSelectors(contractName, contracts) {
+  const selectors = [];
+  const contractNode = contracts[contractName];
+  if (!contractNode) {
+    return selectors;
+  }
+
+  for (const functionDefinition of findAll('FunctionDefinition', contractNode)) {
+    selectors.push({ selector: '0x' + functionDefinition.functionSelector });
+  }
+  return selectors;
+}
+
 module.exports = {
   findDuplicateSlots,
   getCaseSelectors,
@@ -132,4 +145,5 @@ module.exports = {
   findContractNodeWithId,
   findStateVariables,
   findDependenciesOf,
+  findFunctionSelectors,
 };

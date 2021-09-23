@@ -1,4 +1,4 @@
-const { getCaseSelectors } = require('./ast-helper');
+const { getCaseSelectors, findFunctionSelectors } = require('./ast-helper');
 const { getModulesSelectors } = require('../contract-helper');
 const { toPrivateConstantCase } = require('../router-helper');
 
@@ -34,17 +34,35 @@ async function findUnreachableSelectorsInAST(contracts, modules) {
   const routerSelectors = getCaseSelectors('Router', contracts['Router']);
   const moduleAddresses = [];
   for (const [moduleName, moduleData] of Object.entries(modules)) {
-    moduleAddresses[toPrivateConstantCase(moduleName)] = moduleData.deployedAddress;
+    moduleAddresses[toPrivateConstantCase(moduleName)] = {
+      moduleName,
+      address: moduleData.deployedAddress,
+    };
   }
 
   const errors = [];
   routerSelectors.forEach((s) => {
-    if (!moduleAddresses[s.value.name] || moduleAddresses[s.value.name] !== s.value.value.value) {
+    if (
+      !moduleAddresses[s.value.name] ||
+      moduleAddresses[s.value.name].address !== s.value.value.value
+    ) {
       errors.push({
         msg: `Selector ${s.selector} not reachable. ${s.value.name} pointing to ${
           s.value.value.value
         } instead of ${moduleAddresses[s.value.name]}`,
       });
+    } else {
+      const contractSelectors = findFunctionSelectors(
+        moduleAddresses[s.value.name].moduleName,
+        contracts
+      );
+      if (!contractSelectors.some((cs) => cs.selector === s.selector)) {
+        errors.push({
+          msg: `Selector ${s.selector} not reachable. ${s.value.name} (${
+            moduleAddresses[s.value.name].moduleName
+          }) doesn't contain a function with that selector`,
+        });
+      }
     }
   });
 
