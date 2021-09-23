@@ -12,6 +12,52 @@ function findContractNode(contractName, nodeOrAst) {
   return null;
 }
 
+function findContractNodeWithId(contractId, contracts) {
+  for (const [contractName, contractAST] of Object.entries(contracts)) {
+    const contractNode = findContractNode(contractName, contractAST);
+
+    if (contractNode.id === contractId) {
+      return contractNode;
+    }
+  }
+
+  return null;
+}
+
+function findDependenciesOf(contractName, contracts) {
+  const contractNode = findContractNode(contractName, contracts[contractName]);
+  if (!contractNode) {
+    return null;
+  }
+
+  let dependencies = [];
+
+  contractNode.linearizedBaseContracts.forEach((baseContractId) => {
+    const dependency = findContractNodeWithId(baseContractId, contracts);
+    if (dependency) {
+      dependencies.push(dependency);
+    }
+  });
+
+  return dependencies;
+}
+
+function findStateVariables(contractName, ast) {
+  const contractNode = findContractNode(contractName, ast);
+  if (!contractNode) {
+    return null;
+  }
+
+  const variables = [];
+  for (const node of findAll('VariableDeclaration', contractNode)) {
+    if (node.stateVariable) {
+      variables.push(node);
+    }
+  }
+
+  return variables.length > 0 ? variables : null;
+}
+
 function getSlotAddresses(contractName, ast) {
   const contractNode = findContractNode(contractName, ast);
   if (!contractNode) {
@@ -68,4 +114,8 @@ module.exports = {
   findDuplicateSlots,
   getCaseSelectors,
   getSlotAddresses,
+  findContractNode,
+  findContractNodeWithId,
+  findStateVariables,
+  findDependenciesOf,
 };
