@@ -110,8 +110,27 @@ function getCaseSelectors(contractName, ast) {
   return items ? items : null;
 }
 
+async function getContractsStructMap(contractNodes) {
+  const structs = [];
+  for (var [contractName, ast] of Object.entries(contractNodes)) {
+    const contractNode = findContractNode(contractName, ast);
+    if (!contractNode) {
+      continue;
+    }
+    for (const structDefinition of findAll('StructDefinition', contractNode)) {
+      const members = [];
+      for (const member of findAll('VariableDeclaration', structDefinition)) {
+        members.push({ name: member.name, type: member.typeDescriptions.typeString });
+      }
+      structs.push({ contractName, structName: structDefinition.name, members });
+    }
+  }
+  return structs;
+}
+
 module.exports = {
   findDuplicateSlots,
+  getContractsStructMap,
   getCaseSelectors,
   getSlotAddresses,
   findContractNode,
