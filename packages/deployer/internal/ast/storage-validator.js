@@ -1,5 +1,5 @@
 const {
-  findInheritorsOf,
+  findDependenciesOf,
   getSlotAddresses,
   findDuplicateSlots,
   findStateVariables,
@@ -38,23 +38,26 @@ function findUnsafeStorageUsageInModules(contracts) {
     filterValues(hre.deployer.deployment.general.contracts, (c) => c.isModule)
   );
 
-  Object.entries(contracts).map(([name, contract]) => {
-    const vars = findStateVariables(name, contract);
-    if (vars) {
-      if (moduleNames.includes(name)) {
-        vars.map((node) => {
-          errors.push({
-            msg: `Unsafe state variable declaration in ${name}: "${node.typeName.name} ${node.name}"`,
-          });
-        });
-      } else {
-        const inheritors = findInheritorsOf(name, contracts).filter((i) => moduleNames.includes(i));
-        vars.map((node) => {
-          errors.push({
-            msg: `Unsafe state variable declaration in ${name} (inherited by ${inheritors}): "${node.typeName.name} ${node.name}"`,
-          });
-        });
+  // Find all contracts inherted by modules
+  let candidates = [];
+  for (const moduleName of moduleNames) {
+    const deps = findDependenciesOf(moduleName, contracts).map((dep) => dep.name);
+    deps.map((dep) => {
+      if (!candidates.includes(dep)) {
+        candidates.push(dep);
       }
+    });
+  }
+
+  // Look for state variable declarations
+  candidates.map((contractName) => {
+    const vars = findStateVariables(contractName, contracts[contractName]);
+    if (vars) {
+      vars.map((node) => {
+        errors.push({
+          msg: `Unsafe state variable declaration in ${contractName}: "${node.typeName.name} ${node.name}"`,
+        });
+      });
     }
   });
 

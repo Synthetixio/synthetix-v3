@@ -12,21 +12,34 @@ function findContractNode(contractName, nodeOrAst) {
   return null;
 }
 
-function findInheritorsOf(contractName, contracts) {
-  const inheritors = [];
+function findContractNodeWithId(contractId, contracts) {
+  for (var [contractName, contractAST] of Object.entries(contracts)) {
+    const contractNode = findContractNode(contractName, contracts[contractName]);
 
-  Object.entries(contracts).map(([name, contract]) => {
-    const contractNode = findContractNode(name, contract);
-    if (contractNode) {
-      contractNode.baseContracts.map((b) => {
-        if (b.baseName.name === contractName) {
-          inheritors.push(name);
-        }
-      });
+    if (contractNode.id === contractId) {
+      return contractNode;
+    }
+  }
+
+  return null;
+}
+
+function findDependenciesOf(contractName, contracts) {
+  const contractNode = findContractNode(contractName, contracts[contractName]);
+  if (!contractNode) {
+    return null;
+  }
+
+  let dependencies = [];
+
+  contractNode.linearizedBaseContracts.map((baseContractId) => {
+    const dependency = findContractNodeWithId(baseContractId, contracts);
+    if (dependency) {
+      dependencies.push(dependency);
     }
   });
 
-  return inheritors;
+  return dependencies;
 }
 
 function findStateVariables(contractName, ast) {
@@ -103,5 +116,5 @@ module.exports = {
   getCaseSelectors,
   getSlotAddresses,
   findStateVariables,
-  findInheritorsOf,
+  findDependenciesOf,
 };
