@@ -39,7 +39,7 @@ function findUnsafeStorageUsageInModules(contracts) {
   );
 
   // Find all contracts inherted by modules
-  let candidates = [];
+  const candidates = [];
   for (const moduleName of moduleNames) {
     const deps = findDependenciesOf(moduleName, contracts).map((dep) => dep.name);
     deps.forEach((dep) => {
