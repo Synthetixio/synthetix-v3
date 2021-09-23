@@ -50,7 +50,7 @@ function findUnsafeStorageUsageInModules(contracts) {
   }
 
   // Look for state variable declarations
-  candidates.map((contractName) => {
+  candidates.forEach((contractName) => {
     const vars = findStateVariables(contractName, contracts[contractName]);
     if (vars) {
       vars.map((node) => {
