@@ -66,7 +66,7 @@ function findUnsafeStorageUsageInModules(contracts) {
 
 function findInvalidMutationsOnNamespaces() {
   logger.info(
-    'Append is the only update enabled on Namespaces. BE AWARE THIS IS NOT NOT AUTOMATICALLY VERIFIED AT THE MOMENT'
+    'Unsafe storage namespace mutations are not yet validated in modules. Please only append to storage namespace structs.'
   );
 
   return [];

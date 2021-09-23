@@ -25,7 +25,7 @@ subtask(
   let sourceErrorsFound = [];
   let astErrorsFound = [];
   // Source Code checking
-  logger.info('Validating Router source code');
+  logger.debug('Validating Router source code');
   sourceErrorsFound.push(...(await findMissingSelectorsInSource()));
   sourceErrorsFound.push(...(await findRepeatedSelectorsInSource()));
   sourceErrorsFound.push(...(await findWrongSelectorsInSource()));
@@ -36,7 +36,7 @@ subtask(
   }
 
   // AST checking
-  logger.info('Validating Router compiled code');
+  logger.debug('Validating Router compiled code');
   astErrorsFound.push(...(await findMissingSelectorsInAST(contracts)));
   astErrorsFound.push(...(await findUnreachableSelectorsInAST(contracts)));
   astErrorsFound.push(...(await findDuplicateSelectorsInAST(contracts)));

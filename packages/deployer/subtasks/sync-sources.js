@@ -64,8 +64,11 @@ async function _addNewSources({ sources, previousDeployment }) {
     }
   }
 
-  logger.notice('The following modules are going to be deployed for the first time:');
-  toAdd.forEach((source) => logger.notice(`  ${source}`));
+  if (toAdd.length > 0) {
+    logger.notice('The following modules are going to be deployed for the first time:');
+
+    toAdd.forEach((source) => logger.notice(`  ${source}`));
+  }
 
   return toAdd.length > 0;
 }

@@ -10,5 +10,10 @@ subtask(SUBTASK_DEPLOY_ROUTER).setAction(async (_, hre) => {
   const contractName = 'Router';
 
   await initContractData(contractName);
-  await hre.run(SUBTASK_DEPLOY_CONTRACT, { contractName });
+
+  const deployedSomething = await hre.run(SUBTASK_DEPLOY_CONTRACT, { contractName });
+
+  if (!deployedSomething) {
+    logger.checked('The router does not need to be deployed');
+  }
 });

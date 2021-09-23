@@ -23,7 +23,7 @@ subtask(
   );
 
   logger.subtitle('Generating router source');
-  logger.info(`location: ${routerPath}`);
+  logger.debug(`location: ${routerPath}`);
 
   const modules = filterValues(hre.deployer.deployment.general.contracts, (c) => c.isModule);
   const modulesNames = Object.keys(modules);
@@ -31,7 +31,7 @@ subtask(
 
   const selectors = await getAllSelectors(modulesNames);
   logger.debug(`selectors: ${JSON.stringify(selectors, null, 2)}`);
-  logger.info(`Found ${modulesNames.length} modules with ${selectors.length} selectors in total`);
+  logger.debug(`Found ${modulesNames.length} modules with ${selectors.length} selectors in total`);
 
   const binaryData = _buildBinaryData({ selectors });
 
@@ -49,7 +49,7 @@ subtask(
 
   logger.debug(`Generated source: ${generatedSource}`);
 
-  const currentSource = fs.existsSync(routerPath) ? fs.readFileSync(routerPath) : '';
+  const currentSource = fs.existsSync(routerPath) ? fs.readFileSync(routerPath, 'utf8') : '';
   if (currentSource !== generatedSource) {
     fs.writeFileSync(routerPath, generatedSource);
     logger.success(`Router code generated and written to ${routerPath}`);

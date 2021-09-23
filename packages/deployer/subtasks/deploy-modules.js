@@ -5,7 +5,6 @@ const filterValues = require('filter-values');
 const {
   SUBTASK_DEPLOY_CONTRACTS,
   SUBTASK_DEPLOY_MODULES,
-  SUBTASK_CANCEL_DEPLOYMENT,
 } = require('../task-names');
 
 subtask(SUBTASK_DEPLOY_MODULES).setAction(async (_, hre) => {
@@ -18,7 +17,6 @@ subtask(SUBTASK_DEPLOY_MODULES).setAction(async (_, hre) => {
   });
 
   if (!deployedSomething) {
-    logger.info('No modules need to be deployed, cancelling execution...');
-    return await hre.run(SUBTASK_CANCEL_DEPLOYMENT);
+    logger.checked('No modules need to be deployed');
   }
 });

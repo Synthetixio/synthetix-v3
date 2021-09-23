@@ -45,7 +45,7 @@ subtask(
 
   const routerAddress = _getDeployedAddress(routerName, hre);
 
-  logger.info(`Target implementation: ${routerAddress}`);
+  logger.debug(`Target implementation: ${routerAddress}`);
 
   const wasProxyDeployed = await _deployProxy({
     proxyName,
@@ -72,9 +72,11 @@ async function _deployProxy({ proxyName, routerAddress, hre }) {
 }
 
 async function _upgradeProxy({ proxyAddress, routerAddress, hre }) {
-  const upgradeable = await hre.ethers.getContractAt(UPGRADE_ABI, proxyAddress);
+  const signer = (await ethers.getSigners())[0];
+
+  const upgradeable = await hre.ethers.getContractAt(UPGRADE_ABI, proxyAddress, signer);
   const activeImplementationAddress = await upgradeable.getImplementation();
-  logger.info(`Active implementation: ${activeImplementationAddress}`);
+  logger.debug(`Active implementation: ${activeImplementationAddress}`);
 
   if (activeImplementationAddress !== routerAddress) {
     logger.notice(
@@ -85,13 +87,17 @@ async function _upgradeProxy({ proxyAddress, routerAddress, hre }) {
 
     logger.notice(`Upgrading main proxy to ${routerAddress}`);
 
-    const transaction = await upgradeable.upgradeTo(routerAddress);
+    try {
+      const transaction = await upgradeable.upgradeTo(routerAddress);
 
-    processTransaction(transaction, hre);
-    const receipt = await transaction.wait();
-    processReceipt(receipt, hre);
+      processTransaction(transaction, hre);
+      const receipt = await transaction.wait();
+      processReceipt(receipt, hre);
 
-    logger.success(`Main proxy upgraded to ${await upgradeable.getImplementation()}`);
+      logger.success(`Main proxy upgraded to ${await upgradeable.getImplementation()}`);
+    } catch (err) {
+      logger.warn(`Unable to upgrade main proxy - Reason: ${err}`);
+    }
   } else {
     logger.checked('No need to upgrade the main proxy');
   }
