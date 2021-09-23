@@ -1,4 +1,9 @@
-const { findInheritorsOf, getSlotAddresses, findDuplicateSlots, findStateVariables } = require('./ast-helper');
+const {
+  findInheritorsOf,
+  getSlotAddresses,
+  findDuplicateSlots,
+  findStateVariables,
+} = require('./ast-helper');
 const logger = require('@synthetixio/core-js/utils/logger');
 const filterValues = require('filter-values');
 
@@ -29,7 +34,9 @@ function findDuplicateStorageNamespaces(contracts) {
 function findUnsafeStorageUsageInModules(contracts) {
   const errors = [];
 
-  const moduleNames = Object.keys(filterValues(hre.deployer.deployment.general.contracts, (c) => c.isModule));
+  const moduleNames = Object.keys(
+    filterValues(hre.deployer.deployment.general.contracts, (c) => c.isModule)
+  );
 
   Object.entries(contracts).map(([name, contract]) => {
     const vars = findStateVariables(name, contract);
