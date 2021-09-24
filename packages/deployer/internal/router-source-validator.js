@@ -55,32 +55,7 @@ async function findMissingSelectorsInSource() {
   return errors;
 }
 
-async function findWrongSelectorsInSource() {
-  const moduleSelectors = await getModulesSelectors();
-  const source = getRouterSource();
-
-  const errors = [];
-  moduleSelectors.forEach((moduleSelector) => {
-    const regex = `(:?\\s|^)case ${moduleSelector.selector}\\s.+`;
-    const matches = source.match(new RegExp(regex, 'gm'));
-
-    if (!matches) return;
-    if (matches.length !== 1) return;
-
-    const [match] = matches;
-    if (!match.includes(moduleSelector.contractName)) {
-      errors.push({
-        msg: `Expected to find ${moduleSelector.contractName} in the selector case: ${match}`,
-        moduleSelector,
-        missingInRouter: true,
-      });
-    }
-  });
-  return errors;
-}
-
 module.exports = {
   findMissingSelectorsInSource,
   findRepeatedSelectorsInSource,
-  findWrongSelectorsInSource,
 };
