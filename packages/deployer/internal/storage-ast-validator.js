@@ -1,7 +1,6 @@
 const {
   findContractDependencies,
   findYulStorageSlotAssignments,
-  findDuplicateSlots,
   findContractStateVariables,
 } = require('@synthetixio/core-js/utils/ast');
 const logger = require('@synthetixio/core-js/utils/logger');

@@ -1,20 +1,22 @@
 const { findAll } = require('solidity-ast/utils');
 
 function findContractNodeWithId(contractId, asts) {
-  return Array.from(findAll('ContractDefinition', asts))
-    .find((contractDefiniton) => contractDefiniton.id === contractId);
+  return Array.from(findAll('ContractDefinition', asts)).find(
+    (contractDefiniton) => contractDefiniton.id === contractId
+  );
 }
 
 function findContractNodeWithName(contractName, asts) {
-  return Array.from(findAll('ContractDefinition', asts))
-    .find((contractDefiniton) => contractDefiniton.name === contractName);
+  return Array.from(findAll('ContractDefinition', asts)).find(
+    (contractDefiniton) => contractDefiniton.name === contractName
+  );
 }
 
 function getContractNode(ast) {
   return Array.from(findAll('ContractDefinition', ast))[0];
 }
 
-function findContractNodeVariables(contractNode, onlyStateVariable) {
+function findContractNodeVariables(contractNode) {
   return Array.from(findAll('VariableDeclaration', contractNode));
 }
 

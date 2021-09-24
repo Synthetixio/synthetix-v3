@@ -8,7 +8,6 @@ async function getContractAST({ sourceName, contractName }) {
 }
 
 async function getAllContractASTs(hre) {
-
   // A fully qualified name looks like "contracts/modules/OwnerModule.sol:OwnerModule"
   // i.e. "<path/to/file>:<contract-name>"
   const names = await hre.artifacts.getAllFullyQualifiedNames();

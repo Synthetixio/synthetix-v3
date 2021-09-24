@@ -39,7 +39,10 @@ class RouterASTValidator {
   async findUnreachableModuleSelectors() {
     const routerSelectors = findYulCaseValues('Router', this.asts['Router']);
 
-    const moduleDeploymentData = filterValues(hre.deployer.deployment.general.contracts, (c) => c.isModule);
+    const moduleDeploymentData = filterValues(
+      hre.deployer.deployment.general.contracts,
+      (c) => c.isModule
+    );
 
     const moduleAddresses = [];
     for (const [moduleName, moduleData] of Object.entries(moduleDeploymentData)) {
