@@ -1,22 +1,19 @@
 const { subtask } = require('hardhat/config');
 const logger = require('@synthetixio/core-js/utils/logger');
-const { getSourcesAST } = require('../internal/ast/ast-sources');
-const {
-  findDuplicateStorageNamespaces,
-  findUnsafeStorageUsageInModules,
-  findInvalidMutationsOnNamespaces,
-} = require('../internal/ast/storage-validator');
+const { getAllContractASTs } = require('@synthetixio/core-js/utils/hardhat');
+const ModuleStorageASTValidator = require('../internal/storage-ast-validator');
 const { SUBTASK_VALIDATE_STORAGE, SUBTASK_CANCEL_DEPLOYMENT } = require('../task-names');
 
 subtask(SUBTASK_VALIDATE_STORAGE).setAction(async (_, hre) => {
-  logger.subtitle('Validating Storage usage');
+  logger.subtitle('Validating module storage usage');
 
-  const { contracts } = await getSourcesAST(hre);
+  const asts = await getAllContractASTs(hre);
+  const validator = new ModuleStorageASTValidator(asts);
 
   let errorsFound = [];
-  errorsFound.push(...findDuplicateStorageNamespaces(contracts));
-  errorsFound.push(...findUnsafeStorageUsageInModules(contracts));
-  errorsFound.push(...findInvalidMutationsOnNamespaces(contracts));
+  errorsFound.push(...validator.findNamespaceCollisions());
+  errorsFound.push(...validator.findRegularVariableDeclarations());
+  errorsFound.push(...validator.findInvalidNamespaceMutations());
 
   if (errorsFound.length > 0) {
     errorsFound.forEach((error) => {

@@ -1,7 +1,7 @@
 const fs = require('fs/promises');
 const path = require('path');
 
-const { getContractAST } = require('./ast/ast-sources');
+const { getContractAST } = require('@synthetixio/core-js/utils/hardhat');
 
 /**
  * Initialize contract metadata on hre.deployer.deployment.*
@@ -17,6 +17,7 @@ async function initContractData(contractName, general = {}) {
   const sourceCode = (
     await fs.readFile(path.resolve(hre.config.paths.root, sourceName))
   ).toString();
+
   const ast = await getContractAST({ sourceName, contractName });
 
   const previousData = previousDeployment?.general.contracts[contractName] || {};
