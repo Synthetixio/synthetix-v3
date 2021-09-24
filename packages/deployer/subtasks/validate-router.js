@@ -9,7 +9,6 @@ const {
 const {
   findMissingSelectorsInSource,
   findRepeatedSelectorsInSource,
-  findWrongSelectorsInSource,
 } = require('../internal/router-source-validator');
 const filterValues = require('filter-values');
 
@@ -30,7 +29,6 @@ subtask(
   logger.debug('Validating Router source code');
   sourceErrorsFound.push(...(await findMissingSelectorsInSource()));
   sourceErrorsFound.push(...(await findRepeatedSelectorsInSource()));
-  sourceErrorsFound.push(...(await findWrongSelectorsInSource()));
   if (sourceErrorsFound.length > 0) {
     sourceErrorsFound.forEach((error) => {
       logger.error(error.msg);
