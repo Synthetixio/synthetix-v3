@@ -1,72 +1,44 @@
 const { findAll } = require('solidity-ast/utils');
 
-function findContractNode(contractName, contractsNodes) {
-  const contractDefs = findAll('ContractDefinition', contractsNodes);
-  if (contractDefs) {
-    for (const contract of contractDefs) {
-      if (contract.name === contractName) {
-        return contract;
-      }
-    }
-  }
-  return null;
+function findContractNodeWithId(contractId, asts) {
+  return Array.from(findAll('ContractDefinition', asts))
+    .find((contractDefiniton) => contractDefiniton.id === contractId);
 }
 
-function findContractNodeWithId(contractId, contracts) {
-  for (const [contractName, contractAST] of Object.entries(contracts)) {
-    const contractNode = findContractNode(contractName, contractAST);
-
-    if (contractNode.id === contractId) {
-      return contractNode;
-    }
-  }
-
-  return null;
+function findContractNodeWithName(contractName, asts) {
+  return Array.from(findAll('ContractDefinition', asts))
+    .find((contractDefiniton) => contractDefiniton.name === contractName);
 }
 
-function findDependenciesOf(contractName, contracts) {
-  const contractNode = findContractNode(contractName, contracts[contractName]);
-  if (!contractNode) {
-    return null;
-  }
+function getContractNode(ast) {
+  return Array.from(findAll('ContractDefinition', ast))[0];
+}
 
-  let dependencies = [];
+function findContractNodeVariables(contractNode, onlyStateVariable) {
+  return Array.from(findAll('VariableDeclaration', contractNode));
+}
+
+function findContractStateVariables(contractName, ast) {
+  return findContractNodeVariables(getContractNode(ast)).filter((n) => n.stateVariable);
+}
+
+function findContractDependencies(contractName, asts) {
+  const contractNode = getContractNode(asts[contractName]);
+
+  let dependencyContractNodes = [];
 
   contractNode.linearizedBaseContracts.forEach((baseContractId) => {
-    const dependency = findContractNodeWithId(baseContractId, contracts);
+    const dependency = findContractNodeWithId(baseContractId, asts);
     if (dependency) {
-      dependencies.push(dependency);
+      dependencyContractNodes.push(dependency);
     }
   });
 
-  return dependencies;
+  return dependencyContractNodes;
 }
 
-function findNodeVariables(contractNode, onlyStateVariable) {
-  const variables = [];
-  for (const node of findAll('VariableDeclaration', contractNode)) {
-    if (!onlyStateVariable || node.stateVariable) {
-      variables.push(node);
-    }
-  }
-
-  return variables.length > 0 ? variables : null;
-}
-
-function findStateVariables(contractName, ast) {
-  const contractNode = findContractNode(contractName, ast);
-  if (!contractNode) {
-    return null;
-  }
-
-  return findNodeVariables(contractNode, true);
-}
-
-function getSlotAddresses(contractName, ast) {
-  const contractNode = findContractNode(contractName, ast);
-  if (!contractNode) {
-    return null;
-  }
+function findYulStorageSlotAssignments(contractName, ast) {
+  const contractNode = getContractNode(ast);
 
   const slots = [];
   for (const assignment of findAll('YulAssignment', contractNode)) {
@@ -78,33 +50,9 @@ function getSlotAddresses(contractName, ast) {
   return slots ? slots : null;
 }
 
-function findDuplicateSlots(slots) {
-  const duplicates = slots
-    .map((s) => s.address)
-    .filter((s, index, slots) => slots.indexOf(s) !== index);
-
-  const ocurrences = [];
-
-  if (duplicates.length > 0) {
-    duplicates.map((duplicate) => {
-      const cases = slots.filter((s) => s.address === duplicate);
-      ocurrences.push({
-        address: duplicate,
-        contracts: cases.map((c) => c.contractName),
-      });
-    });
-  }
-
-  return ocurrences.length > 0 ? ocurrences : null;
-}
-
-function getCaseSelectors(contractName, ast) {
-  const contractNode = findContractNode(contractName, ast);
-  if (!contractNode) {
-    return null;
-  }
-
-  const addressVariables = findNodeVariables(contractNode, false);
+function findYulCaseValues(contractName, ast) {
+  const contractNode = getContractNode(ast);
+  const addressVariables = findContractNodeVariables(contractNode);
 
   const items = [];
   for (const caseSelector of findAll('YulCase', contractNode)) {
@@ -112,7 +60,7 @@ function getCaseSelectors(contractName, ast) {
     if (caseSelector.value.value === '0') continue;
     const caseAssignment = findAll('YulAssignment', caseSelector);
     const assignmentValue = caseAssignment ? caseAssignment.next() : null;
-    // console.log(assignmentValue)
+
     items.push({
       selector: caseSelector.value.value,
       value: assignmentValue
@@ -124,9 +72,9 @@ function getCaseSelectors(contractName, ast) {
   return items ? items : null;
 }
 
-function findFunctionSelectors(contractName, contracts) {
+function findFunctionSelectors(contractName, asts) {
   const selectors = [];
-  const contractNode = contracts[contractName];
+  const contractNode = asts[contractName];
   if (!contractNode) {
     return selectors;
   }
@@ -134,16 +82,16 @@ function findFunctionSelectors(contractName, contracts) {
   for (const functionDefinition of findAll('FunctionDefinition', contractNode)) {
     selectors.push({ selector: '0x' + functionDefinition.functionSelector });
   }
+
   return selectors;
 }
 
 module.exports = {
-  findDuplicateSlots,
-  getCaseSelectors,
-  getSlotAddresses,
-  findContractNode,
+  findYulCaseValues,
+  findYulStorageSlotAssignments,
+  findContractNodeWithName,
   findContractNodeWithId,
-  findStateVariables,
-  findDependenciesOf,
+  findContractStateVariables,
+  findContractDependencies,
   findFunctionSelectors,
 };

@@ -1,4 +1,4 @@
-const { getCaseSelectors, findFunctionSelectors } = require('@synthetixio/core-js/utils/ast');
+const { findYulCaseValues, findFunctionSelectors } = require('@synthetixio/core-js/utils/ast');
 const { getModulesSelectors } = require('./contract-helper');
 const { toPrivateConstantCase } = require('./router-helper');
 const filterValues = require('filter-values');
@@ -10,7 +10,7 @@ class RouterASTValidator {
 
   async findMissingModuleSelectors() {
     const moduleSelectors = await getModulesSelectors();
-    const routerSelectors = getCaseSelectors('Router', this.asts['Router']);
+    const routerSelectors = findYulCaseValues('Router', this.asts['Router']);
 
     const errors = [];
     moduleSelectors.forEach((contractSelector) => {
@@ -37,7 +37,7 @@ class RouterASTValidator {
   }
 
   async findUnreachableModuleSelectors() {
-    const routerSelectors = getCaseSelectors('Router', this.asts['Router']);
+    const routerSelectors = findYulCaseValues('Router', this.asts['Router']);
 
     const moduleDeploymentData = filterValues(hre.deployer.deployment.general.contracts, (c) => c.isModule);
 
@@ -79,7 +79,7 @@ class RouterASTValidator {
   }
 
   async findDuplicateModuleSelectors() {
-    const routerSelectors = getCaseSelectors('Router', this.asts['Router']);
+    const routerSelectors = findYulCaseValues('Router', this.asts['Router']);
 
     const duplicates = routerSelectors.filter(
       (s, index, selectors) =>

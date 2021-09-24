@@ -1,8 +1,8 @@
 const {
-  findDependenciesOf,
-  getSlotAddresses,
+  findContractDependencies,
+  findYulStorageSlotAssignments,
   findDuplicateSlots,
-  findStateVariables,
+  findContractStateVariables,
 } = require('@synthetixio/core-js/utils/ast');
 const logger = require('@synthetixio/core-js/utils/logger');
 const filterValues = require('filter-values');
@@ -12,24 +12,47 @@ class ModuleStorageASTValidator {
     this.asts = asts;
   }
 
+  findDuplicateNamespaces(namespaces) {
+    const duplicates = namespaces
+      .map((s) => s.position)
+      .filter((s, index, namespaces) => namespaces.indexOf(s) !== index);
+
+    const ocurrences = [];
+
+    if (duplicates.length > 0) {
+      duplicates.map((duplicate) => {
+        const cases = namespaces.filter((s) => s.position === duplicate);
+        ocurrences.push({
+          position: duplicate,
+          contracts: cases.map((c) => c.contractName),
+        });
+      });
+    }
+
+    return ocurrences.length > 0 ? ocurrences : null;
+  }
+
   findNamespaceCollisions() {
-    const slots = [];
+    const namespaces = [];
+
     for (var [contractName, ast] of Object.entries(this.asts)) {
-      const slotAddresses = getSlotAddresses(contractName, ast);
-      if (slotAddresses) {
-        slotAddresses.forEach((address) => slots.push({ contractName, address }));
+      const slot = findYulStorageSlotAssignments(contractName, ast);
+
+      if (slot) {
+        slot.forEach((position) => namespaces.push({ contractName, position }));
       }
     }
-    const duplicates = findDuplicateSlots(slots);
+
+    const duplicates = this.findDuplicateNamespaces(namespaces);
 
     const errors = [];
     if (duplicates) {
       const details = duplicates.map(
-        (d) => `  > ${d.address} found in storage contracts ${d.contracts}\n`
+        (d) => `  > ${d.position} found in storage contracts ${d.contracts}\n`
       );
 
       errors.push({
-        msg: `Duplicate Namespaces found!\n${details.join('')}`,
+        msg: `Duplicate namespaces found!\n${details.join('')}`,
       });
     }
 
@@ -46,7 +69,7 @@ class ModuleStorageASTValidator {
     // Find all contracts inherted by modules
     const candidates = [];
     for (const moduleName of moduleNames) {
-      const deps = findDependenciesOf(moduleName, this.asts).map((dep) => dep.name);
+      const deps = findContractDependencies(moduleName, this.asts).map((dep) => dep.name);
       deps.forEach((dep) => {
         if (!candidates.includes(dep)) {
           candidates.push(dep);
@@ -56,7 +79,7 @@ class ModuleStorageASTValidator {
 
     // Look for state variable declarations
     candidates.forEach((contractName) => {
-      const vars = findStateVariables(contractName, this.asts[contractName]);
+      const vars = findContractStateVariables(contractName, this.asts[contractName]);
       if (vars) {
         vars.forEach((node) => {
           errors.push({
