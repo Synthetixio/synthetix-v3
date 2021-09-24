@@ -122,7 +122,7 @@ async function getContractsStructMap(contractNodes) {
       for (const member of findAll('VariableDeclaration', structDefinition)) {
         members.push({ name: member.name, type: member.typeDescriptions.typeString });
       }
-      structs.push({ contractName, structName: structDefinition.name, members });
+      structs.push({ contract: {name: contractName, id: contractNode.id }, struct : { name: structDefinition.name, members }});
     }
   }
   return structs;
