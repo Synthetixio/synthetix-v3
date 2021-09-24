@@ -1,7 +1,7 @@
 const { findAll } = require('solidity-ast/utils');
 
-function findContractNode(contractName, nodeOrAst) {
-  const contractDefs = findAll('ContractDefinition', nodeOrAst);
+function findContractNode(contractName, contractsNodes) {
+  const contractDefs = findAll('ContractDefinition', contractsNodes);
   if (contractDefs) {
     for (const contract of contractDefs) {
       if (contract.name === contractName) {
@@ -42,20 +42,24 @@ function findDependenciesOf(contractName, contracts) {
   return dependencies;
 }
 
+function findNodeVariables(contractNode, onlyStateVariable) {
+  const variables = [];
+  for (const node of findAll('VariableDeclaration', contractNode)) {
+    if (!onlyStateVariable || node.stateVariable) {
+      variables.push(node);
+    }
+  }
+
+  return variables.length > 0 ? variables : null;
+}
+
 function findStateVariables(contractName, ast) {
   const contractNode = findContractNode(contractName, ast);
   if (!contractNode) {
     return null;
   }
 
-  const variables = [];
-  for (const node of findAll('VariableDeclaration', contractNode)) {
-    if (node.stateVariable) {
-      variables.push(node);
-    }
-  }
-
-  return variables.length > 0 ? variables : null;
+  return findNodeVariables(contractNode, true);
 }
 
 function getSlotAddresses(contractName, ast) {
@@ -100,14 +104,37 @@ function getCaseSelectors(contractName, ast) {
     return null;
   }
 
+  const addressVariables = findNodeVariables(contractNode, false);
+
   const items = [];
-  for (const assignment of findAll('YulCase', contractNode)) {
-    if (assignment.value === 'default') continue;
-    if (assignment.value.value === '0') continue;
-    items.push(assignment.value.value);
+  for (const caseSelector of findAll('YulCase', contractNode)) {
+    if (caseSelector.value === 'default') continue;
+    if (caseSelector.value.value === '0') continue;
+    const caseAssignment = findAll('YulAssignment', caseSelector);
+    const assignmentValue = caseAssignment ? caseAssignment.next() : null;
+    // console.log(assignmentValue)
+    items.push({
+      selector: caseSelector.value.value,
+      value: assignmentValue
+        ? addressVariables.find((v) => v.name === assignmentValue.value.value.name)
+        : null,
+    });
   }
 
   return items ? items : null;
+}
+
+function findFunctionSelectors(contractName, contracts) {
+  const selectors = [];
+  const contractNode = contracts[contractName];
+  if (!contractNode) {
+    return selectors;
+  }
+
+  for (const functionDefinition of findAll('FunctionDefinition', contractNode)) {
+    selectors.push({ selector: '0x' + functionDefinition.functionSelector });
+  }
+  return selectors;
 }
 
 module.exports = {
@@ -118,4 +145,5 @@ module.exports = {
   findContractNodeWithId,
   findStateVariables,
   findDependenciesOf,
+  findFunctionSelectors,
 };

@@ -11,6 +11,7 @@ const {
   findRepeatedSelectorsInSource,
   findWrongSelectorsInSource,
 } = require('../internal/router-source-validator');
+const filterValues = require('filter-values');
 
 const { SUBTASK_VALIDATE_ROUTER, SUBTASK_CANCEL_DEPLOYMENT } = require('../task-names');
 
@@ -21,6 +22,7 @@ subtask(
   logger.subtitle('Validating router');
 
   const { contracts } = await getSourcesAST(hre);
+  const modules = filterValues(hre.deployer.deployment.general.contracts, (c) => c.isModule);
 
   let sourceErrorsFound = [];
   let astErrorsFound = [];
@@ -38,7 +40,7 @@ subtask(
   // AST checking
   logger.info('Validating Router compiled code');
   astErrorsFound.push(...(await findMissingSelectorsInAST(contracts)));
-  astErrorsFound.push(...(await findUnreachableSelectorsInAST(contracts)));
+  astErrorsFound.push(...(await findUnreachableSelectorsInAST(contracts, modules)));
   astErrorsFound.push(...(await findDuplicateSelectorsInAST(contracts)));
   if (astErrorsFound.length > 0) {
     astErrorsFound.forEach((error) => {
