@@ -49,7 +49,7 @@ function findYulStorageSlotAssignments(contractName, ast) {
     }
   }
 
-  return slots ? slots : null;
+  return slots;
 }
 
 function findYulCaseValues(contractName, ast) {
@@ -71,7 +71,7 @@ function findYulCaseValues(contractName, ast) {
     });
   }
 
-  return items ? items : null;
+  return items;
 }
 
 function findFunctionSelectors(contractName, asts) {

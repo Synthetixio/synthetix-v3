@@ -35,11 +35,9 @@ class ModuleStorageASTValidator {
     const namespaces = [];
 
     for (var [contractName, ast] of Object.entries(this.asts)) {
-      const slot = findYulStorageSlotAssignments(contractName, ast);
+      const slots = findYulStorageSlotAssignments(contractName, ast);
 
-      if (slot) {
-        slot.forEach((position) => namespaces.push({ contractName, position }));
-      }
+      slots.forEach((position) => namespaces.push({ contractName, position }));
     }
 
     const duplicates = this.findDuplicateNamespaces(namespaces);
