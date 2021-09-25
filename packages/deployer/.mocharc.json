@@ -2,9 +2,10 @@
   "spec": ["test/**/*.spec.js"],
   "parallel": true,
   "watch-files": [
-    "utils/**/*.js",
-    "tasks/**/*.js",
+    "internal/**/*.js",
     "subtasks/**/*.js",
-    "internal/**/*.js"
+    "tasks/**/*.js",
+    "test/**/*.js",
+    "utils/**/*.js"
   ]
 }

@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "mocha",
-    "test:coverage": "nyc -r lcov -r text mocha",
+    "test:coverage": "nyc mocha",
     "test:watch": "mocha --watch"
   },
   "keywords": [],
