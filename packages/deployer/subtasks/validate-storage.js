@@ -7,7 +7,7 @@ const { SUBTASK_VALIDATE_STORAGE, SUBTASK_CANCEL_DEPLOYMENT } = require('../task
 subtask(SUBTASK_VALIDATE_STORAGE).setAction(async (_, hre) => {
   logger.subtitle('Validating module storage usage');
 
-  const asts = await getAllContractASTs(hre);
+  const asts = await getAllContractASTs();
   const validator = new ModuleStorageASTValidator(asts);
 
   let errorsFound = [];

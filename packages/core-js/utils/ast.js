@@ -39,6 +39,10 @@ function findContractDependencies(contractName, asts) {
   return dependencyContractNodes;
 }
 
+function findInheritedContractNames(ast) {
+  return Array.from(findAll('InheritanceSpecifier', ast)).map(({ baseName }) => baseName.name);
+}
+
 function findYulStorageSlotAssignments(contractName, ast) {
   const contractNode = getContractNode(ast);
 
@@ -96,4 +100,5 @@ module.exports = {
   findContractStateVariables,
   findContractDependencies,
   findFunctionSelectors,
+  findInheritedContractNames,
 };
