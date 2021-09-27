@@ -6,8 +6,8 @@ const { getBytecodeHash } = require('@synthetixio/core-js/utils/contracts');
 
 /**
  * Initialize contract metadata on hre.deployer.deployment.*
+ * This will in turn save all the necessary data to deployments file.
  * @param {string} contractName
- * @param {object} [general={}] initial contract metadata, e.g.: { isModule: true }
  */
 async function initContractData(contractName) {
   const { deployment, previousDeployment } = hre.deployer;

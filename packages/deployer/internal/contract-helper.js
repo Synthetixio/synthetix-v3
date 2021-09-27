@@ -66,7 +66,7 @@ function findDuplicateSelectors(selectors) {
  */
 function contractIsModule(contractSource) {
   const source = path.resolve(hre.config.paths.root, contractSource);
-  return source.startsWith(hre.config.deployer.modules);
+  return source.startsWith(`${hre.config.deployer.paths.modules}${path.sep}`);
 }
 
 module.exports = {
