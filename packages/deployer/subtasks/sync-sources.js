@@ -57,7 +57,7 @@ async function _addNewSources({ sources, previousDeployment }) {
   for (const source of sources) {
     const contractName = path.basename(source, '.sol');
 
-    await initContractData(contractName, { isModule: true });
+    await initContractData(contractName);
 
     if (!previousDeployment?.general.contracts[contractName]) {
       toAdd.push(source);
@@ -66,7 +66,6 @@ async function _addNewSources({ sources, previousDeployment }) {
 
   if (toAdd.length > 0) {
     logger.notice('The following modules are going to be deployed for the first time:');
-
     toAdd.forEach((source) => logger.notice(`  ${source}`));
   }
 

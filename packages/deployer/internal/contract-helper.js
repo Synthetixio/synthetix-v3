@@ -1,6 +1,7 @@
-const { deployedContractHasBytescode } = require('@synthetixio/core-js/utils/contracts');
-const { getSelectors } = require('@synthetixio/core-js/utils/contracts');
+const path = require('path');
 const filterValues = require('filter-values');
+const { getSelectors } = require('@synthetixio/core-js/utils/contracts');
+const { deployedContractHasBytescode } = require('@synthetixio/core-js/utils/contracts');
 
 async function isAlreadyDeployed(contractName, deploymentData) {
   if (!deploymentData.deployedAddress) {
@@ -58,9 +59,20 @@ function findDuplicateSelectors(selectors) {
   return ocurrences.length > 0 ? ocurrences : null;
 }
 
+/**
+ * Check if the given contract path is inside the modules folder.
+ * @param {string} contractSource contract path to file, e.g.: contracts/modules/SomeModule.sol
+ * @returns {boolean}
+ */
+function contractIsModule(contractSource) {
+  const source = path.resolve(hre.config.paths.root, contractSource);
+  return source.startsWith(hre.config.deployer.modules);
+}
+
 module.exports = {
   findDuplicateSelectors,
   getAllSelectors,
   getModulesSelectors,
   isAlreadyDeployed,
+  contractIsModule,
 };
