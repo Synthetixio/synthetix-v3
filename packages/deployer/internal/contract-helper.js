@@ -61,11 +61,11 @@ function findDuplicateSelectors(selectors) {
 
 /**
  * Check if the given contract path is inside the modules folder.
- * @param {string} contractSource contract path to file, e.g.: contracts/modules/SomeModule.sol
+ * @param {string} contractSourcePath contract path to file, e.g.: contracts/modules/SomeModule.sol
  * @returns {boolean}
  */
-function contractIsModule(contractSource) {
-  const source = path.resolve(hre.config.paths.root, contractSource);
+function contractIsModule(contractSourcePath) {
+  const source = path.resolve(hre.config.paths.root, contractSourcePath);
   return source.startsWith(`${hre.config.deployer.paths.modules}${path.sep}`);
 }
 
