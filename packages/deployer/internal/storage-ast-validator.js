@@ -2,13 +2,15 @@ const {
   findContractDependencies,
   findYulStorageSlotAssignments,
   findContractStateVariables,
+  buildContractsStructMap,
 } = require('@synthetixio/core-js/utils/ast');
-const logger = require('@synthetixio/core-js/utils/logger');
+const { compareStorageStructs } = require('@synthetixio/core-js/utils/comparator');
 const filterValues = require('filter-values');
 
 class ModuleStorageASTValidator {
-  constructor(asts) {
+  constructor(asts, previousAsts) {
     this.asts = asts;
+    this.previousAsts = previousAsts;
   }
 
   findDuplicateNamespaces(namespaces) {
@@ -89,12 +91,42 @@ class ModuleStorageASTValidator {
     return errors;
   }
 
-  findInvalidNamespaceMutations() {
-    logger.info(
-      'Unsafe storage namespace mutations are not yet validated in modules. Please only append to storage namespace structs.'
-    );
+  async findInvalidNamespaceMutations() {
+    const errors = [];
 
-    return [];
+    if (!this.previousAsts) {
+      return errors;
+    }
+
+    const previousStructsMap = await buildContractsStructMap(this.previousAsts);
+    const currentStructsMap = await buildContractsStructMap(this.asts);
+
+    const { modifications, removals } = compareStorageStructs({
+      previousStructsMap,
+      currentStructsMap,
+    });
+
+    modifications.forEach((m) => {
+      if (!errors.some((e) => e.contract === m.contract && e.struct === m.struct)) {
+        errors.push({
+          msg: `Invalid mutation found in namespace ${m.contract}.${m.struct}`,
+          contract: m.contract,
+          struct: m.struct,
+        });
+      }
+    });
+
+    removals.forEach((m) => {
+      if (!errors.some((e) => e.contract === m.contract && e.struct === m.struct)) {
+        errors.push({
+          msg: `Invalid mutation found in namespace ${m.contract}.${m.struct}`,
+          contract: m.contract,
+          struct: m.struct,
+        });
+      }
+    });
+
+    return errors;
   }
 }
 
