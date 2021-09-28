@@ -1,4 +1,4 @@
-async function getContractAST({ sourceName, contractName }) {
+async function getContractAST({ sourceName, contractName, hre }) {
   const { output } = await hre.artifacts.getBuildInfo(`${sourceName}:${contractName}`);
 
   // Hardhat includes the contract name in the object if any .sol file has more than one contract.
@@ -17,7 +17,7 @@ async function getAllContractASTs(hre) {
   for (const name of names) {
     const [sourceName, contractName] = name.split(':');
 
-    asts[contractName] = await getContractAST({ sourceName, contractName });
+    asts[contractName] = await getContractAST({ sourceName, contractName, hre });
   }
 
   return asts;
