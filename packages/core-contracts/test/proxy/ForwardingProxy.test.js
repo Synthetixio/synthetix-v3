@@ -56,10 +56,7 @@ describe('ForwardingProxy', () => {
         });
 
         it('reverts', async () => {
-          await assertRevert(
-            BadInstance.getB(),
-            'function selector was not recognized'
-          );
+          await assertRevert(BadInstance.getB(), 'function selector was not recognized');
         });
       });
     });
