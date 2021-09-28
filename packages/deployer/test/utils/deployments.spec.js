@@ -14,7 +14,7 @@ const {
 describe('utils/deployments.js', function () {
   // Default configuration using as folder the tests fixtures
   const info = {
-    folder: path.resolve(__dirname, '..', 'fixtures', 'sample-deployments', 'deployments'),
+    folder: path.resolve(__dirname, '..', 'fixtures', 'completed-deployment', 'deployments'),
     network: 'local',
     instance: 'official',
   };
