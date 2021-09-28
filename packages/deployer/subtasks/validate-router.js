@@ -43,7 +43,7 @@ async function _runSourceValidations() {
 async function _runASTValidations() {
   const errorsFound = [];
 
-  const asts = await getAllContractASTs();
+  const asts = await getAllContractASTs(hre);
   const validator = new RouterASTValidator(asts);
 
   logger.debug('Validating Router compiled code');

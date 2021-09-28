@@ -52,7 +52,7 @@ async function initContractSource(contractName) {
 
   const { sourceName, bytecode, deployedBytecode } = await hre.artifacts.readArtifact(contractName);
 
-  const ast = await getContractAST({ sourceName, contractName });
+  const ast = await getContractAST({ sourceName, contractName, hre });
   const sourceCode = (
     await fs.readFile(path.resolve(hre.config.paths.root, sourceName))
   ).toString();
