@@ -1,30 +1,17 @@
 //SPDX-License-Identifier: Unlicense
 pragma solidity ^0.8.0;
 
+import "@synthetixio/core-contracts/contracts/proxy/ForwardingProxy.sol";
 import "./storage/ProxyNamespace.sol";
 
-contract Proxy is ProxyNamespace {
-    fallback() external payable {
-        address impl = _proxyStorage().implementation;
-        // solhint-disable-next-line no-inline-assembly
-        assembly {
-            calldatacopy(0, 0, calldatasize())
+contract Proxy is ForwardingProxy, ProxyNamespace {
+    constructor(address firstImplementation) ForwardingProxy(firstImplementation) {}
 
-            let result := delegatecall(gas(), impl, 0, calldatasize(), 0, 0)
-
-            returndatacopy(0, 0, returndatasize())
-
-            switch result
-            case 0 {
-                revert(0, returndatasize())
-            }
-            default {
-                return(0, returndatasize())
-            }
-        }
+    function _setImplementation(address newImplementation) internal override {
+        _proxyStorage().implementation = newImplementation;
     }
 
-    constructor(address firstImplementation) payable {
-        _proxyStorage().implementation = firstImplementation;
+    function _getImplementation() internal override view returns (address) {
+        return _proxyStorage().implementation;
     }
 }
