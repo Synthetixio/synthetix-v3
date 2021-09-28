@@ -96,17 +96,18 @@ function findFunctionSelectors(contractName, asts) {
   return selectors;
 }
 
+// prettier-ignore
 function orderContractsStructMap(structs) {
   structs.sort((a, b) =>
     a.contract.name > b.contract.name
       ? 1
       : a.contract.name < b.contract.name
-      ? -1
-      : a.struct.name > b.struct.name
-      ? 1
-      : a.struct.name < b.struct.name
-      ? -1
-      : 0
+        ? -1
+        : a.struct.name > b.struct.name
+          ? 1
+          : a.struct.name < b.struct.name
+            ? -1
+            : 0
   );
 }
 
