@@ -101,12 +101,12 @@ function orderContractsStructMap(structs) {
     a.contract.name > b.contract.name
       ? 1
       : a.contract.name < b.contract.name
-        ? -1
-        : a.struct.name > b.struct.name
-          ? 1
-          : a.struct.name < b.struct.name
-            ? -1
-            : 0
+      ? -1
+      : a.struct.name > b.struct.name
+      ? 1
+      : a.struct.name < b.struct.name
+      ? -1
+      : 0
   );
 }
 
