@@ -16,4 +16,3 @@ contract Proxy is ForwardingProxy, ProxyNamespace {
         return _proxyStorage().implementation;
     }
 }
-

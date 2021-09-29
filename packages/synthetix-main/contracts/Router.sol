@@ -6,7 +6,7 @@ pragma solidity ^0.8.0;
 // @synthetixio/main
 //
 // Source code generated from
-// Repository: 
+// Repository:
 // Branch: bootstrap-main-project
 // Commit: 9f624a977eec4cb5c2f3b959f39fcebd19e17f0e
 //
@@ -27,7 +27,9 @@ contract Router {
 
             function findImplementation(sig) -> result {
                 switch sig
-                case 0x6279e43c { result := _DUMMY_MODULE } // DummyModule.echo()
+                case 0x6279e43c {
+                    result := _DUMMY_MODULE
+                } // DummyModule.echo()
                 leave
             }
 
