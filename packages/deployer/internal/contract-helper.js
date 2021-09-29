@@ -84,7 +84,7 @@ function getContractFilePath(contractSourcePath) {
       throw new Error(`Contract file for ${localSource} not found.`);
     }
 
-    return path.resolve(hre.config.paths.root, contractSourcePath);
+    return localSource;
   }
 
   // If not, try to resolve the contract path from one of the dependencies
