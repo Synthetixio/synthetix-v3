@@ -20,7 +20,7 @@ const {
 let logCache;
 
 const logger = require('@synthetixio/core-js/utils/logger');
-const prompter = require('@synthetixio/core-js//utils/prompter');
+const prompter = require('@synthetixio/core-js/utils/prompter');
 const types = require('../internal/argument-types');
 
 task(TASK_DEPLOY, 'Deploys all system modules')
