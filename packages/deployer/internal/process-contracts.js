@@ -2,7 +2,7 @@ const fs = require('fs/promises');
 const path = require('path');
 const { getContractAST } = require('@synthetixio/core-js/utils/hardhat');
 const { getBytecodeHash } = require('@synthetixio/core-js/utils/contracts');
-const { findInheritedContractNames } = require('@synthetixio/core-js/utils/ast');
+const { findInheritedContractNames } = require('@synthetixio/core-js/utils/ast/finders');
 const { contractIsModule } = require('./contract-helper');
 
 /**
