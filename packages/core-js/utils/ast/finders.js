@@ -20,6 +20,10 @@ function findContractNodeVariables(contractNode) {
   return Array.from(findAll('VariableDeclaration', contractNode));
 }
 
+function findContractNodeStructs(contractNode) {
+  return Array.from(findAll('StructDefinition', contractNode));
+}
+
 function findContractStateVariables(contractName, ast) {
   return findContractNodeVariables(getContractNode(ast)).filter((n) => n.stateVariable);
 }
@@ -91,12 +95,13 @@ function findFunctionSelectors(contractName, asts) {
 
   return selectors;
 }
-
 module.exports = {
   findYulCaseValues,
   findYulStorageSlotAssignments,
   findContractNodeWithName,
   findContractNodeWithId,
+  findContractNodeVariables,
+  findContractNodeStructs,
   findContractStateVariables,
   findContractDependencies,
   findFunctionSelectors,

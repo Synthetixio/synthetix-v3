@@ -1,4 +1,7 @@
-const { findYulCaseValues, findFunctionSelectors } = require('@synthetixio/core-js/utils/ast');
+const {
+  findYulCaseValues,
+  findFunctionSelectors,
+} = require('@synthetixio/core-js/utils/ast/finders');
 const { getModulesSelectors } = require('./contract-helper');
 const { toPrivateConstantCase } = require('./router-helper');
 const filterValues = require('filter-values');
