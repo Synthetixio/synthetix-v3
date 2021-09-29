@@ -5,6 +5,7 @@ const { assertRevert } = require('@synthetixio/core-js/utils/assertions');
 describe('ForwardingProxy', () => {
   let ForwardingProxy, Instance, Implementation;
 
+  // eslint-disable-next-line no-unused-vars
   let user;
 
   before('identify signers', async () => {
