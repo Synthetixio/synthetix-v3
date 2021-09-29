@@ -3,10 +3,8 @@ const {
   findYulStorageSlotAssignments,
   findContractStateVariables,
 } = require('@synthetixio/core-js/utils/ast/finders');
-const {
-  compareStorageStructs,
-  buildContractsStructMap,
-} = require('@synthetixio/core-js/utils/ast/storage-struct');
+const { buildContractsStructMap } = require('@synthetixio/core-js/utils/ast/storage-struct');
+const { compareStorageStructs } = require('@synthetixio/core-js/utils/ast/comparator');
 const filterValues = require('filter-values');
 
 class ModuleStorageASTValidator {

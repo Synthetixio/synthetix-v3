@@ -1,8 +1,8 @@
 const { equal } = require('assert/strict');
 const { clone } = require('../../utils/clone');
-const { compareStorageStructs } = require('../../utils/ast/storage-struct');
+const { compareStorageStructs } = require('../../utils/ast/comparator');
 
-describe('utils/ast/storage-struct.js', function () {
+describe('utils/ast/comparator.js compareStorageStructs', function () {
   const previousStructsMap = [
     {
       contract: {
