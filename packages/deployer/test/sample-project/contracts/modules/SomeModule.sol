@@ -28,6 +28,10 @@ contract SomeModule is GlobalNamespace {
         return _globalStorage().someValue;
     }
 
+    function fourtyTwo() public pure returns (uint) {
+        return 42;
+    }
+
     /* EVENTS */
 
     event ValueSet(address sender, uint value);

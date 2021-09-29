@@ -52,12 +52,13 @@ describe('tasks/deploy.js', function () {
 
       await this.hre.run(TASK_DEPLOY, {
         noConfirm: true,
-        quiet: false,
+        quiet: true,
         clear: false,
         alias: 'third',
         instance: 'test',
       });
     } finally {
+      // Restore all the changes
       await Promise.all([
         unlink(path.join(MODULES, 'NewModule.sol')),
         copyFile(
