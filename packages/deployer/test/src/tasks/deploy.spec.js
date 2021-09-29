@@ -1,16 +1,10 @@
 const path = require('path');
 const { copyFile, unlink } = require('fs/promises');
-const { ok } = require('assert/strict');
 const { useEnvironment } = require('../../helpers');
 const { TASK_DEPLOY } = require('../../../task-names');
 
 describe('tasks/deploy.js', function () {
   useEnvironment('complete-run');
-
-  it('extends the configuration and the environment', function () {
-    ok(this.hre.config.deployer);
-    ok(this.hre.deployer);
-  });
 
   it('correctly executes several deployments with changes', async function () {
     this.timeout(25000);
