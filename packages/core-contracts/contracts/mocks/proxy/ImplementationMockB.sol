@@ -1,10 +1,9 @@
-
 //SPDX-License-Identifier: Unlicense
 pragma solidity ^0.8.0;
 
 contract ImplementationMockB {
-    uint _a;
-    string _b;
+    uint private _a;
+    string private _b;
 
     function setA(uint newA) external payable {
         _a = newA;
@@ -22,5 +21,3 @@ contract ImplementationMockB {
         return _b;
     }
 }
-
-

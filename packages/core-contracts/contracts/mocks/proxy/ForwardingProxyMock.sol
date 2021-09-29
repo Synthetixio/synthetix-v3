@@ -4,19 +4,20 @@ pragma solidity ^0.8.0;
 import "../../proxy/ForwardingProxy.sol";
 
 contract ForwardingProxyMock is ForwardingProxy {
-    bytes32 __SLOT_0;
-    bytes32 __SLOT_1;
-    bytes32 __SLOT_2;
-    bytes32 __SLOT_3;
-    bytes32 __SLOT_4;
-    bytes32 __SLOT_5;
-    bytes32 __SLOT_6;
-    bytes32 __SLOT_7;
-    bytes32 __SLOT_8;
-    bytes32 __SLOT_9;
+    bytes32 private _slot0;
+    bytes32 private _slot1;
+    bytes32 private _slot2;
+    bytes32 private _slot3;
+    bytes32 private _slot4;
+    bytes32 private _slot5;
+    bytes32 private _slot6;
+    bytes32 private _slot7;
+    bytes32 private _slot8;
+    bytes32 private _slot9;
 
-    address _implementation;
+    address private _implementation;
 
+    // solhint-disable-next-line no-empty-blocks
     constructor(address firstImplementation) ForwardingProxy(firstImplementation) {}
 
     function setImplementation(address newImplementation) external {
@@ -31,8 +32,7 @@ contract ForwardingProxyMock is ForwardingProxy {
         _implementation = newImplementation;
     }
 
-    function _getImplementation() internal override view returns (address) {
+    function _getImplementation() internal view override returns (address) {
         return _implementation;
     }
 }
-

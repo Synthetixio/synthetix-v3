@@ -37,6 +37,5 @@ abstract contract ForwardingProxy {
 
     function _setImplementation(address newImplementation) internal virtual;
 
-    function _getImplementation() internal virtual view returns (address);
+    function _getImplementation() internal view virtual returns (address);
 }
-
