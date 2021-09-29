@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 import "../mixins/OwnerMixin.sol";
 
 contract OwnerModule is OwnerMixin {
-    /* MUTATIVE FUNCTIONS */
+    event OwnerChanged(address newOwner);
 
     function nominateOwner(address newNominatedOwner) public onlyOwnerIfSet {
         require(newNominatedOwner != address(0), "Invalid nominated owner address");
@@ -36,8 +36,6 @@ contract OwnerModule is OwnerMixin {
         emit OwnerChanged(store.owner);
     }
 
-    /* VIEW FUNCTIONS */
-
     function getOwner() public view returns (address) {
         return _ownerStorage().owner;
     }
@@ -45,8 +43,4 @@ contract OwnerModule is OwnerMixin {
     function getNominatedOwner() public view returns (address) {
         return _ownerStorage().nominatedOwner;
     }
-
-    /* EVENTS */
-
-    event OwnerChanged(address newOwner);
 }
