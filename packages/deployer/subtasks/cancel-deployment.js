@@ -19,6 +19,6 @@ subtask(
 
   await del(toDelete);
 
-  logger.info('Extiting...');
+  logger.info('Exiting...');
   process.exit(0);
 });
