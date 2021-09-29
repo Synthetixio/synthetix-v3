@@ -6,11 +6,11 @@ const { ZERO_ADDRESS } = require('../test-libs/test-lib');
 describe('Ownable', () => {
   describe('Constructor / Deployment', () => {
     it('Should revert when no argument passed to Ctor', async () => {
-      const Ownable = await ethers.getContractFactory('Ownable');
+      const OwnableParent = await ethers.getContractFactory('OwnableParent');
 
       await assert.rejects(
         async () => {
-          await Ownable.deploy();
+          await OwnableParent.deploy();
         },
         {
           name: 'Error',
@@ -22,11 +22,11 @@ describe('Ownable', () => {
     });
 
     it('Should revert when owner parameter is passed the zero address', async () => {
-      const Ownable = await ethers.getContractFactory('Ownable');
+      const OwnableParent = await ethers.getContractFactory('OwnableParent');
 
       await assert.rejects(
         async () => {
-          await Ownable.deploy(ZERO_ADDRESS);
+          await OwnableParent.deploy(ZERO_ADDRESS);
         },
         {
           name: 'Error',
@@ -39,23 +39,23 @@ describe('Ownable', () => {
 
     it('Should set owner address on deployment', async () => {
       const [owner] = await ethers.getSigners();
-      const Ownable = await ethers.getContractFactory('Ownable');
-      const ownable = await Ownable.deploy(owner.address);
-      await ownable.deployed();
+      const OwnableParent = await ethers.getContractFactory('OwnableParent');
+      const ownableParent = await OwnableParent.deploy(owner.address);
+      await ownableParent.deployed();
 
-      const contractOwner = await ownable.owner();
+      const contractOwner = await ownableParent.owner();
 
       assert.equal(contractOwner, owner.address);
     });
 
     it('Should trigger OwnerChanged event on deployment', async () => {
       const [owner] = await ethers.getSigners();
-      const Ownable = await ethers.getContractFactory('Ownable');
-      const ownable = await Ownable.deploy(owner.address);
-      await ownable.deployed();
+      const OwnableParent = await ethers.getContractFactory('OwnableParent');
+      const ownableParent = await OwnableParent.deploy(owner.address);
+      await ownableParent.deployed();
 
       await new Promise((resolve) => {
-        ownable.once('OwnerChanged', (oldOwner, newOwner) => {
+        ownableParent.once('OwnerChanged', (oldOwner, newOwner) => {
           assert.equal(oldOwner, ZERO_ADDRESS);
           assert.equal(newOwner, owner.address);
           resolve();
