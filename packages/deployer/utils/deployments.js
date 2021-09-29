@@ -112,6 +112,25 @@ function _populateDefaults(info) {
   return { ...DeploymentInfo, ...info };
 }
 
+function _getAllContractASTs(deploymentSources) {
+  const asts = {};
+  for (const [contractName, data] of Object.entries(deploymentSources)) {
+    asts[contractName] = data.ast;
+  }
+  return asts;
+}
+
+function getAllContractASTs(hre) {
+  return _getAllContractASTs(hre.deployer.deployment.sources);
+}
+
+function getAllPreviousContractASTs(hre) {
+  if (hre.deployer.previousDeployment) {
+    return _getAllContractASTs(hre.deployer.previousDeployment.sources);
+  }
+  return null;
+}
+
 module.exports = {
   getDeploymentExtendedFiles,
   getProxyAddress,
@@ -120,4 +139,6 @@ module.exports = {
   getDeploymentFile,
   getAllDeploymentFiles,
   getDeploymentFolder,
+  getAllContractASTs,
+  getAllPreviousContractASTs,
 };
