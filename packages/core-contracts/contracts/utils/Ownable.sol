@@ -8,6 +8,11 @@ abstract contract Ownable {
     event OwnerNominated(address newOwner);
     event OwnerChanged(address oldOwner, address newOwner);
 
+    modifier onlyOwner() {
+        _onlyOwner();
+        _;
+    }
+
     constructor(address ownerCtor) {
         require(ownerCtor != address(0), "Owner address cannot be 0x0");
         owner = ownerCtor;
@@ -24,11 +29,6 @@ abstract contract Ownable {
         emit OwnerChanged(owner, nominatedOwner);
         owner = nominatedOwner;
         nominatedOwner = address(0);
-    }
-
-    modifier onlyOwner() {
-        _onlyOwner();
-        _;
     }
 
     function _onlyOwner() private view {
