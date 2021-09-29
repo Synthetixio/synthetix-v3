@@ -28,7 +28,6 @@
   },
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "2.0.2",
-    "ethers": "5.4.7",
     "hardhat": "2.6.4",
     "mocha": "9.1.1",
     "nyc": "15.1.0"
