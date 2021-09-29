@@ -1,6 +1,6 @@
 const { subtask } = require('hardhat/config');
 const logger = require('@synthetixio/core-js/utils/logger');
-const { getAllContractASTs } = require('@synthetixio/core-js/utils/hardhat');
+const mapValues = require('just-map-values');
 const RouterSourceValidator = require('../internal/router-source-validator');
 const RouterASTValidator = require('../internal/router-ast-validator');
 const { SUBTASK_VALIDATE_ROUTER, SUBTASK_CANCEL_DEPLOYMENT } = require('../task-names');
@@ -43,7 +43,7 @@ async function _runSourceValidations() {
 async function _runASTValidations() {
   const errorsFound = [];
 
-  const asts = await getAllContractASTs(hre);
+  const asts = mapValues(hre.deployer.deployment.sources, (val) => val.ast);
   const validator = new RouterASTValidator(asts);
 
   logger.debug('Validating Router compiled code');
