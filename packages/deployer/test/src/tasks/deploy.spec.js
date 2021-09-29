@@ -8,7 +8,31 @@ const { TASK_DEPLOY } = require('../../../task-names');
 describe.skip('tasks/deploy.js', function () {
   useEnvironment('complete-run');
 
-  it('correctly executes several deployments with changes', async function () {
+  it('correctly executes several deployments with no changes', async function () {
+    this.timeout(25000);
+
+    // Initial deployment
+    await this.hre.run(TASK_DEPLOY, {
+      noConfirm: true,
+      quiet: true,
+      clear: true,
+      alias: 'first',
+      instance: 'test',
+    });
+
+    // Second deployment, without any changes
+    await this.hre.run(TASK_DEPLOY, {
+      noConfirm: true,
+      quiet: true,
+      clear: false,
+      alias: 'second',
+      instance: 'test',
+    });
+  });
+
+  // TODO: enable this test when module initialization is implemented
+  // More info: https://github.com/Synthetixio/synthetix-v3/issues/193
+  it.skip('correctly executes several deployments with changes', async function () {
     this.timeout(25000);
 
     // Initial deployment
