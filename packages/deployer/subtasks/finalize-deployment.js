@@ -17,7 +17,7 @@ subtask(SUBTASK_FINALIZE_DEPLOYMENT).setAction(async (_, hre) => {
       hre.deployer.paths.sources,
       hre.deployer.paths.abis,
     ];
-  
+
     await del(toDelete);
   } else {
     logger.complete('Deployment marked as completed');
