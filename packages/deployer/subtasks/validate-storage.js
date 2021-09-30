@@ -7,8 +7,11 @@ const { SUBTASK_VALIDATE_STORAGE, SUBTASK_CANCEL_DEPLOYMENT } = require('../task
 subtask(SUBTASK_VALIDATE_STORAGE).setAction(async (_, hre) => {
   logger.subtitle('Validating module storage usage');
 
-  const asts = mapValues(hre.deployer.deployment.sources, (val) => val.ast);
-  const previousAsts = mapValues(hre.deployer.previousDeployment.sources, (val) => val.ast);
+  const { deployment, previousDeployment } = hre.deployer;
+
+  const asts = mapValues(deployment.sources, (val) => val.ast);
+  const previousAsts =
+    previousDeployment && mapValues(previousDeployment.sources, (val) => val.ast);
   const validator = new ModuleStorageASTValidator(asts, previousAsts);
 
   let errorsFound = [];

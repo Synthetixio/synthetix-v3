@@ -3,10 +3,8 @@ const { copyFile, unlink } = require('fs/promises');
 const { useEnvironment } = require('../../helpers');
 const { TASK_DEPLOY } = require('../../../task-names');
 
-// TODO: enable this test when the connection to the hardhat network works
-// More info: https://github.com/Synthetixio/synthetix-v3/issues/143
-describe.skip('tasks/deploy.js', function () {
-  useEnvironment('complete-run');
+describe('tasks/deploy.js', function () {
+  useEnvironment('sample-project');
 
   it('correctly executes several deployments with no changes', async function () {
     this.timeout(25000);
@@ -55,7 +53,7 @@ describe.skip('tasks/deploy.js', function () {
 
     // Third deployment
     const MODULES = this.hre.config.deployer.paths.modules;
-    const CONTRACTS = path.join(this.hre.config.paths.root, 'test-contracts');
+    const CONTRACTS = path.join(__dirname, '..', '..', 'fixtures', 'sample-project-contracts');
     try {
       // Make some file changes before deploying
       await Promise.all([
