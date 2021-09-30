@@ -1,0 +1,10 @@
+{
+  "include": [
+    "utils/**/*.js",
+    "tasks/**/*.js",
+    "subtasks/**/*.js",
+    "internal/**/*.js"
+  ],
+  "check-coverage": true,
+  "reporter": ["lcov", "text"]
+}
