@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 import "../storage/GlobalNamespace.sol";
 
 contract SomeModule is GlobalNamespace {
-    /* MUTATIVE FUNCTIONS */
+    event ValueSet(address sender, uint value);
 
     function setValue(uint newValue) public {
         _globalStorage().value = newValue;
@@ -18,8 +18,6 @@ contract SomeModule is GlobalNamespace {
         emit ValueSet(msg.sender, newSomeValue);
     }
 
-    /* VIEW FUNCTIONS */
-
     function getValue() public view returns (uint) {
         return _globalStorage().value;
     }
@@ -27,12 +25,4 @@ contract SomeModule is GlobalNamespace {
     function getSomeValue() public view returns (uint) {
         return _globalStorage().someValue;
     }
-
-    function fourtyTwo() public pure returns (uint) {
-        return 42;
-    }
-
-    /* EVENTS */
-
-    event ValueSet(address sender, uint value);
 }

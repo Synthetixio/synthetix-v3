@@ -8,18 +8,18 @@ pragma solidity ^0.8.0;
 // Source code generated from
 // Repository: git+https://github.com/Synthetixio/synthetix-v3.git
 // Branch: add-deployer-tests
-// Commit: 095f8b0f8e708f72c8356cb0e0275e3616f72350
+// Commit: 10214076d78a51d47f2762691f96f0733d7e1e31
 //
 // GENERATED CODE - do not edit manually!!
 // --------------------------------------------------------------------------------
 // --------------------------------------------------------------------------------
 
 contract Router {
-    address private constant _ANOTHER_MODULE = 0xfbC22278A96299D91d41C453234d97b4F5Eb9B2d;
-    address private constant _OWNER_MODULE = 0x46b142DD1E924FAb83eCc3c08e4D46E82f005e0E;
-    address private constant _SETTINGS_MODULE = 0xC9a43158891282A2B1475592D5719c001986Aaec;
-    address private constant _SOME_MODULE = 0x1c85638e118b37167e9298c2268758e058DdfDA0;
-    address private constant _UPGRADE_MODULE = 0x367761085BF3C12e5DA2Df99AC6E1a824612b8fb;
+    address private constant _ANOTHER_MODULE = 0xe8D2A1E88c91DCd5433208d4152Cc4F399a7e91d;
+    address private constant _OWNER_MODULE = 0x5067457698Fd6Fa1C6964e416b3f42713513B3dD;
+    address private constant _SETTINGS_MODULE = 0x18E317A7D70d8fBf8e6E893616b52390EbBdb629;
+    address private constant _SOME_MODULE = 0x4b6aB5F819A515382B0dEB6935D793817bB4af28;
+    address private constant _UPGRADE_MODULE = 0xCace1b78160AE76398F486c8a18044da0d66d86D;
 
     fallback() external payable {
         // Lookup table: Function selector => implementation contract

@@ -53,7 +53,7 @@ describe('tasks/deploy.js', function () {
 
     // Third deployment
     const MODULES = this.hre.config.deployer.paths.modules;
-    const CONTRACTS = path.join(__dirname, '..', '..', 'fixtures', 'sample-project-contracts');
+    const CONTRACTS = path.join(this.hre.config.paths.root, 'test-contracts');
     try {
       // Make some file changes before deploying
       await Promise.all([
