@@ -1,7 +1,7 @@
 const hre = require('hardhat');
 const assert = require('assert');
 const { ethers } = hre;
-const { getProxyAddress } = require('../../../utils/deployments');
+const { getProxyAddress } = require('../../../../utils/deployments');
 const { assertRevert } = require('@synthetixio/core-js/utils/assertions');
 const { findEvent } = require('@synthetixio/core-js/utils/events');
 const { bootstrap } = require('./helpers/initializer');
