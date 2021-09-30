@@ -21,8 +21,8 @@ contract ERC20Mock is ERC20 {
 
     uint256 private _totalSupply;
 
-    string public _name;
-    string public _symbol;
+    string private _name;
+    string private _symbol;
 
     function name() public view override returns (string memory) {
         return _name;
