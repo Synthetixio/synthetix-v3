@@ -5,28 +5,68 @@ pragma solidity ^0.8.0;
 import "../interfaces/IERC20.sol";
 
 abstract contract ERC20 is IERC20 {
-    function name() public view virtual override returns (string memory);
+    string public override name;
 
-    function symbol() public view virtual override returns (string memory);
+    string public override symbol;
 
-    // if there was a constructor decimals would be decalred as immutable!
-    function decimals() public view virtual override returns (uint8) {
-        return 18;
+    uint8 public immutable override decimals;
+
+    mapping(address => uint256) public override balanceOf;
+
+    mapping(address => mapping(address => uint256)) public override allowance;
+
+    uint256 public override totalSupply;
+
+    constructor(
+        string memory _name,
+        string memory _symbol,
+        uint8 _decimals
+    ) {
+        name = _name;
+        symbol = _symbol;
+        decimals = _decimals;
     }
 
-    function totalSupply() public view virtual override returns (uint256);
+    function approve(address spender, uint256 amount) public override returns (bool) {
+        allowance[msg.sender][spender] = amount;
 
-    function balanceOf(address account) public view virtual override returns (uint256);
+        emit Approval(msg.sender, spender, amount);
 
-    function allowance(address owner, address spender) public view virtual override returns (uint256);
+        return true;
+    }
 
-    function approve(address spender, uint256 amount) public virtual override returns (bool);
+    function transfer(address to, uint256 amount) public override returns (bool) {
+        _transfer(msg.sender, to, amount);
 
-    function transfer(address to, uint amount) external virtual override returns (bool);
+        return true;
+    }
 
     function transferFrom(
         address from,
         address to,
         uint amount
-    ) external virtual override returns (bool);
+    ) external override returns (bool) {
+        // it reverts if the sender does not have sufficient allowance
+        allowance[from][msg.sender] -= amount;
+
+        _transfer(from, to, amount);
+
+        return true;
+    }
+
+    function _transfer(
+        address from,
+        address to,
+        uint256 amount
+    ) private {
+        // it reverts if the sender does not have sufficient balance
+        balanceOf[from] -= amount;
+        // we are now sure that we can perform this operation safely since it didn't revert in the previous step
+        // i.e. the total supply cannot exceed the maximum value of uint256
+        unchecked {
+            balanceOf[to] += amount;
+        }
+
+        emit Transfer(from, to, amount);
+    }
 }
