@@ -1,4 +1,5 @@
 {
+  "all": true,
   "include": [
     "utils/**/*.js",
     "tasks/**/*.js",
@@ -6,5 +7,9 @@
     "internal/**/*.js"
   ],
   "check-coverage": true,
-  "reporter": ["lcov", "text"]
+  "reporter": ["lcov", "text"],
+  "branches": 1,
+  "lines": 1,
+  "functions": 1,
+  "statements": 1
 }
