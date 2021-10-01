@@ -16,7 +16,7 @@
   "homepage": "https://github.com/Synthetixio/synthetix-v3#readme",
   "scripts": {
     "test": "npm run --workspaces --if-present test",
-    "test:coverage": "npm run --workspaces --if-present test:coverage",
+    "coverage": "npm run --workspaces --if-present coverage",
     "lint:js": "prettier --check '**/*.js' && eslint '**/*.js'",
     "lint:js:fix": "prettier --write '**/*.js' && eslint --fix '**/*.js'",
     "lint:sol": "prettier --check 'packages/**/*.sol' && solhint 'packages/**/*.sol'",
