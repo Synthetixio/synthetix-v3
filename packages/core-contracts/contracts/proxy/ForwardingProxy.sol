@@ -1,4 +1,4 @@
-//SPDX-License-Identifier: Unlicense
+//SPDX-License-Identifier: UNLICENCED
 pragma solidity ^0.8.0;
 
 abstract contract ForwardingProxy {
