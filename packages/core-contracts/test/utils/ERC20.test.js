@@ -139,10 +139,9 @@ describe('ERC20', () => {
 
     describe('Approve and TransferFrom', () => {
       const approvalAmount = ethers.BigNumber.from('10');
-      let currentSupply, user1Balance, user2Balance;
+      let user1Balance, user2Balance;
 
-      before('record balances and supply', async () => {
-        currentSupply = await ERC20.totalSupply();
+      before('record balances', async () => {
         user1Balance = await ERC20.balanceOf(user1.address);
         user2Balance = await ERC20.balanceOf(user2.address);
       });
