@@ -25,8 +25,8 @@ abstract contract UniversalProxyImplementation is ContractUtil {
     }
 
     function _canUpgradeInTheFuture(address newImplementation) private returns (bool) {
-        console.log(newImplementation);
-        console.log(_getImplementation());
+        console.log("_canUpgradeInTheFuture: newImplementation", newImplementation);
+        console.log("_canUpgradeInTheFuture: _getImplementation", _getImplementation());
         if (newImplementation == _getImplementation()) {
             return true;
         }
@@ -38,10 +38,10 @@ abstract contract UniversalProxyImplementation is ContractUtil {
             abi.encodeWithSignature("simulateUpgrades", newImplementation)
         );
 
-        console.log(success);
-        console.log("Response");
+        console.log("_canUpgradeInTheFuture: Success", success);
+        console.log("_canUpgradeInTheFuture: Response", string(response));
         console.logBytes(response);
-        console.log("Done");
+        console.log("_canUpgradeInTheFuture: Done");
 
         // The simulation is expected to revert!
         if (success) {

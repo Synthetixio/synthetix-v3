@@ -58,7 +58,7 @@ describe('UniversalProxy', () => {
     });
   });
 
-  describe('when attempts to upgrade to an EOA', () => {
+  describe.skip('when attempts to upgrade to an EOA', () => {
     it('reverts', async () => {
       [user] = await ethers.getSigners();
 
@@ -69,7 +69,7 @@ describe('UniversalProxy', () => {
     });
   });
 
-  describe('when attempts to upgrade to a sterile implementation', () => {
+  describe.skip('when attempts to upgrade to a sterile implementation', () => {
     it('reverts', async () => {
       let factory;
 
