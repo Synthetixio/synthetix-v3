@@ -100,7 +100,7 @@ describe('ERC20', () => {
       describe('when not having enough balance', () => {
         it('reverts ', async () => {
           await assertRevert(
-            ERC20.connect(user1).transfer(user2.address, transferAmount.add(1)),
+            ERC20.connect(user1).transfer(user2.address, user1Balance.add(1)),
             'Arithmetic operation underflowed or overflowed outside of an unchecked block'
           );
         });
@@ -133,6 +133,86 @@ describe('ERC20', () => {
           assert.equal(event.args.from, user1.address);
           assert.equal(event.args.to, user2.address);
           assert.equal(event.args.amount, transferAmount.toString());
+        });
+      });
+    });
+
+    describe('Approve and TransferFrom', () => {
+      const approvalAmount = ethers.BigNumber.from('10');
+      let currentSupply, user1Balance, user2Balance;
+
+      before('record balances and supply', async () => {
+        currentSupply = await ERC20.totalSupply();
+        user1Balance = await ERC20.balanceOf(user1.address);
+        user2Balance = await ERC20.balanceOf(user2.address);
+      });
+
+      before('approve', async () => {
+        const tx = await ERC20.connect(user1).approve(user2.address, approvalAmount);
+        receipt = await tx.wait();
+      });
+
+      it('sets the right allowance', async () => {
+        assert.equal(
+          await ERC20.allowance(user1.address, user2.address),
+          approvalAmount.toString()
+        );
+      });
+
+      it('emits an Approval event', async () => {
+        const event = findEvent({ receipt, eventName: 'Approval' });
+
+        assert.equal(event.args.owner, user1.address);
+        assert.equal(event.args.spender, user2.address);
+        assert.equal(event.args.amount, approvalAmount.toString());
+      });
+
+      describe('when trying to transfer more than the amount approved', () => {
+        it('reverts ', async () => {
+          await assertRevert(
+            ERC20.connect(user2).transferFrom(user1.address, user2.address, approvalAmount.add(1)),
+            'Arithmetic operation underflowed or overflowed outside of an unchecked block'
+          );
+        });
+      });
+
+      describe('when transfering less or equal than the approval amount', () => {
+        const transferFromAmount = approvalAmount.sub(1);
+        before('transferFrom to itself', async () => {
+          let tx = await ERC20.connect(user2).transferFrom(
+            user1.address,
+            user2.address,
+            transferFromAmount
+          );
+          receipt = await tx.wait();
+          // get the new, reduced allowance
+          const newAllowance = await ERC20.allowance(user1.address, user2.address);
+          // transferFrom the remaining allowance
+          tx = await ERC20.connect(user2).transferFrom(user1.address, user2.address, newAllowance);
+          await tx.wait();
+        });
+
+        it('the allowance should be 0', async () => {
+          assert.equal(await ERC20.allowance(user1.address, user2.address), '0');
+        });
+
+        it('updates the user balances accordingly', async () => {
+          assert.equal(
+            await ERC20.balanceOf(user1.address),
+            user1Balance.sub(approvalAmount).toString()
+          );
+          assert.equal(
+            await ERC20.balanceOf(user2.address),
+            user2Balance.add(approvalAmount).toString()
+          );
+        });
+
+        it('emits a Transfer event', async () => {
+          const event = findEvent({ receipt, eventName: 'Transfer' });
+
+          assert.equal(event.args.from, user1.address);
+          assert.equal(event.args.to, user2.address);
+          assert.equal(event.args.amount, transferFromAmount.toString());
         });
       });
     });
