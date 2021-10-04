@@ -13,6 +13,10 @@ function findContractNodeWithName(contractName, ast) {
 }
 
 function getContractNode(ast) {
+  if (!ast) {
+    return undefined;
+  }
+
   return Array.from(findAll('ContractDefinition', ast))[0];
 }
 
@@ -32,6 +36,9 @@ function findContractDependencies(contractName, asts) {
   const contractNode = getContractNode(asts[contractName]);
 
   let dependencyContractNodes = [];
+  if (!contractNode) {
+    return dependencyContractNodes;
+  }
 
   contractNode.linearizedBaseContracts.forEach((baseContractId) => {
     for (var [, ast] of Object.entries(asts)) {
