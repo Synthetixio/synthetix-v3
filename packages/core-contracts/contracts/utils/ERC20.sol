@@ -69,4 +69,25 @@ abstract contract ERC20 is IERC20 {
 
         emit Transfer(from, to, amount);
     }
+
+    function _mint(address to, uint256 amount) internal {
+        totalSupply += amount;
+        // no need for overflow check since it is done in the previous step
+        unchecked {
+            balanceOf[to] += amount;
+        }
+
+        emit Transfer(address(0), to, amount);
+    }
+
+    function _burn(address from, uint256 amount) internal {
+        balanceOf[from] -= amount;
+
+        // no need for underflow check since it would have occured in the previous step
+        unchecked {
+            totalSupply -= amount;
+        }
+
+        emit Transfer(from, address(0), amount);
+    }
 }
