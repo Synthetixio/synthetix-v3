@@ -18,13 +18,13 @@ abstract contract ERC20 is IERC20 {
     uint256 public override totalSupply;
 
     constructor(
-        string memory _name,
-        string memory _symbol,
-        uint8 _decimals
+        string memory tokenName,
+        string memory tokenSymbol,
+        uint8 tokenDecimals
     ) {
-        name = _name;
-        symbol = _symbol;
-        decimals = _decimals;
+        name = tokenName;
+        symbol = tokenSymbol;
+        decimals = tokenDecimals;
     }
 
     function approve(address spender, uint256 amount) public override returns (bool) {
