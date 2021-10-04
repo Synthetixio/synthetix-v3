@@ -15,9 +15,9 @@ abstract contract Ownable is IOwnable {
 
     function renounceNomination() external virtual override {}
 
-    function getOwner() external view virtual override returns (address) {}
+    function owner() external view virtual override returns (address) {}
 
-    function getNominatedOwner() external view virtual override returns (address) {}
+    function nominatedOwner() external view virtual override returns (address) {}
 
     function _onlyOwner() internal view virtual {}
 }

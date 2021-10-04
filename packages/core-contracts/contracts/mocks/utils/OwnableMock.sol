@@ -4,8 +4,8 @@ pragma solidity ^0.8.0;
 import "../../utils/Ownable.sol";
 
 contract OwnableMock is Ownable {
-    address public owner;
-    address public nominatedOwner;
+    address public override owner;
+    address public override nominatedOwner;
 
     constructor(address firstOwner) {
         require(firstOwner != address(0), "Owner cannot be 0x0");
@@ -26,6 +26,6 @@ contract OwnableMock is Ownable {
     }
 
     function _onlyOwner() internal view override {
-        require(msg.sender == owner, "Must be the contract owner");
+        require(msg.sender == owner, "Only the owner can invoke");
     }
 }

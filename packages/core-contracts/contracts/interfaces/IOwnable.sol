@@ -11,7 +11,7 @@ interface IOwnable {
 
     function renounceNomination() external;
 
-    function getOwner() external view returns (address);
+    function owner() external view returns (address);
 
-    function getNominatedOwner() external view returns (address);
+    function nominatedOwner() external view returns (address);
 }
