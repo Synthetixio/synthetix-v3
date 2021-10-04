@@ -1,19 +1,23 @@
 //SPDX-License-Identifier: UNLICENCED
-
 pragma solidity ^0.8.0;
 
-abstract contract Ownable {
-    event OwnerNominated(address newOwner);
-    event OwnerChanged(address oldOwner, address newOwner);
+import "../interfaces/IOwnable.sol";
 
+abstract contract Ownable is IOwnable {
     modifier onlyOwner() {
         _onlyOwner();
         _;
     }
 
-    function nominateNewOwner(address ownerNominated) external virtual {}
+    function acceptOwnership() external virtual override {}
 
-    function acceptOwnership() external virtual {}
+    function nominateNewOwner(address newOwner) external virtual override {}
+
+    function renounceNomination() external virtual override {}
+
+    function getOwner() external view virtual override returns (address) {}
+
+    function getNominatedOwner() external view virtual override returns (address) {}
 
     function _onlyOwner() internal view virtual {}
 }
