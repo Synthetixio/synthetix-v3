@@ -2,6 +2,7 @@
 pragma solidity ^0.8.0;
 
 import "../utils/ContractUtil.sol";
+import "hardhat/console.sol";
 
 abstract contract UniversalProxyImplementation is ContractUtil {
 
@@ -11,10 +12,6 @@ abstract contract UniversalProxyImplementation is ContractUtil {
 
     function _getImplementation() internal view virtual returns (address);
     
-    function getImplementation() public view returns (address) {
-        return _getImplementation();
-    }
-
     function upgradeTo(address newImplementation) public virtual;
     
     function _upgradeTo(address newImplementation) internal {
@@ -28,15 +25,23 @@ abstract contract UniversalProxyImplementation is ContractUtil {
     }
 
     function _canUpgradeInTheFuture(address newImplementation) private returns (bool) {
+        console.log(newImplementation);
+        console.log(_getImplementation());
         if (newImplementation == _getImplementation()) {
             return true;
         }
+
 
         // Simulate upgrading to this implementation and then rolling back to the current one.
         // NOTE: This call will always revert, and thus will have no side effects.
         (bool success, bytes memory response) = address(this).delegatecall(
             abi.encodeWithSignature("simulateUpgrades", newImplementation)
         );
+
+        console.log(success);
+        console.log("Response");
+        console.logBytes(response);
+        console.log("Done");
 
         // The simulation is expected to revert!
         if (success) {
@@ -49,7 +54,7 @@ abstract contract UniversalProxyImplementation is ContractUtil {
 
     function simulateUpgrades(address newImplementation) public {
         address oldImplementation = _getImplementation();
-
+        
         // Set the implementation, and then use it to roll back to the old implementation
         _setImplementation(newImplementation);
         (bool rollbackSuccessful, ) = newImplementation.delegatecall(
