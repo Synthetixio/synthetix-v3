@@ -39,7 +39,20 @@ describe('utils/contracts.js', function () {
     payable: false,
     stateMutability: "nonpayable",
     type: "function"
-  }];
+  },
+  {
+    inputs: [
+      {
+        internalType: "uint256",
+        name: "chainId_",
+        type: "uint256"
+      }
+    ],
+    payable: false,
+    stateMutability: "nonpayable",
+    type: "constructor"
+  },
+  ];
 
   it('can retrieve the hash of the bytecode of a contract', function () {
     assert.equal(getBytecodeHash(dummyBytecode), dummyBytecodeHash);
