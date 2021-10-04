@@ -7,6 +7,14 @@ abstract contract UniversalProxyImplementation is ContractUtil {
 
     event Upgraded(address implementation);
 
+    function _setImplementation(address newImplementation) internal virtual;
+
+    function _getImplementation() internal view virtual returns (address);
+    
+    function getImplementation() public view returns (address) {
+        return _getImplementation();
+    }
+
     function upgradeTo(address newImplementation) public virtual;
     
     function _upgradeTo(address newImplementation) internal {
@@ -59,10 +67,4 @@ abstract contract UniversalProxyImplementation is ContractUtil {
         revert("upgrades correctly");
     }
 
-    function _setImplementation(address newImplementation) internal virtual;
-
-    function _getImplementation() internal view virtual returns (address);
-    function getImplementation() public view returns (address) {
-        return _getImplementation();
-    }
 }

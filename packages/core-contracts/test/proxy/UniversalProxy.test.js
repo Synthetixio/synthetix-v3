@@ -57,7 +57,6 @@ describe('UniversalProxy', () => {
     });
   });
 
-
   describe('when attempts to upgrade to an EOA', () => {
     it('reverts', async () => {
       [user] = await ethers.getSigners();
