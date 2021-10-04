@@ -1,6 +1,6 @@
 const hre = require('hardhat');
 const { ethers } = hre;
-const { getProxyAddress } = require('../../../../utils/deployments');
+const { getProxyAddress } = require('../../../../../utils/deployments');
 const { takeSnapshot, restoreSnapshot } = require('@synthetixio/core-js/utils/rpc');
 
 let snapshotId;

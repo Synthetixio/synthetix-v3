@@ -20,7 +20,7 @@ const {
 let logCache;
 
 const logger = require('@synthetixio/core-js/utils/logger');
-const prompter = require('@synthetixio/core-js//utils/prompter');
+const prompter = require('@synthetixio/core-js/utils/prompter');
 const types = require('../internal/argument-types');
 
 task(TASK_DEPLOY, 'Deploys all system modules')
@@ -44,25 +44,27 @@ task(TASK_DEPLOY, 'Deploys all system modules')
     logger.debugging = debug;
     prompter.noConfirm = noConfirm;
 
-    if (clear) {
-      await hre.run(SUBTASK_CLEAR_DEPLOYMENTS, taskArguments);
+    try {
+      if (clear) {
+        await hre.run(SUBTASK_CLEAR_DEPLOYMENTS, taskArguments);
+      }
+
+      await hre.run(SUBTASK_PREPARE_DEPLOYMENT, taskArguments);
+      await hre.run(SUBTASK_PRINT_INFO, taskArguments);
+      await hre.run(TASK_COMPILE, { force: false, quiet: true });
+      await hre.run(SUBTASK_SYNC_SOURCES);
+      await hre.run(SUBTASK_VALIDATE_STORAGE);
+      await hre.run(SUBTASK_VALIDATE_MODULES);
+      await hre.run(SUBTASK_DEPLOY_MODULES);
+      await hre.run(SUBTASK_GENERATE_ROUTER_SOURCE);
+      await hre.run(TASK_COMPILE, { force: false, quiet: true });
+      await hre.run(SUBTASK_VALIDATE_ROUTER);
+      await hre.run(SUBTASK_DEPLOY_ROUTER);
+      await hre.run(SUBTASK_UPGRADE_PROXY);
+      await hre.run(SUBTASK_FINALIZE_DEPLOYMENT);
+    } finally {
+      _forceSilenceHardhat(false, quiet);
     }
-
-    await hre.run(SUBTASK_PREPARE_DEPLOYMENT, taskArguments);
-    await hre.run(SUBTASK_PRINT_INFO, taskArguments);
-    await hre.run(TASK_COMPILE, { force: false, quiet: true });
-    await hre.run(SUBTASK_SYNC_SOURCES);
-    await hre.run(SUBTASK_VALIDATE_STORAGE);
-    await hre.run(SUBTASK_VALIDATE_MODULES);
-    await hre.run(SUBTASK_DEPLOY_MODULES);
-    await hre.run(SUBTASK_GENERATE_ROUTER_SOURCE);
-    await hre.run(TASK_COMPILE, { force: false, quiet: true });
-    await hre.run(SUBTASK_VALIDATE_ROUTER);
-    await hre.run(SUBTASK_DEPLOY_ROUTER);
-    await hre.run(SUBTASK_UPGRADE_PROXY);
-    await hre.run(SUBTASK_FINALIZE_DEPLOYMENT);
-
-    _forceSilenceHardhat(false, quiet);
   });
 
 /*

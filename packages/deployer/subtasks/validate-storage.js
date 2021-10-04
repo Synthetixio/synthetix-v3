@@ -1,14 +1,17 @@
 const { subtask } = require('hardhat/config');
+const mapValues = require('just-map-values');
 const logger = require('@synthetixio/core-js/utils/logger');
-const { getAllContractASTs, getAllPreviousContractASTs } = require('../utils/deployments');
 const ModuleStorageASTValidator = require('../internal/storage-ast-validator');
 const { SUBTASK_VALIDATE_STORAGE, SUBTASK_CANCEL_DEPLOYMENT } = require('../task-names');
 
 subtask(SUBTASK_VALIDATE_STORAGE).setAction(async (_, hre) => {
   logger.subtitle('Validating module storage usage');
 
-  const asts = getAllContractASTs(hre);
-  const previousAsts = getAllPreviousContractASTs(hre);
+  const { deployment, previousDeployment } = hre.deployer;
+
+  const asts = mapValues(deployment.sources, (val) => val.ast);
+  const previousAsts =
+    previousDeployment && mapValues(previousDeployment.sources, (val) => val.ast);
   const validator = new ModuleStorageASTValidator(asts, previousAsts);
 
   let errorsFound = [];

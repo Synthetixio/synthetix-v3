@@ -1,5 +1,5 @@
 require('@nomiclabs/hardhat-ethers');
-require('../../index');
+require('../../..');
 
 module.exports = {
   solidity: '0.8.4',

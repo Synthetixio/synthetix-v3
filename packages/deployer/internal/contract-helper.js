@@ -92,6 +92,25 @@ function getContractFilePath(contractSourcePath) {
   return require.resolve(contractSourcePath);
 }
 
+/**
+ * Get the list of all modules relative paths, e.g.: ['contracts/modules/SomeModule.sol', ...]
+ * @returns {string[]}
+ */
+async function getModulesPaths() {
+  const names = await hre.artifacts.getAllFullyQualifiedNames();
+
+  const moduleSourcePaths = [];
+
+  for (const name of names) {
+    const [contractSourcePath] = name.split(':');
+    if (contractIsModule(contractSourcePath)) {
+      moduleSourcePaths.push(contractSourcePath);
+    }
+  }
+
+  return moduleSourcePaths;
+}
+
 module.exports = {
   findDuplicateSelectors,
   getAllSelectors,
@@ -99,4 +118,5 @@ module.exports = {
   isAlreadyDeployed,
   contractIsModule,
   getContractFilePath,
+  getModulesPaths,
 };
