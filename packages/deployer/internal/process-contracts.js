@@ -1,9 +1,8 @@
 const fs = require('fs/promises');
-const path = require('path');
 const { getContractAST } = require('@synthetixio/core-js/utils/hardhat');
 const { getBytecodeHash } = require('@synthetixio/core-js/utils/contracts');
-const { findInheritedContractNames } = require('@synthetixio/core-js/utils/ast');
-const { contractIsModule } = require('./contract-helper');
+const { findInheritedContractNames } = require('@synthetixio/core-js/utils/ast/finders');
+const { contractIsModule, getContractFilePath } = require('./contract-helper');
 
 /**
  * Initialize contract metadata on hre.deployer.deployment.*
@@ -53,9 +52,7 @@ async function initContractSource(contractName) {
   const { sourceName, bytecode, deployedBytecode } = await hre.artifacts.readArtifact(contractName);
 
   const ast = await getContractAST({ sourceName, contractName, hre });
-  const sourceCode = (
-    await fs.readFile(path.resolve(hre.config.paths.root, sourceName))
-  ).toString();
+  const sourceCode = (await fs.readFile(getContractFilePath(sourceName))).toString();
 
   deployment.sources[contractName] = {
     bytecode,

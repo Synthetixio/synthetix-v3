@@ -60,8 +60,10 @@ subtask(
   };
 
   if (previousFile) {
+    const { sources: previousSources } = getDeploymentExtendedFiles(previousFile);
     hre.deployer.previousDeployment = {
       general: JSON.parse(fs.readFileSync(previousFile)),
+      sources: JSON.parse(fs.readFileSync(previousSources)),
     };
   }
 });

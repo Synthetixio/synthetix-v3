@@ -1,2 +1,3 @@
-test/sample-project/deployments
-test/sample-project/contracts/Router.sol
+test/fixture-projects/*/deployments/local
+test/fixture-projects/*/deployments/hardhat
+test/fixture-projects/*/contracts/Router.sol
