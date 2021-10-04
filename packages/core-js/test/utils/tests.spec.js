@@ -6,8 +6,8 @@ describe('utils/tests.js', () => {
   it('can print the gas used in a test', async () => {
     const test = {
       _runnable: {
-        title: 'Hello'
-      }
+        title: 'Hello',
+      },
     };
 
     const gasUsed = 1337;
