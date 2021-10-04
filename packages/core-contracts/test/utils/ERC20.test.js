@@ -86,5 +86,55 @@ describe('ERC20', () => {
         assert.equal(event.args.amount, tokensToBurn.toString());
       });
     });
+
+    describe('transfer()', () => {
+      const transferAmount = ethers.BigNumber.from('10');
+      let currentSupply, user1Balance, user2Balance;
+
+      before('record balances and supply', async () => {
+        currentSupply = await ERC20.totalSupply();
+        user1Balance = await ERC20.balanceOf(user1.address);
+        user2Balance = await ERC20.balanceOf(user2.address);
+      });
+
+      describe('when not having enough balance', () => {
+        it('reverts ', async () => {
+          await assertRevert(
+            ERC20.connect(user1).transfer(user2.address, transferAmount.add(1)),
+            'Arithmetic operation underflowed or overflowed outside of an unchecked block'
+          );
+        });
+      });
+
+      describe('when having enough balance', () => {
+        before('transfer', async () => {
+          const tx = await ERC20.connect(user1).transfer(user2.address, transferAmount);
+          receipt = await tx.wait();
+        });
+
+        it('does not alter the total supply', async () => {
+          assert.equal(await ERC20.totalSupply(), currentSupply.toString());
+        });
+
+        it('reduces the sender balance and increases the receiver balance', async () => {
+          assert.equal(
+            await ERC20.balanceOf(user1.address),
+            user1Balance.sub(transferAmount).toString()
+          );
+          assert.equal(
+            await ERC20.balanceOf(user2.address),
+            user2Balance.add(transferAmount).toString()
+          );
+        });
+
+        it('emits a Transfer event', async () => {
+          const event = findEvent({ receipt, eventName: 'Transfer' });
+
+          assert.equal(event.args.from, user1.address);
+          assert.equal(event.args.to, user2.address);
+          assert.equal(event.args.amount, transferAmount.toString());
+        });
+      });
+    });
   });
 });
