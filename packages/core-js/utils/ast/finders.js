@@ -1,18 +1,22 @@
 const { findAll } = require('solidity-ast/utils');
 
-function findContractNodeWithId(contractId, asts) {
-  return Array.from(findAll('ContractDefinition', asts)).find(
+function findContractNodeWithId(contractId, ast) {
+  return Array.from(findAll('ContractDefinition', ast)).find(
     (contractDefiniton) => contractDefiniton.id === contractId
   );
 }
 
-function findContractNodeWithName(contractName, asts) {
-  return Array.from(findAll('ContractDefinition', asts)).find(
+function findContractNodeWithName(contractName, ast) {
+  return Array.from(findAll('ContractDefinition', ast)).find(
     (contractDefiniton) => contractDefiniton.name === contractName
   );
 }
 
 function getContractNode(ast) {
+  if (!ast) {
+    return undefined;
+  }
+
   return Array.from(findAll('ContractDefinition', ast))[0];
 }
 
@@ -32,11 +36,16 @@ function findContractDependencies(contractName, asts) {
   const contractNode = getContractNode(asts[contractName]);
 
   let dependencyContractNodes = [];
+  if (!contractNode) {
+    return dependencyContractNodes;
+  }
 
   contractNode.linearizedBaseContracts.forEach((baseContractId) => {
-    const dependency = findContractNodeWithId(baseContractId, asts);
-    if (dependency) {
-      dependencyContractNodes.push(dependency);
+    for (var [, ast] of Object.entries(asts)) {
+      const dependency = findContractNodeWithId(baseContractId, ast);
+      if (dependency) {
+        dependencyContractNodes.push(dependency);
+      }
     }
   });
 
@@ -82,19 +91,30 @@ function findYulCaseValues(contractName, ast) {
   return items;
 }
 
-function findFunctionSelectors(contractName, asts) {
+function _findFunctionSelectors(contractNode) {
   const selectors = [];
-  const contractNode = asts[contractName];
-  if (!contractNode) {
-    return selectors;
-  }
 
   for (const functionDefinition of findAll('FunctionDefinition', contractNode)) {
-    selectors.push({ selector: '0x' + functionDefinition.functionSelector });
+    if (functionDefinition.functionSelector) {
+      selectors.push({ selector: '0x' + functionDefinition.functionSelector });
+    }
   }
 
   return selectors;
 }
+
+function findFunctionSelectors(contractName, asts) {
+  const selectors = [];
+  for (const contractNode of findContractDependencies(contractName, asts)) {
+    const currentSelectors = _findFunctionSelectors(contractNode);
+    if (currentSelectors.length > 0) {
+      selectors.push(...currentSelectors);
+    }
+  }
+
+  return selectors;
+}
+
 module.exports = {
   findYulCaseValues,
   findYulStorageSlotAssignments,
