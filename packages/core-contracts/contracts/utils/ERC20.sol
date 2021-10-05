@@ -45,8 +45,12 @@ abstract contract ERC20 is IERC20 {
         address to,
         uint amount
     ) external override returns (bool) {
+        uint256 currentAllowance = allowance[from][msg.sender];
         // it reverts if the sender does not have sufficient allowance
-        allowance[from][msg.sender] -= amount;
+        require(currentAllowance >= amount, "TransferFrom amount exceeds allowance");
+        unchecked {
+            allowance[from][msg.sender] -= amount;
+        }
 
         _transfer(from, to, amount);
 
@@ -58,11 +62,13 @@ abstract contract ERC20 is IERC20 {
         address to,
         uint256 amount
     ) private {
+        uint256 accountBalance = balanceOf[from];
         // it reverts if the sender does not have sufficient balance
-        balanceOf[from] -= amount;
+        require(accountBalance >= amount, "Transfer amount exceeds balance");
         // we are now sure that we can perform this operation safely since it didn't revert in the previous step
-        // i.e. the total supply cannot exceed the maximum value of uint256
+        // the total supply cannot exceed the maximum value of uint256 thus we performed but accounting operations in unchecked mode
         unchecked {
+            balanceOf[from] -= amount;
             balanceOf[to] += amount;
         }
 
@@ -80,10 +86,13 @@ abstract contract ERC20 is IERC20 {
     }
 
     function _burn(address from, uint256 amount) internal {
-        balanceOf[from] -= amount;
+        uint256 accountBalance = balanceOf[from];
+
+        require(accountBalance >= amount, "Burn amount exceeds balance");
 
         // no need for underflow check since it would have occured in the previous step
         unchecked {
+            balanceOf[from] -= amount;
             totalSupply -= amount;
         }
 
