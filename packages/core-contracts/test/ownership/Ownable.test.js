@@ -7,10 +7,10 @@ const { findEvent } = require('@synthetixio/core-js/utils/events');
 describe('Ownable', () => {
   let Ownable;
 
-  let owner, newOWner;
+  let owner, newOwner;
 
   before('identify signers', async () => {
-    [owner, newOWner] = await ethers.getSigners();
+    [owner, newOwner] = await ethers.getSigners();
   });
 
   before('deploy the contract', async () => {
@@ -34,25 +34,25 @@ describe('Ownable', () => {
     describe('when an non-owner tries to nominate a new owner', () => {
       it('reverts', async () => {
         await assertRevert(
-          Ownable.connect(newOWner).nominateNewOwner(newOWner.address),
-          'Only the owner can invoke'
+          Ownable.connect(newOwner).nominateNewOwner(newOwner.address),
+          'Only owner can invoke'
         );
       });
     });
 
     before('nominateNewOwner', async () => {
-      const tx = await Ownable.connect(owner).nominateNewOwner(newOWner.address);
+      const tx = await Ownable.connect(owner).nominateNewOwner(newOwner.address);
       receipt = await tx.wait();
     });
 
     it('shows that the address is nominated', async () => {
-      assert.equal(await Ownable.nominatedOwner(), newOWner.address);
+      assert.equal(await Ownable.nominatedOwner(), newOwner.address);
     });
 
     it('emitted an OwnerNominated event', async () => {
       const event = findEvent({ receipt, eventName: 'OwnerNominated' });
 
-      assert.equal(event.args.newOwner, newOWner.address);
+      assert.equal(event.args.newOwner, newOwner.address);
     });
 
     describe('Accepting ownership', () => {
@@ -64,18 +64,18 @@ describe('Ownable', () => {
 
       describe('when the nominated address accepts ownership', () => {
         before('acceptOwnership', async () => {
-          const tx = await Ownable.connect(newOWner).acceptOwnership();
+          const tx = await Ownable.connect(newOwner).acceptOwnership();
           receipt = await tx.wait();
         });
 
         it('emits an OwnerChanged event', async () => {
           const event = findEvent({ receipt, eventName: 'OwnerChanged' });
 
-          assert.equal(event.args.newOwner, newOWner.address);
+          assert.equal(event.args.newOwner, newOwner.address);
         });
 
         it('shows that the address is the new owner', async () => {
-          assert.equal(await Ownable.owner(), newOWner.address);
+          assert.equal(await Ownable.owner(), newOwner.address);
         });
 
         it('shows that the address is no longer nominated', async () => {
@@ -91,13 +91,13 @@ describe('Ownable', () => {
       describe('when there is no nomination', () => {
         it('reverts', async () => {
           await assertRevert(
-            Ownable.connect(newOWner).renounceNomination(),
+            Ownable.connect(newOwner).renounceNomination(),
             'No nomination to renounce'
           );
 
           describe('when there is a nomination', () => {
             before('nominateNewOwner', async () => {
-              const tx = await Ownable.connect(newOWner).nominateNewOwner(owner.address);
+              const tx = await Ownable.connect(newOwner).nominateNewOwner(owner.address);
               await tx.wait();
             });
 
@@ -109,13 +109,13 @@ describe('Ownable', () => {
               it('reverts', async () => {
                 await assertRevert(
                   Ownable.connect(owner).renounceNomination(),
-                  'Only the owner can invoke'
+                  'Only owner can invoke'
                 );
               });
 
               describe('when the current owner renounces', () => {
                 before('nominateNewOwner', async () => {
-                  const tx = await Ownable.connect(newOWner).renounceNomination();
+                  const tx = await Ownable.connect(newOwner).renounceNomination();
                   await tx.wait();
                 });
 
