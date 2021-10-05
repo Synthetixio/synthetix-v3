@@ -12,7 +12,7 @@ function getBytecodeHash(bytecode) {
 }
 
 async function getRemoteBytecode(address, provider) {
-  return await (provider || ethers.provider).getCode(address);
+  return await provider.getCode(address);
 }
 
 async function getSelectors(contractAbi) {

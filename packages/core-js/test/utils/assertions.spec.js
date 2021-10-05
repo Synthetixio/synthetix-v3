@@ -12,6 +12,10 @@ function mockRevertingTx(errorMsg = '') {
 describe('utils/assertions.js', function () {
   describe('#assertRevert', function () {
     it('resolves when correctly reverting', async function () {
+      await assertRevert(mockRevertingTx(), '');
+    });
+
+    it('resolves when correctly reverting with a message', async function () {
       const message = 'The transaction reverted reversely';
       await assertRevert(mockRevertingTx(message), message);
     });

@@ -7,9 +7,12 @@
  * @returns {array} The array of parsed events
  */
 function findEvent({ receipt, eventName, contract = undefined }) {
-  const eventsAreParsed = !receipt.events.some((e) => e.event === undefined);
+  let eventsAreParsed = false;
+  if (receipt.events !== undefined) {
+    eventsAreParsed = !receipt.events.some((e) => e.event === undefined);
+  }
 
-  let events = receipt.events;
+  let events = receipt.events || receipt.logs;
 
   if (!eventsAreParsed) {
     if (!contract) {
