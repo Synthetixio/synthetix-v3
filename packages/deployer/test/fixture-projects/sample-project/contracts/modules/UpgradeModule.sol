@@ -6,7 +6,6 @@ import "../storage/ProxyNamespace.sol";
 import "@synthetixio/core-contracts/contracts/proxy/UniversalProxyImplementation.sol";
 
 contract UpgradeModule is UniversalProxyImplementation, ProxyNamespace, OwnerMixin {
-
     function upgradeTo(address newImplementation) public override onlyOwner {
         _upgradeTo(newImplementation);
     }
@@ -18,5 +17,4 @@ contract UpgradeModule is UniversalProxyImplementation, ProxyNamespace, OwnerMix
     function _setImplementation(address newImplementation) internal override {
         _proxyStorage().implementation = newImplementation;
     }
-
 }

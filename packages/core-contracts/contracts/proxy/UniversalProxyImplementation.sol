@@ -5,15 +5,14 @@ import "../utils/ContractUtil.sol";
 import "hardhat/console.sol";
 
 abstract contract UniversalProxyImplementation is ContractUtil {
-
     event Upgraded(address implementation);
 
     function _setImplementation(address newImplementation) internal virtual;
 
     function _getImplementation() internal view virtual returns (address);
-    
+
     function upgradeTo(address newImplementation) public virtual;
-    
+
     function _upgradeTo(address newImplementation) internal {
         require(newImplementation != address(0), "Implementation is zero address");
         require(_isContract(newImplementation), "Implementation not a contract");
@@ -30,7 +29,6 @@ abstract contract UniversalProxyImplementation is ContractUtil {
         if (newImplementation == _getImplementation()) {
             return true;
         }
-
 
         // Simulate upgrading to this implementation and then rolling back to the current one.
         // NOTE: This call will always revert, and thus will have no side effects.
@@ -54,7 +52,7 @@ abstract contract UniversalProxyImplementation is ContractUtil {
 
     function simulateUpgrades(address newImplementation) public {
         address oldImplementation = _getImplementation();
-        
+
         // Set the implementation, and then use it to roll back to the old implementation
         _setImplementation(newImplementation);
         (bool rollbackSuccessful, ) = newImplementation.delegatecall(
@@ -71,5 +69,4 @@ abstract contract UniversalProxyImplementation is ContractUtil {
 
         revert("upgrades correctly");
     }
-
 }
