@@ -19,9 +19,15 @@ contract OwnableMock is Ownable {
     }
 
     function acceptOwnership() external override {
-        require(msg.sender == nominatedOwner, "You must first be nominated");
+        require(msg.sender == nominatedOwner, "Not nominated");
         emit OwnerChanged(owner, nominatedOwner);
         owner = nominatedOwner;
+        nominatedOwner = address(0);
+    }
+
+    function renounceNomination() external override onlyOwner {
+        require(nominatedOwner != address(0), "No nomination to renounce");
+
         nominatedOwner = address(0);
     }
 
