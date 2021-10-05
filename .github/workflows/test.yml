@@ -11,7 +11,7 @@ jobs:
           cache: "npm"
       - run: npm ci
       - name: Execute tests
-        run: npm run --workspaces --if-present test:coverage
+        run: npm run coverage
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v2
         with:

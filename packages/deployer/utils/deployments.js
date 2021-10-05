@@ -2,7 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const glob = require('glob');
 const naturalCompare = require('string-natural-compare');
-const { defaults } = require('../extensions/config');
+const configDefaults = require('../internal/config-defaults');
 
 /**
  * @typedef {Object} DeploymentInfo An object describing which deployment to retrieve
@@ -13,7 +13,7 @@ const { defaults } = require('../extensions/config');
 const DeploymentInfo = {
   network: 'local',
   instance: 'official',
-  folder: defaults.paths.deployments,
+  folder: configDefaults.paths.deployments,
 };
 
 // Regex for deployment file formats, e.g.: 2021-08-31-00-sirius.json
