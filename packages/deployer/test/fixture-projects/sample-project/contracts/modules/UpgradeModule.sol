@@ -13,7 +13,7 @@ contract UpgradeModule is UniversalProxyImplementation, ProxyNamespace, OwnerMix
     function getImplementation() public view returns (address) {
         return _getImplementation();
     }
-    
+
     function _getImplementation() internal view override returns (address) {
         return _proxyStorage().implementation;
     }

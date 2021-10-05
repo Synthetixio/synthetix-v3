@@ -13,6 +13,7 @@ abstract contract UniversalProxyImplementation is ContractUtil {
 
     function upgradeTo(address newImplementation) public virtual;
 
+    // WARNING: non-bricking protection was removed from the contract!!! 
     function _upgradeTo(address newImplementation) internal {
         require(newImplementation != address(0), "Implementation is zero address");
         require(_isContract(newImplementation), "Implementation not a contract");

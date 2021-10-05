@@ -105,7 +105,7 @@ describe('UniversalProxy', () => {
       assert.equal(event.args.implementation, Implementation.address);
 
       assert.equal(await ForwardingProxy.getImplementation(), Implementation.address);
-    })
+    });
 
     it('emitted an Upgraded event', async () => {
       const event = findEvent({ receipt, eventName: 'Upgraded' });

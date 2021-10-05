@@ -55,7 +55,7 @@ describe('UpgradeModule', () => {
     });
   });
 
-  describe('when the owner attempts to upgrade to a sterile implementation', () => {
+  describe.skip('when the owner attempts to upgrade to a sterile implementation', () => {
     it('reverts', async () => {
       const deployment = getDeployment();
       const someSterileContractAddress = deployment.contracts.SomeModule.deployedAddress;
@@ -86,7 +86,7 @@ describe('UpgradeModule', () => {
     });
   });
 
-  describe('when attempting to destroy the implementation with a malicious contract', () => {
+  describe.skip('when attempting to destroy the implementation with a malicious contract', () => {
     let destroyer;
 
     let OwnerModuleImpl, UpgradeModuleImpl;
