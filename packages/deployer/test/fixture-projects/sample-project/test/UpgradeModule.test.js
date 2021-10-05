@@ -55,6 +55,7 @@ describe('UpgradeModule', () => {
     });
   });
 
+  // SKIPPED UNTIL ISSUE #214 is done
   describe.skip('when the owner attempts to upgrade to a sterile implementation', () => {
     it('reverts', async () => {
       const deployment = getDeployment();
@@ -86,6 +87,7 @@ describe('UpgradeModule', () => {
     });
   });
 
+  // SKIPPED UNTIL ISSUE #214 is done
   describe.skip('when attempting to destroy the implementation with a malicious contract', () => {
     let destroyer;
 
