@@ -19,5 +19,5 @@ abstract contract OwnableMixin {
         _;
     }
 
-    function _getOwner() internal virtual view returns (address);
+    function _getOwner() internal view virtual returns (address);
 }
