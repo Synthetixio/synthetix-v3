@@ -16,8 +16,11 @@ describe('UniversalProxy', () => {
       factory = await ethers.getContractFactory('ForwardingProxyMock');
       ForwardingProxy = await factory.deploy(Implementation.address);
 
-      Instance = await ethers.getContractAt('UniversalProxyImplementationMockA', ForwardingProxy.address);
-      console.log(`Original implementation Address: ${Implementation.address}`)
+      Instance = await ethers.getContractAt(
+        'UniversalProxyImplementationMockA',
+        ForwardingProxy.address
+      );
+      console.log(`Original implementation Address: ${Implementation.address}`);
     });
 
     it('shows that the implementation is set', async () => {
@@ -48,7 +51,10 @@ describe('UniversalProxy', () => {
         let BadInstance;
 
         before('wrap the implementation', async () => {
-          BadInstance = await ethers.getContractAt('UniversalProxyImplementationMockB', ForwardingProxy.address);
+          BadInstance = await ethers.getContractAt(
+            'UniversalProxyImplementationMockB',
+            ForwardingProxy.address
+          );
         });
 
         it('reverts', async () => {
@@ -60,12 +66,9 @@ describe('UniversalProxy', () => {
 
   describe.skip('when attempts to upgrade to an EOA', () => {
     it('reverts', async () => {
-      [user] = await ethers.getSigners();
+      const [user] = await ethers.getSigners();
 
-      await assertRevert(
-        Instance.upgradeTo(user.address),
-        'Implementation not a contract'
-      );
+      await assertRevert(Instance.upgradeTo(user.address), 'Implementation not a contract');
     });
   });
 
@@ -91,13 +94,15 @@ describe('UniversalProxy', () => {
 
       factory = await ethers.getContractFactory('UniversalProxyImplementationMockB');
       implementationB = await factory.deploy();
-      console.log(`New implementation Address: ${implementationB.address}`)
-
+      console.log(`New implementation Address: ${implementationB.address}`);
 
       const tx = await Instance.upgradeTo(implementationB.address);
       receipt = await tx.wait();
 
-      InstanceB = await ethers.getContractAt('UniversalProxyImplementationMockB', ForwardingProxy.address);
+      InstanceB = await ethers.getContractAt(
+        'UniversalProxyImplementationMockB',
+        ForwardingProxy.address
+      );
     });
 
     it('emitted an Upgraded event', async () => {
@@ -123,7 +128,7 @@ describe('UniversalProxy', () => {
 
       describe('when reading and setting another value that exists in the implementation', () => {
         before('set a value and send ETH', async () => {
-          await (await InstanceB.setB( ethers.utils.formatByte32String('Hello') )).wait();
+          await (await InstanceB.setB(ethers.utils.formatByte32String('Hello'))).wait();
         });
 
         it('can read the value set', async () => {
@@ -143,10 +148,7 @@ describe('UniversalProxy', () => {
 
     describe('when trying to upgrade the implementation of the implementation to the destroyer', () => {
       it('reverts', async () => {
-        await assertRevert(
-          Instance.upgradeTo(destroyer.address),
-          'Implementation is sterile'
-        );
+        await assertRevert(Instance.upgradeTo(destroyer.address), 'Implementation is sterile');
       });
 
       it('shows that the code of the implementation is not null', async () => {
@@ -166,5 +168,4 @@ describe('UniversalProxy', () => {
       });
     });
   });
-
 });
