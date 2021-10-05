@@ -25,12 +25,12 @@ describe('OwnerModule', () => {
 
   describe('before an owner is set or nominated', () => {
     it('shows that no owner is set', async () => {
-      assert.equal(await OwnerModule.getOwner(), '0x0000000000000000000000000000000000000000');
+      assert.equal(await OwnerModule.owner(), '0x0000000000000000000000000000000000000000');
     });
 
     it('shows that no owner is nominated', async () => {
       assert.equal(
-        await OwnerModule.getNominatedOwner(),
+        await OwnerModule.nominatedOwner(),
         '0x0000000000000000000000000000000000000000'
       );
     });
@@ -38,12 +38,12 @@ describe('OwnerModule', () => {
 
   describe('when an address is nominated', () => {
     before('nominate ownership', async () => {
-      const tx = await OwnerModule.connect(owner).nominateOwner(owner.address);
+      const tx = await OwnerModule.connect(owner).nominateNewOwner(owner.address);
       await tx.wait();
     });
 
     it('shows that the address is nominated', async () => {
-      assert.equal(await OwnerModule.getNominatedOwner(), owner.address);
+      assert.equal(await OwnerModule.nominatedOwner(), owner.address);
     });
 
     describe('when the address accepts ownership', () => {
@@ -61,12 +61,12 @@ describe('OwnerModule', () => {
       });
 
       it('shows that the address is the new owner', async () => {
-        assert.equal(await OwnerModule.getOwner(), owner.address);
+        assert.equal(await OwnerModule.owner(), owner.address);
       });
 
       it('shows that the address is no longer nominated', async () => {
         assert.equal(
-          await OwnerModule.getNominatedOwner(),
+          await OwnerModule.nominatedOwner(),
           '0x0000000000000000000000000000000000000000'
         );
       });
@@ -74,31 +74,31 @@ describe('OwnerModule', () => {
       describe('when a regular user tries to nominate a new owner', () => {
         it('reverts', async () => {
           await assertRevert(
-            OwnerModule.connect(user).nominateOwner(user.address),
-            'Only owner allowed'
+            OwnerModule.connect(user).nominateNewOwner(user.address),
+            'Only owner can invoke'
           );
         });
       });
 
       describe('when the owner nominates a new owner', () => {
         before('nominate new owner', async () => {
-          const tx = await OwnerModule.connect(owner).nominateOwner(user.address);
+          const tx = await OwnerModule.connect(owner).nominateNewOwner(user.address);
           await tx.wait();
         });
 
         it('shows that the user is nominated', async () => {
-          assert.equal(await OwnerModule.getNominatedOwner(), user.address);
+          assert.equal(await OwnerModule.nominatedOwner(), user.address);
         });
 
         describe('when the owner rejects the nomination', () => {
           before('reject the nomination', async () => {
-            const tx = await OwnerModule.connect(owner).rejectNomination();
+            const tx = await OwnerModule.connect(owner).renounceNomination();
             await tx.wait();
           });
 
           it('shows that the address is no longer nominated', async () => {
             assert.equal(
-              await OwnerModule.getNominatedOwner(),
+              await OwnerModule.nominatedOwner(),
               '0x0000000000000000000000000000000000000000'
             );
           });

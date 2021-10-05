@@ -42,7 +42,7 @@ describe('UpgradeModule', () => {
 
   describe('when a regular user attempts to upgrade the system', () => {
     it('reverts', async () => {
-      await assertRevert(UpgradeModule.connect(user).upgradeTo(user.address), 'Only owner allowed');
+      await assertRevert(UpgradeModule.connect(user).upgradeTo(user.address), 'Only owner can invoke');
     });
   });
 
@@ -102,7 +102,7 @@ describe('UpgradeModule', () => {
     });
 
     it('shows that the owner of the implementation is address(0)', async () => {
-      assert.equal(await OwnerModuleImpl.getOwner(), '0x0000000000000000000000000000000000000000');
+      assert.equal(await OwnerModuleImpl.owner(), '0x0000000000000000000000000000000000000000');
     });
 
     it('shows that the implementation of the implementation is address(0)', async () => {
@@ -116,7 +116,7 @@ describe('UpgradeModule', () => {
       before('own the implementation', async function () {
         let tx;
 
-        tx = await OwnerModuleImpl.connect(user).nominateOwner(user.address);
+        tx = await OwnerModuleImpl.connect(user).nominateNewOwner(user.address);
         await tx.wait();
 
         tx = await OwnerModuleImpl.connect(user).acceptOwnership();
@@ -124,7 +124,7 @@ describe('UpgradeModule', () => {
       });
 
       it('shows that the user is now the owner of the implementation', async () => {
-        assert.equal(await OwnerModuleImpl.getOwner(), user.address);
+        assert.equal(await OwnerModuleImpl.owner(), user.address);
       });
 
       describe('when trying to upgrade the implementation of the implementation to the destroyer', () => {
@@ -142,7 +142,7 @@ describe('UpgradeModule', () => {
         });
 
         it('shows that the proxy is still responsive', async () => {
-          assert.equal(await OwnerModule.getOwner(), owner.address);
+          assert.equal(await OwnerModule.owner(), owner.address);
         });
       });
     });
