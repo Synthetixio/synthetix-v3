@@ -47,7 +47,7 @@ abstract contract ERC20 is IERC20 {
     ) external override returns (bool) {
         uint256 currentAllowance = allowance[from][msg.sender];
         // it reverts if the sender does not have sufficient allowance
-        require(currentAllowance >= amount, "TransferFrom amount exceeds allowance");
+        require(currentAllowance >= amount, "Amount exceeds allowance");
         unchecked {
             allowance[from][msg.sender] -= amount;
         }

@@ -167,7 +167,7 @@ describe('ERC20', () => {
         it('reverts ', async () => {
           await assertRevert(
             ERC20.connect(user2).transferFrom(user1.address, user2.address, approvalAmount.add(1)),
-            'TransferFrom amount exceeds allowance'
+            'Amount exceeds allowance'
           );
         });
       });
