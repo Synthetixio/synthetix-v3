@@ -51,7 +51,7 @@ async function _runASTValidations() {
 
   logger.debug('Validating Router compiled code');
   errorsFound.push(...(await validator.findMissingModuleSelectors()));
-  errorsFound.push(...(await validator.findUnreachableModuleSelectors()));
+  // errorsFound.push(...(await validator.findUnreachableModuleSelectors()));
   errorsFound.push(...(await validator.findDuplicateModuleSelectors()));
   if (errorsFound.length > 0) {
     errorsFound.forEach((error) => {
