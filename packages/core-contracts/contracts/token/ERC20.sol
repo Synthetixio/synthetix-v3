@@ -46,7 +46,6 @@ abstract contract ERC20 is IERC20 {
         uint amount
     ) external override returns (bool) {
         uint256 currentAllowance = allowance[from][msg.sender];
-        // it reverts if the sender does not have sufficient allowance
         require(currentAllowance >= amount, "Amount exceeds allowance");
         unchecked {
             allowance[from][msg.sender] -= amount;
@@ -63,7 +62,6 @@ abstract contract ERC20 is IERC20 {
         uint256 amount
     ) private {
         uint256 accountBalance = balanceOf[from];
-        // it reverts if the sender does not have sufficient balance
         require(accountBalance >= amount, "Transfer amount exceeds balance");
         // we are now sure that we can perform this operation safely since it didn't revert in the previous step
         // the total supply cannot exceed the maximum value of uint256 thus we performed but accounting operations in unchecked mode

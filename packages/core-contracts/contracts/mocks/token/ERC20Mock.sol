@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: Unlicense
 pragma solidity ^0.8.0;
 
-import "../../utils/ERC20.sol";
+import "../../token/ERC20.sol";
 
 contract ERC20Mock is ERC20 {
     constructor(
