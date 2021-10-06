@@ -1,62 +1,45 @@
-const hre = require('hardhat');
-const { ethers } = hre;
-const { getProxyAddress } = require('../../../../../utils/deployments');
-const { takeSnapshot, restoreSnapshot } = require('@synthetixio/core-js/utils/rpc');
+const { getProxyAddress } = require('@synthetixio/deployer/utils/deployments');
+const { TASK_DEPLOY } = require('@synthetixio/deployer/task-names');
 
-let snapshotId;
-let proxyAddress;
+/**
+ * Initializer helper for the sample-project, allows to deploy and initialize
+ * the project on the given hardhat environment
+ * @param {import('hardhat/types').HardhatRuntimeEnvironment}
+ */
+module.exports = function createInitializer(hre) {
+  const info = {
+    network: hre.config.defaultNetwork,
+    instance: 'test',
+  };
 
-function bootstrap() {
-  before('deploy system only once if needed', async () => {
-    await deploySystemIfNeeded();
-  });
+  return {
+    info,
 
-  before('take a snapshot', async () => {
-    snapshotId = await takeSnapshot(ethers.provider);
-  });
+    async deploy(customOptions = {}) {
+      await hre.run(TASK_DEPLOY, {
+        ...info,
+        noConfirm: true,
+        quiet: true,
+        ...customOptions,
+      });
+    },
 
-  after('restore the snapshot', async () => {
-    await restoreSnapshot(snapshotId, ethers.provider);
-  });
-}
+    async init() {
+      const { ethers } = hre;
 
-async function deploySystemIfNeeded() {
-  if (!proxyAddress) {
-    await deploySystem();
-  }
-}
+      const proxyAddress = getProxyAddress(info);
 
-async function deploySystem() {
-  await hre.run('deploy', {
-    network: hre.config.network,
-    noConfirm: true,
-    clear: true,
-    quiet: true,
-  });
+      const [owner] = await ethers.getSigners();
 
-  proxyAddress = getProxyAddress();
-}
+      let tx;
 
-async function initializeSystem({ owner }) {
-  await initializeOwner({ owner });
-}
+      const OwnerModule = await ethers.getContractAt('OwnerModule', proxyAddress);
 
-async function initializeOwner({ owner }) {
-  let tx;
+      tx = await OwnerModule.connect(owner).nominateOwner(owner.address);
+      await tx.wait();
 
-  const OwnerModule = await ethers.getContractAt('OwnerModule', proxyAddress);
-
-  tx = await OwnerModule.connect(owner).nominateNewOwner(owner.address);
-  await tx.wait();
-
-  tx = await OwnerModule.connect(owner).acceptOwnership();
-  await tx.wait();
-}
-
-module.exports = {
-  bootstrap,
-  deploySystem,
-  deploySystemIfNeeded,
-  initializeSystem,
-  initializeOwner,
+      tx = await OwnerModule.connect(owner).acceptOwnership();
+      await tx.wait();
+    },
+  };
 };

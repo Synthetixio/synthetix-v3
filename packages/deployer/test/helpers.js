@@ -2,6 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const { request } = require('http');
 const { resetHardhatContext } = require('hardhat/plugins-testing');
+const { takeSnapshot, restoreSnapshot } = require('@synthetixio/core-js/utils/rpc');
 
 function _getEnvironmentPath(fixtureProjectName) {
   const pathname = path.join(__dirname, 'fixture-projects', fixtureProjectName);
@@ -33,13 +34,35 @@ function useEnvironment(fixtureProjectName) {
     });
   });
 
-  beforeEach('Loading hardhat environment', function () {
-    process.chdir(_getEnvironmentPath(fixtureProjectName));
+  let snapshotId;
+
+  beforeEach('loading environment', async function () {
+    const environementPath = _getEnvironmentPath(fixtureProjectName);
+
+    // Set node environments root on the given fixture project root
+    process.chdir(environementPath);
+
+    // Load global hardhat environement
     this.hre = require('hardhat');
+
+    // Save an snapshot to be resseted at the end of tests
+    snapshotId = await takeSnapshot(this.hre.ethers.provider);
+
+    const { deploy, init } = require(`${environementPath}/test/helpers/initializer`)(this.hre);
+
+    // Allow the tests to execute the configured deploy method on the loaded environment
+    this.deploy = deploy;
+
+    // Allow to initialize a deployment from the tests
+    this.init = init;
   });
 
-  afterEach('Resetting hardhat', function () {
+  afterEach('resetting environment', async function () {
+    // Reset global loaded hardhat envrironment
     resetHardhatContext();
+
+    // Restore blockchain snapshot to its original state
+    await restoreSnapshot(snapshotId, this.hre.ethers.provider);
   });
 }
 

@@ -1,12 +1,12 @@
 const hre = require('hardhat');
 const assert = require('assert');
 const { ethers } = hre;
-const { getProxyAddress } = require('../../../../utils/deployments');
-const { bootstrap, initializeSystem } = require('./helpers/initializer');
+const { getProxyAddress } = require('@synthetixio/deployer/utils/deployments');
 const { findEvent } = require('@synthetixio/core-js/utils/events');
+const bootstrap = require('./helpers/bootstrap');
 
 describe('SomeModule', () => {
-  bootstrap();
+  const { info, init } = bootstrap();
 
   let SomeModule;
 
@@ -14,16 +14,16 @@ describe('SomeModule', () => {
 
   let receipt;
 
+  before('initialize the system', async () => {
+    await init();
+  });
+
   before('identify signers', async () => {
     [owner] = await ethers.getSigners();
   });
 
-  before('initialize the system', async () => {
-    await initializeSystem({ owner });
-  });
-
   before('identify modules', async () => {
-    const proxyAddress = getProxyAddress();
+    const proxyAddress = getProxyAddress(info);
 
     SomeModule = await ethers.getContractAt('SomeModule', proxyAddress);
   });

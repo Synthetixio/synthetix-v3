@@ -108,7 +108,7 @@ function getDeploymentFolder(info) {
   return path.resolve(folder, network, instance);
 }
 
-function _populateDefaults(info) {
+function _populateDefaults(info = {}) {
   return { ...DeploymentInfo, ...info };
 }
 
@@ -120,4 +120,5 @@ module.exports = {
   getDeploymentFile,
   getAllDeploymentFiles,
   getDeploymentFolder,
+  defaultDeploymentInfo: DeploymentInfo,
 };

@@ -1,7 +1,6 @@
 const path = require('path');
 const { copyFile, unlink } = require('fs/promises');
 const { useEnvironment } = require('../../helpers');
-const { TASK_DEPLOY } = require('../../../task-names');
 
 describe('tasks/deploy.js', function () {
   useEnvironment('sample-project');
@@ -10,45 +9,33 @@ describe('tasks/deploy.js', function () {
     this.timeout(25000);
 
     // Initial deployment
-    await this.hre.run(TASK_DEPLOY, {
-      noConfirm: true,
-      quiet: true,
-      clear: true,
+    await this.deploy({
       alias: 'first',
-      instance: 'test',
+      clear: true,
     });
 
+    await this.init();
+
     // Second deployment, without any changes
-    await this.hre.run(TASK_DEPLOY, {
-      noConfirm: true,
-      quiet: true,
-      clear: false,
+    await this.deploy({
       alias: 'second',
-      instance: 'test',
     });
   });
 
-  // TODO: enable this test when module initialization is implemented
-  // More info: https://github.com/Synthetixio/synthetix-v3/issues/193
-  it.skip('correctly executes several deployments with changes', async function () {
+  it('correctly executes several deployments with changes', async function () {
     this.timeout(25000);
 
     // Initial deployment
-    await this.hre.run(TASK_DEPLOY, {
-      noConfirm: true,
-      quiet: true,
-      clear: true,
+    await this.deploy({
       alias: 'first',
-      instance: 'test',
+      clear: true,
     });
 
+    await this.init();
+
     // Second deployment, without any changes
-    await this.hre.run(TASK_DEPLOY, {
-      noConfirm: true,
-      quiet: true,
-      clear: false,
+    await this.deploy({
       alias: 'second',
-      instance: 'test',
     });
 
     // Third deployment
@@ -64,16 +51,15 @@ describe('tasks/deploy.js', function () {
           path.join(CONTRACTS, 'SomeModule.modified.sol'),
           path.join(MODULES, 'SomeModule.sol')
         ),
+
+        // TODO: enable this test when module deletion is fixed
+        // More info: https://github.com/Synthetixio/synthetix-v3/issues/224
         // Delete a existing module
-        unlink(path.join(MODULES, 'OwnerModule.sol')),
+        // unlink(path.join(MODULES, 'OwnerModule.sol')),
       ]);
 
-      await this.hre.run(TASK_DEPLOY, {
-        noConfirm: true,
-        quiet: true,
-        clear: false,
+      await this.deploy({
         alias: 'third',
-        instance: 'test',
       });
     } finally {
       // Restore all the changes
@@ -83,10 +69,13 @@ describe('tasks/deploy.js', function () {
           path.join(CONTRACTS, 'SomeModule.original.sol'),
           path.join(MODULES, 'SomeModule.sol')
         ),
-        copyFile(
-          path.join(CONTRACTS, 'OwnerModule.original.sol'),
-          path.join(MODULES, 'OwnerModule.sol')
-        ),
+
+        // TODO: enable this test when module deletion is fixed
+        // More info: https://github.com/Synthetixio/synthetix-v3/issues/224
+        // copyFile(
+        //   path.join(CONTRACTS, 'OwnerModule.original.sol'),
+        //   path.join(MODULES, 'OwnerModule.sol')
+        // ),
       ]);
     }
   });

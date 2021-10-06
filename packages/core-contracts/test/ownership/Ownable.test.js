@@ -91,7 +91,7 @@ describe('Ownable', () => {
       describe('when there is no nomination', () => {
         it('reverts', async () => {
           await assertRevert(
-            Ownable.connect(newOwner).renounceNomination(),
+            Ownable.connect(newOwner).rejectNomination(),
             'No nomination to renounce'
           );
 
@@ -108,14 +108,14 @@ describe('Ownable', () => {
             describe('when a non owner renounces', () => {
               it('reverts', async () => {
                 await assertRevert(
-                  Ownable.connect(owner).renounceNomination(),
+                  Ownable.connect(owner).rejectNomination(),
                   'Only owner can invoke'
                 );
               });
 
               describe('when the current owner renounces', () => {
                 before('nominateNewOwner', async () => {
-                  const tx = await Ownable.connect(newOwner).renounceNomination();
+                  const tx = await Ownable.connect(newOwner).rejectNomination();
                   await tx.wait();
                 });
 

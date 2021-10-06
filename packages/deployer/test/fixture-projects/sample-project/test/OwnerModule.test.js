@@ -1,13 +1,13 @@
 const hre = require('hardhat');
 const assert = require('assert');
 const { ethers } = hre;
-const { getProxyAddress } = require('../../../../utils/deployments');
+const { getProxyAddress } = require('@synthetixio/deployer/utils/deployments');
 const { assertRevert } = require('@synthetixio/core-js/utils/assertions');
 const { findEvent } = require('@synthetixio/core-js/utils/events');
-const { bootstrap } = require('./helpers/initializer');
+const bootstrap = require('./helpers/bootstrap');
 
 describe('OwnerModule', () => {
-  bootstrap();
+  const { info } = bootstrap();
 
   let OwnerModule;
 
@@ -18,19 +18,19 @@ describe('OwnerModule', () => {
   });
 
   before('identify modules', async () => {
-    const proxyAddress = getProxyAddress();
+    const proxyAddress = getProxyAddress(info);
 
     OwnerModule = await ethers.getContractAt('OwnerModule', proxyAddress);
   });
 
   describe('before an owner is set or nominated', () => {
     it('shows that no owner is set', async () => {
-      assert.equal(await OwnerModule.owner(), '0x0000000000000000000000000000000000000000');
+      assert.equal(await OwnerModule.getOwner(), '0x0000000000000000000000000000000000000000');
     });
 
     it('shows that no owner is nominated', async () => {
       assert.equal(
-        await OwnerModule.nominatedOwner(),
+        await OwnerModule.getNominatedOwner(),
         '0x0000000000000000000000000000000000000000'
       );
     });
@@ -38,12 +38,12 @@ describe('OwnerModule', () => {
 
   describe('when an address is nominated', () => {
     before('nominate ownership', async () => {
-      const tx = await OwnerModule.connect(owner).nominateNewOwner(owner.address);
+      const tx = await OwnerModule.connect(owner).nominateOwner(owner.address);
       await tx.wait();
     });
 
     it('shows that the address is nominated', async () => {
-      assert.equal(await OwnerModule.nominatedOwner(), owner.address);
+      assert.equal(await OwnerModule.getNominatedOwner(), owner.address);
     });
 
     describe('when the address accepts ownership', () => {
@@ -61,12 +61,12 @@ describe('OwnerModule', () => {
       });
 
       it('shows that the address is the new owner', async () => {
-        assert.equal(await OwnerModule.owner(), owner.address);
+        assert.equal(await OwnerModule.getOwner(), owner.address);
       });
 
       it('shows that the address is no longer nominated', async () => {
         assert.equal(
-          await OwnerModule.nominatedOwner(),
+          await OwnerModule.getNominatedOwner(),
           '0x0000000000000000000000000000000000000000'
         );
       });
@@ -74,7 +74,7 @@ describe('OwnerModule', () => {
       describe('when a regular user tries to nominate a new owner', () => {
         it('reverts', async () => {
           await assertRevert(
-            OwnerModule.connect(user).nominateNewOwner(user.address),
+            OwnerModule.connect(user).nominateOwner(user.address),
             'Only owner can invoke'
           );
         });
@@ -82,23 +82,23 @@ describe('OwnerModule', () => {
 
       describe('when the owner nominates a new owner', () => {
         before('nominate new owner', async () => {
-          const tx = await OwnerModule.connect(owner).nominateNewOwner(user.address);
+          const tx = await OwnerModule.connect(owner).nominateOwner(user.address);
           await tx.wait();
         });
 
         it('shows that the user is nominated', async () => {
-          assert.equal(await OwnerModule.nominatedOwner(), user.address);
+          assert.equal(await OwnerModule.getNominatedOwner(), user.address);
         });
 
         describe('when the owner rejects the nomination', () => {
           before('reject the nomination', async () => {
-            const tx = await OwnerModule.connect(owner).renounceNomination();
+            const tx = await OwnerModule.connect(owner).rejectNomination();
             await tx.wait();
           });
 
           it('shows that the address is no longer nominated', async () => {
             assert.equal(
-              await OwnerModule.nominatedOwner(),
+              await OwnerModule.getNominatedOwner(),
               '0x0000000000000000000000000000000000000000'
             );
           });
