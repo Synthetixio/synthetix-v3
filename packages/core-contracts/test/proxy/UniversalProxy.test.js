@@ -4,29 +4,23 @@ const { assertRevert } = require('@synthetixio/core-js/utils/assertions');
 const { findEvent } = require('@synthetixio/core-js/utils/events');
 
 describe('UniversalProxy', () => {
-  let ForwardingProxy, Instance, Implementation;
+  let Proxy, Instance, Implementation;
+
+  before('set up proxy and implementation', async () => {
+    let factory;
+
+    factory = await ethers.getContractFactory('UniversalProxyImplementationMockA');
+    Implementation = await factory.deploy();
+
+    factory = await ethers.getContractFactory('ForwardingProxyMock');
+    Proxy = await factory.deploy(Implementation.address);
+
+    Instance = await ethers.getContractAt('UniversalProxyImplementationMockA', Proxy.address);
+
+    assert.equal(await Proxy.getImplementation(), Implementation.address);
+  });
 
   describe('when setting UniversalProxyImplementationMockA as the implementation', () => {
-    before('set up proxy and implementation', async () => {
-      let factory;
-
-      factory = await ethers.getContractFactory('UniversalProxyImplementationMockA');
-      Implementation = await factory.deploy();
-
-      factory = await ethers.getContractFactory('ForwardingProxyMock');
-      ForwardingProxy = await factory.deploy(Implementation.address);
-
-      Instance = await ethers.getContractAt(
-        'UniversalProxyImplementationMockA',
-        ForwardingProxy.address
-      );
-      console.log(`Original implementation Address: ${Implementation.address}`);
-    });
-
-    it('shows that the implementation is set', async () => {
-      assert.equal(await ForwardingProxy.getImplementation(), Implementation.address);
-    });
-
     describe('when interacting with the implementation via the proxy', async () => {
       describe('when reading and setting a value that exists in the implementation', () => {
         before('set a value', async () => {
@@ -53,7 +47,7 @@ describe('UniversalProxy', () => {
         before('wrap the implementation', async () => {
           BadInstance = await ethers.getContractAt(
             'UniversalProxyImplementationMockB',
-            ForwardingProxy.address
+            Proxy.address
           );
         });
 
@@ -76,18 +70,15 @@ describe('UniversalProxy', () => {
     let receipt, UpgradedImplementation, UpgradedInstance;
 
     before('upgrade', async () => {
-      let factory;
-
-      factory = await ethers.getContractFactory('UniversalProxyImplementationMockB');
+      const factory = await ethers.getContractFactory('UniversalProxyImplementationMockB');
       UpgradedImplementation = await factory.deploy();
-      console.log(`New implementation Address: ${UpgradedImplementation.address}`);
 
       const tx = await Instance.upgradeTo(UpgradedImplementation.address);
       receipt = await tx.wait();
 
       UpgradedInstance = await ethers.getContractAt(
         'UniversalProxyImplementationMockB',
-        ForwardingProxy.address
+        Proxy.address
       );
     });
 
@@ -95,16 +86,13 @@ describe('UniversalProxy', () => {
       const tx = await UpgradedInstance.upgradeTo(Implementation.address);
       receipt = await tx.wait();
 
-      Instance = await ethers.getContractAt(
-        'UniversalProxyImplementationMockA',
-        ForwardingProxy.address
-      );
+      Instance = await ethers.getContractAt('UniversalProxyImplementationMockA', Proxy.address);
 
       const event = findEvent({ receipt, eventName: 'Upgraded' });
 
       assert.equal(event.args.implementation, Implementation.address);
 
-      assert.equal(await ForwardingProxy.getImplementation(), Implementation.address);
+      assert.equal(await Proxy.getImplementation(), Implementation.address);
     });
 
     it('emitted an Upgraded event', async () => {
@@ -114,7 +102,7 @@ describe('UniversalProxy', () => {
     });
 
     it('shows that the current implementation is correct', async () => {
-      assert.equal(await ForwardingProxy.getImplementation(), UpgradedImplementation.address);
+      assert.equal(await Proxy.getImplementation(), UpgradedImplementation.address);
     });
 
     describe('when interacting with the implementation via the proxy', async () => {
