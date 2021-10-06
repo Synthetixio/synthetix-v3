@@ -3,7 +3,7 @@ const assert = require('assert');
 const { assertRevert } = require('@synthetixio/core-js/utils/assertions');
 
 describe('ForwardingProxy', () => {
-  let ForwardingProxy, Instance, Implementation;
+  let Proxy, Instance, Implementation;
 
   describe('when setting ImplementationMockA as the implementation', () => {
     before('set up proxy and implementation', async () => {
@@ -13,13 +13,13 @@ describe('ForwardingProxy', () => {
       Implementation = await factory.deploy();
 
       factory = await ethers.getContractFactory('ForwardingProxyMock');
-      ForwardingProxy = await factory.deploy(Implementation.address);
+      Proxy = await factory.deploy(Implementation.address);
 
-      Instance = await ethers.getContractAt('ImplementationMockA', ForwardingProxy.address);
+      Instance = await ethers.getContractAt('ImplementationMockA', Proxy.address);
     });
 
     it('shows that the implementation is set', async () => {
-      assert.equal(await ForwardingProxy.getImplementation(), Implementation.address);
+      assert.equal(await Proxy.getImplementation(), Implementation.address);
     });
 
     describe('when interacting with the implementation via the proxy', async () => {
@@ -46,7 +46,7 @@ describe('ForwardingProxy', () => {
         let BadInstance;
 
         before('wrap the implementation', async () => {
-          BadInstance = await ethers.getContractAt('ImplementationMockB', ForwardingProxy.address);
+          BadInstance = await ethers.getContractAt('ImplementationMockB', Proxy.address);
         });
 
         it('reverts', async () => {
@@ -64,13 +64,13 @@ describe('ForwardingProxy', () => {
       Implementation = await factory.deploy();
 
       factory = await ethers.getContractFactory('ForwardingProxyMock');
-      ForwardingProxy = await factory.deploy(Implementation.address);
+      Proxy = await factory.deploy(Implementation.address);
 
-      Instance = await ethers.getContractAt('ImplementationMockB', ForwardingProxy.address);
+      Instance = await ethers.getContractAt('ImplementationMockB', Proxy.address);
     });
 
     it('shows that the implementation is set', async () => {
-      assert.equal(await ForwardingProxy.getImplementation(), Implementation.address);
+      assert.equal(await Proxy.getImplementation(), Implementation.address);
     });
 
     describe('when interacting with the implementation via the proxy', async () => {
