@@ -58,8 +58,7 @@ describe('UpgradeModule', () => {
     });
   });
 
-  // SKIPPED UNTIL ISSUE #214 is done
-  describe.skip('when the owner attempts to upgrade to a sterile implementation', () => {
+  describe('when the owner attempts to upgrade to a sterile implementation', () => {
     it('reverts', async () => {
       const deployment = getDeployment();
       const someSterileContractAddress = deployment.contracts.SomeModule.deployedAddress;
@@ -72,26 +71,30 @@ describe('UpgradeModule', () => {
   });
 
   describe('when the owner upgrades to a non-sterile implementation', () => {
-    let receipt;
+    let receipt, newRouter;
+
+    before('deploy another router instance', async () => {
+      const factory = await ethers.getContractFactory('Router');
+      newRouter = await factory.deploy();
+    });
 
     before('upgrade', async () => {
-      const tx = await UpgradeModule.connect(owner).upgradeTo(routerAddress);
+      const tx = await UpgradeModule.connect(owner).upgradeTo(newRouter.address);
       receipt = await tx.wait();
     });
 
     it('emitted an Upgraded event', async () => {
       const event = findEvent({ receipt, eventName: 'Upgraded' });
 
-      assert.equal(event.args.implementation, routerAddress);
+      assert.equal(event.args.implementation, newRouter.address);
     });
 
     it('shows that the current implementation is correct', async () => {
-      assert.equal(await UpgradeModule.getImplementation(), routerAddress);
+      assert.equal(await UpgradeModule.getImplementation(), newRouter.address);
     });
   });
 
-  // SKIPPED UNTIL ISSUE #214 is done
-  describe.skip('when attempting to destroy the implementation with a malicious contract', () => {
+  describe.only('when attempting to destroy the implementation with a malicious contract', () => {
     let destroyer;
 
     let OwnerModuleImpl, UpgradeModuleImpl;

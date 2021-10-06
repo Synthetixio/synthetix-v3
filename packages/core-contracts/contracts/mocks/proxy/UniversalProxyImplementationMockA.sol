@@ -17,6 +17,7 @@ contract UniversalProxyImplementationMockA is UniversalProxyImplementation {
     bytes32 private _slot9;
 
     address private _implementation;
+    bool private _isUpgrading;
 
     function setA(uint newA) external {
         _a = newA;
@@ -36,5 +37,13 @@ contract UniversalProxyImplementationMockA is UniversalProxyImplementation {
 
     function _getImplementation() internal view override returns (address) {
         return _implementation;
+    }
+
+    function _setIsUpgrading(bool isUpgrading) internal virtual override {
+        _isUpgrading = isUpgrading;
+    }
+
+    function _getIsUpgrading() internal view override returns (bool) {
+        return _isUpgrading;
     }
 }
