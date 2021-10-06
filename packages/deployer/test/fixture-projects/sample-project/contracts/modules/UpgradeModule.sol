@@ -1,10 +1,10 @@
 //SPDX-License-Identifier: Unlicense
 pragma solidity ^0.8.0;
 
-import "../mixins/OwnerModuleMixin.sol";
+import "../mixins/OwnerMixin.sol";
 import "../storage/ProxyNamespace.sol";
 
-contract UpgradeModule is ProxyNamespace, OwnerModuleMixin {
+contract UpgradeModule is ProxyNamespace, OwnerMixin {
     event Upgraded(address implementation);
 
     function upgradeTo(address newImplementation) public onlyOwner {
