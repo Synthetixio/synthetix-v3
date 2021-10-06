@@ -43,9 +43,9 @@ abstract contract Ownable is OwnableMixin {
 
     function _setOwner(address newOwner) internal virtual;
 
-    function _getOwner() internal virtual override view returns (address);
+    function _getOwner() internal view virtual override returns (address);
 
     function _setNominatedOwner(address newNominatedOwner) internal virtual;
 
-    function _getNominatedOwner() internal virtual view returns (address);
+    function _getNominatedOwner() internal view virtual returns (address);
 }
