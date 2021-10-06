@@ -2,9 +2,9 @@
 pragma solidity ^0.8.0;
 
 import "../storage/SettingsNamespace.sol";
-import "../mixins/OwnerModuleMixin.sol";
+import "../mixins/OwnerMixin.sol";
 
-contract SettingsModule is SettingsNamespace, OwnerModuleMixin {
+contract SettingsModule is SettingsNamespace, OwnerMixin {
     function setASettingValue(uint newSettingValue) public onlyOwner {
         _settingsStorage().aSettingValue = newSettingValue;
     }
