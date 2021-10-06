@@ -2,7 +2,6 @@
 pragma solidity ^0.8.0;
 
 import "../utils/ContractUtil.sol";
-import "hardhat/console.sol";
 
 abstract contract UniversalProxyImplementation is ContractUtil {
     event Upgraded(address implementation);
