@@ -1,46 +1,23 @@
 //SPDX-License-Identifier: Unlicense
 pragma solidity ^0.8.0;
 
-import "../mixins/OwnerMixin.sol";
+import "@synthetixio/core-contracts/contracts/ownership/Ownable.sol";
+import "../storage/OwnerNamespace.sol";
 
-contract OwnerModule is OwnerMixin {
-    event OwnerChanged(address newOwner);
-
-    function nominateOwner(address newNominatedOwner) public onlyOwnerIfSet {
-        require(newNominatedOwner != address(0), "Invalid nominated owner address");
-
-        _ownerStorage().nominatedOwner = newNominatedOwner;
+contract OwnerModule is Ownable, OwnerNamespace {
+    function _setOwner(address newOwner) internal override {
+        _ownerStorage().owner = newOwner;
     }
 
-    function rejectNomination() public onlyOwnerIfSet {
-        OwnerStorage storage store = _ownerStorage();
-
-        require(store.nominatedOwner != address(0), "No nomination to reject");
-
-        store.nominatedOwner = address(0);
-    }
-
-    function acceptOwnership() public {
-        OwnerStorage storage store = _ownerStorage();
-
-        if (store.owner == address(0)) {
-            store.owner = msg.sender;
-        } else {
-            require(msg.sender == store.nominatedOwner, "Must be nominated");
-
-            store.owner = store.nominatedOwner;
-        }
-
-        store.nominatedOwner = address(0);
-
-        emit OwnerChanged(store.owner);
-    }
-
-    function getOwner() public view returns (address) {
+    function _getOwner() internal view override returns (address) {
         return _ownerStorage().owner;
     }
 
-    function getNominatedOwner() public view returns (address) {
+    function _setNominatedOwner(address newNominatedOwner) internal override {
+        _ownerStorage().nominatedOwner = newNominatedOwner;
+    }
+
+    function _getNominatedOwner() internal view override returns (address) {
         return _ownerStorage().nominatedOwner;
     }
 }
