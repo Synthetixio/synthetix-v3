@@ -35,7 +35,7 @@ module.exports = function createInitializer(hre) {
 
       const OwnerModule = await ethers.getContractAt('OwnerModule', proxyAddress);
 
-      tx = await OwnerModule.connect(owner).nominateOwner(owner.address);
+      tx = await OwnerModule.connect(owner).nominateNewOwner(owner.address);
       await tx.wait();
 
       tx = await OwnerModule.connect(owner).acceptOwnership();

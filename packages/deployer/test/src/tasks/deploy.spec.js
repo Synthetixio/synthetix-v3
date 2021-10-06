@@ -1,5 +1,5 @@
 const path = require('path');
-const { copyFile, unlink } = require('fs/promises');
+const { copyFile, unlink, readFile, writeFile } = require('fs/promises');
 const { useEnvironment } = require('../../helpers');
 
 describe('tasks/deploy.js', function () {
@@ -41,6 +41,9 @@ describe('tasks/deploy.js', function () {
     // Third deployment
     const MODULES = this.hre.config.deployer.paths.modules;
     const CONTRACTS = path.join(this.hre.config.paths.root, 'test-contracts');
+
+    const SomeModuleOriginal = await readFile(path.join(MODULES, 'SomeModule.sol'));
+
     try {
       // Make some file changes before deploying
       await Promise.all([
@@ -65,10 +68,7 @@ describe('tasks/deploy.js', function () {
       // Restore all the changes
       await Promise.all([
         unlink(path.join(MODULES, 'NewModule.sol')),
-        copyFile(
-          path.join(CONTRACTS, 'SomeModule.original.sol'),
-          path.join(MODULES, 'SomeModule.sol')
-        ),
+        writeFile(path.join(MODULES, 'SomeModule.sol'), SomeModuleOriginal),
 
         // TODO: enable this test when module deletion is fixed
         // More info: https://github.com/Synthetixio/synthetix-v3/issues/224
