@@ -1,14 +1,9 @@
 const hre = require('hardhat');
 const assert = require('assert');
 const { ethers } = hre;
-const {
-  getProxyAddress,
-  getRouterAddress,
-  getDeployment,
-} = require('../../../../utils/deployments');
+const { getProxyAddress, getRouterAddress } = require('../../../../utils/deployments');
 const { assertRevert } = require('@synthetixio/core-js/utils/assertions');
 const { bootstrap, initializeSystem } = require('./helpers/initializer');
-const { findEvent } = require('@synthetixio/core-js/utils/events');
 
 describe('UpgradeModule', () => {
   bootstrap();
@@ -46,51 +41,6 @@ describe('UpgradeModule', () => {
         UpgradeModule.connect(user).upgradeTo(user.address),
         'Only owner can invoke'
       );
-    });
-  });
-
-  describe('when the owner attempts to upgrade to an EOA', () => {
-    it('reverts', async () => {
-      await assertRevert(
-        UpgradeModule.connect(owner).upgradeTo(owner.address),
-        'Implementation not a contract'
-      );
-    });
-  });
-
-  describe('when the owner attempts to upgrade to a sterile implementation', () => {
-    it('reverts', async () => {
-      const deployment = getDeployment();
-      const someSterileContractAddress = deployment.contracts.SomeModule.deployedAddress;
-
-      await assertRevert(
-        UpgradeModule.connect(owner).upgradeTo(someSterileContractAddress),
-        'Implementation is sterile'
-      );
-    });
-  });
-
-  describe('when the owner upgrades to a non-sterile implementation', () => {
-    let receipt, newRouter;
-
-    before('deploy another router instance', async () => {
-      const factory = await ethers.getContractFactory('Router');
-      newRouter = await factory.deploy();
-    });
-
-    before('upgrade', async () => {
-      const tx = await UpgradeModule.connect(owner).upgradeTo(newRouter.address);
-      receipt = await tx.wait();
-    });
-
-    it('emitted an Upgraded event', async () => {
-      const event = findEvent({ receipt, eventName: 'Upgraded' });
-
-      assert.equal(event.args.implementation, newRouter.address);
-    });
-
-    it('shows that the current implementation is correct', async () => {
-      assert.equal(await UpgradeModule.getImplementation(), newRouter.address);
     });
   });
 

@@ -58,11 +58,72 @@ describe('UniversalProxy', () => {
     });
   });
 
-  describe('when attempts to upgrade to an EOA', () => {
+  describe('when attempting to upgrade to an EOA', () => {
     it('reverts', async () => {
       const [user] = await ethers.getSigners();
 
       await assertRevert(Instance.upgradeTo(user.address), 'Implementation not a contract');
+    });
+  });
+
+  describe('when attempting to upgrade to a sterile implementation', () => {
+    let sterileImplementation;
+    before('deploy the sterile implementation', async () => {
+      const factory = await ethers.getContractFactory('ImplementationMockA');
+      sterileImplementation = await factory.deploy();
+    });
+
+    it('reverts', async () => {
+      await assertRevert(
+        Instance.upgradeTo(sterileImplementation.address),
+        'Implementation is sterile'
+      );
+    });
+  });
+
+  describe('when attempting to brick the implementation with a bad contract', () => {
+    let bricker;
+    before('deploy the bad contract', async () => {
+      const factory = await ethers.getContractFactory('Bricker');
+      bricker = await factory.deploy();
+    });
+
+    it('reverts', async () => {
+      await assertRevert(Instance.upgradeTo(bricker.address), 'Implementation is sterile');
+    });
+
+    it('shows that the proxy is still responsive', async () => {
+      before('set a value', async () => {
+        await (await Instance.setA(1339)).wait();
+      });
+
+      it('can read the value set', async () => {
+        assert.equal(await Instance.getA(), 1339);
+      });
+    });
+  });
+
+  describe('when attempting to destroy the implementation with a malicious contract', () => {
+    let destroyer;
+    before('deploy the malicious contract', async () => {
+      const factory = await ethers.getContractFactory('Destroyer');
+      destroyer = await factory.deploy();
+    });
+
+    describe('when trying to upgrade the implementation of the implementation to the destroyer', () => {
+      it('reverts', async () => {
+        await assertRevert(Instance.upgradeTo(destroyer.address), 'Implementation is sterile');
+      });
+
+      it('shows that the proxy is still responsive', async () => {
+        before('set a value', async () => {
+          await (await Instance.setA(1338)).wait();
+        });
+
+        it('can read the value set', async () => {
+          assert.equal(await Instance.getA(), 1338);
+        });
+      });
     });
   });
 
