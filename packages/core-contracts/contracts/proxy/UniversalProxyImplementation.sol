@@ -40,11 +40,13 @@ abstract contract UniversalProxyImplementation is ContractUtil {
 
         // Get revert message from response
         if (response.length > 0) {
-            assembly { response := add(response, 68)} 
+            assembly {
+                response := add(response, 68)
+            }
         }
-        
+
         _setIsUpgrading(false);
-        
+
         // The simulation is expected to revert!
         if (success) {
             return false;

@@ -94,7 +94,8 @@ describe('UpgradeModule', () => {
     });
   });
 
-  describe.only('when attempting to destroy the implementation with a malicious contract', () => {
+  // Skipped until Issue #226 is resolved. Details there.
+  describe.skip('when attempting to destroy the implementation with a malicious contract', () => {
     let destroyer;
 
     let OwnerModuleImpl, UpgradeModuleImpl;
