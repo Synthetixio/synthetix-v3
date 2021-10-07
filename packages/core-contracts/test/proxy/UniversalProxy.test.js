@@ -20,7 +20,7 @@ describe('UniversalProxy', () => {
     assert.equal(await Proxy.getImplementation(), Implementation.address);
   });
 
-  describe('when setting UniversalProxyImplementationMockA as the implementation', () => {
+  describe('when UniversalProxyImplementationMockA is set as the implementation', () => {
     describe('when interacting with the implementation via the proxy', async () => {
       describe('when reading and setting a value that exists in the implementation', () => {
         before('set a value', async () => {
@@ -68,6 +68,7 @@ describe('UniversalProxy', () => {
 
   describe('when attempting to upgrade to a sterile implementation', () => {
     let sterileImplementation;
+
     before('deploy the sterile implementation', async () => {
       const factory = await ethers.getContractFactory('ImplementationMockA');
       sterileImplementation = await factory.deploy();
@@ -83,6 +84,7 @@ describe('UniversalProxy', () => {
 
   describe('when attempting to brick the implementation with a bad contract', () => {
     let bricker;
+
     before('deploy the bad contract', async () => {
       const factory = await ethers.getContractFactory('Bricker');
       bricker = await factory.deploy();
@@ -105,6 +107,7 @@ describe('UniversalProxy', () => {
 
   describe('when attempting to destroy the implementation with a malicious contract', () => {
     let destroyer;
+
     before('deploy the malicious contract', async () => {
       const factory = await ethers.getContractFactory('Destroyer');
       destroyer = await factory.deploy();

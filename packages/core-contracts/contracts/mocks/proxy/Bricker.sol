@@ -16,9 +16,7 @@ contract Bricker is UniversalProxyImplementation {
     bytes32 private _slot9;
 
     address private _implementation;
-    bool private _isUpgrading;
-
-    address private _implementationOld;
+    bool private _simulatingUpgrade;
 
     function upgradeTo(address newImplementation) public override {
         _implementation = newImplementation;
@@ -32,11 +30,11 @@ contract Bricker is UniversalProxyImplementation {
         return _implementation;
     }
 
-    function _setIsUpgrading(bool isUpgrading) internal virtual override {
-        _isUpgrading = isUpgrading;
+    function _setSimulatingUpgrade(bool simulatingUpgrade) internal virtual override {
+        _simulatingUpgrade = simulatingUpgrade;
     }
 
-    function _getIsUpgrading() internal view override returns (bool) {
-        return _isUpgrading;
+    function _getSimulatingUpgrade() internal view override returns (bool) {
+        return _simulatingUpgrade;
     }
 }

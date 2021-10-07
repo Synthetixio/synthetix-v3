@@ -11,9 +11,9 @@ abstract contract UniversalProxyImplementation is ContractUtil, TransformUtil {
 
     function _getImplementation() internal view virtual returns (address);
 
-    function _setIsUpgrading(bool isUpgrading) internal virtual;
+    function _setSimulatingUpgrade(bool simulatingUpgrade) internal virtual;
 
-    function _getIsUpgrading() internal view virtual returns (bool);
+    function _getSimulatingUpgrade() internal view virtual returns (bool);
 
     function upgradeTo(address newImplementation) public virtual;
 
@@ -28,10 +28,10 @@ abstract contract UniversalProxyImplementation is ContractUtil, TransformUtil {
     }
 
     function _canUpgradeInTheFuture(address newImplementation) private returns (bool) {
-        if (_getIsUpgrading()) {
+        if (_getSimulatingUpgrade()) {
             return true;
         }
-        _setIsUpgrading(true);
+        _setSimulatingUpgrade(true);
 
         // Simulate upgrading to this implementation and then rolling back to the current one.
         // NOTE: This call will always revert, and thus will have no side effects.
@@ -39,7 +39,7 @@ abstract contract UniversalProxyImplementation is ContractUtil, TransformUtil {
             abi.encodeWithSignature("simulateUpgrades(address)", newImplementation)
         );
 
-        _setIsUpgrading(false);
+        _setSimulatingUpgrade(false);
 
         // The simulation is expected to revert!
         if (success) {
