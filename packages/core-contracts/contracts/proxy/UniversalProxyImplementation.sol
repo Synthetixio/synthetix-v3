@@ -2,8 +2,9 @@
 pragma solidity ^0.8.0;
 
 import "../utils/ContractUtil.sol";
+import "../utils/TransformUtil.sol";
 
-abstract contract UniversalProxyImplementation is ContractUtil {
+abstract contract UniversalProxyImplementation is ContractUtil, TransformUtil {
     event Upgraded(address implementation);
 
     function _setImplementation(address newImplementation) internal virtual;
@@ -38,13 +39,6 @@ abstract contract UniversalProxyImplementation is ContractUtil {
             abi.encodeWithSignature("simulateUpgrades(address)", newImplementation)
         );
 
-        // Get revert message from response
-        if (response.length > 0) {
-            assembly {
-                response := add(response, 68)
-            }
-        }
-
         _setIsUpgrading(false);
 
         // The simulation is expected to revert!
@@ -53,7 +47,9 @@ abstract contract UniversalProxyImplementation is ContractUtil {
         }
 
         // The revert reason is expected to be "upgrades correctly"
-        return keccak256(abi.encodePacked(string(response))) == keccak256(abi.encodePacked("upgrades correctly"));
+        return
+            keccak256(abi.encodePacked(_revertReasonFromBytes(response))) ==
+            keccak256(abi.encodePacked("upgrades correctly"));
     }
 
     function simulateUpgrades(address newImplementation) public {
