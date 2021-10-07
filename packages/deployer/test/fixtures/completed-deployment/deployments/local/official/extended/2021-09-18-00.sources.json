@@ -6,21 +6,11 @@
     "ast": {
       "absolutePath": "contracts/modules/AnotherModule.sol",
       "exportedSymbols": {
-        "AnotherModule": [
-          164
-        ],
-        "CommsMixin": [
-          106
-        ],
-        "GlobalNamespace": [
-          564
-        ],
-        "ProxyNamespace": [
-          596
-        ],
-        "SomeModule": [
-          408
-        ]
+        "AnotherModule": [164],
+        "CommsMixin": [106],
+        "GlobalNamespace": [564],
+        "ProxyNamespace": [596],
+        "SomeModule": [408]
       },
       "id": 165,
       "license": "Unlicense",
@@ -28,12 +18,7 @@
       "nodes": [
         {
           "id": 142,
-          "literals": [
-            "solidity",
-            "^",
-            "0.8",
-            ".0"
-          ],
+          "literals": ["solidity", "^", "0.8", ".0"],
           "nodeType": "PragmaDirective",
           "src": "37:23:4"
         },
@@ -93,11 +78,7 @@
           "contractKind": "contract",
           "fullyImplemented": true,
           "id": 164,
-          "linearizedBaseContracts": [
-            164,
-            106,
-            596
-          ],
+          "linearizedBaseContracts": [164, 106, 596],
           "name": "AnotherModule",
           "nameLocation": "175:13:4",
           "nodeType": "ContractDefinition",
@@ -328,15 +309,9 @@
     "ast": {
       "absolutePath": "contracts/modules/OwnerModule.sol",
       "exportedSymbols": {
-        "OwnerMixin": [
-          140
-        ],
-        "OwnerModule": [
-          307
-        ],
-        "OwnerNamespace": [
-          580
-        ]
+        "OwnerMixin": [140],
+        "OwnerModule": [307],
+        "OwnerNamespace": [580]
       },
       "id": 308,
       "license": "Unlicense",
@@ -344,12 +319,7 @@
       "nodes": [
         {
           "id": 166,
-          "literals": [
-            "solidity",
-            "^",
-            "0.8",
-            ".0"
-          ],
+          "literals": ["solidity", "^", "0.8", ".0"],
           "nodeType": "PragmaDirective",
           "src": "37:23:5"
         },
@@ -385,11 +355,7 @@
           "contractKind": "contract",
           "fullyImplemented": true,
           "id": 307,
-          "linearizedBaseContracts": [
-            307,
-            140,
-            580
-          ],
+          "linearizedBaseContracts": [307, 140, 580],
           "name": "OwnerModule",
           "nameLocation": "107:11:5",
           "nodeType": "ContractDefinition",
@@ -524,10 +490,7 @@
                         "id": 176,
                         "name": "require",
                         "nodeType": "Identifier",
-                        "overloadedDeclarations": [
-                          -18,
-                          -18
-                        ],
+                        "overloadedDeclarations": [-18, -18],
                         "referencedDeclaration": -18,
                         "src": "246:7:5",
                         "typeDescriptions": {
@@ -651,7 +614,7 @@
                   "src": "226:9:5"
                 }
               ],
-              "name": "nominateOwner",
+              "name": "nominateNewOwner",
               "nameLocation": "178:13:5",
               "nodeType": "FunctionDefinition",
               "parameters": {
@@ -708,9 +671,7 @@
                 "src": "440:186:5",
                 "statements": [
                   {
-                    "assignments": [
-                      200
-                    ],
+                    "assignments": [200],
                     "declarations": [
                       {
                         "constant": false,
@@ -920,10 +881,7 @@
                         "id": 204,
                         "name": "require",
                         "nodeType": "Identifier",
-                        "overloadedDeclarations": [
-                          -18,
-                          -18
-                        ],
+                        "overloadedDeclarations": [-18, -18],
                         "referencedDeclaration": -18,
                         "src": "505:7:5",
                         "typeDescriptions": {
@@ -1105,9 +1063,7 @@
                 "src": "666:380:5",
                 "statements": [
                   {
-                    "assignments": [
-                      230
-                    ],
+                    "assignments": [230],
                     "declarations": [
                       {
                         "constant": false,
@@ -1394,10 +1350,7 @@
                               "id": 249,
                               "name": "require",
                               "nodeType": "Identifier",
-                              "overloadedDeclarations": [
-                                -18,
-                                -18
-                              ],
+                              "overloadedDeclarations": [-18, -18],
                               "referencedDeclaration": -18,
                               "src": "831:7:5",
                               "typeDescriptions": {
@@ -2072,18 +2025,10 @@
     "ast": {
       "absolutePath": "contracts/modules/SettingsModule.sol",
       "exportedSymbols": {
-        "OwnerMixin": [
-          140
-        ],
-        "OwnerNamespace": [
-          580
-        ],
-        "SettingsModule": [
-          340
-        ],
-        "SettingsNamespace": [
-          610
-        ]
+        "OwnerMixin": [140],
+        "OwnerNamespace": [580],
+        "SettingsModule": [340],
+        "SettingsNamespace": [610]
       },
       "id": 341,
       "license": "Unlicense",
@@ -2091,12 +2036,7 @@
       "nodes": [
         {
           "id": 309,
-          "literals": [
-            "solidity",
-            "^",
-            "0.8",
-            ".0"
-          ],
+          "literals": ["solidity", "^", "0.8", ".0"],
           "nodeType": "PragmaDirective",
           "src": "37:23:6"
         },
@@ -2156,12 +2096,7 @@
           "contractKind": "contract",
           "fullyImplemented": true,
           "id": 340,
-          "linearizedBaseContracts": [
-            340,
-            140,
-            580,
-            610
-          ],
+          "linearizedBaseContracts": [340, 140, 580, 610],
           "name": "SettingsModule",
           "nameLocation": "150:14:6",
           "nodeType": "ContractDefinition",
@@ -2447,12 +2382,8 @@
     "ast": {
       "absolutePath": "contracts/modules/SomeModule.sol",
       "exportedSymbols": {
-        "GlobalNamespace": [
-          564
-        ],
-        "SomeModule": [
-          408
-        ]
+        "GlobalNamespace": [564],
+        "SomeModule": [408]
       },
       "id": 409,
       "license": "Unlicense",
@@ -2460,12 +2391,7 @@
       "nodes": [
         {
           "id": 342,
-          "literals": [
-            "solidity",
-            "^",
-            "0.8",
-            ".0"
-          ],
+          "literals": ["solidity", "^", "0.8", ".0"],
           "nodeType": "PragmaDirective",
           "src": "37:23:7"
         },
@@ -2501,10 +2427,7 @@
           "contractKind": "contract",
           "fullyImplemented": true,
           "id": 408,
-          "linearizedBaseContracts": [
-            408,
-            564
-          ],
+          "linearizedBaseContracts": [408, 564],
           "name": "SomeModule",
           "nameLocation": "113:10:7",
           "nodeType": "ContractDefinition",
@@ -3265,18 +3188,10 @@
     "ast": {
       "absolutePath": "contracts/modules/UpgradeModule.sol",
       "exportedSymbols": {
-        "OwnerMixin": [
-          140
-        ],
-        "OwnerNamespace": [
-          580
-        ],
-        "ProxyNamespace": [
-          596
-        ],
-        "UpgradeModule": [
-          548
-        ]
+        "OwnerMixin": [140],
+        "OwnerNamespace": [580],
+        "ProxyNamespace": [596],
+        "UpgradeModule": [548]
       },
       "id": 549,
       "license": "Unlicense",
@@ -3284,12 +3199,7 @@
       "nodes": [
         {
           "id": 410,
-          "literals": [
-            "solidity",
-            "^",
-            "0.8",
-            ".0"
-          ],
+          "literals": ["solidity", "^", "0.8", ".0"],
           "nodeType": "PragmaDirective",
           "src": "37:23:8"
         },
@@ -3349,12 +3259,7 @@
           "contractKind": "contract",
           "fullyImplemented": true,
           "id": 548,
-          "linearizedBaseContracts": [
-            548,
-            140,
-            580,
-            596
-          ],
+          "linearizedBaseContracts": [548, 140, 580, 596],
           "name": "UpgradeModule",
           "nameLocation": "147:13:8",
           "nodeType": "ContractDefinition",
@@ -3366,9 +3271,7 @@
                 "src": "299:124:8",
                 "statements": [
                   {
-                    "assignments": [
-                      424
-                    ],
+                    "assignments": [424],
                     "declarations": [
                       {
                         "constant": false,
@@ -3723,10 +3626,7 @@
                         "id": 439,
                         "name": "require",
                         "nodeType": "Identifier",
-                        "overloadedDeclarations": [
-                          -18,
-                          -18
-                        ],
+                        "overloadedDeclarations": [-18, -18],
                         "referencedDeclaration": -18,
                         "src": "532:7:8",
                         "typeDescriptions": {
@@ -3835,10 +3735,7 @@
                         "id": 449,
                         "name": "require",
                         "nodeType": "Identifier",
-                        "overloadedDeclarations": [
-                          -18,
-                          -18
-                        ],
+                        "overloadedDeclarations": [-18, -18],
                         "referencedDeclaration": -18,
                         "src": "607:7:8",
                         "typeDescriptions": {
@@ -3866,9 +3763,7 @@
                     "src": "607:66:8"
                   },
                   {
-                    "assignments": [
-                      457
-                    ],
+                    "assignments": [457],
                     "declarations": [
                       {
                         "constant": false,
@@ -4361,10 +4256,7 @@
                     "src": "1078:40:8"
                   },
                   {
-                    "assignments": [
-                      497,
-                      null
-                    ],
+                    "assignments": [497, null],
                     "declarations": [
                       {
                         "constant": false,
@@ -4577,10 +4469,7 @@
                         "id": 507,
                         "name": "require",
                         "nodeType": "Identifier",
-                        "overloadedDeclarations": [
-                          -18,
-                          -18
-                        ],
+                        "overloadedDeclarations": [-18, -18],
                         "referencedDeclaration": -18,
                         "src": "1461:7:8",
                         "typeDescriptions": {
@@ -4701,10 +4590,7 @@
                         "id": 512,
                         "name": "require",
                         "nodeType": "Identifier",
-                        "overloadedDeclarations": [
-                          -18,
-                          -18
-                        ],
+                        "overloadedDeclarations": [-18, -18],
                         "referencedDeclaration": -18,
                         "src": "1522:7:8",
                         "typeDescriptions": {
@@ -5145,9 +5031,7 @@
     "ast": {
       "absolutePath": "contracts/Router.sol",
       "exportedSymbols": {
-        "Router": [
-          41
-        ]
+        "Router": [41]
       },
       "id": 42,
       "license": "Unlicense",
@@ -5155,12 +5039,7 @@
       "nodes": [
         {
           "id": 1,
-          "literals": [
-            "solidity",
-            "^",
-            "0.8",
-            ".0"
-          ],
+          "literals": ["solidity", "^", "0.8", ".0"],
           "nodeType": "PragmaDirective",
           "src": "37:23:0"
         },
@@ -5171,9 +5050,7 @@
           "contractKind": "contract",
           "fullyImplemented": true,
           "id": 41,
-          "linearizedBaseContracts": [
-            41
-          ],
+          "linearizedBaseContracts": [41],
           "name": "Router",
           "nameLocation": "653:6:0",
           "nodeType": "ContractDefinition",
@@ -5405,9 +5282,7 @@
                 "src": "1146:2355:0",
                 "statements": [
                   {
-                    "assignments": [
-                      20
-                    ],
+                    "assignments": [20],
                     "declarations": [
                       {
                         "constant": false,
@@ -5468,9 +5343,7 @@
                     "src": "1226:21:0"
                   },
                   {
-                    "assignments": [
-                      25
-                    ],
+                    "assignments": [25],
                     "declarations": [
                       {
                         "constant": false,
@@ -6369,10 +6242,7 @@
                         "id": 28,
                         "name": "require",
                         "nodeType": "Identifier",
-                        "overloadedDeclarations": [
-                          -18,
-                          -18
-                        ],
+                        "overloadedDeclarations": [-18, -18],
                         "referencedDeclaration": -18,
                         "src": "2980:7:0",
                         "typeDescriptions": {
@@ -6713,12 +6583,8 @@
     "ast": {
       "absolutePath": "contracts/Proxy.sol",
       "exportedSymbols": {
-        "Proxy": [
-          28
-        ],
-        "ProxyNamespace": [
-          596
-        ]
+        "Proxy": [28],
+        "ProxyNamespace": [596]
       },
       "id": 29,
       "license": "Unlicense",
@@ -6726,12 +6592,7 @@
       "nodes": [
         {
           "id": 1,
-          "literals": [
-            "solidity",
-            "^",
-            "0.8",
-            ".0"
-          ],
+          "literals": ["solidity", "^", "0.8", ".0"],
           "nodeType": "PragmaDirective",
           "src": "37:23:0"
         },
@@ -6767,10 +6628,7 @@
           "contractKind": "contract",
           "fullyImplemented": true,
           "id": 28,
-          "linearizedBaseContracts": [
-            28,
-            596
-          ],
+          "linearizedBaseContracts": [28, 596],
           "name": "Proxy",
           "nameLocation": "111:5:0",
           "nodeType": "ContractDefinition",
@@ -6782,9 +6640,7 @@
                 "src": "169:510:0",
                 "statements": [
                   {
-                    "assignments": [
-                      8
-                    ],
+                    "assignments": [8],
                     "declarations": [
                       {
                         "constant": false,
