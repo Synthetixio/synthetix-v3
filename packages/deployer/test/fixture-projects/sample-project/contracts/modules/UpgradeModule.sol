@@ -21,4 +21,12 @@ contract UpgradeModule is UniversalProxyImplementation, ProxyNamespace, OwnerMix
     function _setImplementation(address newImplementation) internal override {
         _proxyStorage().implementation = newImplementation;
     }
+
+    function _getSimulatingUpgrade() internal view override returns (bool) {
+        return _proxyStorage().simulatingUpgrade;
+    }
+
+    function _setSimulatingUpgrade(bool simulatingUpgrade) internal override {
+        _proxyStorage().simulatingUpgrade = simulatingUpgrade;
+    }
 }
