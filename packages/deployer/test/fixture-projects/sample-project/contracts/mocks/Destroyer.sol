@@ -1,9 +1,9 @@
 //SPDX-License-Identifier: Unlicense
 pragma solidity ^0.8.0;
 
-import "../storage/ProxyNamespace.sol";
+import "../storage/ProxyStorage.sol";
 
-contract Destroyer is ProxyNamespace {
+contract Destroyer is ProxyStorage {
     function upgradeTo(address) public {
         _proxyStorage().implementation = address(0);
 

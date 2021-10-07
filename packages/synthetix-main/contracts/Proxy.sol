@@ -2,9 +2,9 @@
 pragma solidity ^0.8.0;
 
 import "@synthetixio/core-contracts/contracts/proxy/ForwardingProxy.sol";
-import "./storage/ProxyNamespace.sol";
+import "./storage/ProxyStorage.sol";
 
-contract Proxy is ForwardingProxy, ProxyNamespace {
+contract Proxy is ForwardingProxy, ProxyStorage {
     // solhint-disable-next-line no-empty-blocks
     constructor(address firstImplementation) ForwardingProxy(firstImplementation) {}
 

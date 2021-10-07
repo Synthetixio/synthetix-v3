@@ -1,9 +1,9 @@
 //SPDX-License-Identifier: Unlicense
 pragma solidity ^0.8.0;
 
-import "../storage/ProxyNamespace.sol";
+import "../storage/ProxyStorage.sol";
 
-contract CommsMixin is ProxyNamespace {
+contract CommsMixin is ProxyStorage {
     function _intermoduleCall(bytes memory data) internal returns (bytes memory) {
         address router = _proxyStorage().implementation;
 

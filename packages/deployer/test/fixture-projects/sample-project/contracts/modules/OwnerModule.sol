@@ -2,9 +2,9 @@
 pragma solidity ^0.8.0;
 
 import "@synthetixio/core-contracts/contracts/ownership/Ownable.sol";
-import "../storage/OwnerNamespace.sol";
+import "../storage/OwnerStorage.sol";
 
-contract OwnerModule is Ownable, OwnerNamespace {
+contract OwnerModule is Ownable, OwnerStorage {
     function _setOwner(address newOwner) internal override {
         _ownerStorage().owner = newOwner;
     }
