@@ -6,7 +6,7 @@ const { findEvent } = require('@synthetixio/core-js/utils/events');
 const bootstrap = require('./helpers/bootstrap');
 
 describe('SomeModule', () => {
-  const { info, init } = bootstrap();
+  const { deploymentInfo, initSystem } = bootstrap();
 
   let SomeModule;
 
@@ -15,7 +15,7 @@ describe('SomeModule', () => {
   let receipt;
 
   before('initialize the system', async () => {
-    await init();
+    await initSystem();
   });
 
   before('identify signers', async () => {
@@ -23,7 +23,7 @@ describe('SomeModule', () => {
   });
 
   before('identify modules', async () => {
-    const proxyAddress = getProxyAddress(info);
+    const proxyAddress = getProxyAddress(deploymentInfo);
 
     SomeModule = await ethers.getContractAt('SomeModule', proxyAddress);
   });

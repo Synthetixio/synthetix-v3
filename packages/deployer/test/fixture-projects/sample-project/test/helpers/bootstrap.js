@@ -2,7 +2,7 @@ const { takeSnapshot, restoreSnapshot } = require('@synthetixio/core-js/utils/rp
 const createInitializer = require('./initializer');
 
 module.exports = function bootstrap() {
-  const { info, deploy, init } = createInitializer(hre);
+  const { deploymentInfo, deploySystem, initSystem } = createInitializer(hre);
 
   let snapshotId;
 
@@ -11,12 +11,12 @@ module.exports = function bootstrap() {
   });
 
   before('deploy system', async () => {
-    await deploy({ clear: true });
+    await deploySystem({ clear: true });
   });
 
   after('restore the snapshot', async () => {
     await restoreSnapshot(snapshotId, hre.ethers.provider);
   });
 
-  return { info, deploy, init };
+  return { deploymentInfo, deploySystem, initSystem };
 };

@@ -48,13 +48,14 @@ function useEnvironment(fixtureProjectName) {
     // Save an snapshot to be resseted at the end of tests
     snapshotId = await takeSnapshot(this.hre.ethers.provider);
 
-    const { deploy, init } = require(`${environementPath}/test/helpers/initializer`)(this.hre);
+    const createInitializer = require(`${environementPath}/test/helpers/initializer`);
+    const { deploySystem, initSystem } = createInitializer(this.hre);
 
     // Allow the tests to execute the configured deploy method on the loaded environment
-    this.deploy = deploy;
+    this.deploySystem = deploySystem;
 
     // Allow to initialize a deployment from the tests
-    this.init = init;
+    this.initSystem = initSystem;
   });
 
   afterEach('resetting environment', async function () {

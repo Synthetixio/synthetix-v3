@@ -6,14 +6,14 @@ const { assertRevert } = require('@synthetixio/core-js/utils/assertions');
 const bootstrap = require('./helpers/bootstrap');
 
 describe('SettingsModule', () => {
-  const { info, init } = bootstrap();
+  const { deploymentInfo, initSystem } = bootstrap();
 
   let SettingsModule;
 
   let owner, user;
 
   before('initialize the system', async () => {
-    await init();
+    await initSystem();
   });
 
   before('identify signers', async () => {
@@ -21,7 +21,7 @@ describe('SettingsModule', () => {
   });
 
   before('identify modules', async () => {
-    const proxyAddress = getProxyAddress(info);
+    const proxyAddress = getProxyAddress(deploymentInfo);
 
     SettingsModule = await ethers.getContractAt('SettingsModule', proxyAddress);
   });

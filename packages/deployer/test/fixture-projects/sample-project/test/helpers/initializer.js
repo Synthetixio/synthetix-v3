@@ -7,27 +7,27 @@ const { TASK_DEPLOY } = require('@synthetixio/deployer/task-names');
  * @param {import('hardhat/types').HardhatRuntimeEnvironment}
  */
 module.exports = function createInitializer(hre) {
-  const info = {
+  const deploymentInfo = {
     network: hre.config.defaultNetwork,
     instance: 'test',
   };
 
   return {
-    info,
+    deploymentInfo,
 
-    async deploy(customOptions = {}) {
+    async deploySystem(customOptions = {}) {
       await hre.run(TASK_DEPLOY, {
-        ...info,
+        ...deploymentInfo,
         noConfirm: true,
         quiet: true,
         ...customOptions,
       });
     },
 
-    async init() {
+    async initSystem() {
       const { ethers } = hre;
 
-      const proxyAddress = getProxyAddress(info);
+      const proxyAddress = getProxyAddress(deploymentInfo);
 
       const [owner] = await ethers.getSigners();
 

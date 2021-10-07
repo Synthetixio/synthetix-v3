@@ -9,15 +9,15 @@ describe('tasks/deploy.js', function () {
     this.timeout(25000);
 
     // Initial deployment
-    await this.deploy({
+    await this.deploySystem({
       alias: 'first',
       clear: true,
     });
 
-    await this.init();
+    await this.initSystem();
 
     // Second deployment, without any changes
-    await this.deploy({
+    await this.deploySystem({
       alias: 'second',
     });
   });
@@ -26,15 +26,15 @@ describe('tasks/deploy.js', function () {
     this.timeout(25000);
 
     // Initial deployment
-    await this.deploy({
+    await this.deploySystem({
       alias: 'first',
       clear: true,
     });
 
-    await this.init();
+    await this.initSystem();
 
     // Second deployment, without any changes
-    await this.deploy({
+    await this.deploySystem({
       alias: 'second',
     });
 
@@ -61,7 +61,7 @@ describe('tasks/deploy.js', function () {
         // unlink(path.join(MODULES, 'OwnerModule.sol')),
       ]);
 
-      await this.deploy({
+      await this.deploySystem({
         alias: 'third',
       });
     } finally {

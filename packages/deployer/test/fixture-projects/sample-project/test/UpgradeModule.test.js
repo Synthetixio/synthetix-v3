@@ -11,7 +11,7 @@ const { findEvent } = require('@synthetixio/core-js/utils/events');
 const bootstrap = require('./helpers/bootstrap');
 
 describe('UpgradeModule', () => {
-  const { info, init } = bootstrap();
+  const { deploymentInfo, initSystem } = bootstrap();
 
   let UpgradeModule, OwnerModule;
 
@@ -19,7 +19,7 @@ describe('UpgradeModule', () => {
   let proxyAddress, routerAddress;
 
   before('initialize the system', async () => {
-    await init();
+    await initSystem();
   });
 
   before('identify signers', async () => {
@@ -27,8 +27,8 @@ describe('UpgradeModule', () => {
   });
 
   before('identify modules', async () => {
-    routerAddress = getRouterAddress(info);
-    proxyAddress = getProxyAddress(info);
+    routerAddress = getRouterAddress(deploymentInfo);
+    proxyAddress = getProxyAddress(deploymentInfo);
 
     UpgradeModule = await ethers.getContractAt('UpgradeModule', proxyAddress);
     OwnerModule = await ethers.getContractAt('OwnerModule', proxyAddress);
@@ -61,7 +61,7 @@ describe('UpgradeModule', () => {
   // SKIPPED UNTIL ISSUE #214 is done
   describe.skip('when the owner attempts to upgrade to a sterile implementation', () => {
     it('reverts', async () => {
-      const deployment = getDeployment(info);
+      const deployment = getDeployment(deploymentInfo);
       const someSterileContractAddress = deployment.contracts.SomeModule.deployedAddress;
 
       await assertRevert(
