@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 import "../interfaces/IERC20.sol";
 
-abstract contract ERC20 is IERC20 {
+contract ERC20 is IERC20 {
     string public override name;
 
     string public override symbol;
@@ -63,8 +63,11 @@ abstract contract ERC20 is IERC20 {
     ) private {
         uint256 accountBalance = balanceOf[from];
         require(accountBalance >= amount, "Transfer amount exceeds balance");
-        // we are now sure that we can perform this operation safely since it didn't revert in the previous step
-        // the total supply cannot exceed the maximum value of uint256 thus we performed but accounting operations in unchecked mode
+
+        // We are now sure that we can perform this operation safely,
+        // since it didn't revert in the previous step.
+        // The total supply cannot exceed the maximum value of uint256,
+        // thus we can now perform accounting operations in unchecked mode.
         unchecked {
             balanceOf[from] -= amount;
             balanceOf[to] += amount;
@@ -75,7 +78,8 @@ abstract contract ERC20 is IERC20 {
 
     function _mint(address to, uint256 amount) internal {
         totalSupply += amount;
-        // no need for overflow check since it is done in the previous step
+
+        // No need for overflow check since it is done in the previous step
         unchecked {
             balanceOf[to] += amount;
         }
@@ -88,7 +92,7 @@ abstract contract ERC20 is IERC20 {
 
         require(accountBalance >= amount, "Burn amount exceeds balance");
 
-        // no need for underflow check since it would have occured in the previous step
+        // No need for underflow check since it would have occured in the previous step
         unchecked {
             balanceOf[from] -= amount;
             totalSupply -= amount;

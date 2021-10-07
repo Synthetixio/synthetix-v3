@@ -10,7 +10,6 @@ contract ERC20Mock is ERC20 {
         string memory symbol,
         uint8 decimals
     ) ERC20(name, symbol, decimals) {}
-
     // solhint-enable
 
     function mint(uint256 amount) external {
