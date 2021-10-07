@@ -1,29 +1,34 @@
 const hre = require('hardhat');
 const assert = require('assert');
 const { ethers } = hre;
-const { getProxyAddress, getRouterAddress } = require('../../../../utils/deployments');
+const {
+  getProxyAddress,
+  getRouterAddress,
+  getDeployment,
+} = require('@synthetixio/deployer/utils/deployments');
 const { assertRevert } = require('@synthetixio/core-js/utils/assertions');
-const { bootstrap, initializeSystem } = require('./helpers/initializer');
+const { findEvent } = require('@synthetixio/core-js/utils/events');
+const bootstrap = require('./helpers/bootstrap');
 
 describe('UpgradeModule', () => {
-  bootstrap();
+  const { deploymentInfo, initSystem } = bootstrap();
 
   let UpgradeModule, OwnerModule;
 
   let owner, user;
   let proxyAddress, routerAddress;
 
+  before('initialize the system', async () => {
+    await initSystem();
+  });
+
   before('identify signers', async () => {
     [owner, user] = await ethers.getSigners();
   });
 
-  before('initialize the system', async () => {
-    await initializeSystem({ owner });
-  });
-
   before('identify modules', async () => {
-    routerAddress = getRouterAddress();
-    proxyAddress = getProxyAddress();
+    routerAddress = getRouterAddress(deploymentInfo);
+    proxyAddress = getProxyAddress(deploymentInfo);
 
     UpgradeModule = await ethers.getContractAt('UpgradeModule', proxyAddress);
     OwnerModule = await ethers.getContractAt('OwnerModule', proxyAddress);

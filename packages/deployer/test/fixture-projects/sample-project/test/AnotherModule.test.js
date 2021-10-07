@@ -1,28 +1,25 @@
 const hre = require('hardhat');
 const assert = require('assert');
 const { ethers } = hre;
-const { getProxyAddress } = require('../../../../utils/deployments');
+const { getProxyAddress } = require('@synthetixio/deployer/utils/deployments');
 const { printGasUsed } = require('@synthetixio/core-js/utils/tests');
-const { bootstrap, initializeSystem } = require('./helpers/initializer');
 const { findEvent } = require('@synthetixio/core-js/utils/events');
+const bootstrap = require('./helpers/bootstrap');
 
 describe('AnotherModule', () => {
-  bootstrap();
+  const { deploymentInfo, initSystem } = bootstrap();
 
   let SomeModule, AnotherModule;
 
   let owner;
 
-  before('identify signers', async () => {
+  before('initialize the system', async () => {
+    await initSystem();
     [owner] = await ethers.getSigners();
   });
 
-  before('initialize the system', async () => {
-    await initializeSystem({ owner });
-  });
-
   before('identify modules', async () => {
-    const proxyAddress = getProxyAddress();
+    const proxyAddress = getProxyAddress(deploymentInfo);
 
     SomeModule = await ethers.getContractAt('SomeModule', proxyAddress);
     AnotherModule = await ethers.getContractAt('AnotherModule', proxyAddress);
