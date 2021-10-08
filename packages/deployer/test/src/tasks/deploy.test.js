@@ -61,7 +61,6 @@ describe('tasks/deploy.js', function () {
 
       await this.deploySystem({
         alias: 'third',
-        quiet: false,
       });
     } finally {
       // Restore all the changes
