@@ -1,9 +1,9 @@
 //SPDX-License-Identifier: Unlicense
 pragma solidity ^0.8.0;
 
-import "../storage/GlobalNamespace.sol";
+import "../storage/GlobalStorage.sol";
 
-contract SomeModule is GlobalNamespace {
+contract SomeModule is GlobalStorage {
     event ValueSet(address sender, uint value);
 
     function setValue(uint newValue) public {
