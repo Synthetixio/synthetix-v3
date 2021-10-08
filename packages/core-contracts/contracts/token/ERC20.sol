@@ -64,7 +64,7 @@ contract ERC20 is IERC20 {
         uint256 accountBalance = balanceOf[from];
         require(accountBalance >= amount, "Transfer amount exceeds balance");
 
-        // We are now sure that we can perform this operation safely,
+        // We are now sure that we can perform this operation safely
         // since it didn't revert in the previous step.
         // The total supply cannot exceed the maximum value of uint256,
         // thus we can now perform accounting operations in unchecked mode.
