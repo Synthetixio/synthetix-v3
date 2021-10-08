@@ -51,13 +51,13 @@ task(TASK_DEPLOY, 'Deploys all system modules')
 
       await hre.run(SUBTASK_PREPARE_DEPLOYMENT, taskArguments);
       await hre.run(SUBTASK_PRINT_INFO, taskArguments);
-      await hre.run(TASK_COMPILE, { force: false, quiet: true });
+      await hre.run(TASK_COMPILE, { force: true, quiet: true });
       await hre.run(SUBTASK_SYNC_SOURCES);
       await hre.run(SUBTASK_VALIDATE_STORAGE);
       await hre.run(SUBTASK_VALIDATE_MODULES);
       await hre.run(SUBTASK_DEPLOY_MODULES);
       await hre.run(SUBTASK_GENERATE_ROUTER_SOURCE);
-      await hre.run(TASK_COMPILE, { force: false, quiet: true });
+      await hre.run(TASK_COMPILE, { force: true, quiet: true });
       await hre.run(SUBTASK_VALIDATE_ROUTER);
       await hre.run(SUBTASK_DEPLOY_ROUTER);
       await hre.run(SUBTASK_UPGRADE_PROXY);

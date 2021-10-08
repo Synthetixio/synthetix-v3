@@ -43,6 +43,7 @@ describe('tasks/deploy.js', function () {
     const CONTRACTS = path.join(this.hre.config.paths.root, 'test-contracts');
 
     const SomeModuleOriginal = await readFile(path.join(MODULES, 'SomeModule.sol'));
+    const OwnerModuleOriginal = await readFile(path.join(MODULES, 'OwnerModule.sol'));
 
     try {
       // Make some file changes before deploying
@@ -54,11 +55,8 @@ describe('tasks/deploy.js', function () {
           path.join(CONTRACTS, 'SomeModule.modified.sol'),
           path.join(MODULES, 'SomeModule.sol')
         ),
-
-        // TODO: enable this test when module deletion is fixed
-        // More info: https://github.com/Synthetixio/synthetix-v3/issues/224
         // Delete a existing module
-        // unlink(path.join(MODULES, 'OwnerModule.sol')),
+        unlink(path.join(MODULES, 'OwnerModule.sol')),
       ]);
 
       await this.deploySystem({
@@ -69,13 +67,7 @@ describe('tasks/deploy.js', function () {
       await Promise.all([
         unlink(path.join(MODULES, 'NewModule.sol')),
         writeFile(path.join(MODULES, 'SomeModule.sol'), SomeModuleOriginal),
-
-        // TODO: enable this test when module deletion is fixed
-        // More info: https://github.com/Synthetixio/synthetix-v3/issues/224
-        // copyFile(
-        //   path.join(CONTRACTS, 'OwnerModule.original.sol'),
-        //   path.join(MODULES, 'OwnerModule.sol')
-        // ),
+        writeFile(path.join(MODULES, 'OwnerModule.sol'), OwnerModuleOriginal),
       ]);
     }
   });
