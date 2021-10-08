@@ -5,7 +5,7 @@
     "internal/**/*.js",
     "subtasks/**/*.js",
     "tasks/**/*.js",
-    "test/**/*.js",
+    "test/src/**/*.js",
     "utils/**/*.js"
   ]
 }
