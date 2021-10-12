@@ -1,6 +1,15 @@
 const { task } = require('hardhat/config');
 const { TASK_COMPILE } = require('hardhat/builtin-tasks/task-names');
 
+// This fixes a very strange bug in hardhat that should be fixed soon.
+// When using the hardhat network, the signer suddenly runs out of ETH =O
+// This is caused by a prototype pollution problem in ANTLR in Immutable.js.
+// It should be fixed soon in a future hardhat version.
+// If fixes, you should be able to run `npx hardhat deploy --no-confirm --clear --network hardhat`
+// without errors.
+// On the meantime, this line produces the local fix.
+require('@solidity-parser/parser')
+
 const {
   SUBTASK_CLEAR_DEPLOYMENTS,
   SUBTASK_DEPLOY_MODULES,
