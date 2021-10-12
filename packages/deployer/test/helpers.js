@@ -7,6 +7,8 @@ function useEnvironment(fixtureProjectName) {
   let snapshotId;
 
   beforeEach('loading environment', async function () {
+    this.timeout(25000);
+
     // Set node environments root on the given fixture project root
     process.chdir(_getEnvironmentPath(fixtureProjectName));
 
