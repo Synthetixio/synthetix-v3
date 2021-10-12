@@ -4,10 +4,11 @@ const filterValues = require('filter-values');
 const { subtask } = require('hardhat/config');
 const logger = require('@synthetixio/core-js/utils/logger');
 const { getCommit, getBranch } = require('@synthetixio/core-js/utils/git');
-const { readPackageJson } = require('@synthetixio/core-js/utils/package');
+const { readPackageJson } = require('@synthetixio/core-js/utils/npm');
 const relativePath = require('@synthetixio/core-js/utils/relative-path');
 const { renderTemplate } = require('../internal/generate-contracts');
 const { getAllSelectors } = require('../internal/contract-helper');
+const { toPrivateConstantCase } = require('../internal/router-helper');
 const { SUBTASK_GENERATE_ROUTER_SOURCE } = require('../task-names');
 
 const TAB = '    ';
@@ -23,7 +24,7 @@ subtask(
   );
 
   logger.subtitle('Generating router source');
-  logger.info(`location: ${routerPath}`);
+  logger.debug(`location: ${routerPath}`);
 
   const modules = filterValues(hre.deployer.deployment.general.contracts, (c) => c.isModule);
   const modulesNames = Object.keys(modules);
@@ -31,7 +32,7 @@ subtask(
 
   const selectors = await getAllSelectors(modulesNames);
   logger.debug(`selectors: ${JSON.stringify(selectors, null, 2)}`);
-  logger.info(`Found ${modulesNames.length} modules with ${selectors.length} selectors in total`);
+  logger.debug(`Found ${modulesNames.length} modules with ${selectors.length} selectors in total`);
 
   const binaryData = _buildBinaryData({ selectors });
 
@@ -49,7 +50,7 @@ subtask(
 
   logger.debug(`Generated source: ${generatedSource}`);
 
-  const currentSource = fs.existsSync(routerPath) ? fs.readFileSync(routerPath) : '';
+  const currentSource = fs.existsSync(routerPath) ? fs.readFileSync(routerPath, 'utf8') : '';
   if (currentSource !== generatedSource) {
     fs.writeFileSync(routerPath, generatedSource);
     logger.success(`Router code generated and written to ${routerPath}`);
@@ -85,7 +86,7 @@ function _renderSelectors({ binaryData }) {
       for (const s of node.selectors) {
         selectorsStr += `\n${TAB.repeat(4 + indent)}case ${
           s.selector
-        } { result := ${_toPrivateConstantCase(s.contractName)} } // ${s.contractName}.${s.name}()`;
+        } { result := ${toPrivateConstantCase(s.contractName)} } // ${s.contractName}.${s.name}()`;
       }
       selectorsStr += `\n${TAB.repeat(4 + indent)}leave`;
     }
@@ -107,23 +108,12 @@ function _renderModules(modules) {
     .reduce((lines, [moduleName, moduleData]) => {
       const { deployedAddress } = moduleData;
       lines.push(
-        `${TAB}address private constant ${_toPrivateConstantCase(moduleName)} = ${deployedAddress};`
+        `${TAB}address private constant ${toPrivateConstantCase(moduleName)} = ${deployedAddress};`
       );
       return lines;
     }, [])
     .join('\n')
     .trim();
-}
-
-/**
- * Converts the contracts name to private _CONSTANT_CASE format.
- * E.g.:
- *   'BearableModule' => '_BEARABLE_MODULE'
- *   'Proxy' => '_PROXY'
- *   'ERC20Token' => '_ERC20_TOKEN'
- */
-function _toPrivateConstantCase(name) {
-  return name.replace(/(?<![A-Z])[A-Z]/g, '_$&').toUpperCase();
 }
 
 function _buildBinaryData({ selectors }) {

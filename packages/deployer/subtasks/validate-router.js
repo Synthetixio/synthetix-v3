@@ -1,11 +1,10 @@
-const fs = require('fs');
-const path = require('path');
 const { subtask } = require('hardhat/config');
 const logger = require('@synthetixio/core-js/utils/logger');
-const relativePath = require('@synthetixio/core-js/utils/relative-path');
-const { getSelectors } = require('@synthetixio/core-js/utils/contracts');
-const filterValues = require('filter-values');
-const { SUBTASK_VALIDATE_ROUTER } = require('../task-names');
+const mapValues = require('just-map-values');
+const { initContractData } = require('../internal/process-contracts');
+const RouterSourceValidator = require('../internal/router-source-validator');
+const RouterASTValidator = require('../internal/router-ast-validator');
+const { SUBTASK_VALIDATE_ROUTER, SUBTASK_CANCEL_DEPLOYMENT } = require('../task-names');
 
 subtask(
   SUBTASK_VALIDATE_ROUTER,
@@ -13,45 +12,52 @@ subtask(
 ).setAction(async (_, hre) => {
   logger.subtitle('Validating router');
 
-  const routerPath = path.join(
-    relativePath(hre.config.paths.sources, hre.config.paths.root),
-    'Router.sol'
-  );
+  await initContractData('Router');
 
-  const modules = filterValues(hre.deployer.deployment.general.contracts, (c) => c.isModule);
-  const modulesNames = Object.keys(modules);
+  const sourceErrorsFound = await _runSourceValidations();
+  const astErrorsFound = await _runASTValidations();
 
-  await _selectorsExistInSource({
-    routerPath,
-    modulesNames,
-  });
+  if (sourceErrorsFound.length > 0 || astErrorsFound.length > 0) {
+    logger.error('Router is not valid');
+
+    return await hre.run(SUBTASK_CANCEL_DEPLOYMENT);
+  }
 
   logger.checked('Router is valid');
 });
 
-async function _selectorsExistInSource({ routerPath, modulesNames }) {
-  const source = fs.readFileSync(routerPath).toString();
+async function _runSourceValidations() {
+  const errorsFound = [];
 
-  for (const moduleName of modulesNames) {
-    const moduleArtifacts = await hre.artifacts.readArtifact(moduleName);
-    const moduleSelectors = await getSelectors(moduleArtifacts.abi);
+  const validator = new RouterSourceValidator();
 
-    moduleSelectors.forEach((moduleSelector) => {
-      const regex = `(:?\\s|^)case ${moduleSelector.selector}\\s.+`;
-      const matches = source.match(new RegExp(regex, 'gm'));
-
-      if (matches.length !== 1) {
-        throw new Error(
-          `Selector case found ${matches.length} times instead of the expected single time. Regex: ${regex}. Matches: ${matches}`
-        );
-      }
-
-      const [match] = matches;
-      if (!match.includes(moduleName)) {
-        throw new Error(`Expected to find ${moduleName} in the selector case: ${match}`);
-      }
-
-      logger.debug(`${moduleName}.${moduleSelector.name} selector found in the router`);
+  logger.debug('Validating Router source code');
+  errorsFound.push(...(await validator.findMissingModuleSelectors()));
+  errorsFound.push(...(await validator.findRepeatedModuleSelectors()));
+  if (errorsFound.length > 0) {
+    errorsFound.forEach((error) => {
+      logger.error(error.msg);
     });
   }
+
+  return errorsFound;
+}
+
+async function _runASTValidations() {
+  const errorsFound = [];
+
+  const asts = mapValues(hre.deployer.deployment.sources, (val) => val.ast);
+  const validator = new RouterASTValidator(asts);
+
+  logger.debug('Validating Router compiled code');
+  errorsFound.push(...(await validator.findMissingModuleSelectors()));
+  errorsFound.push(...(await validator.findUnreachableModuleSelectors()));
+  errorsFound.push(...(await validator.findDuplicateModuleSelectors()));
+  if (errorsFound.length > 0) {
+    errorsFound.forEach((error) => {
+      logger.error(error.msg);
+    });
+  }
+
+  return errorsFound;
 }

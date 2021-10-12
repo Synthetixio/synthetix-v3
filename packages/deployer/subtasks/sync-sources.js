@@ -3,7 +3,7 @@ const filterValues = require('filter-values');
 const { subtask } = require('hardhat/config');
 const logger = require('@synthetixio/core-js/utils/logger');
 const prompter = require('@synthetixio/core-js/utils/prompter');
-const { getModulesPaths } = require('../internal/path-finder');
+const { getModulesPaths } = require('../internal/contract-helper');
 const { initContractData } = require('../internal/process-contracts');
 const { SUBTASK_SYNC_SOURCES } = require('../task-names');
 
@@ -19,7 +19,7 @@ subtask(
   logger.subtitle('Syncing solidity sources with deployment data');
 
   const { previousDeployment } = hre.deployer;
-  const sources = getModulesPaths(hre.config);
+  const sources = await getModulesPaths(hre.config);
 
   const removed = await _removeDeletedSources({ sources, previousDeployment });
   const added = await _addNewSources({ sources, previousDeployment });
@@ -57,15 +57,17 @@ async function _addNewSources({ sources, previousDeployment }) {
   for (const source of sources) {
     const contractName = path.basename(source, '.sol');
 
-    await initContractData(contractName, { isModule: true });
+    await initContractData(contractName);
 
     if (!previousDeployment?.general.contracts[contractName]) {
       toAdd.push(source);
     }
   }
 
-  logger.notice('The following modules are going to be deployed for the first time:');
-  toAdd.forEach((source) => logger.notice(`  ${source}`));
+  if (toAdd.length > 0) {
+    logger.notice('The following modules are going to be deployed for the first time:');
+    toAdd.forEach((source) => logger.notice(`  ${source}`));
+  }
 
   return toAdd.length > 0;
 }

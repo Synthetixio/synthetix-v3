@@ -1,6 +1,5 @@
 const logger = require('@synthetixio/core-js/utils/logger');
 const { isAlreadyDeployed } = require('../internal/contract-helper');
-const { getBytecodeHash } = require('@synthetixio/core-js/utils/contracts');
 const { processTransaction, processReceipt } = require('../internal/process-transactions');
 const { subtask } = require('hardhat/config');
 const { SUBTASK_DEPLOY_CONTRACT } = require('../task-names');
@@ -19,15 +18,11 @@ subtask(
     return false;
   }
 
-  const contractArtifacts = await hre.artifacts.readArtifact(contractName);
-  const sourceBytecodeHash = getBytecodeHash(contractArtifacts.deployedBytecode);
-
   // Create contract & start the transaction on the network
   const { contract, transaction } = await _createAndDeployContract(contractName, constructorArgs);
 
   contractData.deployedAddress = contract.address;
   contractData.deployTransaction = transaction.hash;
-  contractData.bytecodeHash = sourceBytecodeHash;
 
   return true;
 });

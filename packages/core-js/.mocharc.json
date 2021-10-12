@@ -1,0 +1,5 @@
+{
+  "spec": ["test/**/*.test.js"],
+  "parallel": true,
+  "watch-files": ["utils/**/*.js", "test/**/*.js"]
+}

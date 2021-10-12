@@ -1,5 +1,8 @@
-const { deployedContractHasBytescode } = require('@synthetixio/core-js/utils/contracts');
+const fs = require('fs');
+const path = require('path');
+const filterValues = require('filter-values');
 const { getSelectors } = require('@synthetixio/core-js/utils/contracts');
+const { deployedContractHasBytescode } = require('@synthetixio/core-js/utils/contracts');
 
 async function isAlreadyDeployed(contractName, deploymentData) {
   if (!deploymentData.deployedAddress) {
@@ -30,6 +33,12 @@ async function getAllSelectors(contractNames) {
   });
 }
 
+async function getModulesSelectors() {
+  const contracts = filterValues(hre.deployer.deployment.general.contracts, (c) => c.isModule);
+  const contractsNames = Object.keys(contracts);
+  return await getAllSelectors(contractsNames);
+}
+
 function findDuplicateSelectors(selectors) {
   const duplicates = selectors
     .map((s) => s.selector)
@@ -51,8 +60,63 @@ function findDuplicateSelectors(selectors) {
   return ocurrences.length > 0 ? ocurrences : null;
 }
 
+/**
+ * Check if the given contract path is inside the modules folder.
+ * @param {string} contractSourcePath contract path to file, e.g.: contracts/modules/SomeModule.sol
+ * @returns {boolean}
+ */
+function contractIsModule(contractSourcePath) {
+  const source = path.resolve(hre.config.paths.root, contractSourcePath);
+  return source.startsWith(`${hre.config.deployer.paths.modules}${path.sep}`);
+}
+
+/**
+ * Get contract source path absolute location. Will try to look it up on the local
+ * hardat folders, or on node_modules.
+ * @param {string} contractSourcePath contract path to file, e.g.: contracts/modules/SomeModule.sol
+ * @returns {string}
+ */
+function getContractFilePath(contractSourcePath) {
+  // First, try to check if its a contract import from the local project
+  const localSource = path.resolve(hre.config.paths.root, contractSourcePath);
+  if (localSource.startsWith(`${hre.config.paths.sources}${path.sep}`)) {
+    if (!fs.existsSync(localSource)) {
+      throw new Error(`Contract file for ${localSource} not found.`);
+    }
+
+    return localSource;
+  }
+
+  // If not, try to resolve the contract path from one of the dependencies
+  // or, throw error
+  return require.resolve(contractSourcePath);
+}
+
+/**
+ * Get the list of all modules relative paths, e.g.: ['contracts/modules/SomeModule.sol', ...]
+ * @returns {string[]}
+ */
+async function getModulesPaths() {
+  const names = await hre.artifacts.getAllFullyQualifiedNames();
+
+  const moduleSourcePaths = [];
+
+  for (const name of names) {
+    const [contractSourcePath] = name.split(':');
+    if (contractIsModule(contractSourcePath)) {
+      moduleSourcePaths.push(contractSourcePath);
+    }
+  }
+
+  return moduleSourcePaths;
+}
+
 module.exports = {
-  isAlreadyDeployed,
-  getAllSelectors,
   findDuplicateSelectors,
+  getAllSelectors,
+  getModulesSelectors,
+  isAlreadyDeployed,
+  contractIsModule,
+  getContractFilePath,
+  getModulesPaths,
 };
