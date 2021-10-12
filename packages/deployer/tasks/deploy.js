@@ -8,6 +8,8 @@ const { TASK_COMPILE } = require('hardhat/builtin-tasks/task-names');
 // If fixes, you should be able to run `npx hardhat deploy --no-confirm --clear --network hardhat`
 // without errors.
 // On the meantime, this line produces the local fix.
+// Repo used to reproduce: https://github.com/ajsantander/weird
+// PR that fixes this in hardhat: https://github.com/nomiclabs/hardhat/pull/1945
 require('@solidity-parser/parser')
 
 const {
