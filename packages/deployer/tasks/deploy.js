@@ -10,7 +10,7 @@ const { TASK_COMPILE } = require('hardhat/builtin-tasks/task-names');
 // On the meantime, this line produces the local fix.
 // Repo used to reproduce: https://github.com/ajsantander/weird
 // PR that fixes this in hardhat: https://github.com/nomiclabs/hardhat/pull/1945
-require('@solidity-parser/parser')
+require('@solidity-parser/parser');
 
 const {
   SUBTASK_CLEAR_DEPLOYMENTS,
