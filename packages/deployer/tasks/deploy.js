@@ -23,15 +23,6 @@ const logger = require('@synthetixio/core-js/utils/logger');
 const prompter = require('@synthetixio/core-js/utils/prompter');
 const types = require('../internal/argument-types');
 
-async function traceBalance(msg, hre) {
-  console.log(msg);
-
-  const signers = await hre.ethers.getSigners();
-  const signer = signers[0];
-  const balance = await hre.ethers.provider.getBalance(signer.address);
-  console.log(signer.address, ethers.utils.formatEther(balance));
-}
-
 task(TASK_DEPLOY, 'Deploys all system modules')
   .addFlag('noConfirm', 'Skip all confirmation prompts', false)
   .addFlag('debug', 'Display debug logs', false)
