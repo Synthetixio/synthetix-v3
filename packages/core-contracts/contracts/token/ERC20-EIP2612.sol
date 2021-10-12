@@ -1,41 +1,12 @@
 // SPDX-License-Identifier: AGPL-3.0-only
 pragma solidity >=0.8.0;
 
+import "./ERC20.sol";
+
 /// @notice Modern and gas efficient ERC20 + EIP-2612 implementation.
 /// @author Modified from Uniswap (https://github.com/Uniswap/uniswap-v2-core/blob/master/contracts/UniswapV2ERC20.sol)
-abstract contract ERC20 {
-    /*///////////////////////////////////////////////////////////////
-                                  EVENTS
-    //////////////////////////////////////////////////////////////*/
-
-    event Transfer(address indexed from, address indexed to, uint256 value);
-
-    event Approval(address indexed owner, address indexed spender, uint256 value);
-
-    /*///////////////////////////////////////////////////////////////
-                             METADATA STORAGE
-    //////////////////////////////////////////////////////////////*/
-
-    string public name;
-
-    string public symbol;
-
-    uint8 public immutable decimals;
-
-    /*///////////////////////////////////////////////////////////////
-                              ERC20 STORAGE
-    //////////////////////////////////////////////////////////////*/
-
-    uint256 public totalSupply;
-
-    mapping(address => uint256) public balanceOf;
-
-    mapping(address => mapping(address => uint256)) public allowance;
-
-    /*///////////////////////////////////////////////////////////////
-                         PERMIT/EIP-2612 STORAGE
-    //////////////////////////////////////////////////////////////*/
-
+/// @author Modified from Rari-Capital (https://github.com/Rari-Capital/solmate/blob/main/src/erc20/ERC20.sol)
+abstract contract ERC20_2612 is ERC20 {
     bytes32 public constant PERMIT_TYPEHASH =
         keccak256("Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)");
 
@@ -44,76 +15,20 @@ abstract contract ERC20 {
     mapping(address => uint256) public nonces;
 
     constructor(
-        string memory _name,
-        string memory _symbol,
-        uint8 _decimals
-    ) {
-        name = _name;
-        symbol = _symbol;
-        decimals = _decimals;
-
+        string memory tokenName,
+        string memory tokenSymbol,
+        uint8 tokenDecimals
+    ) ERC20(tokenName, tokenSymbol, tokenDecimals) {
         DOMAIN_SEPARATOR = keccak256(
             abi.encode(
                 keccak256("EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"),
-                keccak256(bytes(name)),
+                keccak256(bytes(tokenName)),
                 keccak256(bytes("1")),
                 block.chainid,
                 address(this)
             )
         );
     }
-
-    /*///////////////////////////////////////////////////////////////
-                              ERC20 LOGIC
-    //////////////////////////////////////////////////////////////*/
-
-    function approve(address spender, uint256 value) public virtual returns (bool) {
-        allowance[msg.sender][spender] = value;
-
-        emit Approval(msg.sender, spender, value);
-
-        return true;
-    }
-
-    function transfer(address to, uint256 value) public virtual returns (bool) {
-        balanceOf[msg.sender] -= value;
-
-        // This is safe because the sum of all user
-        // balances can't exceed type(uint256).max!
-        unchecked {
-            balanceOf[to] += value;
-        }
-
-        emit Transfer(msg.sender, to, value);
-
-        return true;
-    }
-
-    function transferFrom(
-        address from,
-        address to,
-        uint256 value
-    ) public virtual returns (bool) {
-        if (allowance[from][msg.sender] != type(uint256).max) {
-            allowance[from][msg.sender] -= value;
-        }
-
-        balanceOf[from] -= value;
-
-        // This is safe because the sum of all user
-        // balances can't exceed type(uint256).max!
-        unchecked {
-            balanceOf[to] += value;
-        }
-
-        emit Transfer(from, to, value);
-
-        return true;
-    }
-
-    /*///////////////////////////////////////////////////////////////
-                          PERMIT/EIP-2612 LOGIC
-    //////////////////////////////////////////////////////////////*/
 
     function permit(
         address owner,
@@ -126,11 +41,13 @@ abstract contract ERC20 {
     ) public virtual {
         require(deadline >= block.timestamp, "PERMIT_DEADLINE_EXPIRED");
 
+        uint256 nonce = nonces[owner]++;
+
         bytes32 digest = keccak256(
             abi.encodePacked(
                 "\x19\x01",
                 DOMAIN_SEPARATOR,
-                keccak256(abi.encode(PERMIT_TYPEHASH, owner, spender, value, nonces[owner]++, deadline))
+                keccak256(abi.encode(PERMIT_TYPEHASH, owner, spender, value, nonce, deadline))
             )
         );
 
@@ -140,33 +57,5 @@ abstract contract ERC20 {
         allowance[recoveredAddress][spender] = value;
 
         emit Approval(owner, spender, value);
-    }
-
-    /*///////////////////////////////////////////////////////////////
-                          INTERNAL UTILS
-    //////////////////////////////////////////////////////////////*/
-
-    function _mint(address to, uint256 value) internal {
-        totalSupply += value;
-
-        // This is safe because the sum of all user
-        // balances can't exceed type(uint256).max!
-        unchecked {
-            balanceOf[to] += value;
-        }
-
-        emit Transfer(address(0), to, value);
-    }
-
-    function _burn(address from, uint256 value) internal {
-        balanceOf[from] -= value;
-
-        // This is safe because a user won't ever
-        // have a balance larger than totalSupply!
-        unchecked {
-            totalSupply -= value;
-        }
-
-        emit Transfer(from, address(0), value);
     }
 }
