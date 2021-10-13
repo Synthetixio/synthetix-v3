@@ -1,4 +1,4 @@
-async function assertRevert(tx, expectedMessage) {
+module.exports = async function assertRevert(tx, expectedMessage) {
   let error;
 
   try {
@@ -18,8 +18,4 @@ async function assertRevert(tx, expectedMessage) {
       );
     }
   }
-}
-
-module.exports = {
-  assertRevert,
 };

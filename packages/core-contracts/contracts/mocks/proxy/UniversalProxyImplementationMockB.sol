@@ -17,6 +17,7 @@ contract UniversalProxyImplementationMockB is UniversalProxyImplementation {
     bytes32 private _slot9;
 
     address private _implementation;
+    bool private _simulatingUpgrade;
 
     function setA(uint newA) external payable {
         _a = newA;
@@ -44,5 +45,13 @@ contract UniversalProxyImplementationMockB is UniversalProxyImplementation {
 
     function _getImplementation() internal view override returns (address) {
         return _implementation;
+    }
+
+    function _setSimulatingUpgrade(bool simulatingUpgrade) internal virtual override {
+        _simulatingUpgrade = simulatingUpgrade;
+    }
+
+    function _getSimulatingUpgrade() internal view override returns (bool) {
+        return _simulatingUpgrade;
     }
 }

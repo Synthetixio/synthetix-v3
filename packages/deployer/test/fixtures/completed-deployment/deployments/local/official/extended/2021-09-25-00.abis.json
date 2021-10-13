@@ -69,7 +69,7 @@
           "type": "address"
         }
       ],
-      "name": "nominateOwner",
+      "name": "nominateNewOwner",
       "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"

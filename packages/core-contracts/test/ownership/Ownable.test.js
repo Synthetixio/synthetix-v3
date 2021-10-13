@@ -1,7 +1,7 @@
 const hre = require('hardhat');
 const assert = require('assert');
 const { ethers } = hre;
-const { assertRevert } = require('@synthetixio/core-js/utils/assertions');
+const assertRevert = require('@synthetixio/core-js/utils/assert-revert');
 const { findEvent } = require('@synthetixio/core-js/utils/events');
 
 describe('Ownable', () => {

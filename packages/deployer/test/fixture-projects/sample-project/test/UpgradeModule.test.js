@@ -1,34 +1,29 @@
 const hre = require('hardhat');
 const assert = require('assert');
 const { ethers } = hre;
-const {
-  getProxyAddress,
-  getRouterAddress,
-  getDeployment,
-} = require('../../../../utils/deployments');
-const { assertRevert } = require('@synthetixio/core-js/utils/assertions');
-const { bootstrap, initializeSystem } = require('./helpers/initializer');
-const { findEvent } = require('@synthetixio/core-js/utils/events');
+const { getProxyAddress, getRouterAddress } = require('@synthetixio/deployer/utils/deployments');
+const assertRevert = require('@synthetixio/core-js/utils/assert-revert');
+const bootstrap = require('./helpers/bootstrap');
 
 describe('UpgradeModule', () => {
-  bootstrap();
+  const { deploymentInfo, initSystem } = bootstrap();
 
   let UpgradeModule, OwnerModule;
 
   let owner, user;
   let proxyAddress, routerAddress;
 
+  before('initialize the system', async () => {
+    await initSystem();
+  });
+
   before('identify signers', async () => {
     [owner, user] = await ethers.getSigners();
   });
 
-  before('initialize the system', async () => {
-    await initializeSystem({ owner });
-  });
-
   before('identify modules', async () => {
-    routerAddress = getRouterAddress();
-    proxyAddress = getProxyAddress();
+    routerAddress = getRouterAddress(deploymentInfo);
+    proxyAddress = getProxyAddress(deploymentInfo);
 
     UpgradeModule = await ethers.getContractAt('UpgradeModule', proxyAddress);
     OwnerModule = await ethers.getContractAt('OwnerModule', proxyAddress);
@@ -49,48 +44,7 @@ describe('UpgradeModule', () => {
     });
   });
 
-  describe('when the owner attempts to upgrade to an EOA', () => {
-    it('reverts', async () => {
-      await assertRevert(
-        UpgradeModule.connect(owner).upgradeTo(owner.address),
-        'Implementation not a contract'
-      );
-    });
-  });
-
-  // SKIPPED UNTIL ISSUE #214 is done
-  describe.skip('when the owner attempts to upgrade to a sterile implementation', () => {
-    it('reverts', async () => {
-      const deployment = getDeployment();
-      const someSterileContractAddress = deployment.contracts.SomeModule.deployedAddress;
-
-      await assertRevert(
-        UpgradeModule.connect(owner).upgradeTo(someSterileContractAddress),
-        'Implementation is sterile'
-      );
-    });
-  });
-
-  describe('when the owner upgrades to a non-sterile implementation', () => {
-    let receipt;
-
-    before('upgrade', async () => {
-      const tx = await UpgradeModule.connect(owner).upgradeTo(routerAddress);
-      receipt = await tx.wait();
-    });
-
-    it('emitted an Upgraded event', async () => {
-      const event = findEvent({ receipt, eventName: 'Upgraded' });
-
-      assert.equal(event.args.implementation, routerAddress);
-    });
-
-    it('shows that the current implementation is correct', async () => {
-      assert.equal(await UpgradeModule.getImplementation(), routerAddress);
-    });
-  });
-
-  // SKIPPED UNTIL ISSUE #214 is done
+  // Skipped until Issue #226 is resolved. Details there.
   describe.skip('when attempting to destroy the implementation with a malicious contract', () => {
     let destroyer;
 
