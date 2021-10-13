@@ -6,7 +6,9 @@ import "./storage/ProxyStorage.sol";
 
 contract Proxy is ForwardingProxy, ProxyStorage {
     // solhint-disable-next-line no-empty-blocks
-    constructor(address firstImplementation) ForwardingProxy(firstImplementation) {}
+    constructor(address firstImplementation) {
+        _setImplementation(firstImplementation);
+    }
 
     function _setImplementation(address newImplementation) internal override {
         _proxyStorage().implementation = newImplementation;
