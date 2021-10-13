@@ -37,10 +37,7 @@ describe('UpgradeModule', () => {
 
   describe('when a regular user attempts to upgrade the system', () => {
     it('reverts', async () => {
-      await assertRevert(
-        UpgradeModule.connect(user).upgradeTo(user.address),
-        'OnlyOwnerAllowed'
-      );
+      await assertRevert(UpgradeModule.connect(user).upgradeTo(user.address), 'OnlyOwnerAllowed');
     });
   });
 

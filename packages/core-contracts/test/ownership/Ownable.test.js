@@ -90,10 +90,7 @@ describe('Ownable', () => {
     describe('Renouncing nomination', () => {
       describe('when there is no nomination', () => {
         it('reverts', async () => {
-          await assertRevert(
-            Ownable.connect(newOwner).renounceNomination(),
-            'NotNominated()'
-          );
+          await assertRevert(Ownable.connect(newOwner).renounceNomination(), 'NotNominated()');
 
           describe('when there is a nomination', () => {
             before('nominateNewOwner', async () => {
