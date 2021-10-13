@@ -35,7 +35,7 @@ describe('Ownable', () => {
       it('reverts', async () => {
         await assertRevert(
           Ownable.connect(newOwner).nominateNewOwner(newOwner.address),
-          'Only owner can invoke'
+          'OnlyOwnerAllowed()'
         );
       });
     });
@@ -58,7 +58,7 @@ describe('Ownable', () => {
     describe('Accepting ownership', () => {
       describe('when an non nominated address tries to accepts ownership', () => {
         it('reverts', async () => {
-          await assertRevert(Ownable.connect(owner).acceptOwnership(), 'Not nominated');
+          await assertRevert(Ownable.connect(owner).acceptOwnership(), 'NotNominated()');
         });
       });
 
@@ -92,7 +92,7 @@ describe('Ownable', () => {
         it('reverts', async () => {
           await assertRevert(
             Ownable.connect(newOwner).renounceNomination(),
-            'No nomination to renounce'
+            'NotNominated()'
           );
 
           describe('when there is a nomination', () => {
@@ -109,7 +109,7 @@ describe('Ownable', () => {
               it('reverts', async () => {
                 await assertRevert(
                   Ownable.connect(owner).renounceNomination(),
-                  'Only owner can invoke'
+                  'OnlyOwnerAllowed()'
                 );
               });
 

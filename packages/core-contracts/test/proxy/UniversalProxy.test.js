@@ -62,7 +62,7 @@ describe('UniversalProxy', () => {
     it('reverts', async () => {
       const [user] = await ethers.getSigners();
 
-      await assertRevert(Instance.upgradeTo(user.address), 'Implementation not a contract');
+      await assertRevert(Instance.upgradeTo(user.address), 'AddressIsNotContract()');
     });
   });
 
@@ -77,7 +77,7 @@ describe('UniversalProxy', () => {
     it('reverts', async () => {
       await assertRevert(
         Instance.upgradeTo(sterileImplementation.address),
-        'Implementation is sterile'
+        'ImplementationIsSterile()'
       );
     });
   });
@@ -91,7 +91,7 @@ describe('UniversalProxy', () => {
     });
 
     it('reverts', async () => {
-      await assertRevert(Instance.upgradeTo(bricker.address), 'Implementation is sterile');
+      await assertRevert(Instance.upgradeTo(bricker.address), 'ImplementationIsSterile()');
     });
 
     it('shows that the proxy is still responsive', async () => {
@@ -115,7 +115,7 @@ describe('UniversalProxy', () => {
 
     describe('when trying to upgrade the implementation of the implementation to the destroyer', () => {
       it('reverts', async () => {
-        await assertRevert(Instance.upgradeTo(destroyer.address), 'Implementation is sterile');
+        await assertRevert(Instance.upgradeTo(destroyer.address), 'ImplementationIsSterile()');
       });
 
       it('shows that the proxy is still responsive', async () => {
