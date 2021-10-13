@@ -22,7 +22,7 @@ abstract contract UniversalProxyImplementation is ContractUtil, TransformUtil, C
 
     function _upgradeTo(address newImplementation) internal {
         if (newImplementation == address(0)) {
-            revert InvalidAddress();
+            revert InvalidAddress(newImplementation);
         }
         if (!_isContract(newImplementation)) {
             revert AddressIsNotContract();

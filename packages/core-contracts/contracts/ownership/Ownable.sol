@@ -26,7 +26,7 @@ abstract contract Ownable is OwnableMixin, CommonErrors {
 
     function nominateNewOwner(address newNominatedOwner) external onlyOwnerIfSet {
         if (newNominatedOwner == address(0)) {
-            revert InvalidAddress();
+            revert InvalidAddress(newNominatedOwner);
         }
         if (newNominatedOwner == _getNominatedOwner()) {
             revert InvalidNomination();
