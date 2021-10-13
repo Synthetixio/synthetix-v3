@@ -159,7 +159,7 @@ describe('utils/ast/finders.js find AST artifacts', function () {
       equal(slots.length == 1, true);
       equal(slots[0], '0x64b748fbda347b7e22c5029a23b4e647df311daee8f2a42947ab7ccf61af2e87');
     });
-    it('doesnt finds storage slot assignemnts', async () => {
+    it('doesnt find storage slot assignemnts', async () => {
       const slots = findYulStorageSlotAssignments('AnotherModule', asts['AnotherModule']);
       notEqual(slots, undefined);
       equal(slots.length == 0, true);
