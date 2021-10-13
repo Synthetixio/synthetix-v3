@@ -15,7 +15,7 @@ pragma solidity ^0.8.0;
 // --------------------------------------------------------------------------------
 
 contract {{{moduleName}}} {
-    error UnknownSelector();
+    error UnknownSelector(bytes4 sel);
 
     {{{modules}}}
 
@@ -35,7 +35,7 @@ contract {{{moduleName}}} {
         }
 
         if (implementation == address(0)) {
-            revert UnknownSelector();
+            revert UnknownSelector(sig4);
         }
 
         // Delegatecall to the implementation contract
