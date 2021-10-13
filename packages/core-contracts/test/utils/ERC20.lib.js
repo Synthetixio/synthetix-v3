@@ -2,9 +2,10 @@ const { ethers } = hre;
 const assert = require('assert');
 const { assertRevert } = require('@synthetixio/core-js/utils/assertions');
 const { findEvent } = require('@synthetixio/core-js/utils/events');
+const bn = require('@synthetixio/core-js/utils/assert-bignumber');
 
 module.exports = (contractFactory) => {
-  describe(`ERC20 Using ${contractFactory}`, () => {
+  describe(`ERC20 using contract: ${contractFactory}`, () => {
     let ERC20;
 
     let user1, user2;
@@ -44,11 +45,11 @@ module.exports = (contractFactory) => {
       });
 
       it('updates the total supply', async () => {
-        assert.equal(await ERC20.totalSupply(), totalSupply.toString());
+        bn.eq(await ERC20.totalSupply(), totalSupply);
       });
 
       it('mints the right amount to the user', async () => {
-        assert.equal(await ERC20.balanceOf(user1.address), totalSupply.toString());
+        bn.eq(await ERC20.balanceOf(user1.address), totalSupply);
       });
 
       it('emits a Transfer event', async () => {
@@ -56,7 +57,7 @@ module.exports = (contractFactory) => {
 
         assert.equal(event.args.from, '0x0000000000000000000000000000000000000000');
         assert.equal(event.args.to, user1.address);
-        assert.equal(event.args.amount, totalSupply.toString());
+        bn.eq(event.args.amount, totalSupply);
       });
 
       describe('when tokens are burned', () => {
@@ -69,11 +70,11 @@ module.exports = (contractFactory) => {
         });
 
         it('updates the total supply', async () => {
-          assert.equal(await ERC20.totalSupply(), newSupply.toString());
+          bn.eq(await ERC20.totalSupply(), newSupply);
         });
 
         it('reduces the user balance', async () => {
-          assert.equal(await ERC20.balanceOf(user1.address), newSupply.toString());
+          bn.eq(await ERC20.balanceOf(user1.address), newSupply);
         });
 
         it('emits a Transfer event', async () => {
@@ -81,7 +82,7 @@ module.exports = (contractFactory) => {
 
           assert.equal(event.args.from, user1.address);
           assert.equal(event.args.to, '0x0000000000000000000000000000000000000000');
-          assert.equal(event.args.amount, tokensToBurn.toString());
+          bn.eq(event.args.amount, tokensToBurn);
         });
       });
 
@@ -111,18 +112,12 @@ module.exports = (contractFactory) => {
           });
 
           it('does not alter the total supply', async () => {
-            assert.equal(await ERC20.totalSupply(), currentSupply.toString());
+            bn.eq(await ERC20.totalSupply(), currentSupply);
           });
 
           it('reduces the sender balance and increases the receiver balance', async () => {
-            assert.equal(
-              await ERC20.balanceOf(user1.address),
-              user1Balance.sub(transferAmount).toString()
-            );
-            assert.equal(
-              await ERC20.balanceOf(user2.address),
-              user2Balance.add(transferAmount).toString()
-            );
+            bn.eq(await ERC20.balanceOf(user1.address), user1Balance.sub(transferAmount));
+            bn.eq(await ERC20.balanceOf(user2.address), user2Balance.add(transferAmount));
           });
 
           it('emits a Transfer event', async () => {
@@ -130,7 +125,7 @@ module.exports = (contractFactory) => {
 
             assert.equal(event.args.from, user1.address);
             assert.equal(event.args.to, user2.address);
-            assert.equal(event.args.amount, transferAmount.toString());
+            bn.eq(event.args.amount, transferAmount);
           });
         });
       });
@@ -150,10 +145,7 @@ module.exports = (contractFactory) => {
         });
 
         it('sets the right allowance', async () => {
-          assert.equal(
-            await ERC20.allowance(user1.address, user2.address),
-            approvalAmount.toString()
-          );
+          bn.eq(await ERC20.allowance(user1.address, user2.address), approvalAmount);
         });
 
         it('emits an Approval event', async () => {
@@ -161,7 +153,7 @@ module.exports = (contractFactory) => {
 
           assert.equal(event.args.owner, user1.address);
           assert.equal(event.args.spender, user2.address);
-          assert.equal(event.args.amount, approvalAmount.toString());
+          bn.eq(event.args.amount, approvalAmount);
         });
 
         describe('when trying to transfer more than the amount approved', () => {
@@ -202,14 +194,8 @@ module.exports = (contractFactory) => {
           });
 
           it('updates the user balances accordingly', async () => {
-            assert.equal(
-              await ERC20.balanceOf(user1.address),
-              user1Balance.sub(approvalAmount).toString()
-            );
-            assert.equal(
-              await ERC20.balanceOf(user2.address),
-              user2Balance.add(approvalAmount).toString()
-            );
+            bn.eq(await ERC20.balanceOf(user1.address), user1Balance.sub(approvalAmount));
+            bn.eq(await ERC20.balanceOf(user2.address), user2Balance.add(approvalAmount));
           });
 
           it('emits a Transfer event', async () => {
@@ -217,7 +203,7 @@ module.exports = (contractFactory) => {
 
             assert.equal(event.args.from, user1.address);
             assert.equal(event.args.to, user2.address);
-            assert.equal(event.args.amount, transferFromAmount.toString());
+            bn.eq(event.args.amount, transferFromAmount);
           });
         });
       });
