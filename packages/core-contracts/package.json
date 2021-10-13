@@ -15,6 +15,8 @@
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "2.0.2",
     "hardhat": "2.6.4",
-    "solidity-coverage": "0.7.17"
-  }
+    "solidity-coverage": "0.7.17",
+    "eth-permit": "0.1.10"
+  },
+  "dependencies": {}
 }
