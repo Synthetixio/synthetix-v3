@@ -39,7 +39,7 @@ describe('UpgradeModule', () => {
     it('reverts', async () => {
       await assertRevert(
         UpgradeModule.connect(user).upgradeTo(user.address),
-        'Only owner can invoke'
+        'OnlyOwnerAllowed'
       );
     });
   });
