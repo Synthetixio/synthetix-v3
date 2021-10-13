@@ -36,7 +36,7 @@ abstract contract UniversalProxyImplementation is ContractUtil, TransformUtil {
         // Simulate upgrading to this implementation and then rolling back to the current one.
         // NOTE: This call will always revert, and thus will have no side effects.
         (bool success, bytes memory response) = address(this).delegatecall(
-            abi.encodeWithSignature("simulateUpgrades(address)", newImplementation)
+            abi.encodeWithSelector(this.simulateUpgrades.selector, newImplementation)
         );
 
         _setSimulatingUpgrade(false);
@@ -58,7 +58,7 @@ abstract contract UniversalProxyImplementation is ContractUtil, TransformUtil {
         // Set the implementation, and then use it to roll back to the old implementation
         _setImplementation(newImplementation);
         (bool rollbackSuccessful, ) = newImplementation.delegatecall(
-            abi.encodeWithSignature("upgradeTo(address)", oldImplementation)
+            abi.encodeWithSelector(this.upgradeTo.selector, oldImplementation)
         );
 
         if (!rollbackSuccessful) {
