@@ -1,5 +1,5 @@
 const { rejects } = require('assert/strict');
-const { assertRevert } = require('../../utils/assertions');
+const assertRevert = require('../../utils/assert-revert');
 
 function mockValidTx() {
   return Promise.resolve({ wait: () => Promise.resolve() });
@@ -9,7 +9,7 @@ function mockRevertingTx(errorMsg = '') {
   return Promise.resolve({ wait: () => Promise.reject(new Error(errorMsg)) });
 }
 
-describe('utils/assertions.js', function () {
+describe('utils/assert-revert.js', function () {
   describe('#assertRevert', function () {
     it('resolves when correctly reverting', async function () {
       await assertRevert(mockRevertingTx(), '');
