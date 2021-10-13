@@ -12,47 +12,46 @@ function not(operator, a, b) {
 }
 
 describe('utils/assert-bignumber.js', function () {
-  it('#eq', function () {
-    bn.eq(BigNumber.from(12), BigNumber.from('12'));
+  it('correctly coerces strings and numbers to BigNumber', function () {
     bn.eq(BigNumber.from(12), BigNumber.from(12));
-    bn.eq(BigNumber.from(12), 12);
-    bn.eq('12', 12);
-    bn.eq('12', '12');
-    not('eq', BigNumber.from(12), BigNumber.from('72'));
-    not('eq', BigNumber.from(13), BigNumber.from(12));
-    not('eq', BigNumber.from(12), 5);
-    not('eq', '12', 0x123123123);
-    not('eq', '12', '1');
+    bn.eq(12, BigNumber.from(12));
+    bn.eq('13', BigNumber.from(13));
+    bn.eq(12, '12');
+  });
+
+  it('#eq', function () {
+    bn.eq(12, 12);
+    not('eq', 12, 13);
   });
 
   it('#lt', function () {
-    bn.lt(BigNumber.from(12), BigNumber.from(24));
-    bn.lt(BigNumber.from(13), BigNumber.from(14));
-    not('lt', BigNumber.from(12), BigNumber.from(12));
-    not('lt', BigNumber.from(12), BigNumber.from(11));
+    bn.lt(12, 24);
+    bn.lt(13, 14);
+    not('lt', 12, 12);
+    not('lt', 12, 11);
   });
 
   it('#lte', function () {
-    bn.lte(BigNumber.from(12), BigNumber.from(24));
-    bn.lte(BigNumber.from(13), BigNumber.from(14));
-    bn.lte(BigNumber.from(13), BigNumber.from(13));
-    not('lte', BigNumber.from(15), BigNumber.from(14));
+    bn.lte(12, 24);
+    bn.lte(13, 14);
+    bn.lte(13, 13);
+    not('lte', 15, 14);
   });
 
   it('#gt', function () {
-    bn.gt(BigNumber.from(15), BigNumber.from(13));
-    not('gt', BigNumber.from(15), BigNumber.from(15));
-    not('gt', BigNumber.from(15), BigNumber.from(16));
+    bn.gt(15, 13);
+    not('gt', 15, 15);
+    not('gt', 15, 16);
   });
 
   it('#gte', function () {
-    bn.gte(BigNumber.from(15), BigNumber.from(13));
-    bn.gte(BigNumber.from(15), BigNumber.from(15));
-    not('gte', BigNumber.from(14), BigNumber.from(15));
+    bn.gte(15, 13);
+    bn.gte(15, 15);
+    not('gte', 14, 15);
   });
 
   it('#isZero', function () {
-    bn.isZero(1);
-    not('isZero', BigNumber.from(1));
+    bn.isZero(0);
+    not('isZero', 1);
   });
 });
