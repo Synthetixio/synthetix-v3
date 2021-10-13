@@ -77,7 +77,7 @@ describe('UniversalProxy', () => {
     it('reverts', async () => {
       await assertRevert(
         Instance.upgradeTo(sterileImplementation.address),
-        'ImplementationIsSterile()'
+        `ImplementationIsSterile("${sterileImplementation.address}")`
       );
     });
   });
@@ -91,7 +91,10 @@ describe('UniversalProxy', () => {
     });
 
     it('reverts', async () => {
-      await assertRevert(Instance.upgradeTo(bricker.address), 'ImplementationIsSterile()');
+      await assertRevert(
+        Instance.upgradeTo(bricker.address),
+        `ImplementationIsSterile("${bricker.address}")`
+      );
     });
 
     it('shows that the proxy is still responsive', async () => {
@@ -115,7 +118,10 @@ describe('UniversalProxy', () => {
 
     describe('when trying to upgrade the implementation of the implementation to the destroyer', () => {
       it('reverts', async () => {
-        await assertRevert(Instance.upgradeTo(destroyer.address), 'ImplementationIsSterile()');
+        await assertRevert(
+          Instance.upgradeTo(destroyer.address),
+          `ImplementationIsSterile("${destroyer.address}")`
+        );
       });
 
       it('shows that the proxy is still responsive', async () => {

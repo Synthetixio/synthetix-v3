@@ -6,7 +6,7 @@ import "../utils/TransformUtil.sol";
 import "../common/CommonErrors.sol";
 
 abstract contract UniversalProxyImplementation is ContractUtil, TransformUtil, CommonErrors {
-    error ImplementationIsSterile();
+    error ImplementationIsSterile(address implementation);
 
     event Upgraded(address implementation);
 
@@ -28,7 +28,7 @@ abstract contract UniversalProxyImplementation is ContractUtil, TransformUtil, C
             revert InvalidContract(newImplementation);
         }
         if (!_canUpgradeInTheFuture(newImplementation)) {
-            revert ImplementationIsSterile();
+            revert ImplementationIsSterile(newImplementation);
         }
 
         _setImplementation(newImplementation);
