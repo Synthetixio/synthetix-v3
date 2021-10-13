@@ -25,7 +25,7 @@ abstract contract UniversalProxyImplementation is ContractUtil, TransformUtil, C
             revert InvalidAddress(newImplementation);
         }
         if (!_isContract(newImplementation)) {
-            revert AddressIsNotContract();
+            revert InvalidContract(newImplementation);
         }
         if (!_canUpgradeInTheFuture(newImplementation)) {
             revert ImplementationIsSterile();

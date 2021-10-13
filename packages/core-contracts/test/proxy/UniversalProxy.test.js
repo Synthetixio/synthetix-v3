@@ -62,7 +62,7 @@ describe('UniversalProxy', () => {
     it('reverts', async () => {
       const [user] = await ethers.getSigners();
 
-      await assertRevert(Instance.upgradeTo(user.address), 'AddressIsNotContract()');
+      await assertRevert(Instance.upgradeTo(user.address), `InvalidContract("${user.address}")`);
     });
   });
 
