@@ -5,8 +5,9 @@ import "./OwnableMixin.sol";
 import "../common/CommonErrors.sol";
 
 abstract contract Ownable is OwnableMixin, CommonErrors {
-    error NotNominated();
-    error InvalidNomination();
+    error NotNominated(address addr);
+    error InvalidNomination(address addr);
+    error NoNomination();
 
     event OwnerNominated(address newOwner);
 
@@ -15,7 +16,7 @@ abstract contract Ownable is OwnableMixin, CommonErrors {
     function acceptOwnership() external {
         address currentNominatedOwner = _getNominatedOwner();
         if (msg.sender != currentNominatedOwner) {
-            revert NotNominated();
+            revert NotNominated(msg.sender);
         }
 
         emit OwnerChanged(_getOwner(), currentNominatedOwner);
@@ -29,7 +30,7 @@ abstract contract Ownable is OwnableMixin, CommonErrors {
             revert InvalidAddress(newNominatedOwner);
         }
         if (newNominatedOwner == _getNominatedOwner()) {
-            revert InvalidNomination();
+            revert InvalidNomination(newNominatedOwner);
         }
 
         _setNominatedOwner(newNominatedOwner);
@@ -39,7 +40,7 @@ abstract contract Ownable is OwnableMixin, CommonErrors {
 
     function renounceNomination() external onlyOwner {
         if (_getNominatedOwner() == address(0)) {
-            revert NotNominated();
+            revert NoNomination();
         }
 
         _setNominatedOwner(address(0));
