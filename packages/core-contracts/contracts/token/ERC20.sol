@@ -4,8 +4,8 @@ pragma solidity ^0.8.0;
 import "../interfaces/IERC20.sol";
 
 contract ERC20 is IERC20 {
-    error InsufficientAllowance();
-    error InsufficientBalance();
+    error InsufficientAllowance(uint required, uint existing);
+    error InsufficientBalance(uint required, uint existing);
 
     string public override name;
 
@@ -50,7 +50,7 @@ contract ERC20 is IERC20 {
     ) external override returns (bool) {
         uint256 currentAllowance = allowance[from][msg.sender];
         if (currentAllowance < amount) {
-            revert InsufficientAllowance();
+            revert InsufficientAllowance(amount, currentAllowance);
         }
 
         unchecked {
@@ -69,7 +69,7 @@ contract ERC20 is IERC20 {
     ) private {
         uint256 accountBalance = balanceOf[from];
         if (accountBalance < amount) {
-            revert InsufficientBalance();
+            revert InsufficientBalance(amount, accountBalance);
         }
 
         // We are now sure that we can perform this operation safely
@@ -98,7 +98,7 @@ contract ERC20 is IERC20 {
     function _burn(address from, uint256 amount) internal {
         uint256 accountBalance = balanceOf[from];
         if (accountBalance < amount) {
-            revert InsufficientBalance();
+            revert InsufficientBalance(amount, accountBalance);
         }
 
         // No need for underflow check since it would have occured in the previous step

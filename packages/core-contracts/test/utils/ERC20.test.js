@@ -30,7 +30,7 @@ describe('ERC20', () => {
     });
 
     it('reverts when trying to burn', async () => {
-      await assertRevert(ERC20.connect(user1).burn(1), 'InsufficientBalance()');
+      await assertRevert(ERC20.connect(user1).burn(1), 'InsufficientBalance(1, 0)');
     });
   });
 
@@ -97,9 +97,11 @@ describe('ERC20', () => {
 
       describe('when not having enough balance', () => {
         it('reverts ', async () => {
+          const amount = user1Balance.add(1);
+
           await assertRevert(
-            ERC20.connect(user1).transfer(user2.address, user1Balance.add(1)),
-            'InsufficientBalance()'
+            ERC20.connect(user1).transfer(user2.address, amount),
+            `InsufficientBalance(${amount.toString()}, ${user1Balance.toString()})`
           );
         });
       });
@@ -157,9 +159,11 @@ describe('ERC20', () => {
 
       describe('when trying to transfer more than the amount approved', () => {
         it('reverts ', async () => {
+          const amount = approvalAmount.add(1);
+
           await assertRevert(
-            ERC20.connect(user2).transferFrom(user1.address, user2.address, approvalAmount.add(1)),
-            'InsufficientAllowance'
+            ERC20.connect(user2).transferFrom(user1.address, user2.address, amount),
+            `InsufficientAllowance(${amount.toString()}, ${approvalAmount.toString()})`
           );
         });
       });
