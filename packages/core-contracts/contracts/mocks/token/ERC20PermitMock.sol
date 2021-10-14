@@ -1,9 +1,9 @@
 //SPDX-License-Identifier: Unlicense
 pragma solidity ^0.8.0;
 
-import "../../token/ERC20-EIP2612.sol";
+import "../../token/ERC20Permit.sol";
 
-contract ERC20_2612Mock is ERC20Permit {
+contract ERC20PermitMock is ERC20Permit {
     // solhint-disable no-empty-blocks
     constructor(
         string memory name,

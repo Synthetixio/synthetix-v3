@@ -7,16 +7,16 @@ const { findEvent } = require('@synthetixio/core-js/utils/events');
 
 const itBehavesLikeAnERC20 = require('./ERC20.behaviors');
 
-const MOCK_2612 = 'ERC20_2612Mock';
+const ERC20PermitMock = 'ERC20PermitMock';
 
 const NAME = 'Synthetix Network Token';
 const SYMBOL = 'snx';
 const DECIMALS = 18;
 
 // run ERC20 Test Suite
-itBehavesLikeAnERC20(MOCK_2612);
+itBehavesLikeAnERC20(ERC20PermitMock);
 
-describe('ERC20 - EIP2612', () => {
+describe('ERC20Permit - EIP2612', () => {
   let ERC20;
   let Handler;
 
@@ -27,7 +27,7 @@ describe('ERC20 - EIP2612', () => {
   });
 
   before('deploy the contract', async () => {
-    const factory = await ethers.getContractFactory(MOCK_2612);
+    const factory = await ethers.getContractFactory(ERC20PermitMock);
     const factoryHandler = await ethers.getContractFactory('HandlerMock');
 
     ERC20 = await factory.deploy(NAME, SYMBOL, DECIMALS);
