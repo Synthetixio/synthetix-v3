@@ -75,7 +75,7 @@ describe('OwnerModule', () => {
         it('reverts', async () => {
           await assertRevert(
             OwnerModule.connect(user).nominateNewOwner(user.address),
-            'Only owner can invoke'
+            'OnlyOwnerAllowed()'
           );
         });
       });

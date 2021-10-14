@@ -3,8 +3,11 @@ pragma solidity ^0.8.0;
 
 import "../utils/ContractUtil.sol";
 import "../utils/TransformUtil.sol";
+import "../common/CommonErrors.sol";
 
-abstract contract UniversalProxyImplementation is ContractUtil, TransformUtil {
+abstract contract UniversalProxyImplementation is ContractUtil, TransformUtil, CommonErrors {
+    error ImplementationIsSterile(address implementation);
+
     event Upgraded(address implementation);
 
     function _setImplementation(address newImplementation) internal virtual;
@@ -18,9 +21,15 @@ abstract contract UniversalProxyImplementation is ContractUtil, TransformUtil {
     function upgradeTo(address newImplementation) public virtual;
 
     function _upgradeTo(address newImplementation) internal {
-        require(newImplementation != address(0), "Implementation is zero address");
-        require(_isContract(newImplementation), "Implementation not a contract");
-        require(_canUpgradeInTheFuture(newImplementation), "Implementation is sterile");
+        if (newImplementation == address(0)) {
+            revert InvalidAddress(newImplementation);
+        }
+        if (!_isContract(newImplementation)) {
+            revert InvalidContract(newImplementation);
+        }
+        if (!_canUpgradeInTheFuture(newImplementation)) {
+            revert ImplementationIsSterile(newImplementation);
+        }
 
         _setImplementation(newImplementation);
 

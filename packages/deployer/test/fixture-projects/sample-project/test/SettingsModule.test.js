@@ -28,7 +28,7 @@ describe('SettingsModule', () => {
 
   describe('when a regular user tries to set a value', () => {
     it('reverts', async () => {
-      await assertRevert(SettingsModule.connect(user).setASettingValue(1), 'Only owner can invoke');
+      await assertRevert(SettingsModule.connect(user).setASettingValue(1), 'OnlyOwnerAllowed');
     });
   });
 
