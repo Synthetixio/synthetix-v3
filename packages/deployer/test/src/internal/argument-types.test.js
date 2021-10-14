@@ -1,4 +1,4 @@
-const { equal, notEqual, throws } = require('assert/strict');
+const { equal, notEqual, throws, doesNotThrow } = require('assert/strict');
 const { alphanumeric } = require('../../../internal/argument-types');
 
 describe('internal/argument-types.js', function () {
@@ -13,7 +13,9 @@ describe('internal/argument-types.js', function () {
       equal(alphanumeric.parse('', 'word'), 'word');
     });
     it('validates correctly', () => {
-      equal(alphanumeric.validate('argName', 'word1234'), undefined);
+      doesNotThrow(() => {
+        alphanumeric.validate('argName', 'word1234');
+      });
       throws(() => {
         alphanumeric.validate('argName', 'word.1234');
       });
