@@ -2,7 +2,7 @@ const { ethers } = hre;
 const assert = require('assert');
 const { signERC2612Permit } = require('eth-permit');
 
-const { assertRevert } = require('@synthetixio/core-js/utils/assertions');
+const assertRevert = require('@synthetixio/core-js/utils/assert-revert');
 const { findEvent } = require('@synthetixio/core-js/utils/events');
 
 const erc20Test = require('./ERC20.lib');
