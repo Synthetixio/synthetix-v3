@@ -16,6 +16,9 @@ describe('internal/argument-types.js', function () {
       doesNotThrow(() => {
         alphanumeric.validate('argName', 'word1234');
       });
+      doesNotThrow(() => {
+        alphanumeric.validate('argName', '12numbers21mixed');
+      });
       throws(() => {
         alphanumeric.validate('argName', 'word.1234');
       });
