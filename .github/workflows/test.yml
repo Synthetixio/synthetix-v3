@@ -15,4 +15,4 @@ jobs:
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v2
         with:
-          files: packages/core-js/coverage/lcov.info
+          files: packages/core-contracts/coverage.json,packages/core-js/coverage/lcov.info,packages/deployer/coverage/lcov.info,packages/synthetix-main/coverage.json
