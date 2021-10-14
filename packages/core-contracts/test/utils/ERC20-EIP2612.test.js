@@ -5,7 +5,7 @@ const { signERC2612Permit } = require('eth-permit');
 const assertRevert = require('@synthetixio/core-js/utils/assert-revert');
 const { findEvent } = require('@synthetixio/core-js/utils/events');
 
-const itBehavesLikeAnERC20 = require('./ERC20.lib');
+const itBehavesLikeAnERC20 = require('./ERC20.behaviors');
 
 const MOCK_2612 = 'ERC20_2612Mock';
 
