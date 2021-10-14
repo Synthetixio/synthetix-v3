@@ -5,7 +5,7 @@ const { signERC2612Permit } = require('eth-permit');
 const assertRevert = require('@synthetixio/core-js/utils/assert-revert');
 const { findEvent } = require('@synthetixio/core-js/utils/events');
 
-const erc20Test = require('./ERC20.lib');
+const itBehavesLikeAnERC20 = require('./ERC20.lib');
 
 const MOCK_2612 = 'ERC20_2612Mock';
 
@@ -14,7 +14,7 @@ const SYMBOL = 'snx';
 const DECIMALS = 18;
 
 // run ERC20 Test Suite
-erc20Test(MOCK_2612);
+itBehavesLikeAnERC20(MOCK_2612);
 
 describe('ERC20 - EIP2612', () => {
   let ERC20;

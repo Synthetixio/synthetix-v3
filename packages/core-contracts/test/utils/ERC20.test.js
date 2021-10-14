@@ -1,3 +1,3 @@
-const erc20Test = require('./ERC20.lib');
+const itBehavesLikeAnERC20 = require('./ERC20.behaviors');
 
-erc20Test('ERC20Mock');
+itBehavesLikeAnERC20('ERC20Mock');
