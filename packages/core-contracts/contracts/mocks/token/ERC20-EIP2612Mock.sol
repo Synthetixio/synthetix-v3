@@ -3,13 +3,13 @@ pragma solidity ^0.8.0;
 
 import "../../token/ERC20-EIP2612.sol";
 
-contract ERC20_2612Mock is ERC20_2612 {
+contract ERC20_2612Mock is ERC20Permit {
     // solhint-disable no-empty-blocks
     constructor(
         string memory name,
         string memory symbol,
         uint8 decimals
-    ) ERC20_2612(name, symbol, decimals) {}
+    ) ERC20Permit(name, symbol, decimals) {}
 
     // solhint-enable
 

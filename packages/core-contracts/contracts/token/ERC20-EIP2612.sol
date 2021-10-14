@@ -6,7 +6,7 @@ import "./ERC20.sol";
 /// @notice Modern and gas efficient ERC20 + EIP-2612 implementation.
 /// @author Modified from Uniswap (https://github.com/Uniswap/uniswap-v2-core/blob/master/contracts/UniswapV2ERC20.sol)
 /// @author Modified from Rari-Capital (https://github.com/Rari-Capital/solmate/blob/main/src/erc20/ERC20.sol)
-abstract contract ERC20_2612 is ERC20 {
+abstract contract ERC20Permit is ERC20 {
     bytes32 public constant PERMIT_TYPEHASH =
         keccak256("Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)");
 
