@@ -1,6 +1,6 @@
 const { ethers } = hre;
 const assert = require('assert');
-const { assertRevert } = require('@synthetixio/core-js/utils/assertions');
+const assertRevert = require('@synthetixio/core-js/utils/assert-revert');
 
 describe('ForwardingProxy', () => {
   let Proxy, Instance, Implementation;
