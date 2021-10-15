@@ -14,7 +14,7 @@
   "license": "MIT",
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "2.0.2",
-    "hardhat": "2.6.4",
+    "hardhat": "2.6.6",
     "solidity-coverage": "0.7.17"
   }
 }
