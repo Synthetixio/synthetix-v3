@@ -67,13 +67,13 @@ class ModuleStorageASTValidator {
       return errors;
     }
 
-    for (var [contractName, ast] of Object.entries(this.previousAsts)) {
+    for (const [contractName, ast] of Object.entries(this.previousAsts)) {
       const slots = findYulStorageSlotAssignments(contractName, ast);
 
       slots.forEach((slot) => previousNamespaces.push({ contractName, slot }));
     }
 
-    for (var [contractName, ast] of Object.entries(this.asts)) {
+    for (const [contractName, ast] of Object.entries(this.asts)) {
       const slots = findYulStorageSlotAssignments(contractName, ast);
 
       slots.forEach((slot) => namespaces.push({ contractName, slot }));
