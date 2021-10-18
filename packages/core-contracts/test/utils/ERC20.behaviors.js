@@ -31,7 +31,7 @@ module.exports = (contractFactory) => {
       });
 
       it('reverts when trying to burn', async () => {
-        await assertRevert(ERC20.connect(user1).burn(1), 'Burn amount exceeds balance');
+        await assertRevert(ERC20.connect(user1).burn(1), 'InsufficientBalance(1, 0)');
       });
     });
 
@@ -98,9 +98,11 @@ module.exports = (contractFactory) => {
 
         describe('when not having enough balance', () => {
           it('reverts ', async () => {
+            const amount = user1Balance.add(1);
+
             await assertRevert(
-              ERC20.connect(user1).transfer(user2.address, user1Balance.add(1)),
-              'Transfer amount exceeds balance'
+              ERC20.connect(user1).transfer(user2.address, amount),
+              `InsufficientBalance(${amount.toString()}, ${user1Balance.toString()})`
             );
           });
         });
@@ -158,13 +160,11 @@ module.exports = (contractFactory) => {
 
         describe('when trying to transfer more than the amount approved', () => {
           it('reverts ', async () => {
+            const amount = approvalAmount.add(1);
+
             await assertRevert(
-              ERC20.connect(user2).transferFrom(
-                user1.address,
-                user2.address,
-                approvalAmount.add(1)
-              ),
-              'Amount exceeds allowance'
+              ERC20.connect(user2).transferFrom(user1.address, user2.address, amount),
+              `InsufficientAllowance(${amount.toString()}, ${approvalAmount.toString()})`
             );
           });
         });

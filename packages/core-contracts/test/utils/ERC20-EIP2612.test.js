@@ -182,7 +182,7 @@ describe('ERC20Permit - EIP2612', () => {
       );
     });
 
-    it.only('Should produce different signatures v,r,s with different signers', async () => {
+    it('Should produce different signatures v,r,s with different signers', async () => {
       const holderVrs = await signERC2612Permit(
         holder,
         ERC20.address,
