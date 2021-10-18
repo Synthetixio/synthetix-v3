@@ -3,7 +3,7 @@ const assert = require('assert');
 const assertRevert = require('@synthetixio/core-js/utils/assert-revert');
 const { findEvent } = require('@synthetixio/core-js/utils/events');
 
-describe('BeaconProxy', () => {
+describe.only('BeaconProxy', () => {
   let BeaconProxy, ERC20Mock1, ERC20Mock2;
 
   let owner, user;
@@ -35,20 +35,38 @@ describe('BeaconProxy', () => {
         it('reverts', async () => {
           await assertRevert(
             BeaconProxy.connect(user).upgradeTo(ERC20Mock2.address),
-            'Only owner can invoke'
+            'OnlyOwnerAllowed()'
           );
         });
       });
       describe('when the owner invokes it', async () => {
-        before('upgrade', async () => {
-          const tx = await BeaconProxy.upgradeTo(ERC20Mock2.address);
-          receipt = await tx.wait();
+        describe('when upgrading to an invalid implementation', () => {
+          it('reverts when attempting to upgrade to an EOA', async () => {
+            await assertRevert(
+              BeaconProxy.connect(owner).upgradeTo(user.address),
+              `InvalidContract("${user.address}")`
+            );
+          });
+
+          it('reverts when attempting to upgrade to an EOA', async () => {
+            const zeroAddress = '0x0000000000000000000000000000000000000000';
+            await assertRevert(
+              BeaconProxy.connect(owner).upgradeTo(zeroAddress),
+              `InvalidAddress("${zeroAddress}")`
+            );
+          });
         });
+        describe('when upgrading to a valid implementation', () => {
+          before('upgrade', async () => {
+            const tx = await BeaconProxy.upgradeTo(ERC20Mock2.address);
+            receipt = await tx.wait();
+          });
 
-        it('emits an Upgraded event', async () => {
-          const event = findEvent({ receipt, eventName: 'Upgraded' });
+          it('emits an Upgraded event', async () => {
+            const event = findEvent({ receipt, eventName: 'Upgraded' });
 
-          assert.equal(event.args.implementation, ERC20Mock2.address);
+            assert.equal(event.args.implementation, ERC20Mock2.address);
+          });
         });
       });
     });

@@ -20,8 +20,6 @@ contract BeaconMock is Beacon {
     address private _implementation;
 
     constructor(address firstOwner, address firstImplementation) {
-        require(firstOwner != address(0), "Owner cannot be 0x0");
-        require(firstImplementation != address(0), "Implementation cannot be 0x0");
         _implementation = firstImplementation;
         _owner = firstOwner;
     }
