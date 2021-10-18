@@ -62,11 +62,6 @@ describe('ERC20Permit - EIP2612', () => {
     return digestProduced;
   }
   describe('Happy Path', () => {
-    it('PERMIT_TYPEHASH has expected value', async () => {
-      const permitHash = await ERC20.PERMIT_TYPEHASH();
-      assert.equal(permitHash, TYPE_HASH);
-    });
-
     it('Can recreate and match the digest', async () => {
       const domainSeperator = await ERC20.DOMAIN_SEPARATOR();
       const nonce = await ERC20.nonces(holder.address);
@@ -199,18 +194,12 @@ describe('ERC20Permit - EIP2612', () => {
         spender.address,
         value
       );
-      console.log(holderVrs);
-      console.log(spenderVrs);
+
       assert.equal(holderVrs.v, spenderVrs.v);
       assert.equal(holderVrs.r, spenderVrs.r);
       assert.equal(holderVrs.s, spenderVrs.s);
     });
 
-    /**
-     * *************************************
-     * **************************************
-     * ***********************************
-     */
     it('Should not signed a message with signer not the holder', async () => {
       const { deadline, v, r, s } = await signERC2612Permit(
         spender,
@@ -220,19 +209,10 @@ describe('ERC20Permit - EIP2612', () => {
         value
       );
 
-      const tx = await ERC20.permit(holder.address, spender.address, value, deadline, v, r, s);
-      await tx.wait();
-
-      const allowanceHolder = await ERC20.allowance(spender.address, holder.address);
-      const allowanceSpender = await ERC20.allowance(holder.address, spender.address);
-
-      assert.equal(allowanceHolder, 0);
-      assert.equal(allowanceSpender, value);
-
-      // await assertRevert(
-      //   ERC20.permit(holder.address, spender.address, value, deadline, v, r, s),
-      //   'INVALID_PERMIT_SIGNATURE'
-      // );
+      await assertRevert(
+        ERC20.permit(holder.address, spender.address, value, deadline, v, r, s),
+        'INVALID_PERMIT_SIGNATURE'
+      );
     });
 
     it('Should not approve a signed message with an expired deadline', async () => {
