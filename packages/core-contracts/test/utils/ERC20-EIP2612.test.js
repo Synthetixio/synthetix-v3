@@ -200,7 +200,7 @@ describe('ERC20Permit - EIP2612', () => {
       assert.equal(holderVrs.s, spenderVrs.s);
     });
 
-    it('Should not signed a message with signer not the holder', async () => {
+    it('Should reject non owner signature', async () => {
       const { deadline, v, r, s } = await signERC2612Permit(
         spender,
         ERC20.address,
