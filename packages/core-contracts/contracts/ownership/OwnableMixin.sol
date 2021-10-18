@@ -1,20 +1,24 @@
-//SPDX-License-Identifier: UNLICENSED
+//SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
 abstract contract OwnableMixin {
+    error OnlyOwnerAllowed();
+
     modifier onlyOwner() {
         _onlyOwner();
         _;
     }
 
     function _onlyOwner() internal view {
-        require(msg.sender == _getOwner(), "Only owner can invoke");
+        if (msg.sender != _getOwner()) {
+            revert OnlyOwnerAllowed();
+        }
     }
 
     modifier onlyOwnerIfSet() {
         address owner = _getOwner();
-        if (owner != address(0)) {
-            require(msg.sender == owner, "Only owner can invoke");
+        if (owner != address(0) && msg.sender != owner) {
+            revert OnlyOwnerAllowed();
         }
         _;
     }

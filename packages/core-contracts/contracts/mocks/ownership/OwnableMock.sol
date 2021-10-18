@@ -1,4 +1,4 @@
-//SPDX-License-Identifier: UNLICENSED
+//SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
 import "../../ownership/Ownable.sol";
@@ -8,8 +8,6 @@ contract OwnableMock is Ownable {
     address public override nominatedOwner;
 
     constructor(address firstOwner) {
-        require(firstOwner != address(0), "Owner cannot be 0x0");
-
         _setOwner(firstOwner);
 
         emit OwnerChanged(address(0), firstOwner);

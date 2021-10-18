@@ -1,11 +1,7 @@
-//SPDX-License-Identifier: UNLICENSED
+//SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
 abstract contract ForwardingProxy {
-    constructor(address firstImplementation) {
-        _setImplementation(firstImplementation);
-    }
-
     fallback() external payable {
         _forward();
     }

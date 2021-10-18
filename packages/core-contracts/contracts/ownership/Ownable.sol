@@ -1,16 +1,23 @@
-//SPDX-License-Identifier: UNLICENSED
+//SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
 import "./OwnableMixin.sol";
+import "../common/CommonErrors.sol";
 
-abstract contract Ownable is OwnableMixin {
+abstract contract Ownable is OwnableMixin, CommonErrors {
+    error NotNominated(address addr);
+    error InvalidNomination(address addr);
+    error NoNomination();
+
     event OwnerNominated(address newOwner);
 
     event OwnerChanged(address oldOwner, address newOwner);
 
     function acceptOwnership() external {
         address currentNominatedOwner = _getNominatedOwner();
-        require(msg.sender == currentNominatedOwner, "Not nominated");
+        if (msg.sender != currentNominatedOwner) {
+            revert NotNominated(msg.sender);
+        }
 
         emit OwnerChanged(_getOwner(), currentNominatedOwner);
         _setOwner(currentNominatedOwner);
@@ -19,8 +26,12 @@ abstract contract Ownable is OwnableMixin {
     }
 
     function nominateNewOwner(address newNominatedOwner) external onlyOwnerIfSet {
-        require(newNominatedOwner != address(0), "Cannot nominate 0x0");
-        require(newNominatedOwner != _getNominatedOwner(), "Cannot nominate current address");
+        if (newNominatedOwner == address(0)) {
+            revert InvalidAddress(newNominatedOwner);
+        }
+        if (newNominatedOwner == _getNominatedOwner()) {
+            revert InvalidNomination(newNominatedOwner);
+        }
 
         _setNominatedOwner(newNominatedOwner);
 
@@ -28,7 +39,9 @@ abstract contract Ownable is OwnableMixin {
     }
 
     function renounceNomination() external onlyOwner {
-        require(_getNominatedOwner() != address(0), "No nomination to renounce");
+        if (_getNominatedOwner() == address(0)) {
+            revert NoNomination();
+        }
 
         _setNominatedOwner(address(0));
     }
