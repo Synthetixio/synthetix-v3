@@ -15,16 +15,16 @@ class ModuleStorageASTValidator {
 
   findDuplicateNamespaces(namespaces) {
     const duplicates = namespaces
-      .map((s) => s.position)
+      .map((s) => s.slot)
       .filter((s, index, namespaces) => namespaces.indexOf(s) !== index);
 
     const ocurrences = [];
 
     if (duplicates.length > 0) {
       duplicates.map((duplicate) => {
-        const cases = namespaces.filter((s) => s.position === duplicate);
+        const cases = namespaces.filter((s) => s.slot === duplicate);
         ocurrences.push({
-          position: duplicate,
+          slot: duplicate,
           contracts: cases.map((c) => c.contractName),
         });
       });
@@ -39,7 +39,7 @@ class ModuleStorageASTValidator {
     for (var [contractName, ast] of Object.entries(this.asts)) {
       const slots = findYulStorageSlotAssignments(contractName, ast);
 
-      slots.forEach((position) => namespaces.push({ contractName, position }));
+      slots.forEach((slot) => namespaces.push({ contractName, slot }));
     }
 
     const duplicates = this.findDuplicateNamespaces(namespaces);
@@ -47,14 +47,52 @@ class ModuleStorageASTValidator {
     const errors = [];
     if (duplicates) {
       const details = duplicates.map(
-        (d) => `  > ${d.position} found in storage contracts ${d.contracts}\n`
+        (d) => `  > ${d.slot} found in storage contracts ${d.contracts}\n`
       );
 
       errors.push({
-        msg: `Duplicate namespaces found!\n${details.join('')}`,
+        msg: `Duplicate namespaces slot found!\n${details.join('')}`,
       });
     }
 
+    return errors;
+  }
+
+  findNamespaceSlotChanges() {
+    const previousNamespaces = [];
+    const namespaces = [];
+    const errors = [];
+
+    if (!this.previousAsts) {
+      return errors;
+    }
+
+    for (const [contractName, ast] of Object.entries(this.previousAsts)) {
+      const slots = findYulStorageSlotAssignments(contractName, ast);
+
+      slots.forEach((slot) => previousNamespaces.push({ contractName, slot }));
+    }
+
+    for (const [contractName, ast] of Object.entries(this.asts)) {
+      const slots = findYulStorageSlotAssignments(contractName, ast);
+
+      slots.forEach((slot) => namespaces.push({ contractName, slot }));
+    }
+
+    for (const previous of previousNamespaces) {
+      const current = namespaces.find((v) => v.contractName === previous.contractName);
+      if (!current) {
+        errors.push({
+          msg: `Removed namespaces slot! ${previous.contractName} slot ${previous.slot} not found`,
+        });
+        continue;
+      }
+      if (current.slot !== previous.slot) {
+        errors.push({
+          msg: `Changed namespaces slot! ${previous.contractName} slot ${previous.slot} changed to ${current.slot}`,
+        });
+      }
+    }
     return errors;
   }
 

@@ -16,6 +16,7 @@ subtask(SUBTASK_VALIDATE_STORAGE).setAction(async (_, hre) => {
 
   let errorsFound = [];
   errorsFound.push(...validator.findNamespaceCollisions());
+  errorsFound.push(...validator.findNamespaceSlotChanges());
   errorsFound.push(...validator.findRegularVariableDeclarations());
   errorsFound.push(...(await validator.findInvalidNamespaceMutations()));
 

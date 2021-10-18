@@ -61,7 +61,7 @@ function findYulStorageSlotAssignments(contractName, ast) {
 
   const slots = [];
   for (const assignment of findAll('YulAssignment', contractNode)) {
-    if (assignment.variableNames[0].name === 'store.slot') {
+    if (assignment.variableNames[0].name.endsWith('.slot')) {
       slots.push(assignment.value.value);
     }
   }

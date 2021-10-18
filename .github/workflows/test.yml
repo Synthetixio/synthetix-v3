@@ -12,7 +12,23 @@ jobs:
       - run: npm ci
       - name: Execute tests
         run: npm run coverage
-      - name: Upload coverage to Codecov
+      - name: Upload core-contracts coverage to Codecov
+        uses: codecov/codecov-action@v2
+        with:
+          files: packages/core-contracts/coverage.json
+          flags: core-contracts
+      - name: Upload core-js coverage to Codecov
         uses: codecov/codecov-action@v2
         with:
           files: packages/core-js/coverage/lcov.info
+          flags: core-js
+      - name: Upload deployer coverage to Codecov
+        uses: codecov/codecov-action@v2
+        with:
+          files: packages/deployer/coverage/lcov.info
+          flags: deployer
+      - name: Upload synthetix-main coverage to Codecov
+        uses: codecov/codecov-action@v2
+        with:
+          files: packages/synthetix-main/coverage.json
+          flags: synthetix-main
