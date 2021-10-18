@@ -33,7 +33,7 @@ contract ERC20PermitMock is ERC20Permit {
             abi.encodePacked(
                 "\x19\x01",
                 DOMAIN_SEPARATOR,
-                keccak256(abi.encode(PERMIT_TYPEHASH, owner, spender, value, nonce, deadline))
+                keccak256(abi.encode(_permitHash(), owner, spender, value, nonce, deadline))
             )
         );
 
@@ -51,7 +51,7 @@ contract ERC20PermitMock is ERC20Permit {
         bytes memory packed = abi.encodePacked(
             "\x19\x01",
             DOMAIN_SEPARATOR,
-            keccak256(abi.encode(PERMIT_TYPEHASH, owner, spender, value, nonce, deadline))
+            keccak256(abi.encode(_permitHash(), owner, spender, value, nonce, deadline))
         );
 
         return packed;
@@ -65,7 +65,7 @@ contract ERC20PermitMock is ERC20Permit {
     ) public view returns (bytes memory) {
         uint256 nonce = nonces[owner];
 
-        bytes memory packed = abi.encode(PERMIT_TYPEHASH, owner, spender, value, nonce, deadline);
+        bytes memory packed = abi.encode(_permitHash(), owner, spender, value, nonce, deadline);
 
         return packed;
     }
