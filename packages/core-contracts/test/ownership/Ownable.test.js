@@ -40,6 +40,16 @@ describe('Ownable', () => {
       });
     });
 
+    describe('when an owner tries to nominate address 0x0 as the new owner', () => {
+      it('reverts', async () => {
+        const addressZero = '0x0000000000000000000000000000000000000000';
+        await assertRevert(
+          Ownable.connect(owner).nominateNewOwner(addressZero),
+          `InvalidAddress("${addressZero}")`
+        );
+      });
+    });
+
     before('nominateNewOwner', async () => {
       const tx = await Ownable.connect(owner).nominateNewOwner(newOwner.address);
       receipt = await tx.wait();
