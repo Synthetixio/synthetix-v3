@@ -3,7 +3,9 @@
   "version": "1.0.0",
   "description": "",
   "files": [
-    "contracts/*"
+    "contracts/*",
+    "!contracts/Proxy.sol",
+    "!contracts/Router.sol"
   ],
   "scripts": {
     "test": "hardhat test",

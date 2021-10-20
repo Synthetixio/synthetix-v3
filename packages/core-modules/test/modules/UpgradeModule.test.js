@@ -3,7 +3,7 @@ const assert = require('assert');
 const { ethers } = hre;
 const { getProxyAddress, getRouterAddress } = require('@synthetixio/deployer/utils/deployments');
 const assertRevert = require('@synthetixio/core-js/utils/assert-revert');
-const bootstrap = require('./helpers/bootstrap');
+const bootstrap = require('../helpers/bootstrap');
 
 describe('UpgradeModule', () => {
   const { deploymentInfo, initSystem } = bootstrap();
