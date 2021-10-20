@@ -3,4 +3,4 @@ pragma solidity ^0.8.0;
 
 import "@synthetixio/core-modules/contracts/modules/OwnerModule.sol";
 
-contract OwnerInitializerModule is OwnerModule {}
+contract SampleOwnerModule is OwnerModule {}

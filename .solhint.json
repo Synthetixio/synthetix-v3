@@ -2,13 +2,14 @@
   "extends": ["solhint:recommended"],
   "plugins": [],
   "rules": {
-    "reason-string": ["error", { "maxLength": 32 }],
+    "avoid-low-level-calls": "off",
     "compiler-version": ["error", "^0.8.0"],
     "contract-name-camelcase": "off",
+    "func-visibility": ["error", { "ignoreConstructors": true }],
     "no-complex-fallback": "off",
+    "no-empty-blocks": "off",
     "no-inline-assembly": "off",
-    "avoid-low-level-calls": "off",
     "private-vars-leading-underscore": ["error", { "strict": true }],
-    "func-visibility": ["error", { "ignoreConstructors": true }]
+    "reason-string": ["error", { "maxLength": 32 }]
   }
 }
