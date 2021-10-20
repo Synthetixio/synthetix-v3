@@ -3,7 +3,7 @@ const assert = require('assert');
 const assertRevert = require('@synthetixio/core-js/utils/assert-revert');
 const { findEvent } = require('@synthetixio/core-js/utils/events');
 
-describe.only('Beacon', () => {
+describe('Beacon', () => {
   let Beacon, ERC20Mock1, ERC20Mock2;
 
   let owner, user;
