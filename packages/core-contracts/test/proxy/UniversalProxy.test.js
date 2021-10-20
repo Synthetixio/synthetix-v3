@@ -66,6 +66,13 @@ describe('UniversalProxy', () => {
     });
   });
 
+  describe('when attempting to upgrade to address 0x0', () => {
+    it('reverts', async () => {
+      const addressZero = '0x0000000000000000000000000000000000000000';
+      await assertRevert(Instance.upgradeTo(addressZero), `InvalidAddress("${addressZero}")`);
+    });
+  });
+
   describe('when attempting to upgrade to a sterile implementation', () => {
     let sterileImplementation;
 
