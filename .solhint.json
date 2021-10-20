@@ -7,7 +7,6 @@
     "contract-name-camelcase": "off",
     "func-visibility": ["error", { "ignoreConstructors": true }],
     "no-complex-fallback": "off",
-    "no-empty-blocks": "off",
     "no-inline-assembly": "off",
     "private-vars-leading-underscore": ["error", { "strict": true }],
     "reason-string": ["error", { "maxLength": 32 }]
