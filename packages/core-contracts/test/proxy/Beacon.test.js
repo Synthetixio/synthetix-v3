@@ -3,8 +3,8 @@ const assert = require('assert');
 const assertRevert = require('@synthetixio/core-js/utils/assert-revert');
 const { findEvent } = require('@synthetixio/core-js/utils/events');
 
-describe.only('BeaconProxy', () => {
-  let BeaconProxy, ERC20Mock1, ERC20Mock2;
+describe.only('Beacon', () => {
+  let Beacon, ERC20Mock1, ERC20Mock2;
 
   let owner, user;
 
@@ -12,8 +12,8 @@ describe.only('BeaconProxy', () => {
     [owner, user] = await ethers.getSigners();
   });
 
-  describe('when a beacon proxy is deployed', () => {
-    before('deploy the proxy and implementation', async () => {
+  describe('when a beacon is deployed', () => {
+    before('deploy the beacon and implementation', async () => {
       let factory;
 
       factory = await ethers.getContractFactory('ERC20');
@@ -21,11 +21,11 @@ describe.only('BeaconProxy', () => {
       ERC20Mock2 = await factory.deploy('Random Token 2', 'rnd2', 18);
 
       factory = await ethers.getContractFactory('BeaconMock');
-      BeaconProxy = await factory.deploy(owner.address, ERC20Mock1.address);
+      Beacon = await factory.deploy(owner.address, ERC20Mock1.address);
     });
 
     it('shows that the implementation is set', async () => {
-      assert.equal(await BeaconProxy.getImplementation(), ERC20Mock1.address);
+      assert.equal(await Beacon.getImplementation(), ERC20Mock1.address);
     });
 
     describe('when upgrading to a new implementation', async () => {
@@ -34,7 +34,7 @@ describe.only('BeaconProxy', () => {
       describe('when a non-owner invokes it', async () => {
         it('reverts', async () => {
           await assertRevert(
-            BeaconProxy.connect(user).upgradeTo(ERC20Mock2.address),
+            Beacon.connect(user).upgradeTo(ERC20Mock2.address),
             'OnlyOwnerAllowed()'
           );
         });
@@ -43,7 +43,7 @@ describe.only('BeaconProxy', () => {
         describe('when upgrading to an invalid implementation', () => {
           it('reverts when attempting to upgrade to an EOA', async () => {
             await assertRevert(
-              BeaconProxy.connect(owner).upgradeTo(user.address),
+              Beacon.connect(owner).upgradeTo(user.address),
               `InvalidContract("${user.address}")`
             );
           });
@@ -51,14 +51,14 @@ describe.only('BeaconProxy', () => {
           it('reverts when attempting to upgrade to an EOA', async () => {
             const zeroAddress = '0x0000000000000000000000000000000000000000';
             await assertRevert(
-              BeaconProxy.connect(owner).upgradeTo(zeroAddress),
+              Beacon.connect(owner).upgradeTo(zeroAddress),
               `InvalidAddress("${zeroAddress}")`
             );
           });
         });
         describe('when upgrading to a valid implementation', () => {
           before('upgrade', async () => {
-            const tx = await BeaconProxy.upgradeTo(ERC20Mock2.address);
+            const tx = await Beacon.upgradeTo(ERC20Mock2.address);
             receipt = await tx.wait();
           });
 
