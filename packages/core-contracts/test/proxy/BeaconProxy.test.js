@@ -1,8 +1,7 @@
 const { ethers } = hre;
 const assert = require('assert');
-const { artifacts } = require('hardhat');
 
-describe.only('BeaconProxy', () => {
+describe('BeaconProxy', () => {
   let Beacon, BeaconProxy, MockedBeaconProxy, Implementation;
 
   let owner;
