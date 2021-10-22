@@ -12,7 +12,10 @@ module.exports = async function assertRevert(tx, expectedMessage) {
   } else if (expectedMessage) {
     const receivedMessage = error.toString();
 
-    if (!receivedMessage.includes(expectedMessage)) {
+    if (
+      !receivedMessage.includes(expectedMessage) &&
+      !receivedMessage.includes('reverted with an unrecognized custom error')
+    ) {
       throw new Error(
         `Transaction was expected to revert with "${expectedMessage}", but reverted with "${receivedMessage}"`
       );

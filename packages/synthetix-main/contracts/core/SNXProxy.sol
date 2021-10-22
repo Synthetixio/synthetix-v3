@@ -2,19 +2,23 @@
 pragma solidity ^0.8.0;
 
 import "@synthetixio/core-contracts/contracts/proxy/ForwardingProxy.sol";
-import "./storage/ProxyStorage.sol";
+import "../storage/SNXStorage.sol";
 
-contract Proxy is ForwardingProxy, ProxyStorage {
-    // solhint-disable-next-line no-empty-blocks
+contract SNXProxy is ForwardingProxy {
+    address private _owner; // owner
+    address private _implementation; // upgrade
+    bool private _simulatingUpgrade; // upgrade
+    bool private _initialized;
+
     constructor(address firstImplementation) {
         _setImplementation(firstImplementation);
     }
 
     function _setImplementation(address newImplementation) internal override {
-        _proxyStorage().implementation = newImplementation;
+        _implementation = newImplementation;
     }
 
     function _getImplementation() internal view override returns (address) {
-        return _proxyStorage().implementation;
+        return _implementation;
     }
 }
