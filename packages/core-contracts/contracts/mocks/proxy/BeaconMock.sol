@@ -24,6 +24,10 @@ contract BeaconMock is Beacon {
         _owner = firstOwner;
     }
 
+    function upgradeTo(address newImplementation) external override onlyOwner {
+        _upgradeTo(newImplementation);
+    }
+
     function _setImplementation(address newImplementation) internal override {
         _implementation = newImplementation;
     }

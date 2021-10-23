@@ -13,7 +13,9 @@ abstract contract Beacon is IBeacon, OwnableMixin, ContractUtil, CommonErrors {
         return _getImplementation();
     }
 
-    function upgradeTo(address newImplementation) public virtual onlyOwner {
+    function upgradeTo(address newImplementation) external virtual;
+
+    function _upgradeTo(address newImplementation) internal {
         if (newImplementation == address(0)) {
             revert InvalidAddress(newImplementation);
         }
