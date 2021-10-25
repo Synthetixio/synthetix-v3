@@ -6,15 +6,15 @@ module.exports = function bootstrap() {
 
   let snapshotId;
 
-  before('take a snapshot', async () => {
+  before('take a snapshot', async function () {
     snapshotId = await takeSnapshot(hre.ethers.provider);
   });
 
-  before('deploy system', async () => {
+  before('deploy system', async function () {
     await deploySystem({ clear: true });
   });
 
-  after('restore the snapshot', async () => {
+  after('restore the snapshot', async function () {
     await restoreSnapshot(snapshotId, hre.ethers.provider);
   });
 

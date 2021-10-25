@@ -22,6 +22,11 @@ jobs:
         with:
           files: packages/core-js/coverage/lcov.info
           flags: core-js
+      - name: Upload core-modules coverage to Codecov
+        uses: codecov/codecov-action@v2
+        with:
+          files: packages/core-modules/coverage.json
+          flags: core-modules
       - name: Upload deployer coverage to Codecov
         uses: codecov/codecov-action@v2
         with:
