@@ -43,16 +43,4 @@ contract SNXImplementation is OwnableMixin, UniversalProxyImplementation {
     function _getSimulatingUpgrade() internal view override returns (bool) {
         return _simulatingUpgrade;
     }
-
-    function getOwner() public view returns (address) {
-        return _owner;
-    }
-
-    function getImplementation() public view returns (address) {
-        return _getImplementation();
-    }
-
-    function getInitialized() public view returns (bool) {
-        return _initialized;
-    }
 }
