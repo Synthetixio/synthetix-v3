@@ -12,7 +12,7 @@ describe('UpgradeModule', () => {
     [owner, user] = await ethers.getSigners();
   });
 
-  before('initialize modules', async () => {
+  before('initialize module', async () => {
     UpgradeModuleMockFactory = await ethers.getContractFactory('UpgradeModuleMock');
     UpgradeModuleMock = await UpgradeModuleMockFactory.deploy();
   });
