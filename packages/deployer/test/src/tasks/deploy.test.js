@@ -43,7 +43,7 @@ describe('tasks/deploy.js', function () {
     const CONTRACTS = path.join(this.hre.config.paths.root, 'test-contracts');
 
     const SomeModuleOriginal = await readFile(path.join(MODULES, 'SomeModule.sol'));
-    const OwnerModuleOriginal = await readFile(path.join(MODULES, 'OwnerModule.sol'));
+    const AnotherModuleOriginal = await readFile(path.join(MODULES, 'AnotherModule.sol'));
 
     try {
       // Make some file changes before deploying
@@ -56,7 +56,7 @@ describe('tasks/deploy.js', function () {
           path.join(MODULES, 'SomeModule.sol')
         ),
         // Delete a existing module
-        unlink(path.join(MODULES, 'OwnerModule.sol')),
+        unlink(path.join(MODULES, 'AnotherModule.sol')),
       ]);
 
       await this.deploySystem({
@@ -67,7 +67,7 @@ describe('tasks/deploy.js', function () {
       await Promise.all([
         unlink(path.join(MODULES, 'NewModule.sol')),
         writeFile(path.join(MODULES, 'SomeModule.sol'), SomeModuleOriginal),
-        writeFile(path.join(MODULES, 'OwnerModule.sol'), OwnerModuleOriginal),
+        writeFile(path.join(MODULES, 'AnotherModule.sol'), AnotherModuleOriginal),
       ]);
     }
   });

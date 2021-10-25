@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: Unlicense
 pragma solidity ^0.8.0;
 
-import "../storage/ProxyStorage.sol";
+import "@synthetixio/core-modules/contracts/storage/ProxyStorage.sol";
 
 contract Destroyer is ProxyStorage {
     function upgradeTo(address) public {

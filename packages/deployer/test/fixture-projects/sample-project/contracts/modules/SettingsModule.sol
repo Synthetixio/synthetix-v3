@@ -1,8 +1,8 @@
 //SPDX-License-Identifier: Unlicense
 pragma solidity ^0.8.0;
 
+import "@synthetixio/core-modules/contracts/mixins/OwnerMixin.sol";
 import "../storage/SettingsStorage.sol";
-import "../mixins/OwnerMixin.sol";
 
 contract SettingsModule is SettingsStorage, OwnerMixin {
     function setASettingValue(uint newSettingValue) public onlyOwner {
