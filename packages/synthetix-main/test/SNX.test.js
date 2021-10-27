@@ -96,5 +96,4 @@ describe('SNXModule', function () {
       });
     });
   });
-
 });
