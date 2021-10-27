@@ -6,7 +6,7 @@ import "@synthetixio/core-contracts/contracts/proxy/UniversalProxyImplementation
 import "./SNXStorageUpgraded.sol";
 
 // a basic (null) implementation (shoud be an ERC20 or even ERC20 on steroids?)
-contract SNXImplementationUpdated is SNXStorageUpgraded, OwnableMixin, UniversalProxyImplementation {
+contract SNXImplementationUpgraded is SNXStorageUpgraded, OwnableMixin, UniversalProxyImplementation {
     error alreadyInitialized();
 
     function initialize(address owner) public {

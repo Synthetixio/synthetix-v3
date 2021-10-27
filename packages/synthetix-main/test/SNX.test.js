@@ -67,7 +67,7 @@ describe('SNXModule', function () {
         before('Deploy new implementation', async () => {
           const proxyAddress = getProxyAddress(deploymentInfo);
 
-          const factory = await ethers.getContractFactory('SNXImplementationUpdated');
+          const factory = await ethers.getContractFactory('SNXImplementationUpgraded');
           SNXImplementationUpdated = await factory.deploy();
           await SNXImplementationUpdated.initialize(proxyAddress);
         });
@@ -78,7 +78,7 @@ describe('SNXModule', function () {
           );
           await tx.wait();
 
-          SNXUpdated = await ethers.getContractAt('SNXImplementationUpdated', snxAddress);
+          SNXUpdated = await ethers.getContractAt('SNXImplementationUpgraded', snxAddress);
         });
         it('is upgraded', async () => {
           const address = await SNXUpdated.getImplementation();
