@@ -5,9 +5,9 @@ import "@synthetixio/core-contracts/contracts/ownership/OwnableMixin.sol";
 import "@synthetixio/core-contracts/contracts/proxy/UniversalProxyImplementation.sol";
 
 contract SNXImplementation is OwnableMixin, UniversalProxyImplementation {
-    address private _owner; // owner
-    address private _implementation; // upgrade
-    bool private _simulatingUpgrade; // upgrade
+    address private _owner;
+    address private _implementation;
+    bool private _simulatingUpgrade;
     bool private _initialized;
 
     error alreadyInitialized();

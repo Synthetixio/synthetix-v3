@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "../mixins/OwnerMixin.sol";
+import "@synthetixio/core-modules/contracts/mixins/OwnerMixin.sol";
 import "../storage/SNXStorage.sol";
 import "../core/SNXProxy.sol";
 import "../core/SNXImplementation.sol";

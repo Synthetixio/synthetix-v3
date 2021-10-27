@@ -17,7 +17,6 @@ contract ForwardingProxyMock is ForwardingProxy {
 
     address private _implementation;
 
-    // solhint-disable-next-line no-empty-blocks
     constructor(address firstImplementation) {
         _setImplementation(firstImplementation);
     }
