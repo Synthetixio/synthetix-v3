@@ -1,6 +1,5 @@
 {
   "spec": ["test/src/**/*.test.js"],
-  "parallel": true,
   "watch-files": [
     "internal/**/*.js",
     "subtasks/**/*.js",
