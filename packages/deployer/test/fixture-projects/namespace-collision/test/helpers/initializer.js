@@ -1,4 +1,3 @@
-const { getProxyAddress } = require('@synthetixio/deployer/utils/deployments');
 const { TASK_DEPLOY } = require('@synthetixio/deployer/task-names');
 
 /**
