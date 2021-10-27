@@ -1,12 +1,13 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-contract SNXStorage {
+contract SNXStorageUpgraded {
     struct SNXNamespace {
         address owner;
         address implementation;
         bool simulatingUpgrade;
         bool initialized;
+        uint256 valueA;
     }
 
     function _snxStorage() internal pure returns (SNXNamespace storage store) {

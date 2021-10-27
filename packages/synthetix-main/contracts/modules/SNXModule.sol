@@ -2,11 +2,11 @@
 pragma solidity ^0.8.0;
 
 import "@synthetixio/core-modules/contracts/mixins/OwnerMixin.sol";
-import "../storage/SNXStorage.sol";
+import "../storage/SNXModuleStorage.sol";
 import "../core/SNXProxy.sol";
 import "../core/SNXImplementation.sol";
 
-contract SNXModule is OwnerMixin, SNXStorage {
+contract SNXModule is OwnerMixin, SNXModuleStorage {
     error SNXAlreadyCreated();
 
     event SNXCreated(address snxAddress);
@@ -34,7 +34,7 @@ contract SNXModule is OwnerMixin, SNXStorage {
     }
 
     function upgradeSNXImplementation(address newSNXImplementation) public onlyOwner {
-        SNXImplementation(_snxStorage().snxAddress).upgradeTo(newSNXImplementation);
+        SNXImplementation(getSNXAddress()).upgradeTo(newSNXImplementation);
     }
 
     function getSNXAddress() public view returns (address) {
