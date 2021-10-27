@@ -2,7 +2,8 @@ const { subtask } = require('hardhat/config');
 const mapValues = require('just-map-values');
 const logger = require('@synthetixio/core-js/utils/logger');
 const ModuleStorageASTValidator = require('../internal/storage-ast-validator');
-const { SUBTASK_VALIDATE_STORAGE, SUBTASK_CANCEL_DEPLOYMENT } = require('../task-names');
+const { ContractValidationError } = require('../internal/errors');
+const { SUBTASK_VALIDATE_STORAGE } = require('../task-names');
 
 subtask(SUBTASK_VALIDATE_STORAGE).setAction(async (_, hre) => {
   logger.subtitle('Validating module storage usage');
@@ -25,7 +26,7 @@ subtask(SUBTASK_VALIDATE_STORAGE).setAction(async (_, hre) => {
       logger.error(error.msg);
     });
 
-    return await hre.run(SUBTASK_CANCEL_DEPLOYMENT);
+    throw new ContractValidationError('Invalid storage usage');
   }
 
   logger.checked('Storage layout is valid');
