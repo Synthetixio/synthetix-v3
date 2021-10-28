@@ -2,6 +2,7 @@ const { task } = require('hardhat/config');
 const { TASK_COMPILE } = require('hardhat/builtin-tasks/task-names');
 
 const {
+  SUBTASK_CANCEL_DEPLOYMENT,
   SUBTASK_CLEAR_DEPLOYMENTS,
   SUBTASK_DEPLOY_MODULES,
   SUBTASK_DEPLOY_ROUTER,
@@ -11,8 +12,8 @@ const {
   SUBTASK_PRINT_INFO,
   SUBTASK_SYNC_SOURCES,
   SUBTASK_UPGRADE_PROXY,
-  SUBTASK_VALIDATE_ROUTER,
   SUBTASK_VALIDATE_MODULES,
+  SUBTASK_VALIDATE_ROUTER,
   SUBTASK_VALIDATE_STORAGE,
   TASK_DEPLOY,
 } = require('../task-names');
@@ -22,6 +23,7 @@ let logCache;
 const logger = require('@synthetixio/core-js/utils/logger');
 const prompter = require('@synthetixio/core-js/utils/prompter');
 const types = require('../internal/argument-types');
+const { ContractValidationError } = require('../internal/errors');
 
 task(TASK_DEPLOY, 'Deploys all system modules')
   .addFlag('noConfirm', 'Skip all confirmation prompts', false)
@@ -62,6 +64,12 @@ task(TASK_DEPLOY, 'Deploys all system modules')
       await hre.run(SUBTASK_DEPLOY_ROUTER);
       await hre.run(SUBTASK_UPGRADE_PROXY);
       await hre.run(SUBTASK_FINALIZE_DEPLOYMENT);
+    } catch (err) {
+      if (err instanceof ContractValidationError) {
+        await hre.run(SUBTASK_CANCEL_DEPLOYMENT);
+      }
+
+      throw err;
     } finally {
       _forceSilenceHardhat(false, quiet);
     }

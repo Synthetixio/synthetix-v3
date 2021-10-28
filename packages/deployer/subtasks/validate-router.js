@@ -4,12 +4,13 @@ const mapValues = require('just-map-values');
 const { initContractData } = require('../internal/process-contracts');
 const RouterSourceValidator = require('../internal/router-source-validator');
 const RouterASTValidator = require('../internal/router-ast-validator');
-const { SUBTASK_VALIDATE_ROUTER, SUBTASK_CANCEL_DEPLOYMENT } = require('../task-names');
+const { ContractValidationError } = require('../internal/errors');
+const { SUBTASK_VALIDATE_ROUTER } = require('../task-names');
 
 subtask(
   SUBTASK_VALIDATE_ROUTER,
   'Runs a series of validations against a generated router source.'
-).setAction(async (_, hre) => {
+).setAction(async () => {
   logger.subtitle('Validating router');
 
   await initContractData('Router');
@@ -18,9 +19,7 @@ subtask(
   const astErrorsFound = await _runASTValidations();
 
   if (sourceErrorsFound.length > 0 || astErrorsFound.length > 0) {
-    logger.error('Router is not valid');
-
-    return await hre.run(SUBTASK_CANCEL_DEPLOYMENT);
+    throw new ContractValidationError('Router is not valid');
   }
 
   logger.checked('Router is valid');

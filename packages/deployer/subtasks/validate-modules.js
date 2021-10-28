@@ -2,7 +2,8 @@ const { subtask } = require('hardhat/config');
 const logger = require('@synthetixio/core-js/utils/logger');
 const filterValues = require('filter-values');
 const { getAllSelectors, findDuplicateSelectors } = require('../internal/contract-helper');
-const { SUBTASK_VALIDATE_MODULES, SUBTASK_CANCEL_DEPLOYMENT } = require('../task-names');
+const { ContractValidationError } = require('../internal/errors');
+const { SUBTASK_VALIDATE_MODULES } = require('../task-names');
 
 subtask(SUBTASK_VALIDATE_MODULES).setAction(async (_, hre) => {
   logger.subtitle('Validating modules');
@@ -18,7 +19,8 @@ subtask(SUBTASK_VALIDATE_MODULES).setAction(async (_, hre) => {
     );
 
     logger.error(`Duplicate selectors found!\n${details.join('\n')}`);
-    return await hre.run(SUBTASK_CANCEL_DEPLOYMENT);
+
+    throw new ContractValidationError('Found duplicate selectors on modules');
   }
 
   logger.checked('Modules are valid');
