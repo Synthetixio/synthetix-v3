@@ -26,7 +26,7 @@ abstract contract Beacon is IBeacon, OwnableMixin, ContractUtil, CommonErrors {
         emit Upgraded(newImplementation);
     }
 
-    function _setImplementation(address newImplementation) internal virtual {}
+    function _setImplementation(address newImplementation) internal virtual;
 
-    function _getImplementation() internal view virtual returns (address) {}
+    function _getImplementation() internal view virtual returns (address);
 }
