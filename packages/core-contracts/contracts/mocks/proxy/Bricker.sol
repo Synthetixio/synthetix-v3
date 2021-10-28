@@ -19,7 +19,13 @@ contract Bricker is UniversalProxyImplementation {
     bool private _simulatingUpgrade;
 
     function upgradeTo(address newImplementation) public override {
-        _implementation = newImplementation;
+        if (_getImplementation() != newImplementation) {
+            _setSimulatingUpgrade(true);
+            _setImplementation(newImplementation);
+        }
+        if (_getSimulatingUpgrade()) {
+            _setSimulatingUpgrade(false);
+        }
     }
 
     function _setImplementation(address newImplementation) internal override {

@@ -22,10 +22,6 @@ contract ForwardingProxyMock is ForwardingProxy {
         _setImplementation(firstImplementation);
     }
 
-    function setImplementation(address newImplementation) external {
-        _setImplementation(newImplementation);
-    }
-
     function getImplementation() external view returns (address) {
         return _getImplementation();
     }
