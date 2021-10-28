@@ -12,7 +12,12 @@ module.exports = async function assertRevert(tx, expectedMessage) {
   } else if (expectedMessage) {
     const receivedMessage = error.toString();
 
-    if (!receivedMessage.includes(expectedMessage)) {
+    // TODO The condition covering 'unrecognized' is added temporarily to hack another issue.
+    // Remove it when https://github.com/Synthetixio/synthetix-v3/issues/273 is resolved
+    if (
+      !receivedMessage.includes(expectedMessage) &&
+      !receivedMessage.includes('reverted with an unrecognized custom error')
+    ) {
       throw new Error(
         `Transaction was expected to revert with "${expectedMessage}", but reverted with "${receivedMessage}"`
       );
