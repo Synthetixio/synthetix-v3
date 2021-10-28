@@ -11,12 +11,6 @@ const { readPackageJson } = require('@synthetixio/core-js/utils/npm');
 const { SUBTASK_PRINT_INFO } = require('../task-names');
 
 subtask(SUBTASK_PRINT_INFO, 'Prints info about a deployment.').setAction(async (taskArguments) => {
-  const { quiet } = taskArguments;
-
-  if (quiet) {
-    return;
-  }
-
   await _printTitle();
   await _printInfo(taskArguments);
 
@@ -26,7 +20,7 @@ subtask(SUBTASK_PRINT_INFO, 'Prints info about a deployment.').setAction(async (
 async function _printTitle() {
   async function printFiglet(msg) {
     const text = await promisify(figlet.text.bind(figlet))(msg, { font: 'Slant' });
-    console.log(chalk.red(text));
+    logger.log(chalk.red(text));
   }
 
   await printFiglet(readPackageJson().name);
