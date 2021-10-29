@@ -53,6 +53,18 @@ describe('ForwardingProxy', () => {
           await assertRevert(BadInstance.getB(), 'function selector was not recognized');
         });
       });
+
+      describe('when trying to send value without data (use the receive())', () => {
+        it('reverts', async () => {
+          await assertRevert(
+            ethers.provider.call({
+              to: Proxy.address,
+              value: ethers.utils.parseEther('1'),
+            }),
+            'function selector was not recognized'
+          );
+        });
+      });
     });
   });
 

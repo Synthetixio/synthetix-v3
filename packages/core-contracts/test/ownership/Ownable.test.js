@@ -65,6 +65,15 @@ describe('Ownable', () => {
       assert.equal(event.args.newOwner, newOwner.address);
     });
 
+    describe('when attempting to re-nominate the same owner', () => {
+      it('reverts', async () => {
+        await assertRevert(
+          Ownable.connect(owner).nominateNewOwner(newOwner.address),
+          `InvalidNomination("${newOwner.address}")`
+        );
+      });
+    });
+
     describe('Accepting ownership', () => {
       describe('when an non nominated address tries to accepts ownership', () => {
         it('reverts', async () => {
