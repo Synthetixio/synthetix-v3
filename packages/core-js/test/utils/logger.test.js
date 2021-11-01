@@ -1,37 +1,33 @@
-const assert = require('assert/strict');
+const { equal, deepStrictEqual } = require('assert/strict');
 const logger = require('../../utils/logger');
 
 describe('utils/logger.js', () => {
-  let logCache;
-  let logged = '';
+  let logged = [];
 
-  function _log(msg) {
-    logged += msg;
-  }
-
-  before('capture output', async () => {
-    logCache = console.log;
-    console.log = _log;
+  before('capture output', () => {
+    logger._log = (...args) => {
+      logged.push(args);
+    };
   });
 
-  after('release output', async () => {
-    console.log = logCache;
+  beforeEach('reset captured output', () => {
+    logged = [];
   });
 
-  it('starts with the correct default props', async () => {
-    assert.equal(logger.quiet, false);
-    assert.equal(logger.debugging, false);
-    assert.equal(logger.prepend, '');
-    assert.equal(logger.postpend, '');
-    assert.equal(logger.boxing, false);
+  it('starts with the correct default props', () => {
+    equal(logger.quiet, false);
+    equal(logger.debugging, false);
+    equal(logger.prepend, '');
+    equal(logger.postpend, '');
+    equal(logger.boxing, false);
   });
 
-  describe('when quiet is enabled', () => {
-    before('enable quiet', async () => {
-      logger.quiet = true;
+  describe('when quiet is not enabled', () => {
+    before('disable quiet', () => {
+      logger.quiet = false;
     });
 
-    before('perform some logs', async () => {
+    it('does not record any logs', () => {
       logger.log('hello');
       logger.info('hello');
       logger.notice('hello');
@@ -41,10 +37,76 @@ describe('utils/logger.js', () => {
       logger.success('hello');
       logger.complete('hello');
       logger.debug('hello');
+      logger.subtitle('hello');
+      logger.boxStart();
+      logger.log('boxed hello');
+      logger.boxEnd();
+
+      deepStrictEqual(logged, [
+        ['hello'],
+        ['\u001b[90mⓘ  hello\u001b[39m'],
+        ['\u001b[33m> hello\u001b[39m'],
+        ['\u001b[31m\u001b[1m\u001b[7m☠ hello\u001b[27m\u001b[22m\u001b[39m'],
+        ['\u001b[33m\u001b[1m\u001b[7m⚠ hello\u001b[27m\u001b[22m\u001b[39m'],
+        ['\u001b[90m✓ hello\u001b[39m'],
+        ['\u001b[32m✅ hello\u001b[39m'],
+        ['\u001b[32m\u001b[1m💯 hello\u001b[22m\u001b[39m'],
+        ['\n'],
+        [
+          '\u001b[36m\u001b[1m┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓\u001b[22m\u001b[39m',
+        ],
+        [
+          '\u001b[36m\u001b[1m┃ \u001b[22m\u001b[39m\u001b[36m‣ hello\u001b[39m\u001b[90m........................................................' +
+            '.........................\u001b[39m\u001b[36m\u001b[1m ┃\u001b[22m\u001b[39m',
+        ],
+        [
+          '\u001b[36m\u001b[1m┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛\u001b[22m\u001b[39m',
+        ],
+        [
+          '\u001b[36m\u001b[1m┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓\u001b[22m\u001b[39m',
+        ],
+        [
+          '\u001b[36m\u001b[1m┃ \u001b[22m\u001b[39mboxed hello\u001b[90m..........................................................................' +
+            '.............\u001b[39m\u001b[36m\u001b[1m ┃\u001b[22m\u001b[39m',
+        ],
+        [
+          '\u001b[36m\u001b[1m┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛\u001b[22m\u001b[39m',
+        ],
+      ]);
     });
 
-    it('does not record any logs', async () => {
-      assert.equal(logged.length, 0);
+    it('should log when debugging is enabled', () => {
+      logger.debugging = true;
+      try {
+        logger.debug('debugging!');
+        deepStrictEqual(logged, [['\u001b[35mdebugging!\u001b[39m']]);
+      } finally {
+        logger.debugging = false;
+      }
+    });
+  });
+
+  describe('when quiet is enabled', () => {
+    before('enable quiet', () => {
+      logger.quiet = true;
+    });
+
+    it('does not record any logs', () => {
+      logger.log('hello');
+      logger.info('hello');
+      logger.notice('hello');
+      logger.error('hello');
+      logger.warn('hello');
+      logger.checked('hello');
+      logger.success('hello');
+      logger.complete('hello');
+      logger.debug('hello');
+      logger.subtitle('hello');
+      logger.boxStart();
+      logger.log('boxed hello');
+      logger.boxEnd();
+
+      equal(logged.length, 0);
     });
   });
 });
