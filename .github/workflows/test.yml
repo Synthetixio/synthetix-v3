@@ -37,3 +37,15 @@ jobs:
         with:
           files: packages/synthetix-main/coverage.json
           flags: synthetix-main
+
+  test-sample:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+        with:
+          node-version: "16.8.0"
+          cache: "npm"
+      - run: npm ci
+      - name: Execute tests
+        run: npm test
