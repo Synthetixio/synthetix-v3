@@ -1,37 +1,38 @@
-const assert = require('assert/strict');
+const { equal, deepEqual } = require('assert/strict');
+const chalk = require('chalk');
 const logger = require('../../utils/logger');
 
 describe('utils/logger.js', () => {
-  let logCache;
-  let logged = '';
+  let logged = [];
 
-  function _log(msg) {
-    logged += msg;
-  }
-
-  before('capture output', async () => {
-    logCache = console.log;
-    console.log = _log;
+  before('disable chalk color usage', () => {
+    chalk.level = 0;
   });
 
-  after('release output', async () => {
-    console.log = logCache;
+  before('capture output', () => {
+    logger._log = (...args) => {
+      logged.push(args);
+    };
   });
 
-  it('starts with the correct default props', async () => {
-    assert.equal(logger.quiet, false);
-    assert.equal(logger.debugging, false);
-    assert.equal(logger.prepend, '');
-    assert.equal(logger.postpend, '');
-    assert.equal(logger.boxing, false);
+  beforeEach('reset captured output', () => {
+    logged = [];
   });
 
-  describe('when quiet is enabled', () => {
-    before('enable quiet', async () => {
-      logger.quiet = true;
+  it('starts with the correct default props', () => {
+    equal(logger.quiet, false);
+    equal(logger.debugging, false);
+    equal(logger.prepend, '');
+    equal(logger.postpend, '');
+    equal(logger.boxing, false);
+  });
+
+  describe('when quiet is not enabled', () => {
+    before('disable quiet', () => {
+      logger.quiet = false;
     });
 
-    before('perform some logs', async () => {
+    it('prints logs to the console', () => {
       logger.log('hello');
       logger.info('hello');
       logger.notice('hello');
@@ -41,10 +42,74 @@ describe('utils/logger.js', () => {
       logger.success('hello');
       logger.complete('hello');
       logger.debug('hello');
+      logger.subtitle('hello');
+      logger.boxStart();
+      logger.log('boxed hello');
+      logger.boxEnd();
+
+      deepEqual(logged, [
+        ['hello'],
+        ['ⓘ  hello'],
+        ['> hello'],
+        ['☠ hello'],
+        ['⚠ hello'],
+        ['✓ hello'],
+        ['✅ hello'],
+        ['💯 hello'],
+        ['\n'],
+        [
+          '┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓',
+        ],
+        [
+          '┃ ‣ hello........................................................................................... ┃',
+        ],
+        [
+          '┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛',
+        ],
+        [
+          '┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓',
+        ],
+        [
+          '┃ boxed hello....................................................................................... ┃',
+        ],
+        [
+          '┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛',
+        ],
+      ]);
     });
 
-    it('does not record any logs', async () => {
-      assert.equal(logged.length, 0);
+    it('should log when debugging is enabled', () => {
+      logger.debugging = true;
+      try {
+        logger.debug('debugging!');
+        deepEqual(logged, [['debugging!']]);
+      } finally {
+        logger.debugging = false;
+      }
+    });
+  });
+
+  describe('when quiet is enabled', () => {
+    before('enable quiet', () => {
+      logger.quiet = true;
+    });
+
+    it('does not record any logs', () => {
+      logger.log('hello');
+      logger.info('hello');
+      logger.notice('hello');
+      logger.error('hello');
+      logger.warn('hello');
+      logger.checked('hello');
+      logger.success('hello');
+      logger.complete('hello');
+      logger.debug('hello');
+      logger.subtitle('hello');
+      logger.boxStart();
+      logger.log('boxed hello');
+      logger.boxEnd();
+
+      equal(logged.length, 0);
     });
   });
 });

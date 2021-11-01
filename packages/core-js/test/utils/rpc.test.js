@@ -21,7 +21,6 @@ describe('utils/rpc.js', () => {
     let snapshotId;
 
     before('call createSnapshot', async () => {
-      console.log(provider);
       snapshotId = await takeSnapshot(provider);
     });
 

@@ -3,6 +3,7 @@ const chalk = require('chalk');
 const BOX_WIDTH = 90;
 
 module.exports = {
+  _log: console.log.bind(console),
   quiet: false,
   debugging: false,
   prepend: '',
@@ -33,7 +34,7 @@ module.exports = {
     const completeLen = Math.max(BOX_WIDTH + 8 - [...msg].length, 0);
     const completeStr = this.boxing ? chalk.gray('.'.repeat(completeLen)) : '';
 
-    console.log(`${this.prepend}${msg}${completeStr}${this.postpend}`);
+    this._log(`${this.prepend}${msg}${completeStr}${this.postpend}`);
   },
 
   subtitle(msg) {
@@ -41,7 +42,7 @@ module.exports = {
       return;
     }
 
-    console.log('\n');
+    this._log('\n');
 
     this.boxStart();
     this.log(chalk.cyan(`‣ ${msg}`));
