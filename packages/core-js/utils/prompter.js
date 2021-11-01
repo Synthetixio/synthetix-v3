@@ -1,6 +1,7 @@
 const inquirer = require('inquirer');
 
 module.exports = {
+  _prompt: inquirer.prompt.bind(inquirer),
   noConfirm: false,
 
   /**
@@ -13,7 +14,7 @@ module.exports = {
       return true;
     }
 
-    const { confirmation } = await inquirer.prompt([
+    const { confirmation } = await this._prompt([
       {
         type: 'confirm',
         name: 'confirmation',
