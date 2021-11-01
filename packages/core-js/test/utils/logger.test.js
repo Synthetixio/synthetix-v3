@@ -1,4 +1,4 @@
-const { equal, deepStrictEqual } = require('assert/strict');
+const { equal, deepEqual } = require('assert/strict');
 const logger = require('../../utils/logger');
 
 describe('utils/logger.js', () => {
@@ -42,7 +42,7 @@ describe('utils/logger.js', () => {
       logger.log('boxed hello');
       logger.boxEnd();
 
-      deepStrictEqual(logged, [
+      deepEqual(logged, [
         ['hello'],
         ['\u001b[90mⓘ  hello\u001b[39m'],
         ['\u001b[33m> hello\u001b[39m'],
@@ -79,7 +79,7 @@ describe('utils/logger.js', () => {
       logger.debugging = true;
       try {
         logger.debug('debugging!');
-        deepStrictEqual(logged, [['\u001b[35mdebugging!\u001b[39m']]);
+        deepEqual(logged, [['\u001b[35mdebugging!\u001b[39m']]);
       } finally {
         logger.debugging = false;
       }
