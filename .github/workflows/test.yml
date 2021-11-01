@@ -40,14 +40,15 @@ jobs:
 
   test-sample:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./packages/deployer/test/fixture-projects/sample-project
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v2
         with:
           node-version: "16.8.0"
           cache: "npm"
-      - name: Install dependencies & run tests
-        working-directory: ./packages/deployer/test/fixture-projects/sample-project
-        run: |
-          npm ci
-          npm test
+      - run: npm ci
+      - name: Execute tests
+        run: npm test
