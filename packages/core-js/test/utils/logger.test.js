@@ -32,7 +32,7 @@ describe('utils/logger.js', () => {
       logger.quiet = false;
     });
 
-    it('does not record any logs', () => {
+    it('prints logs to the console', () => {
       logger.log('hello');
       logger.info('hello');
       logger.notice('hello');
