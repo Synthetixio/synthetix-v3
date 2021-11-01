@@ -1,10 +1,12 @@
-const { getModulesSelectors } = require('./contract-helper');
-const { getRouterSource } = require('./router-helper');
-
 class RouterSourceValidator {
+  constructor({ getModulesSelectors, getRouterSource } = {}) {
+    this.getModulesSelectors = getModulesSelectors;
+    this.getRouterSource = getRouterSource;
+  }
+
   async findRepeatedModuleSelectors() {
-    const moduleSelectors = await getModulesSelectors();
-    const source = getRouterSource();
+    const moduleSelectors = await this.getModulesSelectors();
+    const source = await this.getRouterSource();
 
     const errors = [];
     moduleSelectors.forEach((moduleSelector) => {
@@ -25,8 +27,8 @@ class RouterSourceValidator {
   }
 
   async findMissingModuleSelectors() {
-    const moduleSelectors = await getModulesSelectors();
-    const source = getRouterSource();
+    const moduleSelectors = await this.getModulesSelectors();
+    const source = await this.getRouterSource();
 
     const errors = [];
     moduleSelectors.forEach((moduleSelector) => {

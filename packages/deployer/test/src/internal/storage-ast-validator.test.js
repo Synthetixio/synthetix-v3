@@ -4,7 +4,7 @@ const asts = require('@synthetixio/core-js/test/fixtures/asts.json');
 const { clone } = require('@synthetixio/core-js/utils/clone');
 
 describe('internal/storage-ast-validator.js', function () {
-  describe('validations without errors (happy path)', async () => {
+  describe('validations without errors (happy path)', () => {
     let currentAsts, previousAsts, validator;
     let errorsFound = [];
 
@@ -25,7 +25,7 @@ describe('internal/storage-ast-validator.js', function () {
     });
   });
 
-  describe('change slot address', async () => {
+  describe('change slot address', () => {
     let currentAsts, previousAsts, validator;
     let errorsFound = [];
 
@@ -48,7 +48,7 @@ describe('internal/storage-ast-validator.js', function () {
     });
   });
 
-  describe('duplicate slot address', async () => {
+  describe('duplicate slot address', () => {
     let currentAsts, previousAsts, validator;
     let errorsFound = [];
 
