@@ -24,7 +24,7 @@ contract BeaconMock is Beacon {
         _owner = firstOwner;
     }
 
-    function upgradeTo(address newImplementation) external override onlyOwner {
+    function upgradeTo(address newImplementation) external {
         _upgradeTo(newImplementation);
     }
 
@@ -34,9 +34,5 @@ contract BeaconMock is Beacon {
 
     function _getImplementation() internal view override returns (address) {
         return _implementation;
-    }
-
-    function _getOwner() internal view override returns (address) {
-        return _owner;
     }
 }

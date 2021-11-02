@@ -31,14 +31,6 @@ describe('Beacon', () => {
     describe('when upgrading to a new implementation', async () => {
       let receipt;
 
-      describe('when a non-owner invokes it', async () => {
-        it('reverts', async () => {
-          await assertRevert(
-            Beacon.connect(user).upgradeTo(ERC20Mock2.address),
-            'OnlyOwnerAllowed()'
-          );
-        });
-      });
       describe('when the owner invokes it', async () => {
         describe('when upgrading to an invalid implementation', () => {
           it('reverts when attempting to upgrade to an EOA', async () => {

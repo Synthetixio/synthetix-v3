@@ -3,17 +3,14 @@ pragma solidity ^0.8.0;
 
 import "../common/CommonErrors.sol";
 import "../interfaces/IBeacon.sol";
-import "../ownership/OwnableMixin.sol";
 import "../utils/ContractUtil.sol";
 
-abstract contract Beacon is IBeacon, OwnableMixin, ContractUtil, CommonErrors {
+abstract contract Beacon is IBeacon, ContractUtil, CommonErrors {
     event Upgraded(address indexed implementation);
 
     function getImplementation() external view override returns (address) {
         return _getImplementation();
     }
-
-    function upgradeTo(address newImplementation) external virtual;
 
     function _upgradeTo(address newImplementation) internal {
         if (newImplementation == address(0)) {
