@@ -5,6 +5,8 @@ const { initContractData } = require('../internal/process-contracts');
 const RouterSourceValidator = require('../internal/router-source-validator');
 const RouterASTValidator = require('../internal/router-ast-validator');
 const { ContractValidationError } = require('../internal/errors');
+const { getModulesSelectors } = require('../internal/contract-helper');
+const { getRouterSource } = require('../internal/router-helper');
 const { SUBTASK_VALIDATE_ROUTER } = require('../task-names');
 
 subtask(
@@ -28,7 +30,10 @@ subtask(
 async function _runSourceValidations() {
   const errorsFound = [];
 
-  const validator = new RouterSourceValidator();
+  const validator = new RouterSourceValidator({
+    getModulesSelectors,
+    getRouterSource,
+  });
 
   logger.debug('Validating Router source code');
   errorsFound.push(...(await validator.findMissingModuleSelectors()));

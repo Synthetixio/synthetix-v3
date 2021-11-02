@@ -62,7 +62,7 @@ async function _processContracts(contracts) {
   const toCreate = [];
 
   for (const [contractName, contractData] of Object.entries(contracts)) {
-    if (hre.network.name === 'hardhat' || !contractData.deployedAddress) {
+    if (!contractData.deployedAddress) {
       toCreate.push(contractName);
     } else {
       if (await isAlreadyDeployed(contractName, contractData)) {
