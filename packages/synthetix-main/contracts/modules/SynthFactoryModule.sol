@@ -9,7 +9,7 @@ import "../storage/SynthFactoryModuleStorage.sol";
 contract SynthFactoryModule is OwnerMixin, BeaconModule, SynthFactoryModuleStorage {
     error SynthExists();
 
-    event NewSynthDeployed(bytes32 synth);
+    event NewSynthDeployed(bytes32 synth, address synthProxyAddress);
 
     function deployNewSynth(bytes32 synth) external onlyOwner {
         if (_synthFactoryStorage().synthProxies[synth] != address(0x0)) {
@@ -17,12 +17,18 @@ contract SynthFactoryModule is OwnerMixin, BeaconModule, SynthFactoryModuleStora
         }
         // deploy a BeaconProxy, the beacon address is the current contract
         BeaconProxy synthProxy = new BeaconProxyMock(address(this));
+        // get the proxy address
+        address synthProxyAddress = address(synthProxy);
         // register the new proxy in the mapping
-        _synthFactoryStorage().synthProxies[synth] = address(synthProxy);
-        emit NewSynthDeployed(synth);
+        _synthFactoryStorage().synthProxies[synth] = synthProxyAddress;
+        emit NewSynthDeployed(synth, synthProxyAddress);
     }
 
     function upgradeSynthImplementation(address newSynthsImplementation) external onlyOwner {
         _upgradeTo(newSynthsImplementation);
+    }
+
+    function getSynthProxy(bytes32 synth) external view returns (address) {
+        return _synthFactoryStorage().synthProxies[synth];
     }
 }
