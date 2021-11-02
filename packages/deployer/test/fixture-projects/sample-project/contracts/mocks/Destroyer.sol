@@ -1,4 +1,4 @@
-//SPDX-License-Identifier: UnlicMITense
+//SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
 import "@synthetixio/core-modules/contracts/storage/ProxyStorage.sol";
