@@ -2,7 +2,7 @@ const { ethers } = hre;
 const assert = require('assert');
 const assertRevert = require('@synthetixio/core-js/utils/assert-revert');
 
-describe.skip('ForwardingProxy', () => {
+describe('UnstructuredProxy', () => {
   let Proxy, Instance, Implementation;
 
   describe('when setting ImplementationMockA as the implementation', () => {
@@ -12,7 +12,7 @@ describe.skip('ForwardingProxy', () => {
       factory = await ethers.getContractFactory('ImplementationMockA');
       Implementation = await factory.deploy();
 
-      factory = await ethers.getContractFactory('ForwardingProxyMock');
+      factory = await ethers.getContractFactory('UnstructuredProxy');
       Proxy = await factory.deploy(Implementation.address);
 
       Instance = await ethers.getContractAt('ImplementationMockA', Proxy.address);
@@ -75,7 +75,7 @@ describe.skip('ForwardingProxy', () => {
       factory = await ethers.getContractFactory('ImplementationMockB');
       Implementation = await factory.deploy();
 
-      factory = await ethers.getContractFactory('ForwardingProxyMock');
+      factory = await ethers.getContractFactory('UnstructuredProxy');
       Proxy = await factory.deploy(Implementation.address);
 
       Instance = await ethers.getContractAt('ImplementationMockB', Proxy.address);

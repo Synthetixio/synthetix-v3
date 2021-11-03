@@ -6,7 +6,7 @@ const assertRevert = require('@synthetixio/core-js/utils/assert-revert');
 const { findEvent } = require('@synthetixio/core-js/utils/events');
 const bootstrap = require('./helpers/bootstrap');
 
-describe('SNXModule', function () {
+describe('SNXTokenModule', function () {
   const { deploymentInfo, initSystem } = bootstrap();
 
   let owner;
@@ -17,21 +17,21 @@ describe('SNXModule', function () {
   });
 
   describe('When creating the SNX token', async () => {
-    let SNXModule, snxAddress;
+    let SNXTokenModule, snxAddress;
     before('identify modules', async () => {
       const proxyAddress = getProxyAddress(deploymentInfo);
-      SNXModule = await ethers.getContractAt('SNXModule', proxyAddress);
+      SNXTokenModule = await ethers.getContractAt('SNXTokenModule', proxyAddress);
     });
 
     it('No SNX is deployed', async () => {
-      const address = await SNXModule.getSNXAddress();
+      const address = await SNXTokenModule.getSNXAddress();
       assert.equal(address, '0x0000000000000000000000000000000000000000');
     });
 
     describe('When the SNX is created', () => {
       let receipt;
       before('Create a SNX token', async () => {
-        const tx = await SNXModule.connect(owner).createSNX();
+        const tx = await SNXTokenModule.connect(owner).createSNXProxy('Synthetix Token', 'SNX', 18);
         receipt = await tx.wait();
       });
 
@@ -45,20 +45,24 @@ describe('SNXModule', function () {
       });
 
       it('gets the newly created address', async () => {
-        const address = await SNXModule.getSNXAddress();
+        const address = await SNXTokenModule.getSNXAddress();
         assert.equal(address, snxAddress);
+      });
+
+      it('can interact with the ERC20 implementation', async () => {
+        let symbol = await SNXUpdated.symbol();
+        assert.equal(symbol, 'SNX');
+
+        let name = await SNXUpdated.name();
+        assert.equal(name, 'Synthetix Token');
+
+        let decimals = await SNXUpdated.decimals();
+        assert.equal(decimals, 18);
       });
 
       describe('When attempting to create the SNX twice', () => {
         it('reverts', async () => {
-          await assertRevert(SNXModule.connect(owner).createSNX(), 'SNXAlreadyCreated()');
-        });
-      });
-
-      describe('When attempting to initialize the SNX again', () => {
-        it('reverts', async () => {
-          const SNX = await ethers.getContractAt('SNXImplementation', snxAddress);
-          await assertRevert(SNX.initialize(owner.address), 'alreadyInitialized()');
+          await assertRevert(SNXTokenModule.connect(owner).createSNXProxy(), 'SNXAlreadyCreated()');
         });
       });
 
@@ -67,18 +71,17 @@ describe('SNXModule', function () {
         before('Deploy new implementation', async () => {
           const proxyAddress = getProxyAddress(deploymentInfo);
 
-          const factory = await ethers.getContractFactory('SNXImplementationUpgraded');
-          SNXImplementationUpdated = await factory.deploy();
-          await SNXImplementationUpdated.initialize(proxyAddress);
+          const factory = await ethers.getContractFactory('SNXImplementation');
+          SNXImplementationUpdated = await factory.deploy('Synthetix Token Updated', 'uSNX', 18);
         });
 
         before('Upgrade to new implementation', async () => {
-          const tx = await SNXModule.connect(owner).upgradeSNXImplementation(
+          const tx = await SNXTokenModule.connect(owner).setSNXImplementation(
             SNXImplementationUpdated.address
           );
           await tx.wait();
 
-          SNXUpdated = await ethers.getContractAt('SNXImplementationUpgraded', snxAddress);
+          SNXUpdated = await ethers.getContractAt('SNXImplementation', snxAddress);
         });
         it('is upgraded', async () => {
           const address = await SNXUpdated.getImplementation();
@@ -86,12 +89,14 @@ describe('SNXModule', function () {
         });
 
         it('can interact with the new implementation', async () => {
-          let valueA = await SNXUpdated.getValueA();
-          assert.equal(valueA, 0);
+          let symbol = await SNXUpdated.symbol();
+          assert.equal(symbol, 'uSNX');
 
-          await SNXUpdated.setValueA(42);
-          valueA = await SNXUpdated.getValueA();
-          assert.equal(valueA, 42);
+          let name = await SNXUpdated.name();
+          assert.equal(name, 'Synthetix Token Updated');
+
+          let decimals = await SNXUpdated.decimals();
+          assert.equal(decimals, 18);
         });
       });
     });
