@@ -24,7 +24,8 @@
     "lint:quick": "pretty-quick --check --staged --pattern '**/*.(js|sol)'",
     "lint:fix": "npm run lint:js:fix && npm run lint:sol:fix",
     "lint": "npm run lint:js && npm run lint:sol",
-    "check-packages": "bin/check-packages"
+    "check-packages": "bin/check-packages",
+    "update-storage-slots": "bin/update-storage-slots.js"
   },
   "pre-commit": [
     "lint:quick",
@@ -39,6 +40,7 @@
   },
   "devDependencies": {
     "eslint": "7.32.0",
+    "glob": "7.2.0",
     "hardhat": "2.6.6",
     "pre-commit": "1.2.2",
     "prettier": "2.3.2",
