@@ -4,7 +4,7 @@
   "description": "",
   "files": [
     "contracts/*",
-    "!contracts/mocks"
+    "!contracts/test"
   ],
   "scripts": {
     "test": "hardhat test",
