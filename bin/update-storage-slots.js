@@ -1,5 +1,33 @@
 #!/usr/bin/env node
 
+/**
+
+Helper script for searching all the storage files that define a hash slot and update
+it if necessary using the label on the comment.
+
+Usage:
+  npm run update-storage-slots
+
+This script will find all the contracts that have something like this defined:
+
+```
+        assembly {
+            // bytes32(uint(keccak256("io.synthetix.proxy")) - 1)
+            store.slot := 0x0000000000000000000000000000000000000000000000000000000000000000
+        }
+```
+
+And replace it with the correct calculated hash from the label:
+
+```
+        assembly {
+            // bytes32(uint(keccak256("io.synthetix.proxy")) - 1)
+            store.slot := 0x9dbde58b6f7305fccdc5abd7ea1096e84de3f9ee47d83d8c3efc3e5557ac9c74
+        }
+```
+
+*/
+
 const path = require('path');
 const fs = require('fs/promises');
 const { promisify } = require('util');
