@@ -3,24 +3,26 @@ const assert = require('assert');
 const assertRevert = require('@synthetixio/core-js/utils/assert-revert');
 const { findEvent } = require('@synthetixio/core-js/utils/events');
 
-describe('UniversalProxy', () => {
+describe('UUPSImplementation', () => {
   let Proxy, Instance, Implementation;
 
   before('set up proxy and implementation', async () => {
     let factory;
 
-    factory = await ethers.getContractFactory('UniversalProxyImplementationMockA');
+    factory = await ethers.getContractFactory('UUPSImplementationMockA');
     Implementation = await factory.deploy();
 
     factory = await ethers.getContractFactory('ForwardingProxyMock');
-    Proxy = await factory.deploy(Implementation.address);
+    Proxy = await factory.deploy();
+    const tx = await Proxy.initialize(Implementation.address);
+    await tx.wait();
 
-    Instance = await ethers.getContractAt('UniversalProxyImplementationMockA', Proxy.address);
+    Instance = await ethers.getContractAt('UUPSImplementationMockA', Proxy.address);
 
     assert.equal(await Proxy.getImplementation(), Implementation.address);
   });
 
-  describe('when UniversalProxyImplementationMockA is set as the implementation', () => {
+  describe('when UUPSImplementationMockA is set as the implementation', () => {
     describe('when interacting with the implementation via the proxy', async () => {
       describe('when reading and setting a value that exists in the implementation', () => {
         before('set a value', async () => {
@@ -45,10 +47,7 @@ describe('UniversalProxy', () => {
         let BadInstance;
 
         before('wrap the implementation', async () => {
-          BadInstance = await ethers.getContractAt(
-            'UniversalProxyImplementationMockB',
-            Proxy.address
-          );
+          BadInstance = await ethers.getContractAt('UUPSImplementationMockB', Proxy.address);
         });
 
         it('reverts', async () => {
@@ -147,23 +146,20 @@ describe('UniversalProxy', () => {
     let receipt, UpgradedImplementation, UpgradedInstance;
 
     before('upgrade', async () => {
-      const factory = await ethers.getContractFactory('UniversalProxyImplementationMockB');
+      const factory = await ethers.getContractFactory('UUPSImplementationMockB');
       UpgradedImplementation = await factory.deploy();
 
       const tx = await Instance.upgradeTo(UpgradedImplementation.address);
       receipt = await tx.wait();
 
-      UpgradedInstance = await ethers.getContractAt(
-        'UniversalProxyImplementationMockB',
-        Proxy.address
-      );
+      UpgradedInstance = await ethers.getContractAt('UUPSImplementationMockB', Proxy.address);
     });
 
     after('rollback', async () => {
       const tx = await UpgradedInstance.upgradeTo(Implementation.address);
       receipt = await tx.wait();
 
-      Instance = await ethers.getContractAt('UniversalProxyImplementationMockA', Proxy.address);
+      Instance = await ethers.getContractAt('UUPSImplementationMockA', Proxy.address);
 
       const event = findEvent({ receipt, eventName: 'Upgraded' });
 

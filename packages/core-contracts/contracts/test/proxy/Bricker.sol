@@ -1,9 +1,9 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "../../proxy/UniversalProxyImplementation.sol";
+import "../../proxy/UUPSImplementation.sol";
 
-contract Bricker is UniversalProxyImplementation {
+contract Bricker is UUPSImplementation {
     // Missing _slot0 => all storage is offseted by one slot
     bytes32 private _slot1;
     bytes32 private _slot2;
