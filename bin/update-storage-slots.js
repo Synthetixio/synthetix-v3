@@ -46,8 +46,10 @@ function toEip1967Hash(label) {
 
 async function main() {
   const contracts = await glob(
-    path.join(__dirname, '..', '**', 'contracts', 'storage', '**', '*.sol'),
-    { ignore: ['**/node_modules/**', '**/artifacts/**'] }
+    path.join(__dirname, '..', 'packages', '**', 'contracts', '**', '*.sol'),
+    {
+      ignore: ['**/node_modules/**', '**/artifacts/**'],
+    }
   );
 
   for (const contractPath of contracts) {
