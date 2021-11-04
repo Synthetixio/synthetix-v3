@@ -9,18 +9,18 @@ describe('UniversalProxy', () => {
   before('set up proxy and implementation', async () => {
     let factory;
 
-    factory = await ethers.getContractFactory('UniversalProxyImplementationMockA');
+    factory = await ethers.getContractFactory('UUPSImplementationMockA');
     Implementation = await factory.deploy();
 
-    factory = await ethers.getContractFactory('ForwardingProxyMock');
+    factory = await ethers.getContractFactory('ForwardingProxy');
     Proxy = await factory.deploy(Implementation.address);
 
-    Instance = await ethers.getContractAt('UniversalProxyImplementationMockA', Proxy.address);
+    Instance = await ethers.getContractAt('UUPSImplementationMockA', Proxy.address);
 
     assert.equal(await Proxy.getImplementation(), Implementation.address);
   });
 
-  describe('when UniversalProxyImplementationMockA is set as the implementation', () => {
+  describe('when UUPSImplementationMockA is set as the implementation', () => {
     describe('when interacting with the implementation via the proxy', async () => {
       describe('when reading and setting a value that exists in the implementation', () => {
         before('set a value', async () => {
@@ -46,7 +46,7 @@ describe('UniversalProxy', () => {
 
         before('wrap the implementation', async () => {
           BadInstance = await ethers.getContractAt(
-            'UniversalProxyImplementationMockB',
+            'UUPSImplementationMockB',
             Proxy.address
           );
         });
@@ -143,18 +143,18 @@ describe('UniversalProxy', () => {
     });
   });
 
-  describe('when upgrading to a non-sterile implementation', () => {
+  describe.only('when upgrading to a non-sterile implementation', () => {
     let receipt, UpgradedImplementation, UpgradedInstance;
 
     before('upgrade', async () => {
-      const factory = await ethers.getContractFactory('UniversalProxyImplementationMockB');
+      const factory = await ethers.getContractFactory('UUPSImplementationMockB');
       UpgradedImplementation = await factory.deploy();
 
       const tx = await Instance.upgradeTo(UpgradedImplementation.address);
       receipt = await tx.wait();
 
       UpgradedInstance = await ethers.getContractAt(
-        'UniversalProxyImplementationMockB',
+        'UUPSImplementationMockB',
         Proxy.address
       );
     });
@@ -163,7 +163,7 @@ describe('UniversalProxy', () => {
       const tx = await UpgradedInstance.upgradeTo(Implementation.address);
       receipt = await tx.wait();
 
-      Instance = await ethers.getContractAt('UniversalProxyImplementationMockA', Proxy.address);
+      Instance = await ethers.getContractAt('UUPSImplementationMockA', Proxy.address);
 
       const event = findEvent({ receipt, eventName: 'Upgraded' });
 
