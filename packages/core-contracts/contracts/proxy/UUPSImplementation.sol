@@ -6,7 +6,7 @@ import "../utils/TransformUtil.sol";
 import "../common/CommonErrors.sol";
 import "./ProxyStorage.sol";
 
-abstract contract UUPSImplementation is ProxyStorage, ContractUtil, TransformUtil, CommonErrors {
+contract UUPSImplementation is ProxyStorage, ContractUtil, TransformUtil, CommonErrors {
     error ImplementationIsSterile(address implementation);
 
     event Upgraded(address implementation);
@@ -27,7 +27,9 @@ abstract contract UUPSImplementation is ProxyStorage, ContractUtil, TransformUti
         return _proxyStorage().simulatingUpgrade;
     }
 
-    function upgradeTo(address newImplementation) public virtual;
+    function upgradeTo(address newImplementation) public virtual {
+        _upgradeTo(newImplementation);
+    }
 
     function _upgradeTo(address newImplementation) internal {
         if (newImplementation == address(0)) {

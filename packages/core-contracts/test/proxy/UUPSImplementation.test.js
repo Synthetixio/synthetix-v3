@@ -14,7 +14,8 @@ describe('UUPSImplementation', () => {
 
     factory = await ethers.getContractFactory('ForwardingProxyMock');
     Proxy = await factory.deploy();
-    await Proxy.initialize(Implementation.address);
+    const tx = await Proxy.initialize(Implementation.address);
+    await tx.wait();
 
     Instance = await ethers.getContractAt('UUPSImplementationMockA', Proxy.address);
 
