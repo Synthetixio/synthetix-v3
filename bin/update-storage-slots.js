@@ -35,8 +35,8 @@ const { ethers } = require('ethers');
 
 const glob = promisify(require('glob'));
 
-const LabelRegex = /\/\/ bytes32\(uint\(keccak256\("([^"]+)"\)\) - 1\)/;
-const HashRegex = /store\.slot := (0x[0-9A-Fa-f]{64})/;
+const SlotRegex =
+  /^\s*\/\/ bytes32\(uint\(keccak256\("([^"]+)"\)\) - 1\)\n\s*store\.slot := (0x[0-9A-Fa-f]{64})$/gm;
 
 function toEip1967Hash(label) {
   const hash = ethers.utils.id(label);
@@ -46,36 +46,37 @@ function toEip1967Hash(label) {
 
 async function main() {
   const contracts = await glob(
-    path.join(__dirname, '..', 'packages', '**', 'contracts', '**', '*.sol'),
+    path.resolve(__dirname, '..', 'packages', '**', 'contracts', '**', '*.sol'),
     {
       ignore: ['**/node_modules/**', '**/artifacts/**'],
     }
   );
 
-  for (const contractPath of contracts) {
-    const source = await fs.readFile(contractPath).then((buff) => buff.toString());
-    const labelMatch = source.match(LabelRegex);
-    const oldHashMatch = source.match(HashRegex);
+  await Promise.all(
+    contracts.map(async (contractPath) => {
+      const source = await fs.readFile(contractPath).then((buff) => buff.toString());
 
-    if (!labelMatch || !oldHashMatch) continue;
+      const result = source.replace(SlotRegex, (...args) => {
+        const [match, label, oldHash] = args;
+        const newHash = toEip1967Hash(label);
 
-    const [, label] = labelMatch;
-    const [, oldHash] = oldHashMatch;
+        if (newHash === oldHash) return match;
 
-    const newHash = toEip1967Hash(label);
+        console.log(
+          `Updating label "${label}" on "${path.relative(
+            path.resolve(__dirname, '..'),
+            contractPath
+          )}"`
+        );
 
-    if (newHash !== oldHash) {
-      console.log(
-        `Updating label "${label}" on "${path.relative(
-          path.resolve(__dirname, '..'),
-          contractPath
-        )}"`
-      );
+        return match.replace(oldHash, newHash);
+      });
 
-      const result = source.replace(oldHash, newHash);
-      await fs.writeFile(contractPath, result);
-    }
-  }
+      if (source !== result) {
+        await fs.writeFile(contractPath, result);
+      }
+    })
+  );
 }
 
 main().catch((err) => {
