@@ -46,19 +46,23 @@ abstract contract Ownable is OwnableMixin, CommonErrors {
         _setNominatedOwner(address(0));
     }
 
-    function owner() external view virtual returns (address) {
+    function owner() external view returns (address) {
         return _getOwner();
     }
 
-    function nominatedOwner() external view virtual returns (address) {
+    function nominatedOwner() external view returns (address) {
         return _getNominatedOwner();
     }
 
-    function _setOwner(address newOwner) internal virtual;
+    function _getNominatedOwner() internal view returns (address) {
+        return _ownerStorage().nominatedOwner;
+    }
 
-    function _getOwner() internal view virtual override returns (address);
+    function _setOwner(address newOwner) internal {
+        _ownerStorage().owner = newOwner;
+    }
 
-    function _setNominatedOwner(address newNominatedOwner) internal virtual;
-
-    function _getNominatedOwner() internal view virtual returns (address);
+    function _setNominatedOwner(address newNominatedOwner) internal {
+        _ownerStorage().nominatedOwner = newNominatedOwner;
+    }
 }

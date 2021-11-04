@@ -2,10 +2,10 @@
 pragma solidity ^0.8.0;
 
 import "@synthetixio/core-contracts/contracts/proxy/UniversalProxyImplementation.sol";
-import "../mixins/OwnerMixin.sol";
+import "@synthetixio/core-contracts/contracts/ownership/OwnableMixin.sol";
 import "../storage/ProxyStorage.sol";
 
-contract UpgradeModule is UniversalProxyImplementation, ProxyStorage, OwnerMixin {
+contract UpgradeModule is UniversalProxyImplementation, ProxyStorage, OwnableMixin {
     function upgradeTo(address newImplementation) public override onlyOwner {
         _upgradeTo(newImplementation);
     }
