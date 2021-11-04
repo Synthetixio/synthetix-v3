@@ -3,34 +3,66 @@ pragma solidity ^0.8.0;
 
 import "../interfaces/IERC20.sol";
 
-contract ERC20 is IERC20 {
+contract ERC20Storage {
+    struct ERC20Namespace {
+        string name;
+        string symbol;
+        uint8 decimals;
+        mapping(address => uint256) balanceOf;
+        mapping(address => mapping(address => uint256)) allowance;
+        uint256 totalSupply;
+    }
+
+    function _erc20Storage() internal pure returns (ERC20Namespace storage store) {
+        assembly {
+            // bytes32(uint(keccak256("io.synthetix.ERC20")) - 1)
+            store.slot := 0x6778cc3893ab2b9879ff6c7efa3c09530eca8fd1ff3491476ce0c0e67212ae5f
+        }
+    }
+}
+
+contract ERC20 is IERC20, ERC20Storage {
     error InsufficientAllowance(uint required, uint existing);
     error InsufficientBalance(uint required, uint existing);
-
-    string public override name;
-
-    string public override symbol;
-
-    uint8 public immutable override decimals;
-
-    mapping(address => uint256) public override balanceOf;
-
-    mapping(address => mapping(address => uint256)) public override allowance;
-
-    uint256 public override totalSupply;
 
     constructor(
         string memory tokenName,
         string memory tokenSymbol,
         uint8 tokenDecimals
     ) {
-        name = tokenName;
-        symbol = tokenSymbol;
-        decimals = tokenDecimals;
+        ERC20Namespace storage store = _erc20Storage();
+
+        store.name = tokenName;
+        store.symbol = tokenSymbol;
+        store.decimals = tokenDecimals;
+    }
+
+    function name() external view override returns (string memory) {
+        return _erc20Storage().name;
+    }
+
+    function symbol() external view override returns (string memory) {
+        return _erc20Storage().symbol;
+    }
+
+    function decimals() external view override returns (uint8) {
+        return _erc20Storage().decimals;
+    }
+
+    function totalSupply() external view override returns (uint) {
+        return _erc20Storage().totalSupply;
+    }
+
+    function allowance(address owner, address spender) public view override returns (uint) {
+        return _erc20Storage().allowance[owner][spender];
+    }
+
+    function balanceOf(address owner) public view override returns (uint) {
+        return _erc20Storage().balanceOf[owner];
     }
 
     function approve(address spender, uint256 amount) public override returns (bool) {
-        allowance[msg.sender][spender] = amount;
+        _erc20Storage().allowance[msg.sender][spender] = amount;
 
         emit Approval(msg.sender, spender, amount);
 
@@ -48,13 +80,15 @@ contract ERC20 is IERC20 {
         address to,
         uint amount
     ) external override returns (bool) {
-        uint256 currentAllowance = allowance[from][msg.sender];
+        ERC20Namespace storage store = _erc20Storage();
+
+        uint256 currentAllowance = store.allowance[from][msg.sender];
         if (currentAllowance < amount) {
             revert InsufficientAllowance(amount, currentAllowance);
         }
 
         unchecked {
-            allowance[from][msg.sender] -= amount;
+            store.allowance[from][msg.sender] -= amount;
         }
 
         _transfer(from, to, amount);
@@ -67,7 +101,9 @@ contract ERC20 is IERC20 {
         address to,
         uint256 amount
     ) private {
-        uint256 accountBalance = balanceOf[from];
+        ERC20Namespace storage store = _erc20Storage();
+
+        uint256 accountBalance = store.balanceOf[from];
         if (accountBalance < amount) {
             revert InsufficientBalance(amount, accountBalance);
         }
@@ -77,34 +113,38 @@ contract ERC20 is IERC20 {
         // The total supply cannot exceed the maximum value of uint256,
         // thus we can now perform accounting operations in unchecked mode.
         unchecked {
-            balanceOf[from] -= amount;
-            balanceOf[to] += amount;
+            store.balanceOf[from] -= amount;
+            store.balanceOf[to] += amount;
         }
 
         emit Transfer(from, to, amount);
     }
 
     function _mint(address to, uint256 amount) internal {
-        totalSupply += amount;
+        ERC20Namespace storage store = _erc20Storage();
+
+        store.totalSupply += amount;
 
         // No need for overflow check since it is done in the previous step
         unchecked {
-            balanceOf[to] += amount;
+            store.balanceOf[to] += amount;
         }
 
         emit Transfer(address(0), to, amount);
     }
 
     function _burn(address from, uint256 amount) internal {
-        uint256 accountBalance = balanceOf[from];
+        ERC20Namespace storage store = _erc20Storage();
+
+        uint256 accountBalance = store.balanceOf[from];
         if (accountBalance < amount) {
             revert InsufficientBalance(amount, accountBalance);
         }
 
         // No need for underflow check since it would have occured in the previous step
         unchecked {
-            balanceOf[from] -= amount;
-            totalSupply -= amount;
+            store.balanceOf[from] -= amount;
+            store.totalSupply -= amount;
         }
 
         emit Transfer(from, address(0), amount);
