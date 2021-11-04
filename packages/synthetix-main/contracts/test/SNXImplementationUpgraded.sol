@@ -1,12 +1,11 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@synthetixio/core-contracts/contracts/ownership/OwnableMixin.sol";
 import "@synthetixio/core-contracts/contracts/proxy/UniversalProxyImplementation.sol";
 import "./SNXStorageUpgraded.sol";
 
 // a basic (null) implementation (shoud be an ERC20 or even ERC20 on steroids?)
-contract SNXImplementationUpgraded is SNXStorageUpgraded, OwnableMixin, UniversalProxyImplementation {
+contract SNXImplementationUpgraded is SNXStorageUpgraded, UniversalProxyImplementation {
     error alreadyInitialized();
 
     function initialize(address owner) public {
@@ -17,11 +16,8 @@ contract SNXImplementationUpgraded is SNXStorageUpgraded, OwnableMixin, Universa
         _snxStorage().initialized = true;
     }
 
-    function _getOwner() internal view override returns (address) {
-        return _snxStorage().owner;
-    }
-
-    function upgradeTo(address newImplementation) public override onlyOwner {
+    function upgradeTo(address newImplementation) public override {
+        require(msg.sender == _snxStorage().owner, "Only owner");
         _upgradeTo(newImplementation);
     }
 
