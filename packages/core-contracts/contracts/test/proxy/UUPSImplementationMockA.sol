@@ -1,6 +1,8 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import "../../proxy/UUPSImplementation.sol";
+
 contract ImplementationMockStorage {
     struct ImplementationMockNamespace {
         uint a;
@@ -14,12 +16,16 @@ contract ImplementationMockStorage {
     }
 }
 
-contract ImplementationMockA is ImplementationMockStorage {
+contract UUPSImplementationMockA is UUPSImplementation, ImplementationMockStorage {
     function setA(uint newA) external {
         _getImplementationMockStorage().a = newA;
     }
 
     function getA() external view returns (uint) {
         return _getImplementationMockStorage().a;
+    }
+
+    function upgradeTo(address newImplementation) public override {
+        _upgradeTo(newImplementation);
     }
 }
