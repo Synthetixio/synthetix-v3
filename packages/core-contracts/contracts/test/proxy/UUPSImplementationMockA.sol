@@ -24,8 +24,4 @@ contract UUPSImplementationMockA is UUPSImplementation, ImplementationMockStorag
     function getA() external view returns (uint) {
         return _implementationMockStorage().a;
     }
-
-    function upgradeTo(address newImplementation) public override {
-        _upgradeTo(newImplementation);
-    }
 }
