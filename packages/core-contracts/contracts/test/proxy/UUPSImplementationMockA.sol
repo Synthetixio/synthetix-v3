@@ -8,7 +8,7 @@ contract ImplementationMockStorage {
         uint a;
     }
 
-    function _getImplementationMockStorage() internal pure returns (ImplementationMockNamespace storage store) {
+    function _implementationMockStorage() internal pure returns (ImplementationMockNamespace storage store) {
         assembly {
             // bytes32(uint(keccak256("io.synthetix.v3.core-contracts.proxyimplementation")) - 1)
             store.slot := 0xd2adbc3c9c4f8d59de43697ca626553b287f0ffd89301738d2b2d6ae3172b7f7
@@ -18,11 +18,11 @@ contract ImplementationMockStorage {
 
 contract UUPSImplementationMockA is UUPSImplementation, ImplementationMockStorage {
     function setA(uint newA) external {
-        _getImplementationMockStorage().a = newA;
+        _implementationMockStorage().a = newA;
     }
 
     function getA() external view returns (uint) {
-        return _getImplementationMockStorage().a;
+        return _implementationMockStorage().a;
     }
 
     function upgradeTo(address newImplementation) public override {

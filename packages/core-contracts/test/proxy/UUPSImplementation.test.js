@@ -46,10 +46,7 @@ describe('UUPSImplementation', () => {
         let BadInstance;
 
         before('wrap the implementation', async () => {
-          BadInstance = await ethers.getContractAt(
-            'UUPSImplementationMockB',
-            Proxy.address
-          );
+          BadInstance = await ethers.getContractAt('UUPSImplementationMockB', Proxy.address);
         });
 
         it('reverts', async () => {
@@ -154,10 +151,7 @@ describe('UUPSImplementation', () => {
       const tx = await Instance.upgradeTo(UpgradedImplementation.address);
       receipt = await tx.wait();
 
-      UpgradedInstance = await ethers.getContractAt(
-        'UUPSImplementationMockB',
-        Proxy.address
-      );
+      UpgradedInstance = await ethers.getContractAt('UUPSImplementationMockB', Proxy.address);
     });
 
     after('rollback', async () => {

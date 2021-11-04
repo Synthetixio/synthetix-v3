@@ -4,20 +4,7 @@ pragma solidity ^0.8.0;
 import "../utils/ContractUtil.sol";
 import "../utils/TransformUtil.sol";
 import "../common/CommonErrors.sol";
-
-contract ProxyStorage {
-    struct ProxyNamespace {
-        address implementation;
-        bool simulatingUpgrade;
-    }
-
-    function _getProxyStorage() internal pure returns (ProxyNamespace storage store) {
-        assembly {
-            // bytes32(uint(keccak256("io.synthetix.v3.core-contracts.proxy")) - 1)
-            store.slot := 0xd3daca0a6d7491bc2d56eb9cc5d57a44c6b4ef14a20af389ba5d245f0f5b351d
-        }
-    }
-}
+import "./ProxyStorage.sol";
 
 abstract contract UUPSImplementation is ProxyStorage, ContractUtil, TransformUtil, CommonErrors {
     error ImplementationIsSterile(address implementation);
@@ -25,19 +12,19 @@ abstract contract UUPSImplementation is ProxyStorage, ContractUtil, TransformUti
     event Upgraded(address implementation);
 
     function _setImplementation(address newImplementation) internal virtual {
-        _getProxyStorage().implementation = newImplementation;
+        _proxyStorage().implementation = newImplementation;
     }
 
     function _getImplementation() internal view virtual returns (address) {
-        return _getProxyStorage().implementation;
+        return _proxyStorage().implementation;
     }
 
     function _setSimulatingUpgrade(bool simulatingUpgrade) internal virtual {
-        _getProxyStorage().simulatingUpgrade = simulatingUpgrade;
+        _proxyStorage().simulatingUpgrade = simulatingUpgrade;
     }
 
     function _getSimulatingUpgrade() internal view virtual returns (bool) {
-        return _getProxyStorage().simulatingUpgrade;
+        return _proxyStorage().simulatingUpgrade;
     }
 
     function upgradeTo(address newImplementation) public virtual;

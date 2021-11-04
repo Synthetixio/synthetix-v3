@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@synthetixio/core-modules/contracts/storage/ProxyStorage.sol";
+import "@synthetixio/core-contracts/contracts/proxy/ProxyStorage.sol";
 
 contract CommsMixin is ProxyStorage {
     error IntermoduleCallFailed();
