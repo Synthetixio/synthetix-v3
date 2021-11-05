@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 import "./OwnableMixin.sol";
 import "../common/CommonErrors.sol";
 
-abstract contract Ownable is OwnableMixin, CommonErrors {
+contract Ownable is OwnableMixin, CommonErrors {
     error NotNominated(address addr);
     error InvalidNomination(address addr);
     error NoNomination();
@@ -19,7 +19,7 @@ abstract contract Ownable is OwnableMixin, CommonErrors {
             revert NotNominated(msg.sender);
         }
 
-        emit OwnerChanged(_getOwner(), currentNominatedOwner);
+        emit OwnerChanged(_ownableStorage().owner, currentNominatedOwner);
         _setOwner(currentNominatedOwner);
 
         _setNominatedOwner(address(0));
@@ -46,19 +46,23 @@ abstract contract Ownable is OwnableMixin, CommonErrors {
         _setNominatedOwner(address(0));
     }
 
-    function owner() external view virtual returns (address) {
-        return _getOwner();
+    function owner() external view returns (address) {
+        return _ownableStorage().owner;
     }
 
-    function nominatedOwner() external view virtual returns (address) {
-        return _getNominatedOwner();
+    function nominatedOwner() external view returns (address) {
+        return _ownableStorage().nominatedOwner;
     }
 
-    function _setOwner(address newOwner) internal virtual;
+    function _getNominatedOwner() internal view returns (address) {
+        return _ownableStorage().nominatedOwner;
+    }
 
-    function _getOwner() internal view virtual override returns (address);
+    function _setOwner(address newOwner) internal {
+        _ownableStorage().owner = newOwner;
+    }
 
-    function _setNominatedOwner(address newNominatedOwner) internal virtual;
-
-    function _getNominatedOwner() internal view virtual returns (address);
+    function _setNominatedOwner(address newNominatedOwner) internal {
+        _ownableStorage().nominatedOwner = newNominatedOwner;
+    }
 }
