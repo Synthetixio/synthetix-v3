@@ -60,6 +60,8 @@ describe('UUPSProxy', () => {
     });
 
     describe('when upgrading to implementation B', () => {
+      let upgradeReceipt;
+
       before('deploy the implementation', async () => {
         const factory = await ethers.getContractFactory('ImplementationMockB');
         Implementation = await factory.deploy();
@@ -67,13 +69,19 @@ describe('UUPSProxy', () => {
 
       before('upgrade', async () => {
         const tx = await Instance.upgradeTo(Implementation.address);
-        await tx.wait();
+        upgradeReceipt = await tx.wait();
 
         Instance = await ethers.getContractAt('ImplementationMockB', UUPSProxy.address);
       });
 
       it('shows that the implementation is set', async () => {
         assert.equal(await Instance.getImplementation(), Implementation.address);
+      });
+
+      it('emitted an Upgraded event', async () => {
+        const event = findEvent({ receipt: upgradeReceipt, eventName: 'Upgraded' });
+
+        assert.equal(event.args.implementation, Implementation.address);
       });
 
       describe('when interacting with implementation B', () => {
@@ -91,50 +99,4 @@ describe('UUPSProxy', () => {
       });
     });
   });
-
-  //   after('rollback', async () => {
-  //     const tx = await UpgradedInstance.upgradeTo(Implementation.address);
-  //     receipt = await tx.wait();
-
-  //     Instance = await ethers.getContractAt('UUPSImplementationMockA', Proxy.address);
-
-  //     const event = findEvent({ receipt, eventName: 'Upgraded' });
-
-  //     assert.equal(event.args.implementation, Implementation.address);
-
-  //     assert.equal(await Proxy.getImplementation(), Implementation.address);
-  //   });
-
-  //   it('emitted an Upgraded event', async () => {
-  //     const event = findEvent({ receipt, eventName: 'Upgraded' });
-
-  //     assert.equal(event.args.implementation, UpgradedImplementation.address);
-  //   });
-
-  //   it('shows that the current implementation is correct', async () => {
-  //     assert.equal(await Proxy.getImplementation(), UpgradedImplementation.address);
-  //   });
-
-  //   describe('when interacting with the implementation via the proxy', async () => {
-  //     describe('when reading and setting a value that exists in the implementation, and sending ETH', () => {
-  //       before('set a value and send ETH', async () => {
-  //         await (await UpgradedInstance.setA(1337, { value: ethers.utils.parseEther('1') })).wait();
-  //       });
-
-  //       it('can read the value set', async () => {
-  //         assert.equal(await UpgradedInstance.getA(), 1337);
-  //       });
-  //     });
-
-  //     describe('when reading and setting another value that exists in the implementation', () => {
-  //       before('set a value and send ETH', async () => {
-  //         await (await UpgradedInstance.setB(ethers.utils.formatBytes32String('Hello'))).wait();
-  //       });
-
-  //       it('can read the value set', async () => {
-  //         assert.equal(await UpgradedInstance.getB(), ethers.utils.formatBytes32String('Hello'));
-  //       });
-  //     });
-  //   });
-  // });
 });
