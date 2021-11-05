@@ -14,36 +14,36 @@ contract Ownable is OwnableMixin, CommonErrors {
     event OwnerChanged(address oldOwner, address newOwner);
 
     function acceptOwnership() external {
-        address currentNominatedOwner = _getNominatedOwner();
+        address currentNominatedOwner = _ownableStorage().nominatedOwner;
         if (msg.sender != currentNominatedOwner) {
             revert NotNominated(msg.sender);
         }
 
         emit OwnerChanged(_ownableStorage().owner, currentNominatedOwner);
-        _setOwner(currentNominatedOwner);
+        _ownableStorage().owner = currentNominatedOwner;
 
-        _setNominatedOwner(address(0));
+        _ownableStorage().nominatedOwner = address(0);
     }
 
     function nominateNewOwner(address newNominatedOwner) external onlyOwnerIfSet {
         if (newNominatedOwner == address(0)) {
             revert InvalidAddress(newNominatedOwner);
         }
-        if (newNominatedOwner == _getNominatedOwner()) {
+
+        if (newNominatedOwner == _ownableStorage().nominatedOwner) {
             revert InvalidNomination(newNominatedOwner);
         }
 
-        _setNominatedOwner(newNominatedOwner);
-
+        _ownableStorage().nominatedOwner = newNominatedOwner;
         emit OwnerNominated(newNominatedOwner);
     }
 
     function renounceNomination() external onlyOwner {
-        if (_getNominatedOwner() == address(0)) {
+        if (_ownableStorage().nominatedOwner == address(0)) {
             revert NoNomination();
         }
 
-        _setNominatedOwner(address(0));
+        _ownableStorage().nominatedOwner = address(0);
     }
 
     function owner() external view returns (address) {
@@ -52,17 +52,5 @@ contract Ownable is OwnableMixin, CommonErrors {
 
     function nominatedOwner() external view returns (address) {
         return _ownableStorage().nominatedOwner;
-    }
-
-    function _getNominatedOwner() internal view returns (address) {
-        return _ownableStorage().nominatedOwner;
-    }
-
-    function _setOwner(address newOwner) internal {
-        _ownableStorage().owner = newOwner;
-    }
-
-    function _setNominatedOwner(address newNominatedOwner) internal {
-        _ownableStorage().nominatedOwner = newNominatedOwner;
     }
 }
