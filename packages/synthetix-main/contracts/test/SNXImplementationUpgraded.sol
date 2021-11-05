@@ -1,11 +1,12 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@synthetixio/core-contracts/contracts/proxy/UniversalProxyImplementation.sol";
+import "@synthetixio/core-contracts/contracts/proxy/UUPSImplementation.sol";
+import "@synthetixio/core-contracts/contracts/ownership/OwnableMixin.sol";
 import "./SNXStorageUpgraded.sol";
 
 // a basic (null) implementation (shoud be an ERC20 or even ERC20 on steroids?)
-contract SNXImplementationUpgraded is SNXStorageUpgraded, UniversalProxyImplementation {
+contract SNXImplementationUpgraded is SNXStorageUpgraded, OwnableMixin, UUPSImplementation {
     error alreadyInitialized();
 
     function initialize(address owner) public {
@@ -19,22 +20,6 @@ contract SNXImplementationUpgraded is SNXStorageUpgraded, UniversalProxyImplemen
     function upgradeTo(address newImplementation) public override {
         require(msg.sender == _snxStorage().owner, "Only owner");
         _upgradeTo(newImplementation);
-    }
-
-    function _setImplementation(address newImplementation) internal override {
-        _snxStorage().implementation = newImplementation;
-    }
-
-    function _getImplementation() internal view override returns (address) {
-        return _snxStorage().implementation;
-    }
-
-    function _setSimulatingUpgrade(bool simulatingUpgrade) internal virtual override {
-        _snxStorage().simulatingUpgrade = simulatingUpgrade;
-    }
-
-    function _getSimulatingUpgrade() internal view override returns (bool) {
-        return _snxStorage().simulatingUpgrade;
     }
 
     function getImplementation() public view returns (address) {

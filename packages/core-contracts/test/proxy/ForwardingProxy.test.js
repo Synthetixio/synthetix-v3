@@ -13,7 +13,9 @@ describe('ForwardingProxy', () => {
       Implementation = await factory.deploy();
 
       factory = await ethers.getContractFactory('ForwardingProxyMock');
-      Proxy = await factory.deploy(Implementation.address);
+      Proxy = await factory.deploy();
+      const tx = await Proxy.initialize(Implementation.address);
+      await tx.wait();
 
       Instance = await ethers.getContractAt('ImplementationMockA', Proxy.address);
     });
@@ -76,7 +78,9 @@ describe('ForwardingProxy', () => {
       Implementation = await factory.deploy();
 
       factory = await ethers.getContractFactory('ForwardingProxyMock');
-      Proxy = await factory.deploy(Implementation.address);
+      Proxy = await factory.deploy();
+      const tx = await Proxy.initialize(Implementation.address);
+      await tx.wait();
 
       Instance = await ethers.getContractAt('ImplementationMockB', Proxy.address);
     });

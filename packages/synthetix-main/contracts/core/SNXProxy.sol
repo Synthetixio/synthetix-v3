@@ -8,12 +8,4 @@ contract SNXProxy is ForwardingProxy, SNXStorage {
     constructor(address firstImplementation) {
         _setImplementation(firstImplementation);
     }
-
-    function _setImplementation(address newImplementation) internal override {
-        _snxStorage().implementation = newImplementation;
-    }
-
-    function _getImplementation() internal view override returns (address) {
-        return _snxStorage().implementation;
-    }
 }

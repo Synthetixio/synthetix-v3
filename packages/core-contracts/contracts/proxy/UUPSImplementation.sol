@@ -4,21 +4,32 @@ pragma solidity ^0.8.0;
 import "../utils/ContractUtil.sol";
 import "../utils/TransformUtil.sol";
 import "../common/CommonErrors.sol";
+import "./ProxyStorage.sol";
 
-abstract contract UniversalProxyImplementation is ContractUtil, TransformUtil, CommonErrors {
+contract UUPSImplementation is ProxyStorage, ContractUtil, TransformUtil, CommonErrors {
     error ImplementationIsSterile(address implementation);
 
     event Upgraded(address implementation);
 
-    function _setImplementation(address newImplementation) internal virtual;
+    function _setImplementation(address newImplementation) internal virtual {
+        _proxyStorage().implementation = newImplementation;
+    }
 
-    function _getImplementation() internal view virtual returns (address);
+    function _getImplementation() internal view virtual returns (address) {
+        return _proxyStorage().implementation;
+    }
 
-    function _setSimulatingUpgrade(bool simulatingUpgrade) internal virtual;
+    function _setSimulatingUpgrade(bool simulatingUpgrade) internal virtual {
+        _proxyStorage().simulatingUpgrade = simulatingUpgrade;
+    }
 
-    function _getSimulatingUpgrade() internal view virtual returns (bool);
+    function _getSimulatingUpgrade() internal view virtual returns (bool) {
+        return _proxyStorage().simulatingUpgrade;
+    }
 
-    function upgradeTo(address newImplementation) public virtual;
+    function upgradeTo(address newImplementation) public virtual {
+        _upgradeTo(newImplementation);
+    }
 
     function _upgradeTo(address newImplementation) internal {
         if (newImplementation == address(0)) {
