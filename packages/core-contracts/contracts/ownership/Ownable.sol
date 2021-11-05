@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 import "./OwnableMixin.sol";
 import "../common/CommonErrors.sol";
 
-abstract contract Ownable is OwnableMixin, CommonErrors {
+contract Ownable is OwnableMixin, CommonErrors {
     error NotNominated(address addr);
     error InvalidNomination(address addr);
     error NoNomination();
@@ -19,7 +19,7 @@ abstract contract Ownable is OwnableMixin, CommonErrors {
             revert NotNominated(msg.sender);
         }
 
-        emit OwnerChanged(_getOwner(), currentNominatedOwner);
+        emit OwnerChanged(_ownableStorage().owner, currentNominatedOwner);
         _setOwner(currentNominatedOwner);
 
         _setNominatedOwner(address(0));
@@ -47,11 +47,11 @@ abstract contract Ownable is OwnableMixin, CommonErrors {
     }
 
     function owner() external view returns (address) {
-        return _getOwner();
+        return _ownableStorage().owner;
     }
 
     function nominatedOwner() external view returns (address) {
-        return _getNominatedOwner();
+        return _ownableStorage().nominatedOwner;
     }
 
     function _getNominatedOwner() internal view returns (address) {

@@ -13,8 +13,9 @@ contract OwnableMixin is OwnableStorage {
 
     modifier onlyOwnerIfSet() {
         address owner = _getOwner();
-        if (owner != address(0) && msg.sender != owner) {
-            revert OnlyOwnerAllowed();
+        // if owner is set then check if msg.sender is the owner
+        if (owner != address(0)) {
+            _onlyOwner();
         }
         _;
     }
