@@ -13,7 +13,7 @@ describe('Beacon', () => {
   });
 
   describe('when a beacon is deployed', () => {
-    before('deploy the beacon and implementation', async () => {
+    before('deploy the beacon and set an initial implementation', async () => {
       let factory;
 
       factory = await ethers.getContractFactory('ERC20');
@@ -21,7 +21,10 @@ describe('Beacon', () => {
       ERC20Mock2 = await factory.deploy('Random Token 2', 'rnd2', 18);
 
       factory = await ethers.getContractFactory('BeaconMock');
-      Beacon = await factory.deploy(ERC20Mock1.address);
+      Beacon = await factory.deploy();
+      // set the implementation via upgradeTo()
+      const tx = await Beacon.upgradeTo(ERC20Mock1.address);
+      tx.wait();
     });
 
     it('shows that the implementation is set', async () => {
@@ -32,6 +35,13 @@ describe('Beacon', () => {
       let receipt;
 
       describe('when upgrading to an invalid implementation', () => {
+        it('reverts when attempting to upgrade to the same implementation', async () => {
+          await assertRevert(
+            Beacon.upgradeTo(ERC20Mock1.address),
+            `InvalidImplementation("${ERC20Mock1.address}")`
+          );
+        });
+
         it('reverts when attempting to upgrade to an EOA', async () => {
           await assertRevert(Beacon.upgradeTo(eoa.address), `InvalidContract("${eoa.address}")`);
         });
