@@ -15,13 +15,10 @@ contract BeaconMock is Beacon {
     bytes32 private _slot8;
     bytes32 private _slot9;
 
-    // we are mocking also the Ownable contract by defining the owner here
-    address private _owner;
     address private _implementation;
 
-    constructor(address firstOwner, address firstImplementation) {
+    constructor(address firstImplementation) {
         _implementation = firstImplementation;
-        _owner = firstOwner;
     }
 
     function upgradeTo(address newImplementation) external {

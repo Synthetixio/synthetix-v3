@@ -55,14 +55,14 @@ abstract contract Ownable is OwnableMixin, CommonErrors {
     }
 
     function _getNominatedOwner() internal view returns (address) {
-        return _ownerStorage().nominatedOwner;
+        return _ownableStorage().nominatedOwner;
     }
 
     function _setOwner(address newOwner) internal {
-        _ownerStorage().owner = newOwner;
+        _ownableStorage().owner = newOwner;
     }
 
     function _setNominatedOwner(address newNominatedOwner) internal {
-        _ownerStorage().nominatedOwner = newNominatedOwner;
+        _ownableStorage().nominatedOwner = newNominatedOwner;
     }
 }

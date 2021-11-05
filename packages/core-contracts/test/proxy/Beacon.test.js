@@ -6,10 +6,10 @@ const { findEvent } = require('@synthetixio/core-js/utils/events');
 describe('Beacon', () => {
   let Beacon, ERC20Mock1, ERC20Mock2;
 
-  let owner, user;
+  let eoa;
 
   before('identify signers', async () => {
-    [owner, user] = await ethers.getSigners();
+    [eoa] = await ethers.getSigners();
   });
 
   describe('when a beacon is deployed', () => {
@@ -21,7 +21,7 @@ describe('Beacon', () => {
       ERC20Mock2 = await factory.deploy('Random Token 2', 'rnd2', 18);
 
       factory = await ethers.getContractFactory('BeaconMock');
-      Beacon = await factory.deploy(owner.address, ERC20Mock1.address);
+      Beacon = await factory.deploy(ERC20Mock1.address);
     });
 
     it('shows that the implementation is set', async () => {
@@ -31,34 +31,27 @@ describe('Beacon', () => {
     describe('when upgrading to a new implementation', async () => {
       let receipt;
 
-      describe('when the owner invokes it', async () => {
-        describe('when upgrading to an invalid implementation', () => {
-          it('reverts when attempting to upgrade to an EOA', async () => {
-            await assertRevert(
-              Beacon.connect(owner).upgradeTo(user.address),
-              `InvalidContract("${user.address}")`
-            );
-          });
-
-          it('reverts when attempting to upgrade to an EOA', async () => {
-            const zeroAddress = '0x0000000000000000000000000000000000000000';
-            await assertRevert(
-              Beacon.connect(owner).upgradeTo(zeroAddress),
-              `InvalidAddress("${zeroAddress}")`
-            );
-          });
+      describe('when upgrading to an invalid implementation', () => {
+        it('reverts when attempting to upgrade to an EOA', async () => {
+          await assertRevert(Beacon.upgradeTo(eoa.address), `InvalidContract("${eoa.address}")`);
         });
-        describe('when upgrading to a valid implementation', () => {
-          before('upgrade', async () => {
-            const tx = await Beacon.upgradeTo(ERC20Mock2.address);
-            receipt = await tx.wait();
-          });
 
-          it('emits an Upgraded event', async () => {
-            const event = findEvent({ receipt, eventName: 'Upgraded' });
+        it('reverts when attempting to upgrade to an EOA', async () => {
+          const zeroAddress = '0x0000000000000000000000000000000000000000';
+          await assertRevert(Beacon.upgradeTo(zeroAddress), `InvalidAddress("${zeroAddress}")`);
+        });
+      });
 
-            assert.equal(event.args.implementation, ERC20Mock2.address);
-          });
+      describe('when upgrading to a valid implementation', () => {
+        before('upgrade', async () => {
+          const tx = await Beacon.upgradeTo(ERC20Mock2.address);
+          receipt = await tx.wait();
+        });
+
+        it('emits an Upgraded event', async () => {
+          const event = findEvent({ receipt, eventName: 'Upgraded' });
+
+          assert.equal(event.args.implementation, ERC20Mock2.address);
         });
       });
     });

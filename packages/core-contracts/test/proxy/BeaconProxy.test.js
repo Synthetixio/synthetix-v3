@@ -18,7 +18,7 @@ describe('BeaconProxy', () => {
       Implementation = await factory.deploy();
 
       factory = await ethers.getContractFactory('BeaconMock');
-      Beacon = await factory.deploy(owner.address, Implementation.address);
+      Beacon = await factory.deploy(Implementation.address);
 
       factory = await ethers.getContractFactory('BeaconProxyMock');
       BeaconProxy = await factory.deploy(Beacon.address);

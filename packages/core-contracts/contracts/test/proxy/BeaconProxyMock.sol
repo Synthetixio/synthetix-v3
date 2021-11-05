@@ -15,7 +15,6 @@ contract BeaconProxyMock is BeaconProxy {
     bytes32 private _slot8;
     bytes32 private _slot9;
 
-    // we are mocking also the Ownable contract by defining the owner here
     address private _beacon;
 
     constructor(address beacon) {
