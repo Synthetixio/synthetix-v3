@@ -24,7 +24,7 @@ describe('Beacon', () => {
       Beacon = await factory.deploy();
       // set the implementation via upgradeTo()
       const tx = await Beacon.upgradeTo(ERC20Mock1.address);
-      tx.wait();
+      await tx.wait();
     });
 
     it('shows that the implementation is set', async () => {
