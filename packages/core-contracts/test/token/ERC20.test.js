@@ -15,7 +15,18 @@ describe('ERC20', () => {
 
   before('deploy the contract', async () => {
     const factory = await ethers.getContractFactory('ERC20Mock');
-    ERC20 = await factory.deploy('Synthetix Network Token', 'snx', 18);
+    ERC20 = await factory.deploy();
+    const tx = await ERC20.initialize('Synthetix Network Token', 'snx', 18);
+    await tx.wait();
+  });
+
+  describe('When attempting to initialize it again', () => {
+    it('reverts', async () => {
+      await assertRevert(
+        ERC20.initialize('Synthetix Network Token Updated', 'snx', 18),
+        'AlreadyInitialized()'
+      );
+    });
   });
 
   describe('Before minting any tokens', () => {

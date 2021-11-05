@@ -14,16 +14,20 @@ describe('Beacon', () => {
 
   describe('when a beacon is deployed', () => {
     before('deploy the beacon and set an initial implementation', async () => {
-      let factory;
+      let factory, tx;
 
       factory = await ethers.getContractFactory('ERC20');
-      ERC20Mock1 = await factory.deploy('Random Token 1', 'rnd1', 18);
-      ERC20Mock2 = await factory.deploy('Random Token 2', 'rnd2', 18);
+      ERC20Mock1 = await factory.deploy();
+      tx = await ERC20Mock1.initialize('Random Token 1', 'rnd1', 18);
+      await tx.wait();
+      ERC20Mock2 = await factory.deploy();
+      tx = await ERC20Mock2.initialize('Random Token 2', 'rnd2', 18);
+      await tx.wait();
 
       factory = await ethers.getContractFactory('BeaconMock');
       Beacon = await factory.deploy();
       // set the implementation via upgradeTo()
-      const tx = await Beacon.upgradeTo(ERC20Mock1.address);
+      tx = await Beacon.upgradeTo(ERC20Mock1.address);
       await tx.wait();
     });
 

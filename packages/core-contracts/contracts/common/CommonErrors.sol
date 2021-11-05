@@ -5,4 +5,5 @@ interface CommonErrors {
     error InvalidAddress(address addr);
     error InvalidContract(address contr);
     error InvalidImplementation(address addr);
+    error AlreadyInitialized();
 }

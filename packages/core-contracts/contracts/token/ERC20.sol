@@ -2,18 +2,22 @@
 pragma solidity ^0.8.0;
 
 import "../interfaces/IERC20.sol";
+import "../common/CommonErrors.sol";
 import "./ERC20Storage.sol";
 
-contract ERC20 is IERC20, ERC20Storage {
+contract ERC20 is IERC20, ERC20Storage, CommonErrors {
     error InsufficientAllowance(uint required, uint existing);
     error InsufficientBalance(uint required, uint existing);
 
-    constructor(
+    function initialize(
         string memory tokenName,
         string memory tokenSymbol,
         uint8 tokenDecimals
-    ) {
+    ) public virtual {
         ERC20Namespace storage store = _erc20Storage();
+        if (bytes(store.name).length > 0 || bytes(store.symbol).length > 0 || store.decimals > 0) {
+            revert AlreadyInitialized();
+        }
 
         store.name = tokenName;
         store.symbol = tokenSymbol;
