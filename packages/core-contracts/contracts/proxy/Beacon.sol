@@ -6,6 +6,8 @@ import "../common/CommonErrors.sol";
 import "../utils/ContractUtil.sol";
 
 contract Beacon is ProxyStorage, ContractUtil, CommonErrors {
+    event Upgraded(address implementation);
+
     constructor(address firstImplementation) {
         setImplementation(firstImplementation);
     }
@@ -20,6 +22,8 @@ contract Beacon is ProxyStorage, ContractUtil, CommonErrors {
         }
 
         _proxyStorage().implementation = newImplementation;
+
+        emit Upgraded(newImplementation);
     }
 
     function getImplementation() external view returns (address) {
