@@ -11,10 +11,6 @@ contract UUPSImplementation is ProxyStorage, ContractUtil, CommonErrors {
     event Upgraded(address implementation);
 
     function upgradeTo(address newImplementation) public virtual {
-        if (newImplementation == _proxyStorage().implementation) {
-            revert InvalidImplementation(newImplementation);
-        }
-
         if (newImplementation == address(0)) {
             revert InvalidAddress(newImplementation);
         }

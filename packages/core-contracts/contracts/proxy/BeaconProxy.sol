@@ -21,10 +21,6 @@ contract BeaconProxy is AbstractProxy, BeaconStorage, CommonErrors, ContractUtil
     }
 
     function _setBeacon(address newBeacon) public virtual {
-        if (newBeacon == _beaconStorage().beacon) {
-            revert InvalidImplementation(newBeacon);
-        }
-
         if (newBeacon == address(0)) {
             revert InvalidAddress(newBeacon);
         }

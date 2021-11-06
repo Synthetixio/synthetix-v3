@@ -6,11 +6,11 @@ import "../common/CommonErrors.sol";
 import "../utils/ContractUtil.sol";
 
 contract Beacon is ProxyStorage, ContractUtil, CommonErrors {
-    function setImplementation(address newImplementation) external {
-        if (newImplementation == _proxyStorage().implementation) {
-            revert InvalidImplementation(newImplementation);
-        }
+    constructor(address firstImplementation) {
+        setImplementation(firstImplementation);
+    }
 
+    function setImplementation(address newImplementation) public {
         if (newImplementation == address(0)) {
             revert InvalidAddress(newImplementation);
         }
