@@ -5,50 +5,44 @@ const assertRevert = require('@synthetixio/core-js/utils/assert-revert');
 const { ethers } = hre;
 
 describe('UpgradeModule', () => {
-  let UpgradeModuleMockFactory, UpgradeModuleMock;
+  let UpgradeModule, Implementation;
   let owner, user;
 
   before('identify signers', async () => {
     [owner, user] = await ethers.getSigners();
   });
 
-  before('initialize module', async () => {
-    UpgradeModuleMockFactory = await ethers.getContractFactory('UpgradeModuleMock');
-    UpgradeModuleMock = await UpgradeModuleMockFactory.deploy();
+  before('deploy the implementation', async () => {
+    const factory = await ethers.getContractFactory('ImplementationMock');
+    Implementation = await factory.deploy();
   });
 
-  before('set the owner', async () => {
-    await UpgradeModuleMock.__setOwner(owner.address).then((tx) => tx.wait());
+  before('deploy the module mocking the first owner', async () => {
+    const factory = await ethers.getContractFactory('UpgradeModuleMock');
+    UpgradeModule = await factory.deploy();
+
+    const tx = await UpgradeModule.mockFirstOwner(owner.address);
+    await tx.wait();
   });
 
-  describe('when a regular user attempts to upgrade the system', () => {
+  it('shows that the implementation is not set', async () => {
+    assert.equal(await UpgradeModule.getImplementation(), '0x0000000000000000000000000000000000000000');
+  });
+
+  describe('when attempting to set the implementation with a non owner signer', () => {
     it('reverts', async () => {
-      await assertRevert(
-        UpgradeModuleMock.connect(user).upgradeTo(user.address),
-        'OnlyOwnerAllowed'
-      );
+      await assertRevert(UpgradeModule.connect(user).upgradeTo(user.address), 'OnlyOwnerAllowed()');
     });
   });
 
-  describe('when the system is deployed', () => {
-    it('upgrades the new implementation and returns the new result', async () => {
-      try {
-        await UpgradeModuleMock.connect(owner)
-          .__setSimulatingUpgrade(true)
-          .then((tx) => tx.wait());
+  describe('when setting the first implementation', () => {
+    before('set the first implentation using the owner address', async () => {
+      const tx = await UpgradeModule.connect(owner).upgradeTo(Implementation.address);
+      await tx.wait();
+    });
 
-        const NewUpgradeModule = await UpgradeModuleMockFactory.deploy();
-
-        await UpgradeModuleMock.connect(owner)
-          .upgradeTo(NewUpgradeModule.address)
-          .then((tx) => tx.wait());
-
-        assert.equal(await UpgradeModuleMock.getImplementation(), NewUpgradeModule.address);
-      } finally {
-        await UpgradeModuleMock.connect(owner)
-          .__setSimulatingUpgrade(false)
-          .then((tx) => tx.wait());
-      }
+    it('shows that the implementation is not set', async () => {
+      assert.equal(await UpgradeModule.getImplementation(), Implementation.address);
     });
   });
 });
