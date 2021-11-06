@@ -1,16 +1,12 @@
-//SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "../utils/ContractUtil.sol";
-import "../common/CommonErrors.sol";
 import "./ProxyStorage.sol";
+import "../common/CommonErrors.sol";
+import "../utils/ContractUtil.sol";
 
-contract UUPSImplementation is ProxyStorage, ContractUtil, CommonErrors {
-    error ImplementationIsSterile(address implementation);
-
-    event Upgraded(address implementation);
-
-    function upgradeTo(address newImplementation) public virtual {
+contract Beacon is ProxyStorage, ContractUtil, CommonErrors {
+    function setImplementation(address newImplementation) external {
         if (newImplementation == _proxyStorage().implementation) {
             revert InvalidImplementation(newImplementation);
         }
@@ -24,8 +20,6 @@ contract UUPSImplementation is ProxyStorage, ContractUtil, CommonErrors {
         }
 
         _proxyStorage().implementation = newImplementation;
-
-        emit Upgraded(newImplementation);
     }
 
     function getImplementation() external view returns (address) {

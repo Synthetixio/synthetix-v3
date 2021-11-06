@@ -5,8 +5,6 @@ import "./AbstractProxy.sol";
 import "./ProxyStorage.sol";
 
 contract UUPSProxy is AbstractProxy, ProxyStorage {
-    // NOTE: It's ok to have a constructor in this case,
-    // because proxies obviously won't be behing another proxy.
     constructor(address firstImplementation) {
         _setImplementation(firstImplementation);
     }
