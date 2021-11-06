@@ -26,7 +26,10 @@ describe('UpgradeModule', () => {
   });
 
   it('shows that the implementation is not set', async () => {
-    assert.equal(await UpgradeModule.getImplementation(), '0x0000000000000000000000000000000000000000');
+    assert.equal(
+      await UpgradeModule.getImplementation(),
+      '0x0000000000000000000000000000000000000000'
+    );
   });
 
   describe('when attempting to set the implementation with a non owner signer', () => {

@@ -20,7 +20,7 @@ contract BeaconProxy is AbstractProxy, BeaconStorage, CommonErrors, ContractUtil
         Beacon(_getBeacon()).setImplementation(newImplementation);
     }
 
-    function _setBeacon(address newBeacon) public virtual {
+    function _setBeacon(address newBeacon) internal virtual {
         if (newBeacon == address(0)) {
             revert InvalidAddress(newBeacon);
         }
@@ -32,7 +32,7 @@ contract BeaconProxy is AbstractProxy, BeaconStorage, CommonErrors, ContractUtil
         _beaconStorage().beacon = newBeacon;
     }
 
-    function _getBeacon() public view virtual returns (address) {
+    function _getBeacon() internal view virtual returns (address) {
         return _beaconStorage().beacon;
     }
 }

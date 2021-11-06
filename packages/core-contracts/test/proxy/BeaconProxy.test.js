@@ -53,14 +53,20 @@ describe('BeaconProxy', () => {
     describe('when trying to upgrade to an EOA', () => {
       it('reverts', async () => {
         const [user] = await ethers.getSigners();
-        await assertRevert(Beacon.setImplementation(user.address), `InvalidContract("${user.address}")`);
+        await assertRevert(
+          Beacon.setImplementation(user.address),
+          `InvalidContract("${user.address}")`
+        );
       });
     });
 
     describe('when trying to upgrade to the zero address', () => {
       it('reverts', async () => {
         const zeroAddress = '0x0000000000000000000000000000000000000000';
-        await assertRevert(Beacon.setImplementation(zeroAddress), `InvalidAddress("${zeroAddress}")`);
+        await assertRevert(
+          Beacon.setImplementation(zeroAddress),
+          `InvalidAddress("${zeroAddress}")`
+        );
       });
     });
 
