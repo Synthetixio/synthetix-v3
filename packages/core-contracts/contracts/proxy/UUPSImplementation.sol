@@ -8,7 +8,7 @@ import "./ProxyStorage.sol";
 contract UUPSImplementation is ProxyStorage, ContractUtil, CommonErrors {
     event Upgraded(address implementation);
 
-    function upgradeTo(address newImplementation) public virtual {
+    function _upgradeTo(address newImplementation) internal virtual {
         if (newImplementation == address(0)) {
             revert InvalidAddress(newImplementation);
         }

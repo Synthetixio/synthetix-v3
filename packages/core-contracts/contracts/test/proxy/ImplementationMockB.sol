@@ -1,9 +1,9 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "../../proxy/UUPSImplementation.sol";
+import "./UUPSImplementationMock.sol";
 
-contract ImplementationMockB is UUPSImplementation {
+contract ImplementationMockB is UUPSImplementationMock {
     uint private _a;
     string private _b;
 
