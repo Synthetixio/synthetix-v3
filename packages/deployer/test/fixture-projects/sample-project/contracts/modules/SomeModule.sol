@@ -7,22 +7,22 @@ contract SomeModule is GlobalStorage {
     event ValueSet(address sender, uint value);
 
     function setValue(uint newValue) public {
-        _globalStorage().value = newValue;
+        _globalStore()().value = newValue;
 
         emit ValueSet(msg.sender, newValue);
     }
 
     function setSomeValue(uint newSomeValue) public {
-        _globalStorage().someValue = newSomeValue;
+        _globalStore()().someValue = newSomeValue;
 
         emit ValueSet(msg.sender, newSomeValue);
     }
 
     function getValue() public view returns (uint) {
-        return _globalStorage().value;
+        return _globalStore()().value;
     }
 
     function getSomeValue() public view returns (uint) {
-        return _globalStorage().someValue;
+        return _globalStore()().someValue;
     }
 }
