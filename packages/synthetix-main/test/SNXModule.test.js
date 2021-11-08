@@ -1,4 +1,3 @@
-// const hre = require('hardhat');
 const assert = require('assert');
 const { ethers } = hre;
 const { getProxyAddress } = require('@synthetixio/deployer/utils/deployments');
