@@ -14,36 +14,42 @@ contract Ownable is OwnableMixin, CommonErrors {
     event OwnerChanged(address oldOwner, address newOwner);
 
     function acceptOwnership() external {
-        address currentNominatedOwner = _ownableStorage().nominatedOwner;
+        OwnableNamespace storage store = _ownableStorage();
+
+        address currentNominatedOwner = store.nominatedOwner;
         if (msg.sender != currentNominatedOwner) {
             revert NotNominated(msg.sender);
         }
 
-        emit OwnerChanged(_ownableStorage().owner, currentNominatedOwner);
-        _ownableStorage().owner = currentNominatedOwner;
+        emit OwnerChanged(store.owner, currentNominatedOwner);
+        store.owner = currentNominatedOwner;
 
-        _ownableStorage().nominatedOwner = address(0);
+        store.nominatedOwner = address(0);
     }
 
     function nominateNewOwner(address newNominatedOwner) external onlyOwnerIfSet {
+        OwnableNamespace storage store = _ownableStorage();
+
         if (newNominatedOwner == address(0)) {
             revert InvalidAddress(newNominatedOwner);
         }
 
-        if (newNominatedOwner == _ownableStorage().nominatedOwner) {
+        if (newNominatedOwner == store.nominatedOwner) {
             revert InvalidNomination(newNominatedOwner);
         }
 
-        _ownableStorage().nominatedOwner = newNominatedOwner;
+        store.nominatedOwner = newNominatedOwner;
         emit OwnerNominated(newNominatedOwner);
     }
 
     function renounceNomination() external onlyOwner {
-        if (_ownableStorage().nominatedOwner == address(0)) {
+        OwnableNamespace storage store = _ownableStorage();
+
+        if (store.nominatedOwner == address(0)) {
             revert NoNomination();
         }
 
-        _ownableStorage().nominatedOwner = address(0);
+        store.nominatedOwner = address(0);
     }
 
     function owner() external view returns (address) {
