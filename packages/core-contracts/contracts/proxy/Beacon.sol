@@ -8,10 +8,6 @@ import "../utils/ContractUtil.sol";
 contract Beacon is ProxyStorage, ContractUtil, CommonErrors {
     event Upgraded(address implementation);
 
-    constructor(address firstImplementation) {
-        setImplementation(firstImplementation);
-    }
-
     function setImplementation(address newImplementation) public {
         if (newImplementation == address(0)) {
             revert InvalidAddress(newImplementation);

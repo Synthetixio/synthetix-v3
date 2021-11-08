@@ -11,14 +11,19 @@ describe('Beacon', () => {
     [user] = await ethers.getSigners();
   });
 
+  before('deploy the beacon', async () => {
+    const factory = await ethers.getContractFactory('Beacon');
+    Beacon = await factory.deploy();
+  });
+
   before('deploy the implementation', async () => {
     const factory = await ethers.getContractFactory('ImplementationMockA');
     Implementation = await factory.deploy();
   });
 
-  before('when deploying a beacon with its first implementation', async () => {
-    const factory = await ethers.getContractFactory('Beacon');
-    Beacon = await factory.deploy(Implementation.address);
+  before('set the beacons first implementation', async () => {
+    const tx = await Beacon.setImplementation(Implementation.address);
+    await tx.wait();
   });
 
   it('shows that the implementation is set', async () => {
