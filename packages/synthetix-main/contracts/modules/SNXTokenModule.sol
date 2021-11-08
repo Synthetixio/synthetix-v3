@@ -12,7 +12,9 @@ contract SNXTokenModule is OwnableMixin, SNXTokenStorage {
     event SNXTokenCreated(address snxAddress);
 
     function createSNX() public onlyOwner {
-        if (_snxTokenStorage().snxTokenAddress != address(0)) {
+        SNXTokenStore storage store = _snxTokenStore();
+
+        if (store.snxTokenAddress != address(0)) {
             revert SNXAlreadyCreated();
         }
 
@@ -23,7 +25,7 @@ contract SNXTokenModule is OwnableMixin, SNXTokenStorage {
         SNXToken(address(snxTokenProxy)).nominateNewOwner(address(this));
         SNXToken(address(snxTokenProxy)).acceptOwnership();
 
-        _snxTokenStorage().snxTokenAddress = address(snxTokenProxy);
+        store.snxTokenAddress = address(snxTokenProxy);
 
         emit SNXTokenCreated(address(snxTokenProxy));
     }
@@ -33,6 +35,6 @@ contract SNXTokenModule is OwnableMixin, SNXTokenStorage {
     }
 
     function getSNXTokenAddress() public view returns (address) {
-        return _snxTokenStorage().snxTokenAddress;
+        return _snxTokenStore().snxTokenAddress;
     }
 }
