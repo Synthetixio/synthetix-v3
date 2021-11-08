@@ -1,9 +1,9 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@synthetixio/core-modules/contracts/modules/OwnerModule.sol";
+import "@synthetixio/core-contracts/contracts/ownership/Ownable.sol";
 
 // solhint-disable-next-line no-empty-blocks
-contract SNXOwnerModule is OwnerModule {
+contract SNXOwnerModule is Ownable {
 
 }

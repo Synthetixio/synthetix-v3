@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 contract BeaconStorage {
     struct BeaconNamespace {
-        address implementation;
+        address beacon;
     }
 
     function _beaconStorage() internal pure returns (BeaconNamespace storage store) {

@@ -1,21 +1,38 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "./ForwardingProxy.sol";
+import "./AbstractProxy.sol";
+import "./Beacon.sol";
+import "./BeaconStorage.sol";
 import "../common/CommonErrors.sol";
-import "../interfaces/IBeacon.sol";
-import "../ownership/OwnableMixin.sol";
 import "../utils/ContractUtil.sol";
 
-abstract contract BeaconProxy is ForwardingProxy {
-    // solhint-disable-next-line no-empty-blocks
-    function _getBeacon() internal view virtual returns (address) {}
-
-    function _getImplementation() internal view override returns (address) {
-        return IBeacon(_getBeacon()).getImplementation();
+contract BeaconProxy is AbstractProxy, BeaconStorage, CommonErrors, ContractUtil {
+    constructor(address firstBeacon) {
+        _setBeacon(firstBeacon);
     }
 
-    // the implementation can be set only by the Beacon
-    // solhint-disable-next-line no-empty-blocks
-    function _setImplementation(address newImplementation) internal override {}
+    function _getImplementation() internal view override returns (address) {
+        return Beacon(_getBeacon()).getImplementation();
+    }
+
+    function _setImplementation(address newImplementation) internal override {
+        Beacon(_getBeacon()).setImplementation(newImplementation);
+    }
+
+    function _setBeacon(address newBeacon) internal virtual {
+        if (newBeacon == address(0)) {
+            revert InvalidAddress(newBeacon);
+        }
+
+        if (!_isContract(newBeacon)) {
+            revert InvalidContract(newBeacon);
+        }
+
+        _beaconStorage().beacon = newBeacon;
+    }
+
+    function _getBeacon() internal view virtual returns (address) {
+        return _beaconStorage().beacon;
+    }
 }

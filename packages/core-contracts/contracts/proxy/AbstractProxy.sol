@@ -1,9 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "./ProxyStorage.sol";
-
-contract ForwardingProxy is ProxyStorage {
+abstract contract AbstractProxy {
     fallback() external payable {
         _forward();
     }
@@ -33,11 +31,7 @@ contract ForwardingProxy is ProxyStorage {
         }
     }
 
-    function _setImplementation(address newImplementation) internal virtual {
-        _proxyStorage().implementation = newImplementation;
-    }
+    function _setImplementation(address newImplementation) internal virtual;
 
-    function _getImplementation() internal view virtual returns (address) {
-        return _proxyStorage().implementation;
-    }
+    function _getImplementation() internal view virtual returns (address);
 }

@@ -4,7 +4,6 @@ pragma solidity ^0.8.0;
 contract ProxyStorage {
     struct ProxyNamespace {
         address implementation;
-        bool simulatingUpgrade;
     }
 
     function _proxyStorage() internal pure returns (ProxyNamespace storage store) {

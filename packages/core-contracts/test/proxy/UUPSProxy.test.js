@@ -3,34 +3,24 @@ const assert = require('assert');
 const assertRevert = require('@synthetixio/core-js/utils/assert-revert');
 const { findEvent } = require('@synthetixio/core-js/utils/events');
 
-describe('BeaconProxy', () => {
-  let BeaconProxy, Instance, Beacon, Implementation;
+describe('UUPSProxy', () => {
+  let UUPSProxy, Instance, Implementation;
 
   describe('when deploying the proxy and setting implementation A as the first implementation', () => {
-    before('deploy the beacon', async () => {
-      const factory = await ethers.getContractFactory('Beacon');
-      Beacon = await factory.deploy();
-    });
-
     before('deploy the implementation', async () => {
       const factory = await ethers.getContractFactory('ImplementationMockA');
       Implementation = await factory.deploy();
     });
 
-    before('set the beacons first implementation', async () => {
-      const tx = await Beacon.setImplementation(Implementation.address);
-      await tx.wait();
-    });
-
     before('deploy the proxy', async () => {
-      const factory = await ethers.getContractFactory('BeaconProxy');
-      BeaconProxy = await factory.deploy(Beacon.address);
+      const factory = await ethers.getContractFactory('UUPSProxy');
+      UUPSProxy = await factory.deploy(Implementation.address);
 
-      Instance = await ethers.getContractAt('ImplementationMockA', BeaconProxy.address);
+      Instance = await ethers.getContractAt('ImplementationMockA', UUPSProxy.address);
     });
 
     it('shows that the implementation is set', async () => {
-      assert.equal(await Beacon.getImplementation(), Implementation.address);
+      assert.equal(await Instance.getImplementation(), Implementation.address);
     });
 
     describe('when interacting with implementation A', () => {
@@ -47,7 +37,7 @@ describe('BeaconProxy', () => {
       let BadInstance;
 
       before('wrap the implementation', async () => {
-        BadInstance = await ethers.getContractAt('ImplementationMockB', BeaconProxy.address);
+        BadInstance = await ethers.getContractAt('ImplementationMockB', UUPSProxy.address);
       });
 
       it('reverts', async () => {
@@ -58,20 +48,14 @@ describe('BeaconProxy', () => {
     describe('when trying to upgrade to an EOA', () => {
       it('reverts', async () => {
         const [user] = await ethers.getSigners();
-        await assertRevert(
-          Beacon.setImplementation(user.address),
-          `InvalidContract("${user.address}")`
-        );
+        await assertRevert(Instance.upgradeTo(user.address), `InvalidContract("${user.address}")`);
       });
     });
 
     describe('when trying to upgrade to the zero address', () => {
       it('reverts', async () => {
         const zeroAddress = '0x0000000000000000000000000000000000000000';
-        await assertRevert(
-          Beacon.setImplementation(zeroAddress),
-          `InvalidAddress("${zeroAddress}")`
-        );
+        await assertRevert(Instance.upgradeTo(zeroAddress), `InvalidAddress("${zeroAddress}")`);
       });
     });
 
@@ -84,14 +68,14 @@ describe('BeaconProxy', () => {
       });
 
       before('upgrade', async () => {
-        const tx = await Beacon.setImplementation(Implementation.address);
+        const tx = await Instance.upgradeTo(Implementation.address);
         upgradeReceipt = await tx.wait();
 
-        Instance = await ethers.getContractAt('ImplementationMockB', BeaconProxy.address);
+        Instance = await ethers.getContractAt('ImplementationMockB', UUPSProxy.address);
       });
 
       it('shows that the implementation is set', async () => {
-        assert.equal(await Beacon.getImplementation(), Implementation.address);
+        assert.equal(await Instance.getImplementation(), Implementation.address);
       });
 
       it('emitted an Upgraded event', async () => {
