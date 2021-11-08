@@ -11,7 +11,7 @@ contract ERC20Storage {
         uint256 totalSupply;
     }
 
-    function _erc20Store() internal pure returns (ERC20Namespace storage store) {
+    function _erc20Store() internal pure returns (ERC20Store storage store) {
         assembly {
             // bytes32(uint(keccak256("io.synthetix.ERC20")) - 1)
             store.slot := 0x6778cc3893ab2b9879ff6c7efa3c09530eca8fd1ff3491476ce0c0e67212ae5f
