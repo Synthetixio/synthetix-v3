@@ -5,7 +5,7 @@ import "@synthetixio/core-contracts/contracts/proxy/UUPSImplementation.sol";
 import "@synthetixio/core-contracts/contracts/ownership/Ownable.sol";
 
 contract SNXToken is Ownable, UUPSImplementation {
-    function upgradeTo(address newImplementation) public override onlyOwner {
-        super.upgradeTo(newImplementation);
+    function upgradeTo(address newImplementation) public onlyOwner {
+        _upgradeTo(newImplementation);
     }
 }
