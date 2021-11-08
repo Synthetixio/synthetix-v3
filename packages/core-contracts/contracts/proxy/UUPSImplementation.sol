@@ -6,8 +6,6 @@ import "../common/CommonErrors.sol";
 import "./ProxyStorage.sol";
 
 contract UUPSImplementation is ProxyStorage, ContractUtil, CommonErrors {
-    error ImplementationIsSterile(address implementation);
-
     event Upgraded(address implementation);
 
     function upgradeTo(address newImplementation) public virtual {
