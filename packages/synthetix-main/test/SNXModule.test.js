@@ -1,99 +1,80 @@
 // const hre = require('hardhat');
-// const assert = require('assert');
-// const { ethers } = hre;
-// const { getProxyAddress } = require('@synthetixio/deployer/utils/deployments');
-// const assertRevert = require('@synthetixio/core-js/utils/assert-revert');
-// const { findEvent } = require('@synthetixio/core-js/utils/events');
-// const bootstrap = require('./helpers/bootstrap');
+const assert = require('assert');
+const { ethers } = hre;
+const { getProxyAddress } = require('@synthetixio/deployer/utils/deployments');
+const assertRevert = require('@synthetixio/core-js/utils/assert-revert');
+const { findEvent } = require('@synthetixio/core-js/utils/events');
+const bootstrap = require('./helpers/bootstrap');
 
-// describe('SNXModule', function () {
-//   const { deploymentInfo, initSystem } = bootstrap();
+describe('SNXTokenModule', function () {
+  const { deploymentInfo, initSystem } = bootstrap();
 
-//   let owner;
+  let owner;
 
-//   before('initialize the system', async () => {
-//     await initSystem();
-//     [owner] = await ethers.getSigners();
-//   });
+  before('initialize the system', async () => {
+    await initSystem();
+    [owner] = await ethers.getSigners();
+  });
 
-//   describe('When creating the SNX token', async () => {
-//     let SNXModule, snxAddress;
-//     before('identify modules', async () => {
-//       const proxyAddress = getProxyAddress(deploymentInfo);
-//       SNXModule = await ethers.getContractAt('SNXModule', proxyAddress);
-//     });
+  describe('When creating the SNX token', async () => {
+    let SNXTokenModule, snxTokenAddress;
+    before('identify modules', async () => {
+      const proxyAddress = getProxyAddress(deploymentInfo);
+      SNXTokenModule = await ethers.getContractAt('SNXTokenModule', proxyAddress);
+    });
 
-//     it('No SNX is deployed', async () => {
-//       const address = await SNXModule.getSNXAddress();
-//       assert.equal(address, '0x0000000000000000000000000000000000000000');
-//     });
+    it('No SNX is deployed', async () => {
+      const address = await SNXTokenModule.getSNXTokenAddress();
+      assert.equal(address, '0x0000000000000000000000000000000000000000');
+    });
 
-//     describe('When the SNX is created', () => {
-//       let receipt;
-//       before('Create a SNX token', async () => {
-//         const tx = await SNXModule.connect(owner).createSNX();
-//         receipt = await tx.wait();
-//       });
+    describe('When the SNX is created', () => {
+      let receipt;
+      before('Create a SNX token', async () => {
+        const tx = await SNXTokenModule.connect(owner).createSNX();
+        receipt = await tx.wait();
+      });
 
-//       before('Identify newly created SNX', async () => {
-//         const event = findEvent({ receipt, eventName: 'SNXCreated' });
-//         snxAddress = event.args.snxAddress;
-//       });
+      before('Identify newly created SNX', async () => {
+        const event = findEvent({ receipt, eventName: 'SNXTokenCreated' });
+        snxTokenAddress = event.args.snxAddress;
+      });
 
-//       it('emmited an event', async () => {
-//         assert.notEqual(snxAddress, '0x0000000000000000000000000000000000000000');
-//       });
+      it('emmited an event', async () => {
+        assert.notEqual(snxTokenAddress, '0x0000000000000000000000000000000000000000');
+      });
 
-//       it('gets the newly created address', async () => {
-//         const address = await SNXModule.getSNXAddress();
-//         assert.equal(address, snxAddress);
-//       });
+      it('gets the newly created address', async () => {
+        const address = await SNXTokenModule.getSNXTokenAddress();
+        assert.equal(address, snxTokenAddress);
+      });
 
-//       describe('When attempting to create the SNX twice', () => {
-//         it('reverts', async () => {
-//           await assertRevert(SNXModule.connect(owner).createSNX(), 'SNXAlreadyCreated()');
-//         });
-//       });
+      describe('When attempting to create the SNX twice', () => {
+        it('reverts', async () => {
+          await assertRevert(SNXTokenModule.connect(owner).createSNX(), 'SNXAlreadyCreated()');
+        });
+      });
 
-//       describe('When attempting to initialize the SNX again', () => {
-//         it('reverts', async () => {
-//           const SNX = await ethers.getContractAt('SNXImplementation', snxAddress);
-//           await assertRevert(SNX.initialize(owner.address), 'alreadyInitialized()');
-//         });
-//       });
+      describe('When attempting to upgrade to a new implementation', () => {
+        let AnotherSNXToken;
 
-//       describe('When attempting to upgrade to a new implementation', () => {
-//         let SNXUpdated, SNXImplementationUpdated;
-//         before('Deploy new implementation', async () => {
-//           const proxyAddress = getProxyAddress(deploymentInfo);
+        before('Deploy new implementation', async () => {
+          const factory = await ethers.getContractFactory('SNXToken');
+          AnotherSNXToken = await factory.deploy();
+        });
 
-//           const factory = await ethers.getContractFactory('SNXImplementationUpgraded');
-//           SNXImplementationUpdated = await factory.deploy();
-//           await SNXImplementationUpdated.initialize(proxyAddress);
-//         });
+        before('Upgrade to new implementation', async () => {
+          const tx = await SNXTokenModule.connect(owner).upgradeSNXImplementation(
+            AnotherSNXToken.address
+          );
+          await tx.wait();
+        });
 
-//         before('Upgrade to new implementation', async () => {
-//           const tx = await SNXModule.connect(owner).upgradeSNXImplementation(
-//             SNXImplementationUpdated.address
-//           );
-//           await tx.wait();
-
-//           SNXUpdated = await ethers.getContractAt('SNXImplementationUpgraded', snxAddress);
-//         });
-//         it('is upgraded', async () => {
-//           const address = await SNXUpdated.getImplementation();
-//           assert.equal(address, SNXImplementationUpdated.address);
-//         });
-
-//         it('can interact with the new implementation', async () => {
-//           let valueA = await SNXUpdated.getValueA();
-//           assert.equal(valueA, 0);
-
-//           await SNXUpdated.setValueA(42);
-//           valueA = await SNXUpdated.getValueA();
-//           assert.equal(valueA, 42);
-//         });
-//       });
-//     });
-//   });
-// });
+        it('is upgraded', async () => {
+          const SNXToken = await ethers.getContractAt('SNXToken', snxTokenAddress);
+          assert.equal(AnotherSNXToken.address, await SNXToken.getImplementation());
+        });
+      });
+    });
+  });
+});
