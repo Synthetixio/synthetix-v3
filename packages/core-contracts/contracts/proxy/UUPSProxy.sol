@@ -6,7 +6,7 @@ import "./ProxyStorage.sol";
 
 contract UUPSProxy is AbstractProxy, ProxyStorage {
     constructor(address firstImplementation) {
-        _proxyStorage().implementation = firstImplementation;
+        _proxyStore().implementation = firstImplementation;
     }
 
     function _getImplementation() internal view virtual override returns (address) {
