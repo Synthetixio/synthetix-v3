@@ -10,10 +10,10 @@ contract UUPSProxy is AbstractProxy, ProxyStorage {
     }
 
     function _setImplementation(address newImplementation) internal virtual override {
-        _proxyStorage().implementation = newImplementation;
+        _proxyStore().implementation = newImplementation;
     }
 
     function _getImplementation() internal view virtual override returns (address) {
-        return _proxyStorage().implementation;
+        return _proxyStore().implementation;
     }
 }

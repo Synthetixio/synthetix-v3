@@ -5,7 +5,7 @@ import "@synthetixio/core-contracts/contracts/proxy/ProxyStorage.sol";
 
 contract Destroyer is ProxyStorage {
     function upgradeTo(address) public {
-        _proxyStorage().implementation = address(0);
+        _proxyStore().implementation = address(0);
 
         selfdestruct(payable(0));
     }

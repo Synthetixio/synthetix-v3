@@ -29,10 +29,10 @@ contract BeaconProxy is AbstractProxy, BeaconStorage, CommonErrors, ContractUtil
             revert InvalidContract(newBeacon);
         }
 
-        _beaconStorage().beacon = newBeacon;
+        _beaconStore().beacon = newBeacon;
     }
 
     function _getBeacon() internal view virtual returns (address) {
-        return _beaconStorage().beacon;
+        return _beaconStore().beacon;
     }
 }
