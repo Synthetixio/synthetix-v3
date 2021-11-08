@@ -5,6 +5,6 @@ import "../storage/GlobalStorage.sol";
 
 contract NewModule is GlobalStorage {
     function setSomeNewValue(uint newValue) public {
-        _globalStore()().someValue = newValue;
+        _globalStore().someValue = newValue;
     }
 }
