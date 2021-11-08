@@ -7,7 +7,7 @@ contract CommsMixin is ProxyStorage {
     error IntermoduleCallFailed();
 
     function _intermoduleCall(bytes memory data) internal returns (bytes memory) {
-        address router = _proxyStorage().implementation;
+        address router = _proxyStore().implementation;
 
         (bool success, bytes memory result) = router.delegatecall(data);
 

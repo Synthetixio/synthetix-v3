@@ -6,10 +6,10 @@ import "../storage/SettingsStorage.sol";
 
 contract SettingsModule is SettingsStorage, OwnableMixin {
     function setASettingValue(uint newSettingValue) public onlyOwner {
-        _settingsStorage().aSettingValue = newSettingValue;
+        _settingsStore().aSettingValue = newSettingValue;
     }
 
     function getASettingValue() public view returns (uint) {
-        return _settingsStorage().aSettingValue;
+        return _settingsStore().aSettingValue;
     }
 }

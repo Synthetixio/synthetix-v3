@@ -9,6 +9,10 @@
 function findEvent({ receipt, eventName, contract = undefined }) {
   let eventsAreParsed = false;
   if (receipt.events !== undefined) {
+    const event = receipt.events.find((e) => e.event === eventName);
+    if (event !== undefined) {
+      return event;
+    }
     eventsAreParsed = !receipt.events.some((e) => e.event === undefined);
   }
 
