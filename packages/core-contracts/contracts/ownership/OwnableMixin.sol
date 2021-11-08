@@ -27,6 +27,6 @@ contract OwnableMixin is OwnableStorage {
     }
 
     function _getOwner() internal view returns (address) {
-        return _ownableStorage().owner;
+        return _ownableStore().owner;
     }
 }

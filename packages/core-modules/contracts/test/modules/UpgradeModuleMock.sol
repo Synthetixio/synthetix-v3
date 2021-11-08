@@ -5,6 +5,6 @@ import "../../modules/UpgradeModule.sol";
 
 contract UpgradeModuleMock is UpgradeModule {
     function mockFirstOwner(address newOwner) public {
-        _ownableStorage().owner = newOwner;
+        _ownableStore().owner = newOwner;
     }
 }

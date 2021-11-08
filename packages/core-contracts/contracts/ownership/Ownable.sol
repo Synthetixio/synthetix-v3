@@ -14,7 +14,7 @@ contract Ownable is OwnableMixin, CommonErrors {
     event OwnerChanged(address oldOwner, address newOwner);
 
     function acceptOwnership() external {
-        OwnableNamespace storage store = _ownableStorage();
+        OwnableStore storage store = _ownableStore();
 
         address currentNominatedOwner = store.nominatedOwner;
         if (msg.sender != currentNominatedOwner) {
@@ -28,7 +28,7 @@ contract Ownable is OwnableMixin, CommonErrors {
     }
 
     function nominateNewOwner(address newNominatedOwner) external onlyOwnerIfSet {
-        OwnableNamespace storage store = _ownableStorage();
+        OwnableStore storage store = _ownableStore();
 
         if (newNominatedOwner == address(0)) {
             revert InvalidAddress(newNominatedOwner);
@@ -43,7 +43,7 @@ contract Ownable is OwnableMixin, CommonErrors {
     }
 
     function renounceNomination() external onlyOwner {
-        OwnableNamespace storage store = _ownableStorage();
+        OwnableStore storage store = _ownableStore();
 
         if (store.nominatedOwner == address(0)) {
             revert NoNomination();
@@ -53,10 +53,10 @@ contract Ownable is OwnableMixin, CommonErrors {
     }
 
     function owner() external view returns (address) {
-        return _ownableStorage().owner;
+        return _ownableStore().owner;
     }
 
     function nominatedOwner() external view returns (address) {
-        return _ownableStorage().nominatedOwner;
+        return _ownableStore().nominatedOwner;
     }
 }
