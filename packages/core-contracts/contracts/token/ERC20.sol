@@ -13,7 +13,7 @@ contract ERC20 is IERC20, ERC20Storage {
         string memory tokenSymbol,
         uint8 tokenDecimals
     ) {
-        ERC20Namespace storage store = _erc20Storage();
+        ERC20Store storage store = _erc20Store();
 
         store.name = tokenName;
         store.symbol = tokenSymbol;
@@ -21,31 +21,31 @@ contract ERC20 is IERC20, ERC20Storage {
     }
 
     function name() external view override returns (string memory) {
-        return _erc20Storage().name;
+        return _erc20Store().name;
     }
 
     function symbol() external view override returns (string memory) {
-        return _erc20Storage().symbol;
+        return _erc20Store().symbol;
     }
 
     function decimals() external view override returns (uint8) {
-        return _erc20Storage().decimals;
+        return _erc20Store().decimals;
     }
 
     function totalSupply() external view override returns (uint) {
-        return _erc20Storage().totalSupply;
+        return _erc20Store().totalSupply;
     }
 
     function allowance(address owner, address spender) public view override returns (uint) {
-        return _erc20Storage().allowance[owner][spender];
+        return _erc20Store().allowance[owner][spender];
     }
 
     function balanceOf(address owner) public view override returns (uint) {
-        return _erc20Storage().balanceOf[owner];
+        return _erc20Store().balanceOf[owner];
     }
 
     function approve(address spender, uint256 amount) public override returns (bool) {
-        _erc20Storage().allowance[msg.sender][spender] = amount;
+        _erc20Store().allowance[msg.sender][spender] = amount;
 
         emit Approval(msg.sender, spender, amount);
 
@@ -63,7 +63,7 @@ contract ERC20 is IERC20, ERC20Storage {
         address to,
         uint amount
     ) external override returns (bool) {
-        ERC20Namespace storage store = _erc20Storage();
+        ERC20Store storage store = _erc20Store();
 
         uint256 currentAllowance = store.allowance[from][msg.sender];
         if (currentAllowance < amount) {
@@ -84,7 +84,7 @@ contract ERC20 is IERC20, ERC20Storage {
         address to,
         uint256 amount
     ) private {
-        ERC20Namespace storage store = _erc20Storage();
+        ERC20Store storage store = _erc20Store();
 
         uint256 accountBalance = store.balanceOf[from];
         if (accountBalance < amount) {
@@ -104,7 +104,7 @@ contract ERC20 is IERC20, ERC20Storage {
     }
 
     function _mint(address to, uint256 amount) internal {
-        ERC20Namespace storage store = _erc20Storage();
+        ERC20Store storage store = _erc20Store();
 
         store.totalSupply += amount;
 
@@ -117,7 +117,7 @@ contract ERC20 is IERC20, ERC20Storage {
     }
 
     function _burn(address from, uint256 amount) internal {
-        ERC20Namespace storage store = _erc20Storage();
+        ERC20Store storage store = _erc20Store();
 
         uint256 accountBalance = store.balanceOf[from];
         if (accountBalance < amount) {
