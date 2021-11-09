@@ -1,15 +1,9 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@synthetixio/core-contracts/contracts/proxy/UUPSImplementation.sol";
-import "@synthetixio/core-contracts/contracts/ownership/Ownable.sol";
-import "@synthetixio/core-contracts/contracts/token/ERC20.sol";
+import "../../token/SNXToken.sol";
 
-contract SNXTokenMock is Ownable, UUPSImplementation, ERC20 {
-    function upgradeTo(address newImplementation) public onlyOwner {
-        _upgradeTo(newImplementation);
-    }
-
+contract SNXTokenMock is SNXToken {
     function mint(uint256 amount) external {
         _mint(msg.sender, amount);
     }
