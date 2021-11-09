@@ -24,12 +24,8 @@ contract ImplementationMockB is UUPSImplementationMock {
     }
 
     // solhint-disable-next-line no-empty-blocks
-    fallback() external payable {
-
-    }
+    fallback() external payable {}
 
     // solhint-disable-next-line no-empty-blocks
-    receive() external payable {
-
-    }
+    receive() external payable {}
 }

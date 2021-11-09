@@ -56,10 +56,7 @@ describe('UUPSProxy', () => {
 
       describe('when sending ETH while interacting with a non payable function', () => {
         it('reverts', async () => {
-          await assertRevert(
-            Instance.setA(1337, { value }),
-            'non-payable method'
-          );
+          await assertRevert(Instance.setA(1337, { value }), 'non-payable method');
         });
       });
 
@@ -68,7 +65,7 @@ describe('UUPSProxy', () => {
           await assertRevert(
             user.sendTransaction({
               to: UUPSProxy.address,
-              value
+              value,
             }),
             'no fallback nor receive function'
           );
