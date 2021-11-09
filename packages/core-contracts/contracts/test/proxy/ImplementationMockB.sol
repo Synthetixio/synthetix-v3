@@ -15,11 +15,17 @@ contract ImplementationMockB is UUPSImplementationMock {
         return _a;
     }
 
-    function setB(string calldata newB) external {
+    function setB(string calldata newB) external payable {
         _b = newB;
     }
 
     function getB() external view returns (string memory) {
         return _b;
     }
+
+    // solhint-disable-next-line no-empty-blocks
+    fallback() external payable {}
+
+    // solhint-disable-next-line no-empty-blocks
+    receive() external payable {}
 }

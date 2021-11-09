@@ -6,6 +6,16 @@ const { findEvent } = require('@synthetixio/core-js/utils/events');
 describe('UUPSProxy', () => {
   let UUPSProxy, Instance, Implementation;
 
+  let user;
+
+  let initialBalance;
+
+  const value = ethers.utils.parseEther('1');
+
+  before('identify signers', async () => {
+    [user] = await ethers.getSigners();
+  });
+
   describe('when deploying the proxy and setting implementation A as the first implementation', () => {
     before('deploy the implementation', async () => {
       const factory = await ethers.getContractFactory('ImplementationMockA');
@@ -23,16 +33,6 @@ describe('UUPSProxy', () => {
       assert.equal(await Instance.getImplementation(), Implementation.address);
     });
 
-    describe('when interacting with implementation A', () => {
-      before('set a value', async () => {
-        await (await Instance.setA(42)).wait();
-      });
-
-      it('can read the value set', async () => {
-        assert.equal(await Instance.getA(), 42);
-      });
-    });
-
     describe('when triyng to interact with methods that A does not have', () => {
       let BadInstance;
 
@@ -45,9 +45,36 @@ describe('UUPSProxy', () => {
       });
     });
 
+    describe('when interacting with implementation A', () => {
+      before('set a value', async () => {
+        await (await Instance.setA(42)).wait();
+      });
+
+      it('can read the value set', async () => {
+        assert.equal(await Instance.getA(), 42);
+      });
+
+      describe('when sending ETH while interacting with a non payable function', () => {
+        it('reverts', async () => {
+          await assertRevert(Instance.setA(1337, { value }), 'non-payable method');
+        });
+      });
+
+      describe('when sending ETH to the proxy', () => {
+        it('reverts, since the implementation has no payable fallback', async () => {
+          await assertRevert(
+            user.sendTransaction({
+              to: UUPSProxy.address,
+              value,
+            }),
+            'no fallback nor receive function'
+          );
+        });
+      });
+    });
+
     describe('when trying to upgrade to an EOA', () => {
       it('reverts', async () => {
-        const [user] = await ethers.getSigners();
         await assertRevert(Instance.upgradeTo(user.address), `InvalidContract("${user.address}")`);
       });
     });
@@ -95,6 +122,40 @@ describe('UUPSProxy', () => {
 
         it('can read the new value set', async () => {
           assert.equal(await Instance.getB(), 'hello');
+        });
+
+        describe('when sending ETH while interacting with a payable function', () => {
+          before('record the initial balance', async () => {
+            initialBalance = await ethers.provider.getBalance(UUPSProxy.address);
+          });
+
+          before('interact with value', async () => {
+            await (await Instance.setB('howdy', { value })).wait();
+          });
+
+          it('increases the proxys balance', async () => {
+            const newBalance = await ethers.provider.getBalance(UUPSProxy.address);
+            const deltaBalance = newBalance.sub(initialBalance);
+
+            assert.deepEqual(deltaBalance, value);
+          });
+        });
+
+        describe('when sending ETH to the proxy', () => {
+          before('record the initial balance', async () => {
+            initialBalance = await ethers.provider.getBalance(UUPSProxy.address);
+          });
+
+          before('send ETH', async () => {
+            await (await user.sendTransaction({ value, to: UUPSProxy.address })).wait();
+          });
+
+          it('incrases the proxys balance', async () => {
+            const newBalance = await ethers.provider.getBalance(UUPSProxy.address);
+            const deltaBalance = newBalance.sub(initialBalance);
+
+            assert.deepEqual(deltaBalance, value);
+          });
         });
       });
     });
