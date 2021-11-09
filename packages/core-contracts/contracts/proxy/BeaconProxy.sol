@@ -8,10 +8,6 @@ import "../common/CommonErrors.sol";
 import "../utils/ContractUtil.sol";
 
 contract BeaconProxy is AbstractProxy, BeaconStorage, CommonErrors, ContractUtil {
-    constructor(address firstBeacon) {
-        _setBeacon(firstBeacon);
-    }
-
     function _getImplementation() internal view override returns (address) {
         return Beacon(_getBeacon()).getImplementation();
     }
