@@ -31,7 +31,5 @@ abstract contract AbstractProxy {
         }
     }
 
-    function _setImplementation(address newImplementation) internal virtual;
-
     function _getImplementation() internal view virtual returns (address);
 }
