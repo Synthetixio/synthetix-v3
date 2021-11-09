@@ -9,11 +9,11 @@ contract ERC20 is IERC20, ERC20Storage {
     error InsufficientBalance(uint required, uint existing);
     error AlreadyInitialized();
 
-    function initialize(
+    function _initialize(
         string memory tokenName,
         string memory tokenSymbol,
         uint8 tokenDecimals
-    ) public virtual {
+    ) internal virtual {
         ERC20Store storage store = _erc20Store();
         if (bytes(store.name).length > 0 || bytes(store.symbol).length > 0 || store.decimals > 0) {
             revert AlreadyInitialized();
