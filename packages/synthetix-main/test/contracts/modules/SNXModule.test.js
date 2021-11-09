@@ -3,7 +3,7 @@ const { ethers } = hre;
 const { getProxyAddress } = require('@synthetixio/deployer/utils/deployments');
 const assertRevert = require('@synthetixio/core-js/utils/assert-revert');
 const { findEvent } = require('@synthetixio/core-js/utils/events');
-const bootstrap = require('./helpers/bootstrap');
+const bootstrap = require('../../helpers/bootstrap');
 
 describe('SNXTokenModule', function () {
   const { deploymentInfo, initSystem } = bootstrap();
