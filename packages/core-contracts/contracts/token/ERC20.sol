@@ -7,13 +7,17 @@ import "./ERC20Storage.sol";
 contract ERC20 is IERC20, ERC20Storage {
     error InsufficientAllowance(uint required, uint existing);
     error InsufficientBalance(uint required, uint existing);
+    error AlreadyInitialized();
 
-    constructor(
+    function initialize(
         string memory tokenName,
         string memory tokenSymbol,
         uint8 tokenDecimals
-    ) {
+    ) public virtual {
         ERC20Store storage store = _erc20Store();
+        if (bytes(store.name).length > 0 || bytes(store.symbol).length > 0 || store.decimals > 0) {
+            revert AlreadyInitialized();
+        }
 
         store.name = tokenName;
         store.symbol = tokenSymbol;
