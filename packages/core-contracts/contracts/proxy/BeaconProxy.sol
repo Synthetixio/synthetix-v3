@@ -16,10 +16,6 @@ contract BeaconProxy is AbstractProxy, BeaconStorage, CommonErrors, ContractUtil
         return Beacon(_getBeacon()).getImplementation();
     }
 
-    function _setImplementation(address newImplementation) internal override {
-        Beacon(_getBeacon()).setImplementation(newImplementation);
-    }
-
     function _setBeacon(address newBeacon) internal virtual {
         if (newBeacon == address(0)) {
             revert InvalidAddress(newBeacon);

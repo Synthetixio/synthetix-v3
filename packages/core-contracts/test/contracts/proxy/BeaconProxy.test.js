@@ -8,7 +8,7 @@ describe('BeaconProxy', () => {
 
   describe('when deploying the proxy and setting implementation A as the first implementation', () => {
     before('deploy the beacon', async () => {
-      const factory = await ethers.getContractFactory('Beacon');
+      const factory = await ethers.getContractFactory('BeaconMock');
       Beacon = await factory.deploy();
     });
 
