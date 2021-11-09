@@ -5,16 +5,16 @@ import "@synthetixio/core-contracts/contracts/proxy/UUPSImplementation.sol";
 import "@synthetixio/core-contracts/contracts/ownership/Ownable.sol";
 import "@synthetixio/core-contracts/contracts/token/ERC20.sol";
 
-contract SNXToken is Ownable, UUPSImplementation, ERC20 {
-    function initialize(
-        string memory tokenName,
-        string memory tokenSymbol,
-        uint8 tokenDecimals
-    ) public onlyOwner {
-        _initialize(tokenName, tokenSymbol, tokenDecimals);
-    }
-
+contract SNXTokenMock is Ownable, UUPSImplementation, ERC20 {
     function upgradeTo(address newImplementation) public onlyOwner {
         _upgradeTo(newImplementation);
+    }
+
+    function mint(uint256 amount) external {
+        _mint(msg.sender, amount);
+    }
+
+    function burn(uint256 amount) external {
+        _burn(msg.sender, amount);
     }
 }
