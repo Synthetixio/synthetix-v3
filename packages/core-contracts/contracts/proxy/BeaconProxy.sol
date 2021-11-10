@@ -2,9 +2,9 @@
 pragma solidity ^0.8.0;
 
 import "./AbstractProxy.sol";
-import "./Beacon.sol";
 import "./BeaconStorage.sol";
 import "../common/CommonErrors.sol";
+import "../interfaces/IBeacon.sol";
 import "../utils/ContractUtil.sol";
 
 contract BeaconProxy is AbstractProxy, BeaconStorage, CommonErrors, ContractUtil {
@@ -17,7 +17,7 @@ contract BeaconProxy is AbstractProxy, BeaconStorage, CommonErrors, ContractUtil
     }
 
     function _getImplementation() internal view override returns (address) {
-        return Beacon(_getBeacon()).getImplementation();
+        return IBeacon(_getBeacon()).getImplementation();
     }
 
     function _setBeacon(address newBeacon) internal virtual {
