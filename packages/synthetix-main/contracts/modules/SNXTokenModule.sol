@@ -25,6 +25,8 @@ contract SNXTokenModule is OwnableMixin, SNXTokenStorage {
         SNXToken(address(snxTokenProxy)).nominateNewOwner(address(this));
         SNXToken(address(snxTokenProxy)).acceptOwnership();
 
+        SNXToken(address(snxTokenProxy)).initialize("Synthetix Network Token", "snx", 18);
+
         store.snxTokenAddress = address(snxTokenProxy);
 
         emit SNXTokenCreated(address(snxTokenProxy));
