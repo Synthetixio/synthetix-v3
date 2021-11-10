@@ -3,12 +3,17 @@ pragma solidity ^0.8.0;
 
 import "./BeaconStorage.sol";
 import "../common/CommonErrors.sol";
+import "../ownership/OwnableMixin.sol"; 
 import "../utils/ContractUtil.sol";
 
-contract Beacon is BeaconStorage, ContractUtil, CommonErrors {
+contract Beacon is OwnableMixin, BeaconStorage, ContractUtil, CommonErrors {
     event Upgraded(address implementation);
 
-    function _setImplementation(address newImplementation) internal virtual {
+    constructor(address firstOwner) {
+        _ownableStore().owner = firstOwner;
+    }
+
+    function upgradeTo(address newImplementation) external onlyOwner {
         if (newImplementation == address(0)) {
             revert InvalidAddress(newImplementation);
         }
