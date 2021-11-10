@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "description": "",
   "files": [
-    "contracts/*"
+    "contracts",
+    "!contracts/mocks"
   ],
   "scripts": {
     "test": "hardhat test",
