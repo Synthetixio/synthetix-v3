@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 import "./BeaconStorage.sol";
 import "../common/CommonErrors.sol";
-import "../ownership/OwnableMixin.sol"; 
+import "../ownership/OwnableMixin.sol";
 import "../utils/ContractUtil.sol";
 
 contract Beacon is OwnableMixin, BeaconStorage, ContractUtil, CommonErrors {

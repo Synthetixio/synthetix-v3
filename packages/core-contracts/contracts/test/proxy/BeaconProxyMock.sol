@@ -4,7 +4,6 @@ pragma solidity ^0.8.0;
 import "../../proxy/BeaconProxy.sol";
 
 contract BeaconProxyMock is BeaconProxy {
-
     constructor(address firstBeacon) BeaconProxy(firstBeacon) {}
 
     function setBeacon(address newBeacon) external {
