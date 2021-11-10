@@ -4,7 +4,7 @@ const assertRevert = require('@synthetixio/core-js/utils/assert-revert');
 
 const { ethers } = hre;
 
-describe('UpgradeModule', () => {
+describe('CoreUpgradeModule', () => {
   let UpgradeModule, Implementation;
   let owner, user;
 
