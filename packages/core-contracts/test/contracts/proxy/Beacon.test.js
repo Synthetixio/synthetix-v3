@@ -1,19 +1,20 @@
 const { ethers } = hre;
 const assert = require('assert');
 const assertRevert = require('@synthetixio/core-js/utils/assert-revert');
+const { findEvent } = require('@synthetixio/core-js/utils/events');
 
 describe('Beacon', () => {
   let Beacon, Implementation;
 
-  let user;
+  let owner, user;
 
   before('identify signers', async () => {
-    [user] = await ethers.getSigners();
+    [owner, user] = await ethers.getSigners();
   });
 
   before('deploy the beacon', async () => {
-    const factory = await ethers.getContractFactory('BeaconMock');
-    Beacon = await factory.deploy();
+    const factory = await ethers.getContractFactory('Beacon');
+    Beacon = await factory.deploy(owner.address);
   });
 
   before('deploy the implementation', async () => {
@@ -22,7 +23,7 @@ describe('Beacon', () => {
   });
 
   before('set the beacons first implementation', async () => {
-    const tx = await Beacon.setImplementation(Implementation.address);
+    const tx = await Beacon.upgradeTo(Implementation.address);
     await tx.wait();
   });
 
@@ -32,33 +33,46 @@ describe('Beacon', () => {
 
   describe('when trying to upgrade to an EOA', () => {
     it('reverts', async () => {
-      await assertRevert(
-        Beacon.setImplementation(user.address),
-        `InvalidContract("${user.address}")`
-      );
+      await assertRevert(Beacon.upgradeTo(user.address), `InvalidContract("${user.address}")`);
     });
   });
 
   describe('when trying to upgrade to the zero address', () => {
     it('reverts', async () => {
       const zeroAddress = '0x0000000000000000000000000000000000000000';
-      await assertRevert(Beacon.setImplementation(zeroAddress), `InvalidAddress("${zeroAddress}")`);
+      await assertRevert(Beacon.upgradeTo(zeroAddress), `InvalidAddress("${zeroAddress}")`);
     });
   });
 
-  describe('when setting a new implementation', () => {
+  describe('when upgrading to a new implementation', () => {
     before('deploy the new implementation', async () => {
       const factory = await ethers.getContractFactory('ImplementationMockB');
       Implementation = await factory.deploy();
     });
 
-    before('set the new implementation', async () => {
-      const tx = await Beacon.setImplementation(Implementation.address);
-      await tx.wait();
+    describe('when a non-owner tries to upgrade', () => {
+      it('reverts', async () => {
+        await assertRevert(Beacon.connect(user).upgradeTo(user.address), 'OnlyOwnerAllowed()');
+      });
     });
 
-    it('shows that the implementation is set', async () => {
-      assert.equal(await Beacon.getImplementation(), Implementation.address);
+    describe('when the owner tries to upgrade', () => {
+      let upgradeReceipt;
+
+      before('set the new implementation', async () => {
+        const tx = await Beacon.connect(owner).upgradeTo(Implementation.address);
+        upgradeReceipt = await tx.wait();
+      });
+
+      it('shows that the implementation is set', async () => {
+        assert.equal(await Beacon.getImplementation(), Implementation.address);
+      });
+
+      it('emitted an Upgraded event', async () => {
+        const event = findEvent({ receipt: upgradeReceipt, eventName: 'Upgraded' });
+
+        assert.equal(event.args.implementation, Implementation.address);
+      });
     });
   });
 });

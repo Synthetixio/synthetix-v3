@@ -3,7 +3,8 @@ pragma solidity ^0.8.0;
 
 contract BeaconStorage {
     struct BeaconStore {
-        address beacon;
+        address beacon; // this is where the beacon address is stored, is is set only in the BeaconProxy
+        address implementation; //this is where the beacon implementation is stored, it is set only in the Beacon
     }
 
     function _beaconStore() internal pure returns (BeaconStore storage store) {

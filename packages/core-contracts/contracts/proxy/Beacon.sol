@@ -1,14 +1,19 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "./ProxyStorage.sol";
+import "./BeaconStorage.sol";
 import "../common/CommonErrors.sol";
+import "../ownership/OwnableMixin.sol";
 import "../utils/ContractUtil.sol";
 
-contract Beacon is ProxyStorage, ContractUtil, CommonErrors {
+contract Beacon is OwnableMixin, BeaconStorage, ContractUtil, CommonErrors {
     event Upgraded(address implementation);
 
-    function _setImplementation(address newImplementation) internal virtual {
+    constructor(address firstOwner) {
+        _ownableStore().owner = firstOwner;
+    }
+
+    function upgradeTo(address newImplementation) external onlyOwner {
         if (newImplementation == address(0)) {
             revert InvalidAddress(newImplementation);
         }
@@ -17,12 +22,12 @@ contract Beacon is ProxyStorage, ContractUtil, CommonErrors {
             revert InvalidContract(newImplementation);
         }
 
-        _proxyStore().implementation = newImplementation;
+        _beaconStore().implementation = newImplementation;
 
         emit Upgraded(newImplementation);
     }
 
     function getImplementation() external view returns (address) {
-        return _proxyStore().implementation;
+        return _beaconStore().implementation;
     }
 }
