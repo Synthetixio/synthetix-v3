@@ -3,11 +3,11 @@ pragma solidity ^0.8.0;
 
 import "./AbstractProxy.sol";
 import "./Beacon.sol";
-import "./BeaconStorage.sol";
+import "./BeaconProxyStorage.sol";
 import "../common/CommonErrors.sol";
 import "../utils/ContractUtil.sol";
 
-contract BeaconProxy is AbstractProxy, BeaconStorage, CommonErrors, ContractUtil {
+contract BeaconProxy is AbstractProxy, BeaconProxyStorage, CommonErrors, ContractUtil {
     constructor(address firstBeacon) {
         _setBeacon(firstBeacon);
     }
