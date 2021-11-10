@@ -3,11 +3,11 @@ pragma solidity ^0.8.0;
 
 import "./AbstractProxy.sol";
 import "./Beacon.sol";
-import "./BeaconProxyStorage.sol";
+import "./BeaconStorage.sol";
 import "../common/CommonErrors.sol";
 import "../utils/ContractUtil.sol";
 
-contract BeaconProxy is AbstractProxy, BeaconProxyStorage, CommonErrors, ContractUtil {
+contract BeaconProxy is AbstractProxy, BeaconStorage, CommonErrors, ContractUtil {
     constructor(address firstBeacon) {
         _setBeacon(firstBeacon);
     }
@@ -25,10 +25,10 @@ contract BeaconProxy is AbstractProxy, BeaconProxyStorage, CommonErrors, Contrac
             revert InvalidContract(newBeacon);
         }
 
-        _beaconProxyStore().beacon = newBeacon;
+        _beaconStore().beacon = newBeacon;
     }
 
     function _getBeacon() internal view virtual returns (address) {
-        return _beaconProxyStore().beacon;
+        return _beaconStore().beacon;
     }
 }
