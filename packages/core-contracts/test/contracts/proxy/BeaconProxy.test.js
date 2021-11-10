@@ -22,9 +22,11 @@ describe('BeaconProxy', () => {
       await tx.wait();
     });
 
-    before('deploy the proxy', async () => {
-      const factory = await ethers.getContractFactory('BeaconProxy');
-      BeaconProxy = await factory.deploy(Beacon.address);
+    before('deploy the proxy and set the beacon', async () => {
+      const factory = await ethers.getContractFactory('BeaconProxyMock');
+      BeaconProxy = await factory.deploy();
+      const tx = await BeaconProxy.setBeacon(Beacon.address);
+      await tx.wait();
 
       Instance = await ethers.getContractAt('ImplementationMockA', BeaconProxy.address);
     });
