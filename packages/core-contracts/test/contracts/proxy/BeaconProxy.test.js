@@ -29,7 +29,7 @@ describe('BeaconProxy', () => {
     });
 
     before('deploy the proxy and set the beacon', async () => {
-      const factory = await ethers.getContractFactory('BeaconProxy');
+      const factory = await ethers.getContractFactory('BeaconProxyMock');
       BeaconProxy = await factory.deploy(Beacon.address);
 
       Instance = await ethers.getContractAt('ImplementationMockA', BeaconProxy.address);
@@ -89,6 +89,52 @@ describe('BeaconProxy', () => {
 
         it('can read the new value set', async () => {
           assert.equal(await Instance.getB(), 'hello');
+        });
+      });
+    });
+
+    describe('when setting a new beacon', () => {
+      describe('when trying to set it to an  EOA', () => {
+        it('reverts', async () => {
+          await assertRevert(
+            BeaconProxy.setBeacon(owner.address),
+            `InvalidContract("${owner.address}")`
+          );
+        });
+      });
+
+      describe('when trying to set it to the zero address', () => {
+        it('reverts', async () => {
+          const zeroAddress = '0x0000000000000000000000000000000000000000';
+          await assertRevert(
+            BeaconProxy.setBeacon(zeroAddress),
+            `InvalidAddress("${zeroAddress}")`
+          );
+        });
+      });
+
+      describe('when trying to set it to the same beacon', () => {
+        it('reverts', async () => {
+          await assertRevert(BeaconProxy.setBeacon(Beacon.address), 'NoChange()');
+        });
+      });
+
+      describe('when setting it to a valid contract', () => {
+        let NewBeacon, receipt;
+
+        before('deploy a new beacon', async () => {
+          const factory = await ethers.getContractFactory('Beacon');
+          NewBeacon = await factory.deploy(owner.address);
+          receipt = await (await BeaconProxy.setBeacon(NewBeacon.address)).wait();
+        });
+
+        it('shows that the beacon is set', async () => {
+          assert.equal(await BeaconProxy.getBeacon(), NewBeacon.address);
+        });
+
+        it('emitts an Upgraded event', async () => {
+          const event = findEvent({ receipt, eventName: 'BeaconSet' });
+          assert.equal(event.args.beacon, NewBeacon.address);
         });
       });
     });

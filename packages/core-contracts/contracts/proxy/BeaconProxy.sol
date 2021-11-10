@@ -8,6 +8,10 @@ import "../common/CommonErrors.sol";
 import "../utils/ContractUtil.sol";
 
 contract BeaconProxy is AbstractProxy, BeaconStorage, CommonErrors, ContractUtil {
+    error NoChange();
+
+    event BeaconSet(address beacon);
+
     constructor(address firstBeacon) {
         _setBeacon(firstBeacon);
     }
@@ -25,7 +29,12 @@ contract BeaconProxy is AbstractProxy, BeaconStorage, CommonErrors, ContractUtil
             revert InvalidContract(newBeacon);
         }
 
+        if (newBeacon == _beaconStore().beacon) {
+            revert NoChange();
+        }
+
         _beaconStore().beacon = newBeacon;
+        emit BeaconSet(newBeacon);
     }
 
     function _getBeacon() internal view virtual returns (address) {
