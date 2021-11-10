@@ -2,21 +2,22 @@ const assert = require('assert');
 const { ethers } = hre;
 const { getProxyAddress } = require('@synthetixio/deployer/utils/deployments');
 const assertRevert = require('@synthetixio/core-js/utils/assert-revert');
+const bn = require('@synthetixio/core-js/utils/assert-bignumber');
 const { findEvent } = require('@synthetixio/core-js/utils/events');
 const bootstrap = require('../../helpers/bootstrap');
 
 describe('SNXTokenModule', function () {
   const { deploymentInfo, initSystem } = bootstrap();
 
-  let owner;
+  let owner, user1;
 
   before('initialize the system', async () => {
     await initSystem();
-    [owner] = await ethers.getSigners();
+    [owner, user1] = await ethers.getSigners();
   });
 
   describe('When creating the SNX token', async () => {
-    let SNXTokenModule, snxTokenAddress;
+    let SNXTokenModule, snxTokenAddress, SNX;
     before('identify modules', async () => {
       const proxyAddress = getProxyAddress(deploymentInfo);
       SNXTokenModule = await ethers.getContractAt('SNXTokenModule', proxyAddress);
@@ -37,6 +38,7 @@ describe('SNXTokenModule', function () {
       before('Identify newly created SNX', async () => {
         const event = findEvent({ receipt, eventName: 'SNXTokenCreated' });
         snxTokenAddress = event.args.snxAddress;
+        SNX = await ethers.getContractAt('SNXToken', snxTokenAddress);
       });
 
       it('emmited an event', async () => {
@@ -48,6 +50,12 @@ describe('SNXTokenModule', function () {
         assert.equal(address, snxTokenAddress);
       });
 
+      it('reads the SNX parameters', async () => {
+        assert.equal(await SNX.name(), 'Synthetix Network Token');
+        assert.equal(await SNX.symbol(), 'snx');
+        assert.equal(await SNX.decimals(), 18);
+      });
+
       describe('When attempting to create the SNX twice', () => {
         it('reverts', async () => {
           await assertRevert(SNXTokenModule.connect(owner).createSNX(), 'SNXAlreadyCreated()');
@@ -55,10 +63,10 @@ describe('SNXTokenModule', function () {
       });
 
       describe('When attempting to upgrade to a new implementation', () => {
-        let AnotherSNXToken;
+        let AnotherSNXToken, NewSNX;
 
         before('Deploy new implementation', async () => {
-          const factory = await ethers.getContractFactory('SNXToken');
+          const factory = await ethers.getContractFactory('SNXTokenMock');
           AnotherSNXToken = await factory.deploy();
         });
 
@@ -66,12 +74,32 @@ describe('SNXTokenModule', function () {
           const tx = await SNXTokenModule.connect(owner).upgradeSNXImplementation(
             AnotherSNXToken.address
           );
+
           await tx.wait();
         });
 
         it('is upgraded', async () => {
-          const SNXToken = await ethers.getContractAt('SNXToken', snxTokenAddress);
-          assert.equal(AnotherSNXToken.address, await SNXToken.getImplementation());
+          NewSNX = await ethers.getContractAt('SNXTokenMock', snxTokenAddress);
+          assert.equal(AnotherSNXToken.address, await NewSNX.getImplementation());
+        });
+
+        it('reads the upgraded SNX parameters', async () => {
+          assert.equal(await NewSNX.name(), 'Synthetix Network Token');
+          assert.equal(await NewSNX.symbol(), 'snx');
+          assert.equal(await NewSNX.decimals(), 18);
+        });
+
+        describe('New SNX can mint', () => {
+          const totalSupply = ethers.BigNumber.from('1000000');
+
+          before('mint', async () => {
+            const tx = await NewSNX.connect(user1).mint(totalSupply);
+            await tx.wait();
+          });
+
+          it('updates the total supply', async () => {
+            bn.eq(await NewSNX.totalSupply(), totalSupply);
+          });
         });
       });
     });
