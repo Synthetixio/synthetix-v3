@@ -14,6 +14,10 @@ module.exports = function bootstrap() {
     await deploySystem({ clear: true });
   });
 
+  before('initialize system', async () => {
+    await initSystem();
+  });
+
   after('restore the snapshot', async () => {
     await restoreSnapshot(snapshotId, hre.ethers.provider);
   });
