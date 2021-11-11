@@ -24,6 +24,7 @@ contract SynthsModule is OwnableMixin, SynthsModuleStorage {
         // register the new proxy in the mapping
         _synthsModuleStore().synthProxies[synth] = synthProxyAddress;
         emit NewSynthDeployed(synth, synthProxyAddress);
+        // TODO: initialize Synth
     }
 
     function upgradeSynthImplementation(address newSynthsImplementation) external onlyOwner {
