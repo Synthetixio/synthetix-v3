@@ -36,7 +36,7 @@ class ModuleStorageASTValidator {
   findNamespaceCollisions() {
     const namespaces = [];
 
-    for (var [contractName, ast] of Object.entries(this.asts)) {
+    for (const [contractName, ast] of Object.entries(this.asts)) {
       const slots = findYulStorageSlotAssignments(contractName, ast);
 
       slots.forEach((slot) => namespaces.push({ contractName, slot }));

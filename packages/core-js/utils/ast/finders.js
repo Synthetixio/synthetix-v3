@@ -41,7 +41,7 @@ function findContractDependencies(contractName, asts) {
   }
 
   contractNode.linearizedBaseContracts.forEach((baseContractId) => {
-    for (var [, ast] of Object.entries(asts)) {
+    for (const [, ast] of Object.entries(asts)) {
       const dependency = findContractNodeWithId(baseContractId, ast);
       if (dependency) {
         dependencyContractNodes.push(dependency);
