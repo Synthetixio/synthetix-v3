@@ -8,11 +8,6 @@ const { ethers } = hre;
 describe('CoreCommsMixin', () => {
   let SomeModuleMockImp, AnotherModuleMockImp, Router;
   const WRONG_VALUE = 13;
-  // let owner, user;
-
-  // before('identify signers', async () => {
-  //   [owner, user] = await ethers.getSigners();
-  // });
 
   before('deploy the contracts', async () => {
     let factory;
@@ -20,19 +15,14 @@ describe('CoreCommsMixin', () => {
     SomeModuleMockImp = await factory.deploy();
     factory = await ethers.getContractFactory('AnotherModuleMock');
     AnotherModuleMockImp = await factory.deploy();
-    factory = await ethers.getContractFactory('RouterMock');
-    Router = await factory.deploy(SomeModuleMockImp.address, AnotherModuleMockImp.address);
   });
 
   before('setup the mock router', async () => {
     const factory = await ethers.getContractFactory('RouterMock');
     Router = await factory.deploy(SomeModuleMockImp.address, AnotherModuleMockImp.address);
-    const tx = await Router.setProxyAddress(Router.address);
-    await tx.wait();
   });
 
   it('shows that the mocked setup is set', async () => {
-    assert.equal(await Router.someModuleImp(), SomeModuleMockImp.address);
     assert.equal(await Router.anotherModuleImp(), AnotherModuleMockImp.address);
   });
 
@@ -49,12 +39,6 @@ describe('CoreCommsMixin', () => {
 
     it('shows that the value was set', async () => {
       bn.eq(await SomeModule.getSomeValue(), 42);
-    });
-
-    describe('when attempting to set an invalid value', () => {
-      it('reverts', async () => {
-        await assertRevert(SomeModule.setSomeValue(WRONG_VALUE), 'WrongValue()');
-      });
     });
 
     describe('when interacting via CommsMixin', () => {
