@@ -18,7 +18,7 @@ describe('CoreUpgradeModule', () => {
   });
 
   before('deploy the module mocking the first owner', async () => {
-    const factory = await ethers.getContractFactory('UpgradeModuleMock');
+    const factory = await ethers.getContractFactory('CoreUpgradeModuleMock');
     UpgradeModule = await factory.deploy();
 
     const tx = await UpgradeModule.mockFirstOwner(owner.address);

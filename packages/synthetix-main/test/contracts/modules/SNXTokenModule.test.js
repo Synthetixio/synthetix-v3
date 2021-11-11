@@ -7,12 +7,11 @@ const { findEvent } = require('@synthetixio/core-js/utils/events');
 const bootstrap = require('../../helpers/bootstrap');
 
 describe('SNXTokenModule', function () {
-  const { deploymentInfo, initSystem } = bootstrap();
+  const { deploymentInfo } = bootstrap();
 
   let owner, user1;
 
   before('initialize the system', async () => {
-    await initSystem();
     [owner, user1] = await ethers.getSigners();
   });
 
