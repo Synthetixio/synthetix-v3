@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 import "@synthetixio/core-contracts/contracts/proxy/ProxyStorage.sol";
 
-contract CommsMixin is ProxyStorage {
+contract CoreCommsMixin is ProxyStorage {
     error IntermoduleCallFailed();
 
     function _intermoduleCall(bytes memory data) internal returns (bytes memory) {

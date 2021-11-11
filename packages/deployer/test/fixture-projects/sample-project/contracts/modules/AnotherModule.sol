@@ -1,10 +1,10 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "../mixins/CommsMixin.sol";
+import "@synthetixio/core-modules/contracts/mixins/CoreCommsMixin.sol";
 import "./SomeModule.sol";
 
-contract AnotherModule is CommsMixin {
+contract AnotherModule is CoreCommsMixin {
     /*
        NOTE: This module shows an example of how to do intermodule communications.
 
