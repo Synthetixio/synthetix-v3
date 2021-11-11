@@ -10,8 +10,8 @@ const {
   findInheritedContractNames,
   findYulCaseValues,
   findYulStorageSlotAssignments,
-} = require('../../utils/ast/finders');
-const asts = require('../fixtures/asts.json');
+} = require('../../../utils/ast/finders');
+const asts = require('../../fixtures/asts.json');
 
 describe('utils/ast/finders.js find AST artifacts', function () {
   describe('find contract dependencies', () => {

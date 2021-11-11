@@ -1,6 +1,6 @@
 const { equal, notEqual } = require('assert/strict');
-const { buildContractsStructMap } = require('../../utils/ast/storage-struct');
-const asts = require('../fixtures/asts.json');
+const { buildContractsStructMap } = require('../../../utils/ast/storage-struct');
+const asts = require('../../fixtures/asts.json');
 
 describe('utils/ast/storage-struct.js', function () {
   describe('build a contracts struct map', () => {
