@@ -16,6 +16,7 @@ contract UUPSImplementation is ProxyStorage, ContractUtil, CommonErrors {
 
     // WARNING!!!
     // It is critical that these two functions are protected in production.
+    // ********************************************************************************************
     function safeUpgradeTo(address newImplementation) public {
         _upgradeTo(newImplementation, true);
     }
@@ -23,6 +24,7 @@ contract UUPSImplementation is ProxyStorage, ContractUtil, CommonErrors {
     function unsafeUpgradeTo(address newImplementation) public {
         _upgradeTo(newImplementation, false);
     }
+    // ********************************************************************************************
 
     function _upgradeTo(address newImplementation, bool checkFertility) internal virtual {
         if (address(this) == __self || _proxyStore().implementation != __self) {
