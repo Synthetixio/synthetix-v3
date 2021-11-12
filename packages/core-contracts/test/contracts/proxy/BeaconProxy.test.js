@@ -132,7 +132,7 @@ describe('BeaconProxy', () => {
           assert.equal(await BeaconProxy.getBeacon(), NewBeacon.address);
         });
 
-        it('emitts an Upgraded event', async () => {
+        it('emits an Upgraded event', async () => {
           const event = findEvent({ receipt, eventName: 'BeaconSet' });
           assert.equal(event.args.beacon, NewBeacon.address);
         });
