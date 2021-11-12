@@ -75,14 +75,17 @@ describe('UUPSProxy', () => {
 
     describe('when trying to upgrade to an EOA', () => {
       it('reverts', async () => {
-        await assertRevert(Instance.upgradeTo(user.address), `InvalidContract("${user.address}")`);
+        await assertRevert(
+          Instance.safeUpgradeTo(user.address),
+          `InvalidContract("${user.address}")`
+        );
       });
     });
 
     describe('when trying to upgrade to the zero address', () => {
       it('reverts', async () => {
         const zeroAddress = '0x0000000000000000000000000000000000000000';
-        await assertRevert(Instance.upgradeTo(zeroAddress), `InvalidAddress("${zeroAddress}")`);
+        await assertRevert(Instance.safeUpgradeTo(zeroAddress), `InvalidAddress("${zeroAddress}")`);
       });
     });
 
@@ -95,7 +98,7 @@ describe('UUPSProxy', () => {
       });
 
       before('upgrade', async () => {
-        const tx = await Instance.upgradeTo(Implementation.address);
+        const tx = await Instance.safeUpgradeTo(Implementation.address);
         upgradeReceipt = await tx.wait();
 
         Instance = await ethers.getContractAt('ImplementationMockB', UUPSProxy.address);
@@ -160,19 +163,7 @@ describe('UUPSProxy', () => {
       });
     });
 
-    // TODO: Unskip tests here when the anti-bricking mechanism is put back in place.
     describe('when trying to brick the proxy', () => {
-      describe('when trying to upgrade to a sterile implementation', () => {
-        before('deploy the implementation', async () => {
-          const factory = await ethers.getContractFactory('SterileImplementation');
-          Implementation = await factory.deploy();
-        });
-
-        it.skip('reverts', async () => {
-          await assertRevert(Instance.upgradeTo(Implementation.address), 'SterileImplementation');
-        });
-      });
-
       describe('when trying to destroy the implementaion', () => {
         let Destroyer;
 
@@ -181,8 +172,30 @@ describe('UUPSProxy', () => {
           Destroyer = await factory.deploy();
         });
 
-        it.skip('reverts', async () => {
-          await assertRevert(Implementation.upgradeTo(Destroyer.address), 'SterileImplementation');
+        describe('via safeUpgradeTo', () => {
+          it('reverts', async () => {
+            await assertRevert(Implementation.safeUpgradeTo(Destroyer.address), 'UpgradeToNotCalledViaProxy');
+          });
+        });
+
+        describe('via unsafeUpgradeTo', () => {
+          it('reverts', async () => {
+            await assertRevert(Implementation.unsafeUpgradeTo(Destroyer.address), 'UpgradeToNotCalledViaProxy');
+          });
+        });
+      });
+
+      describe('when trying to upgrade to a sterile implementation', () => {
+        before('deploy the implementation', async () => {
+          const factory = await ethers.getContractFactory('SterileImplementation');
+          Implementation = await factory.deploy();
+        });
+
+        it('reverts', async () => {
+          await assertRevert(
+            Instance.safeUpgradeTo(Implementation.address),
+            'SterileImplementation'
+          );
         });
       });
     });
