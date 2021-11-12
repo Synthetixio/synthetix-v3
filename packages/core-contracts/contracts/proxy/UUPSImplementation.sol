@@ -17,11 +17,11 @@ contract UUPSImplementation is ProxyStorage, ContractUtil, CommonErrors {
     // WARNING!!!
     // It is critical that these two functions are protected in production.
     // ********************************************************************************************
-    function safeUpgradeTo(address newImplementation) public {
+    function safeUpgradeTo(address newImplementation) public virtual {
         _upgradeTo(newImplementation, true);
     }
 
-    function unsafeUpgradeTo(address newImplementation) public {
+    function unsafeUpgradeTo(address newImplementation) public virtual {
         _upgradeTo(newImplementation, false);
     }
 
