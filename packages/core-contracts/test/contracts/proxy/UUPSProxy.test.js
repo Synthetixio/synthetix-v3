@@ -33,7 +33,7 @@ describe('UUPSProxy', () => {
       assert.equal(await Instance.getImplementation(), Implementation.address);
     });
 
-    describe('when triyng to interact with methods that A does not have', () => {
+    describe('when trying to interact with methods that A does not have', () => {
       let BadInstance;
 
       before('wrap the implementation', async () => {
