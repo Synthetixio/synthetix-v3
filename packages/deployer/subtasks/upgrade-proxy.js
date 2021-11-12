@@ -27,7 +27,7 @@ const UPGRADE_ABI = [
         type: 'address',
       },
     ],
-    name: 'upgradeTo',
+    name: 'safeUpgradeTo',
     outputs: [],
     stateMutability: 'nonpayable',
     type: 'function',

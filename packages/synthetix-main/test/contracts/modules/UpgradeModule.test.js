@@ -20,7 +20,7 @@ describe('UpgradeModule', function () {
         const [, user] = await ethers.getSigners();
 
         await assertRevert(
-          UpgradeModule.connect(user).upgradeTo(user.address),
+          UpgradeModule.connect(user).safeUpgradeTo(user.address),
           'OnlyOwnerAllowed()'
         );
       });

@@ -34,13 +34,16 @@ describe('CoreUpgradeModule', () => {
 
   describe('when attempting to set the implementation with a non owner signer', () => {
     it('reverts', async () => {
-      await assertRevert(UpgradeModule.connect(user).upgradeTo(user.address), 'OnlyOwnerAllowed()');
+      await assertRevert(
+        UpgradeModule.connect(user).safeUpgradeTo(user.address),
+        'OnlyOwnerAllowed()'
+      );
     });
   });
 
   describe('when setting the first implementation', () => {
     before('set the first implentation using the owner address', async () => {
-      const tx = await UpgradeModule.connect(owner).upgradeTo(Implementation.address);
+      const tx = await UpgradeModule.connect(owner).safeUpgradeTo(Implementation.address);
       await tx.wait();
     });
 
