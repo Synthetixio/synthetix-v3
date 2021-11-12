@@ -49,7 +49,7 @@ describe('BeaconProxy', () => {
       });
     });
 
-    describe('when triyng to interact with methods that A does not have', () => {
+    describe('when trying to interact with methods that A does not have', () => {
       let BadInstance;
 
       before('wrap the implementation', async () => {
@@ -79,15 +79,17 @@ describe('BeaconProxy', () => {
       });
 
       describe('when interacting with implementation B', () => {
-        before('set a value', async () => {
-          await (await Instance.setB('hello')).wait();
-        });
-
         it('can read the value previously set', async () => {
           assert.equal(await Instance.getA(), 42);
         });
 
-        it('can read the new value set', async () => {
+        it('can set & read a new value set on A', async () => {
+          await (await Instance.setA(64)).wait();
+          assert.equal(await Instance.getA(), 64);
+        });
+
+        it('can set & read a new value set on B', async () => {
+          await (await Instance.setB('hello')).wait();
           assert.equal(await Instance.getB(), 'hello');
         });
       });

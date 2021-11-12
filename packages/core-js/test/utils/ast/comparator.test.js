@@ -1,6 +1,6 @@
 const { equal } = require('assert/strict');
-const { clone } = require('../../utils/clone');
-const { compareStorageStructs } = require('../../utils/ast/comparator');
+const { clone } = require('../../../utils/clone');
+const { compareStorageStructs } = require('../../../utils/ast/comparator');
 
 describe('utils/ast/comparator.js compareStorageStructs', function () {
   const previousStructsMap = [

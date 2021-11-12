@@ -21,7 +21,7 @@ function orderContractsStructMap(structs) {
 
 async function buildContractsStructMap(asts) {
   const structs = [];
-  for (var [contractName, ast] of Object.entries(asts)) {
+  for (const [contractName, ast] of Object.entries(asts)) {
     const contractNode = findContractNodeWithName(contractName, ast);
     if (!contractNode) {
       continue;
