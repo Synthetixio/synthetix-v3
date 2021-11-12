@@ -19,6 +19,7 @@ contract UUPSImplementation is ProxyStorage, ContractUtil, CommonErrors {
     function safeUpgradeTo(address newImplementation) public {
         _upgradeTo(newImplementation, true);
     }
+
     function unsafeUpgradeTo(address newImplementation) public {
         _upgradeTo(newImplementation, false);
     }
@@ -56,8 +57,7 @@ contract UUPSImplementation is ProxyStorage, ContractUtil, CommonErrors {
 
         return
             !simulationReverted &&
-            keccak256(abi.encodePacked(simulationResponse)) ==
-            keccak256(abi.encodePacked(SimulatedUpgradeFailed.selector));
+            keccak256(abi.encodePacked(simulationResponse)) == keccak256(abi.encodePacked(SimulatedUpgradeFailed.selector));
     }
 
     function simulateUpgradeTo(address newImplementation) public {
@@ -72,6 +72,7 @@ contract UUPSImplementation is ProxyStorage, ContractUtil, CommonErrors {
             revert SimulatedUpgradeFailed();
         }
 
+        // solhint-disable-next-line reason-string
         revert();
     }
 }

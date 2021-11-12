@@ -174,13 +174,19 @@ describe('UUPSProxy', () => {
 
         describe('via safeUpgradeTo', () => {
           it('reverts', async () => {
-            await assertRevert(Implementation.safeUpgradeTo(Destroyer.address), 'UpgradeToNotCalledViaProxy');
+            await assertRevert(
+              Implementation.safeUpgradeTo(Destroyer.address),
+              'UpgradeToNotCalledViaProxy'
+            );
           });
         });
 
         describe('via unsafeUpgradeTo', () => {
           it('reverts', async () => {
-            await assertRevert(Implementation.unsafeUpgradeTo(Destroyer.address), 'UpgradeToNotCalledViaProxy');
+            await assertRevert(
+              Implementation.unsafeUpgradeTo(Destroyer.address),
+              'UpgradeToNotCalledViaProxy'
+            );
           });
         });
       });
