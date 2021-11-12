@@ -36,7 +36,12 @@ subtask(
 
   const binaryData = _buildBinaryData({ selectors });
 
-  const packageJson = readPackageJson();
+  let packageJson;
+  try {
+    packageJson = readPackageJson();
+  } catch (err) {
+    packageJson = { name: '' };
+  }
 
   const generatedSource = renderTemplate(hre.deployer.paths.routerTemplate, {
     project: packageJson.name,

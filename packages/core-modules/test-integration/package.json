@@ -1,0 +1,17 @@
+{
+  "name": "core-modules-integration-tests",
+  "version": "1.0.0",
+  "description": "",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Synthetixio/synthetix-v3.git"
+  },
+  "main": "index.js",
+  "scripts": {
+    "test": "hardhat test",
+    "coverage": "hardhat coverage"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT"
+}
