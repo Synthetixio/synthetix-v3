@@ -9,6 +9,7 @@ import "../storage/SynthsModuleStorage.sol";
 contract SynthsModule is OwnableMixin, SynthsModuleStorage {
     error BeaconAlreadyDeployed();
     error BeaconNotDeployed();
+    error ImplementationNotSet();
     error SynthAlreadyDeployed();
 
     event BeaconDeployed(address beacon);
@@ -27,10 +28,13 @@ contract SynthsModule is OwnableMixin, SynthsModuleStorage {
         if (_synthsModuleStore().synthProxies[synth] != address(0x0)) {
             revert SynthAlreadyDeployed();
         }
-        // get the Beacon address and check if it has been deployed properly
+        // get the Beacon address and check if it has been deployed properly and if the implementation is set.
         address beaconAddress = _synthsModuleStore().beacon;
         if (beaconAddress == address(0)) {
             revert BeaconNotDeployed();
+        }
+        if (Beacon(beaconAddress).getImplementation() == address(0)) {
+            revert ImplementationNotSet();
         }
         // deploy a BeaconProxy with the right Beacon address
         BeaconProxy synthProxy = new BeaconProxy(beaconAddress);
