@@ -159,5 +159,32 @@ describe('UUPSProxy', () => {
         });
       });
     });
+
+    // TODO: Unskip tests here when the anti-bricking mechanism is put back in place.
+    describe('when trying to brick the proxy', () => {
+      describe('when trying to upgrade to a sterile implementation', () => {
+        before('deploy the implementation', async () => {
+          const factory = await ethers.getContractFactory('SterileImplementation');
+          Implementation = await factory.deploy();
+        });
+
+        it.skip('reverts', async () => {
+          await assertRevert(Instance.upgradeTo(Implementation.address), 'SterileImplementation');
+        });
+      });
+
+      describe('when trying to destroy the implementaion', () => {
+        let Destroyer;
+
+        before('deploy the malicious implementation', async () => {
+          const factory = await ethers.getContractFactory('ImplementationDestroyer');
+          Destroyer = await factory.deploy();
+        });
+
+        it.skip('reverts', async () => {
+          await assertRevert(Implementation.upgradeTo(Destroyer.address), 'SterileImplementation');
+        });
+      });
+    });
   });
 });
