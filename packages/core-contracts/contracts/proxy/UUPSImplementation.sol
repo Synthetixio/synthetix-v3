@@ -8,8 +8,13 @@ import "./ProxyStorage.sol";
 abstract contract UUPSImplementation is ProxyStorage, ContractUtil, CommonErrors {
     error SterileImplementation(address implementation);
     error SimulatedUpgradeFailed();
+    error MustInteractThroughProxy();
 
     event Upgraded(address implementation);
+
+    constructor() {
+        _proxyStore().implementationSelf = address(this);
+    }
 
     // WARNING!!!
     // **************************************************************************
@@ -28,12 +33,19 @@ abstract contract UUPSImplementation is ProxyStorage, ContractUtil, CommonErrors
     function _upgradeTo(
         address newImplementation /*, skipFertilityCheck = false */
     ) internal virtual {
+        ProxyStore storage store = _proxyStore();
+
         // Basic protection against upgrading to invalid addresses.
         if (newImplementation == address(0)) {
             revert InvalidAddress(newImplementation);
         }
         if (!_isContract(newImplementation)) {
             revert InvalidContract(newImplementation);
+        }
+
+        // Protection against attempts to destroy the implementation.
+        if (address(this) == store.implementationSelf) {
+            revert MustInteractThroughProxy();
         }
 
         // Protection against upgrading to an implementation that will
@@ -43,7 +55,7 @@ abstract contract UUPSImplementation is ProxyStorage, ContractUtil, CommonErrors
             revert SterileImplementation(newImplementation);
         }
 
-        _proxyStore().implementation = newImplementation;
+        store.implementation = newImplementation;
 
         emit Upgraded(newImplementation);
     }

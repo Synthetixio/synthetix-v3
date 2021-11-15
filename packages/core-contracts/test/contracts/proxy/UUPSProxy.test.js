@@ -169,8 +169,24 @@ describe('UUPSProxy', () => {
           Destroyer = await factory.deploy();
         });
 
-        it('reverts', async () => {
-          await assertRevert(Implementation.upgradeTo(Destroyer.address), 'SterileImplementation');
+        describe('with a regular call to upgradeTo', () => {
+          it('reverts', async () => {
+            await assertRevert(Implementation.upgradeTo(Destroyer.address), 'MustInteractThroughProxy');
+          });
+        });
+
+        describe('with a call to upgradeTo with appended data', () => {
+          it('reverts', async () => {
+            const calldata = Implementation.interface.encodeFunctionData('upgradeTo', [Destroyer.address])
+            const appended = '0000000000000000000000000000000000000000000000000000000000000001';
+            await assertRevert(
+              user.sendTransaction({
+                to: Implementation.address,
+                data: `${calldata}${appended}`
+              }),
+              'MustInteractThroughProxy'
+            );
+          });
         });
       });
 
