@@ -170,10 +170,7 @@ describe('UUPSProxy', () => {
         });
 
         it('reverts', async () => {
-          await assertRevert(
-            Implementation.upgradeTo(Destroyer.address),
-            'SterileImplementation'
-          );
+          await assertRevert(Implementation.upgradeTo(Destroyer.address), 'SterileImplementation');
         });
       });
 

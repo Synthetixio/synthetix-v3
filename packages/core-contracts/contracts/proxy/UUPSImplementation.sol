@@ -26,7 +26,9 @@ abstract contract UUPSImplementation is ProxyStorage, ContractUtil, CommonErrors
     // Function selector: 4 bytes
     // Address parameter: 32 bytes
     // Total: 36 bytes
-    function _upgradeTo(address newImplementation/*, skipFertilityCheck = false */) internal virtual {
+    function _upgradeTo(
+        address newImplementation /*, skipFertilityCheck = false */
+    ) internal virtual {
         // Basic protection against upgrading to invalid addresses.
         if (newImplementation == address(0)) {
             revert InvalidAddress(newImplementation);
