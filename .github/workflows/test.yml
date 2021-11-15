@@ -27,6 +27,11 @@ jobs:
         with:
           files: packages/core-modules/coverage.json
           flags: core-modules
+      - name: Upload core-modules integration tests coverage to Codecov
+        uses: codecov/codecov-action@v2
+        with:
+          files: packages/core-modules/test/integration/coverage.json
+          flags: core-modules
       - name: Upload deployer coverage to Codecov
         uses: codecov/codecov-action@v2
         with:
