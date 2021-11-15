@@ -53,11 +53,6 @@ subtask(
 
   logger.debug(`Generated source: ${generatedSource}`);
 
-  console.log({
-    relativeRouterPath,
-    routerPath,
-  });
-
   const currentSource = fs.existsSync(routerPath) ? fs.readFileSync(routerPath, 'utf8') : '';
   if (currentSource !== generatedSource) {
     fs.writeFileSync(routerPath, generatedSource);
