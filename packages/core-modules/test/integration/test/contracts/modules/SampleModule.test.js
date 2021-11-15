@@ -15,6 +15,6 @@ describe.only('SampleModule', function () {
   });
 
   it('responds with the absolute truth', async function () {
-    assert.equal(await CoreSampleModule.fortyTwo(), 42);
+    assert.equal(Number.parseInt(await CoreSampleModule.fortyTwo()), 42);
   });
 });

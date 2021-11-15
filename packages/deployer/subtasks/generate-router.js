@@ -18,13 +18,11 @@ subtask(
   'Reads deployed modules from the deployment data file and generates the source for a new router contract.'
 ).setAction(async (_, hre) => {
   const routerName = 'Router';
-  const routerPath = path.join(
-    relativePath(hre.config.paths.sources, hre.config.paths.root),
-    `${routerName}.sol`
-  );
+  const routerPath = path.join(hre.config.paths.sources, `${routerName}.sol`);
+  const relativeRouterPath = relativePath(routerPath, hre.config.paths.root);
 
   logger.subtitle('Generating router source');
-  logger.debug(`location: ${routerPath}`);
+  logger.debug(`location: ${relativeRouterPath}`);
 
   const modules = filterValues(hre.deployer.deployment.general.contracts, (c) => c.isModule);
   const modulesNames = Object.keys(modules);
@@ -55,10 +53,15 @@ subtask(
 
   logger.debug(`Generated source: ${generatedSource}`);
 
+  console.log({
+    relativeRouterPath,
+    routerPath,
+  });
+
   const currentSource = fs.existsSync(routerPath) ? fs.readFileSync(routerPath, 'utf8') : '';
   if (currentSource !== generatedSource) {
     fs.writeFileSync(routerPath, generatedSource);
-    logger.success(`Router code generated and written to ${routerPath}`);
+    logger.success(`Router code generated and written to ${relativeRouterPath}`);
   } else {
     logger.checked('Router source did not change');
   }

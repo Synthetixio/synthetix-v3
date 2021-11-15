@@ -1,9 +1,11 @@
+const path = require('path');
 const { TASK_DEPLOY } = require('@synthetixio/deployer/task-names');
 
 module.exports = function bootstrap() {
   const deploymentInfo = {
     network: 'hardhat',
     instance: 'fixture',
+    folder: path.resolve(__dirname, '..', '..', 'deployments'),
   };
 
   before('loading environment', async function () {
@@ -14,8 +16,8 @@ module.exports = function bootstrap() {
       ...deploymentInfo,
       clear: true,
       noConfirm: true,
-      quiet: false,
-      debug: true,
+      quiet: true,
+      debug: false,
     });
   });
 
