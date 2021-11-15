@@ -8,7 +8,6 @@ import "./ProxyStorage.sol";
 abstract contract UUPSImplementation is ProxyStorage, ContractUtil, CommonErrors {
     error SterileImplementation(address implementation);
     error SimulatedUpgradeFailed();
-    error UpgradeToNotCalledViaProxy();
 
     event Upgraded(address implementation);
 
