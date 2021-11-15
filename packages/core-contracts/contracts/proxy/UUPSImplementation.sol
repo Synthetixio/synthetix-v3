@@ -5,52 +5,46 @@ import "../utils/ContractUtil.sol";
 import "../common/CommonErrors.sol";
 import "./ProxyStorage.sol";
 
-contract UUPSImplementation is ProxyStorage, ContractUtil, CommonErrors {
+abstract contract UUPSImplementation is ProxyStorage, ContractUtil, CommonErrors {
     error SterileImplementation(address implementation);
     error SimulatedUpgradeFailed();
     error UpgradeToNotCalledViaProxy();
 
     event Upgraded(address implementation);
 
-    address private immutable __self = address(this);
-
     // WARNING!!!
-    // It is critical that these two functions are protected in production.
-    // ********************************************************************************************
-    function safeUpgradeTo(address newImplementation) public virtual {
-        _upgradeTo(newImplementation, true);
-    }
+    // **************************************************************************
+    // This function is intentionally not implemented, because
+    // it is critical and should not be exposed by default.
+    // It should be implemented with some protection like `onlyOwner`,
+    // and simply call the underlying intenal function.
+    // **************************************************************************
+    function upgradeTo(address newImplementation) public virtual;
 
-    function unsafeUpgradeTo(address newImplementation) public virtual {
-        _upgradeTo(newImplementation, false);
-    }
-
-    // ********************************************************************************************
-
-    function _upgradeTo(address newImplementation, bool checkFertility) internal virtual {
-        if (address(this) == __self || _proxyStore().implementation != __self) {
-            revert UpgradeToNotCalledViaProxy();
-        }
-
+    // NOTE: This function uses a hack to emulate an optional parameter (which Solidity does not provide).
+    // If the function is called with more than 36 bytes, the optional parameter is interpreted to be true.
+    // Function selector: 4 bytes
+    // Address parameter: 32 bytes
+    // Total: 36 bytes
+    function _upgradeTo(address newImplementation/*, skipFertilityCheck = false */) internal virtual {
+        // Basic protection against upgrading to invalid addresses.
         if (newImplementation == address(0)) {
             revert InvalidAddress(newImplementation);
         }
-
         if (!_isContract(newImplementation)) {
             revert InvalidContract(newImplementation);
         }
 
-        if (checkFertility && _implementationIsSterile(newImplementation)) {
+        // Protection against upgrading to an implementation that will
+        // not be able to upgrade in the future (i.e. is "sterile").
+        bool skipFertilityCheck = msg.data.length > 36; // selector + address = 36 bytes
+        if (!skipFertilityCheck && _implementationIsSterile(newImplementation)) {
             revert SterileImplementation(newImplementation);
         }
 
         _proxyStore().implementation = newImplementation;
 
         emit Upgraded(newImplementation);
-    }
-
-    function getImplementation() external view returns (address) {
-        return _proxyStore().implementation;
     }
 
     function _implementationIsSterile(address candidateImplementation) internal virtual returns (bool) {
@@ -67,8 +61,9 @@ contract UUPSImplementation is ProxyStorage, ContractUtil, CommonErrors {
         address currentImplementation = _proxyStore().implementation;
         _proxyStore().implementation = newImplementation;
 
+        // Append extra data to skip a 2nd (and thus recursive) fertility check.
         (bool rollbackSuccessful, ) = newImplementation.delegatecall(
-            abi.encodeWithSelector(this.unsafeUpgradeTo.selector, currentImplementation, 1)
+            abi.encodeWithSelector(this.upgradeTo.selector, currentImplementation, true)
         );
 
         if (!rollbackSuccessful || _proxyStore().implementation != currentImplementation) {
@@ -77,5 +72,9 @@ contract UUPSImplementation is ProxyStorage, ContractUtil, CommonErrors {
 
         // solhint-disable-next-line reason-string
         revert();
+    }
+
+    function getImplementation() external view returns (address) {
+        return _proxyStore().implementation;
     }
 }

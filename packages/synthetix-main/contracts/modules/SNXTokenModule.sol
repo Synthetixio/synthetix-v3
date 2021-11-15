@@ -33,7 +33,7 @@ contract SNXTokenModule is OwnableMixin, SNXTokenStorage {
     }
 
     function upgradeSNXImplementation(address newSNXTokenImplementation) public onlyOwner {
-        SNXToken(getSNXTokenAddress()).safeUpgradeTo(newSNXTokenImplementation);
+        SNXToken(getSNXTokenAddress()).upgradeTo(newSNXTokenImplementation);
     }
 
     function getSNXTokenAddress() public view returns (address) {

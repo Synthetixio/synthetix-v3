@@ -51,7 +51,7 @@ contract Router {
                     } // SomeModule.fourtyTwo()
                     case 0x3659cfe6 {
                         result := _SAMPLE_UPGRADE_MODULE
-                    } // SampleUpgradeModule.safeUpgradeTo()
+                    } // SampleUpgradeModule.upgradeTo()
                     case 0x53a47bb7 {
                         result := _SAMPLE_OWNER_MODULE
                     } // SampleOwnerModule.nominatedOwner()

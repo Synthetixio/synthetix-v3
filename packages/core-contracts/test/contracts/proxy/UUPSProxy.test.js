@@ -75,17 +75,14 @@ describe('UUPSProxy', () => {
 
     describe('when trying to upgrade to an EOA', () => {
       it('reverts', async () => {
-        await assertRevert(
-          Instance.safeUpgradeTo(user.address),
-          `InvalidContract("${user.address}")`
-        );
+        await assertRevert(Instance.upgradeTo(user.address), `InvalidContract("${user.address}")`);
       });
     });
 
     describe('when trying to upgrade to the zero address', () => {
       it('reverts', async () => {
         const zeroAddress = '0x0000000000000000000000000000000000000000';
-        await assertRevert(Instance.safeUpgradeTo(zeroAddress), `InvalidAddress("${zeroAddress}")`);
+        await assertRevert(Instance.upgradeTo(zeroAddress), `InvalidAddress("${zeroAddress}")`);
       });
     });
 
@@ -98,7 +95,7 @@ describe('UUPSProxy', () => {
       });
 
       before('upgrade', async () => {
-        const tx = await Instance.safeUpgradeTo(Implementation.address);
+        const tx = await Instance.upgradeTo(Implementation.address);
         upgradeReceipt = await tx.wait();
 
         Instance = await ethers.getContractAt('ImplementationMockB', UUPSProxy.address);
@@ -172,20 +169,11 @@ describe('UUPSProxy', () => {
           Destroyer = await factory.deploy();
         });
 
-        describe('via safeUpgradeTo', () => {
+        describe('via upgradeTo', () => {
           it('reverts', async () => {
             await assertRevert(
-              Implementation.safeUpgradeTo(Destroyer.address),
-              'UpgradeToNotCalledViaProxy'
-            );
-          });
-        });
-
-        describe('via unsafeUpgradeTo', () => {
-          it('reverts', async () => {
-            await assertRevert(
-              Implementation.unsafeUpgradeTo(Destroyer.address),
-              'UpgradeToNotCalledViaProxy'
+              Implementation.upgradeTo(Destroyer.address),
+              'SterileImplementation'
             );
           });
         });
@@ -198,10 +186,7 @@ describe('UUPSProxy', () => {
         });
 
         it('reverts', async () => {
-          await assertRevert(
-            Instance.safeUpgradeTo(Implementation.address),
-            'SterileImplementation'
-          );
+          await assertRevert(Instance.upgradeTo(Implementation.address), 'SterileImplementation');
         });
       });
     });
