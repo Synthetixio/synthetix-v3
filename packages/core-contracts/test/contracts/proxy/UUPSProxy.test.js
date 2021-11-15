@@ -169,13 +169,11 @@ describe('UUPSProxy', () => {
           Destroyer = await factory.deploy();
         });
 
-        describe('via upgradeTo', () => {
-          it('reverts', async () => {
-            await assertRevert(
-              Implementation.upgradeTo(Destroyer.address),
-              'SterileImplementation'
-            );
-          });
+        it('reverts', async () => {
+          await assertRevert(
+            Implementation.upgradeTo(Destroyer.address),
+            'SterileImplementation'
+          );
         });
       });
 
