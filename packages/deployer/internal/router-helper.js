@@ -1,6 +1,5 @@
 const fs = require('fs');
 const path = require('path');
-const relativePath = require('@synthetixio/core-js/utils/relative-path');
 
 /**
  * Converts the contracts name to private _CONSTANT_CASE format.
@@ -14,11 +13,7 @@ function toPrivateConstantCase(name) {
 }
 
 function getRouterSource() {
-  const routerPath = path.join(
-    relativePath(hre.config.paths.sources, hre.config.paths.root),
-    'Router.sol'
-  );
-
+  const routerPath = path.join(hre.config.paths.sources, 'Router.sol');
   const source = fs.readFileSync(routerPath).toString();
   return source;
 }

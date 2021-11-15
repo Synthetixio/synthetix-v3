@@ -23,7 +23,10 @@ async function _printTitle() {
     logger.log(chalk.red(text));
   }
 
-  await printFiglet(readPackageJson().name);
+  try {
+    await printFiglet(readPackageJson().name);
+  } catch (err) {} // eslint-disable-line no-empty
+
   await printFiglet('           deployer');
 }
 
