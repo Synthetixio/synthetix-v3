@@ -12,6 +12,9 @@ abstract contract UUPSImplementation is ProxyStorage, ContractUtil, CommonErrors
 
     event Upgraded(address implementation);
 
+    // This uses the implementation's storage for it to keep track
+    // of its own address, which is needed for protecting the implementation
+    // against self-destruct attacks.
     constructor() {
         _proxyStore().implementationSelf = address(this);
     }
