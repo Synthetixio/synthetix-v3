@@ -4,7 +4,7 @@ const bootstrap = require('../../helpers/bootstrap');
 
 const { ethers } = hre;
 
-describe.only('SampleModule', function () {
+describe('SampleModule', function () {
   const { deploymentInfo } = bootstrap();
 
   let CoreSampleModule;
