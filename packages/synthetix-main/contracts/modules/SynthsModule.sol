@@ -16,7 +16,13 @@ contract SynthsModule is OwnableMixin, SynthsStorage {
     event SynthDeployed(bytes32 synth, address synthAddress);
 
     function deployBeacon() external onlyOwner {
-        _deployBeacon();
+        SynthsStore storage store = _synthsStore();
+        if (store.beacon != address(0)) {
+            revert BeaconAlreadyDeployed();
+        }
+        address beacon = address(new Beacon(address(this)));
+        store.beacon = beacon;
+        emit BeaconDeployed(beacon);
     }
 
     function deploySynth(bytes32 synth) external onlyOwner {
@@ -41,7 +47,7 @@ contract SynthsModule is OwnableMixin, SynthsStorage {
     function upgradeSynthImplementation(address newSynthsImplementation) external onlyOwner {
         address beaconAddress = _synthsStore().beacon;
         if (beaconAddress == address(0)) {
-            _deployBeacon();
+            revert BeaconNotDeployed();
         }
         Beacon(beaconAddress).upgradeTo(newSynthsImplementation);
     }
@@ -56,15 +62,5 @@ contract SynthsModule is OwnableMixin, SynthsStorage {
 
     function getSynth(bytes32 synth) external view returns (address) {
         return _synthsStore().synths[synth];
-    }
-
-    function _deployBeacon() internal {
-        SynthsStore storage store = _synthsStore();
-        if (store.beacon != address(0)) {
-            revert BeaconAlreadyDeployed();
-        }
-        address beacon = address(new Beacon(address(this)));
-        store.beacon = beacon;
-        emit BeaconDeployed(beacon);
     }
 }
