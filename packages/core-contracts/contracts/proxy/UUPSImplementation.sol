@@ -14,8 +14,6 @@ abstract contract UUPSImplementation is ProxyStorage, ContractUtil, CommonErrors
     function upgradeTo(address newImplementation) public virtual;
 
     function _upgradeTo(address newImplementation) internal virtual {
-        ProxyStore storage store = _proxyStore();
-
         if (newImplementation == address(0)) {
             revert InvalidAddress(newImplementation);
         }
@@ -23,6 +21,8 @@ abstract contract UUPSImplementation is ProxyStorage, ContractUtil, CommonErrors
         if (!_isContract(newImplementation)) {
             revert InvalidContract(newImplementation);
         }
+
+        ProxyStore storage store = _proxyStore();
 
         if (!store.simulatingUpgrade && _implementationIsSterile(newImplementation)) {
             revert SterileImplementation(newImplementation);
