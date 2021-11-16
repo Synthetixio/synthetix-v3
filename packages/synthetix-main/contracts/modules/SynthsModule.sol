@@ -4,9 +4,9 @@ pragma solidity ^0.8.0;
 import "@synthetixio/core-contracts/contracts/proxy/Beacon.sol";
 import "@synthetixio/core-contracts/contracts/ownership/OwnableMixin.sol";
 import "@synthetixio/core-contracts/contracts/proxy/BeaconProxy.sol";
-import "../storage/SynthsModuleStorage.sol";
+import "../storage/SynthsStorage.sol";
 
-contract SynthsModule is OwnableMixin, SynthsModuleStorage {
+contract SynthsModule is OwnableMixin, SynthsStorage {
     error BeaconAlreadyDeployed();
     error BeaconNotDeployed();
     error ImplementationNotSet();
@@ -20,11 +20,11 @@ contract SynthsModule is OwnableMixin, SynthsModuleStorage {
     }
 
     function deploySynth(bytes32 synth) external onlyOwner {
-        if (_synthsModuleStore().synthProxies[synth] != address(0x0)) {
+        if (_synthsStore().synthProxies[synth] != address(0x0)) {
             revert SynthAlreadyDeployed();
         }
         // get the Beacon address and check if it has been deployed properly and if the implementation is set.
-        address beaconAddress = _synthsModuleStore().beacon;
+        address beaconAddress = _synthsStore().beacon;
         if (beaconAddress == address(0)) {
             revert BeaconNotDeployed();
         }
@@ -36,28 +36,33 @@ contract SynthsModule is OwnableMixin, SynthsModuleStorage {
         // get the proxy address
         address synthProxyAddress = address(synthProxy);
         // register the new proxy in the mapping
-        _synthsModuleStore().synthProxies[synth] = synthProxyAddress;
+        _synthsStore().synthProxies[synth] = synthProxyAddress;
         emit SynthDeployed(synth, synthProxyAddress);
         // TODO: initialize Synth
     }
 
     function upgradeSynthImplementation(address newSynthsImplementation) external onlyOwner {
-        if (_synthsModuleStore().beacon != address(0)) {
+        address beaconAddress = _synthsStore().beacon;
+        if (beaconAddress != address(0)) {
             _deployBeacon();
         }
-        Beacon(_synthsModuleStore().beacon).upgradeTo(newSynthsImplementation);
+        Beacon(beaconAddress).upgradeTo(newSynthsImplementation);
     }
 
     function getBeacon() external view returns (address) {
-        return _synthsModuleStore().beacon;
+        return _synthsStore().beacon;
+    }
+
+    function getSynthImplementation() external view returns (address) {
+        return Beacon(_synthsStore().beacon).getImplementation();
     }
 
     function getSynthProxy(bytes32 synth) external view returns (address) {
-        return _synthsModuleStore().synthProxies[synth];
+        return _synthsStore().synthProxies[synth];
     }
 
     function _deployBeacon() internal {
-        SynthsModuleStore storage store = _synthsModuleStore();
+        SynthsStore storage store = _synthsStore();
         if (store.beacon != address(0)) {
             revert BeaconAlreadyDeployed();
         }
