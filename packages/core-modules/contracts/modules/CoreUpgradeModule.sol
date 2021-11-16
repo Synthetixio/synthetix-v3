@@ -5,7 +5,7 @@ import "@synthetixio/core-contracts/contracts/proxy/UUPSImplementation.sol";
 import "@synthetixio/core-contracts/contracts/ownership/OwnableMixin.sol";
 
 contract CoreUpgradeModule is UUPSImplementation, OwnableMixin {
-    function upgradeTo(address newImplementation) public onlyOwner {
+    function upgradeTo(address newImplementation) public override onlyOwner {
         _upgradeTo(newImplementation);
     }
 }

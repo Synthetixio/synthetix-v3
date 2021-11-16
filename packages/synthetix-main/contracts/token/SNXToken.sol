@@ -14,7 +14,7 @@ contract SNXToken is Ownable, UUPSImplementation, ERC20 {
         _initialize(tokenName, tokenSymbol, tokenDecimals);
     }
 
-    function upgradeTo(address newImplementation) public onlyOwner {
+    function upgradeTo(address newImplementation) public override onlyOwner {
         _upgradeTo(newImplementation);
     }
 }
