@@ -4,15 +4,13 @@
   "description": "",
   "files": [
     "contracts",
-    "!contracts/mocks"
+    "!contracts/mocks",
+    "!contracts/Proxy.sol",
+    "!contracts/Router.sol"
   ],
   "scripts": {
-    "test:unit": "hardhat test",
-    "coverage:unit": "hardhat coverage",
-    "test:integration": "hardhat --config ./test/integration/hardhat.config.js test",
-    "coverage:integration": "hardhat --config ./test/integration/hardhat.config.js coverage",
-    "test": "npm run test:unit && npm run test:integration",
-    "coverage": "npm run coverage:unit && npm run coverage:integration"
+    "test": "hardhat test",
+    "coverage": "hardhat coverage"
   },
   "keywords": [],
   "author": "",
