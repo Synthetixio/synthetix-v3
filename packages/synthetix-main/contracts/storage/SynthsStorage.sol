@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 contract SynthsStorage {
     struct SynthsStore {
         address beacon;
-        mapping(bytes32 => address) synthProxies;
+        mapping(bytes32 => address) synths;
     }
 
     function _synthsStore() internal pure returns (SynthsStore storage store) {

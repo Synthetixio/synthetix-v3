@@ -20,7 +20,7 @@ contract SynthsModule is OwnableMixin, SynthsStorage {
     }
 
     function deploySynth(bytes32 synth) external onlyOwner {
-        if (_synthsStore().synthProxies[synth] != address(0x0)) {
+        if (_synthsStore().synths[synth] != address(0x0)) {
             revert SynthAlreadyDeployed();
         }
         // get the Beacon address and check if it has been deployed properly and if the implementation is set.
@@ -36,7 +36,7 @@ contract SynthsModule is OwnableMixin, SynthsStorage {
         // get the proxy address
         address synthProxyAddress = address(synthProxy);
         // register the new proxy in the mapping
-        _synthsStore().synthProxies[synth] = synthProxyAddress;
+        _synthsStore().synths[synth] = synthProxyAddress;
         emit SynthDeployed(synth, synthProxyAddress);
         // TODO: initialize Synth
     }
@@ -57,8 +57,8 @@ contract SynthsModule is OwnableMixin, SynthsStorage {
         return Beacon(_synthsStore().beacon).getImplementation();
     }
 
-    function getSynthProxy(bytes32 synth) external view returns (address) {
-        return _synthsStore().synthProxies[synth];
+    function getSynth(bytes32 synth) external view returns (address) {
+        return _synthsStore().synths[synth];
     }
 
     function _deployBeacon() internal {
