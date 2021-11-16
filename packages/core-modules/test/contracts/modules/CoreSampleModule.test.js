@@ -4,14 +4,14 @@ const bootstrap = require('../../helpers/bootstrap');
 
 const { ethers } = hre;
 
-describe('SampleModule', function () {
+describe('CoreSampleModule', function () {
   const { deploymentInfo } = bootstrap();
 
   let CoreSampleModule;
 
   before('identify modules', async function () {
     const proxyAddress = getProxyAddress(deploymentInfo);
-    CoreSampleModule = await ethers.getContractAt('SampleModule', proxyAddress);
+    CoreSampleModule = await ethers.getContractAt('CoreSampleModule', proxyAddress);
   });
 
   it('responds with the absolute truth', async function () {
