@@ -1,8 +1,8 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-contract CoreSampleModule {
-    function fortyTwo() public pure returns (uint) {
+contract WrongModuleMock {
+    function getFortyTwo() public pure returns (uint) {
         return 42;
     }
 }

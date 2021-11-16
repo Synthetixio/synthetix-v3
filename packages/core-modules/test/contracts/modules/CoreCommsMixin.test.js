@@ -1,14 +1,15 @@
-const hre = require('hardhat');
-const assert = require('assert');
-const { ethers } = hre;
+const assert = require('assert/strict');
 const { getProxyAddress } = require('@synthetixio/deployer/utils/deployments');
+const assertRevert = require('@synthetixio/core-js/utils/assert-revert');
 const { printGasUsed } = require('@synthetixio/core-js/utils/tests');
 const bootstrap = require('../../helpers/bootstrap');
+const { ethers } = hre;
 
 describe('CoreCommsMixin', () => {
   const { deploymentInfo } = bootstrap();
 
   let SomeModule, AnotherModule;
+  const WRONG_VALUE = 13;
 
   before('identify modules', async () => {
     const proxyAddress = getProxyAddress(deploymentInfo);
@@ -29,7 +30,7 @@ describe('CoreCommsMixin', () => {
 
       printGasUsed({ test: this, gasUsed: receipt.cumulativeGasUsed });
 
-      assert.equal(await SomeModule.getSomeValue(), 42);
+      assert.equal(Number.parseInt(await SomeModule.getSomeValue()), 42);
     });
 
     it('indirectly via AnotherModule', async function () {
@@ -38,7 +39,16 @@ describe('CoreCommsMixin', () => {
 
       printGasUsed({ test: this, gasUsed: receipt.cumulativeGasUsed });
 
-      assert.equal(await SomeModule.getSomeValue(), 1337);
+      assert.equal(Number.parseInt(await SomeModule.getSomeValue()), 1337);
+    });
+
+    describe('when interacting via CommsMixin with invalid params', () => {
+      it('reverts', async () => {
+        await assertRevert(
+          AnotherModule.setSomeValueOnSomeModule(WRONG_VALUE),
+          'IntermoduleCallFailed()'
+        );
+      });
     });
   });
 });

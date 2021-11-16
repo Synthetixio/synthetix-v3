@@ -1,10 +1,13 @@
 const hre = require('hardhat');
 const assert = require('assert');
 const assertRevert = require('@synthetixio/core-js/utils/assert-revert');
+const bootstrap = require('../../helpers/bootstrap');
 
 const { ethers } = hre;
 
 describe('CoreOwnerModule', () => {
+  bootstrap();
+
   let OwnerModule;
   let owner, user;
 
