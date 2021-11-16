@@ -22,6 +22,14 @@ describe('SynthsModule', function () {
     SynthsModule = await ethers.getContractAt('SynthsModule', proxyAddress);
   });
 
+  describe('When the beacon is NOT deployed', async () => {
+    describe('when trying to deploy a synth', () => {
+      it('reverts', async () => {
+        await assertRevert(SynthsModule.deploySynth(sUSD), 'BeaconNotDeployed()');
+      });
+    });
+  });
+
   describe('When a beacon is deployed', async () => {
     describe('when a non-owner tries to deploy', () => {
       it('reverts', async () => {
@@ -49,6 +57,14 @@ describe('SynthsModule', function () {
       describe('when trying to redeploy', () => {
         it('reverts', async () => {
           await assertRevert(SynthsModule.connect(owner).deployBeacon(), 'BeaconAlreadyDeployed()');
+        });
+      });
+
+      describe('When there is NO implementation', async () => {
+        describe('when trying to deploy a synth', () => {
+          it('reverts', async () => {
+            await assertRevert(SynthsModule.deploySynth(sUSD), 'ImplementationNotSet()');
+          });
         });
       });
 
