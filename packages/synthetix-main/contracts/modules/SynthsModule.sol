@@ -13,7 +13,7 @@ contract SynthsModule is OwnableMixin, SynthsStorage {
     error SynthAlreadyDeployed();
 
     event BeaconDeployed(address beacon);
-    event SynthDeployed(bytes32 synth, address synthProxyAddress);
+    event SynthDeployed(bytes32 synth, address synthAddress);
 
     function deployBeacon() external onlyOwner {
         _deployBeacon();
@@ -31,18 +31,16 @@ contract SynthsModule is OwnableMixin, SynthsStorage {
         if (Beacon(beaconAddress).getImplementation() == address(0)) {
             revert ImplementationNotSet();
         }
-        // deploy a BeaconProxy with the right Beacon address
-        BeaconProxy synthProxy = new BeaconProxy(beaconAddress);
-        // get the proxy address
-        address synthProxyAddress = address(synthProxy);
-        // register the new proxy in the mapping
-        _synthsStore().synths[synth] = synthProxyAddress;
-        emit SynthDeployed(synth, synthProxyAddress);
+        // deploy a BeaconProxy/Synth with the right Beacon address
+        address synthAddress = address(new BeaconProxy(beaconAddress));
+        // register the new synth (proxy) in the mapping
+        _synthsStore().synths[synth] = synthAddress;
+        emit SynthDeployed(synth, synthAddress);
     }
 
     function upgradeSynthImplementation(address newSynthsImplementation) external onlyOwner {
         address beaconAddress = _synthsStore().beacon;
-        if (beaconAddress != address(0)) {
+        if (beaconAddress == address(0)) {
             _deployBeacon();
         }
         Beacon(beaconAddress).upgradeTo(newSynthsImplementation);
