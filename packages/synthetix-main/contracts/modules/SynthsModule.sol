@@ -4,6 +4,7 @@ pragma solidity ^0.8.0;
 import "@synthetixio/core-contracts/contracts/proxy/Beacon.sol";
 import "@synthetixio/core-contracts/contracts/ownership/OwnableMixin.sol";
 import "@synthetixio/core-contracts/contracts/proxy/BeaconProxy.sol";
+import "../interfaces/ISynth.sol";
 import "../storage/SynthsStorage.sol";
 
 contract SynthsModule is OwnableMixin, SynthsStorage {
@@ -25,7 +26,12 @@ contract SynthsModule is OwnableMixin, SynthsStorage {
         emit BeaconDeployed(beacon);
     }
 
-    function deploySynth(bytes32 synth) external onlyOwner {
+    function deploySynth(
+        bytes32 synth,
+        string memory synthName,
+        string memory synthSymbol,
+        uint8 synthDecimals
+    ) external onlyOwner {
         if (_synthsStore().synths[synth] != address(0x0)) {
             revert SynthAlreadyDeployed();
         }
@@ -42,6 +48,8 @@ contract SynthsModule is OwnableMixin, SynthsStorage {
         // register the new synth (proxy) in the mapping
         _synthsStore().synths[synth] = synthAddress;
         emit SynthDeployed(synth, synthAddress);
+        // initialize synth
+        ISynth(synthAddress).initialize(synthName, synthSymbol, synthDecimals);
     }
 
     function upgradeSynthImplementation(address newSynthsImplementation) external onlyOwner {
