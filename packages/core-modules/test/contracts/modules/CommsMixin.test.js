@@ -5,47 +5,46 @@ const { printGasUsed } = require('@synthetixio/core-js/utils/tests');
 const bootstrap = require('../../helpers/bootstrap');
 const { ethers } = hre;
 
-describe('CoreCommsMixin', () => {
+describe('CommsMixin', () => {
   const { deploymentInfo } = bootstrap();
 
-  let SomeModule, AnotherModule;
-  const WRONG_VALUE = 13;
+  let SampleModuleA, SampleModuleB;
 
   before('identify modules', async () => {
     const proxyAddress = getProxyAddress(deploymentInfo);
 
-    SomeModule = await ethers.getContractAt('SomeModuleMock', proxyAddress);
-    AnotherModule = await ethers.getContractAt('AnotherModuleMock', proxyAddress);
+    SampleModuleA = await ethers.getContractAt('SampleModuleA', proxyAddress);
+    SampleModuleB = await ethers.getContractAt('SampleModuleB', proxyAddress);
   });
 
-  describe('when writting to GlobalNamespace.someValue', () => {
+  describe('when writting to SampleNamespace.someValue', () => {
     before('set value if zero for correct gas measurements', async () => {
-      const tx = await SomeModule.setSomeValue(1);
+      const tx = await SampleModuleA.setSomeValue(1);
       await tx.wait();
     });
 
-    it('directly via SomeModule', async function () {
-      const tx = await SomeModule.setSomeValue(42);
+    it('directly via SampleModuleA', async function () {
+      const tx = await SampleModuleA.setSomeValue(42);
       const receipt = await tx.wait();
 
       printGasUsed({ test: this, gasUsed: receipt.cumulativeGasUsed });
 
-      assert.equal(Number.parseInt(await SomeModule.getSomeValue()), 42);
+      assert.equal(Number.parseInt(await SampleModuleA.getSomeValue()), 42);
     });
 
-    it('indirectly via AnotherModule', async function () {
-      const tx = await AnotherModule.setSomeValueOnSomeModule(1337);
+    it('indirectly via SampleModuleB', async function () {
+      const tx = await SampleModuleB.setSomeValueOnSampleModuleA(1337);
       const receipt = await tx.wait();
 
       printGasUsed({ test: this, gasUsed: receipt.cumulativeGasUsed });
 
-      assert.equal(Number.parseInt(await SomeModule.getSomeValue()), 1337);
+      assert.equal(Number.parseInt(await SampleModuleA.getSomeValue()), 1337);
     });
 
     describe('when interacting via CommsMixin with invalid params', () => {
       it('reverts', async () => {
         await assertRevert(
-          AnotherModule.setSomeValueOnSomeModule(WRONG_VALUE),
+          SampleModuleB.setSomeValueOnSampleModuleA(13),
           'IntermoduleCallFailed()'
         );
       });

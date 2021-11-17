@@ -1,9 +1,9 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "../storage/GlobalStorage.sol";
+import "../storage/SampleStorage.sol";
 
-contract SomeModuleMock is GlobalStorage {
+contract SampleModuleA is SampleStorage {
     error WrongValue();
 
     function setSomeValue(uint newSomeValue) public {
@@ -11,10 +11,10 @@ contract SomeModuleMock is GlobalStorage {
             revert WrongValue();
         }
 
-        _globalStore().someValue = newSomeValue;
+        _sampleStore().someValue = newSomeValue;
     }
 
     function getSomeValue() public view returns (uint) {
-        return _globalStore().someValue;
+        return _sampleStore().someValue;
     }
 }
