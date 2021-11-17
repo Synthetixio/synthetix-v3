@@ -64,7 +64,7 @@ class RouterASTValidator {
         errors.push({
           msg: `Selector ${s.selector} not reachable. ${s.value.name} pointing to ${
             s.value.value.value
-          } instead of ${moduleAddresses[s.value.name]}`,
+          } instead of ${moduleAddresses[s.value.name].address}`,
         });
       } else {
         const contractSelectors = findFunctionSelectors(
