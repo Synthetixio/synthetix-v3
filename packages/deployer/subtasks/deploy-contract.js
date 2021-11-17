@@ -41,6 +41,7 @@ async function _createAndDeployContract(contractName, constructorArgs = []) {
   }
 
   const transaction = contract.deployTransaction;
+  await transaction.wait();
 
   processTransaction(transaction, hre);
   const receipt = await hre.ethers.provider.getTransactionReceipt(transaction.hash);

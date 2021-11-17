@@ -1,0 +1,68 @@
+{
+  "properties": {
+    "completed": true,
+    "totalGasUsed": "4822199"
+  },
+  "transactions": {
+    "0xee37a84183f5f514aadb09a2d4d7f1dca435845f138c041a8df8fb215b8be1fd": {
+      "status": "confirmed"
+    },
+    "0xc0ef9eff7520641e678178541af840b458010af7f5049485b643f4afc9c18736": {
+      "status": "confirmed"
+    },
+    "0xba7b7d147e921293d78ec566ac0d2320e25045a93b5cbd8b461a1fe496cd148d": {
+      "status": "confirmed"
+    },
+    "0x00b0eda8b8a9e81dc3775707630756bdb913ecbe2d9e711dadd8016f2c4e830d": {
+      "status": "confirmed"
+    },
+    "0x38c4bc09f33a2dd9318b5349ad770fee0fb678134dfaf03e60f1872d7d83d670": {
+      "status": "confirmed"
+    },
+    "0x54926f8470fdaf30c1818f4d2b20463e90097e99059f7620811c8f78de298cb8": {
+      "status": "confirmed"
+    }
+  },
+  "contracts": {
+    "OwnerModule": {
+      "deployedAddress": "0x2Aa90f81C97e1E2b124c02257931599b1B923156",
+      "deployTransaction": "0xee37a84183f5f514aadb09a2d4d7f1dca435845f138c041a8df8fb215b8be1fd",
+      "deployedBytecodeHash": "0x395794c901029add8b19a33d96aaebf0f1e53f2f450629e035c440adfb3b7475",
+      "sourceName": "contracts/modules/OwnerModule.sol",
+      "isModule": true
+    },
+    "SNXTokenModule": {
+      "deployedAddress": "0x4C79561E16e0dA0370aB8F1C513967a048dBd702",
+      "deployTransaction": "0xc0ef9eff7520641e678178541af840b458010af7f5049485b643f4afc9c18736",
+      "deployedBytecodeHash": "0x747c0c0357af2c019397a7f6007a2a2b72b0340e8d9170afca26352f73c4813e",
+      "sourceName": "contracts/modules/SNXTokenModule.sol",
+      "isModule": true
+    },
+    "SynthsModule": {
+      "deployedAddress": "0x01Fe10Cc84d771f05a565b26EB75B5854e3136c2",
+      "deployTransaction": "0xba7b7d147e921293d78ec566ac0d2320e25045a93b5cbd8b461a1fe496cd148d",
+      "deployedBytecodeHash": "0xdc7359b0657924e77165923db5d290216377d571e4b9a0475591d62acfc4d3a5",
+      "sourceName": "contracts/modules/SynthsModule.sol",
+      "isModule": true
+    },
+    "UpgradeModule": {
+      "deployedAddress": "0xfE10E35e0D7a22f2E26840e626B225BF201Fc3a9",
+      "deployTransaction": "0x00b0eda8b8a9e81dc3775707630756bdb913ecbe2d9e711dadd8016f2c4e830d",
+      "deployedBytecodeHash": "0x1bdef1b3a6f21ed175c5509f8af7d09910ab308a22f34396805d22b5b536b885",
+      "sourceName": "contracts/modules/UpgradeModule.sol",
+      "isModule": true
+    },
+    "Router": {
+      "deployedAddress": "0x5b0921723CB4E1256d727B72299dDcdD9590dA7E",
+      "deployTransaction": "0x38c4bc09f33a2dd9318b5349ad770fee0fb678134dfaf03e60f1872d7d83d670",
+      "deployedBytecodeHash": "0x4147ffdc4e27d6018ec430f5eda6c8a35a46a9ea0599c81189ef6c95013bb79c",
+      "sourceName": "contracts/Router.sol"
+    },
+    "Proxy": {
+      "deployedAddress": "0x141f6ed94C0F8e1Ad30b8b1E0d0f23BF4709e535",
+      "deployTransaction": "0x54926f8470fdaf30c1818f4d2b20463e90097e99059f7620811c8f78de298cb8",
+      "deployedBytecodeHash": "0x6d898ca303a258c5723b87a08dcadd5b8de848327dd7b2213ce7e4ca63abccc2",
+      "sourceName": "contracts/Proxy.sol"
+    }
+  }
+}
