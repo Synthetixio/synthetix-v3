@@ -5,6 +5,7 @@
   "files": [
     "contracts",
     "!contracts/mocks",
+    "!contracts/Proxy.sol",
     "!contracts/Router.sol"
   ],
   "scripts": {
