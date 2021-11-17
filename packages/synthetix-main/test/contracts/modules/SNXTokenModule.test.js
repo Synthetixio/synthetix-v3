@@ -11,7 +11,7 @@ describe('SNXTokenModule', function () {
 
   let owner, user1;
 
-  before('initialize the system', async () => {
+  before('identify signers', async () => {
     [owner, user1] = await ethers.getSigners();
   });
 
