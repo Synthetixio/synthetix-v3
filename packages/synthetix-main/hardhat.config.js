@@ -13,7 +13,7 @@ module.exports = {
     kovan: {
       url: `https://kovan.infura.io/v3/${process.env.INFURA_KEY}`,
       accounts: [process.env.DEPLOYER_PRIVATE_KEY],
-    }
+    },
   },
   deployer: {},
 };
