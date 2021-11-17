@@ -3,7 +3,6 @@ function processTransaction(transaction, hre) {
 }
 
 function processReceipt(receipt, hre) {
-  // Wait for the transaction to finish
   const { gasUsed } = receipt;
   const status = receipt.status === 1 ? 'confirmed' : 'failed';
 

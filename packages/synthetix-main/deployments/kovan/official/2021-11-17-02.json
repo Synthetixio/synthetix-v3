@@ -1,0 +1,59 @@
+{
+  "properties": {
+    "completed": false,
+    "totalGasUsed": "1370109"
+  },
+  "transactions": {
+    "0x82f5cd82bd0ae4520759f97dbf7a09445e52078cb5690a09881631fe8d8c4295": {
+      "status": "confirmed"
+    },
+    "0x701cabe387fd06b20d95e5fe4b9f00cda3b0ba1ae02ef828475425ddf9adab8e": {
+      "status": "pending"
+    },
+    "0x6be82918dd3ee3176cee844b805493d6161a8e7be2e93656a9ca1522c4422357": {
+      "status": "pending"
+    },
+    "0x8792882663fcaf6292f5fa6985536ff481ec4d0b209d68450ccfdd8b952a22d2": {
+      "status": "confirmed"
+    },
+    "0xd2d9ce26b34c9f24e95748518394b607e8f7210ae3a04769744202eda902e34e": {
+      "status": "pending"
+    },
+    "0xa2d9e3a19e6ba156ad474010822ca83cb95f93d9b4d25639edc9519ff6dcd86a": {
+      "status": "confirmed"
+    },
+    "0x0017a2cb7bdca3b565871a8df61265514c2c638a262e992fd73111c19efde3f4": {
+      "status": "pending"
+    }
+  },
+  "contracts": {
+    "OwnerModule": {
+      "deployedAddress": "0x9Fffe5652335b29a39C072C3bb80e13b2F0b73Ed",
+      "deployTransaction": "0xa2d9e3a19e6ba156ad474010822ca83cb95f93d9b4d25639edc9519ff6dcd86a",
+      "deployedBytecodeHash": "0x395794c901029add8b19a33d96aaebf0f1e53f2f450629e035c440adfb3b7475",
+      "sourceName": "contracts/modules/OwnerModule.sol",
+      "isModule": true
+    },
+    "SNXTokenModule": {
+      "deployedAddress": "",
+      "deployTransaction": "",
+      "deployedBytecodeHash": "0x747c0c0357af2c019397a7f6007a2a2b72b0340e8d9170afca26352f73c4813e",
+      "sourceName": "contracts/modules/SNXTokenModule.sol",
+      "isModule": true
+    },
+    "SynthsModule": {
+      "deployedAddress": "",
+      "deployTransaction": "",
+      "deployedBytecodeHash": "0xdc7359b0657924e77165923db5d290216377d571e4b9a0475591d62acfc4d3a5",
+      "sourceName": "contracts/modules/SynthsModule.sol",
+      "isModule": true
+    },
+    "UpgradeModule": {
+      "deployedAddress": "",
+      "deployTransaction": "",
+      "deployedBytecodeHash": "0x1bdef1b3a6f21ed175c5509f8af7d09910ab308a22f34396805d22b5b536b885",
+      "sourceName": "contracts/modules/UpgradeModule.sol",
+      "isModule": true
+    }
+  }
+}
