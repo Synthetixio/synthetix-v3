@@ -3,6 +3,7 @@ const path = require('path');
 const glob = require('glob');
 const naturalCompare = require('string-natural-compare');
 const configDefaults = require('../internal/config-defaults');
+const { TASK_DEPLOY } = require('../task-names');
 
 /**
  * @typedef {Object} DeploymentInfo An object describing which deployment to retrieve
@@ -108,6 +109,21 @@ function getDeploymentFolder(info) {
   return path.resolve(folder, network, instance);
 }
 
+/**
+ * Deploys a system.
+ * Designed for programmatic use in tests.
+ * @param {DeploymentInfo} info See DeploymentInfo above
+ * @returns {string} The path of the folder
+ */
+async function deploySystem(deploymentInfo, customOptions = {}) {
+  await hre.run(TASK_DEPLOY, {
+    ...deploymentInfo,
+    noConfirm: true,
+    quiet: true,
+    ...customOptions,
+  });
+};
+
 function _populateDefaults(info = {}) {
   return { ...DeploymentInfo, ...info };
 }
@@ -121,4 +137,5 @@ module.exports = {
   getAllDeploymentFiles,
   getDeploymentFolder,
   defaultDeploymentInfo: DeploymentInfo,
+  deploySystem,
 };

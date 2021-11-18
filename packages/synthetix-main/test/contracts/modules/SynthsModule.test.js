@@ -1,12 +1,12 @@
 const assert = require('assert');
 const { ethers } = hre;
-const { getProxyAddress } = require('@synthetixio/deployer/utils/deployments');
 const assertRevert = require('@synthetixio/core-js/utils/assert-revert');
 const { findEvent } = require('@synthetixio/core-js/utils/events');
-const bootstrap = require('../../helpers/bootstrap');
+const { bootstrap } = require('@synthetixio/deployer/utils/tests');
+const initializer = require('../../helpers/initializer');
 
 describe('SynthsModule', function () {
-  const { deploymentInfo } = bootstrap();
+  const { proxyAddress } = bootstrap(initializer);
 
   const sUSD = ethers.utils.formatBytes32String('sUSD');
 
@@ -19,7 +19,6 @@ describe('SynthsModule', function () {
   let SynthsModule, synthImplementation;
 
   before('identify modules', async () => {
-    const proxyAddress = getProxyAddress(deploymentInfo);
     SynthsModule = await ethers.getContractAt('SynthsModule', proxyAddress);
   });
 

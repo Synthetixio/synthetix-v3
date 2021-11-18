@@ -1,17 +1,16 @@
 const assert = require('assert/strict');
-const { getProxyAddress, getRouterAddress } = require('@synthetixio/deployer/utils/deployments');
 const assertRevert = require('@synthetixio/core-js/utils/assert-revert');
-const bootstrap = require('../../helpers/bootstrap');
+const { bootstrap } = require('@synthetixio/deployer/utils/tests');
+const initializer = require('../../helpers/initializer');
 
 const { ethers } = hre;
 
 describe('UpgradeModule', function () {
   describe('when upgrading to a new Proxy', function () {
-    const { deploymentInfo } = bootstrap();
+    const { proxyAddress, routerAddress } = bootstrap(initializer);
 
     let UpgradeModule;
     before('identify module', async function () {
-      const proxyAddress = getProxyAddress(deploymentInfo);
       UpgradeModule = await ethers.getContractAt('UpgradeModule', proxyAddress);
     });
 
@@ -34,7 +33,7 @@ describe('UpgradeModule', function () {
       });
 
       it('sets the new address', async function () {
-        assert.equal(await UpgradeModule.getImplementation(), getRouterAddress(deploymentInfo));
+        assert.equal(await UpgradeModule.getImplementation(), routerAddress);
 
         const tx = await UpgradeModule.upgradeTo(NewRouter.address);
         await tx.wait();
