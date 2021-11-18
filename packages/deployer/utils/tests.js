@@ -13,9 +13,6 @@ function bootstrap(initializer) {
     instance: 'test',
   };
 
-  const proxyAddress = getProxyAddress(deploymentInfo);
-  const routerAddress = getRouterAddress(deploymentInfo);
-
   before('take a snapshot', async () => {
     snapshotId = await takeSnapshot(hre.ethers.provider);
   });
@@ -31,6 +28,9 @@ function bootstrap(initializer) {
   after('restore the snapshot', async () => {
     await restoreSnapshot(snapshotId, hre.ethers.provider);
   });
+
+  const proxyAddress = () => getProxyAddress(deploymentInfo) ;
+  const routerAddress = () => getRouterAddress(deploymentInfo) ;
 
   return { deploymentInfo, proxyAddress, routerAddress };
 }

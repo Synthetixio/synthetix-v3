@@ -16,7 +16,7 @@ describe('SettingsModule', () => {
   });
 
   before('identify modules', async () => {
-    SettingsModule = await ethers.getContractAt('SettingsModule', proxyAddress);
+    SettingsModule = await ethers.getContractAt('SettingsModule', proxyAddress());
   });
 
   describe('when a regular user tries to set a value', () => {

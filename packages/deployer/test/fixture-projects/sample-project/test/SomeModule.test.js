@@ -19,7 +19,7 @@ describe('SomeModule', () => {
   });
 
   before('identify modules', async () => {
-    SomeModule = await ethers.getContractAt('SomeModule', proxyAddress);
+    SomeModule = await ethers.getContractAt('SomeModule', proxyAddress());
   });
 
   describe('when value is set', () => {

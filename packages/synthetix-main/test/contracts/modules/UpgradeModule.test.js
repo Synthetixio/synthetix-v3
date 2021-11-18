@@ -11,7 +11,7 @@ describe('UpgradeModule', function () {
 
     let UpgradeModule;
     before('identify module', async function () {
-      UpgradeModule = await ethers.getContractAt('UpgradeModule', proxyAddress);
+      UpgradeModule = await ethers.getContractAt('UpgradeModule', proxyAddress());
     });
 
     describe('when attempting to set the implementation with a non owner signer', function () {
@@ -33,7 +33,7 @@ describe('UpgradeModule', function () {
       });
 
       it('sets the new address', async function () {
-        assert.equal(await UpgradeModule.getImplementation(), routerAddress);
+        assert.equal(await UpgradeModule.getImplementation(), routerAddress());
 
         const tx = await UpgradeModule.upgradeTo(NewRouter.address);
         await tx.wait();

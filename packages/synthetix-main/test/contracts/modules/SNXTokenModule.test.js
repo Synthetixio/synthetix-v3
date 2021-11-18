@@ -18,7 +18,7 @@ describe('SNXTokenModule', function () {
   describe('When creating the SNX token', async () => {
     let SNXTokenModule, snxTokenAddress, SNX;
     before('identify modules', async () => {
-      SNXTokenModule = await ethers.getContractAt('SNXTokenModule', proxyAddress);
+      SNXTokenModule = await ethers.getContractAt('SNXTokenModule', proxyAddress());
     });
 
     it('No SNX is deployed', async () => {

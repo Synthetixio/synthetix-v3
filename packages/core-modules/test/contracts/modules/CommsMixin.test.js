@@ -10,8 +10,8 @@ describe('CommsMixin', () => {
   let SampleModuleA, SampleModuleB;
 
   before('identify modules', async () => {
-    SampleModuleA = await ethers.getContractAt('SampleModuleA', proxyAddress);
-    SampleModuleB = await ethers.getContractAt('SampleModuleB', proxyAddress);
+    SampleModuleA = await ethers.getContractAt('SampleModuleA', proxyAddress());
+    SampleModuleB = await ethers.getContractAt('SampleModuleB', proxyAddress());
   });
 
   describe('when writting to SampleNamespace.someValue', () => {

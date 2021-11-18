@@ -10,7 +10,7 @@ describe('ExtrasCoverage', () => {
     let WrongModuleMock;
 
     before('identify modules', async () => {
-      WrongModuleMock = await ethers.getContractAt('WrongModuleMock', proxyAddress);
+      WrongModuleMock = await ethers.getContractAt('WrongModuleMock', proxyAddress());
     });
 
     it('reverts', async () => {

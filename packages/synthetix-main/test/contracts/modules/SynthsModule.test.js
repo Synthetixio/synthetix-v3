@@ -19,7 +19,7 @@ describe('SynthsModule', function () {
   let SynthsModule, synthImplementation;
 
   before('identify modules', async () => {
-    SynthsModule = await ethers.getContractAt('SynthsModule', proxyAddress);
+    SynthsModule = await ethers.getContractAt('SynthsModule', proxyAddress());
   });
 
   before('deploy an implementation', async () => {
