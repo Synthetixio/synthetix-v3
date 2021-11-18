@@ -1,4 +1,8 @@
-const { deploySystem, getProxyAddress, getRouterAddress } = require('@synthetixio/deployer/utils/deployments');
+const {
+  deploySystem,
+  getProxyAddress,
+  getRouterAddress,
+} = require('@synthetixio/deployer/utils/deployments');
 const { takeSnapshot, restoreSnapshot } = require('@synthetixio/core-js/utils/rpc');
 
 function bootstrap(initializer) {
@@ -29,7 +33,7 @@ function bootstrap(initializer) {
   });
 
   return { deploymentInfo, proxyAddress, routerAddress };
-};
+}
 
 module.exports = {
   bootstrap,

@@ -122,7 +122,7 @@ async function deploySystem(deploymentInfo, customOptions = {}) {
     quiet: true,
     ...customOptions,
   });
-};
+}
 
 function _populateDefaults(info = {}) {
   return { ...DeploymentInfo, ...info };

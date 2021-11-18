@@ -1,4 +1,3 @@
-const { getProxyAddress } = require('@synthetixio/deployer/utils/deployments');
 const assert = require('assert');
 const assertRevert = require('@synthetixio/core-js/utils/assert-revert');
 const { bootstrap } = require('@synthetixio/deployer/utils/tests');

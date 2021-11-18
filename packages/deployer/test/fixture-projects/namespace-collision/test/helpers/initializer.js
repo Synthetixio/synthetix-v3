@@ -1,1 +1,1 @@
-module.exports = async function initializer() {}
+module.exports = async function initializer() {};
