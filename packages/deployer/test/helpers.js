@@ -2,6 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const { resetHardhatContext } = require('hardhat/plugins-testing');
 const { takeSnapshot, restoreSnapshot } = require('@synthetixio/core-js/utils/rpc');
+const { TASK_DEPLOY } = require('../task-names');
 
 function useEnvironment(fixtureProjectName) {
   let snapshotId;
@@ -18,15 +19,18 @@ function useEnvironment(fixtureProjectName) {
     // Save a snapshot to be reverted at the end of each test
     snapshotId = await takeSnapshot(this.hre.ethers.provider);
 
-    // Load sample project's initializers, for being able to deploy and set it up
-    const createInitializer = _getEnvironmentInitializer(fixtureProjectName);
-    const { deploySystem, initSystem } = createInitializer(this.hre);
+    // Load sample project's initializers, for being able to deploy and set it up  
+    const initializer = _getEnvironmentInitializer(fixtureProjectName);
+    const deploymentInfo = {
+      network: this.hre.config.defaultNetwork,
+      instance: 'test',
+    };
 
     // Allow the tests to execute the configured deploy method on the loaded environment
-    this.deploySystem = deploySystem;
+    this.deploySystem = async (deploymentInfo) => { await deploySystem(deploymentInfo, { clear: true })};
 
     // Allow to initialize a deployment from the tests
-    this.initSystem = initSystem;
+    this.initSystem = async (deploymentInfo) => { await initializer(deploymentInfo) };
   });
 
   afterEach('resetting environment', async function () {
@@ -37,6 +41,16 @@ function useEnvironment(fixtureProjectName) {
     await restoreSnapshot(snapshotId, this.hre.ethers.provider);
   });
 }
+
+async function deploySystem(deploymentInfo, customOptions = {}) {
+  this.hre = require('hardhat');
+  await this.hre.run(TASK_DEPLOY, {
+    ...deploymentInfo,
+    noConfirm: true,
+    quiet: true,
+    ...customOptions,
+  });
+};
 
 function _getEnvironmentPath(fixtureProjectName) {
   const pathname = path.join(__dirname, 'fixture-projects', fixtureProjectName);

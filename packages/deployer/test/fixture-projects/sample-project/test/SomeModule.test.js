@@ -3,10 +3,11 @@ const assert = require('assert');
 const { ethers } = hre;
 const { getProxyAddress } = require('@synthetixio/deployer/utils/deployments');
 const { findEvent } = require('@synthetixio/core-js/utils/events');
-const bootstrap = require('./helpers/bootstrap');
+const { bootstrap } = require('@synthetixio/deployer/utils/tests');
+const initializer = require('./helpers/initializer');
 
 describe('SomeModule', () => {
-  const { deploymentInfo, initSystem } = bootstrap();
+  const { proxyAddress } = bootstrap(initializer);
 
   let SomeModule;
 
@@ -14,17 +15,11 @@ describe('SomeModule', () => {
 
   let receipt;
 
-  before('initialize the system', async () => {
-    await initSystem();
-  });
-
   before('identify signers', async () => {
     [owner] = await ethers.getSigners();
   });
 
   before('identify modules', async () => {
-    const proxyAddress = getProxyAddress(deploymentInfo);
-
     SomeModule = await ethers.getContractAt('SomeModule', proxyAddress);
   });
 

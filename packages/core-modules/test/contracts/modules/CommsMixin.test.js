@@ -1,18 +1,15 @@
 const assert = require('assert/strict');
-const { getProxyAddress } = require('@synthetixio/deployer/utils/deployments');
 const assertRevert = require('@synthetixio/core-js/utils/assert-revert');
 const { printGasUsed } = require('@synthetixio/core-js/utils/tests');
-const bootstrap = require('../../helpers/bootstrap');
+const { bootstrap } = require('@synthetixio/deployer/utils/tests');
 const { ethers } = hre;
 
 describe('CommsMixin', () => {
-  const { deploymentInfo } = bootstrap();
+  const { proxyAddress } = bootstrap(() => {});
 
   let SampleModuleA, SampleModuleB;
 
   before('identify modules', async () => {
-    const proxyAddress = getProxyAddress(deploymentInfo);
-
     SampleModuleA = await ethers.getContractAt('SampleModuleA', proxyAddress);
     SampleModuleB = await ethers.getContractAt('SampleModuleB', proxyAddress);
   });
