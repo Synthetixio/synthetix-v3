@@ -5,6 +5,7 @@ const {
   deployedContractHasBytescode,
   getSelectors,
 } = require('../../utils/contracts');
+const dummyABI = require('../fixtures/dummy-abi');
 
 describe('utils/contracts.js', function () {
   const dummyAddress = '0x0000000000000000000000000000000000000001';
@@ -14,46 +15,6 @@ describe('utils/contracts.js', function () {
   const dummyProvider = {
     getCode: async () => dummyBytecode,
   };
-  const dummyABI = [
-    {
-      constant: false,
-      inputs: [
-        {
-          internalType: 'address',
-          name: 'dst',
-          type: 'address',
-        },
-        {
-          internalType: 'uint256',
-          name: 'wad',
-          type: 'uint256',
-        },
-      ],
-      name: 'transfer',
-      outputs: [
-        {
-          internalType: 'bool',
-          name: '',
-          type: 'bool',
-        },
-      ],
-      payable: false,
-      stateMutability: 'nonpayable',
-      type: 'function',
-    },
-    {
-      inputs: [
-        {
-          internalType: 'uint256',
-          name: 'chainId_',
-          type: 'uint256',
-        },
-      ],
-      payable: false,
-      stateMutability: 'nonpayable',
-      type: 'constructor',
-    },
-  ];
 
   it('can retrieve the hash of the bytecode of a contract', function () {
     assert.equal(getBytecodeHash(dummyBytecode), dummyBytecodeHash);
