@@ -6,7 +6,7 @@ const { bootstrap } = require('@synthetixio/deployer/utils/tests');
 const { ethers } = hre;
 
 describe('CoreOwnerModule', () => {
-  bootstrap(() => {});
+  bootstrap();
 
   let OwnerModule;
   let owner, user;

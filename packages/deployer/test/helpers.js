@@ -28,7 +28,7 @@ function useEnvironment(fixtureProjectName) {
 
     // Allow the tests to execute the configured deploy method on the loaded environment
     this.deploySystem = async () => {
-      await deploySystem(deploymentInfo, { clear: true });
+      await _deploySystem(deploymentInfo, { clear: true });
     };
 
     // Allow to initialize a deployment from the tests
@@ -46,7 +46,7 @@ function useEnvironment(fixtureProjectName) {
   });
 }
 
-async function deploySystem(deploymentInfo, customOptions = {}) {
+async function _deploySystem(deploymentInfo, customOptions = {}) {
   this.hre = require('hardhat');
   await this.hre.run(TASK_DEPLOY, {
     ...deploymentInfo,

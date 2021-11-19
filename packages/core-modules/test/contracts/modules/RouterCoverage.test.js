@@ -4,7 +4,7 @@ const { bootstrap } = require('@synthetixio/deployer/utils/tests');
 const { ethers } = hre;
 
 describe('ExtrasCoverage', () => {
-  const { proxyAddress } = bootstrap(() => {});
+  const { proxyAddress } = bootstrap();
 
   describe('when attempting to reach an unexistent function in Router', () => {
     let WrongModuleMock;

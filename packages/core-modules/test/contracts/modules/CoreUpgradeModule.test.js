@@ -6,7 +6,7 @@ const { bootstrap } = require('@synthetixio/deployer/utils/tests');
 const { ethers } = hre;
 
 describe('CoreUpgradeModule', () => {
-  bootstrap(() => {});
+  bootstrap();
 
   let UpgradeModule, Implementation;
   let owner, user;

@@ -5,7 +5,7 @@ const { bootstrap } = require('@synthetixio/deployer/utils/tests');
 const { ethers } = hre;
 
 describe('CommsMixin', () => {
-  const { proxyAddress } = bootstrap(() => {});
+  const { proxyAddress } = bootstrap();
 
   let SampleModuleA, SampleModuleB;
 
