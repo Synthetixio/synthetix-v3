@@ -48,6 +48,7 @@ function useEnvironment(fixtureProjectName) {
 
 async function _deploySystem(deploymentInfo, customOptions = {}) {
   this.hre = require('hardhat');
+
   await this.hre.run(TASK_DEPLOY, {
     ...deploymentInfo,
     noConfirm: true,

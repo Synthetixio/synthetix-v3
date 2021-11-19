@@ -1,6 +1,5 @@
-const hre = require('hardhat');
-const assert = require('assert');
 const { ethers } = hre;
+const assert = require('assert');
 const { findEvent } = require('@synthetixio/core-js/utils/events');
 const { bootstrap } = require('@synthetixio/deployer/utils/tests');
 const initializer = require('./helpers/initializer');

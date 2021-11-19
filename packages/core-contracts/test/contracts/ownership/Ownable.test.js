@@ -1,6 +1,5 @@
-const hre = require('hardhat');
-const assert = require('assert');
 const { ethers } = hre;
+const assert = require('assert');
 const assertRevert = require('@synthetixio/core-js/utils/assert-revert');
 const { findEvent } = require('@synthetixio/core-js/utils/events');
 
