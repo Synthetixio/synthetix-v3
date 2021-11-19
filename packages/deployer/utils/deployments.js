@@ -109,21 +109,6 @@ function getDeploymentFolder(info) {
   return path.resolve(folder, network, instance);
 }
 
-/**
- * Deploys a system.
- * Designed for programmatic use in tests.
- * @param {DeploymentInfo} info See DeploymentInfo above
- * @returns {string} The path of the folder
- */
-async function deploySystem(deploymentInfo, customOptions = {}) {
-  await hre.run(TASK_DEPLOY, {
-    ...deploymentInfo,
-    noConfirm: true,
-    quiet: true,
-    ...customOptions,
-  });
-}
-
 function _populateDefaults(info = {}) {
   return { ...DeploymentInfo, ...info };
 }
