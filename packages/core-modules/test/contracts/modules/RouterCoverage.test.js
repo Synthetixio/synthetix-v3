@@ -1,7 +1,7 @@
+const { ethers } = hre;
 const assert = require('assert');
 const assertRevert = require('@synthetixio/core-js/utils/assert-revert');
 const { bootstrap } = require('@synthetixio/deployer/utils/tests');
-const { ethers } = hre;
 
 describe('ExtrasCoverage', () => {
   const { proxyAddress } = bootstrap();

@@ -34,7 +34,7 @@ describe('CoreOwnerModule', () => {
     });
 
     it('sets the value', async () => {
-      assert.equal((await OwnerModule.value()).toNumber(), 42);
+      assert.equal(await OwnerModule.value(), 42);
     });
   });
 });
