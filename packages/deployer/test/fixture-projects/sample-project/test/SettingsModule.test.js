@@ -1,29 +1,22 @@
-const hre = require('hardhat');
 const assert = require('assert');
 const { ethers } = hre;
-const { getProxyAddress } = require('@synthetixio/deployer/utils/deployments');
 const assertRevert = require('@synthetixio/core-js/utils/assert-revert');
-const bootstrap = require('./helpers/bootstrap');
+const { bootstrap } = require('@synthetixio/deployer/utils/tests');
+const initializer = require('./helpers/initializer');
 
 describe('SettingsModule', () => {
-  const { deploymentInfo, initSystem } = bootstrap();
+  const { proxyAddress } = bootstrap(initializer);
 
   let SettingsModule;
 
   let owner, user;
-
-  before('initialize the system', async () => {
-    await initSystem();
-  });
 
   before('identify signers', async () => {
     [owner, user] = await ethers.getSigners();
   });
 
   before('identify modules', async () => {
-    const proxyAddress = getProxyAddress(deploymentInfo);
-
-    SettingsModule = await ethers.getContractAt('SettingsModule', proxyAddress);
+    SettingsModule = await ethers.getContractAt('SettingsModule', proxyAddress());
   });
 
   describe('when a regular user tries to set a value', () => {

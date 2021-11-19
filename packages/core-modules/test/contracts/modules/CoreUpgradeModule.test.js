@@ -1,7 +1,7 @@
 const hre = require('hardhat');
 const assert = require('assert');
 const assertRevert = require('@synthetixio/core-js/utils/assert-revert');
-const bootstrap = require('../../helpers/bootstrap');
+const { bootstrap } = require('@synthetixio/deployer/utils/tests');
 
 const { ethers } = hre;
 

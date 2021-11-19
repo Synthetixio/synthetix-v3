@@ -1,19 +1,16 @@
-const { getProxyAddress } = require('@synthetixio/deployer/utils/deployments');
 const assert = require('assert');
 const assertRevert = require('@synthetixio/core-js/utils/assert-revert');
-const bootstrap = require('../../helpers/bootstrap');
+const { bootstrap } = require('@synthetixio/deployer/utils/tests');
 const { ethers } = hre;
 
 describe('ExtrasCoverage', () => {
-  const { deploymentInfo } = bootstrap();
+  const { proxyAddress } = bootstrap();
 
   describe('when attempting to reach an unexistent function in Router', () => {
     let WrongModuleMock;
 
     before('identify modules', async () => {
-      const proxyAddress = getProxyAddress(deploymentInfo);
-
-      WrongModuleMock = await ethers.getContractAt('WrongModuleMock', proxyAddress);
+      WrongModuleMock = await ethers.getContractAt('WrongModuleMock', proxyAddress());
     });
 
     it('reverts', async () => {

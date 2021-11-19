@@ -1,13 +1,13 @@
 const assert = require('assert');
 const { ethers } = hre;
-const { getProxyAddress } = require('@synthetixio/deployer/utils/deployments');
 const assertRevert = require('@synthetixio/core-js/utils/assert-revert');
 const bn = require('@synthetixio/core-js/utils/assert-bignumber');
 const { findEvent } = require('@synthetixio/core-js/utils/events');
-const bootstrap = require('../../helpers/bootstrap');
+const { bootstrap } = require('@synthetixio/deployer/utils/tests');
+const initializer = require('../../helpers/initializer');
 
 describe('SNXTokenModule', function () {
-  const { deploymentInfo } = bootstrap();
+  const { proxyAddress } = bootstrap(initializer);
 
   let owner, user1;
 
@@ -18,8 +18,7 @@ describe('SNXTokenModule', function () {
   describe('When creating the SNX token', async () => {
     let SNXTokenModule, snxTokenAddress, SNX;
     before('identify modules', async () => {
-      const proxyAddress = getProxyAddress(deploymentInfo);
-      SNXTokenModule = await ethers.getContractAt('SNXTokenModule', proxyAddress);
+      SNXTokenModule = await ethers.getContractAt('SNXTokenModule', proxyAddress());
     });
 
     it('No SNX is deployed', async () => {
