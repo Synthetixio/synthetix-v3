@@ -4,7 +4,7 @@ const { findEvent } = require('../../utils/events');
 const parsedTxReceipt = require('../fixtures/parsed-tx-receipt');
 const unparsedTxReceipt = require('../fixtures/unparsed-tx-receipt');
 const deploymentTxReceipt = require('../fixtures/deployment-tx-receipt');
-const dummyABI = require('../fixtures/event');
+const dummyABI = require('../fixtures/event-abi');
 
 describe('utils/events.js', () => {
   it('can retrieve events from a regular transaction receipt', async () => {
