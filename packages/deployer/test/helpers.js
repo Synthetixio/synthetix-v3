@@ -19,21 +19,14 @@ function useEnvironment(fixtureProjectName) {
     // Save a snapshot to be reverted at the end of each test
     snapshotId = await takeSnapshot(this.hre.ethers.provider);
 
-    // Load sample project's initializers, for being able to deploy and set it up
-    const initializer = _getEnvironmentInitializer(fixtureProjectName);
-    const deploymentInfo = {
+    this.deploymentInfo = {
       network: this.hre.config.defaultNetwork,
       instance: 'test',
     };
 
     // Allow the tests to execute the configured deploy method on the loaded environment
-    this.deploySystem = async () => {
-      await _deploySystem(deploymentInfo, { clear: true });
-    };
-
-    // Allow to initialize a deployment from the tests
-    this.initSystem = async () => {
-      await initializer(deploymentInfo);
+    this.deploySystem = async (customOptions = {}) => {
+      await _deploySystem(this.deploymentInfo, customOptions);
     };
   });
 
@@ -65,20 +58,6 @@ function _getEnvironmentPath(fixtureProjectName) {
   }
 
   return pathname;
-}
-
-function _getEnvironmentInitializer(fixtureProjectName) {
-  const initializerPath = `${_getEnvironmentPath(fixtureProjectName)}/test/helpers/initializer`;
-
-  try {
-    return require(initializerPath);
-  } catch (err) {
-    if (err.code === 'MODULE_NOT_FOUND') {
-      return () => {};
-    }
-
-    throw err;
-  }
 }
 
 module.exports = {

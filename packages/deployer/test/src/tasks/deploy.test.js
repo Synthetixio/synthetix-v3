@@ -1,12 +1,17 @@
 const path = require('path');
 const { rejects } = require('assert/strict');
 const { copyFile, unlink, readFile, writeFile } = require('fs/promises');
+const sampleProjectInitializer = require('../../fixture-projects/sample-project/test/helpers/initializer');
 const { ContractValidationError } = require('../../../internal/errors');
 const { useEnvironment } = require('../../helpers');
 
 describe('tasks/deploy.js', function () {
   describe('when deploying a correctly written project', function () {
     useEnvironment('sample-project');
+
+    beforeEach('initialize sample-project owner', async function () {
+      await sampleProjectInitializer(this.deploymentInfo, this.hre);
+    });
 
     it('correctly executes several deployments with no changes', async function () {
       this.timeout(25000);
@@ -16,8 +21,6 @@ describe('tasks/deploy.js', function () {
         alias: 'first',
         clear: true,
       });
-
-      await this.initSystem();
 
       // Second deployment, without any changes
       await this.deploySystem({
@@ -33,8 +36,6 @@ describe('tasks/deploy.js', function () {
         alias: 'first',
         clear: true,
       });
-
-      await this.initSystem();
 
       // Second deployment, without any changes
       await this.deploySystem({
@@ -103,8 +104,6 @@ describe('tasks/deploy.js', function () {
         alias: 'first',
         clear: true,
       });
-
-      await this.initSystem();
 
       // Second deployment, without any changes
       await this.deploySystem({
