@@ -1,7 +1,5 @@
-const {
-  getProxyAddress,
-  getRouterAddress,
-} = require('@synthetixio/deployer/utils/deployments');
+const { TASK_DEPLOY } = require('@synthetixio/deployer/task-names');
+const { getProxyAddress, getRouterAddress } = require('@synthetixio/deployer/utils/deployments');
 const { takeSnapshot, restoreSnapshot } = require('@synthetixio/core-js/utils/rpc');
 
 function bootstrap(initializer = () => {}) {

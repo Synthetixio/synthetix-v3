@@ -3,7 +3,6 @@ const path = require('path');
 const glob = require('glob');
 const naturalCompare = require('string-natural-compare');
 const configDefaults = require('../internal/config-defaults');
-const { TASK_DEPLOY } = require('../task-names');
 
 /**
  * @typedef {Object} DeploymentInfo An object describing which deployment to retrieve
@@ -122,5 +121,4 @@ module.exports = {
   getAllDeploymentFiles,
   getDeploymentFolder,
   defaultDeploymentInfo: DeploymentInfo,
-  deploySystem,
 };
