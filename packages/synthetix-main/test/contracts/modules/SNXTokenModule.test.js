@@ -1,7 +1,7 @@
-const assert = require('assert');
 const { ethers } = hre;
+const assert = require('assert/strict');
 const assertRevert = require('@synthetixio/core-js/utils/assert-revert');
-const bn = require('@synthetixio/core-js/utils/assert-bignumber');
+const assertBn = require('@synthetixio/core-js/utils/assert-bignumber');
 const { findEvent } = require('@synthetixio/core-js/utils/events');
 const { bootstrap } = require('@synthetixio/deployer/utils/tests');
 const initializer = require('../../helpers/initializer');
@@ -96,7 +96,7 @@ describe('SNXTokenModule', function () {
           });
 
           it('updates the total supply', async () => {
-            bn.eq(await NewSNX.totalSupply(), totalSupply);
+            assertBn.eq(await NewSNX.totalSupply(), totalSupply);
           });
         });
       });

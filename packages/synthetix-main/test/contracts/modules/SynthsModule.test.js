@@ -1,5 +1,5 @@
-const assert = require('assert');
 const { ethers } = hre;
+const assert = require('assert/strict');
 const assertRevert = require('@synthetixio/core-js/utils/assert-revert');
 const { findEvent } = require('@synthetixio/core-js/utils/events');
 const { bootstrap } = require('@synthetixio/deployer/utils/tests');
@@ -156,7 +156,7 @@ describe('SynthsModule', function () {
                 it('reverts', async () => {
                   await assertRevert(
                     SynthsModule.createSynth(sUSD, name, symbol, decimals),
-                    'SynthAlreadyDeployed()'
+                    'SynthAlreadyCreated()'
                   );
                 });
               });
