@@ -117,7 +117,10 @@ describe('BeaconProxy', () => {
 
       describe('when trying to set it to the same beacon', () => {
         it('reverts', async () => {
-          await assertRevert(BeaconProxy.setBeacon(Beacon.address), 'NoChange()');
+          await assertRevert(
+            BeaconProxy.setBeacon(Beacon.address),
+            `InvalidAddress("${Beacon.address}")`
+          );
         });
       });
 

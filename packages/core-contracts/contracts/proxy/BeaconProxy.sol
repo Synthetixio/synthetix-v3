@@ -8,8 +8,6 @@ import "../interfaces/IBeacon.sol";
 import "../utils/ContractUtil.sol";
 
 contract BeaconProxy is AbstractProxy, BeaconStorage, CommonErrors, ContractUtil {
-    error NoChange();
-
     event BeaconSet(address beacon);
 
     constructor(address firstBeacon) {
@@ -21,16 +19,12 @@ contract BeaconProxy is AbstractProxy, BeaconStorage, CommonErrors, ContractUtil
     }
 
     function _setBeacon(address newBeacon) internal virtual {
-        if (newBeacon == address(0)) {
+        if (newBeacon == address(0) || newBeacon == _beaconStore().beacon) {
             revert InvalidAddress(newBeacon);
         }
 
         if (!_isContract(newBeacon)) {
             revert InvalidContract(newBeacon);
-        }
-
-        if (newBeacon == _beaconStore().beacon) {
-            revert NoChange();
         }
 
         _beaconStore().beacon = newBeacon;
