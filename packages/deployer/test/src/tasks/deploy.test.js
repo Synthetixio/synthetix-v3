@@ -9,10 +9,6 @@ describe('tasks/deploy.js', function () {
   describe('when deploying a correctly written project', function () {
     useEnvironment('sample-project');
 
-    beforeEach('initialize sample-project owner', async function () {
-      await sampleProjectInitializer(this.deploymentInfo, this.hre);
-    });
-
     it('correctly executes several deployments with no changes', async function () {
       this.timeout(25000);
 
@@ -21,6 +17,8 @@ describe('tasks/deploy.js', function () {
         alias: 'first',
         clear: true,
       });
+
+      await sampleProjectInitializer(this.deploymentInfo, this.hre);
 
       // Second deployment, without any changes
       await this.deploySystem({
