@@ -1,3 +1,4 @@
+/* eslint-disable */
 module.exports = {
   to: '0x09635F643e140090A9A8Dcd712eD6285858ceBef',
   from: '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266',
