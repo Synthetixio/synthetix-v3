@@ -74,9 +74,7 @@ function _getEnvironmentInitializer(fixtureProjectName) {
     return require(initializerPath);
   } catch (err) {
     if (err.code === 'MODULE_NOT_FOUND') {
-      throw new Error(
-        `Sample project didn't define any tests environment initializer helper: ${initializerPath}`
-      );
+      return () => {};
     }
 
     throw err;
