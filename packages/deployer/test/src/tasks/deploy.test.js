@@ -91,4 +91,25 @@ describe('tasks/deploy.js', function () {
       }, ContractValidationError);
     });
   });
+
+  describe('when deploying a project with a custom Proxy', function () {
+    useEnvironment('custom-proxy');
+
+    it('correctly executes several deployments with no changes', async function () {
+      this.timeout(25000);
+
+      // Initial deployment
+      await this.deploySystem({
+        alias: 'first',
+        clear: true,
+      });
+
+      await this.initSystem();
+
+      // Second deployment, without any changes
+      await this.deploySystem({
+        alias: 'second',
+      });
+    });
+  });
 });

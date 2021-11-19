@@ -41,7 +41,7 @@ subtask(
   logger.subtitle('Upgrading main proxy');
 
   const routerName = 'Router';
-  const proxyName = 'Proxy';
+  const proxyName = hre.config.deployer.proxyContract;
 
   const routerAddress = _getDeployedAddress(routerName, hre);
 

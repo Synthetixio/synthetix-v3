@@ -3,21 +3,19 @@ const { extendConfig } = require('hardhat/config');
 const configDefaults = require('../internal/config-defaults');
 
 extendConfig((config, userConfig) => {
-  const { root } = config.paths;
+  const { root, sources } = config.paths;
   const { deployer: givenConfig = {} } = userConfig;
-
-  // Resolve the absolute path from the root of the configurable path
-  function resolvePath(key) {
-    return path.resolve(root, givenConfig?.paths?.[key] || configDefaults.paths[key]);
-  }
 
   config.deployer = {
     ...configDefaults,
     ...givenConfig,
     paths: {
       ...configDefaults.paths,
-      modules: resolvePath('modules'),
-      deployments: resolvePath('deployments'),
+      ...(givenConfig?.paths || {}),
     },
   };
+
+  // Resolve the absolute path from the root of the configurable path
+  config.deployer.paths.deployments = path.resolve(root, config.deployer.paths.deployments);
+  config.deployer.paths.modules = path.resolve(sources, config.deployer.paths.modules);
 });

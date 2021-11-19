@@ -1,6 +1,7 @@
 module.exports = {
+  proxyContract: 'Proxy',
   paths: {
-    modules: 'contracts/modules',
     deployments: 'deployments',
+    modules: 'modules',
   },
 };
