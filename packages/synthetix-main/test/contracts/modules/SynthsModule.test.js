@@ -156,7 +156,7 @@ describe('SynthsModule', function () {
                 it('reverts', async () => {
                   await assertRevert(
                     SynthsModule.createSynth(sUSD, name, symbol, decimals),
-                    'SynthAlreadyDeployed()'
+                    'SynthAlreadyCreated()'
                   );
                 });
               });

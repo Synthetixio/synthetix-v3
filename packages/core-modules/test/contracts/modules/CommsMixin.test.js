@@ -1,5 +1,5 @@
 const { ethers } = hre;
-const assert = require('assert');
+const assertBn = require('@synthetixio/core-js/utils/assert-bignumber');
 const assertRevert = require('@synthetixio/core-js/utils/assert-revert');
 const { printGasUsed } = require('@synthetixio/core-js/utils/tests');
 const { bootstrap } = require('@synthetixio/deployer/utils/tests');
@@ -26,7 +26,7 @@ describe('CommsMixin', () => {
 
       printGasUsed({ test: this, gasUsed: receipt.cumulativeGasUsed });
 
-      assert.equal(await SampleModuleA.getSomeValue(), 42);
+      assertBn.eq(await SampleModuleA.getSomeValue(), 42);
     });
 
     it('indirectly via SampleModuleB', async function () {
@@ -35,7 +35,7 @@ describe('CommsMixin', () => {
 
       printGasUsed({ test: this, gasUsed: receipt.cumulativeGasUsed });
 
-      assert.equal(await SampleModuleA.getSomeValue(), 1337);
+      assertBn.eq(await SampleModuleA.getSomeValue(), 1337);
     });
 
     describe('when interacting via CommsMixin with invalid params', () => {

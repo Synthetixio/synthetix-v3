@@ -1,5 +1,5 @@
 const { ethers } = hre;
-const assert = require('assert');
+const assertBn = require('@synthetixio/core-js/utils/assert-bignumber');
 const assertRevert = require('@synthetixio/core-js/utils/assert-revert');
 const { bootstrap } = require('@synthetixio/deployer/utils/tests');
 
@@ -27,7 +27,7 @@ describe('ExtrasCoverage', () => {
     });
 
     it('reads the right valie', async () => {
-      assert.equal(await WrongModuleMock.getFortyTwo(), 42);
+      assertBn.eq(await WrongModuleMock.getFortyTwo(), 42);
     });
   });
 });

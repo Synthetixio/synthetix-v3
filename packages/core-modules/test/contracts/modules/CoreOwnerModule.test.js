@@ -1,5 +1,6 @@
 const { ethers } = hre;
-const assert = require('assert');
+const assert = require('assert/strict');
+const assertBn = require('@synthetixio/core-js/utils/assert-bignumber');
 const assertRevert = require('@synthetixio/core-js/utils/assert-revert');
 const { bootstrap } = require('@synthetixio/deployer/utils/tests');
 
@@ -34,7 +35,7 @@ describe('CoreOwnerModule', () => {
     });
 
     it('sets the value', async () => {
-      assert.equal(await OwnerModule.value(), 42);
+      assertBn.eq(await OwnerModule.value(), 42);
     });
   });
 });
