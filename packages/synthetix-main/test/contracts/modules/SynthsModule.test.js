@@ -9,6 +9,9 @@ describe('SynthsModule', function () {
   const { deploymentInfo } = bootstrap();
 
   const sUSD = ethers.utils.formatBytes32String('sUSD');
+  const name = 'Synthetic USD';
+  const symbol = 'sUSD';
+  const decimals = 18;
 
   let owner, user;
 
@@ -24,7 +27,7 @@ describe('SynthsModule', function () {
   });
 
   before('deploy an implementation', async () => {
-    const factory = await ethers.getContractFactory('SynthMock');
+    const factory = await ethers.getContractFactory('Synth');
     synthImplementation = await factory.deploy();
   });
 
@@ -39,7 +42,10 @@ describe('SynthsModule', function () {
 
       describe('when trying to deploy a synth', () => {
         it('reverts', async () => {
-          await assertRevert(SynthsModule.deploySynth(sUSD), 'BeaconNotDeployed()');
+          await assertRevert(
+            SynthsModule.deploySynth(sUSD, name, symbol, decimals),
+            'BeaconNotDeployed()'
+          );
         });
       });
     });
@@ -80,7 +86,10 @@ describe('SynthsModule', function () {
         describe('When there is NO implementation', async () => {
           describe('when trying to deploy a synth', () => {
             it('reverts', async () => {
-              await assertRevert(SynthsModule.deploySynth(sUSD), 'ImplementationNotSet()');
+              await assertRevert(
+                SynthsModule.deploySynth(sUSD, name, symbol, decimals),
+                'ImplementationNotSet()'
+              );
             });
           });
         });
@@ -115,7 +124,7 @@ describe('SynthsModule', function () {
             describe('when a non-owner tries to deploy', () => {
               it('reverts', async () => {
                 await assertRevert(
-                  SynthsModule.connect(user).deploySynth(sUSD),
+                  SynthsModule.connect(user).deploySynth(sUSD, name, symbol, decimals),
                   'OnlyOwnerAllowed()'
                 );
               });
@@ -125,7 +134,12 @@ describe('SynthsModule', function () {
               let synthAddress;
 
               before('deploySynth()', async () => {
-                const tx = await SynthsModule.connect(owner).deploySynth(sUSD);
+                const tx = await SynthsModule.connect(owner).deploySynth(
+                  sUSD,
+                  name,
+                  symbol,
+                  decimals
+                );
                 receipt = await tx.wait();
               });
 
@@ -141,7 +155,10 @@ describe('SynthsModule', function () {
 
               describe('when trying to deploy an existing synth', () => {
                 it('reverts', async () => {
-                  await assertRevert(SynthsModule.deploySynth(sUSD), 'SynthAlreadyDeployed()');
+                  await assertRevert(
+                    SynthsModule.deploySynth(sUSD, name, symbol, decimals),
+                    'SynthAlreadyDeployed()'
+                  );
                 });
               });
             });
