@@ -35,15 +35,15 @@ describe('SynthsModule', function () {
       it('reverts', async () => {
         await assertRevert(
           SynthsModule.upgradeSynthImplementation(synthImplementation.address),
-          'BeaconNotDeployed()'
+          'BeaconNotCreated()'
         );
       });
 
       describe('when trying to deploy a synth', () => {
         it('reverts', async () => {
           await assertRevert(
-            SynthsModule.deploySynth(sUSD, name, symbol, decimals),
-            'BeaconNotDeployed()'
+            SynthsModule.createSynth(sUSD, name, symbol, decimals),
+            'BeaconNotCreated()'
           );
         });
       });
@@ -52,20 +52,20 @@ describe('SynthsModule', function () {
     describe('When a beacon is deployed', async () => {
       describe('when a non-owner tries to deploy', () => {
         it('reverts', async () => {
-          await assertRevert(SynthsModule.connect(user).deployBeacon(), 'OnlyOwnerAllowed()');
+          await assertRevert(SynthsModule.connect(user).createBeacon(), 'OnlyOwnerAllowed()');
         });
       });
 
       describe('when the owner deploys the beacon', () => {
         let beaconAddress, receipt;
 
-        before('deployBeacon()', async () => {
-          const tx = await SynthsModule.connect(owner).deployBeacon();
+        before('createBeacon()', async () => {
+          const tx = await SynthsModule.connect(owner).createBeacon();
           receipt = await tx.wait();
         });
 
-        it('emits a BeaconDeployed event', async () => {
-          const event = findEvent({ receipt, eventName: 'BeaconDeployed' });
+        it('emits a BeaconCreated event', async () => {
+          const event = findEvent({ receipt, eventName: 'BeaconCreated' });
           beaconAddress = event.args.beacon;
         });
 
@@ -76,8 +76,8 @@ describe('SynthsModule', function () {
         describe('when trying to redeploy', () => {
           it('reverts', async () => {
             await assertRevert(
-              SynthsModule.connect(owner).deployBeacon(),
-              'BeaconAlreadyDeployed()'
+              SynthsModule.connect(owner).createBeacon(),
+              'BeaconAlreadyCreated()'
             );
           });
         });
@@ -86,7 +86,7 @@ describe('SynthsModule', function () {
           describe('when trying to deploy a synth', () => {
             it('reverts', async () => {
               await assertRevert(
-                SynthsModule.deploySynth(sUSD, name, symbol, decimals),
+                SynthsModule.createSynth(sUSD, name, symbol, decimals),
                 'ImplementationNotSet()'
               );
             });
@@ -123,7 +123,7 @@ describe('SynthsModule', function () {
             describe('when a non-owner tries to deploy', () => {
               it('reverts', async () => {
                 await assertRevert(
-                  SynthsModule.connect(user).deploySynth(sUSD, name, symbol, decimals),
+                  SynthsModule.connect(user).createSynth(sUSD, name, symbol, decimals),
                   'OnlyOwnerAllowed()'
                 );
               });
@@ -132,8 +132,8 @@ describe('SynthsModule', function () {
             describe('when the owner deploys synths', () => {
               let synthAddress;
 
-              before('deploySynth()', async () => {
-                const tx = await SynthsModule.connect(owner).deploySynth(
+              before('createSynth()', async () => {
+                const tx = await SynthsModule.connect(owner).createSynth(
                   sUSD,
                   name,
                   symbol,
@@ -142,8 +142,8 @@ describe('SynthsModule', function () {
                 receipt = await tx.wait();
               });
 
-              it('emits a SynthDeployed event', async () => {
-                const event = findEvent({ receipt, eventName: 'SynthDeployed' });
+              it('emits a SynthCreated event', async () => {
+                const event = findEvent({ receipt, eventName: 'SynthCreated' });
                 assert.equal(event.args.synth, sUSD);
                 synthAddress = event.args.synthAddress;
               });
@@ -155,7 +155,7 @@ describe('SynthsModule', function () {
               describe('when trying to deploy an existing synth', () => {
                 it('reverts', async () => {
                   await assertRevert(
-                    SynthsModule.deploySynth(sUSD, name, symbol, decimals),
+                    SynthsModule.createSynth(sUSD, name, symbol, decimals),
                     'SynthAlreadyDeployed()'
                   );
                 });

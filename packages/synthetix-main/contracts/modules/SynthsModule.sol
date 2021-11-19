@@ -8,37 +8,37 @@ import "../interfaces/ISynth.sol";
 import "../storage/SynthsStorage.sol";
 
 contract SynthsModule is OwnableMixin, SynthsStorage {
-    error BeaconAlreadyDeployed();
-    error BeaconNotDeployed();
+    error BeaconAlreadyCreated();
+    error BeaconNotCreated();
     error ImplementationNotSet();
-    error SynthAlreadyDeployed();
+    error SynthAlreadyCreated();
 
-    event BeaconDeployed(address beacon);
-    event SynthDeployed(bytes32 synth, address synthAddress);
+    event BeaconCreated(address beacon);
+    event SynthCreated(bytes32 synth, address synthAddress);
 
-    function deployBeacon() external onlyOwner {
+    function createBeacon() external onlyOwner {
         SynthsStore storage store = _synthsStore();
         if (store.beacon != address(0)) {
-            revert BeaconAlreadyDeployed();
+            revert BeaconAlreadyCreated();
         }
         address beacon = address(new Beacon(address(this)));
         store.beacon = beacon;
-        emit BeaconDeployed(beacon);
+        emit BeaconCreated(beacon);
     }
 
-    function deploySynth(
+    function createSynth(
         bytes32 synth,
         string memory synthName,
         string memory synthSymbol,
         uint8 synthDecimals
     ) external onlyOwner {
         if (_synthsStore().synths[synth] != address(0x0)) {
-            revert SynthAlreadyDeployed();
+            revert SynthAlreadyCreated();
         }
         // get the Beacon address and check if it has been deployed properly and if the implementation is set.
         address beaconAddress = _synthsStore().beacon;
         if (beaconAddress == address(0)) {
-            revert BeaconNotDeployed();
+            revert BeaconNotCreated();
         }
         if (Beacon(beaconAddress).getImplementation() == address(0)) {
             revert ImplementationNotSet();
@@ -47,7 +47,7 @@ contract SynthsModule is OwnableMixin, SynthsStorage {
         address synthAddress = address(new BeaconProxy(beaconAddress));
         // register the new synth (proxy) in the mapping
         _synthsStore().synths[synth] = synthAddress;
-        emit SynthDeployed(synth, synthAddress);
+        emit SynthCreated(synth, synthAddress);
         // initialize synth
         ISynth(synthAddress).initialize(synthName, synthSymbol, synthDecimals);
     }
@@ -55,7 +55,7 @@ contract SynthsModule is OwnableMixin, SynthsStorage {
     function upgradeSynthImplementation(address newSynthsImplementation) external onlyOwner {
         address beaconAddress = _synthsStore().beacon;
         if (beaconAddress == address(0)) {
-            revert BeaconNotDeployed();
+            revert BeaconNotCreated();
         }
         Beacon(beaconAddress).upgradeTo(newSynthsImplementation);
     }
