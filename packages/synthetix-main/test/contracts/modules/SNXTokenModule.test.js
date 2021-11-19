@@ -1,5 +1,5 @@
 const { ethers } = hre;
-const assert = require('assert');
+const assert = require('assert/strict');
 const assertRevert = require('@synthetixio/core-js/utils/assert-revert');
 const assertBn = require('@synthetixio/core-js/utils/assert-bignumber');
 const { findEvent } = require('@synthetixio/core-js/utils/events');
