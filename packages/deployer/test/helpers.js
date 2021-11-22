@@ -2,7 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const { resetHardhatContext } = require('hardhat/plugins-testing');
 const { takeSnapshot, restoreSnapshot } = require('@synthetixio/core-js/utils/rpc');
-const { TASK_DEPLOY } = require('../task-names');
+const { deploySystem } = require('../utils/tests');
 
 function useEnvironment(fixtureProjectName) {
   let snapshotId;
@@ -10,50 +10,42 @@ function useEnvironment(fixtureProjectName) {
   beforeEach('loading environment', async function () {
     this.timeout(25000);
 
+    const envPath = _getEnvironmentPath(fixtureProjectName);
+
     // Set node environments root on the given fixture project root
-    process.chdir(_getEnvironmentPath(fixtureProjectName));
+    process.chdir(envPath);
 
     // Load global hardhat environement
     this.hre = require('hardhat');
 
-    // Save a snapshot to be reverted at the end of each test
-    snapshotId = await takeSnapshot(this.hre.ethers.provider);
-
-    // Load sample project's initializers, for being able to deploy and set it up
-    const initializer = _getEnvironmentInitializer(fixtureProjectName);
-    const deploymentInfo = {
+    this.deploymentInfo = {
       network: this.hre.config.defaultNetwork,
       instance: 'test',
     };
 
-    // Allow the tests to execute the configured deploy method on the loaded environment
-    this.deploySystem = async () => {
-      await _deploySystem(deploymentInfo, { clear: true });
-    };
+    const initializer = _safeRequire(path.join(envPath, 'test', 'helpers', 'initializer'));
 
-    // Allow to initialize a deployment from the tests
-    this.initSystem = async () => {
-      await initializer(deploymentInfo);
+    // Allow the tests to execute the configured deploy method on the loaded environment
+    this.deploySystem = async (customOptions = {}) => {
+      await deploySystem(this.deploymentInfo, customOptions, this.hre);
+
+      if (customOptions.clear) {
+        await initializer(this.deploymentInfo, this.hre);
+      }
     };
+  });
+
+  beforeEach('take a snapshot', async function () {
+    snapshotId = await takeSnapshot(this.hre.ethers.provider);
   });
 
   afterEach('resetting environment', async function () {
     // Reset global loaded hardhat envrironment
     resetHardhatContext();
-
-    // Restore blockchain snapshot to its original state before the test run
-    await restoreSnapshot(snapshotId, this.hre.ethers.provider);
   });
-}
 
-async function _deploySystem(deploymentInfo, customOptions = {}) {
-  this.hre = require('hardhat');
-
-  await this.hre.run(TASK_DEPLOY, {
-    ...deploymentInfo,
-    noConfirm: true,
-    quiet: true,
-    ...customOptions,
+  afterEach('restore the snapshot', async function () {
+    await restoreSnapshot(snapshotId, this.hre.ethers.provider);
   });
 }
 
@@ -67,16 +59,12 @@ function _getEnvironmentPath(fixtureProjectName) {
   return pathname;
 }
 
-function _getEnvironmentInitializer(fixtureProjectName) {
-  const initializerPath = `${_getEnvironmentPath(fixtureProjectName)}/test/helpers/initializer`;
-
+function _safeRequire(pathname, defaults = () => {}) {
   try {
-    return require(initializerPath);
+    return require(pathname);
   } catch (err) {
     if (err.code === 'MODULE_NOT_FOUND') {
-      throw new Error(
-        `Sample project didn't define any tests environment initializer helper: ${initializerPath}`
-      );
+      return defaults;
     }
 
     throw err;

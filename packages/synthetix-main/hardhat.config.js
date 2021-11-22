@@ -15,5 +15,7 @@ module.exports = {
       accounts: process.env.DEPLOYER_PRIVATE_KEY ? [process.env.DEPLOYER_PRIVATE_KEY] : [],
     },
   },
-  deployer: {},
+  deployer: {
+    proxyContract: 'Synthetix',
+  },
 };

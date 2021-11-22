@@ -1,11 +1,14 @@
 const { TASK_DEPLOY } = require('@synthetixio/deployer/task-names');
 const { getProxyAddress, getRouterAddress } = require('@synthetixio/deployer/utils/deployments');
 const { takeSnapshot, restoreSnapshot } = require('@synthetixio/core-js/utils/rpc');
+const { defaultDeploymentInfo } = require('./deployments');
 
 function bootstrap(initializer = () => {}) {
   let snapshotId;
 
   const deploymentInfo = {
+    ...defaultDeploymentInfo,
+    proxyContract: hre.config.deployer.proxyContract,
     network: hre.config.defaultNetwork,
     instance: 'test',
   };
@@ -32,8 +35,8 @@ function bootstrap(initializer = () => {}) {
   return { deploymentInfo, proxyAddress, routerAddress };
 }
 
-async function deploySystem(deploymentInfo, customOptions = {}) {
-  await hre.run(TASK_DEPLOY, {
+async function deploySystem(deploymentInfo, customOptions = {}, _hre = hre) {
+  await _hre.run(TASK_DEPLOY, {
     ...deploymentInfo,
     noConfirm: true,
     quiet: true,

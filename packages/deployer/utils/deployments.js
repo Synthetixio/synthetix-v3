@@ -13,6 +13,7 @@ const configDefaults = require('../internal/config-defaults');
 const DeploymentInfo = {
   network: 'local',
   instance: 'official',
+  proxyContract: configDefaults.proxyContract,
   folder: configDefaults.paths.deployments,
 };
 
@@ -43,7 +44,7 @@ function getProxyAddress(info) {
 
   const deployment = getDeployment(info);
 
-  return deployment.contracts.Proxy.deployedAddress;
+  return deployment.contracts[info.proxyContract].deployedAddress;
 }
 
 /**

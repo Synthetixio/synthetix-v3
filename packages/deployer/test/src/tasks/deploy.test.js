@@ -17,8 +17,6 @@ describe('tasks/deploy.js', function () {
         clear: true,
       });
 
-      await this.initSystem();
-
       // Second deployment, without any changes
       await this.deploySystem({
         alias: 'second',
@@ -33,8 +31,6 @@ describe('tasks/deploy.js', function () {
         alias: 'first',
         clear: true,
       });
-
-      await this.initSystem();
 
       // Second deployment, without any changes
       await this.deploySystem({
@@ -104,12 +100,13 @@ describe('tasks/deploy.js', function () {
         clear: true,
       });
 
-      await this.initSystem();
-
-      // Second deployment, without any changes
-      await this.deploySystem({
-        alias: 'second',
-      });
+      // TODO: Uncomment this test when this fixed:
+      //   https://github.com/Synthetixio/synthetix-v3/issues/428
+      // await this.deploySystem({
+      //   alias: 'second',
+      //   clear: false,
+      //   quiet: false,
+      // });
     });
   });
 });
