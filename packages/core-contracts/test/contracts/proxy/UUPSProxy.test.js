@@ -1,6 +1,7 @@
 const { ethers } = hre;
-const assert = require('assert');
+const assert = require('assert/strict');
 const assertRevert = require('@synthetixio/core-js/utils/assert-revert');
+const assertBn = require('@synthetixio/core-js/utils/assert-bignumber');
 const { findEvent } = require('@synthetixio/core-js/utils/events');
 
 describe('UUPSProxy', () => {
@@ -51,7 +52,7 @@ describe('UUPSProxy', () => {
       });
 
       it('can read the value set', async () => {
-        assert.equal(await Instance.getA(), 42);
+        assertBn.eq(await Instance.getA(), 42);
       });
 
       describe('when sending ETH while interacting with a non payable function', () => {
@@ -117,7 +118,7 @@ describe('UUPSProxy', () => {
         });
 
         it('can read the value previously set', async () => {
-          assert.equal(await Instance.getA(), 42);
+          assertBn.eq(await Instance.getA(), 42);
         });
 
         it('can read the new value set', async () => {

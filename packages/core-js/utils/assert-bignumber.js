@@ -1,4 +1,4 @@
-const { AssertionError } = require('assert');
+const { AssertionError } = require('assert/strict');
 const { BigNumber } = require('ethers');
 
 class BigNumberAssertionError extends AssertionError {}

@@ -1,5 +1,5 @@
 const { ethers } = hre;
-const assert = require('assert');
+const assert = require('assert/strict');
 
 describe('ContractHelper', () => {
   let ContractUtil;

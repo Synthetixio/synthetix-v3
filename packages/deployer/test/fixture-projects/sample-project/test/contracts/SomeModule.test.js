@@ -1,7 +1,8 @@
 const { ethers } = hre;
-const assert = require('assert');
+const assert = require('assert/strict');
 const { findEvent } = require('@synthetixio/core-js/utils/events');
 const { bootstrap } = require('@synthetixio/deployer/utils/tests');
+const assertBn = require('@synthetixio/core-js/utils/assert-bignumber');
 const initializer = require('../helpers/initializer');
 
 describe('SomeModule', () => {
@@ -28,14 +29,14 @@ describe('SomeModule', () => {
     });
 
     it('shows that the value was set', async () => {
-      assert.equal(await SomeModule.getValue(), 42);
+      assertBn.eq(await SomeModule.getValue(), 42);
     });
 
     it('emitted a ValueSet event', async () => {
       const event = findEvent({ receipt, eventName: 'ValueSet' });
 
       assert.equal(event.args.sender, owner.address);
-      assert.equal(event.args.value, 42);
+      assertBn.eq(event.args.value, 42);
     });
   });
 
@@ -46,14 +47,14 @@ describe('SomeModule', () => {
     });
 
     it('shows that the value was set', async () => {
-      assert.equal(await SomeModule.getSomeValue(), 1337);
+      assertBn.eq(await SomeModule.getSomeValue(), 1337);
     });
 
     it('emitted a ValueSet event', async () => {
       const event = findEvent({ receipt, eventName: 'ValueSet' });
 
       assert.equal(event.args.sender, owner.address);
-      assert.equal(event.args.value, 1337);
+      assertBn.eq(event.args.value, 1337);
     });
   });
 });

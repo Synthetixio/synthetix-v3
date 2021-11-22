@@ -1,5 +1,5 @@
 const { ethers } = hre;
-const assert = require('assert');
+const assert = require('assert/strict');
 const assertRevert = require('@synthetixio/core-js/utils/assert-revert');
 const assertBn = require('@synthetixio/core-js/utils/assert-bignumber');
 const { findEvent } = require('@synthetixio/core-js/utils/events');
@@ -31,13 +31,13 @@ describe('ERC20', () => {
 
   describe('Before minting any tokens', () => {
     it('the total supply is 0', async () => {
-      assert.equal(await ERC20.totalSupply(), 0);
+      assertBn.eq(await ERC20.totalSupply(), 0);
     });
 
     it('the constructor arguments are set correctly', async () => {
       assert.equal(await ERC20.name(), 'Synthetix Network Token');
       assert.equal(await ERC20.symbol(), 'snx');
-      assert.equal(await ERC20.decimals(), 18);
+      assertBn.eq(await ERC20.decimals(), 18);
     });
 
     it('reverts when trying to burn', async () => {
@@ -196,7 +196,7 @@ describe('ERC20', () => {
         });
 
         it('the allowance should be 0', async () => {
-          assert.equal(await ERC20.allowance(user1.address, user2.address), '0');
+          assertBn.eq(await ERC20.allowance(user1.address, user2.address), '0');
         });
 
         it('updates the user balances accordingly', async () => {

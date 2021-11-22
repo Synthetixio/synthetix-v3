@@ -1,6 +1,7 @@
 const { ethers } = hre;
-const assert = require('assert');
+const assert = require('assert/strict');
 const assertRevert = require('@synthetixio/core-js/utils/assert-revert');
+const assertBn = require('@synthetixio/core-js/utils/assert-bignumber');
 const { findEvent } = require('@synthetixio/core-js/utils/events');
 
 describe('BeaconProxy', () => {
@@ -45,7 +46,7 @@ describe('BeaconProxy', () => {
       });
 
       it('can read the value set', async () => {
-        assert.equal(await Instance.getA(), 42);
+        assertBn.eq(await Instance.getA(), 42);
       });
     });
 
@@ -80,12 +81,12 @@ describe('BeaconProxy', () => {
 
       describe('when interacting with implementation B', () => {
         it('can read the value previously set', async () => {
-          assert.equal(await Instance.getA(), 42);
+          assertBn.eq(await Instance.getA(), 42);
         });
 
         it('can set & read a new value set on A', async () => {
           await (await Instance.setA(64)).wait();
-          assert.equal(await Instance.getA(), 64);
+          assertBn.eq(await Instance.getA(), 64);
         });
 
         it('can set & read a new value set on B', async () => {
