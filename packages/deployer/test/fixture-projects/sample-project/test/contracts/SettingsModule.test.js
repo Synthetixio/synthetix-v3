@@ -1,7 +1,7 @@
-const assert = require('assert/strict');
 const { ethers } = hre;
 const assertRevert = require('@synthetixio/core-js/utils/assert-revert');
 const { bootstrap } = require('@synthetixio/deployer/utils/tests');
+const assertBn = require('@synthetixio/core-js/utils/assert-bignumber');
 const initializer = require('../helpers/initializer');
 
 describe('SettingsModule', () => {
@@ -32,7 +32,7 @@ describe('SettingsModule', () => {
     });
 
     it('shows that the value was set', async () => {
-      assert.equal(await SettingsModule.getASettingValue(), 42);
+      assertBn.eq(await SettingsModule.getASettingValue(), 42);
     });
   });
 });
