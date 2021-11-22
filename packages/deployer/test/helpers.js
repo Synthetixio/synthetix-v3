@@ -10,31 +10,41 @@ function useEnvironment(fixtureProjectName) {
   beforeEach('loading environment', async function () {
     this.timeout(25000);
 
+    const envPath = _getEnvironmentPath(fixtureProjectName);
+
     // Set node environments root on the given fixture project root
-    process.chdir(_getEnvironmentPath(fixtureProjectName));
+    process.chdir(envPath);
 
     // Load global hardhat environement
     this.hre = require('hardhat');
-
-    // Save a snapshot to be reverted at the end of each test
-    snapshotId = await takeSnapshot(this.hre.ethers.provider);
 
     this.deploymentInfo = {
       network: this.hre.config.defaultNetwork,
       instance: 'test',
     };
 
+    const initializer = _safeRequire(path.join(envPath, 'test', 'helpers', 'initializer'));
+
     // Allow the tests to execute the configured deploy method on the loaded environment
     this.deploySystem = async (customOptions = {}) => {
       await deploySystem(this.deploymentInfo, customOptions, this.hre);
+
+      if (customOptions.clear) {
+        await initializer(this.deploymentInfo, this.hre);
+      }
     };
+  });
+
+  beforeEach('take a snapshot', async function () {
+    snapshotId = await takeSnapshot(this.hre.ethers.provider);
   });
 
   afterEach('resetting environment', async function () {
     // Reset global loaded hardhat envrironment
     resetHardhatContext();
+  });
 
-    // Restore blockchain snapshot to its original state before the test run
+  afterEach('restore the snapshot', async function () {
     await restoreSnapshot(snapshotId, this.hre.ethers.provider);
   });
 }
@@ -47,6 +57,18 @@ function _getEnvironmentPath(fixtureProjectName) {
   }
 
   return pathname;
+}
+
+function _safeRequire(pathname, defaults = () => {}) {
+  try {
+    return require(pathname);
+  } catch (err) {
+    if (err.code === 'MODULE_NOT_FOUND') {
+      return defaults;
+    }
+
+    throw err;
+  }
 }
 
 module.exports = {

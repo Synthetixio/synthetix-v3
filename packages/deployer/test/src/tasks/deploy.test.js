@@ -1,7 +1,6 @@
 const path = require('path');
 const { rejects } = require('assert/strict');
 const { copyFile, unlink, readFile, writeFile } = require('fs/promises');
-const sampleProjectInitializer = require('../../fixture-projects/sample-project/test/helpers/initializer');
 const { ContractValidationError } = require('../../../internal/errors');
 const { useEnvironment } = require('../../helpers');
 
@@ -17,8 +16,6 @@ describe('tasks/deploy.js', function () {
         alias: 'first',
         clear: true,
       });
-
-      await sampleProjectInitializer(this.deploymentInfo, this.hre);
 
       // Second deployment, without any changes
       await this.deploySystem({
