@@ -2,7 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const { resetHardhatContext } = require('hardhat/plugins-testing');
 const { takeSnapshot, restoreSnapshot } = require('@synthetixio/core-js/utils/rpc');
-const { TASK_DEPLOY } = require('../task-names');
+const { deploySystem } = require('../utils/tests');
 
 function useEnvironment(fixtureProjectName) {
   let snapshotId;
@@ -26,7 +26,7 @@ function useEnvironment(fixtureProjectName) {
 
     // Allow the tests to execute the configured deploy method on the loaded environment
     this.deploySystem = async (customOptions = {}) => {
-      await _deploySystem(this.deploymentInfo, customOptions);
+      await deploySystem(this.deploymentInfo, customOptions, this.hre);
     };
   });
 
@@ -36,17 +36,6 @@ function useEnvironment(fixtureProjectName) {
 
     // Restore blockchain snapshot to its original state before the test run
     await restoreSnapshot(snapshotId, this.hre.ethers.provider);
-  });
-}
-
-async function _deploySystem(deploymentInfo, customOptions = {}) {
-  this.hre = require('hardhat');
-
-  await this.hre.run(TASK_DEPLOY, {
-    ...deploymentInfo,
-    noConfirm: true,
-    quiet: true,
-    ...customOptions,
   });
 }
 

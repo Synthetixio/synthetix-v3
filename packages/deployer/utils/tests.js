@@ -35,8 +35,8 @@ function bootstrap(initializer = () => {}) {
   return { deploymentInfo, proxyAddress, routerAddress };
 }
 
-async function deploySystem(deploymentInfo, customOptions = {}) {
-  await hre.run(TASK_DEPLOY, {
+async function deploySystem(deploymentInfo, customOptions = {}, _hre = hre) {
+  await _hre.run(TASK_DEPLOY, {
     ...deploymentInfo,
     noConfirm: true,
     quiet: true,
