@@ -5,7 +5,7 @@
   "files": [
     "contracts",
     "!contracts/mocks",
-    "!contracts/modules/test-helpers",
+    "!contracts/modules/mocks",
     "!contracts/Proxy.sol",
     "!contracts/Router.sol"
   ],
