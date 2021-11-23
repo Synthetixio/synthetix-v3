@@ -10,6 +10,7 @@ const {
   SUBTASK_GENERATE_ROUTER_SOURCE,
   SUBTASK_PREPARE_DEPLOYMENT,
   SUBTASK_PRINT_INFO,
+  SUBTASK_SYNC_PROXY,
   SUBTASK_SYNC_SOURCES,
   SUBTASK_UPGRADE_PROXY,
   SUBTASK_VALIDATE_MODULES,
@@ -51,6 +52,7 @@ task(TASK_DEPLOY, 'Deploys all system modules')
       await hre.run(SUBTASK_PRINT_INFO, taskArguments);
       await _compile(hre, quiet);
       await hre.run(SUBTASK_SYNC_SOURCES);
+      await hre.run(SUBTASK_SYNC_PROXY);
       await hre.run(SUBTASK_VALIDATE_STORAGE);
       await hre.run(SUBTASK_VALIDATE_MODULES);
       await hre.run(SUBTASK_DEPLOY_MODULES);

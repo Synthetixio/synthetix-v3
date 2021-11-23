@@ -47,10 +47,9 @@ subtask(
 
   logger.debug(`Target implementation: ${routerAddress}`);
 
-  const wasProxyDeployed = await _deployProxy({
-    proxyName,
-    routerAddress,
-    hre,
+  const wasProxyDeployed = await hre.run(SUBTASK_DEPLOY_CONTRACT, {
+    contractName: proxyName,
+    constructorArgs: [routerAddress],
   });
 
   if (!wasProxyDeployed) {
@@ -61,14 +60,6 @@ subtask(
 
 function _getDeployedAddress(contractName, hre) {
   return hre.deployer.deployment.general.contracts[contractName].deployedAddress;
-}
-
-async function _deployProxy({ proxyName, routerAddress, hre }) {
-  await initContractData(proxyName);
-  return await hre.run(SUBTASK_DEPLOY_CONTRACT, {
-    contractName: proxyName,
-    constructorArgs: [routerAddress],
-  });
 }
 
 async function _upgradeProxy({ proxyAddress, routerAddress, hre }) {
