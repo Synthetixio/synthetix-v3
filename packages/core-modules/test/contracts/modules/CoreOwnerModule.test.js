@@ -5,7 +5,7 @@ const assertRevert = require('@synthetixio/core-js/utils/assert-revert');
 const { bootstrap } = require('@synthetixio/deployer/utils/tests');
 
 describe('CoreOwnerModule', () => {
-  bootstrap();
+  const { proxyAddress } = bootstrap();
 
   let OwnerModule;
   let owner, user;
@@ -14,9 +14,8 @@ describe('CoreOwnerModule', () => {
     [owner, user] = await ethers.getSigners();
   });
 
-  before('deploy the module, mocking the first owner', async () => {
-    const factory = await ethers.getContractFactory('OwnerModuleMock');
-    OwnerModule = await factory.deploy(owner.address);
+  before('identify modules', async () => {
+    OwnerModule = await ethers.getContractAt('OwnerModuleMock', proxyAddress());
   });
 
   it('shows that the owner is set', async () => {
