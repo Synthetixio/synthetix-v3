@@ -5,11 +5,11 @@ contract ERC721Storage {
     struct ERC721Store {
         string name;
         string symbol;
-        string tokenURI;
+        string baseTokenURI;
         mapping(uint256 => address) ownerOf;
         mapping(address => uint256) balanceOf;
         mapping(uint256 => address) tokenApprovals;
-        mapping(address => mapping(address => bool)) operatorApprovals;        
+        mapping(address => mapping(address => bool)) operatorApprovals;
     }
 
     function _erc721Store() internal pure returns (ERC721Store storage store) {
