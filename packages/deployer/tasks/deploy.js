@@ -18,8 +18,6 @@ const {
   TASK_DEPLOY,
 } = require('../task-names');
 
-let logCache;
-
 const logger = require('@synthetixio/core-js/utils/logger');
 const prompter = require('@synthetixio/core-js/utils/prompter');
 const types = require('../internal/argument-types');
@@ -40,8 +38,6 @@ task(TASK_DEPLOY, 'Deploys all system modules')
   .setAction(async (taskArguments, hre) => {
     const { clear, debug, quiet, noConfirm } = taskArguments;
 
-    _forceSilenceHardhat(true, quiet);
-
     logger.quiet = quiet;
     logger.debugging = debug;
     prompter.noConfirm = noConfirm;
@@ -53,13 +49,13 @@ task(TASK_DEPLOY, 'Deploys all system modules')
 
       await hre.run(SUBTASK_PREPARE_DEPLOYMENT, taskArguments);
       await hre.run(SUBTASK_PRINT_INFO, taskArguments);
-      await hre.run(TASK_COMPILE, { force: true, quiet: true });
+      await _compile(hre, quiet);
       await hre.run(SUBTASK_SYNC_SOURCES);
       await hre.run(SUBTASK_VALIDATE_STORAGE);
       await hre.run(SUBTASK_VALIDATE_MODULES);
       await hre.run(SUBTASK_DEPLOY_MODULES);
       await hre.run(SUBTASK_GENERATE_ROUTER_SOURCE);
-      await hre.run(TASK_COMPILE, { force: true, quiet: true });
+      await _compile(hre, quiet);
       await hre.run(SUBTASK_VALIDATE_ROUTER);
       await hre.run(SUBTASK_DEPLOY_ROUTER);
       await hre.run(SUBTASK_UPGRADE_PROXY);
@@ -70,8 +66,6 @@ task(TASK_DEPLOY, 'Deploys all system modules')
       }
 
       throw err;
-    } finally {
-      _forceSilenceHardhat(false, quiet);
     }
   });
 
@@ -79,16 +73,18 @@ task(TASK_DEPLOY, 'Deploys all system modules')
  * Note: Even though hardhat's compile task has a quiet option,
  * it stil prints some output. This is a hack to completely silence
  * output during deployment.
- * */
-function _forceSilenceHardhat(silence, quiet) {
-  if (!quiet) {
-    return;
-  }
+ */
+async function _compile(hre, quiet) {
+  let logCache;
 
-  if (silence) {
+  if (quiet) {
     logCache = console.log;
     console.log = () => {};
-  } else {
-    console.log = logCache;
+  }
+
+  try {
+    await hre.run(TASK_COMPILE, { force: true, quiet: true });
+  } finally {
+    if (logCache) console.log = logCache;
   }
 }
