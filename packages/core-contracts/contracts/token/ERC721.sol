@@ -8,13 +8,14 @@ import "./ERC721Storage.sol";
 import "../utils/ContractUtil.sol";
 
 contract ERC721 is IERC721, IERC721Metadata, ERC721Storage, ContractUtil {
-    error InvalidOwner();
+    error InvalidOwner(address);
+    error InvalidOperator(address);
     error InvalidTokenId(uint256);
     error InvalidFrom(address);
     error InvalidTo(address);
-    error Unauthorized();
-    error AlreadyInitialized();
     error InvalidTransferRecipient();
+    error Unauthorized(address);
+    error AlreadyInitialized();
 
     function _initialize(
         string memory tokenName,
@@ -57,7 +58,7 @@ contract ERC721 is IERC721, IERC721Metadata, ERC721Storage, ContractUtil {
 
     function balanceOf(address owner) public view override returns (uint) {
         if (owner == address(0)) {
-            revert InvalidOwner();
+            revert InvalidOwner(owner);
         }
         return _erc721Store().balanceOf[owner];
     }
@@ -78,7 +79,7 @@ contract ERC721 is IERC721, IERC721Metadata, ERC721Storage, ContractUtil {
         }
 
         if (msg.sender != owner && !isApprovedForAll(owner, msg.sender)) {
-            revert Unauthorized();
+            revert Unauthorized(msg.sender);
         }
 
         store.tokenApprovals[tokenId] = to;
@@ -98,8 +99,6 @@ contract ERC721 is IERC721, IERC721Metadata, ERC721Storage, ContractUtil {
         if (msg.sender == operator) {
             revert InvalidOperator(operator);
         }
-
-        require(owner != operator, "ERC721: approve to caller");
 
         _erc721Store().operatorApprovals[msg.sender][operator] = approved;
         emit ApprovalForAll(msg.sender, operator, approved);
@@ -199,7 +198,7 @@ contract ERC721 is IERC721, IERC721Metadata, ERC721Storage, ContractUtil {
         }
 
         if (owner != msg.sender && store.tokenApprovals[tokenId] != msg.sender && !isApprovedForAll(from, msg.sender)) {
-            revert Unauthorized();
+            revert Unauthorized(msg.sender);
         }
 
         if (ownerOf(tokenId) != from) {
