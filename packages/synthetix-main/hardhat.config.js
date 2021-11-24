@@ -3,6 +3,7 @@ require('dotenv').config();
 require('solidity-coverage');
 require('@nomiclabs/hardhat-ethers');
 require('@synthetixio/deployer');
+require('@synthetixio/synthetix-cli');
 
 module.exports = {
   solidity: {
