@@ -20,7 +20,7 @@ contract ERC721 is IERC721, IERC721Metadata, ERC721Storage, ContractUtil {
     function _initialize(
         string memory tokenName,
         string memory tokenSymbol,
-        string memory initTokenURI
+        string memory initBaseTokenURI
     ) internal virtual {
         ERC721Store storage store = _erc721Store();
         if (bytes(store.name).length > 0 || bytes(store.symbol).length > 0 || bytes(store.baseTokenURI).length > 0) {
@@ -29,7 +29,7 @@ contract ERC721 is IERC721, IERC721Metadata, ERC721Storage, ContractUtil {
 
         store.name = tokenName;
         store.symbol = tokenSymbol;
-        store.baseTokenURI = initTokenURI;
+        store.baseTokenURI = initBaseTokenURI;
     }
 
     function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
