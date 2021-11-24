@@ -5,7 +5,7 @@ const { bootstrap } = require('@synthetixio/deployer/utils/tests');
 const initializer = require('../../helpers/initializer');
 
 describe('CoreUpgradeModule', () => {
-  const { proxyAddress } = bootstrap(initializer, { quiet: false });
+  const { proxyAddress } = bootstrap(initializer);
 
   let CoreUpgradeModule, NewRouter;
   let owner, user;
