@@ -129,28 +129,24 @@ describe('tasks/deploy.js', function () {
 
       const { root, sources } = this.hre.config.paths;
 
-      try {
-        // Create the Proxy
-        await copyFile(path.join(root, 'Proxy.original.sol'), path.join(sources, 'Proxy.sol'));
+      // Create the Proxy
+      await copyFile(path.join(root, 'Proxy.original.sol'), path.join(sources, 'Proxy.sol'));
 
-        // Deploy for the first time
+      // Deploy for the first time
+      await this.deploySystem({
+        alias: 'first',
+        clear: true,
+      });
+
+      // Edit the Proxy
+      await copyFile(path.join(root, 'Proxy.edited.sol'), path.join(sources, 'Proxy.sol'));
+
+      // Try to re-deploy with a changed Proxy
+      await rejects(async () => {
         await this.deploySystem({
-          alias: 'first',
-          clear: true,
+          alias: 'second',
         });
-
-        // Edit the Proxy
-        await copyFile(path.join(root, 'Proxy.edited.sol'), path.join(sources, 'Proxy.sol'));
-
-        // Try to re-deploy with a changed Proxy
-        await rejects(async () => {
-          await this.deploySystem({
-            alias: 'second',
-          });
-        }, ContractValidationError);
-      } finally {
-        await unlink(path.join(sources, 'Proxy.sol'));
-      }
+      }, ContractValidationError);
     });
   });
 });
