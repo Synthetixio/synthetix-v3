@@ -69,6 +69,62 @@ contract ERC721 is IERC721, IERC721Metadata, ERC721Storage, ContractUtil {
         return _erc721Store().ownerOf[tokenId];
     }
 
+    function approve(address to, uint256 tokenId) external virtual override payable {
+        ERC721Store storage store = _erc721Store();
+        address owner = store.ownerOf[tokenId];
+
+        if (to == owner) {
+            revert InvalidTo(to);
+        }
+
+        if (msg.sender != owner && !isApprovedForAll(owner, msg.sender)) {
+            revert Unauthorized();
+        }
+
+        store.tokenApprovals[tokenId] = to;
+
+        emit Approval(owner, to, tokenId);
+    }
+
+    function getApproved(uint256 tokenId) external view virtual override returns (address) {
+        if (!_exists(tokenId)) {
+            revert InvalidTokenId(tokenId);
+        }
+
+        return _erc721Store().tokenApprovals[tokenId];
+    }
+
+    function setApprovalForAll(address operator, bool approved) external virtual override {
+        if (msg.sender == operator) {
+            revert InvalidOperator(operator);
+        }
+
+        require(owner != operator, "ERC721: approve to caller");
+
+        _erc721Store().operatorApprovals[msg.sender][operator] = approved;
+        emit ApprovalForAll(msg.sender, operator, approved);
+    }
+
+    function isApprovedForAll(address owner, address operator) public view virtual override returns (bool) {
+        return _erc721Store().operatorApprovals[owner][operator];
+    }
+
+    function transferFrom(
+        address from,
+        address to,
+        uint256 tokenId
+    ) external payable virtual override {
+        _transfer(from, to, tokenId);
+    }
+
+    function safeTransferFrom(
+        address from,
+        address to,
+        uint256 tokenId
+    ) external payable virtual override {
+        safeTransferFrom(from, to, tokenId, "");
+    }
+
     function safeTransferFrom(
         address from,
         address to,
@@ -81,64 +137,8 @@ contract ERC721 is IERC721, IERC721Metadata, ERC721Storage, ContractUtil {
         }
     }
 
-    function safeTransferFrom(
-        address from,
-        address to,
-        uint256 tokenId
-    ) external payable virtual override {
-        safeTransferFrom(from, to, tokenId, "");
-    }
-
-    function transferFrom(
-        address from,
-        address to,
-        uint256 tokenId
-    ) external payable virtual override {
-        _transfer(from, to, tokenId);
-    }
-
-    function setApprovalForAll(address operator, bool approved) external virtual override {
-        _erc721Store().operatorApprovals[msg.sender][operator] = approved;
-        emit ApprovalForAll(msg.sender, operator, approved);
-    }
-
-    function isApprovedForAll(address owner, address operator) public view virtual override returns (bool) {
-        return _erc721Store().operatorApprovals[owner][operator];
-    }
-
-    function approve(address to, uint256 tokenId) external payable virtual override {
-        ERC721Store storage store = _erc721Store();
-        address owner = store.ownerOf[tokenId];
-        if (msg.sender != owner && !isApprovedForAll(owner, msg.sender)) {
-            revert Unauthorized();
-        }
-
-        _erc721Store().tokenApprovals[tokenId] = to;
-
-        emit Approval(msg.sender, to, tokenId);
-    }
-
-    function getApproved(uint256 tokenId) external view virtual override returns (address) {
-        if (!_exists(tokenId)) {
-            revert InvalidTokenId(tokenId);
-        }
-        return _erc721Store().tokenApprovals[tokenId];
-    }
-
-    function _mint(address to, uint256 tokenId) internal virtual {
-        ERC721Store storage store = _erc721Store();
-        if (to == address(0)) {
-            revert InvalidTo(to);
-        }
-
-        if (_exists(tokenId)) {
-            revert InvalidTokenId(tokenId);
-        }
-
-        store.balanceOf[to] += 1;
-        store.ownerOf[tokenId] = to;
-
-        emit Transfer(address(0), to, tokenId);
+    function _safeMint(address to, uint256 tokenId) internal virtual {
+        _safeMint(to, tokenId, "");
     }
 
     function _safeMint(
@@ -152,8 +152,21 @@ contract ERC721 is IERC721, IERC721Metadata, ERC721Storage, ContractUtil {
         }
     }
 
-    function _safeMint(address to, uint256 tokenId) internal virtual {
-        _safeMint(to, tokenId, "");
+    function _mint(address to, uint256 tokenId) internal virtual {
+        ERC721Store storage store = _erc721Store();
+        if (to == address(0)) {
+            revert InvalidTo(to);
+        }
+
+        if (_exists(tokenId)) {
+            // Already minted
+            revert InvalidTokenId(tokenId);
+        }
+
+        store.balanceOf[to] += 1;
+        store.ownerOf[tokenId] = to;
+
+        emit Transfer(address(0), to, tokenId);
     }
 
     function _burn(uint256 tokenId) internal virtual {
@@ -179,8 +192,14 @@ contract ERC721 is IERC721, IERC721Metadata, ERC721Storage, ContractUtil {
         uint256 tokenId
     ) internal virtual {
         ERC721Store storage store = _erc721Store();
+        address owner = ownerOf(tokenId);
+
         if (!_exists(tokenId)) {
             revert InvalidTokenId(tokenId);
+        }
+
+        if (owner != msg.sender && store.tokenApprovals[tokenId] != msg.sender && !isApprovedForAll(from, msg.sender)) {
+            revert Unauthorized();
         }
 
         if (ownerOf(tokenId) != from) {
@@ -189,10 +208,6 @@ contract ERC721 is IERC721, IERC721Metadata, ERC721Storage, ContractUtil {
 
         if (to == address(0)) {
             revert InvalidTo(to);
-        }
-
-        if (from != msg.sender && store.tokenApprovals[tokenId] != msg.sender && !isApprovedForAll(from, msg.sender)) {
-            revert Unauthorized();
         }
 
         // Clear approvals from the previous owner
@@ -226,27 +241,5 @@ contract ERC721 is IERC721, IERC721Metadata, ERC721Storage, ContractUtil {
         } else {
             return true;
         }
-    }
-
-    function _toString(uint256 value) internal pure returns (string memory) {
-        // Inspired by OraclizeAPI's implementation - MIT licence
-        // https://github.com/oraclize/ethereum-api/blob/b42146b063c7d6ee1358846c198246239e9360e8/oraclizeAPI_0.4.25.sol
-
-        if (value == 0) {
-            return "0";
-        }
-        uint256 temp = value;
-        uint256 digits;
-        while (temp != 0) {
-            digits++;
-            temp /= 10;
-        }
-        bytes memory buffer = new bytes(digits);
-        while (value != 0) {
-            digits -= 1;
-            buffer[digits] = bytes1(uint8(48 + uint256(value % 10)));
-            value /= 10;
-        }
-        return string(buffer);
     }
 }
