@@ -4,8 +4,8 @@ const assertRevert = require('@synthetixio/core-js/utils/assert-revert');
 const { bootstrap } = require('@synthetixio/deployer/utils/tests');
 const initializer = require('../../helpers/initializer');
 
-describe.only('CoreUpgradeModule', () => {
-  const { proxyAddress } = bootstrap(initializer, { quiet: false });
+describe('CoreUpgradeModule', () => {
+  const { proxyAddress } = bootstrap(initializer);
 
   let CoreUpgradeModule;
   let owner, user;
