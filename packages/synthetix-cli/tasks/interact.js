@@ -10,7 +10,9 @@ task(TASK_INTERACT, 'Interacts with a given Synthetix deployment')
   .addOptionalParam('privateKey', 'Private key to use to sign txs')
   .addOptionalParam('providerUrl', 'The http provider to use for communicating with the blockchain')
   .addOptionalParam('deploymentPath', 'Specify the path to the deployment data directory')
-  .setAction(async (taskArguments, hre) => {
+  .setAction(async (taskArguments) => {
     const { useOvm, useFork, deploymentPath, targetNetwork } = taskArguments;
     let { providerUrl, gasLimit, privateKey } = taskArguments;
+    console.log(useOvm, useFork, deploymentPath, targetNetwork);
+    console.log(providerUrl, gasLimit, privateKey);
   });
