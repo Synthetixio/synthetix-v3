@@ -3,7 +3,7 @@ const { getProxyAddress, getRouterAddress } = require('@synthetixio/deployer/uti
 const { takeSnapshot, restoreSnapshot } = require('@synthetixio/core-js/utils/rpc');
 const { defaultDeploymentInfo } = require('./deployments');
 
-function bootstrap(initializer = () => {}) {
+function bootstrap(initializer = () => {}, customDeployOptions = {}) {
   let snapshotId;
 
   const deploymentInfo = {
@@ -18,7 +18,7 @@ function bootstrap(initializer = () => {}) {
   });
 
   before('deploy system', async () => {
-    await deploySystem(deploymentInfo, { clear: true });
+    await deploySystem(deploymentInfo, { clear: true, ...customDeployOptions });
   });
 
   before('initialize system', async () => {

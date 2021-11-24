@@ -5,8 +5,8 @@ import "@synthetixio/core-contracts/contracts/ownership/OwnableMixin.sol";
 import "../../storage/SampleStorage.sol";
 
 contract SampleOwnedModule is SampleStorage, OwnableMixin {
-    function setProtectedValue(uint newValue) public onlyOwner {
-        _sampleStore().protectedValue = newValue;
+    function setProtectedValue(uint newProtectedValue) public onlyOwner {
+        _sampleStore().protectedValue = newProtectedValue;
     }
 
     function getProtectedValue() public view returns (uint) {
