@@ -70,7 +70,7 @@ contract ERC721 is IERC721, IERC721Metadata, ERC721Storage, ContractUtil {
         return _erc721Store().ownerOf[tokenId];
     }
 
-    function approve(address to, uint256 tokenId) external virtual override payable {
+    function approve(address to, uint256 tokenId) external payable virtual override {
         ERC721Store storage store = _erc721Store();
         address owner = store.ownerOf[tokenId];
 
