@@ -94,16 +94,63 @@ describe('tasks/deploy.js', function () {
     it('correctly executes several deployments with no changes', async function () {
       this.timeout(25000);
 
+      await this.deploySystem({
+        alias: 'first',
+        clear: true,
+      });
+
+      // await this.deploySystem({
+      //   alias: 'second',
+      // });
+    });
+
+    it('throws an error when changing the proxy name', async function () {
+      this.timeout(25000);
+
       // Initial deployment
       await this.deploySystem({
         alias: 'first',
         clear: true,
       });
 
-      // Second deployment, without any changes
-      await this.deploySystem({
-        alias: 'second',
-      });
+      this.hre.config.deployer.proxyContract = 'AlternativeProxy';
+
+      await rejects(async () => {
+        await this.deploySystem({
+          alias: 'second',
+        });
+      }, ContractValidationError);
+    });
+
+    it('throws an error when editing the proxy contract', async function () {
+      this.timeout(25000);
+
+      this.hre.config.deployer.proxyContract = 'Proxy';
+
+      const { root, sources } = this.hre.config.paths;
+
+      try {
+        // Create the Proxy
+        await copyFile(path.join(root, 'Proxy.original.sol'), path.join(sources, 'Proxy.sol'));
+
+        // Deploy for the first time
+        await this.deploySystem({
+          alias: 'first',
+          clear: true,
+        });
+
+        // Edit the Proxy
+        await copyFile(path.join(root, 'Proxy.edited.sol'), path.join(sources, 'Proxy.sol'));
+
+        // Try to re-deploy with a changed Proxy
+        await rejects(async () => {
+          await this.deploySystem({
+            alias: 'second',
+          });
+        }, ContractValidationError);
+      } finally {
+        await unlink(path.join(sources, 'Proxy.sol'));
+      }
     });
   });
 });
