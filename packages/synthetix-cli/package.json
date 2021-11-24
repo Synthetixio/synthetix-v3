@@ -1,0 +1,16 @@
+{
+  "name": "@synthetixio/synthetix-cli",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": ""
+  },
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@nomiclabs/hardhat-ethers": "^2.0.2",
+    "ethers": "^5.5.1",
+    "hardhat": "^2.6.8"
+  }
+}
