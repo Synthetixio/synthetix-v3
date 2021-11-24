@@ -4,7 +4,7 @@ const assertRevert = require('@synthetixio/core-js/utils/assert-revert');
 const { bootstrap } = require('@synthetixio/deployer/utils/tests');
 const initializer = require('../../helpers/initializer');
 
-describe('ExtrasCoverage', () => {
+describe('RouterCoverage', () => {
   const { proxyAddress } = bootstrap(initializer);
 
   describe('when attempting to reach an unexistent function in Router', () => {
