@@ -2,9 +2,10 @@ const { ethers } = hre;
 const assertBn = require('@synthetixio/core-js/utils/assert-bignumber');
 const assertRevert = require('@synthetixio/core-js/utils/assert-revert');
 const { bootstrap } = require('@synthetixio/deployer/utils/tests');
+const initializer = require('../../helpers/initializer');
 
 describe('ExtrasCoverage', () => {
-  const { proxyAddress } = bootstrap();
+  const { proxyAddress } = bootstrap(initializer);
 
   describe('when attempting to reach an unexistent function in Router', () => {
     let WrongModuleMock;

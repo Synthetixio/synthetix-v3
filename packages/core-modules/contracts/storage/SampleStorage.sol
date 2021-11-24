@@ -4,6 +4,7 @@ pragma solidity ^0.8.0;
 contract SampleStorage {
     struct SampleStore {
         uint someValue;
+        uint protectedValue;
     }
 
     function _sampleStore() internal pure returns (SampleStore storage store) {

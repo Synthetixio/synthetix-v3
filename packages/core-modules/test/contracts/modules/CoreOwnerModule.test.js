@@ -3,11 +3,12 @@ const assert = require('assert/strict');
 const assertBn = require('@synthetixio/core-js/utils/assert-bignumber');
 const assertRevert = require('@synthetixio/core-js/utils/assert-revert');
 const { bootstrap } = require('@synthetixio/deployer/utils/tests');
+const initializer = require('../../helpers/initializer');
 
 describe('CoreOwnerModule', () => {
-  const { proxyAddress } = bootstrap();
+  const { proxyAddress } = bootstrap(initializer);
 
-  let OwnerModule;
+  let CoreOwnerModule, SampleOwnedModule;
   let owner, user;
 
   before('identify signers', async () => {
@@ -15,26 +16,30 @@ describe('CoreOwnerModule', () => {
   });
 
   before('identify modules', async () => {
-    OwnerModule = await ethers.getContractAt('OwnerModuleMock', proxyAddress());
+    CoreOwnerModule = await ethers.getContractAt('CoreOwnerModule', proxyAddress());
+    SampleOwnedModule = await ethers.getContractAt('SampleOwnedModule', proxyAddress());
   });
 
   it('shows that the owner is set', async () => {
-    assert.equal(await OwnerModule.owner(), owner.address);
+    assert.equal(await CoreOwnerModule.owner(), owner.address);
   });
 
   describe('when a regular user attempts to interact with the protected function', () => {
     it('reverts', async () => {
-      await assertRevert(OwnerModule.connect(user).protectedFn(42), 'OnlyOwnerAllowed()');
+      await assertRevert(
+        SampleOwnedModule.connect(user).setProtectedValue(42),
+        'OnlyOwnerAllowed()'
+      );
     });
   });
 
   describe('when the owner interacts with the protected function', () => {
     before('set value', async () => {
-      await (await OwnerModule.connect(owner).protectedFn(42)).wait();
+      await (await SampleOwnedModule.connect(owner).setProtectedValue(42)).wait();
     });
 
     it('sets the value', async () => {
-      assertBn.eq(await OwnerModule.value(), 42);
+      assertBn.eq(await SampleOwnedModule.getProtectedValue(), 42);
     });
   });
 });
