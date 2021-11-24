@@ -99,9 +99,9 @@ describe('tasks/deploy.js', function () {
         clear: true,
       });
 
-      // await this.deploySystem({
-      //   alias: 'second',
-      // });
+      await this.deploySystem({
+        alias: 'second',
+      });
     });
 
     it('throws an error when changing the proxy name', async function () {
