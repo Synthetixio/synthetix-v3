@@ -1,7 +1,6 @@
 const logger = require('@synthetixio/core-js/utils/logger');
 const prompter = require('@synthetixio/core-js/utils/prompter');
 const { subtask } = require('hardhat/config');
-const { initContractData } = require('../internal/process-contracts');
 const { processTransaction, processReceipt } = require('../internal/process-transactions');
 const { SUBTASK_UPGRADE_PROXY, SUBTASK_DEPLOY_CONTRACT } = require('../task-names');
 
@@ -47,10 +46,9 @@ subtask(
 
   logger.debug(`Target implementation: ${routerAddress}`);
 
-  const wasProxyDeployed = await _deployProxy({
-    proxyName,
-    routerAddress,
-    hre,
+  const wasProxyDeployed = await hre.run(SUBTASK_DEPLOY_CONTRACT, {
+    contractName: proxyName,
+    constructorArgs: [routerAddress],
   });
 
   if (!wasProxyDeployed) {
@@ -61,14 +59,6 @@ subtask(
 
 function _getDeployedAddress(contractName, hre) {
   return hre.deployer.deployment.general.contracts[contractName].deployedAddress;
-}
-
-async function _deployProxy({ proxyName, routerAddress, hre }) {
-  await initContractData(proxyName);
-  return await hre.run(SUBTASK_DEPLOY_CONTRACT, {
-    contractName: proxyName,
-    constructorArgs: [routerAddress],
-  });
 }
 
 async function _upgradeProxy({ proxyAddress, routerAddress, hre }) {
