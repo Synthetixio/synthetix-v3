@@ -3,8 +3,6 @@ const path = require('path');
 const filterValues = require('filter-values');
 const { subtask } = require('hardhat/config');
 const logger = require('@synthetixio/core-js/utils/logger');
-const { getCommit, getBranch } = require('@synthetixio/core-js/utils/git');
-const { readPackageJson } = require('@synthetixio/core-js/utils/npm');
 const relativePath = require('@synthetixio/core-js/utils/relative-path');
 const { renderTemplate } = require('../internal/generate-contracts');
 const { getAllSelectors } = require('../internal/contract-helper');
@@ -34,18 +32,7 @@ subtask(
 
   const binaryData = _buildBinaryData({ selectors });
 
-  let packageJson;
-  try {
-    packageJson = readPackageJson();
-  } catch (err) {
-    packageJson = { name: '' };
-  }
-
   const generatedSource = renderTemplate(hre.deployer.paths.routerTemplate, {
-    project: packageJson.name,
-    repo: packageJson.repository?.url || '',
-    branch: getBranch(),
-    commit: getCommit(),
     moduleName: routerName,
     modules: _renderModules(modules),
     selectors: _renderSelectors({ binaryData }),
