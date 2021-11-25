@@ -1,10 +1,20 @@
-function processTransaction(transaction, hre) {
-  hre.deployer.deployment.general.transactions[transaction.hash] = { status: 'pending' };
-}
+const logger = require('@synthetixio/core-js/utils/logger');
 
-function processReceipt(receipt, hre) {
+async function processTransaction(transaction, hre) {
+  logger.info(`Processing transaction ${transaction.hash}...`);
+
+  hre.deployer.deployment.general.transactions[transaction.hash] = { status: 'pending' };
+
+  const receipt = await transaction.wait();
+
   const { gasUsed } = receipt;
   const status = receipt.status === 1 ? 'confirmed' : 'failed';
+
+  if (status === 1) {
+    logger.failed('Transaction reverted')
+  } else {
+    logger.checked(`Transaction successful with gas ${gasUsed}`);
+  }
 
   hre.deployer.deployment.general.transactions[receipt.transactionHash].status = status;
 
@@ -16,10 +26,9 @@ function processReceipt(receipt, hre) {
 
   hre.deployer.deployment.general.properties.totalGasUsed = totalGasUsed;
 
-  return { status, gasUsed };
+  return receipt;
 }
 
 module.exports = {
   processTransaction,
-  processReceipt,
 };
