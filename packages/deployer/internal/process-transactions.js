@@ -1,20 +1,10 @@
-const logger = require('@synthetixio/core-js/utils/logger');
-
-async function processTransaction(transaction, hre) {
-  logger.info(`Processing transaction ${transaction.hash}...`);
-
+function processTransaction(transaction, hre) {
   hre.deployer.deployment.general.transactions[transaction.hash] = { status: 'pending' };
+}
 
-  const receipt = await transaction.wait();
-
+function processReceipt(receipt, hre) {
   const { gasUsed } = receipt;
   const status = receipt.status === 1 ? 'confirmed' : 'failed';
-
-  if (status === 1) {
-    logger.failed('Transaction reverted')
-  } else {
-    logger.checked(`Transaction successful with gas ${gasUsed}`);
-  }
 
   hre.deployer.deployment.general.transactions[receipt.transactionHash].status = status;
 
@@ -26,9 +16,10 @@ async function processTransaction(transaction, hre) {
 
   hre.deployer.deployment.general.properties.totalGasUsed = totalGasUsed;
 
-  return receipt;
+  return { status, gasUsed };
 }
 
 module.exports = {
   processTransaction,
+  processReceipt,
 };

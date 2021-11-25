@@ -1,6 +1,6 @@
 const logger = require('@synthetixio/core-js/utils/logger');
 const { isAlreadyDeployed } = require('../internal/contract-helper');
-const { processTransaction } = require('../internal/process-transactions');
+const { processTransaction, processReceipt } = require('../internal/process-transactions');
 const { subtask } = require('hardhat/config');
 const { SUBTASK_DEPLOY_CONTRACT } = require('../task-names');
 
@@ -43,7 +43,9 @@ async function _createAndDeployContract(contractName, constructorArgs = []) {
   const transaction = contract.deployTransaction;
   await transaction.wait();
 
-  await processTransaction(transaction, hre);
+  processTransaction(transaction, hre);
+  const receipt = await hre.ethers.provider.getTransactionReceipt(transaction.hash);
+  processReceipt(receipt, hre);
 
   return { contract, transaction };
 }
