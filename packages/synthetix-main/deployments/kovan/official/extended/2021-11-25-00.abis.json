@@ -201,12 +201,12 @@
   "SynthsModule": [
     {
       "inputs": [],
-      "name": "BeaconAlreadyDeployed",
+      "name": "BeaconAlreadyCreated",
       "type": "error"
     },
     {
       "inputs": [],
-      "name": "BeaconNotDeployed",
+      "name": "BeaconNotCreated",
       "type": "error"
     },
     {
@@ -221,7 +221,7 @@
     },
     {
       "inputs": [],
-      "name": "SynthAlreadyDeployed",
+      "name": "SynthAlreadyCreated",
       "type": "error"
     },
     {
@@ -234,7 +234,7 @@
           "type": "address"
         }
       ],
-      "name": "BeaconDeployed",
+      "name": "BeaconCreated",
       "type": "event"
     },
     {
@@ -253,12 +253,12 @@
           "type": "address"
         }
       ],
-      "name": "SynthDeployed",
+      "name": "SynthCreated",
       "type": "event"
     },
     {
       "inputs": [],
-      "name": "deployBeacon",
+      "name": "createBeacon",
       "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"
@@ -269,9 +269,24 @@
           "internalType": "bytes32",
           "name": "synth",
           "type": "bytes32"
+        },
+        {
+          "internalType": "string",
+          "name": "synthName",
+          "type": "string"
+        },
+        {
+          "internalType": "string",
+          "name": "synthSymbol",
+          "type": "string"
+        },
+        {
+          "internalType": "uint8",
+          "name": "synthDecimals",
+          "type": "uint8"
         }
       ],
-      "name": "deploySynth",
+      "name": "createSynth",
       "outputs": [],
       "stateMutability": "nonpayable",
       "type": "function"
@@ -432,24 +447,7 @@
       "type": "function"
     }
   ],
-  "Router": [
-    {
-      "inputs": [
-        {
-          "internalType": "bytes4",
-          "name": "sel",
-          "type": "bytes4"
-        }
-      ],
-      "name": "UnknownSelector",
-      "type": "error"
-    },
-    {
-      "stateMutability": "payable",
-      "type": "fallback"
-    }
-  ],
-  "Proxy": [
+  "Synthetix": [
     {
       "inputs": [
         {
@@ -468,6 +466,23 @@
     {
       "stateMutability": "payable",
       "type": "receive"
+    }
+  ],
+  "Router": [
+    {
+      "inputs": [
+        {
+          "internalType": "bytes4",
+          "name": "sel",
+          "type": "bytes4"
+        }
+      ],
+      "name": "UnknownSelector",
+      "type": "error"
+    },
+    {
+      "stateMutability": "payable",
+      "type": "fallback"
     }
   ]
 }
