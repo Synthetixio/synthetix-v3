@@ -22,7 +22,8 @@ async function getSelectors(contractAbi) {
   );
 
   return contract.interface.fragments.reduce((selectors, fragment) => {
-    if (fragment.type === 'function') {
+    // Only add methods, and filter out the ones added during instrumentation by solidity-coverage
+    if (fragment.type === 'function' && !fragment.name.startsWith('c_')) {
       selectors.push({
         name: fragment.name,
         selector: contract.interface.getSighash(fragment),

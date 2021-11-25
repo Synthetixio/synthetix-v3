@@ -2,54 +2,44 @@ const { ethers } = hre;
 const assert = require('assert/strict');
 const assertRevert = require('@synthetixio/core-js/utils/assert-revert');
 const { bootstrap } = require('@synthetixio/deployer/utils/tests');
+const initializer = require('../../helpers/initializer');
 
 describe('CoreUpgradeModule', () => {
-  bootstrap();
+  const { proxyAddress } = bootstrap(initializer);
 
-  let UpgradeModule, Implementation;
+  let CoreUpgradeModule;
   let owner, user;
 
   before('identify signers', async () => {
     [owner, user] = await ethers.getSigners();
   });
 
-  before('deploy the implementation', async () => {
-    const factory = await ethers.getContractFactory('ImplementationMock');
-    Implementation = await factory.deploy();
-  });
-
   before('deploy the module mocking the first owner', async () => {
-    const factory = await ethers.getContractFactory('CoreUpgradeModuleMock');
-    UpgradeModule = await factory.deploy();
-
-    const tx = await UpgradeModule.mockFirstOwner(owner.address);
-    await tx.wait();
-  });
-
-  it('shows that the implementation is not set', async () => {
-    assert.equal(
-      await UpgradeModule.getImplementation(),
-      '0x0000000000000000000000000000000000000000'
-    );
+    CoreUpgradeModule = await ethers.getContractAt('CoreUpgradeModule', proxyAddress());
   });
 
   describe('when attempting to set the implementation with a non owner signer', () => {
     it('reverts', async () => {
-      await assertRevert(UpgradeModule.connect(user).upgradeTo(user.address), 'OnlyOwnerAllowed()');
+      await assertRevert(
+        CoreUpgradeModule.connect(user).upgradeTo(user.address),
+        'OnlyOwnerAllowed()'
+      );
     });
   });
 
-  // TODO: Anti-implementation destruction protection does not allow
-  // this unit test to work anymore, which makes sense.
-  // This can be unskipped once we use integration tests in core-modules.
-  describe.skip('when setting the first implementation', () => {
-    before('set the first implentation using the owner address', async () => {
-      const tx = await UpgradeModule.connect(owner).upgradeTo(Implementation.address);
+  describe('when upgrading the implementation', () => {
+    let NewRouter;
+
+    before('set a new implementation using the owner address', async () => {
+      const factory = await ethers.getContractFactory('Router');
+      NewRouter = await factory.deploy();
+
+      const tx = await CoreUpgradeModule.connect(owner).upgradeTo(NewRouter.address);
       await tx.wait();
     });
 
-    it('shows that the implementation is not set', async () => {
-      assert.equal(await UpgradeModule.getImplementation(), Implementation.address);
+    it('shows that the implementation is set', async () => {
+      assert.equal(await CoreUpgradeModule.connect(owner).getImplementation(), NewRouter.address);
     });
   });
 });

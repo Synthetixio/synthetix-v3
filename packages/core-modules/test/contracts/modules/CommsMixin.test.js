@@ -3,9 +3,10 @@ const assertBn = require('@synthetixio/core-js/utils/assert-bignumber');
 const assertRevert = require('@synthetixio/core-js/utils/assert-revert');
 const { printGasUsed } = require('@synthetixio/core-js/utils/tests');
 const { bootstrap } = require('@synthetixio/deployer/utils/tests');
+const initializer = require('../../helpers/initializer');
 
 describe('CommsMixin', () => {
-  const { proxyAddress } = bootstrap();
+  const { proxyAddress } = bootstrap(initializer);
 
   let SampleModuleA, SampleModuleB;
 

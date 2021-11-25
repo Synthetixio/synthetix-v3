@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "../mixins/CommsMixin.sol";
+import "../../mixins/CommsMixin.sol";
 import "./SampleModuleA.sol";
 
 contract SampleModuleB is CommsMixin {

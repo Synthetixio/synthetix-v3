@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "../storage/SampleStorage.sol";
+import "../../storage/SampleStorage.sol";
 
 contract SampleModuleA is SampleStorage {
     error WrongValue();
