@@ -112,7 +112,7 @@ contract ERC721 is IERC721, IERC721Metadata, ERC721Storage, ContractUtil {
         address from,
         address to,
         uint256 tokenId
-    ) external payable virtual override {
+    ) public payable virtual override {
         _transfer(from, to, tokenId);
     }
 
@@ -120,7 +120,7 @@ contract ERC721 is IERC721, IERC721Metadata, ERC721Storage, ContractUtil {
         address from,
         address to,
         uint256 tokenId
-    ) external payable virtual override {
+    ) public payable virtual override {
         safeTransferFrom(from, to, tokenId, "");
     }
 
