@@ -82,7 +82,7 @@ describe('ERC721', () => {
       assertBn.eq(event.args.tokenId, token42);
     });
 
-    it('mints a couple of NFTs to the user', async () => {
+    it('the user NFT accounts is increased', async () => {
       assertBn.eq(await ERC721.balanceOf(user1.address), 2);
     });
 
@@ -97,6 +97,15 @@ describe('ERC721', () => {
     describe('when attempting to mint again an existent Token', async () => {
       it('reverts', async () => {
         await assertRevert(ERC721.connect(user1).mint(token42), 'InvalidTokenId(42)');
+      });
+    });
+
+    describe('when attempting to mint to Zero Address', async () => {
+      it('reverts', async () => {
+        await assertRevert(
+          ERC721.connect(user1).mintTo(ethers.constants.AddressZero, 1337),
+          `InvalidTo("${ethers.constants.AddressZero}")`
+        );
       });
     });
 
@@ -139,7 +148,7 @@ describe('ERC721', () => {
       after('mint again', async () => {
         const tx = await ERC721.connect(user1).mint(1);
         await tx.wait();
-      })
+      });
     });
 
     describe('transferFrom()', () => {
@@ -195,7 +204,7 @@ describe('ERC721', () => {
       describe('when attempting to transfer a non owned tokenId', () => {
         it('reverts ', async () => {
           await assertRevert(
-            ERC721.connect(user2).transferFrom(user2.address, user1.address, 42),
+            ERC721.connect(user2).transferFrom(user2.address, user1.address, token42),
             `Unauthorized("${user2.address}")`
           );
         });
@@ -223,11 +232,10 @@ describe('ERC721', () => {
     describe('safeTransferFrom()', () => {
       describe('when transfering to a EOA', () => {
         before('transfer', async () => {
-          console.log(await ERC721.connect(user1));
-          const tx = await ERC721.connect(user1).safeTransferFrom(
+          const tx = await ERC721.connect(user1)['safeTransferFrom(address,address,uint256)'](
             user1.address,
             user2.address,
-            token42, ""
+            token42
           );
           receipt = await tx.wait();
         });
@@ -250,7 +258,90 @@ describe('ERC721', () => {
         });
       });
 
-      
+      describe('when attempting to transfer to a contract not implementing the Receiver', () => {
+        it('reverts ', async () => {
+          await assertRevert(
+            ERC721.connect(user1)['safeTransferFrom(address,address,uint256,bytes)'](
+              user1.address,
+              ERC721.address,
+              token42,
+              '0x'
+            ),
+            `InvalidTransferRecipient("${ERC721.address}")`
+          );
+        });
+      });
+
+      describe('when attempting to transfer to a contract not accepting it', () => {
+        let ERC721WrongReceiver;
+
+        before('deploy the contract', async () => {
+          const factory = await ethers.getContractFactory('ERC721RevertingReceiverMock');
+          ERC721WrongReceiver = await factory.deploy();
+        });
+
+        it('reverts ', async () => {
+          await assertRevert(
+            ERC721.connect(user1)['safeTransferFrom(address,address,uint256)'](
+              user1.address,
+              ERC721WrongReceiver.address,
+              token42
+            ),
+            `InvalidTransferRecipient("${ERC721WrongReceiver.address}")`
+          );
+        });
+      });
+
+      describe('when attempting to transfer to a failed contract', () => {
+        let ERC721WrongReceiver;
+
+        before('deploy the contract', async () => {
+          const factory = await ethers.getContractFactory('ERC721FailedReceiverMock');
+          ERC721WrongReceiver = await factory.deploy();
+        });
+
+        it('reverts ', async () => {
+          await assertRevert(
+            ERC721.connect(user1)['safeTransferFrom(address,address,uint256)'](
+              user1.address,
+              ERC721WrongReceiver.address,
+              token42
+            ),
+            `InvalidTransferRecipient("${ERC721WrongReceiver.address}")`
+          );
+        });
+      });
+
+      describe('when transfering to a valid contract', () => {
+        let ERC721Receiver;
+
+        before('deploy the contract', async () => {
+          const factory = await ethers.getContractFactory('ERC721ReceiverMock');
+          ERC721Receiver = await factory.deploy();
+        });
+
+        before('transfer', async () => {
+          const tx = await ERC721.connect(user1)['safeTransferFrom(address,address,uint256)'](
+            user1.address,
+            ERC721Receiver.address,
+            token42
+          );
+          receipt = await tx.wait();
+        });
+
+        it('emits a Transfer event', async () => {
+          const event = findEvent({ receipt, eventName: 'Transfer' });
+
+          assert.equal(event.args.from, user1.address);
+          assert.equal(event.args.to, ERC721Receiver.address);
+          assertBn.eq(event.args.tokenId, token42);
+        });
+
+        after('transfer it back', async () => {
+          const tx = await ERC721Receiver.transferToken(ERC721.address, user1.address, token42);
+          await tx.wait();
+        });
+      });
     });
 
     describe('Approve and TransferFrom', () => {
@@ -260,70 +351,163 @@ describe('ERC721', () => {
         receipt = await tx.wait();
       });
 
+      it('emits an Approval event', async () => {
+        const event = findEvent({ receipt, eventName: 'Approval' });
 
+        assert.equal(event.args.owner, user1.address);
+        assert.equal(event.args.approved, user3.address);
+        assertBn.eq(event.args.tokenId, token42);
+      });
+
+      it('approves the user', async () => {
+        assert.equal(await ERC721.getApproved(token42), user3.address);
+      });
+
+      describe('when attempting to transfer a non approved tokenId', () => {
+        it('reverts ', async () => {
+          await assertRevert(
+            ERC721.connect(user3).transferFrom(user1.address, user2.address, 1),
+            `Unauthorized("${user3.address}")`
+          );
+        });
+      });
+
+      describe('when the approved account transfers the tokenId', () => {
+        before('transfer', async () => {
+          const tx = await ERC721.connect(user3).transferFrom(
+            user1.address,
+            user2.address,
+            token42
+          );
+          await tx.wait();
+        });
+
+        it('is transfered', async () => {
+          assert.equal(await ERC721.ownerOf(token42), user2.address);
+        });
+
+        it('the approval is cleared', async () => {
+          assert.equal(await ERC721.getApproved(token42), ethers.constants.AddressZero);
+        });
+
+        after('transfer it back', async () => {
+          const tx = await ERC721.connect(user2).transferFrom(
+            user2.address,
+            user1.address,
+            token42
+          );
+          await tx.wait();
+        });
+      });
+
+      describe('when attempting to check the aproval on a non existent tokenId', () => {
+        it('reverts ', async () => {
+          await assertRevert(ERC721.connect(user1).getApproved(1337), 'InvalidTokenId(1337)');
+        });
+      });
+
+      describe('when attempting to approve the same owner', () => {
+        it('reverts ', async () => {
+          await assertRevert(
+            ERC721.connect(user1).approve(user1.address, token42),
+            `InvalidTo("${user1.address}")`
+          );
+        });
+      });
+
+      describe('when not approved to approve', () => {
+        it('reverts ', async () => {
+          await assertRevert(
+            ERC721.connect(user2).approve(user3.address, token42),
+            `Unauthorized("${user2.address}")`
+          );
+        });
+      });
     });
 
     describe('Approve Operator and TransferFrom', () => {
-      // const approvalAmount = ethers.BigNumber.from('10');
-      // let user1Balance, user2Balance;
-      // before('record balances', async () => {
-      //   user1Balance = await ERC721.balanceOf(user1.address);
-      //   user2Balance = await ERC721.balanceOf(user2.address);
-      // });
-      // before('approve', async () => {
-      //   const tx = await ERC721.connect(user1).approve(user2.address, approvalAmount);
-      //   receipt = await tx.wait();
-      // });
-      // it('sets the right allowance', async () => {
-      //   assertBn.eq(await ERC721.allowance(user1.address, user2.address), approvalAmount);
-      // });
-      // it('emits an Approval event', async () => {
-      //   const event = findEvent({ receipt, eventName: 'Approval' });
-      //   assert.equal(event.args.owner, user1.address);
-      //   assert.equal(event.args.spender, user2.address);
-      //   assertBn.eq(event.args.amount, approvalAmount);
-      // });
-      // describe('when trying to transfer more than the amount approved', () => {
-      //   it('reverts ', async () => {
-      //     const amount = approvalAmount.add(1);
-      //     await assertRevert(
-      //       ERC721.connect(user2).transferFrom(user1.address, user2.address, amount),
-      //       `InsufficientAllowance(${amount.toString()}, ${approvalAmount.toString()})`
-      //     );
-      //   });
-      // });
-      // describe('when transfering less or equal than the approval amount', () => {
-      //   const transferFromAmount = approvalAmount.sub(1);
-      //   before('transferFrom to itself', async () => {
-      //     let tx = await ERC721.connect(user2).transferFrom(
-      //       user1.address,
-      //       user2.address,
-      //       transferFromAmount
-      //     );
-      //     receipt = await tx.wait();
-      //     // get the new, reduced allowance
-      //     const newAllowance = await ERC721.allowance(user1.address, user2.address);
-      //     // transferFrom the remaining allowance
-      //     tx = await ERC721.connect(user2).transferFrom(user1.address,
-      // user2.address, newAllowance);
-      //     await tx.wait();
-      //   });
-      //   it('the allowance should be 0', async () => {
-      //     assertBn.eq(await ERC721.allowance(user1.address, user2.address), '0');
-      //   });
-      //   it('updates the user balances accordingly', async () => {
-      //     assertBn.eq(await ERC721.balanceOf(user1.address),
-      // user1Balance.sub(approvalAmount));
-      //     assertBn.eq(await ERC721.balanceOf(user2.address),
-      // user2Balance.add(approvalAmount));
-      //   });
-      //   it('emits a Transfer event', async () => {
-      //     const event = findEvent({ receipt, eventName: 'Transfer' });
-      //     assert.equal(event.args.from, user1.address);
-      //     assert.equal(event.args.to, user2.address);
-      //     assertBn.eq(event.args.amount, transferFromAmount);
-      //   });
-      // });
+      let receipt;
+      before('setApprovalForAll', async () => {
+        const tx = await ERC721.connect(user1).setApprovalForAll(user3.address, true);
+        receipt = await tx.wait();
+      });
+
+      it('emits an ApprovalForAll event', async () => {
+        const event = findEvent({ receipt, eventName: 'ApprovalForAll' });
+
+        assert.equal(event.args.owner, user1.address);
+        assert.equal(event.args.operator, user3.address);
+        assert.equal(event.args.approved, true);
+      });
+
+      it('approves the operator', async () => {
+        assert.equal(await ERC721.isApprovedForAll(user1.address, user3.address), true);
+      });
+
+      describe('when the approved account transfers the tokenId', () => {
+        before('transfer', async () => {
+          const tx = await ERC721.connect(user3).transferFrom(
+            user1.address,
+            user2.address,
+            token42
+          );
+          await tx.wait();
+        });
+
+        it('is transfered', async () => {
+          assert.equal(await ERC721.ownerOf(token42), user2.address);
+        });
+
+        it('any approval is cleared', async () => {
+          assert.equal(await ERC721.getApproved(token42), ethers.constants.AddressZero);
+        });
+
+        after('transfer it back', async () => {
+          const tx = await ERC721.connect(user2).transferFrom(
+            user2.address,
+            user1.address,
+            token42
+          );
+          await tx.wait();
+        });
+      });
+
+      describe('when attempting to approve the same owner', () => {
+        it('reverts ', async () => {
+          await assertRevert(
+            ERC721.connect(user1).setApprovalForAll(user1.address, true),
+            `InvalidOperator("${user1.address}")`
+          );
+        });
+      });
+
+      describe('clearing the approval', () => {
+        before('clear ApprovalForAll', async () => {
+          const tx = await ERC721.connect(user1).setApprovalForAll(user3.address, false);
+          receipt = await tx.wait();
+        });
+
+        it('emits an ApprovalForAll event', async () => {
+          const event = findEvent({ receipt, eventName: 'ApprovalForAll' });
+
+          assert.equal(event.args.owner, user1.address);
+          assert.equal(event.args.operator, user3.address);
+          assert.equal(event.args.approved, false);
+        });
+
+        it('approves the operator', async () => {
+          assert.equal(await ERC721.isApprovedForAll(user1.address, user3.address), false);
+        });
+
+        describe('when the previous approved operator attempts to transfers the tokenId', () => {
+          it('reverts ', async () => {
+            await assertRevert(
+              ERC721.connect(user3).transferFrom(user1.address, user2.address, token42),
+              `Unauthorized("${user3.address}")`
+            );
+          });
+        });
+      });
     });
   });
 });

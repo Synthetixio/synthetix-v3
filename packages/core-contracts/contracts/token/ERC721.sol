@@ -13,7 +13,7 @@ contract ERC721 is IERC721, IERC721Metadata, ERC721Storage, ContractUtil {
     error InvalidTokenId(uint256);
     error InvalidFrom(address);
     error InvalidTo(address);
-    error InvalidTransferRecipient();
+    error InvalidTransferRecipient(address);
     error Unauthorized(address);
     error AlreadyInitialized();
 
@@ -131,23 +131,8 @@ contract ERC721 is IERC721, IERC721Metadata, ERC721Storage, ContractUtil {
         bytes memory data
     ) public payable virtual override {
         _transfer(from, to, tokenId);
-        if (_checkOnERC721Received(from, to, tokenId, data)) {
-            revert InvalidTransferRecipient();
-        }
-    }
-
-    function _safeMint(address to, uint256 tokenId) internal virtual {
-        _safeMint(to, tokenId, "");
-    }
-
-    function _safeMint(
-        address to,
-        uint256 tokenId,
-        bytes memory data
-    ) internal virtual {
-        _mint(to, tokenId);
-        if (_checkOnERC721Received(address(0), to, tokenId, data)) {
-            revert InvalidTransferRecipient();
+        if (!_checkOnERC721Received(from, to, tokenId, data)) {
+            revert InvalidTransferRecipient(to);
         }
     }
 
@@ -193,9 +178,7 @@ contract ERC721 is IERC721, IERC721Metadata, ERC721Storage, ContractUtil {
         ERC721Store storage store = _erc721Store();
         address owner = ownerOf(tokenId);
 
-        if (!_exists(tokenId)) {
-            revert InvalidTokenId(tokenId);
-        }
+        // Not checking tokenId existence since is checked in ownerOf()
 
         if (owner != msg.sender && store.tokenApprovals[tokenId] != msg.sender && !isApprovedForAll(from, msg.sender)) {
             revert Unauthorized(msg.sender);
@@ -230,7 +213,7 @@ contract ERC721 is IERC721, IERC721Metadata, ERC721Storage, ContractUtil {
                 return retval == IERC721Receiver.onERC721Received.selector;
             } catch (bytes memory reason) {
                 if (reason.length == 0) {
-                    revert InvalidTransferRecipient();
+                    revert InvalidTransferRecipient(to);
                 } else {
                     assembly {
                         revert(add(32, reason), mload(reason))
