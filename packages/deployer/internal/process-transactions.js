@@ -11,7 +11,7 @@ async function processTransaction(transaction, hre) {
   const status = receipt.status === 1 ? 'confirmed' : 'failed';
 
   if (status === 1) {
-    logger.failed('Transaction reverted')
+    logger.failed('Transaction reverted');
   } else {
     logger.checked(`Transaction successful with gas ${gasUsed}`);
   }
