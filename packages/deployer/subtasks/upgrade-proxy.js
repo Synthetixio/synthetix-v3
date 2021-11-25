@@ -1,7 +1,7 @@
 const logger = require('@synthetixio/core-js/utils/logger');
 const prompter = require('@synthetixio/core-js/utils/prompter');
 const { subtask } = require('hardhat/config');
-const { processTransaction, processReceipt } = require('../internal/process-transactions');
+const { processTransaction } = require('../internal/process-transactions');
 const { SUBTASK_UPGRADE_PROXY, SUBTASK_DEPLOY_CONTRACT } = require('../task-names');
 
 const UPGRADE_ABI = [
@@ -80,9 +80,7 @@ async function _upgradeProxy({ proxyAddress, routerAddress, hre }) {
     try {
       const transaction = await upgradeable.upgradeTo(routerAddress);
 
-      processTransaction(transaction, hre);
-      const receipt = await transaction.wait();
-      processReceipt(receipt, hre);
+      await processTransaction(transaction, hre);
 
       logger.success(`Main proxy upgraded to ${await upgradeable.getImplementation()}`);
     } catch (err) {
