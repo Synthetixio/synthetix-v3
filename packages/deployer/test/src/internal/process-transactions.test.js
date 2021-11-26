@@ -2,7 +2,7 @@ const { equal, deepStrictEqual } = require('assert/strict');
 const { processTransaction } = require('../../../internal/process-transactions');
 const { useEnvironment } = require('../../helpers');
 
-describe('internal/process-transactions.js', function () {
+describe.only('internal/process-transactions.js', function () {
   useEnvironment('sample-project');
 
   let signer;
@@ -30,6 +30,24 @@ describe('internal/process-transactions.js', function () {
   describe('before sending a transaction', function () {
     it('shows txs list empty', async function () {
       deepStrictEqual(this.hre.deployer.deployment.general.transactions, {});
+    });
+
+    describe('when trying to send a tx that fails', async function () {
+      beforeEach('send a failing tx', async function ()  {
+        transaction = await signer.sendTransaction({
+          gasLimit: 2100,
+          to: '0x0000000000000000000000000000000000000000',
+        });
+
+        await processTransaction(transaction, this.hre);
+      });
+
+      it('registers a transaction in the deployment data', async function () {
+        equal(
+          this.hre.deployer.deployment.general.transactions[transaction.hash].status,
+          'failed'
+        );
+      });
     });
 
     describe('when sending a transaction', function () {
