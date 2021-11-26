@@ -29,21 +29,19 @@ async function deployOnEnvironment(hre, customOptions = {}) {
   });
 
   if (customOptions.clear) {
-    try {
-      const initializer = require(path.join(
-        hre.config.paths.root,
-        'test',
-        'helpers',
-        'initializer'
-      ));
+    let initializer;
 
+    try {
+      initializer = require(path.join(hre.config.paths.root, 'test', 'helpers', 'initializer'));
     } catch (err) {
       if (err.code !== 'MODULE_NOT_FOUND') {
         throw err;
       }
     }
 
-    await initializer(deploymentInfo, hre);
+    if (initializer) {
+      await initializer(deploymentInfo, hre);
+    }
   }
 }
 
