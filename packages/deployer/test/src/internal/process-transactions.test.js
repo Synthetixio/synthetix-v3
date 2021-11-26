@@ -35,7 +35,6 @@ describe.only('internal/process-transactions.js', function () {
     describe('when trying to send a tx that fails', async function () {
       beforeEach('send a failing tx', async function ()  {
         transaction = await signer.sendTransaction({
-          gasLimit: 2100,
           to: '0x0000000000000000000000000000000000000000',
         });
 
@@ -53,7 +52,6 @@ describe.only('internal/process-transactions.js', function () {
     describe('when sending a transaction', function () {
       beforeEach('send a tx', async function () {
         transaction = await signer.sendTransaction({
-          value: 0,
           to: '0x0000000000000000000000000000000000000000',
         });
 

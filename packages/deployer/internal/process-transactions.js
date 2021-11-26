@@ -10,12 +10,6 @@ async function processTransaction(transaction, hre) {
   const { gasUsed } = receipt;
   const status = receipt.status === 1 ? 'confirmed' : 'failed';
 
-  if (status === 1) {
-    throw new Error('Transaction reverted', receipt);
-  } else {
-    logger.checked(`Transaction successful with gas ${gasUsed}`);
-  }
-
   hre.deployer.deployment.general.transactions[transaction.hash].status = status;
 
   const totalGasUsed = hre.ethers.BigNumber.from(
@@ -25,6 +19,13 @@ async function processTransaction(transaction, hre) {
     .toString();
 
   hre.deployer.deployment.general.properties.totalGasUsed = totalGasUsed;
+
+  if (status === 1) {
+    // Do not allow execution to continue when a tx is mined, but reverts.
+    throw new Error('Transaction reverted', receipt);
+  } else {
+    logger.checked(`Transaction successful with gas ${gasUsed}`);
+  }
 
   return receipt;
 }
