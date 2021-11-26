@@ -30,10 +30,17 @@ async function deployOnEnvironment(hre, customOptions = {}) {
 
   if (customOptions.clear) {
     try {
-      const initializer = require(path.join(hre.config.paths.root, 'test', 'helpers', 'initializer'));
+      const initializer = require(path.join(
+        hre.config.paths.root,
+        'test',
+        'helpers',
+        'initializer'
+      ));
 
       await initializer(deploymentInfo, hre);
-    } catch (err) {}
+    } catch (err) {
+      // eslint-disable-next-line
+    }
   }
 }
 
