@@ -37,10 +37,15 @@ async function deployOnEnvironment(hre, customOptions = {}) {
         'initializer'
       ));
 
-      await initializer(deploymentInfo, hre);
     } catch (err) {
-      // eslint-disable-next-line
+      if (err.code === 'MODULE_NOT_FOUND') {
+        return defaults;
+      }
+
+      throw err;
     }
+
+    await initializer(deploymentInfo, hre);
   }
 }
 
