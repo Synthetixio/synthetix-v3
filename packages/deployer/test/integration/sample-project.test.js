@@ -1,5 +1,5 @@
 const path = require('path');
-const { loadEnvironment, deployOnEnvironment } = require('./helpers/use-environment');
+const { loadEnvironment, deployOnEnvironment } = require('../helpers/use-environment');
 const { copyFile, unlink, readFile, writeFile } = require('fs/promises');
 
 describe('sample-project', function () {

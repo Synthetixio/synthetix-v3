@@ -1,21 +1,25 @@
 const { equal, deepStrictEqual } = require('assert/strict');
 const { processTransaction } = require('../../../internal/process-transactions');
-const { useEnvironment } = require('../../helpers');
+const { loadEnvironment } = require('../../helpers/use-environment');
 
 describe.only('internal/process-transactions.js', function () {
-  useEnvironment('sample-project');
-
   let signer;
 
   let transaction;
   let receipt;
 
+  let hre;
+
+  beforeEach('set fixture project', function () {
+    hre = loadEnvironment('custom-proxy');
+  });
+
   beforeEach('identify signers', async function () {
-    signer = (await this.hre.ethers.getSigners())[0];
+    signer = (await hre.ethers.getSigners())[0];
   });
 
   beforeEach('mock deployment data', async function () {
-    this.hre.deployer = {
+    hre.deployer = {
       deployment: {
         general: {
           transactions: {},
@@ -29,7 +33,7 @@ describe.only('internal/process-transactions.js', function () {
 
   describe('before sending a transaction', function () {
     it('shows txs list empty', async function () {
-      deepStrictEqual(this.hre.deployer.deployment.general.transactions, {});
+      deepStrictEqual(hre.deployer.deployment.general.transactions, {});
     });
 
     describe('when trying to send a tx that fails', async function () {
@@ -38,12 +42,12 @@ describe.only('internal/process-transactions.js', function () {
           to: '0x0000000000000000000000000000000000000000',
         });
 
-        await processTransaction(transaction, this.hre);
+        await processTransaction(transaction, hre);
       });
 
       it('registers a transaction in the deployment data', async function () {
         equal(
-          this.hre.deployer.deployment.general.transactions[transaction.hash].status,
+          hre.deployer.deployment.general.transactions[transaction.hash].status,
           'failed'
         );
       });
@@ -55,12 +59,12 @@ describe.only('internal/process-transactions.js', function () {
           to: '0x0000000000000000000000000000000000000000',
         });
 
-        receipt = await processTransaction(transaction, this.hre);
+        receipt = await processTransaction(transaction, hre);
       });
 
       it('registers a transaction in the deployment data', async function () {
         equal(
-          this.hre.deployer.deployment.general.transactions[transaction.hash].status,
+          hre.deployer.deployment.general.transactions[transaction.hash].status,
           'confirmed'
         );
       });
@@ -72,7 +76,7 @@ describe.only('internal/process-transactions.js', function () {
       it('records total gas used', async function () {
         equal(
           receipt.gasUsed.toString(),
-          this.hre.deployer.deployment.general.properties.totalGasUsed
+          hre.deployer.deployment.general.properties.totalGasUsed
         );
       });
     });
