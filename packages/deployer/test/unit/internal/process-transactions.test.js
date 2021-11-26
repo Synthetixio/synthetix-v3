@@ -37,19 +37,22 @@ describe.only('internal/process-transactions.js', function () {
     });
 
     describe('when trying to send a tx that fails', async function () {
-      beforeEach('send a failing tx', async function ()  {
-        transaction = await signer.sendTransaction({
-          to: '0x0000000000000000000000000000000000000000',
-        });
+      const failingTransaction = {
+        hash: '0xDeadBeef',
+        value: hre.ethers.BigNumber.from('0'),
+        wait: async function () {
+          return {
+            status: 0,
+          };
+        },
+      };
 
-        await processTransaction(transaction, hre);
+      beforeEach('send a failing tx', async function () {
+        await processTransaction(failingTransaction, hre);
       });
 
       it('registers a transaction in the deployment data', async function () {
-        equal(
-          hre.deployer.deployment.general.transactions[transaction.hash].status,
-          'failed'
-        );
+        equal(hre.deployer.deployment.general.transactions[transaction.hash].status, 'failed');
       });
     });
 
@@ -63,10 +66,7 @@ describe.only('internal/process-transactions.js', function () {
       });
 
       it('registers a transaction in the deployment data', async function () {
-        equal(
-          hre.deployer.deployment.general.transactions[transaction.hash].status,
-          'confirmed'
-        );
+        equal(hre.deployer.deployment.general.transactions[transaction.hash].status, 'confirmed');
       });
 
       it('returns a valid receipt', async function () {
@@ -74,10 +74,7 @@ describe.only('internal/process-transactions.js', function () {
       });
 
       it('records total gas used', async function () {
-        equal(
-          receipt.gasUsed.toString(),
-          hre.deployer.deployment.general.properties.totalGasUsed
-        );
+        equal(receipt.gasUsed.toString(), hre.deployer.deployment.general.properties.totalGasUsed);
       });
     });
   });
