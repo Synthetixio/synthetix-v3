@@ -38,11 +38,9 @@ async function deployOnEnvironment(hre, customOptions = {}) {
       ));
 
     } catch (err) {
-      if (err.code === 'MODULE_NOT_FOUND') {
-        return defaults;
+      if (err.code !== 'MODULE_NOT_FOUND') {
+        throw err;
       }
-
-      throw err;
     }
 
     await initializer(deploymentInfo, hre);
