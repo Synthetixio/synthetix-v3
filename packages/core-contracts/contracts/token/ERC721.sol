@@ -202,7 +202,9 @@ contract ERC721 is IERC721, IERC721Metadata, ERC721Storage, ContractUtil {
     }
 
     function _isAuthorizedToTransfer(address from, uint256 tokenId) internal virtual returns (bool) {
-        return (ownerOf(tokenId) == msg.sender || _erc721Store().tokenApprovals[tokenId] == msg.sender || isApprovedForAll(from, msg.sender));
+        return (ownerOf(tokenId) == msg.sender ||
+            _erc721Store().tokenApprovals[tokenId] == msg.sender ||
+            isApprovedForAll(from, msg.sender));
     }
 
     function _checkOnERC721Received(
