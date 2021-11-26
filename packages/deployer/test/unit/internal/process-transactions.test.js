@@ -2,7 +2,7 @@ const { equal, deepStrictEqual } = require('assert/strict');
 const { processTransaction } = require('../../../internal/process-transactions');
 const { loadEnvironment } = require('../../helpers/use-environment');
 
-describe.only('internal/process-transactions.js', function () {
+describe('internal/process-transactions.js', function () {
   let signer;
 
   let transaction;
