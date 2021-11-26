@@ -16,7 +16,7 @@ async function processTransaction(transaction, hre) {
     logger.checked(`Transaction successful with gas ${gasUsed}`);
   }
 
-  hre.deployer.deployment.general.transactions[receipt.transactionHash].status = status;
+  hre.deployer.deployment.general.transactions[transaction.hash].status = status;
 
   const totalGasUsed = hre.ethers.BigNumber.from(
     hre.deployer.deployment.general.properties.totalGasUsed
