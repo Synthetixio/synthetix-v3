@@ -1,5 +1,5 @@
 {
-  "spec": ["test/src/**/*.test.js"],
+  "spec": ["test/unit/**/*.test.js", "test/integration/**/*.test.js"],
   "watch-files": [
     "internal/**/*.js",
     "subtasks/**/*.js",
