@@ -24,4 +24,14 @@ describe('ContractHelper', () => {
       assert.equal(await ContractUtil.isContract(ContractUtil.address), true);
     });
   });
+
+  describe('_toString(uint256 value)', () => {
+    it('shows that it can stringify values', async () => {
+      assert.equal(await ContractUtil.stringify(0), '0');
+      assert.equal(await ContractUtil.stringify(1), '1');
+      assert.equal(await ContractUtil.stringify(10), '10');
+      assert.equal(await ContractUtil.stringify(1000), '1000');
+      assert.equal(await ContractUtil.stringify(99999), '99999');
+    });
+  });
 });
