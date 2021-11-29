@@ -19,8 +19,4 @@ contract ERC721OwnedMock is ERC721Owned {
     function mintTo(address to, uint256 tokenId) external {
         _mint(to, tokenId);
     }
-
-    function burn(uint256 tokenId) external {
-        _burn(tokenId);
-    }
 }
