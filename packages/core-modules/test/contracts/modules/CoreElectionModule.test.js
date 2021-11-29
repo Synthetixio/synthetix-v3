@@ -59,7 +59,6 @@ describe('CoreElectionModule', () => {
     it('reads the MemberToken parameters', async () => {
       equal(await MemberToken.name(), 'Member Token');
       equal(await MemberToken.symbol(), 'cmt');
-      equal(await MemberToken.decimals(), 0);
     });
 
     describe('when attempting to create the MemberToken twice', () => {
