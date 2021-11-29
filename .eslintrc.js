@@ -9,10 +9,12 @@ module.exports = {
     Proxy: 'readonly',
     Promise: 'readonly',
   },
+  plugins: ['no-only-tests'],
   parserOptions: {
     ecmaVersion: 12,
   },
   rules: {
+    'no-only-tests/no-only-tests': 'error',
     indent: ['error', 2],
     'linebreak-style': ['error', 'unix'],
     quotes: ['error', 'single'],
