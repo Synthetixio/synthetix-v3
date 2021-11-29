@@ -1,4 +1,4 @@
-const { loadEnvironment, deployOnEnvironment } = require('./helpers/use-environment');
+const { loadEnvironment, deployOnEnvironment } = require('../helpers/use-environment');
 const { rejects } = require('assert/strict');
 const { ContractValidationError } = require('../../internal/errors');
 

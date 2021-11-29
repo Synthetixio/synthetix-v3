@@ -1,12 +1,16 @@
-function processTransaction(transaction, hre) {
-  hre.deployer.deployment.general.transactions[transaction.hash] = { status: 'pending' };
-}
+const logger = require('@synthetixio/core-js/utils/logger');
 
-function processReceipt(receipt, hre) {
+async function processTransaction(transaction, hre) {
+  logger.info(`Processing transaction ${transaction.hash}...`);
+
+  hre.deployer.deployment.general.transactions[transaction.hash] = { status: 'pending' };
+
+  const receipt = await transaction.wait();
+
   const { gasUsed } = receipt;
   const status = receipt.status === 1 ? 'confirmed' : 'failed';
 
-  hre.deployer.deployment.general.transactions[receipt.transactionHash].status = status;
+  hre.deployer.deployment.general.transactions[transaction.hash].status = status;
 
   const totalGasUsed = hre.ethers.BigNumber.from(
     hre.deployer.deployment.general.properties.totalGasUsed
@@ -16,10 +20,16 @@ function processReceipt(receipt, hre) {
 
   hre.deployer.deployment.general.properties.totalGasUsed = totalGasUsed;
 
-  return { status, gasUsed };
+  if (status === 1) {
+    // Do not allow execution to continue when a tx is mined, but reverts.
+    throw new Error('Transaction reverted', receipt);
+  } else {
+    logger.checked(`Transaction successful with gas ${gasUsed}`);
+  }
+
+  return receipt;
 }
 
 module.exports = {
   processTransaction,
-  processReceipt,
 };
