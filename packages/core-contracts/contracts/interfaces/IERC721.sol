@@ -19,21 +19,21 @@ interface IERC721 is IERC165 {
         address to,
         uint256 tokenId,
         bytes calldata data
-    ) external payable;
+    ) external;
 
     function safeTransferFrom(
         address from,
         address to,
         uint256 tokenId
-    ) external payable;
+    ) external;
 
     function transferFrom(
         address from,
         address to,
         uint256 tokenId
-    ) external payable;
+    ) external;
 
-    function approve(address approved, uint256 tokenId) external payable;
+    function approve(address approved, uint256 tokenId) external;
 
     function setApprovalForAll(address operator, bool approved) external;
 

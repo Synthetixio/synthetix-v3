@@ -72,7 +72,7 @@ contract ERC721 is IERC721, IERC721Metadata, ERC721Storage, ContractUtil, Common
         return _erc721Store().ownerOf[tokenId];
     }
 
-    function approve(address to, uint256 tokenId) external payable virtual override {
+    function approve(address to, uint256 tokenId) external virtual override {
         ERC721Store storage store = _erc721Store();
         address holder = store.ownerOf[tokenId];
 
@@ -112,7 +112,7 @@ contract ERC721 is IERC721, IERC721Metadata, ERC721Storage, ContractUtil, Common
         address from,
         address to,
         uint256 tokenId
-    ) public payable virtual override {
+    ) public virtual override {
         if (!_isAuthorizedToTransfer(from, tokenId)) {
             revert Unauthorized(msg.sender);
         }
@@ -124,7 +124,7 @@ contract ERC721 is IERC721, IERC721Metadata, ERC721Storage, ContractUtil, Common
         address from,
         address to,
         uint256 tokenId
-    ) public payable virtual override {
+    ) public virtual override {
         if (!_isAuthorizedToTransfer(from, tokenId)) {
             revert Unauthorized(msg.sender);
         }
@@ -137,7 +137,7 @@ contract ERC721 is IERC721, IERC721Metadata, ERC721Storage, ContractUtil, Common
         address to,
         uint256 tokenId,
         bytes memory data
-    ) public payable virtual override {
+    ) public virtual override {
         if (!_isAuthorizedToTransfer(from, tokenId)) {
             revert Unauthorized(msg.sender);
         }
