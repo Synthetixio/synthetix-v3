@@ -41,15 +41,29 @@ contract ERC721 is IERC721, IERC721Metadata, ERC721Storage, ContractUtil, Common
             interfaceId == type(IERC721Metadata).interfaceId;
     }
 
-    function name() external view override returns (string memory) {
+    function balanceOf(address holder) public view virtual override returns (uint) {
+        if (holder == address(0)) {
+            revert InvalidAddress(holder);
+        }
+        return _erc721Store().balanceOf[holder];
+    }
+
+    function ownerOf(uint256 tokenId) public view virtual override returns (address) {
+        if (!_exists(tokenId)) {
+            revert TokenDoesNotExists(tokenId);
+        }
+        return _erc721Store().ownerOf[tokenId];
+    }
+
+    function name() external view virtual override returns (string memory) {
         return _erc721Store().name;
     }
 
-    function symbol() external view override returns (string memory) {
+    function symbol() external view virtual override returns (string memory) {
         return _erc721Store().symbol;
     }
 
-    function tokenURI(uint256 tokenId) external view override returns (string memory) {
+    function tokenURI(uint256 tokenId) external view virtual override returns (string memory) {
         if (!_exists(tokenId)) {
             revert TokenDoesNotExists(tokenId);
         }
@@ -58,21 +72,7 @@ contract ERC721 is IERC721, IERC721Metadata, ERC721Storage, ContractUtil, Common
         return bytes(baseURI).length > 0 ? string(abi.encodePacked(baseURI, _toString(tokenId))) : "";
     }
 
-    function balanceOf(address holder) public view override returns (uint) {
-        if (holder == address(0)) {
-            revert InvalidAddress(holder);
-        }
-        return _erc721Store().balanceOf[holder];
-    }
-
-    function ownerOf(uint256 tokenId) public view override returns (address) {
-        if (!_exists(tokenId)) {
-            revert TokenDoesNotExists(tokenId);
-        }
-        return _erc721Store().ownerOf[tokenId];
-    }
-
-    function approve(address to, uint256 tokenId) external virtual override {
+    function approve(address to, uint256 tokenId) public virtual override {
         ERC721Store storage store = _erc721Store();
         address holder = store.ownerOf[tokenId];
 
@@ -87,7 +87,7 @@ contract ERC721 is IERC721, IERC721Metadata, ERC721Storage, ContractUtil, Common
         _approve(to, tokenId);
     }
 
-    function getApproved(uint256 tokenId) external view virtual override returns (address) {
+    function getApproved(uint256 tokenId) public view virtual override returns (address) {
         if (!_exists(tokenId)) {
             revert TokenDoesNotExists(tokenId);
         }
@@ -95,7 +95,7 @@ contract ERC721 is IERC721, IERC721Metadata, ERC721Storage, ContractUtil, Common
         return _erc721Store().tokenApprovals[tokenId];
     }
 
-    function setApprovalForAll(address operator, bool approved) external virtual override {
+    function setApprovalForAll(address operator, bool approved) public virtual override {
         if (msg.sender == operator) {
             revert CannotApproveToCaller(operator);
         }
@@ -125,10 +125,6 @@ contract ERC721 is IERC721, IERC721Metadata, ERC721Storage, ContractUtil, Common
         address to,
         uint256 tokenId
     ) public virtual override {
-        if (!_isApprovedOrOwner(msg.sender, tokenId)) {
-            revert Unauthorized(msg.sender);
-        }
-
         safeTransferFrom(from, to, tokenId, "");
     }
 
@@ -148,6 +144,19 @@ contract ERC721 is IERC721, IERC721Metadata, ERC721Storage, ContractUtil, Common
         }
     }
 
+    function _exists(uint256 tokenId) internal view virtual returns (bool) {
+        return _erc721Store().ownerOf[tokenId] != address(0);
+    }
+
+    function _isApprovedOrOwner(address spender, uint256 tokenId) internal view virtual returns (bool) {
+        address holder = ownerOf(tokenId);
+
+        // Not checking tokenId existence since it is checked in ownerOf() and getApproved()
+
+        return (spender == holder || getApproved(tokenId) == spender || isApprovedForAll(holder, spender));
+    }
+
+    // Not implementing _safeMint at the moment
     function _mint(address to, uint256 tokenId) internal virtual {
         ERC721Store storage store = _erc721Store();
         if (to == address(0)) {
@@ -175,10 +184,6 @@ contract ERC721 is IERC721, IERC721Metadata, ERC721Storage, ContractUtil, Common
         delete store.ownerOf[tokenId];
 
         emit Transfer(holder, address(0), tokenId);
-    }
-
-    function _exists(uint256 tokenId) internal view virtual returns (bool) {
-        return _erc721Store().ownerOf[tokenId] != address(0);
     }
 
     function _transfer(
@@ -211,13 +216,6 @@ contract ERC721 is IERC721, IERC721Metadata, ERC721Storage, ContractUtil, Common
     function _approve(address to, uint256 tokenId) internal virtual {
         _erc721Store().tokenApprovals[tokenId] = to;
         emit Approval(ERC721.ownerOf(tokenId), to, tokenId);
-    }
-
-    function _isApprovedOrOwner(address spender, uint256 tokenId) internal virtual returns (bool) {
-        address holder = ownerOf(tokenId);
-        return (holder == spender ||
-            _erc721Store().tokenApprovals[tokenId] == spender ||
-            isApprovedForAll(holder, spender));
     }
 
     function _checkOnERC721Received(

@@ -342,6 +342,45 @@ describe('ERC721', () => {
           await tx.wait();
         });
       });
+
+      describe('when attempting to transfer a non owned tokenId', () => {
+        it('reverts ', async () => {
+          await assertRevert(
+            ERC721.connect(user2)['safeTransferFrom(address,address,uint256)'](
+              user2.address,
+              user1.address,
+              token42
+            ),
+            `Unauthorized("${user2.address}")`
+          );
+        });
+      });
+
+      describe('when attempting to transfer a token from an invalid owner', () => {
+        it('reverts ', async () => {
+          await assertRevert(
+            ERC721.connect(user1)['safeTransferFrom(address,address,uint256)'](
+              user2.address,
+              user1.address,
+              42
+            ),
+            `InvalidFrom("${user2.address}")`
+          );
+        });
+      });
+
+      describe('when attempting to transfer a token to a Zero address', () => {
+        it('reverts ', async () => {
+          await assertRevert(
+            ERC721.connect(user1)['safeTransferFrom(address,address,uint256)'](
+              user1.address,
+              ethers.constants.AddressZero,
+              42
+            ),
+            `InvalidTo("${ethers.constants.AddressZero}")`
+          );
+        });
+      });
     });
 
     describe('Approve and TransferFrom', () => {
