@@ -13,6 +13,7 @@ task(TASK_INTERACT, 'Interacts with a given modular system deployment')
     'official',
     types.alphanumeric
   )
+  .addFlag('debug', 'Display debug logs', false)
   .setAction(async (taskArguments, hre) => {
     const { debug } = taskArguments;
 
