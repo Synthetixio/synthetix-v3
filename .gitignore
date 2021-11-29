@@ -7,3 +7,9 @@ cache
 coverage
 node_modules
 **/coverage*
+
+# python venv
+.venv/
+
+# sarif files
+slither.sarif

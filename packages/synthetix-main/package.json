@@ -10,7 +10,9 @@
     "test": "hardhat test",
     "coverage": "hardhat coverage",
     "compile-contracts": "hardhat compile",
-    "size-contracts": "hardhat size-contracts"
+    "size-contracts": "hardhat size-contracts",
+    "slither-local": "python3 -m venv .venv && .venv/bin/python -m pip install slither-analyzer && .venv/bin/python -m slither .",
+    "slither-sarif": "python3 -m venv .venv && .venv/bin/python -m pip install slither-analyzer && .venv/bin/python -m slither . --sarif slither.sarif"
   },
   "keywords": [],
   "author": "",
