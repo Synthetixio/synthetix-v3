@@ -4,7 +4,7 @@ const { rejects } = require('assert/strict');
 const { ContractValidationError } = require('../../internal/errors');
 const { copyFile } = require('fs/promises');
 
-describe('custom-proxy', function () {
+describe.only('custom-proxy', function () {
   let hre;
 
   beforeEach('set fixture project', function () {
