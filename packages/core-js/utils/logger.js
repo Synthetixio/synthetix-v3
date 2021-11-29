@@ -1,5 +1,4 @@
 const chalk = require('chalk');
-const { promisify } = require('util');
 
 const BOX_WIDTH = 90;
 
