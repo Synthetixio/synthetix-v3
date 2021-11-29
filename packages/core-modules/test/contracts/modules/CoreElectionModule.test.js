@@ -10,10 +10,10 @@ describe.only('CoreElectionModule', () => {
   const { proxyAddress } = bootstrap(initializer);
 
   let CoreElectionModule;
-  let owner, user;
+  let user;
 
   before('identify signers', async () => {
-    [owner, user] = await ethers.getSigners();
+    [, user] = await ethers.getSigners();
   });
 
   before('identify modules', async () => {
