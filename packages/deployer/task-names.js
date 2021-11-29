@@ -7,6 +7,7 @@ module.exports = {
   SUBTASK_DEPLOY_ROUTER: 'deployer-generate-deploy-router',
   SUBTASK_GENERATE_ROUTER_SOURCE: 'deployer-generate-router-source',
   SUBTASK_PREPARE_DEPLOYMENT: 'deployer-prepare-deployment',
+  SUBTASK_LOAD_DEPLOYMENT: 'deployer-load-deployment',
   SUBTASK_PRINT_INFO: 'deployer-print-info',
   SUBTASK_SYNC_PROXY: 'deployer-sync-proxy',
   SUBTASK_SYNC_SOURCES: 'deployer-sync-sources',
