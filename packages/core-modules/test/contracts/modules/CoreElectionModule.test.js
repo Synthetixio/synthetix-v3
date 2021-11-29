@@ -6,7 +6,7 @@ const initializer = require('../../helpers/initializer');
 
 const { ethers } = hre;
 
-describe.only('CoreElectionModule', () => {
+describe('CoreElectionModule', () => {
   const { proxyAddress } = bootstrap(initializer);
 
   let CoreElectionModule;
