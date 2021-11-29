@@ -8,7 +8,7 @@ const relativePath = require('@synthetixio/core-js/utils/relative-path');
 
 subtask(SUBTASK_PRINT_INFO, 'Prints info about the interaction with a particular system').setAction(
   async (taskArguments) => {
-    await logger.title(`${readPackageJson().name}\n          CLI`);
+    await logger.title(`${readPackageJson().name}\nCLI`);
     await _printInfo(taskArguments);
   }
 );

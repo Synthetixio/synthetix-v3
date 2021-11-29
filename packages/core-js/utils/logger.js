@@ -1,5 +1,4 @@
 const chalk = require('chalk');
-const figlet = require('figlet');
 const { promisify } = require('util');
 
 const BOX_WIDTH = 90;
@@ -39,9 +38,12 @@ module.exports = {
     this._log(`${this.prepend}${msg}${completeStr}${this.postpend}`);
   },
 
-  async title(msg, font = 'small') {
-    const text = await promisify(figlet.text.bind(figlet))(msg, { font });
-    this.log(chalk.red(text));
+  async title(msg) {
+    if (this.quiet) {
+      return;
+    }
+
+    this._log(chalk.red.bold(msg));
   },
 
   subtitle(msg) {

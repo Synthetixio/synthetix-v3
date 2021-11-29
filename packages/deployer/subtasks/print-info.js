@@ -9,7 +9,7 @@ const { readPackageJson } = require('@synthetixio/core-js/utils/npm');
 const { SUBTASK_PRINT_INFO } = require('../task-names');
 
 subtask(SUBTASK_PRINT_INFO, 'Prints info about a deployment.').setAction(async (taskArguments) => {
-  await logger.title(`${readPackageJson().name}\n       DEPLOYER`);
+  await logger.title(`${readPackageJson().name}\nDEPLOYER`);
   await _printInfo(taskArguments);
 
   await prompter.confirmAction('Proceed with deployment');
