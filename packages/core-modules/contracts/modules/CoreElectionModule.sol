@@ -35,6 +35,7 @@ contract CoreElectionModule is CoreElectionStorage, OwnableMixin {
 
     function upgradeMemberTokenImplementation(address newMemberTokenImplementation) public onlyOwner {
         MemberToken(getMemberTokenAddress()).upgradeTo(newMemberTokenImplementation);
+        _electionStore().memberTokenAddress = newMemberTokenImplementation;
     }
 
     function getMemberTokenAddress() public view returns (address) {
