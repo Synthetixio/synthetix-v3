@@ -88,12 +88,12 @@ describe('CoreElectionModule', () => {
       });
 
       it('upgrades to the new implementation', async () => {
-        await (
-          await CoreElectionModule.upgradeMemberTokenImplementation(NewImplementation.address)
-        ).wait();
+        const tx = await CoreElectionModule.upgradeMemberTokenImplementation(
+          NewImplementation.address
+        );
+        await tx.wait();
 
-        const newAddress = await CoreElectionModule.getMemberTokenAddress();
-        equal(newAddress, NewImplementation.address);
+        equal(await MemberToken.getImplementation(), NewImplementation.address);
       });
     });
   });

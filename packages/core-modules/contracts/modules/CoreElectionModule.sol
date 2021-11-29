@@ -22,11 +22,11 @@ contract CoreElectionModule is ElectionStorage, OwnableMixin {
 
         UUPSProxy memberTokenProxy = new UUPSProxy(address(firstMemberTokenImplementation));
         address memberTokenProxyAddress = address(memberTokenProxy);
+        MemberToken memberToken = MemberToken(memberTokenProxyAddress);
 
-        MemberToken(memberTokenProxyAddress).nominateNewOwner(address(this));
-        MemberToken(memberTokenProxyAddress).acceptOwnership();
-
-        MemberToken(memberTokenProxyAddress).initialize(tokenName, tokenSymbol);
+        memberToken.nominateNewOwner(address(this));
+        memberToken.acceptOwnership();
+        memberToken.initialize(tokenName, tokenSymbol);
 
         store.memberTokenAddress = memberTokenProxyAddress;
 
@@ -35,7 +35,6 @@ contract CoreElectionModule is ElectionStorage, OwnableMixin {
 
     function upgradeMemberTokenImplementation(address newMemberTokenImplementation) public onlyOwner {
         MemberToken(getMemberTokenAddress()).upgradeTo(newMemberTokenImplementation);
-        _electionStore().memberTokenAddress = newMemberTokenImplementation;
     }
 
     function getMemberTokenAddress() public view returns (address) {

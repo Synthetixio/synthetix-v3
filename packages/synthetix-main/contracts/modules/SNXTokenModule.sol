@@ -23,11 +23,11 @@ contract SNXTokenModule is OwnableMixin, SNXTokenStorage {
         UUPSProxy snxTokenProxy = new UUPSProxy(address(firstSNXTokenImplementation));
 
         address snxTokenProxyAddress = address(snxTokenProxy);
+        SNXToken snxToken = SNXToken(snxTokenProxyAddress);
 
-        SNXToken(snxTokenProxyAddress).nominateNewOwner(address(this));
-        SNXToken(snxTokenProxyAddress).acceptOwnership();
-
-        SNXToken(snxTokenProxyAddress).initialize("Synthetix Network Token", "snx", 18);
+        snxToken.nominateNewOwner(address(this));
+        snxToken.acceptOwnership();
+        snxToken.initialize("Synthetix Network Token", "snx", 18);
 
         store.snxTokenAddress = snxTokenProxyAddress;
 
