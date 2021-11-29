@@ -1,22 +1,20 @@
 const chalk = require('chalk');
-const { subtask } = require('hardhat/config');
-
 const logger = require('@synthetixio/core-js/utils/logger');
-const prompter = require('@synthetixio/core-js/utils/prompter');
-const relativePath = require('@synthetixio/core-js/utils/relative-path');
-const { getCommit, getBranch } = require('@synthetixio/core-js/utils/git');
-const { readPackageJson } = require('@synthetixio/core-js/utils/npm');
+const { subtask } = require('hardhat/config');
 const { SUBTASK_PRINT_INFO } = require('../task-names');
+const { readPackageJson } = require('@synthetixio/core-js/utils/npm');
+const { getCommit, getBranch } = require('@synthetixio/core-js/utils/git');
+const relativePath = require('@synthetixio/core-js/utils/relative-path');
 
-subtask(SUBTASK_PRINT_INFO, 'Prints info about a deployment.').setAction(async (taskArguments) => {
-  await logger.title(`${readPackageJson().name}\nDEPLOYER`);
-  await _printInfo(taskArguments);
-
-  await prompter.confirmAction('Proceed with deployment');
-});
+subtask(SUBTASK_PRINT_INFO, 'Prints info about the interaction with a particular system').setAction(
+  async (taskArguments) => {
+    await logger.title(`${readPackageJson().name}\nCLI`);
+    await _printInfo(taskArguments);
+  }
+);
 
 async function _printInfo(taskArguments) {
-  logger.log(chalk.yellow('\nPlease confirm these deployment parameters:'));
+  logger.log(chalk.yellow('\nPlease confirm these interaction parameters:'));
   logger.boxStart();
 
   logger.log(chalk.gray(`commit: ${getCommit()}`));
@@ -28,7 +26,6 @@ async function _printInfo(taskArguments) {
   logger.log(chalk[network.includes('mainnet') ? 'red' : 'gray'](`network: ${network}`));
 
   logger.log(chalk.gray(`instance: ${taskArguments.instance}`));
-  logger.log(chalk.gray(`debug: ${taskArguments.debug}`));
   logger.log(chalk.gray(`deployment: ${relativePath(hre.deployer.paths.deployment)}`));
 
   const signer = (await hre.ethers.getSigners())[0];
@@ -38,12 +35,5 @@ async function _printInfo(taskArguments) {
   logger.log(chalk.gray(`signer: ${signer.address}`));
   logger.log(chalk.gray(`signer balance: ${balance} ETH`));
 
-  if (taskArguments.clear) {
-    logger.log(chalk.red('clear: true'));
-  }
-
   logger.boxEnd();
-
-  logger.debug('Deployer configuration:');
-  logger.debug(JSON.stringify(hre.config.deployer, null, 2));
 }

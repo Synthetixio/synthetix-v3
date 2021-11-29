@@ -1,9 +1,25 @@
 const { task } = require('hardhat/config');
 
-const { SUBTASK_PICK_CONTRACT, TASK_INTERACT } = require('../task-names');
+const { SUBTASK_PICK_CONTRACT, SUBTASK_PRINT_INFO, TASK_INTERACT } = require('../task-names');
+const { SUBTASK_LOAD_DEPLOYMENT } = require('@synthetixio/deployer/task-names');
+
+const types = require('@synthetixio/core-js/utils/hardhat/argument-types');
+const logger = require('@synthetixio/core-js/utils/logger');
 
 task(TASK_INTERACT, 'Interacts with a given modular system deployment')
-  .addOptionalParam('deploymentPath', 'Specify the path to the deployment data directory')
+  .addOptionalParam(
+    'instance',
+    'The name of the target instance for deployment',
+    'official',
+    types.alphanumeric
+  )
+  .addFlag('debug', 'Display debug logs', false)
   .setAction(async (taskArguments, hre) => {
+    const { debug } = taskArguments;
+
+    logger.debugging = debug;
+
+    await hre.run(SUBTASK_LOAD_DEPLOYMENT, taskArguments);
+    await hre.run(SUBTASK_PRINT_INFO, taskArguments);
     await hre.run(SUBTASK_PICK_CONTRACT, taskArguments);
   });
