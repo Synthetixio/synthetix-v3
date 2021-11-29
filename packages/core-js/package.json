@@ -16,6 +16,7 @@
   "license": "MIT",
   "dependencies": {
     "chalk": "4.1.2",
+    "figlet": "1.5.2",
     "ethers": "5.5.1",
     "inquirer": "8.1.2"
   },
