@@ -4,9 +4,9 @@ pragma solidity ^0.8.0;
 import "@synthetixio/core-contracts/contracts/ownership/OwnableMixin.sol";
 import "@synthetixio/core-contracts/contracts/proxy/UUPSProxy.sol";
 import "../token/MemberToken.sol";
-import "../storage/CoreElectionStorage.sol";
+import "../storage/ElectionStorage.sol";
 
-contract CoreElectionModule is CoreElectionStorage, OwnableMixin {
+contract CoreElectionModule is ElectionStorage, OwnableMixin {
     error MemberTokenAlreadyCreated();
 
     event MemberTokenCreated(address memberTokenAddress);
