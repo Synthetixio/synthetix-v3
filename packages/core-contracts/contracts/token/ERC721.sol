@@ -113,7 +113,7 @@ contract ERC721 is IERC721, IERC721Metadata, ERC721Storage, ContractUtil, Common
         address to,
         uint256 tokenId
     ) public virtual override {
-        if (!_isAuthorizedToTransfer(from, tokenId)) {
+        if (!_isApprovedOrOwner(msg.sender, tokenId)) {
             revert Unauthorized(msg.sender);
         }
 
@@ -125,7 +125,7 @@ contract ERC721 is IERC721, IERC721Metadata, ERC721Storage, ContractUtil, Common
         address to,
         uint256 tokenId
     ) public virtual override {
-        if (!_isAuthorizedToTransfer(from, tokenId)) {
+        if (!_isApprovedOrOwner(msg.sender, tokenId)) {
             revert Unauthorized(msg.sender);
         }
 
@@ -138,7 +138,7 @@ contract ERC721 is IERC721, IERC721Metadata, ERC721Storage, ContractUtil, Common
         uint256 tokenId,
         bytes memory data
     ) public virtual override {
-        if (!_isAuthorizedToTransfer(from, tokenId)) {
+        if (!_isApprovedOrOwner(msg.sender, tokenId)) {
             revert Unauthorized(msg.sender);
         }
 
@@ -213,10 +213,11 @@ contract ERC721 is IERC721, IERC721Metadata, ERC721Storage, ContractUtil, Common
         emit Approval(ERC721.ownerOf(tokenId), to, tokenId);
     }
 
-    function _isAuthorizedToTransfer(address from, uint256 tokenId) internal virtual returns (bool) {
-        return (ownerOf(tokenId) == msg.sender ||
-            _erc721Store().tokenApprovals[tokenId] == msg.sender ||
-            isApprovedForAll(from, msg.sender));
+    function _isApprovedOrOwner(address spender, uint256 tokenId) internal virtual returns (bool) {
+        address holder = ownerOf(tokenId);
+        return (holder == spender ||
+            _erc721Store().tokenApprovals[tokenId] == spender ||
+            isApprovedForAll(holder, spender));
     }
 
     function _checkOnERC721Received(
