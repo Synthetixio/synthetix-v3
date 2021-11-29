@@ -21,7 +21,7 @@ const {
 
 const logger = require('@synthetixio/core-js/utils/logger');
 const prompter = require('@synthetixio/core-js/utils/prompter');
-const types = require('../internal/argument-types');
+const types = require('@synthetixio/core-js/utils/hardhat/argument-types');
 const { ContractValidationError } = require('../internal/errors');
 
 task(TASK_DEPLOY, 'Deploys all system modules')

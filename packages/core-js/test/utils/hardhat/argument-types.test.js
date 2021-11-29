@@ -1,7 +1,7 @@
 const { equal, notEqual, throws, doesNotThrow } = require('assert/strict');
-const { alphanumeric } = require('../../../internal/argument-types');
+const { alphanumeric } = require('../../../utils/hardhat/argument-types');
 
-describe('internal/argument-types.js', function () {
+describe('utils/hardhat/argument-types.js', function () {
   describe('alphanumeric', () => {
     it('is well formed', () => {
       equal(alphanumeric.name, 'word');
