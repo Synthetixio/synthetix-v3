@@ -156,7 +156,6 @@ contract ERC721 is IERC721, IERC721Metadata, ERC721Storage, ContractUtil, Common
         return (spender == holder || getApproved(tokenId) == spender || isApprovedForAll(holder, spender));
     }
 
-    // Not implementing _safeMint at the moment
     function _mint(address to, uint256 tokenId) internal virtual {
         ERC721Store storage store = _erc721Store();
         if (to == address(0)) {
@@ -164,7 +163,6 @@ contract ERC721 is IERC721, IERC721Metadata, ERC721Storage, ContractUtil, Common
         }
 
         if (_exists(tokenId)) {
-            // Already minted
             revert TokenAlreadyMinted(tokenId);
         }
 
@@ -192,8 +190,6 @@ contract ERC721 is IERC721, IERC721Metadata, ERC721Storage, ContractUtil, Common
         uint256 tokenId
     ) internal virtual {
         ERC721Store storage store = _erc721Store();
-
-        // Not checking tokenId existence since it is checked in ownerOf()
 
         if (ownerOf(tokenId) != from) {
             revert InvalidFrom(from);
