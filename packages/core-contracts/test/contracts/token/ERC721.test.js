@@ -91,7 +91,7 @@ describe('ERC721', () => {
     });
 
     it('reverts checking the owner for a wrong NFT Id', async () => {
-      await assertRevert(ERC721.ownerOf(24), 'TokenDoesNotExists(24)');
+      await assertRevert(ERC721.ownerOf(24), 'TokenDoesNotExist(24)');
     });
 
     describe('when attempting to mint again an existent Token', async () => {
@@ -115,7 +115,7 @@ describe('ERC721', () => {
       });
 
       it('reverts for an invalid tokenID', async () => {
-        await assertRevert(ERC721.tokenURI(24), 'TokenDoesNotExists(24)');
+        await assertRevert(ERC721.tokenURI(24), 'TokenDoesNotExist(24)');
       });
     });
 
@@ -163,7 +163,7 @@ describe('ERC721', () => {
         it('reverts ', async () => {
           await assertRevert(
             ERC721.connect(user1).transferFrom(user1.address, user2.address, 24),
-            'TokenDoesNotExists(24)'
+            'TokenDoesNotExist(24)'
           );
         });
       });
@@ -441,7 +441,7 @@ describe('ERC721', () => {
 
       describe('when attempting to check the aproval on a non existent tokenId', () => {
         it('reverts ', async () => {
-          await assertRevert(ERC721.connect(user1).getApproved(1337), 'TokenDoesNotExists(1337)');
+          await assertRevert(ERC721.connect(user1).getApproved(1337), 'TokenDoesNotExist(1337)');
         });
       });
 

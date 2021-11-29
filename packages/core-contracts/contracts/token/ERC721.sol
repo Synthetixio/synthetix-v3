@@ -14,7 +14,7 @@ contract ERC721 is IERC721, IERC721Metadata, ERC721Storage, ContractUtil, Common
     error InvalidFrom(address);
     error InvalidTo(address);
     error InvalidTransferRecipient(address);
-    error TokenDoesNotExists(uint256);
+    error TokenDoesNotExist(uint256);
     error TokenAlreadyMinted(uint256);
     error Unauthorized(address);
     error AlreadyInitialized();
@@ -50,7 +50,7 @@ contract ERC721 is IERC721, IERC721Metadata, ERC721Storage, ContractUtil, Common
 
     function ownerOf(uint256 tokenId) public view virtual override returns (address) {
         if (!_exists(tokenId)) {
-            revert TokenDoesNotExists(tokenId);
+            revert TokenDoesNotExist(tokenId);
         }
         return _erc721Store().ownerOf[tokenId];
     }
@@ -65,7 +65,7 @@ contract ERC721 is IERC721, IERC721Metadata, ERC721Storage, ContractUtil, Common
 
     function tokenURI(uint256 tokenId) external view virtual override returns (string memory) {
         if (!_exists(tokenId)) {
-            revert TokenDoesNotExists(tokenId);
+            revert TokenDoesNotExist(tokenId);
         }
 
         string memory baseURI = _erc721Store().baseTokenURI;
@@ -89,7 +89,7 @@ contract ERC721 is IERC721, IERC721Metadata, ERC721Storage, ContractUtil, Common
 
     function getApproved(uint256 tokenId) public view virtual override returns (address) {
         if (!_exists(tokenId)) {
-            revert TokenDoesNotExists(tokenId);
+            revert TokenDoesNotExist(tokenId);
         }
 
         return _erc721Store().tokenApprovals[tokenId];
