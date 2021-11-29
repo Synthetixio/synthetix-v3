@@ -37,6 +37,14 @@ module.exports = {
     this._log(`${this.prepend}${msg}${completeStr}${this.postpend}`);
   },
 
+  async title(msg) {
+    if (this.quiet) {
+      return;
+    }
+
+    this._log(chalk.red.bold(msg));
+  },
+
   subtitle(msg) {
     if (this.quiet) {
       return;
