@@ -6,7 +6,7 @@ interface SNXTokenModule {
 
     event SNXTokenCreated(address snxAddress);
 
-    function createSNX() external {
+    function createSNX() external;
 
     function upgradeSNXImplementation(address newSNXTokenImplementation) external;
 
