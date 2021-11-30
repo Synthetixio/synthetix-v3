@@ -8,7 +8,7 @@ const { SUBTASK_DEPLOY_CONTRACT } = require('../task-names');
 subtask(
   SUBTASK_DEPLOY_CONTRACT,
   'Deploys the given contract and update the contractData object.'
-).setAction(async ({ contractName, constructorArgs = [], requireConfirmation = true  }) => {
+).setAction(async ({ contractName, constructorArgs = [], requireConfirmation = true }) => {
   const contractData = hre.deployer.deployment.general.contracts[contractName];
 
   if (!contractData) {
