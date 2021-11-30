@@ -30,8 +30,8 @@ contract ERC721Owned is ERC721, Ownable {
         super.safeTransferFrom(from, to, tokenId, data);
     }
 
-    function _isApprovedOrOwner(address, uint256) internal view virtual override onlyOwner returns (bool) {
+    function _isApprovedOrOwner(address, uint256) internal view virtual override returns (bool) {
         // The owner (and only the owner) is authorized to transfer
-        return true;
+        return (this.owner() == msg.sender);
     }
 }
