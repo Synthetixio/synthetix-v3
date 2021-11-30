@@ -1,4 +1,3 @@
-const fs = require('fs');
 const { subtask } = require('hardhat/config');
 const inquirer = require('inquirer');
 const autocomplete = require('inquirer-list-search-prompt');
