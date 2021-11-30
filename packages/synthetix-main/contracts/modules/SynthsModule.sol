@@ -4,19 +4,12 @@ pragma solidity ^0.8.0;
 import "@synthetixio/core-contracts/contracts/proxy/Beacon.sol";
 import "@synthetixio/core-contracts/contracts/ownership/OwnableMixin.sol";
 import "@synthetixio/core-contracts/contracts/proxy/BeaconProxy.sol";
+import "../interfaces/ISynthsModule.sol";
 import "../interfaces/ISynth.sol";
 import "../storage/SynthsStorage.sol";
 
-contract SynthsModule is OwnableMixin, SynthsStorage {
-    error BeaconAlreadyCreated();
-    error BeaconNotCreated();
-    error ImplementationNotSet();
-    error SynthAlreadyCreated();
-
-    event BeaconCreated(address beacon);
-    event SynthCreated(bytes32 synth, address synthAddress);
-
-    function createBeacon() external onlyOwner {
+contract SynthsModule is ISynthsModule, OwnableMixin, SynthsStorage {
+    function createBeacon() external override onlyOwner {
         SynthsStore storage store = _synthsStore();
         if (store.beacon != address(0)) {
             revert BeaconAlreadyCreated();
@@ -31,7 +24,7 @@ contract SynthsModule is OwnableMixin, SynthsStorage {
         string memory synthName,
         string memory synthSymbol,
         uint8 synthDecimals
-    ) external onlyOwner {
+    ) external override onlyOwner {
         if (_synthsStore().synths[synth] != address(0x0)) {
             revert SynthAlreadyCreated();
         }
@@ -52,7 +45,7 @@ contract SynthsModule is OwnableMixin, SynthsStorage {
         ISynth(synthAddress).initialize(synthName, synthSymbol, synthDecimals);
     }
 
-    function upgradeSynthImplementation(address newSynthsImplementation) external onlyOwner {
+    function upgradeSynthImplementation(address newSynthsImplementation) external override onlyOwner {
         address beaconAddress = _synthsStore().beacon;
         if (beaconAddress == address(0)) {
             revert BeaconNotCreated();
@@ -60,15 +53,15 @@ contract SynthsModule is OwnableMixin, SynthsStorage {
         Beacon(beaconAddress).upgradeTo(newSynthsImplementation);
     }
 
-    function getBeacon() external view returns (address) {
+    function getBeacon() external override view returns (address) {
         return _synthsStore().beacon;
     }
 
-    function getSynthImplementation() external view returns (address) {
+    function getSynthImplementation() external override view returns (address) {
         return Beacon(_synthsStore().beacon).getImplementation();
     }
 
-    function getSynth(bytes32 synth) external view returns (address) {
+    function getSynth(bytes32 synth) external override view returns (address) {
         return _synthsStore().synths[synth];
     }
 }
