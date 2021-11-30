@@ -7,14 +7,12 @@ const { SUBTASK_PICK_CONTRACT } = require('../task-names');
 
 subtask(SUBTASK_PICK_CONTRACT, 'Pick contract to interact with').setAction(
   async (taskArguments, hre) => {
-    logger.info('Pick a contract:');
-
     const deploymentData = JSON.parse(fs.readFileSync(hre.deployer.paths.deployment));
     const contracts = Object.keys(deploymentData.contracts);
 
     _prioritizeTarget(contracts, 'Synthetix');
 
-    await _prompt(contracts);
+    hre.cli.contract = await _prompt(contracts);
   }
 );
 
@@ -24,17 +22,19 @@ function _prioritizeTarget(contracts, itemName) {
 }
 
 async function _prompt(contracts) {
-  // Set up inquirer
+  // Set up inquirer with autocomplete plugin i.e. as you type filtering
   inquirer.registerPrompt('autocomplete', autocomplete);
 
-  await inquirer.prompt([
+  const { contract } = await inquirer.prompt([
     {
       type: 'autocomplete',
-      name: 'contractName',
+      name: 'contract',
       message: 'Pick a CONTRACT:',
       source: (matches, query) => _searchContracts(contracts, matches, query),
     },
   ]);
+
+  return contract;
 }
 async function _searchContracts(contracts, matches, query = '') {
   return new Promise((resolve) => {
