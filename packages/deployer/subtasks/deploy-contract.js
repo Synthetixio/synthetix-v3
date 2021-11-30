@@ -20,7 +20,7 @@ subtask(
   }
 
   if (requireConfirmation) {
-    const confirmed = await prompter.ask('Are you sure you want to make these changes?');
+    const confirmed = await prompter.ask(`Are you sure you want to deploy ${contractName}?`);
 
     if (!confirmed) {
       return false;

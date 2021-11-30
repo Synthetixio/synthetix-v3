@@ -21,7 +21,7 @@ subtask(
   for (const contractName of [...toUpdate, ...toCreate]) {
     await hre.run(SUBTASK_DEPLOY_CONTRACT, {
       contractName,
-      requireConfirmation: false,
+      requireConfirmation: true, // This could be set to false. For now, double confirmation seems kinda nice.
     });
   }
 
