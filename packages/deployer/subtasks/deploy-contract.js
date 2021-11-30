@@ -3,6 +3,7 @@ const { isAlreadyDeployed } = require('../internal/contract-helper');
 const { processTransaction } = require('../internal/process-transactions');
 const { subtask } = require('hardhat/config');
 const { SUBTASK_DEPLOY_CONTRACT } = require('../task-names');
+const { getCommit } = require('@synthetixio/core-js/utils/git');
 
 subtask(
   SUBTASK_DEPLOY_CONTRACT,
@@ -24,6 +25,7 @@ subtask(
   contractData.deployedAddress = contract.address;
   contractData.deployTransaction = transaction.hash;
   contractData.deploymentBlock = await hre.ethers.provider.getBlockNumber();
+  contractData.deploymentCommit = getCommit();
 
   return true;
 });
