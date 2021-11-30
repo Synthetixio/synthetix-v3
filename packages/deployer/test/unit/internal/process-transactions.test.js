@@ -1,6 +1,7 @@
 const { equal, deepStrictEqual } = require('assert/strict');
 const { processTransaction } = require('../../../internal/process-transactions');
 const { loadEnvironment } = require('../../helpers/use-environment');
+const logger = require('@synthetixio/core-js/utils/logger');
 
 describe('internal/process-transactions.js', function () {
   let signer;
@@ -9,6 +10,8 @@ describe('internal/process-transactions.js', function () {
   let receipt;
 
   let hre;
+
+  logger.quiet = true;
 
   beforeEach('set fixture project', function () {
     hre = loadEnvironment('custom-proxy');

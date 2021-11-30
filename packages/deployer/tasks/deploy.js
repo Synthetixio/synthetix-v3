@@ -8,7 +8,8 @@ const {
   SUBTASK_DEPLOY_ROUTER,
   SUBTASK_FINALIZE_DEPLOYMENT,
   SUBTASK_GENERATE_ROUTER_SOURCE,
-  SUBTASK_PREPARE_DEPLOYMENT,
+  SUBTASK_CREATE_DEPLOYMENT,
+  SUBTASK_LOAD_DEPLOYMENT,
   SUBTASK_PRINT_INFO,
   SUBTASK_SYNC_PROXY,
   SUBTASK_SYNC_SOURCES,
@@ -48,7 +49,8 @@ task(TASK_DEPLOY, 'Deploys all system modules')
         await hre.run(SUBTASK_CLEAR_DEPLOYMENTS, taskArguments);
       }
 
-      await hre.run(SUBTASK_PREPARE_DEPLOYMENT, taskArguments);
+      await hre.run(SUBTASK_CREATE_DEPLOYMENT, taskArguments);
+      await hre.run(SUBTASK_LOAD_DEPLOYMENT, taskArguments);
       await hre.run(SUBTASK_PRINT_INFO, taskArguments);
       await _compile(hre, quiet);
       await hre.run(SUBTASK_SYNC_SOURCES);
