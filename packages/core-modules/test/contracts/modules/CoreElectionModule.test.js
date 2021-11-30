@@ -1,4 +1,4 @@
-const { ok, notOk, equal, notEqual } = require('assert/strict');
+const { equal, notEqual } = require('assert/strict');
 const assertRevert = require('@synthetixio/core-js/utils/assert-revert');
 const { findEvent } = require('@synthetixio/core-js/utils/events');
 const { bootstrap } = require('@synthetixio/deployer/utils/tests');
@@ -100,10 +100,10 @@ describe('CoreElectionModule', () => {
   describe('when the user self nominates', () => {
     it('sets the value & unsets the value', async () => {
       await (await CoreElectionModule.selfNominate()).wait();
-      ok((await CoreElectionModule.getNominees()).includes(owner.address));
+      equal((await CoreElectionModule.getNominees()).includes(owner.address), true);
 
       await (await CoreElectionModule.selfUnnominate()).wait();
-      notOk((await CoreElectionModule.getNominees()).includes(owner.address));
+      equal((await CoreElectionModule.getNominees()).includes(owner.address), false);
     });
   });
 });
