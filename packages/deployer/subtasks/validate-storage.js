@@ -39,7 +39,9 @@ subtask(SUBTASK_VALIDATE_STORAGE).setAction(async (_, hre) => {
       errorsFound.map((err) => console.log(JSON.stringify(err, null, 2)));
     }
 
-    throw new ContractValidationError(`Invalid storage usage: ${errorsFound.map((err) => err.msg)}`);
+    throw new ContractValidationError(
+      `Invalid storage usage: ${errorsFound.map((err) => err.msg)}`
+    );
   }
 
   logger.checked('Storage layout is valid');
