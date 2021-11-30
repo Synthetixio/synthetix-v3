@@ -79,7 +79,7 @@ async function _upgradeProxy({ proxyAddress, routerAddress, hre }) {
 
     try {
       const transaction = await upgradeable.upgradeTo(routerAddress);
-      await processTransaction(transaction, hre);
+      await processTransaction({ transaction, hre, description: 'Proxy upgrade' });
 
       logger.success(`Main proxy upgraded to ${await upgradeable.getImplementation()}`);
     } catch (err) {

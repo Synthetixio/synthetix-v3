@@ -42,7 +42,7 @@ async function _createAndDeployContract(contractName, constructorArgs = []) {
   }
 
   const transaction = contract.deployTransaction;
-  await processTransaction(transaction, hre);
+  await processTransaction({ transaction, hre, description: `Deployment of ${contractName}` });
 
   return { contract, transaction };
 }

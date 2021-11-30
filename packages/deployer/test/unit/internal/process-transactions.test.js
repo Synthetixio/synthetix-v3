@@ -51,7 +51,7 @@ describe('internal/process-transactions.js', function () {
       };
 
       beforeEach('send a failing tx', async function () {
-        await processTransaction(failingTransaction, hre);
+        await processTransaction({ failingTransaction, hre, description: 'test' });
       });
 
       it('registers a transaction in the deployment data', async function () {
@@ -65,11 +65,13 @@ describe('internal/process-transactions.js', function () {
           to: '0x0000000000000000000000000000000000000000',
         });
 
-        receipt = await processTransaction(transaction, hre);
+        receipt = await processTransaction({ transaction, hre, description: 'test' });
       });
 
       it('registers a transaction in the deployment data', async function () {
-        equal(hre.deployer.deployment.general.transactions[transaction.hash].status, 'confirmed');
+        const transaction = hre.deployer.deployment.general.transactions[transaction.hash];
+        equal(transaction.status, 'confirmed');
+        equal(transaction.description, 'test');
       });
 
       it('returns a valid receipt', async function () {
