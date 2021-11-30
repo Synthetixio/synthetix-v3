@@ -6,7 +6,7 @@ import "../utils/AddressUtil.sol";
 import "../common/CommonErrors.sol";
 import "./ProxyStorage.sol";
 
-abstract contract UUPSImplementation is IUUPSImplementation, ProxyStorage, ContractUtil, CommonErrors {
+abstract contract UUPSImplementation is IUUPSImplementation, ProxyStorage, CommonErrors {
     function _upgradeTo(address newImplementation) internal virtual {
         if (newImplementation == address(0)) {
             revert InvalidAddress(newImplementation);
