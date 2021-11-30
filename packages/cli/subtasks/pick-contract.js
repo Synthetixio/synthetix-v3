@@ -6,8 +6,7 @@ const { SUBTASK_PICK_CONTRACT } = require('../task-names');
 
 subtask(SUBTASK_PICK_CONTRACT, 'Pick contract to interact with').setAction(
   async (taskArguments, hre) => {
-    const deploymentData = JSON.parse(fs.readFileSync(hre.deployer.paths.deployment));
-    const contracts = Object.keys(deploymentData.contracts);
+    const contracts = Object.keys(hre.deployer.deployment.general.contracts);
 
     _prioritizeTarget(contracts, 'Synthetix');
 
