@@ -5,9 +5,9 @@ import "./AbstractProxy.sol";
 import "./BeaconStorage.sol";
 import "../common/CommonErrors.sol";
 import "../interfaces/IBeacon.sol";
-import "../utils/ContractUtil.sol";
+import "../utils/AddressUtil.sol";
 
-contract BeaconProxy is AbstractProxy, BeaconStorage, CommonErrors, ContractUtil {
+contract BeaconProxy is AbstractProxy, BeaconStorage, CommonErrors {
     event BeaconSet(address beacon);
 
     constructor(address firstBeacon) {
@@ -23,7 +23,7 @@ contract BeaconProxy is AbstractProxy, BeaconStorage, CommonErrors, ContractUtil
             revert InvalidAddress(newBeacon);
         }
 
-        if (!_isContract(newBeacon)) {
+        if (!AddressUtil.isContract(newBeacon)) {
             revert InvalidContract(newBeacon);
         }
 

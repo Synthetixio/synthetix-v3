@@ -5,10 +5,11 @@ import "../interfaces/IERC721.sol";
 import "../interfaces/IERC721Metadata.sol";
 import "../interfaces/IERC721Receiver.sol";
 import "./ERC721Storage.sol";
-import "../utils/ContractUtil.sol";
+import "../utils/AddressUtil.sol";
+import "../utils/StringUtil.sol";
 import "../common/CommonErrors.sol";
 
-contract ERC721 is IERC721, IERC721Metadata, ERC721Storage, ContractUtil, CommonErrors {
+contract ERC721 is IERC721, IERC721Metadata, ERC721Storage, CommonErrors {
     error CannotApproveToHolder(address);
     error CannotApproveToCaller(address);
     error InvalidFrom(address);
@@ -69,7 +70,7 @@ contract ERC721 is IERC721, IERC721Metadata, ERC721Storage, ContractUtil, Common
         }
 
         string memory baseURI = _erc721Store().baseTokenURI;
-        return bytes(baseURI).length > 0 ? string(abi.encodePacked(baseURI, _toString(tokenId))) : "";
+        return bytes(baseURI).length > 0 ? string(abi.encodePacked(baseURI, StringUtil.uintToString(tokenId))) : "";
     }
 
     function approve(address to, uint256 tokenId) public virtual override {
@@ -220,7 +221,7 @@ contract ERC721 is IERC721, IERC721Metadata, ERC721Storage, ContractUtil, Common
         uint256 tokenId,
         bytes memory data
     ) private returns (bool) {
-        if (_isContract(to)) {
+        if (AddressUtil.isContract(to)) {
             try IERC721Receiver(to).onERC721Received(msg.sender, from, tokenId, data) returns (bytes4 retval) {
                 return retval == IERC721Receiver.onERC721Received.selector;
             } catch (bytes memory reason) {

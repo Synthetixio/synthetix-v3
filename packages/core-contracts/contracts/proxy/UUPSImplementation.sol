@@ -1,11 +1,11 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "../utils/ContractUtil.sol";
+import "../utils/AddressUtil.sol";
 import "../common/CommonErrors.sol";
 import "./ProxyStorage.sol";
 
-abstract contract UUPSImplementation is ProxyStorage, ContractUtil, CommonErrors {
+abstract contract UUPSImplementation is ProxyStorage, CommonErrors {
     error SterileImplementation(address implementation);
     error SimulatedUpgradeFailed();
 
@@ -18,7 +18,7 @@ abstract contract UUPSImplementation is ProxyStorage, ContractUtil, CommonErrors
             revert InvalidAddress(newImplementation);
         }
 
-        if (!_isContract(newImplementation)) {
+        if (!AddressUtil.isContract(newImplementation)) {
             revert InvalidContract(newImplementation);
         }
 

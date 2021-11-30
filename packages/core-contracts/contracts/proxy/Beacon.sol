@@ -4,9 +4,9 @@ pragma solidity ^0.8.0;
 import "./BeaconStorage.sol";
 import "../common/CommonErrors.sol";
 import "../ownership/OwnableMixin.sol";
-import "../utils/ContractUtil.sol";
+import "../utils/AddressUtil.sol";
 
-contract Beacon is OwnableMixin, BeaconStorage, ContractUtil, CommonErrors {
+contract Beacon is OwnableMixin, BeaconStorage, CommonErrors {
     event Upgraded(address implementation);
 
     constructor(address firstOwner) {
@@ -18,7 +18,7 @@ contract Beacon is OwnableMixin, BeaconStorage, ContractUtil, CommonErrors {
             revert InvalidAddress(newImplementation);
         }
 
-        if (!_isContract(newImplementation)) {
+        if (!AddressUtil.isContract(newImplementation)) {
             revert InvalidContract(newImplementation);
         }
 
