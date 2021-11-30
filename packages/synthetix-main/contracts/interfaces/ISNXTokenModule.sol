@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-interface SNXTokenModule {
+interface ISNXTokenModule {
     error SNXAlreadyCreated();
 
     event SNXTokenCreated(address snxAddress);
