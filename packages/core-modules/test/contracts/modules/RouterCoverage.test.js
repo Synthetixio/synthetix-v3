@@ -27,7 +27,7 @@ describe('RouterCoverage', () => {
       WrongModuleMock = await factory.deploy();
     });
 
-    it('reads the right valie', async () => {
+    it('reads the right value', async () => {
       assertBn.eq(await WrongModuleMock.getFortyTwo(), 42);
     });
   });

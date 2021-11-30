@@ -39,7 +39,7 @@ contract CoreElectionModule is IElectionModule, ElectionStorage, OwnableMixin {
         return _electionStore().memberTokenAddress;
     }
 
-    function getNominees() public view returns (address[] memory) {
+    function getNominees() external view returns (address[] memory) {
         return EnumerableSet.values(_electionStore().nominees);
     }
 
