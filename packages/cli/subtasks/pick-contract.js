@@ -2,7 +2,6 @@ const fs = require('fs');
 const { subtask } = require('hardhat/config');
 const inquirer = require('inquirer');
 const autocomplete = require('inquirer-list-search-prompt');
-const logger = require('@synthetixio/core-js/utils/logger');
 const { SUBTASK_PICK_CONTRACT } = require('../task-names');
 
 subtask(SUBTASK_PICK_CONTRACT, 'Pick contract to interact with').setAction(

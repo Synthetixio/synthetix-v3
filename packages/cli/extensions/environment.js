@@ -1,4 +1,3 @@
-const path = require('path');
 const { extendEnvironment } = require('hardhat/config');
 
 extendEnvironment((hre) => {
