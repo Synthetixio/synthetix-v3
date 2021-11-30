@@ -1,4 +1,5 @@
 const logger = require('@synthetixio/core-js/utils/logger');
+const prompter = require('@synthetixio/core-js/utils/prompter');
 const { isAlreadyDeployed } = require('../internal/contract-helper');
 const { processTransaction } = require('../internal/process-transactions');
 const { subtask } = require('hardhat/config');
@@ -7,7 +8,7 @@ const { SUBTASK_DEPLOY_CONTRACT } = require('../task-names');
 subtask(
   SUBTASK_DEPLOY_CONTRACT,
   'Deploys the given contract and update the contractData object.'
-).setAction(async ({ contractName, constructorArgs = [] }) => {
+).setAction(async ({ contractName, constructorArgs = [], requireConfirmation = true  }) => {
   const contractData = hre.deployer.deployment.general.contracts[contractName];
 
   if (!contractData) {
@@ -16,6 +17,14 @@ subtask(
 
   if (await isAlreadyDeployed(contractName, contractData)) {
     return false;
+  }
+
+  if (requireConfirmation) {
+    const confirmed = await prompter.ask('Are you sure you want to make these changes?');
+
+    if (!confirmed) {
+      return false;
+    }
   }
 
   // Create contract & start the transaction on the network
