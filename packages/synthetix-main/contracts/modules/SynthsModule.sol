@@ -53,15 +53,15 @@ contract SynthsModule is ISynthsModule, OwnableMixin, SynthsStorage {
         Beacon(beaconAddress).upgradeTo(newSynthsImplementation);
     }
 
-    function getBeacon() external override view returns (address) {
+    function getBeacon() external view override returns (address) {
         return _synthsStore().beacon;
     }
 
-    function getSynthImplementation() external override view returns (address) {
+    function getSynthImplementation() external view override returns (address) {
         return Beacon(_synthsStore().beacon).getImplementation();
     }
 
-    function getSynth(bytes32 synth) external override view returns (address) {
+    function getSynth(bytes32 synth) external view override returns (address) {
         return _synthsStore().synths[synth];
     }
 }

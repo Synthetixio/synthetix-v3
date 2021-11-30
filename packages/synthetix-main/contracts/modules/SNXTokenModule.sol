@@ -35,7 +35,7 @@ contract SNXTokenModule is ISNXTokenModule, OwnableMixin, SNXTokenStorage {
         SNXToken(getSNXTokenAddress()).upgradeTo(newSNXTokenImplementation);
     }
 
-    function getSNXTokenAddress() public override view returns (address) {
+    function getSNXTokenAddress() public view override returns (address) {
         return _snxTokenStore().snxTokenAddress;
     }
 }

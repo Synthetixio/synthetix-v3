@@ -59,7 +59,7 @@ abstract contract UUPSImplementation is IUUPSImplementation, ProxyStorage, Contr
         revert();
     }
 
-    function getImplementation() external override view returns (address) {
+    function getImplementation() external view override returns (address) {
         return _proxyStore().implementation;
     }
 }

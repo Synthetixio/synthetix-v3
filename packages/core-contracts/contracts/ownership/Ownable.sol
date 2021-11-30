@@ -45,11 +45,11 @@ contract Ownable is IOwnable, OwnableMixin, CommonErrors {
         store.nominatedOwner = address(0);
     }
 
-    function owner() external override view returns (address) {
+    function owner() external view override returns (address) {
         return _ownableStore().owner;
     }
 
-    function nominatedOwner() external override view returns (address) {
+    function nominatedOwner() external view override returns (address) {
         return _ownableStore().nominatedOwner;
     }
 }

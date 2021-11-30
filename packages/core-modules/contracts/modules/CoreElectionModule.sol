@@ -34,7 +34,7 @@ contract CoreElectionModule is IElectionModule, ElectionStorage, OwnableMixin {
         MemberToken(getMemberTokenAddress()).upgradeTo(newMemberTokenImplementation);
     }
 
-    function getMemberTokenAddress() public override view returns (address) {
+    function getMemberTokenAddress() public view override returns (address) {
         return _electionStore().memberTokenAddress;
     }
 }
