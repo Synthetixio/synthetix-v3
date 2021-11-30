@@ -19,6 +19,6 @@ task(TASK_INTERACT, 'Interacts with a given modular system deployment')
 
     logger.debugging = debug;
 
-    await hre.run(SUBTASK_LOAD_DEPLOYMENT, taskArguments);
+    await hre.run(SUBTASK_LOAD_DEPLOYMENT, { ...taskArguments, readOnly: true });
     await hre.run(SUBTASK_PRINT_INFO, taskArguments);
   });
