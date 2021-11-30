@@ -3,15 +3,12 @@ pragma solidity ^0.8.0;
 
 import "@synthetixio/core-contracts/contracts/ownership/OwnableMixin.sol";
 import "@synthetixio/core-contracts/contracts/proxy/UUPSProxy.sol";
+import "../interfaces/IElectionModule.sol";
 import "../token/MemberToken.sol";
 import "../storage/ElectionStorage.sol";
 
-contract CoreElectionModule is ElectionStorage, OwnableMixin {
-    error MemberTokenAlreadyCreated();
-
-    event MemberTokenCreated(address memberTokenAddress);
-
-    function createMemberToken(string memory tokenName, string memory tokenSymbol) public onlyOwner {
+contract CoreElectionModule is IElectionModule, ElectionStorage, OwnableMixin {
+    function createMemberToken(string memory tokenName, string memory tokenSymbol) external override onlyOwner {
         ElectionStore storage store = _electionStore();
 
         if (store.memberTokenAddress != address(0)) {
@@ -33,11 +30,11 @@ contract CoreElectionModule is ElectionStorage, OwnableMixin {
         emit MemberTokenCreated(memberTokenProxyAddress);
     }
 
-    function upgradeMemberTokenImplementation(address newMemberTokenImplementation) public onlyOwner {
+    function upgradeMemberTokenImplementation(address newMemberTokenImplementation) external override onlyOwner {
         MemberToken(getMemberTokenAddress()).upgradeTo(newMemberTokenImplementation);
     }
 
-    function getMemberTokenAddress() public view returns (address) {
+    function getMemberTokenAddress() public override view returns (address) {
         return _electionStore().memberTokenAddress;
     }
 }
