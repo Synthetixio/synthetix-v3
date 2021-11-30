@@ -10,7 +10,9 @@ async function processTransaction(transaction, hre) {
   const { gasUsed } = receipt;
   const status = receipt.status === 1 ? 'confirmed' : 'failed';
 
-  hre.deployer.deployment.general.transactions[transaction.hash].status = status;
+  const tx = hre.deployer.deployment.general.transactions[transaction.hash];
+  tx.status = status;
+  tx.deploymentBlock = await hre.ethers.provider.getBlockNumber();
 
   const totalGasUsed = hre.ethers.BigNumber.from(
     hre.deployer.deployment.general.properties.totalGasUsed

@@ -23,6 +23,7 @@ subtask(
 
   contractData.deployedAddress = contract.address;
   contractData.deployTransaction = transaction.hash;
+  contractData.deploymentBlock = await hre.ethers.provider.getBlockNumber();
 
   return true;
 });
