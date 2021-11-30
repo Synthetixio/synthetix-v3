@@ -1,18 +1,12 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import "../interfaces/IUUPSImplementation.sol";
 import "../utils/AddressUtil.sol";
 import "../common/CommonErrors.sol";
 import "./ProxyStorage.sol";
 
-abstract contract UUPSImplementation is ProxyStorage, CommonErrors {
-    error SterileImplementation(address implementation);
-    error SimulatedUpgradeFailed();
-
-    event Upgraded(address implementation);
-
-    function upgradeTo(address newImplementation) public virtual;
-
+abstract contract UUPSImplementation is IUUPSImplementation, ProxyStorage, ContractUtil, CommonErrors {
     function _upgradeTo(address newImplementation) internal virtual {
         if (newImplementation == address(0)) {
             revert InvalidAddress(newImplementation);
@@ -43,7 +37,7 @@ abstract contract UUPSImplementation is ProxyStorage, CommonErrors {
             keccak256(abi.encodePacked(simulationResponse)) == keccak256(abi.encodePacked(SimulatedUpgradeFailed.selector));
     }
 
-    function simulateUpgradeTo(address newImplementation) public {
+    function simulateUpgradeTo(address newImplementation) public override {
         ProxyStore storage store = _proxyStore();
 
         store.simulatingUpgrade = true;
@@ -65,7 +59,7 @@ abstract contract UUPSImplementation is ProxyStorage, CommonErrors {
         revert();
     }
 
-    function getImplementation() external view returns (address) {
+    function getImplementation() external view override returns (address) {
         return _proxyStore().implementation;
     }
 }
