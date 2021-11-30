@@ -1,6 +1,7 @@
 const { subtask } = require('hardhat/config');
 const mapValues = require('just-map-values');
 const logger = require('@synthetixio/core-js/utils/logger');
+const prompter = require('@synthetixio/core-js/utils/prompter');
 const ModuleStorageASTValidator = require('../internal/storage-ast-validator');
 const { ContractValidationError } = require('../internal/errors');
 const { SUBTASK_VALIDATE_STORAGE } = require('../task-names');
@@ -17,16 +18,30 @@ subtask(SUBTASK_VALIDATE_STORAGE).setAction(async (_, hre) => {
 
   let errorsFound = [];
   errorsFound.push(...validator.findNamespaceCollisions());
-  errorsFound.push(...validator.findNamespaceSlotChanges());
   errorsFound.push(...validator.findRegularVariableDeclarations());
   errorsFound.push(...(await validator.findInvalidNamespaceMutations()));
+
+  let warningsFound = [];
+  warningsFound.push(...validator.findNamespaceSlotChanges());
+
+  if (warningsFound.length > 0) {
+    for (let warning of warningsFound) {
+      await prompter.ask(`Warning: ${warning.msg}. Do you wish to continue anyway?`);
+    }
+  }
 
   if (errorsFound.length > 0) {
     errorsFound.forEach((error) => {
       logger.error(error.msg);
     });
 
-    throw new ContractValidationError('Invalid storage usage');
+    if (logger.debug) {
+      errorsFound.map((err) => console.log(JSON.stringify(err, null, 2)));
+    }
+
+    throw new ContractValidationError(
+      `Invalid storage usage: ${errorsFound.map((err) => err.msg)}`
+    );
   }
 
   logger.checked('Storage layout is valid');

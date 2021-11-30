@@ -83,13 +83,13 @@ class ModuleStorageASTValidator {
       const current = namespaces.find((v) => v.contractName === previous.contractName);
       if (!current) {
         errors.push({
-          msg: `Removed namespaces slot! ${previous.contractName} slot ${previous.slot} not found`,
+          msg: `Storage namespace removed! ${previous.contractName} slot ${previous.slot} not found`,
         });
         continue;
       }
       if (current.slot !== previous.slot) {
         errors.push({
-          msg: `Changed namespaces slot! ${previous.contractName} slot ${previous.slot} changed to ${current.slot}`,
+          msg: `Storage namespace hash changed! ${previous.contractName} slot ${previous.slot} changed to ${current.slot}`,
         });
       }
     }
@@ -139,15 +139,17 @@ class ModuleStorageASTValidator {
     const previousStructsMap = await buildContractsStructMap(this.previousAsts);
     const currentStructsMap = await buildContractsStructMap(this.asts);
 
-    const { modifications, removals } = compareStorageStructs({
+    let { modifications, removals } = compareStorageStructs({
       previousStructsMap,
       currentStructsMap,
     });
 
+    removals = removals.filter((removal) => removal.completeStruct === false);
+
     modifications.forEach((m) => {
       if (!errors.some((e) => e.contract === m.contract && e.struct === m.struct)) {
         errors.push({
-          msg: `Invalid mutation found in namespace ${m.contract}.${m.struct}`,
+          msg: `Invalid modification mutation found in namespace ${m.contract}.${m.struct}`,
           contract: m.contract,
           struct: m.struct,
         });
@@ -157,7 +159,7 @@ class ModuleStorageASTValidator {
     removals.forEach((m) => {
       if (!errors.some((e) => e.contract === m.contract && e.struct === m.struct)) {
         errors.push({
-          msg: `Invalid mutation found in namespace ${m.contract}.${m.struct}`,
+          msg: `Invalid removal mutation found in namespace ${m.contract}.${m.struct}`,
           contract: m.contract,
           struct: m.struct,
         });
