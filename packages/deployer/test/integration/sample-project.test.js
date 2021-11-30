@@ -44,19 +44,21 @@ describe('sample-project', function () {
 
     const SomeModuleOriginal = await readFile(path.join(MODULES, 'SomeModule.sol'));
     const AnotherModuleOriginal = await readFile(path.join(MODULES, 'AnotherModule.sol'));
+    const SettingsModuleOriginal = await readFile(path.join(MODULES, 'SettingsModule.sol'));
 
     try {
       // Make some file changes before deploying
       await Promise.all([
         // Create new module
         copyFile(path.join(CONTRACTS, 'NewModule.sol'), path.join(MODULES, 'NewModule.sol')),
-        // Modify a existing module
+        // Modify existing modules
         copyFile(
           path.join(CONTRACTS, 'SomeModule.modified.sol'),
           path.join(MODULES, 'SomeModule.sol')
         ),
-        // Delete a existing module
+        // Delete existing modules
         unlink(path.join(MODULES, 'AnotherModule.sol')),
+        unlink(path.join(MODULES, 'SettingsModule.sol')),
       ]);
 
       await deployOnEnvironment(hre, {
@@ -68,6 +70,7 @@ describe('sample-project', function () {
         unlink(path.join(MODULES, 'NewModule.sol')),
         writeFile(path.join(MODULES, 'SomeModule.sol'), SomeModuleOriginal),
         writeFile(path.join(MODULES, 'AnotherModule.sol'), AnotherModuleOriginal),
+        writeFile(path.join(MODULES, 'SettingsModule.sol'), SettingsModuleOriginal),
       ]);
     }
   });
