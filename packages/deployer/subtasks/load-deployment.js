@@ -35,8 +35,8 @@ subtask(SUBTASK_LOAD_DEPLOYMENT, 'Loads deployment artifacts for a particular in
       general: readOnly
         ? JSON.parse(fs.readFileSync(currentDeploymentFile))
         : autosaveObject(currentDeploymentFile),
-      sources: readOnly ? sources : autosaveObject(sources, {}),
-      abis: readOnly ? abis : autosaveObject(abis, {}),
+      sources: readOnly ? JSON.parse(fs.readFileSync(sources)) : autosaveObject(sources, {}),
+      abis: readOnly ? JSON.parse(fs.readFileSync(abis)) : autosaveObject(abis, {}),
     };
 
     if (previousDeploymentFile) {

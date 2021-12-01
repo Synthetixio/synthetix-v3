@@ -7,7 +7,7 @@ subtask(SUBTASK_PICK_CONTRACT, 'Pick contract to interact with').setAction(
   async (taskArguments, hre) => {
     const contracts = Object.keys(hre.deployer.deployment.general.contracts);
 
-    _prioritizeTarget(contracts, 'Synthetix');
+    _prioritizeTarget(contracts, 'SNXTokenModule');
 
     hre.cli.contract = await _prompt(contracts);
   }
