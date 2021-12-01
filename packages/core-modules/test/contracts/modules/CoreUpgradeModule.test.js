@@ -22,7 +22,7 @@ describe('CoreUpgradeModule', () => {
     it('reverts', async () => {
       await assertRevert(
         CoreUpgradeModule.connect(user).upgradeTo(user.address),
-        'OnlyOwnerAllowed()'
+        'Unauthorized()'
       );
     });
   });

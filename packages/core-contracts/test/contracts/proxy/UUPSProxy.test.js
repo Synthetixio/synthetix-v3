@@ -76,14 +76,14 @@ describe('UUPSProxy', () => {
 
     describe('when trying to upgrade to an EOA', () => {
       it('reverts', async () => {
-        await assertRevert(Instance.upgradeTo(user.address), `InvalidContract("${user.address}")`);
+        await assertRevert(Instance.upgradeTo(user.address), `NotAContract("${user.address}")`);
       });
     });
 
     describe('when trying to upgrade to the zero address', () => {
       it('reverts', async () => {
         const zeroAddress = '0x0000000000000000000000000000000000000000';
-        await assertRevert(Instance.upgradeTo(zeroAddress), `InvalidAddress("${zeroAddress}")`);
+        await assertRevert(Instance.upgradeTo(zeroAddress), `ZeroAddress`);
       });
     });
 
@@ -171,7 +171,7 @@ describe('UUPSProxy', () => {
         });
 
         it('reverts', async () => {
-          await assertRevert(Implementation.upgradeTo(Destroyer.address), 'SterileImplementation');
+          await assertRevert(Implementation.upgradeTo(Destroyer.address), 'ImplementationIsSterile');
         });
       });
 
@@ -182,7 +182,7 @@ describe('UUPSProxy', () => {
         });
 
         it('reverts', async () => {
-          await assertRevert(Instance.upgradeTo(Implementation.address), 'SterileImplementation');
+          await assertRevert(Instance.upgradeTo(Implementation.address), 'ImplementationIsSterile');
         });
       });
     });

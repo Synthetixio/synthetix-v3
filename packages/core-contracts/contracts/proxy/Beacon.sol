@@ -16,7 +16,7 @@ contract Beacon is IBeacon, OwnableMixin, BeaconStorage, ContractUtil {
 
     function upgradeTo(address newImplementation) external override onlyOwner {
         if (newImplementation == address(0)) {
-            revert AddressError.ZeroAddress(newImplementation);
+            revert AddressError.ZeroAddress();
         }
 
         if (!_isContract(newImplementation)) {

@@ -4,6 +4,7 @@ pragma solidity ^0.8.0;
 import "./OwnableMixin.sol";
 import "../interfaces/IOwnable.sol";
 import "../errors/AddressError.sol";
+import "../errors/ChangeError.sol";
 
 contract Ownable is IOwnable, OwnableMixin {
     function acceptOwnership() external override {
@@ -24,22 +25,22 @@ contract Ownable is IOwnable, OwnableMixin {
         OwnableStore storage store = _ownableStore();
 
         if (newNominatedOwner == address(0)) {
-            revert AddressError.ZeroAddress(newNominatedOwner);
+            revert AddressError.ZeroAddress();
         }
 
         if (newNominatedOwner == store.nominatedOwner) {
-            revert InvalidNomination(newNominatedOwner);
+            revert ChangeError.NoChange();
         }
 
         store.nominatedOwner = newNominatedOwner;
         emit OwnerNominated(newNominatedOwner);
     }
 
-    function renounceNomination() external override onlyOwner {
+    function renounceNomination() external override {
         OwnableStore storage store = _ownableStore();
 
-        if (store.nominatedOwner == address(0)) {
-            revert NoNomination();
+        if (store.nominatedOwner != msg.sender) {
+            revert NotNominated(msg.sender);
         }
 
         store.nominatedOwner = address(0);

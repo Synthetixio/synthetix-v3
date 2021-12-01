@@ -2,8 +2,8 @@
 pragma solidity ^0.8.0;
 
 interface IUUPSImplementation {
-    error SterileImplementation(address implementation);
-    error SimulatedUpgradeFailed();
+    error ImplementationIsSterile(address implementation);
+    error UpgradeSimulationFailed();
 
     event Upgraded(address implementation);
 

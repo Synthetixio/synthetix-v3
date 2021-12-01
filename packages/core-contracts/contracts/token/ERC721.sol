@@ -4,20 +4,17 @@ pragma solidity ^0.8.0;
 import "../interfaces/IERC721.sol";
 import "../interfaces/IERC721Metadata.sol";
 import "../interfaces/IERC721Receiver.sol";
+import "../errors/AddressError.sol";
+import "../errors/AccessError.sol";
+import "../errors/InitError.sol";
 import "./ERC721Storage.sol";
 import "../utils/ContractUtil.sol";
-import "../errors/AddressError.sol";
 
 contract ERC721 is IERC721, IERC721Metadata, ERC721Storage, ContractUtil {
-    error CannotApproveToHolder(address);
-    error CannotApproveToCaller(address);
-    error InvalidFrom(address);
-    error InvalidTo(address);
+    error CannotSelfApprove(address);
     error InvalidTransferRecipient(address);
     error TokenDoesNotExist(uint256);
     error TokenAlreadyMinted(uint256);
-    error Unauthorized(address);
-    error AlreadyInitialized();
 
     function _initialize(
         string memory tokenName,
@@ -26,7 +23,7 @@ contract ERC721 is IERC721, IERC721Metadata, ERC721Storage, ContractUtil {
     ) internal virtual {
         ERC721Store storage store = _erc721Store();
         if (bytes(store.name).length > 0 || bytes(store.symbol).length > 0 || bytes(store.baseTokenURI).length > 0) {
-            revert AlreadyInitialized();
+            revert InitError.AlreadyInitialized();
         }
 
         store.name = tokenName;
@@ -43,7 +40,7 @@ contract ERC721 is IERC721, IERC721Metadata, ERC721Storage, ContractUtil {
 
     function balanceOf(address holder) public view virtual override returns (uint) {
         if (holder == address(0)) {
-            revert AddressError.ZeroAddress(holder);
+            revert AddressError.ZeroAddress();
         }
 
         return _erc721Store().balanceOf[holder];
@@ -80,11 +77,11 @@ contract ERC721 is IERC721, IERC721Metadata, ERC721Storage, ContractUtil {
         address holder = store.ownerOf[tokenId];
 
         if (to == holder) {
-            revert CannotApproveToHolder(to);
+            revert CannotSelfApprove(to);
         }
 
         if (msg.sender != holder && !isApprovedForAll(holder, msg.sender)) {
-            revert Unauthorized(msg.sender);
+            revert AccessError.Unauthorized(msg.sender);
         }
 
         _approve(to, tokenId);
@@ -100,7 +97,7 @@ contract ERC721 is IERC721, IERC721Metadata, ERC721Storage, ContractUtil {
 
     function setApprovalForAll(address operator, bool approved) public virtual override {
         if (msg.sender == operator) {
-            revert CannotApproveToCaller(operator);
+            revert CannotSelfApprove(operator);
         }
 
         _erc721Store().operatorApprovals[msg.sender][operator] = approved;
@@ -118,7 +115,7 @@ contract ERC721 is IERC721, IERC721Metadata, ERC721Storage, ContractUtil {
         uint256 tokenId
     ) public virtual override {
         if (!_isApprovedOrOwner(msg.sender, tokenId)) {
-            revert Unauthorized(msg.sender);
+            revert AccessError.Unauthorized(msg.sender);
         }
 
         _transfer(from, to, tokenId);
@@ -139,7 +136,7 @@ contract ERC721 is IERC721, IERC721Metadata, ERC721Storage, ContractUtil {
         bytes memory data
     ) public virtual override {
         if (!_isApprovedOrOwner(msg.sender, tokenId)) {
-            revert Unauthorized(msg.sender);
+            revert AccessError.Unauthorized(msg.sender);
         }
 
         _transfer(from, to, tokenId);
@@ -163,7 +160,7 @@ contract ERC721 is IERC721, IERC721Metadata, ERC721Storage, ContractUtil {
     function _mint(address to, uint256 tokenId) internal virtual {
         ERC721Store storage store = _erc721Store();
         if (to == address(0)) {
-            revert InvalidTo(to);
+            revert AddressError.ZeroAddress();
         }
 
         if (_exists(tokenId)) {
@@ -196,11 +193,11 @@ contract ERC721 is IERC721, IERC721Metadata, ERC721Storage, ContractUtil {
         ERC721Store storage store = _erc721Store();
 
         if (ownerOf(tokenId) != from) {
-            revert InvalidFrom(from);
+            revert AccessError.Unauthorized(from);
         }
 
         if (to == address(0)) {
-            revert InvalidTo(to);
+            revert AddressError.ZeroAddress();
         }
 
         // Clear approvals from the previous holder

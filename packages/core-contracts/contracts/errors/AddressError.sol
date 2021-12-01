@@ -2,6 +2,6 @@
 pragma solidity ^0.8.0;
 
 library AddressError {
-    error ZeroAddress(address addr);
+    error ZeroAddress();
     error NotAContract(address contr);
 }

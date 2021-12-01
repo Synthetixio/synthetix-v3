@@ -58,7 +58,7 @@ describe('ERC721', () => {
     it('reverts checking the balance of 0x0 address', async () => {
       await assertRevert(
         ERC721.balanceOf(ethers.constants.AddressZero),
-        'InvalidAddress("0x0000000000000000000000000000000000000000")'
+        'ZeroAddress'
       );
     });
   });
@@ -104,7 +104,7 @@ describe('ERC721', () => {
       it('reverts', async () => {
         await assertRevert(
           ERC721.connect(user1).mintTo(ethers.constants.AddressZero, 1337),
-          `InvalidTo("${ethers.constants.AddressZero}")`
+          `ZeroAddress`
         );
       });
     });
@@ -214,7 +214,7 @@ describe('ERC721', () => {
         it('reverts ', async () => {
           await assertRevert(
             ERC721.connect(user1).transferFrom(user2.address, user1.address, 42),
-            `InvalidFrom("${user2.address}")`
+            `Unauthorized("${user2.address}")`
           );
         });
       });
@@ -223,7 +223,7 @@ describe('ERC721', () => {
         it('reverts ', async () => {
           await assertRevert(
             ERC721.connect(user1).transferFrom(user1.address, ethers.constants.AddressZero, 42),
-            `InvalidTo("${ethers.constants.AddressZero}")`
+            `ZeroAddress`
           );
         });
       });
@@ -364,7 +364,7 @@ describe('ERC721', () => {
               user1.address,
               42
             ),
-            `InvalidFrom("${user2.address}")`
+            `Unauthorized("${user2.address}")`
           );
         });
       });
@@ -377,7 +377,7 @@ describe('ERC721', () => {
               ethers.constants.AddressZero,
               42
             ),
-            `InvalidTo("${ethers.constants.AddressZero}")`
+            `ZeroAddress`
           );
         });
       });
@@ -449,7 +449,7 @@ describe('ERC721', () => {
         it('reverts ', async () => {
           await assertRevert(
             ERC721.connect(user1).approve(user1.address, token42),
-            `CannotApproveToHolder("${user1.address}")`
+            `CannotSelfApprove("${user1.address}")`
           );
         });
       });
@@ -515,7 +515,7 @@ describe('ERC721', () => {
         it('reverts ', async () => {
           await assertRevert(
             ERC721.connect(user1).setApprovalForAll(user1.address, true),
-            `CannotApproveToCaller("${user1.address}")`
+            `CannotSelfApprove("${user1.address}")`
           );
         });
       });

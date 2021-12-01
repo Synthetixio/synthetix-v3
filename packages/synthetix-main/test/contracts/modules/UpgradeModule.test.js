@@ -20,7 +20,7 @@ describe('UpgradeModule', function () {
 
         await assertRevert(
           UpgradeModule.connect(user).upgradeTo(user.address),
-          'OnlyOwnerAllowed()'
+          'Unauthorized()'
         );
       });
     });

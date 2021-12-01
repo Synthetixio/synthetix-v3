@@ -28,7 +28,7 @@ describe('CoreOwnerModule', () => {
     it('reverts', async () => {
       await assertRevert(
         SampleOwnedModule.connect(user).setProtectedValue(42),
-        'OnlyOwnerAllowed()'
+        'Unauthorized()'
       );
     });
   });
