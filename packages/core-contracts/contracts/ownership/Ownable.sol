@@ -3,9 +3,8 @@ pragma solidity ^0.8.0;
 
 import "./OwnableMixin.sol";
 import "../interfaces/IOwnable.sol";
-import "../common/CommonErrors.sol";
 
-contract Ownable is IOwnable, OwnableMixin, CommonErrors {
+contract Ownable is IOwnable, OwnableMixin {
     function acceptOwnership() external override {
         OwnableStore storage store = _ownableStore();
 
@@ -24,7 +23,7 @@ contract Ownable is IOwnable, OwnableMixin, CommonErrors {
         OwnableStore storage store = _ownableStore();
 
         if (newNominatedOwner == address(0)) {
-            revert InvalidAddress(newNominatedOwner);
+            revert IAddressError.ZeroAddress(newNominatedOwner);
         }
 
         if (newNominatedOwner == store.nominatedOwner) {

@@ -6,9 +6,8 @@ import "../interfaces/IERC721Metadata.sol";
 import "../interfaces/IERC721Receiver.sol";
 import "./ERC721Storage.sol";
 import "../utils/ContractUtil.sol";
-import "../common/CommonErrors.sol";
 
-contract ERC721 is IERC721, IERC721Metadata, ERC721Storage, ContractUtil, CommonErrors {
+contract ERC721 is IERC721, IERC721Metadata, ERC721Storage, ContractUtil {
     error CannotApproveToHolder(address);
     error CannotApproveToCaller(address);
     error InvalidFrom(address);
@@ -43,8 +42,9 @@ contract ERC721 is IERC721, IERC721Metadata, ERC721Storage, ContractUtil, Common
 
     function balanceOf(address holder) public view virtual override returns (uint) {
         if (holder == address(0)) {
-            revert InvalidAddress(holder);
+            revert IAddressError.ZeroAddress(holder);
         }
+
         return _erc721Store().balanceOf[holder];
     }
 
@@ -52,6 +52,7 @@ contract ERC721 is IERC721, IERC721Metadata, ERC721Storage, ContractUtil, Common
         if (!_exists(tokenId)) {
             revert TokenDoesNotExist(tokenId);
         }
+
         return _erc721Store().ownerOf[tokenId];
     }
 
@@ -69,6 +70,7 @@ contract ERC721 is IERC721, IERC721Metadata, ERC721Storage, ContractUtil, Common
         }
 
         string memory baseURI = _erc721Store().baseTokenURI;
+
         return bytes(baseURI).length > 0 ? string(abi.encodePacked(baseURI, _toString(tokenId))) : "";
     }
 
@@ -101,6 +103,7 @@ contract ERC721 is IERC721, IERC721Metadata, ERC721Storage, ContractUtil, Common
         }
 
         _erc721Store().operatorApprovals[msg.sender][operator] = approved;
+
         emit ApprovalForAll(msg.sender, operator, approved);
     }
 

@@ -1,7 +1,9 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-interface IUUPSImplementation {
+import "./IAddressError.sol";
+
+interface IUUPSImplementation is IAddressError {
     error SterileImplementation(address implementation);
     error SimulatedUpgradeFailed();
 

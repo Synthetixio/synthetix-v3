@@ -2,8 +2,9 @@
 pragma solidity ^0.8.0;
 
 import "./IERC165.sol";
+import "./IAddressError.sol";
 
-interface IERC721 is IERC165 {
+interface IERC721 is IERC165, IAddressError {
     event Transfer(address indexed from, address indexed to, uint256 indexed tokenId);
 
     event Approval(address indexed owner, address indexed approved, uint256 indexed tokenId);
