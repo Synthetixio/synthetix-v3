@@ -2,24 +2,25 @@
 pragma solidity ^0.8.0;
 
 import "./BeaconStorage.sol";
-import "../common/CommonErrors.sol";
 import "../ownership/OwnableMixin.sol";
 import "../utils/ContractUtil.sol";
+import "../interfaces/IBeacon.sol";
+import "../errors/AddressError.sol";
 
-contract Beacon is OwnableMixin, BeaconStorage, ContractUtil, CommonErrors {
+contract Beacon is IBeacon, OwnableMixin, BeaconStorage, ContractUtil {
     event Upgraded(address implementation);
 
     constructor(address firstOwner) {
         _ownableStore().owner = firstOwner;
     }
 
-    function upgradeTo(address newImplementation) external onlyOwner {
+    function upgradeTo(address newImplementation) external override onlyOwner {
         if (newImplementation == address(0)) {
-            revert InvalidAddress(newImplementation);
+            revert AddressError.ZeroAddress();
         }
 
         if (!_isContract(newImplementation)) {
-            revert InvalidContract(newImplementation);
+            revert AddressError.NotAContract(newImplementation);
         }
 
         _beaconStore().implementation = newImplementation;
@@ -27,7 +28,7 @@ contract Beacon is OwnableMixin, BeaconStorage, ContractUtil, CommonErrors {
         emit Upgraded(newImplementation);
     }
 
-    function getImplementation() external view returns (address) {
+    function getImplementation() external view override returns (address) {
         return _beaconStore().implementation;
     }
 }

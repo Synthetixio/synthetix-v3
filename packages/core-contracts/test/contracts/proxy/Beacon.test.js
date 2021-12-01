@@ -33,14 +33,14 @@ describe('Beacon', () => {
 
   describe('when trying to upgrade to an EOA', () => {
     it('reverts', async () => {
-      await assertRevert(Beacon.upgradeTo(user.address), `InvalidContract("${user.address}")`);
+      await assertRevert(Beacon.upgradeTo(user.address), `NotAContract("${user.address}")`);
     });
   });
 
   describe('when trying to upgrade to the zero address', () => {
     it('reverts', async () => {
       const zeroAddress = '0x0000000000000000000000000000000000000000';
-      await assertRevert(Beacon.upgradeTo(zeroAddress), `InvalidAddress("${zeroAddress}")`);
+      await assertRevert(Beacon.upgradeTo(zeroAddress), 'ZeroAddress');
     });
   });
 
@@ -52,7 +52,7 @@ describe('Beacon', () => {
 
     describe('when a non-owner tries to upgrade', () => {
       it('reverts', async () => {
-        await assertRevert(Beacon.connect(user).upgradeTo(user.address), 'OnlyOwnerAllowed()');
+        await assertRevert(Beacon.connect(user).upgradeTo(user.address), 'Unauthorized');
       });
     });
 

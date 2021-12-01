@@ -101,7 +101,7 @@ describe('BeaconProxy', () => {
         it('reverts', async () => {
           await assertRevert(
             BeaconProxy.setBeacon(owner.address),
-            `InvalidContract("${owner.address}")`
+            `NotAContract("${owner.address}")`
           );
         });
       });
@@ -109,19 +109,13 @@ describe('BeaconProxy', () => {
       describe('when trying to set it to the zero address', () => {
         it('reverts', async () => {
           const zeroAddress = '0x0000000000000000000000000000000000000000';
-          await assertRevert(
-            BeaconProxy.setBeacon(zeroAddress),
-            `InvalidAddress("${zeroAddress}")`
-          );
+          await assertRevert(BeaconProxy.setBeacon(zeroAddress), 'ZeroAddress');
         });
       });
 
       describe('when trying to set it to the same beacon', () => {
         it('reverts', async () => {
-          await assertRevert(
-            BeaconProxy.setBeacon(Beacon.address),
-            `InvalidAddress("${Beacon.address}")`
-          );
+          await assertRevert(BeaconProxy.setBeacon(Beacon.address), 'NoChange');
         });
       });
 

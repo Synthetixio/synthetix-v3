@@ -3,23 +3,23 @@ pragma solidity ^0.8.0;
 
 import "../interfaces/IUUPSImplementation.sol";
 import "../utils/ContractUtil.sol";
-import "../common/CommonErrors.sol";
+import "../errors/AddressError.sol";
 import "./ProxyStorage.sol";
 
-abstract contract UUPSImplementation is IUUPSImplementation, ProxyStorage, ContractUtil, CommonErrors {
+abstract contract UUPSImplementation is IUUPSImplementation, ProxyStorage, ContractUtil {
     function _upgradeTo(address newImplementation) internal virtual {
         if (newImplementation == address(0)) {
-            revert InvalidAddress(newImplementation);
+            revert AddressError.ZeroAddress();
         }
 
         if (!_isContract(newImplementation)) {
-            revert InvalidContract(newImplementation);
+            revert AddressError.NotAContract(newImplementation);
         }
 
         ProxyStore storage store = _proxyStore();
 
         if (!store.simulatingUpgrade && _implementationIsSterile(newImplementation)) {
-            revert SterileImplementation(newImplementation);
+            revert ImplementationIsSterile(newImplementation);
         }
 
         store.implementation = newImplementation;
@@ -34,7 +34,7 @@ abstract contract UUPSImplementation is IUUPSImplementation, ProxyStorage, Contr
 
         return
             !simulationReverted &&
-            keccak256(abi.encodePacked(simulationResponse)) == keccak256(abi.encodePacked(SimulatedUpgradeFailed.selector));
+            keccak256(abi.encodePacked(simulationResponse)) == keccak256(abi.encodePacked(UpgradeSimulationFailed.selector));
     }
 
     function simulateUpgradeTo(address newImplementation) public override {
@@ -50,7 +50,7 @@ abstract contract UUPSImplementation is IUUPSImplementation, ProxyStorage, Contr
         );
 
         if (!rollbackSuccessful || _proxyStore().implementation != currentImplementation) {
-            revert SimulatedUpgradeFailed();
+            revert UpgradeSimulationFailed();
         }
 
         store.simulatingUpgrade = false;

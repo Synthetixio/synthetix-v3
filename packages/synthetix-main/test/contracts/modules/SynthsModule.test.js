@@ -52,7 +52,7 @@ describe('SynthsModule', function () {
     describe('When a beacon is deployed', async () => {
       describe('when a non-owner tries to deploy', () => {
         it('reverts', async () => {
-          await assertRevert(SynthsModule.connect(user).createBeacon(), 'OnlyOwnerAllowed()');
+          await assertRevert(SynthsModule.connect(user).createBeacon(), 'Unauthorized()');
         });
       });
 
@@ -98,7 +98,7 @@ describe('SynthsModule', function () {
             it('reverts', async () => {
               await assertRevert(
                 SynthsModule.connect(user).upgradeSynthImplementation(synthImplementation.address),
-                'OnlyOwnerAllowed()'
+                'Unauthorized()'
               );
             });
           });
@@ -124,7 +124,7 @@ describe('SynthsModule', function () {
               it('reverts', async () => {
                 await assertRevert(
                   SynthsModule.connect(user).createSynth(sUSD, name, symbol, decimals),
-                  'OnlyOwnerAllowed()'
+                  'Unauthorized()'
                 );
               });
             });

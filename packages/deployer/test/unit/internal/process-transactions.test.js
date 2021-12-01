@@ -69,9 +69,9 @@ describe('internal/process-transactions.js', function () {
       });
 
       it('registers a transaction in the deployment data', async function () {
-        const transaction = hre.deployer.deployment.general.transactions[transaction.hash];
-        equal(transaction.status, 'confirmed');
-        equal(transaction.description, 'test');
+        const tx = hre.deployer.deployment.general.transactions[transaction.hash];
+        equal(tx.status, 'confirmed');
+        equal(tx.description, 'test');
       });
 
       it('returns a valid receipt', async function () {
