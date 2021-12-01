@@ -2,17 +2,17 @@
 pragma solidity ^0.8.0;
 
 import "../interfaces/IUUPSImplementation.sol";
-import "../utils/ContractUtil.sol";
 import "../errors/AddressError.sol";
+import "../utils/AddressUtil.sol";
 import "./ProxyStorage.sol";
 
-abstract contract UUPSImplementation is IUUPSImplementation, ProxyStorage, ContractUtil {
+abstract contract UUPSImplementation is IUUPSImplementation, ProxyStorage {
     function _upgradeTo(address newImplementation) internal virtual {
         if (newImplementation == address(0)) {
             revert AddressError.ZeroAddress();
         }
 
-        if (!_isContract(newImplementation)) {
+        if (!AddressUtil.isContract(newImplementation)) {
             revert AddressError.NotAContract(newImplementation);
         }
 

@@ -3,11 +3,11 @@ pragma solidity ^0.8.0;
 
 import "./BeaconStorage.sol";
 import "../ownership/OwnableMixin.sol";
-import "../utils/ContractUtil.sol";
-import "../interfaces/IBeacon.sol";
+import "../utils/AddressUtil.sol";
 import "../errors/AddressError.sol";
+import "../interfaces/IBeacon.sol";
 
-contract Beacon is IBeacon, OwnableMixin, BeaconStorage, ContractUtil {
+contract Beacon is IBeacon, OwnableMixin, BeaconStorage {
     event Upgraded(address implementation);
 
     constructor(address firstOwner) {
@@ -19,7 +19,7 @@ contract Beacon is IBeacon, OwnableMixin, BeaconStorage, ContractUtil {
             revert AddressError.ZeroAddress();
         }
 
-        if (!_isContract(newImplementation)) {
+        if (!AddressUtil.isContract(newImplementation)) {
             revert AddressError.NotAContract(newImplementation);
         }
 

@@ -6,9 +6,9 @@ import "./BeaconStorage.sol";
 import "../errors/AddressError.sol";
 import "../errors/ChangeError.sol";
 import "../interfaces/IBeacon.sol";
-import "../utils/ContractUtil.sol";
+import "../utils/AddressUtil.sol";
 
-contract BeaconProxy is AbstractProxy, BeaconStorage, ContractUtil {
+contract BeaconProxy is AbstractProxy, BeaconStorage {
     event BeaconSet(address beacon);
 
     constructor(address firstBeacon) {
@@ -30,7 +30,7 @@ contract BeaconProxy is AbstractProxy, BeaconStorage, ContractUtil {
             revert ChangeError.NoChange();
         }
 
-        if (!_isContract(newBeacon)) {
+        if (!AddressUtil.isContract(newBeacon)) {
             revert AddressError.NotAContract(newBeacon);
         }
 
