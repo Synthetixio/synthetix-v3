@@ -1,12 +1,12 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+import "@synthetixio/core-contracts/contracts/utils/AddressSet.sol";
 
 contract ElectionStorage {
     struct ElectionStore {
         address memberTokenAddress;
-        EnumerableSet.AddressSet nominees;
+        AddressSet.Values nominees;
     }
 
     function _electionStore() internal pure returns (ElectionStore storage store) {

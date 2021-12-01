@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@openzeppelin/contracts/utils/structs/EnumerableSet.sol";
+import "@synthetixio/core-contracts/contracts/utils/AddressSet.sol";
 import "@synthetixio/core-contracts/contracts/ownership/OwnableMixin.sol";
 import "@synthetixio/core-contracts/contracts/proxy/UUPSProxy.sol";
 import "../interfaces/IElectionModule.sol";
@@ -40,14 +40,14 @@ contract CoreElectionModule is IElectionModule, ElectionStorage, OwnableMixin {
     }
 
     function getNominees() external view returns (address[] memory) {
-        return EnumerableSet.values(_electionStore().nominees);
+        return AddressSet.values(_electionStore().nominees);
     }
 
     function selfNominate() external {
-        EnumerableSet.add(_electionStore().nominees, msg.sender);
+        AddressSet.add(_electionStore().nominees, msg.sender);
     }
 
     function selfUnnominate() external {
-        EnumerableSet.remove(_electionStore().nominees, msg.sender);
+        AddressSet.remove(_electionStore().nominees, msg.sender);
     }
 }
