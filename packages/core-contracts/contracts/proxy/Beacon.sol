@@ -5,6 +5,7 @@ import "./BeaconStorage.sol";
 import "../ownership/OwnableMixin.sol";
 import "../utils/ContractUtil.sol";
 import "../interfaces/IBeacon.sol";
+import "../errors/AddressError.sol";
 
 contract Beacon is IBeacon, OwnableMixin, BeaconStorage, ContractUtil {
     event Upgraded(address implementation);
@@ -15,11 +16,11 @@ contract Beacon is IBeacon, OwnableMixin, BeaconStorage, ContractUtil {
 
     function upgradeTo(address newImplementation) external override onlyOwner {
         if (newImplementation == address(0)) {
-            revert IAddressError.ZeroAddress(newImplementation);
+            revert AddressError.ZeroAddress(newImplementation);
         }
 
         if (!_isContract(newImplementation)) {
-            revert IAddressError.NotAContract(newImplementation);
+            revert AddressError.NotAContract(newImplementation);
         }
 
         _beaconStore().implementation = newImplementation;

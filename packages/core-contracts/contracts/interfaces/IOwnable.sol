@@ -1,9 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "./IAddressError.sol";
-
-interface IOwnable is IAddressError {
+interface IOwnable {
     error NotNominated(address addr);
     error InvalidNomination(address addr);
     error NoNomination();

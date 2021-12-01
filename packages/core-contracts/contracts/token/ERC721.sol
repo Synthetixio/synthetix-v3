@@ -6,6 +6,7 @@ import "../interfaces/IERC721Metadata.sol";
 import "../interfaces/IERC721Receiver.sol";
 import "./ERC721Storage.sol";
 import "../utils/ContractUtil.sol";
+import "../errors/AddressError.sol";
 
 contract ERC721 is IERC721, IERC721Metadata, ERC721Storage, ContractUtil {
     error CannotApproveToHolder(address);
@@ -42,7 +43,7 @@ contract ERC721 is IERC721, IERC721Metadata, ERC721Storage, ContractUtil {
 
     function balanceOf(address holder) public view virtual override returns (uint) {
         if (holder == address(0)) {
-            revert IAddressError.ZeroAddress(holder);
+            revert AddressError.ZeroAddress(holder);
         }
 
         return _erc721Store().balanceOf[holder];
