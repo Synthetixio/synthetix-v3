@@ -32,7 +32,7 @@ describe('CoreElectionModule', () => {
       it('reverts', async () => {
         await assertRevert(
           CoreElectionModule.connect(user).createMemberToken('Member Token', 'cmt'),
-          'OnlyOwnerAllowed()'
+          'Unauthorized()'
         );
       });
     });
@@ -82,7 +82,7 @@ describe('CoreElectionModule', () => {
           CoreElectionModule.connect(user).upgradeMemberTokenImplementation(
             NewImplementation.address
           ),
-          'OnlyOwnerAllowed()'
+          'Unauthorized()'
         );
       });
 

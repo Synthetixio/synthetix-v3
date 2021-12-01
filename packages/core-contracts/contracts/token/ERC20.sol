@@ -2,12 +2,12 @@
 pragma solidity ^0.8.0;
 
 import "../interfaces/IERC20.sol";
+import "../errors/InitError.sol";
 import "./ERC20Storage.sol";
 
 contract ERC20 is IERC20, ERC20Storage {
     error InsufficientAllowance(uint required, uint existing);
     error InsufficientBalance(uint required, uint existing);
-    error AlreadyInitialized();
 
     function _initialize(
         string memory tokenName,
@@ -15,8 +15,9 @@ contract ERC20 is IERC20, ERC20Storage {
         uint8 tokenDecimals
     ) internal virtual {
         ERC20Store storage store = _erc20Store();
+
         if (bytes(store.name).length > 0 || bytes(store.symbol).length > 0 || store.decimals > 0) {
-            revert AlreadyInitialized();
+            revert InitError.AlreadyInitialized();
         }
 
         store.name = tokenName;

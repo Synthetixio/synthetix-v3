@@ -18,10 +18,7 @@ describe('UpgradeModule', function () {
       it('reverts', async function () {
         const [, user] = await ethers.getSigners();
 
-        await assertRevert(
-          UpgradeModule.connect(user).upgradeTo(user.address),
-          'OnlyOwnerAllowed()'
-        );
+        await assertRevert(UpgradeModule.connect(user).upgradeTo(user.address), 'Unauthorized()');
       });
     });
 

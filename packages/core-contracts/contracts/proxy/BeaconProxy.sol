@@ -3,11 +3,12 @@ pragma solidity ^0.8.0;
 
 import "./AbstractProxy.sol";
 import "./BeaconStorage.sol";
-import "../common/CommonErrors.sol";
+import "../errors/AddressError.sol";
+import "../errors/ChangeError.sol";
 import "../interfaces/IBeacon.sol";
 import "../utils/AddressUtil.sol";
 
-contract BeaconProxy is AbstractProxy, BeaconStorage, CommonErrors {
+contract BeaconProxy is AbstractProxy, BeaconStorage {
     event BeaconSet(address beacon);
 
     constructor(address firstBeacon) {
@@ -19,15 +20,22 @@ contract BeaconProxy is AbstractProxy, BeaconStorage, CommonErrors {
     }
 
     function _setBeacon(address newBeacon) internal virtual {
-        if (newBeacon == address(0) || newBeacon == _beaconStore().beacon) {
-            revert InvalidAddress(newBeacon);
+        BeaconStore storage store = _beaconStore();
+
+        if (newBeacon == address(0)) {
+            revert AddressError.ZeroAddress();
+        }
+
+        if (newBeacon == store.beacon) {
+            revert ChangeError.NoChange();
         }
 
         if (!AddressUtil.isContract(newBeacon)) {
-            revert InvalidContract(newBeacon);
+            revert AddressError.NotAContract(newBeacon);
         }
 
-        _beaconStore().beacon = newBeacon;
+        store.beacon = newBeacon;
+
         emit BeaconSet(newBeacon);
     }
 
