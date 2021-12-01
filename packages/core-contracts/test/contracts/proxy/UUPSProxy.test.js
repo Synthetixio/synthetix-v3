@@ -83,7 +83,7 @@ describe('UUPSProxy', () => {
     describe('when trying to upgrade to the zero address', () => {
       it('reverts', async () => {
         const zeroAddress = '0x0000000000000000000000000000000000000000';
-        await assertRevert(Instance.upgradeTo(zeroAddress), `ZeroAddress`);
+        await assertRevert(Instance.upgradeTo(zeroAddress), 'ZeroAddress');
       });
     });
 
@@ -171,7 +171,10 @@ describe('UUPSProxy', () => {
         });
 
         it('reverts', async () => {
-          await assertRevert(Implementation.upgradeTo(Destroyer.address), 'ImplementationIsSterile');
+          await assertRevert(
+            Implementation.upgradeTo(Destroyer.address),
+            'ImplementationIsSterile'
+          );
         });
       });
 

@@ -109,19 +109,13 @@ describe('BeaconProxy', () => {
       describe('when trying to set it to the zero address', () => {
         it('reverts', async () => {
           const zeroAddress = '0x0000000000000000000000000000000000000000';
-          await assertRevert(
-            BeaconProxy.setBeacon(zeroAddress),
-            `ZeroAddress`
-          );
+          await assertRevert(BeaconProxy.setBeacon(zeroAddress), 'ZeroAddress');
         });
       });
 
       describe('when trying to set it to the same beacon', () => {
         it('reverts', async () => {
-          await assertRevert(
-            BeaconProxy.setBeacon(Beacon.address),
-            `NoChange`
-          );
+          await assertRevert(BeaconProxy.setBeacon(Beacon.address), 'NoChange');
         });
       });
 

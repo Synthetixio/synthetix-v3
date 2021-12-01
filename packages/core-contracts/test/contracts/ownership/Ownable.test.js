@@ -50,10 +50,7 @@ describe('Ownable', () => {
       describe('when an owner tries to nominate address 0x0 as the new owner', () => {
         it('reverts', async () => {
           const addressZero = '0x0000000000000000000000000000000000000000';
-          await assertRevert(
-            Ownable.connect(owner).nominateNewOwner(addressZero),
-            `ZeroAddress`
-          );
+          await assertRevert(Ownable.connect(owner).nominateNewOwner(addressZero), 'ZeroAddress');
         });
       });
 
@@ -74,10 +71,7 @@ describe('Ownable', () => {
 
       describe('when attempting to re-nominate the same owner', () => {
         it('reverts', async () => {
-          await assertRevert(
-            Ownable.connect(owner).nominateNewOwner(newOwner.address),
-            `NoChange`
-          );
+          await assertRevert(Ownable.connect(owner).nominateNewOwner(newOwner.address), 'NoChange');
         });
       });
 
@@ -145,10 +139,7 @@ describe('Ownable', () => {
 
           describe('when a non nominated user tries to renounce', () => {
             it('reverts', async () => {
-              await assertRevert(
-                Ownable.connect(user).renounceNomination(),
-                'NotNominated'
-              );
+              await assertRevert(Ownable.connect(user).renounceNomination(), 'NotNominated');
             });
           });
 

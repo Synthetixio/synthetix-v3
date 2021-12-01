@@ -20,10 +20,7 @@ describe('CoreUpgradeModule', () => {
 
   describe('when attempting to set the implementation with a non owner signer', () => {
     it('reverts', async () => {
-      await assertRevert(
-        CoreUpgradeModule.connect(user).upgradeTo(user.address),
-        'Unauthorized()'
-      );
+      await assertRevert(CoreUpgradeModule.connect(user).upgradeTo(user.address), 'Unauthorized()');
     });
   });
 

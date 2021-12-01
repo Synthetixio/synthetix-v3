@@ -56,10 +56,7 @@ describe('ERC721', () => {
     });
 
     it('reverts checking the balance of 0x0 address', async () => {
-      await assertRevert(
-        ERC721.balanceOf(ethers.constants.AddressZero),
-        'ZeroAddress'
-      );
+      await assertRevert(ERC721.balanceOf(ethers.constants.AddressZero), 'ZeroAddress');
     });
   });
 
@@ -104,7 +101,7 @@ describe('ERC721', () => {
       it('reverts', async () => {
         await assertRevert(
           ERC721.connect(user1).mintTo(ethers.constants.AddressZero, 1337),
-          `ZeroAddress`
+          'ZeroAddress'
         );
       });
     });
@@ -223,7 +220,7 @@ describe('ERC721', () => {
         it('reverts ', async () => {
           await assertRevert(
             ERC721.connect(user1).transferFrom(user1.address, ethers.constants.AddressZero, 42),
-            `ZeroAddress`
+            'ZeroAddress'
           );
         });
       });
@@ -377,7 +374,7 @@ describe('ERC721', () => {
               ethers.constants.AddressZero,
               42
             ),
-            `ZeroAddress`
+            'ZeroAddress'
           );
         });
       });

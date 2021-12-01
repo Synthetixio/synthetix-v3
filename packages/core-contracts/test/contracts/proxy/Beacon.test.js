@@ -40,7 +40,7 @@ describe('Beacon', () => {
   describe('when trying to upgrade to the zero address', () => {
     it('reverts', async () => {
       const zeroAddress = '0x0000000000000000000000000000000000000000';
-      await assertRevert(Beacon.upgradeTo(zeroAddress), `ZeroAddress`);
+      await assertRevert(Beacon.upgradeTo(zeroAddress), 'ZeroAddress');
     });
   });
 
