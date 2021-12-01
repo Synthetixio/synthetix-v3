@@ -3,8 +3,6 @@ pragma solidity ^0.8.0;
 
 interface IOwnable {
     error NotNominated(address addr);
-    error InvalidNomination(address addr);
-    error NoNomination();
 
     event OwnerNominated(address newOwner);
 
