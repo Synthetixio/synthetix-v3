@@ -46,11 +46,11 @@ contract CoreElectionModule is IElectionModule, ElectionStorage, OwnableMixin {
         return _electionStore().memberTokenAddress;
     }
 
-    function getNominees() external view returns (address[] memory) {
+    function getNominees() external view override returns (address[] memory) {
         return _electionStore().nominees;
     }
 
-    function selfNominate() external {
+    function selfNominate() external override {
         ElectionStore storage store = _electionStore();
 
         if (msg.sender == address(0)) {
@@ -65,7 +65,7 @@ contract CoreElectionModule is IElectionModule, ElectionStorage, OwnableMixin {
         store.nomineesIndexes[msg.sender] = store.nominees.length;
     }
 
-    function selfUnnominate() external {
+    function selfUnnominate() external override {
         ElectionStore storage store = _electionStore();
 
         uint256 valueIndex = store.nomineesIndexes[msg.sender];

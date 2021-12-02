@@ -4,6 +4,9 @@ pragma solidity ^0.8.0;
 interface IElectionModule {
     error MemberTokenAlreadyCreated();
 
+    error AlreadyNominated(address addr);
+    error NotNominated(address addr);
+
     event MemberTokenCreated(address memberTokenAddress);
 
     function createMemberToken(string memory tokenName, string memory tokenSymbol) external;
