@@ -97,6 +97,72 @@ describe('CoreElectionModule', () => {
     });
   });
 
+  describe('when configuring the current epoch', () => {
+    it('reverts when a regular user tries to setSeatCount', async () => {
+      await assertRevert(CoreElectionModule.connect(user).setSeatCount(5), 'Unauthorized');
+    });
+
+    it('allows the owner to setSeatCount', async () => {
+      await (await CoreElectionModule.connect(owner).setSeatCount(5)).wait();
+    });
+
+    it('reverts when a regular user tries to setEpochDuration', async () => {
+      await assertRevert(CoreElectionModule.connect(user).setEpochDuration(10000), 'Unauthorized');
+    });
+
+    it('allows the owner to setEpochDuration', async () => {
+      await (await CoreElectionModule.connect(owner).setEpochDuration(10000)).wait();
+    });
+
+    it('reverts when a regular user tries to setPeriodPercent', async () => {
+      await assertRevert(CoreElectionModule.connect(user).setPeriodPercent(20), 'Unauthorized');
+    });
+
+    it('reverts when giving an invalid percent value to setPeriodPercent', async () => {
+      await assertRevert(CoreElectionModule.connect(owner).setPeriodPercent(101), 'NumberTooBig');
+    });
+
+    it('allows the owner to setPeriodPercent', async () => {
+      await (await CoreElectionModule.connect(owner).setPeriodPercent(20)).wait();
+    });
+  });
+
+  describe('when configuring the next epoch', () => {
+    it('reverts when a regular user tries to setNextSeatCount', async () => {
+      await assertRevert(CoreElectionModule.connect(user).setNextSeatCount(5), 'Unauthorized');
+    });
+
+    it('allows the owner to setNextSeatCount', async () => {
+      await (await CoreElectionModule.connect(owner).setNextSeatCount(5)).wait();
+    });
+
+    it('reverts when a regular user tries to setNextEpochDuration', async () => {
+      await assertRevert(
+        CoreElectionModule.connect(user).setNextEpochDuration(10000),
+        'Unauthorized'
+      );
+    });
+
+    it('allows the owner to setNextEpochDuration', async () => {
+      await (await CoreElectionModule.connect(owner).setNextEpochDuration(10000)).wait();
+    });
+
+    it('reverts when a regular user tries to setNextPeriodPercent', async () => {
+      await assertRevert(CoreElectionModule.connect(user).setNextPeriodPercent(20), 'Unauthorized');
+    });
+
+    it('reverts when giving an invalid percent value to setNextPeriodPercent', async () => {
+      await assertRevert(
+        CoreElectionModule.connect(owner).setNextPeriodPercent(101),
+        'NumberTooBig'
+      );
+    });
+
+    it('allows the owner to setNextPeriodPercent', async () => {
+      await (await CoreElectionModule.connect(owner).setNextPeriodPercent(20)).wait();
+    });
+  });
+
   describe('when the address self nominates', () => {
     it('can nominate several addresses', async () => {
       await (await CoreElectionModule.connect(owner).nominate()).wait();
@@ -118,7 +184,7 @@ describe('CoreElectionModule', () => {
       deepEqual(await CoreElectionModule.getNominees(), []);
     });
 
-    it('reverts when withdrawing a not nomiated address', async () => {
+    it('reverts when withdrawing a not nominated address', async () => {
       await assertRevert(CoreElectionModule.connect(owner).withdrawNomination(), 'NotNominated');
     });
   });

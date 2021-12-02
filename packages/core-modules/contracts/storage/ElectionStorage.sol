@@ -36,6 +36,10 @@ contract ElectionStorage {
          * @dev Staging duration for the next epoch.
          */
         uint nextNominationPeriodPercent;
+        /**
+         * @dev used to keep track of the number of votes a nominee has for being a council member in the next epoch.
+         */
+        mapping(address => uint256) nomineeVotes;
     }
 
     function _electionStore() internal pure returns (ElectionStore storage store) {

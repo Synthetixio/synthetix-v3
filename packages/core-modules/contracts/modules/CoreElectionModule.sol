@@ -96,16 +96,8 @@ contract CoreElectionModule is IElectionModule, ElectionStorage, OwnableMixin {
         _electionStore().seatCount = seats;
     }
 
-    function setNextSeatCount(uint seats) external override onlyOwner {
-        _electionStore().nextSeatCount = seats;
-    }
-
     function setEpochDuration(uint duration) external override onlyOwner {
         _electionStore().epochDuration = duration;
-    }
-
-    function setNextEpochDuration(uint duration) external override onlyOwner {
-        _electionStore().nextEpochDuration = duration;
     }
 
     function setPeriodPercent(uint8 percent) external override onlyOwner {
@@ -114,6 +106,14 @@ contract CoreElectionModule is IElectionModule, ElectionStorage, OwnableMixin {
         }
 
         _electionStore().nominationPeriodPercent = percent;
+    }
+
+    function setNextSeatCount(uint seats) external override onlyOwner {
+        _electionStore().nextSeatCount = seats;
+    }
+
+    function setNextEpochDuration(uint duration) external override onlyOwner {
+        _electionStore().nextEpochDuration = duration;
     }
 
     function setNextPeriodPercent(uint8 percent) external override onlyOwner {
