@@ -30,8 +30,8 @@ task(TASK_INTERACT, 'Interacts with a given modular system deployment')
 
     let contractFunction = escItem;
     while (contractFunction === escItem) {
-      // first pick the contract
       await hre.run(SUBTASK_PICK_CONTRACT, taskArguments);
+
       contractFunction = await hre.run(SUBTASK_PICK_FUNCTION, taskArguments);
     }
   });

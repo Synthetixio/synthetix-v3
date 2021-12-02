@@ -34,6 +34,7 @@ async function _searchAbi(abi, matches, query = '') {
     if (item.name && item.type === 'function') {
       return item.name.toLowerCase().includes(query.toLowerCase());
     }
+
     return false;
   });
 
@@ -41,5 +42,6 @@ async function _searchAbi(abi, matches, query = '') {
   if (query === '') {
     abiMatches.splice(0, 0, escItem);
   }
+
   return abiMatches;
 }
