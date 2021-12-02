@@ -98,13 +98,6 @@ describe('CoreElectionModule', () => {
   });
 
   describe('when the user self nominates', () => {
-    it.skip('reverts when called from zero address', async () => {
-      await assertRevert(
-        CoreElectionModule.connect('0x0000000000000000000000000000000000000000').nominate(),
-        'ZeroAddress'
-      );
-    });
-
     it('sets the value & unsets the value', async () => {
       // Nominate just one user
       await (await CoreElectionModule.connect(owner).nominate()).wait();
