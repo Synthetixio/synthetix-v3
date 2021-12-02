@@ -32,7 +32,7 @@ describe('CoreElectionModule', () => {
       it('reverts', async () => {
         await assertRevert(
           CoreElectionModule.connect(user).createMemberToken('Member Token', 'cmt'),
-          'Unauthorized()'
+          'Unauthorized'
         );
       });
     });
@@ -65,7 +65,7 @@ describe('CoreElectionModule', () => {
       it('reverts', async () => {
         await assertRevert(
           CoreElectionModule.createMemberToken('Member Token', 'cmt'),
-          'MemberTokenAlreadyCreated()'
+          'MemberTokenAlreadyCreated'
         );
       });
     });
@@ -82,7 +82,7 @@ describe('CoreElectionModule', () => {
           CoreElectionModule.connect(user).upgradeMemberTokenImplementation(
             NewImplementation.address
           ),
-          'Unauthorized()'
+          'Unauthorized'
         );
       });
 
