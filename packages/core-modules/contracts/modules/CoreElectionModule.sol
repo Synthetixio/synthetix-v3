@@ -3,7 +3,6 @@ pragma solidity ^0.8.0;
 
 import "@synthetixio/core-contracts/contracts/ownership/OwnableMixin.sol";
 import "@synthetixio/core-contracts/contracts/proxy/UUPSProxy.sol";
-import "@synthetixio/core-contracts/contracts/errors/AddressError.sol";
 import "../interfaces/IElectionModule.sol";
 import "../token/MemberToken.sol";
 import "../storage/ElectionStorage.sol";
@@ -53,10 +52,6 @@ contract CoreElectionModule is IElectionModule, ElectionStorage, OwnableMixin {
     function nominate() external override {
         ElectionStore storage store = _electionStore();
 
-        if (msg.sender == address(0)) {
-            revert AddressError.ZeroAddress();
-        }
-
         if (store.nomineeIndexes[msg.sender] != 0) {
             revert AlreadyNominated(msg.sender);
         }
@@ -69,10 +64,6 @@ contract CoreElectionModule is IElectionModule, ElectionStorage, OwnableMixin {
         ElectionStore storage store = _electionStore();
 
         uint256 valueIndex = store.nomineeIndexes[msg.sender];
-
-        if (msg.sender == address(0)) {
-            revert AddressError.ZeroAddress();
-        }
 
         if (valueIndex == 0) {
             revert NotNominated(msg.sender);
