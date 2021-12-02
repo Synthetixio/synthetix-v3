@@ -97,28 +97,28 @@ describe('CoreElectionModule', () => {
     });
   });
 
-  describe('when the user self nominates', () => {
-    it('sets the value & unsets the value', async () => {
-      // Nominate just one user
+  describe('when the address self nominates', () => {
+    it('can nominate several addresses', async () => {
       await (await CoreElectionModule.connect(owner).nominate()).wait();
       deepEqual(await CoreElectionModule.getNominees(), [owner.address]);
 
-      // Nominate another user
       await (await CoreElectionModule.connect(user).nominate()).wait();
       deepEqual(await CoreElectionModule.getNominees(), [owner.address, user.address]);
+    });
 
-      // Check for double nominations
+    it('reverts when trying to nominate several times the same address', async () => {
       await assertRevert(CoreElectionModule.connect(owner).nominate(), 'AlreadyNominated');
+    });
 
-      // Withdraw first nomination
+    it('can withdraw their own nominations', async () => {
       await (await CoreElectionModule.connect(owner).withdrawNomination()).wait();
       deepEqual(await CoreElectionModule.getNominees(), [user.address]);
 
-      // Withdraw second nomination
       await (await CoreElectionModule.connect(user).withdrawNomination()).wait();
       deepEqual(await CoreElectionModule.getNominees(), []);
+    });
 
-      // Check for invalid withdraw
+    it('reverts when withdrawing a not nomiated address', async () => {
       await assertRevert(CoreElectionModule.connect(owner).withdrawNomination(), 'NotNominated');
     });
   });
