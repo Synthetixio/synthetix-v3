@@ -13,4 +13,16 @@ interface IElectionModule {
     function nominate() external;
 
     function withdrawNomination() external;
+
+    function setSeatCount(uint seats) external;
+
+    function setNextSeatCount(uint seats) external;
+
+    function setEpochDuration(uint duration) external;
+
+    function setNextEpochDuration(uint duration) external;
+
+    function setPeriodPercent(uint8 percent) external;
+
+    function setNextPeriodPercent(uint8 percent) external;
 }

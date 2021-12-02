@@ -3,6 +3,7 @@ pragma solidity ^0.8.0;
 
 import "@synthetixio/core-contracts/contracts/ownership/OwnableMixin.sol";
 import "@synthetixio/core-contracts/contracts/proxy/UUPSProxy.sol";
+import "@synthetixio/core-contracts/contracts/errors/ArgumentError.sol";
 import "../interfaces/IElectionModule.sol";
 import "../token/MemberToken.sol";
 import "../storage/ElectionStorage.sol";
@@ -89,5 +90,37 @@ contract CoreElectionModule is IElectionModule, ElectionStorage, OwnableMixin {
 
         // Delete the index for the deleted slot
         delete store.nomineeIndexes[msg.sender];
+    }
+
+    function setSeatCount(uint seats) external override onlyOwner {
+        _electionStore().seatCount = seats;
+    }
+
+    function setNextSeatCount(uint seats) external override onlyOwner {
+        _electionStore().nextSeatCount = seats;
+    }
+
+    function setEpochDuration(uint duration) external override onlyOwner {
+        _electionStore().epochDuration = duration;
+    }
+
+    function setNextEpochDuration(uint duration) external override onlyOwner {
+        _electionStore().nextEpochDuration = duration;
+    }
+
+    function setPeriodPercent(uint8 percent) external override onlyOwner {
+        if (percent > 100) {
+            revert ArgumentError.NumberTooBig("percent", 100);
+        }
+
+        _electionStore().nominationPeriodPercent = percent;
+    }
+
+    function setNextPeriodPercent(uint8 percent) external override onlyOwner {
+        if (percent > 100) {
+            revert ArgumentError.NumberTooBig("percent", 100);
+        }
+
+        _electionStore().nextNominationPeriodPercent = percent;
     }
 }
