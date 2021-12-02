@@ -119,7 +119,10 @@ describe('CoreElectionModule', () => {
     });
 
     it('reverts when giving an invalid percent value to setPeriodPercent', async () => {
-      await assertRevert(CoreElectionModule.connect(owner).setPeriodPercent(101), 'NumberTooBig');
+      await assertRevert(
+        CoreElectionModule.connect(owner).setPeriodPercent(101),
+        'InvalidPeriodPercent'
+      );
     });
 
     it('allows the owner to setPeriodPercent', async () => {
@@ -154,7 +157,7 @@ describe('CoreElectionModule', () => {
     it('reverts when giving an invalid percent value to setNextPeriodPercent', async () => {
       await assertRevert(
         CoreElectionModule.connect(owner).setNextPeriodPercent(101),
-        'NumberTooBig'
+        'InvalidPeriodPercent'
       );
     });
 
@@ -186,6 +189,33 @@ describe('CoreElectionModule', () => {
 
     it('reverts when withdrawing a not nominated address', async () => {
       await assertRevert(CoreElectionModule.connect(owner).withdrawNomination(), 'NotNominated');
+    });
+  });
+
+  describe('when electing a new council', () => {
+    let candidates;
+
+    before('identify candidates', async () => {
+      // Grab 5 users as candidates
+      candidates = (await ethers.getSigners()).slice(2, 7);
+    });
+
+    before('prepare next epoch', async () => {
+      // Next seat count should be 3, and leave 2 outside
+      await (await CoreElectionModule.connect(owner).setNextSeatCount(3)).wait();
+    });
+
+    before('nominate candidates', async () => {
+      await Promise.all(
+        candidates.map((candidate) => CoreElectionModule.connect(candidate).nominate())
+      );
+    });
+
+    it('reverts when trying to elect an invalid amount of candidates', async () => {
+      await assertRevert(
+        CoreElectionModule.connect(user).elect([candidates[0].address, candidates[1].address]),
+        'InvalidCandidatesCount'
+      );
     });
   });
 });

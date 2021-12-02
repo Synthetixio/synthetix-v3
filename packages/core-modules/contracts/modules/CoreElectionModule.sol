@@ -3,7 +3,6 @@ pragma solidity ^0.8.0;
 
 import "@synthetixio/core-contracts/contracts/ownership/OwnableMixin.sol";
 import "@synthetixio/core-contracts/contracts/proxy/UUPSProxy.sol";
-import "@synthetixio/core-contracts/contracts/errors/ArgumentError.sol";
 import "../interfaces/IElectionModule.sol";
 import "../token/MemberToken.sol";
 import "../storage/ElectionStorage.sol";
@@ -13,6 +12,9 @@ contract CoreElectionModule is IElectionModule, ElectionStorage, OwnableMixin {
 
     error AlreadyNominated(address addr);
     error NotNominated(address addr);
+
+    error InvalidPeriodPercent();
+    error InvalidCandidatesCount();
 
     event MemberTokenCreated(address memberTokenAddress);
 
@@ -102,7 +104,7 @@ contract CoreElectionModule is IElectionModule, ElectionStorage, OwnableMixin {
 
     function setPeriodPercent(uint8 percent) external override onlyOwner {
         if (percent > 100) {
-            revert ArgumentError.NumberTooBig("percent", 100);
+            revert InvalidPeriodPercent();
         }
 
         _electionStore().nominationPeriodPercent = percent;
@@ -118,9 +120,17 @@ contract CoreElectionModule is IElectionModule, ElectionStorage, OwnableMixin {
 
     function setNextPeriodPercent(uint8 percent) external override onlyOwner {
         if (percent > 100) {
-            revert ArgumentError.NumberTooBig("percent", 100);
+            revert InvalidPeriodPercent();
         }
 
         _electionStore().nextNominationPeriodPercent = percent;
+    }
+
+    function elect(address[] memory candidates) external view override {
+        uint seatCount = _electionStore().nextSeatCount;
+
+        if (candidates.length != seatCount) {
+            revert InvalidCandidatesCount();
+        }
     }
 }

@@ -16,13 +16,15 @@ interface IElectionModule {
 
     function setSeatCount(uint seats) external;
 
-    function setNextSeatCount(uint seats) external;
-
     function setEpochDuration(uint duration) external;
-
-    function setNextEpochDuration(uint duration) external;
 
     function setPeriodPercent(uint8 percent) external;
 
+    function setNextSeatCount(uint seats) external;
+
+    function setNextEpochDuration(uint duration) external;
+
     function setNextPeriodPercent(uint8 percent) external;
+
+    function elect(address[] memory candidates) external;
 }
