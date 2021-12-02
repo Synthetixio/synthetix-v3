@@ -11,4 +11,10 @@ interface IElectionModule {
     function upgradeMemberTokenImplementation(address newMemberTokenImplementation) external;
 
     function getMemberTokenAddress() external view returns (address);
+
+    function getNominees() external view returns (address[] memory);
+
+    function selfNominate() external;
+
+    function selfUnnominate() external;
 }
