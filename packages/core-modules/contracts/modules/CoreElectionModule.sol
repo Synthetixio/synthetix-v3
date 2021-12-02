@@ -14,6 +14,8 @@ contract CoreElectionModule is IElectionModule, ElectionStorage, OwnableMixin {
     error AlreadyNominated(address addr);
     error NotNominated(address addr);
 
+    event MemberTokenCreated(address memberTokenAddress);
+
     function createMemberToken(string memory tokenName, string memory tokenSymbol) external override onlyOwner {
         ElectionStore storage store = _electionStore();
 
