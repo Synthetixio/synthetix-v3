@@ -34,7 +34,5 @@ async function _prompt(contracts) {
   return contract;
 }
 async function _searchContracts(contracts, matches, query = '') {
-  return new Promise((resolve) => {
-    resolve(contracts.filter((contract) => contract.toLowerCase().includes(query.toLowerCase())));
-  });
+  return contracts.filter((contract) => contract.toLowerCase().includes(query.toLowerCase()));
 }

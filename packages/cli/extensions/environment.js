@@ -7,7 +7,6 @@ extendEnvironment((hre) => {
 
   hre.cli = {
     contract: null,
-    contractFunction: null,
   };
 
   // Prevent any properties being added to hre.cli

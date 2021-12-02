@@ -30,18 +30,16 @@ async function _prompt(abi) {
 }
 
 async function _searchAbi(abi, matches, query = '') {
-  return new Promise((resolve) => {
-    const abiMatches = abi.filter((item) => {
-      if (item.name && item.type === 'function') {
-        return item.name.toLowerCase().includes(query.toLowerCase());
-      }
-      return false;
-    });
-
-    const escItem = '↩ BACK';
-    if (query === '') {
-      abiMatches.splice(0, 0, escItem);
+  const abiMatches = abi.filter((item) => {
+    if (item.name && item.type === 'function') {
+      return item.name.toLowerCase().includes(query.toLowerCase());
     }
-    resolve(abiMatches);
+    return false;
   });
+
+  const escItem = '↩ BACK';
+  if (query === '') {
+    abiMatches.splice(0, 0, escItem);
+  }
+  return abiMatches;
 }
