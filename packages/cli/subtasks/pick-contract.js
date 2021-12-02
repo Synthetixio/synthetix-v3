@@ -1,7 +1,6 @@
 const { subtask } = require('hardhat/config');
 const { SUBTASK_PICK_CONTRACT } = require('../task-names');
 const inquirer = require('inquirer');
-const constants = require('../constants');
 
 subtask(SUBTASK_PICK_CONTRACT, 'Pick contract to interact with').setAction(
   async (taskArguments, hre) => {
