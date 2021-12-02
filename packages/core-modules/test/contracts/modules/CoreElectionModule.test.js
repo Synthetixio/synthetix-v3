@@ -99,10 +99,10 @@ describe('CoreElectionModule', () => {
 
   describe('when the user self nominates', () => {
     it('sets the value & unsets the value', async () => {
-      await (await CoreElectionModule.selfNominate()).wait();
+      await (await CoreElectionModule.nominate()).wait();
       equal((await CoreElectionModule.getNominees()).includes(owner.address), true);
 
-      await (await CoreElectionModule.selfUnnominate()).wait();
+      await (await CoreElectionModule.withdrawNomination()).wait();
       equal((await CoreElectionModule.getNominees()).includes(owner.address), false);
     });
   });

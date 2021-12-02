@@ -10,7 +10,7 @@ interface IElectionModule {
 
     function getNominees() external view returns (address[] memory);
 
-    function selfNominate() external;
+    function nominate() external;
 
-    function selfUnnominate() external;
+    function withdrawNomination() external;
 }
