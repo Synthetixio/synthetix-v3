@@ -6,6 +6,9 @@ import "../errors/InitError.sol";
 import "./ERC20Storage.sol";
 
 contract ERC20 is IERC20, ERC20Storage {
+    event Transfer(address indexed from, address indexed to, uint amount);
+    event Approval(address indexed owner, address indexed spender, uint amount);
+
     error InsufficientAllowance(uint required, uint existing);
     error InsufficientBalance(uint required, uint existing);
 

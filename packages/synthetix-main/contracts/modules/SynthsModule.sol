@@ -9,6 +9,14 @@ import "../interfaces/ISynth.sol";
 import "../storage/SynthsStorage.sol";
 
 contract SynthsModule is ISynthsModule, OwnableMixin, SynthsStorage {
+    event BeaconCreated(address beacon);
+    event SynthCreated(bytes32 synth, address synthAddress);
+
+    error BeaconAlreadyCreated();
+    error BeaconNotCreated();
+    error ImplementationNotSet();
+    error SynthAlreadyCreated();
+
     function createBeacon() external override onlyOwner {
         SynthsStore storage store = _synthsStore();
         if (store.beacon != address(0)) {

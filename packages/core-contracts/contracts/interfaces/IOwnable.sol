@@ -2,12 +2,6 @@
 pragma solidity ^0.8.0;
 
 interface IOwnable {
-    error NotNominated(address addr);
-
-    event OwnerNominated(address newOwner);
-
-    event OwnerChanged(address oldOwner, address newOwner);
-
     function acceptOwnership() external;
 
     function nominateNewOwner(address newNominatedOwner) external;

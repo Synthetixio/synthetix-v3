@@ -8,6 +8,10 @@ import "../token/MemberToken.sol";
 import "../storage/ElectionStorage.sol";
 
 contract CoreElectionModule is IElectionModule, ElectionStorage, OwnableMixin {
+    event MemberTokenCreated(address memberTokenAddress);
+
+    error MemberTokenAlreadyCreated();
+
     function createMemberToken(string memory tokenName, string memory tokenSymbol) external override onlyOwner {
         ElectionStore storage store = _electionStore();
 

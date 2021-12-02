@@ -7,6 +7,11 @@ import "../utils/AddressUtil.sol";
 import "./ProxyStorage.sol";
 
 abstract contract UUPSImplementation is IUUPSImplementation, ProxyStorage {
+    event Upgraded(address implementation);
+
+    error ImplementationIsSterile(address implementation);
+    error UpgradeSimulationFailed();
+
     function _upgradeTo(address newImplementation) internal virtual {
         if (newImplementation == address(0)) {
             revert AddressError.ZeroAddress();
