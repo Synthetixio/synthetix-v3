@@ -1,8 +1,6 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@synthetixio/core-contracts/contracts/utils/AddressSet.sol";
-
 contract ElectionStorage {
     struct ElectionStore {
         address memberTokenAddress;
