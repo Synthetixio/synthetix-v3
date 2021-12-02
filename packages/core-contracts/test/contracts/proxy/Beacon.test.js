@@ -17,7 +17,7 @@ describe('Beacon', () => {
       const factory = await ethers.getContractFactory('Beacon');
       await assertRevert(
         factory.deploy('0x0000000000000000000000000000000000000000'),
-        `ZeroAddress()`
+        'ZeroAddress()'
       );
     });
   });

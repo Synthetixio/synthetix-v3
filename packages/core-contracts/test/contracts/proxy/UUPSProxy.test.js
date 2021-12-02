@@ -30,7 +30,7 @@ describe('UUPSProxy', () => {
         const factory = await ethers.getContractFactory('UUPSProxy');
         await assertRevert(
           factory.deploy('0x0000000000000000000000000000000000000000'),
-          `ZeroAddress()`
+          'ZeroAddress()'
         );
       });
     });
