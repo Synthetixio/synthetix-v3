@@ -6,7 +6,8 @@ import "@synthetixio/core-contracts/contracts/utils/AddressSet.sol";
 contract ElectionStorage {
     struct ElectionStore {
         address memberTokenAddress;
-        AddressSet.Values nominees;
+        address[] nominees;
+        mapping(address => uint256) nomineesIndexes;
     }
 
     function _electionStore() internal pure returns (ElectionStore storage store) {
