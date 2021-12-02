@@ -2,9 +2,23 @@
 pragma solidity ^0.8.0;
 
 contract ElectionStorage {
-    struct VotesCount {
-        address addr;
-        uint votesCount;
+    struct ElectionData {
+        /**
+         * @dev number of votes a nominee has for being a council member in the next epoch.
+         */
+        mapping(address => uint256) nomineeVotes;
+        /**
+         * @dev History of addresses that voted on any of the elections.
+         */
+        mapping(address => bool) addressVoted;
+        /**
+         * @dev Used to keep track of the next epoch's nominees. Gets erased when an epoch starts and a new council takes effect.
+         */
+        address[] nominees;
+        /**
+         * @dev Position of an address on the nominees Array.
+         */
+        mapping(address => uint256) nomineeIndexes;
     }
 
     struct ElectionStore {
@@ -17,18 +31,9 @@ contract ElectionStorage {
          */
         address electionTokenAddress;
         /**
-         * @dev History of address votes for all the elections.
+         * @dev Voting data for the current election
          */
-        mapping(address => bool)[] electionVotes;
-        /**
-         * @dev History of address votes for all the elections.
-         */
-        VotesCount[][] electionTopNominees;
-        /**
-         * @dev Used to keep track of the next epoch's nominees. Gets erased when an epoch starts and a new council takes effect.
-         */
-        address[] nominees;
-        mapping(address => uint256) nomineeIndexes;
+        ElectionData electionData;
         /**
          * @dev Number of members in the current epoch.
          */
@@ -57,10 +62,6 @@ contract ElectionStorage {
          * @dev Staging duration for the next epoch.
          */
         uint nextNominationPeriodPercent;
-        /**
-         * @dev used to keep track of the number of votes a nominee has for being a council member in the next epoch.
-         */
-        mapping(address => uint256) nomineeVotes;
     }
 
     function _electionStore() internal pure returns (ElectionStore storage store) {
