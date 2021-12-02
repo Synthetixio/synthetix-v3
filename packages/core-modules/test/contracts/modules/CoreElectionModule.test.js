@@ -97,7 +97,7 @@ describe('CoreElectionModule', () => {
     });
   });
 
-  describe.only('when the user self nominates', () => {
+  describe('when the user self nominates', () => {
     it.skip('reverts when called from zero address', async () => {
       await assertRevert(
         CoreElectionModule.connect('0x0000000000000000000000000000000000000000').nominate(),
