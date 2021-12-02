@@ -1,4 +1,4 @@
-const { equal, notEqual } = require('assert/strict');
+const { deepEqual, equal, notEqual } = require('assert/strict');
 const assertRevert = require('@synthetixio/core-js/utils/assert-revert');
 const { findEvent } = require('@synthetixio/core-js/utils/events');
 const { bootstrap } = require('@synthetixio/deployer/utils/tests');
@@ -97,13 +97,36 @@ describe('CoreElectionModule', () => {
     });
   });
 
-  describe('when the user self nominates', () => {
-    it('sets the value & unsets the value', async () => {
-      await (await CoreElectionModule.nominate()).wait();
-      equal((await CoreElectionModule.getNominees()).includes(owner.address), true);
+  describe.only('when the user self nominates', () => {
+    it.skip('reverts when called from zero address', async () => {
+      await assertRevert(
+        CoreElectionModule.connect('0x0000000000000000000000000000000000000000').nominate(),
+        'ZeroAddress'
+      );
+    });
 
-      await (await CoreElectionModule.withdrawNomination()).wait();
-      equal((await CoreElectionModule.getNominees()).includes(owner.address), false);
+    it('sets the value & unsets the value', async () => {
+      // Nominate just one user
+      await (await CoreElectionModule.connect(owner).nominate()).wait();
+      deepEqual(await CoreElectionModule.getNominees(), [owner.address]);
+
+      // Nominate another user
+      await (await CoreElectionModule.connect(user).nominate()).wait();
+      deepEqual(await CoreElectionModule.getNominees(), [owner.address, user.address]);
+
+      // Check for double nominations
+      await assertRevert(CoreElectionModule.connect(owner).nominate(), 'AlreadyNominated');
+
+      // Withdraw first nomination
+      await (await CoreElectionModule.connect(owner).withdrawNomination()).wait();
+      deepEqual(await CoreElectionModule.getNominees(), [user.address]);
+
+      // Withdraw second nomination
+      await (await CoreElectionModule.connect(user).withdrawNomination()).wait();
+      deepEqual(await CoreElectionModule.getNominees(), []);
+
+      // Check for invalid withdraw
+      await assertRevert(CoreElectionModule.connect(owner).withdrawNomination(), 'NotNominated');
     });
   });
 });
