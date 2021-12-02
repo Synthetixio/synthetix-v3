@@ -57,18 +57,18 @@ contract CoreElectionModule is IElectionModule, ElectionStorage, OwnableMixin {
             revert AddressError.ZeroAddress();
         }
 
-        if (store.nomineesIndexes[msg.sender] != 0) {
+        if (store.nomineeIndexes[msg.sender] != 0) {
             revert AlreadyNominated(msg.sender);
         }
 
         store.nominees.push(msg.sender);
-        store.nomineesIndexes[msg.sender] = store.nominees.length;
+        store.nomineeIndexes[msg.sender] = store.nominees.length;
     }
 
     function withdrawNomination() external override {
         ElectionStore storage store = _electionStore();
 
-        uint256 valueIndex = store.nomineesIndexes[msg.sender];
+        uint256 valueIndex = store.nomineeIndexes[msg.sender];
 
         if (msg.sender == address(0)) {
             revert AddressError.ZeroAddress();
@@ -90,13 +90,13 @@ contract CoreElectionModule is IElectionModule, ElectionStorage, OwnableMixin {
             // Move the last value to the index where the value to delete is
             store.nominees[toDeleteIndex] = lastvalue;
             // Update the index for the moved value
-            store.nomineesIndexes[lastvalue] = valueIndex; // Replace lastvalue's index to valueIndex
+            store.nomineeIndexes[lastvalue] = valueIndex; // Replace lastvalue's index to valueIndex
         }
 
         // Delete the slot where the moved value was stored
         store.nominees.pop();
 
         // Delete the index for the deleted slot
-        delete store.nomineesIndexes[msg.sender];
+        delete store.nomineeIndexes[msg.sender];
     }
 }

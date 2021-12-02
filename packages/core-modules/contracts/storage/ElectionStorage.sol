@@ -5,7 +5,7 @@ contract ElectionStorage {
     struct ElectionStore {
         address memberTokenAddress;
         address[] nominees;
-        mapping(address => uint256) nomineesIndexes;
+        mapping(address => uint256) nomineeIndexes;
     }
 
     function _electionStore() internal pure returns (ElectionStore storage store) {
