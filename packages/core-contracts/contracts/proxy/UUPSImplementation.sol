@@ -3,6 +3,7 @@ pragma solidity ^0.8.0;
 
 import "../interfaces/IUUPSImplementation.sol";
 import "../errors/AddressError.sol";
+import "../errors/ChangeError.sol";
 import "../utils/AddressUtil.sol";
 import "./ProxyStorage.sol";
 
@@ -22,6 +23,10 @@ abstract contract UUPSImplementation is IUUPSImplementation, ProxyStorage {
         }
 
         ProxyStore storage store = _proxyStore();
+
+        if (newImplementation == store.implementation) {
+            revert ChangeError.NoChange();
+        }
 
         if (!store.simulatingUpgrade && _implementationIsSterile(newImplementation)) {
             revert ImplementationIsSterile(newImplementation);
