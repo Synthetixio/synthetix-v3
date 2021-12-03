@@ -3,7 +3,7 @@ const { SUBTASK_PICK_PARAMETERS } = require('../task-names');
 const inquirer = require('inquirer');
 const logger = require('@synthetixio/core-js/utils/logger');
 
-subtask(SUBTASK_PICK_PARAMETERS, 'Populate the selected function\'s parameters').setAction(
+subtask(SUBTASK_PICK_PARAMETERS, 'Populate the selected function parameters').setAction(
   async (taskArguments, hre) => {
     hre.cli.functionParameters = [];
 
