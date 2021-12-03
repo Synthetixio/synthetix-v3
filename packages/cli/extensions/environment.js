@@ -6,11 +6,13 @@ extendEnvironment((hre) => {
   }
 
   hre.cli = {
-    contract: null,
+    contractName: null,
+    functionName: null,
   };
 
   // Prevent any properties being added to hre.cli
   // other than those defined above.
   Object.preventExtensions(hre.cli);
-  Object.preventExtensions(hre.cli.contract);
+  Object.preventExtensions(hre.cli.contractName);
+  Object.preventExtensions(hre.cli.functionName);
 });
