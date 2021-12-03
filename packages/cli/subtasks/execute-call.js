@@ -9,7 +9,6 @@ subtask(SUBTASK_EXECUTE_CALL, 'Execute the current tx').setAction(async (taskArg
   const functionAbi = abi.find((abiItem) => abiItem.name === hre.cli.functionName);
 
   const readOnly = functionAbi.stateMutability === 'view';
-
   if (readOnly) {
     await executeReadTransaction(abi);
   } else {
@@ -30,7 +29,10 @@ async function executeReadTransaction(abi) {
 }
 
 async function executeWriteTransaction(abi) {
+  logger.warn('This is a write transaction');
+
   const signer = (await hre.ethers.getSigners())[0];
+  logger.info(`Signer to use: ${signer.address}`);
 
   const contract = new hre.ethers.Contract(
     hre.deployer.deployment.general.contracts[hre.cli.contractName].deployedAddress,
@@ -43,7 +45,10 @@ async function executeWriteTransaction(abi) {
     const estimateGas = await contract.estimateGas[hre.cli.functionName](
       ...hre.cli.functionParameters
     );
-    hre.cli.callConfirmed = await prompter.ask(`Estimated gas: ${estimateGas}. Continue?`);
+    const confirmed = await prompter.ask(`Estimated gas: ${estimateGas}. Continue?`);
+    if (!confirmed) {
+      return;
+    }
 
     tx = await contract[hre.cli.functionName](...hre.cli.functionParameters);
   } catch (error) {

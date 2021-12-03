@@ -49,7 +49,7 @@ task(TASK_INTERACT, 'Interacts with a given modular system deployment')
       nextSubtask: SUBTASK_PREVIEW_CALL,
     };
     taskLinks[SUBTASK_PREVIEW_CALL] = {
-      completed: () => hre.cli.callConfirmed === true,
+      completed: () => true,
       previousSubtask: SUBTASK_PICK_FUNCTION,
       nextSubtask: SUBTASK_EXECUTE_CALL,
     };
