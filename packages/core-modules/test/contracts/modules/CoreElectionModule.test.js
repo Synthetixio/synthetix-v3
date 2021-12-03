@@ -97,6 +97,96 @@ describe('CoreElectionModule', () => {
     });
   });
 
+  describe('when configuring the election token address', () => {
+    let ERC20;
+    before('prepare token', async () => {
+      const factory = await ethers.getContractFactory('ERC20');
+      ERC20 = await factory.deploy();
+    });
+
+    it('reverts when a regular user tries to setElectionTokenAddress', async () => {
+      await assertRevert(
+        CoreElectionModule.connect(user).setElectionTokenAddress(
+          '0x0000000000000000000000000000000000000000'
+        ),
+        'Unauthorized'
+      );
+    });
+
+    it('allows the owner to setElectionTokenAddress', async () => {
+      await (await CoreElectionModule.connect(owner).setElectionTokenAddress(ERC20.address)).wait();
+    });
+  });
+
+  describe('when configuring the current epoch', () => {
+    it('reverts when a regular user tries to setSeatCount', async () => {
+      await assertRevert(CoreElectionModule.connect(user).setSeatCount(5), 'Unauthorized');
+    });
+
+    it('allows the owner to setSeatCount', async () => {
+      await (await CoreElectionModule.connect(owner).setSeatCount(5)).wait();
+    });
+
+    it('reverts when a regular user tries to setEpochDuration', async () => {
+      await assertRevert(CoreElectionModule.connect(user).setEpochDuration(10000), 'Unauthorized');
+    });
+
+    it('allows the owner to setEpochDuration', async () => {
+      await (await CoreElectionModule.connect(owner).setEpochDuration(10000)).wait();
+    });
+
+    it('reverts when a regular user tries to setPeriodPercent', async () => {
+      await assertRevert(CoreElectionModule.connect(user).setPeriodPercent(20), 'Unauthorized');
+    });
+
+    it('reverts when giving an invalid percent value to setPeriodPercent', async () => {
+      await assertRevert(
+        CoreElectionModule.connect(owner).setPeriodPercent(101),
+        'InvalidPeriodPercent'
+      );
+    });
+
+    it('allows the owner to setPeriodPercent', async () => {
+      await (await CoreElectionModule.connect(owner).setPeriodPercent(20)).wait();
+    });
+  });
+
+  describe('when configuring the next epoch', () => {
+    it('reverts when a regular user tries to setNextSeatCount', async () => {
+      await assertRevert(CoreElectionModule.connect(user).setNextSeatCount(5), 'Unauthorized');
+    });
+
+    it('allows the owner to setNextSeatCount', async () => {
+      await (await CoreElectionModule.connect(owner).setNextSeatCount(5)).wait();
+    });
+
+    it('reverts when a regular user tries to setNextEpochDuration', async () => {
+      await assertRevert(
+        CoreElectionModule.connect(user).setNextEpochDuration(10000),
+        'Unauthorized'
+      );
+    });
+
+    it('allows the owner to setNextEpochDuration', async () => {
+      await (await CoreElectionModule.connect(owner).setNextEpochDuration(10000)).wait();
+    });
+
+    it('reverts when a regular user tries to setNextPeriodPercent', async () => {
+      await assertRevert(CoreElectionModule.connect(user).setNextPeriodPercent(20), 'Unauthorized');
+    });
+
+    it('reverts when giving an invalid percent value to setNextPeriodPercent', async () => {
+      await assertRevert(
+        CoreElectionModule.connect(owner).setNextPeriodPercent(101),
+        'InvalidPeriodPercent'
+      );
+    });
+
+    it('allows the owner to setNextPeriodPercent', async () => {
+      await (await CoreElectionModule.connect(owner).setNextPeriodPercent(20)).wait();
+    });
+  });
+
   describe('when the address self nominates', () => {
     it('can nominate several addresses', async () => {
       await (await CoreElectionModule.connect(owner).nominate()).wait();
@@ -118,8 +208,35 @@ describe('CoreElectionModule', () => {
       deepEqual(await CoreElectionModule.getNominees(), []);
     });
 
-    it('reverts when withdrawing a not nomiated address', async () => {
+    it('reverts when withdrawing a not nominated address', async () => {
       await assertRevert(CoreElectionModule.connect(owner).withdrawNomination(), 'NotNominated');
+    });
+  });
+
+  describe('when electing a new council', () => {
+    let candidates;
+
+    before('identify candidates', async () => {
+      // Grab 5 users as candidates
+      candidates = (await ethers.getSigners()).slice(2, 7);
+    });
+
+    before('prepare next epoch', async () => {
+      // Next seat count should be 3, and leave 2 outside
+      await (await CoreElectionModule.connect(owner).setNextSeatCount(3)).wait();
+    });
+
+    before('nominate candidates', async () => {
+      await Promise.all(
+        candidates.map((candidate) => CoreElectionModule.connect(candidate).nominate())
+      );
+    });
+
+    it('reverts when trying to elect an invalid amount of candidates', async () => {
+      await assertRevert(
+        CoreElectionModule.connect(user).elect([candidates[0].address, candidates[1].address]),
+        'InvalidCandidatesCount'
+      );
     });
   });
 });

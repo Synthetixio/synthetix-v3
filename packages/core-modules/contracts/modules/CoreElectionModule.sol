@@ -1,6 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import "@synthetixio/core-contracts/contracts/token/ERC20.sol";
 import "@synthetixio/core-contracts/contracts/ownership/OwnableMixin.sol";
 import "@synthetixio/core-contracts/contracts/proxy/UUPSProxy.sol";
 import "../interfaces/IElectionModule.sol";
@@ -13,6 +14,8 @@ contract CoreElectionModule is IElectionModule, ElectionStorage, OwnableMixin {
     error MemberTokenAlreadyCreated();
     error AlreadyNominated(address addr);
     error NotNominated(address addr);
+    error InvalidPeriodPercent();
+    error InvalidCandidatesCount();
 
     function createMemberToken(string memory tokenName, string memory tokenSymbol) external override onlyOwner {
         ElectionStore storage store = _electionStore();
@@ -42,6 +45,14 @@ contract CoreElectionModule is IElectionModule, ElectionStorage, OwnableMixin {
 
     function getMemberTokenAddress() public view override returns (address) {
         return _electionStore().memberTokenAddress;
+    }
+
+    function setElectionTokenAddress(address addr) external override onlyOwner {
+        _electionStore().electionTokenAddress = addr;
+    }
+
+    function getElectionTokenAddress() external view override returns (address) {
+        return _electionStore().electionTokenAddress;
     }
 
     function getNominees() external view override returns (address[] memory) {
@@ -88,5 +99,71 @@ contract CoreElectionModule is IElectionModule, ElectionStorage, OwnableMixin {
 
         // Delete the index for the deleted slot
         delete store.nomineeIndexes[msg.sender];
+    }
+
+    function setSeatCount(uint seats) external override onlyOwner {
+        _electionStore().seatCount = seats;
+    }
+
+    function setEpochDuration(uint duration) external override onlyOwner {
+        _electionStore().epochDuration = duration;
+    }
+
+    function setPeriodPercent(uint8 percent) external override onlyOwner {
+        if (percent > 100) {
+            revert InvalidPeriodPercent();
+        }
+
+        _electionStore().nominationPeriodPercent = percent;
+    }
+
+    function setNextSeatCount(uint seats) external override onlyOwner {
+        _electionStore().nextSeatCount = seats;
+    }
+
+    function setNextEpochDuration(uint duration) external override onlyOwner {
+        _electionStore().nextEpochDuration = duration;
+    }
+
+    function setNextPeriodPercent(uint8 percent) external override onlyOwner {
+        if (percent > 100) {
+            revert InvalidPeriodPercent();
+        }
+
+        _electionStore().nextNominationPeriodPercent = percent;
+    }
+
+    function elect(address[] memory candidates) external view override {
+        uint seatCount = _electionStore().nextSeatCount;
+
+        if (candidates.length != seatCount) {
+            revert InvalidCandidatesCount();
+        }
+
+        // TODO: if msg.sender already voted, rollback previous votes.
+
+        // TODO: Assign votes to each address (same to all)
+        // uint votePower = ERC20(_electionStore().electionTokenAddress).balanceOf(msg.sender);
+
+        // TODO: Recalculate top [seatsCount] nominees
+        //   _minimunIdx;
+        //   _minimumValue;
+        //   if votes > minimum
+        //     electionTopNominees[last][minumunNomineeTop] = msg.sender
+        //     for () // get new minimum (idx & value)
+
+        // TODO: Mark msg.sender as already voted on electionVotes
+    }
+
+    function _isNextEpochNomination() internal view virtual returns (bool) {
+        return false;
+    }
+
+    function _isNextEpochVoting() internal view virtual returns (bool) {
+        return false;
+    }
+
+    function _isNextEpoch() internal virtual returns (bool) {
+        return false;
     }
 }
