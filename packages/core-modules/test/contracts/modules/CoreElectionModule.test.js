@@ -1,4 +1,4 @@
-const { equal, notEqual } = require('assert/strict');
+const { deepEqual, equal, notEqual } = require('assert/strict');
 const assertRevert = require('@synthetixio/core-js/utils/assert-revert');
 const { findEvent } = require('@synthetixio/core-js/utils/events');
 const { bootstrap } = require('@synthetixio/deployer/utils/tests');
@@ -10,10 +10,10 @@ describe('CoreElectionModule', () => {
   const { proxyAddress } = bootstrap(initializer);
 
   let CoreElectionModule;
-  let user;
+  let owner, user;
 
   before('identify signers', async () => {
-    [, user] = await ethers.getSigners();
+    [owner, user] = await ethers.getSigners();
   });
 
   before('identify modules', async () => {
@@ -32,7 +32,7 @@ describe('CoreElectionModule', () => {
       it('reverts', async () => {
         await assertRevert(
           CoreElectionModule.connect(user).createMemberToken('Member Token', 'cmt'),
-          'Unauthorized()'
+          'Unauthorized'
         );
       });
     });
@@ -65,7 +65,7 @@ describe('CoreElectionModule', () => {
       it('reverts', async () => {
         await assertRevert(
           CoreElectionModule.createMemberToken('Member Token', 'cmt'),
-          'MemberTokenAlreadyCreated()'
+          'MemberTokenAlreadyCreated'
         );
       });
     });
@@ -82,7 +82,7 @@ describe('CoreElectionModule', () => {
           CoreElectionModule.connect(user).upgradeMemberTokenImplementation(
             NewImplementation.address
           ),
-          'Unauthorized()'
+          'Unauthorized'
         );
       });
 
@@ -94,6 +94,32 @@ describe('CoreElectionModule', () => {
 
         equal(await MemberToken.getImplementation(), NewImplementation.address);
       });
+    });
+  });
+
+  describe('when the address self nominates', () => {
+    it('can nominate several addresses', async () => {
+      await (await CoreElectionModule.connect(owner).nominate()).wait();
+      deepEqual(await CoreElectionModule.getNominees(), [owner.address]);
+
+      await (await CoreElectionModule.connect(user).nominate()).wait();
+      deepEqual(await CoreElectionModule.getNominees(), [owner.address, user.address]);
+    });
+
+    it('reverts when trying to nominate several times the same address', async () => {
+      await assertRevert(CoreElectionModule.connect(owner).nominate(), 'AlreadyNominated');
+    });
+
+    it('can withdraw their own nominations', async () => {
+      await (await CoreElectionModule.connect(owner).withdrawNomination()).wait();
+      deepEqual(await CoreElectionModule.getNominees(), [user.address]);
+
+      await (await CoreElectionModule.connect(user).withdrawNomination()).wait();
+      deepEqual(await CoreElectionModule.getNominees(), []);
+    });
+
+    it('reverts when withdrawing a not nomiated address', async () => {
+      await assertRevert(CoreElectionModule.connect(owner).withdrawNomination(), 'NotNominated');
     });
   });
 });

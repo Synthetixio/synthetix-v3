@@ -1,40 +1,39 @@
 const { subtask } = require('hardhat/config');
-const inquirer = require('inquirer');
-const autocomplete = require('inquirer-list-search-prompt');
 const { SUBTASK_PICK_CONTRACT } = require('../task-names');
+const inquirer = require('inquirer');
+const chalk = require('chalk');
 
 subtask(SUBTASK_PICK_CONTRACT, 'Pick contract to interact with').setAction(
   async (taskArguments, hre) => {
-    const contracts = Object.keys(hre.deployer.deployment.general.contracts);
+    const contractNames = Object.keys(hre.deployer.deployment.general.contracts);
 
-    _prioritizeTarget(contracts, 'Synthetix');
+    let { contractName } = await inquirer.prompt([
+      {
+        type: 'autocomplete',
+        name: 'contractName',
+        message: 'Pick a CONTRACT:',
+        source: async (matches, query) => {
+          return contractNames
+            .filter((contractName) => {
+              if (query) {
+                return contractName.toLowerCase().includes(query.toLowerCase());
+              }
 
-    hre.cli.contract = await _prompt(contracts);
+              return true;
+            })
+            .map((contractName) => {
+              const contractAddress =
+                hre.deployer.deployment.general.contracts[contractName].deployedAddress;
+
+              return `${contractName} ${chalk.gray(contractAddress)}`;
+            });
+        },
+      },
+    ]);
+
+    // Remove address
+    contractName = contractName.split(' ')[0];
+
+    hre.cli.contractName = contractName;
   }
 );
-
-function _prioritizeTarget(contracts, itemName) {
-  contracts.splice(contracts.indexOf(itemName), 1);
-  contracts.unshift(itemName);
-}
-
-async function _prompt(contracts) {
-  // Set up inquirer with autocomplete plugin i.e. as you type filtering
-  inquirer.registerPrompt('autocomplete', autocomplete);
-
-  const { contract } = await inquirer.prompt([
-    {
-      type: 'autocomplete',
-      name: 'contract',
-      message: 'Pick a CONTRACT:',
-      source: (matches, query) => _searchContracts(contracts, matches, query),
-    },
-  ]);
-
-  return contract;
-}
-async function _searchContracts(contracts, matches, query = '') {
-  return new Promise((resolve) => {
-    resolve(contracts.filter((contract) => contract.toLowerCase().includes(query.toLowerCase())));
-  });
-}

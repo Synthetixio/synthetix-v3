@@ -26,7 +26,7 @@ describe('CoreOwnerModule', () => {
 
   describe('when a regular user attempts to interact with the protected function', () => {
     it('reverts', async () => {
-      await assertRevert(SampleOwnedModule.connect(user).setProtectedValue(42), 'Unauthorized()');
+      await assertRevert(SampleOwnedModule.connect(user).setProtectedValue(42), 'Unauthorized');
     });
   });
 
