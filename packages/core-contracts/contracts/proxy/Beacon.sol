@@ -5,12 +5,17 @@ import "./BeaconStorage.sol";
 import "../ownership/OwnableMixin.sol";
 import "../utils/AddressUtil.sol";
 import "../errors/AddressError.sol";
+import "../errors/ChangeError.sol";
 import "../interfaces/IBeacon.sol";
 
 contract Beacon is IBeacon, OwnableMixin, BeaconStorage {
     event Upgraded(address implementation);
 
     constructor(address firstOwner) {
+        if (firstOwner == address(0)) {
+            revert AddressError.ZeroAddress();
+        }
+
         _ownableStore().owner = firstOwner;
     }
 
@@ -19,11 +24,17 @@ contract Beacon is IBeacon, OwnableMixin, BeaconStorage {
             revert AddressError.ZeroAddress();
         }
 
+        BeaconStore storage store = _beaconStore();
+
+        if (newImplementation == store.implementation) {
+            revert ChangeError.NoChange();
+        }
+
         if (!AddressUtil.isContract(newImplementation)) {
             revert AddressError.NotAContract(newImplementation);
         }
 
-        _beaconStore().implementation = newImplementation;
+        store.implementation = newImplementation;
 
         emit Upgraded(newImplementation);
     }

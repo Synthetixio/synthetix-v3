@@ -2,10 +2,6 @@
 pragma solidity ^0.8.0;
 
 interface ISNXTokenModule {
-    error SNXAlreadyCreated();
-
-    event SNXTokenCreated(address snxAddress);
-
     function createSNX() external;
 
     function upgradeSNXImplementation(address newSNXTokenImplementation) external;

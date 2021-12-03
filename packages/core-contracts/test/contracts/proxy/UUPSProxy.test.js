@@ -17,6 +17,25 @@ describe('UUPSProxy', () => {
     [user] = await ethers.getSigners();
   });
 
+  describe('when deploying the proxy with invalid parameters', () => {
+    describe('when setting an EOA as the first implementation', () => {
+      it('reverts', async () => {
+        const factory = await ethers.getContractFactory('UUPSProxy');
+        await assertRevert(factory.deploy(user.address), `NotAContract("${user.address}")`);
+      });
+    });
+
+    describe('when setting the zero address as the first implementation', () => {
+      it('reverts', async () => {
+        const factory = await ethers.getContractFactory('UUPSProxy');
+        await assertRevert(
+          factory.deploy('0x0000000000000000000000000000000000000000'),
+          'ZeroAddress()'
+        );
+      });
+    });
+  });
+
   describe('when deploying the proxy and setting implementation A as the first implementation', () => {
     before('deploy the implementation', async () => {
       const factory = await ethers.getContractFactory('ImplementationMockA');
@@ -77,6 +96,12 @@ describe('UUPSProxy', () => {
     describe('when trying to upgrade to an EOA', () => {
       it('reverts', async () => {
         await assertRevert(Instance.upgradeTo(user.address), `NotAContract("${user.address}")`);
+      });
+    });
+
+    describe('when trying to upgrade to the current implementation', () => {
+      it('reverts', async () => {
+        await assertRevert(Instance.upgradeTo(Implementation.address), 'NoChange()');
       });
     });
 
