@@ -17,6 +17,10 @@ import "../utils/StringUtil.sol";
 */
 
 contract ERC721 is IERC721, IERC721Metadata, ERC721Storage {
+    event Transfer(address indexed from, address indexed to, uint256 indexed tokenId);
+    event Approval(address indexed owner, address indexed approved, uint256 indexed tokenId);
+    event ApprovalForAll(address indexed owner, address indexed operator, bool approved);
+
     error CannotSelfApprove(address);
     error InvalidTransferRecipient(address);
     error TokenDoesNotExist(uint256);

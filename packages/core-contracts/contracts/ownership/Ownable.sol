@@ -7,6 +7,11 @@ import "../errors/AddressError.sol";
 import "../errors/ChangeError.sol";
 
 contract Ownable is IOwnable, OwnableMixin {
+    event OwnerNominated(address newOwner);
+    event OwnerChanged(address oldOwner, address newOwner);
+
+    error NotNominated(address addr);
+
     function acceptOwnership() external override {
         OwnableStore storage store = _ownableStore();
 

@@ -8,6 +8,10 @@ import "../storage/SNXTokenStorage.sol";
 import "../token/SNXToken.sol";
 
 contract SNXTokenModule is ISNXTokenModule, OwnableMixin, SNXTokenStorage {
+    event SNXTokenCreated(address snxAddress);
+
+    error SNXAlreadyCreated();
+
     function createSNX() external override onlyOwner {
         SNXTokenStore storage store = _snxTokenStore();
 
