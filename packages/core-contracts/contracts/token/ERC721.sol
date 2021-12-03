@@ -11,6 +11,11 @@ import "./ERC721Storage.sol";
 import "../utils/AddressUtil.sol";
 import "../utils/StringUtil.sol";
 
+/*
+    Reference implementations:
+    * OpenZeppelin - https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC721/ERC721.sol
+*/
+
 contract ERC721 is IERC721, IERC721Metadata, ERC721Storage {
     error CannotSelfApprove(address);
     error InvalidTransferRecipient(address);

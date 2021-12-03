@@ -3,7 +3,7 @@ const { SUBTASK_PICK_PARAMETERS } = require('../task-names');
 const inquirer = require('inquirer');
 const logger = require('@synthetixio/core-js/utils/logger');
 
-subtask(SUBTASK_PICK_PARAMETERS, 'Populate the selected function\'s parameters').setAction(
+subtask(SUBTASK_PICK_PARAMETERS, 'Populate the selected function parameters').setAction(
   async (taskArguments, hre) => {
     hre.cli.functionParameters = [];
 
@@ -26,7 +26,8 @@ subtask(SUBTASK_PICK_PARAMETERS, 'Populate the selected function\'s parameters')
 
       let encodedParameter;
       try {
-        // Encode and decode to parse user input.
+        // Encode and decode the user's input to parse the input
+        // into types acceptable by ethers.
         encodedParameter = abiCoder.encode([parameter.type], [userInput]);
         encodedParameter = abiCoder.decode([parameter.type], encodedParameter);
 
