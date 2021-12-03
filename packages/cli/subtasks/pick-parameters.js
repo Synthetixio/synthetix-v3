@@ -31,7 +31,7 @@ subtask(SUBTASK_PICK_PARAMETERS, 'Populate the selected function parameters').se
         encodedParameter = abiCoder.encode([parameter.type], [userInput]);
         encodedParameter = abiCoder.decode([parameter.type], encodedParameter);
 
-        hre.cli.functionParameters.push(encodedParameter);
+        hre.cli.functionParameters.push(...encodedParameter);
 
         parameterIndex++;
       } catch (error) {
