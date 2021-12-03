@@ -20,15 +20,23 @@ interface IElectionModule {
 
     function setSeatCount(uint seats) external;
 
-    function setEpochDuration(uint duration) external;
+    function setEpochDuration(uint64 duration) external;
 
     function setPeriodPercent(uint8 percent) external;
 
     function setNextSeatCount(uint seats) external;
 
-    function setNextEpochDuration(uint duration) external;
+    function setNextEpochDuration(uint64 duration) external;
 
     function setNextPeriodPercent(uint8 percent) external;
 
     function elect(address[] memory candidates) external;
+
+    function epochFinised() external view returns (bool);
+
+    function isEpochNominationPeriod() external view returns (bool);
+
+    function isEpochVotingPeriod() external view returns (bool);
+
+    function initialize() external;
 }
