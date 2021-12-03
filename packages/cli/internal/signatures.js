@@ -10,10 +10,10 @@ function getSignatureWithParameterNamesAndValues(contractName, functionName, fun
 
     const valueDescription = functionParameters ? ` = ${functionParameters[i]}` : '';
 
-    parameterDescriptions.push(`${input.type} ${input.name}${valueDescription}`)
+    parameterDescriptions.push(`${input.type} ${input.name}${valueDescription}`);
   }
 
-  let str = `${functionAbi.name}${multiline ? '(\n': '('}`;
+  let str = `${functionAbi.name}${multiline ? '(\n' : '('}`;
   str += `${multiline ? '  ' : ''}${parameterDescriptions.join(multiline ? '\n,' : ', ')}`;
   str += `${multiline ? '\n)' : ')'}`;
 

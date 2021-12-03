@@ -17,17 +17,19 @@ subtask(SUBTASK_PICK_FUNCTION, 'Pick a function from the given contract').setAct
         name: 'functionName',
         message: 'Pick a FUNCTION:',
         source: async (matches, query) => {
-          return abiFunctions.filter((abiItem) => {
-            if (query) {
-              return abiItem.name.toLowerCase().includes(query.toLowerCase());
-            }
+          return abiFunctions
+            .filter((abiItem) => {
+              if (query) {
+                return abiItem.name.toLowerCase().includes(query.toLowerCase());
+              }
 
-            return true;
-          }).map((abiItem) => {
-            return abiItem.name !== constants.BACK ?
-              getSignatureWithParameterNamesAndValues(hre.cli.contractName, abiItem.name) :
-              abiItem.name;
-          });
+              return true;
+            })
+            .map((abiItem) => {
+              return abiItem.name !== constants.BACK
+                ? getSignatureWithParameterNamesAndValues(hre.cli.contractName, abiItem.name)
+                : abiItem.name;
+            });
         },
       },
     ]);

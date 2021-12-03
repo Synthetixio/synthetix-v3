@@ -13,17 +13,20 @@ subtask(SUBTASK_PICK_CONTRACT, 'Pick contract to interact with').setAction(
         name: 'contractName',
         message: 'Pick a CONTRACT:',
         source: async (matches, query) => {
-          return contractNames.filter((contractName) => {
-            if (query) {
-              return contractName.toLowerCase().includes(query.toLowerCase());
-            }
+          return contractNames
+            .filter((contractName) => {
+              if (query) {
+                return contractName.toLowerCase().includes(query.toLowerCase());
+              }
 
-            return true;
-          }).map((contractName) => {
-            const contractAddress = hre.deployer.deployment.general.contracts[contractName].deployedAddress;
+              return true;
+            })
+            .map((contractName) => {
+              const contractAddress =
+                hre.deployer.deployment.general.contracts[contractName].deployedAddress;
 
-            return `${contractName} ${chalk.gray(contractAddress)}`;
-          });
+              return `${contractName} ${chalk.gray(contractAddress)}`;
+            });
         },
       },
     ]);
