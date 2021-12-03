@@ -1,6 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import "@synthetixio/core-contracts/contracts/token/ERC20.sol";
 import "@synthetixio/core-contracts/contracts/ownership/OwnableMixin.sol";
 import "@synthetixio/core-contracts/contracts/proxy/UUPSProxy.sol";
 import "../interfaces/IElectionModule.sol";
@@ -132,5 +133,19 @@ contract CoreElectionModule is IElectionModule, ElectionStorage, OwnableMixin {
         if (candidates.length != seatCount) {
             revert InvalidCandidatesCount();
         }
+
+        // TODO: validate if the msg.sender already voted
+
+        // TODO: Assign votes to each address (same to all)
+        uint votePower = ERC20(_electionStore().electionTokenAddress).balanceOf(msg.sender);
+
+        // TODO: Recalculate top [seatsCount] nominees
+        //   _minimunIdx;
+        //   _minimumValue;
+        //   if votes > minimum
+        //     electionTopNominees[last][minumunNomineeTop] = msg.sender
+        //     for () // get new minimum (idx & value)
+
+        // TODO: Mark msg.sender as already voted on electionVotes
     }
 }

@@ -2,11 +2,28 @@
 pragma solidity ^0.8.0;
 
 contract ElectionStorage {
+    struct VotesCount {
+        address addr;
+        uint votesCount;
+    }
+
     struct ElectionStore {
         /**
          * @dev NFT token awarded to council members in the current epoch. It can be taken away by demotion at any moment, or by election in the next epoch.
          */
         address memberTokenAddress;
+        /**
+         * @dev Regular token used for voting. Requires snapshot functionality to avoid sybil attacks.
+         */
+        address electionTokenAddress;
+        /**
+         * @dev History of address votes for all the elections.
+         */
+        mapping(address => bool)[] electionVotes;
+        /**
+         * @dev History of address votes for all the elections.
+         */
+        VotesCount[][] electionTopNominees;
         /**
          * @dev Used to keep track of the next epoch's nominees. Gets erased when an epoch starts and a new council takes effect.
          */
