@@ -21,7 +21,7 @@ async function executeReadTransaction(abi) {
   const contract = new hre.ethers.Contract(
     hre.deployer.deployment.general.contracts[hre.cli.contractName].deployedAddress,
     abi,
-    hre.ethers.provider,
+    hre.ethers.provider
   );
 
   const result = await contract[hre.cli.functionName](...hre.cli.functionParameters);
@@ -35,16 +35,18 @@ async function executeWriteTransaction(abi) {
   const contract = new hre.ethers.Contract(
     hre.deployer.deployment.general.contracts[hre.cli.contractName].deployedAddress,
     abi,
-    signer,
+    signer
   );
 
   let tx;
   try {
-    const estimateGas = await contract.estimateGas[hre.cli.functionName](...hre.cli.functionParameters);
+    const estimateGas = await contract.estimateGas[hre.cli.functionName](
+      ...hre.cli.functionParameters
+    );
     hre.cli.callConfirmed = await prompter.ask(`Estimated gas: ${estimateGas}. Continue?`);
 
     tx = await contract[hre.cli.functionName](...hre.cli.functionParameters);
-  } catch(error) {
+  } catch (error) {
     logger.error(`Transaction reverted during gas estimation with error "${error}"`);
   }
 
@@ -54,7 +56,7 @@ async function executeWriteTransaction(abi) {
     let receipt;
     try {
       receipt = await tx.wait();
-    } catch(error) {
+    } catch (error) {
       logger.error(`Error sending transaction: ${error}\n${JSON.stringify(tx, null, 2)}`);
     }
 
@@ -64,7 +66,7 @@ async function executeWriteTransaction(abi) {
       if (receipt.status === 0) {
         logger.error(`Transaction reverted:\n${JSON.stringify(receipt, null, 2)}`);
       } else {
-        logger.success(`Transaction succeeded`);
+        logger.success('Transaction succeeded');
       }
 
       printEventsInReceipt(receipt);

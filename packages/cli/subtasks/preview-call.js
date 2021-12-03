@@ -21,9 +21,7 @@ subtask(SUBTASK_PREVIEW_CALL, 'Preview the call to make').setAction(async (taskA
     logger.warn('This is a write transaction');
 
     const signer = (await hre.ethers.getSigners())[0];
-    logger.info(
-      `Signer to use: ${signer.address}`
-    );
+    logger.info(`Signer to use: ${signer.address}`);
 
     hre.cli.callConfirmed = await prompter.ask('Do you confirm sending this transaction?');
   } else {
