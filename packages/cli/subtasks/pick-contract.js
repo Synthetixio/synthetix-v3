@@ -17,7 +17,7 @@ subtask(SUBTASK_PICK_CONTRACT, 'Pick contract to interact with').setAction(
               return contractName.toLowerCase().includes(query.toLowerCase());
             }
 
-            return contractName;
+            return true;
           });
         },
       },
