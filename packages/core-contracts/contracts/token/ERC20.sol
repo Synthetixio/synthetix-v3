@@ -5,6 +5,12 @@ import "../interfaces/IERC20.sol";
 import "../errors/InitError.sol";
 import "./ERC20Storage.sol";
 
+/*
+    Reference implementations:
+    * OpenZeppelin - https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC20/ERC20.sol
+    * Rari-Capital - https://github.com/Rari-Capital/solmate/blob/main/src/tokens/ERC20.sol
+*/
+
 contract ERC20 is IERC20, ERC20Storage {
     error InsufficientAllowance(uint required, uint existing);
     error InsufficientBalance(uint required, uint existing);
