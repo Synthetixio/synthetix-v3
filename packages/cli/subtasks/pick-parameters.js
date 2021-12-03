@@ -1,5 +1,4 @@
 const { subtask } = require('hardhat/config');
-const constants = require('../constants');
 const { SUBTASK_PICK_PARAMETERS } = require('../task-names');
 const inquirer = require('inquirer');
 const logger = require('@synthetixio/core-js/utils/logger');
