@@ -1,9 +1,10 @@
 const { task } = require('hardhat/config');
 const {
+  TASK_INTERACT,
+  SUBTASK_PRINT_INFO,
   SUBTASK_PICK_CONTRACT,
   SUBTASK_PICK_FUNCTION,
-  SUBTASK_PRINT_INFO,
-  TASK_INTERACT,
+  SUBTASK_PICK_PARAMETERS,
 } = require('../task-names');
 const { SUBTASK_LOAD_DEPLOYMENT } = require('@synthetixio/deployer/task-names');
 const types = require('@synthetixio/core-js/utils/hardhat/argument-types');
@@ -38,6 +39,11 @@ task(TASK_INTERACT, 'Interacts with a given modular system deployment')
     taskLinks[SUBTASK_PICK_FUNCTION] = {
       completed: () => hre.cli.functionName !== null,
       previousSubtask: SUBTASK_PICK_CONTRACT,
+      nextSubtask: SUBTASK_PICK_PARAMETERS,
+    };
+    taskLinks[SUBTASK_PICK_PARAMETERS] = {
+      completed: () => hre.cli.functionParameters !== null,
+      previousSubtask: SUBTASK_PICK_FUNCTION,
       nextSubtask: SUBTASK_PICK_CONTRACT,
     };
 
