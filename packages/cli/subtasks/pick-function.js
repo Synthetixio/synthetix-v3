@@ -2,6 +2,7 @@ const { subtask } = require('hardhat/config');
 const constants = require('../constants');
 const { SUBTASK_PICK_FUNCTION } = require('../task-names');
 const inquirer = require('inquirer');
+const { getSignatureWithParameterNamesAndValues } = require('../internal/signatures');
 
 subtask(SUBTASK_PICK_FUNCTION, 'Pick a function from the given contract').setAction(
   async (taskArguments, hre) => {
@@ -10,22 +11,31 @@ subtask(SUBTASK_PICK_FUNCTION, 'Pick a function from the given contract').setAct
 
     abiFunctions.splice(0, 0, { name: constants.BACK });
 
-    const { functionName } = await inquirer.prompt([
+    let { functionName } = await inquirer.prompt([
       {
         type: 'autocomplete',
         name: 'functionName',
         message: 'Pick a FUNCTION:',
         source: async (matches, query) => {
-          return abiFunctions.filter((abiItem) => {
-            if (query) {
-              return abiItem.name.toLowerCase().includes(query.toLowerCase());
-            }
+          return abiFunctions
+            .filter((abiItem) => {
+              if (query) {
+                return abiItem.name.toLowerCase().includes(query.toLowerCase());
+              }
 
-            return abiItem.name;
-          });
+              return true;
+            })
+            .map((abiItem) => {
+              return abiItem.name !== constants.BACK
+                ? getSignatureWithParameterNamesAndValues(hre.cli.contractName, abiItem.name)
+                : abiItem.name;
+            });
         },
       },
     ]);
+
+    // Remove parenthesis
+    functionName = functionName.split('(')[0];
 
     hre.cli.functionName = functionName !== constants.BACK ? functionName : null;
   }
