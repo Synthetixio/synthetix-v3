@@ -49,6 +49,14 @@ contract CoreElectionModule is IElectionModule, ElectionStorage, OwnableMixin {
         return _electionStore().memberTokenAddress;
     }
 
+    function setElectionTokenAddress(address addr) external override onlyOwner {
+        _electionStore().electionTokenAddress = addr;
+    }
+
+    function getElectionTokenAddress() external view override returns (address) {
+        return _electionStore().electionTokenAddress;
+    }
+
     function getNominees() external view override returns (address[] memory) {
         return _electionStore().nominees;
     }
@@ -148,4 +156,14 @@ contract CoreElectionModule is IElectionModule, ElectionStorage, OwnableMixin {
 
         // TODO: Mark msg.sender as already voted on electionVotes
     }
+
+    function _isNextEpochNomination() internal view virtual returns (bool) {
+        return false;
+    }
+
+    function _isNextEpochVoting() internal view virtual returns (bool) {
+        return false;
+    }
+
+    function _isNextEpoch() internal virtual returns (bool);
 }

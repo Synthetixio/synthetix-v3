@@ -8,6 +8,10 @@ interface IElectionModule {
 
     function getMemberTokenAddress() external view returns (address);
 
+    function setElectionTokenAddress(address addr) external;
+
+    function getElectionTokenAddress() external view returns (address);
+
     function getNominees() external view returns (address[] memory);
 
     function nominate() external;
