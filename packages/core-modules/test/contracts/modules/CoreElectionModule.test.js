@@ -97,6 +97,27 @@ describe('CoreElectionModule', () => {
     });
   });
 
+  describe('when configuring the election token address', () => {
+    let ERC20;
+    before('prepare token', async () => {
+      const factory = await ethers.getContractFactory('ERC20');
+      ERC20 = await factory.deploy();
+    });
+
+    it('reverts when a regular user tries to setElectionTokenAddress', async () => {
+      await assertRevert(
+        CoreElectionModule.connect(user).setElectionTokenAddress(
+          '0x0000000000000000000000000000000000000000'
+        ),
+        'Unauthorized'
+      );
+    });
+
+    it('allows the owner to setElectionTokenAddress', async () => {
+      await (await CoreElectionModule.connect(owner).setElectionTokenAddress(ERC20.address)).wait();
+    });
+  });
+
   describe('when configuring the current epoch', () => {
     it('reverts when a regular user tries to setSeatCount', async () => {
       await assertRevert(CoreElectionModule.connect(user).setSeatCount(5), 'Unauthorized');

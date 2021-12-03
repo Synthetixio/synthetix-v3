@@ -142,10 +142,10 @@ contract CoreElectionModule is IElectionModule, ElectionStorage, OwnableMixin {
             revert InvalidCandidatesCount();
         }
 
-        // TODO: validate if the msg.sender already voted
+        // TODO: if msg.sender already voted, rollback previous votes.
 
         // TODO: Assign votes to each address (same to all)
-        uint votePower = ERC20(_electionStore().electionTokenAddress).balanceOf(msg.sender);
+        // uint votePower = ERC20(_electionStore().electionTokenAddress).balanceOf(msg.sender);
 
         // TODO: Recalculate top [seatsCount] nominees
         //   _minimunIdx;
@@ -165,5 +165,7 @@ contract CoreElectionModule is IElectionModule, ElectionStorage, OwnableMixin {
         return false;
     }
 
-    function _isNextEpoch() internal virtual returns (bool);
+    function _isNextEpoch() internal virtual returns (bool) {
+        return false;
+    }
 }
