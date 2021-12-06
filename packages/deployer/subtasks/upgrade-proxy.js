@@ -2,90 +2,53 @@ const logger = require('@synthetixio/core-js/utils/logger');
 const prompter = require('@synthetixio/core-js/utils/prompter');
 const { subtask } = require('hardhat/config');
 const { processTransaction } = require('../internal/process-transactions');
-const { SUBTASK_UPGRADE_PROXY, SUBTASK_DEPLOY_CONTRACT } = require('../task-names');
+const { UPGRADE_ABI } = require('../internal/abis');
+const { SUBTASK_UPGRADE_PROXY } = require('../task-names');
 
-const UPGRADE_ABI = [
-  {
-    inputs: [],
-    name: 'getImplementation',
-    outputs: [
-      {
-        internalType: 'address',
-        name: '',
-        type: 'address',
-      },
-    ],
-    stateMutability: 'view',
-    type: 'function',
-  },
-  {
-    inputs: [
-      {
-        internalType: 'address',
-        name: 'newImplementation',
-        type: 'address',
-      },
-    ],
-    name: 'upgradeTo',
-    outputs: [],
-    stateMutability: 'nonpayable',
-    type: 'function',
-  },
-];
-
-subtask(
-  SUBTASK_UPGRADE_PROXY,
-  'Checks if the main proxy needs to be deployed, and upgrades it if needed.'
-).setAction(async (_, hre) => {
+subtask(SUBTASK_UPGRADE_PROXY, 'Upgrades the main proxy if needed').setAction(async (_, hre) => {
   logger.subtitle('Upgrading main proxy');
 
   const routerName = 'Router';
   const proxyName = hre.config.deployer.proxyContract;
 
-  const routerAddress = _getDeployedAddress(routerName, hre);
+  const proxyAddress = _getDeployedAddress(proxyName, hre);
+  let ProxyContract = await hre.ethers.getContractAt(
+    UPGRADE_ABI,
+    proxyAddress,
+    hre.ethers.provider
+  );
 
-  logger.debug(`Target implementation: ${routerAddress}`);
-
-  const wasProxyDeployed = await hre.run(SUBTASK_DEPLOY_CONTRACT, {
-    contractName: proxyName,
-    constructorArgs: [routerAddress],
-  });
-
-  if (!wasProxyDeployed) {
-    const proxyAddress = _getDeployedAddress(proxyName, hre);
-    await _upgradeProxy({ proxyAddress, routerAddress, hre });
-  }
-});
-
-function _getDeployedAddress(contractName, hre) {
-  return hre.deployer.deployment.general.contracts[contractName].deployedAddress;
-}
-
-async function _upgradeProxy({ proxyAddress, routerAddress, hre }) {
-  const signer = (await hre.ethers.getSigners())[0];
-
-  const upgradeable = await hre.ethers.getContractAt(UPGRADE_ABI, proxyAddress, signer);
-  const activeImplementationAddress = await upgradeable.getImplementation();
+  const activeImplementationAddress = await ProxyContract.getImplementation();
   logger.debug(`Active implementation: ${activeImplementationAddress}`);
+
+  const routerAddress = _getDeployedAddress(routerName, hre);
+  logger.debug(`Target implementation: ${routerAddress}`);
 
   if (activeImplementationAddress !== routerAddress) {
     logger.notice(
-      `Proxy upgrade needed - Main proxy implementation ${activeImplementationAddress} is different from the target implementation`
+      `Main Proxy upgrade needed - Proxy implementation ${activeImplementationAddress} is different from the latest deployer router`
     );
 
     await prompter.confirmAction('Upgrade system');
-
     logger.notice(`Upgrading main proxy to ${routerAddress}`);
 
     try {
-      const transaction = await upgradeable.upgradeTo(routerAddress);
+      const signer = (await hre.ethers.getSigners())[0];
+
+      ProxyContract = ProxyContract.connect(signer);
+
+      const transaction = await ProxyContract.upgradeTo(routerAddress);
       await processTransaction({ transaction, hre, description: 'Proxy upgrade' });
 
-      logger.success(`Main proxy upgraded to ${await upgradeable.getImplementation()}`);
+      logger.success(`Main proxy upgraded to ${await ProxyContract.getImplementation()}`);
     } catch (err) {
       logger.warn(`Unable to upgrade main proxy - Reason: ${err}`);
     }
   } else {
     logger.checked('No need to upgrade the main proxy');
   }
+});
+
+function _getDeployedAddress(contractName, hre) {
+  return hre.deployer.deployment.general.contracts[contractName].deployedAddress;
 }

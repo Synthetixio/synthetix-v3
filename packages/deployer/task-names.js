@@ -11,6 +11,7 @@ module.exports = {
   SUBTASK_PRINT_INFO: 'deployer-print-info',
   SUBTASK_SYNC_PROXY: 'deployer-sync-proxy',
   SUBTASK_SYNC_SOURCES: 'deployer-sync-sources',
+  SUBTASK_DEPLOY_PROXY: 'deployer-deploy-proxy',
   SUBTASK_UPGRADE_PROXY: 'deployer-upgrade-proxy',
   SUBTASK_VALIDATE_MODULES: 'deployer-validate-modules',
   SUBTASK_VALIDATE_STORAGE: 'deployer-validate-storage',
