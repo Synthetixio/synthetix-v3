@@ -8,17 +8,20 @@ subtask(SUBTASK_EXECUTE_CALL, 'Execute the current tx').setAction(async (taskArg
   const abi = hre.deployer.deployment.abis[hre.cli.contractName];
   const functionAbi = abi.find((abiItem) => abiItem.name === hre.cli.functionName);
 
+  const target = hre.deployer.deployment.general.contracts[hre.cli.contractName];
+  const address = target.proxyAddress || target.deployedAddress;
+
   const readOnly = functionAbi.stateMutability === 'view';
   if (readOnly) {
-    await executeReadTransaction(abi);
+    await executeReadTransaction(address, abi);
   } else {
-    await executeWriteTransaction(abi);
+    await executeWriteTransaction(address, abi);
   }
 });
 
-async function executeReadTransaction(abi) {
+async function executeReadTransaction(address, abi) {
   const contract = new hre.ethers.Contract(
-    hre.deployer.deployment.general.contracts[hre.cli.contractName].deployedAddress,
+    address,
     abi,
     hre.ethers.provider
   );
@@ -28,14 +31,14 @@ async function executeReadTransaction(abi) {
   logger.checked(`Result: ${result}`);
 }
 
-async function executeWriteTransaction(abi) {
+async function executeWriteTransaction(address, abi) {
   logger.warn('This is a write transaction');
 
   const signer = (await hre.ethers.getSigners())[0];
   logger.info(`Signer to use: ${signer.address}`);
 
   const contract = new hre.ethers.Contract(
-    hre.deployer.deployment.general.contracts[hre.cli.contractName].deployedAddress,
+    address,
     abi,
     signer
   );
