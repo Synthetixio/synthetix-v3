@@ -5,7 +5,6 @@ const {
   SUBTASK_PICK_CONTRACT,
   SUBTASK_PICK_FUNCTION,
   SUBTASK_PICK_PARAMETERS,
-  SUBTASK_PREVIEW_CALL,
   SUBTASK_EXECUTE_CALL,
 } = require('../task-names');
 const { SUBTASK_LOAD_DEPLOYMENT } = require('@synthetixio/deployer/task-names');
@@ -32,41 +31,30 @@ task(TASK_INTERACT, 'Interacts with a given modular system deployment')
     await hre.run(SUBTASK_LOAD_DEPLOYMENT, { ...taskArguments, readOnly: true });
     await hre.run(SUBTASK_PRINT_INFO, taskArguments);
 
-    const taskLinks = {};
-    taskLinks[SUBTASK_PICK_CONTRACT] = {
-      completed: () => hre.cli.contractName !== null,
-      previousSubtask: null,
-      nextSubtask: SUBTASK_PICK_FUNCTION,
-    };
-    taskLinks[SUBTASK_PICK_FUNCTION] = {
-      completed: () => hre.cli.functionName !== null,
-      previousSubtask: SUBTASK_PICK_CONTRACT,
-      nextSubtask: SUBTASK_PICK_PARAMETERS,
-    };
-    taskLinks[SUBTASK_PICK_PARAMETERS] = {
-      completed: () => hre.cli.functionParameters !== null,
-      previousSubtask: SUBTASK_PICK_FUNCTION,
-      nextSubtask: SUBTASK_PREVIEW_CALL,
-    };
-    taskLinks[SUBTASK_PREVIEW_CALL] = {
-      completed: () => true,
-      previousSubtask: SUBTASK_PICK_FUNCTION,
-      nextSubtask: SUBTASK_EXECUTE_CALL,
-    };
-    taskLinks[SUBTASK_EXECUTE_CALL] = {
-      completed: () => true,
-      previousSubtask: SUBTASK_PICK_FUNCTION,
-      nextSubtask: SUBTASK_PICK_FUNCTION,
-    };
+    async function run() {
+      let subtask, clear;
 
-    async function runSubtask(subtask) {
+      if (!hre.cli.contractName) {
+        subtask = SUBTASK_PICK_CONTRACT;
+      } else if (!hre.cli.functionName) {
+        subtask = SUBTASK_PICK_FUNCTION;
+      } else if (!hre.cli.functionParameters) {
+        subtask = SUBTASK_PICK_PARAMETERS;
+      } else {
+        subtask = SUBTASK_EXECUTE_CALL;
+        clear = true;
+      }
+
       await hre.run(subtask, taskArguments);
 
-      const link = taskLinks[subtask];
-      const nextSubtask = link.completed() ? link.nextSubtask : link.previousSubtask;
+      if (clear) {
+        hre.cli.functionParameters = null;
+        hre.cli.functionName = null;
+        hre.cli.contractName = null;
+      }
 
-      await runSubtask(nextSubtask);
+      await run();
     }
 
-    await runSubtask(SUBTASK_PICK_CONTRACT);
+    await run();
   });

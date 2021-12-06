@@ -31,7 +31,6 @@ subtask(SUBTASK_PICK_CONTRACT, 'Pick contract to interact with').setAction(
       },
     ]);
 
-    // Remove address
     contractName = contractName.split(' ')[0];
 
     hre.cli.contractName = contractName;

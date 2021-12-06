@@ -29,7 +29,6 @@ subtask(SUBTASK_PICK_FUNCTION, 'Pick a function from the given contract').setAct
       },
     ]);
 
-    // Remove parenthesis
     functionName = functionName.split('(')[0];
 
     hre.cli.functionName = functionName;

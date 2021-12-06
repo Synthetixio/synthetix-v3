@@ -3,10 +3,19 @@ const { SUBTASK_EXECUTE_CALL } = require('../task-names');
 const logger = require('@synthetixio/core-js/utils/logger');
 const chalk = require('chalk');
 const prompter = require('@synthetixio/core-js/utils/prompter');
+const { getSignatureWithParameterNamesAndValues } = require('../internal/signatures');
 
 subtask(SUBTASK_EXECUTE_CALL, 'Execute the current tx').setAction(async (taskArguments, hre) => {
   const abi = hre.deployer.deployment.abis[hre.cli.contractName];
   const functionAbi = abi.find((abiItem) => abiItem.name === hre.cli.functionName);
+
+  logger.info(
+    `Calling ${hre.cli.contractName}.${getSignatureWithParameterNamesAndValues(
+      hre.cli.contractName,
+      hre.cli.functionName,
+      hre.cli.functionParameters
+    )}`
+  );
 
   const readOnly = functionAbi.stateMutability === 'view';
   if (readOnly) {
