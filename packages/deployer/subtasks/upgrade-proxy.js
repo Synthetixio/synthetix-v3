@@ -33,7 +33,7 @@ subtask(SUBTASK_UPGRADE_PROXY, 'Upgrades the main proxy if needed').setAction(as
     logger.notice(`Upgrading main proxy to ${routerAddress}`);
 
     try {
-      const signer = (await hre.ethers.getSigners())[0];
+      const [signer] = await hre.ethers.getSigners();
 
       ProxyContract = ProxyContract.connect(signer);
 
