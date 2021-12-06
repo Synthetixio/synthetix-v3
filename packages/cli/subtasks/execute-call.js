@@ -20,11 +20,7 @@ subtask(SUBTASK_EXECUTE_CALL, 'Execute the current tx').setAction(async (taskArg
 });
 
 async function executeReadTransaction(address, abi) {
-  const contract = new hre.ethers.Contract(
-    address,
-    abi,
-    hre.ethers.provider
-  );
+  const contract = new hre.ethers.Contract(address, abi, hre.ethers.provider);
 
   const result = await contract[hre.cli.functionName](...hre.cli.functionParameters);
 
@@ -37,11 +33,7 @@ async function executeWriteTransaction(address, abi) {
   const signer = (await hre.ethers.getSigners())[0];
   logger.info(`Signer to use: ${signer.address}`);
 
-  const contract = new hre.ethers.Contract(
-    address,
-    abi,
-    signer
-  );
+  const contract = new hre.ethers.Contract(address, abi, signer);
 
   let tx;
   try {
