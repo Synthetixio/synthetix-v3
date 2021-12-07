@@ -5,11 +5,10 @@ const chalk = require('chalk');
 
 subtask(SUBTASK_PICK_CONTRACT, 'Pick contract to interact with').setAction(
   async (taskArguments, hre) => {
-    const contractNames = Object.keys(hre.deployer.deployment.general.contracts);
+    const contracts = Object.entries(hre.deployer.deployment.general.contracts);
 
-    const choices = contractNames.map((contractName) => {
-      const contractAddress =
-        hre.deployer.deployment.general.contracts[contractName].deployedAddress;
+    const choices = contracts.map(([contractName, contract]) => {
+      const contractAddress = contract.proxyAddress || contract.deployedAddress;
 
       return { title: `${contractName} ${chalk.gray(contractAddress)}`, value: contractName };
     });
