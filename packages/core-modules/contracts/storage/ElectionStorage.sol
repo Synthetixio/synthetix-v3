@@ -38,6 +38,10 @@ contract ElectionStorage {
          */
         uint nextSeatCount;
         /**
+         * @dev Start reference of the current epoch.
+         */
+        uint epochStart;
+        /**
          * @dev Duration of the current epoch.
          */
         uint epochDuration;

@@ -3,6 +3,7 @@ const assertRevert = require('@synthetixio/core-js/utils/assert-revert');
 const { findEvent } = require('@synthetixio/core-js/utils/events');
 const { bootstrap } = require('@synthetixio/deployer/utils/tests');
 const initializer = require('../../helpers/initializer');
+const { fastForward } = require('@synthetixio/core-js/utils/rpc');
 
 const { ethers } = hre;
 
@@ -127,14 +128,6 @@ describe('CoreElectionModule', () => {
       await (await CoreElectionModule.connect(owner).setSeatCount(5)).wait();
     });
 
-    it('reverts when a regular user tries to setEpochDuration', async () => {
-      await assertRevert(CoreElectionModule.connect(user).setEpochDuration(10000), 'Unauthorized');
-    });
-
-    it('allows the owner to setEpochDuration', async () => {
-      await (await CoreElectionModule.connect(owner).setEpochDuration(10000)).wait();
-    });
-
     it('reverts when a regular user tries to setPeriodPercent', async () => {
       await assertRevert(CoreElectionModule.connect(user).setPeriodPercent(20), 'Unauthorized');
     });
@@ -237,6 +230,91 @@ describe('CoreElectionModule', () => {
         CoreElectionModule.connect(user).elect([candidates[0].address, candidates[1].address]),
         'InvalidCandidatesCount'
       );
+    });
+  });
+
+  describe('when checking epoch states', () => {
+    describe('before starting an epoch', () => {
+      it('checking if epoch finished returns false', async () => {
+        equal(await CoreElectionModule.isEpochFinished(), false);
+      });
+
+      it('checking if epoch nomination period returns false', async () => {
+        equal(await CoreElectionModule.isNominating(), false);
+      });
+
+      it('checking if epoch fvoting period returns false', async () => {
+        equal(await CoreElectionModule.isVoting(), false);
+      });
+    });
+
+    describe('when the epoch started', () => {
+      const minute = 60 * 1000;
+      const day = 24 * 60 * minute;
+      const week = 7 * day;
+
+      const checkTimeState = async ({
+        timeLapse,
+        epochState,
+        nominationPeriodState,
+        votePeriodState,
+      }) => {
+        before(`fastForward a ${timeLapse / 1000} seconds`, async () => {
+          await fastForward(timeLapse, ethers.provider);
+        });
+
+        it('show the right epoch state', async () => {
+          equal(await CoreElectionModule.isEpochFinished(), epochState);
+        });
+
+        it('show the right nomination period state', async () => {
+          equal(await CoreElectionModule.isNominating(), nominationPeriodState);
+        });
+
+        it('show the right voting period state', async () => {
+          equal(await CoreElectionModule.isVoting(), votePeriodState);
+        });
+      };
+
+      before('set the nextEpoch parameters', async () => {
+        await (await CoreElectionModule.connect(owner).setNextEpochDuration(week)).wait();
+        await (await CoreElectionModule.connect(owner).setNextPeriodPercent(15)).wait(); // 15% ~1 day
+      });
+
+      before('start epoch', async () => {
+        await (await CoreElectionModule.setupFirstEpoch()).wait();
+      });
+
+      checkTimeState({
+        timeLapse: minute * 2,
+        epochState: false,
+        nominationPeriodState: true,
+        votePeriodState: false,
+      });
+
+      describe('when the nomination period finished', () => {
+        checkTimeState({
+          timeLapse: day * 2,
+          epochState: false,
+          nominationPeriodState: false,
+          votePeriodState: true,
+        });
+      });
+
+      describe('when the epoch finished', () => {
+        checkTimeState({
+          timeLapse: week,
+          epochState: true,
+          nominationPeriodState: false,
+          votePeriodState: false,
+        });
+      });
+
+      describe('when attempting to set the first epoch again', () => {
+        it('reverts', async () => {
+          await assertRevert(CoreElectionModule.setupFirstEpoch(), 'FirstEpochAlreadySetUp');
+        });
+      });
     });
   });
 });

@@ -1,6 +1,6 @@
 const assert = require('assert/strict');
 const sinon = require('sinon');
-const { takeSnapshot, restoreSnapshot } = require('../../utils/rpc');
+const { takeSnapshot, restoreSnapshot, fastForward } = require('../../utils/rpc');
 
 const fakeProvider = {
   send() {
@@ -19,6 +19,10 @@ describe('utils/rpc.js', () => {
 
   describe('when taking a snapshot', () => {
     let snapshotId;
+
+    before('clear spy history', () => {
+      provider.send.resetHistory();
+    });
 
     before('call createSnapshot', async () => {
       snapshotId = await takeSnapshot(provider);
@@ -56,6 +60,28 @@ describe('utils/rpc.js', () => {
         assert.equal(provider.send.getCall(3).args[0], 'evm_mine');
         assert.equal(provider.send.getCall(3).args[1], undefined);
       });
+    });
+  });
+
+  describe('when fastforwarding', () => {
+    before('clear spy history', () => {
+      provider.send.resetHistory();
+    });
+
+    before('call fastForward', async () => {
+      await fastForward(1337, provider);
+    });
+
+    it('calls the provider.send twice', () => {
+      assert(provider.send.calledTwice);
+    });
+
+    it('calls the provider.send with the right params', () => {
+      assert.equal(provider.send.getCall(0).args[0], 'evm_increaseTime');
+      assert.deepEqual(provider.send.getCall(0).args[1], [1337]);
+
+      assert.equal(provider.send.getCall(1).args[0], 'evm_mine');
+      assert.equal(provider.send.getCall(1).args[1], undefined);
     });
   });
 });
