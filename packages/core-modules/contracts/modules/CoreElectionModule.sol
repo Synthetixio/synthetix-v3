@@ -222,6 +222,5 @@ contract CoreElectionModule is IElectionModule, ElectionStorage, OwnableMixin {
         store.seatCount = store.nextSeatCount;
         store.epochDuration = store.nextEpochDuration;
         store.nominationPeriodPercent = store.nextNominationPeriodPercent;
-        store.nominees = new address[](0);
     }
 }
