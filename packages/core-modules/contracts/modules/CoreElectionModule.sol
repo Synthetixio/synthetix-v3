@@ -174,6 +174,11 @@ contract CoreElectionModule is IElectionModule, ElectionStorage, OwnableMixin {
             electionData.nomineeVotes[candidate] += votePower;
         }
 
+        // Save vote data for future usage
+        VoteData memory voteData = VoteData({candidates: candidates, votePower: votePower});
+        electionData.votes.push(voteData);
+        electionData.votesIndexes[msg.sender] = electionData.votes.length - 1;
+
         // Mark the user as already voted
         electionData.addressVoted[msg.sender] = true;
     }

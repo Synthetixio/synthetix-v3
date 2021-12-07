@@ -2,6 +2,7 @@ const { deepEqual, equal, notEqual } = require('assert/strict');
 const assertRevert = require('@synthetixio/core-js/utils/assert-revert');
 const { findEvent } = require('@synthetixio/core-js/utils/events');
 const { bootstrap } = require('@synthetixio/deployer/utils/tests');
+const assertBn = require('@synthetixio/core-js/utils/assert-bignumber');
 const initializer = require('../../helpers/initializer');
 const { fastForward } = require('@synthetixio/core-js/utils/rpc');
 
@@ -204,7 +205,11 @@ describe('CoreElectionModule', () => {
   });
 
   describe('when electing a new council', () => {
-    let ElectionToken, candidates;
+    let ElectionToken, ElectionStorageMock, candidates;
+
+    before('identify modules', async () => {
+      ElectionStorageMock = await ethers.getContractAt('ElectionStorageMock', proxyAddress());
+    });
 
     before('identify candidates', async () => {
       // Grab 5 users as candidates
@@ -264,6 +269,16 @@ describe('CoreElectionModule', () => {
       ]);
 
       deepEqual(results.map(Number), [100, 100, 100]);
+    });
+
+    it('correctly saves vote data', async () => {
+      deepEqual(await ElectionStorageMock.getVoterVoteCandidates(user.address), [
+        candidates[0].address,
+        candidates[1].address,
+        candidates[2].address,
+      ]);
+
+      assertBn.eq(await ElectionStorageMock.getVoterVoteVotePower(user.address), 100);
     });
   });
 

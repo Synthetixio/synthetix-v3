@@ -2,7 +2,26 @@
 pragma solidity ^0.8.0;
 
 contract ElectionStorage {
+    struct VoteData {
+        /**
+         * @dev the ordered list of candidates the user voted
+         */
+        address[] candidates;
+        /**
+         * @dev the votig power that the user gave to the candidates list
+         */
+        uint votePower;
+    }
+
     struct ElectionData {
+        /**
+         * @dev History of all the votes casted by voter addrees
+         */
+        VoteData[] votes;
+        /**
+         * @dev Position of an address on the votes Array.
+         */
+        mapping(address => uint256) votesIndexes;
         /**
          * @dev number of votes a nominee has for being a council member in the next epoch.
          */
