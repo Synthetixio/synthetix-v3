@@ -1,6 +1,6 @@
 const assert = require('assert/strict');
 const sinon = require('sinon');
-const { takeSnapshot, restoreSnapshot, timeWarp } = require('../../utils/rpc');
+const { takeSnapshot, restoreSnapshot, fastForward } = require('../../utils/rpc');
 
 const fakeProvider = {
   send() {
@@ -63,13 +63,13 @@ describe('utils/rpc.js', () => {
     });
   });
 
-  describe('when timewarping', () => {
+  describe('when fastforwarding', () => {
     before('clear spy history', () => {
       provider.send.resetHistory();
     });
 
-    before('call timeWarp', async () => {
-      await timeWarp(1337, provider);
+    before('call fastForward', async () => {
+      await fastForward(1337, provider);
     });
 
     it('calls the provider.send twice', () => {

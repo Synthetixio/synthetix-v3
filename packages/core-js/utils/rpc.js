@@ -12,8 +12,8 @@ async function restoreSnapshot(snapshotId, provider) {
   await mineBlock(provider);
 }
 
-async function timeWarp(ellapsedTime, provider) {
-  await provider.send('evm_increaseTime', [ellapsedTime]);
+async function fastForward(seconds, provider) {
+  await provider.send('evm_increaseTime', [seconds]);
 
   await mineBlock(provider);
 }
@@ -25,5 +25,5 @@ async function mineBlock(provider) {
 module.exports = {
   takeSnapshot,
   restoreSnapshot,
-  timeWarp,
+  fastForward,
 };

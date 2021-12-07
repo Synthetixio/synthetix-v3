@@ -107,10 +107,6 @@ contract CoreElectionModule is IElectionModule, ElectionStorage, OwnableMixin {
         _electionStore().seatCount = seats;
     }
 
-    function setEpochDuration(uint64 duration) external override onlyOwner {
-        _electionStore().epochDuration = duration;
-    }
-
     function setPeriodPercent(uint8 percent) external override onlyOwner {
         if (percent > 100) {
             revert InvalidPeriodPercent();
@@ -157,53 +153,20 @@ contract CoreElectionModule is IElectionModule, ElectionStorage, OwnableMixin {
         // TODO: Mark msg.sender as already voted on electionVotes
     }
 
-    function epochFinised() external view override returns (bool) {
+    function isEpochFinished() public view override returns (bool) {
         if (_electionStore().epochStart == 0) {
-            revert EpochNotStarted();
+            return false; // epoch didn't even start
         }
 
-        return _epochFinished();
-    }
-
-    function isEpochNominationPeriod() external view override returns (bool) {
-        if (_electionStore().epochStart == 0) {
-            revert EpochNotStarted();
-        }
-
-        return _isEpochNominationPeriod();
-    }
-
-    function isEpochVotingPeriod() external view override returns (bool) {
-        if (_electionStore().epochStart == 0) {
-            revert EpochNotStarted();
-        }
-
-        return _isEpochVotingPeriod();
-    }
-
-    function initialize() external override {
-        // TODO set epoch 0 seat to 1
-        // TODO set epoch 0 period
-        // TODO set token for owner
-        _changeEpoch();
-    }
-
-    function _changeEpoch() internal virtual {
-        ElectionStore storage store = _electionStore();
-        // solhint-disable-next-line not-rely-on-time
-        store.epochStart = block.timestamp;
-        store.seatCount = store.nextSeatCount;
-        store.epochDuration = store.nextEpochDuration;
-        store.nominationPeriodPercent = store.nextNominationPeriodPercent;
-        store.nominees = new address[](0);
-    }
-
-    function _epochFinished() internal view virtual returns (bool) {
         // solhint-disable-next-line not-rely-on-time
         return block.timestamp > _electionStore().epochStart + _electionStore().epochDuration;
     }
 
-    function _isEpochNominationPeriod() internal view virtual returns (bool) {
+    function isNomination() public view override returns (bool) {
+        if (_electionStore().epochStart == 0) {
+            return false; // epoch didn't even start
+        }
+
         // the time accuracy we need is in the range of hours or even days.
         // Using timestamp with the risk of seconds manipulation is not an issue here
         return
@@ -212,7 +175,27 @@ contract CoreElectionModule is IElectionModule, ElectionStorage, OwnableMixin {
             _electionStore().epochStart + (_electionStore().nominationPeriodPercent * _electionStore().epochDuration) / 100;
     }
 
-    function _isEpochVotingPeriod() internal view virtual returns (bool) {
-        return !_isEpochNominationPeriod() && !_epochFinished();
+    function isVoting() external view override returns (bool) {
+        if (_electionStore().epochStart == 0) {
+            return false; // epoch didn't even start
+        }
+
+        return !isNomination() && !isEpochFinished();
+    }
+
+    function setupFirstEpoch() external override {
+        ElectionStore storage store = _electionStore();
+
+        // TODO set epoch 0 seat to 1
+        // TODO set epoch 0 period
+        // TODO set token for owner
+
+        // Flip epochs
+        // solhint-disable-next-line not-rely-on-time
+        store.epochStart = block.timestamp;
+        store.seatCount = store.nextSeatCount;
+        store.epochDuration = store.nextEpochDuration;
+        store.nominationPeriodPercent = store.nextNominationPeriodPercent;
+        store.nominees = new address[](0);
     }
 }
