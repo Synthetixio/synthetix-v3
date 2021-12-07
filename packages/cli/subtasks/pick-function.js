@@ -15,23 +15,22 @@ subtask(SUBTASK_PICK_FUNCTION, 'Pick a function from the given contract').setAct
       };
     });
 
-    await prompts(
+    const { functionName } = await prompts(
       [
         {
           type: 'autocomplete',
+          name: 'functionName',
           message: 'Pick a FUNCTION:',
           choices,
         },
       ],
-      {
-        onCancel: () => {
-          hre.cli.functionName = null;
-          hre.cli.contractName = null;
-        },
-        onSubmit: (prompt, answer) => {
-          hre.cli.functionName = answer;
-        },
-      }
     );
+
+    if (functionName) {
+      hre.cli.functionName = functionName;
+    } else {
+      // Cancelling returns to pick-contract
+      hre.cli.contractName = null;
+    }
   }
 );

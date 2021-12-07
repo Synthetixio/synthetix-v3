@@ -26,6 +26,9 @@ subtask(SUBTASK_EXECUTE_CALL, 'Execute the current tx').setAction(async (taskArg
   } else {
     await executeWriteTransaction(address, abi);
   }
+
+  hre.cli.functionParameters = null;
+  hre.cli.functionName = null;
 });
 
 async function executeReadTransaction(address, abi) {
@@ -90,7 +93,7 @@ function printEventsInReceipt(receipt) {
     logger.info(`(${numEvents}) events emitted:`);
 
     receipt.events.map((event) => {
-      logger.log(chalk.gray(`- ${event.event}(${event.args.join(', ')})`));
+      logger.log(chalk.gray(`* ${event.event}(${event.args.join(', ')})`));
     });
   }
 }

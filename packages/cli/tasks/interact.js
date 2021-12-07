@@ -34,7 +34,7 @@ task(TASK_INTERACT, 'Interacts with a given modular system deployment')
     logger.info(help, '\n');
 
     async function run() {
-      let subtask, clear;
+      let subtask;
 
       if (!hre.cli.contractName) {
         subtask = SUBTASK_PICK_CONTRACT;
@@ -44,15 +44,9 @@ task(TASK_INTERACT, 'Interacts with a given modular system deployment')
         subtask = SUBTASK_PICK_PARAMETERS;
       } else {
         subtask = SUBTASK_EXECUTE_CALL;
-        clear = true;
       }
 
       await hre.run(subtask, taskArguments);
-
-      if (clear) {
-        hre.cli.functionParameters = null;
-        hre.cli.functionName = null;
-      }
 
       await run();
     }

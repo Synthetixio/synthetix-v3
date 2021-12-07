@@ -13,39 +13,40 @@ subtask(SUBTASK_PICK_PARAMETERS, 'Populate the selected function parameters').se
     const abiCoder = hre.ethers.utils.defaultAbiCoder;
 
     let parameterIndex = 0;
+    // Using a while loop so that the user can retry failed inputs
     while (parameterIndex < functionAbi.inputs.length) {
       const parameter = functionAbi.inputs[parameterIndex];
 
-      await prompts(
+      const { answer } = await prompts(
         [
           {
             type: 'text',
+            name: 'answer',
             message: `${parameter.name} (${parameter.type}):`,
           },
         ],
-        {
-          onCancel: () => {
-            hre.cli.functionName = null;
-            parameterIndex = functionAbi.inputs.length;
-          },
-          onSubmit: (prompt, answer) => {
-            let encodedParameter;
-
-            try {
-              // Encode and decode the user's input to parse the input
-              // into types acceptable by ethers.
-              encodedParameter = abiCoder.encode([parameter.type], [answer]);
-              encodedParameter = abiCoder.decode([parameter.type], encodedParameter);
-
-              hre.cli.functionParameters.push(...encodedParameter);
-
-              parameterIndex++;
-            } catch (error) {
-              logger.warn(error);
-            }
-          },
-        }
       );
+
+      if (answer) {
+        let encodedParameter;
+
+        try {
+          // Encode and decode the user's input to parse the input
+          // into types acceptable by ethers.
+          encodedParameter = abiCoder.encode([parameter.type], [answer]);
+          encodedParameter = abiCoder.decode([parameter.type], encodedParameter);
+
+          hre.cli.functionParameters.push(...encodedParameter);
+
+          parameterIndex++;
+        } catch (error) {
+          logger.warn(error);
+        }
+      } else {
+        // Cancelling returns to pick-function
+        hre.cli.functionName = null;
+        parameterIndex = functionAbi.inputs.length;
+      }
     }
   }
 );
