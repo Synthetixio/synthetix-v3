@@ -241,13 +241,16 @@ describe('CoreElectionModule', () => {
       await assertRevert(CoreElectionModule.connect(user).elect([]), 'InvalidCandidatesCount');
     });
 
-    it('reverts when trying to elect too many candidates', async () => {
+    it('reverts when trying to elect more candidates than nominees', async () => {
       await assertRevert(
         CoreElectionModule.connect(user).elect([
+          user.address,
+          owner.address,
           candidates[0].address,
           candidates[1].address,
           candidates[2].address,
           candidates[3].address,
+          candidates[4].address,
         ]),
         'InvalidCandidatesCount'
       );

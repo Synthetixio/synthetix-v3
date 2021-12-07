@@ -141,7 +141,7 @@ contract CoreElectionModule is IElectionModule, ElectionStorage, OwnableMixin {
         ElectionStore storage store = _electionStore();
         ElectionData storage electionData = store.electionData;
 
-        if (candidates.length == 0 || candidates.length > store.seatCount) {
+        if (candidates.length == 0 || candidates.length > electionData.nominees.length) {
             revert InvalidCandidatesCount();
         }
 
@@ -160,6 +160,7 @@ contract CoreElectionModule is IElectionModule, ElectionStorage, OwnableMixin {
             }
 
             // Check that all the values on the candidates Array are unique
+            // TODO: Remove the nested loops https://github.com/Synthetixio/synthetix-v3/issues/518
             if (i < candidates.length - 1) {
                 for (uint256 j = i + 1; j < candidates.length; j++) {
                     address nextCandidate = candidates[j];
