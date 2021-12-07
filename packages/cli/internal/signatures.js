@@ -14,7 +14,7 @@ function getSignatureWithParameterNamesAndValues(contractName, functionName, fun
   }
 
   let str = `${functionAbi.name}${multiline ? '(\n' : '('}`;
-  str += `${multiline ? '  ' : ''}${parameterDescriptions.join(multiline ? '\n,' : ', ')}`;
+  str += `${multiline ? '  ' : ''}${parameterDescriptions.join(multiline ? ',\n  ' : ', ')}`;
   str += `${multiline ? '\n)' : ')'}`;
 
   return str;
