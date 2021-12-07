@@ -22,7 +22,7 @@ describe('utils/prompter.js', function () {
   });
 
   describe('when noConfirm is disabled', function () {
-    before('enable noCofirm', function () {
+    before('disable noCofirm', function () {
       prompter.noConfirm = false;
     });
 

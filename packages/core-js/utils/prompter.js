@@ -1,8 +1,12 @@
 const prompts = require('prompts');
 
 module.exports = {
-  // _prompt: prompts.prompt.bind(prompts),
+  // Auto-responds all prompts as 'yes'
+  // when enabled.
   noConfirm: false,
+
+  // Used for testing.
+  _prompt: prompts.bind(prompts),
 
   /**
    * Ask the user for confirmation
@@ -14,7 +18,7 @@ module.exports = {
       return true;
     }
 
-    const { confirmation } = await prompts([
+    const { confirmation } = await this._prompt([
       {
         type: 'confirm',
         name: 'confirmation',
