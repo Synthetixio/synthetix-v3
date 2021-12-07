@@ -183,8 +183,8 @@ contract CoreElectionModule is IElectionModule, ElectionStorage, OwnableMixin {
         electionData.addressVoted[msg.sender] = true;
     }
 
-    function getNomineeVotes(address candidate) external view override returns (uint) {
-        return _electionStore().electionData.nomineeVotes[candidate];
+    function getNomineeVotes(address nominee) external view override returns (uint) {
+        return _electionStore().electionData.nomineeVotes[nominee];
     }
 
     function isEpochFinished() public view override returns (bool) {
