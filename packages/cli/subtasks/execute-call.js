@@ -64,6 +64,7 @@ async function executeWriteTransaction(address, abi) {
 
   if (tx) {
     logger.info(`Sending transaction with hash ${tx.hash}`);
+    logger.debug(JSON.stringify(tx, null, 2));
 
     let receipt;
     try {
@@ -81,6 +82,8 @@ async function executeWriteTransaction(address, abi) {
         logger.success('Transaction succeeded');
       }
 
+      logger.debug(JSON.stringify(receipt, null, 2));
+
       printEventsInReceipt(receipt);
     }
   }
@@ -93,7 +96,13 @@ function printEventsInReceipt(receipt) {
     logger.info(`(${numEvents}) events emitted:`);
 
     receipt.events.map((event) => {
-      logger.log(chalk.gray(`* ${event.event}(${event.args.join(', ')})`));
+      if (event.event) {
+        logger.log(chalk.gray(`* ${event.event}(${event.args.join(', ')})`));
+      } else {
+        logger.log(chalk.gray(`* Unknown event with topics: [${event.topics}] and data: [${event.data}]`));
+      }
+
+      logger.debug(JSON.stringify(event, null, 2));
     });
   }
 }
