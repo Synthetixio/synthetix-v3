@@ -20,7 +20,7 @@ subtask(SUBTASK_PICK_PARAMETERS, 'Populate the selected function parameters').se
         [
           {
             type: 'text',
-            message: ` ${parameter.name} (${parameter.type}):`,
+            message: `${parameter.name} (${parameter.type}):`,
           },
         ],
         {

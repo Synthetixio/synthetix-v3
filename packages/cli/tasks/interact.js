@@ -52,7 +52,6 @@ task(TASK_INTERACT, 'Interacts with a given modular system deployment')
       if (clear) {
         hre.cli.functionParameters = null;
         hre.cli.functionName = null;
-        hre.cli.contractName = null;
       }
 
       await run();
