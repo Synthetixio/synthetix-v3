@@ -15,16 +15,14 @@ subtask(SUBTASK_PICK_FUNCTION, 'Pick a function from the given contract').setAct
       };
     });
 
-    const { functionName } = await prompts(
-      [
-        {
-          type: 'autocomplete',
-          name: 'functionName',
-          message: 'Pick a FUNCTION:',
-          choices,
-        },
-      ],
-    );
+    const { functionName } = await prompts([
+      {
+        type: 'autocomplete',
+        name: 'functionName',
+        message: 'Pick a FUNCTION:',
+        choices,
+      },
+    ]);
 
     if (functionName) {
       hre.cli.functionName = functionName;

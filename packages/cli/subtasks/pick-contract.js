@@ -14,16 +14,14 @@ subtask(SUBTASK_PICK_CONTRACT, 'Pick contract to interact with').setAction(
       return { title: `${contractName} ${chalk.gray(contractAddress)}`, value: contractName };
     });
 
-    const { contractName } = await prompts(
-      [
-        {
-          type: 'autocomplete',
-          name: 'contractName',
-          message: 'Pick a CONTRACT:',
-          choices,
-        },
-      ],
-    );
+    const { contractName } = await prompts([
+      {
+        type: 'autocomplete',
+        name: 'contractName',
+        message: 'Pick a CONTRACT:',
+        choices,
+      },
+    ]);
 
     if (contractName) {
       hre.cli.contractName = contractName;

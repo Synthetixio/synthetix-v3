@@ -17,15 +17,13 @@ subtask(SUBTASK_PICK_PARAMETERS, 'Populate the selected function parameters').se
     while (parameterIndex < functionAbi.inputs.length) {
       const parameter = functionAbi.inputs[parameterIndex];
 
-      const { answer } = await prompts(
-        [
-          {
-            type: 'text',
-            name: 'answer',
-            message: `${parameter.name} (${parameter.type}):`,
-          },
-        ],
-      );
+      const { answer } = await prompts([
+        {
+          type: 'text',
+          name: 'answer',
+          message: `${parameter.name} (${parameter.type}):`,
+        },
+      ]);
 
       if (answer) {
         let encodedParameter;
