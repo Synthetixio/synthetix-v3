@@ -1,8 +1,26 @@
 name: Test
+
 on: [push]
+
 jobs:
   test:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        package:
+          [core-contracts, core-js, core-modules, deployer, synthetix-main]
+        include:
+          - package: core-contracts
+            coverage-file: packages/core-contracts/coverage.json
+          - package: core-js
+            coverage-file: packages/core-js/coverage/lcov.info
+          - package: core-modules
+            coverage-file: packages/core-modules/coverage.json
+          - package: deployer
+            coverage-file: packages/deployer/coverage/lcov.info
+          - package: synthetix-main
+            coverage-file: packages/synthetix-main/coverage.json
+
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v2
@@ -12,31 +30,11 @@ jobs:
       - run: npm ci
       - name: Execute tests
         run: npm run coverage
-      - name: Upload core-contracts coverage to Codecov
+      - name: Upload ${{ matrix.package }} coverage to Codecov
         uses: codecov/codecov-action@v2
         with:
-          files: packages/core-contracts/coverage.json
-          flags: core-contracts
-      - name: Upload core-js coverage to Codecov
-        uses: codecov/codecov-action@v2
-        with:
-          files: packages/core-js/coverage/lcov.info
-          flags: core-js
-      - name: Upload core-modules coverage to Codecov
-        uses: codecov/codecov-action@v2
-        with:
-          files: packages/core-modules/coverage.json
-          flags: core-modules
-      - name: Upload deployer coverage to Codecov
-        uses: codecov/codecov-action@v2
-        with:
-          files: packages/deployer/coverage/lcov.info
-          flags: deployer
-      - name: Upload synthetix-main coverage to Codecov
-        uses: codecov/codecov-action@v2
-        with:
-          files: packages/synthetix-main/coverage.json
-          flags: synthetix-main
+          files: ${{ matrix.coverage-file }}
+          flags: ${{ matrix.package }}
 
   test-sample:
     runs-on: ubuntu-latest
