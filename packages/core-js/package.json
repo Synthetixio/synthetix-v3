@@ -16,12 +16,12 @@
   "license": "MIT",
   "dependencies": {
     "chalk": "4.1.2",
-    "ethers": "5.5.1",
-    "inquirer": "8.1.2"
+    "ethers": "5.5.1"
   },
   "devDependencies": {
     "mocha": "9.1.1",
     "nyc": "15.1.0",
+    "prompts": "2.4.2",
     "sinon": "11.1.2"
   }
 }

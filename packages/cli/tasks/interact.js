@@ -10,8 +10,7 @@ const {
 const { SUBTASK_LOAD_DEPLOYMENT } = require('@synthetixio/deployer/task-names');
 const types = require('@synthetixio/core-js/utils/hardhat/argument-types');
 const logger = require('@synthetixio/core-js/utils/logger');
-const inquirer = require('inquirer');
-const autocomplete = require('inquirer-list-search-prompt');
+const prompts = require('prompts');
 
 task(TASK_INTERACT, 'Interacts with a given modular system deployment')
   .addOptionalParam(
@@ -24,12 +23,16 @@ task(TASK_INTERACT, 'Interacts with a given modular system deployment')
   .setAction(async (taskArguments, hre) => {
     const { debug } = taskArguments;
 
-    inquirer.registerPrompt('autocomplete', autocomplete);
-
     logger.debugging = debug;
 
     await hre.run(SUBTASK_LOAD_DEPLOYMENT, { ...taskArguments, readOnly: true });
     await hre.run(SUBTASK_PRINT_INFO, taskArguments);
+
+    let help = 'USAGE:\n';
+    help += '* Use arrows to navigate, or type to autocomplete\n';
+    help += '* Press enter to select a choice\n';
+    help += '* Press ctrl-c to go back and exit\n';
+    logger.info(help, '\n');
 
     async function run() {
       let subtask, clear;
