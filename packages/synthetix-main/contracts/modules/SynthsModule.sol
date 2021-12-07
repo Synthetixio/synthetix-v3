@@ -7,9 +7,11 @@ import "@synthetixio/core-contracts/contracts/proxy/BeaconProxy.sol";
 import "../interfaces/ISynthsModule.sol";
 import "../interfaces/ISynth.sol";
 import "../storage/SynthsStorage.sol";
+import "../token/Synth.sol";
 
 contract SynthsModule is ISynthsModule, OwnableMixin, SynthsStorage {
     event BeaconCreated(address beacon);
+    event SynthImplementationCreated(address implementationAddress);
     event SynthCreated(bytes32 synth, address synthAddress);
 
     error BeaconAlreadyCreated();
@@ -19,11 +21,14 @@ contract SynthsModule is ISynthsModule, OwnableMixin, SynthsStorage {
 
     function createBeacon() external override onlyOwner {
         SynthsStore storage store = _synthsStore();
+
         if (store.beacon != address(0)) {
             revert BeaconAlreadyCreated();
         }
+
         address beacon = address(new Beacon(address(this)));
         store.beacon = beacon;
+
         emit BeaconCreated(beacon);
     }
 
@@ -36,29 +41,39 @@ contract SynthsModule is ISynthsModule, OwnableMixin, SynthsStorage {
         if (_synthsStore().synths[synth] != address(0x0)) {
             revert SynthAlreadyCreated();
         }
-        // get the Beacon address and check if it has been deployed properly and if the implementation is set.
+
         address beaconAddress = _synthsStore().beacon;
         if (beaconAddress == address(0)) {
             revert BeaconNotCreated();
         }
+
         if (Beacon(beaconAddress).getImplementation() == address(0)) {
             revert ImplementationNotSet();
         }
-        // deploy a BeaconProxy/Synth with the right Beacon address
+
         address synthAddress = address(new BeaconProxy(beaconAddress));
-        // register the new synth (proxy) in the mapping
+
         _synthsStore().synths[synth] = synthAddress;
-        emit SynthCreated(synth, synthAddress);
-        // initialize synth
+
         ISynth(synthAddress).initialize(synthName, synthSymbol, synthDecimals);
+
+        emit SynthCreated(synth, synthAddress);
     }
 
     function upgradeSynthImplementation(address newSynthsImplementation) external override onlyOwner {
         address beaconAddress = _synthsStore().beacon;
+
         if (beaconAddress == address(0)) {
             revert BeaconNotCreated();
         }
+
         Beacon(beaconAddress).upgradeTo(newSynthsImplementation);
+    }
+
+    function createSynthImplementation() external override {
+        address implementationAddress = address(new Synth());
+
+        emit SynthImplementationCreated(implementationAddress);
     }
 
     function getBeacon() external view override returns (address) {

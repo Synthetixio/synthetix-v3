@@ -13,6 +13,8 @@ interface ISynthsModule {
 
     function upgradeSynthImplementation(address newSynthsImplementation) external;
 
+    function createSynthImplementation() external;
+
     function getBeacon() external view returns (address);
 
     function getSynthImplementation() external view returns (address);
