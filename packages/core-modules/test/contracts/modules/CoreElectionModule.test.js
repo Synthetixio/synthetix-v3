@@ -228,7 +228,7 @@ describe('CoreElectionModule', () => {
 
     before('prepare next epoch', async () => {
       // Next seat count should be 3, and leave 2 outside
-      await (await CoreElectionModule.connect(owner).setNextSeatCount(3)).wait();
+      await (await ElectionStorageMock.setNextSeatCountMock(3)).wait();
     });
 
     before('nominate candidates', async () => {
@@ -239,6 +239,18 @@ describe('CoreElectionModule', () => {
 
     it('reverts when trying to elect no candidates', async () => {
       await assertRevert(CoreElectionModule.connect(user).elect([]), 'InvalidCandidatesCount');
+    });
+
+    it('reverts when trying to elect too many candidates', async () => {
+      await assertRevert(
+        CoreElectionModule.connect(user).elect([
+          candidates[0].address,
+          candidates[1].address,
+          candidates[2].address,
+          candidates[3].address,
+        ]),
+        'InvalidCandidatesCount'
+      );
     });
 
     it('reverts when trying to elect a not nominated candidate', async () => {
@@ -272,13 +284,13 @@ describe('CoreElectionModule', () => {
     });
 
     it('correctly saves vote data', async () => {
-      deepEqual(await ElectionStorageMock.getVoterVoteCandidates(user.address), [
+      deepEqual(await ElectionStorageMock.getVoterVoteCandidatesMock(user.address), [
         candidates[0].address,
         candidates[1].address,
         candidates[2].address,
       ]);
 
-      assertBn.eq(await ElectionStorageMock.getVoterVoteVotePower(user.address), 100);
+      assertBn.eq(await ElectionStorageMock.getVoterVoteVotePowerMock(user.address), 100);
     });
   });
 
