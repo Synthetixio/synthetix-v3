@@ -240,7 +240,7 @@ describe('CoreElectionModule', () => {
       });
 
       it('checking if epoch nomination period returns false', async () => {
-        equal(await CoreElectionModule.isNomination(), false);
+        equal(await CoreElectionModule.isNominating(), false);
       });
 
       it('checking if epoch fvoting period returns false', async () => {
@@ -268,7 +268,7 @@ describe('CoreElectionModule', () => {
         });
 
         it('show the right nomination period state', async () => {
-          equal(await CoreElectionModule.isNomination(), nominationPeriodState);
+          equal(await CoreElectionModule.isNominating(), nominationPeriodState);
         });
 
         it('show the right voting period state', async () => {
@@ -307,6 +307,12 @@ describe('CoreElectionModule', () => {
           epochState: true,
           nominationPeriodState: false,
           votePeriodState: false,
+        });
+      });
+
+      describe('when attempting to set the first epoch again', () => {
+        it('reverts', async () => {
+          await assertRevert(CoreElectionModule.setupFirstEpoch(), 'AlreadyStarted');
         });
       });
     });

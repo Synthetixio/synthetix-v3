@@ -32,7 +32,7 @@ interface IElectionModule {
 
     function isEpochFinished() external view returns (bool);
 
-    function isNomination() external view returns (bool);
+    function isNominating() external view returns (bool);
 
     function isVoting() external view returns (bool);
 

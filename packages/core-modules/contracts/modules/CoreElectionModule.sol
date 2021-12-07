@@ -16,7 +16,7 @@ contract CoreElectionModule is IElectionModule, ElectionStorage, OwnableMixin {
     error NotNominated(address addr);
     error InvalidPeriodPercent();
     error InvalidCandidatesCount();
-    error EpochNotStarted();
+    error AlreadyStarted();
 
     function createMemberToken(string memory tokenName, string memory tokenSymbol) external override onlyOwner {
         ElectionStore storage store = _electionStore();
@@ -162,7 +162,7 @@ contract CoreElectionModule is IElectionModule, ElectionStorage, OwnableMixin {
         return block.timestamp > _electionStore().epochStart + _electionStore().epochDuration;
     }
 
-    function isNomination() public view override returns (bool) {
+    function isNominating() public view override returns (bool) {
         if (_electionStore().epochStart == 0) {
             return false; // epoch didn't even start
         }
@@ -180,11 +180,15 @@ contract CoreElectionModule is IElectionModule, ElectionStorage, OwnableMixin {
             return false; // epoch didn't even start
         }
 
-        return !isNomination() && !isEpochFinished();
+        return !isNominating() && !isEpochFinished();
     }
 
-    function setupFirstEpoch() external override {
+    function setupFirstEpoch() external virtual override {
         ElectionStore storage store = _electionStore();
+
+        if (store.epochStart != 0) {
+            revert AlreadyStarted();
+        }
 
         // TODO set epoch 0 seat to 1
         // TODO set epoch 0 period
