@@ -1,9 +1,9 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@synthetixio/core-modules/contracts/modules/CoreUpgradeModule.sol";
+import { UpgradeModule as BaseUpgradeModule } from "@synthetixio/core-modules/contracts/modules/UpgradeModule.sol";
 
 // solhint-disable-next-line no-empty-blocks
-contract UpgradeModule is CoreUpgradeModule {
+contract UpgradeModule is BaseUpgradeModule {
 
 }

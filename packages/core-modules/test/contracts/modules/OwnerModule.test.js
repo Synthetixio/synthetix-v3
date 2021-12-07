@@ -5,10 +5,10 @@ const assertRevert = require('@synthetixio/core-js/utils/assertions/assert-rever
 const { bootstrap } = require('@synthetixio/deployer/utils/tests');
 const initializer = require('../../helpers/initializer');
 
-describe('CoreOwnerModule', () => {
+describe('OwnerModule', () => {
   const { proxyAddress } = bootstrap(initializer);
 
-  let CoreOwnerModule, SampleOwnedModule;
+  let OwnerModule, SampleOwnedModule;
   let owner, user;
 
   before('identify signers', async () => {
@@ -16,12 +16,12 @@ describe('CoreOwnerModule', () => {
   });
 
   before('identify modules', async () => {
-    CoreOwnerModule = await ethers.getContractAt('CoreOwnerModule', proxyAddress());
+    OwnerModule = await ethers.getContractAt('OwnerModule', proxyAddress());
     SampleOwnedModule = await ethers.getContractAt('SampleOwnedModule', proxyAddress());
   });
 
   it('shows that the owner is set', async () => {
-    assert.equal(await CoreOwnerModule.owner(), owner.address);
+    assert.equal(await OwnerModule.owner(), owner.address);
   });
 
   describe('when a regular user attempts to interact with the protected function', () => {

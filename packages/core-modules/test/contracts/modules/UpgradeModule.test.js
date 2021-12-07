@@ -4,10 +4,10 @@ const assertRevert = require('@synthetixio/core-js/utils/assertions/assert-rever
 const { bootstrap } = require('@synthetixio/deployer/utils/tests');
 const initializer = require('../../helpers/initializer');
 
-describe('CoreUpgradeModule', () => {
+describe('UpgradeModule', () => {
   const { proxyAddress } = bootstrap(initializer);
 
-  let CoreUpgradeModule;
+  let UpgradeModule;
   let owner, user;
 
   before('identify signers', async () => {
@@ -15,12 +15,12 @@ describe('CoreUpgradeModule', () => {
   });
 
   before('deploy the module mocking the first owner', async () => {
-    CoreUpgradeModule = await ethers.getContractAt('CoreUpgradeModule', proxyAddress());
+    UpgradeModule = await ethers.getContractAt('UpgradeModule', proxyAddress());
   });
 
   describe('when attempting to set the implementation with a non owner signer', () => {
     it('reverts', async () => {
-      await assertRevert(CoreUpgradeModule.connect(user).upgradeTo(user.address), 'Unauthorized');
+      await assertRevert(UpgradeModule.connect(user).upgradeTo(user.address), 'Unauthorized');
     });
   });
 
@@ -31,12 +31,12 @@ describe('CoreUpgradeModule', () => {
       const factory = await ethers.getContractFactory('Router');
       NewRouter = await factory.deploy();
 
-      const tx = await CoreUpgradeModule.connect(owner).upgradeTo(NewRouter.address);
+      const tx = await UpgradeModule.connect(owner).upgradeTo(NewRouter.address);
       await tx.wait();
     });
 
     it('shows that the implementation is set', async () => {
-      assert.equal(await CoreUpgradeModule.connect(owner).getImplementation(), NewRouter.address);
+      assert.equal(await UpgradeModule.connect(owner).getImplementation(), NewRouter.address);
     });
   });
 });
