@@ -99,7 +99,9 @@ function printEventsInReceipt(receipt) {
       if (event.event) {
         logger.log(chalk.gray(`* ${event.event}(${event.args.join(', ')})`));
       } else {
-        logger.log(chalk.gray(`* Unknown event with topics: [${event.topics}] and data: [${event.data}]`));
+        logger.log(
+          chalk.gray(`* Unknown event with topics: [${event.topics}] and data: [${event.data}]`)
+        );
       }
 
       logger.debug(JSON.stringify(event, null, 2));
