@@ -14,19 +14,22 @@ subtask(SUBTASK_PICK_CONTRACT, 'Pick contract to interact with').setAction(
       return { title: `${contractName} ${chalk.gray(contractAddress)}`, value: contractName };
     });
 
-    await prompts([
+    await prompts(
+      [
+        {
+          type: 'autocomplete',
+          message: 'Pick a CONTRACT:',
+          choices,
+        },
+      ],
       {
-        type: 'autocomplete',
-        message: 'Pick a CONTRACT:',
-        choices,
-      },
-    ], {
-      onCancel: (prompt) => {
-        process.exit(0);
-      },
-      onSubmit: (prompt, answer) => {
-        hre.cli.contractName = answer;
-      },
-    });
+        onCancel: () => {
+          process.exit(0);
+        },
+        onSubmit: (prompt, answer) => {
+          hre.cli.contractName = answer;
+        },
+      }
+    );
   }
 );

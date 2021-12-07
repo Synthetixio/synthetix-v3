@@ -9,23 +9,29 @@ subtask(SUBTASK_PICK_FUNCTION, 'Pick a function from the given contract').setAct
     const abiFunctions = abi.filter((abiItem) => abiItem.name && abiItem.type === 'function');
 
     const choices = abiFunctions.map((abiItem) => {
-      return { title: getSignatureWithParameterNamesAndValues(hre.cli.contractName, abiItem.name), value: abiItem.name };
+      return {
+        title: getSignatureWithParameterNamesAndValues(hre.cli.contractName, abiItem.name),
+        value: abiItem.name,
+      };
     });
 
-    await prompts([
+    await prompts(
+      [
+        {
+          type: 'autocomplete',
+          message: 'Pick a FUNCTION:',
+          choices,
+        },
+      ],
       {
-        type: 'autocomplete',
-        message: 'Pick a FUNCTION:',
-        choices,
-      },
-    ], {
-      onCancel: (prompt) => {
-        hre.cli.functionName = null;
-        hre.cli.contractName = null;
-      },
-      onSubmit: (prompt, answer) => {
-        hre.cli.functionName = answer;
-      },
-    });
+        onCancel: () => {
+          hre.cli.functionName = null;
+          hre.cli.contractName = null;
+        },
+        onSubmit: (prompt, answer) => {
+          hre.cli.functionName = answer;
+        },
+      }
+    );
   }
 );
