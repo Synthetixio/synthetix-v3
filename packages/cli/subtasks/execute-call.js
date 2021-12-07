@@ -6,9 +6,6 @@ const prompter = require('@synthetixio/core-js/utils/prompter');
 const { getSignatureWithParameterNamesAndValues } = require('../internal/signatures');
 
 subtask(SUBTASK_EXECUTE_CALL, 'Execute the current tx').setAction(async (taskArguments, hre) => {
-  const abi = hre.deployer.deployment.abis[hre.cli.contractName];
-  const functionAbi = abi.find((abiItem) => abiItem.name === hre.cli.functionName);
-
   logger.info(
     `Calling ${hre.cli.contractName}.${getSignatureWithParameterNamesAndValues(
       hre.cli.contractName,
@@ -17,37 +14,35 @@ subtask(SUBTASK_EXECUTE_CALL, 'Execute the current tx').setAction(async (taskArg
     )}`
   );
 
+  const target = hre.deployer.deployment.general.contracts[hre.cli.contractName];
+  const address = target.proxyAddress || target.deployedAddress;
+
+  const abi = hre.deployer.deployment.abis[hre.cli.contractName];
+  const functionAbi = abi.find((abiItem) => abiItem.name === hre.cli.functionName);
+
   const readOnly = functionAbi.stateMutability === 'view';
   if (readOnly) {
-    await executeReadTransaction(abi);
+    await executeReadTransaction(address, abi);
   } else {
-    await executeWriteTransaction(abi);
+    await executeWriteTransaction(address, abi);
   }
 });
 
-async function executeReadTransaction(abi) {
-  const contract = new hre.ethers.Contract(
-    hre.deployer.deployment.general.contracts[hre.cli.contractName].deployedAddress,
-    abi,
-    hre.ethers.provider
-  );
+async function executeReadTransaction(address, abi) {
+  const contract = new hre.ethers.Contract(address, abi, hre.ethers.provider);
 
   const result = await contract[hre.cli.functionName](...hre.cli.functionParameters);
 
   logger.checked(`Result: ${result}`);
 }
 
-async function executeWriteTransaction(abi) {
+async function executeWriteTransaction(address, abi) {
   logger.warn('This is a write transaction');
 
   const signer = (await hre.ethers.getSigners())[0];
   logger.info(`Signer to use: ${signer.address}`);
 
-  const contract = new hre.ethers.Contract(
-    hre.deployer.deployment.general.contracts[hre.cli.contractName].deployedAddress,
-    abi,
-    signer
-  );
+  const contract = new hre.ethers.Contract(address, abi, signer);
 
   let tx;
   try {
