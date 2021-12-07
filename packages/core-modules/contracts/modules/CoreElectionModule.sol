@@ -16,6 +16,7 @@ contract CoreElectionModule is IElectionModule, ElectionStorage, OwnableMixin {
     error InvalidPeriodPercent();
     error InvalidCandidatesCount();
     error InvalidCandidatesRepeat();
+    error FirstEpochAlreadySetUp();
 
     error AlreadyVoted();
 
