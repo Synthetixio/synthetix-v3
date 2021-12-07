@@ -5,14 +5,11 @@ const {
   SUBTASK_PICK_CONTRACT,
   SUBTASK_PICK_FUNCTION,
   SUBTASK_PICK_PARAMETERS,
-  SUBTASK_PREVIEW_CALL,
   SUBTASK_EXECUTE_CALL,
 } = require('../task-names');
 const { SUBTASK_LOAD_DEPLOYMENT } = require('@synthetixio/deployer/task-names');
 const types = require('@synthetixio/core-js/utils/hardhat/argument-types');
 const logger = require('@synthetixio/core-js/utils/logger');
-const inquirer = require('inquirer');
-const autocomplete = require('inquirer-list-search-prompt');
 
 task(TASK_INTERACT, 'Interacts with a given modular system deployment')
   .addOptionalParam(
@@ -25,48 +22,34 @@ task(TASK_INTERACT, 'Interacts with a given modular system deployment')
   .setAction(async (taskArguments, hre) => {
     const { debug } = taskArguments;
 
-    inquirer.registerPrompt('autocomplete', autocomplete);
-
     logger.debugging = debug;
 
     await hre.run(SUBTASK_LOAD_DEPLOYMENT, { ...taskArguments, readOnly: true });
     await hre.run(SUBTASK_PRINT_INFO, taskArguments);
 
-    const taskLinks = {};
-    taskLinks[SUBTASK_PICK_CONTRACT] = {
-      completed: () => hre.cli.contractName !== null,
-      previousSubtask: null,
-      nextSubtask: SUBTASK_PICK_FUNCTION,
-    };
-    taskLinks[SUBTASK_PICK_FUNCTION] = {
-      completed: () => hre.cli.functionName !== null,
-      previousSubtask: SUBTASK_PICK_CONTRACT,
-      nextSubtask: SUBTASK_PICK_PARAMETERS,
-    };
-    taskLinks[SUBTASK_PICK_PARAMETERS] = {
-      completed: () => hre.cli.functionParameters !== null,
-      previousSubtask: SUBTASK_PICK_FUNCTION,
-      nextSubtask: SUBTASK_PREVIEW_CALL,
-    };
-    taskLinks[SUBTASK_PREVIEW_CALL] = {
-      completed: () => true,
-      previousSubtask: SUBTASK_PICK_FUNCTION,
-      nextSubtask: SUBTASK_EXECUTE_CALL,
-    };
-    taskLinks[SUBTASK_EXECUTE_CALL] = {
-      completed: () => true,
-      previousSubtask: SUBTASK_PICK_FUNCTION,
-      nextSubtask: SUBTASK_PICK_FUNCTION,
-    };
+    let help = 'USAGE:\n';
+    help += '* Use arrows to navigate, or type to autocomplete\n';
+    help += '* Press enter to select a choice\n';
+    help += '* Press ctrl-c to go back and exit\n';
+    logger.info(help, '\n');
 
-    async function runSubtask(subtask) {
+    async function run() {
+      let subtask;
+
+      if (!hre.cli.contractName) {
+        subtask = SUBTASK_PICK_CONTRACT;
+      } else if (!hre.cli.functionName) {
+        subtask = SUBTASK_PICK_FUNCTION;
+      } else if (!hre.cli.functionParameters) {
+        subtask = SUBTASK_PICK_PARAMETERS;
+      } else {
+        subtask = SUBTASK_EXECUTE_CALL;
+      }
+
       await hre.run(subtask, taskArguments);
 
-      const link = taskLinks[subtask];
-      const nextSubtask = link.completed() ? link.nextSubtask : link.previousSubtask;
-
-      await runSubtask(nextSubtask);
+      await run();
     }
 
-    await runSubtask(SUBTASK_PICK_CONTRACT);
+    await run();
   });

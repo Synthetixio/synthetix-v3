@@ -1,6 +1,6 @@
 const { subtask } = require('hardhat/config');
 const { SUBTASK_PICK_PARAMETERS } = require('../task-names');
-const inquirer = require('inquirer');
+const prompts = require('prompts');
 const logger = require('@synthetixio/core-js/utils/logger');
 
 subtask(SUBTASK_PICK_PARAMETERS, 'Populate the selected function parameters').setAction(
@@ -13,29 +13,37 @@ subtask(SUBTASK_PICK_PARAMETERS, 'Populate the selected function parameters').se
     const abiCoder = hre.ethers.utils.defaultAbiCoder;
 
     let parameterIndex = 0;
+    // Using a while loop so that the user can retry failed inputs
     while (parameterIndex < functionAbi.inputs.length) {
       const parameter = functionAbi.inputs[parameterIndex];
 
-      const { userInput } = await inquirer.prompt([
+      const { answer } = await prompts([
         {
-          type: 'input',
-          name: 'userInput',
-          message: `  ${parameter.name} (${parameter.type}):`,
+          type: 'text',
+          name: 'answer',
+          message: `${parameter.name} (${parameter.type}):`,
         },
       ]);
 
-      let encodedParameter;
-      try {
-        // Encode and decode the user's input to parse the input
-        // into types acceptable by ethers.
-        encodedParameter = abiCoder.encode([parameter.type], [userInput]);
-        encodedParameter = abiCoder.decode([parameter.type], encodedParameter);
+      if (answer) {
+        let encodedParameter;
 
-        hre.cli.functionParameters.push(...encodedParameter);
+        try {
+          // Encode and decode the user's input to parse the input
+          // into types acceptable by ethers.
+          encodedParameter = abiCoder.encode([parameter.type], [answer]);
+          encodedParameter = abiCoder.decode([parameter.type], encodedParameter);
 
-        parameterIndex++;
-      } catch (error) {
-        logger.warn(error);
+          hre.cli.functionParameters.push(...encodedParameter);
+
+          parameterIndex++;
+        } catch (error) {
+          logger.warn(error);
+        }
+      } else {
+        // Cancelling returns to pick-function
+        hre.cli.functionName = null;
+        parameterIndex = functionAbi.inputs.length;
       }
     }
   }

@@ -1,8 +1,12 @@
-const inquirer = require('inquirer');
+const prompts = require('prompts');
 
 module.exports = {
-  _prompt: inquirer.prompt.bind(inquirer),
+  // Auto-responds all prompts as 'yes'
+  // when enabled.
   noConfirm: false,
+
+  // Used for testing.
+  _prompt: prompts.bind(prompts),
 
   /**
    * Ask the user for confirmation
@@ -19,6 +23,7 @@ module.exports = {
         type: 'confirm',
         name: 'confirmation',
         message,
+        initial: true,
       },
     ]);
 
