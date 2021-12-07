@@ -2,6 +2,7 @@ const { deepEqual, equal, notEqual } = require('assert/strict');
 const assertRevert = require('@synthetixio/core-js/utils/assert-revert');
 const { findEvent } = require('@synthetixio/core-js/utils/events');
 const { bootstrap } = require('@synthetixio/deployer/utils/tests');
+const assertBn = require('@synthetixio/core-js/utils/assert-bignumber');
 const initializer = require('../../helpers/initializer');
 const { fastForward } = require('@synthetixio/core-js/utils/rpc');
 
@@ -19,11 +20,6 @@ describe('CoreElectionModule', () => {
 
   before('identify modules', async () => {
     CoreElectionModule = await ethers.getContractAt('CoreElectionModule', proxyAddress());
-  });
-
-  it('no MemberToken is deployed', async () => {
-    const address = await CoreElectionModule.getMemberTokenAddress();
-    equal(address, '0x0000000000000000000000000000000000000000');
   });
 
   describe('when creating MemberToken', () => {
@@ -99,10 +95,10 @@ describe('CoreElectionModule', () => {
   });
 
   describe('when configuring the election token address', () => {
-    let ERC20;
+    let ElectionToken;
     before('prepare token', async () => {
-      const factory = await ethers.getContractFactory('ERC20');
-      ERC20 = await factory.deploy();
+      const factory = await ethers.getContractFactory('ElectionTokenMock');
+      ElectionToken = await factory.deploy();
     });
 
     it('reverts when a regular user tries to setElectionTokenAddress', async () => {
@@ -115,7 +111,9 @@ describe('CoreElectionModule', () => {
     });
 
     it('allows the owner to setElectionTokenAddress', async () => {
-      await (await CoreElectionModule.connect(owner).setElectionTokenAddress(ERC20.address)).wait();
+      await (
+        await CoreElectionModule.connect(owner).setElectionTokenAddress(ElectionToken.address)
+      ).wait();
     });
   });
 
@@ -207,16 +205,30 @@ describe('CoreElectionModule', () => {
   });
 
   describe('when electing a new council', () => {
-    let candidates;
+    let ElectionToken, ElectionStorageMock, candidates;
+
+    before('identify modules', async () => {
+      ElectionStorageMock = await ethers.getContractAt('ElectionStorageMock', proxyAddress());
+    });
 
     before('identify candidates', async () => {
       // Grab 5 users as candidates
       candidates = (await ethers.getSigners()).slice(2, 7);
     });
 
+    before('prepare election token', async () => {
+      const factory = await ethers.getContractFactory('ElectionTokenMock');
+      ElectionToken = await factory.deploy();
+      await (await CoreElectionModule.setElectionTokenAddress(ElectionToken.address)).wait();
+    });
+
+    before('assign election tokens to the user', async () => {
+      await ElectionToken.connect(user).mint(100);
+    });
+
     before('prepare next epoch', async () => {
       // Next seat count should be 3, and leave 2 outside
-      await (await CoreElectionModule.connect(owner).setNextSeatCount(3)).wait();
+      await (await ElectionStorageMock.setNextSeatCountMock(3)).wait();
     });
 
     before('nominate candidates', async () => {
@@ -225,11 +237,63 @@ describe('CoreElectionModule', () => {
       );
     });
 
-    it('reverts when trying to elect an invalid amount of candidates', async () => {
+    it('reverts when trying to elect no candidates', async () => {
+      await assertRevert(CoreElectionModule.connect(user).elect([]), 'InvalidCandidatesCount');
+    });
+
+    it('reverts when trying to elect more candidates than nominees', async () => {
       await assertRevert(
-        CoreElectionModule.connect(user).elect([candidates[0].address, candidates[1].address]),
+        CoreElectionModule.connect(user).elect([
+          user.address,
+          owner.address,
+          candidates[0].address,
+          candidates[1].address,
+          candidates[2].address,
+          candidates[3].address,
+          candidates[4].address,
+        ]),
         'InvalidCandidatesCount'
       );
+    });
+
+    it('reverts when trying to elect a not nominated candidate', async () => {
+      await assertRevert(
+        CoreElectionModule.connect(user).elect([user.address]),
+        `InvalidCandidate("${user.address}")`
+      );
+    });
+
+    it('reverts when trying to elect several times the same address', async () => {
+      await assertRevert(
+        CoreElectionModule.elect([candidates[0].address, candidates[0].address]),
+        `InvalidCandidateRepeat("${candidates[0].address}")`
+      );
+    });
+
+    it('allows to elect council members', async () => {
+      await CoreElectionModule.connect(user).elect([
+        candidates[0].address,
+        candidates[1].address,
+        candidates[2].address,
+      ]);
+
+      const results = await Promise.all([
+        CoreElectionModule.getNomineeVotes(candidates[0].address),
+        CoreElectionModule.getNomineeVotes(candidates[1].address),
+        CoreElectionModule.getNomineeVotes(candidates[2].address),
+      ]);
+
+      deepEqual(results.map(Number), [100, 100, 100]);
+    });
+
+    it('correctly saves vote data', async () => {
+      deepEqual(await ElectionStorageMock.getVoterVoteCandidatesMock(user.address), [
+        candidates[0].address,
+        candidates[1].address,
+        candidates[2].address,
+      ]);
+
+      assertBn.eq(await ElectionStorageMock.getVoterVoteVotePowerMock(user.address), 100);
     });
   });
 

@@ -9,14 +9,19 @@ import "../token/MemberToken.sol";
 import "../storage/ElectionStorage.sol";
 
 contract CoreElectionModule is IElectionModule, ElectionStorage, OwnableMixin {
-    event MemberTokenCreated(address memberTokenAddress);
-
     error MemberTokenAlreadyCreated();
     error AlreadyNominated(address addr);
     error NotNominated(address addr);
-    error InvalidPeriodPercent();
+
+    error InvalidCandidate(address addr);
     error InvalidCandidatesCount();
+    error InvalidCandidateRepeat(address addr);
+    error InvalidPeriodPercent();
     error FirstEpochAlreadySetUp();
+
+    error AlreadyVoted();
+
+    event MemberTokenCreated(address memberTokenAddress);
 
     function createMemberToken(string memory tokenName, string memory tokenSymbol) external override onlyOwner {
         ElectionStore storage store = _electionStore();
@@ -56,51 +61,52 @@ contract CoreElectionModule is IElectionModule, ElectionStorage, OwnableMixin {
         return _electionStore().electionTokenAddress;
     }
 
+    // TODO: add pagination for getting nominees list
     function getNominees() external view override returns (address[] memory) {
-        return _electionStore().nominees;
+        return _electionStore().electionData.nominees;
     }
 
     function nominate() external override {
-        ElectionStore storage store = _electionStore();
+        ElectionData storage electionData = _electionStore().electionData;
 
-        if (store.nomineeIndexes[msg.sender] != 0) {
+        if (electionData.nomineeIndexes[msg.sender] != 0) {
             revert AlreadyNominated(msg.sender);
         }
 
-        store.nominees.push(msg.sender);
-        store.nomineeIndexes[msg.sender] = store.nominees.length;
-        store.nomineeVotes[msg.sender] = 0;
+        electionData.nominees.push(msg.sender);
+        electionData.nomineeIndexes[msg.sender] = electionData.nominees.length;
+        electionData.nomineeVotes[msg.sender] = 0;
     }
 
     function withdrawNomination() external override {
-        ElectionStore storage store = _electionStore();
+        ElectionData storage electionData = _electionStore().electionData;
 
-        uint256 valueIndex = store.nomineeIndexes[msg.sender];
+        uint256 valueIndex = electionData.nomineeIndexes[msg.sender];
 
         if (valueIndex == 0) {
             revert NotNominated(msg.sender);
         }
 
         uint256 toDeleteIndex = valueIndex - 1;
-        uint256 lastIndex = store.nominees.length - 1;
+        uint256 lastIndex = electionData.nominees.length - 1;
 
         // If the address is not the last one on the Array, we have to move it to
         // swap it with the last element, and then pop it, so we don't leave any
         // empty spaces.
         if (lastIndex != toDeleteIndex) {
-            address lastvalue = store.nominees[lastIndex];
+            address lastvalue = electionData.nominees[lastIndex];
 
             // Move the last value to the index where the value to delete is
-            store.nominees[toDeleteIndex] = lastvalue;
+            electionData.nominees[toDeleteIndex] = lastvalue;
             // Update the index for the moved value
-            store.nomineeIndexes[lastvalue] = valueIndex; // Replace lastvalue's index to valueIndex
+            electionData.nomineeIndexes[lastvalue] = valueIndex; // Replace lastvalue's index to valueIndex
         }
 
         // Delete the slot where the moved value was stored
-        store.nominees.pop();
+        electionData.nominees.pop();
 
         // Delete the index for the deleted slot
-        delete store.nomineeIndexes[msg.sender];
+        delete electionData.nomineeIndexes[msg.sender];
     }
 
     function setSeatCount(uint seats) external override onlyOwner {
@@ -131,26 +137,51 @@ contract CoreElectionModule is IElectionModule, ElectionStorage, OwnableMixin {
         _electionStore().nextNominationPeriodPercent = percent;
     }
 
-    function elect(address[] memory candidates) external view override {
-        uint seatCount = _electionStore().nextSeatCount;
+    function elect(address[] memory candidates) external override {
+        ElectionStore storage store = _electionStore();
+        ElectionData storage electionData = store.electionData;
 
-        if (candidates.length != seatCount) {
+        if (candidates.length == 0 || candidates.length > electionData.nominees.length) {
             revert InvalidCandidatesCount();
         }
 
-        // TODO: if msg.sender already voted, rollback previous votes.
+        if (electionData.addressVoted[msg.sender]) {
+            // TODO: if msg.sender already voted, rollback previous votes and allow to re-vote
+            revert AlreadyVoted();
+        }
 
-        // TODO: Assign votes to each address (same to all)
-        // uint votePower = ERC20(_electionStore().electionTokenAddress).balanceOf(msg.sender);
+        uint votePower = ERC20(store.electionTokenAddress).balanceOf(msg.sender);
 
-        // TODO: Recalculate top [seatsCount] nominees
-        //   _minimunIdx;
-        //   _minimumValue;
-        //   if votes > minimum
-        //     electionTopNominees[last][minumunNomineeTop] = msg.sender
-        //     for () // get new minimum (idx & value)
+        for (uint i = 0; i < candidates.length; i++) {
+            address candidate = candidates[i];
 
-        // TODO: Mark msg.sender as already voted on electionVotes
+            if (electionData.nomineeIndexes[candidate] == 0) {
+                revert InvalidCandidate(candidate);
+            }
+
+            // Check that all the values on the candidates Array are unique
+            // TODO: Remove the nested loops https://github.com/Synthetixio/synthetix-v3/issues/518
+            if (i < candidates.length - 1) {
+                for (uint256 j = i + 1; j < candidates.length; j++) {
+                    address nextCandidate = candidates[j];
+                    if (candidate == nextCandidate) {
+                        revert InvalidCandidateRepeat(candidate);
+                    }
+                }
+            }
+
+            electionData.nomineeVotes[candidate] += votePower;
+        }
+
+        VoteData memory voteData = VoteData({candidates: candidates, votePower: votePower});
+        electionData.votes.push(voteData);
+        electionData.votesIndexes[msg.sender] = electionData.votes.length - 1;
+
+        electionData.addressVoted[msg.sender] = true;
+    }
+
+    function getNomineeVotes(address nominee) external view override returns (uint) {
+        return _electionStore().electionData.nomineeVotes[nominee];
     }
 
     function isEpochFinished() public view override returns (bool) {
@@ -200,6 +231,5 @@ contract CoreElectionModule is IElectionModule, ElectionStorage, OwnableMixin {
         store.seatCount = store.nextSeatCount;
         store.epochDuration = store.nextEpochDuration;
         store.nominationPeriodPercent = store.nextNominationPeriodPercent;
-        store.nominees = new address[](0);
     }
 }

@@ -30,6 +30,8 @@ interface IElectionModule {
 
     function elect(address[] memory candidates) external;
 
+    function getNomineeVotes(address nominee) external view returns (uint);
+
     function isEpochFinished() external view returns (bool);
 
     function isNominating() external view returns (bool);
