@@ -312,7 +312,7 @@ describe('CoreElectionModule', () => {
 
       describe('when attempting to set the first epoch again', () => {
         it('reverts', async () => {
-          await assertRevert(CoreElectionModule.setupFirstEpoch(), 'AlreadyStarted');
+          await assertRevert(CoreElectionModule.setupFirstEpoch(), 'FirstEpochAlreadySetUp');
         });
       });
     });
