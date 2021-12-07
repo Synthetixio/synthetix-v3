@@ -61,7 +61,7 @@ contract CoreElectionModule is IElectionModule, ElectionStorage, OwnableMixin {
         return _electionStore().electionTokenAddress;
     }
 
-    // TODO add pagination for getting nominees list
+    // TODO: add pagination for getting nominees list
     function getNominees() external view override returns (address[] memory) {
         return _electionStore().electionData.nominees;
     }
@@ -150,13 +150,11 @@ contract CoreElectionModule is IElectionModule, ElectionStorage, OwnableMixin {
             revert AlreadyVoted();
         }
 
-        // The voting power is the amount of votes we are going to assign to the given candidates
         uint votePower = ERC20(store.electionTokenAddress).balanceOf(msg.sender);
 
         for (uint i = 0; i < candidates.length; i++) {
             address candidate = candidates[i];
 
-            // Check that the candidate is a nominee
             if (electionData.nomineeIndexes[candidate] == 0) {
                 revert InvalidCandidate(candidate);
             }
@@ -171,16 +169,13 @@ contract CoreElectionModule is IElectionModule, ElectionStorage, OwnableMixin {
                 }
             }
 
-            // Assign votes to the given candidate
             electionData.nomineeVotes[candidate] += votePower;
         }
 
-        // Save vote data for future usage
         VoteData memory voteData = VoteData({candidates: candidates, votePower: votePower});
         electionData.votes.push(voteData);
         electionData.votesIndexes[msg.sender] = electionData.votes.length - 1;
 
-        // Mark the user as already voted
         electionData.addressVoted[msg.sender] = true;
     }
 
