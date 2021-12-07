@@ -13,9 +13,10 @@ contract CoreElectionModule is IElectionModule, ElectionStorage, OwnableMixin {
     error AlreadyNominated(address addr);
     error NotNominated(address addr);
 
-    error InvalidPeriodPercent();
+    error InvalidCandidate(address addr);
     error InvalidCandidatesCount();
-    error InvalidCandidatesRepeat();
+    error InvalidCandidateRepeat(address addr);
+    error InvalidPeriodPercent();
     error FirstEpochAlreadySetUp();
 
     error AlreadyVoted();
@@ -154,15 +155,21 @@ contract CoreElectionModule is IElectionModule, ElectionStorage, OwnableMixin {
         for (uint i = 0; i < candidates.length; i++) {
             address candidate = candidates[i];
 
+            // Check that the candidate is a nominee
+            if (electionData.nomineeIndexes[candidate] == 0) {
+                revert InvalidCandidate(candidate);
+            }
+
             // Check that all the values on the candidates Array are unique
             if (i < candidates.length - 1) {
                 for (uint256 j = i + 1; j < candidates.length; j++) {
                     address nextCandidate = candidates[j];
                     if (candidate == nextCandidate) {
-                        revert InvalidCandidatesRepeat();
+                        revert InvalidCandidateRepeat(candidate);
                     }
                 }
             }
+
             // Assign votes to the given candidate
             electionData.nomineeVotes[candidate] += votePower;
         }

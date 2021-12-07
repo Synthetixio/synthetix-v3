@@ -232,14 +232,21 @@ describe('CoreElectionModule', () => {
       );
     });
 
-    it('reverts when trying to elect an invalid amount of candidates', async () => {
+    it('reverts when trying to elect no candidates', async () => {
       await assertRevert(CoreElectionModule.connect(user).elect([]), 'InvalidCandidatesCount');
+    });
+
+    it('reverts when trying to elect a not nominated candidate', async () => {
+      await assertRevert(
+        CoreElectionModule.connect(user).elect([user.address]),
+        `InvalidCandidate("${user.address}")`
+      );
     });
 
     it('reverts when trying to elect several times the same address', async () => {
       await assertRevert(
         CoreElectionModule.elect([candidates[0].address, candidates[0].address]),
-        'InvalidCandidatesRepeat'
+        `InvalidCandidateRepeat("${candidates[0].address}")`
       );
     });
 
