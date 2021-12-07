@@ -61,6 +61,7 @@ contract CoreElectionModule is IElectionModule, ElectionStorage, OwnableMixin {
         return _electionStore().electionTokenAddress;
     }
 
+    // TODO add pagination for getting nominees list
     function getNominees() external view override returns (address[] memory) {
         return _electionStore().electionData.nominees;
     }
