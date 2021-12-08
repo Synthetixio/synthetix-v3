@@ -31,6 +31,8 @@ task(TASK_INTERACT, 'Interacts with a given modular system deployment')
     help += '* Use arrows to navigate, or type to autocomplete\n';
     help += '* Press enter to select a choice\n';
     help += '* Press ctrl-c to go back and exit\n';
+    help += '* For bytes32 types, strings will be utf converted\n';
+    help += '* For address types, self/signer will use signer address\n';
     logger.info(help, '\n');
 
     async function run() {

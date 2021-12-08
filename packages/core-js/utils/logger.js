@@ -62,7 +62,7 @@ module.exports = {
   },
 
   notice(msg) {
-    this.log(chalk.yellow(`> ${msg}`));
+    this.log(chalk.yellow(`! ${msg}`));
   },
 
   error(msg) {

@@ -50,7 +50,7 @@ describe('utils/logger.js', () => {
       deepEqual(logged, [
         ['hello'],
         ['ⓘ  hello'],
-        ['> hello'],
+        ['! hello'],
         ['☠ hello'],
         ['⚠ hello'],
         ['✓ hello'],

@@ -3,49 +3,53 @@ const { SUBTASK_EXECUTE_CALL } = require('../task-names');
 const logger = require('@synthetixio/core-js/utils/logger');
 const chalk = require('chalk');
 const prompter = require('@synthetixio/core-js/utils/prompter');
-const { getSignatureWithParameterNamesAndValues } = require('../internal/signatures');
+const { getFullFunctionSignature, getFullEventSignature } = require('../internal/signatures');
 
 subtask(SUBTASK_EXECUTE_CALL, 'Execute the current tx').setAction(async (taskArguments, hre) => {
-  logger.info(
-    `Calling ${hre.cli.contractName}.${getSignatureWithParameterNamesAndValues(
+  const target = hre.deployer.deployment.general.contracts[hre.cli.contractName];
+  const address = target.proxyAddress || target.deployedAddress;
+
+  logger.notice(
+    `${hre.cli.contractName}.${getFullFunctionSignature(
       hre.cli.contractName,
       hre.cli.functionName,
       hre.cli.functionParameters
     )}`
   );
-
-  const target = hre.deployer.deployment.general.contracts[hre.cli.contractName];
-  const address = target.proxyAddress || target.deployedAddress;
+  logger.info(`Target: ${address}`);
 
   const abi = hre.deployer.deployment.abis[hre.cli.contractName];
   const functionAbi = abi.find((abiItem) => abiItem.name === hre.cli.functionName);
 
+  const contract = new hre.ethers.Contract(address, abi, hre.ethers.provider);
+  const tx = await contract.populateTransaction[hre.cli.functionName](
+    ...hre.cli.functionParameters
+  );
+  logger.info(`Calldata: ${tx.data}`);
+
   const readOnly = functionAbi.stateMutability === 'view';
   if (readOnly) {
-    await executeReadTransaction(address, abi);
+    await executeReadTransaction(contract);
   } else {
-    await executeWriteTransaction(address, abi);
+    await executeWriteTransaction(contract);
   }
 
   hre.cli.functionParameters = null;
   hre.cli.functionName = null;
 });
 
-async function executeReadTransaction(address, abi) {
-  const contract = new hre.ethers.Contract(address, abi, hre.ethers.provider);
-
+async function executeReadTransaction(contract) {
   const result = await contract[hre.cli.functionName](...hre.cli.functionParameters);
 
-  logger.checked(`Result: ${result}`);
+  console.log(chalk.green(`✓ ${result}`));
 }
 
-async function executeWriteTransaction(address, abi) {
-  logger.warn('This is a write transaction');
-
+async function executeWriteTransaction(contract) {
   const signer = (await hre.ethers.getSigners())[0];
-  logger.info(`Signer to use: ${signer.address}`);
+  logger.info(`Signer: ${signer.address}`);
+  logger.warn('This is a write transaction!');
 
-  const contract = new hre.ethers.Contract(address, abi, signer);
+  contract = contract.connect(signer);
 
   let tx;
   try {
@@ -84,12 +88,12 @@ async function executeWriteTransaction(address, abi) {
 
       logger.debug(JSON.stringify(receipt, null, 2));
 
-      printEventsInReceipt(receipt);
+      _printEventsInReceipt(receipt);
     }
   }
 }
 
-function printEventsInReceipt(receipt) {
+function _printEventsInReceipt(receipt) {
   const numEvents = receipt.events.length;
 
   if (numEvents > 0) {
@@ -97,7 +101,7 @@ function printEventsInReceipt(receipt) {
 
     receipt.events.map((event) => {
       if (event.event) {
-        logger.log(chalk.gray(`* ${event.event}(${event.args.join(', ')})`));
+        console.log(chalk.green(`✓ ${getFullEventSignature(hre.cli.contractName, event)}`));
       } else {
         logger.log(
           chalk.gray(`* Unknown event with topics: [${event.topics}] and data: [${event.data}]`)

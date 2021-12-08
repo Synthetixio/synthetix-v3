@@ -1,4 +1,4 @@
-function getSignatureWithParameterNamesAndValues(contractName, functionName, functionParameters) {
+function getFullFunctionSignature(contractName, functionName, functionParameters) {
   const abi = hre.deployer.deployment.abis[contractName];
   const functionAbi = abi.find((abiItem) => abiItem.name === functionName);
 
@@ -20,6 +20,27 @@ function getSignatureWithParameterNamesAndValues(contractName, functionName, fun
   return str;
 }
 
+function getFullEventSignature(contractName, event) {
+  const abi = hre.deployer.deployment.abis[contractName];
+  const eventAbi = abi.find((entry) => entry.name === event.event);
+
+
+  let i = 0;
+  const namedArgs = event.args.map((arg) => {
+    const input = eventAbi.inputs[i];
+    i++;
+
+    return `${input.type} ${input.name} = ${arg}`;
+  });
+
+  let str = `${event.event}(\n`;
+  str += `  ${namedArgs.join(',\n  ')}`;
+  str += '\n)';
+
+  return str;
+}
+
 module.exports = {
-  getSignatureWithParameterNamesAndValues,
+  getFullFunctionSignature,
+  getFullEventSignature,
 };

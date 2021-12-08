@@ -25,7 +25,7 @@ subtask(SUBTASK_PICK_PARAMETERS, 'Populate the selected function parameters').se
 
       if (answer) {
         try {
-          hre.cli.functionParameters.push(_parseInput(answer, parameter.type, hre));
+          hre.cli.functionParameters.push(await _parseInput(answer, parameter.type, hre));
 
           parameterIndex++;
         } catch (error) {
@@ -34,14 +34,15 @@ subtask(SUBTASK_PICK_PARAMETERS, 'Populate the selected function parameters').se
       } else {
         // Cancelling returns to pick-function
         hre.cli.functionName = null;
+        hre.cli.functionParameters = null;
         parameterIndex = functionAbi.inputs.length;
       }
     }
   }
 );
 
-function _parseInput(input, type, hre) {
-  const processed = _preprocessInput(input, type, hre);
+async function _parseInput(input, type, hre) {
+  const processed = await _preprocessInput(input, type, hre);
   if (input !== processed) {
     logger.info(`"${input}" auto-converted to "${processed}"`);
 
@@ -57,13 +58,18 @@ function _parseInput(input, type, hre) {
   return input;
 }
 
-function _preprocessInput(input, type, hre) {
+async function _preprocessInput(input, type, hre) {
   const isNumber = !isNaN(input);
   const isHex = hre.ethers.utils.isHexString(input);
 
   // E.g. "sUSD" to "0x7355534400000000000000000000000000000000000000000000000000000000"
   if (type === 'bytes32' && !isNumber && !isHex) {
     return hre.ethers.utils.formatBytes32String(input);
+  }
+
+  // E.g. "self" or "signer" to signer address
+  if ((type === 'address' && input === 'self') || input === 'signer') {
+    return (await hre.ethers.getSigners())[0].address;
   }
 
   return input;
