@@ -10,8 +10,6 @@ subtask(SUBTASK_PICK_PARAMETERS, 'Populate the selected function parameters').se
     const abi = hre.deployer.deployment.abis[hre.cli.contractName];
     const functionAbi = abi.find((abiItem) => abiItem.name === hre.cli.functionName);
 
-    const abiCoder = hre.ethers.utils.defaultAbiCoder;
-
     let parameterIndex = 0;
     // Using a while loop so that the user can retry failed inputs
     while (parameterIndex < functionAbi.inputs.length) {
@@ -26,15 +24,8 @@ subtask(SUBTASK_PICK_PARAMETERS, 'Populate the selected function parameters').se
       ]);
 
       if (answer) {
-        let encodedParameter;
-
         try {
-          // Encode and decode the user's input to parse the input
-          // into types acceptable by ethers.
-          encodedParameter = abiCoder.encode([parameter.type], [answer]);
-          encodedParameter = abiCoder.decode([parameter.type], encodedParameter);
-
-          hre.cli.functionParameters.push(...encodedParameter);
+          hre.cli.functionParameters.push(_parseInput(answer, parameter.type, hre));
 
           parameterIndex++;
         } catch (error) {
@@ -48,3 +39,32 @@ subtask(SUBTASK_PICK_PARAMETERS, 'Populate the selected function parameters').se
     }
   }
 );
+
+function _parseInput(input, type, hre) {
+  const processed = _preprocessInput(input, type, hre);
+  if (input !== processed) {
+    logger.info(`"${input}" auto-converted to "${processed}"`);
+
+    input = processed;
+  }
+
+  // Encode and decode the user's input to parse it
+  // into types acceptable by ethers.
+  const abiCoder = hre.ethers.utils.defaultAbiCoder;
+  input = abiCoder.encode([type], [input]);
+  input = abiCoder.decode([type], input)[0];
+
+  return input;
+}
+
+function _preprocessInput(input, type, hre) {
+  const isNumber = !isNaN(input);
+  const isHex = hre.ethers.utils.isHexString(input);
+
+  // E.g. "sUSD" to "0x7355534400000000000000000000000000000000000000000000000000000000"
+  if (type === 'bytes32' && !isNumber && !isHex) {
+    return hre.ethers.utils.formatBytes32String(input);
+  }
+
+  return input;
+}
