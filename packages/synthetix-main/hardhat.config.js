@@ -28,4 +28,7 @@ module.exports = {
   deployer: {
     proxyContract: 'Synthetix',
   },
+  contractSizer: {
+    strict: true,
+  },
 };

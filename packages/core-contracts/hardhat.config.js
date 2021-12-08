@@ -12,4 +12,7 @@ module.exports = {
       },
     },
   },
+  contractSizer: {
+    strict: true,
+  },
 };

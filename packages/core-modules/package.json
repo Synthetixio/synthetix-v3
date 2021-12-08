@@ -11,7 +11,9 @@
   ],
   "scripts": {
     "test": "hardhat test",
-    "coverage": "hardhat coverage"
+    "coverage": "hardhat coverage",
+    "compile-contracts": "hardhat compile",
+    "size-contracts": "hardhat size-contracts"
   },
   "keywords": [],
   "author": "",
