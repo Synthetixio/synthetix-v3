@@ -58,8 +58,11 @@ function _parseInput(input, type, hre) {
 }
 
 function _preprocessInput(input, type, hre) {
+  const isNumber = !isNaN(input);
+  const isHex = hre.ethers.utils.isHexString(input);
+
   // E.g. "sUSD" to "0x7355534400000000000000000000000000000000000000000000000000000000"
-  if (type === 'bytes32' && !hre.ethers.utils.isHexString(input)) {
+  if (type === 'bytes32' && !isNumber && !isHex) {
     return hre.ethers.utils.formatBytes32String(input);
   }
 
