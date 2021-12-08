@@ -48,7 +48,7 @@ function _parseInput(input, type, hre) {
     input = processed;
   }
 
-  // Encode and decode the user's input to parse the input
+  // Encode and decode the user's input to parse it
   // into types acceptable by ethers.
   const abiCoder = hre.ethers.utils.defaultAbiCoder;
   input = abiCoder.encode([type], [input]);
