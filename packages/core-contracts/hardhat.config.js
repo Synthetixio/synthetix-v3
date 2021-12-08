@@ -1,6 +1,15 @@
+require('hardhat-contract-sizer');
 require('solidity-coverage');
 require('@nomiclabs/hardhat-ethers');
 
 module.exports = {
-  solidity: '0.8.4',
+  solidity: {
+    version: '0.8.7',
+    settings: {
+      optimizer: {
+        enabled: true,
+        runs: 200,
+      },
+    },
+  },
 };
