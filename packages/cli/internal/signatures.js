@@ -24,7 +24,6 @@ function getFullEventSignature(contractName, event) {
   const abi = hre.deployer.deployment.abis[contractName];
   const eventAbi = abi.find((entry) => entry.name === event.event);
 
-
   let i = 0;
   const namedArgs = event.args.map((arg) => {
     const input = eventAbi.inputs[i];

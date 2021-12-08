@@ -12,10 +12,7 @@ subtask(SUBTASK_PICK_FUNCTION, 'Pick a function from the given contract').setAct
     const selectors = await getSelectors(abi);
 
     const choices = abiFunctions.map((abiItem) => {
-      const fullSignature = getFullFunctionSignature(
-        hre.cli.contractName,
-        abiItem.name
-      );
+      const fullSignature = getFullFunctionSignature(hre.cli.contractName, abiItem.name);
       const selector = selectors.find((selector) => selector.name === abiItem.name).selector;
 
       return {
