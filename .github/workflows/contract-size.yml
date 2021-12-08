@@ -3,7 +3,7 @@ name: Contract sizes
 on: [push]
 
 jobs:
-  test:
+  size:
     runs-on: ubuntu-latest
     strategy:
       matrix:
