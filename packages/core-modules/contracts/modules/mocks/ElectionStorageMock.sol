@@ -8,6 +8,19 @@ contract ElectionStorageMock is ElectionStorage {
         _electionStore().seatCount = seats;
     }
 
+    function setCurrentEpochMock(
+        uint seatCount,
+        uint duration,
+        uint nominationPercent
+    ) external {
+        ElectionStore storage store = _electionStore();
+
+        store.epochStart = block.timestamp; // solhint-disable-line not-rely-on-time
+        store.seatCount = seatCount;
+        store.epochDuration = duration;
+        store.nominationPeriodPercent = nominationPercent;
+    }
+
     function getNextEpochRepresentatives() external view returns (address[] memory) {
         return _electionStore().electionData.nextEpochRepresentatives;
     }

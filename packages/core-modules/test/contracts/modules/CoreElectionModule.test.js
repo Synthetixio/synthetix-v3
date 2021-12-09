@@ -11,7 +11,7 @@ const { ethers } = hre;
 describe('CoreElectionModule Setup, Getters, Setters and Voting', () => {
   const { proxyAddress } = bootstrap(initializer);
 
-  let CoreElectionModule;
+  let CoreElectionModule, ElectionStorageMock;
   let owner, user;
 
   before('identify signers', async () => {
@@ -19,7 +19,10 @@ describe('CoreElectionModule Setup, Getters, Setters and Voting', () => {
   });
 
   before('identify modules', async () => {
-    CoreElectionModule = await ethers.getContractAt('CoreElectionModule', proxyAddress());
+    [CoreElectionModule, ElectionStorageMock] = await Promise.all([
+      ethers.getContractAt('CoreElectionModule', proxyAddress()),
+      ethers.getContractAt('ElectionStorageMock', proxyAddress()),
+    ]);
   });
 
   describe('when creating MemberToken', () => {
@@ -123,6 +126,23 @@ describe('CoreElectionModule Setup, Getters, Setters and Voting', () => {
     });
   });
 
+  describe('when initializing first epoch', () => {
+    it('reverts when a regular user tries to setupFirstEpoch', async () => {
+      await assertRevert(CoreElectionModule.connect(user).setupFirstEpoch(), 'Unauthorized');
+    });
+
+    it('sets the first epoch parameters', async () => {
+      await (await CoreElectionModule.connect(owner).setupFirstEpoch()).wait();
+    });
+
+    it('reverts if already initialized', async () => {
+      await assertRevert(
+        CoreElectionModule.connect(owner).setupFirstEpoch(),
+        'FirstEpochAlreadySet'
+      );
+    });
+  });
+
   describe('when configuring the next epoch', () => {
     it('reverts when a regular user tries to setNextSeatCount', async () => {
       await assertRevert(CoreElectionModule.connect(user).setNextSeatCount(5), 'Unauthorized');
@@ -194,11 +214,7 @@ describe('CoreElectionModule Setup, Getters, Setters and Voting', () => {
   });
 
   describe('when voting a new council', () => {
-    let ElectionToken, ElectionStorageMock, candidates, voters;
-
-    before('identify modules', async () => {
-      ElectionStorageMock = await ethers.getContractAt('ElectionStorageMock', proxyAddress());
-    });
+    let ElectionToken, candidates, voters;
 
     before('identify candidates and voters', async () => {
       // Grab 5 users as candidates and sort by address number
@@ -355,18 +371,13 @@ describe('CoreElectionModule Setup, Getters, Setters and Voting', () => {
         timeLapse: 0,
         epochState: false,
         nominatingState: false,
-        votingState: false,
+        votingState: true,
       });
     });
 
     describe('when the epoch started', () => {
-      before('set the nextEpoch parameters', async () => {
-        await (await CoreElectionModule.connect(owner).setNextEpochDuration(week)).wait();
-        await (await CoreElectionModule.connect(owner).setNextPeriodPercent(15)).wait(); // 15% ~1 day
-      });
-
-      before('start epoch', async () => {
-        await (await CoreElectionModule.setupFirstEpoch()).wait();
+      before('set current epoch parameters', async () => {
+        await (await ElectionStorageMock.setCurrentEpochMock(1, week, 15)).wait();
       });
 
       checkTimeState({
