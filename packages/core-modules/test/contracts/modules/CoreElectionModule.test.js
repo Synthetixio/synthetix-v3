@@ -123,6 +123,27 @@ describe('CoreElectionModule Setup, Getters, Setters and Voting', () => {
     });
   });
 
+  describe('when configuring the current epoch', () => {
+    it('reverts when a regular user tries to setSeatCount', async () => {
+      await assertRevert(CoreElectionModule.connect(user).setSeatCount(5), 'Unauthorized');
+    });
+
+    it('allows the owner to setSeatCount', async () => {
+      await (await CoreElectionModule.connect(owner).setSeatCount(5)).wait();
+    });
+
+    it('reverts when a regular user tries to setPeriodPercent', async () => {
+      await assertRevert(CoreElectionModule.connect(user).setPeriodPercent(20), 'Unauthorized');
+    });
+
+    it('reverts when giving an invalid percent value to setPeriodPercent', async () => {
+      await assertRevert(
+        CoreElectionModule.connect(owner).setPeriodPercent(101),
+        'InvalidPeriodPercent'
+      );
+    });
+  });
+
   describe('when configuring the next epoch', () => {
     it('reverts when a regular user tries to setNextSeatCount', async () => {
       await assertRevert(CoreElectionModule.connect(user).setNextSeatCount(5), 'Unauthorized');
@@ -201,8 +222,10 @@ describe('CoreElectionModule Setup, Getters, Setters and Voting', () => {
     });
 
     before('identify candidates and voters', async () => {
-      // Grab 5 users as candidates and voters
-      candidates = (await ethers.getSigners()).slice(2, 7);
+      // Grab 5 users as candidates and sort by address number
+      candidates = (await ethers.getSigners())
+        .slice(2, 7)
+        .sort((a, b) => Number(a.address) - Number(b.address));
       voters = (await ethers.getSigners()).slice(2, 7);
     });
 
@@ -228,43 +251,67 @@ describe('CoreElectionModule Setup, Getters, Setters and Voting', () => {
     });
 
     it('reverts when trying to elect no candidates', async () => {
-      await assertRevert(CoreElectionModule.connect(user).elect([]), 'InvalidCandidatesCount');
+      await assertRevert(CoreElectionModule.connect(user).elect([], []), 'MissingCandidates');
     });
 
     it('reverts when trying to elect more candidates than nominees', async () => {
       await assertRevert(
-        CoreElectionModule.connect(user).elect([
-          user.address,
-          candidates[0].address,
-          candidates[1].address,
-          candidates[2].address,
-          candidates[3].address,
-          candidates[4].address,
-        ]),
-        'InvalidCandidatesCount'
+        CoreElectionModule.connect(user).elect(
+          [
+            user.address,
+            owner.address,
+            candidates[0].address,
+            candidates[1].address,
+            candidates[2].address,
+            candidates[3].address,
+            candidates[4].address,
+          ],
+          [0, 1, 2, 3, 4, 5, 6, 7]
+        ),
+        'TooManyCandidates'
+      );
+    });
+
+    it('reverts when sending a wrong amount of candidate priorities', async () => {
+      await assertRevert(
+        CoreElectionModule.connect(user).elect([user.address], [0, 1]),
+        'CandidateLengthMismatch'
+      );
+    });
+
+    it('reverts when using a big priority', async () => {
+      await assertRevert(
+        CoreElectionModule.connect(user).elect([user.address], [2]),
+        'InvalidCandidatePriority(2)'
       );
     });
 
     it('reverts when trying to elect a not nominated candidate', async () => {
       await assertRevert(
-        CoreElectionModule.connect(user).elect([user.address]),
+        CoreElectionModule.connect(user).elect([user.address], [0]),
         `InvalidCandidate("${user.address}")`
       );
     });
 
-    it('reverts when trying to elect several times the same address', async () => {
+    it('reverts when trying to elect repeated addresses', async () => {
       await assertRevert(
-        CoreElectionModule.connect(user).elect([candidates[0].address, candidates[0].address]),
-        `InvalidCandidateRepeat("${candidates[0].address}")`
+        CoreElectionModule.elect([candidates[0].address, candidates[0].address], [0, 1]),
+        `DuplicateCandidate("${candidates[0].address}")`
+      );
+    });
+
+    it('reverts when trying to elect repeated priorities', async () => {
+      await assertRevert(
+        CoreElectionModule.elect([candidates[0].address, candidates[1].address], [0, 0]),
+        'DuplicateCandidatePriority'
       );
     });
 
     it('allows to elect council members', async () => {
-      await CoreElectionModule.connect(voters[0]).elect([
-        candidates[0].address,
-        candidates[1].address,
-        candidates[2].address,
-      ]);
+      await CoreElectionModule.connect(user).elect(
+        [candidates[0].address, candidates[1].address, candidates[2].address],
+        [2, 0, 1]
+      );
 
       await CoreElectionModule.connect(voters[1]).elect([candidates[0].address]);
 
@@ -280,9 +327,9 @@ describe('CoreElectionModule Setup, Getters, Setters and Voting', () => {
 
     it('correctly saves vote data', async () => {
       deepEqual(await ElectionStorageMock.getVoterVoteCandidatesMock(user.address), [
-        candidates[0].address,
         candidates[1].address,
         candidates[2].address,
+        candidates[0].address,
       ]);
 
       assertBn.eq(await ElectionStorageMock.getVoterVoteVotePowerMock(user.address), 100);
