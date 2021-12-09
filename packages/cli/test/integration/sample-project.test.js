@@ -6,7 +6,7 @@ const {
 const assert = require('assert/strict');
 
 // Handy configs for developing on this file:
-const SHOW_CLI_OUTPUT = false; // CI needs this to be false
+const SHOW_CLI_OUTPUT = true; // CI needs this to be false
 const DEPLOY_INSTANCE = true; // CI needs this to be true
 
 describe('sample-project', function () {
@@ -74,7 +74,7 @@ describe('sample-project', function () {
       await deployOnEnvironment(hre, {
         alias: 'first',
         clear: true,
-        quiet: false,
+        quiet: true,
       });
     }
   });
