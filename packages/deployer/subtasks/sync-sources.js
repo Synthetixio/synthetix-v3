@@ -43,7 +43,7 @@ async function _removeDeletedSources({ sources, previousDeployment }) {
     logger.notice(
       'The following modules are not present in sources anymore, they will not be included on the deployment:'
     );
-    toRemove.forEach((source) => logger.notice(`  ${source}`));
+    toRemove.forEach((source) => logger.notice(source));
     await prompter.confirmAction('Do you confirm removing these modules?');
   }
 
@@ -66,7 +66,7 @@ async function _addNewSources({ sources, previousDeployment }) {
 
   if (toAdd.length > 0) {
     logger.notice('The following modules are going to be deployed for the first time:');
-    toAdd.forEach((source) => logger.notice(`  ${source}`));
+    toAdd.forEach((source) => logger.notice(source));
   }
 
   return toAdd.length > 0;

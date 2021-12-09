@@ -34,19 +34,19 @@ subtask(
 async function _confirmDeployments({ toSkip, toUpdate, toCreate }) {
   if (toSkip.length > 0) {
     logger.info(`There are ${toSkip.length} contracts that are already up-to-date:`);
-    toSkip.forEach((contractName) => logger.notice(`  ${contractName}`));
+    toSkip.forEach((contractName) => logger.notice(contractName));
   }
 
   if (toUpdate.length > 0) {
     logger.info(`The following ${toUpdate.length} contracts are going to be updated:`);
-    toUpdate.forEach((contractName) => logger.notice(`  ${contractName}`));
+    toUpdate.forEach((contractName) => logger.notice(contractName));
   }
 
   if (toCreate.length > 0) {
     logger.info(
       `The following ${toCreate.length} contracts are going to be deployed for the first time:`
     );
-    toCreate.forEach((contractName) => logger.notice(`  ${contractName}`));
+    toCreate.forEach((contractName) => logger.notice(contractName));
   }
 
   return await prompter.ask('Are you sure you want to make these changes?');
