@@ -9,10 +9,6 @@ jobs:
       matrix:
         package:
           [core-contracts, core-modules, synthetix-main]
-        include:
-          - package: core-contracts
-          - package: core-modules
-          - package: synthetix-main
 
     steps:
       - uses: actions/checkout@v2
