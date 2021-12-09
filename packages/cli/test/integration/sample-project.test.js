@@ -20,6 +20,7 @@ describe('sample-project', function () {
   let child;
   let buffer = '';
   let status;
+  let errors = [];
 
   const keys = {
     CTRLC: '\x03',
@@ -49,6 +50,8 @@ describe('sample-project', function () {
     });
     child.stderr.on('data', (data) => {
       console.error(data.toString());
+
+      errors.push(data.toString());
     });
 
     child.on('exit', () => {
@@ -135,6 +138,7 @@ describe('sample-project', function () {
 
       it('exits', async function () {
         assert.equal(status, 'stopped');
+        assert.deepEqual(errors, []);
       });
     });
   });
@@ -172,6 +176,7 @@ describe('sample-project', function () {
 
         it('exits', async function () {
           assert.equal(status, 'stopped');
+          assert.deepEqual(errors, []);
         });
       });
     });
