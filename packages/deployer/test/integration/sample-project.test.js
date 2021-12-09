@@ -2,7 +2,7 @@ const path = require('path');
 const { loadEnvironment, deployOnEnvironment } = require('../helpers/use-environment');
 const { copyFile, unlink, readFile, writeFile } = require('fs/promises');
 
-describe.only('sample-project', function () {
+describe('sample-project', function () {
   let hre;
 
   beforeEach('set fixture project', function () {
