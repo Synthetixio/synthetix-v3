@@ -5,12 +5,11 @@ const {
 } = require('@synthetixio/deployer/test/helpers/use-environment');
 const assert = require('assert/strict');
 const { spawn } = require('child_process');
-const { StringDecoder } = require('string_decoder');
 
 // Handy configs for developing on this file:
-const SHOW_CLI_OUTPUT = true; // CI needs this to be false
-const SHOW_DEPLOY_OUTPUT = true; // CI needs this to be false
-const DEPLOY_INSTANCE = false; // CI needs this to be true
+const DEPLOY_INSTANCE = true; // CI needs this to be true
+const SHOW_CLI_OUTPUT = false; // CI needs this to be false
+const SHOW_DEPLOY_OUTPUT = false; // CI needs this to be false
 const START_DELAY = 5000;
 const INTERACT_DELAY = 2000;
 const DELTA_DELAY = 100;
@@ -28,11 +27,10 @@ describe('sample-project', function () {
   };
 
   async function _startCli() {
-    child = spawn('npx', ['hardhat', 'interact'], {
-      shell: true,
+    child = spawn('npx', ['hardhat', 'interact', '--instance', 'test'], {
       env: {
         ...process.env,
-        FORCE_COLOR: 0,
+        FORCE_COLOR: 0, // Disables chalk colors
       }
     });
 
@@ -40,19 +38,17 @@ describe('sample-project', function () {
 
     child.stdin.setEncoding('utf-8');
 
-    const decoder = new StringDecoder('utf-8');
     child.stdout.on('data', (data) => {
-      // str = Buffer.from(data, 'utf-8').toString();
-      // const str = '0101';
-      // const str = decoder.write(data);
-      const str = `${data}`;
+      const str = data.toString();
 
       if (SHOW_CLI_OUTPUT) {
-        console.log('Received data:', data.length, str.length);
         console.log(str);
       }
 
       buffer += str;
+    });
+    child.stderr.on('data', (data) => {
+      console.error(data.toString());
     });
 
     child.on('exit', () => {
@@ -91,7 +87,6 @@ describe('sample-project', function () {
       this.timeout(60000);
 
       await deployOnEnvironment(hre, {
-        alias: 'first',
         clear: true,
         quiet: !SHOW_DEPLOY_OUTPUT,
       });
@@ -116,7 +111,7 @@ describe('sample-project', function () {
 
     it('displays deployment info', async function () {
       _prints('network: hardhat');
-      _prints('deployment: deployments/hardhat/official');
+      _prints('deployment: deployments/hardhat/test');
     });
 
     it('displays usage help', async function () {
