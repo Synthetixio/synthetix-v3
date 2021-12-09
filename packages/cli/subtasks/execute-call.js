@@ -22,8 +22,7 @@ subtask(SUBTASK_EXECUTE_CALL, 'Execute the current tx').setAction(async (taskArg
   );
   logger.info(`Calldata: ${tx.data}`);
 
-  const readOnly =
-    (functionAbi.stateMutability === 'view') || (functionAbi.stateMutability === 'pure');
+  const readOnly = functionAbi.stateMutability === 'view' || functionAbi.stateMutability === 'pure';
   if (readOnly) {
     await executeReadTransaction(contract);
   } else {

@@ -31,7 +31,7 @@ describe('sample-project', function () {
       env: {
         ...process.env,
         FORCE_COLOR: 0, // Disables chalk colors
-      }
+      },
     });
 
     status = 'running';
