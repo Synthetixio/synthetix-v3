@@ -11,15 +11,15 @@ subtask(SUBTASK_PICK_FUNCTION, 'Pick a function from the given contract').setAct
     const abiFunctions = abi.filter((abiItem) => abiItem.name && abiItem.type === 'function');
     const selectors = await getSelectors(abi);
 
-    const choices = abiFunctions.map((abiItem) => {
-      const fullSignature = getFullFunctionSignature(hre.cli.contractName, abiItem.name);
-      const selector = selectors.find((selector) => selector.name === abiItem.name).selector;
+    const choices = abiFunctions.map((functionAbi) => {
+      const fullSignature = getFullFunctionSignature(functionAbi);
+      const selector = selectors.find((selector) => selector.name === functionAbi.name).selector;
 
       return {
         title: `${chalk.gray(`${hre.cli.contractName}.`)}${fullSignature}${chalk.gray(
           ` ${selector}`
         )}`,
-        value: abiItem.name,
+        value: functionAbi.name,
       };
     });
 

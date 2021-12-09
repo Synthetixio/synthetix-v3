@@ -8,18 +8,16 @@ const { getFullFunctionSignature, getFullEventSignature } = require('../internal
 subtask(SUBTASK_EXECUTE_CALL, 'Execute the current tx').setAction(async (taskArguments, hre) => {
   const target = hre.deployer.deployment.general.contracts[hre.cli.contractName];
   const address = target.proxyAddress || target.deployedAddress;
+  const abi = hre.deployer.deployment.abis[hre.cli.contractName];
+  const functionAbi = abi.find((abiItem) => abiItem.name === hre.cli.functionName);
 
   logger.notice(
     `${hre.cli.contractName}.${getFullFunctionSignature(
-      hre.cli.contractName,
-      hre.cli.functionName,
+      functionAbi,
       hre.cli.functionParameters
     )}`
   );
   logger.info(`Target: ${address}`);
-
-  const abi = hre.deployer.deployment.abis[hre.cli.contractName];
-  const functionAbi = abi.find((abiItem) => abiItem.name === hre.cli.functionName);
 
   const contract = new hre.ethers.Contract(address, abi, hre.ethers.provider);
   const tx = await contract.populateTransaction[hre.cli.functionName](
@@ -101,7 +99,10 @@ function _printEventsInReceipt(receipt) {
 
     receipt.events.map((event) => {
       if (event.event) {
-        console.log(chalk.green(`✓ ${getFullEventSignature(hre.cli.contractName, event)}`));
+        const abi = hre.deployer.deployment.abis[hre.cli.contractName];
+        const eventAbi = abi.find((abiItem) => abiItem.name === event.event);
+
+        console.log(chalk.green(`✓ ${getFullEventSignature(eventAbi, event)}`));
       } else {
         logger.log(
           chalk.gray(`* Unknown event with topics: [${event.topics}] and data: [${event.data}]`)
