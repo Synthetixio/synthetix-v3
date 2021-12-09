@@ -5,9 +5,9 @@ module.exports = {
       indexed: false,
       internalType: 'address',
       name: 'implementationAddress',
-      type: 'address'
-    }
+      type: 'address',
+    },
   ],
   name: 'SynthImplementationCreated',
-  type: 'event'
+  type: 'event',
 };

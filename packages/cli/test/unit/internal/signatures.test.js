@@ -14,27 +14,33 @@ describe('internal/signatures.js', function () {
       });
 
       it('produces the expected string', async () => {
-        equal(str, 'createSynth(bytes32 synth, string synthName, string synthSymbol, uint8 synthDecimals)');
+        equal(
+          str,
+          'createSynth(bytes32 synth, string synthName, string synthSymbol, uint8 synthDecimals)'
+        );
       });
     });
 
     describe('with parameter values', () => {
       before('produce the signature', async () => {
         str = getFullFunctionSignature(sampleFunctionAbi, [
-           '0x7355534400000000000000000000000000000000000000000000000000000000',
+          '0x7355534400000000000000000000000000000000000000000000000000000000',
           'Synthetic USD',
           'sUSD',
-          18
-        ])
+          18,
+        ]);
       });
 
       it('produces the expected string', async () => {
-        equal(str, `createSynth(
+        equal(
+          str,
+          `createSynth(
   bytes32 synth = 0x7355534400000000000000000000000000000000000000000000000000000000,
   string synthName = Synthetic USD,
   string synthSymbol = sUSD,
   uint8 synthDecimals = 18
-)`);
+)`
+        );
       });
     });
   });
@@ -45,9 +51,12 @@ describe('internal/signatures.js', function () {
     });
 
     it('produces the expected string', async () => {
-      equal(str, `SynthImplementationCreated(
+      equal(
+        str,
+        `SynthImplementationCreated(
   address implementationAddress = 0x8EFa1819Ff5B279077368d44B593a4543280e402
-)`);
+)`
+      );
     });
   });
 });

@@ -8,7 +8,7 @@ jobs:
     strategy:
       matrix:
         package:
-          [core-contracts, core-js, core-modules, deployer, synthetix-main]
+          [core-contracts, core-js, core-modules, deployer, synthetix-main, cli]
         include:
           - package: core-contracts
             coverage-file: packages/core-contracts/coverage.json
@@ -20,6 +20,8 @@ jobs:
             coverage-file: packages/deployer/coverage/lcov.info
           - package: synthetix-main
             coverage-file: packages/synthetix-main/coverage.json
+          - package: cli
+            coverage-file: packages/cli/coverage/lcov.json
 
     steps:
       - uses: actions/checkout@v2
