@@ -4,12 +4,16 @@ const {
   deployOnEnvironment,
 } = require('@synthetixio/deployer/test/helpers/use-environment');
 const assert = require('assert/strict');
+const { spawn } = require('child_process');
+const { StringDecoder } = require('string_decoder');
 
 // Handy configs for developing on this file:
 const SHOW_CLI_OUTPUT = true; // CI needs this to be false
+const SHOW_DEPLOY_OUTPUT = true; // CI needs this to be false
 const DEPLOY_INSTANCE = false; // CI needs this to be true
 const START_DELAY = 5000;
 const INTERACT_DELAY = 2000;
+const DELTA_DELAY = 100;
 
 describe('sample-project', function () {
   let hre;
@@ -24,16 +28,27 @@ describe('sample-project', function () {
   };
 
   async function _startCli() {
-    const spawn = require('child_process').spawn;
-    child = spawn('npx', ['hardhat', 'interact']);
+    child = spawn('npx', ['hardhat', 'interact'], {
+      shell: true,
+      env: {
+        ...process.env,
+        FORCE_COLOR: 0,
+      }
+    });
 
     status = 'running';
 
     child.stdin.setEncoding('utf-8');
+
+    const decoder = new StringDecoder('utf-8');
     child.stdout.on('data', (data) => {
-      const str = data.toString();
+      // str = Buffer.from(data, 'utf-8').toString();
+      // const str = '0101';
+      // const str = decoder.write(data);
+      const str = `${data}`;
 
       if (SHOW_CLI_OUTPUT) {
+        console.log('Received data:', data.length, str.length);
         console.log(str);
       }
 
@@ -78,14 +93,14 @@ describe('sample-project', function () {
       await deployOnEnvironment(hre, {
         alias: 'first',
         clear: true,
-        quiet: true,
+        quiet: !SHOW_DEPLOY_OUTPUT,
       });
     }
   });
 
   describe('header and contract list', () => {
     before('start the cli', async function () {
-      this.timeout(START_DELAY + 1);
+      this.timeout(START_DELAY + DELTA_DELAY);
 
       await _startCli();
     });
@@ -118,6 +133,8 @@ describe('sample-project', function () {
 
     describe('when ctrl-c is pressed', function () {
       before('press ctrl-c', async function () {
+        this.timeout(INTERACT_DELAY + DELTA_DELAY);
+
         await _interactWithCli(keys.CTRLC);
       });
 
@@ -129,7 +146,7 @@ describe('sample-project', function () {
 
   describe('function list', function () {
     before('start the cli and navigate', async function () {
-      this.timeout(START_DELAY + INTERACT_DELAY * 2 + 1);
+      this.timeout(START_DELAY + INTERACT_DELAY * 2 + DELTA_DELAY);
 
       await _startCli();
 
@@ -146,11 +163,15 @@ describe('sample-project', function () {
 
     describe('when ctrl-c is pressed', function () {
       before('press ctrl-c', async function () {
+        this.timeout(INTERACT_DELAY + DELTA_DELAY);
+
         await _interactWithCli(keys.CTRLC);
       });
 
       describe('when ctrl-c is pressed again', function () {
         before('press ctrl-c', async function () {
+          this.timeout(INTERACT_DELAY + DELTA_DELAY);
+
           await _interactWithCli(keys.CTRLC);
         });
 
