@@ -49,4 +49,8 @@ interface IElectionModule {
     function getNextPeriodPercent() external view returns (uint);
 
     function setupFirstEpoch() external;
+
+    function setMaxProcessingBatchSize(uint size) external;
+
+    function getMaxProcessingBatchSize() external view returns (uint);
 }

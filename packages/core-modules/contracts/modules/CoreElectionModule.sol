@@ -17,6 +17,7 @@ contract CoreElectionModule is IElectionModule, ElectionStorage, OwnableMixin {
     error InvalidCandidatesCount();
     error InvalidCandidateRepeat(address addr);
     error InvalidPeriodPercent();
+    error InvalidBatchSize();
 
     error FirstEpochAlreadySetUp();
 
@@ -24,6 +25,7 @@ contract CoreElectionModule is IElectionModule, ElectionStorage, OwnableMixin {
 
     error EpochNotFinished();
     error ElectionAlreadyEvaluated();
+    error BatchSizeNotSet();
 
     event MemberTokenCreated(address memberTokenAddress);
 
@@ -205,6 +207,10 @@ contract CoreElectionModule is IElectionModule, ElectionStorage, OwnableMixin {
             revert ElectionAlreadyEvaluated();
         }
 
+        if (_electionStore().maxProcessingBatchSize == 0) {
+            revert BatchSizeNotSet();
+        }
+
         _evaluateElectionBatchBySimpleCounting();
     }
 
@@ -212,7 +218,7 @@ contract CoreElectionModule is IElectionModule, ElectionStorage, OwnableMixin {
         ElectionStore storage store = _electionStore();
         ElectionData storage electionData = store.electionData;
 
-        uint maxBatchSize = 100;
+        uint maxBatchSize = store.maxProcessingBatchSize;
         uint offset = 0;
         uint previousBatchIdx = electionData.processedBatchIdx;
         uint lessVotedCandidateVotes;
@@ -317,5 +323,17 @@ contract CoreElectionModule is IElectionModule, ElectionStorage, OwnableMixin {
         store.epochDuration = store.nextEpochDuration;
         store.nominationPeriodPercent = store.nextNominationPeriodPercent;
         // TODO Cleanup election data from previous election
+    }
+
+    function setMaxProcessingBatchSize(uint256 maxBatchSize) external override {
+        if (maxBatchSize == 0) {
+            revert InvalidBatchSize();
+        }
+
+        _electionStore().maxProcessingBatchSize = maxBatchSize;
+    }
+
+    function getMaxProcessingBatchSize() external view override returns (uint256){
+        return _electionStore().maxProcessingBatchSize;
     }
 }

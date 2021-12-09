@@ -97,6 +97,10 @@ contract ElectionStorage {
          * @dev Staging duration for the next epoch.
          */
         uint nextNominationPeriodPercent;
+        /**
+         * @dev Used to limit the batch size. This shouldn't be erased on an epoch change
+         */
+        uint256 maxProcessingBatchSize;
     }
 
     function _electionStore() internal pure returns (ElectionStore storage store) {
