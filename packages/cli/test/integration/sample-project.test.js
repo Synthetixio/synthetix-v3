@@ -7,7 +7,9 @@ const assert = require('assert/strict');
 
 // Handy configs for developing on this file:
 const SHOW_CLI_OUTPUT = true; // CI needs this to be false
-const DEPLOY_INSTANCE = true; // CI needs this to be true
+const DEPLOY_INSTANCE = false; // CI needs this to be true
+const START_DELAY = 5000;
+const INTERACT_DELAY = 2000;
 
 describe('sample-project', function () {
   let hre;
@@ -29,11 +31,13 @@ describe('sample-project', function () {
 
     child.stdin.setEncoding('utf-8');
     child.stdout.on('data', (data) => {
+      const str = data.toString();
+
       if (SHOW_CLI_OUTPUT) {
-        console.log(data.toString());
+        console.log(str);
       }
 
-      buffer += data.toString();
+      buffer += str;
     });
 
     child.on('exit', () => {
@@ -41,7 +45,7 @@ describe('sample-project', function () {
     });
 
     return new Promise((resolve) => {
-      setTimeout(resolve, 2000);
+      setTimeout(resolve, START_DELAY);
     });
   }
 
@@ -49,7 +53,7 @@ describe('sample-project', function () {
     child.stdin.write(cmd);
 
     return new Promise((resolve) => {
-      setTimeout(resolve, 1000);
+      setTimeout(resolve, INTERACT_DELAY);
     });
   }
 
@@ -81,7 +85,7 @@ describe('sample-project', function () {
 
   describe('header and contract list', () => {
     before('start the cli', async function () {
-      this.timeout(3000);
+      this.timeout(START_DELAY + 1);
 
       await _startCli();
     });
@@ -125,7 +129,7 @@ describe('sample-project', function () {
 
   describe('function list', function () {
     before('start the cli and navigate', async function () {
-      this.timeout(5000);
+      this.timeout(START_DELAY + INTERACT_DELAY * 2 + 1);
 
       await _startCli();
 
