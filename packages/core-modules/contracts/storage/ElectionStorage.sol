@@ -38,6 +38,22 @@ contract ElectionStorage {
          * @dev Position of an address on the nominees Array.
          */
         mapping(address => uint256) nomineeIndexes;
+        /**
+         * @dev Flag to indicate if the election was evaluated (if batched, latest batch was processed).
+         */
+        bool isElectionEvaluated;
+        /**
+         * @dev Used to keep track of the next epoch's winners. Gets erased when an epoch starts and a new council takes effect.
+         */
+        address[] winners;
+        /**
+         * @dev Used to keep track of the next epoch's winners votes. Gets erased when an epoch starts and a new council takes effect.
+         */
+        uint256[] winnersVotes;
+        /**
+         * @dev Used to keep track of the latest nominee processed in the last batch.
+         */
+        uint256 processedBatchIdx;
     }
 
     struct ElectionStore {
