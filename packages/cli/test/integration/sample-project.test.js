@@ -1,5 +1,8 @@
 const path = require('path');
-const { loadEnvironment, deployOnEnvironment } = require('@synthetixio/deployer/test/helpers/use-environment');
+const {
+  loadEnvironment,
+  deployOnEnvironment,
+} = require('@synthetixio/deployer/test/helpers/use-environment');
 const assert = require('assert/strict');
 
 // Handy configs for developing on this file:
@@ -15,7 +18,7 @@ describe('sample-project', function () {
 
   const keys = {
     CTRLC: '\x03',
-    ENTER: `\x0D`,
+    ENTER: '\x0D',
   };
 
   async function _startCli() {
@@ -59,7 +62,9 @@ describe('sample-project', function () {
   }
 
   before('set fixture project', function () {
-    hre = loadEnvironment(path.join(__dirname, '..', '..', 'test', 'fixture-projects', 'sample-project'));
+    hre = loadEnvironment(
+      path.join(__dirname, '..', '..', 'test', 'fixture-projects', 'sample-project')
+    );
   });
 
   before('make a deployment', async function () {
