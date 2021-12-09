@@ -4,11 +4,17 @@ const { TASK_DEPLOY } = require('@synthetixio/deployer/task-names');
 const { defaultDeploymentInfo } = require('../../utils/deployments');
 const { resetHardhatContext } = require('hardhat/plugins-testing');
 
+throw new Error('root');
+
 function loadEnvironment(fixtureProjectName) {
+  console.log('>>>>>>>>>>>>>>>>>>>');
+  throw new Error('entry');
   resetHardhatContext();
 
-  const envPath = _getEnvironmentPath(fixtureProjectName);
-  process.chdir(envPath);
+  if (!process.cwd().includes(fixtureProjectName)) {
+    const envPath = _getEnvironmentPath(fixtureProjectName);
+    process.chdir(envPath);
+  }
 
   return require('hardhat');
 }
@@ -46,7 +52,8 @@ async function deployOnEnvironment(hre, customOptions = {}) {
 }
 
 function _getEnvironmentPath(fixtureProjectName) {
-  const pathname = path.join(__dirname, '..', 'fixture-projects', fixtureProjectName);
+  const pathname = path.join(process.cwd(), 'test', 'fixture-projects', fixtureProjectName);
+  console.log(pathname);
 
   if (!fs.existsSync(pathname)) {
     throw new Error(`Invalid fixture project ${fixtureProjectName}`);

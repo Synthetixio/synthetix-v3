@@ -1,0 +1,21 @@
+{
+  "name": "sample-project",
+  "version": "1.0.0",
+  "description": "",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Synthetixio/synthetix-v3.git"
+  },
+  "main": "index.js",
+  "scripts": {
+    "test": "hardhat test"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@nomiclabs/hardhat-ethers": "^2.0.2",
+    "ethers": "^5.4.6",
+    "hardhat": "^2.6.8"
+  }
+}
