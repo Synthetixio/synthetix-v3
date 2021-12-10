@@ -44,7 +44,7 @@ jobs:
         with:
           node-version: "16.8.0"
           cache: "npm"
-      - run: npm -w ./packages/cli ci
+      - run: npm ci
       - name: Install dependencies & execute tests
         run: |
           cd packages/cli/test/fixture-projects/sample-project
