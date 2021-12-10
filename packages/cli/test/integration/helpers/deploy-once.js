@@ -1,5 +1,7 @@
 const { deployOnEnvironment } = require('@synthetixio/deployer/test/helpers/use-environment');
 
+const SHOW_DEPLYER_OUTPUT = false;
+
 let deployed = false;
 
 async function deployIfNeeded(hre) {
@@ -10,7 +12,7 @@ async function deployIfNeeded(hre) {
   await deployOnEnvironment(hre, {
     instance: 'test',
     clear: true,
-    quiet: true,
+    quiet: !SHOW_DEPLYER_OUTPUT,
   });
 
   deployed = true;
