@@ -17,8 +17,8 @@ describe('execute-call', function () {
       // started in a different process.
       // await this.cli.interact(this.cli.keys.ENTER); // Selects getUintValue
       // await this.cli.interact(this.cli.keys.CTRLC); // Return to function list
-      // await this.cli.interact(this.cli.keys.CTRLC); // Return to contract list
-      // await this.cli.interact(this.cli.keys.CTRLC); // Exit
+      await this.cli.interact(this.cli.keys.CTRLC); // Return to contract list
+      await this.cli.interact(this.cli.keys.CTRLC); // Exit
 
       assert.deepEqual(this.cli.errors, []);
     });
