@@ -19,5 +19,5 @@ describe('pick-parameters', function () {
   });
 
   // TODO
-  it('', async function () {});
+  it('TODO', async function () {});
 });
