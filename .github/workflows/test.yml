@@ -52,7 +52,7 @@ jobs:
           sleep 10
           npx hardhat deploy --network local --clear --no-confirm
           cd ../../..
-          npm test --network local
+          npm test
 
   test-sample:
     runs-on: ubuntu-latest

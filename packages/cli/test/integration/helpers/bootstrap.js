@@ -13,6 +13,7 @@ function bootstrap() {
       'fixture-projects',
       'sample-project'
     );
+
     this.hre = loadEnvironment(folder, 'local');
   });
 
