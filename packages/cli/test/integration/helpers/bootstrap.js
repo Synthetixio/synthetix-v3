@@ -1,19 +1,19 @@
 const path = require('path');
 const { loadEnvironment } = require('@synthetixio/deployer/test/helpers/use-environment');
-const { deployIfNeeded } = require('./deploy-once');
 const CliRunner = require('./cli-runner');
 
 function bootstrap() {
-  before('set fixture project', function () {
-    this.hre = loadEnvironment(
-      path.join(__dirname, '..', '..', '..', 'test', 'fixture-projects', 'sample-project')
+  before('set fixture project and network', function () {
+    const folder = path.join(
+      __dirname,
+      '..',
+      '..',
+      '..',
+      'test',
+      'fixture-projects',
+      'sample-project'
     );
-  });
-
-  before('make a deployment', async function () {
-    this.timeout(60000);
-
-    await deployIfNeeded(this.hre);
+    this.hre = loadEnvironment(folder, 'local');
   });
 
   before('prep the cli helper', async function () {

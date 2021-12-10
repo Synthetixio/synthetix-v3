@@ -15,10 +15,10 @@ describe('pick-contract', function () {
 
   it('displays the contract list', async function () {
     this.cli.printed('Pick a CONTRACT');
-    // TODO: Verify these with variable addresses
     this.cli.printed('SomeModule');
     this.cli.printed('UpgradeModule');
     this.cli.printed('Proxy');
     this.cli.printed('Router');
+    // TODO: Verify these with variable addresses
   });
 });
