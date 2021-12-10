@@ -8,12 +8,12 @@ contract ElectionStorageMock is ElectionStorage {
         _electionStore().seatCount = seats;
     }
 
-    function getWinners() external view returns (address[] memory) {
-        return _electionStore().electionData.winner;
+    function getNextEpochRepresentatives() external view returns (address[] memory) {
+        return _electionStore().electionData.nextEpochRepresentatives;
     }
 
-    function getWinnerVotes() external view returns (uint[] memory) {
-        return _electionStore().electionData.winnerVotes;
+    function getNextEpochRepresentativeVotes() external view returns (uint[] memory) {
+        return _electionStore().electionData.nextEpochRepresentativeVotes;
     }
 
     function initNextEpochMock() external {

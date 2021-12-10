@@ -111,11 +111,12 @@ describe('CoreElectionModule Count Votes using Simple Plurality strategy', () =>
         });
 
         describe('when evaluating the election', () => {
-          let winners, winnerVotes;
+          let nextEpochRepresentatives, nextEpochRepresentativeVotes;
           before('evaluate the election', async () => {
             await (await CoreElectionModule.evaluateElectionBatch()).wait();
-            winners = await ElectionStorageMock.getWinners();
-            winnerVotes = await ElectionStorageMock.getWinnerVotes();
+            nextEpochRepresentatives = await ElectionStorageMock.getNextEpochRepresentatives();
+            nextEpochRepresentativeVotes =
+              await ElectionStorageMock.getNextEpochRepresentativeVotes();
           });
 
           it('the election is evaluated', async () => {
@@ -123,15 +124,17 @@ describe('CoreElectionModule Count Votes using Simple Plurality strategy', () =>
           });
 
           it('the votes are counted correctly', async () => {
-            let winnerVotesParsed = winnerVotes.map((votes) => votes.toString());
+            let nextEpochRepresentativeVotesParsed = nextEpochRepresentativeVotes.map((votes) =>
+              votes.toString()
+            );
 
-            equal(winners.length, 3);
-            deepEqual(winners, [
+            equal(nextEpochRepresentatives.length, 3);
+            deepEqual(nextEpochRepresentatives, [
               candidates[0].address,
               candidates[3].address,
               candidates[4].address,
             ]);
-            deepEqual(winnerVotesParsed, ['500', '130', '140']);
+            deepEqual(nextEpochRepresentativeVotesParsed, ['500', '130', '140']);
           });
         });
 
@@ -146,7 +149,103 @@ describe('CoreElectionModule Count Votes using Simple Plurality strategy', () =>
       });
     });
 
-    // describe('when counting a large number of votes', async () => {
-    // })
+    // Skipped until we figure out how to run more than one election :/
+    describe.skip('when counting a large number of votes and candidates', async () => {
+      let candidates, voters;
+
+      before('identify candidates and voters', async () => {
+        candidates = (await ethers.getSigners()).slice(2, 12);
+        voters = (await ethers.getSigners()).slice(2, 12);
+      });
+
+      before('set epoch', async () => {
+        await (await ElectionStorageMock.initNextEpochMock()).wait();
+      });
+
+      before('nominate and setup voters', async () => {
+        console.log(candidates.map((candidate) => candidate.address));
+        console.log(await CoreElectionModule.getNominees());
+        await Promise.all(
+          candidates.map((candidate) => CoreElectionModule.connect(candidate).nominate())
+        );
+
+        for (let i = 0; i < voters.length; i++) {
+          await ElectionToken.connect(voters[i]).mint(100 + i * 10);
+        }
+      });
+
+      before('fastForward to voting phase', async () => {
+        await fastForward(3 * day, ethers.provider);
+      });
+
+      it('is voting phase', async () => {
+        equal(await CoreElectionModule.isVoting(), true, 'wrong voting phase');
+        assertBignumber.eq(await CoreElectionModule.getPeriodPercent(), 15);
+        assertBignumber.eq(await CoreElectionModule.getSeatCount(), 3);
+      });
+
+      describe('when casting votes', () => {
+        before('cast votes', async () => {
+          for (let i = 1; i < voters.length; i++) {
+            let candidateIdx = i % candidates.length;
+            if (candidateIdx == 0) {
+              await CoreElectionModule.connect(voters[i]).elect([candidates[0].address]);
+              continue;
+            }
+            await CoreElectionModule.connect(voters[i]).elect([
+              candidates[0].address,
+              candidates[candidateIdx].address,
+            ]);
+          }
+        });
+
+        before('fastForward to close voting phase', async () => {
+          await fastForward(week, ethers.provider);
+        });
+
+        before('set the batch size to NOT fit all candidates', async () => {
+          await (await CoreElectionModule.connect(owner).setMaxProcessingBatchSize(5)).wait();
+        });
+
+        it('the election is not evaluated', async () => {
+          equal(await CoreElectionModule.isElectionEvaluated(), false);
+        });
+
+        describe('when evaluating the election once', () => {
+          before('evaluate the election', async () => {
+            await (await CoreElectionModule.evaluateElectionBatch()).wait();
+          });
+
+          it('the election is not evaluated', async () => {
+            equal(await CoreElectionModule.isElectionEvaluated(), false);
+          });
+
+          describe('when completing the batches', () => {
+            let nextEpochRepresentatives, nextEpochRepresentativeVotes;
+            before('evaluate the election', async () => {
+              let finished = await CoreElectionModule.isElectionEvaluated();
+              while (!finished) {
+                await (await CoreElectionModule.evaluateElectionBatch()).wait();
+                finished = await CoreElectionModule.isElectionEvaluated();
+              }
+            });
+
+            it('the votes are counted correctly', async () => {
+              let nextEpochRepresentativeVotesParsed = nextEpochRepresentativeVotes.map((votes) =>
+                votes.toString()
+              );
+
+              equal(nextEpochRepresentatives.length, 3);
+              deepEqual(nextEpochRepresentatives, [
+                candidates[0].address,
+                candidates[98].address,
+                candidates[99].address,
+              ]);
+              deepEqual(nextEpochRepresentativeVotesParsed, ['500', '130', '140']);
+            });
+          });
+        });
+      });
+    });
   });
 });

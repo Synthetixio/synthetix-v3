@@ -236,20 +236,24 @@ contract CoreElectionModule is IElectionModule, ElectionStorage, OwnableMixin {
             uint currentNomineeVotes = electionData.nomineeVotes[currentNominee];
 
             if (currentNomineeVotes > 0) {
-                if (electionData.winner.length < store.seatCount) {
+                if (electionData.nextEpochRepresentatives.length < store.seatCount) {
                     // seats not filled, fill it with whoever received votes
-                    electionData.winner.push(currentNominee);
-                    electionData.winnerVotes.push(currentNomineeVotes);
+                    electionData.nextEpochRepresentatives.push(currentNominee);
+                    electionData.nextEpochRepresentativeVotes.push(currentNomineeVotes);
 
-                    if (electionData.winner.length == store.seatCount) {
-                        (lessVotedCandidateIdx, lessVotedCandidateVotes) = _findLessVoted(electionData.winnerVotes);
+                    if (electionData.nextEpochRepresentatives.length == store.seatCount) {
+                        (lessVotedCandidateIdx, lessVotedCandidateVotes) = _findLessVoted(
+                            electionData.nextEpochRepresentativeVotes
+                        );
                     }
                 } else if (currentNomineeVotes > lessVotedCandidateVotes) {
                     // replace minimun
-                    electionData.winner[lessVotedCandidateIdx] = currentNominee;
-                    electionData.winnerVotes[lessVotedCandidateIdx] = currentNomineeVotes;
+                    electionData.nextEpochRepresentatives[lessVotedCandidateIdx] = currentNominee;
+                    electionData.nextEpochRepresentativeVotes[lessVotedCandidateIdx] = currentNomineeVotes;
 
-                    (lessVotedCandidateIdx, lessVotedCandidateVotes) = _findLessVoted(electionData.winnerVotes);
+                    (lessVotedCandidateIdx, lessVotedCandidateVotes) = _findLessVoted(
+                        electionData.nextEpochRepresentativeVotes
+                    );
                 }
             }
         }
