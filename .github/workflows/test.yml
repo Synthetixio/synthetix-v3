@@ -50,7 +50,7 @@ jobs:
           cd packages/cli/test/fixture-projects/sample-project
           npx hardhat node > /dev/null 2>&1 &
           sleep 10
-          npx hardhat deploy --network local --clear --no-confirm
+          npx hardhat deploy --network local --clear --no-confirm --instance test
           cd ../../..
           npm test
 
