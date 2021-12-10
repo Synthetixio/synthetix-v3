@@ -7,7 +7,13 @@ const { resetHardhatContext } = require('hardhat/plugins-testing');
 function loadEnvironment(fixtureProjectName) {
   resetHardhatContext();
 
-  const envPath = _getEnvironmentPath(fixtureProjectName);
+  let envPath = fixtureProjectName;
+  if (fixtureProjectName.includes('/')) {
+    envPath = fixtureProjectName;
+  } else {
+    envPath = _getEnvironmentPath(fixtureProjectName);
+  }
+
   process.chdir(envPath);
 
   return require('hardhat');

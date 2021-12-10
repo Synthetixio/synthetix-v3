@@ -22,7 +22,7 @@ subtask(SUBTASK_EXECUTE_CALL, 'Execute the current tx').setAction(async (taskArg
   );
   logger.info(`Calldata: ${tx.data}`);
 
-  const readOnly = functionAbi.stateMutability === 'view';
+  const readOnly = functionAbi.stateMutability === 'view' || functionAbi.stateMutability === 'pure';
   if (readOnly) {
     await executeReadTransaction(contract);
   } else {
@@ -94,7 +94,7 @@ function _printEventsInReceipt(receipt) {
   if (numEvents > 0) {
     logger.info(`(${numEvents}) events emitted:`);
 
-    receipt.events.map((event) => {
+    receipt.events.forEach((event) => {
       if (event.event) {
         const abi = hre.deployer.deployment.abis[hre.cli.contractName];
         const eventAbi = abi.find((abiItem) => abiItem.name === event.event);
