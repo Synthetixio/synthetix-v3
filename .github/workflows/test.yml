@@ -44,13 +44,11 @@ jobs:
         with:
           node-version: "16.8.0"
           cache: "npm"
-      - run: npm ci
+      - run: npm -w ./packages/cli ci
       - name: Install dependencies & execute tests
-        working-directory: ./packages/cli
         run: |
-          npm ci
-          cd test/fixture-projects/sample-project
-          npx hardhat node --network local &
+          cd packages/cli/test/fixture-projects/sample-project
+          npx hardhat node &
           sleep 5
           cd ../../..
           npm test
