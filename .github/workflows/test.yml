@@ -8,7 +8,7 @@ jobs:
     strategy:
       matrix:
         package:
-          [core-contracts, core-js, core-modules, deployer, synthetix-main, cli]
+          [core-contracts, core-js, core-modules, deployer, synthetix-main]
         include:
           - package: core-contracts
             coverage-file: packages/core-contracts/coverage.json
@@ -20,8 +20,6 @@ jobs:
             coverage-file: packages/deployer/coverage/lcov.info
           - package: synthetix-main
             coverage-file: packages/synthetix-main/coverage.json
-          - package: cli
-            coverage-file: packages/cli/coverage/lcov.json
 
     steps:
       - uses: actions/checkout@v2
@@ -37,6 +35,24 @@ jobs:
         with:
           files: ${{ matrix.coverage-file }}
           flags: ${{ matrix.package }}
+
+  test-cli:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+        with:
+          node-version: "16.8.0"
+          cache: "npm"
+      - run: npm ci
+      - name: Start local node & execute tests
+        run: |
+          cd packages/cli/test/fixture-projects/sample-project
+          npx hardhat node > /dev/null 2>&1 &
+          sleep 10
+          npx hardhat deploy --network local --clear --no-confirm --instance test
+          cd ../../..
+          npm test
 
   test-sample:
     runs-on: ubuntu-latest

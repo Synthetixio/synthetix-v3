@@ -19,16 +19,16 @@ describe('print-info', function () {
   });
 
   it('displays deployment info', async function () {
-    // TODO: Check more info
     this.cli.printed('instance: test');
     this.cli.printed('signer: 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266');
-    this.cli.printed('network: hardhat');
-    this.cli.printed('deployment: deployments/hardhat/test');
+    this.cli.printed('network: local');
+    this.cli.printed('deployment: deployments/local/test');
+    // TODO: Check more info
   });
 
   it('displays usage help', async function () {
-    // TODO: Check all help
     this.cli.printed('USAGE:');
     this.cli.printed('Use arrows to navigate, or type to autocomplete');
+    // TODO: Check all help
   });
 });

@@ -13,12 +13,16 @@ class CliRunner {
     this.errors = [];
     this.buffer = '';
 
-    this.cliProcess = spawn('npx', ['hardhat', 'interact', '--instance', 'test'], {
-      env: {
-        ...process.env,
-        FORCE_COLOR: 0, // Disables chalk colors in the subprocess
-      },
-    });
+    this.cliProcess = spawn(
+      'npx',
+      ['hardhat', 'interact', '--instance', 'test', '--network', 'local'],
+      {
+        env: {
+          ...process.env,
+          FORCE_COLOR: 0, // Disables chalk colors in the subprocess
+        },
+      }
+    );
 
     this.cliProcess.stdin.setEncoding('utf-8');
 
