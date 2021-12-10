@@ -4,7 +4,7 @@ const { TASK_DEPLOY } = require('@synthetixio/deployer/task-names');
 const { defaultDeploymentInfo } = require('../../utils/deployments');
 const { resetHardhatContext } = require('hardhat/plugins-testing');
 
-function loadEnvironment(fixtureProjectName, networkName = 'hardhat') {
+function loadEnvironment(fixtureProjectName) {
   resetHardhatContext();
 
   let envPath = fixtureProjectName;
@@ -15,7 +15,6 @@ function loadEnvironment(fixtureProjectName, networkName = 'hardhat') {
   }
 
   process.chdir(envPath);
-  process.env.HARDHAT_NETWORK = networkName;
 
   return require('hardhat');
 }
