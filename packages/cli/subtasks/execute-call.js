@@ -12,7 +12,10 @@ subtask(SUBTASK_EXECUTE_CALL, 'Execute the current tx').setAction(async (taskArg
   const functionAbi = abi.find((abiItem) => abiItem.name === hre.cli.functionName);
 
   logger.notice(
-    `${hre.cli.contractName}.${getFullFunctionSignature(functionAbi, hre.cli.functionParameters)}`
+    `Calling ${hre.cli.contractName}.${getFullFunctionSignature(
+      functionAbi,
+      hre.cli.functionParameters
+    )}`
   );
   logger.info(`Target: ${address}`);
 
