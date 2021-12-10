@@ -3,6 +3,8 @@ const chalk = require('chalk');
 const { spawn } = require('child_process');
 
 const SHOW_CLI_OUTPUT = false;
+const START_DELAY = 2000;
+const INTERACT_DELAY = 500;
 
 class CliRunner {
   constructor() {}
@@ -10,12 +12,11 @@ class CliRunner {
   async start() {
     this.errors = [];
     this.buffer = '';
-    this.status = 'running';
 
     this.cliProcess = spawn('npx', ['hardhat', 'interact', '--instance', 'test'], {
       env: {
         ...process.env,
-        FORCE_COLOR: 0, // Disables chalk colors
+        FORCE_COLOR: 0, // Disables chalk colors in the subprocess
       },
     });
 
@@ -25,7 +26,7 @@ class CliRunner {
       const str = data.toString();
 
       if (SHOW_CLI_OUTPUT) {
-        console.log(str);
+        console.log(chalk.gray(str));
       }
 
       this.buffer += str;
@@ -36,12 +37,8 @@ class CliRunner {
       this.errors.push(data.toString());
     });
 
-    this.cliProcess.on('exit', () => {
-      this.status = 'stopped';
-    });
-
     return new Promise((resolve) => {
-      setTimeout(resolve, 5000);
+      setTimeout(resolve, START_DELAY);
     });
   }
 
@@ -49,7 +46,7 @@ class CliRunner {
     this.cliProcess.stdin.write(cmd);
 
     return new Promise((resolve) => {
-      setTimeout(resolve, 2000);
+      setTimeout(resolve, INTERACT_DELAY);
     });
   }
 
@@ -74,6 +71,8 @@ class CliRunner {
     return {
       CTRLC: '\x03',
       ENTER: '\x0D',
+      DOWN: '\x28',
+      UP: '\x26',
     };
   }
 }

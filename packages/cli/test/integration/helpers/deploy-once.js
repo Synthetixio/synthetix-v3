@@ -8,6 +8,7 @@ async function deployIfNeeded(hre) {
   }
 
   await deployOnEnvironment(hre, {
+    instance: 'test',
     clear: true,
     quiet: true,
   });

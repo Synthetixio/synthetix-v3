@@ -11,4 +11,8 @@ contract SomeModule is GlobalStorage {
 
         emit UintValueSet(msg.sender, newValue);
     }
+
+    function getUintValue() public view returns (uint) {
+        return _globalStore().uintValue;
+    }
 }
