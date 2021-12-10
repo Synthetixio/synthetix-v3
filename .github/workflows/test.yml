@@ -45,13 +45,14 @@ jobs:
           node-version: "16.8.0"
           cache: "npm"
       - run: npm ci
-      - name: Install dependencies & execute tests
+      - name: Start local node & execute tests
         run: |
           cd packages/cli/test/fixture-projects/sample-project
           npx hardhat node &
-          sleep 5
+          sleep 10
+          npx hardhat deploy --network local --clear --no-confirm
           cd ../../..
-          npm test
+          npm test --network local
 
   test-sample:
     runs-on: ubuntu-latest
