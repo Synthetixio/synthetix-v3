@@ -4,6 +4,7 @@ const {
   deployOnEnvironment,
 } = require('@synthetixio/deployer/test/helpers/use-environment');
 const assert = require('assert/strict');
+const chalk = require('chalk');
 const { spawn } = require('child_process');
 
 // Handy configs for developing on this file:
@@ -76,7 +77,16 @@ describe('sample-project', function () {
   }
 
   function _prints(txt) {
-    assert.ok(buffer.includes(txt));
+    const includes = buffer.includes(txt);
+    if (!includes) {
+      console.error(
+        `CLI output was expected to include "${chalk.red(
+          txt
+        )}", but it does not. CLI output is: "${chalk.gray(buffer)}"`
+      );
+    }
+
+    assert.ok(includes);
   }
 
   before('set fixture project', function () {
