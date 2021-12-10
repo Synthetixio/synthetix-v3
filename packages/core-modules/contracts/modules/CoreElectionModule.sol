@@ -19,7 +19,7 @@ contract CoreElectionModule is IElectionModule, ElectionStorage, OwnableMixin {
     error InvalidPeriodPercent();
     error InvalidBatchSize();
 
-    error FirstEpochAlreadySetUp();
+    error FirstEpochAlreadySet();
 
     error AlreadyVoted();
 
@@ -194,7 +194,7 @@ contract CoreElectionModule is IElectionModule, ElectionStorage, OwnableMixin {
         electionData.addressVoted[msg.sender] = true;
     }
 
-    function isElectionEvaluated() external view virtual override returns (bool) {
+    function isElectionEvaluated() public view virtual override returns (bool) {
         return _electionStore().electionData.isElectionEvaluated;
     }
 
@@ -203,7 +203,7 @@ contract CoreElectionModule is IElectionModule, ElectionStorage, OwnableMixin {
             revert EpochNotFinished();
         }
 
-        if (_electionStore().electionData.isElectionEvaluated) {
+        if (isElectionEvaluated()) {
             revert ElectionAlreadyEvaluated();
         }
 
@@ -219,34 +219,38 @@ contract CoreElectionModule is IElectionModule, ElectionStorage, OwnableMixin {
         ElectionData storage electionData = store.electionData;
 
         uint maxBatchSize = store.maxProcessingBatchSize;
-        uint offset = 0;
         uint previousBatchIdx = electionData.processedBatchIdx;
         uint lessVotedCandidateVotes;
         uint lessVotedCandidateIdx;
 
-        while (offset < maxBatchSize && !electionData.isElectionEvaluated) {
-            uint currentNomineeVotes = electionData.nomineeVotes[electionData.nominees[previousBatchIdx + offset]];
+        for (uint offset; offset < maxBatchSize; offset++) {
+            uint currentIdx = previousBatchIdx + offset;
+
+            if (currentIdx >= electionData.nominees.length) {
+                // all nominees reviewed
+                electionData.isElectionEvaluated = true;
+                break;
+            }
+
+            address currentNominee = electionData.nominees[currentIdx];
+            uint currentNomineeVotes = electionData.nomineeVotes[currentNominee];
 
             if (currentNomineeVotes > 0) {
-                if (electionData.winners.length < store.seatCount) {
+                if (electionData.winner.length < store.seatCount) {
                     // seats not filled, fill it with whoever received votes
-                    electionData.winners.push(electionData.nominees[previousBatchIdx + offset]);
-                    if (electionData.winners.length == store.seatCount) {
-                        (lessVotedCandidateIdx, lessVotedCandidateVotes) = _findLessVoted(electionData.winnersVotes);
+                    electionData.winner.push(currentNominee);
+                    electionData.winnerVotes.push(currentNomineeVotes);
+
+                    if (electionData.winner.length == store.seatCount) {
+                        (lessVotedCandidateIdx, lessVotedCandidateVotes) = _findLessVoted(electionData.winnerVotes);
                     }
                 } else if (currentNomineeVotes > lessVotedCandidateVotes) {
                     // replace minimun
-                    electionData.winners[lessVotedCandidateIdx] = electionData.nominees[previousBatchIdx + offset];
-                    electionData.winnersVotes[lessVotedCandidateIdx] = currentNomineeVotes;
-                    (lessVotedCandidateIdx, lessVotedCandidateVotes) = _findLessVoted(electionData.winnersVotes);
-                }
-            }
+                    electionData.winner[lessVotedCandidateIdx] = currentNominee;
+                    electionData.winnerVotes[lessVotedCandidateIdx] = currentNomineeVotes;
 
-            // go to next item
-            offset++;
-            if (offset + previousBatchIdx >= electionData.nominees.length) {
-                // all nominees reviewed
-                electionData.isElectionEvaluated = true;
+                    (lessVotedCandidateIdx, lessVotedCandidateVotes) = _findLessVoted(electionData.winnerVotes);
+                }
             }
         }
 
@@ -305,11 +309,11 @@ contract CoreElectionModule is IElectionModule, ElectionStorage, OwnableMixin {
         return !isNominating() && !isEpochFinished();
     }
 
-    function setupFirstEpoch() external virtual override {
+    function setupFirstEpoch() external virtual override onlyOwner {
         ElectionStore storage store = _electionStore();
 
         if (store.epochStart != 0) {
-            revert FirstEpochAlreadySetUp();
+            revert FirstEpochAlreadySet();
         }
 
         // TODO set epoch 0 seat to 1
@@ -325,7 +329,7 @@ contract CoreElectionModule is IElectionModule, ElectionStorage, OwnableMixin {
         // TODO Cleanup election data from previous election
     }
 
-    function setMaxProcessingBatchSize(uint256 maxBatchSize) external override {
+    function setMaxProcessingBatchSize(uint256 maxBatchSize) external override onlyOwner {
         if (maxBatchSize == 0) {
             revert InvalidBatchSize();
         }
@@ -333,7 +337,7 @@ contract CoreElectionModule is IElectionModule, ElectionStorage, OwnableMixin {
         _electionStore().maxProcessingBatchSize = maxBatchSize;
     }
 
-    function getMaxProcessingBatchSize() external view override returns (uint256){
+    function getMaxProcessingBatchSize() external view override returns (uint256) {
         return _electionStore().maxProcessingBatchSize;
     }
 }

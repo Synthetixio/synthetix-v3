@@ -4,8 +4,24 @@ pragma solidity ^0.8.0;
 import "../../storage/ElectionStorage.sol";
 
 contract ElectionStorageMock is ElectionStorage {
-    function setNextSeatCountMock(uint seats) external {
+    function setSeatCountMock(uint seats) external {
         _electionStore().seatCount = seats;
+    }
+
+    function getWinners() external view returns (address[] memory) {
+        return _electionStore().electionData.winner;
+    }
+
+    function getWinnerVotes() external view returns (uint[] memory) {
+        return _electionStore().electionData.winnerVotes;
+    }
+
+    function initNextEpochMock() external {
+        // solhint-disable-next-line not-rely-on-time
+        _electionStore().epochStart = block.timestamp;
+        _electionStore().seatCount = _electionStore().nextSeatCount;
+        _electionStore().epochDuration = _electionStore().nextEpochDuration;
+        _electionStore().nominationPeriodPercent = _electionStore().nextNominationPeriodPercent;
     }
 
     function getVoterVoteCandidatesMock(address addr) public view returns (address[] memory) {

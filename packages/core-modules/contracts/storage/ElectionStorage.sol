@@ -45,11 +45,11 @@ contract ElectionStorage {
         /**
          * @dev Used to keep track of the next epoch's winners. Gets erased when an epoch starts and a new council takes effect.
          */
-        address[] winners;
+        address[] winner;
         /**
          * @dev Used to keep track of the next epoch's winners votes. Gets erased when an epoch starts and a new council takes effect.
          */
-        uint256[] winnersVotes;
+        uint256[] winnerVotes;
         /**
          * @dev Used to keep track of the latest nominee processed in the last batch.
          */
