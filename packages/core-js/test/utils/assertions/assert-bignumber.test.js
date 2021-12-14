@@ -1,5 +1,5 @@
 const { BigNumber } = require('ethers');
-const bn = require('../../utils/assert-bignumber');
+const bn = require('../../utils/assertions/assert-bignumber');
 
 function not(operator, a, b) {
   try {
