@@ -1,6 +1,6 @@
 const ethers = require('ethers');
 const assert = require('assert/strict');
-const { findEvent } = require('../../utils/events');
+const { findEvent } = require('../../../utils/ethers/events');
 const parsedTxReceipt = require('../fixtures/parsed-tx-receipt');
 const unparsedTxReceipt = require('../fixtures/unparsed-tx-receipt');
 const deploymentTxReceipt = require('../fixtures/deployment-tx-receipt');
