@@ -1,6 +1,6 @@
 const { ethers } = hre;
 const assert = require('assert/strict');
-const assertRevert = require('@synthetixio/core-js/utils/assert-revert');
+const assertRevert = require('@synthetixio/core-js/utils/assertions/assert-revert');
 const { findEvent } = require('@synthetixio/core-js/utils/events');
 
 describe('Beacon', () => {
