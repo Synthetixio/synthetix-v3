@@ -1,5 +1,5 @@
 const { rejects } = require('assert/strict');
-const assertRevert = require('../../utils/assertions/assert-revert');
+const assertRevert = require('../../../utils/assertions/assert-revert');
 
 function mockValidTx() {
   return Promise.resolve({ wait: () => Promise.resolve() });
