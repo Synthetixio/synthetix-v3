@@ -1,7 +1,7 @@
 const { ethers } = hre;
-const assertRevert = require('@synthetixio/core-js/utils/assert-revert');
+const assertRevert = require('@synthetixio/core-js/utils/assertions/assert-revert');
 const { bootstrap } = require('@synthetixio/deployer/utils/tests');
-const assertBn = require('@synthetixio/core-js/utils/assert-bignumber');
+const assertBn = require('@synthetixio/core-js/utils/assertions/assert-bignumber');
 const initializer = require('../helpers/initializer');
 
 describe('SettingsModule', () => {
