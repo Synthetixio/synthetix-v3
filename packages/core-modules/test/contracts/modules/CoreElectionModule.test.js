@@ -4,7 +4,7 @@ const { findEvent } = require('@synthetixio/core-js/utils/events');
 const { bootstrap } = require('@synthetixio/deployer/utils/tests');
 const assertBn = require('@synthetixio/core-js/utils/assertions/assert-bignumber');
 const initializer = require('../../helpers/initializer');
-const { fastForward } = require('@synthetixio/core-js/utils/rpc');
+const { fastForward } = require('@synthetixio/core-js/utils/hardhat/rpc');
 
 const { ethers } = hre;
 
