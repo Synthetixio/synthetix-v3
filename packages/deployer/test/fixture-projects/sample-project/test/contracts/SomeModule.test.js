@@ -1,7 +1,7 @@
 const { ethers } = hre;
 const assert = require('assert/strict');
-const { findEvent } = require('@synthetixio/core-js/utils/events');
-const { bootstrap } = require('@synthetixio/deployer/utils/misc/mocha');
+const { findEvent } = require('@synthetixio/core-js/utils/ethers/events');
+const { bootstrap } = require('@synthetixio/deployer/utils/mocha/mocha-helpers');
 const assertBn = require('@synthetixio/core-js/utils/assertions/assert-bignumber');
 const initializer = require('../helpers/initializer');
 
