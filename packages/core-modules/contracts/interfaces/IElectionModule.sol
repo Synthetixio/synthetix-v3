@@ -18,8 +18,6 @@ interface IElectionModule {
 
     function getNominees() external view returns (address[] memory);
 
-    function elect(address[] memory candidates) external;
-
     function isElectionEvaluated() external view returns (bool);
 
     function evaluateElectionBatch() external;
@@ -43,6 +41,8 @@ interface IElectionModule {
     function setNextPeriodPercent(uint8 percent) external;
 
     function getNextSeatCount() external view returns (uint);
+
+    function elect(address[] memory numericallySortedCandidates, uint[] memory priorities) external;
 
     function getNextEpochDuration() external view returns (uint);
 

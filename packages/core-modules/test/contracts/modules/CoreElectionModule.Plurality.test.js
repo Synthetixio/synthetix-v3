@@ -46,7 +46,9 @@ describe('CoreElectionModule Count Votes using Simple Plurality strategy', () =>
       let candidates, voters;
 
       before('identify candidates and voters', async () => {
-        candidates = (await ethers.getSigners()).slice(2, 7);
+        candidates = (await ethers.getSigners())
+          .slice(2, 7)
+          .sort((a, b) => Number(a.address) - Number(b.address));
         voters = (await ethers.getSigners()).slice(2, 7);
       });
 
@@ -88,13 +90,13 @@ describe('CoreElectionModule Count Votes using Simple Plurality strategy', () =>
           for (let i = 1; i < voters.length; i++) {
             let candidateIdx = i % candidates.length;
             if (candidateIdx == 0) {
-              await CoreElectionModule.connect(voters[i]).elect([candidates[0].address]);
+              await CoreElectionModule.connect(voters[i]).elect([candidates[0].address], [0]);
               continue;
             }
-            await CoreElectionModule.connect(voters[i]).elect([
-              candidates[0].address,
-              candidates[candidateIdx].address,
-            ]);
+            await CoreElectionModule.connect(voters[i]).elect(
+              [candidates[0].address, candidates[candidateIdx].address],
+              [0, 1]
+            );
           }
         });
 
@@ -154,7 +156,9 @@ describe('CoreElectionModule Count Votes using Simple Plurality strategy', () =>
       let candidates, voters;
 
       before('identify candidates and voters', async () => {
-        candidates = (await ethers.getSigners()).slice(2, 12);
+        candidates = (await ethers.getSigners())
+          .slice(2, 12)
+          .sort((a, b) => Number(a.address) - Number(b.address));
         voters = (await ethers.getSigners()).slice(2, 12);
       });
 
@@ -189,13 +193,13 @@ describe('CoreElectionModule Count Votes using Simple Plurality strategy', () =>
           for (let i = 1; i < voters.length; i++) {
             let candidateIdx = i % candidates.length;
             if (candidateIdx == 0) {
-              await CoreElectionModule.connect(voters[i]).elect([candidates[0].address]);
+              await CoreElectionModule.connect(voters[i]).elect([candidates[0].address], [0]);
               continue;
             }
-            await CoreElectionModule.connect(voters[i]).elect([
-              candidates[0].address,
-              candidates[candidateIdx].address,
-            ]);
+            await CoreElectionModule.connect(voters[i]).elect(
+              [candidates[0].address, candidates[candidateIdx].address],
+              [0, 1]
+            );
           }
         });
 
