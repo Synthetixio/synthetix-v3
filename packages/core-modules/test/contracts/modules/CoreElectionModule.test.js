@@ -123,27 +123,6 @@ describe('CoreElectionModule Setup, Getters, Setters and Voting', () => {
     });
   });
 
-  describe('when configuring the current epoch', () => {
-    it('reverts when a regular user tries to setSeatCount', async () => {
-      await assertRevert(CoreElectionModule.connect(user).setSeatCount(5), 'Unauthorized');
-    });
-
-    it('allows the owner to setSeatCount', async () => {
-      await (await CoreElectionModule.connect(owner).setSeatCount(5)).wait();
-    });
-
-    it('reverts when a regular user tries to setPeriodPercent', async () => {
-      await assertRevert(CoreElectionModule.connect(user).setPeriodPercent(20), 'Unauthorized');
-    });
-
-    it('reverts when giving an invalid percent value to setPeriodPercent', async () => {
-      await assertRevert(
-        CoreElectionModule.connect(owner).setPeriodPercent(101),
-        'InvalidPeriodPercent'
-      );
-    });
-  });
-
   describe('when configuring the next epoch', () => {
     it('reverts when a regular user tries to setNextSeatCount', async () => {
       await assertRevert(CoreElectionModule.connect(user).setNextSeatCount(5), 'Unauthorized');
@@ -308,37 +287,40 @@ describe('CoreElectionModule Setup, Getters, Setters and Voting', () => {
     });
 
     it('allows to elect council members', async () => {
-      await CoreElectionModule.connect(user).elect(
-        [candidates[0].address, candidates[1].address, candidates[2].address],
-        [2, 0, 1]
+      await CoreElectionModule.connect(voters[1]).elect([candidates[0].address], [0]);
+      await CoreElectionModule.connect(voters[2]).elect([candidates[1].address], [0]);
+      await CoreElectionModule.connect(voters[3]).elect([candidates[2].address], [0]);
+      await CoreElectionModule.connect(voters[4]).elect(
+        [candidates[0].address, candidates[2].address],
+        [1, 0]
       );
-
-      await CoreElectionModule.connect(voters[1]).elect([candidates[0].address]);
-
-      await CoreElectionModule.connect(voters[2]).elect([candidates[1].address]);
-
-      await CoreElectionModule.connect(voters[3]).elect([candidates[2].address]);
-
-      await CoreElectionModule.connect(voters[4]).elect([
-        candidates[0].address,
-        candidates[2].address,
-      ]);
     });
 
     it('correctly saves vote data', async () => {
-      deepEqual(await ElectionStorageMock.getVoterVoteCandidatesMock(user.address), [
+      deepEqual(await ElectionStorageMock.getVoterVoteCandidatesMock(voters[1].address), [
+        candidates[0].address,
+      ]);
+      deepEqual(await ElectionStorageMock.getVoterVoteCandidatesMock(voters[2].address), [
         candidates[1].address,
+      ]);
+      deepEqual(await ElectionStorageMock.getVoterVoteCandidatesMock(voters[3].address), [
+        candidates[2].address,
+      ]);
+      deepEqual(await ElectionStorageMock.getVoterVoteCandidatesMock(voters[4].address), [
         candidates[2].address,
         candidates[0].address,
       ]);
 
-      assertBn.eq(await ElectionStorageMock.getVoterVoteVotePowerMock(user.address), 100);
+      assertBn.eq(await ElectionStorageMock.getVoterVoteVotePowerMock(voters[1].address), 100);
+      assertBn.eq(await ElectionStorageMock.getVoterVoteVotePowerMock(voters[2].address), 100);
+      assertBn.eq(await ElectionStorageMock.getVoterVoteVotePowerMock(voters[3].address), 100);
+      assertBn.eq(await ElectionStorageMock.getVoterVoteVotePowerMock(voters[4].address), 100);
     });
 
     describe('when attempting to vote again', () => {
       it('reverts', async () => {
         await assertRevert(
-          CoreElectionModule.connect(voters[0]).elect([candidates[0].address]),
+          CoreElectionModule.connect(voters[1]).elect([candidates[0].address], [0]),
           'AlreadyVoted'
         );
       });
