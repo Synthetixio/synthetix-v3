@@ -2,7 +2,7 @@ const { ethers } = hre;
 const assert = require('assert/strict');
 const assertRevert = require('@synthetixio/core-js/utils/assertions/assert-revert');
 const assertBn = require('@synthetixio/core-js/utils/assertions/assert-bignumber');
-const { findEvent } = require('@synthetixio/core-js/utils/events');
+const { findEvent } = require('@synthetixio/core-js/utils/ethers/events');
 
 describe('UUPSProxy', () => {
   let UUPSProxy, Instance, Implementation;
