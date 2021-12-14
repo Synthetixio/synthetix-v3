@@ -2,7 +2,7 @@ const del = require('del');
 const { subtask } = require('hardhat/config');
 const { TASK_CLEAN } = require('hardhat/builtin-tasks/task-names');
 
-const logger = require('@synthetixio/core-js/utils/logger');
+const logger = require('@synthetixio/core-js/utils/io/prompter');
 const prompter = require('@synthetixio/core-js/utils/prompter');
 const { getDeploymentFolder } = require('../utils/deployments');
 const { getGeneratedContractPaths } = require('../internal/generate-contracts');

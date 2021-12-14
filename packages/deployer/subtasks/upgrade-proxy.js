@@ -1,4 +1,4 @@
-const logger = require('@synthetixio/core-js/utils/logger');
+const logger = require('@synthetixio/core-js/utils/io/prompter');
 const prompter = require('@synthetixio/core-js/utils/prompter');
 const { subtask } = require('hardhat/config');
 const { processTransaction } = require('../internal/process-transactions');

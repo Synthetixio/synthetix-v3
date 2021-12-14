@@ -1,5 +1,5 @@
 const { subtask } = require('hardhat/config');
-const logger = require('@synthetixio/core-js/utils/logger');
+const logger = require('@synthetixio/core-js/utils/io/prompter');
 const mapValues = require('just-map-values');
 const { initContractData } = require('../internal/process-contracts');
 const RouterSourceValidator = require('../internal/router-source-validator');

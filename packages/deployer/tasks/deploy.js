@@ -21,7 +21,7 @@ const {
   TASK_DEPLOY,
 } = require('../task-names');
 
-const logger = require('@synthetixio/core-js/utils/logger');
+const logger = require('@synthetixio/core-js/utils/io/prompter');
 const prompter = require('@synthetixio/core-js/utils/prompter');
 const types = require('@synthetixio/core-js/utils/hardhat/argument-types');
 const { ContractValidationError } = require('../internal/errors');

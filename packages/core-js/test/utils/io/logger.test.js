@@ -1,8 +1,8 @@
 const { equal, deepEqual } = require('assert/strict');
 const chalk = require('chalk');
-const logger = require('../../utils/logger');
+const logger = require('../../../utils/io/prompter');
 
-describe('utils/logger.js', () => {
+describe('utils/io/prompter.js', () => {
   let logged = [];
 
   before('disable chalk color usage', () => {

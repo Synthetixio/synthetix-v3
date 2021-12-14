@@ -1,7 +1,7 @@
 const chalk = require('chalk');
 const { subtask } = require('hardhat/config');
 
-const logger = require('@synthetixio/core-js/utils/logger');
+const logger = require('@synthetixio/core-js/utils/io/prompter');
 const prompter = require('@synthetixio/core-js/utils/prompter');
 const relativePath = require('@synthetixio/core-js/utils/relative-path');
 const { getCommit, getBranch } = require('@synthetixio/core-js/utils/git');
