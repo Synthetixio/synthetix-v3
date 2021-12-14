@@ -1,6 +1,6 @@
 const { equal, deepEqual } = require('assert/strict');
 const chalk = require('chalk');
-const logger = require('../../../utils/io/prompter');
+const logger = require('../../../utils/io/logger');
 
 describe('utils/io/prompter.js', () => {
   let logged = [];

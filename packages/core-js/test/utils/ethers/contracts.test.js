@@ -5,7 +5,7 @@ const {
   deployedContractHasBytescode,
   getSelectors,
 } = require('../../../utils/ethers/contracts');
-const dummyABI = require('../fixtures/dummy-abi');
+const dummyABI = require('../../fixtures/dummy-abi');
 
 describe('utils/ethers/contracts.js', function () {
   const dummyAddress = '0x0000000000000000000000000000000000000001';

@@ -1,5 +1,5 @@
 const chalk = require('chalk');
-const logger = require('@synthetixio/core-js/utils/io/prompter');
+const logger = require('@synthetixio/core-js/utils/io/logger');
 const { subtask } = require('hardhat/config');
 const { SUBTASK_PRINT_INFO } = require('../task-names');
 const { readPackageJson } = require('@synthetixio/core-js/utils/misc/npm');

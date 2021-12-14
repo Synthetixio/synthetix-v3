@@ -1,8 +1,8 @@
 const { subtask } = require('hardhat/config');
 const { SUBTASK_EXECUTE_CALL } = require('../task-names');
-const logger = require('@synthetixio/core-js/utils/io/prompter');
+const logger = require('@synthetixio/core-js/utils/io/logger');
 const chalk = require('chalk');
-const prompter = require('@synthetixio/core-js/utils/prompter');
+const prompter = require('@synthetixio/core-js/utils/io/prompter');
 const { getFullFunctionSignature, getFullEventSignature } = require('../internal/signatures');
 
 subtask(SUBTASK_EXECUTE_CALL, 'Execute the current tx').setAction(async (taskArguments, hre) => {

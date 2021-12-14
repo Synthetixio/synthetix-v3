@@ -1,7 +1,7 @@
 const { equal } = require('assert/strict');
-const prompter = require('../../../utils/prompter');
+const prompter = require('../../../utils/io/prompter');
 
-describe('utils/prompter.js', function () {
+describe('utils/io/prompter.js', function () {
   describe('when noConfirm is enabled', function () {
     before('enable noCofirm', function () {
       prompter.noConfirm = true;

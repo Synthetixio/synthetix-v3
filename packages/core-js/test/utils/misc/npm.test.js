@@ -1,5 +1,5 @@
 const assert = require('assert/strict');
-const { readPackageJson } = require('../../utils/misc/npm');
+const { readPackageJson } = require('../../../utils/misc/npm');
 
 describe('utils/misc/npm.js', function () {
   it('can retrieve the package.json of the project', function () {

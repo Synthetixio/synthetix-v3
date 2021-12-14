@@ -1,5 +1,5 @@
 const { ok, equal, throws } = require('assert/strict');
-const getDate = require('../../utils/misc/get-date');
+const getDate = require('../../../utils/misc/get-date');
 
 describe('utils/misc/get-date.js', function () {
   it('returns the date with the correct format', function () {

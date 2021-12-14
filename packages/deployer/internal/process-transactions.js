@@ -1,4 +1,4 @@
-const logger = require('@synthetixio/core-js/utils/io/prompter');
+const logger = require('@synthetixio/core-js/utils/io/logger');
 
 async function processTransaction({ transaction, description, hre }) {
   logger.info(`Processing transaction ${transaction.hash}...`);

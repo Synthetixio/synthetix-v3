@@ -1,8 +1,8 @@
 const path = require('path');
 const filterValues = require('filter-values');
 const { subtask } = require('hardhat/config');
-const logger = require('@synthetixio/core-js/utils/io/prompter');
-const prompter = require('@synthetixio/core-js/utils/prompter');
+const logger = require('@synthetixio/core-js/utils/io/logger');
+const prompter = require('@synthetixio/core-js/utils/io/prompter');
 const { getModulesPaths } = require('../internal/contract-helper');
 const { initContractData } = require('../internal/process-contracts');
 const { SUBTASK_SYNC_SOURCES } = require('../task-names');

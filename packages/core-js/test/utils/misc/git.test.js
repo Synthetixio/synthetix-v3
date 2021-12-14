@@ -1,5 +1,5 @@
 const assert = require('assert/strict');
-const { getCommit, getBranch } = require('../../utils/misc/git');
+const { getCommit, getBranch } = require('../../../utils/misc/git');
 const execSync = (cmd) => require('child_process').execSync(cmd).toString().trim();
 
 describe('utils/misc/git.js', function () {
