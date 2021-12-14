@@ -1,10 +1,10 @@
-const logger = require('@synthetixio/core-js/utils/logger');
-const prompter = require('@synthetixio/core-js/utils/prompter');
+const logger = require('@synthetixio/core-js/utils/io/logger');
+const prompter = require('@synthetixio/core-js/utils/io/prompter');
 const { isAlreadyDeployed } = require('../internal/contract-helper');
 const { processTransaction } = require('../internal/process-transactions');
 const { subtask } = require('hardhat/config');
 const { SUBTASK_DEPLOY_CONTRACT } = require('../task-names');
-const { getCommit } = require('@synthetixio/core-js/utils/git');
+const { getCommit } = require('@synthetixio/core-js/utils/misc/git');
 
 subtask(
   SUBTASK_DEPLOY_CONTRACT,

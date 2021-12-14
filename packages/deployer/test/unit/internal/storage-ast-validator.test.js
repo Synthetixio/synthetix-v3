@@ -1,7 +1,7 @@
 const { equal } = require('assert/strict');
 const ModuleStorageASTValidator = require('../../../internal/storage-ast-validator');
 const asts = require('@synthetixio/core-js/test/fixtures/asts.json');
-const { clone } = require('@synthetixio/core-js/utils/clone');
+const { clone } = require('@synthetixio/core-js/utils/misc/clone');
 
 describe('internal/storage-ast-validator.js', function () {
   describe('validations without errors (happy path)', () => {

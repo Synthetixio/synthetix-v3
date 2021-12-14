@@ -1,7 +1,7 @@
 const { deepEqual } = require('assert/strict');
-const { getAllContractASTs } = require('../../../utils/hardhat/asts');
+const { getAllContractASTs } = require('../../../utils/hardhat/artifacts');
 
-describe('utils/hardhat/asts.js', () => {
+describe('utils/hardhat/artifacts.js', () => {
   it('should get artifacts ASTs', async () => {
     const qualifiedNames = [
       'contracts/modules/OwnerModule.sol:OwnerModule',

@@ -1,12 +1,12 @@
 const ethers = require('ethers');
 const assert = require('assert/strict');
-const { findEvent } = require('../../utils/events');
-const parsedTxReceipt = require('../fixtures/parsed-tx-receipt');
-const unparsedTxReceipt = require('../fixtures/unparsed-tx-receipt');
-const deploymentTxReceipt = require('../fixtures/deployment-tx-receipt');
-const dummyABI = require('../fixtures/event-abi');
+const { findEvent } = require('../../../utils/ethers/events');
+const parsedTxReceipt = require('../../fixtures/parsed-tx-receipt');
+const unparsedTxReceipt = require('../../fixtures/unparsed-tx-receipt');
+const deploymentTxReceipt = require('../../fixtures/deployment-tx-receipt');
+const dummyABI = require('../../fixtures/event-abi');
 
-describe('utils/events.js', () => {
+describe('utils/ethers/events.js', () => {
   it('can retrieve events from a regular transaction receipt', async () => {
     const event = findEvent({ receipt: parsedTxReceipt, eventName: 'ValueSet' });
 

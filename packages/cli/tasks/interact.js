@@ -9,7 +9,7 @@ const {
 } = require('../task-names');
 const { SUBTASK_LOAD_DEPLOYMENT } = require('@synthetixio/deployer/task-names');
 const types = require('@synthetixio/core-js/utils/hardhat/argument-types');
-const logger = require('@synthetixio/core-js/utils/logger');
+const logger = require('@synthetixio/core-js/utils/io/logger');
 
 task(TASK_INTERACT, 'Interacts with a given modular system deployment')
   .addOptionalParam(

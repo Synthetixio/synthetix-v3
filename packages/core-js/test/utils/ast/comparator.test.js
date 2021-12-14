@@ -1,5 +1,5 @@
 const { equal } = require('assert/strict');
-const { clone } = require('../../../utils/clone');
+const { clone } = require('../../../utils/misc/clone');
 const { compareStorageStructs } = require('../../../utils/ast/comparator');
 
 describe('utils/ast/comparator.js compareStorageStructs', function () {

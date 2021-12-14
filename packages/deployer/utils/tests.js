@@ -1,6 +1,6 @@
 const { TASK_DEPLOY } = require('@synthetixio/deployer/task-names');
 const { getProxyAddress, getRouterAddress } = require('@synthetixio/deployer/utils/deployments');
-const { takeSnapshot, restoreSnapshot } = require('@synthetixio/core-js/utils/rpc');
+const { takeSnapshot, restoreSnapshot } = require('@synthetixio/core-js/utils/hardhat/rpc');
 const { defaultDeploymentInfo } = require('./deployments');
 
 function bootstrap(initializer = () => {}, customDeployOptions = {}) {

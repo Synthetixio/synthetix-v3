@@ -1,5 +1,5 @@
 const { BigNumber } = require('ethers');
-const bn = require('../../utils/assert-bignumber');
+const bn = require('../../../utils/assertions/assert-bignumber');
 
 function not(operator, a, b) {
   try {
@@ -11,7 +11,7 @@ function not(operator, a, b) {
   }
 }
 
-describe('utils/assert-bignumber.js', function () {
+describe('utils/assertions/assert-bignumber.js', function () {
   it('correctly coerces strings and numbers to BigNumber', function () {
     bn.eq(BigNumber.from(12), BigNumber.from(12));
     bn.eq(12, BigNumber.from(12));

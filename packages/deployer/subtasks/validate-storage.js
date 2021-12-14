@@ -1,7 +1,7 @@
 const { subtask } = require('hardhat/config');
 const mapValues = require('just-map-values');
-const logger = require('@synthetixio/core-js/utils/logger');
-const prompter = require('@synthetixio/core-js/utils/prompter');
+const logger = require('@synthetixio/core-js/utils/io/logger');
+const prompter = require('@synthetixio/core-js/utils/io/prompter');
 const ModuleStorageASTValidator = require('../internal/storage-ast-validator');
 const { ContractValidationError } = require('../internal/errors');
 const { SUBTASK_VALIDATE_STORAGE } = require('../task-names');

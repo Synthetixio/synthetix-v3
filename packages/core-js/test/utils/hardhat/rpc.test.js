@@ -1,6 +1,6 @@
 const assert = require('assert/strict');
 const sinon = require('sinon');
-const { takeSnapshot, restoreSnapshot, fastForward } = require('../../utils/rpc');
+const { takeSnapshot, restoreSnapshot, fastForward } = require('../../../utils/hardhat/rpc');
 
 const fakeProvider = {
   send() {
@@ -10,7 +10,7 @@ const fakeProvider = {
   },
 };
 
-describe('utils/rpc.js', () => {
+describe('utils/hardhat/rpc.js', () => {
   let provider;
 
   before(function () {
