@@ -1,6 +1,6 @@
 const assert = require('assert/strict');
 const chalk = require('chalk');
-const { printGasUsed } = require('../../utils/mocha');
+const { printGasUsed } = require('../../utils/misc/mocha');
 
 describe('utils/tests.js', () => {
   it('can print the gas used in a test', async () => {

@@ -3,7 +3,7 @@ const assert = require('assert/strict');
 const assertRevert = require('@synthetixio/core-js/utils/assertions/assert-revert');
 const assertBn = require('@synthetixio/core-js/utils/assertions/assert-bignumber');
 const { findEvent } = require('@synthetixio/core-js/utils/events');
-const { bootstrap } = require('@synthetixio/deployer/utils/mocha');
+const { bootstrap } = require('@synthetixio/deployer/utils/misc/mocha');
 const initializer = require('../../helpers/initializer');
 
 describe('SNXTokenModule', function () {

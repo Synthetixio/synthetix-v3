@@ -1,7 +1,7 @@
 const del = require('del');
 const { subtask } = require('hardhat/config');
 const logger = require('@synthetixio/core-js/utils/io/prompter');
-const relativePath = require('@synthetixio/core-js/utils/relative-path');
+const relativePath = require('@synthetixio/core-js/utils/misc/relative-path');
 const { SUBTASK_CANCEL_DEPLOYMENT } = require('../task-names');
 
 subtask(

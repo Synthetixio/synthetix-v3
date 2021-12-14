@@ -3,8 +3,8 @@ const { subtask } = require('hardhat/config');
 
 const logger = require('@synthetixio/core-js/utils/io/prompter');
 const prompter = require('@synthetixio/core-js/utils/prompter');
-const relativePath = require('@synthetixio/core-js/utils/relative-path');
-const { getCommit, getBranch } = require('@synthetixio/core-js/utils/git');
+const relativePath = require('@synthetixio/core-js/utils/misc/relative-path');
+const { getCommit, getBranch } = require('@synthetixio/core-js/utils/misc/git');
 const { SUBTASK_PRINT_INFO } = require('../task-names');
 
 subtask(SUBTASK_PRINT_INFO, 'Prints info about a deployment.').setAction(async (taskArguments) => {

@@ -25,7 +25,7 @@ const logger = require('@synthetixio/core-js/utils/io/prompter');
 const prompter = require('@synthetixio/core-js/utils/prompter');
 const types = require('@synthetixio/core-js/utils/hardhat/argument-types');
 const { ContractValidationError } = require('../internal/errors');
-const { readPackageJson } = require('@synthetixio/core-js/utils/npm');
+const { readPackageJson } = require('@synthetixio/core-js/utils/misc/npm');
 
 task(TASK_DEPLOY, 'Deploys all system modules')
   .addFlag('noConfirm', 'Skip all confirmation prompts', false)

@@ -1,7 +1,7 @@
 const { ok, equal, throws } = require('assert/strict');
-const getDate = require('../../utils/get-date');
+const getDate = require('../../utils/misc/get-date');
 
-describe('utils/get-date.js', function () {
+describe('utils/misc/get-date.js', function () {
   it('returns the date with the correct format', function () {
     const result = getDate();
     ok(/[0-9]{4}-[0-9]{2}-[0-9]{2}/.test(result));

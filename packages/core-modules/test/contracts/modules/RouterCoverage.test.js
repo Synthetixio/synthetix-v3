@@ -1,7 +1,7 @@
 const { ethers } = hre;
 const assertBn = require('@synthetixio/core-js/utils/assertions/assertions/assert-bignumber');
 const assertRevert = require('@synthetixio/core-js/utils/assertions/assertions/assert-revert');
-const { bootstrap } = require('@synthetixio/deployer/utils/mocha');
+const { bootstrap } = require('@synthetixio/deployer/utils/misc/mocha');
 const initializer = require('../../helpers/initializer');
 
 describe('RouterCoverage', () => {
