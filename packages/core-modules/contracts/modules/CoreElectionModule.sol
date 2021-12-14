@@ -17,9 +17,15 @@ contract CoreElectionModule is IElectionModule, ElectionStorage, OwnableMixin {
     error InvalidCandidatesCount();
     error InvalidCandidateRepeat(address addr);
     error InvalidPeriodPercent();
-    error FirstEpochAlreadySetUp();
+    error InvalidBatchSize();
+
+    error FirstEpochAlreadySet();
 
     error AlreadyVoted();
+
+    error EpochNotFinished();
+    error ElectionAlreadyEvaluated();
+    error BatchSizeNotSet();
 
     event MemberTokenCreated(address memberTokenAddress);
 
@@ -109,18 +115,6 @@ contract CoreElectionModule is IElectionModule, ElectionStorage, OwnableMixin {
         delete electionData.nomineeIndexes[msg.sender];
     }
 
-    function setSeatCount(uint seats) external override onlyOwner {
-        _electionStore().seatCount = seats;
-    }
-
-    function setPeriodPercent(uint8 percent) external override onlyOwner {
-        if (percent > 100) {
-            revert InvalidPeriodPercent();
-        }
-
-        _electionStore().nominationPeriodPercent = percent;
-    }
-
     function setNextSeatCount(uint seats) external override onlyOwner {
         _electionStore().nextSeatCount = seats;
     }
@@ -137,7 +131,27 @@ contract CoreElectionModule is IElectionModule, ElectionStorage, OwnableMixin {
         _electionStore().nextNominationPeriodPercent = percent;
     }
 
-    function elect(address[] memory candidates) external override {
+    function getSeatCount() external view override returns (uint) {
+        return _electionStore().seatCount;
+    }
+
+    function getPeriodPercent() external view override returns (uint) {
+        return _electionStore().nominationPeriodPercent;
+    }
+
+    function getNextSeatCount() external view override returns (uint) {
+        return _electionStore().nextSeatCount;
+    }
+
+    function getNextEpochDuration() external view override returns (uint) {
+        return _electionStore().nextEpochDuration;
+    }
+
+    function getNextPeriodPercent() external view override returns (uint) {
+        return _electionStore().nextNominationPeriodPercent;
+    }
+
+    function elect(address[] memory candidates) external virtual override {
         ElectionStore storage store = _electionStore();
         ElectionData storage electionData = store.electionData;
 
@@ -180,8 +194,93 @@ contract CoreElectionModule is IElectionModule, ElectionStorage, OwnableMixin {
         electionData.addressVoted[msg.sender] = true;
     }
 
-    function getNomineeVotes(address nominee) external view override returns (uint) {
-        return _electionStore().electionData.nomineeVotes[nominee];
+    function isElectionEvaluated() public view virtual override returns (bool) {
+        return _electionStore().electionData.isElectionEvaluated;
+    }
+
+    function evaluateElectionBatch() external virtual override {
+        if (!isEpochFinished()) {
+            revert EpochNotFinished();
+        }
+
+        if (isElectionEvaluated()) {
+            revert ElectionAlreadyEvaluated();
+        }
+
+        if (_electionStore().maxProcessingBatchSize == 0) {
+            revert BatchSizeNotSet();
+        }
+
+        _evaluateElectionBatchBySimpleCounting();
+    }
+
+    function _evaluateElectionBatchBySimpleCounting() internal virtual {
+        ElectionStore storage store = _electionStore();
+        ElectionData storage electionData = store.electionData;
+
+        uint maxBatchSize = store.maxProcessingBatchSize;
+        uint previousBatchIdx = electionData.processedBatchIdx;
+        uint lessVotedCandidateVotes;
+        uint lessVotedCandidateIdx;
+
+        for (uint offset; offset < maxBatchSize; offset++) {
+            uint currentIdx = previousBatchIdx + offset;
+
+            if (currentIdx >= electionData.nominees.length) {
+                // all nominees reviewed
+                electionData.isElectionEvaluated = true;
+                break;
+            }
+
+            address currentNominee = electionData.nominees[currentIdx];
+            uint currentNomineeVotes = electionData.nomineeVotes[currentNominee];
+
+            if (currentNomineeVotes > 0) {
+                if (electionData.nextEpochRepresentatives.length < store.seatCount) {
+                    // seats not filled, fill it with whoever received votes
+                    electionData.nextEpochRepresentatives.push(currentNominee);
+                    electionData.nextEpochRepresentativeVotes.push(currentNomineeVotes);
+
+                    if (electionData.nextEpochRepresentatives.length == store.seatCount) {
+                        (lessVotedCandidateIdx, lessVotedCandidateVotes) = _findLessVoted(
+                            electionData.nextEpochRepresentativeVotes
+                        );
+                    }
+                } else if (currentNomineeVotes > lessVotedCandidateVotes) {
+                    // replace minimun
+                    electionData.nextEpochRepresentatives[lessVotedCandidateIdx] = currentNominee;
+                    electionData.nextEpochRepresentativeVotes[lessVotedCandidateIdx] = currentNomineeVotes;
+
+                    (lessVotedCandidateIdx, lessVotedCandidateVotes) = _findLessVoted(
+                        electionData.nextEpochRepresentativeVotes
+                    );
+                }
+            }
+        }
+
+        electionData.processedBatchIdx += maxBatchSize;
+    }
+
+    function _findLessVoted(uint[] storage votes) private view returns (uint, uint) {
+        uint minVotes = votes[0];
+        uint minIdx = 0;
+        for (uint idx = 0; idx < votes.length; idx++) {
+            if (votes[idx] < minVotes) {
+                minVotes = votes[idx];
+                minIdx = idx;
+            }
+        }
+        return (minIdx, minVotes);
+    }
+
+    // solhint-disable-next-line no-empty-blocks
+    function resolveElection() external virtual override {
+        // TODO Check preconditions
+        // TODO Compare lists and -> fill TO_REMOVE, and TO_ADD
+        // TODO Move votes from TO_REMOVE to TO_ADD
+        // TODO Burn missing TO_REMOVE
+        // TODO Mint missing TO_ADD
+        // TODO Flip epochs
     }
 
     function isEpochFinished() public view override returns (bool) {
@@ -214,11 +313,11 @@ contract CoreElectionModule is IElectionModule, ElectionStorage, OwnableMixin {
         return !isNominating() && !isEpochFinished();
     }
 
-    function setupFirstEpoch() external virtual override {
+    function setupFirstEpoch() external virtual override onlyOwner {
         ElectionStore storage store = _electionStore();
 
         if (store.epochStart != 0) {
-            revert FirstEpochAlreadySetUp();
+            revert FirstEpochAlreadySet();
         }
 
         // TODO set epoch 0 seat to 1
@@ -231,5 +330,18 @@ contract CoreElectionModule is IElectionModule, ElectionStorage, OwnableMixin {
         store.seatCount = store.nextSeatCount;
         store.epochDuration = store.nextEpochDuration;
         store.nominationPeriodPercent = store.nextNominationPeriodPercent;
+        // TODO Cleanup election data from previous election
+    }
+
+    function setMaxProcessingBatchSize(uint256 maxBatchSize) external override onlyOwner {
+        if (maxBatchSize == 0) {
+            revert InvalidBatchSize();
+        }
+
+        _electionStore().maxProcessingBatchSize = maxBatchSize;
+    }
+
+    function getMaxProcessingBatchSize() external view override returns (uint256) {
+        return _electionStore().maxProcessingBatchSize;
     }
 }

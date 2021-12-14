@@ -38,6 +38,22 @@ contract ElectionStorage {
          * @dev Position of an address on the nominees Array.
          */
         mapping(address => uint256) nomineeIndexes;
+        /**
+         * @dev Flag to indicate if the election was evaluated (if batched, latest batch was processed).
+         */
+        bool isElectionEvaluated;
+        /**
+         * @dev Used to keep track of the next epoch's nextEpochRepresentativess. Gets erased when an epoch starts and a new council takes effect.
+         */
+        address[] nextEpochRepresentatives;
+        /**
+         * @dev Used to keep track of the next epoch's nextEpochRepresentativess votes. Gets erased when an epoch starts and a new council takes effect.
+         */
+        uint256[] nextEpochRepresentativeVotes;
+        /**
+         * @dev Used to keep track of the latest nominee processed in the last batch.
+         */
+        uint256 processedBatchIdx;
     }
 
     struct ElectionStore {
@@ -81,6 +97,10 @@ contract ElectionStorage {
          * @dev Staging duration for the next epoch.
          */
         uint nextNominationPeriodPercent;
+        /**
+         * @dev Used to limit the batch size. This shouldn't be erased on an epoch change
+         */
+        uint256 maxProcessingBatchSize;
     }
 
     function _electionStore() internal pure returns (ElectionStore storage store) {
