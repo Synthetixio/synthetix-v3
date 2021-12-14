@@ -343,24 +343,18 @@ contract CoreElectionModule is IElectionModule, ElectionStorage, OwnableMixin {
         return !isNominating() && !isEpochFinished();
     }
 
-    function setupFirstEpoch() external virtual override onlyOwner {
+    function setupFirstEpoch() external override onlyOwner {
         ElectionStore storage store = _electionStore();
 
         if (store.epochStart != 0) {
             revert FirstEpochAlreadySet();
         }
 
-        // TODO set epoch 0 seat to 1
-        // TODO set epoch 0 period
-        // TODO set token for owner
-
-        // Flip epochs
-        // solhint-disable-next-line not-rely-on-time
-        store.epochStart = block.timestamp;
-        store.seatCount = store.nextSeatCount;
-        store.epochDuration = store.nextEpochDuration;
-        store.nominationPeriodPercent = store.nextNominationPeriodPercent;
-        // TODO Cleanup election data from previous election
+        store.epochStart = block.timestamp; // solhint-disable-line not-rely-on-time
+        store.seatCount = 1;
+        store.epochDuration = 2 days;
+        store.nominationPeriodPercent = 0;
+        // TODO: Assign current owner as only council member
     }
 
     function setMaxProcessingBatchSize(uint256 maxBatchSize) external override onlyOwner {
