@@ -4,7 +4,7 @@ const {
   getRemoteBytecode,
   deployedContractHasBytescode,
   getSelectors,
-} = require('../../utils/ethers/contracts');
+} = require('../../../utils/ethers/contracts');
 const dummyABI = require('../fixtures/dummy-abi');
 
 describe('utils/ethers/contracts.js', function () {

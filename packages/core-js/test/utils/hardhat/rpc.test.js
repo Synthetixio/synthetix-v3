@@ -1,6 +1,6 @@
 const assert = require('assert/strict');
 const sinon = require('sinon');
-const { takeSnapshot, restoreSnapshot, fastForward } = require('../../utils/hardhat/rpc');
+const { takeSnapshot, restoreSnapshot, fastForward } = require('../../../utils/hardhat/rpc');
 
 const fakeProvider = {
   send() {
