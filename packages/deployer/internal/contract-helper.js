@@ -1,8 +1,8 @@
 const fs = require('fs');
 const path = require('path');
 const filterValues = require('filter-values');
-const { getSelectors } = require('@synthetixio/core-js/utils/contracts');
-const { deployedContractHasBytescode } = require('@synthetixio/core-js/utils/contracts');
+const { getSelectors } = require('@synthetixio/core-js/utils/ethers/contracts');
+const { deployedContractHasBytescode } = require('@synthetixio/core-js/utils/ethers/contracts');
 
 async function isAlreadyDeployed(contractName, deploymentData) {
   if (!deploymentData.deployedAddress) {

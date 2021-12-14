@@ -4,10 +4,10 @@ const {
   getRemoteBytecode,
   deployedContractHasBytescode,
   getSelectors,
-} = require('../../utils/contracts');
+} = require('../../utils/ethers/contracts');
 const dummyABI = require('../fixtures/dummy-abi');
 
-describe('utils/contracts.js', function () {
+describe('utils/ethers/contracts.js', function () {
   const dummyAddress = '0x0000000000000000000000000000000000000001';
   const dummyBytecode =
     '0x363d3d373d3d3d363d73bebebebebebebebebebebebebebebebebebebebe5af43d82803e903d91602b57fd5bf3';
