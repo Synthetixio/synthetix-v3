@@ -2,7 +2,7 @@ const { ethers } = hre;
 const assert = require('assert/strict');
 const assertBn = require('@synthetixio/core-js/utils/assertions/assert-bignumber');
 const assertRevert = require('@synthetixio/core-js/utils/assertions/assert-revert');
-const { bootstrap } = require('@synthetixio/deployer/utils/tests');
+const { bootstrap } = require('@synthetixio/deployer/utils/mocha');
 const initializer = require('../../helpers/initializer');
 
 describe('CoreOwnerModule', () => {

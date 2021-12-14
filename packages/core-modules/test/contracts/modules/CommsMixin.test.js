@@ -1,8 +1,8 @@
 const { ethers } = hre;
 const assertBn = require('@synthetixio/core-js/utils/assertions/assert-bignumber');
 const assertRevert = require('@synthetixio/core-js/utils/assertions/assert-revert');
-const { printGasUsed } = require('@synthetixio/core-js/utils/tests');
-const { bootstrap } = require('@synthetixio/deployer/utils/tests');
+const { printGasUsed } = require('@synthetixio/core-js/utils/mocha');
+const { bootstrap } = require('@synthetixio/deployer/utils/mocha');
 const initializer = require('../../helpers/initializer');
 
 describe('CommsMixin', () => {

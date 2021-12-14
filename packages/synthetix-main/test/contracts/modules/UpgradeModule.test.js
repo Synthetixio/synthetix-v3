@@ -1,6 +1,6 @@
 const assert = require('assert/strict');
 const assertRevert = require('@synthetixio/core-js/utils/assertions/assert-revert');
-const { bootstrap } = require('@synthetixio/deployer/utils/tests');
+const { bootstrap } = require('@synthetixio/deployer/utils/mocha');
 const initializer = require('../../helpers/initializer');
 
 const { ethers } = hre;
