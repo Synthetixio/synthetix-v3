@@ -127,6 +127,20 @@ describe('CoreElectionModule Setup, Getters, Setters and Voting', () => {
   });
 
   describe('when initializing first epoch', () => {
+    describe('before starting the first epoch', () => {
+      before('reset epoch', async () => {
+        await (await ElectionStorageMock.resetCurrentEpochMock()).wait();
+      });
+
+      it('returns false when isNominating', async () => {
+        equal(await CoreElectionModule.isNominating(), false);
+      });
+
+      it('returns false when isVoting', async () => {
+        equal(await CoreElectionModule.isVoting(), false);
+      });
+    });
+
     it('reverts when a regular user tries to setupFirstEpoch', async () => {
       await assertRevert(CoreElectionModule.connect(user).setupFirstEpoch(), 'Unauthorized');
     });
@@ -367,11 +381,15 @@ describe('CoreElectionModule Setup, Getters, Setters and Voting', () => {
     };
 
     describe('before starting an epoch', () => {
+      before('reset epoch', async () => {
+        await (await ElectionStorageMock.resetCurrentEpochMock()).wait();
+      });
+
       checkTimeState({
         timeLapse: 0,
         epochState: false,
         nominatingState: false,
-        votingState: true,
+        votingState: false,
       });
     });
 

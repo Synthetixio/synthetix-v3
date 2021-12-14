@@ -21,6 +21,14 @@ contract ElectionStorageMock is ElectionStorage {
         store.nominationPeriodPercent = nominationPercent;
     }
 
+    function resetCurrentEpochMock() external {
+        ElectionStore storage store = _electionStore();
+        store.epochStart = 0;
+        store.seatCount = 0;
+        store.epochDuration = 0;
+        store.nominationPeriodPercent = 0;
+    }
+
     function getNextEpochRepresentatives() external view returns (address[] memory) {
         return _electionStore().electionData.nextEpochRepresentatives;
     }
@@ -47,5 +55,9 @@ contract ElectionStorageMock is ElectionStorage {
         ElectionData storage electionData = _electionStore().electionData;
         VoteData storage voteData = electionData.votes[electionData.votesIndexes[addr]];
         return voteData.votePower;
+    }
+
+    function getEpochStart() public view returns (uint) {
+        return _electionStore().epochStart;
     }
 }
