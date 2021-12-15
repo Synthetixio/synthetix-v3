@@ -184,9 +184,9 @@ describe('CoreElectionModule Count Votes using Simple Plurality strategy', () =>
       });
 
       after('cleanup voters', async () => {
-        for (let i = 0; i < voters.length; i++) {
-          await ElectionToken.connect(voters[i]).burn(
-            await ElectionToken.balanceOf(voters[i].address)
+        for (const voter of voters) {
+          await ElectionToken.connect(voter).burn(
+            await ElectionToken.balanceOf(voter.address)
           );
         }
       });
