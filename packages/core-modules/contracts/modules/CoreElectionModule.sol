@@ -73,11 +73,11 @@ contract CoreElectionModule is IElectionModule, ElectionStorage, OwnableMixin {
 
     // TODO: add pagination for getting nominees list
     function getNominees() external view override returns (address[] memory) {
-        return _electionData().nominees;
+        return _currentElectionData().nominees;
     }
 
     function nominate() external override {
-        ElectionData storage electionData = _electionData();
+        ElectionData storage electionData = _currentElectionData();
 
         if (electionData.nomineeIndexes[msg.sender] != 0) {
             revert AlreadyNominated(msg.sender);
@@ -89,7 +89,7 @@ contract CoreElectionModule is IElectionModule, ElectionStorage, OwnableMixin {
     }
 
     function withdrawNomination() external override {
-        ElectionData storage electionData = _electionData();
+        ElectionData storage electionData = _currentElectionData();
 
         uint256 valueIndex = electionData.nomineeIndexes[msg.sender];
 
@@ -161,7 +161,7 @@ contract CoreElectionModule is IElectionModule, ElectionStorage, OwnableMixin {
     /// @param priorities array of priorities order for the selected candidates, 0 indexed e.g.: [2, 0, 1]
     function elect(address[] memory numericallySortedCandidates, uint[] memory priorities) external override {
         ElectionStore storage store = _electionStore();
-        ElectionData storage electionData = _electionData();
+        ElectionData storage electionData = _currentElectionData();
 
         if (numericallySortedCandidates.length > electionData.nominees.length) {
             revert TooManyCandidates();
@@ -225,7 +225,7 @@ contract CoreElectionModule is IElectionModule, ElectionStorage, OwnableMixin {
     }
 
     function isElectionEvaluated() public view virtual override returns (bool) {
-        return _electionData().isElectionEvaluated;
+        return _currentElectionData().isElectionEvaluated;
     }
 
     function evaluateElectionBatch() external virtual override {
@@ -246,7 +246,7 @@ contract CoreElectionModule is IElectionModule, ElectionStorage, OwnableMixin {
 
     function _evaluateElectionBatchBySimpleCounting() internal virtual {
         ElectionStore storage store = _electionStore();
-        ElectionData storage electionData = _electionData();
+        ElectionData storage electionData = _currentElectionData();
 
         uint maxBatchSize = store.maxProcessingBatchSize;
         uint previousBatchIdx = electionData.processedBatchIdx;
@@ -254,7 +254,7 @@ contract CoreElectionModule is IElectionModule, ElectionStorage, OwnableMixin {
         uint lessVotedCandidateIdx;
 
         // set initial values
-        (lessVotedCandidateIdx, lessVotedCandidateVotes) = _findLessVoted(electionData.nextEpochRepresentativeVotes);
+        (lessVotedCandidateIdx, lessVotedCandidateVotes) = _findLessVoted(electionData.nextEpochMemberVotes);
 
         for (uint offset; offset < maxBatchSize; offset++) {
             uint currentIdx = previousBatchIdx + offset;
@@ -269,24 +269,20 @@ contract CoreElectionModule is IElectionModule, ElectionStorage, OwnableMixin {
             uint currentNomineeVotes = electionData.nomineeVotes[currentNominee];
 
             if (currentNomineeVotes > 0) {
-                if (electionData.nextEpochRepresentatives.length < store.seatCount) {
+                if (electionData.nextEpochMembers.length < store.seatCount) {
                     // seats not filled, fill it with whoever received votes
-                    electionData.nextEpochRepresentatives.push(currentNominee);
-                    electionData.nextEpochRepresentativeVotes.push(currentNomineeVotes);
+                    electionData.nextEpochMembers.push(currentNominee);
+                    electionData.nextEpochMemberVotes.push(currentNomineeVotes);
 
-                    if (electionData.nextEpochRepresentatives.length == store.seatCount) {
-                        (lessVotedCandidateIdx, lessVotedCandidateVotes) = _findLessVoted(
-                            electionData.nextEpochRepresentativeVotes
-                        );
+                    if (electionData.nextEpochMembers.length == store.seatCount) {
+                        (lessVotedCandidateIdx, lessVotedCandidateVotes) = _findLessVoted(electionData.nextEpochMemberVotes);
                     }
                 } else if (currentNomineeVotes > lessVotedCandidateVotes) {
                     // replace minimun
-                    electionData.nextEpochRepresentatives[lessVotedCandidateIdx] = currentNominee;
-                    electionData.nextEpochRepresentativeVotes[lessVotedCandidateIdx] = currentNomineeVotes;
+                    electionData.nextEpochMembers[lessVotedCandidateIdx] = currentNominee;
+                    electionData.nextEpochMemberVotes[lessVotedCandidateIdx] = currentNomineeVotes;
 
-                    (lessVotedCandidateIdx, lessVotedCandidateVotes) = _findLessVoted(
-                        electionData.nextEpochRepresentativeVotes
-                    );
+                    (lessVotedCandidateIdx, lessVotedCandidateVotes) = _findLessVoted(electionData.nextEpochMemberVotes);
                 }
             }
         }
@@ -320,7 +316,7 @@ contract CoreElectionModule is IElectionModule, ElectionStorage, OwnableMixin {
         // TODO Burn missing TO_REMOVE
         // TODO Mint missing TO_ADD
         // TODO Flip epochs
-        // TODO _electionStore().electionDataIndex++;
+        // TODO _electionStore().latestElectionDataIndex++;
     }
 
     function isEpochFinished() public view override returns (bool) {
@@ -360,8 +356,8 @@ contract CoreElectionModule is IElectionModule, ElectionStorage, OwnableMixin {
             revert FirstEpochAlreadySet();
         }
 
-        // Initialize electionDataIndex
-        store.electionDataIndex = 1;
+        // Initialize latestElectionDataIndex
+        store.latestElectionDataIndex = 1;
 
         store.epochStart = block.timestamp; // solhint-disable-line not-rely-on-time
         store.seatCount = 1;
@@ -382,7 +378,7 @@ contract CoreElectionModule is IElectionModule, ElectionStorage, OwnableMixin {
         return _electionStore().maxProcessingBatchSize;
     }
 
-    function _electionData() private view returns (ElectionData storage) {
-        return _electionStore().electionData[_electionStore().electionDataIndex];
+    function _currentElectionData() private view returns (ElectionData storage) {
+        return _electionStore().electionData[_electionStore().latestElectionDataIndex];
     }
 }

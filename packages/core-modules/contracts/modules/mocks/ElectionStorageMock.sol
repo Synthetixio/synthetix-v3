@@ -29,12 +29,12 @@ contract ElectionStorageMock is ElectionStorage {
         store.nominationPeriodPercent = 0;
     }
 
-    function getNextEpochRepresentatives() external view returns (address[] memory) {
-        return _electionData().nextEpochRepresentatives;
+    function getNextEpochMembers() external view returns (address[] memory) {
+        return _currentElectionData().nextEpochMembers;
     }
 
-    function getNextEpochRepresentativeVotes() external view returns (uint[] memory) {
-        return _electionData().nextEpochRepresentativeVotes;
+    function getNextEpochMemberVotes() external view returns (uint[] memory) {
+        return _currentElectionData().nextEpochMemberVotes;
     }
 
     function initNextEpochMock() external {
@@ -43,22 +43,22 @@ contract ElectionStorageMock is ElectionStorage {
         _electionStore().seatCount = _electionStore().nextSeatCount;
         _electionStore().epochDuration = _electionStore().nextEpochDuration;
         _electionStore().nominationPeriodPercent = _electionStore().nextNominationPeriodPercent;
-        _electionStore().electionDataIndex++;
+        _electionStore().latestElectionDataIndex++;
     }
 
     function getVoterVoteCandidatesMock(address addr) public view returns (address[] memory) {
-        ElectionData storage electionData = _electionData();
+        ElectionData storage electionData = _currentElectionData();
         VoteData storage voteData = electionData.votes[electionData.votesIndexes[addr]];
         return voteData.candidates;
     }
 
     function getVoterVoteVotePowerMock(address addr) public view returns (uint) {
-        ElectionData storage electionData = _electionData();
+        ElectionData storage electionData = _currentElectionData();
         VoteData storage voteData = electionData.votes[electionData.votesIndexes[addr]];
         return voteData.votePower;
     }
 
-    function _electionData() private view returns (ElectionData storage) {
-        return _electionStore().electionData[_electionStore().electionDataIndex];
+    function _currentElectionData() private view returns (ElectionData storage) {
+        return _electionStore().electionData[_electionStore().latestElectionDataIndex];
     }
 }
