@@ -25,8 +25,6 @@ contract CoreElectionModule is IElectionModule, ElectionStorage, OwnableMixin {
 
     error FirstEpochAlreadySet();
 
-    error AlreadyVoted();
-
     error EpochNotFinished();
     error ElectionAlreadyEvaluated();
     error BatchSizeNotSet();
@@ -176,8 +174,15 @@ contract CoreElectionModule is IElectionModule, ElectionStorage, OwnableMixin {
         }
 
         if (electionData.addressVoted[msg.sender]) {
-            // TODO: if msg.sender already voted, rollback previous votes and allow to re-vote
-            revert AlreadyVoted();
+            uint voteDataIndex = electionData.votesIndexes[msg.sender];
+            VoteData memory previousVoteData = electionData.votes[voteDataIndex];
+
+            for (uint i = 0; i < previousVoteData.candidates.length; i++) {
+                electionData.nomineeVotes[previousVoteData.candidates[i]] += previousVoteData.votePower;
+            }
+
+            // Cleanup previous vote in store
+            electionData.votes[voteDataIndex] = VoteData({candidates: new address[](0), votePower: 0});
         }
 
         uint votePower = ERC20(store.electionTokenAddress).balanceOf(msg.sender);
