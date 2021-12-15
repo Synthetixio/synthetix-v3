@@ -43,13 +43,13 @@ contract ElectionStorage {
          */
         bool isElectionEvaluated;
         /**
-         * @dev Used to keep track of the next epoch's nextEpochRepresentativess. Gets erased when an epoch starts and a new council takes effect.
+         * @dev Used to keep track of the next epoch's nextEpochMembers. Gets erased when an epoch starts and a new council takes effect.
          */
-        address[] nextEpochRepresentatives;
+        address[] nextEpochMembers;
         /**
-         * @dev Used to keep track of the next epoch's nextEpochRepresentativess votes. Gets erased when an epoch starts and a new council takes effect.
+         * @dev Used to keep track of the next epoch's nextEpochMembers votes. Gets erased when an epoch starts and a new council takes effect.
          */
-        uint256[] nextEpochRepresentativeVotes;
+        uint256[] nextEpochMemberVotes;
         /**
          * @dev Used to keep track of the latest nominee processed in the last batch.
          */
@@ -66,9 +66,13 @@ contract ElectionStorage {
          */
         address electionTokenAddress;
         /**
-         * @dev Voting data for the current election
+         * @dev Voting data for the current and past elections
          */
-        ElectionData electionData;
+        mapping(uint => ElectionData) electionData;
+        /**
+         * @dev Index pointing to the latest electionDta
+         */
+        uint latestElectionDataIndex;
         /**
          * @dev Number of members in the current epoch.
          */

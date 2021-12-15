@@ -69,6 +69,12 @@ describe('CoreElectionModule Count Votes using Simple Plurality strategy', () =>
         }
       });
 
+      after('cleanup voters', async () => {
+        for (const voter of voters) {
+          await ElectionToken.connect(voter).burn(await ElectionToken.balanceOf(voter.address));
+        }
+      });
+
       before('fastForward to voting phase', async () => {
         await fastForward(3 * day, ethers.provider);
       });
@@ -113,12 +119,11 @@ describe('CoreElectionModule Count Votes using Simple Plurality strategy', () =>
         });
 
         describe('when evaluating the election', () => {
-          let nextEpochRepresentatives, nextEpochRepresentativeVotes;
+          let nextEpochMembers, nextEpochMemberVotes;
           before('evaluate the election', async () => {
             await (await CoreElectionModule.evaluateElectionBatch()).wait();
-            nextEpochRepresentatives = await ElectionStorageMock.getNextEpochRepresentatives();
-            nextEpochRepresentativeVotes =
-              await ElectionStorageMock.getNextEpochRepresentativeVotes();
+            nextEpochMembers = await ElectionStorageMock.getNextEpochMembers();
+            nextEpochMemberVotes = await ElectionStorageMock.getNextEpochMemberVotes();
           });
 
           it('the election is evaluated', async () => {
@@ -126,17 +131,15 @@ describe('CoreElectionModule Count Votes using Simple Plurality strategy', () =>
           });
 
           it('the votes are counted correctly', async () => {
-            let nextEpochRepresentativeVotesParsed = nextEpochRepresentativeVotes.map((votes) =>
-              votes.toString()
-            );
+            let nextEpochMemberVotesParsed = nextEpochMemberVotes.map((votes) => votes.toString());
 
-            equal(nextEpochRepresentatives.length, 3);
-            deepEqual(nextEpochRepresentatives, [
+            equal(nextEpochMembers.length, 3);
+            deepEqual(nextEpochMembers, [
               candidates[0].address,
               candidates[3].address,
               candidates[4].address,
             ]);
-            deepEqual(nextEpochRepresentativeVotesParsed, ['500', '130', '140']);
+            deepEqual(nextEpochMemberVotesParsed, ['500', '130', '140']);
           });
         });
 
@@ -151,8 +154,7 @@ describe('CoreElectionModule Count Votes using Simple Plurality strategy', () =>
       });
     });
 
-    // Skipped until we figure out how to run more than one election :/
-    describe.skip('when counting a large number of votes and candidates', async () => {
+    describe('when counting a large number of votes and candidates', async () => {
       let candidates, voters;
 
       before('identify candidates and voters', async () => {
@@ -167,14 +169,18 @@ describe('CoreElectionModule Count Votes using Simple Plurality strategy', () =>
       });
 
       before('nominate and setup voters', async () => {
-        console.log(candidates.map((candidate) => candidate.address));
-        console.log(await CoreElectionModule.getNominees());
         await Promise.all(
           candidates.map((candidate) => CoreElectionModule.connect(candidate).nominate())
         );
 
         for (let i = 0; i < voters.length; i++) {
           await ElectionToken.connect(voters[i]).mint(100 + i * 10);
+        }
+      });
+
+      after('cleanup voters', async () => {
+        for (const voter of voters) {
+          await ElectionToken.connect(voter).burn(await ElectionToken.balanceOf(voter.address));
         }
       });
 
@@ -225,27 +231,30 @@ describe('CoreElectionModule Count Votes using Simple Plurality strategy', () =>
           });
 
           describe('when completing the batches', () => {
-            let nextEpochRepresentatives, nextEpochRepresentativeVotes;
+            let nextEpochMembers, nextEpochMemberVotes;
             before('evaluate the election', async () => {
               let finished = await CoreElectionModule.isElectionEvaluated();
               while (!finished) {
                 await (await CoreElectionModule.evaluateElectionBatch()).wait();
                 finished = await CoreElectionModule.isElectionEvaluated();
               }
+
+              nextEpochMembers = await ElectionStorageMock.getNextEpochMembers();
+              nextEpochMemberVotes = await ElectionStorageMock.getNextEpochMemberVotes();
             });
 
             it('the votes are counted correctly', async () => {
-              let nextEpochRepresentativeVotesParsed = nextEpochRepresentativeVotes.map((votes) =>
+              let nextEpochMemberVotesParsed = nextEpochMemberVotes.map((votes) =>
                 votes.toString()
               );
 
-              equal(nextEpochRepresentatives.length, 3);
-              deepEqual(nextEpochRepresentatives, [
+              equal(nextEpochMembers.length, 3);
+              deepEqual(nextEpochMembers, [
                 candidates[0].address,
-                candidates[98].address,
-                candidates[99].address,
+                candidates[9].address,
+                candidates[8].address,
               ]);
-              deepEqual(nextEpochRepresentativeVotesParsed, ['500', '130', '140']);
+              deepEqual(nextEpochMemberVotesParsed, ['1350', '190', '180']);
             });
           });
         });
