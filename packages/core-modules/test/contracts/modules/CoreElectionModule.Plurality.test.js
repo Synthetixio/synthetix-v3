@@ -71,9 +71,7 @@ describe('CoreElectionModule Count Votes using Simple Plurality strategy', () =>
 
       after('cleanup voters', async () => {
         for (const voter of voters) {
-          await ElectionToken.connect(voter).burn(
-            await ElectionToken.balanceOf(voter.address)
-          );
+          await ElectionToken.connect(voter).burn(await ElectionToken.balanceOf(voter.address));
         }
       });
 
@@ -185,9 +183,7 @@ describe('CoreElectionModule Count Votes using Simple Plurality strategy', () =>
 
       after('cleanup voters', async () => {
         for (const voter of voters) {
-          await ElectionToken.connect(voter).burn(
-            await ElectionToken.balanceOf(voter.address)
-          );
+          await ElectionToken.connect(voter).burn(await ElectionToken.balanceOf(voter.address));
         }
       });
 
