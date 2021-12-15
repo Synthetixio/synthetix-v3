@@ -69,6 +69,14 @@ describe('CoreElectionModule Count Votes using Simple Plurality strategy', () =>
         }
       });
 
+      after('cleanup voters', async () => {
+        for (let i = 0; i < voters.length; i++) {
+          await ElectionToken.connect(voters[i]).burn(
+            await ElectionToken.balanceOf(voters[i].address)
+          );
+        }
+      });
+
       before('fastForward to voting phase', async () => {
         await fastForward(3 * day, ethers.provider);
       });
@@ -152,7 +160,7 @@ describe('CoreElectionModule Count Votes using Simple Plurality strategy', () =>
     });
 
     // Skipped until we figure out how to run more than one election :/
-    describe.skip('when counting a large number of votes and candidates', async () => {
+    describe('when counting a large number of votes and candidates', async () => {
       let candidates, voters;
 
       before('identify candidates and voters', async () => {
@@ -167,14 +175,20 @@ describe('CoreElectionModule Count Votes using Simple Plurality strategy', () =>
       });
 
       before('nominate and setup voters', async () => {
-        console.log(candidates.map((candidate) => candidate.address));
-        console.log(await CoreElectionModule.getNominees());
         await Promise.all(
           candidates.map((candidate) => CoreElectionModule.connect(candidate).nominate())
         );
 
         for (let i = 0; i < voters.length; i++) {
           await ElectionToken.connect(voters[i]).mint(100 + i * 10);
+        }
+      });
+
+      after('cleanup voters', async () => {
+        for (let i = 0; i < voters.length; i++) {
+          await ElectionToken.connect(voters[i]).burn(
+            await ElectionToken.balanceOf(voters[i].address)
+          );
         }
       });
 
@@ -232,6 +246,10 @@ describe('CoreElectionModule Count Votes using Simple Plurality strategy', () =>
                 await (await CoreElectionModule.evaluateElectionBatch()).wait();
                 finished = await CoreElectionModule.isElectionEvaluated();
               }
+
+              nextEpochRepresentatives = await ElectionStorageMock.getNextEpochRepresentatives();
+              nextEpochRepresentativeVotes =
+                await ElectionStorageMock.getNextEpochRepresentativeVotes();
             });
 
             it('the votes are counted correctly', async () => {
@@ -242,10 +260,10 @@ describe('CoreElectionModule Count Votes using Simple Plurality strategy', () =>
               equal(nextEpochRepresentatives.length, 3);
               deepEqual(nextEpochRepresentatives, [
                 candidates[0].address,
-                candidates[98].address,
-                candidates[99].address,
+                candidates[9].address,
+                candidates[8].address,
               ]);
-              deepEqual(nextEpochRepresentativeVotesParsed, ['500', '130', '140']);
+              deepEqual(nextEpochRepresentativeVotesParsed, ['1350', '190', '180']);
             });
           });
         });

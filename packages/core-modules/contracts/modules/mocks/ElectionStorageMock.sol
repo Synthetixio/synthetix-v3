@@ -30,11 +30,11 @@ contract ElectionStorageMock is ElectionStorage {
     }
 
     function getNextEpochRepresentatives() external view returns (address[] memory) {
-        return _electionStore().electionData.nextEpochRepresentatives;
+        return _electionData().nextEpochRepresentatives;
     }
 
     function getNextEpochRepresentativeVotes() external view returns (uint[] memory) {
-        return _electionStore().electionData.nextEpochRepresentativeVotes;
+        return _electionData().nextEpochRepresentativeVotes;
     }
 
     function initNextEpochMock() external {
@@ -43,21 +43,26 @@ contract ElectionStorageMock is ElectionStorage {
         _electionStore().seatCount = _electionStore().nextSeatCount;
         _electionStore().epochDuration = _electionStore().nextEpochDuration;
         _electionStore().nominationPeriodPercent = _electionStore().nextNominationPeriodPercent;
+        _electionStore().electionDataIndex++;
     }
 
     function getVoterVoteCandidatesMock(address addr) public view returns (address[] memory) {
-        ElectionData storage electionData = _electionStore().electionData;
+        ElectionData storage electionData = _electionData();
         VoteData storage voteData = electionData.votes[electionData.votesIndexes[addr]];
         return voteData.candidates;
     }
 
     function getVoterVoteVotePowerMock(address addr) public view returns (uint) {
-        ElectionData storage electionData = _electionStore().electionData;
+        ElectionData storage electionData = _electionData();
         VoteData storage voteData = electionData.votes[electionData.votesIndexes[addr]];
         return voteData.votePower;
     }
 
-    function getEpochStart() public view returns (uint) {
-        return _electionStore().epochStart;
+    // function getEpochStart() public view returns (uint) {
+    //     return _electionStore().epochStart;
+    // }
+
+    function _electionData() private view returns (ElectionData storage) {
+        return _electionStore().electionData[_electionStore().electionDataIndex];
     }
 }

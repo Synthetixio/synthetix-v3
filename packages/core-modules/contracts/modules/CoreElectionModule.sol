@@ -73,11 +73,11 @@ contract CoreElectionModule is IElectionModule, ElectionStorage, OwnableMixin {
 
     // TODO: add pagination for getting nominees list
     function getNominees() external view override returns (address[] memory) {
-        return _electionStore().electionData.nominees;
+        return _electionData().nominees;
     }
 
     function nominate() external override {
-        ElectionData storage electionData = _electionStore().electionData;
+        ElectionData storage electionData = _electionData();
 
         if (electionData.nomineeIndexes[msg.sender] != 0) {
             revert AlreadyNominated(msg.sender);
@@ -89,7 +89,7 @@ contract CoreElectionModule is IElectionModule, ElectionStorage, OwnableMixin {
     }
 
     function withdrawNomination() external override {
-        ElectionData storage electionData = _electionStore().electionData;
+        ElectionData storage electionData = _electionData();
 
         uint256 valueIndex = electionData.nomineeIndexes[msg.sender];
 
@@ -161,7 +161,7 @@ contract CoreElectionModule is IElectionModule, ElectionStorage, OwnableMixin {
     /// @param priorities array of priorities order for the selected candidates, 0 indexed e.g.: [2, 0, 1]
     function elect(address[] memory numericallySortedCandidates, uint[] memory priorities) external override {
         ElectionStore storage store = _electionStore();
-        ElectionData storage electionData = store.electionData;
+        ElectionData storage electionData = _electionData();
 
         if (numericallySortedCandidates.length > electionData.nominees.length) {
             revert TooManyCandidates();
@@ -225,7 +225,7 @@ contract CoreElectionModule is IElectionModule, ElectionStorage, OwnableMixin {
     }
 
     function isElectionEvaluated() public view virtual override returns (bool) {
-        return _electionStore().electionData.isElectionEvaluated;
+        return _electionData().isElectionEvaluated;
     }
 
     function evaluateElectionBatch() external virtual override {
@@ -246,12 +246,15 @@ contract CoreElectionModule is IElectionModule, ElectionStorage, OwnableMixin {
 
     function _evaluateElectionBatchBySimpleCounting() internal virtual {
         ElectionStore storage store = _electionStore();
-        ElectionData storage electionData = store.electionData;
+        ElectionData storage electionData = _electionData();
 
         uint maxBatchSize = store.maxProcessingBatchSize;
         uint previousBatchIdx = electionData.processedBatchIdx;
         uint lessVotedCandidateVotes;
         uint lessVotedCandidateIdx;
+
+        // set initial values
+        (lessVotedCandidateIdx, lessVotedCandidateVotes) = _findLessVoted(electionData.nextEpochRepresentativeVotes);
 
         for (uint offset; offset < maxBatchSize; offset++) {
             uint currentIdx = previousBatchIdx + offset;
@@ -292,14 +295,20 @@ contract CoreElectionModule is IElectionModule, ElectionStorage, OwnableMixin {
     }
 
     function _findLessVoted(uint[] storage votes) private view returns (uint, uint) {
+        if (votes.length == 0) {
+            return (0, 0);
+        }
+
         uint minVotes = votes[0];
         uint minIdx = 0;
-        for (uint idx = 0; idx < votes.length; idx++) {
+
+        for (uint idx = 1; idx < votes.length; idx++) {
             if (votes[idx] < minVotes) {
                 minVotes = votes[idx];
                 minIdx = idx;
             }
         }
+
         return (minIdx, minVotes);
     }
 
@@ -311,6 +320,7 @@ contract CoreElectionModule is IElectionModule, ElectionStorage, OwnableMixin {
         // TODO Burn missing TO_REMOVE
         // TODO Mint missing TO_ADD
         // TODO Flip epochs
+        // TODO _electionStore().electionDataIndex++;
     }
 
     function isEpochFinished() public view override returns (bool) {
@@ -350,6 +360,9 @@ contract CoreElectionModule is IElectionModule, ElectionStorage, OwnableMixin {
             revert FirstEpochAlreadySet();
         }
 
+        // Initialize electionDataIndex
+        store.electionDataIndex = 1;
+
         store.epochStart = block.timestamp; // solhint-disable-line not-rely-on-time
         store.seatCount = 1;
         store.epochDuration = 2 days;
@@ -367,5 +380,9 @@ contract CoreElectionModule is IElectionModule, ElectionStorage, OwnableMixin {
 
     function getMaxProcessingBatchSize() external view override returns (uint256) {
         return _electionStore().maxProcessingBatchSize;
+    }
+
+    function _electionData() private view returns (ElectionData storage) {
+        return _electionStore().electionData[_electionStore().electionDataIndex];
     }
 }

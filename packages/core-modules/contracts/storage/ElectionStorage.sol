@@ -68,7 +68,11 @@ contract ElectionStorage {
         /**
          * @dev Voting data for the current election
          */
-        ElectionData electionData;
+        mapping(uint => ElectionData) electionData;
+        /**
+         * @dev Index pointing to the latest electionDta
+         */
+        uint electionDataIndex;
         /**
          * @dev Number of members in the current epoch.
          */
