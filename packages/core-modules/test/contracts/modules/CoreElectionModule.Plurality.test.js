@@ -159,7 +159,6 @@ describe('CoreElectionModule Count Votes using Simple Plurality strategy', () =>
       });
     });
 
-    // Skipped until we figure out how to run more than one election :/
     describe('when counting a large number of votes and candidates', async () => {
       let candidates, voters;
 
