@@ -58,10 +58,6 @@ contract ElectionStorageMock is ElectionStorage {
         return voteData.votePower;
     }
 
-    // function getEpochStart() public view returns (uint) {
-    //     return _electionStore().epochStart;
-    // }
-
     function _electionData() private view returns (ElectionData storage) {
         return _electionStore().electionData[_electionStore().electionDataIndex];
     }
