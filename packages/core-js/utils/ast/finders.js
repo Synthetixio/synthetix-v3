@@ -1,23 +1,23 @@
 const { findAll } = require('solidity-ast/utils');
 
-function findContractNodeWithId(contractId, ast) {
-  return Array.from(findAll('ContractDefinition', ast)).find(
+function findContractNodeWithId(contractId, astNode) {
+  return Array.from(findAll('ContractDefinition', astNode)).find(
     (contractDefiniton) => contractDefiniton.id === contractId
   );
 }
 
-function findContractNodeWithName(contractName, ast) {
-  return Array.from(findAll('ContractDefinition', ast)).find(
+function findContractNodeWithName(contractName, astNode) {
+  return Array.from(findAll('ContractDefinition', astNode)).find(
     (contractDefiniton) => contractDefiniton.name === contractName
   );
 }
 
-function getContractNode(ast) {
-  if (!ast) {
+function getContractNode(astNode) {
+  if (!astNode) {
     return undefined;
   }
 
-  return Array.from(findAll('ContractDefinition', ast))[0];
+  return Array.from(findAll('ContractDefinition', astNode))[0];
 }
 
 function findContractNodeVariables(contractNode) {
@@ -28,12 +28,12 @@ function findContractNodeStructs(contractNode) {
   return Array.from(findAll('StructDefinition', contractNode));
 }
 
-function findContractStateVariables(contractName, ast) {
-  return findContractNodeVariables(getContractNode(ast)).filter((n) => n.stateVariable);
+function findContractStateVariables(contractName, astNode) {
+  return findContractNodeVariables(getContractNode(astNode)).filter((n) => n.stateVariable);
 }
 
-function findContractDependencies(contractName, asts) {
-  const contractNode = getContractNode(asts[contractName]);
+function findContractDependencies(contractName, astNodes) {
+  const contractNode = getContractNode(astNodes[contractName]);
 
   let dependencyContractNodes = [];
   if (!contractNode) {
@@ -41,8 +41,8 @@ function findContractDependencies(contractName, asts) {
   }
 
   contractNode.linearizedBaseContracts.forEach((baseContractId) => {
-    for (const [, ast] of Object.entries(asts)) {
-      const dependency = findContractNodeWithId(baseContractId, ast);
+    for (const [, astNode] of Object.entries(astNodes)) {
+      const dependency = findContractNodeWithId(baseContractId, astNode);
       if (dependency) {
         dependencyContractNodes.push(dependency);
       }
@@ -52,12 +52,12 @@ function findContractDependencies(contractName, asts) {
   return dependencyContractNodes;
 }
 
-function findInheritedContractNames(ast) {
-  return Array.from(findAll('InheritanceSpecifier', ast)).map(({ baseName }) => baseName.name);
+function findInheritedContractNames(astNodes) {
+  return Array.from(findAll('InheritanceSpecifier', astNodes)).map(({ baseName }) => baseName.name);
 }
 
-function findYulStorageSlotAssignments(contractName, ast) {
-  const contractNode = getContractNode(ast);
+function findYulStorageSlotAssignments(contractName, astNode) {
+  const contractNode = getContractNode(astNode);
 
   const slots = [];
   for (const assignment of findAll('YulAssignment', contractNode)) {
@@ -69,8 +69,8 @@ function findYulStorageSlotAssignments(contractName, ast) {
   return slots;
 }
 
-function findYulCaseValues(contractName, ast) {
-  const contractNode = getContractNode(ast);
+function findYulCaseValues(contractName, astNode) {
+  const contractNode = getContractNode(astNode);
   const addressVariables = findContractNodeVariables(contractNode);
 
   const items = [];
@@ -103,9 +103,9 @@ function _findFunctionSelectors(contractNode) {
   return selectors;
 }
 
-function findFunctionSelectors(contractName, asts) {
+function findFunctionSelectors(contractName, astNodes) {
   const selectors = [];
-  for (const contractNode of findContractDependencies(contractName, asts)) {
+  for (const contractNode of findContractDependencies(contractName, astNodes)) {
     const currentSelectors = _findFunctionSelectors(contractNode);
     if (currentSelectors.length > 0) {
       selectors.push(...currentSelectors);
