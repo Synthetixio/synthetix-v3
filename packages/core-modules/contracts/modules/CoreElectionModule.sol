@@ -89,6 +89,9 @@ contract CoreElectionModule is IElectionModule, ElectionStorage, OwnableMixin {
 
     function withdrawNomination() external override {
         ElectionData storage electionData = _currentElectionData();
+        if (electionData.nomineePositions[msg.sender] == 0) {
+            revert NotNominated(msg.sender);
+        }
 
         ArrayUtil.removeValue(msg.sender, electionData.nominees, electionData.nomineePositions);
     }
