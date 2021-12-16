@@ -322,6 +322,9 @@ contract CoreElectionModule is IElectionModule, ElectionStorage, OwnableMixin {
         ElectionStore storage store = _electionStore();
         MemberToken memberToken = MemberToken(store.memberTokenAddress);
         address[] memory nextEpochMembers = _currentElectionData().nextEpochMembers;
+        uint currentIndex;
+        uint currentMembersSize = store.members.length;
+        uint nextEpochMembersSize = nextEpochMembers.length;
 
         if (!isEpochFinished()) {
             revert EpochNotFinished();
@@ -331,12 +334,18 @@ contract CoreElectionModule is IElectionModule, ElectionStorage, OwnableMixin {
             revert ElectionNotEvaluated();
         }
 
-        for (uint i = 0; i < store.members.length; i++) {
-            memberToken.burn(i);
+        while (currentIndex < currentMembersSize) {
+            if (currentIndex < nextEpochMembersSize) {
+                memberToken.transferFrom(store.members[currentIndex], nextEpochMembers[currentIndex], currentIndex);
+            } else {
+                memberToken.burn(currentIndex);
+            }
+            currentIndex++;
         }
 
-        for (uint i = 0; i < nextEpochMembers.length; i++) {
-            memberToken.mint(nextEpochMembers[i], i);
+        while (currentIndex < nextEpochMembersSize) {
+            memberToken.mint(nextEpochMembers[currentIndex], currentIndex);
+            currentIndex++;
         }
 
         store.members = nextEpochMembers;

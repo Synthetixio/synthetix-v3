@@ -148,7 +148,7 @@ describe('CoreElectionModule Setup, Getters, Setters and Voting', () => {
     describe('when a regular user attempts to call setupFirstEpoch', () => {
       it('reverts', async () => {
         await assertRevert(CoreElectionModule.connect(user).setupFirstEpoch(), 'Unauthorized');
-      })
+      });
     });
 
     describe('when the owner setups the first epoch', () => {
@@ -156,12 +156,12 @@ describe('CoreElectionModule Setup, Getters, Setters and Voting', () => {
 
       before('sets the first epoch parameters', async () => {
         await (await CoreElectionModule.connect(owner).setupFirstEpoch()).wait();
-      })
+      });
 
       before('get the member token', async () => {
         const memberTokenAddress = await CoreElectionModule.getMemberTokenAddress();
         MemberToken = await ethers.getContractAt('MemberToken', memberTokenAddress);
-      })
+      });
 
       it('gets setted with the right parameters', async () => {
         assertBn.eq(await CoreElectionModule.getSeatCount(), 1);
@@ -401,7 +401,6 @@ describe('CoreElectionModule Setup, Getters, Setters and Voting', () => {
   });
 
   describe('when moving in time (epoch state changes)', () => {
-
     const checkTimeState = async ({ timeLapse, epochState, nominatingState, votingState }) => {
       before(`fastForward ${timeLapse / 1000} seconds`, async () => {
         if (timeLapse > 0) {
@@ -519,12 +518,9 @@ describe('CoreElectionModule Setup, Getters, Setters and Voting', () => {
       await (await ElectionStorageMock.resetCurrentEpochMock()).wait();
     });
 
-    describe('when the epoch is not finished', () => {  
+    describe('when the epoch is not finished', () => {
       it('reverts', async () => {
-        await assertRevert(
-          CoreElectionModule.connect(user).resolveElection(),
-          'EpochNotFinished'
-        );
+        await assertRevert(CoreElectionModule.connect(user).resolveElection(), 'EpochNotFinished');
       });
     });
 
@@ -533,7 +529,7 @@ describe('CoreElectionModule Setup, Getters, Setters and Voting', () => {
         await (await ElectionStorageMock.setCurrentEpochMock(1, week, 15)).wait();
         await fastForward(week, ethers.provider);
       });
-  
+
       it('reverts', async () => {
         await assertRevert(
           CoreElectionModule.connect(user).resolveElection(),

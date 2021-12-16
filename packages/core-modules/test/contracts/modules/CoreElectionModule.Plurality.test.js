@@ -153,29 +153,28 @@ describe('CoreElectionModule Count Votes using Simple Plurality strategy', () =>
 
           describe('when resolving the election', () => {
             let MemberToken, members;
-            
+
             before('get the member token', async () => {
               const memberTokenAddress = await CoreElectionModule.getMemberTokenAddress();
               MemberToken = await ethers.getContractAt('MemberToken', memberTokenAddress);
-            })
-      
+            });
+
             before('resolve the election', async () => {
-              await (await CoreElectionModule.connect(voters[0]).resolveElection()).wait()
-            })
-            
+              await (await CoreElectionModule.connect(voters[0]).resolveElection()).wait();
+            });
+
             it('the council has 3 members', async () => {
               members = await CoreElectionModule.getMembers();
               equal(members.length, 3);
             });
-      
+
             it('the members own the NFTs', async () => {
               equal(await MemberToken.ownerOf(0), candidates[0].address);
               equal(await MemberToken.ownerOf(1), candidates[3].address);
               equal(await MemberToken.ownerOf(2), candidates[4].address);
             });
-          })
+          });
         });
-
       });
     });
 
@@ -386,12 +385,10 @@ describe('CoreElectionModule Count Votes using Simple Plurality strategy', () =>
       });
     });
 
-    describe('when resolving an election for a smaller council', () => {
+    describe('when resolving an election for a smaller council', () => {});
 
-    })
+    describe('when resolving an election for a larger council', () => {});
 
-    describe('when resolving an election for a larger council', () => {
-      
-    })
+    describe('when changing the next epoch parameters ', () => {});
   });
 });
