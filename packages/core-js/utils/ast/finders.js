@@ -1,23 +1,44 @@
 const { findAll } = require('solidity-ast/utils');
 
+/**
+ * Get the given contract by id on the given AST
+ * @param {number} contractId
+ * @param {import("solidity-ast").SourceUnit} astNode
+ * @returns {import("solidity-ast").ContractDefinition} contractDefinitionNode
+ */
 function findContractNodeWithId(contractId, astNode) {
-  return Array.from(findAll('ContractDefinition', astNode)).find(
-    (contractDefiniton) => contractDefiniton.id === contractId
-  );
-}
-
-function findContractNodeWithName(contractName, astNode) {
-  return Array.from(findAll('ContractDefinition', astNode)).find(
-    (contractDefiniton) => contractDefiniton.name === contractName
-  );
-}
-
-function getContractNode(astNode) {
-  if (!astNode) {
-    return undefined;
+  for (const contractDefiniton of findAll('ContractDefinition', astNode)) {
+    if (contractDefiniton.id === contractId) {
+      return contractDefiniton;
+    }
   }
+}
 
-  return Array.from(findAll('ContractDefinition', astNode))[0];
+/**
+ * Get the given contract by name on the given AST
+ * @param {string} contractName
+ * @param {import("solidity-ast").SourceUnit} astNode
+ * @returns {import("solidity-ast").ContractDefinition} contractDefinitionNode
+ */
+function findContractNodeWithName(contractName, astNode) {
+  for (const contractDefiniton of findAll('ContractDefinition', astNode)) {
+    if (contractDefiniton.name === contractName) {
+      return contractDefiniton;
+    }
+  }
+}
+
+/**
+ * Get the first contract defined on the given AST
+ * @param {import("solidity-ast").SourceUnit} astNode
+ * @returns {import("solidity-ast").ContractDefinition} contractDefinitionNode
+ */
+function getFirstContractNode(astNode) {
+  if (!astNode) return undefined;
+
+  for (const contractDefinitionNode of findAll('ContractDefinition', astNode)) {
+    return contractDefinitionNode;
+  }
 }
 
 function findContractNodeVariables(contractNode) {
@@ -29,11 +50,11 @@ function findContractNodeStructs(contractNode) {
 }
 
 function findContractStateVariables(contractName, astNode) {
-  return findContractNodeVariables(getContractNode(astNode)).filter((n) => n.stateVariable);
+  return findContractNodeVariables(getFirstContractNode(astNode)).filter((n) => n.stateVariable);
 }
 
 function findContractDependencies(contractName, astNodes) {
-  const contractNode = getContractNode(astNodes[contractName]);
+  const contractNode = getFirstContractNode(astNodes[contractName]);
 
   let dependencyContractNodes = [];
   if (!contractNode) {
@@ -57,7 +78,7 @@ function findInheritedContractNames(astNodes) {
 }
 
 function findYulStorageSlotAssignments(contractName, astNode) {
-  const contractNode = getContractNode(astNode);
+  const contractNode = getFirstContractNode(astNode);
 
   const slots = [];
   for (const assignment of findAll('YulAssignment', contractNode)) {
@@ -70,7 +91,7 @@ function findYulStorageSlotAssignments(contractName, astNode) {
 }
 
 function findYulCaseValues(contractName, astNode) {
-  const contractNode = getContractNode(astNode);
+  const contractNode = getFirstContractNode(astNode);
   const addressVariables = findContractNodeVariables(contractNode);
 
   const items = [];
