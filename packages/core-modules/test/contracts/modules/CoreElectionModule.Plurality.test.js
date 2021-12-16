@@ -260,5 +260,105 @@ describe('CoreElectionModule Count Votes using Simple Plurality strategy', () =>
         });
       });
     });
+
+    describe('when re-casting votes', async () => {
+      let candidates, voters;
+
+      before('identify candidates and voters', async () => {
+        candidates = (await ethers.getSigners())
+          .slice(2, 7)
+          .sort((a, b) => Number(a.address) - Number(b.address));
+        voters = (await ethers.getSigners()).slice(2, 7);
+      });
+
+      before('set epoch', async () => {
+        await (await ElectionStorageMock.initNextEpochMock()).wait();
+      });
+
+      before('nominate and setup voters', async () => {
+        await Promise.all(
+          candidates.map((candidate) => CoreElectionModule.connect(candidate).nominate())
+        );
+
+        for (let i = 0; i < voters.length; i++) {
+          await ElectionToken.connect(voters[i]).mint(100 + i * 10);
+        }
+        await ElectionToken.connect(voters[0]).mint(1000);
+      });
+
+      after('cleanup voters', async () => {
+        for (const voter of voters) {
+          await ElectionToken.connect(voter).burn(await ElectionToken.balanceOf(voter.address));
+        }
+      });
+
+      before('fastForward to voting phase', async () => {
+        await fastForward(3 * day, ethers.provider);
+      });
+
+      it('is voting phase', async () => {
+        equal(await CoreElectionModule.isVoting(), true, 'wrong voting phase');
+        assertBignumber.eq(await CoreElectionModule.getPeriodPercent(), 15);
+        assertBignumber.eq(await CoreElectionModule.getSeatCount(), 3);
+      });
+
+      describe('when casting votes', () => {
+        before('cast votes', async () => {
+          for (let i = 1; i < voters.length; i++) {
+            let candidateIdx = i % candidates.length;
+            await CoreElectionModule.connect(voters[i]).elect(
+              [candidates[candidateIdx].address],
+              [0]
+            );
+          }
+        });
+
+        before('voter 0 re-casts the vote', async () => {
+          // Before that the winners should be 0, 3 and 4. When voter[0] changes the vote,
+          // it changes who wins, and now should be 2, 3 and 4
+          await CoreElectionModule.connect(voters[0]).elect(
+            [candidates[2].address, candidates[3].address],
+            [0, 1]
+          );
+        });
+
+        before('fastForward to close voting phase', async () => {
+          await fastForward(week, ethers.provider);
+        });
+
+        before('set the batch size to fit all candidates', async () => {
+          await (await CoreElectionModule.connect(owner).setMaxProcessingBatchSize(10)).wait();
+        });
+
+        it('the election is not evaluated', async () => {
+          equal(await CoreElectionModule.isElectionEvaluated(), false);
+        });
+
+        describe('when evaluating the election', () => {
+          let nextEpochMembers, nextEpochMemberVotes;
+          before('evaluate the election', async () => {
+            await (await CoreElectionModule.evaluateElectionBatch()).wait();
+            nextEpochMembers = await ElectionStorageMock.getNextEpochMembers();
+            nextEpochMemberVotes = await ElectionStorageMock.getNextEpochMemberVotes();
+          });
+
+          it('the election is evaluated', async () => {
+            equal(await CoreElectionModule.isElectionEvaluated(), true);
+          });
+
+          it('the votes are counted correctly', async () => {
+            let nextEpochMemberVotesParsed = nextEpochMemberVotes.map((votes) => votes.toString());
+
+            equal(nextEpochMembers.length, 3);
+            deepEqual(nextEpochMembers, [
+              candidates[4].address,
+              candidates[2].address,
+              candidates[3].address,
+            ]);
+            deepEqual(nextEpochMemberVotesParsed, ['140', '1220', '1230']);
+          });
+        });
+      });
+    });
   });
 });

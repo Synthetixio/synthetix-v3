@@ -178,7 +178,7 @@ contract CoreElectionModule is IElectionModule, ElectionStorage, OwnableMixin {
             VoteData memory previousVoteData = electionData.votes[voteDataIndex];
 
             for (uint i = 0; i < previousVoteData.candidates.length; i++) {
-                electionData.nomineeVotes[previousVoteData.candidates[i]] += previousVoteData.votePower;
+                electionData.nomineeVotes[previousVoteData.candidates[i]] -= previousVoteData.votePower;
             }
 
             // Cleanup previous vote in store
