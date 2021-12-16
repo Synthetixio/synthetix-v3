@@ -4,8 +4,8 @@ pragma solidity ^0.8.0;
 import "../../utils/ArrayUtil.sol";
 
 contract ArrayUtilMock {
-    address[] _values;
-    mapping(address => uint) _positions;
+    address[] private _values;
+    mapping(address => uint) private _positions;
 
     function addValue(address value) public {
         _values.push(value);

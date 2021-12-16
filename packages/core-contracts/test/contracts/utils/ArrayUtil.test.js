@@ -1,8 +1,7 @@
 const { ethers } = hre;
-const assert = require('assert/strict');
 const assertBn = require('@synthetixio/core-js/utils/assertions/assert-bignumber');
 
-describe.only('ArrayUtil', () => {
+describe('ArrayUtil', () => {
   let ArrayUtil;
 
   let user1, user2, user3, user4, user5;
