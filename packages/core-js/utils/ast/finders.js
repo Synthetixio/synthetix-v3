@@ -4,7 +4,7 @@ const { findAll } = require('solidity-ast/utils');
  * Get the given contract by id on the given AST
  * @param {number} contractId
  * @param {import("solidity-ast").SourceUnit} astNode
- * @returns {import("solidity-ast").ContractDefinition} contractDefinitionNode
+ * @returns {import("solidity-ast").ContractDefinition}
  */
 function findContractNodeWithId(contractId, astNode) {
   for (const contractDefiniton of findAll('ContractDefinition', astNode)) {
@@ -18,7 +18,7 @@ function findContractNodeWithId(contractId, astNode) {
  * Get the given contract by name on the given AST
  * @param {string} contractName
  * @param {import("solidity-ast").SourceUnit} astNode
- * @returns {import("solidity-ast").ContractDefinition} contractDefinitionNode
+ * @returns {import("solidity-ast").ContractDefinition}
  */
 function findContractNodeWithName(contractName, astNode) {
   for (const contractDefiniton of findAll('ContractDefinition', astNode)) {
@@ -29,56 +29,85 @@ function findContractNodeWithName(contractName, astNode) {
 }
 
 /**
- * Get the first contract defined on the given AST
- * @param {import("solidity-ast").SourceUnit} astNode
- * @returns {import("solidity-ast").ContractDefinition} contractDefinitionNode
+ * Get all the variable nodes defined on a contract node
+ * @param {import("solidity-ast").ContractDefinition} contractNode
+ * @returns {import("solidity-ast").VariableDeclaration}
  */
-function getFirstContractNode(astNode) {
-  if (!astNode) return undefined;
-
-  for (const contractDefinitionNode of findAll('ContractDefinition', astNode)) {
-    return contractDefinitionNode;
-  }
-}
-
 function findContractNodeVariables(contractNode) {
   return Array.from(findAll('VariableDeclaration', contractNode));
 }
 
+/**
+ * Get all the structs definitions on a contract node
+ * @param {import("solidity-ast").ContractDefinition} contractNode
+ * @returns {import("solidity-ast").StructDefinition}
+ */
 function findContractNodeStructs(contractNode) {
   return Array.from(findAll('StructDefinition', contractNode));
 }
 
+/**
+ * Get the state variables from the given contract name
+ * @param {string} contractName
+ * @param {import("solidity-ast").SourceUnit} astNode
+ * @returns {import("solidity-ast").VariableDeclaration}
+ */
 function findContractStateVariables(contractName, astNode) {
-  return findContractNodeVariables(getFirstContractNode(astNode)).filter((n) => n.stateVariable);
+  const contractNode = findContractNodeWithName(contractName, astNode);
+  return findContractNodeVariables(contractNode).filter((n) => n.stateVariable);
 }
 
+/**
+ * Get the complete tree of dependencies from the given contract. This methods
+ * takes an objects with the keys from all the contracts and the values are their
+ * AST nodes.
+ * @param {string} contractName
+ * @param {{ [contractName: string]: import("solidity-ast").SourceUnit }} astNodes
+ * @returns {import("solidity-ast").ContractDefinition[]}
+ */
 function findContractDependencies(contractName, astNodes) {
-  const contractNode = getFirstContractNode(astNodes[contractName]);
-
-  let dependencyContractNodes = [];
-  if (!contractNode) {
-    return dependencyContractNodes;
+  if (!astNodes[contractName]) {
+    return [];
   }
 
-  contractNode.linearizedBaseContracts.forEach((baseContractId) => {
-    for (const [, astNode] of Object.entries(astNodes)) {
+  const contractNode = findContractNodeWithName(contractName, astNodes[contractName]);
+
+  if (!contractNode) {
+    return [];
+  }
+
+  const dependencyContractNodes = [];
+
+  for (const baseContractId of contractNode.linearizedBaseContracts) {
+    for (const astNode of Object.values(astNodes)) {
       const dependency = findContractNodeWithId(baseContractId, astNode);
       if (dependency) {
         dependencyContractNodes.push(dependency);
       }
     }
-  });
+  }
 
   return dependencyContractNodes;
 }
 
-function findInheritedContractNames(astNodes) {
-  return Array.from(findAll('InheritanceSpecifier', astNodes)).map(({ baseName }) => baseName.name);
+/**
+ * Get all the contract names that inherits the given contract node AST
+ * @param {import("solidity-ast").ContractDefinition} contractNode
+ * @returns {string[]}
+ */
+function findInheritedContractNames(contractNode) {
+  const specifierNodes = findAll('InheritanceSpecifier', contractNode);
+  return Array.from(specifierNodes).map(({ baseName }) => baseName.name);
 }
 
+/**
+ * Find all the slot definitions on the given AST node
+ * @param {string} contractName
+ * @param {import("solidity-ast").SourceUnit} astNode
+ * @returns {string[]}
+ */
 function findYulStorageSlotAssignments(contractName, astNode) {
-  const contractNode = getFirstContractNode(astNode);
+  const contractNode = findContractNodeWithName(contractName, astNode);
 
   const slots = [];
   for (const assignment of findAll('YulAssignment', contractNode)) {
@@ -90,8 +119,14 @@ function findYulStorageSlotAssignments(contractName, astNode) {
   return slots;
 }
 
+/**
+ * Get all the case values from the given contract node
+ * @param {string} contractName
+ * @param {import("solidity-ast").SourceUnit} astNode
+ * @returns {{ selector: string, value?: string }[]}
+ */
 function findYulCaseValues(contractName, astNode) {
-  const contractNode = getFirstContractNode(astNode);
+  const contractNode = findContractNodeWithName(contractName, astNode);
   const addressVariables = findContractNodeVariables(contractNode);
 
   const items = [];
@@ -124,8 +159,16 @@ function _findFunctionSelectors(contractNode) {
   return selectors;
 }
 
+/**
+ * Get all the function selectors definitions from the complete tree of contract
+ * nodes starting from the given root contract definition
+ * @param {string} contractName
+ * @param {{ [contractName: string]: import("solidity-ast").SourceUnit }} astNodes
+ * @returns {import("solidity-ast").ContractDefinition[]}
+ */
 function findFunctionSelectors(contractName, astNodes) {
   const selectors = [];
+
   for (const contractNode of findContractDependencies(contractName, astNodes)) {
     const currentSelectors = _findFunctionSelectors(contractNode);
     if (currentSelectors.length > 0) {
