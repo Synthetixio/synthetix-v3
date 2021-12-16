@@ -318,7 +318,6 @@ contract CoreElectionModule is IElectionModule, ElectionStorage, OwnableMixin {
             return false; // epoch didn't even start
         }
 
-        // solhint-disable-next-line not-rely-on-time
         return block.timestamp > _electionStore().epochStart + _electionStore().epochDuration;
     }
 
@@ -350,7 +349,7 @@ contract CoreElectionModule is IElectionModule, ElectionStorage, OwnableMixin {
             revert FirstEpochAlreadySet();
         }
 
-        store.epochStart = block.timestamp; // solhint-disable-line not-rely-on-time
+        store.epochStart = block.timestamp;
         store.seatCount = 1;
         store.epochDuration = 2 days;
         store.nominationPeriodPercent = 0;
