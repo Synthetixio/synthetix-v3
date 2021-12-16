@@ -347,12 +347,21 @@ describe('CoreElectionModule Setup, Getters, Setters and Voting', () => {
       assertBn.eq(await ElectionStorageMock.getVoterVoteVotePowerMock(voters[4].address), 100);
     });
 
-    describe('when attempting to vote again', () => {
-      it('reverts', async () => {
-        await assertRevert(
-          CoreElectionModule.connect(voters[1]).elect([candidates[0].address], [0]),
-          'AlreadyVoted'
+    describe('when casting a vote again', () => {
+      before('vote again', async () => {
+        await CoreElectionModule.connect(voters[1]).elect(
+          [candidates[0].address, candidates[2].address],
+          [1, 0]
         );
+      });
+
+      it('correctly saves vote data', async () => {
+        deepEqual(await ElectionStorageMock.getVoterVoteCandidatesMock(voters[1].address), [
+          candidates[2].address,
+          candidates[0].address,
+        ]);
+
+        assertBn.eq(await ElectionStorageMock.getVoterVoteVotePowerMock(voters[1].address), 100);
       });
     });
   });
