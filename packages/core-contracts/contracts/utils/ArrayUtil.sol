@@ -4,7 +4,11 @@ pragma solidity ^0.8.0;
 library ArrayUtil {
     error ArrayValueNotFound(address element);
 
-    function removeValue(address value, address[] storage array, mapping(address => uint) storage positions) internal {
+    function removeValue(
+        address value,
+        address[] storage array,
+        mapping(address => uint) storage positions
+    ) internal {
         uint256 valuePosition = positions[value];
         if (valuePosition == 0) {
             revert ArrayValueNotFound(value);
@@ -17,8 +21,8 @@ library ArrayUtil {
         if (lastIndex != valueIndex) {
             address lastValue = array[lastIndex];
 
-            array[valueIndex] = lastvalue;
-            positions[lastvalue] = valueIndex;
+            array[valueIndex] = lastValue;
+            positions[lastValue] = valueIndex;
         }
 
         array.pop();
