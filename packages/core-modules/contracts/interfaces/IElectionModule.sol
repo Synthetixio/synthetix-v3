@@ -16,6 +16,8 @@ interface IElectionModule {
 
     function withdrawNomination() external;
 
+    function getMembers() external view returns (address[] memory);
+
     function getNominees() external view returns (address[] memory);
 
     function isElectionEvaluated() external view returns (bool);

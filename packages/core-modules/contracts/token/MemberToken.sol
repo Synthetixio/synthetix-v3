@@ -13,4 +13,12 @@ contract MemberToken is Ownable, UUPSImplementation, ERC721 {
     function upgradeTo(address newImplementation) public override onlyOwner {
         _upgradeTo(newImplementation);
     }
+
+    function mint(address to, uint256 tokenId) public virtual onlyOwner {
+        _mint(to, tokenId);
+    }
+
+    function burn(uint256 tokenId) public virtual onlyOwner {
+        _burn(tokenId);
+    }
 }

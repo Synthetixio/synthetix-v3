@@ -27,6 +27,7 @@ contract CoreElectionModule is IElectionModule, ElectionStorage, OwnableMixin {
 
     error EpochNotFinished();
     error ElectionAlreadyEvaluated();
+    error ElectionNotEvaluated();
     error BatchSizeNotSet();
 
     event MemberTokenCreated(address memberTokenAddress);
@@ -67,6 +68,10 @@ contract CoreElectionModule is IElectionModule, ElectionStorage, OwnableMixin {
 
     function getElectionTokenAddress() external view override returns (address) {
         return _electionStore().electionTokenAddress;
+    }
+
+    function getMembers() external view override returns (address[] memory) {
+        return _electionStore().members;
     }
 
     // TODO: add pagination for getting nominees list
@@ -313,15 +318,35 @@ contract CoreElectionModule is IElectionModule, ElectionStorage, OwnableMixin {
         return (minIdx, minVotes);
     }
 
-    // solhint-disable-next-line no-empty-blocks
     function resolveElection() external virtual override {
-        // TODO Check preconditions
-        // TODO Compare lists and -> fill TO_REMOVE, and TO_ADD
-        // TODO Move votes from TO_REMOVE to TO_ADD
-        // TODO Burn missing TO_REMOVE
-        // TODO Mint missing TO_ADD
-        // TODO Flip epochs
-        // TODO _electionStore().latestElectionDataIndex++;
+        ElectionStore storage store = _electionStore();
+        MemberToken memberToken = MemberToken(store.memberTokenAddress);
+        address[] memory nextEpochMembers = _currentElectionData().nextEpochMembers;
+
+        if (!isEpochFinished()) {
+            revert EpochNotFinished();
+        }
+
+        if (!isElectionEvaluated()) {
+            revert ElectionNotEvaluated();
+        }
+
+        for (uint i = 0; i < store.members.length; i++) {
+            memberToken.burn(i);
+        }
+
+        for (uint i = 0; i < nextEpochMembers.length; i++) {
+            memberToken.mint(nextEpochMembers[i], i);
+        }
+
+        store.members = nextEpochMembers;
+        store.seatCount = store.nextSeatCount;
+        store.epochDuration = store.nextEpochDuration;
+        store.nominationPeriodPercent = store.nextNominationPeriodPercent;
+
+        store.epochStart = block.timestamp; // solhint-disable-line not-rely-on-time
+
+        _electionStore().latestElectionDataIndex++;
     }
 
     function isEpochFinished() public view override returns (bool) {
@@ -356,6 +381,7 @@ contract CoreElectionModule is IElectionModule, ElectionStorage, OwnableMixin {
 
     function setupFirstEpoch() external override onlyOwner {
         ElectionStore storage store = _electionStore();
+        MemberToken memberToken = MemberToken(store.memberTokenAddress);
 
         if (store.epochStart != 0) {
             revert FirstEpochAlreadySet();
@@ -368,7 +394,10 @@ contract CoreElectionModule is IElectionModule, ElectionStorage, OwnableMixin {
         store.seatCount = 1;
         store.epochDuration = 2 days;
         store.nominationPeriodPercent = 0;
-        // TODO: Assign current owner as only council member
+
+        // Set current owner as only council member
+        store.members.push(msg.sender);
+        memberToken.mint(msg.sender, 0);
     }
 
     function setMaxProcessingBatchSize(uint256 maxBatchSize) external override onlyOwner {
