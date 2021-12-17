@@ -27,4 +27,8 @@ contract ArrayUtilMock {
     function numValues() public view returns (uint) {
         return _values.length;
     }
+
+    function hasDuplicates(address[] memory values) public pure returns (bool) {
+        return ArrayUtil.hasDuplicates(values);
+    }
 }

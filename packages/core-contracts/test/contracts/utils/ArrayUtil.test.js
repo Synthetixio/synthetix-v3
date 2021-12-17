@@ -1,4 +1,5 @@
 const { ethers } = hre;
+const assert = require('assert/strict');
 const assertBn = require('@synthetixio/core-js/utils/assertions/assert-bignumber');
 const assertRevert = require('@synthetixio/core-js/utils/assertions/assert-revert');
 
@@ -14,6 +15,30 @@ describe('ArrayUtil', () => {
   before('deploy the contract', async () => {
     const factory = await ethers.getContractFactory('ArrayUtilMock');
     ArrayUtil = await factory.deploy();
+  });
+
+  it('can detect duplicates', async function () {
+    assert.equal(
+      await ArrayUtil.hasDuplicates([
+        user1.address,
+        user2.address,
+        user3.address,
+        user4.address,
+        user5.address,
+      ]),
+      false
+    );
+
+    assert.equal(
+      await ArrayUtil.hasDuplicates([
+        user1.address,
+        user2.address,
+        user3.address,
+        user3.address,
+        user5.address,
+      ]),
+      true
+    );
   });
 
   describe('when adding multiple values to the array', () => {

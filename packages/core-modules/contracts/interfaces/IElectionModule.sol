@@ -42,7 +42,7 @@ interface IElectionModule {
 
     function getNextSeatCount() external view returns (uint);
 
-    function elect(address[] memory numericallySortedCandidates, uint[] memory priorities) external;
+    function elect(address[] memory candidates) external;
 
     function getNextEpochDuration() external view returns (uint);
 
