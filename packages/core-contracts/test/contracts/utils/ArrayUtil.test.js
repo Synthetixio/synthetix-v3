@@ -1,5 +1,6 @@
 const { ethers } = hre;
 const assertBn = require('@synthetixio/core-js/utils/assertions/assert-bignumber');
+const assertRevert = require('@synthetixio/core-js/utils/assertions/assert-revert');
 
 describe('ArrayUtil', () => {
   let ArrayUtil;
@@ -38,6 +39,13 @@ describe('ArrayUtil', () => {
       assertBn.eq(await ArrayUtil.positionForValue(user3.address), 3);
       assertBn.eq(await ArrayUtil.positionForValue(user4.address), 4);
       assertBn.eq(await ArrayUtil.positionForValue(user5.address), 5);
+    });
+
+    it('reverts when trying to access a value beyond the length of the array', async function () {
+      await assertRevert(
+        ArrayUtil.valueAtIndex(5),
+        'Array accessed at an out-of-bounds or negative index'
+      );
     });
 
     describe('when removing a value', function () {
