@@ -8,14 +8,14 @@ const { fastForward } = require('@synthetixio/core-js/utils/hardhat/rpc');
 
 const { ethers } = hre;
 
-describe('CoreElectionModule Setup, Getters, Setters and Voting', () => {
+describe.only('CoreElectionModule Setup, Getters, Setters and Voting', () => {
   const { proxyAddress } = bootstrap(initializer);
 
   let CoreElectionModule, ElectionStorageMock;
-  let owner, user;
+  let owner, user, anotherUser;
 
   before('identify signers', async () => {
-    [owner, user] = await ethers.getSigners();
+    [owner, user, anotherUser] = await ethers.getSigners();
   });
 
   before('identify modules', async () => {
@@ -260,7 +260,7 @@ describe('CoreElectionModule Setup, Getters, Setters and Voting', () => {
     });
 
     it('reverts when trying to elect no candidates', async () => {
-      await assertRevert(CoreElectionModule.connect(user).elect([], []), 'MissingCandidates');
+      await assertRevert(CoreElectionModule.connect(user).elect([]), 'MissingCandidates');
     });
 
     it('reverts when trying to elect more candidates than nominees', async () => {
@@ -274,56 +274,31 @@ describe('CoreElectionModule Setup, Getters, Setters and Voting', () => {
             candidates[2].address,
             candidates[3].address,
             candidates[4].address,
-          ],
-          [0, 1, 2, 3, 4, 5, 6, 7]
+          ]
         ),
         'TooManyCandidates'
       );
     });
 
-    it('reverts when sending a wrong amount of candidate priorities', async () => {
-      await assertRevert(
-        CoreElectionModule.connect(user).elect([user.address], [0, 1]),
-        'CandidateLengthMismatch'
-      );
-    });
-
-    it('reverts when using a big priority', async () => {
-      await assertRevert(
-        CoreElectionModule.connect(user).elect([user.address], [2]),
-        'InvalidCandidatePriority(2)'
-      );
-    });
-
     it('reverts when trying to elect a not nominated candidate', async () => {
       await assertRevert(
-        CoreElectionModule.connect(user).elect([user.address], [0]),
-        `InvalidCandidate("${user.address}")`
+        CoreElectionModule.connect(user).elect([anotherUser.address]),
+        `NotNominated("${user.address}")`
       );
     });
 
     it('reverts when trying to elect repeated addresses', async () => {
       await assertRevert(
-        CoreElectionModule.elect([candidates[0].address, candidates[0].address], [0, 1]),
-        `DuplicateCandidate("${candidates[0].address}")`
-      );
-    });
-
-    it('reverts when trying to elect repeated priorities', async () => {
-      await assertRevert(
-        CoreElectionModule.elect([candidates[0].address, candidates[1].address], [0, 0]),
-        'DuplicateCandidatePriority'
+        CoreElectionModule.elect([candidates[0].address, candidates[0].address]),
+        `DuplicateCandidates`
       );
     });
 
     it('allows to elect council members', async () => {
-      await CoreElectionModule.connect(voters[1]).elect([candidates[0].address], [0]);
-      await CoreElectionModule.connect(voters[2]).elect([candidates[1].address], [0]);
-      await CoreElectionModule.connect(voters[3]).elect([candidates[2].address], [0]);
-      await CoreElectionModule.connect(voters[4]).elect(
-        [candidates[0].address, candidates[2].address],
-        [1, 0]
-      );
+      await CoreElectionModule.connect(voters[1]).elect([candidates[0].address]);
+      await CoreElectionModule.connect(voters[2]).elect([candidates[1].address]);
+      await CoreElectionModule.connect(voters[3]).elect([candidates[2].address]);
+      await CoreElectionModule.connect(voters[4]).elect([candidates[0].address, candidates[2].address]);
     });
 
     it('correctly saves vote data', async () => {
@@ -349,10 +324,7 @@ describe('CoreElectionModule Setup, Getters, Setters and Voting', () => {
 
     describe('when casting a vote again', () => {
       before('vote again', async () => {
-        await CoreElectionModule.connect(voters[1]).elect(
-          [candidates[0].address, candidates[2].address],
-          [1, 0]
-        );
+        await CoreElectionModule.connect(voters[1]).elect([candidates[0].address, candidates[2].address]);
       });
 
       it('correctly saves vote data', async () => {

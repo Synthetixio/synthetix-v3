@@ -14,13 +14,10 @@ contract CoreElectionModule is IElectionModule, ElectionStorage, OwnableMixin {
     error AlreadyNominated(address addr);
     error NotNominated(address addr);
 
-    error InvalidCandidate(address addr);
     error CandidateLengthMismatch();
     error TooManyCandidates();
     error MissingCandidates();
-    error DuplicateCandidatePriority();
-    error InvalidCandidatePriority(uint priority);
-    error DuplicateCandidate(address addr);
+    error DuplicateCandidates();
     error InvalidPeriodPercent();
     error InvalidBatchSize();
 
@@ -136,12 +133,26 @@ contract CoreElectionModule is IElectionModule, ElectionStorage, OwnableMixin {
         ElectionStore storage store = _electionStore();
         ElectionData storage electionData = _currentElectionData();
 
-        if (candidates.length > electionData.nominees.length) {
+        uint length = candidates.length;
+
+        if (length > electionData.nominees.length) {
             revert TooManyCandidates();
         }
 
-        if (candidates.length == 0) {
+        if (length == 0) {
             revert MissingCandidates();
+        }
+
+        for (uint i = 0; i < length; i++) {
+            address candidate = candidates[i];
+
+            if (electionData.nomineePositions[candidate] == 0) {
+                revert NotNominated(candidate);
+            }
+        }
+
+        if (ArrayUtil.hasDuplicates(candidates)) {
+            revert DuplicateCandidates();
         }
 
         // Clear previous votes if user already voted
