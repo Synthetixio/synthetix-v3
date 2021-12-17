@@ -265,17 +265,15 @@ describe('CoreElectionModule Setup, Getters, Setters and Voting', () => {
 
     it('reverts when trying to elect more candidates than nominees', async () => {
       await assertRevert(
-        CoreElectionModule.connect(user).elect(
-          [
-            user.address,
-            owner.address,
-            candidates[0].address,
-            candidates[1].address,
-            candidates[2].address,
-            candidates[3].address,
-            candidates[4].address,
-          ]
-        ),
+        CoreElectionModule.connect(user).elect([
+          user.address,
+          owner.address,
+          candidates[0].address,
+          candidates[1].address,
+          candidates[2].address,
+          candidates[3].address,
+          candidates[4].address,
+        ]),
         'TooManyCandidates'
       );
     });
@@ -290,7 +288,7 @@ describe('CoreElectionModule Setup, Getters, Setters and Voting', () => {
     it('reverts when trying to elect repeated addresses', async () => {
       await assertRevert(
         CoreElectionModule.elect([candidates[0].address, candidates[0].address]),
-        `DuplicateCandidates`
+        'DuplicateCandidates'
       );
     });
 
@@ -298,7 +296,10 @@ describe('CoreElectionModule Setup, Getters, Setters and Voting', () => {
       await CoreElectionModule.connect(voters[1]).elect([candidates[0].address]);
       await CoreElectionModule.connect(voters[2]).elect([candidates[1].address]);
       await CoreElectionModule.connect(voters[3]).elect([candidates[2].address]);
-      await CoreElectionModule.connect(voters[4]).elect([candidates[0].address, candidates[2].address]);
+      await CoreElectionModule.connect(voters[4]).elect([
+        candidates[0].address,
+        candidates[2].address,
+      ]);
     });
 
     it('correctly saves vote data', async () => {
@@ -324,7 +325,10 @@ describe('CoreElectionModule Setup, Getters, Setters and Voting', () => {
 
     describe('when casting a vote again', () => {
       before('vote again', async () => {
-        await CoreElectionModule.connect(voters[1]).elect([candidates[0].address, candidates[2].address]);
+        await CoreElectionModule.connect(voters[1]).elect([
+          candidates[0].address,
+          candidates[2].address,
+        ]);
       });
 
       it('correctly saves vote data', async () => {
