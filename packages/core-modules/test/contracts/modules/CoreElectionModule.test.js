@@ -8,14 +8,14 @@ const { fastForward } = require('@synthetixio/core-js/utils/hardhat/rpc');
 
 const { ethers } = hre;
 
-describe.only('CoreElectionModule Setup, Getters, Setters and Voting', () => {
+describe('CoreElectionModule Setup, Getters, Setters and Voting', () => {
   const { proxyAddress } = bootstrap(initializer);
 
   let CoreElectionModule, ElectionStorageMock;
-  let owner, user, anotherUser;
+  let owner, user;
 
   before('identify signers', async () => {
-    [owner, user, anotherUser] = await ethers.getSigners();
+    [owner, user] = await ethers.getSigners();
   });
 
   before('identify modules', async () => {
@@ -282,7 +282,7 @@ describe.only('CoreElectionModule Setup, Getters, Setters and Voting', () => {
 
     it('reverts when trying to elect a not nominated candidate', async () => {
       await assertRevert(
-        CoreElectionModule.connect(user).elect([anotherUser.address]),
+        CoreElectionModule.connect(user).elect([user.address]),
         `NotNominated("${user.address}")`
       );
     });

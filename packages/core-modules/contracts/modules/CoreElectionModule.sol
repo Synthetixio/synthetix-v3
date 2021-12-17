@@ -133,17 +133,17 @@ contract CoreElectionModule is IElectionModule, ElectionStorage, OwnableMixin {
         ElectionStore storage store = _electionStore();
         ElectionData storage electionData = _currentElectionData();
 
-        uint length = candidates.length;
+        uint numCandidates = candidates.length;
 
-        if (length > electionData.nominees.length) {
+        if (numCandidates > electionData.nominees.length) {
             revert TooManyCandidates();
         }
 
-        if (length == 0) {
+        if (numCandidates == 0) {
             revert MissingCandidates();
         }
 
-        for (uint i = 0; i < length; i++) {
+        for (uint i = 0; i < numCandidates; i++) {
             address candidate = candidates[i];
 
             if (electionData.nomineePositions[candidate] == 0) {
