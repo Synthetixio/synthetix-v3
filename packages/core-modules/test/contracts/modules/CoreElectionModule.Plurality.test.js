@@ -7,7 +7,7 @@ const assertBn = require('@synthetixio/core-js/utils/assertions/assert-bignumber
 
 const { ethers } = hre;
 
-describe('CoreElectionModule Count Votes using Simple Plurality strategy', () => {
+describe('CoreElectionModule: Evaluate and Resolve elections using Simple Plurality strategy', () => {
   const { proxyAddress } = bootstrap(initializer);
 
   let CoreElectionModule, ElectionStorageMock, ElectionToken;

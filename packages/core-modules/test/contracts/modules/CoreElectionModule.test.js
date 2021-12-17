@@ -8,7 +8,7 @@ const { fastForward } = require('@synthetixio/core-js/utils/hardhat/rpc');
 
 const { ethers } = hre;
 
-describe('CoreElectionModule Setup, Getters, Setters and Voting', () => {
+describe('CoreElectionModule: Setup, Getters, Setters, Reverts and Voting', () => {
   const { proxyAddress } = bootstrap(initializer);
 
   let CoreElectionModule, ElectionStorageMock;
