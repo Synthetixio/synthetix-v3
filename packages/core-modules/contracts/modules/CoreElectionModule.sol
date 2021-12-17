@@ -319,12 +319,6 @@ contract CoreElectionModule is IElectionModule, ElectionStorage, OwnableMixin {
     }
 
     function resolveElection() external virtual override {
-        ElectionStore storage store = _electionStore();
-        MemberToken memberToken = MemberToken(store.memberTokenAddress);
-        address[] memory nextEpochMembers = _currentElectionData().nextEpochMembers;
-        uint currentMembersSize = store.members.length;
-        uint nextEpochMembersSize = nextEpochMembers.length;
-
         if (!isEpochFinished()) {
             revert EpochNotFinished();
         }
@@ -332,6 +326,16 @@ contract CoreElectionModule is IElectionModule, ElectionStorage, OwnableMixin {
         if (!isElectionEvaluated()) {
             revert ElectionNotEvaluated();
         }
+
+        _resolveElection();
+    }
+
+    function _resolveElection() internal virtual {
+        ElectionStore storage store = _electionStore();
+        MemberToken memberToken = MemberToken(store.memberTokenAddress);
+        address[] memory nextEpochMembers = _currentElectionData().nextEpochMembers;
+        uint currentMembersSize = store.members.length;
+        uint nextEpochMembersSize = nextEpochMembers.length;
 
         for (uint i = 0; i < currentMembersSize; i++) {
             memberToken.burn(i);
