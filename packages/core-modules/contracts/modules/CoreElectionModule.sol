@@ -149,6 +149,12 @@ contract CoreElectionModule is IElectionModule, ElectionStorage, OwnableMixin {
 
         if (electionData.addressVoted[msg.sender]) {
             uint voteDataIndex = electionData.votesIndexes[msg.sender];
+            VoteData memory previousVoteData = electionData.votes[voteDataIndex];
+
+            for (uint i = 0; i < previousVoteData.candidates.length; i++) {
+                electionData.nomineeVotes[previousVoteData.candidates[i]] -= previousVoteData.votePower;
+            }
+
             electionData.votes[voteDataIndex] = VoteData({candidates: new address[](0), votePower: 0});
         }
 
