@@ -15,7 +15,7 @@ contract ElectionStorageMock is ElectionStorage {
     ) external {
         ElectionStore storage store = _electionStore();
 
-        store.epochStart = block.timestamp; // solhint-disable-line not-rely-on-time
+        store.epochStart = block.timestamp;
         store.seatCount = seatCount;
         store.epochDuration = duration;
         store.nominationPeriodPercent = nominationPercent;
@@ -38,7 +38,6 @@ contract ElectionStorageMock is ElectionStorage {
     }
 
     function initNextEpochMock() external {
-        // solhint-disable-next-line not-rely-on-time
         _electionStore().epochStart = block.timestamp;
         _electionStore().seatCount = _electionStore().nextSeatCount;
         _electionStore().epochDuration = _electionStore().nextEpochDuration;
