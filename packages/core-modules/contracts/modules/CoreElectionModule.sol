@@ -322,7 +322,6 @@ contract CoreElectionModule is IElectionModule, ElectionStorage, OwnableMixin {
         ElectionStore storage store = _electionStore();
         MemberToken memberToken = MemberToken(store.memberTokenAddress);
         address[] memory nextEpochMembers = _currentElectionData().nextEpochMembers;
-        uint currentIndex;
         uint currentMembersSize = store.members.length;
         uint nextEpochMembersSize = nextEpochMembers.length;
 
@@ -334,18 +333,12 @@ contract CoreElectionModule is IElectionModule, ElectionStorage, OwnableMixin {
             revert ElectionNotEvaluated();
         }
 
-        while (currentIndex < currentMembersSize) {
-            if (currentIndex < nextEpochMembersSize) {
-                memberToken.transferFrom(store.members[currentIndex], nextEpochMembers[currentIndex], currentIndex);
-            } else {
-                memberToken.burn(currentIndex);
-            }
-            currentIndex++;
+        for (uint i = 0; i < currentMembersSize; i++) {
+            memberToken.burn(i);
         }
 
-        while (currentIndex < nextEpochMembersSize) {
-            memberToken.mint(nextEpochMembers[currentIndex], currentIndex);
-            currentIndex++;
+        for (uint i = 0; i < nextEpochMembersSize; i++) {
+            memberToken.mint(nextEpochMembers[i], i);
         }
 
         store.members = nextEpochMembers;
@@ -405,8 +398,8 @@ contract CoreElectionModule is IElectionModule, ElectionStorage, OwnableMixin {
         store.nominationPeriodPercent = 0;
 
         // Set current owner as only council member
-        store.members.push(msg.sender);
         memberToken.mint(msg.sender, 0);
+        store.members.push(msg.sender);
     }
 
     function setMaxProcessingBatchSize(uint256 maxBatchSize) external override onlyOwner {

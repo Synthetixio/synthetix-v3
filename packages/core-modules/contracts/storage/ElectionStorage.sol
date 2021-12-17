@@ -78,9 +78,6 @@ contract ElectionStorage {
          */
         address[] members;
         /**
-         * @dev Number of members in the next epoch.
-         */
-        /**
          * @dev Number of members in the current epoch.
          */
         uint seatCount;

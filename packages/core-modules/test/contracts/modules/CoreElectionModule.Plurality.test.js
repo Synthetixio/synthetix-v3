@@ -385,10 +385,236 @@ describe('CoreElectionModule Count Votes using Simple Plurality strategy', () =>
       });
     });
 
-    describe('when resolving an election for a smaller council', () => {});
+    describe('when resolving an election for a smaller council', () => {
+      let candidates, voters, members, MemberToken;
 
-    describe('when resolving an election for a larger council', () => {});
+      before('identify candidates and voters', async () => {
+        candidates = (await ethers.getSigners())
+          .slice(2, 12)
+          .sort((a, b) => Number(a.address) - Number(b.address));
+        voters = (await ethers.getSigners()).slice(2, 12);
+      });
 
-    describe('when changing the next epoch parameters ', () => {});
+      before('set initial epoch', async () => {
+        await (await CoreElectionModule.connect(owner).setNextEpochDuration(week)).wait();
+        await (await CoreElectionModule.connect(owner).setNextPeriodPercent(15)).wait();
+        await (await CoreElectionModule.connect(owner).setNextSeatCount(5)).wait();
+        await (await ElectionStorageMock.initNextEpochMock()).wait();
+      });
+
+      before('nominate and setup voters', async () => {
+        await Promise.all(
+          candidates.map((candidate) => CoreElectionModule.connect(candidate).nominate())
+        );
+
+        for (let i = 0; i < voters.length; i++) {
+          await ElectionToken.connect(voters[i]).mint(100 + i * 10);
+        }
+      });
+
+      after('cleanup voters', async () => {
+        for (const voter of voters) {
+          await ElectionToken.connect(voter).burn(await ElectionToken.balanceOf(voter.address));
+        }
+      });
+
+      before('set initial epoch', async () => {
+        await (await CoreElectionModule.connect(owner).setNextSeatCount(3)).wait();
+      });
+
+      before('get the member token', async () => {
+        const memberTokenAddress = await CoreElectionModule.getMemberTokenAddress();
+        MemberToken = await ethers.getContractAt('MemberToken', memberTokenAddress);
+      });
+
+      before('execute initial election', async () => {
+        await (await CoreElectionModule.connect(owner).setMaxProcessingBatchSize(20)).wait();
+
+        await fastForward(3 * day, ethers.provider);
+
+        for (let i = 1; i < voters.length; i++) {
+          let candidateIdx = i % candidates.length;
+          await CoreElectionModule.connect(voters[i]).elect(
+            [candidates[candidateIdx].address],
+            [0]
+          );
+        }
+
+        await fastForward(week, ethers.provider);
+
+        let finished = await CoreElectionModule.isElectionEvaluated();
+        while (!finished) {
+          await (await CoreElectionModule.evaluateElectionBatch()).wait();
+          finished = await CoreElectionModule.isElectionEvaluated();
+        }
+
+        await (await CoreElectionModule.resolveElection()).wait();
+      });
+
+      it('resolved the first election', async () => {
+        members = await CoreElectionModule.getMembers();
+        equal(members.length, 5);
+      });
+
+      it('next epoch data moved to current', async () => {
+        assertBignumber.eq(await CoreElectionModule.getSeatCount(), 3);
+      });
+
+      describe('when running the second election', () => {
+        before('execute the second election', async () => {
+          await Promise.all(
+            candidates.map((candidate) => CoreElectionModule.connect(candidate).nominate())
+          );
+
+          await fastForward(3 * day, ethers.provider);
+
+          for (let i = 1; i < voters.length; i++) {
+            let candidateIdx = i % candidates.length;
+            await CoreElectionModule.connect(voters[i]).elect(
+              [candidates[candidateIdx].address],
+              [0]
+            );
+          }
+
+          await fastForward(week, ethers.provider);
+
+          let finished = await CoreElectionModule.isElectionEvaluated();
+          while (!finished) {
+            await (await CoreElectionModule.evaluateElectionBatch()).wait();
+            finished = await CoreElectionModule.isElectionEvaluated();
+          }
+
+          await (await CoreElectionModule.resolveElection()).wait();
+        });
+
+        it('the members own the NFTs', async () => {
+          equal(await MemberToken.ownerOf(0), candidates[7].address);
+          equal(await MemberToken.ownerOf(1), candidates[8].address);
+          equal(await MemberToken.ownerOf(2), candidates[9].address);
+        });
+
+        it('resolved the 2nd election', async () => {
+          members = await CoreElectionModule.getMembers();
+          equal(members.length, 3);
+        });
+      });
+    });
+
+    describe('when resolving an election for a larger council', () => {
+      let candidates, voters, members, MemberToken;
+
+      before('identify candidates and voters', async () => {
+        candidates = (await ethers.getSigners())
+          .slice(2, 12)
+          .sort((a, b) => Number(a.address) - Number(b.address));
+        voters = (await ethers.getSigners()).slice(2, 12);
+      });
+
+      before('set initial epoch', async () => {
+        await (await CoreElectionModule.connect(owner).setNextEpochDuration(week)).wait();
+        await (await CoreElectionModule.connect(owner).setNextPeriodPercent(15)).wait();
+        await (await CoreElectionModule.connect(owner).setNextSeatCount(3)).wait();
+        await (await ElectionStorageMock.initNextEpochMock()).wait();
+      });
+
+      before('nominate and setup voters', async () => {
+        await Promise.all(
+          candidates.map((candidate) => CoreElectionModule.connect(candidate).nominate())
+        );
+
+        for (let i = 0; i < voters.length; i++) {
+          await ElectionToken.connect(voters[i]).mint(100 + i * 10);
+        }
+      });
+
+      after('cleanup voters', async () => {
+        for (const voter of voters) {
+          await ElectionToken.connect(voter).burn(await ElectionToken.balanceOf(voter.address));
+        }
+      });
+
+      before('set initial epoch', async () => {
+        await (await CoreElectionModule.connect(owner).setNextSeatCount(5)).wait();
+      });
+
+      before('get the member token', async () => {
+        const memberTokenAddress = await CoreElectionModule.getMemberTokenAddress();
+        MemberToken = await ethers.getContractAt('MemberToken', memberTokenAddress);
+      });
+
+      before('execute initial election', async () => {
+        await (await CoreElectionModule.connect(owner).setMaxProcessingBatchSize(20)).wait();
+
+        await fastForward(3 * day, ethers.provider);
+
+        for (let i = 1; i < voters.length; i++) {
+          let candidateIdx = i % candidates.length;
+          await CoreElectionModule.connect(voters[i]).elect(
+            [candidates[candidateIdx].address],
+            [0]
+          );
+        }
+
+        await fastForward(week, ethers.provider);
+
+        let finished = await CoreElectionModule.isElectionEvaluated();
+        while (!finished) {
+          await (await CoreElectionModule.evaluateElectionBatch()).wait();
+          finished = await CoreElectionModule.isElectionEvaluated();
+        }
+
+        await (await CoreElectionModule.resolveElection()).wait();
+      });
+
+      it('resolved the first election', async () => {
+        members = await CoreElectionModule.getMembers();
+        equal(members.length, 3);
+      });
+
+      it('next epoch data moved to current', async () => {
+        assertBignumber.eq(await CoreElectionModule.getSeatCount(), 5);
+      });
+
+      describe('when running the second election', () => {
+        before('execute the second election', async () => {
+          await Promise.all(
+            candidates.map((candidate) => CoreElectionModule.connect(candidate).nominate())
+          );
+
+          await fastForward(3 * day, ethers.provider);
+
+          for (let i = 1; i < voters.length; i++) {
+            let candidateIdx = i % candidates.length;
+            await CoreElectionModule.connect(voters[i]).elect(
+              [candidates[candidateIdx].address],
+              [0]
+            );
+          }
+
+          await fastForward(week, ethers.provider);
+
+          let finished = await CoreElectionModule.isElectionEvaluated();
+          while (!finished) {
+            await (await CoreElectionModule.evaluateElectionBatch()).wait();
+            finished = await CoreElectionModule.isElectionEvaluated();
+          }
+
+          await (await CoreElectionModule.resolveElection()).wait();
+        });
+
+        it('the members own the NFTs', async () => {
+          equal(await MemberToken.ownerOf(0), candidates[6].address);
+          equal(await MemberToken.ownerOf(1), candidates[7].address);
+          equal(await MemberToken.ownerOf(2), candidates[8].address);
+          equal(await MemberToken.ownerOf(3), candidates[9].address);
+          equal(await MemberToken.ownerOf(4), candidates[5].address);
+        });
+
+        it('resolved the 2nd election', async () => {
+          members = await CoreElectionModule.getMembers();
+          equal(members.length, 5);
+        });
+      });
+    });
   });
 });
