@@ -143,31 +143,26 @@ contract CoreElectionModule is IElectionModule, ElectionStorage, OwnableMixin {
             revert MissingCandidates();
         }
 
+        if (ArrayUtil.hasDuplicates(candidates)) {
+            revert DuplicateCandidates();
+        }
+
+        if (electionData.addressVoted[msg.sender]) {
+            uint voteDataIndex = electionData.votesIndexes[msg.sender];
+            electionData.votes[voteDataIndex] = VoteData({candidates: new address[](0), votePower: 0});
+        }
+
+        uint votePower = ERC20(store.electionTokenAddress).balanceOf(msg.sender);
+
         for (uint i = 0; i < numCandidates; i++) {
             address candidate = candidates[i];
 
             if (electionData.nomineePositions[candidate] == 0) {
                 revert NotNominated(candidate);
             }
+
+            electionData.nomineeVotes[candidate] += votePower;
         }
-
-        if (ArrayUtil.hasDuplicates(candidates)) {
-            revert DuplicateCandidates();
-        }
-
-        // Clear previous votes if user already voted
-        if (electionData.addressVoted[msg.sender]) {
-            uint voteDataIndex = electionData.votesIndexes[msg.sender];
-            VoteData memory previousVoteData = electionData.votes[voteDataIndex];
-
-            for (uint i = 0; i < previousVoteData.candidates.length; i++) {
-                electionData.nomineeVotes[previousVoteData.candidates[i]] -= previousVoteData.votePower;
-            }
-
-            electionData.votes[voteDataIndex] = VoteData({candidates: new address[](0), votePower: 0});
-        }
-
-        uint votePower = ERC20(store.electionTokenAddress).balanceOf(msg.sender);
 
         VoteData memory voteData = VoteData({candidates: candidates, votePower: votePower});
 
