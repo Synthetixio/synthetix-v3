@@ -3,7 +3,7 @@ const assertRevert = require('@synthetixio/core-js/utils/assertions/assert-rever
 const { bootstrap } = require('@synthetixio/deployer/utils/tests');
 const initializer = require('../../helpers/initializer');
 const { fastForward } = require('@synthetixio/core-js/utils/hardhat/rpc');
-const assertBignumber = require('@synthetixio/core-js/utils/assertions/assert-bignumber');
+const assertBn = require('@synthetixio/core-js/utils/assertions/assert-bignumber');
 
 const { ethers } = hre;
 
@@ -81,8 +81,8 @@ describe('CoreElectionModule Count Votes using Simple Plurality strategy', () =>
 
       it('is voting phase', async () => {
         equal(await CoreElectionModule.isVoting(), true, 'wrong voting phase');
-        assertBignumber.eq(await CoreElectionModule.getPeriodPercent(), 15);
-        assertBignumber.eq(await CoreElectionModule.getSeatCount(), 3);
+        assertBn.eq(await CoreElectionModule.getPeriodPercent(), 15);
+        assertBn.eq(await CoreElectionModule.getSeatCount(), 3);
       });
 
       describe('when attempting to evaluate the election before time', () => {
@@ -169,9 +169,11 @@ describe('CoreElectionModule Count Votes using Simple Plurality strategy', () =>
             });
 
             it('the members own the NFTs', async () => {
-              equal(await MemberToken.ownerOf(0), candidates[0].address);
-              equal(await MemberToken.ownerOf(1), candidates[3].address);
-              equal(await MemberToken.ownerOf(2), candidates[4].address);
+              assertBn.eq(await MemberToken.balanceOf(candidates[0].address), 1);
+              assertBn.eq(await MemberToken.balanceOf(candidates[1].address), 0);
+              assertBn.eq(await MemberToken.balanceOf(candidates[2].address), 0);
+              assertBn.eq(await MemberToken.balanceOf(candidates[3].address), 1);
+              assertBn.eq(await MemberToken.balanceOf(candidates[4].address), 1);
             });
           });
         });
@@ -214,8 +216,8 @@ describe('CoreElectionModule Count Votes using Simple Plurality strategy', () =>
 
       it('is voting phase', async () => {
         equal(await CoreElectionModule.isVoting(), true, 'wrong voting phase');
-        assertBignumber.eq(await CoreElectionModule.getPeriodPercent(), 15);
-        assertBignumber.eq(await CoreElectionModule.getSeatCount(), 3);
+        assertBn.eq(await CoreElectionModule.getPeriodPercent(), 15);
+        assertBn.eq(await CoreElectionModule.getSeatCount(), 3);
       });
 
       describe('when casting votes', () => {
@@ -322,8 +324,8 @@ describe('CoreElectionModule Count Votes using Simple Plurality strategy', () =>
 
       it('is voting phase', async () => {
         equal(await CoreElectionModule.isVoting(), true, 'wrong voting phase');
-        assertBignumber.eq(await CoreElectionModule.getPeriodPercent(), 15);
-        assertBignumber.eq(await CoreElectionModule.getSeatCount(), 3);
+        assertBn.eq(await CoreElectionModule.getPeriodPercent(), 15);
+        assertBn.eq(await CoreElectionModule.getSeatCount(), 3);
       });
 
       describe('when casting votes', () => {
@@ -457,7 +459,7 @@ describe('CoreElectionModule Count Votes using Simple Plurality strategy', () =>
       });
 
       it('next epoch data moved to current', async () => {
-        assertBignumber.eq(await CoreElectionModule.getSeatCount(), 3);
+        assertBn.eq(await CoreElectionModule.getSeatCount(), 3);
       });
 
       describe('when running the second election', () => {
@@ -487,15 +489,22 @@ describe('CoreElectionModule Count Votes using Simple Plurality strategy', () =>
           await (await CoreElectionModule.resolveElection()).wait();
         });
 
-        it('the members own the NFTs', async () => {
-          equal(await MemberToken.ownerOf(0), candidates[7].address);
-          equal(await MemberToken.ownerOf(1), candidates[8].address);
-          equal(await MemberToken.ownerOf(2), candidates[9].address);
-        });
-
         it('resolved the 2nd election', async () => {
           members = await CoreElectionModule.getMembers();
           equal(members.length, 3);
+        });
+
+        it('the members own the NFTs', async () => {
+          assertBn.eq(await MemberToken.balanceOf(candidates[0].address), 0);
+          assertBn.eq(await MemberToken.balanceOf(candidates[1].address), 0);
+          assertBn.eq(await MemberToken.balanceOf(candidates[2].address), 0);
+          assertBn.eq(await MemberToken.balanceOf(candidates[3].address), 0);
+          assertBn.eq(await MemberToken.balanceOf(candidates[4].address), 0);
+          assertBn.eq(await MemberToken.balanceOf(candidates[5].address), 0);
+          assertBn.eq(await MemberToken.balanceOf(candidates[6].address), 0);
+          assertBn.eq(await MemberToken.balanceOf(candidates[7].address), 1);
+          assertBn.eq(await MemberToken.balanceOf(candidates[8].address), 1);
+          assertBn.eq(await MemberToken.balanceOf(candidates[9].address), 1);
         });
       });
     });
@@ -572,7 +581,7 @@ describe('CoreElectionModule Count Votes using Simple Plurality strategy', () =>
       });
 
       it('next epoch data moved to current', async () => {
-        assertBignumber.eq(await CoreElectionModule.getSeatCount(), 5);
+        assertBn.eq(await CoreElectionModule.getSeatCount(), 5);
       });
 
       describe('when running the second election', () => {
@@ -602,17 +611,22 @@ describe('CoreElectionModule Count Votes using Simple Plurality strategy', () =>
           await (await CoreElectionModule.resolveElection()).wait();
         });
 
-        it('the members own the NFTs', async () => {
-          equal(await MemberToken.ownerOf(0), candidates[6].address);
-          equal(await MemberToken.ownerOf(1), candidates[7].address);
-          equal(await MemberToken.ownerOf(2), candidates[8].address);
-          equal(await MemberToken.ownerOf(3), candidates[9].address);
-          equal(await MemberToken.ownerOf(4), candidates[5].address);
-        });
-
         it('resolved the 2nd election', async () => {
           members = await CoreElectionModule.getMembers();
           equal(members.length, 5);
+        });
+
+        it('the members own the NFTs', async () => {
+          assertBn.eq(await MemberToken.balanceOf(candidates[0].address), 0);
+          assertBn.eq(await MemberToken.balanceOf(candidates[1].address), 0);
+          assertBn.eq(await MemberToken.balanceOf(candidates[2].address), 0);
+          assertBn.eq(await MemberToken.balanceOf(candidates[3].address), 0);
+          assertBn.eq(await MemberToken.balanceOf(candidates[4].address), 0);
+          assertBn.eq(await MemberToken.balanceOf(candidates[5].address), 1);
+          assertBn.eq(await MemberToken.balanceOf(candidates[6].address), 1);
+          assertBn.eq(await MemberToken.balanceOf(candidates[7].address), 1);
+          assertBn.eq(await MemberToken.balanceOf(candidates[8].address), 1);
+          assertBn.eq(await MemberToken.balanceOf(candidates[9].address), 1);
         });
       });
     });
