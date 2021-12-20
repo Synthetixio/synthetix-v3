@@ -29,4 +29,24 @@ library ArrayUtil {
 
         delete positions[value];
     }
+
+    function hasDuplicates(address[] memory array) internal pure returns (bool) {
+        uint length = array.length;
+
+        for (uint i = 0; i < length; i++) {
+            address value = array[i];
+
+            if (i < length - 1) {
+                for (uint256 j = i + 1; j < length; j++) {
+                    address otherValue = array[j];
+
+                    if (value == otherValue) {
+                        return true;
+                    }
+                }
+            }
+        }
+
+        return false;
+    }
 }

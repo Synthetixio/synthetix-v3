@@ -14,13 +14,10 @@ contract CoreElectionModule is IElectionModule, ElectionStorage, OwnableMixin {
     error AlreadyNominated(address addr);
     error NotNominated(address addr);
 
-    error InvalidCandidate(address addr);
     error CandidateLengthMismatch();
     error TooManyCandidates();
     error MissingCandidates();
-    error DuplicateCandidatePriority();
-    error InvalidCandidatePriority(uint priority);
-    error DuplicateCandidate(address addr);
+    error DuplicateCandidates();
     error InvalidPeriodPercent();
     error InvalidBatchSize();
 
@@ -132,24 +129,22 @@ contract CoreElectionModule is IElectionModule, ElectionStorage, OwnableMixin {
         return _electionStore().nextNominationPeriodPercent;
     }
 
-    /// @notice Elect nominees for the next election.
-    /// @dev The interface requests the info in two arrays in order to guarantee no duplicates with lower computational cost.
-    /// @param numericallySortedCandidates array of nominees addresses sorted numerically starting from lower values
-    /// @param priorities array of priorities order for the selected candidates, 0 indexed e.g.: [2, 0, 1]
-    function elect(address[] memory numericallySortedCandidates, uint[] memory priorities) external override {
+    function elect(address[] memory candidates) external override {
         ElectionStore storage store = _electionStore();
         ElectionData storage electionData = _currentElectionData();
 
-        if (numericallySortedCandidates.length > electionData.nominees.length) {
+        uint numCandidates = candidates.length;
+
+        if (numCandidates > electionData.nominees.length) {
             revert TooManyCandidates();
         }
 
-        if (numericallySortedCandidates.length == 0) {
+        if (numCandidates == 0) {
             revert MissingCandidates();
         }
 
-        if (numericallySortedCandidates.length != priorities.length) {
-            revert CandidateLengthMismatch();
+        if (ArrayUtil.hasDuplicates(candidates)) {
+            revert DuplicateCandidates();
         }
 
         if (electionData.addressVoted[msg.sender]) {
@@ -160,47 +155,22 @@ contract CoreElectionModule is IElectionModule, ElectionStorage, OwnableMixin {
                 electionData.nomineeVotes[previousVoteData.candidates[i]] -= previousVoteData.votePower;
             }
 
-            // Cleanup previous vote in store
             electionData.votes[voteDataIndex] = VoteData({candidates: new address[](0), votePower: 0});
         }
 
         uint votePower = ERC20(store.electionTokenAddress).balanceOf(msg.sender);
 
-        // The goal is to merge the two arrays from the interface, resulting in a single array
-        // with the candidates in priority order.
-        address[] memory prioritizedCandidates = new address[](numericallySortedCandidates.length);
+        for (uint i = 0; i < numCandidates; i++) {
+            address candidate = candidates[i];
 
-        for (uint i = 0; i < numericallySortedCandidates.length; i++) {
-            address candidate = numericallySortedCandidates[i];
-            uint priority = priorities[i];
-
-            if (priority > numericallySortedCandidates.length - 1) {
-                revert InvalidCandidatePriority(priority);
-            }
-
-            // Validate that the candidate is a nominee
             if (electionData.nomineePositions[candidate] == 0) {
-                revert InvalidCandidate(candidate);
+                revert NotNominated(candidate);
             }
 
-            // Validate priorities repetition
-            if (prioritizedCandidates[priority] != address(0)) {
-                revert DuplicateCandidatePriority();
-            }
-
-            // Validate candidates repetition
-            if (i > 0) {
-                address prev = numericallySortedCandidates[i - 1];
-                if (candidate <= prev) {
-                    revert DuplicateCandidate(candidate);
-                }
-            }
-
-            prioritizedCandidates[priority] = candidate;
             electionData.nomineeVotes[candidate] += votePower;
         }
 
-        VoteData memory voteData = VoteData({candidates: prioritizedCandidates, votePower: votePower});
+        VoteData memory voteData = VoteData({candidates: candidates, votePower: votePower});
 
         electionData.votes.push(voteData);
         electionData.votesIndexes[msg.sender] = electionData.votes.length - 1;
