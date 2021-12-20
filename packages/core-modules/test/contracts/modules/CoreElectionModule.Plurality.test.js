@@ -438,10 +438,7 @@ describe('CoreElectionModule: Evaluate and Resolve elections using Simple Plural
 
         for (let i = 1; i < voters.length; i++) {
           let candidateIdx = i % candidates.length;
-          await CoreElectionModule.connect(voters[i]).elect(
-            [candidates[candidateIdx].address],
-            [0]
-          );
+          await CoreElectionModule.connect(voters[i]).elect([candidates[candidateIdx].address]);
         }
 
         await fastForward(week, ethers.provider);
@@ -474,10 +471,7 @@ describe('CoreElectionModule: Evaluate and Resolve elections using Simple Plural
 
           for (let i = 1; i < voters.length; i++) {
             let candidateIdx = i % candidates.length;
-            await CoreElectionModule.connect(voters[i]).elect(
-              [candidates[candidateIdx].address],
-              [0]
-            );
+            await CoreElectionModule.connect(voters[i]).elect([candidates[candidateIdx].address]);
           }
 
           await fastForward(week, ethers.provider);
@@ -560,10 +554,7 @@ describe('CoreElectionModule: Evaluate and Resolve elections using Simple Plural
 
         for (let i = 1; i < voters.length; i++) {
           let candidateIdx = i % candidates.length;
-          await CoreElectionModule.connect(voters[i]).elect(
-            [candidates[candidateIdx].address],
-            [0]
-          );
+          await CoreElectionModule.connect(voters[i]).elect([candidates[candidateIdx].address]);
         }
 
         await fastForward(week, ethers.provider);
@@ -596,10 +587,7 @@ describe('CoreElectionModule: Evaluate and Resolve elections using Simple Plural
 
           for (let i = 1; i < voters.length; i++) {
             let candidateIdx = i % candidates.length;
-            await CoreElectionModule.connect(voters[i]).elect(
-              [candidates[candidateIdx].address],
-              [0]
-            );
+            await CoreElectionModule.connect(voters[i]).elect([candidates[candidateIdx].address]);
           }
 
           await fastForward(week, ethers.provider);
