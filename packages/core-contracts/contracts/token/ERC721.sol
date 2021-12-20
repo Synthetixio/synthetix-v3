@@ -11,6 +11,8 @@ import "./ERC721Storage.sol";
 import "../utils/AddressUtil.sol";
 import "../utils/StringUtil.sol";
 
+import "hardhat/console.sol";
+
 /*
     Reference implementations:
     * OpenZeppelin - https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC721/ERC721.sol
@@ -234,14 +236,8 @@ contract ERC721 is IERC721, IERC721Metadata, ERC721Storage {
         if (AddressUtil.isContract(to)) {
             try IERC721Receiver(to).onERC721Received(msg.sender, from, tokenId, data) returns (bytes4 retval) {
                 return retval == IERC721Receiver.onERC721Received.selector;
-            } catch (bytes memory reason) {
-                if (reason.length == 0) {
-                    revert InvalidTransferRecipient(to);
-                } else {
-                    assembly {
-                        revert(add(32, reason), mload(reason))
-                    }
-                }
+            } catch {
+                return false;
             }
         } else {
             return true;
