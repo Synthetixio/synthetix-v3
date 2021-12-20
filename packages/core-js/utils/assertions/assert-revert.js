@@ -12,12 +12,20 @@ module.exports = async function assertRevert(tx, expectedMessage) {
   } else if (expectedMessage) {
     const receivedMessage = error.toString();
 
-    // TODO The condition covering 'unrecognized' is added temporarily to hack another issue.
-    // Remove it when https://github.com/Synthetixio/synthetix-v3/issues/273 is resolved
-    if (
-      !receivedMessage.includes(expectedMessage) &&
-      !receivedMessage.includes('reverted with an unrecognized custom error')
-    ) {
+    if (!receivedMessage.includes(expectedMessage)) {
+      // ----------------------------------------------------------------------------
+      // TODO: Remove this check once the following issue is solved in hardhat:
+      // https://github.com/nomiclabs/hardhat/issues/1996
+      // Basically, the first time tests are run, the revert reason is not parsed,
+      // but the second time it is parsed just fine;
+      if (receivedMessage.includes('reverted with an unrecognized custom error')) {
+        console.warn(
+          `WARNING: assert-revert was unable to parse revert reason. The reason will be ignored in this test: ${receivedMessage}`
+        );
+        return;
+      }
+      // ----------------------------------------------------------------------------
+
       throw new Error(
         `Transaction was expected to revert with "${expectedMessage}", but reverted with "${receivedMessage}"`
       );
