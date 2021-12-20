@@ -35,9 +35,9 @@ contract ElectionStorage {
          */
         address[] nominees;
         /**
-         * @dev Position of an address on the nominees Array.
+         * @dev Position of an address on the nominees Array. Note that position 1 corresponds to index 0.
          */
-        mapping(address => uint256) nomineeIndexes;
+        mapping(address => uint256) nomineePositions;
         /**
          * @dev Flag to indicate if the election was evaluated (if batched, latest batch was processed).
          */

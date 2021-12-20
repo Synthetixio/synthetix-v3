@@ -95,14 +95,16 @@ describe('CoreElectionModule: Evaluate and Resolve elections using Simple Plural
         before('cast votes', async () => {
           for (let i = 1; i < voters.length; i++) {
             let candidateIdx = i % candidates.length;
+
             if (candidateIdx == 0) {
-              await CoreElectionModule.connect(voters[i]).elect([candidates[0].address], [0]);
+              await CoreElectionModule.connect(voters[i]).elect([candidates[0].address]);
               continue;
             }
-            await CoreElectionModule.connect(voters[i]).elect(
-              [candidates[0].address, candidates[candidateIdx].address],
-              [0, 1]
-            );
+
+            await CoreElectionModule.connect(voters[i]).elect([
+              candidates[0].address,
+              candidates[candidateIdx].address,
+            ]);
           }
         });
 
@@ -120,6 +122,7 @@ describe('CoreElectionModule: Evaluate and Resolve elections using Simple Plural
 
         describe('when evaluating the election', () => {
           let nextEpochMembers, nextEpochMemberVotes;
+
           before('evaluate the election', async () => {
             await (await CoreElectionModule.evaluateElectionBatch()).wait();
             nextEpochMembers = await ElectionStorageMock.getNextEpochMembers();
@@ -224,14 +227,16 @@ describe('CoreElectionModule: Evaluate and Resolve elections using Simple Plural
         before('cast votes', async () => {
           for (let i = 1; i < voters.length; i++) {
             let candidateIdx = i % candidates.length;
+
             if (candidateIdx == 0) {
-              await CoreElectionModule.connect(voters[i]).elect([candidates[0].address], [0]);
+              await CoreElectionModule.connect(voters[i]).elect([candidates[0].address]);
               continue;
             }
-            await CoreElectionModule.connect(voters[i]).elect(
-              [candidates[0].address, candidates[candidateIdx].address],
-              [0, 1]
-            );
+
+            await CoreElectionModule.connect(voters[i]).elect([
+              candidates[0].address,
+              candidates[candidateIdx].address,
+            ]);
           }
         });
 
@@ -332,20 +337,17 @@ describe('CoreElectionModule: Evaluate and Resolve elections using Simple Plural
         before('cast votes', async () => {
           for (let i = 1; i < voters.length; i++) {
             let candidateIdx = i % candidates.length;
-            await CoreElectionModule.connect(voters[i]).elect(
-              [candidates[candidateIdx].address],
-              [0]
-            );
+            await CoreElectionModule.connect(voters[i]).elect([candidates[candidateIdx].address]);
           }
         });
 
         before('voter 0 re-casts the vote', async () => {
           // Before that the winners should be 0, 3 and 4. When voter[0] changes the vote,
           // it changes who wins, and now should be 2, 3 and 4
-          await CoreElectionModule.connect(voters[0]).elect(
-            [candidates[2].address, candidates[3].address],
-            [0, 1]
-          );
+          await CoreElectionModule.connect(voters[0]).elect([
+            candidates[2].address,
+            candidates[3].address,
+          ]);
         });
 
         before('fastForward to close voting phase', async () => {

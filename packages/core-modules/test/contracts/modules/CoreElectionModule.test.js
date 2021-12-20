@@ -292,6 +292,7 @@ describe('CoreElectionModule: Setup, Getters, Setters, Reverts and Voting', () =
       );
     });
 
+<<<<<<< HEAD
     it('reverts when trying to elect no candidates', async () => {
       await assertRevert(CoreElectionModule.connect(user).elect([], []), 'MissingCandidates');
     });
@@ -407,108 +408,220 @@ describe('CoreElectionModule: Setup, Getters, Setters, Reverts and Voting', () =
           await fastForward(timeLapse, ethers.provider);
         }
       });
+=======
+    describe('when voting on candidates', function () {
+      describe('incorrectly', function () {
+        it('reverts when trying to elect no candidates', async () => {
+          await assertRevert(CoreElectionModule.connect(user).elect([]), 'MissingCandidates');
+        });
+>>>>>>> feature-ElectionModule
 
-      it('show the right state', async () => {
-        equal(await CoreElectionModule.isEpochFinished(), epochState, 'wrong epoch state');
-        equal(
-          await CoreElectionModule.isNominating(),
-          nominatingState,
-          'wrong nominating period state'
-        );
-        equal(await CoreElectionModule.isVoting(), votingState, 'wrong voting period state');
-      });
-    };
+        it('reverts when trying to elect more candidates than nominees', async () => {
+          await assertRevert(
+            CoreElectionModule.connect(user).elect([
+              user.address,
+              owner.address,
+              candidates[0].address,
+              candidates[1].address,
+              candidates[2].address,
+              candidates[3].address,
+              candidates[4].address,
+            ]),
+            'TooManyCandidates'
+          );
+        });
 
-    describe('before starting an epoch', () => {
-      before('reset epoch', async () => {
-        await (await ElectionStorageMock.resetCurrentEpochMock()).wait();
-      });
+        it('reverts when trying to elect a not nominated candidate', async () => {
+          await assertRevert(
+            CoreElectionModule.connect(user).elect([user.address]),
+            `NotNominated("${user.address}")`
+          );
+        });
 
-      checkTimeState({
-        timeLapse: 0,
-        epochState: false,
-        nominatingState: false,
-        votingState: false,
-      });
-    });
-
-    describe('when the epoch started', () => {
-      before('set current epoch parameters', async () => {
-        await (await ElectionStorageMock.setCurrentEpochMock(1, week, 15)).wait();
-      });
-
-      checkTimeState({
-        timeLapse: minute * 2,
-        epochState: false,
-        nominatingState: true,
-        votingState: false,
-      });
-
-      describe('when the nomination period finished', () => {
-        checkTimeState({
-          timeLapse: day * 2,
-          epochState: false,
-          nominatingState: false,
-          votingState: true,
+        it('reverts when trying to elect repeated addresses', async () => {
+          await assertRevert(
+            CoreElectionModule.elect([candidates[0].address, candidates[0].address]),
+            'DuplicateCandidates'
+          );
         });
       });
 
-      describe('when the epoch finished', () => {
-        checkTimeState({
-          timeLapse: week,
-          epochState: true,
-          nominatingState: false,
-          votingState: false,
+      describe('correctly', function () {
+        before('vote on candidates', async function () {
+          await CoreElectionModule.connect(voters[1]).elect([candidates[0].address]);
+          await CoreElectionModule.connect(voters[2]).elect([candidates[1].address]);
+          await CoreElectionModule.connect(voters[3]).elect([candidates[2].address]);
+          await CoreElectionModule.connect(voters[4]).elect([
+            candidates[2].address,
+            candidates[0].address,
+          ]);
+        });
+
+        it('correctly saves vote data', async () => {
+          deepEqual(await ElectionStorageMock.getVoterVoteCandidatesMock(voters[1].address), [
+            candidates[0].address,
+          ]);
+          deepEqual(await ElectionStorageMock.getVoterVoteCandidatesMock(voters[2].address), [
+            candidates[1].address,
+          ]);
+          deepEqual(await ElectionStorageMock.getVoterVoteCandidatesMock(voters[3].address), [
+            candidates[2].address,
+          ]);
+          deepEqual(await ElectionStorageMock.getVoterVoteCandidatesMock(voters[4].address), [
+            candidates[2].address,
+            candidates[0].address,
+          ]);
+
+          assertBn.eq(await ElectionStorageMock.getVoterVoteVotePowerMock(voters[1].address), 100);
+          assertBn.eq(await ElectionStorageMock.getVoterVoteVotePowerMock(voters[2].address), 100);
+          assertBn.eq(await ElectionStorageMock.getVoterVoteVotePowerMock(voters[3].address), 100);
+          assertBn.eq(await ElectionStorageMock.getVoterVoteVotePowerMock(voters[4].address), 100);
+        });
+
+        describe('when re-casting votes', () => {
+          before('vote again', async () => {
+            await CoreElectionModule.connect(voters[1]).elect([
+              candidates[0].address,
+              candidates[2].address,
+            ]);
+          });
+
+          it('correctly saves vote data', async () => {
+            deepEqual(await ElectionStorageMock.getVoterVoteCandidatesMock(voters[1].address), [
+              candidates[0].address,
+              candidates[2].address,
+            ]);
+
+            assertBn.eq(
+              await ElectionStorageMock.getVoterVoteVotePowerMock(voters[1].address),
+              100
+            );
+          });
         });
       });
 
-      describe('when attempting to set the first epoch again', () => {
-        it('reverts', async () => {
-          await assertRevert(CoreElectionModule.setupFirstEpoch(), 'FirstEpochAlreadySet');
-        });
-      });
-    });
-  });
+      describe('when moving in time (epoch state changes)', () => {
+        const minute = 60 * 1000;
+        const day = 24 * 60 * minute;
+        const week = 7 * day;
 
+        const checkTimeState = async ({ timeLapse, epochState, nominatingState, votingState }) => {
+          before(`fastForward a ${timeLapse / 1000} seconds`, async () => {
+            if (timeLapse > 0) {
+              await fastForward(timeLapse, ethers.provider);
+            }
+          });
+
+          it('show the right state', async () => {
+            equal(await CoreElectionModule.isEpochFinished(), epochState, 'wrong epoch state');
+            equal(
+              await CoreElectionModule.isNominating(),
+              nominatingState,
+              'wrong nominating period state'
+            );
+            equal(await CoreElectionModule.isVoting(), votingState, 'wrong voting period state');
+          });
+        };
+
+        describe('before starting an epoch', () => {
+          before('reset epoch', async () => {
+            await (await ElectionStorageMock.resetCurrentEpochMock()).wait();
+          });
+
+          checkTimeState({
+            timeLapse: 0,
+            epochState: false,
+            nominatingState: false,
+            votingState: false,
+          });
+        });
+
+<<<<<<< HEAD
   describe('when setting up and attempting to evaluate an election', () => {
     describe('when attempting to evaluate without setting up a batch size', () => {
       it('shows the batch size', async () => {
         assertBn.eq(await CoreElectionModule.getMaxProcessingBatchSize(), 0);
+=======
+        describe('when the epoch started', () => {
+          before('set current epoch parameters', async () => {
+            await (await ElectionStorageMock.setCurrentEpochMock(1, week, 15)).wait();
+          });
+
+          checkTimeState({
+            timeLapse: minute * 2,
+            epochState: false,
+            nominatingState: true,
+            votingState: false,
+          });
+
+          describe('when the nomination period finished', () => {
+            checkTimeState({
+              timeLapse: day * 2,
+              epochState: false,
+              nominatingState: false,
+              votingState: true,
+            });
+          });
+
+          describe('when the epoch finished', () => {
+            checkTimeState({
+              timeLapse: week,
+              epochState: true,
+              nominatingState: false,
+              votingState: false,
+            });
+          });
+
+          describe('when attempting to set the first epoch again', () => {
+            it('reverts', async () => {
+              await assertRevert(CoreElectionModule.setupFirstEpoch(), 'FirstEpochAlreadySet');
+            });
+          });
+        });
+>>>>>>> feature-ElectionModule
       });
 
-      it('reverts', async () => {
-        await assertRevert(
-          CoreElectionModule.connect(user).evaluateElectionBatch(),
-          'BatchSizeNotSet'
-        );
-      });
-    });
+      describe('when setting up and evaluating an election', () => {
+        describe('when attempting to evaluate without setting up a batch size', () => {
+          it('shows the batch size', async () => {
+            assertBn.eq(await CoreElectionModule.getMaxProcessingBatchSize(), 0);
+          });
 
-    describe('when attempting to set the batch size by a not owner', () => {
-      it('reverts', async () => {
-        await assertRevert(
-          CoreElectionModule.connect(user).setMaxProcessingBatchSize(2),
-          'Unauthorized'
-        );
-      });
-    });
+          it('reverts', async () => {
+            await assertRevert(
+              CoreElectionModule.connect(user).evaluateElectionBatch(),
+              'BatchSizeNotSet'
+            );
+          });
+        });
 
-    describe('when a wrong batch size is setted', () => {
-      it('reverts', async () => {
-        await assertRevert(
-          CoreElectionModule.connect(owner).setMaxProcessingBatchSize(0),
-          'InvalidBatchSize'
-        );
-      });
-    });
+        describe('when attempting to set the batch size by a not owner', () => {
+          it('reverts', async () => {
+            await assertRevert(
+              CoreElectionModule.connect(user).setMaxProcessingBatchSize(2),
+              'Unauthorized'
+            );
+          });
+        });
 
-    describe('when a batch size is setted', () => {
-      before('set batch size', async () => {
-        await (await CoreElectionModule.connect(owner).setMaxProcessingBatchSize(2)).wait();
-      });
+        describe('when a wrong batch size is setted', () => {
+          it('reverts', async () => {
+            await assertRevert(
+              CoreElectionModule.connect(owner).setMaxProcessingBatchSize(0),
+              'InvalidBatchSize'
+            );
+          });
+        });
 
-      it('shows the batch size', async () => {
-        assertBn.eq(await CoreElectionModule.getMaxProcessingBatchSize(), 2);
+        describe('when a batch size is setted', () => {
+          before('set batch size', async () => {
+            await (await CoreElectionModule.connect(owner).setMaxProcessingBatchSize(2)).wait();
+          });
+
+          it('shows the batch size', async () => {
+            assertBn.eq(await CoreElectionModule.getMaxProcessingBatchSize(), 2);
+          });
+        });
       });
     });
   });
