@@ -31,6 +31,11 @@ describe('utils/ast/finders.js find AST artifacts', function () {
       equal(dependencies.length, 0);
     });
 
+    it('doesnt find a contract for a missing ast', async () => {
+      const dependencies = await findContractDependencies('MissingModule', { MissingModule: {} });
+      equal(dependencies.length, 0);
+    });
+
     it('finds contract dependencies of a complex contract', async () => {
       const dependencies = await findContractDependencies('SettingsModule', asts);
       equal(dependencies.length, 5, 'SettingsModule should have 5 dependencies');
