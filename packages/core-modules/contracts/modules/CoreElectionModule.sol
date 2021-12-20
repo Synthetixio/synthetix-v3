@@ -4,6 +4,7 @@ pragma solidity ^0.8.0;
 import "@synthetixio/core-contracts/contracts/token/ERC20.sol";
 import "@synthetixio/core-contracts/contracts/ownership/OwnableMixin.sol";
 import "@synthetixio/core-contracts/contracts/proxy/UUPSProxy.sol";
+import "@synthetixio/core-contracts/contracts/utils/ArrayUtil.sol";
 import "../interfaces/IElectionModule.sol";
 import "../token/MemberToken.sol";
 import "../storage/ElectionStorage.sol";
@@ -77,44 +78,22 @@ contract CoreElectionModule is IElectionModule, ElectionStorage, OwnableMixin {
     function nominate() external override {
         ElectionData storage electionData = _currentElectionData();
 
-        if (electionData.nomineeIndexes[msg.sender] != 0) {
+        if (electionData.nomineePositions[msg.sender] != 0) {
             revert AlreadyNominated(msg.sender);
         }
 
         electionData.nominees.push(msg.sender);
-        electionData.nomineeIndexes[msg.sender] = electionData.nominees.length;
+        electionData.nomineePositions[msg.sender] = electionData.nominees.length;
         electionData.nomineeVotes[msg.sender] = 0;
     }
 
     function withdrawNomination() external override {
         ElectionData storage electionData = _currentElectionData();
-
-        uint256 valueIndex = electionData.nomineeIndexes[msg.sender];
-
-        if (valueIndex == 0) {
+        if (electionData.nomineePositions[msg.sender] == 0) {
             revert NotNominated(msg.sender);
         }
 
-        uint256 toDeleteIndex = valueIndex - 1;
-        uint256 lastIndex = electionData.nominees.length - 1;
-
-        // If the address is not the last one on the Array, we have to move it to
-        // swap it with the last element, and then pop it, so we don't leave any
-        // empty spaces.
-        if (lastIndex != toDeleteIndex) {
-            address lastvalue = electionData.nominees[lastIndex];
-
-            // Move the last value to the index where the value to delete is
-            electionData.nominees[toDeleteIndex] = lastvalue;
-            // Update the index for the moved value
-            electionData.nomineeIndexes[lastvalue] = valueIndex; // Replace lastvalue's index to valueIndex
-        }
-
-        // Delete the slot where the moved value was stored
-        electionData.nominees.pop();
-
-        // Delete the index for the deleted slot
-        delete electionData.nomineeIndexes[msg.sender];
+        ArrayUtil.removeValue(msg.sender, electionData.nominees, electionData.nomineePositions);
     }
 
     function setNextSeatCount(uint seats) external override onlyOwner {
@@ -200,7 +179,7 @@ contract CoreElectionModule is IElectionModule, ElectionStorage, OwnableMixin {
             }
 
             // Validate that the candidate is a nominee
-            if (electionData.nomineeIndexes[candidate] == 0) {
+            if (electionData.nomineePositions[candidate] == 0) {
                 revert InvalidCandidate(candidate);
             }
 
