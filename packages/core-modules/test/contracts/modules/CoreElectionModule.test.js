@@ -8,11 +8,15 @@ const { fastForward } = require('@synthetixio/core-js/utils/hardhat/rpc');
 
 const { ethers } = hre;
 
-describe('CoreElectionModule Setup, Getters, Setters and Voting', () => {
+describe('CoreElectionModule: Setup, Getters, Setters, Reverts and Voting', () => {
   const { proxyAddress } = bootstrap(initializer);
 
   let CoreElectionModule, ElectionStorageMock;
   let owner, user;
+
+  const minute = 60 * 1000;
+  const day = 24 * 60 * minute;
+  const week = 7 * day;
 
   before('identify signers', async () => {
     [owner, user] = await ethers.getSigners();
@@ -141,19 +145,48 @@ describe('CoreElectionModule Setup, Getters, Setters and Voting', () => {
       });
     });
 
-    it('reverts when a regular user tries to setupFirstEpoch', async () => {
-      await assertRevert(CoreElectionModule.connect(user).setupFirstEpoch(), 'Unauthorized');
+    describe('when a regular user attempts to call setupFirstEpoch', () => {
+      it('reverts', async () => {
+        await assertRevert(CoreElectionModule.connect(user).setupFirstEpoch(), 'Unauthorized');
+      });
     });
 
-    it('sets the first epoch parameters', async () => {
-      await (await CoreElectionModule.connect(owner).setupFirstEpoch()).wait();
+    describe('when the owner setups the first epoch', () => {
+      let MemberToken, members;
+
+      before('sets the first epoch parameters', async () => {
+        await (await CoreElectionModule.connect(owner).setupFirstEpoch()).wait();
+      });
+
+      before('get the member token', async () => {
+        const memberTokenAddress = await CoreElectionModule.getMemberTokenAddress();
+        MemberToken = await ethers.getContractAt('MemberToken', memberTokenAddress);
+      });
+
+      it('gets setted with the right parameters', async () => {
+        assertBn.eq(await CoreElectionModule.getSeatCount(), 1);
+        assertBn.eq(await CoreElectionModule.getPeriodPercent(), 0);
+        equal(await CoreElectionModule.isVoting(), true);
+        equal(await CoreElectionModule.isNominating(), false);
+      });
+
+      it('has a single member (the owner) council', async () => {
+        members = await CoreElectionModule.getMembers();
+        equal(members.length, 1);
+      });
+
+      it('the owner has an NFT', async () => {
+        equal(await MemberToken.ownerOf(0), owner.address);
+      });
     });
 
-    it('reverts if already initialized', async () => {
-      await assertRevert(
-        CoreElectionModule.connect(owner).setupFirstEpoch(),
-        'FirstEpochAlreadySet'
-      );
+    describe('when the owner attempts to call setupFirstEpoch again', () => {
+      it('reverts', async () => {
+        await assertRevert(
+          CoreElectionModule.connect(owner).setupFirstEpoch(),
+          'FirstEpochAlreadySet'
+        );
+      });
     });
   });
 
@@ -328,7 +361,8 @@ describe('CoreElectionModule Setup, Getters, Setters and Voting', () => {
         });
 
         describe('when re-casting votes', () => {
-          before('vote again', async () => {
+          before('vote and correct the vote', async () => {
+            await CoreElectionModule.connect(voters[1]).elect([candidates[1].address]);
             await CoreElectionModule.connect(voters[1]).elect([
               candidates[0].address,
               candidates[2].address,
@@ -464,6 +498,32 @@ describe('CoreElectionModule Setup, Getters, Setters and Voting', () => {
             assertBn.eq(await CoreElectionModule.getMaxProcessingBatchSize(), 2);
           });
         });
+      });
+    });
+  });
+
+  describe('when attempting to resolve an election at a wrong time', () => {
+    before('reset epoch', async () => {
+      await (await ElectionStorageMock.resetCurrentEpochMock()).wait();
+    });
+
+    describe('when the epoch is not finished', () => {
+      it('reverts', async () => {
+        await assertRevert(CoreElectionModule.connect(user).resolveElection(), 'EpochNotFinished');
+      });
+    });
+
+    describe('when the election was not evaluated', () => {
+      before('set current epoch parameters', async () => {
+        await (await ElectionStorageMock.setCurrentEpochMock(1, week, 15)).wait();
+        await fastForward(week, ethers.provider);
+      });
+
+      it('reverts', async () => {
+        await assertRevert(
+          CoreElectionModule.connect(user).resolveElection(),
+          'ElectionNotEvaluated'
+        );
       });
     });
   });

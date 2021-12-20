@@ -74,6 +74,10 @@ contract ElectionStorage {
          */
         uint latestElectionDataIndex;
         /**
+         * @dev Member's addresses in the current epoch.
+         */
+        address[] members;
+        /**
          * @dev Number of members in the current epoch.
          */
         uint seatCount;
