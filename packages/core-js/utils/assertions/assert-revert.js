@@ -17,7 +17,7 @@ module.exports = async function assertRevert(tx, expectedMessage) {
       // TODO: Remove this check once the issue is solved in hardhat.
       // https://github.com/nomiclabs/hardhat/issues/1996
       if (receivedMessage.includes('reverted with an unrecognized custom error')) {
-        console.warn(`Unable to parse reverse reason.\n${receivedMessage}`);
+        console.warn(`assert-revert was unable to parse reverse reason, and will ignore the reason: ${receivedMessage}`);
         return;
       }
       // ----------------------------------------------------------------------------
