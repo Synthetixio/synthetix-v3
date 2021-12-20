@@ -19,7 +19,9 @@ module.exports = async function assertRevert(tx, expectedMessage) {
       // Basically, the first time tests are run, the revert reason is not parsed,
       // but the second time it is parsed just fine;
       if (receivedMessage.includes('reverted with an unrecognized custom error')) {
-        console.warn(`WARNING: assert-revert was unable to parse reverse reason, and will ignore the reason: ${receivedMessage}`);
+        console.warn(
+          `WARNING: assert-revert was unable to parse reverse reason, and will ignore the reason: ${receivedMessage}`
+        );
         return;
       }
       // ----------------------------------------------------------------------------
