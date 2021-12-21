@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "mocha",
+    "test": "./scripts/test.sh",
     "coverage": "nyc mocha",
     "test:watch": "mocha --watch"
   },
