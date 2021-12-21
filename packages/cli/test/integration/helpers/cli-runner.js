@@ -68,11 +68,7 @@ class CliRunner {
   printed(txt) {
     const includes = this.buffer.includes(txt);
     if (!includes) {
-      console.error(
-        `CLI output was expected to include "${chalk.red(
-          txt
-        )}", but it does not.`
-      );
+      console.error(`CLI output was expected to include "${chalk.red(txt)}", but it does not.`);
     }
 
     assert.ok(includes);

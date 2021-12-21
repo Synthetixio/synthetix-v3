@@ -3,7 +3,8 @@ const chalk = require('chalk');
 function getFullFunctionSignature(functionAbi, functionParameters) {
   const multiline = !!functionParameters && functionParameters.length > 0;
 
-  const isWriteCall = functionAbi.stateMutability !== 'view' && functionAbi.stateMutability !== 'pure';
+  const isWriteCall =
+    functionAbi.stateMutability !== 'view' && functionAbi.stateMutability !== 'pure';
 
   // Collect parameter list
   const parameterDescriptions = [];

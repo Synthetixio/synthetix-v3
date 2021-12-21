@@ -16,9 +16,7 @@ subtask(SUBTASK_PICK_FUNCTION, 'Pick a function from the given contract').setAct
       const selector = selectors.find((selector) => selector.name === functionAbi.name).selector;
 
       return {
-        title: `${fullSignature}${chalk.gray(
-          ` ${selector}`
-        )}`,
+        title: `${fullSignature}${chalk.gray(` ${selector}`)}`,
         value: functionAbi.name,
       };
     });

@@ -9,11 +9,11 @@ describe('pick-parameters', function () {
 
     await this.cli.start();
     await this.cli.interact(this.cli.keys.ENTER); // Selects SomeModule
-    await this.cli.interact('set');               // Highlights setUintValue
+    await this.cli.interact('set'); // Highlights setUintValue
     await this.cli.interact(this.cli.keys.ENTER); // Selects setUintValue
-    await this.cli.interact('ngmi');              // Invalid input for "newValue"
+    await this.cli.interact('ngmi'); // Invalid input for "newValue"
     await this.cli.interact(this.cli.keys.ENTER); // Submit input
-    await this.cli.interact('1337');              // Valid input for "newValue"
+    await this.cli.interact('1337'); // Valid input for "newValue"
     await this.cli.interact(this.cli.keys.ENTER); // Submit input
     await this.cli.interact(this.cli.keys.CTRLC); // Cancel transaction
     await this.cli.interact(this.cli.keys.CTRLC); // Return to contract list
