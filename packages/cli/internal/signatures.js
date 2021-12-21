@@ -1,6 +1,11 @@
+const chalk = require('chalk');
+
 function getFullFunctionSignature(functionAbi, functionParameters) {
   const multiline = !!functionParameters && functionParameters.length > 0;
 
+  const isWriteCall = functionAbi.stateMutability !== 'view' && functionAbi.stateMutability !== 'pure';
+
+  // Collect parameter list
   const parameterDescriptions = [];
   for (let i = 0; i < functionAbi.inputs.length; i++) {
     const input = functionAbi.inputs[i];
@@ -10,11 +15,30 @@ function getFullFunctionSignature(functionAbi, functionParameters) {
     parameterDescriptions.push(`${input.type} ${input.name}${valueDescription}`);
   }
 
+  // Collect return values
+  const outputDescriptions = [];
+  for (let i = 0; i < functionAbi.outputs.length; i++) {
+    const output = functionAbi.outputs[i];
+
+    outputDescriptions.push(`${output.type}${output.name ? ` ${output.name}` : ''}`);
+  }
+
+  // Function name
   let str = `${functionAbi.name}${multiline ? '(\n' : '('}`;
   str += `${multiline ? '  ' : ''}${parameterDescriptions.join(multiline ? ',\n  ' : ', ')}`;
   str += `${multiline ? '\n)' : ')'}`;
 
-  return str;
+  // Function decorators
+  if (!isWriteCall) {
+    str += ` ${functionAbi.stateMutability}`;
+  }
+
+  // Return values
+  if (outputDescriptions.length > 0) {
+    str += ` returns (${outputDescriptions.join(', ')})`;
+  }
+
+  return isWriteCall ? chalk.yellowBright.bold(str) : str;
 }
 
 function getFullEventSignature(eventAbi, event) {

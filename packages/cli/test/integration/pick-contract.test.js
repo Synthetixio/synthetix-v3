@@ -19,6 +19,5 @@ describe('pick-contract', function () {
     this.cli.printed('UpgradeModule');
     this.cli.printed('Proxy');
     this.cli.printed('Router');
-    // TODO: Verify these with variable addresses
   });
 });
