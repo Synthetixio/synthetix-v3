@@ -17,7 +17,7 @@ describe('CoreElectionModule: Evaluate and Resolve elections using Simple Plural
   const day = 24 * 60 * minute;
   const week = 7 * day;
 
-  before('identify signers, candidates and voters', async () => {
+  before('identify owner', async () => {
     [owner] = await ethers.getSigners();
   });
 

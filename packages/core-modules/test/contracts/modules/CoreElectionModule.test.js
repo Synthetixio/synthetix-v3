@@ -165,6 +165,7 @@ describe('CoreElectionModule: Setup, Getters, Setters, Reverts and Voting', () =
 
       it('gets setted with the right parameters', async () => {
         assertBn.eq(await CoreElectionModule.getSeatCount(), 1);
+        assertBn.eq(await CoreElectionModule.getEpochDuration(), (2 * day) / 1000);
         assertBn.eq(await CoreElectionModule.getPeriodPercent(), 0);
         equal(await CoreElectionModule.isVoting(), true);
         equal(await CoreElectionModule.isNominating(), false);
@@ -237,10 +238,10 @@ describe('CoreElectionModule: Setup, Getters, Setters, Reverts and Voting', () =
   describe('when the address self nominates', () => {
     it('can nominate several addresses', async () => {
       await (await CoreElectionModule.connect(owner).nominate()).wait();
-      deepEqual(await CoreElectionModule.getNominees(), [owner.address]);
+      deepEqual(await CoreElectionModule.getCandidates(), [owner.address]);
 
       await (await CoreElectionModule.connect(user).nominate()).wait();
-      deepEqual(await CoreElectionModule.getNominees(), [owner.address, user.address]);
+      deepEqual(await CoreElectionModule.getCandidates(), [owner.address, user.address]);
     });
 
     it('reverts when trying to nominate several times the same address', async () => {
@@ -249,10 +250,10 @@ describe('CoreElectionModule: Setup, Getters, Setters, Reverts and Voting', () =
 
     it('can withdraw their own nominations', async () => {
       await (await CoreElectionModule.connect(owner).withdrawNomination()).wait();
-      deepEqual(await CoreElectionModule.getNominees(), [user.address]);
+      deepEqual(await CoreElectionModule.getCandidates(), [user.address]);
 
       await (await CoreElectionModule.connect(user).withdrawNomination()).wait();
-      deepEqual(await CoreElectionModule.getNominees(), []);
+      deepEqual(await CoreElectionModule.getCandidates(), []);
     });
 
     it('reverts when withdrawing a not nominated address', async () => {
@@ -298,7 +299,7 @@ describe('CoreElectionModule: Setup, Getters, Setters, Reverts and Voting', () =
           await assertRevert(CoreElectionModule.connect(user).elect([]), 'MissingCandidates');
         });
 
-        it('reverts when trying to elect more candidates than nominees', async () => {
+        it('reverts when trying to elect more candidates than candidates available', async () => {
           await assertRevert(
             CoreElectionModule.connect(user).elect([
               user.address,
