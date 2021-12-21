@@ -18,11 +18,17 @@ interface IElectionModule {
 
     function getMembers() external view returns (address[] memory);
 
-    function getNominees() external view returns (address[] memory);
+    function getCandidates() external view returns (address[] memory);
+
+    function elect(address[] memory candidates) external;
 
     function isElectionEvaluated() external view returns (bool);
 
     function evaluateElectionBatch() external;
+
+    function setMaxProcessingBatchSize(uint size) external;
+
+    function getMaxProcessingBatchSize() external view returns (uint);
 
     function resolveElection() external;
 
@@ -32,27 +38,23 @@ interface IElectionModule {
 
     function isVoting() external view returns (bool);
 
-    function getSeatCount() external view returns (uint);
-
-    function getPeriodPercent() external view returns (uint);
-
     function setNextSeatCount(uint seats) external;
 
     function setNextEpochDuration(uint64 duration) external;
 
     function setNextPeriodPercent(uint8 percent) external;
 
-    function getNextSeatCount() external view returns (uint);
+    function getSeatCount() external view returns (uint);
 
-    function elect(address[] memory candidates) external;
+    function getEpochDuration() external view returns (uint);
+
+    function getPeriodPercent() external view returns (uint);
+
+    function getNextSeatCount() external view returns (uint);
 
     function getNextEpochDuration() external view returns (uint);
 
     function getNextPeriodPercent() external view returns (uint);
 
     function setupFirstEpoch() external;
-
-    function setMaxProcessingBatchSize(uint size) external;
-
-    function getMaxProcessingBatchSize() external view returns (uint);
 }

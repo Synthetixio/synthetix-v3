@@ -14,7 +14,6 @@ contract CoreElectionModule is IElectionModule, ElectionStorage, OwnableMixin {
     error AlreadyNominated(address addr);
     error NotNominated(address addr);
 
-    error CandidateLengthMismatch();
     error TooManyCandidates();
     error MissingCandidates();
     error DuplicateCandidates();
@@ -73,29 +72,28 @@ contract CoreElectionModule is IElectionModule, ElectionStorage, OwnableMixin {
     }
 
     // TODO: add pagination for getting nominees list
-    function getNominees() external view override returns (address[] memory) {
-        return _currentElectionData().nominees;
+    function getCandidates() external view override returns (address[] memory) {
+        return _currentElectionData().candidates;
     }
 
     function nominate() external override {
         ElectionData storage electionData = _currentElectionData();
 
-        if (electionData.nomineePositions[msg.sender] != 0) {
+        if (electionData.candidatePositions[msg.sender] != 0) {
             revert AlreadyNominated(msg.sender);
         }
 
-        electionData.nominees.push(msg.sender);
-        electionData.nomineePositions[msg.sender] = electionData.nominees.length;
-        electionData.nomineeVotes[msg.sender] = 0;
+        electionData.candidates.push(msg.sender);
+        electionData.candidatePositions[msg.sender] = electionData.candidates.length;
     }
 
     function withdrawNomination() external override {
         ElectionData storage electionData = _currentElectionData();
-        if (electionData.nomineePositions[msg.sender] == 0) {
+        if (electionData.candidatePositions[msg.sender] == 0) {
             revert NotNominated(msg.sender);
         }
 
-        ArrayUtil.removeValue(msg.sender, electionData.nominees, electionData.nomineePositions);
+        ArrayUtil.removeValue(msg.sender, electionData.candidates, electionData.candidatePositions);
     }
 
     function setNextSeatCount(uint seats) external override onlyOwner {
@@ -116,6 +114,10 @@ contract CoreElectionModule is IElectionModule, ElectionStorage, OwnableMixin {
 
     function getSeatCount() external view override returns (uint) {
         return _electionStore().seatCount;
+    }
+
+    function getEpochDuration() external view override returns (uint) {
+        return _electionStore().epochDuration;
     }
 
     function getPeriodPercent() external view override returns (uint) {
@@ -140,7 +142,7 @@ contract CoreElectionModule is IElectionModule, ElectionStorage, OwnableMixin {
 
         uint numCandidates = candidates.length;
 
-        if (numCandidates > electionData.nominees.length) {
+        if (numCandidates > electionData.candidates.length) {
             revert TooManyCandidates();
         }
 
@@ -153,14 +155,14 @@ contract CoreElectionModule is IElectionModule, ElectionStorage, OwnableMixin {
         }
 
         if (electionData.addressVoted[msg.sender]) {
-            uint voteDataIndex = electionData.votesIndexes[msg.sender];
-            VoteData memory previousVoteData = electionData.votes[voteDataIndex];
+            uint ballotIndex = electionData.ballotsIndex[msg.sender];
+            Ballot memory previousBallot = electionData.ballots[ballotIndex];
 
-            for (uint i = 0; i < previousVoteData.candidates.length; i++) {
-                electionData.nomineeVotes[previousVoteData.candidates[i]] -= previousVoteData.votePower;
+            for (uint i = 0; i < previousBallot.candidates.length; i++) {
+                electionData.candidateVotes[previousBallot.candidates[i]] -= previousBallot.votePower;
             }
 
-            electionData.votes[voteDataIndex] = VoteData({candidates: new address[](0), votePower: 0});
+            electionData.ballots[ballotIndex] = Ballot({candidates: new address[](0), votePower: 0});
         }
 
         uint votePower = ERC20(store.electionTokenAddress).balanceOf(msg.sender);
@@ -168,17 +170,17 @@ contract CoreElectionModule is IElectionModule, ElectionStorage, OwnableMixin {
         for (uint i = 0; i < numCandidates; i++) {
             address candidate = candidates[i];
 
-            if (electionData.nomineePositions[candidate] == 0) {
+            if (electionData.candidatePositions[candidate] == 0) {
                 revert NotNominated(candidate);
             }
 
-            electionData.nomineeVotes[candidate] += votePower;
+            electionData.candidateVotes[candidate] += votePower;
         }
 
-        VoteData memory voteData = VoteData({candidates: candidates, votePower: votePower});
+        Ballot memory ballot = Ballot({candidates: candidates, votePower: votePower});
 
-        electionData.votes.push(voteData);
-        electionData.votesIndexes[msg.sender] = electionData.votes.length - 1;
+        electionData.ballots.push(ballot);
+        electionData.ballotsIndex[msg.sender] = electionData.ballots.length - 1;
 
         electionData.addressVoted[msg.sender] = true;
     }
@@ -208,45 +210,47 @@ contract CoreElectionModule is IElectionModule, ElectionStorage, OwnableMixin {
         ElectionData storage electionData = _currentElectionData();
 
         uint maxBatchSize = store.maxProcessingBatchSize;
-        uint previousBatchIdx = electionData.processedBatchIdx;
+        uint previousBatchIndex = electionData.processedBatchIndex;
         uint lessVotedCandidateVotes;
-        uint lessVotedCandidateIdx;
+        uint lessVotedCandidateIndex;
 
         // set initial values
-        (lessVotedCandidateIdx, lessVotedCandidateVotes) = _findLessVoted(electionData.nextEpochMemberVotes);
+        (lessVotedCandidateIndex, lessVotedCandidateVotes) = _findLessVoted(electionData.nextEpochMemberVotes);
 
         for (uint offset; offset < maxBatchSize; offset++) {
-            uint currentIdx = previousBatchIdx + offset;
+            uint currentIndex = previousBatchIndex + offset;
 
-            if (currentIdx >= electionData.nominees.length) {
+            if (currentIndex >= electionData.candidates.length) {
                 // all nominees reviewed
                 electionData.isElectionEvaluated = true;
                 break;
             }
 
-            address currentNominee = electionData.nominees[currentIdx];
-            uint currentNomineeVotes = electionData.nomineeVotes[currentNominee];
+            address currentCandidate = electionData.candidates[currentIndex];
+            uint currentCandidateVotes = electionData.candidateVotes[currentCandidate];
 
-            if (currentNomineeVotes > 0) {
+            if (currentCandidateVotes > 0) {
                 if (electionData.nextEpochMembers.length < store.seatCount) {
                     // seats not filled, fill it with whoever received votes
-                    electionData.nextEpochMembers.push(currentNominee);
-                    electionData.nextEpochMemberVotes.push(currentNomineeVotes);
+                    electionData.nextEpochMembers.push(currentCandidate);
+                    electionData.nextEpochMemberVotes.push(currentCandidateVotes);
 
                     if (electionData.nextEpochMembers.length == store.seatCount) {
-                        (lessVotedCandidateIdx, lessVotedCandidateVotes) = _findLessVoted(electionData.nextEpochMemberVotes);
+                        (lessVotedCandidateIndex, lessVotedCandidateVotes) = _findLessVoted(
+                            electionData.nextEpochMemberVotes
+                        );
                     }
-                } else if (currentNomineeVotes > lessVotedCandidateVotes) {
+                } else if (currentCandidateVotes > lessVotedCandidateVotes) {
                     // replace minimun
-                    electionData.nextEpochMembers[lessVotedCandidateIdx] = currentNominee;
-                    electionData.nextEpochMemberVotes[lessVotedCandidateIdx] = currentNomineeVotes;
+                    electionData.nextEpochMembers[lessVotedCandidateIndex] = currentCandidate;
+                    electionData.nextEpochMemberVotes[lessVotedCandidateIndex] = currentCandidateVotes;
 
-                    (lessVotedCandidateIdx, lessVotedCandidateVotes) = _findLessVoted(electionData.nextEpochMemberVotes);
+                    (lessVotedCandidateIndex, lessVotedCandidateVotes) = _findLessVoted(electionData.nextEpochMemberVotes);
                 }
             }
         }
 
-        electionData.processedBatchIdx += maxBatchSize;
+        electionData.processedBatchIndex += maxBatchSize;
     }
 
     function _findLessVoted(uint[] storage votes) private view returns (uint, uint) {
@@ -255,16 +259,16 @@ contract CoreElectionModule is IElectionModule, ElectionStorage, OwnableMixin {
         }
 
         uint minVotes = votes[0];
-        uint minIdx = 0;
+        uint minIndex = 0;
 
-        for (uint idx = 1; idx < votes.length; idx++) {
-            if (votes[idx] < minVotes) {
-                minVotes = votes[idx];
-                minIdx = idx;
+        for (uint i = 1; i < votes.length; i++) {
+            if (votes[i] < minVotes) {
+                minVotes = votes[i];
+                minIndex = i;
             }
         }
 
-        return (minIdx, minVotes);
+        return (minIndex, minVotes);
     }
 
     function resolveElection() external virtual override {

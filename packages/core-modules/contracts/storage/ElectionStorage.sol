@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 contract ElectionStorage {
-    struct VoteData {
+    struct Ballot {
         /**
          * @dev the ordered list of candidates the user voted
          */
@@ -15,45 +15,46 @@ contract ElectionStorage {
 
     struct ElectionData {
         /**
-         * @dev History of all the votes casted by voter addrees
+         * @dev Compilation of all the ballots casted by voters. Works together with ballotsIndexes
          */
-        VoteData[] votes;
+        Ballot[] ballots;
         /**
-         * @dev Position of an address on the votes Array.
+         * @dev Position of an address (voter) on the ballots Array.
          */
-        mapping(address => uint256) votesIndexes;
+        mapping(address => uint256) ballotsIndex;
         /**
-         * @dev number of votes a nominee has for being a council member in the next epoch.
+         * @dev number of votes a candidate has for being a council member in the next epoch.
+         * @dev Note the interpretation is dependant on the voting strategy
          */
-        mapping(address => uint256) nomineeVotes;
+        mapping(address => uint256) candidateVotes;
         /**
          * @dev History of addresses that voted on any of the elections.
          */
         mapping(address => bool) addressVoted;
         /**
-         * @dev Used to keep track of the next epoch's nominees. Gets erased when an epoch starts and a new council takes effect.
+         * @dev Used to keep track of the next epoch's nominees.
          */
-        address[] nominees;
+        address[] candidates;
         /**
-         * @dev Position of an address on the nominees Array. Note that position 1 corresponds to index 0.
+         * @dev Position of an address on the candidates Array. Note that position 1 corresponds to index 0.
          */
-        mapping(address => uint256) nomineePositions;
+        mapping(address => uint256) candidatePositions;
+        /**
+         * @dev Used to keep track of the latest candidate processed in the last batch.
+         */
+        uint256 processedBatchIndex;
         /**
          * @dev Flag to indicate if the election was evaluated (if batched, latest batch was processed).
          */
         bool isElectionEvaluated;
         /**
-         * @dev Used to keep track of the next epoch's nextEpochMembers. Gets erased when an epoch starts and a new council takes effect.
+         * @dev Used to keep track of the next epoch's nextEpochMembers.
          */
         address[] nextEpochMembers;
         /**
-         * @dev Used to keep track of the next epoch's nextEpochMembers votes. Gets erased when an epoch starts and a new council takes effect.
+         * @dev Used to keep track of the next epoch's nextEpochMembers votes.
          */
         uint256[] nextEpochMemberVotes;
-        /**
-         * @dev Used to keep track of the latest nominee processed in the last batch.
-         */
-        uint256 processedBatchIdx;
     }
 
     struct ElectionStore {
