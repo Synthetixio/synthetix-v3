@@ -10,13 +10,11 @@ describe('execute-call', function () {
 
       await this.cli.start();
       await this.cli.interact(this.cli.keys.ENTER); // Selects SomeModule
-      await this.cli.interact('set');  // Highlights setUintValue
+      await this.cli.interact('set');               // Highlights setUintValue
       await this.cli.interact(this.cli.keys.ENTER); // Selects setUintValue
       await this.cli.interact('42');                // Input for "newValue"
       await this.cli.interact(this.cli.keys.ENTER); // Submits input
       await this.cli.interact(this.cli.keys.ENTER); // Confirms input
-
-      assert.deepEqual(this.cli.errors, []);
     });
 
     it('displays calldata', async function () {
