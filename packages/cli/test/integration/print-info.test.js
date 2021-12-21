@@ -23,12 +23,10 @@ describe('print-info', function () {
     this.cli.printed('signer: 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266');
     this.cli.printed('network: local');
     this.cli.printed('deployment: deployments/local/test');
-    // TODO: Check more info
   });
 
   it('displays usage help', async function () {
     this.cli.printed('USAGE:');
     this.cli.printed('Use arrows to navigate, or type to autocomplete');
-    // TODO: Check all help
   });
 });
