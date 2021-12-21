@@ -56,7 +56,7 @@ abstract contract UUPSImplementation is IUUPSImplementation, ProxyStorage {
         store.implementation = newImplementation;
 
         (bool rollbackSuccessful, ) = newImplementation.delegatecall(
-            abi.encodeWithSelector(this.upgradeTo.selector, currentImplementation, true)
+            abi.encodeWithSelector(this.upgradeTo.selector, currentImplementation)
         );
 
         if (!rollbackSuccessful || _proxyStore().implementation != currentImplementation) {
