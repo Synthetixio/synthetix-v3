@@ -9,11 +9,13 @@ import "./ProxyStorage.sol";
 
 abstract contract UUPSImplementation is IUUPSImplementation, ProxyStorage {
     event Upgraded(address implementation);
+    event ImplementationNominated(address newImplementation);
 
     error ImplementationIsSterile(address implementation);
     error UpgradeSimulationFailed();
+    error NotNominated(address addr);
 
-    function _upgradeTo(address newImplementation) internal virtual {
+    function _nominateNewImplementation(address newImplementation) internal virtual {
         if (newImplementation == address(0)) {
             revert AddressError.ZeroAddress();
         }
@@ -28,13 +30,37 @@ abstract contract UUPSImplementation is IUUPSImplementation, ProxyStorage {
             revert ChangeError.NoChange();
         }
 
+        store.nominatedImplementation = newImplementation;
+
+        emit ImplementationNominated(newImplementation);
+    }
+
+    function _acceptUpgradeNomination() internal virtual {
+        ProxyStore storage store = _proxyStore();
+
+        address currentNominatedImpementation = store.nominatedImplementation;
+        if (msg.sender != currentNominatedImpementation) {
+            revert NotNominated(msg.sender);
+        }
+
         if (!store.simulatingUpgrade && _implementationIsSterile(newImplementation)) {
             revert ImplementationIsSterile(newImplementation);
         }
 
-        store.implementation = newImplementation;
+        store.nominatedImplementation = address(0);
+        store.implementation = currentNominatedImpementation;
 
         emit Upgraded(newImplementation);
+    }
+
+    function _renounceUpgradeNomination() internal virtual {
+        ProxyStore storage store = _proxyStore();
+
+        if (store.nominatedImplementation != msg.sender) {
+            revert NotNominated(msg.sender);
+        }
+
+        store.nominatedImplementation = address(0);
     }
 
     function _implementationIsSterile(address candidateImplementation) internal virtual returns (bool) {
@@ -56,8 +82,10 @@ abstract contract UUPSImplementation is IUUPSImplementation, ProxyStorage {
         store.implementation = newImplementation;
 
         (bool rollbackSuccessful, ) = newImplementation.delegatecall(
-            abi.encodeWithSelector(this.upgradeTo.selector, currentImplementation, true)
+            abi.encodeWithSelector(this.nominateNewImplementation.selector, currentImplementation, true)
         );
+
+        newImplementation.acceptUpgradeNomination();
 
         if (!rollbackSuccessful || _proxyStore().implementation != currentImplementation) {
             revert UpgradeSimulationFailed();
