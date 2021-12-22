@@ -43,18 +43,14 @@ async function getModulesSelectors() {
 function findDuplicateSelectors(selectors) {
   const duplicates = selectors.map((s) => s.selector).filter(unique);
 
-  const ocurrences = [];
-
-  if (duplicates.length > 0) {
-    duplicates.map((duplicate) => {
-      const cases = selectors.filter((s) => s.selector === duplicate);
-      ocurrences.push({
-        fn: cases[0].name,
-        selector: duplicate,
-        contracts: cases.map((c) => c.contractName),
-      });
-    });
-  }
+  const ocurrences = duplicates.map((duplicate) => {
+    const cases = selectors.filter((s) => s.selector === duplicate);
+    return {
+      fn: cases[0].name,
+      selector: duplicate,
+      contracts: cases.map((c) => c.contractName),
+    };
+  });
 
   return ocurrences.length > 0 ? ocurrences : null;
 }
