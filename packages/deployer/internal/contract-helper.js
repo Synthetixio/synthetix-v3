@@ -3,6 +3,7 @@ const path = require('path');
 const filterValues = require('filter-values');
 const { getSelectors } = require('@synthetixio/core-js/utils/ethers/contracts');
 const { deployedContractHasBytescode } = require('@synthetixio/core-js/utils/ethers/contracts');
+const unique = require('@synthetixio/core-js/utils/misc/unique');
 
 async function isAlreadyDeployed(contractName, deploymentData) {
   if (!deploymentData.deployedAddress) {
@@ -40,9 +41,7 @@ async function getModulesSelectors() {
 }
 
 function findDuplicateSelectors(selectors) {
-  const duplicates = selectors
-    .map((s) => s.selector)
-    .filter((s, index, selectors) => selectors.indexOf(s) !== index);
+  const duplicates = selectors.map((s) => s.selector).filter(unique);
 
   const ocurrences = [];
 

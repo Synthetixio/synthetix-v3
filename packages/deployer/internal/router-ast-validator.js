@@ -5,6 +5,7 @@ const {
 const { getModulesSelectors } = require('./contract-helper');
 const { toPrivateConstantCase } = require('./router-helper');
 const filterValues = require('filter-values');
+const unique = require('@synthetixio/core-js/utils/misc/unique');
 
 class RouterASTValidator {
   constructor(asts) {
@@ -16,25 +17,30 @@ class RouterASTValidator {
     const routerSelectors = findYulCaseValues('Router', this.asts['Router']);
 
     const errors = [];
-    moduleSelectors.forEach((contractSelector) => {
-      if (!routerSelectors.some((s) => s.selector === contractSelector.selector)) {
+
+    for (const contractSelector of moduleSelectors) {
+      const selectorExists = routerSelectors.some((s) => s.selector === contractSelector.selector);
+
+      if (!selectorExists) {
         errors.push({
           msg: `Selector for ${contractSelector.contractName}.${contractSelector.name} not found in the router`,
           contractSelector,
           missingInRouter: true,
         });
       }
-    });
+    }
 
-    routerSelectors.forEach((routerSelector) => {
-      if (!moduleSelectors.some((s) => s.selector === routerSelector.selector)) {
+    for (const routerSelector of routerSelectors) {
+      const selectorExists = moduleSelectors.some((s) => s.selector === routerSelector.selector);
+
+      if (!selectorExists) {
         errors.push({
           msg: `Selector ${routerSelector.selector} is present in router but not found in contracts`,
           routerSelector,
           onlyInRouter: true,
         });
       }
-    });
+    }
 
     return errors;
   }
@@ -56,11 +62,13 @@ class RouterASTValidator {
     }
 
     const errors = [];
-    routerSelectors.forEach((s) => {
-      if (
-        !moduleAddresses[s.value.name] ||
-        moduleAddresses[s.value.name].address !== s.value.value.value
-      ) {
+
+    for (const s of routerSelectors) {
+      const selectorReachable =
+        moduleAddresses[s.value.name] &&
+        moduleAddresses[s.value.name].address === s.value.value.value;
+
+      if (!selectorReachable) {
         errors.push({
           msg: `Selector ${s.selector} not reachable. ${s.value.name} pointing to ${
             s.value.value.value
@@ -71,6 +79,7 @@ class RouterASTValidator {
           moduleAddresses[s.value.name].moduleName,
           this.asts
         );
+
         if (!contractSelectors.some((cs) => cs.selector === s.selector)) {
           errors.push({
             msg: `Selector ${s.selector} not reachable. ${s.value.name} (${
@@ -79,7 +88,7 @@ class RouterASTValidator {
           });
         }
       }
-    });
+    }
 
     return errors;
   }
@@ -87,17 +96,11 @@ class RouterASTValidator {
   async findDuplicateModuleSelectors() {
     const routerSelectors = findYulCaseValues('Router', this.asts['Router']);
 
-    const duplicates = routerSelectors.filter(
-      (s, index, selectors) =>
-        selectors.indexOf(selectors.find((n) => n.selector === s.selector)) !== index
-    );
+    const duplicates = routerSelectors.map((s) => s.selector).filter(unique);
 
-    const errors = [];
-    duplicates.forEach((duplicate) => {
-      errors.push({
-        msg: `Selector ${duplicate.selector} is present multiple times in the router`,
-      });
-    });
+    const errors = duplicates.map((duplicate) => ({
+      msg: `Selector ${duplicate.selector} is present multiple times in the router`,
+    }));
 
     return errors;
   }
