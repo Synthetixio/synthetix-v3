@@ -3,6 +3,7 @@ const path = require('path');
 const filterValues = require('filter-values');
 const { getSelectors } = require('@synthetixio/core-js/utils/ethers/contracts');
 const { deployedContractHasBytescode } = require('@synthetixio/core-js/utils/ethers/contracts');
+const { onlyRepeated } = require('@synthetixio/core-js/utils/misc/array-filters');
 
 async function isAlreadyDeployed(contractName, deploymentData) {
   if (!deploymentData.deployedAddress) {
@@ -40,22 +41,16 @@ async function getModulesSelectors() {
 }
 
 function findDuplicateSelectors(selectors) {
-  const duplicates = selectors
-    .map((s) => s.selector)
-    .filter((s, index, selectors) => selectors.indexOf(s) !== index);
+  const duplicates = selectors.map((s) => s.selector).filter(onlyRepeated);
 
-  const ocurrences = [];
-
-  if (duplicates.length > 0) {
-    duplicates.map((duplicate) => {
-      const cases = selectors.filter((s) => s.selector === duplicate);
-      ocurrences.push({
-        fn: cases[0].name,
-        selector: duplicate,
-        contracts: cases.map((c) => c.contractName),
-      });
-    });
-  }
+  const ocurrences = duplicates.map((duplicate) => {
+    const cases = selectors.filter((s) => s.selector === duplicate);
+    return {
+      fn: cases[0].name,
+      selector: duplicate,
+      contracts: cases.map((c) => c.contractName),
+    };
+  });
 
   return ocurrences.length > 0 ? ocurrences : null;
 }
