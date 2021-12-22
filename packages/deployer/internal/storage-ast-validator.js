@@ -15,18 +15,16 @@ class ModuleStorageASTValidator {
 
   findDuplicateNamespaces(namespaces) {
     const duplicates = namespaces
-      .map((s) => s.slot)
-      .filter((s, index, namespaces) => namespaces.indexOf(s) !== index);
+      .map((namespace) => namespace.slot)
+      .filter((slot, index, namespaces) => namespaces.indexOf(slot) !== index);
 
     const ocurrences = [];
 
-    if (duplicates.length > 0) {
-      duplicates.map((duplicate) => {
-        const cases = namespaces.filter((s) => s.slot === duplicate);
-        ocurrences.push({
-          slot: duplicate,
-          contracts: cases.map((c) => c.contractName),
-        });
+    for (const duplicate of duplicates) {
+      const contracts = namespaces.filter((s) => s.slot === duplicate).map((c) => c.contractName);
+      ocurrences.push({
+        slot: duplicate,
+        contracts,
       });
     }
 
@@ -35,16 +33,16 @@ class ModuleStorageASTValidator {
 
   findNamespaceCollisions() {
     const namespaces = [];
+    const errors = [];
 
     for (const [contractName, ast] of Object.entries(this.asts)) {
-      const slots = findYulStorageSlotAssignments(contractName, ast);
-
-      slots.forEach((slot) => namespaces.push({ contractName, slot }));
+      for (const slot of findYulStorageSlotAssignments(contractName, ast)) {
+        namespaces.push({ contractName, slot });
+      }
     }
 
     const duplicates = this.findDuplicateNamespaces(namespaces);
 
-    const errors = [];
     if (duplicates) {
       const details = duplicates.map(
         (d) => `  > ${d.slot} found in storage contracts ${d.contracts}\n`
@@ -68,31 +66,35 @@ class ModuleStorageASTValidator {
     }
 
     for (const [contractName, ast] of Object.entries(this.previousAsts)) {
-      const slots = findYulStorageSlotAssignments(contractName, ast);
-
-      slots.forEach((slot) => previousNamespaces.push({ contractName, slot }));
+      for (const slot of findYulStorageSlotAssignments(contractName, ast)) {
+        previousNamespaces.push({ contractName, slot });
+      }
     }
 
     for (const [contractName, ast] of Object.entries(this.asts)) {
-      const slots = findYulStorageSlotAssignments(contractName, ast);
-
-      slots.forEach((slot) => namespaces.push({ contractName, slot }));
+      for (const slot of findYulStorageSlotAssignments(contractName, ast)) {
+        namespaces.push({ contractName, slot });
+      }
     }
 
     for (const previous of previousNamespaces) {
       const current = namespaces.find((v) => v.contractName === previous.contractName);
+
       if (!current) {
         errors.push({
           msg: `Storage namespace removed! ${previous.contractName} slot ${previous.slot} not found`,
         });
+
         continue;
       }
+
       if (current.slot !== previous.slot) {
         errors.push({
           msg: `Storage namespace hash changed! ${previous.contractName} slot ${previous.slot} changed to ${current.slot}`,
         });
       }
     }
+
     return errors;
   }
 
@@ -106,25 +108,21 @@ class ModuleStorageASTValidator {
     // Find all contracts inherted by modules
     const candidates = [];
     for (const moduleName of moduleNames) {
-      const deps = findContractDependencies(moduleName, this.asts).map((dep) => dep.name);
-      deps.forEach((dep) => {
-        if (!candidates.includes(dep)) {
-          candidates.push(dep);
+      for (const dep of findContractDependencies(moduleName, this.asts)) {
+        if (!candidates.includes(dep.name)) {
+          candidates.push(dep.name);
         }
-      });
+      }
     }
 
     // Look for state variable declarations
-    candidates.forEach((contractName) => {
-      const vars = findContractStateVariables(contractName, this.asts[contractName]);
-      if (vars) {
-        vars.forEach((node) => {
-          errors.push({
-            msg: `Unsafe state variable declaration in ${contractName}: "${node.typeName.name} ${node.name}"`,
-          });
+    for (const contractName of candidates) {
+      for (const node of findContractStateVariables(contractName, this.asts[contractName])) {
+        errors.push({
+          msg: `Unsafe state variable declaration in ${contractName}: "${node.typeName.name} ${node.name}"`,
         });
       }
-    });
+    }
 
     return errors;
   }
@@ -146,25 +144,33 @@ class ModuleStorageASTValidator {
 
     removals = removals.filter((removal) => removal.completeStruct === false);
 
-    modifications.forEach((m) => {
-      if (!errors.some((e) => e.contract === m.contract && e.struct === m.struct)) {
+    for (const m of modifications) {
+      const alreadyReported = errors.some(
+        (e) => e.contract === m.contract && e.struct === m.struct
+      );
+
+      if (!alreadyReported) {
         errors.push({
           msg: `Invalid modification mutation found in namespace ${m.contract}.${m.struct}`,
           contract: m.contract,
           struct: m.struct,
         });
       }
-    });
+    }
 
-    removals.forEach((m) => {
-      if (!errors.some((e) => e.contract === m.contract && e.struct === m.struct)) {
+    for (const m of removals) {
+      const alreadyReported = errors.some(
+        (e) => e.contract === m.contract && e.struct === m.struct
+      );
+
+      if (!alreadyReported) {
         errors.push({
           msg: `Invalid removal mutation found in namespace ${m.contract}.${m.struct}`,
           contract: m.contract,
           struct: m.struct,
         });
       }
-    });
+    }
 
     return errors;
   }
