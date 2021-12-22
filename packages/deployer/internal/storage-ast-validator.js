@@ -6,7 +6,7 @@ const {
 const { buildContractsStructMap } = require('@synthetixio/core-js/utils/ast/storage-struct');
 const { compareStorageStructs } = require('@synthetixio/core-js/utils/ast/comparator');
 const filterValues = require('filter-values');
-const unique = require('@synthetixio/core-js/utils/misc/unique');
+const { onlyRepeated } = require('@synthetixio/core-js/utils/misc/array-filters');
 
 class ModuleStorageASTValidator {
   constructor(asts, previousAsts) {
@@ -15,7 +15,7 @@ class ModuleStorageASTValidator {
   }
 
   findDuplicateNamespaces(namespaces) {
-    const duplicates = namespaces.map((namespace) => namespace.slot).filter(unique);
+    const duplicates = namespaces.map((namespace) => namespace.slot).filter(onlyRepeated);
 
     const ocurrences = [];
 

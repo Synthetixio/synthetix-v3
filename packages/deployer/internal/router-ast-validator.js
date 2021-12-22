@@ -5,7 +5,7 @@ const {
 const { getModulesSelectors } = require('./contract-helper');
 const { toPrivateConstantCase } = require('./router-helper');
 const filterValues = require('filter-values');
-const unique = require('@synthetixio/core-js/utils/misc/unique');
+const { onlyRepeated } = require('@synthetixio/core-js/utils/misc/array-filters');
 
 class RouterASTValidator {
   constructor(asts) {
@@ -96,7 +96,7 @@ class RouterASTValidator {
   async findDuplicateModuleSelectors() {
     const routerSelectors = findYulCaseValues('Router', this.asts['Router']);
 
-    const duplicates = routerSelectors.map((s) => s.selector).filter(unique);
+    const duplicates = routerSelectors.map((s) => s.selector).filter(onlyRepeated);
 
     const errors = duplicates.map((duplicate) => ({
       msg: `Selector ${duplicate.selector} is present multiple times in the router`,
