@@ -2,31 +2,27 @@
 pragma solidity ^0.8.0;
 
 contract ElectionStorage {
-    struct Ballot {
-        /**
-         * @dev the ordered list of candidates the user voted
-         */
-        address[] candidates;
-        /**
-         * @dev the votig power that the user gave to the candidates list
-         */
-        uint votePower;
-    }
-
     struct ElectionData {
         /**
-         * @dev Compilation of all the ballots casted by voters. Works together with ballotsIndexes
+         * @dev List of all ballot hashes (keccak of concatenated address array)
          */
-        Ballot[] ballots;
+        bytes32[] ballotHashes;
         /**
-         * @dev Position of an address (voter) on the ballots Array.
+         * @dev Details of ballots per hash (the address array)
          */
-        mapping(address => uint256) ballotsIndex;
+        mapping(bytes32 => address[]) ballotCandidates;
         /**
-         * @dev number of votes a candidate has for being a council member in the next epoch.
-         * @dev Note the interpretation is dependant on the voting strategy
+         * @dev Votes received by the ballot
          */
-        mapping(address => uint256) candidateVotes;
+        mapping(bytes32 => uint256) ballotVotes;
+        /**
+         * @dev Vote casted by voter (which ballot choose). It can be modified.
+         */
+        mapping(address => bytes32) addressVotedBallot;
+        /**
+         * @dev Votes power of the voter
+         */
+        mapping(address => uint256) addressVotePower;
         /**
          * @dev History of addresses that voted on any of the elections.
          */
@@ -53,8 +49,14 @@ contract ElectionStorage {
         address[] nextEpochMembers;
         /**
          * @dev Used to keep track of the next epoch's nextEpochMembers votes.
+         * @dev Note the interpretation is dependant on the voting strategy
          */
         uint256[] nextEpochMemberVotes;
+        /**
+         * @dev number of votes a candidate has for being a council member in the next epoch.
+         * @dev Note the interpretation is dependant on the voting strategy
+         */
+        mapping(address => uint256) candidateVotes;
     }
 
     struct ElectionStore {

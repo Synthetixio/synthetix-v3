@@ -155,14 +155,15 @@ contract CoreElectionModule is IElectionModule, ElectionStorage, OwnableMixin {
         }
 
         if (electionData.addressVoted[msg.sender]) {
-            uint ballotIndex = electionData.ballotsIndex[msg.sender];
-            Ballot memory previousBallot = electionData.ballots[ballotIndex];
+            bytes32 previousBallotHash = electionData.addressVotedBallot[msg.sender];
+            uint voterPower = electionData.addressVotePower[msg.sender];
+            address[] storage previousBallotCandidates = electionData.ballotCandidates[previousBallotHash];
 
-            for (uint i = 0; i < previousBallot.candidates.length; i++) {
-                electionData.candidateVotes[previousBallot.candidates[i]] -= previousBallot.votePower;
+            for (uint i = 0; i < previousBallotCandidates.length; i++) {
+                electionData.candidateVotes[previousBallotCandidates[i]] -= voterPower;
             }
 
-            electionData.ballots[ballotIndex] = Ballot({candidates: new address[](0), votePower: 0});
+            electionData.ballotVotes[previousBallotHash] -= voterPower;
         }
 
         uint votePower = ERC20(store.electionTokenAddress).balanceOf(msg.sender);
@@ -177,11 +178,15 @@ contract CoreElectionModule is IElectionModule, ElectionStorage, OwnableMixin {
             electionData.candidateVotes[candidate] += votePower;
         }
 
-        Ballot memory ballot = Ballot({candidates: candidates, votePower: votePower});
+        bytes32 ballotHash = keccak256(abi.encodePacked(candidates));
+        if (electionData.ballotCandidates[ballotHash].length == 0) {
+            // this ballot wasn't already voted
+            electionData.ballotCandidates[ballotHash] = candidates;
+        }
+        electionData.ballotVotes[ballotHash] += votePower;
 
-        electionData.ballots.push(ballot);
-        electionData.ballotsIndex[msg.sender] = electionData.ballots.length - 1;
-
+        electionData.addressVotedBallot[msg.sender] = ballotHash;
+        electionData.addressVotePower[msg.sender] = votePower;
         electionData.addressVoted[msg.sender] = true;
     }
 
