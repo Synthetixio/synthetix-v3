@@ -4,11 +4,11 @@ pragma solidity ^0.8.0;
 contract ElectionStorage {
     struct ElectionData {
         /**
-         * @dev List of all ballot hashes (keccak of concatenated address array)
+         * @dev List of all ballot ids (keccak of concatenated address array)
          */
-        bytes32[] ballotHashes;
+        bytes32[] ballotIds;
         /**
-         * @dev Details of ballots per hash (the address array)
+         * @dev Ballot's details (Ordered list of candidates) indexed by hash
          */
         mapping(bytes32 => address[]) ballotCandidates;
         /**
@@ -16,19 +16,19 @@ contract ElectionStorage {
          */
         mapping(bytes32 => uint256) ballotVotes;
         /**
-         * @dev Vote casted by voter (which ballot choose). It can be modified.
+         * @dev Vote casted by voter (ballot id). It can be modified.
          */
-        mapping(address => bytes32) addressVotedBallot;
+        mapping(address => bytes32) addressBallotVote;
         /**
-         * @dev Votes power of the voter
+         * @dev Vote power of the voter
          */
         mapping(address => uint256) addressVotePower;
         /**
-         * @dev History of addresses that voted on any of the elections.
+         * @dev List of addresses that voted
          */
         mapping(address => bool) addressVoted;
         /**
-         * @dev Used to keep track of the next epoch's nominees.
+         * @dev Next epoch's nominees.
          */
         address[] candidates;
         /**
@@ -36,7 +36,7 @@ contract ElectionStorage {
          */
         mapping(address => uint256) candidatePositions;
         /**
-         * @dev Used to keep track of the latest candidate processed in the last batch.
+         * @dev Latest candidate processed in the last batch.
          */
         uint256 processedBatchIndex;
         /**
@@ -61,7 +61,7 @@ contract ElectionStorage {
 
     struct ElectionStore {
         /**
-         * @dev NFT token awarded to council members in the current epoch. It can be taken away by demotion at any moment, or by election in the next epoch.
+         * @dev NFT token awarded to council members. It can be taken away by demotion at any moment, or by election in the next epoch.
          */
         address memberTokenAddress;
         /**
@@ -73,7 +73,7 @@ contract ElectionStorage {
          */
         mapping(uint => ElectionData) electionData;
         /**
-         * @dev Index pointing to the latest electionDta
+         * @dev Index pointing to the latest electionData
          */
         uint latestElectionDataIndex;
         /**

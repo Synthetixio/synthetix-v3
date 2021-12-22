@@ -48,7 +48,7 @@ contract ElectionStorageMock is ElectionStorage {
 
     function getVoterVoteCandidatesMock(address addr) public view returns (address[] memory) {
         ElectionData storage electionData = _currentElectionData();
-        bytes32 ballotHash = electionData.addressVotedBallot[addr];
+        bytes32 ballotHash = electionData.addressBallotVote[addr];
         return electionData.ballotCandidates[ballotHash];
     }
 
