@@ -20,12 +20,12 @@ async function isAlreadyDeployed(contractName, deploymentData) {
   );
 }
 
-async function getAllSelectors(contractNames) {
+async function getAllSelectors(contractsFullyQualifiedNames) {
   const allSelectors = [];
 
-  for (const contractName of contractNames) {
-    const contractArtifacts = await hre.artifacts.readArtifact(contractName);
-    const selectors = await getSelectors(contractArtifacts.abi);
+  for (const name of contractsFullyQualifiedNames) {
+    const { contractName, abi } = await hre.artifacts.readArtifact(name);
+    const selectors = await getSelectors(abi);
 
     allSelectors.push(...selectors.map((s) => ({ ...s, contractName })));
   }
