@@ -23,18 +23,21 @@ subtask(
   logger.debug(`location: ${relativeRouterPath}`);
 
   const modules = filterValues(hre.deployer.deployment.general.contracts, (c) => c.isModule);
-  const modulesNames = Object.keys(modules);
+  const modulesData = Object.values(modules);
+  const modulesNames = modulesData.map((attrs) => attrs.contractName);
+  const modulesFullyQualifiedNames = Object.keys(modules);
+
   logger.debug(`modules: ${JSON.stringify(modulesNames, null, 2)}`);
 
-  const selectors = await getAllSelectors(modulesNames);
+  const selectors = await getAllSelectors(modulesFullyQualifiedNames);
   logger.debug(`selectors: ${JSON.stringify(selectors, null, 2)}`);
-  logger.debug(`Found ${modulesNames.length} modules with ${selectors.length} selectors in total`);
+  logger.debug(`Found ${modules.length} modules with ${selectors.length} selectors in total`);
 
   const binaryData = _buildBinaryData({ selectors });
 
   const generatedSource = renderTemplate(hre.deployer.paths.routerTemplate, {
     moduleName: routerName,
-    modules: _renderModules(modules),
+    modules: _renderModules(modulesData),
     selectors: _renderSelectors({ binaryData }),
   });
 
@@ -93,12 +96,14 @@ function _renderSelectors({ binaryData }) {
  *   address private constant _ANOTHER_MODULE = 0xAA...;
  *   address private constant _OWNER_MODULE = 0x5c..;
  */
-function _renderModules(modules) {
-  return Object.entries(modules)
-    .reduce((lines, [moduleName, moduleData]) => {
-      const { deployedAddress } = moduleData;
+function _renderModules(modulesData) {
+  return modulesData
+    .reduce((lines, moduleData) => {
+      const { contractName, deployedAddress } = moduleData;
       lines.push(
-        `${TAB}address private constant ${toPrivateConstantCase(moduleName)} = ${deployedAddress};`
+        `${TAB}address private constant ${toPrivateConstantCase(
+          contractName
+        )} = ${deployedAddress};`
       );
       return lines;
     }, [])

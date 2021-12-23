@@ -46,7 +46,15 @@ task(TASK_DEPLOY, 'Deploys all system modules')
     logger.debugging = debug;
     prompter.noConfirm = noConfirm;
 
-    await logger.title(`${readPackageJson().name}\nDEPLOYER`);
+    // Do not throw an error on missing package.json
+    // This is so we don't force the user to have the file on tests just for the name
+    try {
+      await logger.title(readPackageJson().name);
+    } catch (err) {
+      if (err.code !== 'ENOENT') throw err;
+    }
+
+    await logger.title('DEPLOYER');
 
     try {
       if (clear) {
@@ -80,7 +88,7 @@ task(TASK_DEPLOY, 'Deploys all system modules')
 
 /*
  * Note: Even though hardhat's compile task has a quiet option,
- * it stil prints some output. This is a hack to completely silence
+ * it still prints some output. This is a hack to completely silence
  * output during compile task run.
  */
 async function _compile(hre, quiet) {

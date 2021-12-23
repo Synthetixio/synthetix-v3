@@ -1,8 +1,4 @@
-const {
-  findContractNodeWithName,
-  findContractNodeVariables,
-  findContractNodeStructs,
-} = require('./finders');
+const { findContractNodeVariables, findContractNodeStructs } = require('./finders');
 
 // prettier-ignore
 function orderContractsStructMap(structs) {
@@ -19,25 +15,26 @@ function orderContractsStructMap(structs) {
   );
 }
 
-async function buildContractsStructMap(asts) {
+async function buildContractsStructMap(contractNodes) {
   const structs = [];
-  for (const [contractName, ast] of Object.entries(asts)) {
-    const contractNode = findContractNodeWithName(contractName, ast);
-    if (!contractNode) {
-      continue;
-    }
+
+  for (const contractNode of contractNodes) {
     for (const structDefinition of findContractNodeStructs(contractNode)) {
       const members = [];
+
       for (const member of findContractNodeVariables(structDefinition)) {
         members.push({ name: member.name, type: member.typeDescriptions.typeString });
       }
+
       structs.push({
-        contract: { name: contractName, id: contractNode.id },
+        contract: { name: contractNode.name, id: contractNode.id },
         struct: { name: structDefinition.name, members },
       });
     }
   }
+
   orderContractsStructMap(structs);
+
   return structs;
 }
 

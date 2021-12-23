@@ -1,9 +1,7 @@
-const path = require('path');
-const filterValues = require('filter-values');
 const { subtask } = require('hardhat/config');
 const logger = require('@synthetixio/core-js/utils/io/logger');
 const prompter = require('@synthetixio/core-js/utils/io/prompter');
-const { getModulesPaths } = require('../internal/contract-helper');
+const { getModulesFullyQualifiedNames } = require('../internal/contract-helper');
 const { initContractData } = require('../internal/process-contracts');
 const { SUBTASK_SYNC_SOURCES } = require('../task-names');
 
@@ -19,54 +17,53 @@ subtask(
   logger.subtitle('Syncing solidity sources with deployment data');
 
   const { previousDeployment } = hre.deployer;
-  const sources = await getModulesPaths(hre.config);
+  const modulesFullyQualifiedNames = await getModulesFullyQualifiedNames();
 
-  const removed = await _removeDeletedSources({ sources, previousDeployment });
-  const added = await _addNewSources({ sources, previousDeployment });
+  const removed = await _removeDeletedSources({ modulesFullyQualifiedNames, previousDeployment });
+  const added = await _addNewSources({ modulesFullyQualifiedNames, previousDeployment });
 
   if (!removed && !added) {
     logger.checked('Deployment data is in sync with sources');
   }
 });
 
-async function _removeDeletedSources({ sources, previousDeployment }) {
+async function _removeDeletedSources({ modulesFullyQualifiedNames, previousDeployment }) {
   if (!previousDeployment) return false;
 
-  const modules = filterValues(previousDeployment.general.contracts, (c) => c.isModule);
-  const modulesPaths = Object.values(modules).map((c) => c.sourceName);
+  const previousModulesFullyQualifiedNames = Object.entries(previousDeployment.general.contracts)
+    .filter(([, contractAttributes]) => contractAttributes.isModule)
+    .map(([fullyQualifiedName]) => fullyQualifiedName);
 
-  const toRemove = modulesPaths.filter(
-    (deployedModule) => !sources.some((source) => deployedModule === source)
+  const toRemove = previousModulesFullyQualifiedNames.filter(
+    (name) => !modulesFullyQualifiedNames.includes(name)
   );
 
   if (toRemove.length > 0) {
     logger.notice(
       'The following modules are not present in sources anymore, they will not be included on the deployment:'
     );
-    toRemove.forEach((source) => logger.notice(source));
+    toRemove.forEach((name) => logger.notice(`  ${name}`));
     await prompter.confirmAction('Do you confirm removing these modules?');
   }
 
   return toRemove.length > 0;
 }
 
-async function _addNewSources({ sources, previousDeployment }) {
+async function _addNewSources({ modulesFullyQualifiedNames, previousDeployment }) {
   const toAdd = [];
 
   // Initialize cotract data, using previous deployed one, or empty data.
-  for (const source of sources) {
-    const contractName = path.basename(source, '.sol');
+  for (const moduleFullyQualifiedName of modulesFullyQualifiedNames) {
+    await initContractData(moduleFullyQualifiedName, { isModule: true });
 
-    await initContractData(contractName);
-
-    if (!previousDeployment?.general.contracts[contractName]) {
-      toAdd.push(source);
+    if (!previousDeployment?.general.contracts[moduleFullyQualifiedName]) {
+      toAdd.push(moduleFullyQualifiedName);
     }
   }
 
   if (toAdd.length > 0) {
     logger.notice('The following modules are going to be deployed for the first time:');
-    toAdd.forEach((source) => logger.notice(source));
+    toAdd.forEach((name) => logger.notice(`  ${name}`));
   }
 
   return toAdd.length > 0;
