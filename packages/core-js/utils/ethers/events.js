@@ -9,17 +9,16 @@
 function findEvent({ receipt, eventName, contract = undefined }) {
   let events = receipt.events;
 
-  if (!events || events.some((e) => e.event === undefined)) {
-    if (!contract) {
-      throw new Error(
-        `Cannot find event ${eventName} in logs, and no contract interface was provided for manual parsing.`
-      );
-    }
-
+  if (!events || events.some((e) => e.event === undefined) && contract) {
     events = parseLogs({ contract, logs: receipt.logs });
   }
 
-  return events.find((e) => e.event === eventName);
+  const event = events.find((e) => e.event === eventName);
+  if (!event) {
+    throw new Error(`Cannot find event ${eventName} in receipt.`);
+  }
+
+  return event;
 }
 
 /**

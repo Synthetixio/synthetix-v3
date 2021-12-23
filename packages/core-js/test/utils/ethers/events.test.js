@@ -15,17 +15,10 @@ describe('utils/ethers/events.js', () => {
     assert.equal(event.args.value, '42');
   });
 
-  it('throws if it cannot find any parsed event', async () => {
+  it('throws if it cannot find any event', async () => {
     assert.throws(() => findEvent({ receipt: unparsedTxReceipt, eventName: 'InvalidEvent' }), {
       message:
-        'Cannot find event InvalidEvent in logs, and no contract interface was provided for manual parsing.',
-    });
-  });
-
-  it('throws if the receipt logs are not parsed and no contract is specified for manual parsing', async () => {
-    assert.throws(() => findEvent({ receipt: deploymentTxReceipt, eventName: 'Test' }), {
-      message:
-        'Cannot find event Test in logs, and no contract interface was provided for manual parsing.',
+        'Cannot find event InvalidEvent in receipt.',
     });
   });
 
