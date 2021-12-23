@@ -19,10 +19,10 @@ async function isAlreadyDeployed(contractData) {
   );
 }
 
-async function getAllSelectors(contractsFullyQualifiedNames) {
+async function getAllSelectors(contractFullyQualifiedNames) {
   const allSelectors = [];
 
-  for (const name of contractsFullyQualifiedNames) {
+  for (const name of contractFullyQualifiedNames) {
     const { contractName, abi } = await hre.artifacts.readArtifact(name);
     const selectors = await getSelectors(abi);
 
