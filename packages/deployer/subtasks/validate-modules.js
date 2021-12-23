@@ -1,6 +1,5 @@
 const { subtask } = require('hardhat/config');
 const logger = require('@synthetixio/core-js/utils/io/logger');
-const filterValues = require('filter-values');
 const { getAllSelectors, findDuplicateSelectors } = require('../internal/contract-helper');
 const { ContractValidationError } = require('../internal/errors');
 const { SUBTASK_VALIDATE_MODULES } = require('../task-names');
@@ -8,9 +7,11 @@ const { SUBTASK_VALIDATE_MODULES } = require('../task-names');
 subtask(SUBTASK_VALIDATE_MODULES).setAction(async (_, hre) => {
   logger.subtitle('Validating modules');
 
-  const modules = filterValues(hre.deployer.deployment.general.contracts, (c) => c.isModule);
-  const moduleNames = Object.keys(modules);
-  const selectors = await getAllSelectors(moduleNames);
+  const modulesFullyQualifiedNames = Object.entries(hre.deployer.deployment.general.contracts)
+    .filter(([, attrs]) => attrs.isModule)
+    .map(([name]) => name);
+
+  const selectors = await getAllSelectors(modulesFullyQualifiedNames);
   const duplicates = findDuplicateSelectors(selectors);
 
   if (duplicates) {

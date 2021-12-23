@@ -10,7 +10,10 @@ module.exports = async function initializer(deploymentInfo, _hre = hre) {
 async function _initializeOwnerModule(proxyAddress, owner, hre) {
   let tx;
 
-  const OwnerModule = await hre.ethers.getContractAt('OwnerModule', proxyAddress);
+  const OwnerModule = await hre.ethers.getContractAt(
+    'contracts/modules/OwnerModule.sol:OwnerModule',
+    proxyAddress
+  );
 
   tx = await OwnerModule.connect(owner).nominateNewOwner(owner.address);
   await tx.wait();

@@ -1,16 +1,17 @@
 const { equal, notEqual, deepEqual } = require('assert/strict');
+const { findContractDefinitions } = require('../../../utils/ast/finders');
 const { buildContractsStructMap } = require('../../../utils/ast/storage-struct');
 const asts = require('../../fixtures/asts.json');
-const noContractAsts = require('../../fixtures/no-contract-asts.json');
 
 describe('utils/ast/storage-struct.js', function () {
   describe('build a contracts struct map', () => {
     let structsMap;
     before('builds a contract struct map from an asts object', async () => {
-      structsMap = await buildContractsStructMap(asts);
+      const contractNodes = Object.values(asts).map(findContractDefinitions).flat();
+      structsMap = await buildContractsStructMap(contractNodes);
     });
     it('handles asts without contract definitions', async () => {
-      const result = await buildContractsStructMap(noContractAsts);
+      const result = await buildContractsStructMap([]);
       deepEqual(result, []);
     });
     it('should have 4 structs', () => {

@@ -7,16 +7,19 @@ const {
   findContractNodeStructs,
   findContractNodeVariables,
   findContractStateVariables,
-  findInheritedContractNames,
   findYulCaseValues,
   findYulStorageSlotAssignments,
+  findContractDefinitions,
 } = require('../../../utils/ast/finders');
 const asts = require('../../fixtures/asts.json');
+const noContractAst = require('../../fixtures/no-contract-ast.json');
+
+const astNodes = Object.values(asts);
 
 describe('utils/ast/finders.js find AST artifacts', function () {
   describe('find contract dependencies', () => {
     it('finds contract dependencies of a simple contract', async () => {
-      const dependencies = await findContractDependencies('AnotherModule', asts);
+      const dependencies = await findContractDependencies('AnotherModule', astNodes);
       equal(dependencies.length, 3, 'AnotherModule should have 3 dependencies');
 
       equal(
@@ -25,12 +28,19 @@ describe('utils/ast/finders.js find AST artifacts', function () {
         'AnotherModule should be present in the list of dependencies'
       );
     });
+
     it('doesnt find a contract for an invalid name', async () => {
-      const dependencies = await findContractDependencies('NotAValidModuleName', asts);
+      const dependencies = await findContractDependencies('NotAValidModuleName', astNodes);
       equal(dependencies.length, 0);
     });
+
+    it('doesnt find a contract for a missing ast', async () => {
+      const dependencies = await findContractDependencies('MissingModule', []);
+      equal(dependencies.length, 0);
+    });
+
     it('finds contract dependencies of a complex contract', async () => {
-      const dependencies = await findContractDependencies('SettingsModule', asts);
+      const dependencies = await findContractDependencies('SettingsModule', astNodes);
       equal(dependencies.length, 5, 'SettingsModule should have 5 dependencies');
 
       equal(
@@ -43,14 +53,28 @@ describe('utils/ast/finders.js find AST artifacts', function () {
 
   describe('find function selectors', function () {
     it('finds selectors from a contract', async () => {
-      const selectors = await findFunctionSelectors('AnotherModule', asts);
+      const selectors = await findFunctionSelectors('AnotherModule', astNodes);
       equal(selectors.length, 1, 'AnotherModule should have 1 selector');
-
       equal(selectors[0].selector, '0x45aa2181', 'AnotherModule selector should be 0x45aa2181');
     });
+
     it('doesnt find selectors from a contract that doesnt expose any', async () => {
-      const selectors = await findFunctionSelectors('Router', asts);
+      const selectors = await findFunctionSelectors('Router', astNodes);
       equal(selectors.length, 0, 'Router should not have any selector');
+    });
+  });
+
+  describe('find all the contract definitions on the given node', function () {
+    it('finds the expected contract definition on the node', async () => {
+      const nodes = await findContractDefinitions(asts['AnotherModule']);
+      equal(nodes.length, 1);
+      equal(nodes[0].nodeType, 'ContractDefinition');
+      equal(nodes[0].name, 'AnotherModule');
+    });
+
+    it('doesnt find a contract with an invalid name', async () => {
+      const nodes = await findContractDefinitions(noContractAst);
+      equal(nodes.length, 0);
     });
   });
 
@@ -61,6 +85,7 @@ describe('utils/ast/finders.js find AST artifacts', function () {
       equal(node.nodeType, 'ContractDefinition');
       equal(node.name, 'AnotherModule');
     });
+
     it('doesnt find a contract with an invalid name', async () => {
       const node = await findContractNodeWithName('NotAValidModuleName', asts['AnotherModule']);
       equal(node, undefined, 'NotAValidModuleName should not be found');
@@ -75,6 +100,7 @@ describe('utils/ast/finders.js find AST artifacts', function () {
       equal(node.name, 'AnotherModule');
       equal(node.id, 620);
     });
+
     it('doesnt find a contract with an invalid name', async () => {
       const node = await findContractNodeWithName(549, asts['AnotherModule']);
       equal(node, undefined);
@@ -89,6 +115,7 @@ describe('utils/ast/finders.js find AST artifacts', function () {
       equal(node[0].nodeType, 'StructDefinition');
       equal(node[0].name, 'SettingsStorage');
     });
+
     it('doesnt find a struct from a contract without one', async () => {
       const node = await findContractNodeStructs(asts['AnotherModule']);
       equal(node.length, 0);
@@ -100,6 +127,7 @@ describe('utils/ast/finders.js find AST artifacts', function () {
       const node = await findContractNodeVariables(
         findContractNodeStructs(asts['SettingsNamespace'])[0]
       );
+
       notEqual(node, undefined);
       equal(node.length, 1);
       equal(node[0].nodeType, 'VariableDeclaration');
@@ -115,27 +143,9 @@ describe('utils/ast/finders.js find AST artifacts', function () {
     });
   });
 
-  describe('find inherited contract names', function () {
-    it('finds contract names', async () => {
-      const node = await findInheritedContractNames(
-        await findContractNodeWithName('SettingsModule', asts['SettingsModule'])
-      );
-      notEqual(node, undefined);
-      equal(node.length, 2);
-      equal(
-        node.some((v) => v === 'SettingsNamespace'),
-        true
-      );
-      equal(
-        node.some((v) => v === 'OwnerMixin'),
-        true
-      );
-    });
-  });
-
   describe('find case vaules (YUL)', function () {
     it('finds case values from Router contract', async () => {
-      const routerSelectors = findYulCaseValues('Router', asts['Router']);
+      const routerSelectors = findYulCaseValues(asts['Router']);
       notEqual(routerSelectors, undefined);
       equal(routerSelectors.length > 2, true);
       equal(
@@ -145,8 +155,9 @@ describe('utils/ast/finders.js find AST artifacts', function () {
         true
       );
     });
+
     it('doesnt find case values on not-case contract', async () => {
-      const routerSelectors = findYulCaseValues('AnotherModule', asts['AnotherModule']);
+      const routerSelectors = findYulCaseValues(asts['AnotherModule']);
       notEqual(routerSelectors, undefined);
       equal(routerSelectors.length == 0, true);
     });
@@ -154,16 +165,16 @@ describe('utils/ast/finders.js find AST artifacts', function () {
 
   describe('find storage slot assignments (YUL)', function () {
     it('finds storage slot assignemnts', async () => {
-      const slots = findYulStorageSlotAssignments('SettingsNamespace', asts['SettingsNamespace']);
+      const slots = findYulStorageSlotAssignments(asts['SettingsNamespace']);
       notEqual(slots, undefined);
       equal(slots.length == 1, true);
       equal(slots[0], '0x64b748fbda347b7e22c5029a23b4e647df311daee8f2a42947ab7ccf61af2e87');
     });
+
     it('doesnt find storage slot assignemnts', async () => {
-      const slots = findYulStorageSlotAssignments('AnotherModule', asts['AnotherModule']);
+      const slots = findYulStorageSlotAssignments(asts['AnotherModule']);
       notEqual(slots, undefined);
       equal(slots.length == 0, true);
     });
-    // ,
   });
 });

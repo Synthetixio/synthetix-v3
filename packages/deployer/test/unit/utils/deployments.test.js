@@ -1,6 +1,7 @@
 const { deepEqual } = require('assert/strict');
-const path = require('path');
 const fs = require('fs');
+const path = require('path');
+const { loadEnvironment, deployOnEnvironment } = require('../../helpers/use-environment');
 const {
   getDeploymentExtendedFiles,
   getProxyAddress,
@@ -12,25 +13,34 @@ const {
 } = require('../../../utils/deployments');
 
 describe('utils/deployments.js', function () {
-  // Default configuration using as folder the tests fixtures
-  const info = {
-    folder: path.resolve(__dirname, '..', '..', 'fixtures', 'completed-deployment', 'deployments'),
-    network: 'local',
-    instance: 'official',
-  };
+  let hre, info, deploymentFile;
 
-  // Expected instance folder where the deployment files are located
-  const folder = `${info.folder}/${info.network}/${info.instance}`;
+  before('prepare environment', async function () {
+    this.timeout(60000);
 
-  // Fixture deployment files
-  const files = ['2021-09-18-00.json', '2021-09-25-00.json'].map((file) => `${folder}/${file}`);
+    hre = loadEnvironment('sample-project');
+
+    await deployOnEnvironment(hre, {
+      alias: 'deployments',
+      clear: true,
+    });
+
+    info = {
+      folder: hre.config.deployer.paths.deployments,
+      network: hre.config.defaultNetwork,
+      instance: 'test',
+    };
+
+    deploymentFile = getDeploymentFile(info);
+  });
 
   describe('#getDeploymentExtendedFiles', function () {
     it('gets the list of extended files for the given deployment file', function () {
-      const result = getDeploymentExtendedFiles(files[files.length - 1]);
+      const result = getDeploymentExtendedFiles(deploymentFile);
+      const expectedFile = path.basename(deploymentFile, '.json');
       const expected = {
-        abis: `${folder}/extended/2021-09-25-00.abis.json`,
-        sources: `${folder}/extended/2021-09-25-00.sources.json`,
+        abis: `${info.folder}/${info.network}/${info.instance}/extended/${expectedFile}.abis.json`,
+        sources: `${info.folder}/${info.network}/${info.instance}/extended/${expectedFile}.sources.json`,
       };
       deepEqual(result, expected);
     });
@@ -39,21 +49,21 @@ describe('utils/deployments.js', function () {
   describe('#getProxyAddress', function () {
     it('gets the current Proxy deployment address', function () {
       const result = getProxyAddress(info);
-      deepEqual(result, '0x922D6956C99E12DFeB3224DEA977D0939758A1Fe');
+      deepEqual(result, '0x0165878A594ca255338adfa4d48449f69242Eb8F');
     });
   });
 
   describe('#getRouterAddress', function () {
     it('gets the current Router deployment address', function () {
       const result = getRouterAddress(info);
-      deepEqual(result, '0x162A433068F51e18b7d13932F27e66a3f99E6890');
+      deepEqual(result, '0x5FC8d32690cc91D4c39d9d3abcBD16989F875707');
     });
   });
 
   describe('#getDeployment', function () {
     it('gets the newest deployment data', function () {
       const result = getDeployment(info);
-      const expected = JSON.parse(fs.readFileSync(files[files.length - 1], 'utf8'));
+      const expected = JSON.parse(fs.readFileSync(deploymentFile, 'utf8'));
       deepEqual(result, expected);
     });
 
@@ -66,21 +76,21 @@ describe('utils/deployments.js', function () {
   describe('#getDeploymentFile', function () {
     it('gets the newest deployment file', function () {
       const result = getDeploymentFile(info);
-      deepEqual(result, files[files.length - 1]);
+      deepEqual(result, deploymentFile);
     });
   });
 
   describe('#getAllDeploymentFiles', function () {
     it('get the historical sorted deployment files', function () {
       const result = getAllDeploymentFiles(info);
-      deepEqual(result, files);
+      deepEqual(result, [deploymentFile]);
     });
   });
 
   describe('#getDeploymentFolder', function () {
     it('correctly calculates deployments instance folder', function () {
       const result = getDeploymentFolder(info);
-      deepEqual(result, folder);
+      deepEqual(result, path.dirname(deploymentFile));
     });
   });
 });

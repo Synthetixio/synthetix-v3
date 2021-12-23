@@ -1,0 +1,16 @@
+{
+  "absolutePath": "contracts/modules/AnotherModule.sol",
+  "exportedSymbols": {},
+  "id": 621,
+  "license": "Unlicense",
+  "nodeType": "SourceUnit",
+  "nodes": [
+    {
+      "id": 599,
+      "literals": ["solidity", "^", "0.8", ".0"],
+      "nodeType": "PragmaDirective",
+      "src": "37:23:10"
+    }
+  ],
+  "src": "37:1165:10"
+}

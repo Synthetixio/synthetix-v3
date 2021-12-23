@@ -1,66 +1,74 @@
+const { parseFullyQualifiedName } = require('hardhat/utils/contract-names');
 const {
   findYulCaseValues,
   findFunctionSelectors,
 } = require('@synthetixio/core-js/utils/ast/finders');
 const { getModulesSelectors } = require('./contract-helper');
 const { toPrivateConstantCase } = require('./router-helper');
-const filterValues = require('filter-values');
+const { onlyRepeated } = require('@synthetixio/core-js/utils/misc/array-filters');
 
 class RouterASTValidator {
-  constructor(asts) {
+  constructor(routerFullyQualifiedName, asts) {
+    const { sourceName } = parseFullyQualifiedName(routerFullyQualifiedName);
+    this.routerSelectors = findYulCaseValues(asts[sourceName]);
     this.asts = asts;
   }
 
   async findMissingModuleSelectors() {
     const moduleSelectors = await getModulesSelectors();
-    const routerSelectors = findYulCaseValues('Router', this.asts['Router']);
 
     const errors = [];
-    moduleSelectors.forEach((contractSelector) => {
-      if (!routerSelectors.some((s) => s.selector === contractSelector.selector)) {
+
+    for (const contractSelector of moduleSelectors) {
+      const selectorExists = this.routerSelectors.some(
+        (s) => s.selector === contractSelector.selector
+      );
+
+      if (!selectorExists) {
         errors.push({
           msg: `Selector for ${contractSelector.contractName}.${contractSelector.name} not found in the router`,
           contractSelector,
           missingInRouter: true,
         });
       }
-    });
+    }
 
-    routerSelectors.forEach((routerSelector) => {
-      if (!moduleSelectors.some((s) => s.selector === routerSelector.selector)) {
+    for (const routerSelector of this.routerSelectors) {
+      const selectorExists = moduleSelectors.some((s) => s.selector === routerSelector.selector);
+
+      if (!selectorExists) {
         errors.push({
           msg: `Selector ${routerSelector.selector} is present in router but not found in contracts`,
           routerSelector,
           onlyInRouter: true,
         });
       }
-    });
+    }
 
     return errors;
   }
 
   async findUnreachableModuleSelectors() {
-    const routerSelectors = findYulCaseValues('Router', this.asts['Router']);
-
-    const moduleDeploymentData = filterValues(
-      hre.deployer.deployment.general.contracts,
+    const modulesDeploymentData = Object.values(hre.deployer.deployment.general.contracts).filter(
       (c) => c.isModule
     );
 
     const moduleAddresses = [];
-    for (const [moduleName, moduleData] of Object.entries(moduleDeploymentData)) {
-      moduleAddresses[toPrivateConstantCase(moduleName)] = {
-        moduleName,
-        address: moduleData.deployedAddress,
+    for (const { contractName, deployedAddress } of modulesDeploymentData) {
+      moduleAddresses[toPrivateConstantCase(contractName)] = {
+        moduleName: contractName,
+        address: deployedAddress,
       };
     }
 
     const errors = [];
-    routerSelectors.forEach((s) => {
-      if (
-        !moduleAddresses[s.value.name] ||
-        moduleAddresses[s.value.name].address !== s.value.value.value
-      ) {
+
+    for (const s of this.routerSelectors) {
+      const selectorReachable =
+        moduleAddresses[s.value.name] &&
+        moduleAddresses[s.value.name].address === s.value.value.value;
+
+      if (!selectorReachable) {
         errors.push({
           msg: `Selector ${s.selector} not reachable. ${s.value.name} pointing to ${
             s.value.value.value
@@ -69,8 +77,9 @@ class RouterASTValidator {
       } else {
         const contractSelectors = findFunctionSelectors(
           moduleAddresses[s.value.name].moduleName,
-          this.asts
+          Object.values(this.asts)
         );
+
         if (!contractSelectors.some((cs) => cs.selector === s.selector)) {
           errors.push({
             msg: `Selector ${s.selector} not reachable. ${s.value.name} (${
@@ -79,25 +88,17 @@ class RouterASTValidator {
           });
         }
       }
-    });
+    }
 
     return errors;
   }
 
   async findDuplicateModuleSelectors() {
-    const routerSelectors = findYulCaseValues('Router', this.asts['Router']);
+    const duplicates = this.routerSelectors.map((s) => s.selector).filter(onlyRepeated);
 
-    const duplicates = routerSelectors.filter(
-      (s, index, selectors) =>
-        selectors.indexOf(selectors.find((n) => n.selector === s.selector)) !== index
-    );
-
-    const errors = [];
-    duplicates.forEach((duplicate) => {
-      errors.push({
-        msg: `Selector ${duplicate.selector} is present multiple times in the router`,
-      });
-    });
+    const errors = duplicates.map((duplicate) => ({
+      msg: `Selector ${duplicate.selector} is present multiple times in the router`,
+    }));
 
     return errors;
   }
