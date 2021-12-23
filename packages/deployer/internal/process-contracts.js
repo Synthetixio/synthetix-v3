@@ -1,4 +1,5 @@
 const fs = require('fs/promises');
+const { parseFullyQualifiedName } = require('hardhat/utils/contract-names');
 const { getBytecodeHash } = require('@synthetixio/core-js/utils/ethers/contracts');
 const { findInheritedContractNames } = require('@synthetixio/core-js/utils/ast/finders');
 const { contractIsModule, getContractFilePath } = require('./contract-helper');
@@ -6,14 +7,15 @@ const { contractIsModule, getContractFilePath } = require('./contract-helper');
 /**
  * Initialize contract metadata on hre.deployer.deployment.*
  * This will in turn save all the necessary data to deployments file.
- * @param {string} contractName
+ * @param {string} contractFullyQualifiedName
  */
-async function initContractData(contractName) {
+async function initContractData(contractFullyQualifiedName) {
   const { deployment, previousDeployment } = hre.deployer;
 
-  const { sourceName, abi, deployedBytecode } = await hre.artifacts.readArtifact(contractName);
+  const { sourceName, contractName } = parseFullyQualifiedName(contractFullyQualifiedName);
+  const { abi, deployedBytecode } = await hre.artifacts.readArtifact(contractFullyQualifiedName);
 
-  const previousData = previousDeployment?.general.contracts[contractName] || {};
+  const previousData = previousDeployment?.general.contracts[contractFullyQualifiedName] || {};
   const isModule = contractIsModule(sourceName);
   const deployedBytecodeHash = getBytecodeHash(deployedBytecode);
 
@@ -22,6 +24,7 @@ async function initContractData(contractName) {
     deployTransaction: '',
     ...previousData,
     deployedBytecodeHash,
+    contractName,
     sourceName,
   };
 
@@ -29,32 +32,34 @@ async function initContractData(contractName) {
     generalData.isModule = true;
   }
 
-  deployment.general.contracts[contractName] = generalData;
-  deployment.abis[contractName] = abi;
+  deployment.general.contracts[contractFullyQualifiedName] = generalData;
+  deployment.abis[contractFullyQualifiedName] = abi;
 
-  await initContractSource(contractName);
+  await _initContractSource(contractFullyQualifiedName);
 }
 
 /**
  * Save contract sources, AST and bytcode to deployment files. Kept for maintaining
  * historic data.
- * @param {string} contractName
+ * @param {string} contractFullyQualifiedName
  */
-async function initContractSource(contractName) {
+async function _initContractSource(contractFullyQualifiedName) {
   const { deployment } = hre.deployer;
 
   // If the contract sources are already calculated, don't re do it.
-  if (deployment.sources[contractName]) {
+  if (deployment.sources[contractFullyQualifiedName]) {
     return;
   }
 
-  const { sourceName, bytecode, deployedBytecode } = await hre.artifacts.readArtifact(contractName);
-  const buildInfo = await hre.artifacts.getBuildInfo(`${sourceName}:${contractName}`);
+  const { sourceName, bytecode, deployedBytecode } = await hre.artifacts.readArtifact(
+    contractFullyQualifiedName
+  );
+  const buildInfo = await hre.artifacts.getBuildInfo(contractFullyQualifiedName);
 
   const ast = buildInfo.output.sources[sourceName].ast;
   const sourceCode = (await fs.readFile(getContractFilePath(sourceName))).toString();
 
-  deployment.sources[contractName] = {
+  deployment.sources[contractFullyQualifiedName] = {
     bytecode,
     deployedBytecode,
     sourceCode,
@@ -63,11 +68,11 @@ async function initContractSource(contractName) {
 
   // Also init all the sources from the inherited contracts
   for (const contractName of findInheritedContractNames(ast)) {
-    await initContractSource(contractName);
+    const { sourceName } = await hre.artifacts.readArtifact(contractName);
+    await _initContractSource(`${sourceName}:${contractName}`);
   }
 }
 
 module.exports = {
   initContractData,
-  initContractSource,
 };

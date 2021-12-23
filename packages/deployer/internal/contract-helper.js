@@ -1,6 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const filterValues = require('filter-values');
+const { parseName } = require('hardhat/utils/contract-names');
 const { getSelectors } = require('@synthetixio/core-js/utils/ethers/contracts');
 const { deployedContractHasBytescode } = require('@synthetixio/core-js/utils/ethers/contracts');
 const { onlyRepeated } = require('@synthetixio/core-js/utils/misc/array-filters');
@@ -88,18 +89,19 @@ function getContractFilePath(contractSourcePath) {
 }
 
 /**
- * Get the list of all modules relative paths, e.g.: ['contracts/modules/SomeModule.sol', ...]
+ * Get the list of all modules fully qualified names.
+ *   e.g.: ['contracts/modules/SomeModule.sol:SomeModule', ...]
  * @returns {string[]}
  */
-async function getModulesPaths() {
+async function getModulesFullyQualifiedNames() {
   const names = await hre.artifacts.getAllFullyQualifiedNames();
 
   const moduleSourcePaths = [];
 
   for (const name of names) {
-    const [contractSourcePath] = name.split(':');
-    if (contractIsModule(contractSourcePath)) {
-      moduleSourcePaths.push(contractSourcePath);
+    const { sourceName } = parseName(name);
+    if (contractIsModule(sourceName)) {
+      moduleSourcePaths.push(name);
     }
   }
 
@@ -113,5 +115,5 @@ module.exports = {
   isAlreadyDeployed,
   contractIsModule,
   getContractFilePath,
-  getModulesPaths,
+  getModulesFullyQualifiedNames,
 };
