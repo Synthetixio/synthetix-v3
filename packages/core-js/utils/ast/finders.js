@@ -90,14 +90,13 @@ function findYulCaseValues(contractNode) {
   for (const caseSelector of findAll('YulCase', contractNode)) {
     if (caseSelector.value === 'default') continue;
     if (caseSelector.value.value === '0') continue;
+
     const caseAssignment = findAll('YulAssignment', caseSelector);
-    const assignmentValue = caseAssignment ? caseAssignment.next() : null;
+    const nextCaseAssignment = caseAssignment.next();
 
     items.push({
       selector: caseSelector.value.value,
-      value: assignmentValue
-        ? addressVariables.find((v) => v.name === assignmentValue.value.value.name)
-        : null,
+      value: addressVariables.find((v) => v.name === nextCaseAssignment.value.value.name),
     });
   }
 

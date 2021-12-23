@@ -42,6 +42,7 @@ describe('utils/io/prompter.js', () => {
       logger.success('hello');
       logger.complete('hello');
       logger.debug('hello');
+      logger.title('hello');
       logger.subtitle('hello');
       logger.boxStart();
       logger.log('boxed hello');
@@ -56,6 +57,7 @@ describe('utils/io/prompter.js', () => {
         ['✓ hello'],
         ['✅ hello'],
         ['💯 hello'],
+        ['hello'],
         ['\n'],
         [
           '┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓',
@@ -104,6 +106,7 @@ describe('utils/io/prompter.js', () => {
       logger.success('hello');
       logger.complete('hello');
       logger.debug('hello');
+      logger.title('hello');
       logger.subtitle('hello');
       logger.boxStart();
       logger.log('boxed hello');

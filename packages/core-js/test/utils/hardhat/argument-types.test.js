@@ -8,10 +8,13 @@ describe('utils/hardhat/argument-types.js', function () {
       notEqual(alphanumeric.parse, undefined);
       notEqual(alphanumeric.validate, undefined);
     });
+
     it('parses strings correctly', () => {
       equal(alphanumeric.parse('', 'WORD'), 'word');
       equal(alphanumeric.parse('', 'word'), 'word');
+      equal(alphanumeric.parse('', 5), 5);
     });
+
     it('validates correctly', () => {
       doesNotThrow(() => {
         alphanumeric.validate('argName', 'word1234');

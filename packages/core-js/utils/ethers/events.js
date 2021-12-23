@@ -7,28 +7,18 @@
  * @returns {array} The array of parsed events
  */
 function findEvent({ receipt, eventName, contract = undefined }) {
-  let eventsAreParsed = false;
-  if (receipt.events !== undefined) {
-    const event = receipt.events.find((e) => e.event === eventName);
-    if (event !== undefined) {
-      return event;
-    }
-    eventsAreParsed = !receipt.events.some((e) => e.event === undefined);
+  let events = receipt.events;
+
+  if (!events || (events.some((e) => e.event === undefined) && contract)) {
+    events = parseLogs({ contract, logs: receipt.logs });
   }
 
-  let events = receipt.events || receipt.logs;
-
-  if (!eventsAreParsed) {
-    if (!contract) {
-      throw new Error(
-        `Cannot find event ${eventName} in logs, and no contract interface was provided for manual parsing.`
-      );
-    }
-
-    events = parseLogs({ contract, logs: events });
+  const event = events.find((e) => e.event === eventName);
+  if (!event) {
+    throw new Error(`Cannot find event ${eventName} in receipt.`);
   }
 
-  return events.find((e) => e.event === eventName);
+  return event;
 }
 
 /**
