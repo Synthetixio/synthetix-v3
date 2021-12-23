@@ -31,6 +31,10 @@ describe('sample-project', function () {
       it('correctly applies changes on deployment', async function () {
         this.timeout(120000);
 
+        await deployOnEnvironment(hre, {
+          alias: 'changes',
+        });
+
         // Third deployment, with changes
         const MODULES = hre.config.deployer.paths.modules;
         const CONTRACTS = path.join(hre.config.paths.root, 'test-contracts');
