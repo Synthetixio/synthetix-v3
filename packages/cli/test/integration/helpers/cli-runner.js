@@ -2,9 +2,12 @@ const assert = require('assert/strict');
 const chalk = require('chalk');
 const { spawn } = require('child_process');
 
+// Set these to false on CI
 const SHOW_CLI_OUTPUT = false;
-const START_DELAY = 2000;
-const INTERACT_DELAY = 500;
+const SHOW_CLI_INTERACTIONS = false;
+
+const START_DELAY = 3000;
+const INTERACT_DELAY = 1000;
 
 class CliRunner {
   constructor() {}
@@ -47,6 +50,10 @@ class CliRunner {
   }
 
   async interact(cmd) {
+    if (SHOW_CLI_INTERACTIONS) {
+      console.log(`CLI input: ${cmd}`);
+    }
+
     this.cliProcess.stdin.write(cmd);
 
     return new Promise((resolve) => {
@@ -61,22 +68,17 @@ class CliRunner {
   printed(txt) {
     const includes = this.buffer.includes(txt);
     if (!includes) {
-      console.error(
-        `CLI output was expected to include "${chalk.red(
-          txt
-        )}", but it does not. CLI output is: "${chalk.gray(this.buffer)}"`
-      );
+      console.error(`CLI output was expected to include "${chalk.red(txt)}", but it does not.`);
     }
 
     assert.ok(includes);
   }
 
   get keys() {
+    // These are ascii hex key codes
     return {
       CTRLC: '\x03',
       ENTER: '\x0D',
-      DOWN: '\x28',
-      UP: '\x26',
     };
   }
 }

@@ -9,15 +9,24 @@ describe('pick-parameters', function () {
 
     await this.cli.start();
     await this.cli.interact(this.cli.keys.ENTER); // Selects SomeModule
-    // TODO: go down once
-    // await this.cli.interact(this.cli.keys.ENTER); // Selects setUintValue
-    // await this.cli.interact(this.cli.keys.CTRLC); // Return to function list
+    await this.cli.interact('set'); // Highlights setUintValue
+    await this.cli.interact(this.cli.keys.ENTER); // Selects setUintValue
+    await this.cli.interact('ngmi'); // Invalid input for "newValue"
+    await this.cli.interact(this.cli.keys.ENTER); // Submit input
+    await this.cli.interact('1337'); // Valid input for "newValue"
+    await this.cli.interact(this.cli.keys.ENTER); // Submit input
+    await this.cli.interact(this.cli.keys.CTRLC); // Cancel transaction
     await this.cli.interact(this.cli.keys.CTRLC); // Return to contract list
     await this.cli.interact(this.cli.keys.CTRLC); // Exit
 
     assert.deepEqual(this.cli.errors, []);
   });
 
-  // TODO
-  it('TODO', async function () {});
+  it('displays an error', async function () {
+    await this.cli.printed('Error: invalid BigNumber string');
+  });
+
+  it('displays the function to be called', async function () {
+    await this.cli.printed('Calling SomeModule.setUintValue');
+  });
 });

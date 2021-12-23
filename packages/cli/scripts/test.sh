@@ -11,3 +11,6 @@ npx hardhat deploy --network local --clear --quiet --no-confirm --instance test
 # Run tests
 cd ../../..
 npx mocha
+
+# Kill node
+pkill node

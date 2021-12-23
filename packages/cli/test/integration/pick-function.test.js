@@ -16,8 +16,7 @@ describe('pick-function', function () {
   });
 
   it('displays the function list', async function () {
-    this.cli.printed('SomeModule.setUintValue(uint256 newValue) 0x2f3b21a2');
-    this.cli.printed('SomeModule.getUintValue() 0x55ec6354');
-    // TODO: Include return values in read functions (not implemented in cli)
+    this.cli.printed('setUintValue(uint256 newValue) 0x2f3b21a2');
+    this.cli.printed('getUintValue() view returns (uint256) 0x55ec6354');
   });
 });
