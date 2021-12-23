@@ -13,10 +13,12 @@ const {
 } = require('../../../utils/ast/finders');
 const asts = require('../../fixtures/asts.json');
 
+const astNodes = Object.values(asts);
+
 describe('utils/ast/finders.js find AST artifacts', function () {
   describe('find contract dependencies', () => {
     it('finds contract dependencies of a simple contract', async () => {
-      const dependencies = await findContractDependencies('AnotherModule', asts);
+      const dependencies = await findContractDependencies('AnotherModule', astNodes);
       equal(dependencies.length, 3, 'AnotherModule should have 3 dependencies');
 
       equal(
@@ -27,17 +29,17 @@ describe('utils/ast/finders.js find AST artifacts', function () {
     });
 
     it('doesnt find a contract for an invalid name', async () => {
-      const dependencies = await findContractDependencies('NotAValidModuleName', asts);
+      const dependencies = await findContractDependencies('NotAValidModuleName', astNodes);
       equal(dependencies.length, 0);
     });
 
     it('doesnt find a contract for a missing ast', async () => {
-      const dependencies = await findContractDependencies('MissingModule', { MissingModule: {} });
+      const dependencies = await findContractDependencies('MissingModule', []);
       equal(dependencies.length, 0);
     });
 
     it('finds contract dependencies of a complex contract', async () => {
-      const dependencies = await findContractDependencies('SettingsModule', asts);
+      const dependencies = await findContractDependencies('SettingsModule', astNodes);
       equal(dependencies.length, 5, 'SettingsModule should have 5 dependencies');
 
       equal(
@@ -50,13 +52,13 @@ describe('utils/ast/finders.js find AST artifacts', function () {
 
   describe('find function selectors', function () {
     it('finds selectors from a contract', async () => {
-      const selectors = await findFunctionSelectors('AnotherModule', asts);
+      const selectors = await findFunctionSelectors('AnotherModule', astNodes);
       equal(selectors.length, 1, 'AnotherModule should have 1 selector');
       equal(selectors[0].selector, '0x45aa2181', 'AnotherModule selector should be 0x45aa2181');
     });
 
     it('doesnt find selectors from a contract that doesnt expose any', async () => {
-      const selectors = await findFunctionSelectors('Router', asts);
+      const selectors = await findFunctionSelectors('Router', astNodes);
       equal(selectors.length, 0, 'Router should not have any selector');
     });
   });

@@ -107,7 +107,7 @@ class ModuleStorageASTValidator {
     // Find all contracts inherted by modules
     const candidates = [];
     for (const moduleName of moduleNames) {
-      for (const dep of findContractDependencies(moduleName, this.asts)) {
+      for (const dep of findContractDependencies(moduleName, Object.values(this.asts))) {
         if (!candidates.includes(dep.name)) {
           candidates.push(dep.name);
         }

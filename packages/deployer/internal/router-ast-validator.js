@@ -77,7 +77,7 @@ class RouterASTValidator {
       } else {
         const contractSelectors = findFunctionSelectors(
           moduleAddresses[s.value.name].moduleName,
-          this.asts
+          Object.values(this.asts)
         );
 
         if (!contractSelectors.some((cs) => cs.selector === s.selector)) {

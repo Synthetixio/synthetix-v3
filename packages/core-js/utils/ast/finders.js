@@ -58,39 +58,6 @@ function findContractStateVariables(contractName, astNode) {
 }
 
 /**
- * Get the complete tree of dependencies from the given contract. This methods
- * takes an objects with the keys from all the contracts and the values are their
- * AST nodes.
- * @param {string} contractName
- * @param {{ [contractName: string]: import("solidity-ast").SourceUnit }} astNodes
- * @returns {import("solidity-ast").ContractDefinition[]}
- */
-function findContractDependencies(contractName, astNodes) {
-  if (!astNodes[contractName]) {
-    return [];
-  }
-
-  const contractNode = findContractNodeWithName(contractName, astNodes[contractName]);
-
-  if (!contractNode) {
-    return [];
-  }
-
-  const dependencyContractNodes = [];
-
-  for (const baseContractId of contractNode.linearizedBaseContracts) {
-    for (const astNode of Object.values(astNodes)) {
-      const dependency = findContractNodeWithId(baseContractId, astNode);
-      if (dependency) {
-        dependencyContractNodes.push(dependency);
-      }
-    }
-  }
-
-  return dependencyContractNodes;
-}
-
-/**
  * Get all the contract names that inherits the given contract node AST
  * @param {import("solidity-ast").ContractDefinition} contractNode
  * @returns {string[]}
@@ -160,10 +127,47 @@ function _findFunctionSelectors(contractNode) {
 }
 
 /**
+ * Get the complete tree of dependencies from the given contract. This methods
+ * takes an objects with the keys from all the contracts and the values are their
+ * AST nodes.
+ * @param {string} contractName
+ * @param {import("solidity-ast").SourceUnit[]} astNodes
+ * @returns {import("solidity-ast").ContractDefinition[]}
+ */
+function findContractDependencies(contractName, astNodes) {
+  let contractNode;
+
+  for (const astNode of astNodes) {
+    const node = findContractNodeWithName(contractName, astNode);
+    if (node) {
+      contractNode = node;
+      break;
+    }
+  }
+
+  if (!contractNode) {
+    return [];
+  }
+
+  const dependencyContractNodes = [];
+
+  for (const baseContractId of contractNode.linearizedBaseContracts) {
+    for (const astNode of astNodes) {
+      const dependencyNode = findContractNodeWithId(baseContractId, astNode);
+      if (dependencyNode) {
+        dependencyContractNodes.push(dependencyNode);
+      }
+    }
+  }
+
+  return dependencyContractNodes;
+}
+
+/**
  * Get all the function selectors definitions from the complete tree of contract
  * nodes starting from the given root contract definition
  * @param {string} contractName
- * @param {{ [contractName: string]: import("solidity-ast").SourceUnit }} astNodes
+ * @param {import("solidity-ast").SourceUnit[]} astNodes
  * @returns {import("solidity-ast").ContractDefinition[]}
  */
 function findFunctionSelectors(contractName, astNodes) {
