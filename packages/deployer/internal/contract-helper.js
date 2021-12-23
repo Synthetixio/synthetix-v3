@@ -1,4 +1,3 @@
-const fs = require('fs');
 const path = require('path');
 const { parseName } = require('hardhat/utils/contract-names');
 const { getSelectors } = require('@synthetixio/core-js/utils/ethers/contracts');
