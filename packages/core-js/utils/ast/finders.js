@@ -1,6 +1,15 @@
 const { findAll } = require('solidity-ast/utils');
 
 /**
+ * Get all the contract definitions on the given node
+ * @param {import("solidity-ast").SourceUnit} astNode
+ * @returns {import("solidity-ast").ContractDefinition[]}
+ */
+function findContractDefinitions(astNode) {
+  return Array.from(findAll('ContractDefinition', astNode));
+}
+
+/**
  * Get the given contract by id on the given AST
  * @param {number} contractId
  * @param {import("solidity-ast").SourceUnit} astNode
@@ -69,7 +78,7 @@ function findInheritedContractNames(contractNode) {
 /**
  * Find all the slot definitions on the given AST node
  * @param {string} contractName
- * @param {import("solidity-ast").SourceUnit} astNode
+ * @param {import("solidity-ast").ContractDefinition} contractNode
  * @returns {string[]}
  */
 function findYulStorageSlotAssignments(contractNode) {
@@ -81,11 +90,10 @@ function findYulStorageSlotAssignments(contractNode) {
 /**
  * Get all the case values from the given contract node
  * @param {string} contractName
- * @param {import("solidity-ast").SourceUnit} astNode
+ * @param {import("solidity-ast").ContractDefinition} contractNode
  * @returns {{ selector: string, value?: string }[]}
  */
-function findYulCaseValues(contractName, astNode) {
-  const contractNode = findContractNodeWithName(contractName, astNode);
+function findYulCaseValues(contractNode) {
   const addressVariables = findContractNodeVariables(contractNode);
 
   const items = [];
@@ -176,6 +184,7 @@ function findFunctionSelectors(contractName, astNodes) {
 }
 
 module.exports = {
+  findContractDefinitions,
   findYulCaseValues,
   findYulStorageSlotAssignments,
   findContractNodeWithName,

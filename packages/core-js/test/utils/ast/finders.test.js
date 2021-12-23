@@ -10,8 +10,10 @@ const {
   findInheritedContractNames,
   findYulCaseValues,
   findYulStorageSlotAssignments,
+  findContractDefinitions,
 } = require('../../../utils/ast/finders');
 const asts = require('../../fixtures/asts.json');
+const noContractAst = require('../../fixtures/no-contract-ast.json');
 
 const astNodes = Object.values(asts);
 
@@ -60,6 +62,20 @@ describe('utils/ast/finders.js find AST artifacts', function () {
     it('doesnt find selectors from a contract that doesnt expose any', async () => {
       const selectors = await findFunctionSelectors('Router', astNodes);
       equal(selectors.length, 0, 'Router should not have any selector');
+    });
+  });
+
+  describe('find all the contract definitions on the given node', function () {
+    it('finds the expected contract definition on the node', async () => {
+      const nodes = await findContractDefinitions(asts['AnotherModule']);
+      equal(nodes.length, 1);
+      equal(nodes[0].nodeType, 'ContractDefinition');
+      equal(nodes[0].name, 'AnotherModule');
+    });
+
+    it('doesnt find a contract with an invalid name', async () => {
+      const nodes = await findContractDefinitions(noContractAst);
+      equal(nodes.length, 0);
     });
   });
 
@@ -148,7 +164,7 @@ describe('utils/ast/finders.js find AST artifacts', function () {
 
   describe('find case vaules (YUL)', function () {
     it('finds case values from Router contract', async () => {
-      const routerSelectors = findYulCaseValues('Router', asts['Router']);
+      const routerSelectors = findYulCaseValues(asts['Router']);
       notEqual(routerSelectors, undefined);
       equal(routerSelectors.length > 2, true);
       equal(
@@ -160,7 +176,7 @@ describe('utils/ast/finders.js find AST artifacts', function () {
     });
 
     it('doesnt find case values on not-case contract', async () => {
-      const routerSelectors = findYulCaseValues('AnotherModule', asts['AnotherModule']);
+      const routerSelectors = findYulCaseValues(asts['AnotherModule']);
       notEqual(routerSelectors, undefined);
       equal(routerSelectors.length == 0, true);
     });

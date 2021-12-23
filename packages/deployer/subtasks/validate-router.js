@@ -1,6 +1,9 @@
-const { subtask } = require('hardhat/config');
-const logger = require('@synthetixio/core-js/utils/io/logger');
+const path = require('path');
 const mapValues = require('just-map-values');
+const { subtask } = require('hardhat/config');
+const { getFullyQualifiedName } = require('hardhat/utils/contract-names');
+const logger = require('@synthetixio/core-js/utils/io/logger');
+const relativePath = require('@synthetixio/core-js/utils/misc/relative-path');
 const { initContractData } = require('../internal/process-contracts');
 const RouterSourceValidator = require('../internal/router-source-validator');
 const RouterASTValidator = require('../internal/router-ast-validator');
@@ -15,10 +18,15 @@ subtask(
 ).setAction(async () => {
   logger.subtitle('Validating router');
 
-  await initContractData('Router');
+  const routerName = 'Router';
+  const routerPath = path.join(hre.config.paths.sources, `${routerName}.sol`);
+  const relativeRouterPath = relativePath(routerPath, hre.config.paths.root);
+  const routerFullyQualifiedName = getFullyQualifiedName(relativeRouterPath, routerName);
+
+  await initContractData(routerFullyQualifiedName);
 
   const sourceErrorsFound = await _runSourceValidations();
-  const astErrorsFound = await _runASTValidations();
+  const astErrorsFound = await _runASTValidations(routerFullyQualifiedName);
 
   if (sourceErrorsFound.length > 0 || astErrorsFound.length > 0) {
     throw new ContractValidationError('Router is not valid');
@@ -47,11 +55,11 @@ async function _runSourceValidations() {
   return errorsFound;
 }
 
-async function _runASTValidations() {
+async function _runASTValidations(routerFullyQualifiedName) {
   const errorsFound = [];
 
   const asts = mapValues(hre.deployer.deployment.sources, (val) => val.ast);
-  const validator = new RouterASTValidator(asts);
+  const validator = new RouterASTValidator(routerFullyQualifiedName, asts);
 
   logger.debug('Validating Router compiled code');
   errorsFound.push(...(await validator.findMissingModuleSelectors()));

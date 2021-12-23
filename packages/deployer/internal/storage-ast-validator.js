@@ -1,6 +1,6 @@
-const { findAll } = require('solidity-ast/utils');
 const { parseFullyQualifiedName } = require('hardhat/utils/contract-names');
 const {
+  findContractDefinitions,
   findContractDependencies,
   findYulStorageSlotAssignments,
   findContractStateVariables,
@@ -12,11 +12,9 @@ const { onlyRepeated } = require('@synthetixio/core-js/utils/misc/array-filters'
 
 class ModuleStorageASTValidator {
   constructor(asts, previousAsts) {
-    this.contractNodes = Object.values(asts)
-      .map((astNode) => findAll('ContractDefinition', astNode))
-      .flat();
+    this.contractNodes = Object.values(asts).map(findContractDefinitions).flat();
     this.previousContractNodes = Object.values(previousAsts || {})
-      .map((astNode) => findAll('ContractDefinition', astNode))
+      .map(findContractDefinitions)
       .flat();
   }
 
