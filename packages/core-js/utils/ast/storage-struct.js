@@ -18,7 +18,6 @@ async function buildContractsStructMap(contractNodes) {
     }
   }
 
-  console.log(structs);
   _orderContractsStructMap(structs);
 
   return structs;
