@@ -11,7 +11,7 @@ const {
   getDeploymentFolder,
 } = require('../../../utils/deployments');
 
-describe('utils/deployments.js', function () {
+describe.only('utils/deployments.js', function () {
   // Default configuration using as folder the tests fixtures
   const info = {
     folder: path.resolve(__dirname, '..', '..', 'fixtures', 'completed-deployment', 'deployments'),
@@ -23,14 +23,14 @@ describe('utils/deployments.js', function () {
   const folder = `${info.folder}/${info.network}/${info.instance}`;
 
   // Fixture deployment files
-  const files = ['2021-09-18-00.json', '2021-09-25-00.json'].map((file) => `${folder}/${file}`);
+  const files = ['2021-12-23-00.json', '2021-12-23-01.json'].map((file) => `${folder}/${file}`);
 
   describe('#getDeploymentExtendedFiles', function () {
     it('gets the list of extended files for the given deployment file', function () {
       const result = getDeploymentExtendedFiles(files[files.length - 1]);
       const expected = {
-        abis: `${folder}/extended/2021-09-25-00.abis.json`,
-        sources: `${folder}/extended/2021-09-25-00.sources.json`,
+        abis: `${folder}/extended/2021-12-23-01.abis.json`,
+        sources: `${folder}/extended/2021-12-23-01.sources.json`,
       };
       deepEqual(result, expected);
     });
@@ -39,14 +39,14 @@ describe('utils/deployments.js', function () {
   describe('#getProxyAddress', function () {
     it('gets the current Proxy deployment address', function () {
       const result = getProxyAddress(info);
-      deepEqual(result, '0x922D6956C99E12DFeB3224DEA977D0939758A1Fe');
+      deepEqual(result, '0x0165878A594ca255338adfa4d48449f69242Eb8F');
     });
   });
 
   describe('#getRouterAddress', function () {
     it('gets the current Router deployment address', function () {
       const result = getRouterAddress(info);
-      deepEqual(result, '0x162A433068F51e18b7d13932F27e66a3f99E6890');
+      deepEqual(result, '0x5FC8d32690cc91D4c39d9d3abcBD16989F875707');
     });
   });
 

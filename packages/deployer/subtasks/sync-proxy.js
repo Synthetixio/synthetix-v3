@@ -19,11 +19,15 @@ subtask(SUBTASK_SYNC_PROXY, 'Compile and sync the source from the Proxy.').setAc
 
     await initContractData(proxyFullyQualifiedName, { isProxy: true });
 
-    const currentBytecode =
-      hre.deployer.deployment.general.contracts[proxyFullyQualifiedName].deployedBytecodeHash;
-    const previousBytecode =
-      hre.deployer.previousDeployment?.general.contracts[proxyFullyQualifiedName]
-        ?.deployedBytecodeHash;
+    const proxyData = Object.values(hre.deployer.deployment.general.contracts).find(
+      (data) => data.isProxy
+    );
+    const previousProxyData = Object.values(
+      hre.deployer.previousDeployment?.general.contracts || {}
+    ).find((data) => data.isProxy);
+
+    const currentBytecode = proxyData.deployedBytecodeHash;
+    const previousBytecode = previousProxyData?.deployedBytecodeHash;
 
     if (hre.deployer.previousDeployment && !previousBytecode) {
       throw new ContractValidationError(

@@ -43,8 +43,9 @@ function getProxyAddress(info) {
   info = _populateDefaults(info);
 
   const deployment = getDeployment(info);
+  const proxyData = Object.values(deployment.contracts).find((c) => c.isProxy);
 
-  return deployment.contracts[info.proxyContract].deployedAddress;
+  return proxyData.deployedAddress;
 }
 
 /**
@@ -56,8 +57,9 @@ function getRouterAddress(info) {
   info = _populateDefaults(info);
 
   const deployment = getDeployment(info);
+  const routerData = Object.values(deployment.contracts).find((c) => c.isRouter);
 
-  return deployment.contracts.Router.deployedAddress;
+  return routerData.deployedAddress;
 }
 
 /**

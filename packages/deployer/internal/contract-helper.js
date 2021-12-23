@@ -1,6 +1,5 @@
 const fs = require('fs');
 const path = require('path');
-const filterValues = require('filter-values');
 const { parseName } = require('hardhat/utils/contract-names');
 const { getSelectors } = require('@synthetixio/core-js/utils/ethers/contracts');
 const { deployedContractHasBytescode } = require('@synthetixio/core-js/utils/ethers/contracts');
@@ -36,9 +35,11 @@ async function getAllSelectors(contractsFullyQualifiedNames) {
 }
 
 async function getModulesSelectors() {
-  const contracts = filterValues(hre.deployer.deployment.general.contracts, (c) => c.isModule);
-  const contractsNames = Object.keys(contracts);
-  return await getAllSelectors(contractsNames);
+  const contractNames = Object.entries(hre.deployer.deployment.general.contracts)
+    .filter(([, c]) => c.isModule)
+    .map(([name]) => name);
+
+  return await getAllSelectors(contractNames);
 }
 
 function findDuplicateSelectors(selectors) {
