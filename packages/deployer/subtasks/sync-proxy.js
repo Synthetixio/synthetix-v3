@@ -1,4 +1,5 @@
 const { subtask } = require('hardhat/config');
+const { getFullyQualifiedName, isFullyQualifiedName } = require('hardhat/utils/contract-names');
 const logger = require('@synthetixio/core-js/utils/io/logger');
 const { initContractData } = require('../internal/process-contracts');
 const { ContractValidationError } = require('../internal/errors');
@@ -12,14 +13,17 @@ subtask(SUBTASK_SYNC_PROXY, 'Compile and sync the source from the Proxy.').setAc
   async (_, hre) => {
     logger.subtitle('Syncing and compiling source from the Proxy');
 
-    const proxyName = hre.config.deployer.proxyContract;
+    const contractName = hre.config.deployer.proxyContract;
+    const { sourceName } = await hre.artifacts.readArtifact(contractName);
+    const proxyFullyQualifiedName = getFullyQualifiedName(sourceName, contractName);
 
-    await initContractData(proxyName);
+    await initContractData(proxyFullyQualifiedName);
 
     const currentBytecode =
-      hre.deployer.deployment.general.contracts[proxyName].deployedBytecodeHash;
+      hre.deployer.deployment.general.contracts[proxyFullyQualifiedName].deployedBytecodeHash;
     const previousBytecode =
-      hre.deployer.previousDeployment?.general.contracts[proxyName]?.deployedBytecodeHash;
+      hre.deployer.previousDeployment?.general.contracts[proxyFullyQualifiedName]
+        ?.deployedBytecodeHash;
 
     if (hre.deployer.previousDeployment && !previousBytecode) {
       throw new ContractValidationError(
@@ -29,7 +33,7 @@ subtask(SUBTASK_SYNC_PROXY, 'Compile and sync the source from the Proxy.').setAc
 
     if (previousBytecode && previousBytecode !== currentBytecode) {
       throw new ContractValidationError(
-        `The ${proxyName} contract cannot be changed after first deployment`
+        `The ${contractName} contract cannot be changed after first deployment`
       );
     }
 
