@@ -1,30 +1,30 @@
 const fs = require('fs');
 const path = require('path');
-const filterValues = require('filter-values');
+const { parseName } = require('hardhat/utils/contract-names');
 const { getSelectors } = require('@synthetixio/core-js/utils/ethers/contracts');
 const { deployedContractHasBytescode } = require('@synthetixio/core-js/utils/ethers/contracts');
 const { onlyRepeated } = require('@synthetixio/core-js/utils/misc/array-filters');
 
-async function isAlreadyDeployed(contractName, deploymentData) {
-  if (!deploymentData.deployedAddress) {
+async function isAlreadyDeployed(contractData) {
+  if (!contractData.deployedAddress) {
     return false;
   }
 
-  const contractArtifacts = await hre.artifacts.readArtifact(contractName);
+  const contractArtifacts = await hre.artifacts.readArtifact(contractData.contractName);
 
   return deployedContractHasBytescode(
-    deploymentData.deployedAddress,
+    contractData.deployedAddress,
     contractArtifacts.deployedBytecode,
     hre.ethers.provider
   );
 }
 
-async function getAllSelectors(contractNames) {
+async function getAllSelectors(contractFullyQualifiedNames) {
   const allSelectors = [];
 
-  for (const contractName of contractNames) {
-    const contractArtifacts = await hre.artifacts.readArtifact(contractName);
-    const selectors = await getSelectors(contractArtifacts.abi);
+  for (const name of contractFullyQualifiedNames) {
+    const { contractName, abi } = await hre.artifacts.readArtifact(name);
+    const selectors = await getSelectors(abi);
 
     allSelectors.push(...selectors.map((s) => ({ ...s, contractName })));
   }
@@ -35,9 +35,11 @@ async function getAllSelectors(contractNames) {
 }
 
 async function getModulesSelectors() {
-  const contracts = filterValues(hre.deployer.deployment.general.contracts, (c) => c.isModule);
-  const contractsNames = Object.keys(contracts);
-  return await getAllSelectors(contractsNames);
+  const contractNames = Object.entries(hre.deployer.deployment.general.contracts)
+    .filter(([, c]) => c.isModule)
+    .map(([name]) => name);
+
+  return await getAllSelectors(contractNames);
 }
 
 function findDuplicateSelectors(selectors) {
@@ -88,18 +90,19 @@ function getContractFilePath(contractSourcePath) {
 }
 
 /**
- * Get the list of all modules relative paths, e.g.: ['contracts/modules/SomeModule.sol', ...]
+ * Get the list of all modules fully qualified names.
+ *   e.g.: ['contracts/modules/SomeModule.sol:SomeModule', ...]
  * @returns {string[]}
  */
-async function getModulesPaths() {
+async function getModulesFullyQualifiedNames() {
   const names = await hre.artifacts.getAllFullyQualifiedNames();
 
   const moduleSourcePaths = [];
 
   for (const name of names) {
-    const [contractSourcePath] = name.split(':');
-    if (contractIsModule(contractSourcePath)) {
-      moduleSourcePaths.push(contractSourcePath);
+    const { sourceName } = parseName(name);
+    if (contractIsModule(sourceName)) {
+      moduleSourcePaths.push(name);
     }
   }
 
@@ -113,5 +116,5 @@ module.exports = {
   isAlreadyDeployed,
   contractIsModule,
   getContractFilePath,
-  getModulesPaths,
+  getModulesFullyQualifiedNames,
 };

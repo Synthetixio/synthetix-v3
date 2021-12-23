@@ -1,4 +1,6 @@
+const { parseFullyQualifiedName } = require('hardhat/utils/contract-names');
 const {
+  findContractDefinitions,
   findContractDependencies,
   findYulStorageSlotAssignments,
   findContractStateVariables,
@@ -10,8 +12,10 @@ const { onlyRepeated } = require('@synthetixio/core-js/utils/misc/array-filters'
 
 class ModuleStorageASTValidator {
   constructor(asts, previousAsts) {
-    this.asts = asts;
-    this.previousAsts = previousAsts;
+    this.contractNodes = Object.values(asts).map(findContractDefinitions).flat();
+    this.previousContractNodes = Object.values(previousAsts || {})
+      .map(findContractDefinitions)
+      .flat();
   }
 
   findDuplicateNamespaces(namespaces) {
@@ -34,9 +38,9 @@ class ModuleStorageASTValidator {
     const namespaces = [];
     const errors = [];
 
-    for (const [contractName, ast] of Object.entries(this.asts)) {
-      for (const slot of findYulStorageSlotAssignments(contractName, ast)) {
-        namespaces.push({ contractName, slot });
+    for (const contractNode of this.contractNodes) {
+      for (const slot of findYulStorageSlotAssignments(contractNode)) {
+        namespaces.push({ contractName: contractNode.name, slot });
       }
     }
 
@@ -60,19 +64,19 @@ class ModuleStorageASTValidator {
     const namespaces = [];
     const errors = [];
 
-    if (!this.previousAsts) {
+    if (this.previousContractNodes.length === 0) {
       return errors;
     }
 
-    for (const [contractName, ast] of Object.entries(this.previousAsts)) {
-      for (const slot of findYulStorageSlotAssignments(contractName, ast)) {
-        previousNamespaces.push({ contractName, slot });
+    for (const contractNode of this.previousContractNodes) {
+      for (const slot of findYulStorageSlotAssignments(contractNode)) {
+        previousNamespaces.push({ contractName: contractNode.name, slot });
       }
     }
 
-    for (const [contractName, ast] of Object.entries(this.asts)) {
-      for (const slot of findYulStorageSlotAssignments(contractName, ast)) {
-        namespaces.push({ contractName, slot });
+    for (const contractNode of this.contractNodes) {
+      for (const slot of findYulStorageSlotAssignments(contractNode)) {
+        namespaces.push({ contractName: contractNode.name, slot });
       }
     }
 
@@ -107,18 +111,19 @@ class ModuleStorageASTValidator {
     // Find all contracts inherted by modules
     const candidates = [];
     for (const moduleName of moduleNames) {
-      for (const dep of findContractDependencies(moduleName, this.asts)) {
-        if (!candidates.includes(dep.name)) {
-          candidates.push(dep.name);
+      const { contractName } = parseFullyQualifiedName(moduleName);
+      for (const dep of findContractDependencies(contractName, this.contractNodes)) {
+        if (!candidates.includes(dep)) {
+          candidates.push(dep);
         }
       }
     }
 
     // Look for state variable declarations
-    for (const contractName of candidates) {
-      for (const node of findContractStateVariables(contractName, this.asts[contractName])) {
+    for (const contractNode of candidates) {
+      for (const node of findContractStateVariables(contractNode)) {
         errors.push({
-          msg: `Unsafe state variable declaration in ${contractName}: "${node.typeName.name} ${node.name}"`,
+          msg: `Unsafe state variable declaration in ${contractNode.name}: "${node.typeName.name} ${node.name}"`,
         });
       }
     }
@@ -129,12 +134,12 @@ class ModuleStorageASTValidator {
   async findInvalidNamespaceMutations() {
     const errors = [];
 
-    if (!this.previousAsts) {
+    if (this.previousContractNodes.length === 0) {
       return errors;
     }
 
-    const previousStructsMap = await buildContractsStructMap(this.previousAsts);
-    const currentStructsMap = await buildContractsStructMap(this.asts);
+    const previousStructsMap = await buildContractsStructMap(this.previousContractNodes);
+    const currentStructsMap = await buildContractsStructMap(this.contractNodes);
 
     let { modifications, removals } = compareStorageStructs({
       previousStructsMap,
