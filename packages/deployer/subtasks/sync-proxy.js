@@ -17,7 +17,7 @@ subtask(SUBTASK_SYNC_PROXY, 'Compile and sync the source from the Proxy.').setAc
     const { sourceName } = await hre.artifacts.readArtifact(contractName);
     const proxyFullyQualifiedName = getFullyQualifiedName(sourceName, contractName);
 
-    await initContractData(proxyFullyQualifiedName);
+    await initContractData(proxyFullyQualifiedName, { isProxy: true });
 
     const currentBytecode =
       hre.deployer.deployment.general.contracts[proxyFullyQualifiedName].deployedBytecodeHash;

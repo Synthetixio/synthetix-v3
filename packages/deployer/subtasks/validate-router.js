@@ -23,7 +23,7 @@ subtask(
   const relativeRouterPath = relativePath(routerPath, hre.config.paths.root);
   const routerFullyQualifiedName = getFullyQualifiedName(relativeRouterPath, routerName);
 
-  await initContractData(routerFullyQualifiedName);
+  await initContractData(routerFullyQualifiedName, { isRouter: true });
 
   const sourceErrorsFound = await _runSourceValidations();
   const astErrorsFound = await _runASTValidations(routerFullyQualifiedName);

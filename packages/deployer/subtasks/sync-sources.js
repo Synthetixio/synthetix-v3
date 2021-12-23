@@ -54,7 +54,7 @@ async function _addNewSources({ modulesFullyQualifiedNames, previousDeployment }
 
   // Initialize cotract data, using previous deployed one, or empty data.
   for (const moduleFullyQualifiedName of modulesFullyQualifiedNames) {
-    await initContractData(moduleFullyQualifiedName);
+    await initContractData(moduleFullyQualifiedName, { isModule: true });
 
     if (!previousDeployment?.general.contracts[moduleFullyQualifiedName]) {
       toAdd.push(moduleFullyQualifiedName);
