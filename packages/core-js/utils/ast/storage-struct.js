@@ -1,20 +1,5 @@
 const { findContractNodeVariables, findContractNodeStructs } = require('./finders');
 
-// prettier-ignore
-function orderContractsStructMap(structs) {
-  structs.sort((a, b) =>
-    a.contract.name > b.contract.name
-      ? 1
-      : a.contract.name < b.contract.name
-        ? -1
-        : a.struct.name > b.struct.name
-          ? 1
-          : a.struct.name < b.struct.name
-            ? -1
-            : 0
-  );
-}
-
 async function buildContractsStructMap(contractNodes) {
   const structs = [];
 
@@ -33,9 +18,20 @@ async function buildContractsStructMap(contractNodes) {
     }
   }
 
-  orderContractsStructMap(structs);
+  console.log(structs);
+  _orderContractsStructMap(structs);
 
   return structs;
+}
+
+function _orderContractsStructMap(structs) {
+  structs.sort((a, b) => {
+    if (a.contract.name >= b.contract.name) {
+      return 1;
+    } else {
+      return -1;
+    }
+  });
 }
 
 module.exports = {

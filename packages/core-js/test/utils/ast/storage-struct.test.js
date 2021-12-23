@@ -6,17 +6,21 @@ const asts = require('../../fixtures/asts.json');
 describe('utils/ast/storage-struct.js', function () {
   describe('build a contracts struct map', () => {
     let structsMap;
+
     before('builds a contract struct map from an asts object', async () => {
       const contractNodes = Object.values(asts).map(findContractDefinitions).flat();
       structsMap = await buildContractsStructMap(contractNodes);
     });
+
     it('handles asts without contract definitions', async () => {
       const result = await buildContractsStructMap([]);
       deepEqual(result, []);
     });
+
     it('should have 4 structs', () => {
       equal(structsMap.length, 4, 'structsMap should have 4 structs');
     });
+
     it('all strutcs should conform with the basic format', () => {
       for (const contractStruct of structsMap) {
         notEqual(contractStruct.contract, undefined);
@@ -27,6 +31,7 @@ describe('utils/ast/storage-struct.js', function () {
         notEqual(contractStruct.struct.members, undefined);
       }
     });
+
     it('should find all the members', () => {
       const contractStruct = structsMap.find((item) => item.contract.name === 'ProxyNamespace');
       notEqual(contractStruct, undefined);
