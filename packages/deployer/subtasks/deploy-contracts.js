@@ -66,7 +66,7 @@ async function _processContracts(contracts) {
     if (!contractData.deployedAddress) {
       toCreate.push(contractFullyQualifiedName);
     } else {
-      if (await isAlreadyDeployed(contractFullyQualifiedName, contractData)) {
+      if (await isAlreadyDeployed(contractData)) {
         toSkip.push(contractFullyQualifiedName);
       } else {
         toUpdate.push(contractFullyQualifiedName);
