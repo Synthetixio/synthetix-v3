@@ -154,17 +154,6 @@ contract CoreElectionModule is IElectionModule, ElectionStorage, OwnableMixin {
             revert DuplicateCandidates();
         }
 
-        if (electionData.addressVoted[msg.sender]) {
-            uint ballotIndex = electionData.ballotsIndex[msg.sender];
-            Ballot memory previousBallot = electionData.ballots[ballotIndex];
-
-            for (uint i = 0; i < previousBallot.candidates.length; i++) {
-                electionData.candidateVotes[previousBallot.candidates[i]] -= previousBallot.votePower;
-            }
-
-            electionData.ballots[ballotIndex] = Ballot({candidates: new address[](0), votePower: 0});
-        }
-
         uint votePower = ERC20(store.electionTokenAddress).balanceOf(msg.sender);
 
         for (uint i = 0; i < numCandidates; i++) {
@@ -177,11 +166,28 @@ contract CoreElectionModule is IElectionModule, ElectionStorage, OwnableMixin {
             electionData.candidateVotes[candidate] += votePower;
         }
 
-        Ballot memory ballot = Ballot({candidates: candidates, votePower: votePower});
+        if (electionData.addressVoted[msg.sender]) {
+            bytes32 previousBallotHash = electionData.addressBallotVote[msg.sender];
+            uint previousVoterPower = electionData.addressVotePower[msg.sender];
+            address[] storage previousBallotCandidates = electionData.ballotCandidates[previousBallotHash];
 
-        electionData.ballots.push(ballot);
-        electionData.ballotsIndex[msg.sender] = electionData.ballots.length - 1;
+            for (uint i = 0; i < previousBallotCandidates.length; i++) {
+                electionData.candidateVotes[previousBallotCandidates[i]] -= previousVoterPower;
+            }
 
+            electionData.ballotVotes[previousBallotHash] -= previousVoterPower;
+        }
+
+        bytes32 ballotHash = keccak256(abi.encodePacked(candidates));
+        if (electionData.ballotCandidates[ballotHash].length == 0) {
+            // this ballot wasn't already voted
+            electionData.ballotCandidates[ballotHash] = candidates;
+            electionData.ballotIds.push(ballotHash);
+        }
+        electionData.ballotVotes[ballotHash] += votePower;
+
+        electionData.addressBallotVote[msg.sender] = ballotHash;
+        electionData.addressVotePower[msg.sender] = votePower;
         electionData.addressVoted[msg.sender] = true;
     }
 
