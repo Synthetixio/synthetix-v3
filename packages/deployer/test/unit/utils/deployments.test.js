@@ -12,7 +12,7 @@ const {
   getDeploymentFolder,
 } = require('../../../utils/deployments');
 
-describe.only('utils/deployments.js', function () {
+describe('utils/deployments.js', function () {
   let hre, info, deploymentFile;
 
   before('prepare environment', async function () {
