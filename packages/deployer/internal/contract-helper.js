@@ -6,15 +6,15 @@ const { getSelectors } = require('@synthetixio/core-js/utils/ethers/contracts');
 const { deployedContractHasBytescode } = require('@synthetixio/core-js/utils/ethers/contracts');
 const { onlyRepeated } = require('@synthetixio/core-js/utils/misc/array-filters');
 
-async function isAlreadyDeployed(contractName, deploymentData) {
-  if (!deploymentData.deployedAddress) {
+async function isAlreadyDeployed(contractData) {
+  if (!contractData.deployedAddress) {
     return false;
   }
 
-  const contractArtifacts = await hre.artifacts.readArtifact(contractName);
+  const contractArtifacts = await hre.artifacts.readArtifact(contractData.contractName);
 
   return deployedContractHasBytescode(
-    deploymentData.deployedAddress,
+    contractData.deployedAddress,
     contractArtifacts.deployedBytecode,
     hre.ethers.provider
   );

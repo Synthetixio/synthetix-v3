@@ -18,9 +18,9 @@ subtask(
   }
 
   // Update & create the contracts
-  for (const contractName of [...toUpdate, ...toCreate]) {
+  for (const contractFullyQualifiedName of [...toUpdate, ...toCreate]) {
     await hre.run(SUBTASK_DEPLOY_CONTRACT, {
-      contractName,
+      contractFullyQualifiedName,
       requireConfirmation: true, // This could be set to false. For now, double confirmation seems kinda nice.
     });
   }
@@ -34,19 +34,19 @@ subtask(
 async function _confirmDeployments({ toSkip, toUpdate, toCreate }) {
   if (toSkip.length > 0) {
     logger.info(`There are ${toSkip.length} contracts that are already up-to-date:`);
-    toSkip.forEach((contractName) => logger.notice(contractName));
+    toSkip.forEach((name) => logger.notice(name));
   }
 
   if (toUpdate.length > 0) {
     logger.info(`The following ${toUpdate.length} contracts are going to be updated:`);
-    toUpdate.forEach((contractName) => logger.notice(contractName));
+    toUpdate.forEach((name) => logger.notice(name));
   }
 
   if (toCreate.length > 0) {
     logger.info(
       `The following ${toCreate.length} contracts are going to be deployed for the first time:`
     );
-    toCreate.forEach((contractName) => logger.notice(contractName));
+    toCreate.forEach((name) => logger.notice(name));
   }
 
   return await prompter.ask('Are you sure you want to make these changes?');
@@ -62,14 +62,14 @@ async function _processContracts(contracts) {
   const toUpdate = [];
   const toCreate = [];
 
-  for (const [contractName, contractData] of Object.entries(contracts)) {
+  for (const [contractFullyQualifiedName, contractData] of Object.entries(contracts)) {
     if (!contractData.deployedAddress) {
-      toCreate.push(contractName);
+      toCreate.push(contractFullyQualifiedName);
     } else {
-      if (await isAlreadyDeployed(contractName, contractData)) {
-        toSkip.push(contractName);
+      if (await isAlreadyDeployed(contractFullyQualifiedName, contractData)) {
+        toSkip.push(contractFullyQualifiedName);
       } else {
-        toUpdate.push(contractName);
+        toUpdate.push(contractFullyQualifiedName);
       }
     }
   }
