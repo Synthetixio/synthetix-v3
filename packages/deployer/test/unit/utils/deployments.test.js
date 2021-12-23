@@ -1,6 +1,7 @@
 const { deepEqual } = require('assert/strict');
-const path = require('path');
 const fs = require('fs');
+const path = require('path');
+const { loadEnvironment, deployOnEnvironment } = require('../../helpers/use-environment');
 const {
   getDeploymentExtendedFiles,
   getProxyAddress,
@@ -11,26 +12,35 @@ const {
   getDeploymentFolder,
 } = require('../../../utils/deployments');
 
-describe('utils/deployments.js', function () {
-  // Default configuration using as folder the tests fixtures
-  const info = {
-    folder: path.resolve(__dirname, '..', '..', 'fixtures', 'completed-deployment', 'deployments'),
-    network: 'local',
-    instance: 'official',
-  };
+describe.only('utils/deployments.js', function () {
+  let hre, info, deploymentFile;
 
-  // Expected instance folder where the deployment files are located
-  const folder = `${info.folder}/${info.network}/${info.instance}`;
+  before('prepare environment', async function () {
+    this.timeout(60000);
 
-  // Fixture deployment files
-  const files = ['2021-12-23-00.json', '2021-12-23-01.json'].map((file) => `${folder}/${file}`);
+    hre = loadEnvironment('sample-project');
+
+    await deployOnEnvironment(hre, {
+      alias: 'deployments',
+      clear: true,
+    });
+
+    info = {
+      folder: hre.config.deployer.paths.deployments,
+      network: hre.config.defaultNetwork,
+      instance: 'test',
+    };
+
+    deploymentFile = getDeploymentFile(info);
+  });
 
   describe('#getDeploymentExtendedFiles', function () {
     it('gets the list of extended files for the given deployment file', function () {
-      const result = getDeploymentExtendedFiles(files[files.length - 1]);
+      const result = getDeploymentExtendedFiles(deploymentFile);
+      const expectedFile = path.basename(deploymentFile, '.json');
       const expected = {
-        abis: `${folder}/extended/2021-12-23-01.abis.json`,
-        sources: `${folder}/extended/2021-12-23-01.sources.json`,
+        abis: `${info.folder}/${info.network}/${info.instance}/extended/${expectedFile}.abis.json`,
+        sources: `${info.folder}/${info.network}/${info.instance}/extended/${expectedFile}.sources.json`,
       };
       deepEqual(result, expected);
     });
@@ -53,7 +63,7 @@ describe('utils/deployments.js', function () {
   describe('#getDeployment', function () {
     it('gets the newest deployment data', function () {
       const result = getDeployment(info);
-      const expected = JSON.parse(fs.readFileSync(files[files.length - 1], 'utf8'));
+      const expected = JSON.parse(fs.readFileSync(deploymentFile, 'utf8'));
       deepEqual(result, expected);
     });
 
@@ -66,21 +76,21 @@ describe('utils/deployments.js', function () {
   describe('#getDeploymentFile', function () {
     it('gets the newest deployment file', function () {
       const result = getDeploymentFile(info);
-      deepEqual(result, files[files.length - 1]);
+      deepEqual(result, deploymentFile);
     });
   });
 
   describe('#getAllDeploymentFiles', function () {
     it('get the historical sorted deployment files', function () {
       const result = getAllDeploymentFiles(info);
-      deepEqual(result, files);
+      deepEqual(result, [deploymentFile]);
     });
   });
 
   describe('#getDeploymentFolder', function () {
     it('correctly calculates deployments instance folder', function () {
       const result = getDeploymentFolder(info);
-      deepEqual(result, folder);
+      deepEqual(result, path.dirname(deploymentFile));
     });
   });
 });
