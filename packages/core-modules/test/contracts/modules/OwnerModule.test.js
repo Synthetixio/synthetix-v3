@@ -16,7 +16,10 @@ describe('OwnerModule', () => {
   });
 
   before('identify modules', async () => {
-    OwnerModule = await ethers.getContractAt('OwnerModule', proxyAddress());
+    OwnerModule = await ethers.getContractAt(
+      'contracts/modules/OwnerModule.sol:OwnerModule',
+      proxyAddress()
+    );
     SampleOwnedModule = await ethers.getContractAt('SampleOwnedModule', proxyAddress());
   });
 

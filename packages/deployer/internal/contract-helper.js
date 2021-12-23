@@ -9,7 +9,9 @@ async function isAlreadyDeployed(contractData) {
     return false;
   }
 
-  const contractArtifacts = await hre.artifacts.readArtifact(contractData.contractName);
+  const contractArtifacts = await hre.artifacts.readArtifact(
+    contractData.contractFullyQualifiedName
+  );
 
   return deployedContractHasBytescode(
     contractData.deployedAddress,
