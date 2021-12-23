@@ -17,12 +17,7 @@ function getFullFunctionSignature(functionAbi, functionParameters) {
   }
 
   // Collect return values
-  const outputDescriptions = [];
-  for (let i = 0; i < functionAbi.outputs.length; i++) {
-    const output = functionAbi.outputs[i];
-
-    outputDescriptions.push(`${output.type}${output.name ? ` ${output.name}` : ''}`);
-  }
+  const outputDescriptions = functionAbi.outputs.map((output) => `${output.type}${` ${output.name}` || ''}`);
 
   // Function name
   let str = `${functionAbi.name}${multiline ? '(\n' : '('}`;
