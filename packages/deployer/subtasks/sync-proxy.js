@@ -1,5 +1,5 @@
 const { subtask } = require('hardhat/config');
-const { getFullyQualifiedName, isFullyQualifiedName } = require('hardhat/utils/contract-names');
+const { getFullyQualifiedName } = require('hardhat/utils/contract-names');
 const logger = require('@synthetixio/core-js/utils/io/logger');
 const { initContractData } = require('../internal/process-contracts');
 const { ContractValidationError } = require('../internal/errors');

@@ -11,7 +11,7 @@ const {
   getDeploymentFolder,
 } = require('../../../utils/deployments');
 
-describe.only('utils/deployments.js', function () {
+describe('utils/deployments.js', function () {
   // Default configuration using as folder the tests fixtures
   const info = {
     folder: path.resolve(__dirname, '..', '..', 'fixtures', 'completed-deployment', 'deployments'),
