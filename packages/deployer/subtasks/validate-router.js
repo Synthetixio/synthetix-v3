@@ -1,9 +1,7 @@
-const path = require('path');
 const mapValues = require('just-map-values');
 const { subtask } = require('hardhat/config');
 const { getFullyQualifiedName } = require('hardhat/utils/contract-names');
 const logger = require('@synthetixio/core-js/utils/io/logger');
-const relativePath = require('@synthetixio/core-js/utils/misc/relative-path');
 const { initContractData } = require('../internal/process-contracts');
 const RouterSourceValidator = require('../internal/router-source-validator');
 const RouterASTValidator = require('../internal/router-ast-validator');
@@ -19,9 +17,8 @@ subtask(
   logger.subtitle('Validating router');
 
   const routerName = 'Router';
-  const routerPath = path.join(hre.config.paths.sources, `${routerName}.sol`);
-  const relativeRouterPath = relativePath(routerPath, hre.config.paths.root);
-  const routerFullyQualifiedName = getFullyQualifiedName(relativeRouterPath, routerName);
+  const { sourceName } = await hre.artifacts.readArtifact(routerName);
+  const routerFullyQualifiedName = getFullyQualifiedName(sourceName, routerName);
 
   await initContractData(routerFullyQualifiedName, { isRouter: true });
 
