@@ -66,16 +66,6 @@ function findContractStateVariables(contractNode) {
 }
 
 /**
- * Get all the contract names that inherits the given contract node AST
- * @param {import("solidity-ast").ContractDefinition} contractNode
- * @returns {string[]}
- */
-function findInheritedContractNames(contractNode) {
-  const specifierNodes = findAll('InheritanceSpecifier', contractNode);
-  return Array.from(specifierNodes).map(({ baseName }) => baseName.name);
-}
-
-/**
  * Find all the slot definitions on the given AST node
  * @param {string} contractName
  * @param {import("solidity-ast").ContractDefinition} contractNode
@@ -194,5 +184,4 @@ module.exports = {
   findContractStateVariables,
   findContractDependencies,
   findFunctionSelectors,
-  findInheritedContractNames,
 };
