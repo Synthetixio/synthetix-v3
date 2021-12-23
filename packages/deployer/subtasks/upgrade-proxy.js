@@ -12,8 +12,8 @@ subtask(SUBTASK_UPGRADE_PROXY, 'Upgrades the main proxy if needed').setAction(as
   const routerData = contracts.find((data) => data.isRouter);
   const proxyData = contracts.find((data) => data.isProxy);
 
-  const proxyAddress = proxyData.deployedAddress;
   const routerAddress = routerData.deployedAddress;
+  const proxyAddress = proxyData.deployedAddress;
 
   let ProxyContract = await hre.ethers.getContractAt(
     UPGRADE_ABI,
