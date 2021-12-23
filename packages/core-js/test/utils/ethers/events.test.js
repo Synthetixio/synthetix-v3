@@ -17,8 +17,7 @@ describe('utils/ethers/events.js', () => {
 
   it('throws if it cannot find any event', async () => {
     assert.throws(() => findEvent({ receipt: unparsedTxReceipt, eventName: 'InvalidEvent' }), {
-      message:
-        'Cannot find event InvalidEvent in receipt.',
+      message: 'Cannot find event InvalidEvent in receipt.',
     });
   });
 

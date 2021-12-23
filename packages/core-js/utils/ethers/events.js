@@ -9,7 +9,7 @@
 function findEvent({ receipt, eventName, contract = undefined }) {
   let events = receipt.events;
 
-  if (!events || events.some((e) => e.event === undefined) && contract) {
+  if (!events || (events.some((e) => e.event === undefined) && contract)) {
     events = parseLogs({ contract, logs: receipt.logs });
   }
 
