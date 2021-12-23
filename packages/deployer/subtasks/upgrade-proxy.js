@@ -8,10 +8,13 @@ const { SUBTASK_UPGRADE_PROXY } = require('../task-names');
 subtask(SUBTASK_UPGRADE_PROXY, 'Upgrades the main proxy if needed').setAction(async (_, hre) => {
   logger.subtitle('Upgrading main proxy');
 
-  const routerName = 'Router';
-  const proxyName = hre.config.deployer.proxyContract;
+  const contracts = Object.values(hre.deployer.deployment.general.contracts);
+  const routerData = contracts.find((data) => data.isRouter);
+  const proxyData = contracts.find((data) => data.isProxy);
 
-  const proxyAddress = _getDeployedAddress(proxyName, hre);
+  const proxyAddress = proxyData.deployedAddress;
+  const routerAddress = routerData.deployedAddress;
+
   let ProxyContract = await hre.ethers.getContractAt(
     UPGRADE_ABI,
     proxyAddress,
@@ -21,7 +24,6 @@ subtask(SUBTASK_UPGRADE_PROXY, 'Upgrades the main proxy if needed').setAction(as
   const activeImplementationAddress = await ProxyContract.getImplementation();
   logger.debug(`Active implementation: ${activeImplementationAddress}`);
 
-  const routerAddress = _getDeployedAddress(routerName, hre);
   logger.debug(`Target implementation: ${routerAddress}`);
 
   if (activeImplementationAddress !== routerAddress) {
@@ -48,7 +50,3 @@ subtask(SUBTASK_UPGRADE_PROXY, 'Upgrades the main proxy if needed').setAction(as
     logger.checked('No need to upgrade the main proxy');
   }
 });
-
-function _getDeployedAddress(contractName, hre) {
-  return hre.deployer.deployment.general.contracts[contractName].deployedAddress;
-}
