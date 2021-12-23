@@ -80,7 +80,7 @@ task(TASK_DEPLOY, 'Deploys all system modules')
 
 /*
  * Note: Even though hardhat's compile task has a quiet option,
- * it stil prints some output. This is a hack to completely silence
+ * it still prints some output. This is a hack to completely silence
  * output during compile task run.
  */
 async function _compile(hre, quiet) {

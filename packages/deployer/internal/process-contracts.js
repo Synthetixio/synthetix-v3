@@ -1,5 +1,4 @@
 const fs = require('fs/promises');
-const { getContractAST } = require('@synthetixio/core-js/utils/hardhat/artifacts');
 const { getBytecodeHash } = require('@synthetixio/core-js/utils/ethers/contracts');
 const { findInheritedContractNames } = require('@synthetixio/core-js/utils/ast/finders');
 const { contractIsModule, getContractFilePath } = require('./contract-helper');
@@ -50,8 +49,9 @@ async function initContractSource(contractName) {
   }
 
   const { sourceName, bytecode, deployedBytecode } = await hre.artifacts.readArtifact(contractName);
+  const buildInfo = await hre.artifacts.getBuildInfo(`${sourceName}:${contractName}`);
 
-  const ast = await getContractAST({ sourceName, contractName, hre });
+  const ast = buildInfo.output.sources[sourceName].ast;
   const sourceCode = (await fs.readFile(getContractFilePath(sourceName))).toString();
 
   deployment.sources[contractName] = {
