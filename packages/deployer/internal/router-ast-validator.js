@@ -1,3 +1,4 @@
+const { parseFullyQualifiedName } = require('hardhat/utils/contract-names');
 const {
   findYulCaseValues,
   findFunctionSelectors,
@@ -8,7 +9,8 @@ const { onlyRepeated } = require('@synthetixio/core-js/utils/misc/array-filters'
 
 class RouterASTValidator {
   constructor(routerFullyQualifiedName, asts) {
-    this.routerSelectors = findYulCaseValues(asts[routerFullyQualifiedName]);
+    const { sourceName } = parseFullyQualifiedName(routerFullyQualifiedName);
+    this.routerSelectors = findYulCaseValues(asts[sourceName]);
     this.asts = asts;
   }
 
