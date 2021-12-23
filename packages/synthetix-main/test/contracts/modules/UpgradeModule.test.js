@@ -11,7 +11,10 @@ describe('UpgradeModule', function () {
 
     let UpgradeModule;
     before('identify module', async function () {
-      UpgradeModule = await ethers.getContractAt('UpgradeModule', proxyAddress());
+      UpgradeModule = await ethers.getContractAt(
+        'contracts/modules/UpgradeModule.sol:UpgradeModule',
+        proxyAddress()
+      );
     });
 
     describe('when attempting to set the implementation with a non owner signer', function () {
