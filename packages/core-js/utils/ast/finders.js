@@ -49,11 +49,10 @@ function findContractNodeStructs(contractNode) {
 /**
  * Get the state variables from the given contract name
  * @param {string} contractName
- * @param {import("solidity-ast").SourceUnit} astNode
+ * @param {import("solidity-ast").ContractDefinition} contractNode
  * @returns {import("solidity-ast").VariableDeclaration}
  */
-function findContractStateVariables(contractName, astNode) {
-  const contractNode = findContractNodeWithName(contractName, astNode);
+function findContractStateVariables(contractNode) {
   return findContractNodeVariables(contractNode).filter((n) => n.stateVariable);
 }
 
@@ -73,17 +72,10 @@ function findInheritedContractNames(contractNode) {
  * @param {import("solidity-ast").SourceUnit} astNode
  * @returns {string[]}
  */
-function findYulStorageSlotAssignments(contractName, astNode) {
-  const contractNode = findContractNodeWithName(contractName, astNode);
-
-  const slots = [];
-  for (const assignment of findAll('YulAssignment', contractNode)) {
-    if (assignment.variableNames[0].name.endsWith('.slot')) {
-      slots.push(assignment.value.value);
-    }
-  }
-
-  return slots;
+function findYulStorageSlotAssignments(contractNode) {
+  return Array.from(findAll('YulAssignment', contractNode))
+    .filter((assignment) => assignment.variableNames[0].name.endsWith('.slot'))
+    .map((assignment) => assignment.value.value);
 }
 
 /**
