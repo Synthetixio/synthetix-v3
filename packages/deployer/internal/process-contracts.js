@@ -1,8 +1,5 @@
-const fs = require('fs/promises');
 const { parseFullyQualifiedName } = require('hardhat/utils/contract-names');
 const { getBytecodeHash } = require('@synthetixio/core-js/utils/ethers/contracts');
-const { findInheritedContractNames } = require('@synthetixio/core-js/utils/ast/finders');
-const { getContractFilePath } = require('./contract-helper');
 
 /**
  * Initialize contract metadata on hre.deployer.deployment.*
@@ -47,25 +44,20 @@ async function _initContractSource(contractFullyQualifiedName) {
     return;
   }
 
-  const { sourceName, bytecode, deployedBytecode } = await hre.artifacts.readArtifact(
-    contractFullyQualifiedName
-  );
   const buildInfo = await hre.artifacts.getBuildInfo(contractFullyQualifiedName);
 
-  const ast = buildInfo.output.sources[sourceName].ast;
-  const sourceCode = (await fs.readFile(getContractFilePath(sourceName))).toString();
+  // Save the source code for the entire dependency tree
+  for (const [sourceName, attributes] of Object.entries(buildInfo.input.sources)) {
+    if (!deployment.sources[sourceName]) {
+      deployment.sources[sourceName] = {};
+    }
 
-  deployment.sources[contractFullyQualifiedName] = {
-    bytecode,
-    deployedBytecode,
-    sourceCode,
-    ast,
-  };
+    deployment.sources[sourceName].sourceCode = attributes.content;
+  }
 
-  // Also init all the sources from the inherited contracts
-  for (const contractName of findInheritedContractNames(ast)) {
-    const { sourceName } = await hre.artifacts.readArtifact(contractName);
-    await _initContractSource(`${sourceName}:${contractName}`);
+  // Save the asts for the entire dependency tree
+  for (const [sourceName, attributes] of Object.entries(buildInfo.output.sources)) {
+    deployment.sources[sourceName].ast = attributes.ast;
   }
 }
 

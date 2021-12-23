@@ -7,7 +7,6 @@ const {
   findContractNodeStructs,
   findContractNodeVariables,
   findContractStateVariables,
-  findInheritedContractNames,
   findYulCaseValues,
   findYulStorageSlotAssignments,
   findContractDefinitions,
@@ -141,24 +140,6 @@ describe('utils/ast/finders.js find AST artifacts', function () {
       const node = await findContractStateVariables('SettingsNamespace', asts['SettingsNamespace']);
       notEqual(node, undefined);
       equal(node.length, 0);
-    });
-  });
-
-  describe('find inherited contract names', function () {
-    it('finds contract names', async () => {
-      const node = await findInheritedContractNames(
-        await findContractNodeWithName('SettingsModule', asts['SettingsModule'])
-      );
-      notEqual(node, undefined);
-      equal(node.length, 2);
-      equal(
-        node.some((v) => v === 'SettingsNamespace'),
-        true
-      );
-      equal(
-        node.some((v) => v === 'OwnerMixin'),
-        true
-      );
     });
   });
 
