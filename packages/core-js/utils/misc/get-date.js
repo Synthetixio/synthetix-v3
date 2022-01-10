@@ -3,10 +3,21 @@
  * @param {Date} [date=new Date()]
  * @returns {string}
  */
-module.exports = function getDate(date = new Date()) {
+function formatDate(date = new Date()) {
   if (!(date instanceof Date)) {
     throw new Error('Invalid date given');
   }
 
   return date.toISOString().slice(0, 10);
+};
+
+function getUnixTimestamp() {
+  return Math.floor(
+    (new Date()).getTime() / 1000
+  );
+}
+
+module.exports = {
+  formatDate,
+  getUnixTimestamp,
 };
