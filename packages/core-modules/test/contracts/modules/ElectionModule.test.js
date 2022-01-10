@@ -32,10 +32,7 @@ describe.only('ElectionModule', () => {
       });
 
       it('reverts', async function () {
-        await assertRevert(
-          ElectionModule.initializeElectionModule(),
-          'Unauthorized'
-        );
+        await assertRevert(ElectionModule.initializeElectionModule(), 'Unauthorized');
       });
     });
 
@@ -47,10 +44,7 @@ describe.only('ElectionModule', () => {
       describe('with invalid parameters', function () {
         describe('with an invalid end date', function () {
           it('reverts', async function () {
-            await assertRevert(
-              ElectionModule.initializeElectionModule(),
-              'InvalidEpochEndDate'
-            );
+            await assertRevert(ElectionModule.initializeElectionModule(), 'InvalidEpochEndDate');
           });
         });
       });
@@ -61,25 +55,16 @@ describe.only('ElectionModule', () => {
         });
 
         it('shows that the current epoch index is 1', async function () {
-          assertBn.eq(
-            await ElectionModule.getCurrentEpochIndex(),
-            1
-          );
+          assertBn.eq(await ElectionModule.getCurrentEpochIndex(), 1);
         });
 
         it('shows that the current epoch status is "Idle"', async function () {
-          assertBn.eq(
-            await ElectionModule.getStatus(),
-            EpochStatus.Idle
-          );
+          assertBn.eq(await ElectionModule.getStatus(), EpochStatus.Idle);
         });
 
         describe('when attemting to re-initialize the module', function () {
           it('reverts', async function () {
-            await assertRevert(
-              ElectionModule.initializeElectionModule(),
-              'AlreadyInitialized'
-            );
+            await assertRevert(ElectionModule.initializeElectionModule(), 'AlreadyInitialized');
           });
         });
       });

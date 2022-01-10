@@ -9,12 +9,10 @@ function formatDate(date = new Date()) {
   }
 
   return date.toISOString().slice(0, 10);
-};
+}
 
 function getUnixTimestamp() {
-  return Math.floor(
-    (new Date()).getTime() / 1000
-  );
+  return Math.floor(new Date().getTime() / 1000);
 }
 
 module.exports = {
