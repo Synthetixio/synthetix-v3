@@ -5,6 +5,33 @@ import "../../storage/ElectionStorage.sol";
 
 contract ElectionSchedule is ElectionStorage {
     error InvalidEpochConfiguration();
+    error OnlyCallableWhileNominating();
+    error OnlyCallableWhileVoting();
+    error OnlyCallableWhileEvaluating();
+
+    modifier onlyWhileNominating() {
+        if (getEpochStatus() != EpochStatus.Nominating) {
+            revert OnlyCallableWhileNominating();
+        }
+
+        _;
+    }
+
+    modifier onlyWhileVoting() {
+        if (getEpochStatus() != EpochStatus.Voting) {
+            revert OnlyCallableWhileVoting();
+        }
+
+        _;
+    }
+
+    modifier onlyWhileEvaluating() {
+        if (getEpochStatus() != EpochStatus.Evaluating) {
+            revert OnlyCallableWhileEvaluating();
+        }
+
+        _;
+    }
 
     function getEpochStatus() public view returns (EpochStatus) {
         ElectionStore storage store = _electionStore();

@@ -1,6 +1,7 @@
 const { ethers } = hre;
 const assert = require('assert/strict');
 const assertBn = require('@synthetixio/core-js/utils/assertions/assert-bignumber');
+const assertRevert = require('@synthetixio/core-js/utils/assertions/assert-revert');
 const { getTime, fastForwardTo } = require('@synthetixio/core-js/utils/hardhat/rpc');
 const { getUnixTimestamp } = require('@synthetixio/core-js/utils/misc/get-date');
 const { bootstrap } = require('@synthetixio/deployer/utils/tests');
@@ -10,6 +11,8 @@ describe('ElectionModule (status)', () => {
   const { proxyAddress } = bootstrap(initializer);
 
   let ElectionModule;
+
+  let user;
 
   let epochEndDate, nominationPeriodStartDate, votingPeriodStartDate, someDate;
 
@@ -21,6 +24,10 @@ describe('ElectionModule (status)', () => {
     Voting: 2,
     Evaluating: 3,
   };
+
+  before('identify signers', async () => {
+    [user] = await ethers.getSigners();
+  });
 
   before('identify modules', async () => {
     ElectionModule = await ethers.getContractAt('ElectionModule', proxyAddress());
@@ -45,6 +52,40 @@ describe('ElectionModule (status)', () => {
       assertBn.eq(await ElectionModule.getEpochStatus(), EpochStatus.Idle);
     });
 
+    const itRejectsNominations = () => {
+      describe('when trying to call the nominate function', function () {
+        it('reverts', async function () {
+          await assertRevert(ElectionModule.nominate(), 'OnlyCallableWhileNominating');
+        });
+      });
+
+      describe('when trying to call the withdrawNomination function', function () {
+        it('reverts', async function () {
+          await assertRevert(ElectionModule.nominate(), 'OnlyCallableWhileNominating');
+        });
+      });
+    };
+
+    const itAcceptsNominations = () => {
+      before('link to user', async function () {
+        ElectionModule = ElectionModule.connect(user);
+      });
+
+      it('does not revert', async function () {
+        await ElectionModule.nominate();
+      });
+
+      describe('when a user withdraws its nomination', function () {
+        it('does not revert', async function () {
+          await ElectionModule.withdrawNomination();
+        });
+      });
+    };
+
+    describe('before entering the nomination period', function () {
+      itRejectsNominations();
+    });
+
     describe('when entering the nomination period', function () {
       before('fast forward', async function () {
         await fastForwardTo(nominationPeriodStartDate, ethers.provider);
@@ -56,6 +97,10 @@ describe('ElectionModule (status)', () => {
 
       it('shows that the current status is Nominating', async function () {
         assertBn.eq(await ElectionModule.getEpochStatus(), EpochStatus.Nominating);
+      });
+
+      describe('when a user calls nominate', function () {
+        itAcceptsNominations();
       });
 
       describe('when fast forwarding within the current period', function () {
@@ -88,6 +133,8 @@ describe('ElectionModule (status)', () => {
         assertBn.eq(await ElectionModule.getEpochStatus(), EpochStatus.Voting);
       });
 
+      itRejectsNominations();
+
       describe('when fast forwarding within the current period', function () {
         before('fast forward', async function () {
           someDate = epochEndDate - 60;
@@ -117,6 +164,8 @@ describe('ElectionModule (status)', () => {
       it('shows that the current status is Evaluating', async function () {
         assertBn.eq(await ElectionModule.getEpochStatus(), EpochStatus.Evaluating);
       });
+
+      itRejectsNominations();
 
       describe('when fast forwarding more', function () {
         before('fast forward', async function () {

@@ -23,6 +23,14 @@ contract ElectionModule is ElectionStorage, ElectionSchedule, OwnableMixin {
         _configureFirstEpoch(epochEndDate, nominationPeriodStartDate, votingPeriodStartDate);
     }
 
+    function nominate() external onlyWhileNominating {
+        // TODO
+    }
+
+    function withdrawNomination() external onlyWhileNominating {
+        // TODO
+    }
+
     function getEpochIndex() public view returns (uint) {
         return _electionStore().currentEpochIndex;
     }
