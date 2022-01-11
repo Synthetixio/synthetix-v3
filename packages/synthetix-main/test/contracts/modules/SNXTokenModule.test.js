@@ -58,6 +58,14 @@ describe('SNXTokenModule', function () {
         assert.equal(await SNX.decimals(), 18);
       });
 
+      it('gets the newly created satellite', async () => {
+        const results = await SNXTokenModule.getSNXTokenModuleSatellites();
+        assert.equal(results.length, 1);
+        assert.equal(results[0].name, ethers.utils.formatBytes32String('snx'));
+        assert.equal(results[0].contractName, ethers.utils.formatBytes32String('SNXToken'));
+        assert.equal(results[0].deployedAddress, snxTokenAddress);
+      });
+
       describe('When attempting to create the SNX twice', () => {
         it('reverts', async () => {
           await assertRevert(

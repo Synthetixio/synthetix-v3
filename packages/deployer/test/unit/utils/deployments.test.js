@@ -15,6 +15,8 @@ const {
 describe('utils/deployments.js', function () {
   let hre, info, deploymentFile;
 
+  const parseDeploymentFile = () => JSON.parse(fs.readFileSync(deploymentFile, 'utf8'));
+
   before('prepare environment', async function () {
     this.timeout(60000);
 
@@ -49,22 +51,27 @@ describe('utils/deployments.js', function () {
   describe('#getProxyAddress', function () {
     it('gets the current Proxy deployment address', function () {
       const result = getProxyAddress(info);
-      deepEqual(result, '0xa513E6E4b8f2a923D98304ec87F64353C4D5C853');
+      const { deployedAddress } = Object.values(parseDeploymentFile().contracts).find(
+        (contract) => contract.isProxy
+      );
+      deepEqual(result, deployedAddress);
     });
   });
 
   describe('#getRouterAddress', function () {
     it('gets the current Router deployment address', function () {
       const result = getRouterAddress(info);
-      deepEqual(result, '0x0165878A594ca255338adfa4d48449f69242Eb8F');
+      const { deployedAddress } = Object.values(parseDeploymentFile().contracts).find(
+        (contract) => contract.isRouter
+      );
+      deepEqual(result, deployedAddress);
     });
   });
 
   describe('#getDeployment', function () {
     it('gets the newest deployment data', function () {
       const result = getDeployment(info);
-      const expected = JSON.parse(fs.readFileSync(deploymentFile, 'utf8'));
-      deepEqual(result, expected);
+      deepEqual(result, parseDeploymentFile());
     });
 
     it('returns null if the given instance does not have any deployments', function () {
