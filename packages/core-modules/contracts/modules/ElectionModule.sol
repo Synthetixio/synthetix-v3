@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 import "@synthetixio/core-contracts/contracts/errors/InitError.sol";
 import "@synthetixio/core-contracts/contracts/ownership/OwnableMixin.sol";
 import "../storage/ElectionStorage.sol";
-import "./election/ElectionSchedule.sol";
+import "../submodules/election/ElectionSchedule.sol";
 
 contract ElectionModule is ElectionStorage, ElectionSchedule, OwnableMixin {
     function initializeElectionModule(

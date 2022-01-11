@@ -5,7 +5,8 @@ contract ElectionStorage {
     enum EpochStatus {
         Idle,
         Nominating,
-        Voting
+        Voting,
+        Evaluating
     }
 
     struct EpochData {

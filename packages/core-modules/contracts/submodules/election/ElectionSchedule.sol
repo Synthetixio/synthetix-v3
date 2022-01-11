@@ -6,6 +6,27 @@ import "../../storage/ElectionStorage.sol";
 contract ElectionSchedule is ElectionStorage {
     error InvalidEpochConfiguration();
 
+    function getEpochStatus() public view returns (EpochStatus) {
+        ElectionStore storage store = _electionStore();
+        EpochData storage epoch = store.epochs[store.currentEpochIndex];
+
+        uint64 currentTime = uint64(block.timestamp);
+
+        if (currentTime >= epoch.endDate) {
+            return EpochStatus.Evaluating;
+        }
+
+        if (currentTime >= epoch.votingPeriodStartDate) {
+            return EpochStatus.Voting;
+        }
+
+        if (currentTime >= epoch.nominationPeriodStartDate) {
+            return EpochStatus.Nominating;
+        }
+
+        return EpochStatus.Idle;
+    }
+
     function _configureFirstEpoch(
         uint64 epochEndDate,
         uint64 nominationPeriodStartDate,
