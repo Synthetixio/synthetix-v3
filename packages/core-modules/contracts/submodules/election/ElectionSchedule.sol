@@ -17,21 +17,23 @@ contract ElectionSchedule is ElectionStorage {
         _;
     }
 
-    modifier onlyWhileVoting() {
-        if (getEpochStatus() != EpochStatus.Voting) {
-            revert OnlyCallableWhileVoting();
-        }
+    // TODO
+    // modifier onlyWhileVoting() {
+    //     if (getEpochStatus() != EpochStatus.Voting) {
+    //         revert OnlyCallableWhileVoting();
+    //     }
 
-        _;
-    }
+    //     _;
+    // }
 
-    modifier onlyWhileEvaluating() {
-        if (getEpochStatus() != EpochStatus.Evaluating) {
-            revert OnlyCallableWhileEvaluating();
-        }
+    // TODO
+    // modifier onlyWhileEvaluating() {
+    //     if (getEpochStatus() != EpochStatus.Evaluating) {
+    //         revert OnlyCallableWhileEvaluating();
+    //     }
 
-        _;
-    }
+    //     _;
+    // }
 
     function getEpochStatus() public view returns (EpochStatus) {
         ElectionStore storage store = _electionStore();
