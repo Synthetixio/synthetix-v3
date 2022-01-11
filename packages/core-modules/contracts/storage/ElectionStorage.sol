@@ -11,8 +11,8 @@ contract ElectionStorage {
     struct EpochData {
         uint64 startDate;
         uint64 endDate;
-        uint64 nominationsStartDate;
-        uint64 votingStartDate;
+        uint64 nominationPeriodStartDate;
+        uint64 votingPeriodStartDate;
     }
 
     struct ElectionStore {

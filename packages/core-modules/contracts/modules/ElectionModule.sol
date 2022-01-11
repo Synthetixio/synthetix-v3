@@ -4,13 +4,14 @@ pragma solidity ^0.8.0;
 import "@synthetixio/core-contracts/contracts/errors/InitError.sol";
 import "@synthetixio/core-contracts/contracts/ownership/OwnableMixin.sol";
 import "../storage/ElectionStorage.sol";
+import "./election/ElectionSchedule.sol";
 
-contract ElectionModule is ElectionStorage, OwnableMixin {
-    error InvalidEpochEndDate();
-
-    uint64 private const _MIN_EPOCH_DURATION = 7 days;
-
-    function initializeElectionModule(uint64 firstEpochEndDate) external onlyOwner {
+contract ElectionModule is ElectionStorage, ElectionSchedule, OwnableMixin {
+    function initializeElectionModule(
+        uint64 epochEndDate,
+        uint64 nominationPeriodStartDate,
+        uint64 votingPeriodStartDate
+    ) external onlyOwner {
         ElectionStore storage store = _electionStore();
 
         if (store.currentEpochIndex != 0) {
@@ -18,23 +19,11 @@ contract ElectionModule is ElectionStorage, OwnableMixin {
         }
 
         store.currentEpochIndex = 1;
-        EpochData storage epoch = store.epochs[1];
 
-        uint64 currentDate = block.timestamp;
-        epoch.startDate = currentDate;
-
-        uint64 epochDuration = firstEpochEndDate - currentDate;
-        if (epochDuration < _MIN_EPOCH_DURATION) {
-            revert InvalidEpochEndDate();
-        }
-        epoch.endDate = firstEpochEndDate;
+        _configureFirstEpoch(epochEndDate, nominationPeriodStartDate, votingPeriodStartDate);
     }
 
-    function getCurrentEpochIndex() public view returns (uint) {
+    function getEpochIndex() public view returns (uint) {
         return _electionStore().currentEpochIndex;
-    }
-
-    function getStatus() public view returns (EpochStatus) {
-        return EpochStatus.Idle;
     }
 }
