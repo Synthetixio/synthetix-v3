@@ -21,7 +21,7 @@ describe('SatelliteManager', () => {
     it('emits SatelliteCreated event', async () => {
       const event = findEvent({ receipt, eventName: 'SatelliteCreated' });
       assert.equal(event.args.fullyQualifiedName, 'contracts/token/ERC20.sol:ERC20');
-      assert(event.args.deployedAddress);
+      assert.notEqual(event.args.deployedAddress, '0x0000000000000000000000000000000000000000');
     });
   });
 });

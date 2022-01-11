@@ -3,13 +3,14 @@ pragma solidity ^0.8.0;
 
 import "@synthetixio/core-contracts/contracts/proxy/Beacon.sol";
 import "@synthetixio/core-contracts/contracts/ownership/OwnableMixin.sol";
+import "@synthetixio/core-contracts/contracts/satellite/SatelliteManager.sol";
 import "@synthetixio/core-contracts/contracts/proxy/BeaconProxy.sol";
 import "../interfaces/ISynthsModule.sol";
 import "../interfaces/ISynth.sol";
 import "../storage/SynthsStorage.sol";
 import "../token/Synth.sol";
 
-contract SynthsModule is ISynthsModule, OwnableMixin, SynthsStorage {
+contract SynthsModule is ISynthsModule, OwnableMixin, SynthsStorage, SatelliteManager {
     event BeaconCreated(address beacon);
     event SynthImplementationCreated(address implementationAddress);
     event SynthCreated(bytes32 synth, address synthAddress);
@@ -57,6 +58,7 @@ contract SynthsModule is ISynthsModule, OwnableMixin, SynthsStorage {
 
         ISynth(synthAddress).initialize(synthName, synthSymbol, synthDecimals);
 
+        emit SatelliteCreated("contracts/token/Synth.sol:Synth", synthAddress);
         emit SynthCreated(synth, synthAddress);
     }
 

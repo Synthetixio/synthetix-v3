@@ -150,6 +150,13 @@ describe('SynthsModule', function () {
                   receipt = await tx.wait();
                 });
 
+                it('emits a SatelliteCreated event', async () => {
+                  const event = findEvent({ receipt, eventName: 'SatelliteCreated' });
+                  const { fullyQualifiedName, deployedAddress } = event.args;
+                  assert.equal(fullyQualifiedName, 'contracts/token/Synth.sol:Synth');
+                  assert.notEqual(deployedAddress, '0x0000000000000000000000000000000000000000');
+                });
+
                 it('emits a SynthCreated event', async () => {
                   const event = findEvent({ receipt, eventName: 'SynthCreated' });
                   assert.equal(event.args.synth, sUSD);

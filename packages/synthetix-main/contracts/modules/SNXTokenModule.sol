@@ -3,13 +3,12 @@ pragma solidity ^0.8.0;
 
 import "@synthetixio/core-contracts/contracts/ownership/OwnableMixin.sol";
 import "@synthetixio/core-contracts/contracts/proxy/UUPSProxy.sol";
+import "@synthetixio/core-contracts/contracts/satellite/SatelliteManager.sol";
 import "../interfaces/ISNXTokenModule.sol";
 import "../storage/SNXTokenStorage.sol";
 import "../token/SNXToken.sol";
 
-contract SNXTokenModule is ISNXTokenModule, OwnableMixin, SNXTokenStorage {
-    event SNXTokenCreated(address snxAddress);
-
+contract SNXTokenModule is ISNXTokenModule, OwnableMixin, SNXTokenStorage, SatelliteManager {
     error SNXAlreadyCreated();
 
     function createSNX() external override onlyOwner {
@@ -32,7 +31,7 @@ contract SNXTokenModule is ISNXTokenModule, OwnableMixin, SNXTokenStorage {
 
         store.snxTokenAddress = snxTokenProxyAddress;
 
-        emit SNXTokenCreated(snxTokenProxyAddress);
+        emit SatelliteCreated("contracts/token/SNXToken.sol:SNXToken", address(snxTokenProxyAddress));
     }
 
     function upgradeSNXImplementation(address newSNXTokenImplementation) external override onlyOwner {
