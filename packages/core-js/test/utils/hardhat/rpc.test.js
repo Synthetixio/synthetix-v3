@@ -98,24 +98,36 @@ describe('utils/hardhat/rpc.js', () => {
   });
 
   describe('when calling fastForwardTo', () => {
-    before('clear spy history', () => {
-      provider.send.resetHistory();
+    describe('to the past', function () {
+      it('throws', async function () {
+        try {
+          await fastForwardTo(1000, provider);
+        } catch (err) {
+          assert.ok(err.toString().includes('Cannot fast forward to a past date'));
+        }
+      });
     });
 
-    before('call fastForward', async () => {
-      await fastForwardTo(10000, provider);
-    });
+    describe('to the future', function () {
+      before('clear spy history', () => {
+        provider.send.resetHistory();
+      });
 
-    it('calls the provider.send twice', () => {
-      assert(provider.send.calledTwice);
-    });
+      before('call fastForward', async () => {
+        await fastForwardTo(10000, provider);
+      });
 
-    it('calls the provider.send with the right params', () => {
-      assert.equal(provider.send.getCall(0).args[0], 'evm_increaseTime');
-      assert.deepEqual(provider.send.getCall(0).args[1], [10000 - 1337]);
+      it('calls the provider.send twice', () => {
+        assert(provider.send.calledTwice);
+      });
 
-      assert.equal(provider.send.getCall(1).args[0], 'evm_mine');
-      assert.equal(provider.send.getCall(1).args[1], undefined);
+      it('calls the provider.send with the right params', () => {
+        assert.equal(provider.send.getCall(0).args[0], 'evm_increaseTime');
+        assert.deepEqual(provider.send.getCall(0).args[1], [10000 - 1337]);
+
+        assert.equal(provider.send.getCall(1).args[0], 'evm_mine');
+        assert.equal(provider.send.getCall(1).args[1], undefined);
+      });
     });
   });
 
