@@ -18,11 +18,19 @@ describe('ElectionModule (status)', () => {
 
   let ElectionModule;
 
-  let user;
+  let owner, user;
 
   let epochEndDate, nominationPeriodStartDate, votingPeriodStartDate, someDate;
 
   let snapshotId;
+
+  before('identify signers', async () => {
+    [user] = await ethers.getSigners();
+  });
+
+  before('identify modules', async () => {
+    ElectionModule = await ethers.getContractAt('ElectionModule', proxyAddress()).connect(owner);
+  });
 
   // ----------------------------------
   // Nomination behavior
@@ -43,10 +51,6 @@ describe('ElectionModule (status)', () => {
   };
 
   const itAcceptsNominations = () => {
-    before('link to user', async function () {
-      ElectionModule = ElectionModule.connect(user);
-    });
-
     describe('when trying to call the nominate function', function () {
       it('does not revert', async function () {
         await ElectionModule.nominate();
@@ -73,10 +77,6 @@ describe('ElectionModule (status)', () => {
   };
 
   const itAcceptsVotes = () => {
-    before('link to user', async function () {
-      ElectionModule = ElectionModule.connect(user);
-    });
-
     describe('when trying to call the elect function', function () {
       it('does not revert', async function () {
         await ElectionModule.elect([user.address]);
@@ -103,10 +103,6 @@ describe('ElectionModule (status)', () => {
   };
 
   const itAcceptsEvaluations = () => {
-    before('link to user', async function () {
-      ElectionModule = ElectionModule.connect(user);
-    });
-
     describe('when trying to call the evaluate function', function () {
       it('does not revert', async function () {
         await ElectionModule.evaluate();
@@ -133,10 +129,6 @@ describe('ElectionModule (status)', () => {
   };
 
   const itAcceptsAdjustments = () => {
-    before('link to user', async function () {
-      ElectionModule = ElectionModule.connect(user);
-    });
-
     describe('when trying to call the adjustEpoch function', function () {
       describe('with invalid parameters', function () {
         it('reverts', async function () {
@@ -168,14 +160,6 @@ describe('ElectionModule (status)', () => {
   // Idle period
   // ----------------------------------
 
-  before('identify signers', async () => {
-    [user] = await ethers.getSigners();
-  });
-
-  before('identify modules', async () => {
-    ElectionModule = await ethers.getContractAt('ElectionModule', proxyAddress());
-  });
-
   describe('when the module is initialized', function () {
     before('initialize', async function () {
       const now = getUnixTimestamp();
@@ -193,6 +177,12 @@ describe('ElectionModule (status)', () => {
 
     it('shows that initial status is Idle', async function () {
       assertBn.eq(await ElectionModule.getEpochStatus(), EpochStatus.Idle);
+    });
+
+    describe('when an account that does not own the instance attempts to adjust the epoch', function () {
+      it('reverts', async function () {
+        await assertRevert(ElectionModule.connect(user).adjustEpoch(0, 0, 0), 'Unauthorized');
+      });
     });
 
     describe('while in the Idle period', function () {

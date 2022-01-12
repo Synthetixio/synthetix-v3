@@ -28,25 +28,20 @@ describe('ElectionModule (init)', () => {
 
   describe('when initializing the module', function () {
     describe('with an account that does not own the instance', function () {
-      before('link to non-owner', async function () {
-        ElectionModule = ElectionModule.connect(user);
-      });
-
       it('reverts', async function () {
-        await assertRevert(ElectionModule.initializeElectionModule(0, 0, 0), 'Unauthorized');
+        await assertRevert(
+          ElectionModule.connect(user).initializeElectionModule(0, 0, 0),
+          'Unauthorized'
+        );
       });
     });
 
     describe('with the account that owns the instance', function () {
-      before('link to owner', async function () {
-        ElectionModule = ElectionModule.connect(owner);
-      });
-
       describe('with invalid parameters', function () {
         describe('with any zero date', function () {
           it('reverts', async function () {
             await assertRevert(
-              ElectionModule.initializeElectionModule(0, 1, 1),
+              ElectionModule.connect(owner).initializeElectionModule(0, 1, 1),
               'InvalidEpochConfiguration'
             );
             await assertRevert(
@@ -68,7 +63,7 @@ describe('ElectionModule (init)', () => {
             votingPeriodStartDate = epochEndDate - daysToSeconds(7);
             nominationPeriodStartDate = votingPeriodStartDate - daysToSeconds(7);
             await assertRevert(
-              ElectionModule.initializeElectionModule(
+              ElectionModule.connect(owner).initializeElectionModule(
                 epochEndDate,
                 nominationPeriodStartDate,
                 votingPeriodStartDate
@@ -80,7 +75,7 @@ describe('ElectionModule (init)', () => {
             votingPeriodStartDate = epochEndDate - daysToSeconds(0.5);
             nominationPeriodStartDate = votingPeriodStartDate - daysToSeconds(7);
             await assertRevert(
-              ElectionModule.initializeElectionModule(
+              ElectionModule.connect(owner).initializeElectionModule(
                 epochEndDate,
                 nominationPeriodStartDate,
                 votingPeriodStartDate
@@ -92,7 +87,7 @@ describe('ElectionModule (init)', () => {
             votingPeriodStartDate = epochEndDate - daysToSeconds(7);
             nominationPeriodStartDate = votingPeriodStartDate - daysToSeconds(0.5);
             await assertRevert(
-              ElectionModule.initializeElectionModule(
+              ElectionModule.connect(owner).initializeElectionModule(
                 epochEndDate,
                 nominationPeriodStartDate,
                 votingPeriodStartDate
