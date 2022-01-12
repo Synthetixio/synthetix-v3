@@ -4,15 +4,16 @@ pragma solidity ^0.8.0;
 import "@synthetixio/core-contracts/contracts/errors/InitError.sol";
 import "@synthetixio/core-contracts/contracts/ownership/OwnableMixin.sol";
 import "../submodules/election/ElectionSchedule.sol";
+import "../interfaces/IElectionModule.sol";
 
-contract ElectionModule is ElectionSchedule, OwnableMixin {
+contract ElectionModule is IElectionModule, ElectionSchedule, OwnableMixin {
     error EpochNotEvaluated();
 
     function initializeElectionModule(
         uint64 epochEndDate,
         uint64 nominationPeriodStartDate,
         uint64 votingPeriodStartDate
-    ) external onlyOwner {
+    ) external override onlyOwner {
         ElectionStore storage store = _electionStore();
 
         if (store.currentEpochIndex != 0) {
@@ -28,7 +29,7 @@ contract ElectionModule is ElectionSchedule, OwnableMixin {
         uint64 epochEndDate,
         uint64 nominationPeriodStartDate,
         uint64 votingPeriodStartDate
-    ) external onlyOwner onlyWithStatus(EpochStatus.Idle) {
+    ) external override onlyOwner onlyWithStatus(EpochStatus.Idle) {
         EpochData storage epoch = _getCurrentEpoch();
 
         // TODO: Validate that the new dates are in the future and/or are close to the initial dates?
@@ -37,33 +38,33 @@ contract ElectionModule is ElectionSchedule, OwnableMixin {
     }
 
     /* solhint-disable */
-    function nominate() external onlyWithStatus(EpochStatus.Nominating) {
+    function nominate() external override onlyWithStatus(EpochStatus.Nominating) {
         // TODO
     }
 
     /* solhint-enable */
 
     /* solhint-disable */
-    function withdrawNomination() external onlyWithStatus(EpochStatus.Nominating) {
+    function withdrawNomination() external override onlyWithStatus(EpochStatus.Nominating) {
         // TODO
     }
 
     /* solhint-enable */
 
     /* solhint-disable */
-    function elect(address[] memory candidates) external onlyWithStatus(EpochStatus.Voting) {
+    function elect(address[] memory candidates) external override onlyWithStatus(EpochStatus.Voting) {
         // TODO
     }
 
     /* solhint-enable */
 
-    function evaluate() external onlyWithStatus(EpochStatus.Evaluating) {
+    function evaluate() external override onlyWithStatus(EpochStatus.Evaluating) {
         // TODO
 
         _getCurrentEpoch().evaluated = true;
     }
 
-    function resolve() external onlyWithStatus(EpochStatus.Evaluating) {
+    function resolve() external override onlyWithStatus(EpochStatus.Evaluating) {
         if (!isCurrentEpochEvaluated()) {
             revert EpochNotEvaluated();
         }
@@ -76,5 +77,57 @@ contract ElectionModule is ElectionSchedule, OwnableMixin {
 
         ElectionStore storage store = _electionStore();
         store.currentEpochIndex = store.currentEpochIndex + 1;
+    }
+
+    // ----------------------------------
+    // Current epoch views
+    // ----------------------------------
+
+    function getEpochStatus() public view override returns (uint) {
+        return uint(_getEpochStatus());
+    }
+
+    function getEpochIndex() public view override returns (uint) {
+        return _electionStore().currentEpochIndex;
+    }
+
+    function getEpochStartDate() public view override returns (uint64) {
+        return _getCurrentEpoch().startDate;
+    }
+
+    function getEpochEndDate() public view override returns (uint64) {
+        return _getCurrentEpoch().endDate;
+    }
+
+    function getNominationPeriodStartDate() public view override returns (uint64) {
+        return _getCurrentEpoch().nominationPeriodStartDate;
+    }
+
+    function getVotingPeriodStartDate() public view override returns (uint64) {
+        return _getCurrentEpoch().votingPeriodStartDate;
+    }
+
+    function isCurrentEpochEvaluated() public view override returns (bool) {
+        return _getCurrentEpoch().evaluated;
+    }
+
+    // ----------------------------------
+    // Next epoch views
+    // ----------------------------------
+
+    function getNextEpochStartDate() public view override returns (uint64) {
+        return _getNextEpoch().startDate;
+    }
+
+    function getNextEpochEndDate() public view override returns (uint64) {
+        return _getNextEpoch().endDate;
+    }
+
+    function getNextEpochNominationPeriodStartDate() public view override returns (uint64) {
+        return _getNextEpoch().nominationPeriodStartDate;
+    }
+
+    function getNextEpochVotingPeriodStartDate() public view override returns (uint64) {
+        return _getNextEpoch().votingPeriodStartDate;
     }
 }

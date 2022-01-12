@@ -8,14 +8,14 @@ contract ElectionSchedule is ElectionBase {
     error NotCallableInCurrentStatus();
 
     modifier onlyWithStatus(EpochStatus status) {
-        if (getEpochStatus() != status) {
+        if (_getEpochStatus() != status) {
             revert NotCallableInCurrentStatus();
         }
 
         _;
     }
 
-    function getEpochStatus() public view returns (EpochStatus) {
+    function _getEpochStatus() internal view returns (EpochStatus) {
         EpochData storage epoch = _getCurrentEpoch();
 
         uint64 currentTime = uint64(block.timestamp);
