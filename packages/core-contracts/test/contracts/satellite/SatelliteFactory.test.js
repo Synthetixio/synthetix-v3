@@ -2,19 +2,19 @@ const { ethers } = hre;
 const assert = require('assert/strict');
 const { findEvent } = require('@synthetixio/core-js/utils/ethers/events');
 
-describe('SatelliteManager', () => {
-  let SatelliteManager;
+describe('SatelliteFactory', () => {
+  let SatelliteFactory;
 
   before('deploy the contract', async () => {
-    const factory = await ethers.getContractFactory('SatelliteManagerMock');
-    SatelliteManager = await factory.deploy();
+    const factory = await ethers.getContractFactory('SatelliteFactoryMock');
+    SatelliteFactory = await factory.deploy();
   });
 
   describe('when creating a mocked satellite', () => {
     let receipt;
 
     before('prepare sattelite', async () => {
-      const tx = await SatelliteManager.createSatelliteMock();
+      const tx = await SatelliteFactory.createSatelliteMock();
       receipt = await tx.wait();
     });
 
