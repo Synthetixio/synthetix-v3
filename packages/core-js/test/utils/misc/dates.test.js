@@ -1,7 +1,7 @@
 const { ok, equal, throws } = require('assert/strict');
 const { formatDate, getUnixTimestamp, daysToSeconds } = require('../../../utils/misc/dates');
 
-describe('utils/misc/get-date.js', function () {
+describe('utils/misc/dates.js', function () {
   describe('formatDate', function () {
     it('returns the date with the correct format', function () {
       const result = formatDate();
