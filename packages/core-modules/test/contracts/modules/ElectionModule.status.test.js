@@ -31,13 +31,13 @@ describe('ElectionModule (status)', () => {
   const itRejectsNominations = () => {
     describe('when trying to call the nominate function', function () {
       it('reverts', async function () {
-        await assertRevert(ElectionModule.nominate(), 'OnlyCallableWhileNominating');
+        await assertRevert(ElectionModule.nominate(), 'NotCallableInCurrentStatus');
       });
     });
 
     describe('when trying to call the withdrawNomination function', function () {
       it('reverts', async function () {
-        await assertRevert(ElectionModule.nominate(), 'OnlyCallableWhileNominating');
+        await assertRevert(ElectionModule.nominate(), 'NotCallableInCurrentStatus');
       });
     });
   };
@@ -67,7 +67,7 @@ describe('ElectionModule (status)', () => {
   const itRejectsVotes = () => {
     describe('when trying to call the elect function', function () {
       it('reverts', async function () {
-        await assertRevert(ElectionModule.elect([user.address]), 'OnlyCallableWhileVoting');
+        await assertRevert(ElectionModule.elect([user.address]), 'NotCallableInCurrentStatus');
       });
     });
   };
@@ -91,13 +91,13 @@ describe('ElectionModule (status)', () => {
   const itRejectsEvaluations = () => {
     describe('when trying to call the evaluate function', function () {
       it('reverts', async function () {
-        await assertRevert(ElectionModule.evaluate(), 'OnlyCallableWhileEvaluating');
+        await assertRevert(ElectionModule.evaluate(), 'NotCallableInCurrentStatus');
       });
     });
 
     describe('when trying to call the resolve function', function () {
       it('reverts', async function () {
-        await assertRevert(ElectionModule.evaluate(), 'OnlyCallableWhileEvaluating');
+        await assertRevert(ElectionModule.evaluate(), 'NotCallableInCurrentStatus');
       });
     });
   };
@@ -127,7 +127,7 @@ describe('ElectionModule (status)', () => {
   const itRejectsAdjustments = () => {
     describe('when trying to call the adjustEpoch function', function () {
       it('reverts', async function () {
-        await assertRevert(ElectionModule.adjustEpoch(0, 0, 0), 'OnlyCallableWhileIdle');
+        await assertRevert(ElectionModule.adjustEpoch(0, 0, 0), 'NotCallableInCurrentStatus');
       });
     });
   };

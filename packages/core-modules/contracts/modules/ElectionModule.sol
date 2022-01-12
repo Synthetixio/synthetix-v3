@@ -28,7 +28,7 @@ contract ElectionModule is ElectionSchedule, OwnableMixin {
         uint64 epochEndDate,
         uint64 nominationPeriodStartDate,
         uint64 votingPeriodStartDate
-    ) external onlyOwner onlyWhileIdle {
+    ) external onlyOwner onlyWithStatus(EpochStatus.Idle) {
         EpochData storage epoch = _getCurrentEpoch();
 
         // TODO: Validate that the new dates are in the future and/or are close to the initial dates?
@@ -37,30 +37,33 @@ contract ElectionModule is ElectionSchedule, OwnableMixin {
     }
 
     /* solhint-disable */
-    function nominate() external onlyWhileNominating {
+    function nominate() external onlyWithStatus(EpochStatus.Nominating) {
         // TODO
     }
+
     /* solhint-enable */
 
     /* solhint-disable */
-    function withdrawNomination() external onlyWhileNominating {
+    function withdrawNomination() external onlyWithStatus(EpochStatus.Nominating) {
         // TODO
     }
+
     /* solhint-enable */
 
     /* solhint-disable */
-    function elect(address[] memory candidates) external onlyWhileVoting {
+    function elect(address[] memory candidates) external onlyWithStatus(EpochStatus.Voting) {
         // TODO
     }
+
     /* solhint-enable */
 
-    function evaluate() external onlyWhileEvaluating {
+    function evaluate() external onlyWithStatus(EpochStatus.Evaluating) {
         // TODO
 
         _getCurrentEpoch().evaluated = true;
     }
 
-    function resolve() external onlyWhileEvaluating {
+    function resolve() external onlyWithStatus(EpochStatus.Evaluating) {
         if (!isCurrentEpochEvaluated()) {
             revert EpochNotEvaluated();
         }

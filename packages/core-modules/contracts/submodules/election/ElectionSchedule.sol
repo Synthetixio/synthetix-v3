@@ -5,38 +5,11 @@ import "./ElectionBase.sol";
 
 contract ElectionSchedule is ElectionBase {
     error InvalidEpochConfiguration();
-    error OnlyCallableWhileIdle();
-    error OnlyCallableWhileNominating();
-    error OnlyCallableWhileVoting();
-    error OnlyCallableWhileEvaluating();
+    error NotCallableInCurrentStatus();
 
-    modifier onlyWhileIdle() {
-        if (getEpochStatus() != EpochStatus.Idle) {
-            revert OnlyCallableWhileIdle();
-        }
-
-        _;
-    }
-
-    modifier onlyWhileNominating() {
-        if (getEpochStatus() != EpochStatus.Nominating) {
-            revert OnlyCallableWhileNominating();
-        }
-
-        _;
-    }
-
-    modifier onlyWhileVoting() {
-        if (getEpochStatus() != EpochStatus.Voting) {
-            revert OnlyCallableWhileVoting();
-        }
-
-        _;
-    }
-
-    modifier onlyWhileEvaluating() {
-        if (getEpochStatus() != EpochStatus.Evaluating) {
-            revert OnlyCallableWhileEvaluating();
+    modifier onlyWithStatus(EpochStatus status) {
+        if (getEpochStatus() != status) {
+            revert NotCallableInCurrentStatus();
         }
 
         _;
