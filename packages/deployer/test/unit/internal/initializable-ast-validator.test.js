@@ -1,6 +1,6 @@
 const { equal } = require('assert/strict');
 const ModuleInitializableASTValidator = require('../../../internal/initializable-ast-validator');
-const asts = require('@synthetixio/core-js/test/fixtures/asts.json');
+const asts = require('@synthetixio/core-js/test/fixtures/initializable-ast.json');
 const { clone } = require('@synthetixio/core-js/utils/misc/clone');
 
 describe('internal/initializable-ast-validator.js', function () {
@@ -27,14 +27,13 @@ describe('internal/initializable-ast-validator.js', function () {
     let sampleAsts, validator;
     let errorsFound = [];
 
-    before('set asts and validator', () => {
+    before('set asts, modify it and validator', () => {
       sampleAsts = clone(asts);
 
-      // Update asts (introduce error) 
+      // Update asts (introduce error)
       sampleAsts[
-        'ProxyNamespace'
-      ].nodes[1].nodes[1].body.statements[0].AST.statements[0].value.value =
-        '0x9dbde58b6f7305fccdc5abd7ea1096e84de3f9ee47d83d8c3efc3e5557ac9c00';
+        'contracts/mocks/initializable/InitializableMock.sol'
+      ].nodes[3].nodes[5].name = 'not_initializeInitializableMock';
 
       validator = new ModuleInitializableASTValidator(sampleAsts);
     });
@@ -43,7 +42,7 @@ describe('internal/initializable-ast-validator.js', function () {
       errorsFound = validator.findMissingInitializer();
     });
 
-    it('should find a change in the slot', () => {
+    it('should find a missing initializer function', () => {
       equal(errorsFound.length, 1);
     });
   });
@@ -52,14 +51,13 @@ describe('internal/initializable-ast-validator.js', function () {
     let sampleAsts, validator;
     let errorsFound = [];
 
-    before('set asts and validator', () => {
+    before('set asts, modify it and validator', () => {
       sampleAsts = clone(asts);
 
-      // Update asts (introduce error) 
+      // Update asts (introduce error)
       sampleAsts[
-        'ProxyNamespace'
-      ].nodes[1].nodes[1].body.statements[0].AST.statements[0].value.value =
-        '0x9dbde58b6f7305fccdc5abd7ea1096e84de3f9ee47d83d8c3efc3e5557ac9c00';
+        'contracts/mocks/initializable/InitializableMock.sol'
+      ].nodes[3].nodes[6].name = 'not_isInitializableMockInitialized';
 
       validator = new ModuleInitializableASTValidator(sampleAsts);
     });
@@ -68,7 +66,7 @@ describe('internal/initializable-ast-validator.js', function () {
       errorsFound = validator.findMissingIsInitialized();
     });
 
-    it('should find a duplicate address', () => {
+    it('should find a missing isInitialized function', () => {
       equal(errorsFound.length, 1);
     });
   });
