@@ -16,5 +16,6 @@ module.exports = {
   SUBTASK_VALIDATE_MODULES: 'deployer-validate-modules',
   SUBTASK_VALIDATE_STORAGE: 'deployer-validate-storage',
   SUBTASK_VALIDATE_ROUTER: 'deployer-validate-router',
+  SUBTASK_VALIDATE_INITIALIZABLES: 'deployer-validate-initializables',
   TASK_DEPLOY: 'deploy',
 };
