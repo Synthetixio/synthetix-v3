@@ -25,7 +25,7 @@ describe('ElectionModule (status)', () => {
   let snapshotId;
 
   before('identify signers', async () => {
-    [user] = await ethers.getSigners();
+    [owner, user] = await ethers.getSigners();
   });
 
   before('identify modules', async () => {
