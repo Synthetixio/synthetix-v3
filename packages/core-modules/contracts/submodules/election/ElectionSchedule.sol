@@ -1,9 +1,9 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "../../storage/ElectionStorage.sol";
+import "./ElectionBase.sol";
 
-contract ElectionSchedule is ElectionStorage {
+contract ElectionSchedule is ElectionBase {
     error InvalidEpochConfiguration();
     error OnlyCallableWhileNominating();
     error OnlyCallableWhileVoting();
@@ -34,8 +34,7 @@ contract ElectionSchedule is ElectionStorage {
     }
 
     function getEpochStatus() public view returns (EpochStatus) {
-        ElectionStore storage store = _electionStore();
-        EpochData storage epoch = store.epochs[store.currentEpochIndex];
+        EpochData storage epoch = _getCurrentEpoch();
 
         uint64 currentTime = uint64(block.timestamp);
 
@@ -59,8 +58,7 @@ contract ElectionSchedule is ElectionStorage {
         uint64 nominationPeriodStartDate,
         uint64 votingPeriodStartDate
     ) internal {
-        ElectionStore storage store = _electionStore();
-        EpochData storage firstEpoch = store.epochs[1];
+        EpochData storage firstEpoch = _getEpochAtPosition(1);
 
         uint64 epochStartDate = uint64(block.timestamp);
         _configureEpoch(firstEpoch, epochStartDate, epochEndDate, nominationPeriodStartDate, votingPeriodStartDate);

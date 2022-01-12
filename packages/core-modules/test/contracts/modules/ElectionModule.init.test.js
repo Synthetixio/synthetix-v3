@@ -5,7 +5,7 @@ const { getUnixTimestamp } = require('@synthetixio/core-js/utils/misc/get-date')
 const { bootstrap } = require('@synthetixio/deployer/utils/tests');
 const initializer = require('../../helpers/initializer');
 
-describe('ElectionModule (init)', () => {
+describe.only('ElectionModule (init)', () => {
   const { proxyAddress } = bootstrap(initializer);
 
   let ElectionModule;
@@ -22,6 +22,10 @@ describe('ElectionModule (init)', () => {
 
   before('identify modules', async () => {
     ElectionModule = await ethers.getContractAt('ElectionModule', proxyAddress());
+  });
+
+  describe.skip('before initializing the module', function () {
+    // TODO
   });
 
   describe('when initializing the module', function () {
@@ -118,6 +122,15 @@ describe('ElectionModule (init)', () => {
 
         it('shows that the current epoch index is 1', async function () {
           assertBn.eq(await ElectionModule.getEpochIndex(), 1);
+        });
+
+        it('shows that the first epoch has appropriate parameters', async function () {
+          assertBn.eq(await ElectionModule.getEpochEndDate(), epochEndDate);
+          assertBn.eq(
+            await ElectionModule.getNominationPeriodStartDate(),
+            nominationPeriodStartDate
+          );
+          assertBn.eq(await ElectionModule.getVotingPeriodStartDate(), votingPeriodStartDate);
         });
 
         describe('when attemting to re-initialize the module', function () {

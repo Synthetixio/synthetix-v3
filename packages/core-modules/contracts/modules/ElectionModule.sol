@@ -3,10 +3,9 @@ pragma solidity ^0.8.0;
 
 import "@synthetixio/core-contracts/contracts/errors/InitError.sol";
 import "@synthetixio/core-contracts/contracts/ownership/OwnableMixin.sol";
-import "../storage/ElectionStorage.sol";
 import "../submodules/election/ElectionSchedule.sol";
 
-contract ElectionModule is ElectionStorage, ElectionSchedule, OwnableMixin {
+contract ElectionModule is ElectionSchedule, OwnableMixin {
     function initializeElectionModule(
         uint64 epochEndDate,
         uint64 nominationPeriodStartDate,
@@ -45,9 +44,5 @@ contract ElectionModule is ElectionStorage, ElectionSchedule, OwnableMixin {
 
     function resolve() external onlyWhileEvaluating {
         // TODO
-    }
-
-    function getEpochIndex() public view returns (uint) {
-        return _electionStore().currentEpochIndex;
     }
 }
