@@ -29,7 +29,7 @@ describe('ElectionModule (status)', () => {
   });
 
   before('identify modules', async () => {
-    ElectionModule = await ethers.getContractAt('ElectionModule', proxyAddress()).connect(owner);
+    ElectionModule = (await ethers.getContractAt('ElectionModule', proxyAddress())).connect(owner);
   });
 
   // ----------------------------------
