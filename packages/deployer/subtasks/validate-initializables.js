@@ -22,7 +22,7 @@ subtask(SUBTASK_VALIDATE_INITIALIZABLES).setAction(async (_, hre) => {
       logger.error(error.msg);
     });
 
-    if (logger.debug) {
+    if (logger.debugging) {
       errorsFound.map((err) => console.log(JSON.stringify(err, null, 2)));
     }
 
