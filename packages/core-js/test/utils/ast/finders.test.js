@@ -69,9 +69,17 @@ describe('utils/ast/finders.js find AST artifacts', function () {
     it('finds selectors from a contract', async () => {
       const functions = await findFunctions('AnotherModule', astNodes);
       equal(functions.length, 3, 'AnotherModule should have 1 function');
-      console.log(functions[0])
-      equal(functions[0].functionSelector, '45aa2181', 'AnotherModule first function selector should be 45aa2181');
-      equal(functions[0].name, 'setSomeValueOnSomeModule', 'AnotherModule first function name should be setSomeValueOnSomeModule');
+      console.log(functions[0]);
+      equal(
+        functions[0].functionSelector,
+        '45aa2181',
+        'AnotherModule first function selector should be 45aa2181'
+      );
+      equal(
+        functions[0].name,
+        'setSomeValueOnSomeModule',
+        'AnotherModule first function name should be setSomeValueOnSomeModule'
+      );
     });
 
     it('doesnt find selectors from a contract that doesnt expose any', async () => {

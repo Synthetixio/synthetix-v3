@@ -1,10 +1,8 @@
-const { parseFullyQualifiedName } = require('hardhat/utils/contract-names');
 const {
   findContractDefinitions,
   findContractDependencies,
   findFunctions,
 } = require('@synthetixio/core-js/utils/ast/finders');
-const filterValues = require('filter-values');
 
 class ModuleInitializableASTValidator {
   constructor(asts) {
@@ -43,11 +41,8 @@ class ModuleInitializableASTValidator {
 
   findInitializableContractNames() {
     const initializableContractNames = [];
-  
-    // const moduleNames = Object.keys(
-    //   filterValues(hre.deployer.deployment.general.contracts, (c) => c.isModule)
-    // );
-    const contractNames =  this.contractNodes.map((v) => v.name);
+
+    const contractNames = this.contractNodes.map((v) => v.name);
 
     for (const contractName of contractNames) {
       if (contractName === 'InitializableMixin') {
@@ -65,12 +60,10 @@ class ModuleInitializableASTValidator {
 
     return initializableContractNames;
   }
-  
 }
 
 function _capitalizeContractName(contractName) {
   return contractName.charAt(0).toUpperCase() + contractName.slice(1);
 }
-
 
 module.exports = ModuleInitializableASTValidator;

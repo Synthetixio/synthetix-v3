@@ -31,9 +31,8 @@ describe('internal/initializable-ast-validator.js', function () {
       sampleAsts = clone(asts);
 
       // Update asts (introduce error)
-      sampleAsts[
-        'contracts/mocks/initializable/InitializableMock.sol'
-      ].nodes[3].nodes[5].name = 'not_initializeInitializableMock';
+      sampleAsts['contracts/mocks/initializable/InitializableMock.sol'].nodes[3].nodes[5].name =
+        'not_initializeInitializableMock';
 
       validator = new ModuleInitializableASTValidator(sampleAsts);
     });
@@ -55,9 +54,8 @@ describe('internal/initializable-ast-validator.js', function () {
       sampleAsts = clone(asts);
 
       // Update asts (introduce error)
-      sampleAsts[
-        'contracts/mocks/initializable/InitializableMock.sol'
-      ].nodes[3].nodes[6].name = 'not_isInitializableMockInitialized';
+      sampleAsts['contracts/mocks/initializable/InitializableMock.sol'].nodes[3].nodes[6].name =
+        'not_isInitializableMockInitialized';
 
       validator = new ModuleInitializableASTValidator(sampleAsts);
     });
