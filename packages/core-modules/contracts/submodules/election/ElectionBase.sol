@@ -28,6 +28,10 @@ contract ElectionBase is ElectionStorage {
         return _getCurrentEpoch().votingPeriodStartDate;
     }
 
+    function isCurrentEpochEvaluated() public view returns (bool) {
+        return _getCurrentEpoch().evaluated;
+    }
+
     // ----------------------------------
     // Next epoch views
     // ----------------------------------

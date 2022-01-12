@@ -1,11 +1,11 @@
 const { ethers } = hre;
 const assertBn = require('@synthetixio/core-js/utils/assertions/assert-bignumber');
 const assertRevert = require('@synthetixio/core-js/utils/assertions/assert-revert');
-const { getUnixTimestamp } = require('@synthetixio/core-js/utils/misc/get-date');
+const { getUnixTimestamp, daysToSeconds } = require('@synthetixio/core-js/utils/misc/dates');
 const { bootstrap } = require('@synthetixio/deployer/utils/tests');
 const initializer = require('../../helpers/initializer');
 
-describe.only('ElectionModule (init)', () => {
+describe('ElectionModule (init)', () => {
   const { proxyAddress } = bootstrap(initializer);
 
   let ElectionModule;
@@ -13,8 +13,6 @@ describe.only('ElectionModule (init)', () => {
   let owner, user;
 
   let epochEndDate, nominationPeriodStartDate, votingPeriodStartDate;
-
-  const daysToSeconds = (days) => days * 3600 * 24;
 
   before('identify signers', async () => {
     [owner, user] = await ethers.getSigners();

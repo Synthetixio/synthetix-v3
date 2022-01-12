@@ -2,10 +2,16 @@ const { ethers } = hre;
 const assert = require('assert/strict');
 const assertBn = require('@synthetixio/core-js/utils/assertions/assert-bignumber');
 const assertRevert = require('@synthetixio/core-js/utils/assertions/assert-revert');
-const { getTime, fastForwardTo } = require('@synthetixio/core-js/utils/hardhat/rpc');
-const { getUnixTimestamp } = require('@synthetixio/core-js/utils/misc/get-date');
+const {
+  getTime,
+  fastForwardTo,
+  takeSnapshot,
+  restoreSnapshot,
+} = require('@synthetixio/core-js/utils/hardhat/rpc');
+const { getUnixTimestamp, daysToSeconds } = require('@synthetixio/core-js/utils/misc/dates');
 const { bootstrap } = require('@synthetixio/deployer/utils/tests');
 const initializer = require('../../helpers/initializer');
+const { EpochStatus } = require('../../helpers/election-helper');
 
 describe('ElectionModule (status)', () => {
   const { proxyAddress } = bootstrap(initializer);
@@ -16,14 +22,7 @@ describe('ElectionModule (status)', () => {
 
   let epochEndDate, nominationPeriodStartDate, votingPeriodStartDate, someDate;
 
-  const daysToSeconds = (days) => days * 3600 * 24;
-
-  const EpochStatus = {
-    Idle: 0,
-    Nominating: 1,
-    Voting: 2,
-    Evaluating: 3,
-  };
+  let snapshotId;
 
   // ----------------------------------
   // Nomination behavior
@@ -122,6 +121,50 @@ describe('ElectionModule (status)', () => {
   };
 
   // ----------------------------------
+  // Evaluation behaviors
+  // ----------------------------------
+
+  const itRejectsAdjustments = () => {
+    describe('when trying to call the adjustEpoch function', function () {
+      it('reverts', async function () {
+        await assertRevert(ElectionModule.adjustEpoch(0, 0, 0), 'OnlyCallableWhileIdle');
+      });
+    });
+  };
+
+  const itAcceptsAdjustments = () => {
+    before('link to user', async function () {
+      ElectionModule = ElectionModule.connect(user);
+    });
+
+    describe('when trying to call the adjustEpoch function', function () {
+      describe('with invalid parameters', function () {
+        it('reverts', async function () {
+          await assertRevert(ElectionModule.adjustEpoch(0, 0, 0), 'InvalidEpochConfiguration');
+        });
+      });
+
+      describe('with valid parameters', function () {
+        before('take snapshot', async function () {
+          snapshotId = await takeSnapshot(ethers.provider);
+        });
+
+        after('restore snapshot', async function () {
+          await restoreSnapshot(snapshotId, ethers.provider);
+        });
+
+        it('does not revert', async function () {
+          await ElectionModule.adjustEpoch(
+            epochEndDate + daysToSeconds(1),
+            nominationPeriodStartDate - daysToSeconds(5),
+            votingPeriodStartDate + daysToSeconds(0.5)
+          );
+        });
+      });
+    });
+  };
+
+  // ----------------------------------
   // Idle period
   // ----------------------------------
 
@@ -156,6 +199,7 @@ describe('ElectionModule (status)', () => {
       itRejectsNominations();
       itRejectsVotes();
       itRejectsEvaluations();
+      itAcceptsAdjustments();
     });
 
     // ----------------------------------
@@ -178,6 +222,7 @@ describe('ElectionModule (status)', () => {
       itAcceptsNominations();
       itRejectsVotes();
       itRejectsEvaluations();
+      itRejectsAdjustments();
 
       describe('when fast forwarding within the current period', function () {
         before('fast forward', async function () {
@@ -197,6 +242,7 @@ describe('ElectionModule (status)', () => {
         itAcceptsNominations();
         itRejectsVotes();
         itRejectsEvaluations();
+        itRejectsAdjustments();
       });
     });
 
@@ -220,6 +266,7 @@ describe('ElectionModule (status)', () => {
       itRejectsNominations();
       itAcceptsVotes();
       itRejectsEvaluations();
+      itRejectsAdjustments();
 
       describe('when fast forwarding within the current period', function () {
         before('fast forward', async function () {
@@ -239,6 +286,7 @@ describe('ElectionModule (status)', () => {
         itRejectsNominations();
         itAcceptsVotes();
         itRejectsEvaluations();
+        itRejectsAdjustments();
       });
     });
 
@@ -261,27 +309,8 @@ describe('ElectionModule (status)', () => {
 
       itRejectsNominations();
       itRejectsVotes();
+      itRejectsAdjustments();
       itAcceptsEvaluations();
-
-      describe('when fast forwarding more', function () {
-        before('fast forward', async function () {
-          someDate = epochEndDate + 1000;
-
-          await fastForwardTo(someDate, ethers.provider);
-        });
-
-        it('skipped to the target time', async function () {
-          assert.equal(await getTime(ethers.provider), someDate);
-        });
-
-        it('shows that the current status is still Evaluating', async function () {
-          assertBn.eq(await ElectionModule.getEpochStatus(), EpochStatus.Evaluating);
-        });
-
-        itRejectsNominations();
-        itRejectsVotes();
-        itAcceptsEvaluations();
-      });
     });
   });
 });

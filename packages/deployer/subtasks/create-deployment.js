@@ -5,7 +5,7 @@ const { subtask } = require('hardhat/config');
 
 const prompter = require('@synthetixio/core-js/utils/io/prompter');
 const relativePath = require('@synthetixio/core-js/utils/misc/relative-path');
-const { formatDate } = require('@synthetixio/core-js/utils/misc/get-date');
+const { formatDate } = require('@synthetixio/core-js/utils/misc/dates');
 const { getDeploymentFolder, getAllDeploymentFiles } = require('../utils/deployments');
 const { SUBTASK_CREATE_DEPLOYMENT } = require('../task-names');
 

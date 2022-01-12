@@ -10,6 +10,8 @@ contract ElectionStorage {
     }
 
     struct EpochData {
+        bool evaluated;
+        bool resolved;
         uint64 startDate;
         uint64 endDate;
         uint64 nominationPeriodStartDate;

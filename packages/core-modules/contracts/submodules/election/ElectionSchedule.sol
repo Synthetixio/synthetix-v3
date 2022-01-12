@@ -5,9 +5,18 @@ import "./ElectionBase.sol";
 
 contract ElectionSchedule is ElectionBase {
     error InvalidEpochConfiguration();
+    error OnlyCallableWhileIdle();
     error OnlyCallableWhileNominating();
     error OnlyCallableWhileVoting();
     error OnlyCallableWhileEvaluating();
+
+    modifier onlyWhileIdle() {
+        if (getEpochStatus() != EpochStatus.Idle) {
+            revert OnlyCallableWhileIdle();
+        }
+
+        _;
+    }
 
     modifier onlyWhileNominating() {
         if (getEpochStatus() != EpochStatus.Nominating) {
@@ -64,6 +73,28 @@ contract ElectionSchedule is ElectionBase {
         _configureEpoch(firstEpoch, epochStartDate, epochEndDate, nominationPeriodStartDate, votingPeriodStartDate);
     }
 
+    function _configureNextEpoch() internal {
+        EpochData storage currentEpoch = _getCurrentEpoch();
+
+        uint64 epochDuration = currentEpoch.endDate - currentEpoch.startDate;
+        uint64 votingPeriodDuration = currentEpoch.endDate - currentEpoch.votingPeriodStartDate;
+        uint64 nominationPeriodDuration = currentEpoch.votingPeriodStartDate - currentEpoch.nominationPeriodStartDate;
+
+        uint64 nextEpochStartDate = uint64(block.timestamp);
+        uint64 nextEpochEndDate = nextEpochStartDate + epochDuration;
+        uint64 nextVotingPeriodStartDate = nextEpochEndDate - votingPeriodDuration;
+        uint64 nextNominationPeriodStartDate = nextVotingPeriodStartDate - nominationPeriodDuration;
+
+        EpochData storage nextEpoch = _getNextEpoch();
+        _configureEpoch(
+            nextEpoch,
+            nextEpochStartDate,
+            nextEpochEndDate,
+            nextNominationPeriodStartDate,
+            nextVotingPeriodStartDate
+        );
+    }
+
     function _configureEpoch(
         EpochData storage epoch,
         uint64 epochStartDate,
@@ -87,13 +118,11 @@ contract ElectionSchedule is ElectionBase {
     ) private pure {
         // TODO: Declare these at contract level once deployer is fixed.
         // The deployer does not allow constant declarations in contracts.
-        /* solhint-disable private-vars-leading-underscore */
-        /* solhint-disable var-name-mixedcase */
+        /* solhint-disable */
         uint64 _MIN_EPOCH_DURATION = 7 days;
         uint64 _MIN_NOMINATION_PERIOD_DURATION = 1 days;
         uint64 _MIN_VOTING_PERIOD_DURATION = 1 days;
-        /* solhint-enable private-vars-leading-underscore */
-        /* solhint-enable var-name-mixedcase */
+        /* solhint-enable */
 
         // Validate order: 0 < epochStartDate < nominationPeriodStartDate < votingPeriodStartDate < epochEndDate
         if (

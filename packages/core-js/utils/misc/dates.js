@@ -15,7 +15,10 @@ function getUnixTimestamp() {
   return Math.floor(new Date().getTime() / 1000);
 }
 
+const daysToSeconds = (days) => days * 3600 * 24;
+
 module.exports = {
   formatDate,
   getUnixTimestamp,
+  daysToSeconds,
 };
