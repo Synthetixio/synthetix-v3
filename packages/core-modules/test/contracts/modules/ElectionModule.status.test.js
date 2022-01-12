@@ -25,6 +25,106 @@ describe('ElectionModule (status)', () => {
     Evaluating: 3,
   };
 
+  // ----------------------------------
+  // Nomination behavior
+  // ----------------------------------
+
+  const itRejectsNominations = () => {
+    describe('when trying to call the nominate function', function () {
+      it('reverts', async function () {
+        await assertRevert(ElectionModule.nominate(), 'OnlyCallableWhileNominating');
+      });
+    });
+
+    describe('when trying to call the withdrawNomination function', function () {
+      it('reverts', async function () {
+        await assertRevert(ElectionModule.nominate(), 'OnlyCallableWhileNominating');
+      });
+    });
+  };
+
+  const itAcceptsNominations = () => {
+    before('link to user', async function () {
+      ElectionModule = ElectionModule.connect(user);
+    });
+
+    describe('when trying to call the nominate function', function () {
+      it('does not revert', async function () {
+        await ElectionModule.nominate();
+      });
+    });
+
+    describe('when a user withdraws its nomination', function () {
+      it('does not revert', async function () {
+        await ElectionModule.withdrawNomination();
+      });
+    });
+  };
+
+  // ----------------------------------
+  // Voting behavior
+  // ----------------------------------
+
+  const itRejectsVotes = () => {
+    describe('when trying to call the elect function', function () {
+      it('reverts', async function () {
+        await assertRevert(ElectionModule.elect([user.address]), 'OnlyCallableWhileVoting');
+      });
+    });
+  };
+
+  const itAcceptsVotes = () => {
+    before('link to user', async function () {
+      ElectionModule = ElectionModule.connect(user);
+    });
+
+    describe('when trying to call the elect function', function () {
+      it('does not revert', async function () {
+        await ElectionModule.elect([user.address]);
+      });
+    });
+  };
+
+  // ----------------------------------
+  // Evaluation behaviors
+  // ----------------------------------
+
+  const itRejectsEvaluations = () => {
+    describe('when trying to call the evaluate function', function () {
+      it('reverts', async function () {
+        await assertRevert(ElectionModule.evaluate(), 'OnlyCallableWhileEvaluating');
+      });
+    });
+
+    describe('when trying to call the resolve function', function () {
+      it('reverts', async function () {
+        await assertRevert(ElectionModule.evaluate(), 'OnlyCallableWhileEvaluating');
+      });
+    });
+  };
+
+  const itAcceptsEvaluations = () => {
+    before('link to user', async function () {
+      ElectionModule = ElectionModule.connect(user);
+    });
+
+    describe('when trying to call the evaluate function', function () {
+      it('does not revert', async function () {
+        await ElectionModule.evaluate();
+      });
+    });
+
+    describe('when trying to call the resolve function', function () {
+      it('does not revert', async function () {
+        await ElectionModule.resolve();
+      });
+    });
+  };
+
+  // ----------------------------------
+  // Idle period
+  // ----------------------------------
+
   before('identify signers', async () => {
     [user] = await ethers.getSigners();
   });
@@ -52,39 +152,15 @@ describe('ElectionModule (status)', () => {
       assertBn.eq(await ElectionModule.getEpochStatus(), EpochStatus.Idle);
     });
 
-    const itRejectsNominations = () => {
-      describe('when trying to call the nominate function', function () {
-        it('reverts', async function () {
-          await assertRevert(ElectionModule.nominate(), 'OnlyCallableWhileNominating');
-        });
-      });
-
-      describe('when trying to call the withdrawNomination function', function () {
-        it('reverts', async function () {
-          await assertRevert(ElectionModule.nominate(), 'OnlyCallableWhileNominating');
-        });
-      });
-    };
-
-    const itAcceptsNominations = () => {
-      before('link to user', async function () {
-        ElectionModule = ElectionModule.connect(user);
-      });
-
-      it('does not revert', async function () {
-        await ElectionModule.nominate();
-      });
-
-      describe('when a user withdraws its nomination', function () {
-        it('does not revert', async function () {
-          await ElectionModule.withdrawNomination();
-        });
-      });
-    };
-
-    describe('before entering the nomination period', function () {
+    describe('while in the Idle period', function () {
       itRejectsNominations();
+      itRejectsVotes();
+      itRejectsEvaluations();
     });
+
+    // ----------------------------------
+    // Nominating period
+    // ----------------------------------
 
     describe('when entering the nomination period', function () {
       before('fast forward', async function () {
@@ -99,9 +175,9 @@ describe('ElectionModule (status)', () => {
         assertBn.eq(await ElectionModule.getEpochStatus(), EpochStatus.Nominating);
       });
 
-      describe('when a user calls nominate', function () {
-        itAcceptsNominations();
-      });
+      itAcceptsNominations();
+      itRejectsVotes();
+      itRejectsEvaluations();
 
       describe('when fast forwarding within the current period', function () {
         before('fast forward', async function () {
@@ -117,8 +193,16 @@ describe('ElectionModule (status)', () => {
         it('shows that the current status is still Nominating', async function () {
           assertBn.eq(await ElectionModule.getEpochStatus(), EpochStatus.Nominating);
         });
+
+        itAcceptsNominations();
+        itRejectsVotes();
+        itRejectsEvaluations();
       });
     });
+
+    // ----------------------------------
+    // Voting period
+    // ----------------------------------
 
     describe('when entering the voting period', function () {
       before('fast forward', async function () {
@@ -134,6 +218,8 @@ describe('ElectionModule (status)', () => {
       });
 
       itRejectsNominations();
+      itAcceptsVotes();
+      itRejectsEvaluations();
 
       describe('when fast forwarding within the current period', function () {
         before('fast forward', async function () {
@@ -149,10 +235,18 @@ describe('ElectionModule (status)', () => {
         it('shows that the current status is still Voting', async function () {
           assertBn.eq(await ElectionModule.getEpochStatus(), EpochStatus.Voting);
         });
+
+        itRejectsNominations();
+        itAcceptsVotes();
+        itRejectsEvaluations();
       });
     });
 
-    describe('when exiting the voting period', function () {
+    // ----------------------------------
+    // Evaluation period
+    // ----------------------------------
+
+    describe('when entering the evaluation period', function () {
       before('fast forward', async function () {
         await fastForwardTo(epochEndDate, ethers.provider);
       });
@@ -166,6 +260,8 @@ describe('ElectionModule (status)', () => {
       });
 
       itRejectsNominations();
+      itRejectsVotes();
+      itAcceptsEvaluations();
 
       describe('when fast forwarding more', function () {
         before('fast forward', async function () {
@@ -181,6 +277,10 @@ describe('ElectionModule (status)', () => {
         it('shows that the current status is still Evaluating', async function () {
           assertBn.eq(await ElectionModule.getEpochStatus(), EpochStatus.Evaluating);
         });
+
+        itRejectsNominations();
+        itRejectsVotes();
+        itAcceptsEvaluations();
       });
     });
   });

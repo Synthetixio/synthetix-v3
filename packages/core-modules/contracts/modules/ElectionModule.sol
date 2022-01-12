@@ -31,6 +31,22 @@ contract ElectionModule is ElectionStorage, ElectionSchedule, OwnableMixin {
         // TODO
     }
 
+    function elect(address[] memory candidates) external onlyWhileVoting {
+        // TODO
+    }
+
+    function evaluate() external onlyWhileEvaluating {
+        // TODO
+    }
+
+    function isEvaluated() external {
+        // TODO
+    }
+
+    function resolve() external onlyWhileEvaluating {
+        // TODO
+    }
+
     function getEpochIndex() public view returns (uint) {
         return _electionStore().currentEpochIndex;
     }
