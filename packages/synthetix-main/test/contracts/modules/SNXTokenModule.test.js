@@ -27,19 +27,22 @@ describe('SNXTokenModule', function () {
     });
 
     describe('When the SNX is created', () => {
-      let receipt;
+      let receipt, fullyQualifiedName;
+
       before('Create a SNX token', async () => {
         const tx = await SNXTokenModule.connect(owner).createSNX();
         receipt = await tx.wait();
       });
 
       before('Identify newly created SNX', async () => {
-        const event = findEvent({ receipt, eventName: 'SNXTokenCreated' });
-        snxTokenAddress = event.args.snxAddress;
+        const event = findEvent({ receipt, eventName: 'SatelliteCreated' });
+        snxTokenAddress = event.args.deployedAddress;
+        fullyQualifiedName = event.args.fullyQualifiedName;
         SNX = await ethers.getContractAt('SNXToken', snxTokenAddress);
       });
 
       it('emmited an event', async () => {
+        assert.equal(fullyQualifiedName, 'contracts/token/SNXToken.sol:SNXToken');
         assert.notEqual(snxTokenAddress, '0x0000000000000000000000000000000000000000');
       });
 
