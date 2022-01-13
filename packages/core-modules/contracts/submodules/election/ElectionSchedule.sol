@@ -5,17 +5,17 @@ import "./ElectionBase.sol";
 
 contract ElectionSchedule is ElectionBase {
     error InvalidEpochConfiguration();
-    error NotCallableInCurrentStatus();
+    error NotCallableInCurrentPeriod();
 
-    modifier onlyWithStatus(ElectionPeriod status) {
-        if (_getElectionPeriod() != status) {
-            revert NotCallableInCurrentStatus();
+    modifier onlyInPeriod(ElectionPeriod period) {
+        if (_getCurrentPeriod() != period) {
+            revert NotCallableInCurrentPeriod();
         }
 
         _;
     }
 
-    function _getElectionPeriod() internal view returns (ElectionPeriod) {
+    function _getCurrentPeriod() internal view returns (ElectionPeriod) {
         EpochData storage epoch = _getCurrentEpoch();
 
         uint64 currentTime = uint64(block.timestamp);

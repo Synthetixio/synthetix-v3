@@ -40,8 +40,8 @@ describe('ElectionModule (resolve)', () => {
         await fastForwardTo(epochEndDate, ethers.provider);
       });
 
-      it('shows that the current status is Evaluating', async function () {
-        assertBn.eq(await ElectionModule.getElectionPeriod(), ElectionPeriod.Evaluation);
+      it('shows that the current period is Evaluation', async function () {
+        assertBn.eq(await ElectionModule.getCurrentPeriod(), ElectionPeriod.Evaluation);
       });
 
       describe('before evaluating the epoch', function () {
@@ -77,8 +77,8 @@ describe('ElectionModule (resolve)', () => {
               assertBn.eq(epochIndexAfter, epochIndexBefore.add(1));
             });
 
-            it('shows that the current status is Idle', async function () {
-              assertBn.eq(await ElectionModule.getElectionPeriod(), ElectionPeriod.Idle);
+            it('shows that the current period is Idle', async function () {
+              assertBn.eq(await ElectionModule.getCurrentPeriod(), ElectionPeriod.Idle);
             });
           });
         });

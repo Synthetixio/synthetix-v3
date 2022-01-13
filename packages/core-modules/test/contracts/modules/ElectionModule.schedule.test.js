@@ -13,7 +13,7 @@ const { bootstrap } = require('@synthetixio/deployer/utils/tests');
 const initializer = require('../../helpers/initializer');
 const { ElectionPeriod } = require('../../helpers/election-helper');
 
-describe('ElectionModule (status)', () => {
+describe('ElectionModule (schedule)', () => {
   const { proxyAddress } = bootstrap(initializer);
 
   let ElectionModule;
@@ -39,13 +39,13 @@ describe('ElectionModule (status)', () => {
   const itRejectsNominations = () => {
     describe('when trying to call the nominate function', function () {
       it('reverts', async function () {
-        await assertRevert(ElectionModule.nominate(), 'NotCallableInCurrentStatus');
+        await assertRevert(ElectionModule.nominate(), 'NotCallableInCurrentPeriod');
       });
     });
 
     describe('when trying to call the withdrawNomination function', function () {
       it('reverts', async function () {
-        await assertRevert(ElectionModule.nominate(), 'NotCallableInCurrentStatus');
+        await assertRevert(ElectionModule.nominate(), 'NotCallableInCurrentPeriod');
       });
     });
   };
@@ -65,13 +65,13 @@ describe('ElectionModule (status)', () => {
   };
 
   // ----------------------------------
-  // Voting behavior
+  // Vote behavior
   // ----------------------------------
 
   const itRejectsVotes = () => {
     describe('when trying to call the elect function', function () {
       it('reverts', async function () {
-        await assertRevert(ElectionModule.elect([user.address]), 'NotCallableInCurrentStatus');
+        await assertRevert(ElectionModule.elect([user.address]), 'NotCallableInCurrentPeriod');
       });
     });
   };
@@ -91,13 +91,13 @@ describe('ElectionModule (status)', () => {
   const itRejectsEvaluations = () => {
     describe('when trying to call the evaluate function', function () {
       it('reverts', async function () {
-        await assertRevert(ElectionModule.evaluate(), 'NotCallableInCurrentStatus');
+        await assertRevert(ElectionModule.evaluate(), 'NotCallableInCurrentPeriod');
       });
     });
 
     describe('when trying to call the resolve function', function () {
       it('reverts', async function () {
-        await assertRevert(ElectionModule.evaluate(), 'NotCallableInCurrentStatus');
+        await assertRevert(ElectionModule.evaluate(), 'NotCallableInCurrentPeriod');
       });
     });
   };
@@ -123,7 +123,7 @@ describe('ElectionModule (status)', () => {
   const itRejectsAdjustments = () => {
     describe('when trying to call the adjustEpoch function', function () {
       it('reverts', async function () {
-        await assertRevert(ElectionModule.adjustEpoch(0, 0, 0), 'NotCallableInCurrentStatus');
+        await assertRevert(ElectionModule.adjustEpoch(0, 0, 0), 'NotCallableInCurrentPeriod');
       });
     });
   };
@@ -175,8 +175,8 @@ describe('ElectionModule (status)', () => {
       );
     });
 
-    it('shows that initial status is Idle', async function () {
-      assertBn.eq(await ElectionModule.getElectionPeriod(), ElectionPeriod.Idle);
+    it('shows that initial period is Idle', async function () {
+      assertBn.eq(await ElectionModule.getCurrentPeriod(), ElectionPeriod.Idle);
     });
 
     describe('when an account that does not own the instance attempts to adjust the epoch', function () {
@@ -193,7 +193,7 @@ describe('ElectionModule (status)', () => {
     });
 
     // ----------------------------------
-    // Nominating period
+    // Nomination period
     // ----------------------------------
 
     describe('when entering the nomination period', function () {
@@ -205,8 +205,8 @@ describe('ElectionModule (status)', () => {
         assert.equal(await getTime(ethers.provider), nominationPeriodStartDate);
       });
 
-      it('shows that the current status is Nominating', async function () {
-        assertBn.eq(await ElectionModule.getElectionPeriod(), ElectionPeriod.Nomination);
+      it('shows that the current period is Nomination', async function () {
+        assertBn.eq(await ElectionModule.getCurrentPeriod(), ElectionPeriod.Nomination);
       });
 
       itAcceptsNominations();
@@ -225,8 +225,8 @@ describe('ElectionModule (status)', () => {
           assert.equal(await getTime(ethers.provider), someDate);
         });
 
-        it('shows that the current status is still Nominating', async function () {
-          assertBn.eq(await ElectionModule.getElectionPeriod(), ElectionPeriod.Nomination);
+        it('shows that the current period is still Nomination', async function () {
+          assertBn.eq(await ElectionModule.getCurrentPeriod(), ElectionPeriod.Nomination);
         });
 
         itAcceptsNominations();
@@ -237,7 +237,7 @@ describe('ElectionModule (status)', () => {
     });
 
     // ----------------------------------
-    // Voting period
+    // Vote period
     // ----------------------------------
 
     describe('when entering the voting period', function () {
@@ -249,8 +249,8 @@ describe('ElectionModule (status)', () => {
         assert.equal(await getTime(ethers.provider), votingPeriodStartDate);
       });
 
-      it('shows that the current status is Voting', async function () {
-        assertBn.eq(await ElectionModule.getElectionPeriod(), ElectionPeriod.Vote);
+      it('shows that the current period is Vote', async function () {
+        assertBn.eq(await ElectionModule.getCurrentPeriod(), ElectionPeriod.Vote);
       });
 
       itRejectsNominations();
@@ -269,8 +269,8 @@ describe('ElectionModule (status)', () => {
           assert.equal(await getTime(ethers.provider), someDate);
         });
 
-        it('shows that the current status is still Voting', async function () {
-          assertBn.eq(await ElectionModule.getElectionPeriod(), ElectionPeriod.Vote);
+        it('shows that the current period is still Vote', async function () {
+          assertBn.eq(await ElectionModule.getCurrentPeriod(), ElectionPeriod.Vote);
         });
 
         itRejectsNominations();
@@ -293,8 +293,8 @@ describe('ElectionModule (status)', () => {
         assert.equal(await getTime(ethers.provider), epochEndDate);
       });
 
-      it('shows that the current status is Evaluating', async function () {
-        assertBn.eq(await ElectionModule.getElectionPeriod(), ElectionPeriod.Evaluation);
+      it('shows that the current period is Evaluation', async function () {
+        assertBn.eq(await ElectionModule.getCurrentPeriod(), ElectionPeriod.Evaluation);
       });
 
       itRejectsNominations();

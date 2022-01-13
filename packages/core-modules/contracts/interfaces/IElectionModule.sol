@@ -24,7 +24,7 @@ interface IElectionModule {
 
     function resolve() external;
 
-    function getElectionPeriod() external view returns (uint);
+    function getCurrentPeriod() external view returns (uint);
 
     function getEpochIndex() external view returns (uint);
 

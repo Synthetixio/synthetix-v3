@@ -1,8 +1,8 @@
 const ElectionPeriod = {
   Idle: 0,
-  Nominating: 1,
-  Voting: 2,
-  Evaluating: 3,
+  Nomination: 1,
+  Vote: 2,
+  Evaluation: 3,
 };
 
 module.exports = {

@@ -29,7 +29,7 @@ contract ElectionModule is IElectionModule, ElectionSchedule, OwnableMixin {
         uint64 epochEndDate,
         uint64 nominationPeriodStartDate,
         uint64 votingPeriodStartDate
-    ) external override onlyOwner onlyWithStatus(ElectionPeriod.Idle) {
+    ) external override onlyOwner onlyInPeriod(ElectionPeriod.Idle) {
         EpochData storage epoch = _getCurrentEpoch();
 
         // TODO: Validate that the new dates are in the future and/or are close to the initial dates?
@@ -38,33 +38,33 @@ contract ElectionModule is IElectionModule, ElectionSchedule, OwnableMixin {
     }
 
     /* solhint-disable */
-    function nominate() external override onlyWithStatus(ElectionPeriod.Nomination) {
+    function nominate() external override onlyInPeriod(ElectionPeriod.Nomination) {
         // TODO
     }
 
     /* solhint-enable */
 
     /* solhint-disable */
-    function withdrawNomination() external override onlyWithStatus(ElectionPeriod.Nomination) {
+    function withdrawNomination() external override onlyInPeriod(ElectionPeriod.Nomination) {
         // TODO
     }
 
     /* solhint-enable */
 
     /* solhint-disable */
-    function elect(address[] memory candidates) external override onlyWithStatus(ElectionPeriod.Vote) {
+    function elect(address[] memory candidates) external override onlyInPeriod(ElectionPeriod.Vote) {
         // TODO
     }
 
     /* solhint-enable */
 
-    function evaluate() external override onlyWithStatus(ElectionPeriod.Evaluation) {
+    function evaluate() external override onlyInPeriod(ElectionPeriod.Evaluation) {
         // TODO
 
         _getCurrentEpoch().evaluated = true;
     }
 
-    function resolve() external override onlyWithStatus(ElectionPeriod.Evaluation) {
+    function resolve() external override onlyInPeriod(ElectionPeriod.Evaluation) {
         if (!isEpochEvaluated()) {
             revert EpochNotEvaluated();
         }
@@ -79,8 +79,8 @@ contract ElectionModule is IElectionModule, ElectionSchedule, OwnableMixin {
         store.currentEpochIndex = store.currentEpochIndex + 1;
     }
 
-    function getElectionPeriod() public view override returns (uint) {
-        return uint(_getElectionPeriod());
+    function getCurrentPeriod() public view override returns (uint) {
+        return uint(_getCurrentPeriod());
     }
 
     function getEpochIndex() public view override returns (uint) {
