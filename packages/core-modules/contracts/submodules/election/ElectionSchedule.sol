@@ -7,32 +7,32 @@ contract ElectionSchedule is ElectionBase {
     error InvalidEpochConfiguration();
     error NotCallableInCurrentStatus();
 
-    modifier onlyWithStatus(EpochStatus status) {
-        if (_getEpochStatus() != status) {
+    modifier onlyWithStatus(ElectionPeriod status) {
+        if (_getElectionPeriod() != status) {
             revert NotCallableInCurrentStatus();
         }
 
         _;
     }
 
-    function _getEpochStatus() internal view returns (EpochStatus) {
+    function _getElectionPeriod() internal view returns (ElectionPeriod) {
         EpochData storage epoch = _getCurrentEpoch();
 
         uint64 currentTime = uint64(block.timestamp);
 
         if (currentTime >= epoch.endDate) {
-            return EpochStatus.Evaluating;
+            return ElectionPeriod.Evaluation;
         }
 
         if (currentTime >= epoch.votingPeriodStartDate) {
-            return EpochStatus.Voting;
+            return ElectionPeriod.Vote;
         }
 
         if (currentTime >= epoch.nominationPeriodStartDate) {
-            return EpochStatus.Nominating;
+            return ElectionPeriod.Nomination;
         }
 
-        return EpochStatus.Idle;
+        return ElectionPeriod.Idle;
     }
 
     function _configureFirstEpoch(

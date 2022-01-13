@@ -24,7 +24,7 @@ interface IElectionModule {
 
     function resolve() external;
 
-    function getEpochStatus() external view returns (uint);
+    function getElectionPeriod() external view returns (uint);
 
     function getEpochIndex() external view returns (uint);
 
@@ -36,13 +36,5 @@ interface IElectionModule {
 
     function getVotingPeriodStartDate() external view returns (uint64);
 
-    function isCurrentEpochEvaluated() external view returns (bool);
-
-    function getNextEpochStartDate() external view returns (uint64);
-
-    function getNextEpochEndDate() external view returns (uint64);
-
-    function getNextEpochNominationPeriodStartDate() external view returns (uint64);
-
-    function getNextEpochVotingPeriodStartDate() external view returns (uint64);
+    function isEpochEvaluated() external view returns (bool);
 }

@@ -11,7 +11,7 @@ const {
 const { getUnixTimestamp, daysToSeconds } = require('@synthetixio/core-js/utils/misc/dates');
 const { bootstrap } = require('@synthetixio/deployer/utils/tests');
 const initializer = require('../../helpers/initializer');
-const { EpochStatus } = require('../../helpers/election-helper');
+const { ElectionPeriod } = require('../../helpers/election-helper');
 
 describe('ElectionModule (status)', () => {
   const { proxyAddress } = bootstrap(initializer);
@@ -176,7 +176,7 @@ describe('ElectionModule (status)', () => {
     });
 
     it('shows that initial status is Idle', async function () {
-      assertBn.eq(await ElectionModule.getEpochStatus(), EpochStatus.Idle);
+      assertBn.eq(await ElectionModule.getElectionPeriod(), ElectionPeriod.Idle);
     });
 
     describe('when an account that does not own the instance attempts to adjust the epoch', function () {
@@ -206,7 +206,7 @@ describe('ElectionModule (status)', () => {
       });
 
       it('shows that the current status is Nominating', async function () {
-        assertBn.eq(await ElectionModule.getEpochStatus(), EpochStatus.Nominating);
+        assertBn.eq(await ElectionModule.getElectionPeriod(), ElectionPeriod.Nomination);
       });
 
       itAcceptsNominations();
@@ -226,7 +226,7 @@ describe('ElectionModule (status)', () => {
         });
 
         it('shows that the current status is still Nominating', async function () {
-          assertBn.eq(await ElectionModule.getEpochStatus(), EpochStatus.Nominating);
+          assertBn.eq(await ElectionModule.getElectionPeriod(), ElectionPeriod.Nomination);
         });
 
         itAcceptsNominations();
@@ -250,7 +250,7 @@ describe('ElectionModule (status)', () => {
       });
 
       it('shows that the current status is Voting', async function () {
-        assertBn.eq(await ElectionModule.getEpochStatus(), EpochStatus.Voting);
+        assertBn.eq(await ElectionModule.getElectionPeriod(), ElectionPeriod.Vote);
       });
 
       itRejectsNominations();
@@ -270,7 +270,7 @@ describe('ElectionModule (status)', () => {
         });
 
         it('shows that the current status is still Voting', async function () {
-          assertBn.eq(await ElectionModule.getEpochStatus(), EpochStatus.Voting);
+          assertBn.eq(await ElectionModule.getElectionPeriod(), ElectionPeriod.Vote);
         });
 
         itRejectsNominations();
@@ -294,7 +294,7 @@ describe('ElectionModule (status)', () => {
       });
 
       it('shows that the current status is Evaluating', async function () {
-        assertBn.eq(await ElectionModule.getEpochStatus(), EpochStatus.Evaluating);
+        assertBn.eq(await ElectionModule.getElectionPeriod(), ElectionPeriod.Evaluation);
       });
 
       itRejectsNominations();

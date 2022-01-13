@@ -6,7 +6,7 @@ const { fastForwardTo } = require('@synthetixio/core-js/utils/hardhat/rpc');
 const { getUnixTimestamp, daysToSeconds } = require('@synthetixio/core-js/utils/misc/dates');
 const { bootstrap } = require('@synthetixio/deployer/utils/tests');
 const initializer = require('../../helpers/initializer');
-const { EpochStatus } = require('../../helpers/election-helper');
+const { ElectionPeriod } = require('../../helpers/election-helper');
 
 describe('ElectionModule (resolve)', () => {
   const { proxyAddress } = bootstrap(initializer);
@@ -41,7 +41,7 @@ describe('ElectionModule (resolve)', () => {
       });
 
       it('shows that the current status is Evaluating', async function () {
-        assertBn.eq(await ElectionModule.getEpochStatus(), EpochStatus.Evaluating);
+        assertBn.eq(await ElectionModule.getElectionPeriod(), ElectionPeriod.Evaluation);
       });
 
       describe('before evaluating the epoch', function () {
@@ -58,7 +58,7 @@ describe('ElectionModule (resolve)', () => {
         });
 
         it('shows that the epoch is evaluated', async function () {
-          assert.ok(await ElectionModule.isCurrentEpochEvaluated());
+          assert.ok(await ElectionModule.isEpochEvaluated());
         });
 
         describe('when resolving the epoch', function () {
@@ -78,7 +78,7 @@ describe('ElectionModule (resolve)', () => {
             });
 
             it('shows that the current status is Idle', async function () {
-              assertBn.eq(await ElectionModule.getEpochStatus(), EpochStatus.Idle);
+              assertBn.eq(await ElectionModule.getElectionPeriod(), ElectionPeriod.Idle);
             });
           });
         });

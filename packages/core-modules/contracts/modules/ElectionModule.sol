@@ -29,7 +29,7 @@ contract ElectionModule is IElectionModule, ElectionSchedule, OwnableMixin {
         uint64 epochEndDate,
         uint64 nominationPeriodStartDate,
         uint64 votingPeriodStartDate
-    ) external override onlyOwner onlyWithStatus(EpochStatus.Idle) {
+    ) external override onlyOwner onlyWithStatus(ElectionPeriod.Idle) {
         EpochData storage epoch = _getCurrentEpoch();
 
         // TODO: Validate that the new dates are in the future and/or are close to the initial dates?
@@ -38,34 +38,34 @@ contract ElectionModule is IElectionModule, ElectionSchedule, OwnableMixin {
     }
 
     /* solhint-disable */
-    function nominate() external override onlyWithStatus(EpochStatus.Nominating) {
+    function nominate() external override onlyWithStatus(ElectionPeriod.Nomination) {
         // TODO
     }
 
     /* solhint-enable */
 
     /* solhint-disable */
-    function withdrawNomination() external override onlyWithStatus(EpochStatus.Nominating) {
+    function withdrawNomination() external override onlyWithStatus(ElectionPeriod.Nomination) {
         // TODO
     }
 
     /* solhint-enable */
 
     /* solhint-disable */
-    function elect(address[] memory candidates) external override onlyWithStatus(EpochStatus.Voting) {
+    function elect(address[] memory candidates) external override onlyWithStatus(ElectionPeriod.Vote) {
         // TODO
     }
 
     /* solhint-enable */
 
-    function evaluate() external override onlyWithStatus(EpochStatus.Evaluating) {
+    function evaluate() external override onlyWithStatus(ElectionPeriod.Evaluation) {
         // TODO
 
         _getCurrentEpoch().evaluated = true;
     }
 
-    function resolve() external override onlyWithStatus(EpochStatus.Evaluating) {
-        if (!isCurrentEpochEvaluated()) {
+    function resolve() external override onlyWithStatus(ElectionPeriod.Evaluation) {
+        if (!isEpochEvaluated()) {
             revert EpochNotEvaluated();
         }
 
@@ -79,12 +79,8 @@ contract ElectionModule is IElectionModule, ElectionSchedule, OwnableMixin {
         store.currentEpochIndex = store.currentEpochIndex + 1;
     }
 
-    // ----------------------------------
-    // Current epoch views
-    // ----------------------------------
-
-    function getEpochStatus() public view override returns (uint) {
-        return uint(_getEpochStatus());
+    function getElectionPeriod() public view override returns (uint) {
+        return uint(_getElectionPeriod());
     }
 
     function getEpochIndex() public view override returns (uint) {
@@ -107,27 +103,7 @@ contract ElectionModule is IElectionModule, ElectionSchedule, OwnableMixin {
         return _getCurrentEpoch().votingPeriodStartDate;
     }
 
-    function isCurrentEpochEvaluated() public view override returns (bool) {
+    function isEpochEvaluated() public view override returns (bool) {
         return _getCurrentEpoch().evaluated;
-    }
-
-    // ----------------------------------
-    // Next epoch views
-    // ----------------------------------
-
-    function getNextEpochStartDate() public view override returns (uint64) {
-        return _getNextEpoch().startDate;
-    }
-
-    function getNextEpochEndDate() public view override returns (uint64) {
-        return _getNextEpoch().endDate;
-    }
-
-    function getNextEpochNominationPeriodStartDate() public view override returns (uint64) {
-        return _getNextEpoch().nominationPeriodStartDate;
-    }
-
-    function getNextEpochVotingPeriodStartDate() public view override returns (uint64) {
-        return _getNextEpoch().votingPeriodStartDate;
     }
 }

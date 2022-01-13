@@ -1,4 +1,4 @@
-const EpochStatus = {
+const ElectionPeriod = {
   Idle: 0,
   Nominating: 1,
   Voting: 2,
@@ -6,5 +6,5 @@ const EpochStatus = {
 };
 
 module.exports = {
-  EpochStatus,
+  ElectionPeriod,
 };
