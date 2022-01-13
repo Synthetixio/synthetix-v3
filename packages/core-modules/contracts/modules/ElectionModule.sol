@@ -53,7 +53,9 @@ contract ElectionModule is IElectionModule, ElectionSchedule, OwnableMixin {
 
     /* solhint-disable */
     function elect(address[] memory candidates) external override onlyInPeriod(ElectionPeriod.Vote) {
-        // TODO
+        // TODO: Validate candidates array with: min length, max length, no duplicates, candidates are nominated
+        // TODO: Record vote in ballot
+        // TODO: Ability to change votes
     }
 
     /* solhint-enable */
