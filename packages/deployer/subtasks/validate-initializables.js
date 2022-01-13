@@ -23,7 +23,7 @@ subtask(SUBTASK_VALIDATE_INITIALIZABLES).setAction(async (_, hre) => {
     });
 
     if (logger.debugging) {
-      errorsFound.map((err) => console.log(JSON.stringify(err, null, 2)));
+      errorsFound.map((err) => logger.debug(JSON.stringify(err, null, 2)));
     }
 
     throw new ContractValidationError(

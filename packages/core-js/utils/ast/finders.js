@@ -115,16 +115,6 @@ function _findFunctionSelectors(contractNode) {
   return selectors;
 }
 
-function _findFunctions(contractNode) {
-  const functions = [];
-
-  for (const functionDefinition of findAll('FunctionDefinition', contractNode)) {
-    functions.push(functionDefinition);
-  }
-
-  return functions;
-}
-
 /**
  * Get the complete tree of dependencies from the given contract. This methods
  * takes an objects with the keys from all the contracts and the values are their
@@ -193,7 +183,7 @@ function findFunctions(contractName, astNodes) {
   const functions = [];
 
   for (const contractNode of findContractDependencies(contractName, astNodes)) {
-    const currentFunctions = _findFunctions(contractNode);
+    const currentFunctions = Array.from(findAll('FunctionDefinition', contractNode));
     if (currentFunctions.length > 0) {
       functions.push(...currentFunctions);
     }
