@@ -9,16 +9,12 @@ const {
 } = require('../../../utils/hardhat/rpc');
 
 const fakeProvider = {
-  send() {
-    return new Promise((resolve) => {
-      resolve(42);
-    });
+  async send() {
+    return 42;
   },
 
-  getBlock() {
-    return new Promise((resolve) => {
-      resolve({ timestamp: 1337 });
-    });
+  async getBlock() {
+    return { timestamp: 1337 };
   },
 };
 
