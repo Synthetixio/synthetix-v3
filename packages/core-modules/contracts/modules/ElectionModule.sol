@@ -39,7 +39,8 @@ contract ElectionModule is IElectionModule, ElectionSchedule, OwnableMixin {
 
     /* solhint-disable */
     function nominate() external override onlyInPeriod(ElectionPeriod.Nomination) {
-        // TODO
+        // TODO: Ensure msg.sender is not already in the candidates array
+        // TODO: Store msg.sender in the candidates array
     }
 
     /* solhint-enable */
