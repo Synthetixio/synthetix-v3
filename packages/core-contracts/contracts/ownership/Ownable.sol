@@ -13,11 +13,15 @@ contract Ownable is IOwnable, OwnableMixin {
     error NotNominated(address addr);
 
     function acceptOwnership() external override {
+        _acceptOwnershipBy(msg.sender);
+    }
+
+    function _acceptOwnershipBy(address newNominatedOwner) internal {
         OwnableStore storage store = _ownableStore();
 
         address currentNominatedOwner = store.nominatedOwner;
-        if (msg.sender != currentNominatedOwner) {
-            revert NotNominated(msg.sender);
+        if (newNominatedOwner != currentNominatedOwner) {
+            revert NotNominated(newNominatedOwner);
         }
 
         emit OwnerChanged(store.owner, currentNominatedOwner);
@@ -26,7 +30,7 @@ contract Ownable is IOwnable, OwnableMixin {
         store.nominatedOwner = address(0);
     }
 
-    function nominateNewOwner(address newNominatedOwner) external override onlyOwnerIfSet {
+    function nominateNewOwner(address newNominatedOwner) public override onlyOwnerIfSet {
         OwnableStore storage store = _ownableStore();
 
         if (newNominatedOwner == address(0)) {
