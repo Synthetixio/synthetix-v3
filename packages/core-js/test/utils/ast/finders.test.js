@@ -68,6 +68,7 @@ describe('utils/ast/finders.js find AST artifacts', function () {
   describe('find function', function () {
     it('finds selectors from a contract', async () => {
       const functions = await findFunctions('AnotherModule', astNodes);
+
       equal(functions.length, 3, 'AnotherModule should have 1 function');
       equal(
         functions[0].functionSelector,
