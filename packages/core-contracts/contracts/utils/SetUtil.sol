@@ -2,13 +2,62 @@
 pragma solidity ^0.8.0;
 
 library SetUtil {
+    // ----------------------------------------
+    // Address support
+    // ----------------------------------------
+
+    struct AddressSet {
+        Bytes32Set raw;
+    }
+
+    function add(AddressSet storage set, address value) internal {
+        add(set.raw, bytes32(uint256(uint160(value))));
+    }
+
+    function remove(AddressSet storage set, address value) internal {
+        remove(set.raw, bytes32(uint256(uint160(value))));
+    }
+
+    function contains(AddressSet storage set, address value) internal view returns (bool) {
+        return contains(set.raw, bytes32(uint256(uint160(value))));
+    }
+
+    function length(AddressSet storage set) internal view returns (uint) {
+        return length(set.raw);
+    }
+
+    function valueAt(AddressSet storage set, uint position) internal view returns (address) {
+        return address(uint160(uint256(valueAt(set.raw, position))));
+    }
+
+    function positionOf(AddressSet storage set, address value) internal view returns (uint) {
+        return positionOf(set.raw, bytes32(uint256(uint160(value))));
+    }
+
+    function values(AddressSet storage set) internal view returns (address[] memory) {
+        bytes32[] memory store = values(set.raw);
+        address[] memory result;
+
+        assembly {
+            result := store
+        }
+
+        return result;
+    }
+
+    // ----------------------------------------
+    // Core bytes32 support
+    // ----------------------------------------
+
     error PositionOutOfBounds();
     error ValueNotInSet();
     error CannotAppendExistingValue();
 
     struct Bytes32Set {
+        /* solhint-disable private-vars-leading-underscore */
         bytes32[] _values;
         mapping(bytes32 => uint) _positions;
+        /* solhint-enable private-vars-leading-underscore */
     }
 
     function add(Bytes32Set storage set, bytes32 value) internal {
@@ -57,6 +106,14 @@ library SetUtil {
         }
 
         return set._values[position];
+    }
+
+    function positionOf(Bytes32Set storage set, bytes32 value) internal view returns (uint) {
+        if (!contains(set, value)) {
+            revert ValueNotInSet();
+        }
+
+        return set._positions[value];
     }
 
     function values(Bytes32Set storage set) internal view returns (bytes32[] memory) {
