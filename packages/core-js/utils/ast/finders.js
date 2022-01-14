@@ -184,6 +184,7 @@ function findFunctions(contractName, astNodes) {
 
   for (const contractNode of findContractDependencies(contractName, astNodes)) {
     const currentFunctions = Array.from(findAll('FunctionDefinition', contractNode));
+
     if (currentFunctions.length > 0) {
       functions.push(...currentFunctions);
     }
