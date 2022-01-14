@@ -2,6 +2,7 @@ const { equal, notEqual } = require('assert/strict');
 const {
   findContractDependencies,
   findFunctionSelectors,
+  findFunctions,
   findContractNodeWithName,
   findContractNodeWithId,
   findContractNodeStructs,
@@ -56,6 +57,29 @@ describe('utils/ast/finders.js find AST artifacts', function () {
       const selectors = await findFunctionSelectors('AnotherModule', astNodes);
       equal(selectors.length, 1, 'AnotherModule should have 1 selector');
       equal(selectors[0].selector, '0x45aa2181', 'AnotherModule selector should be 0x45aa2181');
+    });
+
+    it('doesnt find selectors from a contract that doesnt expose any', async () => {
+      const selectors = await findFunctionSelectors('Router', astNodes);
+      equal(selectors.length, 0, 'Router should not have any selector');
+    });
+  });
+
+  describe('find function', function () {
+    it('finds selectors from a contract', async () => {
+      const functions = await findFunctions('AnotherModule', astNodes);
+
+      equal(functions.length, 3, 'AnotherModule should have 1 function');
+      equal(
+        functions[0].functionSelector,
+        '45aa2181',
+        'AnotherModule first function selector should be 45aa2181'
+      );
+      equal(
+        functions[0].name,
+        'setSomeValueOnSomeModule',
+        'AnotherModule first function name should be setSomeValueOnSomeModule'
+      );
     });
 
     it('doesnt find selectors from a contract that doesnt expose any', async () => {

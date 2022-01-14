@@ -172,6 +172,27 @@ function findFunctionSelectors(contractName, astNodes) {
   return selectors;
 }
 
+/**
+ * Get all the function definitions from the complete tree of contract
+ * nodes starting from the given root contract definition
+ * @param {string} contractName
+ * @param {import("solidity-ast").SourceUnit[]} astNodes
+ * @returns {import("solidity-ast").FunctionDefinition[]}
+ */
+function findFunctions(contractName, astNodes) {
+  const functions = [];
+
+  for (const contractNode of findContractDependencies(contractName, astNodes)) {
+    const currentFunctions = Array.from(findAll('FunctionDefinition', contractNode));
+
+    if (currentFunctions.length > 0) {
+      functions.push(...currentFunctions);
+    }
+  }
+
+  return functions;
+}
+
 module.exports = {
   findContractDefinitions,
   findYulCaseValues,
@@ -183,4 +204,5 @@ module.exports = {
   findContractStateVariables,
   findContractDependencies,
   findFunctionSelectors,
+  findFunctions,
 };
