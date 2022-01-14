@@ -35,9 +35,7 @@ subtask(SUBTASK_VALIDATE_STORAGE).setAction(async (_, hre) => {
       logger.error(error.msg);
     });
 
-    if (logger.debug) {
-      errorsFound.map((err) => console.log(JSON.stringify(err, null, 2)));
-    }
+    errorsFound.map((err) => logger.debug(JSON.stringify(err, null, 2)));
 
     throw new ContractValidationError(
       `Invalid storage usage: ${errorsFound.map((err) => err.msg)}`
