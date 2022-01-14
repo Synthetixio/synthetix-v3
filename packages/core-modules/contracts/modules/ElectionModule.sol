@@ -8,6 +8,7 @@ import "../interfaces/IElectionModule.sol";
 
 contract ElectionModule is IElectionModule, ElectionSchedule, OwnableMixin {
     error EpochNotEvaluated();
+    error NoCandidates();
 
     function initializeElectionModule(
         uint64 epochEndDate,
@@ -53,7 +54,13 @@ contract ElectionModule is IElectionModule, ElectionSchedule, OwnableMixin {
 
     /* solhint-disable */
     function elect(address[] memory candidates) external override onlyInPeriod(ElectionPeriod.Vote) {
-        // TODO: Validate candidates array with: min length, max length, no duplicates, candidates are nominated
+        if(candidates.length == 0) {
+            revert NoCandidates();
+        }
+
+        // TODO: No duplicates in candidates array
+
+        // TODO: All candidates are nominated
         // TODO: Record vote in ballot
         // TODO: Ability to change votes
     }
