@@ -3,116 +3,160 @@ const assert = require('assert/strict');
 const assertBn = require('@synthetixio/core-js/utils/assertions/assert-bignumber');
 const assertRevert = require('@synthetixio/core-js/utils/assertions/assert-revert');
 
-describe.only('Set', () => {
-  let Bytes32Set;
+describe('SetUtil', () => {
+  const repeater = [1, 2, 3, 4, 5, 6, 7, 8];
 
-  const expectedValues = [];
+  // -----------------------------------------
+  // Specific type tests
+  // -----------------------------------------
 
-  const SOME_VALUE = '0x000000000000000000000000000000000000000000000000000000000000beef';
+  describe('Bytes32Set', function () {
+    const randomBytes32 = () => ethers.Wallet.createRandom().privateKey;
 
-  before('deploy the contract', async () => {
-    const factory = await ethers.getContractFactory('SetUtilMock');
-    Bytes32Set = await factory.deploy();
+    itSupportsType(
+      'Bytes32Set',
+      repeater.map(() => randomBytes32()),
+      randomBytes32()
+    );
   });
 
-  const itBehavesAsAValidSet = () => {
-    it('has the expected length', async function () {
-      assertBn.eq(await Bytes32Set.length(), expectedValues.length);
-    });
+  describe('AddressSet', function () {
+    const randomAddress = () => ethers.Wallet.createRandom().address;
 
-    it('has the expected values', async function () {
-      assert.deepEqual(await Bytes32Set.values(), expectedValues);
-    });
+    itSupportsType(
+      'AddressSet',
+      repeater.map(() => randomAddress()),
+      randomAddress()
+    );
+  });
 
-    it('contains all values', async function () {
-      for (let value of expectedValues) {
-        assert.equal(await Bytes32Set.contains(value), true);
+  // -----------------------------------------
+  // Behaviors
+  // -----------------------------------------
+
+  function itSupportsType(typeName, sampleValues, notContainedValue) {
+    let SampleSet;
+
+    const expectedValues = [];
+
+    const addValue = async (value) => {
+      expectedValues.push(value);
+
+      await SampleSet.add(value);
+    };
+
+    const removeValue = async (value) => {
+      const index = expectedValues.indexOf(value);
+
+      if (index !== expectedValues.length - 1) {
+        const lastValue = expectedValues[expectedValues.length - 1];
+
+        expectedValues[index] = lastValue;
       }
-    });
 
-    it('can retrieve values', async function () {
-      for (let position = 0; position < expectedValues.length; position++) {
-        assert.equal(await Bytes32Set.valueAt(position), expectedValues[position]);
-      }
-    });
+      expectedValues.pop();
 
-    it('does not contain a value not in the set', async function () {
-      assert.equal(await Bytes32Set.contains(SOME_VALUE), false);
-    });
+      await SampleSet.remove(value);
+    };
 
-    it('reverts when trying to access a value not in the set', async function () {
-      await assertRevert(Bytes32Set.valueAt(1337), 'PositionOutOfBounds');
-    });
-  };
+    function itBehavesAsAValidSet() {
+      it('has the expected length', async function () {
+        assertBn.eq(await SampleSet.length(), expectedValues.length);
+      });
 
-  const addValue = async (value) => {
-    expectedValues.push(value);
+      it('has the expected values', async function () {
+        assert.deepEqual(await SampleSet.values(), expectedValues);
+      });
 
-    await Bytes32Set.add(value);
-  };
+      it('contains all values', async function () {
+        for (let value of expectedValues) {
+          assert.equal(await SampleSet.contains(value), true);
+        }
+      });
 
-  const removeValue = async (value) => {
-    const index = expectedValues.indexOf(value);
+      it('can retrieve values', async function () {
+        for (let position = 0; position < expectedValues.length; position++) {
+          assert.equal(await SampleSet.valueAt(position), expectedValues[position]);
+        }
+      });
 
-    if (index !== expectedValues.length - 1) {
-      const lastValue = expectedValues[expectedValues.length - 1];
+      it('does not contain a value not in the set', async function () {
+        assert.equal(await SampleSet.contains(notContainedValue), false);
+      });
 
-      expectedValues[index] = lastValue;
+      it('reverts when trying to access a value not in the set', async function () {
+        await assertRevert(SampleSet.valueAt(1337), 'PositionOutOfBounds');
+      });
+
+      it('reverts when trying to get the position of a value not in the set', async function () {
+        await assertRevert(SampleSet.positionOf(notContainedValue), 'ValueNotInSet');
+      });
+
+      it('reverts when trying to remove a value not in the set', async function () {
+        await assertRevert(SampleSet.remove(notContainedValue), 'ValueNotInSet');
+      });
+
+      it('reverts when trying to append a value already exsiting in set', async function () {
+        if (expectedValues.length > 0) {
+          await assertRevert(SampleSet.add(expectedValues[0]), 'CannotAppendExistingValue');
+        }
+      });
     }
 
-    expectedValues.pop();
-
-    await Bytes32Set.remove(value);
-  };
-
-  describe('before any values are added to the set', function () {
-    itBehavesAsAValidSet();
-  });
-
-  describe('when some values are added to the set', function () {
-    before('add values', async function () {
-      await addValue('0x0000000000000000000000000000000000000000000000000000000deadbeef0');
-      await addValue('0x0000000000000000000000000000000000000000000000000000000deadbeef1');
-      await addValue('0x0000000000000000000000000000000000000000000000000000000deadbeef2');
-      await addValue('0x0000000000000000000000000000000000000000000000000000000deadbeef3');
+    before('deploy the contract', async () => {
+      const factory = await ethers.getContractFactory(`${typeName}Mock`);
+      SampleSet = await factory.deploy();
     });
 
-    itBehavesAsAValidSet();
+    describe('before any values are added to the set', function () {
+      itBehavesAsAValidSet();
+    });
 
-    describe('when more values are added to the set', function () {
+    describe('when some values are added to the set', function () {
       before('add values', async function () {
-        await addValue('0x0000000000000000000000000000000000000000000000000000000deadbeef4');
-        await addValue('0x0000000000000000000000000000000000000000000000000000000deadbeef5');
+        await addValue(sampleValues[0]);
+        await addValue(sampleValues[1]);
+        await addValue(sampleValues[2]);
+        await addValue(sampleValues[3]);
       });
 
       itBehavesAsAValidSet();
 
-      describe('when some values are removed from the set', function () {
-        before('remove values', async function () {
-          await removeValue('0x0000000000000000000000000000000000000000000000000000000deadbeef0');
-          await removeValue('0x0000000000000000000000000000000000000000000000000000000deadbeef1');
-        });
-
-        itBehavesAsAValidSet();
-      });
-
       describe('when more values are added to the set', function () {
         before('add values', async function () {
-          await addValue('0x0000000000000000000000000000000000000000000000000000000deadbeef6');
-          await addValue('0x0000000000000000000000000000000000000000000000000000000deadbeef7');
+          await addValue(sampleValues[4]);
+          await addValue(sampleValues[5]);
         });
 
         itBehavesAsAValidSet();
 
         describe('when some values are removed from the set', function () {
           before('remove values', async function () {
-            await removeValue('0x0000000000000000000000000000000000000000000000000000000deadbeef2');
-            await removeValue('0x0000000000000000000000000000000000000000000000000000000deadbeef5');
+            await removeValue(sampleValues[0]);
+            await removeValue(sampleValues[1]);
           });
 
           itBehavesAsAValidSet();
         });
+
+        describe('when more values are added to the set', function () {
+          before('add values', async function () {
+            await addValue(sampleValues[6]);
+            await addValue(sampleValues[7]);
+          });
+
+          itBehavesAsAValidSet();
+
+          describe('when some values are removed from the set', function () {
+            before('remove values', async function () {
+              await removeValue(sampleValues[2]);
+              await removeValue(sampleValues[5]);
+            });
+
+            itBehavesAsAValidSet();
+          });
+        });
       });
     });
-  });
+  }
 });
