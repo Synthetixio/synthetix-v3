@@ -1,6 +1,5 @@
 const { ethers } = hre;
 const assert = require('assert/strict');
-const { findEvent } = require('@synthetixio/core-js/utils/ethers/events');
 
 describe('SatelliteFactory', () => {
   let SatelliteFactory;
@@ -11,17 +10,18 @@ describe('SatelliteFactory', () => {
   });
 
   describe('when creating a mocked satellite', () => {
-    let receipt;
-
     before('prepare sattelite', async () => {
-      const tx = await SatelliteFactory.createSatelliteMock();
-      receipt = await tx.wait();
+      const tx = await SatelliteFactory.createSatelliteMock('TestSatellite');
+      await tx.wait();
     });
 
-    it('emits SatelliteCreated event', async () => {
-      const event = findEvent({ receipt, eventName: 'SatelliteCreated' });
-      assert.equal(event.args.fullyQualifiedName, 'contracts/token/ERC20.sol:ERC20');
-      assert.notEqual(event.args.deployedAddress, '0x0000000000000000000000000000000000000000');
+    it('gets newly created satellite', async () => {
+      const result = await SatelliteFactory.getSatellites();
+
+      assert.equal(result.length, 1);
+      assert.equal(result[0].id, 'TestSatellite');
+      assert.equal(result[0].contractName, 'ERC20');
+      assert.notEqual(result[0].deployedAddress, '0x0000000000000000000000000000000000000000');
     });
   });
 });
