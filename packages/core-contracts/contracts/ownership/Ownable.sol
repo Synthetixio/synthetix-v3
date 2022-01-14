@@ -12,16 +12,12 @@ contract Ownable is IOwnable, OwnableMixin {
 
     error NotNominated(address addr);
 
-    function acceptOwnership() external override {
-        _acceptOwnershipBy(msg.sender);
-    }
-
-    function _acceptOwnershipBy(address newNominatedOwner) internal {
+    function acceptOwnership() public override {
         OwnableStore storage store = _ownableStore();
 
         address currentNominatedOwner = store.nominatedOwner;
-        if (newNominatedOwner != currentNominatedOwner) {
-            revert NotNominated(newNominatedOwner);
+        if (msg.sender != currentNominatedOwner) {
+            revert NotNominated(msg.sender);
         }
 
         emit OwnerChanged(store.owner, currentNominatedOwner);

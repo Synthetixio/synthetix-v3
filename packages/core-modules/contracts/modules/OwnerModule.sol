@@ -17,6 +17,6 @@ contract OwnerModule is Ownable, IOwnerModule, InitializableMixin {
 
     function initializeOwnerModule(address initialOwner) external override onlyIfNotInitialized {
         nominateNewOwner(initialOwner);
-        _acceptOwnershipBy(initialOwner);
+        acceptOwnership();
     }
 }
