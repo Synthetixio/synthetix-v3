@@ -14,6 +14,7 @@ class ModuleInitializableASTValidator {
 
     for (const contractName of this.findInitializableContractNames()) {
       const functionName = `is${_capitalizeContractName(contractName)}Initialized`;
+
       if (!findFunctions(contractName, this.contractNodes).some((v) => v.name === functionName)) {
         errors.push({
           msg: `Initializable contract ${contractName} missing ${functionName} function!}`,
