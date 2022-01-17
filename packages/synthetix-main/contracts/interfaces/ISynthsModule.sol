@@ -2,7 +2,9 @@
 pragma solidity ^0.8.0;
 
 interface ISynthsModule {
-    function createBeacon() external;
+    function initializeSynthsModule() external;
+
+    function isSynthsModuleInitialized() external view returns (bool);
 
     function createSynth(
         bytes32 synth,

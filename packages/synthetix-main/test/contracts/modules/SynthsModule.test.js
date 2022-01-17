@@ -43,7 +43,7 @@ describe('SynthsModule', function () {
         it('reverts', async () => {
           await assertRevert(
             SynthsModule.upgradeSynthImplementation(synthImplementationAddress),
-            'BeaconNotCreated()'
+            'NotInitialized()'
           );
         });
 
@@ -51,24 +51,24 @@ describe('SynthsModule', function () {
           it('reverts', async () => {
             await assertRevert(
               SynthsModule.createSynth(sUSD, name, symbol, decimals),
-              'BeaconNotCreated()'
+              'NotInitialized()'
             );
           });
         });
       });
 
       describe('When a beacon is deployed', async () => {
-        describe('when a non-owner tries to deploy', () => {
+        describe('when a non-owner tries to initialize the SynthsModule', () => {
           it('reverts', async () => {
-            await assertRevert(SynthsModule.connect(user).createBeacon(), 'Unauthorized');
+            await assertRevert(SynthsModule.connect(user).initializeSynthsModule(), 'Unauthorized');
           });
         });
 
-        describe('when the owner deploys the beacon', () => {
+        describe('when the owner initialize the SynthsModule', () => {
           let beaconAddress;
 
-          before('createBeacon()', async () => {
-            const tx = await SynthsModule.connect(owner).createBeacon();
+          before('initializeSynthsModule()', async () => {
+            const tx = await SynthsModule.connect(owner).initializeSynthsModule();
             receipt = await tx.wait();
           });
 
@@ -77,15 +77,19 @@ describe('SynthsModule', function () {
             beaconAddress = event.args.beacon;
           });
 
+          it('shows that the SynthsModule is initialized', async () => {
+            assert.equal(await SynthsModule.isSynthsModuleInitialized(), true);
+          });
+
           it('shows that the beacon address is set in storage', async () => {
             assert.equal(await SynthsModule.getBeacon(), beaconAddress);
           });
 
-          describe('when trying to redeploy', () => {
+          describe('when trying to re initialize the module', () => {
             it('reverts', async () => {
               await assertRevert(
-                SynthsModule.connect(owner).createBeacon(),
-                'BeaconAlreadyCreated()'
+                SynthsModule.connect(owner).initializeSynthsModule(),
+                'AlreadyInitialized()'
               );
             });
           });
