@@ -1,8 +1,4 @@
 const { ethers } = hre;
-<<<<<<< HEAD
-const assert = require('assert/strict');
-=======
->>>>>>> feature/election-module
 const assertBn = require('@synthetixio/core-js/utils/assertions/assert-bignumber');
 const assertRevert = require('@synthetixio/core-js/utils/assertions/assert-revert');
 const {

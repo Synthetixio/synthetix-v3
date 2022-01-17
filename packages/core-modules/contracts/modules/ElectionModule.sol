@@ -7,7 +7,11 @@ import "../submodules/election/ElectionSchedule.sol";
 import "../interfaces/IElectionModule.sol";
 
 contract ElectionModule is IElectionModule, ElectionSchedule, OwnableMixin {
+    using SetUtil for SetUtil.AddressSet;
+
     error EpochNotEvaluated();
+    error AlreadyNominated();
+    error NotNominated();
 
     function initializeElectionModule(
         uint64 epochEndDate,
@@ -37,20 +41,33 @@ contract ElectionModule is IElectionModule, ElectionSchedule, OwnableMixin {
         _configureEpoch(epoch, epoch.startDate, epochEndDate, nominationPeriodStartDate, votingPeriodStartDate);
     }
 
-    /* solhint-disable */
     function nominate() external override onlyInPeriod(ElectionPeriod.Nomination) {
-        // TODO: Ensure msg.sender is not already in the candidates array
-        // TODO: Store msg.sender in the candidates array
+        SetUtil.AddressSet storage nominees = _getCurrentEpoch().nominees;
+
+        if (nominees.contains(msg.sender)) {
+            revert AlreadyNominated();
+        }
+
+        nominees.add(msg.sender);
     }
 
-    /* solhint-enable */
-
-    /* solhint-disable */
     function withdrawNomination() external override onlyInPeriod(ElectionPeriod.Nomination) {
-        // TODO
+        SetUtil.AddressSet storage nominees = _getCurrentEpoch().nominees;
+
+        if (!nominees.contains(msg.sender)) {
+            revert NotNominated();
+        }
+
+        nominees.remove(msg.sender);
     }
 
-    /* solhint-enable */
+    function isNominated(address candidate) external view override returns (bool) {
+        return _getCurrentEpoch().nominees.contains(candidate);
+    }
+
+    function getNominees() external view override returns (address[] memory) {
+        return _getCurrentEpoch().nominees.values();
+    }
 
     /* solhint-disable */
     function elect(address[] memory candidates) external override onlyInPeriod(ElectionPeriod.Vote) {
