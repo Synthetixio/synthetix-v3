@@ -1,6 +1,8 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
+
 contract ElectionStorage {
     enum ElectionPeriod {
         Idle,
@@ -16,6 +18,7 @@ contract ElectionStorage {
         uint64 endDate;
         uint64 nominationPeriodStartDate;
         uint64 votingPeriodStartDate;
+        SetUtil.AddressSet nominees;
     }
 
     struct ElectionStore {

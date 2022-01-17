@@ -37,4 +37,8 @@ interface IElectionModule {
     function getVotingPeriodStartDate() external view returns (uint64);
 
     function isEpochEvaluated() external view returns (bool);
+
+    function isNominated(address candidate) external view returns (bool);
+
+    function getNominees() external view returns (address[] memory);
 }
