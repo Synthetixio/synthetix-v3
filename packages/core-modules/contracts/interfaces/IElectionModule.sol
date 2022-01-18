@@ -18,7 +18,7 @@ interface IElectionModule {
 
     function withdrawNomination() external;
 
-    function elect(address[] memory candidates) external;
+    function elect(address[] calldata candidates) external;
 
     function evaluate() external;
 
@@ -41,4 +41,14 @@ interface IElectionModule {
     function isNominated(address candidate) external view returns (bool);
 
     function getNominees() external view returns (address[] memory);
+
+    function getVotePower(address voter) external view returns (uint);
+
+    function getBallotVotes(bytes32 ballotId) external view returns (uint);
+
+    function getBallotCandidates(bytes32 ballotId) external view returns (address[] memory);
+
+    function getBallotId(address[] calldata candidates) external pure returns (bytes32);
+
+    function getVote(address voter) external view returns (bytes32);
 }

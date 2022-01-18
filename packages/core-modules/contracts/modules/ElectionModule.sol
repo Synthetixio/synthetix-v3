@@ -4,15 +4,11 @@ pragma solidity ^0.8.0;
 import "@synthetixio/core-contracts/contracts/errors/InitError.sol";
 import "@synthetixio/core-contracts/contracts/ownership/OwnableMixin.sol";
 import "../submodules/election/ElectionSchedule.sol";
+import "../submodules/election/ElectionVotes.sol";
 import "../interfaces/IElectionModule.sol";
 
-contract ElectionModule is IElectionModule, ElectionSchedule, OwnableMixin {
+contract ElectionModule is IElectionModule, ElectionSchedule, ElectionVotes, OwnableMixin {
     using SetUtil for SetUtil.AddressSet;
-
-    error EpochNotEvaluated();
-    error AlreadyNominated();
-    error NotNominated();
-    error NoCandidates();
 
     function initializeElectionModule(
         uint64 epochEndDate,
@@ -37,21 +33,50 @@ contract ElectionModule is IElectionModule, ElectionSchedule, OwnableMixin {
     ) external override onlyOwner onlyInPeriod(ElectionPeriod.Idle) {
         EpochData storage epoch = _getCurrentEpoch();
 
-        // TODO: Validate that the new dates are in the future and/or are close to the initial dates?
-
         _configureEpoch(epoch, epoch.startDate, epochEndDate, nominationPeriodStartDate, votingPeriodStartDate);
     }
 
-    function elect(address[] memory candidates) external override onlyInPeriod(ElectionPeriod.Vote) {
-        if(candidates.length == 0) {
-            revert NoCandidates();
+    function elect(address[] calldata candidates) external override onlyInPeriod(ElectionPeriod.Vote) {
+        _validateCandidates(candidates);
+
+        uint votePower = _votePowerOf(msg.sender);
+        if (votePower == 0) {
+            revert NoVotePower();
         }
 
-        // TODO: No duplicates in candidates array
+        _recordVote(msg.sender, votePower, candidates);
+    }
 
-        // TODO: All candidates are nominated
-        // TODO: Record vote in ballot
-        // TODO: Ability to change votes
+    function getVotePower(address voter) external view override returns (uint) {
+        return _votePowerOf(voter);
+    }
+
+    function getBallotVotes(bytes32 ballotId) external view override returns (uint) {
+        BallotData storage ballot = _getBallot(ballotId);
+
+        if (!_ballotExists(ballot)) {
+            revert BallotDoesNotExist();
+        }
+
+        return ballot.votes;
+    }
+
+    function getBallotCandidates(bytes32 ballotId) external view override returns (address[] memory) {
+        BallotData storage ballot = _getBallot(ballotId);
+
+        if (!_ballotExists(ballot)) {
+            revert BallotDoesNotExist();
+        }
+
+        return ballot.candidates;
+    }
+
+    function getBallotId(address[] calldata candidates) external pure override returns (bytes32) {
+        return _getBallotId(candidates);
+    }
+
+    function getVote(address voter) external view override returns (bytes32) {
+        return _getCurrentEpoch().ballotIdFromVoterAddress[voter];
     }
 
     function nominate() external override onlyInPeriod(ElectionPeriod.Nomination) {

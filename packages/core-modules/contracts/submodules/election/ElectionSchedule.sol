@@ -4,9 +4,6 @@ pragma solidity ^0.8.0;
 import "./ElectionBase.sol";
 
 contract ElectionSchedule is ElectionBase {
-    error InvalidEpochConfiguration();
-    error NotCallableInCurrentPeriod();
-
     modifier onlyInPeriod(ElectionPeriod period) {
         if (_getCurrentPeriod() != period) {
             revert NotCallableInCurrentPeriod();
