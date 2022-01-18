@@ -16,6 +16,8 @@ describe('check-initializable', function () {
   });
 
   it('displays the contract not initialized warning', async function () {
-    this.cli.printed('Contract initializable but not initialized. Call initializeInitializableModule() with the right paramters first');
+    this.cli.printed(
+      'Contract initializable but not initialized. Call initializeInitializableModule() with the right paramters first'
+    );
   });
 });
