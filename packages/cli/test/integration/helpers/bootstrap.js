@@ -4,7 +4,6 @@ const CliRunner = require('./cli-runner');
 
 function bootstrap(fixture) {
   before('set fixture project and network', function () {
-    
     const folder = path.join(
       __dirname,
       '..',
