@@ -3,6 +3,7 @@ const {
   findContractDependencies,
   findFunctions,
 } = require('@synthetixio/core-js/utils/ast/finders');
+const { capitalize } = require('@synthetixio/core-js/utils/misc/strings');
 
 class ModuleInitializableASTValidator {
   constructor(asts) {
@@ -13,7 +14,7 @@ class ModuleInitializableASTValidator {
     const errors = [];
 
     for (const contractName of this.findInitializableContractNames()) {
-      const functionName = `is${_capitalizeContractName(contractName)}Initialized`;
+      const functionName = `is${capitalize(contractName)}Initialized`;
 
       if (!findFunctions(contractName, this.contractNodes).some((v) => v.name === functionName)) {
         errors.push({
@@ -29,7 +30,7 @@ class ModuleInitializableASTValidator {
     const errors = [];
 
     for (const contractName of this.findInitializableContractNames()) {
-      const functionName = `initialize${_capitalizeContractName(contractName)}`;
+      const functionName = `initialize${capitalize(contractName)}`;
 
       if (!findFunctions(contractName, this.contractNodes).some((v) => v.name === functionName)) {
         errors.push({
@@ -62,10 +63,6 @@ class ModuleInitializableASTValidator {
 
     return initializableContractNames;
   }
-}
-
-function _capitalizeContractName(contractName) {
-  return contractName.charAt(0).toUpperCase() + contractName.slice(1);
 }
 
 module.exports = ModuleInitializableASTValidator;
