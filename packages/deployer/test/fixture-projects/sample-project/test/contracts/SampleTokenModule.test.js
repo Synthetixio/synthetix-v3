@@ -1,6 +1,5 @@
 const assert = require('assert/strict');
 const { bootstrap } = require('@synthetixio/deployer/utils/tests');
-const { findEvent } = require('@synthetixio/core-js/utils/ethers/events');
 const initializer = require('../helpers/initializer');
 
 const { ethers } = hre;
@@ -15,17 +14,18 @@ describe('SampleTokenModule', () => {
   });
 
   describe('when a new token is created', () => {
-    let receipt;
-
     before('create the token', async () => {
-      const tx = await SampleTokenModule.createSampleToken();
-      receipt = await tx.wait();
+      const tx = await SampleTokenModule.createSampleToken('SNXToken');
+      await tx.wait();
     });
 
-    it('emits the SatelliteCreated event', async () => {
-      const event = findEvent({ receipt, eventName: 'SatelliteCreated' });
-      assert.equal(event.args.fullyQualifiedName, 'contracts/token/SampleToken.sol:SampleToken');
-      assert.notEqual(event.args.deployedAddress, '0x0000000000000000000000000000000000000000');
+    it('gets newly created token', async () => {
+      const result = await SampleTokenModule.getSampleTokenModuleSatellites();
+
+      assert.equal(result.length, 1);
+      assert.equal(result[0].id, 'SNXToken');
+      assert.equal(result[0].contractName, 'SampleToken');
+      assert.notEqual(result[0].deployedAddress, '0x0000000000000000000000000000000000000000');
     });
   });
 });
