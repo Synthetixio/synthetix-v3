@@ -7,7 +7,11 @@ import "../submodules/election/ElectionSchedule.sol";
 import "../interfaces/IElectionModule.sol";
 
 contract ElectionModule is IElectionModule, ElectionSchedule, OwnableMixin {
+    using SetUtil for SetUtil.AddressSet;
+
     error EpochNotEvaluated();
+    error AlreadyNominated();
+    error NotNominated();
     error NoCandidates();
 
     function initializeElectionModule(
@@ -38,21 +42,6 @@ contract ElectionModule is IElectionModule, ElectionSchedule, OwnableMixin {
         _configureEpoch(epoch, epoch.startDate, epochEndDate, nominationPeriodStartDate, votingPeriodStartDate);
     }
 
-    /* solhint-disable */
-    function nominate() external override onlyInPeriod(ElectionPeriod.Nomination) {
-        // TODO
-    }
-
-    /* solhint-enable */
-
-    /* solhint-disable */
-    function withdrawNomination() external override onlyInPeriod(ElectionPeriod.Nomination) {
-        // TODO
-    }
-
-    /* solhint-enable */
-
-    /* solhint-disable */
     function elect(address[] memory candidates) external override onlyInPeriod(ElectionPeriod.Vote) {
         if(candidates.length == 0) {
             revert NoCandidates();
@@ -65,7 +54,33 @@ contract ElectionModule is IElectionModule, ElectionSchedule, OwnableMixin {
         // TODO: Ability to change votes
     }
 
-    /* solhint-enable */
+    function nominate() external override onlyInPeriod(ElectionPeriod.Nomination) {
+        SetUtil.AddressSet storage nominees = _getCurrentEpoch().nominees;
+
+        if (nominees.contains(msg.sender)) {
+            revert AlreadyNominated();
+        }
+
+        nominees.add(msg.sender);
+    }
+
+    function withdrawNomination() external override onlyInPeriod(ElectionPeriod.Nomination) {
+        SetUtil.AddressSet storage nominees = _getCurrentEpoch().nominees;
+
+        if (!nominees.contains(msg.sender)) {
+            revert NotNominated();
+        }
+
+        nominees.remove(msg.sender);
+    }
+
+    function isNominated(address candidate) external view override returns (bool) {
+        return _getCurrentEpoch().nominees.contains(candidate);
+    }
+
+    function getNominees() external view override returns (address[] memory) {
+        return _getCurrentEpoch().nominees.values();
+    }
 
     function evaluate() external override onlyInPeriod(ElectionPeriod.Evaluation) {
         // TODO

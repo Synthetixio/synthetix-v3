@@ -1,5 +1,4 @@
 const { ethers } = hre;
-const assert = require('assert/strict');
 const assertBn = require('@synthetixio/core-js/utils/assertions/assert-bignumber');
 const assertRevert = require('@synthetixio/core-js/utils/assertions/assert-revert');
 const {
@@ -23,6 +22,8 @@ describe('ElectionModule (schedule)', () => {
   let epochEndDate, nominationPeriodStartDate, votingPeriodStartDate, someDate;
 
   let snapshotId;
+
+  const assertDatesEqual = (dateA, dateB) => Math.abs(dateB - dateA) < 2;
 
   before('identify signers', async () => {
     [owner, user] = await ethers.getSigners();
@@ -202,7 +203,7 @@ describe('ElectionModule (schedule)', () => {
       });
 
       it('skipped to the target time', async function () {
-        assert.equal(await getTime(ethers.provider), nominationPeriodStartDate);
+        assertDatesEqual(await getTime(ethers.provider), nominationPeriodStartDate);
       });
 
       it('shows that the current period is Nomination', async function () {
@@ -222,7 +223,7 @@ describe('ElectionModule (schedule)', () => {
         });
 
         it('skipped to the target time', async function () {
-          assert.equal(await getTime(ethers.provider), someDate);
+          assertDatesEqual(await getTime(ethers.provider), someDate);
         });
 
         it('shows that the current period is still Nomination', async function () {
@@ -246,7 +247,7 @@ describe('ElectionModule (schedule)', () => {
       });
 
       it('skipped to the target time', async function () {
-        assert.equal(await getTime(ethers.provider), votingPeriodStartDate);
+        assertDatesEqual(await getTime(ethers.provider), votingPeriodStartDate);
       });
 
       it('shows that the current period is Vote', async function () {
@@ -266,7 +267,7 @@ describe('ElectionModule (schedule)', () => {
         });
 
         it('skipped to the target time', async function () {
-          assert.equal(await getTime(ethers.provider), someDate);
+          assertDatesEqual(await getTime(ethers.provider), someDate);
         });
 
         it('shows that the current period is still Vote', async function () {
@@ -290,7 +291,7 @@ describe('ElectionModule (schedule)', () => {
       });
 
       it('skipped to the target time', async function () {
-        assert.equal(await getTime(ethers.provider), epochEndDate);
+        assertDatesEqual(await getTime(ethers.provider), epochEndDate);
       });
 
       it('shows that the current period is Evaluation', async function () {
