@@ -10,7 +10,7 @@ contract ElectionVotes is ElectionBase {
     function _validateCandidates(address[] calldata candidates) internal virtual {
         uint length = candidates.length;
 
-        if(length == 0) {
+        if (length == 0) {
             revert NoCandidates();
         }
 
@@ -37,7 +37,11 @@ contract ElectionVotes is ElectionBase {
         }
     }
 
-    function _recordVote(address voter, uint votePower, address[] calldata candidates) internal virtual {
+    function _recordVote(
+        address voter,
+        uint votePower,
+        address[] calldata candidates
+    ) internal virtual {
         EpochData storage epoch = _getCurrentEpoch();
 
         bytes32 oldBallotId = epoch.ballotIdFromVoterAddress[voter];
@@ -66,7 +70,7 @@ contract ElectionVotes is ElectionBase {
         epoch.ballotIdFromVoterAddress[voter] = newBallotId;
     }
 
-    function _votePowerOf(address) internal virtual view returns (uint) {
+    function _votePowerOf(address) internal view virtual returns (uint) {
         return 1;
     }
 }

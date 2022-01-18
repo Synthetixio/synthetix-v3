@@ -19,7 +19,7 @@ describe('ElectionModule (schedule)', () => {
 
   let owner, user;
 
-  let epochEndDate, nominationPeriodStartDate, votingPeriodStartDate, someDate;
+  let epochEndDate, nominationPeriodStartDate, votingPeriodStartDate;
 
   let snapshotId;
 
@@ -214,27 +214,6 @@ describe('ElectionModule (schedule)', () => {
       itRejectsVotes();
       itRejectsEvaluations();
       itRejectsAdjustments();
-
-      describe('when fast forwarding within the current period', function () {
-        before('fast forward', async function () {
-          someDate = votingPeriodStartDate - 60;
-
-          await fastForwardTo(someDate, ethers.provider);
-        });
-
-        it('skipped to the target time', async function () {
-          assertDatesEqual(await getTime(ethers.provider), someDate);
-        });
-
-        it('shows that the current period is still Nomination', async function () {
-          assertBn.eq(await ElectionModule.getCurrentPeriod(), ElectionPeriod.Nomination);
-        });
-
-        itAcceptsNominations();
-        itRejectsVotes();
-        itRejectsEvaluations();
-        itRejectsAdjustments();
-      });
     });
 
     // ----------------------------------
@@ -242,6 +221,10 @@ describe('ElectionModule (schedule)', () => {
     // ----------------------------------
 
     describe('when entering the voting period', function () {
+      before('ensure nominations', async function () {
+        await ElectionModule.connect(user).nominate();
+      });
+
       before('fast forward', async function () {
         await fastForwardTo(votingPeriodStartDate, ethers.provider);
       });
@@ -258,27 +241,6 @@ describe('ElectionModule (schedule)', () => {
       itAcceptsVotes();
       itRejectsEvaluations();
       itRejectsAdjustments();
-
-      describe('when fast forwarding within the current period', function () {
-        before('fast forward', async function () {
-          someDate = epochEndDate - 60;
-
-          await fastForwardTo(someDate, ethers.provider);
-        });
-
-        it('skipped to the target time', async function () {
-          assertDatesEqual(await getTime(ethers.provider), someDate);
-        });
-
-        it('shows that the current period is still Vote', async function () {
-          assertBn.eq(await ElectionModule.getCurrentPeriod(), ElectionPeriod.Vote);
-        });
-
-        itRejectsNominations();
-        itAcceptsVotes();
-        itRejectsEvaluations();
-        itRejectsAdjustments();
-      });
     });
 
     // ----------------------------------

@@ -139,6 +139,11 @@ describe('ElectionModule (vote)', () => {
               assert.equal(await ElectionModule.getVote(voter5.address), ballot2.id);
             });
 
+            it('can retrieve ballot votes', async function () {
+              assertBn.eq(await ElectionModule.getBallotVotes(ballot1.id), 3);
+              assertBn.eq(await ElectionModule.getBallotVotes(ballot2.id), 2);
+            });
+
             it('can retrive ballot candidates', async function () {
               assert.deepEqual(
                 await ElectionModule.getBallotCandidates(ballot1.id),
@@ -148,11 +153,6 @@ describe('ElectionModule (vote)', () => {
                 await ElectionModule.getBallotCandidates(ballot2.id),
                 ballot2.candidates
               );
-            });
-
-            it('can retrieve ballot votes', async function () {
-              assertBn.eq(await ElectionModule.getBallotVotes(ballot1.id), 3);
-              assertBn.eq(await ElectionModule.getBallotVotes(ballot2.id), 2);
             });
 
             describe('when trying to retrieve candidates for a ballot that was not voted on', function () {
@@ -167,6 +167,29 @@ describe('ElectionModule (vote)', () => {
             describe('when trying to retrieve votes for a ballot that was not voted on', function () {
               it('reverts', async function () {
                 await assertRevert(ElectionModule.getBallotVotes(ballot3.id), 'BallotDoesNotExist');
+              });
+            });
+
+            describe('when users change their vote', function () {
+              before('change vote', async function () {
+                await ElectionModule.connect(voter5).elect(ballot3.candidates);
+              });
+
+              it('can retrieve the corresponding ballot that users voted on', async function () {
+                assert.equal(await ElectionModule.getVote(voter5.address), ballot3.id);
+              });
+
+              it('can retrieve ballot votes', async function () {
+                assertBn.eq(await ElectionModule.getBallotVotes(ballot1.id), 3);
+                assertBn.eq(await ElectionModule.getBallotVotes(ballot2.id), 1);
+                assertBn.eq(await ElectionModule.getBallotVotes(ballot3.id), 1);
+              });
+
+              it('can retrive ballot candidates', async function () {
+                assert.deepEqual(
+                  await ElectionModule.getBallotCandidates(ballot3.id),
+                  ballot3.candidates
+                );
               });
             });
           });
