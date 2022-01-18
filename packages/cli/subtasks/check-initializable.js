@@ -13,18 +13,18 @@ subtask(
   const abiFunctions = abi.filter((abiItem) => abiItem.name && abiItem.type === 'function');
 
   const capitalizedContractName = capitalize(hre.cli.contractName.split(':')[1]);
-  const isInitializablefunctionName = `is${capitalizedContractName}Initialized`;
-  const initializafunctionName = `initialize${capitalizedContractName}()`;
+  const isInitializableFunctionName = `is${capitalizedContractName}Initialized`;
+  const initializeFunctionName = `initialize${capitalizedContractName}`;
 
-  const isInitializable = abiFunctions.some((f) => f.name === isInitializablefunctionName);
+  const isInitializable = abiFunctions.some((f) => f.name === isInitializableFunctionName);
 
   if (isInitializable) {
     const contract = new hre.ethers.Contract(address, abi, hre.ethers.provider);
-    const result = await contract[isInitializablefunctionName]();
+    const result = await contract[isInitializableFunctionName]();
 
     if (!result) {
       logger.warn(
-        `Contract initializable but not initialized. Call ${initializafunctionName} with the right paramters first`
+        `Contract initializable but not initialized. Call ${initializeFunctionName}() with the right paramters first`
       );
     }
   }
