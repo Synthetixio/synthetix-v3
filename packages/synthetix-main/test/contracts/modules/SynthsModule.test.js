@@ -5,7 +5,7 @@ const { findEvent } = require('@synthetixio/core-js/utils/ethers/events');
 const { bootstrap } = require('@synthetixio/deployer/utils/tests');
 const initializer = require('../../helpers/initializer');
 
-describe('SynthsModule', function () {
+describe.only('SynthsModule', function () {
   const { proxyAddress } = bootstrap(initializer);
 
   const sUSD = ethers.utils.formatBytes32String('sUSD');
@@ -150,13 +150,6 @@ describe('SynthsModule', function () {
                   receipt = await tx.wait();
                 });
 
-                it('emits a SatelliteCreated event', async () => {
-                  const event = findEvent({ receipt, eventName: 'SatelliteCreated' });
-                  const { fullyQualifiedName, deployedAddress } = event.args;
-                  assert.equal(fullyQualifiedName, 'contracts/token/Synth.sol:Synth');
-                  assert.notEqual(deployedAddress, '0x0000000000000000000000000000000000000000');
-                });
-
                 it('emits a SynthCreated event', async () => {
                   const event = findEvent({ receipt, eventName: 'SynthCreated' });
                   assert.equal(event.args.synth, sUSD);
@@ -165,6 +158,13 @@ describe('SynthsModule', function () {
 
                 it('shows that the synth is stored correctly', async () => {
                   assert.equal(await SynthsModule.getSynth(sUSD), synthAddress);
+                });
+
+                it('gets the newly created satellite', async () => {
+                  const [result] = await SynthsModule.getSynthsModuleSatellites();
+                  assert.equal(result.id, sUSD);
+                  assert.equal(result.contractName, 'ISynth');
+                  assert.equal(result.deployedAddress, synthAddress);
                 });
 
                 describe('when trying to deploy an existing synth', () => {
