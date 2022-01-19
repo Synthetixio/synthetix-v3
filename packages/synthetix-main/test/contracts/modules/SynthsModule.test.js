@@ -5,7 +5,7 @@ const { findEvent } = require('@synthetixio/core-js/utils/ethers/events');
 const { bootstrap } = require('@synthetixio/deployer/utils/tests');
 const initializer = require('../../helpers/initializer');
 
-describe.only('SynthsModule', function () {
+describe('SynthsModule', function () {
   const { proxyAddress } = bootstrap(initializer);
 
   const sUSD = ethers.utils.formatBytes32String('sUSD');

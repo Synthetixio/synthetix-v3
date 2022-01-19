@@ -14,8 +14,10 @@ describe('SampleTokenModule', () => {
   });
 
   describe('when a new token is created', () => {
+    const SNXToken = ethers.utils.formatBytes32String('SNXToken');
+
     before('create the token', async () => {
-      const tx = await SampleTokenModule.createSampleToken('SNXToken');
+      const tx = await SampleTokenModule.createSampleToken(SNXToken);
       await tx.wait();
     });
 
@@ -23,7 +25,7 @@ describe('SampleTokenModule', () => {
       const result = await SampleTokenModule.getSampleTokenModuleSatellites();
 
       assert.equal(result.length, 1);
-      assert.equal(result[0].id, 'SNXToken');
+      assert.equal(result[0].id, SNXToken);
       assert.equal(result[0].contractName, 'SampleToken');
       assert.notEqual(result[0].deployedAddress, '0x0000000000000000000000000000000000000000');
     });
