@@ -1,9 +1,11 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import "@synthetixio/core-contracts/contracts/satellite/SatelliteFactory.sol";
+
 contract SNXTokenStorage {
     struct SNXTokenStore {
-        address snxTokenAddress; // main address
+        Satellite snxToken; // main address
     }
 
     function _snxTokenStore() internal pure returns (SNXTokenStore storage store) {

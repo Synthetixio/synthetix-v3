@@ -1,12 +1,16 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-abstract contract SatelliteFactory {
-    struct Satellite {
-        string id;
-        string contractName;
-        address deployedAddress;
-    }
+struct Satellite {
+    string id;
+    string contractName;
+    address deployedAddress;
+}
 
+abstract contract SatelliteFactory {
+    function _getSatellite() internal view virtual returns (Satellite memory);
+}
+
+abstract contract SatellitesFactory {
     function _getSatellites() internal view virtual returns (Satellite[] memory);
 }

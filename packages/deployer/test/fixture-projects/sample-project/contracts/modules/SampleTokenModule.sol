@@ -5,7 +5,7 @@ import "@synthetixio/core-contracts/contracts/satellite/SatelliteFactory.sol";
 import "../storage/TokenStorage.sol";
 import "../token/SampleToken.sol";
 
-contract SampleTokenModule is SatelliteFactory, TokenStorage {
+contract SampleTokenModule is SatellitesFactory, TokenStorage {
     function _getSatellites() internal view override returns (Satellite[] memory) {
         return _tokenStore().satellites;
     }

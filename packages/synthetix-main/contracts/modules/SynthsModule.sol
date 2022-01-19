@@ -10,7 +10,7 @@ import "../interfaces/ISynth.sol";
 import "../storage/SynthsStorage.sol";
 import "../token/Synth.sol";
 
-contract SynthsModule is ISynthsModule, OwnableMixin, SynthsStorage, SatelliteFactory {
+contract SynthsModule is ISynthsModule, OwnableMixin, SynthsStorage, SatellitesFactory {
     event BeaconCreated(address beacon);
     event SynthImplementationCreated(address implementationAddress);
     event SynthCreated(bytes32 synth, address synthAddress);
@@ -58,7 +58,6 @@ contract SynthsModule is ISynthsModule, OwnableMixin, SynthsStorage, SatelliteFa
 
         ISynth(synthAddress).initialize(synthName, synthSymbol, synthDecimals);
 
-        emit SatelliteCreated("contracts/token/Synth.sol:Synth", synthAddress);
         emit SynthCreated(synth, synthAddress);
     }
 
