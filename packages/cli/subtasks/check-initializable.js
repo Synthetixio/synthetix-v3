@@ -13,14 +13,14 @@ subtask(
   const abiFunctions = abi.filter((abiItem) => abiItem.name && abiItem.type === 'function');
 
   const capitalizedContractName = capitalize(hre.cli.contractName.split(':')[1]);
-  const isInitializableFunctionName = `is${capitalizedContractName}Initialized`;
+  const isInitializedFunctionName = `is${capitalizedContractName}Initialized`;
   const initializeFunctionName = `initialize${capitalizedContractName}`;
 
-  const isInitializable = abiFunctions.some((f) => f.name === isInitializableFunctionName);
+  const isInitializable = abiFunctions.some((f) => f.name === isInitializedFunctionName);
 
   if (isInitializable) {
     const contract = new hre.ethers.Contract(address, abi, hre.ethers.provider);
-    const result = await contract[isInitializableFunctionName]();
+    const result = await contract[isInitializedFunctionName]();
 
     if (!result) {
       logger.warn(
