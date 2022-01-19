@@ -2,7 +2,7 @@ const { ethers } = hre;
 const assert = require('assert/strict');
 const assertBn = require('@synthetixio/core-js/utils/assertions/assert-bignumber');
 const assertRevert = require('@synthetixio/core-js/utils/assertions/assert-revert');
-const { fastForwardTo } = require('@synthetixio/core-js/utils/hardhat/rpc');
+const { fastForward } = require('@synthetixio/core-js/utils/hardhat/rpc');
 const { getUnixTimestamp, daysToSeconds } = require('@synthetixio/core-js/utils/misc/dates');
 const { bootstrap } = require('@synthetixio/deployer/utils/tests');
 const initializer = require('../../helpers/initializer');
@@ -12,8 +12,6 @@ describe('ElectionModule (nominate)', () => {
   const { proxyAddress } = bootstrap(initializer);
 
   let ElectionModule;
-
-  let epochEndDate, nominationPeriodStartDate, votingPeriodStartDate;
 
   let user, users;
 
@@ -68,20 +66,16 @@ describe('ElectionModule (nominate)', () => {
     before('initialize', async function () {
       const now = getUnixTimestamp();
 
-      epochEndDate = now + daysToSeconds(90);
-      votingPeriodStartDate = epochEndDate - daysToSeconds(7);
-      nominationPeriodStartDate = votingPeriodStartDate - daysToSeconds(7);
-
       await ElectionModule.initializeElectionModule(
-        epochEndDate,
-        nominationPeriodStartDate,
-        votingPeriodStartDate
+        daysToSeconds(90),
+        daysToSeconds(7),
+        daysToSeconds(7)
       );
     });
 
     describe('when entering the nomination period', function () {
       before('fast forward', async function () {
-        await fastForwardTo(nominationPeriodStartDate, ethers.provider);
+        await fastForward(await ElectionModule.getIdlePeriodDuration(), ethers.provider);
       });
 
       it('shows that the current period is Nomination', async function () {

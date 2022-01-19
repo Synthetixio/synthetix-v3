@@ -15,9 +15,9 @@ contract ElectionModule is IElectionModule, ElectionSchedule, ElectionVotes, Own
     // ---------------------------------------
 
     function initializeElectionModule(
-        uint64 epochEndDate,
-        uint64 nominationPeriodStartDate,
-        uint64 votingPeriodStartDate
+        uint64 epochDuration,
+        uint64 nominationPeriodDuration,
+        uint64 votingPeriodDuration
     ) external override onlyOwner {
         ElectionStore storage store = _electionStore();
 
@@ -27,7 +27,7 @@ contract ElectionModule is IElectionModule, ElectionSchedule, ElectionVotes, Own
 
         store.currentEpochIndex = 1;
 
-        _configureFirstEpoch(epochEndDate, nominationPeriodStartDate, votingPeriodStartDate);
+        _configureFirstEpoch(epochDuration, nominationPeriodDuration, votingPeriodDuration);
     }
 
     function adjustEpoch(
@@ -37,7 +37,12 @@ contract ElectionModule is IElectionModule, ElectionSchedule, ElectionVotes, Own
     ) external override onlyOwner onlyInPeriod(ElectionPeriod.Idle) {
         EpochData storage epoch = _getCurrentEpoch();
 
-        _configureEpoch(epoch, epoch.startDate, epochEndDate, nominationPeriodStartDate, votingPeriodStartDate);
+        // TODO: Validate that these are within a certain threshold
+        uint64 epochDuration = epochEndDate - epoch.startDate;
+        uint64 votingPeriodDuration = epochEndDate - votingPeriodStartDate;
+        uint64 nominationPeriodDuration = votingPeriodStartDate - nominationPeriodStartDate;
+
+        _configureEpoch(epoch, epoch.startDate, epochDuration, nominationPeriodDuration, votingPeriodDuration);
     }
 
     // ---------------------------------------
@@ -124,15 +129,39 @@ contract ElectionModule is IElectionModule, ElectionSchedule, ElectionVotes, Own
     }
 
     function getEpochEndDate() public view override returns (uint64) {
-        return _getCurrentEpoch().endDate;
-    }
+        EpochData storage epoch = _getCurrentEpoch();
 
-    function getNominationPeriodStartDate() public view override returns (uint64) {
-        return _getCurrentEpoch().nominationPeriodStartDate;
+        return getEpochStartDate() + epoch.duration;
     }
 
     function getVotingPeriodStartDate() public view override returns (uint64) {
-        return _getCurrentEpoch().votingPeriodStartDate;
+        EpochData storage epoch = _getCurrentEpoch();
+
+        return getEpochEndDate() - epoch.votingPeriodDuration;
+    }
+
+    function getNominationPeriodStartDate() public view override returns (uint64) {
+        EpochData storage epoch = _getCurrentEpoch();
+
+        return getVotingPeriodStartDate() - epoch.nominationPeriodDuration;
+    }
+
+    function getEpochDuration() public view overrid returns (uint64) {
+        return _getCurrentEpoch().duration;
+    }
+
+    function getNominationPeriodDuration() public view override returns (uint64) {
+        return _getCurrentEpoch().nominationPeriodDuration;
+    }
+
+    function getVotingPeriodDuration() public view override returns (uint64) {
+        return _getCurrentEpoch().nominationPeriodDuration;
+    }
+
+    function getIdlePeriodDuration() public view override returns (uint64) {
+        EpochData storage epoch = _getCurrentEpoch();
+
+        return epoch.duration - epoch.votingPeriodDuration - epoch.nominationPeriodDuration;
     }
 
     function getCurrentPeriodType() public view override returns (uint) {

@@ -2,7 +2,7 @@ const { ethers } = hre;
 const assert = require('assert/strict');
 const assertBn = require('@synthetixio/core-js/utils/assertions/assert-bignumber');
 const assertRevert = require('@synthetixio/core-js/utils/assertions/assert-revert');
-const { fastForwardTo } = require('@synthetixio/core-js/utils/hardhat/rpc');
+const { fastForward } = require('@synthetixio/core-js/utils/hardhat/rpc');
 const { getUnixTimestamp, daysToSeconds } = require('@synthetixio/core-js/utils/misc/dates');
 const { bootstrap } = require('@synthetixio/deployer/utils/tests');
 const initializer = require('../../helpers/initializer');
@@ -13,7 +13,6 @@ describe('ElectionModule (resolve)', () => {
 
   let ElectionModule;
 
-  let epochEndDate, nominationPeriodStartDate, votingPeriodStartDate;
   let epochIndexBefore;
 
   before('identify modules', async () => {
@@ -24,14 +23,10 @@ describe('ElectionModule (resolve)', () => {
     before('initialize', async function () {
       const now = getUnixTimestamp();
 
-      epochEndDate = now + daysToSeconds(90);
-      votingPeriodStartDate = epochEndDate - daysToSeconds(7);
-      nominationPeriodStartDate = votingPeriodStartDate - daysToSeconds(7);
-
       await ElectionModule.initializeElectionModule(
-        epochEndDate,
-        nominationPeriodStartDate,
-        votingPeriodStartDate
+        daysToSeconds(90),
+        daysToSeconds(7),
+        daysToSeconds(7)
       );
     });
 

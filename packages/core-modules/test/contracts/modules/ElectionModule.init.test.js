@@ -12,7 +12,7 @@ describe('ElectionModule (init)', () => {
 
   let owner, user;
 
-  let epochEndDate, nominationPeriodStartDate, votingPeriodStartDate;
+  let epochStartDate, epochDuration, nominationPeriodDuration, votingPeriodDuration;
 
   before('identify signers', async () => {
     [owner, user] = await ethers.getSigners();
@@ -59,38 +59,29 @@ describe('ElectionModule (init)', () => {
           it('reverts', async function () {
             const now = getUnixTimestamp();
 
-            epochEndDate = now + daysToSeconds(4);
-            votingPeriodStartDate = epochEndDate - daysToSeconds(7);
-            nominationPeriodStartDate = votingPeriodStartDate - daysToSeconds(7);
             await assertRevert(
               ElectionModule.connect(owner).initializeElectionModule(
-                epochEndDate,
-                nominationPeriodStartDate,
-                votingPeriodStartDate
+                daysToSeconds(4),
+                daysToSeconds(2),
+                daysToSeconds(2)
               ),
               'InvalidEpochConfiguration'
             );
 
-            epochEndDate = now + daysToSeconds(90);
-            votingPeriodStartDate = epochEndDate - daysToSeconds(0.5);
-            nominationPeriodStartDate = votingPeriodStartDate - daysToSeconds(7);
             await assertRevert(
               ElectionModule.connect(owner).initializeElectionModule(
-                epochEndDate,
-                nominationPeriodStartDate,
-                votingPeriodStartDate
+                daysToSeconds(7),
+                daysToSeconds(1),
+                daysToSeconds(2)
               ),
               'InvalidEpochConfiguration'
             );
 
-            epochEndDate = now + daysToSeconds(90);
-            votingPeriodStartDate = epochEndDate - daysToSeconds(7);
-            nominationPeriodStartDate = votingPeriodStartDate - daysToSeconds(0.5);
             await assertRevert(
               ElectionModule.connect(owner).initializeElectionModule(
-                epochEndDate,
-                nominationPeriodStartDate,
-                votingPeriodStartDate
+                daysToSeconds(7),
+                daysToSeconds(2),
+                daysToSeconds(1)
               ),
               'InvalidEpochConfiguration'
             );
@@ -100,16 +91,15 @@ describe('ElectionModule (init)', () => {
 
       describe('with valid parameters', function () {
         before('initialize', async function () {
-          const now = getUnixTimestamp();
-
-          epochEndDate = now + daysToSeconds(90);
-          votingPeriodStartDate = epochEndDate - daysToSeconds(7);
-          nominationPeriodStartDate = votingPeriodStartDate - daysToSeconds(7);
+          epochStartDate = getUnixTimestamp();
+          epochDuration = daysToSeconds(90);
+          votingPeriodDuration = daysToSeconds(7);
+          nominationPeriodDuration = daysToSeconds(7);
 
           await ElectionModule.initializeElectionModule(
-            epochEndDate,
-            nominationPeriodStartDate,
-            votingPeriodStartDate
+            epochDuration,
+            nominationPeriodDuration,
+            votingPeriodDuration
           );
         });
 
@@ -117,13 +107,25 @@ describe('ElectionModule (init)', () => {
           assertBn.eq(await ElectionModule.getEpochIndex(), 1);
         });
 
-        it('shows that the first epoch has appropriate parameters', async function () {
-          assertBn.eq(await ElectionModule.getEpochEndDate(), epochEndDate);
+        it('shows that the first epoch has appropriate durations', async function () {
+          assertBn.eq(await ElectionModule.getEpochDuration(), epochDuration);
+          assertBn.eq(
+            await ElectionModule.getNominationPeriodDuration(),
+            nominationPeriodDuration
+          );
+          assertBn.eq(await ElectionModule.getVotingPeriodDuration(), votingPeriodDuration);
+        });
+
+        it('shows that the first epoch has appropriate dates', async function () {
+          assertBn.eq(await ElectionModule.getEpochStartDate(), epochStartDate);
+          assertBn.eq(await ElectionModule.getEpochEndDate(), epochStartDate + epochDuration);
+          assertBn.eq(await ElectionModule.getVotingPeriodStartDate(),
+            epochStartDate + epochDuration - votingPeriodDuration
+          );
           assertBn.eq(
             await ElectionModule.getNominationPeriodStartDate(),
-            nominationPeriodStartDate
+            epochStartDate + epochDuration - votingPeriodDuration - nominationPeriodDuration
           );
-          assertBn.eq(await ElectionModule.getVotingPeriodStartDate(), votingPeriodStartDate);
         });
 
         describe('when attemting to re-initialize the module', function () {

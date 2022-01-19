@@ -33,66 +33,72 @@ contract ElectionSchedule is ElectionBase {
     }
 
     function _configureFirstEpoch(
-        uint64 epochEndDate,
-        uint64 nominationPeriodStartDate,
-        uint64 votingPeriodStartDate
+        uint64 epochDuration,
+        uint64 nominationPeriodDuration,
+        uint64 votingPeriodDuration
     ) internal {
         EpochData storage firstEpoch = _getEpochAtPosition(1);
 
         uint64 epochStartDate = uint64(block.timestamp);
-        _configureEpoch(firstEpoch, epochStartDate, epochEndDate, nominationPeriodStartDate, votingPeriodStartDate);
+        _configureEpoch(firstEpoch, epochStartDate, epochDuration, nominationPeriodDuration, votingPeriodDuration);
     }
 
     function _configureNextEpoch() internal {
         EpochData storage currentEpoch = _getCurrentEpoch();
 
-        uint64 epochDuration = currentEpoch.endDate - currentEpoch.startDate;
-        uint64 votingPeriodDuration = currentEpoch.endDate - currentEpoch.votingPeriodStartDate;
-        uint64 nominationPeriodDuration = currentEpoch.votingPeriodStartDate - currentEpoch.nominationPeriodStartDate;
-
         uint64 nextEpochStartDate = uint64(block.timestamp);
-        uint64 nextEpochEndDate = nextEpochStartDate + epochDuration;
-        uint64 nextVotingPeriodStartDate = nextEpochEndDate - votingPeriodDuration;
-        uint64 nextNominationPeriodStartDate = nextVotingPeriodStartDate - nominationPeriodDuration;
 
         EpochData storage nextEpoch = _getNextEpoch();
         _configureEpoch(
             nextEpoch,
             nextEpochStartDate,
-            nextEpochEndDate,
-            nextNominationPeriodStartDate,
-            nextVotingPeriodStartDate
+            currentEpoch.duration,
+            currentEpoch.nominationPeriodDuration,
+            currentEpoch.votingPeriodDuration
         );
     }
 
     function _configureEpoch(
         EpochData storage epoch,
         uint64 epochStartDate,
-        uint64 epochEndDate,
-        uint64 nominationPeriodStartDate,
-        uint64 votingPeriodStartDate
+        uint64 epochDuration,
+        uint64 nominationPeriodDuration,
+        uint64 votingPeriodDuration
     ) internal {
-        _validateEpochDates(epochStartDate, epochEndDate, nominationPeriodStartDate, votingPeriodStartDate);
+        _validateEpochSchedule(epochStartDate, epochDuration, nominationPeriodDuration, votingPeriodDuration);
 
         epoch.startDate = epochStartDate;
-        epoch.endDate = epochEndDate;
-        epoch.nominationPeriodStartDate = nominationPeriodStartDate;
-        epoch.votingPeriodStartDate = votingPeriodStartDate;
+        epoch.duration = epochDuration;
+        epoch.nominationPeriodDuration = nominationPeriodDuration;
+        epoch.votingPeriodDuration = votingPeriodDuration;
     }
 
-    function _validateEpochDates(
+    function _validateEpochSchedule(
         uint64 epochStartDate,
-        uint64 epochEndDate,
-        uint64 nominationPeriodStartDate,
-        uint64 votingPeriodStartDate
+        uint64 epochDuration,
+        uint64 nominationPeriodDuration,
+        uint64 votingPeriodDuration
     ) private pure {
         // TODO: Declare these at contract level once deployer is fixed.
         // The deployer does not allow constant declarations in contracts.
         /* solhint-disable */
         uint64 _MIN_EPOCH_DURATION = 7 days;
-        uint64 _MIN_NOMINATION_PERIOD_DURATION = 1 days;
-        uint64 _MIN_VOTING_PERIOD_DURATION = 1 days;
+        uint64 _MIN_NOMINATION_PERIOD_DURATION = 2 days;
+        uint64 _MIN_VOTING_PERIOD_DURATION = 2 days;
         /* solhint-enable */
+
+        // Validate minimum durations
+        if (
+            epochDuration < _MIN_EPOCH_DURATION ||
+            nominationPeriodDuration < _MIN_NOMINATION_PERIOD_DURATION ||
+            votingPeriodDuration < _MIN_VOTING_PERIOD_DURATION
+        ) {
+            revert InvalidEpochConfiguration();
+        }
+
+        uint64 epochEndDate = epochStartDate + epochDuration;
+        uint64 votingPeriodStartDate = epochEndDate - votingPeriodDuration;
+        uint64 nominationPeriodStartDate = votingPeriodStartDate - nominationPeriodDuration;
 
         // Validate order: 0 < epochStartDate < nominationPeriodStartDate < votingPeriodStartDate < epochEndDate
         if (
@@ -100,18 +106,6 @@ contract ElectionSchedule is ElectionBase {
             epochStartDate > nominationPeriodStartDate ||
             nominationPeriodStartDate > votingPeriodStartDate ||
             votingPeriodStartDate > epochEndDate
-        ) {
-            revert InvalidEpochConfiguration();
-        }
-
-        // Validate minimum durations
-        uint64 epochDuration = epochEndDate - epochStartDate;
-        uint64 votingPeriodDuration = epochEndDate - votingPeriodStartDate;
-        uint64 nominationPeriodDuration = votingPeriodStartDate - nominationPeriodStartDate;
-        if (
-            epochDuration < _MIN_EPOCH_DURATION ||
-            nominationPeriodDuration < _MIN_NOMINATION_PERIOD_DURATION ||
-            votingPeriodDuration < _MIN_VOTING_PERIOD_DURATION
         ) {
             revert InvalidEpochConfiguration();
         }
