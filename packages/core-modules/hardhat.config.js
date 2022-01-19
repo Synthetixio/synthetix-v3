@@ -22,4 +22,7 @@ module.exports = {
   contractSizer: {
     strict: true,
   },
+  mocha: {
+    timeout: 120000,
+  },
 };

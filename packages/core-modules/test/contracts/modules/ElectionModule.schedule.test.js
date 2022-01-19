@@ -19,7 +19,7 @@ describe('ElectionModule (schedule)', () => {
 
   let owner, user;
 
-  let epochEndDate, nominationPeriodStartDate, votingPeriodStartDate, someDate;
+  let epochEndDate, nominationPeriodStartDate, votingPeriodStartDate;
 
   let snapshotId;
 
@@ -177,7 +177,7 @@ describe('ElectionModule (schedule)', () => {
     });
 
     it('shows that initial period is Idle', async function () {
-      assertBn.eq(await ElectionModule.getCurrentPeriod(), ElectionPeriod.Idle);
+      assertBn.eq(await ElectionModule.getCurrentPeriodType(), ElectionPeriod.Idle);
     });
 
     describe('when an account that does not own the instance attempts to adjust the epoch', function () {
@@ -207,34 +207,13 @@ describe('ElectionModule (schedule)', () => {
       });
 
       it('shows that the current period is Nomination', async function () {
-        assertBn.eq(await ElectionModule.getCurrentPeriod(), ElectionPeriod.Nomination);
+        assertBn.eq(await ElectionModule.getCurrentPeriodType(), ElectionPeriod.Nomination);
       });
 
       itAcceptsNominations();
       itRejectsVotes();
       itRejectsEvaluations();
       itRejectsAdjustments();
-
-      describe('when fast forwarding within the current period', function () {
-        before('fast forward', async function () {
-          someDate = votingPeriodStartDate - 60;
-
-          await fastForwardTo(someDate, ethers.provider);
-        });
-
-        it('skipped to the target time', async function () {
-          assertDatesEqual(await getTime(ethers.provider), someDate);
-        });
-
-        it('shows that the current period is still Nomination', async function () {
-          assertBn.eq(await ElectionModule.getCurrentPeriod(), ElectionPeriod.Nomination);
-        });
-
-        itAcceptsNominations();
-        itRejectsVotes();
-        itRejectsEvaluations();
-        itRejectsAdjustments();
-      });
     });
 
     // ----------------------------------
@@ -242,6 +221,10 @@ describe('ElectionModule (schedule)', () => {
     // ----------------------------------
 
     describe('when entering the voting period', function () {
+      before('ensure nominations', async function () {
+        await ElectionModule.connect(user).nominate();
+      });
+
       before('fast forward', async function () {
         await fastForwardTo(votingPeriodStartDate, ethers.provider);
       });
@@ -251,34 +234,13 @@ describe('ElectionModule (schedule)', () => {
       });
 
       it('shows that the current period is Vote', async function () {
-        assertBn.eq(await ElectionModule.getCurrentPeriod(), ElectionPeriod.Vote);
+        assertBn.eq(await ElectionModule.getCurrentPeriodType(), ElectionPeriod.Vote);
       });
 
       itRejectsNominations();
       itAcceptsVotes();
       itRejectsEvaluations();
       itRejectsAdjustments();
-
-      describe('when fast forwarding within the current period', function () {
-        before('fast forward', async function () {
-          someDate = epochEndDate - 60;
-
-          await fastForwardTo(someDate, ethers.provider);
-        });
-
-        it('skipped to the target time', async function () {
-          assertDatesEqual(await getTime(ethers.provider), someDate);
-        });
-
-        it('shows that the current period is still Vote', async function () {
-          assertBn.eq(await ElectionModule.getCurrentPeriod(), ElectionPeriod.Vote);
-        });
-
-        itRejectsNominations();
-        itAcceptsVotes();
-        itRejectsEvaluations();
-        itRejectsAdjustments();
-      });
     });
 
     // ----------------------------------
@@ -295,7 +257,7 @@ describe('ElectionModule (schedule)', () => {
       });
 
       it('shows that the current period is Evaluation', async function () {
-        assertBn.eq(await ElectionModule.getCurrentPeriod(), ElectionPeriod.Evaluation);
+        assertBn.eq(await ElectionModule.getCurrentPeriodType(), ElectionPeriod.Evaluation);
       });
 
       itRejectsNominations();

@@ -11,6 +11,11 @@ contract ElectionStorage {
         Evaluation
     }
 
+    struct BallotData {
+        uint votes;
+        address[] candidates;
+    }
+
     struct EpochData {
         bool evaluated;
         bool resolved;
@@ -19,6 +24,8 @@ contract ElectionStorage {
         uint64 nominationPeriodStartDate;
         uint64 votingPeriodStartDate;
         SetUtil.AddressSet nominees;
+        mapping(bytes32 => BallotData) ballotsById;
+        mapping(address => bytes32) ballotsByAddress;
     }
 
     struct ElectionStore {

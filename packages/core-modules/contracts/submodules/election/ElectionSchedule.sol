@@ -4,18 +4,15 @@ pragma solidity ^0.8.0;
 import "./ElectionBase.sol";
 
 contract ElectionSchedule is ElectionBase {
-    error InvalidEpochConfiguration();
-    error NotCallableInCurrentPeriod();
-
     modifier onlyInPeriod(ElectionPeriod period) {
-        if (_getCurrentPeriod() != period) {
+        if (_getCurrentPeriodType() != period) {
             revert NotCallableInCurrentPeriod();
         }
 
         _;
     }
 
-    function _getCurrentPeriod() internal view returns (ElectionPeriod) {
+    function _getCurrentPeriodType() internal view returns (ElectionPeriod) {
         EpochData storage epoch = _getCurrentEpoch();
 
         uint64 currentTime = uint64(block.timestamp);
