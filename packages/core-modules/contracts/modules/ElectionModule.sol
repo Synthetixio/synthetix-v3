@@ -149,6 +149,10 @@ contract ElectionModule is IElectionModule, ElectionSchedule, ElectionVotes, Own
         return uint(_getCurrentPeriodType());
     }
 
+    function getCurrentPeriodType() public view override returns (uint) {
+        return uint(_getCurrentPeriodType());
+    }
+
     function isEpochEvaluated() public view override returns (bool) {
         return _getCurrentEpoch().evaluated;
     }
