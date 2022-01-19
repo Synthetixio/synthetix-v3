@@ -38,8 +38,6 @@ interface IElectionModule {
 
     function getVotingPeriodDuration() external view returns (uint64);
 
-    function getIdlePeriodDuration() external view returns (uint64);
-
     function getNominationPeriodStartDate() external view returns (uint64);
 
     function getVotingPeriodStartDate() external view returns (uint64);

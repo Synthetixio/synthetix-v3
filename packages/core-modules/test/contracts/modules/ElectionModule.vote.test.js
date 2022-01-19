@@ -16,8 +16,6 @@ describe('ElectionModule (vote)', () => {
   let candidate1, candidate2, candidate3;
   let voter1, voter2, voter3, voter4, voter5;
 
-  let epochEndDate, nominationPeriodStartDate, votingPeriodStartDate;
-
   before('identify signers', async () => {
     const users = await ethers.getSigners();
 
@@ -33,20 +31,16 @@ describe('ElectionModule (vote)', () => {
     before('initialize', async function () {
       const now = getUnixTimestamp();
 
-      epochEndDate = now + daysToSeconds(90);
-      votingPeriodStartDate = epochEndDate - daysToSeconds(7);
-      nominationPeriodStartDate = votingPeriodStartDate - daysToSeconds(7);
-
       await ElectionModule.initializeElectionModule(
-        epochEndDate,
-        nominationPeriodStartDate,
-        votingPeriodStartDate
+        daysToSeconds(90),
+        daysToSeconds(7),
+        daysToSeconds(7)
       );
     });
 
     describe('when entering the nomiantion period', function () {
       before('fast forward', async function () {
-        await fastForwardTo(nominationPeriodStartDate, ethers.provider);
+        await fastForwardTo(await ElectionModule.getNominationPeriodStartDate(), ethers.provider);
       });
 
       it('shows that the current period is Nomination', async function () {
@@ -62,7 +56,7 @@ describe('ElectionModule (vote)', () => {
 
         describe('when entering the vote period', function () {
           before('fast forward', async function () {
-            await fastForwardTo(votingPeriodStartDate, ethers.provider);
+            await fastForwardTo(await ElectionModule.getVotingPeriodStartDate(), ethers.provider);
           });
 
           it('shows that the current period is Vote', async function () {

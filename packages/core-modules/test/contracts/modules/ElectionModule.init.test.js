@@ -1,8 +1,10 @@
 const { ethers } = hre;
 const assertBn = require('@synthetixio/core-js/utils/assertions/assert-bignumber');
 const assertRevert = require('@synthetixio/core-js/utils/assertions/assert-revert');
-const { getUnixTimestamp, daysToSeconds } = require('@synthetixio/core-js/utils/misc/dates');
+const { daysToSeconds } = require('@synthetixio/core-js/utils/misc/dates');
+const { getTime } = require('@synthetixio/core-js/utils/hardhat/rpc');
 const { bootstrap } = require('@synthetixio/deployer/utils/tests');
+const { assertDatesAreClose } = require('../../helpers/election-helper');
 const initializer = require('../../helpers/initializer');
 
 describe('ElectionModule (init)', () => {
@@ -57,7 +59,7 @@ describe('ElectionModule (init)', () => {
 
         describe('with any short duration', function () {
           it('reverts', async function () {
-            const now = getUnixTimestamp();
+            const now = await getTime(ethers.provider);
 
             await assertRevert(
               ElectionModule.connect(owner).initializeElectionModule(
@@ -91,7 +93,7 @@ describe('ElectionModule (init)', () => {
 
       describe('with valid parameters', function () {
         before('initialize', async function () {
-          epochStartDate = getUnixTimestamp();
+          epochStartDate = await getTime(ethers.provider);
           epochDuration = daysToSeconds(90);
           votingPeriodDuration = daysToSeconds(7);
           nominationPeriodDuration = daysToSeconds(7);
@@ -117,12 +119,12 @@ describe('ElectionModule (init)', () => {
         });
 
         it('shows that the first epoch has appropriate dates', async function () {
-          assertBn.eq(await ElectionModule.getEpochStartDate(), epochStartDate);
-          assertBn.eq(await ElectionModule.getEpochEndDate(), epochStartDate + epochDuration);
-          assertBn.eq(await ElectionModule.getVotingPeriodStartDate(),
+          assertDatesAreClose(await ElectionModule.getEpochStartDate(), epochStartDate);
+          assertDatesAreClose(await ElectionModule.getEpochEndDate(), epochStartDate + epochDuration);
+          assertDatesAreClose(await ElectionModule.getVotingPeriodStartDate(),
             epochStartDate + epochDuration - votingPeriodDuration
           );
-          assertBn.eq(
+          assertDatesAreClose(
             await ElectionModule.getNominationPeriodStartDate(),
             epochStartDate + epochDuration - votingPeriodDuration - nominationPeriodDuration
           );

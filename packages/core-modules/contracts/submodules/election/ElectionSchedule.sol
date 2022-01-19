@@ -17,15 +17,15 @@ contract ElectionSchedule is ElectionBase {
 
         uint64 currentTime = uint64(block.timestamp);
 
-        if (currentTime >= epoch.endDate) {
+        if (currentTime >= _getEpochEndDate(epoch)) {
             return ElectionPeriod.Evaluation;
         }
 
-        if (currentTime >= epoch.votingPeriodStartDate) {
+        if (currentTime >= _getVotingPeriodStartDate(epoch)) {
             return ElectionPeriod.Vote;
         }
 
-        if (currentTime >= epoch.nominationPeriodStartDate) {
+        if (currentTime >= _getNominationPeriodStartDate(epoch)) {
             return ElectionPeriod.Nomination;
         }
 
@@ -45,10 +45,10 @@ contract ElectionSchedule is ElectionBase {
 
     function _configureNextEpoch() internal {
         EpochData storage currentEpoch = _getCurrentEpoch();
+        EpochData storage nextEpoch = _getNextEpoch();
 
         uint64 nextEpochStartDate = uint64(block.timestamp);
 
-        EpochData storage nextEpoch = _getNextEpoch();
         _configureEpoch(
             nextEpoch,
             nextEpochStartDate,
@@ -58,6 +58,51 @@ contract ElectionSchedule is ElectionBase {
         );
     }
 
+    function _adjustEpoch(
+        uint64 newEpochEndDate,
+        uint64 newNominationPeriodStartDate,
+        uint64 newVotingPeriodStartDate
+    ) internal {
+        EpochData storage epoch = _getCurrentEpoch();
+
+        uint64 currentEpochStartDate = epoch.startDate;
+
+        // Date order makes sense?
+        if (
+            newEpochEndDate <= currentEpochStartDate ||
+            newNominationPeriodStartDate >= newVotingPeriodStartDate ||
+            newVotingPeriodStartDate >= newEpochEndDate
+        ) {
+            revert InvalidEpochConfiguration();
+        }
+
+        uint64 currentEpochEndDate = currentEpochStartDate + epoch.duration;
+        uint64 currentVotingPeriodStartDate = currentEpochEndDate - epoch.votingPeriodDuration;
+        uint64 currentNominationPeriodStartDate = currentVotingPeriodStartDate - epoch.nominationPeriodDuration;
+
+        // TODO: Make these settings
+        /* solhint-disable */
+        uint64 _MAX_EPOCH_DURATION_WIGGLE = 7 days;
+        uint64 _MAX_NOMINATION_PERIOD_WIGGLE = 2 days;
+        uint64 _MAX_VOTING_PERIOD_WIGGLE = 2 days;
+
+        // New dates not too distant from current dates?
+        if (
+            _uint64AbsDifference(newEpochEndDate, currentEpochEndDate) > _MAX_EPOCH_DURATION_WIGGLE ||
+            _uint64AbsDifference(newNominationPeriodStartDate, currentNominationPeriodStartDate) > _MAX_NOMINATION_PERIOD_WIGGLE ||
+            _uint64AbsDifference(newVotingPeriodStartDate, currentVotingPeriodStartDate) > _MAX_VOTING_PERIOD_WIGGLE
+        ) {
+            revert InvalidEpochConfiguration();
+        }
+
+        /* solhint-enable */
+        uint64 newEpochDuration = newEpochEndDate - currentEpochStartDate;
+        uint64 newVotingPeriodDuration = newEpochEndDate - newVotingPeriodStartDate;
+        uint64 newNominationPeriodDuration = currentVotingPeriodStartDate - newNominationPeriodStartDate;
+
+        _configureEpoch(epoch, currentEpochStartDate, newEpochDuration, newNominationPeriodDuration, newVotingPeriodDuration);
+    }
+
     function _configureEpoch(
         EpochData storage epoch,
         uint64 epochStartDate,
@@ -65,7 +110,7 @@ contract ElectionSchedule is ElectionBase {
         uint64 nominationPeriodDuration,
         uint64 votingPeriodDuration
     ) internal {
-        _validateEpochSchedule(epochStartDate, epochDuration, nominationPeriodDuration, votingPeriodDuration);
+        _validateEpochSchedule(epochDuration, nominationPeriodDuration, votingPeriodDuration);
 
         epoch.startDate = epochStartDate;
         epoch.duration = epochDuration;
@@ -74,20 +119,18 @@ contract ElectionSchedule is ElectionBase {
     }
 
     function _validateEpochSchedule(
-        uint64 epochStartDate,
         uint64 epochDuration,
         uint64 nominationPeriodDuration,
         uint64 votingPeriodDuration
     ) private pure {
-        // TODO: Declare these at contract level once deployer is fixed.
-        // The deployer does not allow constant declarations in contracts.
+        // TODO: Make these settings
         /* solhint-disable */
         uint64 _MIN_EPOCH_DURATION = 7 days;
         uint64 _MIN_NOMINATION_PERIOD_DURATION = 2 days;
         uint64 _MIN_VOTING_PERIOD_DURATION = 2 days;
+        uint64 _MIN_IDLE_PERIOD_DURATION = 2 days;
         /* solhint-enable */
 
-        // Validate minimum durations
         if (
             epochDuration < _MIN_EPOCH_DURATION ||
             nominationPeriodDuration < _MIN_NOMINATION_PERIOD_DURATION ||
@@ -96,18 +139,24 @@ contract ElectionSchedule is ElectionBase {
             revert InvalidEpochConfiguration();
         }
 
-        uint64 epochEndDate = epochStartDate + epochDuration;
-        uint64 votingPeriodStartDate = epochEndDate - votingPeriodDuration;
-        uint64 nominationPeriodStartDate = votingPeriodStartDate - nominationPeriodDuration;
-
-        // Validate order: 0 < epochStartDate < nominationPeriodStartDate < votingPeriodStartDate < epochEndDate
-        if (
-            epochStartDate == 0 ||
-            epochStartDate > nominationPeriodStartDate ||
-            nominationPeriodStartDate > votingPeriodStartDate ||
-            votingPeriodStartDate > epochEndDate
-        ) {
+        if (epochDuration - nominationPeriodDuration - votingPeriodDuration < _MIN_IDLE_PERIOD_DURATION) {
             revert InvalidEpochConfiguration();
         }
+    }
+
+    function _uint64AbsDifference(uint64 valueA, uint64 valueB) private pure returns (uint64) {
+        return valueA > valueB ? valueA - valueB : valueB - valueA;
+    }
+
+    function _getEpochEndDate(EpochData storage epoch) internal view returns (uint64) {
+        return epoch.startDate + epoch.duration;
+    }
+
+    function _getVotingPeriodStartDate(EpochData storage epoch) internal view returns (uint64) {
+        return epoch.startDate + epoch.duration - epoch.votingPeriodDuration;
+    }
+
+    function _getNominationPeriodStartDate(EpochData storage epoch) internal view returns (uint64) {
+        return epoch.startDate + epoch.duration - epoch.votingPeriodDuration - epoch.nominationPeriodDuration;
     }
 }

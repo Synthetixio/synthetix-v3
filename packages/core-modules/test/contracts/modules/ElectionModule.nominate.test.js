@@ -2,7 +2,7 @@ const { ethers } = hre;
 const assert = require('assert/strict');
 const assertBn = require('@synthetixio/core-js/utils/assertions/assert-bignumber');
 const assertRevert = require('@synthetixio/core-js/utils/assertions/assert-revert');
-const { fastForward } = require('@synthetixio/core-js/utils/hardhat/rpc');
+const { fastForwardTo } = require('@synthetixio/core-js/utils/hardhat/rpc');
 const { getUnixTimestamp, daysToSeconds } = require('@synthetixio/core-js/utils/misc/dates');
 const { bootstrap } = require('@synthetixio/deployer/utils/tests');
 const initializer = require('../../helpers/initializer');
@@ -75,7 +75,7 @@ describe('ElectionModule (nominate)', () => {
 
     describe('when entering the nomination period', function () {
       before('fast forward', async function () {
-        await fastForward(await ElectionModule.getIdlePeriodDuration(), ethers.provider);
+        await fastForwardTo(await ElectionModule.getNominationPeriodStartDate(), ethers.provider);
       });
 
       it('shows that the current period is Nomination', async function () {

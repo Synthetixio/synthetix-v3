@@ -35,14 +35,7 @@ contract ElectionModule is IElectionModule, ElectionSchedule, ElectionVotes, Own
         uint64 nominationPeriodStartDate,
         uint64 votingPeriodStartDate
     ) external override onlyOwner onlyInPeriod(ElectionPeriod.Idle) {
-        EpochData storage epoch = _getCurrentEpoch();
-
-        // TODO: Validate that these are within a certain threshold
-        uint64 epochDuration = epochEndDate - epoch.startDate;
-        uint64 votingPeriodDuration = epochEndDate - votingPeriodStartDate;
-        uint64 nominationPeriodDuration = votingPeriodStartDate - nominationPeriodStartDate;
-
-        _configureEpoch(epoch, epoch.startDate, epochDuration, nominationPeriodDuration, votingPeriodDuration);
+        _adjustEpoch(epochEndDate, nominationPeriodStartDate, votingPeriodStartDate);
     }
 
     // ---------------------------------------
@@ -129,24 +122,18 @@ contract ElectionModule is IElectionModule, ElectionSchedule, ElectionVotes, Own
     }
 
     function getEpochEndDate() public view override returns (uint64) {
-        EpochData storage epoch = _getCurrentEpoch();
-
-        return getEpochStartDate() + epoch.duration;
+        return _getEpochEndDate(_getCurrentEpoch());
     }
 
     function getVotingPeriodStartDate() public view override returns (uint64) {
-        EpochData storage epoch = _getCurrentEpoch();
-
-        return getEpochEndDate() - epoch.votingPeriodDuration;
+        return _getVotingPeriodStartDate(_getCurrentEpoch());
     }
 
     function getNominationPeriodStartDate() public view override returns (uint64) {
-        EpochData storage epoch = _getCurrentEpoch();
-
-        return getVotingPeriodStartDate() - epoch.nominationPeriodDuration;
+        return _getNominationPeriodStartDate(_getCurrentEpoch());
     }
 
-    function getEpochDuration() public view overrid returns (uint64) {
+    function getEpochDuration() public view override returns (uint64) {
         return _getCurrentEpoch().duration;
     }
 
@@ -156,12 +143,6 @@ contract ElectionModule is IElectionModule, ElectionSchedule, ElectionVotes, Own
 
     function getVotingPeriodDuration() public view override returns (uint64) {
         return _getCurrentEpoch().nominationPeriodDuration;
-    }
-
-    function getIdlePeriodDuration() public view override returns (uint64) {
-        EpochData storage epoch = _getCurrentEpoch();
-
-        return epoch.duration - epoch.votingPeriodDuration - epoch.nominationPeriodDuration;
     }
 
     function getCurrentPeriodType() public view override returns (uint) {
