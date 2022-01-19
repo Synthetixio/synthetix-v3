@@ -89,7 +89,8 @@ contract ElectionSchedule is ElectionBase {
         // New dates not too distant from current dates?
         if (
             _uint64AbsDifference(newEpochEndDate, currentEpochEndDate) > _MAX_EPOCH_DURATION_WIGGLE ||
-            _uint64AbsDifference(newNominationPeriodStartDate, currentNominationPeriodStartDate) > _MAX_NOMINATION_PERIOD_WIGGLE ||
+            _uint64AbsDifference(newNominationPeriodStartDate, currentNominationPeriodStartDate) >
+            _MAX_NOMINATION_PERIOD_WIGGLE ||
             _uint64AbsDifference(newVotingPeriodStartDate, currentVotingPeriodStartDate) > _MAX_VOTING_PERIOD_WIGGLE
         ) {
             revert InvalidEpochConfiguration();
@@ -100,7 +101,13 @@ contract ElectionSchedule is ElectionBase {
         uint64 newVotingPeriodDuration = newEpochEndDate - newVotingPeriodStartDate;
         uint64 newNominationPeriodDuration = currentVotingPeriodStartDate - newNominationPeriodStartDate;
 
-        _configureEpoch(epoch, currentEpochStartDate, newEpochDuration, newNominationPeriodDuration, newVotingPeriodDuration);
+        _configureEpoch(
+            epoch,
+            currentEpochStartDate,
+            newEpochDuration,
+            newNominationPeriodDuration,
+            newVotingPeriodDuration
+        );
     }
 
     function _configureEpoch(

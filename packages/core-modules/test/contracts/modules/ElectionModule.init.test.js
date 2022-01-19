@@ -59,8 +59,6 @@ describe('ElectionModule (init)', () => {
 
         describe('with any short duration', function () {
           it('reverts', async function () {
-            const now = await getTime(ethers.provider);
-
             await assertRevert(
               ElectionModule.connect(owner).initializeElectionModule(
                 daysToSeconds(4),
@@ -111,17 +109,18 @@ describe('ElectionModule (init)', () => {
 
         it('shows that the first epoch has appropriate durations', async function () {
           assertBn.eq(await ElectionModule.getEpochDuration(), epochDuration);
-          assertBn.eq(
-            await ElectionModule.getNominationPeriodDuration(),
-            nominationPeriodDuration
-          );
+          assertBn.eq(await ElectionModule.getNominationPeriodDuration(), nominationPeriodDuration);
           assertBn.eq(await ElectionModule.getVotingPeriodDuration(), votingPeriodDuration);
         });
 
         it('shows that the first epoch has appropriate dates', async function () {
           assertDatesAreClose(await ElectionModule.getEpochStartDate(), epochStartDate);
-          assertDatesAreClose(await ElectionModule.getEpochEndDate(), epochStartDate + epochDuration);
-          assertDatesAreClose(await ElectionModule.getVotingPeriodStartDate(),
+          assertDatesAreClose(
+            await ElectionModule.getEpochEndDate(),
+            epochStartDate + epochDuration
+          );
+          assertDatesAreClose(
+            await ElectionModule.getVotingPeriodStartDate(),
             epochStartDate + epochDuration - votingPeriodDuration
           );
           assertDatesAreClose(

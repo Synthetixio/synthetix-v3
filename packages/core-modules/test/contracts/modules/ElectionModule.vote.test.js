@@ -3,7 +3,7 @@ const assert = require('assert/strict');
 const assertBn = require('@synthetixio/core-js/utils/assertions/assert-bignumber');
 const assertRevert = require('@synthetixio/core-js/utils/assertions/assert-revert');
 const { fastForwardTo } = require('@synthetixio/core-js/utils/hardhat/rpc');
-const { getUnixTimestamp, daysToSeconds } = require('@synthetixio/core-js/utils/misc/dates');
+const { daysToSeconds } = require('@synthetixio/core-js/utils/misc/dates');
 const { bootstrap } = require('@synthetixio/deployer/utils/tests');
 const initializer = require('../../helpers/initializer');
 const { ElectionPeriod } = require('../../helpers/election-helper');
@@ -29,8 +29,6 @@ describe('ElectionModule (vote)', () => {
 
   describe('when the module is initialized', function () {
     before('initialize', async function () {
-      const now = getUnixTimestamp();
-
       await ElectionModule.initializeElectionModule(
         daysToSeconds(90),
         daysToSeconds(7),

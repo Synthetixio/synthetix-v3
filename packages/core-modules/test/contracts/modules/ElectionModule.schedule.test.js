@@ -7,12 +7,12 @@ const {
   takeSnapshot,
   restoreSnapshot,
 } = require('@synthetixio/core-js/utils/hardhat/rpc');
-const { getUnixTimestamp, daysToSeconds } = require('@synthetixio/core-js/utils/misc/dates');
+const { daysToSeconds } = require('@synthetixio/core-js/utils/misc/dates');
 const { bootstrap } = require('@synthetixio/deployer/utils/tests');
 const initializer = require('../../helpers/initializer');
 const { ElectionPeriod, assertDatesAreClose } = require('../../helpers/election-helper');
 
-describe.only('ElectionModule (schedule)', () => {
+describe('ElectionModule (schedule)', () => {
   const { proxyAddress } = bootstrap(initializer);
 
   let ElectionModule;
@@ -137,8 +137,12 @@ describe.only('ElectionModule (schedule)', () => {
         describe('with dates too far from the current dates', function () {
           it('reverts', async function () {
             const epochEndDate = (await ElectionModule.getEpochEndDate()).toNumber();
-            const nominationPeriodStartDate = (await ElectionModule.getNominationPeriodStartDate()).toNumber();
-            const votingPeriodStartDate = (await ElectionModule.getVotingPeriodStartDate()).toNumber();
+            const nominationPeriodStartDate = (
+              await ElectionModule.getNominationPeriodStartDate()
+            ).toNumber();
+            const votingPeriodStartDate = (
+              await ElectionModule.getVotingPeriodStartDate()
+            ).toNumber();
 
             await assertRevert(
               ElectionModule.adjustEpoch(
@@ -169,7 +173,10 @@ describe.only('ElectionModule (schedule)', () => {
       });
 
       describe('with valid parameters', function () {
-        let newEpochDuration, newEpochEndDate, newNominationPeriodStartDate, newVotingPeriodStartDate;
+        let newEpochDuration,
+          newEpochEndDate,
+          newNominationPeriodStartDate,
+          newVotingPeriodStartDate;
 
         before('take snapshot', async function () {
           snapshotId = await takeSnapshot(ethers.provider);
@@ -181,17 +188,30 @@ describe.only('ElectionModule (schedule)', () => {
 
         before('adjust', async function () {
           newEpochEndDate = (await ElectionModule.getEpochEndDate()).toNumber() + daysToSeconds(4);
-          newEpochDuration = newEpochEndDate - (await ElectionModule.getEpochStartDate()).toNumber();
-          newNominationPeriodStartDate = (await ElectionModule.getNominationPeriodStartDate()).toNumber() - daysToSeconds(2);
-          newVotingPeriodStartDate = (await ElectionModule.getVotingPeriodStartDate()).toNumber() + daysToSeconds(0.5);
+          newEpochDuration =
+            newEpochEndDate - (await ElectionModule.getEpochStartDate()).toNumber();
+          newNominationPeriodStartDate =
+            (await ElectionModule.getNominationPeriodStartDate()).toNumber() - daysToSeconds(2);
+          newVotingPeriodStartDate =
+            (await ElectionModule.getVotingPeriodStartDate()).toNumber() + daysToSeconds(0.5);
 
-          await ElectionModule.adjustEpoch(newEpochEndDate, newNominationPeriodStartDate, newVotingPeriodStartDate);
+          await ElectionModule.adjustEpoch(
+            newEpochEndDate,
+            newNominationPeriodStartDate,
+            newVotingPeriodStartDate
+          );
         });
 
         it('properly adjusted dates', async function () {
           assertDatesAreClose(await ElectionModule.getEpochEndDate(), newEpochEndDate);
-          assertDatesAreClose(await ElectionModule.getNominationPeriodStartDate(), newNominationPeriodStartDate);
-          assertDatesAreClose(await ElectionModule.getVotingPeriodStartDate(), newVotingPeriodStartDate);
+          assertDatesAreClose(
+            await ElectionModule.getNominationPeriodStartDate(),
+            newNominationPeriodStartDate
+          );
+          assertDatesAreClose(
+            await ElectionModule.getVotingPeriodStartDate(),
+            newVotingPeriodStartDate
+          );
         });
 
         it('properly adjusted durations', async function () {
@@ -241,7 +261,10 @@ describe.only('ElectionModule (schedule)', () => {
       });
 
       it('skipped to the target time', async function () {
-        assertDatesAreClose(await getTime(ethers.provider), await ElectionModule.getNominationPeriodStartDate());
+        assertDatesAreClose(
+          await getTime(ethers.provider),
+          await ElectionModule.getNominationPeriodStartDate()
+        );
       });
 
       it('shows that the current period is Nomination', async function () {
@@ -268,7 +291,10 @@ describe.only('ElectionModule (schedule)', () => {
       });
 
       it('skipped to the target time', async function () {
-        assertDatesAreClose(await getTime(ethers.provider), await ElectionModule.getVotingPeriodStartDate());
+        assertDatesAreClose(
+          await getTime(ethers.provider),
+          await ElectionModule.getVotingPeriodStartDate()
+        );
       });
 
       it('shows that the current period is Vote', async function () {

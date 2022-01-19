@@ -11,7 +11,7 @@ const assertDatesAreClose = (dateA, dateB) => {
   const numberDateA = ethers.BigNumber.isBigNumber(dateA) ? dateA.toNumber() : dateA;
   const numberDateB = ethers.BigNumber.isBigNumber(dateB) ? dateB.toNumber() : dateB;
 
-  return Math.abs(dateB - dateA) <= 1;
+  return Math.abs(numberDateB - numberDateA) <= 1;
 };
 
 module.exports = {
