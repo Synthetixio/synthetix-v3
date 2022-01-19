@@ -46,8 +46,7 @@ jobs:
           cache: "npm"
       - run: npm ci
       - name: Execute tests
-        run: |
-          npm test
+        run: npm --workspace=./packages/cli test
 
   test-sample:
     runs-on: ubuntu-latest
