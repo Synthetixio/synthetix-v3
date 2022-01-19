@@ -119,7 +119,10 @@ describe('ElectionModule (vote)', () => {
               };
               ballot3 = {
                 candidates: [candidate2.address, candidate3.address],
-                id: await ElectionModule.calculateBallotId([candidate2.address, candidate3.address]),
+                id: await ElectionModule.calculateBallotId([
+                  candidate2.address,
+                  candidate3.address,
+                ]),
               };
             });
 
