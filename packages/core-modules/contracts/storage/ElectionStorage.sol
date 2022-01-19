@@ -24,8 +24,8 @@ contract ElectionStorage {
         uint64 nominationPeriodStartDate;
         uint64 votingPeriodStartDate;
         SetUtil.AddressSet nominees;
-        mapping(bytes32 => BallotData) ballotFromBallotId;
-        mapping(address => bytes32) ballotIdFromVoterAddress;
+        mapping(bytes32 => BallotData) ballotsById;
+        mapping(address => bytes32) ballotsByAddress;
     }
 
     struct ElectionStore {

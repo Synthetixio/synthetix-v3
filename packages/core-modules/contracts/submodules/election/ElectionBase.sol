@@ -27,14 +27,22 @@ contract ElectionBase is ElectionStorage {
     }
 
     function _getBallot(bytes32 ballotId) internal view returns (BallotData storage) {
-        return _getCurrentEpoch().ballotFromBallotId[ballotId];
+        return _getCurrentEpoch().ballotsById[ballotId];
     }
 
-    function _getBallotId(address[] memory candidates) internal pure returns (bytes32) {
+    function _calculateBallotId(address[] memory candidates) internal pure returns (bytes32) {
         return keccak256(abi.encodePacked(candidates));
     }
 
     function _ballotExists(BallotData storage ballot) internal view returns (bool) {
         return ballot.candidates.length != 0;
+    }
+
+    function _getBallotVoted(address voter) internal view returns (bytes32) {
+        return _getCurrentEpoch().ballotsByAddress[voter];
+    }
+
+    function _hasVoted(address voter) internal view returns (bool) {
+        return _getBallotVoted(voter) != bytes32(0);
     }
 }

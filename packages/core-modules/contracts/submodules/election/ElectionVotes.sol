@@ -44,33 +44,31 @@ contract ElectionVotes is ElectionBase {
     ) internal virtual {
         EpochData storage epoch = _getCurrentEpoch();
 
-        bytes32 oldBallotId = epoch.ballotIdFromVoterAddress[voter];
-        bytes32 newBallotId = _getBallotId(candidates);
-        if (newBallotId == oldBallotId) {
-            revert ChangeError.NoChange();
-        }
-
-        // Clear previous vote
-        if (oldBallotId != bytes32(0)) {
-            BallotData storage oldBallot = _getBallot(oldBallotId);
-
-            oldBallot.votes -= votePower;
-        }
-
-        BallotData storage newBallot = _getBallot(newBallotId);
+        bytes32 ballotId = _calculateBallotId(candidates);
+        BallotData storage ballot = _getBallot(ballotId);
 
         // Initialize ballot if new
-        if (!_ballotExists(newBallot)) {
+        if (!_ballotExists(ballot)) {
             address[] memory newCandidates = candidates;
 
-            newBallot.candidates = newCandidates;
+            ballot.candidates = newCandidates;
         }
 
-        newBallot.votes += votePower;
-        epoch.ballotIdFromVoterAddress[voter] = newBallotId;
+        ballot.votes += votePower;
+        epoch.ballotsByAddress[voter] = ballotId;
     }
 
-    function _votePowerOf(address) internal view virtual returns (uint) {
+    function _withdrawVote(address voter, uint votePower) internal virtual {
+        EpochData storage epoch = _getCurrentEpoch();
+
+        bytes32 ballotId = epoch.ballotsByAddress[voter];
+        BallotData storage ballot = _getBallot(ballotId);
+
+        ballot.votes -= votePower;
+        epoch.ballotsByAddress[voter] = bytes32(0);
+    }
+
+    function _getVotePower(address) internal view virtual returns (uint) {
         return 1;
     }
 }

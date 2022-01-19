@@ -5,14 +5,14 @@ import "./ElectionBase.sol";
 
 contract ElectionSchedule is ElectionBase {
     modifier onlyInPeriod(ElectionPeriod period) {
-        if (_getCurrentPeriod() != period) {
+        if (_getCurrentPeriodType() != period) {
             revert NotCallableInCurrentPeriod();
         }
 
         _;
     }
 
-    function _getCurrentPeriod() internal view returns (ElectionPeriod) {
+    function _getCurrentPeriodType() internal view returns (ElectionPeriod) {
         EpochData storage epoch = _getCurrentEpoch();
 
         uint64 currentTime = uint64(block.timestamp);

@@ -41,7 +41,7 @@ describe('ElectionModule (resolve)', () => {
       });
 
       it('shows that the current period is Evaluation', async function () {
-        assertBn.eq(await ElectionModule.getCurrentPeriod(), ElectionPeriod.Evaluation);
+        assertBn.eq(await ElectionModule.getCurrentPeriodType(), ElectionPeriod.Evaluation);
       });
 
       describe('before evaluating the epoch', function () {
@@ -78,7 +78,7 @@ describe('ElectionModule (resolve)', () => {
             });
 
             it('shows that the current period is Idle', async function () {
-              assertBn.eq(await ElectionModule.getCurrentPeriod(), ElectionPeriod.Idle);
+              assertBn.eq(await ElectionModule.getCurrentPeriodType(), ElectionPeriod.Idle);
             });
           });
         });

@@ -24,7 +24,7 @@ interface IElectionModule {
 
     function resolve() external;
 
-    function getCurrentPeriod() external view returns (uint);
+    function getCurrentPeriodType() external view returns (uint);
 
     function getEpochIndex() external view returns (uint);
 
@@ -48,7 +48,9 @@ interface IElectionModule {
 
     function getBallotCandidates(bytes32 ballotId) external view returns (address[] memory);
 
-    function getBallotId(address[] calldata candidates) external pure returns (bytes32);
+    function calculateBallotId(address[] calldata candidates) external pure returns (bytes32);
 
-    function getVote(address voter) external view returns (bytes32);
+    function getBallotVoted(address voter) external view returns (bytes32);
+
+    function hasVoted(address voter) external view returns (bool);
 }

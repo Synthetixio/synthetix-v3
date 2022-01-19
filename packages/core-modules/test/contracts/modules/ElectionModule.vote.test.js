@@ -50,7 +50,7 @@ describe('ElectionModule (vote)', () => {
       });
 
       it('shows that the current period is Nomination', async function () {
-        assertBn.eq(await ElectionModule.getCurrentPeriod(), ElectionPeriod.Nomination);
+        assertBn.eq(await ElectionModule.getCurrentPeriodType(), ElectionPeriod.Nomination);
       });
 
       describe('when nominations exist', function () {
@@ -66,7 +66,7 @@ describe('ElectionModule (vote)', () => {
           });
 
           it('shows that the current period is Vote', async function () {
-            assertBn.eq(await ElectionModule.getCurrentPeriod(), ElectionPeriod.Vote);
+            assertBn.eq(await ElectionModule.getCurrentPeriodType(), ElectionPeriod.Vote);
           });
 
           describe('when issuing invalid votes', function () {
@@ -111,15 +111,15 @@ describe('ElectionModule (vote)', () => {
             before('form ballots', async function () {
               ballot1 = {
                 candidates: [candidate1.address],
-                id: await ElectionModule.getBallotId([candidate1.address]),
+                id: await ElectionModule.calculateBallotId([candidate1.address]),
               };
               ballot2 = {
                 candidates: [candidate2.address],
-                id: await ElectionModule.getBallotId([candidate2.address]),
+                id: await ElectionModule.calculateBallotId([candidate2.address]),
               };
               ballot3 = {
                 candidates: [candidate3.address],
-                id: await ElectionModule.getBallotId([candidate3.address]),
+                id: await ElectionModule.calculateBallotId([candidate3.address]),
               };
             });
 
@@ -132,11 +132,11 @@ describe('ElectionModule (vote)', () => {
             });
 
             it('can retrieve the corresponding ballot that users voted on', async function () {
-              assert.equal(await ElectionModule.getVote(voter1.address), ballot1.id);
-              assert.equal(await ElectionModule.getVote(voter2.address), ballot2.id);
-              assert.equal(await ElectionModule.getVote(voter3.address), ballot1.id);
-              assert.equal(await ElectionModule.getVote(voter4.address), ballot1.id);
-              assert.equal(await ElectionModule.getVote(voter5.address), ballot2.id);
+              assert.equal(await ElectionModule.getBallotVoted(voter1.address), ballot1.id);
+              assert.equal(await ElectionModule.getBallotVoted(voter2.address), ballot2.id);
+              assert.equal(await ElectionModule.getBallotVoted(voter3.address), ballot1.id);
+              assert.equal(await ElectionModule.getBallotVoted(voter4.address), ballot1.id);
+              assert.equal(await ElectionModule.getBallotVoted(voter5.address), ballot2.id);
             });
 
             it('can retrieve ballot votes', async function () {
@@ -176,7 +176,7 @@ describe('ElectionModule (vote)', () => {
               });
 
               it('can retrieve the corresponding ballot that users voted on', async function () {
-                assert.equal(await ElectionModule.getVote(voter5.address), ballot3.id);
+                assert.equal(await ElectionModule.getBallotVoted(voter5.address), ballot3.id);
               });
 
               it('can retrieve ballot votes', async function () {

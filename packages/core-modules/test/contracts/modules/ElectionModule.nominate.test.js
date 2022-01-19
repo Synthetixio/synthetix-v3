@@ -85,7 +85,7 @@ describe('ElectionModule (nominate)', () => {
       });
 
       it('shows that the current period is Nomination', async function () {
-        assertBn.eq(await ElectionModule.getCurrentPeriod(), ElectionPeriod.Nomination);
+        assertBn.eq(await ElectionModule.getCurrentPeriodType(), ElectionPeriod.Nomination);
       });
 
       describe('before users nominate', function () {

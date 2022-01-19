@@ -177,7 +177,7 @@ describe('ElectionModule (schedule)', () => {
     });
 
     it('shows that initial period is Idle', async function () {
-      assertBn.eq(await ElectionModule.getCurrentPeriod(), ElectionPeriod.Idle);
+      assertBn.eq(await ElectionModule.getCurrentPeriodType(), ElectionPeriod.Idle);
     });
 
     describe('when an account that does not own the instance attempts to adjust the epoch', function () {
@@ -207,7 +207,7 @@ describe('ElectionModule (schedule)', () => {
       });
 
       it('shows that the current period is Nomination', async function () {
-        assertBn.eq(await ElectionModule.getCurrentPeriod(), ElectionPeriod.Nomination);
+        assertBn.eq(await ElectionModule.getCurrentPeriodType(), ElectionPeriod.Nomination);
       });
 
       itAcceptsNominations();
@@ -234,7 +234,7 @@ describe('ElectionModule (schedule)', () => {
       });
 
       it('shows that the current period is Vote', async function () {
-        assertBn.eq(await ElectionModule.getCurrentPeriod(), ElectionPeriod.Vote);
+        assertBn.eq(await ElectionModule.getCurrentPeriodType(), ElectionPeriod.Vote);
       });
 
       itRejectsNominations();
@@ -257,7 +257,7 @@ describe('ElectionModule (schedule)', () => {
       });
 
       it('shows that the current period is Evaluation', async function () {
-        assertBn.eq(await ElectionModule.getCurrentPeriod(), ElectionPeriod.Evaluation);
+        assertBn.eq(await ElectionModule.getCurrentPeriodType(), ElectionPeriod.Evaluation);
       });
 
       itRejectsNominations();
