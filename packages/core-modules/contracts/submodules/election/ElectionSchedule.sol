@@ -66,10 +66,9 @@ contract ElectionSchedule is ElectionBase {
         // TODO: Make these settings
         /* solhint-disable */
         uint64 _MAX_EPOCH_DATE_ADJUST = 7 days;
+        /* solhint-enable */
 
         EpochData storage epoch = _getCurrentEpoch();
-
-        uint64 currentEpochStartDate = epoch.startDate;
 
         // New dates not too distant from current dates?
         if (
@@ -81,7 +80,8 @@ contract ElectionSchedule is ElectionBase {
             revert InvalidEpochConfiguration();
         }
 
-        /* solhint-enable */
+        uint64 currentEpochStartDate = epoch.startDate;
+
         uint64 newEpochDuration = newEpochEndDate - currentEpochStartDate;
         uint64 newVotingPeriodDuration = newEpochEndDate - newVotingPeriodStartDate;
         uint64 newNominationPeriodDuration = newVotingPeriodStartDate - newNominationPeriodStartDate;
