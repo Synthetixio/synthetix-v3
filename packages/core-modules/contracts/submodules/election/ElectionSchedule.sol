@@ -63,33 +63,20 @@ contract ElectionSchedule is ElectionBase {
         uint64 newNominationPeriodStartDate,
         uint64 newVotingPeriodStartDate
     ) internal {
-        EpochData storage epoch = _getCurrentEpoch();
-
-        uint64 currentEpochStartDate = epoch.startDate;
-
-        // Date order makes sense?
-        if (
-            newEpochEndDate <= currentEpochStartDate ||
-            newNominationPeriodStartDate >= newVotingPeriodStartDate ||
-            newVotingPeriodStartDate >= newEpochEndDate
-        ) {
-            revert InvalidEpochConfiguration();
-        }
-
-        uint64 currentEpochEndDate = _getEpochEndDate(epoch);
-        uint64 currentVotingPeriodStartDate = _getVotingPeriodStartDate(epoch);
-        uint64 currentNominationPeriodStartDate = _getNominationPeriodStartDate(epoch);
-
         // TODO: Make these settings
         /* solhint-disable */
         uint64 _MAX_EPOCH_DATE_ADJUST = 7 days;
 
+        EpochData storage epoch = _getCurrentEpoch();
+
+        uint64 currentEpochStartDate = epoch.startDate;
+
         // New dates not too distant from current dates?
         if (
-            _uint64AbsDifference(newEpochEndDate, currentEpochEndDate) > _MAX_EPOCH_DATE_ADJUST ||
-            _uint64AbsDifference(newNominationPeriodStartDate, currentNominationPeriodStartDate) >
+            _uint64AbsDifference(newEpochEndDate, _getEpochEndDate(epoch)) > _MAX_EPOCH_DATE_ADJUST ||
+            _uint64AbsDifference(newNominationPeriodStartDate, _getNominationPeriodStartDate(epoch)) >
             _MAX_EPOCH_DATE_ADJUST ||
-            _uint64AbsDifference(newVotingPeriodStartDate, currentVotingPeriodStartDate) > _MAX_EPOCH_DATE_ADJUST
+            _uint64AbsDifference(newVotingPeriodStartDate, _getVotingPeriodStartDate(epoch)) > _MAX_EPOCH_DATE_ADJUST
         ) {
             revert InvalidEpochConfiguration();
         }
@@ -97,7 +84,7 @@ contract ElectionSchedule is ElectionBase {
         /* solhint-enable */
         uint64 newEpochDuration = newEpochEndDate - currentEpochStartDate;
         uint64 newVotingPeriodDuration = newEpochEndDate - newVotingPeriodStartDate;
-        uint64 newNominationPeriodDuration = currentVotingPeriodStartDate - newNominationPeriodStartDate;
+        uint64 newNominationPeriodDuration = newVotingPeriodStartDate - newNominationPeriodStartDate;
 
         _configureEpoch(
             epoch,
