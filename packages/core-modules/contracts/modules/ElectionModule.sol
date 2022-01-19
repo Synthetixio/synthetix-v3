@@ -69,12 +69,12 @@ contract ElectionModule is IElectionModule, ElectionSchedule, ElectionVotes, Own
     // ---------------------------------------
 
     function elect(address[] calldata candidates) external override onlyInPeriod(ElectionPeriod.Vote) {
-        _validateCandidates(candidates);
-
         uint votePower = _getVotePower(msg.sender);
         if (votePower == 0) {
             revert NoVotePower();
         }
+
+        _validateCandidates(candidates);
 
         if (_hasVoted(msg.sender)) {
             _withdrawVote(msg.sender, votePower);
