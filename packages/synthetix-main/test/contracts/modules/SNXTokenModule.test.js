@@ -27,7 +27,7 @@ describe('SNXTokenModule', function () {
     });
 
     describe('When the SNX is created', () => {
-      let receipt, fullyQualifiedName;
+      let receipt;
 
       before('Create a SNX token', async () => {
         const tx = await SNXTokenModule.connect(owner).createSNX();
@@ -35,14 +35,12 @@ describe('SNXTokenModule', function () {
       });
 
       before('Identify newly created SNX', async () => {
-        const event = findEvent({ receipt, eventName: 'SatelliteCreated' });
-        snxTokenAddress = event.args.deployedAddress;
-        fullyQualifiedName = event.args.fullyQualifiedName;
+        const event = findEvent({ receipt, eventName: 'SNXTokenCreated' });
+        snxTokenAddress = event.args.snxAddress;
         SNX = await ethers.getContractAt('SNXToken', snxTokenAddress);
       });
 
       it('emmited an event', async () => {
-        assert.equal(fullyQualifiedName, 'contracts/token/SNXToken.sol:SNXToken');
         assert.notEqual(snxTokenAddress, '0x0000000000000000000000000000000000000000');
       });
 
@@ -55,6 +53,13 @@ describe('SNXTokenModule', function () {
         assert.equal(await SNX.name(), 'Synthetix Network Token');
         assert.equal(await SNX.symbol(), 'snx');
         assert.equal(await SNX.decimals(), 18);
+      });
+
+      it('gets the newly created satellite', async () => {
+        const result = await SNXTokenModule.getSNXTokenModuleSatellite();
+        assert.equal(result.id, ethers.utils.formatBytes32String('snx'));
+        assert.equal(result.contractName, 'SNXToken');
+        assert.equal(result.deployedAddress, snxTokenAddress);
       });
 
       describe('When attempting to create the SNX twice', () => {

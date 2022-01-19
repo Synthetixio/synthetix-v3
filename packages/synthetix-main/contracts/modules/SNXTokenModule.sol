@@ -9,6 +9,8 @@ import "../storage/SNXTokenStorage.sol";
 import "../token/SNXToken.sol";
 
 contract SNXTokenModule is ISNXTokenModule, OwnableMixin, SNXTokenStorage, SatelliteFactory {
+    event SNXTokenCreated(address snxAddress);
+
     error SNXAlreadyCreated();
 
     function _getSatellite() internal view override returns (Satellite memory) {
@@ -38,6 +40,8 @@ contract SNXTokenModule is ISNXTokenModule, OwnableMixin, SNXTokenStorage, Satel
         snxToken.initialize("Synthetix Network Token", "snx", 18);
 
         store.snxToken = Satellite({id: "snx", contractName: type(SNXToken).name, deployedAddress: snxTokenProxyAddress});
+
+        emit SNXTokenCreated(snxTokenProxyAddress);
     }
 
     function upgradeSNXImplementation(address newSNXTokenImplementation) external override onlyOwner {
