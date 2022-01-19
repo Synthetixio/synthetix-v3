@@ -15,7 +15,7 @@ contract SatelliteFactoryMock is SatelliteFactory {
         return _getSatellite();
     }
 
-    function createSatelliteMock(string memory id) external {
+    function createSatelliteMock(bytes32 id) external {
         ExampleToken newSatellite = new ExampleToken();
 
         _satellite = Satellite({id: id, contractName: type(ExampleToken).name, deployedAddress: address(newSatellite)});
@@ -25,7 +25,7 @@ contract SatelliteFactoryMock is SatelliteFactory {
 contract SatellitesFactoryMock is SatellitesFactory {
     //TODO: Update array declaration to use SetUtil library
     Satellite[] private _satellites;
-    mapping(string => uint256) private _satellitePositions;
+    mapping(bytes32 => uint256) private _satellitePositions;
 
     function _getSatellites() internal view override returns (Satellite[] memory) {
         return _satellites;
@@ -45,7 +45,7 @@ contract SatellitesFactoryMock is SatellitesFactory {
         }
     }
 
-    function createSatelliteMock(string memory id) external {
+    function createSatelliteMock(bytes32 id) external {
         ExampleToken newSatellite = new ExampleToken();
 
         Satellite memory satellite = Satellite({

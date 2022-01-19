@@ -1,10 +1,13 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import {Satellite} from "@synthetixio/core-contracts/contracts/satellite/SatelliteFactory.sol";
+
 contract SynthsStorage {
     struct SynthsStore {
         address beacon;
-        mapping(bytes32 => address) synths;
+        mapping(bytes32 => Satellite) synths;
+        bytes32[] synthsIds;
     }
 
     function _synthsStore() internal pure returns (SynthsStore storage store) {

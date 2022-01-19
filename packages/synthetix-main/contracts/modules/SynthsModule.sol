@@ -20,6 +20,21 @@ contract SynthsModule is ISynthsModule, OwnableMixin, SynthsStorage, SatellitesF
     error ImplementationNotSet();
     error SynthAlreadyCreated();
 
+    function _getSatellites() internal view override returns (Satellite[] memory) {
+        SynthsStore storage store = _synthsStore();
+        Satellite[] memory satellites = new Satellite[](store.synthsIds.length);
+
+        for (uint256 i = 0; i < store.synthsIds.length; i++) {
+            satellites[i] = store.synths[store.synthsIds[i]];
+        }
+
+        return satellites;
+    }
+
+    function getSynthsModuleSatellites() public view returns (Satellite[] memory) {
+        return _getSatellites();
+    }
+
     function createBeacon() external override onlyOwner {
         SynthsStore storage store = _synthsStore();
 
@@ -39,7 +54,7 @@ contract SynthsModule is ISynthsModule, OwnableMixin, SynthsStorage, SatellitesF
         string memory synthSymbol,
         uint8 synthDecimals
     ) external override onlyOwner {
-        if (_synthsStore().synths[synth] != address(0x0)) {
+        if (_synthsStore().synths[synth].deployedAddress != address(0)) {
             revert SynthAlreadyCreated();
         }
 
@@ -54,7 +69,13 @@ contract SynthsModule is ISynthsModule, OwnableMixin, SynthsStorage, SatellitesF
 
         address synthAddress = address(new BeaconProxy(beaconAddress));
 
-        _synthsStore().synths[synth] = synthAddress;
+        _synthsStore().synths[synth] = Satellite({
+            id: synth,
+            contractName: type(ISynth).name,
+            deployedAddress: synthAddress
+        });
+
+        _synthsStore().synthsIds.push(synth);
 
         ISynth(synthAddress).initialize(synthName, synthSymbol, synthDecimals);
 
@@ -86,6 +107,6 @@ contract SynthsModule is ISynthsModule, OwnableMixin, SynthsStorage, SatellitesF
     }
 
     function getSynth(bytes32 synth) external view override returns (address) {
-        return _synthsStore().synths[synth];
+        return _synthsStore().synths[synth].deployedAddress;
     }
 }

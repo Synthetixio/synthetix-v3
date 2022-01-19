@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 struct Satellite {
-    string id;
+    bytes32 id;
     string contractName;
     address deployedAddress;
 }

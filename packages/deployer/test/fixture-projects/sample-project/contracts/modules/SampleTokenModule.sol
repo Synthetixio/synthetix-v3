@@ -14,7 +14,19 @@ contract SampleTokenModule is SatellitesFactory, TokenStorage {
         return _getSatellites();
     }
 
-    function createSampleToken(string memory id) external {
+    //TODO: Update array declaration to use SetUtil library
+    function _setSatellite(Satellite memory satellite) internal {
+        TokenStore storage s = _tokenStore();
+
+        if (s.satellitePositions[satellite.id] > 0) {
+            s.satellites[s.satellitePositions[satellite.id] - 1] = satellite;
+        } else {
+            s.satellites.push(satellite);
+            s.satellitePositions[satellite.id] = s.satellites.length;
+        }
+    }
+
+    function createSampleToken(bytes32 id) external {
         SampleToken token = new SampleToken();
 
         Satellite memory satellite = Satellite({
