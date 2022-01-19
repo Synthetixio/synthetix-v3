@@ -76,22 +76,20 @@ contract ElectionSchedule is ElectionBase {
             revert InvalidEpochConfiguration();
         }
 
-        uint64 currentEpochEndDate = currentEpochStartDate + epoch.duration;
-        uint64 currentVotingPeriodStartDate = currentEpochEndDate - epoch.votingPeriodDuration;
-        uint64 currentNominationPeriodStartDate = currentVotingPeriodStartDate - epoch.nominationPeriodDuration;
+        uint64 currentEpochEndDate = _getEpochEndDate(epoch);
+        uint64 currentVotingPeriodStartDate = _getVotingPeriodStartDate(epoch);
+        uint64 currentNominationPeriodStartDate = _getNominationPeriodStartDate(epoch);
 
         // TODO: Make these settings
         /* solhint-disable */
-        uint64 _MAX_EPOCH_DURATION_WIGGLE = 7 days;
-        uint64 _MAX_NOMINATION_PERIOD_WIGGLE = 2 days;
-        uint64 _MAX_VOTING_PERIOD_WIGGLE = 2 days;
+        uint64 _MAX_EPOCH_DATE_ADJUST = 7 days;
 
         // New dates not too distant from current dates?
         if (
-            _uint64AbsDifference(newEpochEndDate, currentEpochEndDate) > _MAX_EPOCH_DURATION_WIGGLE ||
+            _uint64AbsDifference(newEpochEndDate, currentEpochEndDate) > _MAX_EPOCH_DATE_ADJUST ||
             _uint64AbsDifference(newNominationPeriodStartDate, currentNominationPeriodStartDate) >
-            _MAX_NOMINATION_PERIOD_WIGGLE ||
-            _uint64AbsDifference(newVotingPeriodStartDate, currentVotingPeriodStartDate) > _MAX_VOTING_PERIOD_WIGGLE
+            _MAX_EPOCH_DATE_ADJUST ||
+            _uint64AbsDifference(newVotingPeriodStartDate, currentVotingPeriodStartDate) > _MAX_EPOCH_DATE_ADJUST
         ) {
             revert InvalidEpochConfiguration();
         }

@@ -155,7 +155,7 @@ describe('ElectionModule (schedule)', () => {
             await assertRevert(
               ElectionModule.adjustEpoch(
                 epochEndDate + daysToSeconds(7),
-                nominationPeriodStartDate - daysToSeconds(3),
+                nominationPeriodStartDate - daysToSeconds(8),
                 votingPeriodStartDate + daysToSeconds(2)
               ),
               'InvalidEpochConfiguration'
@@ -164,7 +164,7 @@ describe('ElectionModule (schedule)', () => {
               ElectionModule.adjustEpoch(
                 epochEndDate + daysToSeconds(7),
                 nominationPeriodStartDate + daysToSeconds(2),
-                votingPeriodStartDate - daysToSeconds(3)
+                votingPeriodStartDate - daysToSeconds(8)
               ),
               'InvalidEpochConfiguration'
             );
