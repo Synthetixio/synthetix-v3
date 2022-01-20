@@ -20,9 +20,9 @@ contract ElectionStorage {
         bool evaluated;
         bool resolved;
         uint64 startDate;
-        uint64 duration;
-        uint64 nominationPeriodDuration;
-        uint64 votingPeriodDuration;
+        uint64 endDate;
+        uint64 nominationPeriodStartDate;
+        uint64 votingPeriodStartDate;
         SetUtil.AddressSet nominees;
         mapping(bytes32 => BallotData) ballotsById;
         mapping(address => bytes32) ballotsByAddress;

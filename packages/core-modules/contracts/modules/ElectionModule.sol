@@ -15,9 +15,9 @@ contract ElectionModule is IElectionModule, ElectionSchedule, ElectionVotes, Own
     // ---------------------------------------
 
     function initializeElectionModule(
-        uint64 epochDuration,
-        uint64 nominationPeriodDuration,
-        uint64 votingPeriodDuration
+        uint64 nominationPeriodStartDate,
+        uint64 votingPeriodStartDate,
+        uint64 epochEndDate
     ) external override onlyOwner {
         ElectionStore storage store = _electionStore();
 
@@ -27,15 +27,35 @@ contract ElectionModule is IElectionModule, ElectionSchedule, ElectionVotes, Own
 
         store.currentEpochIndex = 1;
 
-        _configureFirstEpoch(epochDuration, nominationPeriodDuration, votingPeriodDuration);
+        _configureFirstEpochSchedule(nominationPeriodStartDate, votingPeriodStartDate, epochEndDate);
     }
 
-    function adjustEpoch(
-        uint64 epochEndDate,
-        uint64 nominationPeriodStartDate,
-        uint64 votingPeriodStartDate
+    function adjustEpochSchedule(
+        uint64 newNominationPeriodStartDate,
+        uint64 newVotingPeriodStartDate,
+        uint64 newEpochEndDate
     ) external override onlyOwner onlyInPeriod(ElectionPeriod.Idle) {
-        _adjustEpoch(epochEndDate, nominationPeriodStartDate, votingPeriodStartDate);
+        _adjustEpochSchedule(
+            _getCurrentEpoch(),
+            newNominationPeriodStartDate,
+            newVotingPeriodStartDate,
+            newEpochEndDate,
+            true // ensureChangesAreSmall
+        );
+    }
+
+    function unsafeAdjustEpochSchedule(
+        uint64 newNominationPeriodStartDate,
+        uint64 newVotingPeriodStartDate,
+        uint64 newEpochEndDate
+    ) external override onlyOwner onlyInPeriod(ElectionPeriod.Idle) {
+        _adjustEpochSchedule(
+            _getCurrentEpoch(),
+            newNominationPeriodStartDate,
+            newVotingPeriodStartDate,
+            newEpochEndDate,
+            false // !ensureChangesAreSmall
+        );
     }
 
     // ---------------------------------------
@@ -100,7 +120,7 @@ contract ElectionModule is IElectionModule, ElectionSchedule, ElectionVotes, Own
 
         _getCurrentEpoch().resolved = true;
 
-        _configureNextEpoch();
+        _configureNextEpochSchedule();
 
         ElectionStore storage store = _electionStore();
         store.currentEpochIndex = store.currentEpochIndex + 1;
@@ -122,27 +142,15 @@ contract ElectionModule is IElectionModule, ElectionSchedule, ElectionVotes, Own
     }
 
     function getEpochEndDate() public view override returns (uint64) {
-        return _getEpochEndDate(_getCurrentEpoch());
-    }
-
-    function getVotingPeriodStartDate() public view override returns (uint64) {
-        return _getVotingPeriodStartDate(_getCurrentEpoch());
+        return _getCurrentEpoch().endDate;
     }
 
     function getNominationPeriodStartDate() public view override returns (uint64) {
-        return _getNominationPeriodStartDate(_getCurrentEpoch());
+        return _getCurrentEpoch().nominationPeriodStartDate;
     }
 
-    function getEpochDuration() public view override returns (uint64) {
-        return _getCurrentEpoch().duration;
-    }
-
-    function getNominationPeriodDuration() public view override returns (uint64) {
-        return _getCurrentEpoch().nominationPeriodDuration;
-    }
-
-    function getVotingPeriodDuration() public view override returns (uint64) {
-        return _getCurrentEpoch().nominationPeriodDuration;
+    function getVotingPeriodStartDate() public view override returns (uint64) {
+        return _getCurrentEpoch().votingPeriodStartDate;
     }
 
     function getCurrentPeriodType() public view override returns (uint) {
