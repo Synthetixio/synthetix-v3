@@ -162,8 +162,8 @@ describe('SynthsModule', function () {
 
                 it('gets the newly created satellite', async () => {
                   const [result] = await SynthsModule.getSynthsModuleSatellites();
-                  assert.equal(result.id, sUSD);
-                  assert.equal(result.contractName, 'ISynth');
+                  assert.equal(result.name, sUSD);
+                  assert.equal(result.contractName, ethers.utils.formatBytes32String('ISynth'));
                   assert.equal(result.deployedAddress, synthAddress);
                 });
 

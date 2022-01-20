@@ -13,12 +13,14 @@ contract SNXTokenModule is ISNXTokenModule, OwnableMixin, SNXTokenStorage, Satel
 
     error SNXAlreadyCreated();
 
-    function _getSatellite() internal view override returns (Satellite memory) {
-        return _snxTokenStore().snxToken;
+    function _getSatellites() internal view override returns (Satellite[] memory) {
+        Satellite[] memory satellites = new Satellite[](1);
+        satellites[0] = _snxTokenStore().snxToken;
+        return satellites;
     }
 
-    function getSNXTokenModuleSatellite() public view returns (Satellite memory) {
-        return _getSatellite();
+    function getSNXTokenModuleSatellites() public view returns (Satellite[] memory) {
+        return _getSatellites();
     }
 
     function createSNX() external override onlyOwner {
@@ -39,7 +41,7 @@ contract SNXTokenModule is ISNXTokenModule, OwnableMixin, SNXTokenStorage, Satel
         snxToken.acceptOwnership();
         snxToken.initialize("Synthetix Network Token", "snx", 18);
 
-        store.snxToken = Satellite({id: "snx", contractName: type(SNXToken).name, deployedAddress: snxTokenProxyAddress});
+        store.snxToken = Satellite({name: "snx", contractName: "SNXToken", deployedAddress: snxTokenProxyAddress});
 
         emit SNXTokenCreated(snxTokenProxyAddress);
     }

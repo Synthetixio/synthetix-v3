@@ -5,7 +5,7 @@ import "@synthetixio/core-contracts/contracts/satellite/SatelliteFactory.sol";
 
 contract SNXTokenStorage {
     struct SNXTokenStore {
-        Satellite snxToken; // main address
+        SatelliteFactory.Satellite snxToken;
     }
 
     function _snxTokenStore() internal pure returns (SNXTokenStore storage store) {

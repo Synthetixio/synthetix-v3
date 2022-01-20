@@ -56,10 +56,11 @@ describe('SNXTokenModule', function () {
       });
 
       it('gets the newly created satellite', async () => {
-        const result = await SNXTokenModule.getSNXTokenModuleSatellite();
-        assert.equal(result.id, ethers.utils.formatBytes32String('snx'));
-        assert.equal(result.contractName, 'SNXToken');
-        assert.equal(result.deployedAddress, snxTokenAddress);
+        const results = await SNXTokenModule.getSNXTokenModuleSatellites();
+        assert.equal(results.length, 1);
+        assert.equal(results[0].name, ethers.utils.formatBytes32String('snx'));
+        assert.equal(results[0].contractName, ethers.utils.formatBytes32String('SNXToken'));
+        assert.equal(results[0].deployedAddress, snxTokenAddress);
       });
 
       describe('When attempting to create the SNX twice', () => {

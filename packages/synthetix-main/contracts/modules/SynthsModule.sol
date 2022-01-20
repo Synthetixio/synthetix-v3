@@ -10,7 +10,7 @@ import "../interfaces/ISynth.sol";
 import "../storage/SynthsStorage.sol";
 import "../token/Synth.sol";
 
-contract SynthsModule is ISynthsModule, OwnableMixin, SynthsStorage, SatellitesFactory {
+contract SynthsModule is ISynthsModule, OwnableMixin, SynthsStorage, SatelliteFactory {
     event BeaconCreated(address beacon);
     event SynthImplementationCreated(address implementationAddress);
     event SynthCreated(bytes32 synth, address synthAddress);
@@ -22,10 +22,10 @@ contract SynthsModule is ISynthsModule, OwnableMixin, SynthsStorage, SatellitesF
 
     function _getSatellites() internal view override returns (Satellite[] memory) {
         SynthsStore storage store = _synthsStore();
-        Satellite[] memory satellites = new Satellite[](store.synthsIds.length);
+        Satellite[] memory satellites = new Satellite[](store.synthNames.length);
 
-        for (uint256 i = 0; i < store.synthsIds.length; i++) {
-            satellites[i] = store.synths[store.synthsIds[i]];
+        for (uint256 i = 0; i < store.synthNames.length; i++) {
+            satellites[i] = store.synths[store.synthNames[i]];
         }
 
         return satellites;
@@ -69,13 +69,8 @@ contract SynthsModule is ISynthsModule, OwnableMixin, SynthsStorage, SatellitesF
 
         address synthAddress = address(new BeaconProxy(beaconAddress));
 
-        _synthsStore().synths[synth] = Satellite({
-            id: synth,
-            contractName: type(ISynth).name,
-            deployedAddress: synthAddress
-        });
-
-        _synthsStore().synthsIds.push(synth);
+        _synthsStore().synths[synth] = Satellite({name: synth, contractName: "ISynth", deployedAddress: synthAddress});
+        _synthsStore().synthNames.push(synth);
 
         ISynth(synthAddress).initialize(synthName, synthSymbol, synthDecimals);
 

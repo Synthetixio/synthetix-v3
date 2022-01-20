@@ -4,8 +4,8 @@ const assert = require('assert/strict');
 describe('SatelliteFactory', () => {
   let SatelliteFactory;
 
-  const FIRST = ethers.utils.formatBytes32String('fst');
-  const SECOND = ethers.utils.formatBytes32String('snd');
+  const FIRST = ethers.utils.formatBytes32String('first');
+  const SECOND = ethers.utils.formatBytes32String('second');
   const ERC20 = ethers.utils.formatBytes32String('ERC20');
 
   before('deploy the contract', async () => {
