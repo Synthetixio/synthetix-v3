@@ -1,5 +1,6 @@
 {
   "spec": ["test/unit/**/*.test.js", "test/integration/**/*.test.js"],
+  "timeout": 10000,
   "watch-files": [
     "internal/**/*.js",
     "subtasks/**/*.js",
