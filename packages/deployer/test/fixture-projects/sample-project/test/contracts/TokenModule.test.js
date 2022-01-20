@@ -4,29 +4,30 @@ const initializer = require('../helpers/initializer');
 
 const { ethers } = hre;
 
-describe('SampleTokenModule', () => {
+describe('TokenModule', () => {
   const { proxyAddress } = bootstrap(initializer);
 
-  let SampleTokenModule;
+  let TokenModule;
 
   before('identify modules', async () => {
-    SampleTokenModule = await ethers.getContractAt('SampleTokenModule', proxyAddress());
+    TokenModule = await ethers.getContractAt('TokenModule', proxyAddress());
   });
 
   describe('when a new token is created', () => {
+    const Token = ethers.utils.formatBytes32String('Token');
     const SNXToken = ethers.utils.formatBytes32String('SNXToken');
 
     before('create the token', async () => {
-      const tx = await SampleTokenModule.createSampleToken(SNXToken);
+      const tx = await TokenModule.createSampleToken(SNXToken);
       await tx.wait();
     });
 
     it('gets newly created token', async () => {
-      const result = await SampleTokenModule.getSampleTokenModuleSatellites();
+      const result = await TokenModule.getSampleTokenModuleSatellites();
 
       assert.equal(result.length, 1);
-      assert.equal(result[0].id, SNXToken);
-      assert.equal(result[0].contractName, 'SampleToken');
+      assert.equal(result[0].name, SNXToken);
+      assert.equal(result[0].contractName, Token);
       assert.notEqual(result[0].deployedAddress, '0x0000000000000000000000000000000000000000');
     });
   });

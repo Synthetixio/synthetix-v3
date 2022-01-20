@@ -5,9 +5,7 @@ import "@synthetixio/core-contracts/contracts/satellite/SatelliteFactory.sol";
 
 contract TokenStorage {
     struct TokenStore {
-        //TODO: Update array declaration to use SetUtil library
-        Satellite[] satellites;
-        mapping(bytes32 => uint256) satellitePositions;
+        SatelliteFactory.Satellite[] tokens;
     }
 
     function _tokenStore() internal pure returns (TokenStore storage store) {
