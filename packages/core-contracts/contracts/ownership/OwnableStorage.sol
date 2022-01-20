@@ -5,6 +5,7 @@ contract OwnableStorage {
     struct OwnableStore {
         address owner;
         address nominatedOwner;
+        bool initialized;
     }
 
     function _ownableStore() internal pure returns (OwnableStore storage store) {

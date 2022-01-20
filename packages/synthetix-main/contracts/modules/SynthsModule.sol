@@ -19,7 +19,7 @@ contract SynthsModule is ISynthsModule, OwnableMixin, SynthsStorage, Initializab
     error SynthAlreadyCreated();
 
     function _isInitialized() internal view override returns (bool) {
-        return _synthsStore().beacon != address(0);
+        return _synthsStore().initialized;
     }
 
     function isSynthsModuleInitialized() external view override returns (bool) {
@@ -31,6 +31,8 @@ contract SynthsModule is ISynthsModule, OwnableMixin, SynthsStorage, Initializab
 
         address beacon = address(new Beacon(address(this)));
         store.beacon = beacon;
+
+        store.initialized = true;
 
         emit BeaconCreated(beacon);
     }
