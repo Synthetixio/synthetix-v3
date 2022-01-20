@@ -2,8 +2,8 @@ const { ethers } = hre;
 const assert = require('assert/strict');
 const assertBn = require('@synthetixio/core-js/utils/assertions/assert-bignumber');
 const assertRevert = require('@synthetixio/core-js/utils/assertions/assert-revert');
-const { fastForwardTo } = require('@synthetixio/core-js/utils/hardhat/rpc');
-const { getUnixTimestamp, daysToSeconds } = require('@synthetixio/core-js/utils/misc/dates');
+const { getTime, fastForwardTo } = require('@synthetixio/core-js/utils/hardhat/rpc');
+const { daysToSeconds } = require('@synthetixio/core-js/utils/misc/dates');
 const { bootstrap } = require('@synthetixio/deployer/utils/tests');
 const initializer = require('../../helpers/initializer');
 const { ElectionPeriod } = require('../../helpers/election-helper');
@@ -13,7 +13,6 @@ describe('ElectionModule (resolve)', () => {
 
   let ElectionModule;
 
-  let epochEndDate, nominationPeriodStartDate, votingPeriodStartDate;
   let epochIndexBefore;
 
   before('identify modules', async () => {
@@ -22,22 +21,21 @@ describe('ElectionModule (resolve)', () => {
 
   describe('when the module is initialized', function () {
     before('initialize', async function () {
-      const now = getUnixTimestamp();
-
-      epochEndDate = now + daysToSeconds(90);
-      votingPeriodStartDate = epochEndDate - daysToSeconds(7);
-      nominationPeriodStartDate = votingPeriodStartDate - daysToSeconds(7);
+      const now = await getTime(ethers.provider);
+      const epochEndDate = now + daysToSeconds(90);
+      const votingPeriodStartDate = epochEndDate - daysToSeconds(7);
+      const nominationPeriodStartDate = votingPeriodStartDate - daysToSeconds(7);
 
       await ElectionModule.initializeElectionModule(
-        epochEndDate,
         nominationPeriodStartDate,
-        votingPeriodStartDate
+        votingPeriodStartDate,
+        epochEndDate
       );
     });
 
     describe('when entering the evaluation period', function () {
       before('fast forward', async function () {
-        await fastForwardTo(epochEndDate, ethers.provider);
+        await fastForwardTo(await ElectionModule.getEpochEndDate(), ethers.provider);
       });
 
       it('shows that the current period is Evaluation', async function () {

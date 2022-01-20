@@ -2,8 +2,8 @@ const { ethers } = hre;
 const assert = require('assert/strict');
 const assertBn = require('@synthetixio/core-js/utils/assertions/assert-bignumber');
 const assertRevert = require('@synthetixio/core-js/utils/assertions/assert-revert');
-const { fastForwardTo } = require('@synthetixio/core-js/utils/hardhat/rpc');
-const { getUnixTimestamp, daysToSeconds } = require('@synthetixio/core-js/utils/misc/dates');
+const { getTime, fastForwardTo } = require('@synthetixio/core-js/utils/hardhat/rpc');
+const { daysToSeconds } = require('@synthetixio/core-js/utils/misc/dates');
 const { bootstrap } = require('@synthetixio/deployer/utils/tests');
 const initializer = require('../../helpers/initializer');
 const { ElectionPeriod } = require('../../helpers/election-helper');
@@ -15,8 +15,6 @@ describe('ElectionModule (vote)', () => {
 
   let candidate1, candidate2, candidate3;
   let voter1, voter2, voter3, voter4, voter5;
-
-  let epochEndDate, nominationPeriodStartDate, votingPeriodStartDate;
 
   before('identify signers', async () => {
     const users = await ethers.getSigners();
@@ -31,22 +29,21 @@ describe('ElectionModule (vote)', () => {
 
   describe('when the module is initialized', function () {
     before('initialize', async function () {
-      const now = getUnixTimestamp();
-
-      epochEndDate = now + daysToSeconds(90);
-      votingPeriodStartDate = epochEndDate - daysToSeconds(7);
-      nominationPeriodStartDate = votingPeriodStartDate - daysToSeconds(7);
+      const now = await getTime(ethers.provider);
+      const epochEndDate = now + daysToSeconds(90);
+      const votingPeriodStartDate = epochEndDate - daysToSeconds(7);
+      const nominationPeriodStartDate = votingPeriodStartDate - daysToSeconds(7);
 
       await ElectionModule.initializeElectionModule(
-        epochEndDate,
         nominationPeriodStartDate,
-        votingPeriodStartDate
+        votingPeriodStartDate,
+        epochEndDate
       );
     });
 
     describe('when entering the nomiantion period', function () {
       before('fast forward', async function () {
-        await fastForwardTo(nominationPeriodStartDate, ethers.provider);
+        await fastForwardTo(await ElectionModule.getNominationPeriodStartDate(), ethers.provider);
       });
 
       it('shows that the current period is Nomination', async function () {
@@ -62,7 +59,7 @@ describe('ElectionModule (vote)', () => {
 
         describe('when entering the vote period', function () {
           before('fast forward', async function () {
-            await fastForwardTo(votingPeriodStartDate, ethers.provider);
+            await fastForwardTo(await ElectionModule.getVotingPeriodStartDate(), ethers.provider);
           });
 
           it('shows that the current period is Vote', async function () {
@@ -118,11 +115,8 @@ describe('ElectionModule (vote)', () => {
                 id: await ElectionModule.calculateBallotId([candidate2.address]),
               };
               ballot3 = {
-                candidates: [candidate2.address, candidate3.address],
-                id: await ElectionModule.calculateBallotId([
-                  candidate2.address,
-                  candidate3.address,
-                ]),
+                candidates: [candidate3.address],
+                id: await ElectionModule.calculateBallotId([candidate3.address]),
               };
             });
 
