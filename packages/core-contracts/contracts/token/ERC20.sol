@@ -97,7 +97,7 @@ contract ERC20 is IERC20, ERC20Storage {
         address from,
         address to,
         uint256 amount
-    ) private {
+    ) internal virtual {
         ERC20Store storage store = _erc20Store();
 
         uint256 accountBalance = store.balanceOf[from];
@@ -117,7 +117,7 @@ contract ERC20 is IERC20, ERC20Storage {
         emit Transfer(from, to, amount);
     }
 
-    function _mint(address to, uint256 amount) internal {
+    function _mint(address to, uint256 amount) internal virtual {
         ERC20Store storage store = _erc20Store();
 
         store.totalSupply += amount;
@@ -130,7 +130,7 @@ contract ERC20 is IERC20, ERC20Storage {
         emit Transfer(address(0), to, amount);
     }
 
-    function _burn(address from, uint256 amount) internal {
+    function _burn(address from, uint256 amount) internal virtual {
         ERC20Store storage store = _erc20Store();
 
         uint256 accountBalance = store.balanceOf[from];
