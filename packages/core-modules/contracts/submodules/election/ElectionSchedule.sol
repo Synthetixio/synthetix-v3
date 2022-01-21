@@ -4,6 +4,10 @@ pragma solidity ^0.8.0;
 import "./ElectionBase.sol";
 
 contract ElectionSchedule is ElectionBase {
+    // ---------------------------------------
+    // ElectionPeriod type enum
+    // ---------------------------------------
+
     modifier onlyInPeriod(ElectionPeriod period) {
         if (_getCurrentPeriodType() != period) {
             revert NotCallableInCurrentPeriod();
@@ -31,6 +35,10 @@ contract ElectionSchedule is ElectionBase {
 
         return ElectionPeriod.Idle;
     }
+
+    // ---------------------------------------
+    // Epoch and period configurations
+    // ---------------------------------------
 
     function _configureFirstEpochSchedule(
         uint64 nominationPeriodStartDate,
@@ -81,15 +89,8 @@ contract ElectionSchedule is ElectionBase {
         uint64 nominationPeriodStartDate,
         uint64 votingPeriodStartDate,
         uint64 epochEndDate
-    ) private pure {
-        // TODO: Make these settings
-        /* solhint-disable */
-        uint64 _MIN_EPOCH_DURATION = 7 days;
-        uint64 _MIN_NOMINATION_PERIOD_DURATION = 2 days;
-        uint64 _MIN_VOTING_PERIOD_DURATION = 2 days;
-        /* solhint-enable */
-
-        // Date order makes sense?
+    ) private view {
+        // Ensure date order makes sense
         if (
             epochEndDate <= votingPeriodStartDate ||
             votingPeriodStartDate <= nominationPeriodStartDate ||
@@ -102,11 +103,13 @@ contract ElectionSchedule is ElectionBase {
         uint64 votingPeriodDuration = epochEndDate - votingPeriodStartDate;
         uint64 nominationPeriodDuration = votingPeriodStartDate - nominationPeriodStartDate;
 
-        // Epoch durations above minimums?
+        ElectionSettings storage settings = _electionStore().settings;
+
+        // Ensure all durations are above minimums
         if (
-            epochDuration < _MIN_EPOCH_DURATION ||
-            nominationPeriodDuration < _MIN_NOMINATION_PERIOD_DURATION ||
-            votingPeriodDuration < _MIN_VOTING_PERIOD_DURATION
+            epochDuration < settings.minEpochDuration ||
+            nominationPeriodDuration < settings.minNominationPeriodDuration ||
+            votingPeriodDuration < settings.minVotingPeriodDuration
         ) {
             revert InvalidEpochConfiguration();
         }
@@ -119,17 +122,13 @@ contract ElectionSchedule is ElectionBase {
         uint64 newEpochEndDate,
         bool ensureChangesAreSmall
     ) internal {
-        // TODO: Make these settings
-        /* solhint-disable */
-        uint64 _MAX_EPOCH_DATE_ADJUST = 7 days;
-        /* solhint-enable */
-
+        uint64 maxDateAdjustmentTolerance = _electionStore().settings.maxDateAdjustmentTolerance;
         if (ensureChangesAreSmall) {
             if (
-                _uint64AbsDifference(newEpochEndDate, epoch.endDate) > _MAX_EPOCH_DATE_ADJUST ||
+                _uint64AbsDifference(newEpochEndDate, epoch.endDate) > maxDateAdjustmentTolerance ||
                 _uint64AbsDifference(newNominationPeriodStartDate, epoch.nominationPeriodStartDate) >
-                _MAX_EPOCH_DATE_ADJUST ||
-                _uint64AbsDifference(newVotingPeriodStartDate, epoch.votingPeriodStartDate) > _MAX_EPOCH_DATE_ADJUST
+                maxDateAdjustmentTolerance ||
+                _uint64AbsDifference(newVotingPeriodStartDate, epoch.votingPeriodStartDate) > maxDateAdjustmentTolerance
             ) {
                 revert InvalidEpochConfiguration();
             }
@@ -143,6 +142,38 @@ contract ElectionSchedule is ElectionBase {
             newEpochEndDate
         );
     }
+
+    // ---------------------------------------
+    // Settings
+    // ---------------------------------------
+
+    function _setMinEpochDurations(
+        uint64 newMinNominationPeriodDuration,
+        uint64 newMinVotingPeriodDuration,
+        uint64 newMinEpochDuration
+    ) internal {
+        ElectionSettings storage settings = _electionStore().settings;
+
+        if (newMinNominationPeriodDuration == 0 || newMinVotingPeriodDuration == 0 || newMinEpochDuration == 0) {
+            revert InvalidElectionSettings();
+        }
+
+        settings.minNominationPeriodDuration = newMinNominationPeriodDuration;
+        settings.minVotingPeriodDuration = newMinVotingPeriodDuration;
+        settings.minEpochDuration = newMinEpochDuration;
+    }
+
+    function _setMaxDateAdjustmentTolerance(uint64 newMaxDateAdjustmentTolerance) internal {
+        if (newMaxDateAdjustmentTolerance == 0) {
+            revert InvalidElectionSettings();
+        }
+
+        _electionStore().settings.maxDateAdjustmentTolerance = newMaxDateAdjustmentTolerance;
+    }
+
+    // ---------------------------------------
+    // Utilities
+    // ---------------------------------------
 
     function _uint64AbsDifference(uint64 valueA, uint64 valueB) private pure returns (uint64) {
         return valueA > valueB ? valueA - valueB : valueB - valueA;

@@ -24,6 +24,14 @@ interface IElectionModule {
         uint64 newEpochEndDate
     ) external;
 
+    function setMinEpochDurations(
+        uint64 newMinNominationPeriodDuration,
+        uint64 newMinVotingPeriodDuration,
+        uint64 newMinEpochDuration
+    ) external;
+
+    function setMaxDateAdjustmentTolerance(uint64 newMaxDateAdjustmentTolerance) external;
+
     // ---------------------------------------
     // Nomination functions
     // ---------------------------------------
@@ -49,6 +57,20 @@ interface IElectionModule {
     // ---------------------------------------
     // View functions
     // ---------------------------------------
+
+    // Settings
+    // ~~~~~~~~~~~~~~~~~~
+
+    function getMinEpochDurations()
+        external
+        view
+        returns (
+            uint64 minNominationPeriodDuration,
+            uint64 minVotingPeriodDuration,
+            uint64 minEpochDuration
+        );
+
+    function getMaxDateAdjustmenTolerance() external view returns (uint64);
 
     // Epoch and periods
     // ~~~~~~~~~~~~~~~~~~

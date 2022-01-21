@@ -16,6 +16,13 @@ contract ElectionStorage {
         address[] candidates;
     }
 
+    struct ElectionSettings {
+        uint64 minEpochDuration;
+        uint64 minNominationPeriodDuration;
+        uint64 minVotingPeriodDuration;
+        uint64 maxDateAdjustmentTolerance;
+    }
+
     struct EpochData {
         bool evaluated;
         bool resolved;
@@ -29,6 +36,7 @@ contract ElectionStorage {
     }
 
     struct ElectionStore {
+        ElectionSettings settings;
         uint currentEpochIndex;
         mapping(uint => EpochData) epochs;
     }

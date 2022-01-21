@@ -1,0 +1,141 @@
+const { ethers } = hre;
+const assertBn = require('@synthetixio/core-js/utils/assertions/assert-bignumber');
+const assertRevert = require('@synthetixio/core-js/utils/assertions/assert-revert');
+const { getTime } = require('@synthetixio/core-js/utils/hardhat/rpc');
+const { daysToSeconds } = require('@synthetixio/core-js/utils/misc/dates');
+const { bootstrap } = require('@synthetixio/deployer/utils/tests');
+const initializer = require('../../helpers/initializer');
+
+describe('ElectionModule (settings)', () => {
+  const { proxyAddress } = bootstrap(initializer);
+
+  let ElectionModule;
+
+  let user;
+
+  before('identify signers', async () => {
+    [, user] = await ethers.getSigners();
+  });
+
+  before('identify modules', async () => {
+    ElectionModule = await ethers.getContractAt('ElectionModule', proxyAddress());
+  });
+
+  describe('when the module is initialized', function () {
+    before('initialize', async function () {
+      const now = await getTime(ethers.provider);
+      const epochEndDate = now + daysToSeconds(90);
+      const votingPeriodStartDate = epochEndDate - daysToSeconds(7);
+      const nominationPeriodStartDate = votingPeriodStartDate - daysToSeconds(7);
+
+      await ElectionModule.initializeElectionModule(
+        nominationPeriodStartDate,
+        votingPeriodStartDate,
+        epochEndDate
+      );
+    });
+
+    // ---------------------------------------
+    // maxDateAdjustmentTolerance
+    // ---------------------------------------
+
+    describe('when configuring maximum epoch date adjustment tolerance', function () {
+      describe('with an account that is not the owner', () => {
+        it('reverts', async () => {
+          await assertRevert(
+            ElectionModule.connect(user).setMaxDateAdjustmentTolerance(1),
+            'Unauthorized'
+          );
+        });
+      });
+
+      describe('with the owner', () => {
+        describe('with any zero duration', () => {
+          it('reverts', async () => {
+            await assertRevert(
+              ElectionModule.setMaxDateAdjustmentTolerance(0),
+              'InvalidElectionSettings'
+            );
+          });
+        });
+
+        describe('with valid parameters', () => {
+          let newMaxDateAdjustmentTolerance = daysToSeconds(1);
+
+          before('set', async () => {
+            await ElectionModule.setMaxDateAdjustmentTolerance(newMaxDateAdjustmentTolerance);
+          });
+
+          it('changes the setting', async () => {
+            assertBn.eq(
+              await ElectionModule.getMaxDateAdjustmenTolerance(),
+              newMaxDateAdjustmentTolerance
+            );
+          });
+        });
+      });
+    });
+
+    // ---------------------------------------
+    // minEpochDuration
+    // minNominationPeriodDuration
+    // minVotingPeriodDuration
+    // ---------------------------------------
+
+    describe('when configuring minimum epoch and period durations', function () {
+      describe('with an account that is not the owner', () => {
+        it('reverts', async () => {
+          await assertRevert(
+            ElectionModule.connect(user).setMinEpochDurations(1, 1, 1),
+            'Unauthorized'
+          );
+        });
+      });
+
+      describe('with the owner', () => {
+        describe('with any zero duration', () => {
+          it('reverts', async () => {
+            await assertRevert(
+              ElectionModule.setMinEpochDurations(1, 1, 0),
+              'InvalidElectionSettings'
+            );
+            await assertRevert(
+              ElectionModule.setMinEpochDurations(1, 0, 1),
+              'InvalidElectionSettings'
+            );
+            await assertRevert(
+              ElectionModule.setMinEpochDurations(0, 1, 1),
+              'InvalidElectionSettings'
+            );
+          });
+        });
+
+        describe('with valid parameters', () => {
+          let newMinNominationPeriodDuration = daysToSeconds(1);
+          let newMinVotingPeriodDuration = daysToSeconds(3);
+          let newMinEpochDuration = daysToSeconds(365);
+
+          before('set', async () => {
+            await ElectionModule.setMinEpochDurations(
+              newMinNominationPeriodDuration,
+              newMinVotingPeriodDuration,
+              newMinEpochDuration
+            );
+          });
+
+          it('changes the setting', async () => {
+            const [
+              setMinNominationPeriodDuration,
+              setMinVotingPeriodDuration,
+              setMinEpochDuration,
+            ] = await ElectionModule.getMinEpochDurations();
+
+            assertBn.eq(setMinNominationPeriodDuration, newMinNominationPeriodDuration);
+            assertBn.eq(setMinVotingPeriodDuration, newMinVotingPeriodDuration);
+            assertBn.eq(setMinEpochDuration, newMinEpochDuration);
+          });
+        });
+      });
+    });
+  });
+});
