@@ -159,5 +159,4 @@ describe('utils/hardhat/rpc.js', () => {
       assert.equal(await getTime(provider), 1337);
     });
   });
-
 });

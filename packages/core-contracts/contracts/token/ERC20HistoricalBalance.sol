@@ -78,9 +78,6 @@ contract ERC20HistoricalBalance is ERC20, IERC20HistoricalBalance, ERC20Historic
 
         _moveVotingPower(from, address(0), amount);
         _writeCheckpoint(_erc20HistoricalBalanceStore().totalSupplyCheckpoints, _subtract, amount);
-        ERC20Store storage store = _erc20Store();
-        store.balanceOf[from] -= amount;
-        store.totalSupply -= amount;
     }
 
     function _moveVotingPower(

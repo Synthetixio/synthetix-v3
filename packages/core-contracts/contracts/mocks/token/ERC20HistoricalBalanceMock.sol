@@ -1,9 +1,9 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "../../token/ERC20.sol";
+import "../../token/ERC20HistoricalBalance.sol";
 
-contract ERC20HistoricalBalanceMock is ERC20 {
+contract ERC20HistoricalBalanceMock is ERC20HistoricalBalance {
     function initialize(
         string memory tokenName,
         string memory tokenSymbol,
