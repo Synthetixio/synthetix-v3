@@ -1,4 +1,5 @@
 const { ethers } = hre;
+const assert = require('assert/strict');
 const assertBn = require('@synthetixio/core-js/utils/assertions/assert-bignumber');
 const assertRevert = require('@synthetixio/core-js/utils/assertions/assert-revert');
 const { daysToSeconds } = require('@synthetixio/core-js/utils/misc/dates');
@@ -6,6 +7,7 @@ const { getTime } = require('@synthetixio/core-js/utils/hardhat/rpc');
 const { bootstrap } = require('@synthetixio/deployer/utils/tests');
 const { assertDatesAreClose } = require('../../helpers/election-helper');
 const initializer = require('../../helpers/initializer');
+const { ElectionPeriod } = require('../../helpers/election-helper');
 
 describe.only('ElectionModule (init)', () => {
   const { proxyAddress } = bootstrap(initializer);
@@ -24,8 +26,14 @@ describe.only('ElectionModule (init)', () => {
     ElectionModule = await ethers.getContractAt('ElectionModule', proxyAddress());
   });
 
-  describe.skip('before initializing the module', function () {
-    // TODO
+  describe('before initializing the module', function () {
+    it('shows that the current period is Null', async () => {
+      assertBn.eq(await ElectionModule.getCurrentPeriodType(), ElectionPeriod.Null);
+    });
+
+    it('shows that the module is not initialized', async () => {
+      assert.equal(await ElectionModule.isElectionModuleInitialized(), false);
+    });
   });
 
   describe('when initializing the module', function () {
@@ -119,8 +127,16 @@ describe.only('ElectionModule (init)', () => {
           );
         });
 
+        it('shows that the module is not initialized', async () => {
+          assert.equal(await ElectionModule.isElectionModuleInitialized(), true);
+        });
+
         it('shows that the current epoch index is 1', async function () {
           assertBn.eq(await ElectionModule.getEpochIndex(), 1);
+        });
+
+        it('shows that the current period is Idle', async () => {
+          assertBn.eq(await ElectionModule.getCurrentPeriodType(), ElectionPeriod.Idle);
         });
 
         it('shows that the first epoch has appropriate dates', async function () {
