@@ -5,6 +5,7 @@ import "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
 
 contract ElectionStorage {
     enum ElectionPeriod {
+        Null,
         Idle,
         Nomination,
         Vote,
@@ -36,8 +37,9 @@ contract ElectionStorage {
     }
 
     struct ElectionStore {
-        ElectionSettings settings;
+        bool initialized;
         uint currentEpochIndex;
+        ElectionSettings settings;
         mapping(uint => EpochData) epochs;
     }
 

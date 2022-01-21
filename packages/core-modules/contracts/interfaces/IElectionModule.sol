@@ -3,6 +3,12 @@ pragma solidity ^0.8.0;
 
 interface IElectionModule {
     // ---------------------------------------
+    // Initialization
+    // ---------------------------------------
+
+    function isElectionModuleInitialized() external bool returns (bool);
+
+    // ---------------------------------------
     // Owner functions
     // ---------------------------------------
 

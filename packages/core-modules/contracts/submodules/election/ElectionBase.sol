@@ -15,6 +15,10 @@ contract ElectionBase is ElectionStorage {
     error NotCallableInCurrentPeriod();
     error BallotDoesNotExist();
 
+    function _isInitialized() internal view virtual returns (bool) {
+        return _electionStore().initialized;
+    }
+
     function _getCurrentEpoch() internal view returns (EpochData storage) {
         return _getEpochAtPosition(_electionStore().currentEpochIndex);
     }
