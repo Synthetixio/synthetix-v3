@@ -3,8 +3,10 @@ const sinon = require('sinon');
 const {
   takeSnapshot,
   restoreSnapshot,
+  advanceBlock,
   fastForward,
   fastForwardTo,
+  getBlock,
   getTime,
 } = require('../../../utils/hardhat/rpc');
 
@@ -14,7 +16,7 @@ const fakeProvider = {
   },
 
   async getBlock() {
-    return { timestamp: 1337 };
+    return { timestamp: 1337, number: 42 };
   },
 };
 
@@ -127,9 +129,35 @@ describe('utils/hardhat/rpc.js', () => {
     });
   });
 
+  describe('when calling advanceBlock', () => {
+    before('clear spy history', () => {
+      provider.send.resetHistory();
+    });
+
+    before('call advanceBlock', async () => {
+      await advanceBlock(provider);
+    });
+
+    it('calls the provider.send once', () => {
+      assert(provider.send.calledOnce);
+    });
+
+    it('calls the provider.send with the right params', () => {
+      assert.equal(provider.send.getCall(0).args[0], 'evm_mine');
+      assert.equal(provider.send.getCall(0).args[1], undefined);
+    });
+  });
+
+  describe('when calling getBlock', () => {
+    it('returns the expected value', async () => {
+      assert.equal(await getBlock(provider), 42);
+    });
+  });
+
   describe('when calling getTime', () => {
     it('returns the expected value', async () => {
       assert.equal(await getTime(provider), 1337);
     });
   });
+
 });
