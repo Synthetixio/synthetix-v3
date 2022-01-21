@@ -7,7 +7,7 @@ const { bootstrap } = require('@synthetixio/deployer/utils/tests');
 const { assertDatesAreClose } = require('../../helpers/election-helper');
 const initializer = require('../../helpers/initializer');
 
-describe('ElectionModule (init)', () => {
+describe.only('ElectionModule (init)', () => {
   const { proxyAddress } = bootstrap(initializer);
 
   let ElectionModule;

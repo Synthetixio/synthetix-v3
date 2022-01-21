@@ -1,9 +1,10 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import "@synthetixio/core-contracts/contracts/initializable/InitializableMixin.sol";
 import "../../storage/ElectionStorage.sol";
 
-contract ElectionBase is ElectionStorage {
+contract ElectionBase is ElectionStorage, InitializableMixin {
     error EpochNotEvaluated();
     error AlreadyNominated();
     error NotNominated();
@@ -15,7 +16,7 @@ contract ElectionBase is ElectionStorage {
     error NotCallableInCurrentPeriod();
     error BallotDoesNotExist();
 
-    function _isInitialized() internal view virtual returns (bool) {
+    function _isInitialized() internal view override returns (bool) {
         return _electionStore().initialized;
     }
 

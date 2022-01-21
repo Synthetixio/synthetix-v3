@@ -12,7 +12,7 @@ interface IElectionModule {
         uint64 epochEndDate
     ) external;
 
-    function isElectionModuleInitialized() external bool returns (bool);
+    function isElectionModuleInitialized() external view returns (bool);
 
     // ---------------------------------------
     // Owner functions

@@ -3,12 +3,11 @@ pragma solidity ^0.8.0;
 
 import "@synthetixio/core-contracts/contracts/errors/InitError.sol";
 import "@synthetixio/core-contracts/contracts/ownership/OwnableMixin.sol";
-import "@synthetixio/core-contracts/contracts/initializable/InitializableMixin.sol";
 import "../submodules/election/ElectionSchedule.sol";
 import "../submodules/election/ElectionVotes.sol";
 import "../interfaces/IElectionModule.sol";
 
-contract ElectionModule is IElectionModule, ElectionSchedule, ElectionVotes, OwnableMixin, InitializableMixin {
+contract ElectionModule is IElectionModule, ElectionSchedule, ElectionVotes, OwnableMixin {
     using SetUtil for SetUtil.AddressSet;
 
     // ---------------------------------------
@@ -34,7 +33,7 @@ contract ElectionModule is IElectionModule, ElectionSchedule, ElectionVotes, Own
         store.initialized = true;
     }
 
-    function isElectionModuleInitialized() external bool returns (bool) {
+    function isElectionModuleInitialized() external view override returns (bool) {
         return _isInitialized();
     }
 
