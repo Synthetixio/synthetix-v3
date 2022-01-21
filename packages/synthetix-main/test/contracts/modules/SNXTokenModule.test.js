@@ -26,10 +26,10 @@ describe('SNXTokenModule', function () {
       assert.equal(address, '0x0000000000000000000000000000000000000000');
     });
 
-    describe('When the SNX is created', () => {
+    describe('When the Module is initialized (SNX is created)', () => {
       let receipt;
-      before('Create a SNX token', async () => {
-        const tx = await SNXTokenModule.connect(owner).createSNX();
+      before('Initialize (Create a SNX token)', async () => {
+        const tx = await SNXTokenModule.connect(owner).initializeSNXTokenModule();
         receipt = await tx.wait();
       });
 
@@ -41,6 +41,10 @@ describe('SNXTokenModule', function () {
 
       it('emmited an event', async () => {
         assert.notEqual(snxTokenAddress, '0x0000000000000000000000000000000000000000');
+      });
+
+      it('is initialized', async () => {
+        assert.equal(await SNXTokenModule.isSNXTokenModuleInitialized(), true);
       });
 
       it('gets the newly created address', async () => {
@@ -56,7 +60,10 @@ describe('SNXTokenModule', function () {
 
       describe('When attempting to create the SNX twice', () => {
         it('reverts', async () => {
-          await assertRevert(SNXTokenModule.connect(owner).createSNX(), 'SNXAlreadyCreated()');
+          await assertRevert(
+            SNXTokenModule.connect(owner).initializeSNXTokenModule(),
+            'AlreadyInitialized()'
+          );
         });
       });
 

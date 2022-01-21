@@ -1,5 +1,5 @@
 const { subtask } = require('hardhat/config');
-const { SUBTASK_PICK_FUNCTION } = require('../task-names');
+const { SUBTASK_PICK_FUNCTION, SUBTASK_CHECK_INITIALIZATION } = require('../task-names');
 const prompts = require('prompts');
 const chalk = require('chalk');
 const { getFullFunctionSignature } = require('../internal/signatures');
@@ -20,6 +20,8 @@ subtask(SUBTASK_PICK_FUNCTION, 'Pick a function from the given contract').setAct
         value: functionAbi.name,
       };
     });
+
+    await hre.run(SUBTASK_CHECK_INITIALIZATION);
 
     const { functionName } = await prompts([
       {
