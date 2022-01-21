@@ -3,8 +3,8 @@ pragma solidity ^0.8.0;
 
 contract SNXTokenStorage {
     struct SNXTokenStore {
-        address snxTokenAddress; // main address
         bool initialized;
+        address snxTokenAddress; // main address
     }
 
     function _snxTokenStore() internal pure returns (SNXTokenStore storage store) {
