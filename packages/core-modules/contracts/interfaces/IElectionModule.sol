@@ -6,17 +6,17 @@ interface IElectionModule {
     // Initialization
     // ---------------------------------------
 
-    function isElectionModuleInitialized() external bool returns (bool);
-
-    // ---------------------------------------
-    // Owner functions
-    // ---------------------------------------
-
     function initializeElectionModule(
         uint64 nominationPeriodStartDate,
         uint64 votingPeriodStartDate,
         uint64 epochEndDate
     ) external;
+
+    function isElectionModuleInitialized() external bool returns (bool);
+
+    // ---------------------------------------
+    // Owner functions
+    // ---------------------------------------
 
     function adjustEpochSchedule(
         uint64 newNominationPeriodStartDate,
