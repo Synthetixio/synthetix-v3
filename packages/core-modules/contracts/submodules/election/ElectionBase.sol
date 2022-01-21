@@ -11,6 +11,7 @@ contract ElectionBase is ElectionStorage {
     error NoVotePower();
     error DuplicateCandidates();
     error InvalidEpochConfiguration();
+    error InvalidElectionSettings();
     error NotCallableInCurrentPeriod();
     error BallotDoesNotExist();
 

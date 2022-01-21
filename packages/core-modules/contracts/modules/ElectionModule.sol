@@ -21,10 +21,15 @@ contract ElectionModule is IElectionModule, ElectionSchedule, ElectionVotes, Own
     ) external override onlyOwner {
         ElectionStore storage store = _electionStore();
 
+        ElectionSettings storage settings = store.settings;
+        settings.minNominationPeriodDuration = 2 days;
+        settings.minVotingPeriodDuration = 2 days;
+        settings.minEpochDuration = 7 days;
+        settings.maxDateAdjustmentTolerance = 7 days;
+
         if (store.currentEpochIndex != 0) {
             revert InitError.AlreadyInitialized();
         }
-
         store.currentEpochIndex = 1;
 
         _configureFirstEpochSchedule(nominationPeriodStartDate, votingPeriodStartDate, epochEndDate);
@@ -56,6 +61,18 @@ contract ElectionModule is IElectionModule, ElectionSchedule, ElectionVotes, Own
             newEpochEndDate,
             false // !ensureChangesAreSmall
         );
+    }
+
+    function setMinEpochDurations(
+        uint64 newMinNominationPeriodDuration,
+        uint64 newMinVotingPeriodDuration,
+        uint64 newMinEpochDuration
+    ) external override onlyOwner {
+        _setMinEpochDurations(newMinNominationPeriodDuration, newMinVotingPeriodDuration, newMinEpochDuration);
+    }
+
+    function setMaxDateAdjustmentTolerance(uint64 newMaxDateAdjustmentTolerance) external override onlyOwner {
+        _setMaxDateAdjustmentTolerance(newMaxDateAdjustmentTolerance);
     }
 
     // ---------------------------------------
@@ -129,6 +146,28 @@ contract ElectionModule is IElectionModule, ElectionSchedule, ElectionVotes, Own
     // ---------------------------------------
     // View functions
     // ---------------------------------------
+
+    // Settings
+    // ~~~~~~~~~~~~~~~~~~
+
+    function getMinEpochDurations()
+        external
+        view
+        override
+        returns (
+            uint64 minNominationPeriodDuration,
+            uint64 minVotingPeriodDuration,
+            uint64 minEpochDuration
+        )
+    {
+        ElectionSettings storage settings = _electionStore().settings;
+
+        return (settings.minNominationPeriodDuration, settings.minVotingPeriodDuration, settings.minEpochDuration);
+    }
+
+    function getMaxDateAdjustmenTolerance() external view override returns (uint64) {
+        return _electionStore().settings.maxDateAdjustmentTolerance;
+    }
 
     // Epoch and periods
     // ~~~~~~~~~~~~~~~~~~
