@@ -15,9 +15,6 @@ async function _initializeOwnerModule(proxyAddress, owner) {
     proxyAddress
   );
 
-  tx = await OwnerModule.connect(owner).nominateNewOwner(owner.address);
-  await tx.wait();
-
-  tx = await OwnerModule.connect(owner).acceptOwnership();
+  tx = await OwnerModule.connect(owner).initializeOwnerModule(owner.address);
   await tx.wait();
 }

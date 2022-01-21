@@ -3,21 +3,24 @@ pragma solidity ^0.8.0;
 
 import "@synthetixio/core-contracts/contracts/ownership/OwnableMixin.sol";
 import "@synthetixio/core-contracts/contracts/proxy/UUPSProxy.sol";
+import "@synthetixio/core-contracts/contracts/initializable/InitializableMixin.sol";
 import "../interfaces/ISNXTokenModule.sol";
 import "../storage/SNXTokenStorage.sol";
 import "../token/SNXToken.sol";
 
-contract SNXTokenModule is ISNXTokenModule, OwnableMixin, SNXTokenStorage {
+contract SNXTokenModule is ISNXTokenModule, OwnableMixin, SNXTokenStorage, InitializableMixin {
     event SNXTokenCreated(address snxAddress);
 
-    error SNXAlreadyCreated();
+    function _isInitialized() internal view override returns (bool) {
+        return _snxTokenStore().initialized;
+    }
 
-    function createSNX() external override onlyOwner {
+    function isSNXTokenModuleInitialized() external view override returns (bool) {
+        return _isInitialized();
+    }
+
+    function initializeSNXTokenModule() external override onlyOwner onlyIfNotInitialized {
         SNXTokenStore storage store = _snxTokenStore();
-
-        if (store.snxTokenAddress != address(0)) {
-            revert SNXAlreadyCreated();
-        }
 
         SNXToken firstSNXTokenImplementation = new SNXToken();
 
@@ -32,10 +35,12 @@ contract SNXTokenModule is ISNXTokenModule, OwnableMixin, SNXTokenStorage {
 
         store.snxTokenAddress = snxTokenProxyAddress;
 
+        store.initialized = true;
+
         emit SNXTokenCreated(snxTokenProxyAddress);
     }
 
-    function upgradeSNXImplementation(address newSNXTokenImplementation) external override onlyOwner {
+    function upgradeSNXImplementation(address newSNXTokenImplementation) external override onlyOwner onlyIfInitialized {
         SNXToken(getSNXTokenAddress()).upgradeTo(newSNXTokenImplementation);
     }
 
