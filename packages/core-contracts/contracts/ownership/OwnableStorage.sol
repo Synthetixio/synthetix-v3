@@ -3,6 +3,7 @@ pragma solidity ^0.8.0;
 
 contract OwnableStorage {
     struct OwnableStore {
+        bool initialized;
         address owner;
         address nominatedOwner;
     }

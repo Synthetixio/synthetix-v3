@@ -12,7 +12,7 @@ contract SNXTokenModule is ISNXTokenModule, OwnableMixin, SNXTokenStorage, Initi
     event SNXTokenCreated(address snxAddress);
 
     function _isInitialized() internal view override returns (bool) {
-        return _snxTokenStore().snxTokenAddress != address(0);
+        return _snxTokenStore().initialized;
     }
 
     function isSNXTokenModuleInitialized() external view override returns (bool) {
@@ -34,6 +34,8 @@ contract SNXTokenModule is ISNXTokenModule, OwnableMixin, SNXTokenStorage, Initi
         snxToken.initialize("Synthetix Network Token", "snx", 18);
 
         store.snxTokenAddress = snxTokenProxyAddress;
+
+        store.initialized = true;
 
         emit SNXTokenCreated(snxTokenProxyAddress);
     }

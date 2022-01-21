@@ -8,7 +8,7 @@ import "../interfaces/IOwnerModule.sol";
 // solhint-disable-next-line no-empty-blocks
 contract OwnerModule is Ownable, IOwnerModule, InitializableMixin {
     function _isInitialized() internal view override returns (bool) {
-        return _ownableStore().owner != address(0);
+        return _ownableStore().initialized;
     }
 
     function isOwnerModuleInitialized() external view override returns (bool) {
@@ -18,5 +18,7 @@ contract OwnerModule is Ownable, IOwnerModule, InitializableMixin {
     function initializeOwnerModule(address initialOwner) external override onlyIfNotInitialized {
         nominateNewOwner(initialOwner);
         acceptOwnership();
+
+        _ownableStore().initialized = true;
     }
 }
