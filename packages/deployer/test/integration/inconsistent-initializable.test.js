@@ -2,7 +2,9 @@ const { loadEnvironment, deployOnEnvironment } = require('../helpers/use-environ
 const { rejects } = require('assert/strict');
 const { ContractValidationError } = require('../../internal/errors');
 
-describe('inconsistent-initializable', function () {
+// TODO: Unskip after the following issues is fixed:
+// https://github.com/Synthetixio/synthetix-v3/issues/757
+describe.skip('inconsistent-initializable', function () {
   let hre;
 
   beforeEach('set fixture project', function () {
