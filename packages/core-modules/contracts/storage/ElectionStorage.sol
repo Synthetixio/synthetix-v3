@@ -27,13 +27,17 @@ contract ElectionStorage {
     struct EpochData {
         bool evaluated;
         bool resolved;
+        uint seatCount;
         uint64 startDate;
         uint64 endDate;
         uint64 nominationPeriodStartDate;
         uint64 votingPeriodStartDate;
         SetUtil.AddressSet nominees;
+        bytes32[] ballotIds;
         mapping(bytes32 => BallotData) ballotsById;
-        mapping(address => bytes32) ballotsByAddress;
+        mapping(address => bytes32) ballotIdsByAddress;
+        address[] members;
+        mapping(address => uint) candidateVotes;
     }
 
     struct ElectionStore {

@@ -52,20 +52,22 @@ contract ElectionVotes is ElectionBase {
             address[] memory newCandidates = candidates;
 
             ballot.candidates = newCandidates;
+
+            epoch.ballotIds.push(ballotId);
         }
 
         ballot.votes += votePower;
-        epoch.ballotsByAddress[voter] = ballotId;
+        epoch.ballotIdsByAddress[voter] = ballotId;
     }
 
     function _withdrawVote(address voter, uint votePower) internal virtual {
         EpochData storage epoch = _getCurrentEpoch();
 
-        bytes32 ballotId = epoch.ballotsByAddress[voter];
+        bytes32 ballotId = epoch.ballotIdsByAddress[voter];
         BallotData storage ballot = _getBallot(ballotId);
 
         ballot.votes -= votePower;
-        epoch.ballotsByAddress[voter] = bytes32(0);
+        epoch.ballotIdsByAddress[voter] = bytes32(0);
     }
 
     function _getVotePower(address) internal view virtual returns (uint) {

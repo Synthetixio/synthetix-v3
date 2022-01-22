@@ -8,7 +8,7 @@ const { bootstrap } = require('@synthetixio/deployer/utils/tests');
 const initializer = require('../../helpers/initializer');
 const { ElectionPeriod } = require('../../helpers/election-helper');
 
-describe('ElectionModule (resolve)', () => {
+describe.only('ElectionModule (resolve)', () => {
   const { proxyAddress } = bootstrap(initializer);
 
   let ElectionModule;
@@ -57,6 +57,15 @@ describe('ElectionModule (resolve)', () => {
 
         it('shows that the epoch is evaluated', async function () {
           assert.ok(await ElectionModule.isEpochEvaluated());
+        });
+
+        describe('when attempting to evaluate the epoch again', () => {
+          it('reverts', async () => {
+            await assertRevert(
+              ElectionModule.evaluate(),
+              'AlreadyEvaluated'
+            );
+          });
         });
 
         describe('when resolving the epoch', function () {

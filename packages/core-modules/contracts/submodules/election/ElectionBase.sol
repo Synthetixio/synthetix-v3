@@ -6,6 +6,7 @@ import "../../storage/ElectionStorage.sol";
 
 contract ElectionBase is ElectionStorage, InitializableMixin {
     error EpochNotEvaluated();
+    error EpochAlreadyEvaluated();
     error AlreadyNominated();
     error NotNominated();
     error NoCandidates();
@@ -45,7 +46,7 @@ contract ElectionBase is ElectionStorage, InitializableMixin {
     }
 
     function _getBallotVoted(address voter) internal view returns (bytes32) {
-        return _getCurrentEpoch().ballotsByAddress[voter];
+        return _getCurrentEpoch().ballotIdsByAddress[voter];
     }
 
     function _hasVoted(address voter) internal view returns (bool) {

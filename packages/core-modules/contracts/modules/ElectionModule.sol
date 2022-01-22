@@ -129,9 +129,11 @@ contract ElectionModule is IElectionModule, ElectionSchedule, ElectionVotes, Own
     // ---------------------------------------
 
     function evaluate() external override onlyInPeriod(ElectionPeriod.Evaluation) {
-        // TODO
+        if (isEpochEvaluated()) {
+            revert EpochAlreadyEvaluated();
+        }
 
-        _getCurrentEpoch().evaluated = true;
+        _evaluateNextBallotBatch();
     }
 
     function resolve() external override onlyInPeriod(ElectionPeriod.Evaluation) {
