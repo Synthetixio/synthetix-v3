@@ -9,7 +9,7 @@ const { assertDatesAreClose } = require('../../helpers/election-helper');
 const initializer = require('../../helpers/initializer');
 const { ElectionPeriod } = require('../../helpers/election-helper');
 
-describe.only('ElectionModule (init)', () => {
+describe('ElectionModule (init)', () => {
   const { proxyAddress } = bootstrap(initializer);
 
   let ElectionModule;
