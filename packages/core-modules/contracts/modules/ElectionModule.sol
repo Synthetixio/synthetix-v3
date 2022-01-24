@@ -11,14 +11,14 @@ contract ElectionModule is IElectionModule, ElectionSchedule, ElectionVotes, Own
     using SetUtil for SetUtil.AddressSet;
 
     // ---------------------------------------
-    // Owner functions
+    // Initialization
     // ---------------------------------------
 
     function initializeElectionModule(
         uint64 nominationPeriodStartDate,
         uint64 votingPeriodStartDate,
         uint64 epochEndDate
-    ) external override onlyOwner {
+    ) external override onlyOwner onlyIfNotInitialized {
         ElectionStore storage store = _electionStore();
 
         ElectionSettings storage settings = store.settings;
@@ -27,13 +27,19 @@ contract ElectionModule is IElectionModule, ElectionSchedule, ElectionVotes, Own
         settings.minEpochDuration = 7 days;
         settings.maxDateAdjustmentTolerance = 7 days;
 
-        if (store.currentEpochIndex != 0) {
-            revert InitError.AlreadyInitialized();
-        }
         store.currentEpochIndex = 1;
-
         _configureFirstEpochSchedule(nominationPeriodStartDate, votingPeriodStartDate, epochEndDate);
+
+        store.initialized = true;
     }
+
+    function isElectionModuleInitialized() external view override returns (bool) {
+        return _isInitialized();
+    }
+
+    // ---------------------------------------
+    // Owner functions
+    // ---------------------------------------
 
     function adjustEpochSchedule(
         uint64 newNominationPeriodStartDate,

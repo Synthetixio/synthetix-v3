@@ -1,10 +1,11 @@
 const { ethers } = require('ethers');
 
 const ElectionPeriod = {
-  Idle: 0,
-  Nomination: 1,
-  Vote: 2,
-  Evaluation: 3,
+  Null: 0,
+  Idle: 1,
+  Nomination: 2,
+  Vote: 3,
+  Evaluation: 4,
 };
 
 const assertDatesAreClose = (dateA, dateB) => {

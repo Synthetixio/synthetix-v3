@@ -17,6 +17,10 @@ contract ElectionSchedule is ElectionBase {
     }
 
     function _getCurrentPeriodType() internal view returns (ElectionPeriod) {
+        if (!_electionStore().initialized) {
+            return ElectionPeriod.Null;
+        }
+
         EpochData storage epoch = _getCurrentEpoch();
 
         uint64 currentTime = uint64(block.timestamp);

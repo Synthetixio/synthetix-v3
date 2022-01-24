@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 interface IElectionModule {
     // ---------------------------------------
-    // Owner functions
+    // Initialization
     // ---------------------------------------
 
     function initializeElectionModule(
@@ -11,6 +11,12 @@ interface IElectionModule {
         uint64 votingPeriodStartDate,
         uint64 epochEndDate
     ) external;
+
+    function isElectionModuleInitialized() external view returns (bool);
+
+    // ---------------------------------------
+    // Owner functions
+    // ---------------------------------------
 
     function adjustEpochSchedule(
         uint64 newNominationPeriodStartDate,
