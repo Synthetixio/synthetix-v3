@@ -16,6 +16,8 @@ describe('ElectionModule (vote)', () => {
   let candidate1, candidate2, candidate3;
   let voter1, voter2, voter3, voter4, voter5;
 
+  let ballot1, ballot2, ballot3;
+
   before('identify signers', async () => {
     const users = await ethers.getSigners();
 
@@ -57,7 +59,7 @@ describe('ElectionModule (vote)', () => {
           await ElectionModule.connect(candidate3).nominate();
         });
 
-        describe('when entering the vote period', function () {
+        describe('when entering the election period', function () {
           before('fast forward', async function () {
             await fastForwardTo(await ElectionModule.getVotingPeriodStartDate(), ethers.provider);
           });
@@ -103,8 +105,6 @@ describe('ElectionModule (vote)', () => {
           });
 
           describe('when issuing valid votes', function () {
-            let ballot1, ballot2, ballot3;
-
             before('form ballots', async function () {
               ballot1 = {
                 candidates: [candidate1.address],

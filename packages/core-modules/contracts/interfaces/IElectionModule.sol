@@ -119,4 +119,6 @@ interface IElectionModule {
     // ~~~~~~~~~~~~~~~~~~
 
     function isElectionEvaluated() external view returns (bool);
+
+    function getCandidateVotes(address candidate) external view returns (uint);
 }

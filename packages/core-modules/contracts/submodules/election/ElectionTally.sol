@@ -17,6 +17,8 @@ contract ElectionTally is ElectionBase {
             _evaluateBallot(election, ballot);
         }
 
+        // TODO: Consider not being able to resolve in a single call
+        // due to a large number of ballots.
         election.evaluated = true;
     }
 
@@ -32,7 +34,34 @@ contract ElectionTally is ElectionBase {
         for (uint candidateIndex = 0; candidateIndex < numCandidates; candidateIndex++) {
             address candidate = ballot.candidates[candidateIndex];
 
-            election.candidateVotes[candidate] += ballotVotes;
+            uint currentCandidateVotes = election.candidateVotes[candidate];
+            uint newCandidateVotes = currentCandidateVotes + ballotVotes;
+            election.candidateVotes[candidate] = newCandidateVotes;
+
+            _refreshWinnerList(election, candidate, newCandidateVotes);
+        }
+    }
+
+    function _refreshWinnerList(ElectionData storage election, address candidate, uint candidateVotes) internal {
+        SetUtil.AddressSet storage winners = election.winners;
+
+        uint8 numSeats = election.settings.nextEpochSeatCount;
+
+        if (winners.length < numSeats) {
+            winners.add(candidate);
+
+            return;
+        }
+
+        address leastVotedWinner;
+        for (uint8 winnerIndex = 0; winnerIndex < numSeats; winnerIndex++) {
+            address winner = winners[winnerIndex];
+
+            uint winnerVotes = election.candidateVotes[winner]
+
+            if (candidateVotes == winnerVotes) {
+                winners.replace(winner, candidate);
+            }
         }
     }
 }

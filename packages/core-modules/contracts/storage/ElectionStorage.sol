@@ -10,9 +10,11 @@ contract ElectionStorage {
         mapping(uint => EpochData) epochs;
         mapping(uint => ElectionData) elections;
         ElectionModuleSettings settings; // TODO: This kind of nesting could be problematic.
+        uint things;
     }
 
     struct ElectionModuleSettings {
+        uint8 nextEpochSeatCount;
         uint64 minEpochDuration;
         uint64 minNominationPeriodDuration;
         uint64 minVotingPeriodDuration;
@@ -20,7 +22,7 @@ contract ElectionStorage {
     }
 
     struct EpochData {
-        uint seatCount;
+        uint8 seatCount;
         uint64 startDate;
         uint64 endDate;
         uint64 nominationPeriodStartDate;
@@ -32,6 +34,7 @@ contract ElectionStorage {
         bool resolved;
         bool evaluated;
         SetUtil.AddressSet nominees;
+        SetUtil.AddressSet winners;
         bytes32[] ballotIds;
         mapping(bytes32 => BallotData) ballotsById;
         mapping(address => bytes32) ballotIdsByAddress;

@@ -15,6 +15,18 @@ describe.only('ElectionModule (resolve)', () => {
 
   let epochIndexBefore;
 
+  let candidate1, candidate2, candidate3;
+  let voter1, voter2, voter3, voter4, voter5;
+
+  let ballot1, ballot2, ballot3;
+
+  before('identify signers', async () => {
+    const users = await ethers.getSigners();
+
+    [candidate1, candidate2, candidate3] = users;
+    [, , , voter1, voter2, voter3, voter4, voter5] = users;
+  });
+
   before('identify modules', async () => {
     ElectionModule = await ethers.getContractAt('ElectionModule', proxyAddress());
   });
@@ -33,59 +45,115 @@ describe.only('ElectionModule (resolve)', () => {
       );
     });
 
-    describe('when entering the evaluation period', function () {
+    describe('when entering the nomiantion period', function () {
       before('fast forward', async function () {
-        await fastForwardTo(await ElectionModule.getEpochEndDate(), ethers.provider);
+        await fastForwardTo(await ElectionModule.getNominationPeriodStartDate(), ethers.provider);
       });
 
-      it('shows that the current period is Evaluation', async function () {
-        assertBn.eq(await ElectionModule.getCurrentPeriodType(), ElectionPeriod.Evaluation);
+      before('nominate', async function () {
+        await ElectionModule.connect(candidate1).nominate();
+        await ElectionModule.connect(candidate2).nominate();
+        await ElectionModule.connect(candidate3).nominate();
       });
 
-      describe('before evaluating the epoch', function () {
-        describe('when trying to resolve the epoch', function () {
-          it('reverts', async function () {
-            await assertRevert(ElectionModule.resolve(), 'EpochNotEvaluated');
-          });
-        });
+      it('shows that nominations exist', async function () {
+        assertBn.eq((await ElectionModule.getNominees()).length, 3);
       });
 
-      describe('when evaluating the epoch', function () {
-        before('evaluate', async function () {
-          await ElectionModule.evaluate();
+      describe('when entering the election period', function () {
+        before('fast forward', async function () {
+          await fastForwardTo(await ElectionModule.getVotingPeriodStartDate(), ethers.provider);
         });
 
-        it('shows that the epoch is evaluated', async function () {
-          assert.ok(await ElectionModule.isEpochEvaluated());
+        before('form ballots', async function () {
+          ballot1 = {
+            candidates: [candidate1.address],
+            id: await ElectionModule.calculateBallotId([candidate1.address]),
+          };
+          ballot2 = {
+            candidates: [candidate2.address],
+            id: await ElectionModule.calculateBallotId([candidate2.address]),
+          };
+          ballot3 = {
+            candidates: [candidate3.address],
+            id: await ElectionModule.calculateBallotId([candidate3.address]),
+          };
         });
 
-        describe('when attempting to evaluate the epoch again', () => {
-          it('reverts', async () => {
-            await assertRevert(
-              ElectionModule.evaluate(),
-              'AlreadyEvaluated'
-            );
-          });
+        before('vote', async function () {
+          await ElectionModule.connect(voter1).elect(ballot1.candidates);
+          await ElectionModule.connect(voter2).elect(ballot2.candidates);
+          await ElectionModule.connect(voter3).elect(ballot1.candidates);
+          await ElectionModule.connect(voter4).elect(ballot1.candidates);
+          await ElectionModule.connect(voter5).elect(ballot2.candidates);
         });
 
-        describe('when resolving the epoch', function () {
-          before('record the epoch index', async function () {
-            epochIndexBefore = await ElectionModule.getEpochIndex();
+        it('shows that votes were registered', async function () {
+          assertBn.eq(await ElectionModule.getBallotVotes(ballot1.id), 3);
+          assertBn.eq(await ElectionModule.getBallotVotes(ballot2.id), 2);
+        });
+
+        describe('when entering the evaluation period', function () {
+          before('fast forward', async function () {
+            await fastForwardTo(await ElectionModule.getEpochEndDate(), ethers.provider);
           });
 
-          before('resolve', async function () {
-            await ElectionModule.resolve();
+          it('shows that the current period is Evaluation', async function () {
+            assertBn.eq(await ElectionModule.getCurrentPeriodType(), ElectionPeriod.Evaluation);
           });
 
-          describe('when a new epoch starts', function () {
-            it('shows that the epoch index increased', async function () {
-              const epochIndexAfter = await ElectionModule.getEpochIndex();
+          describe('before evaluating the epoch', function () {
+            describe('when trying to resolve the epoch', function () {
+              it('reverts', async function () {
+                await assertRevert(ElectionModule.resolve(), 'EpochNotEvaluated');
+              });
+            });
+          });
 
-              assertBn.eq(epochIndexAfter, epochIndexBefore.add(1));
+          describe('when evaluating the epoch', function () {
+            before('evaluate', async function () {
+              await ElectionModule.evaluate();
             });
 
-            it('shows that the current period is Idle', async function () {
-              assertBn.eq(await ElectionModule.getCurrentPeriodType(), ElectionPeriod.Idle);
+            it('shows that the epoch is evaluated', async function () {
+              assert.ok(await ElectionModule.isElectionEvaluated());
+            });
+
+            it('shows that candidate votes where processed', async function () {
+              assertBn.eq(await ElectionModule.getCandidateVotes(candidate1.address), 3);
+              assertBn.eq(await ElectionModule.getCandidateVotes(candidate2.address), 2);
+              assertBn.eq(await ElectionModule.getCandidateVotes(candidate3.address), 0);
+            });
+
+            describe('when attempting to evaluate the epoch again', () => {
+              it('reverts', async () => {
+                await assertRevert(
+                  ElectionModule.evaluate(),
+                  'AlreadyEvaluated'
+                );
+              });
+            });
+
+            describe('when resolving the epoch', function () {
+              before('record the epoch index', async function () {
+                epochIndexBefore = await ElectionModule.getEpochIndex();
+              });
+
+              before('resolve', async function () {
+                await ElectionModule.resolve();
+              });
+
+              describe('when a new epoch starts', function () {
+                it('shows that the epoch index increased', async function () {
+                  const epochIndexAfter = await ElectionModule.getEpochIndex();
+
+                  assertBn.eq(epochIndexAfter, epochIndexBefore.add(1));
+                });
+
+                it('shows that the current period is Idle', async function () {
+                  assertBn.eq(await ElectionModule.getCurrentPeriodType(), ElectionPeriod.Idle);
+                });
+              });
             });
           });
         });

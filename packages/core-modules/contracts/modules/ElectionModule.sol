@@ -27,9 +27,15 @@ contract ElectionModule is IElectionModule, ElectionSchedule, ElectionVotes, Ele
         settings.minVotingPeriodDuration = 2 days;
         settings.minEpochDuration = 7 days;
         settings.maxDateAdjustmentTolerance = 7 days;
+        settings.nextEpochSeatCount = 3;
 
         store.currentEpochIndex = 1;
         _configureFirstEpochSchedule(nominationPeriodStartDate, votingPeriodStartDate, epochEndDate);
+
+        EpochData storage firstEpoch = store.epochs[1];
+        epoch.seatCount = 1;
+
+        // TODO: set owner as only member of the first epoch
 
         store.initialized = true;
     }
@@ -260,5 +266,9 @@ contract ElectionModule is IElectionModule, ElectionSchedule, ElectionVotes, Ele
 
     function isElectionEvaluated() public view override returns (bool) {
         return _getCurrentElection().evaluated;
+    }
+
+    function getCandidateVotes(address candidate) external view override returns (uint) {
+        return _getCurrentElection().candidateVotes[candidate];
     }
 }
