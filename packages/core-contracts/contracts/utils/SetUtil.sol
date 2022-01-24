@@ -18,6 +18,14 @@ library SetUtil {
         remove(set.raw, bytes32(uint256(uint160(value))));
     }
 
+    function replace(
+        AddressSet storage set,
+        address value,
+        address newValue
+    ) internal {
+        replace(set.raw, bytes32(uint256(uint160(value))), bytes32(uint256(uint160(newValue))));
+    }
+
     function contains(AddressSet storage set, address value) internal view returns (bool) {
         return contains(set.raw, bytes32(uint256(uint160(value))));
     }
@@ -51,18 +59,18 @@ library SetUtil {
 
     error PositionOutOfBounds();
     error ValueNotInSet();
-    error CannotAppendExistingValue();
+    error ValueAlreadyInSet();
 
     struct Bytes32Set {
         /* solhint-disable private-vars-leading-underscore */
         bytes32[] _values;
-        mapping(bytes32 => uint) _positions;
+        mapping(bytes32 => uint) _positions; // Position zero is never used.
         /* solhint-enable private-vars-leading-underscore */
     }
 
     function add(Bytes32Set storage set, bytes32 value) internal {
         if (contains(set, value)) {
-            revert CannotAppendExistingValue();
+            revert ValueAlreadyInSet();
         }
 
         set._values.push(value);
@@ -92,6 +100,26 @@ library SetUtil {
         delete set._positions[value];
     }
 
+    function replace(
+        Bytes32Set storage set,
+        bytes32 value,
+        bytes32 newValue
+    ) internal {
+        if (!contains(set, value)) {
+            revert ValueNotInSet();
+        }
+
+        if (contains(set, newValue)) {
+            revert ValueAlreadyInSet();
+        }
+
+        uint position = set._positions[value];
+        uint index = position - 1;
+
+        set._values[index] = newValue;
+        set._positions[newValue] = position;
+    }
+
     function contains(Bytes32Set storage set, bytes32 value) internal view returns (bool) {
         return set._positions[value] != 0;
     }
@@ -101,11 +129,13 @@ library SetUtil {
     }
 
     function valueAt(Bytes32Set storage set, uint position) internal view returns (bytes32) {
-        if (set._values.length < position) {
+        if (position == 0 || position > set._values.length) {
             revert PositionOutOfBounds();
         }
 
-        return set._values[position];
+        uint index = position - 1;
+
+        return set._values[index];
     }
 
     function positionOf(Bytes32Set storage set, bytes32 value) internal view returns (uint) {
