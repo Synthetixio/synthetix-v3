@@ -5,9 +5,10 @@ import "@synthetixio/core-contracts/contracts/errors/InitError.sol";
 import "@synthetixio/core-contracts/contracts/ownership/OwnableMixin.sol";
 import "../submodules/election/ElectionSchedule.sol";
 import "../submodules/election/ElectionVotes.sol";
+import "../submodules/election/ElectionTally.sol";
 import "../interfaces/IElectionModule.sol";
 
-contract ElectionModule is IElectionModule, ElectionSchedule, ElectionVotes, OwnableMixin {
+contract ElectionModule is IElectionModule, ElectionSchedule, ElectionVotes, ElectionTally, OwnableMixin {
     using SetUtil for SetUtil.AddressSet;
 
     // ---------------------------------------
@@ -21,7 +22,7 @@ contract ElectionModule is IElectionModule, ElectionSchedule, ElectionVotes, Own
     ) external override onlyOwner onlyIfNotInitialized {
         ElectionStore storage store = _electionStore();
 
-        ElectionSettings storage settings = store.settings;
+        ElectionModuleSettings storage settings = store.settings;
         settings.minNominationPeriodDuration = 2 days;
         settings.minVotingPeriodDuration = 2 days;
         settings.minEpochDuration = 7 days;
@@ -86,7 +87,7 @@ contract ElectionModule is IElectionModule, ElectionSchedule, ElectionVotes, Own
     // ---------------------------------------
 
     function nominate() external override onlyInPeriod(ElectionPeriod.Nomination) {
-        SetUtil.AddressSet storage nominees = _getCurrentEpoch().nominees;
+        SetUtil.AddressSet storage nominees = _getCurrentElection().nominees;
 
         if (nominees.contains(msg.sender)) {
             revert AlreadyNominated();
@@ -96,7 +97,7 @@ contract ElectionModule is IElectionModule, ElectionSchedule, ElectionVotes, Own
     }
 
     function withdrawNomination() external override onlyInPeriod(ElectionPeriod.Nomination) {
-        SetUtil.AddressSet storage nominees = _getCurrentEpoch().nominees;
+        SetUtil.AddressSet storage nominees = _getCurrentElection().nominees;
 
         if (!nominees.contains(msg.sender)) {
             revert NotNominated();
@@ -129,7 +130,7 @@ contract ElectionModule is IElectionModule, ElectionSchedule, ElectionVotes, Own
     // ---------------------------------------
 
     function evaluate() external override onlyInPeriod(ElectionPeriod.Evaluation) {
-        if (isEpochEvaluated()) {
+        if (isElectionEvaluated()) {
             revert EpochAlreadyEvaluated();
         }
 
@@ -137,13 +138,13 @@ contract ElectionModule is IElectionModule, ElectionSchedule, ElectionVotes, Own
     }
 
     function resolve() external override onlyInPeriod(ElectionPeriod.Evaluation) {
-        if (!isEpochEvaluated()) {
+        if (!isElectionEvaluated()) {
             revert EpochNotEvaluated();
         }
 
         // TODO: Shuffle NFTs
 
-        _getCurrentEpoch().resolved = true;
+        _getCurrentElection().resolved = true;
 
         _configureNextEpochSchedule();
 
@@ -168,7 +169,7 @@ contract ElectionModule is IElectionModule, ElectionSchedule, ElectionVotes, Own
             uint64 minEpochDuration
         )
     {
-        ElectionSettings storage settings = _electionStore().settings;
+        ElectionModuleSettings storage settings = _electionStore().settings;
 
         return (settings.minNominationPeriodDuration, settings.minVotingPeriodDuration, settings.minEpochDuration);
     }
@@ -204,22 +205,18 @@ contract ElectionModule is IElectionModule, ElectionSchedule, ElectionVotes, Own
         return uint(_getCurrentPeriodType());
     }
 
-    function isEpochEvaluated() public view override returns (bool) {
-        return _getCurrentEpoch().evaluated;
-    }
-
     // Nominations
     // ~~~~~~~~~~~~~~~~~~
 
     function isNominated(address candidate) external view override returns (bool) {
-        return _getCurrentEpoch().nominees.contains(candidate);
+        return _getCurrentElection().nominees.contains(candidate);
     }
 
     function getNominees() external view override returns (address[] memory) {
-        return _getCurrentEpoch().nominees.values();
+        return _getCurrentElection().nominees.values();
     }
 
-    // Votes / ballots
+    // Votes
     // ~~~~~~~~~~~~~~~~~~
 
     function calculateBallotId(address[] calldata candidates) external pure override returns (bytes32) {
@@ -256,5 +253,12 @@ contract ElectionModule is IElectionModule, ElectionSchedule, ElectionVotes, Own
         }
 
         return ballot.candidates;
+    }
+
+    // Resolutions
+    // ~~~~~~~~~~~~~~~~~~
+
+    function isElectionEvaluated() public view override returns (bool) {
+        return _getCurrentElection().evaluated;
     }
 }

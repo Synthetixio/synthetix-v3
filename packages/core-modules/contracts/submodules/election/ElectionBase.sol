@@ -5,6 +5,10 @@ import "@synthetixio/core-contracts/contracts/initializable/InitializableMixin.s
 import "../../storage/ElectionStorage.sol";
 
 contract ElectionBase is ElectionStorage, InitializableMixin {
+    // ---------------------------------------
+    // Errors
+    // ---------------------------------------
+
     error EpochNotEvaluated();
     error EpochAlreadyEvaluated();
     error AlreadyNominated();
@@ -21,6 +25,13 @@ contract ElectionBase is ElectionStorage, InitializableMixin {
         return _electionStore().initialized;
     }
 
+    // ---------------------------------------
+    // Helpers
+    // ---------------------------------------
+
+    // Epoch helpers
+    // ~~~~~~~~~~~~~~~~~~
+
     function _getCurrentEpoch() internal view returns (EpochData storage) {
         return _getEpochAtPosition(_electionStore().currentEpochIndex);
     }
@@ -33,8 +44,19 @@ contract ElectionBase is ElectionStorage, InitializableMixin {
         return _electionStore().epochs[position];
     }
 
+    // Election helpers
+    // ~~~~~~~~~~~~~~~~~~
+
+    function _getCurrentElection() internal view returns (ElectionData storage) {
+        return _getElectionAtPosition(_electionStore().currentEpochIndex);
+    }
+
+    function _getElectionAtPosition(uint position) internal view returns (ElectionData storage) {
+        return _electionStore().elections[position];
+    }
+
     function _getBallot(bytes32 ballotId) internal view returns (BallotData storage) {
-        return _getCurrentEpoch().ballotsById[ballotId];
+        return _getCurrentElection().ballotsById[ballotId];
     }
 
     function _calculateBallotId(address[] memory candidates) internal pure returns (bytes32) {
@@ -46,7 +68,7 @@ contract ElectionBase is ElectionStorage, InitializableMixin {
     }
 
     function _getBallotVoted(address voter) internal view returns (bytes32) {
-        return _getCurrentEpoch().ballotIdsByAddress[voter];
+        return _getCurrentElection().ballotIdsByAddress[voter];
     }
 
     function _hasVoted(address voter) internal view returns (bool) {

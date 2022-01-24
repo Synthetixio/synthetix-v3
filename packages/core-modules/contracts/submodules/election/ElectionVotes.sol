@@ -14,7 +14,7 @@ contract ElectionVotes is ElectionBase {
             revert NoCandidates();
         }
 
-        SetUtil.AddressSet storage nominees = _getCurrentEpoch().nominees;
+        SetUtil.AddressSet storage nominees = _getCurrentElection().nominees;
 
         for (uint i = 0; i < length; i++) {
             address candidate = candidates[i];
@@ -42,7 +42,7 @@ contract ElectionVotes is ElectionBase {
         uint votePower,
         address[] calldata candidates
     ) internal virtual {
-        EpochData storage epoch = _getCurrentEpoch();
+        ElectionData storage election = _getCurrentElection();
 
         bytes32 ballotId = _calculateBallotId(candidates);
         BallotData storage ballot = _getBallot(ballotId);
@@ -53,21 +53,21 @@ contract ElectionVotes is ElectionBase {
 
             ballot.candidates = newCandidates;
 
-            epoch.ballotIds.push(ballotId);
+            election.ballotIds.push(ballotId);
         }
 
         ballot.votes += votePower;
-        epoch.ballotIdsByAddress[voter] = ballotId;
+        election.ballotIdsByAddress[voter] = ballotId;
     }
 
     function _withdrawVote(address voter, uint votePower) internal virtual {
-        EpochData storage epoch = _getCurrentEpoch();
+        ElectionData storage election = _getCurrentElection();
 
-        bytes32 ballotId = epoch.ballotIdsByAddress[voter];
+        bytes32 ballotId = election.ballotIdsByAddress[voter];
         BallotData storage ballot = _getBallot(ballotId);
 
         ballot.votes -= votePower;
-        epoch.ballotIdsByAddress[voter] = bytes32(0);
+        election.ballotIdsByAddress[voter] = bytes32(0);
     }
 
     function _getVotePower(address) internal view virtual returns (uint) {

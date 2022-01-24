@@ -6,21 +6,23 @@ import "./ElectionBase.sol";
 contract ElectionTally is ElectionBase {
     using SetUtil for SetUtil.AddressSet;
 
-    function _evalauteNextBallotBatch() internal {
-        EpochData storage epoch = _getCurrentEpoch();
+    function _evaluateNextBallotBatch() internal {
+        ElectionData storage election = _getCurrentElection();
 
-        uint numBallots = store.ballotIds.length;
+        uint numBallots = election.ballotIds.length;
         for (uint ballotIndex = 0; ballotIndex < numBallots; ballotIndex++) {
-            bytes32 ballotId = store.ballotIds[ballotIndex];
-            BallotData storage ballot = epoch.ballotsById[ballotId];
+            bytes32 ballotId = election.ballotIds[ballotIndex];
+            BallotData storage ballot = election.ballotsById[ballotId];
 
-            _evaluateBallot(ballot);
+            _evaluateBallot(election, ballot);
         }
+
+        election.evaluated = true;
     }
 
-    function _evaluateBallot(BallotData storage ballot) internal {
-        uint ballotVotePower = ballot.votePower;
-        if (ballotVotePower == 0) {
+    function _evaluateBallot(ElectionData storage election, BallotData storage ballot) internal {
+        uint ballotVotes = ballot.votes;
+        if (ballotVotes == 0) {
             return;
         }
 
@@ -28,9 +30,9 @@ contract ElectionTally is ElectionBase {
 
         uint numCandidates = ballotCandidates.length;
         for (uint candidateIndex = 0; candidateIndex < numCandidates; candidateIndex++) {
-            address candidate = ballot.candiates[candidateIndex];
+            address candidate = ballot.candidates[candidateIndex];
 
-            epoch.candidateVotes[candidate] += ballot.votePower;
+            election.candidateVotes[candidate] += ballotVotes;
         }
     }
 }

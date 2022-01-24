@@ -93,8 +93,6 @@ interface IElectionModule {
 
     function getCurrentPeriodType() external view returns (uint);
 
-    function isEpochEvaluated() external view returns (bool);
-
     // Nominations
     // ~~~~~~~~~~~~~~~~~~
 
@@ -102,7 +100,7 @@ interface IElectionModule {
 
     function getNominees() external view returns (address[] memory);
 
-    // Votes / ballots
+    // Votes
     // ~~~~~~~~~~~~~~~~~~
 
     function calculateBallotId(address[] calldata candidates) external pure returns (bytes32);
@@ -116,4 +114,9 @@ interface IElectionModule {
     function getBallotVotes(bytes32 ballotId) external view returns (uint);
 
     function getBallotCandidates(bytes32 ballotId) external view returns (address[] memory);
+
+    // Resolutions
+    // ~~~~~~~~~~~~~~~~~~
+
+    function isElectionEvaluated() external view returns (bool);
 }
