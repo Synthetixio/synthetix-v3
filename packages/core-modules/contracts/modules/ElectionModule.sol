@@ -33,7 +33,7 @@ contract ElectionModule is IElectionModule, ElectionSchedule, ElectionVotes, Ele
         _configureFirstEpochSchedule(nominationPeriodStartDate, votingPeriodStartDate, epochEndDate);
 
         EpochData storage firstEpoch = store.epochs[1];
-        epoch.seatCount = 1;
+        firstEpoch.seatCount = 1;
 
         // TODO: set owner as only member of the first epoch
 

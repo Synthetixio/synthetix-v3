@@ -10,7 +10,6 @@ contract ElectionStorage {
         mapping(uint => EpochData) epochs;
         mapping(uint => ElectionData) elections;
         ElectionModuleSettings settings; // TODO: This kind of nesting could be problematic.
-        uint things;
     }
 
     struct ElectionModuleSettings {

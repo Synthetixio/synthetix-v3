@@ -4,7 +4,7 @@ const assertBn = require('@synthetixio/core-js/utils/assertions/assert-bignumber
 const assertRevert = require('@synthetixio/core-js/utils/assertions/assert-revert');
 
 describe('SetUtil', () => {
-  const repeater = [1, 2, 3, 4, 5, 6, 7, 8];
+  const repeater = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 
   // -----------------------------------------
   // Specific type tests
@@ -59,6 +59,14 @@ describe('SetUtil', () => {
       await SampleSet.remove(value);
     };
 
+    const replaceValue = async (value, newValue) => {
+      const index = expectedValues.indexOf(value);
+
+      expectedValues[index] = newValue;
+
+      await SampleSet.replace(value, newValue);
+    };
+
     function itBehavesAsAValidSet() {
       it('has the expected length', async function () {
         assertBn.eq(await SampleSet.length(), expectedValues.length);
@@ -75,8 +83,10 @@ describe('SetUtil', () => {
       });
 
       it('can retrieve values', async function () {
-        for (let position = 0; position < expectedValues.length; position++) {
-          assert.equal(await SampleSet.valueAt(position), expectedValues[position]);
+        for (let index = 0; index < expectedValues.length; index++) {
+          const position = index + 1;
+
+          assert.equal(await SampleSet.valueAt(position), expectedValues[index]);
         }
       });
 
@@ -85,6 +95,7 @@ describe('SetUtil', () => {
       });
 
       it('reverts when trying to access a value not in the set', async function () {
+        await assertRevert(SampleSet.valueAt(0), 'PositionOutOfBounds');
         await assertRevert(SampleSet.valueAt(1337), 'PositionOutOfBounds');
       });
 
@@ -98,7 +109,16 @@ describe('SetUtil', () => {
 
       it('reverts when trying to append a value already exsiting in set', async function () {
         if (expectedValues.length > 0) {
-          await assertRevert(SampleSet.add(expectedValues[0]), 'CannotAppendExistingValue');
+          await assertRevert(SampleSet.add(expectedValues[0]), 'ValueAlreadyInSet');
+        }
+      });
+
+      it('reverts when trying replace a value in the set with another value in the set', async function () {
+        if (expectedValues.length > 1) {
+          await assertRevert(
+            SampleSet.replace(await SampleSet.valueAt(1), await SampleSet.valueAt(2)),
+            'ValueAlreadyInSet'
+          );
         }
       });
     }
@@ -154,6 +174,15 @@ describe('SetUtil', () => {
             });
 
             itBehavesAsAValidSet();
+
+            describe('when some values are replaced in the set', function () {
+              before('replace values', async function () {
+                await replaceValue(sampleValues[4], sampleValues[8]);
+                await replaceValue(sampleValues[6], sampleValues[9]);
+              });
+
+              itBehavesAsAValidSet();
+            });
           });
         });
       });
