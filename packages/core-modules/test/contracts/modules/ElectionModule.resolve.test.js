@@ -18,6 +18,8 @@ describe('ElectionModule (resolve)', () => {
   let candidate1, candidate2, candidate3, candidate4, candidate5;
   let voter1, voter2, voter3, voter4, voter5, voter6, voter7, voter8, voter9, voter10;
 
+  let ballot1, ballot2, ballot3;
+
   before('identify signers', async () => {
     const users = await ethers.getSigners();
 
@@ -66,76 +68,38 @@ describe('ElectionModule (resolve)', () => {
           await fastForwardTo(await ElectionModule.getVotingPeriodStartDate(), ethers.provider);
         });
 
-        before('vote', async function () {
-          await ElectionModule.connect(voter1).elect([candidate1.address]);
-          await ElectionModule.connect(voter10).elect([candidate1.address]);
-          await ElectionModule.connect(voter6).elect([candidate2.address]);
-          await ElectionModule.connect(voter4).elect([candidate3.address]);
-          await ElectionModule.connect(voter9).elect([candidate3.address]);
-          await ElectionModule.connect(voter3).elect([candidate5.address]);
-          await ElectionModule.connect(voter7).elect([candidate1.address, candidate2.address]);
-          await ElectionModule.connect(voter2).elect([candidate1.address, candidate3.address]);
-          await ElectionModule.connect(voter5).elect([candidate1.address, candidate3.address]);
-          await ElectionModule.connect(voter8).elect([
-            candidate1.address,
-            candidate2.address,
-            candidate5.address,
-          ]);
+        before('form ballots', async function () {
+          ballot1 = {
+            candidates: [candidate2.address, candidate1.address],
+            id: await ElectionModule.calculateBallotId([candidate2.address, candidate1.address]),
+          };
+          ballot2 = {
+            candidates: [candidate3.address],
+            id: await ElectionModule.calculateBallotId([candidate3.address]),
+          };
+          ballot3 = {
+            candidates: [candidate5.address],
+            id: await ElectionModule.calculateBallotId([candidate5.address]),
+          };
         });
 
-        it('shows that votes were registered', async function () {
-          assertBn.eq(
-            await ElectionModule.getBallotVotes(
-              await ElectionModule.calculateBallotId([candidate1.address])
-            ),
-            2
-          );
-          assertBn.eq(
-            await ElectionModule.getBallotVotes(
-              await ElectionModule.calculateBallotId([candidate2.address])
-            ),
-            1
-          );
-          assertBn.eq(
-            await ElectionModule.getBallotVotes(
-              await ElectionModule.calculateBallotId([candidate3.address])
-            ),
-            2
-          );
-          assertBn.eq(
-            await ElectionModule.getBallotVotes(
-              await ElectionModule.calculateBallotId([candidate5.address])
-            ),
-            1
-          );
-          assertBn.eq(
-            await ElectionModule.getBallotVotes(
-              await ElectionModule.calculateBallotId([candidate4.address])
-            ),
-            0
-          );
-          assertBn.eq(
-            await ElectionModule.getBallotVotes(
-              await ElectionModule.calculateBallotId([candidate1.address, candidate2.address])
-            ),
-            1
-          );
-          assertBn.eq(
-            await ElectionModule.getBallotVotes(
-              await ElectionModule.calculateBallotId([candidate1.address, candidate3.address])
-            ),
-            2
-          );
-          assertBn.eq(
-            await ElectionModule.getBallotVotes(
-              await ElectionModule.calculateBallotId([
-                candidate1.address,
-                candidate2.address,
-                candidate5.address,
-              ])
-            ),
-            1
-          );
+        before('vote', async function () {
+          await ElectionModule.connect(voter1).elect(ballot1.candidates);
+          await ElectionModule.connect(voter2).elect(ballot1.candidates);
+          await ElectionModule.connect(voter3).elect(ballot1.candidates);
+          await ElectionModule.connect(voter4).elect(ballot1.candidates);
+          await ElectionModule.connect(voter5).elect(ballot2.candidates);
+          await ElectionModule.connect(voter6).elect(ballot3.candidates);
+          await ElectionModule.connect(voter7).elect(ballot3.candidates);
+          await ElectionModule.connect(voter8).elect(ballot3.candidates);
+          await ElectionModule.connect(voter9).elect(ballot3.candidates);
+          await ElectionModule.connect(voter10).elect(ballot3.candidates);
+        });
+
+        it('shows that ballots were registered', async function () {
+          assertBn.eq(await ElectionModule.getBallotVotes(ballot1.id), 4);
+          assertBn.eq(await ElectionModule.getBallotVotes(ballot2.id), 1);
+          assertBn.eq(await ElectionModule.getBallotVotes(ballot3.id), 5);
         });
 
         describe('when entering the evaluation period', function () {
@@ -158,31 +122,19 @@ describe('ElectionModule (resolve)', () => {
           describe('when evaluating the epoch', function () {
             describe('partially', function () {
               before('evaluate', async function () {
-                await ElectionModule.evaluate(2);
+                await ElectionModule.evaluate(1);
               });
 
               it('shows that the epoch is not evaluated', async function () {
                 assert.equal(await ElectionModule.isElectionEvaluated(), false);
               });
 
-              it('shows that some votes were registered', async function () {
-                assertBn.eq(
-                  await ElectionModule.getBallotVotes(
-                    await ElectionModule.calculateBallotId([candidate1.address])
-                  ),
-                  2
-                );
-                assertBn.eq(
-                  await ElectionModule.getBallotVotes(
-                    await ElectionModule.calculateBallotId([candidate2.address])
-                  ),
-                  1
-                );
-              });
-
               it('shows that some candidate votes where processed', async function () {
-                assertBn.eq(await ElectionModule.getCandidateVotes(candidate1.address), 2);
-                assertBn.eq(await ElectionModule.getCandidateVotes(candidate2.address), 1);
+                assertBn.eq(await ElectionModule.getCandidateVotes(candidate1.address), 4);
+                assertBn.eq(await ElectionModule.getCandidateVotes(candidate2.address), 4);
+                assertBn.eq(await ElectionModule.getCandidateVotes(candidate3.address), 1);
+                assertBn.eq(await ElectionModule.getCandidateVotes(candidate4.address), 0);
+                assertBn.eq(await ElectionModule.getCandidateVotes(candidate5.address), 0);
               });
 
               describe('totally', function () {
@@ -195,11 +147,11 @@ describe('ElectionModule (resolve)', () => {
                 });
 
                 it('shows that candidate votes where processed', async function () {
-                  assertBn.eq(await ElectionModule.getCandidateVotes(candidate1.address), 6);
-                  assertBn.eq(await ElectionModule.getCandidateVotes(candidate2.address), 3);
-                  assertBn.eq(await ElectionModule.getCandidateVotes(candidate3.address), 4);
+                  assertBn.eq(await ElectionModule.getCandidateVotes(candidate1.address), 4);
+                  assertBn.eq(await ElectionModule.getCandidateVotes(candidate2.address), 4);
+                  assertBn.eq(await ElectionModule.getCandidateVotes(candidate3.address), 1);
                   assertBn.eq(await ElectionModule.getCandidateVotes(candidate4.address), 0);
-                  assertBn.eq(await ElectionModule.getCandidateVotes(candidate5.address), 2);
+                  assertBn.eq(await ElectionModule.getCandidateVotes(candidate5.address), 5);
                 });
 
                 it('shows the election winners', async function () {
@@ -209,7 +161,7 @@ describe('ElectionModule (resolve)', () => {
 
                   assert.equal(winners.includes(candidate1.address), true);
                   assert.equal(winners.includes(candidate2.address), true);
-                  assert.equal(winners.includes(candidate3.address), true);
+                  assert.equal(winners.includes(candidate5.address), true);
                 });
 
                 describe('when attempting to evaluate the epoch again', () => {
