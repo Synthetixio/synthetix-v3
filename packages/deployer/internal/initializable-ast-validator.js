@@ -3,22 +3,27 @@ const {
   findContractDependencies,
   findFunctions,
 } = require('@synthetixio/core-js/utils/ast/finders');
+const { contractIsModule } = require('../internal/contract-helper');
 const { capitalize } = require('@synthetixio/core-js/utils/misc/strings');
 
 class ModuleInitializableASTValidator {
   constructor(asts) {
+    this.moduleNodes = Object.values(asts)
+      .filter((v) => contractIsModule(v.absolutePath))
+      .map(findContractDefinitions)
+      .flat();
     this.contractNodes = Object.values(asts).map(findContractDefinitions).flat();
   }
 
   findMissingIsInitialized() {
     const errors = [];
 
-    for (const contractName of this.findInitializableContractNames()) {
-      const functionName = `is${capitalize(contractName)}Initialized`;
+    for (const moduleName of this.findInitializableModuleNames()) {
+      const functionName = `is${capitalize(moduleName)}Initialized`;
 
-      if (!findFunctions(contractName, this.contractNodes).some((v) => v.name === functionName)) {
+      if (!findFunctions(moduleName, this.contractNodes).some((v) => v.name === functionName)) {
         errors.push({
-          msg: `Initializable contract ${contractName} missing ${functionName} function!}`,
+          msg: `Initializable module ${moduleName} missing ${functionName} function!`,
         });
       }
     }
@@ -29,12 +34,12 @@ class ModuleInitializableASTValidator {
   findMissingInitializer() {
     const errors = [];
 
-    for (const contractName of this.findInitializableContractNames()) {
-      const functionName = `initialize${capitalize(contractName)}`;
+    for (const moduleName of this.findInitializableModuleNames()) {
+      const functionName = `initialize${capitalize(moduleName)}`;
 
-      if (!findFunctions(contractName, this.contractNodes).some((v) => v.name === functionName)) {
+      if (!findFunctions(moduleName, this.contractNodes).some((v) => v.name === functionName)) {
         errors.push({
-          msg: `Initializable contract ${contractName} missing ${functionName} function!}`,
+          msg: `Initializable module ${moduleName} missing ${functionName} function!`,
         });
       }
     }
@@ -42,26 +47,26 @@ class ModuleInitializableASTValidator {
     return errors;
   }
 
-  findInitializableContractNames() {
-    const initializableContractNames = [];
+  findInitializableModuleNames() {
+    const initializableModuleNames = [];
 
-    const contractNames = this.contractNodes.map((v) => v.name);
+    const moduleNames = this.moduleNodes.map((v) => v.name);
 
-    for (const contractName of contractNames) {
-      if (contractName === 'InitializableMixin') {
+    for (const moduleName of moduleNames) {
+      if (moduleName === 'InitializableMixin') {
         continue;
       }
 
       if (
-        findContractDependencies(contractName, this.contractNodes).some(
+        findContractDependencies(moduleName, this.contractNodes).some(
           (v) => v.name === 'InitializableMixin'
         )
       ) {
-        initializableContractNames.push(contractName);
+        initializableModuleNames.push(moduleName);
       }
     }
 
-    return initializableContractNames;
+    return initializableModuleNames;
   }
 }
 
