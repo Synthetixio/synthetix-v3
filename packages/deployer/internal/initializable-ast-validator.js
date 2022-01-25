@@ -7,9 +7,9 @@ const { contractIsModule } = require('../internal/contract-helper');
 const { capitalize } = require('@synthetixio/core-js/utils/misc/strings');
 
 class ModuleInitializableASTValidator {
-  constructor(asts) {
+  constructor(asts, isModuleChecker = contractIsModule) {
     this.moduleNodes = Object.values(asts)
-      .filter((v) => contractIsModule(v.absolutePath))
+      .filter((v) => isModuleChecker(v.absolutePath))
       .map(findContractDefinitions)
       .flat();
     this.contractNodes = Object.values(asts).map(findContractDefinitions).flat();
