@@ -6,23 +6,47 @@ import "./ElectionBase.sol";
 contract ElectionTally is ElectionBase {
     using SetUtil for SetUtil.AddressSet;
 
-    function _evaluateNextBallotBatch() internal {
-        ElectionData storage election = _getCurrentElection();
+    function _evaluateNextBallotBatch(uint numBallots) internal {
+        if (numBallots == 0) {
+            numBallots = _electionStore().settings.defaultBallotEvaluationBatchSize;
+        }
 
-        uint numBallots = election.ballotIds.length;
-        for (uint ballotIndex = 0; ballotIndex < numBallots; ballotIndex++) {
+        ElectionData storage election = _getCurrentElection();
+        uint totalBallots = election.ballotIds.length;
+
+        uint firstBallotIndex = election.numEvaluatedBallots;
+
+        uint lastBallotIndex = firstBallotIndex + numBallots;
+        if (lastBallotIndex >= totalBallots) {
+            lastBallotIndex = totalBallots - 1;
+
+            election.evaluated = true;
+        }
+
+        _evaluateBallotRange(election, firstBallotIndex, lastBallotIndex);
+    }
+
+    function _evaluateBallotRange(
+        ElectionData storage election,
+        uint fromIndex,
+        uint toIndex
+    ) internal {
+        ElectionModuleSettings storage settings = _electionStore().settings;
+        uint numSeats = settings.nextEpochSeatCount;
+
+        for (uint ballotIndex = fromIndex; ballotIndex <= toIndex; ballotIndex++) {
             bytes32 ballotId = election.ballotIds[ballotIndex];
             BallotData storage ballot = election.ballotsById[ballotId];
 
-            _evaluateBallot(election, ballot);
+            _evaluateBallot(election, ballot, numSeats);
         }
-
-        // TODO: Consider not being able to resolve in a single call
-        // due to a large number of ballots.
-        election.evaluated = true;
     }
 
-    function _evaluateBallot(ElectionData storage election, BallotData storage ballot) internal {
+    function _evaluateBallot(
+        ElectionData storage election,
+        BallotData storage ballot,
+        uint numSeats
+    ) internal {
         uint ballotVotes = ballot.votes;
         if (ballotVotes == 0) {
             return;
@@ -38,30 +62,48 @@ contract ElectionTally is ElectionBase {
             uint newCandidateVotes = currentCandidateVotes + ballotVotes;
             election.candidateVotes[candidate] = newCandidateVotes;
 
-            _refreshWinnerList(election, candidate, newCandidateVotes);
+            _updateWinnerSet(election, candidate, newCandidateVotes, numSeats);
         }
+
+        election.numEvaluatedBallots += 1;
     }
 
-    function _refreshWinnerList(ElectionData storage election, address candidate, uint candidateVotes) internal {
+    function _updateWinnerSet(
+        ElectionData storage election,
+        address candidate,
+        uint candidateVotes,
+        uint numSeats
+    ) internal {
         SetUtil.AddressSet storage winners = election.winners;
+        if (winners.contains(candidate)) {
+            return;
+        }
 
-        uint8 numSeats = election.settings.nextEpochSeatCount;
-
-        if (winners.length < numSeats) {
+        // Just take first empty seat.
+        if (winners.length() < numSeats) {
             winners.add(candidate);
 
             return;
         }
 
-        address leastVotedWinner;
-        for (uint8 winnerIndex = 0; winnerIndex < numSeats; winnerIndex++) {
-            address winner = winners[winnerIndex];
+        // Otherwise see if there is a winning candidate with less votes to take its seat.
+        for (uint8 winnerPosition = 1; winnerPosition <= numSeats; winnerPosition++) {
+            address winner = winners.valueAt(winnerPosition);
+            uint winnerVotes = election.candidateVotes[winner];
 
-            uint winnerVotes = election.candidateVotes[winner]
-
-            if (candidateVotes == winnerVotes) {
+            if (candidateVotes > winnerVotes) {
                 winners.replace(winner, candidate);
+
+                return;
             }
         }
+    }
+
+    function _setDefaultBallotEvaluationBatchSize(uint newDefaultBallotEvaluationBatchSize) internal {
+        if (newDefaultBallotEvaluationBatchSize == 0) {
+            revert InvalidElectionSettings();
+        }
+
+        _electionStore().settings.defaultBallotEvaluationBatchSize = newDefaultBallotEvaluationBatchSize;
     }
 }

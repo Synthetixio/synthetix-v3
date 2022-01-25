@@ -10,7 +10,7 @@ contract ElectionBase is ElectionStorage, InitializableMixin {
     // ---------------------------------------
 
     error EpochNotEvaluated();
-    error EpochAlreadyEvaluated();
+    error ElectionAlreadyEvaluated();
     error AlreadyNominated();
     error NotNominated();
     error NoCandidates();
@@ -19,7 +19,6 @@ contract ElectionBase is ElectionStorage, InitializableMixin {
     error InvalidEpochConfiguration();
     error InvalidElectionSettings();
     error NotCallableInCurrentPeriod();
-    error BallotDoesNotExist();
 
     function _isInitialized() internal view override returns (bool) {
         return _electionStore().initialized;

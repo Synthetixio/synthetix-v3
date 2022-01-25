@@ -18,6 +18,7 @@ contract ElectionStorage {
         uint64 minNominationPeriodDuration;
         uint64 minVotingPeriodDuration;
         uint64 maxDateAdjustmentTolerance;
+        uint defaultBallotEvaluationBatchSize;
     }
 
     struct EpochData {
@@ -26,12 +27,13 @@ contract ElectionStorage {
         uint64 endDate;
         uint64 nominationPeriodStartDate;
         uint64 votingPeriodStartDate;
-        address[] members;
+        SetUtil.AddressSet members;
     }
 
     struct ElectionData {
         bool resolved;
         bool evaluated;
+        uint numEvaluatedBallots;
         SetUtil.AddressSet nominees;
         SetUtil.AddressSet winners;
         bytes32[] ballotIds;

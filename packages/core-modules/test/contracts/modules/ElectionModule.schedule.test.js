@@ -88,13 +88,13 @@ describe('ElectionModule (schedule)', () => {
   const itRejectsEvaluations = () => {
     describe('when trying to call the evaluate function', function () {
       it('reverts', async function () {
-        await assertRevert(ElectionModule.evaluate(), 'NotCallableInCurrentPeriod');
+        await assertRevert(ElectionModule.evaluate(0), 'NotCallableInCurrentPeriod');
       });
     });
 
     describe('when trying to call the resolve function', function () {
       it('reverts', async function () {
-        await assertRevert(ElectionModule.evaluate(), 'NotCallableInCurrentPeriod');
+        await assertRevert(ElectionModule.evaluate(0), 'NotCallableInCurrentPeriod');
       });
     });
   };
@@ -102,7 +102,7 @@ describe('ElectionModule (schedule)', () => {
   const itAcceptsEvaluations = () => {
     describe('when trying to call the evaluate function', function () {
       it('does not revert', async function () {
-        await ElectionModule.evaluate();
+        await ElectionModule.evaluate(0);
       });
     });
 

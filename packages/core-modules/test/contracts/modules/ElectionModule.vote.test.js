@@ -139,6 +139,7 @@ describe('ElectionModule (vote)', () => {
             it('can retrieve ballot votes', async function () {
               assertBn.eq(await ElectionModule.getBallotVotes(ballot1.id), 3);
               assertBn.eq(await ElectionModule.getBallotVotes(ballot2.id), 2);
+              assertBn.eq(await ElectionModule.getBallotVotes(ballot3.id), 0);
             });
 
             it('can retrive ballot candidates', async function () {
@@ -152,19 +153,8 @@ describe('ElectionModule (vote)', () => {
               );
             });
 
-            describe('when trying to retrieve candidates for a ballot that was not voted on', function () {
-              it('reverts', async function () {
-                await assertRevert(
-                  ElectionModule.getBallotCandidates(ballot3.id),
-                  'BallotDoesNotExist'
-                );
-              });
-            });
-
-            describe('when trying to retrieve votes for a ballot that was not voted on', function () {
-              it('reverts', async function () {
-                await assertRevert(ElectionModule.getBallotVotes(ballot3.id), 'BallotDoesNotExist');
-              });
+            it('will retrieve no candidates for ballots that where not voted on', async function () {
+              assert.deepEqual(await ElectionModule.getBallotCandidates(ballot3.id), []);
             });
 
             describe('when users change their vote', function () {

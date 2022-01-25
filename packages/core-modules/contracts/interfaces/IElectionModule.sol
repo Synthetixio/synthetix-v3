@@ -38,6 +38,8 @@ interface IElectionModule {
 
     function setMaxDateAdjustmentTolerance(uint64 newMaxDateAdjustmentTolerance) external;
 
+    function setDefaultBallotEvaluationBatchSize(uint newDefaultBallotEvaluationBatchSize) external;
+
     // ---------------------------------------
     // Nomination functions
     // ---------------------------------------
@@ -56,7 +58,7 @@ interface IElectionModule {
     // Election resolution
     // ---------------------------------------
 
-    function evaluate() external;
+    function evaluate(uint numBallots) external;
 
     function resolve() external;
 
@@ -77,6 +79,8 @@ interface IElectionModule {
         );
 
     function getMaxDateAdjustmenTolerance() external view returns (uint64);
+
+    function getDefaultBallotEvaluationBatchSize() external view returns (uint);
 
     // Epoch and periods
     // ~~~~~~~~~~~~~~~~~~
@@ -121,4 +125,6 @@ interface IElectionModule {
     function isElectionEvaluated() external view returns (bool);
 
     function getCandidateVotes(address candidate) external view returns (uint);
+
+    function getElectionWinners() external view returns (address[] memory);
 }
