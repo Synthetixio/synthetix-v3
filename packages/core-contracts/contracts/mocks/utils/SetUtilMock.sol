@@ -16,6 +16,10 @@ contract Bytes32SetMock {
         _set.remove(value);
     }
 
+    function replace(bytes32 value, bytes32 newValue) external {
+        _set.replace(value, newValue);
+    }
+
     function contains(bytes32 value) external view returns (bool) {
         return _set.contains(value);
     }
@@ -48,6 +52,10 @@ contract AddressSetMock {
 
     function remove(address value) external {
         _set.remove(value);
+    }
+
+    function replace(address value, address newValue) external {
+        _set.replace(value, newValue);
     }
 
     function contains(address value) external view returns (bool) {
