@@ -167,14 +167,6 @@ contract ElectionSchedule is ElectionBase {
         settings.minEpochDuration = newMinEpochDuration;
     }
 
-    function _setMaxDateAdjustmentTolerance(uint64 newMaxDateAdjustmentTolerance) internal {
-        if (newMaxDateAdjustmentTolerance == 0) {
-            revert InvalidElectionSettings();
-        }
-
-        _electionStore().settings.maxDateAdjustmentTolerance = newMaxDateAdjustmentTolerance;
-    }
-
     // ---------------------------------------
     // Utilities
     // ---------------------------------------

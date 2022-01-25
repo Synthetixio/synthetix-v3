@@ -5,9 +5,10 @@ import "@synthetixio/core-contracts/contracts/errors/InitError.sol";
 import "@synthetixio/core-contracts/contracts/ownership/OwnableMixin.sol";
 import "../submodules/election/ElectionSchedule.sol";
 import "../submodules/election/ElectionVotes.sol";
+import "../submodules/election/ElectionTally.sol";
 import "../interfaces/IElectionModule.sol";
 
-contract ElectionModule is IElectionModule, ElectionSchedule, ElectionVotes, OwnableMixin {
+contract ElectionModule is IElectionModule, ElectionSchedule, ElectionVotes, ElectionTally, OwnableMixin {
     using SetUtil for SetUtil.AddressSet;
 
     // ---------------------------------------
@@ -26,9 +27,16 @@ contract ElectionModule is IElectionModule, ElectionSchedule, ElectionVotes, Own
         settings.minVotingPeriodDuration = 2 days;
         settings.minEpochDuration = 7 days;
         settings.maxDateAdjustmentTolerance = 7 days;
+        settings.nextEpochSeatCount = 3;
+        settings.defaultBallotEvaluationBatchSize = 500;
 
         store.currentEpochIndex = 1;
         _configureFirstEpochSchedule(nominationPeriodStartDate, votingPeriodStartDate, epochEndDate);
+
+        EpochData storage firstEpoch = store.epochs[1];
+        firstEpoch.seatCount = 1;
+
+        // TODO: set owner as only member of the first epoch
 
         store.initialized = true;
     }
@@ -78,7 +86,21 @@ contract ElectionModule is IElectionModule, ElectionSchedule, ElectionVotes, Own
     }
 
     function setMaxDateAdjustmentTolerance(uint64 newMaxDateAdjustmentTolerance) external override onlyOwner {
-        _setMaxDateAdjustmentTolerance(newMaxDateAdjustmentTolerance);
+        if (newMaxDateAdjustmentTolerance == 0) revert InvalidElectionSettings();
+
+        _electionStore().settings.maxDateAdjustmentTolerance = newMaxDateAdjustmentTolerance;
+    }
+
+    function setDefaultBallotEvaluationBatchSize(uint newDefaultBallotEvaluationBatchSize) external override onlyOwner {
+        if (newDefaultBallotEvaluationBatchSize == 0) revert InvalidElectionSettings();
+
+        _electionStore().settings.defaultBallotEvaluationBatchSize = newDefaultBallotEvaluationBatchSize;
+    }
+
+    function setNextEpochSeatCount(uint8 newSeatCount) external override onlyOwner {
+        if (newSeatCount == 0) revert InvalidElectionSettings();
+
+        _electionStore().settings.nextEpochSeatCount = newSeatCount;
     }
 
     // ---------------------------------------
@@ -86,21 +108,17 @@ contract ElectionModule is IElectionModule, ElectionSchedule, ElectionVotes, Own
     // ---------------------------------------
 
     function nominate() external override onlyInPeriod(ElectionPeriod.Nomination) {
-        SetUtil.AddressSet storage nominees = _getCurrentEpoch().nominees;
+        SetUtil.AddressSet storage nominees = _getCurrentElection().nominees;
 
-        if (nominees.contains(msg.sender)) {
-            revert AlreadyNominated();
-        }
+        if (nominees.contains(msg.sender)) revert AlreadyNominated();
 
         nominees.add(msg.sender);
     }
 
     function withdrawNomination() external override onlyInPeriod(ElectionPeriod.Nomination) {
-        SetUtil.AddressSet storage nominees = _getCurrentEpoch().nominees;
+        SetUtil.AddressSet storage nominees = _getCurrentElection().nominees;
 
-        if (!nominees.contains(msg.sender)) {
-            revert NotNominated();
-        }
+        if (!nominees.contains(msg.sender)) revert NotNominated();
 
         nominees.remove(msg.sender);
     }
@@ -111,9 +129,8 @@ contract ElectionModule is IElectionModule, ElectionSchedule, ElectionVotes, Own
 
     function elect(address[] calldata candidates) external override onlyInPeriod(ElectionPeriod.Vote) {
         uint votePower = _getVotePower(msg.sender);
-        if (votePower == 0) {
-            revert NoVotePower();
-        }
+
+        if (votePower == 0) revert NoVotePower();
 
         _validateCandidates(candidates);
 
@@ -128,20 +145,23 @@ contract ElectionModule is IElectionModule, ElectionSchedule, ElectionVotes, Own
     // Election resolution
     // ---------------------------------------
 
-    function evaluate() external override onlyInPeriod(ElectionPeriod.Evaluation) {
-        // TODO
+    function evaluate(uint numBallots) external override onlyInPeriod(ElectionPeriod.Evaluation) {
+        if (isElectionEvaluated()) revert ElectionAlreadyEvaluated();
 
-        _getCurrentEpoch().evaluated = true;
+        _evaluateNextBallotBatch(numBallots);
+
+        ElectionData storage election = _getCurrentElection();
+        if (election.numEvaluatedBallots == election.ballotIds.length) {
+            election.evaluated = true;
+        }
     }
 
     function resolve() external override onlyInPeriod(ElectionPeriod.Evaluation) {
-        if (!isEpochEvaluated()) {
-            revert EpochNotEvaluated();
-        }
+        if (!isElectionEvaluated()) revert EpochNotEvaluated();
 
         // TODO: Shuffle NFTs
 
-        _getCurrentEpoch().resolved = true;
+        _getCurrentElection().resolved = true;
 
         _configureNextEpochSchedule();
 
@@ -175,6 +195,14 @@ contract ElectionModule is IElectionModule, ElectionSchedule, ElectionVotes, Own
         return _electionStore().settings.maxDateAdjustmentTolerance;
     }
 
+    function getDefaultBallotEvaluationBatchSize() external view override returns (uint) {
+        return _electionStore().settings.defaultBallotEvaluationBatchSize;
+    }
+
+    function getNextEpochSeatCount() external view override returns (uint8) {
+        return _electionStore().settings.nextEpochSeatCount;
+    }
+
     // Epoch and periods
     // ~~~~~~~~~~~~~~~~~~
 
@@ -202,22 +230,18 @@ contract ElectionModule is IElectionModule, ElectionSchedule, ElectionVotes, Own
         return uint(_getCurrentPeriodType());
     }
 
-    function isEpochEvaluated() public view override returns (bool) {
-        return _getCurrentEpoch().evaluated;
-    }
-
     // Nominations
     // ~~~~~~~~~~~~~~~~~~
 
     function isNominated(address candidate) external view override returns (bool) {
-        return _getCurrentEpoch().nominees.contains(candidate);
+        return _getCurrentElection().nominees.contains(candidate);
     }
 
     function getNominees() external view override returns (address[] memory) {
-        return _getCurrentEpoch().nominees.values();
+        return _getCurrentElection().nominees.values();
     }
 
-    // Votes / ballots
+    // Votes
     // ~~~~~~~~~~~~~~~~~~
 
     function calculateBallotId(address[] calldata candidates) external pure override returns (bytes32) {
@@ -237,22 +261,25 @@ contract ElectionModule is IElectionModule, ElectionSchedule, ElectionVotes, Own
     }
 
     function getBallotVotes(bytes32 ballotId) external view override returns (uint) {
-        BallotData storage ballot = _getBallot(ballotId);
-
-        if (!_ballotExists(ballot)) {
-            revert BallotDoesNotExist();
-        }
-
-        return ballot.votes;
+        return _getBallot(ballotId).votes;
     }
 
     function getBallotCandidates(bytes32 ballotId) external view override returns (address[] memory) {
-        BallotData storage ballot = _getBallot(ballotId);
+        return _getBallot(ballotId).candidates;
+    }
 
-        if (!_ballotExists(ballot)) {
-            revert BallotDoesNotExist();
-        }
+    // Resolutions
+    // ~~~~~~~~~~~~~~~~~~
 
-        return ballot.candidates;
+    function isElectionEvaluated() public view override returns (bool) {
+        return _getCurrentElection().evaluated;
+    }
+
+    function getCandidateVotes(address candidate) external view override returns (uint) {
+        return _getCurrentElection().candidateVotes[candidate];
+    }
+
+    function getElectionWinners() external view override returns (address[] memory) {
+        return _getCurrentElection().winners.values();
     }
 }

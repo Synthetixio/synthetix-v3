@@ -4,12 +4,42 @@ pragma solidity ^0.8.0;
 import "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
 
 contract ElectionStorage {
-    enum ElectionPeriod {
-        Null,
-        Idle,
-        Nomination,
-        Vote,
-        Evaluation
+    struct ElectionStore {
+        bool initialized;
+        uint currentEpochIndex;
+        mapping(uint => EpochData) epochs;
+        mapping(uint => ElectionData) elections;
+        ElectionSettings settings; // TODO: This kind of nesting could be problematic.
+    }
+
+    struct ElectionSettings {
+        uint8 nextEpochSeatCount;
+        uint64 minEpochDuration;
+        uint64 minNominationPeriodDuration;
+        uint64 minVotingPeriodDuration;
+        uint64 maxDateAdjustmentTolerance;
+        uint defaultBallotEvaluationBatchSize;
+    }
+
+    struct EpochData {
+        uint8 seatCount;
+        uint64 startDate;
+        uint64 endDate;
+        uint64 nominationPeriodStartDate;
+        uint64 votingPeriodStartDate;
+        SetUtil.AddressSet members;
+    }
+
+    struct ElectionData {
+        bool resolved;
+        bool evaluated;
+        uint numEvaluatedBallots;
+        SetUtil.AddressSet nominees;
+        SetUtil.AddressSet winners;
+        bytes32[] ballotIds;
+        mapping(bytes32 => BallotData) ballotsById;
+        mapping(address => bytes32) ballotIdsByAddress;
+        mapping(address => uint) candidateVotes;
     }
 
     struct BallotData {
@@ -17,30 +47,12 @@ contract ElectionStorage {
         address[] candidates;
     }
 
-    struct ElectionSettings {
-        uint64 minEpochDuration;
-        uint64 minNominationPeriodDuration;
-        uint64 minVotingPeriodDuration;
-        uint64 maxDateAdjustmentTolerance;
-    }
-
-    struct EpochData {
-        bool evaluated;
-        bool resolved;
-        uint64 startDate;
-        uint64 endDate;
-        uint64 nominationPeriodStartDate;
-        uint64 votingPeriodStartDate;
-        SetUtil.AddressSet nominees;
-        mapping(bytes32 => BallotData) ballotsById;
-        mapping(address => bytes32) ballotsByAddress;
-    }
-
-    struct ElectionStore {
-        bool initialized;
-        uint currentEpochIndex;
-        ElectionSettings settings;
-        mapping(uint => EpochData) epochs;
+    enum ElectionPeriod {
+        Null,
+        Idle,
+        Nomination,
+        Vote,
+        Evaluation
     }
 
     function _electionStore() internal pure returns (ElectionStore storage store) {

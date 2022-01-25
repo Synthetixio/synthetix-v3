@@ -36,6 +36,81 @@ describe('ElectionModule (settings)', () => {
     });
 
     // ---------------------------------------
+    // nextEpochSeatCount
+    // ---------------------------------------
+
+    describe('when configuring the next epoch seat count', function () {
+      describe('with an account that is not the owner', () => {
+        it('reverts', async () => {
+          await assertRevert(ElectionModule.connect(user).setNextEpochSeatCount(1), 'Unauthorized');
+        });
+      });
+
+      describe('with the owner', () => {
+        describe('with zero', () => {
+          it('reverts', async () => {
+            await assertRevert(ElectionModule.setNextEpochSeatCount(0), 'InvalidElectionSettings');
+          });
+        });
+
+        describe('with valid parameters', () => {
+          let newNextEpochSeatCount = 8;
+
+          before('set', async () => {
+            await ElectionModule.setNextEpochSeatCount(newNextEpochSeatCount);
+          });
+
+          it('changes the setting', async () => {
+            assertBn.eq(await ElectionModule.getNextEpochSeatCount(), newNextEpochSeatCount);
+          });
+        });
+      });
+    });
+
+    // ---------------------------------------
+    // defaultBallotEvaluationBatchSize
+    // ---------------------------------------
+
+    describe('when configuring the default ballot evaluation batch size', function () {
+      describe('with an account that is not the owner', () => {
+        it('reverts', async () => {
+          await assertRevert(
+            ElectionModule.connect(user).setDefaultBallotEvaluationBatchSize(1),
+            'Unauthorized'
+          );
+        });
+      });
+
+      describe('with the owner', () => {
+        describe('with zero', () => {
+          it('reverts', async () => {
+            await assertRevert(
+              ElectionModule.setDefaultBallotEvaluationBatchSize(0),
+              'InvalidElectionSettings'
+            );
+          });
+        });
+
+        describe('with valid parameters', () => {
+          let newDefaultBallotEvaluationBatchSize = 100;
+
+          before('set', async () => {
+            await ElectionModule.setDefaultBallotEvaluationBatchSize(
+              newDefaultBallotEvaluationBatchSize
+            );
+          });
+
+          it('changes the setting', async () => {
+            assertBn.eq(
+              await ElectionModule.getDefaultBallotEvaluationBatchSize(),
+              newDefaultBallotEvaluationBatchSize
+            );
+          });
+        });
+      });
+    });
+
+    // ---------------------------------------
     // maxDateAdjustmentTolerance
     // ---------------------------------------
 
