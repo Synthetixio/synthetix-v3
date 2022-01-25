@@ -31,7 +31,7 @@ contract ElectionTally is ElectionBase {
         uint fromIndex,
         uint toIndex
     ) internal {
-        ElectionModuleSettings storage settings = _electionStore().settings;
+        ElectionSettings storage settings = _electionStore().settings;
         uint numSeats = settings.nextEpochSeatCount;
 
         for (uint ballotIndex = fromIndex; ballotIndex <= toIndex; ballotIndex++) {

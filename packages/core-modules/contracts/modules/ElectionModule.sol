@@ -22,7 +22,7 @@ contract ElectionModule is IElectionModule, ElectionSchedule, ElectionVotes, Ele
     ) external override onlyOwner onlyIfNotInitialized {
         ElectionStore storage store = _electionStore();
 
-        ElectionModuleSettings storage settings = store.settings;
+        ElectionSettings storage settings = store.settings;
         settings.minNominationPeriodDuration = 2 days;
         settings.minVotingPeriodDuration = 2 days;
         settings.minEpochDuration = 7 days;
@@ -180,7 +180,7 @@ contract ElectionModule is IElectionModule, ElectionSchedule, ElectionVotes, Ele
             uint64 minEpochDuration
         )
     {
-        ElectionModuleSettings storage settings = _electionStore().settings;
+        ElectionSettings storage settings = _electionStore().settings;
 
         return (settings.minNominationPeriodDuration, settings.minVotingPeriodDuration, settings.minEpochDuration);
     }

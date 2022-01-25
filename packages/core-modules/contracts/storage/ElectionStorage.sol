@@ -9,10 +9,10 @@ contract ElectionStorage {
         uint currentEpochIndex;
         mapping(uint => EpochData) epochs;
         mapping(uint => ElectionData) elections;
-        ElectionModuleSettings settings; // TODO: This kind of nesting could be problematic.
+        ElectionSettings settings; // TODO: This kind of nesting could be problematic.
     }
 
-    struct ElectionModuleSettings {
+    struct ElectionSettings {
         uint8 nextEpochSeatCount;
         uint64 minEpochDuration;
         uint64 minNominationPeriodDuration;

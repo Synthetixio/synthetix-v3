@@ -107,7 +107,7 @@ contract ElectionSchedule is ElectionBase {
         uint64 votingPeriodDuration = epochEndDate - votingPeriodStartDate;
         uint64 nominationPeriodDuration = votingPeriodStartDate - nominationPeriodStartDate;
 
-        ElectionModuleSettings storage settings = _electionStore().settings;
+        ElectionSettings storage settings = _electionStore().settings;
 
         // Ensure all durations are above minimums
         if (
@@ -156,7 +156,7 @@ contract ElectionSchedule is ElectionBase {
         uint64 newMinVotingPeriodDuration,
         uint64 newMinEpochDuration
     ) internal {
-        ElectionModuleSettings storage settings = _electionStore().settings;
+        ElectionSettings storage settings = _electionStore().settings;
 
         if (newMinNominationPeriodDuration == 0 || newMinVotingPeriodDuration == 0 || newMinEpochDuration == 0) {
             revert InvalidElectionSettings();
