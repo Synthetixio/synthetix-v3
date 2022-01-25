@@ -52,9 +52,7 @@ contract ElectionTally is ElectionBase {
             return;
         }
 
-        address[] memory ballotCandidates = ballot.candidates;
-
-        uint numCandidates = ballotCandidates.length;
+        uint numCandidates = ballot.candidates.length;
         for (uint candidateIndex = 0; candidateIndex < numCandidates; candidateIndex++) {
             address candidate = ballot.candidates[candidateIndex];
 
