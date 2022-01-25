@@ -19,8 +19,6 @@ contract ElectionTally is ElectionBase {
         uint lastBallotIndex = firstBallotIndex + numBallots;
         if (lastBallotIndex >= totalBallots) {
             lastBallotIndex = totalBallots - 1;
-
-            election.evaluated = true;
         }
 
         _evaluateBallotRange(election, firstBallotIndex, lastBallotIndex);

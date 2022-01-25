@@ -154,6 +154,11 @@ contract ElectionModule is IElectionModule, ElectionSchedule, ElectionVotes, Ele
         }
 
         _evaluateNextBallotBatch(numBallots);
+
+        ElectionData storage election = _getCurrentElection();
+        if (election.numEvaluatedBallots == election.ballotIds.length) {
+            election.evaluated = true;
+        }
     }
 
     function resolve() external override onlyInPeriod(ElectionPeriod.Evaluation) {
