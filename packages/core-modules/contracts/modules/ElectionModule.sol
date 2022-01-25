@@ -86,17 +86,19 @@ contract ElectionModule is IElectionModule, ElectionSchedule, ElectionVotes, Ele
     }
 
     function setMaxDateAdjustmentTolerance(uint64 newMaxDateAdjustmentTolerance) external override onlyOwner {
-        _setMaxDateAdjustmentTolerance(newMaxDateAdjustmentTolerance);
+        if (newMaxDateAdjustmentTolerance == 0) revert InvalidElectionSettings();
+
+        _electionStore().settings.maxDateAdjustmentTolerance = newMaxDateAdjustmentTolerance;
     }
 
     function setDefaultBallotEvaluationBatchSize(uint newDefaultBallotEvaluationBatchSize) external override onlyOwner {
-        _setDefaultBallotEvaluationBatchSize(newDefaultBallotEvaluationBatchSize);
+        if (newDefaultBallotEvaluationBatchSize == 0) revert InvalidElectionSettings();
+
+        _electionStore().settings.defaultBallotEvaluationBatchSize = newDefaultBallotEvaluationBatchSize;
     }
 
     function setNextEpochSeatCount(uint8 newSeatCount) external override onlyOwner {
-        if (newSeatCount == 0) {
-            revert InvalidElectionSettings();
-        }
+        if (newSeatCount == 0) revert InvalidElectionSettings();
 
         _electionStore().settings.nextEpochSeatCount = newSeatCount;
     }
@@ -107,20 +109,14 @@ contract ElectionModule is IElectionModule, ElectionSchedule, ElectionVotes, Ele
 
     function nominate() external override onlyInPeriod(ElectionPeriod.Nomination) {
         SetUtil.AddressSet storage nominees = _getCurrentElection().nominees;
-
-        if (nominees.contains(msg.sender)) {
-            revert AlreadyNominated();
-        }
+        if (nominees.contains(msg.sender)) revert AlreadyNominated();
 
         nominees.add(msg.sender);
     }
 
     function withdrawNomination() external override onlyInPeriod(ElectionPeriod.Nomination) {
         SetUtil.AddressSet storage nominees = _getCurrentElection().nominees;
-
-        if (!nominees.contains(msg.sender)) {
-            revert NotNominated();
-        }
+        if (!nominees.contains(msg.sender)) revert NotNominated();
 
         nominees.remove(msg.sender);
     }
@@ -131,9 +127,7 @@ contract ElectionModule is IElectionModule, ElectionSchedule, ElectionVotes, Ele
 
     function elect(address[] calldata candidates) external override onlyInPeriod(ElectionPeriod.Vote) {
         uint votePower = _getVotePower(msg.sender);
-        if (votePower == 0) {
-            revert NoVotePower();
-        }
+        if (votePower == 0) revert NoVotePower();
 
         _validateCandidates(candidates);
 
@@ -149,9 +143,7 @@ contract ElectionModule is IElectionModule, ElectionSchedule, ElectionVotes, Ele
     // ---------------------------------------
 
     function evaluate(uint numBallots) external override onlyInPeriod(ElectionPeriod.Evaluation) {
-        if (isElectionEvaluated()) {
-            revert ElectionAlreadyEvaluated();
-        }
+        if (isElectionEvaluated()) revert ElectionAlreadyEvaluated();
 
         _evaluateNextBallotBatch(numBallots);
 
@@ -162,9 +154,7 @@ contract ElectionModule is IElectionModule, ElectionSchedule, ElectionVotes, Ele
     }
 
     function resolve() external override onlyInPeriod(ElectionPeriod.Evaluation) {
-        if (!isElectionEvaluated()) {
-            revert EpochNotEvaluated();
-        }
+        if (!isElectionEvaluated()) revert EpochNotEvaluated();
 
         // TODO: Shuffle NFTs
 

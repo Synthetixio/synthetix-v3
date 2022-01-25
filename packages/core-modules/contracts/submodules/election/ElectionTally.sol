@@ -94,12 +94,4 @@ contract ElectionTally is ElectionBase {
             }
         }
     }
-
-    function _setDefaultBallotEvaluationBatchSize(uint newDefaultBallotEvaluationBatchSize) internal {
-        if (newDefaultBallotEvaluationBatchSize == 0) {
-            revert InvalidElectionSettings();
-        }
-
-        _electionStore().settings.defaultBallotEvaluationBatchSize = newDefaultBallotEvaluationBatchSize;
-    }
 }
