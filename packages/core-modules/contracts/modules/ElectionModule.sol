@@ -93,6 +93,14 @@ contract ElectionModule is IElectionModule, ElectionSchedule, ElectionVotes, Ele
         _setDefaultBallotEvaluationBatchSize(newDefaultBallotEvaluationBatchSize);
     }
 
+    function setNextEpochSeatCount(uint8 newSeatCount) external override onlyOwner {
+        if (newSeatCount == 0) {
+            revert InvalidElectionSettings();
+        }
+
+        _electionStore().settings.nextEpochSeatCount = newSeatCount;
+    }
+
     // ---------------------------------------
     // Nomination functions
     // ---------------------------------------
@@ -191,6 +199,10 @@ contract ElectionModule is IElectionModule, ElectionSchedule, ElectionVotes, Ele
 
     function getDefaultBallotEvaluationBatchSize() external view override returns (uint) {
         return _electionStore().settings.defaultBallotEvaluationBatchSize;
+    }
+
+    function getNextEpochSeatCount() external view override returns (uint8) {
+        return _electionStore().settings.nextEpochSeatCount;
     }
 
     // Epoch and periods

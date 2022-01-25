@@ -40,6 +40,8 @@ interface IElectionModule {
 
     function setDefaultBallotEvaluationBatchSize(uint newDefaultBallotEvaluationBatchSize) external;
 
+    function setNextEpochSeatCount(uint8 newSeatCount) external;
+
     // ---------------------------------------
     // Nomination functions
     // ---------------------------------------
@@ -81,6 +83,8 @@ interface IElectionModule {
     function getMaxDateAdjustmenTolerance() external view returns (uint64);
 
     function getDefaultBallotEvaluationBatchSize() external view returns (uint);
+
+    function getNextEpochSeatCount() external view returns (uint8);
 
     // Epoch and periods
     // ~~~~~~~~~~~~~~~~~~
