@@ -109,6 +109,7 @@ contract ElectionModule is IElectionModule, ElectionSchedule, ElectionVotes, Ele
 
     function nominate() external override onlyInPeriod(ElectionPeriod.Nomination) {
         SetUtil.AddressSet storage nominees = _getCurrentElection().nominees;
+
         if (nominees.contains(msg.sender)) revert AlreadyNominated();
 
         nominees.add(msg.sender);
