@@ -28,7 +28,7 @@ module.exports = {
    * @param {(string|number|BigNumber)} a
    * @param {(string|number|BigNumber)} b
    */
-  eq: _createAssertBN('eq'),
+  equal: _createAssertBN('eq'),
 
   /**
    * Assert if `a` is less than than `b`

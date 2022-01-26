@@ -46,7 +46,7 @@ describe('BeaconProxy', () => {
       });
 
       it('can read the value set', async () => {
-        assertBn.eq(await Instance.getA(), 42);
+        assertBn.equal(await Instance.getA(), 42);
       });
     });
 
@@ -81,12 +81,12 @@ describe('BeaconProxy', () => {
 
       describe('when interacting with implementation B', () => {
         it('can read the value previously set', async () => {
-          assertBn.eq(await Instance.getA(), 42);
+          assertBn.equal(await Instance.getA(), 42);
         });
 
         it('can set & read a new value set on A', async () => {
           await (await Instance.setA(64)).wait();
-          assertBn.eq(await Instance.getA(), 64);
+          assertBn.equal(await Instance.getA(), 64);
         });
 
         it('can set & read a new value set on B', async () => {

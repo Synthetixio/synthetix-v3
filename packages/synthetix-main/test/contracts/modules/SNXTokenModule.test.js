@@ -103,7 +103,7 @@ describe('SNXTokenModule', function () {
           });
 
           it('updates the total supply', async () => {
-            assertBn.eq(await NewSNX.totalSupply(), totalSupply);
+            assertBn.equal(await NewSNX.totalSupply(), totalSupply);
           });
         });
       });

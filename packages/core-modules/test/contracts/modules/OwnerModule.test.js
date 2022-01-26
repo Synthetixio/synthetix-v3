@@ -39,7 +39,7 @@ describe('OwnerModule', () => {
     });
 
     it('sets the value', async () => {
-      assertBn.eq(await SampleOwnedModule.getProtectedValue(), 42);
+      assertBn.equal(await SampleOwnedModule.getProtectedValue(), 42);
     });
   });
 });
