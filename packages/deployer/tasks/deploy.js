@@ -18,9 +18,7 @@ const {
   SUBTASK_VALIDATE_MODULES,
   SUBTASK_VALIDATE_ROUTER,
   SUBTASK_VALIDATE_STORAGE,
-  // TODO: Uncomment after the following issues is fixed:
-  // https://github.com/Synthetixio/synthetix-v3/issues/757
-  // SUBTASK_VALIDATE_INITIALIZABLES,
+  SUBTASK_VALIDATE_INITIALIZABLES,
   TASK_DEPLOY,
 } = require('../task-names');
 
@@ -72,9 +70,7 @@ task(TASK_DEPLOY, 'Deploys all system modules')
       await hre.run(SUBTASK_SYNC_PROXY);
       await hre.run(SUBTASK_VALIDATE_STORAGE);
       await hre.run(SUBTASK_VALIDATE_MODULES);
-      // TODO: Uncomment after the following issues is fixed:
-      // https://github.com/Synthetixio/synthetix-v3/issues/757
-      // await hre.run(SUBTASK_VALIDATE_INITIALIZABLES);
+      await hre.run(SUBTASK_VALIDATE_INITIALIZABLES);
       await hre.run(SUBTASK_DEPLOY_MODULES);
       await hre.run(SUBTASK_GENERATE_ROUTER_SOURCE);
       await _compile(hre, quiet);

@@ -118,7 +118,7 @@ describe('ElectionModule (schedule)', () => {
   // ----------------------------------
 
   const itRejectsAdjustments = () => {
-    describe('when trying to call the adjustEpochSchedul function', function () {
+    describe('when trying to call the adjustEpochSchedule function', function () {
       it('reverts', async function () {
         await assertRevert(
           ElectionModule.adjustEpochSchedule(0, 0, 0),
