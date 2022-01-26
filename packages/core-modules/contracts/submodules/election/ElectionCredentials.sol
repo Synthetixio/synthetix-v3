@@ -26,18 +26,18 @@ contract ElectionCredentials is ElectionBase {
         store.councilToken = proxyAddress;
     }
 
-    function _addMembers(SetUtil.AddressSet storage newMembers) internal {
+    function _addCouncilMembers(SetUtil.AddressSet storage newMembers) internal {
         uint numNewMembers = newMembers.length();
         for (uint newMemberIndex = 0; newMemberIndex < numNewMembers; newMemberIndex++) {
             uint newMemberPosition = newMemberIndex + 1;
 
             address newMember = newMembers.valueAt(newMemberPosition);
 
-            _addMember(_electionStore(), newMember);
+            _addCouncilMember(_electionStore(), newMember);
         }
     }
 
-    function _removeAllMembers() internal {
+    function _removeAllCouncilMembers() internal {
         ElectionStore storage store = _electionStore();
         SetUtil.AddressSet storage members = store.councilMembers;
 
@@ -45,11 +45,11 @@ contract ElectionCredentials is ElectionBase {
         for (uint memberIndex = 0; memberIndex < numMembers; memberIndex++) {
             address member = members.valueAt(1);
 
-            _removeMember(store, member);
+            _removeCouncilMember(store, member);
         }
     }
 
-    function _addMember(ElectionStore storage store, address newMember) internal {
+    function _addCouncilMember(ElectionStore storage store, address newMember) internal {
         SetUtil.AddressSet storage members = store.councilMembers;
 
         if (members.contains(newMember)) {
@@ -64,7 +64,7 @@ contract ElectionCredentials is ElectionBase {
         store.councilTokenIds[newMember] = tokenId;
     }
 
-    function _removeMember(ElectionStore storage store, address member) internal {
+    function _removeCouncilMember(ElectionStore storage store, address member) internal {
         SetUtil.AddressSet storage members = store.councilMembers;
 
         if (!members.contains(member)) {

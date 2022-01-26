@@ -47,7 +47,7 @@ contract ElectionModule is
         firstEpoch.seatCount = 1;
 
         _createCouncilToken(councilTokenName, councilTokenSymbol);
-        _addMember(store, msg.sender);
+        _addCouncilMember(store, msg.sender);
 
         store.initialized = true;
     }
@@ -174,8 +174,8 @@ contract ElectionModule is
     function resolve() external override onlyInPeriod(ElectionPeriod.Evaluation) {
         if (!isElectionEvaluated()) revert EpochNotEvaluated();
 
-        _removeAllMembers();
-        _addMembers(_getCurrentElection().winners);
+        _removeAllCouncilMembers();
+        _addCouncilMembers(_getCurrentElection().winners);
 
         _getCurrentElection().resolved = true;
 
