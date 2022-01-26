@@ -9,6 +9,7 @@ contract ElectionStorage {
         uint currentEpochIndex;
         address councilToken;
         SetUtil.AddressSet councilMembers;
+        mapping(address => uint) councilTokenIds;
         mapping(uint => EpochData) epochs;
         mapping(uint => ElectionData) elections;
         ElectionSettings settings; // TODO: This kind of nesting could be problematic.

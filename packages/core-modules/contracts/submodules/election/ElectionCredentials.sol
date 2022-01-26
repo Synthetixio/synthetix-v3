@@ -27,56 +27,68 @@ contract ElectionCredentials is ElectionBase {
     }
 
     function _addMembers(SetUtil.AddressSet storage newMembers) internal {
-        SetUtil.AddressSet storage currentMembers = _electionStore().councilMembers;
-
         uint numNewMembers = newMembers.length();
         for (uint newMemberIndex = 0; newMemberIndex < numNewMembers; newMemberIndex++) {
             uint newMemberPosition = newMemberIndex + 1;
 
             address newMember = newMembers.valueAt(newMemberPosition);
 
-            _addMember(currentMembers, newMember);
+            _addMember(_electionStore(), newMember);
         }
     }
 
     function _removeAllMembers() internal {
-        SetUtil.AddressSet storage members = _electionStore().councilMembers;
+        ElectionStore storage store = _electionStore();
+        SetUtil.AddressSet storage members = store.councilMembers;
 
         uint numMembers = members.length();
         for (uint memberIndex = 0; memberIndex < numMembers; memberIndex++) {
-            uint memberPosition = memberIndex + 1;
+            address member = members.valueAt(1);
 
-            address member = members.valueAt(memberPosition);
-
-            _removeMember(members, member);
+            _removeMember(store, member);
         }
     }
 
-    function _addMember(SetUtil.AddressSet storage members, address newMember) internal {
+    function _addMember(ElectionStore storage store, address newMember) internal {
+        SetUtil.AddressSet storage members = store.councilMembers;
+
         if (members.contains(newMember)) {
             revert AlreadyACouncilMember();
         }
 
         members.add(newMember);
 
-        uint tokenId = members.positionOf(newMember) - 1;
-
+        uint tokenId = members.length();
         _getCouncilToken().mint(newMember, tokenId);
+
+        store.councilTokenIds[newMember] = tokenId;
     }
 
-    function _removeMember(SetUtil.AddressSet storage members, address member) internal {
+    function _removeMember(ElectionStore storage store, address member) internal {
+        SetUtil.AddressSet storage members = store.councilMembers;
+
         if (!members.contains(member)) {
             revert NotACouncilMember();
         }
 
-        uint tokenId = members.positionOf(member) - 1;
-
         members.remove(member);
 
+        uint tokenId = _getCouncilMemberTokenId(store, member);
         _getCouncilToken().burn(tokenId);
+
+        store.councilTokenIds[member] = 0;
     }
 
     function _getCouncilToken() internal view returns (CouncilToken) {
         return CouncilToken(_electionStore().councilToken);
+    }
+
+    function _getCouncilMemberTokenId(ElectionStore storage store, address member) internal view returns (uint) {
+        uint tokenId = store.councilTokenIds[member];
+
+        // Note that tokenId = 0 will never be used.
+        if (tokenId == 0) revert NotACouncilMember();
+
+        return tokenId;
     }
 }

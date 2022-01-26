@@ -69,7 +69,7 @@ describe('ElectionModule (token)', () => {
       });
 
       it('shows that the first token is held by the owner', async function () {
-        assert.equal(await CouncilToken.ownerOf(0), owner.address);
+        assert.equal(await CouncilToken.ownerOf(1), owner.address);
       });
 
       describe('when upgrading the council token', function () {
@@ -108,7 +108,7 @@ describe('ElectionModule (token)', () => {
         describe('using transferFrom', function () {
           it('reverts', async function () {
             await assertRevert(
-              CouncilToken.transferFrom(owner.address, user.address, 0),
+              CouncilToken.transferFrom(owner.address, user.address, 1),
               'TokenIsNotTransferable'
             );
           });
@@ -120,7 +120,7 @@ describe('ElectionModule (token)', () => {
               CouncilToken['safeTransferFrom(address,address,uint256)'](
                 owner.address,
                 user.address,
-                0
+                1
               ),
               'TokenIsNotTransferable'
             );
@@ -133,7 +133,7 @@ describe('ElectionModule (token)', () => {
               CouncilToken['safeTransferFrom(address,address,uint256,bytes)'](
                 owner.address,
                 user.address,
-                0,
+                1,
                 '0x00'
               ),
               'TokenIsNotTransferable'

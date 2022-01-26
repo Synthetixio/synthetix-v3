@@ -47,7 +47,7 @@ contract ElectionModule is
         firstEpoch.seatCount = 1;
 
         _createCouncilToken(councilTokenName, councilTokenSymbol);
-        _addMember(store.councilMembers, msg.sender);
+        _addMember(store, msg.sender);
 
         store.initialized = true;
     }
