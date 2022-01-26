@@ -20,6 +20,8 @@ interface IElectionModule {
     // Owner functions
     // ---------------------------------------
 
+    function upgradeCouncilToken(address newCouncilTokenImplementation) external;
+
     function adjustEpochSchedule(
         uint64 newNominationPeriodStartDate,
         uint64 newVotingPeriodStartDate,

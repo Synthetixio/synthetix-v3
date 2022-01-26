@@ -154,6 +154,10 @@ describe('ElectionModule (initialization)', () => {
           assertBn.eq(await ElectionModule.getCurrentPeriodType(), ElectionPeriod.Idle);
         });
 
+        it('shows that the owner is the single council member', async function () {
+          assert.deepEqual(await ElectionModule.getCouncilMembers(), [owner.address]);
+        });
+
         it('shows that the first epoch has appropriate dates', async function () {
           assertDatesAreClose(await ElectionModule.getEpochStartDate(), epochStartDate);
           assertDatesAreClose(

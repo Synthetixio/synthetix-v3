@@ -60,6 +60,10 @@ contract ElectionModule is
     // Owner functions
     // ---------------------------------------
 
+    function upgradeCouncilToken(address newCouncilTokenImplementation) external override onlyOwner {
+        CouncilToken(getCouncilToken()).upgradeTo(newCouncilTokenImplementation);
+    }
+
     function adjustEpochSchedule(
         uint64 newNominationPeriodStartDate,
         uint64 newVotingPeriodStartDate,
@@ -298,7 +302,7 @@ contract ElectionModule is
     // Credentials
     // ~~~~~~~~~~~~~~~~~~
 
-    function getCouncilToken() external view override returns (address) {
+    function getCouncilToken() public view override returns (address) {
         return _electionStore().councilToken;
     }
 

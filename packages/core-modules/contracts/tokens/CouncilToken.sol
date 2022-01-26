@@ -6,6 +6,8 @@ import "@synthetixio/core-contracts/contracts/ownership/Ownable.sol";
 import "@synthetixio/core-contracts/contracts/token/ERC721.sol";
 
 contract CouncilToken is Ownable, UUPSImplementation, ERC721 {
+    error TokenIsNotTransferable();
+
     function initialize(string memory tokenName, string memory tokenSymbol) public onlyOwner {
         _initialize(tokenName, tokenSymbol, "");
     }
@@ -20,5 +22,22 @@ contract CouncilToken is Ownable, UUPSImplementation, ERC721 {
 
     function burn(uint256 tokenId) public virtual onlyOwner {
         _burn(tokenId);
+    }
+
+    function transferFrom(
+        address,
+        address,
+        uint256
+    ) public virtual override {
+        revert TokenIsNotTransferable();
+    }
+
+    function safeTransferFrom(
+        address,
+        address,
+        uint256,
+        bytes memory
+    ) public virtual override {
+        revert TokenIsNotTransferable();
     }
 }

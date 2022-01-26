@@ -7,7 +7,7 @@ const { daysToSeconds } = require('@synthetixio/core-js/utils/misc/dates');
 const { bootstrap } = require('@synthetixio/deployer/utils/tests');
 const initializer = require('../../helpers/initializer');
 
-describe.only('ElectionModule (token)', () => {
+describe('ElectionModule (token)', () => {
   const { proxyAddress } = bootstrap(initializer);
 
   let ElectionModule, CouncilToken;
@@ -72,12 +72,74 @@ describe.only('ElectionModule (token)', () => {
         assert.equal(await CouncilToken.ownerOf(0), owner.address);
       });
 
-      it('shows that the owner is the single council member', async function () {
-        assert.deepEqual(await ElectionModule.getCouncilMembers(), [owner.address]);
+      describe('when upgrading the council token', function () {
+        describe('using an account that is not the owner', function () {
+          it('reverts', async function () {
+            await assertRevert(
+              ElectionModule.connect(user).upgradeCouncilToken(user.address),
+              'Unauthorized'
+            );
+          });
+        });
+
+        describe('with the owner account', function () {
+          let NewCouncilTokenImplementation;
+
+          before('upgrade', async function () {
+            const factory = await ethers.getContractFactory('CouncilToken');
+            NewCouncilTokenImplementation = await factory.deploy();
+
+            const tx = await ElectionModule.upgradeCouncilToken(
+              NewCouncilTokenImplementation.address
+            );
+            await tx.wait();
+          });
+
+          it('shows that the implementation was upgraded', async function () {
+            assert.equal(
+              await CouncilToken.getImplementation(),
+              NewCouncilTokenImplementation.address
+            );
+          });
+        });
       });
 
-      describe('when upgrading the council token', function () {
-        // TODO
+      describe('when attempting to transfer the council token', function () {
+        describe('using transferFrom', function () {
+          it('reverts', async function () {
+            await assertRevert(
+              CouncilToken.transferFrom(owner.address, user.address, 0),
+              'TokenIsNotTransferable'
+            );
+          });
+        });
+
+        describe('using safeTransferFrom without data', function () {
+          it('reverts', async function () {
+            await assertRevert(
+              CouncilToken['safeTransferFrom(address,address,uint256)'](
+                owner.address,
+                user.address,
+                0
+              ),
+              'TokenIsNotTransferable'
+            );
+          });
+        });
+
+        describe('using safeTransferFrom with data', function () {
+          it('reverts', async function () {
+            await assertRevert(
+              CouncilToken['safeTransferFrom(address,address,uint256,bytes)'](
+                owner.address,
+                user.address,
+                0,
+                '0x00'
+              ),
+              'TokenIsNotTransferable'
+            );
+          });
+        });
       });
     });
   });
