@@ -18,7 +18,7 @@ function getFullFunctionSignature(functionAbi, functionParameters) {
 
   // Collect return values
   const outputDescriptions = functionAbi.outputs.map(
-    (output) => `${output.type}${` ${output.name}` || ''}`
+    (output) => `${output.type}${output.name ? ` ${output.name}` : ''}`
   );
 
   // Function name

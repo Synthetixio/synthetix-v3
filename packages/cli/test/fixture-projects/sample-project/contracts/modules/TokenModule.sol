@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 import "@synthetixio/core-contracts/contracts/satellite/SatelliteFactory.sol";
 import "../storage/TokenStorage.sol";
-import "../token/Token.sol";
+import {Token as BaseToken} from "../token/Token.sol";
 
 contract TokenModule is SatelliteFactory, TokenStorage {
     function _getSatellites() internal view override returns (Satellite[] memory) {
@@ -15,7 +15,7 @@ contract TokenModule is SatelliteFactory, TokenStorage {
     }
 
     function createSampleToken(bytes32 name) external {
-        Token token = new Token();
-        _tokenStore().tokens.push(Satellite({name: name, contractName: "Token", deployedAddress: address(token)}));
+        BaseToken token = new BaseToken();
+        _tokenStore().tokens.push(Satellite({name: name, contractName: "BaseToken", deployedAddress: address(token)}));
     }
 }

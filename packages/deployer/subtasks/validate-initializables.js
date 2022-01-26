@@ -1,5 +1,4 @@
 const { subtask } = require('hardhat/config');
-const mapValues = require('just-map-values');
 const logger = require('@synthetixio/core-js/utils/io/logger');
 const ModuleInitializableASTValidator = require('../internal/initializable-ast-validator');
 const { ContractValidationError } = require('../internal/errors');
@@ -8,21 +7,19 @@ const { SUBTASK_VALIDATE_INITIALIZABLES } = require('../task-names');
 subtask(SUBTASK_VALIDATE_INITIALIZABLES).setAction(async (_, hre) => {
   logger.subtitle('Validating initializable contracts');
 
-  const { deployment } = hre.deployer;
+  const astNodes = Object.values(hre.deployer.deployment.sources).map((val) => val.ast);
+  const validator = new ModuleInitializableASTValidator(astNodes);
 
-  const asts = mapValues(deployment.sources, (val) => val.ast);
-  const validator = new ModuleInitializableASTValidator(asts);
+  const errorsFound = [];
 
-  let errorsFound = [];
   errorsFound.push(...validator.findMissingInitializer());
   errorsFound.push(...validator.findMissingIsInitialized());
 
   if (errorsFound.length > 0) {
-    errorsFound.forEach((error) => {
+    for (const error of errorsFound) {
       logger.error(error.msg);
-    });
-
-    errorsFound.map((err) => logger.debug(JSON.stringify(err, null, 2)));
+      logger.debug(JSON.stringify(error, null, 2));
+    }
 
     throw new ContractValidationError(
       `Invalid initializable contracts: ${errorsFound.map((err) => err.msg)}`

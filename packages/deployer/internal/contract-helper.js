@@ -1,5 +1,5 @@
 const path = require('path');
-const { parseName } = require('hardhat/utils/contract-names');
+const { parseFullyQualifiedName } = require('hardhat/utils/contract-names');
 const { getSelectors } = require('@synthetixio/core-js/utils/ethers/contracts');
 const { deployedContractHasBytescode } = require('@synthetixio/core-js/utils/ethers/contracts');
 const { onlyRepeated } = require('@synthetixio/core-js/utils/misc/array-filters');
@@ -76,16 +76,10 @@ function contractIsModule(contractSourcePath) {
 async function getModulesFullyQualifiedNames() {
   const names = await hre.artifacts.getAllFullyQualifiedNames();
 
-  const moduleSourcePaths = [];
-
-  for (const name of names) {
-    const { sourceName } = parseName(name);
-    if (contractIsModule(sourceName)) {
-      moduleSourcePaths.push(name);
-    }
-  }
-
-  return moduleSourcePaths;
+  return names.filter((name) => {
+    const { sourceName } = parseFullyQualifiedName(name);
+    return contractIsModule(sourceName);
+  });
 }
 
 module.exports = {
