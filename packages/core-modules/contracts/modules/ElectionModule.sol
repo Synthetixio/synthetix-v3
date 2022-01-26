@@ -47,7 +47,7 @@ contract ElectionModule is
         firstEpoch.seatCount = 1;
 
         _createCouncilToken(councilTokenName, councilTokenSymbol);
-        _addToCouncil(msg.sender);
+        _addMember(store.councilMembers, msg.sender);
 
         store.initialized = true;
     }
@@ -170,9 +170,8 @@ contract ElectionModule is
     function resolve() external override onlyInPeriod(ElectionPeriod.Evaluation) {
         if (!isElectionEvaluated()) revert EpochNotEvaluated();
 
-        // TODO: Burn previous epoch NFTs
-
-        // TODO: Mint new NFTs
+        _removeAllMembers();
+        _addMembers(_getCurrentElection().winners);
 
         _getCurrentElection().resolved = true;
 
@@ -304,6 +303,6 @@ contract ElectionModule is
     }
 
     function getCouncilMembers() external view override returns (address[] memory) {
-        return _getCurrentEpoch().councilMembers.values();
+        return _electionStore().councilMembers.values();
     }
 }
