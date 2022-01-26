@@ -138,4 +138,6 @@ interface IElectionModule {
     // ~~~~~~~~~~~~~~~~~~
 
     function getCouncilToken() external view returns (address);
+
+    function getCouncilMembers() external view returns (address[] memory);
 }

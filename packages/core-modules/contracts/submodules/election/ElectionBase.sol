@@ -19,6 +19,8 @@ contract ElectionBase is ElectionStorage, InitializableMixin {
     error InvalidEpochConfiguration();
     error InvalidElectionSettings();
     error NotCallableInCurrentPeriod();
+    error AlreadyACouncilMember();
+    error NotACouncilMember();
 
     function _isInitialized() internal view override returns (bool) {
         return _electionStore().initialized;

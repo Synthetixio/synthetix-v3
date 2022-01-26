@@ -28,7 +28,7 @@ contract ElectionStorage {
         uint64 endDate;
         uint64 nominationPeriodStartDate;
         uint64 votingPeriodStartDate;
-        SetUtil.AddressSet members;
+        SetUtil.AddressSet councilMembers;
     }
 
     struct ElectionData {

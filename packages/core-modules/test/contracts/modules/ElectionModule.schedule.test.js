@@ -271,8 +271,8 @@ describe('ElectionModule (schedule)', () => {
       const nominationPeriodStartDate = votingPeriodStartDate - daysToSeconds(7);
 
       await ElectionModule.initializeElectionModule(
-        "Spartan Council Token",
-        "SCT",
+        'Spartan Council Token',
+        'SCT',
         nominationPeriodStartDate,
         votingPeriodStartDate,
         epochEndDate

@@ -47,8 +47,7 @@ contract ElectionModule is
         firstEpoch.seatCount = 1;
 
         _createCouncilToken(councilTokenName, councilTokenSymbol);
-
-        // TODO: set owner as only member of the first epoch
+        _addToCouncil(msg.sender);
 
         store.initialized = true;
     }
@@ -302,5 +301,9 @@ contract ElectionModule is
 
     function getCouncilToken() external view override returns (address) {
         return _electionStore().councilToken;
+    }
+
+    function getCouncilMembers() external view override returns (address[] memory) {
+        return _getCurrentEpoch().councilMembers.values();
     }
 }
