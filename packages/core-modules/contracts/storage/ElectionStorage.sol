@@ -7,6 +7,7 @@ contract ElectionStorage {
     struct ElectionStore {
         bool initialized;
         uint currentEpochIndex;
+        address councilToken;
         mapping(uint => EpochData) epochs;
         mapping(uint => ElectionData) elections;
         ElectionSettings settings; // TODO: This kind of nesting could be problematic.
