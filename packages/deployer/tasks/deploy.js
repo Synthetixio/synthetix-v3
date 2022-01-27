@@ -19,6 +19,7 @@ const {
   SUBTASK_VALIDATE_ROUTER,
   SUBTASK_VALIDATE_STORAGE,
   SUBTASK_VALIDATE_INITIALIZABLES,
+  SUBTASK_VALIDATE_INTERFACES,
   TASK_DEPLOY,
 } = require('../task-names');
 
@@ -70,6 +71,7 @@ task(TASK_DEPLOY, 'Deploys all system modules')
       await hre.run(SUBTASK_SYNC_PROXY);
       await hre.run(SUBTASK_VALIDATE_STORAGE);
       await hre.run(SUBTASK_VALIDATE_MODULES);
+      await hre.run(SUBTASK_VALIDATE_INTERFACES);
       await hre.run(SUBTASK_VALIDATE_INITIALIZABLES);
       await hre.run(SUBTASK_DEPLOY_MODULES);
       await hre.run(SUBTASK_GENERATE_ROUTER_SOURCE);
