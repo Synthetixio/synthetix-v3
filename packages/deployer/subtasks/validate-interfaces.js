@@ -16,11 +16,10 @@ subtask(SUBTASK_VALIDATE_INTERFACES).setAction(async (_, hre) => {
   const errorsFound = validator.findFunctionsNotDefinedInInterfaces();
 
   if (errorsFound.length > 0) {
-    errorsFound.forEach((error) => {
+    for (const error of errorsFound) {
       logger.error(error.msg);
-    });
-
-    errorsFound.map((err) => logger.debug(JSON.stringify(err, null, 2)));
+      logger.debug(JSON.stringify(error, null, 2));
+    }
 
     throw new ContractValidationError(
       `Missing interfaces for contracts: ${errorsFound.map((err) => err.msg)}`
