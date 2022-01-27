@@ -41,9 +41,9 @@ class InterfaceCoverageASTValidator {
   }
 
   _findVisibleFunctions(module) {
-    const visibleFunctions = findFunctions(module.name, this.contractNodes).filter(
-      (f) => f.visibility === 'public' || f.visibility === 'external'
-    );
+    const visibleFunctions = findFunctions(module.name, this.contractNodes)
+      .filter((f) => f.visibility === 'public' || f.visibility === 'external')
+      .filter((f) => !f.name.startsWith('c_0x')); // Filter out coverage added functions
 
     return visibleFunctions;
   }
