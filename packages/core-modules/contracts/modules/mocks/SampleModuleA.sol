@@ -2,11 +2,12 @@
 pragma solidity ^0.8.0;
 
 import "../../storage/SampleStorage.sol";
+import "../../interfaces/ISampleModuleA.sol";
 
-contract SampleModuleA is SampleStorage {
+contract SampleModuleA is SampleStorage, ISampleModuleA {
     error WrongValue();
 
-    function setSomeValue(uint newSomeValue) public {
+    function setSomeValue(uint newSomeValue) public override {
         if (newSomeValue == 13) {
             revert WrongValue();
         }
@@ -14,7 +15,7 @@ contract SampleModuleA is SampleStorage {
         _sampleStore().someValue = newSomeValue;
     }
 
-    function getSomeValue() public view returns (uint) {
+    function getSomeValue() public view override returns (uint) {
         return _sampleStore().someValue;
     }
 }
