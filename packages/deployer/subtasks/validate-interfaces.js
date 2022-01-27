@@ -13,8 +13,7 @@ subtask(SUBTASK_VALIDATE_INTERFACES).setAction(async (_, hre) => {
   const asts = mapValues(deployment.sources, (val) => val.ast);
   const validator = new InterfaceCoverageASTValidator(asts);
 
-  let errorsFound = [];
-  errorsFound.push(...validator.findFunctionsNotDefinedInInterfaces());
+  const errorsFound = validator.findFunctionsNotDefinedInInterfaces();
 
   if (errorsFound.length > 0) {
     errorsFound.forEach((error) => {
