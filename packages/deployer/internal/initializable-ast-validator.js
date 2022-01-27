@@ -7,7 +7,7 @@ const { capitalize } = require('@synthetixio/core-js/utils/misc/strings');
 
 class ModuleInitializableASTValidator {
   constructor(asts) {
-    this.contractNodes = Object.values(asts).map(findContractDefinitions).flat();
+    this.contractNodes = asts.map(findContractDefinitions).flat();
   }
 
   findMissingIsInitialized() {

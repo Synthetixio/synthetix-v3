@@ -7,8 +7,8 @@ const { contractIsModule } = require('../internal/contract-helper');
 
 class InterfaceCoverageASTValidator {
   constructor(asts, isModuleChecker = contractIsModule) {
-    this.contractNodes = Object.values(asts).map(findContractDefinitions).flat();
-    this.moduleNodes = Object.values(asts)
+    this.contractNodes = asts.map(findContractDefinitions).flat();
+    this.moduleNodes = asts
       .filter((v) => isModuleChecker(v.absolutePath))
       .map(findContractDefinitions)
       .flat();

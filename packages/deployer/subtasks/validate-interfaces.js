@@ -1,5 +1,4 @@
 const { subtask } = require('hardhat/config');
-const mapValues = require('just-map-values');
 const logger = require('@synthetixio/core-js/utils/io/logger');
 const InterfaceCoverageASTValidator = require('../internal/interface-ast-validator');
 const { ContractValidationError } = require('../internal/errors');
@@ -10,7 +9,7 @@ subtask(SUBTASK_VALIDATE_INTERFACES).setAction(async (_, hre) => {
 
   const { deployment } = hre.deployer;
 
-  const asts = mapValues(deployment.sources, (val) => val.ast);
+  const asts = Object.values(deployment.sources).map((val) => val.ast);
   const validator = new InterfaceCoverageASTValidator(asts);
 
   const errorsFound = validator.findFunctionsNotDefinedInInterfaces();
