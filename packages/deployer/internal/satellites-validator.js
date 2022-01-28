@@ -35,8 +35,6 @@ module.exports = class SatellitesValidator {
 
         continue;
       }
-
-      //TODO: Validate getter interface is correct
     }
 
     return errors;
