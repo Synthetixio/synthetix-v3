@@ -230,22 +230,14 @@ function findFunctionSelectors(contractName, astNodes) {
 /**
  * Get all the function definitions from the complete tree of contract
  * nodes starting from the given root contract definition
- * @param {string} contractName
+ * @param {string|import("solidity-ast").ContractDefinition} contractNameOrNode
  * @param {import("solidity-ast").SourceUnit[]} astNodes
  * @returns {import("solidity-ast").FunctionDefinition[]}
  */
-function findFunctions(contractName, astNodes) {
-  const functions = [];
-
-  for (const contractNode of findContractDependencies(contractName, astNodes)) {
-    const currentFunctions = Array.from(findAll('FunctionDefinition', contractNode));
-
-    if (currentFunctions.length > 0) {
-      functions.push(...currentFunctions);
-    }
-  }
-
-  return functions;
+function findFunctions(contractNameOrNode, astNodes) {
+  return findContractDependencies(contractNameOrNode, astNodes).flatMap((contractNode) =>
+    Array.from(findAll('FunctionDefinition', contractNode))
+  );
 }
 
 module.exports = {
