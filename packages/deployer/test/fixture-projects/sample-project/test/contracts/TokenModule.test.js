@@ -23,7 +23,7 @@ describe('TokenModule', () => {
     });
 
     it('gets newly created token', async () => {
-      const result = await TokenModule.getSampleTokenModuleSatellites();
+      const result = await TokenModule.getTokenModuleSatellites();
 
       assert.equal(result.length, 1);
       assert.equal(result[0].name, SNXToken);

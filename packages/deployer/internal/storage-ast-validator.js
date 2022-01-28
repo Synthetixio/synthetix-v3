@@ -13,9 +13,7 @@ const { onlyRepeated } = require('@synthetixio/core-js/utils/misc/array-filters'
 class ModuleStorageASTValidator {
   constructor(asts, previousAsts) {
     this.contractNodes = Object.values(asts).map(findContractDefinitions).flat();
-    this.previousContractNodes = Object.values(previousAsts || {})
-      .map(findContractDefinitions)
-      .flat();
+    this.previousContractNodes = Object.values(previousAsts || {}).flatMap(findContractDefinitions);
   }
 
   findDuplicateNamespaces(namespaces) {

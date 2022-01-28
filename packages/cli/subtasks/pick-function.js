@@ -7,7 +7,7 @@ const { getSelectors } = require('@synthetixio/core-js/utils/ethers/contracts');
 
 subtask(SUBTASK_PICK_FUNCTION, 'Pick a function from the given contract').setAction(
   async (taskArguments, hre) => {
-    const abi = hre.deployer.deployment.abis[hre.cli.contractName];
+    const abi = hre.deployer.deployment.abis[hre.cli.contractFullyQualifiedName];
     const abiFunctions = abi.filter((abiItem) => abiItem.name && abiItem.type === 'function');
     const selectors = await getSelectors(abi);
 
@@ -36,7 +36,7 @@ subtask(SUBTASK_PICK_FUNCTION, 'Pick a function from the given contract').setAct
       hre.cli.functionName = functionName;
     } else {
       // Cancelling returns to pick-contract
-      hre.cli.contractName = null;
+      hre.cli.contractFullyQualifiedName = null;
     }
   }
 );

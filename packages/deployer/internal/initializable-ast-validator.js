@@ -1,13 +1,13 @@
 const {
   findContractDefinitions,
-  findContractDependencies,
+  contractHasDependency,
   findFunctions,
 } = require('@synthetixio/core-js/utils/ast/finders');
 const { capitalize } = require('@synthetixio/core-js/utils/misc/strings');
 
 class ModuleInitializableASTValidator {
-  constructor(asts) {
-    this.contractNodes = Object.values(asts).map(findContractDefinitions).flat();
+  constructor(astNodes) {
+    this.contractNodes = astNodes.flatMap(findContractDefinitions);
   }
 
   findMissingIsInitialized() {
@@ -43,25 +43,12 @@ class ModuleInitializableASTValidator {
   }
 
   findInitializableContractNames() {
-    const initializableContractNames = [];
-
-    const contractNames = this.contractNodes.map((v) => v.name);
-
-    for (const contractName of contractNames) {
-      if (contractName === 'InitializableMixin') {
-        continue;
-      }
-
-      if (
-        findContractDependencies(contractName, this.contractNodes).some(
-          (v) => v.name === 'InitializableMixin'
-        )
-      ) {
-        initializableContractNames.push(contractName);
-      }
-    }
-
-    return initializableContractNames;
+    return this.contractNodes
+      .map((v) => v.name)
+      .filter((contractName) => contractName !== 'InitializableMixin')
+      .filter((contractName) =>
+        contractHasDependency(contractName, 'InitializableMixin', this.contractNodes)
+      );
   }
 }
 

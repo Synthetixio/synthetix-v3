@@ -58,7 +58,7 @@ contract SynthsModule is ISynthsModule, OwnableMixin, SynthsStorage, Initializab
         string memory synthName,
         string memory synthSymbol,
         uint8 synthDecimals
-    ) external override onlyOwner {
+    ) external override onlyOwner onlyIfInitialized {
         if (_synthsStore().synths[synth].deployedAddress != address(0)) {
             revert SynthAlreadyCreated();
         }

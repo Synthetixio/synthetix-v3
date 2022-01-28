@@ -1,3 +1,4 @@
+const path = require('path');
 const { equal, notEqual } = require('assert/strict');
 const {
   findContractDependencies,
@@ -11,14 +12,26 @@ const {
   findYulCaseValues,
   findYulStorageSlotAssignments,
   findContractDefinitions,
+  contractHasDependency,
+  findImportedContractFullyQualifiedName,
 } = require('../../../utils/ast/finders');
 const asts = require('../../fixtures/asts.json');
 const noContractAst = require('../../fixtures/no-contract-ast.json');
+const parseContracts = require('../../helpers/parse-contracts');
 
 const astNodes = Object.values(asts);
 
 describe('utils/ast/finders.js find AST artifacts', function () {
-  describe('find contract dependencies', () => {
+  let sampleProject;
+  let sampleProjectAstNodes;
+
+  before('load sample-project artifacts', async function () {
+    const envPath = path.join(__dirname, '..', '..', 'fixtures', 'sample-project');
+    sampleProject = await parseContracts(envPath);
+    sampleProjectAstNodes = Object.values(sampleProject.asts);
+  });
+
+  describe('find contract dependencies', function () {
     it('finds contract dependencies of a simple contract', async () => {
       const dependencies = await findContractDependencies('AnotherModule', astNodes);
       equal(dependencies.length, 3, 'AnotherModule should have 3 dependencies');
@@ -199,6 +212,70 @@ describe('utils/ast/finders.js find AST artifacts', function () {
       const slots = findYulStorageSlotAssignments(asts['AnotherModule']);
       notEqual(slots, undefined);
       equal(slots.length == 0, true);
+    });
+  });
+
+  describe('check if a contract has a dependency', function () {
+    it('returns true when a contract has the given dependency by contractName', function () {
+      const result = contractHasDependency('Token', 'ERC20', sampleProjectAstNodes);
+      equal(result, true);
+    });
+
+    it('returns false when a contract does not have the given dependency by contractName', function () {
+      const result = contractHasDependency('Token', 'Unexistant', sampleProjectAstNodes);
+      equal(result, false);
+    });
+
+    it('returns true when a contract has the given dependency by contractNode', function () {
+      const contractNode = findContractNodeWithName(
+        'Token',
+        sampleProject.asts['contracts/Token.sol']
+      );
+
+      const result = contractHasDependency(contractNode, 'ERC20', sampleProjectAstNodes);
+      equal(result, true);
+    });
+
+    it('returns false when a contract does not have the given dependency by contractNode', function () {
+      const contractNode = findContractNodeWithName(
+        'Token',
+        sampleProject.asts['contracts/Token.sol']
+      );
+
+      const result = contractHasDependency(contractNode, 'Unexistant', sampleProjectAstNodes);
+      equal(result, false);
+    });
+  });
+
+  describe('find the fully qualified name of a imported contract', function () {
+    it('finds a globally imported contract', function () {
+      const result = findImportedContractFullyQualifiedName(
+        'ERC20',
+        sampleProject.asts['contracts/Token.sol'],
+        sampleProjectAstNodes
+      );
+
+      equal(result, '@synthetixio/core-contracts/contracts/token/ERC20.sol:ERC20');
+    });
+
+    it('finds a aliased imported contract', function () {
+      const result = findImportedContractFullyQualifiedName(
+        'ERC721Base',
+        sampleProject.asts['contracts/Token.sol'],
+        sampleProjectAstNodes
+      );
+
+      equal(result, '@synthetixio/core-contracts/contracts/token/ERC721.sol:ERC721');
+    });
+
+    it('returns undefined when not finding it', function () {
+      const result = findImportedContractFullyQualifiedName(
+        'UnexistantContract',
+        sampleProject.asts['contracts/Token.sol'],
+        sampleProjectAstNodes
+      );
+
+      equal(result, undefined);
     });
   });
 });
