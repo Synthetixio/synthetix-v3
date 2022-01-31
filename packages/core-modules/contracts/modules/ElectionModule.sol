@@ -50,6 +50,8 @@ contract ElectionModule is
         _addCouncilMember(msg.sender);
 
         store.initialized = true;
+
+        emit ElectionModuleInitialized();
     }
 
     function isElectionModuleInitialized() external view override returns (bool) {
@@ -62,6 +64,8 @@ contract ElectionModule is
 
     function upgradeCouncilToken(address newCouncilTokenImplementation) external override onlyOwner {
         CouncilToken(getCouncilToken()).upgradeTo(newCouncilTokenImplementation);
+
+        emit CouncilTokenUpgraded(newCouncilTokenImplementation);
     }
 
     function tweakEpochSchedule(
@@ -74,8 +78,10 @@ contract ElectionModule is
             newNominationPeriodStartDate,
             newVotingPeriodStartDate,
             newEpochEndDate,
-            true // ensureChangesAreSmall
+            true /*ensureChangesAreSmall = true*/
         );
+
+        emit EpochScheduleUpdated(newNominationPeriodStartDate, newVotingPeriodStartDate, newEpochEndDate);
     }
 
     function modifyEpochSchedule(
@@ -88,8 +94,10 @@ contract ElectionModule is
             newNominationPeriodStartDate,
             newVotingPeriodStartDate,
             newEpochEndDate,
-            false // !ensureChangesAreSmall
+            false /*!ensureChangesAreSmall = false*/
         );
+
+        emit EpochScheduleUpdated(newNominationPeriodStartDate, newVotingPeriodStartDate, newEpochEndDate);
     }
 
     function setMinEpochDurations(
@@ -98,24 +106,32 @@ contract ElectionModule is
         uint64 newMinEpochDuration
     ) external override onlyOwner {
         _setMinEpochDurations(newMinNominationPeriodDuration, newMinVotingPeriodDuration, newMinEpochDuration);
+
+        emit MinimumEpochDurationsChanged(newMinNominationPeriodDuration, newMinVotingPeriodDuration, newMinEpochDuration);
     }
 
     function setMaxDateAdjustmentTolerance(uint64 newMaxDateAdjustmentTolerance) external override onlyOwner {
         if (newMaxDateAdjustmentTolerance == 0) revert InvalidElectionSettings();
 
         _electionStore().settings.maxDateAdjustmentTolerance = newMaxDateAdjustmentTolerance;
+
+        emit MaximumDateAdjustmentToleranceChanged(newMaxDateAdjustmentTolerance);
     }
 
     function setDefaultBallotEvaluationBatchSize(uint newDefaultBallotEvaluationBatchSize) external override onlyOwner {
         if (newDefaultBallotEvaluationBatchSize == 0) revert InvalidElectionSettings();
 
         _electionStore().settings.defaultBallotEvaluationBatchSize = newDefaultBallotEvaluationBatchSize;
+
+        emit DefaultBallotEvaluationBatchSizeChanged(newDefaultBallotEvaluationBatchSize);
     }
 
     function setNextEpochSeatCount(uint8 newSeatCount) external override onlyOwner {
         if (newSeatCount == 0) revert InvalidElectionSettings();
 
         _electionStore().settings.nextEpochSeatCount = newSeatCount;
+
+        emit NextEpochSeatCountChanged(newSeatCount);
     }
 
     // ---------------------------------------
@@ -128,6 +144,8 @@ contract ElectionModule is
         if (nominees.contains(msg.sender)) revert AlreadyNominated();
 
         nominees.add(msg.sender);
+
+        emit CandidateNominated(msg.sender);
     }
 
     function withdrawNomination() external override onlyInPeriod(ElectionPeriod.Nomination) {

@@ -23,13 +23,29 @@ contract ElectionBase is ElectionStorage, InitializableMixin {
     error AlreadyACouncilMember();
     error NotACouncilMember();
 
-    function _isInitialized() internal view override returns (bool) {
-        return _electionStore().initialized;
-    }
+    // ---------------------------------------
+    // Events
+    // ---------------------------------------
+
+    event ElectionModuleInitialized();
+    event CouncilTokenUpgraded(address newImplementation);
+    event EpochScheduleUpdated(uint64 nominationPeriodStartDate, uint64 votingPeriodStartDate, uint64 epochEndDate);
+    event MinimumEpochDurationsChanged(uint64 minNominationPeriodDuration, uint64 minVotingPeriodDuration, uint64 minEpochDuration);
+    event MaximumDateAdjustmentToleranceChanged(uint64 maxDateAdjustmentTolerance);
+    event DefaultBallotEvaluationBatchSizeChanged(uint newDefaultBallotEvaluationBatchSize);
+    event NextEpochSeatCountChanged(uint seatCount);
+    event CandidateNominated(address candidate);
 
     // ---------------------------------------
     // Helpers
     // ---------------------------------------
+
+    // Init helpers
+    // ~~~~~~~~~~~~~~~~~~
+
+    function _isInitialized() internal view override returns (bool) {
+        return _electionStore().initialized;
+    }
 
     // Epoch helpers
     // ~~~~~~~~~~~~~~~~~~

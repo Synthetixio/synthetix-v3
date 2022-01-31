@@ -1,10 +1,12 @@
 const { ethers } = hre;
+const assert = require('assert/strict');
 const assertBn = require('@synthetixio/core-js/utils/assertions/assert-bignumber');
 const assertRevert = require('@synthetixio/core-js/utils/assertions/assert-revert');
 const { getTime } = require('@synthetixio/core-js/utils/hardhat/rpc');
 const { daysToSeconds } = require('@synthetixio/core-js/utils/misc/dates');
 const { bootstrap } = require('@synthetixio/deployer/utils/tests');
 const initializer = require('../../helpers/initializer');
+const { findEvent } = require('@synthetixio/core-js/utils/ethers/events');
 
 describe('ElectionModule (settings)', () => {
   const { proxyAddress } = bootstrap(initializer);
@@ -12,6 +14,8 @@ describe('ElectionModule (settings)', () => {
   let ElectionModule;
 
   let user;
+
+  let receipt;
 
   before('identify signers', async () => {
     [, user] = await ethers.getSigners();
@@ -59,7 +63,15 @@ describe('ElectionModule (settings)', () => {
           let newNextEpochSeatCount = 8;
 
           before('set', async () => {
-            await ElectionModule.setNextEpochSeatCount(newNextEpochSeatCount);
+            const tx = await ElectionModule.setNextEpochSeatCount(newNextEpochSeatCount);
+            receipt = await tx.wait();
+          });
+
+          it('emitted an NextEpochSeatCountChanged event', async function () {
+            const event = findEvent({ receipt, eventName: 'NextEpochSeatCountChanged' });
+
+            assert.ok(event);
+            assertBn.eq(event.args.nextEpochSeatCount, newNextEpochSeatCount);
           });
 
           it('changes the setting', async () => {
@@ -97,9 +109,17 @@ describe('ElectionModule (settings)', () => {
           let newDefaultBallotEvaluationBatchSize = 100;
 
           before('set', async () => {
-            await ElectionModule.setDefaultBallotEvaluationBatchSize(
+            const tx = await ElectionModule.setDefaultBallotEvaluationBatchSize(
               newDefaultBallotEvaluationBatchSize
             );
+            receipt = await tx.wait();
+          });
+
+          it('emitted an DefaultBallotEvaluationBatchSizeChanged event', async function () {
+            const event = findEvent({ receipt, eventName: 'DefaultBallotEvaluationBatchSizeChanged' });
+
+            assert.ok(event);
+            assertBn.eq(event.args.defaultBallotEvaluationBatchSize, newDefaultBallotEvaluationBatchSize);
           });
 
           it('changes the setting', async () => {
@@ -140,7 +160,15 @@ describe('ElectionModule (settings)', () => {
           let newMaxDateAdjustmentTolerance = daysToSeconds(1);
 
           before('set', async () => {
-            await ElectionModule.setMaxDateAdjustmentTolerance(newMaxDateAdjustmentTolerance);
+            const tx = await ElectionModule.setMaxDateAdjustmentTolerance(newMaxDateAdjustmentTolerance);
+            receipt = await tx.wait();
+          });
+
+          it('emitted an MaxDateAdjustmentToleranceChanged event', async function () {
+            const event = findEvent({ receipt, eventName: 'MaxDateAdjustmentToleranceChanged' });
+
+            assert.ok(event);
+            assertBn.eq(event.args.maxDateAdjustmentTolerance, maxDateAdjustmentTolerance);
           });
 
           it('changes the setting', async () => {
@@ -193,11 +221,21 @@ describe('ElectionModule (settings)', () => {
           let newMinEpochDuration = daysToSeconds(365);
 
           before('set', async () => {
-            await ElectionModule.setMinEpochDurations(
+            const tx = await ElectionModule.setMinEpochDurations(
               newMinNominationPeriodDuration,
               newMinVotingPeriodDuration,
               newMinEpochDuration
             );
+            receipt = await tx.wait();
+          });
+
+          it('emitted an MinimumEpochDurationsChanged event', async function () {
+            const event = findEvent({ receipt, eventName: 'MinimumEpochDurationsChanged' });
+
+            assert.ok(event);
+            assertBn.eq(event.args.minNominationPeriodDuration, newMinNominationPeriodDuration);
+            assertBn.eq(event.args.minVotingPeriodDuration, newMinVotingPeriodDuration);
+            assertBn.eq(event.args.minEpochDuration, newMinEpochDuration);
           });
 
           it('changes the setting', async () => {
