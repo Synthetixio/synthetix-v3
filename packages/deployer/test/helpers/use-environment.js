@@ -1,6 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const { TASK_DEPLOY } = require('@synthetixio/deployer/task-names');
+const { getProxyAddress, getRouterAddress } = require('@synthetixio/deployer/utils/deployments');
 const { defaultDeploymentInfo } = require('../../utils/deployments');
 const { resetHardhatContext } = require('hardhat/plugins-testing');
 
@@ -50,6 +51,11 @@ async function deployOnEnvironment(hre, customOptions = {}) {
       await initializer(deploymentInfo, hre);
     }
   }
+
+  const proxyAddress = () => getProxyAddress(deploymentInfo);
+  const routerAddress = () => getRouterAddress(deploymentInfo);
+
+  return { deploymentInfo, proxyAddress, routerAddress };
 }
 
 function _getEnvironmentPath(fixtureProjectName) {
