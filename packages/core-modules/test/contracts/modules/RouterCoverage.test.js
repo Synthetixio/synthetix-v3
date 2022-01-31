@@ -28,7 +28,7 @@ describe('RouterCoverage', () => {
     });
 
     it('reads the right value', async () => {
-      assertBn.eq(await WrongModuleMock.getFortyTwo(), 42);
+      assertBn.equal(await WrongModuleMock.getFortyTwo(), 42);
     });
   });
 });

@@ -1,18 +1,19 @@
 const { subtask } = require('hardhat/config');
-const { SUBTASK_CHECK_INITIALIZATION } = require('../task-names');
-const logger = require('@synthetixio/core-js/utils/io/logger');
+const { parseFullyQualifiedName } = require('hardhat/utils/contract-names');
 const { capitalize } = require('@synthetixio/core-js/utils/misc/strings');
+const logger = require('@synthetixio/core-js/utils/io/logger');
+const { SUBTASK_CHECK_INITIALIZATION } = require('../task-names');
 
 subtask(
   SUBTASK_CHECK_INITIALIZATION,
   'Check if current contract is initializable and if it is initialized'
 ).setAction(async (taskArguments, hre) => {
-  const target = hre.deployer.deployment.general.contracts[hre.cli.contractName];
-  const address = target.proxyAddress || target.deployedAddress;
-  const abi = hre.deployer.deployment.abis[hre.cli.contractName];
+  const address = hre.cli.contractDeployedAddress;
+  const abi = hre.deployer.deployment.abis[hre.cli.contractFullyQualifiedName];
   const abiFunctions = abi.filter((abiItem) => abiItem.name && abiItem.type === 'function');
 
-  const capitalizedContractName = capitalize(hre.cli.contractName.split(':')[1]);
+  const { contractName } = parseFullyQualifiedName(hre.cli.contractFullyQualifiedName);
+  const capitalizedContractName = capitalize(contractName);
   const isInitializedFunctionName = `is${capitalizedContractName}Initialized`;
   const initializeFunctionName = `initialize${capitalizedContractName}`;
 

@@ -13,9 +13,7 @@ const { onlyRepeated } = require('@synthetixio/core-js/utils/misc/array-filters'
 class ModuleStorageASTValidator {
   constructor(asts, previousAsts) {
     this.contractNodes = Object.values(asts).map(findContractDefinitions).flat();
-    this.previousContractNodes = Object.values(previousAsts || {})
-      .map(findContractDefinitions)
-      .flat();
+    this.previousContractNodes = Object.values(previousAsts || {}).flatMap(findContractDefinitions);
   }
 
   findDuplicateNamespaces(namespaces) {
@@ -122,6 +120,10 @@ class ModuleStorageASTValidator {
     // Look for state variable declarations
     for (const contractNode of candidates) {
       for (const node of findContractStateVariables(contractNode)) {
+        if (node.mutability === 'constant') {
+          continue;
+        }
+
         errors.push({
           msg: `Unsafe state variable declaration in ${contractNode.name}: "${node.typeName.name} ${node.name}"`,
         });

@@ -6,13 +6,12 @@ const prompter = require('@synthetixio/core-js/utils/io/prompter');
 const { getFullFunctionSignature, getFullEventSignature } = require('../internal/signatures');
 
 subtask(SUBTASK_EXECUTE_CALL, 'Execute the current tx').setAction(async (taskArguments, hre) => {
-  const target = hre.deployer.deployment.general.contracts[hre.cli.contractName];
-  const address = target.proxyAddress || target.deployedAddress;
-  const abi = hre.deployer.deployment.abis[hre.cli.contractName];
+  const address = hre.cli.contractDeployedAddress;
+  const abi = hre.deployer.deployment.abis[hre.cli.contractFullyQualifiedName];
   const functionAbi = abi.find((abiItem) => abiItem.name === hre.cli.functionName);
 
   logger.notice(
-    `Calling ${hre.cli.contractName}.${getFullFunctionSignature(
+    `Calling ${hre.cli.contractFullyQualifiedName}.${getFullFunctionSignature(
       functionAbi,
       hre.cli.functionParameters
     )}`
@@ -99,7 +98,7 @@ function _printEventsInReceipt(receipt) {
 
     receipt.events.forEach((event) => {
       if (event.event) {
-        const abi = hre.deployer.deployment.abis[hre.cli.contractName];
+        const abi = hre.deployer.deployment.abis[hre.cli.contractFullyQualifiedName];
         const eventAbi = abi.find((abiItem) => abiItem.name === event.event);
 
         console.log(chalk.green(`✓ ${getFullEventSignature(eventAbi, event)}`));

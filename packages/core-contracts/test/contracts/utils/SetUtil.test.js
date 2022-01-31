@@ -69,7 +69,7 @@ describe('SetUtil', () => {
 
     function itBehavesAsAValidSet() {
       it('has the expected length', async function () {
-        assertBn.eq(await SampleSet.length(), expectedValues.length);
+        assertBn.equal(await SampleSet.length(), expectedValues.length);
       });
 
       it('has the expected values', async function () {
