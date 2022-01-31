@@ -141,6 +141,13 @@ describe('ElectionModule (schedule)', () => {
     describe('when trying to adjust the epoch schedule', function () {
       let newEpochEndDate, newNominationPeriodStartDate, newVotingPeriodStartDate;
 
+      before('fast forward', async function () {
+        await fastForwardTo(
+          (await ElectionModule.getNominationPeriodStartDate()) - daysToSeconds(1),
+          ethers.provider
+        );
+      });
+
       before('take snapshot', async function () {
         snapshotId = await takeSnapshot(ethers.provider);
       });
@@ -197,62 +204,96 @@ describe('ElectionModule (schedule)', () => {
         });
 
         describe('with dates close to the current dates', function () {
-          before('adjust', async function () {
-            newEpochEndDate =
-              (await ElectionModule.getEpochEndDate()).toNumber() + daysToSeconds(4);
-            newNominationPeriodStartDate =
-              (await ElectionModule.getNominationPeriodStartDate()).toNumber() - daysToSeconds(2);
-            newVotingPeriodStartDate =
-              (await ElectionModule.getVotingPeriodStartDate()).toNumber() + daysToSeconds(0.5);
-
-            await ElectionModule.tweakEpochSchedule(
-              newNominationPeriodStartDate,
-              newVotingPeriodStartDate,
-              newEpochEndDate
-            );
+          describe('which change the current period type', function () {
+            it('reverts', async function () {
+              await assertRevert(
+                ElectionModule.tweakEpochSchedule(
+                  (await ElectionModule.getNominationPeriodStartDate()).toNumber() -
+                    daysToSeconds(2),
+                  (await ElectionModule.getVotingPeriodStartDate()).toNumber() + daysToSeconds(0.5),
+                  (await ElectionModule.getEpochEndDate()).toNumber() + daysToSeconds(4)
+                ),
+                'ChangesCurrentPeriod'
+              );
+            });
           });
 
-          it('properly adjusted dates', async function () {
-            assertDatesAreClose(
-              await ElectionModule.getNominationPeriodStartDate(),
-              newNominationPeriodStartDate
-            );
-            assertDatesAreClose(
-              await ElectionModule.getVotingPeriodStartDate(),
-              newVotingPeriodStartDate
-            );
-            assertDatesAreClose(await ElectionModule.getEpochEndDate(), newEpochEndDate);
+          describe('which dont change the current period type', function () {
+            before('adjust', async function () {
+              newEpochEndDate =
+                (await ElectionModule.getEpochEndDate()).toNumber() + daysToSeconds(4);
+              newNominationPeriodStartDate =
+                (await ElectionModule.getNominationPeriodStartDate()).toNumber() -
+                daysToSeconds(0.5);
+              newVotingPeriodStartDate =
+                (await ElectionModule.getVotingPeriodStartDate()).toNumber() + daysToSeconds(0.5);
+
+              await ElectionModule.tweakEpochSchedule(
+                newNominationPeriodStartDate,
+                newVotingPeriodStartDate,
+                newEpochEndDate
+              );
+            });
+
+            it('properly adjusted dates', async function () {
+              assertDatesAreClose(
+                await ElectionModule.getNominationPeriodStartDate(),
+                newNominationPeriodStartDate
+              );
+              assertDatesAreClose(
+                await ElectionModule.getVotingPeriodStartDate(),
+                newVotingPeriodStartDate
+              );
+              assertDatesAreClose(await ElectionModule.getEpochEndDate(), newEpochEndDate);
+            });
           });
         });
       });
 
       describe('with major changes', function () {
         describe('with dates far from the current dates', function () {
-          before('adjust', async function () {
-            newEpochEndDate =
-              (await ElectionModule.getEpochEndDate()).toNumber() + daysToSeconds(100);
-            newNominationPeriodStartDate =
-              (await ElectionModule.getNominationPeriodStartDate()).toNumber() + daysToSeconds(100);
-            newVotingPeriodStartDate =
-              (await ElectionModule.getVotingPeriodStartDate()).toNumber() + daysToSeconds(100);
-
-            await ElectionModule.modifyEpochSchedule(
-              newNominationPeriodStartDate,
-              newVotingPeriodStartDate,
-              newEpochEndDate
-            );
+          describe('which change the current period type', function () {
+            it('reverts', async function () {
+              await assertRevert(
+                ElectionModule.modifyEpochSchedule(
+                  (await ElectionModule.getNominationPeriodStartDate()).toNumber() -
+                    daysToSeconds(2),
+                  (await ElectionModule.getVotingPeriodStartDate()).toNumber() + daysToSeconds(100),
+                  (await ElectionModule.getEpochEndDate()).toNumber() + daysToSeconds(100)
+                ),
+                'ChangesCurrentPeriod'
+              );
+            });
           });
 
-          it('properly adjusted dates', async function () {
-            assertDatesAreClose(
-              await ElectionModule.getNominationPeriodStartDate(),
-              newNominationPeriodStartDate
-            );
-            assertDatesAreClose(
-              await ElectionModule.getVotingPeriodStartDate(),
-              newVotingPeriodStartDate
-            );
-            assertDatesAreClose(await ElectionModule.getEpochEndDate(), newEpochEndDate);
+          describe('which dont change the current period type', function () {
+            before('adjust', async function () {
+              newEpochEndDate =
+                (await ElectionModule.getEpochEndDate()).toNumber() + daysToSeconds(100);
+              newNominationPeriodStartDate =
+                (await ElectionModule.getNominationPeriodStartDate()).toNumber() +
+                daysToSeconds(100);
+              newVotingPeriodStartDate =
+                (await ElectionModule.getVotingPeriodStartDate()).toNumber() + daysToSeconds(100);
+
+              await ElectionModule.modifyEpochSchedule(
+                newNominationPeriodStartDate,
+                newVotingPeriodStartDate,
+                newEpochEndDate
+              );
+            });
+
+            it('properly adjusted dates', async function () {
+              assertDatesAreClose(
+                await ElectionModule.getNominationPeriodStartDate(),
+                newNominationPeriodStartDate
+              );
+              assertDatesAreClose(
+                await ElectionModule.getVotingPeriodStartDate(),
+                newVotingPeriodStartDate
+              );
+              assertDatesAreClose(await ElectionModule.getEpochEndDate(), newEpochEndDate);
+            });
           });
         });
       });

@@ -19,6 +19,7 @@ contract ElectionBase is ElectionStorage, InitializableMixin {
     error InvalidEpochConfiguration();
     error InvalidElectionSettings();
     error NotCallableInCurrentPeriod();
+    error ChangesCurrentPeriod();
     error AlreadyACouncilMember();
     error NotACouncilMember();
 

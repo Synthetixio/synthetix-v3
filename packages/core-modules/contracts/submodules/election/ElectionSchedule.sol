@@ -145,6 +145,10 @@ contract ElectionSchedule is ElectionBase {
             newVotingPeriodStartDate,
             newEpochEndDate
         );
+
+        if (_getCurrentPeriodType() != ElectionPeriod.Idle) {
+            revert ChangesCurrentPeriod();
+        }
     }
 
     // ---------------------------------------
