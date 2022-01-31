@@ -32,7 +32,7 @@ describe('SettingsModule', () => {
     });
 
     it('shows that the value was set', async () => {
-      assertBn.eq(await SettingsModule.getASettingValue(), 42);
+      assertBn.equal(await SettingsModule.getASettingValue(), 42);
     });
   });
 });

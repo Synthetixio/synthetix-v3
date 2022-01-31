@@ -31,13 +31,13 @@ describe('ERC20', () => {
 
   describe('Before minting any tokens', () => {
     it('the total supply is 0', async () => {
-      assertBn.eq(await ERC20.totalSupply(), 0);
+      assertBn.equal(await ERC20.totalSupply(), 0);
     });
 
     it('the constructor arguments are set correctly', async () => {
       assert.equal(await ERC20.name(), 'Synthetix Network Token');
       assert.equal(await ERC20.symbol(), 'snx');
-      assertBn.eq(await ERC20.decimals(), 18);
+      assertBn.equal(await ERC20.decimals(), 18);
     });
 
     it('reverts when trying to burn', async () => {
@@ -55,11 +55,11 @@ describe('ERC20', () => {
     });
 
     it('updates the total supply', async () => {
-      assertBn.eq(await ERC20.totalSupply(), totalSupply);
+      assertBn.equal(await ERC20.totalSupply(), totalSupply);
     });
 
     it('mints the right amount to the user', async () => {
-      assertBn.eq(await ERC20.balanceOf(user1.address), totalSupply);
+      assertBn.equal(await ERC20.balanceOf(user1.address), totalSupply);
     });
 
     it('emits a Transfer event', async () => {
@@ -67,7 +67,7 @@ describe('ERC20', () => {
 
       assert.equal(event.args.from, '0x0000000000000000000000000000000000000000');
       assert.equal(event.args.to, user1.address);
-      assertBn.eq(event.args.amount, totalSupply);
+      assertBn.equal(event.args.amount, totalSupply);
     });
 
     describe('when tokens are burned', () => {
@@ -80,11 +80,11 @@ describe('ERC20', () => {
       });
 
       it('updates the total supply', async () => {
-        assertBn.eq(await ERC20.totalSupply(), newSupply);
+        assertBn.equal(await ERC20.totalSupply(), newSupply);
       });
 
       it('reduces the user balance', async () => {
-        assertBn.eq(await ERC20.balanceOf(user1.address), newSupply);
+        assertBn.equal(await ERC20.balanceOf(user1.address), newSupply);
       });
 
       it('emits a Transfer event', async () => {
@@ -92,7 +92,7 @@ describe('ERC20', () => {
 
         assert.equal(event.args.from, user1.address);
         assert.equal(event.args.to, '0x0000000000000000000000000000000000000000');
-        assertBn.eq(event.args.amount, tokensToBurn);
+        assertBn.equal(event.args.amount, tokensToBurn);
       });
     });
 
@@ -124,12 +124,12 @@ describe('ERC20', () => {
         });
 
         it('does not alter the total supply', async () => {
-          assertBn.eq(await ERC20.totalSupply(), currentSupply);
+          assertBn.equal(await ERC20.totalSupply(), currentSupply);
         });
 
         it('reduces the sender balance and increases the receiver balance', async () => {
-          assertBn.eq(await ERC20.balanceOf(user1.address), user1Balance.sub(transferAmount));
-          assertBn.eq(await ERC20.balanceOf(user2.address), user2Balance.add(transferAmount));
+          assertBn.equal(await ERC20.balanceOf(user1.address), user1Balance.sub(transferAmount));
+          assertBn.equal(await ERC20.balanceOf(user2.address), user2Balance.add(transferAmount));
         });
 
         it('emits a Transfer event', async () => {
@@ -137,7 +137,7 @@ describe('ERC20', () => {
 
           assert.equal(event.args.from, user1.address);
           assert.equal(event.args.to, user2.address);
-          assertBn.eq(event.args.amount, transferAmount);
+          assertBn.equal(event.args.amount, transferAmount);
         });
       });
     });
@@ -157,7 +157,7 @@ describe('ERC20', () => {
       });
 
       it('sets the right allowance', async () => {
-        assertBn.eq(await ERC20.allowance(user1.address, user2.address), approvalAmount);
+        assertBn.equal(await ERC20.allowance(user1.address, user2.address), approvalAmount);
       });
 
       it('emits an Approval event', async () => {
@@ -165,7 +165,7 @@ describe('ERC20', () => {
 
         assert.equal(event.args.owner, user1.address);
         assert.equal(event.args.spender, user2.address);
-        assertBn.eq(event.args.amount, approvalAmount);
+        assertBn.equal(event.args.amount, approvalAmount);
       });
 
       describe('when trying to transfer more than the amount approved', () => {
@@ -196,12 +196,12 @@ describe('ERC20', () => {
         });
 
         it('the allowance should be 0', async () => {
-          assertBn.eq(await ERC20.allowance(user1.address, user2.address), '0');
+          assertBn.equal(await ERC20.allowance(user1.address, user2.address), '0');
         });
 
         it('updates the user balances accordingly', async () => {
-          assertBn.eq(await ERC20.balanceOf(user1.address), user1Balance.sub(approvalAmount));
-          assertBn.eq(await ERC20.balanceOf(user2.address), user2Balance.add(approvalAmount));
+          assertBn.equal(await ERC20.balanceOf(user1.address), user1Balance.sub(approvalAmount));
+          assertBn.equal(await ERC20.balanceOf(user2.address), user2Balance.add(approvalAmount));
         });
 
         it('emits a Transfer event', async () => {
@@ -209,7 +209,7 @@ describe('ERC20', () => {
 
           assert.equal(event.args.from, user1.address);
           assert.equal(event.args.to, user2.address);
-          assertBn.eq(event.args.amount, transferFromAmount);
+          assertBn.equal(event.args.amount, transferFromAmount);
         });
       });
     });

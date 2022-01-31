@@ -38,8 +38,8 @@ describe('ERC721Owned', () => {
     });
 
     it('the users NFT accounts is increased', async () => {
-      assertBn.eq(await ERC721.balanceOf(owner.address), 1);
-      assertBn.eq(await ERC721.balanceOf(user1.address), 1);
+      assertBn.equal(await ERC721.balanceOf(owner.address), 1);
+      assertBn.equal(await ERC721.balanceOf(user1.address), 1);
     });
 
     it('the minted NFT token belongs to the user', async () => {
@@ -68,8 +68,8 @@ describe('ERC721Owned', () => {
           });
 
           it('reduces the sender balance and increases the receiver balance', async () => {
-            assertBn.eq(await ERC721.balanceOf(owner.address), ownerBalance.sub(1));
-            assertBn.eq(await ERC721.balanceOf(user2.address), user2Balance.add(1));
+            assertBn.equal(await ERC721.balanceOf(owner.address), ownerBalance.sub(1));
+            assertBn.equal(await ERC721.balanceOf(user2.address), user2Balance.add(1));
           });
 
           after('transfer it back', async () => {
@@ -93,8 +93,8 @@ describe('ERC721Owned', () => {
           });
 
           it('reduces the sender balance and increases the receiver balance', async () => {
-            assertBn.eq(await ERC721.balanceOf(user1.address), user1Balance.sub(1));
-            assertBn.eq(await ERC721.balanceOf(user2.address), user2Balance.add(1));
+            assertBn.equal(await ERC721.balanceOf(user1.address), user1Balance.sub(1));
+            assertBn.equal(await ERC721.balanceOf(user2.address), user2Balance.add(1));
           });
 
           after('transfer it back', async () => {
@@ -137,8 +137,8 @@ describe('ERC721Owned', () => {
           });
 
           it('reduces the sender balance and increases the receiver balance', async () => {
-            assertBn.eq(await ERC721.balanceOf(owner.address), ownerBalance.sub(1));
-            assertBn.eq(await ERC721.balanceOf(user2.address), user2Balance.add(1));
+            assertBn.equal(await ERC721.balanceOf(owner.address), ownerBalance.sub(1));
+            assertBn.equal(await ERC721.balanceOf(user2.address), user2Balance.add(1));
           });
 
           after('transfer it back', async () => {
@@ -158,8 +158,8 @@ describe('ERC721Owned', () => {
           });
 
           it('reduces the sender balance and increases the receiver balance', async () => {
-            assertBn.eq(await ERC721.balanceOf(user1.address), user1Balance.sub(1));
-            assertBn.eq(await ERC721.balanceOf(user2.address), user2Balance.add(1));
+            assertBn.equal(await ERC721.balanceOf(user1.address), user1Balance.sub(1));
+            assertBn.equal(await ERC721.balanceOf(user2.address), user2Balance.add(1));
           });
 
           after('transfer it back', async () => {
@@ -207,8 +207,8 @@ describe('ERC721Owned', () => {
           });
 
           it('reduces the sender balance and increases the receiver balance', async () => {
-            assertBn.eq(await ERC721.balanceOf(owner.address), ownerBalance.sub(1));
-            assertBn.eq(await ERC721.balanceOf(user2.address), user2Balance.add(1));
+            assertBn.equal(await ERC721.balanceOf(owner.address), ownerBalance.sub(1));
+            assertBn.equal(await ERC721.balanceOf(user2.address), user2Balance.add(1));
           });
 
           after('transfer it back', async () => {
@@ -232,8 +232,8 @@ describe('ERC721Owned', () => {
           });
 
           it('reduces the sender balance and increases the receiver balance', async () => {
-            assertBn.eq(await ERC721.balanceOf(user1.address), user1Balance.sub(1));
-            assertBn.eq(await ERC721.balanceOf(user2.address), user2Balance.add(1));
+            assertBn.equal(await ERC721.balanceOf(user1.address), user1Balance.sub(1));
+            assertBn.equal(await ERC721.balanceOf(user2.address), user2Balance.add(1));
           });
 
           after('transfer it back', async () => {
