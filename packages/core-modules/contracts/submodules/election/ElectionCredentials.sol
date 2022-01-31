@@ -9,31 +9,25 @@ contract ElectionCredentials is ElectionBase {
     using SetUtil for SetUtil.AddressSet;
 
     function _createCouncilToken(string memory tokenName, string memory tokenSymbol) internal {
-        ElectionStore storage store = _electionStore();
+        CouncilToken implementation = new CouncilToken();
 
-        CouncilToken firstImplementation = new CouncilToken();
+        UUPSProxy proxy = new UUPSProxy(address(implementation));
 
-        UUPSProxy proxy = new UUPSProxy(address(firstImplementation));
-        address proxyAddress = address(proxy);
-
-        CouncilToken token = CouncilToken(proxyAddress);
+        CouncilToken token = CouncilToken(address(proxy));
 
         token.nominateNewOwner(address(this));
         token.acceptOwnership();
 
         token.initialize(tokenName, tokenSymbol);
 
-        store.councilToken = proxyAddress;
+        _electionStore().councilToken = address(token);
     }
 
     function _addCouncilMembers(SetUtil.AddressSet storage newMembers) internal {
         uint numNewMembers = newMembers.length();
-        for (uint newMemberIndex = 0; newMemberIndex < numNewMembers; newMemberIndex++) {
-            uint newMemberPosition = newMemberIndex + 1;
 
-            address newMember = newMembers.valueAt(newMemberPosition);
-
-            _addCouncilMember(_electionStore(), newMember);
+        for (uint newMemberPosition = 1; newMemberPosition <= numNewMembers; newMemberPosition++) {
+            _addCouncilMember(newMembers.valueAt(newMemberPosition));
         }
     }
 
@@ -42,14 +36,14 @@ contract ElectionCredentials is ElectionBase {
         SetUtil.AddressSet storage members = store.councilMembers;
 
         uint numMembers = members.length();
-        for (uint memberIndex = 0; memberIndex < numMembers; memberIndex++) {
-            address member = members.valueAt(1);
 
-            _removeCouncilMember(store, member);
+        for (uint memberIndex = 0; memberIndex < numMembers; memberIndex++) {
+            _removeCouncilMember(members.valueAt(1));
         }
     }
 
-    function _addCouncilMember(ElectionStore storage store, address newMember) internal {
+    function _addCouncilMember(address newMember) internal {
+        ElectionStore storage store = _electionStore();
         SetUtil.AddressSet storage members = store.councilMembers;
 
         if (members.contains(newMember)) {
@@ -58,13 +52,15 @@ contract ElectionCredentials is ElectionBase {
 
         members.add(newMember);
 
+        // Note that tokenId = 0 will not be used.
         uint tokenId = members.length();
         _getCouncilToken().mint(newMember, tokenId);
 
         store.councilTokenIds[newMember] = tokenId;
     }
 
-    function _removeCouncilMember(ElectionStore storage store, address member) internal {
+    function _removeCouncilMember(address member) internal {
+        ElectionStore storage store = _electionStore();
         SetUtil.AddressSet storage members = store.councilMembers;
 
         if (!members.contains(member)) {
@@ -76,6 +72,7 @@ contract ElectionCredentials is ElectionBase {
         uint tokenId = _getCouncilMemberTokenId(store, member);
         _getCouncilToken().burn(tokenId);
 
+        // tokenId = 0 means no associated token.
         store.councilTokenIds[member] = 0;
     }
 
@@ -86,7 +83,6 @@ contract ElectionCredentials is ElectionBase {
     function _getCouncilMemberTokenId(ElectionStore storage store, address member) internal view returns (uint) {
         uint tokenId = store.councilTokenIds[member];
 
-        // Note that tokenId = 0 will never be used.
         if (tokenId == 0) revert NotACouncilMember();
 
         return tokenId;
