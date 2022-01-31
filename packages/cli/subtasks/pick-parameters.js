@@ -7,7 +7,7 @@ subtask(SUBTASK_PICK_PARAMETERS, 'Populate the selected function parameters').se
   async (taskArguments, hre) => {
     hre.cli.functionParameters = [];
 
-    const abi = hre.deployer.deployment.abis[hre.cli.contractName];
+    const abi = hre.deployer.deployment.abis[hre.cli.contractFullyQualifiedName];
     const functionAbi = abi.find((abiItem) => abiItem.name === hre.cli.functionName);
 
     let parameterIndex = 0;

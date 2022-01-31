@@ -1,29 +1,31 @@
-const { subtask } = require('hardhat/config');
-const { SUBTASK_PICK_CONTRACT } = require('../task-names');
-const prompts = require('prompts');
 const chalk = require('chalk');
+const prompts = require('prompts');
+const { subtask } = require('hardhat/config');
+const { SUBTASK_PICK_CONTRACT, SUBTASK_FIND_CONTRACTS } = require('../task-names');
 
 subtask(SUBTASK_PICK_CONTRACT, 'Pick contract to interact with').setAction(
   async (taskArguments, hre) => {
-    const contracts = Object.entries(hre.deployer.deployment.general.contracts);
+    const contracts = await hre.run(SUBTASK_FIND_CONTRACTS);
 
-    const choices = contracts.map(([contractName, contract]) => {
-      const contractAddress = contract.proxyAddress || contract.deployedAddress;
-
-      return { title: `${contractName} ${chalk.gray(contractAddress)}`, value: contractName };
+    const choices = contracts.map((data) => {
+      return {
+        title: [data.contractName, chalk.gray(data.contractDeployedAddress)].join(' '),
+        value: data,
+      };
     });
 
-    const { contractName } = await prompts([
+    const { result } = await prompts([
       {
         type: 'autocomplete',
-        name: 'contractName',
+        name: 'result',
         message: 'Pick a CONTRACT:',
         choices,
       },
     ]);
 
-    if (contractName) {
-      hre.cli.contractName = contractName;
+    if (result) {
+      hre.cli.contractFullyQualifiedName = result.contractFullyQualifiedName;
+      hre.cli.contractDeployedAddress = result.contractDeployedAddress;
     } else {
       // Cancelling exits CLI
       process.exit(0);
