@@ -40,6 +40,7 @@ contract ElectionBase is ElectionStorage, InitializableMixin {
     event NextEpochSeatCountChanged(uint seatCount);
     event CandidateNominated(address indexed candidate);
     event NominationWithdrawn(address indexed candidate);
+    event VoteRecorded(address indexed voter, address[] indexed candidates, uint votePower);
 
     // ---------------------------------------
     // Helpers
