@@ -71,7 +71,7 @@ describe('ElectionModule (settings)', () => {
             const event = findEvent({ receipt, eventName: 'NextEpochSeatCountChanged' });
 
             assert.ok(event);
-            assertBn.eq(event.args.nextEpochSeatCount, newNextEpochSeatCount);
+            assertBn.eq(event.args.seatCount, newNextEpochSeatCount);
           });
 
           it('changes the setting', async () => {
@@ -116,10 +116,13 @@ describe('ElectionModule (settings)', () => {
           });
 
           it('emitted an DefaultBallotEvaluationBatchSizeChanged event', async function () {
-            const event = findEvent({ receipt, eventName: 'DefaultBallotEvaluationBatchSizeChanged' });
+            const event = findEvent({
+              receipt,
+              eventName: 'DefaultBallotEvaluationBatchSizeChanged',
+            });
 
             assert.ok(event);
-            assertBn.eq(event.args.defaultBallotEvaluationBatchSize, newDefaultBallotEvaluationBatchSize);
+            assertBn.eq(event.args.size, newDefaultBallotEvaluationBatchSize);
           });
 
           it('changes the setting', async () => {
@@ -160,7 +163,9 @@ describe('ElectionModule (settings)', () => {
           let newMaxDateAdjustmentTolerance = daysToSeconds(1);
 
           before('set', async () => {
-            const tx = await ElectionModule.setMaxDateAdjustmentTolerance(newMaxDateAdjustmentTolerance);
+            const tx = await ElectionModule.setMaxDateAdjustmentTolerance(
+              newMaxDateAdjustmentTolerance
+            );
             receipt = await tx.wait();
           });
 
@@ -168,7 +173,7 @@ describe('ElectionModule (settings)', () => {
             const event = findEvent({ receipt, eventName: 'MaxDateAdjustmentToleranceChanged' });
 
             assert.ok(event);
-            assertBn.eq(event.args.maxDateAdjustmentTolerance, maxDateAdjustmentTolerance);
+            assertBn.eq(event.args.tolerance, newMaxDateAdjustmentTolerance);
           });
 
           it('changes the setting', async () => {

@@ -30,11 +30,16 @@ contract ElectionBase is ElectionStorage, InitializableMixin {
     event ElectionModuleInitialized();
     event CouncilTokenUpgraded(address newImplementation);
     event EpochScheduleUpdated(uint64 nominationPeriodStartDate, uint64 votingPeriodStartDate, uint64 epochEndDate);
-    event MinimumEpochDurationsChanged(uint64 minNominationPeriodDuration, uint64 minVotingPeriodDuration, uint64 minEpochDuration);
-    event MaximumDateAdjustmentToleranceChanged(uint64 maxDateAdjustmentTolerance);
-    event DefaultBallotEvaluationBatchSizeChanged(uint newDefaultBallotEvaluationBatchSize);
+    event MinimumEpochDurationsChanged(
+        uint64 minNominationPeriodDuration,
+        uint64 minVotingPeriodDuration,
+        uint64 minEpochDuration
+    );
+    event MaxDateAdjustmentToleranceChanged(uint64 tolerance);
+    event DefaultBallotEvaluationBatchSizeChanged(uint size);
     event NextEpochSeatCountChanged(uint seatCount);
-    event CandidateNominated(address candidate);
+    event CandidateNominated(address indexed candidate);
+    event NominationWithdrawn(address indexed candidate);
 
     // ---------------------------------------
     // Helpers

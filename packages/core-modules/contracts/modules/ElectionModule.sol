@@ -115,7 +115,7 @@ contract ElectionModule is
 
         _electionStore().settings.maxDateAdjustmentTolerance = newMaxDateAdjustmentTolerance;
 
-        emit MaximumDateAdjustmentToleranceChanged(newMaxDateAdjustmentTolerance);
+        emit MaxDateAdjustmentToleranceChanged(newMaxDateAdjustmentTolerance);
     }
 
     function setDefaultBallotEvaluationBatchSize(uint newDefaultBallotEvaluationBatchSize) external override onlyOwner {
@@ -154,6 +154,8 @@ contract ElectionModule is
         if (!nominees.contains(msg.sender)) revert NotNominated();
 
         nominees.remove(msg.sender);
+
+        emit NominationWithdrawn(msg.sender);
     }
 
     // ---------------------------------------
