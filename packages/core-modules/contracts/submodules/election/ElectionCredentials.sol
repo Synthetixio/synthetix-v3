@@ -32,8 +32,7 @@ contract ElectionCredentials is ElectionBase {
     }
 
     function _removeAllCouncilMembers() internal {
-        ElectionStore storage store = _electionStore();
-        SetUtil.AddressSet storage members = store.councilMembers;
+        SetUtil.AddressSet storage members = _electionStore().councilMembers;
 
         uint numMembers = members.length();
 
@@ -69,7 +68,7 @@ contract ElectionCredentials is ElectionBase {
 
         members.remove(member);
 
-        uint tokenId = _getCouncilMemberTokenId(store, member);
+        uint tokenId = _getCouncilMemberTokenId(member);
         _getCouncilToken().burn(tokenId);
 
         // tokenId = 0 means no associated token.
@@ -80,8 +79,8 @@ contract ElectionCredentials is ElectionBase {
         return CouncilToken(_electionStore().councilToken);
     }
 
-    function _getCouncilMemberTokenId(ElectionStore storage store, address member) internal view returns (uint) {
-        uint tokenId = store.councilTokenIds[member];
+    function _getCouncilMemberTokenId(address member) internal view returns (uint) {
+        uint tokenId = _electionStore().councilTokenIds[member];
 
         if (tokenId == 0) revert NotACouncilMember();
 
