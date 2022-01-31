@@ -64,7 +64,7 @@ contract ElectionModule is
         CouncilToken(getCouncilToken()).upgradeTo(newCouncilTokenImplementation);
     }
 
-    function adjustEpochSchedule(
+    function tweakEpochSchedule(
         uint64 newNominationPeriodStartDate,
         uint64 newVotingPeriodStartDate,
         uint64 newEpochEndDate
@@ -78,7 +78,7 @@ contract ElectionModule is
         );
     }
 
-    function unsafeAdjustEpochSchedule(
+    function modifyEpochSchedule(
         uint64 newNominationPeriodStartDate,
         uint64 newVotingPeriodStartDate,
         uint64 newEpochEndDate

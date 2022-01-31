@@ -118,19 +118,19 @@ describe('ElectionModule (schedule)', () => {
   // ----------------------------------
 
   const itRejectsAdjustments = () => {
-    describe('when trying to call the adjustEpochSchedule function', function () {
+    describe('when trying to call the tweakEpochSchedule function', function () {
       it('reverts', async function () {
         await assertRevert(
-          ElectionModule.adjustEpochSchedule(0, 0, 0),
+          ElectionModule.tweakEpochSchedule(0, 0, 0),
           'NotCallableInCurrentPeriod'
         );
       });
     });
 
-    describe('when trying to call the unsafeAdjustEpochSchedule function', function () {
+    describe('when trying to call the modifyEpochSchedule function', function () {
       it('reverts', async function () {
         await assertRevert(
-          ElectionModule.unsafeAdjustEpochSchedule(0, 0, 0),
+          ElectionModule.modifyEpochSchedule(0, 0, 0),
           'NotCallableInCurrentPeriod'
         );
       });
@@ -152,13 +152,13 @@ describe('ElectionModule (schedule)', () => {
       describe('with zero dates', function () {
         it('reverts', async function () {
           await assertRevert(
-            ElectionModule.adjustEpochSchedule(0, 0, 0),
+            ElectionModule.tweakEpochSchedule(0, 0, 0),
             'InvalidEpochConfiguration'
           );
         });
       });
 
-      describe('safely', function () {
+      describe('with minor changes', function () {
         describe('with dates too far from the current dates', function () {
           it('reverts', async function () {
             const epochEndDate = (await ElectionModule.getEpochEndDate()).toNumber();
@@ -170,7 +170,7 @@ describe('ElectionModule (schedule)', () => {
             ).toNumber();
 
             await assertRevert(
-              ElectionModule.adjustEpochSchedule(
+              ElectionModule.tweakEpochSchedule(
                 nominationPeriodStartDate + daysToSeconds(2),
                 votingPeriodStartDate + daysToSeconds(2),
                 epochEndDate + daysToSeconds(8)
@@ -178,7 +178,7 @@ describe('ElectionModule (schedule)', () => {
               'InvalidEpochConfiguration'
             );
             await assertRevert(
-              ElectionModule.adjustEpochSchedule(
+              ElectionModule.tweakEpochSchedule(
                 nominationPeriodStartDate - daysToSeconds(8),
                 votingPeriodStartDate + daysToSeconds(2),
                 epochEndDate + daysToSeconds(7)
@@ -186,7 +186,7 @@ describe('ElectionModule (schedule)', () => {
               'InvalidEpochConfiguration'
             );
             await assertRevert(
-              ElectionModule.adjustEpochSchedule(
+              ElectionModule.tweakEpochSchedule(
                 nominationPeriodStartDate + daysToSeconds(2),
                 votingPeriodStartDate - daysToSeconds(8),
                 epochEndDate + daysToSeconds(7)
@@ -205,7 +205,7 @@ describe('ElectionModule (schedule)', () => {
             newVotingPeriodStartDate =
               (await ElectionModule.getVotingPeriodStartDate()).toNumber() + daysToSeconds(0.5);
 
-            await ElectionModule.adjustEpochSchedule(
+            await ElectionModule.tweakEpochSchedule(
               newNominationPeriodStartDate,
               newVotingPeriodStartDate,
               newEpochEndDate
@@ -226,7 +226,7 @@ describe('ElectionModule (schedule)', () => {
         });
       });
 
-      describe('unsafely', function () {
+      describe('with major changes', function () {
         describe('with dates far from the current dates', function () {
           before('adjust', async function () {
             newEpochEndDate =
@@ -236,7 +236,7 @@ describe('ElectionModule (schedule)', () => {
             newVotingPeriodStartDate =
               (await ElectionModule.getVotingPeriodStartDate()).toNumber() + daysToSeconds(100);
 
-            await ElectionModule.unsafeAdjustEpochSchedule(
+            await ElectionModule.modifyEpochSchedule(
               newNominationPeriodStartDate,
               newVotingPeriodStartDate,
               newEpochEndDate
@@ -286,7 +286,7 @@ describe('ElectionModule (schedule)', () => {
     describe('when an account that does not own the instance attempts to adjust the epoch', function () {
       it('reverts', async function () {
         await assertRevert(
-          ElectionModule.connect(user).adjustEpochSchedule(0, 0, 0),
+          ElectionModule.connect(user).tweakEpochSchedule(0, 0, 0),
           'Unauthorized'
         );
       });
@@ -295,7 +295,7 @@ describe('ElectionModule (schedule)', () => {
     describe('when an account that does not own the instance attempts to unsafely adjust the epoch', function () {
       it('reverts', async function () {
         await assertRevert(
-          ElectionModule.connect(user).unsafeAdjustEpochSchedule(0, 0, 0),
+          ElectionModule.connect(user).modifyEpochSchedule(0, 0, 0),
           'Unauthorized'
         );
       });
