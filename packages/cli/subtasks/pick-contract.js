@@ -9,11 +9,7 @@ subtask(SUBTASK_PICK_CONTRACT, 'Pick contract to interact with').setAction(
 
     const choices = contracts.map((data) => {
       return {
-        title: [
-          data.contractName,
-          chalk.white(data.contractFullyQualifiedName),
-          chalk.gray(data.contractDeployedAddress),
-        ].join(' '),
+        title: [data.contractName, chalk.gray(data.contractDeployedAddress)].join(' '),
         value: data,
       };
     });
