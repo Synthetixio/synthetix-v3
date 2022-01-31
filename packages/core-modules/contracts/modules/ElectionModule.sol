@@ -6,9 +6,17 @@ import "@synthetixio/core-contracts/contracts/ownership/OwnableMixin.sol";
 import "../submodules/election/ElectionSchedule.sol";
 import "../submodules/election/ElectionVotes.sol";
 import "../submodules/election/ElectionTally.sol";
+import "../submodules/election/ElectionCredentials.sol";
 import "../interfaces/IElectionModule.sol";
 
-contract ElectionModule is IElectionModule, ElectionSchedule, ElectionVotes, ElectionTally, OwnableMixin {
+contract ElectionModule is
+    IElectionModule,
+    ElectionSchedule,
+    ElectionVotes,
+    ElectionTally,
+    ElectionCredentials,
+    OwnableMixin
+{
     using SetUtil for SetUtil.AddressSet;
 
     // ---------------------------------------
@@ -16,6 +24,8 @@ contract ElectionModule is IElectionModule, ElectionSchedule, ElectionVotes, Ele
     // ---------------------------------------
 
     function initializeElectionModule(
+        string memory councilTokenName,
+        string memory councilTokenSymbol,
         uint64 nominationPeriodStartDate,
         uint64 votingPeriodStartDate,
         uint64 epochEndDate
@@ -36,7 +46,8 @@ contract ElectionModule is IElectionModule, ElectionSchedule, ElectionVotes, Ele
         EpochData storage firstEpoch = store.epochs[1];
         firstEpoch.seatCount = 1;
 
-        // TODO: set owner as only member of the first epoch
+        _createCouncilToken(councilTokenName, councilTokenSymbol);
+        _addCouncilMember(msg.sender);
 
         store.initialized = true;
     }
@@ -48,6 +59,10 @@ contract ElectionModule is IElectionModule, ElectionSchedule, ElectionVotes, Ele
     // ---------------------------------------
     // Owner functions
     // ---------------------------------------
+
+    function upgradeCouncilToken(address newCouncilTokenImplementation) external override onlyOwner {
+        CouncilToken(getCouncilToken()).upgradeTo(newCouncilTokenImplementation);
+    }
 
     function adjustEpochSchedule(
         uint64 newNominationPeriodStartDate,
@@ -159,7 +174,8 @@ contract ElectionModule is IElectionModule, ElectionSchedule, ElectionVotes, Ele
     function resolve() external override onlyInPeriod(ElectionPeriod.Evaluation) {
         if (!isElectionEvaluated()) revert EpochNotEvaluated();
 
-        // TODO: Shuffle NFTs
+        _removeAllCouncilMembers();
+        _addCouncilMembers(_getCurrentElection().winners);
 
         _getCurrentElection().resolved = true;
 
@@ -281,5 +297,16 @@ contract ElectionModule is IElectionModule, ElectionSchedule, ElectionVotes, Ele
 
     function getElectionWinners() external view override returns (address[] memory) {
         return _getCurrentElection().winners.values();
+    }
+
+    // Credentials
+    // ~~~~~~~~~~~~~~~~~~
+
+    function getCouncilToken() public view override returns (address) {
+        return _electionStore().councilToken;
+    }
+
+    function getCouncilMembers() external view override returns (address[] memory) {
+        return _electionStore().councilMembers.values();
     }
 }

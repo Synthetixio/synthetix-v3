@@ -9,7 +9,7 @@ const { assertDatesAreClose } = require('../../helpers/election-helper');
 const initializer = require('../../helpers/initializer');
 const { ElectionPeriod } = require('../../helpers/election-helper');
 
-describe('ElectionModule (init)', () => {
+describe('ElectionModule (initialization)', () => {
   const { proxyAddress } = bootstrap(initializer);
 
   let ElectionModule;
@@ -34,13 +34,20 @@ describe('ElectionModule (init)', () => {
     it('shows that the module is not initialized', async () => {
       assert.equal(await ElectionModule.isElectionModuleInitialized(), false);
     });
+
+    it('shows that the council token does not exist', async function () {
+      assert.equal(
+        await ElectionModule.getCouncilToken(),
+        '0x0000000000000000000000000000000000000000'
+      );
+    });
   });
 
   describe('when initializing the module', function () {
     describe('with an account that does not own the instance', function () {
       it('reverts', async function () {
         await assertRevert(
-          ElectionModule.connect(user).initializeElectionModule(0, 0, 0),
+          ElectionModule.connect(user).initializeElectionModule('', '', 0, 0, 0),
           'Unauthorized'
         );
       });
@@ -56,15 +63,15 @@ describe('ElectionModule (init)', () => {
             const date3 = date2 + daysToSeconds(2);
 
             await assertRevert(
-              ElectionModule.connect(owner).initializeElectionModule(date2, date1, date3),
+              ElectionModule.connect(owner).initializeElectionModule('', '', date2, date1, date3),
               'InvalidEpochConfiguration'
             );
             await assertRevert(
-              ElectionModule.initializeElectionModule(date1, date3, date2),
+              ElectionModule.initializeElectionModule('', '', date1, date3, date2),
               'InvalidEpochConfiguration'
             );
             await assertRevert(
-              ElectionModule.initializeElectionModule(date3, date2, date1),
+              ElectionModule.initializeElectionModule('', '', date3, date2, date1),
               'InvalidEpochConfiguration'
             );
           });
@@ -79,6 +86,8 @@ describe('ElectionModule (init)', () => {
             nominationPeriodStartDate = votingPeriodStartDate - daysToSeconds(2);
             await assertRevert(
               ElectionModule.connect(owner).initializeElectionModule(
+                '',
+                '',
                 nominationPeriodStartDate,
                 votingPeriodStartDate,
                 epochEndDate
@@ -91,6 +100,8 @@ describe('ElectionModule (init)', () => {
             nominationPeriodStartDate = votingPeriodStartDate - daysToSeconds(2);
             await assertRevert(
               ElectionModule.connect(owner).initializeElectionModule(
+                '',
+                '',
                 nominationPeriodStartDate,
                 votingPeriodStartDate,
                 epochEndDate
@@ -103,6 +114,8 @@ describe('ElectionModule (init)', () => {
             nominationPeriodStartDate = votingPeriodStartDate - daysToSeconds(1);
             await assertRevert(
               ElectionModule.connect(owner).initializeElectionModule(
+                '',
+                '',
                 now + daysToSeconds(1),
                 now + daysToSeconds(2),
                 now + daysToSeconds(7)
@@ -121,13 +134,15 @@ describe('ElectionModule (init)', () => {
           nominationPeriodStartDate = votingPeriodStartDate - daysToSeconds(7);
 
           await ElectionModule.initializeElectionModule(
+            '',
+            '',
             nominationPeriodStartDate,
             votingPeriodStartDate,
             epochEndDate
           );
         });
 
-        it('shows that the module is not initialized', async () => {
+        it('shows that the module is initialized', async () => {
           assert.equal(await ElectionModule.isElectionModuleInitialized(), true);
         });
 
@@ -137,6 +152,10 @@ describe('ElectionModule (init)', () => {
 
         it('shows that the current period is Idle', async () => {
           assertBn.eq(await ElectionModule.getCurrentPeriodType(), ElectionPeriod.Idle);
+        });
+
+        it('shows that the owner is the single council member', async function () {
+          assert.deepEqual(await ElectionModule.getCouncilMembers(), [owner.address]);
         });
 
         it('shows that the first epoch has appropriate dates', async function () {
@@ -152,10 +171,17 @@ describe('ElectionModule (init)', () => {
           assertDatesAreClose(await ElectionModule.getEpochEndDate(), epochEndDate);
         });
 
+        it('shows that the council token was created', async function () {
+          assert.notEqual(
+            await ElectionModule.getCouncilToken(),
+            '0x0000000000000000000000000000000000000000'
+          );
+        });
+
         describe('when attemting to re-initialize the module', function () {
           it('reverts', async function () {
             await assertRevert(
-              ElectionModule.initializeElectionModule(0, 0, 0),
+              ElectionModule.initializeElectionModule('', '', 0, 0, 0),
               'AlreadyInitialized'
             );
           });

@@ -7,6 +7,8 @@ interface IElectionModule {
     // ---------------------------------------
 
     function initializeElectionModule(
+        string memory councilTokenName,
+        string memory councilTokenSymbol,
         uint64 nominationPeriodStartDate,
         uint64 votingPeriodStartDate,
         uint64 epochEndDate
@@ -17,6 +19,8 @@ interface IElectionModule {
     // ---------------------------------------
     // Owner functions
     // ---------------------------------------
+
+    function upgradeCouncilToken(address newCouncilTokenImplementation) external;
 
     function adjustEpochSchedule(
         uint64 newNominationPeriodStartDate,
@@ -131,4 +135,11 @@ interface IElectionModule {
     function getCandidateVotes(address candidate) external view returns (uint);
 
     function getElectionWinners() external view returns (address[] memory);
+
+    // Credentials
+    // ~~~~~~~~~~~~~~~~~~
+
+    function getCouncilToken() external view returns (address);
+
+    function getCouncilMembers() external view returns (address[] memory);
 }
