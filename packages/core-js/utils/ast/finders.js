@@ -239,6 +239,17 @@ function _findCotractSourceByFullyQualifiedName(contractFullyQualifiedName, astN
   return { baseNode, contractNode };
 }
 
+function _findInheritedLocalNodeNames(contractNode, sourceUnitNode) {
+  return Array.from(findAll('InheritanceSpecifier', contractNode))
+    .map((inheritNode) => inheritNode.baseName.referencedDeclaration)
+    .map(
+      (declarationId) =>
+        Object.entries(sourceUnitNode.exportedSymbols).find(([, ids]) =>
+          ids.includes(declarationId)
+        )[0]
+    );
+}
+
 /**
  * Get the complete tree of dependencies from the given contract. This methods
  * takes an objects with the keys from all the contracts and the values are their
@@ -252,17 +263,10 @@ function findContractDependenciesByFullyQualifiedName(contractFullyQualifiedName
     contractFullyQualifiedName,
     astNodes
   );
-
-  const inheritNodeNames = Array.from(findAll('InheritanceSpecifier', contractNode))
-    .map((inheritNode) => inheritNode.baseName.referencedDeclaration)
-    .map((declarationId) =>
-      Object.entries(baseNode.exportedSymbols).find((symbolName, ids) =>
-        ids.includes(declarationId)
-      )
-    );
+  const inheritedNodeNames = _findInheritedLocalNodeNames(contractNode, baseNode);
 
   console.log(JSON.stringify(baseNode, null, 2));
-  console.log(JSON.stringify(inheritNodeNames, null, 2));
+  console.log(JSON.stringify(inheritedNodeNames, null, 2));
 }
 
 /**
