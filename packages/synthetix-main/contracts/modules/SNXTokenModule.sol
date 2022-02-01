@@ -4,11 +4,12 @@ pragma solidity ^0.8.0;
 import "@synthetixio/core-contracts/contracts/ownership/OwnableMixin.sol";
 import "@synthetixio/core-contracts/contracts/proxy/UUPSProxy.sol";
 import "@synthetixio/core-contracts/contracts/initializable/InitializableMixin.sol";
+import "@synthetixio/core-contracts/contracts/satellite/SatelliteFactory.sol";
 import "../interfaces/ISNXTokenModule.sol";
 import "../storage/SNXTokenStorage.sol";
 import "../token/SNXToken.sol";
 
-contract SNXTokenModule is ISNXTokenModule, OwnableMixin, SNXTokenStorage, InitializableMixin {
+contract SNXTokenModule is ISNXTokenModule, OwnableMixin, SNXTokenStorage, InitializableMixin, SatelliteFactory {
     event SNXTokenCreated(address snxAddress);
 
     function _isInitialized() internal view override returns (bool) {
@@ -33,11 +34,21 @@ contract SNXTokenModule is ISNXTokenModule, OwnableMixin, SNXTokenStorage, Initi
         snxToken.acceptOwnership();
         snxToken.initialize("Synthetix Network Token", "snx", 18);
 
-        store.snxTokenAddress = snxTokenProxyAddress;
+        store.snxToken = Satellite({name: "snx", contractName: "SNXToken", deployedAddress: snxTokenProxyAddress});
 
         store.initialized = true;
 
         emit SNXTokenCreated(snxTokenProxyAddress);
+    }
+
+    function _getSatellites() internal view override returns (Satellite[] memory) {
+        Satellite[] memory satellites = new Satellite[](1);
+        satellites[0] = _snxTokenStore().snxToken;
+        return satellites;
+    }
+
+    function getSNXTokenModuleSatellites() public view returns (Satellite[] memory) {
+        return _getSatellites();
     }
 
     function upgradeSNXImplementation(address newSNXTokenImplementation) external override onlyOwner onlyIfInitialized {
@@ -45,6 +56,6 @@ contract SNXTokenModule is ISNXTokenModule, OwnableMixin, SNXTokenStorage, Initi
     }
 
     function getSNXTokenAddress() public view override returns (address) {
-        return _snxTokenStore().snxTokenAddress;
+        return _snxTokenStore().snxToken.deployedAddress;
     }
 }

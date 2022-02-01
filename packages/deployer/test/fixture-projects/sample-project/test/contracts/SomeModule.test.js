@@ -29,14 +29,14 @@ describe('SomeModule', () => {
     });
 
     it('shows that the value was set', async () => {
-      assertBn.eq(await SomeModule.getValue(), 42);
+      assertBn.equal(await SomeModule.getValue(), 42);
     });
 
     it('emitted a ValueSet event', async () => {
       const event = findEvent({ receipt, eventName: 'ValueSet' });
 
       assert.equal(event.args.sender, owner.address);
-      assertBn.eq(event.args.value, 42);
+      assertBn.equal(event.args.value, 42);
     });
   });
 
@@ -47,14 +47,14 @@ describe('SomeModule', () => {
     });
 
     it('shows that the value was set', async () => {
-      assertBn.eq(await SomeModule.getSomeValue(), 1337);
+      assertBn.equal(await SomeModule.getSomeValue(), 1337);
     });
 
     it('emitted a ValueSet event', async () => {
       const event = findEvent({ receipt, eventName: 'ValueSet' });
 
       assert.equal(event.args.sender, owner.address);
-      assertBn.eq(event.args.value, 1337);
+      assertBn.equal(event.args.value, 1337);
     });
   });
 });

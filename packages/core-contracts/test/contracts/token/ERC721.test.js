@@ -52,7 +52,7 @@ describe('ERC721', () => {
     });
 
     it('user does not have any NFT token minted', async () => {
-      assertBn.eq(await ERC721.balanceOf(user1.address), 0);
+      assertBn.equal(await ERC721.balanceOf(user1.address), 0);
     });
 
     it('reverts checking the balance of 0x0 address', async () => {
@@ -76,11 +76,11 @@ describe('ERC721', () => {
 
       assert.equal(event.args.from, '0x0000000000000000000000000000000000000000');
       assert.equal(event.args.to, user1.address);
-      assertBn.eq(event.args.tokenId, token42);
+      assertBn.equal(event.args.tokenId, token42);
     });
 
     it('the user NFT accounts is increased', async () => {
-      assertBn.eq(await ERC721.balanceOf(user1.address), 2);
+      assertBn.equal(await ERC721.balanceOf(user1.address), 2);
     });
 
     it('the minted NFT token belongs to the user', async () => {
@@ -123,7 +123,7 @@ describe('ERC721', () => {
       });
 
       it('reduces the user balance', async () => {
-        assertBn.eq(await ERC721.balanceOf(user1.address), 1);
+        assertBn.equal(await ERC721.balanceOf(user1.address), 1);
       });
 
       it('emits a Transfer event', async () => {
@@ -131,7 +131,7 @@ describe('ERC721', () => {
 
         assert.equal(event.args.from, user1.address);
         assert.equal(event.args.to, '0x0000000000000000000000000000000000000000');
-        assertBn.eq(event.args.tokenId, 1);
+        assertBn.equal(event.args.tokenId, 1);
       });
 
       it('emits an Approval event', async () => {
@@ -139,7 +139,7 @@ describe('ERC721', () => {
 
         assert.equal(event.args.owner, user1.address);
         assert.equal(event.args.approved, '0x0000000000000000000000000000000000000000');
-        assertBn.eq(event.args.tokenId, 1);
+        assertBn.equal(event.args.tokenId, 1);
       });
 
       after('mint again', async () => {
@@ -176,8 +176,8 @@ describe('ERC721', () => {
         });
 
         it('reduces the sender balance and increases the receiver balance', async () => {
-          assertBn.eq(await ERC721.balanceOf(user1.address), user1Balance.sub(1));
-          assertBn.eq(await ERC721.balanceOf(user2.address), user2Balance.add(1));
+          assertBn.equal(await ERC721.balanceOf(user1.address), user1Balance.sub(1));
+          assertBn.equal(await ERC721.balanceOf(user2.address), user2Balance.add(1));
         });
 
         it('emits a Transfer event', async () => {
@@ -185,7 +185,7 @@ describe('ERC721', () => {
 
           assert.equal(event.args.from, user1.address);
           assert.equal(event.args.to, user2.address);
-          assertBn.eq(event.args.tokenId, token42);
+          assertBn.equal(event.args.tokenId, token42);
         });
 
         after('transfer it back', async () => {
@@ -242,7 +242,7 @@ describe('ERC721', () => {
 
           assert.equal(event.args.from, user1.address);
           assert.equal(event.args.to, user2.address);
-          assertBn.eq(event.args.tokenId, token42);
+          assertBn.equal(event.args.tokenId, token42);
         });
 
         after('transfer it back', async () => {
@@ -331,7 +331,7 @@ describe('ERC721', () => {
 
           assert.equal(event.args.from, user1.address);
           assert.equal(event.args.to, ERC721Receiver.address);
-          assertBn.eq(event.args.tokenId, token42);
+          assertBn.equal(event.args.tokenId, token42);
         });
 
         after('transfer it back', async () => {
@@ -392,7 +392,7 @@ describe('ERC721', () => {
 
         assert.equal(event.args.owner, user1.address);
         assert.equal(event.args.approved, user3.address);
-        assertBn.eq(event.args.tokenId, token42);
+        assertBn.equal(event.args.tokenId, token42);
       });
 
       it('approves the user', async () => {

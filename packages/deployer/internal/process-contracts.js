@@ -10,7 +10,7 @@ async function initContractData(contractFullyQualifiedName, extraData = {}) {
   const { deployment, previousDeployment } = hre.deployer;
 
   const { sourceName, contractName } = parseFullyQualifiedName(contractFullyQualifiedName);
-  const { abi, deployedBytecode } = await hre.artifacts.readArtifact(contractFullyQualifiedName);
+  const { deployedBytecode } = await hre.artifacts.readArtifact(contractFullyQualifiedName);
 
   const previousData = previousDeployment?.general.contracts[contractFullyQualifiedName] || {};
   const deployedBytecodeHash = getBytecodeHash(deployedBytecode);
@@ -26,8 +26,6 @@ async function initContractData(contractFullyQualifiedName, extraData = {}) {
     sourceName,
   };
 
-  deployment.abis[contractFullyQualifiedName] = abi;
-
   await _initContractSource(contractFullyQualifiedName);
 }
 
@@ -38,11 +36,6 @@ async function initContractData(contractFullyQualifiedName, extraData = {}) {
  */
 async function _initContractSource(contractFullyQualifiedName) {
   const { deployment } = hre.deployer;
-
-  // If the contract sources are already calculated, don't re do it.
-  if (deployment.sources[contractFullyQualifiedName]) {
-    return;
-  }
 
   const buildInfo = await hre.artifacts.getBuildInfo(contractFullyQualifiedName);
 
@@ -58,6 +51,13 @@ async function _initContractSource(contractFullyQualifiedName) {
   // Save the asts for the entire dependency tree
   for (const [sourceName, attributes] of Object.entries(buildInfo.output.sources)) {
     deployment.sources[sourceName].ast = attributes.ast;
+  }
+
+  // Save the ABIs of all the contracts
+  for (const [sourceName, contracts] of Object.entries(buildInfo.output.contracts)) {
+    for (const [contractName, attributes] of Object.entries(contracts)) {
+      deployment.abis[`${sourceName}:${contractName}`] = attributes.abi;
+    }
   }
 }
 

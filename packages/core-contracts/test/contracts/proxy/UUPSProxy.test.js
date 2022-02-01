@@ -71,7 +71,7 @@ describe('UUPSProxy', () => {
       });
 
       it('can read the value set', async () => {
-        assertBn.eq(await Instance.getA(), 42);
+        assertBn.equal(await Instance.getA(), 42);
       });
 
       describe('when sending ETH while interacting with a non payable function', () => {
@@ -143,7 +143,7 @@ describe('UUPSProxy', () => {
         });
 
         it('can read the value previously set', async () => {
-          assertBn.eq(await Instance.getA(), 42);
+          assertBn.equal(await Instance.getA(), 42);
         });
 
         it('can read the new value set', async () => {
