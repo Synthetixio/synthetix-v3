@@ -5,6 +5,9 @@ const {
 } = require('@synthetixio/core-js/utils/ast/finders');
 const { capitalize } = require('@synthetixio/core-js/utils/misc/strings');
 
+const INITIALIZABLE_MIXIN =
+  '@synthetixio/core-contracts/contracts/initializable/InitializableMixin.sol:InitializableMixin';
+
 class ModuleInitializableASTValidator {
   constructor(asts) {
     this.contractNodes = asts.map(findContractDefinitions).flat();

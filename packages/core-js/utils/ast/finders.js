@@ -116,7 +116,7 @@ function _findFunctionSelectors(contractNode) {
  * @returns {string[]}
  */
 function findContractDependencies(contractFullyQualifiedName, astNodes) {
-  const { baseNode, contractNode } = _findCotractSourceByFullyQualifiedName(
+  const { baseNode, contractNode } = _findContractSourceByFullyQualifiedName(
     contractFullyQualifiedName,
     astNodes
   );
@@ -146,7 +146,7 @@ function _findSourceUnitByAbsolutePath(absolutePath, astNodes) {
   }
 }
 
-function _findCotractSourceByFullyQualifiedName(contractFullyQualifiedName, astNodes) {
+function _findContractSourceByFullyQualifiedName(contractFullyQualifiedName, astNodes) {
   const { sourceName, contractName } = parseFullyQualifiedName(contractFullyQualifiedName);
   const baseNode = _findSourceUnitByAbsolutePath(sourceName, astNodes);
   const contractNode = findContractNodeWithName(contractName, baseNode);
@@ -184,10 +184,11 @@ function _findLocalContractFullyQualifiedName(localContractName, localSourceUnit
  * @returns {string[]}
  */
 function findContractNode(contractFullyQualifiedName, astNodes) {
-  const { contractNode } = _findCotractSourceByFullyQualifiedName(
+  const { contractNode } = _findContractSourceByFullyQualifiedName(
     contractFullyQualifiedName,
     astNodes
   );
+
   return contractNode;
 }
 
@@ -251,7 +252,7 @@ function findFunctionSelectors(contractName, astNodes) {
 function findFunctionNodes(contractFullyQualifiedName, astNodes) {
   return findContractDependencies(contractFullyQualifiedName, astNodes).flatMap(
     (contractFullyQualifiedName) => {
-      const { contractNode } = _findCotractSourceByFullyQualifiedName(
+      const { contractNode } = _findContractSourceByFullyQualifiedName(
         contractFullyQualifiedName,
         astNodes
       );
