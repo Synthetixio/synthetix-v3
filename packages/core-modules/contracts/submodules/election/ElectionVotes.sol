@@ -19,12 +19,12 @@ contract ElectionVotes is ElectionBase {
         for (uint i = 0; i < length; i++) {
             address candidate = candidates[i];
 
-            // Not nominated?
+            // Reject candidates that are not nominated.
             if (!nominees.contains(candidate)) {
                 revert NotNominated();
             }
 
-            // Duplicate candidates?
+            // Reject duplicate candidates.
             if (i < length - 1) {
                 for (uint j = i + 1; j < length; j++) {
                     address otherCandidate = candidates[j];
@@ -41,13 +41,13 @@ contract ElectionVotes is ElectionBase {
         address voter,
         uint votePower,
         address[] calldata candidates
-    ) internal virtual {
+    ) internal virtual returns (bytes32 ballotId) {
         ElectionData storage election = _getCurrentElection();
 
-        bytes32 ballotId = _calculateBallotId(candidates);
+        ballotId = _calculateBallotId(candidates);
         BallotData storage ballot = _getBallot(ballotId);
 
-        // Initialize ballot if new
+        // Initialize ballot if new.
         if (!_ballotExists(ballot)) {
             address[] memory newCandidates = candidates;
 
@@ -59,17 +59,19 @@ contract ElectionVotes is ElectionBase {
         ballot.votes += votePower;
         election.ballotIdsByAddress[voter] = ballotId;
 
-        emit VoteRecorded(msg.sender, ballotId, votePower);
+        return ballotId;
     }
 
-    function _withdrawVote(address voter, uint votePower) internal virtual {
+    function _withdrawVote(address voter, uint votePower) internal virtual returns (bytes32 ballotId) {
         ElectionData storage election = _getCurrentElection();
 
-        bytes32 ballotId = election.ballotIdsByAddress[voter];
+        ballotId = election.ballotIdsByAddress[voter];
         BallotData storage ballot = _getBallot(ballotId);
 
         ballot.votes -= votePower;
         election.ballotIdsByAddress[voter] = bytes32(0);
+
+        return ballotId;
     }
 
     function _getVotePower(address) internal view virtual returns (uint) {

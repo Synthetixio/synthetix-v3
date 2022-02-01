@@ -169,11 +169,17 @@ contract ElectionModule is
 
         _validateCandidates(candidates);
 
+        bytes32 ballotId;
+
         if (_hasVoted(msg.sender)) {
-            _withdrawVote(msg.sender, votePower);
+            ballotId = _withdrawVote(msg.sender, votePower);
+
+            emit VoteWithdrawn(msg.sender, ballotId, votePower);
         }
 
-        _recordVote(msg.sender, votePower, candidates);
+        ballotId = _recordVote(msg.sender, votePower, candidates);
+
+        emit VoteRecorded(msg.sender, ballotId, votePower);
     }
 
     // ---------------------------------------
@@ -185,9 +191,16 @@ contract ElectionModule is
 
         _evaluateNextBallotBatch(numBallots);
 
+        ElectionStore storage store = _electionStore();
         ElectionData storage election = _getCurrentElection();
-        if (election.numEvaluatedBallots == election.ballotIds.length) {
+
+        uint totalBallots = election.ballotIds.length;
+        if (election.numEvaluatedBallots == totalBallots) {
             election.evaluated = true;
+
+            emit ElectionEvaluated(store.currentEpochIndex, totalBallots);
+        } else {
+            emit ElectionBatchEvaluated(store.currentEpochIndex, election.numEvaluatedBallots, totalBallots);
         }
     }
 

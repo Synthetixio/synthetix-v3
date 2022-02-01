@@ -9,7 +9,7 @@ const initializer = require('../../helpers/initializer');
 const { ElectionPeriod } = require('../../helpers/election-helper');
 const { findEvent } = require('@synthetixio/core-js/utils/ethers/events');
 
-describe.only('ElectionModule (vote)', () => {
+describe('ElectionModule (vote)', () => {
   const { proxyAddress } = bootstrap(initializer);
 
   let ElectionModule;
@@ -118,7 +118,10 @@ describe.only('ElectionModule (vote)', () => {
               };
               ballot2 = {
                 candidates: [candidate2.address, candidate4.address],
-                id: await ElectionModule.calculateBallotId([candidate2.address, candidate4.address]),
+                id: await ElectionModule.calculateBallotId([
+                  candidate2.address,
+                  candidate4.address,
+                ]),
               };
               ballot3 = {
                 candidates: [candidate3.address],
@@ -178,7 +181,24 @@ describe.only('ElectionModule (vote)', () => {
 
             describe('when users change their vote', function () {
               before('change vote', async function () {
-                await ElectionModule.connect(voter5).elect(ballot3.candidates);
+                const tx = await ElectionModule.connect(voter5).elect(ballot3.candidates);
+                receipt = await tx.wait();
+              });
+
+              it('emitted VoteWithdrawn and VoteRecorded events', async function () {
+                let event;
+
+                event = findEvent({ receipt, eventName: 'VoteWithdrawn' });
+                assert.ok(event);
+                assertBn.eq(event.args.voter, voter5.address);
+                assert.equal(event.args.ballotId, ballot2.id);
+                assertBn.eq(event.args.votePower, 1);
+
+                event = findEvent({ receipt, eventName: 'VoteRecorded' });
+                assert.ok(event);
+                assertBn.eq(event.args.voter, voter5.address);
+                assert.equal(event.args.ballotId, ballot3.id);
+                assertBn.eq(event.args.votePower, 1);
               });
 
               it('can retrieve the corresponding ballot that users voted on', async function () {
