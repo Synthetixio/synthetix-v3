@@ -8,10 +8,11 @@ const { capitalize } = require('@synthetixio/core-js/utils/misc/strings');
 
 class ModuleInitializableASTValidator {
   constructor(astNodes, isModuleChecker = contractIsModule) {
-    this.moduleNodes = astNodes
+    this.astNodes = astNodes;
+    this.moduleNodes = this.astNodes
       .filter((v) => isModuleChecker(v.absolutePath))
       .flatMap(findContractDefinitions);
-    this.contractNodes = astNodes.flatMap(findContractDefinitions);
+    this.contractNodes = this.astNodes.flatMap(findContractDefinitions);
   }
 
   findMissingIsInitialized() {
@@ -48,11 +49,11 @@ class ModuleInitializableASTValidator {
 
   findInitializableModuleNames() {
     return this.moduleNodes
-      .map((v) => v.name)
-      .filter((contractName) => contractName !== 'InitializableMixin')
-      .filter((contractName) =>
-        contractHasDependency(contractName, 'InitializableMixin', this.moduleNodes)
-      );
+      .filter((contractNode) => contractNode.name !== 'InitializableMixin')
+      .filter((contractNode) =>
+        contractHasDependency(contractNode, 'InitializableMixin', this.astNodes)
+      )
+      .map((v) => v.name);
   }
 }
 
