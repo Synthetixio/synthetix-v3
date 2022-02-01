@@ -27,7 +27,7 @@ describe('CommsMixin', () => {
 
       printGasUsed({ test: this, gasUsed: receipt.cumulativeGasUsed });
 
-      assertBn.eq(await SampleModuleA.getSomeValue(), 42);
+      assertBn.equal(await SampleModuleA.getSomeValue(), 42);
     });
 
     it('indirectly via SampleModuleB', async function () {
@@ -36,7 +36,7 @@ describe('CommsMixin', () => {
 
       printGasUsed({ test: this, gasUsed: receipt.cumulativeGasUsed });
 
-      assertBn.eq(await SampleModuleA.getSomeValue(), 1337);
+      assertBn.equal(await SampleModuleA.getSomeValue(), 1337);
     });
 
     describe('when interacting via CommsMixin with invalid params', () => {

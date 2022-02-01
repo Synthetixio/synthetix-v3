@@ -8,6 +8,7 @@ const { bootstrap } = require('@synthetixio/deployer/utils/tests');
 const { assertDatesAreClose } = require('../../helpers/election-helper');
 const initializer = require('../../helpers/initializer');
 const { ElectionPeriod } = require('../../helpers/election-helper');
+const { findEvent } = require('@synthetixio/core-js/utils/ethers/events');
 
 describe('ElectionModule (initialization)', () => {
   const { proxyAddress } = bootstrap(initializer);
@@ -17,6 +18,8 @@ describe('ElectionModule (initialization)', () => {
   let owner, user;
 
   let epochStartDate, epochEndDate, nominationPeriodStartDate, votingPeriodStartDate;
+
+  let receipt;
 
   before('identify signers', async () => {
     [owner, user] = await ethers.getSigners();
@@ -133,13 +136,27 @@ describe('ElectionModule (initialization)', () => {
           votingPeriodStartDate = epochEndDate - daysToSeconds(7);
           nominationPeriodStartDate = votingPeriodStartDate - daysToSeconds(7);
 
-          await ElectionModule.initializeElectionModule(
+          const tx = await ElectionModule.initializeElectionModule(
             '',
             '',
             nominationPeriodStartDate,
             votingPeriodStartDate,
             epochEndDate
           );
+          receipt = await tx.wait();
+        });
+
+        it('emitted an ElectionModuleInitialized event', async function () {
+          const event = findEvent({ receipt, eventName: 'ElectionModuleInitialized' });
+
+          assert.ok(event);
+        });
+
+        it('emitted an EpochStarted event', async function () {
+          const event = findEvent({ receipt, eventName: 'EpochStarted' });
+
+          assert.ok(event);
+          assertBn.eq(event.args.epochIndex, 1);
         });
 
         it('shows that the module is initialized', async () => {

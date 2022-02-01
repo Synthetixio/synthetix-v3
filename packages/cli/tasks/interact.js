@@ -38,7 +38,7 @@ task(TASK_INTERACT, 'Interacts with a given modular system deployment')
     async function run() {
       let subtask;
 
-      if (!hre.cli.contractName) {
+      if (!hre.cli.contractFullyQualifiedName) {
         subtask = SUBTASK_PICK_CONTRACT;
       } else if (!hre.cli.functionName) {
         subtask = SUBTASK_PICK_FUNCTION;

@@ -7,6 +7,7 @@ const { daysToSeconds } = require('@synthetixio/core-js/utils/misc/dates');
 const { bootstrap } = require('@synthetixio/deployer/utils/tests');
 const initializer = require('../../helpers/initializer');
 const { ElectionPeriod } = require('../../helpers/election-helper');
+const { findEvent } = require('@synthetixio/core-js/utils/ethers/events');
 
 describe('ElectionModule (evaluate)', () => {
   const { proxyAddress } = bootstrap(initializer);
@@ -19,6 +20,8 @@ describe('ElectionModule (evaluate)', () => {
   let voter1, voter2, voter3, voter4, voter5, voter6, voter7, voter8, voter9, voter10;
 
   let ballot1, ballot2, ballot3;
+
+  let receipt;
 
   before('identify signers', async () => {
     const users = await ethers.getSigners();
@@ -124,7 +127,17 @@ describe('ElectionModule (evaluate)', () => {
           describe('when evaluating the epoch', function () {
             describe('partially', function () {
               before('evaluate', async function () {
-                await ElectionModule.evaluate(1);
+                const tx = await ElectionModule.evaluate(1);
+                receipt = await tx.wait();
+              });
+
+              it('emitted an ElectionBatchEvaluated event', async function () {
+                const event = findEvent({ receipt, eventName: 'ElectionBatchEvaluated' });
+
+                assert.ok(event);
+                assertBn.eq(event.args.epochIndex, 1);
+                assertBn.eq(event.args.evaluatedBallots, 1);
+                assertBn.eq(event.args.totalBallots, 3);
               });
 
               it('shows that the epoch is not evaluated', async function () {
@@ -134,14 +147,23 @@ describe('ElectionModule (evaluate)', () => {
               it('shows that some candidate votes where processed', async function () {
                 assertBn.eq(await ElectionModule.getCandidateVotes(candidate1.address), 4);
                 assertBn.eq(await ElectionModule.getCandidateVotes(candidate2.address), 4);
-                assertBn.eq(await ElectionModule.getCandidateVotes(candidate3.address), 1);
+                assertBn.eq(await ElectionModule.getCandidateVotes(candidate3.address), 0);
                 assertBn.eq(await ElectionModule.getCandidateVotes(candidate4.address), 0);
                 assertBn.eq(await ElectionModule.getCandidateVotes(candidate5.address), 0);
               });
 
               describe('totally', function () {
                 before('evaluate', async function () {
-                  await ElectionModule.evaluate(0);
+                  const tx = await ElectionModule.evaluate(0);
+                  receipt = await tx.wait();
+                });
+
+                it('emitted an ElectionEvaluated event', async function () {
+                  const event = findEvent({ receipt, eventName: 'ElectionEvaluated' });
+
+                  assert.ok(event);
+                  assertBn.eq(event.args.epochIndex, 1);
+                  assertBn.eq(event.args.totalBallots, 3);
                 });
 
                 it('shows that the epoch is evaluated', async function () {

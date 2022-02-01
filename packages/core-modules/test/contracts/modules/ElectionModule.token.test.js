@@ -6,6 +6,7 @@ const { getTime } = require('@synthetixio/core-js/utils/hardhat/rpc');
 const { daysToSeconds } = require('@synthetixio/core-js/utils/misc/dates');
 const { bootstrap } = require('@synthetixio/deployer/utils/tests');
 const initializer = require('../../helpers/initializer');
+const { findEvent } = require('@synthetixio/core-js/utils/ethers/events');
 
 describe('ElectionModule (token)', () => {
   const { proxyAddress } = bootstrap(initializer);
@@ -16,6 +17,8 @@ describe('ElectionModule (token)', () => {
 
   const TOKEN_NAME = 'Spartan Council Token';
   const TOKEN_SYMBOL = 'SCT';
+
+  let receipt;
 
   before('identify signers', async () => {
     [owner, user] = await ethers.getSigners();
@@ -92,7 +95,14 @@ describe('ElectionModule (token)', () => {
             const tx = await ElectionModule.upgradeCouncilToken(
               NewCouncilTokenImplementation.address
             );
-            await tx.wait();
+            receipt = await tx.wait();
+          });
+
+          it('emitted an CouncilTokenUpgraded event', async function () {
+            const event = findEvent({ receipt, eventName: 'CouncilTokenUpgraded' });
+
+            assert.ok(event);
+            assert.equal(event.args.newImplementation, NewCouncilTokenImplementation.address);
           });
 
           it('shows that the implementation was upgraded', async function () {

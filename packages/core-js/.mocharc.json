@@ -1,4 +1,5 @@
 {
   "spec": ["test/**/*.test.js"],
+  "timeout": 10000,
   "watch-files": ["utils/**/*.js", "test/**/*.js"]
 }

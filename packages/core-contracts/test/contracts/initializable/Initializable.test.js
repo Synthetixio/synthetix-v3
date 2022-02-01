@@ -35,7 +35,7 @@ describe('Initializable', () => {
       });
 
       it('gets the right value', async () => {
-        assertBn.eq(await Initializable.getNonCriticalValue(), 10);
+        assertBn.equal(await Initializable.getNonCriticalValue(), 10);
       });
     });
   });
@@ -58,7 +58,7 @@ describe('Initializable', () => {
 
     describe('when attempting to access a protected view', () => {
       it('gets the right value', async () => {
-        assertBn.eq(await Initializable.getValue(), 42);
+        assertBn.equal(await Initializable.getValue(), 42);
       });
     });
 
@@ -69,7 +69,7 @@ describe('Initializable', () => {
       });
 
       it('gets the right value', async () => {
-        assertBn.eq(await Initializable.getValue(), 84);
+        assertBn.equal(await Initializable.getValue(), 84);
       });
     });
 
@@ -80,7 +80,7 @@ describe('Initializable', () => {
       });
 
       it('gets the right value', async () => {
-        assertBn.eq(await Initializable.getNonCriticalValue(), 12);
+        assertBn.equal(await Initializable.getNonCriticalValue(), 12);
       });
     });
   });

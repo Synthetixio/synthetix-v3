@@ -5,6 +5,7 @@ const { getTime, fastForwardTo } = require('@synthetixio/core-js/utils/hardhat/r
 const { daysToSeconds } = require('@synthetixio/core-js/utils/misc/dates');
 const { bootstrap } = require('@synthetixio/deployer/utils/tests');
 const initializer = require('../../helpers/initializer');
+const { findEvent } = require('@synthetixio/core-js/utils/ethers/events');
 
 describe('ElectionModule (resolve)', () => {
   const { proxyAddress } = bootstrap(initializer);
@@ -15,6 +16,8 @@ describe('ElectionModule (resolve)', () => {
   let member1, member2, member3, member4, member5;
 
   let members;
+
+  let receipt;
 
   async function simulateAndResolveElection() {
     // Nominate
@@ -39,7 +42,8 @@ describe('ElectionModule (resolve)', () => {
     );
 
     // Resolve
-    await ElectionModule.resolve();
+    const tx = await ElectionModule.resolve();
+    receipt = await tx.wait();
   }
 
   async function itProperlyManagesCredentials() {
@@ -118,6 +122,13 @@ describe('ElectionModule (resolve)', () => {
           });
 
           itProperlyManagesCredentials();
+
+          it('emitted an EpochStarted event', async function () {
+            const event = findEvent({ receipt, eventName: 'EpochStarted' });
+
+            assert.ok(event);
+            assertBn.eq(event.args.epochIndex, 2);
+          });
         });
 
         describe('epoch 3', function () {
@@ -136,6 +147,13 @@ describe('ElectionModule (resolve)', () => {
 
             itProperlyManagesCredentials();
 
+            it('emitted an EpochStarted event', async function () {
+              const event = findEvent({ receipt, eventName: 'EpochStarted' });
+
+              assert.ok(event);
+              assertBn.eq(event.args.epochIndex, 3);
+            });
+
             describe('epoch 4', function () {
               describe('when members 3, 4, and 2 are elected', function () {
                 before('define members', async function () {
@@ -151,6 +169,13 @@ describe('ElectionModule (resolve)', () => {
                 });
 
                 itProperlyManagesCredentials();
+
+                it('emitted an EpochStarted event', async function () {
+                  const event = findEvent({ receipt, eventName: 'EpochStarted' });
+
+                  assert.ok(event);
+                  assertBn.eq(event.args.epochIndex, 4);
+                });
               });
             });
           });

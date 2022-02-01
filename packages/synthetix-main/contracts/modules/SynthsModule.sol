@@ -3,6 +3,7 @@ pragma solidity ^0.8.0;
 
 import "@synthetixio/core-contracts/contracts/proxy/Beacon.sol";
 import "@synthetixio/core-contracts/contracts/ownership/OwnableMixin.sol";
+import "@synthetixio/core-contracts/contracts/satellite/SatelliteFactory.sol";
 import "@synthetixio/core-contracts/contracts/proxy/BeaconProxy.sol";
 import "@synthetixio/core-contracts/contracts/initializable/InitializableMixin.sol";
 import "../interfaces/ISynthsModule.sol";
@@ -10,7 +11,7 @@ import "../interfaces/ISynth.sol";
 import "../storage/SynthsStorage.sol";
 import "../token/Synth.sol";
 
-contract SynthsModule is ISynthsModule, OwnableMixin, SynthsStorage, InitializableMixin {
+contract SynthsModule is ISynthsModule, OwnableMixin, SynthsStorage, InitializableMixin, SatelliteFactory {
     event BeaconCreated(address beacon);
     event SynthImplementationCreated(address implementationAddress);
     event SynthCreated(bytes32 synth, address synthAddress);
@@ -37,13 +38,28 @@ contract SynthsModule is ISynthsModule, OwnableMixin, SynthsStorage, Initializab
         emit BeaconCreated(beacon);
     }
 
+    function _getSatellites() internal view override returns (Satellite[] memory) {
+        SynthsStore storage store = _synthsStore();
+        Satellite[] memory satellites = new Satellite[](store.synthNames.length);
+
+        for (uint256 i = 0; i < store.synthNames.length; i++) {
+            satellites[i] = store.synths[store.synthNames[i]];
+        }
+
+        return satellites;
+    }
+
+    function getSynthsModuleSatellites() public view returns (Satellite[] memory) {
+        return _getSatellites();
+    }
+
     function createSynth(
         bytes32 synth,
         string memory synthName,
         string memory synthSymbol,
         uint8 synthDecimals
     ) external override onlyOwner onlyIfInitialized {
-        if (_synthsStore().synths[synth] != address(0x0)) {
+        if (_synthsStore().synths[synth].deployedAddress != address(0)) {
             revert SynthAlreadyCreated();
         }
 
@@ -55,7 +71,8 @@ contract SynthsModule is ISynthsModule, OwnableMixin, SynthsStorage, Initializab
 
         address synthAddress = address(new BeaconProxy(beaconAddress));
 
-        _synthsStore().synths[synth] = synthAddress;
+        _synthsStore().synths[synth] = Satellite({name: synth, contractName: "ISynth", deployedAddress: synthAddress});
+        _synthsStore().synthNames.push(synth);
 
         ISynth(synthAddress).initialize(synthName, synthSymbol, synthDecimals);
 
@@ -83,6 +100,6 @@ contract SynthsModule is ISynthsModule, OwnableMixin, SynthsStorage, Initializab
     }
 
     function getSynth(bytes32 synth) external view override returns (address) {
-        return _synthsStore().synths[synth];
+        return _synthsStore().synths[synth].deployedAddress;
     }
 }

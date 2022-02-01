@@ -1,4 +1,5 @@
 const { ethers } = hre;
+const assert = require('assert/strict');
 const assertBn = require('@synthetixio/core-js/utils/assertions/assert-bignumber');
 const assertRevert = require('@synthetixio/core-js/utils/assertions/assert-revert');
 const {
@@ -11,6 +12,7 @@ const { daysToSeconds } = require('@synthetixio/core-js/utils/misc/dates');
 const { bootstrap } = require('@synthetixio/deployer/utils/tests');
 const initializer = require('../../helpers/initializer');
 const { ElectionPeriod, assertDatesAreClose } = require('../../helpers/election-helper');
+const { findEvent } = require('@synthetixio/core-js/utils/ethers/events');
 
 describe('ElectionModule (schedule)', () => {
   const { proxyAddress } = bootstrap(initializer);
@@ -20,6 +22,10 @@ describe('ElectionModule (schedule)', () => {
   let owner, user;
 
   let snapshotId;
+
+  let receipt;
+
+  let newNominationPeriodStartDate, newVotingPeriodStartDate, newEpochEndDate;
 
   before('identify signers', async () => {
     [owner, user] = await ethers.getSigners();
@@ -139,7 +145,12 @@ describe('ElectionModule (schedule)', () => {
 
   const itAcceptsAdjustments = () => {
     describe('when trying to adjust the epoch schedule', function () {
-      let newEpochEndDate, newNominationPeriodStartDate, newVotingPeriodStartDate;
+      before('fast forward', async function () {
+        await fastForwardTo(
+          (await ElectionModule.getNominationPeriodStartDate()) - daysToSeconds(1),
+          ethers.provider
+        );
+      });
 
       before('fast forward', async function () {
         await fastForwardTo(
@@ -228,11 +239,21 @@ describe('ElectionModule (schedule)', () => {
               newVotingPeriodStartDate =
                 (await ElectionModule.getVotingPeriodStartDate()).toNumber() + daysToSeconds(0.5);
 
-              await ElectionModule.tweakEpochSchedule(
+              const tx = await ElectionModule.tweakEpochSchedule(
                 newNominationPeriodStartDate,
                 newVotingPeriodStartDate,
                 newEpochEndDate
               );
+              receipt = await tx.wait();
+            });
+
+            it('emitted an EpochScheduleUpdated event', async function () {
+              const event = findEvent({ receipt, eventName: 'EpochScheduleUpdated' });
+
+              assert.ok(event);
+              assertBn.eq(event.args.nominationPeriodStartDate, newNominationPeriodStartDate);
+              assertBn.eq(event.args.votingPeriodStartDate, newVotingPeriodStartDate);
+              assertBn.eq(event.args.epochEndDate, newEpochEndDate);
             });
 
             it('properly adjusted dates', async function () {
@@ -276,11 +297,21 @@ describe('ElectionModule (schedule)', () => {
               newVotingPeriodStartDate =
                 (await ElectionModule.getVotingPeriodStartDate()).toNumber() + daysToSeconds(100);
 
-              await ElectionModule.modifyEpochSchedule(
+              const tx = await ElectionModule.modifyEpochSchedule(
                 newNominationPeriodStartDate,
                 newVotingPeriodStartDate,
                 newEpochEndDate
               );
+              receipt = await tx.wait();
+            });
+
+            it('emitted an EpochScheduleUpdated event', async function () {
+              const event = findEvent({ receipt, eventName: 'EpochScheduleUpdated' });
+
+              assert.ok(event);
+              assertBn.eq(event.args.nominationPeriodStartDate, newNominationPeriodStartDate);
+              assertBn.eq(event.args.votingPeriodStartDate, newVotingPeriodStartDate);
+              assertBn.eq(event.args.epochEndDate, newEpochEndDate);
             });
 
             it('properly adjusted dates', async function () {
