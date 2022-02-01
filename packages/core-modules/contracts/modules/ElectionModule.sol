@@ -43,9 +43,6 @@ contract ElectionModule is
         store.currentEpochIndex = 1;
         _configureFirstEpochSchedule(nominationPeriodStartDate, votingPeriodStartDate, epochEndDate);
 
-        EpochData storage firstEpoch = store.epochs[1];
-        firstEpoch.seatCount = 1;
-
         _createCouncilToken(councilTokenName, councilTokenSymbol);
         _addCouncilMember(msg.sender);
 
@@ -127,7 +124,7 @@ contract ElectionModule is
         emit DefaultBallotEvaluationBatchSizeChanged(newDefaultBallotEvaluationBatchSize);
     }
 
-    function setNextEpochSeatCount(uint8 newSeatCount) external override onlyOwner {
+    function setNextEpochSeatCount(uint8 newSeatCount) external override onlyOwner onlyInPeriod(ElectionPeriod.Idle) {
         if (newSeatCount == 0) revert InvalidElectionSettings();
 
         _electionStore().settings.nextEpochSeatCount = newSeatCount;

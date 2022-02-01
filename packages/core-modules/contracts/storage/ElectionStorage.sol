@@ -25,7 +25,6 @@ contract ElectionStorage {
     }
 
     struct EpochData {
-        uint8 seatCount;
         uint64 startDate;
         uint64 endDate;
         uint64 nominationPeriodStartDate;
