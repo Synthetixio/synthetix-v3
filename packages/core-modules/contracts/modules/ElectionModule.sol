@@ -32,7 +32,7 @@ contract ElectionModule is
     ) external override onlyOwner onlyIfNotInitialized {
         ElectionStore storage store = _electionStore();
 
-        ElectionSettings storage settings = store.settings;
+        ElectionSettings storage settings = _getElectionSettings();
         settings.minNominationPeriodDuration = 2 days;
         settings.minVotingPeriodDuration = 2 days;
         settings.minEpochDuration = 7 days;
@@ -111,7 +111,7 @@ contract ElectionModule is
     function setMaxDateAdjustmentTolerance(uint64 newMaxDateAdjustmentTolerance) external override onlyOwner {
         if (newMaxDateAdjustmentTolerance == 0) revert InvalidElectionSettings();
 
-        _electionStore().settings.maxDateAdjustmentTolerance = newMaxDateAdjustmentTolerance;
+        _getElectionSettings().maxDateAdjustmentTolerance = newMaxDateAdjustmentTolerance;
 
         emit MaxDateAdjustmentToleranceChanged(newMaxDateAdjustmentTolerance);
     }
@@ -119,7 +119,7 @@ contract ElectionModule is
     function setDefaultBallotEvaluationBatchSize(uint newDefaultBallotEvaluationBatchSize) external override onlyOwner {
         if (newDefaultBallotEvaluationBatchSize == 0) revert InvalidElectionSettings();
 
-        _electionStore().settings.defaultBallotEvaluationBatchSize = newDefaultBallotEvaluationBatchSize;
+        _getElectionSettings().defaultBallotEvaluationBatchSize = newDefaultBallotEvaluationBatchSize;
 
         emit DefaultBallotEvaluationBatchSizeChanged(newDefaultBallotEvaluationBatchSize);
     }
@@ -127,7 +127,7 @@ contract ElectionModule is
     function setNextEpochSeatCount(uint8 newSeatCount) external override onlyOwner onlyInPeriod(ElectionPeriod.Idle) {
         if (newSeatCount == 0) revert InvalidElectionSettings();
 
-        _electionStore().settings.nextEpochSeatCount = newSeatCount;
+        _getElectionSettings().nextEpochSeatCount = newSeatCount;
 
         emit NextEpochSeatCountChanged(newSeatCount);
     }
@@ -237,21 +237,21 @@ contract ElectionModule is
             uint64 minEpochDuration
         )
     {
-        ElectionSettings storage settings = _electionStore().settings;
+        ElectionSettings storage settings = _getElectionSettings();
 
         return (settings.minNominationPeriodDuration, settings.minVotingPeriodDuration, settings.minEpochDuration);
     }
 
     function getMaxDateAdjustmenTolerance() external view override returns (uint64) {
-        return _electionStore().settings.maxDateAdjustmentTolerance;
+        return _getElectionSettings().maxDateAdjustmentTolerance;
     }
 
     function getDefaultBallotEvaluationBatchSize() external view override returns (uint) {
-        return _electionStore().settings.defaultBallotEvaluationBatchSize;
+        return _getElectionSettings().defaultBallotEvaluationBatchSize;
     }
 
     function getNextEpochSeatCount() external view override returns (uint8) {
-        return _electionStore().settings.nextEpochSeatCount;
+        return _getElectionSettings().nextEpochSeatCount;
     }
 
     // Epoch and periods
