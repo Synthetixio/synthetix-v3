@@ -244,9 +244,9 @@ describe('ElectionModule (schedule)', () => {
               const event = findEvent({ receipt, eventName: 'EpochScheduleUpdated' });
 
               assert.ok(event);
-              assertBn.eq(event.args.nominationPeriodStartDate, newNominationPeriodStartDate);
-              assertBn.eq(event.args.votingPeriodStartDate, newVotingPeriodStartDate);
-              assertBn.eq(event.args.epochEndDate, newEpochEndDate);
+              assertBn.equal(event.args.nominationPeriodStartDate, newNominationPeriodStartDate);
+              assertBn.equal(event.args.votingPeriodStartDate, newVotingPeriodStartDate);
+              assertBn.equal(event.args.epochEndDate, newEpochEndDate);
             });
 
             it('properly adjusted dates', async function () {
@@ -302,9 +302,9 @@ describe('ElectionModule (schedule)', () => {
               const event = findEvent({ receipt, eventName: 'EpochScheduleUpdated' });
 
               assert.ok(event);
-              assertBn.eq(event.args.nominationPeriodStartDate, newNominationPeriodStartDate);
-              assertBn.eq(event.args.votingPeriodStartDate, newVotingPeriodStartDate);
-              assertBn.eq(event.args.epochEndDate, newEpochEndDate);
+              assertBn.equal(event.args.nominationPeriodStartDate, newNominationPeriodStartDate);
+              assertBn.equal(event.args.votingPeriodStartDate, newVotingPeriodStartDate);
+              assertBn.equal(event.args.epochEndDate, newEpochEndDate);
             });
 
             it('properly adjusted dates', async function () {
@@ -345,7 +345,7 @@ describe('ElectionModule (schedule)', () => {
     });
 
     it('shows that initial period is Idle', async function () {
-      assertBn.eq(await ElectionModule.getCurrentPeriodType(), ElectionPeriod.Idle);
+      assertBn.equal(await ElectionModule.getCurrentPeriodType(), ElectionPeriod.Idle);
     });
 
     describe('when an account that does not own the instance attempts to adjust the epoch', function () {
@@ -390,7 +390,7 @@ describe('ElectionModule (schedule)', () => {
       });
 
       it('shows that the current period is Nomination', async function () {
-        assertBn.eq(await ElectionModule.getCurrentPeriodType(), ElectionPeriod.Nomination);
+        assertBn.equal(await ElectionModule.getCurrentPeriodType(), ElectionPeriod.Nomination);
       });
 
       itAcceptsNominations();
@@ -420,7 +420,7 @@ describe('ElectionModule (schedule)', () => {
       });
 
       it('shows that the current period is Vote', async function () {
-        assertBn.eq(await ElectionModule.getCurrentPeriodType(), ElectionPeriod.Vote);
+        assertBn.equal(await ElectionModule.getCurrentPeriodType(), ElectionPeriod.Vote);
       });
 
       itRejectsNominations();
@@ -443,7 +443,7 @@ describe('ElectionModule (schedule)', () => {
       });
 
       it('shows that the current period is Evaluation', async function () {
-        assertBn.eq(await ElectionModule.getCurrentPeriodType(), ElectionPeriod.Evaluation);
+        assertBn.equal(await ElectionModule.getCurrentPeriodType(), ElectionPeriod.Evaluation);
       });
 
       itRejectsNominations();

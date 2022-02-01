@@ -71,11 +71,11 @@ describe('ElectionModule (settings)', () => {
             const event = findEvent({ receipt, eventName: 'NextEpochSeatCountChanged' });
 
             assert.ok(event);
-            assertBn.eq(event.args.seatCount, newNextEpochSeatCount);
+            assertBn.equal(event.args.seatCount, newNextEpochSeatCount);
           });
 
           it('changes the setting', async () => {
-            assertBn.eq(await ElectionModule.getNextEpochSeatCount(), newNextEpochSeatCount);
+            assertBn.equal(await ElectionModule.getNextEpochSeatCount(), newNextEpochSeatCount);
           });
         });
       });
@@ -122,11 +122,11 @@ describe('ElectionModule (settings)', () => {
             });
 
             assert.ok(event);
-            assertBn.eq(event.args.size, newDefaultBallotEvaluationBatchSize);
+            assertBn.equal(event.args.size, newDefaultBallotEvaluationBatchSize);
           });
 
           it('changes the setting', async () => {
-            assertBn.eq(
+            assertBn.equal(
               await ElectionModule.getDefaultBallotEvaluationBatchSize(),
               newDefaultBallotEvaluationBatchSize
             );
@@ -173,11 +173,11 @@ describe('ElectionModule (settings)', () => {
             const event = findEvent({ receipt, eventName: 'MaxDateAdjustmentToleranceChanged' });
 
             assert.ok(event);
-            assertBn.eq(event.args.tolerance, newMaxDateAdjustmentTolerance);
+            assertBn.equal(event.args.tolerance, newMaxDateAdjustmentTolerance);
           });
 
           it('changes the setting', async () => {
-            assertBn.eq(
+            assertBn.equal(
               await ElectionModule.getMaxDateAdjustmenTolerance(),
               newMaxDateAdjustmentTolerance
             );
@@ -238,9 +238,9 @@ describe('ElectionModule (settings)', () => {
             const event = findEvent({ receipt, eventName: 'MinimumEpochDurationsChanged' });
 
             assert.ok(event);
-            assertBn.eq(event.args.minNominationPeriodDuration, newMinNominationPeriodDuration);
-            assertBn.eq(event.args.minVotingPeriodDuration, newMinVotingPeriodDuration);
-            assertBn.eq(event.args.minEpochDuration, newMinEpochDuration);
+            assertBn.equal(event.args.minNominationPeriodDuration, newMinNominationPeriodDuration);
+            assertBn.equal(event.args.minVotingPeriodDuration, newMinVotingPeriodDuration);
+            assertBn.equal(event.args.minEpochDuration, newMinEpochDuration);
           });
 
           it('changes the setting', async () => {
@@ -250,9 +250,9 @@ describe('ElectionModule (settings)', () => {
               setMinEpochDuration,
             ] = await ElectionModule.getMinEpochDurations();
 
-            assertBn.eq(setMinNominationPeriodDuration, newMinNominationPeriodDuration);
-            assertBn.eq(setMinVotingPeriodDuration, newMinVotingPeriodDuration);
-            assertBn.eq(setMinEpochDuration, newMinEpochDuration);
+            assertBn.equal(setMinNominationPeriodDuration, newMinNominationPeriodDuration);
+            assertBn.equal(setMinVotingPeriodDuration, newMinVotingPeriodDuration);
+            assertBn.equal(setMinEpochDuration, newMinEpochDuration);
           });
         });
       });

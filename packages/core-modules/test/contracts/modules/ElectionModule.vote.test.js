@@ -54,7 +54,7 @@ describe('ElectionModule (vote)', () => {
       });
 
       it('shows that the current period is Nomination', async function () {
-        assertBn.eq(await ElectionModule.getCurrentPeriodType(), ElectionPeriod.Nomination);
+        assertBn.equal(await ElectionModule.getCurrentPeriodType(), ElectionPeriod.Nomination);
       });
 
       describe('when nominations exist', function () {
@@ -71,7 +71,7 @@ describe('ElectionModule (vote)', () => {
           });
 
           it('shows that the current period is Vote', async function () {
-            assertBn.eq(await ElectionModule.getCurrentPeriodType(), ElectionPeriod.Vote);
+            assertBn.equal(await ElectionModule.getCurrentPeriodType(), ElectionPeriod.Vote);
           });
 
           describe('when issuing invalid votes', function () {
@@ -105,9 +105,9 @@ describe('ElectionModule (vote)', () => {
           });
 
           it('can retrieve user vote power', async function () {
-            assertBn.eq(await ElectionModule.getVotePower(voter1.address), 1);
-            assertBn.eq(await ElectionModule.getVotePower(voter2.address), 1);
-            assertBn.eq(await ElectionModule.getVotePower(voter3.address), 1);
+            assertBn.equal(await ElectionModule.getVotePower(voter1.address), 1);
+            assertBn.equal(await ElectionModule.getVotePower(voter2.address), 1);
+            assertBn.equal(await ElectionModule.getVotePower(voter3.address), 1);
           });
 
           describe('when issuing valid votes', function () {
@@ -145,9 +145,9 @@ describe('ElectionModule (vote)', () => {
               const event = findEvent({ receipt, eventName: 'VoteRecorded' });
 
               assert.ok(event);
-              assertBn.eq(event.args.voter, voter5.address);
+              assertBn.equal(event.args.voter, voter5.address);
               assert.equal(event.args.ballotId, ballot2.id);
-              assertBn.eq(event.args.votePower, 1);
+              assertBn.equal(event.args.votePower, 1);
             });
 
             it('can retrieve the corresponding ballot that users voted on', async function () {
@@ -159,9 +159,9 @@ describe('ElectionModule (vote)', () => {
             });
 
             it('can retrieve ballot votes', async function () {
-              assertBn.eq(await ElectionModule.getBallotVotes(ballot1.id), 3);
-              assertBn.eq(await ElectionModule.getBallotVotes(ballot2.id), 2);
-              assertBn.eq(await ElectionModule.getBallotVotes(ballot3.id), 0);
+              assertBn.equal(await ElectionModule.getBallotVotes(ballot1.id), 3);
+              assertBn.equal(await ElectionModule.getBallotVotes(ballot2.id), 2);
+              assertBn.equal(await ElectionModule.getBallotVotes(ballot3.id), 0);
             });
 
             it('can retrive ballot candidates', async function () {
@@ -190,15 +190,15 @@ describe('ElectionModule (vote)', () => {
 
                 event = findEvent({ receipt, eventName: 'VoteWithdrawn' });
                 assert.ok(event);
-                assertBn.eq(event.args.voter, voter5.address);
+                assertBn.equal(event.args.voter, voter5.address);
                 assert.equal(event.args.ballotId, ballot2.id);
-                assertBn.eq(event.args.votePower, 1);
+                assertBn.equal(event.args.votePower, 1);
 
                 event = findEvent({ receipt, eventName: 'VoteRecorded' });
                 assert.ok(event);
-                assertBn.eq(event.args.voter, voter5.address);
+                assertBn.equal(event.args.voter, voter5.address);
                 assert.equal(event.args.ballotId, ballot3.id);
-                assertBn.eq(event.args.votePower, 1);
+                assertBn.equal(event.args.votePower, 1);
               });
 
               it('can retrieve the corresponding ballot that users voted on', async function () {
@@ -206,9 +206,9 @@ describe('ElectionModule (vote)', () => {
               });
 
               it('can retrieve ballot votes', async function () {
-                assertBn.eq(await ElectionModule.getBallotVotes(ballot1.id), 3);
-                assertBn.eq(await ElectionModule.getBallotVotes(ballot2.id), 1);
-                assertBn.eq(await ElectionModule.getBallotVotes(ballot3.id), 1);
+                assertBn.equal(await ElectionModule.getBallotVotes(ballot1.id), 3);
+                assertBn.equal(await ElectionModule.getBallotVotes(ballot2.id), 1);
+                assertBn.equal(await ElectionModule.getBallotVotes(ballot3.id), 1);
               });
 
               it('can retrive ballot candidates', async function () {

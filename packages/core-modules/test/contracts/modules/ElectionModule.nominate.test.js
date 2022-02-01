@@ -89,7 +89,7 @@ describe('ElectionModule (nominate)', () => {
       });
 
       it('shows that the current period is Nomination', async function () {
-        assertBn.eq(await ElectionModule.getCurrentPeriodType(), ElectionPeriod.Nomination);
+        assertBn.equal(await ElectionModule.getCurrentPeriodType(), ElectionPeriod.Nomination);
       });
 
       describe('before users nominate', function () {
@@ -105,7 +105,7 @@ describe('ElectionModule (nominate)', () => {
           const event = findEvent({ receipt, eventName: 'CandidateNominated' });
 
           assert.ok(event);
-          assertBn.eq(event.args.candidate, user.address);
+          assertBn.equal(event.args.candidate, user.address);
         });
 
         itProperlyRecordsNominees();
@@ -143,7 +143,7 @@ describe('ElectionModule (nominate)', () => {
               const event = findEvent({ receipt, eventName: 'NominationWithdrawn' });
 
               assert.ok(event);
-              assertBn.eq(event.args.candidate, user.address);
+              assertBn.equal(event.args.candidate, user.address);
             });
 
             itProperlyRecordsNominees();

@@ -31,7 +31,7 @@ describe('ElectionModule (initialization)', () => {
 
   describe('before initializing the module', function () {
     it('shows that the current period is Null', async () => {
-      assertBn.eq(await ElectionModule.getCurrentPeriodType(), ElectionPeriod.Null);
+      assertBn.equal(await ElectionModule.getCurrentPeriodType(), ElectionPeriod.Null);
     });
 
     it('shows that the module is not initialized', async () => {
@@ -156,7 +156,7 @@ describe('ElectionModule (initialization)', () => {
           const event = findEvent({ receipt, eventName: 'EpochStarted' });
 
           assert.ok(event);
-          assertBn.eq(event.args.epochIndex, 1);
+          assertBn.equal(event.args.epochIndex, 1);
         });
 
         it('shows that the module is initialized', async () => {
@@ -164,11 +164,11 @@ describe('ElectionModule (initialization)', () => {
         });
 
         it('shows that the current epoch index is 1', async function () {
-          assertBn.eq(await ElectionModule.getEpochIndex(), 1);
+          assertBn.equal(await ElectionModule.getEpochIndex(), 1);
         });
 
         it('shows that the current period is Idle', async () => {
-          assertBn.eq(await ElectionModule.getCurrentPeriodType(), ElectionPeriod.Idle);
+          assertBn.equal(await ElectionModule.getCurrentPeriodType(), ElectionPeriod.Idle);
         });
 
         it('shows that the owner is the single council member', async function () {
