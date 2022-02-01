@@ -152,6 +152,13 @@ describe('ElectionModule (schedule)', () => {
         );
       });
 
+      before('fast forward', async function () {
+        await fastForwardTo(
+          (await ElectionModule.getNominationPeriodStartDate()) - daysToSeconds(1),
+          ethers.provider
+        );
+      });
+
       before('take snapshot', async function () {
         snapshotId = await takeSnapshot(ethers.provider);
       });
