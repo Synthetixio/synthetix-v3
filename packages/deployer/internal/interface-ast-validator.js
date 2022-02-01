@@ -2,12 +2,14 @@ const {
   findContractDefinitions,
   findContractDependencies,
   findFunctions,
+  findContractDependenciesByFullyQualifiedName,
 } = require('@synthetixio/core-js/utils/ast/finders');
 const { contractIsModule } = require('../internal/contract-helper');
 
 class InterfaceCoverageASTValidator {
   constructor(asts, isModuleChecker = contractIsModule) {
-    this.contractNodes = asts.map(findContractDefinitions).flat();
+    this.asts = asts;
+    this.contractNodes = asts.flatMap(findContractDefinitions);
     this.moduleNodes = asts
       .filter((v) => isModuleChecker(v.absolutePath))
       .map(findContractDefinitions)
@@ -33,6 +35,28 @@ class InterfaceCoverageASTValidator {
           errors.push({
             msg: `Visible function ${visibleFunction.name} of contract ${module.name} not found in the inherited interfaces`,
           });
+
+          // console.log(
+          //   '==>',
+          //   visibleFunctions.map((m) => m.name)
+          // );
+          // console.log(
+          //   '-->',
+          //   interfacedFunctions.map((m) => m.name)
+          // );
+          // console.log(
+          //   module.name,
+          //   findContractDependencies(module, this.asts).map((m) => m.name)
+          // );
+          console.log(
+            module.name,
+            findContractDependenciesByFullyQualifiedName(
+              'contracts/modules/SecondaryModule.sol:SecondaryModule',
+              this.asts
+            )
+          );
+
+          throw new Error('error');
         }
       }
     }
@@ -51,12 +75,12 @@ class InterfaceCoverageASTValidator {
   _findInterfaceFunctions(module) {
     const interfacedFunctions = [];
 
-    for (const dependency of findContractDependencies(module.name, this.contractNodes)) {
+    for (const dependency of findContractDependencies(module, this.contractNodes)) {
       if (dependency.contractKind != 'interface') {
         continue;
       }
 
-      interfacedFunctions.push(...findFunctions(dependency.name, this.contractNodes));
+      interfacedFunctions.push(...findFunctions(dependency, this.contractNodes));
     }
 
     return interfacedFunctions;

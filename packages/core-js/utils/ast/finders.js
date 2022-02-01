@@ -1,4 +1,29 @@
+const { parseFullyQualifiedName } = require('hardhat/utils/contract-names');
 const { findAll } = require('solidity-ast/utils');
+
+/**
+ * findAll helper function compatible with an array of astNodes
+ * @param {string} nodeType
+ * @param {import("solidity-ast").Node|import("solidity-ast").Node[]} astNodes
+ * @returns {import("solidity-ast").Node[]}
+ */
+function _findAll(nodeType, astNodes) {
+  if (Array.isArray(astNodes)) {
+    return astNodes.flatMap((astNode) => Array.from(findAll(nodeType, astNode)));
+  } else {
+    return Array.from(findAll(nodeType, astNodes));
+  }
+}
+
+function _findSourceUnitByAbsolutePath(absolutePath, astNodes) {
+  for (const astNode of astNodes) {
+    for (const sourceUnitNode of findAll('SourceUnit', astNode)) {
+      if (sourceUnitNode.absolutePath === absolutePath) {
+        return sourceUnitNode;
+      }
+    }
+  }
+}
 
 /**
  * Get all the contract definitions on the given node
@@ -197,7 +222,7 @@ function findImportedContractFullyQualifiedName(localContractName, baseAstNode, 
       }
     }
 
-    const importedSourceNode = astNodes.find(({ id }) => id === importNode.sourceUnit);
+    const importedSourceNode = _findSourceUnitByAbsolutePath(importNode.absolutePath, astNodes);
     const importedContractNodes = Array.from(findAll('ContractDefinition', importedSourceNode));
     const importedContract = importedContractNodes.find(({ name }) => name === localContractName);
 
@@ -205,6 +230,39 @@ function findImportedContractFullyQualifiedName(localContractName, baseAstNode, 
       return `${contractSource}:${importedContract.name}`;
     }
   }
+}
+
+function _findCotractSourceByFullyQualifiedName(contractFullyQualifiedName, astNodes) {
+  const { sourceName, contractName } = parseFullyQualifiedName(contractFullyQualifiedName);
+  const baseNode = _findSourceUnitByAbsolutePath(sourceName, astNodes);
+  const contractNode = findContractNodeWithName(contractName, baseNode);
+  return { baseNode, contractNode };
+}
+
+/**
+ * Get the complete tree of dependencies from the given contract. This methods
+ * takes an objects with the keys from all the contracts and the values are their
+ * AST nodes.
+ * @param {string} ccontractFullyQualifiedName
+ * @param {import("solidity-ast").SourceUnit[]} astNodes
+ * @returns {import("solidity-ast").ContractDefinition[]}
+ */
+function findContractDependenciesByFullyQualifiedName(contractFullyQualifiedName, astNodes) {
+  const { baseNode, contractNode } = _findCotractSourceByFullyQualifiedName(
+    contractFullyQualifiedName,
+    astNodes
+  );
+
+  const inheritNodeNames = Array.from(findAll('InheritanceSpecifier', contractNode))
+    .map((inheritNode) => inheritNode.baseName.referencedDeclaration)
+    .map((declarationId) =>
+      Object.entries(baseNode.exportedSymbols).find((symbolName, ids) =>
+        ids.includes(declarationId)
+      )
+    );
+
+  console.log(JSON.stringify(baseNode, null, 2));
+  console.log(JSON.stringify(inheritNodeNames, null, 2));
 }
 
 /**
@@ -250,6 +308,7 @@ module.exports = {
   findContractNodeStructs,
   findContractStateVariables,
   findContractDependencies,
+  findContractDependenciesByFullyQualifiedName,
   findImportedContractFullyQualifiedName,
   contractHasDependency,
   findFunctionSelectors,
