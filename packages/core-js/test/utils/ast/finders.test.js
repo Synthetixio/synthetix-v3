@@ -3,9 +3,8 @@ const { equal, notEqual } = require('assert/strict');
 const {
   findContractDependencies,
   findFunctionSelectors,
-  findFunctions,
+  findFunctionNodes,
   findContractNodeWithName,
-  findContractNodeWithId,
   findContractNodeStructs,
   findContractNodeVariables,
   findContractStateVariables,
@@ -80,7 +79,7 @@ describe('utils/ast/finders.js find AST artifacts', function () {
 
   describe('find function', function () {
     it('finds selectors from a contract', async () => {
-      const functions = await findFunctions('AnotherModule', astNodes);
+      const functions = await findFunctionNodes('AnotherModule', astNodes);
 
       equal(functions.length, 3, 'AnotherModule should have 1 function');
       equal(
@@ -126,21 +125,6 @@ describe('utils/ast/finders.js find AST artifacts', function () {
     it('doesnt find a contract with an invalid name', async () => {
       const node = await findContractNodeWithName('NotAValidModuleName', asts['AnotherModule']);
       equal(node, undefined, 'NotAValidModuleName should not be found');
-    });
-  });
-
-  describe('find contract node by id', function () {
-    it('finds a contract with a valid id', async () => {
-      const node = await findContractNodeWithId(620, asts['AnotherModule']);
-      notEqual(node, undefined);
-      equal(node.nodeType, 'ContractDefinition');
-      equal(node.name, 'AnotherModule');
-      equal(node.id, 620);
-    });
-
-    it('doesnt find a contract with an invalid name', async () => {
-      const node = await findContractNodeWithName(549, asts['AnotherModule']);
-      equal(node, undefined);
     });
   });
 

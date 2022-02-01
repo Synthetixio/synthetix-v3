@@ -2,7 +2,7 @@ const {
   contractHasDependency,
   findContractDefinitions,
   findContractNodeWithName,
-  findFunctions,
+  findFunctionNodes,
 } = require('@synthetixio/core-js/utils/ast/finders');
 const { capitalize } = require('@synthetixio/core-js/utils/misc/strings');
 
@@ -23,7 +23,7 @@ module.exports = class SatellitesValidator {
 
     for (const satelliteFactoryNode of this.satelliteFactoryNodes) {
       const functionName = `get${capitalize(satelliteFactoryNode.name)}Satellites`;
-      const getterNode = findFunctions(satelliteFactoryNode, this.astNodes).find(
+      const getterNode = findFunctionNodes(satelliteFactoryNode, this.astNodes).find(
         (node) => node.name === functionName
       );
 
