@@ -2,7 +2,12 @@ const { ethers } = hre;
 const assert = require('assert/strict');
 const assertBn = require('@synthetixio/core-js/utils/assertions/assert-bignumber');
 const assertRevert = require('@synthetixio/core-js/utils/assertions/assert-revert');
-const { getTime } = require('@synthetixio/core-js/utils/hardhat/rpc');
+const {
+  getTime,
+  takeSnapshot,
+  restoreSnapshot,
+  fastForwardTo,
+} = require('@synthetixio/core-js/utils/hardhat/rpc');
 const { daysToSeconds } = require('@synthetixio/core-js/utils/misc/dates');
 const { bootstrap } = require('@synthetixio/deployer/utils/tests');
 const initializer = require('../../helpers/initializer');
@@ -16,6 +21,8 @@ describe('ElectionModule (settings)', () => {
   let user;
 
   let receipt;
+
+  let snapshotId;
 
   before('identify signers', async () => {
     [, user] = await ethers.getSigners();
@@ -62,20 +69,63 @@ describe('ElectionModule (settings)', () => {
         describe('with valid parameters', () => {
           let newNextEpochSeatCount = 8;
 
-          before('set', async () => {
-            const tx = await ElectionModule.setNextEpochSeatCount(newNextEpochSeatCount);
-            receipt = await tx.wait();
+          describe('in the nominations period', function () {
+            before('take snapshot and fast forward', async function () {
+              snapshotId = await takeSnapshot(ethers.provider);
+
+              await fastForwardTo(
+                await ElectionModule.getNominationPeriodStartDate(),
+                ethers.provider
+              );
+            });
+
+            after('restore snapshot', async function () {
+              await restoreSnapshot(snapshotId, ethers.provider);
+            });
+
+            it('reverts', async function () {
+              await assertRevert(
+                ElectionModule.setNextEpochSeatCount(42),
+                'NotCallableInCurrentPeriod'
+              );
+            });
           });
 
-          it('emitted an NextEpochSeatCountChanged event', async function () {
-            const event = findEvent({ receipt, eventName: 'NextEpochSeatCountChanged' });
+          describe('in the voting period', function () {
+            before('take snapshot and fast forward', async function () {
+              snapshotId = await takeSnapshot(ethers.provider);
 
-            assert.ok(event);
-            assertBn.equal(event.args.seatCount, newNextEpochSeatCount);
+              await fastForwardTo(await ElectionModule.getVotingPeriodStartDate(), ethers.provider);
+            });
+
+            after('restore snapshot', async function () {
+              await restoreSnapshot(snapshotId, ethers.provider);
+            });
+
+            it('reverts', async function () {
+              await assertRevert(
+                ElectionModule.setNextEpochSeatCount(42),
+                'NotCallableInCurrentPeriod'
+              );
+            });
           });
 
-          it('changes the setting', async () => {
-            assertBn.equal(await ElectionModule.getNextEpochSeatCount(), newNextEpochSeatCount);
+          describe('in the idle period', function () {
+            before('set', async () => {
+              const tx = await ElectionModule.setNextEpochSeatCount(newNextEpochSeatCount);
+              receipt = await tx.wait();
+            });
+
+            it('emitted an NextEpochSeatCountChanged event', async function () {
+              const event = findEvent({ receipt, eventName: 'NextEpochSeatCountChanged' });
+
+              assert.ok(event);
+              assertBn.equal(event.args.seatCount, newNextEpochSeatCount);
+            });
+
+            it('changes the setting', async () => {
+              assertBn.equal(await ElectionModule.getNextEpochSeatCount(), newNextEpochSeatCount);
+            });
           });
         });
       });
