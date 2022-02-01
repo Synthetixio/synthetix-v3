@@ -152,6 +152,13 @@ describe('ElectionModule (initialization)', () => {
           assert.ok(event);
         });
 
+        it('emitted an EpochStarted event', async function () {
+          const event = findEvent({ receipt, eventName: 'EpochStarted' });
+
+          assert.ok(event);
+          assertBn.eq(event.args.epochIndex, 1);
+        });
+
         it('shows that the module is initialized', async () => {
           assert.equal(await ElectionModule.isElectionModuleInitialized(), true);
         });

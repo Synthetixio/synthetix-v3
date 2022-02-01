@@ -52,6 +52,7 @@ contract ElectionModule is
         store.initialized = true;
 
         emit ElectionModuleInitialized();
+        emit EpochStarted(1);
     }
 
     function isElectionModuleInitialized() external view override returns (bool) {
@@ -195,12 +196,12 @@ contract ElectionModule is
         ElectionData storage election = _getCurrentElection();
 
         uint totalBallots = election.ballotIds.length;
-        if (election.numEvaluatedBallots == totalBallots) {
+        if (election.numEvaluatedBallots < totalBallots) {
+            emit ElectionBatchEvaluated(store.currentEpochIndex, election.numEvaluatedBallots, totalBallots);
+        } else {
             election.evaluated = true;
 
             emit ElectionEvaluated(store.currentEpochIndex, totalBallots);
-        } else {
-            emit ElectionBatchEvaluated(store.currentEpochIndex, election.numEvaluatedBallots, totalBallots);
         }
     }
 
@@ -215,7 +216,11 @@ contract ElectionModule is
         _configureNextEpochSchedule();
 
         ElectionStore storage store = _electionStore();
-        store.currentEpochIndex = store.currentEpochIndex + 1;
+
+        uint newEpochIndex = store.currentEpochIndex + 1;
+        store.currentEpochIndex = newEpochIndex;
+
+        emit EpochStarted(newEpochIndex);
     }
 
     // ---------------------------------------
