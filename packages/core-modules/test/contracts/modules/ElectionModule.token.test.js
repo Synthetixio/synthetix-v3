@@ -68,7 +68,7 @@ describe('ElectionModule (token)', () => {
       });
 
       it('shows that the owner holds one token', async function () {
-        assertBn.eq(await CouncilToken.balanceOf(owner.address), 1);
+        assertBn.equal(await CouncilToken.balanceOf(owner.address), 1);
       });
 
       it('shows that the first token is held by the owner', async function () {

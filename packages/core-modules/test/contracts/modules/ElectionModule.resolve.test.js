@@ -56,7 +56,7 @@ describe('ElectionModule (resolve)', () => {
 
     it('shows that all members hold their corresponding NFT', async function () {
       for (let member of members) {
-        assertBn.eq(await CouncilToken.balanceOf(member.address), 1);
+        assertBn.equal(await CouncilToken.balanceOf(member.address), 1);
 
         const tokenId = members.indexOf(member) + 1;
         assert.equal(await CouncilToken.ownerOf(tokenId), member.address);
@@ -102,7 +102,7 @@ describe('ElectionModule (resolve)', () => {
       });
 
       it('shows that the current epoch is 1', async function () {
-        assertBn.eq(await ElectionModule.getEpochIndex(), 1);
+        assertBn.equal(await ElectionModule.getEpochIndex(), 1);
       });
 
       itProperlyManagesCredentials();
@@ -118,7 +118,7 @@ describe('ElectionModule (resolve)', () => {
           });
 
           it('shows that the current epoch is 2', async function () {
-            assertBn.eq(await ElectionModule.getEpochIndex(), 2);
+            assertBn.equal(await ElectionModule.getEpochIndex(), 2);
           });
 
           itProperlyManagesCredentials();
@@ -127,7 +127,7 @@ describe('ElectionModule (resolve)', () => {
             const event = findEvent({ receipt, eventName: 'EpochStarted' });
 
             assert.ok(event);
-            assertBn.eq(event.args.epochIndex, 2);
+            assertBn.equal(event.args.epochIndex, 2);
           });
         });
 
@@ -142,7 +142,7 @@ describe('ElectionModule (resolve)', () => {
             });
 
             it('shows that the current epoch is 3', async function () {
-              assertBn.eq(await ElectionModule.getEpochIndex(), 3);
+              assertBn.equal(await ElectionModule.getEpochIndex(), 3);
             });
 
             itProperlyManagesCredentials();
@@ -151,7 +151,7 @@ describe('ElectionModule (resolve)', () => {
               const event = findEvent({ receipt, eventName: 'EpochStarted' });
 
               assert.ok(event);
-              assertBn.eq(event.args.epochIndex, 3);
+              assertBn.equal(event.args.epochIndex, 3);
             });
 
             describe('epoch 4', function () {
@@ -165,7 +165,7 @@ describe('ElectionModule (resolve)', () => {
                 });
 
                 it('shows that the current epoch is 4', async function () {
-                  assertBn.eq(await ElectionModule.getEpochIndex(), 4);
+                  assertBn.equal(await ElectionModule.getEpochIndex(), 4);
                 });
 
                 itProperlyManagesCredentials();
@@ -174,7 +174,7 @@ describe('ElectionModule (resolve)', () => {
                   const event = findEvent({ receipt, eventName: 'EpochStarted' });
 
                   assert.ok(event);
-                  assertBn.eq(event.args.epochIndex, 4);
+                  assertBn.equal(event.args.epochIndex, 4);
                 });
               });
             });

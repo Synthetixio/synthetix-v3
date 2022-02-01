@@ -65,7 +65,7 @@ describe('ElectionModule (evaluate)', () => {
       });
 
       it('shows that nominations exist', async function () {
-        assertBn.eq((await ElectionModule.getNominees()).length, 5);
+        assertBn.equal((await ElectionModule.getNominees()).length, 5);
       });
 
       describe('when entering the election period', function () {
@@ -102,9 +102,9 @@ describe('ElectionModule (evaluate)', () => {
         });
 
         it('shows that ballots were registered', async function () {
-          assertBn.eq(await ElectionModule.getBallotVotes(ballot1.id), 4);
-          assertBn.eq(await ElectionModule.getBallotVotes(ballot2.id), 1);
-          assertBn.eq(await ElectionModule.getBallotVotes(ballot3.id), 5);
+          assertBn.equal(await ElectionModule.getBallotVotes(ballot1.id), 4);
+          assertBn.equal(await ElectionModule.getBallotVotes(ballot2.id), 1);
+          assertBn.equal(await ElectionModule.getBallotVotes(ballot3.id), 5);
         });
 
         describe('when entering the evaluation period', function () {
@@ -113,7 +113,7 @@ describe('ElectionModule (evaluate)', () => {
           });
 
           it('shows that the current period is Evaluation', async function () {
-            assertBn.eq(await ElectionModule.getCurrentPeriodType(), ElectionPeriod.Evaluation);
+            assertBn.equal(await ElectionModule.getCurrentPeriodType(), ElectionPeriod.Evaluation);
           });
 
           describe('before evaluating the epoch', function () {
@@ -135,9 +135,9 @@ describe('ElectionModule (evaluate)', () => {
                 const event = findEvent({ receipt, eventName: 'ElectionBatchEvaluated' });
 
                 assert.ok(event);
-                assertBn.eq(event.args.epochIndex, 1);
-                assertBn.eq(event.args.evaluatedBallots, 1);
-                assertBn.eq(event.args.totalBallots, 3);
+                assertBn.equal(event.args.epochIndex, 1);
+                assertBn.equal(event.args.evaluatedBallots, 1);
+                assertBn.equal(event.args.totalBallots, 3);
               });
 
               it('shows that the epoch is not evaluated', async function () {
@@ -145,11 +145,11 @@ describe('ElectionModule (evaluate)', () => {
               });
 
               it('shows that some candidate votes where processed', async function () {
-                assertBn.eq(await ElectionModule.getCandidateVotes(candidate1.address), 4);
-                assertBn.eq(await ElectionModule.getCandidateVotes(candidate2.address), 4);
-                assertBn.eq(await ElectionModule.getCandidateVotes(candidate3.address), 0);
-                assertBn.eq(await ElectionModule.getCandidateVotes(candidate4.address), 0);
-                assertBn.eq(await ElectionModule.getCandidateVotes(candidate5.address), 0);
+                assertBn.equal(await ElectionModule.getCandidateVotes(candidate1.address), 4);
+                assertBn.equal(await ElectionModule.getCandidateVotes(candidate2.address), 4);
+                assertBn.equal(await ElectionModule.getCandidateVotes(candidate3.address), 0);
+                assertBn.equal(await ElectionModule.getCandidateVotes(candidate4.address), 0);
+                assertBn.equal(await ElectionModule.getCandidateVotes(candidate5.address), 0);
               });
 
               describe('totally', function () {
@@ -162,8 +162,8 @@ describe('ElectionModule (evaluate)', () => {
                   const event = findEvent({ receipt, eventName: 'ElectionEvaluated' });
 
                   assert.ok(event);
-                  assertBn.eq(event.args.epochIndex, 1);
-                  assertBn.eq(event.args.totalBallots, 3);
+                  assertBn.equal(event.args.epochIndex, 1);
+                  assertBn.equal(event.args.totalBallots, 3);
                 });
 
                 it('shows that the epoch is evaluated', async function () {
@@ -171,11 +171,11 @@ describe('ElectionModule (evaluate)', () => {
                 });
 
                 it('shows that candidate votes where processed', async function () {
-                  assertBn.eq(await ElectionModule.getCandidateVotes(candidate1.address), 4);
-                  assertBn.eq(await ElectionModule.getCandidateVotes(candidate2.address), 4);
-                  assertBn.eq(await ElectionModule.getCandidateVotes(candidate3.address), 1);
-                  assertBn.eq(await ElectionModule.getCandidateVotes(candidate4.address), 0);
-                  assertBn.eq(await ElectionModule.getCandidateVotes(candidate5.address), 5);
+                  assertBn.equal(await ElectionModule.getCandidateVotes(candidate1.address), 4);
+                  assertBn.equal(await ElectionModule.getCandidateVotes(candidate2.address), 4);
+                  assertBn.equal(await ElectionModule.getCandidateVotes(candidate3.address), 1);
+                  assertBn.equal(await ElectionModule.getCandidateVotes(candidate4.address), 0);
+                  assertBn.equal(await ElectionModule.getCandidateVotes(candidate5.address), 5);
                 });
 
                 it('shows the election winners', async function () {
@@ -207,11 +207,14 @@ describe('ElectionModule (evaluate)', () => {
                     it('shows that the epoch index increased', async function () {
                       const epochIndexAfter = await ElectionModule.getEpochIndex();
 
-                      assertBn.eq(epochIndexAfter, epochIndexBefore.add(1));
+                      assertBn.equal(epochIndexAfter, epochIndexBefore.add(1));
                     });
 
                     it('shows that the current period is Idle', async function () {
-                      assertBn.eq(await ElectionModule.getCurrentPeriodType(), ElectionPeriod.Idle);
+                      assertBn.equal(
+                        await ElectionModule.getCurrentPeriodType(),
+                        ElectionPeriod.Idle
+                      );
                     });
                   });
                 });
