@@ -35,20 +35,14 @@ describe('ElectionModule (token)', () => {
       const votingPeriodStartDate = epochEndDate - daysToSeconds(7);
       const nominationPeriodStartDate = votingPeriodStartDate - daysToSeconds(7);
 
-      await ElectionModule.initializeElectionModule(
+      const tx = await ElectionModule.initializeElectionModule(
         TOKEN_NAME,
         TOKEN_SYMBOL,
         nominationPeriodStartDate,
         votingPeriodStartDate,
         epochEndDate
       );
-    });
-
-    it('shows that the council token was created', async function () {
-      assert.notEqual(
-        await ElectionModule.getCouncilToken(),
-        '0x0000000000000000000000000000000000000000'
-      );
+      receipt = await tx.wait();
     });
 
     describe('when the council token is identified', function () {
@@ -56,6 +50,18 @@ describe('ElectionModule (token)', () => {
         const tokenAddress = await ElectionModule.getCouncilToken();
 
         CouncilToken = await ethers.getContractAt('CouncilToken', tokenAddress);
+      });
+
+      it('shows that the council token was created', async function () {
+        assert.equal(await ElectionModule.getCouncilToken(), CouncilToken.address);
+      });
+
+      it('emitted an CouncilTokenCreated event', async function () {
+        const event = findEvent({ receipt, eventName: 'CouncilTokenCreated' });
+
+        assert.ok(event);
+        assert.equal(event.args.proxy, CouncilToken.address);
+        assert.equal(event.args.implementation, await CouncilToken.getImplementation());
       });
 
       it('has the correct token name and symbol', async function () {

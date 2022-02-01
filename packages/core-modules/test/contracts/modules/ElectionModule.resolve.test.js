@@ -129,6 +129,25 @@ describe('ElectionModule (resolve)', () => {
             assert.ok(event);
             assertBn.equal(event.args.epochIndex, 2);
           });
+
+          it('emitted CouncilMemberRemoved events', async function () {
+            const event = findEvent({ receipt, eventName: 'CouncilMemberRemoved' });
+            assert.ok(event);
+
+            assert.equal(event.args.member, owner.address);
+          });
+
+          it('emitted CouncilMemberAdded events', async function () {
+            const events = findEvent({ receipt, eventName: 'CouncilMemberAdded' });
+            assert.ok(events);
+
+            const addedMembers = events.map((e) => e.args.member);
+            assert.equal(addedMembers.length, 3);
+
+            assert.ok(addedMembers.includes(member1.address));
+            assert.ok(addedMembers.includes(member2.address));
+            assert.ok(addedMembers.includes(member3.address));
+          });
         });
 
         describe('epoch 3', function () {
@@ -152,6 +171,30 @@ describe('ElectionModule (resolve)', () => {
 
               assert.ok(event);
               assertBn.equal(event.args.epochIndex, 3);
+            });
+
+            it('emitted CouncilMemberRemoved events', async function () {
+              const events = findEvent({ receipt, eventName: 'CouncilMemberRemoved' });
+              assert.ok(events);
+
+              const removedMembers = events.map((e) => e.args.member);
+              assert.equal(removedMembers.length, 3);
+
+              assert.ok(removedMembers.includes(member1.address));
+              assert.ok(removedMembers.includes(member2.address));
+              assert.ok(removedMembers.includes(member3.address));
+            });
+
+            it('emitted CouncilMemberAdded events', async function () {
+              const events = findEvent({ receipt, eventName: 'CouncilMemberAdded' });
+              assert.ok(events);
+
+              const addedMembers = events.map((e) => e.args.member);
+              assert.equal(addedMembers.length, 3);
+
+              assert.ok(addedMembers.includes(member2.address));
+              assert.ok(addedMembers.includes(member3.address));
+              assert.ok(addedMembers.includes(member5.address));
             });
 
             describe('epoch 4', function () {

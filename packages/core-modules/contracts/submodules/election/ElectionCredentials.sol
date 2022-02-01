@@ -21,6 +21,8 @@ contract ElectionCredentials is ElectionBase {
         token.initialize(tokenName, tokenSymbol);
 
         _electionStore().councilToken = address(token);
+
+        emit CouncilTokenCreated(address(proxy), address(implementation));
     }
 
     function _addCouncilMembers(SetUtil.AddressSet storage newMembers) internal {
@@ -58,6 +60,8 @@ contract ElectionCredentials is ElectionBase {
         _getCouncilToken().mint(newMember, tokenId);
 
         store.councilTokenIds[newMember] = tokenId;
+
+        emit CouncilMemberAdded(newMember);
     }
 
     function _removeCouncilMember(address member) internal {
@@ -75,6 +79,8 @@ contract ElectionCredentials is ElectionBase {
 
         // tokenId = 0 means no associated token.
         store.councilTokenIds[member] = 0;
+
+        emit CouncilMemberRemoved(member);
     }
 
     function _getCouncilToken() internal view returns (CouncilToken) {
