@@ -1,36 +1,34 @@
+const { parseFullyQualifiedName } = require('hardhat/utils/contract-names');
 const {
-  contractHasDependency,
-  findContractDefinitions,
-  findContractNodeWithName,
+  findContractDependencies,
   findFunctionNodes,
 } = require('@synthetixio/core-js/utils/ast/finders');
 const { capitalize } = require('@synthetixio/core-js/utils/misc/strings');
 
-const SATELLITE_FACTORY = 'SatelliteFactory';
+const SATELLITE_FACTORY =
+  '@synthetixio/core-contracts/contracts/satellite/SatelliteFactory.sol:SatelliteFactory';
 
-module.exports = class SatellitesValidator {
-  constructor(astNodes) {
+class SatellitesValidator {
+  constructor(moduleFullyQualifiedNames, astNodes) {
+    this.moduleFullyQualifiedNames = moduleFullyQualifiedNames;
     this.astNodes = astNodes;
-    this.satelliteFactoryNode = findContractNodeWithName(SATELLITE_FACTORY, astNodes);
-    this.satelliteFactoryNodes = astNodes
-      .flatMap(findContractDefinitions)
-      .filter((contractNode) => contractNode.name !== SATELLITE_FACTORY)
-      .filter((contractNode) => contractHasDependency(contractNode, SATELLITE_FACTORY, astNodes));
   }
 
   validateSatelliteGetters() {
     const errors = [];
 
-    for (const satelliteFactoryNode of this.satelliteFactoryNodes) {
-      const functionName = `get${capitalize(satelliteFactoryNode.name)}Satellites`;
-      const getterNode = findFunctionNodes(satelliteFactoryNode, this.astNodes).find(
+    for (const contractFqName of this._findSatelliteFactories()) {
+      const { contractName } = parseFullyQualifiedName(contractFqName);
+      const functionName = `get${capitalize(contractName)}Satellites`;
+
+      const hasSatellitesGetter = findFunctionNodes(contractFqName, this.astNodes).find(
         (node) => node.name === functionName
       );
 
-      if (!getterNode) {
+      if (!hasSatellitesGetter) {
         errors.push({
-          contractName: satelliteFactoryNode.name,
-          msg: `SatelliteFactory contract "${satelliteFactoryNode.name}" is missing the getter function "${functionName}"`,
+          contractName: contractFqName,
+          msg: `SatelliteFactory contract "${contractFqName}" is missing the getter function "${functionName}"`,
         });
 
         continue;
@@ -39,4 +37,12 @@ module.exports = class SatellitesValidator {
 
     return errors;
   }
-};
+
+  _findSatelliteFactories() {
+    return this.moduleFullyQualifiedNames.filter((contractFqName) =>
+      findContractDependencies(contractFqName, this.astNodes).includes(SATELLITE_FACTORY)
+    );
+  }
+}
+
+module.exports = SatellitesValidator;

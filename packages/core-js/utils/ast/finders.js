@@ -225,14 +225,15 @@ function findImportedContractFullyQualifiedName(localContractName, baseAstNode, 
 /**
  * Get all the function selectors definitions from the complete tree of contract
  * nodes starting from the given root contract definition
- * @param {string} contractName
+ * @param {string} contractFullyQualifiedName
  * @param {import("solidity-ast").SourceUnit[]} astNodes
  * @returns {import("solidity-ast").ContractDefinition[]}
  */
-function findFunctionSelectors(contractName, astNodes) {
+function findFunctionSelectors(contractFullyQualifiedName, astNodes) {
   const selectors = [];
 
-  for (const contractNode of findContractDependencies(contractName, astNodes)) {
+  for (const contractFqName of findContractDependencies(contractFullyQualifiedName, astNodes)) {
+    const contractNode = findContractNode(contractFqName, astNodes);
     const currentSelectors = _findFunctionSelectors(contractNode);
     if (currentSelectors.length > 0) {
       selectors.push(...currentSelectors);
