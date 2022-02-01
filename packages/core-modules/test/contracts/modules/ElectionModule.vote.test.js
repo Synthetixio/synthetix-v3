@@ -140,10 +140,11 @@ describe.only('ElectionModule (vote)', () => {
 
             it('emitted a VoteRecorded event', async function () {
               const event = findEvent({ receipt, eventName: 'VoteRecorded' });
-              console.log(event);
 
               assert.ok(event);
               assertBn.eq(event.args.voter, voter5.address);
+              assert.equal(event.args.ballotId, ballot2.id);
+              assertBn.eq(event.args.votePower, 1);
             });
 
             it('can retrieve the corresponding ballot that users voted on', async function () {

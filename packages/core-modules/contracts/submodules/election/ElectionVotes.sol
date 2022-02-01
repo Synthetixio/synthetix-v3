@@ -58,6 +58,8 @@ contract ElectionVotes is ElectionBase {
 
         ballot.votes += votePower;
         election.ballotIdsByAddress[voter] = ballotId;
+
+        emit VoteRecorded(msg.sender, ballotId, votePower);
     }
 
     function _withdrawVote(address voter, uint votePower) internal virtual {

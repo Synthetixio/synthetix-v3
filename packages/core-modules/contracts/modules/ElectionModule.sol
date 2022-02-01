@@ -174,8 +174,6 @@ contract ElectionModule is
         }
 
         _recordVote(msg.sender, votePower, candidates);
-
-        emit VoteRecorded(msg.sender, candidates, votePower);
     }
 
     // ---------------------------------------
