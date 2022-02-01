@@ -13,18 +13,11 @@ function findContractDefinitions(astNode) {
 /**
  * Get the given contract by name on the given AST
  * @param {string} contractName
- * @param {import("solidity-ast").SourceUnit|import("solidity-ast").SourceUnit[]} astNodes
+ * @param {import("solidity-ast").SourceUnit|import("solidity-ast").SourceUnit} sourceUnitNode
  * @returns {import("solidity-ast").ContractDefinition}
  */
-function findContractNodeWithName(contractName, astNodes) {
-  if (Array.isArray(astNodes)) {
-    for (const astNode of astNodes) {
-      const contractDefiniton = findContractNodeWithName(contractName, astNode);
-      if (contractDefiniton) return contractDefiniton;
-    }
-  }
-
-  for (const contractDefiniton of findAll('ContractDefinition', astNodes)) {
+function _findContractNodeWithName(contractName, sourceUnitNode) {
+  for (const contractDefiniton of findAll('ContractDefinition', sourceUnitNode)) {
     if (contractDefiniton.name === contractName) {
       return contractDefiniton;
     }
@@ -116,16 +109,16 @@ function _findFunctionSelectors(contractNode) {
  * @returns {string[]}
  */
 function findContractDependencies(contractFullyQualifiedName, astNodes) {
-  const { baseNode, contractNode } = _findContractSourceByFullyQualifiedName(
+  const { sourceUnitNode, contractNode } = _findContractSourceByFullyQualifiedName(
     contractFullyQualifiedName,
     astNodes
   );
 
   const inheritedCotractsFullyQualifiedNames = _findInheritedContractsLocalNodeNames(
     contractNode,
-    baseNode
+    sourceUnitNode
   ).map((localContractName) =>
-    _findLocalContractFullyQualifiedName(localContractName, baseNode, astNodes)
+    _findLocalContractFullyQualifiedName(localContractName, sourceUnitNode, astNodes)
   );
 
   return [
@@ -148,9 +141,11 @@ function _findSourceUnitByAbsolutePath(absolutePath, astNodes) {
 
 function _findContractSourceByFullyQualifiedName(contractFullyQualifiedName, astNodes) {
   const { sourceName, contractName } = parseFullyQualifiedName(contractFullyQualifiedName);
-  const baseNode = _findSourceUnitByAbsolutePath(sourceName, astNodes);
-  const contractNode = findContractNodeWithName(contractName, baseNode);
-  return { baseNode, contractNode };
+  const sourceUnitNode = _findSourceUnitByAbsolutePath(sourceName, astNodes);
+  if (!sourceUnitNode) return {};
+  const contractNode = _findContractNodeWithName(contractName, sourceUnitNode);
+  if (!contractNode) return {};
+  return { sourceUnitNode, contractNode };
 }
 
 function _findInheritedContractsLocalNodeNames(contractNode, sourceUnitNode) {
@@ -166,7 +161,7 @@ function _findInheritedContractsLocalNodeNames(contractNode, sourceUnitNode) {
 
 function _findLocalContractFullyQualifiedName(localContractName, localSourceUnitNode, astNodes) {
   // First, check if the contract was created locally
-  const localContractNode = findContractNodeWithName(localContractName, localSourceUnitNode);
+  const localContractNode = _findContractNodeWithName(localContractName, localSourceUnitNode);
   if (localContractNode) {
     return `${localSourceUnitNode.absolutePath}:${localContractName}`;
   }
@@ -267,7 +262,6 @@ module.exports = {
   findContractDefinitions,
   findYulCaseValues,
   findYulStorageSlotAssignments,
-  findContractNodeWithName,
   findContractNodeVariables,
   findContractNodeStructs,
   findContractStateVariables,

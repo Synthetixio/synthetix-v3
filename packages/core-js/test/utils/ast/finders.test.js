@@ -4,14 +4,13 @@ const {
   findContractDependencies,
   findFunctionSelectors,
   findFunctionNodes,
-  findContractNodeWithName,
   findContractNodeStructs,
   findContractNodeVariables,
   findContractStateVariables,
   findYulCaseValues,
   findYulStorageSlotAssignments,
   findContractDefinitions,
-  contractHasDependency,
+  findContractNode,
   findImportedContractFullyQualifiedName,
 } = require('../../../utils/ast/finders');
 const asts = require('../../fixtures/asts.json');
@@ -32,32 +31,28 @@ describe('utils/ast/finders.js find AST artifacts', function () {
 
   describe('find contract dependencies', function () {
     it('finds contract dependencies of a simple contract', async () => {
-      const dependencies = await findContractDependencies('AnotherModule', astNodes);
+      const AnotherModule = 'contracts/modules/AnotherModule.sol:AnotherModule';
+      const dependencies = await findContractDependencies(AnotherModule, astNodes);
       equal(dependencies.length, 3, 'AnotherModule should have 3 dependencies');
 
       equal(
-        dependencies.some((v) => v.name === 'AnotherModule'),
+        dependencies.some((fqName) => fqName === AnotherModule),
         true,
         'AnotherModule should be present in the list of dependencies'
       );
     });
 
-    it('doesnt find a contract for an invalid name', async () => {
-      const dependencies = await findContractDependencies('NotAValidModuleName', astNodes);
-      equal(dependencies.length, 0);
-    });
-
-    it('doesnt find a contract for a missing ast', async () => {
-      const dependencies = await findContractDependencies('MissingModule', []);
-      equal(dependencies.length, 0);
-    });
-
     it('finds contract dependencies of a complex contract', async () => {
-      const dependencies = await findContractDependencies('SettingsModule', astNodes);
+      const dependencies = await findContractDependencies(
+        'contracts/modules/SettingsModule.sol:SettingsModule',
+        astNodes
+      );
       equal(dependencies.length, 5, 'SettingsModule should have 5 dependencies');
 
       equal(
-        dependencies.some((v) => v.name === 'OwnableMixin'),
+        dependencies.includes(
+          '@synthetixio/core-contracts/contracts/ownership/OwnableMixin.sol:OwnableMixin'
+        ),
         true,
         'OwnableMixin should be present in the list of dependencies (inherited from core-contracts)'
       );
@@ -66,20 +61,24 @@ describe('utils/ast/finders.js find AST artifacts', function () {
 
   describe('find function selectors', function () {
     it('finds selectors from a contract', async () => {
-      const selectors = await findFunctionSelectors('AnotherModule', astNodes);
+      const AnotherModule = 'contracts/modules/AnotherModule.sol:AnotherModule';
+      const selectors = await findFunctionSelectors(AnotherModule, astNodes);
       equal(selectors.length, 1, 'AnotherModule should have 1 selector');
       equal(selectors[0].selector, '0x45aa2181', 'AnotherModule selector should be 0x45aa2181');
     });
 
     it('doesnt find selectors from a contract that doesnt expose any', async () => {
-      const selectors = await findFunctionSelectors('Router', astNodes);
+      const selectors = await findFunctionSelectors('contracts/Router.sol:Router', astNodes);
       equal(selectors.length, 0, 'Router should not have any selector');
     });
   });
 
   describe('find function', function () {
     it('finds selectors from a contract', async () => {
-      const functions = await findFunctionNodes('AnotherModule', astNodes);
+      const functions = await findFunctionNodes(
+        'contracts/modules/AnotherModule.sol:AnotherModule',
+        astNodes
+      );
 
       equal(functions.length, 3, 'AnotherModule should have 1 function');
       equal(
@@ -95,7 +94,7 @@ describe('utils/ast/finders.js find AST artifacts', function () {
     });
 
     it('doesnt find selectors from a contract that doesnt expose any', async () => {
-      const selectors = await findFunctionSelectors('Router', astNodes);
+      const selectors = await findFunctionSelectors('contracts/Router.sol:Router', astNodes);
       equal(selectors.length, 0, 'Router should not have any selector');
     });
   });
@@ -111,20 +110,6 @@ describe('utils/ast/finders.js find AST artifacts', function () {
     it('doesnt find a contract with an invalid name', async () => {
       const nodes = await findContractDefinitions(noContractAst);
       equal(nodes.length, 0);
-    });
-  });
-
-  describe('find contract node by name', function () {
-    it('finds a contract with a valid name', async () => {
-      const node = await findContractNodeWithName('AnotherModule', asts['AnotherModule']);
-      notEqual(node, undefined);
-      equal(node.nodeType, 'ContractDefinition');
-      equal(node.name, 'AnotherModule');
-    });
-
-    it('doesnt find a contract with an invalid name', async () => {
-      const node = await findContractNodeWithName('NotAValidModuleName', asts['AnotherModule']);
-      equal(node, undefined, 'NotAValidModuleName should not be found');
     });
   });
 
@@ -157,8 +142,8 @@ describe('utils/ast/finders.js find AST artifacts', function () {
   });
 
   describe('find contract node state variables', function () {
-    it('doesnt find a state variable', async () => {
-      const node = await findContractStateVariables('SettingsNamespace', asts['SettingsNamespace']);
+    it('doesnt find a state variable', function () {
+      const node = findContractStateVariables('SettingsNamespace', asts['SettingsNamespace']);
       notEqual(node, undefined);
       equal(node.length, 0);
     });
@@ -196,38 +181,6 @@ describe('utils/ast/finders.js find AST artifacts', function () {
       const slots = findYulStorageSlotAssignments(asts['AnotherModule']);
       notEqual(slots, undefined);
       equal(slots.length == 0, true);
-    });
-  });
-
-  describe('check if a contract has a dependency', function () {
-    it('returns true when a contract has the given dependency by contractName', function () {
-      const result = contractHasDependency('Token', 'ERC20', sampleProjectAstNodes);
-      equal(result, true);
-    });
-
-    it('returns false when a contract does not have the given dependency by contractName', function () {
-      const result = contractHasDependency('Token', 'Unexistant', sampleProjectAstNodes);
-      equal(result, false);
-    });
-
-    it('returns true when a contract has the given dependency by contractNode', function () {
-      const contractNode = findContractNodeWithName(
-        'Token',
-        sampleProject.asts['contracts/Token.sol']
-      );
-
-      const result = contractHasDependency(contractNode, 'ERC20', sampleProjectAstNodes);
-      equal(result, true);
-    });
-
-    it('returns false when a contract does not have the given dependency by contractNode', function () {
-      const contractNode = findContractNodeWithName(
-        'Token',
-        sampleProject.asts['contracts/Token.sol']
-      );
-
-      const result = contractHasDependency(contractNode, 'Unexistant', sampleProjectAstNodes);
-      equal(result, false);
     });
   });
 
