@@ -7,6 +7,7 @@ const { daysToSeconds } = require('@synthetixio/core-js/utils/misc/dates');
 const { bootstrap } = require('@synthetixio/deployer/utils/tests');
 const initializer = require('../../helpers/initializer');
 const { ElectionPeriod } = require('../../helpers/election-helper');
+const { findEvent } = require('@synthetixio/core-js/utils/ethers/events');
 
 describe('ElectionModule (nominate)', () => {
   const { proxyAddress } = bootstrap(initializer);
@@ -17,10 +18,13 @@ describe('ElectionModule (nominate)', () => {
 
   let nominees = [];
 
+  let receipt;
+
   async function nominate(signer) {
     nominees.push(signer.address);
 
-    await ElectionModule.connect(signer).nominate();
+    const tx = await ElectionModule.connect(signer).nominate();
+    receipt = await tx.wait();
   }
 
   async function withdrawNomination(signer) {
@@ -34,7 +38,8 @@ describe('ElectionModule (nominate)', () => {
 
     nominees.pop();
 
-    await ElectionModule.connect(signer).withdrawNomination();
+    const tx = await ElectionModule.connect(signer).withdrawNomination();
+    receipt = await tx.wait();
   }
 
   const itProperlyRecordsNominees = () => {
@@ -96,6 +101,13 @@ describe('ElectionModule (nominate)', () => {
           await nominate(user);
         });
 
+        it('emitted an CandidateNominated event', async function () {
+          const event = findEvent({ receipt, eventName: 'CandidateNominated' });
+
+          assert.ok(event);
+          assertBn.eq(event.args.candidate, user.address);
+        });
+
         itProperlyRecordsNominees();
 
         describe('when a user that is not nominated attempts to withdraw', function () {
@@ -125,6 +137,13 @@ describe('ElectionModule (nominate)', () => {
           describe('when a user withdraws its nomination', function () {
             before('withdraw', async function () {
               await withdrawNomination(user);
+            });
+
+            it('emitted an NominationWithdrawn event', async function () {
+              const event = findEvent({ receipt, eventName: 'NominationWithdrawn' });
+
+              assert.ok(event);
+              assertBn.eq(event.args.candidate, user.address);
             });
 
             itProperlyRecordsNominees();

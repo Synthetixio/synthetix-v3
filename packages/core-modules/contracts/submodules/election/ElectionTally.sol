@@ -17,8 +17,8 @@ contract ElectionTally is ElectionBase {
         uint firstBallotIndex = election.numEvaluatedBallots;
 
         uint lastBallotIndex = firstBallotIndex + numBallots;
-        if (lastBallotIndex >= totalBallots) {
-            lastBallotIndex = totalBallots - 1;
+        if (lastBallotIndex > totalBallots) {
+            lastBallotIndex = totalBallots;
         }
 
         _evaluateBallotRange(election, firstBallotIndex, lastBallotIndex);
@@ -32,7 +32,7 @@ contract ElectionTally is ElectionBase {
         ElectionSettings storage settings = _electionStore().settings;
         uint numSeats = settings.nextEpochSeatCount;
 
-        for (uint ballotIndex = fromIndex; ballotIndex <= toIndex; ballotIndex++) {
+        for (uint ballotIndex = fromIndex; ballotIndex < toIndex; ballotIndex++) {
             bytes32 ballotId = election.ballotIds[ballotIndex];
             BallotData storage ballot = election.ballotsById[ballotId];
 

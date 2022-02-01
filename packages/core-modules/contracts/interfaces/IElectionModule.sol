@@ -22,13 +22,13 @@ interface IElectionModule {
 
     function upgradeCouncilToken(address newCouncilTokenImplementation) external;
 
-    function adjustEpochSchedule(
+    function tweakEpochSchedule(
         uint64 newNominationPeriodStartDate,
         uint64 newVotingPeriodStartDate,
         uint64 newEpochEndDate
     ) external;
 
-    function unsafeAdjustEpochSchedule(
+    function modifyEpochSchedule(
         uint64 newNominationPeriodStartDate,
         uint64 newVotingPeriodStartDate,
         uint64 newEpochEndDate

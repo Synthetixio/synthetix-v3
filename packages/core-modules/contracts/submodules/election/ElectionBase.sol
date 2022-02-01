@@ -19,16 +19,43 @@ contract ElectionBase is ElectionStorage, InitializableMixin {
     error InvalidEpochConfiguration();
     error InvalidElectionSettings();
     error NotCallableInCurrentPeriod();
+    error ChangesCurrentPeriod();
     error AlreadyACouncilMember();
     error NotACouncilMember();
 
-    function _isInitialized() internal view override returns (bool) {
-        return _electionStore().initialized;
-    }
+    // ---------------------------------------
+    // Events
+    // ---------------------------------------
+
+    event ElectionModuleInitialized();
+    event EpochStarted(uint epochIndex);
+    event CouncilTokenUpgraded(address newImplementation);
+    event EpochScheduleUpdated(uint64 nominationPeriodStartDate, uint64 votingPeriodStartDate, uint64 epochEndDate);
+    event MinimumEpochDurationsChanged(
+        uint64 minNominationPeriodDuration,
+        uint64 minVotingPeriodDuration,
+        uint64 minEpochDuration
+    );
+    event MaxDateAdjustmentToleranceChanged(uint64 tolerance);
+    event DefaultBallotEvaluationBatchSizeChanged(uint size);
+    event NextEpochSeatCountChanged(uint seatCount);
+    event CandidateNominated(address indexed candidate);
+    event NominationWithdrawn(address indexed candidate);
+    event VoteRecorded(address indexed voter, bytes32 indexed ballotId, uint votePower);
+    event VoteWithdrawn(address indexed voter, bytes32 indexed ballotId, uint votePower);
+    event ElectionEvaluated(uint epochIndex, uint totalBallots);
+    event ElectionBatchEvaluated(uint epochIndex, uint evaluatedBallots, uint totalBallots);
 
     // ---------------------------------------
     // Helpers
     // ---------------------------------------
+
+    // Init helpers
+    // ~~~~~~~~~~~~~~~~~~
+
+    function _isInitialized() internal view override returns (bool) {
+        return _electionStore().initialized;
+    }
 
     // Epoch helpers
     // ~~~~~~~~~~~~~~~~~~

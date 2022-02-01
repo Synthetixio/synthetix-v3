@@ -7,22 +7,25 @@ const { daysToSeconds } = require('@synthetixio/core-js/utils/misc/dates');
 const { bootstrap } = require('@synthetixio/deployer/utils/tests');
 const initializer = require('../../helpers/initializer');
 const { ElectionPeriod } = require('../../helpers/election-helper');
+const { findEvent } = require('@synthetixio/core-js/utils/ethers/events');
 
 describe('ElectionModule (vote)', () => {
   const { proxyAddress } = bootstrap(initializer);
 
   let ElectionModule;
 
-  let candidate1, candidate2, candidate3;
+  let candidate1, candidate2, candidate3, candidate4;
   let voter1, voter2, voter3, voter4, voter5;
 
   let ballot1, ballot2, ballot3;
 
+  let receipt;
+
   before('identify signers', async () => {
     const users = await ethers.getSigners();
 
-    [candidate1, candidate2, candidate3] = users;
-    [, , , voter1, voter2, voter3, voter4, voter5] = users;
+    [candidate1, candidate2, candidate3, candidate4] = users;
+    [, , , , voter1, voter2, voter3, voter4, voter5] = users;
   });
 
   before('identify modules', async () => {
@@ -59,6 +62,7 @@ describe('ElectionModule (vote)', () => {
           await ElectionModule.connect(candidate1).nominate();
           await ElectionModule.connect(candidate2).nominate();
           await ElectionModule.connect(candidate3).nominate();
+          await ElectionModule.connect(candidate4).nominate();
         });
 
         describe('when entering the election period', function () {
@@ -113,8 +117,11 @@ describe('ElectionModule (vote)', () => {
                 id: await ElectionModule.calculateBallotId([candidate1.address]),
               };
               ballot2 = {
-                candidates: [candidate2.address],
-                id: await ElectionModule.calculateBallotId([candidate2.address]),
+                candidates: [candidate2.address, candidate4.address],
+                id: await ElectionModule.calculateBallotId([
+                  candidate2.address,
+                  candidate4.address,
+                ]),
               };
               ballot3 = {
                 candidates: [candidate3.address],
@@ -127,7 +134,20 @@ describe('ElectionModule (vote)', () => {
               await ElectionModule.connect(voter2).elect(ballot2.candidates);
               await ElectionModule.connect(voter3).elect(ballot1.candidates);
               await ElectionModule.connect(voter4).elect(ballot1.candidates);
-              await ElectionModule.connect(voter5).elect(ballot2.candidates);
+            });
+
+            before('vote and record receipt', async function () {
+              const tx = await ElectionModule.connect(voter5).elect(ballot2.candidates);
+              receipt = await tx.wait();
+            });
+
+            it('emitted a VoteRecorded event', async function () {
+              const event = findEvent({ receipt, eventName: 'VoteRecorded' });
+
+              assert.ok(event);
+              assertBn.eq(event.args.voter, voter5.address);
+              assert.equal(event.args.ballotId, ballot2.id);
+              assertBn.eq(event.args.votePower, 1);
             });
 
             it('can retrieve the corresponding ballot that users voted on', async function () {
@@ -161,7 +181,24 @@ describe('ElectionModule (vote)', () => {
 
             describe('when users change their vote', function () {
               before('change vote', async function () {
-                await ElectionModule.connect(voter5).elect(ballot3.candidates);
+                const tx = await ElectionModule.connect(voter5).elect(ballot3.candidates);
+                receipt = await tx.wait();
+              });
+
+              it('emitted VoteWithdrawn and VoteRecorded events', async function () {
+                let event;
+
+                event = findEvent({ receipt, eventName: 'VoteWithdrawn' });
+                assert.ok(event);
+                assertBn.eq(event.args.voter, voter5.address);
+                assert.equal(event.args.ballotId, ballot2.id);
+                assertBn.eq(event.args.votePower, 1);
+
+                event = findEvent({ receipt, eventName: 'VoteRecorded' });
+                assert.ok(event);
+                assertBn.eq(event.args.voter, voter5.address);
+                assert.equal(event.args.ballotId, ballot3.id);
+                assertBn.eq(event.args.votePower, 1);
               });
 
               it('can retrieve the corresponding ballot that users voted on', async function () {
