@@ -34,6 +34,16 @@ async function getTime(provider) {
   return block.timestamp;
 }
 
+async function getBlock(provider) {
+  const block = await provider.getBlock();
+
+  return block.number;
+}
+
+async function advanceBlock(provider) {
+  await mineBlock(provider);
+}
+
 async function mineBlock(provider) {
   await provider.send('evm_mine');
 }
@@ -43,5 +53,7 @@ module.exports = {
   restoreSnapshot,
   fastForward,
   fastForwardTo,
+  advanceBlock,
+  getBlock,
   getTime,
 };

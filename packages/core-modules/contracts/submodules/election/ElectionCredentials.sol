@@ -37,6 +37,8 @@ contract ElectionCredentials is ElectionBase {
         uint numMembers = members.length();
 
         for (uint memberIndex = 0; memberIndex < numMembers; memberIndex++) {
+            // Always removes the first element in the array
+            // until none are left.
             _removeCouncilMember(members.valueAt(1));
         }
     }
