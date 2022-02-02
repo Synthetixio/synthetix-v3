@@ -1,7 +1,6 @@
 const { subtask } = require('hardhat/config');
 const logger = require('@synthetixio/core-js/utils/io/logger');
 const SatellitesValidator = require('../internal/satellites-validator');
-const { ContractValidationError } = require('../internal/errors');
 const { SUBTASK_VALIDATE_SATELLITES } = require('../task-names');
 
 subtask(SUBTASK_VALIDATE_SATELLITES).setAction(async (_, hre) => {
@@ -23,7 +22,7 @@ subtask(SUBTASK_VALIDATE_SATELLITES).setAction(async (_, hre) => {
       logger.debug(JSON.stringify(error, null, 2));
     }
 
-    throw new ContractValidationError(
+    throw new SatellitesValidator.SatellitesValidationError(
       `Invalid satellite factory implementation on: ${errorsFound
         .map((error) => error.contractName)
         .join(', ')}`

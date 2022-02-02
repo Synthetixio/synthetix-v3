@@ -4,6 +4,7 @@ const {
   findFunctionNodes,
 } = require('@synthetixio/core-js/utils/ast/finders');
 const { capitalize } = require('@synthetixio/core-js/utils/misc/strings');
+const { ContractValidationError } = require('./errors');
 
 const SATELLITE_FACTORY =
   '@synthetixio/core-contracts/contracts/satellite/SatelliteFactory.sol:SatelliteFactory';
@@ -44,5 +45,9 @@ class SatellitesValidator {
     );
   }
 }
+
+SatellitesValidator.SatellitesValidationError = class SatellitesValidationError extends (
+  ContractValidationError
+) {};
 
 module.exports = SatellitesValidator;

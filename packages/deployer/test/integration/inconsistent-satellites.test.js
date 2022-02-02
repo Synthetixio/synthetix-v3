@@ -1,6 +1,6 @@
 const { loadEnvironment, deployOnEnvironment } = require('../helpers/use-environment');
 const { rejects } = require('assert/strict');
-const { ContractValidationError } = require('../../internal/errors');
+const { SatellitesValidationError } = require('../../internal/satellites-validator');
 
 describe('inconsistent-satellites', function () {
   let hre;
@@ -18,7 +18,7 @@ describe('inconsistent-satellites', function () {
           alias: 'first',
           clear: true,
         });
-      }, ContractValidationError);
+      }, SatellitesValidationError);
     });
   });
 });
