@@ -211,10 +211,7 @@ describe('ElectionModule (evaluate)', () => {
                     });
 
                     it('shows that the current period is Idle', async function () {
-                      assertBn.equal(
-                        await ElectionModule.getCurrentPeriod(),
-                        ElectionPeriod.Idle
-                      );
+                      assertBn.equal(await ElectionModule.getCurrentPeriod(), ElectionPeriod.Idle);
                     });
                   });
                 });
