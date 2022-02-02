@@ -7,6 +7,23 @@ import "../../storage/ElectionStorage.sol";
 /// @dev Common utils, errors, and events to be used by any contracts that conform the ElectionModule
 contract ElectionBase is ElectionStorage, InitializableMixin {
     // ---------------------------------------
+    // Enums
+    // ---------------------------------------
+
+    enum ElectionPeriod {
+        // Not initialized
+        Null,
+        // Initialized, but not nominating nor voting
+        Idle,
+        // Accepts nominations
+        Nomination,
+        // Accepts votes
+        Vote,
+        // Votes being counted
+        Evaluation
+    }
+
+    // ---------------------------------------
     // Errors
     // ---------------------------------------
 

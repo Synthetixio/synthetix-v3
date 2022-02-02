@@ -79,19 +79,6 @@ contract ElectionStorage {
         address[] candidates;
     }
 
-    enum ElectionPeriod {
-        // Not initialized
-        Null,
-        // Initialized, but not nominating nor voting
-        Idle,
-        // Accepts nominations
-        Nomination,
-        // Accepts votes
-        Vote,
-        // Votes being counted
-        Evaluation
-    }
-
     function _electionSettings() internal view returns (ElectionSettings storage) {
         return _electionStore().settings[address(this)];
     }
