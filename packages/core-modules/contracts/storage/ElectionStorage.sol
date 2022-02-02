@@ -56,6 +56,10 @@ contract ElectionStorage {
         Evaluation
     }
 
+    function _electionSettings() internal view returns (ElectionSettings storage) {
+        return _electionStore().settings[address(this)];
+    }
+
     function _electionStore() internal pure returns (ElectionStore storage store) {
         assembly {
             // bytes32(uint(keccak256("io.synthetix.election")) - 1)

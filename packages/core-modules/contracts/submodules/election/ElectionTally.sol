@@ -8,7 +8,7 @@ contract ElectionTally is ElectionBase {
 
     function _evaluateNextBallotBatch(uint numBallots) internal {
         if (numBallots == 0) {
-            numBallots = _getElectionSettings().defaultBallotEvaluationBatchSize;
+            numBallots = _electionSettings().defaultBallotEvaluationBatchSize;
         }
 
         ElectionData storage election = _getCurrentElection();
@@ -29,7 +29,7 @@ contract ElectionTally is ElectionBase {
         uint fromIndex,
         uint toIndex
     ) internal {
-        ElectionSettings storage settings = _getElectionSettings();
+        ElectionSettings storage settings = _electionSettings();
         uint numSeats = settings.nextEpochSeatCount;
 
         for (uint ballotIndex = fromIndex; ballotIndex < toIndex; ballotIndex++) {

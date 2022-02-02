@@ -107,7 +107,7 @@ contract ElectionSchedule is ElectionBase {
         uint64 votingPeriodDuration = epochEndDate - votingPeriodStartDate;
         uint64 nominationPeriodDuration = votingPeriodStartDate - nominationPeriodStartDate;
 
-        ElectionSettings storage settings = _getElectionSettings();
+        ElectionSettings storage settings = _electionSettings();
 
         // Ensure all durations are above minimums
         if (
@@ -126,7 +126,7 @@ contract ElectionSchedule is ElectionBase {
         uint64 newEpochEndDate,
         bool ensureChangesAreSmall
     ) internal {
-        uint64 maxDateAdjustmentTolerance = _getElectionSettings().maxDateAdjustmentTolerance;
+        uint64 maxDateAdjustmentTolerance = _electionSettings().maxDateAdjustmentTolerance;
         if (ensureChangesAreSmall) {
             if (
                 _uint64AbsDifference(newEpochEndDate, epoch.endDate) > maxDateAdjustmentTolerance ||
@@ -160,7 +160,7 @@ contract ElectionSchedule is ElectionBase {
         uint64 newMinVotingPeriodDuration,
         uint64 newMinEpochDuration
     ) internal {
-        ElectionSettings storage settings = _getElectionSettings();
+        ElectionSettings storage settings = _electionSettings();
 
         if (newMinNominationPeriodDuration == 0 || newMinVotingPeriodDuration == 0 || newMinEpochDuration == 0) {
             revert InvalidElectionSettings();

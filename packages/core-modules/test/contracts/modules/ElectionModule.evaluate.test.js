@@ -119,7 +119,7 @@ describe('ElectionModule (evaluate)', () => {
           describe('before evaluating the epoch', function () {
             describe('when trying to resolve the epoch', function () {
               it('reverts', async function () {
-                await assertRevert(ElectionModule.resolve(), 'EpochNotEvaluated');
+                await assertRevert(ElectionModule.resolve(), 'ElectionNotEvaluated');
               });
             });
           });

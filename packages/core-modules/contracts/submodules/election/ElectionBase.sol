@@ -9,7 +9,7 @@ contract ElectionBase is ElectionStorage, InitializableMixin {
     // Errors
     // ---------------------------------------
 
-    error EpochNotEvaluated();
+    error ElectionNotEvaluated();
     error ElectionAlreadyEvaluated();
     error AlreadyNominated();
     error NotNominated();
@@ -53,22 +53,9 @@ contract ElectionBase is ElectionStorage, InitializableMixin {
     // Helpers
     // ---------------------------------------
 
-    // Init helpers
-    // ~~~~~~~~~~~~~~~~~~
-
     function _isInitialized() internal view override returns (bool) {
         return _electionStore().initialized;
     }
-
-    // Settings helpers
-    // ~~~~~~~~~~~~~~~~~~
-
-    function _getElectionSettings() internal view returns (ElectionSettings storage) {
-        return _electionStore().settings[address(this)];
-    }
-
-    // Epoch helpers
-    // ~~~~~~~~~~~~~~~~~~
 
     function _getCurrentEpoch() internal view returns (EpochData storage) {
         return _getEpochAtPosition(_electionStore().currentEpochIndex);
@@ -81,9 +68,6 @@ contract ElectionBase is ElectionStorage, InitializableMixin {
     function _getEpochAtPosition(uint position) internal view returns (EpochData storage) {
         return _electionStore().epochs[position];
     }
-
-    // Election helpers
-    // ~~~~~~~~~~~~~~~~~~
 
     function _getCurrentElection() internal view returns (ElectionData storage) {
         return _getElectionAtPosition(_electionStore().currentEpochIndex);
