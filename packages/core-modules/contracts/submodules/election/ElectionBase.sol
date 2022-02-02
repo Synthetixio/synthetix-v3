@@ -4,6 +4,7 @@ pragma solidity ^0.8.0;
 import "@synthetixio/core-contracts/contracts/initializable/InitializableMixin.sol";
 import "../../storage/ElectionStorage.sol";
 
+/// @dev Common utils, errors, and events to be used by any contracts that conform the ElectionModule
 contract ElectionBase is ElectionStorage, InitializableMixin {
     // ---------------------------------------
     // Errors

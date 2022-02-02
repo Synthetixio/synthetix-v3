@@ -3,6 +3,7 @@ pragma solidity ^0.8.0;
 
 import "../ElectionTally.sol";
 
+/// @dev Basic way of counting votes in ElectionModule.evaluate()
 contract ElectionTallyPlurality is ElectionTally {
     using SetUtil for SetUtil.AddressSet;
 

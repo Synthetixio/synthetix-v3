@@ -3,6 +3,7 @@ pragma solidity ^0.8.0;
 
 import "./ElectionBase.sol";
 
+/// @dev Defines core vote-counting / ballot-processing functionality in ElectionModule.evaluate()
 abstract contract ElectionTally is ElectionBase {
     function _evaluateNextBallotBatch(uint numBallots) internal {
         if (numBallots == 0) {
