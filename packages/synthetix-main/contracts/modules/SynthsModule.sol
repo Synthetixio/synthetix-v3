@@ -49,7 +49,7 @@ contract SynthsModule is ISynthsModule, OwnableMixin, SynthsStorage, Initializab
         return satellites;
     }
 
-    function getSynthsModuleSatellites() public view returns (Satellite[] memory) {
+    function getSynthsModuleSatellites() public view override returns (Satellite[] memory) {
         return _getSatellites();
     }
 

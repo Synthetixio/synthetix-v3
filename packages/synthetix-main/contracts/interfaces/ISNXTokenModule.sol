@@ -1,7 +1,9 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-interface ISNXTokenModule {
+import "@synthetixio/core-contracts/contracts/interfaces/ISatelliteFactory.sol";
+
+interface ISNXTokenModule is ISatelliteFactory {
     function initializeSNXTokenModule() external;
 
     function isSNXTokenModuleInitialized() external view returns (bool);
@@ -9,4 +11,6 @@ interface ISNXTokenModule {
     function upgradeSNXImplementation(address newSNXTokenImplementation) external;
 
     function getSNXTokenAddress() external view returns (address);
+
+    function getSNXTokenModuleSatellites() external view returns (Satellite[] memory);
 }

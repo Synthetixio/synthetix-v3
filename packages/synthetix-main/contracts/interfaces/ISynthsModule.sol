@@ -1,7 +1,9 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-interface ISynthsModule {
+import "@synthetixio/core-contracts/contracts/interfaces/ISatelliteFactory.sol";
+
+interface ISynthsModule is ISatelliteFactory {
     function initializeSynthsModule() external;
 
     function isSynthsModuleInitialized() external view returns (bool);
@@ -22,4 +24,6 @@ interface ISynthsModule {
     function getSynthImplementation() external view returns (address);
 
     function getSynth(bytes32 synth) external view returns (address);
+
+    function getSynthsModuleSatellites() external view returns (Satellite[] memory);
 }

@@ -7,8 +7,11 @@ const { SUBTASK_VALIDATE_INITIALIZABLES } = require('../task-names');
 subtask(SUBTASK_VALIDATE_INITIALIZABLES).setAction(async (_, hre) => {
   logger.subtitle('Validating initializable contracts');
 
+  const moduleFullyQualifiedNames = Object.values(hre.deployer.deployment.general.contracts)
+    .filter(({ isModule }) => isModule)
+    .map((c) => c.contractFullyQualifiedName);
   const astNodes = Object.values(hre.deployer.deployment.sources).map((val) => val.ast);
-  const validator = new ModuleInitializableASTValidator(astNodes);
+  const validator = new ModuleInitializableASTValidator(moduleFullyQualifiedNames, astNodes);
 
   const errorsFound = [];
 
