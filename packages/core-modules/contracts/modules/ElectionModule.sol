@@ -57,7 +57,7 @@ contract ElectionModule is
     }
 
     // ---------------------------------------
-    // Owner functions
+    // Owner write functions
     // ---------------------------------------
 
     function upgradeCouncilToken(address newCouncilTokenImplementation) external override onlyOwner {
@@ -133,7 +133,7 @@ contract ElectionModule is
     }
 
     // ---------------------------------------
-    // Nomination functions
+    // User write functions
     // ---------------------------------------
 
     function nominate() external override onlyInPeriod(ElectionPeriod.Nomination) {
@@ -156,10 +156,6 @@ contract ElectionModule is
         emit NominationWithdrawn(msg.sender);
     }
 
-    // ---------------------------------------
-    // Vote functions
-    // ---------------------------------------
-
     function elect(address[] calldata candidates) external override onlyInPeriod(ElectionPeriod.Vote) {
         uint votePower = _getVotePower(msg.sender);
 
@@ -169,7 +165,7 @@ contract ElectionModule is
 
         bytes32 ballotId;
 
-        if (_hasVoted(msg.sender)) {
+        if (hasVoted(msg.sender)) {
             ballotId = _withdrawVote(msg.sender, votePower);
 
             emit VoteWithdrawn(msg.sender, ballotId, votePower);
@@ -179,10 +175,6 @@ contract ElectionModule is
 
         emit VoteRecorded(msg.sender, ballotId, votePower);
     }
-
-    // ---------------------------------------
-    // Election resolution
-    // ---------------------------------------
 
     function evaluate(uint numBallots) external override onlyInPeriod(ElectionPeriod.Evaluation) {
         if (isElectionEvaluated()) revert ElectionAlreadyEvaluated();
@@ -299,12 +291,12 @@ contract ElectionModule is
         return _calculateBallotId(candidates);
     }
 
-    function getBallotVoted(address voter) external view override returns (bytes32) {
-        return _getBallotVoted(voter);
+    function getBallotVoted(address voter) public view override returns (bytes32) {
+        return _getCurrentElection().ballotIdsByAddress[voter];
     }
 
-    function hasVoted(address voter) external view override returns (bool) {
-        return _hasVoted(voter);
+    function hasVoted(address voter) public view override returns (bool) {
+        return getBallotVoted(voter) != bytes32(0);
     }
 
     function getVotePower(address voter) external view override returns (uint) {

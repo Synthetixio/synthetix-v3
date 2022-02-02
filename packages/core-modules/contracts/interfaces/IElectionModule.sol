@@ -17,7 +17,7 @@ interface IElectionModule {
     function isElectionModuleInitialized() external view returns (bool);
 
     // ---------------------------------------
-    // Owner functions
+    // Owner write functions
     // ---------------------------------------
 
     function upgradeCouncilToken(address newCouncilTokenImplementation) external;
@@ -47,22 +47,14 @@ interface IElectionModule {
     function setNextEpochSeatCount(uint8 newSeatCount) external;
 
     // ---------------------------------------
-    // Nomination functions
+    // User write functions
     // ---------------------------------------
 
     function nominate() external;
 
     function withdrawNomination() external;
 
-    // ---------------------------------------
-    // Vote functions
-    // ---------------------------------------
-
     function elect(address[] calldata candidates) external;
-
-    // ---------------------------------------
-    // Election resolution
-    // ---------------------------------------
 
     function evaluate(uint numBallots) external;
 
