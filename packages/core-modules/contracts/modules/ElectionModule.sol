@@ -276,32 +276,32 @@ contract ElectionModule is
     // ~~~~~~~~~~~~~~~~~~
 
     /// @notice Returns the index of the current epoch. The first epoch's index is 1
-    function getEpochIndex() public view override returns (uint) {
+    function getEpochIndex() external view override returns (uint) {
         return _electionStore().currentEpochIndex;
     }
 
     /// @notice Returns the date in which the current epoch started
-    function getEpochStartDate() public view override returns (uint64) {
+    function getEpochStartDate() external view override returns (uint64) {
         return _getCurrentEpoch().startDate;
     }
 
     /// @notice Returns the date in which the current epoch will end
-    function getEpochEndDate() public view override returns (uint64) {
+    function getEpochEndDate() external view override returns (uint64) {
         return _getCurrentEpoch().endDate;
     }
 
     /// @notice Returns the date in which the Nomination period in the current epoch will start
-    function getNominationPeriodStartDate() public view override returns (uint64) {
+    function getNominationPeriodStartDate() external view override returns (uint64) {
         return _getCurrentEpoch().nominationPeriodStartDate;
     }
 
     /// @notice Returns the date in which the Voting period in the current epoch will start
-    function getVotingPeriodStartDate() public view override returns (uint64) {
+    function getVotingPeriodStartDate() external view override returns (uint64) {
         return _getCurrentEpoch().votingPeriodStartDate;
     }
 
     /// @notice Returns the current period type: Idle, Nomination, Voting, Evaluation
-    function getCurrentPeriodType() public view override returns (uint) {
+    function getCurrentPeriodType() external view override returns (uint) {
         return uint(_getCurrentPeriodType());
     }
 
