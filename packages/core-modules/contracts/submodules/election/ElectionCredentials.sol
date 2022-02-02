@@ -83,11 +83,11 @@ contract ElectionCredentials is ElectionBase {
         emit CouncilMemberRemoved(member);
     }
 
-    function _getCouncilToken() internal view returns (CouncilToken) {
+    function _getCouncilToken() private view returns (CouncilToken) {
         return CouncilToken(_electionStore().councilToken);
     }
 
-    function _getCouncilMemberTokenId(address member) internal view returns (uint) {
+    function _getCouncilMemberTokenId(address member) private view returns (uint) {
         uint tokenId = _electionStore().councilTokenIds[member];
 
         if (tokenId == 0) revert NotACouncilMember();

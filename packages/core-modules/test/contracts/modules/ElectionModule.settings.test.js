@@ -66,6 +66,12 @@ describe('ElectionModule (settings)', () => {
           });
         });
 
+        describe('with a value that is too big', () => {
+          it('reverts', async () => {
+            await assertRevert(ElectionModule.setNextEpochSeatCount(1000), 'value out-of-bounds');
+          });
+        });
+
         describe('with valid parameters', () => {
           let newNextEpochSeatCount = 8;
 

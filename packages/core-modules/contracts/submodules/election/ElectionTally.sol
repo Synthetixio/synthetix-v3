@@ -28,7 +28,7 @@ contract ElectionTally is ElectionBase {
         ElectionData storage election,
         uint fromIndex,
         uint toIndex
-    ) internal {
+    ) private {
         ElectionSettings storage settings = _electionSettings();
         uint numSeats = settings.nextEpochSeatCount;
 
@@ -44,7 +44,7 @@ contract ElectionTally is ElectionBase {
         ElectionData storage election,
         BallotData storage ballot,
         uint numSeats
-    ) internal {
+    ) private {
         uint ballotVotes = ballot.votes;
         if (ballotVotes == 0) {
             return;
@@ -69,7 +69,7 @@ contract ElectionTally is ElectionBase {
         address candidate,
         uint candidateVotes,
         uint numSeats
-    ) internal {
+    ) private {
         SetUtil.AddressSet storage winners = election.winners;
 
         // Already a winner?
@@ -95,7 +95,7 @@ contract ElectionTally is ElectionBase {
     }
 
     function _findWinnerWithLeastVotes(ElectionData storage election, SetUtil.AddressSet storage winners)
-        internal
+        private
         view
         returns (address leastVotedWinner, uint leastVotes)
     {
