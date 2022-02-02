@@ -1,5 +1,5 @@
-const { parseFullyQualifiedName } = require('hardhat/utils/contract-names');
 const {
+  findContractNode,
   findYulCaseValues,
   findFunctionSelectors,
 } = require('@synthetixio/core-js/utils/ast/finders');
@@ -8,10 +8,10 @@ const { toPrivateConstantCase } = require('./router-helper');
 const { onlyRepeated } = require('@synthetixio/core-js/utils/misc/array-filters');
 
 class RouterASTValidator {
-  constructor(routerFullyQualifiedName, asts) {
-    const { sourceName } = parseFullyQualifiedName(routerFullyQualifiedName);
-    this.routerSelectors = findYulCaseValues(asts[sourceName]);
-    this.asts = asts;
+  constructor(routerFullyQualifiedName, astNodes) {
+    const routerContractNode = findContractNode(routerFullyQualifiedName, astNodes);
+    this.routerSelectors = findYulCaseValues(routerContractNode);
+    this.astNodes = astNodes;
   }
 
   async findMissingModuleSelectors() {
@@ -54,9 +54,13 @@ class RouterASTValidator {
     );
 
     const moduleAddresses = [];
-    for (const { contractName, deployedAddress } of modulesDeploymentData) {
+    for (const {
+      contractName,
+      contractFullyQualifiedName,
+      deployedAddress,
+    } of modulesDeploymentData) {
       moduleAddresses[toPrivateConstantCase(contractName)] = {
-        moduleName: contractName,
+        contractFullyQualifiedName,
         address: deployedAddress,
       };
     }
@@ -76,14 +80,14 @@ class RouterASTValidator {
         });
       } else {
         const contractSelectors = findFunctionSelectors(
-          moduleAddresses[s.value.name].moduleName,
-          Object.values(this.asts)
+          moduleAddresses[s.value.name].contractFullyQualifiedName,
+          this.astNodes
         );
 
         if (!contractSelectors.some((cs) => cs.selector === s.selector)) {
           errors.push({
             msg: `Selector ${s.selector} not reachable. ${s.value.name} (${
-              moduleAddresses[s.value.name].moduleName
+              moduleAddresses[s.value.name].contractFullyQualifiedName
             }) doesn't contain a function with that selector`,
           });
         }

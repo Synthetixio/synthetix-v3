@@ -1,22 +1,49 @@
-const { parseFullyQualifiedName } = require('hardhat/utils/contract-names');
 const {
   findContractDefinitions,
   findContractDependencies,
   findYulStorageSlotAssignments,
   findContractStateVariables,
+  findContractNode,
 } = require('@synthetixio/core-js/utils/ast/finders');
+const { onlyUnique } = require('@synthetixio/core-js/utils/misc/array-filters');
 const { buildContractsStructMap } = require('@synthetixio/core-js/utils/ast/storage-struct');
 const { compareStorageStructs } = require('@synthetixio/core-js/utils/ast/comparator');
-const filterValues = require('filter-values');
 const { onlyRepeated } = require('@synthetixio/core-js/utils/misc/array-filters');
 
 class ModuleStorageASTValidator {
-  constructor(asts, previousAsts) {
-    this.contractNodes = Object.values(asts).map(findContractDefinitions).flat();
-    this.previousContractNodes = Object.values(previousAsts || {}).flatMap(findContractDefinitions);
+  constructor(moduleFullyQualifiedNames, astNodes, previousAstNodes = {}) {
+    this.moduleFullyQualifiedNames = moduleFullyQualifiedNames;
+    this.astNodes = astNodes;
+    this.contractNodes = this.astNodes.flatMap(findContractDefinitions);
+    this.previousContractNodes = previousAstNodes.flatMap(findContractDefinitions);
   }
 
-  findDuplicateNamespaces(namespaces) {
+  findNamespaceCollisions() {
+    const namespaces = [];
+    const errors = [];
+
+    for (const contractNode of this.contractNodes) {
+      for (const slot of findYulStorageSlotAssignments(contractNode)) {
+        namespaces.push({ contractName: contractNode.name, slot });
+      }
+    }
+
+    const duplicates = this._findDuplicateNamespaces(namespaces);
+
+    if (duplicates) {
+      const details = duplicates.map(
+        (d) => `  > ${d.slot} found in storage contracts ${d.contracts}\n`
+      );
+
+      errors.push({
+        msg: `Duplicate namespaces slot found!\n${details.join('')}`,
+      });
+    }
+
+    return errors;
+  }
+
+  _findDuplicateNamespaces(namespaces) {
     const duplicates = namespaces.map((namespace) => namespace.slot).filter(onlyRepeated);
 
     const ocurrences = [];
@@ -30,31 +57,6 @@ class ModuleStorageASTValidator {
     }
 
     return ocurrences.length > 0 ? ocurrences : null;
-  }
-
-  findNamespaceCollisions() {
-    const namespaces = [];
-    const errors = [];
-
-    for (const contractNode of this.contractNodes) {
-      for (const slot of findYulStorageSlotAssignments(contractNode)) {
-        namespaces.push({ contractName: contractNode.name, slot });
-      }
-    }
-
-    const duplicates = this.findDuplicateNamespaces(namespaces);
-
-    if (duplicates) {
-      const details = duplicates.map(
-        (d) => `  > ${d.slot} found in storage contracts ${d.contracts}\n`
-      );
-
-      errors.push({
-        msg: `Duplicate namespaces slot found!\n${details.join('')}`,
-      });
-    }
-
-    return errors;
   }
 
   findNamespaceSlotChanges() {
@@ -102,23 +104,14 @@ class ModuleStorageASTValidator {
   findRegularVariableDeclarations() {
     const errors = [];
 
-    const moduleNames = Object.keys(
-      filterValues(hre.deployer.deployment.general.contracts, (c) => c.isModule)
-    );
-
     // Find all contracts inherted by modules
-    const candidates = [];
-    for (const moduleName of moduleNames) {
-      const { contractName } = parseFullyQualifiedName(moduleName);
-      for (const dep of findContractDependencies(contractName, this.contractNodes)) {
-        if (!candidates.includes(dep)) {
-          candidates.push(dep);
-        }
-      }
-    }
+    const candidateNodes = this.moduleFullyQualifiedNames
+      .flatMap((fqName) => findContractDependencies(fqName, this.astNodes))
+      .filter(onlyUnique)
+      .map((fqName) => findContractNode(fqName, this.astNodes));
 
     // Look for state variable declarations
-    for (const contractNode of candidates) {
+    for (const contractNode of candidateNodes) {
       for (const node of findContractStateVariables(contractNode)) {
         if (node.mutability === 'constant') {
           continue;

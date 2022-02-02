@@ -6,6 +6,7 @@
     "subtasks/**/*.js",
     "internal/**/*.js"
   ],
+  "exclude": ["utils/tests.js"],
   "check-coverage": true,
   "reporter": ["lcov", "text"],
   "branches": 1,

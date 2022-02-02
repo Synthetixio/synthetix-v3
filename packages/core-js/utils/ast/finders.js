@@ -1,3 +1,4 @@
+const { parseFullyQualifiedName } = require('hardhat/utils/contract-names');
 const { findAll } = require('solidity-ast/utils');
 
 /**
@@ -10,41 +11,13 @@ function findContractDefinitions(astNode) {
 }
 
 /**
- * Get the given contract by id on the given AST
- * @param {number} contractId
- * @param {import("solidity-ast").SourceUnit|import("solidity-ast").SourceUnit[]} astNodes
- * @returns {import("solidity-ast").ContractDefinition}
- */
-function findContractNodeWithId(contractId, astNodes) {
-  if (Array.isArray(astNodes)) {
-    for (const astNode of astNodes) {
-      const contractDefiniton = findContractNodeWithId(contractId, astNode);
-      if (contractDefiniton) return contractDefiniton;
-    }
-  }
-
-  for (const contractDefiniton of findAll('ContractDefinition', astNodes)) {
-    if (contractDefiniton.id === contractId) {
-      return contractDefiniton;
-    }
-  }
-}
-
-/**
  * Get the given contract by name on the given AST
  * @param {string} contractName
- * @param {import("solidity-ast").SourceUnit|import("solidity-ast").SourceUnit[]} astNodes
+ * @param {import("solidity-ast").SourceUnit|import("solidity-ast").SourceUnit} sourceUnitNode
  * @returns {import("solidity-ast").ContractDefinition}
  */
-function findContractNodeWithName(contractName, astNodes) {
-  if (Array.isArray(astNodes)) {
-    for (const astNode of astNodes) {
-      const contractDefiniton = findContractNodeWithName(contractName, astNode);
-      if (contractDefiniton) return contractDefiniton;
-    }
-  }
-
-  for (const contractDefiniton of findAll('ContractDefinition', astNodes)) {
+function _findContractNodeWithName(contractName, sourceUnitNode) {
+  for (const contractDefiniton of findAll('ContractDefinition', sourceUnitNode)) {
     if (contractDefiniton.name === contractName) {
       return contractDefiniton;
     }
@@ -71,7 +44,6 @@ function findContractNodeStructs(contractNode) {
 
 /**
  * Get the state variables from the given contract name
- * @param {string} contractName
  * @param {import("solidity-ast").ContractDefinition} contractNode
  * @returns {import("solidity-ast").VariableDeclaration}
  */
@@ -81,7 +53,6 @@ function findContractStateVariables(contractNode) {
 
 /**
  * Find all the slot definitions on the given AST node
- * @param {string} contractName
  * @param {import("solidity-ast").ContractDefinition} contractNode
  * @returns {string[]}
  */
@@ -130,51 +101,87 @@ function _findFunctionSelectors(contractNode) {
 }
 
 /**
- * Get the complete tree of dependencies from the given contract. This methods
- * takes an objects with the keys from all the contracts and the values are their
- * AST nodes.
- * @param {string|import("solidity-ast").ContractDefinition} contractNameOrNode
+ * Get the complete tree of dependencies from the given contract. This method recursevely
+ * finds the inherited contracts following variable references.
+ * @param {string} contractFullyQualifiedName
  * @param {import("solidity-ast").SourceUnit[]} astNodes
- * @returns {import("solidity-ast").ContractDefinition[]}
+ * @returns {string[]}
  */
-function findContractDependencies(contractNameOrNode, astNodes) {
-  // TODO: Remove the possibility of using a contract name to find its node and
-  //       just accept a node parameter
-  const contractNode =
-    typeof contractNameOrNode === 'string'
-      ? findContractNodeWithName(contractNameOrNode, astNodes)
-      : contractNameOrNode;
+function findContractDependencies(contractFullyQualifiedName, astNodes) {
+  const { sourceUnitNode, contractNode } = _findContractSourceByFullyQualifiedName(
+    contractFullyQualifiedName,
+    astNodes
+  );
 
-  if (!contractNode) {
-    return [];
+  const inheritedCotractsFullyQualifiedNames = _findInheritedContractsLocalNodeNames(
+    contractNode,
+    sourceUnitNode
+  ).map((localContractName) =>
+    _findLocalContractFullyQualifiedName(localContractName, sourceUnitNode, astNodes)
+  );
+
+  return [
+    contractFullyQualifiedName,
+    ...inheritedCotractsFullyQualifiedNames.flatMap((inheritedContractFullyQualifiedName) =>
+      findContractDependencies(inheritedContractFullyQualifiedName, astNodes)
+    ),
+  ].flat();
+}
+
+function _findSourceUnitByAbsolutePath(absolutePath, astNodes) {
+  for (const astNode of astNodes) {
+    for (const sourceUnitNode of findAll('SourceUnit', astNode)) {
+      if (sourceUnitNode.absolutePath === absolutePath) {
+        return sourceUnitNode;
+      }
+    }
+  }
+}
+
+function _findContractSourceByFullyQualifiedName(contractFullyQualifiedName, astNodes) {
+  const { sourceName, contractName } = parseFullyQualifiedName(contractFullyQualifiedName);
+  const sourceUnitNode = _findSourceUnitByAbsolutePath(sourceName, astNodes);
+  if (!sourceUnitNode) return {};
+  const contractNode = _findContractNodeWithName(contractName, sourceUnitNode);
+  if (!contractNode) return {};
+  return { sourceUnitNode, contractNode };
+}
+
+function _findInheritedContractsLocalNodeNames(contractNode, sourceUnitNode) {
+  return Array.from(findAll('InheritanceSpecifier', contractNode))
+    .map((inheritNode) => inheritNode.baseName.referencedDeclaration)
+    .map(
+      (declarationId) =>
+        Object.entries(sourceUnitNode.exportedSymbols).find(([, ids]) =>
+          ids.includes(declarationId)
+        )[0]
+    );
+}
+
+function _findLocalContractFullyQualifiedName(localContractName, localSourceUnitNode, astNodes) {
+  // First, check if the contract was created locally
+  const localContractNode = _findContractNodeWithName(localContractName, localSourceUnitNode);
+  if (localContractNode) {
+    return `${localSourceUnitNode.absolutePath}:${localContractName}`;
   }
 
-  return contractNode.linearizedBaseContracts.map((dependencyId) =>
-    findContractNodeWithId(dependencyId, astNodes)
-  );
+  // If not, look it on the imports
+  return findImportedContractFullyQualifiedName(localContractName, localSourceUnitNode, astNodes);
 }
 
 /**
- * Get the complete tree of dependencies from the given contract. This methods
- * takes an objects with the keys from all the contracts and the values are their
- * AST nodes.
- * @param {string|import("solidity-ast").ContractDefinition} contractNameOrNode
- * @param {string} dependencyContractName
+ * Find a contracts node on the ASTs trees.
+ * @param {string} contractFullyQualifiedName
  * @param {import("solidity-ast").SourceUnit[]} astNodes
- * @returns {boolean}
+ * @returns {string[]}
  */
-function contractHasDependency(contractNameOrNode, dependencyContractName, astNodes) {
-  // TODO: Remove the possibility of using a contract name to find its node and
-  //       just accept a node parameter
-  const contractNode =
-    typeof contractNameOrNode === 'string'
-      ? findContractNodeWithName(contractNameOrNode, astNodes)
-      : contractNameOrNode;
+function findContractNode(contractFullyQualifiedName, astNodes) {
+  const { contractNode } = _findContractSourceByFullyQualifiedName(
+    contractFullyQualifiedName,
+    astNodes
+  );
 
-  return contractNode.linearizedBaseContracts.some((baseContractId) => {
-    const dependencyNode = findContractNodeWithId(baseContractId, astNodes);
-    return dependencyNode.name === dependencyContractName;
-  });
+  return contractNode;
 }
 
 /**
@@ -197,7 +204,7 @@ function findImportedContractFullyQualifiedName(localContractName, baseAstNode, 
       }
     }
 
-    const importedSourceNode = astNodes.find(({ id }) => id === importNode.sourceUnit);
+    const importedSourceNode = _findSourceUnitByAbsolutePath(importNode.absolutePath, astNodes);
     const importedContractNodes = Array.from(findAll('ContractDefinition', importedSourceNode));
     const importedContract = importedContractNodes.find(({ name }) => name === localContractName);
 
@@ -210,14 +217,15 @@ function findImportedContractFullyQualifiedName(localContractName, baseAstNode, 
 /**
  * Get all the function selectors definitions from the complete tree of contract
  * nodes starting from the given root contract definition
- * @param {string} contractName
+ * @param {string} contractFullyQualifiedName
  * @param {import("solidity-ast").SourceUnit[]} astNodes
  * @returns {import("solidity-ast").ContractDefinition[]}
  */
-function findFunctionSelectors(contractName, astNodes) {
+function findFunctionSelectors(contractFullyQualifiedName, astNodes) {
   const selectors = [];
 
-  for (const contractNode of findContractDependencies(contractName, astNodes)) {
+  for (const contractFqName of findContractDependencies(contractFullyQualifiedName, astNodes)) {
+    const contractNode = findContractNode(contractFqName, astNodes);
     const currentSelectors = _findFunctionSelectors(contractNode);
     if (currentSelectors.length > 0) {
       selectors.push(...currentSelectors);
@@ -230,13 +238,20 @@ function findFunctionSelectors(contractName, astNodes) {
 /**
  * Get all the function definitions from the complete tree of contract
  * nodes starting from the given root contract definition
- * @param {string|import("solidity-ast").ContractDefinition} contractNameOrNode
+ * @param {string} contractFullyQualifiedName
  * @param {import("solidity-ast").SourceUnit[]} astNodes
  * @returns {import("solidity-ast").FunctionDefinition[]}
  */
-function findFunctions(contractNameOrNode, astNodes) {
-  return findContractDependencies(contractNameOrNode, astNodes).flatMap((contractNode) =>
-    Array.from(findAll('FunctionDefinition', contractNode))
+function findFunctionNodes(contractFullyQualifiedName, astNodes) {
+  return findContractDependencies(contractFullyQualifiedName, astNodes).flatMap(
+    (contractFullyQualifiedName) => {
+      const { contractNode } = _findContractSourceByFullyQualifiedName(
+        contractFullyQualifiedName,
+        astNodes
+      );
+
+      return Array.from(findAll('FunctionDefinition', contractNode));
+    }
   );
 }
 
@@ -244,14 +259,12 @@ module.exports = {
   findContractDefinitions,
   findYulCaseValues,
   findYulStorageSlotAssignments,
-  findContractNodeWithName,
-  findContractNodeWithId,
   findContractNodeVariables,
   findContractNodeStructs,
   findContractStateVariables,
   findContractDependencies,
+  findContractNode,
   findImportedContractFullyQualifiedName,
-  contractHasDependency,
   findFunctionSelectors,
-  findFunctions,
+  findFunctionNodes,
 };

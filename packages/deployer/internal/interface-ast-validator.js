@@ -1,37 +1,33 @@
 const {
-  findContractDefinitions,
   findContractDependencies,
-  findFunctions,
+  findFunctionNodes,
+  findContractNode,
 } = require('@synthetixio/core-js/utils/ast/finders');
-const { contractIsModule } = require('../internal/contract-helper');
 
 class InterfaceCoverageASTValidator {
-  constructor(asts, isModuleChecker = contractIsModule) {
-    this.contractNodes = asts.map(findContractDefinitions).flat();
-    this.moduleNodes = asts
-      .filter((v) => isModuleChecker(v.absolutePath))
-      .map(findContractDefinitions)
-      .flat();
+  constructor(contractFullyQualifiedNames, astNodes) {
+    this.contractFullyQualifiedNames = contractFullyQualifiedNames;
+    this.astNodes = astNodes;
   }
 
   findFunctionsNotDefinedInInterfaces() {
     const errors = [];
 
-    for (const module of this.moduleNodes) {
-      const visibleFunctions = this._findVisibleFunctions(module);
+    for (const contractFullyQualifiedName of this.contractFullyQualifiedNames) {
+      const visibleFunctions = this._findVisibleFunctions(contractFullyQualifiedName);
 
       if (visibleFunctions.length === 0) {
         continue;
       }
 
-      const interfacedFunctions = this._findInterfaceFunctions(module);
+      const interfacedFunctions = this._findInterfaceFunctions(contractFullyQualifiedName);
 
       for (const visibleFunction of visibleFunctions) {
         if (
           !interfacedFunctions.some((f) => f.functionSelector === visibleFunction.functionSelector)
         ) {
           errors.push({
-            msg: `Visible function ${visibleFunction.name} of contract ${module.name} not found in the inherited interfaces`,
+            msg: `Visible function ${visibleFunction.name} of contract ${contractFullyQualifiedName} not found in the inherited interfaces`,
           });
         }
       }
@@ -40,23 +36,27 @@ class InterfaceCoverageASTValidator {
     return errors;
   }
 
-  _findVisibleFunctions(module) {
-    const visibleFunctions = findFunctions(module.name, this.contractNodes)
+  _findVisibleFunctions(contractFullyQualifiedName) {
+    const visibleFunctions = findFunctionNodes(contractFullyQualifiedName, this.astNodes)
       .filter((f) => f.visibility === 'public' || f.visibility === 'external')
       .filter((f) => !f.name.startsWith('c_0x')); // Filter out coverage added functions
 
     return visibleFunctions;
   }
 
-  _findInterfaceFunctions(module) {
+  _findInterfaceFunctions(contractFullyQualifiedName) {
     const interfacedFunctions = [];
 
-    for (const dependency of findContractDependencies(module.name, this.contractNodes)) {
-      if (dependency.contractKind != 'interface') {
+    const dependencies = findContractDependencies(contractFullyQualifiedName, this.astNodes);
+
+    for (const dependencyFullyQualifiedName of dependencies) {
+      const contractNode = findContractNode(dependencyFullyQualifiedName, this.astNodes);
+
+      if (contractNode.contractKind != 'interface') {
         continue;
       }
 
-      interfacedFunctions.push(...findFunctions(dependency.name, this.contractNodes));
+      interfacedFunctions.push(...findFunctionNodes(dependencyFullyQualifiedName, this.astNodes));
     }
 
     return interfacedFunctions;
