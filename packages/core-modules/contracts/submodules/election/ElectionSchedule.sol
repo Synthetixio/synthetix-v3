@@ -94,6 +94,7 @@ contract ElectionSchedule is ElectionBase {
         bool ensureChangesAreSmall
     ) internal {
         uint64 maxDateAdjustmentTolerance = _electionSettings().maxDateAdjustmentTolerance;
+
         if (ensureChangesAreSmall) {
             if (
                 _uint64AbsDifference(newEpochEndDate, epoch.endDate) > maxDateAdjustmentTolerance ||
