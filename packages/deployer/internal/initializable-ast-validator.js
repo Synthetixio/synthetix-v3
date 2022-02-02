@@ -3,7 +3,6 @@ const {
   findContractDependencies,
   findFunctionNodes,
 } = require('@synthetixio/core-js/utils/ast/finders');
-const { contractIsModule } = require('../internal/contract-helper');
 const { capitalize } = require('@synthetixio/core-js/utils/misc/strings');
 
 class ModuleInitializableASTValidator {
