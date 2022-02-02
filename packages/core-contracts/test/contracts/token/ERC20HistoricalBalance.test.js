@@ -25,12 +25,12 @@ describe('ERC20HistoricalBalance', () => {
     });
 
     it('the total supply is 0', async () => {
-      assertBn.eq(await ERC20.totalSupply(), 0);
+      assertBn.equal(await ERC20.totalSupply(), 0);
     });
 
     it('the total supply was 0', async () => {
       const currentBlock = await getBlock(ethers.provider);
-      assertBn.eq(await ERC20.totalSupplyAt(currentBlock - 1), 0);
+      assertBn.equal(await ERC20.totalSupplyAt(currentBlock - 1), 0);
     });
   });
 
@@ -53,9 +53,9 @@ describe('ERC20HistoricalBalance', () => {
     it('reads the right values', async () => {
       await advanceBlock(ethers.provider);
 
-      assertBn.eq(await ERC20.totalSupplyAt(receipt.blockNumber), totalSupply);
-      assertBn.eq(await ERC20.balanceOfAt(user1.address, receipt.blockNumber), 100);
-      assertBn.eq(await ERC20.balanceOfAt(user2.address, receipt.blockNumber), 100);
+      assertBn.equal(await ERC20.totalSupplyAt(receipt.blockNumber), totalSupply);
+      assertBn.equal(await ERC20.balanceOfAt(user1.address, receipt.blockNumber), 100);
+      assertBn.equal(await ERC20.balanceOfAt(user2.address, receipt.blockNumber), 100);
     });
 
     describe('when getting the past values', () => {
@@ -84,20 +84,20 @@ describe('ERC20HistoricalBalance', () => {
         it('reads the right values', async () => {
           await advanceBlock(ethers.provider);
 
-          assertBn.eq(await ERC20.totalSupplyAt(r1.blockNumber), initialTotalSupply.add(10));
-          assertBn.eq(
+          assertBn.equal(await ERC20.totalSupplyAt(r1.blockNumber), initialTotalSupply.add(10));
+          assertBn.equal(
             await ERC20.balanceOfAt(user1.address, r1.blockNumber),
             initialBalances[0].add(10)
           );
 
-          assertBn.eq(await ERC20.totalSupplyAt(r2.blockNumber), initialTotalSupply.add(30));
-          assertBn.eq(
+          assertBn.equal(await ERC20.totalSupplyAt(r2.blockNumber), initialTotalSupply.add(30));
+          assertBn.equal(
             await ERC20.balanceOfAt(user1.address, r2.blockNumber),
             initialBalances[0].add(30)
           );
 
-          assertBn.eq(await ERC20.totalSupplyAt(r3.blockNumber), initialTotalSupply.add(60));
-          assertBn.eq(
+          assertBn.equal(await ERC20.totalSupplyAt(r3.blockNumber), initialTotalSupply.add(60));
+          assertBn.equal(
             await ERC20.balanceOfAt(user1.address, r3.blockNumber),
             initialBalances[0].add(60)
           );
@@ -129,20 +129,20 @@ describe('ERC20HistoricalBalance', () => {
         it('reads the right values', async () => {
           await advanceBlock(ethers.provider);
 
-          assertBn.eq(await ERC20.totalSupplyAt(r1.blockNumber), initialTotalSupply.sub(10));
-          assertBn.eq(
+          assertBn.equal(await ERC20.totalSupplyAt(r1.blockNumber), initialTotalSupply.sub(10));
+          assertBn.equal(
             await ERC20.balanceOfAt(user1.address, r1.blockNumber),
             initialBalances[0].sub(10)
           );
 
-          assertBn.eq(await ERC20.totalSupplyAt(r2.blockNumber), initialTotalSupply.sub(30));
-          assertBn.eq(
+          assertBn.equal(await ERC20.totalSupplyAt(r2.blockNumber), initialTotalSupply.sub(30));
+          assertBn.equal(
             await ERC20.balanceOfAt(user1.address, r2.blockNumber),
             initialBalances[0].sub(30)
           );
 
-          assertBn.eq(await ERC20.totalSupplyAt(r3.blockNumber), initialTotalSupply.sub(60));
-          assertBn.eq(
+          assertBn.equal(await ERC20.totalSupplyAt(r3.blockNumber), initialTotalSupply.sub(60));
+          assertBn.equal(
             await ERC20.balanceOfAt(user1.address, r3.blockNumber),
             initialBalances[0].sub(60)
           );
@@ -175,32 +175,32 @@ describe('ERC20HistoricalBalance', () => {
         it('reads the right values', async () => {
           await advanceBlock(ethers.provider);
 
-          assertBn.eq(await ERC20.totalSupplyAt(r1.blockNumber), initialTotalSupply);
-          assertBn.eq(
+          assertBn.equal(await ERC20.totalSupplyAt(r1.blockNumber), initialTotalSupply);
+          assertBn.equal(
             await ERC20.balanceOfAt(user1.address, r1.blockNumber),
             initialBalances[0].add(10)
           );
-          assertBn.eq(
+          assertBn.equal(
             await ERC20.balanceOfAt(user2.address, r1.blockNumber),
             initialBalances[1].sub(10)
           );
 
-          assertBn.eq(await ERC20.totalSupplyAt(r2.blockNumber), initialTotalSupply);
-          assertBn.eq(
+          assertBn.equal(await ERC20.totalSupplyAt(r2.blockNumber), initialTotalSupply);
+          assertBn.equal(
             await ERC20.balanceOfAt(user1.address, r2.blockNumber),
             initialBalances[0].add(30)
           );
-          assertBn.eq(
+          assertBn.equal(
             await ERC20.balanceOfAt(user2.address, r2.blockNumber),
             initialBalances[1].sub(30)
           );
 
-          assertBn.eq(await ERC20.totalSupplyAt(r3.blockNumber), initialTotalSupply);
-          assertBn.eq(
+          assertBn.equal(await ERC20.totalSupplyAt(r3.blockNumber), initialTotalSupply);
+          assertBn.equal(
             await ERC20.balanceOfAt(user1.address, r3.blockNumber),
             initialBalances[0].add(60)
           );
-          assertBn.eq(
+          assertBn.equal(
             await ERC20.balanceOfAt(user2.address, r3.blockNumber),
             initialBalances[1].sub(60)
           );
@@ -248,26 +248,26 @@ describe('ERC20HistoricalBalance', () => {
         it('reads the right values', async () => {
           await advanceBlock(ethers.provider);
 
-          assertBn.eq(await ERC20.totalSupplyAt(r1.blockNumber), initialTotalSupply.add(10));
-          assertBn.eq(
+          assertBn.equal(await ERC20.totalSupplyAt(r1.blockNumber), initialTotalSupply.add(10));
+          assertBn.equal(
             await ERC20.balanceOfAt(user1.address, r1.blockNumber),
             initialBalances[0].add(10)
           );
 
-          assertBn.eq(await ERC20.totalSupplyAt(r2.blockNumber), initialTotalSupply.add(30));
-          assertBn.eq(
+          assertBn.equal(await ERC20.totalSupplyAt(r2.blockNumber), initialTotalSupply.add(30));
+          assertBn.equal(
             await ERC20.balanceOfAt(user1.address, r2.blockNumber),
             initialBalances[0].add(30)
           );
 
           // Should be the same as r2 for user1 and the point in time for totalSupply
-          assertBn.eq(await ERC20.totalSupplyAt(ri.blockNumber), intermediateTotalSupply);
-          assertBn.eq(
+          assertBn.equal(await ERC20.totalSupplyAt(ri.blockNumber), intermediateTotalSupply);
+          assertBn.equal(
             await ERC20.balanceOfAt(user1.address, ri.blockNumber),
             initialBalances[0].add(30)
           );
 
-          assertBn.eq(
+          assertBn.equal(
             await ERC20.balanceOfAt(user1.address, rn.blockNumber),
             initialBalances[0].add(60)
           );
