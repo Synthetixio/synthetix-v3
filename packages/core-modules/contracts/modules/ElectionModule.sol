@@ -44,7 +44,10 @@ contract ElectionModule is
         settings.defaultBallotEvaluationBatchSize = 500;
 
         store.currentEpochIndex = 1;
-        _configureFirstEpochSchedule(nominationPeriodStartDate, votingPeriodStartDate, epochEndDate);
+
+        EpochData storage firstEpoch = _getEpochAtPosition(1);
+        uint64 epochStartDate = uint64(block.timestamp);
+        _configureEpochSchedule(firstEpoch, epochStartDate, nominationPeriodStartDate, votingPeriodStartDate, epochEndDate);
 
         _createCouncilToken(councilTokenName, councilTokenSymbol);
         _addCouncilMember(msg.sender);
@@ -221,7 +224,7 @@ contract ElectionModule is
 
         _getCurrentElection().resolved = true;
 
-        _configureNextEpochSchedule();
+        _copyCurrentEpochScheduleToNextEpoch();
 
         ElectionStore storage store = _electionStore();
 
