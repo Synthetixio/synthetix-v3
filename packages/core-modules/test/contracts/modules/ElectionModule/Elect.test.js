@@ -54,7 +54,7 @@ describe('ElectionModule (vote)', () => {
       });
 
       it('shows that the current period is Nomination', async function () {
-        assertBn.equal(await ElectionModule.getCurrentPeriodType(), ElectionPeriod.Nomination);
+        assertBn.equal(await ElectionModule.getCurrentPeriod(), ElectionPeriod.Nomination);
       });
 
       describe('when nominations exist', function () {
@@ -71,7 +71,7 @@ describe('ElectionModule (vote)', () => {
           });
 
           it('shows that the current period is Vote', async function () {
-            assertBn.equal(await ElectionModule.getCurrentPeriodType(), ElectionPeriod.Vote);
+            assertBn.equal(await ElectionModule.getCurrentPeriod(), ElectionPeriod.Vote);
           });
 
           describe('when issuing invalid votes', function () {

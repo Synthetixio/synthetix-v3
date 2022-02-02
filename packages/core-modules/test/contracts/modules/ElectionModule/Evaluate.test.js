@@ -113,7 +113,7 @@ describe('ElectionModule (evaluate)', () => {
           });
 
           it('shows that the current period is Evaluation', async function () {
-            assertBn.equal(await ElectionModule.getCurrentPeriodType(), ElectionPeriod.Evaluation);
+            assertBn.equal(await ElectionModule.getCurrentPeriod(), ElectionPeriod.Evaluation);
           });
 
           describe('before evaluating the epoch', function () {
@@ -212,7 +212,7 @@ describe('ElectionModule (evaluate)', () => {
 
                     it('shows that the current period is Idle', async function () {
                       assertBn.equal(
-                        await ElectionModule.getCurrentPeriodType(),
+                        await ElectionModule.getCurrentPeriod(),
                         ElectionPeriod.Idle
                       );
                     });

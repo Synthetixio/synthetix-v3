@@ -301,8 +301,8 @@ contract ElectionModule is
     }
 
     /// @notice Returns the current period type: Idle, Nomination, Voting, Evaluation
-    function getCurrentPeriodType() external view override returns (uint) {
-        return uint(_getCurrentPeriodType());
+    function getCurrentPeriod() external view override returns (uint) {
+        return uint(_getCurrentPeriod());
     }
 
     // Nominations

@@ -7,7 +7,7 @@ import "./ElectionBase.sol";
 contract ElectionSchedule is ElectionBase {
     /// @dev Used to allow certain functions to only operate within a given period
     modifier onlyInPeriod(ElectionPeriod period) {
-        if (_getCurrentPeriodType() != period) {
+        if (_getCurrentPeriod() != period) {
             revert NotCallableInCurrentPeriod();
         }
 
@@ -15,7 +15,7 @@ contract ElectionSchedule is ElectionBase {
     }
 
     /// @dev Determines the current period type according to the current time and the epoch's dates
-    function _getCurrentPeriodType() internal view returns (ElectionPeriod) {
+    function _getCurrentPeriod() internal view returns (ElectionPeriod) {
         if (!_electionStore().initialized) {
             return ElectionPeriod.Null;
         }
@@ -113,7 +113,7 @@ contract ElectionSchedule is ElectionBase {
             newEpochEndDate
         );
 
-        if (_getCurrentPeriodType() != ElectionPeriod.Idle) {
+        if (_getCurrentPeriod() != ElectionPeriod.Idle) {
             revert ChangesCurrentPeriod();
         }
     }

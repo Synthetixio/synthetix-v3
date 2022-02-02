@@ -95,7 +95,7 @@ interface IElectionModule {
 
     function getVotingPeriodStartDate() external view returns (uint64);
 
-    function getCurrentPeriodType() external view returns (uint);
+    function getCurrentPeriod() external view returns (uint);
 
     // Nominations
     // ~~~~~~~~~~~~~~~~~~

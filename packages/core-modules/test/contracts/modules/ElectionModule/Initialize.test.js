@@ -31,7 +31,7 @@ describe('ElectionModule (initialization)', () => {
 
   describe('before initializing the module', function () {
     it('shows that the current period is Null', async () => {
-      assertBn.equal(await ElectionModule.getCurrentPeriodType(), ElectionPeriod.Null);
+      assertBn.equal(await ElectionModule.getCurrentPeriod(), ElectionPeriod.Null);
     });
 
     it('shows that the module is not initialized', async () => {
@@ -168,7 +168,7 @@ describe('ElectionModule (initialization)', () => {
         });
 
         it('shows that the current period is Idle', async () => {
-          assertBn.equal(await ElectionModule.getCurrentPeriodType(), ElectionPeriod.Idle);
+          assertBn.equal(await ElectionModule.getCurrentPeriod(), ElectionPeriod.Idle);
         });
 
         it('shows that the owner is the single council member', async function () {
