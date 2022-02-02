@@ -39,7 +39,7 @@ abstract contract UUPSImplementation is IUUPSImplementation, ProxyStorage {
 
     function _implementationIsSterile(address candidateImplementation) internal virtual returns (bool) {
         (bool simulationReverted, bytes memory simulationResponse) = address(this).delegatecall(
-            abi.encodeWithSelector(this.simulateUpgradeTo.selector, candidateImplementation)
+            abi.encodeCall(this.simulateUpgradeTo, (candidateImplementation))
         );
 
         return
@@ -56,7 +56,7 @@ abstract contract UUPSImplementation is IUUPSImplementation, ProxyStorage {
         store.implementation = newImplementation;
 
         (bool rollbackSuccessful, ) = newImplementation.delegatecall(
-            abi.encodeWithSelector(this.upgradeTo.selector, currentImplementation)
+            abi.encodeCall(this.upgradeTo, (currentImplementation))
         );
 
         if (!rollbackSuccessful || _proxyStore().implementation != currentImplementation) {
