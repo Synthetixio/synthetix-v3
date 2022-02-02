@@ -63,24 +63,24 @@ contract ERC20HistoricalBalance is ERC20, IERC20HistoricalBalance, ERC20Historic
     ) internal override {
         super._transfer(from, to, amount);
 
-        _moveBalance(from, to, amount);
+        _moveVotingPower(from, to, amount);
     }
 
     function _mint(address to, uint256 amount) internal override {
         super._mint(to, amount);
 
-        _moveBalance(address(0), to, amount);
+        _moveVotingPower(address(0), to, amount);
         _writeCheckpoint(_erc20HistoricalBalanceStore().totalSupplyCheckpoints, _add, amount);
     }
 
     function _burn(address from, uint256 amount) internal override {
         super._burn(from, amount);
 
-        _moveBalance(from, address(0), amount);
+        _moveVotingPower(from, address(0), amount);
         _writeCheckpoint(_erc20HistoricalBalanceStore().totalSupplyCheckpoints, _subtract, amount);
     }
 
-    function _moveBalance(
+    function _moveVotingPower(
         address src,
         address dst,
         uint256 amount
