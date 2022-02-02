@@ -1,12 +1,18 @@
 const { equal } = require('assert/strict');
+const { findContractDefinitions } = require('@synthetixio/core-js/utils/ast/finders');
 const asts = require('@synthetixio/core-js/test/fixtures/initializable-ast.json');
 const { clone } = require('@synthetixio/core-js/utils/misc/clone');
 const ModuleInitializableASTValidator = require('../../../internal/initializable-ast-validator');
 
-// fake isModule that treats any contract as module to test the validator
-const fakeIsModuleChecker = () => true;
-
 describe('internal/initializable-ast-validator.js', function () {
+  const fqNames = Object.values(asts).flatMap((sourceNode) =>
+    findContractDefinitions(sourceNode).map(
+      (contractNode) => `${sourceNode.absolutePath}:${contractNode.name}`
+    )
+  );
+
+  const initMixin = 'contracts/initializable/InitializableMixin.sol:InitializableMixin';
+
   describe('validations without errors (happy path)', () => {
     let sampleAsts, validator;
     let errorsFound = [];
@@ -14,8 +20,9 @@ describe('internal/initializable-ast-validator.js', function () {
     before('set asts and validator', () => {
       sampleAsts = clone(asts);
       validator = new ModuleInitializableASTValidator(
+        fqNames,
         Object.values(sampleAsts),
-        fakeIsModuleChecker
+        initMixin
       );
     });
 
@@ -41,8 +48,9 @@ describe('internal/initializable-ast-validator.js', function () {
         'not_initializeInitializableMock';
 
       validator = new ModuleInitializableASTValidator(
+        fqNames,
         Object.values(sampleAsts),
-        fakeIsModuleChecker
+        initMixin
       );
     });
 
@@ -67,8 +75,9 @@ describe('internal/initializable-ast-validator.js', function () {
         'not_isInitializableMockInitialized';
 
       validator = new ModuleInitializableASTValidator(
+        fqNames,
         Object.values(sampleAsts),
-        fakeIsModuleChecker
+        initMixin
       );
     });
 

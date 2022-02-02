@@ -2,15 +2,15 @@
 pragma solidity ^0.8.0;
 
 import "@synthetixio/core-contracts/contracts/satellite/SatelliteFactory.sol";
+import "../interfaces/ITokenModule.sol";
 
-contract TokenModule is SatelliteFactory {
-    Satellite[] private _satellites;
-
-    function _getSatellites() internal view override returns (Satellite[] memory) {
-        return _satellites;
+contract TokenModule is SatelliteFactory, ITokenModule {
+    function _getSatellites() internal pure override returns (Satellite[] memory) {
+        Satellite[] memory satellites = new Satellite[](0);
+        return satellites;
     }
 
-    function getSatellitesInvalid() public view returns (Satellite[] memory) {
+    function getSatellitesInvalid() external pure override returns (Satellite[] memory) {
         return _getSatellites();
     }
 }

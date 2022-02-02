@@ -1,29 +1,36 @@
+const { parseFullyQualifiedName } = require('hardhat/utils/contract-names');
 const {
-  findContractDefinitions,
-  contractHasDependency,
-  findFunctions,
+  findContractDependencies,
+  findFunctionNodes,
 } = require('@synthetixio/core-js/utils/ast/finders');
 const { contractIsModule } = require('../internal/contract-helper');
 const { capitalize } = require('@synthetixio/core-js/utils/misc/strings');
 
 class ModuleInitializableASTValidator {
-  constructor(astNodes, isModuleChecker = contractIsModule) {
+  constructor(
+    moduleFullyQualifiedNames,
+    astNodes,
+    initializableMixin = '@synthetixio/core-contracts/contracts/initializable/InitializableMixin.sol:InitializableMixin'
+  ) {
+    this.moduleFullyQualifiedNames = moduleFullyQualifiedNames;
     this.astNodes = astNodes;
-    this.moduleNodes = this.astNodes
-      .filter((v) => isModuleChecker(v.absolutePath))
-      .flatMap(findContractDefinitions);
-    this.contractNodes = this.astNodes.flatMap(findContractDefinitions);
+    this.initializableMixin = initializableMixin;
   }
 
   findMissingIsInitialized() {
     const errors = [];
 
-    for (const moduleName of this.findInitializableModuleNames()) {
-      const functionName = `is${capitalize(moduleName)}Initialized`;
+    for (const contractFqName of this._findInitializableContractNames()) {
+      const { contractName } = parseFullyQualifiedName(contractFqName);
+      const functionName = `is${capitalize(contractName)}Initialized`;
 
-      if (!findFunctions(moduleName, this.contractNodes).some((v) => v.name === functionName)) {
+      const hasIsInitFn = findFunctionNodes(contractFqName, this.astNodes).some(
+        (v) => v.name === functionName
+      );
+
+      if (!hasIsInitFn) {
         errors.push({
-          msg: `Initializable module ${moduleName} missing ${functionName} function!`,
+          msg: `Initializable contract ${contractFqName} missing ${functionName} function!}`,
         });
       }
     }
@@ -34,12 +41,17 @@ class ModuleInitializableASTValidator {
   findMissingInitializer() {
     const errors = [];
 
-    for (const moduleName of this.findInitializableModuleNames()) {
-      const functionName = `initialize${capitalize(moduleName)}`;
+    for (const contractFqName of this._findInitializableContractNames()) {
+      const { contractName } = parseFullyQualifiedName(contractFqName);
+      const functionName = `initialize${capitalize(contractName)}`;
 
-      if (!findFunctions(moduleName, this.contractNodes).some((v) => v.name === functionName)) {
+      const hasInitializableFn = findFunctionNodes(contractFqName, this.astNodes).some(
+        (v) => v.name === functionName
+      );
+
+      if (!hasInitializableFn) {
         errors.push({
-          msg: `Initializable module ${moduleName} missing ${functionName} function!`,
+          msg: `Initializable contract ${contractFqName} missing ${functionName} function!}`,
         });
       }
     }
@@ -47,13 +59,12 @@ class ModuleInitializableASTValidator {
     return errors;
   }
 
-  findInitializableModuleNames() {
-    return this.moduleNodes
-      .filter((contractNode) => contractNode.name !== 'InitializableMixin')
-      .filter((contractNode) =>
-        contractHasDependency(contractNode, 'InitializableMixin', this.astNodes)
-      )
-      .map((v) => v.name);
+  _findInitializableContractNames() {
+    return this.moduleFullyQualifiedNames
+      .filter((contractFqName) => contractFqName !== this.initializableMixin)
+      .filter((contractFqName) =>
+        findContractDependencies(contractFqName, this.astNodes).includes(this.initializableMixin)
+      );
   }
 }
 

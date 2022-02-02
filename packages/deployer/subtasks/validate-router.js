@@ -1,4 +1,3 @@
-const mapValues = require('just-map-values');
 const { subtask } = require('hardhat/config');
 const { getFullyQualifiedName } = require('hardhat/utils/contract-names');
 const logger = require('@synthetixio/core-js/utils/io/logger');
@@ -41,12 +40,12 @@ async function _runSourceValidations() {
   });
 
   logger.debug('Validating Router source code');
+
   errorsFound.push(...(await validator.findMissingModuleSelectors()));
   errorsFound.push(...(await validator.findRepeatedModuleSelectors()));
-  if (errorsFound.length > 0) {
-    errorsFound.forEach((error) => {
-      logger.error(error.msg);
-    });
+
+  for (const error of errorsFound) {
+    logger.error(error.msg);
   }
 
   return errorsFound;
@@ -55,17 +54,17 @@ async function _runSourceValidations() {
 async function _runASTValidations(routerFullyQualifiedName) {
   const errorsFound = [];
 
-  const asts = mapValues(hre.deployer.deployment.sources, (val) => val.ast);
-  const validator = new RouterASTValidator(routerFullyQualifiedName, asts);
+  const astNodes = Object.values(hre.deployer.deployment.sources).map((val) => val.ast);
+  const validator = new RouterASTValidator(routerFullyQualifiedName, astNodes);
 
   logger.debug('Validating Router compiled code');
+
   errorsFound.push(...(await validator.findMissingModuleSelectors()));
   errorsFound.push(...(await validator.findUnreachableModuleSelectors()));
   errorsFound.push(...(await validator.findDuplicateModuleSelectors()));
-  if (errorsFound.length > 0) {
-    errorsFound.forEach((error) => {
-      logger.error(error.msg);
-    });
+
+  for (const error of errorsFound) {
+    logger.error(error.msg);
   }
 
   return errorsFound;

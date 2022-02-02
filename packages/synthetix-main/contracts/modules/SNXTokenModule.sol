@@ -47,7 +47,7 @@ contract SNXTokenModule is ISNXTokenModule, OwnableMixin, SNXTokenStorage, Initi
         return satellites;
     }
 
-    function getSNXTokenModuleSatellites() public view returns (Satellite[] memory) {
+    function getSNXTokenModuleSatellites() public view override returns (Satellite[] memory) {
         return _getSatellites();
     }
 
