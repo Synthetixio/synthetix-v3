@@ -101,9 +101,8 @@ function _findFunctionSelectors(contractNode) {
 }
 
 /**
- * Get the complete tree of dependencies from the given contract. This methods
- * takes an objects with the keys from all the contracts and the values are their
- * AST nodes.
+ * Get the complete tree of dependencies from the given contract. This method recursevely
+ * finds the inherited contracts following variable references.
  * @param {string} contractFullyQualifiedName
  * @param {import("solidity-ast").SourceUnit[]} astNodes
  * @returns {string[]}
@@ -171,9 +170,7 @@ function _findLocalContractFullyQualifiedName(localContractName, localSourceUnit
 }
 
 /**
- * Get the complete tree of dependencies from the given contract. This methods
- * takes an objects with the keys from all the contracts and the values are their
- * AST nodes.
+ * Find a contracts node on the ASTs trees.
  * @param {string} contractFullyQualifiedName
  * @param {import("solidity-ast").SourceUnit[]} astNodes
  * @returns {string[]}
