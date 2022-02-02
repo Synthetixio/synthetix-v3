@@ -21,10 +21,6 @@ contract ElectionModule is
 {
     using SetUtil for SetUtil.AddressSet;
 
-    // ---------------------------------------
-    // Initialization
-    // ---------------------------------------
-
     /// @notice Initializes the module and immediately starts the first epoch with the owner as the single council member
     function initializeElectionModule(
         string memory councilTokenName,
@@ -62,10 +58,6 @@ contract ElectionModule is
     function isElectionModuleInitialized() external view override returns (bool) {
         return _isInitialized();
     }
-
-    // ---------------------------------------
-    // Owner write functions
-    // ---------------------------------------
 
     /// @notice Upgrades the implementation of the existing council NFT token
     function upgradeCouncilToken(address newCouncilTokenImplementation) external override onlyOwner {
@@ -145,10 +137,6 @@ contract ElectionModule is
 
         emit NextEpochSeatCountChanged(newSeatCount);
     }
-
-    // ---------------------------------------
-    // User write functions
-    // ---------------------------------------
 
     /// @notice Allows anyone to self-nominate during the Nomination period
     function nominate() external override onlyInPeriod(ElectionPeriod.Nomination) {
@@ -234,13 +222,6 @@ contract ElectionModule is
         emit EpochStarted(newEpochIndex);
     }
 
-    // ---------------------------------------
-    // View functions
-    // ---------------------------------------
-
-    // Settings
-    // ~~~~~~~~~~~~~~~~~~
-
     /// @notice Exposes minimum durations required when adjusting epoch schedules
     function getMinEpochDurations()
         external
@@ -272,9 +253,6 @@ contract ElectionModule is
         return _electionSettings().nextEpochSeatCount;
     }
 
-    // Epoch and periods
-    // ~~~~~~~~~~~~~~~~~~
-
     /// @notice Returns the index of the current epoch. The first epoch's index is 1
     function getEpochIndex() external view override returns (uint) {
         return _electionStore().currentEpochIndex;
@@ -305,9 +283,6 @@ contract ElectionModule is
         return uint(_getCurrentPeriod());
     }
 
-    // Nominations
-    // ~~~~~~~~~~~~~~~~~~
-
     /// @notice Shows if a candidate has been nominated in the current epoch
     function isNominated(address candidate) external view override returns (bool) {
         return _getCurrentElection().nominees.contains(candidate);
@@ -317,9 +292,6 @@ contract ElectionModule is
     function getNominees() external view override returns (address[] memory) {
         return _getCurrentElection().nominees.values();
     }
-
-    // Votes
-    // ~~~~~~~~~~~~~~~~~~
 
     /// @notice Hashes a list of candidates (used for identifying and storing ballots)
     function calculateBallotId(address[] calldata candidates) external pure override returns (bytes32) {
@@ -351,9 +323,6 @@ contract ElectionModule is
         return _getBallot(ballotId).candidates;
     }
 
-    // Resolutions
-    // ~~~~~~~~~~~~~~~~~~
-
     /// @notice Returns whether all ballots in the current election have been counted
     function isElectionEvaluated() public view override returns (bool) {
         return _getCurrentElection().evaluated;
@@ -368,9 +337,6 @@ contract ElectionModule is
     function getElectionWinners() external view override returns (address[] memory) {
         return _getCurrentElection().winners.values();
     }
-
-    // Credentials
-    // ~~~~~~~~~~~~~~~~~~
 
     /// @notice Returns the address of the council NFT token
     function getCouncilToken() public view override returns (address) {
