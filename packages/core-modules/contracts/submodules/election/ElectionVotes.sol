@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 import "./ElectionBase.sol";
 import "@synthetixio/core-contracts/contracts/errors/ChangeError.sol";
 
-contract ElectionVotes is ElectionBase {
+abstract contract ElectionVotes is ElectionBase {
     using SetUtil for SetUtil.AddressSet;
 
     function _validateCandidates(address[] calldata candidates) internal virtual {
@@ -74,7 +74,6 @@ contract ElectionVotes is ElectionBase {
         return ballotId;
     }
 
-    function _getVotePower(address) internal view virtual returns (uint) {
-        return 1;
-    }
+    /// @dev Override this function to specify how vote power is calculated
+    function _getVotePower(address) internal view virtual returns (uint);
 }
