@@ -4,7 +4,7 @@ const assertBn = require('@synthetixio/core-js/utils/assertions/assert-bignumber
 const { getTime, fastForwardTo } = require('@synthetixio/core-js/utils/hardhat/rpc');
 const { daysToSeconds } = require('@synthetixio/core-js/utils/misc/dates');
 const { bootstrap } = require('@synthetixio/deployer/utils/tests');
-const initializer = require('../../helpers/initializer');
+const initializer = require('../../../helpers/initializer');
 const { findEvent } = require('@synthetixio/core-js/utils/ethers/events');
 
 describe('ElectionModule (resolve)', () => {

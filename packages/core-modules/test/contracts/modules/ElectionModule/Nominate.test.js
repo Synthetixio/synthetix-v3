@@ -5,8 +5,8 @@ const assertRevert = require('@synthetixio/core-js/utils/assertions/assert-rever
 const { getTime, fastForwardTo } = require('@synthetixio/core-js/utils/hardhat/rpc');
 const { daysToSeconds } = require('@synthetixio/core-js/utils/misc/dates');
 const { bootstrap } = require('@synthetixio/deployer/utils/tests');
-const initializer = require('../../helpers/initializer');
-const { ElectionPeriod } = require('../../helpers/election-helper');
+const initializer = require('../../../helpers/initializer');
+const { ElectionPeriod } = require('../../../helpers/election-helper');
 const { findEvent } = require('@synthetixio/core-js/utils/ethers/events');
 
 describe('ElectionModule (nominate)', () => {
@@ -89,7 +89,7 @@ describe('ElectionModule (nominate)', () => {
       });
 
       it('shows that the current period is Nomination', async function () {
-        assertBn.equal(await ElectionModule.getCurrentPeriodType(), ElectionPeriod.Nomination);
+        assertBn.equal(await ElectionModule.getCurrentPeriod(), ElectionPeriod.Nomination);
       });
 
       describe('before users nominate', function () {

@@ -3,26 +3,25 @@ pragma solidity ^0.8.0;
 
 import "@synthetixio/core-contracts/contracts/errors/InitError.sol";
 import "@synthetixio/core-contracts/contracts/ownership/OwnableMixin.sol";
-import "../submodules/election/ElectionSchedule.sol";
-import "../submodules/election/ElectionVotes.sol";
-import "../submodules/election/ElectionTally.sol";
-import "../submodules/election/ElectionCredentials.sol";
 import "../interfaces/IElectionModule.sol";
+import "../submodules/election/ElectionSchedule.sol";
+import "../submodules/election/ElectionCredentials.sol";
+import "../submodules/election/strategies/ElectionVotesBasic.sol";
+import "../submodules/election/strategies/ElectionTallyPlurality.sol";
 
+/// @title Module for electing a council, represented by a set of NFT holders
+/// @dev This contract contains all election related external functions. Inherited code only provides encapsulated internal logic.
 contract ElectionModule is
     IElectionModule,
     ElectionSchedule,
-    ElectionVotes,
-    ElectionTally,
     ElectionCredentials,
+    ElectionVotesBasic,
+    ElectionTallyPlurality,
     OwnableMixin
 {
     using SetUtil for SetUtil.AddressSet;
 
-    // ---------------------------------------
-    // Initialization
-    // ---------------------------------------
-
+    /// @notice Initializes the module and immediately starts the first epoch with the owner as the single council member
     function initializeElectionModule(
         string memory councilTokenName,
         string memory councilTokenSymbol,
@@ -32,7 +31,7 @@ contract ElectionModule is
     ) external override onlyOwner onlyIfNotInitialized {
         ElectionStore storage store = _electionStore();
 
-        ElectionSettings storage settings = _getElectionSettings();
+        ElectionSettings storage settings = _electionSettings();
         settings.minNominationPeriodDuration = 2 days;
         settings.minVotingPeriodDuration = 2 days;
         settings.minEpochDuration = 7 days;
@@ -41,7 +40,10 @@ contract ElectionModule is
         settings.defaultBallotEvaluationBatchSize = 500;
 
         store.currentEpochIndex = 1;
-        _configureFirstEpochSchedule(nominationPeriodStartDate, votingPeriodStartDate, epochEndDate);
+
+        EpochData storage firstEpoch = _getEpochAtPosition(1);
+        uint64 epochStartDate = uint64(block.timestamp);
+        _configureEpochSchedule(firstEpoch, epochStartDate, nominationPeriodStartDate, votingPeriodStartDate, epochEndDate);
 
         _createCouncilToken(councilTokenName, councilTokenSymbol);
         _addCouncilMember(msg.sender);
@@ -52,20 +54,19 @@ contract ElectionModule is
         emit EpochStarted(1);
     }
 
+    /// @notice Shows whether the module has been initialized
     function isElectionModuleInitialized() external view override returns (bool) {
         return _isInitialized();
     }
 
-    // ---------------------------------------
-    // Owner functions
-    // ---------------------------------------
-
+    /// @notice Upgrades the implementation of the existing council NFT token
     function upgradeCouncilToken(address newCouncilTokenImplementation) external override onlyOwner {
         CouncilToken(getCouncilToken()).upgradeTo(newCouncilTokenImplementation);
 
         emit CouncilTokenUpgraded(newCouncilTokenImplementation);
     }
 
+    /// @notice Adjust the current epoch schedule requiring that the current period remains Idle, and that changes are small (see setMaxDateAdjustmentTolerance)
     function tweakEpochSchedule(
         uint64 newNominationPeriodStartDate,
         uint64 newVotingPeriodStartDate,
@@ -82,6 +83,7 @@ contract ElectionModule is
         emit EpochScheduleUpdated(newNominationPeriodStartDate, newVotingPeriodStartDate, newEpochEndDate);
     }
 
+    /// @notice Adjusts the current epoch schedule requiring that the current period remains Idle
     function modifyEpochSchedule(
         uint64 newNominationPeriodStartDate,
         uint64 newVotingPeriodStartDate,
@@ -98,6 +100,7 @@ contract ElectionModule is
         emit EpochScheduleUpdated(newNominationPeriodStartDate, newVotingPeriodStartDate, newEpochEndDate);
     }
 
+    /// @notice Determines minimum values for epoch schedul adjustments
     function setMinEpochDurations(
         uint64 newMinNominationPeriodDuration,
         uint64 newMinVotingPeriodDuration,
@@ -108,34 +111,34 @@ contract ElectionModule is
         emit MinimumEpochDurationsChanged(newMinNominationPeriodDuration, newMinVotingPeriodDuration, newMinEpochDuration);
     }
 
+    /// @notice Determines adjustment size for tweakEpochSchedule
     function setMaxDateAdjustmentTolerance(uint64 newMaxDateAdjustmentTolerance) external override onlyOwner {
         if (newMaxDateAdjustmentTolerance == 0) revert InvalidElectionSettings();
 
-        _getElectionSettings().maxDateAdjustmentTolerance = newMaxDateAdjustmentTolerance;
+        _electionSettings().maxDateAdjustmentTolerance = newMaxDateAdjustmentTolerance;
 
         emit MaxDateAdjustmentToleranceChanged(newMaxDateAdjustmentTolerance);
     }
 
+    /// @notice Determines batch size when evaluate() is called with numBallots = 0
     function setDefaultBallotEvaluationBatchSize(uint newDefaultBallotEvaluationBatchSize) external override onlyOwner {
         if (newDefaultBallotEvaluationBatchSize == 0) revert InvalidElectionSettings();
 
-        _getElectionSettings().defaultBallotEvaluationBatchSize = newDefaultBallotEvaluationBatchSize;
+        _electionSettings().defaultBallotEvaluationBatchSize = newDefaultBallotEvaluationBatchSize;
 
         emit DefaultBallotEvaluationBatchSizeChanged(newDefaultBallotEvaluationBatchSize);
     }
 
+    /// @notice Determines the number of council memebers in the next epoch
     function setNextEpochSeatCount(uint8 newSeatCount) external override onlyOwner onlyInPeriod(ElectionPeriod.Idle) {
         if (newSeatCount == 0) revert InvalidElectionSettings();
 
-        _getElectionSettings().nextEpochSeatCount = newSeatCount;
+        _electionSettings().nextEpochSeatCount = newSeatCount;
 
         emit NextEpochSeatCountChanged(newSeatCount);
     }
 
-    // ---------------------------------------
-    // Nomination functions
-    // ---------------------------------------
-
+    /// @notice Allows anyone to self-nominate during the Nomination period
     function nominate() external override onlyInPeriod(ElectionPeriod.Nomination) {
         SetUtil.AddressSet storage nominees = _getCurrentElection().nominees;
 
@@ -146,6 +149,7 @@ contract ElectionModule is
         emit CandidateNominated(msg.sender);
     }
 
+    /// @notice Self-withdrawal of nominations during the Nomination period
     function withdrawNomination() external override onlyInPeriod(ElectionPeriod.Nomination) {
         SetUtil.AddressSet storage nominees = _getCurrentElection().nominees;
 
@@ -156,10 +160,8 @@ contract ElectionModule is
         emit NominationWithdrawn(msg.sender);
     }
 
-    // ---------------------------------------
-    // Vote functions
-    // ---------------------------------------
-
+    /// @notice Allows anyone with vote power to vote on nominated candidates during the Voting period
+    /// @dev ElectionVotes needs to be extended to specify what determines voting power
     function elect(address[] calldata candidates) external override onlyInPeriod(ElectionPeriod.Vote) {
         uint votePower = _getVotePower(msg.sender);
 
@@ -169,7 +171,7 @@ contract ElectionModule is
 
         bytes32 ballotId;
 
-        if (_hasVoted(msg.sender)) {
+        if (hasVoted(msg.sender)) {
             ballotId = _withdrawVote(msg.sender, votePower);
 
             emit VoteWithdrawn(msg.sender, ballotId, votePower);
@@ -180,10 +182,8 @@ contract ElectionModule is
         emit VoteRecorded(msg.sender, ballotId, votePower);
     }
 
-    // ---------------------------------------
-    // Election resolution
-    // ---------------------------------------
-
+    /// @notice Processes ballots in batches during the Evaluation period (after epochEndDate)
+    /// @dev ElectionTally needs to be extended to specify how votes are counted
     function evaluate(uint numBallots) external override onlyInPeriod(ElectionPeriod.Evaluation) {
         if (isElectionEvaluated()) revert ElectionAlreadyEvaluated();
 
@@ -202,15 +202,17 @@ contract ElectionModule is
         }
     }
 
+    /// @notice Shuffles NFTs and resolves an election after it has been evaluated
+    /// @dev Burns previous NFTs and mints new ones
     function resolve() external override onlyInPeriod(ElectionPeriod.Evaluation) {
-        if (!isElectionEvaluated()) revert EpochNotEvaluated();
+        if (!isElectionEvaluated()) revert ElectionNotEvaluated();
 
         _removeAllCouncilMembers();
         _addCouncilMembers(_getCurrentElection().winners);
 
         _getCurrentElection().resolved = true;
 
-        _configureNextEpochSchedule();
+        _copyCurrentEpochScheduleToNextEpoch();
 
         ElectionStore storage store = _electionStore();
 
@@ -220,13 +222,7 @@ contract ElectionModule is
         emit EpochStarted(newEpochIndex);
     }
 
-    // ---------------------------------------
-    // View functions
-    // ---------------------------------------
-
-    // Settings
-    // ~~~~~~~~~~~~~~~~~~
-
+    /// @notice Exposes minimum durations required when adjusting epoch schedules
     function getMinEpochDurations()
         external
         view
@@ -237,110 +233,117 @@ contract ElectionModule is
             uint64 minEpochDuration
         )
     {
-        ElectionSettings storage settings = _getElectionSettings();
+        ElectionSettings storage settings = _electionSettings();
 
         return (settings.minNominationPeriodDuration, settings.minVotingPeriodDuration, settings.minEpochDuration);
     }
 
+    /// @notice Exposes maximum size of adjustments when calling tweakEpochSchedule
     function getMaxDateAdjustmenTolerance() external view override returns (uint64) {
-        return _getElectionSettings().maxDateAdjustmentTolerance;
+        return _electionSettings().maxDateAdjustmentTolerance;
     }
 
+    /// @notice Shows the default batch size when calling elect() with numBallots = 0
     function getDefaultBallotEvaluationBatchSize() external view override returns (uint) {
-        return _getElectionSettings().defaultBallotEvaluationBatchSize;
+        return _electionSettings().defaultBallotEvaluationBatchSize;
     }
 
+    /// @notice Shows the number of council members that the next epoch will have
     function getNextEpochSeatCount() external view override returns (uint8) {
-        return _getElectionSettings().nextEpochSeatCount;
+        return _electionSettings().nextEpochSeatCount;
     }
 
-    // Epoch and periods
-    // ~~~~~~~~~~~~~~~~~~
-
-    function getEpochIndex() public view override returns (uint) {
+    /// @notice Returns the index of the current epoch. The first epoch's index is 1
+    function getEpochIndex() external view override returns (uint) {
         return _electionStore().currentEpochIndex;
     }
 
-    function getEpochStartDate() public view override returns (uint64) {
+    /// @notice Returns the date in which the current epoch started
+    function getEpochStartDate() external view override returns (uint64) {
         return _getCurrentEpoch().startDate;
     }
 
-    function getEpochEndDate() public view override returns (uint64) {
+    /// @notice Returns the date in which the current epoch will end
+    function getEpochEndDate() external view override returns (uint64) {
         return _getCurrentEpoch().endDate;
     }
 
-    function getNominationPeriodStartDate() public view override returns (uint64) {
+    /// @notice Returns the date in which the Nomination period in the current epoch will start
+    function getNominationPeriodStartDate() external view override returns (uint64) {
         return _getCurrentEpoch().nominationPeriodStartDate;
     }
 
-    function getVotingPeriodStartDate() public view override returns (uint64) {
+    /// @notice Returns the date in which the Voting period in the current epoch will start
+    function getVotingPeriodStartDate() external view override returns (uint64) {
         return _getCurrentEpoch().votingPeriodStartDate;
     }
 
-    function getCurrentPeriodType() public view override returns (uint) {
-        return uint(_getCurrentPeriodType());
+    /// @notice Returns the current period type: Idle, Nomination, Voting, Evaluation
+    function getCurrentPeriod() external view override returns (uint) {
+        return uint(_getCurrentPeriod());
     }
 
-    // Nominations
-    // ~~~~~~~~~~~~~~~~~~
-
+    /// @notice Shows if a candidate has been nominated in the current epoch
     function isNominated(address candidate) external view override returns (bool) {
         return _getCurrentElection().nominees.contains(candidate);
     }
 
+    /// @notice Returns a list of all nominated candidates in the current epoch
     function getNominees() external view override returns (address[] memory) {
         return _getCurrentElection().nominees.values();
     }
 
-    // Votes
-    // ~~~~~~~~~~~~~~~~~~
-
+    /// @notice Hashes a list of candidates (used for identifying and storing ballots)
     function calculateBallotId(address[] calldata candidates) external pure override returns (bytes32) {
         return _calculateBallotId(candidates);
     }
 
-    function getBallotVoted(address voter) external view override returns (bytes32) {
-        return _getBallotVoted(voter);
+    /// @notice Returns the ballot id that voter voted on in the current election
+    function getBallotVoted(address voter) public view override returns (bytes32) {
+        return _getCurrentElection().ballotIdsByAddress[voter];
     }
 
-    function hasVoted(address voter) external view override returns (bool) {
-        return _hasVoted(voter);
+    /// @notice Returns of voter has voted in the current election
+    function hasVoted(address voter) public view override returns (bool) {
+        return getBallotVoted(voter) != bytes32(0);
     }
 
+    /// @notice Returns the vote power of voter in the current election
     function getVotePower(address voter) external view override returns (uint) {
         return _getVotePower(voter);
     }
 
+    /// @notice Returns the number of votes given to a particular ballot
     function getBallotVotes(bytes32 ballotId) external view override returns (uint) {
         return _getBallot(ballotId).votes;
     }
 
+    /// @notice Returns the list of candidates that a particular ballot has
     function getBallotCandidates(bytes32 ballotId) external view override returns (address[] memory) {
         return _getBallot(ballotId).candidates;
     }
 
-    // Resolutions
-    // ~~~~~~~~~~~~~~~~~~
-
+    /// @notice Returns whether all ballots in the current election have been counted
     function isElectionEvaluated() public view override returns (bool) {
         return _getCurrentElection().evaluated;
     }
 
+    /// @notice Returns the number of votes a candidate received. Requires the election to be partially or totally evaluated
     function getCandidateVotes(address candidate) external view override returns (uint) {
         return _getCurrentElection().candidateVotes[candidate];
     }
 
+    /// @notice Returns the winners of the current election. Requires the election to be partially or totally evaluated
     function getElectionWinners() external view override returns (address[] memory) {
         return _getCurrentElection().winners.values();
     }
 
-    // Credentials
-    // ~~~~~~~~~~~~~~~~~~
-
+    /// @notice Returns the address of the council NFT token
     function getCouncilToken() public view override returns (address) {
         return _electionStore().councilToken;
     }
 
+    /// @notice Returns the current NFT token holders
     function getCouncilMembers() external view override returns (address[] memory) {
         return _electionStore().councilMembers.values();
     }

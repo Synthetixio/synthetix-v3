@@ -3,20 +3,19 @@ pragma solidity ^0.8.0;
 
 import "./ElectionBase.sol";
 
+/// @dev Provides core schedule functionality. I.e. dates, periods, etc
 contract ElectionSchedule is ElectionBase {
-    // ---------------------------------------
-    // ElectionPeriod type enum
-    // ---------------------------------------
-
+    /// @dev Used to allow certain functions to only operate within a given period
     modifier onlyInPeriod(ElectionPeriod period) {
-        if (_getCurrentPeriodType() != period) {
+        if (_getCurrentPeriod() != period) {
             revert NotCallableInCurrentPeriod();
         }
 
         _;
     }
 
-    function _getCurrentPeriodType() internal view returns (ElectionPeriod) {
+    /// @dev Determines the current period type according to the current time and the epoch's dates
+    function _getCurrentPeriod() internal view returns (ElectionPeriod) {
         if (!_electionStore().initialized) {
             return ElectionPeriod.Null;
         }
@@ -40,39 +39,7 @@ contract ElectionSchedule is ElectionBase {
         return ElectionPeriod.Idle;
     }
 
-    // ---------------------------------------
-    // Epoch and period configurations
-    // ---------------------------------------
-
-    function _configureFirstEpochSchedule(
-        uint64 nominationPeriodStartDate,
-        uint64 votingPeriodStartDate,
-        uint64 epochEndDate
-    ) internal {
-        EpochData storage firstEpoch = _getEpochAtPosition(1);
-
-        uint64 epochStartDate = uint64(block.timestamp);
-        _configureEpochSchedule(firstEpoch, epochStartDate, nominationPeriodStartDate, votingPeriodStartDate, epochEndDate);
-    }
-
-    function _configureNextEpochSchedule() internal {
-        EpochData storage currentEpoch = _getCurrentEpoch();
-        EpochData storage nextEpoch = _getNextEpoch();
-
-        uint64 nextEpochStartDate = uint64(block.timestamp);
-        uint64 nextEpochEndDate = nextEpochStartDate + _getEpochDuration(currentEpoch);
-        uint64 nextVotingPeriodStartDate = nextEpochEndDate - _getVotingPeriodDuration(currentEpoch);
-        uint64 nextNominationPeriodStartDate = nextVotingPeriodStartDate - _getNominationPeriodDuration(currentEpoch);
-
-        _configureEpochSchedule(
-            nextEpoch,
-            nextEpochStartDate,
-            nextNominationPeriodStartDate,
-            nextVotingPeriodStartDate,
-            nextEpochEndDate
-        );
-    }
-
+    /// @dev Sets dates within an epoch, with validations
     function _configureEpochSchedule(
         EpochData storage epoch,
         uint64 epochStartDate,
@@ -88,13 +55,13 @@ contract ElectionSchedule is ElectionBase {
         epoch.endDate = epochEndDate;
     }
 
+    /// @dev Ensures epoch dates are in the correct order, durations are above minimums, etc
     function _validateEpochSchedule(
         uint64 epochStartDate,
         uint64 nominationPeriodStartDate,
         uint64 votingPeriodStartDate,
         uint64 epochEndDate
     ) private view {
-        // Ensure date order makes sense
         if (
             epochEndDate <= votingPeriodStartDate ||
             votingPeriodStartDate <= nominationPeriodStartDate ||
@@ -107,9 +74,8 @@ contract ElectionSchedule is ElectionBase {
         uint64 votingPeriodDuration = epochEndDate - votingPeriodStartDate;
         uint64 nominationPeriodDuration = votingPeriodStartDate - nominationPeriodStartDate;
 
-        ElectionSettings storage settings = _getElectionSettings();
+        ElectionSettings storage settings = _electionSettings();
 
-        // Ensure all durations are above minimums
         if (
             epochDuration < settings.minEpochDuration ||
             nominationPeriodDuration < settings.minNominationPeriodDuration ||
@@ -119,6 +85,7 @@ contract ElectionSchedule is ElectionBase {
         }
     }
 
+    /// @dev Changes epoch dates, with validations
     function _adjustEpochSchedule(
         EpochData storage epoch,
         uint64 newNominationPeriodStartDate,
@@ -126,7 +93,8 @@ contract ElectionSchedule is ElectionBase {
         uint64 newEpochEndDate,
         bool ensureChangesAreSmall
     ) internal {
-        uint64 maxDateAdjustmentTolerance = _getElectionSettings().maxDateAdjustmentTolerance;
+        uint64 maxDateAdjustmentTolerance = _electionSettings().maxDateAdjustmentTolerance;
+
         if (ensureChangesAreSmall) {
             if (
                 _uint64AbsDifference(newEpochEndDate, epoch.endDate) > maxDateAdjustmentTolerance ||
@@ -146,21 +114,37 @@ contract ElectionSchedule is ElectionBase {
             newEpochEndDate
         );
 
-        if (_getCurrentPeriodType() != ElectionPeriod.Idle) {
+        if (_getCurrentPeriod() != ElectionPeriod.Idle) {
             revert ChangesCurrentPeriod();
         }
     }
 
-    // ---------------------------------------
-    // Settings
-    // ---------------------------------------
+    /// @dev Copies the current epoch schedule to the next epoch, maintaining durations
+    function _copyCurrentEpochScheduleToNextEpoch() internal {
+        EpochData storage currentEpoch = _getCurrentEpoch();
+        EpochData storage nextEpoch = _getNextEpoch();
 
+        uint64 nextEpochStartDate = uint64(block.timestamp);
+        uint64 nextEpochEndDate = nextEpochStartDate + _getEpochDuration(currentEpoch);
+        uint64 nextVotingPeriodStartDate = nextEpochEndDate - _getVotingPeriodDuration(currentEpoch);
+        uint64 nextNominationPeriodStartDate = nextVotingPeriodStartDate - _getNominationPeriodDuration(currentEpoch);
+
+        _configureEpochSchedule(
+            nextEpoch,
+            nextEpochStartDate,
+            nextNominationPeriodStartDate,
+            nextVotingPeriodStartDate,
+            nextEpochEndDate
+        );
+    }
+
+    /// @dev Sets the minimum epoch durations, with validations
     function _setMinEpochDurations(
         uint64 newMinNominationPeriodDuration,
         uint64 newMinVotingPeriodDuration,
         uint64 newMinEpochDuration
     ) internal {
-        ElectionSettings storage settings = _getElectionSettings();
+        ElectionSettings storage settings = _electionSettings();
 
         if (newMinNominationPeriodDuration == 0 || newMinVotingPeriodDuration == 0 || newMinEpochDuration == 0) {
             revert InvalidElectionSettings();
@@ -170,10 +154,6 @@ contract ElectionSchedule is ElectionBase {
         settings.minVotingPeriodDuration = newMinVotingPeriodDuration;
         settings.minEpochDuration = newMinEpochDuration;
     }
-
-    // ---------------------------------------
-    // Utilities
-    // ---------------------------------------
 
     function _uint64AbsDifference(uint64 valueA, uint64 valueB) private pure returns (uint64) {
         return valueA > valueB ? valueA - valueB : valueB - valueA;

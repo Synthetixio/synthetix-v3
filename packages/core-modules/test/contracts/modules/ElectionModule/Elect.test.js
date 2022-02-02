@@ -5,8 +5,8 @@ const assertRevert = require('@synthetixio/core-js/utils/assertions/assert-rever
 const { getTime, fastForwardTo } = require('@synthetixio/core-js/utils/hardhat/rpc');
 const { daysToSeconds } = require('@synthetixio/core-js/utils/misc/dates');
 const { bootstrap } = require('@synthetixio/deployer/utils/tests');
-const initializer = require('../../helpers/initializer');
-const { ElectionPeriod } = require('../../helpers/election-helper');
+const initializer = require('../../../helpers/initializer');
+const { ElectionPeriod } = require('../../../helpers/election-helper');
 const { findEvent } = require('@synthetixio/core-js/utils/ethers/events');
 
 describe('ElectionModule (vote)', () => {
@@ -54,7 +54,7 @@ describe('ElectionModule (vote)', () => {
       });
 
       it('shows that the current period is Nomination', async function () {
-        assertBn.equal(await ElectionModule.getCurrentPeriodType(), ElectionPeriod.Nomination);
+        assertBn.equal(await ElectionModule.getCurrentPeriod(), ElectionPeriod.Nomination);
       });
 
       describe('when nominations exist', function () {
@@ -71,7 +71,7 @@ describe('ElectionModule (vote)', () => {
           });
 
           it('shows that the current period is Vote', async function () {
-            assertBn.equal(await ElectionModule.getCurrentPeriodType(), ElectionPeriod.Vote);
+            assertBn.equal(await ElectionModule.getCurrentPeriod(), ElectionPeriod.Vote);
           });
 
           describe('when issuing invalid votes', function () {

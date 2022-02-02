@@ -5,8 +5,8 @@ const assertRevert = require('@synthetixio/core-js/utils/assertions/assert-rever
 const { getTime, fastForwardTo } = require('@synthetixio/core-js/utils/hardhat/rpc');
 const { daysToSeconds } = require('@synthetixio/core-js/utils/misc/dates');
 const { bootstrap } = require('@synthetixio/deployer/utils/tests');
-const initializer = require('../../helpers/initializer');
-const { ElectionPeriod } = require('../../helpers/election-helper');
+const initializer = require('../../../helpers/initializer');
+const { ElectionPeriod } = require('../../../helpers/election-helper');
 const { findEvent } = require('@synthetixio/core-js/utils/ethers/events');
 
 describe('ElectionModule (evaluate)', () => {
@@ -113,13 +113,13 @@ describe('ElectionModule (evaluate)', () => {
           });
 
           it('shows that the current period is Evaluation', async function () {
-            assertBn.equal(await ElectionModule.getCurrentPeriodType(), ElectionPeriod.Evaluation);
+            assertBn.equal(await ElectionModule.getCurrentPeriod(), ElectionPeriod.Evaluation);
           });
 
           describe('before evaluating the epoch', function () {
             describe('when trying to resolve the epoch', function () {
               it('reverts', async function () {
-                await assertRevert(ElectionModule.resolve(), 'EpochNotEvaluated');
+                await assertRevert(ElectionModule.resolve(), 'ElectionNotEvaluated');
               });
             });
           });
@@ -211,10 +211,7 @@ describe('ElectionModule (evaluate)', () => {
                     });
 
                     it('shows that the current period is Idle', async function () {
-                      assertBn.equal(
-                        await ElectionModule.getCurrentPeriodType(),
-                        ElectionPeriod.Idle
-                      );
+                      assertBn.equal(await ElectionModule.getCurrentPeriod(), ElectionPeriod.Idle);
                     });
                   });
                 });

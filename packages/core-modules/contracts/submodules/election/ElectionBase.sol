@@ -4,12 +4,30 @@ pragma solidity ^0.8.0;
 import "@synthetixio/core-contracts/contracts/initializable/InitializableMixin.sol";
 import "../../storage/ElectionStorage.sol";
 
+/// @dev Common utils, errors, and events to be used by any contracts that conform the ElectionModule
 contract ElectionBase is ElectionStorage, InitializableMixin {
+    // ---------------------------------------
+    // Enums
+    // ---------------------------------------
+
+    enum ElectionPeriod {
+        // Not initialized
+        Null,
+        // Initialized, but not nominating nor voting
+        Idle,
+        // Accepts nominations
+        Nomination,
+        // Accepts votes
+        Vote,
+        // Votes being counted
+        Evaluation
+    }
+
     // ---------------------------------------
     // Errors
     // ---------------------------------------
 
-    error EpochNotEvaluated();
+    error ElectionNotEvaluated();
     error ElectionAlreadyEvaluated();
     error AlreadyNominated();
     error NotNominated();
@@ -53,22 +71,9 @@ contract ElectionBase is ElectionStorage, InitializableMixin {
     // Helpers
     // ---------------------------------------
 
-    // Init helpers
-    // ~~~~~~~~~~~~~~~~~~
-
     function _isInitialized() internal view override returns (bool) {
         return _electionStore().initialized;
     }
-
-    // Settings helpers
-    // ~~~~~~~~~~~~~~~~~~
-
-    function _getElectionSettings() internal view returns (ElectionSettings storage) {
-        return _electionStore().settings[address(this)];
-    }
-
-    // Epoch helpers
-    // ~~~~~~~~~~~~~~~~~~
 
     function _getCurrentEpoch() internal view returns (EpochData storage) {
         return _getEpochAtPosition(_electionStore().currentEpochIndex);
@@ -81,9 +86,6 @@ contract ElectionBase is ElectionStorage, InitializableMixin {
     function _getEpochAtPosition(uint position) internal view returns (EpochData storage) {
         return _electionStore().epochs[position];
     }
-
-    // Election helpers
-    // ~~~~~~~~~~~~~~~~~~
 
     function _getCurrentElection() internal view returns (ElectionData storage) {
         return _getElectionAtPosition(_electionStore().currentEpochIndex);
@@ -103,13 +105,5 @@ contract ElectionBase is ElectionStorage, InitializableMixin {
 
     function _ballotExists(BallotData storage ballot) internal view returns (bool) {
         return ballot.candidates.length != 0;
-    }
-
-    function _getBallotVoted(address voter) internal view returns (bytes32) {
-        return _getCurrentElection().ballotIdsByAddress[voter];
-    }
-
-    function _hasVoted(address voter) internal view returns (bool) {
-        return _getBallotVoted(voter) != bytes32(0);
     }
 }

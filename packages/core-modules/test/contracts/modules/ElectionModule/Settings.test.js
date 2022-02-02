@@ -10,7 +10,7 @@ const {
 } = require('@synthetixio/core-js/utils/hardhat/rpc');
 const { daysToSeconds } = require('@synthetixio/core-js/utils/misc/dates');
 const { bootstrap } = require('@synthetixio/deployer/utils/tests');
-const initializer = require('../../helpers/initializer');
+const initializer = require('../../../helpers/initializer');
 const { findEvent } = require('@synthetixio/core-js/utils/ethers/events');
 
 describe('ElectionModule (settings)', () => {
@@ -63,6 +63,12 @@ describe('ElectionModule (settings)', () => {
         describe('with zero', () => {
           it('reverts', async () => {
             await assertRevert(ElectionModule.setNextEpochSeatCount(0), 'InvalidElectionSettings');
+          });
+        });
+
+        describe('with a value that is too big', () => {
+          it('reverts', async () => {
+            await assertRevert(ElectionModule.setNextEpochSeatCount(1000), 'value out-of-bounds');
           });
         });
 
