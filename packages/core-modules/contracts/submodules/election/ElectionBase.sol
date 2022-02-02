@@ -60,6 +60,13 @@ contract ElectionBase is ElectionStorage, InitializableMixin {
         return _electionStore().initialized;
     }
 
+    // Settings helpers
+    // ~~~~~~~~~~~~~~~~~~
+
+    function _getElectionSettings() internal view returns (ElectionSettings storage) {
+        return _electionStore().settings[address(this)];
+    }
+
     // Epoch helpers
     // ~~~~~~~~~~~~~~~~~~
 

@@ -12,7 +12,7 @@ contract ElectionStorage {
         mapping(address => uint) councilTokenIds;
         mapping(uint => EpochData) epochs;
         mapping(uint => ElectionData) elections;
-        ElectionSettings settings; // TODO: This kind of nesting could be problematic.
+        mapping(address => ElectionSettings) settings;
     }
 
     struct ElectionSettings {
