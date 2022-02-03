@@ -60,7 +60,7 @@ contract ElectionModule is
     }
 
     /// @notice Upgrades the implementation of the existing council NFT token
-    function upgradeCouncilToken(address newCouncilTokenImplementation) external override onlyOwner {
+    function upgradeCouncilToken(address newCouncilTokenImplementation) external override onlyOwner onlyIfInitialized {
         CouncilToken(getCouncilToken()).upgradeTo(newCouncilTokenImplementation);
 
         emit CouncilTokenUpgraded(newCouncilTokenImplementation);

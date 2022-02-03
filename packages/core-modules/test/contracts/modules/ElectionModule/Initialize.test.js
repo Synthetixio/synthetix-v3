@@ -30,10 +30,6 @@ describe('ElectionModule (initialization)', () => {
   });
 
   describe('before initializing the module', function () {
-    it('shows that the current period is Null', async () => {
-      assertBn.equal(await ElectionModule.getCurrentPeriod(), ElectionPeriod.Null);
-    });
-
     it('shows that the module is not initialized', async () => {
       assert.equal(await ElectionModule.isElectionModuleInitialized(), false);
     });
@@ -43,6 +39,12 @@ describe('ElectionModule (initialization)', () => {
         await ElectionModule.getCouncilToken(),
         '0x0000000000000000000000000000000000000000'
       );
+    });
+
+    describe('trying to retrieve the period', function () {
+      it('reverts', async function () {
+        await assertRevert(ElectionModule.getCurrentPeriod(), 'InvalidEpochConfiguration');
+      });
     });
   });
 
