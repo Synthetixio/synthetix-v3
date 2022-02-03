@@ -7,7 +7,7 @@ const { getTime } = require('@synthetixio/core-js/utils/hardhat/rpc');
 const { bootstrap } = require('@synthetixio/deployer/utils/tests');
 const { assertDatesAreClose } = require('../../../helpers/election-helper');
 const initializer = require('../../../helpers/initializer');
-const { ElectionPeriod } = require('../../../helpers/election-helper');
+const { ElectionPeriod } = require('./helpers/election-helper');
 const { findEvent } = require('@synthetixio/core-js/utils/ethers/events');
 
 describe('ElectionModule (initialization)', () => {
