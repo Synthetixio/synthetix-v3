@@ -21,8 +21,8 @@ contract ElectionStorage {
         // ElectionData's by epoch index
         mapping(uint => ElectionData) elections;
         // Pointer to ElectionSettings
-        // To be always used via store.settings[address(this)]
-        mapping(address => ElectionSettings) settings;
+        // To be always used via store.settings[0]
+        mapping(uint => ElectionSettings) settings;
     }
 
     struct ElectionSettings {
@@ -80,7 +80,7 @@ contract ElectionStorage {
     }
 
     function _electionSettings() internal view returns (ElectionSettings storage) {
-        return _electionStore().settings[address(this)];
+        return _electionStore().settings[0];
     }
 
     function _electionStore() internal pure returns (ElectionStore storage store) {
