@@ -28,6 +28,14 @@ describe('ElectionModule (token)', () => {
     ElectionModule = await ethers.getContractAt('ElectionModule', proxyAddress());
   });
 
+  describe('before the module is initialized', function () {
+    describe('when upgrading the council token', function () {
+      it('reverts', async function () {
+        await assertRevert(ElectionModule.upgradeCouncilToken(user.address), 'NotInitialized');
+      });
+    });
+  });
+
   describe('when the module is initialized', function () {
     before('initialize', async function () {
       const now = await getTime(ethers.provider);

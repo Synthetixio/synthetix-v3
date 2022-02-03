@@ -16,15 +16,16 @@ contract ElectionSchedule is ElectionBase {
 
     /// @dev Determines the current period type according to the current time and the epoch's dates
     function _getCurrentPeriod() internal view returns (ElectionPeriod) {
-        if (!_electionStore().initialized) {
-            return ElectionPeriod.Null;
-        }
-
         EpochData storage epoch = _getCurrentEpoch();
 
         uint64 currentTime = uint64(block.timestamp);
 
-        if (currentTime >= epoch.endDate) {
+        uint64 epochEndDate = epoch.endDate;
+        if (epochEndDate == 0) {
+            revert InvalidEpochConfiguration();
+        }
+
+        if (currentTime >= epochEndDate) {
             return ElectionPeriod.Evaluation;
         }
 
