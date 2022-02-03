@@ -100,7 +100,7 @@ contract ElectionModule is
         emit EpochScheduleUpdated(newNominationPeriodStartDate, newVotingPeriodStartDate, newEpochEndDate);
     }
 
-    /// @notice Determines minimum values for epoch schedul adjustments
+    /// @notice Determines minimum values for epoch schedule adjustments
     function setMinEpochDurations(
         uint64 newMinNominationPeriodDuration,
         uint64 newMinVotingPeriodDuration,
@@ -129,7 +129,7 @@ contract ElectionModule is
         emit DefaultBallotEvaluationBatchSizeChanged(newDefaultBallotEvaluationBatchSize);
     }
 
-    /// @notice Determines the number of council memebers in the next epoch
+    /// @notice Determines the number of council members in the next epoch
     function setNextEpochSeatCount(uint8 newSeatCount) external override onlyOwner onlyInPeriod(ElectionPeriod.Idle) {
         if (newSeatCount == 0) revert InvalidElectionSettings();
 
@@ -243,7 +243,7 @@ contract ElectionModule is
         return _electionSettings().maxDateAdjustmentTolerance;
     }
 
-    /// @notice Shows the default batch size when calling elect() with numBallots = 0
+    /// @notice Shows the default batch size when calling evaluate() with numBallots = 0
     function getDefaultBallotEvaluationBatchSize() external view override returns (uint) {
         return _electionSettings().defaultBallotEvaluationBatchSize;
     }
