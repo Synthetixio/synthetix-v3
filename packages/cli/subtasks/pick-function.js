@@ -9,7 +9,7 @@ subtask(SUBTASK_PICK_FUNCTION, 'Pick a function from the given contract').setAct
   async (taskArguments, hre) => {
     const abi = hre.deployer.deployment.abis[hre.cli.contractFullyQualifiedName];
     const abiFunctions = abi.filter((abiItem) => abiItem.name && abiItem.type === 'function');
-    const selectors = await getSelectors(abi);
+    const selectors = await getSelectors(abi, hre.config.deployer.routerFunctionFilter);
 
     const choices = abiFunctions.map((functionAbi) => {
       const fullSignature = getFullFunctionSignature(functionAbi);

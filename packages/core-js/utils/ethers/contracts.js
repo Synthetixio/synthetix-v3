@@ -15,15 +15,14 @@ async function getRemoteBytecode(address, provider) {
   return await provider.getCode(address);
 }
 
-async function getSelectors(contractAbi) {
+async function getSelectors(contractAbi, functionFilter = () => true) {
   const contract = await new ethers.Contract(
     '0x0000000000000000000000000000000000000001',
     contractAbi
   );
 
   return contract.interface.fragments.reduce((selectors, fragment) => {
-    // Only add methods, and filter out the ones added during instrumentation by solidity-coverage
-    if (fragment.type === 'function' && !fragment.name.startsWith('c_')) {
+    if (fragment.type === 'function' && functionFilter(fragment.name)) {
       selectors.push({
         name: fragment.name,
         selector: contract.interface.getSighash(fragment),
