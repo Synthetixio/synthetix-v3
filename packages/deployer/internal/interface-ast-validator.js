@@ -5,9 +5,10 @@ const {
 } = require('@synthetixio/core-js/utils/ast/finders');
 
 class InterfaceCoverageASTValidator {
-  constructor(contractFullyQualifiedNames, astNodes) {
+  constructor(contractFullyQualifiedNames, astNodes, visibleFunctionsFilter = () => true) {
     this.contractFullyQualifiedNames = contractFullyQualifiedNames;
     this.astNodes = astNodes;
+    this.visibleFunctionsFilter = visibleFunctionsFilter;
   }
 
   findFunctionsNotDefinedInInterfaces() {
@@ -39,7 +40,7 @@ class InterfaceCoverageASTValidator {
   _findVisibleFunctions(contractFullyQualifiedName) {
     const visibleFunctions = findFunctionNodes(contractFullyQualifiedName, this.astNodes)
       .filter((f) => f.visibility === 'public' || f.visibility === 'external')
-      .filter((f) => !f.name.startsWith('c_0x')); // Filter out coverage added functions
+      .filter((f) => this.visibleFunctionsFilter(f.name));
 
     return visibleFunctions;
   }
