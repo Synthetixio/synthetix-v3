@@ -113,7 +113,7 @@ class ModuleStorageASTValidator {
     // Look for state variable declarations
     for (const contractNode of candidateNodes) {
       for (const node of findContractStateVariables(contractNode)) {
-        if (node.mutability === 'constant') {
+        if (node.mutability === 'constant' || node.mutability === 'immutable') {
           continue;
         }
 
