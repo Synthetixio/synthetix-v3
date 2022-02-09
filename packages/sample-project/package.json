@@ -1,5 +1,5 @@
 {
-  "name": "sample-project",
+  "name": "@synthetixio/sample-project",
   "version": "1.0.0",
   "description": "",
   "repository": {
@@ -14,8 +14,7 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "@nomiclabs/hardhat-ethers": "^2.0.2",
-    "ethers": "^5.4.6",
-    "hardhat": "^2.6.8"
+    "@nomiclabs/hardhat-ethers": "2.0.2",
+    "hardhat": "2.6.8"
   }
 }
