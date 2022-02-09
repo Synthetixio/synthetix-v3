@@ -4,14 +4,14 @@ const CliRunner = require('./cli-runner');
 
 function bootstrap(fixture) {
   before('set fixture project and network', function () {
-    const folder = path.join(
+    const folder = path.resolve(
       __dirname,
       '..',
       '..',
       '..',
       'test',
       'fixture-projects',
-      fixture ? fixture : 'sample-project'
+      fixture ? fixture : path.dirname(require.resolve('@synthetixio/sample-project/package.json'))
     );
 
     this.hre = loadEnvironment(folder, 'local');
