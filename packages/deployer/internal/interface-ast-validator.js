@@ -5,7 +5,7 @@ const {
 } = require('@synthetixio/core-js/utils/ast/finders');
 
 class InterfaceCoverageASTValidator {
-  constructor(contractFullyQualifiedNames, astNodes, visibleFunctionsFilter = () => true) {
+  constructor(contractFullyQualifiedNames, astNodes, visibleFunctionsFilter) {
     this.contractFullyQualifiedNames = contractFullyQualifiedNames;
     this.astNodes = astNodes;
     this.visibleFunctionsFilter = visibleFunctionsFilter;
@@ -16,11 +16,6 @@ class InterfaceCoverageASTValidator {
 
     for (const contractFullyQualifiedName of this.contractFullyQualifiedNames) {
       const visibleFunctions = this._findVisibleFunctions(contractFullyQualifiedName);
-
-      if (visibleFunctions.length === 0) {
-        continue;
-      }
-
       const interfacedFunctions = this._findInterfaceFunctions(contractFullyQualifiedName);
 
       for (const visibleFunction of visibleFunctions) {
