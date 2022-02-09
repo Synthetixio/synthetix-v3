@@ -11,7 +11,11 @@ subtask(SUBTASK_VALIDATE_INTERFACES).setAction(async (_, hre) => {
     .filter(({ isModule }) => isModule)
     .map((c) => c.contractFullyQualifiedName);
   const astNodes = Object.values(hre.deployer.deployment.sources).map((val) => val.ast);
-  const validator = new InterfaceCoverageASTValidator(moduleFullyQualifiedNames, astNodes);
+  const validator = new InterfaceCoverageASTValidator(
+    moduleFullyQualifiedNames,
+    astNodes,
+    hre.config.deployer.routerFunctionFilter
+  );
 
   const errorsFound = validator.findFunctionsNotDefinedInInterfaces();
 
