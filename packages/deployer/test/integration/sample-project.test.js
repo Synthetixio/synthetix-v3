@@ -6,7 +6,9 @@ describe('sample-project', function () {
   let hre;
 
   beforeEach('set fixture project', function () {
-    hre = loadEnvironment('sample-project');
+    hre = loadEnvironment(
+      path.dirname(require.resolve('@synthetixio/sample-project/package.json'))
+    );
   });
 
   describe('when deploying without any changes', function () {
@@ -37,7 +39,7 @@ describe('sample-project', function () {
 
         // Third deployment, with changes
         const MODULES = hre.config.deployer.paths.modules;
-        const CONTRACTS = path.join(hre.config.paths.root, 'test-contracts');
+        const CONTRACTS = path.resolve(__dirname, '..', 'fixtures', 'contracts');
 
         const SomeModuleOriginal = await readFile(path.join(MODULES, 'SomeModule.sol'));
         const AnotherModuleOriginal = await readFile(path.join(MODULES, 'AnotherModule.sol'));

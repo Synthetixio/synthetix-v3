@@ -20,7 +20,9 @@ describe('utils/deployments.js', function () {
   before('prepare environment', async function () {
     this.timeout(60000);
 
-    hre = loadEnvironment('sample-project');
+    hre = loadEnvironment(
+      path.dirname(require.resolve('@synthetixio/sample-project/package.json'))
+    );
 
     await deployOnEnvironment(hre, {
       alias: 'deployments',

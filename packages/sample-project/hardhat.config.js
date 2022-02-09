@@ -1,5 +1,5 @@
 require('@nomiclabs/hardhat-ethers');
-require('../deployer');
+require('@synthetixio/deployer');
 
 module.exports = {
   solidity: {
