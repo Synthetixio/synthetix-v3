@@ -53,7 +53,7 @@ async function deployOnEnvironment(hre, customOptions = {}) {
 }
 
 function _getEnvironmentPath(fixtureProjectName) {
-  const pathname = path.join(__dirname, '..', 'fixture-projects', fixtureProjectName);
+  const pathname = path.resolve(__dirname, '..', 'fixture-projects', fixtureProjectName);
 
   if (!fs.existsSync(pathname)) {
     throw new Error(`Invalid fixture project ${fixtureProjectName}`);
