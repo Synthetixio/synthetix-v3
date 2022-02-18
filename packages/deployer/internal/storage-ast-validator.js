@@ -14,7 +14,7 @@ class ModuleStorageASTValidator {
   constructor(moduleFullyQualifiedNames, astNodes, previousAstNodes = {}) {
     this.moduleFullyQualifiedNames = moduleFullyQualifiedNames;
     this.astNodes = astNodes;
-    this.contractNodes = this.astNodes.flatMap(findContractDefinitions);
+    this.contractNodes = astNodes.flatMap(findContractDefinitions);
     this.previousContractNodes = previousAstNodes.flatMap(findContractDefinitions);
   }
 
@@ -141,21 +141,7 @@ class ModuleStorageASTValidator {
       currentStructsMap,
     });
 
-    removals = removals.filter((removal) => removal.completeStruct === false);
-
-    for (const m of modifications) {
-      const alreadyReported = errors.some(
-        (e) => e.contract === m.contract && e.struct === m.struct
-      );
-
-      if (!alreadyReported) {
-        errors.push({
-          msg: `Invalid modification mutation found in namespace ${m.contract}.${m.struct}`,
-          contract: m.contract,
-          struct: m.struct,
-        });
-      }
-    }
+    removals = removals.filter((removal) => !removal.completeStruct);
 
     for (const m of removals) {
       const alreadyReported = errors.some(
@@ -165,6 +151,20 @@ class ModuleStorageASTValidator {
       if (!alreadyReported) {
         errors.push({
           msg: `Invalid removal mutation found in namespace ${m.contract}.${m.struct}`,
+          contract: m.contract,
+          struct: m.struct,
+        });
+      }
+    }
+
+    for (const m of modifications) {
+      const alreadyReported = errors.some(
+        (e) => e.contract === m.contract && e.struct === m.struct
+      );
+
+      if (!alreadyReported) {
+        errors.push({
+          msg: `Invalid modification mutation found in namespace ${m.contract}.${m.struct}`,
           contract: m.contract,
           struct: m.struct,
         });
