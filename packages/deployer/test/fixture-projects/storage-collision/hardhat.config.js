@@ -1,8 +1,5 @@
-require('hardhat-contract-sizer');
-require('solidity-coverage');
 require('@nomiclabs/hardhat-ethers');
-require('@synthetixio/deployer');
-require('@synthetixio/cli');
+require('../../..');
 
 module.exports = {
   solidity: {
@@ -19,10 +16,5 @@ module.exports = {
       url: 'http://localhost:8545',
     },
   },
-  contractSizer: {
-    strict: true,
-  },
-  mocha: {
-    timeout: 120000,
-  },
+  deployer: {},
 };

@@ -1,0 +1,43 @@
+{
+  "constant": true,
+  "id": 15,
+  "mutability": "constant",
+  "name": "someVariable",
+  "nameLocation": "169:11:1",
+  "nodeType": "VariableDeclaration",
+  "scope": 25,
+  "src": "147:38:1",
+  "stateVariable": true,
+  "storageLocation": "default",
+  "typeDescriptions": {
+    "typeIdentifier": "t_uint256",
+    "typeString": "uint256"
+  },
+  "typeName": {
+    "id": 13,
+    "name": "uint",
+    "nodeType": "ElementaryTypeName",
+    "src": "147:4:1",
+    "typeDescriptions": {
+      "typeIdentifier": "t_uint256",
+      "typeString": "uint256"
+    }
+  },
+  "value": {
+    "hexValue": "3634",
+    "id": 14,
+    "isConstant": false,
+    "isLValue": false,
+    "isPure": true,
+    "kind": "number",
+    "lValueRequested": false,
+    "nodeType": "Literal",
+    "src": "183:2:1",
+    "typeDescriptions": {
+      "typeIdentifier": "t_rational_64_by_1",
+      "typeString": "int_const 64"
+    },
+    "value": "64"
+  },
+  "visibility": "private"
+}
