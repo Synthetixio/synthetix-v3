@@ -3,7 +3,6 @@ const { parseFullyQualifiedName } = require('hardhat/utils/contract-names');
 const {
   findImportedContractFullyQualifiedName,
   findContractDependencies,
-  findContractNode,
 } = require('@synthetixio/core-js/utils/ast/finders');
 const { capitalize } = require('@synthetixio/core-js/utils/misc/strings');
 const { SUBTASK_FIND_CONTRACTS } = require('../task-names');
@@ -45,9 +44,8 @@ async function _getSatellites(hre) {
     const { sourceName, contractName } = parseFullyQualifiedName(contractFullyQualifiedName);
     const baseAstNode = hre.deployer.deployment.sources[sourceName].ast;
     const astNodes = Object.values(sources).map((source) => source.ast);
-    const contractAstNode = findContractNode(contractFullyQualifiedName, astNodes);
 
-    const dependencies = findContractDependencies(contractAstNode, astNodes).map(
+    const dependencies = findContractDependencies(contractFullyQualifiedName, astNodes).map(
       (fqName) => parseFullyQualifiedName(fqName).contractName
     );
 
