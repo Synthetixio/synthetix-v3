@@ -73,7 +73,7 @@ describe('utils/hardhat/rpc.js', () => {
     });
   });
 
-  describe('when fastforwarding', () => {
+  describe('when calling fastForward', () => {
     before('clear spy history', () => {
       provider.send.resetHistory();
     });
