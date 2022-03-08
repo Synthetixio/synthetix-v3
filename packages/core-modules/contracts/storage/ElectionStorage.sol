@@ -38,6 +38,8 @@ contract ElectionStorage {
         uint64 maxDateAdjustmentTolerance;
         // Default batch size when calling evaluate() with numBallots = 0
         uint defaultBallotEvaluationBatchSize;
+        // Minimum active council members. If too many are dismissed an emergency election is triggered
+        uint minimumActiveMembers;
     }
 
     struct EpochData {

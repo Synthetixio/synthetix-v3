@@ -46,6 +46,8 @@ interface IElectionModule {
 
     function setNextEpochSeatCount(uint8 newSeatCount) external;
 
+    function dismissMembers(address[] calldata members) external;
+
     // ---------------------------------------
     // User write functions
     // ---------------------------------------

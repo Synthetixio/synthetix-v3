@@ -46,6 +46,14 @@ contract ElectionCredentials is ElectionBase {
         }
     }
 
+    function _removeCouncilMembers(address[] calldata membersToRemove) internal {
+        uint numMembers = membersToRemove.length;
+
+        for (uint memberIndex = 0; memberIndex < numMembers; memberIndex++) {
+            _removeCouncilMember(membersToRemove[memberIndex]);
+        }
+    }
+
     function _addCouncilMember(address newMember) internal {
         ElectionStore storage store = _electionStore();
         SetUtil.AddressSet storage members = store.councilMembers;

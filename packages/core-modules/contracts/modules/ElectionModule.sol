@@ -37,6 +37,7 @@ contract ElectionModule is
         settings.minEpochDuration = 7 days;
         settings.maxDateAdjustmentTolerance = 7 days;
         settings.nextEpochSeatCount = 3;
+        settings.minimumActiveMembers = 2;
         settings.defaultBallotEvaluationBatchSize = 500;
 
         store.currentEpochIndex = 1;
@@ -136,6 +137,20 @@ contract ElectionModule is
         _electionSettings().nextEpochSeatCount = newSeatCount;
 
         emit NextEpochSeatCountChanged(newSeatCount);
+    }
+
+    /// @notice Allows the owner to remove one or more council members, triggering an election if a threshold is met
+    function dismissMembers(address[] calldata membersToDismiss) external override onlyOwner {
+        _removeCouncilMembers(membersToDismiss);
+
+        uint activeMembers = _electionStore().councilMembers.length();
+        uint minimumMembers = _electionSettings().minimumActiveMembers;
+        bool inElection = _getCurrentPeriod() != ElectionPeriod.Idle;
+        if (activeMembers < minimumMembers && !inElection) {
+            _jumpToNominationPeriod();
+        }
+
+        emit CouncilMembersDismissed(membersToDismiss);
     }
 
     /// @notice Allows anyone to self-nominate during the Nomination period

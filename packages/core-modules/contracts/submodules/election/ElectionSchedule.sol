@@ -120,6 +120,26 @@ contract ElectionSchedule is ElectionBase {
         }
     }
 
+    /// @dev Moves schedule forward to immediately jump to the nomination period
+    function _jumpToNominationPeriod() internal {
+        EpochData storage currentEpoch = _getCurrentEpoch();
+
+        uint64 nominationPeriodDuration = _getNominationPeriodDuration(currentEpoch);
+        uint64 votingPeriodDuration = _getVotingPeriodDuration(currentEpoch);
+
+        uint64 newNominationPeriodStartDate = uint64(block.timestamp);
+        uint64 newVotingPeriodStartDate = newNominationPeriodStartDate + nominationPeriodDuration;
+        uint64 newEpochEndDate = newVotingPeriodStartDate + votingPeriodDuration;
+
+        _configureEpochSchedule(
+            currentEpoch,
+            currentEpoch.startDate,
+            newNominationPeriodStartDate,
+            newVotingPeriodStartDate,
+            newEpochEndDate
+        );
+    }
+
     /// @dev Copies the current epoch schedule to the next epoch, maintaining durations
     function _copyCurrentEpochScheduleToNextEpoch() internal {
         EpochData storage currentEpoch = _getCurrentEpoch();
