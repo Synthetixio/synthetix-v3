@@ -6,6 +6,7 @@ const { daysToSeconds } = require('@synthetixio/core-js/utils/misc/dates');
 const { bootstrap } = require('@synthetixio/deployer/utils/tests');
 const initializer = require('../../../helpers/initializer');
 const { findEvent } = require('@synthetixio/core-js/utils/ethers/events');
+const { runElection } = require('./helpers/election-helper');
 
 describe('ElectionModule (resolve)', () => {
   const { proxyAddress } = bootstrap(initializer);
@@ -19,34 +20,7 @@ describe('ElectionModule (resolve)', () => {
 
   let receipt;
 
-  async function simulateAndResolveElection() {
-    // Nominate
-    await fastForwardTo(await ElectionModule.getNominationPeriodStartDate(), ethers.provider);
-    for (let member of members) {
-      await ElectionModule.connect(member).nominate();
-    }
-
-    // Vote
-    await fastForwardTo(await ElectionModule.getVotingPeriodStartDate(), ethers.provider);
-    for (let member of members) {
-      await ElectionModule.connect(member).elect([member.address]);
-    }
-
-    // Evaluate
-    await fastForwardTo(await ElectionModule.getEpochEndDate(), ethers.provider);
-    await ElectionModule.evaluate(0);
-    assert.equal(await ElectionModule.isElectionEvaluated(), true);
-    assert.deepEqual(
-      await ElectionModule.getElectionWinners(),
-      members.map((w) => w.address)
-    );
-
-    // Resolve
-    const tx = await ElectionModule.resolve();
-    receipt = await tx.wait();
-  }
-
-  async function itProperlyManagesCredentials() {
+  async function itHasExpectedMembers() {
     it('shows that the members are in the council', async function () {
       assert.deepEqual(
         await ElectionModule.getCouncilMembers(),
@@ -105,7 +79,7 @@ describe('ElectionModule (resolve)', () => {
         assertBn.equal(await ElectionModule.getEpochIndex(), 1);
       });
 
-      itProperlyManagesCredentials();
+      itHasExpectedMembers();
 
       describe('epoch 2', function () {
         describe('when members 1, 2, and 3 are elected', function () {
@@ -114,14 +88,14 @@ describe('ElectionModule (resolve)', () => {
           });
 
           before('simulate election', async function () {
-            await simulateAndResolveElection();
+            receipt = await runElection(ElectionModule, members);
           });
 
           it('shows that the current epoch is 2', async function () {
             assertBn.equal(await ElectionModule.getEpochIndex(), 2);
           });
 
-          itProperlyManagesCredentials();
+          itHasExpectedMembers();
 
           it('emitted an EpochStarted event', async function () {
             const event = findEvent({ receipt, eventName: 'EpochStarted' });
@@ -157,14 +131,14 @@ describe('ElectionModule (resolve)', () => {
             });
 
             before('simulate election', async function () {
-              await simulateAndResolveElection();
+              receipt = await runElection(ElectionModule, members);
             });
 
             it('shows that the current epoch is 3', async function () {
               assertBn.equal(await ElectionModule.getEpochIndex(), 3);
             });
 
-            itProperlyManagesCredentials();
+            itHasExpectedMembers();
 
             it('emitted an EpochStarted event', async function () {
               const event = findEvent({ receipt, eventName: 'EpochStarted' });
@@ -204,14 +178,14 @@ describe('ElectionModule (resolve)', () => {
                 });
 
                 before('simulate election', async function () {
-                  await simulateAndResolveElection();
+                  receipt = await runElection(ElectionModule, members);
                 });
 
                 it('shows that the current epoch is 4', async function () {
                   assertBn.equal(await ElectionModule.getEpochIndex(), 4);
                 });
 
-                itProperlyManagesCredentials();
+                itHasExpectedMembers();
 
                 it('emitted an EpochStarted event', async function () {
                   const event = findEvent({ receipt, eventName: 'EpochStarted' });
