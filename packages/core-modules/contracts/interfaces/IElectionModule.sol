@@ -46,6 +46,8 @@ interface IElectionModule {
 
     function setNextEpochSeatCount(uint8 newSeatCount) external;
 
+    function setMinimumActiveMembers(uint8 newMinimumActiveMembers) external;
+
     function dismissMembers(address[] calldata members) external;
 
     // ---------------------------------------
@@ -83,6 +85,8 @@ interface IElectionModule {
     function getDefaultBallotEvaluationBatchSize() external view returns (uint);
 
     function getNextEpochSeatCount() external view returns (uint8);
+
+    function getMinimumActiveMembers() external view returns (uint8);
 
     // Epoch and periods
     // ~~~~~~~~~~~~~~~~~~
