@@ -127,6 +127,8 @@ contract ElectionSchedule is ElectionBase {
         uint64 nominationPeriodDuration = _getNominationPeriodDuration(currentEpoch);
         uint64 votingPeriodDuration = _getVotingPeriodDuration(currentEpoch);
 
+        // Keep the previous durations, but shift everything back
+        // so that nominations start now
         uint64 newNominationPeriodStartDate = uint64(block.timestamp);
         uint64 newVotingPeriodStartDate = newNominationPeriodStartDate + nominationPeriodDuration;
         uint64 newEpochEndDate = newVotingPeriodStartDate + votingPeriodDuration;
