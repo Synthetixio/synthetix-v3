@@ -145,7 +145,7 @@ contract ElectionModule is
 
         emit CouncilMembersDismissed(membersToDismiss);
 
-        // Don't do anything else if not in an election and the council still has enough members
+        // Don't immediately jump to an election if the council still has enough members
         if (_getCurrentPeriod() != ElectionPeriod.Idle) return;
         if (_electionStore().councilMembers.length() >= _electionSettings().minimumActiveMembers) return;
 
