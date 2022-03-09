@@ -49,6 +49,58 @@ describe('ElectionModule (settings)', () => {
     });
 
     // ---------------------------------------
+    // minimumActiveMembers
+    // ---------------------------------------
+
+    describe('when configuring the minimum active members', function () {
+      describe('with an account that is not the owner', () => {
+        it('reverts', async () => {
+          await assertRevert(
+            ElectionModule.connect(user).setMinimumActiveMembers(1),
+            'Unauthorized'
+          );
+        });
+      });
+
+      describe('with the owner', () => {
+        describe('with zero', () => {
+          it('reverts', async () => {
+            await assertRevert(
+              ElectionModule.setMinimumActiveMembers(0),
+              'InvalidMinimumActiveMembers'
+            );
+          });
+        });
+
+        describe('with a value that is too big', () => {
+          it('reverts', async () => {
+            await assertRevert(ElectionModule.setMinimumActiveMembers(1000), 'value out-of-bounds');
+          });
+        });
+
+        describe('with valid parameters', () => {
+          let newMinimumActiveMembers = 3;
+
+          before('set', async () => {
+            const tx = await ElectionModule.setMinimumActiveMembers(newMinimumActiveMembers);
+            receipt = await tx.wait();
+          });
+
+          it('emitted an MinimumActiveMembersChanged event', async function () {
+            const event = findEvent({ receipt, eventName: 'MinimumActiveMembersChanged' });
+
+            assert.ok(event);
+            assertBn.equal(event.args.minimumActiveMembers, newMinimumActiveMembers);
+          });
+
+          it('changes the setting', async () => {
+            assertBn.equal(await ElectionModule.getMinimumActiveMembers(), newMinimumActiveMembers);
+          });
+        });
+      });
+    });
+
+    // ---------------------------------------
     // nextEpochSeatCount
     // ---------------------------------------
 

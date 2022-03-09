@@ -139,6 +139,14 @@ contract ElectionModule is
         emit NextEpochSeatCountChanged(newSeatCount);
     }
 
+    function setMinimumActiveMembers(uint8 newMinimumActiveMembers) external onlyOwner {
+        if (newMinimumActiveMembers == 0) revert InvalidMinimumActiveMembers();
+
+        _electionSettings().minimumActiveMembers = newMinimumActiveMembers;
+
+        emit MinimumActiveMembersChanged(newMinimumActiveMembers);
+    }
+
     /// @notice Allows the owner to remove one or more council members, triggering an election if a threshold is met
     function dismissMembers(address[] calldata membersToDismiss) external override onlyOwner {
         _removeCouncilMembers(membersToDismiss);
@@ -267,6 +275,11 @@ contract ElectionModule is
     /// @notice Shows the number of council members that the next epoch will have
     function getNextEpochSeatCount() external view override returns (uint8) {
         return _electionSettings().nextEpochSeatCount;
+    }
+
+    /// @notice Returns the minimum active members that the council needs to avoid an emergency election
+    function getMinimumActiveMembers() external view returns (uint8) {
+        return _electionSettings().minimumActiveMembers;
     }
 
     /// @notice Returns the index of the current epoch. The first epoch's index is 1

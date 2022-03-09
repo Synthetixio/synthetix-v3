@@ -38,6 +38,7 @@ contract ElectionBase is ElectionStorage, InitializableMixin {
     error ChangesCurrentPeriod();
     error AlreadyACouncilMember();
     error NotACouncilMember();
+    error InvalidMinimumActiveMembers();
 
     // ---------------------------------------
     // Events
@@ -59,6 +60,7 @@ contract ElectionBase is ElectionStorage, InitializableMixin {
     event MaxDateAdjustmentToleranceChanged(uint64 tolerance);
     event DefaultBallotEvaluationBatchSizeChanged(uint size);
     event NextEpochSeatCountChanged(uint seatCount);
+    event MinimumActiveMembersChanged(uint8 minimumActiveMembers);
     event CandidateNominated(address indexed candidate);
     event NominationWithdrawn(address indexed candidate);
     event VoteRecorded(address indexed voter, bytes32 indexed ballotId, uint votePower);
