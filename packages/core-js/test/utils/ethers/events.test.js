@@ -15,10 +15,8 @@ describe('utils/ethers/events.js', () => {
     assert.equal(event.args.value, '42');
   });
 
-  it('throws if it cannot find any event', async () => {
-    assert.throws(() => findEvent({ receipt: unparsedTxReceipt, eventName: 'InvalidEvent' }), {
-      message: 'Cannot find event InvalidEvent in receipt.',
-    });
+  it('returns undefined if it cannot find any event', async () => {
+    assert.equal(findEvent({ receipt: unparsedTxReceipt, eventName: 'InvalidEvent' }), undefined);
   });
 
   it('can retrieve events from a deployment transaction receipt if a contract interface is provided', async () => {
