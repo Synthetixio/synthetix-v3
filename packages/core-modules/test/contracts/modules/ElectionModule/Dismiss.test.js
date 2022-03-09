@@ -163,10 +163,104 @@ describe.only('ElectionModule (dismiss)', () => {
         assertBn.gt(votingPeriodStartDate, await ElectionModule.getVotingPeriodStartDate());
         assertBn.gt(epochEndDate, await ElectionModule.getEpochEndDate());
       });
+
+      it('allows candidates to nominate', async function () {
+        await ElectionModule.connect(user2).nominate();
+        await ElectionModule.connect(user3).nominate();
+        await ElectionModule.connect(user4).nominate();
+      });
     });
 
-    describe.skip('while not in the Idle period', function () {
-      // TODO
+    describe('while in the Nomination period', function () {
+      before('take snapshot', async function () {
+        snapshotId = await takeSnapshot(ethers.provider);
+      });
+
+      after('restore snapshot', async function () {
+        await restoreSnapshot(snapshotId, ethers.provider);
+      });
+
+      before('record schedule', async function () {
+        nominationPeriodStartDate = await ElectionModule.getNominationPeriodStartDate();
+        votingPeriodStartDate = await ElectionModule.getVotingPeriodStartDate();
+        epochEndDate = await ElectionModule.getEpochEndDate();
+      });
+
+      before('fast forward to the Nomination period', async function () {
+        await fastForwardTo(await ElectionModule.getNominationPeriodStartDate(), ethers.provider);
+      });
+
+      before('dismiss', async function () {
+        const tx = await ElectionModule.connect(owner).dismissMembers([user1.address, user2.address]);
+        await tx.wait();
+
+        members = [owner];
+      });
+
+      itHasExpectedMembers();
+
+      it('shows that the schedule has not moved', async function () {
+        assertBn.equal(nominationPeriodStartDate, await ElectionModule.getNominationPeriodStartDate());
+        assertBn.equal(votingPeriodStartDate, await ElectionModule.getVotingPeriodStartDate());
+        assertBn.equal(epochEndDate, await ElectionModule.getEpochEndDate());
+      });
+
+      it('allows candidates to nominate', async function () {
+        await ElectionModule.connect(user2).nominate();
+        await ElectionModule.connect(user3).nominate();
+        await ElectionModule.connect(user4).nominate();
+      });
+    });
+
+    describe('while in the Voting period', function () {
+      before('take snapshot', async function () {
+        snapshotId = await takeSnapshot(ethers.provider);
+      });
+
+      after('restore snapshot', async function () {
+        await restoreSnapshot(snapshotId, ethers.provider);
+      });
+
+      before('record schedule', async function () {
+        nominationPeriodStartDate = await ElectionModule.getNominationPeriodStartDate();
+        votingPeriodStartDate = await ElectionModule.getVotingPeriodStartDate();
+        epochEndDate = await ElectionModule.getEpochEndDate();
+      });
+
+      before('fast forward to the Nomination period and nominate', async function () {
+        await fastForwardTo(await ElectionModule.getNominationPeriodStartDate(), ethers.provider);
+
+        await ElectionModule.connect(user2).nominate();
+        await ElectionModule.connect(user3).nominate();
+        await ElectionModule.connect(user4).nominate();
+      });
+
+      before('fast forward to the Voting period', async function () {
+        await fastForwardTo(await ElectionModule.getVotingPeriodStartDate(), ethers.provider);
+      });
+
+      before('dismiss', async function () {
+        const tx = await ElectionModule.connect(owner).dismissMembers([user1.address, user2.address]);
+        await tx.wait();
+
+        members = [owner];
+      });
+
+      itHasExpectedMembers();
+
+      it('shows that the schedule has not moved', async function () {
+        assertBn.equal(nominationPeriodStartDate, await ElectionModule.getNominationPeriodStartDate());
+        assertBn.equal(votingPeriodStartDate, await ElectionModule.getVotingPeriodStartDate());
+        assertBn.equal(epochEndDate, await ElectionModule.getEpochEndDate());
+      });
+
+      it('allows users to vote', async function () {
+        const candidates = [user2.address, user3.address, user4.address];
+
+        await ElectionModule.connect(user2).elect(candidates);
+        await ElectionModule.connect(user3).elect(candidates);
+        await ElectionModule.connect(user4).elect(candidates);
+      });
     });
   });
 });
