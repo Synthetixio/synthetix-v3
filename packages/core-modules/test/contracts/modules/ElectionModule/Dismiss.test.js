@@ -166,6 +166,19 @@ describe('ElectionModule (dismiss)', () => {
 
       itHasExpectedMembers();
 
+      it('emitted a CouncilMembersDismissed event', async function () {
+        const event = findEvent({ receipt, eventName: 'CouncilMembersDismissed' });
+
+        assert.ok(event);
+        assert.deepEqual(event.args.members, [user1.address, user2.address]);
+      });
+
+      it('emitted an EmergencyElectionStarted event', async function () {
+        const event = findEvent({ receipt, eventName: 'EmergencyElectionStarted' });
+
+        assert.ok(event);
+      });
+
       it('shows that the current period is Nomination', async function () {
         assertBn.equal(await ElectionModule.getCurrentPeriod(), ElectionPeriod.Nomination);
       });
@@ -213,6 +226,19 @@ describe('ElectionModule (dismiss)', () => {
       });
 
       itHasExpectedMembers();
+
+      it('emitted a CouncilMembersDismissed event', async function () {
+        const event = findEvent({ receipt, eventName: 'CouncilMembersDismissed' });
+
+        assert.ok(event);
+        assert.deepEqual(event.args.members, [user1.address, user2.address]);
+      });
+
+      it('did not emitted an EmergencyElectionStarted event', async function () {
+        const event = findEvent({ receipt, eventName: 'EmergencyElectionStarted' });
+
+        assert.equal(event, undefined);
+      });
 
       it('shows that the schedule has not moved', async function () {
         assertBn.equal(
@@ -268,6 +294,19 @@ describe('ElectionModule (dismiss)', () => {
       });
 
       itHasExpectedMembers();
+
+      it('emitted a CouncilMembersDismissed event', async function () {
+        const event = findEvent({ receipt, eventName: 'CouncilMembersDismissed' });
+
+        assert.ok(event);
+        assert.deepEqual(event.args.members, [user1.address, user2.address]);
+      });
+
+      it('did not emitted an EmergencyElectionStarted event', async function () {
+        const event = findEvent({ receipt, eventName: 'EmergencyElectionStarted' });
+
+        assert.equal(event, undefined);
+      });
 
       it('shows that the schedule has not moved', async function () {
         assertBn.equal(
