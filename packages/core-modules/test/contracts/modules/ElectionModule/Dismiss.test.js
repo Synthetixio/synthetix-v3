@@ -15,7 +15,7 @@ const {
   restoreSnapshot,
 } = require('@synthetixio/core-js/utils/hardhat/rpc');
 
-describe.only('ElectionModule (dismiss)', () => {
+describe('ElectionModule (dismiss)', () => {
   const { proxyAddress } = bootstrap(initializer);
 
   let members;
@@ -27,6 +27,8 @@ describe.only('ElectionModule (dismiss)', () => {
   let snapshotId;
 
   let nominationPeriodStartDate, votingPeriodStartDate, epochEndDate;
+
+  let receipt;
 
   async function itHasExpectedMembers() {
     it('shows that the members are in the council', async function () {
@@ -116,12 +118,19 @@ describe.only('ElectionModule (dismiss)', () => {
 
       before('dismiss', async function () {
         const tx = await ElectionModule.connect(owner).dismissMembers([user2.address]);
-        await tx.wait();
+        receipt = await tx.wait();
 
         members = [owner, user1];
       });
 
       itHasExpectedMembers();
+
+      it('emitted a CouncilMembersDismissed event', async function () {
+        const event = findEvent({ receipt, eventName: 'CouncilMembersDismissed' });
+
+        assert.ok(event);
+        assert.deepEqual(event.args.members, [user2.address]);
+      });
 
       it('shows that the current period is Idle', async function () {
         assertBn.equal(await ElectionModule.getCurrentPeriod(), ElectionPeriod.Idle);
@@ -146,8 +155,11 @@ describe.only('ElectionModule (dismiss)', () => {
       });
 
       before('dismiss', async function () {
-        const tx = await ElectionModule.connect(owner).dismissMembers([user1.address, user2.address]);
-        await tx.wait();
+        const tx = await ElectionModule.connect(owner).dismissMembers([
+          user1.address,
+          user2.address,
+        ]);
+        receipt = await tx.wait();
 
         members = [owner];
       });
@@ -191,8 +203,11 @@ describe.only('ElectionModule (dismiss)', () => {
       });
 
       before('dismiss', async function () {
-        const tx = await ElectionModule.connect(owner).dismissMembers([user1.address, user2.address]);
-        await tx.wait();
+        const tx = await ElectionModule.connect(owner).dismissMembers([
+          user1.address,
+          user2.address,
+        ]);
+        receipt = await tx.wait();
 
         members = [owner];
       });
@@ -200,7 +215,10 @@ describe.only('ElectionModule (dismiss)', () => {
       itHasExpectedMembers();
 
       it('shows that the schedule has not moved', async function () {
-        assertBn.equal(nominationPeriodStartDate, await ElectionModule.getNominationPeriodStartDate());
+        assertBn.equal(
+          nominationPeriodStartDate,
+          await ElectionModule.getNominationPeriodStartDate()
+        );
         assertBn.equal(votingPeriodStartDate, await ElectionModule.getVotingPeriodStartDate());
         assertBn.equal(epochEndDate, await ElectionModule.getEpochEndDate());
       });
@@ -240,8 +258,11 @@ describe.only('ElectionModule (dismiss)', () => {
       });
 
       before('dismiss', async function () {
-        const tx = await ElectionModule.connect(owner).dismissMembers([user1.address, user2.address]);
-        await tx.wait();
+        const tx = await ElectionModule.connect(owner).dismissMembers([
+          user1.address,
+          user2.address,
+        ]);
+        receipt = await tx.wait();
 
         members = [owner];
       });
@@ -249,7 +270,10 @@ describe.only('ElectionModule (dismiss)', () => {
       itHasExpectedMembers();
 
       it('shows that the schedule has not moved', async function () {
-        assertBn.equal(nominationPeriodStartDate, await ElectionModule.getNominationPeriodStartDate());
+        assertBn.equal(
+          nominationPeriodStartDate,
+          await ElectionModule.getNominationPeriodStartDate()
+        );
         assertBn.equal(votingPeriodStartDate, await ElectionModule.getVotingPeriodStartDate());
         assertBn.equal(epochEndDate, await ElectionModule.getEpochEndDate());
       });

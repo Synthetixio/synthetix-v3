@@ -143,14 +143,15 @@ contract ElectionModule is
     function dismissMembers(address[] calldata membersToDismiss) external override onlyOwner {
         _removeCouncilMembers(membersToDismiss);
 
-        uint activeMembers = _electionStore().councilMembers.length();
-        uint minimumMembers = _electionSettings().minimumActiveMembers;
-        bool inElection = _getCurrentPeriod() != ElectionPeriod.Idle;
-        if (activeMembers < minimumMembers && !inElection) {
-            _jumpToNominationPeriod();
-        }
-
         emit CouncilMembersDismissed(membersToDismiss);
+
+        // Don't do anything else if not in an election and the council still has enough members
+        if (_getCurrentPeriod() != ElectionPeriod.Idle) return;
+        if (_electionStore().councilMembers.length() >= _electionSettings().minimumActiveMembers) return;
+
+        _jumpToNominationPeriod();
+
+        emit EmergencyElectionStarted();
     }
 
     /// @notice Allows anyone to self-nominate during the Nomination period
