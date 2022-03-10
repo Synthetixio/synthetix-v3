@@ -37,6 +37,7 @@ contract ElectionModule is
         settings.minEpochDuration = 7 days;
         settings.maxDateAdjustmentTolerance = 7 days;
         settings.nextEpochSeatCount = 3;
+        settings.minimumActiveMembers = 2;
         settings.defaultBallotEvaluationBatchSize = 500;
 
         store.currentEpochIndex = 1;
@@ -136,6 +137,29 @@ contract ElectionModule is
         _electionSettings().nextEpochSeatCount = newSeatCount;
 
         emit NextEpochSeatCountChanged(newSeatCount);
+    }
+
+    function setMinimumActiveMembers(uint8 newMinimumActiveMembers) external onlyOwner {
+        if (newMinimumActiveMembers == 0) revert InvalidMinimumActiveMembers();
+
+        _electionSettings().minimumActiveMembers = newMinimumActiveMembers;
+
+        emit MinimumActiveMembersChanged(newMinimumActiveMembers);
+    }
+
+    /// @notice Allows the owner to remove one or more council members, triggering an election if a threshold is met
+    function dismissMembers(address[] calldata membersToDismiss) external override onlyOwner {
+        _removeCouncilMembers(membersToDismiss);
+
+        emit CouncilMembersDismissed(membersToDismiss);
+
+        // Don't immediately jump to an election if the council still has enough members
+        if (_getCurrentPeriod() != ElectionPeriod.Idle) return;
+        if (_electionStore().councilMembers.length() >= _electionSettings().minimumActiveMembers) return;
+
+        _jumpToNominationPeriod();
+
+        emit EmergencyElectionStarted();
     }
 
     /// @notice Allows anyone to self-nominate during the Nomination period
@@ -251,6 +275,11 @@ contract ElectionModule is
     /// @notice Shows the number of council members that the next epoch will have
     function getNextEpochSeatCount() external view override returns (uint8) {
         return _electionSettings().nextEpochSeatCount;
+    }
+
+    /// @notice Returns the minimum active members that the council needs to avoid an emergency election
+    function getMinimumActiveMembers() external view returns (uint8) {
+        return _electionSettings().minimumActiveMembers;
     }
 
     /// @notice Returns the index of the current epoch. The first epoch's index is 1

@@ -38,6 +38,7 @@ contract ElectionBase is ElectionStorage, InitializableMixin {
     error ChangesCurrentPeriod();
     error AlreadyACouncilMember();
     error NotACouncilMember();
+    error InvalidMinimumActiveMembers();
 
     // ---------------------------------------
     // Events
@@ -49,6 +50,7 @@ contract ElectionBase is ElectionStorage, InitializableMixin {
     event CouncilTokenUpgraded(address newImplementation);
     event CouncilMemberAdded(address member);
     event CouncilMemberRemoved(address member);
+    event CouncilMembersDismissed(address[] members);
     event EpochScheduleUpdated(uint64 nominationPeriodStartDate, uint64 votingPeriodStartDate, uint64 epochEndDate);
     event MinimumEpochDurationsChanged(
         uint64 minNominationPeriodDuration,
@@ -58,12 +60,14 @@ contract ElectionBase is ElectionStorage, InitializableMixin {
     event MaxDateAdjustmentToleranceChanged(uint64 tolerance);
     event DefaultBallotEvaluationBatchSizeChanged(uint size);
     event NextEpochSeatCountChanged(uint seatCount);
+    event MinimumActiveMembersChanged(uint8 minimumActiveMembers);
     event CandidateNominated(address indexed candidate);
     event NominationWithdrawn(address indexed candidate);
     event VoteRecorded(address indexed voter, bytes32 indexed ballotId, uint votePower);
     event VoteWithdrawn(address indexed voter, bytes32 indexed ballotId, uint votePower);
     event ElectionEvaluated(uint epochIndex, uint totalBallots);
     event ElectionBatchEvaluated(uint epochIndex, uint evaluatedBallots, uint totalBallots);
+    event EmergencyElectionStarted();
 
     // ---------------------------------------
     // Helpers

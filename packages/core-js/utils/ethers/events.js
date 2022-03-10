@@ -15,7 +15,7 @@ function findEvent({ receipt, eventName, contract = undefined }) {
 
   events = events.filter((e) => e.event === eventName);
   if (!events || events.length === 0) {
-    throw new Error(`Cannot find event ${eventName} in receipt.`);
+    return undefined;
   }
 
   return events.length === 1 ? events[0] : events;
