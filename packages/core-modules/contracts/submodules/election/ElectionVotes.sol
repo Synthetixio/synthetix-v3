@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 import "./ElectionBase.sol";
 import "@synthetixio/core-contracts/contracts/errors/ChangeError.sol";
 
-/// @dev Defines core functionality for recording votes in ElectionModule.elect()
+/// @dev Defines core functionality for recording votes in ElectionModule.cast()
 abstract contract ElectionVotes is ElectionBase {
     using SetUtil for SetUtil.AddressSet;
 

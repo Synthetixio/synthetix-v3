@@ -186,7 +186,7 @@ contract ElectionModule is
 
     /// @notice Allows anyone with vote power to vote on nominated candidates during the Voting period
     /// @dev ElectionVotes needs to be extended to specify what determines voting power
-    function elect(address[] calldata candidates) external override onlyInPeriod(ElectionPeriod.Vote) {
+    function cast(address[] calldata candidates) external override onlyInPeriod(ElectionPeriod.Vote) {
         uint votePower = _getVotePower(msg.sender);
 
         if (votePower == 0) revert NoVotePower();

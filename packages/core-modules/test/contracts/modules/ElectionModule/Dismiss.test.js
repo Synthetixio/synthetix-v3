@@ -320,9 +320,9 @@ describe('ElectionModule (dismiss)', () => {
       it('allows users to vote', async function () {
         const candidates = [user2.address, user3.address, user4.address];
 
-        await ElectionModule.connect(user2).elect(candidates);
-        await ElectionModule.connect(user3).elect(candidates);
-        await ElectionModule.connect(user4).elect(candidates);
+        await ElectionModule.connect(user2).cast(candidates);
+        await ElectionModule.connect(user3).cast(candidates);
+        await ElectionModule.connect(user4).cast(candidates);
       });
     });
   });

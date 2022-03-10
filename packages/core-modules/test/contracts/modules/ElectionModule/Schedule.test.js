@@ -74,7 +74,7 @@ describe('ElectionModule (schedule)', () => {
   const itRejectsVotes = () => {
     describe('when trying to call the elect function', function () {
       it('reverts', async function () {
-        await assertRevert(ElectionModule.elect([user.address]), 'NotCallableInCurrentPeriod');
+        await assertRevert(ElectionModule.cast([user.address]), 'NotCallableInCurrentPeriod');
       });
     });
   };
@@ -82,7 +82,7 @@ describe('ElectionModule (schedule)', () => {
   const itAcceptsVotes = () => {
     describe('when trying to call the elect function', function () {
       it('does not revert', async function () {
-        await ElectionModule.elect([user.address]);
+        await ElectionModule.cast([user.address]);
       });
     });
   };
