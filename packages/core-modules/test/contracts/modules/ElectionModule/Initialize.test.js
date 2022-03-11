@@ -62,7 +62,7 @@ describe('ElectionModule (initialization)', () => {
         describe('with incorrect date order', function () {
           it('reverts', async function () {
             const now = await getTime(ethers.provider);
-            const date1 = now + daysToSeconds(2);
+            const date1 = now + daysToSeconds(7);
             const date2 = date1 + daysToSeconds(2);
             const date3 = date2 + daysToSeconds(2);
 
