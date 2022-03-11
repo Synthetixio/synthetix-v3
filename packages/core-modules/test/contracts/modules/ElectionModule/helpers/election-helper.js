@@ -15,7 +15,10 @@ const assertDatesAreClose = (dateA, dateB) => {
   return Math.abs(numberDateB - numberDateA) <= 1;
 };
 
-async function runElection(ElectionModule, members) {
+async function runElection(ElectionModule, owner, members) {
+  // Configure
+  await ElectionModule.connect(owner).setNextEpochSeatCount(members.length);
+
   // Nominate
   await fastForwardTo(await ElectionModule.getNominationPeriodStartDate(), hre.ethers.provider);
   for (let member of members) {

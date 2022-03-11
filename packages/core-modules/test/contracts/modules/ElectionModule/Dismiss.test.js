@@ -68,6 +68,7 @@ describe('ElectionModule (dismiss)', () => {
       await ElectionModule.initializeElectionModule(
         'Spartan Council Token',
         'SCT',
+        [owner.address],
         nominationPeriodStartDate,
         votingPeriodStartDate,
         epochEndDate
@@ -83,7 +84,11 @@ describe('ElectionModule (dismiss)', () => {
     describe('after some election', function () {
       before('run election', async function () {
         members = [owner, user1, user2];
-        await runElection(ElectionModule, members);
+        await runElection(ElectionModule, owner, members);
+      });
+
+      before('configure minimum seat count', async function () {
+        await ElectionModule.connect(owner).setMinimumActiveMembers(2);
       });
 
       itHasExpectedMembers();

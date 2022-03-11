@@ -58,6 +58,7 @@ describe('ElectionModule (resolve)', () => {
       await ElectionModule.initializeElectionModule(
         'Spartan Council Token',
         'SCT',
+        [owner.address],
         nominationPeriodStartDate,
         votingPeriodStartDate,
         epochEndDate
@@ -88,7 +89,7 @@ describe('ElectionModule (resolve)', () => {
           });
 
           before('simulate election', async function () {
-            receipt = await runElection(ElectionModule, members);
+            receipt = await runElection(ElectionModule, owner, members);
           });
 
           it('shows that the current epoch is 2', async function () {
@@ -131,7 +132,7 @@ describe('ElectionModule (resolve)', () => {
             });
 
             before('simulate election', async function () {
-              receipt = await runElection(ElectionModule, members);
+              receipt = await runElection(ElectionModule, owner, members);
             });
 
             it('shows that the current epoch is 3', async function () {
@@ -178,7 +179,7 @@ describe('ElectionModule (resolve)', () => {
                 });
 
                 before('simulate election', async function () {
-                  receipt = await runElection(ElectionModule, members);
+                  receipt = await runElection(ElectionModule, owner, members);
                 });
 
                 it('shows that the current epoch is 4', async function () {

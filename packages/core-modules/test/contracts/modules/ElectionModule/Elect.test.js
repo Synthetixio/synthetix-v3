@@ -42,6 +42,7 @@ describe('ElectionModule (vote)', () => {
       await ElectionModule.initializeElectionModule(
         'Spartan Council Token',
         'SCT',
+        [candidate1.address],
         nominationPeriodStartDate,
         votingPeriodStartDate,
         epochEndDate
