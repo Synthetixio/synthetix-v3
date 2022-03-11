@@ -9,7 +9,7 @@ const initializer = require('../../../helpers/initializer');
 const { ElectionPeriod, assertDatesAreClose } = require('./helpers/election-helper');
 const { findEvent } = require('@synthetixio/core-js/utils/ethers/events');
 
-describe('ElectionModule (initialization)', () => {
+describe.only('ElectionModule (initialization)', () => {
   const { proxyAddress } = bootstrap(initializer);
 
   let ElectionModule, CouncilToken;
@@ -84,6 +84,10 @@ describe('ElectionModule (initialization)', () => {
             await assertRevert(
               ElectionModule.initializeElectionModule('', '', [], date3, date2, date1),
               'InvalidEpochConfiguration'
+            );
+            await assertRevert(
+              ElectionModule.initializeElectionModule('', '', [], date1, date2, date3),
+              'EmptyArray'
             );
           });
         });
