@@ -9,6 +9,7 @@ interface IElectionModule {
     function initializeElectionModule(
         string memory councilTokenName,
         string memory councilTokenSymbol,
+        address[] memory firstCouncil,
         uint64 nominationPeriodStartDate,
         uint64 votingPeriodStartDate,
         uint64 epochEndDate
