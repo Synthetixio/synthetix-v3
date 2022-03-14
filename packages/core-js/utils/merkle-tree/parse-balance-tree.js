@@ -1,6 +1,6 @@
 // based on https://github.com/Uniswap/merkle-distributor/tree/master/src
-import { BigNumber, utils } from 'ethers';
-import BalanceTree from './balance-tree';
+const { BigNumber, utils } = require('ethers');
+const BalanceTree = require('./balance-tree');
 
 const { isAddress, getAddress } = utils;
 
@@ -26,15 +26,15 @@ const { isAddress, getAddress } = utils;
 // type OldFormat = { [account: string]: number | string }
 // type NewFormat = { address: string; earnings: string; reasons: string }
 
-export function parseBalanceMap(balances) {
+function parseBalanceMap(balances) {
   // if balances are in an old format, process them
   const balancesInNewFormat = Array.isArray(balances)
     ? balances
     : Object.keys(balances).map((account) => ({
-        address: account,
-        earnings: `${balances[account].toString(16)}`,
-        reasons: '',
-      }));
+      address: account,
+      earnings: `${balances[account].toString(16)}`,
+      reasons: '',
+    }));
 
   const dataByAddress = balancesInNewFormat.reduce(
     (memo, { address: account, earnings, reasons }) => {
@@ -72,7 +72,7 @@ export function parseBalanceMap(balances) {
       // index,
       amount: amount.toHexString(),
       proof: tree.getProof(index, address, amount),
-      // ...(flags ? { flags } : {}),
+      ...(flags ? { flags } : {}),
     };
     return memo;
   }, {});
@@ -82,3 +82,7 @@ export function parseBalanceMap(balances) {
     claims,
   };
 }
+
+module.exports = {
+  parseBalanceMap,
+};

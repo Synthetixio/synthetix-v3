@@ -1,6 +1,6 @@
 // based on https://github.com/Uniswap/merkle-distributor/tree/master/src
-import { utils } from 'ethers';
-import MerkleTree from './merkle-tree';
+const { utils } = require('ethers');
+const MerkleTree = require('./merkle-tree');
 
 class BalanceTree {
   constructor(balances) {
@@ -11,6 +11,7 @@ class BalanceTree {
     );
   }
 
+  // eslint-disable-next-line max-params
   static verifyProof(account, amount, proof, root) {
     let pair = BalanceTree.toNode(account, amount);
     for (const item of proof) {
