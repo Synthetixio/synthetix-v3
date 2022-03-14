@@ -51,7 +51,7 @@ describe('ElectionModule (initialization)', () => {
     describe('with an account that does not own the instance', function () {
       it('reverts', async function () {
         await assertRevert(
-          ElectionModule.connect(user).initializeElectionModule('', '', [], 0, 0, 0),
+          ElectionModule.connect(user).initializeElectionModule('', '', [], 0, 0, 0, 0),
           'Unauthorized'
         );
       });
@@ -59,6 +59,35 @@ describe('ElectionModule (initialization)', () => {
 
     describe('with the account that owns the instance', function () {
       describe('with invalid parameters', function () {
+        describe('with invalid minimumActiveMembers', function () {
+          it('reverts', async function () {
+            await assertRevert(
+              ElectionModule.connect(owner).initializeElectionModule(
+                '',
+                '',
+                [owner.address],
+                2,
+                0,
+                0,
+                0
+              ),
+              'InvalidMinimumActiveMembers'
+            );
+            await assertRevert(
+              ElectionModule.connect(owner).initializeElectionModule(
+                '',
+                '',
+                [owner.address],
+                0,
+                0,
+                0,
+                0
+              ),
+              'InvalidMinimumActiveMembers'
+            );
+          });
+        });
+
         describe('with incorrect date order', function () {
           it('reverts', async function () {
             const now = await getTime(ethers.provider);
@@ -70,7 +99,8 @@ describe('ElectionModule (initialization)', () => {
               ElectionModule.connect(owner).initializeElectionModule(
                 '',
                 '',
-                [],
+                [owner.address],
+                1,
                 date2,
                 date1,
                 date3
@@ -78,16 +108,28 @@ describe('ElectionModule (initialization)', () => {
               'InvalidEpochConfiguration'
             );
             await assertRevert(
-              ElectionModule.initializeElectionModule('', '', [], date1, date3, date2),
+              ElectionModule.initializeElectionModule(
+                '',
+                '',
+                [owner.address],
+                1,
+                date1,
+                date3,
+                date2
+              ),
               'InvalidEpochConfiguration'
             );
             await assertRevert(
-              ElectionModule.initializeElectionModule('', '', [], date3, date2, date1),
+              ElectionModule.initializeElectionModule(
+                '',
+                '',
+                [owner.address],
+                1,
+                date3,
+                date2,
+                date1
+              ),
               'InvalidEpochConfiguration'
-            );
-            await assertRevert(
-              ElectionModule.initializeElectionModule('', '', [], date1, date2, date3),
-              'EmptyArray'
             );
           });
         });
@@ -103,7 +145,8 @@ describe('ElectionModule (initialization)', () => {
               ElectionModule.connect(owner).initializeElectionModule(
                 '',
                 '',
-                [],
+                [owner.address],
+                1,
                 nominationPeriodStartDate,
                 votingPeriodStartDate,
                 epochEndDate
@@ -118,7 +161,8 @@ describe('ElectionModule (initialization)', () => {
               ElectionModule.connect(owner).initializeElectionModule(
                 '',
                 '',
-                [],
+                [owner.address],
+                1,
                 nominationPeriodStartDate,
                 votingPeriodStartDate,
                 epochEndDate
@@ -133,7 +177,8 @@ describe('ElectionModule (initialization)', () => {
               ElectionModule.connect(owner).initializeElectionModule(
                 '',
                 '',
-                [],
+                [owner.address],
+                1,
                 now + daysToSeconds(1),
                 now + daysToSeconds(2),
                 now + daysToSeconds(7)
@@ -155,6 +200,7 @@ describe('ElectionModule (initialization)', () => {
             'Spartan Council Token',
             'SCT',
             [owner.address, user.address],
+            1,
             nominationPeriodStartDate,
             votingPeriodStartDate,
             epochEndDate
@@ -209,7 +255,7 @@ describe('ElectionModule (initialization)', () => {
 
         it('reflects the expected default settings', async function () {
           assertBn.equal(await ElectionModule.getNextEpochSeatCount(), 2);
-          assertBn.equal(await ElectionModule.getMinimumActiveMembers(), 2);
+          assertBn.equal(await ElectionModule.getMinimumActiveMembers(), 1);
         });
 
         it('shows that the first epoch has appropriate dates', async function () {
@@ -235,7 +281,7 @@ describe('ElectionModule (initialization)', () => {
         describe('when attemting to re-initialize the module', function () {
           it('reverts', async function () {
             await assertRevert(
-              ElectionModule.initializeElectionModule('', '', [], 0, 0, 0),
+              ElectionModule.initializeElectionModule('', '', [], 0, 0, 0, 0),
               'AlreadyInitialized'
             );
           });
