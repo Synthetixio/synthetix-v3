@@ -47,6 +47,7 @@ describe('ElectionModule (token)', () => {
         TOKEN_NAME,
         TOKEN_SYMBOL,
         [owner.address],
+        1,
         nominationPeriodStartDate,
         votingPeriodStartDate,
         epochEndDate

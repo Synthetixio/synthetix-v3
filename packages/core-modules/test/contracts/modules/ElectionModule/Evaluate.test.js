@@ -46,6 +46,7 @@ describe('ElectionModule (evaluate)', () => {
         'Spartan Council Token',
         'SCT',
         [candidate1.address],
+        1,
         nominationPeriodStartDate,
         votingPeriodStartDate,
         epochEndDate
