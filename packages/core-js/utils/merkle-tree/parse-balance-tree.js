@@ -32,31 +32,21 @@ function parseBalanceMap(balances) {
     ? balances
     : Object.keys(balances).map((account) => ({
       address: account,
-      earnings: `${balances[account].toString(16)}`,
-      reasons: '',
+      balance: `${balances[account].toString(16)}`,
     }));
 
-  const dataByAddress = balancesInNewFormat.reduce(
-    (memo, { address: account, earnings, reasons }) => {
-      if (!isAddress(account)) {
-        throw new Error(`Found invalid address: ${account}`);
-      }
-      const parsed = getAddress(account);
-      if (memo[parsed]) throw new Error(`Duplicate address: ${parsed}`);
-      const parsedNum = BigNumber.from(earnings);
-      if (parsedNum.lte(0)) throw new Error(`Invalid amount for account: ${account}`);
+  const dataByAddress = balancesInNewFormat.reduce((memo, { address: account, balance }) => {
+    if (!isAddress(account)) {
+      throw new Error(`Found invalid address: ${account}`);
+    }
+    const parsed = getAddress(account);
+    if (memo[parsed]) throw new Error(`Duplicate address: ${parsed}`);
+    const parsedNum = BigNumber.from(balance);
+    if (parsedNum.lte(0)) throw new Error(`Invalid amount for account: ${account}`);
 
-      const flags = {
-        // isSOCKS: reasons.includes('socks'),
-        // isLP: reasons.includes('lp'),
-        // isUser: reasons.includes('user'),
-      };
-
-      memo[parsed] = { amount: parsedNum, ...(reasons === '' ? {} : { flags }) };
-      return memo;
-    },
-    {}
-  );
+    memo[parsed] = { amount: parsedNum };
+    return memo;
+  }, {});
 
   const sortedAddresses = Object.keys(dataByAddress).sort();
 
@@ -66,13 +56,11 @@ function parseBalanceMap(balances) {
   );
 
   // generate claims
-  const claims = sortedAddresses.reduce((memo, address, index) => {
-    const { amount, flags } = dataByAddress[address];
+  const claims = sortedAddresses.reduce((memo, address) => {
+    const { amount } = dataByAddress[address];
     memo[address] = {
-      // index,
       amount: amount.toHexString(),
-      proof: tree.getProof(index, address, amount),
-      ...(flags ? { flags } : {}),
+      proof: tree.getProof(address, amount),
     };
     return memo;
   }, {});
