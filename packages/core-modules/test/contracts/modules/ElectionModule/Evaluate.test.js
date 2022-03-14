@@ -45,10 +45,16 @@ describe('ElectionModule (evaluate)', () => {
       await ElectionModule.initializeElectionModule(
         'Spartan Council Token',
         'SCT',
+        [candidate1.address],
+        1,
         nominationPeriodStartDate,
         votingPeriodStartDate,
         epochEndDate
       );
+    });
+
+    before('configure next epoch seat count', async function () {
+      await ElectionModule.connect(candidate1).setNextEpochSeatCount(3);
     });
 
     describe('when entering the nomiantion period', function () {

@@ -2,6 +2,7 @@
 pragma solidity ^0.8.0;
 
 import "@synthetixio/core-contracts/contracts/proxy/UUPSProxy.sol";
+import "@synthetixio/core-contracts/contracts/errors/ArrayError.sol";
 import "../../tokens/CouncilToken.sol";
 import "./ElectionBase.sol";
 
@@ -26,14 +27,6 @@ contract ElectionCredentials is ElectionBase {
         emit CouncilTokenCreated(address(proxy), address(implementation));
     }
 
-    function _addCouncilMembers(SetUtil.AddressSet storage newMembers) internal {
-        uint numNewMembers = newMembers.length();
-
-        for (uint newMemberPosition = 1; newMemberPosition <= numNewMembers; newMemberPosition++) {
-            _addCouncilMember(newMembers.valueAt(newMemberPosition));
-        }
-    }
-
     function _removeAllCouncilMembers() internal {
         SetUtil.AddressSet storage members = _electionStore().councilMembers;
 
@@ -46,8 +39,18 @@ contract ElectionCredentials is ElectionBase {
         }
     }
 
-    function _removeCouncilMembers(address[] calldata membersToRemove) internal {
+    function _addCouncilMembers(address[] memory membersToAdd) internal {
+        uint numMembers = membersToAdd.length;
+        if (numMembers == 0) revert ArrayError.EmptyArray();
+
+        for (uint memberIndex = 0; memberIndex < numMembers; memberIndex++) {
+            _addCouncilMember(membersToAdd[memberIndex]);
+        }
+    }
+
+    function _removeCouncilMembers(address[] memory membersToRemove) internal {
         uint numMembers = membersToRemove.length;
+        if (numMembers == 0) revert ArrayError.EmptyArray();
 
         for (uint memberIndex = 0; memberIndex < numMembers; memberIndex++) {
             _removeCouncilMember(membersToRemove[memberIndex]);

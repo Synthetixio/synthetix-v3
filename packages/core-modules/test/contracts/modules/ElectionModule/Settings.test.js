@@ -18,14 +18,14 @@ describe('ElectionModule (settings)', () => {
 
   let ElectionModule;
 
-  let user;
+  let owner, user;
 
   let receipt;
 
   let snapshotId;
 
   before('identify signers', async () => {
-    [, user] = await ethers.getSigners();
+    [owner, user] = await ethers.getSigners();
   });
 
   before('identify modules', async () => {
@@ -42,6 +42,8 @@ describe('ElectionModule (settings)', () => {
       await ElectionModule.initializeElectionModule(
         'Spartan Council Token',
         'SCT',
+        [owner.address],
+        1,
         nominationPeriodStartDate,
         votingPeriodStartDate,
         epochEndDate

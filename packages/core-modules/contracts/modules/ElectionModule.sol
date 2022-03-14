@@ -25,19 +25,26 @@ contract ElectionModule is
     function initializeElectionModule(
         string memory councilTokenName,
         string memory councilTokenSymbol,
+        address[] memory firstCouncil,
+        uint8 minimumActiveMembers,
         uint64 nominationPeriodStartDate,
         uint64 votingPeriodStartDate,
         uint64 epochEndDate
     ) external override onlyOwner onlyIfNotInitialized {
         ElectionStore storage store = _electionStore();
 
+        uint8 seatCount = uint8(firstCouncil.length);
+        if (minimumActiveMembers == 0 || minimumActiveMembers > seatCount) {
+            revert InvalidMinimumActiveMembers();
+        }
+
         ElectionSettings storage settings = _electionSettings();
         settings.minNominationPeriodDuration = 2 days;
         settings.minVotingPeriodDuration = 2 days;
         settings.minEpochDuration = 7 days;
         settings.maxDateAdjustmentTolerance = 7 days;
-        settings.nextEpochSeatCount = 3;
-        settings.minimumActiveMembers = 2;
+        settings.nextEpochSeatCount = uint8(firstCouncil.length);
+        settings.minimumActiveMembers = minimumActiveMembers;
         settings.defaultBallotEvaluationBatchSize = 500;
 
         store.currentEpochIndex = 1;
@@ -47,7 +54,7 @@ contract ElectionModule is
         _configureEpochSchedule(firstEpoch, epochStartDate, nominationPeriodStartDate, votingPeriodStartDate, epochEndDate);
 
         _createCouncilToken(councilTokenName, councilTokenSymbol);
-        _addCouncilMember(msg.sender);
+        _addCouncilMembers(firstCouncil);
 
         store.initialized = true;
 
@@ -232,7 +239,7 @@ contract ElectionModule is
         if (!isElectionEvaluated()) revert ElectionNotEvaluated();
 
         _removeAllCouncilMembers();
-        _addCouncilMembers(_getCurrentElection().winners);
+        _addCouncilMembers(_getCurrentElection().winners.values());
 
         _getCurrentElection().resolved = true;
 

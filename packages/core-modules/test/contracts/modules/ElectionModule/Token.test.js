@@ -46,6 +46,8 @@ describe('ElectionModule (token)', () => {
       const tx = await ElectionModule.initializeElectionModule(
         TOKEN_NAME,
         TOKEN_SYMBOL,
+        [owner.address],
+        1,
         nominationPeriodStartDate,
         votingPeriodStartDate,
         epochEndDate
