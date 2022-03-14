@@ -28,7 +28,7 @@ async function runElection(ElectionModule, owner, members) {
   // Vote
   await fastForwardTo(await ElectionModule.getVotingPeriodStartDate(), hre.ethers.provider);
   for (let member of members) {
-    await ElectionModule.connect(member).elect([member.address]);
+    await ElectionModule.connect(member).cast([member.address]);
   }
 
   // Evaluate

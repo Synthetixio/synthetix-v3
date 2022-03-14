@@ -95,16 +95,16 @@ describe('ElectionModule (evaluate)', () => {
         });
 
         before('vote', async function () {
-          await ElectionModule.connect(voter1).elect(ballot1.candidates);
-          await ElectionModule.connect(voter2).elect(ballot1.candidates);
-          await ElectionModule.connect(voter3).elect(ballot1.candidates);
-          await ElectionModule.connect(voter4).elect(ballot1.candidates);
-          await ElectionModule.connect(voter5).elect(ballot2.candidates);
-          await ElectionModule.connect(voter6).elect(ballot3.candidates);
-          await ElectionModule.connect(voter7).elect(ballot3.candidates);
-          await ElectionModule.connect(voter8).elect(ballot3.candidates);
-          await ElectionModule.connect(voter9).elect(ballot3.candidates);
-          await ElectionModule.connect(voter10).elect(ballot3.candidates);
+          await ElectionModule.connect(voter1).cast(ballot1.candidates);
+          await ElectionModule.connect(voter2).cast(ballot1.candidates);
+          await ElectionModule.connect(voter3).cast(ballot1.candidates);
+          await ElectionModule.connect(voter4).cast(ballot1.candidates);
+          await ElectionModule.connect(voter5).cast(ballot2.candidates);
+          await ElectionModule.connect(voter6).cast(ballot3.candidates);
+          await ElectionModule.connect(voter7).cast(ballot3.candidates);
+          await ElectionModule.connect(voter8).cast(ballot3.candidates);
+          await ElectionModule.connect(voter9).cast(ballot3.candidates);
+          await ElectionModule.connect(voter10).cast(ballot3.candidates);
         });
 
         it('shows that ballots were registered', async function () {

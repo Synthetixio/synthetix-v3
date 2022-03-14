@@ -79,14 +79,14 @@ describe('ElectionModule (vote)', () => {
           describe('when issuing invalid votes', function () {
             describe('when voting with zero candidates', function () {
               it('reverts', async function () {
-                await assertRevert(ElectionModule.elect([]), 'NoCandidates');
+                await assertRevert(ElectionModule.cast([]), 'NoCandidates');
               });
             });
 
             describe('when voting candidates that are not nominated', function () {
               it('reverts', async function () {
                 await assertRevert(
-                  ElectionModule.elect([candidate1.address, candidate2.address, voter1.address]),
+                  ElectionModule.cast([candidate1.address, candidate2.address, voter1.address]),
                   'NotNominated'
                 );
               });
@@ -95,11 +95,7 @@ describe('ElectionModule (vote)', () => {
             describe('when voting duplicate candidates', function () {
               it('reverts', async function () {
                 await assertRevert(
-                  ElectionModule.elect([
-                    candidate1.address,
-                    candidate2.address,
-                    candidate1.address,
-                  ]),
+                  ElectionModule.cast([candidate1.address, candidate2.address, candidate1.address]),
                   'DuplicateCandidates'
                 );
               });
@@ -132,14 +128,14 @@ describe('ElectionModule (vote)', () => {
             });
 
             before('vote', async function () {
-              await ElectionModule.connect(voter1).elect(ballot1.candidates);
-              await ElectionModule.connect(voter2).elect(ballot2.candidates);
-              await ElectionModule.connect(voter3).elect(ballot1.candidates);
-              await ElectionModule.connect(voter4).elect(ballot1.candidates);
+              await ElectionModule.connect(voter1).cast(ballot1.candidates);
+              await ElectionModule.connect(voter2).cast(ballot2.candidates);
+              await ElectionModule.connect(voter3).cast(ballot1.candidates);
+              await ElectionModule.connect(voter4).cast(ballot1.candidates);
             });
 
             before('vote and record receipt', async function () {
-              const tx = await ElectionModule.connect(voter5).elect(ballot2.candidates);
+              const tx = await ElectionModule.connect(voter5).cast(ballot2.candidates);
               receipt = await tx.wait();
             });
 
@@ -183,7 +179,7 @@ describe('ElectionModule (vote)', () => {
 
             describe('when users change their vote', function () {
               before('change vote', async function () {
-                const tx = await ElectionModule.connect(voter5).elect(ballot3.candidates);
+                const tx = await ElectionModule.connect(voter5).cast(ballot3.candidates);
                 receipt = await tx.wait();
               });
 
