@@ -1,5 +1,4 @@
-// based on https://github.com/Uniswap/merkle-distributor/tree/master/src
-import { bufferToHex, keccak256 } from 'ethereumjs-util';
+const { bufferToHex, keccak256 } = require('ethereumjs-util');
 
 class MerkleTree {
   // private readonly elements: Buffer[]
@@ -39,6 +38,7 @@ class MerkleTree {
   }
 
   getNextLayer(elements) {
+    // eslint-disable-next-line max-params
     return elements.reduce((layer, el, idx, arr) => {
       if (idx % 2 === 0) {
         // Hash the current element with its pair element
