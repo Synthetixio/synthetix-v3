@@ -62,11 +62,27 @@ describe('ElectionModule (initialization)', () => {
         describe('with invalid minimumActiveMembers', function () {
           it('reverts', async function () {
             await assertRevert(
-              ElectionModule.connect(owner).initializeElectionModule('', '', [owner.address], 2, 0, 0, 0),
+              ElectionModule.connect(owner).initializeElectionModule(
+                '',
+                '',
+                [owner.address],
+                2,
+                0,
+                0,
+                0
+              ),
               'InvalidMinimumActiveMembers'
             );
             await assertRevert(
-              ElectionModule.connect(owner).initializeElectionModule('', '', [owner.address], 0, 0, 0, 0),
+              ElectionModule.connect(owner).initializeElectionModule(
+                '',
+                '',
+                [owner.address],
+                0,
+                0,
+                0,
+                0
+              ),
               'InvalidMinimumActiveMembers'
             );
           });
@@ -92,11 +108,27 @@ describe('ElectionModule (initialization)', () => {
               'InvalidEpochConfiguration'
             );
             await assertRevert(
-              ElectionModule.initializeElectionModule('', '', [owner.address], 1, date1, date3, date2),
+              ElectionModule.initializeElectionModule(
+                '',
+                '',
+                [owner.address],
+                1,
+                date1,
+                date3,
+                date2
+              ),
               'InvalidEpochConfiguration'
             );
             await assertRevert(
-              ElectionModule.initializeElectionModule('', '', [owner.address], 1, date3, date2, date1),
+              ElectionModule.initializeElectionModule(
+                '',
+                '',
+                [owner.address],
+                1,
+                date3,
+                date2,
+                date1
+              ),
               'InvalidEpochConfiguration'
             );
           });
