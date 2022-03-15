@@ -20,8 +20,8 @@ module.exports = {
     local: {
       url: 'http://localhost:8545',
     },
-    kovan: {
-      url: `https://kovan.infura.io/v3/${process.env.INFURA_KEY}`,
+    ['optimistic-kovan']: {
+      url: `https://kovan.optimism.io`,
       accounts: process.env.DEPLOYER_PRIVATE_KEY ? [process.env.DEPLOYER_PRIVATE_KEY] : [],
     },
   },
