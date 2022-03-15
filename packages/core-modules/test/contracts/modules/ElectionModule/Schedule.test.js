@@ -332,7 +332,7 @@ describe('ElectionModule (schedule)', () => {
   };
 
   // ----------------------------------
-  // Idle period
+  // Administration period
   // ----------------------------------
 
   describe('when the module is initialized', function () {
@@ -353,8 +353,8 @@ describe('ElectionModule (schedule)', () => {
       );
     });
 
-    it('shows that initial period is Idle', async function () {
-      assertBn.equal(await ElectionModule.getCurrentPeriod(), ElectionPeriod.Idle);
+    it('shows that initial period is Administration', async function () {
+      assertBn.equal(await ElectionModule.getCurrentPeriod(), ElectionPeriod.Administration);
     });
 
     describe('when an account that does not own the instance attempts to adjust the epoch', function () {
@@ -375,7 +375,7 @@ describe('ElectionModule (schedule)', () => {
       });
     });
 
-    describe('while in the Idle period', function () {
+    describe('while in the Administration period', function () {
       itRejectsNominations();
       itRejectsVotes();
       itRejectsEvaluations();

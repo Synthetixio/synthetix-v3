@@ -2,7 +2,7 @@ const assert = require('assert/strict');
 const { fastForwardTo } = require('@synthetixio/core-js/utils/hardhat/rpc');
 
 const ElectionPeriod = {
-  Idle: 0,
+  Administration: 0,
   Nomination: 1,
   Vote: 2,
   Evaluation: 3,
