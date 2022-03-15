@@ -1,10 +1,6 @@
 const { bufferToHex, keccak256 } = require('ethereumjs-util');
 
 class MerkleTree {
-  // private readonly elements: Buffer[]
-  // private readonly bufferElementPositionIndex: { [hexElement: string]: number }
-  // private readonly layers: Buffer[][]
-
   constructor(elements) {
     this.elements = [...elements];
     // Sort elements
