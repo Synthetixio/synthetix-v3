@@ -25,7 +25,10 @@ describe('ElectionModule (initialization)', () => {
   });
 
   before('identify modules', async () => {
-    ElectionModule = await ethers.getContractAt('ElectionModule', proxyAddress());
+    ElectionModule = await ethers.getContractAt(
+      'contracts/modules/ElectionModule.sol:ElectionModule',
+      proxyAddress()
+    );
   });
 
   describe('before initializing the module', function () {

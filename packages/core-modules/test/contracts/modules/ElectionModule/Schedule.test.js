@@ -32,7 +32,12 @@ describe('ElectionModule (schedule)', () => {
   });
 
   before('identify modules', async () => {
-    ElectionModule = (await ethers.getContractAt('ElectionModule', proxyAddress())).connect(owner);
+    ElectionModule = (
+      await ethers.getContractAt(
+        'contracts/modules/ElectionModule.sol:ElectionModule',
+        proxyAddress()
+      )
+    ).connect(owner);
   });
 
   // ----------------------------------
