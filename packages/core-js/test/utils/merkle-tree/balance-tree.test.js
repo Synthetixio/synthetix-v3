@@ -1,6 +1,5 @@
 const ethers = require('ethers');
 const { equal } = require('assert/strict');
-const { ok } = require('assert/strict');
 const BalanceTree = require('../../../utils/merkle-tree/balance-tree');
 
 function hexStringToBuffer(data) {
