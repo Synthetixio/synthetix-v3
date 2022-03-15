@@ -37,7 +37,7 @@ contract ElectionSchedule is ElectionBase {
             return ElectionPeriod.Nomination;
         }
 
-        return ElectionPeriod.Idle;
+        return ElectionPeriod.Administration;
     }
 
     /// @dev Sets dates within an epoch, with validations
@@ -115,7 +115,7 @@ contract ElectionSchedule is ElectionBase {
             newEpochEndDate
         );
 
-        if (_getCurrentPeriod() != ElectionPeriod.Idle) {
+        if (_getCurrentPeriod() != ElectionPeriod.Administration) {
             revert ChangesCurrentPeriod();
         }
     }

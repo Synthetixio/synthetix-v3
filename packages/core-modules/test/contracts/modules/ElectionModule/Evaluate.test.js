@@ -32,7 +32,10 @@ describe('ElectionModule (evaluate)', () => {
   });
 
   before('identify modules', async () => {
-    ElectionModule = await ethers.getContractAt('ElectionModule', proxyAddress());
+    ElectionModule = await ethers.getContractAt(
+      'contracts/modules/ElectionModule.sol:ElectionModule',
+      proxyAddress()
+    );
   });
 
   describe('when the module is initialized', function () {
@@ -216,8 +219,11 @@ describe('ElectionModule (evaluate)', () => {
                       assertBn.equal(epochIndexAfter, epochIndexBefore.add(1));
                     });
 
-                    it('shows that the current period is Idle', async function () {
-                      assertBn.equal(await ElectionModule.getCurrentPeriod(), ElectionPeriod.Idle);
+                    it('shows that the current period is Administration', async function () {
+                      assertBn.equal(
+                        await ElectionModule.getCurrentPeriod(),
+                        ElectionPeriod.Administration
+                      );
                     });
                   });
                 });

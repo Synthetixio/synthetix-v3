@@ -12,7 +12,7 @@ contract ElectionBase is ElectionStorage, InitializableMixin {
 
     enum ElectionPeriod {
         // Council elected and active
-        Idle,
+        Administration,
         // Accepting nominations for next election
         Nomination,
         // Accepting votes for ongoing election
