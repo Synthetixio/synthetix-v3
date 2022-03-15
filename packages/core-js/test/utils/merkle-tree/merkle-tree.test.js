@@ -1,5 +1,5 @@
-const { deepEqual, ok } = require('assert/strict');
-const { bufferToHex, keccak256 } = require('ethereumjs-util');
+const { deepEqual } = require('assert/strict');
+const { keccak256 } = require('ethereumjs-util');
 const MerkleTree = require('../../../utils/merkle-tree/merkle-tree');
 
 describe('utils/merkle-tree/merkle-tree.js', function () {
