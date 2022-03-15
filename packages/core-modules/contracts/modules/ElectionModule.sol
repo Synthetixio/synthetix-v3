@@ -74,7 +74,7 @@ contract ElectionModule is
         emit CouncilTokenUpgraded(newCouncilTokenImplementation);
     }
 
-    /// @notice Adjust the current epoch schedule requiring that the current period remains as Administration, and that changes are small (see setMaxDateAdjustmentTolerance)
+    /// @notice Adjust the current epoch schedule requiring that the current period remains Administration, and that changes are small (see setMaxDateAdjustmentTolerance)
     function tweakEpochSchedule(
         uint64 newNominationPeriodStartDate,
         uint64 newVotingPeriodStartDate,
