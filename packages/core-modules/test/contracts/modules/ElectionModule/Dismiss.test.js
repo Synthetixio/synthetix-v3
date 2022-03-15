@@ -138,14 +138,14 @@ describe('ElectionModule (dismiss)', () => {
         assert.deepEqual(event.args.members, [user2.address]);
       });
 
-      it('shows that the current period is Idle', async function () {
-        assertBn.equal(await ElectionModule.getCurrentPeriod(), ElectionPeriod.Idle);
+      it('shows that the current period is Administration', async function () {
+        assertBn.equal(await ElectionModule.getCurrentPeriod(), ElectionPeriod.Administration);
       });
     });
   });
 
   describe('when the owner dismisses council members and triggers and emergency election', function () {
-    describe('while in the Idle period', function () {
+    describe('while in the Administration period', function () {
       before('take snapshot', async function () {
         snapshotId = await takeSnapshot(ethers.provider);
       });

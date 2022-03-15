@@ -240,8 +240,8 @@ describe('ElectionModule (initialization)', () => {
           assertBn.equal(await ElectionModule.getEpochIndex(), 1);
         });
 
-        it('shows that the current period is Idle', async () => {
-          assertBn.equal(await ElectionModule.getCurrentPeriod(), ElectionPeriod.Idle);
+        it('shows that the current period is Administration', async () => {
+          assertBn.equal(await ElectionModule.getCurrentPeriod(), ElectionPeriod.Administration);
         });
 
         it('shows that there are two council members', async function () {

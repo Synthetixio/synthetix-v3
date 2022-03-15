@@ -74,12 +74,12 @@ contract ElectionModule is
         emit CouncilTokenUpgraded(newCouncilTokenImplementation);
     }
 
-    /// @notice Adjust the current epoch schedule requiring that the current period remains Idle, and that changes are small (see setMaxDateAdjustmentTolerance)
+    /// @notice Adjust the current epoch schedule requiring that the current period remains Administration, and that changes are small (see setMaxDateAdjustmentTolerance)
     function tweakEpochSchedule(
         uint64 newNominationPeriodStartDate,
         uint64 newVotingPeriodStartDate,
         uint64 newEpochEndDate
-    ) external override onlyOwner onlyInPeriod(ElectionPeriod.Idle) {
+    ) external override onlyOwner onlyInPeriod(ElectionPeriod.Administration) {
         _adjustEpochSchedule(
             _getCurrentEpoch(),
             newNominationPeriodStartDate,
@@ -91,12 +91,12 @@ contract ElectionModule is
         emit EpochScheduleUpdated(newNominationPeriodStartDate, newVotingPeriodStartDate, newEpochEndDate);
     }
 
-    /// @notice Adjusts the current epoch schedule requiring that the current period remains Idle
+    /// @notice Adjusts the current epoch schedule requiring that the current period remains Administration
     function modifyEpochSchedule(
         uint64 newNominationPeriodStartDate,
         uint64 newVotingPeriodStartDate,
         uint64 newEpochEndDate
-    ) external override onlyOwner onlyInPeriod(ElectionPeriod.Idle) {
+    ) external override onlyOwner onlyInPeriod(ElectionPeriod.Administration) {
         _adjustEpochSchedule(
             _getCurrentEpoch(),
             newNominationPeriodStartDate,
@@ -138,7 +138,12 @@ contract ElectionModule is
     }
 
     /// @notice Determines the number of council members in the next epoch
-    function setNextEpochSeatCount(uint8 newSeatCount) external override onlyOwner onlyInPeriod(ElectionPeriod.Idle) {
+    function setNextEpochSeatCount(uint8 newSeatCount)
+        external
+        override
+        onlyOwner
+        onlyInPeriod(ElectionPeriod.Administration)
+    {
         if (newSeatCount == 0) revert InvalidElectionSettings();
 
         _electionSettings().nextEpochSeatCount = newSeatCount;
@@ -161,7 +166,7 @@ contract ElectionModule is
         emit CouncilMembersDismissed(membersToDismiss);
 
         // Don't immediately jump to an election if the council still has enough members
-        if (_getCurrentPeriod() != ElectionPeriod.Idle) return;
+        if (_getCurrentPeriod() != ElectionPeriod.Administration) return;
         if (_electionStore().councilMembers.length() >= _electionSettings().minimumActiveMembers) return;
 
         _jumpToNominationPeriod();
@@ -314,7 +319,7 @@ contract ElectionModule is
         return _getCurrentEpoch().votingPeriodStartDate;
     }
 
-    /// @notice Returns the current period type: Idle, Nomination, Voting, Evaluation
+    /// @notice Returns the current period type: Administration, Nomination, Voting, Evaluation
     function getCurrentPeriod() external view override returns (uint) {
         return uint(_getCurrentPeriod());
     }
