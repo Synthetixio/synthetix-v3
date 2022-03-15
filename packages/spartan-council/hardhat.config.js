@@ -21,7 +21,7 @@ module.exports = {
       url: 'http://localhost:8545',
     },
     ['optimistic-kovan']: {
-      url: `https://kovan.optimism.io`,
+      url: 'https://kovan.optimism.io',
       accounts: process.env.DEPLOYER_PRIVATE_KEY ? [process.env.DEPLOYER_PRIVATE_KEY] : [],
     },
   },
