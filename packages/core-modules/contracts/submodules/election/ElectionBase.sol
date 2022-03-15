@@ -59,7 +59,7 @@ contract ElectionBase is ElectionStorage, InitializableMixin {
     );
     event MaxDateAdjustmentToleranceChanged(uint64 tolerance);
     event DefaultBallotEvaluationBatchSizeChanged(uint size);
-    event NextEpochSeatCountChanged(uint seatCount);
+    event NextEpochSeatCountChanged(uint8 seatCount);
     event MinimumActiveMembersChanged(uint8 minimumActiveMembers);
     event CandidateNominated(address indexed candidate);
     event NominationWithdrawn(address indexed candidate);
