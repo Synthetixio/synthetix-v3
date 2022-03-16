@@ -76,13 +76,9 @@ describe('utils/merkle-tree/merkle-tree.js', function () {
 
   describe('when creating an empty tree', function () {
     it('throws an error', () => {
-      throws(
-        () => {
-          new MerkleTree([]);
-        },
-        Error,
-        'empty tree'
-      );
+      throws(() => {
+        new MerkleTree([]);
+      }, 'Error: empty tree');
     });
   });
 
@@ -97,13 +93,9 @@ describe('utils/merkle-tree/merkle-tree.js', function () {
     });
 
     it('throws an error', () => {
-      throws(
-        () => {
-          tree.getProof(Buffer.from('3'));
-        },
-        Error,
-        'empty tree'
-      );
+      throws(() => {
+        tree.getProof(Buffer.from('3'));
+      }, 'Error: Element does not exist in Merkle tree');
     });
   });
 
@@ -126,13 +118,9 @@ describe('utils/merkle-tree/merkle-tree.js', function () {
       elements.push(Buffer.from('2'));
       elements.push('3');
 
-      throws(
-        () => {
-          MerkleTree._bufArrToHexArr(elements);
-        },
-        Error,
-        'Array is not an array of buffers'
-      );
+      throws(() => {
+        MerkleTree._bufArrToHexArr(elements);
+      }, 'Error: Array is not an array of buffers');
     });
   });
 });
