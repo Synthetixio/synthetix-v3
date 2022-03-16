@@ -1,4 +1,4 @@
-const { deepEqual } = require('assert/strict');
+const { deepEqual, throws } = require('assert/strict');
 const { keccak256 } = require('ethereumjs-util');
 const MerkleTree = require('../../../utils/merkle-tree/merkle-tree');
 
@@ -36,7 +36,7 @@ describe('utils/merkle-tree/merkle-tree.js', function () {
   describe('large tree', function () {
     let elements, tree;
 
-    before('create the smallest tree', () => {
+    before('create a large tree', () => {
       elements = [];
       for (let i = 1; i < 100000; i++) {
         elements.push(Buffer.from('' + i));
@@ -64,12 +64,75 @@ describe('utils/merkle-tree/merkle-tree.js', function () {
         '0x7ec791713b6e1f992c70f2e18acd3d19db715ff75d247fc2acc46ab70d4ba7e9',
         '0x5c1ed5d5c70d2b32aa8366b22bc70b86bdcf9fa1033d21fe0fcb4ff9ec293e05',
       ];
+
       deepEqual(proof, tree.getHexProof(elements[0]));
     });
 
     it('root is valid (calculated offline)', function () {
       const root = '0x851a1a8eeb1f817cd7f713c0e25ba14bffb4d3d1c8fbc9c1682a254640592df5';
       deepEqual(root, tree.getHexRoot());
+    });
+  });
+
+  describe('when creating an empty tree', function () {
+    it('throws an error', () => {
+      throws(
+        () => {
+          new MerkleTree([]);
+        },
+        Error,
+        'empty tree'
+      );
+    });
+  });
+
+  describe('when attempting to get the proof of an invalid element', function () {
+    let elements, tree;
+
+    before('create the smallest tree', () => {
+      elements = [];
+      elements.push(Buffer.from('1'));
+      elements.push(Buffer.from('2'));
+      tree = new MerkleTree(elements);
+    });
+
+    it('throws an error', () => {
+      throws(
+        () => {
+          tree.getProof(Buffer.from('3'));
+        },
+        Error,
+        'empty tree'
+      );
+    });
+  });
+
+  describe('when combining hashes', function () {
+    it('combines two hashes', () => {
+      const hash1 = Buffer.from('1');
+      const hash2 = Buffer.from('2');
+
+      deepEqual(MerkleTree.combinedHash(hash1, hash2), keccak256(Buffer.concat([hash1, hash2])));
+      deepEqual(MerkleTree.combinedHash(hash2, hash1), keccak256(Buffer.concat([hash1, hash2])));
+      deepEqual(MerkleTree.combinedHash(null, hash2), hash2);
+      deepEqual(MerkleTree.combinedHash(hash1, null), hash1);
+    });
+  });
+
+  describe('when attempting to get an hex array from a non Buffer array', function () {
+    it('throws an arror', () => {
+      const elements = [];
+      elements.push(Buffer.from('1'));
+      elements.push(Buffer.from('2'));
+      elements.push('3');
+
+      throws(
+        () => {
+          MerkleTree._bufArrToHexArr(elements);
+        },
+        Error,
+        'Array is not an array of buffers'
+      );
     });
   });
 });
