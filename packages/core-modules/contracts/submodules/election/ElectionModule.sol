@@ -178,7 +178,7 @@ abstract contract ElectionModule is
     }
 
     /// @notice Allows anyone to self-nominate during the Nomination period
-    function nominate() external override onlyInPeriod(ElectionPeriod.Nomination) {
+    function nominate() public virtual override onlyInPeriod(ElectionPeriod.Nomination) {
         SetUtil.AddressSet storage nominees = _getCurrentElection().nominees;
 
         if (nominees.contains(msg.sender)) revert AlreadyNominated();
