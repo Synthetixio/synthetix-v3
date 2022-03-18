@@ -5,10 +5,17 @@ import {ElectionModule as ElectionModuleBase} from "@synthetixio/core-modules/co
 import "@synthetixio/core-modules/contracts/submodules/election/strategies/ElectionTallyPlurality.sol";
 import "@synthetixio/core-contracts/contracts/errors/AddressError.sol";
 import "../interfaces/IDebtShare.sol";
+import "../interfaces/ISpartanCouncil.sol";
 import "../storage/SpartanCouncilStorage.sol";
 import "../submodules/DebtShareMigrator.sol";
 
-contract ElectionModule is ElectionModuleBase, SpartanCouncilStorage, DebtShareMigrator, ElectionTallyPlurality {
+contract ElectionModule is
+    ElectionModuleBase,
+    ISpartanCouncil,
+    SpartanCouncilStorage,
+    DebtShareMigrator,
+    ElectionTallyPlurality
+{
     event DebtShareContractSet(address debtShareContractAddress);
     event DebtShareSnapshotTaken(uint128 snapshotId);
 
@@ -16,6 +23,7 @@ contract ElectionModule is ElectionModuleBase, SpartanCouncilStorage, DebtShareM
 
     function setDebtShareContract(address newDebtShareContractAddress)
         external
+        override
         onlyOwner
         onlyInPeriod(ElectionPeriod.Administration)
     {
@@ -28,7 +36,7 @@ contract ElectionModule is ElectionModuleBase, SpartanCouncilStorage, DebtShareM
         emit DebtShareContractSet(newDebtShareContractAddress);
     }
 
-    function getDebtShareContract() external view returns (address) {
+    function getDebtShareContract() external view override returns (address) {
         return address(_spartanCouncilStore().debtShareContract);
     }
 
