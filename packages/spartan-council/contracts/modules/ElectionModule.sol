@@ -6,9 +6,9 @@ import "@synthetixio/core-modules/contracts/submodules/election/strategies/Elect
 import "@synthetixio/core-contracts/contracts/errors/AddressError.sol";
 import "../interfaces/IDebtShare.sol";
 import "../storage/SpartanCouncilStorage.sol";
+import "./DebtShareMigrator.sol";
 
-// solhint-disable-next-line no-empty-blocks
-contract ElectionModule is ElectionModuleBase, SpartanCouncilStorage, ElectionTallyPlurality {
+contract ElectionModule is ElectionModuleBase, SpartanCouncilStorage, DebtShareMigrator, ElectionTallyPlurality {
     event DebtShareContractSet(address debtShareContractAddress);
     event DebtShareSnapshotTaken(uint128 snapshotId);
 
@@ -67,7 +67,7 @@ contract ElectionModule is ElectionModuleBase, SpartanCouncilStorage, ElectionTa
     }
 
     function _getVotePowerL1(address voter) internal view returns (uint) {
-        // TODO: Use merkle tree here
+        return (getL1DebtShare(voter));
     }
 
     function _getVotePowerL2(address voter) internal view returns (uint) {
