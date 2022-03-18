@@ -23,7 +23,7 @@ describe('utils/merkle-tree/balance-tree.js', function () {
       const proof = tree.getProof(balances[0].account, balances[0].amount);
       const root = tree.getHexRoot();
 
-      equal(proof.length > 2, true);
+      equal(proof.length >= 2, true);
       equal(
         BalanceTree.verifyProof(
           hexStringToBuffer(balances[0].account),
