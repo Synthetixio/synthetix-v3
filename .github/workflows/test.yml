@@ -8,7 +8,7 @@ jobs:
     strategy:
       matrix:
         package:
-          [core-contracts, core-js, core-modules, deployer, synthetix-main]
+          [core-contracts, core-js, core-modules, deployer, synthetix-main, spartan-council, governance-modules]
         include:
           - package: core-contracts
             coverage-file: packages/core-contracts/coverage.json
