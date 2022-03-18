@@ -7,4 +7,3 @@ import {ElectionModule as BaseElectionModule} from "@synthetixio/governance-modu
 contract ElectionModule is BaseElectionModule {
 
 }
-
