@@ -12,7 +12,7 @@ const { findEvent } = require('@synthetixio/core-js/utils/ethers/events');
 describe('ElectionModule (evaluate)', () => {
   const { proxyAddress } = bootstrap(initializer);
 
-  let ElectionModule;
+  let ElectionModule, DebtShare;
 
   let epochIndexBefore;
 
@@ -39,6 +39,11 @@ describe('ElectionModule (evaluate)', () => {
   });
 
   describe('when the module is initialized', function () {
+    before('deploy debt shares mock', async function () {
+      const factory = await ethers.getContractFactory('DebtSareMock');
+      DebtShare = await factory.deploy();
+    });
+
     before('initialize', async function () {
       const now = await getTime(ethers.provider);
       const epochEndDate = now + daysToSeconds(90);
@@ -52,7 +57,8 @@ describe('ElectionModule (evaluate)', () => {
         1,
         nominationPeriodStartDate,
         votingPeriodStartDate,
-        epochEndDate
+        epochEndDate,
+        DebtShare.address
       );
     });
 

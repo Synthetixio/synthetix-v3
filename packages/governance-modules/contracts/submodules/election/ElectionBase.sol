@@ -39,6 +39,7 @@ contract ElectionBase is ElectionStorage, InitializableMixin {
     error AlreadyACouncilMember();
     error NotACouncilMember();
     error InvalidMinimumActiveMembers();
+    error DebtShareContractNotSet();
 
     // ---------------------------------------
     // Events
@@ -68,6 +69,8 @@ contract ElectionBase is ElectionStorage, InitializableMixin {
     event ElectionEvaluated(uint epochIndex, uint totalBallots);
     event ElectionBatchEvaluated(uint epochIndex, uint evaluatedBallots, uint totalBallots);
     event EmergencyElectionStarted();
+    event DebtShareContractSet(address debtShareContractAddress);
+    event DebtShareSnapshotTaken(uint128 snapshotId);
 
     // ---------------------------------------
     // Helpers

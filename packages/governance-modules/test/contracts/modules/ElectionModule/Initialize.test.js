@@ -9,10 +9,10 @@ const initializer = require('../../../helpers/initializer');
 const { ElectionPeriod, assertDatesAreClose } = require('./helpers/election-helper');
 const { findEvent } = require('@synthetixio/core-js/utils/ethers/events');
 
-describe('ElectionModule (initialization)', () => {
+describe.only('ElectionModule (initialization)', () => {
   const { proxyAddress } = bootstrap(initializer);
 
-  let ElectionModule, CouncilToken;
+  let ElectionModule, CouncilToken, DebtShare;
 
   let owner, user;
 
@@ -54,7 +54,7 @@ describe('ElectionModule (initialization)', () => {
     describe('with an account that does not own the instance', function () {
       it('reverts', async function () {
         await assertRevert(
-          ElectionModule.connect(user).initializeElectionModule('', '', [], 0, 0, 0, 0),
+          ElectionModule.connect(user).initializeElectionModule('', '', [], 0, 0, 0, 0, user.address),
           'Unauthorized'
         );
       });
@@ -72,7 +72,8 @@ describe('ElectionModule (initialization)', () => {
                 2,
                 0,
                 0,
-                0
+                0,
+                user.address
               ),
               'InvalidMinimumActiveMembers'
             );
@@ -84,7 +85,8 @@ describe('ElectionModule (initialization)', () => {
                 0,
                 0,
                 0,
-                0
+                0,
+                user.address
               ),
               'InvalidMinimumActiveMembers'
             );
@@ -106,7 +108,8 @@ describe('ElectionModule (initialization)', () => {
                 1,
                 date2,
                 date1,
-                date3
+                date3,
+                user.address
               ),
               'InvalidEpochConfiguration'
             );
@@ -118,7 +121,8 @@ describe('ElectionModule (initialization)', () => {
                 1,
                 date1,
                 date3,
-                date2
+                date2,
+                user.address
               ),
               'InvalidEpochConfiguration'
             );
@@ -130,7 +134,8 @@ describe('ElectionModule (initialization)', () => {
                 1,
                 date3,
                 date2,
-                date1
+                date1,
+                user.address
               ),
               'InvalidEpochConfiguration'
             );
@@ -152,7 +157,8 @@ describe('ElectionModule (initialization)', () => {
                 1,
                 nominationPeriodStartDate,
                 votingPeriodStartDate,
-                epochEndDate
+                epochEndDate,
+                user.address
               ),
               'InvalidEpochConfiguration'
             );
@@ -168,7 +174,8 @@ describe('ElectionModule (initialization)', () => {
                 1,
                 nominationPeriodStartDate,
                 votingPeriodStartDate,
-                epochEndDate
+                epochEndDate,
+                user.address
               ),
               'InvalidEpochConfiguration'
             );
@@ -184,7 +191,8 @@ describe('ElectionModule (initialization)', () => {
                 1,
                 now + daysToSeconds(1),
                 now + daysToSeconds(2),
-                now + daysToSeconds(7)
+                now + daysToSeconds(7),
+                user.address
               ),
               'InvalidEpochConfiguration'
             );
@@ -193,6 +201,11 @@ describe('ElectionModule (initialization)', () => {
       });
 
       describe('with valid parameters', function () {
+        before('deploy debt shares mock', async function () {
+          const factory = await ethers.getContractFactory('DebtSareMock');
+          DebtShare = await factory.deploy();
+        });
+
         before('initialize', async function () {
           epochStartDate = await getTime(ethers.provider);
           epochEndDate = epochStartDate + daysToSeconds(90);
@@ -206,9 +219,24 @@ describe('ElectionModule (initialization)', () => {
             1,
             nominationPeriodStartDate,
             votingPeriodStartDate,
-            epochEndDate
+            epochEndDate,
+            DebtShare.address
           );
           receipt = await tx.wait();
+
+          assertRevert(
+            ElectionModule.initializeElectionModule(
+              'Spartan Council Token',
+              'SCT',
+              [owner.address, user.address],
+              1,
+              nominationPeriodStartDate,
+              votingPeriodStartDate,
+              epochEndDate,
+              DebtShare.address
+            ),
+            'AlreadyInitialized'
+          );
         });
 
         before('identify the council token', async function () {
@@ -282,12 +310,12 @@ describe('ElectionModule (initialization)', () => {
         });
 
         describe('when attemting to re-initialize the module', function () {
-          it('reverts', async function () {
-            await assertRevert(
-              ElectionModule.initializeElectionModule('', '', [], 0, 0, 0, 0),
-              'AlreadyInitialized'
-            );
-          });
+          // it('reverts', async function () {
+          //   await assertRevert(
+          //     ElectionModule.initializeElectionModule('', '', [], 1, 0, 0, 0, DebtShare.address),
+          //     'AlreadyInitialized'
+          //   );
+          // });
         });
       });
     });

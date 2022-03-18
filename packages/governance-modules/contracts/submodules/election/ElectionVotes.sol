@@ -2,7 +2,9 @@
 pragma solidity ^0.8.0;
 
 import "./ElectionBase.sol";
+import "@synthetixio/core-contracts/contracts/utils/AddressUtil.sol";
 import "@synthetixio/core-contracts/contracts/errors/ChangeError.sol";
+import "@synthetixio/core-contracts/contracts/errors/AddressError.sol";
 
 /// @dev Defines core functionality for recording votes in ElectionModule.cast()
 abstract contract ElectionVotes is ElectionBase {
@@ -75,6 +77,57 @@ abstract contract ElectionVotes is ElectionBase {
         return ballotId;
     }
 
-    /// @dev Override this function to specify how vote power is calculated
-    function _getVotePower(address) internal view virtual returns (uint);
+    function _takeDebtShareSnapshotOnFirstNomination() internal {
+        ElectionStore storage store = _electionStore();
+
+        IDebtShare debtShareContract = store.debtShareContract;
+        if (address(debtShareContract) == address(0)) {
+            revert DebtShareContractNotSet();
+        }
+
+        // Skip if we already have a debt share snapshot for this epoch
+        uint currentEpochIndex = _electionStore().currentEpochIndex;
+        uint debtShareId = store.debtShareIds[currentEpochIndex];
+        if (debtShareId != 0) {
+            return;
+        }
+
+        // Take new debt share snapshot for this epoch
+        uint128 currentDebtSharePeriodId = debtShareContract.currentPeriodId();
+        uint128 nextDebtSharePeriodId = currentDebtSharePeriodId + 1;
+        debtShareContract.takeSnapshot(nextDebtSharePeriodId);
+        store.debtShareIds[currentEpochIndex] = nextDebtSharePeriodId;
+
+        emit DebtShareSnapshotTaken(nextDebtSharePeriodId);
+    }
+
+    function _setDebtShareContract(address newDebtShareContractAddress) internal {
+        if (newDebtShareContractAddress == address(0)) {
+            revert AddressError.ZeroAddress();
+        }
+
+        if (!AddressUtil.isContract(newDebtShareContractAddress)) {
+            revert AddressError.NotAContract(newDebtShareContractAddress);
+        }
+
+        _electionStore().debtShareContract = IDebtShare(newDebtShareContractAddress);
+    }
+
+    function _getVotePower(address voter) internal view returns (uint) {
+        return _getVotePowerL1(voter) + _getVotePowerL2(voter);
+    }
+
+    function _getVotePowerL1(address) internal pure returns (uint) {
+        // TODO: Use merkle tree here
+        return 0;
+    }
+
+    function _getVotePowerL2(address voter) internal view returns (uint) {
+        ElectionStore storage store = _electionStore();
+
+        uint currentEpochIndex = _electionStore().currentEpochIndex;
+        uint128 debtShareId = store.debtShareIds[currentEpochIndex];
+
+        return store.debtShareContract.balanceOfOnPeriod(voter, debtShareId);
+    }
 }

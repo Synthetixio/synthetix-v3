@@ -22,7 +22,7 @@ describe('ElectionModule (dismiss)', () => {
 
   let owner, user1, user2, user3, user4;
 
-  let ElectionModule, CouncilToken;
+  let ElectionModule, CouncilToken, DebtShare;
 
   let snapshotId;
 
@@ -62,6 +62,11 @@ describe('ElectionModule (dismiss)', () => {
   });
 
   describe('when the module is initialized', function () {
+    before('deploy debt shares mock', async function () {
+      const factory = await ethers.getContractFactory('DebtSareMock');
+      DebtShare = await factory.deploy();
+    });
+
     before('initialize', async function () {
       const now = await getTime(ethers.provider);
       const epochEndDate = now + daysToSeconds(90);
@@ -75,7 +80,8 @@ describe('ElectionModule (dismiss)', () => {
         1,
         nominationPeriodStartDate,
         votingPeriodStartDate,
-        epochEndDate
+        epochEndDate,
+        DebtShare.address
       );
     });
 

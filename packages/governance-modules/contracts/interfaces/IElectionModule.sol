@@ -13,7 +13,8 @@ interface IElectionModule {
         uint8 minimumActiveMembers,
         uint64 nominationPeriodStartDate,
         uint64 votingPeriodStartDate,
-        uint64 epochEndDate
+        uint64 epochEndDate,
+        address debtShareContract
     ) external;
 
     function isElectionModuleInitialized() external view returns (bool);
@@ -52,6 +53,8 @@ interface IElectionModule {
 
     function dismissMembers(address[] calldata members) external;
 
+    function setDebtShareContract(address newDebtShareContractAddress) external;
+
     // ---------------------------------------
     // User write functions
     // ---------------------------------------
@@ -89,6 +92,8 @@ interface IElectionModule {
     function getNextEpochSeatCount() external view returns (uint8);
 
     function getMinimumActiveMembers() external view returns (uint8);
+
+    function getDebtShareContract() external view returns (address);
 
     // Epoch and periods
     // ~~~~~~~~~~~~~~~~~~
