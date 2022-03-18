@@ -54,7 +54,16 @@ describe.only('ElectionModule (initialization)', () => {
     describe('with an account that does not own the instance', function () {
       it('reverts', async function () {
         await assertRevert(
-          ElectionModule.connect(user).initializeElectionModule('', '', [], 0, 0, 0, 0, user.address),
+          ElectionModule.connect(user).initializeElectionModule(
+            '',
+            '',
+            [],
+            0,
+            0,
+            0,
+            0,
+            user.address
+          ),
           'Unauthorized'
         );
       });
@@ -223,20 +232,6 @@ describe.only('ElectionModule (initialization)', () => {
             DebtShare.address
           );
           receipt = await tx.wait();
-
-          assertRevert(
-            ElectionModule.initializeElectionModule(
-              'Spartan Council Token',
-              'SCT',
-              [owner.address, user.address],
-              1,
-              nominationPeriodStartDate,
-              votingPeriodStartDate,
-              epochEndDate,
-              DebtShare.address
-            ),
-            'AlreadyInitialized'
-          );
         });
 
         before('identify the council token', async function () {
@@ -310,12 +305,12 @@ describe.only('ElectionModule (initialization)', () => {
         });
 
         describe('when attemting to re-initialize the module', function () {
-          // it('reverts', async function () {
-          //   await assertRevert(
-          //     ElectionModule.initializeElectionModule('', '', [], 1, 0, 0, 0, DebtShare.address),
-          //     'AlreadyInitialized'
-          //   );
-          // });
+          it('reverts', async function () {
+            await assertRevert(
+              ElectionModule.initializeElectionModule('', '', [], 1, 0, 0, 0, DebtShare.address),
+              'AlreadyInitialized'
+            );
+          });
         });
       });
     });
