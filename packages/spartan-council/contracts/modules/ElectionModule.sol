@@ -6,7 +6,7 @@ import "@synthetixio/core-modules/contracts/submodules/election/strategies/Elect
 import "@synthetixio/core-contracts/contracts/errors/AddressError.sol";
 import "../interfaces/IDebtShare.sol";
 import "../storage/SpartanCouncilStorage.sol";
-import "./DebtShareMigrator.sol";
+import "../submodules/DebtShareMigrator.sol";
 
 contract ElectionModule is ElectionModuleBase, SpartanCouncilStorage, DebtShareMigrator, ElectionTallyPlurality {
     event DebtShareContractSet(address debtShareContractAddress);
