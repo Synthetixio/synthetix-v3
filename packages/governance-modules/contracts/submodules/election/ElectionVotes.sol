@@ -102,15 +102,21 @@ abstract contract ElectionVotes is ElectionBase {
     }
 
     function _setDebtShareContract(address newDebtShareContractAddress) internal {
+        ElectionStore storage store = _electionStore();
+
         if (newDebtShareContractAddress == address(0)) {
             revert AddressError.ZeroAddress();
+        }
+
+        if (newDebtShareContractAddress == address(store.debtShareContract)) {
+            revert ChangeError.NoChange();
         }
 
         if (!AddressUtil.isContract(newDebtShareContractAddress)) {
             revert AddressError.NotAContract(newDebtShareContractAddress);
         }
 
-        _electionStore().debtShareContract = IDebtShare(newDebtShareContractAddress);
+        store.debtShareContract = IDebtShare(newDebtShareContractAddress);
     }
 
     function _getVotePower(address voter) internal view returns (uint) {
