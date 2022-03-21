@@ -81,9 +81,6 @@ abstract contract ElectionVotes is ElectionBase {
         ElectionStore storage store = _electionStore();
 
         IDebtShare debtShareContract = store.debtShareContract;
-        if (address(debtShareContract) == address(0)) {
-            revert DebtShareContractNotSet();
-        }
 
         // Skip if we already have a debt share snapshot for this epoch
         uint currentEpochIndex = _electionStore().currentEpochIndex;
