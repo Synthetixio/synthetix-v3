@@ -26,7 +26,7 @@ module.exports = {
     },
   },
   deployer: {
-    proxyContract: 'SpartanCouncil',
+    proxyContract: 'Proxy',
   },
   contractSizer: {
     strict: true,
