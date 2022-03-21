@@ -85,10 +85,7 @@ describe('ElectionModule (settings)', () => {
 
         describe('with the same address', () => {
           it('reverts', async () => {
-            await assertRevert(
-              ElectionModule.setDebtShareContract(DebtShare.address),
-              'NoChange'
-            );
+            await assertRevert(ElectionModule.setDebtShareContract(DebtShare.address), 'NoChange');
           });
         });
 

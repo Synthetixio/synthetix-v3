@@ -9,7 +9,7 @@ const initializer = require('../../../helpers/initializer');
 const { ElectionPeriod } = require('./helpers/election-helper');
 const { findEvent } = require('@synthetixio/core-js/utils/ethers/events');
 
-describe('ElectionModule (vote)', () => {
+describe('ElectionModule (cast)', () => {
   const { proxyAddress } = bootstrap(initializer);
 
   let ElectionModule, DebtShare;

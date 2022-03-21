@@ -14,7 +14,7 @@ contract DebtShareMock is IDebtShare {
         _currentPeriodId = id;
     }
 
-    function balanceOfOnPeriod(address, uint) external pure override returns (uint) {
-        return 1;
+    function balanceOfOnPeriod(address, uint) external view override returns (uint) {
+        return uint(_currentPeriodId);
     }
 }

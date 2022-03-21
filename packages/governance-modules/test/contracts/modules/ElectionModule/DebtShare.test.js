@@ -1,32 +1,20 @@
 const { ethers } = hre;
 const assert = require('assert/strict');
 const assertBn = require('@synthetixio/core-js/utils/assertions/assert-bignumber');
-const assertRevert = require('@synthetixio/core-js/utils/assertions/assert-revert');
 const { daysToSeconds } = require('@synthetixio/core-js/utils/misc/dates');
 const { bootstrap } = require('@synthetixio/deployer/utils/tests');
 const initializer = require('../../../helpers/initializer');
 const { ElectionPeriod } = require('./helpers/election-helper');
 const { findEvent } = require('@synthetixio/core-js/utils/ethers/events');
 const { runElection } = require('./helpers/election-helper');
-const {
-  getTime,
-  fastForwardTo,
-  takeSnapshot,
-  restoreSnapshot,
-} = require('@synthetixio/core-js/utils/hardhat/rpc');
+const { getTime, fastForwardTo } = require('@synthetixio/core-js/utils/hardhat/rpc');
 
-describe.only('ElectionModule (debt share)', () => {
+describe('ElectionModule (debt share)', () => {
   const { proxyAddress } = bootstrap(initializer);
 
-  let members;
+  let owner, user1, user2, user3;
 
-  let owner, user1, user2, user3, user4;
-
-  let ElectionModule, CouncilToken, DebtShare;
-
-  let snapshotId;
-
-  let nominationPeriodStartDate, votingPeriodStartDate, epochEndDate;
+  let ElectionModule, DebtShare;
 
   let receipt;
 
@@ -43,7 +31,7 @@ describe.only('ElectionModule (debt share)', () => {
   before('identify signers', async () => {
     const users = await ethers.getSigners();
 
-    [owner, user1, user2, user3, user4] = users;
+    [owner, user1, user2, user3] = users;
   });
 
   before('identify modules', async () => {
@@ -135,7 +123,10 @@ describe.only('ElectionModule (debt share)', () => {
 
             describe('on the second epoch', function () {
               before('fast forward', async function () {
-                await fastForwardTo(await ElectionModule.getNominationPeriodStartDate(), ethers.provider);
+                await fastForwardTo(
+                  await ElectionModule.getNominationPeriodStartDate(),
+                  ethers.provider
+                );
               });
 
               it('shows that the current period is Nomination', async function () {
