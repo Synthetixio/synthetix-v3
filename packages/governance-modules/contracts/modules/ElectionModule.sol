@@ -8,7 +8,6 @@ import "../submodules/election/ElectionSchedule.sol";
 import "../submodules/election/ElectionCredentials.sol";
 import "../submodules/election/ElectionVotes.sol";
 import "../submodules/election/ElectionTally.sol";
-import "../submodules/election/ElectionDebtShareMigrator.sol";
 
 /// @title Module for electing a council, represented by a set of NFT holders
 contract ElectionModule is
@@ -17,7 +16,6 @@ contract ElectionModule is
     ElectionCredentials,
     ElectionVotes,
     ElectionTally,
-    ElectionDebtShareMigrator,
     OwnableMixin
 {
     using SetUtil for SetUtil.AddressSet;
