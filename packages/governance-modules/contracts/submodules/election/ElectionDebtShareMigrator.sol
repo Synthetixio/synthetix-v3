@@ -10,11 +10,11 @@ contract ElectionDebtShareMigrator is ElectionBase {
         ElectionData storage election = _getCurrentElection();
 
         // store.currentEpochIndex = index;
-        if (election.merkleroot != 0) {
+        if (election.merkleRoot != 0) {
             revert MerkleRootAlreadySet();
         }
 
-        election.merkleroot = merkleRoot;
+        election.merkleRoot = merkleRoot;
     }
 
     function _declareL1DebtShare(
@@ -25,21 +25,21 @@ contract ElectionDebtShareMigrator is ElectionBase {
         ElectionData storage election = _getCurrentElection();
 
         // store.currentEpochIndex = index;
-        if (election.merkleroot == 0) {
+        if (election.merkleRoot == 0) {
             revert MerkleRootNotSet();
         }
 
         // build leaf
         bytes32 leaf = keccak256(abi.encodePacked(voter, debtShare));
 
-        if (!MerkleProof.verify(merkleProof, election.merkleroot, leaf)) {
+        if (!MerkleProof.verify(merkleProof, election.merkleRoot, leaf)) {
             revert InvalidMerkleProof();
         }
 
-        election.l1debtshares[voter] = debtShare;
+        election.l1DebtShares[voter] = debtShare;
     }
 
     function _getL1DebtShare(address voter) internal view returns (uint) {
-        return _getCurrentElection().l1debtshares[voter];
+        return _getCurrentElection().l1DebtShares[voter];
     }
 }
