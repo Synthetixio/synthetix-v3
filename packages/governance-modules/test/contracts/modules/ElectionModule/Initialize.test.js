@@ -50,6 +50,11 @@ describe('ElectionModule (initialization)', () => {
     });
   });
 
+  before('deploy debt shares mock', async function () {
+    const factory = await ethers.getContractFactory('DebtShareMock');
+    DebtShare = await factory.deploy();
+  });
+
   describe('when initializing the module', function () {
     describe('with an account that does not own the instance', function () {
       it('reverts', async function () {
@@ -62,7 +67,7 @@ describe('ElectionModule (initialization)', () => {
             0,
             0,
             0,
-            user.address
+            DebtShare.address
           ),
           'Unauthorized'
         );
@@ -82,7 +87,7 @@ describe('ElectionModule (initialization)', () => {
                 0,
                 0,
                 0,
-                user.address
+                DebtShare.address
               ),
               'InvalidMinimumActiveMembers'
             );
@@ -95,9 +100,40 @@ describe('ElectionModule (initialization)', () => {
                 0,
                 0,
                 0,
-                user.address
+                DebtShare.address
               ),
               'InvalidMinimumActiveMembers'
+            );
+          });
+        });
+
+        describe('with invalid debtShareContract', function () {
+          it('reverts', async function () {
+            await assertRevert(
+              ElectionModule.connect(owner).initializeElectionModule(
+                '',
+                '',
+                [owner.address],
+                1,
+                0,
+                0,
+                0,
+                '0x0000000000000000000000000000000000000000'
+              ),
+              'ZeroAddress'
+            );
+            await assertRevert(
+              ElectionModule.connect(owner).initializeElectionModule(
+                '',
+                '',
+                [owner.address],
+                1,
+                0,
+                0,
+                0,
+                user.address
+              ),
+              'NotAContract'
             );
           });
         });
@@ -118,7 +154,7 @@ describe('ElectionModule (initialization)', () => {
                 date2,
                 date1,
                 date3,
-                user.address
+                DebtShare.address
               ),
               'InvalidEpochConfiguration'
             );
@@ -131,7 +167,7 @@ describe('ElectionModule (initialization)', () => {
                 date1,
                 date3,
                 date2,
-                user.address
+                DebtShare.address
               ),
               'InvalidEpochConfiguration'
             );
@@ -144,7 +180,7 @@ describe('ElectionModule (initialization)', () => {
                 date3,
                 date2,
                 date1,
-                user.address
+                DebtShare.address
               ),
               'InvalidEpochConfiguration'
             );
@@ -167,7 +203,7 @@ describe('ElectionModule (initialization)', () => {
                 nominationPeriodStartDate,
                 votingPeriodStartDate,
                 epochEndDate,
-                user.address
+                DebtShare.address
               ),
               'InvalidEpochConfiguration'
             );
@@ -184,7 +220,7 @@ describe('ElectionModule (initialization)', () => {
                 nominationPeriodStartDate,
                 votingPeriodStartDate,
                 epochEndDate,
-                user.address
+                DebtShare.address
               ),
               'InvalidEpochConfiguration'
             );
@@ -201,7 +237,7 @@ describe('ElectionModule (initialization)', () => {
                 now + daysToSeconds(1),
                 now + daysToSeconds(2),
                 now + daysToSeconds(7),
-                user.address
+                DebtShare.address
               ),
               'InvalidEpochConfiguration'
             );
@@ -210,11 +246,6 @@ describe('ElectionModule (initialization)', () => {
       });
 
       describe('with valid parameters', function () {
-        before('deploy debt shares mock', async function () {
-          const factory = await ethers.getContractFactory('DebtShareMock');
-          DebtShare = await factory.deploy();
-        });
-
         before('initialize', async function () {
           epochStartDate = await getTime(ethers.provider);
           epochEndDate = epochStartDate + daysToSeconds(90);
@@ -238,6 +269,10 @@ describe('ElectionModule (initialization)', () => {
           const tokenAddress = await ElectionModule.getCouncilToken();
 
           CouncilToken = await ethers.getContractAt('CouncilToken', tokenAddress);
+        });
+
+        it('set the debt share contract address', async function () {
+          assert.equal(await ElectionModule.getDebtShareContract(), DebtShare.address);
         });
 
         it('produced a token with the correct name and symbol', async function () {
