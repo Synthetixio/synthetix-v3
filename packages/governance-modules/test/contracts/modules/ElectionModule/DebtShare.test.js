@@ -83,6 +83,10 @@ describe('ElectionModule (debt share)', () => {
           assertBn.equal(await ElectionModule.getEpochIndex(), 1);
         });
 
+        it('shows that user vote power is 0', async function () {
+          assertBn.equal(await ElectionModule.getVotePower(user1.address), 0);
+        });
+
         describe('on the first nomination', function () {
           before('nominate', async function () {
             await nominate(user1);
@@ -97,6 +101,10 @@ describe('ElectionModule (debt share)', () => {
 
           it('shows that the debt share snapshot is now 1', async function () {
             assertBn.equal(await DebtShare.currentPeriodId(), 1);
+          });
+
+          it('shows that user vote power is 1', async function () {
+            assertBn.equal(await ElectionModule.getVotePower(user1.address), 1);
           });
 
           describe('upon further nominations', function () {
@@ -156,6 +164,10 @@ describe('ElectionModule (debt share)', () => {
 
                   it('shows that the debt share snapshot is now 1', async function () {
                     assertBn.equal(await DebtShare.currentPeriodId(), 2);
+                  });
+
+                  it('shows that user vote power is 2', async function () {
+                    assertBn.equal(await ElectionModule.getVotePower(user1.address), 2);
                   });
 
                   describe('upon further nominations', function () {
