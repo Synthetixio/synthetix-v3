@@ -18,7 +18,10 @@ module.exports = async function assertRevert(tx, expectedMessage) {
       // https://github.com/nomiclabs/hardhat/issues/1996
       // Basically, the first time tests are run, the revert reason is not parsed,
       // but the second time it is parsed just fine;
-      if (receivedMessage.includes('reverted with an unrecognized custom error') || receivedMessage.includes('revert with unrecognized return data or custom error')) {
+      if (
+        receivedMessage.includes('reverted with an unrecognized custom error') ||
+        receivedMessage.includes('revert with unrecognized return data or custom error')
+      ) {
         console.warn(
           `WARNING: assert-revert was unable to parse revert reason. The reason will be ignored in this test: ${receivedMessage}`
         );
