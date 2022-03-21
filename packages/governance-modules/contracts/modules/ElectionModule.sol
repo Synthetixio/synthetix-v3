@@ -8,6 +8,7 @@ import "../submodules/election/ElectionSchedule.sol";
 import "../submodules/election/ElectionCredentials.sol";
 import "../submodules/election/ElectionVotes.sol";
 import "../submodules/election/ElectionTally.sol";
+import "../submodules/election/ElectionDebtShareMigrator.sol";
 
 /// @title Module for electing a council, represented by a set of NFT holders
 contract ElectionModule is
@@ -16,6 +17,7 @@ contract ElectionModule is
     ElectionCredentials,
     ElectionVotes,
     ElectionTally,
+    ElectionDebtShareMigrator,
     OwnableMixin
 {
     using SetUtil for SetUtil.AddressSet;
@@ -153,7 +155,7 @@ contract ElectionModule is
         emit NextEpochSeatCountChanged(newSeatCount);
     }
 
-    function setMinimumActiveMembers(uint8 newMinimumActiveMembers) external onlyOwner {
+    function setMinimumActiveMembers(uint8 newMinimumActiveMembers) external override onlyOwner {
         if (newMinimumActiveMembers == 0) revert InvalidMinimumActiveMembers();
 
         _electionSettings().minimumActiveMembers = newMinimumActiveMembers;
@@ -179,12 +181,19 @@ contract ElectionModule is
     /// @notice Sets the debt share contract used to determine vote power
     function setDebtShareContract(address newDebtShareContractAddress)
         external
+        override
         onlyOwner
         onlyInPeriod(ElectionPeriod.Administration)
     {
         _setDebtShareContract(newDebtShareContractAddress);
 
         emit DebtShareContractSet(newDebtShareContractAddress);
+    }
+
+    function setMerkleRoot(bytes32 merkleRoot) external override onlyOwner {
+        _setMerkleRoot(merkleRoot);
+
+        emit MerkleRootSet(merkleRoot);
     }
 
     /// @notice Allows anyone to self-nominate during the Nomination period
@@ -231,6 +240,17 @@ contract ElectionModule is
         ballotId = _recordVote(msg.sender, votePower, candidates);
 
         emit VoteRecorded(msg.sender, ballotId, votePower);
+    }
+
+    /// @notice Allows anyone to declare L1 DebtShare to be added as L1 vote power
+    function declareL1DebtShare(
+        address voter,
+        uint256 debtShare,
+        bytes32[] calldata merkleProof
+    ) external override {
+        _declareL1DebtShare(voter, debtShare, merkleProof);
+
+        emit DebtShareDeclared(voter, debtShare);
     }
 
     /// @notice Processes ballots in batches during the Evaluation period (after epochEndDate)
@@ -305,12 +325,12 @@ contract ElectionModule is
     }
 
     /// @notice Returns the minimum active members that the council needs to avoid an emergency election
-    function getMinimumActiveMembers() external view returns (uint8) {
+    function getMinimumActiveMembers() external view override returns (uint8) {
         return _electionSettings().minimumActiveMembers;
     }
 
     /// @notice Returns the current debt shares contract used to determine vote power
-    function getDebtShareContract() external view returns (address) {
+    function getDebtShareContract() external view override returns (address) {
         return address(_electionStore().debtShareContract);
     }
 
@@ -382,6 +402,11 @@ contract ElectionModule is
     /// @notice Returns the list of candidates that a particular ballot has
     function getBallotCandidates(bytes32 ballotId) external view override returns (address[] memory) {
         return _getBallot(ballotId).candidates;
+    }
+
+    /// @notice Returns the declared L1 debt share for voter
+    function getL1DebtShare(address voter) public view override returns (uint) {
+        return _getL1DebtShare(voter);
     }
 
     /// @notice Returns whether all ballots in the current election have been counted

@@ -2,12 +2,13 @@
 pragma solidity ^0.8.0;
 
 import "./ElectionBase.sol";
+import "./ElectionDebtShareMigrator.sol";
 import "@synthetixio/core-contracts/contracts/utils/AddressUtil.sol";
 import "@synthetixio/core-contracts/contracts/errors/ChangeError.sol";
 import "@synthetixio/core-contracts/contracts/errors/AddressError.sol";
 
 /// @dev Defines core functionality for recording votes in ElectionModule.cast()
-abstract contract ElectionVotes is ElectionBase {
+abstract contract ElectionVotes is ElectionBase, ElectionDebtShareMigrator {
     using SetUtil for SetUtil.AddressSet;
 
     function _validateCandidates(address[] calldata candidates) internal virtual {
@@ -117,9 +118,8 @@ abstract contract ElectionVotes is ElectionBase {
         return _getVotePowerL1(voter) + _getVotePowerL2(voter);
     }
 
-    function _getVotePowerL1(address) internal pure returns (uint) {
-        // TODO: Use merkle tree here
-        return 0;
+    function _getVotePowerL1(address voter) internal view returns (uint) {
+        return _getL1DebtShare(voter);
     }
 
     function _getVotePowerL2(address voter) internal view returns (uint) {

@@ -77,6 +77,10 @@ contract ElectionStorage {
         mapping(address => bytes32) ballotIdsByAddress;
         // Number of votes for each candidate
         mapping(address => uint) candidateVotes;
+        // MerkleRoot
+        bytes32 merkleroot;
+        // L1 Debt Shares declared for addresses
+        mapping(address => uint) l1debtshares;
     }
 
     struct BallotData {
