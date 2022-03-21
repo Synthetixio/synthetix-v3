@@ -5,17 +5,10 @@ import {ElectionModule as ElectionModuleBase} from "@synthetixio/core-modules/co
 import "@synthetixio/core-modules/contracts/submodules/election/strategies/ElectionTallyPlurality.sol";
 import "@synthetixio/core-contracts/contracts/errors/AddressError.sol";
 import "../interfaces/IDebtShare.sol";
-import "../interfaces/ISpartanCouncil.sol";
 import "../storage/SpartanCouncilStorage.sol";
-import "../submodules/DebtShareMigrator.sol";
 
-contract ElectionModule is
-    ElectionModuleBase,
-    ISpartanCouncil,
-    SpartanCouncilStorage,
-    DebtShareMigrator,
-    ElectionTallyPlurality
-{
+// solhint-disable-next-line no-empty-blocks
+contract ElectionModule is ElectionModuleBase, SpartanCouncilStorage, ElectionTallyPlurality {
     event DebtShareContractSet(address debtShareContractAddress);
     event DebtShareSnapshotTaken(uint128 snapshotId);
 
@@ -23,7 +16,6 @@ contract ElectionModule is
 
     function setDebtShareContract(address newDebtShareContractAddress)
         external
-        override
         onlyOwner
         onlyInPeriod(ElectionPeriod.Administration)
     {
@@ -36,7 +28,7 @@ contract ElectionModule is
         emit DebtShareContractSet(newDebtShareContractAddress);
     }
 
-    function getDebtShareContract() external view override returns (address) {
+    function getDebtShareContract() external view returns (address) {
         return address(_spartanCouncilStore().debtShareContract);
     }
 
@@ -75,7 +67,7 @@ contract ElectionModule is
     }
 
     function _getVotePowerL1(address voter) internal view returns (uint) {
-        return (getL1DebtShare(voter));
+        // TODO: Use merkle tree here
     }
 
     function _getVotePowerL2(address voter) internal view returns (uint) {
