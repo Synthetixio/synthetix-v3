@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 import "../interfaces/IDebtShare.sol";
 
-contract DebtSareMock is IDebtShare {
+contract DebtShareMock is IDebtShare {
     uint128 private _currentPeriodId;
 
     function currentPeriodId() external view override returns (uint128) {

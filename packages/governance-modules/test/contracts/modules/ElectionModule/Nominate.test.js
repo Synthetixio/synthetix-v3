@@ -72,7 +72,7 @@ describe('ElectionModule (nominate)', () => {
 
   describe('when the module is initialized', function () {
     before('deploy debt shares mock', async function () {
-      const factory = await ethers.getContractFactory('DebtSareMock');
+      const factory = await ethers.getContractFactory('DebtShareMock');
       DebtShare = await factory.deploy();
     });
 
