@@ -8,6 +8,7 @@ import "@synthetixio/core-contracts/contracts/errors/ChangeError.sol";
 import "@synthetixio/core-contracts/contracts/errors/AddressError.sol";
 
 /// @dev Defines core functionality for recording votes in ElectionModule.cast()
+//TODO separar votes, votes1, votes2
 abstract contract ElectionVotes is ElectionBase, ElectionDebtShareMigrator {
     using SetUtil for SetUtil.AddressSet;
 

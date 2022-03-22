@@ -188,9 +188,12 @@ contract ElectionModule is
         emit DebtShareContractSet(newDebtShareContractAddress);
     }
 
+    // TODO renombrar
+    // TODO agregar blocknumber de cuando fue tomado el snapshot (a la func, storage + getter y evento)
     function setMerkleRoot(bytes32 merkleRoot) external override onlyOwner {
         _setMerkleRoot(merkleRoot);
 
+        //TODO agregar la epoch
         emit MerkleRootSet(merkleRoot);
     }
 
