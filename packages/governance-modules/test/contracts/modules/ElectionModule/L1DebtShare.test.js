@@ -5,11 +5,13 @@ const { findEvent } = require('@synthetixio/core-js/utils/ethers/events');
 const { parseBalanceMap } = require('@synthetixio/core-js/utils/merkle-tree/parse-balance-tree');
 const { bootstrap } = require('@synthetixio/deployer/utils/tests');
 const initializer = require('../../../../../spartan-council/test/helpers/initializer');
+const { daysToSeconds } = require('@synthetixio/core-js/utils/misc/dates');
+const { getTime, fastForwardTo } = require('@synthetixio/core-js/utils/hardhat/rpc');
 
 const { ethers } = hre;
 
-describe('ElectionModule (debtShareMigrator)', function () {
-  let owner, user;
+describe('ElectionModule (L1 debt share)', function () {
+  let owner, user, DebtShare;
 
   let parsedTree, validRoot, wrongTree, voter;
 
@@ -34,6 +36,11 @@ describe('ElectionModule (debtShareMigrator)', function () {
     [owner, user] = await ethers.getSigners();
   });
 
+  before('deploy debt shares mock', async function () {
+    const factory = await ethers.getContractFactory('DebtShareMock');
+    DebtShare = await factory.deploy();
+  });
+
   describe('when setting a merkle root', () => {
     const { proxyAddress } = bootstrap(initializer);
 
@@ -46,9 +53,34 @@ describe('ElectionModule (debtShareMigrator)', function () {
       );
     });
 
+    before('initialize', async function () {
+      const now = await getTime(ethers.provider);
+      const epochEndDate = now + daysToSeconds(90);
+      const votingPeriodStartDate = epochEndDate - daysToSeconds(7);
+      const nominationPeriodStartDate = votingPeriodStartDate - daysToSeconds(7);
+
+      await ElectionModule.initializeElectionModule(
+        'Spartan Council Token',
+        'SCT',
+        [owner.address],
+        1,
+        nominationPeriodStartDate,
+        votingPeriodStartDate,
+        epochEndDate,
+        DebtShare.address
+      );
+    });
+
+    before('fast forward', async function () {
+      await fastForwardTo(await ElectionModule.getNominationPeriodStartDate(), ethers.provider);
+    });
+
     describe('when attempting to set the merkle root with a non owner signer', () => {
       it('reverts', async function () {
-        await assertRevert(ElectionModule.connect(user).setMerkleRoot(validRoot), 'Unauthorized');
+        await assertRevert(
+          ElectionModule.connect(user).setL1DebtShareMerkleRoot(validRoot, 1),
+          'Unauthorized'
+        );
       });
     });
 
@@ -69,12 +101,12 @@ describe('ElectionModule (debtShareMigrator)', function () {
       let receipt;
 
       before('set merkle root', async () => {
-        const tx = await ElectionModule.connect(owner).setMerkleRoot(validRoot);
+        const tx = await ElectionModule.connect(owner).setL1DebtShareMerkleRoot(validRoot, 1);
         receipt = await tx.wait();
       });
 
       it('emitted a MerkleRootSet event', async function () {
-        const event = findEvent({ receipt, eventName: 'MerkleRootSet' });
+        const event = findEvent({ receipt, eventName: 'L1DebtShareMerkleRootSet' });
 
         assert.ok(event);
         assert.deepEqual(event.args.merkleRoot, validRoot);
@@ -83,7 +115,7 @@ describe('ElectionModule (debtShareMigrator)', function () {
       describe('when attempting to set the merkle root again', () => {
         it('reverts', async function () {
           await assertRevert(
-            ElectionModule.connect(user).setMerkleRoot(wrongTree.merkleRoot),
+            ElectionModule.connect(user).setL1DebtShareMerkleRoot(wrongTree.merkleRoot, 1),
             'Unauthorized'
           );
         });
@@ -119,7 +151,7 @@ describe('ElectionModule (debtShareMigrator)', function () {
         });
 
         it('emitted a DebtShareDeclared event', async function () {
-          const event = findEvent({ receipt, eventName: 'DebtShareDeclared' });
+          const event = findEvent({ receipt, eventName: 'L1DebtShareDeclared' });
 
           assert.ok(event);
           assert.deepEqual(event.args.voter, voter);

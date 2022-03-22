@@ -197,7 +197,7 @@ contract ElectionModule is
     {
         _setL1DebtShareMerkleRoot(merkleRoot, blocknumber);
 
-        emit L1DebtShareMerkleRootSet(merkleRoot, blocknumber, _electionStore().epochIndex);
+        emit L1DebtShareMerkleRootSet(merkleRoot, blocknumber, _electionStore().currentEpochIndex);
     }
 
     /// @notice Allows anyone to self-nominate during the Nomination period
