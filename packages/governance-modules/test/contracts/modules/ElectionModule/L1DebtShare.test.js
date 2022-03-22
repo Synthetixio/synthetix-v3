@@ -71,98 +71,119 @@ describe('ElectionModule (L1 debt share)', function () {
       );
     });
 
-    before('fast forward', async function () {
-      await fastForwardTo(await ElectionModule.getNominationPeriodStartDate(), ethers.provider);
-    });
-
-    describe('when attempting to set the merkle root with a non owner signer', () => {
+    describe('when attempting to set the merkle before time', () => {
       it('reverts', async function () {
         await assertRevert(
-          ElectionModule.connect(user).setL1DebtShareMerkleRoot(validRoot, 1),
-          'Unauthorized'
+          ElectionModule.connect(owner).setL1DebtShareMerkleRoot(validRoot, 1),
+          'NotCallableInCurrentPeriod'
         );
       });
     });
 
-    describe('when attempting to claim and the merkle root is not set', () => {
-      it('reverts', async () => {
-        await assertRevert(
-          ElectionModule.declareL1DebtShare(
-            voter,
-            parsedTree.claims[voter].amount,
-            parsedTree.claims[voter].proof
-          ),
-          'MerkleRootNotSet'
-        );
-      });
-    });
-
-    describe('when the merkle root is set', () => {
-      let receipt;
-
-      before('set merkle root', async () => {
-        const tx = await ElectionModule.connect(owner).setL1DebtShareMerkleRoot(validRoot, 1);
-        receipt = await tx.wait();
+    describe('when moving to nomination phase', () => {
+      before('fast forward', async function () {
+        await fastForwardTo(await ElectionModule.getNominationPeriodStartDate(), ethers.provider);
       });
 
-      it('emitted a MerkleRootSet event', async function () {
-        const event = findEvent({ receipt, eventName: 'L1DebtShareMerkleRootSet' });
-
-        assert.ok(event);
-        assert.deepEqual(event.args.merkleRoot, validRoot);
-      });
-
-      describe('when attempting to set the merkle root again', () => {
+      describe('when attempting to set the merkle root with a non owner signer', () => {
         it('reverts', async function () {
           await assertRevert(
-            ElectionModule.connect(user).setL1DebtShareMerkleRoot(wrongTree.merkleRoot, 1),
+            ElectionModule.connect(user).setL1DebtShareMerkleRoot(validRoot, 1),
             'Unauthorized'
           );
         });
       });
 
-      describe('when attempting to claim with the wrong proof', () => {
+      describe('when attempting to claim and the merkle root is not set', () => {
         it('reverts', async () => {
           await assertRevert(
             ElectionModule.declareL1DebtShare(
               voter,
-              wrongTree.claims[voter].amount,
-              wrongTree.claims[voter].proof
+              parsedTree.claims[voter].amount,
+              parsedTree.claims[voter].proof
             ),
-            'InvalidMerkleProof'
+            'MerkleRootNotSet'
           );
         });
       });
 
-      describe('when retrieving the voter declared debt before declaring it', () => {
-        it('has 0 debt share', async () => {
-          assertBn.equal(await ElectionModule.getL1DebtShare(voter), 0);
-        });
-      });
+      describe('when the merkle root is set', () => {
+        let receipt;
 
-      describe('when a voter has declared their debt shares', () => {
-        before('claim', async () => {
-          const tx = await ElectionModule.declareL1DebtShare(
-            voter,
-            parsedTree.claims[voter].amount,
-            parsedTree.claims[voter].proof
-          );
+        before('set merkle root', async () => {
+          const tx = await ElectionModule.connect(owner).setL1DebtShareMerkleRoot(validRoot, 42);
           receipt = await tx.wait();
         });
 
-        it('emitted a DebtShareDeclared event', async function () {
-          const event = findEvent({ receipt, eventName: 'L1DebtShareDeclared' });
+        it('emitted a MerkleRootSet event', async function () {
+          const event = findEvent({ receipt, eventName: 'L1DebtShareMerkleRootSet' });
 
           assert.ok(event);
-          assert.deepEqual(event.args.voter, voter);
-          assertBn.equal(event.args.debtShare, parsedTree.claims[voter].amount);
+          assert.deepEqual(event.args.merkleRoot, validRoot);
+          assertBn.equal(event.args.blocknumber, 42);
+          assertBn.equal(event.args.epoch, 1);
         });
 
-        it('has the right debt share', async () => {
-          assertBn.equal(
-            await ElectionModule.getL1DebtShare(voter),
-            parsedTree.claims[voter].amount
-          );
+        it('gets the merkle root blocknumber', async function () {
+          assertBn.equal(await ElectionModule.getL1DebtShareMerkleRootBlocknumber(), 42);
+        });
+
+        it('gets the merkle root', async function () {
+          assert.deepEqual(await ElectionModule.getL1DebtShareMerkleRoot(), validRoot);
+        });
+
+        describe('when attempting to set the merkle root again', () => {
+          it('reverts', async function () {
+            await assertRevert(
+              ElectionModule.connect(user).setL1DebtShareMerkleRoot(wrongTree.merkleRoot, 1),
+              'Unauthorized'
+            );
+          });
+        });
+
+        describe('when attempting to claim with the wrong proof', () => {
+          it('reverts', async () => {
+            await assertRevert(
+              ElectionModule.declareL1DebtShare(
+                voter,
+                wrongTree.claims[voter].amount,
+                wrongTree.claims[voter].proof
+              ),
+              'InvalidMerkleProof'
+            );
+          });
+        });
+
+        describe('when retrieving the voter declared debt before declaring it', () => {
+          it('has 0 debt share', async () => {
+            assertBn.equal(await ElectionModule.getL1DebtShare(voter), 0);
+          });
+        });
+
+        describe('when a voter has declared their debt shares', () => {
+          before('declare L1 debt share', async () => {
+            const tx = await ElectionModule.declareL1DebtShare(
+              voter,
+              parsedTree.claims[voter].amount,
+              parsedTree.claims[voter].proof
+            );
+            receipt = await tx.wait();
+          });
+
+          it('emitted a DebtShareDeclared event', async function () {
+            const event = findEvent({ receipt, eventName: 'L1DebtShareDeclared' });
+
+            assert.ok(event);
+            assert.deepEqual(event.args.voter, voter);
+            assertBn.equal(event.args.debtShare, parsedTree.claims[voter].amount);
+          });
+
+          it('has the right debt share', async () => {
+            assertBn.equal(
+              await ElectionModule.getL1DebtShare(voter),
+              parsedTree.claims[voter].amount
+            );
+          });
         });
       });
     });
