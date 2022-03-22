@@ -188,13 +188,16 @@ contract ElectionModule is
         emit DebtShareContractSet(newDebtShareContractAddress);
     }
 
-    // TODO renombrar
-    // TODO agregar blocknumber de cuando fue tomado el snapshot (a la func, storage + getter y evento)
-    function setMerkleRoot(bytes32 merkleRoot) external override onlyOwner {
-        _setMerkleRoot(merkleRoot);
+    /// @notice Sets the L1 debt shares merkle tree root and the blocknumber used to build it
+    function setL1DebtShareMerkleRoot(bytes32 merkleRoot, uint blocknumber)
+        external
+        override
+        onlyOwner
+        onlyInPeriod(ElectionPeriod.Nomination)
+    {
+        _setL1DebtShareMerkleRoot(merkleRoot, blocknumber);
 
-        //TODO agregar la epoch
-        emit MerkleRootSet(merkleRoot);
+        emit L1DebtShareMerkleRootSet(merkleRoot, blocknumber, _electionStore().epochIndex);
     }
 
     /// @notice Allows anyone to self-nominate during the Nomination period
@@ -251,7 +254,7 @@ contract ElectionModule is
     ) external override {
         _declareL1DebtShare(voter, debtShare, merkleProof);
 
-        emit DebtShareDeclared(voter, debtShare);
+        emit L1DebtShareDeclared(voter, debtShare);
     }
 
     /// @notice Processes ballots in batches during the Evaluation period (after epochEndDate)
@@ -403,6 +406,16 @@ contract ElectionModule is
     /// @notice Returns the list of candidates that a particular ballot has
     function getBallotCandidates(bytes32 ballotId) external view override returns (address[] memory) {
         return _getBallot(ballotId).candidates;
+    }
+
+    /// @notice Returns the L1 debt share merkle root set for the current epoch
+    function getL1DebtShareMerkleRoot() public view override returns (bytes32) {
+        return _getCurrentElection().merkleRoot;
+    }
+
+    /// @notice Returns the blocknumber used to build the L1 debt shares merkle tree for the current epoch
+    function getL1DebtShareMerkleRootBlocknumber() public view override returns (uint) {
+        return _getCurrentElection().merkleRootBlocknumber;
     }
 
     /// @notice Returns the declared L1 debt share for voter

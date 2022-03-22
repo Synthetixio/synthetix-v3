@@ -55,7 +55,7 @@ interface IElectionModule {
 
     function setDebtShareContract(address newDebtShareContractAddress) external;
 
-    function setMerkleRoot(bytes32 merkleRoot) external;
+    function setL1DebtShareMerkleRoot(bytes32 merkleRoot, uint blocknumber) external;
 
     // ---------------------------------------
     // User write functions
@@ -139,6 +139,10 @@ interface IElectionModule {
     function getBallotVotes(bytes32 ballotId) external view returns (uint);
 
     function getBallotCandidates(bytes32 ballotId) external view returns (address[] memory);
+
+    function getL1DebtShareMerkleRoot() external view returns (bytes32);
+
+    function getL1DebtShareMerkleRootBlocknumber() external view returns (uint);
 
     function getL1DebtShare(address account) external view returns (uint);
 

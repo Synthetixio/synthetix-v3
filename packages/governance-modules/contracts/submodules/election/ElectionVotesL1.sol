@@ -5,8 +5,8 @@ import "@synthetixio/core-contracts/contracts/utils/MerkleProof.sol";
 import "./ElectionBase.sol";
 
 /// @dev Implements merkle-tree migration/declaration of debt shares on L1
-contract ElectionDebtShareMigrator is ElectionBase {
-    function _setMerkleRoot(bytes32 merkleRoot) internal {
+contract ElectionVotesL1 is ElectionBase {
+    function _setL1DebtShareMerkleRoot(bytes32 merkleRoot, uint blocknumber) internal {
         ElectionData storage election = _getCurrentElection();
 
         // store.currentEpochIndex = index;
@@ -15,6 +15,7 @@ contract ElectionDebtShareMigrator is ElectionBase {
         }
 
         election.merkleRoot = merkleRoot;
+        election.merkleRootBlocknumber = blocknumber;
     }
 
     function _declareL1DebtShare(
@@ -41,5 +42,9 @@ contract ElectionDebtShareMigrator is ElectionBase {
 
     function _getL1DebtShare(address voter) internal view returns (uint) {
         return _getCurrentElection().l1DebtShares[voter];
+    }
+
+    function _getVotePowerL1(address voter) internal view returns (uint) {
+        return _getL1DebtShare(voter);
     }
 }
