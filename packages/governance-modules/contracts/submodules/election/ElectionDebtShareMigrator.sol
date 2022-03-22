@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 import "@synthetixio/core-contracts/contracts/utils/MerkleProof.sol";
 import "./ElectionBase.sol";
 
-/// @dev Defines core vote-counting / ballot-processing functionality in ElectionModule.evaluate()
+/// @dev Implements merkle-tree migration/declaration of debt shares on L1
 contract ElectionDebtShareMigrator is ElectionBase {
     function _setMerkleRoot(bytes32 merkleRoot) internal {
         ElectionData storage election = _getCurrentElection();
