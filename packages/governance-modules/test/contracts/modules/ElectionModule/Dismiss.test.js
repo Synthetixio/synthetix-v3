@@ -249,7 +249,7 @@ describe('ElectionModule (dismiss)', () => {
         assert.deepEqual(event.args.members, [user1.address, user2.address]);
       });
 
-      it('did not emitted an EmergencyElectionStarted event', async function () {
+      it('did not emit an EmergencyElectionStarted event', async function () {
         const event = findEvent({ receipt, eventName: 'EmergencyElectionStarted' });
 
         assert.equal(event, undefined);
@@ -317,7 +317,7 @@ describe('ElectionModule (dismiss)', () => {
         assert.deepEqual(event.args.members, [user1.address, user2.address]);
       });
 
-      it('did not emitted an EmergencyElectionStarted event', async function () {
+      it('did not emit an EmergencyElectionStarted event', async function () {
         const event = findEvent({ receipt, eventName: 'EmergencyElectionStarted' });
 
         assert.equal(event, undefined);

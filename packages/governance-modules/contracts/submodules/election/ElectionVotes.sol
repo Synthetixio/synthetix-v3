@@ -81,9 +81,6 @@ abstract contract ElectionVotes is ElectionBase {
         ElectionStore storage store = _electionStore();
 
         IDebtShare debtShareContract = store.debtShareContract;
-        if (address(debtShareContract) == address(0)) {
-            revert DebtShareContractNotSet();
-        }
 
         // Skip if we already have a debt share snapshot for this epoch
         uint currentEpochIndex = _electionStore().currentEpochIndex;
@@ -102,15 +99,21 @@ abstract contract ElectionVotes is ElectionBase {
     }
 
     function _setDebtShareContract(address newDebtShareContractAddress) internal {
+        ElectionStore storage store = _electionStore();
+
         if (newDebtShareContractAddress == address(0)) {
             revert AddressError.ZeroAddress();
+        }
+
+        if (newDebtShareContractAddress == address(store.debtShareContract)) {
+            revert ChangeError.NoChange();
         }
 
         if (!AddressUtil.isContract(newDebtShareContractAddress)) {
             revert AddressError.NotAContract(newDebtShareContractAddress);
         }
 
-        _electionStore().debtShareContract = IDebtShare(newDebtShareContractAddress);
+        store.debtShareContract = IDebtShare(newDebtShareContractAddress);
     }
 
     function _getVotePower(address voter) internal view returns (uint) {

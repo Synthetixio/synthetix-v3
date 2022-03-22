@@ -39,7 +39,6 @@ contract ElectionBase is ElectionStorage, InitializableMixin {
     error AlreadyACouncilMember();
     error NotACouncilMember();
     error InvalidMinimumActiveMembers();
-    error DebtShareContractNotSet();
 
     // ---------------------------------------
     // Events

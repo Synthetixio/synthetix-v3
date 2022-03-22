@@ -33,6 +33,8 @@ contract ElectionModule is
     ) external override onlyOwner onlyIfNotInitialized {
         ElectionStore storage store = _electionStore();
 
+        _setDebtShareContract(debtShareContract);
+
         uint8 seatCount = uint8(firstCouncil.length);
         if (minimumActiveMembers == 0 || minimumActiveMembers > seatCount) {
             revert InvalidMinimumActiveMembers();
@@ -55,8 +57,6 @@ contract ElectionModule is
 
         _createCouncilToken(councilTokenName, councilTokenSymbol);
         _addCouncilMembers(firstCouncil);
-
-        _setDebtShareContract(debtShareContract);
 
         store.initialized = true;
 

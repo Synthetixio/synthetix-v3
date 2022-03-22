@@ -17,10 +17,14 @@ const assertDatesAreClose = (dateA, dateB) => {
 
 async function runElection(ElectionModule, owner, members) {
   // Configure
-  await ElectionModule.connect(owner).setNextEpochSeatCount(members.length);
+  if ((await ElectionModule.getNextEpochSeatCount()) !== members.length) {
+    await ElectionModule.connect(owner).setNextEpochSeatCount(members.length);
+  }
 
   // Nominate
-  await fastForwardTo(await ElectionModule.getNominationPeriodStartDate(), hre.ethers.provider);
+  if ((await ElectionModule.getCurrentPeriod()).toNumber() === ElectionPeriod.Administration) {
+    await fastForwardTo(await ElectionModule.getNominationPeriodStartDate(), hre.ethers.provider);
+  }
   for (let member of members) {
     await ElectionModule.connect(member).nominate();
   }
