@@ -1,14 +1,9 @@
 const { ethers } = hre;
 const assertBn = require('@synthetixio/core-js/utils/assertions/assert-bignumber');
+const { bnSqrt } = require('@synthetixio/core-js/utils/ethers/bignumber');
 
-describe.only('MathUtil', () => {
+describe('MathUtil', () => {
   let MathUtil;
-
-  let user;
-
-  before('identify signers', async () => {
-    [user] = await ethers.getSigners();
-  });
 
   before('deploy the contract', async () => {
     const factory = await ethers.getContractFactory('MathUtilMock');
@@ -16,25 +11,8 @@ describe.only('MathUtil', () => {
   });
 
   describe('sqrt(x)', () => {
-    const ONE = ethers.BigNumber.from(1);
-    const TWO = ethers.BigNumber.from(2);
-
     function sqrt(value) {
-      return Math.floor(Math.sqrt(value))
-    }
-
-    function bnSqrt(value) {
-        x = ethers.BigNumber.from(value);
-
-        let z = x.add(ONE).div(TWO);
-        let y = x;
-
-        while (z.sub(y).isNegative()) {
-            y = z;
-            z = x.div(z).add(z).div(TWO);
-        }
-
-        return y;
+      return Math.floor(Math.sqrt(value));
     }
 
     async function assertSqrt(value) {

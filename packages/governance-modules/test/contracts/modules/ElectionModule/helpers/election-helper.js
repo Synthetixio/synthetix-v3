@@ -1,5 +1,7 @@
+const ethers = require('ethers');
 const assert = require('assert/strict');
 const { fastForwardTo } = require('@synthetixio/core-js/utils/hardhat/rpc');
+const { bnSqrt, BN_TWO } = require('@synthetixio/core-js/utils/ethers/bignumber');
 
 const ElectionPeriod = {
   Administration: 0,
@@ -14,6 +16,15 @@ const assertDatesAreClose = (dateA, dateB) => {
 
   return Math.abs(numberDateB - numberDateA) <= 1;
 };
+
+async function expectedVotePowerForDebtSharePeriodId(debtSharePeriodId) {
+  const debtSharePeriodIdBN = ethers.BigNumber.from(debtSharePeriodId);
+
+  return bnSqrt(
+    // See DebtShareMock.sol L19
+    debtSharePeriodIdBN.add(BN_TWO).pow(ethers.BigNumber.from(18))
+  );
+}
 
 async function runElection(ElectionModule, owner, members) {
   // Configure
@@ -55,4 +66,5 @@ module.exports = {
   ElectionPeriod,
   assertDatesAreClose,
   runElection,
+  expectedVotePowerForDebtSharePeriodId,
 };

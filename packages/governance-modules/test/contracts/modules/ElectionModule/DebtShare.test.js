@@ -4,7 +4,10 @@ const assertBn = require('@synthetixio/core-js/utils/assertions/assert-bignumber
 const { daysToSeconds } = require('@synthetixio/core-js/utils/misc/dates');
 const { bootstrap } = require('@synthetixio/deployer/utils/tests');
 const initializer = require('../../../helpers/initializer');
-const { ElectionPeriod } = require('./helpers/election-helper');
+const {
+  ElectionPeriod,
+  expectedVotePowerForDebtSharePeriodId,
+} = require('./helpers/election-helper');
 const { findEvent } = require('@synthetixio/core-js/utils/ethers/events');
 const { runElection } = require('./helpers/election-helper');
 const { getTime, fastForwardTo } = require('@synthetixio/core-js/utils/hardhat/rpc');
@@ -83,8 +86,11 @@ describe('ElectionModule (debt share)', () => {
           assertBn.equal(await ElectionModule.getEpochIndex(), 1);
         });
 
-        it('shows that user vote power is 0', async function () {
-          assertBn.equal(await ElectionModule.getVotePower(user1.address), 0);
+        it('shows that has the expected vote power', async function () {
+          assertBn.equal(
+            await ElectionModule.getVotePower(user1.address),
+            await expectedVotePowerForDebtSharePeriodId(0)
+          );
         });
 
         describe('on the first nomination', function () {
@@ -103,8 +109,11 @@ describe('ElectionModule (debt share)', () => {
             assertBn.equal(await DebtShare.currentPeriodId(), 1);
           });
 
-          it('shows that user vote power is 1', async function () {
-            assertBn.equal(await ElectionModule.getVotePower(user1.address), 1);
+          it('shows that has the expected vote power', async function () {
+            assertBn.equal(
+              await ElectionModule.getVotePower(user1.address),
+              await expectedVotePowerForDebtSharePeriodId(1)
+            );
           });
 
           describe('upon further nominations', function () {
@@ -166,8 +175,11 @@ describe('ElectionModule (debt share)', () => {
                     assertBn.equal(await DebtShare.currentPeriodId(), 2);
                   });
 
-                  it('shows that user vote power is 2', async function () {
-                    assertBn.equal(await ElectionModule.getVotePower(user1.address), 2);
+                  it('shows that has the expected vote power', async function () {
+                    assertBn.equal(
+                      await ElectionModule.getVotePower(user1.address),
+                      await expectedVotePowerForDebtSharePeriodId(2)
+                    );
                   });
 
                   describe('upon further nominations', function () {

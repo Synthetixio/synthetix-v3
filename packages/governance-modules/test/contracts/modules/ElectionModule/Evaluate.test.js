@@ -6,7 +6,10 @@ const { getTime, fastForwardTo } = require('@synthetixio/core-js/utils/hardhat/r
 const { daysToSeconds } = require('@synthetixio/core-js/utils/misc/dates');
 const { bootstrap } = require('@synthetixio/deployer/utils/tests');
 const initializer = require('../../../helpers/initializer');
-const { ElectionPeriod } = require('./helpers/election-helper');
+const {
+  ElectionPeriod,
+  expectedVotePowerForDebtSharePeriodId,
+} = require('./helpers/election-helper');
 const { findEvent } = require('@synthetixio/core-js/utils/ethers/events');
 
 describe('ElectionModule (evaluate)', () => {
@@ -117,9 +120,11 @@ describe('ElectionModule (evaluate)', () => {
         });
 
         it('shows that ballots were registered', async function () {
-          assertBn.equal(await ElectionModule.getBallotVotes(ballot1.id), 4);
-          assertBn.equal(await ElectionModule.getBallotVotes(ballot2.id), 1);
-          assertBn.equal(await ElectionModule.getBallotVotes(ballot3.id), 5);
+          const votePowerUnit = await expectedVotePowerForDebtSharePeriodId(1);
+
+          assertBn.equal(await ElectionModule.getBallotVotes(ballot1.id), votePowerUnit.mul(4));
+          assertBn.equal(await ElectionModule.getBallotVotes(ballot2.id), votePowerUnit.mul(1));
+          assertBn.equal(await ElectionModule.getBallotVotes(ballot3.id), votePowerUnit.mul(5));
         });
 
         describe('when entering the evaluation period', function () {
@@ -160,8 +165,16 @@ describe('ElectionModule (evaluate)', () => {
               });
 
               it('shows that some candidate votes where processed', async function () {
-                assertBn.equal(await ElectionModule.getCandidateVotes(candidate1.address), 4);
-                assertBn.equal(await ElectionModule.getCandidateVotes(candidate2.address), 4);
+                const votePowerUnit = await expectedVotePowerForDebtSharePeriodId(1);
+
+                assertBn.equal(
+                  await ElectionModule.getCandidateVotes(candidate1.address),
+                  votePowerUnit.mul(4)
+                );
+                assertBn.equal(
+                  await ElectionModule.getCandidateVotes(candidate2.address),
+                  votePowerUnit.mul(4)
+                );
                 assertBn.equal(await ElectionModule.getCandidateVotes(candidate3.address), 0);
                 assertBn.equal(await ElectionModule.getCandidateVotes(candidate4.address), 0);
                 assertBn.equal(await ElectionModule.getCandidateVotes(candidate5.address), 0);
@@ -186,11 +199,25 @@ describe('ElectionModule (evaluate)', () => {
                 });
 
                 it('shows that candidate votes where processed', async function () {
-                  assertBn.equal(await ElectionModule.getCandidateVotes(candidate1.address), 4);
-                  assertBn.equal(await ElectionModule.getCandidateVotes(candidate2.address), 4);
-                  assertBn.equal(await ElectionModule.getCandidateVotes(candidate3.address), 1);
+                  const votePowerUnit = await expectedVotePowerForDebtSharePeriodId(1);
+
+                  assertBn.equal(
+                    await ElectionModule.getCandidateVotes(candidate1.address),
+                    votePowerUnit.mul(4)
+                  );
+                  assertBn.equal(
+                    await ElectionModule.getCandidateVotes(candidate2.address),
+                    votePowerUnit.mul(4)
+                  );
+                  assertBn.equal(
+                    await ElectionModule.getCandidateVotes(candidate3.address),
+                    votePowerUnit.mul(1)
+                  );
                   assertBn.equal(await ElectionModule.getCandidateVotes(candidate4.address), 0);
-                  assertBn.equal(await ElectionModule.getCandidateVotes(candidate5.address), 5);
+                  assertBn.equal(
+                    await ElectionModule.getCandidateVotes(candidate5.address),
+                    votePowerUnit.mul(5)
+                  );
                 });
 
                 it('shows the election winners', async function () {

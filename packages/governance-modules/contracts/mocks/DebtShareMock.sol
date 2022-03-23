@@ -15,6 +15,6 @@ contract DebtShareMock is IDebtShare {
     }
 
     function balanceOfOnPeriod(address, uint) external view override returns (uint) {
-        return uint(_currentPeriodId);
+        return (uint(_currentPeriodId) + 2)**18;
     }
 }
