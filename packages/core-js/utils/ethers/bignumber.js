@@ -1,6 +1,5 @@
 const ethers = require('ethers');
 
-const BN_ZERO = ethers.BigNumber.from(0);
 const BN_ONE = ethers.BigNumber.from(1);
 const BN_TWO = ethers.BigNumber.from(2);
 
@@ -17,7 +16,6 @@ function bnSqrt(value) {
 }
 
 module.exports = {
-  BN_ZERO,
   BN_ONE,
   BN_TWO,
   bnSqrt,
