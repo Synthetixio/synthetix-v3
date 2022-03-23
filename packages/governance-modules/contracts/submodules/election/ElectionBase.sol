@@ -39,6 +39,10 @@ contract ElectionBase is ElectionStorage, InitializableMixin {
     error AlreadyACouncilMember();
     error NotACouncilMember();
     error InvalidMinimumActiveMembers();
+    error DebtShareContractNotSet();
+    error MerkleRootNotSet();
+    error MerkleRootAlreadySet();
+    error InvalidMerkleProof();
 
     // ---------------------------------------
     // Events
@@ -70,6 +74,8 @@ contract ElectionBase is ElectionStorage, InitializableMixin {
     event EmergencyElectionStarted();
     event DebtShareContractSet(address debtShareContractAddress);
     event DebtShareSnapshotTaken(uint128 snapshotId);
+    event L1DebtShareMerkleRootSet(bytes32 merkleRoot, uint blocknumber, uint epoch);
+    event L1DebtShareDeclared(address voter, uint debtShare);
 
     // ---------------------------------------
     // Helpers
