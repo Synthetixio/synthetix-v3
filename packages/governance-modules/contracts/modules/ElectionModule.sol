@@ -236,9 +236,11 @@ contract ElectionModule is
         bytes32 ballotId;
 
         if (hasVoted(msg.sender)) {
-            ballotId = _withdrawVote(msg.sender, votePower);
+            uint castedVotePower = _getCastedVotePower(msg.sender);
 
-            emit VoteWithdrawn(msg.sender, ballotId, votePower);
+            ballotId = _withdrawVote(msg.sender, castedVotePower);
+
+            emit VoteWithdrawn(msg.sender, ballotId, castedVotePower);
         }
 
         ballotId = _recordVote(msg.sender, votePower, candidates);

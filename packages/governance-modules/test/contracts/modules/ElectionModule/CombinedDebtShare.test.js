@@ -229,8 +229,7 @@ describe('ElectionModule (L1 + L2 debt share)', function () {
           );
         });
 
-        // Skipped until the #866 is fixed
-        describe.skip('when re-casting vote declaring L1 debt', () => {
+        describe('when re-casting vote declaring L1 debt', () => {
           before('declare L1 debt share', async () => {
             const tx = await ElectionModule.declareL1DebtShare(
               voter,
