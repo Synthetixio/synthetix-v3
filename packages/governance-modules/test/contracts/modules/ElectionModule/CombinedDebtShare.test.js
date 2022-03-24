@@ -1,4 +1,5 @@
-const { ethers } = hre;
+const assert = require('assert/strict');
+const assertRevert = require('@synthetixio/core-js/utils/assertions/assert-revert');
 const assertBn = require('@synthetixio/core-js/utils/assertions/assert-bignumber');
 const { parseBalanceMap } = require('@synthetixio/core-js/utils/merkle-tree/parse-balance-tree');
 const { bootstrap } = require('@synthetixio/deployer/utils/tests');
@@ -9,6 +10,7 @@ const {
   expectedVotePowerForDebtSharePeriodId,
   expectedVotePowerForSpecificDebtShare,
 } = require('./helpers/election-helper');
+const { ethers } = hre;
 
 describe('ElectionModule (L1 + L2 debt share)', function () {
   const { proxyAddress } = bootstrap(initializer);
