@@ -1,4 +1,4 @@
-require('dotenv').config();
+require('dotenv/config');
 
 require('hardhat-contract-sizer');
 require('solidity-coverage');
