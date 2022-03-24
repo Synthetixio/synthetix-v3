@@ -90,6 +90,8 @@ contract ElectionStorage {
         uint votes;
         // List of candidates in this ballot
         address[] candidates;
+        // Vote power added per voter
+        mapping(address => uint) votesByUser;
     }
 
     function _electionSettings() internal view returns (ElectionSettings storage) {

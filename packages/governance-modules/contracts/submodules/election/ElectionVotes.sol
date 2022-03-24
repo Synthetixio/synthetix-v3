@@ -63,6 +63,7 @@ abstract contract ElectionVotes is ElectionBase, ElectionVotesL1, ElectionVotesL
         }
 
         ballot.votes += votePower;
+        ballot.votesByUser[voter] = votePower;
         election.ballotIdsByAddress[voter] = ballotId;
 
         return ballotId;
@@ -75,9 +76,19 @@ abstract contract ElectionVotes is ElectionBase, ElectionVotesL1, ElectionVotesL
         BallotData storage ballot = _getBallot(ballotId);
 
         ballot.votes -= votePower;
+        ballot.votesByUser[voter] = 0;
         election.ballotIdsByAddress[voter] = bytes32(0);
 
         return ballotId;
+    }
+
+    function _getCastedVotePower(address voter) internal virtual returns (uint votePower) {
+        ElectionData storage election = _getCurrentElection();
+
+        bytes32 ballotId = election.ballotIdsByAddress[voter];
+        BallotData storage ballot = _getBallot(ballotId);
+
+        return ballot.votesByUser[voter];
     }
 
     function _getVotePower(address voter) internal view returns (uint) {

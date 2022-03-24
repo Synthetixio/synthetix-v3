@@ -26,6 +26,10 @@ async function expectedVotePowerForDebtSharePeriodId(debtSharePeriodId) {
   );
 }
 
+async function expectedVotePowerForSpecificDebtShare(debtShare) {
+  return bnSqrt(ethers.BigNumber.from(debtShare));
+}
+
 async function runElection(ElectionModule, owner, members) {
   // Configure
   if ((await ElectionModule.getNextEpochSeatCount()) !== members.length) {
@@ -67,4 +71,5 @@ module.exports = {
   assertDatesAreClose,
   runElection,
   expectedVotePowerForDebtSharePeriodId,
+  expectedVotePowerForSpecificDebtShare,
 };
