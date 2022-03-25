@@ -20,5 +20,8 @@
     "hardhat": "2.6.8",
     "hardhat-contract-sizer": "2.1.1",
     "solidity-coverage": "0.7.17"
+  },
+  "dependencies": {
+    "import-modules": "3.1.0"
   }
 }
