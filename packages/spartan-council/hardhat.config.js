@@ -1,5 +1,3 @@
-const importModules = require('import-modules');
-
 require('dotenv/config');
 
 require('hardhat-contract-sizer');
@@ -8,8 +6,11 @@ require('@nomiclabs/hardhat-ethers');
 require('@synthetixio/deployer');
 require('@synthetixio/cli');
 
-importModules('./tasks');
+require('./tasks/test');
 
+/**
+ * @type import('hardhat/config').HardhatUserConfig
+ */
 const config = {
   solidity: {
     version: '0.8.11',
