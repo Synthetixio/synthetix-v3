@@ -1,9 +1,11 @@
+const assert = require('assert/strict');
 const { ethers } = require('hardhat');
 const synthetix = require('synthetix');
 const assertBn = require('@synthetixio/core-js/utils/assertions/assert-bignumber');
 const assertRevert = require('@synthetixio/core-js/utils/assertions/assert-revert');
 const { bootstrap } = require('@synthetixio/deployer/utils/tests');
 const { getTime, fastForwardTo } = require('@synthetixio/core-js/utils/hardhat/rpc');
+const { findEvent } = require('@synthetixio/core-js/utils/ethers/events');
 const { daysToSeconds } = require('@synthetixio/core-js/utils/misc/dates');
 const initializer = require('../helpers/initializer');
 
@@ -117,6 +119,8 @@ describe('ElectionModule (cast)', function () {
         });
 
         describe('when issuing valid votes', function () {
+          let receipt;
+
           before('form ballots', async function () {
             ballot1 = {
               candidates: [candidate1.address],
