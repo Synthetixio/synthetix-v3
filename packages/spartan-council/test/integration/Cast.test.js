@@ -9,8 +9,6 @@ const { findEvent } = require('@synthetixio/core-js/utils/ethers/events');
 const { daysToSeconds } = require('@synthetixio/core-js/utils/misc/dates');
 const initializer = require('../helpers/initializer');
 
-const { SynthetixDebtShare } = synthetix.getTarget({ network: 'mainnet-ovm' });
-
 const ElectionPeriod = {
   Administration: 0,
   Nomination: 1,
@@ -21,7 +19,7 @@ const ElectionPeriod = {
 describe('ElectionModule (cast)', function () {
   const { proxyAddress } = bootstrap(initializer);
 
-  let ElectionModule;
+  let ElectionModule, SynthetixDebtShare;
 
   let candidate1, candidate2, candidate3, candidate4;
   let voter1, voter2, voter3, voter4, voter5;
@@ -42,7 +40,29 @@ describe('ElectionModule (cast)', function () {
     );
   });
 
-  before('initialize', async function () {
+  before('initialize SynthetixDebtShare', async function () {
+    const { address } = synthetix.getTarget({ network: 'mainnet-ovm' }).SynthetixDebtShare;
+    const { abi } = synthetix.getSource({ network: 'mainnet-ovm' }).SynthetixDebtShare;
+
+    SynthetixDebtShare = await ethers.getContractAt(abi, address);
+
+    const ownerAddress = await SynthetixDebtShare.owner();
+    const owner = await ethers.getSigner(ownerAddress);
+
+    await hre.network.provider.request({
+      method: 'hardhat_impersonateAccount',
+      params: [ownerAddress],
+    });
+
+    await hre.network.provider.request({
+      method: 'hardhat_setBalance',
+      params: [ownerAddress, '0x10000000000000000000000'],
+    });
+
+    await SynthetixDebtShare.connect(owner).addAuthorizedToSnapshot(proxyAddress());
+  });
+
+  before('initialize ElectionModule', async function () {
     const now = await getTime(ethers.provider);
     const epochEndDate = now + daysToSeconds(90);
     const votingPeriodStartDate = epochEndDate - daysToSeconds(7);
