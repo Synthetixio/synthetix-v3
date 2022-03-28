@@ -1,4 +1,4 @@
-require('dotenv').config();
+require('dotenv/config');
 
 require('hardhat-contract-sizer');
 require('solidity-coverage');
@@ -6,7 +6,12 @@ require('@nomiclabs/hardhat-ethers');
 require('@synthetixio/deployer');
 require('@synthetixio/cli');
 
-module.exports = {
+require('./tasks/test');
+
+/**
+ * @type import('hardhat/config').HardhatUserConfig
+ */
+const config = {
   solidity: {
     version: '0.8.11',
     settings: {
@@ -32,3 +37,14 @@ module.exports = {
     strict: true,
   },
 };
+
+if (process.env.FORK_PROVIDER_URL) {
+  config.networks.hardhat = {
+    forking: {
+      url: process.env.FORK_PROVIDER_URL,
+      blockNumber: 4838445, // 2022-03-25
+    },
+  };
+}
+
+module.exports = config;
