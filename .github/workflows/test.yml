@@ -72,6 +72,8 @@ jobs:
 
   test-integration:
     runs-on: ubuntu-latest
+    env:
+      FORK_PROVIDER_URL: ${{ env.FORK_PROVIDER_URL }}
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v2
