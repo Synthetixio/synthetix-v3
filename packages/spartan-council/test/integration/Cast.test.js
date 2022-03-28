@@ -30,7 +30,15 @@ describe('ElectionModule (cast)', function () {
     const users = await ethers.getSigners();
 
     [candidate1, candidate2, candidate3, candidate4] = users;
-    [, , , , voter1, voter2, voter3, voter4, voter5] = users;
+
+    // Random addresses with real debt
+    [voter1, voter2, voter3, voter4, voter5] = await Promise.all([
+      ethers.getSigner('0x0a653bd08E2B0A80d1D212d33032953Db8298efd'),
+      ethers.getSigner('0x1d3666a6B38A3B7eb22a98f62B2E52A44890450F'),
+      ethers.getSigner('0x215B67D707cEd250c3803a19348E9C565E42d7A3'),
+      ethers.getSigner('0x2ce5f9f52C1eec9a1183f91139C59b485Ff39dAd'),
+      ethers.getSigner('0x391Da6221fde9C73472F0cF6CbDB280359CFb32F'),
+    ]);
   });
 
   before('identify modules', async () => {
@@ -133,9 +141,15 @@ describe('ElectionModule (cast)', function () {
         });
 
         it('can retrieve user vote power', async function () {
-          assertBn.equal(await ElectionModule.getVotePower(voter1.address), 1);
-          assertBn.equal(await ElectionModule.getVotePower(voter2.address), 1);
-          assertBn.equal(await ElectionModule.getVotePower(voter3.address), 1);
+          const debts = await Promise.all([
+            ElectionModule.getVotePower(voter1.address),
+            ElectionModule.getVotePower(voter2.address),
+            ElectionModule.getVotePower(voter3.address),
+          ]);
+
+          assertBn.equal(debts[0], ethers.BigNumber.from('127506055884648544164502'));
+          assertBn.equal(debts[1], ethers.BigNumber.from('144460521479569515200508'));
+          assertBn.equal(debts[2], ethers.BigNumber.from('122875067482594009777896'));
         });
 
         describe('when issuing valid votes', function () {
