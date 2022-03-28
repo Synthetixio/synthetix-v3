@@ -26,6 +26,22 @@ describe('ElectionModule (cast)', function () {
 
   let ballot1, ballot2, ballot3;
 
+  function fundSignerWallet(signer) {
+    return hre.network.provider.request({
+      method: 'hardhat_setBalance',
+      params: [signer.address, '0x10000000000000000000000'],
+    });
+  }
+
+  async function impersonateAndCast(signer, ...args) {
+    await hre.network.provider.request({
+      method: 'hardhat_impersonateAccount',
+      params: [signer.address],
+    });
+
+    return ElectionModule.connect(signer).cast(...args);
+  }
+
   before('identify signers', async () => {
     const users = await ethers.getSigners();
 
@@ -41,7 +57,17 @@ describe('ElectionModule (cast)', function () {
     ]);
   });
 
-  before('identify modules', async () => {
+  before('give funds to voters', async function () {
+    await Promise.all([
+      fundSignerWallet(voter1),
+      fundSignerWallet(voter2),
+      fundSignerWallet(voter3),
+      fundSignerWallet(voter4),
+      fundSignerWallet(voter5),
+    ]);
+  });
+
+  before('identify modules', async function () {
     ElectionModule = await ethers.getContractAt(
       'contracts/modules/ElectionModule.sol:ElectionModule',
       proxyAddress()
@@ -62,10 +88,7 @@ describe('ElectionModule (cast)', function () {
       params: [ownerAddress],
     });
 
-    await hre.network.provider.request({
-      method: 'hardhat_setBalance',
-      params: [ownerAddress, '0x10000000000000000000000'],
-    });
+    await fundSignerWallet(owner);
 
     await SynthetixDebtShare.connect(owner).addAuthorizedToSnapshot(proxyAddress());
   });
@@ -117,14 +140,18 @@ describe('ElectionModule (cast)', function () {
         describe('when issuing invalid votes', function () {
           describe('when voting with zero candidates', function () {
             it('reverts', async function () {
-              await assertRevert(ElectionModule.cast([]), 'NoCandidates');
+              await assertRevert(impersonateAndCast(voter1, []), 'NoCandidates');
             });
           });
 
           describe('when voting candidates that are not nominated', function () {
             it('reverts', async function () {
               await assertRevert(
-                ElectionModule.cast([candidate1.address, candidate2.address, voter1.address]),
+                impersonateAndCast(voter1, [
+                  candidate1.address,
+                  candidate2.address,
+                  voter1.address,
+                ]),
                 'NotNominated'
               );
             });
@@ -133,7 +160,11 @@ describe('ElectionModule (cast)', function () {
           describe('when voting duplicate candidates', function () {
             it('reverts', async function () {
               await assertRevert(
-                ElectionModule.cast([candidate1.address, candidate2.address, candidate1.address]),
+                impersonateAndCast(voter1, [
+                  candidate1.address,
+                  candidate2.address,
+                  candidate1.address,
+                ]),
                 'DuplicateCandidates'
               );
             });
@@ -171,14 +202,14 @@ describe('ElectionModule (cast)', function () {
           });
 
           before('vote', async function () {
-            await ElectionModule.connect(voter1).cast(ballot1.candidates);
-            await ElectionModule.connect(voter2).cast(ballot2.candidates);
-            await ElectionModule.connect(voter3).cast(ballot1.candidates);
-            await ElectionModule.connect(voter4).cast(ballot1.candidates);
+            await impersonateAndCast(voter1, ballot1.candidates);
+            await impersonateAndCast(voter2, ballot2.candidates);
+            await impersonateAndCast(voter3, ballot1.candidates);
+            await impersonateAndCast(voter4, ballot1.candidates);
           });
 
           before('vote and record receipt', async function () {
-            const tx = await ElectionModule.connect(voter5).cast(ballot2.candidates);
+            const tx = await impersonateAndCast(voter5, ballot2.candidates);
             receipt = await tx.wait();
           });
 
@@ -188,7 +219,7 @@ describe('ElectionModule (cast)', function () {
             assert.ok(event);
             assertBn.equal(event.args.voter, voter5.address);
             assert.equal(event.args.ballotId, ballot2.id);
-            assertBn.equal(event.args.votePower, 1);
+            assertBn.equal(event.args.votePower, ethers.BigNumber.from('185208897045341192360733'));
           });
 
           it('can retrieve the corresponding ballot that users voted on', async function () {
@@ -200,9 +231,18 @@ describe('ElectionModule (cast)', function () {
           });
 
           it('can retrieve ballot votes', async function () {
-            assertBn.equal(await ElectionModule.getBallotVotes(ballot1.id), 3);
-            assertBn.equal(await ElectionModule.getBallotVotes(ballot2.id), 2);
-            assertBn.equal(await ElectionModule.getBallotVotes(ballot3.id), 0);
+            assertBn.equal(
+              await ElectionModule.getBallotVotes(ballot1.id),
+              ethers.BigNumber.from('397653365834058540620292')
+            );
+            assertBn.equal(
+              await ElectionModule.getBallotVotes(ballot2.id),
+              ethers.BigNumber.from('329669418524910707561241')
+            );
+            assertBn.equal(
+              await ElectionModule.getBallotVotes(ballot3.id),
+              ethers.BigNumber.from('0')
+            );
           });
 
           it('can retrive ballot candidates', async function () {
@@ -222,7 +262,7 @@ describe('ElectionModule (cast)', function () {
 
           describe('when users change their vote', function () {
             before('change vote', async function () {
-              const tx = await ElectionModule.connect(voter5).cast(ballot3.candidates);
+              const tx = await impersonateAndCast(voter5, ballot3.candidates);
               receipt = await tx.wait();
             });
 
@@ -233,13 +273,19 @@ describe('ElectionModule (cast)', function () {
               assert.ok(event);
               assertBn.equal(event.args.voter, voter5.address);
               assert.equal(event.args.ballotId, ballot2.id);
-              assertBn.equal(event.args.votePower, 1);
+              assertBn.equal(
+                event.args.votePower,
+                ethers.BigNumber.from('185208897045341192360733')
+              );
 
               event = findEvent({ receipt, eventName: 'VoteRecorded' });
               assert.ok(event);
               assertBn.equal(event.args.voter, voter5.address);
               assert.equal(event.args.ballotId, ballot3.id);
-              assertBn.equal(event.args.votePower, 1);
+              assertBn.equal(
+                event.args.votePower,
+                ethers.BigNumber.from('185208897045341192360733')
+              );
             });
 
             it('can retrieve the corresponding ballot that users voted on', async function () {
@@ -247,9 +293,18 @@ describe('ElectionModule (cast)', function () {
             });
 
             it('can retrieve ballot votes', async function () {
-              assertBn.equal(await ElectionModule.getBallotVotes(ballot1.id), 3);
-              assertBn.equal(await ElectionModule.getBallotVotes(ballot2.id), 1);
-              assertBn.equal(await ElectionModule.getBallotVotes(ballot3.id), 1);
+              assertBn.equal(
+                await ElectionModule.getBallotVotes(ballot1.id),
+                ethers.BigNumber.from('397653365834058540620292')
+              );
+              assertBn.equal(
+                await ElectionModule.getBallotVotes(ballot2.id),
+                ethers.BigNumber.from('144460521479569515200508')
+              );
+              assertBn.equal(
+                await ElectionModule.getBallotVotes(ballot3.id),
+                ethers.BigNumber.from('185208897045341192360733')
+              );
             });
 
             it('can retrive ballot candidates', async function () {
