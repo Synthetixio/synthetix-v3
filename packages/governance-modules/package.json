@@ -1,5 +1,5 @@
 {
-  "name": "@synthetixio/spartan-council",
+  "name": "@synthetixio/governance-modules",
   "version": "1.0.0",
   "description": "",
   "files": [
@@ -7,9 +7,8 @@
     "!contracts/mocks"
   ],
   "scripts": {
-    "test": "hardhat test test/unit/**/*.test.js",
-    "test:integration": "hardhat test test/integration/**/*.test.js",
-    "coverage": "hardhat coverage --testfiles test/unit/**/*.test.js",
+    "test": "hardhat test",
+    "coverage": "hardhat coverage",
     "compile-contracts": "hardhat compile",
     "size-contracts": "hardhat size-contracts"
   },
@@ -20,7 +19,6 @@
     "@nomiclabs/hardhat-ethers": "2.0.2",
     "hardhat": "2.6.8",
     "hardhat-contract-sizer": "2.1.1",
-    "solidity-coverage": "0.7.17",
-    "synthetix": "2.64.2"
+    "solidity-coverage": "0.7.17"
   }
 }
