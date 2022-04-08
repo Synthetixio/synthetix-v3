@@ -1,0 +1,11 @@
+{
+  "chains": [
+    {
+      "deploy": [
+        "synthetix-governance:0.0.1"
+      ],
+      "chainId": 10,
+      "port": 8545
+    }
+  ]
+}
