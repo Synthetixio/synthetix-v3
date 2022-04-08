@@ -1,6 +1,7 @@
 require('dotenv/config');
 
 require('hardhat-contract-sizer');
+require('hardhat-cannon');
 require('solidity-coverage');
 require('@nomiclabs/hardhat-ethers');
 require('@synthetixio/deployer');
