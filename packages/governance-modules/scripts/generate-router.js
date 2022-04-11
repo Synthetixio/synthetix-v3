@@ -1,4 +1,3 @@
-const path = require('path');
 const hre = require('hardhat');
 const { parseFullyQualifiedName } = require('hardhat/utils/contract-names');
 const { TASK_COMPILE } = require('hardhat/builtin-tasks/task-names');
@@ -19,6 +18,6 @@ exports.generateRouter = async function generateRouter(modulesData) {
   await hre.run(TASK_COMPILE, { quiet: true });
 
   return {
-    routerPath: path.join(hre.config.paths.sources, 'Router.sol'),
+    router: 'contracts/Router.sol:Router',
   };
 };
