@@ -1,5 +1,6 @@
 name = "synthetix-governance"
 description = "Governance cotracts for on chain voting"
+version = "0.0.1"
 
 # Deployment Owner, defaults to first hardhat account
 [setting.owner_address]
