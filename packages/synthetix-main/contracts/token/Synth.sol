@@ -12,4 +12,17 @@ contract Synth is ERC20, ISynth {
     ) external override {
         _initialize(synthName, synthSymbol, synthDecimals);
     }
+
+    function mint(address recipient, uint256 amount) external onlySystem {
+        _mint(recipient, amount);
+    }
+
+    function burn(address recipient, uint256 amount) external onlySystem {
+        _burn(recipient, amount);
+    }
+
+    modifier onlySystem() {
+        // "owning" DebtPool contract can mint/burn
+        _;
+    }
 }
