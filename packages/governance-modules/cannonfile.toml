@@ -1,6 +1,5 @@
 name = "synthetix-governance"
 description = "Governance cotracts for on chain voting"
-version = "0.0.1"
 
 # Deployment Owner, defaults to first hardhat account
 [setting.owner_address]
@@ -36,14 +35,13 @@ step = 1
 [run.generate_router]
 exec = "scripts/generate-router.js"
 func = "generateRouter"
-args = [
-  "contracts/modules/ElectionModule.sol:ElectionModule",
-  "<%= outputs.self.contracts.election_module.address %>",
-  "contracts/modules/OwnerModule.sol:OwnerModule",
-  "<%= outputs.self.contracts.owner_module.address %>",
-  "contracts/modules/UpgradeModule.sol:UpgradeModule",
-  "<%= outputs.self.contracts.upgrade_module.address %>",
-]
+args = ['''
+{
+  "contracts/modules/ElectionModule.sol:ElectionModule": "<%= outputs.self.contracts.election_module.address %>",
+  "contracts/modules/OwnerModule.sol:OwnerModule": "<%= outputs.self.contracts.owner_module.address %>",
+  "contracts/modules/UpgradeModule.sol:UpgradeModule": "<%= outputs.self.contracts.upgrade_module.address %>"
+}
+''']
 step = 2
 
 [contract.router]
