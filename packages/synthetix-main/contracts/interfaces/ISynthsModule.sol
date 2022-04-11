@@ -23,6 +23,8 @@ interface ISynthsModule is ISatelliteFactory {
 
     function getSynthImplementation() external view returns (address);
 
+    function setNewSynthAuthorizedSystem(address authorized) external;
+
     function getSynth(bytes32 synth) external view returns (address);
 
     function getSynthsModuleSatellites() external view returns (Satellite[] memory);

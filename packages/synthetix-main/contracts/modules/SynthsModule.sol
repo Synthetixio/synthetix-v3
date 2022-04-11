@@ -86,16 +86,25 @@ contract SynthsModule is ISynthsModule, OwnableMixin, SynthsStorage, Initializab
     }
 
     function createSynthImplementation() external override {
-        address implementationAddress = address(new Synth());
+        Synth synth = new Synth();
+        address implementationAddress = address(synth);
+
+        // Set onwership
+        synth.nominateNewOwner(address(this));
+        synth.acceptOwnership();
 
         emit SynthImplementationCreated(implementationAddress);
+    }
+
+    function setNewSynthAuthorizedSystem(address authorized) external override {
+        ISynth(getSynthImplementation()).setNewAuthorized(authorized);
     }
 
     function getBeacon() external view override returns (address) {
         return _synthsStore().beacon;
     }
 
-    function getSynthImplementation() external view override returns (address) {
+    function getSynthImplementation() public view override returns (address) {
         return Beacon(_synthsStore().beacon).getImplementation();
     }
 

@@ -12,5 +12,7 @@ interface ISNXTokenModule is ISatelliteFactory {
 
     function getSNXTokenAddress() external view returns (address);
 
+    function setNewSNXAuthorizedSystem(address authorized) external;
+
     function getSNXTokenModuleSatellites() external view returns (Satellite[] memory);
 }

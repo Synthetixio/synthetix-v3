@@ -58,4 +58,8 @@ contract SNXTokenModule is ISNXTokenModule, OwnableMixin, SNXTokenStorage, Initi
     function getSNXTokenAddress() public view override returns (address) {
         return _snxTokenStore().snxToken.deployedAddress;
     }
+
+    function setNewSNXAuthorizedSystem(address authorized) external override {
+        SNXToken(getSNXTokenAddress()).setNewAuthorized(authorized);
+    }
 }
