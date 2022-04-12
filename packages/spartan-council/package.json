@@ -17,8 +17,8 @@
   "author": "",
   "license": "MIT",
   "devDependencies": {
-    "@nomiclabs/hardhat-ethers": "2.0.2",
-    "hardhat": "2.6.8",
+    "@nomiclabs/hardhat-ethers": "2.0.5",
+    "hardhat": "2.9.3",
     "hardhat-contract-sizer": "2.1.1",
     "solidity-coverage": "0.7.17",
     "synthetix": "2.64.2"
