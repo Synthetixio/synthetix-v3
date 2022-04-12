@@ -91,6 +91,12 @@ describe('SNXTokenModule', function () {
           await tx.wait();
         });
 
+        before('Set the Authorized System address', async () => {
+          const tx = await SNXTokenModule.connect(owner).setNewSNXAuthorizedSystem(user1.address);
+
+          await tx.wait();
+        });
+
         it('is upgraded', async () => {
           NewSNX = await ethers.getContractAt('SNXTokenMock', snxTokenAddress);
           assert.equal(AnotherSNXToken.address, await NewSNX.getImplementation());
@@ -106,7 +112,7 @@ describe('SNXTokenModule', function () {
           const totalSupply = ethers.BigNumber.from('1000000');
 
           before('mint', async () => {
-            const tx = await NewSNX.connect(user1).mint(totalSupply);
+            const tx = await NewSNX.connect(user1).mint(user1.address, totalSupply);
             await tx.wait();
           });
 
