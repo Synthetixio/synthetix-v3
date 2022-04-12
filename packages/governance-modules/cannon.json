@@ -4,7 +4,7 @@
       "deploy": [
         "synthetix-governance:0.0.1"
       ],
-      "chainId": 10,
+      "chainId": 1337,
       "port": 8545
     }
   ]

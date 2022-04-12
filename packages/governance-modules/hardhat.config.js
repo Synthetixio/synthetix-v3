@@ -1,5 +1,4 @@
 require('dotenv/config');
-
 require('hardhat-contract-sizer');
 require('hardhat-cannon');
 require('solidity-coverage');
@@ -31,5 +30,18 @@ module.exports = {
   },
   contractSizer: {
     strict: true,
+  },
+  cannon: {
+    publisherPrivateKey: process.env.PRIVATE_KEY,
+    ipfsConnection: {
+      protocol: 'https',
+      host: 'ipfs.infura.io',
+      port: 5001,
+      headers: {
+        authorization: `Basic ${Buffer.from(
+          process.env.INFURA_IPFS_ID + ':' + process.env.INFURA_IPFS_SECRET
+        ).toString('base64')}`,
+      },
+    },
   },
 };
