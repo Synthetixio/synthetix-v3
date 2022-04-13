@@ -8,8 +8,6 @@ import "@synthetixio/core-contracts/contracts/token/ERC20.sol";
 import "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
 
 contract SNXToken is ERC20, UUPSImplementation, Ownable, Authorizable {
-    address private _minterSystem;
-
     function initialize(
         string memory tokenName,
         string memory tokenSymbol,
