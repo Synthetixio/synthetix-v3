@@ -3,21 +3,22 @@ pragma solidity ^0.8.0;
 
 import "@synthetixio/core-contracts/contracts/token/ERC721.sol";
 import "@synthetixio/core-contracts/contracts/initializable/InitializableMixin.sol";
-import "@synthetixio/core-contracts/contracts/ownership/Ownable.sol";
 import "../../storage/AccountStorage.sol";
 
 /// @dev Common utils, errors, and events to be used by any contracts that conform the AcccountModule
-contract AccountBase is ERC721, AccountStorage, InitializableMixin, Ownable {
+contract AccountBase is ERC721, AccountStorage, InitializableMixin {
     // ---------------------------------------
     // Constants
     // ---------------------------------------
 
-    uint16 private constant _PERMISSION_STAKE = 1;
-    uint16 private constant _PERMISSION_UNSTAKE = 2;
-    uint16 private constant _PERMISSION_MINT = 4;
-    uint16 private constant _PERMISSION_BURN = 8;
-    uint16 private constant _PERMISSION_CLAIM_REWARDS = 16;
-    uint16 private constant _PERMISSION_MANAGE_LOCKING = 32;
+    /// @dev use permissions packed in an uint16 (16 permissions). Set the values right shifting uint(1) from 0 to 15
+    uint16 private constant _PERMISSION_DELEGATE = uint16(1);
+    uint16 private constant _PERMISSION_STAKE = uint16(1) << 1;
+    uint16 private constant _PERMISSION_UNSTAKE = uint16(1) << 2;
+    uint16 private constant _PERMISSION_MINT = uint16(1) << 3;
+    uint16 private constant _PERMISSION_BURN = uint16(1) << 4;
+    uint16 private constant _PERMISSION_CLAIM_REWARDS = uint16(1) << 5;
+    uint16 private constant _PERMISSION_MANAGE_LOCKING = uint16(1) << 6;
 
     // ---------------------------------------
     // Enums
@@ -35,19 +36,12 @@ contract AccountBase is ERC721, AccountStorage, InitializableMixin, Ownable {
 
     event PermissionGranted(uint256 account, address authorized, uint16 permission);
     event PermissionRevoked(uint256 account, address authorized, uint16 permission);
-    event AllPermissionsRevoked(uint256 account, address authorized);
+    event PermissionsSet(uint256 account, address authorized, uint16 packedPermissions);
+    event PermissionsCleared(uint256 account, address authorized);
 
     // ---------------------------------------
     // Helpers
     // ---------------------------------------
-
-    function initialize(
-        string memory tokenName,
-        string memory tokenSymbol,
-        string memory uri
-    ) public onlyOwner {
-        _initialize(tokenName, tokenSymbol, uri);
-    }
 
     function _isInitialized() internal view override returns (bool) {
         return _accountStore().initialized;
@@ -69,6 +63,7 @@ contract AccountBase is ERC721, AccountStorage, InitializableMixin, Ownable {
         _accountStore().accountDelegations[account][authorized] =
             _accountStore().accountDelegations[account][authorized] |
             permission;
+
         emit PermissionGranted(account, authorized, permission);
     }
 
@@ -80,12 +75,14 @@ contract AccountBase is ERC721, AccountStorage, InitializableMixin, Ownable {
         _accountStore().accountDelegations[account][authorized] =
             _accountStore().accountDelegations[account][authorized] &
             ~permission;
+
         emit PermissionRevoked(account, authorized, permission);
     }
 
     function _clearPermissions(uint256 account, address authorized) internal {
         _accountStore().accountDelegations[account][authorized] = 0;
-        emit AllPermissionsRevoked(account, authorized);
+
+        emit PermissionsCleared(account, authorized);
     }
 
     function _setPermissions(
@@ -93,10 +90,15 @@ contract AccountBase is ERC721, AccountStorage, InitializableMixin, Ownable {
         address authorized,
         uint16[] calldata permissions
     ) internal {
-        _clearPermissions(account, authorized);
+        uint16 packedPermissions = 0;
+
         for (uint i = 0; i < permissions.length; i++) {
-            _grantPermission(account, authorized, permissions[i]);
+            packedPermissions = packedPermissions | permissions[i];
         }
+
+        _accountStore().accountDelegations[account][authorized] = packedPermissions;
+
+        emit PermissionsSet(account, authorized, packedPermissions);
     }
 
     /// @dev Used to allow certain functions to operate on the account if owner or authorized to that operation

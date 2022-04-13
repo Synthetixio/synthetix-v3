@@ -100,7 +100,7 @@ contract SynthsModule is ISynthsModule, OwnableMixin, SynthsStorage, Initializab
         ISynth(getSynthImplementation()).setNewAuthorized(authorized);
     }
 
-    function getBeacon() external view override returns (address) {
+    function getSynthBeacon() external view override returns (address) {
         return _synthsStore().beacon;
     }
 
