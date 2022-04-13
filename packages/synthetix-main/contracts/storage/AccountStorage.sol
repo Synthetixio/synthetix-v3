@@ -1,13 +1,20 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@synthetixio/core-contracts/contracts/satellite/SatelliteFactory.sol";
+import "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
 
 contract AccountStorage {
     struct AccountStore {
         bool initialized;
-        SatelliteFactory.Satellite account;
-        mapping(uint256 => mapping(address => uint32)) accountDelegations;
+        // Account delegated addresses
+        mapping(uint256 => SetUtil.AddressSet) delegatedAddresses;
+        // Account delegated permissions per address
+        mapping(uint256 => mapping(address => uint32)) delegatedPermissions;
+    }
+
+    struct Delegation {
+        address authorized;
+        uint32 permissions;
     }
 
     function _accountStore() internal pure returns (AccountStore storage store) {
