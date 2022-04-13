@@ -3,7 +3,11 @@ pragma solidity ^0.8.0;
 
 import "@synthetixio/core-contracts/contracts/interfaces/ISatelliteFactory.sol";
 
-interface IAccountModule is ISatelliteFactory {
+interface IAccountModule {
+    // ---------------------------------------
+    // Initialization
+    // ---------------------------------------
+
     function initializeAccountModule(
         string memory tokenName,
         string memory tokenSymbol,
@@ -11,6 +15,4 @@ interface IAccountModule is ISatelliteFactory {
     ) external;
 
     function isAccountModuleInitialized() external view returns (bool);
-
-    function getAccountModuleSatellites() external view returns (Satellite[] memory);
 }

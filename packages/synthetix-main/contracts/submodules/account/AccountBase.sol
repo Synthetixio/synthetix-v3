@@ -44,7 +44,7 @@ contract AccountBase is ERC721, AccountStorage, InitializableMixin {
         return _accountStore().initialized;
     }
 
-    function _getPermissionBit(Permission permission) internal pure returns (uint32) {
+    function _getPermissionMask(Permission permission) internal pure returns (uint32) {
         return uint32(1) << uint32(permission);
     }
 
@@ -53,7 +53,7 @@ contract AccountBase is ERC721, AccountStorage, InitializableMixin {
         address authorized,
         Permission permission
     ) internal view returns (bool) {
-        return _accountStore().accountDelegations[account][authorized] & _getPermissionBit(permission) != 0;
+        return _accountStore().accountDelegations[account][authorized] & _getPermissionMask(permission) != 0;
     }
 
     function _grantPermission(
@@ -63,7 +63,7 @@ contract AccountBase is ERC721, AccountStorage, InitializableMixin {
     ) internal {
         _accountStore().accountDelegations[account][authorized] =
             _accountStore().accountDelegations[account][authorized] |
-            _getPermissionBit(permission);
+            _getPermissionMask(permission);
 
         emit PermissionGranted(account, authorized, permission);
     }
@@ -75,7 +75,7 @@ contract AccountBase is ERC721, AccountStorage, InitializableMixin {
     ) internal {
         _accountStore().accountDelegations[account][authorized] =
             _accountStore().accountDelegations[account][authorized] &
-            ~_getPermissionBit(permission);
+            ~_getPermissionMask(permission);
 
         emit PermissionRevoked(account, authorized, permission);
     }
@@ -94,7 +94,7 @@ contract AccountBase is ERC721, AccountStorage, InitializableMixin {
         uint32 packedPermissions = 0;
 
         for (uint i = 0; i < permissions.length; i++) {
-            packedPermissions = packedPermissions | _getPermissionBit(permissions[i]);
+            packedPermissions = packedPermissions | _getPermissionMask(permissions[i]);
         }
 
         _accountStore().accountDelegations[account][authorized] = packedPermissions;
