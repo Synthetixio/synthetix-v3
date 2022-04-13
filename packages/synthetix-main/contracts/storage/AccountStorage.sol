@@ -7,7 +7,7 @@ contract AccountStorage {
     struct AccountStore {
         bool initialized;
         SatelliteFactory.Satellite account;
-        mapping(uint256 => mapping(address => uint16)) accountDelegations;
+        mapping(uint256 => mapping(address => uint32)) accountDelegations;
     }
 
     function _accountStore() internal pure returns (AccountStore storage store) {
