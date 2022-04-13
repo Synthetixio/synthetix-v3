@@ -12,8 +12,8 @@ defaultValue = "Synthetix Governance Module"
 [setting.council_token_symbol]
 defaultValue = "SGT"
 
-[setting.first_council_member]
-defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
+[setting.first_council_members]
+defaultValue = '["0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"]'
 
 [setting.epoch_duration]
 defaultValue = 90 # days
@@ -31,6 +31,10 @@ step = 1
 
 [contract.upgrade_module]
 artifact = "contracts/modules/UpgradeModule.sol:UpgradeModule"
+step = 1
+
+[contract.debt_share_mock]
+artifact = "contracts/mocks/DebtShareMock.sol:DebtShareMock"
 step = 1
 
 [run.generate_router]
@@ -54,13 +58,6 @@ artifact = "contracts/Proxy.sol:Proxy"
 args = ["<%= outputs.self.contracts.router.address %>"]
 step = 4
 
-# [invoke.initialize_owner_module]
-# addresses = ["<%= outputs.self.contracts.proxy.address %>"]
-# abi = "<%= outputs.self.contracts.owner_module.abi %>"
-# func = "initializeOwnerModule"
-# args = ["<%= settings.owner_address %>"]
-# step = 5
-
 [run.epoch_dates]
 exec = "scripts/calculate-epoch-dates.js"
 func = "calculateEpochDates"
@@ -68,24 +65,22 @@ args = [
   "<%= settings.epoch_duration %>",
   "<%= settings.voting_period_duration %>",
 ]
+step = 5
+
+[run.initialize]
+exec = "scripts/initialize.js"
+func = "initialize"
+args = ['''
+{
+  "proxyAddress": "<%= outputs.self.contracts.proxy.address %>",
+  "ownerAddress": "<%= settings.owner_address %>",
+  "councilTokenName": "<%= settings.council_token_name %>",
+  "councilTokenSymbol": "<%= settings.council_token_symbol %>",
+  "firstCouncilMembers": <%= settings.first_council_members %>,
+  "nominationPeriodStartDate": <%= outputs.self.runs.epoch_dates.nominationPeriodStartDate %>,
+  "votingPeriodStartDate": <%= outputs.self.runs.epoch_dates.votingPeriodStartDate %>,
+  "epochEndDate": <%= outputs.self.runs.epoch_dates.epochEndDate %>,
+  "debtShareAddress": "<%= outputs.self.contracts.debt_share_mock.address %>"
+}
+''']
 step = 6
-
-[contract.debt_share_mock]
-artifact = "contracts/mocks/DebtShareMock.sol:DebtShareMock"
-step = 7
-
-# [invoke.initialize_election_module]
-# addresses = ["<%= outputs.self.contracts.proxy.address %>"]
-# abi = "<%= outputs.self.contracts.election_module.abi %>"
-# func = "initializeElectionModule"
-# args = [
-#   "<%= settings.council_token_name %>",
-#   "<%= settings.council_token_symbol %>",
-#   ["0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"], # TODO: allow array settings interpolation: <%= settings.first_council_members %>,
-#   "1",
-#   "<%= outputs.self.runs.epoch_dates.nominationPeriodStartDate %>",
-#   "<%= outputs.self.runs.epoch_dates.votingPeriodStartDate %>",
-#   "<%= outputs.self.runs.epoch_dates.epochEndDate %>",
-#   "<%= outputs.self.contracts.debt_share_mock.address %>",
-# ]
-# step = 7
