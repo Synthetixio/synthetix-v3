@@ -4,7 +4,7 @@ version = "0.0.1"
 
 # Deployment Owner, defaults to first hardhat account
 [setting.owner_address]
-defaultValue = "0xe3B0C44298FC1C149AfBF4C8996fb92427aE41E4"
+defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
 
 [setting.council_token_name]
 defaultValue = "Synthetix Governance Module"
@@ -13,7 +13,7 @@ defaultValue = "Synthetix Governance Module"
 defaultValue = "SGT"
 
 [setting.first_council_member]
-defaultValue = "0xe3B0C44298FC1C149AfBF4C8996fb92427aE41E4"
+defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
 
 [setting.epoch_duration]
 defaultValue = 90 # days
@@ -54,12 +54,12 @@ artifact = "contracts/Proxy.sol:Proxy"
 args = ["<%= outputs.self.contracts.router.address %>"]
 step = 4
 
-[invoke.initialize_owner_module]
-addresses = ["<%= outputs.self.contracts.proxy.address %>"]
-abi = "<%= outputs.self.contracts.owner_module.abi %>"
-func = "initializeOwnerModule"
-args = ["<%= settings.owner_address %>"]
-step = 5
+# [invoke.initialize_owner_module]
+# addresses = ["<%= outputs.self.contracts.proxy.address %>"]
+# abi = "<%= outputs.self.contracts.owner_module.abi %>"
+# func = "initializeOwnerModule"
+# args = ["<%= settings.owner_address %>"]
+# step = 5
 
 [run.epoch_dates]
 exec = "scripts/calculate-epoch-dates.js"
@@ -74,18 +74,18 @@ step = 6
 artifact = "contracts/mocks/DebtShareMock.sol:DebtShareMock"
 step = 7
 
-[invoke.initialize_election_module]
-addresses = ["<%= outputs.self.contracts.proxy.address %>"]
-abi = "<%= outputs.self.contracts.election_module.abi %>"
-func = "initializeElectionModule"
-args = [
-  "<%= settings.council_token_name %>",
-  "<%= settings.council_token_symbol %>",
-  ["0xe3B0C44298FC1C149AfBF4C8996fb92427aE41E4"], # TODO: allow array settings interpolation: <%= settings.first_council_members %>,
-  "1",
-  "<%= outputs.self.runs.epoch_dates.nominationPeriodStartDate %>",
-  "<%= outputs.self.runs.epoch_dates.votingPeriodStartDate %>",
-  "<%= outputs.self.runs.epoch_dates.epochEndDate %>",
-  "<%= outputs.self.contracts.debt_share_mock.address %>",
-]
-step = 7
+# [invoke.initialize_election_module]
+# addresses = ["<%= outputs.self.contracts.proxy.address %>"]
+# abi = "<%= outputs.self.contracts.election_module.abi %>"
+# func = "initializeElectionModule"
+# args = [
+#   "<%= settings.council_token_name %>",
+#   "<%= settings.council_token_symbol %>",
+#   ["0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"], # TODO: allow array settings interpolation: <%= settings.first_council_members %>,
+#   "1",
+#   "<%= outputs.self.runs.epoch_dates.nominationPeriodStartDate %>",
+#   "<%= outputs.self.runs.epoch_dates.votingPeriodStartDate %>",
+#   "<%= outputs.self.runs.epoch_dates.epochEndDate %>",
+#   "<%= outputs.self.contracts.debt_share_mock.address %>",
+# ]
+# step = 7
