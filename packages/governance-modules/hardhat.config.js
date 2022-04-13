@@ -6,7 +6,7 @@ require('@nomiclabs/hardhat-ethers');
 require('@synthetixio/deployer');
 require('@synthetixio/cli');
 
-module.exports = {
+const config = {
   solidity: {
     version: '0.8.11',
     settings: {
@@ -31,17 +31,22 @@ module.exports = {
   contractSizer: {
     strict: true,
   },
-  cannon: {
-    publisherPrivateKey: process.env.PRIVATE_KEY,
-    ipfsConnection: {
-      protocol: 'https',
-      host: 'ipfs.infura.io',
-      port: 5001,
-      headers: {
-        authorization: `Basic ${Buffer.from(
-          process.env.INFURA_IPFS_ID + ':' + process.env.INFURA_IPFS_SECRET
-        ).toString('base64')}`,
-      },
-    },
-  },
+  cannon: {},
 };
+
+// Config only necessary for publishing cannon package
+if (process.env.CANNON_PUBLISHER_PRIVATE_KEY) {
+  config.cannon.publisherPrivateKey = process.env.CANNON_PUBLISHER_PRIVATE_KEY;
+  config.cannon.ipfsConnection = {
+    protocol: 'https',
+    host: 'ipfs.infura.io',
+    port: 5001,
+    headers: {
+      authorization: `Basic ${Buffer.from(
+        process.env.INFURA_IPFS_ID + ':' + process.env.INFURA_IPFS_SECRET
+      ).toString('base64')}`,
+    },
+  };
+}
+
+module.exports = config;
