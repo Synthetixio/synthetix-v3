@@ -5,10 +5,10 @@ import "@synthetixio/core-contracts/contracts/token/ERC721.sol";
 import "@synthetixio/core-contracts/contracts/utils/AddressUtil.sol";
 import "@synthetixio/core-contracts/contracts/initializable/InitializableMixin.sol";
 import "../../storage/AccountStorage.sol";
-import "../../interfaces/IAccountDelegation.sol";
+import "../../interfaces/IDelegation.sol";
 
 /// @dev Common utils, errors, and events to be used by any contracts that conform the AcccountModule
-contract AccountBase is ERC721, AccountStorage, IAccountDelegation, InitializableMixin {
+contract AccountBase is ERC721, AccountStorage, IDelegation, InitializableMixin {
     using SetUtil for SetUtil.AddressSet;
 
     // ---------------------------------------

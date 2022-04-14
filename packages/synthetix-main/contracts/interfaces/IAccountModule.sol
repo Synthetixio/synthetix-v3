@@ -1,38 +1,16 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "./IAccountDelegation.sol";
+import "@synthetixio/core-contracts/contracts/interfaces/ISatelliteFactory.sol";
 
-interface IAccountModule is IAccountDelegation {
-    // ---------------------------------------
-    // Initialization
-    // ---------------------------------------
-
-    function initializeAccountModule(
-        string memory tokenName,
-        string memory tokenSymbol,
-        string memory uri
-    ) external;
+interface IAccountModule is ISatelliteFactory {
+    function initializeAccountModule() external;
 
     function isAccountModuleInitialized() external view returns (bool);
 
-    // ---------------------------------------
-    // Delegation
-    // ---------------------------------------
+    function upgradeAccountImplementation(address newSNXTokenImplementation) external;
 
-    function delegateAccountPermission(
-        uint256 account,
-        address authorized,
-        Permission permission
-    ) external;
+    function getAccountAddress() external view returns (address);
 
-    function revokeAccountPermission(
-        uint256 account,
-        address authorized,
-        Permission permission
-    ) external;
-
-    function getAccountDelegatedAddresses(uint256 account) external view returns (address[] memory);
-
-    function getAccountDelegatedAddressPackedPermissions(uint256 account, address authorized) external view returns (uint32);
+    function getAccountModuleSatellites() external view returns (Satellite[] memory);
 }

@@ -2,53 +2,70 @@
 pragma solidity ^0.8.0;
 
 import "@synthetixio/core-contracts/contracts/ownership/OwnableMixin.sol";
+import "@synthetixio/core-contracts/contracts/proxy/UUPSProxy.sol";
+import "@synthetixio/core-contracts/contracts/initializable/InitializableMixin.sol";
+import "@synthetixio/core-contracts/contracts/satellite/SatelliteFactory.sol";
 import "../interfaces/IAccountModule.sol";
-import "../submodules/account/AccountBase.sol";
+import "../storage/AccountModuleStorage.sol";
 
-contract AccountModule is IAccountModule, AccountBase, OwnableMixin {
-    using SetUtil for SetUtil.AddressSet;
+import "../satellites/Account.sol";
+
+contract AccountModule is IAccountModule, OwnableMixin, AccountModuleStorage, InitializableMixin, SatelliteFactory {
+    event AccountCreated(address accountAddress);
+
+    function _isInitialized() internal view override returns (bool) {
+        return _accountModuleStore().initialized;
+    }
 
     function isAccountModuleInitialized() external view override returns (bool) {
         return _isInitialized();
     }
 
-    function initializeAccountModule(
-        string memory tokenName,
-        string memory tokenSymbol,
-        string memory uri
-    ) external override onlyOwner onlyIfNotInitialized {
-        _initialize(tokenName, tokenSymbol, uri);
+    function initializeAccountModule() external override onlyOwner onlyIfNotInitialized {
+        AccountModuleStore storage store = _accountModuleStore();
 
-        AccountStore storage store = _accountStore();
+        Account firstAccountImplementation = new Account();
+
+        UUPSProxy accountProxy = new UUPSProxy(address(firstAccountImplementation));
+
+        address accountProxyAddress = address(accountProxy);
+        Account account = Account(accountProxyAddress);
+
+        account.nominateNewOwner(address(this));
+        account.acceptOwnership();
+        account.initialize("Synthetix Account", "synthethixAccount", "");
+
+        store.account = Satellite({
+            name: "synthethixAccount",
+            contractName: "Account",
+            deployedAddress: accountProxyAddress
+        });
 
         store.initialized = true;
+
+        emit AccountCreated(accountProxyAddress);
     }
 
-    function delegateAccountPermission(
-        uint256 account,
-        address authorized,
-        Permission permission
-    ) external onlyOwnerOrAuthorized(account, Permission.Delegate) {
-        _grantPermission(account, authorized, permission);
+    function _getSatellites() internal view override returns (Satellite[] memory) {
+        Satellite[] memory satellites = new Satellite[](1);
+        satellites[0] = _accountModuleStore().account;
+        return satellites;
     }
 
-    function revokeAccountPermission(
-        uint256 account,
-        address authorized,
-        Permission permission
-    ) external onlyOwnerOrAuthorized(account, Permission.Delegate) {
-        _revokePermission(account, authorized, permission);
+    function getAccountModuleSatellites() public view override returns (Satellite[] memory) {
+        return _getSatellites();
     }
 
-    function getAccountDelegatedAddresses(uint256 account) external view returns (address[] memory) {
-        return _accountStore().delegatedAddresses[account].values();
-    }
-
-    function getAccountDelegatedAddressPackedPermissions(uint256 account, address authorized)
+    function upgradeAccountImplementation(address newAccountTokenImplementation)
         external
-        view
-        returns (uint32)
+        override
+        onlyOwner
+        onlyIfInitialized
     {
-        return _accountStore().delegatedPermissions[account][authorized];
+        Account(getAccountAddress()).upgradeTo(newAccountTokenImplementation);
+    }
+
+    function getAccountAddress() public view override returns (address) {
+        return _accountModuleStore().account.deployedAddress;
     }
 }
