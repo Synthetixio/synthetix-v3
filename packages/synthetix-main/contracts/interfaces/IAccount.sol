@@ -4,14 +4,6 @@ pragma solidity ^0.8.0;
 import "./IDelegation.sol";
 
 interface IAccount is IDelegation {
-    // ---------------------------------------
-    // Initialization
-    // ---------------------------------------
-
-    // ---------------------------------------
-    // Delegation
-    // ---------------------------------------
-
     function delegateAccountPermission(
         uint256 account,
         address authorized,
