@@ -12,10 +12,6 @@ contract AccountBase is ERC721, AccountStorage, IDelegation, InitializableMixin 
     using SetUtil for SetUtil.AddressSet;
 
     // ---------------------------------------
-    // Enums
-    // ---------------------------------------
-
-    // ---------------------------------------
     // Errors
     // ---------------------------------------
 
