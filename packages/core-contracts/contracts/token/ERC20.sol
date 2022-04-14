@@ -46,7 +46,7 @@ contract ERC20 is IERC20, ERC20Storage {
         return _erc20Store().decimals;
     }
 
-    function totalSupply() external view override returns (uint) {
+    function totalSupply() public view override returns (uint) {
         return _erc20Store().totalSupply;
     }
 
