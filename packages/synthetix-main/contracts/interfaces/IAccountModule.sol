@@ -8,7 +8,7 @@ interface IAccountModule is ISatelliteFactory {
 
     function isAccountModuleInitialized() external view returns (bool);
 
-    function upgradeAccountImplementation(address newSNXTokenImplementation) external;
+    function upgradeAccountImplementation(address newAccountImplementation) external;
 
     function getAccountAddress() external view returns (address);
 
