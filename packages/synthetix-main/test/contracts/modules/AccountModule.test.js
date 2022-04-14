@@ -1,7 +1,6 @@
 const { ethers } = hre;
 const assert = require('assert/strict');
 const assertRevert = require('@synthetixio/core-js/utils/assertions/assert-revert');
-const assertBn = require('@synthetixio/core-js/utils/assertions/assert-bignumber');
 const { findEvent } = require('@synthetixio/core-js/utils/ethers/events');
 const { bootstrap } = require('@synthetixio/deployer/utils/tests');
 const initializer = require('../../helpers/initializer');
@@ -9,10 +8,10 @@ const initializer = require('../../helpers/initializer');
 describe('AccountModule', function () {
   const { proxyAddress } = bootstrap(initializer);
 
-  let owner, user1;
+  let owner;
 
   before('identify signers', async () => {
-    [owner, user1] = await ethers.getSigners();
+    [owner] = await ethers.getSigners();
   });
 
   describe('When creating the Account', async () => {
