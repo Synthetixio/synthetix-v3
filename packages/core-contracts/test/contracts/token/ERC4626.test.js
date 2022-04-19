@@ -73,7 +73,6 @@ describe('ERC4626', () => {
 
   describe('Single Deposit and Withdraw', () => {
     const user1Assets = ethers.BigNumber.from('1000000');
-    let receipt;
 
     before('mint', async () => {
       const tx = await AssetToken.connect(user1).mint(user1Assets);
@@ -87,7 +86,7 @@ describe('ERC4626', () => {
 
     before('approves vault to use user1 assets', async () => {
       const tx = await AssetToken.connect(user1).approve(ERC4626.address, user1Assets);
-      receipt = await tx.wait();
+      await tx.wait();
     });
 
     it('vault is approved to use user1 assets', async () => {
@@ -123,7 +122,7 @@ describe('ERC4626', () => {
 
         // Balances
         assertBn.equal(await AssetToken.balanceOf(user1.address), 0);
-        assertBn.equal(user1Shares, user1Shares);
+        assertBn.equal(await ERC4626.balanceOf(user1.address), user1Shares);
 
         // Totals
         assertBn.equal(await ERC4626.totalSupply(), user1Shares);
@@ -163,7 +162,90 @@ describe('ERC4626', () => {
     });
   });
 
-  describe.skip('Single Mint and Redeem', () => {});
+  describe('Single Mint and Redeem', () => {
+    const user1Assets = ethers.BigNumber.from('1000000');
+    let user1Shares;
+
+    before('mint', async () => {
+      const tx = await AssetToken.connect(user1).mint(user1Assets);
+      await tx.wait();
+    });
+
+    after('burn', async () => {
+      const tx = await AssetToken.connect(user1).burn(user1Assets);
+      await tx.wait();
+    });
+
+    before('approves vault to use user1 assets', async () => {
+      const tx = await AssetToken.connect(user1).approve(ERC4626.address, user1Assets);
+      await tx.wait();
+    });
+
+    it('vault is approved to use user1 assets', async () => {
+      user1Shares = await ERC4626.convertToShares(user1Assets);
+      assertBn.equal(await AssetToken.allowance(user1.address, ERC4626.address), user1Shares);
+    });
+
+    describe('when user mints some assets', async () => {
+      let receipt;
+      before('do the mint', async () => {
+        const tx = await ERC4626.connect(user1).mint(user1Assets, user1.address);
+        receipt = await tx.wait();
+      });
+
+      it('emits a Depost event', async () => {
+        const event = findEvent({ receipt, eventName: 'Deposit' });
+
+        assert.equal(event.args.caller, user1.address);
+        assert.equal(event.args.owner, user1.address);
+        assertBn.equal(event.args.assets, user1Assets);
+        assertBn.equal(event.args.shares, user1Shares);
+      });
+
+      it('updates the vault and underlying values', async () => {
+        // 1:1 rate
+        assertBn.equal(user1Shares, user1Assets);
+        assertBn.equal(await ERC4626.convertToAssets(user1Shares), user1Assets);
+        assertBn.equal(await ERC4626.previewMint(user1Assets), user1Shares);
+        assertBn.equal(await ERC4626.previewRedeem(user1Shares), user1Assets);
+
+        // Balances
+        assertBn.equal(await AssetToken.balanceOf(user1.address), 0);
+        assertBn.equal(await ERC4626.balanceOf(user1.address), user1Shares);
+
+        // Totals
+        assertBn.equal(await ERC4626.totalSupply(), user1Shares);
+        assertBn.equal(await ERC4626.totalAssets(), user1Assets);
+      });
+
+      describe('when the user Redeem', () => {
+        let receipt;
+        before('do the redeem', async () => {
+          const tx = await ERC4626.connect(user1).redeem(user1Shares, user1.address, user1.address);
+          receipt = await tx.wait();
+        });
+
+        it('emits a Withdraw event', async () => {
+          const event = findEvent({ receipt, eventName: 'Withdraw' });
+
+          assert.equal(event.args.caller, user1.address);
+          assert.equal(event.args.receiver, user1.address);
+          assert.equal(event.args.owner, user1.address);
+          assertBn.equal(event.args.assets, user1Assets);
+          assertBn.equal(event.args.shares, user1Shares);
+        });
+
+        it('updates the vault and underlying values', async () => {
+          // Balances
+          assertBn.equal(await AssetToken.balanceOf(user1.address), user1Assets);
+
+          // Totals
+          assertBn.equal(await ERC4626.totalSupply(), 0);
+          assertBn.equal(await ERC4626.totalAssets(), 0);
+        });
+      });
+    });
+  });
 
   describe.skip('Multiple operations', () => {});
 });
