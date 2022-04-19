@@ -1,0 +1,86 @@
+name = "synthetix-governance"
+description = "Governance cotracts for on chain voting"
+version = "0.0.1"
+
+# Deployment Owner, defaults to first hardhat account
+[setting.owner_address]
+defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
+
+[setting.council_token_name]
+defaultValue = "Synthetix Governance Module"
+
+[setting.council_token_symbol]
+defaultValue = "SGT"
+
+[setting.first_council_members]
+defaultValue = '["0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"]'
+
+[setting.epoch_duration]
+defaultValue = 90 # days
+
+[setting.voting_period_duration]
+defaultValue = 7 # days
+
+[contract.election_module]
+artifact = "contracts/modules/ElectionModule.sol:ElectionModule"
+step = 1
+
+[contract.owner_module]
+artifact = "contracts/modules/OwnerModule.sol:OwnerModule"
+step = 1
+
+[contract.upgrade_module]
+artifact = "contracts/modules/UpgradeModule.sol:UpgradeModule"
+step = 1
+
+[contract.debt_share_mock]
+artifact = "contracts/mocks/DebtShareMock.sol:DebtShareMock"
+step = 1
+
+[run.generate_router]
+exec = "scripts/generate-router.js"
+func = "generateRouter"
+args = ['''
+{
+  "contracts/modules/ElectionModule.sol:ElectionModule": "<%= outputs.self.contracts.election_module.address %>",
+  "contracts/modules/OwnerModule.sol:OwnerModule": "<%= outputs.self.contracts.owner_module.address %>",
+  "contracts/modules/UpgradeModule.sol:UpgradeModule": "<%= outputs.self.contracts.upgrade_module.address %>"
+}
+''']
+step = 2
+
+[contract.router]
+artifact = "contracts/Router.sol:Router"
+step = 3
+
+[contract.proxy]
+artifact = "contracts/Proxy.sol:Proxy"
+args = ["<%= outputs.self.contracts.router.address %>"]
+step = 4
+
+[run.epoch_dates]
+exec = "scripts/calculate-epoch-dates.js"
+func = "calculateEpochDates"
+args = [
+  "<%= settings.epoch_duration %>",
+  "<%= settings.voting_period_duration %>",
+]
+step = 5
+
+[run.initialize]
+exec = "scripts/initialize.js"
+func = "initialize"
+args = ['''
+{
+  "proxyAddress": "<%= outputs.self.contracts.proxy.address %>",
+  "ownerAddress": "<%= settings.owner_address %>",
+  "councilTokenName": "<%= settings.council_token_name %>",
+  "councilTokenSymbol": "<%= settings.council_token_symbol %>",
+  "firstCouncilMembers": <%= settings.first_council_members %>,
+  "nominationPeriodStartDate": <%= outputs.self.runs.epoch_dates.nominationPeriodStartDate %>,
+  "votingPeriodStartDate": <%= outputs.self.runs.epoch_dates.votingPeriodStartDate %>,
+  "epochEndDate": <%= outputs.self.runs.epoch_dates.epochEndDate %>,
+  "debtShareAddress": "<%= outputs.self.contracts.debt_share_mock.address %>"
+}
+''']
+step = 6
