@@ -76,12 +76,12 @@ describe('ERC4626', () => {
 
     before('mint', async () => {
       const tx = await AssetToken.connect(user1).mint(user1Assets);
-      receipt = await tx.wait();
+      await tx.wait();
     });
 
     after('burn', async () => {
       const tx = await AssetToken.connect(user1).burn(user1Assets);
-      receipt = await tx.wait();
+      await tx.wait();
     });
 
     before('approves vault to use user1 assets', async () => {
@@ -248,7 +248,7 @@ describe('ERC4626', () => {
   });
 
   describe('Multiple operations', () => {
-    let aShares, aAssets, bShares, bAssets, vShares, vAssets;
+    let aShares, aAssets, bShares, bAssets;
 
     let preMutationShareBal, preMutationBal;
 
@@ -416,7 +416,8 @@ describe('ERC4626', () => {
       before('Vault mutates by +3000 tokens...', async () => {
         // 3. Vault mutates by +3000 tokens...                    |
         //    (simulated yield returned from strategy)...
-        // The Vault now contains more tokens than deposited which causes the exchange rate to change.
+        // The Vault now contains more tokens than deposited
+        // which causes the exchange rate to change.
         // Alice share is 33.33% of the Vault, Bob 66.66% of the Vault.
         // Alice's share count stays the same but the underlying amount changes from 2000 to 3000.
         // Bob's share count stays the same but the underlying amount changes from 4000 to 6000.
