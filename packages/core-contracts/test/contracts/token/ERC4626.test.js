@@ -254,6 +254,8 @@ describe('ERC4626', () => {
 
     let receipt;
 
+    const mutationUnderlyingAmount = ethers.BigNumber.from(3000);
+
     // Scenario:
     // A = Alice, B = Bob
     //  ________________________________________________________
@@ -332,9 +334,9 @@ describe('ERC4626', () => {
     after('burn A and B assets', async () => {
       let tx;
 
-      tx = await AssetToken.connect(alice).burn(4000);
+      tx = await AssetToken.connect(alice).burn(6071);
       await tx.wait();
-      tx = await AssetToken.connect(bob).burn(7001);
+      tx = await AssetToken.connect(bob).burn(10930);
       await tx.wait();
     });
 
@@ -412,7 +414,6 @@ describe('ERC4626', () => {
     });
 
     describe('step 3 - Vault mutates by +3000 tokens... ', async () => {
-      const mutationUnderlyingAmount = ethers.BigNumber.from(3000);
       before('Vault mutates by +3000 tokens...', async () => {
         // 3. Vault mutates by +3000 tokens...                    |
         //    (simulated yield returned from strategy)...
@@ -503,10 +504,119 @@ describe('ERC4626', () => {
       });
     });
 
-    describe('step 6 - Vault mutates by +3000 tokens', async () => {});
-    describe('step 7', async () => {});
-    describe('step 8', async () => {});
-    describe('step 9', async () => {});
-    describe('step 10', async () => {});
+    describe('step 6 - Vault mutates by +3000 tokens', async () => {
+      before('Vault mutates by +3000 tokens', async () => {
+        const tx = await AssetToken.connect(user1).mintTo(
+          ERC4626.address,
+          mutationUnderlyingAmount
+        );
+        await tx.wait();
+      });
+
+      it('has the right values', async () => {
+        // TODO Check rounded additions
+        // NOTE: Vault holds 17001 tokens, but sum of assetsOf() is 17000.
+
+        // vault
+        assertBn.equal(await ERC4626.totalAssets(), 17000); // TODO Should be 17001
+
+        // alice
+        assertBn.equal(await ERC4626.convertToAssets(await ERC4626.balanceOf(alice.address)), 6071);
+
+        // bob
+        assertBn.equal(await ERC4626.convertToAssets(await ERC4626.balanceOf(bob.address)), 10928); // Should be 10929
+      });
+    });
+
+    describe('step 7 - Alice redeem 1333 shares (2428 assets)', async () => {
+      before('Alice redeem 1333 shares (2428 assets)', async () => {
+        const tx = await ERC4626.connect(alice).redeem(
+          ethers.BigNumber.from(1333),
+          alice.address,
+          alice.address
+        );
+        await tx.wait();
+      });
+
+      it('has the right values', async () => {
+        // TODO Check rounded additions
+        assertBn.equal(await AssetToken.balanceOf(alice.address), 2428);
+        assertBn.equal(await ERC4626.totalSupply(), 8000);
+        assertBn.equal(await ERC4626.totalAssets(), 14572); // TODO Should be 14573
+        assertBn.equal(await ERC4626.balanceOf(alice.address), 2000);
+        assertBn.equal(await ERC4626.convertToAssets(await ERC4626.balanceOf(alice.address)), 3643);
+        assertBn.equal(await ERC4626.balanceOf(bob.address), 6000);
+        assertBn.equal(await ERC4626.convertToAssets(await ERC4626.balanceOf(bob.address)), 10929);
+      });
+    });
+
+    describe('step 8 - Bob withdraws 2929 assets (1608 shares)', async () => {
+      before('Bob withdraws 2929 assets (1608 shares)', async () => {
+        const tx = await ERC4626.connect(bob).withdraw(
+          ethers.BigNumber.from(2929),
+          bob.address,
+          bob.address
+        );
+        await tx.wait();
+      });
+
+      it('has the right values', async () => {
+        // TODO Check rounded additions
+        assertBn.equal(await AssetToken.balanceOf(bob.address), 2930); // TODO Should be 2929
+        assertBn.equal(await ERC4626.totalSupply(), 6392);
+        assertBn.equal(await ERC4626.totalAssets(), 11643); // TODO Should be 11644
+        assertBn.equal(await ERC4626.balanceOf(alice.address), 2000);
+        assertBn.equal(await ERC4626.convertToAssets(await ERC4626.balanceOf(alice.address)), 3642); // TODO Should be 3643
+        assertBn.equal(await ERC4626.balanceOf(bob.address), 4392);
+        assertBn.equal(await ERC4626.convertToAssets(await ERC4626.balanceOf(bob.address)), 8000);
+      });
+    });
+    describe('step 9 - Alice withdraws 3643 assets (2000 shares)', async () => {
+      before('Alice withdraws 3643 assets (2000 shares)', async () => {
+        const tx = await ERC4626.connect(alice).withdraw(
+          ethers.BigNumber.from(3643),
+          alice.address,
+          alice.address
+        );
+        await tx.wait();
+      });
+
+      it('has the right values', async () => {
+        // TODO Check rounded additions
+        assertBn.equal(await AssetToken.balanceOf(alice.address), 6071);
+        assertBn.equal(await ERC4626.totalSupply(), 4392);
+        assertBn.equal(await ERC4626.totalAssets(), 8000); // TODO Should be 8001
+        assertBn.equal(await ERC4626.balanceOf(alice.address), 0);
+        assertBn.equal(await ERC4626.convertToAssets(await ERC4626.balanceOf(alice.address)), 0);
+        assertBn.equal(await ERC4626.balanceOf(bob.address), 4392);
+        assertBn.equal(await ERC4626.convertToAssets(await ERC4626.balanceOf(bob.address)), 8000); // TODO Should be 8001
+      });
+    });
+
+    describe('step 10 - Bob redeem 4392 shares (8001 tokens)', async () => {
+      before('Bob redeem 4392 shares (8001 tokens)', async () => {
+        const tx = await ERC4626.connect(bob).redeem(
+          ethers.BigNumber.from(4392),
+          bob.address,
+          bob.address
+        );
+        await tx.wait();
+      });
+
+      it('has the right values', async () => {
+        // TODO Check rounded additions
+
+        assertBn.equal(await AssetToken.balanceOf(bob.address), 10930);
+        assertBn.equal(await ERC4626.totalSupply(), 0);
+        assertBn.equal(await ERC4626.totalAssets(), 0); // TODO Should be 8001
+        assertBn.equal(await ERC4626.balanceOf(alice.address), 0);
+        assertBn.equal(await ERC4626.convertToAssets(await ERC4626.balanceOf(alice.address)), 0);
+        assertBn.equal(await ERC4626.balanceOf(bob.address), 0);
+        assertBn.equal(await ERC4626.convertToAssets(await ERC4626.balanceOf(bob.address)), 0);
+
+        // Sanity check
+        assertBn.equal(await AssetToken.balanceOf(ERC4626.address), 0);
+      });
+    });
   });
 });
