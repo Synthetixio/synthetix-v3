@@ -50,4 +50,99 @@ contract Account is IAccount, AccountBase, UUPSImplementation, Ownable {
     {
         return _accountStore().delegatedPermissions[account][authorized];
     }
+
+    // Business Interface
+    struct collateralInfo {
+        uint cType;
+        uint amount;
+        uint lockDuration;
+        uint startLockingTime;
+    }
+
+    // array of assigned funds
+
+    function stake(uint collateralType, uint collateralAmount) public {
+        // adds a collateralInfo to the collaterals array
+    }
+
+    function totalCollateral(uint collateralType) public view returns (uint) {
+        return 0;
+    }
+
+    function assignedCollateral(uint collateralType) public view returns (uint) {
+        return 0;
+    }
+
+    function _getAssignedFunds(uint collateralType) public view returns (uint) {
+        return 0;
+    }
+}
+
+contract Fund {
+    mapping(uint => positionInfo) public positions;
+
+    struct positionInfo {
+        uint accountId;
+        uint collateralType;
+        uint collateralAmount;
+        uint leverage;
+        uint initialDebt;
+    }
+
+    function adjust(
+        uint accountId,
+        uint collateralType,
+        uint collateralAmount,
+        uint leverage
+    ) public {
+        // require accountId can operate on collateralType
+
+        if (positions[accountId].collateralAmount == 0) {
+            // new position
+        } else if (collateralAmount == 0) {
+            // remove position
+        } else if (positions[accountId].collateralAmount < collateralAmount) {
+            // increase position
+        } else if (positions[accountId].collateralAmount > collateralAmount) {
+            // decrease position
+        } else {
+            // nop
+        }
+    }
+
+    function getAccountCurrentDebt(uint accountId) public returns (uint) {
+        return 0;
+    }
+
+    function accountShares(uint accountId) public returns (uint) {
+        return 0;
+    }
+
+    function totalShares() public returns (uint) {
+        return 0;
+    }
+
+    function totalDebt() public returns (uint) {
+        return 0;
+    }
+
+    function accountDebt(uint accountId) public {
+        return
+            accountCollateralValue() +
+            positions[accountId].initialDebt -
+            totalDebt() *
+            (accountShares(accountId) / totalShares());
+    }
+
+    function accountCollateralValue(uint accountId) public view returns (uint) {
+        return positions[accountId].amount - positions[accountId].amount * token(accountEntry.collateralToken).value;
+    }
+
+    function getCRation(uint accountId) public view returns (uint) {
+        return accountCollateralValue() / accountDebt(accountId);
+    }
+
+    function setMarkets(uint[] marketIds, uint[] weights) internal {}
+
+    function _assignCollateralToMarket() internal {}
 }
