@@ -38,6 +38,8 @@ const config = {
   },
 };
 
+console.log('--->', process.env.FORK_PROVIDER_URL);
+
 if (process.env.FORK_PROVIDER_URL) {
   config.networks.hardhat = {
     forking: {
