@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 import "../interfaces/IERC4626.sol";
 import "../interfaces/IERC20.sol";
-import "../utils/FixedPointMathLib.sol";
+import "../utils/MathUtil.sol";
 import "./ERC20.sol";
 import "./ERC4626Storage.sol";
 
@@ -14,7 +14,7 @@ import "./ERC4626Storage.sol";
 */
 
 contract ERC4626 is IERC4626, ERC20, ERC4626Storage {
-    using FixedPointMathLib for uint256;
+    using MathUtil for uint256;
 
     event Deposit(address indexed caller, address indexed owner, uint256 assets, uint256 shares);
     event Withdraw(address indexed caller, address indexed receiver, address indexed owner, uint256 assets, uint256 shares);

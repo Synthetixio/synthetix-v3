@@ -613,4 +613,25 @@ describe('ERC4626', () => {
       });
     });
   });
+
+  describe('When trying to Deposit zero', () => {
+    it('reverts', async () => {
+      await assertRevert(
+        ERC4626.connect(user1).deposit(constants.Zero, user1.address),
+        'ZeroShares'
+      );
+    });
+  });
+
+  describe('When trying to Mint zero', () => {});
+  describe('When trying to Withdraw zero', () => {});
+
+  describe('When trying to Redeem zero', () => {
+    it('reverts', async () => {
+      await assertRevert(
+        ERC4626.connect(user1).redeem(constants.Zero, user1.address, user1.address),
+        'ZeroAssets'
+      );
+    });
+  });
 });
