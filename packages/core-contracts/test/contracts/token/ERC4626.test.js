@@ -55,8 +55,8 @@ describe('ERC4626', () => {
     });
 
     it('preview the right values', async () => {
-      // 0 since no assets
-      assertBn.equal(await ERC4626.convertToAssets(constants.WeiPerEther), 0);
+      // 1 : 1 (no previous shares)
+      assertBn.equal(await ERC4626.convertToAssets(constants.WeiPerEther), constants.WeiPerEther);
 
       // 1 : 1 (no previous shares)
       assertBn.equal(await ERC4626.convertToShares(constants.WeiPerEther), constants.WeiPerEther);
@@ -64,10 +64,8 @@ describe('ERC4626', () => {
       // 1 : 1 (no previous shares)
       assertBn.equal(await ERC4626.previewDeposit(constants.One), 1);
       assertBn.equal(await ERC4626.previewMint(constants.One), 1);
-
-      // 0 since no assets
-      assertBn.equal(await ERC4626.previewRedeem(constants.One), 0);
-      assertBn.equal(await ERC4626.previewWithdraw(constants.One), 0);
+      assertBn.equal(await ERC4626.previewRedeem(constants.One), 1);
+      assertBn.equal(await ERC4626.previewWithdraw(constants.One), 1);
     });
   });
 
@@ -338,6 +336,10 @@ describe('ERC4626', () => {
       await tx.wait();
       tx = await AssetToken.connect(bob).burn(10930);
       await tx.wait();
+
+      // sanity check
+      assertBn.equal(await AssetToken.balanceOf(alice.address), 0);
+      assertBn.equal(await AssetToken.balanceOf(bob.address), 0);
     });
 
     describe('step 1 - Alice mints 2000 shares', async () => {
@@ -480,8 +482,6 @@ describe('ERC4626', () => {
       });
 
       it('has the right values', async () => {
-        // TODO Check rounded additions
-
         // NOTE: Bob's assets spent got rounded up
         // NOTE: Alices's vault assets got rounded up
 
@@ -490,7 +490,7 @@ describe('ERC4626', () => {
 
         // alice
         assertBn.equal(await ERC4626.balanceOf(alice.address), 3333);
-        assertBn.equal(await ERC4626.convertToAssets(await ERC4626.balanceOf(alice.address)), 4999); // should be 5000
+        assertBn.equal(await ERC4626.convertToAssets(await ERC4626.balanceOf(alice.address)), 5000);
 
         // bob
         assertBn.equal(await ERC4626.balanceOf(bob.address), 6000);
@@ -498,9 +498,9 @@ describe('ERC4626', () => {
 
         // Sanity check
         assertBn.equal(await AssetToken.balanceOf(alice.address), 0);
-        assertBn.equal(await AssetToken.balanceOf(bob.address), 1); // Should be 0
+        assertBn.equal(await AssetToken.balanceOf(bob.address), 0);
         // Assets in vault: 4k (alice) + 7k (bob) + 3k (yield) + 1 (round up)
-        assertBn.equal(await ERC4626.totalAssets(), 14000); // Should be 14001
+        assertBn.equal(await ERC4626.totalAssets(), 14001);
       });
     });
 
@@ -514,17 +514,16 @@ describe('ERC4626', () => {
       });
 
       it('has the right values', async () => {
-        // TODO Check rounded additions
         // NOTE: Vault holds 17001 tokens, but sum of assetsOf() is 17000.
 
         // vault
-        assertBn.equal(await ERC4626.totalAssets(), 17000); // TODO Should be 17001
+        assertBn.equal(await ERC4626.totalAssets(), 17001);
 
         // alice
         assertBn.equal(await ERC4626.convertToAssets(await ERC4626.balanceOf(alice.address)), 6071);
 
         // bob
-        assertBn.equal(await ERC4626.convertToAssets(await ERC4626.balanceOf(bob.address)), 10928); // Should be 10929
+        assertBn.equal(await ERC4626.convertToAssets(await ERC4626.balanceOf(bob.address)), 10929);
       });
     });
 
@@ -539,10 +538,9 @@ describe('ERC4626', () => {
       });
 
       it('has the right values', async () => {
-        // TODO Check rounded additions
         assertBn.equal(await AssetToken.balanceOf(alice.address), 2428);
         assertBn.equal(await ERC4626.totalSupply(), 8000);
-        assertBn.equal(await ERC4626.totalAssets(), 14572); // TODO Should be 14573
+        assertBn.equal(await ERC4626.totalAssets(), 14573);
         assertBn.equal(await ERC4626.balanceOf(alice.address), 2000);
         assertBn.equal(await ERC4626.convertToAssets(await ERC4626.balanceOf(alice.address)), 3643);
         assertBn.equal(await ERC4626.balanceOf(bob.address), 6000);
@@ -561,12 +559,11 @@ describe('ERC4626', () => {
       });
 
       it('has the right values', async () => {
-        // TODO Check rounded additions
-        assertBn.equal(await AssetToken.balanceOf(bob.address), 2930); // TODO Should be 2929
+        assertBn.equal(await AssetToken.balanceOf(bob.address), 2929);
         assertBn.equal(await ERC4626.totalSupply(), 6392);
-        assertBn.equal(await ERC4626.totalAssets(), 11643); // TODO Should be 11644
+        assertBn.equal(await ERC4626.totalAssets(), 11644);
         assertBn.equal(await ERC4626.balanceOf(alice.address), 2000);
-        assertBn.equal(await ERC4626.convertToAssets(await ERC4626.balanceOf(alice.address)), 3642); // TODO Should be 3643
+        assertBn.equal(await ERC4626.convertToAssets(await ERC4626.balanceOf(alice.address)), 3643);
         assertBn.equal(await ERC4626.balanceOf(bob.address), 4392);
         assertBn.equal(await ERC4626.convertToAssets(await ERC4626.balanceOf(bob.address)), 8000);
       });
@@ -582,14 +579,13 @@ describe('ERC4626', () => {
       });
 
       it('has the right values', async () => {
-        // TODO Check rounded additions
         assertBn.equal(await AssetToken.balanceOf(alice.address), 6071);
         assertBn.equal(await ERC4626.totalSupply(), 4392);
-        assertBn.equal(await ERC4626.totalAssets(), 8000); // TODO Should be 8001
+        assertBn.equal(await ERC4626.totalAssets(), 8001);
         assertBn.equal(await ERC4626.balanceOf(alice.address), 0);
         assertBn.equal(await ERC4626.convertToAssets(await ERC4626.balanceOf(alice.address)), 0);
         assertBn.equal(await ERC4626.balanceOf(bob.address), 4392);
-        assertBn.equal(await ERC4626.convertToAssets(await ERC4626.balanceOf(bob.address)), 8000); // TODO Should be 8001
+        assertBn.equal(await ERC4626.convertToAssets(await ERC4626.balanceOf(bob.address)), 8001);
       });
     });
 
@@ -604,11 +600,9 @@ describe('ERC4626', () => {
       });
 
       it('has the right values', async () => {
-        // TODO Check rounded additions
-
         assertBn.equal(await AssetToken.balanceOf(bob.address), 10930);
         assertBn.equal(await ERC4626.totalSupply(), 0);
-        assertBn.equal(await ERC4626.totalAssets(), 0); // TODO Should be 8001
+        assertBn.equal(await ERC4626.totalAssets(), 0);
         assertBn.equal(await ERC4626.balanceOf(alice.address), 0);
         assertBn.equal(await ERC4626.convertToAssets(await ERC4626.balanceOf(alice.address)), 0);
         assertBn.equal(await ERC4626.balanceOf(bob.address), 0);
