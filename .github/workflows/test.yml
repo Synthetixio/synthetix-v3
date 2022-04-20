@@ -70,16 +70,17 @@ jobs:
       - run: npm ci
       - run: npm --workspace=./packages/sample-project test
 
-  test-integration:
-    runs-on: ubuntu-latest
-    env:
-      FORK_PROVIDER_URL: ${{ env.FORK_PROVIDER_URL }}
-    steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-node@v2
-        with:
-          node-version: "16.8.0"
-          cache: "npm"
-      - run: npm ci
-      - name: Execute tests
-        run: npm --workspace=./packages/spartan-council test:integration
+  # TODO: Fix integration tests configuration
+  # test-integration:
+  #   runs-on: ubuntu-latest
+  #   env:
+  #     FORK_PROVIDER_URL: ${{ env.FORK_PROVIDER_URL }}
+  #   steps:
+  #     - uses: actions/checkout@v2
+  #     - uses: actions/setup-node@v2
+  #       with:
+  #         node-version: "16.8.0"
+  #         cache: "npm"
+  #     - run: npm ci
+  #     - name: Execute tests
+  #       run: npm --workspace=./packages/spartan-council test:integration
