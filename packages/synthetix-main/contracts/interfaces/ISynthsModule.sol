@@ -19,7 +19,7 @@ interface ISynthsModule is ISatelliteFactory {
 
     function createSynthImplementation() external;
 
-    function getBeacon() external view returns (address);
+    function getSynthBeacon() external view returns (address);
 
     function getSynthImplementation() external view returns (address);
 

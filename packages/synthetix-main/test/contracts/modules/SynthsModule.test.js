@@ -82,7 +82,7 @@ describe('SynthsModule', function () {
           });
 
           it('shows that the beacon address is set in storage', async () => {
-            assert.equal(await SynthsModule.getBeacon(), beaconAddress);
+            assert.equal(await SynthsModule.getSynthBeacon(), beaconAddress);
           });
 
           describe('when trying to re initialize the module', () => {
