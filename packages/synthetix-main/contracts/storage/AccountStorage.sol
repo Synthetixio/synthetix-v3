@@ -6,15 +6,6 @@ import "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
 contract AccountStorage {
     struct AccountStore {
         bool initialized;
-        // Account delegated addresses
-        mapping(uint256 => SetUtil.AddressSet) delegatedAddresses;
-        // Account delegated permissions per address
-        mapping(uint256 => mapping(address => uint32)) delegatedPermissions;
-    }
-
-    struct Delegation {
-        address authorized;
-        uint32 permissions;
     }
 
     function _accountStore() internal pure returns (AccountStore storage store) {
