@@ -1,12 +1,9 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@synthetixio/core-contracts/contracts/satellite/SatelliteFactory.sol";
-
 contract FundModuleStorage {
     struct FundModuleStore {
         bool initialized;
-        SatelliteFactory.Satellite fund;
     }
 
     function _fundModuleStore() internal pure returns (FundModuleStore storage store) {
