@@ -8,6 +8,8 @@ import "../../storage/AccountStorage.sol";
 
 /// @dev Common utils, errors, and events to be used by any contracts that conform the AcccountModule
 contract AccountBase is ERC721, AccountStorage, InitializableMixin {
+    error StakedCollateralAlreadyExists(StakedCollateral stakedCollateral);
+
     function _isInitialized() internal view override returns (bool) {
         return _accountStore().initialized;
     }

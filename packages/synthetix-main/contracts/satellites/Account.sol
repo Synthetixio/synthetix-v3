@@ -20,8 +20,6 @@ contract Account is IAccount, AccountBase, UUPSImplementation, Ownable {
         _upgradeTo(newImplementation);
     }
 
-    error StakedCollateralAlreadyExists(StakedCollateral stakedCollateral);
-
     function stake(uint accountId, StakedCollateral calldata collateral) public {
         AccountData storage accountData = _accountStore().accountsData[accountId];
 
