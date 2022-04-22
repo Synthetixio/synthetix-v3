@@ -178,9 +178,9 @@ describe('ElectionModule (cast)', function () {
             ElectionModule.getVotePower(voter3.address),
           ]);
 
-          assertBn.gt(debts[0], 0);
-          assertBn.gt(debts[1], 0);
-          assertBn.gt(debts[2], 0);
+          assertBn.equal(debts[0], ethers.BigNumber.from('127506055884648544164502'));
+          assertBn.equal(debts[1], ethers.BigNumber.from('144460521479569515200508'));
+          assertBn.equal(debts[2], ethers.BigNumber.from('122875067482594009777896'));
         });
 
         describe('when issuing valid votes', function () {
@@ -219,7 +219,7 @@ describe('ElectionModule (cast)', function () {
             assert.ok(event);
             assertBn.equal(event.args.voter, voter5.address);
             assert.equal(event.args.ballotId, ballot2.id);
-            assertBn.gt(event.args.votePower, 0);
+            assertBn.equal(event.args.votePower, ethers.BigNumber.from('185208897045341192360733'));
           });
 
           it('can retrieve the corresponding ballot that users voted on', async function () {
@@ -231,9 +231,18 @@ describe('ElectionModule (cast)', function () {
           });
 
           it('can retrieve ballot votes', async function () {
-            assertBn.gt(await ElectionModule.getBallotVotes(ballot1.id), 0);
-            assertBn.gt(await ElectionModule.getBallotVotes(ballot2.id), 0);
-            assertBn.equal(await ElectionModule.getBallotVotes(ballot3.id), 0);
+            assertBn.equal(
+              await ElectionModule.getBallotVotes(ballot1.id),
+              ethers.BigNumber.from('397653365834058540620292')
+            );
+            assertBn.equal(
+              await ElectionModule.getBallotVotes(ballot2.id),
+              ethers.BigNumber.from('329669418524910707561241')
+            );
+            assertBn.equal(
+              await ElectionModule.getBallotVotes(ballot3.id),
+              ethers.BigNumber.from('0')
+            );
           });
 
           it('can retrive ballot candidates', async function () {
@@ -264,13 +273,19 @@ describe('ElectionModule (cast)', function () {
               assert.ok(event);
               assertBn.equal(event.args.voter, voter5.address);
               assert.equal(event.args.ballotId, ballot2.id);
-              assertBn.gt(event.args.votePower, 0);
+              assertBn.equal(
+                event.args.votePower,
+                ethers.BigNumber.from('185208897045341192360733')
+              );
 
               event = findEvent({ receipt, eventName: 'VoteRecorded' });
               assert.ok(event);
               assertBn.equal(event.args.voter, voter5.address);
               assert.equal(event.args.ballotId, ballot3.id);
-              assertBn.gt(event.args.votePower, 0);
+              assertBn.equal(
+                event.args.votePower,
+                ethers.BigNumber.from('185208897045341192360733')
+              );
             });
 
             it('can retrieve the corresponding ballot that users voted on', async function () {
@@ -278,9 +293,18 @@ describe('ElectionModule (cast)', function () {
             });
 
             it('can retrieve ballot votes', async function () {
-              assertBn.gt(await ElectionModule.getBallotVotes(ballot1.id), 0);
-              assertBn.gt(await ElectionModule.getBallotVotes(ballot2.id), 0);
-              assertBn.gt(await ElectionModule.getBallotVotes(ballot3.id), 0);
+              assertBn.equal(
+                await ElectionModule.getBallotVotes(ballot1.id),
+                ethers.BigNumber.from('397653365834058540620292')
+              );
+              assertBn.equal(
+                await ElectionModule.getBallotVotes(ballot2.id),
+                ethers.BigNumber.from('144460521479569515200508')
+              );
+              assertBn.equal(
+                await ElectionModule.getBallotVotes(ballot3.id),
+                ethers.BigNumber.from('185208897045341192360733')
+              );
             });
 
             it('can retrive ballot candidates', async function () {
