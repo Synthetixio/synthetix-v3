@@ -4,6 +4,15 @@ pragma solidity ^0.8.0;
 contract FundModuleStorage {
     struct FundModuleStore {
         bool initialized;
+        mapping(uint => Position) positions; // positions by accountId (only one positon per account id?)
+    }
+
+    struct Position {
+        uint accountId;
+        uint collateralType;
+        uint collateralAmount;
+        uint leverage;
+        uint initialDebt;
     }
 
     function _fundModuleStore() internal pure returns (FundModuleStore storage store) {
