@@ -6,6 +6,21 @@ import "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
 contract AccountStorage {
     struct AccountStore {
         bool initialized;
+        mapping(uint => AccountData) accountsData;
+    }
+
+    struct StakedCollateral {
+        uint collateralId;
+        uint amount;
+        uint lockDuration;
+        uint startLockingTime;
+    }
+
+    // Account finances
+    struct AccountData {
+        // Id is keccak256(abi.encodePacked(stakedCollateral))
+        mapping(uint => bytes32[]) stakedCollateralIds; // staked collateral ids by collateral type
+        mapping(bytes32 => StakedCollateral) stakedCollaterals; // staked collateral data by stakedColalteralId
     }
 
     function _accountStore() internal pure returns (AccountStore storage store) {
