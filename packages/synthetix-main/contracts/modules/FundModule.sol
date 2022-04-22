@@ -82,6 +82,8 @@ contract FundModule is IFundModule, OwnableMixin, FundModuleStorage, Initializab
         uint leverage
     ) internal {}
 
+    // TODO Check ERC4626 logic. a lot of the stuff is there
+
     function getAccountCurrentDebt(uint accountId) public returns (uint) {
         return 0;
     }
