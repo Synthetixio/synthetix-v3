@@ -13,8 +13,7 @@ interface IElectionModule {
         uint8 minimumActiveMembers,
         uint64 nominationPeriodStartDate,
         uint64 votingPeriodStartDate,
-        uint64 epochEndDate,
-        address debtShareContract
+        uint64 epochEndDate
     ) external;
 
     function isElectionModuleInitialized() external view returns (bool);
@@ -53,10 +52,6 @@ interface IElectionModule {
 
     function dismissMembers(address[] calldata members) external;
 
-    function setDebtShareContract(address newDebtShareContractAddress) external;
-
-    function setL1DebtShareMerkleRoot(bytes32 merkleRoot, uint blocknumber) external;
-
     // ---------------------------------------
     // User write functions
     // ---------------------------------------
@@ -70,12 +65,6 @@ interface IElectionModule {
     function evaluate(uint numBallots) external;
 
     function resolve() external;
-
-    function declareL1DebtShare(
-        address account,
-        uint256 debtShare,
-        bytes32[] calldata merkleProof
-    ) external;
 
     // ---------------------------------------
     // View functions
@@ -100,8 +89,6 @@ interface IElectionModule {
     function getNextEpochSeatCount() external view returns (uint8);
 
     function getMinimumActiveMembers() external view returns (uint8);
-
-    function getDebtShareContract() external view returns (address);
 
     // Epoch and periods
     // ~~~~~~~~~~~~~~~~~~
@@ -139,12 +126,6 @@ interface IElectionModule {
     function getBallotVotes(bytes32 ballotId) external view returns (uint);
 
     function getBallotCandidates(bytes32 ballotId) external view returns (address[] memory);
-
-    function getL1DebtShareMerkleRoot() external view returns (bytes32);
-
-    function getL1DebtShareMerkleRootBlocknumber() external view returns (uint);
-
-    function getL1DebtShare(address account) external view returns (uint);
 
     // Resolutions
     // ~~~~~~~~~~~~~~~~~~

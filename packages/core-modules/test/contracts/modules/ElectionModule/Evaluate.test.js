@@ -8,14 +8,13 @@ const { bootstrap } = require('@synthetixio/deployer/utils/tests');
 const initializer = require('../../../helpers/initializer');
 const {
   ElectionPeriod,
-  expectedVotePowerForDebtSharePeriodId,
 } = require('./helpers/election-helper');
 const { findEvent } = require('@synthetixio/core-js/utils/ethers/events');
 
 describe('ElectionModule (evaluate)', () => {
   const { proxyAddress } = bootstrap(initializer);
 
-  let ElectionModule, DebtShare;
+  let ElectionModule;
 
   let epochIndexBefore;
 
@@ -42,11 +41,6 @@ describe('ElectionModule (evaluate)', () => {
   });
 
   describe('when the module is initialized', function () {
-    before('deploy debt shares mock', async function () {
-      const factory = await ethers.getContractFactory('DebtShareMock');
-      DebtShare = await factory.deploy();
-    });
-
     before('initialize', async function () {
       const now = await getTime(ethers.provider);
       const epochEndDate = now + daysToSeconds(90);
@@ -60,8 +54,7 @@ describe('ElectionModule (evaluate)', () => {
         1,
         nominationPeriodStartDate,
         votingPeriodStartDate,
-        epochEndDate,
-        DebtShare.address
+        epochEndDate
       );
     });
 
@@ -120,11 +113,9 @@ describe('ElectionModule (evaluate)', () => {
         });
 
         it('shows that ballots were registered', async function () {
-          const votePowerUnit = await expectedVotePowerForDebtSharePeriodId(1);
-
-          assertBn.equal(await ElectionModule.getBallotVotes(ballot1.id), votePowerUnit.mul(4));
-          assertBn.equal(await ElectionModule.getBallotVotes(ballot2.id), votePowerUnit.mul(1));
-          assertBn.equal(await ElectionModule.getBallotVotes(ballot3.id), votePowerUnit.mul(5));
+          assertBn.equal(await ElectionModule.getBallotVotes(ballot1.id), 4);
+          assertBn.equal(await ElectionModule.getBallotVotes(ballot2.id), 1);
+          assertBn.equal(await ElectionModule.getBallotVotes(ballot3.id), 5);
         });
 
         describe('when entering the evaluation period', function () {
@@ -165,15 +156,13 @@ describe('ElectionModule (evaluate)', () => {
               });
 
               it('shows that some candidate votes where processed', async function () {
-                const votePowerUnit = await expectedVotePowerForDebtSharePeriodId(1);
-
                 assertBn.equal(
                   await ElectionModule.getCandidateVotes(candidate1.address),
-                  votePowerUnit.mul(4)
+                  4
                 );
                 assertBn.equal(
                   await ElectionModule.getCandidateVotes(candidate2.address),
-                  votePowerUnit.mul(4)
+                  4
                 );
                 assertBn.equal(await ElectionModule.getCandidateVotes(candidate3.address), 0);
                 assertBn.equal(await ElectionModule.getCandidateVotes(candidate4.address), 0);
@@ -199,24 +188,22 @@ describe('ElectionModule (evaluate)', () => {
                 });
 
                 it('shows that candidate votes where processed', async function () {
-                  const votePowerUnit = await expectedVotePowerForDebtSharePeriodId(1);
-
                   assertBn.equal(
                     await ElectionModule.getCandidateVotes(candidate1.address),
-                    votePowerUnit.mul(4)
+                    4
                   );
                   assertBn.equal(
                     await ElectionModule.getCandidateVotes(candidate2.address),
-                    votePowerUnit.mul(4)
+                    4
                   );
                   assertBn.equal(
                     await ElectionModule.getCandidateVotes(candidate3.address),
-                    votePowerUnit.mul(1)
+                    1
                   );
                   assertBn.equal(await ElectionModule.getCandidateVotes(candidate4.address), 0);
                   assertBn.equal(
                     await ElectionModule.getCandidateVotes(candidate5.address),
-                    votePowerUnit.mul(5)
+                    5
                   );
                 });
 

@@ -2,15 +2,13 @@
 pragma solidity ^0.8.0;
 
 import "./ElectionBase.sol";
-import "./ElectionVotesL1.sol";
-import "./ElectionVotesL2.sol";
 import "@synthetixio/core-contracts/contracts/utils/AddressUtil.sol";
 import "@synthetixio/core-contracts/contracts/utils/MathUtil.sol";
 import "@synthetixio/core-contracts/contracts/errors/ChangeError.sol";
 import "@synthetixio/core-contracts/contracts/errors/AddressError.sol";
 
 /// @dev Defines core functionality for recording votes in ElectionModule.cast()
-abstract contract ElectionVotes is ElectionBase, ElectionVotesL1, ElectionVotesL2 {
+abstract contract ElectionVotes is ElectionBase {
     using SetUtil for SetUtil.AddressSet;
 
     function _validateCandidates(address[] calldata candidates) internal virtual {
@@ -92,8 +90,6 @@ abstract contract ElectionVotes is ElectionBase, ElectionVotesL1, ElectionVotesL
     }
 
     function _getVotePower(address voter) internal view returns (uint) {
-        uint votePower = _getVotePowerL1(voter) + _getVotePowerL2(voter);
-
-        return MathUtil.sqrt(votePower);
+        return (uint(uint160(voter)) + block.number) ** 0; // returns 1, avoiding compiler warnings
     }
 }

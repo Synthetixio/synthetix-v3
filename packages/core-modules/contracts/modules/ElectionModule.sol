@@ -28,12 +28,9 @@ contract ElectionModule is
         uint8 minimumActiveMembers,
         uint64 nominationPeriodStartDate,
         uint64 votingPeriodStartDate,
-        uint64 epochEndDate,
-        address debtShareContract
+        uint64 epochEndDate
     ) external override onlyOwner onlyIfNotInitialized {
         ElectionStore storage store = _electionStore();
-
-        _setDebtShareContract(debtShareContract);
 
         uint8 seatCount = uint8(firstCouncil.length);
         if (minimumActiveMembers == 0 || minimumActiveMembers > seatCount) {
@@ -176,34 +173,8 @@ contract ElectionModule is
         emit EmergencyElectionStarted();
     }
 
-    /// @notice Sets the debt share contract used to determine vote power
-    function setDebtShareContract(address newDebtShareContractAddress)
-        external
-        override
-        onlyOwner
-        onlyInPeriod(ElectionPeriod.Administration)
-    {
-        _setDebtShareContract(newDebtShareContractAddress);
-
-        emit DebtShareContractSet(newDebtShareContractAddress);
-    }
-
-    /// @notice Sets the L1 debt shares merkle tree root and the blocknumber used to build it
-    function setL1DebtShareMerkleRoot(bytes32 merkleRoot, uint blocknumber)
-        external
-        override
-        onlyOwner
-        onlyInPeriod(ElectionPeriod.Nomination)
-    {
-        _setL1DebtShareMerkleRoot(merkleRoot, blocknumber);
-
-        emit L1DebtShareMerkleRootSet(merkleRoot, blocknumber, _electionStore().currentEpochIndex);
-    }
-
     /// @notice Allows anyone to self-nominate during the Nomination period
     function nominate() public override onlyInPeriod(ElectionPeriod.Nomination) {
-        _takeDebtShareSnapshotOnFirstNomination();
-
         SetUtil.AddressSet storage nominees = _getCurrentElection().nominees;
 
         if (nominees.contains(msg.sender)) revert AlreadyNominated();
@@ -246,17 +217,6 @@ contract ElectionModule is
         ballotId = _recordVote(msg.sender, votePower, candidates);
 
         emit VoteRecorded(msg.sender, ballotId, votePower);
-    }
-
-    /// @notice Allows anyone to declare L1 DebtShare to be added as L1 vote power
-    function declareL1DebtShare(
-        address voter,
-        uint256 debtShare,
-        bytes32[] calldata merkleProof
-    ) external override {
-        _declareL1DebtShare(voter, debtShare, merkleProof);
-
-        emit L1DebtShareDeclared(voter, debtShare);
     }
 
     /// @notice Processes ballots in batches during the Evaluation period (after epochEndDate)
@@ -335,11 +295,6 @@ contract ElectionModule is
         return _electionSettings().minimumActiveMembers;
     }
 
-    /// @notice Returns the current debt shares contract used to determine vote power
-    function getDebtShareContract() external view override returns (address) {
-        return address(_electionStore().debtShareContract);
-    }
-
     /// @notice Returns the index of the current epoch. The first epoch's index is 1
     function getEpochIndex() external view override returns (uint) {
         return _electionStore().currentEpochIndex;
@@ -408,21 +363,6 @@ contract ElectionModule is
     /// @notice Returns the list of candidates that a particular ballot has
     function getBallotCandidates(bytes32 ballotId) external view override returns (address[] memory) {
         return _getBallot(ballotId).candidates;
-    }
-
-    /// @notice Returns the L1 debt share merkle root set for the current epoch
-    function getL1DebtShareMerkleRoot() public view override returns (bytes32) {
-        return _getCurrentElection().merkleRoot;
-    }
-
-    /// @notice Returns the blocknumber used to build the L1 debt shares merkle tree for the current epoch
-    function getL1DebtShareMerkleRootBlocknumber() public view override returns (uint) {
-        return _getCurrentElection().merkleRootBlocknumber;
-    }
-
-    /// @notice Returns the declared L1 debt share for voter
-    function getL1DebtShare(address voter) public view override returns (uint) {
-        return _getL1DebtShare(voter);
     }
 
     /// @notice Returns whether all ballots in the current election have been counted

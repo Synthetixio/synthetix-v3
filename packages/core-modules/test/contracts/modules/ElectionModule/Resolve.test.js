@@ -11,7 +11,7 @@ const { runElection } = require('./helpers/election-helper');
 describe('ElectionModule (resolve)', () => {
   const { proxyAddress } = bootstrap(initializer);
 
-  let ElectionModule, CouncilToken, DebtShare;
+  let ElectionModule, CouncilToken;
 
   let owner;
   let member1, member2, member3, member4, member5;
@@ -52,11 +52,6 @@ describe('ElectionModule (resolve)', () => {
   });
 
   describe('when the module is initialized', function () {
-    before('deploy debt shares mock', async function () {
-      const factory = await ethers.getContractFactory('DebtShareMock');
-      DebtShare = await factory.deploy();
-    });
-
     before('initialize', async function () {
       const now = await getTime(ethers.provider);
       const epochEndDate = now + daysToSeconds(90);
@@ -70,8 +65,7 @@ describe('ElectionModule (resolve)', () => {
         1,
         nominationPeriodStartDate,
         votingPeriodStartDate,
-        epochEndDate,
-        DebtShare.address
+        epochEndDate
       );
     });
 

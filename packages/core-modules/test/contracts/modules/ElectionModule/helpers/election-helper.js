@@ -17,19 +17,6 @@ const assertDatesAreClose = (dateA, dateB) => {
   return Math.abs(numberDateB - numberDateA) <= 1;
 };
 
-async function expectedVotePowerForDebtSharePeriodId(debtSharePeriodId) {
-  const debtSharePeriodIdBN = ethers.BigNumber.from(debtSharePeriodId);
-
-  return bnSqrt(
-    // See DebtShareMock.sol L19
-    debtSharePeriodIdBN.add(BN_TWO).pow(ethers.BigNumber.from(18))
-  );
-}
-
-async function expectedVotePowerForSpecificDebtShare(debtShare) {
-  return bnSqrt(ethers.BigNumber.from(debtShare));
-}
-
 async function runElection(ElectionModule, owner, members) {
   // Configure
   if ((await ElectionModule.getNextEpochSeatCount()) !== members.length) {
@@ -70,6 +57,4 @@ module.exports = {
   ElectionPeriod,
   assertDatesAreClose,
   runElection,
-  expectedVotePowerForDebtSharePeriodId,
-  expectedVotePowerForSpecificDebtShare,
 };

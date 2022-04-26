@@ -16,7 +16,7 @@ const { findEvent } = require('@synthetixio/core-js/utils/ethers/events');
 describe('ElectionModule (settings)', () => {
   const { proxyAddress } = bootstrap(initializer);
 
-  let ElectionModule, DebtShare;
+  let ElectionModule;
 
   let owner, user;
 
@@ -36,11 +36,6 @@ describe('ElectionModule (settings)', () => {
   });
 
   describe('when the module is initialized', function () {
-    before('deploy debt shares mock', async function () {
-      const factory = await ethers.getContractFactory('DebtShareMock');
-      DebtShare = await factory.deploy();
-    });
-
     before('initialize', async function () {
       const now = await getTime(ethers.provider);
       const epochEndDate = now + daysToSeconds(90);
@@ -54,72 +49,8 @@ describe('ElectionModule (settings)', () => {
         1,
         nominationPeriodStartDate,
         votingPeriodStartDate,
-        epochEndDate,
-        DebtShare.address
+        epochEndDate
       );
-    });
-
-    // ---------------------------------------
-    // debtShareContract
-    // ---------------------------------------
-
-    describe('when configuring the debt share contract', function () {
-      describe('with an account that is not the owner', () => {
-        it('reverts', async () => {
-          await assertRevert(
-            ElectionModule.connect(user).setDebtShareContract(user.address),
-            'Unauthorized'
-          );
-        });
-      });
-
-      describe('with the owner', () => {
-        describe('with a zero address', () => {
-          it('reverts', async () => {
-            await assertRevert(
-              ElectionModule.setDebtShareContract('0x0000000000000000000000000000000000000000'),
-              'ZeroAddress'
-            );
-          });
-        });
-
-        describe('with the same address', () => {
-          it('reverts', async () => {
-            await assertRevert(ElectionModule.setDebtShareContract(DebtShare.address), 'NoChange');
-          });
-        });
-
-        describe('with an address that is not a contract', () => {
-          it('reverts', async () => {
-            await assertRevert(ElectionModule.setDebtShareContract(owner.address), 'NotAContract');
-          });
-        });
-
-        describe('with valid parameters', () => {
-          let AnotherDebtShare;
-
-          before('deploy debt shares mock', async function () {
-            const factory = await ethers.getContractFactory('DebtShareMock');
-            AnotherDebtShare = await factory.deploy();
-          });
-
-          before('set', async () => {
-            const tx = await ElectionModule.setDebtShareContract(AnotherDebtShare.address);
-            receipt = await tx.wait();
-          });
-
-          it('emitted an DebtShareContractSet event', async function () {
-            const event = findEvent({ receipt, eventName: 'DebtShareContractSet' });
-
-            assert.ok(event);
-            assertBn.equal(event.args.debtShareContractAddress, AnotherDebtShare.address);
-          });
-
-          it('changes the setting', async () => {
-            assertBn.equal(await ElectionModule.getDebtShareContract(), AnotherDebtShare.address);
-          });
-        });
-      });
     });
 
     // ---------------------------------------

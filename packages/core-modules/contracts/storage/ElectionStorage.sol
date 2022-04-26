@@ -1,7 +1,6 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "../interfaces/IDebtShare.sol";
 import "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
 
 contract ElectionStorage {
@@ -24,10 +23,6 @@ contract ElectionStorage {
         // Pointer to ElectionSettings
         // To be always used via store.settings[0]
         mapping(uint => ElectionSettings) settings;
-        // Debt share contract used to determine vote power
-        IDebtShare debtShareContract;
-        // Debt share snapshot id by epoch index
-        mapping(uint => uint128) debtShareIds;
     }
 
     struct ElectionSettings {
@@ -77,12 +72,6 @@ contract ElectionStorage {
         mapping(address => bytes32) ballotIdsByAddress;
         // Number of votes for each candidate
         mapping(address => uint) candidateVotes;
-        // L1 Debt Share MerkleRoot
-        bytes32 merkleRoot;
-        // L1 Debt Share MerkleRoot snapshot blocknumber
-        uint merkleRootBlocknumber;
-        // L1 Debt Shares declared for addresses
-        mapping(address => uint) l1DebtShares;
     }
 
     struct BallotData {
