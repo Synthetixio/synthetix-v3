@@ -89,7 +89,7 @@ contract ElectionVotes is ElectionBase {
         return ballot.votesByUser[voter];
     }
 
-    function _getVotePower(address voter) internal virtual view returns (uint) {
-        return (uint(uint160(voter)) + block.number) ** 0; // returns 1, avoiding compiler warnings
+    function _getVotePower(address voter) internal view virtual returns (uint) {
+        return (uint(uint160(voter)) + block.number)**0; // returns 1, avoiding compiler warnings
     }
 }

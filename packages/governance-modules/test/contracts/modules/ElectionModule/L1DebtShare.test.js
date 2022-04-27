@@ -10,7 +10,7 @@ const { getTime, fastForwardTo } = require('@synthetixio/core-js/utils/hardhat/r
 
 const { ethers } = hre;
 
-describe('ElectionModule (L1 debt share)', function () {
+describe('SynthetixElectionModule (L1 debt share)', function () {
   let owner, user, DebtShare;
 
   let parsedTree, validRoot, wrongTree, voter;
@@ -18,6 +18,7 @@ describe('ElectionModule (L1 debt share)', function () {
   before('build tree and related data', () => {
     const inputData = {};
     const wrongData = {};
+
     for (let i = 0; i < 10; i++) {
       const address = ethers.Wallet.createRandom().address;
       inputData[address] = '' + (i + 1);
@@ -44,11 +45,11 @@ describe('ElectionModule (L1 debt share)', function () {
   describe('when setting a merkle root', () => {
     const { proxyAddress } = bootstrap(initializer);
 
-    let ElectionModule;
+    let SynthetixElectionModule;
 
     before('identify module', async () => {
-      ElectionModule = await ethers.getContractAt(
-        'contracts/modules/ElectionModule.sol:ElectionModule',
+      SynthetixElectionModule = await ethers.getContractAt(
+        'SynthetixElectionModule',
         proxyAddress()
       );
     });
@@ -59,7 +60,7 @@ describe('ElectionModule (L1 debt share)', function () {
       const votingPeriodStartDate = epochEndDate - daysToSeconds(7);
       const nominationPeriodStartDate = votingPeriodStartDate - daysToSeconds(7);
 
-      await ElectionModule.initializeElectionModule(
+      await SynthetixElectionModule.initializeSynthetixElectionModule(
         'Spartan Council Token',
         'SCT',
         [owner.address],
@@ -74,7 +75,7 @@ describe('ElectionModule (L1 debt share)', function () {
     describe('when attempting to set the merkle before time', () => {
       it('reverts', async function () {
         await assertRevert(
-          ElectionModule.connect(owner).setL1DebtShareMerkleRoot(validRoot, 1),
+          SynthetixElectionModule.connect(owner).setL1DebtShareMerkleRoot(validRoot, 1),
           'NotCallableInCurrentPeriod'
         );
       });
@@ -82,13 +83,16 @@ describe('ElectionModule (L1 debt share)', function () {
 
     describe('when moving to nomination phase', () => {
       before('fast forward', async function () {
-        await fastForwardTo(await ElectionModule.getNominationPeriodStartDate(), ethers.provider);
+        await fastForwardTo(
+          await SynthetixElectionModule.getNominationPeriodStartDate(),
+          ethers.provider
+        );
       });
 
       describe('when attempting to set the merkle root with a non owner signer', () => {
         it('reverts', async function () {
           await assertRevert(
-            ElectionModule.connect(user).setL1DebtShareMerkleRoot(validRoot, 1),
+            SynthetixElectionModule.connect(user).setL1DebtShareMerkleRoot(validRoot, 1),
             'Unauthorized'
           );
         });
@@ -97,7 +101,7 @@ describe('ElectionModule (L1 debt share)', function () {
       describe('when attempting to claim and the merkle root is not set', () => {
         it('reverts', async () => {
           await assertRevert(
-            ElectionModule.declareL1DebtShare(
+            SynthetixElectionModule.declareL1DebtShare(
               voter,
               parsedTree.claims[voter].amount,
               parsedTree.claims[voter].proof
@@ -111,7 +115,10 @@ describe('ElectionModule (L1 debt share)', function () {
         let receipt;
 
         before('set merkle root', async () => {
-          const tx = await ElectionModule.connect(owner).setL1DebtShareMerkleRoot(validRoot, 42);
+          const tx = await SynthetixElectionModule.connect(owner).setL1DebtShareMerkleRoot(
+            validRoot,
+            42
+          );
           receipt = await tx.wait();
         });
 
@@ -125,17 +132,20 @@ describe('ElectionModule (L1 debt share)', function () {
         });
 
         it('gets the merkle root blocknumber', async function () {
-          assertBn.equal(await ElectionModule.getL1DebtShareMerkleRootBlocknumber(), 42);
+          assertBn.equal(await SynthetixElectionModule.getL1DebtShareMerkleRootBlocknumber(), 42);
         });
 
         it('gets the merkle root', async function () {
-          assert.deepEqual(await ElectionModule.getL1DebtShareMerkleRoot(), validRoot);
+          assert.deepEqual(await SynthetixElectionModule.getL1DebtShareMerkleRoot(), validRoot);
         });
 
         describe('when attempting to set the merkle root again', () => {
           it('reverts', async function () {
             await assertRevert(
-              ElectionModule.connect(user).setL1DebtShareMerkleRoot(wrongTree.merkleRoot, 1),
+              SynthetixElectionModule.connect(user).setL1DebtShareMerkleRoot(
+                wrongTree.merkleRoot,
+                1
+              ),
               'Unauthorized'
             );
           });
@@ -144,7 +154,7 @@ describe('ElectionModule (L1 debt share)', function () {
         describe('when attempting to claim with the wrong proof', () => {
           it('reverts', async () => {
             await assertRevert(
-              ElectionModule.declareL1DebtShare(
+              SynthetixElectionModule.declareL1DebtShare(
                 voter,
                 wrongTree.claims[voter].amount,
                 wrongTree.claims[voter].proof
@@ -156,13 +166,13 @@ describe('ElectionModule (L1 debt share)', function () {
 
         describe('when retrieving the voter declared debt before declaring it', () => {
           it('has 0 debt share', async () => {
-            assertBn.equal(await ElectionModule.getL1DebtShare(voter), 0);
+            assertBn.equal(await SynthetixElectionModule.getL1DebtShare(voter), 0);
           });
         });
 
         describe('when a voter has declared their debt shares', () => {
           before('declare L1 debt share', async () => {
-            const tx = await ElectionModule.declareL1DebtShare(
+            const tx = await SynthetixElectionModule.declareL1DebtShare(
               voter,
               parsedTree.claims[voter].amount,
               parsedTree.claims[voter].proof
@@ -180,7 +190,7 @@ describe('ElectionModule (L1 debt share)', function () {
 
           it('has the right debt share', async () => {
             assertBn.equal(
-              await ElectionModule.getL1DebtShare(voter),
+              await SynthetixElectionModule.getL1DebtShare(voter),
               parsedTree.claims[voter].amount
             );
           });

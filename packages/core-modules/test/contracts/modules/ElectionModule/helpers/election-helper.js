@@ -1,7 +1,5 @@
-const ethers = require('ethers');
 const assert = require('assert/strict');
 const { fastForwardTo } = require('@synthetixio/core-js/utils/hardhat/rpc');
-const { bnSqrt, BN_TWO } = require('@synthetixio/core-js/utils/ethers/bignumber');
 
 const ElectionPeriod = {
   Administration: 0,

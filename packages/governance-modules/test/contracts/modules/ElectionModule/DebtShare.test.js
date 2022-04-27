@@ -12,22 +12,22 @@ const { findEvent } = require('@synthetixio/core-js/utils/ethers/events');
 const { runElection } = require('./helpers/election-helper');
 const { getTime, fastForwardTo } = require('@synthetixio/core-js/utils/hardhat/rpc');
 
-describe('ElectionModule (debt share)', () => {
+describe('SynthetixElectionModule (debt share)', () => {
   const { proxyAddress } = bootstrap(initializer);
 
   let owner, user1, user2, user3;
 
-  let ElectionModule, DebtShare;
+  let SynthetixElectionModule, DebtShare;
 
   let receipt;
 
   async function nominate(signer) {
-    const tx = await ElectionModule.connect(signer).nominate();
+    const tx = await SynthetixElectionModule.connect(signer).nominate();
     receipt = await tx.wait();
   }
 
   async function withdrawNomination(signer) {
-    const tx = await ElectionModule.connect(signer).withdrawNomination();
+    const tx = await SynthetixElectionModule.connect(signer).withdrawNomination();
     receipt = await tx.wait();
   }
 
@@ -38,10 +38,7 @@ describe('ElectionModule (debt share)', () => {
   });
 
   before('identify modules', async () => {
-    ElectionModule = await ethers.getContractAt(
-      'contracts/modules/ElectionModule.sol:ElectionModule',
-      proxyAddress()
-    );
+    SynthetixElectionModule = await ethers.getContractAt('SynthetixElectionModule', proxyAddress());
   });
 
   describe('when the module is initialized', function () {
@@ -56,7 +53,7 @@ describe('ElectionModule (debt share)', () => {
       const votingPeriodStartDate = epochEndDate - daysToSeconds(7);
       const nominationPeriodStartDate = votingPeriodStartDate - daysToSeconds(7);
 
-      await ElectionModule.initializeElectionModule(
+      await SynthetixElectionModule.initializeSynthetixElectionModule(
         'Spartan Council Token',
         'SCT',
         [owner.address],
@@ -68,14 +65,24 @@ describe('ElectionModule (debt share)', () => {
       );
     });
 
+    it('set the debt share contract', async function () {
+      assert.equal(await SynthetixElectionModule.getDebtShareContract(), DebtShare.address);
+    });
+
     describe('on the first epoch', function () {
       describe('when entering the nomination period', function () {
         before('fast forward', async function () {
-          await fastForwardTo(await ElectionModule.getNominationPeriodStartDate(), ethers.provider);
+          await fastForwardTo(
+            await SynthetixElectionModule.getNominationPeriodStartDate(),
+            ethers.provider
+          );
         });
 
         it('shows that the current period is Nomination', async function () {
-          assertBn.equal(await ElectionModule.getCurrentPeriod(), ElectionPeriod.Nomination);
+          assertBn.equal(
+            await SynthetixElectionModule.getCurrentPeriod(),
+            ElectionPeriod.Nomination
+          );
         });
 
         it('shows that the debt share snapshot is 0', async function () {
@@ -83,12 +90,12 @@ describe('ElectionModule (debt share)', () => {
         });
 
         it('shows that the current epoch is 1', async function () {
-          assertBn.equal(await ElectionModule.getEpochIndex(), 1);
+          assertBn.equal(await SynthetixElectionModule.getEpochIndex(), 1);
         });
 
-        it('shows that has the expected vote power', async function () {
+        it('shows that the user has the expected vote power', async function () {
           assertBn.equal(
-            await ElectionModule.getVotePower(user1.address),
+            await SynthetixElectionModule.getVotePower(user1.address),
             await expectedVotePowerForDebtSharePeriodId(0)
           );
         });
@@ -111,7 +118,7 @@ describe('ElectionModule (debt share)', () => {
 
           it('shows that has the expected vote power', async function () {
             assertBn.equal(
-              await ElectionModule.getVotePower(user1.address),
+              await SynthetixElectionModule.getVotePower(user1.address),
               await expectedVotePowerForDebtSharePeriodId(1)
             );
           });
@@ -135,19 +142,22 @@ describe('ElectionModule (debt share)', () => {
               await withdrawNomination(user2);
               await withdrawNomination(user3);
 
-              receipt = await runElection(ElectionModule, owner, [user1]);
+              receipt = await runElection(SynthetixElectionModule, owner, [user1]);
             });
 
             describe('on the second epoch', function () {
               before('fast forward', async function () {
                 await fastForwardTo(
-                  await ElectionModule.getNominationPeriodStartDate(),
+                  await SynthetixElectionModule.getNominationPeriodStartDate(),
                   ethers.provider
                 );
               });
 
               it('shows that the current period is Nomination', async function () {
-                assertBn.equal(await ElectionModule.getCurrentPeriod(), ElectionPeriod.Nomination);
+                assertBn.equal(
+                  await SynthetixElectionModule.getCurrentPeriod(),
+                  ElectionPeriod.Nomination
+                );
               });
 
               it('shows that the debt share snapshot is 1', async function () {
@@ -155,7 +165,7 @@ describe('ElectionModule (debt share)', () => {
               });
 
               it('shows that the current epoch is 2', async function () {
-                assertBn.equal(await ElectionModule.getEpochIndex(), 2);
+                assertBn.equal(await SynthetixElectionModule.getEpochIndex(), 2);
               });
 
               describe('when entering the nomination period', function () {
@@ -177,7 +187,7 @@ describe('ElectionModule (debt share)', () => {
 
                   it('shows that has the expected vote power', async function () {
                     assertBn.equal(
-                      await ElectionModule.getVotePower(user1.address),
+                      await SynthetixElectionModule.getVotePower(user1.address),
                       await expectedVotePowerForDebtSharePeriodId(2)
                     );
                   });
@@ -201,11 +211,11 @@ describe('ElectionModule (debt share)', () => {
                       await withdrawNomination(user2);
                       await withdrawNomination(user3);
 
-                      receipt = await runElection(ElectionModule, owner, [user2]);
+                      receipt = await runElection(SynthetixElectionModule, owner, [user2]);
                     });
 
                     it('shows that the current epoch is 2', async function () {
-                      assertBn.equal(await ElectionModule.getEpochIndex(), 3);
+                      assertBn.equal(await SynthetixElectionModule.getEpochIndex(), 3);
                     });
                   });
                 });

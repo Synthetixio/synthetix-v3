@@ -8,10 +8,10 @@ const initializer = require('../../../helpers/initializer');
 const { findEvent } = require('@synthetixio/core-js/utils/ethers/events');
 const { runElection } = require('./helpers/election-helper');
 
-describe('ElectionModule (resolve)', () => {
+describe('SynthetixElectionModule (resolve)', () => {
   const { proxyAddress } = bootstrap(initializer);
 
-  let ElectionModule, CouncilToken, DebtShare;
+  let SynthetixElectionModule, CouncilToken, DebtShare;
 
   let owner;
   let member1, member2, member3, member4, member5;
@@ -23,7 +23,7 @@ describe('ElectionModule (resolve)', () => {
   async function itHasExpectedMembers() {
     it('shows that the members are in the council', async function () {
       assert.deepEqual(
-        await ElectionModule.getCouncilMembers(),
+        await SynthetixElectionModule.getCouncilMembers(),
         members.map((m) => m.address)
       );
     });
@@ -45,8 +45,8 @@ describe('ElectionModule (resolve)', () => {
   });
 
   before('identify modules', async () => {
-    ElectionModule = await ethers.getContractAt(
-      'contracts/modules/ElectionModule.sol:ElectionModule',
+    SynthetixElectionModule = await ethers.getContractAt(
+      'contracts/modules/SynthetixElectionModule.sol:SynthetixElectionModule',
       proxyAddress()
     );
   });
@@ -63,7 +63,7 @@ describe('ElectionModule (resolve)', () => {
       const votingPeriodStartDate = epochEndDate - daysToSeconds(7);
       const nominationPeriodStartDate = votingPeriodStartDate - daysToSeconds(7);
 
-      await ElectionModule.initializeElectionModule(
+      await SynthetixElectionModule.initializeSynthetixElectionModule(
         'Spartan Council Token',
         'SCT',
         [owner.address],
@@ -76,7 +76,7 @@ describe('ElectionModule (resolve)', () => {
     });
 
     before('identify the council token', async function () {
-      const tokenAddress = await ElectionModule.getCouncilToken();
+      const tokenAddress = await SynthetixElectionModule.getCouncilToken();
 
       CouncilToken = await ethers.getContractAt('CouncilToken', tokenAddress);
     });
@@ -87,7 +87,7 @@ describe('ElectionModule (resolve)', () => {
       });
 
       it('shows that the current epoch is 1', async function () {
-        assertBn.equal(await ElectionModule.getEpochIndex(), 1);
+        assertBn.equal(await SynthetixElectionModule.getEpochIndex(), 1);
       });
 
       itHasExpectedMembers();
@@ -99,11 +99,11 @@ describe('ElectionModule (resolve)', () => {
           });
 
           before('simulate election', async function () {
-            receipt = await runElection(ElectionModule, owner, members);
+            receipt = await runElection(SynthetixElectionModule, owner, members);
           });
 
           it('shows that the current epoch is 2', async function () {
-            assertBn.equal(await ElectionModule.getEpochIndex(), 2);
+            assertBn.equal(await SynthetixElectionModule.getEpochIndex(), 2);
           });
 
           itHasExpectedMembers();
@@ -142,11 +142,11 @@ describe('ElectionModule (resolve)', () => {
             });
 
             before('simulate election', async function () {
-              receipt = await runElection(ElectionModule, owner, members);
+              receipt = await runElection(SynthetixElectionModule, owner, members);
             });
 
             it('shows that the current epoch is 3', async function () {
-              assertBn.equal(await ElectionModule.getEpochIndex(), 3);
+              assertBn.equal(await SynthetixElectionModule.getEpochIndex(), 3);
             });
 
             itHasExpectedMembers();
@@ -189,11 +189,11 @@ describe('ElectionModule (resolve)', () => {
                 });
 
                 before('simulate election', async function () {
-                  receipt = await runElection(ElectionModule, owner, members);
+                  receipt = await runElection(SynthetixElectionModule, owner, members);
                 });
 
                 it('shows that the current epoch is 4', async function () {
-                  assertBn.equal(await ElectionModule.getEpochIndex(), 4);
+                  assertBn.equal(await SynthetixElectionModule.getEpochIndex(), 4);
                 });
 
                 itHasExpectedMembers();

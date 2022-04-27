@@ -106,18 +106,9 @@ describe('ElectionModule (cast)', () => {
           });
 
           it('can retrieve user vote power', async function () {
-            assertBn.equal(
-              await ElectionModule.getVotePower(voter1.address),
-              1
-            );
-            assertBn.equal(
-              await ElectionModule.getVotePower(voter2.address),
-              1
-            );
-            assertBn.equal(
-              await ElectionModule.getVotePower(voter3.address),
-              1
-            );
+            assertBn.equal(await ElectionModule.getVotePower(voter1.address), 1);
+            assertBn.equal(await ElectionModule.getVotePower(voter2.address), 1);
+            assertBn.equal(await ElectionModule.getVotePower(voter3.address), 1);
           });
 
           describe('when issuing valid votes', function () {
@@ -216,10 +207,7 @@ describe('ElectionModule (cast)', () => {
               });
 
               it('can retrieve ballot votes', async function () {
-                assertBn.equal(
-                  await ElectionModule.getBallotVotes(ballot1.id),
-                  3
-                );
+                assertBn.equal(await ElectionModule.getBallotVotes(ballot1.id), 3);
                 assertBn.equal(await ElectionModule.getBallotVotes(ballot2.id), 1);
                 assertBn.equal(await ElectionModule.getBallotVotes(ballot3.id), 1);
               });

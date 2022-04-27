@@ -12,7 +12,7 @@ const { findEvent } = require('@synthetixio/core-js/utils/ethers/events');
 describe('ElectionModule (initialization)', () => {
   const { proxyAddress } = bootstrap(initializer);
 
-  let ElectionModule, CouncilToken, DebtShare;
+  let ElectionModule, CouncilToken;
 
   let owner, user;
 
@@ -54,15 +54,7 @@ describe('ElectionModule (initialization)', () => {
     describe('with an account that does not own the instance', function () {
       it('reverts', async function () {
         await assertRevert(
-          ElectionModule.connect(user).initializeElectionModule(
-            '',
-            '',
-            [],
-            0,
-            0,
-            0,
-            0
-          ),
+          ElectionModule.connect(user).initializeElectionModule('', '', [], 0, 0, 0, 0),
           'Unauthorized'
         );
       });

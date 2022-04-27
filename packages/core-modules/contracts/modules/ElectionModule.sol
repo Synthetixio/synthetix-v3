@@ -29,7 +29,7 @@ contract ElectionModule is
         uint64 nominationPeriodStartDate,
         uint64 votingPeriodStartDate,
         uint64 epochEndDate
-    ) external override onlyOwner onlyIfNotInitialized {
+    ) public override onlyOwner onlyIfNotInitialized {
         ElectionStore storage store = _electionStore();
 
         uint8 seatCount = uint8(firstCouncil.length);
@@ -62,7 +62,7 @@ contract ElectionModule is
     }
 
     /// @notice Shows whether the module has been initialized
-    function isElectionModuleInitialized() external view override returns (bool) {
+    function isElectionModuleInitialized() public view override returns (bool) {
         return _isInitialized();
     }
 
@@ -174,7 +174,7 @@ contract ElectionModule is
     }
 
     /// @notice Allows anyone to self-nominate during the Nomination period
-    function nominate() public override onlyInPeriod(ElectionPeriod.Nomination) {
+    function nominate() public virtual override onlyInPeriod(ElectionPeriod.Nomination) {
         SetUtil.AddressSet storage nominees = _getCurrentElection().nominees;
 
         if (nominees.contains(msg.sender)) revert AlreadyNominated();

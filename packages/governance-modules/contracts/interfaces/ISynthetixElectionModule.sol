@@ -5,6 +5,23 @@ import {IElectionModule as IBaseElectionModule} from "@synthetixio/core-modules/
 
 interface ISynthetixElectionModule is IBaseElectionModule {
     // ---------------------------------------
+    // Initialization
+    // ---------------------------------------
+
+    function initializeSynthetixElectionModule(
+        string memory councilTokenName,
+        string memory councilTokenSymbol,
+        address[] memory firstCouncil,
+        uint8 minimumActiveMembers,
+        uint64 nominationPeriodStartDate,
+        uint64 votingPeriodStartDate,
+        uint64 epochEndDate,
+        address debtShareContract
+    ) external;
+
+    function isSynthetixElectionModuleInitialized() external view returns (bool);
+
+    // ---------------------------------------
     // L2 debt share
     // ---------------------------------------
 
