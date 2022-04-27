@@ -1,20 +1,21 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "./ElectionBase.sol";
+import "../../storage/DebtShareStorage.sol";
 import "@synthetixio/core-contracts/contracts/utils/AddressUtil.sol";
 import "@synthetixio/core-contracts/contracts/errors/ChangeError.sol";
 import "@synthetixio/core-contracts/contracts/errors/AddressError.sol";
+import "@synthetixio/core-modules/contracts/submodules/election/ElectionBase.sol";
 
 /// @dev Defines specific L2 ElectionVotes functionalities
-contract ElectionVotesL2 is ElectionBase {
+contract DebtShareVotesL2 is ElectionBase, DebtShareStorage {
     function _takeDebtShareSnapshotOnFirstNomination() internal {
-        ElectionStore storage store = _electionStore();
+        DebtShareStore storage store = _debtShareStore();
 
         IDebtShare debtShareContract = store.debtShareContract;
 
         // Skip if we already have a debt share snapshot for this epoch
-        uint currentEpochIndex = _electionStore().currentEpochIndex;
+        uint currentEpochIndex = _getCurrentEpochIndex();
         uint debtShareId = store.debtShareIds[currentEpochIndex];
         if (debtShareId != 0) {
             return;
@@ -30,7 +31,7 @@ contract ElectionVotesL2 is ElectionBase {
     }
 
     function _setDebtShareContract(address newDebtShareContractAddress) internal {
-        ElectionStore storage store = _electionStore();
+        DebtShareStore storage store = _debtShareStore();
 
         if (newDebtShareContractAddress == address(0)) {
             revert AddressError.ZeroAddress();
@@ -48,10 +49,9 @@ contract ElectionVotesL2 is ElectionBase {
     }
 
     function _getVotePowerL2(address voter) internal view returns (uint) {
-        ElectionStore storage store = _electionStore();
+        DebtShareStore storage store = _debtShareStore();
 
-        uint currentEpochIndex = _electionStore().currentEpochIndex;
-        uint128 debtShareId = store.debtShareIds[currentEpochIndex];
+        uint128 debtShareId = store.debtShareIds[_getCurrentEpochIndex()];
 
         return store.debtShareContract.balanceOfOnPeriod(voter, debtShareId);
     }

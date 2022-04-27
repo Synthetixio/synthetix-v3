@@ -8,7 +8,7 @@ import "@synthetixio/core-contracts/contracts/errors/ChangeError.sol";
 import "@synthetixio/core-contracts/contracts/errors/AddressError.sol";
 
 /// @dev Defines core functionality for recording votes in ElectionModule.cast()
-abstract contract ElectionVotes is ElectionBase {
+contract ElectionVotes is ElectionBase {
     using SetUtil for SetUtil.AddressSet;
 
     function _validateCandidates(address[] calldata candidates) internal virtual {
@@ -89,7 +89,7 @@ abstract contract ElectionVotes is ElectionBase {
         return ballot.votesByUser[voter];
     }
 
-    function _getVotePower(address voter) internal view returns (uint) {
+    function _getVotePower(address voter) internal virtual view returns (uint) {
         return (uint(uint160(voter)) + block.number) ** 0; // returns 1, avoiding compiler warnings
     }
 }

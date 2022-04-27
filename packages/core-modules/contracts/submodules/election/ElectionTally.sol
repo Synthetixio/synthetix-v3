@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 import "./ElectionBase.sol";
 
 /// @dev Defines core vote-counting / ballot-processing functionality in ElectionModule.evaluate()
-abstract contract ElectionTally is ElectionBase {
+contract ElectionTally is ElectionBase {
     using SetUtil for SetUtil.AddressSet;
 
     function _evaluateNextBallotBatch(uint numBallots) internal {
