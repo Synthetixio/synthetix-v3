@@ -13,6 +13,18 @@ import "../storage/AccountStorage.sol";
 
 contract Account is IAccount, ERC721, AccountStorage, InitializableMixin, UUPSImplementation, Ownable {
     error StakedCollateralAlreadyExists(StakedCollateral stakedCollateral);
+    error NotUnassignedCollateral();
+    error InsufficientAvailableCollateral(
+        uint accountId,
+        uint collateralType,
+        uint requestedAmount,
+        uint unassignedCollateral,
+        uint unlockedCollateral
+    );
+
+    /////////////////////////////////////////////////
+    // CHORES
+    /////////////////////////////////////////////////
 
     function _isInitialized() internal view override returns (bool) {
         return _accountStore().initialized;
@@ -30,42 +42,133 @@ contract Account is IAccount, ERC721, AccountStorage, InitializableMixin, UUPSIm
         _upgradeTo(newImplementation);
     }
 
-    // function stake(uint accountId, StakedCollateral calldata collateral) public {
-    //     AccountData storage accountData = _accountStore().accountsData[accountId];
+    /////////////////////////////////////////////////
+    // STAKE  /  UNSTAKE
+    /////////////////////////////////////////////////
 
-    //     bytes32 collateralId = _calculateId(collateral);
-    //     if (accountData.stakedCollaterals[collateralId]) {
-    //         revert StakedCollateralAlreadyExists(collateral);
-    //     }
+    function stake(uint accountId, StakedCollateral calldata collateral) public {
+        // TODO check if msg.sender is enabled to execute that operation for the accountID
 
-    //     // TODO check the rest of the info of the callateral to stake
+        // TODO check if (this) is approved to collateral.transferFrom() the amount
 
-    //     // TODO check if msg.sender is enabled to execute that operation for the accountID
+        AccountData storage accountData = _accountStore().accountsData[accountId];
 
-    //     // TODO do the business logic on the funds
+        bytes32 collateralId = _calculateCollateralId(collateral);
+        if (accountData.stakedCollaterals[collateralId]) {
+            // TODO What if the aim is to add collateral to the same staking
+            revert StakedCollateralAlreadyExists(collateral);
+        }
 
-    //     // adds a collateralInfo to the collaterals array
-    //     accountData.stakedCollateralIds[collateral.collateralId].push(collateralId);
-    //     accountData.stakedCollaterals[collateralId] = collateral;
-    // }
+        // TODO transfer collateral from accountId.owner to (this)
 
-    function totalCollateral(uint accountId, uint collateralType) public view returns (uint) {
-        // loop through accountsData[accountId].stakedCollateralIds[collateralType] to get the ids and get the data from
-        // accountsData[accountId].stakedCollaterals[collateralId]
-        return 0;
+        // TODO check the rest of the info of the callateral to stake
+
+        // TODO do the business logic on the funds
+
+        // adds a collateralInfo to the collaterals array
+        accountData.stakedCollateralIds[collateral.collateralId].push(collateralId);
+        accountData.stakedCollaterals[collateralId] = collateral;
     }
 
-    function assignedCollateral(uint accountId, uint collateralType) public view returns (uint) {
-        // loop through accountsData[accountId].stakedCollateralIds[collateralType] to get the ids and get the data from
-        // accountsData[accountId].stakedCollaterals[collateralId]
-        return 0;
+    function unstake(
+        uint accountId,
+        uint collateralType,
+        uint amount
+    ) public {
+        // TODO check if msg.sender is enabled to execute that operation for the accountID
+
+        (uint256 collateral, uint256 unlockedCollateral, uint256 assignedCollateral) = getCollateralTotals(
+            accountId,
+            collateralType
+        );
+
+        if (assignedCollateral > collateral) {
+            revert NotUnassignedCollateral();
+        }
+
+        if (collateral - assignedCollateral < amount || unlockedCollateral < amount) {
+            revert InsufficientAvailableCollateral(
+                accountId,
+                collateralType,
+                amount,
+                collateral - assignedCollateral,
+                unlockedCollateral
+            );
+        }
+
+        _unstake(accountId, collateralType, amount);
     }
 
-    function _getAssignedFunds(uint accountId, uint collateralType) internal view returns (uint) {
-        return 0;
+    function _unstake(
+        uint accountId,
+        uint collateralType,
+        uint amount
+    ) internal {
+        // TODO loop over the staked collateral array to find from where to remove the collateral (adjust amount)
+        // TODO if amount == 0 remove item
+        // TODO emit an event
+        // TODO transfer collateral from (this) to accountId.owner
     }
 
-    function _calculateId(StakedCollateral calldata collateral) internal view returns (bytes32) {
-        return keccak256(abi.encodePacked(collateral));
+    /////////////////////////////////////////////////
+    // ASSIGN  /  UNASSIGN
+    /////////////////////////////////////////////////
+    function assign(
+        uint accountId,
+        address fund,
+        StakedCollateral calldata collateral,
+        uint amount
+    ) public {}
+
+    function unassign(
+        uint accountId,
+        address fund,
+        StakedCollateral calldata collateral,
+        uint amount
+    ) public {}
+
+    /////////////////////////////////////////////////
+    // STATS
+    /////////////////////////////////////////////////
+
+    function getCollateralTotals(uint accountId, uint collateralType)
+        public
+        view
+        returns (
+            uint,
+            uint,
+            uint
+        )
+    {
+        AccountData storage accountData = _accountStore().accountsData[accountId];
+        uint256 collateral;
+        uint256 unlockedCollateral;
+        uint256 assignedCollateral;
+
+        for (uint i = 0; i < accountData.stakedCollateralIds.length; i++) {
+            StakedCollateral storage stakedCollateral = accountData.stakedCollaterals[accountData.stakedCollateralIds[i]];
+            if (stakedCollateral.collateralType == collateralType) {
+                collateral = collateral + stakedCollateral.amount;
+                assignedCollateral = assignedCollateral + stakedCollateral.assignedAmount;
+                if (_notLocked(stakedCollateral)) {
+                    unlockedCollateral = unlockedCollateral + stakedCollateral.amount;
+                }
+            }
+        }
+
+        return (collateral, unlockedCollateral, assignedCollateral);
+    }
+
+    /////////////////////////////////////////////////
+    // INTERNALS
+    /////////////////////////////////////////////////
+
+    function _calculateCollateralId(StakedCollateral calldata collateral) internal view returns (bytes32) {
+        return keccak256(abi.encodePacked(collateral.collateralType, collateral.lockExpirationTime));
+    }
+
+    function _notLocked(StakedCollateral calldata collateral) internal view returns (bool) {
+        // TODO implement the logic
+        return false;
     }
 }

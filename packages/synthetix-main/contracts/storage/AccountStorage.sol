@@ -10,17 +10,19 @@ contract AccountStorage {
     }
 
     struct StakedCollateral {
-        uint collateralId;
-        uint amount;
+        uint collateralType; // SNX, LUSD, etc.
+        // locking
         uint lockDuration;
-        uint startLockingTime;
-        uint startDebt;
+        uint lockExpirationTime; // now(staking time) + lockDuration
+        // accounting
+        uint amount; // adjustable (stake/unstake)
+        uint assignedAmount; // adjustable (assign/unassign)
     }
 
     // Account finances
     struct AccountData {
         // Id is keccak256(abi.encodePacked(stakedCollateral))
-        mapping(uint => bytes32[]) stakedCollateralIds; // staked collateral ids by collateral type
+        mapping(uint => bytes32[]) stakedCollateralIds; // staked collateral ids by collateral type/locking
         mapping(bytes32 => StakedCollateral) stakedCollaterals; // staked collateral data by stakedColalteralId
     }
 

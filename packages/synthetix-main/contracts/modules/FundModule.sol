@@ -31,23 +31,26 @@ contract FundModule is IFundModule, OwnableMixin, FundModuleStorage, Initializab
         uint accountId,
         uint collateralType,
         uint collateralAmount,
+        uint lockingPeriod,
         uint leverage
     ) public {
-        // require accountId can operate on collateralType
+        // TODO require accountId can operate on collateralType
+
+        // TODO require input data checking
 
         Position storage position = _fundModuleStore().positions[accountId];
 
         if (position.collateralAmount == 0) {
-            _addPosition(accountId, collateralType, collateralAmount, leverage);
+            _addPosition(accountId, collateralType, collateralAmount, lockingPeriod, leverage);
             // new position
         } else if (collateralAmount == 0) {
-            _removePosition(accountId, collateralType, collateralAmount, leverage);
+            _removePosition(accountId, collateralType, collateralAmount, lockingPeriod, leverage);
             // remove position
         } else if (position.collateralAmount < collateralAmount) {
-            _increasePosition(accountId, collateralType, collateralAmount, leverage);
+            _increasePosition(accountId, collateralType, collateralAmount, lockingPeriod, leverage);
             // increase position
         } else if (position.collateralAmount > collateralAmount) {
-            _decreasePosition(accountId, collateralType, collateralAmount, leverage);
+            _decreasePosition(accountId, collateralType, collateralAmount, lockingPeriod, leverage);
             // decrease position
         } else {
             // no change
@@ -58,6 +61,7 @@ contract FundModule is IFundModule, OwnableMixin, FundModuleStorage, Initializab
         uint accountId,
         uint collateralType,
         uint collateralAmount,
+        uint lockingPeriod,
         uint leverage
     ) internal {}
 
@@ -65,6 +69,7 @@ contract FundModule is IFundModule, OwnableMixin, FundModuleStorage, Initializab
         uint accountId,
         uint collateralType,
         uint collateralAmount,
+        uint lockingPeriod,
         uint leverage
     ) internal {}
 
@@ -72,6 +77,7 @@ contract FundModule is IFundModule, OwnableMixin, FundModuleStorage, Initializab
         uint accountId,
         uint collateralType,
         uint collateralAmount,
+        uint lockingPeriod,
         uint leverage
     ) internal {}
 
@@ -79,6 +85,7 @@ contract FundModule is IFundModule, OwnableMixin, FundModuleStorage, Initializab
         uint accountId,
         uint collateralType,
         uint collateralAmount,
+        uint lockingPeriod,
         uint leverage
     ) internal {}
 
