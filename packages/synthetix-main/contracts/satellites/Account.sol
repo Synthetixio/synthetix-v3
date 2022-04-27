@@ -3,11 +3,21 @@ pragma solidity ^0.8.0;
 
 import "@synthetixio/core-contracts/contracts/proxy/UUPSImplementation.sol";
 import "@synthetixio/core-contracts/contracts/ownership/Ownable.sol";
+import "@synthetixio/core-contracts/contracts/token/ERC721.sol";
+import "@synthetixio/core-contracts/contracts/utils/AddressUtil.sol";
+import "@synthetixio/core-contracts/contracts/initializable/InitializableMixin.sol";
 import "../interfaces/IAccount.sol";
+import "../storage/AccountStorage.sol";
 
-import "./account/AccountBase.sol";
+// import "./account/AccountBase.sol";
 
-contract Account is IAccount, AccountBase, UUPSImplementation, Ownable {
+contract Account is IAccount, ERC721, AccountStorage, InitializableMixin, UUPSImplementation, Ownable {
+    error StakedCollateralAlreadyExists(StakedCollateral stakedCollateral);
+
+    function _isInitialized() internal view override returns (bool) {
+        return _accountStore().initialized;
+    }
+
     function initialize(
         string memory tokenName,
         string memory tokenSymbol,
@@ -20,24 +30,24 @@ contract Account is IAccount, AccountBase, UUPSImplementation, Ownable {
         _upgradeTo(newImplementation);
     }
 
-    function stake(uint accountId, StakedCollateral calldata collateral) public {
-        AccountData storage accountData = _accountStore().accountsData[accountId];
+    // function stake(uint accountId, StakedCollateral calldata collateral) public {
+    //     AccountData storage accountData = _accountStore().accountsData[accountId];
 
-        bytes32 collateralId = _calculateId(collateral);
-        if (accountData.stakedCollaterals[collateralId]) {
-            revert StakedCollateralAlreadyExists(collateral);
-        }
+    //     bytes32 collateralId = _calculateId(collateral);
+    //     if (accountData.stakedCollaterals[collateralId]) {
+    //         revert StakedCollateralAlreadyExists(collateral);
+    //     }
 
-        // TODO check the rest of the info of the callateral to stake
+    //     // TODO check the rest of the info of the callateral to stake
 
-        // TODO check if msg.sender is enabled to execute that operation for the accountID
+    //     // TODO check if msg.sender is enabled to execute that operation for the accountID
 
-        // TODO do the business logic on the funds
+    //     // TODO do the business logic on the funds
 
-        // adds a collateralInfo to the collaterals array
-        accountData.stakedCollateralIds[collateral.collateralId].push(collateralId);
-        accountData.stakedCollaterals[collateralId] = collateral;
-    }
+    //     // adds a collateralInfo to the collaterals array
+    //     accountData.stakedCollateralIds[collateral.collateralId].push(collateralId);
+    //     accountData.stakedCollaterals[collateralId] = collateral;
+    // }
 
     function totalCollateral(uint accountId, uint collateralType) public view returns (uint) {
         // loop through accountsData[accountId].stakedCollateralIds[collateralType] to get the ids and get the data from

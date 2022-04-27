@@ -14,6 +14,7 @@ contract AccountStorage {
         uint amount;
         uint lockDuration;
         uint startLockingTime;
+        uint startDebt;
     }
 
     // Account finances
