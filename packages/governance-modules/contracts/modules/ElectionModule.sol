@@ -3,16 +3,29 @@ pragma solidity ^0.8.0;
 
 import {ElectionModule as BaseElectionModule} from "@synthetixio/core-modules/contracts/modules/ElectionModule.sol";
 import "@synthetixio/core-contracts/contracts/utils/MathUtil.sol";
-import "../submodules/election/DebtShareVotes.sol";
 import "../interfaces/ISynthetixElectionModule.sol";
+import "../submodules/election/DebtShareVotesL1.sol";
+import "../submodules/election/DebtShareVotesL2.sol";
 
 /// @title Module for electing a council, represented by a set of NFT holders
-contract ElectionModule is ISynthetixElectionModule, BaseElectionModule, DebtShareVotes {
+contract ElectionModule is ISynthetixElectionModule, BaseElectionModule, DebtShareVotesL1, DebtShareVotesL2 {
+    // ---------------------------------------
+    // L2 debt share
+    // ---------------------------------------
+
     function setDebtShareContract(address debtShareContract) external onlyOwner {
         _setDebtShareContract(debtShareContract);
 
         emit DebtShareContractSet(debtShareContract);
     }
+
+    function getDebtShareContract() external view returns (address) {
+        return address(_debtShareStore().debtShareContract);
+    }
+
+    // ---------------------------------------
+    // L1 debt share
+    // ---------------------------------------
 
     function setL1DebtShareMerkleRoot(bytes32 merkleRoot, uint blocknumber) external {
         _setL1DebtShareMerkleRoot(merkleRoot, blocknumber);
@@ -30,10 +43,6 @@ contract ElectionModule is ISynthetixElectionModule, BaseElectionModule, DebtSha
         emit L1DebtShareDeclared(voter, debtShare);
     }
 
-    function getDebtShareContract() external view returns (address) {
-        return address(_debtShareStore().debtShareContract);
-    }
-
     function getL1DebtShareMerkleRoot() external view returns (bytes32) {
         L1DebtShareData storage l1DebtShareData = _debtShareStore().l1DebtShareDatas[_getCurrentEpochIndex()];
 
@@ -49,6 +58,10 @@ contract ElectionModule is ISynthetixElectionModule, BaseElectionModule, DebtSha
     function getL1DebtShare(address voter) external view returns (uint) {
         return _getL1DebtShare(voter);
     }
+
+    // ---------------------------------------
+    // Internal
+    // ---------------------------------------
 
     function _getVotePower(address voter) internal override view returns (uint) {
         uint votePower = _getVotePowerL1(voter) + _getVotePowerL2(voter);
