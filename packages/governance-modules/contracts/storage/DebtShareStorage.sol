@@ -11,15 +11,15 @@ contract DebtShareStorage {
         // Debt share snapshot id by epoch index
         mapping(uint => uint128) debtShareIds;
         // Cross chain debt share data by epoch index
-        mapping(uint => L1DebtShareData) l1DebtShareDatas;
+        mapping(uint => CrossChainDebtShareData) CrossChainDebtShareDatas;
     }
 
-    struct L1DebtShareData {
-        // L1 Debt Share MerkleRoot
+    struct CrossChainDebtShareData {
+        // Cross chain debt share merkle root
         bytes32 merkleRoot;
-        // L1 Debt Share MerkleRoot snapshot blocknumber
+        // Cross chain debt share merkle root snapshot blocknumber
         uint merkleRootBlocknumber;
-        // L1 Debt Shares declared for addresses
+        // Cross chain debt shares declared on this chain
         mapping(address => uint) debtShares;
     }
 

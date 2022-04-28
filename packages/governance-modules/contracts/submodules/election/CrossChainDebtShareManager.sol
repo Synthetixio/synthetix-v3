@@ -5,17 +5,17 @@ import "@synthetixio/core-contracts/contracts/utils/MerkleProof.sol";
 import "@synthetixio/core-modules/contracts/submodules/election/ElectionBase.sol";
 import "../../storage/DebtShareStorage.sol";
 
-/// @dev Implements merkle-tree migration/declaration of debt shares on L1
+/// @dev Allows tracking of debt shares on other chains
 contract CrossChainDebtShareManager is ElectionBase, DebtShareStorage {
     function _setCrossChainDebtShareMerkleRoot(bytes32 merkleRoot, uint blocknumber) internal {
-        L1DebtShareData storage l1DebtShareData = _debtShareStore().l1DebtShareDatas[_getCurrentEpochIndex()];
+        CrossChainDebtShareDAta storage debtShareData = _debtShareStore().debtShareDatas[_getCurrentEpochIndex()];
 
-        if (l1DebtShareData.merkleRoot != 0) {
+        if (debtShareData.merkleRoot != 0) {
             revert MerkleRootAlreadySet();
         }
 
-        l1DebtShareData.merkleRoot = merkleRoot;
-        l1DebtShareData.merkleRootBlocknumber = blocknumber;
+        debtShareData.merkleRoot = merkleRoot;
+        debtShareData.merkleRootBlocknumber = blocknumber;
     }
 
     function _declareCrossChainDebtShare(
@@ -23,24 +23,24 @@ contract CrossChainDebtShareManager is ElectionBase, DebtShareStorage {
         uint256 debtShare,
         bytes32[] calldata merkleProof
     ) internal {
-        L1DebtShareData storage l1DebtShareData = _debtShareStore().l1DebtShareDatas[_getCurrentEpochIndex()];
+        CrossChainDebtShareDAta storage debtShareData = _debtShareStore().debtShareDatas[_getCurrentEpochIndex()];
 
-        if (l1DebtShareData.merkleRoot == 0) {
+        if (debtShareData.merkleRoot == 0) {
             revert MerkleRootNotSet();
         }
 
         bytes32 leaf = keccak256(abi.encodePacked(voter, debtShare));
 
-        if (!MerkleProof.verify(merkleProof, l1DebtShareData.merkleRoot, leaf)) {
+        if (!MerkleProof.verify(merkleProof, debtShareData.merkleRoot, leaf)) {
             revert InvalidMerkleProof();
         }
 
-        l1DebtShareData.debtShares[voter] = debtShare;
+        debtShareData.debtShares[voter] = debtShare;
     }
 
     function _getCrossChainDebtShare(address voter) internal view returns (uint) {
-        L1DebtShareData storage l1DebtShareData = _debtShareStore().l1DebtShareDatas[_getCurrentEpochIndex()];
+        CrossChainDebtShareDAta storage debtShareData = _debtShareStore().debtShareDatas[_getCurrentEpochIndex()];
 
-        return l1DebtShareData.debtShares[voter];
+        return debtShareData.debtShares[voter];
     }
 }

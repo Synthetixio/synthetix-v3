@@ -33,7 +33,7 @@ contract SynthetixElectionModule is ISynthetixElectionModule, ElectionModule, De
         );
     }
 
-    function isSynthetixElectionModuleInitialized() external override view returns (bool) {
+    function isSynthetixElectionModuleInitialized() external view override returns (bool) {
         return isElectionModuleInitialized();
     }
 
@@ -58,11 +58,11 @@ contract SynthetixElectionModule is ISynthetixElectionModule, ElectionModule, De
         emit DebtShareContractSet(debtShareContract);
     }
 
-    function getDebtShareContract() external override view returns (address) {
+    function getDebtShareContract() external view override returns (address) {
         return address(_debtShareStore().debtShareContract);
     }
 
-    function getDebtShare(address voter) external override view returns (uint) {
+    function getDebtShare(address voter) external view override returns (uint) {
         return _getDebtShare(voter);
     }
 
@@ -91,19 +91,23 @@ contract SynthetixElectionModule is ISynthetixElectionModule, ElectionModule, De
         emit L1DebtShareMerkleRootSet(merkleRoot, blocknumber, _electionStore().currentEpochIndex);
     }
 
-    function getCrossChainDebtShareMerkleRoot() external override view returns (bytes32) {
-        L1DebtShareData storage l1DebtShareData = _debtShareStore().l1DebtShareDatas[_getCurrentEpochIndex()];
+    function getCrossChainDebtShareMerkleRoot() external view override returns (bytes32) {
+        CrossChainDebtShareData storage CrossChainDebtShareData = _debtShareStore().CrossChainDebtShareDatas[
+            _getCurrentEpochIndex()
+        ];
 
-        return l1DebtShareData.merkleRoot;
+        return CrossChainDebtShareData.merkleRoot;
     }
 
-    function getCrossChainDebtShareMerkleRootBlocknumber() external override view returns (uint) {
-        L1DebtShareData storage l1DebtShareData = _debtShareStore().l1DebtShareDatas[_getCurrentEpochIndex()];
+    function getCrossChainDebtShareMerkleRootBlocknumber() external view override returns (uint) {
+        CrossChainDebtShareData storage CrossChainDebtShareData = _debtShareStore().CrossChainDebtShareDatas[
+            _getCurrentEpochIndex()
+        ];
 
-        return l1DebtShareData.merkleRootBlocknumber;
+        return CrossChainDebtShareData.merkleRootBlocknumber;
     }
 
-    function getCrossChainDebtShare(address voter) external override view returns (uint) {
+    function getCrossChainDebtShare(address voter) external view override returns (uint) {
         return _getCrossChainDebtShare(voter);
     }
 
@@ -111,8 +115,8 @@ contract SynthetixElectionModule is ISynthetixElectionModule, ElectionModule, De
     // Internal
     // ---------------------------------------
 
-    function _getVotePower(address voter) internal override view returns (uint) {
-        uint votePower =  _getDebtShare(voter) + _getCrossChainDebtShare(voter);
+    function _getVotePower(address voter) internal view override returns (uint) {
+        uint votePower = _getDebtShare(voter) + _getCrossChainDebtShare(voter);
 
         return MathUtil.sqrt(votePower);
     }
