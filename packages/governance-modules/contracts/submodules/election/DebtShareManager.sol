@@ -8,7 +8,7 @@ import "@synthetixio/core-contracts/contracts/errors/AddressError.sol";
 import "@synthetixio/core-modules/contracts/submodules/election/ElectionBase.sol";
 
 /// @dev Defines specific L2 ElectionVotes functionalities
-contract DebtShareVotesL2 is ElectionBase, DebtShareStorage {
+contract DebtShareManager is ElectionBase, DebtShareStorage {
     function _takeDebtShareSnapshotOnFirstNomination() internal {
         DebtShareStore storage store = _debtShareStore();
 
@@ -48,7 +48,7 @@ contract DebtShareVotesL2 is ElectionBase, DebtShareStorage {
         store.debtShareContract = IDebtShare(newDebtShareContractAddress);
     }
 
-    function _getVotePowerL2(address voter) internal view returns (uint) {
+    function _getDebtShare(address voter) internal view returns (uint) {
         DebtShareStore storage store = _debtShareStore();
 
         uint128 debtShareId = store.debtShareIds[_getCurrentEpochIndex()];

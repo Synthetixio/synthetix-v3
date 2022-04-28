@@ -29,21 +29,23 @@ interface ISynthetixElectionModule is IBaseElectionModule {
 
     function getDebtShareContract() external view returns (address);
 
+    function getDebtShare(address voter) external view returns (uint);
+
     // ---------------------------------------
     // L1 debt share
     // ---------------------------------------
 
-    function setL1DebtShareMerkleRoot(bytes32 merkleRoot, uint blocknumber) external;
+    function setCrossChainDebtShareMerkleRoot(bytes32 merkleRoot, uint blocknumber) external;
 
-    function declareL1DebtShare(
+    function declareCrossChainDebtShare(
         address account,
         uint256 debtShare,
         bytes32[] calldata merkleProof
     ) external;
 
-    function getL1DebtShareMerkleRoot() external view returns (bytes32);
+    function getCrossChainDebtShareMerkleRoot() external view returns (bytes32);
 
-    function getL1DebtShareMerkleRootBlocknumber() external view returns (uint);
+    function getCrossChainDebtShareMerkleRootBlocknumber() external view returns (uint);
 
-    function getL1DebtShare(address account) external view returns (uint);
+    function getCrossChainDebtShare(address account) external view returns (uint);
 }

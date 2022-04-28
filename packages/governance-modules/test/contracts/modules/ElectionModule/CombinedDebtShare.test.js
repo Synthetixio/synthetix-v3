@@ -84,7 +84,10 @@ describe('SynthetixElectionModule (L1 + L2 debt share)', function () {
     }
 
     // set merkle root
-    const tx = await SynthetixElectionModule.connect(owner).setL1DebtShareMerkleRoot(validRoot, 42);
+    const tx = await SynthetixElectionModule.connect(owner).setCrossChainDebtShareMerkleRoot(
+      validRoot,
+      42
+    );
     await tx.wait();
   });
 
@@ -102,7 +105,7 @@ describe('SynthetixElectionModule (L1 + L2 debt share)', function () {
       before('declare L1 debt share', async () => {
         voter = l1voters[1].address;
 
-        const tx = await SynthetixElectionModule.declareL1DebtShare(
+        const tx = await SynthetixElectionModule.declareCrossChainDebtShare(
           voter,
           parsedTree.claims[voter].amount,
           parsedTree.claims[voter].proof
@@ -164,7 +167,7 @@ describe('SynthetixElectionModule (L1 + L2 debt share)', function () {
       before('declare L1 debt share', async () => {
         voter = l1voters[2].address;
 
-        const tx = await SynthetixElectionModule.declareL1DebtShare(
+        const tx = await SynthetixElectionModule.declareCrossChainDebtShare(
           voter,
           parsedTree.claims[voter].amount,
           parsedTree.claims[voter].proof
@@ -237,7 +240,7 @@ describe('SynthetixElectionModule (L1 + L2 debt share)', function () {
 
         describe('when re-casting vote declaring L1 debt', () => {
           before('declare L1 debt share', async () => {
-            const tx = await SynthetixElectionModule.declareL1DebtShare(
+            const tx = await SynthetixElectionModule.declareCrossChainDebtShare(
               voter,
               parsedTree.claims[voter].amount,
               parsedTree.claims[voter].proof

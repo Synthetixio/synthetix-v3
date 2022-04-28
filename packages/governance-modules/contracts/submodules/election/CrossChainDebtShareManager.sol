@@ -6,8 +6,8 @@ import "@synthetixio/core-modules/contracts/submodules/election/ElectionBase.sol
 import "../../storage/DebtShareStorage.sol";
 
 /// @dev Implements merkle-tree migration/declaration of debt shares on L1
-contract DebtShareVotesL1 is ElectionBase, DebtShareStorage {
-    function _setL1DebtShareMerkleRoot(bytes32 merkleRoot, uint blocknumber) internal {
+contract CrossChainDebtShareManager is ElectionBase, DebtShareStorage {
+    function _setCrossChainDebtShareMerkleRoot(bytes32 merkleRoot, uint blocknumber) internal {
         L1DebtShareData storage l1DebtShareData = _debtShareStore().l1DebtShareDatas[_getCurrentEpochIndex()];
 
         if (l1DebtShareData.merkleRoot != 0) {
@@ -18,7 +18,7 @@ contract DebtShareVotesL1 is ElectionBase, DebtShareStorage {
         l1DebtShareData.merkleRootBlocknumber = blocknumber;
     }
 
-    function _declareL1DebtShare(
+    function _declareCrossChainDebtShare(
         address voter,
         uint256 debtShare,
         bytes32[] calldata merkleProof
@@ -38,13 +38,9 @@ contract DebtShareVotesL1 is ElectionBase, DebtShareStorage {
         l1DebtShareData.debtShares[voter] = debtShare;
     }
 
-    function _getL1DebtShare(address voter) internal view returns (uint) {
+    function _getCrossChainDebtShare(address voter) internal view returns (uint) {
         L1DebtShareData storage l1DebtShareData = _debtShareStore().l1DebtShareDatas[_getCurrentEpochIndex()];
 
         return l1DebtShareData.debtShares[voter];
-    }
-
-    function _getVotePowerL1(address voter) internal view returns (uint) {
-        return _getL1DebtShare(voter);
     }
 }
