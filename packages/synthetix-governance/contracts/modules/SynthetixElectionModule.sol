@@ -92,7 +92,7 @@ contract SynthetixElectionModule is ISynthetixElectionModule, ElectionModule, De
     }
 
     function getCrossChainDebtShareMerkleRoot() external view override returns (bytes32) {
-        CrossChainDebtShareData storage CrossChainDebtShareData = _debtShareStore().CrossChainDebtShareDatas[
+        CrossChainDebtShareData storage CrossChainDebtShareData = _debtShareStore().crossChainDebtShareData[
             _getCurrentEpochIndex()
         ];
 
@@ -100,7 +100,7 @@ contract SynthetixElectionModule is ISynthetixElectionModule, ElectionModule, De
     }
 
     function getCrossChainDebtShareMerkleRootBlocknumber() external view override returns (uint) {
-        CrossChainDebtShareData storage CrossChainDebtShareData = _debtShareStore().CrossChainDebtShareDatas[
+        CrossChainDebtShareData storage CrossChainDebtShareData = _debtShareStore().crossChainDebtShareData[
             _getCurrentEpochIndex()
         ];
 

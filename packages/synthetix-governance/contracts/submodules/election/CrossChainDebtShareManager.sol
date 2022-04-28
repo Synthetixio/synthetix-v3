@@ -8,7 +8,7 @@ import "../../storage/DebtShareStorage.sol";
 /// @dev Allows tracking of debt shares on other chains
 contract CrossChainDebtShareManager is ElectionBase, DebtShareStorage {
     function _setCrossChainDebtShareMerkleRoot(bytes32 merkleRoot, uint blocknumber) internal {
-        CrossChainDebtShareDAta storage debtShareData = _debtShareStore().debtShareDatas[_getCurrentEpochIndex()];
+        CrossChainDebtShareData storage debtShareData = _debtShareStore().crossChainDebtShareData[_getCurrentEpochIndex()];
 
         if (debtShareData.merkleRoot != 0) {
             revert MerkleRootAlreadySet();
@@ -23,7 +23,7 @@ contract CrossChainDebtShareManager is ElectionBase, DebtShareStorage {
         uint256 debtShare,
         bytes32[] calldata merkleProof
     ) internal {
-        CrossChainDebtShareDAta storage debtShareData = _debtShareStore().debtShareDatas[_getCurrentEpochIndex()];
+        CrossChainDebtShareData storage debtShareData = _debtShareStore().crossChainDebtShareData[_getCurrentEpochIndex()];
 
         if (debtShareData.merkleRoot == 0) {
             revert MerkleRootNotSet();
@@ -39,7 +39,7 @@ contract CrossChainDebtShareManager is ElectionBase, DebtShareStorage {
     }
 
     function _getCrossChainDebtShare(address voter) internal view returns (uint) {
-        CrossChainDebtShareDAta storage debtShareData = _debtShareStore().debtShareDatas[_getCurrentEpochIndex()];
+        CrossChainDebtShareData storage debtShareData = _debtShareStore().crossChainDebtShareData[_getCurrentEpochIndex()];
 
         return debtShareData.debtShares[voter];
     }

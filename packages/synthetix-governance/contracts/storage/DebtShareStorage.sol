@@ -11,7 +11,7 @@ contract DebtShareStorage {
         // Debt share snapshot id by epoch index
         mapping(uint => uint128) debtShareIds;
         // Cross chain debt share data by epoch index
-        mapping(uint => CrossChainDebtShareData) CrossChainDebtShareDatas;
+        mapping(uint => CrossChainDebtShareData) crossChainDebtShareData;
     }
 
     struct CrossChainDebtShareData {
