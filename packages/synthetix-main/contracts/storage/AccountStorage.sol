@@ -22,8 +22,15 @@ contract AccountStorage {
     // Account finances
     struct AccountData {
         // Id is keccak256(abi.encodePacked(stakedCollateral))
+        // Collaterals
         mapping(uint => bytes32[]) stakedCollateralIds; // staked collateral ids by collateral type/locking
         mapping(bytes32 => StakedCollateral) stakedCollaterals; // staked collateral data by stakedColalteralId
+        // Funds
+        address[] ownedFunds;
+        address[] subscribedFunds;
+        // Delegations
+        mapping(address => bytes32[]) delegations;
+        SetUtil.AddressSet delegatedAddresses;
     }
 
     function _accountStore() internal pure returns (AccountStore storage store) {

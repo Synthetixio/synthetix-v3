@@ -4,7 +4,8 @@ pragma solidity ^0.8.0;
 contract FundModuleStorage {
     struct FundModuleStore {
         bool initialized;
-        mapping(uint => Position) positions; // positions by accountId (only one positon per account id?)
+        mapping(uint => PositionData) fundPositions; // positions by fundId
+        mapping(uint => FundMetadata) funds; // fund metadata by fundId
     }
 
     struct Position {
@@ -12,7 +13,18 @@ contract FundModuleStorage {
         uint collateralType;
         uint collateralAmount;
         uint leverage;
-        uint initialDebt;
+        uint initialDebt; // how that works with amount adjustments?
+    }
+
+    struct FundMetadata {
+        address owner;
+    }
+
+    // Account finances
+    struct PositionData {
+        // Id is keccak256(abi.encodePacked(stakedCollateral))
+        mapping(uint => bytes32[]) positionIds; // position ids by accountId/collateralType/leverage
+        mapping(bytes32 => Position) fundedPositions; // staked collateral data by stakedColalteralId
     }
 
     function _fundModuleStore() internal pure returns (FundModuleStore storage store) {
