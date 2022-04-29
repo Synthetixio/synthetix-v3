@@ -9,7 +9,13 @@ import "../submodules/election/DebtShareManager.sol";
 import "../submodules/election/CrossChainDebtShareManager.sol";
 
 /// @title Module for electing a council, represented by a set of NFT holders
-contract ElectionModule is ISynthetixElectionModule, BaseElectionModule, DebtShareManager, CrossChainDebtShareManager {
+contract ElectionModule is
+    ISynthetixElectionModule,
+    BaseElectionModule,
+    DebtShareManager,
+    CrossChainDebtShareManager,
+    DebtShareBase
+{
     function initializeElectionModule(
         string memory councilTokenName,
         string memory councilTokenSymbol,
@@ -73,7 +79,7 @@ contract ElectionModule is ISynthetixElectionModule, BaseElectionModule, DebtSha
     ) external override {
         _declareCrossChainDebtShare(voter, debtShare, merkleProof);
 
-        emit L1DebtShareDeclared(voter, debtShare);
+        emit CrossChainDebtShareDeclared(voter, debtShare);
     }
 
     function setCrossChainDebtShareMerkleRoot(bytes32 merkleRoot, uint blocknumber)
@@ -84,7 +90,7 @@ contract ElectionModule is ISynthetixElectionModule, BaseElectionModule, DebtSha
     {
         _setCrossChainDebtShareMerkleRoot(merkleRoot, blocknumber);
 
-        emit L1DebtShareMerkleRootSet(merkleRoot, blocknumber, _electionStore().currentEpochIndex);
+        emit CrossChainDebtShareMerkleRootSet(merkleRoot, blocknumber, _electionStore().currentEpochIndex);
     }
 
     function getCrossChainDebtShareMerkleRoot() external view override returns (bytes32) {

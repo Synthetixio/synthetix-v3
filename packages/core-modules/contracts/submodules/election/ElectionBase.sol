@@ -74,8 +74,8 @@ contract ElectionBase is ElectionStorage, InitializableMixin {
     event EmergencyElectionStarted();
     event DebtShareContractSet(address debtShareContractAddress);
     event DebtShareSnapshotTaken(uint128 snapshotId);
-    event L1DebtShareMerkleRootSet(bytes32 merkleRoot, uint blocknumber, uint epoch);
-    event L1DebtShareDeclared(address voter, uint debtShare);
+    event CrossChainDebtShareMerkleRootSet(bytes32 merkleRoot, uint blocknumber, uint epoch);
+    event CrossChainDebtShareDeclared(address voter, uint debtShare);
 
     // ---------------------------------------
     // Helpers

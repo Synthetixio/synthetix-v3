@@ -122,7 +122,7 @@ describe('ElectionModule (cross chain debt share)', function () {
         });
 
         it('emitted a MerkleRootSet event', async function () {
-          const event = findEvent({ receipt, eventName: 'L1DebtShareMerkleRootSet' });
+          const event = findEvent({ receipt, eventName: 'CrossChainDebtShareMerkleRootSet' });
 
           assert.ok(event);
           assert.deepEqual(event.args.merkleRoot, validRoot);
@@ -180,7 +180,7 @@ describe('ElectionModule (cross chain debt share)', function () {
           });
 
           it('emitted a DebtShareDeclared event', async function () {
-            const event = findEvent({ receipt, eventName: 'L1DebtShareDeclared' });
+            const event = findEvent({ receipt, eventName: 'CrossChainDebtShareDeclared' });
 
             assert.ok(event);
             assert.deepEqual(event.args.voter, voter);
