@@ -4,11 +4,7 @@ pragma solidity ^0.8.0;
 import {IElectionModule as IBaseElectionModule} from "@synthetixio/core-modules/contracts/interfaces/IElectionModule.sol";
 
 interface ISynthetixElectionModule is IBaseElectionModule {
-    // ---------------------------------------
-    // Initialization
-    // ---------------------------------------
-
-    function initializeSynthetixElectionModule(
+    function initializeElectionModule(
         string memory councilTokenName,
         string memory councilTokenSymbol,
         address[] memory firstCouncil,
@@ -19,10 +15,8 @@ interface ISynthetixElectionModule is IBaseElectionModule {
         address debtShareContract
     ) external;
 
-    function isSynthetixElectionModuleInitialized() external view returns (bool);
-
     // ---------------------------------------
-    // L2 debt share
+    // Debt shares
     // ---------------------------------------
 
     function setDebtShareContract(address newDebtShareContractAddress) external;
@@ -32,7 +26,7 @@ interface ISynthetixElectionModule is IBaseElectionModule {
     function getDebtShare(address voter) external view returns (uint);
 
     // ---------------------------------------
-    // L1 debt share
+    // Cross chain debt shares
     // ---------------------------------------
 
     function setCrossChainDebtShareMerkleRoot(bytes32 merkleRoot, uint blocknumber) external;

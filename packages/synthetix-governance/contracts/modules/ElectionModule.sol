@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@synthetixio/core-modules/contracts/modules/ElectionModule.sol";
+import {ElectionModule as BaseElectionModule} from "@synthetixio/core-modules/contracts/modules/ElectionModule.sol";
 import "@synthetixio/core-contracts/contracts/utils/MathUtil.sol";
 import "@synthetixio/core-modules/contracts/interfaces/IElectionModule.sol";
 import "../interfaces/ISynthetixElectionModule.sol";
@@ -9,8 +9,8 @@ import "../submodules/election/DebtShareManager.sol";
 import "../submodules/election/CrossChainDebtShareManager.sol";
 
 /// @title Module for electing a council, represented by a set of NFT holders
-contract SynthetixElectionModule is ISynthetixElectionModule, ElectionModule, DebtShareManager, CrossChainDebtShareManager {
-    function initializeSynthetixElectionModule(
+contract ElectionModule is ISynthetixElectionModule, BaseElectionModule, DebtShareManager, CrossChainDebtShareManager {
+    function initializeElectionModule(
         string memory councilTokenName,
         string memory councilTokenSymbol,
         address[] memory firstCouncil,
@@ -19,7 +19,7 @@ contract SynthetixElectionModule is ISynthetixElectionModule, ElectionModule, De
         uint64 votingPeriodStartDate,
         uint64 epochEndDate,
         address debtShareContract
-    ) external override onlyOwner onlyIfNotInitialized {
+    ) external onlyOwner onlyIfNotInitialized {
         _setDebtShareContract(debtShareContract);
 
         initializeElectionModule(
@@ -33,11 +33,7 @@ contract SynthetixElectionModule is ISynthetixElectionModule, ElectionModule, De
         );
     }
 
-    function isSynthetixElectionModuleInitialized() external view override returns (bool) {
-        return isElectionModuleInitialized();
-    }
-
-    function nominate() public override(ElectionModule, IElectionModule) onlyInPeriod(ElectionPeriod.Nomination) {
+    function nominate() public override(BaseElectionModule, IElectionModule) onlyInPeriod(ElectionPeriod.Nomination) {
         _takeDebtShareSnapshotOnFirstNomination();
 
         super.nominate();

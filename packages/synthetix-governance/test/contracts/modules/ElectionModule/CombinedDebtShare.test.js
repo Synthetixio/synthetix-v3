@@ -10,14 +10,14 @@ const {
   expectedVotePowerForSpecificDebtShare,
 } = require('./helpers/election-helper');
 
-describe('SynthetixElectionModule (L1 + L2 debt share)', function () {
+describe('ElectionModule (combined debt share)', function () {
   const { proxyAddress } = bootstrap(initializer);
 
   let signers, l1voters, members, owner, user1, user2, user3, user4;
 
   let parsedTree, validRoot;
 
-  let DebtShare, SynthetixElectionModule;
+  let DebtShare, ElectionModule;
 
   const TEN = '10000000000000000000';
   const HUNDRED = '100000000000000000000';
@@ -48,8 +48,8 @@ describe('SynthetixElectionModule (L1 + L2 debt share)', function () {
     const factory = await ethers.getContractFactory('DebtShareMock');
     DebtShare = await factory.deploy();
 
-    SynthetixElectionModule = await ethers.getContractAt(
-      'contracts/modules/SynthetixElectionModule.sol:SynthetixElectionModule',
+    ElectionModule = await ethers.getContractAt(
+      'contracts/modules/ElectionModule.sol:ElectionModule',
       proxyAddress()
     );
   });
@@ -60,7 +60,9 @@ describe('SynthetixElectionModule (L1 + L2 debt share)', function () {
     const votingPeriodStartDate = epochEndDate - daysToSeconds(7);
     const nominationPeriodStartDate = votingPeriodStartDate - daysToSeconds(7);
 
-    await SynthetixElectionModule.initializeSynthetixElectionModule(
+    await ElectionModule[
+      'initializeElectionModule(string,string,address[],uint8,uint64,uint64,uint64,address)'
+    ](
       'Spartan Council Token',
       'SCT',
       [owner.address],
@@ -73,30 +75,21 @@ describe('SynthetixElectionModule (L1 + L2 debt share)', function () {
   });
 
   before('nominate tasks', async function () {
-    await fastForwardTo(
-      await SynthetixElectionModule.getNominationPeriodStartDate(),
-      ethers.provider
-    );
+    await fastForwardTo(await ElectionModule.getNominationPeriodStartDate(), ethers.provider);
 
     // nominate members
     for (const member of members) {
-      await SynthetixElectionModule.connect(member).nominate();
+      await ElectionModule.connect(member).nominate();
     }
 
     // set merkle root
-    const tx = await SynthetixElectionModule.connect(owner).setCrossChainDebtShareMerkleRoot(
-      validRoot,
-      42
-    );
+    const tx = await ElectionModule.connect(owner).setCrossChainDebtShareMerkleRoot(validRoot, 42);
     await tx.wait();
   });
 
   describe('when casting votes', () => {
     before('fastforward to voting period', async function () {
-      await fastForwardTo(
-        await SynthetixElectionModule.getVotingPeriodStartDate(),
-        ethers.provider
-      );
+      await fastForwardTo(await ElectionModule.getVotingPeriodStartDate(), ethers.provider);
     });
 
     describe('when casting votes with an address with debt share only on L1', () => {
@@ -105,7 +98,7 @@ describe('SynthetixElectionModule (L1 + L2 debt share)', function () {
       before('declare L1 debt share', async () => {
         voter = l1voters[1].address;
 
-        const tx = await SynthetixElectionModule.declareCrossChainDebtShare(
+        const tx = await ElectionModule.declareCrossChainDebtShare(
           voter,
           parsedTree.claims[voter].amount,
           parsedTree.claims[voter].proof
@@ -119,21 +112,21 @@ describe('SynthetixElectionModule (L1 + L2 debt share)', function () {
       });
 
       before('cast vote', async () => {
-        await SynthetixElectionModule.connect(l1voters[1]).cast([members[0].address]);
+        await ElectionModule.connect(l1voters[1]).cast([members[0].address]);
       });
 
       it('shows that has the expected vote power', async () => {
         assertBn.equal(
-          await SynthetixElectionModule.getVotePower(voter),
+          await ElectionModule.getVotePower(voter),
           await expectedVotePowerForSpecificDebtShare(parsedTree.claims[voter].amount)
         );
       });
 
       it('candidate should have the right amount of votes', async () => {
-        const ballotId = await SynthetixElectionModule.getBallotVoted(voter);
+        const ballotId = await ElectionModule.getBallotVoted(voter);
 
         assertBn.equal(
-          await SynthetixElectionModule.getBallotVotes(ballotId),
+          await ElectionModule.getBallotVotes(ballotId),
           await expectedVotePowerForSpecificDebtShare(parsedTree.claims[voter].amount)
         );
       });
@@ -141,21 +134,21 @@ describe('SynthetixElectionModule (L1 + L2 debt share)', function () {
 
     describe('when casting votes with an address with debt share only on L2', () => {
       before('cast vote', async () => {
-        await SynthetixElectionModule.connect(user1).cast([members[1].address]);
+        await ElectionModule.connect(user1).cast([members[1].address]);
       });
 
       it('shows that has the expected vote power', async () => {
         assertBn.equal(
-          await SynthetixElectionModule.getVotePower(user1.address),
+          await ElectionModule.getVotePower(user1.address),
           await expectedVotePowerForDebtSharePeriodId(1)
         );
       });
 
       it('shows that candidate has the expected amount of votes', async () => {
-        const ballotId = await SynthetixElectionModule.getBallotVoted(user1.address);
+        const ballotId = await ElectionModule.getBallotVoted(user1.address);
 
         assertBn.equal(
-          await SynthetixElectionModule.getBallotVotes(ballotId),
+          await ElectionModule.getBallotVotes(ballotId),
           await expectedVotePowerForDebtSharePeriodId(1)
         );
       });
@@ -167,7 +160,7 @@ describe('SynthetixElectionModule (L1 + L2 debt share)', function () {
       before('declare L1 debt share', async () => {
         voter = l1voters[2].address;
 
-        const tx = await SynthetixElectionModule.declareCrossChainDebtShare(
+        const tx = await ElectionModule.declareCrossChainDebtShare(
           voter,
           parsedTree.claims[voter].amount,
           parsedTree.claims[voter].proof
@@ -181,14 +174,14 @@ describe('SynthetixElectionModule (L1 + L2 debt share)', function () {
       });
 
       before('cast vote', async () => {
-        await SynthetixElectionModule.connect(l1voters[2]).cast([members[2].address]);
+        await ElectionModule.connect(l1voters[2]).cast([members[2].address]);
       });
 
       it('shows that has the expected vote power', async () => {
         const expectedVotePower = ethers.BigNumber.from(parsedTree.claims[voter].amount).add(TEN);
 
         assertBn.equal(
-          await SynthetixElectionModule.getVotePower(voter),
+          await ElectionModule.getVotePower(voter),
           await expectedVotePowerForSpecificDebtShare(expectedVotePower)
         );
       });
@@ -196,10 +189,10 @@ describe('SynthetixElectionModule (L1 + L2 debt share)', function () {
       it('shows that candidate has the expected amount of votes', async () => {
         const expectedVotePower = ethers.BigNumber.from(parsedTree.claims[voter].amount).add(TEN);
 
-        const ballotId = await SynthetixElectionModule.getBallotVoted(voter);
+        const ballotId = await ElectionModule.getBallotVoted(voter);
 
         assertBn.equal(
-          await SynthetixElectionModule.getBallotVotes(ballotId),
+          await ElectionModule.getBallotVotes(ballotId),
           await expectedVotePowerForSpecificDebtShare(expectedVotePower)
         );
       });
@@ -219,28 +212,28 @@ describe('SynthetixElectionModule (L1 + L2 debt share)', function () {
 
       describe('when casting vote for the first time (without declaring L1 debt)', () => {
         before('cast vote', async () => {
-          await SynthetixElectionModule.connect(l1voters[0]).cast([members[3].address]);
+          await ElectionModule.connect(l1voters[0]).cast([members[3].address]);
         });
 
         it('shows that has the expected vote power', async () => {
           assertBn.equal(
-            await SynthetixElectionModule.getVotePower(voter),
+            await ElectionModule.getVotePower(voter),
             await expectedVotePowerForSpecificDebtShare(TEN)
           );
         });
 
         it('shows that candidate has the expected amount of votes', async () => {
-          const ballotId = await SynthetixElectionModule.getBallotVoted(voter);
+          const ballotId = await ElectionModule.getBallotVoted(voter);
 
           assertBn.equal(
-            await SynthetixElectionModule.getBallotVotes(ballotId),
+            await ElectionModule.getBallotVotes(ballotId),
             await expectedVotePowerForSpecificDebtShare(TEN)
           );
         });
 
         describe('when re-casting vote declaring L1 debt', () => {
           before('declare L1 debt share', async () => {
-            const tx = await SynthetixElectionModule.declareCrossChainDebtShare(
+            const tx = await ElectionModule.declareCrossChainDebtShare(
               voter,
               parsedTree.claims[voter].amount,
               parsedTree.claims[voter].proof
@@ -249,11 +242,11 @@ describe('SynthetixElectionModule (L1 + L2 debt share)', function () {
           });
 
           before('another user cast vote', async () => {
-            await SynthetixElectionModule.connect(user2).cast([members[3].address]);
+            await ElectionModule.connect(user2).cast([members[3].address]);
           });
 
           before('voter re-cast vote', async () => {
-            await SynthetixElectionModule.connect(l1voters[0]).cast([members[4].address]);
+            await ElectionModule.connect(l1voters[0]).cast([members[4].address]);
           });
 
           it('shows that has the expected vote power', async () => {
@@ -262,29 +255,29 @@ describe('SynthetixElectionModule (L1 + L2 debt share)', function () {
             );
 
             assertBn.equal(
-              await SynthetixElectionModule.getVotePower(voter),
+              await ElectionModule.getVotePower(voter),
               await expectedVotePowerForSpecificDebtShare(expectedVotePower)
             );
           });
 
           it('shows that previous candidate has the expected amount of votes', async () => {
-            const ballotId = await SynthetixElectionModule.getBallotVoted(user2.address);
+            const ballotId = await ElectionModule.getBallotVoted(user2.address);
 
             assertBn.equal(
-              await SynthetixElectionModule.getBallotVotes(ballotId),
+              await ElectionModule.getBallotVotes(ballotId),
               await expectedVotePowerForDebtSharePeriodId(1)
             );
           });
 
           it('shows that new candidate has the expected amount of votes', async () => {
-            const ballotId = await SynthetixElectionModule.getBallotVoted(voter);
+            const ballotId = await ElectionModule.getBallotVoted(voter);
 
             const expectedVotePower = ethers.BigNumber.from(parsedTree.claims[voter].amount).add(
               TEN
             );
 
             assertBn.equal(
-              await SynthetixElectionModule.getBallotVotes(ballotId),
+              await ElectionModule.getBallotVotes(ballotId),
               await expectedVotePowerForSpecificDebtShare(expectedVotePower)
             );
           });

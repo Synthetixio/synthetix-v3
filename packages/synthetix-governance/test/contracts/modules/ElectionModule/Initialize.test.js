@@ -6,10 +6,10 @@ const { getTime } = require('@synthetixio/core-js/utils/hardhat/rpc');
 const { bootstrap } = require('@synthetixio/deployer/utils/tests');
 const initializer = require('../../../helpers/initializer');
 
-describe('SynthetixElectionModule (initialization)', () => {
+describe('ElectionModule (initialization)', () => {
   const { proxyAddress } = bootstrap(initializer);
 
-  let SynthetixElectionModule, DebtShare;
+  let ElectionModule, DebtShare;
 
   let owner, user;
 
@@ -20,15 +20,15 @@ describe('SynthetixElectionModule (initialization)', () => {
   });
 
   before('identify modules', async () => {
-    SynthetixElectionModule = await ethers.getContractAt(
-      'contracts/modules/SynthetixElectionModule.sol:SynthetixElectionModule',
+    ElectionModule = await ethers.getContractAt(
+      'contracts/modules/ElectionModule.sol:ElectionModule',
       proxyAddress()
     );
   });
 
   describe('before initializing the module', function () {
     it('shows that the module is not initialized', async () => {
-      assert.equal(await SynthetixElectionModule.isSynthetixElectionModuleInitialized(), false);
+      assert.equal(await ElectionModule.isElectionModuleInitialized(), false);
     });
   });
 
@@ -41,16 +41,9 @@ describe('SynthetixElectionModule (initialization)', () => {
     describe('with an account that does not own the instance', function () {
       it('reverts', async function () {
         await assertRevert(
-          SynthetixElectionModule.connect(user).initializeSynthetixElectionModule(
-            '',
-            '',
-            [],
-            0,
-            0,
-            0,
-            0,
-            DebtShare.address
-          ),
+          ElectionModule.connect(user)[
+            'initializeElectionModule(string,string,address[],uint8,uint64,uint64,uint64,address)'
+          ]('', '', [], 0, 0, 0, 0, DebtShare.address),
           'Unauthorized'
         );
       });
@@ -61,29 +54,15 @@ describe('SynthetixElectionModule (initialization)', () => {
         describe('with invalid debtShareContract', function () {
           it('reverts', async function () {
             await assertRevert(
-              SynthetixElectionModule.connect(owner).initializeSynthetixElectionModule(
-                '',
-                '',
-                [owner.address],
-                1,
-                0,
-                0,
-                0,
-                '0x0000000000000000000000000000000000000000'
-              ),
+              ElectionModule.connect(owner)[
+                'initializeElectionModule(string,string,address[],uint8,uint64,uint64,uint64,address)'
+              ]('', '', [owner.address], 1, 0, 0, 0, '0x0000000000000000000000000000000000000000'),
               'ZeroAddress'
             );
             await assertRevert(
-              SynthetixElectionModule.connect(owner).initializeSynthetixElectionModule(
-                '',
-                '',
-                [owner.address],
-                1,
-                0,
-                0,
-                0,
-                user.address
-              ),
+              ElectionModule.connect(owner)[
+                'initializeElectionModule(string,string,address[],uint8,uint64,uint64,uint64,address)'
+              ]('', '', [owner.address], 1, 0, 0, 0, user.address),
               'NotAContract'
             );
           });
@@ -97,7 +76,9 @@ describe('SynthetixElectionModule (initialization)', () => {
           votingPeriodStartDate = epochEndDate - daysToSeconds(7);
           nominationPeriodStartDate = votingPeriodStartDate - daysToSeconds(7);
 
-          const tx = await SynthetixElectionModule.initializeSynthetixElectionModule(
+          const tx = await ElectionModule[
+            'initializeElectionModule(string,string,address[],uint8,uint64,uint64,uint64,address)'
+          ](
             'Spartan Council Token',
             'SCT',
             [owner.address, user.address],
@@ -112,7 +93,7 @@ describe('SynthetixElectionModule (initialization)', () => {
         });
 
         it('set the debt share contract address', async function () {
-          assert.equal(await SynthetixElectionModule.getDebtShareContract(), DebtShare.address);
+          assert.equal(await ElectionModule.getDebtShareContract(), DebtShare.address);
         });
       });
     });
