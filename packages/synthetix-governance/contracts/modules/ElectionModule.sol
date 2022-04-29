@@ -9,13 +9,7 @@ import "../submodules/election/DebtShareManager.sol";
 import "../submodules/election/CrossChainDebtShareManager.sol";
 
 /// @title Module for electing a council, represented by a set of NFT holders
-contract ElectionModule is
-    ISynthetixElectionModule,
-    BaseElectionModule,
-    DebtShareManager,
-    CrossChainDebtShareManager,
-    DebtShareBase
-{
+contract ElectionModule is ISynthetixElectionModule, BaseElectionModule, DebtShareManager, CrossChainDebtShareManager {
     function initializeElectionModule(
         string memory councilTokenName,
         string memory councilTokenSymbol,

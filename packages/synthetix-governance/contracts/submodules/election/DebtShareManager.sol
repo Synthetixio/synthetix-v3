@@ -9,6 +9,11 @@ import "@synthetixio/core-modules/contracts/submodules/election/ElectionBase.sol
 
 /// @dev Defines specific L2 ElectionVotes functionalities
 contract DebtShareManager is ElectionBase, DebtShareStorage {
+    error DebtShareContractNotSet();
+
+    event DebtShareContractSet(address debtShareContractAddress);
+    event DebtShareSnapshotTaken(uint128 snapshotId);
+
     function _takeDebtShareSnapshotOnFirstNomination() internal {
         DebtShareStore storage store = _debtShareStore();
 
