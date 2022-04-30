@@ -6,7 +6,7 @@ import "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
 
 contract DebtShareStorage {
     struct DebtShareStore {
-        // Debt share contract used to determine vote power
+        // Synthetix c2 DebtShare contract used to determine vote power in the local chain
         IDebtShare debtShareContract;
         // Debt share snapshot id by epoch index
         mapping(uint => uint128) debtShareIds;
@@ -15,7 +15,7 @@ contract DebtShareStorage {
     }
 
     struct CrossChainDebtShareData {
-        // Cross chain debt share merkle root
+        // Synthetix v2 cross chain debt share merkle root
         bytes32 merkleRoot;
         // Cross chain debt share merkle root snapshot blocknumber
         uint merkleRootBlocknumber;
