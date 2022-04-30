@@ -53,11 +53,11 @@ contract DebtShareManager is ElectionBase, DebtShareStorage {
         store.debtShareContract = IDebtShare(newDebtShareContractAddress);
     }
 
-    function _getDebtShare(address voter) internal view returns (uint) {
+    function _getDebtShare(address user) internal view returns (uint) {
         DebtShareStore storage store = _debtShareStore();
 
         uint128 debtShareId = store.debtShareIds[_getCurrentEpochIndex()];
 
-        return store.debtShareContract.balanceOfOnPeriod(voter, debtShareId);
+        return store.debtShareContract.balanceOfOnPeriod(user, debtShareId);
     }
 }

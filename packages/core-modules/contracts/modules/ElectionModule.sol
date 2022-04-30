@@ -340,19 +340,19 @@ contract ElectionModule is
         return _calculateBallotId(candidates);
     }
 
-    /// @notice Returns the ballot id that voter voted on in the current election
-    function getBallotVoted(address voter) public view override returns (bytes32) {
-        return _getCurrentElection().ballotIdsByAddress[voter];
+    /// @notice Returns the ballot id that user voted on in the current election
+    function getBallotVoted(address user) public view override returns (bytes32) {
+        return _getCurrentElection().ballotIdsByAddress[user];
     }
 
-    /// @notice Returns of voter has voted in the current election
-    function hasVoted(address voter) public view override returns (bool) {
-        return getBallotVoted(voter) != bytes32(0);
+    /// @notice Returns of user has voted in the current election
+    function hasVoted(address user) public view override returns (bool) {
+        return getBallotVoted(user) != bytes32(0);
     }
 
-    /// @notice Returns the vote power of voter in the current election
-    function getVotePower(address voter) external view override returns (uint) {
-        return _getVotePower(voter);
+    /// @notice Returns the vote power of user in the current election
+    function getVotePower(address user) external view override returns (uint) {
+        return _getVotePower(user);
     }
 
     /// @notice Returns the number of votes given to a particular ballot

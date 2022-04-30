@@ -117,11 +117,11 @@ interface IElectionModule {
 
     function calculateBallotId(address[] calldata candidates) external pure returns (bytes32);
 
-    function getBallotVoted(address voter) external view returns (bytes32);
+    function getBallotVoted(address user) external view returns (bytes32);
 
-    function hasVoted(address voter) external view returns (bool);
+    function hasVoted(address user) external view returns (bool);
 
-    function getVotePower(address voter) external view returns (uint);
+    function getVotePower(address user) external view returns (uint);
 
     function getBallotVotes(bytes32 ballotId) external view returns (uint);
 

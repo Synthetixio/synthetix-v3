@@ -23,7 +23,7 @@ interface ISynthetixElectionModule is IBaseElectionModule {
 
     function getDebtShareContract() external view returns (address);
 
-    function getDebtShare(address voter) external view returns (uint);
+    function getDebtShare(address user) external view returns (uint);
 
     // ---------------------------------------
     // Cross chain debt shares

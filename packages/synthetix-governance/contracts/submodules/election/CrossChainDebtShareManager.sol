@@ -12,7 +12,7 @@ contract CrossChainDebtShareManager is ElectionBase, DebtShareStorage {
     error InvalidMerkleProof();
 
     event CrossChainDebtShareMerkleRootSet(bytes32 merkleRoot, uint blocknumber, uint epoch);
-    event CrossChainDebtShareDeclared(address voter, uint debtShare);
+    event CrossChainDebtShareDeclared(address user, uint debtShare);
 
     function _setCrossChainDebtShareMerkleRoot(bytes32 merkleRoot, uint blocknumber) internal {
         CrossChainDebtShareData storage debtShareData = _debtShareStore().crossChainDebtShareData[_getCurrentEpochIndex()];
@@ -26,7 +26,7 @@ contract CrossChainDebtShareManager is ElectionBase, DebtShareStorage {
     }
 
     function _declareCrossChainDebtShare(
-        address voter,
+        address user,
         uint256 debtShare,
         bytes32[] calldata merkleProof
     ) internal {
@@ -36,18 +36,18 @@ contract CrossChainDebtShareManager is ElectionBase, DebtShareStorage {
             revert MerkleRootNotSet();
         }
 
-        bytes32 leaf = keccak256(abi.encodePacked(voter, debtShare));
+        bytes32 leaf = keccak256(abi.encodePacked(user, debtShare));
 
         if (!MerkleProof.verify(merkleProof, debtShareData.merkleRoot, leaf)) {
             revert InvalidMerkleProof();
         }
 
-        debtShareData.debtShares[voter] = debtShare;
+        debtShareData.debtShares[user] = debtShare;
     }
 
-    function _getCrossChainDebtShare(address voter) internal view returns (uint) {
+    function _getCrossChainDebtShare(address user) internal view returns (uint) {
         CrossChainDebtShareData storage debtShareData = _debtShareStore().crossChainDebtShareData[_getCurrentEpochIndex()];
 
-        return debtShareData.debtShares[voter];
+        return debtShareData.debtShares[user];
     }
 }

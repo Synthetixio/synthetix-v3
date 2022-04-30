@@ -183,7 +183,7 @@ describe('ElectionModule (cross chain debt share)', function () {
             const event = findEvent({ receipt, eventName: 'CrossChainDebtShareDeclared' });
 
             assert.ok(event);
-            assert.deepEqual(event.args.voter, voter);
+            assert.deepEqual(event.args.user, voter);
             assertBn.equal(event.args.debtShare, parsedTree.claims[voter].amount);
           });
 

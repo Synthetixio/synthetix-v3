@@ -42,7 +42,7 @@ contract ElectionVotes is ElectionBase {
     }
 
     function _recordVote(
-        address voter,
+        address user,
         uint votePower,
         address[] calldata candidates
     ) internal virtual returns (bytes32 ballotId) {
@@ -61,35 +61,35 @@ contract ElectionVotes is ElectionBase {
         }
 
         ballot.votes += votePower;
-        ballot.votesByUser[voter] = votePower;
-        election.ballotIdsByAddress[voter] = ballotId;
+        ballot.votesByUser[user] = votePower;
+        election.ballotIdsByAddress[user] = ballotId;
 
         return ballotId;
     }
 
-    function _withdrawVote(address voter, uint votePower) internal virtual returns (bytes32 ballotId) {
+    function _withdrawVote(address user, uint votePower) internal virtual returns (bytes32 ballotId) {
         ElectionData storage election = _getCurrentElection();
 
-        ballotId = election.ballotIdsByAddress[voter];
+        ballotId = election.ballotIdsByAddress[user];
         BallotData storage ballot = _getBallot(ballotId);
 
         ballot.votes -= votePower;
-        ballot.votesByUser[voter] = 0;
-        election.ballotIdsByAddress[voter] = bytes32(0);
+        ballot.votesByUser[user] = 0;
+        election.ballotIdsByAddress[user] = bytes32(0);
 
         return ballotId;
     }
 
-    function _getCastedVotePower(address voter) internal virtual returns (uint votePower) {
+    function _getCastedVotePower(address user) internal virtual returns (uint votePower) {
         ElectionData storage election = _getCurrentElection();
 
-        bytes32 ballotId = election.ballotIdsByAddress[voter];
+        bytes32 ballotId = election.ballotIdsByAddress[user];
         BallotData storage ballot = _getBallot(ballotId);
 
-        return ballot.votesByUser[voter];
+        return ballot.votesByUser[user];
     }
 
-    function _getVotePower(address voter) internal view virtual returns (uint) {
-        return (uint(uint160(voter)) + block.number)**0; // returns 1, avoiding compiler warnings
+    function _getVotePower(address user) internal view virtual returns (uint) {
+        return (uint(uint160(user)) + block.number)**0; // returns 1, avoiding compiler warnings
     }
 }

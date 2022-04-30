@@ -66,8 +66,8 @@ contract ElectionModule is ISynthetixElectionModule, BaseElectionModule, DebtSha
     }
 
     /// @notice Returns the Synthetix v2 debt share for the provided address, at this epoch's snapshot
-    function getDebtShare(address voter) external view override returns (uint) {
-        return _getDebtShare(voter);
+    function getDebtShare(address user) external view override returns (uint) {
+        return _getDebtShare(user);
     }
 
     // ---------------------------------------
@@ -76,13 +76,13 @@ contract ElectionModule is ISynthetixElectionModule, BaseElectionModule, DebtSha
 
     /// @notice Allows users to declare their Synthetix v2 debt shares on other chains
     function declareCrossChainDebtShare(
-        address voter,
+        address user,
         uint256 debtShare,
         bytes32[] calldata merkleProof
     ) external override {
-        _declareCrossChainDebtShare(voter, debtShare, merkleProof);
+        _declareCrossChainDebtShare(user, debtShare, merkleProof);
 
-        emit CrossChainDebtShareDeclared(voter, debtShare);
+        emit CrossChainDebtShareDeclared(user, debtShare);
     }
 
     /// @notice Allows the system owner to declare a merkle root for user debt shares on other chains for this epoch
@@ -112,8 +112,8 @@ contract ElectionModule is ISynthetixElectionModule, BaseElectionModule, DebtSha
     }
 
     /// @notice Returns the Synthetix v2 debt shares for the provided address, at this epoch's snapshot, in other chains
-    function getCrossChainDebtShare(address voter) external view override returns (uint) {
-        return _getCrossChainDebtShare(voter);
+    function getCrossChainDebtShare(address user) external view override returns (uint) {
+        return _getCrossChainDebtShare(user);
     }
 
     // ---------------------------------------
@@ -121,8 +121,8 @@ contract ElectionModule is ISynthetixElectionModule, BaseElectionModule, DebtSha
     // ---------------------------------------
 
     /// @dev Overrides the user's voting power by combining local chain debt share with debt shares in other chains, quadratically filtered
-    function _getVotePower(address voter) internal view override returns (uint) {
-        uint votePower = _getDebtShare(voter) + _getCrossChainDebtShare(voter);
+    function _getVotePower(address user) internal view override returns (uint) {
+        uint votePower = _getDebtShare(user) + _getCrossChainDebtShare(user);
 
         return MathUtil.sqrt(votePower);
     }
