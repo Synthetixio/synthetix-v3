@@ -7,7 +7,7 @@ import "@synthetixio/core-contracts/contracts/errors/ChangeError.sol";
 import "@synthetixio/core-contracts/contracts/errors/AddressError.sol";
 import "@synthetixio/core-modules/contracts/submodules/election/ElectionBase.sol";
 
-/// @dev Defines specific L2 ElectionVotes functionalities
+/// @dev Tracks user Synthetix v2 debt chains on the local chain at a particular block number
 contract DebtShareManager is ElectionBase, DebtShareStorage {
     error DebtShareContractNotSet();
 

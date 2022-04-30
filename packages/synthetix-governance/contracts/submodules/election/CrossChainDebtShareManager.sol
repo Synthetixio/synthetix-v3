@@ -5,7 +5,7 @@ import "@synthetixio/core-contracts/contracts/utils/MerkleProof.sol";
 import "@synthetixio/core-modules/contracts/submodules/election/ElectionBase.sol";
 import "../../storage/DebtShareStorage.sol";
 
-/// @dev Allows tracking of debt shares on other chains
+/// @dev Uses a merkle tree to track user Synthetix v2 debt shares on other chains at a particular block number
 contract CrossChainDebtShareManager is ElectionBase, DebtShareStorage {
     error MerkleRootNotSet();
     error MerkleRootAlreadySet();
