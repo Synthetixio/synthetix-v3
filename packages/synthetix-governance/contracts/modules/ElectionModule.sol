@@ -108,7 +108,7 @@ contract ElectionModule is ISynthetixElectionModule, BaseElectionModule, DebtSha
     function getCrossChainDebtShareMerkleRootBlocknumber() external view override returns (uint) {
         CrossChainDebtShareData storage debtShareData = _debtShareStore().crossChainDebtShareData[_getCurrentEpochIndex()];
 
-        return debtShareData.merkleRootBlocknumber;
+        return debtShareData.merkleRootBlockNumber;
     }
 
     /// @notice Returns the Synthetix v2 debt shares for the provided address, at this epoch's snapshot, in other chains

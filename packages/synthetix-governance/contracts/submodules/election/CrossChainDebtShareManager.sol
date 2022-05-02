@@ -22,7 +22,7 @@ contract CrossChainDebtShareManager is ElectionBase, DebtShareStorage {
         }
 
         debtShareData.merkleRoot = merkleRoot;
-        debtShareData.merkleRootBlocknumber = blocknumber;
+        debtShareData.merkleRootBlockNumber = blocknumber;
     }
 
     function _declareCrossChainDebtShare(

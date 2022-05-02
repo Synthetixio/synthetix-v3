@@ -18,7 +18,7 @@ contract DebtShareStorage {
         // Synthetix v2 cross chain debt share merkle root
         bytes32 merkleRoot;
         // Cross chain debt share merkle root snapshot blocknumber
-        uint merkleRootBlocknumber;
+        uint merkleRootBlockNumber;
         // Cross chain debt shares declared on this chain
         mapping(address => uint) debtShares;
     }
