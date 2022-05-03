@@ -1,30 +1,43 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
+
 contract FundModuleStorage {
     struct FundModuleStore {
         bool initialized;
-        mapping(uint => PositionData) fundPositions; // positions by fundId
-        mapping(uint => FundMetadata) funds; // fund metadata by fundId
+        uint latestFundId;
+        mapping(uint => FundData) funds; // fund metadata by fundId
+        mapping(uint => LiquidityProviderData) fundLiquidityProviders; // positions by fundId
     }
 
-    struct Position {
+    struct FundData {
+        address owner;
+        uint targetRatio;
+        uint liquidationRatio;
+        MarketExposure[] fundDistribution;
+    }
+
+    struct MarketExposure {
+        uint exposure;
+        address market;
+        address priceOracle;
+    }
+
+    struct LiquidityProvider {
+        address collateralType;
         uint accountId;
-        uint collateralType;
-        uint collateralAmount;
         uint leverage;
+        uint collateralAmount;
+        uint shares;
         uint initialDebt; // how that works with amount adjustments?
     }
 
-    struct FundMetadata {
-        address owner;
-    }
-
     // Account finances
-    struct PositionData {
-        // Id is keccak256(abi.encodePacked(stakedCollateral))
-        mapping(uint => bytes32[]) positionIds; // position ids by accountId/collateralType/leverage
-        mapping(bytes32 => Position) fundedPositions; // staked collateral data by stakedColalteralId
+    struct LiquidityProviderData {
+        /// liquidityProviderIds is keccak256(abi.encodePacked(accountId, collateralType, leverage))
+        mapping(uint => bytes32[]) liquidityProviderIds; // liquidityProvider ids by fundId
+        mapping(bytes32 => LiquidityProvider) liquidityProviders; // liquidityProviders data by liquidityProviderIds
     }
 
     function _fundModuleStore() internal pure returns (FundModuleStore storage store) {
