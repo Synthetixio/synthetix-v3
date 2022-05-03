@@ -8,7 +8,8 @@ contract FundModuleStorage {
         bool initialized;
         uint latestFundId;
         mapping(uint => FundData) funds; // fund metadata by fundId
-        mapping(uint => LiquidityProviderData) fundLiquidityProviders; // positions by fundId
+        mapping(uint => bytes32[]) liquidityProviderIds; // liquidityProvider ids by fundId
+        mapping(bytes32 => LiquidityProvider) liquidityProviders; // liquidityProviders data by liquidityProviderIds
     }
 
     struct FundData {
@@ -26,18 +27,12 @@ contract FundModuleStorage {
 
     struct LiquidityProvider {
         address collateralType;
+        uint fundId;
         uint accountId;
         uint leverage;
         uint collateralAmount;
         uint shares;
         uint initialDebt; // how that works with amount adjustments?
-    }
-
-    // Account finances
-    struct LiquidityProviderData {
-        /// liquidityProviderIds is keccak256(abi.encodePacked(accountId, collateralType, leverage))
-        mapping(uint => bytes32[]) liquidityProviderIds; // liquidityProvider ids by fundId
-        mapping(bytes32 => LiquidityProvider) liquidityProviders; // liquidityProviders data by liquidityProviderIds
     }
 
     function _fundModuleStore() internal pure returns (FundModuleStore storage store) {

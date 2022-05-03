@@ -10,6 +10,9 @@ import "../interfaces/IAccount.sol";
 import "../storage/AccountStorage.sol";
 
 contract Account is IAccount, ERC721, AccountStorage, InitializableMixin, UUPSImplementation, Ownable {
+    using SetUtil for SetUtil.AddressSet;
+    using SetUtil for SetUtil.Bytes32Set;
+
     error StakedCollateralAlreadyExists(StakedCollateral stakedCollateral);
     error NotUnassignedCollateral();
     error InsufficientAvailableCollateral(uint accountId, address collateralType, uint requestedAmount);
@@ -48,7 +51,7 @@ contract Account is IAccount, ERC721, AccountStorage, InitializableMixin, UUPSIm
         AccountData storage accountData = _accountStore().accountsData[accountId];
 
         bytes32 collateralId = _calculateCollateralId(collateral);
-        if (accountData.stakedCollaterals[collateralId]) {
+        if (accountData.stakedCollaterals[collateralId].collateralType != address(0)) {
             // TODO What if the aim is to add collateral to the same staking
             revert StakedCollateralAlreadyExists(collateral);
         }
@@ -56,7 +59,7 @@ contract Account is IAccount, ERC721, AccountStorage, InitializableMixin, UUPSIm
         // TODO transfer collateral from accountId.owner to (this)
 
         // adds a collateralInfo to the collaterals array
-        accountData.stakedCollateralIds[collateral.collateralId].push(collateralId);
+        accountData.stakedCollateralIds.add(collateralId);
         accountData.stakedCollaterals[collateralId] = collateral;
     }
 
@@ -90,10 +93,12 @@ contract Account is IAccount, ERC721, AccountStorage, InitializableMixin, UUPSIm
     ) internal {
         AccountData storage accountData = _accountStore().accountsData[accountId];
 
-        for (uint i = 0; i < accountData.stakedCollateralIds.length; i++) {
-            StakedCollateral storage stakedCollateral = accountData.stakedCollaterals[accountData.stakedCollateralIds[i]];
+        for (uint i = 1; i < accountData.stakedCollateralIds.length(); i++) {
+            StakedCollateral storage stakedCollateral = accountData.stakedCollaterals[
+                accountData.stakedCollateralIds.valueAt(i)
+            ];
             if (stakedCollateral.collateralType == collateralType && _notLocked(stakedCollateral)) {
-                if (stakedCollateral.amount - stakedCollateral.assignedCollateral < amount) {
+                if (stakedCollateral.amount - stakedCollateral.assignedAmount < amount) {
                     // remove that amount from the collateral and keep looking on other entries.
                     amount = amount - stakedCollateral.amount;
                 } else {
@@ -151,8 +156,10 @@ contract Account is IAccount, ERC721, AccountStorage, InitializableMixin, UUPSIm
         uint256 unlockedCollateral;
         uint256 assignedCollateral;
 
-        for (uint i = 0; i < accountData.stakedCollateralIds.length; i++) {
-            StakedCollateral storage stakedCollateral = accountData.stakedCollaterals[accountData.stakedCollateralIds[i]];
+        for (uint i = 1; i < accountData.stakedCollateralIds.length(); i++) {
+            StakedCollateral storage stakedCollateral = accountData.stakedCollaterals[
+                accountData.stakedCollateralIds.valueAt(i)
+            ];
             if (stakedCollateral.collateralType == collateralType) {
                 collateral = collateral + stakedCollateral.amount;
                 assignedCollateral = assignedCollateral + stakedCollateral.assignedAmount;
@@ -173,7 +180,7 @@ contract Account is IAccount, ERC721, AccountStorage, InitializableMixin, UUPSIm
         return keccak256(abi.encodePacked(collateral.collateralType, collateral.lockExpirationTime));
     }
 
-    function _notLocked(StakedCollateral calldata collateral) internal view returns (bool) {
+    function _notLocked(StakedCollateral storage collateral) internal view returns (bool) {
         // TODO implement the logic
         return false;
     }

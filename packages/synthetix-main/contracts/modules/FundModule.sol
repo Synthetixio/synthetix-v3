@@ -28,29 +28,31 @@ contract FundModule is IFundModule, OwnableMixin, FundModuleStorage, Initializab
     //////////////////////////////////////////////
 
     function adjust(
+        uint fundId,
         uint accountId,
-        uint collateralType,
+        address collateralType,
         uint collateralAmount,
         uint lockingPeriod,
         uint leverage
-    ) public {
+    ) public override {
         // TODO require accountId can operate on collateralType
 
         // TODO require input data checking
 
-        Position storage position = _fundModuleStore().positions[accountId];
+        bytes32 lpid = _calculateLPId(fundId, accountId, collateralType, leverage);
+        LiquidityProvider storage position = _fundModuleStore().liquidityProviders[lpid];
 
         if (position.collateralAmount == 0) {
-            _addPosition(accountId, collateralType, collateralAmount, lockingPeriod, leverage);
+            _addPosition(fundId, accountId, collateralType, collateralAmount, lockingPeriod, leverage);
             // new position
         } else if (collateralAmount == 0) {
-            _removePosition(accountId, collateralType, collateralAmount, lockingPeriod, leverage);
+            _removePosition(fundId, accountId, collateralType, collateralAmount, lockingPeriod, leverage);
             // remove position
         } else if (position.collateralAmount < collateralAmount) {
-            _increasePosition(accountId, collateralType, collateralAmount, lockingPeriod, leverage);
+            _increasePosition(fundId, accountId, collateralType, collateralAmount, lockingPeriod, leverage);
             // increase position
         } else if (position.collateralAmount > collateralAmount) {
-            _decreasePosition(accountId, collateralType, collateralAmount, lockingPeriod, leverage);
+            _decreasePosition(fundId, accountId, collateralType, collateralAmount, lockingPeriod, leverage);
             // decrease position
         } else {
             // no change
@@ -58,32 +60,36 @@ contract FundModule is IFundModule, OwnableMixin, FundModuleStorage, Initializab
     }
 
     function _addPosition(
+        uint fundId,
         uint accountId,
-        uint collateralType,
+        address collateralType,
         uint collateralAmount,
         uint lockingPeriod,
         uint leverage
     ) internal {}
 
     function _removePosition(
+        uint fundId,
         uint accountId,
-        uint collateralType,
+        address collateralType,
         uint collateralAmount,
         uint lockingPeriod,
         uint leverage
     ) internal {}
 
     function _increasePosition(
+        uint fundId,
         uint accountId,
-        uint collateralType,
+        address collateralType,
         uint collateralAmount,
         uint lockingPeriod,
         uint leverage
     ) internal {}
 
     function _decreasePosition(
+        uint fundId,
         uint accountId,
-        uint collateralType,
+        address collateralType,
         uint collateralAmount,
         uint lockingPeriod,
         uint leverage
@@ -91,42 +97,67 @@ contract FundModule is IFundModule, OwnableMixin, FundModuleStorage, Initializab
 
     // TODO Check ERC4626 logic. a lot of the stuff is there
 
-    function getAccountCurrentDebt(uint accountId) public returns (uint) {
+    function getAccountCurrentDebt(uint accountId) public override returns (uint) {
         return 0;
     }
 
-    function accountShares(uint accountId) public returns (uint) {
+    function accountShares(uint accountId) public override returns (uint) {
         return 0;
     }
 
-    function totalShares() public returns (uint) {
+    function totalShares() public override returns (uint) {
         return 0;
     }
 
-    function totalDebt() public returns (uint) {
+    function totalDebt() public override returns (uint) {
         return 0;
     }
 
-    function accountDebt(uint accountId) public returns (uint) {
-        Position storage position = _fundModuleStore().positions[accountId];
+    function accountDebt(uint fundId, uint accountId) public override returns (uint) {
+        // bytes32 lpid = _calculateLPId(fundId, accountId, collateralType, leverage);
+        // LiquidityProvider storage position = _fundModuleStore().liquidityProviders[lpid];
+        bytes32[] storage liquidityProviderIds = _fundModuleStore().liquidityProviderIds[fundId];
+        for (uint i = 0; i < liquidityProviderIds.length; i++) {
+            LiquidityProvider storage lp = _fundModuleStore().liquidityProviders[liquidityProviderIds[i]];
+            if (lp.accountId == accountId) {
+                // do the math with
+                // lp.leverage;
+                // lp.collateralAmount;
+                // lp.shares;
+                // lp.initialDebt;
+            }
+        }
 
-        return
-            accountCollateralValue(accountId) +
-            position.initialDebt -
-            totalDebt() *
-            (accountShares(accountId) / totalShares());
+        return 0;
+        // accountCollateralValue(accountId) +
+        // position.initialDebt -
+        // totalDebt() *
+        // (accountShares(accountId) / totalShares());
     }
 
-    function accountCollateralValue(uint accountId) public view returns (uint) {
+    function accountCollateralValue(uint accountId) public view override returns (uint) {
         return 0;
         // TODO return positions[accountId].amount - positions[accountId].amount * token(accountEntry.collateralToken).value;
     }
 
-    function getCRation(uint accountId) public returns (uint) {
-        return accountCollateralValue(accountId) / accountDebt(accountId);
+    function getCRation(uint fundId, uint accountId) public override returns (uint) {
+        return accountCollateralValue(accountId) / accountDebt(fundId, accountId);
     }
 
     function _setMarkets(uint[] calldata marketIds, uint[] calldata weights) internal {}
 
     function _assignCollateralToMarket() internal {}
+
+    /////////////////////////////////////////////////
+    // INTERNALS
+    /////////////////////////////////////////////////
+
+    function _calculateLPId(
+        uint fundId,
+        uint accountId,
+        address collateralType,
+        uint leverage
+    ) internal view returns (bytes32) {
+        return keccak256(abi.encodePacked(fundId, accountId, collateralType, leverage));
+    }
 }

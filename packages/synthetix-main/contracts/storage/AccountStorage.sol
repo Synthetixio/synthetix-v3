@@ -6,7 +6,7 @@ import "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
 contract AccountStorage {
     struct AccountStore {
         bool initialized;
-        mapping(uint => AccountData) accountsData;
+        mapping(uint => AccountData) accountsData; // AccountData by accountId
     }
 
     struct StakedCollateral {
@@ -23,7 +23,7 @@ contract AccountStorage {
     struct AccountData {
         // Id is keccak256(abi.encodePacked(stakedCollateral))
         // Collaterals
-        mapping(address => bytes32[]) stakedCollateralIds; // staked collateral ids by collateral type/locking
+        SetUtil.Bytes32Set stakedCollateralIds; // staked collateral ids
         mapping(bytes32 => StakedCollateral) stakedCollaterals; // staked collateral data by stakedColalteralId
         // Funds
         SetUtil.AddressSet ownedFunds;
