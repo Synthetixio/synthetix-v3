@@ -9,18 +9,10 @@ import "@synthetixio/core-contracts/contracts/initializable/InitializableMixin.s
 import "../interfaces/IAccount.sol";
 import "../storage/AccountStorage.sol";
 
-// import "./account/AccountBase.sol";
-
 contract Account is IAccount, ERC721, AccountStorage, InitializableMixin, UUPSImplementation, Ownable {
     error StakedCollateralAlreadyExists(StakedCollateral stakedCollateral);
     error NotUnassignedCollateral();
-    error InsufficientAvailableCollateral(
-        uint accountId,
-        uint collateralType,
-        uint requestedAmount,
-        uint unassignedCollateral,
-        uint unlockedCollateral
-    );
+    error InsufficientAvailableCollateral(uint accountId, address collateralType, uint requestedAmount);
 
     /////////////////////////////////////////////////
     // CHORES
@@ -51,6 +43,8 @@ contract Account is IAccount, ERC721, AccountStorage, InitializableMixin, UUPSIm
 
         // TODO check if (this) is approved to collateral.transferFrom() the amount
 
+        // TODO check the rest of the info of the callateral to stake
+
         AccountData storage accountData = _accountStore().accountsData[accountId];
 
         bytes32 collateralId = _calculateCollateralId(collateral);
@@ -61,10 +55,6 @@ contract Account is IAccount, ERC721, AccountStorage, InitializableMixin, UUPSIm
 
         // TODO transfer collateral from accountId.owner to (this)
 
-        // TODO check the rest of the info of the callateral to stake
-
-        // TODO do the business logic on the funds
-
         // adds a collateralInfo to the collaterals array
         accountData.stakedCollateralIds[collateral.collateralId].push(collateralId);
         accountData.stakedCollaterals[collateralId] = collateral;
@@ -72,7 +62,7 @@ contract Account is IAccount, ERC721, AccountStorage, InitializableMixin, UUPSIm
 
     function unstake(
         uint accountId,
-        uint collateralType,
+        address collateralType,
         uint amount
     ) public {
         // TODO check if msg.sender is enabled to execute that operation for the accountID
@@ -87,26 +77,42 @@ contract Account is IAccount, ERC721, AccountStorage, InitializableMixin, UUPSIm
         }
 
         if (collateral - assignedCollateral < amount || unlockedCollateral < amount) {
-            revert InsufficientAvailableCollateral(
-                accountId,
-                collateralType,
-                amount,
-                collateral - assignedCollateral,
-                unlockedCollateral
-            );
+            revert InsufficientAvailableCollateral(accountId, collateralType, amount);
         }
 
         _unstake(accountId, collateralType, amount);
     }
 
     function _unstake(
-        uint accountId,
-        uint collateralType,
-        uint amount
+        uint256 accountId,
+        address collateralType,
+        uint256 amount
     ) internal {
-        // TODO loop over the staked collateral array to find from where to remove the collateral (adjust amount)
-        // TODO if amount == 0 remove item
+        AccountData storage accountData = _accountStore().accountsData[accountId];
+
+        for (uint i = 0; i < accountData.stakedCollateralIds.length; i++) {
+            StakedCollateral storage stakedCollateral = accountData.stakedCollaterals[accountData.stakedCollateralIds[i]];
+            if (stakedCollateral.collateralType == collateralType && _notLocked(stakedCollateral)) {
+                if (stakedCollateral.amount - stakedCollateral.assignedCollateral < amount) {
+                    // remove that amount from the collateral and keep looking on other entries.
+                    amount = amount - stakedCollateral.amount;
+                } else {
+                    amount = 0;
+                }
+                stakedCollateral.amount = stakedCollateral.amount - amount;
+                if (amount == 0) {
+                    break;
+                }
+            }
+        }
+
+        if (amount > 0) {
+            // should not happen because we checked before...
+            revert InsufficientAvailableCollateral(accountId, collateralType, amount);
+        }
+
         // TODO emit an event
+
         // TODO transfer collateral from (this) to accountId.owner
     }
 
@@ -131,7 +137,7 @@ contract Account is IAccount, ERC721, AccountStorage, InitializableMixin, UUPSIm
     // STATS
     /////////////////////////////////////////////////
 
-    function getCollateralTotals(uint accountId, uint collateralType)
+    function getCollateralTotals(uint accountId, address collateralType)
         public
         view
         returns (
