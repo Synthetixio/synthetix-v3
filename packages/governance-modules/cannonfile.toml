@@ -1,6 +1,9 @@
 name = "synthetix-governance"
 description = "Governance cotracts for on chain voting"
-version = "0.0.1"
+version = "0.0.2"
+
+[setting.salt]
+defaultValue = "governance"
 
 # Deployment Owner, defaults to first hardhat account
 [setting.owner_address]
@@ -23,18 +26,22 @@ defaultValue = 7 # days
 
 [contract.election_module]
 artifact = "contracts/modules/ElectionModule.sol:ElectionModule"
+salt = "<%= settings.salt %>"
 step = 1
 
 [contract.owner_module]
 artifact = "contracts/modules/OwnerModule.sol:OwnerModule"
+salt = "<%= settings.salt %>"
 step = 1
 
 [contract.upgrade_module]
 artifact = "contracts/modules/UpgradeModule.sol:UpgradeModule"
+salt = "<%= settings.salt %>"
 step = 1
 
 [contract.debt_share_mock]
 artifact = "contracts/mocks/DebtShareMock.sol:DebtShareMock"
+salt = "<%= settings.salt %>"
 step = 1
 
 [run.generate_router]
@@ -51,11 +58,13 @@ step = 2
 
 [contract.router]
 artifact = "contracts/Router.sol:Router"
+salt = "<%= settings.salt %>"
 step = 3
 
 [contract.proxy]
 artifact = "contracts/Proxy.sol:Proxy"
 args = ["<%= outputs.self.contracts.router.address %>"]
+salt = "<%= settings.salt %>"
 step = 4
 
 [run.epoch_dates]
