@@ -2,7 +2,38 @@
   "chains": [
     {
       "deploy": [
-        "synthetix-governance:0.0.1"
+        [
+          "synthetix-governance:0.0.2",
+          {
+            "salt": "spartan-council",
+            "council_token_name": "Spartan Council",
+            "council_token_symbol": "SPC"
+          }
+        ],
+        [
+          "synthetix-governance:0.0.2",
+          {
+            "salt": "ambassador-council",
+            "council_token_name": "Ambassador Council",
+            "council_token_symbol": "ABC"
+          }
+        ],
+        [
+          "synthetix-governance:0.0.2",
+          {
+            "salt": "grants-council",
+            "council_token_name": "Grants Council",
+            "council_token_symbol": "GRC"
+          }
+        ],
+        [
+          "synthetix-governance:0.0.2",
+          {
+            "salt": "treasury-council",
+            "council_token_name": "Treasury Council",
+            "council_token_symbol": "TRC"
+          }
+        ]
       ],
       "chainId": 1337,
       "port": 8545
