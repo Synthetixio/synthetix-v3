@@ -99,7 +99,9 @@ describe('ElectionModule (cast)', function () {
     const votingPeriodStartDate = epochEndDate - daysToSeconds(7);
     const nominationPeriodStartDate = votingPeriodStartDate - daysToSeconds(7);
 
-    await ElectionModule.initializeElectionModule(
+    await ElectionModule[
+      'initializeElectionModule(string,string,address[],uint8,uint64,uint64,uint64,address)'
+    ](
       'Spartan Council Token',
       'SCT',
       [candidate1.address],
