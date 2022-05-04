@@ -15,6 +15,7 @@ jobs:
             deployer,
             synthetix-main,
             spartan-council,
+            grants-council,
             synthetix-governance,
           ]
         include:
@@ -30,6 +31,8 @@ jobs:
             coverage-file: packages/synthetix-main/coverage.json
           - package: spartan-council
             coverage-file: packages/spartan-council/coverage.json
+          - package: grants-council
+            coverage-file: packages/grants-council/coverage.json
           - package: synthetix-governance
             coverage-file: packages/synthetix-governance/coverage.json
     steps:

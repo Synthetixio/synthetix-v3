@@ -13,6 +13,7 @@ jobs:
             core-modules,
             synthetix-main,
             spartan-council,
+            grants-council,
             synthetix-governance,
           ]
 
