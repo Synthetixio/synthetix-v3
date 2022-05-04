@@ -82,4 +82,4 @@ jobs:
           cache: "npm"
       - run: npm ci
       - name: Execute tests
-        run: npm --workspace=./packages/spartan-council run test:integration
+        run: npm --workspace=./packages/synthetix-governance run test:integration

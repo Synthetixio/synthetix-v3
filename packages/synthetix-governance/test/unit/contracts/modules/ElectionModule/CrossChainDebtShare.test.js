@@ -4,7 +4,7 @@ const assertBn = require('@synthetixio/core-js/utils/assertions/assert-bignumber
 const { findEvent } = require('@synthetixio/core-js/utils/ethers/events');
 const { parseBalanceMap } = require('@synthetixio/core-js/utils/merkle-tree/parse-balance-tree');
 const { bootstrap } = require('@synthetixio/deployer/utils/tests');
-const initializer = require('../../../../../spartan-council/test/helpers/initializer');
+const initializer = require('../../../../helpers/initializer');
 const { daysToSeconds } = require('@synthetixio/core-js/utils/misc/dates');
 const { getTime, fastForwardTo } = require('@synthetixio/core-js/utils/hardhat/rpc');
 

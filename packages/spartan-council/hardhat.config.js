@@ -6,8 +6,6 @@ require('@nomiclabs/hardhat-ethers');
 require('@synthetixio/deployer');
 require('@synthetixio/cli');
 
-require('./tasks/test');
-
 /**
  * @type import('hardhat/config').HardhatUserConfig
  */
