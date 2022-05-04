@@ -15,6 +15,7 @@ jobs:
             spartan-council,
             grants-council,
             treasury-council,
+            ambassador-council,
             synthetix-governance,
           ]
 

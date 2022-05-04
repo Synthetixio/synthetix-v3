@@ -17,6 +17,7 @@ jobs:
             spartan-council,
             grants-council,
             treasury-council,
+            ambassador-council,
             synthetix-governance,
           ]
         include:
@@ -36,6 +37,8 @@ jobs:
             coverage-file: packages/grants-council/coverage.json
           - package: treasury-council
             coverage-file: packages/treasury-council/coverage.json
+          - package: ambassador-council
+            coverage-file: packages/ambassador-council/coverage.json
           - package: synthetix-governance
             coverage-file: packages/synthetix-governance/coverage.json
     steps:
