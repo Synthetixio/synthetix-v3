@@ -29,7 +29,7 @@ contract AccountStorage {
         SetUtil.AddressSet ownedFunds;
         SetUtil.AddressSet subscribedFunds;
         // Delegations
-        mapping(address => bytes32[]) delegations;
+        mapping(address => SetUtil.Bytes32Set) delegations;
         SetUtil.AddressSet delegatedAddresses;
     }
 

@@ -6,6 +6,8 @@ import "@synthetixio/core-contracts/contracts/ownership/Ownable.sol";
 import "@synthetixio/core-contracts/contracts/token/ERC721.sol";
 import "@synthetixio/core-contracts/contracts/utils/AddressUtil.sol";
 import "@synthetixio/core-contracts/contracts/initializable/InitializableMixin.sol";
+import "@synthetixio/core-contracts/contracts/errors/AddressError.sol";
+
 import "../interfaces/IAccount.sol";
 import "../storage/AccountStorage.sol";
 
@@ -13,7 +15,11 @@ contract Account is IAccount, ERC721, AccountStorage, InitializableMixin, UUPSIm
     using SetUtil for SetUtil.AddressSet;
     using SetUtil for SetUtil.Bytes32Set;
 
-    error StakedCollateralAlreadyExists(StakedCollateral stakedCollateral);
+    error InvalidAccountId(uint accountId);
+
+    error InvalidRole(bytes32 role);
+
+    error StakedCollateralAlreadyExists(address collateral, uint256 lockExpirationTime);
     error NotUnassignedCollateral();
     error InsufficientAvailableCollateral(uint accountId, address collateralType, uint requestedAmount);
 
@@ -38,10 +44,21 @@ contract Account is IAccount, ERC721, AccountStorage, InitializableMixin, UUPSIm
     }
 
     /////////////////////////////////////////////////
+    // MINT
+    /////////////////////////////////////////////////
+    function mint(uint256 accountId, address owner) external override {
+        _mint(owner, accountId);
+    }
+
+    /////////////////////////////////////////////////
     // STAKE  /  UNSTAKE
     /////////////////////////////////////////////////
 
-    function stake(uint accountId, StakedCollateral calldata collateral) public {
+    function stake(
+        uint accountId,
+        address collateral,
+        uint256 amount
+    ) public override {
         // TODO check if msg.sender is enabled to execute that operation for the accountID
 
         // TODO check if (this) is approved to collateral.transferFrom() the amount
@@ -53,21 +70,25 @@ contract Account is IAccount, ERC721, AccountStorage, InitializableMixin, UUPSIm
         bytes32 collateralId = _calculateCollateralId(collateral);
         if (accountData.stakedCollaterals[collateralId].collateralType != address(0)) {
             // TODO What if the aim is to add collateral to the same staking
-            revert StakedCollateralAlreadyExists(collateral);
+            revert StakedCollateralAlreadyExists(collateral, 0);
         }
 
         // TODO transfer collateral from accountId.owner to (this)
 
         // adds a collateralInfo to the collaterals array
         accountData.stakedCollateralIds.add(collateralId);
-        accountData.stakedCollaterals[collateralId] = collateral;
+        accountData.stakedCollaterals[collateralId].collateralType = collateral;
+        accountData.stakedCollaterals[collateralId].lockDuration = 0;
+        accountData.stakedCollaterals[collateralId].lockExpirationTime = 0;
+        accountData.stakedCollaterals[collateralId].amount = amount;
+        accountData.stakedCollaterals[collateralId].assignedAmount = 0;
     }
 
     function unstake(
         uint accountId,
         address collateralType,
         uint amount
-    ) public {
+    ) public override {
         // TODO check if msg.sender is enabled to execute that operation for the accountID
 
         (uint256 collateral, uint256 unlockedCollateral, uint256 assignedCollateral) = getCollateralTotals(
@@ -122,7 +143,54 @@ contract Account is IAccount, ERC721, AccountStorage, InitializableMixin, UUPSIm
     }
 
     /////////////////////////////////////////////////
-    // ASSIGN  /  UNASSIGN
+    // ROLES
+    /////////////////////////////////////////////////
+    function hasRole(
+        uint accountId,
+        bytes32 role,
+        address target
+    ) public view override returns (bool) {
+        AccountData storage accountData = _accountStore().accountsData[accountId];
+
+        return target != address(0) && accountData.delegations[target].contains(role);
+    }
+
+    function grantRole(
+        uint accountId,
+        bytes32 role,
+        address target
+    ) external override {
+        if (target == address(0)) {
+            revert AddressError.ZeroAddress();
+        }
+
+        if (role == 0) {
+            revert InvalidRole(role);
+        }
+
+        AccountData storage accountData = _accountStore().accountsData[accountId];
+
+        accountData.delegations[target].add(role);
+    }
+
+    function revokeRole(
+        uint accountId,
+        bytes32 role,
+        address target
+    ) external override {
+        AccountData storage accountData = _accountStore().accountsData[accountId];
+
+        accountData.delegations[target].remove(role);
+    }
+
+    function renounceRole(
+        uint accountId,
+        bytes32 role,
+        address target
+    ) external override {}
+
+    /////////////////////////////////////////////////
+    // FUND ASSIGN  /  UNASSIGN
     /////////////////////////////////////////////////
     function assign(
         uint accountId,
@@ -177,7 +245,15 @@ contract Account is IAccount, ERC721, AccountStorage, InitializableMixin, UUPSIm
     /////////////////////////////////////////////////
 
     function _calculateCollateralId(StakedCollateral calldata collateral) internal view returns (bytes32) {
-        return keccak256(abi.encodePacked(collateral.collateralType, collateral.lockExpirationTime));
+        return _calculateCollateralId(collateral.collateralType, collateral.lockExpirationTime);
+    }
+
+    function _calculateCollateralId(address collateralType) internal view returns (bytes32) {
+        return _calculateCollateralId(collateralType, 0);
+    }
+
+    function _calculateCollateralId(address collateralType, uint256 lockExpirationTime) internal view returns (bytes32) {
+        return keccak256(abi.encodePacked(collateralType, lockExpirationTime));
     }
 
     function _notLocked(StakedCollateral storage collateral) internal view returns (bool) {
