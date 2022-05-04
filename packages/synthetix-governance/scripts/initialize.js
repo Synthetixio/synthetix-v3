@@ -35,7 +35,9 @@ exports.initializeElectionModule = async function initializeElectionModule({
     proxyAddress
   );
 
-  const tx = await ElectionModule.initializeElectionModule(
+  const tx = await ElectionModule[
+    'initializeElectionModule(string,string,address[],uint8,uint64,uint64,uint64,address)'
+  ](
     councilTokenName,
     councilTokenSymbol,
     firstCouncilMembers,
