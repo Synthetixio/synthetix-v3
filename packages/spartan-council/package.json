@@ -7,9 +7,8 @@
     "!contracts/mocks"
   ],
   "scripts": {
-    "test": "hardhat test test/unit/**/*.test.js",
-    "test:integration": "hardhat test test/integration/**/*.test.js",
-    "coverage": "hardhat coverage --testfiles test/unit/**/*.test.js",
+    "test": "hardhat test",
+    "coverage": "hardhat coverage",
     "compile-contracts": "hardhat compile",
     "size-contracts": "hardhat size-contracts"
   },
