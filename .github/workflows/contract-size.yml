@@ -14,6 +14,7 @@ jobs:
             synthetix-main,
             spartan-council,
             grants-council,
+            treasury-council,
             synthetix-governance,
           ]
 
