@@ -3,7 +3,7 @@ const assert = require('assert/strict');
 const assertBn = require('@synthetixio/core-js/utils/assertions/assert-bignumber');
 const { daysToSeconds } = require('@synthetixio/core-js/utils/misc/dates');
 const { bootstrap } = require('@synthetixio/deployer/utils/tests');
-const initializer = require('../../../helpers/initializer');
+const initializer = require('../../../../helpers/initializer');
 const {
   ElectionPeriod,
   expectedVotePowerForDebtSharePeriodId,

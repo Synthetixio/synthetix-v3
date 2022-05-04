@@ -6,6 +6,8 @@ require('@nomiclabs/hardhat-ethers');
 require('@synthetixio/deployer');
 require('@synthetixio/cli');
 
+require('./tasks/test');
+
 const config = {
   solidity: {
     version: '0.8.11',
@@ -33,6 +35,16 @@ const config = {
   },
   cannon: {},
 };
+
+// Fork configuration necessary only for integration tests
+if (process.env.FORK_PROVIDER_URL) {
+  config.networks.hardhat = {
+    forking: {
+      url: process.env.FORK_PROVIDER_URL,
+      blockNumber: 4838445, // 2022-03-25
+    },
+  };
+}
 
 // Config only necessary for publishing cannon package
 if (process.env.CANNON_PUBLISHER_PRIVATE_KEY) {
