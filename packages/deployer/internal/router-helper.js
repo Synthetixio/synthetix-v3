@@ -7,9 +7,17 @@ const path = require('path');
  *   'BearableModule' => '_BEARABLE_MODULE'
  *   'Proxy' => '_PROXY'
  *   'ERC20Token' => '_ERC20_TOKEN'
+ *   'contracts/modules/TokenModule.sol:TokenModule' =>
+ *    '_CONTRACTS_MODULES__TOKEN_MODULE_SOL__TOKEN_MODULE'
  */
 function toPrivateConstantCase(name) {
-  return name.replace(/(?<![A-Z])[A-Z]/g, '_$&').toUpperCase();
+  return (
+    '_' +
+    name
+      .replace(/(?<![A-Z])[A-Z]/g, '_$&')
+      .toUpperCase()
+      .replace(/[^A-Z_]/g, '_')
+  );
 }
 
 function getRouterSource() {

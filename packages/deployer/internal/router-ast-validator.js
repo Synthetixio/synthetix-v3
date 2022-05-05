@@ -54,12 +54,8 @@ class RouterASTValidator {
     );
 
     const moduleAddresses = [];
-    for (const {
-      contractName,
-      contractFullyQualifiedName,
-      deployedAddress,
-    } of modulesDeploymentData) {
-      moduleAddresses[toPrivateConstantCase(contractName)] = {
+    for (const { contractFullyQualifiedName, deployedAddress } of modulesDeploymentData) {
+      moduleAddresses[toPrivateConstantCase(contractFullyQualifiedName)] = {
         contractFullyQualifiedName,
         address: deployedAddress,
       };

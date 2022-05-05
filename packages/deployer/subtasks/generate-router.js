@@ -82,7 +82,9 @@ function _renderSelectors({ binaryData }) {
       for (const s of node.selectors) {
         selectorsStr += `\n${TAB.repeat(4 + indent)}case ${
           s.selector
-        } { result := ${toPrivateConstantCase(s.contractName)} } // ${s.contractName}.${s.name}()`;
+        } { result := ${toPrivateConstantCase(s.contractFullyQualifiedName)} } // ${
+          s.contractFullyQualifiedName
+        }.${s.name}()`;
       }
       selectorsStr += `\n${TAB.repeat(4 + indent)}leave`;
     }
@@ -102,10 +104,10 @@ function _renderSelectors({ binaryData }) {
 function _renderModules(modulesData) {
   return modulesData
     .reduce((lines, moduleData) => {
-      const { contractName, deployedAddress } = moduleData;
+      const { contractFullyQualifiedName, deployedAddress } = moduleData;
       lines.push(
         `${TAB}address private constant ${toPrivateConstantCase(
-          contractName
+          contractFullyQualifiedName
         )} = ${deployedAddress};`
       );
       return lines;

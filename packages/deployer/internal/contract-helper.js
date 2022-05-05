@@ -27,7 +27,9 @@ async function getAllSelectors(contractFullyQualifiedNames) {
     const { contractName, abi } = await hre.artifacts.readArtifact(name);
     const selectors = await getSelectors(abi, hre.config.deployer.routerFunctionFilter);
 
-    allSelectors.push(...selectors.map((s) => ({ ...s, contractName })));
+    allSelectors.push(
+      ...selectors.map((s) => ({ ...s, contractName, contractFullyQualifiedName: name }))
+    );
   }
 
   return allSelectors.sort((a, b) => {
