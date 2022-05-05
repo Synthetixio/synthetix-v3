@@ -1,3 +1,4 @@
-deployments/local
-deployments/hardhat
 contracts/Router.sol
+deployments/hardhat
+deployments/local
+deployments/localhost
