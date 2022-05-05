@@ -15,13 +15,29 @@ contract Account is IAccount, ERC721, AccountStorage, InitializableMixin, UUPSIm
     using SetUtil for SetUtil.AddressSet;
     using SetUtil for SetUtil.Bytes32Set;
 
+    /////////////////////////////////////////////////
+    // ERRORS
+    /////////////////////////////////////////////////
     error InvalidAccountId(uint accountId);
 
     error InvalidRole(bytes32 role);
+    error NotAuthorized(uint accountId, bytes32 role, address target);
 
     error StakedCollateralAlreadyExists(address collateral, uint256 lockExpirationTime);
     error NotUnassignedCollateral();
     error InsufficientAvailableCollateral(uint accountId, address collateralType, uint requestedAmount);
+    error OutOfBounds();
+
+    /////////////////////////////////////////////////
+    // EVENTS
+    /////////////////////////////////////////////////
+    event AccountMinted(uint accountId, address owner);
+
+    event CollateralStaked(uint accountId, address collateral, uint amount, address executedBy);
+    event CollateralUnstaked(uint accountId, address collateral, uint amount, address executedBy);
+
+    event RoleGranted(uint accountId, bytes32 role, address target, address executedBy);
+    event RoleRevoked(uint accountId, bytes32 role, address target, address executedBy);
 
     /////////////////////////////////////////////////
     // CHORES
@@ -46,8 +62,10 @@ contract Account is IAccount, ERC721, AccountStorage, InitializableMixin, UUPSIm
     /////////////////////////////////////////////////
     // MINT
     /////////////////////////////////////////////////
-    function mint(uint256 accountId, address owner) external override {
+    function mint(address owner, uint256 accountId) external override {
         _mint(owner, accountId);
+
+        emit AccountMinted(owner, accountId);
     }
 
     /////////////////////////////////////////////////
@@ -58,16 +76,13 @@ contract Account is IAccount, ERC721, AccountStorage, InitializableMixin, UUPSIm
         uint accountId,
         address collateral,
         uint256 amount
-    ) public override {
-        // TODO check if msg.sender is enabled to execute that operation for the accountID
-
+    ) public override onlyAuthorized(accountId, "stake") {
         // TODO check if (this) is approved to collateral.transferFrom() the amount
 
         // TODO check the rest of the info of the callateral to stake
 
         AccountData storage accountData = _accountStore().accountsData[accountId];
 
-        bytes32 collateralId = _calculateCollateralId(collateral);
         if (accountData.stakedCollaterals[collateralId].collateralType != address(0)) {
             // TODO What if the aim is to add collateral to the same staking
             revert StakedCollateralAlreadyExists(collateral, 0);
@@ -88,7 +103,7 @@ contract Account is IAccount, ERC721, AccountStorage, InitializableMixin, UUPSIm
         uint accountId,
         address collateralType,
         uint amount
-    ) public override {
+    ) public override onlyAuthorized(accountId, "unstake") {
         // TODO check if msg.sender is enabled to execute that operation for the accountID
 
         (uint256 collateral, uint256 unlockedCollateral, uint256 assignedCollateral) = getCollateralTotals(
@@ -143,6 +158,23 @@ contract Account is IAccount, ERC721, AccountStorage, InitializableMixin, UUPSIm
     }
 
     /////////////////////////////////////////////////
+    // FUND ASSIGN  /  UNASSIGN
+    /////////////////////////////////////////////////
+    function assign(
+        uint accountId,
+        uint fundId,
+        address collateralType,
+        uint amount
+    ) public onlyAuthorized(accountId, "assignFund") {}
+
+    function unassign(
+        uint accountId,
+        uint fundId,
+        address collateralType,
+        uint amount
+    ) public onlyAuthorized(accountId, "unassignFund") {}
+
+    /////////////////////////////////////////////////
     // ROLES
     /////////////////////////////////////////////////
     function hasRole(
@@ -159,52 +191,72 @@ contract Account is IAccount, ERC721, AccountStorage, InitializableMixin, UUPSIm
         uint accountId,
         bytes32 role,
         address target
-    ) external override {
+    ) external override onlyAuthorized(accountId, "modifyPermission") {
         if (target == address(0)) {
             revert AddressError.ZeroAddress();
         }
 
-        if (role == 0) {
+        if (role == "") {
             revert InvalidRole(role);
         }
 
         AccountData storage accountData = _accountStore().accountsData[accountId];
 
         accountData.delegations[target].add(role);
+
+        emit RoleGranted(accountId, role, target, msg.sender);
     }
 
     function revokeRole(
         uint accountId,
         bytes32 role,
         address target
-    ) external override {
-        AccountData storage accountData = _accountStore().accountsData[accountId];
-
-        accountData.delegations[target].remove(role);
+    ) external override onlyAuthorized(accountId, "modifyPermission") {
+        _revokeRole(accountId, role, target);
     }
 
     function renounceRole(
         uint accountId,
         bytes32 role,
         address target
-    ) external override {}
+    ) external override {
+        if (msg.sender != target) {
+            revert NotAuthorized(accountId, "renounceRole", target);
+        }
 
-    /////////////////////////////////////////////////
-    // FUND ASSIGN  /  UNASSIGN
-    /////////////////////////////////////////////////
-    function assign(
-        uint accountId,
-        address fund,
-        StakedCollateral calldata collateral,
-        uint amount
-    ) public {}
+        _revokeRole(accountId, role, target);
+    }
 
-    function unassign(
+    function _revokeRole(
         uint accountId,
-        address fund,
-        StakedCollateral calldata collateral,
-        uint amount
-    ) public {}
+        bytes32 role,
+        address target
+    ) internal {
+        AccountData storage accountData = _accountStore().accountsData[accountId];
+
+        accountData.delegations[target].remove(role);
+
+        emit RoleRevoked(accountId, role, target, msg.sender);
+    }
+
+    modifier onlyAuthorized(uint accountId, bytes32 role) {
+        AccountData storage accountData = _accountStore().accountsData[accountId];
+        address msgSender = msg.sender;
+
+        // msgSender is owner => go ahead
+        // msgSender has role 'owner' => go ahead
+        // msgSender has role role => go ahead
+        // otherwise revert as not authorized
+        if (
+            (msgSender != accountData.owner) &&
+            (!hasRole(accountId, "owner", msgSender)) &&
+            (!hasRole(accountId, role, msgSender))
+        ) {
+            revert NotAuthorized(accountId, role, msgSender);
+        }
+
+        _;
+    }
 
     /////////////////////////////////////////////////
     // STATS
@@ -219,45 +271,89 @@ contract Account is IAccount, ERC721, AccountStorage, InitializableMixin, UUPSIm
             uint
         )
     {
-        AccountData storage accountData = _accountStore().accountsData[accountId];
-        uint256 collateral;
-        uint256 unlockedCollateral;
-        uint256 assignedCollateral;
+        StakedCollateralData storage stakedCollateral = _accountStore().accountsData[accountId].stakedCollateralsData[
+            collateralType
+        ];
+        uint256 total = stakedCollateral.amount;
+        uint256 assigned = stakedCollateral.assignedAmount;
+        uint256 locked = _getTotalLocked(stakedCollateral.locks);
 
-        for (uint i = 1; i < accountData.stakedCollateralIds.length(); i++) {
-            StakedCollateral storage stakedCollateral = accountData.stakedCollaterals[
-                accountData.stakedCollateralIds.valueAt(i)
-            ];
-            if (stakedCollateral.collateralType == collateralType) {
-                collateral = collateral + stakedCollateral.amount;
-                assignedCollateral = assignedCollateral + stakedCollateral.assignedAmount;
-                if (_notLocked(stakedCollateral)) {
-                    unlockedCollateral = unlockedCollateral + stakedCollateral.amount;
-                }
-            }
+        return (total, locked, assigned);
+    }
+
+    function getUnstakableCollateral(uint accountId, address collateralType) public view returns (uint) {
+        (total, locked, assigned) = getCollateralTotals(accountId, collateralType);
+
+        if (locked > assigned) {
+            return total - locked;
         }
 
-        return (collateral, unlockedCollateral, assignedCollateral);
+        return total - assigned;
+    }
+
+    function getUnstakableCollateral(uint accountId, address collateralType) public view returns (uint) {
+        (total, locked, assigned) = getCollateralTotals(accountId, collateralType);
+
+        return total - assigned;
+    }
+
+    /////////////////////////////////////////////////
+    // UTILS
+    /////////////////////////////////////////////////
+    function cleanExpiredLockes(
+        uint accountId,
+        address collateralType,
+        uint offset,
+        uint items
+    ) external {
+        _cleanExpiredLockes(
+            _accountStore().accountsData[accountId].stakedCollateralsData[collateralType].locks,
+            offset,
+            items
+        );
     }
 
     /////////////////////////////////////////////////
     // INTERNALS
     /////////////////////////////////////////////////
+    function _getTotalLocked(StakedCollateralLock[] locks) internal view returns (uint) {
+        uint64 currentTime = uint64(block.timestamp);
+        uint256 locked;
 
-    function _calculateCollateralId(StakedCollateral calldata collateral) internal view returns (bytes32) {
-        return _calculateCollateralId(collateral.collateralType, collateral.lockExpirationTime);
+        for (uint i = 0; i < locks.length; i++) {
+            if (locks[i].lockExpirationTime > currentTime) {
+                locked += locks[i].amount;
+            }
+        }
+        return locked;
     }
 
-    function _calculateCollateralId(address collateralType) internal view returns (bytes32) {
-        return _calculateCollateralId(collateralType, 0);
-    }
+    // TODO this can be part of core-contract utils
+    function _cleanExpiredLockes(
+        StakedCollateralLock[] locks,
+        uint offset,
+        uint items
+    ) internal {
+        if (offset > locks.length || items > locks.length) {
+            revert OutOfBounds();
+        }
 
-    function _calculateCollateralId(address collateralType, uint256 lockExpirationTime) internal view returns (bytes32) {
-        return keccak256(abi.encodePacked(collateralType, lockExpirationTime));
-    }
+        uint64 currentTime = uint64(block.timestamp);
 
-    function _notLocked(StakedCollateral storage collateral) internal view returns (bool) {
-        // TODO implement the logic
-        return false;
+        if (offset == 0 && items == 0) {
+            // not specified, use all array
+            items = locks.length;
+        }
+
+        uint index = offset;
+        while (index < locks.length) {
+            if (locks[index].lockExpirationTime <= currentTime) {
+                // remove item
+                locks[index] = locks[locks.length - 1];
+                locks.pop();
+            } else {
+                index++;
+            }
+        }
     }
 }

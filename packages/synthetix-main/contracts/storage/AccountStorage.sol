@@ -6,31 +6,29 @@ import "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
 contract AccountStorage {
     struct AccountStore {
         bool initialized;
-        mapping(uint => AccountData) accountsData; // AccountData by accountId
+        mapping(uint256 => AccountData) accountsData; // AccountData by accountId
     }
 
-    struct StakedCollateral {
-        address collateralType; // SNX, LUSD, etc.
-        // locking
-        uint lockDuration;
-        uint lockExpirationTime; // now(staking time) + lockDuration
-        // accounting
-        uint amount; // adjustable (stake/unstake)
-        uint assignedAmount; // adjustable (assign/unassign)
+    struct StakedCollateralData {
+        uint256 amount; // adjustable (stake/unstake)
+        uint256 assignedAmount; // adjustable (assign/unassign)
+        StakedCollateralLock[] locks;
     }
 
-    // Account finances
+    struct StakedCollateralLock {
+        uint256 amount; // adjustable (stake/unstake)
+        uint64 lockExpirationTime; // adjustable (assign/unassign)
+    }
+
     struct AccountData {
-        // Id is keccak256(abi.encodePacked(stakedCollateral))
+        address owner;
+        // Permissions
+        mapping(address => SetUtil.Bytes32Set) permissions;
+        SetUtil.AddressSet permissionAddresses;
         // Collaterals
-        SetUtil.Bytes32Set stakedCollateralIds; // staked collateral ids
-        mapping(bytes32 => StakedCollateral) stakedCollaterals; // staked collateral data by stakedColalteralId
+        mapping(address => StakedCollateralData) stakedCollateralsData;
         // Funds
-        SetUtil.AddressSet ownedFunds;
-        SetUtil.AddressSet subscribedFunds;
-        // Delegations
-        mapping(address => SetUtil.Bytes32Set) delegations;
-        SetUtil.AddressSet delegatedAddresses;
+        uint256[] subscribedFunds;
     }
 
     function _accountStore() internal pure returns (AccountStore storage store) {
