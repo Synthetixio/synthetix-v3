@@ -7,6 +7,15 @@ contract AccountStorage {
     struct AccountStore {
         bool initialized;
         mapping(uint256 => AccountData) accountsData; // AccountData by accountId
+        mapping(address => CollateralData) collateralsData; // CollateralData per collateralType (address)
+        SetUtil.AddressSet collaterals; // approved collaterals
+    }
+
+    struct CollateralData {
+        bool disabled;
+        uint targetCRatio;
+        uint minimumCRatio;
+        address priceFeed;
     }
 
     struct StakedCollateralData {

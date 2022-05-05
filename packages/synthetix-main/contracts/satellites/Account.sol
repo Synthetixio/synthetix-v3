@@ -24,7 +24,8 @@ contract Account is IAccount, ERC721, AccountStorage, InitializableMixin, UUPSIm
     error InvalidRole(bytes32 role);
     error NotAuthorized(uint accountId, bytes32 role, address target);
 
-    error StakedCollateralAlreadyExists(address collateral, uint256 lockExpirationTime);
+    error CollateralAlreadyExists(address collateralType);
+    error InvalidCollateralType(address collateralType);
     error NotUnassignedCollateral();
     error InsufficientAvailableCollateral(uint accountId, address collateralType, uint requestedAmount);
     error OutOfBounds();
@@ -70,6 +71,63 @@ contract Account is IAccount, ERC721, AccountStorage, InitializableMixin, UUPSIm
     }
 
     /////////////////////////////////////////////////
+    // SCCP ADD/REMOVE COLLATERAL TYPE
+    /////////////////////////////////////////////////
+    function addCollateralType(
+        address collateralType,
+        address priceFeed,
+        uint targetCRatio,
+        uint minimumCRatio
+    ) external override onlyOwner {
+        if (_accountStore().collaterals.contains(collateralType)) {
+            revert CollateralAlreadyExists(collateralType);
+        }
+
+        _accountStore().collaterals.add(collateralType);
+
+        _accountStore().collateralsData[collateralType].targetCRatio = targetCRatio;
+        _accountStore().collateralsData[collateralType].minimumCRatio = minimumCRatio;
+        _accountStore().collateralsData[collateralType].priceFeed = priceFeed;
+        _accountStore().collateralsData[collateralType].disabled = false;
+    }
+
+    function adjustCollateralType(
+        address collateralType,
+        address priceFeed,
+        uint targetCRatio,
+        uint minimumCRatio,
+        bool disabled
+    ) external override onlyOwner {
+        if (!_accountStore().collaterals.contains(collateralType)) {
+            revert InvalidCollateralType(collateralType);
+        }
+
+        _accountStore().collateralsData[collateralType].targetCRatio = targetCRatio;
+        _accountStore().collateralsData[collateralType].minimumCRatio = minimumCRatio;
+        _accountStore().collateralsData[collateralType].priceFeed = priceFeed;
+        _accountStore().collateralsData[collateralType].disabled = disabled;
+    }
+
+    function getCollateralTypes() external view override returns (address[] memory) {
+        return _accountStore().collaterals.values();
+    }
+
+    function getCollateralType(address collateralType)
+        external
+        view
+        override
+        returns (
+            address,
+            uint,
+            uint,
+            bool
+        )
+    {
+        CollateralData storage collateral = _accountStore().collateralsData[collateralType];
+        return (collateral.priceFeed, collateral.targetCRatio, collateral.minimumCRatio, collateral.disabled);
+    }
+
+    /////////////////////////////////////////////////
     // STAKE  /  UNSTAKE
     /////////////////////////////////////////////////
 
@@ -78,6 +136,12 @@ contract Account is IAccount, ERC721, AccountStorage, InitializableMixin, UUPSIm
         address collateralType,
         uint256 amount
     ) public override onlyAuthorized(accountId, "stake") {
+        if (
+            !_accountStore().collaterals.contains(collateralType) || _accountStore().collateralsData[collateralType].disabled
+        ) {
+            revert InvalidCollateralType(collateralType);
+        }
+
         // TODO check if (this) is approved to collateral.transferFrom() the amount
 
         // TODO check the rest of the info of the callateral to stake
@@ -126,20 +190,26 @@ contract Account is IAccount, ERC721, AccountStorage, InitializableMixin, UUPSIm
     /////////////////////////////////////////////////
     // FUND ASSIGN  /  UNASSIGN
     /////////////////////////////////////////////////
-    // solhint-disable no-empty-blocks
     function assign(
         uint accountId,
         uint fundId,
         address collateralType,
         uint amount
-    ) public onlyAuthorized(accountId, "assignFund") {}
+    ) public override onlyAuthorized(accountId, "assignFund") {
+        if (
+            !_accountStore().collaterals.contains(collateralType) || _accountStore().collateralsData[collateralType].disabled
+        ) {
+            revert InvalidCollateralType(collateralType);
+        }
+    }
 
+    // solhint-disable no-empty-blocks
     function unassign(
         uint accountId,
         uint fundId,
         address collateralType,
         uint amount
-    ) public onlyAuthorized(accountId, "unassignFund") {}
+    ) public override onlyAuthorized(accountId, "unassignFund") {}
 
     // solhint-enable no-empty-blocks
 
@@ -242,6 +312,7 @@ contract Account is IAccount, ERC721, AccountStorage, InitializableMixin, UUPSIm
     function getCollateralTotals(uint accountId, address collateralType)
         public
         view
+        override
         returns (
             uint,
             uint,
@@ -258,7 +329,7 @@ contract Account is IAccount, ERC721, AccountStorage, InitializableMixin, UUPSIm
         return (total, locked, assigned);
     }
 
-    function getUnstakableCollateral(uint accountId, address collateralType) public view returns (uint) {
+    function getUnstakableCollateral(uint accountId, address collateralType) public view override returns (uint) {
         (uint256 total, uint256 locked, uint256 assigned) = getCollateralTotals(accountId, collateralType);
 
         if (locked > assigned) {
@@ -268,7 +339,7 @@ contract Account is IAccount, ERC721, AccountStorage, InitializableMixin, UUPSIm
         return total - assigned;
     }
 
-    function getUnassignedCollateral(uint accountId, address collateralType) public view returns (uint) {
+    function getUnassignedCollateral(uint accountId, address collateralType) public view override returns (uint) {
         (uint256 total, , uint256 assigned) = getCollateralTotals(accountId, collateralType);
 
         return total - assigned;
