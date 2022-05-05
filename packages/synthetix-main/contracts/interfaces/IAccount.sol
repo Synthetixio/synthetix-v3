@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 interface IAccount {
-    function mint(uint requestedAccountId, address owner) external;
+    function mint(address owner, uint requestedAccountId) external;
 
     function stake(
         uint accountId,
@@ -12,6 +12,20 @@ interface IAccount {
 
     function unstake(
         uint accountId,
+        address collateralType,
+        uint amount
+    ) external;
+
+    function assign(
+        uint accountId,
+        uint fundId,
+        address collateralType,
+        uint amount
+    ) external;
+
+    function unassign(
+        uint accountId,
+        uint fundId,
         address collateralType,
         uint amount
     ) external;
@@ -39,4 +53,17 @@ interface IAccount {
         bytes32 role,
         address target
     ) external;
+
+    function getCollateralTotals(uint accountId, address collateralType)
+        external
+        view
+        returns (
+            uint,
+            uint,
+            uint
+        );
+
+    function getUnstakableCollateral(uint accountId, address collateralType) external view returns (uint);
+
+    function getUnassignedCollateral(uint accountId, address collateralType) external view returns (uint);
 }

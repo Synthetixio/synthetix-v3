@@ -10,6 +10,7 @@ contract AccountStorage {
     }
 
     struct StakedCollateralData {
+        bool set;
         uint256 amount; // adjustable (stake/unstake)
         uint256 assignedAmount; // adjustable (assign/unassign)
         StakedCollateralLock[] locks;

@@ -7,6 +7,7 @@ import "@synthetixio/core-contracts/contracts/token/ERC721.sol";
 import "@synthetixio/core-contracts/contracts/utils/AddressUtil.sol";
 import "@synthetixio/core-contracts/contracts/initializable/InitializableMixin.sol";
 import "@synthetixio/core-contracts/contracts/errors/AddressError.sol";
+import "@synthetixio/core-contracts/contracts/interfaces/IERC20.sol";
 
 import "../interfaces/IAccount.sol";
 import "../storage/AccountStorage.sol";
@@ -31,7 +32,7 @@ contract Account is IAccount, ERC721, AccountStorage, InitializableMixin, UUPSIm
     /////////////////////////////////////////////////
     // EVENTS
     /////////////////////////////////////////////////
-    event AccountMinted(uint accountId, address owner);
+    event AccountMinted(address owner, uint accountId);
 
     event CollateralStaked(uint accountId, address collateral, uint amount, address executedBy);
     event CollateralUnstaked(uint accountId, address collateral, uint amount, address executedBy);
@@ -74,29 +75,29 @@ contract Account is IAccount, ERC721, AccountStorage, InitializableMixin, UUPSIm
 
     function stake(
         uint accountId,
-        address collateral,
+        address collateralType,
         uint256 amount
     ) public override onlyAuthorized(accountId, "stake") {
         // TODO check if (this) is approved to collateral.transferFrom() the amount
 
         // TODO check the rest of the info of the callateral to stake
 
-        AccountData storage accountData = _accountStore().accountsData[accountId];
+        StakedCollateralData storage collateralData = _accountStore().accountsData[accountId].stakedCollateralsData[
+            collateralType
+        ];
 
-        if (accountData.stakedCollaterals[collateralId].collateralType != address(0)) {
-            // TODO What if the aim is to add collateral to the same staking
-            revert StakedCollateralAlreadyExists(collateral, 0);
+        // TODO Use SafeTransferFrom
+        IERC20(collateralType).transferFrom(_accountStore().accountsData[accountId].owner, address(this), amount);
+
+        if (!collateralData.set) {
+            // new collateral
+            collateralData.set = true;
+            collateralData.amount = amount;
+        } else {
+            collateralData.amount += amount;
         }
 
-        // TODO transfer collateral from accountId.owner to (this)
-
-        // adds a collateralInfo to the collaterals array
-        accountData.stakedCollateralIds.add(collateralId);
-        accountData.stakedCollaterals[collateralId].collateralType = collateral;
-        accountData.stakedCollaterals[collateralId].lockDuration = 0;
-        accountData.stakedCollaterals[collateralId].lockExpirationTime = 0;
-        accountData.stakedCollaterals[collateralId].amount = amount;
-        accountData.stakedCollaterals[collateralId].assignedAmount = 0;
+        emit CollateralStaked(accountId, collateralType, amount, msg.sender);
     }
 
     function unstake(
@@ -104,62 +105,28 @@ contract Account is IAccount, ERC721, AccountStorage, InitializableMixin, UUPSIm
         address collateralType,
         uint amount
     ) public override onlyAuthorized(accountId, "unstake") {
-        // TODO check if msg.sender is enabled to execute that operation for the accountID
+        uint256 availableCollateral = getUnstakableCollateral(accountId, collateralType);
 
-        (uint256 collateral, uint256 unlockedCollateral, uint256 assignedCollateral) = getCollateralTotals(
-            accountId,
+        if (availableCollateral < amount) {
+            revert InsufficientAvailableCollateral(accountId, collateralType, amount);
+        }
+
+        StakedCollateralData storage collateralData = _accountStore().accountsData[accountId].stakedCollateralsData[
             collateralType
-        );
+        ];
 
-        if (assignedCollateral > collateral) {
-            revert NotUnassignedCollateral();
-        }
+        collateralData.amount -= amount;
 
-        if (collateral - assignedCollateral < amount || unlockedCollateral < amount) {
-            revert InsufficientAvailableCollateral(accountId, collateralType, amount);
-        }
+        emit CollateralUnstaked(accountId, collateralType, amount, msg.sender);
 
-        _unstake(accountId, collateralType, amount);
-    }
-
-    function _unstake(
-        uint256 accountId,
-        address collateralType,
-        uint256 amount
-    ) internal {
-        AccountData storage accountData = _accountStore().accountsData[accountId];
-
-        for (uint i = 1; i < accountData.stakedCollateralIds.length(); i++) {
-            StakedCollateral storage stakedCollateral = accountData.stakedCollaterals[
-                accountData.stakedCollateralIds.valueAt(i)
-            ];
-            if (stakedCollateral.collateralType == collateralType && _notLocked(stakedCollateral)) {
-                if (stakedCollateral.amount - stakedCollateral.assignedAmount < amount) {
-                    // remove that amount from the collateral and keep looking on other entries.
-                    amount = amount - stakedCollateral.amount;
-                } else {
-                    amount = 0;
-                }
-                stakedCollateral.amount = stakedCollateral.amount - amount;
-                if (amount == 0) {
-                    break;
-                }
-            }
-        }
-
-        if (amount > 0) {
-            // should not happen because we checked before...
-            revert InsufficientAvailableCollateral(accountId, collateralType, amount);
-        }
-
-        // TODO emit an event
-
-        // TODO transfer collateral from (this) to accountId.owner
+        // TODO Use SafeTransfer
+        IERC20(collateralType).transfer(_accountStore().accountsData[accountId].owner, amount);
     }
 
     /////////////////////////////////////////////////
     // FUND ASSIGN  /  UNASSIGN
     /////////////////////////////////////////////////
+    // solhint-disable no-empty-blocks
     function assign(
         uint accountId,
         uint fundId,
@@ -174,6 +141,8 @@ contract Account is IAccount, ERC721, AccountStorage, InitializableMixin, UUPSIm
         uint amount
     ) public onlyAuthorized(accountId, "unassignFund") {}
 
+    // solhint-enable no-empty-blocks
+
     /////////////////////////////////////////////////
     // ROLES
     /////////////////////////////////////////////////
@@ -184,7 +153,7 @@ contract Account is IAccount, ERC721, AccountStorage, InitializableMixin, UUPSIm
     ) public view override returns (bool) {
         AccountData storage accountData = _accountStore().accountsData[accountId];
 
-        return target != address(0) && accountData.delegations[target].contains(role);
+        return target != address(0) && accountData.permissions[target].contains(role);
     }
 
     function grantRole(
@@ -202,7 +171,11 @@ contract Account is IAccount, ERC721, AccountStorage, InitializableMixin, UUPSIm
 
         AccountData storage accountData = _accountStore().accountsData[accountId];
 
-        accountData.delegations[target].add(role);
+        if (!accountData.permissionAddresses.contains(target)) {
+            accountData.permissionAddresses.add(target);
+        }
+
+        accountData.permissions[target].add(role);
 
         emit RoleGranted(accountId, role, target, msg.sender);
     }
@@ -234,7 +207,11 @@ contract Account is IAccount, ERC721, AccountStorage, InitializableMixin, UUPSIm
     ) internal {
         AccountData storage accountData = _accountStore().accountsData[accountId];
 
-        accountData.delegations[target].remove(role);
+        accountData.permissions[target].remove(role);
+
+        if (accountData.permissions[target].length() == 0) {
+            accountData.permissionAddresses.remove(target);
+        }
 
         emit RoleRevoked(accountId, role, target, msg.sender);
     }
@@ -282,7 +259,7 @@ contract Account is IAccount, ERC721, AccountStorage, InitializableMixin, UUPSIm
     }
 
     function getUnstakableCollateral(uint accountId, address collateralType) public view returns (uint) {
-        (total, locked, assigned) = getCollateralTotals(accountId, collateralType);
+        (uint256 total, uint256 locked, uint256 assigned) = getCollateralTotals(accountId, collateralType);
 
         if (locked > assigned) {
             return total - locked;
@@ -291,8 +268,8 @@ contract Account is IAccount, ERC721, AccountStorage, InitializableMixin, UUPSIm
         return total - assigned;
     }
 
-    function getUnstakableCollateral(uint accountId, address collateralType) public view returns (uint) {
-        (total, locked, assigned) = getCollateralTotals(accountId, collateralType);
+    function getUnassignedCollateral(uint accountId, address collateralType) public view returns (uint) {
+        (uint256 total, , uint256 assigned) = getCollateralTotals(accountId, collateralType);
 
         return total - assigned;
     }
@@ -316,7 +293,7 @@ contract Account is IAccount, ERC721, AccountStorage, InitializableMixin, UUPSIm
     /////////////////////////////////////////////////
     // INTERNALS
     /////////////////////////////////////////////////
-    function _getTotalLocked(StakedCollateralLock[] locks) internal view returns (uint) {
+    function _getTotalLocked(StakedCollateralLock[] storage locks) internal view returns (uint) {
         uint64 currentTime = uint64(block.timestamp);
         uint256 locked;
 
@@ -330,7 +307,7 @@ contract Account is IAccount, ERC721, AccountStorage, InitializableMixin, UUPSIm
 
     // TODO this can be part of core-contract utils
     function _cleanExpiredLockes(
-        StakedCollateralLock[] locks,
+        StakedCollateralLock[] storage locks,
         uint offset,
         uint items
     ) internal {
