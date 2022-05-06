@@ -31,7 +31,6 @@ contract AccountStorage {
     }
 
     struct AccountData {
-        address owner;
         // Permissions
         mapping(address => SetUtil.Bytes32Set) permissions;
         SetUtil.AddressSet permissionAddresses;

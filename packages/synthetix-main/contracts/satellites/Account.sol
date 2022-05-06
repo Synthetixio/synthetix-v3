@@ -44,8 +44,8 @@ contract Account is IAccount, ERC721, AccountStorage, InitializableMixin, UUPSIm
         bool disabled
     );
 
-    event CollateralStaked(uint accountId, address collateral, uint amount, address executedBy);
-    event CollateralUnstaked(uint accountId, address collateral, uint amount, address executedBy);
+    event CollateralStaked(uint accountId, address collateralType, uint amount, address executedBy);
+    event CollateralUnstaked(uint accountId, address collateralType, uint amount, address executedBy);
 
     event RoleGranted(uint accountId, bytes32 role, address target, address executedBy);
     event RoleRevoked(uint accountId, bytes32 role, address target, address executedBy);
@@ -169,7 +169,7 @@ contract Account is IAccount, ERC721, AccountStorage, InitializableMixin, UUPSIm
         ];
 
         // TODO Use SafeTransferFrom
-        IERC20(collateralType).transferFrom(_accountStore().accountsData[accountId].owner, address(this), amount);
+        IERC20(collateralType).transferFrom(ownerOf(accountId), address(this), amount);
 
         if (!collateralData.set) {
             // new collateral
@@ -202,7 +202,7 @@ contract Account is IAccount, ERC721, AccountStorage, InitializableMixin, UUPSIm
         emit CollateralUnstaked(accountId, collateralType, amount, msg.sender);
 
         // TODO Use SafeTransfer
-        IERC20(collateralType).transfer(_accountStore().accountsData[accountId].owner, amount);
+        IERC20(collateralType).transfer(ownerOf(accountId), amount);
     }
 
     /////////////////////////////////////////////////
@@ -343,7 +343,7 @@ contract Account is IAccount, ERC721, AccountStorage, InitializableMixin, UUPSIm
         // msgSender has role role => go ahead
         // otherwise revert as not authorized
         if (
-            (msgSender != accountData.owner) &&
+            (msgSender != ownerOf(accountId)) &&
             (!hasRole(accountId, "owner", msgSender)) &&
             (!hasRole(accountId, role, msgSender))
         ) {
