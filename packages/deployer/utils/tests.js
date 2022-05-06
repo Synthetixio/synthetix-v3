@@ -13,19 +13,20 @@ function bootstrap(initializer = () => {}, customDeployOptions = {}) {
     instance: 'test',
   };
 
-  before('take a snapshot', async () => {
+  before('take a snapshot', async function () {
     snapshotId = await takeSnapshot(hre.ethers.provider);
   });
 
-  before('deploy system', async () => {
+  before('deploy system', async function () {
+    this.timeout(100000);
     await deploySystem(deploymentInfo, { clear: true, ...customDeployOptions });
   });
 
-  before('initialize system', async () => {
+  before('initialize system', async function () {
     await initializer(deploymentInfo);
   });
 
-  after('restore the snapshot', async () => {
+  after('restore the snapshot', async function () {
     await restoreSnapshot(snapshotId, hre.ethers.provider);
   });
 
