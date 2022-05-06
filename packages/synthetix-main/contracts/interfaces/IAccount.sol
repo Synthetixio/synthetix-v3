@@ -90,7 +90,7 @@ interface IAccount {
             uint
         );
 
-    function getUnstakableCollateral(uint accountId, address collateralType) external view returns (uint);
+    function getFreeCollateral(uint accountId, address collateralType) external view returns (uint);
 
     function getUnassignedCollateral(uint accountId, address collateralType) external view returns (uint);
 }

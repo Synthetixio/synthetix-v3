@@ -169,7 +169,7 @@ contract Account is IAccount, ERC721, AccountStorage, InitializableMixin, UUPSIm
         address collateralType,
         uint amount
     ) public override onlyAuthorized(accountId, "unstake") {
-        uint256 availableCollateral = getUnstakableCollateral(accountId, collateralType);
+        uint256 availableCollateral = getFreeCollateral(accountId, collateralType);
 
         if (availableCollateral < amount) {
             revert InsufficientAvailableCollateral(accountId, collateralType, amount);
@@ -201,17 +201,47 @@ contract Account is IAccount, ERC721, AccountStorage, InitializableMixin, UUPSIm
         ) {
             revert InvalidCollateralType(collateralType);
         }
+
+        uint256 availableCollateral = getFreeCollateral(accountId, collateralType);
+
+        if (availableCollateral < amount) {
+            revert InsufficientAvailableCollateral(accountId, collateralType, amount);
+        }
+
+        StakedCollateralData storage collateralData = _accountStore().accountsData[accountId].stakedCollateralsData[
+            collateralType
+        ];
+
+        collateralData.assignedAmount += amount;
+
+        // TODO add to assigned funds
+        _accountStore().accountsData[accountId].subscribedFunds.push(fundId);
+
+        // TODO emit an event
     }
 
-    // solhint-disable no-empty-blocks
     function unassign(
         uint accountId,
         uint fundId,
         address collateralType,
         uint amount
-    ) public override onlyAuthorized(accountId, "unassignFund") {}
+    ) public override onlyAuthorized(accountId, "unassignFund") {
+        // TODO Some validity checks
 
-    // solhint-enable no-empty-blocks
+        // TODO is enough assigned collateral?
+
+        // TODO is enough collateral to unassign
+        StakedCollateralData storage collateralData = _accountStore().accountsData[accountId].stakedCollateralsData[
+            collateralType
+        ];
+
+        collateralData.assignedAmount -= amount;
+
+        // TODO remove from assigned funds if not more assigned
+        _accountStore().accountsData[accountId].subscribedFunds.push(fundId);
+
+        // TODO emit an event
+    }
 
     /////////////////////////////////////////////////
     // ROLES
@@ -329,7 +359,7 @@ contract Account is IAccount, ERC721, AccountStorage, InitializableMixin, UUPSIm
         return (total, locked, assigned);
     }
 
-    function getUnstakableCollateral(uint accountId, address collateralType) public view override returns (uint) {
+    function getFreeCollateral(uint accountId, address collateralType) public view override returns (uint) {
         (uint256 total, uint256 locked, uint256 assigned) = getCollateralTotals(accountId, collateralType);
 
         if (locked > assigned) {
