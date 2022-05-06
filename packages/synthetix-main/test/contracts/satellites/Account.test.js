@@ -5,8 +5,6 @@ const assertRevert = require('@synthetixio/core-js/utils/assertions/assert-rever
 const { findEvent } = require('@synthetixio/core-js/utils/ethers/events');
 const { bootstrap } = require('@synthetixio/deployer/utils/tests');
 const initializer = require('../../helpers/initializer');
-const { setDefaultResultOrder } = require('dns');
-// const { isTypedArray } = require('util/types');
 
 describe('Account', function () {
   const { proxyAddress } = bootstrap(initializer);
