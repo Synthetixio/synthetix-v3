@@ -59,6 +59,7 @@ describe('Account', function () {
     assert.equal((await Account.getCollateralTypes())[0], Collateral.address);
 
     const collateralType = await Account.getCollateralType(Collateral.address);
+
     assert.equal(collateralType[0], CollateralPriceFeed.address);
     assertBn.equal(collateralType[1], 400);
     assertBn.equal(collateralType[2], 200);
@@ -133,6 +134,7 @@ describe('Account', function () {
 
           it('emits an event', async () => {
             const event = findEvent({ receipt, eventName: 'CollateralStaked' });
+
             assertBn.equal(event.args.accountId, 1);
             assert.equal(event.args.collateralType, Collateral.address);
             assertBn.equal(event.args.amount, 100);
@@ -165,6 +167,7 @@ describe('Account', function () {
               );
             });
           });
+
           describe('unstake', () => {
             before('unstake some collateral', async () => {
               const tx = await Account.connect(user1).unstake(1, Collateral.address, 100);
@@ -173,6 +176,7 @@ describe('Account', function () {
 
             it('emits an event', async () => {
               const event = findEvent({ receipt, eventName: 'CollateralUnstaked' });
+
               assertBn.equal(event.args.accountId, 1);
               assert.equal(event.args.collateralType, Collateral.address);
               assertBn.equal(event.args.amount, 100);
