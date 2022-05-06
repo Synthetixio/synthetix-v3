@@ -35,6 +35,15 @@ contract Account is IAccount, ERC721, AccountStorage, InitializableMixin, UUPSIm
     /////////////////////////////////////////////////
     event AccountMinted(address owner, uint accountId);
 
+    event CollateralAdded(address collateralType, address priceFeed, uint targetCRatio, uint minimumCRatio);
+    event CollateralAdjusted(
+        address collateralType,
+        address priceFeed,
+        uint targetCRatio,
+        uint minimumCRatio,
+        bool disabled
+    );
+
     event CollateralStaked(uint accountId, address collateral, uint amount, address executedBy);
     event CollateralUnstaked(uint accountId, address collateral, uint amount, address executedBy);
 
@@ -49,12 +58,17 @@ contract Account is IAccount, ERC721, AccountStorage, InitializableMixin, UUPSIm
         return _accountStore().initialized;
     }
 
+    function isAccountInitialized() external view returns (bool) {
+        return _isInitialized();
+    }
+
     function initialize(
         string memory tokenName,
         string memory tokenSymbol,
         string memory uri
     ) public onlyOwner {
         _initialize(tokenName, tokenSymbol, uri);
+        _accountStore().initialized = true;
     }
 
     function upgradeTo(address newImplementation) public override onlyOwner {
@@ -89,6 +103,8 @@ contract Account is IAccount, ERC721, AccountStorage, InitializableMixin, UUPSIm
         _accountStore().collateralsData[collateralType].minimumCRatio = minimumCRatio;
         _accountStore().collateralsData[collateralType].priceFeed = priceFeed;
         _accountStore().collateralsData[collateralType].disabled = false;
+
+        emit CollateralAdded(collateralType, priceFeed, targetCRatio, minimumCRatio);
     }
 
     function adjustCollateralType(
@@ -106,6 +122,8 @@ contract Account is IAccount, ERC721, AccountStorage, InitializableMixin, UUPSIm
         _accountStore().collateralsData[collateralType].minimumCRatio = minimumCRatio;
         _accountStore().collateralsData[collateralType].priceFeed = priceFeed;
         _accountStore().collateralsData[collateralType].disabled = disabled;
+
+        emit CollateralAdjusted(collateralType, priceFeed, targetCRatio, minimumCRatio, disabled);
     }
 
     function getCollateralTypes() external view override returns (address[] memory) {
