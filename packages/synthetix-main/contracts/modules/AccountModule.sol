@@ -68,4 +68,23 @@ contract AccountModule is IAccountModule, OwnableMixin, AccountModuleStorage, In
     function getAccountAddress() public view override returns (address) {
         return _accountModuleStore().account.deployedAddress;
     }
+
+    function addCollateralType(
+        address collateralType,
+        address priceFeed,
+        uint targetCRatio,
+        uint minimumCRatio
+    ) external override onlyOwner {
+        Account(getAccountAddress()).addCollateralType(collateralType, priceFeed, targetCRatio, minimumCRatio);
+    }
+
+    function adjustCollateralType(
+        address collateralType,
+        address priceFeed,
+        uint targetCRatio,
+        uint minimumCRatio,
+        bool disabled
+    ) external override onlyOwner {
+        Account(getAccountAddress()).adjustCollateralType(collateralType, priceFeed, targetCRatio, minimumCRatio, disabled);
+    }
 }
