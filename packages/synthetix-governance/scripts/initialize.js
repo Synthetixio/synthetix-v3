@@ -5,6 +5,10 @@ exports.initialize = async function initialize(jsonArgs) {
 
   await exports.initializeOwnerModule(args);
   await exports.initializeElectionModule(args);
+
+  return {
+    councilTokenName: args.councilTokenName,
+  };
 };
 
 exports.initializeOwnerModule = async function initializeOwnerModule({

@@ -1,6 +1,6 @@
 name = "synthetix-governance"
 description = "Governance cotracts for on chain voting"
-version = "0.0.3"
+version = "0.0.4"
 
 [setting.salt]
 defaultValue = "governance"
@@ -56,14 +56,17 @@ args = ['''
 ''']
 step = 2
 
-[contract.router]
-artifact = "contracts/Router.sol:Router"
-salt = "<%= settings.salt %>"
+# Router has to be manually deployed so it makes sure it has the correct modules addresses
+# when changing settigs.
+[run.router]
+exec = "scripts/cannon/contract.js"
+func = "deploy"
+args = ["contracts/Router.sol:Router"]
 step = 3
 
 [contract.proxy]
 artifact = "contracts/Proxy.sol:Proxy"
-args = ["<%= outputs.self.contracts.router.address %>"]
+args = ["<%= outputs.self.runs.router.address %>"]
 salt = "<%= settings.salt %>"
 step = 4
 

@@ -18,6 +18,6 @@ exports.generateRouter = async function generateRouter(modulesData) {
   await hre.run(TASK_COMPILE, { quiet: true });
 
   return {
-    router: 'contracts/Router.sol:Router',
+    fullyQualifiedName: 'contracts/Router.sol:Router',
   };
 };
