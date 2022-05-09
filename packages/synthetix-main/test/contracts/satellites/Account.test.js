@@ -12,11 +12,11 @@ describe('Account', function () {
   let AccountModule, accountAddress, Account;
   let Collateral, CollateralPriceFeed;
 
-  let systemOwner, user1, user2;
+  let systemOwner, user1, user2, user3, user4, user5;
 
   before('identify signers', async () => {
     [systemOwner] = await ethers.getSigners();
-    [, user1, user2] = await ethers.getSigners();
+    [, user1, user2, user3, user4, user5] = await ethers.getSigners();
   });
 
   before('create and identify Account contract', async () => {
@@ -209,16 +209,252 @@ describe('Account', function () {
       });
 
       describe('when an unauthorized address tries to operate in the account', () => {
-        it('reverts when trying to stake', async () => {});
+        it('reverts when trying to stake', async () => {
+          await assertRevert(
+            Account.connect(user2).stake(1, Collateral.address, 100),
+            `NotAuthorized(1, "0x7374616b65000000000000000000000000000000000000000000000000000000", "${user2.address}")`
+          );
+        });
 
-        it('reverts when trying to unstake', async () => {});
+        it('reverts when trying to unstake', async () => {
+          await assertRevert(
+            Account.connect(user2).unstake(1, Collateral.address, 100),
+            `NotAuthorized(1, "0x756e7374616b6500000000000000000000000000000000000000000000000000", "${user2.address}")`
+          );
+        });
 
-        it('reverts when trying to grant access', async () => {});
+        it('reverts when trying to grant access', async () => {
+          await assertRevert(
+            Account.connect(user2).grantRole(
+              1,
+              ethers.utils.formatBytes32String('stake'),
+              user2.address
+            ),
+            `NotAuthorized(1, "${ethers.utils.formatBytes32String('modifyPermission')}", "${
+              user2.address
+            }")`
+          );
+        });
       });
 
       describe('when an authorized address operates with the account', () => {
+        before('authorize some users', async () => {
+          await (
+            await Account.connect(user1).grantRole(
+              1,
+              ethers.utils.formatBytes32String('stake'),
+              user2.address
+            )
+          ).wait();
+          await (
+            await Account.connect(user1).grantRole(
+              1,
+              ethers.utils.formatBytes32String('unstake'),
+              user3.address
+            )
+          ).wait();
+          await (
+            await Account.connect(user1).grantRole(
+              1,
+              ethers.utils.formatBytes32String('owner'),
+              user4.address
+            )
+          ).wait();
+        });
+
+        it('roles are granted', async () => {
+          assert.equal(
+            await Account.hasRole(1, ethers.utils.formatBytes32String('stake'), user2.address),
+            true
+          );
+          assert.equal(
+            await Account.hasRole(1, ethers.utils.formatBytes32String('unstake'), user3.address),
+            true
+          );
+          assert.equal(
+            await Account.hasRole(1, ethers.utils.formatBytes32String('owner'), user4.address),
+            true
+          );
+          assert.equal(
+            await Account.hasRole(1, ethers.utils.formatBytes32String('other'), user5.address),
+            false
+          );
+        });
+
+        describe('when granting a role', () => {
+          before('grant an user a role', async () => {
+            const tx = await await Account.connect(user1).grantRole(
+              1,
+              ethers.utils.formatBytes32String('other'),
+              user5.address
+            );
+            receipt = await tx.wait();
+          });
+
+          it('emit an event', async () => {
+            const event = findEvent({ receipt, eventName: 'RoleGranted' });
+
+            assertBn.equal(event.args.accountId, 1);
+            assert.equal(event.args.role, ethers.utils.formatBytes32String('other'));
+            assert.equal(event.args.target, user5.address);
+            assert.equal(event.args.executedBy, user1.address);
+          });
+
+          it('role is granted', async () => {
+            assert.equal(
+              await Account.hasRole(1, ethers.utils.formatBytes32String('other'), user5.address),
+              true
+            );
+          });
+        });
+
         describe('when some collateral is staked', () => {
-          describe('when some collateral is unstaked', () => {});
+          before('stake some collateral', async () => {
+            const tx = await Account.connect(user2).stake(1, Collateral.address, 100);
+            receipt = await tx.wait();
+          });
+
+          it('emits an event', async () => {
+            const event = findEvent({ receipt, eventName: 'CollateralStaked' });
+
+            assertBn.equal(event.args.accountId, 1);
+            assert.equal(event.args.collateralType, Collateral.address);
+            assertBn.equal(event.args.amount, 100);
+            assert.equal(event.args.executedBy, user2.address);
+          });
+
+          it('is staked', async () => {
+            const totals = await Account.getCollateralTotals(1, Collateral.address);
+            const free = await Account.getFreeCollateral(1, Collateral.address);
+            const unassigned = await Account.getUnassignedCollateral(1, Collateral.address);
+
+            assertBn.equal(totals[0], 100);
+            assertBn.equal(totals[1], 0);
+            assertBn.equal(totals[2], 0);
+            assertBn.equal(free, 100);
+            assertBn.equal(unassigned, 100);
+
+            // In Collateral balances
+            assertBn.equal(await Collateral.balanceOf(user1.address), 900);
+            assertBn.equal(await Collateral.balanceOf(Account.address), 100);
+          });
+
+          describe('when some collateral is unstaked', () => {
+            before('unstake some collateral', async () => {
+              const tx = await Account.connect(user3).unstake(1, Collateral.address, 100);
+              receipt = await tx.wait();
+            });
+
+            it('emits an event', async () => {
+              const event = findEvent({ receipt, eventName: 'CollateralUnstaked' });
+
+              assertBn.equal(event.args.accountId, 1);
+              assert.equal(event.args.collateralType, Collateral.address);
+              assertBn.equal(event.args.amount, 100);
+              assert.equal(event.args.executedBy, user3.address);
+            });
+
+            it('is unstaked', async () => {
+              const totals = await Account.getCollateralTotals(1, Collateral.address);
+              const free = await Account.getFreeCollateral(1, Collateral.address);
+              const unassigned = await Account.getUnassignedCollateral(1, Collateral.address);
+
+              assertBn.equal(totals[0], 0);
+              assertBn.equal(totals[1], 0);
+              assertBn.equal(totals[2], 0);
+              assertBn.equal(free, 0);
+              assertBn.equal(unassigned, 0);
+
+              // In Collateral balances
+              assertBn.equal(await Collateral.balanceOf(user1.address), 1000);
+              assertBn.equal(await Collateral.balanceOf(Account.address), 0);
+            });
+          });
+        });
+
+        describe('when an admin tries to grant more access', () => {
+          before('grant another user a role', async () => {
+            const tx = await await Account.connect(user4).grantRole(
+              1,
+              ethers.utils.formatBytes32String('another'),
+              user5.address
+            );
+            receipt = await tx.wait();
+          });
+
+          it('emit an event', async () => {
+            const event = findEvent({ receipt, eventName: 'RoleGranted' });
+
+            assertBn.equal(event.args.accountId, 1);
+            assert.equal(event.args.role, ethers.utils.formatBytes32String('another'));
+            assert.equal(event.args.target, user5.address);
+            assert.equal(event.args.executedBy, user4.address);
+          });
+
+          it('role is granted', async () => {
+            assert.equal(
+              await Account.hasRole(1, ethers.utils.formatBytes32String('another'), user5.address),
+              true
+            );
+          });
+
+          describe('when an admin tries to revoke more access', () => {
+            before('revoke another user a role', async () => {
+              const tx = await await Account.connect(user4).revokeRole(
+                1,
+                ethers.utils.formatBytes32String('another'),
+                user5.address
+              );
+              receipt = await tx.wait();
+            });
+
+            it('emit an event', async () => {
+              const event = findEvent({ receipt, eventName: 'RoleRevoked' });
+
+              assertBn.equal(event.args.accountId, 1);
+              assert.equal(event.args.role, ethers.utils.formatBytes32String('another'));
+              assert.equal(event.args.target, user5.address);
+              assert.equal(event.args.executedBy, user4.address);
+            });
+
+            it('role is granted', async () => {
+              assert.equal(
+                await Account.hasRole(
+                  1,
+                  ethers.utils.formatBytes32String('another'),
+                  user5.address
+                ),
+                false
+              );
+            });
+          });
+        });
+
+        describe('when someone renounce a role', () => {
+          before('revoke another user a role', async () => {
+            const tx = await await Account.connect(user5).renounceRole(
+              1,
+              ethers.utils.formatBytes32String('other'),
+              user5.address
+            );
+            receipt = await tx.wait();
+          });
+
+          it('emit an event', async () => {
+            const event = findEvent({ receipt, eventName: 'RoleRevoked' });
+
+            assertBn.equal(event.args.accountId, 1);
+            assert.equal(event.args.role, ethers.utils.formatBytes32String('other'));
+            assert.equal(event.args.target, user5.address);
+            assert.equal(event.args.executedBy, user5.address);
+          });
+
+          it('role is granted', async () => {
+            assert.equal(
+              await Account.hasRole(1, ethers.utils.formatBytes32String('user5'), user5.address),
+              false
+            );
+          });
         });
       });
     });
