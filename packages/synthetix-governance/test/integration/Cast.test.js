@@ -178,11 +178,13 @@ describe('SynthetixElectionModule - integration (cast)', function () {
             ElectionModule.getVotePower(voter1.address),
             ElectionModule.getVotePower(voter2.address),
             ElectionModule.getVotePower(voter3.address),
+            ElectionModule.getVotePower(voter4.address),
           ]);
 
           assertBn.equal(debts[0], ethers.BigNumber.from('357079901261'));
           assertBn.equal(debts[1], ethers.BigNumber.from('380079625183'));
           assertBn.equal(debts[2], ethers.BigNumber.from('350535401183'));
+          assertBn.equal(debts[3], ethers.BigNumber.from('383760657789'));
         });
 
         describe('before issuing valid votes', function () {
@@ -337,7 +339,7 @@ describe('SynthetixElectionModule - integration (cast)', function () {
               assert.ok(event);
               assertBn.equal(event.args.voter, voter4.address);
               assert.equal(event.args.ballotId, ballot1.id);
-              assertBn.equal(event.args.votePower, '430359032721');
+              assertBn.equal(event.args.votePower, '383760657789');
             });
 
             it('can retrieve the corresponding ballot that users voted on', async function () {
@@ -354,7 +356,7 @@ describe('SynthetixElectionModule - integration (cast)', function () {
             it('can retrieve ballot votes', async function () {
               assertBn.equal(
                 await ElectionModule.getBallotVotes(ballot1.id),
-                ethers.BigNumber.from('661016927512')
+                ethers.BigNumber.from('707615302444')
               );
               assertBn.equal(
                 await ElectionModule.getBallotVotes(ballot2.id),
