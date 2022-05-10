@@ -8,26 +8,30 @@ contract FundModuleStorage {
     struct FundModuleStore {
         bool initialized;
         SatelliteFactory.Satellite fundToken;
+        uint preferredFund;
+        uint[] approvedFunds;
         mapping(uint => FundData) funds; // fund metadata by fundId
-        mapping(uint => bytes32[]) liquidityProviderIds; // liquidityProvider ids by fundId
-        mapping(bytes32 => LiquidityProvider) liquidityProviders; // liquidityProviders data by liquidityProviderIds
+        mapping(uint => SetUtil.Bytes32Set) liquidityItemIds; // LiquidityItem ids by fundId
+        mapping(bytes32 => LiquidityItem) liquidityItems; // LiquidityItems data by liquidityProviderIds
     }
 
     struct FundData {
-        uint targetRatio;
-        uint liquidationRatio;
-        MarketExposure[] fundDistribution;
+        // uint targetRatio;
+        // uint liquidationRatio;
+        uint totalWeights; // sum of distribution weights
+        MarketDistribution[] fundDistribution;
+        SetUtil.AddressSet collateralTypes; // collateral types used to add liquidity to the fund
+        mapping(address => uint) liquidityByCollateral; // total liquidity per collateral
     }
 
-    struct MarketExposure {
-        uint exposure;
-        address market;
-        address priceOracle;
+    struct MarketDistribution {
+        uint weight;
+        uint market;
+        address priceOracle; // here or in market?
     }
 
-    struct LiquidityProvider {
+    struct LiquidityItem {
         address collateralType;
-        // uint fundId;
         uint accountId;
         uint leverage;
         uint collateralAmount;

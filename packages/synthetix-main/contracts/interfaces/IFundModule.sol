@@ -35,7 +35,7 @@ interface IFundModule is ISatelliteFactory {
         uint accountId,
         address collateralType,
         uint amount,
-        uint exposure
+        uint leverage
     ) external;
 
     function mintsUSD(
@@ -69,4 +69,14 @@ interface IFundModule is ISatelliteFactory {
     function totalDebtShares(uint fundId) external;
 
     function debtPerShare(uint fundId) external;
+
+    function setPreferredFund(uint fundId) external;
+
+    function getPreferredFund() external returns (uint);
+
+    function addApprovedFund(uint fundId) external;
+
+    function removeApprovedFund(uint fundId) external;
+
+    function getApprovedFunds() external returns (uint[] calldata);
 }
