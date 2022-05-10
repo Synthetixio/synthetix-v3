@@ -88,7 +88,7 @@ contract FundModule is IFundModule, OwnableMixin, FundModuleStorage, Initializab
     //////////////////////////////////////////////
     modifier onlyFundOwner(uint fundId, address requestor) {
         if (FundToken(getFundTokenAddress()).ownerOf(fundId) != requestor) {
-            revert AccessError.Unauthorized();
+            revert AccessError.Unauthorized(requestor);
         }
 
         _;
@@ -116,7 +116,7 @@ contract FundModule is IFundModule, OwnableMixin, FundModuleStorage, Initializab
     }
 
     function renounceFundOwnership(uint fundId) external override {
-        FundToken(getFundTokenAddress()).renounce(msg.sender, fundId);
+        FundToken(getFundTokenAddress()).renounceNomination(msg.sender, fundId);
     }
 
     //////////////////////////////////////////////
@@ -126,7 +126,7 @@ contract FundModule is IFundModule, OwnableMixin, FundModuleStorage, Initializab
         uint fundId,
         uint[] calldata markets,
         uint[] calldata weights
-    ) external override onlyFundOwner {
+    ) external override onlyFundOwner(fundId, msg.sender) {
         if (markets.length != weights.length) {
             revert InvalidParameters();
         }
@@ -167,12 +167,12 @@ contract FundModule is IFundModule, OwnableMixin, FundModuleStorage, Initializab
     }
 
     function _rebalanceMarkets(uint fundId, bool zeros) internal {
-        FundData storage distribution = _fundModuleStore().funds[fundId].fundDistribution;
+        FundData storage fundData = _fundModuleStore().funds[fundId];
         uint totalWeights = _fundModuleStore().funds[fundId].totalWeights;
 
-        for (uint i = 0; i < distribution.length; i++) {
-            uint weight = zeros ? 0 : distribution.weight;
-            _setCollateralDistribution(fundId, distribution.market, weight, totalWeights);
+        for (uint i = 0; i < fundData.fundDistribution.length; i++) {
+            uint weight = zeros ? 0 : fundData.fundDistribution[i].weight;
+            _setCollateralDistribution(fundId, fundData.fundDistribution[i].market, weight, totalWeights);
         }
     }
 
