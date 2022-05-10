@@ -13,4 +13,20 @@ interface IAccountModule is ISatelliteFactory {
     function getAccountAddress() external view returns (address);
 
     function getAccountModuleSatellites() external view returns (Satellite[] memory);
+
+    // SCCP
+    function addCollateralType(
+        address collateralType,
+        address priceFeed,
+        uint targetCRatio,
+        uint minimumCRatio
+    ) external;
+
+    function adjustCollateralType(
+        address collateralType,
+        address priceFeed,
+        uint targetCRatio,
+        uint minimumCRatio,
+        bool disabled
+    ) external;
 }

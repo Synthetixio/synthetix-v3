@@ -1,9 +1,38 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
+
 contract FundModuleStorage {
     struct FundModuleStore {
         bool initialized;
+        uint latestFundId;
+        mapping(uint => FundData) funds; // fund metadata by fundId
+        mapping(uint => bytes32[]) liquidityProviderIds; // liquidityProvider ids by fundId
+        mapping(bytes32 => LiquidityProvider) liquidityProviders; // liquidityProviders data by liquidityProviderIds
+    }
+
+    struct FundData {
+        address owner;
+        uint targetRatio;
+        uint liquidationRatio;
+        MarketExposure[] fundDistribution;
+    }
+
+    struct MarketExposure {
+        uint exposure;
+        address market;
+        address priceOracle;
+    }
+
+    struct LiquidityProvider {
+        address collateralType;
+        uint fundId;
+        uint accountId;
+        uint leverage;
+        uint collateralAmount;
+        uint shares;
+        uint initialDebt; // how that works with amount adjustments?
     }
 
     function _fundModuleStore() internal pure returns (FundModuleStore storage store) {
