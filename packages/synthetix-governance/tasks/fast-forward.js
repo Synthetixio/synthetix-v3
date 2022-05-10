@@ -10,22 +10,25 @@ const units = {
 };
 
 task('fast-forward', 'travel the given amount of time on the current node')
-  .addVariadicPositionalParam(
-    'time',
-    'the amount of time that you want to travel. Optionally you can add a unit of time (seconds|minutes|hours|days|weeks)'
+  .addPositionalParam(
+    'amount',
+    'The amount of time that you want to travel, by default in seconds.'
   )
-  .setAction(async ({ time }) => {
-    const [amount, unit = 'seconds'] = time;
-
+  .addOptionalPositionalParam('unit', 'Unit of time (seconds|minutes|hours|days|weeks)', 'seconds')
+  .setAction(async ({ amount, unit }) => {
     if (!Object.keys(units).includes(unit)) {
       throw new Error(
         `Invalid unit of time "${unit}". Expected one of (seconds|minutes|hours|days|weeks)`
       );
     }
 
+    if (!/^[1-9][0-9]*$/.test(amount)) {
+      throw new Error(`Invalid amount of time "${amount}". Expected an integer number`);
+    }
+
     await hre.ethers.provider.send('evm_mine');
 
-    await fastForward(amount * units[unit], hre.ethers.provider);
+    await fastForward(Number(amount) * units[unit], hre.ethers.provider);
 
     console.log(`Fast forwarded ${amount} ${unit}`);
   });
