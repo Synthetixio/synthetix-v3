@@ -16,6 +16,22 @@ const alphanumeric = {
   },
 };
 
+const address = {
+  name: 'address',
+  parse: (argName, value) => value,
+  validate: (argName, value) => {
+    const valid = typeof value === 'string' && /^0x[a-fA-F0-9]{40}$/.test(value);
+    if (!valid) {
+      throw new HardhatError(ERRORS.ARGUMENTS.INVALID_VALUE_FOR_TYPE, {
+        value,
+        name: argName,
+        type: address.name,
+      });
+    }
+  },
+};
+
 module.exports = {
   alphanumeric,
+  address,
 };
