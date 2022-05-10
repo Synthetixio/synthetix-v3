@@ -31,7 +31,22 @@ const address = {
   },
 };
 
+const oneOf = (...values) => ({
+  name: 'oneOf',
+  parse: (argName, value) => value,
+  validate: (argName, value) => {
+    if (!values.includes(value)) {
+      throw new HardhatError(ERRORS.ARGUMENTS.INVALID_VALUE_FOR_TYPE, {
+        value,
+        name: argName,
+        type: oneOf.name,
+      });
+    }
+  },
+});
+
 module.exports = {
   alphanumeric,
   address,
+  oneOf,
 };

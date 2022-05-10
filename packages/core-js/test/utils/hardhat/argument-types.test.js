@@ -1,5 +1,5 @@
 const { equal, notEqual, throws, doesNotThrow } = require('assert/strict');
-const { alphanumeric, address } = require('../../../utils/hardhat/argument-types');
+const { alphanumeric, address, oneOf } = require('../../../utils/hardhat/argument-types');
 
 describe('utils/hardhat/argument-types.js', function () {
   describe('alphanumeric', () => {
@@ -73,6 +73,42 @@ describe('utils/hardhat/argument-types.js', function () {
       });
       throws(() => {
         address.validate('argName', 1);
+      });
+    });
+  });
+
+  describe('oneOf', () => {
+    const type = oneOf('one', 'two');
+
+    it('is well formed', () => {
+      equal(type.name, 'oneOf');
+      notEqual(type.parse, undefined);
+      notEqual(type.validate, undefined);
+    });
+
+    it('parses values correctly', () => {
+      equal(type.parse('arg', 'one'), 'one');
+      equal(type.parse('arg', '2'), '2');
+    });
+
+    it('validates correctly', () => {
+      doesNotThrow(() => {
+        type.validate('argName', 'one');
+      });
+      doesNotThrow(() => {
+        type.validate('argName', 'two');
+      });
+      throws(() => {
+        type.validate('argName', 1);
+      });
+      throws(() => {
+        type.validate('argName', undefined);
+      });
+      throws(() => {
+        type.validate('argName', 'something');
+      });
+      throws(() => {
+        type.validate('argName', {});
       });
     });
   });
