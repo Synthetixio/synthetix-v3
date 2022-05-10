@@ -2,12 +2,22 @@
 pragma solidity ^0.8.0;
 
 import "@synthetixio/core-contracts/contracts/ownership/OwnableMixin.sol";
+import "@synthetixio/core-contracts/contracts/proxy/UUPSProxy.sol";
 import "@synthetixio/core-contracts/contracts/initializable/InitializableMixin.sol";
+import "@synthetixio/core-contracts/contracts/satellite/SatelliteFactory.sol";
+import "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
+
 import "../interfaces/IFundModule.sol";
 import "../storage/FundModuleStorage.sol";
 
-contract FundModule is IFundModule, OwnableMixin, FundModuleStorage, InitializableMixin {
+import "../satellites/FundToken.sol";
+
+contract FundModule is IFundModule, OwnableMixin, FundModuleStorage, InitializableMixin, SatelliteFactory {
     event FundCreated(address fundAddress);
+
+    /////////////////////////////////////////////////
+    // CHORES
+    /////////////////////////////////////////////////
 
     function _isInitialized() internal view override returns (bool) {
         return _fundModuleStore().initialized;
@@ -20,12 +30,141 @@ contract FundModule is IFundModule, OwnableMixin, FundModuleStorage, Initializab
     function initializeFundModule() external override onlyOwner onlyIfNotInitialized {
         FundModuleStore storage store = _fundModuleStore();
 
+        FundToken firstFundImplementation = new FundToken();
+
+        UUPSProxy fundProxy = new UUPSProxy(address(firstFundImplementation));
+
+        address fundProxyAddress = address(fundProxy);
+        FundToken fund = FundToken(fundProxyAddress);
+
+        fund.nominateNewOwner(address(this));
+        fund.acceptOwnership();
+        fund.initialize("Synthetix FundToken", "synthethixFundToken", "");
+
+        store.fundToken = Satellite({
+            name: "synthethixFundToken",
+            contractName: "FundToken",
+            deployedAddress: fundProxyAddress
+        });
+
         store.initialized = true;
+
+        emit FundCreated(fundProxyAddress);
+    }
+
+    function _getSatellites() internal view override returns (Satellite[] memory) {
+        Satellite[] memory satellites = new Satellite[](1);
+        satellites[0] = _fundModuleStore().fundToken;
+        return satellites;
+    }
+
+    function getFundModuleSatellites() public view override returns (Satellite[] memory) {
+        return _getSatellites();
+    }
+
+    function upgradeFundTokenImplementation(address newFundTokenImplementation)
+        external
+        override
+        onlyOwner
+        onlyIfInitialized
+    {
+        FundToken(getFundTokenAddress()).upgradeTo(newFundTokenImplementation);
+    }
+
+    function getFundTokenAddress() public view override returns (address) {
+        return _fundModuleStore().fundToken.deployedAddress;
     }
 
     //////////////////////////////////////////////
     //          BUSINESS LOGIC                  //
     //////////////////////////////////////////////
+
+    //////////////////////////////////////////////
+    //          OWNERSHIP                       //
+    //////////////////////////////////////////////
+    modifier onlyFundOwner(uint fundId, address requestor) {
+        if (FundToken(getFundTokenAddress()).ownerOf(fundId) != requestor) {
+            revert AccessError.Unauthorized();
+        }
+
+        _;
+    }
+
+    modifier onlyAccountAuthorized(uint accountId, address requestor) {
+        // TODO Check if requestor is authorized in account
+        // if (FundToken(getFundTokenAddress()).ownerOf(fundId) != requestor) {
+        //     revert AccessError.Unauthorized();
+        // }
+
+        _;
+    }
+
+    function createFund(uint requestedFundId, address owner) external override {
+        FundToken(getFundTokenAddress()).mint(owner, requestedFundId);
+    }
+
+    function nominateFundOwner(uint fundId, address owner) external override {
+        FundToken(getFundTokenAddress()).nominateNewOwner(msg.sender, owner, fundId);
+    }
+
+    function acceptFundOwnership(uint fundId) external override {
+        FundToken(getFundTokenAddress()).acceptOwnership(msg.sender, fundId);
+    }
+
+    function renounceFundOwnership(uint fundId) external override {
+        FundToken(getFundTokenAddress()).renounce(msg.sender, fundId);
+    }
+
+    //////////////////////////////////////////////
+    //          OWNERSHIP                       //
+    //////////////////////////////////////////////
+    function setFundPosition(
+        uint fundId,
+        uint[] calldata markets,
+        uint[] calldata weights
+    ) external override onlyFundOwner {}
+
+    function rebalanceMarkets(uint fundId) external override {}
+
+    function delegateCollateral(
+        uint fundId,
+        uint accountId,
+        address collateralType,
+        uint amount,
+        uint exposure
+    ) external override onlyAccountAuthorized {}
+
+    function mintsUSD(
+        uint fundId,
+        uint accountId,
+        address collateralType,
+        uint amount
+    ) external override onlyAccountAuthorized {}
+
+    function burnsUSD(
+        uint fundId,
+        uint accountId,
+        address collateralType,
+        uint amount
+    ) external override onlyAccountAuthorized {}
+
+    function collateralizationRatio(
+        uint fundId,
+        uint accountId,
+        address collateralType
+    ) external override {}
+
+    function accountFundDebt(
+        uint fundId,
+        uint accountId,
+        address collateralType
+    ) external override {}
+
+    function fundDebt(uint fundId) external override {}
+
+    function totalDebtShares(uint fundId) external override {}
+
+    function debtPerShare(uint fundId) external override {}
 
     // function adjust(
     //     uint fundId,
