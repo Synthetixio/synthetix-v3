@@ -39,7 +39,7 @@ const oneOf = (...values) => ({
       throw new HardhatError(ERRORS.ARGUMENTS.INVALID_VALUE_FOR_TYPE, {
         value,
         name: argName,
-        type: oneOf.name,
+        type: `oneOf(${values.join('|')})`,
       });
     }
   },
