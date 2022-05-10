@@ -1,4 +1,5 @@
 const { task } = require('hardhat/config');
+const types = require('@synthetixio/core-js/utils/hardhat/argument-types');
 const { fastForward } = require('@synthetixio/core-js/utils/hardhat/rpc');
 
 const units = {
@@ -12,20 +13,17 @@ const units = {
 task('fast-forward', 'travel the given amount of time on the current node')
   .addPositionalParam(
     'amount',
-    'The amount of time that you want to travel, by default in seconds.'
+    'The amount of time that you want to travel, by default in seconds.',
+    undefined,
+    types.int
   )
-  .addOptionalPositionalParam('unit', 'Unit of time (seconds|minutes|hours|days|weeks)', 'seconds')
+  .addOptionalPositionalParam(
+    'unit',
+    `Unit of time, should be one of (${Object.keys(units).join('|')})`,
+    'seconds',
+    types.oneOf(...Object.keys(units))
+  )
   .setAction(async ({ amount, unit }) => {
-    if (!Object.keys(units).includes(unit)) {
-      throw new Error(
-        `Invalid unit of time "${unit}". Expected one of (seconds|minutes|hours|days|weeks)`
-      );
-    }
-
-    if (!/^[1-9][0-9]*$/.test(amount)) {
-      throw new Error(`Invalid amount of time "${amount}". Expected an integer number`);
-    }
-
     await hre.ethers.provider.send('evm_mine');
 
     await fastForward(Number(amount) * units[unit], hre.ethers.provider);
