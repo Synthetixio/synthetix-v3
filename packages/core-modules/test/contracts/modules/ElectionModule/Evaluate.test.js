@@ -144,7 +144,7 @@ describe('ElectionModule (evaluate)', () => {
                 const event = findEvent({ receipt, eventName: 'ElectionBatchEvaluated' });
 
                 assert.ok(event);
-                assertBn.equal(event.args.epochIndex, 1);
+                assertBn.equal(event.args.epochIndex, 0);
                 assertBn.equal(event.args.evaluatedBallots, 1);
                 assertBn.equal(event.args.totalBallots, 3);
               });
@@ -171,7 +171,7 @@ describe('ElectionModule (evaluate)', () => {
                   const event = findEvent({ receipt, eventName: 'ElectionEvaluated' });
 
                   assert.ok(event);
-                  assertBn.equal(event.args.epochIndex, 1);
+                  assertBn.equal(event.args.epochIndex, 0);
                   assertBn.equal(event.args.totalBallots, 3);
                 });
 

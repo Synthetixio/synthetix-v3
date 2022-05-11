@@ -79,15 +79,15 @@ contract ElectionBase is ElectionStorage, InitializableMixin {
     }
 
     function _getCurrentEpochIndex() internal view returns (uint) {
-        return _electionStore().currentEpochIndex;
+        return _electionStore().epochs.length - 1;
     }
 
     function _getCurrentEpoch() internal view returns (EpochData storage) {
-        return _getEpochAtPosition(_electionStore().currentEpochIndex);
+        return _getEpochAtPosition(_getCurrentEpochIndex());
     }
 
-    function _getNextEpoch() internal view returns (EpochData storage) {
-        return _getEpochAtPosition(_electionStore().currentEpochIndex + 1);
+    function _getLastEpoch() internal view returns (EpochData storage) {
+        return _getEpochAtPosition(_getCurrentEpochIndex() - 1);
     }
 
     function _getEpochAtPosition(uint position) internal view returns (EpochData storage) {
@@ -95,7 +95,7 @@ contract ElectionBase is ElectionStorage, InitializableMixin {
     }
 
     function _getCurrentElection() internal view returns (ElectionData storage) {
-        return _getElectionAtPosition(_electionStore().currentEpochIndex);
+        return _getElectionAtPosition(_getCurrentEpochIndex());
     }
 
     function _getElectionAtPosition(uint position) internal view returns (ElectionData storage) {
