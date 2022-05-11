@@ -15,10 +15,10 @@ contract ElectionStorage {
         mapping(address => uint) councilTokenIds;
         // Array of EpochData's for each epoch
         EpochData[] epochs;
-        // ElectionData's by epoch index
-        mapping(uint => ElectionData) elections;
+        // Array of ElectionData's for each election
+        ElectionData[] elections;
         // Pointer to ElectionSettings
-        // To be always used via store.settings[0]
+        // To be always used via store.settings[0] to avoid storage collisions
         mapping(uint => ElectionSettings) settings;
     }
 

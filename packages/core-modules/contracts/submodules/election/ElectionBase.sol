@@ -78,6 +78,13 @@ contract ElectionBase is ElectionStorage, InitializableMixin {
         return _electionStore().initialized;
     }
 
+    function _createNewEpoch() internal {
+        ElectionStore storage store = _electionStore();
+
+        store.epochs.push();
+        store.elections.push();
+    }
+
     function _getCurrentEpochIndex() internal view returns (uint) {
         return _electionStore().epochs.length - 1;
     }

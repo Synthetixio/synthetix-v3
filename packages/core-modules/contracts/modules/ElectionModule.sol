@@ -46,7 +46,7 @@ contract ElectionModule is
         settings.minimumActiveMembers = minimumActiveMembers;
         settings.defaultBallotEvaluationBatchSize = 500;
 
-        store.epochs.push(EpochData(0, 0, 0, 0));
+        _createNewEpoch();
 
         EpochData storage firstEpoch = _getEpochAtPosition(0);
         uint64 epochStartDate = uint64(block.timestamp);
@@ -254,7 +254,7 @@ contract ElectionModule is
 
         _getCurrentElection().resolved = true;
 
-        _electionStore().epochs.push(EpochData(0, 0, 0, 0));
+        _createNewEpoch();
 
         _copyScheduleFromPreviousEpoch();
 
