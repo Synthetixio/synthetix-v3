@@ -17,7 +17,7 @@ contract ElectionSchedule is ElectionBase {
 
     /// @dev Determines the current period type according to the current time and the epoch's dates
     function _getCurrentPeriod() internal view returns (ElectionPeriod) {
-        if (_electionStore().epochs.length == 0) {
+        if (!_electionStore().initialized) {
             revert InitError.NotInitialized();
         }
 
