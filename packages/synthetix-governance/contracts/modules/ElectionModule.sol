@@ -126,4 +126,13 @@ contract ElectionModule is ISynthetixElectionModule, BaseElectionModule, DebtSha
 
         return MathUtil.sqrt(votePower);
     }
+
+    function _createNewEpoch() internal virtual override {
+        super._createNewEpoch();
+
+        DebtShareStore storage store = _debtShareStore();
+
+        store.debtShareIds.push();
+        store.crossChainDebtShareData.push();
+    }
 }

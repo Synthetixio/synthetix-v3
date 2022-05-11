@@ -8,10 +8,10 @@ contract DebtShareStorage {
     struct DebtShareStore {
         // Synthetix c2 DebtShare contract used to determine vote power in the local chain
         IDebtShare debtShareContract;
-        // Debt share snapshot id by epoch index
-        mapping(uint => uint128) debtShareIds;
-        // Cross chain debt share data by epoch index
-        mapping(uint => CrossChainDebtShareData) crossChainDebtShareData;
+        // Array of debt share snapshot id's for each epoch
+        uint128[] debtShareIds;
+        // Array of cross chain debt share data for each epoch
+        CrossChainDebtShareData[] crossChainDebtShareData;
     }
 
     struct CrossChainDebtShareData {
