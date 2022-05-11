@@ -16,7 +16,7 @@ const ElectionPeriod = {
   Evaluation: 3,
 };
 
-describe('ElectionModule (cast)', function () {
+describe('SynthetixElectionModule - integration (cast)', function () {
   const { proxyAddress } = bootstrap(initializer);
 
   let ElectionModule, SynthetixDebtShare;
@@ -178,11 +178,28 @@ describe('ElectionModule (cast)', function () {
             ElectionModule.getVotePower(voter1.address),
             ElectionModule.getVotePower(voter2.address),
             ElectionModule.getVotePower(voter3.address),
+            ElectionModule.getVotePower(voter4.address),
           ]);
 
           assertBn.equal(debts[0], ethers.BigNumber.from('357079901261'));
           assertBn.equal(debts[1], ethers.BigNumber.from('380079625183'));
           assertBn.equal(debts[2], ethers.BigNumber.from('350535401183'));
+          assertBn.equal(debts[3], ethers.BigNumber.from('383760657789'));
+        });
+
+        describe('before issuing valid votes', function () {
+          it('reflects users that have not voted', async function () {
+            assert.equal(await ElectionModule.hasVoted(voter1.address), false);
+            assert.equal(await ElectionModule.hasVoted(voter2.address), false);
+            assert.equal(await ElectionModule.hasVoted(voter3.address), false);
+            assert.equal(await ElectionModule.hasVoted(voter4.address), false);
+          });
+
+          describe('when attempting to withdraw a vote that does not exist', function () {
+            it('reverts', async function () {
+              await assertRevert(ElectionModule.withdrawVote(), 'VoteNotCasted');
+            });
+          });
         });
 
         describe('when issuing valid votes', function () {
@@ -307,6 +324,47 @@ describe('ElectionModule (cast)', function () {
               assert.deepEqual(
                 await ElectionModule.getBallotCandidates(ballot3.id),
                 ballot3.candidates
+              );
+            });
+          });
+
+          describe('when users withdraw their vote', function () {
+            before('withdraw vote', async function () {
+              const tx = await ElectionModule.connect(voter4).withdrawVote();
+              receipt = await tx.wait();
+            });
+
+            it('emitted a VoteWithdrawn event', async function () {
+              const event = findEvent({ receipt, eventName: 'VoteWithdrawn' });
+              assert.ok(event);
+              assertBn.equal(event.args.voter, voter4.address);
+              assert.equal(event.args.ballotId, ballot1.id);
+              assertBn.equal(event.args.votePower, '383760657789');
+            });
+
+            it('can retrieve the corresponding ballot that users voted on', async function () {
+              assert.equal(
+                await ElectionModule.getBallotVoted(voter4.address),
+                '0x0000000000000000000000000000000000000000000000000000000000000000'
+              );
+            });
+
+            it('shows that the user has not voted', async function () {
+              assert.equal(await ElectionModule.hasVoted(voter4.address), false);
+            });
+
+            it('can retrieve ballot votes', async function () {
+              assertBn.equal(
+                await ElectionModule.getBallotVotes(ballot1.id),
+                ethers.BigNumber.from('707615302444')
+              );
+              assertBn.equal(
+                await ElectionModule.getBallotVotes(ballot2.id),
+                ethers.BigNumber.from('380079625183')
+              );
+              assertBn.equal(
+                await ElectionModule.getBallotVotes(ballot3.id),
+                ethers.BigNumber.from('430359032721')
               );
             });
           });

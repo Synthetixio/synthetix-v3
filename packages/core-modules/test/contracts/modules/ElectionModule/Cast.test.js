@@ -111,6 +111,21 @@ describe('ElectionModule (cast)', () => {
             assertBn.equal(await ElectionModule.getVotePower(voter3.address), 1);
           });
 
+          describe('before issuing valid votes', function () {
+            it('reflects users that have not voted', async function () {
+              assert.equal(await ElectionModule.hasVoted(voter1.address), false);
+              assert.equal(await ElectionModule.hasVoted(voter2.address), false);
+              assert.equal(await ElectionModule.hasVoted(voter3.address), false);
+              assert.equal(await ElectionModule.hasVoted(voter4.address), false);
+            });
+
+            describe('when attempting to withdraw a vote that does not exist', function () {
+              it('reverts', async function () {
+                await assertRevert(ElectionModule.withdrawVote(), 'VoteNotCasted');
+              });
+            });
+          });
+
           describe('when issuing valid votes', function () {
             before('form ballots', async function () {
               ballot1 = {
@@ -140,6 +155,13 @@ describe('ElectionModule (cast)', () => {
             before('vote and record receipt', async function () {
               const tx = await ElectionModule.connect(voter5).cast(ballot2.candidates);
               receipt = await tx.wait();
+            });
+
+            it('reflects users that have not voted', async function () {
+              assert.equal(await ElectionModule.hasVoted(voter1.address), true);
+              assert.equal(await ElectionModule.hasVoted(voter2.address), true);
+              assert.equal(await ElectionModule.hasVoted(voter3.address), true);
+              assert.equal(await ElectionModule.hasVoted(voter4.address), true);
             });
 
             it('emitted a VoteRecorded event', async function () {
@@ -217,6 +239,38 @@ describe('ElectionModule (cast)', () => {
                   await ElectionModule.getBallotCandidates(ballot3.id),
                   ballot3.candidates
                 );
+              });
+            });
+
+            describe('when users withdraw their vote', function () {
+              before('withdraw vote', async function () {
+                const tx = await ElectionModule.connect(voter4).withdrawVote();
+                receipt = await tx.wait();
+              });
+
+              it('emitted a VoteWithdrawn event', async function () {
+                const event = findEvent({ receipt, eventName: 'VoteWithdrawn' });
+                assert.ok(event);
+                assertBn.equal(event.args.voter, voter4.address);
+                assert.equal(event.args.ballotId, ballot1.id);
+                assertBn.equal(event.args.votePower, 1);
+              });
+
+              it('can retrieve the corresponding ballot that users voted on', async function () {
+                assert.equal(
+                  await ElectionModule.getBallotVoted(voter4.address),
+                  '0x0000000000000000000000000000000000000000000000000000000000000000'
+                );
+              });
+
+              it('shows that the user has not voted', async function () {
+                assert.equal(await ElectionModule.hasVoted(voter4.address), false);
+              });
+
+              it('can retrieve ballot votes', async function () {
+                assertBn.equal(await ElectionModule.getBallotVotes(ballot1.id), 2);
+                assertBn.equal(await ElectionModule.getBallotVotes(ballot2.id), 1);
+                assertBn.equal(await ElectionModule.getBallotVotes(ballot3.id), 1);
               });
             });
           });

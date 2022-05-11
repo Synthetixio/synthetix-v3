@@ -207,16 +207,21 @@ contract ElectionModule is
         bytes32 ballotId;
 
         if (hasVoted(msg.sender)) {
-            uint castedVotePower = _getCastedVotePower(msg.sender);
-
-            ballotId = _withdrawVote(msg.sender, castedVotePower);
-
-            emit VoteWithdrawn(msg.sender, ballotId, castedVotePower);
+            _withdrawCastedVote(msg.sender);
         }
 
         ballotId = _recordVote(msg.sender, votePower, candidates);
 
         emit VoteRecorded(msg.sender, ballotId, votePower);
+    }
+
+    /// @notice Allows votes to be withdraw
+    function withdrawVote() external {
+        if (!hasVoted(msg.sender)) {
+            revert VoteNotCasted();
+        }
+
+        _withdrawCastedVote(msg.sender);
     }
 
     /// @notice Processes ballots in batches during the Evaluation period (after epochEndDate)

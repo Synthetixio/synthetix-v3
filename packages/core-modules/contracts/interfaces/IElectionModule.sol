@@ -62,6 +62,8 @@ interface IElectionModule {
 
     function cast(address[] calldata candidates) external;
 
+    function withdrawVote() external;
+
     function evaluate(uint numBallots) external;
 
     function resolve() external;
