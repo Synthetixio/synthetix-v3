@@ -10,7 +10,7 @@ contract DebtShareStorage {
         IDebtShare debtShareContract;
         // Array of debt share snapshot id's for each epoch
         uint128[] debtShareIds;
-        // Array of cross chain debt share data for each epoch
+        // Array of CrossChainDebtShareData's for each epoch
         CrossChainDebtShareData[] crossChainDebtShareData;
     }
 
