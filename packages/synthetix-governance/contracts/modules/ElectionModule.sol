@@ -94,7 +94,7 @@ contract ElectionModule is ISynthetixElectionModule, BaseElectionModule, DebtSha
     {
         _setCrossChainDebtShareMerkleRoot(merkleRoot, blocknumber);
 
-        emit CrossChainDebtShareMerkleRootSet(merkleRoot, blocknumber, _electionStore().currentEpochIndex);
+        emit CrossChainDebtShareMerkleRootSet(merkleRoot, blocknumber, _getCurrentEpochIndex());
     }
 
     /// @notice Returns the current epoch's merkle root for user debt shares on other chains

@@ -6,7 +6,7 @@ const { getTime } = require('@synthetixio/core-js/utils/hardhat/rpc');
 const { bootstrap } = require('@synthetixio/deployer/utils/tests');
 const initializer = require('../../../../helpers/initializer');
 
-describe('ElectionModule (initialization)', () => {
+describe('SynthetixElectionModule (initialization)', () => {
   const { proxyAddress } = bootstrap(initializer);
 
   let ElectionModule, DebtShare;

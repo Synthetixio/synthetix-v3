@@ -10,7 +10,7 @@ const { getTime, fastForwardTo } = require('@synthetixio/core-js/utils/hardhat/r
 
 const { ethers } = hre;
 
-describe('ElectionModule (cross chain debt share)', function () {
+describe('SynthetixElectionModule (cross chain debt share)', function () {
   let owner, user, DebtShare;
 
   let parsedTree, validRoot, wrongTree, voter;
@@ -127,7 +127,7 @@ describe('ElectionModule (cross chain debt share)', function () {
           assert.ok(event);
           assert.deepEqual(event.args.merkleRoot, validRoot);
           assertBn.equal(event.args.blocknumber, 42);
-          assertBn.equal(event.args.epoch, 1);
+          assertBn.equal(event.args.epoch, 0);
         });
 
         it('gets the merkle root blocknumber', async function () {

@@ -10,7 +10,7 @@ const {
   expectedVotePowerForSpecificDebtShare,
 } = require('./helpers/election-helper');
 
-describe('ElectionModule (combined debt share)', function () {
+describe('SynthetixElectionModule (combined debt share)', function () {
   const { proxyAddress } = bootstrap(initializer);
 
   let signers, l1voters, members, owner, user1, user2, user3, user4;
