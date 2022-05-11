@@ -8,6 +8,10 @@ const ElectionPeriod = {
   Evaluation: 3,
 };
 
+/**
+ * Example:
+ *  npx hardhat --network local fixture:candidates --address 0x...
+ */
 task('fixture:candidates', 'create fixture wallets and nominate them')
   .addParam('address', 'Deployed election module proxy address', undefined, types.address)
   .addOptionalParam('amount', 'Amount of candidates to fixture', '50', types.int)
