@@ -14,7 +14,7 @@ const periods = {
   },
 };
 
-task('fast-forward-to', 'travel the given amount of time on the current node')
+task('fast-forward-to', 'skips time to the specified election period')
   .addParam(
     'address',
     'Deployed election module proxy address to get period date from',
