@@ -13,6 +13,8 @@ import "../storage/FundModuleStorage.sol";
 import "../satellites/FundToken.sol";
 
 contract FundModule is IFundModule, OwnableMixin, FundModuleStorage, InitializableMixin, SatelliteFactory {
+    using SetUtil for SetUtil.Bytes32Set;
+
     event FundCreated(address fundAddress);
 
     error InvalidParameters();
@@ -195,18 +197,19 @@ contract FundModule is IFundModule, OwnableMixin, FundModuleStorage, Initializab
         address collateralType,
         uint amount,
         uint leverage
-    ) external override onlyAccountAuthorized {
+    ) external override onlyAccountAuthorized(accountId, msg.sender) {
         // TODO check if fund exists
         // TODO check parameters are valid (collateralType, amount, exposure)
 
         bytes32 lpid = _getLiquidityItemId(fundId, accountId, collateralType, leverage);
+        SetUtil.Bytes32Set storage liquidityItemIds = _fundModuleStore().liquidityItemIds[fundId];
 
-        if (!_fundModuleStore().liquidityItemIds[fundId].contains(lpid)) {
+        if (!liquidityItemIds.contains(lpid)) {
             // lpid not found in set =>  new position
             _addPosition(lpid, fundId, accountId, collateralType, amount, leverage);
         } else {
             // Position found, need to adjust (increase, decrease or remove)
-            LiquidityItem storage liquidityItem = _fundModuleStore().liquidityItems[fundId][lpid];
+            LiquidityItem storage liquidityItem = _fundModuleStore().liquidityItems[lpid];
 
             if (
                 liquidityItem.accountId != accountId ||
@@ -220,9 +223,9 @@ contract FundModule is IFundModule, OwnableMixin, FundModuleStorage, Initializab
             if (amount == 0) {
                 _removePosition(lpid, liquidityItem, fundId, accountId, collateralType);
             } else if (liquidityItem.collateralAmount < amount) {
-                _increasePosition(liquidityItem, fundId, accountId, collateralType, amount, leverage);
+                _increasePosition(lpid, liquidityItem, fundId, collateralType, amount, leverage);
             } else if (liquidityItem.collateralAmount > amount) {
-                _decreasePosition(liquidityItem, fundId, accountId, collateralType, amount, leverage);
+                _decreasePosition(lpid, liquidityItem, fundId, collateralType, amount, leverage);
             } else {
                 // no change
                 revert InvalidParameters();
@@ -250,7 +253,7 @@ contract FundModule is IFundModule, OwnableMixin, FundModuleStorage, Initializab
         liquidityItem.shares = _calculateShares(fundId, collateralType, amount, leverage);
         liquidityItem.initialDebt = _calculateInitialDebt(fundId, collateralType, amount, leverage); // how that works with amount adjustments?
 
-        _fundModuleStore().liquidityItems[fundId][liquidityItemId] = liquidityItem;
+        _fundModuleStore().liquidityItems[liquidityItemId] = liquidityItem;
     }
 
     function _removePosition(
@@ -271,14 +274,13 @@ contract FundModule is IFundModule, OwnableMixin, FundModuleStorage, Initializab
         liquidityItem.shares = 0;
         liquidityItem.initialDebt = 0; // how that works with amount adjustments?
 
-        _fundModuleStore().liquidityItems[fundId][liquidityItemId] = liquidityItem;
+        _fundModuleStore().liquidityItems[liquidityItemId] = liquidityItem;
     }
 
     function _increasePosition(
         bytes32 liquidityItemId,
         LiquidityItem storage liquidityItem,
         uint fundId,
-        uint accountId,
         address collateralType,
         uint amount,
         uint leverage
@@ -292,14 +294,13 @@ contract FundModule is IFundModule, OwnableMixin, FundModuleStorage, Initializab
         liquidityItem.shares = _calculateShares(fundId, collateralType, amount, leverage);
         liquidityItem.initialDebt = _calculateInitialDebt(fundId, collateralType, amount, leverage); // how that works with amount adjustments?
 
-        _fundModuleStore().liquidityItems[fundId][liquidityItemId] = liquidityItem;
+        _fundModuleStore().liquidityItems[liquidityItemId] = liquidityItem;
     }
 
     function _decreasePosition(
         bytes32 liquidityItemId,
         LiquidityItem storage liquidityItem,
         uint fundId,
-        uint accountId,
         address collateralType,
         uint amount,
         uint leverage
@@ -313,12 +314,12 @@ contract FundModule is IFundModule, OwnableMixin, FundModuleStorage, Initializab
         liquidityItem.shares = _calculateShares(fundId, collateralType, amount, leverage);
         liquidityItem.initialDebt = _calculateInitialDebt(fundId, collateralType, amount, leverage); // how that works with amount adjustments?
 
-        _fundModuleStore().liquidityItems[fundId][liquidityItemId] = liquidityItem;
+        _fundModuleStore().liquidityItems[liquidityItemId] = liquidityItem;
     }
 
     function _calculateShares(
         uint fundId,
-        uint collateralType,
+        address collateralType,
         uint amount,
         uint leverage
     ) internal returns (uint) {
@@ -328,7 +329,7 @@ contract FundModule is IFundModule, OwnableMixin, FundModuleStorage, Initializab
 
     function _calculateInitialDebt(
         uint fundId,
-        uint collateralType,
+        address collateralType,
         uint amount,
         uint leverage
     ) internal returns (uint) {
@@ -345,7 +346,7 @@ contract FundModule is IFundModule, OwnableMixin, FundModuleStorage, Initializab
         uint accountId,
         address collateralType,
         uint amount
-    ) external override onlyAccountAuthorized {
+    ) external override onlyAccountAuthorized(accountId, msg.sender) {
         // TODO Check if can mint that amount
     }
 
@@ -354,7 +355,7 @@ contract FundModule is IFundModule, OwnableMixin, FundModuleStorage, Initializab
         uint accountId,
         address collateralType,
         uint amount
-    ) external override onlyAccountAuthorized {
+    ) external override onlyAccountAuthorized(accountId, msg.sender) {
         // TODO Check if can burn that amount
     }
 
@@ -419,7 +420,7 @@ contract FundModule is IFundModule, OwnableMixin, FundModuleStorage, Initializab
         }
     }
 
-    function getApprovedFunds() external override returns (uint[] calldata) {
+    function getApprovedFunds() external override returns (uint[] memory) {
         return _fundModuleStore().approvedFunds;
     }
 
