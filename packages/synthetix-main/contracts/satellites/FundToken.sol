@@ -49,11 +49,23 @@ contract FundToken is IFundToken, ERC721, FundTokenStorage, InitializableMixin, 
         emit FundMinted(owner, fundId);
     }
 
+    function nominateNewOwner(address nominatedOwner, uint256 fundId) external override {
+        _nominateNewOwner(msg.sender, nominatedOwner, fundId);
+    }
+
     function nominateNewOwner(
         address sender,
         address nominatedOwner,
         uint256 fundId
     ) external override onlyOwner {
+        _nominateNewOwner(sender, nominatedOwner, fundId);
+    }
+
+    function _nominateNewOwner(
+        address sender,
+        address nominatedOwner,
+        uint256 fundId
+    ) internal {
         if (!_isApprovedOrOwner(sender, fundId)) {
             revert AccessError.Unauthorized(sender);
         }
@@ -63,7 +75,15 @@ contract FundToken is IFundToken, ERC721, FundTokenStorage, InitializableMixin, 
         emit NominatedNewOwner(nominatedOwner, fundId);
     }
 
+    function acceptOwnership(uint256 fundId) external override {
+        _acceptOwnership(msg.sender, fundId);
+    }
+
     function acceptOwnership(address sender, uint256 fundId) external override onlyOwner {
+        _acceptOwnership(sender, fundId);
+    }
+
+    function _acceptOwnership(address sender, uint256 fundId) internal {
         if (_fundTokenStore().nominatedOwnerOf[fundId] != sender) {
             revert AccessError.Unauthorized(sender);
         }
@@ -75,7 +95,15 @@ contract FundToken is IFundToken, ERC721, FundTokenStorage, InitializableMixin, 
         emit OwnershipAccepted(sender, fundId);
     }
 
+    function renounceNomination(uint256 fundId) external override {
+        _renounceNomination(msg.sender, fundId);
+    }
+
     function renounceNomination(address sender, uint256 fundId) external override onlyOwner {
+        _renounceNomination(sender, fundId);
+    }
+
+    function _renounceNomination(address sender, uint256 fundId) internal {
         if (_fundTokenStore().nominatedOwnerOf[fundId] != sender) {
             revert AccessError.Unauthorized(sender);
         }
@@ -84,7 +112,4 @@ contract FundToken is IFundToken, ERC721, FundTokenStorage, InitializableMixin, 
 
         emit OwnershipRenounced(sender, fundId);
     }
-    /////////////////////////////////////////////////
-    // STAKE  /  UNSTAKE
-    /////////////////////////////////////////////////
 }

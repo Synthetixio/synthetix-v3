@@ -105,6 +105,7 @@ contract FundModule is IFundModule, OwnableMixin, FundModuleStorage, Initializab
         _;
     }
 
+    // TODO Remove createFund and transger ownership from module and keep in FundToken only
     function createFund(uint requestedFundId, address owner) external override {
         FundToken(getFundTokenAddress()).mint(owner, requestedFundId);
     }
