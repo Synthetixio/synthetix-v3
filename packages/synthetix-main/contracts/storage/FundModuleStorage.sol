@@ -11,23 +11,28 @@ contract FundModuleStorage {
         uint preferredFund;
         uint[] approvedFunds;
         mapping(uint => FundData) funds; // fund metadata by fundId
-        mapping(uint => SetUtil.Bytes32Set) liquidityItemIds; // LiquidityItem ids by fundId
-        mapping(bytes32 => LiquidityItem) liquidityItems; // LiquidityItems data by liquidityProviderIds
     }
 
     struct FundData {
-        // uint targetRatio;
-        // uint liquidationRatio;
+        /// @dev fund configuration and market distribution
+        uint targetRatio; // TODO set up and update by owner or configured by system?
+        uint liquidationRatio; // TODO set up and update by owner or configured by system?
         uint totalWeights; // sum of distribution weights
         MarketDistribution[] fundDistribution;
+        /// @dev collateral delegated
         SetUtil.AddressSet collateralTypes; // collateral types used to add liquidity to the fund
         mapping(address => uint) liquidityByCollateral; // total liquidity per collateral
+        uint totalShares;
+        /// @dev Individual Liquidity Items
+        SetUtil.Bytes32Set liquidityItemIds; // All LiquidityItem ids in this fund
+        mapping(uint => SetUtil.Bytes32Set) liquidityItemsByAccount; // LiquidityItem ids by account
+        mapping(bytes32 => LiquidityItem) liquidityItems; // LiquidityItems data by liquidityProviderIds
+        /// @dev lp shares accounting
     }
 
     struct MarketDistribution {
         uint weight;
         uint market;
-        address priceOracle; // here or in market?
     }
 
     struct LiquidityItem {

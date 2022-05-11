@@ -14,12 +14,20 @@ import "../satellites/FundToken.sol";
 
 contract FundModule is IFundModule, OwnableMixin, FundModuleStorage, InitializableMixin, SatelliteFactory {
     using SetUtil for SetUtil.Bytes32Set;
+    using SetUtil for SetUtil.AddressSet;
 
-    event FundCreated(address fundAddress);
-
+    /////////////////////////////////////////////////
+    // ERRORS
+    /////////////////////////////////////////////////
     error InvalidParameters();
     error FundAlreadyApproved(uint fundId);
     error FundNotFound(uint fundId);
+
+    /////////////////////////////////////////////////
+    // EVENTS
+    /////////////////////////////////////////////////
+    event FundCreated(address fundAddress);
+    event FundPositionSet(uint fundId, uint[] markets, uint[] weights, address executedBy);
 
     /////////////////////////////////////////////////
     // CHORES
@@ -123,7 +131,7 @@ contract FundModule is IFundModule, OwnableMixin, FundModuleStorage, Initializab
     }
 
     //////////////////////////////////////////////
-    //          OWNERSHIP                       //
+    //          FUND ADMIN                      //
     //////////////////////////////////////////////
     function setFundPosition(
         uint fundId,
@@ -154,7 +162,7 @@ contract FundModule is IFundModule, OwnableMixin, FundModuleStorage, Initializab
 
         _rebalanceMarkets(fundId, false);
 
-        // TODO emit an event
+        emit FundPositionSet(fundId, markets, weights, msg.sender);
     }
 
     //////////////////////////////////////////////
@@ -175,11 +183,11 @@ contract FundModule is IFundModule, OwnableMixin, FundModuleStorage, Initializab
 
         for (uint i = 0; i < fundData.fundDistribution.length; i++) {
             uint weight = zeros ? 0 : fundData.fundDistribution[i].weight;
-            _setCollateralDistribution(fundId, fundData.fundDistribution[i].market, weight, totalWeights);
+            _distributeCollaterals(fundId, fundData.fundDistribution[i].market, weight, totalWeights);
         }
     }
 
-    function _setCollateralDistribution(
+    function _distributeCollaterals(
         uint fundId,
         uint marketId,
         uint marketWeight,
@@ -202,15 +210,17 @@ contract FundModule is IFundModule, OwnableMixin, FundModuleStorage, Initializab
         // TODO check if fund exists
         // TODO check parameters are valid (collateralType, amount, exposure)
 
-        bytes32 lpid = _getLiquidityItemId(fundId, accountId, collateralType, leverage);
-        SetUtil.Bytes32Set storage liquidityItemIds = _fundModuleStore().liquidityItemIds[fundId];
+        bytes32 lpid = _getLiquidityItemId(accountId, collateralType, leverage);
+
+        FundData storage fundData = _fundModuleStore().funds[fundId];
+        SetUtil.Bytes32Set storage liquidityItemIds = fundData.liquidityItemIds;
 
         if (!liquidityItemIds.contains(lpid)) {
             // lpid not found in set =>  new position
             _addPosition(lpid, fundId, accountId, collateralType, amount, leverage);
         } else {
             // Position found, need to adjust (increase, decrease or remove)
-            LiquidityItem storage liquidityItem = _fundModuleStore().liquidityItems[lpid];
+            LiquidityItem storage liquidityItem = fundData.liquidityItems[lpid];
 
             if (
                 liquidityItem.accountId != accountId ||
@@ -244,17 +254,19 @@ contract FundModule is IFundModule, OwnableMixin, FundModuleStorage, Initializab
         uint amount,
         uint leverage
     ) internal {
-        _fundModuleStore().liquidityItemIds[fundId].add(liquidityItemId);
+        _fundModuleStore().funds[fundId].liquidityItemIds.add(liquidityItemId);
 
         LiquidityItem memory liquidityItem;
         liquidityItem.collateralType = collateralType;
         liquidityItem.accountId = accountId;
         liquidityItem.leverage = leverage;
         liquidityItem.collateralAmount = amount;
-        liquidityItem.shares = _calculateShares(fundId, collateralType, amount, leverage);
+        liquidityItem.shares = _convertToShares(fundId, collateralType, amount, leverage);
         liquidityItem.initialDebt = _calculateInitialDebt(fundId, collateralType, amount, leverage); // how that works with amount adjustments?
 
-        _fundModuleStore().liquidityItems[liquidityItemId] = liquidityItem;
+        _fundModuleStore().funds[fundId].liquidityItems[liquidityItemId] = liquidityItem;
+
+        // TODO adjust totalShares, liquidityByCollateral
     }
 
     function _removePosition(
@@ -269,13 +281,15 @@ contract FundModule is IFundModule, OwnableMixin, FundModuleStorage, Initializab
         uint oldOnitialDebt = liquidityItem.initialDebt;
         // TODO check if is enabled to remove position comparing old and new data
 
-        _fundModuleStore().liquidityItemIds[fundId].remove(liquidityItemId);
+        _fundModuleStore().funds[fundId].liquidityItemIds.remove(liquidityItemId);
 
         liquidityItem.collateralAmount = 0;
         liquidityItem.shares = 0;
         liquidityItem.initialDebt = 0; // how that works with amount adjustments?
 
-        _fundModuleStore().liquidityItems[liquidityItemId] = liquidityItem;
+        _fundModuleStore().funds[fundId].liquidityItems[liquidityItemId] = liquidityItem;
+
+        // TODO adjust totalShares, liquidityByCollateral
     }
 
     function _increasePosition(
@@ -292,10 +306,12 @@ contract FundModule is IFundModule, OwnableMixin, FundModuleStorage, Initializab
         // TODO check if is enabled to remove position comparing old and new data
 
         liquidityItem.collateralAmount = amount;
-        liquidityItem.shares = _calculateShares(fundId, collateralType, amount, leverage);
+        liquidityItem.shares = _convertToShares(fundId, collateralType, amount, leverage);
         liquidityItem.initialDebt = _calculateInitialDebt(fundId, collateralType, amount, leverage); // how that works with amount adjustments?
 
-        _fundModuleStore().liquidityItems[liquidityItemId] = liquidityItem;
+        _fundModuleStore().funds[fundId].liquidityItems[liquidityItemId] = liquidityItem;
+
+        // TODO adjust totalShares, liquidityByCollateral
     }
 
     function _decreasePosition(
@@ -312,20 +328,48 @@ contract FundModule is IFundModule, OwnableMixin, FundModuleStorage, Initializab
         // TODO check if is enabled to remove position comparing old and new data
 
         liquidityItem.collateralAmount = amount;
-        liquidityItem.shares = _calculateShares(fundId, collateralType, amount, leverage);
+        liquidityItem.shares = _convertToShares(fundId, collateralType, amount, leverage);
         liquidityItem.initialDebt = _calculateInitialDebt(fundId, collateralType, amount, leverage); // how that works with amount adjustments?
 
-        _fundModuleStore().liquidityItems[liquidityItemId] = liquidityItem;
+        _fundModuleStore().funds[fundId].liquidityItems[liquidityItemId] = liquidityItem;
+
+        // TODO adjust totalShares, liquidityByCollateral
     }
 
-    function _calculateShares(
+    function _convertToShares(
         uint fundId,
         address collateralType,
         uint amount,
         uint leverage
-    ) internal returns (uint) {
-        // TODO implement it
-        return 0;
+    ) internal view returns (uint) {
+        uint collateralValue = _getCollateralValue(collateralType) * amount * leverage; //(use mulDivDown or mulDivUp)
+        uint totalShares = _totalShares(fundId);
+        uint totalCollateralValue = _totalCollateral(fundId);
+
+        return totalShares == 0 ? collateralValue : (collateralValue * totalShares) / totalCollateralValue;
+    }
+
+    function _perShareValue(uint fundId) internal view returns (uint) {
+        uint totalShares = _totalShares(fundId);
+        uint totalCollateralValue = _totalCollateral(fundId);
+
+        return totalCollateralValue == 0 ? 1 : totalCollateralValue / totalShares;
+    }
+
+    function _totalCollateral(uint fundId) internal view returns (uint) {
+        uint total;
+        address[] memory collateralTypes = _fundModuleStore().funds[fundId].collateralTypes.values();
+        for (uint i = 0; i < collateralTypes.length; i++) {
+            address collateralType = collateralTypes[i];
+            total +=
+                _getCollateralValue(collateralType) *
+                _fundModuleStore().funds[fundId].liquidityByCollateral[collateralType];
+        }
+        return total;
+    }
+
+    function _totalShares(uint fundId) internal view returns (uint) {
+        return _fundModuleStore().funds[fundId].totalShares;
     }
 
     function _calculateInitialDebt(
@@ -349,6 +393,7 @@ contract FundModule is IFundModule, OwnableMixin, FundModuleStorage, Initializab
         uint amount
     ) external override onlyAccountAuthorized(accountId, msg.sender) {
         // TODO Check if can mint that amount
+        // TODO implement it
     }
 
     function burnsUSD(
@@ -358,6 +403,7 @@ contract FundModule is IFundModule, OwnableMixin, FundModuleStorage, Initializab
         uint amount
     ) external override onlyAccountAuthorized(accountId, msg.sender) {
         // TODO Check if can burn that amount
+        // TODO implement it
     }
 
     //////////////////////////////////////////////
@@ -375,11 +421,13 @@ contract FundModule is IFundModule, OwnableMixin, FundModuleStorage, Initializab
         address collateralType
     ) external override {}
 
-    function fundDebt(uint fundId) external override {}
+    function fundDebt(uint fundId) external view override returns (uint) {}
 
-    function totalDebtShares(uint fundId) external override {}
+    function totalDebtShares(uint fundId) external view override returns (uint) {
+        return _totalShares(fundId);
+    }
 
-    function debtPerShare(uint fundId) external override {}
+    function debtPerShare(uint fundId) external view override returns (uint) {}
 
     /////////////////////////////////////////////////
     // SCCP
@@ -430,12 +478,16 @@ contract FundModule is IFundModule, OwnableMixin, FundModuleStorage, Initializab
     /////////////////////////////////////////////////
 
     function _getLiquidityItemId(
-        uint fundId,
         uint accountId,
         address collateralType,
         uint leverage
     ) internal view returns (bytes32) {
-        return keccak256(abi.encodePacked(fundId, accountId, collateralType, leverage));
+        return keccak256(abi.encodePacked(accountId, collateralType, leverage));
+    }
+
+    function _getCollateralValue(address collateralType) internal view returns (uint) {
+        // TODO
+        return collateralType == address(0) ? 0 : 1; // dummy function
     }
 
     // TODO Check ERC4626 logic. a lot of the stuff is there

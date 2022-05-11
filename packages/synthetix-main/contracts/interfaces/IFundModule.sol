@@ -64,11 +64,11 @@ interface IFundModule is ISatelliteFactory {
         address collateralType
     ) external;
 
-    function fundDebt(uint fundId) external;
+    function fundDebt(uint fundId) external view returns (uint);
 
-    function totalDebtShares(uint fundId) external;
+    function totalDebtShares(uint fundId) external view returns (uint);
 
-    function debtPerShare(uint fundId) external;
+    function debtPerShare(uint fundId) external view returns (uint);
 
     function setPreferredFund(uint fundId) external;
 
