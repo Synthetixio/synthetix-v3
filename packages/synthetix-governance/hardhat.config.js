@@ -1,3 +1,5 @@
+const { requireAll } = require('@synthetixio/core-js/utils/misc/require-all');
+
 require('dotenv/config');
 require('hardhat-contract-sizer');
 require('hardhat-cannon');
@@ -6,7 +8,7 @@ require('@nomiclabs/hardhat-ethers');
 require('@synthetixio/deployer');
 require('@synthetixio/cli');
 
-require('./tasks/test');
+requireAll(`${__dirname}/tasks`);
 
 const config = {
   solidity: {

@@ -22,7 +22,7 @@ describe('utils/misc/dates.js', function () {
   });
 
   describe('getUnixTimestamp', function () {
-    it('returns the current unix timestamp', async function () {
+    it('returns the current unix timestamp in seconds', async function () {
       equal(getUnixTimestamp(), Math.floor(new Date().getTime() / 1000));
     });
   });
