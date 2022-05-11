@@ -12,7 +12,7 @@ const { findEvent } = require('@synthetixio/core-js/utils/ethers/events');
 const { runElection } = require('./helpers/election-helper');
 const { getTime, fastForwardTo } = require('@synthetixio/core-js/utils/hardhat/rpc');
 
-describe('ElectionModule (debt share)', () => {
+describe('SynthetixElectionModule (debt share)', () => {
   const { proxyAddress } = bootstrap(initializer);
 
   let owner, user1, user2, user3;
@@ -88,8 +88,8 @@ describe('ElectionModule (debt share)', () => {
           assertBn.equal(await DebtShare.currentPeriodId(), 0);
         });
 
-        it('shows that the current epoch is 1', async function () {
-          assertBn.equal(await ElectionModule.getEpochIndex(), 1);
+        it('shows that the current epoch is 0', async function () {
+          assertBn.equal(await ElectionModule.getEpochIndex(), 0);
         });
 
         it('shows that the user has the expected vote power', async function () {
@@ -160,8 +160,8 @@ describe('ElectionModule (debt share)', () => {
                 assertBn.equal(await DebtShare.currentPeriodId(), 1);
               });
 
-              it('shows that the current epoch is 2', async function () {
-                assertBn.equal(await ElectionModule.getEpochIndex(), 2);
+              it('shows that the current epoch is 1', async function () {
+                assertBn.equal(await ElectionModule.getEpochIndex(), 1);
               });
 
               describe('when entering the nomination period', function () {
@@ -211,7 +211,7 @@ describe('ElectionModule (debt share)', () => {
                     });
 
                     it('shows that the current epoch is 2', async function () {
-                      assertBn.equal(await ElectionModule.getEpochIndex(), 3);
+                      assertBn.equal(await ElectionModule.getEpochIndex(), 2);
                     });
                   });
                 });

@@ -7,21 +7,18 @@ contract ElectionStorage {
     struct ElectionStore {
         // True if initializeElectionModule was called
         bool initialized;
-        // Current epoch index
-        // First epoch is 1
-        uint currentEpochIndex;
         // The address of the council NFT
         address councilToken;
         // Council member addresses
         SetUtil.AddressSet councilMembers;
         // Council token id's by council member address
         mapping(address => uint) councilTokenIds;
-        // EpochData's by epoch index
-        mapping(uint => EpochData) epochs;
-        // ElectionData's by epoch index
-        mapping(uint => ElectionData) elections;
+        // Array of EpochData's for each epoch
+        EpochData[] epochs;
+        // Array of ElectionData's for each election
+        ElectionData[] elections;
         // Pointer to ElectionSettings
-        // To be always used via store.settings[0]
+        // To be always used via store.settings[0] to avoid storage collisions
         mapping(uint => ElectionSettings) settings;
     }
 

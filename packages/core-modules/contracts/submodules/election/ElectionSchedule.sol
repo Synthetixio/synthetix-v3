@@ -2,6 +2,7 @@
 pragma solidity ^0.8.0;
 
 import "./ElectionBase.sol";
+import "@synthetixio/core-contracts/contracts/errors/InitError.sol";
 
 /// @dev Provides core schedule functionality. I.e. dates, periods, etc
 contract ElectionSchedule is ElectionBase {
@@ -16,16 +17,15 @@ contract ElectionSchedule is ElectionBase {
 
     /// @dev Determines the current period type according to the current time and the epoch's dates
     function _getCurrentPeriod() internal view returns (ElectionPeriod) {
+        if (!_electionStore().initialized) {
+            revert InitError.NotInitialized();
+        }
+
         EpochData storage epoch = _getCurrentEpoch();
 
         uint64 currentTime = uint64(block.timestamp);
 
-        uint64 epochEndDate = epoch.endDate;
-        if (epochEndDate == 0) {
-            revert InvalidEpochConfiguration();
-        }
-
-        if (currentTime >= epochEndDate) {
+        if (currentTime >= epoch.endDate) {
             return ElectionPeriod.Evaluation;
         }
 
@@ -143,21 +143,21 @@ contract ElectionSchedule is ElectionBase {
     }
 
     /// @dev Copies the current epoch schedule to the next epoch, maintaining durations
-    function _copyCurrentEpochScheduleToNextEpoch() internal {
+    function _copyScheduleFromPreviousEpoch() internal {
+        EpochData storage lastEpoch = _getLastEpoch();
         EpochData storage currentEpoch = _getCurrentEpoch();
-        EpochData storage nextEpoch = _getNextEpoch();
 
-        uint64 nextEpochStartDate = uint64(block.timestamp);
-        uint64 nextEpochEndDate = nextEpochStartDate + _getEpochDuration(currentEpoch);
-        uint64 nextVotingPeriodStartDate = nextEpochEndDate - _getVotingPeriodDuration(currentEpoch);
-        uint64 nextNominationPeriodStartDate = nextVotingPeriodStartDate - _getNominationPeriodDuration(currentEpoch);
+        uint64 currentEpochStartDate = uint64(block.timestamp);
+        uint64 currentEpochEndDate = currentEpochStartDate + _getEpochDuration(lastEpoch);
+        uint64 currentVotingPeriodStartDate = currentEpochEndDate - _getVotingPeriodDuration(lastEpoch);
+        uint64 currentNominationPeriodStartDate = currentVotingPeriodStartDate - _getNominationPeriodDuration(lastEpoch);
 
         _configureEpochSchedule(
-            nextEpoch,
-            nextEpochStartDate,
-            nextNominationPeriodStartDate,
-            nextVotingPeriodStartDate,
-            nextEpochEndDate
+            currentEpoch,
+            currentEpochStartDate,
+            currentNominationPeriodStartDate,
+            currentVotingPeriodStartDate,
+            currentEpochEndDate
         );
     }
 

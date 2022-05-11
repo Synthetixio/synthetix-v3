@@ -75,18 +75,18 @@ describe('ElectionModule (resolve)', () => {
       CouncilToken = await ethers.getContractAt('CouncilToken', tokenAddress);
     });
 
-    describe('epoch 1', function () {
+    describe('epoch 0', function () {
       before('define members', async function () {
         members = [owner];
       });
 
-      it('shows that the current epoch is 1', async function () {
-        assertBn.equal(await ElectionModule.getEpochIndex(), 1);
+      it('shows that the current epoch is 0', async function () {
+        assertBn.equal(await ElectionModule.getEpochIndex(), 0);
       });
 
       itHasExpectedMembers();
 
-      describe('epoch 2', function () {
+      describe('epoch 1', function () {
         describe('when members 1, 2, and 3 are elected', function () {
           before('define members', async function () {
             members = [member1, member2, member3];
@@ -96,8 +96,8 @@ describe('ElectionModule (resolve)', () => {
             receipt = await runElection(ElectionModule, owner, members);
           });
 
-          it('shows that the current epoch is 2', async function () {
-            assertBn.equal(await ElectionModule.getEpochIndex(), 2);
+          it('shows that the current epoch is 1', async function () {
+            assertBn.equal(await ElectionModule.getEpochIndex(), 1);
           });
 
           itHasExpectedMembers();
@@ -106,7 +106,7 @@ describe('ElectionModule (resolve)', () => {
             const event = findEvent({ receipt, eventName: 'EpochStarted' });
 
             assert.ok(event);
-            assertBn.equal(event.args.epochIndex, 2);
+            assertBn.equal(event.args.epochIndex, 1);
           });
 
           it('emitted CouncilMemberRemoved events', async function () {
@@ -129,7 +129,7 @@ describe('ElectionModule (resolve)', () => {
           });
         });
 
-        describe('epoch 3', function () {
+        describe('epoch 2', function () {
           describe('when members 2, 3, and 5 are elected', function () {
             before('define members', async function () {
               members = [member2, member3, member5];
@@ -140,7 +140,7 @@ describe('ElectionModule (resolve)', () => {
             });
 
             it('shows that the current epoch is 3', async function () {
-              assertBn.equal(await ElectionModule.getEpochIndex(), 3);
+              assertBn.equal(await ElectionModule.getEpochIndex(), 2);
             });
 
             itHasExpectedMembers();
@@ -149,7 +149,7 @@ describe('ElectionModule (resolve)', () => {
               const event = findEvent({ receipt, eventName: 'EpochStarted' });
 
               assert.ok(event);
-              assertBn.equal(event.args.epochIndex, 3);
+              assertBn.equal(event.args.epochIndex, 2);
             });
 
             it('emitted CouncilMemberRemoved events', async function () {
@@ -176,7 +176,7 @@ describe('ElectionModule (resolve)', () => {
               assert.ok(addedMembers.includes(member5.address));
             });
 
-            describe('epoch 4', function () {
+            describe('epoch 3', function () {
               describe('when members 3, 4, and 2 are elected', function () {
                 before('define members', async function () {
                   members = [member3, member4, member2];
@@ -187,7 +187,7 @@ describe('ElectionModule (resolve)', () => {
                 });
 
                 it('shows that the current epoch is 4', async function () {
-                  assertBn.equal(await ElectionModule.getEpochIndex(), 4);
+                  assertBn.equal(await ElectionModule.getEpochIndex(), 3);
                 });
 
                 itHasExpectedMembers();
@@ -196,7 +196,7 @@ describe('ElectionModule (resolve)', () => {
                   const event = findEvent({ receipt, eventName: 'EpochStarted' });
 
                   assert.ok(event);
-                  assertBn.equal(event.args.epochIndex, 4);
+                  assertBn.equal(event.args.epochIndex, 3);
                 });
               });
             });

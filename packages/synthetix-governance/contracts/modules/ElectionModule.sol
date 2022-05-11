@@ -94,7 +94,7 @@ contract ElectionModule is ISynthetixElectionModule, BaseElectionModule, DebtSha
     {
         _setCrossChainDebtShareMerkleRoot(merkleRoot, blocknumber);
 
-        emit CrossChainDebtShareMerkleRootSet(merkleRoot, blocknumber, _electionStore().currentEpochIndex);
+        emit CrossChainDebtShareMerkleRootSet(merkleRoot, blocknumber, _getCurrentEpochIndex());
     }
 
     /// @notice Returns the current epoch's merkle root for user debt shares on other chains
@@ -125,5 +125,14 @@ contract ElectionModule is ISynthetixElectionModule, BaseElectionModule, DebtSha
         uint votePower = _getDebtShare(user) + _getCrossChainDebtShare(user);
 
         return MathUtil.sqrt(votePower);
+    }
+
+    function _createNewEpoch() internal virtual override {
+        super._createNewEpoch();
+
+        DebtShareStore storage store = _debtShareStore();
+
+        store.debtShareIds.push();
+        store.crossChainDebtShareData.push();
     }
 }

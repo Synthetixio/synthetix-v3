@@ -45,7 +45,7 @@ describe('ElectionModule (initialization)', () => {
 
     describe('trying to retrieve the period', function () {
       it('reverts', async function () {
-        await assertRevert(ElectionModule.getCurrentPeriod(), 'InvalidEpochConfiguration');
+        await assertRevert(ElectionModule.getCurrentPeriod(), 'NotInitialized');
       });
     });
   });
@@ -239,8 +239,8 @@ describe('ElectionModule (initialization)', () => {
           assert.equal(await ElectionModule.isElectionModuleInitialized(), true);
         });
 
-        it('shows that the current epoch index is 1', async function () {
-          assertBn.equal(await ElectionModule.getEpochIndex(), 1);
+        it('shows that the current epoch index is 0', async function () {
+          assertBn.equal(await ElectionModule.getEpochIndex(), 0);
         });
 
         it('shows that the current period is Administration', async () => {

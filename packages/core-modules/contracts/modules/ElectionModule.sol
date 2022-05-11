@@ -46,9 +46,9 @@ contract ElectionModule is
         settings.minimumActiveMembers = minimumActiveMembers;
         settings.defaultBallotEvaluationBatchSize = 500;
 
-        store.currentEpochIndex = 1;
+        _createNewEpoch();
 
-        EpochData storage firstEpoch = _getEpochAtPosition(1);
+        EpochData storage firstEpoch = _getEpochAtPosition(0);
         uint64 epochStartDate = uint64(block.timestamp);
         _configureEpochSchedule(firstEpoch, epochStartDate, nominationPeriodStartDate, votingPeriodStartDate, epochEndDate);
 
@@ -231,16 +231,16 @@ contract ElectionModule is
 
         _evaluateNextBallotBatch(numBallots);
 
-        ElectionStore storage store = _electionStore();
+        uint currentEpochIndex = _getCurrentEpochIndex();
         ElectionData storage election = _getCurrentElection();
 
         uint totalBallots = election.ballotIds.length;
         if (election.numEvaluatedBallots < totalBallots) {
-            emit ElectionBatchEvaluated(store.currentEpochIndex, election.numEvaluatedBallots, totalBallots);
+            emit ElectionBatchEvaluated(currentEpochIndex, election.numEvaluatedBallots, totalBallots);
         } else {
             election.evaluated = true;
 
-            emit ElectionEvaluated(store.currentEpochIndex, totalBallots);
+            emit ElectionEvaluated(currentEpochIndex, totalBallots);
         }
     }
 
@@ -254,14 +254,11 @@ contract ElectionModule is
 
         _getCurrentElection().resolved = true;
 
-        _copyCurrentEpochScheduleToNextEpoch();
+        _createNewEpoch();
 
-        ElectionStore storage store = _electionStore();
+        _copyScheduleFromPreviousEpoch();
 
-        uint newEpochIndex = store.currentEpochIndex + 1;
-        store.currentEpochIndex = newEpochIndex;
-
-        emit EpochStarted(newEpochIndex);
+        emit EpochStarted(_getCurrentEpochIndex());
     }
 
     /// @notice Exposes minimum durations required when adjusting epoch schedules
@@ -302,7 +299,7 @@ contract ElectionModule is
 
     /// @notice Returns the index of the current epoch. The first epoch's index is 1
     function getEpochIndex() external view override returns (uint) {
-        return _electionStore().currentEpochIndex;
+        return _getCurrentEpochIndex();
     }
 
     /// @notice Returns the date in which the current epoch started
