@@ -218,7 +218,7 @@ contract ElectionModule is
     /// @notice Allows votes to be withdraw
     function withdrawVote() external {
         if (!hasVoted(msg.sender)) {
-            revert HasNotVoted();
+            revert VoteNotCasted();
         }
 
         _withdrawCastedVote(msg.sender);

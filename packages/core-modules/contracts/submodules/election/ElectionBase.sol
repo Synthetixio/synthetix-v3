@@ -31,7 +31,7 @@ contract ElectionBase is ElectionStorage, InitializableMixin {
     error NotNominated();
     error NoCandidates();
     error NoVotePower();
-    error HasNotVoted();
+    error VoteNotCasted();
     error DuplicateCandidates();
     error InvalidEpochConfiguration();
     error InvalidElectionSettings();

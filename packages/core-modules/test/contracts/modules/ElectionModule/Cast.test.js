@@ -121,7 +121,7 @@ describe('ElectionModule (cast)', () => {
 
             describe('when attempting to withdraw a vote that does not exist', function () {
               it('reverts', async function () {
-                await assertRevert(ElectionModule.withdrawVote(), 'HasNotVoted');
+                await assertRevert(ElectionModule.withdrawVote(), 'VoteNotCasted');
               });
             });
           });
