@@ -1,5 +1,15 @@
 const { task } = require('hardhat/config');
 const types = require('@synthetixio/core-js/utils/hardhat/argument-types');
+const { findEvent } = require('@synthetixio/core-js/utils/ethers/events');
+
+const {
+  TASK_FAST_FORWARD_TO,
+  TASK_FIXTURE_WALLETS,
+  TASK_FIXTURE_CANDIDATES,
+  TASK_FIXTURE_VOTES,
+  TASK_FIXTURE_EPOCHS,
+  TASK_FIXTURE_EVALUATE,
+} = require('../task-names');
 
 const ElectionPeriod = {
   Administration: 0,
@@ -8,7 +18,7 @@ const ElectionPeriod = {
   Evaluation: 3,
 };
 
-task('fixture:wallets', 'Create fixture wallets')
+task(TASK_FIXTURE_WALLETS, 'Create fixture wallets')
   .addOptionalParam('amount', 'Amount of wallets to fixture', '50', types.int)
   .setAction(async ({ amount }, hre) => {
     console.log(`Fixturing ${amount} wallets\n`);
@@ -35,9 +45,9 @@ task('fixture:wallets', 'Create fixture wallets')
     );
   });
 
-task('fixture:candidates', 'Create fixture candidate nominations')
+task(TASK_FIXTURE_CANDIDATES, 'Create fixture candidate nominations')
   .addParam('address', 'Deployed election module proxy address', undefined, types.address)
-  .addOptionalParam('amount', 'Amount of candidates to fixture', '50', types.int)
+  .addOptionalParam('amount', 'Amount of candidates to fixture', '12', types.int)
   .setAction(async ({ address, amount }, hre) => {
     const ElectionModule = await hre.ethers.getContractAt(
       'contracts/modules/ElectionModule.sol:ElectionModule',
@@ -50,9 +60,9 @@ task('fixture:candidates', 'Create fixture candidate nominations')
       throw new Error('The election is not on ElectionPeriod.Nomination');
     }
 
-    const candidates = await hre.run('fixture:wallets', { amount });
+    const candidates = await hre.run(TASK_FIXTURE_WALLETS, { amount });
 
-    console.log(`Nominating ${amount} candidates for ${address}\n`);
+    console.log(`Nominating ${amount} candidates on ${address}\n`);
 
     await Promise.all(
       candidates.map(async (candidate) => {
@@ -64,9 +74,9 @@ task('fixture:candidates', 'Create fixture candidate nominations')
     return candidates;
   });
 
-task('fixture:votes', 'Create fixture votes to nominated candidates')
+task(TASK_FIXTURE_VOTES, 'Create fixture votes to nominated candidates')
   .addParam('address', 'Deployed election module proxy address', undefined, types.address)
-  .addOptionalParam('amount', 'Amount of voters to fixture', '30', types.int)
+  .addOptionalParam('amount', 'Amount of voters to fixture', '20', types.int)
   .addOptionalParam('ballotSize', 'Amount of cadidates for each ballot', '5', types.int)
   .setAction(async ({ address, amount, ballotSize }, hre) => {
     const ElectionModule = await hre.ethers.getContractAt(
@@ -80,9 +90,9 @@ task('fixture:votes', 'Create fixture votes to nominated candidates')
       throw new Error('The election is not on ElectionPeriod.Vote');
     }
 
-    console.log(`Fixturing ${amount} voters for ${address}\n`);
+    console.log(`Fixturing ${amount} voters on ${address}\n`);
 
-    const voters = await hre.run('fixture:wallets', { amount });
+    const voters = await hre.run(TASK_FIXTURE_WALLETS, { amount });
     const candidates = await ElectionModule.getNominees();
 
     const ballotsCount = Math.floor(candidates.length / Number(ballotSize));
@@ -114,10 +124,92 @@ task('fixture:votes', 'Create fixture votes to nominated candidates')
     );
   });
 
-task('fixture:epochs', 'Create fixture votes to nominated candidates')
+task(TASK_FIXTURE_EVALUATE, 'Evaluate current election')
+  .addParam('address', 'Deployed election module proxy address', undefined, types.address)
+  .setAction(async ({ address }, hre) => {
+    const ElectionModule = await hre.ethers.getContractAt(
+      'contracts/modules/ElectionModule.sol:ElectionModule',
+      address
+    );
+
+    const currentPeriod = Number(await ElectionModule.getCurrentPeriod());
+
+    if (currentPeriod !== ElectionPeriod.Evaluation) {
+      throw new Error('The election is not on ElectionPeriod.Evaluation');
+    }
+
+    console.log('Evaluating current election\n');
+
+    // eslint-disable-next-line no-constant-condition
+    while (true) {
+      const tx = await ElectionModule.evaluate(0);
+      const receipt = await tx.wait();
+
+      const evaluatedEvent = findEvent({ receipt, eventName: 'ElectionEvaluated' });
+      if (evaluatedEvent) {
+        console.log('Election evaluated');
+        console.log('  epochIndex: ', Number(evaluatedEvent.args.epochIndex));
+        console.log('  totalBallots: ', Number(evaluatedEvent.args.totalBallots));
+        console.log();
+        break;
+      }
+
+      const batchEvent = findEvent({ receipt, eventName: 'ElectionBatchEvaluated' });
+      if (batchEvent) {
+        console.log('Election batch evaluated');
+        console.log('  epochIndex: ', Number(evaluatedEvent.args.epochIndex));
+        console.log('  evaluatedBallots: ', Number(evaluatedEvent.args.evaluatedBallots));
+        console.log();
+        continue;
+      }
+
+      throw new Error('Election evaluation did not finish correctly');
+    }
+
+    const tx = await ElectionModule.resolve();
+    const receipt = await tx.wait();
+    const epochStartedEvent = findEvent({ receipt, eventName: 'EpochStarted' });
+    console.log(
+      `Election resolved, started new epoch index ${epochStartedEvent.args.epochIndex}\n`
+    );
+  });
+
+task(TASK_FIXTURE_EPOCHS, 'Complete an epoch with fixtured data')
   .addParam('address', 'Deployed election module proxy address', undefined, types.address)
   .addOptionalParam('amount', 'Amount of epochs to complete with fixture data', '5', types.int)
-  .addOptionalParam('ballotSize', 'Amount of cadidates for each ballot', '5', types.int);
+  .addOptionalParam('voters', 'Amount of voters to fixture', '20', types.int)
+  .addOptionalParam('candidates', 'Amount of voters to fixture', '12', types.int)
+  .setAction(async ({ address, amount, voters, candidates }, hre) => {
+    const ElectionModule = await hre.ethers.getContractAt(
+      'contracts/modules/ElectionModule.sol:ElectionModule',
+      address
+    );
+
+    for (let i = 0; i < amount; i++) {
+      let currentPeriod = Number(await ElectionModule.getCurrentPeriod());
+
+      if (currentPeriod === ElectionPeriod.Administration) {
+        await hre.run(TASK_FAST_FORWARD_TO, { address, period: 'nomination' });
+        currentPeriod = ElectionPeriod.Nomination;
+      }
+
+      if (currentPeriod === ElectionPeriod.Nomination) {
+        await hre.run(TASK_FIXTURE_CANDIDATES, { address, amount: candidates });
+        await hre.run(TASK_FAST_FORWARD_TO, { address, period: 'vote' });
+        currentPeriod = ElectionPeriod.Vote;
+      }
+
+      if (currentPeriod === ElectionPeriod.Vote) {
+        await hre.run(TASK_FIXTURE_VOTES, { address, amount: voters });
+        await hre.run(TASK_FAST_FORWARD_TO, { address, period: 'evaluation' });
+        currentPeriod = ElectionPeriod.Evaluation;
+      }
+
+      if (currentPeriod === ElectionPeriod.Evaluation) {
+        await hre.run(TASK_FIXTURE_EVALUATE, { address });
+      }
+    }
+  });
 
 function pickRand(arr, amount = 1) {
   if (!Array.isArray(arr) || arr.length < amount) throw new Error('Invalid data');

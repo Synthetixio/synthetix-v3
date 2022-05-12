@@ -1,6 +1,7 @@
 const { task } = require('hardhat/config');
 const types = require('@synthetixio/core-js/utils/hardhat/argument-types');
 const { fastForward } = require('@synthetixio/core-js/utils/hardhat/rpc');
+const { TASK_FAST_FORWARD } = require('../task-names');
 
 const units = {
   seconds: 1,
@@ -10,7 +11,7 @@ const units = {
   weeks: 60 * 60 * 24 * 7,
 };
 
-task('fast-forward', 'travel the given amount of time on the current node')
+task(TASK_FAST_FORWARD, 'travel the given amount of time on the current node')
   .addPositionalParam(
     'amount',
     'The amount of time that you want to travel, by default in seconds.',
