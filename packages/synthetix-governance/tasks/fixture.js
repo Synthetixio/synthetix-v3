@@ -114,6 +114,11 @@ task('fixture:votes', 'Create fixture votes to nominated candidates')
     );
   });
 
+task('fixture:epochs', 'Create fixture votes to nominated candidates')
+  .addParam('address', 'Deployed election module proxy address', undefined, types.address)
+  .addOptionalParam('amount', 'Amount of epochs to complete with fixture data', '5', types.int)
+  .addOptionalParam('ballotSize', 'Amount of cadidates for each ballot', '5', types.int);
+
 function pickRand(arr, amount = 1) {
   if (!Array.isArray(arr) || arr.length < amount) throw new Error('Invalid data');
 
