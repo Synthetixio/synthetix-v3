@@ -413,21 +413,70 @@ contract FundModule is IFundModule, OwnableMixin, FundModuleStorage, Initializab
         uint fundId,
         uint accountId,
         address collateralType
-    ) external override {}
+    ) external view override returns (uint) {
+        (uint accountDebt, uint accountCollateralValue) = _accountDebtAndCollateral(fundId, accountId, collateralType);
+        return accountCollateralValue / accountDebt;
+    }
+
+    function accountFundCollateralValue(
+        uint fundId,
+        uint accountId,
+        address collateralType
+    ) external view override returns (uint) {
+        (, uint accountCollateralValue) = _accountDebtAndCollateral(fundId, accountId, collateralType);
+        return accountCollateralValue;
+    }
 
     function accountFundDebt(
         uint fundId,
         uint accountId,
         address collateralType
-    ) external override {}
+    ) external view override returns (uint) {
+        (uint accountDebt, ) = _accountDebtAndCollateral(fundId, accountId, collateralType);
+        return accountDebt;
+    }
 
-    function fundDebt(uint fundId) external view override returns (uint) {}
+    function _accountDebtAndCollateral(
+        uint fundId,
+        uint accountId,
+        address collateralType
+    ) internal view returns (uint, uint) {
+        FundData storage fundData = _fundModuleStore().funds[fundId];
 
-    function totalDebtShares(uint fundId) external view override returns (uint) {
+        uint shareDebt = debtPerShare(fundId);
+        uint collateralPrice = _getCollateralValue(collateralType);
+
+        uint accountDebt;
+        uint accountCollateralValue;
+        for (uint i = 1; i < fundData.liquidityItemsByAccount[accountId].length() + 1; i++) {
+            bytes32 itemId = fundData.liquidityItemsByAccount[accountId].valueAt(i);
+            LiquidityItem storage item = fundData.liquidityItems[itemId];
+            if (item.collateralType == collateralType) {
+                accountCollateralValue += item.collateralAmount * collateralPrice;
+
+                //TODO review formula
+                accountDebt +=
+                    item.collateralAmount *
+                    collateralPrice +
+                    item.initialDebt -
+                    shareDebt *
+                    item.shares *
+                    item.leverage;
+            }
+        }
+
+        return (accountDebt, accountCollateralValue);
+    }
+
+    function fundDebt(uint fundId) public view override returns (uint) {}
+
+    function totalDebtShares(uint fundId) public view override returns (uint) {
         return _totalShares(fundId);
     }
 
-    function debtPerShare(uint fundId) external view override returns (uint) {}
+    function debtPerShare(uint fundId) public view override returns (uint) {
+        return fundDebt(fundId) / totalDebtShares(fundId);
+    }
 
     /////////////////////////////////////////////////
     // SCCP
@@ -437,7 +486,7 @@ contract FundModule is IFundModule, OwnableMixin, FundModuleStorage, Initializab
         _fundModuleStore().preferredFund = fundId;
     }
 
-    function getPreferredFund() external override returns (uint) {
+    function getPreferredFund() external view override returns (uint) {
         return _fundModuleStore().preferredFund;
     }
 
@@ -469,7 +518,7 @@ contract FundModule is IFundModule, OwnableMixin, FundModuleStorage, Initializab
         }
     }
 
-    function getApprovedFunds() external override returns (uint[] memory) {
+    function getApprovedFunds() external view override returns (uint[] memory) {
         return _fundModuleStore().approvedFunds;
     }
 
@@ -489,41 +538,4 @@ contract FundModule is IFundModule, OwnableMixin, FundModuleStorage, Initializab
         // TODO
         return collateralType == address(0) ? 0 : 1; // dummy function
     }
-
-    // TODO Check ERC4626 logic. a lot of the stuff is there
-
-    // function accountDebt(uint fundId, uint accountId) public override returns (uint) {
-    //     // bytes32 lpid = _calculateLPId(fundId, accountId, collateralType, leverage);
-    //     // LiquidityProvider storage position = _fundModuleStore().liquidityProviders[lpid];
-    //     bytes32[] storage liquidityProviderIds = _fundModuleStore().liquidityProviderIds[fundId];
-    //     for (uint i = 0; i < liquidityProviderIds.length; i++) {
-    //         LiquidityProvider storage lp = _fundModuleStore().liquidityProviders[liquidityProviderIds[i]];
-    //         if (lp.accountId == accountId) {
-    //             // do the math with
-    //             // lp.leverage;
-    //             // lp.collateralAmount;
-    //             // lp.shares;
-    //             // lp.initialDebt;
-    //         }
-    //     }
-
-    //     return 0;
-    //     // accountCollateralValue(accountId) +
-    //     // position.initialDebt -
-    //     // totalDebt() *
-    //     // (accountShares(accountId) / totalShares());
-    // }
-
-    // function accountCollateralValue(uint accountId) public view override returns (uint) {
-    //     return 0;
-    //     // TODO return positions[accountId].amount - positions[accountId].amount * token(accountEntry.collateralToken).value;
-    // }
-
-    // function getCRation(uint fundId, uint accountId) public override returns (uint) {
-    //     return accountCollateralValue(accountId) / accountDebt(fundId, accountId);
-    // }
-
-    // function _setMarkets(uint[] calldata marketIds, uint[] calldata weights) internal {}
-
-    // function _assignCollateralToMarket() internal {}
 }

@@ -56,13 +56,19 @@ interface IFundModule is ISatelliteFactory {
         uint fundId,
         uint accountId,
         address collateralType
-    ) external;
+    ) external view returns (uint);
 
     function accountFundDebt(
         uint fundId,
         uint accountId,
         address collateralType
-    ) external;
+    ) external view returns (uint);
+
+    function accountFundCollateralValue(
+        uint fundId,
+        uint accountId,
+        address collateralType
+    ) external view returns (uint);
 
     function fundDebt(uint fundId) external view returns (uint);
 
@@ -72,11 +78,11 @@ interface IFundModule is ISatelliteFactory {
 
     function setPreferredFund(uint fundId) external;
 
-    function getPreferredFund() external returns (uint);
+    function getPreferredFund() external view returns (uint);
 
     function addApprovedFund(uint fundId) external;
 
     function removeApprovedFund(uint fundId) external;
 
-    function getApprovedFunds() external returns (uint[] calldata);
+    function getApprovedFunds() external view returns (uint[] calldata);
 }

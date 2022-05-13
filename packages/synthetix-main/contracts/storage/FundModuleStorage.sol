@@ -27,7 +27,6 @@ contract FundModuleStorage {
         SetUtil.Bytes32Set liquidityItemIds; // All LiquidityItem ids in this fund
         mapping(uint => SetUtil.Bytes32Set) liquidityItemsByAccount; // LiquidityItem ids by account
         mapping(bytes32 => LiquidityItem) liquidityItems; // LiquidityItems data by liquidityProviderIds
-        /// @dev lp shares accounting
     }
 
     struct MarketDistribution {
