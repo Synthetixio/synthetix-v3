@@ -443,7 +443,7 @@ contract FundModule is IFundModule, OwnableMixin, FundModuleStorage, Initializab
     ) internal view returns (uint, uint) {
         FundData storage fundData = _fundModuleStore().funds[fundId];
 
-        uint shareDebt = debtPerShare(fundId);
+        uint perShareValue = _perShareValue(fundId);
         uint collateralPrice = _getCollateralValue(collateralType);
 
         uint accountDebt;
@@ -459,7 +459,7 @@ contract FundModule is IFundModule, OwnableMixin, FundModuleStorage, Initializab
                     item.collateralAmount *
                     collateralPrice +
                     item.initialDebt -
-                    shareDebt *
+                    perShareValue *
                     item.shares *
                     item.leverage;
             }
@@ -468,14 +468,16 @@ contract FundModule is IFundModule, OwnableMixin, FundModuleStorage, Initializab
         return (accountDebt, accountCollateralValue);
     }
 
-    function fundDebt(uint fundId) public view override returns (uint) {}
+    function fundDebt(uint fundId) public view override returns (uint) {
+        return _totalShares(fundId) * _perShareValue(fundId);
+    }
 
-    function totalDebtShares(uint fundId) public view override returns (uint) {
+    function totalDebtShares(uint fundId) external view override returns (uint) {
         return _totalShares(fundId);
     }
 
-    function debtPerShare(uint fundId) public view override returns (uint) {
-        return fundDebt(fundId) / totalDebtShares(fundId);
+    function debtPerShare(uint fundId) external view override returns (uint) {
+        return _perShareValue(fundId);
     }
 
     /////////////////////////////////////////////////
