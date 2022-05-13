@@ -1,6 +1,7 @@
 const { task } = require('hardhat/config');
 const { fastForwardTo } = require('@synthetixio/core-js/utils/hardhat/rpc');
 const types = require('@synthetixio/core-js/utils/hardhat/argument-types');
+const { TASK_FAST_FORWARD_TO } = require('../task-names');
 
 const periods = {
   nomination: async (ElectionModule) => {
@@ -14,7 +15,7 @@ const periods = {
   },
 };
 
-task('fast-forward-to', 'skips time to the specified election period')
+task(TASK_FAST_FORWARD_TO, 'skips time to the specified election period')
   .addParam(
     'address',
     'Deployed election module proxy address to get period date from',
