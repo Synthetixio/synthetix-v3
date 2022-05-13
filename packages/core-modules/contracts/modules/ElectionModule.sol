@@ -181,7 +181,7 @@ contract ElectionModule is
 
         nominees.add(msg.sender);
 
-        emit CandidateNominated(msg.sender);
+        emit CandidateNominated(msg.sender, _getCurrentEpochIndex());
     }
 
     /// @notice Self-withdrawal of nominations during the Nomination period
@@ -192,7 +192,7 @@ contract ElectionModule is
 
         nominees.remove(msg.sender);
 
-        emit NominationWithdrawn(msg.sender);
+        emit NominationWithdrawn(msg.sender, _getCurrentEpochIndex());
     }
 
     /// @notice Allows anyone with vote power to vote on nominated candidates during the Voting period
