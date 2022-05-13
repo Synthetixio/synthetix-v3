@@ -49,8 +49,8 @@ contract ElectionBase is ElectionStorage, InitializableMixin {
     event EpochStarted(uint epochIndex);
     event CouncilTokenCreated(address proxy, address implementation);
     event CouncilTokenUpgraded(address newImplementation);
-    event CouncilMemberAdded(address member, uint epochIndex);
-    event CouncilMemberRemoved(address member);
+    event CouncilMemberAdded(address indexed member, uint indexed epochIndex);
+    event CouncilMemberRemoved(address indexed member);
     event CouncilMembersDismissed(address[] members);
     event EpochScheduleUpdated(uint64 nominationPeriodStartDate, uint64 votingPeriodStartDate, uint64 epochEndDate);
     event MinimumEpochDurationsChanged(
@@ -66,8 +66,8 @@ contract ElectionBase is ElectionStorage, InitializableMixin {
     event NominationWithdrawn(address indexed candidate);
     event VoteRecorded(address indexed voter, bytes32 indexed ballotId, uint votePower);
     event VoteWithdrawn(address indexed voter, bytes32 indexed ballotId, uint votePower);
-    event ElectionEvaluated(uint epochIndex, uint totalBallots);
-    event ElectionBatchEvaluated(uint epochIndex, uint evaluatedBallots, uint totalBallots);
+    event ElectionEvaluated(uint indexed epochIndex, uint totalBallots);
+    event ElectionBatchEvaluated(uint indexed epochIndex, uint evaluatedBallots, uint totalBallots);
     event EmergencyElectionStarted();
 
     // ---------------------------------------
