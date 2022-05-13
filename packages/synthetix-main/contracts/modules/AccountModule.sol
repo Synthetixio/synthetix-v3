@@ -8,7 +8,7 @@ import "@synthetixio/core-contracts/contracts/satellite/SatelliteFactory.sol";
 import "../interfaces/IAccountModule.sol";
 import "../storage/AccountModuleStorage.sol";
 
-import "../satellites/Account.sol";
+import "../satellites/AccountToken.sol";
 
 contract AccountModule is IAccountModule, OwnableMixin, AccountModuleStorage, InitializableMixin, SatelliteFactory {
     event AccountCreated(address accountAddress);
@@ -24,12 +24,12 @@ contract AccountModule is IAccountModule, OwnableMixin, AccountModuleStorage, In
     function initializeAccountModule() external override onlyOwner onlyIfNotInitialized {
         AccountModuleStore storage store = _accountModuleStore();
 
-        Account firstAccountImplementation = new Account();
+        AccountToken firstAccountImplementation = new AccountToken();
 
         UUPSProxy accountProxy = new UUPSProxy(address(firstAccountImplementation));
 
         address accountProxyAddress = address(accountProxy);
-        Account account = Account(accountProxyAddress);
+        AccountToken account = AccountToken(accountProxyAddress);
 
         account.nominateNewOwner(address(this));
         account.acceptOwnership();
@@ -62,29 +62,10 @@ contract AccountModule is IAccountModule, OwnableMixin, AccountModuleStorage, In
         onlyOwner
         onlyIfInitialized
     {
-        Account(getAccountAddress()).upgradeTo(newAccountTokenImplementation);
+        AccountToken(getAccountAddress()).upgradeTo(newAccountTokenImplementation);
     }
 
     function getAccountAddress() public view override returns (address) {
         return _accountModuleStore().account.deployedAddress;
-    }
-
-    function addCollateralType(
-        address collateralType,
-        address priceFeed,
-        uint targetCRatio,
-        uint minimumCRatio
-    ) external override onlyOwner {
-        Account(getAccountAddress()).addCollateralType(collateralType, priceFeed, targetCRatio, minimumCRatio);
-    }
-
-    function adjustCollateralType(
-        address collateralType,
-        address priceFeed,
-        uint targetCRatio,
-        uint minimumCRatio,
-        bool disabled
-    ) external override onlyOwner {
-        Account(getAccountAddress()).adjustCollateralType(collateralType, priceFeed, targetCRatio, minimumCRatio, disabled);
     }
 }

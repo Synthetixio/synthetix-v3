@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 import "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
 
-contract AccountStorage {
+contract AccountTokenStorage {
     struct AccountStore {
         bool initialized;
         mapping(uint256 => AccountData) accountsData; // AccountData by accountId

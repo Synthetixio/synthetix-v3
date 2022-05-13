@@ -9,10 +9,10 @@ import "@synthetixio/core-contracts/contracts/initializable/InitializableMixin.s
 import "@synthetixio/core-contracts/contracts/errors/AddressError.sol";
 import "@synthetixio/core-contracts/contracts/interfaces/IERC20.sol";
 
-import "../interfaces/IAccount.sol";
-import "../storage/AccountStorage.sol";
+import "../interfaces/IAccountToken.sol";
+import "../storage/AccountTokenStorage.sol";
 
-contract Account is IAccount, ERC721, AccountStorage, InitializableMixin, UUPSImplementation, Ownable {
+contract AccountToken is IAccountToken, ERC721, AccountTokenStorage, InitializableMixin, UUPSImplementation, Ownable {
     using SetUtil for SetUtil.AddressSet;
     using SetUtil for SetUtil.Bytes32Set;
 
@@ -34,15 +34,6 @@ contract Account is IAccount, ERC721, AccountStorage, InitializableMixin, UUPSIm
     // EVENTS
     /////////////////////////////////////////////////
     event AccountMinted(address owner, uint accountId);
-
-    event CollateralAdded(address collateralType, address priceFeed, uint targetCRatio, uint minimumCRatio);
-    event CollateralAdjusted(
-        address collateralType,
-        address priceFeed,
-        uint targetCRatio,
-        uint minimumCRatio,
-        bool disabled
-    );
 
     event CollateralStaked(uint accountId, address collateralType, uint amount, address executedBy);
     event CollateralUnstaked(uint accountId, address collateralType, uint amount, address executedBy);
@@ -82,67 +73,6 @@ contract Account is IAccount, ERC721, AccountStorage, InitializableMixin, UUPSIm
         _mint(owner, accountId);
 
         emit AccountMinted(owner, accountId);
-    }
-
-    /////////////////////////////////////////////////
-    // SCCP ADD/REMOVE COLLATERAL TYPE
-    /////////////////////////////////////////////////
-    function addCollateralType(
-        address collateralType,
-        address priceFeed,
-        uint targetCRatio,
-        uint minimumCRatio
-    ) external override onlyOwner {
-        if (_accountStore().collaterals.contains(collateralType)) {
-            revert CollateralAlreadyExists(collateralType);
-        }
-
-        _accountStore().collaterals.add(collateralType);
-
-        _accountStore().collateralsData[collateralType].targetCRatio = targetCRatio;
-        _accountStore().collateralsData[collateralType].minimumCRatio = minimumCRatio;
-        _accountStore().collateralsData[collateralType].priceFeed = priceFeed;
-        _accountStore().collateralsData[collateralType].disabled = false;
-
-        emit CollateralAdded(collateralType, priceFeed, targetCRatio, minimumCRatio);
-    }
-
-    function adjustCollateralType(
-        address collateralType,
-        address priceFeed,
-        uint targetCRatio,
-        uint minimumCRatio,
-        bool disabled
-    ) external override onlyOwner {
-        if (!_accountStore().collaterals.contains(collateralType)) {
-            revert InvalidCollateralType(collateralType);
-        }
-
-        _accountStore().collateralsData[collateralType].targetCRatio = targetCRatio;
-        _accountStore().collateralsData[collateralType].minimumCRatio = minimumCRatio;
-        _accountStore().collateralsData[collateralType].priceFeed = priceFeed;
-        _accountStore().collateralsData[collateralType].disabled = disabled;
-
-        emit CollateralAdjusted(collateralType, priceFeed, targetCRatio, minimumCRatio, disabled);
-    }
-
-    function getCollateralTypes() external view override returns (address[] memory) {
-        return _accountStore().collaterals.values();
-    }
-
-    function getCollateralType(address collateralType)
-        external
-        view
-        override
-        returns (
-            address,
-            uint,
-            uint,
-            bool
-        )
-    {
-        CollateralData storage collateral = _accountStore().collateralsData[collateralType];
-        return (collateral.priceFeed, collateral.targetCRatio, collateral.minimumCRatio, collateral.disabled);
     }
 
     /////////////////////////////////////////////////
