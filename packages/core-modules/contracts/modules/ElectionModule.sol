@@ -206,13 +206,15 @@ contract ElectionModule is
 
         bytes32 ballotId;
 
+        uint epochIndex = _getCurrentEpochIndex();
+
         if (hasVoted(msg.sender)) {
-            _withdrawCastedVote(msg.sender);
+            _withdrawCastedVote(msg.sender, epochIndex);
         }
 
         ballotId = _recordVote(msg.sender, votePower, candidates);
 
-        emit VoteRecorded(msg.sender, ballotId, votePower);
+        emit VoteRecorded(msg.sender, ballotId, epochIndex, votePower);
     }
 
     /// @notice Allows votes to be withdraw
@@ -221,7 +223,7 @@ contract ElectionModule is
             revert VoteNotCasted();
         }
 
-        _withdrawCastedVote(msg.sender);
+        _withdrawCastedVote(msg.sender, _getCurrentEpochIndex());
     }
 
     /// @notice Processes ballots in batches during the Evaluation period (after epochEndDate)

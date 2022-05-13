@@ -80,12 +80,12 @@ contract ElectionVotes is ElectionBase {
         return ballotId;
     }
 
-    function _withdrawCastedVote(address user) internal virtual {
+    function _withdrawCastedVote(address user, uint epochIndex) internal virtual {
         uint castedVotePower = _getCastedVotePower(user);
 
         bytes32 ballotId = _withdrawVote(user, castedVotePower);
 
-        emit VoteWithdrawn(user, ballotId, castedVotePower);
+        emit VoteWithdrawn(user, ballotId, epochIndex, castedVotePower);
     }
 
     function _getCastedVotePower(address user) internal virtual returns (uint votePower) {

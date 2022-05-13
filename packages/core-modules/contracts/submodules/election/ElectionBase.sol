@@ -62,10 +62,10 @@ contract ElectionBase is ElectionStorage, InitializableMixin {
     event DefaultBallotEvaluationBatchSizeChanged(uint size);
     event NextEpochSeatCountChanged(uint8 seatCount);
     event MinimumActiveMembersChanged(uint8 minimumActiveMembers);
-    event CandidateNominated(address indexed candidate, uint epochIndex);
-    event NominationWithdrawn(address indexed candidate, uint epochIndex);
-    event VoteRecorded(address indexed voter, bytes32 indexed ballotId, uint votePower);
-    event VoteWithdrawn(address indexed voter, bytes32 indexed ballotId, uint votePower);
+    event CandidateNominated(address indexed candidate, uint indexed epochIndex);
+    event NominationWithdrawn(address indexed candidate, uint indexed epochIndex);
+    event VoteRecorded(address indexed voter, bytes32 indexed ballotId, uint indexed epochIndex, uint votePower);
+    event VoteWithdrawn(address indexed voter, bytes32 indexed ballotId, uint indexed epochIndex, uint votePower);
     event ElectionEvaluated(uint indexed epochIndex, uint totalBallots);
     event ElectionBatchEvaluated(uint indexed epochIndex, uint evaluatedBallots, uint totalBallots);
     event EmergencyElectionStarted();
