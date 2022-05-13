@@ -120,6 +120,8 @@ describe('ElectionModule (resolve)', () => {
             const events = findEvent({ receipt, eventName: 'CouncilMemberAdded' });
             assert.ok(events);
 
+            events.forEach((event) => assertBn.equal(event.args.epochIndex, 1));
+
             const addedMembers = events.map((e) => e.args.member);
             assert.equal(addedMembers.length, 3);
 
@@ -167,6 +169,8 @@ describe('ElectionModule (resolve)', () => {
             it('emitted CouncilMemberAdded events', async function () {
               const events = findEvent({ receipt, eventName: 'CouncilMemberAdded' });
               assert.ok(events);
+
+              events.forEach((event) => assertBn.equal(event.args.epochIndex, 2));
 
               const addedMembers = events.map((e) => e.args.member);
               assert.equal(addedMembers.length, 3);

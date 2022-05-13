@@ -39,12 +39,12 @@ contract ElectionCredentials is ElectionBase {
         }
     }
 
-    function _addCouncilMembers(address[] memory membersToAdd) internal {
+    function _addCouncilMembers(address[] memory membersToAdd, uint epochIndex) internal {
         uint numMembers = membersToAdd.length;
         if (numMembers == 0) revert ArrayError.EmptyArray();
 
         for (uint memberIndex = 0; memberIndex < numMembers; memberIndex++) {
-            _addCouncilMember(membersToAdd[memberIndex]);
+            _addCouncilMember(membersToAdd[memberIndex], epochIndex);
         }
     }
 
@@ -57,7 +57,7 @@ contract ElectionCredentials is ElectionBase {
         }
     }
 
-    function _addCouncilMember(address newMember) internal {
+    function _addCouncilMember(address newMember, uint epochIndex) internal {
         ElectionStore storage store = _electionStore();
         SetUtil.AddressSet storage members = store.councilMembers;
 
@@ -73,7 +73,7 @@ contract ElectionCredentials is ElectionBase {
 
         store.councilTokenIds[newMember] = tokenId;
 
-        emit CouncilMemberAdded(newMember);
+        emit CouncilMemberAdded(newMember, epochIndex);
     }
 
     function _removeCouncilMember(address member) internal {

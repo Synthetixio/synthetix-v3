@@ -53,7 +53,7 @@ contract ElectionModule is
         _configureEpochSchedule(firstEpoch, epochStartDate, nominationPeriodStartDate, votingPeriodStartDate, epochEndDate);
 
         _createCouncilToken(councilTokenName, councilTokenSymbol);
-        _addCouncilMembers(firstCouncil);
+        _addCouncilMembers(firstCouncil, 0);
 
         store.initialized = true;
 
@@ -250,7 +250,7 @@ contract ElectionModule is
         if (!isElectionEvaluated()) revert ElectionNotEvaluated();
 
         _removeAllCouncilMembers();
-        _addCouncilMembers(_getCurrentElection().winners.values());
+        _addCouncilMembers(_getCurrentElection().winners.values(), _getCurrentEpochIndex() + 1);
 
         _getCurrentElection().resolved = true;
 
