@@ -17,7 +17,7 @@ const { findEvent } = require('@synthetixio/core-js/utils/ethers/events');
 describe('ElectionModule (schedule)', () => {
   const { proxyAddress } = bootstrap(initializer);
 
-  let ElectionModule;
+  let ElectionModule, ElectionInspectorModule;
 
   let owner, user;
 
@@ -38,6 +38,11 @@ describe('ElectionModule (schedule)', () => {
         proxyAddress()
       )
     ).connect(owner);
+
+    ElectionInspectorModule = await ethers.getContractAt(
+      'contracts/modules/ElectionInspectorModule.sol:ElectionInspectorModule',
+      proxyAddress()
+    );
   });
 
   // ----------------------------------
@@ -152,14 +157,14 @@ describe('ElectionModule (schedule)', () => {
     describe('when trying to adjust the epoch schedule', function () {
       before('fast forward', async function () {
         await fastForwardTo(
-          (await ElectionModule.getNominationPeriodStartDate()) - daysToSeconds(1),
+          (await ElectionInspectorModule.getNominationPeriodStartDate()) - daysToSeconds(1),
           ethers.provider
         );
       });
 
       before('fast forward', async function () {
         await fastForwardTo(
-          (await ElectionModule.getNominationPeriodStartDate()) - daysToSeconds(1),
+          (await ElectionInspectorModule.getNominationPeriodStartDate()) - daysToSeconds(1),
           ethers.provider
         );
       });
@@ -184,12 +189,12 @@ describe('ElectionModule (schedule)', () => {
       describe('with minor changes', function () {
         describe('with dates too far from the current dates', function () {
           it('reverts', async function () {
-            const epochEndDate = (await ElectionModule.getEpochEndDate()).toNumber();
+            const epochEndDate = (await ElectionInspectorModule.getEpochEndDate()).toNumber();
             const nominationPeriodStartDate = (
-              await ElectionModule.getNominationPeriodStartDate()
+              await ElectionInspectorModule.getNominationPeriodStartDate()
             ).toNumber();
             const votingPeriodStartDate = (
-              await ElectionModule.getVotingPeriodStartDate()
+              await ElectionInspectorModule.getVotingPeriodStartDate()
             ).toNumber();
 
             await assertRevert(
@@ -224,10 +229,11 @@ describe('ElectionModule (schedule)', () => {
             it('reverts', async function () {
               await assertRevert(
                 ElectionModule.tweakEpochSchedule(
-                  (await ElectionModule.getNominationPeriodStartDate()).toNumber() -
+                  (await ElectionInspectorModule.getNominationPeriodStartDate()).toNumber() -
                     daysToSeconds(2),
-                  (await ElectionModule.getVotingPeriodStartDate()).toNumber() + daysToSeconds(0.5),
-                  (await ElectionModule.getEpochEndDate()).toNumber() + daysToSeconds(4)
+                  (await ElectionInspectorModule.getVotingPeriodStartDate()).toNumber() +
+                    daysToSeconds(0.5),
+                  (await ElectionInspectorModule.getEpochEndDate()).toNumber() + daysToSeconds(4)
                 ),
                 'ChangesCurrentPeriod'
               );
@@ -237,12 +243,13 @@ describe('ElectionModule (schedule)', () => {
           describe('which dont change the current period type', function () {
             before('adjust', async function () {
               newEpochEndDate =
-                (await ElectionModule.getEpochEndDate()).toNumber() + daysToSeconds(4);
+                (await ElectionInspectorModule.getEpochEndDate()).toNumber() + daysToSeconds(4);
               newNominationPeriodStartDate =
-                (await ElectionModule.getNominationPeriodStartDate()).toNumber() -
+                (await ElectionInspectorModule.getNominationPeriodStartDate()).toNumber() -
                 daysToSeconds(0.5);
               newVotingPeriodStartDate =
-                (await ElectionModule.getVotingPeriodStartDate()).toNumber() + daysToSeconds(0.5);
+                (await ElectionInspectorModule.getVotingPeriodStartDate()).toNumber() +
+                daysToSeconds(0.5);
 
               const tx = await ElectionModule.tweakEpochSchedule(
                 newNominationPeriodStartDate,
@@ -263,14 +270,14 @@ describe('ElectionModule (schedule)', () => {
 
             it('properly adjusted dates', async function () {
               assertDatesAreClose(
-                await ElectionModule.getNominationPeriodStartDate(),
+                await ElectionInspectorModule.getNominationPeriodStartDate(),
                 newNominationPeriodStartDate
               );
               assertDatesAreClose(
-                await ElectionModule.getVotingPeriodStartDate(),
+                await ElectionInspectorModule.getVotingPeriodStartDate(),
                 newVotingPeriodStartDate
               );
-              assertDatesAreClose(await ElectionModule.getEpochEndDate(), newEpochEndDate);
+              assertDatesAreClose(await ElectionInspectorModule.getEpochEndDate(), newEpochEndDate);
             });
           });
         });
@@ -282,10 +289,11 @@ describe('ElectionModule (schedule)', () => {
             it('reverts', async function () {
               await assertRevert(
                 ElectionModule.modifyEpochSchedule(
-                  (await ElectionModule.getNominationPeriodStartDate()).toNumber() -
+                  (await ElectionInspectorModule.getNominationPeriodStartDate()).toNumber() -
                     daysToSeconds(2),
-                  (await ElectionModule.getVotingPeriodStartDate()).toNumber() + daysToSeconds(100),
-                  (await ElectionModule.getEpochEndDate()).toNumber() + daysToSeconds(100)
+                  (await ElectionInspectorModule.getVotingPeriodStartDate()).toNumber() +
+                    daysToSeconds(100),
+                  (await ElectionInspectorModule.getEpochEndDate()).toNumber() + daysToSeconds(100)
                 ),
                 'ChangesCurrentPeriod'
               );
@@ -295,12 +303,13 @@ describe('ElectionModule (schedule)', () => {
           describe('which dont change the current period type', function () {
             before('adjust', async function () {
               newEpochEndDate =
-                (await ElectionModule.getEpochEndDate()).toNumber() + daysToSeconds(100);
+                (await ElectionInspectorModule.getEpochEndDate()).toNumber() + daysToSeconds(100);
               newNominationPeriodStartDate =
-                (await ElectionModule.getNominationPeriodStartDate()).toNumber() +
+                (await ElectionInspectorModule.getNominationPeriodStartDate()).toNumber() +
                 daysToSeconds(100);
               newVotingPeriodStartDate =
-                (await ElectionModule.getVotingPeriodStartDate()).toNumber() + daysToSeconds(100);
+                (await ElectionInspectorModule.getVotingPeriodStartDate()).toNumber() +
+                daysToSeconds(100);
 
               const tx = await ElectionModule.modifyEpochSchedule(
                 newNominationPeriodStartDate,
@@ -321,14 +330,14 @@ describe('ElectionModule (schedule)', () => {
 
             it('properly adjusted dates', async function () {
               assertDatesAreClose(
-                await ElectionModule.getNominationPeriodStartDate(),
+                await ElectionInspectorModule.getNominationPeriodStartDate(),
                 newNominationPeriodStartDate
               );
               assertDatesAreClose(
-                await ElectionModule.getVotingPeriodStartDate(),
+                await ElectionInspectorModule.getVotingPeriodStartDate(),
                 newVotingPeriodStartDate
               );
-              assertDatesAreClose(await ElectionModule.getEpochEndDate(), newEpochEndDate);
+              assertDatesAreClose(await ElectionInspectorModule.getEpochEndDate(), newEpochEndDate);
             });
           });
         });
@@ -359,7 +368,10 @@ describe('ElectionModule (schedule)', () => {
     });
 
     it('shows that initial period is Administration', async function () {
-      assertBn.equal(await ElectionModule.getCurrentPeriod(), ElectionPeriod.Administration);
+      assertBn.equal(
+        await ElectionInspectorModule.getCurrentPeriod(),
+        ElectionPeriod.Administration
+      );
     });
 
     describe('when an account that does not own the instance attempts to adjust the epoch', function () {
@@ -393,18 +405,21 @@ describe('ElectionModule (schedule)', () => {
 
     describe('when entering the nomination period', function () {
       before('fast forward', async function () {
-        await fastForwardTo(await ElectionModule.getNominationPeriodStartDate(), ethers.provider);
+        await fastForwardTo(
+          await ElectionInspectorModule.getNominationPeriodStartDate(),
+          ethers.provider
+        );
       });
 
       it('skipped to the target time', async function () {
         assertDatesAreClose(
           await getTime(ethers.provider),
-          await ElectionModule.getNominationPeriodStartDate()
+          await ElectionInspectorModule.getNominationPeriodStartDate()
         );
       });
 
       it('shows that the current period is Nomination', async function () {
-        assertBn.equal(await ElectionModule.getCurrentPeriod(), ElectionPeriod.Nomination);
+        assertBn.equal(await ElectionInspectorModule.getCurrentPeriod(), ElectionPeriod.Nomination);
       });
 
       itAcceptsNominations();
@@ -423,18 +438,21 @@ describe('ElectionModule (schedule)', () => {
       });
 
       before('fast forward', async function () {
-        await fastForwardTo(await ElectionModule.getVotingPeriodStartDate(), ethers.provider);
+        await fastForwardTo(
+          await ElectionInspectorModule.getVotingPeriodStartDate(),
+          ethers.provider
+        );
       });
 
       it('skipped to the target time', async function () {
         assertDatesAreClose(
           await getTime(ethers.provider),
-          await ElectionModule.getVotingPeriodStartDate()
+          await ElectionInspectorModule.getVotingPeriodStartDate()
         );
       });
 
       it('shows that the current period is Vote', async function () {
-        assertBn.equal(await ElectionModule.getCurrentPeriod(), ElectionPeriod.Vote);
+        assertBn.equal(await ElectionInspectorModule.getCurrentPeriod(), ElectionPeriod.Vote);
       });
 
       itRejectsNominations();
@@ -449,15 +467,18 @@ describe('ElectionModule (schedule)', () => {
 
     describe('when entering the evaluation period', function () {
       before('fast forward', async function () {
-        await fastForwardTo(await ElectionModule.getEpochEndDate(), ethers.provider);
+        await fastForwardTo(await ElectionInspectorModule.getEpochEndDate(), ethers.provider);
       });
 
       it('skipped to the target time', async function () {
-        assertDatesAreClose(await getTime(ethers.provider), await ElectionModule.getEpochEndDate());
+        assertDatesAreClose(
+          await getTime(ethers.provider),
+          await ElectionInspectorModule.getEpochEndDate()
+        );
       });
 
       it('shows that the current period is Evaluation', async function () {
-        assertBn.equal(await ElectionModule.getCurrentPeriod(), ElectionPeriod.Evaluation);
+        assertBn.equal(await ElectionInspectorModule.getCurrentPeriod(), ElectionPeriod.Evaluation);
       });
 
       itRejectsNominations();

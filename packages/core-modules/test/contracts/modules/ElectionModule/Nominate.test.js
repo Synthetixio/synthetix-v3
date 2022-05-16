@@ -12,7 +12,7 @@ const { findEvent } = require('@synthetixio/core-js/utils/ethers/events');
 describe('ElectionModule (nominate)', () => {
   const { proxyAddress } = bootstrap(initializer);
 
-  let ElectionModule;
+  let ElectionModule, ElectionInspectorModule;
 
   let user, users;
 
@@ -46,14 +46,14 @@ describe('ElectionModule (nominate)', () => {
     it('records nominated and non-nominated users', async function () {
       for (let user of users) {
         assert.equal(
-          await ElectionModule.isNominated(user.address),
+          await ElectionInspectorModule.isNominated(user.address),
           nominees.includes(user.address)
         );
       }
     });
 
     it('tracks the nominee array', async function () {
-      assert.deepEqual(await ElectionModule.getNominees(), nominees);
+      assert.deepEqual(await ElectionInspectorModule.getNominees(), nominees);
     });
   };
 
@@ -66,6 +66,11 @@ describe('ElectionModule (nominate)', () => {
   before('identify modules', async () => {
     ElectionModule = await ethers.getContractAt(
       'contracts/modules/ElectionModule.sol:ElectionModule',
+      proxyAddress()
+    );
+
+    ElectionInspectorModule = await ethers.getContractAt(
+      'contracts/modules/ElectionInspectorModule.sol:ElectionInspectorModule',
       proxyAddress()
     );
   });
@@ -90,11 +95,14 @@ describe('ElectionModule (nominate)', () => {
 
     describe('when entering the nomination period', function () {
       before('fast forward', async function () {
-        await fastForwardTo(await ElectionModule.getNominationPeriodStartDate(), ethers.provider);
+        await fastForwardTo(
+          await ElectionInspectorModule.getNominationPeriodStartDate(),
+          ethers.provider
+        );
       });
 
       it('shows that the current period is Nomination', async function () {
-        assertBn.equal(await ElectionModule.getCurrentPeriod(), ElectionPeriod.Nomination);
+        assertBn.equal(await ElectionInspectorModule.getCurrentPeriod(), ElectionPeriod.Nomination);
       });
 
       describe('before users nominate', function () {

@@ -12,7 +12,7 @@ const { findEvent } = require('@synthetixio/core-js/utils/ethers/events');
 describe('ElectionModule (initialization)', () => {
   const { proxyAddress } = bootstrap(initializer);
 
-  let ElectionModule, CouncilToken;
+  let ElectionModule, ElectionInspectorModule, CouncilToken;
 
   let owner, user;
 
@@ -29,6 +29,11 @@ describe('ElectionModule (initialization)', () => {
       'contracts/modules/ElectionModule.sol:ElectionModule',
       proxyAddress()
     );
+
+    ElectionInspectorModule = await ethers.getContractAt(
+      'contracts/modules/ElectionInspectorModule.sol:ElectionInspectorModule',
+      proxyAddress()
+    );
   });
 
   describe('before initializing the module', function () {
@@ -38,14 +43,14 @@ describe('ElectionModule (initialization)', () => {
 
     it('shows that the council token does not exist', async function () {
       assert.equal(
-        await ElectionModule.getCouncilToken(),
+        await ElectionInspectorModule.getCouncilToken(),
         '0x0000000000000000000000000000000000000000'
       );
     });
 
     describe('trying to retrieve the period', function () {
       it('reverts', async function () {
-        await assertRevert(ElectionModule.getCurrentPeriod(), 'NotInitialized');
+        await assertRevert(ElectionInspectorModule.getCurrentPeriod(), 'NotInitialized');
       });
     });
   });
@@ -212,7 +217,7 @@ describe('ElectionModule (initialization)', () => {
         });
 
         before('identify the council token', async function () {
-          const tokenAddress = await ElectionModule.getCouncilToken();
+          const tokenAddress = await ElectionInspectorModule.getCouncilToken();
 
           CouncilToken = await ethers.getContractAt('CouncilToken', tokenAddress);
         });
@@ -240,15 +245,21 @@ describe('ElectionModule (initialization)', () => {
         });
 
         it('shows that the current epoch index is 0', async function () {
-          assertBn.equal(await ElectionModule.getEpochIndex(), 0);
+          assertBn.equal(await ElectionInspectorModule.getEpochIndex(), 0);
         });
 
         it('shows that the current period is Administration', async () => {
-          assertBn.equal(await ElectionModule.getCurrentPeriod(), ElectionPeriod.Administration);
+          assertBn.equal(
+            await ElectionInspectorModule.getCurrentPeriod(),
+            ElectionPeriod.Administration
+          );
         });
 
         it('shows that there are two council members', async function () {
-          assert.deepEqual(await ElectionModule.getCouncilMembers(), [owner.address, user.address]);
+          assert.deepEqual(await ElectionInspectorModule.getCouncilMembers(), [
+            owner.address,
+            user.address,
+          ]);
         });
 
         it('shows that there are two council NFTs', async function () {
@@ -257,26 +268,26 @@ describe('ElectionModule (initialization)', () => {
         });
 
         it('reflects the expected default settings', async function () {
-          assertBn.equal(await ElectionModule.getNextEpochSeatCount(), 2);
-          assertBn.equal(await ElectionModule.getMinimumActiveMembers(), 1);
+          assertBn.equal(await ElectionInspectorModule.getNextEpochSeatCount(), 2);
+          assertBn.equal(await ElectionInspectorModule.getMinimumActiveMembers(), 1);
         });
 
         it('shows that the first epoch has appropriate dates', async function () {
-          assertDatesAreClose(await ElectionModule.getEpochStartDate(), epochStartDate);
+          assertDatesAreClose(await ElectionInspectorModule.getEpochStartDate(), epochStartDate);
           assertDatesAreClose(
-            await ElectionModule.getVotingPeriodStartDate(),
+            await ElectionInspectorModule.getVotingPeriodStartDate(),
             votingPeriodStartDate
           );
           assertDatesAreClose(
-            await ElectionModule.getNominationPeriodStartDate(),
+            await ElectionInspectorModule.getNominationPeriodStartDate(),
             nominationPeriodStartDate
           );
-          assertDatesAreClose(await ElectionModule.getEpochEndDate(), epochEndDate);
+          assertDatesAreClose(await ElectionInspectorModule.getEpochEndDate(), epochEndDate);
         });
 
         it('shows that the council token was created', async function () {
           assert.notEqual(
-            await ElectionModule.getCouncilToken(),
+            await ElectionInspectorModule.getCouncilToken(),
             '0x0000000000000000000000000000000000000000'
           );
         });
