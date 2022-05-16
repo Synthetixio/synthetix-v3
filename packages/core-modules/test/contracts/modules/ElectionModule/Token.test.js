@@ -11,7 +11,7 @@ const { findEvent } = require('@synthetixio/core-js/utils/ethers/events');
 describe('ElectionModule (token)', () => {
   const { proxyAddress } = bootstrap(initializer);
 
-  let ElectionModule, ElectionInspectorModule, CouncilToken;
+  let ElectionModule, CouncilToken;
 
   let owner, user;
 
@@ -27,11 +27,6 @@ describe('ElectionModule (token)', () => {
   before('identify modules', async () => {
     ElectionModule = await ethers.getContractAt(
       'contracts/modules/ElectionModule.sol:ElectionModule',
-      proxyAddress()
-    );
-
-    ElectionInspectorModule = await ethers.getContractAt(
-      'contracts/modules/ElectionInspectorModule.sol:ElectionInspectorModule',
       proxyAddress()
     );
   });
@@ -65,13 +60,13 @@ describe('ElectionModule (token)', () => {
 
     describe('when the council token is identified', function () {
       before('identify token', async function () {
-        const tokenAddress = await ElectionInspectorModule.getCouncilToken();
+        const tokenAddress = await ElectionModule.getCouncilToken();
 
         CouncilToken = await ethers.getContractAt('CouncilToken', tokenAddress);
       });
 
       it('shows that the council token was created', async function () {
-        assert.equal(await ElectionInspectorModule.getCouncilToken(), CouncilToken.address);
+        assert.equal(await ElectionModule.getCouncilToken(), CouncilToken.address);
       });
 
       it('emitted an CouncilTokenCreated event', async function () {

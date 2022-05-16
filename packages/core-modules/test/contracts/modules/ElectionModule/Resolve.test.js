@@ -11,7 +11,7 @@ const { runElection } = require('./helpers/election-helper');
 describe('ElectionModule (resolve)', () => {
   const { proxyAddress } = bootstrap(initializer);
 
-  let ElectionModule, ElectionInspectorModule, CouncilToken;
+  let ElectionModule, CouncilToken;
 
   let owner;
   let member1, member2, member3, member4, member5;
@@ -23,7 +23,7 @@ describe('ElectionModule (resolve)', () => {
   async function itHasExpectedMembers() {
     it('shows that the members are in the council', async function () {
       assert.deepEqual(
-        await ElectionInspectorModule.getCouncilMembers(),
+        await ElectionModule.getCouncilMembers(),
         members.map((m) => m.address)
       );
     });
@@ -49,11 +49,6 @@ describe('ElectionModule (resolve)', () => {
       'contracts/modules/ElectionModule.sol:ElectionModule',
       proxyAddress()
     );
-
-    ElectionInspectorModule = await ethers.getContractAt(
-      'contracts/modules/ElectionInspectorModule.sol:ElectionInspectorModule',
-      proxyAddress()
-    );
   });
 
   describe('when the module is initialized', function () {
@@ -75,7 +70,7 @@ describe('ElectionModule (resolve)', () => {
     });
 
     before('identify the council token', async function () {
-      const tokenAddress = await ElectionInspectorModule.getCouncilToken();
+      const tokenAddress = await ElectionModule.getCouncilToken();
 
       CouncilToken = await ethers.getContractAt('CouncilToken', tokenAddress);
     });
@@ -86,7 +81,7 @@ describe('ElectionModule (resolve)', () => {
       });
 
       it('shows that the current epoch is 0', async function () {
-        assertBn.equal(await ElectionInspectorModule.getEpochIndex(), 0);
+        assertBn.equal(await ElectionModule.getEpochIndex(), 0);
       });
 
       itHasExpectedMembers();
@@ -98,16 +93,11 @@ describe('ElectionModule (resolve)', () => {
           });
 
           before('simulate election', async function () {
-            receipt = await runElection({
-              ElectionModule,
-              ElectionInspectorModule,
-              owner,
-              members,
-            });
+            receipt = await runElection(ElectionModule, owner, members);
           });
 
           it('shows that the current epoch is 1', async function () {
-            assertBn.equal(await ElectionInspectorModule.getEpochIndex(), 1);
+            assertBn.equal(await ElectionModule.getEpochIndex(), 1);
           });
 
           itHasExpectedMembers();
@@ -146,16 +136,11 @@ describe('ElectionModule (resolve)', () => {
             });
 
             before('simulate election', async function () {
-              receipt = await runElection({
-                ElectionModule,
-                ElectionInspectorModule,
-                owner,
-                members,
-              });
+              receipt = await runElection(ElectionModule, owner, members);
             });
 
             it('shows that the current epoch is 3', async function () {
-              assertBn.equal(await ElectionInspectorModule.getEpochIndex(), 2);
+              assertBn.equal(await ElectionModule.getEpochIndex(), 2);
             });
 
             itHasExpectedMembers();
@@ -198,16 +183,11 @@ describe('ElectionModule (resolve)', () => {
                 });
 
                 before('simulate election', async function () {
-                  receipt = await runElection({
-                    ElectionModule,
-                    ElectionInspectorModule,
-                    owner,
-                    members,
-                  });
+                  receipt = await runElection(ElectionModule, owner, members);
                 });
 
                 it('shows that the current epoch is 4', async function () {
-                  assertBn.equal(await ElectionInspectorModule.getEpochIndex(), 3);
+                  assertBn.equal(await ElectionModule.getEpochIndex(), 3);
                 });
 
                 itHasExpectedMembers();

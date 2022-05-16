@@ -16,7 +16,7 @@ const { findEvent } = require('@synthetixio/core-js/utils/ethers/events');
 describe('ElectionModule (settings)', () => {
   const { proxyAddress } = bootstrap(initializer);
 
-  let ElectionModule, ElectionInspectorModule;
+  let ElectionModule;
 
   let owner, user;
 
@@ -31,11 +31,6 @@ describe('ElectionModule (settings)', () => {
   before('identify modules', async () => {
     ElectionModule = await ethers.getContractAt(
       'contracts/modules/ElectionModule.sol:ElectionModule',
-      proxyAddress()
-    );
-
-    ElectionInspectorModule = await ethers.getContractAt(
-      'contracts/modules/ElectionInspectorModule.sol:ElectionInspectorModule',
       proxyAddress()
     );
   });
@@ -104,10 +99,7 @@ describe('ElectionModule (settings)', () => {
           });
 
           it('changes the setting', async () => {
-            assertBn.equal(
-              await ElectionInspectorModule.getMinimumActiveMembers(),
-              newMinimumActiveMembers
-            );
+            assertBn.equal(await ElectionModule.getMinimumActiveMembers(), newMinimumActiveMembers);
           });
         });
       });
@@ -145,7 +137,7 @@ describe('ElectionModule (settings)', () => {
               snapshotId = await takeSnapshot(ethers.provider);
 
               await fastForwardTo(
-                await ElectionInspectorModule.getNominationPeriodStartDate(),
+                await ElectionModule.getNominationPeriodStartDate(),
                 ethers.provider
               );
             });
@@ -166,10 +158,7 @@ describe('ElectionModule (settings)', () => {
             before('take snapshot and fast forward', async function () {
               snapshotId = await takeSnapshot(ethers.provider);
 
-              await fastForwardTo(
-                await ElectionInspectorModule.getVotingPeriodStartDate(),
-                ethers.provider
-              );
+              await fastForwardTo(await ElectionModule.getVotingPeriodStartDate(), ethers.provider);
             });
 
             after('restore snapshot', async function () {
@@ -198,10 +187,7 @@ describe('ElectionModule (settings)', () => {
             });
 
             it('changes the setting', async () => {
-              assertBn.equal(
-                await ElectionInspectorModule.getNextEpochSeatCount(),
-                newNextEpochSeatCount
-              );
+              assertBn.equal(await ElectionModule.getNextEpochSeatCount(), newNextEpochSeatCount);
             });
           });
         });
@@ -254,7 +240,7 @@ describe('ElectionModule (settings)', () => {
 
           it('changes the setting', async () => {
             assertBn.equal(
-              await ElectionInspectorModule.getDefaultBallotEvaluationBatchSize(),
+              await ElectionModule.getDefaultBallotEvaluationBatchSize(),
               newDefaultBallotEvaluationBatchSize
             );
           });
@@ -305,7 +291,7 @@ describe('ElectionModule (settings)', () => {
 
           it('changes the setting', async () => {
             assertBn.equal(
-              await ElectionInspectorModule.getMaxDateAdjustmenTolerance(),
+              await ElectionModule.getMaxDateAdjustmenTolerance(),
               newMaxDateAdjustmentTolerance
             );
           });
@@ -375,7 +361,7 @@ describe('ElectionModule (settings)', () => {
               setMinNominationPeriodDuration,
               setMinVotingPeriodDuration,
               setMinEpochDuration,
-            ] = await ElectionInspectorModule.getMinEpochDurations();
+            ] = await ElectionModule.getMinEpochDurations();
 
             assertBn.equal(setMinNominationPeriodDuration, newMinNominationPeriodDuration);
             assertBn.equal(setMinVotingPeriodDuration, newMinVotingPeriodDuration);

@@ -22,7 +22,7 @@ describe('ElectionModule (dismiss)', () => {
 
   let owner, user1, user2, user3, user4;
 
-  let ElectionModule, ElectionInspectorModule, CouncilToken;
+  let ElectionModule, CouncilToken;
 
   let snapshotId;
 
@@ -33,7 +33,7 @@ describe('ElectionModule (dismiss)', () => {
   async function itHasExpectedMembers() {
     it('shows that the members are in the council', async function () {
       assert.deepEqual(
-        await ElectionInspectorModule.getCouncilMembers(),
+        await ElectionModule.getCouncilMembers(),
         members.map((m) => m.address)
       );
     });
@@ -59,11 +59,6 @@ describe('ElectionModule (dismiss)', () => {
       'contracts/modules/ElectionModule.sol:ElectionModule',
       proxyAddress()
     );
-
-    ElectionInspectorModule = await ethers.getContractAt(
-      'contracts/modules/ElectionInspectorModule.sol:ElectionInspectorModule',
-      proxyAddress()
-    );
   });
 
   describe('when the module is initialized', function () {
@@ -85,7 +80,7 @@ describe('ElectionModule (dismiss)', () => {
     });
 
     before('identify the council token', async function () {
-      const tokenAddress = await ElectionInspectorModule.getCouncilToken();
+      const tokenAddress = await ElectionModule.getCouncilToken();
 
       CouncilToken = await ethers.getContractAt('CouncilToken', tokenAddress);
     });
@@ -93,7 +88,7 @@ describe('ElectionModule (dismiss)', () => {
     describe('after some election', function () {
       before('run election', async function () {
         members = [owner, user1, user2];
-        await runElection({ ElectionModule, ElectionInspectorModule, owner, members });
+        await runElection(ElectionModule, owner, members);
       });
 
       before('configure minimum seat count', async function () {
@@ -147,10 +142,7 @@ describe('ElectionModule (dismiss)', () => {
       });
 
       it('shows that the current period is Administration', async function () {
-        assertBn.equal(
-          await ElectionInspectorModule.getCurrentPeriod(),
-          ElectionPeriod.Administration
-        );
+        assertBn.equal(await ElectionModule.getCurrentPeriod(), ElectionPeriod.Administration);
       });
     });
   });
@@ -166,9 +158,9 @@ describe('ElectionModule (dismiss)', () => {
       });
 
       before('record schedule', async function () {
-        nominationPeriodStartDate = await ElectionInspectorModule.getNominationPeriodStartDate();
-        votingPeriodStartDate = await ElectionInspectorModule.getVotingPeriodStartDate();
-        epochEndDate = await ElectionInspectorModule.getEpochEndDate();
+        nominationPeriodStartDate = await ElectionModule.getNominationPeriodStartDate();
+        votingPeriodStartDate = await ElectionModule.getVotingPeriodStartDate();
+        epochEndDate = await ElectionModule.getEpochEndDate();
       });
 
       before('dismiss', async function () {
@@ -197,19 +189,13 @@ describe('ElectionModule (dismiss)', () => {
       });
 
       it('shows that the current period is Nomination', async function () {
-        assertBn.equal(await ElectionInspectorModule.getCurrentPeriod(), ElectionPeriod.Nomination);
+        assertBn.equal(await ElectionModule.getCurrentPeriod(), ElectionPeriod.Nomination);
       });
 
       it('shows that the schedule has been moved forward', async function () {
-        assertBn.gt(
-          nominationPeriodStartDate,
-          await ElectionInspectorModule.getNominationPeriodStartDate()
-        );
-        assertBn.gt(
-          votingPeriodStartDate,
-          await ElectionInspectorModule.getVotingPeriodStartDate()
-        );
-        assertBn.gt(epochEndDate, await ElectionInspectorModule.getEpochEndDate());
+        assertBn.gt(nominationPeriodStartDate, await ElectionModule.getNominationPeriodStartDate());
+        assertBn.gt(votingPeriodStartDate, await ElectionModule.getVotingPeriodStartDate());
+        assertBn.gt(epochEndDate, await ElectionModule.getEpochEndDate());
       });
 
       it('allows candidates to nominate', async function () {
@@ -229,16 +215,13 @@ describe('ElectionModule (dismiss)', () => {
       });
 
       before('record schedule', async function () {
-        nominationPeriodStartDate = await ElectionInspectorModule.getNominationPeriodStartDate();
-        votingPeriodStartDate = await ElectionInspectorModule.getVotingPeriodStartDate();
-        epochEndDate = await ElectionInspectorModule.getEpochEndDate();
+        nominationPeriodStartDate = await ElectionModule.getNominationPeriodStartDate();
+        votingPeriodStartDate = await ElectionModule.getVotingPeriodStartDate();
+        epochEndDate = await ElectionModule.getEpochEndDate();
       });
 
       before('fast forward to the Nomination period', async function () {
-        await fastForwardTo(
-          await ElectionInspectorModule.getNominationPeriodStartDate(),
-          ethers.provider
-        );
+        await fastForwardTo(await ElectionModule.getNominationPeriodStartDate(), ethers.provider);
       });
 
       before('dismiss', async function () {
@@ -269,13 +252,10 @@ describe('ElectionModule (dismiss)', () => {
       it('shows that the schedule has not moved', async function () {
         assertBn.equal(
           nominationPeriodStartDate,
-          await ElectionInspectorModule.getNominationPeriodStartDate()
+          await ElectionModule.getNominationPeriodStartDate()
         );
-        assertBn.equal(
-          votingPeriodStartDate,
-          await ElectionInspectorModule.getVotingPeriodStartDate()
-        );
-        assertBn.equal(epochEndDate, await ElectionInspectorModule.getEpochEndDate());
+        assertBn.equal(votingPeriodStartDate, await ElectionModule.getVotingPeriodStartDate());
+        assertBn.equal(epochEndDate, await ElectionModule.getEpochEndDate());
       });
 
       it('allows candidates to nominate', async function () {
@@ -295,16 +275,13 @@ describe('ElectionModule (dismiss)', () => {
       });
 
       before('record schedule', async function () {
-        nominationPeriodStartDate = await ElectionInspectorModule.getNominationPeriodStartDate();
-        votingPeriodStartDate = await ElectionInspectorModule.getVotingPeriodStartDate();
-        epochEndDate = await ElectionInspectorModule.getEpochEndDate();
+        nominationPeriodStartDate = await ElectionModule.getNominationPeriodStartDate();
+        votingPeriodStartDate = await ElectionModule.getVotingPeriodStartDate();
+        epochEndDate = await ElectionModule.getEpochEndDate();
       });
 
       before('fast forward to the Nomination period and nominate', async function () {
-        await fastForwardTo(
-          await ElectionInspectorModule.getNominationPeriodStartDate(),
-          ethers.provider
-        );
+        await fastForwardTo(await ElectionModule.getNominationPeriodStartDate(), ethers.provider);
 
         await ElectionModule.connect(user2).nominate();
         await ElectionModule.connect(user3).nominate();
@@ -312,10 +289,7 @@ describe('ElectionModule (dismiss)', () => {
       });
 
       before('fast forward to the Voting period', async function () {
-        await fastForwardTo(
-          await ElectionInspectorModule.getVotingPeriodStartDate(),
-          ethers.provider
-        );
+        await fastForwardTo(await ElectionModule.getVotingPeriodStartDate(), ethers.provider);
       });
 
       before('dismiss', async function () {
@@ -346,13 +320,10 @@ describe('ElectionModule (dismiss)', () => {
       it('shows that the schedule has not moved', async function () {
         assertBn.equal(
           nominationPeriodStartDate,
-          await ElectionInspectorModule.getNominationPeriodStartDate()
+          await ElectionModule.getNominationPeriodStartDate()
         );
-        assertBn.equal(
-          votingPeriodStartDate,
-          await ElectionInspectorModule.getVotingPeriodStartDate()
-        );
-        assertBn.equal(epochEndDate, await ElectionInspectorModule.getEpochEndDate());
+        assertBn.equal(votingPeriodStartDate, await ElectionModule.getVotingPeriodStartDate());
+        assertBn.equal(epochEndDate, await ElectionModule.getEpochEndDate());
       });
 
       it('allows users to vote', async function () {

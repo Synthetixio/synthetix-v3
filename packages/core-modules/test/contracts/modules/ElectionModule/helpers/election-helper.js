@@ -15,40 +15,32 @@ const assertDatesAreClose = (dateA, dateB) => {
   return Math.abs(numberDateB - numberDateA) <= 1;
 };
 
-async function runElection({ ElectionModule, ElectionInspectorModule, owner, members }) {
+async function runElection(ElectionModule, owner, members) {
   // Configure
-  if ((await ElectionInspectorModule.getNextEpochSeatCount()) !== members.length) {
+  if ((await ElectionModule.getNextEpochSeatCount()) !== members.length) {
     await ElectionModule.connect(owner).setNextEpochSeatCount(members.length);
   }
 
   // Nominate
-  if (
-    (await ElectionInspectorModule.getCurrentPeriod()).toNumber() === ElectionPeriod.Administration
-  ) {
-    await fastForwardTo(
-      await ElectionInspectorModule.getNominationPeriodStartDate(),
-      hre.ethers.provider
-    );
+  if ((await ElectionModule.getCurrentPeriod()).toNumber() === ElectionPeriod.Administration) {
+    await fastForwardTo(await ElectionModule.getNominationPeriodStartDate(), hre.ethers.provider);
   }
   for (let member of members) {
     await ElectionModule.connect(member).nominate();
   }
 
   // Vote
-  await fastForwardTo(
-    await ElectionInspectorModule.getVotingPeriodStartDate(),
-    hre.ethers.provider
-  );
+  await fastForwardTo(await ElectionModule.getVotingPeriodStartDate(), hre.ethers.provider);
   for (let member of members) {
     await ElectionModule.connect(member).cast([member.address]);
   }
 
   // Evaluate
-  await fastForwardTo(await ElectionInspectorModule.getEpochEndDate(), hre.ethers.provider);
+  await fastForwardTo(await ElectionModule.getEpochEndDate(), hre.ethers.provider);
   await ElectionModule.evaluate(0);
-  assert.equal(await ElectionInspectorModule.isElectionEvaluated(), true);
+  assert.equal(await ElectionModule.isElectionEvaluated(), true);
   assert.deepEqual(
-    await ElectionInspectorModule.getElectionWinners(),
+    await ElectionModule.getElectionWinners(),
     members.map((w) => w.address)
   );
 
