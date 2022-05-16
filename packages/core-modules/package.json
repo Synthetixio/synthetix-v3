@@ -21,7 +21,7 @@
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "2.0.5",
     "hardhat": "2.9.3",
-    "hardhat-contract-sizer": "2.5.1",
+    "hardhat-contract-sizer": "2.1.1",
     "solidity-coverage": "0.7.17"
   }
 }

@@ -15,7 +15,7 @@ const { findEvent } = require('@synthetixio/core-js/utils/ethers/events');
 describe('SynthetixElectionModule (cast)', () => {
   const { proxyAddress } = bootstrap(initializer);
 
-  let ElectionModule, DebtShare;
+  let ElectionModule, ElectionInspectorModule, DebtShare;
 
   let candidate1, candidate2, candidate3, candidate4;
   let voter1, voter2, voter3, voter4, voter5;
@@ -34,6 +34,11 @@ describe('SynthetixElectionModule (cast)', () => {
   before('identify modules', async () => {
     ElectionModule = await ethers.getContractAt(
       'contracts/modules/ElectionModule.sol:ElectionModule',
+      proxyAddress()
+    );
+
+    ElectionInspectorModule = await ethers.getContractAt(
+      'contracts/modules/ElectionInspectorModule.sol:ElectionInspectorModule',
       proxyAddress()
     );
   });
@@ -66,11 +71,14 @@ describe('SynthetixElectionModule (cast)', () => {
 
     describe('when entering the nomiantion period', function () {
       before('fast forward', async function () {
-        await fastForwardTo(await ElectionModule.getNominationPeriodStartDate(), ethers.provider);
+        await fastForwardTo(
+          await ElectionInspectorModule.getNominationPeriodStartDate(),
+          ethers.provider
+        );
       });
 
       it('shows that the current period is Nomination', async function () {
-        assertBn.equal(await ElectionModule.getCurrentPeriod(), ElectionPeriod.Nomination);
+        assertBn.equal(await ElectionInspectorModule.getCurrentPeriod(), ElectionPeriod.Nomination);
       });
 
       describe('when nominations exist', function () {
@@ -83,11 +91,14 @@ describe('SynthetixElectionModule (cast)', () => {
 
         describe('when entering the election period', function () {
           before('fast forward', async function () {
-            await fastForwardTo(await ElectionModule.getVotingPeriodStartDate(), ethers.provider);
+            await fastForwardTo(
+              await ElectionInspectorModule.getVotingPeriodStartDate(),
+              ethers.provider
+            );
           });
 
           it('shows that the current period is Vote', async function () {
-            assertBn.equal(await ElectionModule.getCurrentPeriod(), ElectionPeriod.Vote);
+            assertBn.equal(await ElectionInspectorModule.getCurrentPeriod(), ElectionPeriod.Vote);
           });
 
           describe('when issuing invalid votes', function () {
@@ -133,10 +144,10 @@ describe('SynthetixElectionModule (cast)', () => {
 
           describe('before issuing valid votes', function () {
             it('reflects users that have not voted', async function () {
-              assert.equal(await ElectionModule.hasVoted(voter1.address), false);
-              assert.equal(await ElectionModule.hasVoted(voter2.address), false);
-              assert.equal(await ElectionModule.hasVoted(voter3.address), false);
-              assert.equal(await ElectionModule.hasVoted(voter4.address), false);
+              assert.equal(await ElectionInspectorModule.hasVoted(voter1.address), false);
+              assert.equal(await ElectionInspectorModule.hasVoted(voter2.address), false);
+              assert.equal(await ElectionInspectorModule.hasVoted(voter3.address), false);
+              assert.equal(await ElectionInspectorModule.hasVoted(voter4.address), false);
             });
 
             describe('when attempting to withdraw a vote that does not exist', function () {
@@ -150,18 +161,18 @@ describe('SynthetixElectionModule (cast)', () => {
             before('form ballots', async function () {
               ballot1 = {
                 candidates: [candidate1.address],
-                id: await ElectionModule.calculateBallotId([candidate1.address]),
+                id: await ElectionInspectorModule.calculateBallotId([candidate1.address]),
               };
               ballot2 = {
                 candidates: [candidate2.address, candidate4.address],
-                id: await ElectionModule.calculateBallotId([
+                id: await ElectionInspectorModule.calculateBallotId([
                   candidate2.address,
                   candidate4.address,
                 ]),
               };
               ballot3 = {
                 candidates: [candidate3.address],
-                id: await ElectionModule.calculateBallotId([candidate3.address]),
+                id: await ElectionInspectorModule.calculateBallotId([candidate3.address]),
               };
             });
 
@@ -187,34 +198,55 @@ describe('SynthetixElectionModule (cast)', () => {
             });
 
             it('can retrieve the corresponding ballot that users voted on', async function () {
-              assert.equal(await ElectionModule.getBallotVoted(voter1.address), ballot1.id);
-              assert.equal(await ElectionModule.getBallotVoted(voter2.address), ballot2.id);
-              assert.equal(await ElectionModule.getBallotVoted(voter3.address), ballot1.id);
-              assert.equal(await ElectionModule.getBallotVoted(voter4.address), ballot1.id);
-              assert.equal(await ElectionModule.getBallotVoted(voter5.address), ballot2.id);
+              assert.equal(
+                await ElectionInspectorModule.getBallotVoted(voter1.address),
+                ballot1.id
+              );
+              assert.equal(
+                await ElectionInspectorModule.getBallotVoted(voter2.address),
+                ballot2.id
+              );
+              assert.equal(
+                await ElectionInspectorModule.getBallotVoted(voter3.address),
+                ballot1.id
+              );
+              assert.equal(
+                await ElectionInspectorModule.getBallotVoted(voter4.address),
+                ballot1.id
+              );
+              assert.equal(
+                await ElectionInspectorModule.getBallotVoted(voter5.address),
+                ballot2.id
+              );
             });
 
             it('can retrieve ballot votes', async function () {
               const votePowerUnit = await expectedVotePowerForDebtSharePeriodId(1);
 
-              assertBn.equal(await ElectionModule.getBallotVotes(ballot1.id), votePowerUnit.mul(3));
-              assertBn.equal(await ElectionModule.getBallotVotes(ballot2.id), votePowerUnit.mul(2));
-              assertBn.equal(await ElectionModule.getBallotVotes(ballot3.id), 0);
+              assertBn.equal(
+                await ElectionInspectorModule.getBallotVotes(ballot1.id),
+                votePowerUnit.mul(3)
+              );
+              assertBn.equal(
+                await ElectionInspectorModule.getBallotVotes(ballot2.id),
+                votePowerUnit.mul(2)
+              );
+              assertBn.equal(await ElectionInspectorModule.getBallotVotes(ballot3.id), 0);
             });
 
             it('can retrive ballot candidates', async function () {
               assert.deepEqual(
-                await ElectionModule.getBallotCandidates(ballot1.id),
+                await ElectionInspectorModule.getBallotCandidates(ballot1.id),
                 ballot1.candidates
               );
               assert.deepEqual(
-                await ElectionModule.getBallotCandidates(ballot2.id),
+                await ElectionInspectorModule.getBallotCandidates(ballot2.id),
                 ballot2.candidates
               );
             });
 
             it('will retrieve no candidates for ballots that where not voted on', async function () {
-              assert.deepEqual(await ElectionModule.getBallotCandidates(ballot3.id), []);
+              assert.deepEqual(await ElectionInspectorModule.getBallotCandidates(ballot3.id), []);
             });
 
             describe('when users change their vote', function () {
@@ -242,23 +274,32 @@ describe('SynthetixElectionModule (cast)', () => {
               });
 
               it('can retrieve the corresponding ballot that users voted on', async function () {
-                assert.equal(await ElectionModule.getBallotVoted(voter5.address), ballot3.id);
+                assert.equal(
+                  await ElectionInspectorModule.getBallotVoted(voter5.address),
+                  ballot3.id
+                );
               });
 
               it('can retrieve ballot votes', async function () {
                 const votePowerUnit = await expectedVotePowerForDebtSharePeriodId(1);
 
                 assertBn.equal(
-                  await ElectionModule.getBallotVotes(ballot1.id),
+                  await ElectionInspectorModule.getBallotVotes(ballot1.id),
                   votePowerUnit.mul(3)
                 );
-                assertBn.equal(await ElectionModule.getBallotVotes(ballot2.id), votePowerUnit);
-                assertBn.equal(await ElectionModule.getBallotVotes(ballot3.id), votePowerUnit);
+                assertBn.equal(
+                  await ElectionInspectorModule.getBallotVotes(ballot2.id),
+                  votePowerUnit
+                );
+                assertBn.equal(
+                  await ElectionInspectorModule.getBallotVotes(ballot3.id),
+                  votePowerUnit
+                );
               });
 
               it('can retrive ballot candidates', async function () {
                 assert.deepEqual(
-                  await ElectionModule.getBallotCandidates(ballot3.id),
+                  await ElectionInspectorModule.getBallotCandidates(ballot3.id),
                   ballot3.candidates
                 );
               });
@@ -282,24 +323,30 @@ describe('SynthetixElectionModule (cast)', () => {
 
               it('can retrieve the corresponding ballot that users voted on', async function () {
                 assert.equal(
-                  await ElectionModule.getBallotVoted(voter4.address),
+                  await ElectionInspectorModule.getBallotVoted(voter4.address),
                   '0x0000000000000000000000000000000000000000000000000000000000000000'
                 );
               });
 
               it('shows that the user has not voted', async function () {
-                assert.equal(await ElectionModule.hasVoted(voter4.address), false);
+                assert.equal(await ElectionInspectorModule.hasVoted(voter4.address), false);
               });
 
               it('can retrieve ballot votes', async function () {
                 const votePowerUnit = await expectedVotePowerForDebtSharePeriodId(1);
 
                 assertBn.equal(
-                  await ElectionModule.getBallotVotes(ballot1.id),
+                  await ElectionInspectorModule.getBallotVotes(ballot1.id),
                   votePowerUnit.mul(2)
                 );
-                assertBn.equal(await ElectionModule.getBallotVotes(ballot2.id), votePowerUnit);
-                assertBn.equal(await ElectionModule.getBallotVotes(ballot3.id), votePowerUnit);
+                assertBn.equal(
+                  await ElectionInspectorModule.getBallotVotes(ballot2.id),
+                  votePowerUnit
+                );
+                assertBn.equal(
+                  await ElectionInspectorModule.getBallotVotes(ballot3.id),
+                  votePowerUnit
+                );
               });
             });
           });
