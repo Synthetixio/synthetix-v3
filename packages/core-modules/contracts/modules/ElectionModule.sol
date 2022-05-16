@@ -162,7 +162,9 @@ contract ElectionModule is
     function dismissMembers(address[] calldata membersToDismiss) external override onlyOwner {
         _removeCouncilMembers(membersToDismiss);
 
-        emit CouncilMembersDismissed(membersToDismiss);
+        uint epochIndex = _getCurrentEpochIndex();
+
+        emit CouncilMembersDismissed(membersToDismiss, epochIndex);
 
         // Don't immediately jump to an election if the council still has enough members
         if (_getCurrentPeriod() != ElectionPeriod.Administration) return;
@@ -170,7 +172,7 @@ contract ElectionModule is
 
         _jumpToNominationPeriod();
 
-        emit EmergencyElectionStarted(_getCurrentEpochIndex());
+        emit EmergencyElectionStarted(epochIndex);
     }
 
     /// @notice Allows anyone to self-nominate during the Nomination period

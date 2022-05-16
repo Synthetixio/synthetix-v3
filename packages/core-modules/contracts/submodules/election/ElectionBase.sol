@@ -51,7 +51,7 @@ contract ElectionBase is ElectionStorage, InitializableMixin {
     event CouncilTokenUpgraded(address newImplementation);
     event CouncilMemberAdded(address indexed member, uint indexed epochIndex);
     event CouncilMemberRemoved(address indexed member);
-    event CouncilMembersDismissed(address[] members);
+    event CouncilMembersDismissed(address[] members, uint indexed epochIndex);
     event EpochScheduleUpdated(uint64 nominationPeriodStartDate, uint64 votingPeriodStartDate, uint64 epochEndDate);
     event MinimumEpochDurationsChanged(
         uint64 minNominationPeriodDuration,
