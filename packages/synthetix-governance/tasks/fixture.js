@@ -47,8 +47,9 @@ task(TASK_FIXTURE_WALLETS, 'Create fixture wallets')
 
 task(TASK_FIXTURE_CANDIDATES, 'Create fixture candidate nominations')
   .addParam('address', 'Deployed election module proxy address', undefined, types.address)
-  .addOptionalParam('amount', 'Amount of candidates to fixture', '12', types.int)
-  .setAction(async ({ address, amount }, hre) => {
+  .addOptionalParam('nominateAmount', 'Amount of candidates to fixture', '12', types.int)
+  .addOptionalParam('withdrawAmount', 'Amount of candidates to withdraw nomination', '2', types.int)
+  .setAction(async ({ address, nominateAmount, withdrawAmount }, hre) => {
     const ElectionModule = await hre.ethers.getContractAt(
       'contracts/modules/ElectionModule.sol:ElectionModule',
       address
@@ -60,13 +61,25 @@ task(TASK_FIXTURE_CANDIDATES, 'Create fixture candidate nominations')
       throw new Error('The election is not on ElectionPeriod.Nomination');
     }
 
-    const candidates = await hre.run(TASK_FIXTURE_WALLETS, { amount });
+    const candidates = await hre.run(TASK_FIXTURE_WALLETS, { nominateAmount });
 
-    console.log(`Nominating ${amount} candidates on ${address}\n`);
+    console.log(`Nominating ${nominateAmount} candidates on ${address}\n`);
 
     await Promise.all(
       candidates.map(async (candidate) => {
         const tx = await ElectionModule.connect(candidate).nominate();
+        await tx.wait();
+      })
+    );
+
+    const withdrawnCandidates = candidates.splice(0, withdrawAmount);
+
+    console.log(`Withdrawing ${withdrawAmount.length} candidates on ${address}\n`);
+
+    await Promise.all(
+      withdrawnCandidates.map(async (candidate) => {
+        console.log(candidate.address);
+        const tx = await ElectionModule.connect(candidate).withdrawNomination();
         await tx.wait();
       })
     );
@@ -101,6 +114,7 @@ task(TASK_FIXTURE_VOTES, 'Create fixture votes to nominated candidates')
 
     const ballots = createArray(ballotsCount).map(() => pickRand(candidates, ballotSize));
 
+    // @MATI - can you add a case where some of the voters withdraw - and log it somehow to console? i did the withdraw nomination already
     await Promise.all(
       voters.map(async (voter) => {
         const [ballot] = pickRand(ballots, 1);
@@ -169,14 +183,18 @@ task(TASK_FIXTURE_EVALUATE, 'Evaluate current election')
     const tx = await ElectionModule.resolve();
     const receipt = await tx.wait();
     const epochStartedEvent = findEvent({ receipt, eventName: 'EpochStarted' });
+
+    const members = await ElectionModule.getCouncilMembers();
+
     console.log(
       `Election resolved, started new epoch index ${epochStartedEvent.args.epochIndex}\n`
     );
+    console.log(`There is ${members.length} Members whom are ${members.map((e) => `${e}\n`)}\n`);
   });
 
 task(TASK_FIXTURE_EPOCHS, 'Complete an epoch with fixtured data')
   .addParam('address', 'Deployed election module proxy address', undefined, types.address)
-  .addOptionalParam('amount', 'Amount of epochs to complete with fixture data', '5', types.int)
+  .addOptionalParam('amount', 'Amount of epochs to complete with fixture data', '1', types.int)
   .addOptionalParam('voters', 'Amount of voters to fixture', '20', types.int)
   .addOptionalParam('candidates', 'Amount of voters to fixture', '12', types.int)
   .setAction(async ({ address, amount, voters, candidates }, hre) => {
@@ -195,6 +213,7 @@ task(TASK_FIXTURE_EPOCHS, 'Complete an epoch with fixtured data')
 
       if (currentPeriod === ElectionPeriod.Nomination) {
         await hre.run(TASK_FIXTURE_CANDIDATES, { address, amount: candidates });
+
         await hre.run(TASK_FAST_FORWARD_TO, { address, period: 'vote' });
         currentPeriod = ElectionPeriod.Vote;
       }
