@@ -186,6 +186,7 @@ describe('ElectionModule (dismiss)', () => {
         const event = findEvent({ receipt, eventName: 'EmergencyElectionStarted' });
 
         assert.ok(event);
+        assertBn.equal(event.args.epochIndex, 0);
       });
 
       it('shows that the current period is Nomination', async function () {

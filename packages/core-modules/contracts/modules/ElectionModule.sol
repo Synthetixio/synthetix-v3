@@ -170,7 +170,7 @@ contract ElectionModule is
 
         _jumpToNominationPeriod();
 
-        emit EmergencyElectionStarted();
+        emit EmergencyElectionStarted(_getCurrentEpochIndex());
     }
 
     /// @notice Allows anyone to self-nominate during the Nomination period
