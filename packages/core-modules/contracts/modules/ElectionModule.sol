@@ -211,12 +211,13 @@ contract ElectionModule is
 
     /// @dev ElectionTally needs to be extended to specify how votes are counted
     function evaluate(uint numBallots) external override onlyInPeriod(ElectionPeriod.Evaluation) {
-        if (_getCurrentElection().evaluated) revert ElectionAlreadyEvaluated();
+        ElectionData storage election = _getCurrentElection();
+
+        if (election.evaluated) revert ElectionAlreadyEvaluated();
 
         _evaluateNextBallotBatch(numBallots);
 
         uint currentEpochIndex = _getCurrentEpochIndex();
-        ElectionData storage election = _getCurrentElection();
 
         uint totalBallots = election.ballotIds.length;
         if (election.numEvaluatedBallots < totalBallots) {
@@ -230,12 +231,14 @@ contract ElectionModule is
 
     /// @dev Burns previous NFTs and mints new ones
     function resolve() external override onlyInPeriod(ElectionPeriod.Evaluation) {
-        if (!_getCurrentElection().evaluated) revert ElectionNotEvaluated();
+        ElectionData storage election = _getCurrentElection();
+
+        if (!election.evaluated) revert ElectionNotEvaluated();
 
         _removeAllCouncilMembers();
-        _addCouncilMembers(_getCurrentElection().winners.values());
+        _addCouncilMembers(election.winners.values());
 
-        _getCurrentElection().resolved = true;
+        election.resolved = true;
 
         _createNewEpoch();
 

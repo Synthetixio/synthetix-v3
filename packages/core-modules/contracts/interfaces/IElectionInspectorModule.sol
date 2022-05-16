@@ -2,6 +2,7 @@
 pragma solidity ^0.8.0;
 
 /// @title Module that simply adds view functions to retrieve additional info from the election module, such as historical election info
+/// @dev View functions add to contract size, since they bloat the Solidity function dispatcher
 interface IElectionInspectorModule {
     // ---------------------------------------
     // Initialization
