@@ -74,31 +74,6 @@ contract ElectionBase is ElectionStorage, InitializableMixin {
     // Helpers
     // ---------------------------------------
 
-    /// @dev Determines the current period type according to the current time and the epoch's dates
-    function _getCurrentPeriod() internal view returns (ElectionPeriod) {
-        if (!_electionStore().initialized) {
-            revert InitError.NotInitialized();
-        }
-
-        EpochData storage epoch = _getCurrentEpoch();
-
-        uint64 currentTime = uint64(block.timestamp);
-
-        if (currentTime >= epoch.endDate) {
-            return ElectionPeriod.Evaluation;
-        }
-
-        if (currentTime >= epoch.votingPeriodStartDate) {
-            return ElectionPeriod.Vote;
-        }
-
-        if (currentTime >= epoch.nominationPeriodStartDate) {
-            return ElectionPeriod.Nomination;
-        }
-
-        return ElectionPeriod.Administration;
-    }
-
     function _isInitialized() internal view override returns (bool) {
         return _electionStore().initialized;
     }
