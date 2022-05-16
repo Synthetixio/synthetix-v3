@@ -3,6 +3,7 @@ pragma solidity ^0.8.0;
 
 import "@synthetixio/core-contracts/contracts/errors/InitError.sol";
 import "@synthetixio/core-contracts/contracts/ownership/OwnableMixin.sol";
+import "@synthetixio/core-contracts/contracts/initializable/InitializableMixin.sol";
 import "../interfaces/IElectionModule.sol";
 import "../submodules/election/ElectionSchedule.sol";
 import "../submodules/election/ElectionCredentials.sol";
@@ -15,7 +16,8 @@ contract ElectionModule is
     ElectionCredentials,
     ElectionVotes,
     ElectionTally,
-    OwnableMixin
+    OwnableMixin,
+    InitializableMixin
 {
     using SetUtil for SetUtil.AddressSet;
 
@@ -61,6 +63,10 @@ contract ElectionModule is
 
     function isElectionModuleInitialized() public view override returns (bool) {
         return _isInitialized();
+    }
+
+    function _isInitialized() internal view override returns (bool) {
+        return _electionStore().initialized;
     }
 
     function upgradeCouncilToken(address newCouncilTokenImplementation) external override onlyOwner onlyIfInitialized {

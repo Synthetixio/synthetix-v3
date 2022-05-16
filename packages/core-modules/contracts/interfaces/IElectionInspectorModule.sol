@@ -5,16 +5,6 @@ pragma solidity ^0.8.0;
 /// @dev View functions add to contract size, since they bloat the Solidity function dispatcher
 interface IElectionInspectorModule {
     // ---------------------------------------
-    // Initialization
-    // ---------------------------------------
-
-    /// @notice Dummy initializer that doesn't need to be called, but the deployer requires it
-    function initializeElectionInspectorModule() external;
-
-    /// @dev Since the module requires no initialization, this simply returns true
-    function isElectionInspectorModuleInitialized() external pure returns (bool);
-
-    // ---------------------------------------
     // View functions
     // ---------------------------------------
 

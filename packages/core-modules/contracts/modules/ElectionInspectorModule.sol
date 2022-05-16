@@ -7,13 +7,6 @@ import "../submodules/election/ElectionBase.sol";
 contract ElectionInspectorModule is IElectionInspectorModule, ElectionBase {
     using SetUtil for SetUtil.AddressSet;
 
-    // solhint-disable-next-line no-empty-blocks
-    function initializeElectionInspectorModule() external {}
-
-    function isElectionInspectorModuleInitialized() external pure returns (bool) {
-        return true;
-    }
-
     function getEpochStartDateForIndex(uint epochIndex) external view override returns (uint64) {
         return _getEpochAtIndex(epochIndex).startDate;
     }

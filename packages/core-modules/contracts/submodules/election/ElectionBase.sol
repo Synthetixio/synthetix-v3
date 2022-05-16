@@ -1,11 +1,10 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@synthetixio/core-contracts/contracts/initializable/InitializableMixin.sol";
 import "../../storage/ElectionStorage.sol";
 
 /// @dev Common utils, errors, and events to be used by any contracts that conform the ElectionModule
-contract ElectionBase is ElectionStorage, InitializableMixin {
+contract ElectionBase is ElectionStorage {
     // ---------------------------------------
     // Enums
     // ---------------------------------------
@@ -73,10 +72,6 @@ contract ElectionBase is ElectionStorage, InitializableMixin {
     // ---------------------------------------
     // Helpers
     // ---------------------------------------
-
-    function _isInitialized() internal view override returns (bool) {
-        return _electionStore().initialized;
-    }
 
     function _createNewEpoch() internal virtual {
         ElectionStore storage store = _electionStore();
