@@ -90,21 +90,6 @@ interface IElectionModule {
     // View functions
     // ---------------------------------------
 
-    /// @notice Returns the vote power of user in the current election
-    function getVotePower(address user) external view returns (uint);
-
-    /// @notice Returns the number of votes a candidate received. Requires the election to be partially or totally evaluated
-    function getCandidateVotes(address candidate) external view returns (uint);
-
-    /// @notice Returns the winners of the current election. Requires the election to be partially or totally evaluated
-    function getElectionWinners() external view returns (address[] memory);
-
-    /// @notice Returns the current NFT token holders
-    function getCouncilMembers() external view returns (address[] memory);
-
-    /// @notice Hashes a list of candidates (used for identifying and storing ballots)
-    function calculateBallotId(address[] calldata candidates) external pure returns (bytes32);
-
     /// @notice Exposes minimum durations required when adjusting epoch schedules
     function getMinEpochDurations()
         external
@@ -142,30 +127,45 @@ interface IElectionModule {
     /// @notice Returns the date in which the Voting period in the current epoch will start
     function getVotingPeriodStartDate() external view returns (uint64);
 
+    /// @notice Returns the current period type: Administration, Nomination, Voting, Evaluation
+    function getCurrentPeriod() external view returns (uint);
+
+    /// @notice Shows if a candidate has been nominated in the current epoch
+    function isNominated(address candidate) external view returns (bool);
+
+    /// @notice Returns a list of all nominated candidates in the current epoch
+    function getNominees() external view returns (address[] memory);
+
+    /// @notice Hashes a list of candidates (used for identifying and storing ballots)
+    function calculateBallotId(address[] calldata candidates) external pure returns (bytes32);
+
+    /// @notice Returns the ballot id that user voted on in the current election
+    function getBallotVoted(address user) external view returns (bytes32);
+
+    /// @notice Returns if user has voted in the current election
+    function hasVoted(address user) external view returns (bool);
+
+    /// @notice Returns the vote power of user in the current election
+    function getVotePower(address user) external view returns (uint);
+
     /// @notice Returns the number of votes given to a particular ballot
     function getBallotVotes(bytes32 ballotId) external view returns (uint);
 
     /// @notice Returns the list of candidates that a particular ballot has
     function getBallotCandidates(bytes32 ballotId) external view returns (address[] memory);
 
-    /// @notice Returns the current period type: Administration, Nomination, Voting, Evaluation
-    function getCurrentPeriod() external view returns (uint);
+    /// @notice Returns whether all ballots in the current election have been counted
+    function isElectionEvaluated() external view returns (bool);
 
-    /// @notice Returns a list of all nominated candidates in the current epoch
-    function getNominees() external view returns (address[] memory);
+    /// @notice Returns the number of votes a candidate received. Requires the election to be partially or totally evaluated
+    function getCandidateVotes(address candidate) external view returns (uint);
+
+    /// @notice Returns the winners of the current election. Requires the election to be partially or totally evaluated
+    function getElectionWinners() external view returns (address[] memory);
 
     /// @notice Returns the address of the council NFT token
     function getCouncilToken() external view returns (address);
 
-    /// @notice Returns if user has voted in the current election
-    function hasVoted(address user) external view returns (bool);
-
-    /// @notice Returns whether all ballots in the current election have been counted
-    function isElectionEvaluated() external view returns (bool);
-
-    /// @notice Returns the ballot id that user voted on in the current election
-    function getBallotVoted(address user) external view returns (bytes32);
-
-    /// @notice Shows if a candidate has been nominated in the current epoch
-    function isNominated(address candidate) external view returns (bool);
+    /// @notice Returns the current NFT token holders
+    function getCouncilMembers() external view returns (address[] memory);
 }

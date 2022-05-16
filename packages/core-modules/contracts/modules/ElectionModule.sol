@@ -244,26 +244,6 @@ contract ElectionModule is
         emit EpochStarted(_getCurrentEpochIndex());
     }
 
-    function getVotePower(address user) external view override returns (uint) {
-        return _getVotePower(user);
-    }
-
-    function getCandidateVotes(address candidate) external view override returns (uint) {
-        return _getCurrentElection().candidateVotes[candidate];
-    }
-
-    function getElectionWinners() external view override returns (address[] memory) {
-        return _getCurrentElection().winners.values();
-    }
-
-    function getCouncilMembers() external view override returns (address[] memory) {
-        return _electionStore().councilMembers.values();
-    }
-
-    function calculateBallotId(address[] calldata candidates) external pure override returns (bytes32) {
-        return _calculateBallotId(candidates);
-    }
-
     function getMinEpochDurations()
         external
         view
@@ -315,6 +295,34 @@ contract ElectionModule is
         return _getCurrentEpoch().votingPeriodStartDate;
     }
 
+    function getCurrentPeriod() external view override returns (uint) {
+        return uint(_getCurrentPeriod());
+    }
+
+    function isNominated(address candidate) external view override returns (bool) {
+        return _getCurrentElection().nominees.contains(candidate);
+    }
+
+    function getNominees() external view override returns (address[] memory) {
+        return _getCurrentElection().nominees.values();
+    }
+
+    function calculateBallotId(address[] calldata candidates) external pure override returns (bytes32) {
+        return _calculateBallotId(candidates);
+    }
+
+    function getBallotVoted(address user) public view override returns (bytes32) {
+        return _getBallotVoted(user);
+    }
+
+    function hasVoted(address user) public view override returns (bool) {
+        return _hasVoted(user);
+    }
+
+    function getVotePower(address user) external view override returns (uint) {
+        return _getVotePower(user);
+    }
+
     function getBallotVotes(bytes32 ballotId) external view override returns (uint) {
         return _getBallot(ballotId).votes;
     }
@@ -323,31 +331,23 @@ contract ElectionModule is
         return _getBallot(ballotId).candidates;
     }
 
-    function getCurrentPeriod() external view override returns (uint) {
-        return uint(_getCurrentPeriod());
+    function isElectionEvaluated() public view override returns (bool) {
+        return _getCurrentElection().evaluated;
     }
 
-    function getNominees() external view override returns (address[] memory) {
-        return _getCurrentElection().nominees.values();
+    function getCandidateVotes(address candidate) external view override returns (uint) {
+        return _getCurrentElection().candidateVotes[candidate];
+    }
+
+    function getElectionWinners() external view override returns (address[] memory) {
+        return _getCurrentElection().winners.values();
     }
 
     function getCouncilToken() public view override returns (address) {
         return _electionStore().councilToken;
     }
 
-    function hasVoted(address user) public view override returns (bool) {
-        return _hasVoted(user);
-    }
-
-    function isElectionEvaluated() public view override returns (bool) {
-        return _getCurrentElection().evaluated;
-    }
-
-    function getBallotVoted(address user) public view override returns (bytes32) {
-        return _getBallotVoted(user);
-    }
-
-    function isNominated(address candidate) external view override returns (bool) {
-        return _getCurrentElection().nominees.contains(candidate);
+    function getCouncilMembers() external view override returns (address[] memory) {
+        return _electionStore().councilMembers.values();
     }
 }
