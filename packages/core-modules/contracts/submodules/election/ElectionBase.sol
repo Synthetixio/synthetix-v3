@@ -128,8 +128,4 @@ contract ElectionBase is ElectionStorage, InitializableMixin {
     function _getBallotVoted(address user) internal view returns (bytes32) {
         return _getCurrentElection().ballotIdsByAddress[user];
     }
-
-    function _hasVoted(address user) internal view returns (bool) {
-        return _getBallotVoted(user) != bytes32(0);
-    }
 }

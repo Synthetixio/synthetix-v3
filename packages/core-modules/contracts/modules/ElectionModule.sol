@@ -192,7 +192,7 @@ contract ElectionModule is
 
         bytes32 ballotId;
 
-        if (_hasVoted(msg.sender)) {
+        if (hasVoted(msg.sender)) {
             _withdrawCastedVote(msg.sender);
         }
 
@@ -202,7 +202,7 @@ contract ElectionModule is
     }
 
     function withdrawVote() external {
-        if (!_hasVoted(msg.sender)) {
+        if (!hasVoted(msg.sender)) {
             revert VoteNotCasted();
         }
 
@@ -316,7 +316,7 @@ contract ElectionModule is
     }
 
     function hasVoted(address user) public view override returns (bool) {
-        return _hasVoted(user);
+        return _getBallotVoted(user) != bytes32(0);
     }
 
     function getVotePower(address user) external view override returns (uint) {
