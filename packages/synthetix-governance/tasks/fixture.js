@@ -74,7 +74,7 @@ task(TASK_FIXTURE_CANDIDATES, 'Create fixture candidate nominations')
 
     const withdrawnCandidates = pickRand(candidates, Number(withdrawAmount));
 
-    console.log(`Withdrawing ${withdrawAmount.length} candidates on ${address}\n`);
+    console.log(`Withdrawing ${withdrawAmount} candidates on ${address}`);
 
     await Promise.all(
       withdrawnCandidates.map(async (candidate) => {
@@ -84,7 +84,7 @@ task(TASK_FIXTURE_CANDIDATES, 'Create fixture candidate nominations')
       })
     );
 
-    if (Number(withdrawAmount) > 0) console.log();
+    console.log();
 
     return candidates;
   });
@@ -116,7 +116,8 @@ task(TASK_FIXTURE_VOTES, 'Create fixture votes to nominated candidates')
 
     const ballots = createArray(ballotsCount).map(() => pickRand(candidates, ballotSize));
 
-    console.log('Votes Casted:');
+    console.log();
+    console.log('Votes Casted');
 
     await Promise.all(
       voters.map(async (voter) => {
@@ -126,6 +127,20 @@ task(TASK_FIXTURE_VOTES, 'Create fixture votes to nominated candidates')
         const tx = await ElectionModule.connect(voter).cast(ballot);
         await tx.wait();
         console.log(`  Voter: ${voter.address} | BallotId: ${ballotId} | VotePower: ${votePower}`);
+      })
+    );
+
+    // Withdraw a random amount of votes between 1/3 and 0
+    const votesToWithdraw = pickRand(voters, rand(0, Math.ceil(Number(amount) / 3)));
+    console.log();
+    console.log(`Withdrawing ${votesToWithdraw.length} votes `);
+
+    await Promise.all(
+      votesToWithdraw.map(async (voter) => {
+        const votePower = await ElectionModule.getVotePower(voter.address);
+        const tx = await ElectionModule.connect(voter).withdrawVote();
+        await tx.wait();
+        console.log(`  Voter: ${voter.address} | VotePower: ${votePower}`);
       })
     );
 
@@ -177,6 +192,7 @@ task(TASK_FIXTURE_EVALUATE, 'Evaluate current election')
 
       const batchEvent = findEvent({ receipt, eventName: 'ElectionBatchEvaluated' });
       if (batchEvent) {
+        console.log(batchEvent);
         console.log('Election batch evaluated');
         console.log('  epochIndex: ', Number(evaluatedEvent.args.epochIndex));
         console.log('  evaluatedBallots: ', Number(evaluatedEvent.args.evaluatedBallots));
@@ -196,7 +212,7 @@ task(TASK_FIXTURE_EVALUATE, 'Evaluate current election')
     console.log(
       `Election resolved, started new epoch index ${epochStartedEvent.args.epochIndex}\n`
     );
-    console.log(`There is ${members.length} Members whom are`);
+    console.log(`Current council members (${members.length}):`);
     members.forEach((address) => console.log('  - ', address));
   });
 
