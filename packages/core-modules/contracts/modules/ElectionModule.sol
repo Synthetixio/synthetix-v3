@@ -9,7 +9,6 @@ import "../submodules/election/ElectionCredentials.sol";
 import "../submodules/election/ElectionVotes.sol";
 import "../submodules/election/ElectionTally.sol";
 
-/// @title Module for electing a council, represented by a set of NFT holders
 contract ElectionModule is
     IElectionModule,
     ElectionSchedule,

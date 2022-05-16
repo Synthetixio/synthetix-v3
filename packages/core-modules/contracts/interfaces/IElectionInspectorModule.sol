@@ -1,6 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+/// @title Module that simply adds view functions to retrieve additional info from the election module, such as historical election info
 interface IElectionInspectorModule {
     // ---------------------------------------
     // Initialization

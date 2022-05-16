@@ -4,7 +4,6 @@ pragma solidity ^0.8.0;
 import "../interfaces/IElectionInspectorModule.sol";
 import "../submodules/election/ElectionBase.sol";
 
-/// @title Module that simply adds view functions to retrieve additional info from the election module, such as historical election info
 contract ElectionInspectorModule is IElectionInspectorModule, ElectionBase {
     using SetUtil for SetUtil.AddressSet;
 

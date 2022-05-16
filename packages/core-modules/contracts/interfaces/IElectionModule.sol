@@ -1,6 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+/// @title Module for electing a council, represented by a set of NFT holders
 interface IElectionModule {
     // ---------------------------------------
     // Initialization
