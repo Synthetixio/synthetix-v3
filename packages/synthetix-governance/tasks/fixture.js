@@ -47,7 +47,7 @@ task(TASK_FIXTURE_WALLETS, 'Create fixture wallets')
 
 task(TASK_FIXTURE_CANDIDATES, 'Create fixture candidate nominations')
   .addParam('address', 'Deployed election module proxy address', undefined, types.address)
-  .addOptionalParam('nominateAmount', 'Amount of candidates to fixture', '12', types.int)
+  .addOptionalParam('nominateAmount', 'Amount of candidates to fixture', '14', types.int)
   .addOptionalParam('withdrawAmount', 'Amount of candidates to withdraw nomination', '2', types.int)
   .setAction(async ({ address, nominateAmount, withdrawAmount }, hre) => {
     const ElectionModule = await hre.ethers.getContractAt(
@@ -61,7 +61,7 @@ task(TASK_FIXTURE_CANDIDATES, 'Create fixture candidate nominations')
       throw new Error('The election is not on ElectionPeriod.Nomination');
     }
 
-    const candidates = await hre.run(TASK_FIXTURE_WALLETS, { nominateAmount });
+    const candidates = await hre.run(TASK_FIXTURE_WALLETS, { amount: nominateAmount });
 
     console.log(`Nominating ${nominateAmount} candidates on ${address}\n`);
 
@@ -72,17 +72,19 @@ task(TASK_FIXTURE_CANDIDATES, 'Create fixture candidate nominations')
       })
     );
 
-    const withdrawnCandidates = candidates.splice(0, withdrawAmount);
+    const withdrawnCandidates = pickRand(candidates, Number(withdrawAmount));
 
     console.log(`Withdrawing ${withdrawAmount.length} candidates on ${address}\n`);
 
     await Promise.all(
       withdrawnCandidates.map(async (candidate) => {
-        console.log(candidate.address);
+        console.log('  - ', candidate.address);
         const tx = await ElectionModule.connect(candidate).withdrawNomination();
         await tx.wait();
       })
     );
+
+    if (Number(withdrawAmount) > 0) console.log();
 
     return candidates;
   });
@@ -133,9 +135,7 @@ task(TASK_FIXTURE_VOTES, 'Create fixture votes to nominated candidates')
         const votes = await ElectionModule.getBallotVotes(ballotId);
         console.log('BallotId: ', ballotId);
         console.log('Candidates:');
-        ballot.forEach((address, i) => {
-          console.log(` #${i}: `, address);
-        });
+        ballot.forEach((address, i) => console.log(` #${i}: `, address));
         console.log('Vote Count: ', votes.toString());
         console.log();
       })
@@ -193,7 +193,8 @@ task(TASK_FIXTURE_EVALUATE, 'Evaluate current election')
     console.log(
       `Election resolved, started new epoch index ${epochStartedEvent.args.epochIndex}\n`
     );
-    console.log(`There is ${members.length} Members whom are ${members.map((e) => `${e}\n`)}\n`);
+    console.log(`There is ${members.length} Members whom are`);
+    members.forEach((address) => console.log('  - ', address));
   });
 
 task(TASK_FIXTURE_EPOCHS, 'Complete an epoch with fixtured data')
@@ -207,7 +208,7 @@ task(TASK_FIXTURE_EPOCHS, 'Complete an epoch with fixtured data')
       address
     );
 
-    for (let i = 0; i < amount; i++) {
+    for (let i = 0; i < Number(amount); i++) {
       let currentPeriod = Number(await ElectionModule.getCurrentPeriod());
 
       if (currentPeriod === ElectionPeriod.Administration) {
@@ -217,7 +218,6 @@ task(TASK_FIXTURE_EPOCHS, 'Complete an epoch with fixtured data')
 
       if (currentPeriod === ElectionPeriod.Nomination) {
         await hre.run(TASK_FIXTURE_CANDIDATES, { address, amount: candidates });
-
         await hre.run(TASK_FAST_FORWARD_TO, { address, period: 'vote' });
         currentPeriod = ElectionPeriod.Vote;
       }
