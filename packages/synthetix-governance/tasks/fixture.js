@@ -116,18 +116,21 @@ task(TASK_FIXTURE_VOTES, 'Create fixture votes to nominated candidates')
 
     const ballots = createArray(ballotsCount).map(() => pickRand(candidates, ballotSize));
 
-    /**
-     * @MATI - can you add a case where some of the voters withdraw - and log it somehow to console?
-     * i did the withdraw nomination already
-     * */
+    console.log('Votes Casted:');
 
     await Promise.all(
       voters.map(async (voter) => {
         const [ballot] = pickRand(ballots, 1);
+        const ballotId = await ElectionModule.calculateBallotId(ballot);
+        const votePower = await ElectionModule.getVotePower(voter.address);
         const tx = await ElectionModule.connect(voter).cast(ballot);
         await tx.wait();
+        console.log(`  Voter: ${voter.address} | BallotId: ${ballotId} | VotePower: ${votePower}`);
       })
     );
+
+    console.log();
+    console.log('Voting Results:');
 
     await Promise.all(
       ballots.map(async (ballot) => {
