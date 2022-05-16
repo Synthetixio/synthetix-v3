@@ -99,11 +99,19 @@ interface IElectionModule {
 
     function getEpochStartDate() external view returns (uint64);
 
+    function getEpochStartDateForIndex(uint epochIndex) external view returns (uint64);
+
     function getEpochEndDate() external view returns (uint64);
+
+    function getEpochEndDateForIndex(uint epochIndex) external view returns (uint64);
 
     function getNominationPeriodStartDate() external view returns (uint64);
 
+    function getNominationPeriodStartDateForIndex(uint epochIndex) external view returns (uint64);
+
     function getVotingPeriodStartDate() external view returns (uint64);
+
+    function getVotingPeriodStartDateForIndex(uint epochIndex) external view returns (uint64);
 
     function getCurrentPeriod() external view returns (uint);
 
@@ -112,7 +120,11 @@ interface IElectionModule {
 
     function isNominated(address candidate) external view returns (bool);
 
+    function wasNominated(address candidate, uint epochIndex) external view returns (bool);
+
     function getNominees() external view returns (address[] memory);
+
+    function getNomineesAtEpoch(uint epochIndex) external view returns (address[] memory);
 
     // Votes
     // ~~~~~~~~~~~~~~~~~~
@@ -121,13 +133,21 @@ interface IElectionModule {
 
     function getBallotVoted(address user) external view returns (bytes32);
 
+    function getBallotVotedAtEpoch(address user, uint epochIndex) external view returns (bytes32);
+
     function hasVoted(address user) external view returns (bool);
+
+    function hasVotedInEpoch(address user, uint epochIndex) external view returns (bool);
 
     function getVotePower(address user) external view returns (uint);
 
     function getBallotVotes(bytes32 ballotId) external view returns (uint);
 
+    function getBallotVotesInEpoch(bytes32 ballotId, uint epochIndex) external view returns (uint);
+
     function getBallotCandidates(bytes32 ballotId) external view returns (address[] memory);
+
+    function getBallotCandidatesInEpoch(bytes32 ballotId, uint epochIndex) external view returns (address[] memory);
 
     // Resolutions
     // ~~~~~~~~~~~~~~~~~~
@@ -136,7 +156,11 @@ interface IElectionModule {
 
     function getCandidateVotes(address candidate) external view returns (uint);
 
+    function getCandidateVotesInEpoch(address candidate, uint epochIndex) external view returns (uint);
+
     function getElectionWinners() external view returns (address[] memory);
+
+    function getElectionWinnersInEpoch(uint epochIndex) external view returns (address[] memory);
 
     // Credentials
     // ~~~~~~~~~~~~~~~~~~

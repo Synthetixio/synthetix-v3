@@ -90,27 +90,31 @@ contract ElectionBase is ElectionStorage, InitializableMixin {
     }
 
     function _getCurrentEpoch() internal view returns (EpochData storage) {
-        return _getEpochAtPosition(_getCurrentEpochIndex());
+        return _getEpochAtIndex(_getCurrentEpochIndex());
     }
 
-    function _getLastEpoch() internal view returns (EpochData storage) {
-        return _getEpochAtPosition(_getCurrentEpochIndex() - 1);
+    function _getPreviousEpoch() internal view returns (EpochData storage) {
+        return _getEpochAtIndex(_getCurrentEpochIndex() - 1);
     }
 
-    function _getEpochAtPosition(uint position) internal view returns (EpochData storage) {
+    function _getEpochAtIndex(uint position) internal view returns (EpochData storage) {
         return _electionStore().epochs[position];
     }
 
     function _getCurrentElection() internal view returns (ElectionData storage) {
-        return _getElectionAtPosition(_getCurrentEpochIndex());
+        return _getElectionAtIndex(_getCurrentEpochIndex());
     }
 
-    function _getElectionAtPosition(uint position) internal view returns (ElectionData storage) {
+    function _getElectionAtIndex(uint position) internal view returns (ElectionData storage) {
         return _electionStore().elections[position];
     }
 
     function _getBallot(bytes32 ballotId) internal view returns (BallotData storage) {
         return _getCurrentElection().ballotsById[ballotId];
+    }
+
+    function _getBallotInEpoch(bytes32 ballotId, uint epochIndex) internal view returns (BallotData storage) {
+        return _getElectionAtIndex(epochIndex).ballotsById[ballotId];
     }
 
     function _calculateBallotId(address[] memory candidates) internal pure returns (bytes32) {
