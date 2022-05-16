@@ -55,10 +55,7 @@ describe('ElectionModule (cast)', () => {
 
     describe('when entering the nomiantion period', function () {
       before('fast forward', async function () {
-        await fastForwardTo(
-          await ElectionModule.getNominationPeriodStartDate(),
-          ethers.provider
-        );
+        await fastForwardTo(await ElectionModule.getNominationPeriodStartDate(), ethers.provider);
       });
 
       it('shows that the current period is Nomination', async function () {
@@ -75,10 +72,7 @@ describe('ElectionModule (cast)', () => {
 
         describe('when entering the election period', function () {
           before('fast forward', async function () {
-            await fastForwardTo(
-              await ElectionModule.getVotingPeriodStartDate(),
-              ethers.provider
-            );
+            await fastForwardTo(await ElectionModule.getVotingPeriodStartDate(), ethers.provider);
           });
 
           it('shows that the current period is Vote', async function () {
@@ -180,26 +174,11 @@ describe('ElectionModule (cast)', () => {
             });
 
             it('can retrieve the corresponding ballot that users voted on', async function () {
-              assert.equal(
-                await ElectionModule.getBallotVoted(voter1.address),
-                ballot1.id
-              );
-              assert.equal(
-                await ElectionModule.getBallotVoted(voter2.address),
-                ballot2.id
-              );
-              assert.equal(
-                await ElectionModule.getBallotVoted(voter3.address),
-                ballot1.id
-              );
-              assert.equal(
-                await ElectionModule.getBallotVoted(voter4.address),
-                ballot1.id
-              );
-              assert.equal(
-                await ElectionModule.getBallotVoted(voter5.address),
-                ballot2.id
-              );
+              assert.equal(await ElectionModule.getBallotVoted(voter1.address), ballot1.id);
+              assert.equal(await ElectionModule.getBallotVoted(voter2.address), ballot2.id);
+              assert.equal(await ElectionModule.getBallotVoted(voter3.address), ballot1.id);
+              assert.equal(await ElectionModule.getBallotVoted(voter4.address), ballot1.id);
+              assert.equal(await ElectionModule.getBallotVoted(voter5.address), ballot2.id);
             });
 
             it('can retrieve ballot votes', async function () {
@@ -246,10 +225,7 @@ describe('ElectionModule (cast)', () => {
               });
 
               it('can retrieve the corresponding ballot that users voted on', async function () {
-                assert.equal(
-                  await ElectionModule.getBallotVoted(voter5.address),
-                  ballot3.id
-                );
+                assert.equal(await ElectionModule.getBallotVoted(voter5.address), ballot3.id);
               });
 
               it('can retrieve ballot votes', async function () {
