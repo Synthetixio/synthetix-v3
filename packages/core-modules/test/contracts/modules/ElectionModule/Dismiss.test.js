@@ -139,6 +139,7 @@ describe('ElectionModule (dismiss)', () => {
 
         assert.ok(event);
         assert.deepEqual(event.args.members, [user2.address]);
+        assertBn.equal(event.args.epochIndex, 1);
       });
 
       it('shows that the current period is Administration', async function () {
@@ -180,12 +181,14 @@ describe('ElectionModule (dismiss)', () => {
 
         assert.ok(event);
         assert.deepEqual(event.args.members, [user1.address, user2.address]);
+        assertBn.equal(event.args.epochIndex, 1);
       });
 
       it('emitted an EmergencyElectionStarted event', async function () {
         const event = findEvent({ receipt, eventName: 'EmergencyElectionStarted' });
 
         assert.ok(event);
+        assertBn.equal(event.args.epochIndex, 1);
       });
 
       it('shows that the current period is Nomination', async function () {
@@ -241,6 +244,7 @@ describe('ElectionModule (dismiss)', () => {
 
         assert.ok(event);
         assert.deepEqual(event.args.members, [user1.address, user2.address]);
+        assertBn.equal(event.args.epochIndex, 1);
       });
 
       it('did not emit an EmergencyElectionStarted event', async function () {
@@ -309,6 +313,7 @@ describe('ElectionModule (dismiss)', () => {
 
         assert.ok(event);
         assert.deepEqual(event.args.members, [user1.address, user2.address]);
+        assertBn.equal(event.args.epochIndex, 1);
       });
 
       it('did not emit an EmergencyElectionStarted event', async function () {

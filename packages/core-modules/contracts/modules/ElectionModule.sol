@@ -53,7 +53,7 @@ contract ElectionModule is
         _configureEpochSchedule(firstEpoch, epochStartDate, nominationPeriodStartDate, votingPeriodStartDate, epochEndDate);
 
         _createCouncilToken(councilTokenName, councilTokenSymbol);
-        _addCouncilMembers(firstCouncil);
+        _addCouncilMembers(firstCouncil, 0);
 
         store.initialized = true;
 
@@ -155,9 +155,11 @@ contract ElectionModule is
     }
 
     function dismissMembers(address[] calldata membersToDismiss) external override onlyOwner {
-        _removeCouncilMembers(membersToDismiss);
+        uint epochIndex = _getCurrentEpochIndex();
 
-        emit CouncilMembersDismissed(membersToDismiss);
+        _removeCouncilMembers(membersToDismiss, epochIndex);
+
+        emit CouncilMembersDismissed(membersToDismiss, epochIndex);
 
         // Don't immediately jump to an election if the council still has enough members
         if (_getCurrentPeriod() != ElectionPeriod.Administration) return;
@@ -165,7 +167,7 @@ contract ElectionModule is
 
         _jumpToNominationPeriod();
 
-        emit EmergencyElectionStarted();
+        emit EmergencyElectionStarted(epochIndex);
     }
 
     function nominate() public virtual override onlyInPeriod(ElectionPeriod.Nomination) {
@@ -175,7 +177,7 @@ contract ElectionModule is
 
         nominees.add(msg.sender);
 
-        emit CandidateNominated(msg.sender);
+        emit CandidateNominated(msg.sender, _getCurrentEpochIndex());
     }
 
     function withdrawNomination() external override onlyInPeriod(ElectionPeriod.Nomination) {
@@ -185,7 +187,7 @@ contract ElectionModule is
 
         nominees.remove(msg.sender);
 
-        emit NominationWithdrawn(msg.sender);
+        emit NominationWithdrawn(msg.sender, _getCurrentEpochIndex());
     }
 
     /// @dev ElectionVotes needs to be extended to specify what determines voting power
@@ -198,13 +200,15 @@ contract ElectionModule is
 
         bytes32 ballotId;
 
+        uint epochIndex = _getCurrentEpochIndex();
+
         if (hasVoted(msg.sender)) {
-            _withdrawCastedVote(msg.sender);
+            _withdrawCastedVote(msg.sender, epochIndex);
         }
 
         ballotId = _recordVote(msg.sender, votePower, candidates);
 
-        emit VoteRecorded(msg.sender, ballotId, votePower);
+        emit VoteRecorded(msg.sender, ballotId, epochIndex, votePower);
     }
 
     function withdrawVote() external {
@@ -212,7 +216,7 @@ contract ElectionModule is
             revert VoteNotCasted();
         }
 
-        _withdrawCastedVote(msg.sender);
+        _withdrawCastedVote(msg.sender, _getCurrentEpochIndex());
     }
 
     /// @dev ElectionTally needs to be extended to specify how votes are counted
@@ -241,16 +245,17 @@ contract ElectionModule is
 
         if (!election.evaluated) revert ElectionNotEvaluated();
 
-        _removeAllCouncilMembers();
-        _addCouncilMembers(election.winners.values());
+        uint newEpochIndex = _getCurrentEpochIndex() + 1;
+
+        _removeAllCouncilMembers(newEpochIndex);
+        _addCouncilMembers(election.winners.values(), newEpochIndex);
 
         election.resolved = true;
 
         _createNewEpoch();
-
         _copyScheduleFromPreviousEpoch();
 
-        emit EpochStarted(_getCurrentEpochIndex());
+        emit EpochStarted(newEpochIndex);
     }
 
     function getMinEpochDurations()

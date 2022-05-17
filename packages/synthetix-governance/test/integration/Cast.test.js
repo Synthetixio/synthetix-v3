@@ -239,6 +239,7 @@ describe('SynthetixElectionModule - integration (cast)', function () {
             assertBn.equal(event.args.voter, voter5.address);
             assert.equal(event.args.ballotId, ballot2.id);
             assertBn.equal(event.args.votePower, ethers.BigNumber.from('430359032721'));
+            assertBn.equal(event.args.epochIndex, 0);
           });
 
           it('can retrieve the corresponding ballot that users voted on', async function () {
@@ -293,12 +294,14 @@ describe('SynthetixElectionModule - integration (cast)', function () {
               assertBn.equal(event.args.voter, voter5.address);
               assert.equal(event.args.ballotId, ballot2.id);
               assertBn.equal(event.args.votePower, ethers.BigNumber.from('430359032721'));
+              assertBn.equal(event.args.epochIndex, 0);
 
               event = findEvent({ receipt, eventName: 'VoteRecorded' });
               assert.ok(event);
               assertBn.equal(event.args.voter, voter5.address);
               assert.equal(event.args.ballotId, ballot3.id);
               assertBn.equal(event.args.votePower, ethers.BigNumber.from('430359032721'));
+              assertBn.equal(event.args.epochIndex, 0);
             });
 
             it('can retrieve the corresponding ballot that users voted on', async function () {

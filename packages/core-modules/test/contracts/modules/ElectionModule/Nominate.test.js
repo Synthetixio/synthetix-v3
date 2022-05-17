@@ -111,6 +111,7 @@ describe('ElectionModule (nominate)', () => {
 
           assert.ok(event);
           assertBn.equal(event.args.candidate, user.address);
+          assertBn.equal(event.args.epochIndex, 0);
         });
 
         itProperlyRecordsNominees();
@@ -149,6 +150,7 @@ describe('ElectionModule (nominate)', () => {
 
               assert.ok(event);
               assertBn.equal(event.args.candidate, user.address);
+              assertBn.equal(event.args.epochIndex, 0);
             });
 
             itProperlyRecordsNominees();
