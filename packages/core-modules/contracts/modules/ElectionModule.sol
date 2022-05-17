@@ -248,14 +248,11 @@ contract ElectionModule is
         uint newEpochIndex = _getCurrentEpochIndex() + 1;
 
         _removeAllCouncilMembers();
-        _addCouncilMembers(_getCurrentElection().winners.values(), newEpochIndex);
-
-        _addCouncilMembers(election.winners.values(), );
+        _addCouncilMembers(election.winners.values(), newEpochIndex);
 
         election.resolved = true;
 
         _createNewEpoch();
-
         _copyScheduleFromPreviousEpoch();
 
         emit EpochStarted(newEpochIndex);
