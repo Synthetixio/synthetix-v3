@@ -53,4 +53,11 @@ interface ICollateralModule {
     function getAccountFreeCollateral(uint accountId, address collateralType) external view returns (uint);
 
     function getAccountUnassignedCollateral(uint accountId, address collateralType) external view returns (uint);
+
+    function cleanExpiredLockes(
+        uint accountId,
+        address collateralType,
+        uint offset,
+        uint items
+    ) external;
 }
