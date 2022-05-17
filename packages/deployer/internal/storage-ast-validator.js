@@ -126,6 +126,23 @@ class ModuleStorageASTValidator {
     return errors;
   }
 
+  async findNestedStructDeclarations() {
+    const errors = [];
+
+    const structsMap = await buildContractsStructMap(this.contractNodes);
+
+    for (const structMap of structsMap) {
+      const structMembers = structMap.struct.members.filter((v) => v.type.startsWith('struct'));
+      if (structMembers.length > 0) {
+        errors.push({
+          msg: `Nested structs at ${structMap.contract.name}.${structMap.struct.name}`,
+        });
+      }
+    }
+
+    return errors;
+  }
+
   async findInvalidNamespaceMutations() {
     const errors = [];
 

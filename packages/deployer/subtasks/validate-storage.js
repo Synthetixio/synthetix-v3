@@ -29,6 +29,7 @@ subtask(SUBTASK_VALIDATE_STORAGE).setAction(async (_, hre) => {
 
   const warningsFound = [];
   warningsFound.push(...validator.findNamespaceSlotChanges());
+  warningsFound.push(...(await validator.findNestedStructDeclarations()));
 
   for (const warning of warningsFound) {
     await prompter.ask(`Warning: ${warning.msg}. Do you wish to continue anyway?`);
