@@ -144,13 +144,13 @@ contract ElectionSchedule is ElectionBase {
 
     /// @dev Copies the current epoch schedule to the next epoch, maintaining durations
     function _copyScheduleFromPreviousEpoch() internal {
-        EpochData storage lastEpoch = _getLastEpoch();
+        EpochData storage previousEpoch = _getPreviousEpoch();
         EpochData storage currentEpoch = _getCurrentEpoch();
 
         uint64 currentEpochStartDate = uint64(block.timestamp);
-        uint64 currentEpochEndDate = currentEpochStartDate + _getEpochDuration(lastEpoch);
-        uint64 currentVotingPeriodStartDate = currentEpochEndDate - _getVotingPeriodDuration(lastEpoch);
-        uint64 currentNominationPeriodStartDate = currentVotingPeriodStartDate - _getNominationPeriodDuration(lastEpoch);
+        uint64 currentEpochEndDate = currentEpochStartDate + _getEpochDuration(previousEpoch);
+        uint64 currentVotingPeriodStartDate = currentEpochEndDate - _getVotingPeriodDuration(previousEpoch);
+        uint64 currentNominationPeriodStartDate = currentVotingPeriodStartDate - _getNominationPeriodDuration(previousEpoch);
 
         _configureEpochSchedule(
             currentEpoch,
