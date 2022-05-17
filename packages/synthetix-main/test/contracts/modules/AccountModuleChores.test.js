@@ -5,7 +5,7 @@ const { findEvent } = require('@synthetixio/core-js/utils/ethers/events');
 const { bootstrap } = require('@synthetixio/deployer/utils/tests');
 const initializer = require('../../helpers/initializer');
 
-describe('AccountModule', function () {
+describe('AccountModule - Chores', function () {
   const { proxyAddress } = bootstrap(initializer);
 
   let owner;
@@ -14,32 +14,32 @@ describe('AccountModule', function () {
     [owner] = await ethers.getSigners();
   });
 
-  describe('When creating the Account', async () => {
-    let AccountModule, accountAddress, Account;
+  describe('When creating the AccountToken', async () => {
+    let AccountModule, accountTokenAddress, AccountToken;
     before('identify modules', async () => {
       AccountModule = await ethers.getContractAt('AccountModule', proxyAddress());
     });
 
-    it('No Account is deployed', async () => {
+    it('No AccountToken is deployed', async () => {
       const address = await AccountModule.getAccountAddress();
       assert.equal(address, '0x0000000000000000000000000000000000000000');
     });
 
-    describe('When the Module is initialized (Account is created)', () => {
+    describe('When the Module is initialized (AccountToken is created)', () => {
       let receipt;
-      before('Initialize (Create a Account token)', async () => {
+      before('Initialize (Create a AccountToken token)', async () => {
         const tx = await AccountModule.connect(owner).initializeAccountModule();
         receipt = await tx.wait();
       });
 
-      before('Identify newly created Account', async () => {
+      before('Identify newly created AccountToken', async () => {
         const event = findEvent({ receipt, eventName: 'AccountCreated' });
-        accountAddress = event.args.accountAddress;
-        Account = await ethers.getContractAt('Account', accountAddress);
+        accountTokenAddress = event.args.accountAddress;
+        AccountToken = await ethers.getContractAt('AccountToken', accountTokenAddress);
       });
 
       it('emmited an event', async () => {
-        assert.notEqual(accountAddress, '0x0000000000000000000000000000000000000000');
+        assert.notEqual(accountTokenAddress, '0x0000000000000000000000000000000000000000');
       });
 
       it('is initialized', async () => {
@@ -48,23 +48,23 @@ describe('AccountModule', function () {
 
       it('gets the newly created address', async () => {
         const address = await AccountModule.getAccountAddress();
-        assert.equal(address, accountAddress);
+        assert.equal(address, accountTokenAddress);
       });
 
-      it('reads the Account parameters', async () => {
-        assert.equal(await Account.name(), 'Synthetix Account');
-        assert.equal(await Account.symbol(), 'synthethixAccount');
+      it('reads the AccountToken parameters', async () => {
+        assert.equal(await AccountToken.name(), 'Synthetix Account');
+        assert.equal(await AccountToken.symbol(), 'synthethixAccount');
       });
 
       it('gets the newly created satellite', async () => {
         const results = await AccountModule.getAccountModuleSatellites();
         assert.equal(results.length, 1);
         assert.equal(results[0].name, ethers.utils.formatBytes32String('synthethixAccount'));
-        assert.equal(results[0].contractName, ethers.utils.formatBytes32String('Account'));
-        assert.equal(results[0].deployedAddress, accountAddress);
+        assert.equal(results[0].contractName, ethers.utils.formatBytes32String('AccountToken'));
+        assert.equal(results[0].deployedAddress, accountTokenAddress);
       });
 
-      describe('When attempting to create the Account twice', () => {
+      describe('When attempting to create the AccountToken twice', () => {
         it('reverts', async () => {
           await assertRevert(
             AccountModule.connect(owner).initializeAccountModule(),
@@ -77,7 +77,7 @@ describe('AccountModule', function () {
         let AnotherAccount, NewAccount;
 
         before('Deploy new implementation', async () => {
-          const factory = await ethers.getContractFactory('Account');
+          const factory = await ethers.getContractFactory('AccountToken');
           AnotherAccount = await factory.deploy();
         });
 
@@ -90,11 +90,11 @@ describe('AccountModule', function () {
         });
 
         it('is upgraded', async () => {
-          NewAccount = await ethers.getContractAt('Account', accountAddress);
+          NewAccount = await ethers.getContractAt('AccountToken', accountTokenAddress);
           assert.equal(AnotherAccount.address, await NewAccount.getImplementation());
         });
 
-        it('reads the upgraded Account parameters', async () => {
+        it('reads the upgraded AccountToken parameters', async () => {
           assert.equal(await NewAccount.name(), 'Synthetix Account');
           assert.equal(await NewAccount.symbol(), 'synthethixAccount');
         });

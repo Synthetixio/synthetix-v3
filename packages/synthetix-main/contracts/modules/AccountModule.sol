@@ -37,11 +37,12 @@ contract AccountModule is IAccountModule, OwnableMixin, AccountRBACMixin, Initia
     function initializeAccountModule() external override onlyOwner onlyIfNotInitialized {
         AccountModuleStore storage store = _accountModuleStore();
 
-        AccountToken account = new AccountToken();
+        AccountToken firstImplementation = new AccountToken();
 
-        UUPSProxy accountProxy = new UUPSProxy(address(account));
+        UUPSProxy accountProxy = new UUPSProxy(address(firstImplementation));
 
         address accountProxyAddress = address(accountProxy);
+        AccountToken account = AccountToken(accountProxyAddress);
 
         account.nominateNewOwner(address(this));
         account.acceptOwnership();
@@ -49,7 +50,7 @@ contract AccountModule is IAccountModule, OwnableMixin, AccountRBACMixin, Initia
 
         store.account = Satellite({
             name: "synthethixAccount",
-            contractName: "Account",
+            contractName: "AccountToken",
             deployedAddress: accountProxyAddress
         });
 
