@@ -27,7 +27,7 @@ contract ElectionCredentials is ElectionBase {
         emit CouncilTokenCreated(address(proxy), address(implementation));
     }
 
-    function _removeAllCouncilMembers() internal {
+    function _removeAllCouncilMembers(uint epochIndex) internal {
         SetUtil.AddressSet storage members = _electionStore().councilMembers;
 
         uint numMembers = members.length();
@@ -35,7 +35,7 @@ contract ElectionCredentials is ElectionBase {
         for (uint memberIndex = 0; memberIndex < numMembers; memberIndex++) {
             // Always removes the first element in the array
             // until none are left.
-            _removeCouncilMember(members.valueAt(1));
+            _removeCouncilMember(members.valueAt(1), epochIndex);
         }
     }
 
@@ -48,12 +48,12 @@ contract ElectionCredentials is ElectionBase {
         }
     }
 
-    function _removeCouncilMembers(address[] memory membersToRemove) internal {
+    function _removeCouncilMembers(address[] memory membersToRemove, uint epochIndex) internal {
         uint numMembers = membersToRemove.length;
         if (numMembers == 0) revert ArrayError.EmptyArray();
 
         for (uint memberIndex = 0; memberIndex < numMembers; memberIndex++) {
-            _removeCouncilMember(membersToRemove[memberIndex]);
+            _removeCouncilMember(membersToRemove[memberIndex], epochIndex);
         }
     }
 
@@ -76,7 +76,7 @@ contract ElectionCredentials is ElectionBase {
         emit CouncilMemberAdded(newMember, epochIndex);
     }
 
-    function _removeCouncilMember(address member) internal {
+    function _removeCouncilMember(address member, uint epochIndex) internal {
         ElectionStore storage store = _electionStore();
         SetUtil.AddressSet storage members = store.councilMembers;
 
@@ -92,7 +92,7 @@ contract ElectionCredentials is ElectionBase {
         // tokenId = 0 means no associated token.
         store.councilTokenIds[member] = 0;
 
-        emit CouncilMemberRemoved(member);
+        emit CouncilMemberRemoved(member, epochIndex);
     }
 
     function _getCouncilToken() private view returns (CouncilToken) {

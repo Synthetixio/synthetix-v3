@@ -49,7 +49,7 @@ contract ElectionBase is ElectionStorage {
     event CouncilTokenCreated(address proxy, address implementation);
     event CouncilTokenUpgraded(address newImplementation);
     event CouncilMemberAdded(address indexed member, uint indexed epochIndex);
-    event CouncilMemberRemoved(address indexed member);
+    event CouncilMemberRemoved(address indexed member, uint indexed epochIndex);
     event CouncilMembersDismissed(address[] members, uint indexed epochIndex);
     event EpochScheduleUpdated(uint64 nominationPeriodStartDate, uint64 votingPeriodStartDate, uint64 epochEndDate);
     event MinimumEpochDurationsChanged(

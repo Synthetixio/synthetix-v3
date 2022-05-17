@@ -114,6 +114,7 @@ describe('ElectionModule (resolve)', () => {
             assert.ok(event);
 
             assert.equal(event.args.member, owner.address);
+            assertBn.equal(event.args.epochIndex, 1);
           });
 
           it('emitted CouncilMemberAdded events', async function () {
@@ -157,6 +158,8 @@ describe('ElectionModule (resolve)', () => {
             it('emitted CouncilMemberRemoved events', async function () {
               const events = findEvent({ receipt, eventName: 'CouncilMemberRemoved' });
               assert.ok(events);
+
+              events.forEach((event) => assertBn.equal(event.args.epochIndex, 2));
 
               const removedMembers = events.map((e) => e.args.member);
               assert.equal(removedMembers.length, 3);

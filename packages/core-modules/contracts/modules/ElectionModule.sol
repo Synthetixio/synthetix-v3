@@ -155,9 +155,9 @@ contract ElectionModule is
     }
 
     function dismissMembers(address[] calldata membersToDismiss) external override onlyOwner {
-        _removeCouncilMembers(membersToDismiss);
-
         uint epochIndex = _getCurrentEpochIndex();
+
+        _removeCouncilMembers(membersToDismiss, epochIndex);
 
         emit CouncilMembersDismissed(membersToDismiss, epochIndex);
 
@@ -247,7 +247,7 @@ contract ElectionModule is
 
         uint newEpochIndex = _getCurrentEpochIndex() + 1;
 
-        _removeAllCouncilMembers();
+        _removeAllCouncilMembers(newEpochIndex);
         _addCouncilMembers(election.winners.values(), newEpochIndex);
 
         election.resolved = true;
