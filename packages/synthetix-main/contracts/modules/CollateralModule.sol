@@ -188,7 +188,7 @@ contract CollateralModule is ICollateralModule, CollateralStorage, OwnableMixin,
         address collateralType,
         uint offset,
         uint items
-    ) external {
+    ) external override {
         _cleanExpiredLockes(
             _collateralStore().stakedCollateralsDataByAccountId[accountId][collateralType].locks,
             offset,

@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 import "@synthetixio/core-contracts/contracts/interfaces/ISatelliteFactory.sol";
 
-/// @title Module for managin account token (NFT) and accounts, each account is represented by an NFT
+/// @title Module for managing account token (NFT) and accounts, each account is represented by an NFT
 interface IAccountModule is ISatelliteFactory {
     /// @notice initializes the Account Module. Creates the AccountToken proxy and first implementation.
     function initializeAccountModule() external;
