@@ -217,6 +217,8 @@ contract ERC721 is IERC721, IERC721Metadata, ERC721Storage {
         store.balanceOf[to] += 1;
         store.ownerOf[tokenId] = to;
 
+        _postTransfer(from, to, tokenId);
+
         emit Transfer(from, to, tokenId);
     }
 
@@ -241,4 +243,10 @@ contract ERC721 is IERC721, IERC721Metadata, ERC721Storage {
             return true;
         }
     }
+
+    function _postTransfer(
+        address from,
+        address to,
+        uint256 tokenId // solhint-disable-next-line no-empty-blocks
+    ) internal virtual {}
 }

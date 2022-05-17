@@ -7,6 +7,8 @@ contract CollateralStorage {
     struct CollateralStore {
         mapping(address => CollateralData) collateralsData; // CollateralData per collateralType (address)
         SetUtil.AddressSet collaterals; // approved collaterals
+        // Staked Collaterals
+        mapping(uint => mapping(address => StakedCollateralData)) stakedCollateralsDataByAccountId;
     }
 
     struct CollateralData {
@@ -14,6 +16,18 @@ contract CollateralStorage {
         uint targetCRatio;
         uint minimumCRatio;
         address priceFeed;
+    }
+
+    struct StakedCollateralData {
+        bool isSet;
+        uint256 amount; // adjustable (stake/unstake)
+        uint256 assignedAmount; // adjustable (assign/unassign)
+        StakedCollateralLock[] locks;
+    }
+
+    struct StakedCollateralLock {
+        uint256 amount; // adjustable (stake/unstake)
+        uint64 lockExpirationTime; // adjustable (assign/unassign)
     }
 
     function _collateralStore() internal pure returns (CollateralStore storage store) {

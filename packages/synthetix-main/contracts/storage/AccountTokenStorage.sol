@@ -1,43 +1,10 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
-
 contract AccountTokenStorage {
     struct AccountStore {
         bool initialized;
-        mapping(uint256 => AccountData) accountsData; // AccountData by accountId
-        mapping(address => CollateralData) collateralsData; // CollateralData per collateralType (address)
-        SetUtil.AddressSet collaterals; // approved collaterals
-    }
-
-    struct CollateralData {
-        bool disabled;
-        uint targetCRatio;
-        uint minimumCRatio;
-        address priceFeed;
-    }
-
-    struct StakedCollateralData {
-        bool set;
-        uint256 amount; // adjustable (stake/unstake)
-        uint256 assignedAmount; // adjustable (assign/unassign)
-        StakedCollateralLock[] locks;
-    }
-
-    struct StakedCollateralLock {
-        uint256 amount; // adjustable (stake/unstake)
-        uint64 lockExpirationTime; // adjustable (assign/unassign)
-    }
-
-    struct AccountData {
-        // Permissions
-        mapping(address => SetUtil.Bytes32Set) permissions;
-        SetUtil.AddressSet permissionAddresses;
-        // Collaterals
-        mapping(address => StakedCollateralData) stakedCollateralsData;
-        // Funds
-        uint256[] subscribedFunds;
+        address mainProxy;
     }
 
     function _accountStore() internal pure returns (AccountStore storage store) {

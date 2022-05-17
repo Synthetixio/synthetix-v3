@@ -28,4 +28,29 @@ interface ICollateralModule {
             uint minimumCRatio,
             bool disabled
         );
+
+    function stake(
+        uint accountId,
+        address collateralType,
+        uint amount
+    ) external;
+
+    function unstake(
+        uint accountId,
+        address collateralType,
+        uint amount
+    ) external;
+
+    function getAccountCollateralTotals(uint accountId, address collateralType)
+        external
+        view
+        returns (
+            uint,
+            uint,
+            uint
+        );
+
+    function getAccountFreeCollateral(uint accountId, address collateralType) external view returns (uint);
+
+    function getAccountUnassignedCollateral(uint accountId, address collateralType) external view returns (uint);
 }
