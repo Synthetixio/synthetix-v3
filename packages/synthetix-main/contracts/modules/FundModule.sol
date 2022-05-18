@@ -536,7 +536,7 @@ contract FundModule is IFundModule, OwnableMixin, FundModuleStorage, Initializab
         return keccak256(abi.encodePacked(accountId, collateralType, leverage));
     }
 
-    function _getCollateralValue(address collateralType) internal view returns (uint) {
+    function _getCollateralValue(address collateralType) internal pure returns (uint) {
         // TODO
         return collateralType == address(0) ? 0 : 1; // dummy function
     }

@@ -1,6 +1,7 @@
 const { ethers } = hre;
 const assert = require('assert/strict');
 const assertBn = require('@synthetixio/core-js/utils/assertions/assert-bignumber');
+const assertRevert = require('@synthetixio/core-js/utils/assertions/assert-revert');
 const { bootstrap } = require('@synthetixio/deployer/utils/tests');
 const initializer = require('../../helpers/initializer');
 
@@ -10,11 +11,11 @@ describe('CollateralModule SCCP', function () {
   let CollateralModule;
   let Collateral, CollateralPriceFeed;
 
-  let systemOwner, user1, user2, user3, user4, user5;
+  let systemOwner, user1;
 
   before('identify signers', async () => {
     [systemOwner] = await ethers.getSigners();
-    [, user1, user2, user3, user4, user5] = await ethers.getSigners();
+    [, user1] = await ethers.getSigners();
   });
 
   before('identify contract', async () => {
@@ -130,6 +131,49 @@ describe('CollateralModule SCCP', function () {
         const collateralType = await CollateralModule.getCollateralType(AnotherCollateral.address);
         assert.equal(collateralType[3], true);
       });
+    });
+  });
+
+  describe('When another user attempts to interact with collaterals', () => {
+    let OtherCollateral, OtherCollateralPriceFeed;
+    before('create the other collateral', async () => {
+      let factory;
+
+      factory = await ethers.getContractFactory('CollateralMock');
+      OtherCollateral = await factory.deploy();
+      await (
+        await OtherCollateral.connect(systemOwner).initialize('Another Token', 'ANT', 18)
+      ).wait();
+
+      factory = await ethers.getContractFactory('CollateralPriceFeedMock');
+      OtherCollateralPriceFeed = await factory.deploy();
+
+      await (await OtherCollateralPriceFeed.connect(systemOwner).setCurrentPrice(100)).wait();
+    });
+
+    it('reverts when attempting to add', async () => {
+      await assertRevert(
+        CollateralModule.connect(user1).addCollateralType(
+          OtherCollateral.address,
+          OtherCollateralPriceFeed.address,
+          400,
+          200
+        ),
+        `Unauthorized("${user1.address}")`
+      );
+    });
+
+    it('reverts when attempting to update', async () => {
+      await assertRevert(
+        CollateralModule.connect(user1).adjustCollateralType(
+          Collateral.address,
+          CollateralPriceFeed.address,
+          300,
+          250,
+          false
+        ),
+        `Unauthorized("${user1.address}")`
+      );
     });
   });
 });

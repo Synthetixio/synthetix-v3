@@ -54,6 +54,7 @@ contract AccountToken is IAccountToken, ERC721, AccountTokenStorage, Initializab
     }
 
     function _postTransfer(
+        // solhint-disable-next-line no-unused-vars
         address from,
         address to,
         uint256 accountId
