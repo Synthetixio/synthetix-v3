@@ -9,12 +9,12 @@ const initializer = require('../../helpers/initializer');
 describe('AccountModule - AccountToken', function () {
   const { proxyAddress } = bootstrap(initializer);
 
-  let owner, user1, user2;
+  let owner, user1, user2, userAdmin, user4;
 
   let AccountModule, accountTokenAddress, AccountToken;
 
   before('identify signers', async () => {
-    [owner, user1, user2] = await ethers.getSigners();
+    [owner, user1, user2, userAdmin, user4] = await ethers.getSigners();
   });
 
   before('identify modules', async () => {
@@ -224,6 +224,78 @@ describe('AccountModule - AccountToken', function () {
                 1,
                 ethers.utils.formatBytes32String('stake'),
                 user2.address
+              ),
+              false
+            );
+          });
+        });
+      });
+
+      describe('when an admin tries to grant more access', () => {
+        before('grant "admin" role to userAdmin', async () => {
+          await (
+            await AccountModule.connect(user1).grantRole(
+              1,
+              ethers.utils.formatBytes32String('owner'),
+              userAdmin.address
+            )
+          ).wait();
+        });
+
+        before('grant another user a role', async () => {
+          const tx = await await AccountModule.connect(userAdmin).grantRole(
+            1,
+            ethers.utils.formatBytes32String('another'),
+            user4.address
+          );
+          receipt = await tx.wait();
+        });
+
+        it('emit an event', async () => {
+          const event = findEvent({ receipt, eventName: 'RoleGranted' });
+
+          assertBn.equal(event.args.accountId, 1);
+          assert.equal(event.args.role, ethers.utils.formatBytes32String('another'));
+          assert.equal(event.args.target, user4.address);
+          assert.equal(event.args.executedBy, userAdmin.address);
+        });
+
+        it('role is granted', async () => {
+          assert.equal(
+            await AccountModule.hasRole(
+              1,
+              ethers.utils.formatBytes32String('another'),
+              user4.address
+            ),
+            true
+          );
+        });
+
+        describe('when an admin tries to revoke more access', () => {
+          before('revoke another user a role', async () => {
+            const tx = await await AccountModule.connect(userAdmin).revokeRole(
+              1,
+              ethers.utils.formatBytes32String('another'),
+              user4.address
+            );
+            receipt = await tx.wait();
+          });
+
+          it('emit an event', async () => {
+            const event = findEvent({ receipt, eventName: 'RoleRevoked' });
+
+            assertBn.equal(event.args.accountId, 1);
+            assert.equal(event.args.role, ethers.utils.formatBytes32String('another'));
+            assert.equal(event.args.target, user4.address);
+            assert.equal(event.args.executedBy, userAdmin.address);
+          });
+
+          it('role is revoked', async () => {
+            assert.equal(
+              await AccountModule.hasRole(
+                1,
+                ethers.utils.formatBytes32String('another'),
+                user4.address
               ),
               false
             );
