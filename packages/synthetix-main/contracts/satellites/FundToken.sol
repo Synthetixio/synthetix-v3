@@ -14,8 +14,8 @@ import "../interfaces/IFundModule.sol";
 contract FundToken is IFundToken, ERC721, FundTokenStorage, InitializableMixin, UUPSImplementation, Ownable {
     event FundMinted(address owner, uint fundId);
     event NominatedNewOwner(address nominatedOwner, uint256 fundId);
-    event OwnershipAccepted(address owner, uint256 fundId);
-    event OwnershipRenounced(address owner, uint256 fundId);
+    event OwnershipAccepted(address newOwner, uint256 fundId);
+    event OwnershipRenounced(address target, uint256 fundId);
 
     error NotAllowed();
 
@@ -50,7 +50,7 @@ contract FundToken is IFundToken, ERC721, FundTokenStorage, InitializableMixin, 
     // ---------------------------------------
     // Mint/Transfer
     // ---------------------------------------
-    function mint(address owner, uint256 fundId) external override {
+    function mint(address owner, uint256 fundId) external override onlyOwner {
         _mint(owner, fundId);
 
         emit FundMinted(owner, fundId);
@@ -62,7 +62,7 @@ contract FundToken is IFundToken, ERC721, FundTokenStorage, InitializableMixin, 
         address to,
         uint256 accountId
     ) internal virtual override {
-        IFundModule(_fundTokenStore().mainProxy).transferAccount(to, accountId);
+        IFundModule(_fundTokenStore().mainProxy).transferFund(to, accountId);
     }
 
     function safeTransferFrom(
@@ -90,9 +90,7 @@ contract FundToken is IFundToken, ERC721, FundTokenStorage, InitializableMixin, 
         revert NotAllowed();
     }
 
-    // solhint-enable no-unused-vars
-
-    function nominateNewOwner(address nominatedOwner, uint256 fundId) external override {
+    function nominateNewFundOwner(address nominatedOwner, uint256 fundId) external override {
         if (!_isApprovedOrOwner(msg.sender, fundId)) {
             revert AccessError.Unauthorized(msg.sender);
         }
@@ -102,19 +100,25 @@ contract FundToken is IFundToken, ERC721, FundTokenStorage, InitializableMixin, 
         emit NominatedNewOwner(nominatedOwner, fundId);
     }
 
-    function acceptOwnership(uint256 fundId) external override {
+    function acceptFundOwnership(uint256 fundId) external override {
         if (_fundTokenStore().nominatedOwnerOf[fundId] != msg.sender) {
             revert AccessError.Unauthorized(msg.sender);
         }
 
-        safeTransferFrom(ownerOf(fundId), msg.sender, fundId);
+        // Need to bring safeTransferFrom functionality from ERC721 implementation since it was set as NotAllowed
+        // Also, don't check for owner or authorized, since is a 2-step transfer
+        _transfer(ownerOf(fundId), msg.sender, fundId);
+        if (!_checkOnERC721Received(ownerOf(fundId), msg.sender, fundId, "")) {
+            revert InvalidTransferRecipient(msg.sender);
+        }
+        // End safeTransferFrom
 
         _fundTokenStore().nominatedOwnerOf[fundId] = address(0);
 
         emit OwnershipAccepted(msg.sender, fundId);
     }
 
-    function renounceNomination(uint256 fundId) external override {
+    function renounceFundNomination(uint256 fundId) external override {
         if (_fundTokenStore().nominatedOwnerOf[fundId] != msg.sender) {
             revert AccessError.Unauthorized(msg.sender);
         }

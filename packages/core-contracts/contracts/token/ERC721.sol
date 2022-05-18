@@ -232,7 +232,7 @@ contract ERC721 is IERC721, IERC721Metadata, ERC721Storage {
         address to,
         uint256 tokenId,
         bytes memory data
-    ) private returns (bool) {
+    ) internal returns (bool) {
         if (AddressUtil.isContract(to)) {
             try IERC721Receiver(to).onERC721Received(msg.sender, from, tokenId, data) returns (bytes4 retval) {
                 return retval == IERC721Receiver.onERC721Received.selector;
