@@ -1,5 +1,8 @@
+const { ethers } = hre;
 const assert = require('assert/strict');
 const { fastForwardTo } = require('@synthetixio/core-js/utils/hardhat/rpc');
+const { getTime } = require('@synthetixio/core-js/utils/hardhat/rpc');
+const { daysToSeconds } = require('@synthetixio/core-js/utils/misc/dates');
 
 const ElectionPeriod = {
   Administration: 0,
@@ -8,12 +11,36 @@ const ElectionPeriod = {
   Evaluation: 3,
 };
 
-const assertDatesAreClose = (dateA, dateB) => {
-  const numberDateA = hre.ethers.BigNumber.isBigNumber(dateA) ? dateA.toNumber() : dateA;
-  const numberDateB = hre.ethers.BigNumber.isBigNumber(dateB) ? dateB.toNumber() : dateB;
+let ElectionModule;
 
-  return Math.abs(numberDateB - numberDateA) <= 1;
-};
+async function getElectionModule(proxyAddress) {
+  if (!ElectionModule) {
+    ElectionModule = await ethers.getContractAt('ElectionModule', proxyAddress());
+  }
+
+  return ElectionModule;
+}
+
+async function initializeElectionModule(ElectionModule) {
+  const now = await getTime(ethers.provider);
+  const epochEndDate = now + daysToSeconds(90);
+  const votingPeriodStartDate = epochEndDate - daysToSeconds(7);
+  const nominationPeriodStartDate = votingPeriodStartDate - daysToSeconds(7);
+
+  const [owner] = await ethers.getSigners();
+
+  const tx = await ElectionModule.initializeElectionModule(
+    'Spartan Council Token',
+    'SCT',
+    [owner.address],
+    1,
+    nominationPeriodStartDate,
+    votingPeriodStartDate,
+    epochEndDate
+  );
+
+  await tx.wait();
+}
 
 async function runElection(ElectionModule, owner, members) {
   // Configure
@@ -51,8 +78,17 @@ async function runElection(ElectionModule, owner, members) {
   return receipt;
 }
 
+const assertDatesAreClose = (dateA, dateB) => {
+  const numberDateA = hre.ethers.BigNumber.isBigNumber(dateA) ? dateA.toNumber() : dateA;
+  const numberDateB = hre.ethers.BigNumber.isBigNumber(dateB) ? dateB.toNumber() : dateB;
+
+  return Math.abs(numberDateB - numberDateA) <= 1;
+};
+
 module.exports = {
   ElectionPeriod,
   assertDatesAreClose,
   runElection,
+  getElectionModule,
+  initializeElectionModule,
 };

@@ -2,58 +2,44 @@ const { ethers } = hre;
 const assert = require('assert/strict');
 const assertBn = require('@synthetixio/core-js/utils/assertions/assert-bignumber');
 const assertRevert = require('@synthetixio/core-js/utils/assertions/assert-revert');
-const { getTime, fastForwardTo } = require('@synthetixio/core-js/utils/hardhat/rpc');
+const { getTime, fastForwardTo, takeSnapshot, restoreSnapshot } = require('@synthetixio/core-js/utils/hardhat/rpc');
 const { daysToSeconds } = require('@synthetixio/core-js/utils/misc/dates');
-const { bootstrap } = require('@synthetixio/deployer/utils/tests');
-const initializer = require('../../../helpers/initializer');
-const { ElectionPeriod } = require('./helpers/election-helper');
+const { ElectionPeriod } = require('../helpers/election-helper');
 const { findEvent } = require('@synthetixio/core-js/utils/ethers/events');
 
-describe('ElectionModule (evaluate)', () => {
-  const { proxyAddress } = bootstrap(initializer);
+module.exports = function(getElectionModule) {
+  describe('Evaluations', () => {
+    let ElectionModule;
 
-  let ElectionModule;
+    let epochIndexBefore;
 
-  let epochIndexBefore;
+    let candidate1, candidate2, candidate3, candidate4, candidate5;
+    let voter1, voter2, voter3, voter4, voter5, voter6, voter7, voter8, voter9, voter10;
 
-  let candidate1, candidate2, candidate3, candidate4, candidate5;
-  let voter1, voter2, voter3, voter4, voter5, voter6, voter7, voter8, voter9, voter10;
+    let ballot1, ballot2, ballot3;
 
-  let ballot1, ballot2, ballot3;
+    let receipt;
 
-  let receipt;
+    let snapshotId;
 
-  before('identify signers', async () => {
-    const users = await ethers.getSigners();
+    before('take snapshot', async function () {
+      snapshotId = await takeSnapshot(ethers.provider);
+    });
 
-    [candidate1, candidate2, candidate3, candidate4, candidate5] = users;
-    [, , , , , voter1, voter2, voter3, voter4, voter5, voter6, voter7, voter8, voter9, voter10] =
-      users;
-  });
+    after('restore snapshot', async function () {
+      await restoreSnapshot(snapshotId, ethers.provider);
+    });
 
-  before('identify modules', async () => {
-    ElectionModule = await ethers.getContractAt(
-      'contracts/modules/ElectionModule.sol:ElectionModule',
-      proxyAddress()
-    );
-  });
+    before('identify signers', async () => {
+      const users = await ethers.getSigners();
 
-  describe('when the module is initialized', function () {
-    before('initialize', async function () {
-      const now = await getTime(ethers.provider);
-      const epochEndDate = now + daysToSeconds(90);
-      const votingPeriodStartDate = epochEndDate - daysToSeconds(7);
-      const nominationPeriodStartDate = votingPeriodStartDate - daysToSeconds(7);
+      [candidate1, candidate2, candidate3, candidate4, candidate5] = users;
+      [, , , , , voter1, voter2, voter3, voter4, voter5, voter6, voter7, voter8, voter9, voter10] =
+        users;
+    });
 
-      await ElectionModule.initializeElectionModule(
-        'Spartan Council Token',
-        'SCT',
-        [candidate1.address],
-        1,
-        nominationPeriodStartDate,
-        votingPeriodStartDate,
-        epochEndDate
-      );
+    before('retrieve the election module', async function () {
+      ElectionModule = await getElectionModule();
     });
 
     before('configure next epoch seat count', async function () {
@@ -234,4 +220,4 @@ describe('ElectionModule (evaluate)', () => {
       });
     });
   });
-});
+}
