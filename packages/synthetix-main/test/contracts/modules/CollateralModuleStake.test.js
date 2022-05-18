@@ -254,10 +254,8 @@ describe('CollateralModule Stake', function () {
     });
 
     describe('when some collateral is staked', () => {
-      let receipt;
       before('stake some collateral', async () => {
-        const tx = await CollateralModule.connect(user2).stake(1, Collateral.address, 100);
-        receipt = await tx.wait();
+        await (await CollateralModule.connect(user2).stake(1, Collateral.address, 100)).wait();
       });
 
       it('is staked', async () => {
@@ -281,8 +279,7 @@ describe('CollateralModule Stake', function () {
 
       describe('when some collateral is unstaked', () => {
         before('unstake some collateral', async () => {
-          const tx = await CollateralModule.connect(user3).unstake(1, Collateral.address, 100);
-          receipt = await tx.wait();
+          await (await CollateralModule.connect(user3).unstake(1, Collateral.address, 100)).wait();
         });
 
         it('is unstaked', async () => {
