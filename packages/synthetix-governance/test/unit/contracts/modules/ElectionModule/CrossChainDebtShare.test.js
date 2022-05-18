@@ -165,7 +165,7 @@ describe('SynthetixElectionModule (cross chain debt share)', function () {
 
         describe('when retrieving the voter declared debt before declaring it', () => {
           it('has 0 debt share', async () => {
-            assertBn.equal(await ElectionModule.getCrossChainDebtShare(voter), 0);
+            assertBn.equal(await ElectionModule.getDeclaredCrossChainDebtShare(voter), 0);
           });
         });
 
@@ -189,9 +189,22 @@ describe('SynthetixElectionModule (cross chain debt share)', function () {
 
           it('has the right debt share', async () => {
             assertBn.equal(
-              await ElectionModule.getCrossChainDebtShare(voter),
+              await ElectionModule.getDeclaredCrossChainDebtShare(voter),
               parsedTree.claims[voter].amount
             );
+          });
+
+          describe('when a voter attempts to declare their cross chain debt shares again', function () {
+            it('reverts', async function () {
+              await assertRevert(
+                ElectionModule.declareCrossChainDebtShare(
+                  voter,
+                  parsedTree.claims[voter].amount,
+                  parsedTree.claims[voter].proof
+                ),
+                'CrossChainDebtShareAlreadyDeclared'
+              );
+            });
           });
         });
       });
