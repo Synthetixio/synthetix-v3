@@ -1,6 +1,6 @@
 name = "synthetix-governance"
 description = "Governance cotracts for on chain voting"
-version = "0.0.4"
+version = "0.0.5"
 
 [setting.salt]
 defaultValue = "governance"
@@ -24,11 +24,6 @@ defaultValue = 90 # days
 [setting.voting_period_duration]
 defaultValue = 7 # days
 
-[contract.election_module]
-artifact = "contracts/modules/ElectionModule.sol:ElectionModule"
-salt = "<%= settings.salt %>"
-step = 1
-
 [contract.owner_module]
 artifact = "contracts/modules/OwnerModule.sol:OwnerModule"
 salt = "<%= settings.salt %>"
@@ -36,6 +31,16 @@ step = 1
 
 [contract.upgrade_module]
 artifact = "contracts/modules/UpgradeModule.sol:UpgradeModule"
+salt = "<%= settings.salt %>"
+step = 1
+
+[contract.election_module]
+artifact = "contracts/modules/ElectionModule.sol:ElectionModule"
+salt = "<%= settings.salt %>"
+step = 1
+
+[contract.election_inspector_module]
+artifact = "contracts/modules/ElectionInspectorModule.sol:ElectionInspectorModule"
 salt = "<%= settings.salt %>"
 step = 1
 
@@ -50,6 +55,7 @@ func = "generateRouter"
 args = ['''
 {
   "contracts/modules/ElectionModule.sol:ElectionModule": "<%= outputs.self.contracts.election_module.address %>",
+  "contracts/modules/ElectionInspectorModule.sol:ElectionInspectorModule": "<%= outputs.self.contracts.election_inspector_module.address %>",
   "contracts/modules/OwnerModule.sol:OwnerModule": "<%= outputs.self.contracts.owner_module.address %>",
   "contracts/modules/UpgradeModule.sol:UpgradeModule": "<%= outputs.self.contracts.upgrade_module.address %>"
 }
