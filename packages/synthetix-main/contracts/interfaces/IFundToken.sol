@@ -6,17 +6,7 @@ interface IFundToken {
 
     function nominateNewOwner(address nominatedOwner, uint256 fundId) external;
 
-    function nominateNewOwner(
-        address sender,
-        address nominatedOwner,
-        uint256 fundId
-    ) external;
-
     function acceptOwnership(uint256 fundId) external;
 
-    function acceptOwnership(address sender, uint256 fundId) external;
-
     function renounceNomination(uint256 fundId) external;
-
-    function renounceNomination(address sender, uint256 fundId) external;
 }

@@ -14,13 +14,10 @@ interface IFundModule is ISatelliteFactory {
 
     function getFundModuleSatellites() external view returns (Satellite[] memory);
 
-    function nominateFundOwner(uint fundId, address owner) external;
+    function mintFund(uint requestedFundId, address owner) external;
 
-    function acceptFundOwnership(uint fundId) external;
-
-    function renounceFundOwnership(uint fundId) external;
-
-    function createFund(uint requestedFundId, address owner) external;
+    /// @notice creates a new accountToken (NFT)
+    function transferFund(address to, uint256 fundId) external;
 
     function setFundPosition(
         uint fundId,

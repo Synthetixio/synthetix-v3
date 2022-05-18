@@ -9,16 +9,19 @@ import "@synthetixio/core-contracts/contracts/ownership/Ownable.sol";
 import "../interfaces/IFundToken.sol";
 import "../storage/FundTokenStorage.sol";
 
+import "../interfaces/IFundModule.sol";
+
 contract FundToken is IFundToken, ERC721, FundTokenStorage, InitializableMixin, UUPSImplementation, Ownable {
     event FundMinted(address owner, uint fundId);
     event NominatedNewOwner(address nominatedOwner, uint256 fundId);
     event OwnershipAccepted(address owner, uint256 fundId);
     event OwnershipRenounced(address owner, uint256 fundId);
 
-    /////////////////////////////////////////////////
-    // CHORES
-    /////////////////////////////////////////////////
+    error NotAllowed();
 
+    // ---------------------------------------
+    // Chores
+    // ---------------------------------------
     function _isInitialized() internal view override returns (bool) {
         return _fundTokenStore().initialized;
     }
@@ -30,44 +33,68 @@ contract FundToken is IFundToken, ERC721, FundTokenStorage, InitializableMixin, 
     function initialize(
         string memory tokenName,
         string memory tokenSymbol,
-        string memory uri
+        string memory uri,
+        address mainProxy
     ) public onlyOwner {
         _initialize(tokenName, tokenSymbol, uri);
-        _fundTokenStore().initialized = true;
+        FundTokenStore storage store = _fundTokenStore();
+
+        store.mainProxy = mainProxy;
+        store.initialized = true;
     }
 
     function upgradeTo(address newImplementation) public override onlyOwner {
         _upgradeTo(newImplementation);
     }
 
-    /////////////////////////////////////////////////
-    // SYSTEM OWNED FUCTIONS
-    /////////////////////////////////////////////////
+    // ---------------------------------------
+    // Mint/Transfer
+    // ---------------------------------------
     function mint(address owner, uint256 fundId) external override {
         _mint(owner, fundId);
 
         emit FundMinted(owner, fundId);
     }
 
+    // solhint-disable no-unused-vars
+    function _postTransfer(
+        address from,
+        address to,
+        uint256 accountId
+    ) internal virtual override {
+        IFundModule(_fundTokenStore().mainProxy).transferAccount(to, accountId);
+    }
+
+    function safeTransferFrom(
+        address from,
+        address to,
+        uint256 tokenId,
+        bytes calldata data
+    ) public override {
+        revert NotAllowed();
+    }
+
+    function safeTransferFrom(
+        address from,
+        address to,
+        uint256 tokenId
+    ) public override {
+        revert NotAllowed();
+    }
+
+    function transferFrom(
+        address from,
+        address to,
+        uint256 tokenId
+    ) public override {
+        revert NotAllowed();
+    }
+
+    // solhint-enable no-unused-vars
+
     function nominateNewOwner(address nominatedOwner, uint256 fundId) external override {
-        _nominateNewOwner(msg.sender, nominatedOwner, fundId);
-    }
-
-    function nominateNewOwner(
-        address sender,
-        address nominatedOwner,
-        uint256 fundId
-    ) external override onlyOwner {
-        _nominateNewOwner(sender, nominatedOwner, fundId);
-    }
-
-    function _nominateNewOwner(
-        address sender,
-        address nominatedOwner,
-        uint256 fundId
-    ) internal {
-        if (!_isApprovedOrOwner(sender, fundId)) {
-            revert AccessError.Unauthorized(sender);
+        if (!_isApprovedOrOwner(msg.sender, fundId)) {
+            revert AccessError.Unauthorized(msg.sender);
         }
 
         _fundTokenStore().nominatedOwnerOf[fundId] = nominatedOwner;
@@ -76,40 +103,24 @@ contract FundToken is IFundToken, ERC721, FundTokenStorage, InitializableMixin, 
     }
 
     function acceptOwnership(uint256 fundId) external override {
-        _acceptOwnership(msg.sender, fundId);
-    }
-
-    function acceptOwnership(address sender, uint256 fundId) external override onlyOwner {
-        _acceptOwnership(sender, fundId);
-    }
-
-    function _acceptOwnership(address sender, uint256 fundId) internal {
-        if (_fundTokenStore().nominatedOwnerOf[fundId] != sender) {
-            revert AccessError.Unauthorized(sender);
+        if (_fundTokenStore().nominatedOwnerOf[fundId] != msg.sender) {
+            revert AccessError.Unauthorized(msg.sender);
         }
 
-        safeTransferFrom(ownerOf(fundId), sender, fundId);
+        safeTransferFrom(ownerOf(fundId), msg.sender, fundId);
 
         _fundTokenStore().nominatedOwnerOf[fundId] = address(0);
 
-        emit OwnershipAccepted(sender, fundId);
+        emit OwnershipAccepted(msg.sender, fundId);
     }
 
     function renounceNomination(uint256 fundId) external override {
-        _renounceNomination(msg.sender, fundId);
-    }
-
-    function renounceNomination(address sender, uint256 fundId) external override onlyOwner {
-        _renounceNomination(sender, fundId);
-    }
-
-    function _renounceNomination(address sender, uint256 fundId) internal {
-        if (_fundTokenStore().nominatedOwnerOf[fundId] != sender) {
-            revert AccessError.Unauthorized(sender);
+        if (_fundTokenStore().nominatedOwnerOf[fundId] != msg.sender) {
+            revert AccessError.Unauthorized(msg.sender);
         }
 
         _fundTokenStore().nominatedOwnerOf[fundId] = address(0);
 
-        emit OwnershipRenounced(sender, fundId);
+        emit OwnershipRenounced(msg.sender, fundId);
     }
 }

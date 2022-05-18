@@ -7,32 +7,28 @@ import "@synthetixio/core-contracts/contracts/initializable/InitializableMixin.s
 import "@synthetixio/core-contracts/contracts/satellite/SatelliteFactory.sol";
 import "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
 
+import "../mixins/AccountRBACMixin.sol";
+
 import "../interfaces/IFundModule.sol";
 import "../storage/FundModuleStorage.sol";
 
 import "../satellites/FundToken.sol";
 
-contract FundModule is IFundModule, OwnableMixin, FundModuleStorage, InitializableMixin, SatelliteFactory {
+contract FundModule is IFundModule, OwnableMixin, FundModuleStorage, InitializableMixin, SatelliteFactory, AccountRBACMixin {
     using SetUtil for SetUtil.Bytes32Set;
     using SetUtil for SetUtil.AddressSet;
 
-    /////////////////////////////////////////////////
-    // ERRORS
-    /////////////////////////////////////////////////
     error InvalidParameters();
     error FundAlreadyApproved(uint fundId);
     error FundNotFound(uint fundId);
+    error OnlyTokenProxyAllowed(address origin);
 
-    /////////////////////////////////////////////////
-    // EVENTS
-    /////////////////////////////////////////////////
     event FundCreated(address fundAddress);
     event FundPositionSet(uint fundId, uint[] markets, uint[] weights, address executedBy);
 
-    /////////////////////////////////////////////////
-    // CHORES
-    /////////////////////////////////////////////////
-
+    // ---------------------------------------
+    // Chores
+    // ---------------------------------------
     function _isInitialized() internal view override returns (bool) {
         return _fundModuleStore().initialized;
     }
@@ -53,7 +49,7 @@ contract FundModule is IFundModule, OwnableMixin, FundModuleStorage, Initializab
 
         fund.nominateNewOwner(address(this));
         fund.acceptOwnership();
-        fund.initialize("Synthetix FundToken", "synthethixFundToken", "");
+        fund.initialize("Synthetix FundToken", "synthethixFundToken", "", address(this));
 
         store.fundToken = Satellite({
             name: "synthethixFundToken",
@@ -89,13 +85,18 @@ contract FundModule is IFundModule, OwnableMixin, FundModuleStorage, Initializab
         return _fundModuleStore().fundToken.deployedAddress;
     }
 
-    //////////////////////////////////////////////
-    //          BUSINESS LOGIC                  //
-    //////////////////////////////////////////////
+    // ---------------------------------------
+    // Business Logic
+    // ---------------------------------------
 
-    //////////////////////////////////////////////
-    //          OWNERSHIP                       //
-    //////////////////////////////////////////////
+    modifier onlyFromTokenProxy() {
+        if (msg.sender != getFundTokenAddress()) {
+            revert OnlyTokenProxyAllowed(msg.sender);
+        }
+
+        _;
+    }
+
     modifier onlyFundOwner(uint fundId, address requestor) {
         if (FundToken(getFundTokenAddress()).ownerOf(fundId) != requestor) {
             revert AccessError.Unauthorized(requestor);
@@ -104,35 +105,14 @@ contract FundModule is IFundModule, OwnableMixin, FundModuleStorage, Initializab
         _;
     }
 
-    modifier onlyAccountAuthorized(uint accountId, address requestor) {
-        // TODO Check if requestor is authorized in account
-        // if (FundToken(getFundTokenAddress()).ownerOf(fundId) != requestor) {
-        //     revert AccessError.Unauthorized();
-        // }
-
-        _;
-    }
-
-    // TODO Remove createFund and transger ownership from module and keep in FundToken only
-    function createFund(uint requestedFundId, address owner) external override {
+    function mintFund(uint requestedFundId, address owner) external override {
         FundToken(getFundTokenAddress()).mint(owner, requestedFundId);
     }
 
-    function nominateFundOwner(uint fundId, address owner) external override {
-        FundToken(getFundTokenAddress()).nominateNewOwner(msg.sender, owner, fundId);
+    function transferFund(address to, uint256 accountId) external override onlyFromTokenProxy {
+        _accountModuleStore().accountsRBAC[accountId].owner = to;
     }
 
-    function acceptFundOwnership(uint fundId) external override {
-        FundToken(getFundTokenAddress()).acceptOwnership(msg.sender, fundId);
-    }
-
-    function renounceFundOwnership(uint fundId) external override {
-        FundToken(getFundTokenAddress()).renounceNomination(msg.sender, fundId);
-    }
-
-    //////////////////////////////////////////////
-    //          FUND ADMIN                      //
-    //////////////////////////////////////////////
     function setFundPosition(
         uint fundId,
         uint[] calldata markets,
@@ -206,7 +186,7 @@ contract FundModule is IFundModule, OwnableMixin, FundModuleStorage, Initializab
         address collateralType,
         uint amount,
         uint leverage
-    ) external override onlyAccountAuthorized(accountId, msg.sender) {
+    ) external override onlyRoleAuthorized(accountId, "assign") {
         // TODO check if fund exists
         // TODO check parameters are valid (collateralType, amount, exposure)
 
@@ -391,7 +371,7 @@ contract FundModule is IFundModule, OwnableMixin, FundModuleStorage, Initializab
         uint accountId,
         address collateralType,
         uint amount
-    ) external override onlyAccountAuthorized(accountId, msg.sender) {
+    ) external override onlyRoleAuthorized(accountId, "mint") {
         // TODO Check if can mint that amount
         // TODO implement it
     }
@@ -401,7 +381,7 @@ contract FundModule is IFundModule, OwnableMixin, FundModuleStorage, Initializab
         uint accountId,
         address collateralType,
         uint amount
-    ) external override onlyAccountAuthorized(accountId, msg.sender) {
+    ) external override onlyRoleAuthorized(accountId, "burn") {
         // TODO Check if can burn that amount
         // TODO implement it
     }
