@@ -4,7 +4,7 @@ const assertBn = require('@synthetixio/core-js/utils/assertions/assert-bignumber
 const { bootstrap } = require('@synthetixio/deployer/utils/tests');
 const initializer = require('../../helpers/initializer');
 
-describe('CollateralModule', function () {
+describe('CollateralModule SCCP', function () {
   const { proxyAddress } = bootstrap(initializer);
 
   let CollateralModule;
