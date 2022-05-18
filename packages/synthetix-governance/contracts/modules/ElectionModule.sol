@@ -112,8 +112,8 @@ contract ElectionModule is ISynthetixElectionModule, BaseElectionModule, DebtSha
     }
 
     /// @notice Returns the Synthetix v2 debt shares for the provided address, at this epoch's snapshot, in other chains
-    function getCrossChainDebtShare(address user) external view override returns (uint) {
-        return _getCrossChainDebtShare(user);
+    function getDeclaredCrossChainDebtShare(address user) external view override returns (uint) {
+        return _getDeclaredCrossChainDebtShare(user);
     }
 
     // ---------------------------------------
@@ -122,7 +122,7 @@ contract ElectionModule is ISynthetixElectionModule, BaseElectionModule, DebtSha
 
     /// @dev Overrides the user's voting power by combining local chain debt share with debt shares in other chains, quadratically filtered
     function _getVotePower(address user) internal view override returns (uint) {
-        uint votePower = _getDebtShare(user) + _getCrossChainDebtShare(user);
+        uint votePower = _getDebtShare(user) + _getDeclaredCrossChainDebtShare(user);
 
         return MathUtil.sqrt(votePower);
     }

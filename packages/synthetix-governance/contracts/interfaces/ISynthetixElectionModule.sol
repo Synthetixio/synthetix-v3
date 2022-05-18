@@ -41,5 +41,5 @@ interface ISynthetixElectionModule is IBaseElectionModule {
 
     function getCrossChainDebtShareMerkleRootBlocknumber() external view returns (uint);
 
-    function getCrossChainDebtShare(address account) external view returns (uint);
+    function getDeclaredCrossChainDebtShare(address account) external view returns (uint);
 }
