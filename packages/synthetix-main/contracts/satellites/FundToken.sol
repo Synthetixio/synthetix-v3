@@ -9,8 +9,6 @@ import "@synthetixio/core-contracts/contracts/ownership/Ownable.sol";
 import "../interfaces/IFundToken.sol";
 import "../storage/FundTokenStorage.sol";
 
-import "../interfaces/IFundModule.sol";
-
 contract FundToken is IFundToken, ERC721, FundTokenStorage, InitializableMixin, UUPSImplementation, Ownable {
     event FundMinted(address owner, uint fundId);
     event NominatedNewOwner(address nominatedOwner, uint256 fundId);
@@ -33,14 +31,11 @@ contract FundToken is IFundToken, ERC721, FundTokenStorage, InitializableMixin, 
     function initialize(
         string memory tokenName,
         string memory tokenSymbol,
-        string memory uri,
-        address mainProxy
+        string memory uri
     ) public onlyOwner {
         _initialize(tokenName, tokenSymbol, uri);
-        FundTokenStore storage store = _fundTokenStore();
 
-        store.mainProxy = mainProxy;
-        store.initialized = true;
+        _fundTokenStore().initialized = true;
     }
 
     function upgradeTo(address newImplementation) public override onlyOwner {
@@ -57,14 +52,6 @@ contract FundToken is IFundToken, ERC721, FundTokenStorage, InitializableMixin, 
     }
 
     // solhint-disable no-unused-vars
-    function _postTransfer(
-        address from,
-        address to,
-        uint256 accountId
-    ) internal virtual override {
-        IFundModule(_fundTokenStore().mainProxy).transferFund(to, accountId);
-    }
-
     function safeTransferFrom(
         address from,
         address to,
@@ -89,6 +76,8 @@ contract FundToken is IFundToken, ERC721, FundTokenStorage, InitializableMixin, 
     ) public override {
         revert NotAllowed();
     }
+
+    // solhint-enable no-unused-vars
 
     function nominateNewFundOwner(address nominatedOwner, uint256 fundId) external override {
         if (!_isApprovedOrOwner(msg.sender, fundId)) {

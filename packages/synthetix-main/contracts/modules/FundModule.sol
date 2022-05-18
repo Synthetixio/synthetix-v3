@@ -49,7 +49,7 @@ contract FundModule is IFundModule, OwnableMixin, FundModuleStorage, Initializab
 
         fund.nominateNewOwner(address(this));
         fund.acceptOwnership();
-        fund.initialize("Synthetix FundToken", "synthethixFundToken", "", address(this));
+        fund.initialize("Synthetix FundToken", "synthethixFundToken", "");
 
         store.fundToken = Satellite({
             name: "synthethixFundToken",
@@ -89,14 +89,6 @@ contract FundModule is IFundModule, OwnableMixin, FundModuleStorage, Initializab
     // Business Logic
     // ---------------------------------------
 
-    modifier onlyFromTokenProxy() {
-        if (msg.sender != getFundTokenAddress()) {
-            revert OnlyTokenProxyAllowed(msg.sender);
-        }
-
-        _;
-    }
-
     modifier onlyFundOwner(uint fundId, address requestor) {
         if (FundToken(getFundTokenAddress()).ownerOf(fundId) != requestor) {
             revert AccessError.Unauthorized(requestor);
@@ -107,10 +99,6 @@ contract FundModule is IFundModule, OwnableMixin, FundModuleStorage, Initializab
 
     function mintFund(uint requestedFundId, address owner) external override {
         FundToken(getFundTokenAddress()).mint(owner, requestedFundId);
-    }
-
-    function transferFund(address to, uint256 accountId) external override onlyFromTokenProxy {
-        _accountModuleStore().accountsRBAC[accountId].owner = to;
     }
 
     function setFundPosition(

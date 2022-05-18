@@ -16,9 +16,6 @@ interface IFundModule is ISatelliteFactory {
 
     function mintFund(uint requestedFundId, address owner) external;
 
-    /// @notice creates a new accountToken (NFT)
-    function transferFund(address to, uint256 fundId) external;
-
     function setFundPosition(
         uint fundId,
         uint[] calldata markets,

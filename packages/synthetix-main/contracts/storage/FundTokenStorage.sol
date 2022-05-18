@@ -6,7 +6,6 @@ import "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
 contract FundTokenStorage {
     struct FundTokenStore {
         bool initialized;
-        address mainProxy;
         mapping(uint256 => address) nominatedOwnerOf;
     }
 

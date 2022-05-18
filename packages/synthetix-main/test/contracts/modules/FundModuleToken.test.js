@@ -66,15 +66,6 @@ describe('FundModule - FundToken - Ownership', function () {
       });
     });
 
-    describe('when attempting to call transferFund directly', async () => {
-      it('reverts', async () => {
-        await assertRevert(
-          FundModule.connect(user1).transferFund(user2.address, 1),
-          `OnlyTokenProxyAllowed("${user1.address}")`
-        );
-      });
-    });
-
     describe('when attempting to use the NFT transfer functions', async () => {
       it('reverts when calling transferFrom', async () => {
         await assertRevert(
