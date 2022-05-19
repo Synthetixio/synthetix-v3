@@ -25,6 +25,7 @@ contract DebtShareMock is IDebtShare {
         if (_setAddresses[user] == true) {
             return _balances[user];
         }
+
         return (uint(_currentPeriodId) + 2)**18;
     }
 }

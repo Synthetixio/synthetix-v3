@@ -15,7 +15,7 @@ const scheduleBehavior = require('./election/behaviors/Schedule.behavior');
 const settingsBehavior = require('./election/behaviors/Settings.behavior');
 const tokenBehavior = require('./election/behaviors/CouncilToken.behavior');
 
-describe('ElectionModule', () => {
+describe.only('ElectionModule', () => {
   const { proxyAddress } = bootstrap(initializer);
 
   async function getElectionModule() {
@@ -72,14 +72,18 @@ describe('ElectionModule', () => {
       receipt = await tx.wait();
     });
 
-    postInitBehavior(getElectionModule, getInitData);
-    scheduleBehavior(getElectionModule);
-    settingsBehavior(getElectionModule);
-    nominationsBehavior(getElectionModule);
-    voteBehavior(getElectionModule);
+    async function getVotePower() {
+      return ethers.BigNumber.from(1);
+    }
+
+    // postInitBehavior(getElectionModule, getInitData);
+    // scheduleBehavior(getElectionModule);
+    // settingsBehavior(getElectionModule);
+    // nominationsBehavior(getElectionModule);
+    // voteBehavior(getElectionModule, getVotePower);
     evaluationBehavior(getElectionModule);
-    resolutionBehavior(getElectionModule, getInitData);
-    dismissalBehavior(getElectionModule);
-    tokenBehavior(getElectionModule, getInitData, proxyAddress);
+    // resolutionBehavior(getElectionModule, getInitData);
+    // dismissalBehavior(getElectionModule);
+    // tokenBehavior(getElectionModule, getInitData, proxyAddress);
   });
 });

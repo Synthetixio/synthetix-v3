@@ -75,16 +75,36 @@ module.exports = function (getElectionModule) {
           ballot1 = {
             candidates: [candidate2.address, candidate1.address],
             id: await ElectionModule.calculateBallotId([candidate2.address, candidate1.address]),
+            votes: ethers.BigNumber.from(0),
           };
           ballot2 = {
             candidates: [candidate3.address],
             id: await ElectionModule.calculateBallotId([candidate3.address]),
+            votes: ethers.BigNumber.from(0),
           };
           ballot3 = {
             candidates: [candidate5.address],
             id: await ElectionModule.calculateBallotId([candidate5.address]),
+            votes: ethers.BigNumber.from(0),
           };
         });
+
+        async function cast(voter, ballot) {
+          const epochIndex = await ElectionModule.getEpochIndex();
+
+          const tx = await ElectionModule.connect(voter).cast(ballot.candidates);
+          receipt = await tx.wait();
+
+          const newVotes = await getVotePower(voter.address, epochIndex);
+          ballot.votes = ballot.votes.add(newVotes);
+          ballot.candidates.forEach((candidate) => {
+            if (!candidate.votes) {
+              candidate.votes = ethers.BigNumber.from(0);
+            }
+
+            candidate.votes = candidate.votes.add(newVotes);
+          });
+        }
 
         before('vote', async function () {
           await ElectionModule.connect(voter1).cast(ballot1.candidates);
@@ -100,9 +120,9 @@ module.exports = function (getElectionModule) {
         });
 
         it('shows that ballots were registered', async function () {
-          assertBn.equal(await ElectionModule.getBallotVotes(ballot1.id), 4);
-          assertBn.equal(await ElectionModule.getBallotVotes(ballot2.id), 1);
-          assertBn.equal(await ElectionModule.getBallotVotes(ballot3.id), 5);
+          assert.deepEqual(await ElectionModule.getBallotVotes(ballot1.id), ballot1.votes);
+          assert.deepEqual(await ElectionModule.getBallotVotes(ballot2.id), ballot2.votes);
+          assert.deepEqual(await ElectionModule.getBallotVotes(ballot3.id), ballot3.votes);
         });
 
         describe('when entering the evaluation period', function () {
@@ -143,11 +163,11 @@ module.exports = function (getElectionModule) {
               });
 
               it('shows that some candidate votes where processed', async function () {
-                assertBn.equal(await ElectionModule.getCandidateVotes(candidate1.address), 4);
-                assertBn.equal(await ElectionModule.getCandidateVotes(candidate2.address), 4);
-                assertBn.equal(await ElectionModule.getCandidateVotes(candidate3.address), 0);
-                assertBn.equal(await ElectionModule.getCandidateVotes(candidate4.address), 0);
-                assertBn.equal(await ElectionModule.getCandidateVotes(candidate5.address), 0);
+                assert.deepEqual(await ElectionModule.getCandidateVotes(candidate1.address), candidate1.votes);
+                assert.deepEqual(await ElectionModule.getCandidateVotes(candidate2.address), candidate2.votes);
+                assert.deepEqual(await ElectionModule.getCandidateVotes(candidate3.address), candidate3.votes);
+                assert.deepEqual(await ElectionModule.getCandidateVotes(candidate4.address), candidate4.votes);
+                assert.deepEqual(await ElectionModule.getCandidateVotes(candidate5.address), candidate5.votes);
               });
 
               describe('totally', function () {
@@ -169,11 +189,11 @@ module.exports = function (getElectionModule) {
                 });
 
                 it('shows that candidate votes where processed', async function () {
-                  assertBn.equal(await ElectionModule.getCandidateVotes(candidate1.address), 4);
-                  assertBn.equal(await ElectionModule.getCandidateVotes(candidate2.address), 4);
-                  assertBn.equal(await ElectionModule.getCandidateVotes(candidate3.address), 1);
-                  assertBn.equal(await ElectionModule.getCandidateVotes(candidate4.address), 0);
-                  assertBn.equal(await ElectionModule.getCandidateVotes(candidate5.address), 5);
+                  assert.deepEqual(await ElectionModule.getCandidateVotes(candidate1.address), candidate1.votes);
+                  assert.deepEqual(await ElectionModule.getCandidateVotes(candidate2.address), candidate2.votes);
+                  assert.deepEqual(await ElectionModule.getCandidateVotes(candidate3.address), candidate3.votes);
+                  assert.deepEqual(await ElectionModule.getCandidateVotes(candidate4.address), candidate4.votes);
+                  assert.deepEqual(await ElectionModule.getCandidateVotes(candidate5.address), candidate5.votes);
                 });
 
                 it('shows the election winners', async function () {

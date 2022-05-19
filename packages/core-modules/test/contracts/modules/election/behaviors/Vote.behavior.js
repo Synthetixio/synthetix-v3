@@ -10,10 +10,10 @@ const {
 const { ElectionPeriod } = require('../helpers/election-helper');
 const { findEvent } = require('@synthetixio/core-js/utils/ethers/events');
 
-module.exports = function (getElectionModule) {
+module.exports = function (getElectionModule, getVotePower) {
   describe('Votes', function () {
     let candidate1, candidate2, candidate3, candidate4;
-    let voter1, voter2, voter3, voter4, voter5;
+    let voter1, voter2, voter3, voter4, voter5, voter6, voter7, voter8;
 
     let ballot1, ballot2, ballot3;
 
@@ -35,7 +35,7 @@ module.exports = function (getElectionModule) {
       const users = await ethers.getSigners();
 
       [candidate1, candidate2, candidate3, candidate4] = users;
-      [, , , , voter1, voter2, voter3, voter4, voter5] = users;
+      [, , , , voter1, voter2, voter3, voter4, voter5, voter6, voter7, voter8] = users;
     });
 
     before('retrieve the election module', async function () {
@@ -95,9 +95,20 @@ module.exports = function (getElectionModule) {
           });
 
           it('can retrieve user vote power', async function () {
-            assertBn.equal(await ElectionModule.getVotePower(voter1.address), 1);
-            assertBn.equal(await ElectionModule.getVotePower(voter2.address), 1);
-            assertBn.equal(await ElectionModule.getVotePower(voter3.address), 1);
+            const epochIndex = await ElectionModule.getEpochIndex();
+
+            assertBn.equal(
+              await ElectionModule.getVotePower(voter1.address),
+              await getVotePower(voter1.address, epochIndex)
+            );
+            assertBn.equal(
+              await ElectionModule.getVotePower(voter2.address),
+              await getVotePower(voter2.address, epochIndex)
+            );
+            assertBn.equal(
+              await ElectionModule.getVotePower(voter3.address),
+              await getVotePower(voter3.address, epochIndex)
+            );
           });
 
           describe('before issuing valid votes', function () {
@@ -119,47 +130,78 @@ module.exports = function (getElectionModule) {
             before('form ballots', async function () {
               ballot1 = {
                 candidates: [candidate1.address],
+                voters: [],
                 id: await ElectionModule.calculateBallotId([candidate1.address]),
+                votes: ethers.BigNumber.from(0),
               };
               ballot2 = {
                 candidates: [candidate2.address, candidate4.address],
+                voters: [],
                 id: await ElectionModule.calculateBallotId([
                   candidate2.address,
                   candidate4.address,
                 ]),
+                votes: ethers.BigNumber.from(0),
               };
               ballot3 = {
                 candidates: [candidate3.address],
+                voters: [],
                 id: await ElectionModule.calculateBallotId([candidate3.address]),
+                votes: ethers.BigNumber.from(0),
               };
             });
 
-            before('vote', async function () {
-              await ElectionModule.connect(voter1).cast(ballot1.candidates);
-              await ElectionModule.connect(voter2).cast(ballot2.candidates);
-              await ElectionModule.connect(voter3).cast(ballot1.candidates);
-              await ElectionModule.connect(voter4).cast(ballot1.candidates);
-            });
+            async function findAndRemovePreviousVote(voter) {
+              const epochIndex = await ElectionModule.getEpochIndex();
 
-            before('vote and record receipt', async function () {
-              const tx = await ElectionModule.connect(voter5).cast(ballot2.candidates);
+              const ballot = [ballot1, ballot2, ballot3].find((ballot) =>
+                ballot.voters.includes(voter.address)
+              );
+
+              if (ballot) {
+                ballot.votes = ballot.votes.sub(await getVotePower(voter.address, epochIndex));
+              }
+            }
+
+            async function cast(voter, ballot) {
+              await findAndRemovePreviousVote(voter);
+
+              const epochIndex = await ElectionModule.getEpochIndex();
+
+              const tx = await ElectionModule.connect(voter).cast(ballot.candidates);
               receipt = await tx.wait();
+
+              ballot.votes = ballot.votes.add(await getVotePower(voter.address, epochIndex));
+
+              ballot.voters.push(voter.address);
+            }
+
+            before('vote', async function () {
+              await cast(voter1, ballot1);
+              await cast(voter2, ballot2);
+              await cast(voter3, ballot1);
+              await cast(voter4, ballot1);
+              await cast(voter5, ballot2);
             });
 
-            it('reflects users that have not voted', async function () {
+            it('reflects users that have voted', async function () {
               assert.equal(await ElectionModule.hasVoted(voter1.address), true);
               assert.equal(await ElectionModule.hasVoted(voter2.address), true);
               assert.equal(await ElectionModule.hasVoted(voter3.address), true);
               assert.equal(await ElectionModule.hasVoted(voter4.address), true);
+              assert.equal(await ElectionModule.hasVoted(voter5.address), true);
+              assert.equal(await ElectionModule.hasVoted(voter6.address), false);
+              assert.equal(await ElectionModule.hasVoted(voter7.address), false);
+              assert.equal(await ElectionModule.hasVoted(voter8.address), false);
             });
 
             it('emitted a VoteRecorded event', async function () {
               const event = findEvent({ receipt, eventName: 'VoteRecorded' });
 
               assert.ok(event);
-              assertBn.equal(event.args.voter, voter5.address);
+              assert.equal(event.args.voter, voter5.address);
               assert.equal(event.args.ballotId, ballot2.id);
-              assertBn.equal(event.args.votePower, 1);
+              assert.deepEqual(event.args.votePower, await getVotePower(voter5.address, await ElectionModule.getEpochIndex()));
               assertBn.equal(event.args.epochIndex, 0);
             });
 
@@ -172,9 +214,9 @@ module.exports = function (getElectionModule) {
             });
 
             it('can retrieve ballot votes', async function () {
-              assertBn.equal(await ElectionModule.getBallotVotes(ballot1.id), 3);
-              assertBn.equal(await ElectionModule.getBallotVotes(ballot2.id), 2);
-              assertBn.equal(await ElectionModule.getBallotVotes(ballot3.id), 0);
+              assert.deepEqual(await ElectionModule.getBallotVotes(ballot1.id), ballot1.votes);
+              assert.deepEqual(await ElectionModule.getBallotVotes(ballot2.id), ballot2.votes);
+              assert.deepEqual(await ElectionModule.getBallotVotes(ballot3.id), ballot3.votes);
             });
 
             it('can retrive ballot candidates', async function () {
@@ -194,8 +236,7 @@ module.exports = function (getElectionModule) {
 
             describe('when users change their vote', function () {
               before('change vote', async function () {
-                const tx = await ElectionModule.connect(voter5).cast(ballot3.candidates);
-                receipt = await tx.wait();
+                await cast(voter5, ballot3);
               });
 
               it('emitted VoteWithdrawn and VoteRecorded events', async function () {
@@ -203,16 +244,16 @@ module.exports = function (getElectionModule) {
 
                 event = findEvent({ receipt, eventName: 'VoteWithdrawn' });
                 assert.ok(event);
-                assertBn.equal(event.args.voter, voter5.address);
+                assert.equal(event.args.voter, voter5.address);
                 assert.equal(event.args.ballotId, ballot2.id);
-                assertBn.equal(event.args.votePower, 1);
+                assert.deepEqual(event.args.votePower, await getVotePower(voter5.address, await ElectionModule.getEpochIndex()));
                 assertBn.equal(event.args.epochIndex, 0);
 
                 event = findEvent({ receipt, eventName: 'VoteRecorded' });
                 assert.ok(event);
-                assertBn.equal(event.args.voter, voter5.address);
+                assert.equal(event.args.voter, voter5.address);
                 assert.equal(event.args.ballotId, ballot3.id);
-                assertBn.equal(event.args.votePower, 1);
+                assert.deepEqual(event.args.votePower, await getVotePower(voter5.address, await ElectionModule.getEpochIndex()));
                 assertBn.equal(event.args.epochIndex, 0);
               });
 
@@ -221,9 +262,9 @@ module.exports = function (getElectionModule) {
               });
 
               it('can retrieve ballot votes', async function () {
-                assertBn.equal(await ElectionModule.getBallotVotes(ballot1.id), 3);
-                assertBn.equal(await ElectionModule.getBallotVotes(ballot2.id), 1);
-                assertBn.equal(await ElectionModule.getBallotVotes(ballot3.id), 1);
+                assert.deepEqual(await ElectionModule.getBallotVotes(ballot1.id), ballot1.votes);
+                assert.deepEqual(await ElectionModule.getBallotVotes(ballot2.id), ballot2.votes);
+                assert.deepEqual(await ElectionModule.getBallotVotes(ballot3.id), ballot3.votes);
               });
 
               it('can retrive ballot candidates', async function () {
@@ -238,14 +279,16 @@ module.exports = function (getElectionModule) {
               before('withdraw vote', async function () {
                 const tx = await ElectionModule.connect(voter4).withdrawVote();
                 receipt = await tx.wait();
+
+                findAndRemovePreviousVote(voter4);
               });
 
               it('emitted a VoteWithdrawn event', async function () {
                 const event = findEvent({ receipt, eventName: 'VoteWithdrawn' });
                 assert.ok(event);
-                assertBn.equal(event.args.voter, voter4.address);
+                assert.equal(event.args.voter, voter4.address);
                 assert.equal(event.args.ballotId, ballot1.id);
-                assertBn.equal(event.args.votePower, 1);
+                assert.deepEqual(event.args.votePower, await getVotePower(voter4.address, await ElectionModule.getEpochIndex()));
                 assertBn.equal(event.args.epochIndex, 0);
               });
 
@@ -261,9 +304,9 @@ module.exports = function (getElectionModule) {
               });
 
               it('can retrieve ballot votes', async function () {
-                assertBn.equal(await ElectionModule.getBallotVotes(ballot1.id), 2);
-                assertBn.equal(await ElectionModule.getBallotVotes(ballot2.id), 1);
-                assertBn.equal(await ElectionModule.getBallotVotes(ballot3.id), 1);
+                assert.deepEqual(await ElectionModule.getBallotVotes(ballot1.id), ballot1.votes);
+                assert.deepEqual(await ElectionModule.getBallotVotes(ballot2.id), ballot2.votes);
+                assert.deepEqual(await ElectionModule.getBallotVotes(ballot3.id), ballot3.votes);
               });
             });
           });
