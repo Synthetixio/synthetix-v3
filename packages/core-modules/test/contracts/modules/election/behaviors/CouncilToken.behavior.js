@@ -2,11 +2,10 @@ const { ethers } = hre;
 const assert = require('assert/strict');
 const assertBn = require('@synthetixio/core-js/utils/assertions/assert-bignumber');
 const assertRevert = require('@synthetixio/core-js/utils/assertions/assert-revert');
-const { getTime, takeSnapshot, restoreSnapshot } = require('@synthetixio/core-js/utils/hardhat/rpc');
-const { daysToSeconds } = require('@synthetixio/core-js/utils/misc/dates');
+const { takeSnapshot, restoreSnapshot } = require('@synthetixio/core-js/utils/hardhat/rpc');
 const { findEvent } = require('@synthetixio/core-js/utils/ethers/events');
 
-module.exports = function(getElectionModule, getInitData, proxyAddress) {
+module.exports = function (getElectionModule, getInitData, proxyAddress) {
   describe('Council token', () => {
     let ElectionModule, CouncilToken;
 
@@ -19,11 +18,7 @@ module.exports = function(getElectionModule, getInitData, proxyAddress) {
     let snapshotId;
 
     before('unwrap init data', async function () {
-      ({
-        tokenName,
-        tokenSymbol,
-        receipt
-      } = await getInitData());
+      ({ tokenName, tokenSymbol, receipt } = await getInitData());
     });
 
     before('take snapshot', async function () {
@@ -156,4 +151,4 @@ module.exports = function(getElectionModule, getInitData, proxyAddress) {
       });
     });
   });
-}
+};

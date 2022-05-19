@@ -12,11 +12,11 @@ const { daysToSeconds } = require('@synthetixio/core-js/utils/misc/dates');
 const { ElectionPeriod, assertDatesAreClose } = require('../helpers/election-helper');
 const { findEvent } = require('@synthetixio/core-js/utils/ethers/events');
 
-module.exports = function(getElectionModule) {
+module.exports = function (getElectionModule) {
   describe('Scheduling', () => {
     let ElectionModule;
 
-    let owner, user;
+    let user;
 
     let snapshotId;
 
@@ -37,7 +37,7 @@ module.exports = function(getElectionModule) {
     });
 
     before('identify signers', async () => {
-      [owner, user] = await ethers.getSigners();
+      [, user] = await ethers.getSigners();
     });
 
     // ----------------------------------
@@ -228,7 +228,8 @@ module.exports = function(getElectionModule) {
                   ElectionModule.tweakEpochSchedule(
                     (await ElectionModule.getNominationPeriodStartDate()).toNumber() -
                       daysToSeconds(2),
-                    (await ElectionModule.getVotingPeriodStartDate()).toNumber() + daysToSeconds(0.5),
+                    (await ElectionModule.getVotingPeriodStartDate()).toNumber() +
+                      daysToSeconds(0.5),
                     (await ElectionModule.getEpochEndDate()).toNumber() + daysToSeconds(4)
                   ),
                   'ChangesCurrentPeriod'
@@ -286,7 +287,8 @@ module.exports = function(getElectionModule) {
                   ElectionModule.modifyEpochSchedule(
                     (await ElectionModule.getNominationPeriodStartDate()).toNumber() -
                       daysToSeconds(2),
-                    (await ElectionModule.getVotingPeriodStartDate()).toNumber() + daysToSeconds(100),
+                    (await ElectionModule.getVotingPeriodStartDate()).toNumber() +
+                      daysToSeconds(100),
                     (await ElectionModule.getEpochEndDate()).toNumber() + daysToSeconds(100)
                   ),
                   'ChangesCurrentPeriod'
@@ -450,4 +452,4 @@ module.exports = function(getElectionModule) {
       itAcceptsEvaluations();
     });
   });
-}
+};

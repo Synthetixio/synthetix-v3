@@ -1,13 +1,16 @@
 const initializer = require('../../../../helpers/initializer');
 const { bootstrap } = require('@synthetixio/deployer/utils/tests');
-const { getElectionModule, initializeElectionModule } = require('@synthetixio/core-modules/test/contracts/modules/ElectionModule/helpers/election-helper');
+const {
+  getElectionModule,
+  initializeElectionModule,
+} = require('@synthetixio/core-modules/test/contracts/modules/ElectionModule/helpers/election-helper');
 // const itCanCastVotes = require('./behaviors/Cast.behavior');
 const itCanHandleNominations = require('@synthetixio/core-modules/test/contracts/modules/ElectionModule/behaviors/Nominate.behavior');
 // const itCanDismissMembers = require('./behaviors/Dismiss.behavior');
 // const itCanEvaluateElections = require('./behaviors/Evaluate.behavior');
 // const itHandlesInitialization = require('./behaviors/Initialize.behavior');
 
-describe.only('ElectionModule', () => {
+describe('ElectionModule', () => {
   const { proxyAddress } = bootstrap(initializer);
 
   let ElectionModule;

@@ -1,13 +1,9 @@
 const { ethers } = hre;
-const assert = require('assert/strict');
-const assertBn = require('@synthetixio/core-js/utils/assertions/assert-bignumber');
 const assertRevert = require('@synthetixio/core-js/utils/assertions/assert-revert');
 const { daysToSeconds } = require('@synthetixio/core-js/utils/misc/dates');
 const { getTime } = require('@synthetixio/core-js/utils/hardhat/rpc');
-const { ElectionPeriod, assertDatesAreClose } = require('../helpers/election-helper');
-const { findEvent } = require('@synthetixio/core-js/utils/ethers/events');
 
-module.exports = function(getElectionModule) {
+module.exports = function (getElectionModule) {
   let ElectionModule;
 
   let owner, user;
@@ -165,4 +161,4 @@ module.exports = function(getElectionModule) {
       });
     });
   });
-}
+};

@@ -3,7 +3,6 @@ const assert = require('assert/strict');
 const assertBn = require('@synthetixio/core-js/utils/assertions/assert-bignumber');
 const assertRevert = require('@synthetixio/core-js/utils/assertions/assert-revert');
 const {
-  getTime,
   takeSnapshot,
   restoreSnapshot,
   fastForwardTo,
@@ -11,11 +10,11 @@ const {
 const { daysToSeconds } = require('@synthetixio/core-js/utils/misc/dates');
 const { findEvent } = require('@synthetixio/core-js/utils/ethers/events');
 
-module.exports = function(getElectionModule) {
+module.exports = function (getElectionModule) {
   describe('Settings', () => {
     let ElectionModule;
 
-    let owner, user;
+    let user;
 
     let receipt;
 
@@ -30,7 +29,7 @@ module.exports = function(getElectionModule) {
     });
 
     before('identify signers', async () => {
-      [owner, user] = await ethers.getSigners();
+      [, user] = await ethers.getSigners();
     });
 
     before('retrieve the election module', async function () {
@@ -359,4 +358,4 @@ module.exports = function(getElectionModule) {
       });
     });
   });
-}
+};

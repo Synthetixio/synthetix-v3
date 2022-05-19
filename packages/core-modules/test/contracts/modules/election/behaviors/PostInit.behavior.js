@@ -2,12 +2,10 @@ const { ethers } = hre;
 const assert = require('assert/strict');
 const assertBn = require('@synthetixio/core-js/utils/assertions/assert-bignumber');
 const assertRevert = require('@synthetixio/core-js/utils/assertions/assert-revert');
-const { daysToSeconds } = require('@synthetixio/core-js/utils/misc/dates');
-const { getTime } = require('@synthetixio/core-js/utils/hardhat/rpc');
 const { ElectionPeriod, assertDatesAreClose } = require('../helpers/election-helper');
 const { findEvent } = require('@synthetixio/core-js/utils/ethers/events');
 
-module.exports = function(getElectionModule, getInitData) {
+module.exports = function (getElectionModule, getInitData) {
   let ElectionModule, CouncilToken;
 
   let tokenName, tokenSymbol;
@@ -26,10 +24,10 @@ module.exports = function(getElectionModule, getInitData) {
       nominationPeriodStartDate,
       votingPeriodStartDate,
       epochEndDate,
-      receipt
+      receipt,
     } = await getInitData());
 
-    ([member1, member2] = firstCouncil);
+    [member1, member2] = firstCouncil;
   });
 
   before('retrieve the election module', async function () {
@@ -88,10 +86,7 @@ module.exports = function(getElectionModule, getInitData) {
 
   it('shows that the first epoch has appropriate dates', async function () {
     assertDatesAreClose(await ElectionModule.getEpochStartDate(), epochStartDate);
-    assertDatesAreClose(
-      await ElectionModule.getVotingPeriodStartDate(),
-      votingPeriodStartDate
-    );
+    assertDatesAreClose(await ElectionModule.getVotingPeriodStartDate(), votingPeriodStartDate);
     assertDatesAreClose(
       await ElectionModule.getNominationPeriodStartDate(),
       nominationPeriodStartDate
@@ -100,10 +95,11 @@ module.exports = function(getElectionModule, getInitData) {
   });
 
   it('shows that the council token was created', async function () {
-    assert.equal(
-      await ElectionModule.getCouncilToken(),
-      CouncilToken.address
-    );
+    assert.equal(await ElectionModule.getCouncilToken(), CouncilToken.address);
+  });
+
+  it('shows that minimumActiveMembers is set', async function () {
+    assert.equal(await ElectionModule.getMinimumActiveMembers(), minimumActiveMembers);
   });
 
   describe('when attemting to re-initialize the module', function () {
@@ -114,4 +110,4 @@ module.exports = function(getElectionModule, getInitData) {
       );
     });
   });
-}
+};

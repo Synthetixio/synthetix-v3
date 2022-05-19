@@ -1,25 +1,28 @@
-const initializer = require('../../../helpers/initializer');
+const { ethers } = hre;
+const initializer = require('../../helpers/initializer');
 const { bootstrap } = require('@synthetixio/deployer/utils/tests');
-const { getElectionModule } = require('./helpers/election-helper');
 const { daysToSeconds } = require('@synthetixio/core-js/utils/misc/dates');
 const { getTime } = require('@synthetixio/core-js/utils/hardhat/rpc');
-const preInitBehavior = require('./behaviors/PreInit.behavior');
-const badInitBehavior = require('./behaviors/BadInit.behavior');
-const postInitBehavior = require('./behaviors/PostInit.behavior');
-const voteBehavior = require('./behaviors/Vote.behavior');
-const nominationsBehavior = require('./behaviors/Nomination.behavior');
-const dismissalBehavior = require('./behaviors/Dismissal.behavior');
-const evaluationBehavior = require('./behaviors/Evaluation.behavior');
-const resolutionBehavior = require('./behaviors/Resolution.behavior');
-const scheduleBehavior = require('./behaviors/Schedule.behavior');
-const settingsBehavior = require('./behaviors/Settings.behavior');
-const tokenBehavior = require('./behaviors/CouncilToken.behavior');
+const preInitBehavior = require('./election/behaviors/PreInit.behavior');
+const badInitBehavior = require('./election/behaviors/BadInit.behavior');
+const postInitBehavior = require('./election/behaviors/PostInit.behavior');
+const voteBehavior = require('./election/behaviors/Vote.behavior');
+const nominationsBehavior = require('./election/behaviors/Nomination.behavior');
+const dismissalBehavior = require('./election/behaviors/Dismissal.behavior');
+const evaluationBehavior = require('./election/behaviors/Evaluation.behavior');
+const resolutionBehavior = require('./election/behaviors/Resolution.behavior');
+const scheduleBehavior = require('./election/behaviors/Schedule.behavior');
+const settingsBehavior = require('./election/behaviors/Settings.behavior');
+const tokenBehavior = require('./election/behaviors/CouncilToken.behavior');
 
-describe.only('ElectionModule', () => {
+describe('ElectionModule', () => {
   const { proxyAddress } = bootstrap(initializer);
 
   async function getElectionModule() {
-    return await ethers.getContractAt('contracts/modules/ElectionModule.sol:ElectionModule', proxyAddress());
+    return await ethers.getContractAt(
+      'contracts/modules/ElectionModule.sol:ElectionModule',
+      proxyAddress()
+    );
   }
 
   describe('before the election module is initialized', async function () {
@@ -46,13 +49,12 @@ describe.only('ElectionModule', () => {
       nominationPeriodStartDate,
       votingPeriodStartDate,
       epochEndDate,
-      receipt
+      receipt,
     };
   }
 
   describe('after the election module is initialized', function () {
     before('initialize the election module', async function () {
-
       const ElectionModule = await getElectionModule();
 
       const initData = await getInitData();

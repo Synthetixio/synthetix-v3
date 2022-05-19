@@ -1,12 +1,11 @@
 const { ethers } = hre;
 const assert = require('assert/strict');
 const assertBn = require('@synthetixio/core-js/utils/assertions/assert-bignumber');
-const { getTime, takeSnapshot, restoreSnapshot } = require('@synthetixio/core-js/utils/hardhat/rpc');
-const { daysToSeconds } = require('@synthetixio/core-js/utils/misc/dates');
+const { takeSnapshot, restoreSnapshot } = require('@synthetixio/core-js/utils/hardhat/rpc');
 const { findEvent } = require('@synthetixio/core-js/utils/ethers/events');
 const { runElection } = require('../helpers/election-helper');
 
-module.exports = function(getElectionModule, getInitData) {
+module.exports = function (getElectionModule, getInitData) {
   describe('Resolutions', () => {
     let ElectionModule, CouncilToken;
 
@@ -19,9 +18,7 @@ module.exports = function(getElectionModule, getInitData) {
     let snapshotId;
 
     before('unwrap init data', async function () {
-      ({
-        firstCouncil,
-      } = await getInitData());
+      ({ firstCouncil } = await getInitData());
     });
 
     before('take snapshot', async function () {
@@ -206,4 +203,4 @@ module.exports = function(getElectionModule, getInitData) {
       });
     });
   });
-}
+};

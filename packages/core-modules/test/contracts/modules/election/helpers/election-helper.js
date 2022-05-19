@@ -1,8 +1,6 @@
 const { ethers } = hre;
 const assert = require('assert/strict');
 const { fastForwardTo } = require('@synthetixio/core-js/utils/hardhat/rpc');
-const { getTime } = require('@synthetixio/core-js/utils/hardhat/rpc');
-const { daysToSeconds } = require('@synthetixio/core-js/utils/misc/dates');
 
 const ElectionPeriod = {
   Administration: 0,
@@ -10,8 +8,6 @@ const ElectionPeriod = {
   Vote: 2,
   Evaluation: 3,
 };
-
-let ElectionModule;
 
 async function runElection(ElectionModule, owner, members) {
   // Configure
@@ -21,20 +17,20 @@ async function runElection(ElectionModule, owner, members) {
 
   // Nominate
   if ((await ElectionModule.getCurrentPeriod()).toNumber() === ElectionPeriod.Administration) {
-    await fastForwardTo(await ElectionModule.getNominationPeriodStartDate(), hre.ethers.provider);
+    await fastForwardTo(await ElectionModule.getNominationPeriodStartDate(), ethers.provider);
   }
   for (let member of members) {
     await ElectionModule.connect(member).nominate();
   }
 
   // Vote
-  await fastForwardTo(await ElectionModule.getVotingPeriodStartDate(), hre.ethers.provider);
+  await fastForwardTo(await ElectionModule.getVotingPeriodStartDate(), ethers.provider);
   for (let member of members) {
     await ElectionModule.connect(member).cast([member.address]);
   }
 
   // Evaluate
-  await fastForwardTo(await ElectionModule.getEpochEndDate(), hre.ethers.provider);
+  await fastForwardTo(await ElectionModule.getEpochEndDate(), ethers.provider);
   await ElectionModule.evaluate(0);
   assert.equal(await ElectionModule.isElectionEvaluated(), true);
   assert.deepEqual(
@@ -50,8 +46,8 @@ async function runElection(ElectionModule, owner, members) {
 }
 
 const assertDatesAreClose = (dateA, dateB) => {
-  const numberDateA = hre.ethers.BigNumber.isBigNumber(dateA) ? dateA.toNumber() : dateA;
-  const numberDateB = hre.ethers.BigNumber.isBigNumber(dateB) ? dateB.toNumber() : dateB;
+  const numberDateA = ethers.BigNumber.isBigNumber(dateA) ? dateA.toNumber() : dateA;
+  const numberDateB = ethers.BigNumber.isBigNumber(dateB) ? dateB.toNumber() : dateB;
 
   return Math.abs(numberDateB - numberDateA) <= 1;
 };
