@@ -133,6 +133,20 @@ contract FundModule is IFundModule, OwnableMixin, FundModuleStorage, Initializab
         emit FundPositionSet(fundId, markets, weights, msg.sender);
     }
 
+    function getFundPosition(uint fundId) external view override returns (uint[] memory, uint[] memory) {
+        FundData storage fund = _fundModuleStore().funds[fundId];
+
+        uint[] memory markets = new uint[](fund.fundDistribution.length);
+        uint[] memory weights = new uint[](fund.fundDistribution.length);
+
+        for (uint i = 0; i < fund.fundDistribution.length; i++) {
+            markets[i] = fund.fundDistribution[i].market;
+            weights[i] = fund.fundDistribution[i].weight;
+        }
+
+        return (markets, weights);
+    }
+
     //////////////////////////////////////////////
     //          REBALANCE                       //
     //////////////////////////////////////////////

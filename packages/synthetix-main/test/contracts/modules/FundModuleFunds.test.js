@@ -92,5 +92,72 @@ describe('FundModule - Funds Admin', function () {
     assertBn.equal(await FundToken.balanceOf(fundAdmin.address), 1);
   });
 
-  describe('When minting an FundToken', async () => {});
+  describe('When setting up the Fund positions', async () => {
+    describe('when attempting to set the positions of a non existent fund', async () => {
+      it('reverts', async () => {
+        await assertRevert(
+          FundModule.connect(fundAdmin).setFundPosition(2, [1], [1]),
+          'TokenDoesNotExist(2)'
+        );
+      });
+    });
+
+    describe('when a regular user attempts to set the positions', async () => {
+      it('reverts', async () => {
+        await assertRevert(
+          FundModule.connect(user1).setFundPosition(1, [1], [1]),
+          `Unauthorized("${user1.address}")`
+        );
+      });
+    });
+
+    describe('when attempting to set the positions with not matching number of positions', async () => {
+      it('reverts with more weights than markets', async () => {
+        await assertRevert(
+          FundModule.connect(fundAdmin).setFundPosition(1, [1], [1, 2]),
+          'InvalidParameters()'
+        );
+      });
+
+      it('reverts with more markets than weights', async () => {
+        await assertRevert(
+          FundModule.connect(fundAdmin).setFundPosition(1, [1, 2], [1]),
+          'InvalidParameters()'
+        );
+      });
+    });
+
+    describe('when adjusting a fund positions', async () => {
+      let receipt;
+
+      before('adjust fund positions', async () => {
+        const tx = await FundModule.connect(fundAdmin).setFundPosition(1, [1, 2], [1, 1]);
+        receipt = await tx.wait();
+      });
+
+      it('emmited an event', async () => {
+        const event = findEvent({ receipt, eventName: 'FundPositionSet' });
+
+        assert.equal(event.args.executedBy, fundAdmin.address);
+        assertBn.equal(event.args.fundId, 1);
+        assert.equal(event.args.markets.length, 2);
+        assert.equal(event.args.weights.length, 2);
+        assertBn.equal(event.args.markets[0], 1);
+        assertBn.equal(event.args.markets[1], 2);
+        assertBn.equal(event.args.weights[0], 1);
+        assertBn.equal(event.args.weights[1], 1);
+      });
+
+      it('is created', async () => {
+        let markets, weights;
+        [markets, weights] = await FundModule.getFundPosition(1);
+        assert.equal(markets.length, 2);
+        assert.equal(weights.length, 2);
+        assertBn.equal(markets[0], 1);
+        assertBn.equal(markets[1], 2);
+        assertBn.equal(weights[0], 1);
+        assertBn.equal(weights[1], 1);
+      });
+    });
+  });
 });

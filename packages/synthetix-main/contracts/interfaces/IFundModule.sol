@@ -22,6 +22,8 @@ interface IFundModule is ISatelliteFactory {
         uint[] calldata weights
     ) external;
 
+    function getFundPosition(uint fundId) external view returns (uint[] memory, uint[] memory);
+
     function rebalanceMarkets(uint fundId) external;
 
     function delegateCollateral(
