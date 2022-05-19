@@ -13,6 +13,7 @@ const evaluationBehavior = require('./behaviors/Evaluation.behavior');
 const resolutionBehavior = require('./behaviors/Resolution.behavior');
 const scheduleBehavior = require('./behaviors/Schedule.behavior');
 const settingsBehavior = require('./behaviors/Settings.behavior');
+const tokenBehavior = require('./behaviors/CouncilToken.behavior');
 
 describe.only('ElectionModule', () => {
   const { proxyAddress } = bootstrap(initializer);
@@ -77,5 +78,6 @@ describe.only('ElectionModule', () => {
     evaluationBehavior(getElectionModule);
     resolutionBehavior(getElectionModule, getInitData);
     dismissalBehavior(getElectionModule);
+    tokenBehavior(getElectionModule, getInitData, proxyAddress);
   });
 });

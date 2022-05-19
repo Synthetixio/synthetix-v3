@@ -25,4 +25,10 @@ module.exports = function(getElectionModule) {
       await assertRevert(ElectionModule.getCurrentPeriod(), 'NotInitialized');
     });
   });
+
+  describe('when upgrading the council token', function () {
+    it('reverts', async function () {
+      await assertRevert(ElectionModule.upgradeCouncilToken('0x0000000000000000000000000000000000000001'), 'NotInitialized');
+    });
+  });
 }

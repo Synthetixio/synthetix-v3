@@ -2,60 +2,44 @@ const { ethers } = hre;
 const assert = require('assert/strict');
 const assertBn = require('@synthetixio/core-js/utils/assertions/assert-bignumber');
 const assertRevert = require('@synthetixio/core-js/utils/assertions/assert-revert');
-const { getTime } = require('@synthetixio/core-js/utils/hardhat/rpc');
+const { getTime, takeSnapshot, restoreSnapshot } = require('@synthetixio/core-js/utils/hardhat/rpc');
 const { daysToSeconds } = require('@synthetixio/core-js/utils/misc/dates');
-const { bootstrap } = require('@synthetixio/deployer/utils/tests');
-const initializer = require('../../../helpers/initializer');
 const { findEvent } = require('@synthetixio/core-js/utils/ethers/events');
 
-describe('ElectionModule (token)', () => {
-  const { proxyAddress } = bootstrap(initializer);
+module.exports = function(getElectionModule, getInitData, proxyAddress) {
+  describe('Council token', () => {
+    let ElectionModule, CouncilToken;
 
-  let ElectionModule, CouncilToken;
+    let owner, user;
 
-  let owner, user;
+    let tokenName, tokenSymbol;
 
-  const TOKEN_NAME = 'Spartan Council Token';
-  const TOKEN_SYMBOL = 'SCT';
+    let receipt;
 
-  let receipt;
+    let snapshotId;
 
-  before('identify signers', async () => {
-    [owner, user] = await ethers.getSigners();
-  });
-
-  before('identify modules', async () => {
-    ElectionModule = await ethers.getContractAt(
-      'contracts/modules/ElectionModule.sol:ElectionModule',
-      proxyAddress()
-    );
-  });
-
-  describe('before the module is initialized', function () {
-    describe('when upgrading the council token', function () {
-      it('reverts', async function () {
-        await assertRevert(ElectionModule.upgradeCouncilToken(user.address), 'NotInitialized');
-      });
+    before('unwrap init data', async function () {
+      ({
+        tokenName,
+        tokenSymbol,
+        receipt
+      } = await getInitData());
     });
-  });
 
-  describe('when the module is initialized', function () {
-    before('initialize', async function () {
-      const now = await getTime(ethers.provider);
-      const epochEndDate = now + daysToSeconds(90);
-      const votingPeriodStartDate = epochEndDate - daysToSeconds(7);
-      const nominationPeriodStartDate = votingPeriodStartDate - daysToSeconds(7);
+    before('take snapshot', async function () {
+      snapshotId = await takeSnapshot(ethers.provider);
+    });
 
-      const tx = await ElectionModule.initializeElectionModule(
-        TOKEN_NAME,
-        TOKEN_SYMBOL,
-        [owner.address],
-        1,
-        nominationPeriodStartDate,
-        votingPeriodStartDate,
-        epochEndDate
-      );
-      receipt = await tx.wait();
+    after('restore snapshot', async function () {
+      await restoreSnapshot(snapshotId, ethers.provider);
+    });
+
+    before('identify signers', async () => {
+      [owner, user] = await ethers.getSigners();
+    });
+
+    before('retrieve the election module', async function () {
+      ElectionModule = await getElectionModule();
     });
 
     describe('when the council token is identified', function () {
@@ -78,8 +62,8 @@ describe('ElectionModule (token)', () => {
       });
 
       it('has the correct token name and symbol', async function () {
-        assert.equal(await CouncilToken.name(), TOKEN_NAME);
-        assert.equal(await CouncilToken.symbol(), TOKEN_SYMBOL);
+        assert.equal(await CouncilToken.name(), tokenName);
+        assert.equal(await CouncilToken.symbol(), tokenSymbol);
       });
 
       it('is owned by the system', async function () {
@@ -172,4 +156,4 @@ describe('ElectionModule (token)', () => {
       });
     });
   });
-});
+}
