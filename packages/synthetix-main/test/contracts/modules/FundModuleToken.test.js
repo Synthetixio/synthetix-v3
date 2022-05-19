@@ -9,12 +9,12 @@ const initializer = require('../../helpers/initializer');
 describe('FundModule - FundToken - Ownership', function () {
   const { proxyAddress } = bootstrap(initializer);
 
-  let owner, user1, user2, userAdmin, user4;
+  let owner, user1, user2;
 
   let FundModule, fundTokenAddress, FundToken;
 
   before('identify signers', async () => {
-    [owner, user1, user2, userAdmin, user4] = await ethers.getSigners();
+    [owner, user1, user2] = await ethers.getSigners();
   });
 
   before('identify modules', async () => {
@@ -70,7 +70,7 @@ describe('FundModule - FundToken - Ownership', function () {
       it('reverts when calling transferFrom', async () => {
         await assertRevert(
           FundToken.connect(user1).transferFrom(user1.address, user2.address, 1),
-          `NotAllowed()`
+          'NotAllowed()'
         );
       });
 
@@ -81,7 +81,7 @@ describe('FundModule - FundToken - Ownership', function () {
             user2.address,
             1
           ),
-          `NotAllowed()`
+          'NotAllowed()'
         );
       });
 
@@ -93,7 +93,7 @@ describe('FundModule - FundToken - Ownership', function () {
             1,
             '0x'
           ),
-          `NotAllowed()`
+          'NotAllowed()'
         );
       });
     });

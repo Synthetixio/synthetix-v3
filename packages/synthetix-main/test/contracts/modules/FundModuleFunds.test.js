@@ -12,7 +12,7 @@ describe('FundModule - Funds Admin', function () {
   let owner, fundAdmin, user1, user2;
 
   let CollateralModule, Collateral, CollateralPriceFeed;
-  let AccountModule, AccountToken, accountTokenAddress;
+  let AccountModule; //, accountTokenAddress;
   let FundModule, FundToken, fundTokenAddress;
 
   before('identify signers', async () => {
@@ -25,9 +25,9 @@ describe('FundModule - Funds Admin', function () {
     CollateralModule = await ethers.getContractAt('CollateralModule', proxyAddress());
     AccountModule = await ethers.getContractAt('AccountModule', proxyAddress());
     await (await AccountModule.connect(owner).initializeAccountModule()).wait();
-    accountTokenAddress = await AccountModule.getAccountAddress();
+    // accountTokenAddress = await AccountModule.getAccountAddress();
 
-    AccountToken = await ethers.getContractAt('AccountToken', accountTokenAddress);
+    // AccountToken = await ethers.getContractAt('AccountToken', accountTokenAddress);
   });
 
   before('Initialize tokens and modules', async () => {
