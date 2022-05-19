@@ -11,6 +11,8 @@ const nominationsBehavior = require('./behaviors/Nomination.behavior');
 const dismissalBehavior = require('./behaviors/Dismissal.behavior');
 const evaluationBehavior = require('./behaviors/Evaluation.behavior');
 const resolutionBehavior = require('./behaviors/Resolution.behavior');
+const scheduleBehavior = require('./behaviors/Schedule.behavior');
+const settingsBehavior = require('./behaviors/Settings.behavior');
 
 describe.only('ElectionModule', () => {
   const { proxyAddress } = bootstrap(initializer);
@@ -68,10 +70,12 @@ describe.only('ElectionModule', () => {
     });
 
     postInitBehavior(getElectionModule, getInitData);
+    scheduleBehavior(getElectionModule);
+    settingsBehavior(getElectionModule);
     nominationsBehavior(getElectionModule);
     voteBehavior(getElectionModule);
     evaluationBehavior(getElectionModule);
-    dismissalBehavior(getElectionModule);
     resolutionBehavior(getElectionModule, getInitData);
+    dismissalBehavior(getElectionModule);
   });
 });

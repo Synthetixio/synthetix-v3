@@ -9,48 +9,32 @@ const {
   fastForwardTo,
 } = require('@synthetixio/core-js/utils/hardhat/rpc');
 const { daysToSeconds } = require('@synthetixio/core-js/utils/misc/dates');
-const { bootstrap } = require('@synthetixio/deployer/utils/tests');
-const initializer = require('../../../helpers/initializer');
 const { findEvent } = require('@synthetixio/core-js/utils/ethers/events');
 
-describe('ElectionModule (settings)', () => {
-  const { proxyAddress } = bootstrap(initializer);
+module.exports = function(getElectionModule) {
+  describe('Settings', () => {
+    let ElectionModule;
 
-  let ElectionModule;
+    let owner, user;
 
-  let owner, user;
+    let receipt;
 
-  let receipt;
+    let snapshotId;
 
-  let snapshotId;
+    before('take snapshot', async function () {
+      snapshotId = await takeSnapshot(ethers.provider);
+    });
 
-  before('identify signers', async () => {
-    [owner, user] = await ethers.getSigners();
-  });
+    after('restore snapshot', async function () {
+      await restoreSnapshot(snapshotId, ethers.provider);
+    });
 
-  before('identify modules', async () => {
-    ElectionModule = await ethers.getContractAt(
-      'contracts/modules/ElectionModule.sol:ElectionModule',
-      proxyAddress()
-    );
-  });
+    before('identify signers', async () => {
+      [owner, user] = await ethers.getSigners();
+    });
 
-  describe('when the module is initialized', function () {
-    before('initialize', async function () {
-      const now = await getTime(ethers.provider);
-      const epochEndDate = now + daysToSeconds(90);
-      const votingPeriodStartDate = epochEndDate - daysToSeconds(7);
-      const nominationPeriodStartDate = votingPeriodStartDate - daysToSeconds(7);
-
-      await ElectionModule.initializeElectionModule(
-        'Spartan Council Token',
-        'SCT',
-        [owner.address],
-        1,
-        nominationPeriodStartDate,
-        votingPeriodStartDate,
-        epochEndDate
-      );
+    before('retrieve the election module', async function () {
+      ElectionModule = await getElectionModule();
     });
 
     // ---------------------------------------
@@ -133,6 +117,8 @@ describe('ElectionModule (settings)', () => {
           let newNextEpochSeatCount = 8;
 
           describe('in the nominations period', function () {
+            let snapshotId;
+
             before('take snapshot and fast forward', async function () {
               snapshotId = await takeSnapshot(ethers.provider);
 
@@ -155,6 +141,8 @@ describe('ElectionModule (settings)', () => {
           });
 
           describe('in the voting period', function () {
+            let snapshotId;
+
             before('take snapshot and fast forward', async function () {
               snapshotId = await takeSnapshot(ethers.provider);
 
@@ -371,4 +359,4 @@ describe('ElectionModule (settings)', () => {
       });
     });
   });
-});
+}
