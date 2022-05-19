@@ -25,6 +25,43 @@ contract FundModule is IFundModule, OwnableMixin, FundModuleStorage, Initializab
 
     event FundCreated(address fundAddress);
     event FundPositionSet(uint fundId, uint[] markets, uint[] weights, address executedBy);
+    event DelegationUpdated(
+        bytes32 liquidityItemId,
+        uint fundId,
+        uint accountId,
+        address collateralType,
+        uint amount,
+        uint leverage
+    );
+    event PositionAdded(
+        bytes32 liquidityItemId,
+        uint fundId,
+        uint accountId,
+        address collateralType,
+        uint amount,
+        uint leverage,
+        uint shares,
+        uint initialDebt
+    );
+    event PositionRemoved(bytes32 liquidityItemId, uint fundId, uint accountId, address collateralType);
+    event PositionIncreased(
+        bytes32 liquidityItemId,
+        uint fundId,
+        address collateralType,
+        uint amount,
+        uint leverage,
+        uint shares,
+        uint initialDebt
+    );
+    event PositionDecreased(
+        bytes32 liquidityItemId,
+        uint fundId,
+        address collateralType,
+        uint amount,
+        uint leverage,
+        uint shares,
+        uint initialDebt
+    );
 
     // ---------------------------------------
     // Chores
@@ -120,6 +157,7 @@ contract FundModule is IFundModule, OwnableMixin, FundModuleStorage, Initializab
         fund.totalWeights = 0;
 
         for (uint i = 0; i < markets.length; i++) {
+            // TODO check if market exists
             MarketDistribution memory distribution;
             distribution.market = markets[i];
             distribution.weight = weights[i];
@@ -226,6 +264,8 @@ contract FundModule is IFundModule, OwnableMixin, FundModuleStorage, Initializab
         }
 
         rebalanceMarkets(fundId);
+
+        emit DelegationUpdated(lpid, fundId, accountId, collateralType, amount, leverage);
     }
 
     function _addPosition(
@@ -249,6 +289,16 @@ contract FundModule is IFundModule, OwnableMixin, FundModuleStorage, Initializab
         _fundModuleStore().funds[fundId].liquidityItems[liquidityItemId] = liquidityItem;
 
         // TODO adjust totalShares, liquidityByCollateral
+        emit PositionAdded(
+            liquidityItemId,
+            fundId,
+            accountId,
+            collateralType,
+            amount,
+            leverage,
+            liquidityItem.shares,
+            liquidityItem.initialDebt
+        );
     }
 
     function _removePosition(
@@ -272,6 +322,7 @@ contract FundModule is IFundModule, OwnableMixin, FundModuleStorage, Initializab
         _fundModuleStore().funds[fundId].liquidityItems[liquidityItemId] = liquidityItem;
 
         // TODO adjust totalShares, liquidityByCollateral
+        emit PositionRemoved(liquidityItemId, fundId, accountId, collateralType);
     }
 
     function _increasePosition(
@@ -294,6 +345,15 @@ contract FundModule is IFundModule, OwnableMixin, FundModuleStorage, Initializab
         _fundModuleStore().funds[fundId].liquidityItems[liquidityItemId] = liquidityItem;
 
         // TODO adjust totalShares, liquidityByCollateral
+        emit PositionIncreased(
+            liquidityItemId,
+            fundId,
+            collateralType,
+            amount,
+            leverage,
+            liquidityItem.shares,
+            liquidityItem.initialDebt
+        );
     }
 
     function _decreasePosition(
@@ -316,6 +376,15 @@ contract FundModule is IFundModule, OwnableMixin, FundModuleStorage, Initializab
         _fundModuleStore().funds[fundId].liquidityItems[liquidityItemId] = liquidityItem;
 
         // TODO adjust totalShares, liquidityByCollateral
+        emit PositionDecreased(
+            liquidityItemId,
+            fundId,
+            collateralType,
+            amount,
+            leverage,
+            liquidityItem.shares,
+            liquidityItem.initialDebt
+        );
     }
 
     function _convertToShares(
