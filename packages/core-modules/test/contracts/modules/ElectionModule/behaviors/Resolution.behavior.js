@@ -1,72 +1,63 @@
 const { ethers } = hre;
 const assert = require('assert/strict');
 const assertBn = require('@synthetixio/core-js/utils/assertions/assert-bignumber');
-const { getTime } = require('@synthetixio/core-js/utils/hardhat/rpc');
+const { getTime, takeSnapshot, restoreSnapshot } = require('@synthetixio/core-js/utils/hardhat/rpc');
 const { daysToSeconds } = require('@synthetixio/core-js/utils/misc/dates');
-const { bootstrap } = require('@synthetixio/deployer/utils/tests');
-const initializer = require('../../../helpers/initializer');
 const { findEvent } = require('@synthetixio/core-js/utils/ethers/events');
-const { runElection } = require('./helpers/election-helper');
+const { runElection } = require('../helpers/election-helper');
 
-describe('ElectionModule (resolve)', () => {
-  const { proxyAddress } = bootstrap(initializer);
+module.exports = function(getElectionModule, getInitData) {
+  describe('Resolutions', () => {
+    let ElectionModule, CouncilToken;
 
-  let ElectionModule, CouncilToken;
+    let member1, member2, member3, member4, member5, member6;
 
-  let owner;
-  let member1, member2, member3, member4, member5;
+    let firstCouncil, members;
 
-  let members;
+    let receipt;
 
-  let receipt;
+    let snapshotId;
 
-  async function itHasExpectedMembers() {
-    it('shows that the members are in the council', async function () {
-      assert.deepEqual(
-        await ElectionModule.getCouncilMembers(),
-        members.map((m) => m.address)
-      );
+    before('unwrap init data', async function () {
+      ({
+        firstCouncil,
+      } = await getInitData());
     });
 
-    it('shows that all members hold their corresponding NFT', async function () {
-      for (let member of members) {
-        assertBn.equal(await CouncilToken.balanceOf(member.address), 1);
-
-        const tokenId = members.indexOf(member) + 1;
-        assert.equal(await CouncilToken.ownerOf(tokenId), member.address);
-      }
+    before('take snapshot', async function () {
+      snapshotId = await takeSnapshot(ethers.provider);
     });
-  }
 
-  before('identify signers', async () => {
-    const users = await ethers.getSigners();
+    after('restore snapshot', async function () {
+      await restoreSnapshot(snapshotId, ethers.provider);
+    });
 
-    [owner, member1, member2, member3, member4, member5] = users;
-  });
+    async function itHasExpectedMembers() {
+      it('shows that the members are in the council', async function () {
+        assert.deepEqual(
+          await ElectionModule.getCouncilMembers(),
+          members.map((m) => m.address)
+        );
+      });
 
-  before('identify modules', async () => {
-    ElectionModule = await ethers.getContractAt(
-      'contracts/modules/ElectionModule.sol:ElectionModule',
-      proxyAddress()
-    );
-  });
+      it('shows that all members hold their corresponding NFT', async function () {
+        for (let member of members) {
+          assertBn.equal(await CouncilToken.balanceOf(member.address), 1);
 
-  describe('when the module is initialized', function () {
-    before('initialize', async function () {
-      const now = await getTime(ethers.provider);
-      const epochEndDate = now + daysToSeconds(90);
-      const votingPeriodStartDate = epochEndDate - daysToSeconds(7);
-      const nominationPeriodStartDate = votingPeriodStartDate - daysToSeconds(7);
+          const tokenId = members.indexOf(member) + 1;
+          assert.equal(await CouncilToken.ownerOf(tokenId), member.address);
+        }
+      });
+    }
 
-      await ElectionModule.initializeElectionModule(
-        'Spartan Council Token',
-        'SCT',
-        [owner.address],
-        1,
-        nominationPeriodStartDate,
-        votingPeriodStartDate,
-        epochEndDate
-      );
+    before('identify signers', async () => {
+      const users = await ethers.getSigners();
+
+      [member1, member2, member3, member4, member5, member6] = users;
+    });
+
+    before('retrieve the election module', async function () {
+      ElectionModule = await getElectionModule();
     });
 
     before('identify the council token', async function () {
@@ -77,7 +68,7 @@ describe('ElectionModule (resolve)', () => {
 
     describe('epoch 0', function () {
       before('define members', async function () {
-        members = [owner];
+        members = firstCouncil;
       });
 
       it('shows that the current epoch is 0', async function () {
@@ -87,13 +78,13 @@ describe('ElectionModule (resolve)', () => {
       itHasExpectedMembers();
 
       describe('epoch 1', function () {
-        describe('when members 1, 2, and 3 are elected', function () {
+        describe('when members 2, 3, and 4 are elected', function () {
           before('define members', async function () {
-            members = [member1, member2, member3];
+            members = [member2, member3, member4];
           });
 
           before('simulate election', async function () {
-            receipt = await runElection(ElectionModule, owner, members);
+            receipt = await runElection(ElectionModule, member1, members);
           });
 
           it('shows that the current epoch is 1', async function () {
@@ -110,11 +101,14 @@ describe('ElectionModule (resolve)', () => {
           });
 
           it('emitted CouncilMemberRemoved events', async function () {
-            const event = findEvent({ receipt, eventName: 'CouncilMemberRemoved' });
-            assert.ok(event);
+            const events = findEvent({ receipt, eventName: 'CouncilMemberRemoved' });
+            assert.ok(events);
 
-            assert.equal(event.args.member, owner.address);
-            assertBn.equal(event.args.epochIndex, 1);
+            const removedMembers = events.map((e) => e.args.member);
+            assert.equal(removedMembers.length, 2);
+
+            assert.ok(removedMembers.includes(member1.address));
+            assert.ok(removedMembers.includes(member2.address));
           });
 
           it('emitted CouncilMemberAdded events', async function () {
@@ -126,20 +120,20 @@ describe('ElectionModule (resolve)', () => {
             const addedMembers = events.map((e) => e.args.member);
             assert.equal(addedMembers.length, 3);
 
-            assert.ok(addedMembers.includes(member1.address));
             assert.ok(addedMembers.includes(member2.address));
             assert.ok(addedMembers.includes(member3.address));
+            assert.ok(addedMembers.includes(member4.address));
           });
         });
 
         describe('epoch 2', function () {
-          describe('when members 2, 3, and 5 are elected', function () {
+          describe('when members 3, 4, and 6 are elected', function () {
             before('define members', async function () {
-              members = [member2, member3, member5];
+              members = [member3, member4, member6];
             });
 
             before('simulate election', async function () {
-              receipt = await runElection(ElectionModule, owner, members);
+              receipt = await runElection(ElectionModule, member1, members);
             });
 
             it('shows that the current epoch is 3', async function () {
@@ -164,9 +158,9 @@ describe('ElectionModule (resolve)', () => {
               const removedMembers = events.map((e) => e.args.member);
               assert.equal(removedMembers.length, 3);
 
-              assert.ok(removedMembers.includes(member1.address));
               assert.ok(removedMembers.includes(member2.address));
               assert.ok(removedMembers.includes(member3.address));
+              assert.ok(removedMembers.includes(member4.address));
             });
 
             it('emitted CouncilMemberAdded events', async function () {
@@ -178,19 +172,19 @@ describe('ElectionModule (resolve)', () => {
               const addedMembers = events.map((e) => e.args.member);
               assert.equal(addedMembers.length, 3);
 
-              assert.ok(addedMembers.includes(member2.address));
               assert.ok(addedMembers.includes(member3.address));
-              assert.ok(addedMembers.includes(member5.address));
+              assert.ok(addedMembers.includes(member4.address));
+              assert.ok(addedMembers.includes(member6.address));
             });
 
             describe('epoch 3', function () {
-              describe('when members 3, 4, and 2 are elected', function () {
+              describe('when members 4, 5, and 3 are elected', function () {
                 before('define members', async function () {
-                  members = [member3, member4, member2];
+                  members = [member4, member5, member3];
                 });
 
                 before('simulate election', async function () {
-                  receipt = await runElection(ElectionModule, owner, members);
+                  receipt = await runElection(ElectionModule, member1, members);
                 });
 
                 it('shows that the current epoch is 4', async function () {
@@ -212,4 +206,4 @@ describe('ElectionModule (resolve)', () => {
       });
     });
   });
-});
+}

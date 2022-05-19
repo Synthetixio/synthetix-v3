@@ -11,7 +11,7 @@ const { ElectionPeriod } = require('../helpers/election-helper');
 const { findEvent } = require('@synthetixio/core-js/utils/ethers/events');
 
 module.exports = function (getElectionModule) {
-  describe('Voting', function () {
+  describe('Votes', function () {
     let candidate1, candidate2, candidate3, candidate4;
     let voter1, voter2, voter3, voter4, voter5;
 

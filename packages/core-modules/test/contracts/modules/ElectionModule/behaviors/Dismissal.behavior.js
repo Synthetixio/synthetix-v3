@@ -24,6 +24,16 @@ module.exports = function (getElectionModule) {
 
     let receipt;
 
+    let snapshotId;
+
+    before('take snapshot', async function () {
+      snapshotId = await takeSnapshot(ethers.provider);
+    });
+
+    after('restore snapshot', async function () {
+      await restoreSnapshot(snapshotId, ethers.provider);
+    });
+
     before('retrieve the election module', async function () {
       ElectionModule = await getElectionModule();
     });

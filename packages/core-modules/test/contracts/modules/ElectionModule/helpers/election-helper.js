@@ -13,35 +13,6 @@ const ElectionPeriod = {
 
 let ElectionModule;
 
-async function getElectionModule(proxyAddress) {
-  if (!ElectionModule) {
-    ElectionModule = await ethers.getContractAt('ElectionModule', proxyAddress());
-  }
-
-  return ElectionModule;
-}
-
-async function initializeElectionModule(ElectionModule) {
-  const now = await getTime(ethers.provider);
-  const epochEndDate = now + daysToSeconds(90);
-  const votingPeriodStartDate = epochEndDate - daysToSeconds(7);
-  const nominationPeriodStartDate = votingPeriodStartDate - daysToSeconds(7);
-
-  const [owner] = await ethers.getSigners();
-
-  const tx = await ElectionModule.initializeElectionModule(
-    'Spartan Council Token',
-    'SCT',
-    [owner.address],
-    1,
-    nominationPeriodStartDate,
-    votingPeriodStartDate,
-    epochEndDate
-  );
-
-  await tx.wait();
-}
-
 async function runElection(ElectionModule, owner, members) {
   // Configure
   if ((await ElectionModule.getNextEpochSeatCount()) !== members.length) {
@@ -89,6 +60,4 @@ module.exports = {
   ElectionPeriod,
   assertDatesAreClose,
   runElection,
-  getElectionModule,
-  initializeElectionModule,
 };
