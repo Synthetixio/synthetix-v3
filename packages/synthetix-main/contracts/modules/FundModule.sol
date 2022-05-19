@@ -123,7 +123,51 @@ contract FundModule is IFundModule, OwnableMixin, FundModuleStorage, Initializab
     }
 
     // ---------------------------------------
-    // Business Logic
+    // SCCP
+    // ---------------------------------------
+
+    function setPreferredFund(uint fundId) external override onlyOwner {
+        _fundModuleStore().preferredFund = fundId;
+    }
+
+    function getPreferredFund() external view override returns (uint) {
+        return _fundModuleStore().preferredFund;
+    }
+
+    function addApprovedFund(uint fundId) external override onlyOwner {
+        for (uint i = 0; i < _fundModuleStore().approvedFunds.length; i++) {
+            if (_fundModuleStore().approvedFunds[i] == fundId) {
+                revert FundAlreadyApproved(fundId);
+            }
+        }
+
+        _fundModuleStore().approvedFunds.push(fundId);
+    }
+
+    function removeApprovedFund(uint fundId) external override onlyOwner {
+        bool found;
+        for (uint i = 0; i < _fundModuleStore().approvedFunds.length; i++) {
+            if (_fundModuleStore().approvedFunds[i] == fundId) {
+                _fundModuleStore().approvedFunds[i] = _fundModuleStore().approvedFunds[
+                    _fundModuleStore().approvedFunds.length - 1
+                ];
+                _fundModuleStore().approvedFunds.pop();
+                found = true;
+                break;
+            }
+        }
+
+        if (!found) {
+            revert FundNotFound(fundId);
+        }
+    }
+
+    function getApprovedFunds() external view override returns (uint[] memory) {
+        return _fundModuleStore().approvedFunds;
+    }
+
+    // ---------------------------------------
+    // Minting
     // ---------------------------------------
 
     modifier onlyFundOwner(uint fundId, address requestor) {
@@ -138,6 +182,9 @@ contract FundModule is IFundModule, OwnableMixin, FundModuleStorage, Initializab
         FundToken(getFundTokenAddress()).mint(owner, requestedFundId);
     }
 
+    // ---------------------------------------
+    // fund admin
+    // ---------------------------------------
     function setFundPosition(
         uint fundId,
         uint[] calldata markets,
@@ -185,10 +232,9 @@ contract FundModule is IFundModule, OwnableMixin, FundModuleStorage, Initializab
         return (markets, weights);
     }
 
-    //////////////////////////////////////////////
-    //          REBALANCE                       //
-    //////////////////////////////////////////////
-
+    // ---------------------------------------
+    // rebalance
+    // ---------------------------------------
     function rebalanceMarkets(uint fundId) public override {
         // TODO check something (if needed)
 
@@ -216,9 +262,9 @@ contract FundModule is IFundModule, OwnableMixin, FundModuleStorage, Initializab
         // TODO
     }
 
-    //////////////////////////////////////////////
-    //          DELEGATION                      //
-    //////////////////////////////////////////////
+    // ---------------------------------------
+    // delegation
+    // ---------------------------------------
 
     function delegateCollateral(
         uint fundId,
@@ -433,9 +479,9 @@ contract FundModule is IFundModule, OwnableMixin, FundModuleStorage, Initializab
         return 0;
     }
 
-    //////////////////////////////////////////////
-    //          MINTING/BURNING sUSD            //
-    //////////////////////////////////////////////
+    // ---------------------------------------
+    // Mint/Burn sUSD
+    // ---------------------------------------
 
     function mintsUSD(
         uint fundId,
@@ -457,9 +503,10 @@ contract FundModule is IFundModule, OwnableMixin, FundModuleStorage, Initializab
         // TODO implement it
     }
 
-    //////////////////////////////////////////////
-    //          CRatio and Debt queries         //
-    //////////////////////////////////////////////
+    // ---------------------------------------
+    // CRatio and Debt queries
+    // ---------------------------------------
+
     function collateralizationRatio(
         uint fundId,
         uint accountId,
@@ -531,53 +578,9 @@ contract FundModule is IFundModule, OwnableMixin, FundModuleStorage, Initializab
         return _perShareValue(fundId);
     }
 
-    /////////////////////////////////////////////////
-    // SCCP
-    /////////////////////////////////////////////////
-
-    function setPreferredFund(uint fundId) external override onlyOwner {
-        _fundModuleStore().preferredFund = fundId;
-    }
-
-    function getPreferredFund() external view override returns (uint) {
-        return _fundModuleStore().preferredFund;
-    }
-
-    function addApprovedFund(uint fundId) external override onlyOwner {
-        for (uint i = 0; i < _fundModuleStore().approvedFunds.length; i++) {
-            if (_fundModuleStore().approvedFunds[i] == fundId) {
-                revert FundAlreadyApproved(fundId);
-            }
-        }
-
-        _fundModuleStore().approvedFunds.push(fundId);
-    }
-
-    function removeApprovedFund(uint fundId) external override onlyOwner {
-        bool found;
-        for (uint i = 0; i < _fundModuleStore().approvedFunds.length; i++) {
-            if (_fundModuleStore().approvedFunds[i] == fundId) {
-                _fundModuleStore().approvedFunds[i] = _fundModuleStore().approvedFunds[
-                    _fundModuleStore().approvedFunds.length - 1
-                ];
-                _fundModuleStore().approvedFunds.pop();
-                found = true;
-                break;
-            }
-        }
-
-        if (!found) {
-            revert FundNotFound(fundId);
-        }
-    }
-
-    function getApprovedFunds() external view override returns (uint[] memory) {
-        return _fundModuleStore().approvedFunds;
-    }
-
-    /////////////////////////////////////////////////
-    // INTERNALS
-    /////////////////////////////////////////////////
+    // ---------------------------------------
+    // Helpers / Internals
+    // ---------------------------------------
 
     function _getLiquidityItemId(
         uint accountId,
