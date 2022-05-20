@@ -11,6 +11,10 @@ const { getTime, fastForwardTo } = require('@synthetixio/core-js/utils/hardhat/r
 const { ethers } = hre;
 
 describe('SynthetixElectionModule (cross chain debt share)', function () {
+  const { proxyAddress } = bootstrap(initializer);
+
+  let ElectionModule;
+
   let owner, user, DebtShare;
 
   let parsedTree, validRoot, wrongTree, voter;
@@ -43,10 +47,6 @@ describe('SynthetixElectionModule (cross chain debt share)', function () {
   });
 
   describe('when setting a merkle root', () => {
-    const { proxyAddress } = bootstrap(initializer);
-
-    let ElectionModule;
-
     before('identify module', async () => {
       ElectionModule = await ethers.getContractAt(
         'contracts/modules/ElectionModule.sol:ElectionModule',
@@ -74,7 +74,7 @@ describe('SynthetixElectionModule (cross chain debt share)', function () {
       );
     });
 
-    describe('when attempting to set the merkle before time', () => {
+    describe('when attempting to set the merkle before time, in the Administration period', () => {
       it('reverts', async function () {
         await assertRevert(
           ElectionModule.connect(owner).setCrossChainDebtShareMerkleRoot(validRoot, 1),
@@ -116,8 +116,9 @@ describe('SynthetixElectionModule (cross chain debt share)', function () {
         before('set merkle root', async () => {
           const tx = await ElectionModule.connect(owner).setCrossChainDebtShareMerkleRoot(
             validRoot,
-            42
+            41
           );
+
           receipt = await tx.wait();
         });
 
@@ -126,84 +127,100 @@ describe('SynthetixElectionModule (cross chain debt share)', function () {
 
           assert.ok(event);
           assert.deepEqual(event.args.merkleRoot, validRoot);
-          assertBn.equal(event.args.blocknumber, 42);
+          assertBn.equal(event.args.blocknumber, 41);
           assertBn.equal(event.args.epoch, 0);
         });
 
         it('gets the merkle root blocknumber', async function () {
-          assertBn.equal(await ElectionModule.getCrossChainDebtShareMerkleRootBlocknumber(), 42);
+          assertBn.equal(await ElectionModule.getCrossChainDebtShareMerkleRootBlocknumber(), 41);
         });
 
         it('gets the merkle root', async function () {
           assert.deepEqual(await ElectionModule.getCrossChainDebtShareMerkleRoot(), validRoot);
         });
 
-        describe('when attempting to set the merkle root again', () => {
-          it('reverts', async function () {
-            await assertRevert(
-              ElectionModule.connect(user).setCrossChainDebtShareMerkleRoot(
-                wrongTree.merkleRoot,
-                1
-              ),
-              'Unauthorized'
+        describe('when merkle root is set again', function () {
+          before('set merkle root', async () => {
+            const tx = await ElectionModule.connect(owner).setCrossChainDebtShareMerkleRoot(
+              validRoot,
+              42
             );
-          });
-        });
 
-        describe('when attempting to claim with the wrong proof', () => {
-          it('reverts', async () => {
-            await assertRevert(
-              ElectionModule.declareCrossChainDebtShare(
-                voter,
-                wrongTree.claims[voter].amount,
-                wrongTree.claims[voter].proof
-              ),
-              'InvalidMerkleProof'
-            );
-          });
-        });
-
-        describe('when retrieving the voter declared debt before declaring it', () => {
-          it('has 0 debt share', async () => {
-            assertBn.equal(await ElectionModule.getDeclaredCrossChainDebtShare(voter), 0);
-          });
-        });
-
-        describe('when a voter has declared their debt shares', () => {
-          before('declare L1 debt share', async () => {
-            const tx = await ElectionModule.declareCrossChainDebtShare(
-              voter,
-              parsedTree.claims[voter].amount,
-              parsedTree.claims[voter].proof
-            );
             receipt = await tx.wait();
           });
 
-          it('emitted a DebtShareDeclared event', async function () {
-            const event = findEvent({ receipt, eventName: 'CrossChainDebtShareDeclared' });
+          it('emitted a MerkleRootSet event', async function () {
+            const event = findEvent({ receipt, eventName: 'CrossChainDebtShareMerkleRootSet' });
 
             assert.ok(event);
-            assert.deepEqual(event.args.user, voter);
-            assertBn.equal(event.args.debtShare, parsedTree.claims[voter].amount);
+            assert.deepEqual(event.args.merkleRoot, validRoot);
+            assertBn.equal(event.args.blocknumber, 42);
+            assertBn.equal(event.args.epoch, 0);
           });
 
-          it('has the right debt share', async () => {
-            assertBn.equal(
-              await ElectionModule.getDeclaredCrossChainDebtShare(voter),
-              parsedTree.claims[voter].amount
-            );
+          it('gets the merkle root blocknumber', async function () {
+            assertBn.equal(await ElectionModule.getCrossChainDebtShareMerkleRootBlocknumber(), 42);
           });
 
-          describe('when a voter attempts to declare their cross chain debt shares again', function () {
-            it('reverts', async function () {
+          it('gets the merkle root', async function () {
+            assert.deepEqual(await ElectionModule.getCrossChainDebtShareMerkleRoot(), validRoot);
+          });
+
+          describe('when attempting to claim with the wrong proof', () => {
+            it('reverts', async () => {
               await assertRevert(
                 ElectionModule.declareCrossChainDebtShare(
                   voter,
-                  parsedTree.claims[voter].amount,
-                  parsedTree.claims[voter].proof
+                  wrongTree.claims[voter].amount,
+                  wrongTree.claims[voter].proof
                 ),
-                'CrossChainDebtShareAlreadyDeclared'
+                'InvalidMerkleProof'
               );
+            });
+          });
+
+          describe('when retrieving the voter declared debt before declaring it', () => {
+            it('has 0 debt share', async () => {
+              assertBn.equal(await ElectionModule.getDeclaredCrossChainDebtShare(voter), 0);
+            });
+          });
+
+          describe('when a voter has declared their debt shares', () => {
+            before('declare L1 debt share', async () => {
+              const tx = await ElectionModule.declareCrossChainDebtShare(
+                voter,
+                parsedTree.claims[voter].amount,
+                parsedTree.claims[voter].proof
+              );
+              receipt = await tx.wait();
+            });
+
+            it('emitted a DebtShareDeclared event', async function () {
+              const event = findEvent({ receipt, eventName: 'CrossChainDebtShareDeclared' });
+
+              assert.ok(event);
+              assert.deepEqual(event.args.user, voter);
+              assertBn.equal(event.args.debtShare, parsedTree.claims[voter].amount);
+            });
+
+            it('has the right debt share', async () => {
+              assertBn.equal(
+                await ElectionModule.getDeclaredCrossChainDebtShare(voter),
+                parsedTree.claims[voter].amount
+              );
+            });
+
+            describe('when a voter attempts to declare their cross chain debt shares again', function () {
+              it('reverts', async function () {
+                await assertRevert(
+                  ElectionModule.declareCrossChainDebtShare(
+                    voter,
+                    parsedTree.claims[voter].amount,
+                    parsedTree.claims[voter].proof
+                  ),
+                  'CrossChainDebtShareAlreadyDeclared'
+                );
+              });
             });
           });
         });

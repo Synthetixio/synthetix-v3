@@ -8,7 +8,6 @@ import "../../storage/DebtShareStorage.sol";
 /// @dev Uses a merkle tree to track user Synthetix v2 debt shares on other chains at a particular block number
 contract CrossChainDebtShareManager is ElectionBase, DebtShareStorage {
     error MerkleRootNotSet();
-    error MerkleRootAlreadySet();
     error InvalidMerkleProof();
     error CrossChainDebtShareAlreadyDeclared();
 
@@ -17,10 +16,6 @@ contract CrossChainDebtShareManager is ElectionBase, DebtShareStorage {
 
     function _setCrossChainDebtShareMerkleRoot(bytes32 merkleRoot, uint blocknumber) internal {
         CrossChainDebtShareData storage debtShareData = _debtShareStore().crossChainDebtShareData[_getCurrentEpochIndex()];
-
-        if (debtShareData.merkleRoot != 0) {
-            revert MerkleRootAlreadySet();
-        }
 
         debtShareData.merkleRoot = merkleRoot;
         debtShareData.merkleRootBlockNumber = blocknumber;
