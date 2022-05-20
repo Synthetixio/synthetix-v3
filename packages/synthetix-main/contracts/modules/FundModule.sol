@@ -23,6 +23,10 @@ contract FundModule is IFundModule, OwnableMixin, FundModuleStorage, Initializab
     error FundNotFound(uint fundId);
     error OnlyTokenProxyAllowed(address origin);
 
+    event PreferredFundSet(uint256 fundId);
+    event FundApprovedAdded(uint256 fundId);
+    event FundApprovedRemoved(uint256 fundId);
+
     event FundCreated(address fundAddress);
     event FundPositionSet(uint fundId, uint[] markets, uint[] weights, address executedBy);
     event DelegationUpdated(
@@ -127,7 +131,11 @@ contract FundModule is IFundModule, OwnableMixin, FundModuleStorage, Initializab
     // ---------------------------------------
 
     function setPreferredFund(uint fundId) external override onlyOwner {
+        FundToken(getFundTokenAddress()).ownerOf(fundId); // Will revert if do not exists
+
         _fundModuleStore().preferredFund = fundId;
+
+        emit PreferredFundSet(fundId);
     }
 
     function getPreferredFund() external view override returns (uint) {
@@ -135,6 +143,8 @@ contract FundModule is IFundModule, OwnableMixin, FundModuleStorage, Initializab
     }
 
     function addApprovedFund(uint fundId) external override onlyOwner {
+        FundToken(getFundTokenAddress()).ownerOf(fundId); // Will revert if do not exists
+
         for (uint i = 0; i < _fundModuleStore().approvedFunds.length; i++) {
             if (_fundModuleStore().approvedFunds[i] == fundId) {
                 revert FundAlreadyApproved(fundId);
@@ -142,9 +152,13 @@ contract FundModule is IFundModule, OwnableMixin, FundModuleStorage, Initializab
         }
 
         _fundModuleStore().approvedFunds.push(fundId);
+
+        emit FundApprovedAdded(fundId);
     }
 
     function removeApprovedFund(uint fundId) external override onlyOwner {
+        FundToken(getFundTokenAddress()).ownerOf(fundId); // Will revert if do not exists
+
         bool found;
         for (uint i = 0; i < _fundModuleStore().approvedFunds.length; i++) {
             if (_fundModuleStore().approvedFunds[i] == fundId) {
@@ -160,6 +174,8 @@ contract FundModule is IFundModule, OwnableMixin, FundModuleStorage, Initializab
         if (!found) {
             revert FundNotFound(fundId);
         }
+
+        emit FundApprovedRemoved(fundId);
     }
 
     function getApprovedFunds() external view override returns (uint[] memory) {
