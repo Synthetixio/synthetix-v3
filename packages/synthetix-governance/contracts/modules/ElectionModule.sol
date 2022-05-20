@@ -11,6 +11,8 @@ import "../submodules/election/CrossChainDebtShareManager.sol";
 /// @title Module for electing a council, represented by a set of NFT holders
 /// @notice This extends the base ElectionModule by determining voting power by Synthetix v2 debt share
 contract ElectionModule is ISynthetixElectionModule, BaseElectionModule, DebtShareManager, CrossChainDebtShareManager {
+    error TooManyCandidates();
+
     /// @dev Overloads the BaseElectionModule initializer with an additional parameter for the debt share contract
     /// @dev The BaseElectionModule initializer should not be called, and this one must be called instead
     function initializeElectionModule(
@@ -42,6 +44,19 @@ contract ElectionModule is ISynthetixElectionModule, BaseElectionModule, DebtSha
         _takeDebtShareSnapshotOnFirstNomination();
 
         super.nominate();
+    }
+
+    /// @notice Overrides the BaseElectionModule nominate function to only allow 1 candidate to be nominated
+    function cast(address[] calldata candidates)
+        public
+        override(BaseElectionModule, IElectionModule)
+        onlyInPeriod(ElectionPeriod.Vote)
+    {
+        if (candidates.length > 1) {
+            revert TooManyCandidates();
+        }
+
+        super.cast(candidates);
     }
 
     // ---------------------------------------

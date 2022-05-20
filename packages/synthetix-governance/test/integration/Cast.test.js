@@ -148,27 +148,7 @@ describe('SynthetixElectionModule - integration (cast)', function () {
 
           describe('when voting candidates that are not nominated', function () {
             it('reverts', async function () {
-              await assertRevert(
-                impersonateAndCast(voter1, [
-                  candidate1.address,
-                  candidate2.address,
-                  voter1.address,
-                ]),
-                'NotNominated'
-              );
-            });
-          });
-
-          describe('when voting duplicate candidates', function () {
-            it('reverts', async function () {
-              await assertRevert(
-                impersonateAndCast(voter1, [
-                  candidate1.address,
-                  candidate2.address,
-                  candidate1.address,
-                ]),
-                'DuplicateCandidates'
-              );
+              await assertRevert(impersonateAndCast(voter1, [voter1.address]), 'NotNominated');
             });
           });
         });
@@ -211,8 +191,8 @@ describe('SynthetixElectionModule - integration (cast)', function () {
               id: await ElectionModule.calculateBallotId([candidate1.address]),
             };
             ballot2 = {
-              candidates: [candidate2.address, candidate4.address],
-              id: await ElectionModule.calculateBallotId([candidate2.address, candidate4.address]),
+              candidates: [candidate2.address],
+              id: await ElectionModule.calculateBallotId([candidate2.address]),
             };
             ballot3 = {
               candidates: [candidate3.address],

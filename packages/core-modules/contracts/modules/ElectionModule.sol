@@ -191,7 +191,7 @@ contract ElectionModule is
     }
 
     /// @dev ElectionVotes needs to be extended to specify what determines voting power
-    function cast(address[] calldata candidates) external override onlyInPeriod(ElectionPeriod.Vote) {
+    function cast(address[] calldata candidates) public virtual override onlyInPeriod(ElectionPeriod.Vote) {
         uint votePower = _getVotePower(msg.sender);
 
         if (votePower == 0) revert NoVotePower();
