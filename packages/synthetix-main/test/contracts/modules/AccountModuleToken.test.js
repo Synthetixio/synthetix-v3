@@ -231,12 +231,12 @@ describe('AccountModule - AccountToken', function () {
         });
       });
 
-      describe('when an admin tries to grant more access', () => {
-        before('grant "admin" role to userAdmin', async () => {
+      describe('when a "modifyPermission" role holder tries to grant more access', () => {
+        before('grant "modifyPermission" role to userAdmin', async () => {
           await (
             await AccountModule.connect(user1).grantRole(
               1,
-              ethers.utils.formatBytes32String('owner'),
+              ethers.utils.formatBytes32String('modifyPermission'),
               userAdmin.address
             )
           ).wait();

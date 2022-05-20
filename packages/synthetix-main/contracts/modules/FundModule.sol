@@ -289,7 +289,8 @@ contract FundModule is IFundModule, OwnableMixin, FundModuleStorage, Initializab
         uint amount,
         uint leverage
     ) external override onlyRoleAuthorized(accountId, "assign") {
-        // TODO check if fund exists
+        FundToken(getFundTokenAddress()).ownerOf(fundId); // Will revert if do not exists
+
         // TODO check parameters are valid (collateralType, amount, exposure)
 
         bytes32 lpid = _getLiquidityItemId(accountId, collateralType, leverage);

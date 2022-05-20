@@ -213,7 +213,6 @@ contract CollateralModule is ICollateralModule, CollateralStorage, OwnableMixin,
         return locked;
     }
 
-    // TODO this can be part of core-contract utils
     function _cleanExpiredLockes(
         StakedCollateralLock[] storage locks,
         uint offset,
