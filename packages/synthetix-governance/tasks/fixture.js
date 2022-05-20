@@ -1,6 +1,10 @@
+const path = require('path');
+const fs = require('fs/promises');
+const { randomInt } = require('crypto');
 const { task } = require('hardhat/config');
 const types = require('@synthetixio/core-js/utils/hardhat/argument-types');
 const { findEvent } = require('@synthetixio/core-js/utils/ethers/events');
+const { parseBalanceMap } = require('@synthetixio/core-js/utils/merkle-tree/parse-balance-tree');
 
 const {
   TASK_FAST_FORWARD_TO,
@@ -9,6 +13,7 @@ const {
   TASK_FIXTURE_VOTES,
   TASK_FIXTURE_EPOCHS,
   TASK_FIXTURE_EVALUATE,
+  TASK_FIXTURE_CROSS_CHAIN_DEBT,
 } = require('../task-names');
 
 const ElectionPeriod = {
@@ -55,11 +60,7 @@ task(TASK_FIXTURE_CANDIDATES, 'Create fixture candidate nominations')
       address
     );
 
-    const currentPeriod = Number(await ElectionModule.getCurrentPeriod());
-
-    if (currentPeriod !== ElectionPeriod.Nomination) {
-      throw new Error('The election is not on ElectionPeriod.Nomination');
-    }
+    await assertPeriod(ElectionModule, 'Nomination');
 
     const candidates = await hre.run(TASK_FIXTURE_WALLETS, { amount: nominateAmount });
 
@@ -99,11 +100,7 @@ task(TASK_FIXTURE_VOTES, 'Create fixture votes to nominated candidates')
       address
     );
 
-    const currentPeriod = Number(await ElectionModule.getCurrentPeriod());
-
-    if (currentPeriod !== ElectionPeriod.Vote) {
-      throw new Error('The election is not on ElectionPeriod.Vote');
-    }
+    await assertPeriod(ElectionModule, 'Vote');
 
     console.log(`Fixturing ${amount} voters on ${address}\n`);
 
@@ -131,7 +128,7 @@ task(TASK_FIXTURE_VOTES, 'Create fixture votes to nominated candidates')
     );
 
     // Withdraw a random amount of votes between 1/3 and 0
-    const votesToWithdraw = pickRand(voters, rand(0, Math.ceil(Number(amount) / 3)));
+    const votesToWithdraw = pickRand(voters, randomInt(0, Math.ceil(Number(amount) / 3)));
     console.log();
     console.log(`Withdrawing ${votesToWithdraw.length} votes `);
 
@@ -168,11 +165,7 @@ task(TASK_FIXTURE_EVALUATE, 'Evaluate current election')
       address
     );
 
-    const currentPeriod = Number(await ElectionModule.getCurrentPeriod());
-
-    if (currentPeriod !== ElectionPeriod.Evaluation) {
-      throw new Error('The election is not on ElectionPeriod.Evaluation');
-    }
+    await assertPeriod(ElectionModule, 'Evaluation');
 
     console.log('Evaluating current election\n');
 
@@ -253,22 +246,98 @@ task(TASK_FIXTURE_EPOCHS, 'Complete an epoch with fixtured data')
     }
   });
 
+task(TASK_FIXTURE_CROSS_CHAIN_DEBT, 'Generate and save cross chain debt merkle tree')
+  .addParam('address', 'Deployed election module proxy address', undefined, types.address)
+  .addOptionalParam(
+    'wallet',
+    'custom wallet to fixture debt to, aside from hardhat signers',
+    undefined,
+    types.address
+  )
+  .addOptionalParam('amount', 'amount of debt to generate', undefined, types.int)
+  .addOptionalParam('blockNumber', 'block number from the origin chain', '1', types.int)
+  .setAction(async ({ address, wallet, amount, blockNumber }, hre) => {
+    const ElectionModule = await hre.ethers.getContractAt(
+      'contracts/modules/ElectionModule.sol:ElectionModule',
+      address
+    );
+
+    await assertPeriod(ElectionModule, 'Nomination');
+
+    const signers = (await hre.ethers.getSigners()).map(({ address }) => address);
+
+    // Generate random cross-chain debts for hardhat signers
+    const debts = signers.reduce((debts, address) => {
+      // random debt between 1 and 10_000_000
+      debts[address] = randNumberString(randomInt(19, 25));
+      return debts;
+    }, {});
+
+    // If passed, also add a custom debt for the given wallet
+    if (wallet) {
+      debts[wallet] = amount || randNumberString(randomInt(19, 25));
+    }
+
+    // Create MerkleTree for the given debts
+    const tree = parseBalanceMap(debts);
+
+    console.log('Saving merkle root on contract:');
+    console.log(
+      `  ElectionModule.setCrossChainDebtShareMerkleRoot('${tree.merkleRoot}', ${blockNumber})`
+    );
+    console.log();
+
+    const tx = await ElectionModule.setCrossChainDebtShareMerkleRoot(
+      tree.merkleRoot,
+      Number(blockNumber)
+    );
+    await tx.wait();
+
+    const location = path.resolve(
+      __dirname,
+      '..',
+      'data',
+      `${hre.network.name}-${blockNumber}.json`
+    );
+
+    console.log('Saving merkle tree:');
+    console.log(`  ${location}`);
+
+    await fs.writeFile(location, JSON.stringify(tree, null, 2));
+  });
+
 function pickRand(arr, amount = 1) {
   if (!Array.isArray(arr) || arr.length < amount) throw new Error('Invalid data');
 
   const res = [];
   while (res.length < amount) {
-    const item = arr[rand(0, arr.length - 1)];
+    const item = arr[randomInt(0, arr.length - 1)];
     if (!res.includes(item)) res.push(item);
   }
 
   return res;
 }
 
-function rand(min = 1, max = 10) {
-  return Math.floor(Math.random() * (max - min + 1) + min);
+function createArray(length = 0) {
+  return Array.from(Array(Number(length)));
 }
 
-function createArray(length) {
-  return Array.from(Array(Number(length)));
+function randNumberString(length = 32) {
+  return [randomInt(1, 9), ...createArray(length - 1).map(() => randomInt(0, 9))].join('');
+}
+
+/**
+ * @param {Object} ElectionModule
+ * @param {("Administration"|"Nomination"|"Vote"|"Evaluation")} period
+ */
+async function assertPeriod(ElectionModule, period) {
+  if (typeof ElectionPeriod[period] !== 'number') {
+    throw new Error(`Invalid given period ${period}`);
+  }
+
+  const currentPeriod = Number(await ElectionModule.getCurrentPeriod());
+
+  if (currentPeriod !== ElectionPeriod[period]) {
+    throw new Error(`The election is not on ElectionPeriod.${period}`);
+  }
 }

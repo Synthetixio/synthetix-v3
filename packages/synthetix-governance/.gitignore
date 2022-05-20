@@ -1,3 +1,6 @@
+data/local-*.json
+data/localhost-*.json
+data/hardhat-*.json
 contracts/Router.sol
 deployments/hardhat
 deployments/local

@@ -6,4 +6,5 @@ module.exports = {
   TASK_FIXTURE_VOTES: 'fixture:votes',
   TASK_FIXTURE_EVALUATE: 'fixture:evaluate',
   TASK_FIXTURE_EPOCHS: 'fixture:epochs',
+  TASK_FIXTURE_CROSS_CHAIN_DEBT: 'fixture:cross-chain-debt',
 };
