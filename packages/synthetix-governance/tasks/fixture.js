@@ -118,7 +118,7 @@ task(TASK_FIXTURE_VOTES, 'Create fixture votes to nominated candidates')
 
     await Promise.all(
       voters.map(async (voter) => {
-        const [ballot] = pickRand(ballots, 1);
+        const ballot = ballots[randomInt(ballots.length)];
         const ballotId = await ElectionModule.calculateBallotId(ballot);
         const votePower = await ElectionModule.getVotePower(voter.address);
         const tx = await ElectionModule.connect(voter).cast(ballot);
@@ -128,7 +128,7 @@ task(TASK_FIXTURE_VOTES, 'Create fixture votes to nominated candidates')
     );
 
     // Withdraw a random amount of votes between 1/3 and 0
-    const votesToWithdraw = pickRand(voters, randomInt(0, Math.ceil(Number(amount) / 3)));
+    const votesToWithdraw = pickRand(voters, randomInt(0, Math.ceil(Number(amount) / 3) + 1));
     console.log();
     console.log(`Withdrawing ${votesToWithdraw.length} votes `);
 
@@ -269,13 +269,13 @@ task(TASK_FIXTURE_CROSS_CHAIN_DEBT, 'Generate and save cross chain debt merkle t
     // Generate random cross-chain debts for hardhat signers
     const debts = signers.reduce((debts, address) => {
       // random debt between 1 and 10_000_000
-      debts[address] = randNumberString(randomInt(19, 25));
+      debts[address] = randNumberString(randomInt(19, 26));
       return debts;
     }, {});
 
     // If passed, also add a custom debt for the given wallet
     if (wallet) {
-      debts[wallet] = amount || randNumberString(randomInt(19, 25));
+      debts[wallet] = amount || randNumberString(randomInt(19, 26));
     }
 
     // Create MerkleTree for the given debts
@@ -306,10 +306,10 @@ task(TASK_FIXTURE_CROSS_CHAIN_DEBT, 'Generate and save cross chain debt merkle t
 function pickRand(arr, amount = 1) {
   if (!Array.isArray(arr) || arr.length < amount) throw new Error('Invalid data');
 
+  const src = [...arr];
   const res = [];
   while (res.length < amount) {
-    const item = arr[randomInt(0, arr.length - 1)];
-    if (!res.includes(item)) res.push(item);
+    res.push(...src.splice(randomInt(src.length), 1));
   }
 
   return res;
@@ -320,7 +320,7 @@ function createArray(length = 0) {
 }
 
 function randNumberString(length = 32) {
-  return [randomInt(1, 9), ...createArray(length - 1).map(() => randomInt(0, 9))].join('');
+  return [randomInt(1, 10), ...createArray(length - 1).map(() => randomInt(10))].join('');
 }
 
 /**
