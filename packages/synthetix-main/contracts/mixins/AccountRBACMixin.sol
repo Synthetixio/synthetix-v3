@@ -34,7 +34,7 @@ contract AccountRBACMixin is AccountModuleStorage {
         address target
     ) internal view returns (bool) {
         return ((target == _accountOwner(accountId)) ||
-            (_hasRole(accountId, "owner", target)) ||
+            (_hasRole(accountId, "owner", target)) || // TODO Remove the "owner" permission
             (_hasRole(accountId, role, target)));
     }
 

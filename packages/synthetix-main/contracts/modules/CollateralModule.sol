@@ -11,7 +11,6 @@ import "../mixins/AccountRBACMixin.sol";
 contract CollateralModule is ICollateralModule, CollateralStorage, OwnableMixin, AccountRBACMixin {
     using SetUtil for SetUtil.AddressSet;
 
-    error CollateralAlreadyExists(address collateralType);
     error InvalidCollateralType(address collateralType);
     error InsufficientAvailableCollateral(uint accountId, address collateralType, uint requestedAmount);
     error OutOfBounds();
@@ -28,26 +27,6 @@ contract CollateralModule is ICollateralModule, CollateralStorage, OwnableMixin,
     event CollateralStaked(uint accountId, address collateralType, uint amount, address executedBy);
     event CollateralUnstaked(uint accountId, address collateralType, uint amount, address executedBy);
 
-    function addCollateralType(
-        address collateralType,
-        address priceFeed,
-        uint targetCRatio,
-        uint minimumCRatio
-    ) external override onlyOwner {
-        if (_collateralStore().collaterals.contains(collateralType)) {
-            revert CollateralAlreadyExists(collateralType);
-        }
-
-        _collateralStore().collaterals.add(collateralType);
-
-        _collateralStore().collateralsData[collateralType].targetCRatio = targetCRatio;
-        _collateralStore().collateralsData[collateralType].minimumCRatio = minimumCRatio;
-        _collateralStore().collateralsData[collateralType].priceFeed = priceFeed;
-        _collateralStore().collateralsData[collateralType].disabled = false;
-
-        emit CollateralAdded(collateralType, priceFeed, targetCRatio, minimumCRatio);
-    }
-
     function adjustCollateralType(
         address collateralType,
         address priceFeed,
@@ -56,19 +35,38 @@ contract CollateralModule is ICollateralModule, CollateralStorage, OwnableMixin,
         bool disabled
     ) external override onlyOwner {
         if (!_collateralStore().collaterals.contains(collateralType)) {
-            revert InvalidCollateralType(collateralType);
-        }
+            // Add a collateral entry
+            _collateralStore().collaterals.add(collateralType);
 
-        _collateralStore().collateralsData[collateralType].targetCRatio = targetCRatio;
-        _collateralStore().collateralsData[collateralType].minimumCRatio = minimumCRatio;
-        _collateralStore().collateralsData[collateralType].priceFeed = priceFeed;
-        _collateralStore().collateralsData[collateralType].disabled = disabled;
+            _collateralStore().collateralsData[collateralType].targetCRatio = targetCRatio;
+            _collateralStore().collateralsData[collateralType].minimumCRatio = minimumCRatio;
+            _collateralStore().collateralsData[collateralType].priceFeed = priceFeed;
+            _collateralStore().collateralsData[collateralType].disabled = false;
+        } else {
+            _collateralStore().collateralsData[collateralType].targetCRatio = targetCRatio;
+            _collateralStore().collateralsData[collateralType].minimumCRatio = minimumCRatio;
+            _collateralStore().collateralsData[collateralType].priceFeed = priceFeed;
+            _collateralStore().collateralsData[collateralType].disabled = disabled;
+        }
 
         emit CollateralAdjusted(collateralType, priceFeed, targetCRatio, minimumCRatio, disabled);
     }
 
-    function getCollateralTypes() external view override returns (address[] memory) {
-        return _collateralStore().collaterals.values();
+    function getCollateralTypes(bool hideDisabled) external view override returns (address[] memory) {
+        address[] memory collaterals = new address[](_collateralStore().collaterals.length());
+        if (!hideDisabled) {
+            collaterals = _collateralStore().collaterals.values();
+        } else {
+            uint collateralsIdx;
+            for (uint i = 0; i < _collateralStore().collaterals.length(); i++) {
+                address collateralType = _collateralStore().collaterals.valueAt(i + 1);
+                if (!_collateralStore().collateralsData[collateralType].disabled) {
+                    collaterals[collateralsIdx++] = collateralType;
+                }
+            }
+        }
+
+        return collaterals;
     }
 
     function getCollateralType(address collateralType)
@@ -129,7 +127,7 @@ contract CollateralModule is ICollateralModule, CollateralStorage, OwnableMixin,
         address collateralType,
         uint amount
     ) public override onlyRoleAuthorized(accountId, "unstake") {
-        uint256 availableCollateral = getAccountFreeCollateral(accountId, collateralType);
+        uint256 availableCollateral = getAccountUnstakebleCollateral(accountId, collateralType);
 
         if (availableCollateral < amount) {
             revert InsufficientAvailableCollateral(accountId, collateralType, amount);
@@ -147,28 +145,32 @@ contract CollateralModule is ICollateralModule, CollateralStorage, OwnableMixin,
         IERC20(collateralType).transfer(_accountOwner(accountId), amount);
     }
 
+    function getAccountCollaterals(uint accountId) external view override returns (address[] memory collateralTypes) {
+        return _collateralStore().stakedCollateralsByAccountId[accountId].values();
+    }
+
     function getAccountCollateralTotals(uint accountId, address collateralType)
         public
         view
         override
         returns (
-            uint,
-            uint,
-            uint
+            uint256 totalStaked,
+            uint256 totalAssigned,
+            uint256 totalLocked
         )
     {
         StakedCollateralData storage stakedCollateral = _collateralStore().stakedCollateralsDataByAccountId[accountId][
             collateralType
         ];
-        uint256 total = stakedCollateral.amount;
-        uint256 assigned = stakedCollateral.assignedAmount;
-        uint256 locked = _getTotalLocked(stakedCollateral.locks);
+        totalStaked = stakedCollateral.amount;
+        totalAssigned = stakedCollateral.assignedAmount;
+        totalLocked = _getTotalLocked(stakedCollateral.locks);
 
-        return (total, locked, assigned);
+        return (totalStaked, totalAssigned, totalLocked);
     }
 
-    function getAccountFreeCollateral(uint accountId, address collateralType) public view override returns (uint) {
-        (uint256 total, uint256 locked, uint256 assigned) = getAccountCollateralTotals(accountId, collateralType);
+    function getAccountUnstakebleCollateral(uint accountId, address collateralType) public view override returns (uint) {
+        (uint256 total, uint256 assigned, uint256 locked) = getAccountCollateralTotals(accountId, collateralType);
 
         if (locked > assigned) {
             return total - locked;
@@ -178,12 +180,12 @@ contract CollateralModule is ICollateralModule, CollateralStorage, OwnableMixin,
     }
 
     function getAccountUnassignedCollateral(uint accountId, address collateralType) public view override returns (uint) {
-        (uint256 total, , uint256 assigned) = getAccountCollateralTotals(accountId, collateralType);
+        (uint256 total, uint256 assigned, ) = getAccountCollateralTotals(accountId, collateralType);
 
         return total - assigned;
     }
 
-    function cleanExpiredLockes(
+    function cleanExpiredLocks(
         uint accountId,
         address collateralType,
         uint offset,

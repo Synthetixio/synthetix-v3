@@ -36,17 +36,18 @@ describe('CollateralModule SCCP', function () {
     await (await CollateralPriceFeed.connect(systemOwner).setCurrentPrice(1)).wait();
 
     await (
-      await CollateralModule.connect(systemOwner).addCollateralType(
+      await CollateralModule.connect(systemOwner).adjustCollateralType(
         Collateral.address,
         CollateralPriceFeed.address,
         400,
-        200
+        200,
+        false
       )
     ).wait();
   });
 
   it('is well configured', async () => {
-    assert.equal((await CollateralModule.getCollateralTypes())[0], Collateral.address);
+    assert.equal((await CollateralModule.getCollateralTypes(false))[0], Collateral.address);
 
     const collateralType = await CollateralModule.getCollateralType(Collateral.address);
 
@@ -72,17 +73,18 @@ describe('CollateralModule SCCP', function () {
 
       await (await AnotherCollateralPriceFeed.connect(systemOwner).setCurrentPrice(100)).wait();
 
-      const tx = await CollateralModule.connect(systemOwner).addCollateralType(
+      const tx = await CollateralModule.connect(systemOwner).adjustCollateralType(
         AnotherCollateral.address,
         AnotherCollateralPriceFeed.address,
         400,
-        200
+        200,
+        false
       );
       await tx.wait();
     });
 
     it('is added', async () => {
-      const collaterals = await CollateralModule.getCollateralTypes();
+      const collaterals = await CollateralModule.getCollateralTypes(false);
       assert.equal(collaterals[1], AnotherCollateral.address);
     });
 
@@ -127,6 +129,14 @@ describe('CollateralModule SCCP', function () {
         await tx.wait();
       });
 
+      it('is not shown in enabled list', async () => {
+        const allCollaterals = await CollateralModule.getCollateralTypes(false);
+        const enabledCollaterals = await CollateralModule.getCollateralTypes(true);
+
+        assert.equal(allCollaterals.includes(AnotherCollateral.address), true);
+        assert.equal(enabledCollaterals.includes(AnotherCollateral.address), false);
+      });
+
       it('is disabled', async () => {
         const collateralType = await CollateralModule.getCollateralType(AnotherCollateral.address);
         assert.equal(collateralType[3], true);
@@ -153,11 +163,12 @@ describe('CollateralModule SCCP', function () {
 
     it('reverts when attempting to add', async () => {
       await assertRevert(
-        CollateralModule.connect(user1).addCollateralType(
+        CollateralModule.connect(user1).adjustCollateralType(
           OtherCollateral.address,
           OtherCollateralPriceFeed.address,
           400,
-          200
+          200,
+          false
         ),
         `Unauthorized("${user1.address}")`
       );

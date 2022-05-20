@@ -14,7 +14,7 @@ interface IFundModule is ISatelliteFactory {
 
     function getFundModuleSatellites() external view returns (Satellite[] memory);
 
-    function mintFund(uint requestedFundId, address owner) external;
+    function createFund(uint requestedFundId, address owner) external;
 
     function setFundPosition(
         uint fundId,
@@ -22,9 +22,9 @@ interface IFundModule is ISatelliteFactory {
         uint[] calldata weights
     ) external;
 
-    function getFundPosition(uint fundId) external view returns (uint[] memory, uint[] memory);
+    function getFundPosition(uint fundId) external view returns (uint[] memory markets, uint[] memory weights);
 
-    function rebalanceMarkets(uint fundId) external;
+    function rebalanceMarkets(uint fundId) external; // TODO Maybe is internal
 
     function delegateCollateral(
         uint fundId,
@@ -72,6 +72,7 @@ interface IFundModule is ISatelliteFactory {
 
     function debtPerShare(uint fundId) external view returns (uint);
 
+    // SCCP
     function setPreferredFund(uint fundId) external;
 
     function getPreferredFund() external view returns (uint);

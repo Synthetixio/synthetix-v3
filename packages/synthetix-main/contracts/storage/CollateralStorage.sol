@@ -8,6 +8,7 @@ contract CollateralStorage {
         mapping(address => CollateralData) collateralsData; // CollateralData per collateralType (address)
         SetUtil.AddressSet collaterals; // approved collaterals
         // Staked Collaterals
+        mapping(uint => SetUtil.AddressSet) stakedCollateralsByAccountId;
         mapping(uint => mapping(address => StakedCollateralData)) stakedCollateralsDataByAccountId;
     }
 

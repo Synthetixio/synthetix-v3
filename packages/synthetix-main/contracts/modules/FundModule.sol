@@ -178,7 +178,7 @@ contract FundModule is IFundModule, OwnableMixin, FundModuleStorage, Initializab
         _;
     }
 
-    function mintFund(uint requestedFundId, address owner) external override {
+    function createFund(uint requestedFundId, address owner) external override {
         FundToken(getFundTokenAddress()).mint(owner, requestedFundId);
     }
 
@@ -243,12 +243,12 @@ contract FundModule is IFundModule, OwnableMixin, FundModuleStorage, Initializab
         // TODO emit an event
     }
 
-    function _rebalanceMarkets(uint fundId, bool zeros) internal {
+    function _rebalanceMarkets(uint fundId, bool clearsLiquidity) internal {
         FundData storage fundData = _fundModuleStore().funds[fundId];
         uint totalWeights = _fundModuleStore().funds[fundId].totalWeights;
 
         for (uint i = 0; i < fundData.fundDistribution.length; i++) {
-            uint weight = zeros ? 0 : fundData.fundDistribution[i].weight;
+            uint weight = clearsLiquidity ? 0 : fundData.fundDistribution[i].weight;
             _distributeCollaterals(fundId, fundData.fundDistribution[i].market, weight, totalWeights);
         }
     }
@@ -475,8 +475,7 @@ contract FundModule is IFundModule, OwnableMixin, FundModuleStorage, Initializab
         uint amount,
         uint leverage
     ) internal returns (uint) {
-        // TODO implement it
-        return 0;
+        return amount * leverage * _getCollateralValue(collateralType);
     }
 
     // ---------------------------------------
