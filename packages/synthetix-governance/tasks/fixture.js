@@ -293,16 +293,13 @@ task(TASK_FIXTURE_CROSS_CHAIN_DEBT, 'Generate and save cross chain debt merkle t
     );
     await tx.wait();
 
-    const location = path.resolve(
-      __dirname,
-      '..',
-      'data',
-      `${hre.network.name}-${blockNumber}.json`
-    );
+    const pathname = path.resolve(__dirname, '..', 'data');
+    const location = path.resolve(pathname, `${hre.network.name}-${blockNumber}.json`);
 
     console.log('Saving merkle tree:');
     console.log(`  ${location}`);
 
+    await fs.mkdir(pathname, { recursive: true });
     await fs.writeFile(location, JSON.stringify(tree, null, 2));
   });
 
