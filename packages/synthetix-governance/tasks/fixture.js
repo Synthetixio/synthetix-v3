@@ -14,6 +14,7 @@ const {
   TASK_FIXTURE_EPOCHS,
   TASK_FIXTURE_EVALUATE,
   TASK_FIXTURE_CROSS_CHAIN_DEBT,
+  TASK_SET_CROSS_CHAIN_DEBT,
 } = require('../task-names');
 
 const ElectionPeriod = {
@@ -281,26 +282,16 @@ task(TASK_FIXTURE_CROSS_CHAIN_DEBT, 'Generate and save cross chain debt merkle t
     // Create MerkleTree for the given debts
     const tree = parseBalanceMap(debts);
 
-    console.log('Saving merkle root on contract:');
-    console.log(
-      `  ElectionModule.setCrossChainDebtShareMerkleRoot('${tree.merkleRoot}', ${blockNumber})`
-    );
-    console.log();
-
-    const tx = await ElectionModule.setCrossChainDebtShareMerkleRoot(
-      tree.merkleRoot,
-      Number(blockNumber)
-    );
-    await tx.wait();
-
-    const pathname = path.resolve(__dirname, '..', 'data');
-    const location = path.resolve(pathname, `${hre.network.name}-${blockNumber}.json`);
+    const file = path.resolve(__dirname, '..', 'data');
+    const location = path.resolve(file, `${hre.network.name}-${blockNumber}.json`);
 
     console.log('Saving merkle tree:');
     console.log(`  ${location}`);
 
-    await fs.mkdir(pathname, { recursive: true });
+    await fs.mkdir(file, { recursive: true });
     await fs.writeFile(location, JSON.stringify(tree, null, 2));
+
+    await hre.run(TASK_SET_CROSS_CHAIN_DEBT, { address, file, blockNumber });
   });
 
 function pickRand(arr, amount = 1) {
