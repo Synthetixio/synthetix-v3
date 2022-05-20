@@ -41,7 +41,7 @@ describe('AccountModule - AccountToken', function () {
     let receipt;
 
     before('mint an accoun token', async () => {
-      const tx = await AccountModule.connect(user1).mintAccount(1);
+      const tx = await AccountModule.connect(user1).createAccount(1);
       receipt = await tx.wait();
     });
 
@@ -59,7 +59,7 @@ describe('AccountModule - AccountToken', function () {
 
     describe('when trying to mint the same AccountTokenId', () => {
       it('reverts', async () => {
-        await assertRevert(AccountModule.connect(user2).mintAccount(1), 'TokenAlreadyMinted(1)');
+        await assertRevert(AccountModule.connect(user2).createAccount(1), 'TokenAlreadyMinted(1)');
       });
     });
 

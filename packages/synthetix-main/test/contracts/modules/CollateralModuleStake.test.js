@@ -43,18 +43,19 @@ describe('CollateralModule Stake', function () {
     await (await CollateralPriceFeed.connect(owner).setCurrentPrice(1)).wait();
 
     await (
-      await CollateralModule.connect(owner).addCollateralType(
+      await CollateralModule.connect(owner).adjustCollateralType(
         Collateral.address,
         CollateralPriceFeed.address,
         400,
-        200
+        200,
+        false
       )
     ).wait();
   });
 
   before('mint some account tokens', async () => {
-    await (await AccountModule.connect(user1).mintAccount(1)).wait();
-    await (await AccountModule.connect(user2).mintAccount(2)).wait();
+    await (await AccountModule.connect(user1).createAccount(1)).wait();
+    await (await AccountModule.connect(user2).createAccount(2)).wait();
   });
 
   before('mint some collateral to the user', async () => {
@@ -72,7 +73,7 @@ describe('CollateralModule Stake', function () {
   });
 
   it('is well configured', async () => {
-    assert.equal((await CollateralModule.getCollateralTypes())[0], Collateral.address);
+    assert.equal((await CollateralModule.getCollateralTypes(false))[0], Collateral.address);
 
     const collateralType = await CollateralModule.getCollateralType(Collateral.address);
 
@@ -118,7 +119,7 @@ describe('CollateralModule Stake', function () {
 
       it('is staked', async () => {
         const totals = await CollateralModule.getAccountCollateralTotals(1, Collateral.address);
-        const free = await CollateralModule.getAccountFreeCollateral(1, Collateral.address);
+        const free = await CollateralModule.getAccountUnstakebleCollateral(1, Collateral.address);
         const unassigned = await CollateralModule.getAccountUnassignedCollateral(
           1,
           Collateral.address
@@ -163,7 +164,7 @@ describe('CollateralModule Stake', function () {
 
         it('is unstaked', async () => {
           const totals = await CollateralModule.getAccountCollateralTotals(1, Collateral.address);
-          const free = await CollateralModule.getAccountFreeCollateral(1, Collateral.address);
+          const free = await CollateralModule.getAccountUnstakebleCollateral(1, Collateral.address);
           const unassigned = await CollateralModule.getAccountUnassignedCollateral(
             1,
             Collateral.address
@@ -260,7 +261,7 @@ describe('CollateralModule Stake', function () {
 
       it('is staked', async () => {
         const totals = await CollateralModule.getAccountCollateralTotals(1, Collateral.address);
-        const free = await CollateralModule.getAccountFreeCollateral(1, Collateral.address);
+        const free = await CollateralModule.getAccountUnstakebleCollateral(1, Collateral.address);
         const unassigned = await CollateralModule.getAccountUnassignedCollateral(
           1,
           Collateral.address
@@ -284,7 +285,7 @@ describe('CollateralModule Stake', function () {
 
         it('is unstaked', async () => {
           const totals = await CollateralModule.getAccountCollateralTotals(1, Collateral.address);
-          const free = await CollateralModule.getAccountFreeCollateral(1, Collateral.address);
+          const free = await CollateralModule.getAccountUnstakebleCollateral(1, Collateral.address);
           const unassigned = await CollateralModule.getAccountUnassignedCollateral(
             1,
             Collateral.address

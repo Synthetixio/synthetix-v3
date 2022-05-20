@@ -21,7 +21,7 @@ interface IAccountModule is ISatelliteFactory {
     function getAccountModuleSatellites() external view returns (Satellite[] memory);
 
     /// @notice creates a new accountToken (NFT)
-    function mintAccount(uint256 accountId) external; // TODO change to createAccount
+    function createAccount(uint256 accountId) external;
 
     /// @notice creates a new accountToken (NFT)
     function transferAccount(address to, uint256 accountId) external;

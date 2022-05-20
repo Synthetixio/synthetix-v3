@@ -7,18 +7,4 @@ import "@synthetixio/core-contracts/contracts/interfaces/IERC721.sol";
 interface IAccountToken is IERC721 {
     /// @notice mints a new token (NFT) with the "requestedAccountId" id owned by "owner". It can ol=nly be called by the system
     function mint(address owner, uint requestedAccountId) external;
-
-    // function assign(
-    //     uint accountId,
-    //     uint fundId,
-    //     address collateralType,
-    //     uint amount
-    // ) external;
-
-    // function unassign(
-    //     uint accountId,
-    //     uint fundId,
-    //     address collateralType,
-    //     uint amount
-    // ) external;
 }
