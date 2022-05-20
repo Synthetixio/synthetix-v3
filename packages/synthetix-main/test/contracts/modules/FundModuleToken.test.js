@@ -41,7 +41,7 @@ describe('FundModule - FundToken - Ownership', function () {
     let receipt;
 
     before('mint an accoun token', async () => {
-      const tx = await FundModule.connect(user1).mintFund(1, user1.address);
+      const tx = await FundModule.connect(user1).createFund(1, user1.address);
       receipt = await tx.wait();
     });
 
@@ -60,7 +60,7 @@ describe('FundModule - FundToken - Ownership', function () {
     describe('when trying to mint the same FundTokenId', () => {
       it('reverts', async () => {
         await assertRevert(
-          FundModule.connect(user2).mintFund(1, user1.address),
+          FundModule.connect(user2).createFund(1, user1.address),
           'TokenAlreadyMinted(1)'
         );
       });

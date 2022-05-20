@@ -85,7 +85,7 @@ describe('FundModule - Funds Admin', function () {
   });
 
   before('mint a fund token', async () => {
-    await (await FundModule.connect(user1).mintFund(1, fundAdmin.address)).wait();
+    await (await FundModule.connect(user1).createFund(1, fundAdmin.address)).wait();
   });
 
   it('fund is created', async () => {
@@ -197,7 +197,7 @@ describe('FundModule - Funds Admin', function () {
             assertBn.equal(event.args.leverage, 1);
             assert.equal(event.args.collateralType, Collateral.address);
             assertBn.equal(event.args.shares, 10);
-            assertBn.equal(event.args.initialDebt, 0);
+            assertBn.equal(event.args.initialDebt, 10);
           });
 
           describe('when adding to the same liquidityId', async () => {
@@ -232,7 +232,7 @@ describe('FundModule - Funds Admin', function () {
               assertBn.equal(event.args.leverage, 1);
               assert.equal(event.args.collateralType, Collateral.address);
               assertBn.equal(event.args.shares, 20);
-              assertBn.equal(event.args.initialDebt, 0);
+              assertBn.equal(event.args.initialDebt, 20);
             });
           });
 
@@ -268,7 +268,7 @@ describe('FundModule - Funds Admin', function () {
               assertBn.equal(event.args.leverage, 1);
               assert.equal(event.args.collateralType, Collateral.address);
               assertBn.equal(event.args.shares, 1);
-              assertBn.equal(event.args.initialDebt, 0);
+              assertBn.equal(event.args.initialDebt, 1);
             });
           });
 
