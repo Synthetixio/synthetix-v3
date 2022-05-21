@@ -8,17 +8,17 @@ async function simulateDebtShareData(DebtShare, users) {
   const [user1, user2, user3] = users;
 
   _debtShareData = {
-    '42': {
+    42: {
       [user1.address]: ethers.utils.parseEther('1000'),
       [user2.address]: ethers.utils.parseEther('24000'),
       [user3.address]: ethers.utils.parseEther('2000000'),
     },
-    '1337': {
+    1337: {
       [user1.address]: ethers.utils.parseEther('0'),
       [user2.address]: ethers.utils.parseEther('30000'),
       [user3.address]: ethers.utils.parseEther('2100000'),
     },
-    '2192': {
+    2192: {
       [user1.address]: ethers.utils.parseEther('500'),
       [user2.address]: ethers.utils.parseEther('35000'),
       [user3.address]: ethers.utils.parseEther('2500000'),
@@ -41,23 +41,50 @@ async function simulateDebtShareData(DebtShare, users) {
   await simulateDebtShareBalances('2192');
 
   let periodId = '42';
-  assert.deepEqual(await DebtShare.balanceOfOnPeriod(user1.address, periodId), _debtShareData[periodId][user1.address]);
-  assert.deepEqual(await DebtShare.balanceOfOnPeriod(user2.address, periodId), _debtShareData[periodId][user2.address]);
-  assert.deepEqual(await DebtShare.balanceOfOnPeriod(user3.address, periodId), _debtShareData[periodId][user3.address]);
+  assert.deepEqual(
+    await DebtShare.balanceOfOnPeriod(user1.address, periodId),
+    _debtShareData[periodId][user1.address]
+  );
+  assert.deepEqual(
+    await DebtShare.balanceOfOnPeriod(user2.address, periodId),
+    _debtShareData[periodId][user2.address]
+  );
+  assert.deepEqual(
+    await DebtShare.balanceOfOnPeriod(user3.address, periodId),
+    _debtShareData[periodId][user3.address]
+  );
 
   periodId = '1337';
-  assert.deepEqual(await DebtShare.balanceOfOnPeriod(user1.address, periodId), _debtShareData[periodId][user1.address]);
-  assert.deepEqual(await DebtShare.balanceOfOnPeriod(user2.address, periodId), _debtShareData[periodId][user2.address]);
-  assert.deepEqual(await DebtShare.balanceOfOnPeriod(user3.address, periodId), _debtShareData[periodId][user3.address]);
+  assert.deepEqual(
+    await DebtShare.balanceOfOnPeriod(user1.address, periodId),
+    _debtShareData[periodId][user1.address]
+  );
+  assert.deepEqual(
+    await DebtShare.balanceOfOnPeriod(user2.address, periodId),
+    _debtShareData[periodId][user2.address]
+  );
+  assert.deepEqual(
+    await DebtShare.balanceOfOnPeriod(user3.address, periodId),
+    _debtShareData[periodId][user3.address]
+  );
 
   periodId = '2192';
-  assert.deepEqual(await DebtShare.balanceOfOnPeriod(user1.address, periodId), _debtShareData[periodId][user1.address]);
-  assert.deepEqual(await DebtShare.balanceOfOnPeriod(user2.address, periodId), _debtShareData[periodId][user2.address]);
-  assert.deepEqual(await DebtShare.balanceOfOnPeriod(user3.address, periodId), _debtShareData[periodId][user3.address]);
+  assert.deepEqual(
+    await DebtShare.balanceOfOnPeriod(user1.address, periodId),
+    _debtShareData[periodId][user1.address]
+  );
+  assert.deepEqual(
+    await DebtShare.balanceOfOnPeriod(user2.address, periodId),
+    _debtShareData[periodId][user2.address]
+  );
+  assert.deepEqual(
+    await DebtShare.balanceOfOnPeriod(user3.address, periodId),
+    _debtShareData[periodId][user3.address]
+  );
 }
 
 function expectedDebtShare(user, periodId) {
-  return _debtShareData[periodId][user]
+  return _debtShareData[periodId][user];
 }
 
 function expectedVotePower(user, periodId) {
