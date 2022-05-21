@@ -81,7 +81,7 @@ contract ElectionModule is ISynthetixElectionModule, BaseElectionModule, DebtSha
         address user,
         uint256 debtShare,
         bytes32[] calldata merkleProof
-    ) external override {
+    ) external override onlyInPeriod(ElectionPeriod.Vote) {
         _declareCrossChainDebtShare(user, debtShare, merkleProof);
 
         emit CrossChainDebtShareDeclared(user, debtShare);
