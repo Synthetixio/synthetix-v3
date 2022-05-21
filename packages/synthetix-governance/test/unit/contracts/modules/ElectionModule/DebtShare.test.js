@@ -17,7 +17,7 @@ const {
 const { findEvent } = require('@synthetixio/core-js/utils/ethers/events');
 const { getTime, fastForwardTo } = require('@synthetixio/core-js/utils/hardhat/rpc');
 
-describe.only('SynthetixElectionModule (debt share)', () => {
+describe('SynthetixElectionModule (debt share)', () => {
   const { proxyAddress } = bootstrap(initializer);
 
   let owner, user1, user2, user3;
