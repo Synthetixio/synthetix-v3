@@ -36,17 +36,19 @@ contract ElectionModule is ISynthetixElectionModule, BaseElectionModule, DebtSha
         );
     }
 
-    /// @notice Overrides the BaseElectionModule nominate function taking a debt share snapshot on the first nomination of an epoch
-    /// @dev This contract's proxy needs to be white listed in the debt shares contract for it to be able to take snapshots
-    function nominate() public override(BaseElectionModule, IElectionModule) onlyInPeriod(ElectionPeriod.Nomination) {
-        _takeDebtShareSnapshotOnFirstNomination();
-
-        super.nominate();
-    }
-
     // ---------------------------------------
     // Debt shares
     // ---------------------------------------
+
+    /// @notice Sets the Synthetix v2 DebtShare snapshot that determines vote power for this epoch
+    function setDebtShareSnapshotId(uint128 snapshotId)
+        external
+        override
+        onlyOwner
+        onlyInPeriod(ElectionPeriod.Nomination)
+    {
+        _setDebtShareSnapshotId(snapshotId);
+    }
 
     /// @notice Sets the Synthetix v2 DebtShare contract that determines vote power
     function setDebtShareContract(address debtShareContract)

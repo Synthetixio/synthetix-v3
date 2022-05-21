@@ -19,6 +19,8 @@ interface ISynthetixElectionModule is IBaseElectionModule {
     // Debt shares
     // ---------------------------------------
 
+    function setDebtShareSnapshotId(uint128 snapshotId) external;
+
     function setDebtShareContract(address newDebtShareContractAddress) external;
 
     function getDebtShareContract() external view returns (address);

@@ -12,27 +12,15 @@ contract DebtShareManager is ElectionBase, DebtShareStorage {
     error DebtShareContractNotSet();
 
     event DebtShareContractSet(address debtShareContractAddress);
-    event DebtShareSnapshotTaken(uint128 snapshotId);
+    event DebtShareSnapshotIdSet(uint128 snapshotId);
 
-    function _takeDebtShareSnapshotOnFirstNomination() internal {
+    function _setDebtShareSnapshotId(uint128 snapshotId) internal {
         DebtShareStore storage store = _debtShareStore();
 
-        IDebtShare debtShareContract = store.debtShareContract;
-
-        // Skip if we already have a debt share snapshot for this epoch
         uint currentEpochIndex = _getCurrentEpochIndex();
-        uint debtShareId = store.debtShareIds[currentEpochIndex];
-        if (debtShareId != 0) {
-            return;
-        }
+        store.debtShareIds[currentEpochIndex] = snapshotId;
 
-        // Take new debt share snapshot for this epoch
-        uint128 currentDebtSharePeriodId = debtShareContract.currentPeriodId();
-        uint128 nextDebtSharePeriodId = currentDebtSharePeriodId + 1;
-        debtShareContract.takeSnapshot(nextDebtSharePeriodId);
-        store.debtShareIds[currentEpochIndex] = nextDebtSharePeriodId;
-
-        emit DebtShareSnapshotTaken(nextDebtSharePeriodId);
+        emit DebtShareSnapshotIdSet(snapshotId);
     }
 
     function _setDebtShareContract(address newDebtShareContractAddress) internal {
