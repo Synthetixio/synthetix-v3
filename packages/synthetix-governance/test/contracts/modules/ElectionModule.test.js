@@ -3,15 +3,18 @@ const assert = require('assert/strict');
 const assertBn = require('@synthetixio/core-js/utils/assertions/assert-bignumber');
 const assertRevert = require('@synthetixio/core-js/utils/assertions/assert-revert');
 const { bootstrap } = require('@synthetixio/deployer/utils/tests');
-const initializer = require('../../../../helpers/initializer');
+const initializer = require('../../helpers/initializer');
 const { getTime, fastForwardTo } = require('@synthetixio/core-js/utils/hardhat/rpc');
 const { daysToSeconds } = require('@synthetixio/core-js/utils/misc/dates');
 const { ElectionPeriod } = require('@synthetixio/core-modules/test/contracts/modules/ElectionModule/helpers/election-helper');
 const {
   simulateDebtShareData,
+  simulateCrossChainDebtShareData,
   expectedDebtShare,
   expectedVotePower,
-} = require('./helpers/debt-share-helper');
+  expectedCrossChainDebtShare,
+  getCrossChainMerkleTree,
+} = require('./ElectionModule/helpers/debt-share-helper');
 const { findEvent } = require('@synthetixio/core-js/utils/ethers/events');
 
 describe.only('SynthetixElectionModule - general elections', function () {
@@ -24,7 +27,24 @@ describe.only('SynthetixElectionModule - general elections', function () {
 
   let receipt;
 
-  let debtShareSnapshotId;
+  let merkleTree;
+
+  let debtShareSnapshotId, debtShareSnapshotBlockNumber;
+
+  const epochData = {
+    0: {
+      snapshotId: 42,
+      blockNumber: 21000000,
+    },
+    1: {
+      snapshotId: 1337,
+      blockNumber: 23100007,
+    },
+    2: {
+      snapshotId: 2192,
+      blockNumber: 30043001,
+    },
+  }
 
   before('identify signers', async () => {
     const users = await ethers.getSigners();
@@ -92,11 +112,8 @@ describe.only('SynthetixElectionModule - general elections', function () {
       });
 
       describe('when trying to retrieve the current debt share of a user', function () {
-        it('reverts', async function () {
-          await assertRevert(
-            ElectionModule.getDebtShare(user1.address),
-            'DebtShareSnapshotIdNotSet'
-          );
+        it('returns zero', async function () {
+          assertBn.equal(await ElectionModule.getDebtShare(user1.address), 0);
         });
       });
     });
@@ -120,12 +137,9 @@ describe.only('SynthetixElectionModule - general elections', function () {
         });
       });
 
-      describe('when trying to retrieve the current cros chain debt share of a user', function () {
-        it('reverts', async function () {
-          await assertRevert(
-            ElectionModule.getDeclaredCrossChainDebtShare(user1.address),
-            'MerkleRootNotSet'
-          );
+      describe('when trying to retrieve the current cross chain debt share of a user', function () {
+        it('returns zero', async function () {
+          assertBn.equal(await ElectionModule.getDeclaredCrossChainDebtShare(user1.address), 0);
         });
       });
     });
@@ -155,14 +169,15 @@ describe.only('SynthetixElectionModule - general elections', function () {
         await fastForwardTo(await ElectionModule.getNominationPeriodStartDate(), ethers.provider);
       });
 
-      describe('when the current epochs debt share snapshot id is set to 42', function () {
-        debtShareSnapshotId = 42;
-
+      describe('when the current epochs debt share snapshot id is set', function () {
         before('simulate debt share data', async function () {
           await simulateDebtShareData(DebtShare, [user1, user2, user3]);
         });
 
         before('set snapshot id', async function () {
+          debtShareSnapshotId = epochData[0].snapshotId;
+          debtShareSnapshotBlockNumber = epochData[0].blockNumber;
+
           const tx = await ElectionModule.setDebtShareSnapshotId(debtShareSnapshotId);
           receipt = await tx.wait();
         });
@@ -177,9 +192,77 @@ describe.only('SynthetixElectionModule - general elections', function () {
         it('shows that the snapshot id is set', async function () {
           assertBn.equal(await ElectionModule.getDebtShareSnapshotId(), debtShareSnapshotId);
         });
-      });
 
-      describe.skip('when the current epochs cross chan debt share merkle proof is set', function () {});
+        it('shows that users have the expected debt shares', async function () {
+          assert.deepEqual(
+            await ElectionModule.getDebtShare(user1.address),
+            expectedDebtShare(user1.address, debtShareSnapshotId)
+          );
+          assert.deepEqual(
+            await ElectionModule.getDebtShare(user2.address),
+            expectedDebtShare(user2.address, debtShareSnapshotId)
+          );
+          assert.deepEqual(
+            await ElectionModule.getDebtShare(user3.address),
+            expectedDebtShare(user3.address, debtShareSnapshotId)
+          );
+        });
+
+        it('shows that users have the expected vote power (cross chain component is zero)', async function () {
+          assert.deepEqual(
+            await ElectionModule.getVotePower(user1.address),
+            expectedVotePower(user1.address, debtShareSnapshotId)
+          );
+          assert.deepEqual(
+            await ElectionModule.getVotePower(user2.address),
+            expectedVotePower(user2.address, debtShareSnapshotId)
+          );
+          assert.deepEqual(
+            await ElectionModule.getVotePower(user3.address),
+            expectedVotePower(user3.address, debtShareSnapshotId)
+          );
+        });
+
+        describe('when the current epochs cross chain debt share merkle proof is set', function () {
+          before('simulate cross chain debt share data', async function () {
+            await simulateCrossChainDebtShareData([user1, user2, user3]);
+          });
+
+          before('set the merkle root', async function () {
+            merkleTree = getCrossChainMerkleTree(debtShareSnapshotId);
+
+            const tx = await ElectionModule.setCrossChainDebtShareMerkleRoot(merkleTree.merkleRoot, debtShareSnapshotBlockNumber);
+            receipt = await tx.wait();
+          });
+
+          it('emitted a CrossChainDebtShareMerkleRootSet event', async function () {
+            const event = findEvent({ receipt, eventName: 'CrossChainDebtShareMerkleRootSet' });
+
+            assert.ok(event);
+            assertBn.equal(event.args.merkleRoot, merkleTree.merkleRoot);
+            assertBn.equal(event.args.blocknumber, debtShareSnapshotBlockNumber);
+          });
+
+          it('shows that the merkle root is set', async function () {
+            assert.equal(await ElectionModule.getCrossChainDebtShareMerkleRoot(), merkleTree.merkleRoot);
+          });
+
+          it('shows that the merkle root block number is set', async function () {
+            assertBn.equal(await ElectionModule.getCrossChainDebtShareMerkleRootBlockNumber(), debtShareSnapshotBlockNumber);
+          });
+
+          describe('when users declare their cross chain debt shares', function () {
+            it('reverts', async function () {
+              await assertRevert(
+                ElectionModule.declareCrossChainDebtShare(user1.address, expectedCrossChainDebtShare(user1.address, debtShareSnapshotId), merkleTree.claims[user1.address].proof),
+                'NotCallableInCurrentPeriod'
+              );
+            });
+          });
+
+          // TODO: Advance to voting period and declare cross chain debt shares
+        });
+      });
     });
   });
 });

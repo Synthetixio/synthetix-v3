@@ -68,10 +68,6 @@ contract CrossChainDebtShareManager is ElectionBase, DebtShareStorage {
     function _getDeclaredCrossChainDebtShare(address user) internal view returns (uint) {
         CrossChainDebtShareData storage debtShareData = _debtShareStore().crossChainDebtShareData[_getCurrentEpochIndex()];
 
-        if (debtShareData.merkleRoot == 0) {
-            revert MerkleRootNotSet();
-        }
-
         return debtShareData.debtShares[user];
     }
 }

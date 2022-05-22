@@ -36,13 +36,4 @@ const config = {
   },
 };
 
-if (process.env.FORK_PROVIDER_URL) {
-  config.networks.hardhat = {
-    forking: {
-      url: process.env.FORK_PROVIDER_URL,
-      blockNumber: 4838445, // 2022-03-25
-    },
-  };
-}
-
 module.exports = config;

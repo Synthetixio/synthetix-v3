@@ -57,9 +57,6 @@ contract DebtShareManager is ElectionBase, DebtShareStorage {
         DebtShareStore storage store = _debtShareStore();
 
         uint128 debtShareId = store.debtShareIds[_getCurrentEpochIndex()];
-        if (debtShareId == 0) {
-            revert DebtShareSnapshotIdNotSet();
-        }
 
         return store.debtShareContract.balanceOfOnPeriod(user, debtShareId);
     }
