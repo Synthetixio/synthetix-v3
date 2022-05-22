@@ -9,7 +9,7 @@ const { daysToSeconds } = require('@synthetixio/core-js/utils/misc/dates');
 const { getTime, fastForwardTo } = require('@synthetixio/core-js/utils/hardhat/rpc');
 const { buildCrossChainDebtShareMerkleTree } = require('./helpers/debt-share-helper');
 
-describe.only('SynthetixElectionModule (cross chain debt share)', function () {
+describe('SynthetixElectionModule (cross chain debt share)', function () {
   const { proxyAddress } = bootstrap(initializer);
 
   let ElectionModule;
