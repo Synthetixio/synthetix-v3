@@ -90,25 +90,31 @@ async function simulateCrossChainDebtShareData(users) {
 
   _crossChainDebtShareData = {
     42: {
-      [user1.address]: ethers.utils.parseEther('1000').toString(),
-      [user2.address]: ethers.utils.parseEther('24000').toString(),
-      [user3.address]: ethers.utils.parseEther('2000000').toString(),
+      [user1.address]: ethers.utils.parseEther('1000'),
+      [user2.address]: ethers.utils.parseEther('24000'),
+      [user3.address]: ethers.utils.parseEther('2000000'),
     },
     1337: {
-      [user1.address]: ethers.utils.parseEther('1').toString(),
-      [user2.address]: ethers.utils.parseEther('30000').toString(),
-      [user3.address]: ethers.utils.parseEther('2100000').toString(),
+      [user1.address]: ethers.utils.parseEther('1'),
+      [user2.address]: ethers.utils.parseEther('30000'),
+      [user3.address]: ethers.utils.parseEther('2100000'),
     },
     2192: {
-      [user1.address]: ethers.utils.parseEther('500').toString(),
-      [user2.address]: ethers.utils.parseEther('35000').toString(),
-      [user3.address]: ethers.utils.parseEther('2500000').toString(),
+      [user1.address]: ethers.utils.parseEther('500'),
+      [user2.address]: ethers.utils.parseEther('35000'),
+      [user3.address]: ethers.utils.parseEther('2500000'),
     },
   };
 
-  _crossChainDebtShareData[42].merkleTree = parseBalanceMap(_crossChainDebtShareData[42]);
-  _crossChainDebtShareData[1337].merkleTree = parseBalanceMap(_crossChainDebtShareData[1337]);
-  _crossChainDebtShareData[2192].merkleTree = parseBalanceMap(_crossChainDebtShareData[2192]);
+  function stringifyBalances(balances) {
+    Object.keys(balances).forEach((user) => balances[user] = balances[user].toString());
+
+    return balances;
+  }
+
+  _crossChainDebtShareData[42].merkleTree = parseBalanceMap(stringifyBalances(_crossChainDebtShareData[42]));
+  _crossChainDebtShareData[1337].merkleTree = parseBalanceMap(stringifyBalances(_crossChainDebtShareData[1337]));
+  _crossChainDebtShareData[2192].merkleTree = parseBalanceMap(stringifyBalances(_crossChainDebtShareData[2192]));
 }
 
 function expectedDebtShare(user, periodId) {

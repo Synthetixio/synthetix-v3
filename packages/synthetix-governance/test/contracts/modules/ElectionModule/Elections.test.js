@@ -3,7 +3,7 @@ const assert = require('assert/strict');
 const assertBn = require('@synthetixio/core-js/utils/assertions/assert-bignumber');
 const assertRevert = require('@synthetixio/core-js/utils/assertions/assert-revert');
 const { bootstrap } = require('@synthetixio/deployer/utils/tests');
-const initializer = require('../../helpers/initializer');
+const initializer = require('../../../helpers/initializer');
 const { getTime, fastForwardTo } = require('@synthetixio/core-js/utils/hardhat/rpc');
 const { daysToSeconds } = require('@synthetixio/core-js/utils/misc/dates');
 const { ElectionPeriod } = require('@synthetixio/core-modules/test/contracts/modules/ElectionModule/helpers/election-helper');
@@ -14,7 +14,7 @@ const {
   expectedVotePower,
   expectedCrossChainDebtShare,
   getCrossChainMerkleTree,
-} = require('./ElectionModule/helpers/debt-share-helper');
+} = require('./helpers/debt-share-helper');
 const { findEvent } = require('@synthetixio/core-js/utils/ethers/events');
 
 describe.only('SynthetixElectionModule - general elections', function () {
@@ -23,7 +23,7 @@ describe.only('SynthetixElectionModule - general elections', function () {
   let ElectionModule, DebtShare;
 
   let owner;
-  let user1, user2, user3;
+  let user1, user2, user3, user4;
 
   let receipt;
 
@@ -49,7 +49,7 @@ describe.only('SynthetixElectionModule - general elections', function () {
   before('identify signers', async () => {
     const users = await ethers.getSigners();
 
-    [owner, user1, user2, user3] = users;
+    [owner, user1, user2, user3, user4] = users;
   });
 
   before('identify modules', async () => {
@@ -251,7 +251,7 @@ describe.only('SynthetixElectionModule - general elections', function () {
             assertBn.equal(await ElectionModule.getCrossChainDebtShareMerkleRootBlockNumber(), debtShareSnapshotBlockNumber);
           });
 
-          describe('when users declare their cross chain debt shares', function () {
+          describe('when users declare their cross chain debt shares in the wrong period', function () {
             it('reverts', async function () {
               await assertRevert(
                 ElectionModule.declareCrossChainDebtShare(user1.address, expectedCrossChainDebtShare(user1.address, debtShareSnapshotId), merkleTree.claims[user1.address].proof),
@@ -260,7 +260,112 @@ describe.only('SynthetixElectionModule - general elections', function () {
             });
           });
 
-          // TODO: Advance to voting period and declare cross chain debt shares
+          describe('when advancing to the voting period', function () {
+            before('fast forward', async function () {
+              await fastForwardTo(await ElectionModule.getVotingPeriodStartDate(), ethers.provider);
+            });
+
+            it('shows that the current period is Voting', async function () {
+              assertBn.equal(await ElectionModule.getCurrentPeriod(), ElectionPeriod.Vote);
+            });
+
+            describe('when users declare their cross chain debt shares incorrectly', function () {
+              describe('when a user declares a wrong amount', function () {
+                it('reverts', async function () {
+                  const { proof } = merkleTree.claims[user2.address];
+
+                  await assertRevert(
+                    ElectionModule.declareCrossChainDebtShare(
+                      user2.address,
+                      ethers.utils.parseEther('10000000'),
+                      proof
+                    ),
+                    'InvalidMerkleProof'
+                  );
+                });
+              });
+
+              describe('when a user with no entry in the tree declares an amount', function () {
+                it('reverts', async function () {
+                  const { proof } = merkleTree.claims[user2.address];
+
+                  await assertRevert(
+                    ElectionModule.declareCrossChainDebtShare(
+                      user4.address,
+                      ethers.utils.parseEther('1000'),
+                      proof
+                    ),
+                    'InvalidMerkleProof'
+                  );
+                });
+              });
+
+              describe('when a user uses the wrong tree to declare', function () {
+                it('reverts', async function () {
+                  const anotherTree = getCrossChainMerkleTree(2192);
+                  const { amount, proof } = anotherTree.claims[user2.address];
+
+                  await assertRevert(
+                    ElectionModule.declareCrossChainDebtShare(
+                      user2.address,
+                      amount,
+                      proof
+                    ),
+                    'InvalidMerkleProof'
+                  );
+                });
+              });
+            });
+
+            describe('when users declare their cross chain debt shares correctly', function () {
+              async function declare(user) {
+                const { amount, proof } = merkleTree.claims[user.address];
+
+                const tx = await ElectionModule.declareCrossChainDebtShare(user.address, amount, proof);
+                receipt = await tx.wait();
+              }
+
+              before('declare', async function () {
+                await declare(user1);
+                await declare(user2);
+                await declare(user3);
+              });
+
+              it('emitted a CrossChainDebtShareDeclared event', async function () {
+                const event = findEvent({ receipt, eventName: 'CrossChainDebtShareDeclared' });
+
+                assert.ok(event);
+                assertBn.equal(event.args.user, user3.address);
+                assertBn.equal(event.args.debtShare, expectedCrossChainDebtShare(user3.address, debtShareSnapshotId));
+              });
+
+              it('shows that users have declared their cross chain debt shares', async function () {
+                assertBn.equal(await ElectionModule.getDeclaredCrossChainDebtShare(user1.address), expectedCrossChainDebtShare(user1.address, debtShareSnapshotId));
+                assertBn.equal(await ElectionModule.getDeclaredCrossChainDebtShare(user2.address), expectedCrossChainDebtShare(user2.address, debtShareSnapshotId));
+                assertBn.equal(await ElectionModule.getDeclaredCrossChainDebtShare(user3.address), expectedCrossChainDebtShare(user3.address, debtShareSnapshotId));
+              });
+
+              it('shows that users have the expected vote power (cross chain component is now declared)', async function () {
+                assert.deepEqual(
+                  await ElectionModule.getVotePower(user1.address),
+                  expectedVotePower(user1.address, debtShareSnapshotId)
+                );
+                assert.deepEqual(
+                  await ElectionModule.getVotePower(user2.address),
+                  expectedVotePower(user2.address, debtShareSnapshotId)
+                );
+                assert.deepEqual(
+                  await ElectionModule.getVotePower(user3.address),
+                  expectedVotePower(user3.address, debtShareSnapshotId)
+                );
+              });
+
+              // TODO: Vote
+              // TODO: Evaluate
+              // TODO: Resolve and check winners
+              // TODO: Repeat for other 2 periods
+            });
+          });
         });
       });
     });
