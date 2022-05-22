@@ -10,10 +10,7 @@ const {
   expectedDebtShare,
   expectedVotePower,
 } = require('./helpers/debt-share-helper');
-const {
-  ElectionPeriod,
-  runElection,
-} = require('@synthetixio/core-modules/test/contracts/modules/ElectionModule/helpers/election-helper');
+const { ElectionPeriod } = require('@synthetixio/core-modules/test/contracts/modules/ElectionModule/helpers/election-helper');
 const { findEvent } = require('@synthetixio/core-js/utils/ethers/events');
 const { getTime, fastForwardTo } = require('@synthetixio/core-js/utils/hardhat/rpc');
 

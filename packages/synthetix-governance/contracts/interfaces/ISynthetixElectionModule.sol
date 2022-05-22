@@ -19,11 +19,13 @@ interface ISynthetixElectionModule is IBaseElectionModule {
     // Debt shares
     // ---------------------------------------
 
-    function setDebtShareSnapshotId(uint128 snapshotId) external;
-
     function setDebtShareContract(address newDebtShareContractAddress) external;
 
     function getDebtShareContract() external view returns (address);
+
+    function setDebtShareSnapshotId(uint128 snapshotId) external;
+
+    function getDebtShareSnapshotId() external view returns (uint128);
 
     function getDebtShare(address user) external view returns (uint);
 
@@ -33,15 +35,15 @@ interface ISynthetixElectionModule is IBaseElectionModule {
 
     function setCrossChainDebtShareMerkleRoot(bytes32 merkleRoot, uint blocknumber) external;
 
+    function getCrossChainDebtShareMerkleRoot() external view returns (bytes32);
+
+    function getCrossChainDebtShareMerkleRootBlockNumber() external view returns (uint);
+
     function declareCrossChainDebtShare(
         address account,
         uint256 debtShare,
         bytes32[] calldata merkleProof
     ) external;
-
-    function getCrossChainDebtShareMerkleRoot() external view returns (bytes32);
-
-    function getCrossChainDebtShareMerkleRootBlocknumber() external view returns (uint);
 
     function getDeclaredCrossChainDebtShare(address account) external view returns (uint);
 }

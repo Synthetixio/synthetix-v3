@@ -10,6 +10,7 @@ import "@synthetixio/core-modules/contracts/submodules/election/ElectionBase.sol
 /// @dev Tracks user Synthetix v2 debt chains on the local chain at a particular block number
 contract DebtShareManager is ElectionBase, DebtShareStorage {
     error DebtShareContractNotSet();
+    error DebtShareSnapshotIdNotSet();
 
     event DebtShareContractSet(address debtShareContractAddress);
     event DebtShareSnapshotIdSet(uint128 snapshotId);
@@ -21,6 +22,17 @@ contract DebtShareManager is ElectionBase, DebtShareStorage {
         store.debtShareIds[currentEpochIndex] = snapshotId;
 
         emit DebtShareSnapshotIdSet(snapshotId);
+    }
+
+    function _getDebtShareSnapshotId() internal view returns (uint128) {
+        DebtShareStore storage store = _debtShareStore();
+
+        uint128 debtShareId = store.debtShareIds[_getCurrentEpochIndex()];
+        if (debtShareId == 0) {
+            revert DebtShareSnapshotIdNotSet();
+        }
+
+        return debtShareId;
     }
 
     function _setDebtShareContract(address newDebtShareContractAddress) internal {
@@ -45,6 +57,9 @@ contract DebtShareManager is ElectionBase, DebtShareStorage {
         DebtShareStore storage store = _debtShareStore();
 
         uint128 debtShareId = store.debtShareIds[_getCurrentEpochIndex()];
+        if (debtShareId == 0) {
+            revert DebtShareSnapshotIdNotSet();
+        }
 
         return store.debtShareContract.balanceOfOnPeriod(user, debtShareId);
     }

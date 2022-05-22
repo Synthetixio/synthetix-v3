@@ -40,16 +40,6 @@ contract ElectionModule is ISynthetixElectionModule, BaseElectionModule, DebtSha
     // Debt shares
     // ---------------------------------------
 
-    /// @notice Sets the Synthetix v2 DebtShare snapshot that determines vote power for this epoch
-    function setDebtShareSnapshotId(uint128 snapshotId)
-        external
-        override
-        onlyOwner
-        onlyInPeriod(ElectionPeriod.Nomination)
-    {
-        _setDebtShareSnapshotId(snapshotId);
-    }
-
     /// @notice Sets the Synthetix v2 DebtShare contract that determines vote power
     function setDebtShareContract(address debtShareContract)
         external
@@ -67,6 +57,16 @@ contract ElectionModule is ISynthetixElectionModule, BaseElectionModule, DebtSha
         return address(_debtShareStore().debtShareContract);
     }
 
+    /// @notice Sets the Synthetix v2 DebtShare snapshot that determines vote power for this epoch
+    function setDebtShareSnapshotId(uint128 snapshotId) external override onlyOwner onlyInPeriod(ElectionPeriod.Nomination) {
+        _setDebtShareSnapshotId(snapshotId);
+    }
+
+    /// @notice Returns the Synthetix v2 DebtShare snapshot id set for this epoch
+    function getDebtShareSnapshotId() external view override returns (uint128) {
+        return _getDebtShareSnapshotId();
+    }
+
     /// @notice Returns the Synthetix v2 debt share for the provided address, at this epoch's snapshot
     function getDebtShare(address user) external view override returns (uint) {
         return _getDebtShare(user);
@@ -75,17 +75,6 @@ contract ElectionModule is ISynthetixElectionModule, BaseElectionModule, DebtSha
     // ---------------------------------------
     // Cross chain debt shares
     // ---------------------------------------
-
-    /// @notice Allows users to declare their Synthetix v2 debt shares on other chains
-    function declareCrossChainDebtShare(
-        address user,
-        uint256 debtShare,
-        bytes32[] calldata merkleProof
-    ) external override onlyInPeriod(ElectionPeriod.Vote) {
-        _declareCrossChainDebtShare(user, debtShare, merkleProof);
-
-        emit CrossChainDebtShareDeclared(user, debtShare);
-    }
 
     /// @notice Allows the system owner to declare a merkle root for user debt shares on other chains for this epoch
     function setCrossChainDebtShareMerkleRoot(bytes32 merkleRoot, uint blocknumber)
@@ -101,16 +90,23 @@ contract ElectionModule is ISynthetixElectionModule, BaseElectionModule, DebtSha
 
     /// @notice Returns the current epoch's merkle root for user debt shares on other chains
     function getCrossChainDebtShareMerkleRoot() external view override returns (bytes32) {
-        CrossChainDebtShareData storage debtShareData = _debtShareStore().crossChainDebtShareData[_getCurrentEpochIndex()];
-
-        return debtShareData.merkleRoot;
+        return _getCrossChainDebtShareMerkleRoot();
     }
 
     /// @notice Returns the current epoch's merkle root block number
-    function getCrossChainDebtShareMerkleRootBlocknumber() external view override returns (uint) {
-        CrossChainDebtShareData storage debtShareData = _debtShareStore().crossChainDebtShareData[_getCurrentEpochIndex()];
+    function getCrossChainDebtShareMerkleRootBlockNumber() external view override returns (uint) {
+        return _getCrossChainDebtShareMerkleRootBlockNumber();
+    }
 
-        return debtShareData.merkleRootBlockNumber;
+    /// @notice Allows users to declare their Synthetix v2 debt shares on other chains
+    function declareCrossChainDebtShare(
+        address user,
+        uint256 debtShare,
+        bytes32[] calldata merkleProof
+    ) external override onlyInPeriod(ElectionPeriod.Vote) {
+        _declareCrossChainDebtShare(user, debtShare, merkleProof);
+
+        emit CrossChainDebtShareDeclared(user, debtShare);
     }
 
     /// @notice Returns the Synthetix v2 debt shares for the provided address, at this epoch's snapshot, in other chains

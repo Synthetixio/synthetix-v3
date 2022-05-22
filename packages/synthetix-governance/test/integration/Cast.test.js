@@ -1,3 +1,5 @@
+// TODO: After uint/Elections, consider removing this - if so, remove snx dependency
+
 // const assert = require('assert/strict');
 // const { ethers } = require('hardhat');
 // const synthetix = require('synthetix');
