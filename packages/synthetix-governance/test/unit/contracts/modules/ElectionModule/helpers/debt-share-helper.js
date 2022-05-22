@@ -1,8 +1,22 @@
 const { ethers } = hre;
 const assert = require('assert/strict');
 const { bnSqrt } = require('@synthetixio/core-js/utils/ethers/bignumber');
+const { parseBalanceMap } = require('@synthetixio/core-js/utils/merkle-tree/parse-balance-tree');
 
 let _debtShareData;
+
+function buildCrossChainDebtShareMerkleTree(balance) {
+  const inputData = {};
+
+  for (let i = 0; i < 10; i++) {
+    const address = ethers.Wallet.createRandom().address;
+    inputData[address] = `${balance}`;
+  }
+
+  const merkleTree = parseBalanceMap(inputData);
+
+  return merkleTree;
+}
 
 async function simulateDebtShareData(DebtShare, users) {
   const [user1, user2, user3] = users;
@@ -95,4 +109,5 @@ module.exports = {
   simulateDebtShareData,
   expectedDebtShare,
   expectedVotePower,
+  buildCrossChainDebtShareMerkleTree,
 };
