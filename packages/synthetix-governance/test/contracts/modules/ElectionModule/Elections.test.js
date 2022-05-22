@@ -23,7 +23,7 @@ describe.only('SynthetixElectionModule - general elections', function () {
   let ElectionModule, DebtShare;
 
   let owner;
-  let user1, user2, user3, user4;
+  let user1, user2, user3, user4, user5, user6, user7, user8, user9;
 
   let receipt;
 
@@ -49,7 +49,7 @@ describe.only('SynthetixElectionModule - general elections', function () {
   before('identify signers', async () => {
     const users = await ethers.getSigners();
 
-    [owner, user1, user2, user3, user4] = users;
+    [owner, user1, user2, user3, user4, user5, user6, user7, user8, user9] = users;
   });
 
   before('identify modules', async () => {
@@ -83,6 +83,10 @@ describe.only('SynthetixElectionModule - general elections', function () {
         epochEndDate,
         DebtShare.address
       );
+    });
+
+    before('set next epoch seat count to 3', async function () {
+      (await ElectionModule.setNextEpochSeatCount(3)).wait();
     });
 
     it('shows that the election module is initialized', async function () {
@@ -235,6 +239,15 @@ describe.only('SynthetixElectionModule - general elections', function () {
             receipt = await tx.wait();
           });
 
+          before('nominate', async function () {
+            (await ElectionModule.connect(user4).nominate()).wait();
+            (await ElectionModule.connect(user5).nominate()).wait();
+            (await ElectionModule.connect(user6).nominate()).wait();
+            (await ElectionModule.connect(user7).nominate()).wait();
+            (await ElectionModule.connect(user8).nominate()).wait();
+            (await ElectionModule.connect(user9).nominate()).wait();
+          });
+
           it('emitted a CrossChainDebtShareMerkleRootSet event', async function () {
             const event = findEvent({ receipt, eventName: 'CrossChainDebtShareMerkleRootSet' });
 
@@ -360,9 +373,19 @@ describe.only('SynthetixElectionModule - general elections', function () {
                 );
               });
 
-              // TODO: Vote
-              // TODO: Evaluate
-              // TODO: Resolve and check winners
+              describe('when a user tries to vote for more than one candidate', function () {
+                it('reverts', async function () {
+                  await assertRevert(
+                    ElectionModule.connect(user1).cast([user4.address, user5.address]),
+                    'TooManyCandidates'
+                  );
+                });
+              });
+
+              // TODO: Vote, track votes in ballots
+
+              // TODO: Evaluate, resolve, and check winners
+
               // TODO: Repeat for other 2 periods
             });
           });
