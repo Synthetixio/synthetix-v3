@@ -94,7 +94,7 @@ task(TASK_FIXTURE_CANDIDATES, 'Create fixture candidate nominations')
 task(TASK_FIXTURE_VOTES, 'Create fixture votes to nominated candidates')
   .addParam('address', 'Deployed election module proxy address', undefined, types.address)
   .addOptionalParam('amount', 'Amount of voters to fixture', '20', types.int)
-  .addOptionalParam('ballotSize', 'Amount of cadidates for each ballot', '5', types.int)
+  .addOptionalParam('ballotSize', 'Amount of cadidates for each ballot', '1', types.int)
   .setAction(async ({ address, amount, ballotSize }, hre) => {
     const ElectionModule = await hre.ethers.getContractAt(
       'contracts/modules/ElectionModule.sol:ElectionModule',
