@@ -7,7 +7,7 @@ interface IElectionModule {
     // Initialization
     // ---------------------------------------
 
-    /// @notice Initializes the module and immediately starts the first epoch with the owner as the single council member
+    /// @notice Initializes the module and immediately starts the first epoch
     function initializeElectionModule(
         string memory councilTokenName,
         string memory councilTokenSymbol,
