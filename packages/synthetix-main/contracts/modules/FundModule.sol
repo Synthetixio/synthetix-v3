@@ -8,13 +8,22 @@ import "@synthetixio/core-contracts/contracts/satellite/SatelliteFactory.sol";
 import "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
 
 import "../mixins/AccountRBACMixin.sol";
+import "../mixins/CollateralMixin.sol";
 
 import "../interfaces/IFundModule.sol";
 import "../storage/FundModuleStorage.sol";
 
 import "../satellites/FundToken.sol";
 
-contract FundModule is IFundModule, OwnableMixin, FundModuleStorage, InitializableMixin, SatelliteFactory, AccountRBACMixin {
+contract FundModule is
+    IFundModule,
+    OwnableMixin,
+    FundModuleStorage,
+    InitializableMixin,
+    SatelliteFactory,
+    AccountRBACMixin,
+    CollateralMixin
+{
     using SetUtil for SetUtil.Bytes32Set;
     using SetUtil for SetUtil.AddressSet;
 
@@ -57,6 +66,7 @@ contract FundModule is IFundModule, OwnableMixin, FundModuleStorage, Initializab
         uint shares,
         uint initialDebt
     );
+
     event PositionDecreased(
         bytes32 liquidityItemId,
         uint fundId,
@@ -339,29 +349,28 @@ contract FundModule is IFundModule, OwnableMixin, FundModuleStorage, Initializab
         uint amount,
         uint leverage
     ) internal {
-        _fundModuleStore().funds[fundId].liquidityItemIds.add(liquidityItemId);
+        FundData storage fundData = _fundModuleStore().funds[fundId];
+        uint collateralValue = amount * _getCollateralValue(collateralType);
+
+        fundData.liquidityItemIds.add(liquidityItemId);
+
+        uint shares = _convertToShares(fundId, collateralValue, leverage);
+        uint initialDebt = _calculateInitialDebt(fundId, collateralValue, leverage); // how that works with amount adjustments?
 
         LiquidityItem memory liquidityItem;
         liquidityItem.collateralType = collateralType;
         liquidityItem.accountId = accountId;
         liquidityItem.leverage = leverage;
         liquidityItem.collateralAmount = amount;
-        liquidityItem.shares = _convertToShares(fundId, collateralType, amount, leverage);
-        liquidityItem.initialDebt = _calculateInitialDebt(fundId, collateralType, amount, leverage); // how that works with amount adjustments?
+        liquidityItem.shares = shares;
+        liquidityItem.initialDebt = initialDebt;
 
-        _fundModuleStore().funds[fundId].liquidityItems[liquidityItemId] = liquidityItem;
+        fundData.liquidityItems[liquidityItemId] = liquidityItem;
 
-        // TODO adjust totalShares, liquidityByCollateral
-        emit PositionAdded(
-            liquidityItemId,
-            fundId,
-            accountId,
-            collateralType,
-            amount,
-            leverage,
-            liquidityItem.shares,
-            liquidityItem.initialDebt
-        );
+        fundData.totalShares += liquidityItem.shares;
+        fundData.liquidityByCollateral[collateralType] += amount;
+
+        emit PositionAdded(liquidityItemId, fundId, accountId, collateralType, amount, leverage, shares, initialDebt);
     }
 
     function _removePosition(
@@ -371,20 +380,24 @@ contract FundModule is IFundModule, OwnableMixin, FundModuleStorage, Initializab
         uint accountId,
         address collateralType
     ) internal {
+        FundData storage fundData = _fundModuleStore().funds[fundId];
+
         uint oldAmount = liquidityItem.collateralAmount;
         uint oldSharesAmount = liquidityItem.shares;
         uint oldOnitialDebt = liquidityItem.initialDebt;
         // TODO check if is enabled to remove position comparing old and new data
 
-        _fundModuleStore().funds[fundId].liquidityItemIds.remove(liquidityItemId);
+        fundData.liquidityItemIds.remove(liquidityItemId);
 
         liquidityItem.collateralAmount = 0;
         liquidityItem.shares = 0;
         liquidityItem.initialDebt = 0; // how that works with amount adjustments?
 
-        _fundModuleStore().funds[fundId].liquidityItems[liquidityItemId] = liquidityItem;
+        fundData.liquidityItems[liquidityItemId] = liquidityItem;
 
-        // TODO adjust totalShares, liquidityByCollateral
+        fundData.totalShares -= oldSharesAmount;
+        fundData.liquidityByCollateral[collateralType] -= oldAmount;
+
         emit PositionRemoved(liquidityItemId, fundId, accountId, collateralType);
     }
 
@@ -396,27 +409,27 @@ contract FundModule is IFundModule, OwnableMixin, FundModuleStorage, Initializab
         uint amount,
         uint leverage
     ) internal {
+        FundData storage fundData = _fundModuleStore().funds[fundId];
+        uint collateralValue = amount * _getCollateralValue(collateralType);
+
         uint oldAmount = liquidityItem.collateralAmount;
         uint oldSharesAmount = liquidityItem.shares;
         uint oldOnitialDebt = liquidityItem.initialDebt;
         // TODO check if is enabled to remove position comparing old and new data
 
+        uint shares = _convertToShares(fundId, collateralValue, leverage);
+        uint initialDebt = _calculateInitialDebt(fundId, collateralValue, leverage); // how that works with amount adjustments?
+
         liquidityItem.collateralAmount = amount;
-        liquidityItem.shares = _convertToShares(fundId, collateralType, amount, leverage);
-        liquidityItem.initialDebt = _calculateInitialDebt(fundId, collateralType, amount, leverage); // how that works with amount adjustments?
+        liquidityItem.shares = shares;
+        liquidityItem.initialDebt = initialDebt;
 
-        _fundModuleStore().funds[fundId].liquidityItems[liquidityItemId] = liquidityItem;
+        fundData.liquidityItems[liquidityItemId] = liquidityItem;
 
-        // TODO adjust totalShares, liquidityByCollateral
-        emit PositionIncreased(
-            liquidityItemId,
-            fundId,
-            collateralType,
-            amount,
-            leverage,
-            liquidityItem.shares,
-            liquidityItem.initialDebt
-        );
+        fundData.totalShares += liquidityItem.shares - oldSharesAmount;
+        fundData.liquidityByCollateral[collateralType] += amount - oldAmount;
+
+        emit PositionIncreased(liquidityItemId, fundId, collateralType, amount, leverage, shares, initialDebt);
     }
 
     function _decreasePosition(
@@ -427,40 +440,38 @@ contract FundModule is IFundModule, OwnableMixin, FundModuleStorage, Initializab
         uint amount,
         uint leverage
     ) internal {
+        FundData storage fundData = _fundModuleStore().funds[fundId];
+        uint collateralValue = amount * _getCollateralValue(collateralType);
+
         uint oldAmount = liquidityItem.collateralAmount;
         uint oldSharesAmount = liquidityItem.shares;
         uint oldOnitialDebt = liquidityItem.initialDebt;
         // TODO check if is enabled to remove position comparing old and new data
 
+        uint shares = _convertToShares(fundId, collateralValue, leverage);
+        uint initialDebt = _calculateInitialDebt(fundId, collateralValue, leverage); // how that works with amount adjustments?
+
         liquidityItem.collateralAmount = amount;
-        liquidityItem.shares = _convertToShares(fundId, collateralType, amount, leverage);
-        liquidityItem.initialDebt = _calculateInitialDebt(fundId, collateralType, amount, leverage); // how that works with amount adjustments?
+        liquidityItem.shares = shares;
+        liquidityItem.initialDebt = initialDebt;
 
-        _fundModuleStore().funds[fundId].liquidityItems[liquidityItemId] = liquidityItem;
+        fundData.liquidityItems[liquidityItemId] = liquidityItem;
 
-        // TODO adjust totalShares, liquidityByCollateral
-        emit PositionDecreased(
-            liquidityItemId,
-            fundId,
-            collateralType,
-            amount,
-            leverage,
-            liquidityItem.shares,
-            liquidityItem.initialDebt
-        );
+        fundData.totalShares -= oldSharesAmount - liquidityItem.shares;
+        fundData.liquidityByCollateral[collateralType] -= oldAmount - amount;
+        emit PositionDecreased(liquidityItemId, fundId, collateralType, amount, leverage, shares, initialDebt);
     }
 
     function _convertToShares(
         uint fundId,
-        address collateralType,
-        uint amount,
+        uint collateralValue,
         uint leverage
     ) internal view returns (uint) {
-        uint collateralValue = _getCollateralValue(collateralType) * amount * leverage; //(use mulDivDown or mulDivUp)
+        uint leveragedCollateralValue = collateralValue * leverage; //(use mulDivDown or mulDivUp)
         uint totalShares = _totalShares(fundId);
         uint totalCollateralValue = _totalCollateral(fundId);
 
-        return totalShares == 0 ? collateralValue : (collateralValue * totalShares) / totalCollateralValue;
+        return totalShares == 0 ? leveragedCollateralValue : (leveragedCollateralValue * totalShares) / totalCollateralValue;
     }
 
     function _perShareValue(uint fundId) internal view returns (uint) {
@@ -488,11 +499,10 @@ contract FundModule is IFundModule, OwnableMixin, FundModuleStorage, Initializab
 
     function _calculateInitialDebt(
         uint fundId,
-        address collateralType,
-        uint amount,
+        uint collateralValue,
         uint leverage
     ) internal returns (uint) {
-        return amount * leverage * _getCollateralValue(collateralType);
+        return leverage * collateralValue;
     }
 
     // ---------------------------------------
@@ -604,10 +614,5 @@ contract FundModule is IFundModule, OwnableMixin, FundModuleStorage, Initializab
         uint leverage
     ) internal view returns (bytes32) {
         return keccak256(abi.encodePacked(accountId, collateralType, leverage));
-    }
-
-    function _getCollateralValue(address collateralType) internal pure returns (uint) {
-        // TODO
-        return collateralType == address(0) ? 0 : 1; // dummy function
     }
 }
