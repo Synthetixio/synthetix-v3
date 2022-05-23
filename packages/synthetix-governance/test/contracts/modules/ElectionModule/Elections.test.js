@@ -371,20 +371,31 @@ describe('SynthetixElectionModule - general elections', function () {
                     receipt = await tx.wait();
                   }
 
+                  async function declareAndCast(user, candidates) {
+                    const { amount, proof } = merkleTree.claims[user.address];
+
+                    const tx = await ElectionModule.connect(user).declareAndCast(
+                      amount,
+                      proof,
+                      candidates
+                    );
+                    receipt = await tx.wait();
+                  }
+
                   before('declare', async function () {
                     await declare(user1);
                     await declare(user2);
-                    await declare(user3);
+                    // Note: Intentionally not declaring for user3
                   });
 
                   it('emitted a CrossChainDebtShareDeclared event', async function () {
                     const event = findEvent({ receipt, eventName: 'CrossChainDebtShareDeclared' });
 
                     assert.ok(event);
-                    assertBn.equal(event.args.user, user3.address);
+                    assertBn.equal(event.args.user, user2.address);
                     assertBn.equal(
                       event.args.debtShare,
-                      expectedCrossChainDebtShare(user3.address, epoch.snapshotId)
+                      expectedCrossChainDebtShare(user2.address, epoch.snapshotId)
                     );
                   });
 
@@ -397,10 +408,6 @@ describe('SynthetixElectionModule - general elections', function () {
                       await ElectionModule.getDeclaredCrossChainDebtShare(user2.address),
                       expectedCrossChainDebtShare(user2.address, epoch.snapshotId)
                     );
-                    assertBn.equal(
-                      await ElectionModule.getDeclaredCrossChainDebtShare(user3.address),
-                      expectedCrossChainDebtShare(user3.address, epoch.snapshotId)
-                    );
                   });
 
                   it('shows that users have the expected vote power (cross chain component is now declared)', async function () {
@@ -411,10 +418,6 @@ describe('SynthetixElectionModule - general elections', function () {
                     assert.deepEqual(
                       await ElectionModule.getVotePower(user2.address),
                       expectedVotePower(user2.address, epoch.snapshotId)
-                    );
-                    assert.deepEqual(
-                      await ElectionModule.getVotePower(user3.address),
-                      expectedVotePower(user3.address, epoch.snapshotId)
                     );
                   });
 
@@ -433,7 +436,7 @@ describe('SynthetixElectionModule - general elections', function () {
                     before('vote', async function () {
                       await ElectionModule.connect(user1).cast([user4.address]);
                       await ElectionModule.connect(user2).cast([user4.address]);
-                      await ElectionModule.connect(user3).cast([user5.address]);
+                      await declareAndCast(user3, [user5.address]); // user3 didn't declare cross chain debt shares yet
                       await ElectionModule.connect(user4).cast([user6.address]);
                       await ElectionModule.connect(user5).cast([user4.address]);
                     });
