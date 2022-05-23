@@ -125,6 +125,15 @@ describe('ElectionModule (evaluate)', () => {
             assertBn.equal(await ElectionModule.getCurrentPeriod(), ElectionPeriod.Evaluation);
           });
 
+          describe('when attempting to withdraw a vote in the evaluation period', function () {
+            it('reverts', async function () {
+              await assertRevert(
+                ElectionModule.connect(voter1).withdrawVote(),
+                'NotCallableInCurrentPeriod'
+              );
+            });
+          });
+
           describe('before evaluating the epoch', function () {
             describe('when trying to resolve the epoch', function () {
               it('reverts', async function () {
