@@ -8,39 +8,43 @@ contract FundModuleStorage {
     struct FundModuleStore {
         bool initialized;
         SatelliteFactory.Satellite fundToken;
-        uint preferredFund;
-        uint[] approvedFunds;
-        mapping(uint => FundData) funds; // fund metadata by fundId
+        uint256 preferredFund;
+        uint256[] approvedFunds;
+        mapping(uint256 => FundData) funds; // fund metadata by fundId
     }
 
     struct FundData {
         /// @dev fund configuration and market distribution
-        uint targetRatio; // TODO set up and update by owner or configured by system?
-        uint liquidationRatio; // TODO set up and update by owner or configured by system?
-        uint totalWeights; // sum of distribution weights
+        uint256 targetRatio; // TODO set up and update by owner or configured by system?
+        uint256 liquidationRatio; // TODO set up and update by owner or configured by system?
+        uint256 totalWeights; // sum of distribution weights
+        uint256 totalShares; // total shares distributed
+        uint256 totalsUSD;
         MarketDistribution[] fundDistribution;
         /// @dev collateral delegated
         SetUtil.AddressSet collateralTypes; // collateral types used to add liquidity to the fund
-        mapping(address => uint) liquidityByCollateral; // total liquidity per collateral
-        uint totalShares;
+        mapping(address => uint256) liquidityByCollateral; // total liquidity per collateral
         /// @dev Individual Liquidity Items
         SetUtil.Bytes32Set liquidityItemIds; // All LiquidityItem ids in this fund
-        mapping(uint => SetUtil.Bytes32Set) liquidityItemsByAccount; // LiquidityItem ids by account
+        mapping(uint256 => SetUtil.Bytes32Set) liquidityItemsByAccount; // LiquidityItem ids by account
         mapping(bytes32 => LiquidityItem) liquidityItems; // LiquidityItems data by liquidityProviderIds
+        /// @dev minted sUSD
+        mapping(uint256 => uint256) sUSDByAccount;
+        mapping(uint256 => mapping(address => uint256)) sUSDByAccountAndCollateral;
     }
 
     struct MarketDistribution {
-        uint weight;
-        uint market;
+        uint256 weight;
+        uint256 market;
     }
 
     struct LiquidityItem {
         address collateralType;
-        uint accountId;
-        uint leverage;
-        uint collateralAmount;
-        uint shares;
-        uint initialDebt; // how that works with amount adjustments?
+        uint256 accountId;
+        uint256 leverage;
+        uint256 collateralAmount;
+        uint256 shares;
+        uint256 initialDebt; // how that works with amount adjustments?
     }
 
     function _fundModuleStore() internal pure returns (FundModuleStore storage store) {

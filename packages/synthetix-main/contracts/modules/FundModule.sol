@@ -531,7 +531,9 @@ contract FundModule is
         uint amount
     ) external override onlyRoleAuthorized(accountId, "mint") {
         // TODO Check if can mint that amount
-        // TODO implement it
+        _fundModuleStore().funds[fundId].sUSDByAccountAndCollateral[accountId][collateralType] += amount;
+        _fundModuleStore().funds[fundId].sUSDByAccount[accountId] += amount;
+        _fundModuleStore().funds[fundId].totalsUSD += amount;
     }
 
     function burnsUSD(
@@ -541,7 +543,9 @@ contract FundModule is
         uint amount
     ) external override onlyRoleAuthorized(accountId, "burn") {
         // TODO Check if can burn that amount
-        // TODO implement it
+        _fundModuleStore().funds[fundId].sUSDByAccountAndCollateral[accountId][collateralType] -= amount;
+        _fundModuleStore().funds[fundId].sUSDByAccount[accountId] -= amount;
+        _fundModuleStore().funds[fundId].totalsUSD -= amount;
     }
 
     // ---------------------------------------
@@ -585,8 +589,9 @@ contract FundModule is
         uint perShareValue = _perShareValue(fundId);
         uint collateralPrice = _getCollateralValue(collateralType);
 
-        uint accountDebt;
         uint accountCollateralValue;
+        uint accountDebt = fundData.sUSDByAccount[accountId]; // add debt from sUSD minted
+
         for (uint i = 1; i < fundData.liquidityItemsByAccount[accountId].length() + 1; i++) {
             bytes32 itemId = fundData.liquidityItemsByAccount[accountId].valueAt(i);
             LiquidityItem storage item = fundData.liquidityItems[itemId];
@@ -608,7 +613,7 @@ contract FundModule is
     }
 
     function fundDebt(uint fundId) public view override returns (uint) {
-        return _totalShares(fundId) * _perShareValue(fundId);
+        return _totalShares(fundId) * _perShareValue(fundId) + _fundModuleStore().funds[fundId].totalsUSD;
     }
 
     function totalDebtShares(uint fundId) external view override returns (uint) {
