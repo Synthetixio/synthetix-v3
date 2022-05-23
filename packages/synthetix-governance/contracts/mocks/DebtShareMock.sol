@@ -4,27 +4,25 @@ pragma solidity ^0.8.0;
 import "../interfaces/IDebtShare.sol";
 
 contract DebtShareMock is IDebtShare {
-    uint128 private _currentPeriodId;
-    mapping(address => uint) private _balances;
-    mapping(address => bool) private _setAddresses;
-
-    function currentPeriodId() external view override returns (uint128) {
-        return _currentPeriodId;
+    struct Period {
+        mapping(address => uint) balances;
     }
 
-    function takeSnapshot(uint128 id) external override {
-        _currentPeriodId = id;
+    mapping(uint128 => Period) private _periods;
+
+    function setBalanceOfOnPeriod(
+        address user,
+        uint balance,
+        uint128 periodId
+    ) external {
+        Period storage period = _periods[periodId];
+
+        period.balances[user] = balance;
     }
 
-    function setBalanceOf(address user, uint balance) external {
-        _balances[user] = balance;
-        _setAddresses[user] = true;
-    }
+    function balanceOfOnPeriod(address user, uint128 periodId) external view virtual override returns (uint) {
+        Period storage period = _periods[periodId];
 
-    function balanceOfOnPeriod(address user, uint) external view override returns (uint) {
-        if (_setAddresses[user] == true) {
-            return _balances[user];
-        }
-        return (uint(_currentPeriodId) + 2)**18;
+        return period.balances[user];
     }
 }
