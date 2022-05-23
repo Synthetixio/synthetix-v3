@@ -3,13 +3,13 @@ pragma solidity ^0.8.0;
 
 /// @title Module for managing collaterals and staked collaterals per account
 interface ICollateralModule {
-    /// @notice SCCP Adds or Adjusts (can be disabled or re-enabled) a collateral type
+    /// @notice SCCP Adds or Adjusts (can be enabled or re-enabled) a collateral type
     function adjustCollateralType(
         address collateralType,
         address priceFeed,
         uint targetCRatio,
         uint minimumCRatio,
-        bool disabled
+        bool enabled
     ) external;
 
     /// @notice Gets a list of approved collateral types
@@ -23,7 +23,7 @@ interface ICollateralModule {
             address priceFeed,
             uint targetCRatio,
             uint minimumCRatio,
-            bool disabled
+            bool enabled
         );
 
     /// @notice Stakes collateral for an account (by the account owner or an address with 'stake' role). Transfers the collateral from the account owner.

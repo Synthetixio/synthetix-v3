@@ -48,7 +48,7 @@ describe('CollateralModule Stake', function () {
         CollateralPriceFeed.address,
         400,
         200,
-        false
+        true
       )
     ).wait();
   });
@@ -80,7 +80,7 @@ describe('CollateralModule Stake', function () {
     assert.equal(collateralType[0], CollateralPriceFeed.address);
     assertBn.equal(collateralType[1], 400);
     assertBn.equal(collateralType[2], 200);
-    assert.equal(collateralType[3], false);
+    assert.equal(collateralType[3], true);
   });
 
   describe('when some collateral is staked', () => {

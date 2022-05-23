@@ -298,10 +298,8 @@ contract FundModule is
         address collateralType,
         uint amount,
         uint leverage
-    ) external override onlyRoleAuthorized(accountId, "assign") {
+    ) external override onlyRoleAuthorized(accountId, "assign") collateralEnabled(collateralType) {
         FundToken(getFundTokenAddress()).ownerOf(fundId); // Will revert if do not exists
-
-        // TODO check parameters are valid (collateralType, amount, exposure)
 
         bytes32 lpid = _getLiquidityItemId(accountId, collateralType, leverage);
 
@@ -309,6 +307,10 @@ contract FundModule is
         SetUtil.Bytes32Set storage liquidityItemIds = fundData.liquidityItemIds;
 
         if (!liquidityItemIds.contains(lpid)) {
+            if (_getAccountUnassignedCollateral(accountId, collateralType) < amount) {
+                revert InsufficientAvailableCollateral(accountId, collateralType, amount);
+            }
+
             // lpid not found in set =>  new position
             _addPosition(lpid, fundId, accountId, collateralType, amount, leverage);
         } else {
@@ -324,11 +326,17 @@ contract FundModule is
                 revert InvalidParameters();
             }
 
+            uint currentLiquidityAmount = liquidityItem.collateralAmount;
+
             if (amount == 0) {
                 _removePosition(lpid, liquidityItem, fundId, accountId, collateralType);
-            } else if (liquidityItem.collateralAmount < amount) {
+            } else if (currentLiquidityAmount < amount) {
+                if (_getAccountUnassignedCollateral(accountId, collateralType) < amount - currentLiquidityAmount) {
+                    revert InsufficientAvailableCollateral(accountId, collateralType, amount);
+                }
+
                 _increasePosition(lpid, liquidityItem, fundId, collateralType, amount, leverage);
-            } else if (liquidityItem.collateralAmount > amount) {
+            } else if (currentLiquidityAmount > amount) {
                 _decreasePosition(lpid, liquidityItem, fundId, collateralType, amount, leverage);
             } else {
                 // no change
@@ -370,6 +378,10 @@ contract FundModule is
         fundData.totalShares += liquidityItem.shares;
         fundData.liquidityByCollateral[collateralType] += amount;
 
+        if (!fundData.collateralTypes.contains(collateralType)) {
+            fundData.collateralTypes.add(collateralType);
+        }
+
         emit PositionAdded(liquidityItemId, fundId, accountId, collateralType, amount, leverage, shares, initialDebt);
     }
 
@@ -409,12 +421,13 @@ contract FundModule is
         uint amount,
         uint leverage
     ) internal {
-        FundData storage fundData = _fundModuleStore().funds[fundId];
-        uint collateralValue = amount * _getCollateralValue(collateralType);
-
         uint oldAmount = liquidityItem.collateralAmount;
         uint oldSharesAmount = liquidityItem.shares;
         uint oldOnitialDebt = liquidityItem.initialDebt;
+
+        FundData storage fundData = _fundModuleStore().funds[fundId];
+        uint collateralValue = amount * _getCollateralValue(collateralType);
+
         // TODO check if is enabled to remove position comparing old and new data
 
         uint shares = _convertToShares(fundId, collateralValue, leverage);
@@ -484,8 +497,10 @@ contract FundModule is
     function _totalCollateral(uint fundId) internal view returns (uint) {
         uint total;
         address[] memory collateralTypes = _fundModuleStore().funds[fundId].collateralTypes.values();
+
         for (uint i = 0; i < collateralTypes.length; i++) {
             address collateralType = collateralTypes[i];
+
             total +=
                 _getCollateralValue(collateralType) *
                 _fundModuleStore().funds[fundId].liquidityByCollateral[collateralType];

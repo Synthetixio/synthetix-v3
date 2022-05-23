@@ -56,7 +56,7 @@ describe('FundModule - Funds Admin', function () {
         CollateralPriceFeed.address,
         400,
         200,
-        false
+        true
       )
     ).wait();
   });

@@ -13,7 +13,7 @@ contract CollateralStorage {
     }
 
     struct CollateralData {
-        bool disabled;
+        bool enabled;
         uint targetCRatio;
         uint minimumCRatio;
         address priceFeed;

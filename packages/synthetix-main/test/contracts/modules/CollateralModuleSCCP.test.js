@@ -124,7 +124,7 @@ describe('CollateralModule SCCP', function () {
           AnotherCollateralPriceFeed.address,
           400,
           200,
-          true
+          false
         );
         await tx.wait();
       });
@@ -139,7 +139,7 @@ describe('CollateralModule SCCP', function () {
 
       it('is disabled', async () => {
         const collateralType = await CollateralModule.getCollateralType(AnotherCollateral.address);
-        assert.equal(collateralType[3], true);
+        assert.equal(collateralType[3], false);
       });
     });
   });
