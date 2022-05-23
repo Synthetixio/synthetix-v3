@@ -1,5 +1,4 @@
 const { ethers } = hre;
-const assert = require('assert/strict');
 const { bnSqrt } = require('@synthetixio/core-js/utils/ethers/bignumber');
 const { parseBalanceMap } = require('@synthetixio/core-js/utils/merkle-tree/parse-balance-tree');
 
@@ -20,16 +19,16 @@ async function simulateDebtShareData(DebtShare, users) {
     1337: {
       [user1.address]: ethers.utils.parseEther('0'),
       [user2.address]: ethers.utils.parseEther('30000'),
-      [user3.address]: ethers.utils.parseEther('210000'),
-      [user4.address]: ethers.utils.parseEther('45000'),
+      [user3.address]: ethers.utils.parseEther('21000'),
+      [user4.address]: ethers.utils.parseEther('459000'),
       [user5.address]: ethers.utils.parseEther('100'),
     },
     2192: {
       [user1.address]: ethers.utils.parseEther('500'),
-      [user2.address]: ethers.utils.parseEther('35000'),
-      [user3.address]: ethers.utils.parseEther('250000'),
+      [user2.address]: ethers.utils.parseEther('10'),
+      [user3.address]: ethers.utils.parseEther('2500'),
       [user4.address]: ethers.utils.parseEther('50000'),
-      [user5.address]: ethers.utils.parseEther('0'),
+      [user5.address]: ethers.utils.parseEther('1'),
     },
   };
 
@@ -49,48 +48,6 @@ async function simulateDebtShareData(DebtShare, users) {
   await simulateDebtShareBalances('42');
   await simulateDebtShareBalances('1337');
   await simulateDebtShareBalances('2192');
-
-  let periodId = '42';
-  assert.deepEqual(
-    await DebtShare.balanceOfOnPeriod(user1.address, periodId),
-    _debtShareData[periodId][user1.address]
-  );
-  assert.deepEqual(
-    await DebtShare.balanceOfOnPeriod(user2.address, periodId),
-    _debtShareData[periodId][user2.address]
-  );
-  assert.deepEqual(
-    await DebtShare.balanceOfOnPeriod(user3.address, periodId),
-    _debtShareData[periodId][user3.address]
-  );
-
-  periodId = '1337';
-  assert.deepEqual(
-    await DebtShare.balanceOfOnPeriod(user1.address, periodId),
-    _debtShareData[periodId][user1.address]
-  );
-  assert.deepEqual(
-    await DebtShare.balanceOfOnPeriod(user2.address, periodId),
-    _debtShareData[periodId][user2.address]
-  );
-  assert.deepEqual(
-    await DebtShare.balanceOfOnPeriod(user3.address, periodId),
-    _debtShareData[periodId][user3.address]
-  );
-
-  periodId = '2192';
-  assert.deepEqual(
-    await DebtShare.balanceOfOnPeriod(user1.address, periodId),
-    _debtShareData[periodId][user1.address]
-  );
-  assert.deepEqual(
-    await DebtShare.balanceOfOnPeriod(user2.address, periodId),
-    _debtShareData[periodId][user2.address]
-  );
-  assert.deepEqual(
-    await DebtShare.balanceOfOnPeriod(user3.address, periodId),
-    _debtShareData[periodId][user3.address]
-  );
 }
 
 async function simulateCrossChainDebtShareData(users) {
@@ -103,14 +60,19 @@ async function simulateCrossChainDebtShareData(users) {
       [user3.address]: ethers.utils.parseEther('1000'),
     },
     1337: {
-      [user1.address]: ethers.utils.parseEther('2050000'),
-      [user2.address]: ethers.utils.parseEther('30000'),
+      [user1.address]: ethers.utils.parseEther('205000'),
+      [user2.address]: ethers.utils.parseEther('300000'),
       [user3.address]: ethers.utils.parseEther('2100'),
     },
     2192: {
-      [user1.address]: ethers.utils.parseEther('2500000'),
+      [user1.address]: ethers.utils.parseEther('1'),
       [user2.address]: ethers.utils.parseEther('35000'),
-      [user3.address]: ethers.utils.parseEther('2500'),
+      [user3.address]: ethers.utils.parseEther('250000'),
+    },
+    666: {
+      [user1.address]: ethers.utils.parseEther('666'),
+      [user2.address]: ethers.utils.parseEther('666'),
+      [user3.address]: ethers.utils.parseEther('666'),
     },
   };
 
@@ -128,6 +90,9 @@ async function simulateCrossChainDebtShareData(users) {
   );
   _crossChainDebtShareData[2192].merkleTree = parseBalanceMap(
     stringifyBalances(_crossChainDebtShareData[2192])
+  );
+  _crossChainDebtShareData[666].merkleTree = parseBalanceMap(
+    stringifyBalances(_crossChainDebtShareData[666])
   );
 }
 
