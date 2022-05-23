@@ -285,7 +285,7 @@ contract FundModule is
         uint marketWeight,
         uint totalWeight
     ) internal {
-        // TODO
+        // TODO implement it
     }
 
     // ---------------------------------------
@@ -396,7 +396,7 @@ contract FundModule is
 
         uint oldAmount = liquidityItem.collateralAmount;
         uint oldSharesAmount = liquidityItem.shares;
-        uint oldOnitialDebt = liquidityItem.initialDebt;
+        // uint oldnitialDebt = liquidityItem.initialDebt;
         // TODO check if is enabled to remove position comparing old and new data
 
         fundData.liquidityItemIds.remove(liquidityItemId);
@@ -423,7 +423,7 @@ contract FundModule is
     ) internal {
         uint oldAmount = liquidityItem.collateralAmount;
         uint oldSharesAmount = liquidityItem.shares;
-        uint oldOnitialDebt = liquidityItem.initialDebt;
+        // uint oldnitialDebt = liquidityItem.initialDebt;
 
         FundData storage fundData = _fundModuleStore().funds[fundId];
         uint collateralValue = amount * _getCollateralValue(collateralType);
@@ -458,7 +458,7 @@ contract FundModule is
 
         uint oldAmount = liquidityItem.collateralAmount;
         uint oldSharesAmount = liquidityItem.shares;
-        uint oldOnitialDebt = liquidityItem.initialDebt;
+        // uint oldnitialDebt = liquidityItem.initialDebt;
         // TODO check if is enabled to remove position comparing old and new data
 
         uint shares = _convertToShares(fundId, collateralValue, leverage);
@@ -513,10 +513,11 @@ contract FundModule is
     }
 
     function _calculateInitialDebt(
+        // solhint-disable-next-line no-unused-vars
         uint fundId,
         uint collateralValue,
         uint leverage
-    ) internal returns (uint) {
+    ) internal pure returns (uint) {
         return leverage * collateralValue;
     }
 
@@ -632,7 +633,7 @@ contract FundModule is
         uint accountId,
         address collateralType,
         uint leverage
-    ) internal view returns (bytes32) {
+    ) internal pure returns (bytes32) {
         return keccak256(abi.encodePacked(accountId, collateralType, leverage));
     }
 }
