@@ -12,9 +12,22 @@ import "../submodules/election/CrossChainDebtShareManager.sol";
 /// @notice This extends the base ElectionModule by determining voting power by Synthetix v2 debt share
 contract ElectionModule is ISynthetixElectionModule, BaseElectionModule, DebtShareManager, CrossChainDebtShareManager {
     error TooManyCandidates();
+    error WrongInitializer();
+
+    /// @dev The BaseElectionModule initializer should not be called, and this one must be called instead
+    function initializeElectionModule(
+        string memory,
+        string memory,
+        address[] memory,
+        uint8,
+        uint64,
+        uint64,
+        uint64
+    ) external view override(BaseElectionModule, IElectionModule) onlyOwner onlyIfNotInitialized {
+        revert WrongInitializer();
+    }
 
     /// @dev Overloads the BaseElectionModule initializer with an additional parameter for the debt share contract
-    /// @dev The BaseElectionModule initializer should not be called, and this one must be called instead
     function initializeElectionModule(
         string memory councilTokenName,
         string memory councilTokenSymbol,
@@ -27,7 +40,7 @@ contract ElectionModule is ISynthetixElectionModule, BaseElectionModule, DebtSha
     ) external onlyOwner onlyIfNotInitialized {
         _setDebtShareContract(debtShareContract);
 
-        initializeElectionModule(
+        _initializeElectionModule(
             councilTokenName,
             councilTokenSymbol,
             firstCouncil,

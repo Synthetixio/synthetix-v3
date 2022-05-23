@@ -50,6 +50,17 @@ describe('SynthetixElectionModule (initialization)', () => {
     });
 
     describe('with the account that owns the instance', function () {
+      describe('with the wrong initializer', function () {
+        it('reverts', async function () {
+          await assertRevert(
+            ElectionModule.connect(owner)[
+              'initializeElectionModule(string,string,address[],uint8,uint64,uint64,uint64)'
+            ]('', '', [owner.address], 1, 0, 0, 0),
+            'WrongInitializer'
+          );
+        });
+      });
+
       describe('with invalid parameters', function () {
         describe('with invalid debtShareContract', function () {
           it('reverts', async function () {

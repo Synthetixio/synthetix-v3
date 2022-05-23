@@ -29,7 +29,27 @@ contract ElectionModule is
         uint64 nominationPeriodStartDate,
         uint64 votingPeriodStartDate,
         uint64 epochEndDate
-    ) public override onlyOwner onlyIfNotInitialized {
+    ) external virtual override onlyOwner onlyIfNotInitialized {
+        _initializeElectionModule(
+            councilTokenName,
+            councilTokenSymbol,
+            firstCouncil,
+            minimumActiveMembers,
+            nominationPeriodStartDate,
+            votingPeriodStartDate,
+            epochEndDate
+        );
+    }
+
+    function _initializeElectionModule(
+        string memory councilTokenName,
+        string memory councilTokenSymbol,
+        address[] memory firstCouncil,
+        uint8 minimumActiveMembers,
+        uint64 nominationPeriodStartDate,
+        uint64 votingPeriodStartDate,
+        uint64 epochEndDate
+    ) internal {
         ElectionStore storage store = _electionStore();
 
         uint8 seatCount = uint8(firstCouncil.length);
