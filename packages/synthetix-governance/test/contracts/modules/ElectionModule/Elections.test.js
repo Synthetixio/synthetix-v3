@@ -19,7 +19,7 @@ const {
 } = require('./helpers/debt-share-helper');
 const { findEvent } = require('@synthetixio/core-js/utils/ethers/events');
 
-describe('SynthetixElectionModule - general elections', function () {
+describe.only('SynthetixElectionModule - general elections', function () {
   const { proxyAddress } = bootstrap(initializer);
 
   let ElectionModule, DebtShare, CouncilToken;
@@ -114,6 +114,52 @@ describe('SynthetixElectionModule - general elections', function () {
 
     it('shows that the DebtShare contract is connected', async function () {
       assert.equal(await ElectionModule.getDebtShareContract(), DebtShare.address);
+    });
+
+    describe('when re setting the debt share contract', function () {
+      describe('with the same address', function () {
+        it('reverts', async function () {
+          await assertRevert(ElectionModule.setDebtShareContract(DebtShare.address), 'NoChange');
+        });
+      });
+
+      describe('with an invalid address', function () {
+        it('reverts', async function () {
+          await assertRevert(
+            ElectionModule.setDebtShareContract('0x0000000000000000000000000000000000000000'),
+            'ZeroAddress'
+          );
+        });
+      });
+
+      describe('with an EOA', function () {
+        it('reverts', async function () {
+          await assertRevert(ElectionModule.setDebtShareContract(owner.address), 'NotAContract');
+        });
+      });
+
+      describe('with a different address', function () {
+        before('deploy debt shares mock', async function () {
+          const factory = await ethers.getContractFactory('DebtShareMock');
+          DebtShare = await factory.deploy();
+        });
+
+        before('set the new debt share contract', async function () {
+          const tx = await ElectionModule.setDebtShareContract(DebtShare.address);
+          receipt = await tx.wait();
+        });
+
+        it('emitted a DebtShareContractSet event', async function () {
+          const event = findEvent({ receipt, eventName: 'DebtShareContractSet' });
+
+          assert.ok(event);
+          assertBn.equal(event.args.contractAddress, DebtShare.address);
+        });
+
+        it('shows that the DebtShare contract is connected', async function () {
+          assert.equal(await ElectionModule.getDebtShareContract(), DebtShare.address);
+        });
+      });
     });
 
     epochData.forEach(function (epoch) {

@@ -12,7 +12,7 @@ contract DebtShareManager is ElectionBase, DebtShareStorage {
     error DebtShareContractNotSet();
     error DebtShareSnapshotIdNotSet();
 
-    event DebtShareContractSet(address debtShareContractAddress);
+    event DebtShareContractSet(address contractAddress);
     event DebtShareSnapshotIdSet(uint128 snapshotId);
 
     function _setDebtShareSnapshotId(uint128 snapshotId) internal {
