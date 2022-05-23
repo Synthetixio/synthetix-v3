@@ -8,9 +8,13 @@ contract DebtShareMock is IDebtShare {
         mapping(address => uint) balances;
     }
 
-    mapping(uint128 => Period) _periods;
+    mapping(uint128 => Period) private _periods;
 
-    function setBalanceOfOnPeriod(address user, uint balance, uint128 periodId) external {
+    function setBalanceOfOnPeriod(
+        address user,
+        uint balance,
+        uint128 periodId
+    ) external {
         Period storage period = _periods[periodId];
 
         period.balances[user] = balance;

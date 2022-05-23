@@ -19,7 +19,7 @@ const {
 } = require('./helpers/debt-share-helper');
 const { findEvent } = require('@synthetixio/core-js/utils/ethers/events');
 
-describe.only('SynthetixElectionModule - general elections', function () {
+describe('SynthetixElectionModule - general elections', function () {
   const { proxyAddress } = bootstrap(initializer);
 
   let ElectionModule, DebtShare, CouncilToken;
@@ -30,8 +30,6 @@ describe.only('SynthetixElectionModule - general elections', function () {
   let receipt;
 
   let merkleTree;
-
-  let debtShareSnapshotId, debtShareSnapshotBlockNumber;
 
   const epochData = [
     {
@@ -97,7 +95,10 @@ describe.only('SynthetixElectionModule - general elections', function () {
     });
 
     before('identify the council token', async function () {
-      CouncilToken = await ethers.getContractAt('CouncilToken', await ElectionModule.getCouncilToken());
+      CouncilToken = await ethers.getContractAt(
+        'CouncilToken',
+        await ElectionModule.getCouncilToken()
+      );
     });
 
     it('shows the expected NFT owners', async function () {
@@ -117,12 +118,8 @@ describe.only('SynthetixElectionModule - general elections', function () {
 
     epochData.forEach(function (epoch) {
       describe(`epoch ${epoch.index} with debt share snapshot ${epoch.snapshotId}`, function () {
-        let epochIndex = epoch.index;
-        let debtShareSnapshotId = epoch.snapshotId;
-        let debtShareSnapshotBlockNumber = epoch.blockNumber;
-
-        it(`shows that the current epoch index is ${epochIndex}`, async function () {
-          assertBn.equal(await ElectionModule.getEpochIndex(), epochIndex);
+        it(`shows that the current epoch index is ${epoch.index}`, async function () {
+          assertBn.equal(await ElectionModule.getEpochIndex(), epoch.index);
         });
 
         it('shows that the current period is Administration', async function () {
@@ -132,7 +129,10 @@ describe.only('SynthetixElectionModule - general elections', function () {
         describe('before a debt share snapshot is set', function () {
           describe('when trying to retrieve the current debt share snapshot id', function () {
             it('reverts', async function () {
-              await assertRevert(ElectionModule.getDebtShareSnapshotId(), 'DebtShareSnapshotIdNotSet');
+              await assertRevert(
+                ElectionModule.getDebtShareSnapshotId(),
+                'DebtShareSnapshotIdNotSet'
+              );
             });
           });
 
@@ -146,7 +146,10 @@ describe.only('SynthetixElectionModule - general elections', function () {
         describe('before a merkle root is set', function () {
           describe('when trying to retrieve the current cross chain merkle root', function () {
             it('reverts', async function () {
-              await assertRevert(ElectionModule.getCrossChainDebtShareMerkleRoot(), 'MerkleRootNotSet');
+              await assertRevert(
+                ElectionModule.getCrossChainDebtShareMerkleRoot(),
+                'MerkleRootNotSet'
+              );
             });
           });
 
@@ -191,7 +194,10 @@ describe.only('SynthetixElectionModule - general elections', function () {
 
         describe('when advancing to the nominations period', function () {
           before('fast forward', async function () {
-            await fastForwardTo(await ElectionModule.getNominationPeriodStartDate(), ethers.provider);
+            await fastForwardTo(
+              await ElectionModule.getNominationPeriodStartDate(),
+              ethers.provider
+            );
           });
 
           describe('when the current epochs debt share snapshot id is set', function () {
@@ -200,7 +206,7 @@ describe.only('SynthetixElectionModule - general elections', function () {
             });
 
             before('set snapshot id', async function () {
-              const tx = await ElectionModule.setDebtShareSnapshotId(debtShareSnapshotId);
+              const tx = await ElectionModule.setDebtShareSnapshotId(epoch.snapshotId);
               receipt = await tx.wait();
             });
 
@@ -208,33 +214,33 @@ describe.only('SynthetixElectionModule - general elections', function () {
               const event = findEvent({ receipt, eventName: 'DebtShareSnapshotIdSet' });
 
               assert.ok(event);
-              assertBn.equal(event.args.snapshotId, debtShareSnapshotId);
+              assertBn.equal(event.args.snapshotId, epoch.snapshotId);
             });
 
             it('shows that the snapshot id is set', async function () {
-              assertBn.equal(await ElectionModule.getDebtShareSnapshotId(), debtShareSnapshotId);
+              assertBn.equal(await ElectionModule.getDebtShareSnapshotId(), epoch.snapshotId);
             });
 
             it('shows that users have the expected debt shares', async function () {
               assert.deepEqual(
                 await ElectionModule.getDebtShare(user1.address),
-                expectedDebtShare(user1.address, debtShareSnapshotId)
+                expectedDebtShare(user1.address, epoch.snapshotId)
               );
               assert.deepEqual(
                 await ElectionModule.getDebtShare(user2.address),
-                expectedDebtShare(user2.address, debtShareSnapshotId)
+                expectedDebtShare(user2.address, epoch.snapshotId)
               );
               assert.deepEqual(
                 await ElectionModule.getDebtShare(user3.address),
-                expectedDebtShare(user3.address, debtShareSnapshotId)
+                expectedDebtShare(user3.address, epoch.snapshotId)
               );
               assert.deepEqual(
                 await ElectionModule.getDebtShare(user4.address),
-                expectedDebtShare(user4.address, debtShareSnapshotId)
+                expectedDebtShare(user4.address, epoch.snapshotId)
               );
               assert.deepEqual(
                 await ElectionModule.getDebtShare(user5.address),
-                expectedDebtShare(user5.address, debtShareSnapshotId)
+                expectedDebtShare(user5.address, epoch.snapshotId)
               );
             });
 
@@ -244,11 +250,11 @@ describe.only('SynthetixElectionModule - general elections', function () {
               });
 
               before('set the merkle root', async function () {
-                merkleTree = getCrossChainMerkleTree(debtShareSnapshotId);
+                merkleTree = getCrossChainMerkleTree(epoch.snapshotId);
 
                 const tx = await ElectionModule.setCrossChainDebtShareMerkleRoot(
                   merkleTree.merkleRoot,
-                  debtShareSnapshotBlockNumber
+                  epoch.blockNumber
                 );
                 receipt = await tx.wait();
               });
@@ -267,7 +273,7 @@ describe.only('SynthetixElectionModule - general elections', function () {
 
                 assert.ok(event);
                 assertBn.equal(event.args.merkleRoot, merkleTree.merkleRoot);
-                assertBn.equal(event.args.blocknumber, debtShareSnapshotBlockNumber);
+                assertBn.equal(event.args.blocknumber, epoch.blockNumber);
               });
 
               it('shows that the merkle root is set', async function () {
@@ -280,7 +286,7 @@ describe.only('SynthetixElectionModule - general elections', function () {
               it('shows that the merkle root block number is set', async function () {
                 assertBn.equal(
                   await ElectionModule.getCrossChainDebtShareMerkleRootBlockNumber(),
-                  debtShareSnapshotBlockNumber
+                  epoch.blockNumber
                 );
               });
 
@@ -289,7 +295,7 @@ describe.only('SynthetixElectionModule - general elections', function () {
                   await assertRevert(
                     ElectionModule.declareCrossChainDebtShare(
                       user1.address,
-                      expectedCrossChainDebtShare(user1.address, debtShareSnapshotId),
+                      expectedCrossChainDebtShare(user1.address, epoch.snapshotId),
                       merkleTree.claims[user1.address].proof
                     ),
                     'NotCallableInCurrentPeriod'
@@ -299,7 +305,10 @@ describe.only('SynthetixElectionModule - general elections', function () {
 
               describe('when advancing to the voting period', function () {
                 before('fast forward', async function () {
-                  await fastForwardTo(await ElectionModule.getVotingPeriodStartDate(), ethers.provider);
+                  await fastForwardTo(
+                    await ElectionModule.getVotingPeriodStartDate(),
+                    ethers.provider
+                  );
                 });
 
                 it('shows that the current period is Voting', async function () {
@@ -375,37 +384,37 @@ describe.only('SynthetixElectionModule - general elections', function () {
                     assertBn.equal(event.args.user, user3.address);
                     assertBn.equal(
                       event.args.debtShare,
-                      expectedCrossChainDebtShare(user3.address, debtShareSnapshotId)
+                      expectedCrossChainDebtShare(user3.address, epoch.snapshotId)
                     );
                   });
 
                   it('shows that users have declared their cross chain debt shares', async function () {
                     assertBn.equal(
                       await ElectionModule.getDeclaredCrossChainDebtShare(user1.address),
-                      expectedCrossChainDebtShare(user1.address, debtShareSnapshotId)
+                      expectedCrossChainDebtShare(user1.address, epoch.snapshotId)
                     );
                     assertBn.equal(
                       await ElectionModule.getDeclaredCrossChainDebtShare(user2.address),
-                      expectedCrossChainDebtShare(user2.address, debtShareSnapshotId)
+                      expectedCrossChainDebtShare(user2.address, epoch.snapshotId)
                     );
                     assertBn.equal(
                       await ElectionModule.getDeclaredCrossChainDebtShare(user3.address),
-                      expectedCrossChainDebtShare(user3.address, debtShareSnapshotId)
+                      expectedCrossChainDebtShare(user3.address, epoch.snapshotId)
                     );
                   });
 
                   it('shows that users have the expected vote power (cross chain component is now declared)', async function () {
                     assert.deepEqual(
                       await ElectionModule.getVotePower(user1.address),
-                      expectedVotePower(user1.address, debtShareSnapshotId)
+                      expectedVotePower(user1.address, epoch.snapshotId)
                     );
                     assert.deepEqual(
                       await ElectionModule.getVotePower(user2.address),
-                      expectedVotePower(user2.address, debtShareSnapshotId)
+                      expectedVotePower(user2.address, epoch.snapshotId)
                     );
                     assert.deepEqual(
                       await ElectionModule.getVotePower(user3.address),
-                      expectedVotePower(user3.address, debtShareSnapshotId)
+                      expectedVotePower(user3.address, epoch.snapshotId)
                     );
                   });
 
@@ -456,11 +465,11 @@ describe.only('SynthetixElectionModule - general elections', function () {
                     });
 
                     it('keeps track of vote power in each ballot', async function () {
-                      const votesBallot1 = expectedVotePower(user1.address, debtShareSnapshotId)
-                        .add(expectedVotePower(user2.address, debtShareSnapshotId))
-                        .add(expectedVotePower(user5.address, debtShareSnapshotId));
-                      const votesBallot2 = expectedVotePower(user3.address, debtShareSnapshotId);
-                      const votesBallot3 = expectedVotePower(user4.address, debtShareSnapshotId);
+                      const votesBallot1 = expectedVotePower(user1.address, epoch.snapshotId)
+                        .add(expectedVotePower(user2.address, epoch.snapshotId))
+                        .add(expectedVotePower(user5.address, epoch.snapshotId));
+                      const votesBallot2 = expectedVotePower(user3.address, epoch.snapshotId);
+                      const votesBallot3 = expectedVotePower(user4.address, epoch.snapshotId);
 
                       assertBn.equal(await ElectionModule.getBallotVotes(ballot1), votesBallot1);
                       assertBn.equal(await ElectionModule.getBallotVotes(ballot2), votesBallot2);
@@ -469,7 +478,10 @@ describe.only('SynthetixElectionModule - general elections', function () {
 
                     describe('when voting ends', function () {
                       before('fast forward', async function () {
-                        await fastForwardTo(await ElectionModule.getEpochEndDate(), ethers.provider);
+                        await fastForwardTo(
+                          await ElectionModule.getEpochEndDate(),
+                          ethers.provider
+                        );
                       });
 
                       it('shows that the current period is Evaluation', async function () {
@@ -489,22 +501,34 @@ describe.only('SynthetixElectionModule - general elections', function () {
                         });
 
                         it('shows each candidates votes', async function () {
-                          const votesUser4 = expectedVotePower(user1.address, debtShareSnapshotId)
-                            .add(expectedVotePower(user2.address, debtShareSnapshotId))
-                            .add(expectedVotePower(user5.address, debtShareSnapshotId));
-                          const votesUser5 = expectedVotePower(user3.address, debtShareSnapshotId);
-                          const votesUser6 = expectedVotePower(user4.address, debtShareSnapshotId);
+                          const votesUser4 = expectedVotePower(user1.address, epoch.snapshotId)
+                            .add(expectedVotePower(user2.address, epoch.snapshotId))
+                            .add(expectedVotePower(user5.address, epoch.snapshotId));
+                          const votesUser5 = expectedVotePower(user3.address, epoch.snapshotId);
+                          const votesUser6 = expectedVotePower(user4.address, epoch.snapshotId);
 
-                          assertBn.equal(await ElectionModule.getCandidateVotes(user4.address), votesUser4);
-                          assertBn.equal(await ElectionModule.getCandidateVotes(user5.address), votesUser5);
-                          assertBn.equal(await ElectionModule.getCandidateVotes(user6.address), votesUser6);
+                          assertBn.equal(
+                            await ElectionModule.getCandidateVotes(user4.address),
+                            votesUser4
+                          );
+                          assertBn.equal(
+                            await ElectionModule.getCandidateVotes(user5.address),
+                            votesUser5
+                          );
+                          assertBn.equal(
+                            await ElectionModule.getCandidateVotes(user6.address),
+                            votesUser6
+                          );
                           assertBn.equal(await ElectionModule.getCandidateVotes(user7.address), 0);
                           assertBn.equal(await ElectionModule.getCandidateVotes(user8.address), 0);
                           assertBn.equal(await ElectionModule.getCandidateVotes(user9.address), 0);
                         });
 
                         it('shows the election winners', async function () {
-                          assert.deepEqual(await ElectionModule.getElectionWinners(), epoch.winners());
+                          assert.deepEqual(
+                            await ElectionModule.getElectionWinners(),
+                            epoch.winners()
+                          );
                         });
 
                         describe('when the election is resolved', function () {
@@ -515,11 +539,26 @@ describe.only('SynthetixElectionModule - general elections', function () {
                           it('shows the expected NFT owners', async function () {
                             const winners = epoch.winners();
 
-                            assertBn.equal(await CouncilToken.balanceOf(owner.address), winners.includes(owner.address) ? 1 : 0);
-                            assertBn.equal(await CouncilToken.balanceOf(user4.address), winners.includes(user4.address) ? 1 : 0);
-                            assertBn.equal(await CouncilToken.balanceOf(user5.address), winners.includes(user5.address) ? 1 : 0);
-                            assertBn.equal(await CouncilToken.balanceOf(user6.address), winners.includes(user6.address) ? 1 : 0);
-                            assertBn.equal(await CouncilToken.balanceOf(user7.address), winners.includes(user7.address) ? 1 : 0);
+                            assertBn.equal(
+                              await CouncilToken.balanceOf(owner.address),
+                              winners.includes(owner.address) ? 1 : 0
+                            );
+                            assertBn.equal(
+                              await CouncilToken.balanceOf(user4.address),
+                              winners.includes(user4.address) ? 1 : 0
+                            );
+                            assertBn.equal(
+                              await CouncilToken.balanceOf(user5.address),
+                              winners.includes(user5.address) ? 1 : 0
+                            );
+                            assertBn.equal(
+                              await CouncilToken.balanceOf(user6.address),
+                              winners.includes(user6.address) ? 1 : 0
+                            );
+                            assertBn.equal(
+                              await CouncilToken.balanceOf(user7.address),
+                              winners.includes(user7.address) ? 1 : 0
+                            );
                           });
                         });
                       });
