@@ -53,6 +53,12 @@ describe('ElectionModule (cast)', () => {
       );
     });
 
+    describe('when attempting to withdraw a vote in the administration period', function () {
+      it('reverts', async function () {
+        await assertRevert(ElectionModule.withdrawVote(), 'NotCallableInCurrentPeriod');
+      });
+    });
+
     describe('when entering the nomiantion period', function () {
       before('fast forward', async function () {
         await fastForwardTo(await ElectionModule.getNominationPeriodStartDate(), ethers.provider);
@@ -68,6 +74,12 @@ describe('ElectionModule (cast)', () => {
           await ElectionModule.connect(candidate2).nominate();
           await ElectionModule.connect(candidate3).nominate();
           await ElectionModule.connect(candidate4).nominate();
+        });
+
+        describe('when attempting to withdraw a vote in the nomination period', function () {
+          it('reverts', async function () {
+            await assertRevert(ElectionModule.withdrawVote(), 'NotCallableInCurrentPeriod');
+          });
         });
 
         describe('when entering the election period', function () {

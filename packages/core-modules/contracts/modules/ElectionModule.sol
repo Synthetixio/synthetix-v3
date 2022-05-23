@@ -231,7 +231,7 @@ contract ElectionModule is
         emit VoteRecorded(msg.sender, ballotId, epochIndex, votePower);
     }
 
-    function withdrawVote() external {
+    function withdrawVote() external override onlyInPeriod(ElectionPeriod.Vote) {
         if (!hasVoted(msg.sender)) {
             revert VoteNotCasted();
         }
