@@ -7,23 +7,29 @@ let _debtShareData = {};
 let _crossChainDebtShareData = {};
 
 async function simulateDebtShareData(DebtShare, users) {
-  const [user1, user2, user3] = users;
+  const [user1, user2, user3, user4, user5] = users;
 
   _debtShareData = {
     42: {
       [user1.address]: ethers.utils.parseEther('1000'),
       [user2.address]: ethers.utils.parseEther('24000'),
-      [user3.address]: ethers.utils.parseEther('2000000'),
+      [user3.address]: ethers.utils.parseEther('200000'),
+      [user4.address]: ethers.utils.parseEther('30000'),
+      [user5.address]: ethers.utils.parseEther('20'),
     },
     1337: {
       [user1.address]: ethers.utils.parseEther('0'),
       [user2.address]: ethers.utils.parseEther('30000'),
-      [user3.address]: ethers.utils.parseEther('2100000'),
+      [user3.address]: ethers.utils.parseEther('210000'),
+      [user4.address]: ethers.utils.parseEther('45000'),
+      [user5.address]: ethers.utils.parseEther('100'),
     },
     2192: {
       [user1.address]: ethers.utils.parseEther('500'),
       [user2.address]: ethers.utils.parseEther('35000'),
-      [user3.address]: ethers.utils.parseEther('2500000'),
+      [user3.address]: ethers.utils.parseEther('250000'),
+      [user4.address]: ethers.utils.parseEther('50000'),
+      [user5.address]: ethers.utils.parseEther('0'),
     },
   };
 
@@ -36,6 +42,8 @@ async function simulateDebtShareData(DebtShare, users) {
     await simulateDebtShareBalance(user1, _debtShareData[periodId][user1.address], periodId);
     await simulateDebtShareBalance(user2, _debtShareData[periodId][user2.address], periodId);
     await simulateDebtShareBalance(user3, _debtShareData[periodId][user3.address], periodId);
+    await simulateDebtShareBalance(user4, _debtShareData[periodId][user4.address], periodId);
+    await simulateDebtShareBalance(user5, _debtShareData[periodId][user5.address], periodId);
   }
 
   await simulateDebtShareBalances('42');
@@ -90,31 +98,37 @@ async function simulateCrossChainDebtShareData(users) {
 
   _crossChainDebtShareData = {
     42: {
-      [user1.address]: ethers.utils.parseEther('1000'),
-      [user2.address]: ethers.utils.parseEther('24000'),
-      [user3.address]: ethers.utils.parseEther('2000000'),
+      [user1.address]: ethers.utils.parseEther('1000000'),
+      [user2.address]: ethers.utils.parseEther('240000'),
+      [user3.address]: ethers.utils.parseEther('1000'),
     },
     1337: {
-      [user1.address]: ethers.utils.parseEther('1'),
+      [user1.address]: ethers.utils.parseEther('2050000'),
       [user2.address]: ethers.utils.parseEther('30000'),
-      [user3.address]: ethers.utils.parseEther('2100000'),
+      [user3.address]: ethers.utils.parseEther('2100'),
     },
     2192: {
-      [user1.address]: ethers.utils.parseEther('500'),
+      [user1.address]: ethers.utils.parseEther('2500000'),
       [user2.address]: ethers.utils.parseEther('35000'),
-      [user3.address]: ethers.utils.parseEther('2500000'),
+      [user3.address]: ethers.utils.parseEther('2500'),
     },
   };
 
   function stringifyBalances(balances) {
-    Object.keys(balances).forEach((user) => balances[user] = balances[user].toString());
+    Object.keys(balances).forEach((user) => (balances[user] = balances[user].toString()));
 
     return balances;
   }
 
-  _crossChainDebtShareData[42].merkleTree = parseBalanceMap(stringifyBalances(_crossChainDebtShareData[42]));
-  _crossChainDebtShareData[1337].merkleTree = parseBalanceMap(stringifyBalances(_crossChainDebtShareData[1337]));
-  _crossChainDebtShareData[2192].merkleTree = parseBalanceMap(stringifyBalances(_crossChainDebtShareData[2192]));
+  _crossChainDebtShareData[42].merkleTree = parseBalanceMap(
+    stringifyBalances(_crossChainDebtShareData[42])
+  );
+  _crossChainDebtShareData[1337].merkleTree = parseBalanceMap(
+    stringifyBalances(_crossChainDebtShareData[1337])
+  );
+  _crossChainDebtShareData[2192].merkleTree = parseBalanceMap(
+    stringifyBalances(_crossChainDebtShareData[2192])
+  );
 }
 
 function expectedDebtShare(user, periodId) {
