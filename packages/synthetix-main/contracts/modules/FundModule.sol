@@ -2,13 +2,84 @@
 pragma solidity ^0.8.0;
 
 import "@synthetixio/core-contracts/contracts/ownership/OwnableMixin.sol";
+import "@synthetixio/core-contracts/contracts/proxy/UUPSProxy.sol";
 import "@synthetixio/core-contracts/contracts/initializable/InitializableMixin.sol";
+import "@synthetixio/core-contracts/contracts/satellite/SatelliteFactory.sol";
+import "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
+
+import "../mixins/AccountRBACMixin.sol";
+import "../mixins/CollateralMixin.sol";
+
 import "../interfaces/IFundModule.sol";
 import "../storage/FundModuleStorage.sol";
 
-contract FundModule is IFundModule, OwnableMixin, FundModuleStorage, InitializableMixin {
-    event FundCreated(address fundAddress);
+import "../satellites/FundToken.sol";
 
+contract FundModule is
+    IFundModule,
+    OwnableMixin,
+    FundModuleStorage,
+    InitializableMixin,
+    SatelliteFactory,
+    AccountRBACMixin,
+    CollateralMixin
+{
+    using SetUtil for SetUtil.Bytes32Set;
+    using SetUtil for SetUtil.AddressSet;
+
+    error InvalidParameters();
+    error FundAlreadyApproved(uint fundId);
+    error FundNotFound(uint fundId);
+    error OnlyTokenProxyAllowed(address origin);
+
+    event PreferredFundSet(uint256 fundId);
+    event FundApprovedAdded(uint256 fundId);
+    event FundApprovedRemoved(uint256 fundId);
+
+    event FundCreated(address fundAddress);
+    event FundPositionSet(uint fundId, uint[] markets, uint[] weights, address executedBy);
+    event DelegationUpdated(
+        bytes32 liquidityItemId,
+        uint fundId,
+        uint accountId,
+        address collateralType,
+        uint amount,
+        uint leverage
+    );
+    event PositionAdded(
+        bytes32 liquidityItemId,
+        uint fundId,
+        uint accountId,
+        address collateralType,
+        uint amount,
+        uint leverage,
+        uint shares,
+        uint initialDebt
+    );
+    event PositionRemoved(bytes32 liquidityItemId, uint fundId, uint accountId, address collateralType);
+    event PositionIncreased(
+        bytes32 liquidityItemId,
+        uint fundId,
+        address collateralType,
+        uint amount,
+        uint leverage,
+        uint shares,
+        uint initialDebt
+    );
+
+    event PositionDecreased(
+        bytes32 liquidityItemId,
+        uint fundId,
+        address collateralType,
+        uint amount,
+        uint leverage,
+        uint shares,
+        uint initialDebt
+    );
+
+    // ---------------------------------------
+    // Chores
+    // ---------------------------------------
     function _isInitialized() internal view override returns (bool) {
         return _fundModuleStore().initialized;
     }
@@ -20,144 +91,550 @@ contract FundModule is IFundModule, OwnableMixin, FundModuleStorage, Initializab
     function initializeFundModule() external override onlyOwner onlyIfNotInitialized {
         FundModuleStore storage store = _fundModuleStore();
 
+        FundToken firstFundImplementation = new FundToken();
+
+        UUPSProxy fundProxy = new UUPSProxy(address(firstFundImplementation));
+
+        address fundProxyAddress = address(fundProxy);
+        FundToken fund = FundToken(fundProxyAddress);
+
+        fund.nominateNewOwner(address(this));
+        fund.acceptOwnership();
+        fund.initialize("Synthetix FundToken", "synthethixFundToken", "");
+
+        store.fundToken = Satellite({
+            name: "synthethixFundToken",
+            contractName: "FundToken",
+            deployedAddress: fundProxyAddress
+        });
+
         store.initialized = true;
+
+        emit FundCreated(fundProxyAddress);
     }
 
-    //////////////////////////////////////////////
-    //          BUSINESS LOGIC                  //
-    //////////////////////////////////////////////
+    function _getSatellites() internal view override returns (Satellite[] memory) {
+        Satellite[] memory satellites = new Satellite[](1);
+        satellites[0] = _fundModuleStore().fundToken;
+        return satellites;
+    }
 
-    // function adjust(
-    //     uint fundId,
-    //     uint accountId,
-    //     address collateralType,
-    //     uint collateralAmount,
-    //     uint lockingPeriod,
-    //     uint leverage
-    // ) public override {
-    //     // TODO require accountId can operate on collateralType
+    function getFundModuleSatellites() public view override returns (Satellite[] memory) {
+        return _getSatellites();
+    }
 
-    //     // TODO require input data checking
+    function upgradeFundTokenImplementation(address newFundTokenImplementation)
+        external
+        override
+        onlyOwner
+        onlyIfInitialized
+    {
+        FundToken(getFundTokenAddress()).upgradeTo(newFundTokenImplementation);
+    }
 
-    //     bytes32 lpid = _calculateLPId(fundId, accountId, collateralType, leverage);
-    //     LiquidityProvider storage position = _fundModuleStore().liquidityProviders[lpid];
+    function getFundTokenAddress() public view override returns (address) {
+        return _fundModuleStore().fundToken.deployedAddress;
+    }
 
-    //     if (position.collateralAmount == 0) {
-    //         _addPosition(fundId, accountId, collateralType, collateralAmount, lockingPeriod, leverage);
-    //         // new position
-    //     } else if (collateralAmount == 0) {
-    //         _removePosition(fundId, accountId, collateralType, collateralAmount, lockingPeriod, leverage);
-    //         // remove position
-    //     } else if (position.collateralAmount < collateralAmount) {
-    //         _increasePosition(fundId, accountId, collateralType, collateralAmount, lockingPeriod, leverage);
-    //         // increase position
-    //     } else if (position.collateralAmount > collateralAmount) {
-    //         _decreasePosition(fundId, accountId, collateralType, collateralAmount, lockingPeriod, leverage);
-    //         // decrease position
-    //     } else {
-    //         // no change
-    //     }
-    // }
+    // ---------------------------------------
+    // SCCP
+    // ---------------------------------------
 
-    // function _addPosition(
-    //     uint fundId,
-    //     uint accountId,
-    //     address collateralType,
-    //     uint collateralAmount,
-    //     uint lockingPeriod,
-    //     uint leverage
-    // ) internal {}
+    function setPreferredFund(uint fundId) external override onlyOwner {
+        FundToken(getFundTokenAddress()).ownerOf(fundId); // Will revert if do not exists
 
-    // function _removePosition(
-    //     uint fundId,
-    //     uint accountId,
-    //     address collateralType,
-    //     uint collateralAmount,
-    //     uint lockingPeriod,
-    //     uint leverage
-    // ) internal {}
+        _fundModuleStore().preferredFund = fundId;
 
-    // function _increasePosition(
-    //     uint fundId,
-    //     uint accountId,
-    //     address collateralType,
-    //     uint collateralAmount,
-    //     uint lockingPeriod,
-    //     uint leverage
-    // ) internal {}
+        emit PreferredFundSet(fundId);
+    }
 
-    // function _decreasePosition(
-    //     uint fundId,
-    //     uint accountId,
-    //     address collateralType,
-    //     uint collateralAmount,
-    //     uint lockingPeriod,
-    //     uint leverage
-    // ) internal {}
+    function getPreferredFund() external view override returns (uint) {
+        return _fundModuleStore().preferredFund;
+    }
 
-    // TODO Check ERC4626 logic. a lot of the stuff is there
+    function addApprovedFund(uint fundId) external override onlyOwner {
+        FundToken(getFundTokenAddress()).ownerOf(fundId); // Will revert if do not exists
 
-    // function getAccountCurrentDebt(uint accountId) public override returns (uint) {
-    //     return 0;
-    // }
+        for (uint i = 0; i < _fundModuleStore().approvedFunds.length; i++) {
+            if (_fundModuleStore().approvedFunds[i] == fundId) {
+                revert FundAlreadyApproved(fundId);
+            }
+        }
 
-    // function accountShares(uint accountId) public override returns (uint) {
-    //     return 0;
-    // }
+        _fundModuleStore().approvedFunds.push(fundId);
 
-    // function totalShares() public override returns (uint) {
-    //     return 0;
-    // }
+        emit FundApprovedAdded(fundId);
+    }
 
-    // function totalDebt() public override returns (uint) {
-    //     return 0;
-    // }
+    function removeApprovedFund(uint fundId) external override onlyOwner {
+        FundToken(getFundTokenAddress()).ownerOf(fundId); // Will revert if do not exists
 
-    // function accountDebt(uint fundId, uint accountId) public override returns (uint) {
-    //     // bytes32 lpid = _calculateLPId(fundId, accountId, collateralType, leverage);
-    //     // LiquidityProvider storage position = _fundModuleStore().liquidityProviders[lpid];
-    //     bytes32[] storage liquidityProviderIds = _fundModuleStore().liquidityProviderIds[fundId];
-    //     for (uint i = 0; i < liquidityProviderIds.length; i++) {
-    //         LiquidityProvider storage lp = _fundModuleStore().liquidityProviders[liquidityProviderIds[i]];
-    //         if (lp.accountId == accountId) {
-    //             // do the math with
-    //             // lp.leverage;
-    //             // lp.collateralAmount;
-    //             // lp.shares;
-    //             // lp.initialDebt;
-    //         }
-    //     }
+        bool found;
+        for (uint i = 0; i < _fundModuleStore().approvedFunds.length; i++) {
+            if (_fundModuleStore().approvedFunds[i] == fundId) {
+                _fundModuleStore().approvedFunds[i] = _fundModuleStore().approvedFunds[
+                    _fundModuleStore().approvedFunds.length - 1
+                ];
+                _fundModuleStore().approvedFunds.pop();
+                found = true;
+                break;
+            }
+        }
 
-    //     return 0;
-    //     // accountCollateralValue(accountId) +
-    //     // position.initialDebt -
-    //     // totalDebt() *
-    //     // (accountShares(accountId) / totalShares());
-    // }
+        if (!found) {
+            revert FundNotFound(fundId);
+        }
 
-    // function accountCollateralValue(uint accountId) public view override returns (uint) {
-    //     return 0;
-    //     // TODO return positions[accountId].amount - positions[accountId].amount * token(accountEntry.collateralToken).value;
-    // }
+        emit FundApprovedRemoved(fundId);
+    }
 
-    // function getCRation(uint fundId, uint accountId) public override returns (uint) {
-    //     return accountCollateralValue(accountId) / accountDebt(fundId, accountId);
-    // }
+    function getApprovedFunds() external view override returns (uint[] memory) {
+        return _fundModuleStore().approvedFunds;
+    }
 
-    // function _setMarkets(uint[] calldata marketIds, uint[] calldata weights) internal {}
+    // ---------------------------------------
+    // Minting
+    // ---------------------------------------
 
-    // function _assignCollateralToMarket() internal {}
+    modifier onlyFundOwner(uint fundId, address requestor) {
+        if (FundToken(getFundTokenAddress()).ownerOf(fundId) != requestor) {
+            revert AccessError.Unauthorized(requestor);
+        }
 
-    /////////////////////////////////////////////////
-    // INTERNALS
-    /////////////////////////////////////////////////
+        _;
+    }
 
-    // function _calculateLPId(
-    //     uint fundId,
-    //     uint accountId,
-    //     address collateralType,
-    //     uint leverage
-    // ) internal view returns (bytes32) {
-    //     return keccak256(abi.encodePacked(fundId, accountId, collateralType, leverage));
-    // }
+    function createFund(uint requestedFundId, address owner) external override {
+        FundToken(getFundTokenAddress()).mint(owner, requestedFundId);
+    }
+
+    // ---------------------------------------
+    // fund admin
+    // ---------------------------------------
+    function setFundPosition(
+        uint fundId,
+        uint[] calldata markets,
+        uint[] calldata weights
+    ) external override onlyFundOwner(fundId, msg.sender) {
+        if (markets.length != weights.length) {
+            revert InvalidParameters();
+        }
+
+        FundData storage fund = _fundModuleStore().funds[fundId];
+
+        // _rebalanceMarkets with second parameter in true will clean up the distribution
+        // TODO improve how the fund positions are changed and only update what is different
+        _rebalanceMarkets(fundId, true);
+
+        // Cleanup previous distribution
+        delete fund.fundDistribution;
+        fund.totalWeights = 0;
+
+        for (uint i = 0; i < markets.length; i++) {
+            // TODO check if market exists when markets are created
+            MarketDistribution memory distribution;
+            distribution.market = markets[i];
+            distribution.weight = weights[i];
+
+            fund.fundDistribution.push(distribution);
+            fund.totalWeights += weights[i];
+        }
+
+        _rebalanceMarkets(fundId, false);
+
+        emit FundPositionSet(fundId, markets, weights, msg.sender);
+    }
+
+    function getFundPosition(uint fundId) external view override returns (uint[] memory, uint[] memory) {
+        FundData storage fund = _fundModuleStore().funds[fundId];
+
+        uint[] memory markets = new uint[](fund.fundDistribution.length);
+        uint[] memory weights = new uint[](fund.fundDistribution.length);
+
+        for (uint i = 0; i < fund.fundDistribution.length; i++) {
+            markets[i] = fund.fundDistribution[i].market;
+            weights[i] = fund.fundDistribution[i].weight;
+        }
+
+        return (markets, weights);
+    }
+
+    // ---------------------------------------
+    // rebalance
+    // ---------------------------------------
+    function rebalanceMarkets(uint fundId) external override {
+        // TODO check something (if needed)
+
+        _rebalanceMarkets(fundId, false);
+
+        // TODO emit an event
+    }
+
+    function _rebalanceMarkets(uint fundId, bool clearsLiquidity) internal {
+        FundData storage fundData = _fundModuleStore().funds[fundId];
+        uint totalWeights = _fundModuleStore().funds[fundId].totalWeights;
+
+        for (uint i = 0; i < fundData.fundDistribution.length; i++) {
+            uint weight = clearsLiquidity ? 0 : fundData.fundDistribution[i].weight;
+            _distributeCollaterals(fundId, fundData.fundDistribution[i].market, weight, totalWeights);
+        }
+    }
+
+    function _distributeCollaterals(
+        uint fundId,
+        uint marketId,
+        uint marketWeight,
+        uint totalWeight
+    ) internal {
+        // TODO implement it when markets are created
+    }
+
+    // ---------------------------------------
+    // delegation
+    // ---------------------------------------
+
+    function delegateCollateral(
+        uint fundId,
+        uint accountId,
+        address collateralType,
+        uint amount,
+        uint leverage
+    ) external override onlyRoleAuthorized(accountId, "assign") collateralEnabled(collateralType) {
+        FundToken(getFundTokenAddress()).ownerOf(fundId); // Will revert if do not exists
+
+        bytes32 lpid = _getLiquidityItemId(accountId, collateralType, leverage);
+
+        FundData storage fundData = _fundModuleStore().funds[fundId];
+        SetUtil.Bytes32Set storage liquidityItemIds = fundData.liquidityItemIds;
+
+        if (!liquidityItemIds.contains(lpid)) {
+            if (_getAccountUnassignedCollateral(accountId, collateralType) < amount) {
+                revert InsufficientAvailableCollateral(accountId, collateralType, amount);
+            }
+
+            // lpid not found in set =>  new position
+            _addPosition(lpid, fundId, accountId, collateralType, amount, leverage);
+        } else {
+            // Position found, need to adjust (increase, decrease or remove)
+            LiquidityItem storage liquidityItem = fundData.liquidityItems[lpid];
+
+            if (
+                liquidityItem.accountId != accountId ||
+                liquidityItem.collateralType != collateralType ||
+                liquidityItem.leverage != leverage
+            ) {
+                // Wrong parameters (in fact should be another lpid) but prefer to be on the safe side. Check and revert
+                revert InvalidParameters();
+            }
+
+            uint currentLiquidityAmount = liquidityItem.collateralAmount;
+
+            if (amount == 0) {
+                _removePosition(lpid, liquidityItem, fundId, accountId, collateralType);
+            } else if (currentLiquidityAmount < amount) {
+                if (_getAccountUnassignedCollateral(accountId, collateralType) < amount - currentLiquidityAmount) {
+                    revert InsufficientAvailableCollateral(accountId, collateralType, amount);
+                }
+
+                _increasePosition(lpid, liquidityItem, fundId, collateralType, amount, leverage);
+            } else if (currentLiquidityAmount > amount) {
+                _decreasePosition(lpid, liquidityItem, fundId, collateralType, amount, leverage);
+            } else {
+                // no change
+                revert InvalidParameters();
+            }
+        }
+
+        _rebalanceMarkets(fundId, false);
+
+        emit DelegationUpdated(lpid, fundId, accountId, collateralType, amount, leverage);
+    }
+
+    function _addPosition(
+        bytes32 liquidityItemId,
+        uint fundId,
+        uint accountId,
+        address collateralType,
+        uint amount,
+        uint leverage
+    ) internal {
+        FundData storage fundData = _fundModuleStore().funds[fundId];
+        uint collateralValue = amount * _getCollateralValue(collateralType);
+
+        fundData.liquidityItemIds.add(liquidityItemId);
+
+        uint shares = _convertToShares(fundId, collateralValue, leverage);
+        uint initialDebt = _calculateInitialDebt(fundId, collateralValue, leverage); // how that works with amount adjustments?
+
+        LiquidityItem memory liquidityItem;
+        liquidityItem.collateralType = collateralType;
+        liquidityItem.accountId = accountId;
+        liquidityItem.leverage = leverage;
+        liquidityItem.collateralAmount = amount;
+        liquidityItem.shares = shares;
+        liquidityItem.initialDebt = initialDebt;
+
+        fundData.liquidityItems[liquidityItemId] = liquidityItem;
+
+        fundData.totalShares += liquidityItem.shares;
+        fundData.liquidityByCollateral[collateralType] += amount;
+
+        if (!fundData.collateralTypes.contains(collateralType)) {
+            fundData.collateralTypes.add(collateralType);
+        }
+
+        emit PositionAdded(liquidityItemId, fundId, accountId, collateralType, amount, leverage, shares, initialDebt);
+    }
+
+    function _removePosition(
+        bytes32 liquidityItemId,
+        LiquidityItem storage liquidityItem,
+        uint fundId,
+        uint accountId,
+        address collateralType
+    ) internal {
+        FundData storage fundData = _fundModuleStore().funds[fundId];
+
+        uint oldAmount = liquidityItem.collateralAmount;
+        uint oldSharesAmount = liquidityItem.shares;
+        // uint oldnitialDebt = liquidityItem.initialDebt;
+        // TODO check if is enabled to remove position comparing old and new data
+
+        fundData.liquidityItemIds.remove(liquidityItemId);
+
+        liquidityItem.collateralAmount = 0;
+        liquidityItem.shares = 0;
+        liquidityItem.initialDebt = 0; // how that works with amount adjustments?
+
+        fundData.liquidityItems[liquidityItemId] = liquidityItem;
+
+        fundData.totalShares -= oldSharesAmount;
+        fundData.liquidityByCollateral[collateralType] -= oldAmount;
+
+        emit PositionRemoved(liquidityItemId, fundId, accountId, collateralType);
+    }
+
+    function _increasePosition(
+        bytes32 liquidityItemId,
+        LiquidityItem storage liquidityItem,
+        uint fundId,
+        address collateralType,
+        uint amount,
+        uint leverage
+    ) internal {
+        uint oldAmount = liquidityItem.collateralAmount;
+        uint oldSharesAmount = liquidityItem.shares;
+        // uint oldnitialDebt = liquidityItem.initialDebt;
+
+        FundData storage fundData = _fundModuleStore().funds[fundId];
+        uint collateralValue = amount * _getCollateralValue(collateralType);
+
+        // TODO check if is enabled to remove position comparing old and new data
+
+        uint shares = _convertToShares(fundId, collateralValue, leverage);
+        uint initialDebt = _calculateInitialDebt(fundId, collateralValue, leverage); // how that works with amount adjustments?
+
+        liquidityItem.collateralAmount = amount;
+        liquidityItem.shares = shares;
+        liquidityItem.initialDebt = initialDebt;
+
+        fundData.liquidityItems[liquidityItemId] = liquidityItem;
+
+        fundData.totalShares += liquidityItem.shares - oldSharesAmount;
+        fundData.liquidityByCollateral[collateralType] += amount - oldAmount;
+
+        emit PositionIncreased(liquidityItemId, fundId, collateralType, amount, leverage, shares, initialDebt);
+    }
+
+    function _decreasePosition(
+        bytes32 liquidityItemId,
+        LiquidityItem storage liquidityItem,
+        uint fundId,
+        address collateralType,
+        uint amount,
+        uint leverage
+    ) internal {
+        FundData storage fundData = _fundModuleStore().funds[fundId];
+        uint collateralValue = amount * _getCollateralValue(collateralType);
+
+        uint oldAmount = liquidityItem.collateralAmount;
+        uint oldSharesAmount = liquidityItem.shares;
+        // uint oldnitialDebt = liquidityItem.initialDebt;
+        // TODO check if is enabled to remove position comparing old and new data
+
+        uint shares = _convertToShares(fundId, collateralValue, leverage);
+        uint initialDebt = _calculateInitialDebt(fundId, collateralValue, leverage); // how that works with amount adjustments?
+
+        liquidityItem.collateralAmount = amount;
+        liquidityItem.shares = shares;
+        liquidityItem.initialDebt = initialDebt;
+
+        fundData.liquidityItems[liquidityItemId] = liquidityItem;
+
+        fundData.totalShares -= oldSharesAmount - liquidityItem.shares;
+        fundData.liquidityByCollateral[collateralType] -= oldAmount - amount;
+        emit PositionDecreased(liquidityItemId, fundId, collateralType, amount, leverage, shares, initialDebt);
+    }
+
+    function _convertToShares(
+        uint fundId,
+        uint collateralValue,
+        uint leverage
+    ) internal view returns (uint) {
+        uint leveragedCollateralValue = collateralValue * leverage; //(use mulDivDown or mulDivUp)
+        uint totalShares = _totalShares(fundId);
+        uint totalCollateralValue = _totalCollateral(fundId);
+
+        return totalShares == 0 ? leveragedCollateralValue : (leveragedCollateralValue * totalShares) / totalCollateralValue;
+    }
+
+    function _perShareValue(uint fundId) internal view returns (uint) {
+        uint totalShares = _totalShares(fundId);
+        uint totalCollateralValue = _totalCollateral(fundId);
+
+        return totalCollateralValue == 0 ? 1 : totalCollateralValue / totalShares;
+    }
+
+    function _totalCollateral(uint fundId) internal view returns (uint) {
+        uint total;
+        address[] memory collateralTypes = _fundModuleStore().funds[fundId].collateralTypes.values();
+
+        for (uint i = 0; i < collateralTypes.length; i++) {
+            address collateralType = collateralTypes[i];
+
+            total +=
+                _getCollateralValue(collateralType) *
+                _fundModuleStore().funds[fundId].liquidityByCollateral[collateralType];
+        }
+        return total;
+    }
+
+    function _totalShares(uint fundId) internal view returns (uint) {
+        return _fundModuleStore().funds[fundId].totalShares;
+    }
+
+    function _calculateInitialDebt(
+        // solhint-disable-next-line no-unused-vars
+        uint fundId,
+        uint collateralValue,
+        uint leverage
+    ) internal pure returns (uint) {
+        return leverage * collateralValue;
+    }
+
+    // ---------------------------------------
+    // Mint/Burn sUSD
+    // ---------------------------------------
+
+    function mintsUSD(
+        uint fundId,
+        uint accountId,
+        address collateralType,
+        uint amount
+    ) external override onlyRoleAuthorized(accountId, "mint") {
+        // TODO Check if can mint that amount
+        _fundModuleStore().funds[fundId].sUSDByAccountAndCollateral[accountId][collateralType] += amount;
+        _fundModuleStore().funds[fundId].sUSDByAccount[accountId] += amount;
+        _fundModuleStore().funds[fundId].totalsUSD += amount;
+    }
+
+    function burnsUSD(
+        uint fundId,
+        uint accountId,
+        address collateralType,
+        uint amount
+    ) external override onlyRoleAuthorized(accountId, "burn") {
+        // TODO Check if can burn that amount
+        _fundModuleStore().funds[fundId].sUSDByAccountAndCollateral[accountId][collateralType] -= amount;
+        _fundModuleStore().funds[fundId].sUSDByAccount[accountId] -= amount;
+        _fundModuleStore().funds[fundId].totalsUSD -= amount;
+    }
+
+    // ---------------------------------------
+    // CRatio and Debt queries
+    // ---------------------------------------
+
+    function collateralizationRatio(
+        uint fundId,
+        uint accountId,
+        address collateralType
+    ) external view override returns (uint) {
+        (uint accountDebt, uint accountCollateralValue) = _accountDebtAndCollateral(fundId, accountId, collateralType);
+        return accountCollateralValue / accountDebt;
+    }
+
+    function accountFundCollateralValue(
+        uint fundId,
+        uint accountId,
+        address collateralType
+    ) external view override returns (uint) {
+        (, uint accountCollateralValue) = _accountDebtAndCollateral(fundId, accountId, collateralType);
+        return accountCollateralValue;
+    }
+
+    function accountFundDebt(
+        uint fundId,
+        uint accountId,
+        address collateralType
+    ) external view override returns (uint) {
+        (uint accountDebt, ) = _accountDebtAndCollateral(fundId, accountId, collateralType);
+        return accountDebt;
+    }
+
+    function _accountDebtAndCollateral(
+        uint fundId,
+        uint accountId,
+        address collateralType
+    ) internal view returns (uint, uint) {
+        FundData storage fundData = _fundModuleStore().funds[fundId];
+
+        uint perShareValue = _perShareValue(fundId);
+        uint collateralPrice = _getCollateralValue(collateralType);
+
+        uint accountCollateralValue;
+        uint accountDebt = fundData.sUSDByAccount[accountId]; // add debt from sUSD minted
+
+        for (uint i = 1; i < fundData.liquidityItemsByAccount[accountId].length() + 1; i++) {
+            bytes32 itemId = fundData.liquidityItemsByAccount[accountId].valueAt(i);
+            LiquidityItem storage item = fundData.liquidityItems[itemId];
+            if (item.collateralType == collateralType) {
+                accountCollateralValue += item.collateralAmount * collateralPrice;
+
+                //TODO review formula
+                accountDebt +=
+                    item.collateralAmount *
+                    collateralPrice +
+                    item.initialDebt -
+                    perShareValue *
+                    item.shares *
+                    item.leverage;
+            }
+        }
+
+        return (accountDebt, accountCollateralValue);
+    }
+
+    function fundDebt(uint fundId) public view override returns (uint) {
+        return _totalShares(fundId) * _perShareValue(fundId) + _fundModuleStore().funds[fundId].totalsUSD;
+    }
+
+    function totalDebtShares(uint fundId) external view override returns (uint) {
+        return _totalShares(fundId);
+    }
+
+    function debtPerShare(uint fundId) external view override returns (uint) {
+        return _perShareValue(fundId);
+    }
+
+    // ---------------------------------------
+    // Helpers / Internals
+    // ---------------------------------------
+
+    function _getLiquidityItemId(
+        uint accountId,
+        address collateralType,
+        uint leverage
+    ) internal pure returns (bytes32) {
+        return keccak256(abi.encodePacked(accountId, collateralType, leverage));
+    }
 }

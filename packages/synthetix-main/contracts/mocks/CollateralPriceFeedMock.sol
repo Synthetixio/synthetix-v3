@@ -1,9 +1,9 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "../interfaces/ICollateralPriceFeed.sol";
+import "../interfaces/IPriceFeed.sol";
 
-contract CollateralPriceFeedMock is ICollateralPriceFeed {
+contract CollateralPriceFeedMock is IPriceFeed {
     uint256 private _price;
 
     function getCurrentPrice() external view override returns (uint) {

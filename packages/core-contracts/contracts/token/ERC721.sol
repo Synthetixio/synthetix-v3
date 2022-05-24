@@ -217,6 +217,8 @@ contract ERC721 is IERC721, IERC721Metadata, ERC721Storage {
         store.balanceOf[to] += 1;
         store.ownerOf[tokenId] = to;
 
+        _postTransfer(from, to, tokenId);
+
         emit Transfer(from, to, tokenId);
     }
 
@@ -230,7 +232,7 @@ contract ERC721 is IERC721, IERC721Metadata, ERC721Storage {
         address to,
         uint256 tokenId,
         bytes memory data
-    ) private returns (bool) {
+    ) internal returns (bool) {
         if (AddressUtil.isContract(to)) {
             try IERC721Receiver(to).onERC721Received(msg.sender, from, tokenId, data) returns (bytes4 retval) {
                 return retval == IERC721Receiver.onERC721Received.selector;
@@ -241,4 +243,10 @@ contract ERC721 is IERC721, IERC721Metadata, ERC721Storage {
             return true;
         }
     }
+
+    function _postTransfer(
+        address from,
+        address to,
+        uint256 tokenId // solhint-disable-next-line no-empty-blocks
+    ) internal virtual {}
 }

@@ -2,11 +2,19 @@
 pragma solidity ^0.8.0;
 
 import "@synthetixio/core-contracts/contracts/satellite/SatelliteFactory.sol";
+import "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
 
 contract AccountModuleStorage {
     struct AccountModuleStore {
         bool initialized;
         SatelliteFactory.Satellite account;
+        mapping(uint256 => AccountRBAC) accountsRBAC;
+    }
+
+    struct AccountRBAC {
+        address owner;
+        mapping(address => SetUtil.Bytes32Set) permissions;
+        SetUtil.AddressSet permissionAddresses;
     }
 
     function _accountModuleStore() internal pure returns (AccountModuleStore storage store) {

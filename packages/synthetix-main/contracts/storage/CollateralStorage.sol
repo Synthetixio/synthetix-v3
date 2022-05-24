@@ -3,23 +3,24 @@ pragma solidity ^0.8.0;
 
 import "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
 
-contract AccountStorage {
-    struct AccountStore {
-        bool initialized;
-        mapping(uint256 => AccountData) accountsData; // AccountData by accountId
+contract CollateralStorage {
+    struct CollateralStore {
         mapping(address => CollateralData) collateralsData; // CollateralData per collateralType (address)
         SetUtil.AddressSet collaterals; // approved collaterals
+        // Staked Collaterals
+        mapping(uint => SetUtil.AddressSet) stakedCollateralsByAccountId;
+        mapping(uint => mapping(address => StakedCollateralData)) stakedCollateralsDataByAccountId;
     }
 
     struct CollateralData {
-        bool disabled;
+        bool enabled;
         uint targetCRatio;
         uint minimumCRatio;
         address priceFeed;
     }
 
     struct StakedCollateralData {
-        bool set;
+        bool isSet;
         uint256 amount; // adjustable (stake/unstake)
         uint256 assignedAmount; // adjustable (assign/unassign)
         StakedCollateralLock[] locks;
@@ -30,20 +31,10 @@ contract AccountStorage {
         uint64 lockExpirationTime; // adjustable (assign/unassign)
     }
 
-    struct AccountData {
-        // Permissions
-        mapping(address => SetUtil.Bytes32Set) permissions;
-        SetUtil.AddressSet permissionAddresses;
-        // Collaterals
-        mapping(address => StakedCollateralData) stakedCollateralsData;
-        // Funds
-        uint256[] subscribedFunds;
-    }
-
-    function _accountStore() internal pure returns (AccountStore storage store) {
+    function _collateralStore() internal pure returns (CollateralStore storage store) {
         assembly {
-            // bytes32(uint(keccak256("io.synthetix.snx.account")) - 1)
-            store.slot := 0xc8ca6284657224e913ed6965e10e3e3b51a0642aff2bbaaae02f526ca2fe92c7
+            // bytes32(uint(keccak256("io.synthetix.snx.collateral")) - 1)
+            store.slot := 0x83916265e1b6c4fb3d473eee2163daacb5963240b78a5853da4fe894b73780a5
         }
     }
 }
