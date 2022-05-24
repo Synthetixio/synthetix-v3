@@ -47,9 +47,6 @@ contract ElectionTally is ElectionBase {
         uint numSeats
     ) internal {
         uint ballotVotes = ballot.votes;
-        if (ballotVotes == 0) {
-            return;
-        }
 
         uint numCandidates = ballot.candidates.length;
         for (uint candidateIndex = 0; candidateIndex < numCandidates; candidateIndex++) {

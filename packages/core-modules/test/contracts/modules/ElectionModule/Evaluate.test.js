@@ -92,8 +92,8 @@ describe('ElectionModule (evaluate)', () => {
             id: await ElectionModule.calculateBallotId([candidate3.address]),
           };
           ballot3 = {
-            candidates: [candidate5.address],
-            id: await ElectionModule.calculateBallotId([candidate5.address]),
+            candidates: [candidate5.address, candidate1.address],
+            id: await ElectionModule.calculateBallotId([candidate5.address, candidate1.address]),
           };
         });
 
@@ -189,7 +189,7 @@ describe('ElectionModule (evaluate)', () => {
                 });
 
                 it('shows that candidate votes where processed', async function () {
-                  assertBn.equal(await ElectionModule.getCandidateVotes(candidate1.address), 4);
+                  assertBn.equal(await ElectionModule.getCandidateVotes(candidate1.address), 9);
                   assertBn.equal(await ElectionModule.getCandidateVotes(candidate2.address), 4);
                   assertBn.equal(await ElectionModule.getCandidateVotes(candidate3.address), 1);
                   assertBn.equal(await ElectionModule.getCandidateVotes(candidate4.address), 0);
