@@ -345,7 +345,7 @@ contract FundModule is
             }
         }
 
-        _rebalanceMarkets(fundId);
+        _rebalanceMarkets(fundId, false);
 
         emit DelegationUpdated(lpid, fundId, accountId, collateralType, amount, leverage);
     }
