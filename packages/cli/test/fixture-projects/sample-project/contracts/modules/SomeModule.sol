@@ -16,4 +16,12 @@ contract SomeModule is GlobalStorage, ISomeModule {
     function getUintValue() public view override returns (uint) {
         return _globalStore().uintValue;
     }
+
+    function setAddressArray(address[] calldata addresses) public override {
+        _globalStore().addressArray = addresses;
+    }
+
+    function getAddressArray() public view override returns (address[] memory) {
+        return _globalStore().addressArray;
+    }
 }

@@ -16,6 +16,7 @@ describe('pick-parameters', function () {
     await this.cli.interact('1337'); // Valid input for "newValue"
     await this.cli.interact(this.cli.keys.ENTER); // Submit input
     await this.cli.interact(this.cli.keys.CTRLC); // Cancel transaction
+    // HERE
     await this.cli.interact(this.cli.keys.CTRLC); // Return to contract list
     await this.cli.interact(this.cli.keys.CTRLC); // Exit
 
