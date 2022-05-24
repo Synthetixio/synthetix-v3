@@ -3,7 +3,7 @@
     {
       "deploy": [
         [
-          "synthetix-governance:0.0.5",
+          "synthetix-governance:0.0.6",
           {
             "salt": "spartan-council",
             "council_token_name": "Spartan Council",
@@ -11,7 +11,7 @@
           }
         ],
         [
-          "synthetix-governance:0.0.5",
+          "synthetix-governance:0.0.6",
           {
             "salt": "ambassador-council",
             "council_token_name": "Ambassador Council",
@@ -19,7 +19,7 @@
           }
         ],
         [
-          "synthetix-governance:0.0.5",
+          "synthetix-governance:0.0.6",
           {
             "salt": "grants-council",
             "council_token_name": "Grants Council",
@@ -27,7 +27,7 @@
           }
         ],
         [
-          "synthetix-governance:0.0.5",
+          "synthetix-governance:0.0.6",
           {
             "salt": "treasury-council",
             "council_token_name": "Treasury Council",

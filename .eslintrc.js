@@ -1,6 +1,7 @@
 module.exports = {
   extends: ['eslint:recommended'],
   env: {
+    es2020: true,
     mocha: true,
     node: true,
     es6: true,
