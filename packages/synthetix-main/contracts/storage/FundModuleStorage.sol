@@ -15,12 +15,13 @@ contract FundModuleStorage {
 
     struct FundData {
         /// @dev fund configuration and market distribution
-        uint256 targetRatio; // TODO set up and update by owner or configured by system?
-        uint256 liquidationRatio; // TODO set up and update by owner or configured by system?
         uint256 totalWeights; // sum of distribution weights
+        MarketDistribution[] fundDistribution;
+        // TODO Everything below this line should be split per collateralType
+        // according to May 23th discussion Funds should be "single" collateral
+        /// @dev fund economics
         uint256 totalShares; // total shares distributed
         uint256 totalsUSD;
-        MarketDistribution[] fundDistribution;
         /// @dev collateral delegated
         SetUtil.AddressSet collateralTypes; // collateral types used to add liquidity to the fund
         mapping(address => uint256) liquidityByCollateral; // total liquidity per collateral

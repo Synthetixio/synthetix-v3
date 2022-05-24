@@ -222,7 +222,8 @@ contract FundModule is
 
         FundData storage fund = _fundModuleStore().funds[fundId];
 
-        // TODO check changes in markets/weights
+        // _rebalanceMarkets with second parameter in true will clean up the distribution
+        // TODO improve how the fund positions are changed and only update what is different
         _rebalanceMarkets(fundId, true);
 
         // Cleanup previous distribution
@@ -230,7 +231,7 @@ contract FundModule is
         fund.totalWeights = 0;
 
         for (uint i = 0; i < markets.length; i++) {
-            // TODO check if market exists
+            // TODO check if market exists when markets are created
             MarketDistribution memory distribution;
             distribution.market = markets[i];
             distribution.weight = weights[i];
@@ -261,7 +262,7 @@ contract FundModule is
     // ---------------------------------------
     // rebalance
     // ---------------------------------------
-    function rebalanceMarkets(uint fundId) public override {
+    function rebalanceMarkets(uint fundId) external override {
         // TODO check something (if needed)
 
         _rebalanceMarkets(fundId, false);
@@ -285,7 +286,7 @@ contract FundModule is
         uint marketWeight,
         uint totalWeight
     ) internal {
-        // TODO implement it
+        // TODO implement it when markets are created
     }
 
     // ---------------------------------------
@@ -344,7 +345,7 @@ contract FundModule is
             }
         }
 
-        rebalanceMarkets(fundId);
+        _rebalanceMarkets(fundId);
 
         emit DelegationUpdated(lpid, fundId, accountId, collateralType, amount, leverage);
     }

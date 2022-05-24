@@ -80,10 +80,6 @@ contract CollateralModule is ICollateralModule, CollateralStorage, OwnableMixin,
         address collateralType,
         uint amount
     ) public override onlyRoleAuthorized(accountId, "stake") collateralEnabled(collateralType) {
-        // TODO check if (this) is approved to collateral.transferFrom() the amount
-
-        // TODO check the rest of the info of the callateral to stake
-
         StakedCollateralData storage collateralData = _collateralStore().stakedCollateralsDataByAccountId[accountId][
             collateralType
         ];

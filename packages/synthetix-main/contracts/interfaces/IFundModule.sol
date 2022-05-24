@@ -20,6 +20,21 @@ interface IFundModule is ISatelliteFactory {
     /// @notice gets the FundModule Satellites created (only one, at idx 0).
     function getFundModuleSatellites() external view returns (Satellite[] memory);
 
+    /// @notice SCCP sets the preferred fund
+    function setPreferredFund(uint fundId) external;
+
+    /// @notice SCCP adds a fundId to the approved list
+    function addApprovedFund(uint fundId) external;
+
+    /// @notice SCCP removes a fundId to the approved list
+    function removeApprovedFund(uint fundId) external;
+
+    /// @notice gets the preferred fund
+    function getPreferredFund() external view returns (uint);
+
+    /// @notice gets the approved funds (list of fundIds)
+    function getApprovedFunds() external view returns (uint[] calldata);
+
     /// @notice creates a new fundToken (NFT)
     function createFund(uint requestedFundId, address owner) external;
 
@@ -82,6 +97,9 @@ interface IFundModule is ISatelliteFactory {
         address collateralType
     ) external view returns (uint);
 
+    // TODO Everything below this line should be split per collateralType
+    // according to May 23th discussion Funds should be "single" collateral
+
     /// @notice gets the total fund debt
     function fundDebt(uint fundId) external view returns (uint);
 
@@ -90,19 +108,4 @@ interface IFundModule is ISatelliteFactory {
 
     /// @notice gets the debt per share (sUSD value) for a fund
     function debtPerShare(uint fundId) external view returns (uint);
-
-    /// @notice SCCP sets the preferred fund
-    function setPreferredFund(uint fundId) external;
-
-    /// @notice SCCP adds a fundId to the approved list
-    function addApprovedFund(uint fundId) external;
-
-    /// @notice SCCP removes a fundId to the approved list
-    function removeApprovedFund(uint fundId) external;
-
-    /// @notice gets the preferred fund
-    function getPreferredFund() external view returns (uint);
-
-    /// @notice gets the approved funds (list of fundIds)
-    function getApprovedFunds() external view returns (uint[] calldata);
 }
