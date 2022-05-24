@@ -22,4 +22,5 @@ module.exports = {
   SUBTASK_VALIDATE_STORAGE: 'deployer-validate-storage',
   TASK_DEPLOY: 'deploy',
   TASK_DEPLOY_VERIFY: 'deploy:verify',
+  TASK_EXPORT_MODULES_ABI: 'export-modules-abi',
 };
