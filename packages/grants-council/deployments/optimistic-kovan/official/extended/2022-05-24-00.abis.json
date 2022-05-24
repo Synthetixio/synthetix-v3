@@ -10309,7 +10309,7 @@
       "type": "event"
     }
   ],
-  "contracts/AmbassadorCouncil.sol:AmbassadorCouncil": [
+  "contracts/GrantsCouncil.sol:GrantsCouncil": [
     {
       "inputs": [
         {
