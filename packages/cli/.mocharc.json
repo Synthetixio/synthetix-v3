@@ -1,5 +1,11 @@
 {
-  "spec": ["test/unit/**/*.test.js", "test/integration/**/*.test.js"],
+  "require": [
+    "test/setup.js"
+  ],
+  "spec": [
+    "test/unit/**/*.test.js",
+    "test/integration/**/*.test.js"
+  ],
   "watch-files": [
     "internal/**/*.js",
     "subtasks/**/*.js",
