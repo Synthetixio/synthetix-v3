@@ -9,6 +9,7 @@ describe('execute-call', function () {
       this.timeout(60000);
 
       await this.cli.start();
+      await this.cli.interact(this.cli.keys.S); // Filter SomeModule
       await this.cli.interact(this.cli.keys.ENTER); // Selects SomeModule
       await this.cli.interact('set'); // Highlights setUintValue
       await this.cli.interact(this.cli.keys.ENTER); // Selects setUintValue

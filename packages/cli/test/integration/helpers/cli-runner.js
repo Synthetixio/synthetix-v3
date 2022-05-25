@@ -79,6 +79,7 @@ class CliRunner {
     return {
       CTRLC: '\x03',
       ENTER: '\x0D',
+      S: '\x53',
     };
   }
 }
