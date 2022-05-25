@@ -11,6 +11,9 @@ npx hardhat deploy --network local --clear --quiet --no-confirm --instance test
 # Run tests
 cd ../../..
 npx mocha
+test_exit_code=$?
 
 # Kill node
 pkill node
+
+exit "$test_exit_code"
