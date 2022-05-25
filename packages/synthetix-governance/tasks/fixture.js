@@ -1,5 +1,3 @@
-const path = require('path');
-const fs = require('fs/promises');
 const { randomInt } = require('crypto');
 const { task } = require('hardhat/config');
 const types = require('@synthetixio/core-js/utils/hardhat/argument-types');
@@ -11,10 +9,10 @@ const {
   TASK_FIXTURE_WALLETS,
   TASK_FIXTURE_CANDIDATES,
   TASK_FIXTURE_VOTES,
-  TASK_FIXTURE_EPOCHS,
+  TASK_FIXTURE_EPOCH,
   TASK_FIXTURE_EVALUATE,
-  TASK_FIXTURE_CROSS_CHAIN_DEBT,
-  TASK_SET_CROSS_CHAIN_DEBT,
+  TASK_FIXTURE_CROSS_CHAIN_DEBT_TREE,
+  TASK_FIXTURE_DECLARE_CROSS_CHAIN_DEBT,
 } = require('../task-names');
 
 const ElectionPeriod = {
@@ -105,7 +103,7 @@ task(TASK_FIXTURE_VOTES, 'Create fixture votes to nominated candidates')
 
     console.log(`Fixturing ${amount} voters on ${address}\n`);
 
-    const voters = await hre.run(TASK_FIXTURE_WALLETS, { amount });
+    const voters = await hre.ethers.getSigners();
     const candidates = await ElectionModule.getNominees();
 
     const ballotsCount = Math.floor(candidates.length / Number(ballotSize));
@@ -210,44 +208,54 @@ task(TASK_FIXTURE_EVALUATE, 'Evaluate current election')
     members.forEach((address) => console.log('  - ', address));
   });
 
-task(TASK_FIXTURE_EPOCHS, 'Complete an epoch with fixtured data')
+task(TASK_FIXTURE_EPOCH, 'Complete an epoch with fixtured data')
   .addParam('address', 'Deployed election module proxy address', undefined, types.address)
-  .addOptionalParam('amount', 'Amount of epochs to complete with fixture data', '1', types.int)
-  .addOptionalParam('voters', 'Amount of voters to fixture', '20', types.int)
-  .addOptionalParam('candidates', 'Amount of voters to fixture', '12', types.int)
-  .setAction(async ({ address, amount, voters, candidates }, hre) => {
+  .addOptionalParam(
+    'period',
+    `Until which period to fixture, should be one of ${Object.keys(ElectionPeriod).join(', ')}`,
+    'Evaluation',
+    types.enum
+  )
+  .setAction(async ({ address, period }, hre) => {
     const ElectionModule = await hre.ethers.getContractAt(
       'contracts/modules/ElectionModule.sol:ElectionModule',
       address
     );
 
-    for (let i = 0; i < Number(amount); i++) {
-      let currentPeriod = Number(await ElectionModule.getCurrentPeriod());
+    let currentPeriod = Number(await ElectionModule.getCurrentPeriod());
 
-      if (currentPeriod === ElectionPeriod.Administration) {
-        await hre.run(TASK_FAST_FORWARD_TO, { address, period: 'nomination' });
-        currentPeriod = ElectionPeriod.Nomination;
-      }
+    if (currentPeriod === ElectionPeriod.Administration) {
+      await hre.run(TASK_FAST_FORWARD_TO, { address, period: 'nomination' });
+      currentPeriod = ElectionPeriod.Nomination;
+      if (period === 'Administration') return;
+    }
 
-      if (currentPeriod === ElectionPeriod.Nomination) {
-        await hre.run(TASK_FIXTURE_CANDIDATES, { address, amount: candidates });
-        await hre.run(TASK_FAST_FORWARD_TO, { address, period: 'vote' });
-        currentPeriod = ElectionPeriod.Vote;
-      }
+    if (currentPeriod === ElectionPeriod.Nomination) {
+      const tree = await hre.run(TASK_FIXTURE_CROSS_CHAIN_DEBT_TREE, { address });
+      await hre.run(TASK_FIXTURE_CANDIDATES, { address });
+      await hre.run(TASK_FAST_FORWARD_TO, { address, period: 'vote' });
+      currentPeriod = ElectionPeriod.Vote;
+      await hre.run(TASK_FIXTURE_DECLARE_CROSS_CHAIN_DEBT, {
+        address,
+        merkleTree: JSON.stringify(tree),
+      });
+      if (period === 'Nomination') return;
+    }
 
-      if (currentPeriod === ElectionPeriod.Vote) {
-        await hre.run(TASK_FIXTURE_VOTES, { address, amount: voters });
-        await hre.run(TASK_FAST_FORWARD_TO, { address, period: 'evaluation' });
-        currentPeriod = ElectionPeriod.Evaluation;
-      }
+    if (currentPeriod === ElectionPeriod.Vote) {
+      await hre.run(TASK_FIXTURE_VOTES, { address });
+      await hre.run(TASK_FAST_FORWARD_TO, { address, period: 'evaluation' });
+      currentPeriod = ElectionPeriod.Evaluation;
+      if (period === 'Vote') return;
+    }
 
-      if (currentPeriod === ElectionPeriod.Evaluation) {
-        await hre.run(TASK_FIXTURE_EVALUATE, { address });
-      }
+    if (currentPeriod === ElectionPeriod.Evaluation) {
+      await hre.run(TASK_FIXTURE_EVALUATE, { address });
+      if (period === 'Evaluation') return;
     }
   });
 
-task(TASK_FIXTURE_CROSS_CHAIN_DEBT, 'Generate and save cross chain debt merkle tree')
+task(TASK_FIXTURE_CROSS_CHAIN_DEBT_TREE, 'Generate and save merkle tree cross chain debt')
   .addParam('address', 'Deployed election module proxy address', undefined, types.address)
   .addOptionalParam(
     'wallet',
@@ -282,16 +290,44 @@ task(TASK_FIXTURE_CROSS_CHAIN_DEBT, 'Generate and save cross chain debt merkle t
     // Create MerkleTree for the given debts
     const tree = parseBalanceMap(debts);
 
-    const file = path.resolve(__dirname, '..', 'data');
-    const location = path.resolve(file, `${hre.network.name}-${blockNumber}.json`);
+    console.log('Setting Cross Chain Debt Root:');
+    console.log(`  merkeRoot: ${tree.merkleRoot}`);
+    console.log(`  blockNumber: ${blockNumber}`);
+    console.log();
 
-    console.log('Saving merkle tree:');
-    console.log(`  ${location}`);
+    const tx = await ElectionModule.setCrossChainDebtShareMerkleRoot(
+      tree.merkleRoot,
+      Number(blockNumber)
+    );
 
-    await fs.mkdir(file, { recursive: true });
-    await fs.writeFile(location, JSON.stringify(tree, null, 2));
+    await tx.wait();
 
-    await hre.run(TASK_SET_CROSS_CHAIN_DEBT, { address, file, blockNumber });
+    return tree;
+  });
+
+task(TASK_FIXTURE_DECLARE_CROSS_CHAIN_DEBT, 'Declare the cross chain debt for the given wallet')
+  .addParam('address', 'Deployed election module proxy address', undefined, types.address)
+  .addParam('merkleTree', 'entire merkle tree as string')
+  .setAction(async ({ address, merkleTree }, hre) => {
+    const ElectionModule = await hre.ethers.getContractAt(
+      'contracts/modules/ElectionModule.sol:ElectionModule',
+      address
+    );
+
+    await assertPeriod(ElectionModule, 'Vote');
+
+    const tree = JSON.parse(merkleTree);
+
+    await Promise.all(
+      Object.entries(tree.claims).map(async ([wallet, { amount, proof }]) => {
+        const tx = await ElectionModule.declareCrossChainDebtShare(wallet, amount, proof);
+        await tx.wait();
+        console.log('Declared: ');
+        console.log(`  wallet: ${wallet} | amount: ${amount}`);
+      })
+    );
+
+    console.log();
   });
 
 function pickRand(arr, amount = 1) {
