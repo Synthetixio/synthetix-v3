@@ -2,7 +2,7 @@ const { subtask } = require('hardhat/config');
 const { SUBTASK_PICK_FUNCTION, SUBTASK_CHECK_INITIALIZATION } = require('../task-names');
 const prompts = require('prompts');
 const chalk = require('chalk');
-const { getFunctionSignature, getFullFunctionSignature } = require('../internal/signatures');
+const { getFullFunctionSignature } = require('../internal/signatures');
 const { getSelectors } = require('@synthetixio/core-js/utils/ethers/contracts');
 
 subtask(SUBTASK_PICK_FUNCTION, 'Pick a function from the given contract').setAction(
@@ -12,29 +12,28 @@ subtask(SUBTASK_PICK_FUNCTION, 'Pick a function from the given contract').setAct
     const selectors = await getSelectors(abi, hre.config.deployer.routerFunctionFilter);
 
     const choices = abiFunctions.map((functionAbi) => {
-      const signature = getFunctionSignature(functionAbi);
       const fullSignature = getFullFunctionSignature(functionAbi);
       const selector = selectors.find((selector) => selector.name === functionAbi.name).selector;
 
       return {
         title: `${fullSignature}${chalk.gray(` ${selector}`)}`,
-        value: signature
+        value: functionAbi,
       };
     });
 
     await hre.run(SUBTASK_CHECK_INITIALIZATION);
 
-    const { functionSignature } = await prompts([
+    const { functionAbi } = await prompts([
       {
         type: 'autocomplete',
-        name: 'functionSignature',
+        name: 'functionAbi',
         message: 'Pick a FUNCTION:',
         choices,
       },
     ]);
 
-    if (functionSignature) {
-      hre.cli.functionSignature = functionSignature;
+    if (functionAbi) {
+      hre.cli.functionAbi = functionAbi;
     } else {
       // Cancelling returns to pick-contract
       hre.cli.contractFullyQualifiedName = null;

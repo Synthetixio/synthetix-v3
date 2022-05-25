@@ -1,6 +1,6 @@
 const chalk = require('chalk');
 
-function getFunctionSignature(functionAbi, functionParameters) {
+function getFunctionSignature(functionAbi) {
   return `${functionAbi.name}(${functionAbi.inputs.map((input) => input.type).join(',')})`;
 }
 

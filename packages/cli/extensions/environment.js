@@ -8,7 +8,7 @@ extendEnvironment((hre) => {
   hre.cli = {
     contractFullyQualifiedName: null,
     contractDeployedAddress: null,
-    functionSignature: null,
+    functionAbi: null,
     functionParameters: null,
   };
 
