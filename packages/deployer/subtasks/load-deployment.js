@@ -25,10 +25,6 @@ subtask(SUBTASK_LOAD_DEPLOYMENT, 'Loads deployment artifacts for a particular in
     const previousDeploymentFile =
       deploymentFiles.length > 1 ? deploymentFiles[deploymentFiles.length - 2] : null;
 
-    if (!currentDeploymentFile) {
-      throw new Error(`Could not find deployment files with ${JSON.stringify(info)}`);
-    }
-
     const { sources, abis } = getDeploymentExtendedFiles(currentDeploymentFile);
 
     hre.deployer.paths.deployment = currentDeploymentFile;
