@@ -29,7 +29,7 @@ const config = {
     },
   },
   deployer: {
-    proxyContract: 'SpartanCouncil',
+    proxyContract: 'AmbassadorCouncil',
   },
   contractSizer: {
     strict: true,
