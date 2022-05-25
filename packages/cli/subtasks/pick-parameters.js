@@ -42,7 +42,9 @@ subtask(SUBTASK_PICK_PARAMETERS, 'Populate the selected function parameters').se
 );
 
 async function _parseInput(input, type, hre) {
-  input = JSON.parse(input);
+  if (type.includes('[]')) {
+    input = JSON.parse(input);
+  }
 
   const processed = await _preprocessInput(input, type, hre);
   if (input !== processed) {
