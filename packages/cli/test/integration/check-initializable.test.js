@@ -8,7 +8,8 @@ describe('check-initializable', function () {
     this.timeout(60000);
 
     await this.cli.start();
-    await this.cli.interact(this.cli.keys.ENTER); // Selects UpgradeModule
+    await this.cli.interact('InitializableModule'); // Filter InitializableModule
+    await this.cli.interact(this.cli.keys.ENTER); // Selects InitializableModule
     await this.cli.interact(this.cli.keys.CTRLC); // Return to contract list
     await this.cli.interact(this.cli.keys.CTRLC); // Exit
 
