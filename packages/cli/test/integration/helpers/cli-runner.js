@@ -3,8 +3,8 @@ const chalk = require('chalk');
 const { spawn } = require('child_process');
 
 // Set these to false on CI
-const SHOW_CLI_OUTPUT = false;
-const SHOW_CLI_INTERACTIONS = false;
+const SHOW_CLI_OUTPUT = true;
+const SHOW_CLI_INTERACTIONS = true;
 
 const START_DELAY = 3000;
 const INTERACT_DELAY = 1000;

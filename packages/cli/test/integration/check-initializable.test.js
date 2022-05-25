@@ -2,7 +2,7 @@ const assert = require('assert/strict');
 const bootstrap = require('./helpers/bootstrap');
 
 describe('check-initializable', function () {
-  bootstrap('initializable');
+  bootstrap();
 
   before('use the cli', async function () {
     this.timeout(60000);

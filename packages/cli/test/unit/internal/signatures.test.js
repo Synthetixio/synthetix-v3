@@ -4,7 +4,7 @@ const sampleFunctionAbi = require('../../fixtures/abis/sample-function-abi');
 const sampleEventAbi = require('../../fixtures/abis/sample-event-abi');
 const sampleEventReceipt = require('../../fixtures/abis/sample-event-receipt');
 
-describe.only('internal/signatures.js', function () {
+describe('internal/signatures.js', function () {
   let str;
 
   describe('full function signatures', () => {
