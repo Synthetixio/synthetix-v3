@@ -40,7 +40,7 @@ task(TASK_INTERACT, 'Interacts with a given modular system deployment')
 
       if (!hre.cli.contractFullyQualifiedName) {
         subtask = SUBTASK_PICK_CONTRACT;
-      } else if (!hre.cli.functionName) {
+      } else if (!hre.cli.functionAbi) {
         subtask = SUBTASK_PICK_FUNCTION;
       } else if (!hre.cli.functionParameters) {
         subtask = SUBTASK_PICK_PARAMETERS;

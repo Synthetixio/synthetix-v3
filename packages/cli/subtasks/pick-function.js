@@ -17,23 +17,23 @@ subtask(SUBTASK_PICK_FUNCTION, 'Pick a function from the given contract').setAct
 
       return {
         title: `${fullSignature}${chalk.gray(` ${selector}`)}`,
-        value: functionAbi.name,
+        value: functionAbi,
       };
     });
 
     await hre.run(SUBTASK_CHECK_INITIALIZATION);
 
-    const { functionName } = await prompts([
+    const { functionAbi } = await prompts([
       {
         type: 'autocomplete',
-        name: 'functionName',
+        name: 'functionAbi',
         message: 'Pick a FUNCTION:',
         choices,
       },
     ]);
 
-    if (functionName) {
-      hre.cli.functionName = functionName;
+    if (functionAbi) {
+      hre.cli.functionAbi = functionAbi;
     } else {
       // Cancelling returns to pick-contract
       hre.cli.contractFullyQualifiedName = null;

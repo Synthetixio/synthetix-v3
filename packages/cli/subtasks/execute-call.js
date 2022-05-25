@@ -3,12 +3,19 @@ const { SUBTASK_EXECUTE_CALL } = require('../task-names');
 const logger = require('@synthetixio/core-js/utils/io/logger');
 const chalk = require('chalk');
 const prompter = require('@synthetixio/core-js/utils/io/prompter');
-const { getFullFunctionSignature, getFullEventSignature } = require('../internal/signatures');
+const {
+  getFullFunctionSignature,
+  getFullEventSignature,
+  getFunctionSignature,
+} = require('../internal/signatures');
 
 subtask(SUBTASK_EXECUTE_CALL, 'Execute the current tx').setAction(async (taskArguments, hre) => {
   const address = hre.cli.contractDeployedAddress;
   const abi = hre.deployer.deployment.abis[hre.cli.contractFullyQualifiedName];
-  const functionAbi = abi.find((abiItem) => abiItem.name === hre.cli.functionName);
+
+  const functionAbi = hre.cli.functionAbi;
+  const functionSignature = getFunctionSignature(functionAbi);
+  console.log(functionSignature);
 
   logger.notice(
     `Calling ${hre.cli.contractFullyQualifiedName}.${getFullFunctionSignature(
@@ -19,29 +26,27 @@ subtask(SUBTASK_EXECUTE_CALL, 'Execute the current tx').setAction(async (taskArg
   logger.info(`Target: ${address}`);
 
   const contract = new hre.ethers.Contract(address, abi, hre.ethers.provider);
-  const tx = await contract.populateTransaction[hre.cli.functionName](
-    ...hre.cli.functionParameters
-  );
+  const tx = await contract.populateTransaction[functionSignature](...hre.cli.functionParameters);
   logger.info(`Calldata: ${tx.data}`);
 
   const readOnly = functionAbi.stateMutability === 'view' || functionAbi.stateMutability === 'pure';
   if (readOnly) {
-    await executeReadTransaction(contract);
+    await executeReadTransaction(functionSignature, contract);
   } else {
-    await executeWriteTransaction(contract);
+    await executeWriteTransaction(functionSignature, contract);
   }
 
   hre.cli.functionParameters = null;
-  hre.cli.functionName = null;
+  hre.cli.functionAbi = null;
 });
 
-async function executeReadTransaction(contract) {
-  const result = await contract[hre.cli.functionName](...hre.cli.functionParameters);
+async function executeReadTransaction(functionSignature, contract) {
+  const result = await contract[functionSignature](...hre.cli.functionParameters);
 
   console.log(chalk.green(`✓ ${result}`));
 }
 
-async function executeWriteTransaction(contract) {
+async function executeWriteTransaction(functionSignature, contract) {
   const signer = (await hre.ethers.getSigners())[0];
   logger.info(`Signer: ${signer.address}`);
   logger.warn('This is a write transaction!');
@@ -50,7 +55,7 @@ async function executeWriteTransaction(contract) {
 
   let tx;
   try {
-    const estimateGas = await contract.estimateGas[hre.cli.functionName](
+    const estimateGas = await contract.estimateGas[functionSignature](
       ...hre.cli.functionParameters
     );
     const confirmed = await prompter.ask(`Estimated gas: ${estimateGas}. Continue?`);
@@ -58,7 +63,7 @@ async function executeWriteTransaction(contract) {
       return;
     }
 
-    tx = await contract[hre.cli.functionName](...hre.cli.functionParameters);
+    tx = await contract[functionSignature](...hre.cli.functionParameters);
   } catch (error) {
     logger.error(`Transaction reverted during gas estimation with error "${error}"`);
   }
