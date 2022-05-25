@@ -8,7 +8,7 @@ const { getFullFunctionSignature, getFullEventSignature } = require('../internal
 subtask(SUBTASK_EXECUTE_CALL, 'Execute the current tx').setAction(async (taskArguments, hre) => {
   const address = hre.cli.contractDeployedAddress;
   const abi = hre.deployer.deployment.abis[hre.cli.contractFullyQualifiedName];
-  const functionAbi = abi.find((abiItem) => abiItem.name === hre.cli.functionSignature);
+  const functionAbi = abi.find((abiItem) => abiItem.name === hre.cli.functionName);
 
   logger.notice(
     `Calling ${hre.cli.contractFullyQualifiedName}.${getFullFunctionSignature(
@@ -19,7 +19,7 @@ subtask(SUBTASK_EXECUTE_CALL, 'Execute the current tx').setAction(async (taskArg
   logger.info(`Target: ${address}`);
 
   const contract = new hre.ethers.Contract(address, abi, hre.ethers.provider);
-  const tx = await contract.populateTransaction[hre.cli.functionSignature](
+  const tx = await contract.populateTransaction[hre.cli.functionName](
     ...hre.cli.functionParameters
   );
   logger.info(`Calldata: ${tx.data}`);
@@ -32,11 +32,11 @@ subtask(SUBTASK_EXECUTE_CALL, 'Execute the current tx').setAction(async (taskArg
   }
 
   hre.cli.functionParameters = null;
-  hre.cli.functionSignature = null;
+  hre.cli.functionName = null;
 });
 
 async function executeReadTransaction(contract) {
-  const result = await contract[hre.cli.functionSignature](...hre.cli.functionParameters);
+  const result = await contract[hre.cli.functionName](...hre.cli.functionParameters);
 
   console.log(chalk.green(`✓ ${result}`));
 }
@@ -50,7 +50,7 @@ async function executeWriteTransaction(contract) {
 
   let tx;
   try {
-    const estimateGas = await contract.estimateGas[hre.cli.functionSignature](
+    const estimateGas = await contract.estimateGas[hre.cli.functionName](
       ...hre.cli.functionParameters
     );
     const confirmed = await prompter.ask(`Estimated gas: ${estimateGas}. Continue?`);
@@ -58,7 +58,7 @@ async function executeWriteTransaction(contract) {
       return;
     }
 
-    tx = await contract[hre.cli.functionSignature](...hre.cli.functionParameters);
+    tx = await contract[hre.cli.functionName](...hre.cli.functionParameters);
   } catch (error) {
     logger.error(`Transaction reverted during gas estimation with error "${error}"`);
   }

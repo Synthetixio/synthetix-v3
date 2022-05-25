@@ -8,17 +8,7 @@ subtask(SUBTASK_PICK_PARAMETERS, 'Populate the selected function parameters').se
     hre.cli.functionParameters = [];
 
     const abi = hre.deployer.deployment.abis[hre.cli.contractFullyQualifiedName];
-
-    const functionName = hre.cli.functionSignature.split('(')[0];
-    const numFunctionParameters = hre.cli.functionSignature.split(',').length;
-
-    console.log('signature:', hre.cli.functionSignature);
-    console.log('name:', functionName);
-    console.log('params:', numFunctionParameters);
-
-    const functionAbi = abi.find(
-      (abiItem) => abiItem.name === functionName && abiItem.inputs.length === numFunctionParameters
-    );
+    const functionAbi = abi.find((abiItem) => abiItem.name === hre.cli.functionName);
 
     let parameterIndex = 0;
     // Using a while loop so that the user can retry failed inputs
@@ -43,7 +33,7 @@ subtask(SUBTASK_PICK_PARAMETERS, 'Populate the selected function parameters').se
         }
       } else {
         // Cancelling returns to pick-function
-        hre.cli.functionSignature = null;
+        hre.cli.functionName = null;
         hre.cli.functionParameters = null;
         parameterIndex = functionAbi.inputs.length;
       }

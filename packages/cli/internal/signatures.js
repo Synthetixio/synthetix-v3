@@ -1,9 +1,5 @@
 const chalk = require('chalk');
 
-function getFunctionSignature(functionAbi, functionParameters) {
-  return `${functionAbi.name}(${functionAbi.inputs.map((input) => input.type).join(',')})`;
-}
-
 function getFullFunctionSignature(functionAbi, functionParameters) {
   const multiline = !!functionParameters && functionParameters.length > 0;
 
@@ -60,7 +56,6 @@ function getFullEventSignature(eventAbi, event) {
 }
 
 module.exports = {
-  getFunctionSignature,
   getFullFunctionSignature,
   getFullEventSignature,
 };
