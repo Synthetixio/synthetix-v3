@@ -8,6 +8,7 @@ describe('pick-function', function () {
     this.timeout(60000);
 
     await this.cli.start();
+    await this.cli.interact('SomeModule'); // Filter SomeModule
     await this.cli.interact(this.cli.keys.ENTER); // Selects SomeModule
     await this.cli.interact(this.cli.keys.CTRLC); // Return to contract list
     await this.cli.interact(this.cli.keys.CTRLC); // Exit

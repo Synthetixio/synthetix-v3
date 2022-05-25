@@ -8,8 +8,9 @@ describe('pick-parameters', function () {
     this.timeout(60000);
 
     await this.cli.start();
+    await this.cli.interact('SomeModule'); // Filter SomeModule
     await this.cli.interact(this.cli.keys.ENTER); // Selects SomeModule
-    await this.cli.interact('set'); // Highlights setUintValue
+    await this.cli.interact('setUintValue'); // Highlights setUintValue
     await this.cli.interact(this.cli.keys.ENTER); // Selects setUintValue
     await this.cli.interact('ngmi'); // Invalid input for "newValue"
     await this.cli.interact(this.cli.keys.ENTER); // Submit input
@@ -28,6 +29,6 @@ describe('pick-parameters', function () {
   });
 
   it('displays the function to be called', async function () {
-    await this.cli.printed('Calling SomeModule.setUintValue');
+    await this.cli.printed('Calling contracts/modules/SomeModule.sol:SomeModule.setUintValue');
   });
 });

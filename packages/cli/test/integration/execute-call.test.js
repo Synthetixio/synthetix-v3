@@ -9,8 +9,9 @@ describe('execute-call', function () {
       this.timeout(60000);
 
       await this.cli.start();
+      await this.cli.interact('SomeModule'); // Filter SomeModule
       await this.cli.interact(this.cli.keys.ENTER); // Selects SomeModule
-      await this.cli.interact('set'); // Highlights setUintValue
+      await this.cli.interact('setUintValue'); // Highlights setUintValue
       await this.cli.interact(this.cli.keys.ENTER); // Selects setUintValue
       await this.cli.interact('42'); // Input for "newValue"
       await this.cli.interact(this.cli.keys.ENTER); // Submits input
@@ -32,7 +33,7 @@ describe('execute-call', function () {
     });
 
     it('shows gas estimation', async function () {
-      await this.cli.printed('Estimated gas: 32946');
+      await this.cli.printed('Estimated gas: ');
     });
 
     it('prints the tx hash', async function () {
@@ -57,6 +58,7 @@ describe('execute-call', function () {
 
         // CLI is still running at this point...
 
+        await this.cli.interact('getUintValue');
         await this.cli.interact(this.cli.keys.ENTER); // Selects getUintValue
         await this.cli.interact(this.cli.keys.CTRLC); // Return to function list
         await this.cli.interact(this.cli.keys.CTRLC); // Return to contract list
@@ -66,7 +68,7 @@ describe('execute-call', function () {
       });
 
       it('displays the function to be called', async function () {
-        this.cli.printed('! Calling SomeModule.getUintValue()');
+        this.cli.printed('! Calling contracts/modules/SomeModule.sol:SomeModule.getUintValue()');
       });
 
       it('displays the calldata', async function () {
