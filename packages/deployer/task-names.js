@@ -21,4 +21,5 @@ module.exports = {
   SUBTASK_VALIDATE_SATELLITES: 'deployer-validate-satellites',
   SUBTASK_VALIDATE_STORAGE: 'deployer-validate-storage',
   TASK_DEPLOY: 'deploy',
+  TASK_DEPLOY_VERIFY: 'deploy:verify',
 };
