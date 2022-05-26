@@ -13,10 +13,10 @@ const {
  */
 module.exports.deploy = async function() {
   const isHHNetwork = hre.network.name === 'hardhat';
-  await hre.run(TASK_DEPLOY, { noConfirm: true, quiet: true, clear: isHHNetwork });
+  await hre.run(TASK_DEPLOY, { noConfirm: true, quiet: false, clear: isHHNetwork });
 
   // deployer leaves its result in JSON files. We only care about the current and "extension"
-  const [currentDeploymentFile] = getAllDeploymentFiles();
+  const [currentDeploymentFile] = getAllDeploymentFiles({ network: hre.network.name });
   const extendedFile = getDeploymentExtendedFiles(currentDeploymentFile);
     
   const deploymentInfo = JSON.parse(fs.readFileSync(currentDeploymentFile));

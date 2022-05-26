@@ -21,15 +21,44 @@ args = []
 modified = ["contracts/**", "scripts/**"]
 step = 1
 
-[invoke.init_accounts]
+[invoke.init_account]
 on = ["Proxy"]
+fromCall.func = "owner"
 func = "initializeAccountModule"
+step = 2
+
+[[invoke.init_account.factory]]
+name = "Account"
+event = "AccountCreated"
+arg = 0
+artifact = "AccountToken"
+
+
+[invoke.init_fund]
+on = ["Proxy"]
+fromCall.func = "owner"
+func = "initializeFundModule"
 step = 2
 
 [invoke.init_snx]
 on = ["Proxy"]
+fromCall.func = "owner"
 func = "initializeSNXTokenModule"
 step = 2
+
+[[invoke.init_snx.factory]]
+name = "SNXToken"
+event = "SNXTokenCreated"
+arg = 0
+artifact = "SNXToken"
+
+# TODO: what does this init do?
+#[invoke.init_owner]
+#on = ["Proxy"]
+#fromCall.func = "owner"
+#func = "initializeOwnerModule"
+#args = ["<%= settings.owner %>"]
+#step = 2
 
 # Mint SNX tokens
 [invoke.authorize_mint_snx]
@@ -38,15 +67,21 @@ func = "setNewSNXAuthorizedSystem"
 args = ["<%= settings.owner %>"]
 step = 3
 
+#[invoke.snx_mint]
+#on = ["SNXToken.init_snx_Proxy.0"]
+#func = "mint"
+#args = ["<%= settings.owner %>", "<%= settings.snx_mint %>"]
+#step = 4
+
 # Set ownership
 [invoke.nominate_owner]
 on = ["Proxy"]
 func = "nominateNewOwner"
 args = ["<%= settings.owner %>"]
-step = 4
+step = 5
 
 [invoke.accept_owner]
 from = "<%= settings.owner %>"
 on = ["Proxy"]
 func = "acceptOwnership"
-step = 5
+step = 6
