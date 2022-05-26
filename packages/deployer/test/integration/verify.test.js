@@ -121,4 +121,19 @@ describe('deploy:verify', function () {
       });
     });
   });
+
+  describe('when the veryfier throws an unkown error', function () {
+    before('mock verify task', function () {
+      task(TASK_VERIFY_VERIFY, async function () {
+        throw new Error('Unkown error');
+      });
+    });
+
+    it('throws the error', async function () {
+      await rejects(
+        () => hre.run(TASK_DEPLOY_VERIFY, { quiet: true, instance: 'test' }),
+        new Error('Unkown error')
+      );
+    });
+  });
 });
