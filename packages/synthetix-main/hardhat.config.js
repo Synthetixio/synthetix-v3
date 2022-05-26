@@ -6,6 +6,8 @@ require('@nomiclabs/hardhat-ethers');
 require('@synthetixio/deployer');
 require('@synthetixio/cli');
 
+require('hardhat-cannon');
+
 module.exports = {
   solidity: {
     version: '0.8.11',

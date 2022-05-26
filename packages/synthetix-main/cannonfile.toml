@@ -1,0 +1,52 @@
+name = "synthetix-main"
+description = "Core synthetix system"
+
+# `salt` here only affects proxy contract
+[setting.salt]
+description = "Change this to a unique string when deploying multiple instances of the system. Note that only the proxy contract will be unique."
+defaultValue = "main"
+
+[setting.owner]
+description = "Admin user for the system"
+defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
+
+[setting.snx_mint]
+description = "Amount of SNX to mint to the owner account"
+defaultValue = "10000000000000000000000"
+
+[run.deploy]
+exec = "scripts/deploy.js"
+func = "deploy"
+args = []
+modified = ["contracts/**", "scripts/**"]
+step = 1
+
+[invoke.init_accounts]
+on = ["Proxy"]
+func = "initializeAccountModule"
+step = 2
+
+[invoke.init_snx]
+on = ["Proxy"]
+func = "initializeSNXTokenModule"
+step = 2
+
+# Mint SNX tokens
+[invoke.authorize_mint_snx]
+on = ["Proxy"]
+func = "setNewSNXAuthorizedSystem"
+args = ["<%= settings.owner %>"]
+step = 3
+
+# Set ownership
+[invoke.nominate_owner]
+on = ["Proxy"]
+func = "nominateNewOwner"
+args = ["<%= settings.owner %>"]
+step = 4
+
+[invoke.accept_owner]
+from = "<%= settings.owner %>"
+on = ["Proxy"]
+func = "acceptOwnership"
+step = 5
