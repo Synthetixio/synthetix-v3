@@ -1,5 +1,6 @@
 const { task } = require('hardhat/config');
 const { HardhatPluginError } = require('hardhat/plugins');
+const { TASK_VERIFY_VERIFY } = require('@nomiclabs/hardhat-etherscan/dist/src/constants');
 
 const {
   SUBTASK_GENERATE_ROUTER_SOURCE,
@@ -21,7 +22,12 @@ task(TASK_DEPLOY_VERIFY, 'Verify deployment contracts using Etherscan API')
     'contract',
     'Optionally verify only one contract, fully qualified name required.'
   )
-  .setAction(async ({ instance, contract }, hre) => {
+  .addFlag('debug', 'Display debug logs', false)
+  .addFlag('quiet', 'Silence all output', false)
+  .setAction(async ({ instance, contract, quiet, debug }, hre) => {
+    logger.quiet = quiet;
+    logger.debugging = debug;
+
     await hre.run(SUBTASK_LOAD_DEPLOYMENT, { readOnly: true, instance });
 
     const deployment = hre.deployer.deployment.general;
@@ -62,7 +68,7 @@ task(TASK_DEPLOY_VERIFY, 'Verify deployment contracts using Etherscan API')
       logger.title(contractFullyQualifiedName);
 
       try {
-        await hre.run('verify:verify', {
+        await hre.run(TASK_VERIFY_VERIFY, {
           address: deployedAddress,
           contract: contractFullyQualifiedName,
           constructorArguments,
@@ -75,6 +81,6 @@ task(TASK_DEPLOY_VERIFY, 'Verify deployment contracts using Etherscan API')
         }
       }
 
-      console.log();
+      logger.log();
     }
   });
