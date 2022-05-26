@@ -1,5 +1,8 @@
+const path = require('path');
 const { TASK_COMPILE } = require('hardhat/builtin-tasks/task-names');
 const { resetHardhatContext } = require('hardhat/plugins-testing');
+
+const cache = {};
 
 /**
  * Helper function to be able to get the ASTs of a given hardhat project, and
@@ -7,6 +10,12 @@ const { resetHardhatContext } = require('hardhat/plugins-testing');
  * @param {string} envPath
  */
 module.exports = async function parseContracts(envPath) {
+  envPath = path.resolve(envPath);
+
+  if (cache[envPath]) return cache[envPath];
+
+  cache[envPath] = {};
+
   resetHardhatContext();
 
   const originalChdir = process.cwd();
@@ -14,7 +23,7 @@ module.exports = async function parseContracts(envPath) {
 
   const hre = require('hardhat');
 
-  await _silentCompile(hre);
+  await hre.run(TASK_COMPILE, { force: true, quiet: true });
 
   const fullyQualifiedNames = await hre.artifacts.getAllFullyQualifiedNames();
 
@@ -31,16 +40,7 @@ module.exports = async function parseContracts(envPath) {
   resetHardhatContext();
   process.chdir(originalChdir);
 
-  return { asts };
+  cache[envPath].asts = asts;
+
+  return cache[envPath];
 };
-
-async function _silentCompile(hre) {
-  const logCache = console.log;
-  console.log = () => {};
-
-  try {
-    await hre.run(TASK_COMPILE, { force: true, quiet: true });
-  } finally {
-    if (logCache) console.log = logCache;
-  }
-}

@@ -24,7 +24,7 @@ describe('utils/ast/finders.js find AST artifacts', function () {
   let sampleProjectAstNodes;
 
   before('load sample-project artifacts', async function () {
-    const envPath = path.join(__dirname, '..', '..', 'fixtures', 'sample-project');
+    const envPath = path.resolve(__dirname, '..', '..', 'fixtures', 'sample-project');
     sampleProject = await parseContracts(envPath);
     sampleProjectAstNodes = Object.values(sampleProject.asts);
   });
