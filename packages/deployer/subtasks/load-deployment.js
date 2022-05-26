@@ -9,9 +9,7 @@ const { SUBTASK_LOAD_DEPLOYMENT } = require('../task-names');
 const autosaveObject = require('../internal/autosave-object');
 
 subtask(SUBTASK_LOAD_DEPLOYMENT, 'Loads deployment artifacts for a particular instance').setAction(
-  async (taskArguments, hre) => {
-    const { readOnly, instance } = taskArguments;
-
+  async ({ readOnly, instance }, hre) => {
     const info = {
       folder: hre.config.deployer.paths.deployments,
       network: hre.network.name,

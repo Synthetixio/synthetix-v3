@@ -1,6 +1,8 @@
 const fs = require('fs');
 const path = require('path');
 
+require('@nomiclabs/hardhat-etherscan');
+
 // Forces "use strict" on all modules.
 require('use-strict');
 
