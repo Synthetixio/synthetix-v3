@@ -34,6 +34,9 @@ const config = {
   contractSizer: {
     strict: true,
   },
+  etherscan: {
+    apiKey: process.env.ETHERSCAN_API_KEY,
+  },
 };
 
 module.exports = config;
