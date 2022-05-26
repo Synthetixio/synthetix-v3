@@ -5,7 +5,8 @@ module.exports = {
   TASK_FIXTURE_CANDIDATES: 'fixture:candidates',
   TASK_FIXTURE_VOTES: 'fixture:votes',
   TASK_FIXTURE_EVALUATE: 'fixture:evaluate',
-  TASK_FIXTURE_EPOCHS: 'fixture:epochs',
-  TASK_FIXTURE_CROSS_CHAIN_DEBT: 'fixture:cross-chain-debt',
+  TASK_FIXTURE_EPOCH: 'fixture:epoch',
+  TASK_FIXTURE_CROSS_CHAIN_DEBT_TREE: 'fixture:cross-chain-debt-tree',
+  TASK_FIXTURE_DECLARE_CROSS_CHAIN_DEBT: 'fixture:declare-cross-chain-debt',
   TASK_SET_CROSS_CHAIN_DEBT: 'set-cross-chain-debt',
 };
