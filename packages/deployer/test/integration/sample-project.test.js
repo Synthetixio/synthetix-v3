@@ -37,7 +37,7 @@ describe('sample-project', function () {
         quiet: true,
       });
 
-      equal(singleResult.abi.length, 6);
+      equal(singleResult.abi.length, 5);
     });
 
     it('correctly executes the second time and makes no changes', async function () {
