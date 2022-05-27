@@ -1,15 +1,13 @@
 const { task } = require('hardhat/config');
 const { HardhatPluginError } = require('hardhat/plugins');
 const { TASK_VERIFY_VERIFY } = require('@nomiclabs/hardhat-etherscan/dist/src/constants');
-
+const logger = require('@synthetixio/core-js/utils/io/logger');
+const types = require('@synthetixio/core-js/utils/hardhat/argument-types');
 const {
   SUBTASK_GENERATE_ROUTER_SOURCE,
   SUBTASK_LOAD_DEPLOYMENT,
   TASK_DEPLOY_VERIFY,
 } = require('../task-names');
-
-const logger = require('@synthetixio/core-js/utils/io/logger');
-const types = require('@synthetixio/core-js/utils/hardhat/argument-types');
 
 task(TASK_DEPLOY_VERIFY, 'Verify deployment contracts using Etherscan API')
   .addOptionalParam(
