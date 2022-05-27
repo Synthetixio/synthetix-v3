@@ -12,6 +12,7 @@ task(
   TASK_DEPLOY_MULTICALL_ABI,
   'Generate a single merged ABI of the Proxy, including all the Modules ABIs'
 )
+  .addFlag('quiet', 'if you do not want the result to be not printed to the console')
   .addOptionalParam(
     'instance',
     'The name of the target instance for deployment',
@@ -19,7 +20,7 @@ task(
     types.alphanumeric
   )
   .addOptionalParam('include', 'optional comma separated modules to include', '')
-  .setAction(async ({ instance, include }, hre) => {
+  .setAction(async ({ quiet, instance, include }, hre) => {
     const whitelist = include
       .split(',')
       .map((name) => name.trim())
@@ -50,5 +51,11 @@ task(
       })
       .flat();
 
-    console.log(JSON.stringify({ abi }, null, 2));
+    const result = { abi };
+
+    if (!quiet) {
+      console.log(JSON.stringify(result, null, 2));
+    }
+
+    return result;
   });
