@@ -8,5 +8,6 @@ module.exports = {
   TASK_FIXTURE_EPOCH: 'fixture:epoch',
   TASK_FIXTURE_CROSS_CHAIN_DEBT_TREE: 'fixture:cross-chain-debt-tree',
   TASK_FIXTURE_DECLARE_CROSS_CHAIN_DEBT: 'fixture:declare-cross-chain-debt',
-  TASK_SET_CROSS_CHAIN_DEBT: 'set-cross-chain-debt',
+  TASK_MERKLE_TREE_SET: 'merkle-tree:set',
+  TASK_MERKLE_TREE_GENERATE: 'merkle-tree:generate',
 };

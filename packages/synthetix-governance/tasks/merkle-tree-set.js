@@ -1,11 +1,11 @@
 const fs = require('fs/promises');
-const { task } = require('hardhat/config');
+const { task, types: hardhatTypes } = require('hardhat/config');
 const types = require('@synthetixio/core-js/utils/hardhat/argument-types');
-const { TASK_SET_CROSS_CHAIN_DEBT } = require('../task-names');
+const { TASK_MERKLE_TREE_SET } = require('../task-names');
 
-task(TASK_SET_CROSS_CHAIN_DEBT, 'set the give merkle tree file on contract')
+task(TASK_MERKLE_TREE_SET, 'set the give merkle tree file on contract')
   .addParam('address', 'Deployed election module proxy address', undefined, types.address)
-  .addParam('file', 'Path to the merkle tree json file')
+  .addParam('file', 'Path to the merkle tree json file', undefined, hardhatTypes.inputFile)
   .addParam('blockNumber', 'block number from the origin chain', undefined, types.int)
   .setAction(async ({ address, file, blockNumber }) => {
     const ElectionModule = await hre.ethers.getContractAt(
