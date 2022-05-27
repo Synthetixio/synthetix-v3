@@ -29,7 +29,7 @@ describe('sample-project', function () {
         quiet: true,
       });
 
-      equal(multiResult.abi.length, 41);
+      equal(multiResult.abi.length, 39);
 
       const singleResult = await hre.run(TASK_DEPLOY_MULTICALL_ABI, {
         include: 'contracts/modules/SomeModule.sol:SomeModule',
