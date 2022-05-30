@@ -74,13 +74,16 @@ task(TASK_DEPLOY_VERIFY, 'Verify deployment contracts using Etherscan API')
           constructorArguments,
         });
       } catch (err) {
-        if (err.message === 'Contract source code already verified') {
+        if (
+          err.message === 'Contract source code already verified' ||
+          err.message.endsWith('Reason: Already Verified')
+        ) {
           logger.info('Contract source code already verified');
         } else {
           throw err;
         }
       }
 
-      logger.log();
+      logger.log('');
     }
   });
