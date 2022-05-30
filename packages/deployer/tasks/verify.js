@@ -65,7 +65,7 @@ task(TASK_DEPLOY_VERIFY, 'Verify deployment contracts using Etherscan API')
         constructorArguments.push(Router.deployedAddress);
       }
 
-      logger.title(contractFullyQualifiedName);
+      logger.title(`Verifying ${contractFullyQualifiedName}...`);
 
       try {
         await hre.run(TASK_VERIFY_VERIFY, {
