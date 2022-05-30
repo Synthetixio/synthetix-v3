@@ -27,6 +27,10 @@ const config = {
       url: 'https://kovan.optimism.io',
       accounts: process.env.DEPLOYER_PRIVATE_KEY ? [process.env.DEPLOYER_PRIVATE_KEY] : [],
     },
+    ['optimistic-mainnet']: {
+      url: 'https://mainnet.optimism.io',
+      accounts: process.env.DEPLOYER_PRIVATE_KEY ? [process.env.DEPLOYER_PRIVATE_KEY] : [],
+    },
   },
   deployer: {
     proxyContract: 'TreasuryCouncil',

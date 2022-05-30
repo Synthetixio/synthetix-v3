@@ -65,7 +65,7 @@ task(TASK_DEPLOY_VERIFY, 'Verify deployment contracts using Etherscan API')
         constructorArguments.push(Router.deployedAddress);
       }
 
-      logger.title(contractFullyQualifiedName);
+      logger.title(`Verifying ${contractFullyQualifiedName}...`);
 
       try {
         await hre.run(TASK_VERIFY_VERIFY, {
@@ -74,13 +74,16 @@ task(TASK_DEPLOY_VERIFY, 'Verify deployment contracts using Etherscan API')
           constructorArguments,
         });
       } catch (err) {
-        if (err.message === 'Contract source code already verified') {
+        if (
+          err.message === 'Contract source code already verified' ||
+          err.message.endsWith('Reason: Already Verified')
+        ) {
           logger.info('Contract source code already verified');
         } else {
           throw err;
         }
       }
 
-      logger.log();
+      logger.log('');
     }
   });
