@@ -5,11 +5,7 @@ const { task } = require('hardhat/config');
 const logger = require('@synthetixio/core-js/utils/io/logger');
 const types = require('@synthetixio/core-js/utils/hardhat/argument-types');
 const { SUBTASK_GET_MULTICALL_ABI } = require('@synthetixio/deployer/task-names');
-const {
-  getDeployment,
-  getDeploymentFile,
-  getDeploymentExtendedFiles,
-} = require('@synthetixio/deployer/utils/deployments');
+const { getDeployment, getDeploymentAbis } = require('@synthetixio/deployer/utils/deployments');
 
 const councils = [
   {
@@ -80,10 +76,8 @@ async function validateCouncil({ instance }, council, hre) {
   };
 
   const deployment = getDeployment(info);
-  const deploymentFile = getDeploymentFile(info);
-  const deploymentExtendedFiles = getDeploymentExtendedFiles(deploymentFile);
+  const abis = getDeploymentAbis(info);
 
-  const abis = require(deploymentExtendedFiles.abis);
   const { deployedAddress } = Object.values(deployment.contracts).find((c) => c.isProxy);
 
   logger.info(`Proxy Address: ${deployedAddress}`);
