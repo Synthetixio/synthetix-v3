@@ -9,6 +9,7 @@ module.exports = {
   SUBTASK_DEPLOY_ROUTER: 'deployer-generate-deploy-router',
   SUBTASK_FINALIZE_DEPLOYMENT: 'deployer-finalize-deployment',
   SUBTASK_GENERATE_ROUTER_SOURCE: 'deployer-generate-router-source',
+  SUBTASK_GET_DEPLOYMENT_INFO: 'deployer-get-deployment-info',
   SUBTASK_LOAD_DEPLOYMENT: 'deployer-load-deployment',
   SUBTASK_PRINT_INFO: 'deployer-print-info',
   SUBTASK_SYNC_PROXY: 'deployer-sync-proxy',
@@ -22,4 +23,5 @@ module.exports = {
   SUBTASK_VALIDATE_STORAGE: 'deployer-validate-storage',
   TASK_DEPLOY: 'deploy',
   TASK_DEPLOY_VERIFY: 'deploy:verify',
+  TASK_DEPLOY_MULTICALL_ABI: 'deploy:multicall-abi',
 };
