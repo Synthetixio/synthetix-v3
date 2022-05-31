@@ -63,9 +63,9 @@ function getRouterAddress(info) {
 }
 
 /**
- * Retrieves an object with the latest deployment ABIs json data for an instance
+ * Retrieves an object with the latest deployment sources json data for an instance
  * @param {DeploymentInfo} info See DeploymentInfo above
- * @returns {Object} An object with deployment ABIs
+ * @returns {Object} An object with deployment sources
  */
 function getDeploymentSources(info) {
   const file = getDeploymentFile(info);
