@@ -1,12 +1,10 @@
-const fs = require('fs');
 const { task } = require('hardhat/config');
 const types = require('@synthetixio/core-js/utils/hardhat/argument-types');
 const {
-  getDeployment,
-  getDeploymentFile,
-  getDeploymentExtendedFiles,
-} = require('../utils/deployments');
-const { TASK_DEPLOY_MULTICALL_ABI, SUBTASK_GET_DEPLOYMENT_INFO } = require('../task-names');
+  TASK_DEPLOY_MULTICALL_ABI,
+  SUBTASK_GET_DEPLOYMENT_INFO,
+  SUBTASK_GET_MULTICALL_ABI,
+} = require('../task-names');
 
 task(
   TASK_DEPLOY_MULTICALL_ABI,
@@ -27,29 +25,7 @@ task(
       .filter(Boolean);
 
     const info = await hre.run(SUBTASK_GET_DEPLOYMENT_INFO, { instance });
-
-    const deployment = getDeployment(info);
-    const deploymentFile = getDeploymentFile(info);
-    const deploymentExtendedFiles = getDeploymentExtendedFiles(deploymentFile);
-
-    const abis = JSON.parse(fs.readFileSync(deploymentExtendedFiles.abis));
-
-    const contracts = Object.values(deployment.contracts)
-      .filter((c) => c.isModule)
-      .filter((c) => {
-        if (whitelist.length === 0) return true;
-        return (
-          whitelist.includes(c.contractName) || whitelist.includes(c.contractFullyQualifiedName)
-        );
-      });
-
-    const abi = contracts
-      .map((c) => {
-        const abi = abis[c.contractFullyQualifiedName];
-        if (!abi) throw new Error(`ABI not found for "${c.contractFullyQualifiedName}"`);
-        return abi;
-      })
-      .flat();
+    const abi = await hre.run(SUBTASK_GET_MULTICALL_ABI, { info, whitelist });
 
     const result = { abi };
 
