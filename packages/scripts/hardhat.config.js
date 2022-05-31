@@ -1,6 +1,9 @@
-require('dotenv/config');
+const { requireAll } = require('@synthetixio/core-js/utils/misc/require-all');
 
+require('dotenv/config');
 require('@nomiclabs/hardhat-ethers');
+
+requireAll(`${__dirname}/tasks`);
 
 /**
  * @type import('hardhat/config').HardhatUserConfig
@@ -23,7 +26,11 @@ const config = {
       url: 'https://kovan.optimism.io',
       accounts: process.env.DEPLOYER_PRIVATE_KEY ? [process.env.DEPLOYER_PRIVATE_KEY] : [],
     },
-  }
+    ['optimistic-mainnet']: {
+      url: 'https://mainnet.optimism.io',
+      accounts: process.env.DEPLOYER_PRIVATE_KEY ? [process.env.DEPLOYER_PRIVATE_KEY] : [],
+    },
+  },
 };
 
 module.exports = config;
