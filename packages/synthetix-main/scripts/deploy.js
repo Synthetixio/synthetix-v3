@@ -1,57 +1,47 @@
-const fs = require('fs');
-const { TASK_DEPLOY } = require('@synthetixio/deployer/task-names');
-
 const hre = require('hardhat');
-
+const { getDeployment, getDeploymentAbis } = require('@synthetixio/deployer/utils/deployments');
 const {
-  getAllDeploymentFiles,
-  getDeploymentExtendedFiles
-} = require('@synthetixio/deployer/utils/deployments');
+  TASK_DEPLOY,
+  SUBTASK_GET_MULTICALL_ABI,
+  SUBTASK_GET_DEPLOYMENT_INFO,
+} = require('@synthetixio/deployer/task-names');
 
 /**
  * Generate the file contracts/Router.sol including the given modules in its source.
  */
-module.exports.deploy = async function() {
+module.exports.deploy = async function deploy() {
   const isHHNetwork = hre.network.name === 'hardhat';
   await hre.run(TASK_DEPLOY, { noConfirm: true, quiet: false, clear: isHHNetwork });
 
-  // deployer leaves its result in JSON files. We only care about the current and "extension"
-  const [currentDeploymentFile] = getAllDeploymentFiles({ network: hre.network.name });
-  const extendedFile = getDeploymentExtendedFiles(currentDeploymentFile);
-    
-  const deploymentInfo = JSON.parse(fs.readFileSync(currentDeploymentFile));
-  const abiInfo = JSON.parse(fs.readFileSync(extendedFile.abis));
-  const deployerContracts = deploymentInfo.contracts;
+  const info = await hre.run(SUBTASK_GET_DEPLOYMENT_INFO);
 
-  // send it to cannon
-  const contracts = {};
+  // deployer leaves its result in JSON files.
+  const deployment = getDeployment(info);
+  const abis = getDeploymentAbis(info);
 
-  const proxyAbi = [];
-
-  for (const c in deployerContracts) {
-    const deployerInfo = deployerContracts[c];
-
-    for (const abiEntry of abiInfo[c]) {
-      if (!proxyAbi.find(e => e.name === abiEntry.name)) {
-        proxyAbi.push(abiEntry);
-      }
+  const contracts = Object.values(deployment.contracts).reduce((contracts, c) => {
+    if (contracts[c.contractName]) {
+      throw new Error(`Contract name repeated: "${c.contractName}"`);
     }
 
-    const contractName = c.indexOf(':') !== -1 ? c.split(':')[1] : c;
-
-    contracts[contractName] = {
-      address: deployerInfo.deployedAddress,
-      abi: abiInfo[c],
-      deployTxnHash: deployerInfo.deployTransaction,
+    contracts[c.contractName] = {
+      address: c.deployedAddress,
+      abi: abis[c.contractFullyQualifiedName],
+      deployTxnHash: c.deployTransaction,
     };
-  }
 
-  contracts.Synthetix.abi = proxyAbi;
+    return contracts;
+  }, {});
+
+  // Rename Synthetix to Proxy
   contracts.Proxy = contracts.Synthetix;
   delete contracts.Synthetix;
 
+  // Set the multicall ABI on the Proxy
+  contracts.Proxy.abi = await hre.run(SUBTASK_GET_MULTICALL_ABI, { info });
+
   return {
-    contracts
+    contracts,
   };
 };
 
