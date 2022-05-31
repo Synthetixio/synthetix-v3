@@ -1,12 +1,27 @@
 const hre = require('hardhat');
+const logger = require('@synthetixio/core-js/utils/io/logger');
+
+const councils = [
+  {
+    name: 'ambassador-council',
+  },
+  {
+    name: 'grants-council',
+  },
+  {
+    name: 'spartan-council',
+  },
+  {
+    name: 'treasury-council',
+  },
+];
 
 async function main() {
-
+  for (const council of councils) {
+  }
 }
 
-main()
-  .then(() => process.exit(0))
-  .catch((error) => {
-    console.error(error);
-    process.exit(1);
-  });
+main().catch((err) => {
+  console.error(err);
+  process.exit(1);
+});
