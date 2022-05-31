@@ -21,6 +21,7 @@ module.exports = {
   SUBTASK_VALIDATE_ROUTER: 'deployer-validate-router',
   SUBTASK_VALIDATE_SATELLITES: 'deployer-validate-satellites',
   SUBTASK_VALIDATE_STORAGE: 'deployer-validate-storage',
+  SUBTASK_GET_MULTICALL_ABI: 'deployer-get-multicall-abi',
   TASK_DEPLOY: 'deploy',
   TASK_DEPLOY_VERIFY: 'deploy:verify',
   TASK_DEPLOY_MULTICALL_ABI: 'deploy:multicall-abi',

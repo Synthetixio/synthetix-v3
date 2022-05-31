@@ -1,15 +1,11 @@
-const fs = require('fs');
 const path = require('path');
 const assert = require('assert/strict');
 const { equal } = require('assert/strict');
 const { task } = require('hardhat/config');
 const logger = require('@synthetixio/core-js/utils/io/logger');
 const types = require('@synthetixio/core-js/utils/hardhat/argument-types');
-const {
-  getDeployment,
-  getDeploymentFile,
-  getDeploymentExtendedFiles,
-} = require('@synthetixio/deployer/utils/deployments');
+const { SUBTASK_GET_MULTICALL_ABI } = require('@synthetixio/deployer/task-names');
+const { getDeployment } = require('@synthetixio/deployer/utils/deployments');
 
 const councils = [
   {
@@ -50,9 +46,12 @@ task('validate-councils')
     types.alphanumeric
   )
   .setAction(async ({ instance }, hre) => {
+    logger.notice(`Validating councils on network "${hre.network.name}"`);
+
     for (const council of councils) {
       try {
         await validateCouncil({ instance }, council, hre);
+        await new Promise((resolve) => setTimeout(resolve, 1500));
       } catch (err) {
         console.error(err);
         logger.error(`Council "${council.name}" is not valid`);
@@ -70,45 +69,25 @@ async function validateCouncil({ instance }, council, hre) {
   };
 
   const deployment = getDeployment(info);
-  const deploymentFile = getDeploymentFile(info);
-  const deploymentExtendedFiles = getDeploymentExtendedFiles(deploymentFile);
-  const abis = JSON.parse(fs.readFileSync(deploymentExtendedFiles.abis));
+  const { deployedAddress } = Object.values(deployment.contracts).find((c) => c.isProxy);
 
-  /*
-   * General Checks
-   */
+  logger.info(`Proxy Address: ${deployedAddress}`);
+
+  const abi = await hre.run(SUBTASK_GET_MULTICALL_ABI, { info });
+  const Proxy = await hre.ethers.getContractAt(abi, deployedAddress);
+
   assert(deployment.properties.completed, `Deployment of ${council.name} is not completed`);
+  logger.success('Deployment complete');
 
-  const proxy = Object.values(deployment.contracts).find((c) => c.isProxy);
+  assert(await Proxy.isOwnerModuleInitialized());
+  equal(await Proxy.owner(), council.owner, 'Owner is invalid');
+  logger.success('OwnerModule correctly initialized');
 
-  /*
-   * Ownership
-   */
-  const OwnerModule = await hre.ethers.getContractAt(
-    abis['contracts/modules/OwnerModule.sol:OwnerModule'],
-    proxy.deployedAddress
-  );
-
-  assert(await OwnerModule.isOwnerModuleInitialized());
-  equal(await OwnerModule.owner(), council.owner, 'Owner is invalid');
-
-  /*
-   * ElectionModule
-   */
-  const ElectionModule = await hre.ethers.getContractAt(
-    abis['contracts/modules/ElectionModule.sol:ElectionModule'],
-    proxy.deployedAddress
-  );
-
-  assert(await ElectionModule.isElectionModuleInitialized());
-  assert(
-    Number(await ElectionModule.getNominationPeriodStartDate()),
-    council.nominationPeriodStartDate
-  );
-  assert(Number(await ElectionModule.getVotingPeriodStartDate()), council.votingPeriodStartDate);
-  assert(Number(await ElectionModule.getEpochEndDate()), council.epochEndDate);
-
-  logger.success('All checks passed');
+  assert(await Proxy.isElectionModuleInitialized());
+  assert(Number(await Proxy.getNominationPeriodStartDate()), council.nominationPeriodStartDate);
+  assert(Number(await Proxy.getVotingPeriodStartDate()), council.votingPeriodStartDate);
+  assert(Number(await Proxy.getEpochEndDate()), council.epochEndDate);
+  logger.success('ElectionModule correctly initialized');
 }
 
 function date(dateStr) {

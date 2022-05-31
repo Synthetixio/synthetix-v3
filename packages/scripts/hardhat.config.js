@@ -2,6 +2,7 @@ const { requireAll } = require('@synthetixio/core-js/utils/misc/require-all');
 
 require('dotenv/config');
 require('@nomiclabs/hardhat-ethers');
+require('@synthetixio/deployer');
 
 requireAll(`${__dirname}/tasks`);
 
