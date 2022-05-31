@@ -1,10 +1,5 @@
-const fs = require('fs');
 const { subtask } = require('hardhat/config');
-const {
-  getDeployment,
-  getDeploymentFile,
-  getDeploymentExtendedFiles,
-} = require('../utils/deployments');
+const { getDeployment, getDeploymentAbis } = require('../utils/deployments');
 const { SUBTASK_GET_MULTICALL_ABI } = require('../task-names');
 
 subtask(
@@ -12,10 +7,7 @@ subtask(
   'Generate a single merged ABI of the Proxy, including all the Modules ABIs'
 ).setAction(async ({ info, whitelist = [] }) => {
   const deployment = getDeployment(info);
-  const deploymentFile = getDeploymentFile(info);
-  const deploymentExtendedFiles = getDeploymentExtendedFiles(deploymentFile);
-
-  const abis = JSON.parse(fs.readFileSync(deploymentExtendedFiles.abis));
+  const abis = getDeploymentAbis(info);
 
   const contracts = Object.values(deployment.contracts)
     .filter((c) => c.isModule)
