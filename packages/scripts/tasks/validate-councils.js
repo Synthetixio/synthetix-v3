@@ -63,7 +63,6 @@ task('validate-councils')
     for (const council of councils) {
       try {
         await validateCouncil({ instance }, council, hre);
-        await new Promise((resolve) => setTimeout(resolve, 1500));
       } catch (err) {
         console.error(err);
         logger.error(`Council "${council.name}" is not valid`);
@@ -95,15 +94,14 @@ async function validateCouncil({ instance }, council, hre) {
   assert(deployment.properties.completed, `Deployment of ${council.name} is not completed`);
   logger.success('Deployment complete');
 
-  assert(await Proxy.isOwnerModuleInitialized());
-  equal(await Proxy.owner(), council.owner, 'Owner is invalid');
-  logger.success('OwnerModule correctly initialized');
+  await expect(Proxy, 'isOwnerModuleInitialized', true);
+  await expect(Proxy, 'owner', council.owner);
 
-  assert(await Proxy.isElectionModuleInitialized());
-  assert(Number(await Proxy.getNominationPeriodStartDate()), council.nominationPeriodStartDate);
-  assert(Number(await Proxy.getVotingPeriodStartDate()), council.votingPeriodStartDate);
-  assert(Number(await Proxy.getEpochEndDate()), council.epochEndDate);
-  logger.success('ElectionModule correctly initialized');
+  await expect(Proxy, 'isElectionModuleInitialized', true);
+  await expect(Proxy, 'isElectionModuleInitialized', true);
+  await expect(Proxy, 'getNominationPeriodStartDate', council.nominationPeriodStartDate);
+  await expect(Proxy, 'getVotingPeriodStartDate', council.votingPeriodStartDate);
+  await expect(Proxy, 'getEpochEndDate', council.epochEndDate);
 
   const councilTokenAddress = await Proxy.getCouncilToken();
   const Token = await hre.ethers.getContractAt(
@@ -112,11 +110,17 @@ async function validateCouncil({ instance }, council, hre) {
   );
 
   logger.info(`Token Address: ${councilTokenAddress}`);
-  assert(await Token.name(), council.councilTokenName);
-  assert(await Token.symbol(), council.councilTokenSymbol);
-  logger.success('ElectionToken correctly initialized');
+  await expect(Token, 'name', council.councilTokenName);
+  await expect(Token, 'symbol', council.councilTokenSymbol);
 }
 
 function date(dateStr) {
   return new Date(dateStr).valueOf() / 1000;
+}
+
+async function expect(Contract, methodName, expected) {
+  const result = await Contract[methodName]();
+  const actual = typeof expected === 'number' ? Number(result) : result;
+  equal(actual, expected);
+  logger.success(`${methodName} is "${expected}"`);
 }
