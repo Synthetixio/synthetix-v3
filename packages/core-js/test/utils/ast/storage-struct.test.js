@@ -1,14 +1,23 @@
+const path = require('path');
 const { equal, notEqual, deepEqual } = require('assert/strict');
 const { findContractDefinitions } = require('../../../utils/ast/finders');
 const { buildContractsStructMap } = require('../../../utils/ast/storage-struct');
-const asts = require('../../fixtures/asts.json');
+const parseContracts = require('../../helpers/parse-contracts');
 
 describe('utils/ast/storage-struct.js', function () {
   describe('build a contracts struct map', () => {
     let structsMap;
+    let sampleProject;
+
+    before('load sample-project artifacts', async function () {
+      const envPath = path.resolve(__dirname, '..', '..', 'fixtures', 'sample-project');
+      sampleProject = await parseContracts(envPath);
+    });
 
     before('builds a contract struct map from an asts object', async () => {
-      const contractNodes = Object.values(asts).map(findContractDefinitions).flat();
+      const contractNodes = findContractDefinitions(
+        sampleProject.asts['contracts/ElectionStorage.sol']
+      );
       structsMap = await buildContractsStructMap(contractNodes);
     });
 
@@ -17,8 +26,8 @@ describe('utils/ast/storage-struct.js', function () {
       deepEqual(result, []);
     });
 
-    it('should have 4 structs', () => {
-      equal(structsMap.length, 4, 'structsMap should have 4 structs');
+    it('should have 5 structs', () => {
+      equal(structsMap.length, 5, 'structsMap should have 5 structs');
     });
 
     it('all strutcs should conform with the basic format', () => {
@@ -33,17 +42,15 @@ describe('utils/ast/storage-struct.js', function () {
     });
 
     it('should find all the members', () => {
-      const contractStruct = structsMap.find((item) => item.contract.name === 'ProxyNamespace');
+      const contractStruct = structsMap.find((item) => item.contract.name === 'ElectionStorage');
       notEqual(contractStruct, undefined);
       equal(
-        contractStruct.struct.members.some(
-          (v) => v.name === 'implementation' && v.type === 'address'
-        ),
+        contractStruct.struct.members.some((v) => v.name === 'initialized' && v.type === 'bool'),
         true
       );
       equal(
         contractStruct.struct.members.some(
-          (v) => v.name === 'simulatingUpgrade' && v.type === 'bool'
+          (v) => v.name === 'councilToken' && v.type === 'address'
         ),
         true
       );

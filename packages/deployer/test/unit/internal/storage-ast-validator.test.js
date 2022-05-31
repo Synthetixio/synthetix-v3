@@ -254,6 +254,34 @@ describe('internal/storage-ast-validator.js', function () {
     });
   });
 
+  describe('change struct add nested struct', () => {
+    let currentAsts, previousAsts, validator;
+    let errorsFound = [];
+
+    before('set asts and validator', () => {
+      currentAsts = clone(asts);
+      const newMember = clone(currentAsts['ProxyNamespace'].nodes[1].nodes[0].members[1]);
+      newMember.name = 'newMember';
+      newMember.typeDescriptions.typeString = 'struct SetUtil.Bytes32Set';
+      currentAsts['ProxyNamespace'].nodes[1].nodes[0].members.push(newMember);
+      previousAsts = clone(asts);
+      validator = new ModuleStorageASTValidator(
+        fqNames,
+        Object.values(currentAsts),
+        Object.values(previousAsts)
+      );
+    });
+
+    before('use the validator to find problems', async () => {
+      errorsFound = await validator.findNestedStructDeclarations();
+    });
+
+    it('should find a nested storage', () => {
+      equal(errorsFound.length, 1);
+      ok(errorsFound[0].msg.includes('Nested structs at'));
+    });
+  });
+
   describe('contract variable declarations', () => {
     describe('valid constant declaration', () => {
       let currentAsts, previousAsts, validator;
@@ -281,8 +309,7 @@ describe('internal/storage-ast-validator.js', function () {
       });
     });
 
-    // TODO enable this test when #782 is closed
-    describe.skip('valid immutable declaration', () => {
+    describe('valid immutable declaration', () => {
       let currentAsts, previousAsts, validator;
       let errorsFound = [];
 

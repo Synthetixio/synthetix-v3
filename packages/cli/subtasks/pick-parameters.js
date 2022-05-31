@@ -7,8 +7,7 @@ subtask(SUBTASK_PICK_PARAMETERS, 'Populate the selected function parameters').se
   async (taskArguments, hre) => {
     hre.cli.functionParameters = [];
 
-    const abi = hre.deployer.deployment.abis[hre.cli.contractFullyQualifiedName];
-    const functionAbi = abi.find((abiItem) => abiItem.name === hre.cli.functionName);
+    const functionAbi = hre.cli.functionAbi;
 
     let parameterIndex = 0;
     // Using a while loop so that the user can retry failed inputs
@@ -33,7 +32,7 @@ subtask(SUBTASK_PICK_PARAMETERS, 'Populate the selected function parameters').se
         }
       } else {
         // Cancelling returns to pick-function
-        hre.cli.functionName = null;
+        hre.cli.functionAbi = null;
         hre.cli.functionParameters = null;
         parameterIndex = functionAbi.inputs.length;
       }
@@ -42,6 +41,10 @@ subtask(SUBTASK_PICK_PARAMETERS, 'Populate the selected function parameters').se
 );
 
 async function _parseInput(input, type, hre) {
+  if (type.includes('[]')) {
+    input = JSON.parse(input);
+  }
+
   const processed = await _preprocessInput(input, type, hre);
   if (input !== processed) {
     logger.info(`"${input}" auto-converted to "${processed}"`);

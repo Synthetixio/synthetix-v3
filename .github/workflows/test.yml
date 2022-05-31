@@ -15,7 +15,10 @@ jobs:
             deployer,
             synthetix-main,
             spartan-council,
-            governance-modules,
+            grants-council,
+            treasury-council,
+            ambassador-council,
+            synthetix-governance,
           ]
         include:
           - package: core-contracts
@@ -30,8 +33,14 @@ jobs:
             coverage-file: packages/synthetix-main/coverage.json
           - package: spartan-council
             coverage-file: packages/spartan-council/coverage.json
-          - package: governance-modules
-            coverage-file: packages/governance-modules/coverage.json
+          - package: grants-council
+            coverage-file: packages/grants-council/coverage.json
+          - package: treasury-council
+            coverage-file: packages/treasury-council/coverage.json
+          - package: ambassador-council
+            coverage-file: packages/ambassador-council/coverage.json
+          - package: synthetix-governance
+            coverage-file: packages/synthetix-governance/coverage.json
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v2
@@ -69,17 +78,3 @@ jobs:
           cache: "npm"
       - run: npm ci
       - run: npm --workspace=./packages/sample-project test
-
-  test-integration:
-    runs-on: ubuntu-latest
-    env:
-      FORK_PROVIDER_URL: ${{ env.FORK_PROVIDER_URL }}
-    steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-node@v2
-        with:
-          node-version: "16.8.0"
-          cache: "npm"
-      - run: npm ci
-      - name: Execute tests
-        run: npm --workspace=./packages/spartan-council test:integration

@@ -1,4 +1,6 @@
 const path = require('path');
+const { equal } = require('assert/strict');
+const { TASK_DEPLOY_MULTICALL_ABI } = require('../../task-names');
 const { loadEnvironment, deployOnEnvironment } = require('../helpers/use-environment');
 const { copyFile, unlink, readFile, writeFile } = require('fs/promises');
 
@@ -19,6 +21,23 @@ describe('sample-project', function () {
         alias: 'first',
         clear: true,
       });
+    });
+
+    it('generates multicall ABI', async function () {
+      const multiResult = await hre.run(TASK_DEPLOY_MULTICALL_ABI, {
+        instance: 'test',
+        quiet: true,
+      });
+
+      equal(multiResult.abi.length, 39);
+
+      const singleResult = await hre.run(TASK_DEPLOY_MULTICALL_ABI, {
+        include: 'contracts/modules/SomeModule.sol:SomeModule',
+        instance: 'test',
+        quiet: true,
+      });
+
+      equal(singleResult.abi.length, 5);
     });
 
     it('correctly executes the second time and makes no changes', async function () {

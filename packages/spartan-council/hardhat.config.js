@@ -6,8 +6,6 @@ require('@nomiclabs/hardhat-ethers');
 require('@synthetixio/deployer');
 require('@synthetixio/cli');
 
-require('./tasks/test');
-
 /**
  * @type import('hardhat/config').HardhatUserConfig
  */
@@ -29,6 +27,10 @@ const config = {
       url: 'https://kovan.optimism.io',
       accounts: process.env.DEPLOYER_PRIVATE_KEY ? [process.env.DEPLOYER_PRIVATE_KEY] : [],
     },
+    ['optimistic-mainnet']: {
+      url: 'https://mainnet.optimism.io',
+      accounts: process.env.DEPLOYER_PRIVATE_KEY ? [process.env.DEPLOYER_PRIVATE_KEY] : [],
+    },
   },
   deployer: {
     proxyContract: 'SpartanCouncil',
@@ -36,15 +38,9 @@ const config = {
   contractSizer: {
     strict: true,
   },
+  etherscan: {
+    apiKey: process.env.ETHERSCAN_API_KEY,
+  },
 };
-
-if (process.env.FORK_PROVIDER_URL) {
-  config.networks.hardhat = {
-    forking: {
-      url: process.env.FORK_PROVIDER_URL,
-      blockNumber: 4838445, // 2022-03-25
-    },
-  };
-}
 
 module.exports = config;

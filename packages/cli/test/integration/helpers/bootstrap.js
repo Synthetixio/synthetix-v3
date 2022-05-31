@@ -2,8 +2,8 @@ const path = require('path');
 const { loadEnvironment } = require('@synthetixio/deployer/test/helpers/use-environment');
 const CliRunner = require('./cli-runner');
 
-function bootstrap(fixture) {
-  before('set fixture project and network', function () {
+function bootstrap() {
+  before('set fixture project and network', async function () {
     const folder = path.join(
       __dirname,
       '..',
@@ -11,7 +11,7 @@ function bootstrap(fixture) {
       '..',
       'test',
       'fixture-projects',
-      fixture ? fixture : 'sample-project'
+      'sample-project'
     );
 
     this.hre = loadEnvironment(folder, 'local');

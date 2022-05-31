@@ -1,0 +1,25 @@
+{
+  "name": "@synthetixio/ambassador-council",
+  "version": "1.0.0",
+  "description": "",
+  "files": [
+    "contracts",
+    "!contracts/mocks"
+  ],
+  "scripts": {
+    "test": "hardhat test",
+    "coverage": "hardhat coverage",
+    "compile-contracts": "hardhat compile",
+    "size-contracts": "hardhat size-contracts"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@nomiclabs/hardhat-ethers": "2.0.5",
+    "hardhat": "2.9.3",
+    "hardhat-contract-sizer": "2.1.1",
+    "solidity-coverage": "0.7.17",
+    "synthetix": "2.64.2"
+  }
+}

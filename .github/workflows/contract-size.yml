@@ -8,7 +8,16 @@ jobs:
     strategy:
       matrix:
         package:
-          [core-contracts, core-modules, synthetix-main, spartan-council, governance-modules]
+          [
+            core-contracts,
+            core-modules,
+            synthetix-main,
+            spartan-council,
+            grants-council,
+            treasury-council,
+            ambassador-council,
+            synthetix-governance,
+          ]
 
     steps:
       - uses: actions/checkout@v2

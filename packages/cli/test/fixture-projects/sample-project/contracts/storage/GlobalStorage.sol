@@ -4,6 +4,7 @@ pragma solidity ^0.8.0;
 contract GlobalStorage {
     struct GlobalStore {
         uint uintValue;
+        address[] addressArray;
     }
 
     function _globalStore() internal pure returns (GlobalStore storage store) {
