@@ -5,7 +5,11 @@ const { task } = require('hardhat/config');
 const logger = require('@synthetixio/core-js/utils/io/logger');
 const types = require('@synthetixio/core-js/utils/hardhat/argument-types');
 const { SUBTASK_GET_MULTICALL_ABI } = require('@synthetixio/deployer/task-names');
-const { getDeployment } = require('@synthetixio/deployer/utils/deployments');
+const {
+  getDeployment,
+  getDeploymentFile,
+  getDeploymentExtendedFiles,
+} = require('@synthetixio/deployer/utils/deployments');
 
 const councils = [
   {
@@ -14,6 +18,8 @@ const councils = [
     nominationPeriodStartDate: date('2022-06-10'),
     votingPeriodStartDate: date('2022-06-17'),
     epochEndDate: date('2022-07-01'),
+    councilTokenName: 'Synthetix Ambassador Council Token',
+    councilTokenSymbol: 'SNX-ACT',
   },
   {
     name: 'grants-council',
@@ -21,6 +27,8 @@ const councils = [
     nominationPeriodStartDate: date('2022-06-10'),
     votingPeriodStartDate: date('2022-06-17'),
     epochEndDate: date('2022-07-01'),
+    councilTokenName: 'Synthetix Grants Council Token',
+    councilTokenSymbol: 'SNX-GCT',
   },
   {
     name: 'spartan-council',
@@ -28,6 +36,8 @@ const councils = [
     nominationPeriodStartDate: date('2022-06-10'),
     votingPeriodStartDate: date('2022-06-17'),
     epochEndDate: date('2022-07-01'),
+    councilTokenName: 'Synthetix Spartan Council Token',
+    councilTokenSymbol: 'SNX-SCT',
   },
   {
     name: 'treasury-council',
@@ -35,6 +45,8 @@ const councils = [
     nominationPeriodStartDate: date('2022-06-10'),
     votingPeriodStartDate: date('2022-06-17'),
     epochEndDate: date('2022-07-01'),
+    councilTokenName: 'Synthetix Treasury Council Token',
+    councilTokenSymbol: 'SNX-TCT',
   },
 ];
 
@@ -69,6 +81,10 @@ async function validateCouncil({ instance }, council, hre) {
   };
 
   const deployment = getDeployment(info);
+  const deploymentFile = getDeploymentFile(info);
+  const deploymentExtendedFiles = getDeploymentExtendedFiles(deploymentFile);
+
+  const abis = require(deploymentExtendedFiles.abis);
   const { deployedAddress } = Object.values(deployment.contracts).find((c) => c.isProxy);
 
   logger.info(`Proxy Address: ${deployedAddress}`);
@@ -88,6 +104,17 @@ async function validateCouncil({ instance }, council, hre) {
   assert(Number(await Proxy.getVotingPeriodStartDate()), council.votingPeriodStartDate);
   assert(Number(await Proxy.getEpochEndDate()), council.epochEndDate);
   logger.success('ElectionModule correctly initialized');
+
+  const councilTokenAddress = await Proxy.getCouncilToken();
+  const Token = await hre.ethers.getContractAt(
+    abis['@synthetixio/core-modules/contracts/tokens/CouncilToken.sol:CouncilToken'],
+    councilTokenAddress
+  );
+
+  logger.info(`Token Address: ${councilTokenAddress}`);
+  assert(await Token.name(), council.councilTokenName);
+  assert(await Token.symbol(), council.councilTokenSymbol);
+  logger.success('ElectionToken correctly initialized');
 }
 
 function date(dateStr) {
