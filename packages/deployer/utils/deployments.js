@@ -63,6 +63,30 @@ function getRouterAddress(info) {
 }
 
 /**
+ * Retrieves an object with the latest deployment ABIs json data for an instance
+ * @param {DeploymentInfo} info See DeploymentInfo above
+ * @returns {Object} An object with deployment ABIs
+ */
+function getDeploymentSources(info) {
+  const file = getDeploymentFile(info);
+  if (!file) return null;
+  const extended = getDeploymentExtendedFiles(file);
+  return JSON.parse(fs.readFileSync(extended.sources, 'utf8'));
+}
+
+/**
+ * Retrieves an object with the latest deployment ABIs json data for an instance
+ * @param {DeploymentInfo} info See DeploymentInfo above
+ * @returns {Object} An object with deployment ABIs
+ */
+function getDeploymentAbis(info) {
+  const file = getDeploymentFile(info);
+  if (!file) return null;
+  const extended = getDeploymentExtendedFiles(file);
+  return JSON.parse(fs.readFileSync(extended.abis, 'utf8'));
+}
+
+/**
  * Retrieves an object with the latest deployment json data for an instance
  * @param {DeploymentInfo} info See DeploymentInfo above
  * @returns {Object} An object with deployment schema
@@ -119,6 +143,8 @@ module.exports = {
   getDeploymentExtendedFiles,
   getProxyAddress,
   getRouterAddress,
+  getDeploymentSources,
+  getDeploymentAbis,
   getDeployment,
   getDeploymentFile,
   getAllDeploymentFiles,

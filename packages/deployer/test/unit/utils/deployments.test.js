@@ -1,4 +1,4 @@
-const { deepEqual } = require('assert/strict');
+const { ok, deepEqual } = require('assert/strict');
 const fs = require('fs');
 const path = require('path');
 const { loadEnvironment, deployOnEnvironment } = require('../../helpers/use-environment');
@@ -6,6 +6,8 @@ const {
   getDeploymentExtendedFiles,
   getProxyAddress,
   getRouterAddress,
+  getDeploymentSources,
+  getDeploymentAbis,
   getDeployment,
   getDeploymentFile,
   getAllDeploymentFiles,
@@ -67,6 +69,32 @@ describe('utils/deployments.js', function () {
         (contract) => contract.isRouter
       );
       deepEqual(result, deployedAddress);
+    });
+  });
+
+  describe('#getDeploymentAbis', function () {
+    it('gets the newest deployment abis', function () {
+      const result = getDeploymentAbis(info);
+      ok(Array.isArray(result['contracts/Router.sol:Router']));
+    });
+
+    it('returns null if the given instance does not have any deployments', function () {
+      const result = getDeploymentAbis({ ...info, instance: 'optimism' });
+      deepEqual(result, null);
+    });
+  });
+
+  describe('#getDeploymentSources', function () {
+    it('gets the newest deployment abis', function () {
+      const result = getDeploymentSources(info);
+      ok(result['contracts/Router.sol']);
+      ok(result['contracts/Router.sol'].ast);
+      deepEqual(typeof result['contracts/Router.sol'].sourceCode, 'string');
+    });
+
+    it('returns null if the given instance does not have any deployments', function () {
+      const result = getDeploymentSources({ ...info, instance: 'optimism' });
+      deepEqual(result, null);
     });
   });
 
