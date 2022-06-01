@@ -15,16 +15,7 @@ jobs:
       # dependencies using npm workspaces, e.g.: npm i -w packages/core-js some-dependency
       # More info: https://docs.npmjs.com/cli/v7/using-npm/workspaces
       - name: Check package-lock.json files are not present on packages/*
-        run: |
-          for workspace in $(find packages/* -type d -maxdepth 0)
-          do
-            lockfile="$workspace/package-lock.json"
-            if [ -f "$lockfile" ]; then
-              echo "The file $lockfile was found, please delete it and install dependencies using npm's Workspaces functionality"
-              echo ' - More info 👉 https://docs.npmjs.com/cli/v7/using-npm/workspaces'
-              exit 1
-            fi
-          done
+        run: bin/check-packages
 
       # The following steps are for checking the validity of the package-lock.json edits.
       # This will make sure that the file has not been tempered with, nor the developer
@@ -38,9 +29,3 @@ jobs:
           first_file_path: package-lock.json
           second_file_path: package-lock.original.json
           expected_result: PASSED
-      #     cmp package-lock.original.json package-lock.json
-      # - name: Show diff if the previous step have failed
-      #   if: failure()
-      #   run: |
-      #     npx --yes humandiff package-lock.original.json package-lock.json
-      #     exit 1

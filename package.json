@@ -23,10 +23,12 @@
     "lint:sol:fix": "prettier --write 'packages/**/*.sol' && solhint --fix 'packages/**/*.sol'",
     "lint:quick": "pretty-quick --check --staged --pattern '**/*.(js|sol)'",
     "lint:fix": "npm run lint:js:fix && npm run lint:sol:fix",
-    "lint": "npm run lint:js && npm run lint:sol"
+    "lint": "npm run lint:js && npm run lint:sol",
+    "check-packages": "bin/check-packages"
   },
   "pre-commit": [
-    "lint:quick"
+    "lint:quick",
+    "check-packages"
   ],
   "workspaces": [
     "packages/*"
