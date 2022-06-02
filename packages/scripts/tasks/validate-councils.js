@@ -17,6 +17,7 @@ const councils = [
     epochEndDate: date('2022-07-01'),
     councilTokenName: 'Synthetix Ambassador Council Token',
     councilTokenSymbol: 'SNX-ACT',
+    nexEpochSeatCount: 3,
   },
   {
     name: 'grants-council',
@@ -27,6 +28,7 @@ const councils = [
     epochEndDate: date('2022-07-01'),
     councilTokenName: 'Synthetix Grants Council Token',
     councilTokenSymbol: 'SNX-GCT',
+    nexEpochSeatCount: 5,
   },
   {
     name: 'spartan-council',
@@ -37,6 +39,7 @@ const councils = [
     epochEndDate: date('2022-07-01'),
     councilTokenName: 'Synthetix Spartan Council Token',
     councilTokenSymbol: 'SNX-SCT',
+    nexEpochSeatCount: 8,
   },
   {
     name: 'treasury-council',
@@ -47,6 +50,7 @@ const councils = [
     epochEndDate: date('2022-07-01'),
     councilTokenName: 'Synthetix Treasury Council Token',
     councilTokenSymbol: 'SNX-TCT',
+    nexEpochSeatCount: 4,
   },
 ];
 
@@ -100,6 +104,7 @@ async function validateCouncil({ instance }, council, hre) {
   await expect(Proxy, 'getVotingPeriodStartDate', council.votingPeriodStartDate);
   await expect(Proxy, 'getEpochEndDate', council.epochEndDate);
   await expect(Proxy, 'getCouncilMembers', council.members);
+  await expect(Proxy, 'getNextEpochSeatCount', council.nexEpochSeatCount);
 
   const councilTokenAddress = await Proxy.getCouncilToken();
   const Token = await hre.ethers.getContractAt(
@@ -120,10 +125,14 @@ async function expect(Contract, methodName, expected) {
   const result = await Contract[methodName]();
   const actual = typeof expected === 'number' ? Number(result) : result;
 
-  if (typeof expected === 'object') {
-    deepEqual(actual, expected);
-  } else {
-    equal(actual, expected);
+  try {
+    if (typeof expected === 'object') {
+      deepEqual(actual, expected);
+    } else {
+      equal(actual, expected);
+    }
+  } catch (err) {
+    logger.error(`Was expecting ${expected} for ${methodName}, but received ${actual} - \n${err}`);
   }
 
   logger.success(`${methodName} is "${expected}"`);
