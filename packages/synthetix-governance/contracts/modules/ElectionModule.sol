@@ -147,7 +147,7 @@ contract ElectionModule is ISynthetixElectionModule, BaseElectionModule, DebtSha
     // ---------------------------------------
 
     /// @dev Overrides the user's voting power by combining local chain debt share with debt shares in other chains, quadratically filtered
-    function _getVotePower(address user) internal view override returns (uint) {
+    function _getVotePower(address user) internal virtual view override returns (uint) {
         uint votePower = _getDebtShare(user) + _getDeclaredCrossChainDebtShare(user);
 
         return MathUtil.sqrt(votePower);
