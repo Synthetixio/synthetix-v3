@@ -1,6 +1,6 @@
 const path = require('path');
 const assert = require('assert/strict');
-const { equal } = require('assert/strict');
+const { equal, deepEqual } = require('assert/strict');
 const { task } = require('hardhat/config');
 const logger = require('@synthetixio/core-js/utils/io/logger');
 const types = require('@synthetixio/core-js/utils/hardhat/argument-types');
@@ -11,6 +11,7 @@ const councils = [
   {
     name: 'ambassador-council',
     owner: '0xDe910777C787903F78C89e7a0bf7F4C435cBB1Fe',
+    members: ['0xDe910777C787903F78C89e7a0bf7F4C435cBB1Fe'],
     nominationPeriodStartDate: date('2022-06-10'),
     votingPeriodStartDate: date('2022-06-17'),
     epochEndDate: date('2022-07-01'),
@@ -20,6 +21,7 @@ const councils = [
   {
     name: 'grants-council',
     owner: '0xDe910777C787903F78C89e7a0bf7F4C435cBB1Fe',
+    members: ['0xDe910777C787903F78C89e7a0bf7F4C435cBB1Fe'],
     nominationPeriodStartDate: date('2022-06-10'),
     votingPeriodStartDate: date('2022-06-17'),
     epochEndDate: date('2022-07-01'),
@@ -29,6 +31,7 @@ const councils = [
   {
     name: 'spartan-council',
     owner: '0xDe910777C787903F78C89e7a0bf7F4C435cBB1Fe',
+    members: ['0xDe910777C787903F78C89e7a0bf7F4C435cBB1Fe'],
     nominationPeriodStartDate: date('2022-06-10'),
     votingPeriodStartDate: date('2022-06-17'),
     epochEndDate: date('2022-07-01'),
@@ -38,6 +41,7 @@ const councils = [
   {
     name: 'treasury-council',
     owner: '0xDe910777C787903F78C89e7a0bf7F4C435cBB1Fe',
+    members: ['0xDe910777C787903F78C89e7a0bf7F4C435cBB1Fe'],
     nominationPeriodStartDate: date('2022-06-10'),
     votingPeriodStartDate: date('2022-06-17'),
     epochEndDate: date('2022-07-01'),
@@ -92,10 +96,10 @@ async function validateCouncil({ instance }, council, hre) {
   await expect(Proxy, 'owner', council.owner);
 
   await expect(Proxy, 'isElectionModuleInitialized', true);
-  await expect(Proxy, 'isElectionModuleInitialized', true);
   await expect(Proxy, 'getNominationPeriodStartDate', council.nominationPeriodStartDate);
   await expect(Proxy, 'getVotingPeriodStartDate', council.votingPeriodStartDate);
   await expect(Proxy, 'getEpochEndDate', council.epochEndDate);
+  await expect(Proxy, 'getCouncilMembers', council.members);
 
   const councilTokenAddress = await Proxy.getCouncilToken();
   const Token = await hre.ethers.getContractAt(
@@ -115,6 +119,12 @@ function date(dateStr) {
 async function expect(Contract, methodName, expected) {
   const result = await Contract[methodName]();
   const actual = typeof expected === 'number' ? Number(result) : result;
-  equal(actual, expected);
+
+  if (typeof expected === 'object') {
+    deepEqual(actual, expected);
+  } else {
+    equal(actual, expected);
+  }
+
   logger.success(`${methodName} is "${expected}"`);
 }
