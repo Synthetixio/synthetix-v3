@@ -1,6 +1,6 @@
 const chalk = require('chalk');
-const prompts = require('prompts');
 const { subtask } = require('hardhat/config');
+const autocomplete = require('../internal/autocomplete');
 const { SUBTASK_PICK_CONTRACT, SUBTASK_FIND_CONTRACTS } = require('../task-names');
 
 subtask(SUBTASK_PICK_CONTRACT, 'Pick contract to interact with').setAction(
@@ -14,14 +14,10 @@ subtask(SUBTASK_PICK_CONTRACT, 'Pick contract to interact with').setAction(
       };
     });
 
-    const { result } = await prompts([
-      {
-        type: 'autocomplete',
-        name: 'result',
-        message: 'Pick a CONTRACT:',
-        choices,
-      },
-    ]);
+    const result = await autocomplete({
+      message: 'Pick a CONTRACT:',
+      choices,
+    });
 
     if (result) {
       hre.cli.contractFullyQualifiedName = result.contractFullyQualifiedName;
