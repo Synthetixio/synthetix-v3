@@ -1,4 +1,4 @@
-const { ethers } = hre;
+const { ethers } = require('hardhat');
 const assertBn = require('@synthetixio/core-js/utils/assertions/assert-bignumber');
 const { parseBalanceMap } = require('@synthetixio/core-js/utils/merkle-tree/parse-balance-tree');
 const { bootstrap } = require('@synthetixio/deployer/utils/tests');
