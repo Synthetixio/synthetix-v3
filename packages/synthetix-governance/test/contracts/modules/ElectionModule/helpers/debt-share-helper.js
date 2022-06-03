@@ -112,12 +112,11 @@ function expectedCrossChainDebtShare(user, periodId) {
   return _crossChainDebtShareData[periodId][user];
 }
 
-function expectedVotePower(user, periodId, linear = false) {
+function expectedVotePower(user, periodId) {
   const debtShare = expectedDebtShare(user, periodId);
   const crossChainDebtShare = expectedCrossChainDebtShare(user, periodId);
-  const combined = debtShare.add(crossChainDebtShare);
 
-  return linear ? combined : bnSqrt(linear);
+  return bnSqrt(debtShare.add(crossChainDebtShare));
 }
 
 function getCrossChainMerkleTree(periodId) {
