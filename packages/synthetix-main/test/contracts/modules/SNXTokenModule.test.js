@@ -4,7 +4,7 @@ const assertRevert = require('@synthetixio/core-js/utils/assertions/assert-rever
 const assertBn = require('@synthetixio/core-js/utils/assertions/assert-bignumber');
 const { findEvent } = require('@synthetixio/core-js/utils/ethers/events');
 const { bootstrap } = require('@synthetixio/deployer/utils/tests');
-const initializer = require('../../helpers/initializer');
+const initializer = require('@synthetixio/core-modules/test/helpers/initializer');
 
 describe('SNXTokenModule', function () {
   const { proxyAddress } = bootstrap(initializer);

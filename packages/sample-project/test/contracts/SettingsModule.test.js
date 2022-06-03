@@ -2,7 +2,7 @@ const { ethers } = hre;
 const assertRevert = require('@synthetixio/core-js/utils/assertions/assert-revert');
 const { bootstrap } = require('@synthetixio/deployer/utils/tests');
 const assertBn = require('@synthetixio/core-js/utils/assertions/assert-bignumber');
-const initializer = require('../helpers/initializer');
+const initializer = require('@synthetixio/core-modules/test/helpers/initializer');
 
 describe('SettingsModule', () => {
   const { proxyAddress } = bootstrap(initializer);

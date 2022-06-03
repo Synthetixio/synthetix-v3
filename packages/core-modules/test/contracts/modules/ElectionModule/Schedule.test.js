@@ -10,7 +10,7 @@ const {
 } = require('@synthetixio/core-js/utils/hardhat/rpc');
 const { daysToSeconds } = require('@synthetixio/core-js/utils/misc/dates');
 const { bootstrap } = require('@synthetixio/deployer/utils/tests');
-const initializer = require('../../../helpers/initializer');
+const initializer = require('@synthetixio/core-modules/test/helpers/initializer');
 const { ElectionPeriod, assertDatesAreClose } = require('./helpers/election-helper');
 const { findEvent } = require('@synthetixio/core-js/utils/ethers/events');
 
