@@ -37,7 +37,7 @@ contract ElectionModule is ISynthetixElectionModule, BaseElectionModule, DebtSha
         uint64 votingPeriodStartDate,
         uint64 epochEndDate,
         address debtShareContract
-    ) external onlyOwner onlyIfNotInitialized {
+    ) external override onlyOwner onlyIfNotInitialized {
         _setDebtShareContract(debtShareContract);
 
         _initializeElectionModule(
@@ -136,7 +136,7 @@ contract ElectionModule is ISynthetixElectionModule, BaseElectionModule, DebtSha
         uint256 debtShare,
         bytes32[] calldata merkleProof,
         address[] calldata candidates
-    ) public onlyInPeriod(ElectionPeriod.Vote) {
+    ) public override onlyInPeriod(ElectionPeriod.Vote) {
         declareCrossChainDebtShare(msg.sender, debtShare, merkleProof);
 
         cast(candidates);
@@ -147,7 +147,7 @@ contract ElectionModule is ISynthetixElectionModule, BaseElectionModule, DebtSha
     // ---------------------------------------
 
     /// @dev Overrides the user's voting power by combining local chain debt share with debt shares in other chains, quadratically filtered
-    function _getVotePower(address user) internal virtual view override returns (uint) {
+    function _getVotePower(address user) internal view virtual override returns (uint) {
         uint votePower = _getDebtShare(user) + _getDeclaredCrossChainDebtShare(user);
 
         return MathUtil.sqrt(votePower);
