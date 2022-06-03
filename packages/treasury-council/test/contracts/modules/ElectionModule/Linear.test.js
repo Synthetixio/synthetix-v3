@@ -48,7 +48,7 @@ describe('SynthetixElectionModule - treasury-council (linear voting)', function 
     await ElectionModule[
       'initializeElectionModule(string,string,address[],uint8,uint64,uint64,uint64,address)'
     ](
-      'Spartan Council Token',
+      'Treasury Council Token',
       'SCT',
       [owner.address],
       1,
