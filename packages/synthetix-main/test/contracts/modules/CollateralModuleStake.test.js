@@ -54,8 +54,8 @@ describe('CollateralModule Stake', function () {
   });
 
   before('mint some account tokens', async () => {
-    await (await AccountModule.connect(user1).createAccount(1)).wait();
-    await (await AccountModule.connect(user2).createAccount(2)).wait();
+    await (await AccountToken.connect(user1).mint(user1.address, 1)).wait();
+    await (await AccountToken.connect(user2).mint(user2.address, 2)).wait();
   });
 
   before('mint some collateral to the user', async () => {
