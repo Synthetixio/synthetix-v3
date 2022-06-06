@@ -88,6 +88,7 @@ describe('MathUtil', () => {
       await assertRevert(MathUtil.mulDivDown(e(1, 18), e(1, 18), 0));
     });
   });
+
   describe('mulDivUp()', () => {
     async function assertMulDivUp(data, expected) {
       assertBn.equal(
