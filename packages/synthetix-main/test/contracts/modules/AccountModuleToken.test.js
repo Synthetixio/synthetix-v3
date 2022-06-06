@@ -28,20 +28,11 @@ describe('AccountModule - AccountToken', function () {
     AccountToken = await ethers.getContractAt('AccountToken', accountTokenAddress);
   });
 
-  describe('when attempting to mint an account token from the satellite', async () => {
-    it('reverts', async () => {
-      await assertRevert(
-        AccountToken.connect(user1).mint(user1.address, 1),
-        `Unauthorized("${user1.address}")`
-      );
-    });
-  });
-
   describe('When minting an AccountToken', async () => {
     let receipt;
 
     before('mint an accoun token', async () => {
-      const tx = await AccountModule.connect(user1).createAccount(1);
+      const tx = await AccountToken.connect(user1).createAccount(user1.address, 1);
       receipt = await tx.wait();
     });
 

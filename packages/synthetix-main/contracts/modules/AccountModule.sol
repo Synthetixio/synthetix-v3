@@ -85,12 +85,6 @@ contract AccountModule is IAccountModule, OwnableMixin, AccountRBACMixin, Initia
     // ---------------------------------------
     // Business Logic
     // ---------------------------------------
-    function createAccount(uint256 accountId) external override {
-        AccountToken(getAccountAddress()).mint(msg.sender, accountId);
-
-        _accountModuleStore().accountsRBAC[accountId].owner = msg.sender;
-    }
-
     function transferAccount(address to, uint256 accountId) external override onlyFromTokenProxy {
         _accountModuleStore().accountsRBAC[accountId].owner = to;
     }
