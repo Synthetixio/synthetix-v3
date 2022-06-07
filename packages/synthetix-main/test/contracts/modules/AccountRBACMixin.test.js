@@ -28,7 +28,7 @@ describe('AccountRBACMixin', function () {
   });
 
   before('mint an account token', async () => {
-    await (await AccountModule.connect(user1).createAccount(1)).wait();
+    await (await AccountToken.connect(user1).mint(user1.address, 1)).wait();
   });
 
   it('is minted', async () => {

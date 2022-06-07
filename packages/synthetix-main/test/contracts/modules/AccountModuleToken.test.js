@@ -28,20 +28,11 @@ describe('AccountModule - AccountToken', function () {
     AccountToken = await ethers.getContractAt('AccountToken', accountTokenAddress);
   });
 
-  describe('when attempting to mint an account token from the satellite', async () => {
-    it('reverts', async () => {
-      await assertRevert(
-        AccountToken.connect(user1).mint(user1.address, 1),
-        `Unauthorized("${user1.address}")`
-      );
-    });
-  });
-
   describe('When minting an AccountToken', async () => {
     let receipt;
 
     before('mint an accoun token', async () => {
-      const tx = await AccountModule.connect(user1).createAccount(1);
+      const tx = await AccountToken.connect(user1).mint(user1.address, 1);
       receipt = await tx.wait();
     });
 
@@ -59,7 +50,10 @@ describe('AccountModule - AccountToken', function () {
 
     describe('when trying to mint the same AccountTokenId', () => {
       it('reverts', async () => {
-        await assertRevert(AccountModule.connect(user2).createAccount(1), 'TokenAlreadyMinted(1)');
+        await assertRevert(
+          AccountToken.connect(user2).mint(user2.address, 1),
+          'TokenAlreadyMinted(1)'
+        );
       });
     });
 
