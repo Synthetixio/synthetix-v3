@@ -47,21 +47,21 @@ contract AccountToken is IAccountToken, ERC721, AccountTokenStorage, Initializab
     // ---------------------------------------
     // Mint/Transfer
     // ---------------------------------------
-    function mint(address _owner, uint256 accountId) public override {
-        _mint(_owner, accountId);
+    function mint(address accountOwner, uint256 accountId) public override {
+        _mint(accountOwner, accountId);
 
-        IAccountModule(_accountStore().mainProxy).transferAccount(_owner, accountId);
+        IAccountModule(_accountStore().mainProxy).transferAccount(accountOwner, accountId);
 
-        emit AccountMinted(_owner, accountId);
+        emit AccountMinted(accountOwner, accountId);
     }
 
-    function mintNext(address _owner) external override returns (uint256 accountId) {
+    function mintNext(address accountOwner) external override returns (uint256 accountId) {
         while (_exists(_accountStore().recentIdUsed)) {
             _accountStore().recentIdUsed++;
         }
         accountId = _accountStore().recentIdUsed;
 
-        mint(_owner, accountId);
+        mint(accountOwner, accountId);
     }
 
     function _postTransfer(
