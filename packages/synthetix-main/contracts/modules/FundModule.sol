@@ -284,7 +284,7 @@ contract FundModule is
         uint fundId,
         uint marketId,
         uint marketWeight,
-        uint totalWeight
+        uint totalWeight // solhint-disable-next-line no-empty-blocks
     ) internal {
         // TODO implement it when markets are created
     }
