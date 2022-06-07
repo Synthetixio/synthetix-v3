@@ -4,6 +4,7 @@ const types = require('@synthetixio/core-js/utils/hardhat/argument-types');
 const { formatDate } = require('@synthetixio/core-js/utils/misc/dates');
 const getPackageProxy = require('../internal/get-package-proxy');
 const getPeriodDate = require('../internal/get-period-date');
+const getTimestamp = require('../internal/get-timestamp');
 const { COUNCILS, ElectionPeriod } = require('../internal/constants');
 
 task('governance-fixtures', 'CLI tools for managing governance fixtures')
@@ -15,13 +16,17 @@ task('governance-fixtures', 'CLI tools for managing governance fixtures')
 
       const ui = new inquirer.ui.BottomBar();
 
-      const currentBlock = await hre.ethers.provider.getBlock();
+      const timestamp = await getTimestamp(hre);
+      const blockNumber = await hre.ethers.provider.getBlockNumber();
 
-      const time = new Date(currentBlock.timestamp * 1000);
+      const time = new Date(timestamp * 1000);
       ui.log.write(
-        `Network: ${hre.network.name} | Block: ${currentBlock.number} | Timestamp: ${
-          currentBlock.timestamp
-        } | Date: ${formatDate(time)}`
+        toOneLine({
+          Network: hre.network.name,
+          BlockNumber: blockNumber,
+          Timestamp: timestamp,
+          Date: formatDate(time),
+        })
       );
 
       const choices = await Promise.all(
@@ -71,7 +76,6 @@ async function initCouncils(hre, instance) {
     COUNCILS.map(async (name) => {
       const council = { name };
       council.Proxy = await getPackageProxy(hre, name, instance);
-      console.log(await council.Proxy.getCurrentPeriod());
       council.currentPeriod = Object.keys(ElectionPeriod)[await council.Proxy.getCurrentPeriod()];
       return council;
     })
@@ -83,4 +87,10 @@ function getNext(arr, curr) {
   const currIndex = arr.findIndex((val) => val === curr);
   if (currIndex === -1) throw new Error(`Item "${curr}" not found in "${JSON.stringify(arr)}"`);
   return arr[currIndex === arr.length - 1 ? 0 : currIndex + 1];
+}
+
+function toOneLine(obj = {}) {
+  return Object.entries(obj)
+    .map(([key, val]) => `${key}: ${val}`)
+    .join(' | ');
 }

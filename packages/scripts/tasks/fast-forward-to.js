@@ -1,9 +1,10 @@
 const { task } = require('hardhat/config');
-const { fastForwardTo } = require('@synthetixio/core-js/utils/hardhat/rpc');
+// const { fastForwardTo } = require('@synthetixio/core-js/utils/hardhat/rpc');
 const types = require('@synthetixio/core-js/utils/hardhat/argument-types');
 const { COUNCILS } = require('../internal/constants');
 const getPackageProxy = require('../internal/get-package-proxy');
 const getPeriodDate = require('../internal/get-period-date');
+const getTimestamp = require('../internal/get-timestamp');
 
 task('fast-forward-to', 'skips time to the specified election period')
   .addOptionalParam('instance', 'Deployment instance name', 'official', types.alphanumeric)
@@ -31,9 +32,19 @@ task('fast-forward-to', 'skips time to the specified election period')
 
     const time = await getPeriodDate(Proxy, period);
 
-    await fastForwardTo(time, hre.ethers.provider);
+    await fastForwardTo(hre, time);
 
     console.log(`Fast forwarded to ${period} period (${time})`);
 
     return time;
   });
+
+async function fastForwardTo(hre, time) {
+  const now = await getTimestamp(hre);
+
+  if (time < now) {
+    throw new Error('Cannot fast forward to a past date.');
+  }
+
+  await hre.ethers.provider.send('evm_increaseTime', [time - now]);
+}
