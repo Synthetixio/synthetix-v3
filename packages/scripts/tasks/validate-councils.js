@@ -4,8 +4,8 @@ const { equal, deepEqual } = require('assert/strict');
 const { task } = require('hardhat/config');
 const logger = require('@synthetixio/core-js/utils/io/logger');
 const types = require('@synthetixio/core-js/utils/hardhat/argument-types');
-const { SUBTASK_GET_MULTICALL_ABI } = require('@synthetixio/deployer/task-names');
 const { getDeployment, getDeploymentAbis } = require('@synthetixio/deployer/utils/deployments');
+const getPackageProxy = require('../internal/get-package-proxy');
 
 const councils = [
   {
@@ -90,12 +90,9 @@ async function validateCouncil({ instance }, council, hre) {
   const deployment = getDeployment(info);
   const abis = getDeploymentAbis(info);
 
-  const { deployedAddress } = Object.values(deployment.contracts).find((c) => c.isProxy);
+  const Proxy = await getPackageProxy(hre, council.name, instance);
 
-  logger.info(`Proxy Address: ${deployedAddress}`);
-
-  const abi = await hre.run(SUBTASK_GET_MULTICALL_ABI, { info });
-  const Proxy = await hre.ethers.getContractAt(abi, deployedAddress);
+  logger.info(`Proxy Address: ${Proxy.address}`);
 
   assert(deployment.properties.completed, `Deployment of ${council.name} is not completed`);
   logger.success('Deployment complete');

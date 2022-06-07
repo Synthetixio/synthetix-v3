@@ -42,7 +42,7 @@ module.exports = {
       return;
     }
 
-    this._log(chalk.red.bold(msg));
+    this._log(chalk.yellow.bold.underline(msg));
   },
 
   subtitle(msg) {

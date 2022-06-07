@@ -15,5 +15,8 @@
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "2.0.5",
     "hardhat": "2.9.3"
+  },
+  "dependencies": {
+    "inquirer": "8.2.4"
   }
 }
