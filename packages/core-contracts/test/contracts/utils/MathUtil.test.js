@@ -3,7 +3,7 @@ const assertBn = require('@synthetixio/core-js/utils/assertions/assert-bignumber
 const assertRevert = require('@synthetixio/core-js/utils/assertions/assert-revert');
 const { bnSqrt } = require('@synthetixio/core-js/utils/ethers/bignumber');
 
-function e(base, exp) {
+function s(base, exp) {
   return ethers.BigNumber.from(base).mul(ethers.BigNumber.from(10).pow(exp));
 }
 
@@ -64,28 +64,28 @@ describe('MathUtil', () => {
     }
 
     it('get the expected results', async () => {
-      await assertMulDivDown({ x: e(250, 25), y: e(50, 25), denominator: e(100, 25) }, e(125, 25));
-      await assertMulDivDown({ x: e(250, 16), y: e(50, 16), denominator: e(100, 16) }, e(125, 16));
-      await assertMulDivDown({ x: e(250, 6), y: e(50, 6), denominator: e(100, 6) }, e(125, 6));
+      await assertMulDivDown({ x: s(250, 25), y: s(50, 25), denominator: s(100, 25) }, s(125, 25));
+      await assertMulDivDown({ x: s(250, 16), y: s(50, 16), denominator: s(100, 16) }, s(125, 16));
+      await assertMulDivDown({ x: s(250, 6), y: s(50, 6), denominator: s(100, 6) }, s(125, 6));
       await assertMulDivDown({ x: 369, y: 271, denominator: 100 }, 999);
 
-      await assertMulDivDown({ x: e(10, 26), y: e(10, 26), denominator: e(20, 26) }, e(5, 26));
-      await assertMulDivDown({ x: e(100, 16), y: e(100, 16), denominator: e(200, 16) }, e(50, 16));
+      await assertMulDivDown({ x: s(10, 26), y: s(10, 26), denominator: s(20, 26) }, s(5, 26));
+      await assertMulDivDown({ x: s(100, 16), y: s(100, 16), denominator: s(200, 16) }, s(50, 16));
       await assertMulDivDown({ x: 1e8, y: 1e8, denominator: 2e8 }, 0.5e8);
 
-      await assertMulDivDown({ x: e(2, 27), y: e(3, 27), denominator: e(2, 27) }, e(3, 27));
-      await assertMulDivDown({ x: e(3, 18), y: e(2, 18), denominator: e(3, 18) }, e(2, 18));
+      await assertMulDivDown({ x: s(2, 27), y: s(3, 27), denominator: s(2, 27) }, s(3, 27));
+      await assertMulDivDown({ x: s(3, 18), y: s(2, 18), denominator: s(3, 18) }, s(2, 18));
       await assertMulDivDown({ x: 2e8, y: 3e8, denominator: 2e8 }, 3e8);
     });
 
     it('get the expected results on edge cases', async () => {
-      await assertMulDivDown({ x: 0, y: e(1, 18), denominator: e(1, 18) }, 0);
-      await assertMulDivDown({ x: e(1, 18), y: 0, denominator: e(1, 18) }, 0);
-      await assertMulDivDown({ x: 0, y: 0, denominator: e(1, 18) }, 0);
+      await assertMulDivDown({ x: 0, y: s(1, 18), denominator: s(1, 18) }, 0);
+      await assertMulDivDown({ x: s(1, 18), y: 0, denominator: s(1, 18) }, 0);
+      await assertMulDivDown({ x: 0, y: 0, denominator: s(1, 18) }, 0);
     });
 
     it('fails on div by zero', async () => {
-      await assertRevert(MathUtil.mulDivDown(e(1, 18), e(1, 18), 0));
+      await assertRevert(MathUtil.mulDivDown(s(1, 18), s(1, 18), 0));
     });
   });
 
@@ -102,28 +102,28 @@ describe('MathUtil', () => {
     }
 
     it('get the expected results', async () => {
-      await assertMulDivUp({ x: e(250, 25), y: e(50, 25), denominator: e(100, 25) }, e(125, 25));
-      await assertMulDivUp({ x: e(250, 16), y: e(50, 16), denominator: e(100, 16) }, e(125, 16));
-      await assertMulDivUp({ x: e(250, 6), y: e(50, 6), denominator: e(100, 6) }, e(125, 6));
+      await assertMulDivUp({ x: s(250, 25), y: s(50, 25), denominator: s(100, 25) }, s(125, 25));
+      await assertMulDivUp({ x: s(250, 16), y: s(50, 16), denominator: s(100, 16) }, s(125, 16));
+      await assertMulDivUp({ x: s(250, 6), y: s(50, 6), denominator: s(100, 6) }, s(125, 6));
       await assertMulDivUp({ x: 369, y: 271, denominator: 100 }, 1000);
 
-      await assertMulDivUp({ x: e(10, 26), y: e(10, 26), denominator: e(20, 26) }, e(5, 26));
-      await assertMulDivUp({ x: e(100, 16), y: e(100, 16), denominator: e(200, 16) }, e(50, 16));
+      await assertMulDivUp({ x: s(10, 26), y: s(10, 26), denominator: s(20, 26) }, s(5, 26));
+      await assertMulDivUp({ x: s(100, 16), y: s(100, 16), denominator: s(200, 16) }, s(50, 16));
       await assertMulDivUp({ x: 1e8, y: 1e8, denominator: 2e8 }, 0.5e8);
 
-      await assertMulDivUp({ x: e(2, 27), y: e(3, 27), denominator: e(2, 27) }, e(3, 27));
-      await assertMulDivUp({ x: e(3, 18), y: e(2, 18), denominator: e(3, 18) }, e(2, 18));
+      await assertMulDivUp({ x: s(2, 27), y: s(3, 27), denominator: s(2, 27) }, s(3, 27));
+      await assertMulDivUp({ x: s(3, 18), y: s(2, 18), denominator: s(3, 18) }, s(2, 18));
       await assertMulDivUp({ x: 2e8, y: 3e8, denominator: 2e8 }, 3e8);
     });
 
     it('get the expected results on edge cases', async () => {
-      await assertMulDivUp({ x: 0, y: e(1, 18), denominator: e(1, 18) }, 0);
-      await assertMulDivUp({ x: e(1, 18), y: 0, denominator: e(1, 18) }, 0);
-      await assertMulDivUp({ x: 0, y: 0, denominator: e(1, 18) }, 0);
+      await assertMulDivUp({ x: 0, y: s(1, 18), denominator: s(1, 18) }, 0);
+      await assertMulDivUp({ x: s(1, 18), y: 0, denominator: s(1, 18) }, 0);
+      await assertMulDivUp({ x: 0, y: 0, denominator: s(1, 18) }, 0);
     });
 
     it('fails on div by zero', async () => {
-      await assertRevert(MathUtil.mulDivUp(e(1, 18), e(1, 18), 0));
+      await assertRevert(MathUtil.mulDivUp(s(1, 18), s(1, 18), 0));
     });
   });
 });

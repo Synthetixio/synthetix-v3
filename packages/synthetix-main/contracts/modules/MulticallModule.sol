@@ -11,7 +11,8 @@ contract MulticallModule is IMulticallModule {
             (bool success, bytes memory result) = address(this).delegatecall(data[i]);
 
             if (!success) {
-                // Next 5 lines from https://ethereum.stackexchange.com/a/83577
+                // Next 6 lines from https://ethereum.stackexchange.com/a/83577
+                // solhint-disable-next-line reason-string
                 if (result.length < 68) revert();
                 assembly {
                     result := add(result, 0x04)
