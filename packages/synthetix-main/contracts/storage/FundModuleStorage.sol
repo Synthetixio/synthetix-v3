@@ -4,13 +4,17 @@ pragma solidity ^0.8.0;
 import "@synthetixio/core-contracts/contracts/satellite/SatelliteFactory.sol";
 import "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
 
-contract FundModuleStorage {
+import "../interfaces/IFundModuleStorage.sol";
+
+contract FundModuleStorage is IFundModuleStorage {
     struct FundModuleStore {
         bool initialized;
         SatelliteFactory.Satellite fundToken;
         uint256 preferredFund;
         uint256[] approvedFunds;
         mapping(uint256 => FundData) funds; // fund metadata by fundId
+        mapping(uint256 => SetUtil.Bytes32Set) accountliquidityItems;
+        mapping(bytes32 => LiquidityItem) liquidityItems; // LiquidityItems data by liquidityProviderIds
     }
 
     struct FundData {
@@ -28,7 +32,6 @@ contract FundModuleStorage {
         /// @dev Individual Liquidity Items
         SetUtil.Bytes32Set liquidityItemIds; // All LiquidityItem ids in this fund
         mapping(uint256 => SetUtil.Bytes32Set) liquidityItemsByAccount; // LiquidityItem ids by account
-        mapping(bytes32 => LiquidityItem) liquidityItems; // LiquidityItems data by liquidityProviderIds
         /// @dev minted sUSD
         mapping(uint256 => uint256) sUSDByAccount;
         mapping(uint256 => mapping(address => uint256)) sUSDByAccountAndCollateral;
@@ -37,15 +40,6 @@ contract FundModuleStorage {
     struct MarketDistribution {
         uint256 weight;
         uint256 market;
-    }
-
-    struct LiquidityItem {
-        address collateralType;
-        uint256 accountId;
-        uint256 leverage;
-        uint256 collateralAmount;
-        uint256 shares;
-        uint256 initialDebt; // how that works with amount adjustments?
     }
 
     function _fundModuleStore() internal pure returns (FundModuleStore storage store) {
