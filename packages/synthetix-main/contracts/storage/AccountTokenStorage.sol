@@ -5,7 +5,6 @@ contract AccountTokenStorage {
     struct AccountStore {
         bool initialized;
         address mainProxy;
-        uint256 recentIdUsed;
     }
 
     function _accountStore() internal pure returns (AccountStore storage store) {
