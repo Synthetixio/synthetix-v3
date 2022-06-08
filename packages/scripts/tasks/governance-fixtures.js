@@ -29,17 +29,28 @@ task('governance-fixtures', 'CLI tools for managing governance fixtures')
         })
       );
 
-      const choices = await Promise.all(
+      const choices = [];
+
+      await Promise.all(
         councils.map(async (council) => {
-          const choices = [
+          choices.push(
             new inquirer.Separator(
               `${council.name.toLocaleUpperCase().replace('-', ' ')} (Period: ${
                 council.currentPeriod
               })`
-            ),
-          ];
+            )
+          );
 
-          if (council.currentPeriod !== 'Evaluation') {
+          if (council.currentPeriod === 'Evaluation') {
+            choices.push({
+              name: '  Evaluate election',
+              value: {
+                type: 'run',
+                name: 'evaluate-election',
+                args: { instance, council: council.name },
+              },
+            });
+          } else {
             const nextPeriod = getNext(Object.keys(ElectionPeriod), council.currentPeriod);
             const nextPeriodDate = await getPeriodDate(council.Proxy, nextPeriod);
             choices.push({
@@ -47,14 +58,12 @@ task('governance-fixtures', 'CLI tools for managing governance fixtures')
               value: {
                 type: 'run',
                 name: 'fast-forward-to',
-                args: { council: council.name, period: nextPeriod },
+                args: { instance, council: council.name, period: nextPeriod },
               },
             });
           }
-
-          return choices;
         })
-      ).then((c) => c.flat());
+      );
 
       const { response } = await inquirer.prompt({
         type: 'list',
