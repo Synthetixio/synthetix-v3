@@ -375,6 +375,7 @@ contract FundModule is
         liquidityItem.collateralAmount = amount;
         liquidityItem.shares = shares;
         liquidityItem.initialDebt = initialDebt;
+        liquidityItem.fundId = fundId;
 
         _fundModuleStore().liquidityItems[liquidityItemId] = liquidityItem;
 
