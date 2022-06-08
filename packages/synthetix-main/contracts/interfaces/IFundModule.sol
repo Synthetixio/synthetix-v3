@@ -2,9 +2,10 @@
 pragma solidity ^0.8.0;
 
 import "@synthetixio/core-contracts/contracts/interfaces/ISatelliteFactory.sol";
+import "./IFundModuleStorage.sol";
 
 /// @title Module for managing funds and assignments per account
-interface IFundModule is ISatelliteFactory {
+interface IFundModule is ISatelliteFactory, IFundModuleStorage {
     /// @notice initializes the FundModule. Creates the FundToken proxy and first implementation.
     function initializeFundModule() external;
 
@@ -108,4 +109,14 @@ interface IFundModule is ISatelliteFactory {
 
     /// @notice gets the debt per share (sUSD value) for a fund
     function debtPerShare(uint fundId) external view returns (uint);
+
+    // VIEWS
+    /// @notice gets liquidityItem details for a liquidityItemId
+    function getLiquidityItem(bytes32 liquidityItemId) external view returns (LiquidityItem memory liquidityItem);
+
+    /// @notice gets list of liquidityItemIds for an accountId
+    function getAccountLiquidityItemIds(uint accountId) external view returns (bytes32[] memory liquidityItemIds);
+
+    /// @notice gets list of liquidityItem details for an accountId
+    function getAccountLiquidityItems(uint accountId) external view returns (LiquidityItem[] memory liquidityItems);
 }

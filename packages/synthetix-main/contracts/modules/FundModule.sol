@@ -46,6 +46,7 @@ contract FundModule is
         uint amount,
         uint leverage
     );
+
     event PositionAdded(
         bytes32 liquidityItemId,
         uint fundId,
@@ -302,43 +303,43 @@ contract FundModule is
     ) external override onlyRoleAuthorized(accountId, "assign") collateralEnabled(collateralType) {
         FundToken(getFundTokenAddress()).ownerOf(fundId); // Will revert if do not exists
 
-        bytes32 lpid = _getLiquidityItemId(accountId, collateralType, leverage);
+        bytes32 lid = _getLiquidityItemId(accountId, collateralType, leverage);
 
         FundData storage fundData = _fundModuleStore().funds[fundId];
         SetUtil.Bytes32Set storage liquidityItemIds = fundData.liquidityItemIds;
 
-        if (!liquidityItemIds.contains(lpid)) {
+        if (!liquidityItemIds.contains(lid)) {
             if (_getAccountUnassignedCollateral(accountId, collateralType) < amount) {
                 revert InsufficientAvailableCollateral(accountId, collateralType, amount);
             }
 
-            // lpid not found in set =>  new position
-            _addPosition(lpid, fundId, accountId, collateralType, amount, leverage);
+            // lid not found in set =>  new position
+            _addPosition(lid, fundId, accountId, collateralType, amount, leverage);
         } else {
             // Position found, need to adjust (increase, decrease or remove)
-            LiquidityItem storage liquidityItem = fundData.liquidityItems[lpid];
+            LiquidityItem storage liquidityItem = _fundModuleStore().liquidityItems[lid];
 
             if (
                 liquidityItem.accountId != accountId ||
                 liquidityItem.collateralType != collateralType ||
                 liquidityItem.leverage != leverage
             ) {
-                // Wrong parameters (in fact should be another lpid) but prefer to be on the safe side. Check and revert
+                // Wrong parameters (in fact should be another lid) but prefer to be on the safe side. Check and revert
                 revert InvalidParameters();
             }
 
             uint currentLiquidityAmount = liquidityItem.collateralAmount;
 
             if (amount == 0) {
-                _removePosition(lpid, liquidityItem, fundId, accountId, collateralType);
+                _removePosition(lid, liquidityItem, fundId, accountId, collateralType);
             } else if (currentLiquidityAmount < amount) {
                 if (_getAccountUnassignedCollateral(accountId, collateralType) < amount - currentLiquidityAmount) {
                     revert InsufficientAvailableCollateral(accountId, collateralType, amount);
                 }
 
-                _increasePosition(lpid, liquidityItem, fundId, collateralType, amount, leverage);
+                _increasePosition(lid, liquidityItem, fundId, collateralType, amount, leverage);
             } else if (currentLiquidityAmount > amount) {
-                _decreasePosition(lpid, liquidityItem, fundId, collateralType, amount, leverage);
+                _decreasePosition(lid, liquidityItem, fundId, collateralType, amount, leverage);
             } else {
                 // no change
                 revert InvalidParameters();
@@ -347,7 +348,7 @@ contract FundModule is
 
         _rebalanceMarkets(fundId, false);
 
-        emit DelegationUpdated(lpid, fundId, accountId, collateralType, amount, leverage);
+        emit DelegationUpdated(lid, fundId, accountId, collateralType, amount, leverage);
     }
 
     function _addPosition(
@@ -362,6 +363,7 @@ contract FundModule is
         uint collateralValue = amount * _getCollateralValue(collateralType);
 
         fundData.liquidityItemIds.add(liquidityItemId);
+        _fundModuleStore().accountliquidityItems[accountId].add(liquidityItemId);
 
         uint shares = _convertToShares(fundId, collateralValue, leverage);
         uint initialDebt = _calculateInitialDebt(fundId, collateralValue, leverage); // how that works with amount adjustments?
@@ -374,7 +376,7 @@ contract FundModule is
         liquidityItem.shares = shares;
         liquidityItem.initialDebt = initialDebt;
 
-        fundData.liquidityItems[liquidityItemId] = liquidityItem;
+        _fundModuleStore().liquidityItems[liquidityItemId] = liquidityItem;
 
         fundData.totalShares += liquidityItem.shares;
         fundData.liquidityByCollateral[collateralType] += amount;
@@ -401,12 +403,13 @@ contract FundModule is
         // TODO check if is enabled to remove position comparing old and new data
 
         fundData.liquidityItemIds.remove(liquidityItemId);
+        _fundModuleStore().accountliquidityItems[accountId].remove(liquidityItemId);
 
         liquidityItem.collateralAmount = 0;
         liquidityItem.shares = 0;
         liquidityItem.initialDebt = 0; // how that works with amount adjustments?
 
-        fundData.liquidityItems[liquidityItemId] = liquidityItem;
+        _fundModuleStore().liquidityItems[liquidityItemId] = liquidityItem;
 
         fundData.totalShares -= oldSharesAmount;
         fundData.liquidityByCollateral[collateralType] -= oldAmount;
@@ -438,7 +441,7 @@ contract FundModule is
         liquidityItem.shares = shares;
         liquidityItem.initialDebt = initialDebt;
 
-        fundData.liquidityItems[liquidityItemId] = liquidityItem;
+        _fundModuleStore().liquidityItems[liquidityItemId] = liquidityItem;
 
         fundData.totalShares += liquidityItem.shares - oldSharesAmount;
         fundData.liquidityByCollateral[collateralType] += amount - oldAmount;
@@ -469,7 +472,7 @@ contract FundModule is
         liquidityItem.shares = shares;
         liquidityItem.initialDebt = initialDebt;
 
-        fundData.liquidityItems[liquidityItemId] = liquidityItem;
+        _fundModuleStore().liquidityItems[liquidityItemId] = liquidityItem;
 
         fundData.totalShares -= oldSharesAmount - liquidityItem.shares;
         fundData.liquidityByCollateral[collateralType] -= oldAmount - amount;
@@ -596,7 +599,7 @@ contract FundModule is
 
         for (uint i = 1; i < fundData.liquidityItemsByAccount[accountId].length() + 1; i++) {
             bytes32 itemId = fundData.liquidityItemsByAccount[accountId].valueAt(i);
-            LiquidityItem storage item = fundData.liquidityItems[itemId];
+            LiquidityItem storage item = _fundModuleStore().liquidityItems[itemId];
             if (item.collateralType == collateralType) {
                 accountCollateralValue += item.collateralAmount * collateralPrice;
 
@@ -624,6 +627,35 @@ contract FundModule is
 
     function debtPerShare(uint fundId) external view override returns (uint) {
         return _perShareValue(fundId);
+    }
+
+    // ---------------------------------------
+    // Views
+    // ---------------------------------------
+
+    function getLiquidityItem(bytes32 liquidityItemId) public view override returns (LiquidityItem memory liquidityItem) {
+        return _fundModuleStore().liquidityItems[liquidityItemId];
+    }
+
+    function getAccountLiquidityItemIds(uint accountId) public view override returns (bytes32[] memory liquidityItemIds) {
+        return _fundModuleStore().accountliquidityItems[accountId].values();
+    }
+
+    function getAccountLiquidityItems(uint accountId)
+        external
+        view
+        override
+        returns (LiquidityItem[] memory liquidityItems)
+    {
+        bytes32[] memory liquidityItemIds = getAccountLiquidityItemIds(accountId);
+
+        liquidityItems = new LiquidityItem[](liquidityItemIds.length);
+
+        for (uint i = 0; i < liquidityItemIds.length; i++) {
+            liquidityItems[i] = getLiquidityItem(liquidityItemIds[i]);
+        }
+
+        return liquidityItems;
     }
 
     // ---------------------------------------
