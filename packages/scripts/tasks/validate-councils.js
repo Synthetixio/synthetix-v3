@@ -10,7 +10,8 @@ const { getDeployment, getDeploymentAbis } = require('@synthetixio/deployer/util
 const councils = [
   {
     name: 'ambassador-council',
-    owner: '0xDe910777C787903F78C89e7a0bf7F4C435cBB1Fe',
+    owner: '0x6cd3f878852769e04A723A5f66CA7DD4d9E38A6C',
+    nominatedOwner: '0x0000000000000000000000000000000000000000',
     members: ['0xDe910777C787903F78C89e7a0bf7F4C435cBB1Fe'],
     nominationPeriodStartDate: date('2022-06-10'),
     votingPeriodStartDate: date('2022-06-17'),
@@ -21,7 +22,8 @@ const councils = [
   },
   {
     name: 'grants-council',
-    owner: '0xDe910777C787903F78C89e7a0bf7F4C435cBB1Fe',
+    owner: '0x6cd3f878852769e04A723A5f66CA7DD4d9E38A6C',
+    nominatedOwner: '0x0000000000000000000000000000000000000000',
     members: ['0xDe910777C787903F78C89e7a0bf7F4C435cBB1Fe'],
     nominationPeriodStartDate: date('2022-06-10'),
     votingPeriodStartDate: date('2022-06-17'),
@@ -32,7 +34,8 @@ const councils = [
   },
   {
     name: 'spartan-council',
-    owner: '0xDe910777C787903F78C89e7a0bf7F4C435cBB1Fe',
+    owner: '0x6cd3f878852769e04A723A5f66CA7DD4d9E38A6C',
+    nominatedOwner: '0x0000000000000000000000000000000000000000',
     members: ['0xDe910777C787903F78C89e7a0bf7F4C435cBB1Fe'],
     nominationPeriodStartDate: date('2022-06-10'),
     votingPeriodStartDate: date('2022-06-17'),
@@ -43,7 +46,8 @@ const councils = [
   },
   {
     name: 'treasury-council',
-    owner: '0xDe910777C787903F78C89e7a0bf7F4C435cBB1Fe',
+    owner: '0x6cd3f878852769e04A723A5f66CA7DD4d9E38A6C',
+    nominatedOwner: '0x0000000000000000000000000000000000000000',
     members: ['0xDe910777C787903F78C89e7a0bf7F4C435cBB1Fe'],
     nominationPeriodStartDate: date('2022-06-10'),
     votingPeriodStartDate: date('2022-06-17'),
@@ -98,6 +102,7 @@ async function validateCouncil({ instance }, council, hre) {
 
   await expect(Proxy, 'isOwnerModuleInitialized', true);
   await expect(Proxy, 'owner', council.owner);
+  await expect(Proxy, 'nominatedOwner', council.nominatedOwner);
 
   await expect(Proxy, 'isElectionModuleInitialized', true);
   await expect(Proxy, 'getNominationPeriodStartDate', council.nominationPeriodStartDate);
