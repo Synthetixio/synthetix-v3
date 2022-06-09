@@ -1,28 +1,31 @@
 const { task } = require('hardhat/config');
 // const { fastForwardTo } = require('@synthetixio/core-js/utils/hardhat/rpc');
 const types = require('@synthetixio/core-js/utils/hardhat/argument-types');
+const logger = require('@synthetixio/core-js/utils/io/logger');
 const { COUNCILS } = require('../internal/constants');
 const getPackageProxy = require('../internal/get-package-proxy');
 const getPeriodDate = require('../internal/get-period-date');
+const { periods } = require('../internal/get-period-date');
 const getTimestamp = require('../internal/get-timestamp');
 
 task('fast-forward-to', 'skips time to the specified election period')
+  .addOptionalParam('time', 'Time to fast forward to', undefined, types.int)
   .addOptionalParam('instance', 'Deployment instance name', 'official', types.alphanumeric)
-  .addParam(
-    'council',
-    'From which council to take the period time',
-    undefined,
-    types.oneOf(...COUNCILS)
-  )
-  .addPositionalParam(
+  .addOptionalParam('council', 'Target council deployment', undefined, types.oneOf(...COUNCILS))
+  .addOptionalParam(
     'period',
-    `Future period you want to fast forward to in time, should be one of ${getPeriodDate.periods.join(
-      ', '
-    )}`,
+    `Future period you want to fast forward to in time, should be one of ${periods.join(', ')}`,
     undefined,
-    types.oneOf(...getPeriodDate.periods)
+    types.oneOf(...periods)
   )
-  .setAction(async ({ instance, council, period }, hre) => {
+  .setAction(async ({ time, instance, council, period }, hre) => {
+    if (time) {
+      time = Number(time);
+      await fastForwardTo(hre, time);
+      logger.log(`Fast forwarded to ${time}`);
+      return time;
+    }
+
     const Proxy = await getPackageProxy(hre, council, instance);
 
     // necessary on first run, if not the next fastForwardTo() call does not work.
@@ -30,13 +33,13 @@ task('fast-forward-to', 'skips time to the specified election period')
       await hre.ethers.provider.send('evm_mine');
     }
 
-    const time = await getPeriodDate(Proxy, period);
+    const periodTime = await getPeriodDate(Proxy, period);
 
-    await fastForwardTo(hre, time);
+    await fastForwardTo(hre, periodTime);
 
-    console.log(`Fast forwarded to ${period} period (${time})`);
+    logger.log(`Fast forwarded to ${period} period (${periodTime})`);
 
-    return time;
+    return periodTime;
   });
 
 async function fastForwardTo(hre, time) {

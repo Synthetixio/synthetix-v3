@@ -16,8 +16,6 @@ task('governance', 'CLI tools for managing Synthetix governance projects')
   .setAction(async ({ instance }, hre) => {
     //eslint-disable-next-line no-constant-condition
     while (true) {
-      const councils = await initCouncils(hre, instance);
-
       const timestamp = await getTimestamp(hre);
       const blockNumber = await hre.ethers.provider.getBlockNumber();
 
@@ -30,6 +28,7 @@ task('governance', 'CLI tools for managing Synthetix governance projects')
       logger.log(chalk.gray(`Url: ${hre.network.config.url}`));
       logger.boxEnd();
 
+      const councils = await initCouncils(hre, instance);
       const choices = [];
 
       await asyncForEach(councils, async (council) => {
@@ -89,7 +88,7 @@ task('governance', 'CLI tools for managing Synthetix governance projects')
           const nextPeriod = getNext(Object.keys(ElectionPeriod), currentPeriod);
           const nextPeriodDate = await getPeriodDate(Proxy, nextPeriod);
           councilChoices.push({
-            name: `  Forward to next period "${nextPeriod}" (timestamp: ${nextPeriodDate})`,
+            name: `  Fast forward "${nextPeriod}" period (timestamp: ${nextPeriodDate})`,
             value: {
               type: 'run',
               name: 'fast-forward-to',

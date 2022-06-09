@@ -4,7 +4,10 @@ const logger = require('@synthetixio/core-js/utils/io/logger');
 const types = require('@synthetixio/core-js/utils/hardhat/argument-types');
 const assertPeriod = require('../internal/assert-period');
 const getPackageProxy = require('../internal/get-package-proxy');
-const { COUNCILS } = require('../internal/constants');
+const getPeriodDate = require('../internal/get-period-date');
+const { periods } = require('../internal/get-period-date');
+const { COUNCILS, ElectionPeriod } = require('../internal/constants');
+const { parseBalanceMap } = require('@synthetixio/core-js/utils/merkle-tree/parse-balance-tree');
 
 task('fixture:wallets', 'Create fixture wallets')
   .addOptionalParam('amount', 'Amount of wallets to fixture', '50', types.int)
@@ -133,6 +136,94 @@ task('fixture:votes', 'Create fixture votes to nominated candidates')
     }
   });
 
+task('fixture:cross-chain-debt-tree', 'Generate cross chain debt merkle tree')
+  .addOptionalParam('instance', 'Deployment instance name', 'official', types.alphanumeric)
+  .addParam('council', 'Target council deployment', undefined, types.oneOf(...COUNCILS))
+  .addOptionalParam('blockNumber', 'block number from the origin chain', '1', types.int)
+  .setAction(async ({ instance, council, blockNumber }, hre) => {
+    const Proxy = await getPackageProxy(hre, council, instance);
+
+    await assertPeriod(Proxy, 'Nomination');
+
+    logger.log(`Fixturing Cross Chain Debt Merkle Tree for "${council}"`);
+
+    const wallets = createArray(randomInt(128)).map(() => hre.ethers.Wallet.createRandom().address);
+
+    // Generate random cross-chain debts for hardhat signers
+    const debts = wallets.reduce((debts, address) => {
+      // random debt between 1 and 10_000_000
+      debts[address] = randNumberString(randomInt(19, 26));
+      return debts;
+    }, {});
+
+    // Create MerkleTree for the given debts
+    const tree = parseBalanceMap(debts);
+
+    logger.log('Setting Cross Chain Debt Root:');
+    logger.info(`merkeRoot: ${tree.merkleRoot}`);
+    logger.info(`blockNumber: ${blockNumber}`);
+
+    const tx = await Proxy.setCrossChainDebtShareMerkleRoot(tree.merkleRoot, Number(blockNumber));
+    await tx.wait();
+
+    logger.success(`Done (tx: ${tx.hash})`);
+
+    logger.info('');
+  });
+
+task('fixture:epoch', 'Fixture a complete epoch')
+  .addOptionalParam('instance', 'Deployment instance name', 'official', types.alphanumeric)
+  .addOptionalParam(
+    'until',
+    `Until which period to fixture, should be one of ${periods.join(', ')}`,
+    'Evaluation',
+    types.enum
+  )
+  .setAction(async ({ instance, period }, hre) => {
+    const until = ElectionPeriod[period];
+    const Proxies = await Promise.all(
+      COUNCILS.map((councilName) => getPackageProxy(hre, councilName, instance))
+    );
+
+    const runOnCouncils = async (taskName, args = {}) => {
+      for (const council of COUNCILS) {
+        await hre.run(taskName, { ...args, instance, council });
+      }
+    };
+
+    let currentPeriod = await getCommonCurrentPeriod(Proxies);
+
+    if (currentPeriod === ElectionPeriod.Administration) {
+      await fastForwardToPeriod(Proxies, 'Nomination');
+
+      currentPeriod = await getCommonCurrentPeriod(Proxies);
+      if (until === ElectionPeriod.Administration) return;
+    }
+
+    if (currentPeriod === ElectionPeriod.Nomination) {
+      await runOnCouncils('governance:set-debt-share-snapshot-id');
+      await runOnCouncils('fixture:cross-chain-debt-tree');
+      await runOnCouncils('fixture:candidates');
+      await fastForwardToPeriod(Proxies, 'Vote');
+
+      currentPeriod = await getCommonCurrentPeriod(Proxies);
+      if (until === ElectionPeriod.Nomination) return;
+    }
+
+    if (currentPeriod === ElectionPeriod.Vote) {
+      await runOnCouncils('fixture:votes');
+
+      await fastForwardToPeriod(Proxies, 'Evaluation');
+      currentPeriod = await getCommonCurrentPeriod(Proxies);
+      if (until === ElectionPeriod.Vote) return;
+    }
+
+    if (currentPeriod === ElectionPeriod.Evaluation) {
+      await runOnCouncils('governance:evaluate-election');
+      if (until === ElectionPeriod.Evaluation) return;
+    }
+  });
+
 function createArray(length = 0) {
   return Array.from(Array(Number(length)));
 }
@@ -147,4 +238,31 @@ function pickRand(arr, amount = 1) {
   }
 
   return res;
+}
+
+function randNumberString(length = 32) {
+  return [randomInt(1, 10), ...createArray(length - 1).map(() => randomInt(10))].join('');
+}
+
+async function asyncMap(arr, fn) {
+  return await Promise.all(arr.map(fn));
+}
+
+async function getCommonCurrentPeriod(Proxies) {
+  const currentPeriodIds = await asyncMap(Proxies, async (Proxy) =>
+    Number(await Proxy.getCurrentPeriod())
+  );
+
+  if (new Set(currentPeriodIds).size !== 1) {
+    throw new Error('All councils are not in the same period');
+  }
+
+  return Number(currentPeriodIds[0]);
+}
+
+async function fastForwardToPeriod(Proxies, periodName) {
+  logger.log(`Fast forwarding to "${periodName}" period`);
+  const timestamps = await asyncMap(Proxies, (Proxy) => getPeriodDate(Proxy, periodName));
+  const time = timestamps.reduce((prev, curr) => (curr > prev ? curr : prev), 0);
+  await hre.run('fast-forward-to', { time: `${time}` });
 }
