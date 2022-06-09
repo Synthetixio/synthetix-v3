@@ -26,8 +26,8 @@ task('governance', 'CLI tools for managing Synthetix governance projects')
       logger.boxStart();
       logger.log(chalk.gray(`Network: ${hre.network.name}`));
       logger.log(chalk.gray(`BlockNumber: ${blockNumber}`));
-      logger.log(chalk.gray(`Timestamp: ${timestamp}`));
-      logger.log(chalk.gray(`Date: ${formatDate(time)}`));
+      logger.log(chalk.gray(`BlockTimestamp: ${timestamp} (${formatDate(time)})`));
+      logger.log(chalk.gray(`Url: ${hre.network.config.url}`));
       logger.boxEnd();
 
       const choices = [];
@@ -43,14 +43,28 @@ task('governance', 'CLI tools for managing Synthetix governance projects')
 
         if (currentPeriod === 'Nomination') {
           const candidates = await Proxy.getNominees();
-          councilChoices.push(new inquirer.Separator(`  Nominees Count: ${candidates.length}`), {
-            name: '  Fixture nominees (14)',
-            value: {
-              type: 'run',
-              name: 'fixture:candidates',
-              args: { instance, council: name, nominateAmount: '14' },
+          const snapshotId = await Proxy.getDebtShareSnapshotId().catch(() => '0');
+
+          councilChoices.push(
+            new inquirer.Separator(`  Nominees Count: ${candidates.length}`),
+            new inquirer.Separator(`  DebtShareSnapshotId: ${snapshotId}`),
+            {
+              name: '  Set debt share snapshot id (latest)',
+              value: {
+                type: 'run',
+                name: 'governance:set-debt-share-snapshot-id',
+                args: { instance, council: name },
+              },
             },
-          });
+            {
+              name: '  Fixture nominees (14)',
+              value: {
+                type: 'run',
+                name: 'fixture:candidates',
+                args: { instance, council: name, nominateAmount: '14' },
+              },
+            }
+          );
         } else if (currentPeriod === 'Vote') {
           councilChoices.push({
             name: '  Fixture votes (20)',
@@ -102,14 +116,45 @@ task('governance', 'CLI tools for managing Synthetix governance projects')
     }
   });
 
+task('governance:set-debt-share-snapshot-id', 'Call ElectioModule.setDebtShareSnapshotId')
+  .addOptionalParam('instance', 'Deployment instance name', 'official', types.alphanumeric)
+  .addParam('council', 'Target council deployment', undefined, types.oneOf(...COUNCILS))
+  .addOptionalParam('snapshotId', 'Snapshot id to set, if missing latest will be used')
+  .setAction(async ({ instance, council, snapshotId }, hre) => {
+    const Proxy = await getPackageProxy(hre, council, instance);
+
+    await assertPeriod(Proxy, 'Nomination');
+
+    if (!snapshotId) {
+      const address = await Proxy.getDebtShareContract();
+      const SynthetixDebtShare = await hre.ethers.getContractAt(
+        [
+          {
+            constant: true,
+            inputs: [],
+            name: 'currentPeriodId',
+            outputs: [{ internalType: 'uint128', name: '', type: 'uint128' }],
+            payable: false,
+            stateMutability: 'view',
+            type: 'function',
+          },
+        ],
+        address
+      );
+      snapshotId = await SynthetixDebtShare.currentPeriodId();
+    }
+
+    logger.log(`Setting snapshot id "${snapshotId}" for "${council}"`);
+
+    const tx = await Proxy.setDebtShareSnapshotId(snapshotId);
+    await tx.wait();
+
+    logger.success(`Done (tx: ${tx.hash})`);
+  });
+
 task('governance:evaluate-election', 'Evaluate election of given council')
   .addOptionalParam('instance', 'Deployment instance name', 'official', types.alphanumeric)
-  .addParam(
-    'council',
-    'From which council to take the period time',
-    undefined,
-    types.oneOf(...COUNCILS)
-  )
+  .addParam('council', 'Target council deployment', undefined, types.oneOf(...COUNCILS))
   .setAction(async ({ instance, council }, hre) => {
     const Proxy = await getPackageProxy(hre, council, instance);
 
@@ -129,19 +174,18 @@ task('governance:evaluate-election', 'Evaluate election of given council')
 
         const evaluatedEvent = findEvent({ receipt, eventName: 'ElectionEvaluated' });
         if (evaluatedEvent) {
-          logger.info('Election evaluated');
-          logger.info('  epochIndex: ', Number(evaluatedEvent.args.epochIndex));
-          logger.info('  totalBallots: ', Number(evaluatedEvent.args.totalBallots));
+          logger.info(`Election evaluated (tx: ${tx.hash})`);
+          logger.info(`  epochIndex: ${Number(evaluatedEvent.args.epochIndex)}`);
+          logger.info(`  totalBallots: ${Number(evaluatedEvent.args.totalBallots)}`);
           logger.log('');
           break;
         }
 
         const batchEvent = findEvent({ receipt, eventName: 'ElectionBatchEvaluated' });
         if (batchEvent) {
-          logger.info(batchEvent);
-          logger.info('Election batch evaluated');
-          logger.info('  epochIndex: ', Number(evaluatedEvent.args.epochIndex));
-          logger.info('  evaluatedBallots: ', Number(evaluatedEvent.args.evaluatedBallots));
+          logger.info(`Election batch evaluated (tx: ${tx.hash})`);
+          logger.info(`  epochIndex: ${Number(evaluatedEvent.args.epochIndex)}`);
+          logger.info(`  evaluatedBallots: ${Number(evaluatedEvent.args.evaluatedBallots)}`);
           logger.log('');
           continue;
         }
@@ -150,19 +194,19 @@ task('governance:evaluate-election', 'Evaluate election of given council')
       }
     }
 
-    logger.info('Resolving election...');
+    logger.log('Resolving election...');
 
     const tx = await Proxy.resolve();
     const receipt = await tx.wait();
-    const epochStartedEvent = findEvent({ receipt, eventName: 'EpochStarted' });
 
-    logger.info(
-      `Election resolved, started new epoch index ${epochStartedEvent.args.epochIndex}\n`
-    );
+    logger.success(`Election resolved (tx: ${tx.hash})`);
+
+    const epochStartedEvent = findEvent({ receipt, eventName: 'EpochStarted' });
+    logger.info(`Started new epoch index ${epochStartedEvent.args.epochIndex}\n`);
 
     const members = await Proxy.getCouncilMembers();
-    logger.info(`Current council members (${members.length}):`);
-    members.forEach((address) => logger.info('  - ', address));
+    logger.log(chalk.gray(`Current council members (${members.length}):`));
+    members.forEach((address) => logger.info(address));
   });
 
 async function initCouncils(hre, instance) {
