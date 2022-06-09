@@ -32,15 +32,14 @@ task(TASK_FIXTURE_WALLETS, 'Create fixture wallets')
       return new hre.ethers.Wallet(privateKey, hre.ethers.provider);
     });
 
-    let i = 0;
     return await Promise.all(
-      wallets.map(async (wallet) => {
-        hre.network.provider.request({
+      wallets.map(async (wallet, i) => {
+        await hre.network.provider.request({
           method: 'hardhat_setBalance',
           params: [wallet.address, '0x10000000000000000000000'],
         });
 
-        console.log(`Address #${++i}: `, wallet.address);
+        console.log(`Address #${i}: `, wallet.address);
         console.log('Private Key: ', wallet.privateKey);
         console.log();
 
