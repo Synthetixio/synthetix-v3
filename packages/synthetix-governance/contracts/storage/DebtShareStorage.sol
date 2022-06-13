@@ -9,7 +9,7 @@ contract DebtShareStorage {
         // Synthetix c2 DebtShare contract used to determine vote power in the local chain
         IDebtShare debtShareContract;
         // Array of debt share snapshot id's for each epoch
-        uint[] debtShareIds;
+        uint128[] debtShareIds;
         // Array of CrossChainDebtShareData's for each epoch
         CrossChainDebtShareData[] crossChainDebtShareData;
     }

@@ -8,20 +8,20 @@ contract DebtShareMock is IDebtShare {
         mapping(address => uint) balances;
     }
 
-    mapping(uint => Period) private _periods;
+    mapping(uint128 => Period) private _periods;
 
     function setBalanceOfOnPeriod(
         address user,
         uint balance,
         uint periodId
     ) external {
-        Period storage period = _periods[periodId];
+        Period storage period = _periods[uint128(periodId)];
 
         period.balances[user] = balance;
     }
 
     function balanceOfOnPeriod(address user, uint periodId) external view virtual override returns (uint) {
-        Period storage period = _periods[periodId];
+        Period storage period = _periods[uint128(periodId)];
 
         return period.balances[user];
     }

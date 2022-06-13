@@ -19,7 +19,7 @@ contract DebtShareManager is ElectionBase, DebtShareStorage {
         DebtShareStore storage store = _debtShareStore();
 
         uint currentEpochIndex = _getCurrentEpochIndex();
-        store.debtShareIds[currentEpochIndex] = snapshotId;
+        store.debtShareIds[currentEpochIndex] = uint128(snapshotId);
 
         emit DebtShareSnapshotIdSet(snapshotId);
     }
@@ -27,7 +27,7 @@ contract DebtShareManager is ElectionBase, DebtShareStorage {
     function _getDebtShareSnapshotId() internal view returns (uint) {
         DebtShareStore storage store = _debtShareStore();
 
-        uint debtShareId = store.debtShareIds[_getCurrentEpochIndex()];
+        uint128 debtShareId = store.debtShareIds[_getCurrentEpochIndex()];
         if (debtShareId == 0) {
             revert DebtShareSnapshotIdNotSet();
         }
@@ -56,8 +56,8 @@ contract DebtShareManager is ElectionBase, DebtShareStorage {
     function _getDebtShare(address user) internal view returns (uint) {
         DebtShareStore storage store = _debtShareStore();
 
-        uint debtShareId = store.debtShareIds[_getCurrentEpochIndex()];
+        uint128 debtShareId = store.debtShareIds[_getCurrentEpochIndex()];
 
-        return store.debtShareContract.balanceOfOnPeriod(user, debtShareId);
+        return store.debtShareContract.balanceOfOnPeriod(user, uint(debtShareId));
     }
 }
