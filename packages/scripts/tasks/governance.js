@@ -42,28 +42,14 @@ task('governance', 'CLI tools for managing Synthetix governance projects')
 
         if (currentPeriod === 'Nomination') {
           const candidates = await Proxy.getNominees();
-          const snapshotId = await Proxy.getDebtShareSnapshotId().catch(() => '0');
-
-          councilChoices.push(
-            new inquirer.Separator(`  Nominees Count: ${candidates.length}`),
-            new inquirer.Separator(`  DebtShareSnapshotId: ${snapshotId}`),
-            {
-              name: '  Set debt share snapshot id (latest)',
-              value: {
-                type: 'run',
-                name: 'governance:set-debt-share-snapshot-id',
-                args: { instance, council: name },
-              },
+          councilChoices.push(new inquirer.Separator(`  Nominees Count: ${candidates.length}`), {
+            name: '  Fixture nominees (14)',
+            value: {
+              type: 'run',
+              name: 'fixture:candidates',
+              args: { instance, council: name, nominateAmount: '14' },
             },
-            {
-              name: '  Fixture nominees (14)',
-              value: {
-                type: 'run',
-                name: 'fixture:candidates',
-                args: { instance, council: name, nominateAmount: '14' },
-              },
-            }
-          );
+          });
         } else if (currentPeriod === 'Vote') {
           councilChoices.push({
             name: '  Fixture votes (20)',
@@ -79,6 +65,18 @@ task('governance', 'CLI tools for managing Synthetix governance projects')
             value: {
               type: 'run',
               name: 'governance:evaluate-election',
+              args: { instance, council: name },
+            },
+          });
+        }
+
+        if (currentPeriod === 'Nomination' || currentPeriod === 'Vote') {
+          const snapshotId = await Proxy.getDebtShareSnapshotId().catch(() => '0');
+          councilChoices.push(new inquirer.Separator(`  DebtShareSnapshotId: ${snapshotId}`), {
+            name: '  Set debt share snapshot id (latest)',
+            value: {
+              type: 'run',
+              name: 'governance:set-debt-share-snapshot-id',
               args: { instance, council: name },
             },
           });

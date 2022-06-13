@@ -24,11 +24,11 @@ const config = {
       url: 'http://localhost:8545',
     },
     ['optimistic-kovan']: {
-      url: 'https://kovan.optimism.io',
+      url: process.env.NETWORK_ENDPOINT || 'https://kovan.optimism.io',
       accounts: process.env.DEPLOYER_PRIVATE_KEY ? [process.env.DEPLOYER_PRIVATE_KEY] : [],
     },
     ['optimistic-mainnet']: {
-      url: 'https://mainnet.optimism.io',
+      url: process.env.NETWORK_ENDPOINT || 'https://mainnet.optimism.io',
       accounts: process.env.DEPLOYER_PRIVATE_KEY ? [process.env.DEPLOYER_PRIVATE_KEY] : [],
     },
   },
