@@ -1,5 +1,4 @@
 const hre = require('hardhat');
-const { getDeployment, getDeploymentAbis } = require('@synthetixio/deployer/utils/deployments');
 const {
   TASK_DEPLOY,
   SUBTASK_GET_MULTICALL_ABI,
@@ -10,16 +9,19 @@ const {
  * Generate the file contracts/Router.sol including the given modules in its source.
  */
 module.exports.deploy = async function deploy() {
+  const info = {
+    folder: hre.config.deployer.paths.deployments,
+    network: hre.network.name,
+  };
+
   const isHHNetwork = hre.network.name === 'hardhat';
+  console.log('netname', hre.network.name);
   await hre.run(TASK_DEPLOY, { noConfirm: true, quiet: false, clear: isHHNetwork });
+  console.log('netname', hre.network.name);
 
-  const info = await hre.run(SUBTASK_GET_DEPLOYMENT_INFO);
+  const { abis, info: deployInfo } = await hre.run(SUBTASK_GET_DEPLOYMENT_INFO);
 
-  // deployer leaves its result in JSON files.
-  const deployment = getDeployment(info);
-  const abis = getDeploymentAbis(info);
-
-  const contracts = Object.values(deployment.contracts).reduce((contracts, c) => {
+  const contracts = Object.values(deployInfo.contracts).reduce((contracts, c) => {
     if (contracts[c.contractName]) {
       throw new Error(`Contract name repeated: "${c.contractName}"`);
     }

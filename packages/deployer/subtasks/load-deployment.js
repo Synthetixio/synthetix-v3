@@ -3,11 +3,15 @@ const { subtask } = require('hardhat/config');
 
 const { getAllDeploymentFiles, getDeploymentExtendedFiles } = require('../utils/deployments');
 const autosaveObject = require('../internal/autosave-object');
-const { SUBTASK_LOAD_DEPLOYMENT, SUBTASK_GET_DEPLOYMENT_INFO } = require('../task-names');
+const { SUBTASK_LOAD_DEPLOYMENT } = require('../task-names');
 
 subtask(SUBTASK_LOAD_DEPLOYMENT, 'Loads deployment artifacts for a particular instance').setAction(
   async ({ readOnly, instance }, hre) => {
-    const info = await hre.run(SUBTASK_GET_DEPLOYMENT_INFO, { instance });
+    const info = {
+      folder: hre.config.deployer.paths.deployments,
+      network: hre.network.name,
+      instance,
+    };
 
     const deploymentFiles = getAllDeploymentFiles(info);
 

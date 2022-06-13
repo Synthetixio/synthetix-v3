@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 import "../storage/CollateralStorage.sol";
 
-import "../interfaces/IPriceFeed.sol";
+import "../interfaces/IAggregatorV3Interface.sol";
 
 contract CollateralMixin is CollateralStorage {
     using SetUtil for SetUtil.AddressSet;
@@ -20,7 +20,9 @@ contract CollateralMixin is CollateralStorage {
     }
 
     function _getCollateralValue(address collateralType) internal view returns (uint) {
-        return IPriceFeed(_collateralStore().collateralsData[collateralType].priceFeed).getCurrentPrice();
+        (, int256 answer,,,) = IAggregatorV3Interface(_collateralStore().collateralsData[collateralType].priceFeed).latestRoundData();
+
+        return uint(answer);
     }
 
     function _getAccountCollateralTotals(uint accountId, address collateralType)
