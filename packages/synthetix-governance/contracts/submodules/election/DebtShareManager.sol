@@ -13,18 +13,18 @@ contract DebtShareManager is ElectionBase, DebtShareStorage {
     error DebtShareSnapshotIdNotSet();
 
     event DebtShareContractSet(address contractAddress);
-    event DebtShareSnapshotIdSet(uint128 snapshotId);
+    event DebtShareSnapshotIdSet(uint snapshotId);
 
-    function _setDebtShareSnapshotId(uint128 snapshotId) internal {
+    function _setDebtShareSnapshotId(uint snapshotId) internal {
         DebtShareStore storage store = _debtShareStore();
 
         uint currentEpochIndex = _getCurrentEpochIndex();
-        store.debtShareIds[currentEpochIndex] = snapshotId;
+        store.debtShareIds[currentEpochIndex] = uint128(snapshotId);
 
         emit DebtShareSnapshotIdSet(snapshotId);
     }
 
-    function _getDebtShareSnapshotId() internal view returns (uint128) {
+    function _getDebtShareSnapshotId() internal view returns (uint) {
         DebtShareStore storage store = _debtShareStore();
 
         uint128 debtShareId = store.debtShareIds[_getCurrentEpochIndex()];
@@ -58,6 +58,6 @@ contract DebtShareManager is ElectionBase, DebtShareStorage {
 
         uint128 debtShareId = store.debtShareIds[_getCurrentEpochIndex()];
 
-        return store.debtShareContract.balanceOfOnPeriod(user, debtShareId);
+        return store.debtShareContract.balanceOfOnPeriod(user, uint(debtShareId));
     }
 }
