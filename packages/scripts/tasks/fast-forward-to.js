@@ -42,6 +42,12 @@ task('fast-forward-to', 'skips time to the specified election period')
     return periodTime;
   });
 
+/**
+ * When calculating the amount of fastforwarding we want to do, we have to use
+ * the timestamp that's on the contract, and not the timestamp from the last block.
+ * This is only a problem only when using forks, as there are not new blocks being
+ * generated.
+ */
 async function fastForwardTo(hre, time) {
   const now = await getTimestamp(hre);
 

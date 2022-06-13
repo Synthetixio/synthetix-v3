@@ -3,6 +3,7 @@ const { SUBTASK_GET_MULTICALL_ABI } = require('@synthetixio/deployer/task-names'
 const { getDeployment } = require('@synthetixio/deployer/utils/deployments');
 
 /**
+ * Load the Proxy contract using the complete ABI from all the Modules of the given package.
  * @param {HardhatEnvironment} hre
  * @param {string} packageName
  * @param {string} [instance="official"]
