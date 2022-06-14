@@ -10,7 +10,7 @@ const { COUNCILS, ElectionPeriod } = require('../internal/constants');
 const { parseBalanceMap } = require('@synthetixio/core-js/utils/merkle-tree/parse-balance-tree');
 
 task('fixture:wallets', 'Create fixture wallets')
-  .addOptionalParam('amount', 'Amount of wallets to fixture', '50', types.int)
+  .addOptionalParam('amount', 'Amount of wallets to fixture', '20', types.int)
   .setAction(async ({ amount }, hre) => {
     logger.log(`Fixturing ${amount} wallets\n`);
 
@@ -19,7 +19,7 @@ task('fixture:wallets', 'Create fixture wallets')
       return new hre.ethers.Wallet(privateKey, hre.ethers.provider);
     });
 
-    if (hre.network.config.url.startsWith('https://rpc.tenderly.co/')) {
+    if (hre.network.config.url.startsWith('https://rpc.tenderly.co/fork/')) {
       await hre.network.provider.request({
         method: 'tenderly_setBalance',
         params: [wallets.map((w) => w.address), '0x10000000000000000000000'],
@@ -89,7 +89,7 @@ task('fixture:votes', 'Create fixture votes to nominated candidates')
 
     logger.log(`Fixturing ${amount} voters on "${council}"\n`);
 
-    const voters = await hre.run('fixture:wallets', { amount });
+    const voters = hre.fixture.voters || (await hre.run('fixture:wallets', { amount }));
     const candidates = await Proxy.getNominees();
 
     const ballotsCount = Math.floor(candidates.length / Number(ballotSize));
@@ -147,7 +147,9 @@ task('fixture:cross-chain-debt-tree', 'Generate cross chain debt merkle tree')
 
     logger.log(`Fixturing Cross Chain Debt Merkle Tree for "${council}"`);
 
-    const wallets = createArray(randomInt(128)).map(() => hre.ethers.Wallet.createRandom().address);
+    const wallets = hre.fixture.voters
+      ? hre.fixture.voters.map(({ address }) => address)
+      : createArray(randomInt(128)).map(() => hre.ethers.Wallet.createRandom().address);
 
     // Generate random cross-chain debts for hardhat signers
     const debts = wallets.reduce((debts, address) => {
@@ -180,6 +182,8 @@ task('fixture:epoch', 'Fixture a complete epoch')
     types.enum
   )
   .setAction(async ({ instance, period }, hre) => {
+    hre.fixture = {};
+
     const until = ElectionPeriod[period];
     const Proxies = await Promise.all(
       COUNCILS.map((councilName) => getPackageProxy(hre, councilName, instance))
@@ -199,6 +203,8 @@ task('fixture:epoch', 'Fixture a complete epoch')
       currentPeriod = await getCommonCurrentPeriod(Proxies);
       if (until === ElectionPeriod.Administration) return;
     }
+
+    hre.fixture.voters = await hre.run('fixture:wallets');
 
     if (currentPeriod === ElectionPeriod.Nomination) {
       await runOnCouncils('governance:set-debt-share-snapshot-id');

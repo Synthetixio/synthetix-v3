@@ -25,6 +25,7 @@ async function _printInfo(taskArguments) {
   const network = hre.network.name;
   logger.log(chalk[network.includes('mainnet') ? 'red' : 'gray'](`network: ${network}`));
 
+  logger.log(chalk.gray(`network url: ${hre.network.config.url}`));
   logger.log(chalk.gray(`instance: ${taskArguments.instance}`));
   logger.log(chalk.gray(`deployment: ${relativePath(hre.deployer.paths.deployment)}`));
 
