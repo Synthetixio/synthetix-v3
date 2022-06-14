@@ -1,45 +1,34 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@synthetixio/core-contracts/contracts/satellite/SatelliteFactory.sol";
-import "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
-
-import "../interfaces/IFundModuleStorage.sol";
-
-contract FundModuleStorage is IFundModuleStorage {
+contract FundModuleStorage {
     struct FundModuleStore {
-        bool initialized;
-        SatelliteFactory.Satellite fundToken;
-        uint256 preferredFund;
-        uint256[] approvedFunds;
         mapping(uint256 => FundData) funds; // fund metadata by fundId
-        mapping(uint256 => SetUtil.Bytes32Set) accountliquidityItems;
-        mapping(bytes32 => LiquidityItem) liquidityItems; // LiquidityItems data by liquidityProviderIds
     }
 
     struct FundData {
-        /// @dev fund configuration and market distribution
+        /// @dev fund owner
+        address owner;
+        /// @dev nominated fund owner
+        address nominatedOwner;
+        /// @dev sum of all distributions for the fund
         uint256 totalWeights; // sum of distribution weights
+        /// @dev fund distribution
         MarketDistribution[] fundDistribution;
-        // TODO Everything below this line should be split per collateralType
-        // according to May 23th discussion Funds should be "single" collateral
-        /// @dev fund economics
-        uint256 totalShares; // total shares distributed
-        uint256 totalsUSD;
-        /// @dev collateral delegated
-        SetUtil.AddressSet collateralTypes; // collateral types used to add liquidity to the fund
-        mapping(address => uint256) liquidityByCollateral; // total liquidity per collateral
-        /// @dev Individual Liquidity Items
-        SetUtil.Bytes32Set liquidityItemIds; // All LiquidityItem ids in this fund
-        mapping(uint256 => SetUtil.Bytes32Set) liquidityItemsByAccount; // LiquidityItem ids by account
-        /// @dev minted sUSD
-        mapping(uint256 => uint256) sUSDByAccount;
-        mapping(uint256 => mapping(address => uint256)) sUSDByAccountAndCollateral;
+        /// @dev fund name
+        string name;
     }
 
+    /**
+     * Market Distribution is set by assigning weights to markets
+     * the proportion for a market is obtained as market_distribution / totalWeights
+     * where totalWeights is the sum of all MarketDistribution weights
+     */
     struct MarketDistribution {
-        uint256 weight;
+        /// @dev market baked by this fund
         uint256 market;
+        /// @dev weight sent to that market
+        uint256 weight;
     }
 
     function _fundModuleStore() internal pure returns (FundModuleStore storage store) {

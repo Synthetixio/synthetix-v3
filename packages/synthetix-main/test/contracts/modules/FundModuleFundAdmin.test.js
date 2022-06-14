@@ -11,9 +11,10 @@ describe('FundModule - Funds Admin', function () {
 
   let owner, fundAdmin, user1, user2;
 
-  let CollateralModule, Collateral, CollateralPriceFeed;
+  let CollateralModule, Collateral, AggregatorV3Mock;
   let AccountModule, AccountToken;
-  let FundModule, FundToken, fundTokenAddress;
+  let FundModule;
+  let FundVault;
 
   before('identify signers', async () => {
     [owner, fundAdmin, user1, user2] = await ethers.getSigners();
@@ -21,6 +22,7 @@ describe('FundModule - Funds Admin', function () {
 
   before('identify modules', async () => {
     FundModule = await ethers.getContractAt('FundModule', proxyAddress());
+    FundVault = await ethers.getContractAt('FundVault', proxyAddress());
 
     CollateralModule = await ethers.getContractAt('CollateralModule', proxyAddress());
     AccountModule = await ethers.getContractAt('AccountModule', proxyAddress());
@@ -28,13 +30,6 @@ describe('FundModule - Funds Admin', function () {
     const accountTokenAddress = await AccountModule.getAccountAddress();
 
     AccountToken = await ethers.getContractAt('AccountToken', accountTokenAddress);
-  });
-
-  before('Initialize tokens and modules', async () => {
-    await (await FundModule.connect(owner).initializeFundModule()).wait();
-    fundTokenAddress = await FundModule.getFundTokenAddress();
-
-    FundToken = await ethers.getContractAt('FundToken', fundTokenAddress);
   });
 
   before('add one collateral', async () => {
@@ -45,15 +40,15 @@ describe('FundModule - Funds Admin', function () {
 
     await (await Collateral.connect(owner).initialize('Synthetix Token', 'SNX', 18)).wait();
 
-    factory = await ethers.getContractFactory('CollateralPriceFeedMock');
-    CollateralPriceFeed = await factory.deploy();
+    factory = await ethers.getContractFactory('AggregatorV3Mock');
+    AggregatorV3Mock = await factory.deploy();
 
-    await (await CollateralPriceFeed.connect(owner).setCurrentPrice(1)).wait();
+    await (await AggregatorV3Mock.connect(owner).mockSetCurrentPrice(1)).wait();
 
     await (
       await CollateralModule.connect(owner).adjustCollateralType(
         Collateral.address,
-        CollateralPriceFeed.address,
+        AggregatorV3Mock.address,
         400,
         200,
         true
@@ -89,8 +84,7 @@ describe('FundModule - Funds Admin', function () {
   });
 
   it('fund is created', async () => {
-    assert.equal(await FundToken.ownerOf(1), fundAdmin.address);
-    assertBn.equal(await FundToken.balanceOf(fundAdmin.address), 1);
+    assert.equal(await FundModule.ownerOf(1), fundAdmin.address);
   });
 
   describe('When setting up the Fund positions', async () => {
@@ -98,7 +92,7 @@ describe('FundModule - Funds Admin', function () {
       it('reverts', async () => {
         await assertRevert(
           FundModule.connect(fundAdmin).setFundPosition(2, [1], [1]),
-          'TokenDoesNotExist(2)'
+          'FundNotFound(2)'
         );
       });
     });
@@ -166,7 +160,7 @@ describe('FundModule - Funds Admin', function () {
           let liquidityItemId;
 
           before('delegate some collateral', async () => {
-            const tx = await FundModule.connect(user1).delegateCollateral(
+            const tx = await FundVault.connect(user1).delegateCollateral(
               1,
               1,
               Collateral.address,
@@ -202,7 +196,7 @@ describe('FundModule - Funds Admin', function () {
 
           describe('when adding to the same liquidityId', async () => {
             before('delegate some collateral', async () => {
-              const tx = await FundModule.connect(user1).delegateCollateral(
+              const tx = await FundVault.connect(user1).delegateCollateral(
                 1,
                 1,
                 Collateral.address,
@@ -238,7 +232,7 @@ describe('FundModule - Funds Admin', function () {
 
           describe('when decreasing from to same liquidityId', async () => {
             before('delegate some collateral', async () => {
-              const tx = await FundModule.connect(user1).delegateCollateral(
+              const tx = await FundVault.connect(user1).delegateCollateral(
                 1,
                 1,
                 Collateral.address,
@@ -274,7 +268,7 @@ describe('FundModule - Funds Admin', function () {
 
           describe('when removing liquidityId', async () => {
             before('delegate some collateral', async () => {
-              const tx = await FundModule.connect(user1).delegateCollateral(
+              const tx = await FundVault.connect(user1).delegateCollateral(
                 1,
                 1,
                 Collateral.address,

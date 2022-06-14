@@ -3,17 +3,15 @@ const { SUBTASK_GET_DEPLOYMENT_INFO } = require('../task-names');
 
 const {
   getAllDeploymentFiles,
-  getDeploymentExtendedFiles
+  getDeploymentExtendedFiles,
 } = require('@synthetixio/deployer/utils/deployments');
 
 const fs = require('fs');
-
 
 subtask(
   SUBTASK_GET_DEPLOYMENT_INFO,
   'Get the deployment info of the current instance',
   async ({ instance }, hre) => {
-
     // deployer leaves its result in JSON files. We only care about the current and "extension"
     const [currentDeploymentFile] = getAllDeploymentFiles({ network: hre.network.name, instance });
     const extendedFile = getDeploymentExtendedFiles(currentDeploymentFile);
