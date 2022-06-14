@@ -2,15 +2,15 @@ const { randomInt } = require('crypto');
 const { task } = require('hardhat/config');
 const logger = require('@synthetixio/core-js/utils/io/logger');
 const types = require('@synthetixio/core-js/utils/hardhat/argument-types');
+const { parseBalanceMap } = require('@synthetixio/core-js/utils/merkle-tree/parse-balance-tree');
 const assertPeriod = require('../internal/assert-period');
 const getPackageProxy = require('../internal/get-package-proxy');
 const getPeriodDate = require('../internal/get-period-date');
 const { periods } = require('../internal/get-period-date');
 const { COUNCILS, ElectionPeriod } = require('../internal/constants');
-const { parseBalanceMap } = require('@synthetixio/core-js/utils/merkle-tree/parse-balance-tree');
 
 task('fixture:wallets', 'Create fixture wallets')
-  .addOptionalParam('amount', 'Amount of wallets to fixture', '50', types.int)
+  .addOptionalParam('amount', 'Amount of wallets to fixture', '20', types.int)
   .setAction(async ({ amount }, hre) => {
     logger.log(`Fixturing ${amount} wallets\n`);
 
@@ -19,7 +19,7 @@ task('fixture:wallets', 'Create fixture wallets')
       return new hre.ethers.Wallet(privateKey, hre.ethers.provider);
     });
 
-    if (hre.network.config.url.startsWith('https://rpc.tenderly.co/')) {
+    if (hre.network.config.url.startsWith('https://rpc.tenderly.co/fork/')) {
       await hre.network.provider.request({
         method: 'tenderly_setBalance',
         params: [wallets.map((w) => w.address), '0x10000000000000000000000'],
@@ -45,8 +45,8 @@ task('fixture:wallets', 'Create fixture wallets')
 task('fixture:candidates', 'Create fixture candidate nominations')
   .addOptionalParam('instance', 'Deployment instance name', 'official', types.alphanumeric)
   .addParam('council', 'Target council deployment', undefined, types.oneOf(...COUNCILS))
-  .addOptionalParam('nominateAmount', 'Amount of candidates to fixture', '14', types.int)
-  .addOptionalParam('withdrawAmount', 'Amount of candidates to withdraw nomination', '2', types.int)
+  .addOptionalParam('nominateAmount', 'Amount of candidates to fixture', '6', types.int)
+  .addOptionalParam('withdrawAmount', 'Amount of candidates to withdraw nomination', '1', types.int)
   .setAction(async ({ instance, council, nominateAmount, withdrawAmount }, hre) => {
     const Proxy = await getPackageProxy(hre, council, instance);
 
@@ -80,7 +80,7 @@ task('fixture:candidates', 'Create fixture candidate nominations')
 task('fixture:votes', 'Create fixture votes to nominated candidates')
   .addOptionalParam('instance', 'Deployment instance name', 'official', types.alphanumeric)
   .addParam('council', 'Target council deployment', undefined, types.oneOf(...COUNCILS))
-  .addOptionalParam('amount', 'Amount of voters to fixture', '20', types.int)
+  .addOptionalParam('amount', 'Amount of voters to fixture', '10', types.int)
   .addOptionalParam('ballotSize', 'Amount of cadidates for each ballot', '1', types.int)
   .setAction(async ({ instance, council, amount, ballotSize }, hre) => {
     const Proxy = await getPackageProxy(hre, council, instance);
@@ -89,7 +89,28 @@ task('fixture:votes', 'Create fixture votes to nominated candidates')
 
     logger.log(`Fixturing ${amount} voters on "${council}"\n`);
 
-    const voters = await hre.run('fixture:wallets', { amount });
+    const voters = hre.fixture?.voters || (await hre.run('fixture:wallets', { amount }));
+
+    if (hre.fixture?.voters) {
+      for (const voter of hre.fixture.voters) {
+        if (!hre.fixture.tree.claims[voter.address]) continue;
+
+        const { amount, proof } = hre.fixture.tree.claims[voter.address];
+
+        logger.log('Declaring cross chain debt');
+        logger.log(` - Address: ${voter.address}`);
+        logger.log(` - Amount: ${hre.ethers.BigNumber.from(amount).toString()}`);
+        logger.log(` - Proof: ${JSON.stringify(proof)}`);
+        await Proxy.declareCrossChainDebtShare(
+          voter.address,
+          hre.ethers.BigNumber.from(amount).toString(),
+          proof
+        );
+
+        await new Promise((resolve) => setTimeout(resolve, 1500));
+      }
+    }
+
     const candidates = await Proxy.getNominees();
 
     const ballotsCount = Math.floor(candidates.length / Number(ballotSize));
@@ -105,9 +126,10 @@ task('fixture:votes', 'Create fixture votes to nominated candidates')
       const ballot = ballots[randomInt(ballots.length)];
       const ballotId = await Proxy.calculateBallotId(ballot);
       const votePower = await Proxy.getVotePower(voter.address);
+      logger.info(`  Voter: ${voter.address} | BallotId: ${ballotId} | VotePower: ${votePower}`);
       const tx = await Proxy.connect(voter).cast(ballot);
       await tx.wait();
-      logger.info(`  Voter: ${voter.address} | BallotId: ${ballotId} | VotePower: ${votePower}`);
+      await new Promise((resolve) => setTimeout(resolve, 2000));
     }
 
     // Withdraw a random amount of votes between 1/3 and 0
@@ -128,13 +150,27 @@ task('fixture:votes', 'Create fixture votes to nominated candidates')
     for (const ballot of ballots) {
       const ballotId = await Proxy.calculateBallotId(ballot);
       const votes = await Proxy.getBallotVotes(ballotId);
-      logger.log('BallotId: ', ballotId);
+      logger.log(`BallotId: ${ballotId}`);
       logger.log('Candidates:');
-      ballot.forEach((address, i) => logger.info(` #${i}: `, address));
-      logger.log('Vote Count: ', votes.toString());
+      ballot.forEach((address, i) => logger.info(` #${i}: ${address}`));
+      logger.log(`Vote Count: ${votes.toString()}`);
       logger.log('');
+      await new Promise((resolve) => setTimeout(resolve, 1000));
     }
   });
+
+function generateMerkleTree(wallets) {
+  const debts = wallets.reduce((debts, { address }) => {
+    // random debt between 1 and 10_000_000
+    debts[address] = randNumberString(randomInt(19, 23));
+    return debts;
+  }, {});
+
+  // Create MerkleTree for the given debts
+  const tree = parseBalanceMap(debts);
+
+  return tree;
+}
 
 task('fixture:cross-chain-debt-tree', 'Generate cross chain debt merkle tree')
   .addOptionalParam('instance', 'Deployment instance name', 'official', types.alphanumeric)
@@ -145,19 +181,7 @@ task('fixture:cross-chain-debt-tree', 'Generate cross chain debt merkle tree')
 
     await assertPeriod(Proxy, 'Nomination');
 
-    logger.log(`Fixturing Cross Chain Debt Merkle Tree for "${council}"`);
-
-    const wallets = createArray(randomInt(128)).map(() => hre.ethers.Wallet.createRandom().address);
-
-    // Generate random cross-chain debts for hardhat signers
-    const debts = wallets.reduce((debts, address) => {
-      // random debt between 1 and 10_000_000
-      debts[address] = randNumberString(randomInt(19, 26));
-      return debts;
-    }, {});
-
-    // Create MerkleTree for the given debts
-    const tree = parseBalanceMap(debts);
+    const tree = hre.fixture.tree;
 
     logger.log('Setting Cross Chain Debt Root:');
     logger.info(`merkeRoot: ${tree.merkleRoot}`);
@@ -180,6 +204,8 @@ task('fixture:epoch', 'Fixture a complete epoch')
     types.enum
   )
   .setAction(async ({ instance, period }, hre) => {
+    hre.fixture = {};
+
     const until = ElectionPeriod[period];
     const Proxies = await Promise.all(
       COUNCILS.map((councilName) => getPackageProxy(hre, councilName, instance))
@@ -188,6 +214,7 @@ task('fixture:epoch', 'Fixture a complete epoch')
     const runOnCouncils = async (taskName, args = {}) => {
       for (const council of COUNCILS) {
         await hre.run(taskName, { ...args, instance, council });
+        await new Promise((resolve) => setTimeout(resolve, 3000));
       }
     };
 
@@ -199,6 +226,9 @@ task('fixture:epoch', 'Fixture a complete epoch')
       currentPeriod = await getCommonCurrentPeriod(Proxies);
       if (until === ElectionPeriod.Administration) return;
     }
+
+    hre.fixture.voters = await hre.run('fixture:wallets', { amount: '5' });
+    hre.fixture.tree = generateMerkleTree(hre.fixture.voters);
 
     if (currentPeriod === ElectionPeriod.Nomination) {
       await runOnCouncils('governance:set-debt-share-snapshot-id');
