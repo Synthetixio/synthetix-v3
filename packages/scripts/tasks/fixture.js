@@ -127,7 +127,7 @@ task('fixture:votes', 'Create fixture votes to nominated candidates')
       const ballotId = await Proxy.calculateBallotId(ballot);
       const votePower = await Proxy.getVotePower(voter.address);
       logger.info(`  Voter: ${voter.address} | BallotId: ${ballotId} | VotePower: ${votePower}`);
-      const tx = await Proxy.connect(voter).cast(ballot, { gasLimit: 8000000 });
+      const tx = await Proxy.connect(voter).cast(ballot);
       await tx.wait();
       await new Promise((resolve) => setTimeout(resolve, 2000));
     }
