@@ -17,6 +17,7 @@
     "hardhat": "2.9.3"
   },
   "dependencies": {
-    "inquirer": "8.2.4"
+    "inquirer": "8.2.4",
+    "synthetix": "2.73.1"
   }
 }
