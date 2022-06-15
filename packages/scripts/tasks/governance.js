@@ -1,9 +1,6 @@
-const fs = require('fs/promises');
-const { task, types: hardhatTypes } = require('hardhat/config');
+const { task } = require('hardhat/config');
 const inquirer = require('inquirer');
 const chalk = require('chalk');
-const snx = require('synthetix');
-const { parseBalanceMap } = require('@synthetixio/core-js/utils/merkle-tree/parse-balance-tree');
 const types = require('@synthetixio/core-js/utils/hardhat/argument-types');
 const { formatDate } = require('@synthetixio/core-js/utils/misc/dates');
 const logger = require('@synthetixio/core-js/utils/io/logger');
@@ -152,67 +149,6 @@ task('governance:set-debt-share-snapshot-id', 'Call ElectioModule.setDebtShareSn
     logger.success(`Done (tx: ${tx.hash})`);
   });
 
-task('governance:get-snapshots-ids', 'Call ElectioModule.setDebtShareSnapshotId')
-  // .addOptionalParam('instance', 'Deployment instance name', 'official', types.alphanumeric)
-  // .addParam('council', 'Target council deployment', undefined, types.oneOf(...COUNCILS))
-  .addParam('until', 'Until wich timestamp to show')
-  .addParam('fromBlock', 'Until wich timestamp to show')
-  .setAction(async ({ until, fromBlock }, hre) => {
-    // const Proxy = await getPackageProxy(hre, council, instance);
-
-    let blockNumber = fromBlock ? Number(fromBlock) : await hre.ethers.provider.getBlockNumber();
-    while (true) {
-      const { timestamp } = await hre.ethers.provider.getBlock(blockNumber);
-      console.log(`#${blockNumber}: ${timestamp}`);
-      blockNumber -= 1;
-      await new Promise((resolve) => setTimeout(resolve, 100));
-      if (timestamp < Number(until)) break;
-    }
-
-    // const address = await Proxy.getDebtShareContract();
-    // const SynthetixDebtShare = await hre.ethers.getContractAt(
-    //   [
-    //     {
-    //       constant: true,
-    //       inputs: [],
-    //       name: 'currentPeriodId',
-    //       outputs: [{ internalType: 'uint128', name: '', type: 'uint128' }],
-    //       payable: false,
-    //       stateMutability: 'view',
-    //       type: 'function',
-    //     },
-    //   ],
-    //   address
-    // );
-
-    // const { address } = snx.getTarget({ network: 'mainnet-ovm', contract: 'ProxyFeePool' });
-
-    // console.log(address);
-    // console.log(hre.ethers.utils.id('FeePeriodClosed(uint256)'));
-
-    // const logs = await hre.ethers.provider.getLogs({
-    //   address,
-    //   topics: [hre.ethers.utils.id('FeePeriodClosed(uint256)')],
-    // });
-
-    // console.log(logs);
-
-    // const FeePool = await hre.ethers.getContractAt(
-    //   [
-    //     {
-    //       constant: true,
-    //       inputs: [],
-    //       name: 'currentPeriodId',
-    //       outputs: [{ internalType: 'uint128', name: '', type: 'uint128' }],
-    //       payable: false,
-    //       stateMutability: 'view',
-    //       type: 'function',
-    //     },
-    //   ],
-    //   '0xD3739A5F06747e148E716Dcb7147B9BA15b70fcc'
-    // );
-  });
-
 task('governance:evaluate-election', 'Evaluate election of given council')
   .addOptionalParam('instance', 'Deployment instance name', 'official', types.alphanumeric)
   .addParam('council', 'Target council deployment', undefined, types.oneOf(...COUNCILS))
@@ -268,21 +204,6 @@ task('governance:evaluate-election', 'Evaluate election of given council')
     const members = await Proxy.getCouncilMembers();
     logger.log(chalk.gray(`Current council members (${members.length}):`));
     members.forEach((address) => logger.info(address));
-  });
-
-task('governance:generate-merkle-tree', 'generate a merkle tree file from users debts')
-  .addFlag('quiet', 'Silence all output', false)
-  .addPositionalParam('file', 'File to get users debts from', undefined, hardhatTypes.inputFile)
-  .setAction(async ({ file, quiet }) => {
-    const { debts } = JSON.parse(await fs.readFile(file));
-
-    const tree = parseBalanceMap(debts);
-
-    if (!quiet) {
-      logger.log(JSON.stringify(tree, null, 2));
-    }
-
-    return tree;
   });
 
 async function initCouncils(hre, instance) {
