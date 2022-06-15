@@ -1,6 +1,8 @@
-const { task } = require('hardhat/config');
+const fs = require('fs/promises');
+const { task, types: hardhatTypes } = require('hardhat/config');
 const inquirer = require('inquirer');
 const chalk = require('chalk');
+const { parseBalanceMap } = require('@synthetixio/core-js/utils/merkle-tree/parse-balance-tree');
 const types = require('@synthetixio/core-js/utils/hardhat/argument-types');
 const { formatDate } = require('@synthetixio/core-js/utils/misc/dates');
 const logger = require('@synthetixio/core-js/utils/io/logger');
@@ -204,6 +206,21 @@ task('governance:evaluate-election', 'Evaluate election of given council')
     const members = await Proxy.getCouncilMembers();
     logger.log(chalk.gray(`Current council members (${members.length}):`));
     members.forEach((address) => logger.info(address));
+  });
+
+task('governance:generate-merkle-tree', 'generate a merkle tree file from users debts')
+  .addFlag('quiet', 'Silence all output', false)
+  .addPositionalParam('file', 'File to get users debts from', undefined, hardhatTypes.inputFile)
+  .setAction(async ({ file, quiet }) => {
+    const { debts } = JSON.parse(await fs.readFile(file));
+
+    const tree = parseBalanceMap(debts);
+
+    if (!quiet) {
+      logger.log(JSON.stringify(tree, null, 2));
+    }
+
+    return tree;
   });
 
 async function initCouncils(hre, instance) {
