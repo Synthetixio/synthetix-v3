@@ -39,10 +39,9 @@ task(TASK_DEPLOY_VERIFY, 'Verify deployment contracts using Etherscan API')
 
     const contracts = Object.values(deployment.contracts);
 
-    const contractsToVerify = contracts.filter((c) => {
-      if (!contract) return true;
-      return c.contractFullyQualifiedName === contract;
-    });
+    const contractsToVerify = contract
+      ? contracts.filter((c) => c.contractFullyQualifiedName === contract)
+      : contracts;
 
     // Verify Contracts
     for (const c of contractsToVerify) {

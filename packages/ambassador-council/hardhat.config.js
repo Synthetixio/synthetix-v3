@@ -30,6 +30,7 @@ const config = {
     ['optimistic-mainnet']: {
       url: process.env.NETWORK_ENDPOINT || 'https://mainnet.optimism.io',
       accounts: process.env.DEPLOYER_PRIVATE_KEY ? [process.env.DEPLOYER_PRIVATE_KEY] : [],
+      chainId: 10,
     },
   },
   deployer: {
@@ -40,6 +41,10 @@ const config = {
   },
   etherscan: {
     apiKey: process.env.ETHERSCAN_API_KEY,
+  },
+  tenderly: {
+    project: 'synthetix',
+    username: 'synthetix-services',
   },
 };
 
