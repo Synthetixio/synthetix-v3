@@ -24,5 +24,6 @@ module.exports = {
   SUBTASK_GET_MULTICALL_ABI: 'deployer-get-multicall-abi',
   TASK_DEPLOY: 'deploy',
   TASK_DEPLOY_VERIFY: 'deploy:verify',
+  TASK_DEPLOY_VERIFY_TENDERLY: 'deploy:verify-tenderly',
   TASK_DEPLOY_MULTICALL_ABI: 'deploy:multicall-abi',
 };
