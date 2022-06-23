@@ -73,7 +73,10 @@ async function validateCouncil({ Proxy, Token, council, epoch }) {
   await expect(Proxy, 'getVotingPeriodStartDate', date(council.getVotingPeriodStartDate));
   await expect(Proxy, 'getEpochEndDate', date(council.getEpochEndDate));
   await expect(Proxy, 'getNextEpochSeatCount', council.getNextEpochSeatCount);
-  await expect(Proxy, 'getCouncilMembers', council.getCouncilMembers);
+
+  if (council.getCouncilMembers) {
+    await expect(Proxy, 'getCouncilMembers', council.getCouncilMembers);
+  }
 
   // Validate Council Token
   logger.log(chalk.gray('CouncilToken Validations:'));
@@ -101,6 +104,7 @@ async function expect(Contract, methodName, ...args) {
   const result = await Contract[methodName](...fnParams);
   const actual = typeof expected === 'number' ? Number(result) : result;
 
+  const paramsStr = fnParams.map(JSON.stringify).join(', ');
   try {
     if (['Array', 'Object'].includes(typeOf(expected))) {
       deepEqual(actual, expected);
@@ -108,9 +112,12 @@ async function expect(Contract, methodName, ...args) {
       equal(actual, expected);
     }
 
-    const params = fnParams.map(JSON.stringify).join(', ');
-    logger.success(`${methodName}(${params}) is ${JSON.stringify(expected)}`);
+    logger.success(`${methodName}(${paramsStr}) is ${JSON.stringify(actual)}`);
   } catch (err) {
-    logger.error(`Expected ${expected} for ${methodName}, but given ${actual}\n${err}`);
+    logger.error(
+      `${methodName}(${paramsStr}) expected ${JSON.stringify(expected)}, but got ${JSON.stringify(
+        actual
+      )}`
+    );
   }
 }
