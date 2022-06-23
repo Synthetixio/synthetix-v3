@@ -2,6 +2,7 @@ const path = require('path');
 const assert = require('assert/strict');
 const { equal, deepEqual } = require('assert/strict');
 const { task } = require('hardhat/config');
+const chalk = require('chalk');
 const logger = require('@synthetixio/core-js/utils/io/logger');
 const types = require('@synthetixio/core-js/utils/hardhat/argument-types');
 const { getDeployment, getDeploymentAbis } = require('@synthetixio/deployer/utils/deployments');
@@ -17,6 +18,8 @@ task('validate-councils')
   )
   .addParam('epoch', 'Epoch index to validate', undefined, types.int)
   .setAction(async ({ instance, epoch }, hre) => {
+    epoch = Number(epoch);
+
     logger.notice(`Validating councils on network "${hre.network.name}"`);
 
     const councils = await importJson(`${__dirname}/../data/councils-epoch-${epoch}.json`);
@@ -33,7 +36,7 @@ task('validate-councils')
 
         // Initialize Proxy
         const Proxy = await getPackageProxy(hre, council.name, instance);
-        logger.info(`Proxy Address: ${Proxy.address}`);
+        logger.log(chalk.gray(`Proxy Address: ${Proxy.address}`));
 
         // Initialize Token
         const councilTokenAddress = await Proxy.getCouncilToken();
@@ -42,14 +45,14 @@ task('validate-councils')
           abis['@synthetixio/core-modules/contracts/tokens/CouncilToken.sol:CouncilToken'],
           councilTokenAddress
         );
-        logger.info(`Token Address: ${Token.address}`);
+        logger.log(chalk.gray(`Token Address: ${Token.address}`));
 
         // Check Deployment Status
         const deployment = getDeployment(info);
         assert(deployment.properties.completed, `Deployment of ${council.name} is not completed`);
         logger.success('Deployment complete');
 
-        await validateCouncil({ Proxy, Token, council });
+        await validateCouncil({ Proxy, Token, council, epoch });
       } catch (err) {
         console.error(err);
         logger.error(`Council "${council.name}" is not valid`);
@@ -57,10 +60,11 @@ task('validate-councils')
     }
   });
 
-async function validateCouncil({ Proxy, Token, council }) {
+async function validateCouncil({ Proxy, Token, council, epoch }) {
   // Validate Initializatiion
   await expect(Proxy, 'isOwnerModuleInitialized', true);
   await expect(Proxy, 'isElectionModuleInitialized', true);
+  await expect(Proxy, 'getEpochIndex', epoch);
 
   // Validate Epoch Properties
   await expect(Proxy, 'owner', council.owner);
@@ -72,8 +76,15 @@ async function validateCouncil({ Proxy, Token, council }) {
   await expect(Proxy, 'getCouncilMembers', council.getCouncilMembers);
 
   // Validate Council Token
+  logger.log(chalk.gray('CouncilToken Validations:'));
+
   await expect(Token, 'name', council.councilTokenName);
   await expect(Token, 'symbol', council.councilTokenSymbol);
+
+  // Validate that the council members have 1 CouncilToken
+  for (const address of await Proxy.getCouncilMembers()) {
+    await expect(Token, 'balanceOf', address, 1);
+  }
 }
 
 function date(dateStr) {
@@ -84,8 +95,10 @@ function typeOf(val) {
   return Object.prototype.toString.call(val).slice(8, -1);
 }
 
-async function expect(Contract, methodName, expected) {
-  const result = await Contract[methodName]();
+async function expect(Contract, methodName, ...args) {
+  const fnParams = args.slice(0, args.length - 1);
+  const [expected] = args.slice(-1);
+  const result = await Contract[methodName](...fnParams);
   const actual = typeof expected === 'number' ? Number(result) : result;
 
   try {
@@ -95,7 +108,8 @@ async function expect(Contract, methodName, expected) {
       equal(actual, expected);
     }
 
-    logger.success(`${methodName} is ${JSON.stringify(expected)}`);
+    const params = fnParams.map(JSON.stringify).join(', ');
+    logger.success(`${methodName}(${params}) is ${JSON.stringify(expected)}`);
   } catch (err) {
     logger.error(`Expected ${expected} for ${methodName}, but given ${actual}\n${err}`);
   }
