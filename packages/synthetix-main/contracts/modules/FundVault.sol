@@ -4,7 +4,6 @@ pragma solidity ^0.8.0;
 import "@synthetixio/core-contracts/contracts/ownership/OwnableMixin.sol";
 import "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
 import "@synthetixio/core-contracts/contracts/utils/MathUtil.sol";
-import "@synthetixio/core-contracts/contracts/interfaces/IERC20.sol";
 
 import "../mixins/AccountRBACMixin.sol";
 import "../mixins/CollateralMixin.sol";
@@ -13,6 +12,7 @@ import "../mixins/SUSDMixin.sol";
 
 import "../storage/FundVaultStorage.sol";
 import "../interfaces/IFundVault.sol";
+import "../interfaces/ISUSDToken.sol";
 
 import "../submodules/FundEventAndErrors.sol";
 
@@ -300,7 +300,7 @@ contract FundVault is
     ) external override onlyRoleAuthorized(accountId, "mint") onlyIfsUSDIsInitialized {
         // TODO Check if can mint that amount
 
-        IERC20(_getSUSDTokenAddress()).mint(accountId, amount);
+        ISUSDToken(_getSUSDTokenAddress()).mint(msg.sender, amount);
         _fundVaultStore().fundVaults[fundId][collateralType].sUSDByAccount[accountId] += amount;
         _fundVaultStore().fundVaults[fundId][collateralType].totalsUSD += amount;
     }
@@ -313,7 +313,7 @@ contract FundVault is
     ) external override onlyRoleAuthorized(accountId, "burn") onlyIfsUSDIsInitialized {
         // TODO Check if can burn that amount
 
-        IERC20(_getSUSDTokenAddress()).burn(accountId, amount);
+        ISUSDToken(_getSUSDTokenAddress()).burn(msg.sender, amount);
         _fundVaultStore().fundVaults[fundId][collateralType].sUSDByAccount[accountId] -= amount;
         _fundVaultStore().fundVaults[fundId][collateralType].totalsUSD -= amount;
     }

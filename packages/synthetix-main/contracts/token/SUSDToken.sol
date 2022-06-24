@@ -3,12 +3,11 @@ pragma solidity ^0.8.0;
 
 import "@synthetixio/core-contracts/contracts/proxy/UUPSImplementation.sol";
 import "@synthetixio/core-contracts/contracts/ownership/Ownable.sol";
-import "@synthetixio/core-contracts/contracts/ownership/Authorizable.sol";
 import "@synthetixio/core-contracts/contracts/token/ERC20.sol";
 import "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
 import "../interfaces/ISUSDToken.sol";
 
-contract SUSDToken is ISUSDToken, ERC20, UUPSImplementation, Ownable, Authorizable {
+contract SUSDToken is ISUSDToken, ERC20, UUPSImplementation, Ownable {
     function initialize(
         string memory tokenName,
         string memory tokenSymbol,
@@ -21,11 +20,11 @@ contract SUSDToken is ISUSDToken, ERC20, UUPSImplementation, Ownable, Authorizab
         _upgradeTo(newImplementation);
     }
 
-    function burn(address to, uint256 amount) external override onlyAuthorized {
+    function burn(address to, uint256 amount) external override onlyOwner {
         _burn(to, amount);
     }
 
-    function mint(address to, uint256 amount) external override onlyAuthorized {
+    function mint(address to, uint256 amount) external override onlyOwner {
         _mint(to, amount);
     }
 }

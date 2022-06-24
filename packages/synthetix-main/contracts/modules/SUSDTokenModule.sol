@@ -40,8 +40,7 @@ contract SUSDTokenModule is
 
         sUSDToken.nominateNewOwner(address(this));
         sUSDToken.acceptOwnership();
-        sUSDToken.setNewAuthorized(address(this));
-        sUSDToken.initialize("SyntUSD Token", "sUSD", 18);
+        sUSDToken.initialize("Synthetic USD Token v3", "sUSD", 18);
 
         store.sUSDToken = Satellite({name: "sUSD", contractName: "SUSDToken", deployedAddress: sUSDTokenProxyAddress});
 
