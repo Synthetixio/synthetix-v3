@@ -53,7 +53,7 @@ describe('SUSDTokenModule', function () {
       });
 
       it('reads the SUSD parameters', async () => {
-        assert.equal(await SUSD.name(), 'SyntUSD Token');
+        assert.equal(await SUSD.name(), 'Synthetic USD Token v3');
         assert.equal(await SUSD.symbol(), 'sUSD');
         assert.equal(await SUSD.decimals(), 18);
       });
@@ -91,19 +91,13 @@ describe('SUSDTokenModule', function () {
           await tx.wait();
         });
 
-        before('Set the Authorized System address', async () => {
-          const tx = await SUSDTokenModule.connect(owner).setNewSUSDAuthorizedSystem(user1.address);
-
-          await tx.wait();
-        });
-
         it('is upgraded', async () => {
           NewSUSD = await ethers.getContractAt('SUSDTokenMock', snxTokenAddress);
           assert.equal(AnotherSUSDToken.address, await NewSUSD.getImplementation());
         });
 
         it('reads the upgraded SUSD parameters', async () => {
-          assert.equal(await NewSUSD.name(), 'SyntUSD Token');
+          assert.equal(await NewSUSD.name(), 'Synthetic USD Token v3');
           assert.equal(await NewSUSD.symbol(), 'sUSD');
           assert.equal(await NewSUSD.decimals(), 18);
         });
@@ -112,7 +106,7 @@ describe('SUSDTokenModule', function () {
           const totalSupply = ethers.BigNumber.from('1000000');
 
           before('mint', async () => {
-            const tx = await NewSUSD.connect(user1).mint(user1.address, totalSupply);
+            const tx = await NewSUSD.connect(user1).mint(totalSupply);
             await tx.wait();
           });
 

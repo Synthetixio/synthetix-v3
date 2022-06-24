@@ -66,8 +66,4 @@ contract SUSDTokenModule is
     function getSUSDTokenAddress() public view override returns (address) {
         return _getSUSDTokenAddress();
     }
-
-    function setNewSUSDAuthorizedSystem(address authorized) external override {
-        SUSDToken(getSUSDTokenAddress()).setNewAuthorized(authorized);
-    }
 }

@@ -12,7 +12,5 @@ interface ISUSDTokenModule is ISatelliteFactory {
 
     function getSUSDTokenAddress() external view returns (address);
 
-    function setNewSUSDAuthorizedSystem(address authorized) external;
-
     function getSUSDTokenModuleSatellites() external view returns (Satellite[] memory);
 }
