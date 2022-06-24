@@ -106,7 +106,7 @@ describe('SUSDTokenModule', function () {
           const totalSupply = ethers.BigNumber.from('1000000');
 
           before('mint', async () => {
-            const tx = await NewSUSD.connect(user1).mint(totalSupply);
+            const tx = await NewSUSD.connect(user1)['mint(uint256)'](totalSupply);
             await tx.wait();
           });
 

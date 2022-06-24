@@ -11,9 +11,9 @@ describe('FundModule - Funds Admin', function () {
 
   let owner, fundAdmin, user1, user2;
 
-  let CollateralModule, Collateral, CollateralPriceFeed;
+  let CollateralModule, Collateral, AggregatorV3Mock;
   let AccountModule; //, accountTokenAddress;
-  let FundModule, FundToken, fundTokenAddress;
+  let FundModule, FundVault;
 
   before('identify signers', async () => {
     [owner, fundAdmin, user1, user2] = await ethers.getSigners();
