@@ -20,7 +20,10 @@ interface IAccountModule is ISatelliteFactory {
     /// @notice gets the AccountModule Satellites created (only one, at idx 0).
     function getAccountModuleSatellites() external view returns (Satellite[] memory);
 
-    /// @notice hook to identify the owner of an account from mint/transfer in accountToken
+    /// @notice creates a new accountToken (NFT)
+    function createAccount(uint256 accountId) external;
+
+    /// @notice creates a new accountToken (NFT)
     function transferAccount(address to, uint256 accountId) external;
 
     /// @notice grants "target" address the "role" role for the "accountId" account token NFT

@@ -11,10 +11,9 @@ describe('FundModule - Funds Admin', function () {
 
   let owner, fundAdmin, user1, user2;
 
-  let CollateralModule, Collateral, AggregatorV3Mock;
-  let AccountModule, AccountToken;
-  let FundModule;
-  let FundVault;
+  let CollateralModule, Collateral, CollateralPriceFeed;
+  let AccountModule; //, accountTokenAddress;
+  let FundModule, FundToken, fundTokenAddress;
 
   before('identify signers', async () => {
     [owner, fundAdmin, user1, user2] = await ethers.getSigners();
@@ -27,9 +26,9 @@ describe('FundModule - Funds Admin', function () {
     CollateralModule = await ethers.getContractAt('CollateralModule', proxyAddress());
     AccountModule = await ethers.getContractAt('AccountModule', proxyAddress());
     await (await AccountModule.connect(owner).initializeAccountModule()).wait();
-    const accountTokenAddress = await AccountModule.getAccountAddress();
+    // accountTokenAddress = await AccountModule.getAccountAddress();
 
-    AccountToken = await ethers.getContractAt('AccountToken', accountTokenAddress);
+    // AccountToken = await ethers.getContractAt('AccountToken', accountTokenAddress);
   });
 
   before('add one collateral', async () => {
@@ -57,8 +56,8 @@ describe('FundModule - Funds Admin', function () {
   });
 
   before('mint some account tokens', async () => {
-    await (await AccountToken.connect(user1).mint(user1.address, 1)).wait();
-    await (await AccountToken.connect(user2).mint(user2.address, 2)).wait();
+    await (await AccountModule.connect(user1).createAccount(1)).wait();
+    await (await AccountModule.connect(user2).createAccount(2)).wait();
   });
 
   before('mint some collateral to the user', async () => {
