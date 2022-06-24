@@ -2,7 +2,18 @@
   "name": "@synthetixio/core-contracts",
   "version": "1.0.0",
   "description": "Base solidity contracts",
-  "private": true,
+  "author": "Synthetix",
+  "license": "MIT",
+  "keywords": [
+    "hardhat",
+    "solidity",
+    "proxy",
+    "ownership"
+  ],
+  "files": [
+    "contracts",
+    "!contracts/mocks"
+  ],
   "scripts": {
     "test": "hardhat test",
     "coverage": "hardhat coverage",
