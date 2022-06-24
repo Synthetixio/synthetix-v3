@@ -1,22 +1,12 @@
 {
   "name": "@synthetixio/scripts",
   "version": "1.0.0",
-  "description": "",
-  "files": [
-    "contracts",
-    "!contracts/mocks"
-  ],
+  "description": "Utility scripts for Synthetix management",
+  "private": true,
   "scripts": {
     "test": "hardhat test"
   },
-  "keywords": [],
-  "author": "",
-  "license": "MIT",
   "devDependencies": {
-    "@nomiclabs/hardhat-ethers": "2.0.5",
-    "hardhat": "2.9.3"
-  },
-  "dependencies": {
     "inquirer": "8.2.4"
   }
 }

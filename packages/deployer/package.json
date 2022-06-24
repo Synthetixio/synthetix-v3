@@ -3,14 +3,18 @@
   "version": "3.0.0",
   "description": "Synthetix deployer",
   "main": "index.js",
+  "keywords": [
+    "hardhat",
+    "deploy",
+    "solidity"
+  ],
+  "author": "Synthetix",
+  "license": "MIT",
   "scripts": {
     "test": "mocha",
     "coverage": "nyc mocha",
     "test:watch": "mocha --watch"
   },
-  "keywords": [],
-  "author": "",
-  "license": "MIT",
   "peerDependencies": {
     "@nomiclabs/hardhat-ethers": "^2.0.2",
     "hardhat": "^2.0.0"

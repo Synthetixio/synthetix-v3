@@ -1,18 +1,11 @@
 {
   "name": "@synthetixio/sample-project",
   "version": "1.0.0",
-  "description": "",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/Synthetixio/synthetix-v3.git"
-  },
-  "main": "index.js",
+  "description": "Sample project implemeting Proxy architecture",
+  "private": true,
   "scripts": {
     "test": "hardhat test"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "2.0.5",
     "hardhat": "2.9.3"
