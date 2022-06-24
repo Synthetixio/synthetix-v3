@@ -6,12 +6,12 @@ const { findEvent } = require('@synthetixio/core-js/utils/ethers/events');
 const { bootstrap } = require('@synthetixio/deployer/utils/tests');
 const initializer = require('../../helpers/initializer');
 
-describe('FundModule - SCCP', function () {
+describe('FundModule - Configuration (SCCP)', function () {
   const { proxyAddress } = bootstrap(initializer);
 
   let owner, user1;
 
-  let FundModule, FundSCCP;
+  let FundModule, FundConfiguration;
 
   before('identify signers', async () => {
     [owner, user1] = await ethers.getSigners();
@@ -19,7 +19,7 @@ describe('FundModule - SCCP', function () {
 
   before('identify modules', async () => {
     FundModule = await ethers.getContractAt('FundModule', proxyAddress());
-    FundSCCP = await ethers.getContractAt('FundSCCP', proxyAddress());
+    FundConfiguration = await ethers.getContractAt('FundConfiguration', proxyAddress());
   });
 
   before('Create some Funds', async () => {
@@ -38,15 +38,15 @@ describe('FundModule - SCCP', function () {
   });
 
   it('does not have any approved or prefered fund at creation time', async () => {
-    assertBn.equal(await FundSCCP.getPreferredFund(), 0);
+    assertBn.equal(await FundConfiguration.getPreferredFund(), 0);
 
-    assert.equal((await FundSCCP.getApprovedFunds()).length, 0);
+    assert.equal((await FundConfiguration.getApprovedFunds()).length, 0);
   });
 
   describe('when attempting to set a preferred fund as a regular user', async () => {
     it('reverts', async () => {
       await assertRevert(
-        FundSCCP.connect(user1).setPreferredFund(1),
+        FundConfiguration.connect(user1).setPreferredFund(1),
         `Unauthorized("${user1.address}")`
       );
     });
@@ -55,7 +55,7 @@ describe('FundModule - SCCP', function () {
   describe('when attempting to add an approved fund as a regular user', async () => {
     it('reverts', async () => {
       await assertRevert(
-        FundSCCP.connect(user1).addApprovedFund(1),
+        FundConfiguration.connect(user1).addApprovedFund(1),
         `Unauthorized("${user1.address}")`
       );
     });
@@ -64,7 +64,7 @@ describe('FundModule - SCCP', function () {
   describe('when attempting to remove an approved fund as a regular user', async () => {
     it('reverts', async () => {
       await assertRevert(
-        FundSCCP.connect(user1).removeApprovedFund(1),
+        FundConfiguration.connect(user1).removeApprovedFund(1),
         `Unauthorized("${user1.address}")`
       );
     });
@@ -72,19 +72,19 @@ describe('FundModule - SCCP', function () {
 
   describe('when attempting to set a preferred fund that does not exist', async () => {
     it('reverts', async () => {
-      await assertRevert(FundSCCP.connect(owner).setPreferredFund(5), 'FundNotFound(5)');
+      await assertRevert(FundConfiguration.connect(owner).setPreferredFund(5), 'FundNotFound(5)');
     });
   });
 
   describe('when attempting to add an approved fund that does not exists', async () => {
     it('reverts', async () => {
-      await assertRevert(FundSCCP.connect(owner).addApprovedFund(5), 'FundNotFound(5)');
+      await assertRevert(FundConfiguration.connect(owner).addApprovedFund(5), 'FundNotFound(5)');
     });
   });
 
   describe('when attempting to remove an approved fund that does not exists', async () => {
     it('reverts', async () => {
-      await assertRevert(FundSCCP.connect(owner).addApprovedFund(5), 'FundNotFound(5)');
+      await assertRevert(FundConfiguration.connect(owner).addApprovedFund(5), 'FundNotFound(5)');
     });
   });
 
@@ -92,7 +92,7 @@ describe('FundModule - SCCP', function () {
     let receipt;
 
     before('set the preferred fund', async () => {
-      const tx = await FundSCCP.connect(owner).setPreferredFund(2);
+      const tx = await FundConfiguration.connect(owner).setPreferredFund(2);
       receipt = await tx.wait();
     });
 
@@ -103,7 +103,7 @@ describe('FundModule - SCCP', function () {
     });
 
     it('is set', async () => {
-      assertBn.equal(await FundSCCP.getPreferredFund(), 2);
+      assertBn.equal(await FundConfiguration.getPreferredFund(), 2);
     });
   });
 
@@ -111,7 +111,7 @@ describe('FundModule - SCCP', function () {
     let receipt;
 
     before('add an approved fund', async () => {
-      const tx = await FundSCCP.connect(owner).addApprovedFund(3);
+      const tx = await FundConfiguration.connect(owner).addApprovedFund(3);
       receipt = await tx.wait();
     });
 
@@ -122,7 +122,7 @@ describe('FundModule - SCCP', function () {
     });
 
     it('is added', async () => {
-      const approvedFunds = (await FundSCCP.getApprovedFunds()).map((e) => e.toString());
+      const approvedFunds = (await FundConfiguration.getApprovedFunds()).map((e) => e.toString());
 
       assert.equal(approvedFunds.length, 1);
 
@@ -131,18 +131,21 @@ describe('FundModule - SCCP', function () {
 
     describe('when attempting to add an approved fund that is already in the list', async () => {
       it('reverts', async () => {
-        await assertRevert(FundSCCP.connect(owner).addApprovedFund(3), 'FundAlreadyApproved(3)');
+        await assertRevert(
+          FundConfiguration.connect(owner).addApprovedFund(3),
+          'FundAlreadyApproved(3)'
+        );
       });
     });
 
     describe('when removing approved funds', async () => {
       before('add other approved fund', async () => {
-        const tx = await FundSCCP.connect(owner).addApprovedFund(4);
+        const tx = await FundConfiguration.connect(owner).addApprovedFund(4);
         receipt = await tx.wait();
       });
 
       it('is added', async () => {
-        const approvedFunds = (await FundSCCP.getApprovedFunds()).map((e) => e.toString());
+        const approvedFunds = (await FundConfiguration.getApprovedFunds()).map((e) => e.toString());
 
         assert.equal(approvedFunds.length, 2);
 
@@ -152,13 +155,16 @@ describe('FundModule - SCCP', function () {
 
       describe('when attempting to remove an approved fund that is not in the list', async () => {
         it('reverts', async () => {
-          await assertRevert(FundSCCP.connect(owner).removeApprovedFund(1), 'FundNotFound(1)');
+          await assertRevert(
+            FundConfiguration.connect(owner).removeApprovedFund(1),
+            'FundNotFound(1)'
+          );
         });
       });
 
       describe('when removing fund from approved list', async () => {
         before('remove an approved fund', async () => {
-          const tx = await FundSCCP.connect(owner).removeApprovedFund(3);
+          const tx = await FundConfiguration.connect(owner).removeApprovedFund(3);
           receipt = await tx.wait();
         });
 
@@ -169,7 +175,9 @@ describe('FundModule - SCCP', function () {
         });
 
         it('is removed', async () => {
-          const approvedFunds = (await FundSCCP.getApprovedFunds()).map((e) => e.toString());
+          const approvedFunds = (await FundConfiguration.getApprovedFunds()).map((e) =>
+            e.toString()
+          );
 
           assert.equal(approvedFunds.length, 1);
 

@@ -5,7 +5,7 @@ const assertRevert = require('@synthetixio/core-js/utils/assertions/assert-rever
 const { bootstrap } = require('@synthetixio/deployer/utils/tests');
 const initializer = require('../../helpers/initializer');
 
-describe('CollateralModule SCCP', function () {
+describe('CollateralModule Configuration (SCCP)', function () {
   const { proxyAddress } = bootstrap(initializer);
 
   let CollateralModule;
