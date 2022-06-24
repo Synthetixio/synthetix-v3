@@ -8,7 +8,7 @@
     "coverage": "nyc mocha",
     "test:watch": "mocha --watch"
   },
-  "author": "",
+  "author": "Synthetix",
   "license": "MIT",
   "peerDependencies": {
     "@nomiclabs/hardhat-ethers": "^2.0.2",

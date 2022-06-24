@@ -1,18 +1,12 @@
 {
   "name": "@synthetixio/core-contracts",
   "version": "1.0.0",
-  "description": "",
-  "files": [
-    "contracts",
-    "!contracts/mocks"
-  ],
+  "description": "Base solidity contracts",
+  "private": true,
   "scripts": {
     "test": "hardhat test",
     "coverage": "hardhat coverage",
     "compile-contracts": "hardhat compile",
     "size-contracts": "hardhat size-contracts"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "MIT"
+  }
 }

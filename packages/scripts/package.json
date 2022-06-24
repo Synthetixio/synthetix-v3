@@ -1,17 +1,11 @@
 {
   "name": "@synthetixio/scripts",
   "version": "1.0.0",
-  "description": "",
-  "files": [
-    "contracts",
-    "!contracts/mocks"
-  ],
+  "description": "Utility scripts for Synthetix management",
+  "private": true,
   "scripts": {
     "test": "hardhat test"
   },
-  "keywords": [],
-  "author": "",
-  "license": "MIT",
   "devDependencies": {
     "inquirer": "8.2.4"
   }

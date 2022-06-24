@@ -1,20 +1,14 @@
 {
   "name": "@synthetixio/synthetix-governance",
   "version": "1.0.0",
-  "description": "",
-  "files": [
-    "contracts",
-    "!contracts/mocks"
-  ],
+  "description": "Base Governance Modules for Synthetix",
+  "private": true,
   "scripts": {
     "test": "hardhat test test/unit/**/*.test.js",
     "coverage": "hardhat coverage --testfiles test/unit/**/*.test.js",
     "compile-contracts": "hardhat compile",
     "size-contracts": "hardhat size-contracts"
   },
-  "keywords": [],
-  "author": "",
-  "license": "MIT",
   "devDependencies": {
     "hardhat-cannon": "0.2.3"
   }

@@ -1,21 +1,12 @@
 {
   "name": "@synthetixio/core-modules",
   "version": "1.0.0",
-  "description": "",
-  "files": [
-    "contracts",
-    "!contracts/mocks",
-    "!contracts/modules/mocks",
-    "!contracts/Proxy.sol",
-    "!contracts/Router.sol"
-  ],
+  "description": "Commmon contracts for Synthetix",
+  "private": true,
   "scripts": {
     "test": "hardhat test",
     "coverage": "hardhat coverage",
     "compile-contracts": "hardhat compile",
     "size-contracts": "hardhat size-contracts"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "MIT"
+  }
 }

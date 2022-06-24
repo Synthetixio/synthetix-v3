@@ -1,18 +1,10 @@
 {
   "name": "@synthetixio/spartan-council",
   "version": "1.0.0",
-  "description": "",
-  "files": [
-    "contracts",
-    "!contracts/mocks"
-  ],
   "scripts": {
     "test": "hardhat test",
     "coverage": "hardhat coverage",
     "compile-contracts": "hardhat compile",
     "size-contracts": "hardhat size-contracts"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "MIT"
+  }
 }

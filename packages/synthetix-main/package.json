@@ -1,18 +1,12 @@
 {
   "name": "@synthetixio/main",
   "version": "1.0.0",
-  "description": "",
-  "files": [
-    "contracts",
-    "!contracts/mocks"
-  ],
+  "description": "Core Synthetix Protocol Contracts",
+  "private": true,
   "scripts": {
     "test": "hardhat test",
     "coverage": "hardhat coverage",
     "compile-contracts": "hardhat compile",
     "size-contracts": "hardhat size-contracts"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "MIT"
+  }
 }
