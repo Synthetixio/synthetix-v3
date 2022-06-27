@@ -18,7 +18,7 @@ function bootstrap(initializer = () => {}, customDeployOptions = {}) {
   });
 
   before('deploy system', async function () {
-    this.timeout(100000);
+    this.timeout(150000);
     await deploySystem(deploymentInfo, { clear: true, ...customDeployOptions });
   });
 

@@ -5,7 +5,7 @@ const assertRevert = require('@synthetixio/core-js/utils/assertions/assert-rever
 const { bootstrap } = require('@synthetixio/deployer/utils/tests');
 const initializer = require('../../helpers/initializer');
 
-describe('CollateralModule SCCP', function () {
+describe('CollateralModule Configuration (SCCP)', function () {
   const { proxyAddress } = bootstrap(initializer);
 
   let CollateralModule;
@@ -30,10 +30,10 @@ describe('CollateralModule SCCP', function () {
 
     await (await Collateral.connect(systemOwner).initialize('Synthetix Token', 'SNX', 18)).wait();
 
-    factory = await ethers.getContractFactory('CollateralPriceFeedMock');
+    factory = await ethers.getContractFactory('AggregatorV3Mock');
     CollateralPriceFeed = await factory.deploy();
 
-    await (await CollateralPriceFeed.connect(systemOwner).setCurrentPrice(1)).wait();
+    await (await CollateralPriceFeed.connect(systemOwner).mockSetCurrentPrice(1)).wait();
 
     await (
       await CollateralModule.connect(systemOwner).adjustCollateralType(
@@ -68,10 +68,10 @@ describe('CollateralModule SCCP', function () {
         await AnotherCollateral.connect(systemOwner).initialize('Another Token', 'ANT', 18)
       ).wait();
 
-      factory = await ethers.getContractFactory('CollateralPriceFeedMock');
+      factory = await ethers.getContractFactory('AggregatorV3Mock');
       AnotherCollateralPriceFeed = await factory.deploy();
 
-      await (await AnotherCollateralPriceFeed.connect(systemOwner).setCurrentPrice(100)).wait();
+      await (await AnotherCollateralPriceFeed.connect(systemOwner).mockSetCurrentPrice(100)).wait();
 
       const tx = await CollateralModule.connect(systemOwner).adjustCollateralType(
         AnotherCollateral.address,
@@ -155,10 +155,10 @@ describe('CollateralModule SCCP', function () {
         await OtherCollateral.connect(systemOwner).initialize('Another Token', 'ANT', 18)
       ).wait();
 
-      factory = await ethers.getContractFactory('CollateralPriceFeedMock');
+      factory = await ethers.getContractFactory('AggregatorV3Mock');
       OtherCollateralPriceFeed = await factory.deploy();
 
-      await (await OtherCollateralPriceFeed.connect(systemOwner).setCurrentPrice(100)).wait();
+      await (await OtherCollateralPriceFeed.connect(systemOwner).mockSetCurrentPrice(100)).wait();
     });
 
     it('reverts when attempting to add', async () => {

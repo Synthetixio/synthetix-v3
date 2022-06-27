@@ -20,7 +20,8 @@ contract CollateralMixin is CollateralStorage {
     }
 
     function _getCollateralValue(address collateralType) internal view returns (uint) {
-        (, int256 answer,,,) = IAggregatorV3Interface(_collateralStore().collateralsData[collateralType].priceFeed).latestRoundData();
+        (, int256 answer, , , ) = IAggregatorV3Interface(_collateralStore().collateralsData[collateralType].priceFeed)
+            .latestRoundData();
 
         return uint(answer);
     }

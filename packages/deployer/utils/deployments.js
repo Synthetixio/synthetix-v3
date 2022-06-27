@@ -137,12 +137,11 @@ function getDeploymentFolder(info) {
 }
 
 function _populateDefaults(info = {}) {
-
   return {
     folder: info.folder || DeploymentInfo.folder,
     network: info.network || DeploymentInfo.network,
-    instance: info.instance || DeploymentInfo.instance
-  }
+    instance: info.instance || DeploymentInfo.instance,
+  };
 }
 
 module.exports = {

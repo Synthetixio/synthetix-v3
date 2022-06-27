@@ -37,10 +37,10 @@ describe('CollateralModule Stake', function () {
 
     await (await Collateral.connect(owner).initialize('Synthetix Token', 'SNX', 18)).wait();
 
-    factory = await ethers.getContractFactory('CollateralPriceFeedMock');
+    factory = await ethers.getContractFactory('AggregatorV3Mock');
     CollateralPriceFeed = await factory.deploy();
 
-    await (await CollateralPriceFeed.connect(owner).setCurrentPrice(1)).wait();
+    await (await CollateralPriceFeed.connect(owner).mockSetCurrentPrice(1)).wait();
 
     await (
       await CollateralModule.connect(owner).adjustCollateralType(

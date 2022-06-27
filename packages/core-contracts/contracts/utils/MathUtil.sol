@@ -10,6 +10,11 @@ library MathUtil {
     /*//////////////////////////////////////////////////////////////
                     LOW LEVEL FIXED POINT OPERATIONS
     //////////////////////////////////////////////////////////////*/
+    /* Number of decimal places in the representations. */
+    uint8 public constant DECIMALS = 18;
+
+    /* The number representing 1.0. */
+    uint256 public constant UNIT = uint(10**uint(DECIMALS));
 
     function mulDivDown(
         uint256 x,
