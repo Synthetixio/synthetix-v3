@@ -1,10 +1,10 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "./IFundVaultStorage.sol";
+import "./IVaultModuleStorage.sol";
 
 /// @title Module for managing funds and assignments per account
-interface IFundVault is IFundVaultStorage {
+interface IVaultModule is IVaultModuleStorage {
     // /// @notice external access to rebalanceMarkets
     // function rebalanceMarkets(uint fundId) external; // TODO Maybe is internal
 

@@ -13,7 +13,7 @@ describe('FundModule - Funds Admin', function () {
 
   let CollateralModule, Collateral, AggregatorV3Mock;
   let AccountModule; //, accountTokenAddress;
-  let FundModule, FundVault;
+  let FundModule, VaultModule;
 
   before('identify signers', async () => {
     [owner, fundAdmin, user1, user2] = await ethers.getSigners();
@@ -21,7 +21,7 @@ describe('FundModule - Funds Admin', function () {
 
   before('identify modules', async () => {
     FundModule = await ethers.getContractAt('FundModule', proxyAddress());
-    FundVault = await ethers.getContractAt('FundVault', proxyAddress());
+    VaultModule = await ethers.getContractAt('VaultModule', proxyAddress());
 
     CollateralModule = await ethers.getContractAt('CollateralModule', proxyAddress());
     AccountModule = await ethers.getContractAt('AccountModule', proxyAddress());
@@ -159,7 +159,7 @@ describe('FundModule - Funds Admin', function () {
           let liquidityItemId;
 
           before('delegate some collateral', async () => {
-            const tx = await FundVault.connect(user1).delegateCollateral(
+            const tx = await VaultModule.connect(user1).delegateCollateral(
               1,
               1,
               Collateral.address,
@@ -195,7 +195,7 @@ describe('FundModule - Funds Admin', function () {
 
           describe('when adding to the same liquidityId', async () => {
             before('delegate some collateral', async () => {
-              const tx = await FundVault.connect(user1).delegateCollateral(
+              const tx = await VaultModule.connect(user1).delegateCollateral(
                 1,
                 1,
                 Collateral.address,
@@ -231,7 +231,7 @@ describe('FundModule - Funds Admin', function () {
 
           describe('when decreasing from to same liquidityId', async () => {
             before('delegate some collateral', async () => {
-              const tx = await FundVault.connect(user1).delegateCollateral(
+              const tx = await VaultModule.connect(user1).delegateCollateral(
                 1,
                 1,
                 Collateral.address,
@@ -267,7 +267,7 @@ describe('FundModule - Funds Admin', function () {
 
           describe('when removing liquidityId', async () => {
             before('delegate some collateral', async () => {
-              const tx = await FundVault.connect(user1).delegateCollateral(
+              const tx = await VaultModule.connect(user1).delegateCollateral(
                 1,
                 1,
                 Collateral.address,

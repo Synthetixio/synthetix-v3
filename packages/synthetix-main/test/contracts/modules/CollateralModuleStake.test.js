@@ -73,7 +73,10 @@ describe('CollateralModule Stake', function () {
   });
 
   it('is well configured', async () => {
-    assert.equal((await CollateralModule.getCollateralTypes(false))[0], Collateral.address);
+    assert.equal(
+      (await CollateralModule.getCollateralTypes(false))[0].tokenAddress,
+      Collateral.address
+    );
 
     const collateralType = await CollateralModule.getCollateralType(Collateral.address);
 

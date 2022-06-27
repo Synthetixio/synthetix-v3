@@ -11,13 +11,13 @@ import "../mixins/FundMixin.sol";
 import "../mixins/SUSDMixin.sol";
 
 import "../storage/FundVaultStorage.sol";
-import "../interfaces/IFundVault.sol";
+import "../interfaces/IVaultModule.sol";
 import "../interfaces/ISUSDToken.sol";
 
 import "../submodules/FundEventAndErrors.sol";
 
-contract FundVault is
-    IFundVault,
+contract VaultModule is
+    IVaultModule,
     FundVaultStorage,
     FundEventAndErrors,
     AccountRBACMixin,

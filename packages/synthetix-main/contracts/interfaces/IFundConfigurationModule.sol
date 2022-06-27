@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 /// @title Module for managing preferred and approved funds via SCCPs
-interface IFundConfiguration {
+interface IFundConfigurationModule {
     /// @notice SCCP sets the preferred fund
     function setPreferredFund(uint fundId) external;
 

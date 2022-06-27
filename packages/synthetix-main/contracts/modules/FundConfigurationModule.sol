@@ -3,12 +3,18 @@ pragma solidity ^0.8.0;
 
 import "@synthetixio/core-contracts/contracts/ownership/OwnableMixin.sol";
 
-import "../interfaces/IFundConfiguration.sol";
+import "../interfaces/IFundConfigurationModule.sol";
 import "../storage/FundConfigurationStorage.sol";
 import "../mixins/FundMixin.sol";
 import "../submodules/FundEventAndErrors.sol";
 
-contract FundConfiguration is IFundConfiguration, FundConfigurationStorage, FundEventAndErrors, FundMixin, OwnableMixin {
+contract FundConfigurationModule is
+    IFundConfigurationModule,
+    FundConfigurationStorage,
+    FundEventAndErrors,
+    FundMixin,
+    OwnableMixin
+{
     function setPreferredFund(uint fundId) external override onlyOwner fundExists(fundId) {
         _fundConfigurationStore().preferredFund = fundId;
 

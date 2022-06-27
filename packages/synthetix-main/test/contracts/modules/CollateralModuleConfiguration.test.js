@@ -47,7 +47,10 @@ describe('CollateralModule Configuration (SCCP)', function () {
   });
 
   it('is well configured', async () => {
-    assert.equal((await CollateralModule.getCollateralTypes(false))[0], Collateral.address);
+    assert.equal(
+      (await CollateralModule.getCollateralTypes(false))[0].tokenAddress,
+      Collateral.address
+    );
 
     const collateralType = await CollateralModule.getCollateralType(Collateral.address);
 
@@ -85,7 +88,7 @@ describe('CollateralModule Configuration (SCCP)', function () {
 
     it('is added', async () => {
       const collaterals = await CollateralModule.getCollateralTypes(false);
-      assert.equal(collaterals[1], AnotherCollateral.address);
+      assert.equal(collaterals[1].tokenAddress, AnotherCollateral.address);
     });
 
     it('has the right configuration', async () => {

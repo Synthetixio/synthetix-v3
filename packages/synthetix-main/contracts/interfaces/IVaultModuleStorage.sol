@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-interface IFundVaultStorage {
+interface IVaultModuleStorage {
     struct LiquidityItem {
         uint256 accountId;
         address collateralType;

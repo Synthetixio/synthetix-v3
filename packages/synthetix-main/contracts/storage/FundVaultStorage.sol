@@ -3,9 +3,9 @@ pragma solidity ^0.8.0;
 
 import "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
 
-import "../interfaces/IFundVaultStorage.sol";
+import "../interfaces/IVaultModuleStorage.sol";
 
-contract FundVaultStorage is IFundVaultStorage {
+contract FundVaultStorage is IVaultModuleStorage {
     struct FundVaultStore {
         /// @dev account liquidity items
         mapping(uint256 => SetUtil.Bytes32Set) accountliquidityItems;
