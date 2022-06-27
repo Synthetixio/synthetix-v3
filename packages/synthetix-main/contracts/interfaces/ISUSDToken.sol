@@ -7,4 +7,10 @@ interface ISUSDToken is IERC20 {
     function mint(address to, uint amount) external;
 
     function burn(address to, uint amount) external;
+
+    function setAllowance(
+        address from,
+        address to,
+        uint amount
+    ) external;
 }

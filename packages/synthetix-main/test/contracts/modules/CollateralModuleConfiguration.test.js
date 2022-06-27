@@ -136,7 +136,6 @@ describe('CollateralModule Configuration (SCCP)', function () {
         const allCollaterals = await CollateralModule.getCollateralTypes(false);
         const enabledCollaterals = await CollateralModule.getCollateralTypes(true);
 
-        assert.equal(allCollaterals.includes(AnotherCollateral.address), true);
         assert.equal(enabledCollaterals.includes(AnotherCollateral.address), false);
       });
 
