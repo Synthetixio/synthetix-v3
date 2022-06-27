@@ -14,9 +14,7 @@ contract CollateralModule is ICollateralModule, CollateralStorage, OwnableMixin,
 
     error OutOfBounds();
 
-    event CollateralAdded(address collateralType, address priceFeed, uint targetCRatio, uint minimumCRatio);
     event CollateralAdjusted(address collateralType, address priceFeed, uint targetCRatio, uint minimumCRatio, bool enabled);
-
     event CollateralStaked(uint accountId, address collateralType, uint amount, address executedBy);
     event CollateralUnstaked(uint accountId, address collateralType, uint amount, address executedBy);
 
@@ -31,6 +29,7 @@ contract CollateralModule is ICollateralModule, CollateralStorage, OwnableMixin,
             // Add a collateral entry
             _collateralStore().collaterals.add(collateralType);
         }
+        _collateralStore().collateralsData[collateralType].tokenAddress = collateralType;
         _collateralStore().collateralsData[collateralType].targetCRatio = targetCRatio;
         _collateralStore().collateralsData[collateralType].minimumCRatio = minimumCRatio;
         _collateralStore().collateralsData[collateralType].priceFeed = priceFeed;
@@ -39,23 +38,26 @@ contract CollateralModule is ICollateralModule, CollateralStorage, OwnableMixin,
         emit CollateralAdjusted(collateralType, priceFeed, targetCRatio, minimumCRatio, enabled);
     }
 
-    function getCollateralTypes(bool hideDisabled) external view override returns (address[] memory) {
-        address[] memory collaterals = new address[](_collateralStore().collaterals.length());
-        if (!hideDisabled) {
-            collaterals = _collateralStore().collaterals.values();
-        } else {
-            uint collateralsIdx;
-            for (uint i = 0; i < _collateralStore().collaterals.length(); i++) {
-                address collateralType = _collateralStore().collaterals.valueAt(i + 1);
-                if (_collateralStore().collateralsData[collateralType].enabled) {
-                    collaterals[collateralsIdx++] = collateralType;
-                }
+    function getCollateralTypes(bool hideDisabled)
+        external
+        view
+        override
+        returns (CollateralStorage.CollateralData[] memory)
+    {
+        CollateralData[] memory collaterals = new CollateralData[](_collateralStore().collaterals.length());
+
+        uint collateralsIdx;
+        for (uint i = 0; i < _collateralStore().collaterals.length(); i++) {
+            address collateralType = _collateralStore().collaterals.valueAt(i + 1);
+            if (!hideDisabled || _collateralStore().collateralsData[collateralType].enabled) {
+                collaterals[collateralsIdx++] = _collateralStore().collateralsData[collateralType];
             }
         }
 
         return collaterals;
     }
 
+    // TODO: Change to return type `CollateralData`?
     function getCollateralType(address collateralType)
         external
         view
@@ -158,7 +160,7 @@ contract CollateralModule is ICollateralModule, CollateralStorage, OwnableMixin,
         uint offset,
         uint items
     ) external override {
-        _cleanExpiredLockes(
+        _cleanExpiredLocks(
             _collateralStore().stakedCollateralsDataByAccountId[accountId][collateralType].locks,
             offset,
             items
@@ -169,7 +171,7 @@ contract CollateralModule is ICollateralModule, CollateralStorage, OwnableMixin,
     // INTERNALS
     /////////////////////////////////////////////////
 
-    function _cleanExpiredLockes(
+    function _cleanExpiredLocks(
         StakedCollateralLock[] storage locks,
         uint offset,
         uint items

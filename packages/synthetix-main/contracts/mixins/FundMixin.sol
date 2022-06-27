@@ -10,7 +10,7 @@ contract FundMixin is FundModuleStorage, FundEventAndErrors {
     }
 
     function _exists(uint256 fundId) internal view returns (bool) {
-        return _ownerOf(fundId) != address(0);
+        return _ownerOf(fundId) != address(0) || fundId == 0; // Reserves id 0 for the 'zero fund'
     }
 
     modifier fundExists(uint256 fundId) {
@@ -27,11 +27,11 @@ contract FundMixin is FundModuleStorage, FundEventAndErrors {
 
         for (uint i = 0; i < fundData.fundDistribution.length; i++) {
             uint weight = clearsLiquidity ? 0 : fundData.fundDistribution[i].weight;
-            _distributeCollaterals(fundId, fundData.fundDistribution[i].market, weight, totalWeights);
+            _distributeLiquidity(fundId, fundData.fundDistribution[i].market, weight, totalWeights);
         }
     }
 
-    function _distributeCollaterals(
+    function _distributeLiquidity(
         uint fundId,
         uint marketId,
         uint marketWeight,

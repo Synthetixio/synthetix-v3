@@ -108,7 +108,7 @@ contract FundVault is
             _fundVaultStore().fundCollateralTypes[fundId].add(collateralType);
         }
 
-        uint shares = _convertToShares(fundId, collateralType, collateralValue, leverage);
+        uint shares = _calculateShares(fundId, collateralType, collateralValue, leverage);
         uint initialDebt = _calculateInitialDebt(fundId, collateralType, collateralValue, leverage); // how that works with amount adjustments?
 
         LiquidityItem memory liquidityItem;
@@ -165,7 +165,7 @@ contract FundVault is
 
         // TODO check if is enabled to remove position comparing old and new data
 
-        uint shares = _convertToShares(
+        uint shares = _calculateShares(
             liquidityItem.fundId,
             liquidityItem.collateralType,
             collateralValue,
@@ -211,7 +211,7 @@ contract FundVault is
         // uint oldnitialDebt = liquidityItem.initialDebt;
         // TODO check if is enabled to remove position comparing old and new data
 
-        uint shares = _convertToShares(
+        uint shares = _calculateShares(
             liquidityItem.fundId,
             liquidityItem.collateralType,
             collateralValue,
@@ -244,7 +244,7 @@ contract FundVault is
         );
     }
 
-    function _convertToShares(
+    function _calculateShares(
         uint fundId,
         address collateralType,
         uint collateralValue,

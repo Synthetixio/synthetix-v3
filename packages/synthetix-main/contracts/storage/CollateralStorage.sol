@@ -17,6 +17,7 @@ contract CollateralStorage {
         uint targetCRatio;
         uint minimumCRatio;
         address priceFeed;
+        address tokenAddress;
     }
 
     struct StakedCollateralData {

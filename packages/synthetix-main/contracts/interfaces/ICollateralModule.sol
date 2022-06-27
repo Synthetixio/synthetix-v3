@@ -1,6 +1,8 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import "../storage/CollateralStorage.sol";
+
 /// @title Module for managing collaterals and staked collaterals per account
 interface ICollateralModule {
     /// @notice SCCP Adds or Adjusts (can be enabled or re-enabled) a collateral type
@@ -13,7 +15,10 @@ interface ICollateralModule {
     ) external;
 
     /// @notice Gets a list of approved collateral types
-    function getCollateralTypes(bool hideDisabled) external view returns (address[] memory collateralTypes);
+    function getCollateralTypes(bool hideDisabled)
+        external
+        view
+        returns (CollateralStorage.CollateralData[] memory collateralTypes);
 
     /// @notice Gets the information of a particular approved collateral type
     function getCollateralType(address collateralType)
