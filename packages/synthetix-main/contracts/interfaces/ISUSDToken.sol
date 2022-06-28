@@ -10,7 +10,7 @@ interface ISUSDToken is IERC20 {
 
     function setAllowance(
         address from,
-        address to,
+        address spender,
         uint amount
     ) external;
 }

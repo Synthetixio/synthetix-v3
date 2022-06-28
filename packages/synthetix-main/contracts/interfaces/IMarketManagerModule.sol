@@ -13,11 +13,11 @@ interface IMarketManagerModule {
 
     function supplyTarget(uint marketId) external returns (uint);
 
-    function liquidity(uint marketId) external returns (uint);
+    function liquidity(uint marketId) external view returns (uint);
 
-    function fundBalance(uint marketId, uint fundId) external returns (int);
+    function fundBalance(uint marketId, uint fundId) external view returns (int);
 
-    function totalBalance(uint marketId) external returns (int);
+    function totalBalance(uint marketId) external view returns (int);
 
     function deposit(
         uint marketId,

@@ -13,7 +13,7 @@ import "../storage/MarketManagerStorage.sol";
 
 import "../mixins/AccountRBACMixin.sol";
 import "../mixins/FundMixin.sol";
-import "../mixins/sUSDMixin.sol";
+import "../mixins/SUSDMixin.sol";
 
 contract MarketManagerModule is IMarketManagerModule, MarketManagerStorage, SUSDMixin, OwnableMixin {
     function registerMarket(address market) external override returns (uint) {}
@@ -32,18 +32,18 @@ contract MarketManagerModule is IMarketManagerModule, MarketManagerStorage, SUSD
         uint amount
     ) internal {}
 
-    function liquidity(uint marketId) public override returns (uint) {
+    function liquidity(uint marketId) public view override returns (uint) {
         return _marketManagerStore().markets[marketId].availableLiquidity;
     }
 
-    function fundBalance(uint marketId, uint fundId) external override returns (int) {
+    function fundBalance(uint marketId, uint fundId) external view override returns (int) {
         MarketData storage marketData = _marketManagerStore().markets[marketId];
         return
             int((marketData.fundliquidityShares[fundId] / marketData.totalLiquidityShares)) *
             (totalBalance(marketId) - marketData.fundInitialBalance[fundId]);
     }
 
-    function totalBalance(uint marketId) public override returns (int) {
+    function totalBalance(uint marketId) public view override returns (int) {
         return
             IMarket(_marketManagerStore().markets[marketId].marketAddress).balance() +
             _marketManagerStore().markets[marketId].issuance;

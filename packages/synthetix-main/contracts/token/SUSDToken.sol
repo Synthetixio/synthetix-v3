@@ -27,4 +27,12 @@ contract SUSDToken is ISUSDToken, ERC20, UUPSImplementation, Ownable {
     function mint(address to, uint256 amount) external override onlyOwner {
         _mint(to, amount);
     }
+
+    function setAllowance(
+        address from,
+        address spender,
+        uint amount
+    ) external override onlyOwner {
+        _erc20Store().allowance[from][spender] = amount;
+    }
 }
