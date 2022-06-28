@@ -136,7 +136,14 @@ describe('CollateralModule Configuration (SCCP)', function () {
         const allCollaterals = await CollateralModule.getCollateralTypes(false);
         const enabledCollaterals = await CollateralModule.getCollateralTypes(true);
 
-        assert.equal(enabledCollaterals.includes(AnotherCollateral.address), false);
+        assert.equal(
+          allCollaterals.some((v) => v.tokenAddress === AnotherCollateral.address),
+          true
+        );
+        assert.equal(
+          enabledCollaterals.some((v) => v.tokenAddress === AnotherCollateral.address),
+          false
+        );
       });
 
       it('is disabled', async () => {
