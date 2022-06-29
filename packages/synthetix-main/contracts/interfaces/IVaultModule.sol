@@ -17,16 +17,16 @@ interface IVaultModule is IVaultModuleStorage {
         uint leverage
     ) external;
 
-    /// @notice mints sUSD for a fund/account from a collateralType. if CRatio is valid
-    function mintsUSD(
+    /// @notice mints USD for a fund/account from a collateralType. if CRatio is valid
+    function mintUSD(
         uint fundId,
         uint accountId,
         address collateralType,
         uint amount
     ) external;
 
-    /// @notice burns sUSD for a fund/account from a collateralType
-    function burnsUSD(
+    /// @notice burns USD for a fund/account from a collateralType
+    function burnUSD(
         uint fundId,
         uint accountId,
         address collateralType,
@@ -63,7 +63,7 @@ interface IVaultModule is IVaultModuleStorage {
     /// @notice gets the total fund debtShares
     function totalDebtShares(uint fundId, address collateralType) external view returns (uint);
 
-    /// @notice gets the debt per share (sUSD value) for a fund
+    /// @notice gets the debt per share (USD value) for a fund
     function debtPerShare(uint fundId, address collateralType) external view returns (uint);
 
     // VIEWS

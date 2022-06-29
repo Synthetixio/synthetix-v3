@@ -8,15 +8,15 @@ import "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
 // import "../submodules/FundEventAndErrors.sol";
 import "../interfaces/IMarketManagerModule.sol";
 import "../interfaces/IMarket.sol";
-import "../interfaces/ISUSDToken.sol";
+import "../interfaces/IUSDToken.sol";
 import "../storage/MarketManagerStorage.sol";
 import "../mixins/SharesLibrary.sol";
 
 import "../mixins/AccountRBACMixin.sol";
 import "../mixins/FundMixin.sol";
-import "../mixins/SUSDMixin.sol";
+import "../mixins/USDMixin.sol";
 
-contract MarketManagerModule is IMarketManagerModule, MarketManagerStorage, SUSDMixin, OwnableMixin {
+contract MarketManagerModule is IMarketManagerModule, MarketManagerStorage, USDMixin, OwnableMixin {
     function registerMarket(address market) external override returns (uint) {}
 
     function setSupplyTarget(
@@ -72,33 +72,33 @@ contract MarketManagerModule is IMarketManagerModule, MarketManagerStorage, SUSD
             _marketManagerStore().markets[marketId].issuance;
     }
 
-    // deposit will burn sUSD
+    // deposit will burn USD
     function deposit(
         uint marketId,
         address target,
         uint amount
     ) external override {
-        // Consider re-implementing without allowance and just sUsd.transferFrom(msg.sender);
+        // Consider re-implementing without allowance and just USD.transferFrom(msg.sender);
 
         MarketData storage marketData = _marketManagerStore().markets[marketId];
 
         if (msg.sender != marketData.marketAddress) revert AccessError.Unauthorized(msg.sender);
 
-        // verify if the market is authorized to burn the sUSD for the target
-        uint originalAllowance = _getSUSDToken().allowance(target, msg.sender);
+        // verify if the market is authorized to burn the USD for the target
+        uint originalAllowance = _getUSDToken().allowance(target, msg.sender);
         require(originalAllowance >= amount, "insufficient allowance");
 
         // Adjust accounting
         marketData.issuance -= int(amount);
 
-        // burn sUSD
-        _getSUSDToken().burn(target, amount);
+        // burn USD
+        _getUSDToken().burn(target, amount);
 
         // Adjust allowance
-        _getSUSDToken().setAllowance(target, msg.sender, originalAllowance - amount);
+        _getUSDToken().setAllowance(target, msg.sender, originalAllowance - amount);
     }
 
-    // withdraw will mint sUSD
+    // withdraw will mint USD
     function withdraw(
         uint marketId,
         address target,
@@ -113,7 +113,7 @@ contract MarketManagerModule is IMarketManagerModule, MarketManagerStorage, SUSD
         // Adjust accounting
         marketData.issuance += int(amount);
 
-        // mint some sUSD
-        _getSUSDToken().mint(target, amount);
+        // mint some USD
+        _getUSDToken().mint(target, amount);
     }
 }

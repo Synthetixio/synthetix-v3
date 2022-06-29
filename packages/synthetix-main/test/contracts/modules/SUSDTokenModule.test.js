@@ -6,7 +6,7 @@ const { findEvent } = require('@synthetixio/core-js/utils/ethers/events');
 const { bootstrap } = require('@synthetixio/deployer/utils/tests');
 const initializer = require('../../helpers/initializer');
 
-describe('SUSDTokenModule', function () {
+describe('USDTokenModule', function () {
   const { proxyAddress } = bootstrap(initializer);
 
   let owner, user1;
@@ -15,28 +15,28 @@ describe('SUSDTokenModule', function () {
     [owner, user1] = await ethers.getSigners();
   });
 
-  describe('When creating the SUSD token', async () => {
-    let SUSDTokenModule, snxTokenAddress, SUSD;
+  describe('When creating the USD token', async () => {
+    let USDTokenModule, snxTokenAddress, USD;
     before('identify modules', async () => {
-      SUSDTokenModule = await ethers.getContractAt('SUSDTokenModule', proxyAddress());
+      USDTokenModule = await ethers.getContractAt('USDTokenModule', proxyAddress());
     });
 
-    it('No SUSD is deployed', async () => {
-      const address = await SUSDTokenModule.getSUSDTokenAddress();
+    it('No USD is deployed', async () => {
+      const address = await USDTokenModule.getUSDTokenAddress();
       assert.equal(address, '0x0000000000000000000000000000000000000000');
     });
 
-    describe('When the Module is initialized (SUSD is created)', () => {
+    describe('When the Module is initialized (USD is created)', () => {
       let receipt;
-      before('Initialize (Create a SUSD token)', async () => {
-        const tx = await SUSDTokenModule.connect(owner).initializeSUSDTokenModule();
+      before('Initialize (Create a USD token)', async () => {
+        const tx = await USDTokenModule.connect(owner).initializeUSDTokenModule();
         receipt = await tx.wait();
       });
 
-      before('Identify newly created SUSD', async () => {
-        const event = findEvent({ receipt, eventName: 'SUSDTokenCreated' });
+      before('Identify newly created USD', async () => {
+        const event = findEvent({ receipt, eventName: 'USDTokenCreated' });
         snxTokenAddress = event.args.snxAddress;
-        SUSD = await ethers.getContractAt('SUSDToken', snxTokenAddress);
+        USD = await ethers.getContractAt('usdToken', snxTokenAddress);
       });
 
       it('emmited an event', async () => {
@@ -44,74 +44,74 @@ describe('SUSDTokenModule', function () {
       });
 
       it('is initialized', async () => {
-        assert.equal(await SUSDTokenModule.isSUSDTokenModuleInitialized(), true);
+        assert.equal(await USDTokenModule.isUSDTokenModuleInitialized(), true);
       });
 
       it('gets the newly created address', async () => {
-        const address = await SUSDTokenModule.getSUSDTokenAddress();
+        const address = await USDTokenModule.getUSDTokenAddress();
         assert.equal(address, snxTokenAddress);
       });
 
-      it('reads the SUSD parameters', async () => {
-        assert.equal(await SUSD.name(), 'Synthetic USD Token v3');
-        assert.equal(await SUSD.symbol(), 'sUSD');
-        assert.equal(await SUSD.decimals(), 18);
+      it('reads the USD parameters', async () => {
+        assert.equal(await USD.name(), 'Synthetic USD Token v3');
+        assert.equal(await USD.symbol(), 'USD');
+        assert.equal(await USD.decimals(), 18);
       });
 
       it('gets the newly created satellite', async () => {
-        const results = await SUSDTokenModule.getSUSDTokenModuleSatellites();
+        const results = await USDTokenModule.getUSDTokenModuleSatellites();
         assert.equal(results.length, 1);
-        assert.equal(results[0].name, ethers.utils.formatBytes32String('sUSD'));
-        assert.equal(results[0].contractName, ethers.utils.formatBytes32String('SUSDToken'));
+        assert.equal(results[0].name, ethers.utils.formatBytes32String('USD'));
+        assert.equal(results[0].contractName, ethers.utils.formatBytes32String('USDToken'));
         assert.equal(results[0].deployedAddress, snxTokenAddress);
       });
 
-      describe('When attempting to create the SUSD twice', () => {
+      describe('When attempting to create the USD twice', () => {
         it('reverts', async () => {
           await assertRevert(
-            SUSDTokenModule.connect(owner).initializeSUSDTokenModule(),
+            USDTokenModule.connect(owner).initializeUSDTokenModule(),
             'AlreadyInitialized()'
           );
         });
       });
 
       describe('When attempting to upgrade to a new implementation', () => {
-        let AnotherSUSDToken, NewSUSD;
+        let AnotherUSDToken, NewUSD;
 
         before('Deploy new implementation', async () => {
-          const factory = await ethers.getContractFactory('SUSDTokenMock');
-          AnotherSUSDToken = await factory.deploy();
+          const factory = await ethers.getContractFactory('USDTokenMock');
+          AnotherUSDToken = await factory.deploy();
         });
 
         before('Upgrade to new implementation', async () => {
-          const tx = await SUSDTokenModule.connect(owner).upgradeSUSDImplementation(
-            AnotherSUSDToken.address
+          const tx = await USDTokenModule.connect(owner).upgradeUSDImplementation(
+            AnotherUSDToken.address
           );
 
           await tx.wait();
         });
 
         it('is upgraded', async () => {
-          NewSUSD = await ethers.getContractAt('SUSDTokenMock', snxTokenAddress);
-          assert.equal(AnotherSUSDToken.address, await NewSUSD.getImplementation());
+          NewUSD = await ethers.getContractAt('USDTokenMock', snxTokenAddress);
+          assert.equal(AnotherUSDToken.address, await NewUSD.getImplementation());
         });
 
-        it('reads the upgraded SUSD parameters', async () => {
-          assert.equal(await NewSUSD.name(), 'Synthetic USD Token v3');
-          assert.equal(await NewSUSD.symbol(), 'sUSD');
-          assert.equal(await NewSUSD.decimals(), 18);
+        it('reads the upgraded USD parameters', async () => {
+          assert.equal(await NewUSD.name(), 'Synthetic USD Token v3');
+          assert.equal(await NewUSD.symbol(), 'USD');
+          assert.equal(await NewUSD.decimals(), 18);
         });
 
-        describe('New SUSD can mint', () => {
+        describe('New USD can mint', () => {
           const totalSupply = ethers.BigNumber.from('1000000');
 
           before('mint', async () => {
-            const tx = await NewSUSD.connect(user1)['mint(uint256)'](totalSupply);
+            const tx = await NewUSD.connect(user1)['mint(uint256)'](totalSupply);
             await tx.wait();
           });
 
           it('updates the total supply', async () => {
-            assertBn.equal(await NewSUSD.totalSupply(), totalSupply);
+            assertBn.equal(await NewUSD.totalSupply(), totalSupply);
           });
         });
       });

@@ -8,12 +8,12 @@ import "@synthetixio/core-contracts/contracts/utils/MathUtil.sol";
 import "../mixins/AccountRBACMixin.sol";
 import "../mixins/CollateralMixin.sol";
 import "../mixins/FundMixin.sol";
-import "../mixins/SUSDMixin.sol";
+import "../mixins/USDMixin.sol";
 import "../mixins/SharesLibrary.sol";
 
 import "../storage/FundVaultStorage.sol";
 import "../interfaces/IVaultModule.sol";
-import "../interfaces/ISUSDToken.sol";
+import "../interfaces/IUSDToken.sol";
 
 import "../submodules/FundEventAndErrors.sol";
 
@@ -24,7 +24,7 @@ contract VaultModule is
     AccountRBACMixin,
     CollateralMixin,
     OwnableMixin,
-    SUSDMixin,
+    USDMixin,
     FundMixin
 {
     using SetUtil for SetUtil.Bytes32Set;
@@ -287,33 +287,33 @@ contract VaultModule is
     // solhint-enable no-unused-vars
 
     // ---------------------------------------
-    // Mint/Burn sUSD
+    // Mint/Burn USD
     // ---------------------------------------
 
-    function mintsUSD(
+    function mintUSD(
         uint fundId,
         uint accountId,
         address collateralType,
         uint amount
-    ) external override onlyRoleAuthorized(accountId, "mint") onlyIfsUSDIsInitialized {
+    ) external override onlyRoleAuthorized(accountId, "mint") onlyIfUSDIsInitialized {
         // TODO Check if can mint that amount
 
-        ISUSDToken(_getSUSDTokenAddress()).mint(msg.sender, amount);
-        _fundVaultStore().fundVaults[fundId][collateralType].sUSDByAccount[accountId] += amount;
-        _fundVaultStore().fundVaults[fundId][collateralType].totalsUSD += amount;
+        IUSDToken(_getUSDTokenAddress()).mint(msg.sender, amount);
+        _fundVaultStore().fundVaults[fundId][collateralType].usdByAccount[accountId] += amount;
+        _fundVaultStore().fundVaults[fundId][collateralType].totalUSD += amount;
     }
 
-    function burnsUSD(
+    function burnUSD(
         uint fundId,
         uint accountId,
         address collateralType,
         uint amount
-    ) external override onlyRoleAuthorized(accountId, "burn") onlyIfsUSDIsInitialized {
+    ) external override onlyRoleAuthorized(accountId, "burn") onlyIfUSDIsInitialized {
         // TODO Check if can burn that amount
 
-        ISUSDToken(_getSUSDTokenAddress()).burn(msg.sender, amount);
-        _fundVaultStore().fundVaults[fundId][collateralType].sUSDByAccount[accountId] -= amount;
-        _fundVaultStore().fundVaults[fundId][collateralType].totalsUSD -= amount;
+        IUSDToken(_getUSDTokenAddress()).burn(msg.sender, amount);
+        _fundVaultStore().fundVaults[fundId][collateralType].usdByAccount[accountId] -= amount;
+        _fundVaultStore().fundVaults[fundId][collateralType].totalUSD -= amount;
     }
 
     // ---------------------------------------
@@ -358,7 +358,7 @@ contract VaultModule is
         uint collateralPrice = _getCollateralValue(collateralType);
 
         uint accountCollateralValue;
-        uint accountDebt = vaultData.sUSDByAccount[accountId]; // add debt from sUSD minted
+        uint accountDebt = vaultData.usdByAccount[accountId]; // add debt from USD minted
 
         for (uint i = 1; i < vaultData.liquidityItemsByAccount[accountId].length() + 1; i++) {
             bytes32 itemId = vaultData.liquidityItemsByAccount[accountId].valueAt(i);
@@ -385,7 +385,7 @@ contract VaultModule is
         return
             _totalShares(fundId, collateralType) *
             _perShareValue(fundId, collateralType) +
-            _fundVaultStore().fundVaults[fundId][collateralType].totalsUSD;
+            _fundVaultStore().fundVaults[fundId][collateralType].totalUSD;
     }
 
     function totalDebtShares(uint fundId, address collateralType) external view override returns (uint) {

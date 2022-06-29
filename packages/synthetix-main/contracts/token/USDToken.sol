@@ -5,9 +5,9 @@ import "@synthetixio/core-contracts/contracts/proxy/UUPSImplementation.sol";
 import "@synthetixio/core-contracts/contracts/ownership/Ownable.sol";
 import "@synthetixio/core-contracts/contracts/token/ERC20.sol";
 import "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
-import "../interfaces/ISUSDToken.sol";
+import "../interfaces/IUSDToken.sol";
 
-contract SUSDToken is ISUSDToken, ERC20, UUPSImplementation, Ownable {
+contract USDToken is IUSDToken, ERC20, UUPSImplementation, Ownable {
     function initialize(
         string memory tokenName,
         string memory tokenSymbol,

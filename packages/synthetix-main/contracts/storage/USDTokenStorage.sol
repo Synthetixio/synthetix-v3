@@ -3,15 +3,15 @@ pragma solidity ^0.8.0;
 
 import "@synthetixio/core-contracts/contracts/satellite/SatelliteFactory.sol";
 
-contract SUSDTokenStorage {
-    struct SUSDTokenStore {
+contract USDTokenStorage {
+    struct USDTokenStore {
         bool initialized;
-        SatelliteFactory.Satellite sUSDToken;
+        SatelliteFactory.Satellite usdToken;
     }
 
-    function _sUSDTokenStore() internal pure returns (SUSDTokenStore storage store) {
+    function _USDTokenStore() internal pure returns (USDTokenStore storage store) {
         assembly {
-            // bytes32(uint(keccak256("io.synthetix.susdtoken")) - 1)
+            // bytes32(uint(keccak256("io.synthetix.USDtoken")) - 1)
             store.slot := 0x2342c0bf00f8a01ac24cb928182ec53c26148864e7bdcf779533fd355508ddfd
         }
     }
