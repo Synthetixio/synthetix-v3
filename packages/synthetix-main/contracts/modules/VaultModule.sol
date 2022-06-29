@@ -9,6 +9,7 @@ import "../mixins/AccountRBACMixin.sol";
 import "../mixins/CollateralMixin.sol";
 import "../mixins/FundMixin.sol";
 import "../mixins/SUSDMixin.sol";
+import "../mixins/SharesLibrary.sol";
 
 import "../storage/FundVaultStorage.sol";
 import "../interfaces/IVaultModule.sol";
@@ -254,10 +255,7 @@ contract VaultModule is
         uint totalShares = _totalShares(fundId, collateralType);
         uint totalCollateralValue = _totalCollateral(fundId, collateralType);
 
-        return
-            totalShares == 0
-                ? leveragedCollateralValue
-                : leveragedCollateralValue.mulDivDown(totalShares, totalCollateralValue);
+        return SharesLibrary.amountToShares(totalShares, totalCollateralValue, leveragedCollateralValue);
     }
 
     function _perShareValue(uint fundId, address collateralType) internal view returns (uint) {

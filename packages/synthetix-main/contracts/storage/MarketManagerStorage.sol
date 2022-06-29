@@ -8,13 +8,12 @@ contract MarketManagerStorage {
 
     struct MarketData {
         address marketAddress;
-        int issuance; // TODO this can be neggative. How to deal with that?
-        uint availableLiquidity; // in dollars
-        uint supplyTarget;
+        int256 issuance; // TODO this can be neggative. How to deal with that?
+        uint256 delegatedCollateralValue;
         // credit shares
-        mapping(uint => uint) fundliquidityShares;
-        mapping(uint => int) fundInitialBalance;
-        uint totalLiquidityShares;
+        mapping(uint => uint256) fundliquidityShares;
+        mapping(uint => int256) fundInitialBalance;
+        uint256 totalLiquidityShares;
     }
 
     function _marketManagerStore() internal pure returns (MarketManagerStore storage store) {

@@ -10,6 +10,7 @@ import "../interfaces/IMarketManagerModule.sol";
 import "../interfaces/IMarket.sol";
 import "../interfaces/ISUSDToken.sol";
 import "../storage/MarketManagerStorage.sol";
+import "../mixins/SharesLibrary.sol";
 
 import "../mixins/AccountRBACMixin.sol";
 import "../mixins/FundMixin.sol";
@@ -24,7 +25,29 @@ contract MarketManagerModule is IMarketManagerModule, MarketManagerStorage, SUSD
         uint amount
     ) external override {}
 
-    function supplyTarget(uint marketId) external override returns (uint) {}
+    function supplyTarget(uint marketId) public view override returns (uint) {
+        return uint(int(_marketManagerStore().markets[marketId].delegatedCollateralValue) + totalBalance(marketId));
+    }
+
+    function _rebalanceMarket(
+        uint marketId,
+        uint fundId,
+        uint amount
+    ) internal {
+        // called by the fund at rebalance markets
+        //       mapping(uint => uint) fundliquidityShares;
+        // mapping(uint => int) fundInitialBalance;
+
+        MarketData storage marketData = _marketManagerStore().markets[marketId];
+        int currentFundBalance = fundBalance(marketId, fundId);
+        uint currentSupplyTarget = supplyTarget(marketId); // cannot be negative, if so, revert.
+
+        marketData.fundliquidityShares[fundId] = SharesLibrary.amountToShares(
+            marketData.totalLiquidityShares,
+            currentSupplyTarget,
+            amount
+        );
+    }
 
     function _setLiquidity(
         uint marketId,
@@ -36,7 +59,7 @@ contract MarketManagerModule is IMarketManagerModule, MarketManagerStorage, SUSD
         return _marketManagerStore().markets[marketId].availableLiquidity;
     }
 
-    function fundBalance(uint marketId, uint fundId) external view override returns (int) {
+    function fundBalance(uint marketId, uint fundId) public view override returns (int) {
         MarketData storage marketData = _marketManagerStore().markets[marketId];
         return
             int((marketData.fundliquidityShares[fundId] / marketData.totalLiquidityShares)) *
