@@ -325,8 +325,7 @@ contract VaultModule is
         uint accountId,
         address collateralType
     ) external view override returns (uint) {
-        (uint accountDebt, uint accountCollateralValue) = _accountDebtAndCollateral(fundId, accountId, collateralType);
-        return accountCollateralValue.mulDivDown(MathUtil.UNIT, accountDebt);
+        return _collateralizationRatio(fundId, accountId, collateralType);
     }
 
     function accountFundCollateralValue(
@@ -345,39 +344,6 @@ contract VaultModule is
     ) external view override returns (uint) {
         (uint accountDebt, ) = _accountDebtAndCollateral(fundId, accountId, collateralType);
         return accountDebt;
-    }
-
-    function _accountDebtAndCollateral(
-        uint fundId,
-        uint accountId,
-        address collateralType
-    ) internal view returns (uint, uint) {
-        VaultData storage vaultData = _fundVaultStore().fundVaults[fundId][collateralType];
-
-        uint perShareValue = _perShareValue(fundId, collateralType);
-        uint collateralPrice = _getCollateralValue(collateralType);
-
-        uint accountCollateralValue;
-        uint accountDebt = vaultData.usdByAccount[accountId]; // add debt from USD minted
-
-        for (uint i = 1; i < vaultData.liquidityItemsByAccount[accountId].length() + 1; i++) {
-            bytes32 itemId = vaultData.liquidityItemsByAccount[accountId].valueAt(i);
-            LiquidityItem storage item = _fundVaultStore().liquidityItems[itemId];
-            if (item.collateralType == collateralType) {
-                accountCollateralValue += item.collateralAmount * collateralPrice;
-
-                //TODO review formula
-                accountDebt +=
-                    item.collateralAmount *
-                    collateralPrice +
-                    item.initialDebt -
-                    perShareValue *
-                    item.shares *
-                    item.leverage;
-            }
-        }
-
-        return (accountDebt, accountCollateralValue);
     }
 
     function fundDebt(uint fundId, address collateralType) public view override returns (uint) {

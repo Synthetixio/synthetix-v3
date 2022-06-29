@@ -62,4 +62,8 @@ contract CollateralMixin is CollateralStorage {
         }
         return locked;
     }
+
+    function _getCollateralMinimumCRatio(address collateralType) internal view returns (uint) {
+        return _collateralStore().collateralsData[collateralType].minimumCRatio;
+    }
 }
