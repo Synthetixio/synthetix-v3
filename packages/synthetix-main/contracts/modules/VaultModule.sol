@@ -398,9 +398,8 @@ contract VaultModule is
     function _getLiquidityItemId(
         uint accountId,
         address collateralType,
-        uint fundId,
-        uint leverage
+        uint fundId
     ) internal pure returns (bytes32) {
-        return keccak256(abi.encodePacked(accountId, collateralType, fundId, leverage));
+        return keccak256(abi.encodePacked(accountId, collateralType, fundId));
     }
 }

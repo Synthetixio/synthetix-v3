@@ -37,6 +37,7 @@ contract FundMixin is FundModuleStorage, FundEventAndErrors {
         uint marketWeight,
         uint totalWeight // solhint-disable-next-line no-empty-blocks
     ) internal {
+        uint toAssign = marketWeight / totalWeight 
         // TODO implement it when markets are created
     }
 
