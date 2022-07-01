@@ -9,7 +9,7 @@
     "getNextEpochSeatCount": 3,
     "getEpochIndex": 1,
     "getCurrentPeriod": 0,
-    "members": [
+    "getCouncilMembers": [
       "0x585639fBf797c1258eBA8875c080Eb63C833d252",
       "0x98Ab20307fdABa1ce8b16d69d22461c6dbe85459",
       "0xF68D2BfCecd7895BBa05a7451Dd09A1749026454"
@@ -27,7 +27,7 @@
     "getNextEpochSeatCount": 5,
     "getEpochIndex": 1,
     "getCurrentPeriod": 0,
-    "members": [
+    "getCouncilMembers": [
       "0xE1f02F7E90ea5F21D0AC6F12c659C3484c143B03",
       "0x1a207bEefC754735871CEEb4C506686F044B1c41",
       "0x4f370B4d03D2b46CcE26F1aEFE142708E03D7FFE",
@@ -47,7 +47,7 @@
     "getNextEpochSeatCount": 8,
     "getEpochIndex": 1,
     "getCurrentPeriod": 0,
-    "members": [
+    "getCouncilMembers": [
       "0x45a10F35BeFa4aB841c77860204b133118B7CcAE",
       "0x42f9134E9d3Bf7eEE1f8A5Ac2a4328B059E7468c",
       "0xA9903BDA477b9A57BD795AdFf9922cB98DB65F04",
@@ -70,7 +70,7 @@
     "getNextEpochSeatCount": 4,
     "getEpochIndex": 1,
     "getCurrentPeriod": 0,
-    "members": [
+    "getCouncilMembers": [
       "0x604F127145CAC2467389124f0871227D3fD6F628",
       "0xD09583bBf77D0Da34Cd02612Fe41aF4AE37ebC95",
       "0xf04A6E38C6CFE0AcFbeB472888ed990787e69072",

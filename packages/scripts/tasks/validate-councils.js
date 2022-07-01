@@ -2,8 +2,8 @@ const path = require('path');
 const assert = require('assert/strict');
 const { equal, deepEqual } = require('assert/strict');
 const { task } = require('hardhat/config');
-const chalk = require('chalk');
 const logger = require('@synthetixio/core-js/utils/io/logger');
+const { formatDate, getUnixTimestamp } = require('@synthetixio/core-js/utils/misc/dates');
 const types = require('@synthetixio/core-js/utils/hardhat/argument-types');
 const { getDeployment, getDeploymentAbis } = require('@synthetixio/deployer/utils/deployments');
 const getPackageProxy = require('../internal/get-package-proxy');
@@ -20,7 +20,7 @@ task('validate-councils')
   .setAction(async ({ instance, epoch }, hre) => {
     epoch = Number(epoch);
 
-    logger.notice(`Validating councils on network "${hre.network.name}"`);
+    logger.info(`Validating councils on network "${hre.network.name}"`);
 
     const councils = await importJson(`${__dirname}/../data/councils-epoch-${epoch}.json`);
 
@@ -34,25 +34,27 @@ task('validate-councils')
           folder: path.join(__dirname, '..', '..', council.name, 'deployments'),
         };
 
-        // Initialize Proxy
-        const Proxy = await getPackageProxy(hre, council.name, instance);
-        logger.log(chalk.gray(`Proxy Address: ${Proxy.address}`));
+        // Retrieve Council contract
+        const Council = await getPackageProxy(hre, council.name, instance);
+        logger.info(`Council Address: ${Council.address}`);
 
-        // Initialize Token
-        const councilTokenAddress = await Proxy.getCouncilToken();
+        // Retrieve Token contract
+        const councilTokenAddress = await Council.getCouncilToken();
         const abis = getDeploymentAbis(info);
         const Token = await hre.ethers.getContractAt(
           abis['@synthetixio/core-modules/contracts/tokens/CouncilToken.sol:CouncilToken'],
           councilTokenAddress
         );
-        logger.log(chalk.gray(`Token Address: ${Token.address}`));
+        logger.info(`Token Address: ${Token.address}`);
 
         // Check Deployment Status
         const deployment = getDeployment(info);
         assert(deployment.properties.completed, `Deployment of ${council.name} is not completed`);
         logger.success('Deployment complete');
 
-        await validateCouncil({ Proxy, Token, council, epoch });
+        await validateCouncil({ Council, Token, council, epoch });
+
+        await validateCouncilToken({ Token, council, epoch });
       } catch (err) {
         console.error(err);
         logger.error(`Council "${council.name}" is not valid`);
@@ -60,40 +62,47 @@ task('validate-councils')
     }
   });
 
-async function validateCouncil({ Proxy, Token, council, epoch }) {
+async function validateCouncil({ Council, council, epoch }) {
+  logger.info('Council validations:');
+
   // Validate Initializatiion
-  await expect(Proxy, 'isOwnerModuleInitialized', true);
-  await expect(Proxy, 'isElectionModuleInitialized', true);
-  await expect(Proxy, 'getEpochIndex', epoch);
+  await expect(Council, 'isOwnerModuleInitialized', true);
+  await expect(Council, 'isElectionModuleInitialized', true);
+  await expect(Council, 'getEpochIndex', epoch);
 
   // Validate Epoch Properties
-  await expect(Proxy, 'owner', council.owner);
-  await expect(Proxy, 'nominatedOwner', council.nominatedOwner);
-  await expect(Proxy, 'getNominationPeriodStartDate', date(council.getNominationPeriodStartDate));
-  await expect(Proxy, 'getVotingPeriodStartDate', date(council.getVotingPeriodStartDate));
-  await expect(Proxy, 'getEpochEndDate', date(council.getEpochEndDate));
-  await expect(Proxy, 'getNextEpochSeatCount', council.getNextEpochSeatCount);
-  await expect(Proxy, 'getEpochIndex', council.getEpochIndex);
-  await expect(Proxy, 'getCurrentPeriod', council.getCurrentPeriod);
+  await expect(Council, 'owner', council.owner);
+  await expect(Council, 'nominatedOwner', council.nominatedOwner);
+  await expect(
+    Council,
+    'getNominationPeriodStartDate',
+    getUnixTimestamp(council.getNominationPeriodStartDate)
+  );
+  await expect(
+    Council,
+    'getVotingPeriodStartDate',
+    getUnixTimestamp(council.getVotingPeriodStartDate)
+  );
+  await expect(Council, 'getEpochEndDate', getUnixTimestamp(council.getEpochEndDate));
+  await expect(Council, 'getNextEpochSeatCount', council.getNextEpochSeatCount);
+  await expect(Council, 'getEpochIndex', council.getEpochIndex);
+  await expect(Council, 'getCurrentPeriod', council.getCurrentPeriod);
 
   if (council.getCouncilMembers) {
-    await expect(Proxy, 'getCouncilMembers', council.getCouncilMembers);
+    await expect(Council, 'getCouncilMembers', council.getCouncilMembers);
   }
+}
 
-  // Validate Council Token
-  logger.log(chalk.gray('CouncilToken Validations:'));
+async function validateCouncilToken({ Token, council }) {
+  logger.info('CouncilToken validations:');
 
   await expect(Token, 'name', council.councilTokenName);
   await expect(Token, 'symbol', council.councilTokenSymbol);
 
   // Validate that the council members have 1 CouncilToken
-  for (const address of await Proxy.getCouncilMembers()) {
+  for (const address of await council.getCouncilMembers) {
     await expect(Token, 'balanceOf', address, 1);
   }
-}
-
-function date(dateStr) {
-  return new Date(dateStr).valueOf() / 1000;
 }
 
 function typeOf(val) {
@@ -106,7 +115,17 @@ async function expect(Contract, methodName, ...args) {
   const result = await Contract[methodName](...fnParams);
   const actual = typeof expected === 'number' ? Number(result) : result;
 
+  const resultIsDate = methodName.includes('Date');
+
   const paramsStr = fnParams.map(JSON.stringify).join(', ');
+
+  const actualReadable = resultIsDate
+    ? formatDate(new Date(actual * 1000))
+    : JSON.stringify(actual);
+  const resultReadable = resultIsDate
+    ? formatDate(new Date(result * 1000))
+    : JSON.stringify(result);
+
   try {
     if (['Array', 'Object'].includes(typeOf(expected))) {
       deepEqual(actual, expected);
@@ -114,12 +133,10 @@ async function expect(Contract, methodName, ...args) {
       equal(actual, expected);
     }
 
-    logger.success(`${methodName}(${paramsStr}) is ${JSON.stringify(actual)}`);
+    logger.success(`${methodName}(${paramsStr}) is ${actualReadable}`);
   } catch (_) {
     logger.error(
-      `${methodName}(${paramsStr}) expected ${JSON.stringify(expected)}, but got ${JSON.stringify(
-        actual
-      )}`
+      `${methodName}(${paramsStr}) expected ${resultReadable}, but got ${actualReadable}`
     );
   }
 }
