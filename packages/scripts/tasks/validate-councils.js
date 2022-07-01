@@ -73,6 +73,8 @@ async function validateCouncil({ Proxy, Token, council, epoch }) {
   await expect(Proxy, 'getVotingPeriodStartDate', date(council.getVotingPeriodStartDate));
   await expect(Proxy, 'getEpochEndDate', date(council.getEpochEndDate));
   await expect(Proxy, 'getNextEpochSeatCount', council.getNextEpochSeatCount);
+  await expect(Proxy, 'getEpochIndex', council.getEpochIndex);
+  await expect(Proxy, 'getCurrentPeriod', council.getCurrentPeriod);
 
   if (council.getCouncilMembers) {
     await expect(Proxy, 'getCouncilMembers', council.getCouncilMembers);
@@ -113,7 +115,7 @@ async function expect(Contract, methodName, ...args) {
     }
 
     logger.success(`${methodName}(${paramsStr}) is ${JSON.stringify(actual)}`);
-  } catch (err) {
+  } catch (_) {
     logger.error(
       `${methodName}(${paramsStr}) expected ${JSON.stringify(expected)}, but got ${JSON.stringify(
         actual
