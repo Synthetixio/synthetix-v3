@@ -92,16 +92,16 @@ contract ElectionBase is ElectionStorage {
         return _getEpochAtIndex(_getCurrentEpochIndex() - 1);
     }
 
-    function _getEpochAtIndex(uint position) internal view returns (EpochData storage) {
-        return _electionStore().epochs[position];
+    function _getEpochAtIndex(uint epochIndex) internal view returns (EpochData storage) {
+        return _electionStore().epochs[epochIndex];
     }
 
     function _getCurrentElection() internal view returns (ElectionData storage) {
         return _getElectionAtIndex(_getCurrentEpochIndex());
     }
 
-    function _getElectionAtIndex(uint position) internal view returns (ElectionData storage) {
-        return _electionStore().elections[position];
+    function _getElectionAtIndex(uint epochIndex) internal view returns (ElectionData storage) {
+        return _electionStore().elections[epochIndex];
     }
 
     function _getBallot(bytes32 ballotId) internal view returns (BallotData storage) {
