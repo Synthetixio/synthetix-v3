@@ -19,7 +19,7 @@ task('validate-councils')
   .setAction(async ({ instance, epoch }, hre) => {
     epoch = Number(epoch);
 
-    logger.info(`Validating councils on network "${hre.network.name}"`);
+    logger.info(`Validating councils on network "${hre.network.name}" (${hre.network.config.url})`);
 
     const councils = await importJson(`${__dirname}/../data/councils-epoch-${epoch}.json`);
 
