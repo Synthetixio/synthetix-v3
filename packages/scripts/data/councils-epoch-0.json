@@ -3,13 +3,15 @@
     "name": "ambassador-council",
     "owner": "0x6cd3f878852769e04A723A5f66CA7DD4d9E38A6C",
     "nominatedOwner": "0x0000000000000000000000000000000000000000",
-    "getNominationPeriodStartDate": "2022-06-10",
-    "getVotingPeriodStartDate": "2022-06-17",
-    "getEpochEndDate": "2022-07-01",
-    "getNextEpochSeatCount": 3,
+    "nominationPeriodStartDate": "2022-06-10",
+    "votingPeriodStartDate": "2022-06-17",
+    "epochEndDate": "2022-07-01",
+    "nextEpochSeatCount": 3,
+    "epochIndex": 0,
+    "currentPeriod": 0,
     "councilTokenName": "Synthetix Ambassador Council Token",
     "councilTokenSymbol": "SNX-ACT",
-    "getCouncilMembers": [
+    "councilMembers": [
       "0xDe910777C787903F78C89e7a0bf7F4C435cBB1Fe"
     ]
   },
@@ -17,13 +19,15 @@
     "name": "grants-council",
     "owner": "0x6cd3f878852769e04A723A5f66CA7DD4d9E38A6C",
     "nominatedOwner": "0x0000000000000000000000000000000000000000",
-    "getNominationPeriodStartDate": "2022-06-10",
-    "getVotingPeriodStartDate": "2022-06-17",
-    "getEpochEndDate": "2022-07-01",
-    "getNextEpochSeatCount": 5,
+    "nominationPeriodStartDate": "2022-06-10",
+    "votingPeriodStartDate": "2022-06-17",
+    "epochEndDate": "2022-07-01",
+    "nextEpochSeatCount": 5,
+    "epochIndex": 0,
+    "currentPeriod": 0,
     "councilTokenName": "Synthetix Grants Council Token",
     "councilTokenSymbol": "SNX-GCT",
-    "getCouncilMembers": [
+    "councilMembers": [
       "0xDe910777C787903F78C89e7a0bf7F4C435cBB1Fe"
     ]
   },
@@ -31,13 +35,15 @@
     "name": "spartan-council",
     "owner": "0x6cd3f878852769e04A723A5f66CA7DD4d9E38A6C",
     "nominatedOwner": "0x0000000000000000000000000000000000000000",
-    "getNominationPeriodStartDate": "2022-06-10",
-    "getVotingPeriodStartDate": "2022-06-17",
-    "getEpochEndDate": "2022-07-01",
-    "getNextEpochSeatCount": 8,
+    "nominationPeriodStartDate": "2022-06-10",
+    "votingPeriodStartDate": "2022-06-17",
+    "epochEndDate": "2022-07-01",
+    "nextEpochSeatCount": 8,
+    "epochIndex": 0,
+    "currentPeriod": 0,
     "councilTokenName": "Synthetix Spartan Council Token",
     "councilTokenSymbol": "SNX-SCT",
-    "getCouncilMembers": [
+    "councilMembers": [
       "0xDe910777C787903F78C89e7a0bf7F4C435cBB1Fe"
     ]
   },
@@ -45,13 +51,15 @@
     "name": "treasury-council",
     "owner": "0x6cd3f878852769e04A723A5f66CA7DD4d9E38A6C",
     "nominatedOwner": "0x0000000000000000000000000000000000000000",
-    "getNominationPeriodStartDate": "2022-06-10",
-    "getVotingPeriodStartDate": "2022-06-17",
-    "getEpochEndDate": "2022-07-01",
-    "getNextEpochSeatCount": 4,
+    "nominationPeriodStartDate": "2022-06-10",
+    "votingPeriodStartDate": "2022-06-17",
+    "epochEndDate": "2022-07-01",
+    "nextEpochSeatCount": 4,
+    "epochIndex": 0,
+    "currentPeriod": 0,
     "councilTokenName": "Synthetix Treasury Council Token",
     "councilTokenSymbol": "SNX-TCT",
-    "getCouncilMembers": [
+    "councilMembers": [
       "0xDe910777C787903F78C89e7a0bf7F4C435cBB1Fe"
     ]
   }
