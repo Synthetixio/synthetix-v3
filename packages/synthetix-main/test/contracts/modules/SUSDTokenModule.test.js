@@ -36,7 +36,7 @@ describe('USDTokenModule', function () {
       before('Identify newly created USD', async () => {
         const event = findEvent({ receipt, eventName: 'USDTokenCreated' });
         snxTokenAddress = event.args.snxAddress;
-        USD = await ethers.getContractAt('usdToken', snxTokenAddress);
+        USD = await ethers.getContractAt('USDToken', snxTokenAddress);
       });
 
       it('emmited an event', async () => {
@@ -62,7 +62,7 @@ describe('USDTokenModule', function () {
         const results = await USDTokenModule.getUSDTokenModuleSatellites();
         assert.equal(results.length, 1);
         assert.equal(results[0].name, ethers.utils.formatBytes32String('USD'));
-        assert.equal(results[0].contractName, ethers.utils.formatBytes32String('USDToken'));
+        assert.equal(results[0].contractName, ethers.utils.formatBytes32String('usdToken'));
         assert.equal(results[0].deployedAddress, snxTokenAddress);
       });
 

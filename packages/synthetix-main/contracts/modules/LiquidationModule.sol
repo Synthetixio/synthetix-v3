@@ -6,12 +6,12 @@ pragma solidity ^0.8.0;
 // import "@synthetixio/core-contracts/contracts/errors/AddressError.sol";
 
 import "../interfaces/ILiquidationModule.sol";
-import "../storage/FundModuleStorage.sol";
+import "../storage/LiquidationModuleStorage.sol";
 
 import "../mixins/CollateralMixin.sol";
 import "../mixins/FundMixin.sol";
 
-contract LiquidationsModule is ILiquidationModule, CollateralMixin, FundMixin {
+contract LiquidationsModule is ILiquidationModule, LiquidationModuleStorage, CollateralMixin, FundMixin {
     function liquidate(
         uint accountId,
         uint fundId,
@@ -56,7 +56,4 @@ contract LiquidationsModule is ILiquidationModule, CollateralMixin, FundMixin {
                 CurvesLibrary.calculateValueAtCurvePoint(liquidationsCurve.curve, block.timestamp)) /
             CurvesLibrary.calculateValueAtCurvePoint(liquidationsCurve.curve, liquidationsCurve.curve.end);
     }
-
-    // mapping vault (fundId + collateralType) as keccak -> liqudation curve
-    mapping(bytes32 => CurvesLibrary.PolynomialCurve) _liquidationCurves;
 }

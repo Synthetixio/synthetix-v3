@@ -102,7 +102,7 @@ contract FundMixin is FundModuleStorage, FundVaultStorage, FundEventAndErrors, C
 
         // Note: if funds are single collaterals (and managed independently per collateral type)
         // we should set the collateral type in the fund definition and remove this loop
-        for (uint idx = 0; idx < _fundVaultStore().fundCollateralTypes[fundId].length(); idx++) {
+        for (uint idx = 1; idx <= _fundVaultStore().fundCollateralTypes[fundId].length(); idx++) {
             address collateralType = _fundVaultStore().fundCollateralTypes[fundId].valueAt(idx);
             uint collateral = _fundVaultStore().fundVaults[fundId][collateralType].totalCollateral;
             total = collateral.mulDivDown(_getCollateralValue(collateralType), MathUtil.UNIT);

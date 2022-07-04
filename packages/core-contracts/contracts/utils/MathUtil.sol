@@ -18,7 +18,6 @@ library MathUtil {
     /* The number representing int 1.0. */
     int256 public constant INT_UNIT = int(10**uint(DECIMALS));
 
-
     function mulDivDown(
         uint256 x,
         uint256 y,
