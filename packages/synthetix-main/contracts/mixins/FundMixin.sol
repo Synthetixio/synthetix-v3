@@ -1,10 +1,19 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import "@synthetixio/core-contracts/contracts/utils/MathUtil.sol";
+
+import "../mixins/CollateralMixin.sol";
+
 import "../storage/FundModuleStorage.sol";
+import "../storage/FundVaultStorage.sol";
 import "../submodules/FundEventAndErrors.sol";
 
-contract FundMixin is FundModuleStorage, FundEventAndErrors {
+contract FundMixin is FundModuleStorage, FundVaultStorage, FundEventAndErrors, CollateralMixin {
+    using SetUtil for SetUtil.AddressSet;
+    using SetUtil for SetUtil.Bytes32Set;
+    using MathUtil for uint256;
+
     function _ownerOf(uint256 fundId) internal view returns (address) {
         return _fundModuleStore().funds[fundId].owner;
     }
@@ -37,8 +46,9 @@ contract FundMixin is FundModuleStorage, FundEventAndErrors {
         uint marketWeight,
         uint totalWeight // solhint-disable-next-line no-empty-blocks
     ) internal {
-        uint toAssign = marketWeight / totalWeight 
-        // TODO implement it when markets are created
+        uint toAssign = (_totalCollateralValue(fundId) * marketWeight) / totalWeight;
+        //TODO push the change to the market
+        // MarketMixin._rebalanceMarket(fundId, marketId, toAssign);
     }
 
     function _accountDebtAndCollateral(
@@ -78,9 +88,38 @@ contract FundMixin is FundModuleStorage, FundEventAndErrors {
         uint fundId,
         uint accountId,
         address collateralType
-    ) internal view override returns (uint) {
+    ) internal view returns (uint) {
         (uint accountDebt, uint accountCollateralValue) = _accountDebtAndCollateral(fundId, accountId, collateralType);
         return accountCollateralValue.mulDivDown(MathUtil.UNIT, accountDebt);
+    }
+
+    function _totalCollateral(uint fundId, address collateralType) internal view returns (uint) {
+        return _fundVaultStore().fundVaults[fundId][collateralType].totalCollateral;
+    }
+
+    function _totalCollateralValue(uint fundId) internal view returns (uint) {
+        uint total;
+
+        // Note: if funds are single collaterals (and managed independently per collateral type)
+        // we should set the collateral type in the fund definition and remove this loop
+        for (uint idx = 0; idx < _fundVaultStore().fundCollateralTypes[fundId].length(); idx++) {
+            address collateralType = _fundVaultStore().fundCollateralTypes[fundId].valueAt(idx);
+            uint collateral = _fundVaultStore().fundVaults[fundId][collateralType].totalCollateral;
+            total = collateral.mulDivDown(_getCollateralValue(collateralType), MathUtil.UNIT);
+        }
+        return total;
+    }
+
+    function _totalShares(uint fundId, address collateralType) internal view returns (uint) {
+        return _fundVaultStore().fundVaults[fundId][collateralType].totalShares;
+    }
+
+    function _perShareValue(uint fundId, address collateralType) internal view returns (uint) {
+        uint totalShares = _totalShares(fundId, collateralType);
+        uint totalCollateralValue = _totalCollateral(fundId, collateralType);
+
+        // TODO Use muldivdown
+        return totalCollateralValue == 0 ? 1 : totalCollateralValue.mulDivDown(MathUtil.UNIT, totalShares);
     }
 
     function _deleteLiquidityItem(bytes32 liquidityItemId, LiquidityItem storage liquidityItem) internal {

@@ -6,7 +6,6 @@ import "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
 import "@synthetixio/core-contracts/contracts/utils/MathUtil.sol";
 
 import "../mixins/AccountRBACMixin.sol";
-import "../mixins/CollateralMixin.sol";
 import "../mixins/FundMixin.sol";
 import "../mixins/USDMixin.sol";
 import "../mixins/SharesLibrary.sol";
@@ -22,7 +21,6 @@ contract VaultModule is
     FundVaultStorage,
     FundEventAndErrors,
     AccountRBACMixin,
-    CollateralMixin,
     OwnableMixin,
     USDMixin,
     FundMixin
@@ -256,22 +254,6 @@ contract VaultModule is
         uint totalCollateralValue = _totalCollateral(fundId, collateralType);
 
         return SharesLibrary.amountToShares(totalShares, totalCollateralValue, leveragedCollateralValue);
-    }
-
-    function _perShareValue(uint fundId, address collateralType) internal view returns (uint) {
-        uint totalShares = _totalShares(fundId, collateralType);
-        uint totalCollateralValue = _totalCollateral(fundId, collateralType);
-
-        // TODO Use muldivdown
-        return totalCollateralValue == 0 ? 1 : totalCollateralValue.mulDivDown(MathUtil.UNIT, totalShares);
-    }
-
-    function _totalCollateral(uint fundId, address collateralType) internal view returns (uint) {
-        return _fundVaultStore().fundVaults[fundId][collateralType].totalCollateral;
-    }
-
-    function _totalShares(uint fundId, address collateralType) internal view returns (uint) {
-        return _fundVaultStore().fundVaults[fundId][collateralType].totalShares;
     }
 
     // solhint-disable no-unused-vars
