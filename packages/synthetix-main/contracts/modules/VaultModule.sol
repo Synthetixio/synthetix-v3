@@ -36,7 +36,7 @@ contract VaultModule is
         uint amount,
         uint leverage
     ) external override onlyRoleAuthorized(accountId, "assign") collateralEnabled(collateralType) fundExists(fundId) {
-        bytes32 lid = _getLiquidityItemId(accountId, collateralType, fundId, leverage);
+        bytes32 lid = _getLiquidityItemId(accountId, collateralType, fundId);
 
         VaultData storage vaultData = _fundVaultStore().fundVaults[fundId][collateralType];
         SetUtil.Bytes32Set storage liquidityItemIds = vaultData.liquidityItemIds;

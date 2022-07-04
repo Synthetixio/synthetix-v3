@@ -56,7 +56,7 @@ contract MarketManagerModule is IMarketManagerModule, MarketManagerStorage, USDM
     ) internal {}
 
     function liquidity(uint marketId) public view override returns (uint) {
-        return _marketManagerStore().markets[marketId].availableLiquidity;
+        return _availableLiquidity(marketId);
     }
 
     function fundBalance(uint marketId, uint fundId) public view override returns (int) {
@@ -108,12 +108,16 @@ contract MarketManagerModule is IMarketManagerModule, MarketManagerStorage, USDM
 
         if (msg.sender != marketData.marketAddress) revert AccessError.Unauthorized(msg.sender);
 
-        require(marketData.issuance + int(amount) <= int(marketData.availableLiquidity), "some error");
+        require(marketData.issuance + int(amount) <= int(_availableLiquidity(marketId)), "some error");
 
         // Adjust accounting
         marketData.issuance += int(amount);
 
         // mint some USD
         _getUSDToken().mint(target, amount);
+    }
+
+    function _availableLiquidity(uint marketId) internal view returns (uint) {
+        return 0;
     }
 }
