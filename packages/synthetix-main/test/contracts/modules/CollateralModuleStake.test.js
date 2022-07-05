@@ -80,10 +80,10 @@ describe('CollateralModule Stake', function () {
 
     const collateralType = await CollateralModule.getCollateralType(Collateral.address);
 
-    assert.equal(collateralType[0], CollateralPriceFeed.address);
-    assertBn.equal(collateralType[1], 400);
-    assertBn.equal(collateralType[2], 200);
-    assert.equal(collateralType[3], true);
+    assert.equal(collateralType.priceFeed, CollateralPriceFeed.address);
+    assertBn.equal(collateralType.targetCRatio, 400);
+    assertBn.equal(collateralType.minimumCRatio, 200);
+    assert.equal(collateralType.enabled, true);
   });
 
   describe('when some collateral is staked', () => {

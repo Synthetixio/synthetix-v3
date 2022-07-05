@@ -4,11 +4,13 @@ pragma solidity ^0.8.0;
 contract MarketManagerStorage {
     struct MarketManagerStore {
         mapping(uint => MarketData) markets;
+        mapping(address => uint) marketIds;
+        uint lastMarketId;
     }
 
     struct MarketData {
         address marketAddress;
-        int256 issuance; // TODO this can be neggative. How to deal with that?
+        int256 issuance; // TODO this can be negative. How to deal with that?
         uint256 delegatedCollateralValue;
         // credit shares
         mapping(uint => uint256) fundliquidityShares;

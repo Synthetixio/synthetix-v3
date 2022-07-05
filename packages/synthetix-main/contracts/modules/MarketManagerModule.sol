@@ -17,7 +17,22 @@ import "../mixins/FundMixin.sol";
 import "../mixins/USDMixin.sol";
 
 contract MarketManagerModule is IMarketManagerModule, MarketManagerStorage, USDMixin, OwnableMixin {
-    function registerMarket(address market) external override returns (uint) {}
+    error MarketAlreadyRegistered(address market);
+
+    event MarketRegistered(address market, uint marketId);
+
+    function registerMarket(address market) external override returns (uint marketId) {
+        if (_marketManagerStore().marketIds[market] > 0) revert MarketAlreadyRegistered(market);
+        uint lastMarketId = _marketManagerStore().lastMarketId++;
+        marketId = lastMarketId + 1;
+
+        _marketManagerStore().marketIds[market] = marketId;
+        _marketManagerStore().markets[marketId].marketAddress = market;
+
+        emit MarketRegistered(market, marketId);
+
+        return marketId;
+    }
 
     function setSupplyTarget(
         uint marketId,
@@ -35,7 +50,7 @@ contract MarketManagerModule is IMarketManagerModule, MarketManagerStorage, USDM
         uint amount
     ) internal {
         // called by the fund at rebalance markets
-        //       mapping(uint => uint) fundliquidityShares;
+        // mapping(uint => uint) fundliquidityShares;
         // mapping(uint => int) fundInitialBalance;
 
         MarketData storage marketData = _marketManagerStore().markets[marketId];
@@ -118,6 +133,10 @@ contract MarketManagerModule is IMarketManagerModule, MarketManagerStorage, USDM
     }
 
     function _availableLiquidity(uint marketId) internal view returns (uint) {
-        return 0;
+        MarketData storage marketData = _marketManagerStore().markets[marketId];
+
+        if (marketData.issuance > 0 && marketData.issuance >= int(marketData.delegatedCollateralValue)) return 0;
+
+        return uint(int(marketData.delegatedCollateralValue) - marketData.issuance);
     }
 }
