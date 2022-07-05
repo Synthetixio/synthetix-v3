@@ -90,7 +90,7 @@ contract FundMixin is FundModuleStorage, FundVaultStorage, FundEventAndErrors, C
         address collateralType
     ) internal view returns (uint) {
         (uint accountDebt, uint accountCollateralValue) = _accountDebtAndCollateral(fundId, accountId, collateralType);
-        return accountCollateralValue.mulDivDown(MathUtil.UNIT, accountDebt);
+        return accountCollateralValue.divDecimal(accountDebt);
     }
 
     function _totalCollateral(uint fundId, address collateralType) internal view returns (uint) {
@@ -105,7 +105,7 @@ contract FundMixin is FundModuleStorage, FundVaultStorage, FundEventAndErrors, C
         for (uint idx = 1; idx <= _fundVaultStore().fundCollateralTypes[fundId].length(); idx++) {
             address collateralType = _fundVaultStore().fundCollateralTypes[fundId].valueAt(idx);
             uint collateral = _fundVaultStore().fundVaults[fundId][collateralType].totalCollateral;
-            total = collateral.mulDivDown(_getCollateralValue(collateralType), MathUtil.UNIT);
+            total = collateral.mulDecimal(_getCollateralValue(collateralType));
         }
         return total;
     }
@@ -118,8 +118,7 @@ contract FundMixin is FundModuleStorage, FundVaultStorage, FundEventAndErrors, C
         uint totalShares = _totalShares(fundId, collateralType);
         uint totalCollateralValue = _totalCollateral(fundId, collateralType);
 
-        // TODO Use muldivdown
-        return totalCollateralValue == 0 ? 1 : totalCollateralValue.mulDivDown(MathUtil.UNIT, totalShares);
+        return totalCollateralValue == 0 ? 1 : totalCollateralValue.divDecimal(totalShares);
     }
 
     function _deleteLiquidityItem(bytes32 liquidityItemId, LiquidityItem storage liquidityItem) internal {

@@ -330,7 +330,7 @@ contract VaultModule is
 
     function fundDebt(uint fundId, address collateralType) public view override returns (uint) {
         return
-            _totalShares(fundId, collateralType).mulDivDown(_perShareValue(fundId, collateralType), MathUtil.UNIT) +
+            _totalShares(fundId, collateralType).mulDecimal(_perShareValue(fundId, collateralType)) +
             _fundVaultStore().fundVaults[fundId][collateralType].totalUSD;
     }
 
