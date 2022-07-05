@@ -18,18 +18,13 @@ interface ICollateralModule {
     function getCollateralTypes(bool hideDisabled)
         external
         view
-        returns (CollateralStorage.CollateralData[] memory collateralTypes);
+        returns (CollateralStorage.CollateralData[] memory collaterals);
 
     /// @notice Gets the information of a particular approved collateral type
     function getCollateralType(address collateralType)
         external
         view
-        returns (
-            address priceFeed,
-            uint targetCRatio,
-            uint minimumCRatio,
-            bool enabled
-        );
+        returns (CollateralStorage.CollateralData memory collateral);
 
     /// @notice Stakes collateral for an account (by the account owner or an address with 'stake' role). Transfers the collateral from the account owner.
     function stake(

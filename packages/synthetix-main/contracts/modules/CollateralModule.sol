@@ -57,20 +57,14 @@ contract CollateralModule is ICollateralModule, CollateralStorage, OwnableMixin,
         return collaterals;
     }
 
-    // TODO: Change to return type `CollateralData`?
     function getCollateralType(address collateralType)
         external
         view
         override
-        returns (
-            address,
-            uint,
-            uint,
-            bool
-        )
+        returns (CollateralStorage.CollateralData memory)
     {
         CollateralData storage collateral = _collateralStore().collateralsData[collateralType];
-        return (collateral.priceFeed, collateral.targetCRatio, collateral.minimumCRatio, collateral.enabled);
+        return collateral;
     }
 
     /////////////////////////////////////////////////
