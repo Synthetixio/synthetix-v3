@@ -7,6 +7,11 @@
     "test": "hardhat test"
   },
   "devDependencies": {
-    "inquirer": "8.2.4"
+    "@nomiclabs/hardhat-ethers": "2.0.5",
+    "fastq": "1.13.0",
+    "hardhat": "2.9.3",
+    "inquirer": "8.2.4",
+    "sort-keys": "4.2.0",
+    "synthetix": "2.73.1"
   }
 }
