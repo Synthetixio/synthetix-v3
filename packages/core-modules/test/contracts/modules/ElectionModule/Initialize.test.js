@@ -232,7 +232,7 @@ describe('ElectionModule (initialization)', () => {
           const event = findEvent({ receipt, eventName: 'EpochStarted' });
 
           assert.ok(event);
-          assertBn.equal(event.args.epochIndex, 1);
+          assertBn.equal(event.args.epochIndex, 0);
         });
 
         it('shows that the module is initialized', async () => {
