@@ -1,9 +1,8 @@
 const path = require('path');
 const assert = require('assert/strict');
-const { equal, deepEqual } = require('assert/strict');
 const { task } = require('hardhat/config');
 const logger = require('@synthetixio/core-js/utils/io/logger');
-const { formatDate, getUnixTimestamp } = require('@synthetixio/core-js/utils/misc/dates');
+const { formatDate, fromUnixTimestamp } = require('@synthetixio/core-js/utils/misc/dates');
 const types = require('@synthetixio/core-js/utils/hardhat/argument-types');
 const { getDeployment, getDeploymentAbis } = require('@synthetixio/deployer/utils/deployments');
 const getPackageProxy = require('../internal/get-package-proxy');
@@ -20,7 +19,7 @@ task('validate-councils')
   .setAction(async ({ instance, epoch }, hre) => {
     epoch = Number(epoch);
 
-    logger.info(`Validating councils on network "${hre.network.name}"`);
+    logger.info(`Validating councils on network "${hre.network.name}" (${hre.network.config.url})`);
 
     const councils = await importJson(`${__dirname}/../data/councils-epoch-${epoch}.json`);
 
@@ -52,9 +51,9 @@ task('validate-councils')
         assert(deployment.properties.completed, `Deployment of ${council.name} is not completed`);
         logger.success('Deployment complete');
 
-        await validateCouncil({ Council, Token, council, epoch });
+        await validateCouncil({ Council, council });
 
-        await validateCouncilToken({ Token, council, epoch });
+        await validateCouncilToken({ Token, council });
       } catch (err) {
         console.error(err);
         logger.error(`Council "${council.name}" is not valid`);
@@ -62,81 +61,169 @@ task('validate-councils')
     }
   });
 
-async function validateCouncil({ Council, council, epoch }) {
+async function validateCouncil({ Council, council }) {
   logger.info('Council validations:');
 
-  // Validate Initializatiion
-  await expect(Council, 'isOwnerModuleInitialized', true);
-  await expect(Council, 'isElectionModuleInitialized', true);
-  await expect(Council, 'getEpochIndex', epoch);
+  await validate({
+    action: Council.isOwnerModuleInitialized(),
+    expectedResult: true,
+    validation: (result, expectedResult) => result === expectedResult,
+    successFn: (result) => logger.success(`OwnerModule is initialized: ${result}`),
+    errorFn: (result, expected) =>
+      logger.error(
+        `Was expecting OwnerModule.isOwnerModuleInitialized to be ${expected}, but received ${result}`
+      ),
+  });
 
-  // Validate Epoch Properties
-  await expect(Council, 'owner', council.owner);
-  await expect(Council, 'nominatedOwner', council.nominatedOwner);
-  await expect(
-    Council,
-    'getNominationPeriodStartDate',
-    getUnixTimestamp(council.getNominationPeriodStartDate)
-  );
-  await expect(
-    Council,
-    'getVotingPeriodStartDate',
-    getUnixTimestamp(council.getVotingPeriodStartDate)
-  );
-  await expect(Council, 'getEpochEndDate', getUnixTimestamp(council.getEpochEndDate));
-  await expect(Council, 'getNextEpochSeatCount', council.getNextEpochSeatCount);
-  await expect(Council, 'getEpochIndex', council.getEpochIndex);
-  await expect(Council, 'getCurrentPeriod', council.getCurrentPeriod);
+  await validate({
+    action: Council.isElectionModuleInitialized(),
+    expectedResult: true,
+    validation: (result, expectedResult) => result === expectedResult,
+    successFn: (result) => logger.success(`ElectionModule is initialized: ${result}`),
+    errorFn: (result, expected) =>
+      logger.error(
+        `Was expecting ElectionModule.isElectionModuleInitialized to be ${expected}, but received ${result}`
+      ),
+  });
 
-  if (council.getCouncilMembers) {
-    await expect(Council, 'getCouncilMembers', council.getCouncilMembers);
-  }
+  await validate({
+    action: Council.getEpochIndex(),
+    expectedResult: council.epochIndex,
+    validation: (result, expectedResult) => result.toString() === expectedResult,
+    successFn: (result) => logger.success(`Epoch index is: ${result}`),
+    errorFn: (result, expected) =>
+      logger.error(`Was expecting epoch index to be ${expected}, but received ${result}`),
+  });
+
+  await validate({
+    action: Council.getCurrentPeriod(),
+    expectedResult: council.currentPeriod,
+    validation: (result, expectedResult) => result.toString() === expectedResult,
+    successFn: (result) => logger.success(`Current period is: ${result}`),
+    errorFn: (result, expected) =>
+      logger.error(`Was expecting current period to be ${expected}, but received ${result}`),
+  });
+
+  await validate({
+    action: Council.owner(),
+    expectedResult: council.owner,
+    validation: (result, expectedResult) => result === expectedResult,
+    successFn: (result) => logger.success(`Owner is: ${result}`),
+    errorFn: (result, expected) =>
+      logger.error(`Was expecting owner to be ${expected}, but received ${result}`),
+  });
+
+  await validate({
+    action: Council.nominatedOwner(),
+    expectedResult: council.nominatedOwner,
+    validation: (result, expectedResult) => result === expectedResult,
+    successFn: (result) => logger.success(`Nominated owner is: ${result}`),
+    errorFn: (result, expected) =>
+      logger.error(`Was expecting nominated owner to be ${expected}, but received ${result}`),
+  });
+
+  await validate({
+    action: Council.getNextEpochSeatCount(),
+    expectedResult: council.nextEpochSeatCount,
+    validation: (result, expectedResult) => result.toString() === expectedResult,
+    successFn: (result) => logger.success(`Next epoch seat count is: ${result}`),
+    errorFn: (result, expected) =>
+      logger.error(`Was expecting next epoch seat count to be ${expected}, but received ${result}`),
+  });
+
+  await validate({
+    action: Council.getCouncilMembers(),
+    expectedResult: council.councilMembers.join(','),
+    validation: (result, expectedResult) => result.toString() === expectedResult,
+    successFn: (result) => logger.success(`Council members are: ${result}`),
+    errorFn: (result, expected) =>
+      logger.error(`Was expecting council members to be ${expected}, but received ${result}`),
+  });
+
+  await validate({
+    action: Council.getNominationPeriodStartDate(),
+    expectedResult: council.nominationPeriodStartDate,
+    validation: (result, expectedResult) => readableDate(result) === expectedResult,
+    successFn: (result) =>
+      logger.success(`Nomination period start date is: ${readableDate(result)}`),
+    errorFn: (result, expected) =>
+      logger.error(
+        `Was expecting nomination period start date to be ${expected}, but received ${readableDate(
+          result
+        )}`
+      ),
+  });
+
+  await validate({
+    action: Council.getVotingPeriodStartDate(),
+    expectedResult: council.votingPeriodStartDate,
+    validation: (result, expectedResult) => readableDate(result) === expectedResult,
+    successFn: (result) => logger.success(`Voting period start date is: ${readableDate(result)}`),
+    errorFn: (result, expected) =>
+      logger.error(
+        `Was expecting voting period start date to be ${expected}, but received ${readableDate(
+          result
+        )}`
+      ),
+  });
+
+  await validate({
+    action: Council.getEpochEndDate(),
+    expectedResult: council.epochEndDate,
+    validation: (result, expectedResult) => readableDate(result) === expectedResult,
+    successFn: (result) => logger.success(`Epoch end date is: ${readableDate(result)}`),
+    errorFn: (result, expected) =>
+      logger.error(
+        `Was expecting epoch end date to be ${expected}, but received ${readableDate(result)}`
+      ),
+  });
 }
 
 async function validateCouncilToken({ Token, council }) {
   logger.info('CouncilToken validations:');
 
-  await expect(Token, 'name', council.councilTokenName);
-  await expect(Token, 'symbol', council.councilTokenSymbol);
+  await validate({
+    action: Token.name(),
+    expectedResult: council.councilTokenName,
+    validation: (result, expectedResult) => result === expectedResult,
+    successFn: (result) => logger.success(`Council token name is: ${result}`),
+    errorFn: (result, expected) =>
+      logger.error(`Was expecting council token name to be ${expected}, but received ${result}`),
+  });
 
-  // Validate that the council members have 1 CouncilToken
-  for (const address of await council.getCouncilMembers) {
-    await expect(Token, 'balanceOf', address, 1);
+  await validate({
+    action: Token.symbol(),
+    expectedResult: council.councilTokenSymbol,
+    validation: (result, expectedResult) => result === expectedResult,
+    successFn: (result) => logger.success(`Council token symbol is: ${result}`),
+    errorFn: (result, expected) =>
+      logger.error(`Was expecting council token symbol to be ${expected}, but received ${result}`),
+  });
+
+  for (const address of await council.councilMembers) {
+    await validate({
+      action: Token.balanceOf(address),
+      expectedResult: '1',
+      validation: (result, expectedResult) => result.toString() === expectedResult,
+      successFn: (result) => logger.success(`Token balance of ${address}: ${result}`),
+      errorFn: (result, expected) =>
+        logger.error(
+          `Was expecting token balance of ${address} to be ${expected}, but received ${result.toString()}`
+        ),
+    });
   }
 }
 
-function typeOf(val) {
-  return Object.prototype.toString.call(val).slice(8, -1);
+function readableDate(timestamp) {
+  return formatDate(fromUnixTimestamp(timestamp));
 }
 
-async function expect(Contract, methodName, ...args) {
-  const fnParams = args.slice(0, args.length - 1);
-  const [expected] = args.slice(-1);
-  const result = await Contract[methodName](...fnParams);
-  const actual = typeof expected === 'number' ? Number(result) : result;
+async function validate({ action, expectedResult, validation, successFn, errorFn }) {
+  const result = await action;
 
-  const resultIsDate = methodName.includes('Date');
-
-  const paramsStr = fnParams.map(JSON.stringify).join(', ');
-
-  const actualReadable = resultIsDate
-    ? formatDate(new Date(actual * 1000))
-    : JSON.stringify(actual);
-  const resultReadable = resultIsDate
-    ? formatDate(new Date(result * 1000))
-    : JSON.stringify(result);
-
-  try {
-    if (['Array', 'Object'].includes(typeOf(expected))) {
-      deepEqual(actual, expected);
-    } else {
-      equal(actual, expected);
-    }
-
-    logger.success(`${methodName}(${paramsStr}) is ${actualReadable}`);
-  } catch (_) {
-    logger.error(
-      `${methodName}(${paramsStr}) expected ${resultReadable}, but got ${actualReadable}`
-    );
+  if (validation(result, expectedResult)) {
+    successFn(result);
+  } else {
+    errorFn(result, expectedResult);
   }
 }
