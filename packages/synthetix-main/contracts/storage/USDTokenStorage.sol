@@ -9,6 +9,7 @@ contract USDTokenStorage {
         SatelliteFactory.Satellite usdToken;
     }
 
+    // solhint-disable-next-line func-name-mixedcase
     function _USDTokenStore() internal pure returns (USDTokenStore storage store) {
         assembly {
             // bytes32(uint(keccak256("io.synthetix.USDtoken")) - 1)

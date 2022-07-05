@@ -1,10 +1,6 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-// import "@synthetixio/core-contracts/contracts/ownership/OwnableMixin.sol";
-// import "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
-// import "@synthetixio/core-contracts/contracts/errors/AddressError.sol";
-
 import "../interfaces/ILiquidationModule.sol";
 import "../storage/LiquidationModuleStorage.sol";
 

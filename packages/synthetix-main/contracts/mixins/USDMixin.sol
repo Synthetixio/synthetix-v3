@@ -14,12 +14,12 @@ contract USDMixin is USDTokenStorage {
         return IUSDToken(_USDTokenStore().usdToken.deployedAddress);
     }
 
-    function _USDInitialized() internal view returns (bool) {
+    function _usdTokenInitialized() internal view returns (bool) {
         return _USDTokenStore().initialized;
     }
 
     modifier onlyIfUSDIsInitialized() {
-        if (!_USDInitialized()) {
+        if (!_usdTokenInitialized()) {
             revert InitError.NotInitialized();
         }
 

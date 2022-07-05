@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "../mixins/CurvesLibrary.sol";
+import "../utils/CurvesLibrary.sol";
 
 /// @title Module for managing fund token and funds positions distribution
 interface ILiquidationModule {

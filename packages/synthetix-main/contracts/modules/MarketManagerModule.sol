@@ -10,7 +10,7 @@ import "../interfaces/IMarketManagerModule.sol";
 import "../interfaces/IMarket.sol";
 import "../interfaces/IUSDToken.sol";
 import "../storage/MarketManagerStorage.sol";
-import "../mixins/SharesLibrary.sol";
+import "../utils/SharesLibrary.sol";
 
 import "../mixins/AccountRBACMixin.sol";
 import "../mixins/FundMixin.sol";
@@ -37,7 +37,7 @@ contract MarketManagerModule is IMarketManagerModule, MarketManagerStorage, USDM
     function setSupplyTarget(
         uint marketId,
         uint fundId,
-        uint amount
+        uint amount // solhint-disable-next-line no-empty-blocks
     ) external override {}
 
     function supplyTarget(uint marketId) public view override returns (uint) {
@@ -54,7 +54,7 @@ contract MarketManagerModule is IMarketManagerModule, MarketManagerStorage, USDM
         // mapping(uint => int) fundInitialBalance;
 
         MarketData storage marketData = _marketManagerStore().markets[marketId];
-        int currentFundBalance = fundBalance(marketId, fundId);
+        // int currentFundBalance = fundBalance(marketId, fundId);
         uint currentSupplyTarget = supplyTarget(marketId); // cannot be negative, if so, revert.
 
         marketData.fundliquidityShares[fundId] = SharesLibrary.amountToShares(
@@ -67,7 +67,7 @@ contract MarketManagerModule is IMarketManagerModule, MarketManagerStorage, USDM
     function _setLiquidity(
         uint marketId,
         uint fundId,
-        uint amount
+        uint amount // solhint-disable-next-line no-empty-blocks
     ) internal {}
 
     function liquidity(uint marketId) public view override returns (uint) {

@@ -8,7 +8,8 @@ import "@synthetixio/core-contracts/contracts/utils/MathUtil.sol";
 import "../mixins/AccountRBACMixin.sol";
 import "../mixins/FundMixin.sol";
 import "../mixins/USDMixin.sol";
-import "../mixins/SharesLibrary.sol";
+
+import "../utils/SharesLibrary.sol";
 
 import "../storage/FundVaultStorage.sol";
 import "../interfaces/IVaultModule.sol";

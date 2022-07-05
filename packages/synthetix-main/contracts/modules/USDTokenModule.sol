@@ -14,7 +14,7 @@ contract USDTokenModule is IUSDTokenModule, USDTokenStorage, USDMixin, OwnableMi
     event USDTokenCreated(address snxAddress);
 
     function _isInitialized() internal view override returns (bool) {
-        return _USDInitialized();
+        return _usdTokenInitialized();
     }
 
     function isUSDTokenModuleInitialized() external view override returns (bool) {
