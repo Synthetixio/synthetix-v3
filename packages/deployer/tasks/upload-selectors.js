@@ -3,7 +3,7 @@ const logger = require('@synthetixio/core-js/utils/io/logger');
 const axios = require('axios');
 const { TASK_UPLOAD_SELECTORS, SUBTASK_GET_SOURCES_ABIS } = require('../task-names');
 
-const API_ENDPOINT = 'https://www.4byte.directory/api/v1/import-solidity/';
+const API_ENDPOINT = 'https://www.4byte.directory/api/v1/import-abi/';
 
 task(TASK_UPLOAD_SELECTORS, 'Upload selectors from all local contracts to 4byte.directory')
   .addOptionalParam('include', 'optional comma separated contracts to include', '')
@@ -25,12 +25,18 @@ task(TASK_UPLOAD_SELECTORS, 'Upload selectors from all local contracts to 4byte.
       throw new Error('No contracts found.');
     }
 
+    const items = {};
+    for (const item of abiValues.flat()) {
+      if (item.type !== 'function' && item.type !== 'event') continue;
+      items[JSON.stringify(item)] = item;
+    }
+
     const { data } = await axios({
       method: 'post',
       url: API_ENDPOINT,
       headers: { 'Content-Type': 'application/json' },
       data: {
-        contract_abi: JSON.stringify(abiValues.flat()),
+        contract_abi: JSON.stringify(Object.values(items)),
       },
     });
 
