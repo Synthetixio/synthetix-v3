@@ -5,7 +5,7 @@ const { SUBTASK_GET_MULTICALL_ABI } = require('../task-names');
 subtask(
   SUBTASK_GET_MULTICALL_ABI,
   'Generate a single merged ABI of the Proxy, including all the Modules ABIs'
-).setAction(async ({ info, whitelist = [] }) => {
+).setAction(({ info, whitelist = [] }) => {
   const deployment = getDeployment(info);
   const abis = getDeploymentAbis(info);
 
