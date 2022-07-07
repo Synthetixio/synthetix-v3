@@ -3,20 +3,17 @@ pragma solidity ^0.8.0;
 
 import "@synthetixio/core-contracts/contracts/ownership/OwnableMixin.sol";
 import "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
-// import "@synthetixio/core-contracts/contracts/errors/AddressError.sol";
 
-// import "../submodules/FundEventAndErrors.sol";
 import "../interfaces/IMarketManagerModule.sol";
-import "../interfaces/IMarket.sol";
 import "../interfaces/IUSDToken.sol";
 import "../storage/MarketManagerStorage.sol";
-import "../utils/SharesLibrary.sol";
 
+import "../mixins/MarketManagerMixin.sol";
 import "../mixins/AccountRBACMixin.sol";
 import "../mixins/FundMixin.sol";
 import "../mixins/USDMixin.sol";
 
-contract MarketManagerModule is IMarketManagerModule, MarketManagerStorage, USDMixin, OwnableMixin {
+contract MarketManagerModule is IMarketManagerModule, MarketManagerStorage, MarketManagerMixin, USDMixin, OwnableMixin {
     error MarketAlreadyRegistered(address market);
 
     event MarketRegistered(address market, uint marketId);
@@ -40,28 +37,8 @@ contract MarketManagerModule is IMarketManagerModule, MarketManagerStorage, USDM
         uint amount // solhint-disable-next-line no-empty-blocks
     ) external override {}
 
-    function supplyTarget(uint marketId) public view override returns (uint) {
-        return uint(int(_marketManagerStore().markets[marketId].delegatedCollateralValue) + totalBalance(marketId));
-    }
-
-    function _rebalanceMarket(
-        uint marketId,
-        uint fundId,
-        uint amount
-    ) internal {
-        // called by the fund at rebalance markets
-        // mapping(uint => uint) fundliquidityShares;
-        // mapping(uint => int) fundInitialBalance;
-
-        MarketData storage marketData = _marketManagerStore().markets[marketId];
-        // int currentFundBalance = fundBalance(marketId, fundId);
-        uint currentSupplyTarget = supplyTarget(marketId); // cannot be negative, if so, revert.
-
-        marketData.fundliquidityShares[fundId] = SharesLibrary.amountToShares(
-            marketData.totalLiquidityShares,
-            currentSupplyTarget,
-            amount
-        );
+    function supplyTarget(uint marketId) external view override returns (uint) {
+        return _supplyTarget(marketId);
     }
 
     function _setLiquidity(
@@ -70,7 +47,7 @@ contract MarketManagerModule is IMarketManagerModule, MarketManagerStorage, USDM
         uint amount // solhint-disable-next-line no-empty-blocks
     ) internal {}
 
-    function liquidity(uint marketId) public view override returns (uint) {
+    function liquidity(uint marketId) external view override returns (uint) {
         return _availableLiquidity(marketId);
     }
 
@@ -81,10 +58,8 @@ contract MarketManagerModule is IMarketManagerModule, MarketManagerStorage, USDM
             (totalBalance(marketId) - marketData.fundInitialBalance[fundId]);
     }
 
-    function totalBalance(uint marketId) public view override returns (int) {
-        return
-            IMarket(_marketManagerStore().markets[marketId].marketAddress).balance() +
-            _marketManagerStore().markets[marketId].issuance;
+    function totalBalance(uint marketId) external view override returns (int) {
+        return _totalBalance(marketId);
     }
 
     // deposit will burn USD

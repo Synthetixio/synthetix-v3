@@ -4,12 +4,13 @@ pragma solidity ^0.8.0;
 import "@synthetixio/core-contracts/contracts/utils/MathUtil.sol";
 
 import "../mixins/CollateralMixin.sol";
+import "../mixins/MarketManagerMixin.sol";
 
 import "../storage/FundModuleStorage.sol";
 import "../storage/FundVaultStorage.sol";
 import "../submodules/FundEventAndErrors.sol";
 
-contract FundMixin is FundModuleStorage, FundVaultStorage, FundEventAndErrors, CollateralMixin {
+contract FundMixin is FundModuleStorage, FundVaultStorage, FundEventAndErrors, CollateralMixin, MarketManagerMixin {
     using SetUtil for SetUtil.AddressSet;
     using SetUtil for SetUtil.Bytes32Set;
     using MathUtil for uint256;
@@ -44,11 +45,10 @@ contract FundMixin is FundModuleStorage, FundVaultStorage, FundEventAndErrors, C
         uint fundId,
         uint marketId,
         uint marketWeight,
-        uint totalWeight // solhint-disable-next-line no-empty-blocks
+        uint totalWeight
     ) internal {
         uint toAssign = (_totalCollateralValue(fundId) * marketWeight) / totalWeight;
-        //TODO push the change to the market
-        // MarketMixin._rebalanceMarket(fundId, marketId, toAssign);
+        _rebalanceMarket(marketId, fundId, toAssign);
     }
 
     function _accountDebtAndCollateral(
