@@ -1,9 +1,7 @@
 const { task } = require('hardhat/config');
 const logger = require('@synthetixio/core-js/utils/io/logger');
-const axios = require('axios');
+const fourbytes = require('../internal/fourbytes');
 const { TASK_UPLOAD_SELECTORS, SUBTASK_GET_SOURCES_ABIS } = require('../task-names');
-
-const API_ENDPOINT = 'https://www.4byte.directory/api/v1/import-abi/';
 
 task(TASK_UPLOAD_SELECTORS, 'Upload selectors from all local contracts to 4byte.directory')
   .addOptionalParam('include', 'optional comma separated contracts to include', '')
@@ -22,7 +20,7 @@ task(TASK_UPLOAD_SELECTORS, 'Upload selectors from all local contracts to 4byte.
     const abiValues = Object.values(abis);
 
     if (!abiValues.length) {
-      throw new Error('No contracts found.');
+      throw new Error('No contracts found');
     }
 
     const items = {};
@@ -31,14 +29,7 @@ task(TASK_UPLOAD_SELECTORS, 'Upload selectors from all local contracts to 4byte.
       items[JSON.stringify(item)] = item;
     }
 
-    const { data } = await axios({
-      method: 'post',
-      url: API_ENDPOINT,
-      headers: { 'Content-Type': 'application/json' },
-      data: {
-        contract_abi: JSON.stringify(Object.values(items)),
-      },
-    });
+    const data = await fourbytes.importAbi(Object.values(items));
 
     logger.info(`Processed ${data.num_processed} unique items from ${abiValues.length} ABIs`);
     logger.info(`Added ${data.num_imported} selectors to database`);
