@@ -85,7 +85,8 @@ describe('deploy:upload-selectors', function () {
         include: `${contractName1},${contractName2}`,
       });
 
-      deepEqual(importedAbis, [expectedAbi]);
+      equal(importedAbis.length, 1);
+      unorderedDeepEqual(expectedAbi, importedAbis[0]);
     });
 
     it('throws an error on invalid contracts', async function () {
@@ -105,4 +106,32 @@ describe('deploy:upload-selectors', function () {
 
 function filterBy(arrOfObjects, key, ...values) {
   return arrOfObjects.filter((obj) => values.includes(obj[key]));
+}
+
+function findItem(arr, item) {
+  return arr.find((j) => {
+    try {
+      deepEqual(item, j);
+      return true;
+    } catch (_) {
+      return false;
+    }
+  });
+}
+
+/**
+ * Check that both arrays are the same, without taking into account the order of
+ * its children.
+ * @param {unknown[]} actual
+ * @param {unknown[]} expected
+ */
+function unorderedDeepEqual(actual, expected) {
+  ok(Array.isArray(actual), 'actual should be an array');
+  ok(Array.isArray(expected), 'expected should be an array');
+  equal(actual.length, expected.length, 'arrays should have the same amout of items');
+
+  for (const expectedItem of expected) {
+    const actualItem = findItem(actual, expectedItem);
+    deepEqual(expectedItem, actualItem);
+  }
 }
