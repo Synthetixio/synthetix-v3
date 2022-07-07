@@ -25,7 +25,7 @@ describe('deploy:verify', function () {
     let verifyCalls = [];
 
     before('mock verify task', function () {
-      task(TASK_VERIFY_VERIFY, async function (args) {
+      task(TASK_VERIFY_VERIFY, function (args) {
         verifyCalls.push(args);
 
         // Include an already verified contract to test all the states
@@ -124,7 +124,7 @@ describe('deploy:verify', function () {
 
   describe('when the veryfier throws an unkown error', function () {
     before('mock verify task', function () {
-      task(TASK_VERIFY_VERIFY, async function () {
+      task(TASK_VERIFY_VERIFY, function () {
         throw new Error('Unkown error');
       });
     });
