@@ -32,19 +32,19 @@ contract MathUtilMock {
         return MathUtil.divDecimal(x, y);
     }
 
-    function mulDivInt(
+    function mulDivDown(
         int256 x,
         int256 y,
         int256 denominator
     ) public pure returns (int256) {
-        return MathUtil.mulDivInt(x, y, denominator);
+        return MathUtil.mulDivDown(x, y, denominator);
     }
 
-    function mulDecimalInt(int256 x, int256 y) public pure returns (int256) {
-        return MathUtil.mulDecimalInt(x, y);
+    function mulDecimal(int256 x, int256 y) public pure returns (int256) {
+        return MathUtil.mulDecimal(x, y);
     }
 
-    function divDecimalInt(int256 x, int256 y) public pure returns (int256) {
-        return MathUtil.divDecimalInt(x, y);
+    function divDecimal(int256 x, int256 y) public pure returns (int256) {
+        return MathUtil.divDecimal(x, y);
     }
 }

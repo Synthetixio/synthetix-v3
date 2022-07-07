@@ -26,7 +26,7 @@ library CurvesLibrary {
     function calculateValueAtCurvePoint(PolynomialCurve memory curve, uint x) internal pure returns (uint y) {
         if (x < curve.start || x > curve.end) revert ValueOutOfRange();
         int xInt = int(x);
-        return uint(curve.a.mulDecimalInt(xInt.mulDecimalInt(xInt)) + curve.b.mulDecimalInt(xInt) + curve.c);
+        return uint(curve.a.mulDecimal(xInt.mulDecimal(xInt)) + curve.b.mulDecimal(xInt) + curve.c);
     }
 
     function combineCurves(PolynomialCurve memory c1, PolynomialCurve memory c2)
@@ -80,14 +80,14 @@ library CurvesLibrary {
         int p2y = int(p2.y);
         int p3y = int(p3.y);
 
-        curve.a = (p1x.mulDecimalInt(p3y - p2y) + p2x.mulDecimalInt(p1y - p3y) + p3x.mulDecimalInt(p2y - p1y)).divDecimalInt(
-            ((p1x - p2x).mulDecimalInt((p1x - p3x).mulDecimalInt(p2x - p3x)))
+        curve.a = (p1x.mulDecimal(p3y - p2y) + p2x.mulDecimal(p1y - p3y) + p3x.mulDecimal(p2y - p1y)).divDecimal(
+            ((p1x - p2x).mulDecimal((p1x - p3x).mulDecimal(p2x - p3x)))
         );
-        curve.b = (p2y - p1y).divDecimalInt(p2x - p1x) - curve.a.mulDecimalInt(p1x + p2x);
-        curve.c = p1y - curve.a.mulDecimalInt(p1x.mulDecimalInt(p1x)) - curve.b.mulDecimalInt(p1x);
+        curve.b = (p2y - p1y).divDecimal(p2x - p1x) - curve.a.mulDecimal(p1x + p2x);
+        curve.c = p1y - curve.a.mulDecimal(p1x.mulDecimal(p1x)) - curve.b.mulDecimal(p1x);
 
         // TODO REVIEW THIS SANITY CHECK
-        int testX = (-curve.b).divDecimalInt((curve.a * 2));
+        int testX = (-curve.b).divDecimal((curve.a * 2));
         require(testX < p1x && testX > p3x, "Function becomes negative"); // sanity check
         // ???? ^ we already stablished that p1x < p3x => if textX is < p1x it can never be > p3x
         // TODO change to use InvalidCurve()

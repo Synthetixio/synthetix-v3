@@ -58,7 +58,7 @@ library MathUtil {
         }
     }
 
-    function mulDivInt(
+    function mulDivDown(
         int x,
         int y,
         int z
@@ -74,12 +74,12 @@ library MathUtil {
         return mulDivDown(x, UNIT, y);
     }
 
-    function mulDecimalInt(int x, int y) internal pure returns (int) {
-        return mulDivInt(x, y, INT_UNIT);
+    function mulDecimal(int x, int y) internal pure returns (int) {
+        return mulDivDown(x, y, INT_UNIT);
     }
 
-    function divDecimalInt(int x, int y) internal pure returns (int) {
-        return mulDivInt(x, INT_UNIT, y);
+    function divDecimal(int x, int y) internal pure returns (int) {
+        return mulDivDown(x, INT_UNIT, y);
     }
 
     function sqrt(uint256 x) internal pure returns (uint256 z) {

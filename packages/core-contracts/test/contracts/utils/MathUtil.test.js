@@ -54,7 +54,7 @@ describe('MathUtil', () => {
   describe('mulDivDown()', () => {
     async function assertMulDivDown(data, expected) {
       assertBn.equal(
-        await MathUtil.mulDivDown(
+        await MathUtil['mulDivDown(uint256,uint256,uint256)'](
           ethers.BigNumber.from(data.x),
           ethers.BigNumber.from(data.y),
           ethers.BigNumber.from(data.denominator)
@@ -85,7 +85,7 @@ describe('MathUtil', () => {
     });
 
     it('fails on div by zero', async () => {
-      await assertRevert(MathUtil.mulDivDown(s(1, 18), s(1, 18), 0));
+      await assertRevert(MathUtil['mulDivDown(uint256,uint256,uint256)'](s(1, 18), s(1, 18), 0));
     });
   });
 
@@ -130,7 +130,10 @@ describe('MathUtil', () => {
   describe('mulDecimal()', () => {
     async function assertMulDecimal(data, expected) {
       assertBn.equal(
-        await MathUtil.mulDecimal(ethers.BigNumber.from(data.x), ethers.BigNumber.from(data.y)),
+        await MathUtil['mulDecimal(uint256,uint256)'](
+          ethers.BigNumber.from(data.x),
+          ethers.BigNumber.from(data.y)
+        ),
         ethers.BigNumber.from(expected)
       );
     }
@@ -152,14 +155,17 @@ describe('MathUtil', () => {
     });
 
     it('fails on large numbers', async () => {
-      await assertRevert(MathUtil.mulDecimal(s(1, 78), 1), 'out-of-bounds');
+      await assertRevert(MathUtil['mulDecimal(uint256,uint256)'](s(1, 78), 1), 'out-of-bounds');
     });
   });
 
   describe('divDecimal()', () => {
     async function assertDivDecimal(data, expected) {
       assertBn.equal(
-        await MathUtil.divDecimal(ethers.BigNumber.from(data.x), ethers.BigNumber.from(data.y)),
+        await MathUtil['divDecimal(uint256,uint256)'](
+          ethers.BigNumber.from(data.x),
+          ethers.BigNumber.from(data.y)
+        ),
         ethers.BigNumber.from(expected)
       );
     }
@@ -177,18 +183,18 @@ describe('MathUtil', () => {
     });
 
     it('fails on large numbers', async () => {
-      await assertRevert(MathUtil.divDecimal(s(1, 78), 1), 'out-of-bounds');
+      await assertRevert(MathUtil['divDecimal(uint256,uint256)'](s(1, 78), 1), 'out-of-bounds');
     });
 
     it('fails on divide by zero', async () => {
-      await assertRevert(MathUtil.divDecimal(1, 0));
+      await assertRevert(MathUtil['divDecimal(uint256,uint256)'](1, 0));
     });
   });
 
-  describe('mulDivInt()', () => {
-    async function assertMulDivInt(data, expected) {
+  describe('mulDivDown() Int', () => {
+    async function assertmulDivDown(data, expected) {
       assertBn.equal(
-        await MathUtil.mulDivInt(
+        await MathUtil['mulDivDown(int256,int256,int256)'](
           ethers.BigNumber.from(data.x),
           ethers.BigNumber.from(data.y),
           ethers.BigNumber.from(data.denominator)
@@ -198,39 +204,51 @@ describe('MathUtil', () => {
     }
 
     it('get the expected results', async () => {
-      await assertMulDivInt({ x: s(250, 25), y: s(50, 25), denominator: s(100, 25) }, s(125, 25));
-      await assertMulDivInt({ x: s(250, 16), y: s(50, 16), denominator: s(100, 16) }, s(125, 16));
-      await assertMulDivInt({ x: s(250, 6), y: s(50, 6), denominator: s(100, 6) }, s(125, 6));
-      await assertMulDivInt({ x: 369, y: 271, denominator: 100 }, 999);
+      await assertmulDivDown({ x: s(250, 25), y: s(50, 25), denominator: s(100, 25) }, s(125, 25));
+      await assertmulDivDown({ x: s(250, 16), y: s(50, 16), denominator: s(100, 16) }, s(125, 16));
+      await assertmulDivDown({ x: s(250, 6), y: s(50, 6), denominator: s(100, 6) }, s(125, 6));
+      await assertmulDivDown({ x: 369, y: 271, denominator: 100 }, 999);
 
-      await assertMulDivInt({ x: s(10, 26), y: s(10, 26), denominator: s(20, 26) }, s(5, 26));
-      await assertMulDivInt({ x: s(100, 16), y: s(100, 16), denominator: s(200, 16) }, s(50, 16));
-      await assertMulDivInt({ x: 1e8, y: 1e8, denominator: 2e8 }, 0.5e8);
+      await assertmulDivDown({ x: s(10, 26), y: s(10, 26), denominator: s(20, 26) }, s(5, 26));
+      await assertmulDivDown({ x: s(100, 16), y: s(100, 16), denominator: s(200, 16) }, s(50, 16));
+      await assertmulDivDown({ x: 1e8, y: 1e8, denominator: 2e8 }, 0.5e8);
 
-      await assertMulDivInt({ x: s(2, 27), y: s(3, 27), denominator: s(2, 27) }, s(3, 27));
-      await assertMulDivInt({ x: s(3, 18), y: s(2, 18), denominator: s(3, 18) }, s(2, 18));
-      await assertMulDivInt({ x: 2e8, y: 3e8, denominator: 2e8 }, 3e8);
+      await assertmulDivDown({ x: s(2, 27), y: s(3, 27), denominator: s(2, 27) }, s(3, 27));
+      await assertmulDivDown({ x: s(3, 18), y: s(2, 18), denominator: s(3, 18) }, s(2, 18));
+      await assertmulDivDown({ x: 2e8, y: 3e8, denominator: 2e8 }, 3e8);
 
-      await assertMulDivInt({ x: s(-250, 18), y: s(50, 18), denominator: s(1, 18) }, s(-12500, 18));
-      await assertMulDivInt({ x: s(250, 18), y: s(-50, 18), denominator: s(1, 18) }, s(-12500, 18));
-      await assertMulDivInt({ x: s(-250, 18), y: s(-50, 18), denominator: s(1, 18) }, s(12500, 18));
+      await assertmulDivDown(
+        { x: s(-250, 18), y: s(50, 18), denominator: s(1, 18) },
+        s(-12500, 18)
+      );
+      await assertmulDivDown(
+        { x: s(250, 18), y: s(-50, 18), denominator: s(1, 18) },
+        s(-12500, 18)
+      );
+      await assertmulDivDown(
+        { x: s(-250, 18), y: s(-50, 18), denominator: s(1, 18) },
+        s(12500, 18)
+      );
     });
 
     it('get the expected results on edge cases', async () => {
-      await assertMulDivInt({ x: 0, y: s(1, 18), denominator: s(1, 18) }, 0);
-      await assertMulDivInt({ x: s(1, 18), y: 0, denominator: s(1, 18) }, 0);
-      await assertMulDivInt({ x: 0, y: 0, denominator: s(1, 18) }, 0);
+      await assertmulDivDown({ x: 0, y: s(1, 18), denominator: s(1, 18) }, 0);
+      await assertmulDivDown({ x: s(1, 18), y: 0, denominator: s(1, 18) }, 0);
+      await assertmulDivDown({ x: 0, y: 0, denominator: s(1, 18) }, 0);
     });
 
     it('fails on div by zero', async () => {
-      await assertRevert(MathUtil.mulDivInt(s(1, 18), s(1, 18), 0));
+      await assertRevert(MathUtil['mulDivDown(int256,int256,int256)'](s(1, 18), s(1, 18), 0));
     });
   });
 
-  describe('mulDecimalInt()', () => {
+  describe('mulDecimal() Int', () => {
     async function assertMulDecimalInt(data, expected) {
       assertBn.equal(
-        await MathUtil.mulDecimalInt(ethers.BigNumber.from(data.x), ethers.BigNumber.from(data.y)),
+        await MathUtil['mulDecimal(int256,int256)'](
+          ethers.BigNumber.from(data.x),
+          ethers.BigNumber.from(data.y)
+        ),
         ethers.BigNumber.from(expected)
       );
     }
@@ -267,14 +285,17 @@ describe('MathUtil', () => {
     });
 
     it('fails on large numbers', async () => {
-      await assertRevert(MathUtil.mulDecimalInt(s(1, 78), 1), 'out-of-bounds');
+      await assertRevert(MathUtil['mulDecimal(int256,int256)'](s(1, 78), 1), 'out-of-bounds');
     });
   });
 
-  describe('divDecimalInt()', () => {
+  describe('divDecimal() Int', () => {
     async function assertDivDecimalInt(data, expected) {
       assertBn.equal(
-        await MathUtil.divDecimalInt(ethers.BigNumber.from(data.x), ethers.BigNumber.from(data.y)),
+        await MathUtil['divDecimal(int256,int256)'](
+          ethers.BigNumber.from(data.x),
+          ethers.BigNumber.from(data.y)
+        ),
         ethers.BigNumber.from(expected)
       );
     }
@@ -307,11 +328,11 @@ describe('MathUtil', () => {
     });
 
     it('fails on large numbers', async () => {
-      await assertRevert(MathUtil.divDecimalInt(s(1, 78), 1), 'out-of-bounds');
+      await assertRevert(MathUtil['divDecimal(int256,int256)'](s(1, 78), 1), 'out-of-bounds');
     });
 
     it('fails on divide by zero', async () => {
-      await assertRevert(MathUtil.divDecimalInt(1, 0), 'division by zero');
+      await assertRevert(MathUtil['divDecimal(int256,int256)'](1, 0), 'division by zero');
     });
   });
 });
