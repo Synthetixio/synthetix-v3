@@ -51,11 +51,11 @@ contract MarketManagerModule is IMarketManagerModule, MarketManagerStorage, Mark
         return _availableLiquidity(marketId);
     }
 
-    function fundBalance(uint marketId, uint fundId) public view override returns (int) {
+    function fundBalance(uint marketId, uint fundId) external view override returns (int) {
         MarketData storage marketData = _marketManagerStore().markets[marketId];
         return
             int((marketData.fundliquidityShares[fundId] / marketData.totalLiquidityShares)) *
-            (totalBalance(marketId) - marketData.fundInitialBalance[fundId]);
+            (_totalBalance(marketId) - marketData.fundInitialBalance[fundId]);
     }
 
     function totalBalance(uint marketId) external view override returns (int) {
