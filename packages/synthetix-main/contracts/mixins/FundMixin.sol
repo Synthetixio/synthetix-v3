@@ -69,27 +69,30 @@ contract FundMixin is FundModuleStorage, FundVaultStorage, FundEventAndErrors, C
     ) internal view returns (uint, uint) {
         VaultData storage vaultData = _fundVaultStore().fundVaults[fundId][collateralType];
 
-        uint perShareValue = _perShareValue(fundId, collateralType);
+        uint perShareCollateral = _perShareCollateral(fundId, collateralType);
         uint collateralPrice = _getCollateralValue(collateralType);
+        uint perShareValue = perShareCollateral.mulDecimal(collateralPrice);
 
         uint accountCollateralValue;
         uint accountDebt = vaultData.usdByAccount[accountId]; // add debt from USD minted
+        SetUtil.Bytes32Set storage accountliquidityItems = vaultData.liquidityItemsByAccount[accountId];
 
-        for (uint i = 1; i < vaultData.liquidityItemsByAccount[accountId].length() + 1; i++) {
-            bytes32 itemId = vaultData.liquidityItemsByAccount[accountId].valueAt(i);
+        for (uint i = 1; i < accountliquidityItems.length() + 1; i++) {
+            bytes32 itemId = accountliquidityItems.valueAt(i);
             LiquidityItem storage item = _fundVaultStore().liquidityItems[itemId];
-            if (item.collateralType == collateralType) {
-                accountCollateralValue += item.collateralAmount * collateralPrice;
 
-                //TODO review formula
-                accountDebt +=
-                    item.collateralAmount *
-                    collateralPrice +
-                    item.initialDebt -
-                    perShareValue *
-                    item.shares *
-                    item.leverage;
-            }
+            assert(item.collateralType == collateralType); // sanity check. There shouldn't be any liquidity item with different collateral here
+
+            uint itemAccountCollateralValue = item.collateralAmount.mulDecimal(collateralPrice);
+
+            accountCollateralValue += itemAccountCollateralValue;
+
+            //TODO review formula
+            accountDebt +=
+                itemAccountCollateralValue +
+                item.initialDebt -
+                item.shares.mulDecimal(perShareValue) *
+                item.leverage;
         }
 
         return (accountDebt, accountCollateralValue);
@@ -112,7 +115,7 @@ contract FundMixin is FundModuleStorage, FundVaultStorage, FundEventAndErrors, C
         return _fundVaultStore().fundVaults[fundId][collateralType].totalShares;
     }
 
-    function _perShareValue(uint fundId, address collateralType) internal view returns (uint) {
+    function _perShareCollateral(uint fundId, address collateralType) internal view returns (uint) {
         uint totalShares = _totalShares(fundId, collateralType);
         uint totalCollateralValue = _totalCollateral(fundId, collateralType);
 

@@ -317,7 +317,7 @@ contract VaultModule is
 
     function fundDebt(uint fundId, address collateralType) public view override returns (uint) {
         return
-            _totalShares(fundId, collateralType).mulDecimal(_perShareValue(fundId, collateralType)) +
+            _totalShares(fundId, collateralType).mulDecimal(_debtPerShare(fundId, collateralType)) +
             _fundVaultStore().fundVaults[fundId][collateralType].totalUSD;
     }
 
@@ -326,7 +326,11 @@ contract VaultModule is
     }
 
     function debtPerShare(uint fundId, address collateralType) external view override returns (uint) {
-        return _perShareValue(fundId, collateralType);
+        return _debtPerShare(fundId, collateralType);
+    }
+
+    function _debtPerShare(uint fundId, address collateralType) internal view returns (uint) {
+        return _perShareCollateral(fundId, collateralType).mulDecimal(_getCollateralValue(collateralType));
     }
 
     // ---------------------------------------

@@ -10,26 +10,48 @@ contract MarketManagerMixin is MarketManagerStorage {
     function _rebalanceMarket(
         uint marketId,
         uint fundId,
-        uint amount
+        uint amount // in collateralValue (USD)
     ) internal {
         // called by the fund at rebalance markets
-        // mapping(uint => uint) fundliquidityShares;
-        // mapping(uint => int) fundInitialBalance;
-
         MarketData storage marketData = _marketManagerStore().markets[marketId];
-        // int currentFundBalance = fundBalance(marketId, fundId);
-        uint currentSupplyTarget = _supplyTarget(marketId); // cannot be negative, if so, revert.
 
-        marketData.fundliquidityShares[fundId] = SharesLibrary.amountToShares(
+        uint previousFundShares = marketData.fundliquidityShares[fundId];
+        uint previousFundAmount = SharesLibrary.sharesToAmount(
             marketData.totalLiquidityShares,
-            currentSupplyTarget,
-            amount
+            marketData.totalDelegatedCollateralValue,
+            previousFundShares
         );
+
+        if (amount >= previousFundAmount) {
+            // Added liquidity
+            uint deltaAmount = amount - previousFundAmount;
+            uint deltaShares = SharesLibrary.amountToShares(
+                marketData.totalLiquidityShares,
+                marketData.totalDelegatedCollateralValue,
+                deltaAmount
+            );
+            marketData.fundliquidityShares[fundId] += deltaShares;
+            marketData.fundInitialBalance[fundId] += int(deltaAmount);
+            marketData.totalLiquidityShares += deltaShares;
+            marketData.totalDelegatedCollateralValue += deltaAmount;
+        } else {
+            // Removed liquidity
+            uint deltaAmount = previousFundAmount - amount;
+            uint deltaShares = SharesLibrary.amountToShares(
+                marketData.totalLiquidityShares,
+                marketData.totalDelegatedCollateralValue,
+                deltaAmount
+            );
+            marketData.fundliquidityShares[fundId] -= deltaShares;
+            marketData.fundInitialBalance[fundId] -= int(deltaAmount);
+            marketData.totalLiquidityShares -= deltaShares;
+            marketData.totalDelegatedCollateralValue -= deltaAmount;
+        }
     }
 
-    function _supplyTarget(uint marketId) internal view returns (uint) {
-        return uint(int(_marketManagerStore().markets[marketId].delegatedCollateralValue) + _totalBalance(marketId));
-    }
+    // function _supplyTarget(uint marketId) internal view returns (uint) {
+    //     return uint(int(_marketManagerStore().markets[marketId].totalDelegatedCollateralValue) + _totalBalance(marketId));
+    // }
 
     function _totalBalance(uint marketId) internal view returns (int) {
         return

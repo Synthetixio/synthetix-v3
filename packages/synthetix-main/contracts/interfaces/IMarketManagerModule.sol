@@ -5,13 +5,13 @@ interface IMarketManagerModule {
     /// initiates the struct
     function registerMarket(address market) external returns (uint);
 
-    function setSupplyTarget(
-        uint marketId,
-        uint fundId,
-        uint amount
-    ) external;
+    // function setSupplyTarget(
+    //     uint marketId,
+    //     uint fundId,
+    //     uint amount
+    // ) external;
 
-    function supplyTarget(uint marketId) external returns (uint);
+    // function supplyTarget(uint marketId) external returns (uint);
 
     function liquidity(uint marketId) external view returns (uint);
 

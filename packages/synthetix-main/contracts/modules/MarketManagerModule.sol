@@ -31,21 +31,21 @@ contract MarketManagerModule is IMarketManagerModule, MarketManagerStorage, Mark
         return marketId;
     }
 
-    function setSupplyTarget(
-        uint marketId,
-        uint fundId,
-        uint amount // solhint-disable-next-line no-empty-blocks
-    ) external override {}
+    // function setSupplyTarget(
+    //     uint marketId,
+    //     uint fundId,
+    //     uint amount // solhint-disable-next-line no-empty-blocks
+    // ) external override {}
 
-    function supplyTarget(uint marketId) external view override returns (uint) {
-        return _supplyTarget(marketId);
-    }
+    // function supplyTarget(uint marketId) external view override returns (uint) {
+    //     return _supplyTarget(marketId);
+    // }
 
-    function _setLiquidity(
-        uint marketId,
-        uint fundId,
-        uint amount // solhint-disable-next-line no-empty-blocks
-    ) internal {}
+    // function _setLiquidity(
+    //     uint marketId,
+    //     uint fundId,
+    //     uint amount // solhint-disable-next-line no-empty-blocks
+    // ) internal {}
 
     function liquidity(uint marketId) external view override returns (uint) {
         return _availableLiquidity(marketId);
@@ -110,8 +110,8 @@ contract MarketManagerModule is IMarketManagerModule, MarketManagerStorage, Mark
     function _availableLiquidity(uint marketId) internal view returns (uint) {
         MarketData storage marketData = _marketManagerStore().markets[marketId];
 
-        if (marketData.issuance > 0 && marketData.issuance >= int(marketData.delegatedCollateralValue)) return 0;
+        if (marketData.issuance > 0 && marketData.issuance >= int(marketData.totalDelegatedCollateralValue)) return 0;
 
-        return uint(int(marketData.delegatedCollateralValue) - marketData.issuance);
+        return uint(int(marketData.totalDelegatedCollateralValue) - marketData.issuance);
     }
 }
