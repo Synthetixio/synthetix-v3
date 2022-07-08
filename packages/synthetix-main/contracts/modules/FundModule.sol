@@ -131,7 +131,12 @@ contract FundModule is IFundModule, FundEventAndErrors, AccountRBACMixin, FundMi
         return (markets, weights);
     }
 
-    function setFundName(uint fundId, string memory name) external override onlyFundOwner(fundId, msg.sender) {
+    function setFundName(uint fundId, string memory name)
+        external
+        override
+        fundExists(fundId)
+        onlyFundOwner(fundId, msg.sender)
+    {
         _fundModuleStore().funds[fundId].name = name;
     }
 

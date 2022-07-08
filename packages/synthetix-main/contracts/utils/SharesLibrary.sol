@@ -1,11 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-// import "@synthetixio/core-contracts/contracts/utils/MathUtil.sol";
-
 library SharesLibrary {
-    // using MathUtil for uint256;
-
     function sharesToAmount(
         uint totalShares,
         uint totalAmount,

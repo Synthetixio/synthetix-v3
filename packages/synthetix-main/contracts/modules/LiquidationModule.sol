@@ -14,7 +14,7 @@ contract LiquidationsModule is ILiquidationModule, LiquidationModuleStorage, Col
         address collateralType
     ) external override {
         require(_isLiquidatable(accountId, fundId, collateralType), "Cannot liquidate");
-        (uint accountDebt, uint collateral) = _accountDebtAndCollateral(fundId, accountId, collateralType);
+        (uint accountDebt, uint collateral) = _accountDebtAndCollateral(accountId, fundId, collateralType);
 
         // _deleteLiquidityItem
         // reallocate collateral

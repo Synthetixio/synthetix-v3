@@ -47,13 +47,24 @@ contract FundMixin is FundModuleStorage, FundVaultStorage, FundEventAndErrors, C
         uint marketWeight,
         uint totalWeight
     ) internal {
-        uint toAssign = (_totalCollateralValue(fundId) * marketWeight) / totalWeight;
-        _rebalanceMarket(marketId, fundId, toAssign);
+        // Rebalance Markets per type of collateral (individual fund-collateral vaults)
+        for (uint idx = 1; idx < _fundVaultStore().fundCollateralTypes[fundId].length(); idx++) {
+            // TODO Verify with product if there's only one collateral type allowed per fund
+            // If there's only one collateralType per fund => this for loop is not needed since
+            // will iterate only once
+            address collateralType = _fundVaultStore().fundCollateralTypes[fundId].valueAt(idx);
+
+            uint collateral = _fundVaultStore().fundVaults[fundId][collateralType].totalCollateral;
+            uint collateralValue = collateral.mulDecimal(_getCollateralValue(collateralType));
+
+            uint toAssign = (collateralValue * marketWeight) / totalWeight;
+            _rebalanceMarket(marketId, fundId, toAssign); //rebalanceMarket from MarketMixin
+        }
     }
 
     function _accountDebtAndCollateral(
-        uint fundId,
         uint accountId,
+        uint fundId,
         address collateralType
     ) internal view returns (uint, uint) {
         VaultData storage vaultData = _fundVaultStore().fundVaults[fundId][collateralType];
@@ -85,29 +96,16 @@ contract FundMixin is FundModuleStorage, FundVaultStorage, FundEventAndErrors, C
     }
 
     function _collateralizationRatio(
-        uint fundId,
         uint accountId,
+        uint fundId,
         address collateralType
     ) internal view returns (uint) {
-        (uint accountDebt, uint accountCollateralValue) = _accountDebtAndCollateral(fundId, accountId, collateralType);
+        (uint accountDebt, uint accountCollateralValue) = _accountDebtAndCollateral(accountId, fundId, collateralType);
         return accountCollateralValue.divDecimal(accountDebt);
     }
 
     function _totalCollateral(uint fundId, address collateralType) internal view returns (uint) {
         return _fundVaultStore().fundVaults[fundId][collateralType].totalCollateral;
-    }
-
-    function _totalCollateralValue(uint fundId) internal view returns (uint) {
-        uint total;
-
-        // Note: if funds are single collaterals (and managed independently per collateral type)
-        // we should set the collateral type in the fund definition and remove this loop
-        for (uint idx = 1; idx <= _fundVaultStore().fundCollateralTypes[fundId].length(); idx++) {
-            address collateralType = _fundVaultStore().fundCollateralTypes[fundId].valueAt(idx);
-            uint collateral = _fundVaultStore().fundVaults[fundId][collateralType].totalCollateral;
-            total = collateral.mulDecimal(_getCollateralValue(collateralType));
-        }
-        return total;
     }
 
     function _totalShares(uint fundId, address collateralType) internal view returns (uint) {
@@ -141,6 +139,6 @@ contract FundMixin is FundModuleStorage, FundVaultStorage, FundEventAndErrors, C
         vaultData.totalShares -= oldSharesAmount;
         vaultData.totalCollateral -= oldAmount;
 
-        emit PositionRemoved(liquidityItemId, liquidityItem.fundId, liquidityItem.accountId, liquidityItem.collateralType);
+        emit PositionRemoved(liquidityItemId, liquidityItem.accountId, liquidityItem.fundId, liquidityItem.collateralType);
     }
 }
