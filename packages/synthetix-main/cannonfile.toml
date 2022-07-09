@@ -18,7 +18,7 @@ defaultValue = "10000000000000000000000"
 exec = "scripts/deploy.js"
 func = "deploy"
 args = []
-modified = ["contracts/**", "scripts/**"]
+modified = ["contracts", "scripts"]
 step = 1
 
 [invoke.init_account]

@@ -8,7 +8,12 @@ const {
 /**
  * Generate the file contracts/Router.sol including the given modules in its source.
  */
-module.exports.deploy = async function deploy() {
+module.exports.deploy = async function deploy(chainBuilder) {
+  console.log(chainBuilder?.provider);
+  if (chainBuilder?.provider) {
+    hre.ethers.provider = chainBuilder.provider;
+  }
+
   const info = {
     folder: hre.config.deployer.paths.deployments,
     network: hre.network.name,
