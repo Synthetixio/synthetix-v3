@@ -30,42 +30,11 @@ factory.Account.arg = 0
 factory.Account.artifact = "AccountToken"
 step = 2
 
-
-[invoke.init_fund]
+[invoke.init_snxusd]
 target = ["Proxy"]
 fromCall.func = "owner"
-func = "initializeFundModule"
+func = "initializeSUSDTokenModule"
 step = 2
-
-[invoke.init_snx]
-target = ["Proxy"]
-fromCall.func = "owner"
-func = "initializeSNXTokenModule"
-factory.init_snx.event = "SNXTokenCreated"
-factory.init_snx.arg = 0
-factory.init_snx.artifact = "SNXToken"
-step = 2
-
-# TODO: what does this init do?
-#[invoke.init_owner]
-#target = ["Proxy"]
-#fromCall.func = "owner"
-#func = "initializeOwnerModule"
-#args = ["<%= settings.owner %>"]
-#step = 2
-
-# Mint SNX tokens
-[invoke.authorize_mint_snx]
-target = ["Proxy"]
-func = "setNewSNXAuthorizedSystem"
-args = ["<%= settings.owner %>"]
-step = 3
-
-#[invoke.snx_mint]
-#target = ["SNXToken.init_snx_Proxy.0"]
-#func = "mint"
-#args = ["<%= settings.owner %>", "<%= settings.snx_mint %>"]
-#step = 4
 
 # Set ownership
 [invoke.nominate_owner]
