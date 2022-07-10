@@ -20,6 +20,12 @@ func = "deploy"
 args = []
 modified = ["contracts", "scripts"]
 
+[invoke.init_owner]
+target = ["Proxy"]
+func = "initializeOwnerModule"
+args = ["<%= settings.owner %>"]
+depends = ["run.deploy"]
+
 [invoke.init_account]
 target = ["Proxy"]
 fromCall.func = "owner"
@@ -27,7 +33,7 @@ func = "initializeAccountModule"
 factory.Account.event = "AccountCreated"
 factory.Account.arg = 0
 factory.Account.artifact = "AccountToken"
-depends = ["run.deploy"]
+depends = ["invoke.init_owner"]
 
 [invoke.init_snxusd]
 target = ["Proxy"]
