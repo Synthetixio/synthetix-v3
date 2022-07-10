@@ -19,7 +19,6 @@ exec = "scripts/deploy.js"
 func = "deploy"
 args = []
 modified = ["contracts", "scripts"]
-step = 1
 
 [invoke.init_account]
 target = ["Proxy"]
@@ -28,23 +27,23 @@ func = "initializeAccountModule"
 factory.Account.event = "AccountCreated"
 factory.Account.arg = 0
 factory.Account.artifact = "AccountToken"
-step = 2
+depends = ["run.deploy"]
 
 [invoke.init_snxusd]
 target = ["Proxy"]
 fromCall.func = "owner"
 func = "initializeSUSDTokenModule"
-step = 2
+depends = ["run.deploy"]
 
 # Set ownership
 [invoke.nominate_owner]
 target = ["Proxy"]
 func = "nominateNewOwner"
 args = ["<%= settings.owner %>"]
-step = 5
+depends = ["invoke.init_account"]
 
 [invoke.accept_owner]
 from = "<%= settings.owner %>"
 target = ["Proxy"]
 func = "acceptOwnership"
-step = 6
+depends = ["invoke.nominate_owner"]
