@@ -10,10 +10,6 @@ defaultValue = "main"
 description = "Admin user for the system"
 defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
 
-[setting.snx_mint]
-description = "Amount of SNX to mint to the owner account"
-defaultValue = "10000000000000000000000"
-
 [run.deploy]
 exec = "scripts/deploy.js"
 func = "deploy"
@@ -22,6 +18,7 @@ modified = ["contracts", "scripts"]
 
 [invoke.init_owner]
 target = ["Proxy"]
+from = "<%= settings.owner %>"
 func = "initializeOwnerModule"
 args = ["<%= settings.owner %>"]
 depends = ["run.deploy"]
@@ -39,17 +36,4 @@ depends = ["invoke.init_owner"]
 target = ["Proxy"]
 fromCall.func = "owner"
 func = "initializeSUSDTokenModule"
-depends = ["run.deploy"]
-
-# Set ownership
-[invoke.nominate_owner]
-target = ["Proxy"]
-func = "nominateNewOwner"
-args = ["<%= settings.owner %>"]
-depends = ["invoke.init_account"]
-
-[invoke.accept_owner]
-from = "<%= settings.owner %>"
-target = ["Proxy"]
-func = "acceptOwnership"
-depends = ["invoke.nominate_owner"]
+depends = ["invoke.init_owner"]
