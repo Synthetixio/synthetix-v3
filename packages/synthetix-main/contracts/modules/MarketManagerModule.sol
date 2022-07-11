@@ -18,6 +18,8 @@ contract MarketManagerModule is IMarketManagerModule, MarketManagerStorage, Mark
 
     event MarketRegistered(address market, uint marketId);
 
+    error NotEnoughLiquidity(uint marketId, uint amount);
+
     function registerMarket(address market) external override returns (uint marketId) {
         if (_marketManagerStore().marketIds[market] > 0) revert MarketAlreadyRegistered(market);
         uint lastMarketId = _marketManagerStore().lastMarketId++;
@@ -98,13 +100,17 @@ contract MarketManagerModule is IMarketManagerModule, MarketManagerStorage, Mark
 
         if (msg.sender != marketData.marketAddress) revert AccessError.Unauthorized(msg.sender);
 
-        require(marketData.issuance + int(amount) <= int(_availableLiquidity(marketId)), "some error");
+        if (int(amount) > int(_availableLiquidity(marketId))) revert NotEnoughLiquidity(marketId, amount);
 
         // Adjust accounting
         marketData.issuance += int(amount);
 
         // mint some USD
         _getUSDToken().mint(target, amount);
+    }
+
+    function getMarketAvailableLiquidity(uint marketId) external view returns (uint) {
+        return _availableLiquidity(marketId);
     }
 
     function _availableLiquidity(uint marketId) internal view returns (uint) {
