@@ -109,10 +109,6 @@ contract MarketManagerModule is IMarketManagerModule, MarketManagerStorage, Mark
         _getUSDToken().mint(target, amount);
     }
 
-    function getMarketAvailableLiquidity(uint marketId) external view returns (uint) {
-        return _availableLiquidity(marketId);
-    }
-
     function _availableLiquidity(uint marketId) internal view returns (uint) {
         MarketData storage marketData = _marketManagerStore().markets[marketId];
 
