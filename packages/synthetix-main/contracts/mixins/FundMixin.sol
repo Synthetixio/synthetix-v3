@@ -36,14 +36,22 @@ contract FundMixin is FundModuleStorage, FundVaultStorage, FundEventAndErrors, C
         uint totalWeights = _fundModuleStore().funds[fundId].totalWeights;
 
         for (uint i = 0; i < fundData.fundDistribution.length; i++) {
-            uint weight = clearsLiquidity ? 0 : fundData.fundDistribution[i].weight;
-            _distributeLiquidity(fundId, fundData.fundDistribution[i].market, weight, totalWeights);
+            MarketDistribution storage marketDistribution = fundData.fundDistribution[i];
+            uint weight = clearsLiquidity ? 0 : marketDistribution.weight;
+            _distributeLiquidity(
+                fundId,
+                marketDistribution.market,
+                marketDistribution.maxDebtShareValue,
+                weight,
+                totalWeights
+            );
         }
     }
 
     function _distributeLiquidity(
         uint fundId,
         uint marketId,
+        uint maxDebtShareValue,
         uint marketWeight,
         uint totalWeight
     ) internal {
@@ -58,7 +66,7 @@ contract FundMixin is FundModuleStorage, FundVaultStorage, FundEventAndErrors, C
             uint collateralValue = collateral.mulDecimal(_getCollateralValue(collateralType));
 
             uint toAssign = (collateralValue * marketWeight) / totalWeight;
-            _rebalanceMarket(marketId, fundId, toAssign); //rebalanceMarket from MarketMixin
+            _rebalanceMarket(marketId, fundId, maxDebtShareValue, toAssign); //rebalanceMarket from MarketMixin
         }
     }
 

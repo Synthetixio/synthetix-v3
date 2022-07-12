@@ -13,9 +13,11 @@ contract MarketManagerStorage {
         int256 issuance; // TODO this can be negative. How to deal with that?
         uint256 totalDelegatedCollateralValue;
         uint256 totalLiquidityShares;
+        uint256 maxMarketDebtShare;
         // credit shares
         mapping(uint => uint256) fundliquidityShares;
         mapping(uint => int256) fundInitialBalance;
+        mapping(uint => uint256) fundMaxDebtShareValue;
     }
 
     function _marketManagerStore() internal pure returns (MarketManagerStore storage store) {

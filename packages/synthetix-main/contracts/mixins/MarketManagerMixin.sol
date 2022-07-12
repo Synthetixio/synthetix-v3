@@ -10,21 +10,67 @@ contract MarketManagerMixin is MarketManagerStorage {
     function _rebalanceMarket(
         uint marketId,
         uint fundId,
+        uint maxDebtShareValue, // (in USD)
         uint amount // in collateralValue (USD)
     ) internal {
-        // called by the fund at rebalance markets
+        // this function is called by the fund at rebalance markets
         MarketData storage marketData = _marketManagerStore().markets[marketId];
 
-        uint previousFundShares = marketData.fundliquidityShares[fundId];
-        uint previousFundAmount = SharesLibrary.sharesToAmount(
+        // Adjust maxShareValue weighted average
+        _adjustMaxShareValue(marketData, fundId, maxDebtShareValue, amount);
+
+        // Adjust fund shares
+        _adjustFundShares(marketData, fundId, amount);
+    }
+
+    function _adjustMaxShareValue(
+        MarketData storage marketData,
+        uint fundId,
+        uint maxDebtShareValue,
+        uint amount
+    ) internal {
+        uint currentFundDebtShares = marketData.fundliquidityShares[fundId];
+        uint newFundDebtShare = SharesLibrary.amountToShares(
             marketData.totalLiquidityShares,
             marketData.totalDelegatedCollateralValue,
-            previousFundShares
+            amount
         );
 
-        if (amount >= previousFundAmount) {
-            // Added liquidity
-            uint deltaAmount = amount - previousFundAmount;
+        uint currentTotalDebtShares = marketData.totalLiquidityShares;
+        uint newTotalDebtShares = marketData.totalLiquidityShares - currentFundDebtShares + newFundDebtShare;
+
+        uint currentFundMaxDebtShareValue = marketData.fundMaxDebtShareValue[fundId]; // here or from call data
+
+        // Start calculations
+        uint currentMaxMarketDebtShare = marketData.maxMarketDebtShare;
+        uint newMaxMarketDebtShare = currentMaxMarketDebtShare -
+            ((currentFundMaxDebtShareValue * currentFundDebtShares) / currentTotalDebtShares) +
+            ((currentMaxMarketDebtShare * currentFundDebtShares) / currentTotalDebtShares);
+
+        newMaxMarketDebtShare =
+            newMaxMarketDebtShare +
+            ((maxDebtShareValue * newFundDebtShare) / newTotalDebtShares) -
+            ((newMaxMarketDebtShare * newFundDebtShare) / newTotalDebtShares);
+
+        marketData.fundMaxDebtShareValue[fundId] = maxDebtShareValue;
+        marketData.maxMarketDebtShare = newMaxMarketDebtShare;
+    }
+
+    function _adjustFundShares(
+        MarketData storage marketData,
+        uint fundId,
+        uint amount
+    ) internal {
+        uint currentFundShares = marketData.fundliquidityShares[fundId];
+        uint currentFundAmount = SharesLibrary.sharesToAmount(
+            marketData.totalLiquidityShares,
+            marketData.totalDelegatedCollateralValue,
+            currentFundShares
+        );
+
+        if (amount >= currentFundAmount) {
+            // liquidity provided by the fund increased. Add the delta
+            uint deltaAmount = amount - currentFundAmount;
             uint deltaShares = SharesLibrary.amountToShares(
                 marketData.totalLiquidityShares,
                 marketData.totalDelegatedCollateralValue,
@@ -35,8 +81,8 @@ contract MarketManagerMixin is MarketManagerStorage {
             marketData.totalLiquidityShares += deltaShares;
             marketData.totalDelegatedCollateralValue += deltaAmount;
         } else {
-            // Removed liquidity
-            uint deltaAmount = previousFundAmount - amount;
+            // liquidity provided by the fund decreased. Substract the delta
+            uint deltaAmount = currentFundAmount - amount;
             uint deltaShares = SharesLibrary.amountToShares(
                 marketData.totalLiquidityShares,
                 marketData.totalDelegatedCollateralValue,
