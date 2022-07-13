@@ -14,9 +14,14 @@ contract MarketMock is IMarket {
     address private _proxy;
     uint private _marketId;
 
-    function initialize(address proxy, uint marketId) external {
+    function initialize(
+        address proxy,
+        uint marketId,
+        uint initialPrice
+    ) external {
         _proxy = proxy;
         _marketId = marketId;
+        _price = initialPrice;
     }
 
     function buySynth(uint amount) external {

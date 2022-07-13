@@ -16,6 +16,7 @@ describe('MarketManager', function () {
   let Collateral, CollateralPriceFeed;
   let AccountModule; // AccountToken;
   let FundModule, VaultModule;
+  let USDTokenModule, USDToken;
   let MarketManagerModule;
 
   let Market1, Market2;
@@ -37,10 +38,12 @@ describe('MarketManager', function () {
     AccountModule = await ethers.getContractAt('AccountModule', proxyAddress());
     await (await AccountModule.connect(owner).initializeAccountModule()).wait();
 
-    MarketManagerModule = await ethers.getContractAt('MarketManagerModule', proxyAddress());
+    USDTokenModule = await ethers.getContractAt('USDTokenModule', proxyAddress());
+    await (await USDTokenModule.connect(owner).initializeUSDTokenModule()).wait();
+    const usdTokenAddress = await USDTokenModule.getUSDTokenAddress();
+    USDToken = await ethers.getContractAt('USDToken', usdTokenAddress);
 
-    // const accountTokenAddress = await AccountModule.getAccountAddress();
-    // AccountToken = await ethers.getContractAt('AccountToken', accountTokenAddress);
+    MarketManagerModule = await ethers.getContractAt('MarketManagerModule', proxyAddress());
   });
 
   before('add one collateral', async () => {

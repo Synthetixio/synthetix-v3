@@ -95,9 +95,9 @@ contract FundModule is IFundModule, FundEventAndErrors, AccountRBACMixin, FundMi
 
         FundData storage fund = _fundModuleStore().funds[fundId];
 
-        // _rebalanceMarkets with second parameter in true will clean up the distribution
+        // _rebalanceFund with second parameter in true will clean up the distribution
         // TODO improve how the fund positions are changed and only update what is different
-        _rebalanceMarkets(fundId, true);
+        _rebalanceFundPositions(fundId, true);
 
         // Cleanup previous distribution
         delete fund.fundDistribution;
@@ -114,7 +114,7 @@ contract FundModule is IFundModule, FundEventAndErrors, AccountRBACMixin, FundMi
             fund.totalWeights += weights[i];
         }
 
-        _rebalanceMarkets(fundId, false);
+        _rebalanceFundPositions(fundId, false);
 
         emit FundPositionSet(fundId, markets, weights, msg.sender);
     }

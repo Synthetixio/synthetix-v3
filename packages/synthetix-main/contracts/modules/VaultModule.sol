@@ -86,7 +86,7 @@ contract VaultModule is
             }
         }
 
-        _rebalanceMarkets(fundId, false);
+        _rebalanceFundPositions(fundId, false);
 
         emit DelegationUpdated(lid, accountId, fundId, collateralType, amount, leverage);
     }

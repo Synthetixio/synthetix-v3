@@ -31,7 +31,7 @@ contract FundMixin is FundModuleStorage, FundVaultStorage, FundEventAndErrors, C
         _;
     }
 
-    function _rebalanceMarkets(uint fundId, bool clearsLiquidity) internal {
+    function _rebalanceFundPositions(uint fundId, bool clearsLiquidity) internal {
         FundData storage fundData = _fundModuleStore().funds[fundId];
         uint totalWeights = _fundModuleStore().funds[fundId].totalWeights;
 
