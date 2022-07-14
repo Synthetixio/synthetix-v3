@@ -7,7 +7,7 @@ import "@synthetixio/core-contracts/contracts/utils/MathUtil.sol";
 
 import "../mixins/AccountRBACMixin.sol";
 import "../mixins/FundMixin.sol";
-import "../mixins/USDMixin.sol";
+import "../mixins/AssociatedSystemsMixin.sol";
 
 import "../utils/SharesLibrary.sol";
 
@@ -23,7 +23,7 @@ contract VaultModule is
     FundEventAndErrors,
     AccountRBACMixin,
     OwnableMixin,
-    USDMixin,
+    AssociatedSystemsMixin,
     FundMixin
 {
     using SetUtil for SetUtil.Bytes32Set;

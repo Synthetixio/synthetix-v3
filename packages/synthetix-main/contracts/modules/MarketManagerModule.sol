@@ -11,9 +11,9 @@ import "../storage/MarketManagerStorage.sol";
 import "../mixins/MarketManagerMixin.sol";
 import "../mixins/AccountRBACMixin.sol";
 import "../mixins/FundMixin.sol";
-import "../mixins/USDMixin.sol";
+import "../mixins/AssociatedSystemsMixin.sol";
 
-contract MarketManagerModule is IMarketManagerModule, MarketManagerStorage, MarketManagerMixin, USDMixin, OwnableMixin {
+contract MarketManagerModule is IMarketManagerModule, MarketManagerStorage, MarketManagerMixin, AssociatedSystemsMixin, OwnableMixin {
     error MarketAlreadyRegistered(address market);
 
     event MarketRegistered(address market, uint marketId);
