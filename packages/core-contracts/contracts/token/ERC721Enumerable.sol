@@ -2,13 +2,14 @@
 pragma solidity ^0.8.0;
 
 import "./ERC721.sol";
+import "../interfaces/IERC721Enumerable.sol";
 
 /*
     Reference implementations:
     * OpenZeppelin - https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC721/extensions/ERC721Enumerable.sol
 */
 
-abstract contract ERC721Enumerable is ERC721 {
+abstract contract ERC721Enumerable is ERC721, IERC721Enumerable {
     error IndexOutOfBounds();
 
     /**
