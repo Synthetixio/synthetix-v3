@@ -15,6 +15,8 @@ library MathUtil {
 
     /* The number representing 1.0. */
     uint256 public constant UNIT = uint(10**uint(DECIMALS));
+    /* The number representing int 1.0. */
+    int256 public constant INT_UNIT = int(UNIT);
 
     function mulDivDown(
         uint256 x,
@@ -54,6 +56,30 @@ library MathUtil {
             // end result by 0 if z is zero, ensuring we return 0 if z is zero.
             z := mul(iszero(iszero(z)), add(div(sub(z, 1), denominator), 1))
         }
+    }
+
+    function mulDivDown(
+        int x,
+        int y,
+        int z
+    ) internal pure returns (int) {
+        return (x * y) / z;
+    }
+
+    function mulDecimal(uint256 x, uint256 y) internal pure returns (uint256 z) {
+        return mulDivDown(x, y, UNIT);
+    }
+
+    function divDecimal(uint256 x, uint256 y) internal pure returns (uint256 z) {
+        return mulDivDown(x, UNIT, y);
+    }
+
+    function mulDecimal(int x, int y) internal pure returns (int) {
+        return mulDivDown(x, y, INT_UNIT);
+    }
+
+    function divDecimal(int x, int y) internal pure returns (int) {
+        return mulDivDown(x, INT_UNIT, y);
     }
 
     function sqrt(uint256 x) internal pure returns (uint256 z) {

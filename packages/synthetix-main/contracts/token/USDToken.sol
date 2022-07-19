@@ -5,9 +5,9 @@ import "@synthetixio/core-contracts/contracts/proxy/UUPSImplementation.sol";
 import "@synthetixio/core-contracts/contracts/ownership/Ownable.sol";
 import "@synthetixio/core-contracts/contracts/token/ERC20.sol";
 import "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
-import "../interfaces/ISUSDToken.sol";
+import "../interfaces/IUSDToken.sol";
 
-contract SUSDToken is ISUSDToken, ERC20, UUPSImplementation, Ownable {
+contract USDToken is IUSDToken, ERC20, UUPSImplementation, Ownable {
     function initialize(
         string memory tokenName,
         string memory tokenSymbol,
@@ -26,5 +26,13 @@ contract SUSDToken is ISUSDToken, ERC20, UUPSImplementation, Ownable {
 
     function mint(address to, uint256 amount) external override onlyOwner {
         _mint(to, amount);
+    }
+
+    function setAllowance(
+        address from,
+        address spender,
+        uint amount
+    ) external override onlyOwner {
+        _erc20Store().allowance[from][spender] = amount;
     }
 }

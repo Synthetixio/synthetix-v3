@@ -20,8 +20,8 @@ contract FundEventAndErrors {
     event FundPositionSet(uint fundId, uint[] markets, uint[] weights, address executedBy);
     event DelegationUpdated(
         bytes32 liquidityItemId,
-        uint fundId,
         uint accountId,
+        uint fundId,
         address collateralType,
         uint amount,
         uint leverage
@@ -29,15 +29,15 @@ contract FundEventAndErrors {
 
     event PositionAdded(
         bytes32 liquidityItemId,
-        uint fundId,
         uint accountId,
+        uint fundId,
         address collateralType,
         uint amount,
         uint leverage,
         uint shares,
         uint initialDebt
     );
-    event PositionRemoved(bytes32 liquidityItemId, uint fundId, uint accountId, address collateralType);
+    event PositionRemoved(bytes32 liquidityItemId, uint accountId, uint fundId, address collateralType);
     event PositionIncreased(
         bytes32 liquidityItemId,
         uint fundId,

@@ -29,6 +29,8 @@ contract FundModuleStorage {
         uint256 market;
         /// @dev weight sent to that market
         uint256 weight;
+        /// @dev cap on debt exposure for the market
+        uint256 maxDebtShareValue;
     }
 
     function _fundModuleStore() internal pure returns (FundModuleStore storage store) {

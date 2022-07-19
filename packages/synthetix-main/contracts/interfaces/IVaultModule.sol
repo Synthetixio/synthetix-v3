@@ -10,50 +10,47 @@ interface IVaultModule is IVaultModuleStorage {
 
     /// @notice delegates (creates, adjust or remove a delegation) collateral from an account
     function delegateCollateral(
-        uint fundId,
         uint accountId,
+        uint fundId,
         address collateralType,
         uint amount,
         uint leverage
     ) external;
 
-    /// @notice mints sUSD for a fund/account from a collateralType. if CRatio is valid
-    function mintsUSD(
-        uint fundId,
+    /// @notice mints USD for a fund/account from a collateralType. if CRatio is valid
+    function mintUSD(
         uint accountId,
+        uint fundId,
         address collateralType,
         uint amount
     ) external;
 
-    /// @notice burns sUSD for a fund/account from a collateralType
-    function burnsUSD(
-        uint fundId,
+    /// @notice burns USD for a fund/account from a collateralType
+    function burnUSD(
         uint accountId,
+        uint fundId,
         address collateralType,
         uint amount
     ) external;
 
     /// @notice gets the CRatio for an account/collateral in a fund
     function collateralizationRatio(
-        uint fundId,
         uint accountId,
+        uint fundId,
         address collateralType
     ) external view returns (uint);
 
-    // TODO Everything below this line should be split per collateralType
-    // according to May 23th discussion Funds should be "single" collateral
-
     /// @notice gets the account debt in a fund for a collateral
     function accountFundDebt(
-        uint fundId,
         uint accountId,
+        uint fundId,
         address collateralType
     ) external view returns (uint);
 
     /// @notice gets the account collateral value in a fund for a collateral
     function accountFundCollateralValue(
-        uint fundId,
         uint accountId,
+        uint fundId,
         address collateralType
     ) external view returns (uint);
 
@@ -63,10 +60,9 @@ interface IVaultModule is IVaultModuleStorage {
     /// @notice gets the total fund debtShares
     function totalDebtShares(uint fundId, address collateralType) external view returns (uint);
 
-    /// @notice gets the debt per share (sUSD value) for a fund
+    /// @notice gets the debt per share (USD value) for a fund
     function debtPerShare(uint fundId, address collateralType) external view returns (uint);
 
-    // VIEWS
     /// @notice gets liquidityItem details for a liquidityItemId
     function getLiquidityItem(bytes32 liquidityItemId) external view returns (LiquidityItem memory liquidityItem);
 

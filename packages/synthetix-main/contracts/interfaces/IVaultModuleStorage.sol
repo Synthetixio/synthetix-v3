@@ -1,7 +1,9 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+/// @title Vault Liquidity Item type declarations used by different contracts
 interface IVaultModuleStorage {
+    /// @notice LiquidityItem struct definition. Account/CollateralType/FundId uniquiely identifies it
     struct LiquidityItem {
         uint256 accountId;
         address collateralType;

@@ -53,11 +53,13 @@ describe('CollateralModule Configuration (SCCP)', function () {
     );
 
     const collateralType = await CollateralModule.getCollateralType(Collateral.address);
+    console.log(collateralType);
 
-    assert.equal(collateralType[0], CollateralPriceFeed.address);
-    assertBn.equal(collateralType[1], 400);
-    assertBn.equal(collateralType[2], 200);
-    assert.equal(collateralType[3], false);
+    assert.equal(collateralType.tokenAddress, Collateral.address);
+    assert.equal(collateralType.priceFeed, CollateralPriceFeed.address);
+    assertBn.equal(collateralType.targetCRatio, 400);
+    assertBn.equal(collateralType.minimumCRatio, 200);
+    assert.equal(collateralType.enabled, false);
   });
 
   describe('When the systemOwner adds another collaterals', () => {
@@ -93,10 +95,10 @@ describe('CollateralModule Configuration (SCCP)', function () {
 
     it('has the right configuration', async () => {
       const collateralType = await CollateralModule.getCollateralType(AnotherCollateral.address);
-      assert.equal(collateralType[0], AnotherCollateralPriceFeed.address);
-      assertBn.equal(collateralType[1], 400);
-      assertBn.equal(collateralType[2], 200);
-      assert.equal(collateralType[3], false);
+      assert.equal(collateralType.priceFeed, AnotherCollateralPriceFeed.address);
+      assertBn.equal(collateralType.targetCRatio, 400);
+      assertBn.equal(collateralType.minimumCRatio, 200);
+      assert.equal(collateralType.enabled, false);
     });
 
     describe('When the systemOwner updates the new collateral data', () => {
@@ -113,10 +115,10 @@ describe('CollateralModule Configuration (SCCP)', function () {
 
       it('is updated', async () => {
         const collateralType = await CollateralModule.getCollateralType(AnotherCollateral.address);
-        assert.equal(collateralType[0], AnotherCollateralPriceFeed.address);
-        assertBn.equal(collateralType[1], 300);
-        assertBn.equal(collateralType[2], 250);
-        assert.equal(collateralType[3], false);
+        assert.equal(collateralType.priceFeed, AnotherCollateralPriceFeed.address);
+        assertBn.equal(collateralType.targetCRatio, 300);
+        assertBn.equal(collateralType.minimumCRatio, 250);
+        assert.equal(collateralType.enabled, false);
       });
     });
 
@@ -136,13 +138,19 @@ describe('CollateralModule Configuration (SCCP)', function () {
         const allCollaterals = await CollateralModule.getCollateralTypes(false);
         const enabledCollaterals = await CollateralModule.getCollateralTypes(true);
 
-        assert.equal(allCollaterals.includes(AnotherCollateral.address), true);
-        assert.equal(enabledCollaterals.includes(AnotherCollateral.address), false);
+        assert.equal(
+          allCollaterals.some((v) => v.tokenAddress === AnotherCollateral.address),
+          true
+        );
+        assert.equal(
+          enabledCollaterals.some((v) => v.tokenAddress === AnotherCollateral.address),
+          false
+        );
       });
 
       it('is disabled', async () => {
         const collateralType = await CollateralModule.getCollateralType(AnotherCollateral.address);
-        assert.equal(collateralType[3], false);
+        assert.equal(collateralType.enabled, false);
       });
     });
   });
