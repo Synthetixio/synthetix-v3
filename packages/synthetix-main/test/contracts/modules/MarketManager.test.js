@@ -12,14 +12,14 @@ describe('MarketManager', function () {
   const One = ethers.utils.parseEther('1');
   const Hundred = ethers.utils.parseEther('100');
 
-  let owner, user1, user2;
+  let owner, user1;
 
   let MarketManagerModule, USDTokenModule, USDToken;
   let Market1;
   let market1id;
 
   before('identify signers', async () => {
-    [owner, user1, user2] = await ethers.getSigners();
+    [owner, user1] = await ethers.getSigners();
   });
 
   before('identify modules', async () => {
