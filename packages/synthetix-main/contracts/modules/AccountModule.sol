@@ -3,15 +3,17 @@ pragma solidity ^0.8.0;
 
 import "@synthetixio/core-contracts/contracts/ownership/OwnableMixin.sol";
 import "@synthetixio/core-contracts/contracts/proxy/UUPSProxy.sol";
-import "@synthetixio/core-contracts/contracts/initializable/InitializableMixin.sol";
 import "@synthetixio/core-contracts/contracts/satellite/SatelliteFactory.sol";
 import "../interfaces/IAccountModule.sol";
 import "../storage/AccountModuleStorage.sol";
 
-import "../satellites/AccountToken.sol";
+import "../mixins/AssociatedSystemsMixin.sol";
 import "../mixins/AccountRBACMixin.sol";
 
-contract AccountModule is IAccountModule, OwnableMixin, AccountRBACMixin, InitializableMixin, SatelliteFactory {
+contract AccountModule is IAccountModule, OwnableMixin, AccountRBACMixin, AssociatedSystemsMixin, SatelliteFactory {
+
+    bytes32 constant public ACCOUNT_SYSTEM = "accountNft";
+
     using SetUtil for SetUtil.AddressSet;
     using SetUtil for SetUtil.Bytes32Set;
 
@@ -23,70 +25,15 @@ contract AccountModule is IAccountModule, OwnableMixin, AccountRBACMixin, Initia
     error OnlyTokenProxyAllowed(address origin);
     error InvalidRole();
 
-    // ---------------------------------------
-    // Chores
-    // ---------------------------------------
-    function _isInitialized() internal view override returns (bool) {
-        return _accountModuleStore().initialized;
-    }
-
-    function isAccountModuleInitialized() external view override returns (bool) {
-        return _isInitialized();
-    }
-
-    function initializeAccountModule() external override onlyOwner onlyIfNotInitialized {
-        AccountModuleStore storage store = _accountModuleStore();
-
-        AccountToken firstImplementation = new AccountToken();
-
-        UUPSProxy accountProxy = new UUPSProxy(address(firstImplementation));
-
-        address accountProxyAddress = address(accountProxy);
-        AccountToken account = AccountToken(accountProxyAddress);
-
-        account.nominateNewOwner(address(this));
-        account.acceptOwnership();
-        account.initialize("Synthetix Account", "synthethixAccount", "", address(this));
-
-        store.account = Satellite({
-            name: "synthethixAccount",
-            contractName: "AccountToken",
-            deployedAddress: accountProxyAddress
-        });
-
-        store.initialized = true;
-
-        emit AccountCreated(accountProxyAddress);
-    }
-
-    function _getSatellites() internal view override returns (Satellite[] memory) {
-        Satellite[] memory satellites = new Satellite[](1);
-        satellites[0] = _accountModuleStore().account;
-        return satellites;
-    }
-
-    function getAccountModuleSatellites() public view override returns (Satellite[] memory) {
-        return _getSatellites();
-    }
-
-    function upgradeAccountImplementation(address newAccountTokenImplementation)
-        external
-        override
-        onlyOwner
-        onlyIfInitialized
-    {
-        AccountToken(getAccountAddress()).upgradeTo(newAccountTokenImplementation);
-    }
-
-    function getAccountAddress() public view override returns (address) {
-        return _accountModuleStore().account.deployedAddress;
+    function getAccountAddress() public view override returns (INftModule) {
+        return _getNft(ACCOUNT_SYSTEM);
     }
 
     // ---------------------------------------
     // Business Logic
     // ---------------------------------------
     function createAccount(uint256 accountId) external override {
-        AccountToken(getAccountAddress()).mint(msg.sender, accountId);
+        getAccountAddress().mint(msg.sender, accountId);
 
         _accountModuleStore().accountsRBAC[accountId].owner = msg.sender;
     }

@@ -1,23 +1,23 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@synthetixio/core-contracts/contracts/interfaces/IERC20.sol";
-import "@synthetixio/core-contracts/contracts/interfaces/IERC721.sol";
 import "@synthetixio/core-contracts/contracts/errors/InitError.sol";
 import "../storage/AssociatedSystemsStorage.sol";
-import "../interfaces/IUSDToken.sol";
+
+import "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
+import "@synthetixio/core-modules/contracts/interfaces/INftModule.sol";
 
 contract AssociatedSystemsMixin is AssociatedSystemsStorage {
-    function _getAssociatedToken(string memory symbol) internal view returns (IERC20) {
-        return IERC20(_associatedSystemsStorage().tokens[symbol].proxy);
+    function _getToken(bytes32 id) internal view returns (ITokenModule) {
+        return ITokenModule(_associatedSystemsStore().satellites[id].proxy);
     }
 
-    function _getAssociatedNft(string memory symbol) internal view returns (IERC721) {
-        return IERC721(_associatedSystemsStorage().tokens[symbol].proxy);
+    function _getNft(bytes32 id) internal view returns (INftModule) {
+        return INftModule(_associatedSystemsStore().satellites[id].proxy);
     }
 
-    modifier onlyIfTokenAssociated(string memory token) {
-        if (address(_getAssociatedToken(token)) == address(0)) {
+    modifier onlyIfAssociated(bytes32 id) {
+        if (address(_associatedSystemsStore().satellites[id].proxy) == address(0)) {
             revert InitError.NotInitialized();
         }
 

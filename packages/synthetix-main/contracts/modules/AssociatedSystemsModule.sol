@@ -6,29 +6,37 @@ import "@synthetixio/core-contracts/contracts/proxy/UUPSProxy.sol";
 import "../interfaces/IAssociatedSystemsModule.sol";
 import "../storage/AssociatedSystemsStorage.sol";
 
+import "@synthetixio/core-contracts/contracts/interfaces/IUUPSImplementation.sol";
+import "@synthetixio/core-modules/contracts/interfaces/IOwnerModule.sol";
+import "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
+
 contract AssociatedSystemsModule is IAssociatedSystemsModule, OwnableMixin, AssociatedSystemsStorage, SatelliteFactory {
 
-    function initOrUpgradeToken(string memory name, string memory symbol, uint8 decimals, address impl) external override onlyOwner {
+    function initOrUpgradeToken(bytes32 id, string memory name, string memory symbol, uint8 decimals, address impl) external override onlyOwner {
         AssociatedSystemsStore storage store = _associatedSystemsStore();
 
-        if (store.tokens[symbol]) {
+        if (store.satellites[id].proxy != address(0)) {
             // tell the associated proxy to upgrade to the new implementation
-            store.tokens[symbol].upgradeTo(impl);
-            emit TokenUpgraded(symbol,  impl);
+            IUUPSImplementation(store.satellites[id].proxy).upgradeTo(impl);
+            emit AssociatedSystemUpgraded(id, store.satellites[id].proxy, store.satellites[id].impl);
         }
         else {
             // create a new proxy and own it
-            UUPSProxy proxy = new UUPSProxy(address(impl));
-            proxy.nominateNewOwner(address(this));
-            proxy.acceptOwnership();
+            address proxy = address(new UUPSProxy(impl));
 
-            proxy.initialize("Synthetix Network Token", "snx", 18);
-            emit TokenCreated(symbol, proxy, name, decimals, impl);
+            IOwnerModule(proxy).initializeOwnerModule(address(this));
+            ITokenModule(proxy).initialize(name, symbol, decimals);
+
+            store.satellites[id] = AssociatedSystem(proxy, impl, KIND_ERC20);
+
+            emit AssociatedSystemUpgraded(id, proxy, impl);
         }
-
-        store.tokens[symbol] = AssociatedToken(name, symbol, decimals, impl);
     }
 
-    event TokenCreated(string indexed symbol, address indexed proxy, string name, uint8 decimals, address impl);
-    event TokenUpgraded(string indexed symbol, address indexed proxy, address impl);
+    function add(bytes32 id, address endpoint) external override onlyOwner {
+
+    }
+
+    event AssociatedSystemCreated(bytes32 indexed id, address proxy, address impl);
+    event AssociatedSystemUpgraded(bytes32 indexed id, address proxy, address impl);
 }

@@ -5,18 +5,18 @@ import "@synthetixio/core-contracts/contracts/satellite/SatelliteFactory.sol";
 
 contract AssociatedSystemsStorage {
 
-    struct AssociatedToken {
-        string name;
-        string symbol;
-        uint8 decimals;
+    string public constant KIND_ERC20 = "erc20";
+    string public constant KIND_ERC721 = "erc721";
+    string public constant KIND_OTHER = "other";
 
+    struct AssociatedSystem {
         address proxy;
         address impl;
+        string kind;
     }
 
     struct AssociatedSystemsStore {
-        mapping (string => AssociatedToken) tokens;
-
+        mapping (bytes32 => AssociatedSystem) satellites;
     }
 
     // solhint-disable-next-line func-name-mixedcase
