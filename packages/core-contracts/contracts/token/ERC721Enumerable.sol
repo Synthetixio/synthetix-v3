@@ -2,6 +2,7 @@
 pragma solidity ^0.8.0;
 
 import "./ERC721.sol";
+import "./ERC721EnumerableStorage.sol";
 import "../interfaces/IERC721Enumerable.sol";
 
 /*
@@ -9,8 +10,20 @@ import "../interfaces/IERC721Enumerable.sol";
     * OpenZeppelin - https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC721/extensions/ERC721Enumerable.sol
 */
 
-abstract contract ERC721Enumerable is ERC721, IERC721Enumerable {
+abstract contract ERC721Enumerable is ERC721, ERC721EnumerableStorage, IERC721Enumerable {
     error IndexOutOfBounds();
+
+    function _initialize(
+        string memory tokenName,
+        string memory tokenSymbol,
+        string memory baseTokenURI
+    ) internal virtual override {
+        super._initialize(tokenName, tokenSymbol, baseTokenURI);
+        ERC721EnumerableStore storage store = _erc20EnumerableStore();
+        if (store.allTokens.length > 0) {
+            revert InitError.AlreadyInitialized();
+        }
+    }
 
     /**
      * @dev Returns a token ID owned by `owner` at a given `index` of its token list.
@@ -20,14 +33,14 @@ abstract contract ERC721Enumerable is ERC721, IERC721Enumerable {
         if (ERC721.balanceOf(owner) <= index) {
             revert IndexOutOfBounds();
         }
-        return _erc721Store().ownedTokens[owner][index];
+        return _erc20EnumerableStore().ownedTokens[owner][index];
     }
 
     /**
      * @dev Returns the total amount of tokens stored by the contract.
      */
     function totalSupply() public view virtual override returns (uint256) {
-        return _erc721Store().allTokens.length;
+        return _erc20EnumerableStore().allTokens.length;
     }
 
     /**
@@ -38,10 +51,10 @@ abstract contract ERC721Enumerable is ERC721, IERC721Enumerable {
         if (index >= ERC721Enumerable.totalSupply()) {
             revert IndexOutOfBounds();
         }
-        return _erc721Store().allTokens[index];
+        return _erc20EnumerableStore().allTokens[index];
     }
 
-    function _beforeTokenTransfer(
+    function _beforeTransfer(
         address from,
         address to,
         uint256 tokenId
@@ -60,8 +73,8 @@ abstract contract ERC721Enumerable is ERC721, IERC721Enumerable {
 
     function _addTokenToOwnerEnumeration(address to, uint256 tokenId) private {
         uint256 length = ERC721.balanceOf(to);
-        _erc721Store().ownedTokens[to][length] = tokenId;
-        _erc721Store().ownedTokensIndex[tokenId] = length;
+        _erc20EnumerableStore().ownedTokens[to][length] = tokenId;
+        _erc20EnumerableStore().ownedTokensIndex[tokenId] = length;
     }
 
     /**
@@ -69,8 +82,8 @@ abstract contract ERC721Enumerable is ERC721, IERC721Enumerable {
      * @param tokenId uint256 ID of the token to be added to the tokens list
      */
     function _addTokenToAllTokensEnumeration(uint256 tokenId) private {
-        _erc721Store().allTokensIndex[tokenId] = _erc721Store().allTokens.length;
-        _erc721Store().allTokens.push(tokenId);
+        _erc20EnumerableStore().allTokensIndex[tokenId] = _erc20EnumerableStore().allTokens.length;
+        _erc20EnumerableStore().allTokens.push(tokenId);
     }
 
     /**
@@ -86,19 +99,19 @@ abstract contract ERC721Enumerable is ERC721, IERC721Enumerable {
         // then delete the last slot (swap and pop).
 
         uint256 lastTokenIndex = ERC721.balanceOf(from) - 1;
-        uint256 tokenIndex = _erc721Store().ownedTokensIndex[tokenId];
+        uint256 tokenIndex = _erc20EnumerableStore().ownedTokensIndex[tokenId];
 
         // When the token to delete is the last token, the swap operation is unnecessary
         if (tokenIndex != lastTokenIndex) {
-            uint256 lastTokenId = _erc721Store().ownedTokens[from][lastTokenIndex];
+            uint256 lastTokenId = _erc20EnumerableStore().ownedTokens[from][lastTokenIndex];
 
-            _erc721Store().ownedTokens[from][tokenIndex] = lastTokenId; // Move the last token to the slot of the to-delete token
-            _erc721Store().ownedTokensIndex[lastTokenId] = tokenIndex; // Update the moved token's index
+            _erc20EnumerableStore().ownedTokens[from][tokenIndex] = lastTokenId; // Move the last token to the slot of the to-delete token
+            _erc20EnumerableStore().ownedTokensIndex[lastTokenId] = tokenIndex; // Update the moved token's index
         }
 
         // This also deletes the contents at the last position of the array
-        delete _erc721Store().ownedTokensIndex[tokenId];
-        delete _erc721Store().ownedTokens[from][lastTokenIndex];
+        delete _erc20EnumerableStore().ownedTokensIndex[tokenId];
+        delete _erc20EnumerableStore().ownedTokens[from][lastTokenIndex];
     }
 
     /**
@@ -110,19 +123,19 @@ abstract contract ERC721Enumerable is ERC721, IERC721Enumerable {
         // To prevent a gap in the tokens array, we store the last token in the index of the token to delete, and
         // then delete the last slot (swap and pop).
 
-        uint256 lastTokenIndex = _erc721Store().allTokens.length - 1;
-        uint256 tokenIndex = _erc721Store().allTokensIndex[tokenId];
+        uint256 lastTokenIndex = _erc20EnumerableStore().allTokens.length - 1;
+        uint256 tokenIndex = _erc20EnumerableStore().allTokensIndex[tokenId];
 
         // When the token to delete is the last token, the swap operation is unnecessary. However, since this occurs so
         // rarely (when the last minted token is burnt) that we still do the swap here to avoid the gas cost of adding
         // an 'if' statement (like in _removeTokenFromOwnerEnumeration)
-        uint256 lastTokenId = _erc721Store().allTokens[lastTokenIndex];
+        uint256 lastTokenId = _erc20EnumerableStore().allTokens[lastTokenIndex];
 
-        _erc721Store().allTokens[tokenIndex] = lastTokenId; // Move the last token to the slot of the to-delete token
-        _erc721Store().allTokensIndex[lastTokenId] = tokenIndex; // Update the moved token's index
+        _erc20EnumerableStore().allTokens[tokenIndex] = lastTokenId; // Move the last token to the slot of the to-delete token
+        _erc20EnumerableStore().allTokensIndex[lastTokenId] = tokenIndex; // Update the moved token's index
 
         // This also deletes the contents at the last position of the array
-        delete _erc721Store().allTokensIndex[tokenId];
-        _erc721Store().allTokens.pop();
+        delete _erc20EnumerableStore().allTokensIndex[tokenId];
+        _erc20EnumerableStore().allTokens.pop();
     }
 }

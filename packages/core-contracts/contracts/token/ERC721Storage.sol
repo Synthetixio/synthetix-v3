@@ -6,14 +6,10 @@ contract ERC721Storage {
         string name;
         string symbol;
         string baseTokenURI;
-        uint256[] allTokens;
         mapping(uint256 => address) ownerOf;
         mapping(address => uint256) balanceOf;
         mapping(uint256 => address) tokenApprovals;
-        mapping(uint256 => uint256) ownedTokensIndex;
-        mapping(uint256 => uint256) allTokensIndex;
         mapping(address => mapping(address => bool)) operatorApprovals;
-        mapping(address => mapping(uint256 => uint256)) ownedTokens;
     }
 
     function _erc721Store() internal pure returns (ERC721Store storage store) {

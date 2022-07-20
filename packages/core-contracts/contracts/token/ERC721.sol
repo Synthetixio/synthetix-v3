@@ -177,7 +177,7 @@ contract ERC721 is IERC721, IERC721Metadata, ERC721Storage {
             revert TokenAlreadyMinted(tokenId);
         }
 
-        _beforeTokenTransfer(address(0), to, tokenId);
+        _beforeTransfer(address(0), to, tokenId);
 
         store.balanceOf[to] += 1;
         store.ownerOf[tokenId] = to;
@@ -189,7 +189,7 @@ contract ERC721 is IERC721, IERC721Metadata, ERC721Storage {
         ERC721Store storage store = _erc721Store();
         address holder = store.ownerOf[tokenId];
 
-        _beforeTokenTransfer(holder, address(0), tokenId);
+        _beforeTransfer(holder, address(0), tokenId);
 
         _approve(address(0), tokenId);
 
@@ -214,7 +214,7 @@ contract ERC721 is IERC721, IERC721Metadata, ERC721Storage {
             revert AddressError.ZeroAddress();
         }
 
-        _beforeTokenTransfer(from, to, tokenId);
+        _beforeTransfer(from, to, tokenId);
 
         // Clear approvals from the previous holder
         _approve(address(0), tokenId);
@@ -250,7 +250,7 @@ contract ERC721 is IERC721, IERC721Metadata, ERC721Storage {
         }
     }
 
-    function _beforeTokenTransfer(
+    function _beforeTransfer(
         address from,
         address to,
         uint256 tokenId // solhint-disable-next-line no-empty-blocks
