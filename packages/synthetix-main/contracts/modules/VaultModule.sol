@@ -6,13 +6,14 @@ import "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
 import "@synthetixio/core-contracts/contracts/utils/MathUtil.sol";
 
 import "../mixins/AccountRBACMixin.sol";
-import "../mixins/CollateralMixin.sol";
 import "../mixins/FundMixin.sol";
-import "../mixins/SUSDMixin.sol";
+import "../mixins/USDMixin.sol";
+
+import "../utils/SharesLibrary.sol";
 
 import "../storage/FundVaultStorage.sol";
 import "../interfaces/IVaultModule.sol";
-import "../interfaces/ISUSDToken.sol";
+import "../interfaces/IUSDToken.sol";
 
 import "../submodules/FundEventAndErrors.sol";
 
@@ -21,23 +22,27 @@ contract VaultModule is
     FundVaultStorage,
     FundEventAndErrors,
     AccountRBACMixin,
-    CollateralMixin,
     OwnableMixin,
-    SUSDMixin,
+    USDMixin,
     FundMixin
 {
     using SetUtil for SetUtil.Bytes32Set;
     using SetUtil for SetUtil.AddressSet;
     using MathUtil for uint256;
 
+    error InvalidLeverage(uint leverage);
+
     function delegateCollateral(
-        uint fundId,
         uint accountId,
+        uint fundId,
         address collateralType,
         uint amount,
         uint leverage
     ) external override onlyRoleAuthorized(accountId, "assign") collateralEnabled(collateralType) fundExists(fundId) {
-        bytes32 lid = _getLiquidityItemId(accountId, collateralType, fundId, leverage);
+        // Fix leverage to 1 until it's enabled
+        if (leverage != 1) revert InvalidLeverage(leverage);
+
+        bytes32 lid = _getLiquidityItemId(accountId, fundId, collateralType);
 
         VaultData storage vaultData = _fundVaultStore().fundVaults[fundId][collateralType];
         SetUtil.Bytes32Set storage liquidityItemIds = vaultData.liquidityItemIds;
@@ -48,7 +53,7 @@ contract VaultModule is
             }
 
             // lid not found in set =>  new position
-            _addPosition(lid, fundId, accountId, collateralType, amount, leverage);
+            _addPosition(lid, accountId, fundId, collateralType, amount, leverage);
         } else {
             // Position found, need to adjust (increase, decrease or remove)
             LiquidityItem storage liquidityItem = _fundVaultStore().liquidityItems[lid];
@@ -81,15 +86,15 @@ contract VaultModule is
             }
         }
 
-        _rebalanceMarkets(fundId, false);
+        _rebalanceFundPositions(fundId, false);
 
-        emit DelegationUpdated(lid, fundId, accountId, collateralType, amount, leverage);
+        emit DelegationUpdated(lid, accountId, fundId, collateralType, amount, leverage);
     }
 
     function _addPosition(
         bytes32 liquidityItemId,
-        uint fundId,
         uint accountId,
+        uint fundId,
         address collateralType,
         uint amount,
         uint leverage
@@ -109,7 +114,7 @@ contract VaultModule is
         }
 
         uint shares = _calculateShares(fundId, collateralType, collateralValue, leverage);
-        uint initialDebt = _calculateInitialDebt(fundId, collateralType, collateralValue, leverage); // how that works with amount adjustments?
+        uint initialDebt = _calculateInitialDebt(collateralValue, leverage); // how that works with amount adjustments?
 
         LiquidityItem memory liquidityItem;
         liquidityItem.collateralType = collateralType;
@@ -125,7 +130,7 @@ contract VaultModule is
         vaultData.totalShares += liquidityItem.shares;
         vaultData.totalCollateral += amount;
 
-        emit PositionAdded(liquidityItemId, fundId, accountId, collateralType, amount, leverage, shares, initialDebt);
+        emit PositionAdded(liquidityItemId, accountId, fundId, collateralType, amount, leverage, shares, initialDebt);
     }
 
     function _removePosition(bytes32 liquidityItemId, LiquidityItem storage liquidityItem) internal {
@@ -148,7 +153,7 @@ contract VaultModule is
         vaultData.totalShares -= oldSharesAmount;
         vaultData.totalCollateral -= oldAmount;
 
-        emit PositionRemoved(liquidityItemId, liquidityItem.fundId, liquidityItem.accountId, liquidityItem.collateralType);
+        emit PositionRemoved(liquidityItemId, liquidityItem.accountId, liquidityItem.fundId, liquidityItem.collateralType);
     }
 
     function _increasePosition(
@@ -158,7 +163,6 @@ contract VaultModule is
     ) internal {
         uint oldAmount = liquidityItem.collateralAmount;
         uint oldSharesAmount = liquidityItem.shares;
-        // uint oldnitialDebt = liquidityItem.initialDebt;
 
         VaultData storage vaultData = _fundVaultStore().fundVaults[liquidityItem.fundId][liquidityItem.collateralType];
         uint collateralValue = amount * _getCollateralValue(liquidityItem.collateralType);
@@ -171,12 +175,7 @@ contract VaultModule is
             collateralValue,
             liquidityItem.leverage
         );
-        uint initialDebt = _calculateInitialDebt(
-            liquidityItem.fundId,
-            liquidityItem.collateralType,
-            collateralValue,
-            liquidityItem.leverage
-        ); // how that works with amount adjustments?
+        uint initialDebt = _calculateInitialDebt(collateralValue, liquidityItem.leverage); // how that works with amount adjustments?
 
         liquidityItem.collateralAmount = amount;
         liquidityItem.shares = shares;
@@ -217,12 +216,7 @@ contract VaultModule is
             collateralValue,
             liquidityItem.leverage
         );
-        uint initialDebt = _calculateInitialDebt(
-            liquidityItem.fundId,
-            liquidityItem.collateralType,
-            collateralValue,
-            liquidityItem.leverage
-        ); // how that works with amount adjustments?
+        uint initialDebt = _calculateInitialDebt(collateralValue, liquidityItem.leverage); // how that works with amount adjustments?
 
         liquidityItem.collateralAmount = amount;
         liquidityItem.shares = shares;
@@ -254,68 +248,41 @@ contract VaultModule is
         uint totalShares = _totalShares(fundId, collateralType);
         uint totalCollateralValue = _totalCollateral(fundId, collateralType);
 
-        return
-            totalShares == 0
-                ? leveragedCollateralValue
-                : leveragedCollateralValue.mulDivDown(totalShares, totalCollateralValue);
+        return SharesLibrary.amountToShares(totalShares, totalCollateralValue, leveragedCollateralValue);
     }
 
-    function _perShareValue(uint fundId, address collateralType) internal view returns (uint) {
-        uint totalShares = _totalShares(fundId, collateralType);
-        uint totalCollateralValue = _totalCollateral(fundId, collateralType);
-
-        // TODO Use muldivdown
-        return totalCollateralValue == 0 ? 1 : totalCollateralValue.mulDivDown(MathUtil.UNIT, totalShares);
-    }
-
-    function _totalCollateral(uint fundId, address collateralType) internal view returns (uint) {
-        return _fundVaultStore().fundVaults[fundId][collateralType].totalCollateral;
-    }
-
-    function _totalShares(uint fundId, address collateralType) internal view returns (uint) {
-        return _fundVaultStore().fundVaults[fundId][collateralType].totalShares;
-    }
-
-    // solhint-disable no-unused-vars
-    function _calculateInitialDebt(
-        uint fundId,
-        address collateralType,
-        uint collateralValue,
-        uint leverage
-    ) internal pure returns (uint) {
+    function _calculateInitialDebt(uint collateralValue, uint leverage) internal pure returns (uint) {
         return leverage * collateralValue;
     }
 
-    // solhint-enable no-unused-vars
-
     // ---------------------------------------
-    // Mint/Burn sUSD
+    // Mint/Burn USD
     // ---------------------------------------
 
-    function mintsUSD(
-        uint fundId,
+    function mintUSD(
         uint accountId,
+        uint fundId,
         address collateralType,
         uint amount
-    ) external override onlyRoleAuthorized(accountId, "mint") onlyIfsUSDIsInitialized {
+    ) external override onlyRoleAuthorized(accountId, "mint") onlyIfUSDIsInitialized {
         // TODO Check if can mint that amount
 
-        ISUSDToken(_getSUSDTokenAddress()).mint(msg.sender, amount);
-        _fundVaultStore().fundVaults[fundId][collateralType].sUSDByAccount[accountId] += amount;
-        _fundVaultStore().fundVaults[fundId][collateralType].totalsUSD += amount;
+        IUSDToken(_getUSDTokenAddress()).mint(msg.sender, amount);
+        _fundVaultStore().fundVaults[fundId][collateralType].usdByAccount[accountId] += amount;
+        _fundVaultStore().fundVaults[fundId][collateralType].totalUSD += amount;
     }
 
-    function burnsUSD(
-        uint fundId,
+    function burnUSD(
         uint accountId,
+        uint fundId,
         address collateralType,
         uint amount
-    ) external override onlyRoleAuthorized(accountId, "burn") onlyIfsUSDIsInitialized {
+    ) external override onlyRoleAuthorized(accountId, "burn") onlyIfUSDIsInitialized {
         // TODO Check if can burn that amount
 
-        ISUSDToken(_getSUSDTokenAddress()).burn(msg.sender, amount);
-        _fundVaultStore().fundVaults[fundId][collateralType].sUSDByAccount[accountId] -= amount;
-        _fundVaultStore().fundVaults[fundId][collateralType].totalsUSD -= amount;
+        IUSDToken(_getUSDTokenAddress()).burn(msg.sender, amount);
+        _fundVaultStore().fundVaults[fundId][collateralType].usdByAccount[accountId] -= amount;
+        _fundVaultStore().fundVaults[fundId][collateralType].totalUSD -= amount;
     }
 
     // ---------------------------------------
@@ -323,71 +290,35 @@ contract VaultModule is
     // ---------------------------------------
 
     function collateralizationRatio(
-        uint fundId,
         uint accountId,
+        uint fundId,
         address collateralType
     ) external view override returns (uint) {
-        (uint accountDebt, uint accountCollateralValue) = _accountDebtAndCollateral(fundId, accountId, collateralType);
-        return accountCollateralValue.mulDivDown(MathUtil.UNIT, accountDebt);
+        return _collateralizationRatio(fundId, accountId, collateralType);
     }
 
     function accountFundCollateralValue(
-        uint fundId,
         uint accountId,
+        uint fundId,
         address collateralType
     ) external view override returns (uint) {
-        (, uint accountCollateralValue) = _accountDebtAndCollateral(fundId, accountId, collateralType);
+        (, uint accountCollateralValue) = _accountDebtAndCollateral(accountId, fundId, collateralType);
         return accountCollateralValue;
     }
 
     function accountFundDebt(
-        uint fundId,
         uint accountId,
+        uint fundId,
         address collateralType
     ) external view override returns (uint) {
-        (uint accountDebt, ) = _accountDebtAndCollateral(fundId, accountId, collateralType);
+        (uint accountDebt, ) = _accountDebtAndCollateral(accountId, fundId, collateralType);
         return accountDebt;
     }
 
-    function _accountDebtAndCollateral(
-        uint fundId,
-        uint accountId,
-        address collateralType
-    ) internal view returns (uint, uint) {
-        VaultData storage vaultData = _fundVaultStore().fundVaults[fundId][collateralType];
-
-        uint perShareValue = _perShareValue(fundId, collateralType);
-        uint collateralPrice = _getCollateralValue(collateralType);
-
-        uint accountCollateralValue;
-        uint accountDebt = vaultData.sUSDByAccount[accountId]; // add debt from sUSD minted
-
-        for (uint i = 1; i < vaultData.liquidityItemsByAccount[accountId].length() + 1; i++) {
-            bytes32 itemId = vaultData.liquidityItemsByAccount[accountId].valueAt(i);
-            LiquidityItem storage item = _fundVaultStore().liquidityItems[itemId];
-            if (item.collateralType == collateralType) {
-                accountCollateralValue += item.collateralAmount * collateralPrice;
-
-                //TODO review formula
-                accountDebt +=
-                    item.collateralAmount *
-                    collateralPrice +
-                    item.initialDebt -
-                    perShareValue *
-                    item.shares *
-                    item.leverage;
-            }
-        }
-
-        return (accountDebt, accountCollateralValue);
-    }
-
     function fundDebt(uint fundId, address collateralType) public view override returns (uint) {
-        // TODO Use muldivdown
         return
-            _totalShares(fundId, collateralType) *
-            _perShareValue(fundId, collateralType) +
-            _fundVaultStore().fundVaults[fundId][collateralType].totalsUSD;
+            _totalShares(fundId, collateralType).mulDecimal(_debtPerShare(fundId, collateralType)) +
+            _fundVaultStore().fundVaults[fundId][collateralType].totalUSD;
     }
 
     function totalDebtShares(uint fundId, address collateralType) external view override returns (uint) {
@@ -395,7 +326,11 @@ contract VaultModule is
     }
 
     function debtPerShare(uint fundId, address collateralType) external view override returns (uint) {
-        return _perShareValue(fundId, collateralType);
+        return _debtPerShare(fundId, collateralType);
+    }
+
+    function _debtPerShare(uint fundId, address collateralType) internal view returns (uint) {
+        return _perShareCollateral(fundId, collateralType).mulDecimal(_getCollateralValue(collateralType));
     }
 
     // ---------------------------------------
@@ -433,10 +368,9 @@ contract VaultModule is
 
     function _getLiquidityItemId(
         uint accountId,
-        address collateralType,
         uint fundId,
-        uint leverage
+        address collateralType
     ) internal pure returns (bytes32) {
-        return keccak256(abi.encodePacked(accountId, collateralType, fundId, leverage));
+        return keccak256(abi.encodePacked(accountId, fundId, collateralType));
     }
 }

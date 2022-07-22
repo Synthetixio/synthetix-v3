@@ -86,17 +86,18 @@ contract FundModule is IFundModule, FundEventAndErrors, AccountRBACMixin, FundMi
     function setFundPosition(
         uint fundId,
         uint[] calldata markets,
-        uint[] calldata weights
+        uint[] calldata weights,
+        uint[] calldata maxDebtShareValues
     ) external override fundExists(fundId) onlyFundOwner(fundId, msg.sender) {
-        if (markets.length != weights.length) {
+        if (markets.length != weights.length || markets.length != maxDebtShareValues.length) {
             revert InvalidParameters();
         }
 
         FundData storage fund = _fundModuleStore().funds[fundId];
 
-        // _rebalanceMarkets with second parameter in true will clean up the distribution
+        // _rebalanceFund with second parameter in true will clean up the distribution
         // TODO improve how the fund positions are changed and only update what is different
-        _rebalanceMarkets(fundId, true);
+        _rebalanceFundPositions(fundId, true);
 
         // Cleanup previous distribution
         delete fund.fundDistribution;
@@ -107,31 +108,48 @@ contract FundModule is IFundModule, FundEventAndErrors, AccountRBACMixin, FundMi
             MarketDistribution memory distribution;
             distribution.market = markets[i];
             distribution.weight = weights[i];
+            distribution.maxDebtShareValue = maxDebtShareValues[i];
 
             fund.fundDistribution.push(distribution);
             fund.totalWeights += weights[i];
         }
 
-        _rebalanceMarkets(fundId, false);
+        _rebalanceFundPositions(fundId, false);
 
         emit FundPositionSet(fundId, markets, weights, msg.sender);
     }
 
-    function getFundPosition(uint fundId) external view override returns (uint[] memory, uint[] memory) {
+    function getFundPosition(uint fundId)
+        external
+        view
+        override
+        returns (
+            uint[] memory,
+            uint[] memory,
+            uint[] memory
+        )
+    {
         FundData storage fund = _fundModuleStore().funds[fundId];
 
         uint[] memory markets = new uint[](fund.fundDistribution.length);
         uint[] memory weights = new uint[](fund.fundDistribution.length);
+        uint[] memory maxDebtShareValues = new uint[](fund.fundDistribution.length);
 
         for (uint i = 0; i < fund.fundDistribution.length; i++) {
             markets[i] = fund.fundDistribution[i].market;
             weights[i] = fund.fundDistribution[i].weight;
+            maxDebtShareValues[i] = fund.fundDistribution[i].maxDebtShareValue;
         }
 
-        return (markets, weights);
+        return (markets, weights, maxDebtShareValues);
     }
 
-    function setFundName(uint fundId, string memory name) external override onlyFundOwner(fundId, msg.sender) {
+    function setFundName(uint fundId, string memory name)
+        external
+        override
+        fundExists(fundId)
+        onlyFundOwner(fundId, msg.sender)
+    {
         _fundModuleStore().funds[fundId].name = name;
     }
 

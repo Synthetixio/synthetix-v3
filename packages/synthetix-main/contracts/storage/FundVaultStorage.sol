@@ -22,15 +22,15 @@ contract FundVaultStorage is IVaultModuleStorage {
         uint256 totalShares;
         /// @dev total liquidity delegated to this vault
         uint256 totalCollateral;
-        /// @dev total sUSD minted
-        uint256 totalsUSD;
+        /// @dev total USD minted
+        uint256 totalUSD;
         /// @dev LiquidityItem ids in this fund
         SetUtil.Bytes32Set liquidityItemIds;
         // Accessory data to simplify views and calculations
         /// @dev LiquidityItem ids by account
         mapping(uint256 => SetUtil.Bytes32Set) liquidityItemsByAccount;
-        /// @dev minted sUSD
-        mapping(uint256 => uint256) sUSDByAccount;
+        /// @dev minted USD
+        mapping(uint256 => uint256) usdByAccount;
     }
 
     function _fundVaultStore() internal pure returns (FundVaultStore storage store) {

@@ -12,7 +12,7 @@ describe('FundModule - Funds Admin', function () {
   let owner, fundAdmin, user1, user2;
 
   let CollateralModule, Collateral, AggregatorV3Mock;
-  let AccountModule; //, accountTokenAddress;
+  let AccountModule, MarketManagerModule;
   let FundModule, VaultModule;
 
   before('identify signers', async () => {
@@ -26,9 +26,8 @@ describe('FundModule - Funds Admin', function () {
     CollateralModule = await ethers.getContractAt('CollateralModule', proxyAddress());
     AccountModule = await ethers.getContractAt('AccountModule', proxyAddress());
     await (await AccountModule.connect(owner).initializeAccountModule()).wait();
-    // accountTokenAddress = await AccountModule.getAccountAddress();
 
-    // AccountToken = await ethers.getContractAt('AccountToken', accountTokenAddress);
+    MarketManagerModule = await ethers.getContractAt('MarketManagerModule', proxyAddress());
   });
 
   before('add one collateral', async () => {
@@ -123,6 +122,18 @@ describe('FundModule - Funds Admin', function () {
 
     describe('when adjusting a fund positions', async () => {
       let receipt;
+
+      before('set dummy markets', async () => {
+        let factory;
+
+        factory = await ethers.getContractFactory('MarketMock');
+        const Market1 = await factory.deploy();
+        factory = await ethers.getContractFactory('MarketMock');
+        const Market2 = await factory.deploy();
+
+        await (await MarketManagerModule.registerMarket(Market1.address)).wait();
+        await (await MarketManagerModule.registerMarket(Market2.address)).wait();
+      });
 
       before('adjust fund positions', async () => {
         const tx = await FundModule.connect(fundAdmin).setFundPosition(1, [1, 2], [1, 1]);
