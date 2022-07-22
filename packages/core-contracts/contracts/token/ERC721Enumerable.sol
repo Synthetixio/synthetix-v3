@@ -19,8 +19,7 @@ abstract contract ERC721Enumerable is ERC721, ERC721EnumerableStorage, IERC721En
         string memory baseTokenURI
     ) internal virtual override {
         super._initialize(tokenName, tokenSymbol, baseTokenURI);
-        ERC721EnumerableStore storage store = _erc20EnumerableStore();
-        if (store.allTokens.length > 0) {
+        if (_erc20EnumerableStore().allTokens.length > 0) {
             revert InitError.AlreadyInitialized();
         }
     }
