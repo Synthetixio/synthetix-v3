@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 import "@synthetixio/core-contracts/contracts/proxy/UUPSImplementation.sol";
 import "@synthetixio/core-contracts/contracts/ownership/Ownable.sol";
-import "@synthetixio/core-contracts/contracts/token/ERC721.sol";
+import "@synthetixio/core-contracts/contracts/token/ERC721Enumerable.sol";
 import "@synthetixio/core-contracts/contracts/utils/AddressUtil.sol";
 import "@synthetixio/core-contracts/contracts/initializable/InitializableMixin.sol";
 import "@synthetixio/core-contracts/contracts/errors/AddressError.sol";
@@ -13,7 +13,14 @@ import "../storage/AccountTokenStorage.sol";
 
 import "../interfaces/IAccountModule.sol";
 
-contract AccountToken is IAccountToken, ERC721, AccountTokenStorage, InitializableMixin, UUPSImplementation, Ownable {
+contract AccountToken is
+    IAccountToken,
+    ERC721Enumerable,
+    AccountTokenStorage,
+    InitializableMixin,
+    UUPSImplementation,
+    Ownable
+{
     event AccountMinted(address owner, uint accountId);
 
     // ---------------------------------------
