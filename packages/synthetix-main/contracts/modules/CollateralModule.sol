@@ -7,11 +7,15 @@ import "@synthetixio/core-contracts/contracts/interfaces/IERC20.sol";
 import "../interfaces/ICollateralModule.sol";
 import "../storage/CollateralStorage.sol";
 import "../mixins/AccountRBACMixin.sol";
+import "../mixins/AssociatedSystemsMixin.sol";
 import "../mixins/CollateralMixin.sol";
 
 contract CollateralModule is ICollateralModule, CollateralStorage, OwnableMixin, AccountRBACMixin, CollateralMixin, AssociatedSystemsMixin {
     bytes32 constant public REDEEMABLE_REWARDS_TOKEN = "eSNXToken";
     bytes32 constant public REWARDED_TOKEN = "SNXToken";
+
+    // 86400 * 365.26
+    uint  constant public SECONDS_PER_YEAR = 31558464;
 
     using SetUtil for SetUtil.AddressSet;
 
@@ -131,7 +135,8 @@ contract CollateralModule is ICollateralModule, CollateralStorage, OwnableMixin,
         returns (
             uint256 totalStaked,
             uint256 totalAssigned,
-            uint256 totalLocked
+            uint256 totalLocked,
+            uint256 totalEscrowed
         )
     {
         return _getAccountCollateralTotals(accountId, collateralType);
@@ -142,7 +147,7 @@ contract CollateralModule is ICollateralModule, CollateralStorage, OwnableMixin,
     }
 
     function getAccountUnstakebleCollateral(uint accountId, address collateralType) public view override returns (uint) {
-        (uint256 total, uint256 assigned, uint256 locked) = _getAccountCollateralTotals(accountId, collateralType);
+        (uint256 total, uint256 assigned, uint256 locked,) = _getAccountCollateralTotals(accountId, collateralType);
 
         if (locked > assigned) {
             return total - locked;
@@ -165,11 +170,11 @@ contract CollateralModule is ICollateralModule, CollateralStorage, OwnableMixin,
     }
 
     function redeemReward(uint accountId, uint amount, uint duration) external override {
-        IERC20 redeemableRewardsToken = _getToken(REDEEMABLE_REWARDS_TOKEN);
-        IERC20 rewardedToken = _getToken(REWARDED_TOKEN);
+        ITokenModule redeemableRewardsToken = _getToken(REDEEMABLE_REWARDS_TOKEN);
+        ITokenModule rewardedToken = _getToken(REWARDED_TOKEN);
 
         if (!_collateralStore().collateralsData[address(rewardedToken)].enabled) {
-            revert InvalidCollateralType(collateralType);
+            revert InvalidCollateralType(address(rewardedToken));
         }
 
         StakedCollateralData storage collateralData = _collateralStore().stakedCollateralsDataByAccountId[accountId][address(rewardedToken)];
@@ -202,6 +207,10 @@ contract CollateralModule is ICollateralModule, CollateralStorage, OwnableMixin,
     /////////////////////////////////////////////////
     // INTERNALS
     /////////////////////////////////////////////////
+
+    function _calculateRewardTokenMinted(uint amount, uint duration) internal pure returns (uint) {
+        return amount * duration / SECONDS_PER_YEAR;
+    }
 
     function _cleanExpiredLocks(
         StakedCollateralLock[] storage locks,

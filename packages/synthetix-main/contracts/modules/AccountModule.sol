@@ -10,7 +10,7 @@ import "../storage/AccountModuleStorage.sol";
 import "../mixins/AssociatedSystemsMixin.sol";
 import "../mixins/AccountRBACMixin.sol";
 
-contract AccountModule is IAccountModule, OwnableMixin, AccountRBACMixin, AssociatedSystemsMixin, SatelliteFactory {
+contract AccountModule is IAccountModule, OwnableMixin, AccountRBACMixin, AssociatedSystemsMixin {
 
     bytes32 constant public ACCOUNT_SYSTEM = "accountNft";
 
@@ -111,7 +111,7 @@ contract AccountModule is IAccountModule, OwnableMixin, AccountRBACMixin, Associ
     }
 
     modifier onlyFromTokenProxy() {
-        if (msg.sender != getAccountAddress()) {
+        if (msg.sender != address(getAccountAddress())) {
             revert OnlyTokenProxyAllowed(msg.sender);
         }
 

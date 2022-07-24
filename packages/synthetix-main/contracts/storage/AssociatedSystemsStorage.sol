@@ -8,6 +8,7 @@ contract AssociatedSystemsStorage {
     string public constant KIND_ERC20 = "erc20";
     string public constant KIND_ERC721 = "erc721";
     string public constant KIND_OTHER = "other";
+    string public constant KIND_UNMANAGED = "unmanaged";
 
     struct AssociatedSystem {
         address proxy;

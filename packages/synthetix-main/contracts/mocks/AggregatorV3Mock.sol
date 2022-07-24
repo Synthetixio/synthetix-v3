@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "../interfaces/IAggregatorV3Interface.sol";
+import "../interfaces/external/IAggregatorV3Interface.sol";
 
 contract AggregatorV3Mock is IAggregatorV3Interface {
     uint80 private _roundId;

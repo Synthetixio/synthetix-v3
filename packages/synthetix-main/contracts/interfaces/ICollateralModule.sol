@@ -50,7 +50,8 @@ interface ICollateralModule {
         returns (
             uint totalStaked,
             uint totalAssigned,
-            uint totalLocked
+            uint totalLocked,
+            uint totalEscrowed
         );
 
     /// @notice Gets the account's free collateral of collateralType that can be unstaked.
@@ -68,5 +69,5 @@ interface ICollateralModule {
     ) external;
 
     /// @notice Redeems the system escrow tokens into reward tokens
-    function redeemReward(uint accountId, uint amount) external;
+    function redeemReward(uint accountId, uint amount, uint duration) external;
 }

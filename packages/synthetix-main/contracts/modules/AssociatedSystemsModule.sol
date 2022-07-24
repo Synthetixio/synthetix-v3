@@ -10,7 +10,7 @@ import "@synthetixio/core-contracts/contracts/interfaces/IUUPSImplementation.sol
 import "@synthetixio/core-modules/contracts/interfaces/IOwnerModule.sol";
 import "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
 
-contract AssociatedSystemsModule is IAssociatedSystemsModule, OwnableMixin, AssociatedSystemsStorage, SatelliteFactory {
+contract AssociatedSystemsModule is IAssociatedSystemsModule, OwnableMixin, AssociatedSystemsStorage {
 
     function initOrUpgradeToken(bytes32 id, string memory name, string memory symbol, uint8 decimals, address impl) external override onlyOwner {
         AssociatedSystemsStore storage store = _associatedSystemsStore();
@@ -33,8 +33,15 @@ contract AssociatedSystemsModule is IAssociatedSystemsModule, OwnableMixin, Asso
         }
     }
 
-    function add(bytes32 id, address endpoint) external override onlyOwner {
-
+    /**
+     * sets a token implementation without the corresponding upgrade functionality
+     * useful for adaptation of ex. old SNX token. The connected system does not need to be
+     * 
+     * *NOTE:* the contract you are connecting should still be owned by your dao. The
+     * system is not expected to be able to do upgrades for you.
+     */
+    function registerUnmanagedSystem(bytes32 id, address endpoint) external override onlyOwner {
+        _associatedSystemsStore().satellites[id] = AssociatedSystem(endpoint, endpoint, KIND_UNMANAGED);
     }
 
     event AssociatedSystemCreated(bytes32 indexed id, address proxy, address impl);

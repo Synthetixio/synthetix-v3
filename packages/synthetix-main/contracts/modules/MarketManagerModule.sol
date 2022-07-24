@@ -14,6 +14,9 @@ import "../mixins/FundMixin.sol";
 import "../mixins/AssociatedSystemsMixin.sol";
 
 contract MarketManagerModule is IMarketManagerModule, MarketManagerStorage, MarketManagerMixin, AssociatedSystemsMixin, OwnableMixin {
+
+    bytes32 constant public USD_TOKEN = "USDToken";
+
     error MarketAlreadyRegistered(address market);
 
     event MarketRegistered(address market, uint marketId);
@@ -77,17 +80,20 @@ contract MarketManagerModule is IMarketManagerModule, MarketManagerStorage, Mark
         if (msg.sender != marketData.marketAddress) revert AccessError.Unauthorized(msg.sender);
 
         // verify if the market is authorized to burn the USD for the target
-        uint originalAllowance = _getUSDToken().allowance(target, msg.sender);
+        ITokenModule usdToken = _getToken(USD_TOKEN);
+
+
+        uint originalAllowance = usdToken.allowance(target, msg.sender);
         require(originalAllowance >= amount, "insufficient allowance");
 
         // Adjust accounting
         marketData.issuance -= int(amount);
 
         // burn USD
-        _getUSDToken().burn(target, amount);
+        usdToken.burn(target, amount);
 
         // Adjust allowance
-        _getUSDToken().setAllowance(target, msg.sender, originalAllowance - amount);
+        usdToken.setAllowance(target, msg.sender, originalAllowance - amount);
     }
 
     // withdraw will mint USD
@@ -106,7 +112,7 @@ contract MarketManagerModule is IMarketManagerModule, MarketManagerStorage, Mark
         marketData.issuance += int(amount);
 
         // mint some USD
-        _getUSDToken().mint(target, amount);
+        _getToken(USD_TOKEN).mint(target, amount);
     }
 
     function _availableLiquidity(uint marketId) internal view returns (uint) {

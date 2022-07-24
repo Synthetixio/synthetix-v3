@@ -3,8 +3,6 @@ pragma solidity ^0.8.0;
 
 import "../storage/AccountModuleStorage.sol";
 
-import "../interfaces/IAccountToken.sol";
-
 contract AccountRBACMixin is AccountModuleStorage {
     using SetUtil for SetUtil.Bytes32Set;
 
