@@ -9,7 +9,10 @@ import "../storage/CollateralStorage.sol";
 import "../mixins/AccountRBACMixin.sol";
 import "../mixins/CollateralMixin.sol";
 
-contract CollateralModule is ICollateralModule, CollateralStorage, OwnableMixin, AccountRBACMixin, CollateralMixin {
+contract CollateralModule is ICollateralModule, CollateralStorage, OwnableMixin, AccountRBACMixin, CollateralMixin, AssociatedSystemsMixin {
+    bytes32 constant public REDEEMABLE_REWARDS_TOKEN = "eSNXToken";
+    bytes32 constant public REWARDED_TOKEN = "SNXToken";
+
     using SetUtil for SetUtil.AddressSet;
 
     error OutOfBounds();
@@ -159,6 +162,41 @@ contract CollateralModule is ICollateralModule, CollateralStorage, OwnableMixin,
             offset,
             items
         );
+    }
+
+    function redeemReward(uint accountId, uint amount, uint duration) external override {
+        IERC20 redeemableRewardsToken = _getToken(REDEEMABLE_REWARDS_TOKEN);
+        IERC20 rewardedToken = _getToken(REWARDED_TOKEN);
+
+        if (!_collateralStore().collateralsData[address(rewardedToken)].enabled) {
+            revert InvalidCollateralType(collateralType);
+        }
+
+        StakedCollateralData storage collateralData = _collateralStore().stakedCollateralsDataByAccountId[accountId][address(rewardedToken)];
+        uint rewardTokenMinted = _calculateRewardTokenMinted(amount, duration);
+
+        redeemableRewardsToken.burn(msg.sender, amount);
+        rewardedToken.mint(address(this), amount);
+
+        // adjust the user reward curve
+        CurvesLibrary.PolynomialCurve memory oldCurve = collateralData.escrow;
+
+        CurvesLibrary.PolynomialCurve memory newCurve = 
+            CurvesLibrary.generateCurve(
+                CurvesLibrary.Point(block.timestamp, rewardTokenMinted),
+                CurvesLibrary.Point(block.timestamp / 2, rewardTokenMinted / 2),
+                CurvesLibrary.Point(block.timestamp + duration, 0)
+        );
+
+        collateralData.escrow = CurvesLibrary.combineCurves(oldCurve, newCurve);
+
+        if (!collateralData.isSet) {
+            // new collateral
+            collateralData.isSet = true;
+            collateralData.amount = amount;
+        } else {
+            collateralData.amount += amount;
+        }
     }
 
     /////////////////////////////////////////////////

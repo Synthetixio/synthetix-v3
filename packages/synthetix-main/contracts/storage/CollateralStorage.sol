@@ -3,6 +3,8 @@ pragma solidity ^0.8.0;
 
 import "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
 
+import "../utils/CurvesLibrary.sol";
+
 contract CollateralStorage {
     struct CollateralStore {
         mapping(address => CollateralData) collateralsData; // CollateralData per collateralType (address)
@@ -24,7 +26,11 @@ contract CollateralStorage {
         bool isSet;
         uint256 amount; // adjustable (stake/unstake)
         uint256 assignedAmount; // adjustable (assign/unassign)
+
+        CurvesLibrary.PolynomialCurve escrow;
+
         StakedCollateralLock[] locks;
+
     }
 
     struct StakedCollateralLock {

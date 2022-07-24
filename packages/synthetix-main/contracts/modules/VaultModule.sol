@@ -30,6 +30,8 @@ contract VaultModule is
     using SetUtil for SetUtil.AddressSet;
     using MathUtil for uint256;
 
+    uint public constant MAX_REWARD_DISTRIBUTIONS = 10;
+
     error InvalidLeverage(uint leverage);
 
     function delegateCollateral(
@@ -253,6 +255,138 @@ contract VaultModule is
 
     function _calculateInitialDebt(uint collateralValue, uint leverage) internal pure returns (uint) {
         return leverage * collateralValue;
+    }
+
+    // ---------------------------------------
+    // Associated Rewards
+    // ---------------------------------------
+
+    function distributeRewards(
+        uint fundId,
+        address token,
+        uint index, 
+        address distributor,
+        uint amount,
+        uint start,
+        uint duration
+    ) external override {
+        if (index > MAX_REWARD_DISTRIBUTIONS) {
+            revert(InvalidParameters());
+        }
+        
+        RewardsDistribution storage existingDistribution = 
+            _fundVaultStore().fundVaults[liquidityItem.fundId][liquidityItem.collateralType].rewards[index];
+
+        // to call this function must be either:
+        // 1. fund owner
+        // 2. the registered distributor contract
+        if (_ownerOf(fundId) != msg.sender && existingDistribution.distributor != msg.sender) {
+            revert(Unauthorized());
+        }
+
+        if ((_ownerOf(fundId) != msg.sender && distributor != msg.sender) || distributor == address(0)) {
+            revert(InvalidParameters());
+        }
+
+        // set stuff
+        existingDistribution.distributor = distributor;
+        existingDistribution.start = start;
+        existingDistribution.duration = duration;
+
+        // the amount is actually the amount distributed already *plus* whatever has been specified now
+        uint alreadyDistributed = 0;
+        existingDistribution.amount = amount;
+
+        _updateRewards();
+
+        emit RewardsDistributionSet(fundId, token, accountId, index, distributor, amount, start, duration);
+    }
+
+    function claimRewards(uint fundId, address token, uint accountId) external override onlyRoleAuthorized(accountId, "rewardsClaim") {
+        RewardsDistribution[] storage dists = 
+            _fundVaultStore().fundVaults[liquidityItem.fundId][liquidityItem.collateralType].rewards;
+
+        uint[] availableRewards = _getAvailableRewards(fundId, token, accountId);
+
+        for (uint i = 0;i < availableRewards.length;i++) {
+            dists[i].lastAccumulated[accountId] = dists[i].accumulatedPerShare;
+
+            // todo: reentrancy protection?
+            dists[i].distributor.payout(fundId, token, msg.sender, availableRewards[i]);
+
+            emit RewardsClaimed(fundId, token, accountId, availableRewards[i]);
+        }
+    }
+
+    // this call is mutable but its intended to be used as a static call to see your current account rewards if you were to claim now
+    function getAvailableRewards(uint fundId, address token, uint accountId) external returns (uint[] memory) {
+        return _getAvailableRewards(fundId, token, accountId);
+    }
+
+    function _updateRewards(uint fundId, address token, uint sharesSupply) internal {
+        RewardsDistribution[] storage dists = 
+            _fundVaultStore().fundVaults[liquidityItem.fundId][liquidityItem.collateralType].rewards;
+
+        uint curTime = block.timestamp;
+
+        for (uint i = 0;i < dists.length;i++) {
+            if (dists[i].distributor == address(0) || dists[i].start > curTime) {
+                continue;
+            }
+
+            // determine whether this is an instant distribution or a delayed distribution
+            if (dists[i].duration == 0 && dists[i].lastUpdate < dists[i].start) {
+                dists[i].accumulatedPerShare += amount / sharesSupply;
+            }
+            else if (dists[i].lastUpdate < dists[i].start + dists[i].duration) {
+                // find out what is "newly" distributed
+                uint lastUpdateDistributed = dists[i].amount * (dists[i].lastUpdate - dists[i].start) / dists[i].duration;
+                
+                uint curUpdateDistributed = dists[i].amount * (dists[i].curTime - dists[i].start) / dists[i].duration;
+                if (dists[i].start + dists[i].duration < curTime) {
+                    curUpdateDistributed = dists[i].amount;
+                }
+
+                dists[i].accumulatedPerShare += (curUpdateDistributed - lastUpdateDistributed) / sharesSupply;
+            }
+
+            dists[i].lastUpdate = curTime;
+        }
+    }
+
+    function _getAvailableRewards(uint fundId, address token, uint accountId) internal returns (uint[] memory) {
+        // get the current shares supply for update rewards
+
+        _updateRewards(fundId, token, sharesSupply);
+
+        RewardsDistribution[] storage dists = 
+            _fundVaultStore().fundVaults[liquidityItem.fundId][liquidityItem.collateralType].rewards;
+
+        uint curTime = block.timestamp;
+
+        for (uint i = 0;i < dists.length;i++) {
+            if (dists[i].distributor == address(0) || dists[i].start > curTime) {
+                continue;
+            }
+
+            // determine whether this is an instant distribution or a delayed distribution
+            if (dists[i].duration == 0 && dists[i].lastUpdate < dists[i].start) {
+                dists[i].accumulatedPerShare += amount / sharesSupply;
+            }
+            else if (dists[i].lastUpdate < dists[i].start + dists[i].duration) {
+                // find out what is "newly" distributed
+                uint lastUpdateDistributed = dists[i].amount * (dists[i].lastUpdate - dists[i].start) / dists[i].duration;
+                
+                uint curUpdateDistributed = dists[i].amount * (dists[i].curTime - dists[i].start) / dists[i].duration;
+                if (dists[i].start + dists[i].duration < curTime) {
+                    curUpdateDistributed = dists[i].amount;
+                }
+
+                dists[i].accumulatedPerShare += (curUpdateDistributed - lastUpdateDistributed) / sharesSupply;
+            }
+
+            dists[i].lastUpdate = curTime;
+        }
     }
 
     // ---------------------------------------

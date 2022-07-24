@@ -66,4 +66,7 @@ interface ICollateralModule {
         uint offset,
         uint items
     ) external;
+
+    /// @notice Redeems the system escrow tokens into reward tokens
+    function redeemReward(uint accountId, uint amount) external;
 }

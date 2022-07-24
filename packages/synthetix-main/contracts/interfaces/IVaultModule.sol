@@ -17,6 +17,24 @@ interface IVaultModule is IVaultModuleStorage {
         uint leverage
     ) external;
 
+    /// @notice called by fund owner or an existing distributor to set up rewards for vault participants
+    function distributeRewards(
+        uint fundId,
+        address token,
+        uint index, 
+        address distributor,
+        uint amount,
+        uint start,
+        uint duration
+    ) external;
+
+    /// @notice retrieves all available rewards for delegation to a vault to the caller's account
+    function claimRewards(uint fundId, address token, uint accountId) external;
+
+    /// @notice retrieves the amount of rewards . This call is mutable becuase it internally calls `updateRewards` to determine
+    /// the most up-to-date amounts, but normally this should be executed with `callStatic`
+    function getAvailableRewards(uint fundId, address token, uint accountId) external returns (uint[] memory);
+
     /// @notice mints USD for a fund/account from a collateralType. if CRatio is valid
     function mintUSD(
         uint accountId,

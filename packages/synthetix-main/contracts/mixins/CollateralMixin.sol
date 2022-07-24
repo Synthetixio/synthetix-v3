@@ -3,7 +3,8 @@ pragma solidity ^0.8.0;
 
 import "../storage/CollateralStorage.sol";
 
-import "../interfaces/IAggregatorV3Interface.sol";
+import "../interfaces/external/IAggregatorV3Interface.sol";
+import "../interfaces/external/IRewardsDistributor.sol";
 
 contract CollateralMixin is CollateralStorage {
     using SetUtil for SetUtil.AddressSet;
@@ -32,7 +33,8 @@ contract CollateralMixin is CollateralStorage {
         returns (
             uint256 totalStaked,
             uint256 totalAssigned,
-            uint256 totalLocked
+            uint256 totalLocked,
+            uint256 totalEscrowed
         )
     {
         StakedCollateralData storage stakedCollateral = _collateralStore().stakedCollateralsDataByAccountId[accountId][
@@ -41,12 +43,13 @@ contract CollateralMixin is CollateralStorage {
         totalStaked = stakedCollateral.amount;
         totalAssigned = stakedCollateral.assignedAmount;
         totalLocked = _getTotalLocked(stakedCollateral.locks);
+        totalEscrowed = _getLockedEscrow(stakedCollateral.escrow);
 
-        return (totalStaked, totalAssigned, totalLocked);
+        return (totalStaked, totalAssigned, totalLocked, totalEscrowed);
     }
 
     function _getAccountUnassignedCollateral(uint accountId, address collateralType) internal view returns (uint) {
-        (uint256 total, uint256 assigned, ) = _getAccountCollateralTotals(accountId, collateralType);
+        (uint256 total, uint256 assigned, , ) = _getAccountCollateralTotals(accountId, collateralType);
 
         return total - assigned;
     }
@@ -61,6 +64,10 @@ contract CollateralMixin is CollateralStorage {
             }
         }
         return locked;
+    }
+
+    function _getLockedEscrow(CurvesLibrary.PolynomialCurve storage escrow) internal view returns (uint) {
+        return CurvesLibrary.calculateValueAtCurvePoint(escrow, block.timestamp);
     }
 
     function _getCollateralMinimumCRatio(address collateralType) internal view returns (uint) {

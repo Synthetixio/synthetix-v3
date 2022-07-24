@@ -17,6 +17,9 @@ contract FundEventAndErrors {
     event FundApprovedAdded(uint256 fundId);
     event FundApprovedRemoved(uint256 fundId);
 
+    event RewardsDistributionSet(uint indexed fundId, address indexed token, uint indexed accountId, uint index, address distributor, uint totalRewarded, uint start, uint duration);
+    event RewardsClaimed(uint indexed fundId, address indexed token, uint indexed accountId, uint index, uint amountClaimed);
+
     event FundPositionSet(uint fundId, uint[] markets, uint[] weights, address executedBy);
     event DelegationUpdated(
         bytes32 liquidityItemId,
