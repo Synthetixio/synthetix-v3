@@ -5,17 +5,17 @@ import "@synthetixio/core-contracts/contracts/ownership/OwnableMixin.sol";
 import "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
 import "@synthetixio/core-contracts/contracts/utils/MathUtil.sol";
 
-import "../mixins/AccountRBACMixin.sol";
-import "../mixins/FundMixin.sol";
-import "../mixins/AssociatedSystemsMixin.sol";
+import "../../mixins/AccountRBACMixin.sol";
+import "../../mixins/FundMixin.sol";
+import "../../mixins/AssociatedSystemsMixin.sol";
 
-import "../utils/SharesLibrary.sol";
+import "../../utils/SharesLibrary.sol";
 
-import "../storage/FundVaultStorage.sol";
-import "../interfaces/IVaultModule.sol";
-import "../interfaces/IUSDToken.sol";
+import "../../storage/FundVaultStorage.sol";
+import "../../interfaces/IVaultModule.sol";
+import "../../interfaces/IUSDToken.sol";
 
-import "../submodules/FundEventAndErrors.sol";
+import "../../submodules/FundEventAndErrors.sol";
 
 contract VaultModule is
     IVaultModule,
@@ -31,7 +31,7 @@ contract VaultModule is
     using MathUtil for uint256;
 
     uint public constant MAX_REWARD_DISTRIBUTIONS = 10;
-    bytes32 constant public USD_TOKEN = "USDToken";
+    bytes32 constant public _USD_TOKEN = "USDToken";
 
     error InvalidLeverage(uint leverage);
 
@@ -383,7 +383,7 @@ contract VaultModule is
     ) external override onlyRoleAuthorized(accountId, "mint") {
         // TODO Check if can mint that amount
 
-        _getToken(USD_TOKEN).mint(msg.sender, amount);
+        _getToken(_USD_TOKEN).mint(msg.sender, amount);
         _fundVaultStore().fundVaults[fundId][collateralType].usdByAccount[accountId] += amount;
         _fundVaultStore().fundVaults[fundId][collateralType].totalUSD += amount;
     }
@@ -396,7 +396,7 @@ contract VaultModule is
     ) external override onlyRoleAuthorized(accountId, "burn") {
         // TODO Check if can burn that amount
 
-        _getToken(USD_TOKEN).burn(msg.sender, amount);
+        _getToken(_USD_TOKEN).burn(msg.sender, amount);
         _fundVaultStore().fundVaults[fundId][collateralType].usdByAccount[accountId] -= amount;
         _fundVaultStore().fundVaults[fundId][collateralType].totalUSD -= amount;
     }

@@ -5,12 +5,12 @@ import "@synthetixio/core-contracts/contracts/ownership/OwnableMixin.sol";
 import "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
 import "@synthetixio/core-contracts/contracts/errors/AddressError.sol";
 
-import "../submodules/FundEventAndErrors.sol";
-import "../interfaces/IFundModule.sol";
-import "../storage/FundModuleStorage.sol";
+import "../../submodules/FundEventAndErrors.sol";
+import "../../interfaces/IFundModule.sol";
+import "../../storage/FundModuleStorage.sol";
 
-import "../mixins/AccountRBACMixin.sol";
-import "../mixins/FundMixin.sol";
+import "../../mixins/AccountRBACMixin.sol";
+import "../../mixins/FundMixin.sol";
 
 contract FundModule is IFundModule, FundEventAndErrors, AccountRBACMixin, FundMixin, OwnableMixin {
     // ---------------------------------------

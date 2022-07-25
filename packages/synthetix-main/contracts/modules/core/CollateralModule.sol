@@ -4,11 +4,11 @@ pragma solidity ^0.8.0;
 import "@synthetixio/core-contracts/contracts/ownership/OwnableMixin.sol";
 import "@synthetixio/core-contracts/contracts/interfaces/IERC20.sol";
 
-import "../interfaces/ICollateralModule.sol";
-import "../storage/CollateralStorage.sol";
-import "../mixins/AccountRBACMixin.sol";
-import "../mixins/AssociatedSystemsMixin.sol";
-import "../mixins/CollateralMixin.sol";
+import "../../interfaces/ICollateralModule.sol";
+import "../../storage/CollateralStorage.sol";
+import "../../mixins/AccountRBACMixin.sol";
+import "../../mixins/AssociatedSystemsMixin.sol";
+import "../../mixins/CollateralMixin.sol";
 
 contract CollateralModule is ICollateralModule, CollateralStorage, OwnableMixin, AccountRBACMixin, CollateralMixin, AssociatedSystemsMixin {
     bytes32 constant public REDEEMABLE_REWARDS_TOKEN = "eSNXToken";

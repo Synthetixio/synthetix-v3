@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "../interfaces/IMulticallModule.sol";
+import "../../interfaces/IMulticallModule.sol";
 
 // adapted from https://github.com/Uniswap/v3-periphery/blob/main/contracts/base/Multicall.sol
 contract MulticallModule is IMulticallModule {

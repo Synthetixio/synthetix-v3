@@ -4,18 +4,18 @@ pragma solidity ^0.8.0;
 import "@synthetixio/core-contracts/contracts/ownership/OwnableMixin.sol";
 import "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
 
-import "../interfaces/IMarketManagerModule.sol";
-import "../interfaces/IUSDToken.sol";
-import "../storage/MarketManagerStorage.sol";
+import "../../interfaces/IMarketManagerModule.sol";
+import "../../interfaces/IUSDToken.sol";
+import "../../storage/MarketManagerStorage.sol";
 
-import "../mixins/MarketManagerMixin.sol";
-import "../mixins/AccountRBACMixin.sol";
-import "../mixins/FundMixin.sol";
-import "../mixins/AssociatedSystemsMixin.sol";
+import "../../mixins/MarketManagerMixin.sol";
+import "../../mixins/AccountRBACMixin.sol";
+import "../../mixins/FundMixin.sol";
+import "../../mixins/AssociatedSystemsMixin.sol";
 
 contract MarketManagerModule is IMarketManagerModule, MarketManagerStorage, MarketManagerMixin, AssociatedSystemsMixin, OwnableMixin {
 
-    bytes32 constant public USD_TOKEN = "USDToken";
+    bytes32 constant private _USD_TOKEN = "USDToken";
 
     error MarketAlreadyRegistered(address market);
 
@@ -80,7 +80,7 @@ contract MarketManagerModule is IMarketManagerModule, MarketManagerStorage, Mark
         if (msg.sender != marketData.marketAddress) revert AccessError.Unauthorized(msg.sender);
 
         // verify if the market is authorized to burn the USD for the target
-        ITokenModule usdToken = _getToken(USD_TOKEN);
+        ITokenModule usdToken = _getToken(_USD_TOKEN);
 
 
         uint originalAllowance = usdToken.allowance(target, msg.sender);
@@ -112,7 +112,7 @@ contract MarketManagerModule is IMarketManagerModule, MarketManagerStorage, Mark
         marketData.issuance += int(amount);
 
         // mint some USD
-        _getToken(USD_TOKEN).mint(target, amount);
+        _getToken(_USD_TOKEN).mint(target, amount);
     }
 
     function _availableLiquidity(uint marketId) internal view returns (uint) {

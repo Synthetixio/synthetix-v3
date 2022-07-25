@@ -10,30 +10,48 @@ defaultValue = "main"
 description = "Admin user for the system"
 defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
 
-[run.deploy]
+[run.deploy_account]
 exec = "scripts/deploy.js"
 func = "deploy"
-args = []
-modified = ["contracts", "scripts"]
+args = ["Account", ".*/account/.*"]
+modified = ["contracts/modules/account", "scripts"]
 
-[invoke.init_owner]
-target = ["Proxy"]
-from = "<%= settings.owner %>"
-func = "initializeOwnerModule"
-args = ["<%= settings.owner %>"]
-depends = ["run.deploy"]
+[run.deploy_usd]
+exec = "scripts/deploy.js"
+func = "deploy"
+args = ["USD", ".*/usd/.*"]
+modified = ["contracts/modules/usd", "scripts"]
+
+[run.deploy_esnx]
+exec = "scripts/deploy.js"
+func = "deploy"
+args = ["ESNX", ".*/esnx/.*"]
+modified = ["contracts/modules/esnx", "scripts"]
+
+[run.deploy_core]
+exec = "scripts/deploy.js"
+func = "deploy"
+args = ["Core", ".*/core/.*"]
+modified = ["contracts/modules/core", "scripts"]
+depends = ["run.deploy_account", "run.deploy_usd", "run.deploy_esnx"]
 
 [invoke.init_account]
-target = ["Proxy"]
-fromCall.func = "owner"
-func = "initializeAccountModule"
-factory.Account.event = "AccountCreated"
-factory.Account.arg = 0
-factory.Account.artifact = "AccountToken"
-depends = ["invoke.init_owner"]
+target = ["CoreProxy"]
+from = "<%= settings.owner %>"
+func = "initOrUpgradeToken"
+args = ["<%= contracts.AccountProxy.address %>"]
+depends = ["run.deploy_core"]
 
-[invoke.init_snxusd]
-target = ["Proxy"]
-fromCall.func = "owner"
-func = "initializeSUSDTokenModule"
-depends = ["invoke.init_owner"]
+[invoke.init_usd]
+target = ["CoreProxy"]
+from = "<%= settings.owner %>"
+func = "initOrUpgradeToken"
+args = ["<%= contracts.USDProxy.address %>"]
+depends = ["run.deploy_core"]
+
+[invoke.init_esnx]
+target = ["CoreProxy"]
+from = "<%= settings.owner %>"
+func = "initOrUpgradeToken"
+args = ["<%= contracts.ESNXProxy.address %>"]
+depends = ["run.deploy_core"]

@@ -3,14 +3,18 @@ pragma solidity ^0.8.0;
 
 import "@synthetixio/core-contracts/contracts/ownership/OwnableMixin.sol";
 import "@synthetixio/core-contracts/contracts/proxy/UUPSProxy.sol";
-import "../interfaces/IAssociatedSystemsModule.sol";
-import "../storage/AssociatedSystemsStorage.sol";
+import "../../interfaces/IAssociatedSystemsModule.sol";
+import "../../storage/AssociatedSystemsStorage.sol";
 
 import "@synthetixio/core-contracts/contracts/interfaces/IUUPSImplementation.sol";
 import "@synthetixio/core-modules/contracts/interfaces/IOwnerModule.sol";
 import "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
 
 contract AssociatedSystemsModule is IAssociatedSystemsModule, OwnableMixin, AssociatedSystemsStorage {
+    string public constant KIND_ERC20 = "erc20";
+    string public constant KIND_ERC721 = "erc721";
+    string public constant KIND_OTHER = "other";
+    string public constant KIND_UNMANAGED = "unmanaged";
 
     function initOrUpgradeToken(bytes32 id, string memory name, string memory symbol, uint8 decimals, address impl) external override onlyOwner {
         AssociatedSystemsStore storage store = _associatedSystemsStore();

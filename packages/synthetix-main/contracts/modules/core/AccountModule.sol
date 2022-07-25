@@ -4,11 +4,11 @@ pragma solidity ^0.8.0;
 import "@synthetixio/core-contracts/contracts/ownership/OwnableMixin.sol";
 import "@synthetixio/core-contracts/contracts/proxy/UUPSProxy.sol";
 import "@synthetixio/core-contracts/contracts/satellite/SatelliteFactory.sol";
-import "../interfaces/IAccountModule.sol";
-import "../storage/AccountModuleStorage.sol";
+import "../../interfaces/IAccountModule.sol";
+import "../../storage/AccountModuleStorage.sol";
 
-import "../mixins/AssociatedSystemsMixin.sol";
-import "../mixins/AccountRBACMixin.sol";
+import "../../mixins/AssociatedSystemsMixin.sol";
+import "../../mixins/AccountRBACMixin.sol";
 
 contract AccountModule is IAccountModule, OwnableMixin, AccountRBACMixin, AssociatedSystemsMixin {
 

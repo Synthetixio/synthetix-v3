@@ -8,29 +8,30 @@ const {
 /**
  * Generate the file contracts/Router.sol including the given modules in its source.
  */
-module.exports.deploy = async function deploy(chainBuilder) {
-  if (chainBuilder?.provider) {
-    hre.ethers.provider = chainBuilder.provider;
+module.exports.deploy = async function deploy(runtime, prefix, modules) {
+  if (runtime?.provider) {
+    hre.ethers.provider = runtime.provider;
   }
+
+  const instance = prefix.toLowerCase();
 
   const info = {
     folder: hre.config.deployer.paths.deployments,
     network: hre.network.name,
+    instance
   };
 
   const isHHNetwork = hre.network.name === 'hardhat';
-  console.log('netname', hre.network.name);
-  await hre.run(TASK_DEPLOY, { noConfirm: true, quiet: false, clear: isHHNetwork });
-  console.log('netname', hre.network.name);
+  await hre.run(TASK_DEPLOY, { noConfirm: true, quiet: false, clear: isHHNetwork, instance, modules });
 
-  const { abis, info: deployInfo } = await hre.run(SUBTASK_GET_DEPLOYMENT_INFO);
+  const { abis, info: deployInfo } = await hre.run(SUBTASK_GET_DEPLOYMENT_INFO, { instance });
 
   const contracts = Object.values(deployInfo.contracts).reduce((contracts, c) => {
     if (contracts[c.contractName]) {
       throw new Error(`Contract name repeated: "${c.contractName}"`);
     }
 
-    contracts[c.contractName] = {
+    contracts[prefix + c.contractName] = {
       address: c.deployedAddress,
       abi: abis[c.contractFullyQualifiedName],
       deployTxnHash: c.deployTransaction,
@@ -39,12 +40,8 @@ module.exports.deploy = async function deploy(chainBuilder) {
     return contracts;
   }, {});
 
-  // Rename Synthetix to Proxy
-  contracts.Proxy = contracts.Synthetix;
-  delete contracts.Synthetix;
-
   // Set the multicall ABI on the Proxy
-  contracts.Proxy.abi = await hre.run(SUBTASK_GET_MULTICALL_ABI, { info });
+  contracts[prefix + 'Router'].abi = await hre.run(SUBTASK_GET_MULTICALL_ABI, { info, instance });
 
   return {
     contracts,

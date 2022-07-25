@@ -22,7 +22,7 @@ contract NftModule is INftModule, ERC721, NftStorage, InitializableMixin, UUPSIm
         return _nftStore().initialized;
     }
 
-    function isAccountInitialized() external view returns (bool) {
+    function isInitialized() external view returns (bool) {
         return _isInitialized();
     }
 

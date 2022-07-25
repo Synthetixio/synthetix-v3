@@ -1,11 +1,11 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "../interfaces/ILiquidationModule.sol";
-import "../storage/LiquidationModuleStorage.sol";
+import "../../interfaces/ILiquidationModule.sol";
+import "../../storage/LiquidationModuleStorage.sol";
 
-import "../mixins/CollateralMixin.sol";
-import "../mixins/FundMixin.sol";
+import "../../mixins/CollateralMixin.sol";
+import "../../mixins/FundMixin.sol";
 
 contract LiquidationsModule is ILiquidationModule, LiquidationModuleStorage, CollateralMixin, FundMixin {
     function liquidate(

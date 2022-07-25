@@ -3,10 +3,10 @@ pragma solidity ^0.8.0;
 
 import "@synthetixio/core-contracts/contracts/ownership/OwnableMixin.sol";
 
-import "../interfaces/IFundConfigurationModule.sol";
-import "../storage/FundConfigurationStorage.sol";
-import "../mixins/FundMixin.sol";
-import "../submodules/FundEventAndErrors.sol";
+import "../../interfaces/IFundConfigurationModule.sol";
+import "../../storage/FundConfigurationStorage.sol";
+import "../../mixins/FundMixin.sol";
+import "../../submodules/FundEventAndErrors.sol";
 
 contract FundConfigurationModule is
     IFundConfigurationModule,
