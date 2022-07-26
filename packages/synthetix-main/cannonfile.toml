@@ -35,5 +35,5 @@ depends = ["invoke.init_owner"]
 [invoke.init_snxusd]
 target = ["Proxy"]
 fromCall.func = "owner"
-func = "initializeSUSDTokenModule"
+func = "initializeUSDTokenModule"
 depends = ["invoke.init_owner"]

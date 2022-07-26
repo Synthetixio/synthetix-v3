@@ -136,7 +136,12 @@ describe('FundModule - Funds Admin', function () {
       });
 
       before('adjust fund positions', async () => {
-        const tx = await FundModule.connect(fundAdmin).setFundPosition(1, [1, 2], [1, 1]);
+        const tx = await FundModule.connect(fundAdmin).setFundPosition(
+          1,
+          [1, 2],
+          [1, 1],
+          [1000, 1000]
+        );
         receipt = await tx.wait();
       });
 
