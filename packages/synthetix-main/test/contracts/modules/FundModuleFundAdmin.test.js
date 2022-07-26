@@ -89,7 +89,7 @@ describe('FundModule - Funds Admin', function () {
     describe('when attempting to set the positions of a non existent fund', async () => {
       it('reverts', async () => {
         await assertRevert(
-          FundModule.connect(fundAdmin).setFundPosition(2, [1], [1]),
+          FundModule.connect(fundAdmin).setFundPosition(2, [1], [1], [0, 0]),
           'FundNotFound(2)'
         );
       });
@@ -98,7 +98,7 @@ describe('FundModule - Funds Admin', function () {
     describe('when a regular user attempts to set the positions', async () => {
       it('reverts', async () => {
         await assertRevert(
-          FundModule.connect(user1).setFundPosition(1, [1], [1]),
+          FundModule.connect(user1).setFundPosition(1, [1], [1], [0, 0]),
           `Unauthorized("${user1.address}")`
         );
       });
@@ -107,14 +107,14 @@ describe('FundModule - Funds Admin', function () {
     describe('when attempting to set the positions with not matching number of positions', async () => {
       it('reverts with more weights than markets', async () => {
         await assertRevert(
-          FundModule.connect(fundAdmin).setFundPosition(1, [1], [1, 2]),
+          FundModule.connect(fundAdmin).setFundPosition(1, [1], [1, 2], [0, 0]),
           'InvalidParameters()'
         );
       });
 
       it('reverts with more markets than weights', async () => {
         await assertRevert(
-          FundModule.connect(fundAdmin).setFundPosition(1, [1, 2], [1]),
+          FundModule.connect(fundAdmin).setFundPosition(1, [1, 2], [1], [0, 0]),
           'InvalidParameters()'
         );
       });
@@ -136,12 +136,7 @@ describe('FundModule - Funds Admin', function () {
       });
 
       before('adjust fund positions', async () => {
-        const tx = await FundModule.connect(fundAdmin).setFundPosition(
-          1,
-          [1, 2],
-          [1, 1],
-          [1000, 1000]
-        );
+        const tx = await FundModule.connect(fundAdmin).setFundPosition(1, [1, 2], [1, 1], [0, 0]);
         receipt = await tx.wait();
       });
 
