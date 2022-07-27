@@ -49,13 +49,4 @@ contract NftModule is INftModule, ERC721, NftStorage, InitializableMixin, UUPSIm
 
         emit AccountMinted(owner, accountId);
     }
-
-    function _postTransfer(
-        // solhint-disable-next-line no-unused-vars
-        address from,
-        address to,
-        uint256 accountId
-    ) internal virtual override {
-        //INftModule(_nftStore().mainProxy).transferAccount(to, accountId);
-    }
 }

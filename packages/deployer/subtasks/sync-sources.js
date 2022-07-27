@@ -17,7 +17,9 @@ subtask(
   logger.subtitle('Syncing solidity sources with deployment data');
 
   const { previousDeployment } = hre.deployer;
-  const modulesFullyQualifiedNames = await getModulesFullyQualifiedNames(modules ? new RegExp(modules) : /.*/);
+  const modulesFullyQualifiedNames = await getModulesFullyQualifiedNames(
+    modules ? new RegExp(modules) : /.*/
+  );
 
   const removed = await _removeDeletedSources({ modulesFullyQualifiedNames, previousDeployment });
   const added = await _addNewSources({ modulesFullyQualifiedNames, previousDeployment });

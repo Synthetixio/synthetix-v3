@@ -5,14 +5,13 @@ import "@synthetixio/core-contracts/contracts/interfaces/IERC20.sol";
 
 /// @title ERC20 token for snxUSD
 interface ITokenModule is IERC20 {
-
     /// @notice allows owner to initialize the token after attaching a proxy
     function initialize(
         string memory tokenName,
         string memory tokenSymbol,
         uint8 tokenDecimals
     ) external;
-    
+
     /// @notice mints token amount to "to" address
     function mint(address to, uint amount) external;
 

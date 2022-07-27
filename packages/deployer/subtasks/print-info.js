@@ -38,7 +38,9 @@ async function _printInfo(taskArguments) {
   logger.log(chalk.gray(`signer: ${signer.address}`));
   logger.log(chalk.gray(`signer balance: ${balance} ETH`));
 
-  const deploymentModules = Object.keys(filterValues(hre.deployer.deployment.general.contracts, (c) => c.isModule));
+  const deploymentModules = Object.keys(
+    filterValues(hre.deployer.deployment.general.contracts, (c) => c.isModule)
+  );
 
   logger.log(chalk.gray('deployment modules:'));
 

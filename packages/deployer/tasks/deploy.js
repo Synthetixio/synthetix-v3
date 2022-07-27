@@ -35,7 +35,10 @@ task(TASK_DEPLOY, 'Deploys all system modules')
   .addFlag('quiet', 'Silence all output', false)
   .addFlag('clear', 'Clear all previous deployment data for the selected network', false)
   .addOptionalParam('alias', 'The alias name for the deployment', undefined, types.alphanumeric)
-  .addOptionalPositionalParam('modules', 'Regex string for which modules are deployed to the router. Leave empty to deploy all modules.')
+  .addOptionalPositionalParam(
+    'modules',
+    'Regex string for which modules are deployed to the router. Leave empty to deploy all modules.'
+  )
   .addOptionalParam(
     'instance',
     'The name of the target instance for deployment',
