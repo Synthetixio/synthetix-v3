@@ -132,7 +132,6 @@ function getAllDeploymentFiles(info) {
  */
 function getDeploymentFolder(info) {
   const { folder, network, instance } = _populateDefaults(info);
-  console.log('RESOLVED DEFAULTS', folder, network, instance);
   return path.resolve(folder, network, instance);
 }
 
