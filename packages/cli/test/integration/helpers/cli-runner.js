@@ -71,7 +71,7 @@ class CliRunner {
       console.error(`CLI output should contain "${chalk.white(txt)}", but it was "${chalk.red(this.buffer.toString())}".`);
     }
 
-    assert.(includes);
+    assert.ok(includes);
   }
 
   get keys() {
