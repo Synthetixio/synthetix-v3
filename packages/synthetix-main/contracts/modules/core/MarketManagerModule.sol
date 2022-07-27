@@ -8,10 +8,10 @@ import "../../interfaces/IMarketManagerModule.sol";
 import "../../interfaces/IUSDToken.sol";
 import "../../storage/MarketManagerStorage.sol";
 
+import "@synthetixio/core-modules/contracts/mixins/AssociatedSystemsMixin.sol";
 import "../../mixins/MarketManagerMixin.sol";
 import "../../mixins/AccountRBACMixin.sol";
 import "../../mixins/FundMixin.sol";
-import "../../mixins/AssociatedSystemsMixin.sol";
 
 contract MarketManagerModule is IMarketManagerModule, MarketManagerStorage, MarketManagerMixin, AssociatedSystemsMixin, OwnableMixin {
 

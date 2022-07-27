@@ -5,9 +5,9 @@ import "@synthetixio/core-contracts/contracts/ownership/OwnableMixin.sol";
 import "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
 import "@synthetixio/core-contracts/contracts/utils/MathUtil.sol";
 
+import "@synthetixio/core-modules/contracts/mixins/AssociatedSystemsMixin.sol";
 import "../../mixins/AccountRBACMixin.sol";
 import "../../mixins/FundMixin.sol";
-import "../../mixins/AssociatedSystemsMixin.sol";
 
 import "../../utils/SharesLibrary.sol";
 

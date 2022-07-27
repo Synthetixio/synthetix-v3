@@ -6,8 +6,8 @@ import "@synthetixio/core-contracts/contracts/interfaces/IERC20.sol";
 
 import "../../interfaces/ICollateralModule.sol";
 import "../../storage/CollateralStorage.sol";
+import "@synthetixio/core-modules/contracts/mixins/AssociatedSystemsMixin.sol";
 import "../../mixins/AccountRBACMixin.sol";
-import "../../mixins/AssociatedSystemsMixin.sol";
 import "../../mixins/CollateralMixin.sol";
 
 contract CollateralModule is ICollateralModule, CollateralStorage, OwnableMixin, AccountRBACMixin, CollateralMixin, AssociatedSystemsMixin {

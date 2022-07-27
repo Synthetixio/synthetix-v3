@@ -7,7 +7,7 @@ import "@synthetixio/core-contracts/contracts/satellite/SatelliteFactory.sol";
 import "../../interfaces/IAccountModule.sol";
 import "../../storage/AccountModuleStorage.sol";
 
-import "../../mixins/AssociatedSystemsMixin.sol";
+import "@synthetixio/core-modules/contracts/mixins/AssociatedSystemsMixin.sol";
 import "../../mixins/AccountRBACMixin.sol";
 
 contract AccountModule is IAccountModule, OwnableMixin, AccountRBACMixin, AssociatedSystemsMixin {
