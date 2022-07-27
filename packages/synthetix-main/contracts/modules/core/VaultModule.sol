@@ -31,7 +31,7 @@ contract VaultModule is
     using MathUtil for uint256;
 
     uint public constant MAX_REWARD_DISTRIBUTIONS = 10;
-    bytes32 constant public _USD_TOKEN = "USDToken";
+    bytes32 constant private _USD_TOKEN = "USDToken";
 
     error InvalidLeverage(uint leverage);
 
