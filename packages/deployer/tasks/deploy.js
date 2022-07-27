@@ -15,7 +15,6 @@ const {
   SUBTASK_SYNC_PROXY,
   SUBTASK_SYNC_SOURCES,
   SUBTASK_UPGRADE_PROXY,
-  SUBTASK_VALIDATE_INITIALIZABLES,
   SUBTASK_VALIDATE_INTERFACES,
   SUBTASK_VALIDATE_MODULES,
   SUBTASK_VALIDATE_ROUTER,
@@ -36,6 +35,7 @@ task(TASK_DEPLOY, 'Deploys all system modules')
   .addFlag('quiet', 'Silence all output', false)
   .addFlag('clear', 'Clear all previous deployment data for the selected network', false)
   .addOptionalParam('alias', 'The alias name for the deployment', undefined, types.alphanumeric)
+  .addOptionalPositionalParam('modules', 'Regex string for which modules are deployed to the router. Leave empty to deploy all modules.')
   .addOptionalParam(
     'instance',
     'The name of the target instance for deployment',
@@ -66,14 +66,13 @@ task(TASK_DEPLOY, 'Deploys all system modules')
 
       await hre.run(SUBTASK_CREATE_DEPLOYMENT, taskArguments);
       await hre.run(SUBTASK_LOAD_DEPLOYMENT, taskArguments);
+      await hre.run(SUBTASK_SYNC_SOURCES, taskArguments);
+      await hre.run(SUBTASK_SYNC_PROXY);
       await hre.run(SUBTASK_PRINT_INFO, taskArguments);
       await _compile(hre, quiet);
-      await hre.run(SUBTASK_SYNC_SOURCES);
-      await hre.run(SUBTASK_SYNC_PROXY);
       await hre.run(SUBTASK_VALIDATE_STORAGE);
       await hre.run(SUBTASK_VALIDATE_MODULES);
       await hre.run(SUBTASK_VALIDATE_INTERFACES);
-      await hre.run(SUBTASK_VALIDATE_INITIALIZABLES);
       await hre.run(SUBTASK_VALIDATE_SATELLITES);
       await hre.run(SUBTASK_DEPLOY_MODULES);
       await hre.run(SUBTASK_GENERATE_ROUTER_SOURCE);

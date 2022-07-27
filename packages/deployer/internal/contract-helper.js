@@ -69,26 +69,17 @@ function contractIsModule(contractSourcePath) {
 }
 
 /**
- * Check if the given contract path is inside the sources folder.
- * @param {string} contractSourcePath contract path to file, e.g.: contracts/modules/SomeModule.sol
- * @returns {boolean}
- */
-function contractIsInSources(contractSourcePath) {
-  const source = path.resolve(hre.config.paths.root, contractSourcePath);
-  return source.startsWith(`${hre.config.paths.sources}${path.sep}`);
-}
-
-/**
  * Get the list of all modules fully qualified names.
  *   e.g.: ['contracts/modules/SomeModule.sol:SomeModule', ...]
- * @returns {string[]}
+ * @param filters RegExp to match for module inclusion
+ * @returns {string[]} fqn of all matching modules
  */
-async function getModulesFullyQualifiedNames() {
+async function getModulesFullyQualifiedNames(filter = /.*/) {
   const names = await hre.artifacts.getAllFullyQualifiedNames();
 
   return names.filter((name) => {
     const { sourceName } = parseFullyQualifiedName(name);
-    return contractIsModule(sourceName);
+    return contractIsModule(sourceName) && name.match(filter);
   });
 }
 
@@ -98,6 +89,5 @@ module.exports = {
   getModulesSelectors,
   isAlreadyDeployed,
   contractIsModule,
-  contractIsInSources,
   getModulesFullyQualifiedNames,
 };

@@ -132,11 +132,16 @@ function getAllDeploymentFiles(info) {
  */
 function getDeploymentFolder(info) {
   const { folder, network, instance } = _populateDefaults(info);
+  console.log('RESOLVED DEFAULTS', folder, network, instance);
   return path.resolve(folder, network, instance);
 }
 
 function _populateDefaults(info = {}) {
-  return { ...DeploymentInfo, ...info };
+  return {
+    folder: info.folder || DeploymentInfo.folder,
+    network: info.network || DeploymentInfo.network,
+    instance: info.instance || DeploymentInfo.instance,
+  };
 }
 
 module.exports = {
