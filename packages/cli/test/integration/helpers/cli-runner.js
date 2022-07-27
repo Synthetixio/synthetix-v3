@@ -68,7 +68,11 @@ class CliRunner {
   printed(txt) {
     const includes = this.buffer.includes(txt);
     if (!includes) {
-      console.error(`CLI output should contain "${chalk.white(txt)}", but it was "${chalk.red(this.buffer.toString())}".`);
+      console.error(
+        `CLI output should contain "${chalk.white(txt)}", but it was "${chalk.red(
+          this.buffer.toString()
+        )}".`
+      );
     }
 
     assert.ok(includes);

@@ -18,11 +18,18 @@ module.exports.deploy = async function deploy(runtime, prefix, modules) {
   const info = {
     folder: hre.config.deployer.paths.deployments,
     network: hre.network.name,
-    instance
+    instance,
   };
 
   const isHHNetwork = hre.network.name === 'hardhat';
-  await hre.run(TASK_DEPLOY, { noConfirm: true, quiet: false, clear: isHHNetwork, instance, modules, skipProxy: true });
+  await hre.run(TASK_DEPLOY, {
+    noConfirm: true,
+    quiet: false,
+    clear: isHHNetwork,
+    instance,
+    modules,
+    skipProxy: true,
+  });
 
   const { abis, info: deployInfo } = await hre.run(SUBTASK_GET_DEPLOYMENT_INFO, { instance });
 

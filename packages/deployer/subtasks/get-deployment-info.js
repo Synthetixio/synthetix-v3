@@ -31,7 +31,7 @@ subtask(
       network: hre.network.name,
       instance,
       info,
-      abis
+      abis,
     };
   }
 );
