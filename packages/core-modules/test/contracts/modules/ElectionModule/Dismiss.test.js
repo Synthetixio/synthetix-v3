@@ -16,7 +16,7 @@ const {
 } = require('@synthetixio/core-js/utils/hardhat/rpc');
 
 describe('ElectionModule (dismiss)', () => {
-  const { proxyAddress } = bootstrap(initializer);
+  const { proxyAddress } = bootstrap(initializer, { modules: '.*(Owner|Upgrade|Election).*' });
 
   let members;
 
