@@ -69,6 +69,16 @@ function contractIsModule(contractSourcePath) {
 }
 
 /**
+ * Check if the given contract path is inside the sources folder.
+ * @param {string} contractSourcePath contract path to file, e.g.: contracts/modules/SomeModule.sol
+ * @returns {boolean}
+ */
+function contractIsInSources(contractSourcePath) {
+  const source = path.resolve(hre.config.paths.root, contractSourcePath);
+  return source.startsWith(`${hre.config.paths.sources}${path.sep}`);
+}
+
+/**
  * Get the list of all modules fully qualified names.
  *   e.g.: ['contracts/modules/SomeModule.sol:SomeModule', ...]
  * @param filters RegExp to match for module inclusion
@@ -89,5 +99,6 @@ module.exports = {
   getModulesSelectors,
   isAlreadyDeployed,
   contractIsModule,
+  contractIsInSources,
   getModulesFullyQualifiedNames,
 };
