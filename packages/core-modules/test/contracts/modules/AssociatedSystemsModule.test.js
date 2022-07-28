@@ -77,7 +77,10 @@ describe('AssociatedSystemsModule', () => {
     describe('when adding TokenModule associated system', () => {
       const { proxyAddress: tokenProxyAddress, routerAddress: tokenRouterAddress } = bootstrap(
         initializer,
-        { modules: '.*(Owner|Upgrade|Token).*' }
+        {
+          instance: 'atoken',
+          modules: '.*(Owner|Upgrade|Token).*'
+        }
       );
 
       let TokenModule, TokenModuleAssociated, OwnerModuleAssociated;
@@ -110,11 +113,7 @@ describe('AssociatedSystemsModule', () => {
         assert.equal(await TokenModuleAssociated.decimals(), 18);
       });
 
-      // TODO: `owner()` call is returning a (literally)
-      // random address. no idea what is going on with that
-      // you know the system is the owner because the
-      // `initialize()` call is succeeding in the `init` function
-      it.skip('is owner of the token', async () => {
+      it('is owner of the token', async () => {
         assert.equal(await OwnerModuleAssociated.owner(), proxyAddress());
       });
 
@@ -124,7 +123,7 @@ describe('AssociatedSystemsModule', () => {
 
       describe('when new impl for TokenModule associated system', () => {
         const { routerAddress: newRouterAddress } = bootstrap(initializer, {
-          instance: 'anothernft',
+          instance: 'anothertoken',
           modules: '.*(Owner|Upgrade|Nft).*',
         });
 
@@ -164,7 +163,10 @@ describe('AssociatedSystemsModule', () => {
     describe('when adding NftModule associated system', () => {
       const { proxyAddress: nftProxyAddress, routerAddress: nftRouterAddress } = bootstrap(
         initializer,
-        { modules: '.*(Owner|Upgrade|Nft).*' }
+        {
+          instance: 'annft',
+          modules: '.*(Owner|Upgrade|Nft).*'
+        }
       );
 
       let NftModule, NftModuleAssociated, OwnerModuleAssociated;
@@ -200,11 +202,7 @@ describe('AssociatedSystemsModule', () => {
         //assert.equal(await NftModuleAssociated.tokenURI(), 'https://vitalik.ca');
       });
 
-      // TODO: `owner()` call is returning a (literally)
-      // random address. no idea what is going on with that
-      // you know the system is the owner because the
-      // `initialize()` call is succeeding in the `init` function
-      it.skip('is owner of the token', async () => {
+      it('is owner of the token', async () => {
         assert.equal(await OwnerModuleAssociated.owner(), proxyAddress());
       });
 
