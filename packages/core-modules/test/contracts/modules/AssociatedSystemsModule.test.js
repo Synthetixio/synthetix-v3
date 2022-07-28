@@ -3,6 +3,7 @@ const assert = require('assert/strict');
 const assertRevert = require('@synthetixio/core-js/utils/assertions/assert-revert');
 const { bootstrap } = require('@synthetixio/deployer/utils/tests');
 const initializer = require('@synthetixio/core-modules/test/helpers/initializer');
+const { findEvent } = require('@synthetixio/core-js/utils/ethers/events');
 
 const toBytes32 = ethers.utils.formatBytes32String;
 
@@ -34,14 +35,23 @@ describe('AssociatedSystemsModule', () => {
     });
 
     it('registers unmanaged', async () => {
-      await AssociatedSystemsModule.connect(owner).registerUnmanagedSystem(
-        toBytes32('wohoo'),
-        owner.address
-      );
+      const receipt = await (
+        await AssociatedSystemsModule.connect(owner).registerUnmanagedSystem(
+          toBytes32('wohoo'),
+          owner.address
+        )
+      ).wait();
 
       const [addr, kind] = await AssociatedSystemsModule.getAssociatedSystem(toBytes32('wohoo'));
       assert.equal(addr, owner.address);
       assert.equal(kind, toBytes32('unmanaged'));
+
+      const event = findEvent({ receipt, eventName: 'AssociatedSystemSet' });
+
+      assert.ok(event);
+      assert.equal(event.args.kind, toBytes32('unmanaged'));
+      assert.equal(event.args.id, toBytes32('wohoo'));
+      assert.equal(event.args.proxy, owner.address);
     });
 
     it('reregisters unmanaged', async () => {
@@ -49,14 +59,23 @@ describe('AssociatedSystemsModule', () => {
         toBytes32('wohoo'),
         owner.address
       );
-      await AssociatedSystemsModule.connect(owner).registerUnmanagedSystem(
-        toBytes32('wohoo'),
-        user.address
-      );
+      const receipt = await (
+        await AssociatedSystemsModule.connect(owner).registerUnmanagedSystem(
+          toBytes32('wohoo'),
+          user.address
+        )
+      ).wait();
 
       const [addr, kind] = await AssociatedSystemsModule.getAssociatedSystem(toBytes32('wohoo'));
       assert.equal(addr, user.address);
       assert.equal(kind, toBytes32('unmanaged'));
+
+      const event = findEvent({ receipt, eventName: 'AssociatedSystemSet' });
+
+      assert.ok(event);
+      assert.equal(event.args.kind, toBytes32('unmanaged'));
+      assert.equal(event.args.id, toBytes32('wohoo'));
+      assert.equal(event.args.proxy, user.address);
     });
   });
 
@@ -79,9 +98,11 @@ describe('AssociatedSystemsModule', () => {
         initializer,
         {
           instance: 'atoken',
-          modules: '.*(Owner|Upgrade|Token).*'
+          modules: '.*(Owner|Upgrade|Token).*',
         }
       );
+
+      let receipt;
 
       let TokenModule, TokenModuleAssociated, OwnerModuleAssociated;
 
@@ -92,18 +113,30 @@ describe('AssociatedSystemsModule', () => {
       });
 
       before('registration', async () => {
-        await AssociatedSystemsModule.connect(owner).initOrUpgradeToken(
-          registeredName,
-          'A Token',
-          'TOK',
-          18,
-          tokenRouterAddress()
-        );
+        receipt = await (
+          await AssociatedSystemsModule.connect(owner).initOrUpgradeToken(
+            registeredName,
+            'A Token',
+            'TOK',
+            18,
+            tokenRouterAddress()
+          )
+        ).wait();
 
         const [proxyAddress] = await AssociatedSystemsModule.getAssociatedSystem(registeredName);
 
         TokenModuleAssociated = await ethers.getContractAt('TokenModule', proxyAddress);
         OwnerModuleAssociated = await ethers.getContractAt('OwnerModule', proxyAddress);
+      });
+
+      it('emitted event', async () => {
+        const event = findEvent({ receipt, eventName: 'AssociatedSystemSet' });
+
+        assert.ok(event);
+        assert.equal(event.args.kind, toBytes32('erc20'));
+        assert.equal(event.args.id, registeredName);
+        assert.equal(event.args.proxy, TokenModuleAssociated.address);
+        assert.equal(event.args.impl, tokenRouterAddress());
       });
 
       it('has initialized the token', async () => {
@@ -121,26 +154,53 @@ describe('AssociatedSystemsModule', () => {
         assert.equal(await TokenModule.isInitialized(), false);
       });
 
+      it('fails with wrong kind when attempting to register a different kind', async () => {
+        await assertRevert(
+          AssociatedSystemsModule.connect(user).initOrUpgradeNft(
+            toBytes32('hello'),
+            'A Token',
+            'TOK',
+            'arst',
+            owner.address
+          ),
+          'MismatchAssociatedSystemKind'
+        );
+      });
+
       describe('when new impl for TokenModule associated system', () => {
         const { routerAddress: newRouterAddress } = bootstrap(initializer, {
           instance: 'anothertoken',
           modules: '.*(Owner|Upgrade|Nft).*',
         });
 
-        it('works when reinitialized with the same impl', async () => {
-          await AssociatedSystemsModule.connect(owner).initOrUpgradeToken(
-            registeredName,
-            'A Token',
-            'TOK',
-            18,
-            newRouterAddress()
-          );
+        before('reinit', async () => {
+          receipt = await (
+            await AssociatedSystemsModule.connect(owner).initOrUpgradeToken(
+              registeredName,
+              'A Token',
+              'TOK',
+              18,
+              newRouterAddress()
+            )
+          ).wait();
+        });
 
+        it('works when reinitialized with the same impl', async () => {
           const [newProxyAddress] = await AssociatedSystemsModule.getAssociatedSystem(
             registeredName
           );
 
           assert.equal(newProxyAddress, TokenModuleAssociated.address);
+        });
+
+        it('emitted event', async () => {
+          const event = findEvent({ receipt, eventName: 'AssociatedSystemSet' });
+
+          assert.ok(event);
+          assert.equal(event.args.kind, toBytes32('erc20'));
+          assert.equal(event.args.id, registeredName);
+          assert.equal(event.args.proxy, TokenModuleAssociated.address);
+          assert.equal(event.args.impl, newRouterAddress());
         });
       });
     });
@@ -165,9 +225,11 @@ describe('AssociatedSystemsModule', () => {
         initializer,
         {
           instance: 'annft',
-          modules: '.*(Owner|Upgrade|Nft).*'
+          modules: '.*(Owner|Upgrade|Nft).*',
         }
       );
+
+      let receipt;
 
       let NftModule, NftModuleAssociated, OwnerModuleAssociated;
 
@@ -178,18 +240,30 @@ describe('AssociatedSystemsModule', () => {
       });
 
       before('registration', async () => {
-        await AssociatedSystemsModule.connect(owner).initOrUpgradeNft(
-          registeredName,
-          'A Token',
-          'TOK',
-          'https://vitalik.ca',
-          nftRouterAddress()
-        );
+        receipt = await (
+          await AssociatedSystemsModule.connect(owner).initOrUpgradeNft(
+            registeredName,
+            'A Token',
+            'TOK',
+            'https://vitalik.ca',
+            nftRouterAddress()
+          )
+        ).wait();
 
         const [proxyAddress] = await AssociatedSystemsModule.getAssociatedSystem(registeredName);
 
         NftModuleAssociated = await ethers.getContractAt('NftModule', proxyAddress);
         OwnerModuleAssociated = await ethers.getContractAt('OwnerModule', proxyAddress);
+      });
+
+      it('emitted event', async () => {
+        const event = findEvent({ receipt, eventName: 'AssociatedSystemSet' });
+
+        assert.ok(event);
+        assert.equal(event.args.kind, toBytes32('erc721'));
+        assert.equal(event.args.id, registeredName);
+        assert.equal(event.args.proxy, NftModuleAssociated.address);
+        assert.equal(event.args.impl, nftRouterAddress());
       });
 
       it('has initialized the token', async () => {
@@ -210,26 +284,53 @@ describe('AssociatedSystemsModule', () => {
         assert.equal(await NftModule.isInitialized(), false);
       });
 
+      it('fails with wrong kind when attempting to register a different kind', async () => {
+        await assertRevert(
+          AssociatedSystemsModule.connect(user).initOrUpgradeToken(
+            toBytes32('hello'),
+            'A Token',
+            'TOK',
+            18,
+            owner.address
+          ),
+          'MismatchAssociatedSystemKind'
+        );
+      });
+
       describe('when new impl for NftModule associated system', () => {
         const { routerAddress: newRouterAddress } = bootstrap(initializer, {
           instance: 'anothernft',
           modules: '.*(Owner|Upgrade|Nft).*',
         });
 
-        it('works when reinitialized with the same impl', async () => {
-          await AssociatedSystemsModule.connect(owner).initOrUpgradeNft(
-            registeredName,
-            'A Token',
-            'TOK',
-            'https://vitalik.ca',
-            newRouterAddress()
-          );
+        before('reinit', async () => {
+          receipt = await (
+            await AssociatedSystemsModule.connect(owner).initOrUpgradeNft(
+              registeredName,
+              'A Token',
+              'TOK',
+              'https://vitalik.ca',
+              newRouterAddress()
+            )
+          ).wait();
+        });
 
+        it('works when reinitialized with the same impl', async () => {
           const [newProxyAddress] = await AssociatedSystemsModule.getAssociatedSystem(
             registeredName
           );
 
           assert.equal(newProxyAddress, NftModuleAssociated.address);
+        });
+
+        it('emitted event', async () => {
+          const event = findEvent({ receipt, eventName: 'AssociatedSystemSet' });
+
+          assert.ok(event);
+          assert.equal(event.args.kind, toBytes32('erc721'));
+          assert.equal(event.args.id, registeredName);
+          assert.equal(event.args.proxy, NftModuleAssociated.address);
+          assert.equal(event.args.impl, newRouterAddress());
         });
       });
     });

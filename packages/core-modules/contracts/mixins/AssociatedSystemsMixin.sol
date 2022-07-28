@@ -8,6 +8,8 @@ import "../interfaces/ITokenModule.sol";
 import "../interfaces/INftModule.sol";
 
 contract AssociatedSystemsMixin is AssociatedSystemsStorage {
+    error MismatchAssociatedSystemKind(bytes32 expected, bytes32 actual);
+
     bytes32 internal constant _KIND_ERC20 = "erc20";
     bytes32 internal constant _KIND_ERC721 = "erc721";
     bytes32 internal constant _KIND_UNMANAGED = "unmanaged";
@@ -24,7 +26,10 @@ contract AssociatedSystemsMixin is AssociatedSystemsStorage {
 
     function _requireKind(bytes32 id, bytes32 kind) internal view {
         bytes32 actualKind = _associatedSystemsStore().satellites[id].kind;
-        require(actualKind == kind || actualKind == _KIND_UNMANAGED, "system kind doesn't match");
+
+        if (actualKind != kind && actualKind != _KIND_UNMANAGED) {
+            revert MismatchAssociatedSystemKind(kind, actualKind);
+        }
     }
 
     modifier onlyIfAssociated(bytes32 id) {

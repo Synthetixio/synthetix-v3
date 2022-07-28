@@ -26,9 +26,12 @@ contract AssociatedSystemsModule is IAssociatedSystemsModule, OwnableMixin, Asso
 
             store.satellites[id].impl = impl;
 
+            address proxy = store.satellites[id].proxy;
+
             // tell the associated proxy to upgrade to the new implementation
-            IUUPSImplementation(store.satellites[id].proxy).upgradeTo(impl);
-            emit AssociatedSystemUpgraded(id, store.satellites[id].proxy, store.satellites[id].impl);
+            IUUPSImplementation(proxy).upgradeTo(impl);
+
+            _setAssociatedSystem(id, _KIND_ERC20, proxy, impl);
         } else {
             // create a new proxy and own it
             address proxy = address(new UUPSProxy(impl));
@@ -36,9 +39,7 @@ contract AssociatedSystemsModule is IAssociatedSystemsModule, OwnableMixin, Asso
             IOwnerModule(proxy).initializeOwnerModule(address(this));
             ITokenModule(proxy).initialize(name, symbol, decimals);
 
-            store.satellites[id] = AssociatedSystem(proxy, impl, _KIND_ERC20);
-
-            emit AssociatedSystemUpgraded(id, proxy, impl);
+            _setAssociatedSystem(id, _KIND_ERC20, proxy, impl);
         }
     }
 
@@ -54,11 +55,12 @@ contract AssociatedSystemsModule is IAssociatedSystemsModule, OwnableMixin, Asso
         if (store.satellites[id].proxy != address(0)) {
             _requireKind(id, _KIND_ERC721);
 
-            store.satellites[id].impl = impl;
+            address proxy = store.satellites[id].proxy;
 
             // tell the associated proxy to upgrade to the new implementation
-            IUUPSImplementation(store.satellites[id].proxy).upgradeTo(impl);
-            emit AssociatedSystemUpgraded(id, store.satellites[id].proxy, store.satellites[id].impl);
+            IUUPSImplementation(proxy).upgradeTo(impl);
+
+            _setAssociatedSystem(id, _KIND_ERC721, proxy, impl);
         } else {
             // create a new proxy and own it
             address proxy = address(new UUPSProxy(impl));
@@ -66,9 +68,7 @@ contract AssociatedSystemsModule is IAssociatedSystemsModule, OwnableMixin, Asso
             IOwnerModule(proxy).initializeOwnerModule(address(this));
             INftModule(proxy).initialize(name, symbol, uri);
 
-            store.satellites[id] = AssociatedSystem(proxy, impl, _KIND_ERC721);
-
-            emit AssociatedSystemUpgraded(id, proxy, impl);
+            _setAssociatedSystem(id, _KIND_ERC721, proxy, impl);
         }
     }
 
@@ -83,7 +83,17 @@ contract AssociatedSystemsModule is IAssociatedSystemsModule, OwnableMixin, Asso
         // empty string require kind will make sure the system is either unregistered or already unmanaged
         _requireKind(id, "");
 
-        _associatedSystemsStore().satellites[id] = AssociatedSystem(endpoint, endpoint, _KIND_UNMANAGED);
+        _setAssociatedSystem(id, _KIND_UNMANAGED, endpoint, endpoint);
+    }
+
+    function _setAssociatedSystem(
+        bytes32 id,
+        bytes32 kind,
+        address proxy,
+        address impl
+    ) internal {
+        _associatedSystemsStore().satellites[id] = AssociatedSystem(proxy, impl, kind);
+        emit AssociatedSystemSet(kind, id, proxy, impl);
     }
 
     function getAssociatedSystem(bytes32 id) external view override returns (address proxy, bytes32 kind) {
@@ -91,6 +101,5 @@ contract AssociatedSystemsModule is IAssociatedSystemsModule, OwnableMixin, Asso
         kind = _associatedSystemsStore().satellites[id].kind;
     }
 
-    event AssociatedSystemCreated(bytes32 indexed id, address proxy, address impl);
-    event AssociatedSystemUpgraded(bytes32 indexed id, address proxy, address impl);
+    event AssociatedSystemSet(bytes32 indexed kind, bytes32 indexed id, address proxy, address impl);
 }
