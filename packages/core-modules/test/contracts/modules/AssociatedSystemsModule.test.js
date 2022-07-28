@@ -7,7 +7,9 @@ const initializer = require('@synthetixio/core-modules/test/helpers/initializer'
 const toBytes32 = ethers.utils.formatBytes32String;
 
 describe('AssociatedSystemsModule', () => {
-  const { proxyAddress } = bootstrap(initializer, { modules: '.*(Owner|Upgrade|AssociatedSystems).*' });
+  const { proxyAddress } = bootstrap(initializer, {
+    modules: '.*(Owner|Upgrade|AssociatedSystems).*',
+  });
 
   let AssociatedSystemsModule;
   let owner, user;
@@ -22,11 +24,20 @@ describe('AssociatedSystemsModule', () => {
 
   describe('registerUnmanagedSystem()', async () => {
     it('only callable by owner', async () => {
-      await assertRevert(AssociatedSystemsModule.connect(user).registerUnmanagedSystem(toBytes32('wohoo'), owner.address), 'Unauthorized');
+      await assertRevert(
+        AssociatedSystemsModule.connect(user).registerUnmanagedSystem(
+          toBytes32('wohoo'),
+          owner.address
+        ),
+        'Unauthorized'
+      );
     });
 
     it('registers unmanaged', async () => {
-      await AssociatedSystemsModule.connect(owner).registerUnmanagedSystem(toBytes32('wohoo'), owner.address);
+      await AssociatedSystemsModule.connect(owner).registerUnmanagedSystem(
+        toBytes32('wohoo'),
+        owner.address
+      );
 
       const [addr, kind] = await AssociatedSystemsModule.getAssociatedSystem(toBytes32('wohoo'));
       assert.equal(addr, owner.address);
@@ -34,8 +45,14 @@ describe('AssociatedSystemsModule', () => {
     });
 
     it('reregisters unmanaged', async () => {
-      await AssociatedSystemsModule.connect(owner).registerUnmanagedSystem(toBytes32('wohoo'), owner.address);
-      await AssociatedSystemsModule.connect(owner).registerUnmanagedSystem(toBytes32('wohoo'), user.address);
+      await AssociatedSystemsModule.connect(owner).registerUnmanagedSystem(
+        toBytes32('wohoo'),
+        owner.address
+      );
+      await AssociatedSystemsModule.connect(owner).registerUnmanagedSystem(
+        toBytes32('wohoo'),
+        user.address
+      );
 
       const [addr, kind] = await AssociatedSystemsModule.getAssociatedSystem(toBytes32('wohoo'));
       assert.equal(addr, user.address);
@@ -45,26 +62,32 @@ describe('AssociatedSystemsModule', () => {
 
   describe('initOrUpgradeToken()', async () => {
     it('only callable by owner', async () => {
-      await assertRevert(AssociatedSystemsModule.connect(user).initOrUpgradeToken(
-        toBytes32('hello'),
-        'A Token',
-        'TOK',
-        18,
-        owner.address
-      ), 'Unauthorized');
+      await assertRevert(
+        AssociatedSystemsModule.connect(user).initOrUpgradeToken(
+          toBytes32('hello'),
+          'A Token',
+          'TOK',
+          18,
+          owner.address
+        ),
+        'Unauthorized'
+      );
     });
 
     describe('when adding TokenModule associated system', () => {
-      const { proxyAddress: tokenProxyAddress, routerAddress: tokenRouterAddress } = bootstrap(initializer, { modules: '.*(Owner|Upgrade|Token).*' });
-  
+      const { proxyAddress: tokenProxyAddress, routerAddress: tokenRouterAddress } = bootstrap(
+        initializer,
+        { modules: '.*(Owner|Upgrade|Token).*' }
+      );
+
       let TokenModule, TokenModuleAssociated, OwnerModuleAssociated;
-  
+
       const registeredName = toBytes32('Token');
-  
+
       before('identify modules', async () => {
         TokenModule = await ethers.getContractAt('TokenModule', tokenProxyAddress());
       });
-  
+
       before('registration', async () => {
         await AssociatedSystemsModule.connect(owner).initOrUpgradeToken(
           registeredName,
@@ -73,20 +96,20 @@ describe('AssociatedSystemsModule', () => {
           18,
           tokenRouterAddress()
         );
-  
+
         const [proxyAddress] = await AssociatedSystemsModule.getAssociatedSystem(registeredName);
-  
+
         TokenModuleAssociated = await ethers.getContractAt('TokenModule', proxyAddress);
         OwnerModuleAssociated = await ethers.getContractAt('OwnerModule', proxyAddress);
       });
-  
+
       it('has initialized the token', async () => {
         assert.equal(await TokenModuleAssociated.isInitialized(), true);
         assert.equal(await TokenModuleAssociated.name(), 'A Token');
         assert.equal(await TokenModuleAssociated.symbol(), 'TOK');
         assert.equal(await TokenModuleAssociated.decimals(), 18);
       });
-  
+
       // TODO: `owner()` call is returning a (literally)
       // random address. no idea what is going on with that
       // you know the system is the owner because the
@@ -94,13 +117,16 @@ describe('AssociatedSystemsModule', () => {
       it.skip('is owner of the token', async () => {
         assert.equal(await OwnerModuleAssociated.owner(), proxyAddress());
       });
-  
-      it ('should not affect existing proxy', async () => {
+
+      it('should not affect existing proxy', async () => {
         assert.equal(await TokenModule.isInitialized(), false);
       });
 
       describe('when new impl for TokenModule associated system', () => {
-        const { routerAddress: newRouterAddress } = bootstrap(initializer, { instance: 'anothernft', modules: '.*(Owner|Upgrade|Nft).*' });
+        const { routerAddress: newRouterAddress } = bootstrap(initializer, {
+          instance: 'anothernft',
+          modules: '.*(Owner|Upgrade|Nft).*',
+        });
 
         it('works when reinitialized with the same impl', async () => {
           await AssociatedSystemsModule.connect(owner).initOrUpgradeToken(
@@ -110,9 +136,11 @@ describe('AssociatedSystemsModule', () => {
             18,
             newRouterAddress()
           );
-    
-          const [newProxyAddress] = await AssociatedSystemsModule.getAssociatedSystem(registeredName);
-    
+
+          const [newProxyAddress] = await AssociatedSystemsModule.getAssociatedSystem(
+            registeredName
+          );
+
           assert.equal(newProxyAddress, TokenModuleAssociated.address);
         });
       });
@@ -121,26 +149,32 @@ describe('AssociatedSystemsModule', () => {
 
   describe('initOrUpgradeNft()', () => {
     it('only callable by owner', async () => {
-      await assertRevert(AssociatedSystemsModule.connect(user).initOrUpgradeNft(
-        toBytes32('hello'),
-        'A Token',
-        'TOK',
-        18,
-        owner.address
-      ), 'Unauthorized');
+      await assertRevert(
+        AssociatedSystemsModule.connect(user).initOrUpgradeNft(
+          toBytes32('hello'),
+          'A Token',
+          'TOK',
+          18,
+          owner.address
+        ),
+        'Unauthorized'
+      );
     });
 
     describe('when adding NftModule associated system', () => {
-      const { proxyAddress: nftProxyAddress, routerAddress: nftRouterAddress } = bootstrap(initializer, { modules: '.*(Owner|Upgrade|Nft).*' });
-  
+      const { proxyAddress: nftProxyAddress, routerAddress: nftRouterAddress } = bootstrap(
+        initializer,
+        { modules: '.*(Owner|Upgrade|Nft).*' }
+      );
+
       let NftModule, NftModuleAssociated, OwnerModuleAssociated;
-  
+
       const registeredName = toBytes32('Token');
-  
+
       before('identify modules', async () => {
         NftModule = await ethers.getContractAt('NftModule', nftProxyAddress());
       });
-  
+
       before('registration', async () => {
         await AssociatedSystemsModule.connect(owner).initOrUpgradeNft(
           registeredName,
@@ -149,13 +183,13 @@ describe('AssociatedSystemsModule', () => {
           'https://vitalik.ca',
           nftRouterAddress()
         );
-  
+
         const [proxyAddress] = await AssociatedSystemsModule.getAssociatedSystem(registeredName);
-  
+
         NftModuleAssociated = await ethers.getContractAt('NftModule', proxyAddress);
         OwnerModuleAssociated = await ethers.getContractAt('OwnerModule', proxyAddress);
       });
-  
+
       it('has initialized the token', async () => {
         assert.equal(await NftModuleAssociated.isInitialized(), true);
         assert.equal(await NftModuleAssociated.name(), 'A Token');
@@ -165,7 +199,7 @@ describe('AssociatedSystemsModule', () => {
         // we currently cannot do easily
         //assert.equal(await NftModuleAssociated.tokenURI(), 'https://vitalik.ca');
       });
-  
+
       // TODO: `owner()` call is returning a (literally)
       // random address. no idea what is going on with that
       // you know the system is the owner because the
@@ -173,13 +207,16 @@ describe('AssociatedSystemsModule', () => {
       it.skip('is owner of the token', async () => {
         assert.equal(await OwnerModuleAssociated.owner(), proxyAddress());
       });
-  
-      it ('should not affect existing proxy', async () => {
+
+      it('should not affect existing proxy', async () => {
         assert.equal(await NftModule.isInitialized(), false);
       });
 
       describe('when new impl for NftModule associated system', () => {
-        const { routerAddress: newRouterAddress } = bootstrap(initializer, { instance: 'anothernft', modules: '.*(Owner|Upgrade|Nft).*' });
+        const { routerAddress: newRouterAddress } = bootstrap(initializer, {
+          instance: 'anothernft',
+          modules: '.*(Owner|Upgrade|Nft).*',
+        });
 
         it('works when reinitialized with the same impl', async () => {
           await AssociatedSystemsModule.connect(owner).initOrUpgradeNft(
@@ -189,9 +226,11 @@ describe('AssociatedSystemsModule', () => {
             'https://vitalik.ca',
             newRouterAddress()
           );
-    
-          const [newProxyAddress] = await AssociatedSystemsModule.getAssociatedSystem(registeredName);
-    
+
+          const [newProxyAddress] = await AssociatedSystemsModule.getAssociatedSystem(
+            registeredName
+          );
+
           assert.equal(newProxyAddress, NftModuleAssociated.address);
         });
       });

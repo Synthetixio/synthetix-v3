@@ -4,7 +4,7 @@ const assertRevert = require('@synthetixio/core-js/utils/assertions/assert-rever
 const { bootstrap } = require('@synthetixio/deployer/utils/tests');
 const initializer = require('@synthetixio/core-modules/test/helpers/initializer');
 
-describe.only('NftModule', () => {
+describe('NftModule', () => {
   const { proxyAddress } = bootstrap(initializer, { modules: '.*(Owner|Upgrade|Nft).*' });
 
   let NftModule;

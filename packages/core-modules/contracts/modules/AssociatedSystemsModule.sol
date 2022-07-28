@@ -12,7 +12,13 @@ import "../interfaces/ITokenModule.sol";
 import "../interfaces/INftModule.sol";
 
 contract AssociatedSystemsModule is IAssociatedSystemsModule, OwnableMixin, AssociatedSystemsMixin {
-    function initOrUpgradeToken(bytes32 id, string memory name, string memory symbol, uint8 decimals, address impl) external override onlyOwner {
+    function initOrUpgradeToken(
+        bytes32 id,
+        string memory name,
+        string memory symbol,
+        uint8 decimals,
+        address impl
+    ) external override onlyOwner {
         AssociatedSystemsStore storage store = _associatedSystemsStore();
 
         if (store.satellites[id].proxy != address(0)) {
@@ -23,8 +29,7 @@ contract AssociatedSystemsModule is IAssociatedSystemsModule, OwnableMixin, Asso
             // tell the associated proxy to upgrade to the new implementation
             IUUPSImplementation(store.satellites[id].proxy).upgradeTo(impl);
             emit AssociatedSystemUpgraded(id, store.satellites[id].proxy, store.satellites[id].impl);
-        }
-        else {
+        } else {
             // create a new proxy and own it
             address proxy = address(new UUPSProxy(impl));
 
@@ -37,7 +42,13 @@ contract AssociatedSystemsModule is IAssociatedSystemsModule, OwnableMixin, Asso
         }
     }
 
-    function initOrUpgradeNft(bytes32 id, string memory name, string memory symbol, string memory uri, address impl) external override onlyOwner {
+    function initOrUpgradeNft(
+        bytes32 id,
+        string memory name,
+        string memory symbol,
+        string memory uri,
+        address impl
+    ) external override onlyOwner {
         AssociatedSystemsStore storage store = _associatedSystemsStore();
 
         if (store.satellites[id].proxy != address(0)) {
@@ -48,8 +59,7 @@ contract AssociatedSystemsModule is IAssociatedSystemsModule, OwnableMixin, Asso
             // tell the associated proxy to upgrade to the new implementation
             IUUPSImplementation(store.satellites[id].proxy).upgradeTo(impl);
             emit AssociatedSystemUpgraded(id, store.satellites[id].proxy, store.satellites[id].impl);
-        }
-        else {
+        } else {
             // create a new proxy and own it
             address proxy = address(new UUPSProxy(impl));
 
@@ -65,7 +75,7 @@ contract AssociatedSystemsModule is IAssociatedSystemsModule, OwnableMixin, Asso
     /**
      * sets a token implementation without the corresponding upgrade functionality
      * useful for adaptation of ex. old SNX token. The connected system does not need to be
-     * 
+     *
      * *NOTE:* the contract you are connecting should still be owned by your dao. The
      * system is not expected to be able to do upgrades for you.
      */

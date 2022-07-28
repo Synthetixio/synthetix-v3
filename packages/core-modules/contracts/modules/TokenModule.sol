@@ -8,7 +8,6 @@ import "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
 import "../interfaces/ITokenModule.sol";
 
 contract TokenModule is ITokenModule, ERC20, InitializableMixin, OwnableMixin {
-
     function _isInitialized() internal view override returns (bool) {
         return _erc20Store().decimals != 0;
     }

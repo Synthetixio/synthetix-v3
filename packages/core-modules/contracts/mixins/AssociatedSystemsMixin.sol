@@ -24,7 +24,7 @@ contract AssociatedSystemsMixin is AssociatedSystemsStorage {
 
     function _requireKind(bytes32 id, bytes32 kind) internal view {
         bytes32 actualKind = _associatedSystemsStore().satellites[id].kind;
-        require(actualKind == kind || actualKind == _KIND_UNMANAGED, "Associated system kind doesn't match");
+        require(actualKind == kind || actualKind == _KIND_UNMANAGED, "system kind doesn't match");
     }
 
     modifier onlyIfAssociated(bytes32 id) {
