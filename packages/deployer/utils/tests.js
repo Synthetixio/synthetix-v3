@@ -10,7 +10,7 @@ function bootstrap(initializer = () => {}, customDeployOptions = {}) {
     ...defaultDeploymentInfo,
     proxyContract: hre.config.deployer.proxyContract,
     network: hre.config.defaultNetwork,
-    instance: 'test',
+    instance: customDeployOptions.instance || 'test',
   };
 
   before('take a snapshot', async () => {

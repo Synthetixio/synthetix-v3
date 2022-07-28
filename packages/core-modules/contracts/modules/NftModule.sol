@@ -1,19 +1,18 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@synthetixio/core-contracts/contracts/proxy/UUPSImplementation.sol";
-import "@synthetixio/core-contracts/contracts/ownership/Ownable.sol";
 import "@synthetixio/core-contracts/contracts/token/ERC721.sol";
 import "@synthetixio/core-contracts/contracts/utils/AddressUtil.sol";
 import "@synthetixio/core-contracts/contracts/initializable/InitializableMixin.sol";
+import "@synthetixio/core-contracts/contracts/ownership/OwnableMixin.sol";
 import "@synthetixio/core-contracts/contracts/errors/AddressError.sol";
 
 import "../storage/NftStorage.sol";
 
 import "../interfaces/INftModule.sol";
 
-contract NftModule is INftModule, ERC721, NftStorage, InitializableMixin, UUPSImplementation, Ownable {
-    event AccountMinted(address owner, uint accountId);
+contract NftModule is INftModule, ERC721, NftStorage, InitializableMixin, OwnableMixin {
+    event Mint(address owner, uint nftId);
 
     // ---------------------------------------
     // Chores
@@ -37,16 +36,12 @@ contract NftModule is INftModule, ERC721, NftStorage, InitializableMixin, UUPSIm
         store.initialized = true;
     }
 
-    function upgradeTo(address newImplementation) public override onlyOwner {
-        _upgradeTo(newImplementation);
-    }
-
     // ---------------------------------------
     // Mint/Transfer
     // ---------------------------------------
-    function mint(address owner, uint256 accountId) external override onlyOwner {
-        _mint(owner, accountId);
+    function mint(address owner, uint256 nftId) external override onlyOwner {
+        _mint(owner, nftId);
 
-        emit AccountMinted(owner, accountId);
+        emit Mint(owner, nftId);
     }
 }

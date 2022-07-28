@@ -1,13 +1,22 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@synthetixio/core-contracts/contracts/proxy/UUPSImplementation.sol";
-import "@synthetixio/core-contracts/contracts/ownership/Ownable.sol";
+import "@synthetixio/core-contracts/contracts/initializable/InitializableMixin.sol";
+import "@synthetixio/core-contracts/contracts/ownership/OwnableMixin.sol";
 import "@synthetixio/core-contracts/contracts/token/ERC20.sol";
 import "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
 import "../interfaces/ITokenModule.sol";
 
-contract TokenModule is ITokenModule, ERC20, UUPSImplementation, Ownable {
+contract TokenModule is ITokenModule, ERC20, InitializableMixin, OwnableMixin {
+
+    function _isInitialized() internal view override returns (bool) {
+        return _erc20Store().decimals != 0;
+    }
+
+    function isInitialized() external view returns (bool) {
+        return _isInitialized();
+    }
+
     function initialize(
         string memory tokenName,
         string memory tokenSymbol,
@@ -16,12 +25,8 @@ contract TokenModule is ITokenModule, ERC20, UUPSImplementation, Ownable {
         _initialize(tokenName, tokenSymbol, tokenDecimals);
     }
 
-    function upgradeTo(address newImplementation) public override onlyOwner {
-        _upgradeTo(newImplementation);
-    }
-
-    function burn(address to, uint256 amount) external override onlyOwner {
-        _burn(to, amount);
+    function burn(address from, uint256 amount) external override onlyOwner {
+        _burn(from, amount);
     }
 
     function mint(address to, uint256 amount) external override onlyOwner {

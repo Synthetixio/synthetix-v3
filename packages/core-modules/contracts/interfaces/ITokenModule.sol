@@ -5,6 +5,10 @@ import "@synthetixio/core-contracts/contracts/interfaces/IERC20.sol";
 
 /// @title ERC20 token for snxUSD
 interface ITokenModule is IERC20 {
+
+    /// @notice returns if `initialize` has been called by the owner
+    function isInitialized() external returns (bool);
+
     /// @notice allows owner to initialize the token after attaching a proxy
     function initialize(
         string memory tokenName,
