@@ -1,6 +1,7 @@
 const assert = require('assert/strict');
-const chalk = require('chalk');
 const { spawn } = require('child_process');
+const { setTimeout } = require('timers/promises');
+const chalk = require('chalk');
 
 // Set these to false on CI
 const SHOW_CLI_OUTPUT = false;
@@ -12,7 +13,7 @@ const INTERACT_DELAY = 1000;
 class CliRunner {
   constructor() {}
 
-  async start() {
+  start() {
     this.errors = [];
     this.buffer = '';
 
@@ -38,27 +39,24 @@ class CliRunner {
 
       this.buffer += str;
     });
+
     this.cliProcess.stderr.on('data', (data) => {
       console.error(data.toString());
 
       this.errors.push(data.toString());
     });
 
-    return new Promise((resolve) => {
-      setTimeout(resolve, START_DELAY);
-    });
+    return setTimeout(START_DELAY);
   }
 
-  async interact(cmd) {
+  interact(cmd) {
     if (SHOW_CLI_INTERACTIONS) {
       console.log(`CLI input: ${cmd}`);
     }
 
     this.cliProcess.stdin.write(cmd);
 
-    return new Promise((resolve) => {
-      setTimeout(resolve, INTERACT_DELAY);
-    });
+    return setTimeout(INTERACT_DELAY);
   }
 
   clear() {
