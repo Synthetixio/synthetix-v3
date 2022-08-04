@@ -9,6 +9,16 @@
 function findEvent({ receipt, eventName, contract = undefined }) {
   let events = receipt.events;
 
+  if (!receipt) {
+    throw new Error(`receipt when searching for event ${eventName} is null/undefined.`);
+  }
+
+  if (!receipt.logs) {
+    throw new Error(
+      `no logs found when searching for event ${eventName}. Did you actually pass a transaction receipt into findEvent?`
+    );
+  }
+
   if (!events || (events.some((e) => e.event === undefined) && contract)) {
     events = parseLogs({ contract, logs: receipt.logs });
   }

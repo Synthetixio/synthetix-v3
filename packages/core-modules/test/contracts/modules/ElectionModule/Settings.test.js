@@ -14,7 +14,7 @@ const initializer = require('@synthetixio/core-modules/test/helpers/initializer'
 const { findEvent } = require('@synthetixio/core-js/utils/ethers/events');
 
 describe('ElectionModule (settings)', () => {
-  const { proxyAddress } = bootstrap(initializer);
+  const { proxyAddress } = bootstrap(initializer, { modules: '.*(Owner|Upgrade|Election).*' });
 
   let ElectionModule;
 

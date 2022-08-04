@@ -8,7 +8,7 @@ const initializer = require('@synthetixio/core-modules/test/helpers/initializer'
 const { runElection, assertDatesAreClose } = require('./helpers/election-helper');
 
 describe('ElectionModule (inspector)', () => {
-  const { proxyAddress } = bootstrap(initializer);
+  const { proxyAddress } = bootstrap(initializer, { modules: '.*(Owner|Upgrade|Election).*' });
 
   let ElectionModule, ElectionInspectorModule;
 

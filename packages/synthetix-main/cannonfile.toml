@@ -1,0 +1,57 @@
+name = "synthetix-main"
+description = "Core synthetix system"
+
+# `salt` here only affects proxy contract
+[setting.salt]
+description = "Change this to a unique string when deploying multiple instances of the system. Note that only the proxy contract will be unique."
+defaultValue = "main"
+
+[setting.owner]
+description = "Admin user for the system"
+defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
+
+[run.deploy_account]
+exec = "scripts/deploy.js"
+func = "deploy"
+args = ["Account", ".*/account/.*"]
+modified = ["contracts/modules/account", "scripts"]
+
+[run.deploy_usd]
+exec = "scripts/deploy.js"
+func = "deploy"
+args = ["USD", ".*/usd/.*"]
+modified = ["contracts/modules/usd", "scripts"]
+
+[run.deploy_esnx]
+exec = "scripts/deploy.js"
+func = "deploy"
+args = ["ESNX", ".*/esnx/.*"]
+modified = ["contracts/modules/esnx", "scripts"]
+
+[run.deploy_core]
+exec = "scripts/deploy.js"
+func = "deploy"
+args = ["Core", ".*/core/.*"]
+modified = ["contracts/modules/core", "scripts"]
+depends = ["run.deploy_account", "run.deploy_usd", "run.deploy_esnx"]
+
+[invoke.init_account]
+target = ["CoreProxy"]
+from = "<%= settings.owner %>"
+func = "initOrUpgradeToken"
+args = ["<%= contracts.AccountProxy.address %>"]
+depends = ["run.deploy_core"]
+
+[invoke.init_usd]
+target = ["CoreProxy"]
+from = "<%= settings.owner %>"
+func = "initOrUpgradeToken"
+args = ["<%= contracts.USDProxy.address %>"]
+depends = ["run.deploy_core"]
+
+[invoke.init_esnx]
+target = ["CoreProxy"]
+from = "<%= settings.owner %>"
+func = "initOrUpgradeToken"
+args = ["<%= contracts.ESNXProxy.address %>"]
+depends = ["run.deploy_core"]

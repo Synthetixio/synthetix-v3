@@ -81,14 +81,15 @@ function contractIsInSources(contractSourcePath) {
 /**
  * Get the list of all modules fully qualified names.
  *   e.g.: ['contracts/modules/SomeModule.sol:SomeModule', ...]
- * @returns {string[]}
+ * @param filters RegExp to match for module inclusion
+ * @returns {string[]} fqn of all matching modules
  */
-async function getModulesFullyQualifiedNames() {
+async function getModulesFullyQualifiedNames(filter = /.*/) {
   const names = await hre.artifacts.getAllFullyQualifiedNames();
 
   return names.filter((name) => {
     const { sourceName } = parseFullyQualifiedName(name);
-    return contractIsModule(sourceName);
+    return contractIsModule(sourceName) && name.match(filter);
   });
 }
 

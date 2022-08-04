@@ -17,7 +17,6 @@ module.exports = {
   SUBTASK_SYNC_PROXY: 'deployer-sync-proxy',
   SUBTASK_SYNC_SOURCES: 'deployer-sync-sources',
   SUBTASK_UPGRADE_PROXY: 'deployer-upgrade-proxy',
-  SUBTASK_VALIDATE_INITIALIZABLES: 'deployer-validate-initializables',
   SUBTASK_VALIDATE_INTERFACES: 'deployer-validate-interfaces',
   SUBTASK_VALIDATE_MODULES: 'deployer-validate-modules',
   SUBTASK_VALIDATE_ROUTER: 'deployer-validate-router',

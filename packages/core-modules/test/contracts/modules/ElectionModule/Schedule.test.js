@@ -15,7 +15,7 @@ const { ElectionPeriod, assertDatesAreClose } = require('./helpers/election-help
 const { findEvent } = require('@synthetixio/core-js/utils/ethers/events');
 
 describe('ElectionModule (schedule)', () => {
-  const { proxyAddress } = bootstrap(initializer);
+  const { proxyAddress } = bootstrap(initializer, { modules: '.*(Owner|Upgrade|Election).*' });
 
   let ElectionModule;
 
