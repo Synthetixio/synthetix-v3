@@ -1,11 +1,8 @@
 {
   "name": "@synthetixio/main",
   "version": "1.0.0",
-  "description": "",
-  "files": [
-    "contracts",
-    "!contracts/mocks"
-  ],
+  "description": "Core Synthetix Protocol Contracts",
+  "private": true,
   "scripts": {
     "test": "hardhat test",
     "coverage": "hardhat coverage",

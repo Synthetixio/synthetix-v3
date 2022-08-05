@@ -13,11 +13,13 @@ const { SUBTASK_SYNC_SOURCES } = require('../task-names');
 subtask(
   SUBTASK_SYNC_SOURCES,
   'Synchronizes the deployment file with the latest module sources.'
-).setAction(async (_, hre) => {
+).setAction(async ({ modules }, hre) => {
   logger.subtitle('Syncing solidity sources with deployment data');
 
   const { previousDeployment } = hre.deployer;
-  const modulesFullyQualifiedNames = await getModulesFullyQualifiedNames();
+  const modulesFullyQualifiedNames = await getModulesFullyQualifiedNames(
+    modules ? new RegExp(modules) : /.*/
+  );
 
   const removed = await _removeDeletedSources({ modulesFullyQualifiedNames, previousDeployment });
   const added = await _addNewSources({ modulesFullyQualifiedNames, previousDeployment });

@@ -2,7 +2,7 @@
   "name": "synthetix-v3",
   "version": "3.0.0",
   "private": true,
-  "description": "",
+  "description": "Mono Repo with Contracts and JS tooling",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Synthetixio/synthetix-v3.git"
@@ -10,8 +10,7 @@
   "bugs": {
     "url": "https://github.com/Synthetixio/synthetix-v3/issues"
   },
-  "keywords": [],
-  "author": "",
+  "author": "Synthetix",
   "license": "MIT",
   "homepage": "https://github.com/Synthetixio/synthetix-v3#readme",
   "scripts": {
@@ -26,6 +25,16 @@
     "lint": "npm run lint:js && npm run lint:sol",
     "check-packages": "bin/check-packages"
   },
+  "devDependencies": {
+    "eslint": "7.32.0",
+    "eslint-plugin-no-only-tests": "2.6.0",
+    "hardhat": "2.9.3",
+    "pre-commit": "1.2.2",
+    "prettier": "2.3.2",
+    "prettier-plugin-solidity": "1.0.0-beta.17",
+    "pretty-quick": "3.1.1",
+    "solhint": "3.3.6"
+  },
   "pre-commit": [
     "lint:quick",
     "check-packages"
@@ -36,16 +45,5 @@
   "engines": {
     "node": "16.8.0",
     "npm": "7.21.0"
-  },
-  "devDependencies": {
-    "dotenv": "10.0.0",
-    "eslint": "7.32.0",
-    "eslint-plugin-no-only-tests": "2.6.0",
-    "hardhat": "2.9.3",
-    "pre-commit": "1.2.2",
-    "prettier": "2.3.2",
-    "prettier-plugin-solidity": "1.0.0-beta.17",
-    "pretty-quick": "3.1.1",
-    "solhint": "3.3.6"
   }
 }

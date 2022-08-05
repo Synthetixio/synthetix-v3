@@ -25,7 +25,9 @@ subtask(
   const astErrorsFound = await _runASTValidations(routerFullyQualifiedName);
 
   if (sourceErrorsFound.length > 0 || astErrorsFound.length > 0) {
-    throw new ContractValidationError('Router is not valid');
+    throw new ContractValidationError(
+      `Router is not valid: ${JSON.stringify(sourceErrorsFound)}, ${JSON.stringify(astErrorsFound)}`
+    );
   }
 
   logger.checked('Router is valid');

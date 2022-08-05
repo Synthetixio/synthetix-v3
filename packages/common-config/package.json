@@ -1,0 +1,14 @@
+{
+  "name": "@synthetixio/common-config",
+  "version": "1.0.0",
+  "description": "Common configuration used by all Hardhat packages",
+  "private": true,
+  "scripts": {},
+  "devDependencies": {
+    "@nomiclabs/hardhat-ethers": "2.0.5",
+    "dotenv": "16.0.1",
+    "hardhat": "2.9.3",
+    "hardhat-contract-sizer": "2.1.1",
+    "solidity-coverage": "0.7.17"
+  }
+}

@@ -16,10 +16,18 @@ subtask(
     const [currentDeploymentFile] = getAllDeploymentFiles({ network: hre.network.name, instance });
     const extendedFile = getDeploymentExtendedFiles(currentDeploymentFile);
 
-    const info = JSON.parse(fs.readFileSync(currentDeploymentFile));
-    const abis = JSON.parse(fs.readFileSync(extendedFile.abis));
+    let info = {};
+    let abis = null;
+
+    if (fs.existsSync(extendedFile.abis)) {
+      info = JSON.parse(fs.readFileSync(currentDeploymentFile));
+      abis = JSON.parse(fs.readFileSync(extendedFile.abis));
+    }
 
     return {
+      folder: hre.config.deployer.paths.deployments,
+      network: hre.network.name,
+      instance,
       info,
       abis,
     };

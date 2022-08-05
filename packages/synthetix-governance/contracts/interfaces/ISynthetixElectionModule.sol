@@ -27,10 +27,10 @@ interface ISynthetixElectionModule is IBaseElectionModule {
     function getDebtShareContract() external view returns (address);
 
     /// @notice Sets the Synthetix v2 DebtShare snapshot that determines vote power for this epoch
-    function setDebtShareSnapshotId(uint128 snapshotId) external;
+    function setDebtShareSnapshotId(uint snapshotId) external;
 
     /// @notice Returns the Synthetix v2 DebtShare snapshot id set for this epoch
-    function getDebtShareSnapshotId() external view returns (uint128);
+    function getDebtShareSnapshotId() external view returns (uint);
 
     /// @notice Returns the Synthetix v2 debt share for the provided address, at this epoch's snapshot
     function getDebtShare(address user) external view returns (uint);

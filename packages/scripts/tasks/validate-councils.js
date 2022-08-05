@@ -1,50 +1,12 @@
 const path = require('path');
 const assert = require('assert/strict');
-const { equal } = require('assert/strict');
 const { task } = require('hardhat/config');
 const logger = require('@synthetixio/core-js/utils/io/logger');
+const { formatDate, fromUnixTimestamp } = require('@synthetixio/core-js/utils/misc/dates');
 const types = require('@synthetixio/core-js/utils/hardhat/argument-types');
-const { SUBTASK_GET_MULTICALL_ABI } = require('@synthetixio/deployer/task-names');
 const { getDeployment, getDeploymentAbis } = require('@synthetixio/deployer/utils/deployments');
-
-const councils = [
-  {
-    name: 'ambassador-council',
-    owner: '0xDe910777C787903F78C89e7a0bf7F4C435cBB1Fe',
-    nominationPeriodStartDate: date('2022-06-10'),
-    votingPeriodStartDate: date('2022-06-17'),
-    epochEndDate: date('2022-07-01'),
-    councilTokenName: 'Synthetix Ambassador Council Token',
-    councilTokenSymbol: 'SNX-ACT',
-  },
-  {
-    name: 'grants-council',
-    owner: '0xDe910777C787903F78C89e7a0bf7F4C435cBB1Fe',
-    nominationPeriodStartDate: date('2022-06-10'),
-    votingPeriodStartDate: date('2022-06-17'),
-    epochEndDate: date('2022-07-01'),
-    councilTokenName: 'Synthetix Grants Council Token',
-    councilTokenSymbol: 'SNX-GCT',
-  },
-  {
-    name: 'spartan-council',
-    owner: '0xDe910777C787903F78C89e7a0bf7F4C435cBB1Fe',
-    nominationPeriodStartDate: date('2022-06-10'),
-    votingPeriodStartDate: date('2022-06-17'),
-    epochEndDate: date('2022-07-01'),
-    councilTokenName: 'Synthetix Spartan Council Token',
-    councilTokenSymbol: 'SNX-SCT',
-  },
-  {
-    name: 'treasury-council',
-    owner: '0xDe910777C787903F78C89e7a0bf7F4C435cBB1Fe',
-    nominationPeriodStartDate: date('2022-06-10'),
-    votingPeriodStartDate: date('2022-06-17'),
-    epochEndDate: date('2022-07-01'),
-    councilTokenName: 'Synthetix Treasury Council Token',
-    councilTokenSymbol: 'SNX-TCT',
-  },
-];
+const getPackageProxy = require('../internal/get-package-proxy');
+const importJson = require('../internal/import-json');
 
 task('validate-councils')
   .addOptionalParam(
@@ -53,12 +15,45 @@ task('validate-councils')
     'official',
     types.alphanumeric
   )
-  .setAction(async ({ instance }, hre) => {
-    logger.notice(`Validating councils on network "${hre.network.name}"`);
+  .addParam('epoch', 'Epoch index to validate', undefined, types.int)
+  .setAction(async ({ instance, epoch }, hre) => {
+    epoch = Number(epoch);
+
+    logger.info(`Validating councils on network "${hre.network.name}" (${hre.network.config.url})`);
+
+    const councils = await importJson(`${__dirname}/../data/councils-epoch-${epoch}.json`);
 
     for (const council of councils) {
+      logger.subtitle(`Validating ${council.name}`);
+
       try {
-        await validateCouncil({ instance }, council, hre);
+        const info = {
+          network: hre.network.name,
+          instance,
+          folder: path.join(__dirname, '..', '..', council.name, 'deployments'),
+        };
+
+        // Retrieve Council contract
+        const Council = await getPackageProxy(hre, council.name, instance);
+        logger.info(`Council Address: ${Council.address}`);
+
+        // Retrieve Token contract
+        const councilTokenAddress = await Council.getCouncilToken();
+        const abis = getDeploymentAbis(info);
+        const Token = await hre.ethers.getContractAt(
+          abis['@synthetixio/core-modules/contracts/tokens/CouncilToken.sol:CouncilToken'],
+          councilTokenAddress
+        );
+        logger.info(`Token Address: ${Token.address}`);
+
+        // Check Deployment Status
+        const deployment = getDeployment(info);
+        assert(deployment.properties.completed, `Deployment of ${council.name} is not completed`);
+        logger.success('Deployment complete');
+
+        await validateCouncil({ Council, council });
+
+        await validateCouncilToken({ Token, council });
       } catch (err) {
         console.error(err);
         logger.error(`Council "${council.name}" is not valid`);
@@ -66,55 +61,169 @@ task('validate-councils')
     }
   });
 
-async function validateCouncil({ instance }, council, hre) {
-  logger.subtitle(`Validating ${council.name}`);
+async function validateCouncil({ Council, council }) {
+  logger.info('Council validations:');
 
-  const info = {
-    network: hre.network.name,
-    instance,
-    folder: path.join(__dirname, '..', '..', council.name, 'deployments'),
-  };
+  await validate({
+    action: Council.isOwnerModuleInitialized(),
+    expectedResult: true,
+    validation: (result, expectedResult) => result === expectedResult,
+    successFn: (result) => logger.success(`OwnerModule is initialized: ${result}`),
+    errorFn: (result, expected) =>
+      logger.error(
+        `Was expecting OwnerModule.isOwnerModuleInitialized to be ${expected}, but received ${result}`
+      ),
+  });
 
-  const deployment = getDeployment(info);
-  const abis = getDeploymentAbis(info);
+  await validate({
+    action: Council.isElectionModuleInitialized(),
+    expectedResult: true,
+    validation: (result, expectedResult) => result === expectedResult,
+    successFn: (result) => logger.success(`ElectionModule is initialized: ${result}`),
+    errorFn: (result, expected) =>
+      logger.error(
+        `Was expecting ElectionModule.isElectionModuleInitialized to be ${expected}, but received ${result}`
+      ),
+  });
 
-  const { deployedAddress } = Object.values(deployment.contracts).find((c) => c.isProxy);
+  await validate({
+    action: Council.getEpochIndex(),
+    expectedResult: council.epochIndex,
+    validation: (result, expectedResult) => result.toString() === expectedResult,
+    successFn: (result) => logger.success(`Epoch index is: ${result}`),
+    errorFn: (result, expected) =>
+      logger.error(`Was expecting epoch index to be ${expected}, but received ${result}`),
+  });
 
-  logger.info(`Proxy Address: ${deployedAddress}`);
+  await validate({
+    action: Council.getCurrentPeriod(),
+    expectedResult: council.currentPeriod,
+    validation: (result, expectedResult) => result.toString() === expectedResult,
+    successFn: (result) => logger.success(`Current period is: ${result}`),
+    errorFn: (result, expected) =>
+      logger.error(`Was expecting current period to be ${expected}, but received ${result}`),
+  });
 
-  const abi = await hre.run(SUBTASK_GET_MULTICALL_ABI, { info });
-  const Proxy = await hre.ethers.getContractAt(abi, deployedAddress);
+  await validate({
+    action: Council.owner(),
+    expectedResult: council.owner,
+    validation: (result, expectedResult) => result === expectedResult,
+    successFn: (result) => logger.success(`Owner is: ${result}`),
+    errorFn: (result, expected) =>
+      logger.error(`Was expecting owner to be ${expected}, but received ${result}`),
+  });
 
-  assert(deployment.properties.completed, `Deployment of ${council.name} is not completed`);
-  logger.success('Deployment complete');
+  await validate({
+    action: Council.nominatedOwner(),
+    expectedResult: council.nominatedOwner,
+    validation: (result, expectedResult) => result === expectedResult,
+    successFn: (result) => logger.success(`Nominated owner is: ${result}`),
+    errorFn: (result, expected) =>
+      logger.error(`Was expecting nominated owner to be ${expected}, but received ${result}`),
+  });
 
-  await expect(Proxy, 'isOwnerModuleInitialized', true);
-  await expect(Proxy, 'owner', council.owner);
+  await validate({
+    action: Council.getNextEpochSeatCount(),
+    expectedResult: council.nextEpochSeatCount,
+    validation: (result, expectedResult) => result.toString() === expectedResult,
+    successFn: (result) => logger.success(`Next epoch seat count is: ${result}`),
+    errorFn: (result, expected) =>
+      logger.error(`Was expecting next epoch seat count to be ${expected}, but received ${result}`),
+  });
 
-  await expect(Proxy, 'isElectionModuleInitialized', true);
-  await expect(Proxy, 'isElectionModuleInitialized', true);
-  await expect(Proxy, 'getNominationPeriodStartDate', council.nominationPeriodStartDate);
-  await expect(Proxy, 'getVotingPeriodStartDate', council.votingPeriodStartDate);
-  await expect(Proxy, 'getEpochEndDate', council.epochEndDate);
+  await validate({
+    action: Council.getCouncilMembers(),
+    expectedResult: council.councilMembers.join(','),
+    validation: (result, expectedResult) => result.toString() === expectedResult,
+    successFn: (result) => logger.success(`Council members are: ${result}`),
+    errorFn: (result, expected) =>
+      logger.error(`Was expecting council members to be ${expected}, but received ${result}`),
+  });
 
-  const councilTokenAddress = await Proxy.getCouncilToken();
-  const Token = await hre.ethers.getContractAt(
-    abis['@synthetixio/core-modules/contracts/tokens/CouncilToken.sol:CouncilToken'],
-    councilTokenAddress
-  );
+  await validate({
+    action: Council.getNominationPeriodStartDate(),
+    expectedResult: council.nominationPeriodStartDate,
+    validation: (result, expectedResult) => readableDate(result) === expectedResult,
+    successFn: (result) =>
+      logger.success(`Nomination period start date is: ${readableDate(result)}`),
+    errorFn: (result, expected) =>
+      logger.error(
+        `Was expecting nomination period start date to be ${expected}, but received ${readableDate(
+          result
+        )}`
+      ),
+  });
 
-  logger.info(`Token Address: ${councilTokenAddress}`);
-  await expect(Token, 'name', council.councilTokenName);
-  await expect(Token, 'symbol', council.councilTokenSymbol);
+  await validate({
+    action: Council.getVotingPeriodStartDate(),
+    expectedResult: council.votingPeriodStartDate,
+    validation: (result, expectedResult) => readableDate(result) === expectedResult,
+    successFn: (result) => logger.success(`Voting period start date is: ${readableDate(result)}`),
+    errorFn: (result, expected) =>
+      logger.error(
+        `Was expecting voting period start date to be ${expected}, but received ${readableDate(
+          result
+        )}`
+      ),
+  });
+
+  await validate({
+    action: Council.getEpochEndDate(),
+    expectedResult: council.epochEndDate,
+    validation: (result, expectedResult) => readableDate(result) === expectedResult,
+    successFn: (result) => logger.success(`Epoch end date is: ${readableDate(result)}`),
+    errorFn: (result, expected) =>
+      logger.error(
+        `Was expecting epoch end date to be ${expected}, but received ${readableDate(result)}`
+      ),
+  });
 }
 
-function date(dateStr) {
-  return new Date(dateStr).valueOf() / 1000;
+async function validateCouncilToken({ Token, council }) {
+  logger.info('CouncilToken validations:');
+
+  await validate({
+    action: Token.name(),
+    expectedResult: council.councilTokenName,
+    validation: (result, expectedResult) => result === expectedResult,
+    successFn: (result) => logger.success(`Council token name is: ${result}`),
+    errorFn: (result, expected) =>
+      logger.error(`Was expecting council token name to be ${expected}, but received ${result}`),
+  });
+
+  await validate({
+    action: Token.symbol(),
+    expectedResult: council.councilTokenSymbol,
+    validation: (result, expectedResult) => result === expectedResult,
+    successFn: (result) => logger.success(`Council token symbol is: ${result}`),
+    errorFn: (result, expected) =>
+      logger.error(`Was expecting council token symbol to be ${expected}, but received ${result}`),
+  });
+
+  for (const address of await council.councilMembers) {
+    await validate({
+      action: Token.balanceOf(address),
+      expectedResult: '1',
+      validation: (result, expectedResult) => result.toString() === expectedResult,
+      successFn: (result) => logger.success(`Token balance of ${address}: ${result}`),
+      errorFn: (result, expected) =>
+        logger.error(
+          `Was expecting token balance of ${address} to be ${expected}, but received ${result.toString()}`
+        ),
+    });
+  }
 }
 
-async function expect(Contract, methodName, expected) {
-  const result = await Contract[methodName]();
-  const actual = typeof expected === 'number' ? Number(result) : result;
-  equal(actual, expected);
-  logger.success(`${methodName} is "${expected}"`);
+function readableDate(timestamp) {
+  return formatDate(fromUnixTimestamp(timestamp));
+}
+
+async function validate({ action, expectedResult, validation, successFn, errorFn }) {
+  const result = await action;
+
+  if (validation(result, expectedResult)) {
+    successFn(result);
+  } else {
+    errorFn(result, expectedResult);
+  }
 }

@@ -1,7 +1,7 @@
 const { subtask } = require('hardhat/config');
 const { SUBTASK_PICK_FUNCTION, SUBTASK_CHECK_INITIALIZATION } = require('../task-names');
-const prompts = require('prompts');
 const chalk = require('chalk');
+const autocomplete = require('../internal/autocomplete');
 const { getFullFunctionSignature } = require('../internal/signatures');
 const { getSelectors } = require('@synthetixio/core-js/utils/ethers/contracts');
 
@@ -23,14 +23,10 @@ subtask(SUBTASK_PICK_FUNCTION, 'Pick a function from the given contract').setAct
 
     await hre.run(SUBTASK_CHECK_INITIALIZATION);
 
-    const { functionAbi } = await prompts([
-      {
-        type: 'autocomplete',
-        name: 'functionAbi',
-        message: 'Pick a FUNCTION:',
-        choices,
-      },
-    ]);
+    const functionAbi = await autocomplete({
+      message: 'Pick a FUNCTION:',
+      choices,
+    });
 
     if (functionAbi) {
       hre.cli.functionAbi = functionAbi;

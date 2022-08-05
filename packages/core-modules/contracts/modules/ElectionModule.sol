@@ -78,7 +78,7 @@ contract ElectionModule is
         store.initialized = true;
 
         emit ElectionModuleInitialized();
-        emit EpochStarted(1);
+        emit EpochStarted(0);
     }
 
     function isElectionModuleInitialized() public view override returns (bool) {

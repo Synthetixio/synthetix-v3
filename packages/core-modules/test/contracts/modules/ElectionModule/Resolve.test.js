@@ -4,12 +4,12 @@ const assertBn = require('@synthetixio/core-js/utils/assertions/assert-bignumber
 const { getTime } = require('@synthetixio/core-js/utils/hardhat/rpc');
 const { daysToSeconds } = require('@synthetixio/core-js/utils/misc/dates');
 const { bootstrap } = require('@synthetixio/deployer/utils/tests');
-const initializer = require('../../../helpers/initializer');
+const initializer = require('@synthetixio/core-modules/test/helpers/initializer');
 const { findEvent } = require('@synthetixio/core-js/utils/ethers/events');
 const { runElection } = require('./helpers/election-helper');
 
 describe('ElectionModule (resolve)', () => {
-  const { proxyAddress } = bootstrap(initializer);
+  const { proxyAddress } = bootstrap(initializer, { modules: '.*(Owner|Upgrade|Election).*' });
 
   let ElectionModule, CouncilToken;
 
