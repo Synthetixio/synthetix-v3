@@ -3,3 +3,4 @@ deployments/hardhat
 contracts/Router.sol
 
 cannon
+typechain-types
