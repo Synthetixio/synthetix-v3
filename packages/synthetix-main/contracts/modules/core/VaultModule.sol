@@ -30,7 +30,7 @@ contract VaultModule is
     using SetUtil for SetUtil.AddressSet;
     using MathUtil for uint256;
 
-    uint public constant MAX_REWARD_DISTRIBUTIONS = 10;
+    uint constant private _MAX_REWARD_DISTRIBUTIONS = 10;
     bytes32 constant private _USD_TOKEN = "USDToken";
 
     error InvalidLeverage(uint leverage);
@@ -271,7 +271,7 @@ contract VaultModule is
         uint start,
         uint duration
     ) external override {
-        if (index > MAX_REWARD_DISTRIBUTIONS) {
+        if (index > _MAX_REWARD_DISTRIBUTIONS) {
             revert InvalidParameters();
         }
         

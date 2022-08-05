@@ -11,11 +11,11 @@ import "../../mixins/AccountRBACMixin.sol";
 import "../../mixins/CollateralMixin.sol";
 
 contract CollateralModule is ICollateralModule, CollateralStorage, OwnableMixin, AccountRBACMixin, CollateralMixin, AssociatedSystemsMixin {
-    bytes32 constant public REDEEMABLE_REWARDS_TOKEN = "eSNXToken";
-    bytes32 constant public REWARDED_TOKEN = "SNXToken";
+    bytes32 constant private _REDEEMABLE_REWARDS_TOKEN = "eSNXToken";
+    bytes32 constant private _REWARDED_TOKEN = "SNXToken";
 
     // 86400 * 365.26
-    uint  constant public SECONDS_PER_YEAR = 31558464;
+    uint  constant private _SECONDS_PER_YEAR = 31558464;
 
     using SetUtil for SetUtil.AddressSet;
 
@@ -170,8 +170,8 @@ contract CollateralModule is ICollateralModule, CollateralStorage, OwnableMixin,
     }
 
     function redeemReward(uint accountId, uint amount, uint duration) external override {
-        ITokenModule redeemableRewardsToken = _getToken(REDEEMABLE_REWARDS_TOKEN);
-        ITokenModule rewardedToken = _getToken(REWARDED_TOKEN);
+        ITokenModule redeemableRewardsToken = _getToken(_REDEEMABLE_REWARDS_TOKEN);
+        ITokenModule rewardedToken = _getToken(_REWARDED_TOKEN);
 
         if (!_collateralStore().collateralsData[address(rewardedToken)].enabled) {
             revert InvalidCollateralType(address(rewardedToken));
@@ -209,7 +209,7 @@ contract CollateralModule is ICollateralModule, CollateralStorage, OwnableMixin,
     /////////////////////////////////////////////////
 
     function _calculateRewardTokenMinted(uint amount, uint duration) internal pure returns (uint) {
-        return amount * duration / SECONDS_PER_YEAR;
+        return amount * duration / _SECONDS_PER_YEAR;
     }
 
     function _cleanExpiredLocks(

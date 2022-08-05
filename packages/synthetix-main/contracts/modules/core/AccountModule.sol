@@ -12,7 +12,7 @@ import "../../mixins/AccountRBACMixin.sol";
 
 contract AccountModule is IAccountModule, OwnableMixin, AccountRBACMixin, AssociatedSystemsMixin {
 
-    bytes32 constant public ACCOUNT_SYSTEM = "accountNft";
+    bytes32 constant private _ACCOUNT_SYSTEM = "accountNft";
 
     using SetUtil for SetUtil.AddressSet;
     using SetUtil for SetUtil.Bytes32Set;
@@ -26,7 +26,7 @@ contract AccountModule is IAccountModule, OwnableMixin, AccountRBACMixin, Associ
     error InvalidRole();
 
     function getAccountAddress() public view override returns (INftModule) {
-        return _getNft(ACCOUNT_SYSTEM);
+        return _getNft(_ACCOUNT_SYSTEM);
     }
 
     // ---------------------------------------
