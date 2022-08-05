@@ -13,7 +13,6 @@ const configDefaults = require('../internal/config-defaults');
 const DeploymentInfo = {
   network: 'local',
   instance: 'official',
-  proxyContract: configDefaults.proxyContract,
   folder: configDefaults.paths.deployments,
 };
 
@@ -132,7 +131,6 @@ function getAllDeploymentFiles(info) {
  */
 function getDeploymentFolder(info) {
   const { folder, network, instance } = _populateDefaults(info);
-  console.log('RESOLVED DEFAULTS', folder, network, instance);
   return path.resolve(folder, network, instance);
 }
 
@@ -154,5 +152,4 @@ module.exports = {
   getDeploymentFile,
   getAllDeploymentFiles,
   getDeploymentFolder,
-  defaultDeploymentInfo: DeploymentInfo,
 };

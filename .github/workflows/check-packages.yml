@@ -1,4 +1,4 @@
-name: "Workspaces package-lock.json files"
+name: "Validate package-lock.json"
 
 on: [pull_request]
 
@@ -6,5 +6,26 @@ jobs:
   check:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - run: bin/check-packages
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 16
+
+      # Step necessary for making sure that the developer correctly updated
+      # dependencies using npm workspaces, e.g.: npm i -w packages/core-js some-dependency
+      # More info: https://docs.npmjs.com/cli/v7/using-npm/workspaces
+      - name: Check package-lock.json files are not present on packages/*
+        run: bin/check-packages
+
+      # The following steps are for checking the validity of the package-lock.json edits.
+      # This will make sure that the file has not been tempered with, nor the developer
+      # forgot to update it.
+      - name: Check package-lock.json was correctly submmitted by the user
+        run: |
+          cp package-lock.json package-lock.original.json
+          npm i --package-lock-only
+      - uses: GuillaumeFalourd/diff-action@v1
+        with:
+          first_file_path: package-lock.json
+          second_file_path: package-lock.original.json
+          expected_result: PASSED

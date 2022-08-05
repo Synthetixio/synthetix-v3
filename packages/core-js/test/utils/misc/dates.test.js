@@ -1,5 +1,10 @@
-const { ok, equal, throws } = require('assert/strict');
-const { formatDate, getUnixTimestamp, daysToSeconds } = require('../../../utils/misc/dates');
+const { ok, equal, deepEqual, throws } = require('assert/strict');
+const {
+  formatDate,
+  getUnixTimestamp,
+  fromUnixTimestamp,
+  daysToSeconds,
+} = require('../../../utils/misc/dates');
 
 describe('utils/misc/dates.js', function () {
   describe('formatDate', function () {
@@ -24,6 +29,14 @@ describe('utils/misc/dates.js', function () {
   describe('getUnixTimestamp', function () {
     it('returns the current unix timestamp in seconds', async function () {
       equal(getUnixTimestamp(), Math.floor(new Date().getTime() / 1000));
+    });
+  });
+
+  describe('fromUnixTimestamp', function () {
+    it('builds a valid date from a unix timestamp', async function () {
+      const now = getUnixTimestamp();
+
+      deepEqual(fromUnixTimestamp(now), new Date(now * 1000));
     });
   });
 

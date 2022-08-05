@@ -1,6 +1,7 @@
 const { requireAll } = require('@synthetixio/core-js/utils/misc/require-all');
 
 require('@nomiclabs/hardhat-etherscan');
+require('@tenderly/hardhat-tenderly');
 
 // Forces "use strict" on all modules.
 require('use-strict');

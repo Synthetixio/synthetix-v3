@@ -5,11 +5,11 @@ contract AssociatedSystemsStorage {
     struct AssociatedSystem {
         address proxy;
         address impl;
-        string kind;
+        bytes32 kind;
     }
 
     struct AssociatedSystemsStore {
-        mapping (bytes32 => AssociatedSystem) satellites;
+        mapping(bytes32 => AssociatedSystem) satellites;
     }
 
     // solhint-disable-next-line func-name-mixedcase

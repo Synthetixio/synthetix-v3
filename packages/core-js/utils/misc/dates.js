@@ -11,8 +11,12 @@ function formatDate(date = new Date()) {
   return date.toISOString().slice(0, 10);
 }
 
-function getUnixTimestamp() {
-  return Math.floor(new Date().getTime() / 1000);
+function getUnixTimestamp(date = new Date()) {
+  return Math.floor(date.getTime() / 1000);
+}
+
+function fromUnixTimestamp(timestamp) {
+  return new Date(timestamp * 1000);
 }
 
 const daysToSeconds = (days) => days * 3600 * 24;
@@ -20,5 +24,6 @@ const daysToSeconds = (days) => days * 3600 * 24;
 module.exports = {
   formatDate,
   getUnixTimestamp,
+  fromUnixTimestamp,
   daysToSeconds,
 };

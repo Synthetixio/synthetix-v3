@@ -1,7 +1,6 @@
 const fs = require('fs');
 const path = require('path');
 const { TASK_DEPLOY } = require('@synthetixio/deployer/task-names');
-const { defaultDeploymentInfo } = require('../../utils/deployments');
 const { resetHardhatContext } = require('hardhat/plugins-testing');
 
 function loadEnvironment(fixtureProjectName, networkName = 'hardhat') {
@@ -22,8 +21,6 @@ function loadEnvironment(fixtureProjectName, networkName = 'hardhat') {
 
 async function deployOnEnvironment(hre, customOptions = {}) {
   const deploymentInfo = {
-    ...defaultDeploymentInfo,
-    proxyContract: hre.config.deployer.proxyContract,
     network: hre.config.defaultNetwork,
     instance: 'test',
   };

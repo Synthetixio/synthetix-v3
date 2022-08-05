@@ -1,32 +1,28 @@
 const { TASK_DEPLOY } = require('@synthetixio/deployer/task-names');
 const { getProxyAddress, getRouterAddress } = require('@synthetixio/deployer/utils/deployments');
 const { takeSnapshot, restoreSnapshot } = require('@synthetixio/core-js/utils/hardhat/rpc');
-const { defaultDeploymentInfo } = require('./deployments');
 
 function bootstrap(initializer = () => {}, customDeployOptions = {}) {
   let snapshotId;
 
   const deploymentInfo = {
-    ...defaultDeploymentInfo,
-    proxyContract: hre.config.deployer.proxyContract,
     network: hre.config.defaultNetwork,
-    instance: 'test',
+    instance: customDeployOptions.instance || 'test',
   };
 
-  before('take a snapshot', async function () {
+  before('take a snapshot', async () => {
     snapshotId = await takeSnapshot(hre.ethers.provider);
   });
 
-  before('deploy system', async function () {
-    this.timeout(150000);
+  before('deploy system', async () => {
     await deploySystem(deploymentInfo, { clear: true, ...customDeployOptions });
   });
 
-  before('initialize system', async function () {
+  before('initialize system', async () => {
     await initializer(deploymentInfo);
   });
 
-  after('restore the snapshot', async function () {
+  after('restore the snapshot', async () => {
     await restoreSnapshot(snapshotId, hre.ethers.provider);
   });
 

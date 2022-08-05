@@ -1,0 +1,16 @@
+type Vote @entity {
+  id: ID!
+  voter: String!
+  ballotId: Bytes!
+  epochIndex: String!
+  votePower: BigInt!
+  contract: String!
+}
+
+type VoteResult @entity {
+  id: ID!
+  epochIndex: String!
+  votePower: BigInt!
+  contract: String!
+  voteCount: BigInt!
+}
