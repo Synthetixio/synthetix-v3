@@ -33,9 +33,9 @@ async function _printInfo(taskArguments) {
 
   const signer = (await hre.ethers.getSigners())[0];
   const balance = hre.ethers.utils.formatEther(
-    await hre.ethers.provider.getBalance(signer.address)
+    await hre.ethers.provider.getBalance(await signer.getAddress())
   );
-  logger.log(chalk.gray(`signer: ${signer.address}`));
+  logger.log(chalk.gray(`signer: ${await signer.getAddress()}`));
   logger.log(chalk.gray(`signer balance: ${balance} ETH`));
 
   const deploymentModules = Object.keys(
