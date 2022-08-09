@@ -26,6 +26,7 @@
     "check-packages": "bin/check-packages"
   },
   "devDependencies": {
+    "@types/sinon": "10.0.13",
     "eslint": "7.32.0",
     "eslint-plugin-no-only-tests": "2.6.0",
     "hardhat": "2.9.3",
