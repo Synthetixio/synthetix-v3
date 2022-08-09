@@ -12,11 +12,6 @@ jobs:
             core-contracts,
             core-modules,
             synthetix-main,
-            spartan-council,
-            grants-council,
-            treasury-council,
-            ambassador-council,
-            synthetix-governance,
           ]
 
     steps:
