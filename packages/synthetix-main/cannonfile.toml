@@ -40,7 +40,7 @@ func = "deploy"
 args = ["Core", ".*/(core|common)/.*"]
 modified = ["contracts/modules/core", "scripts"]
 
-[contract.Synthetix]
+[contract.CoreProxy]
 artifact = "Synthetix"
 args = ["<%= contracts.CoreRouter.address %>"]
 abi = "CoreRouter"
@@ -48,36 +48,52 @@ abi = "CoreRouter"
 depends = ["run.deploy_core"]
 
 [invoke.acquire_ownership]
-target = ["Synthetix"]
+target = ["CoreProxy"]
 from = "<%= settings.owner %>"
 func = "initializeOwnerModule"
 args = ["<%= settings.owner %>"]
-depends = ["contract.Synthetix"]
+depends = ["contract.CoreProxy"]
 
 [invoke.init_account]
-target = ["Synthetix"]
+target = ["CoreProxy"]
 from = "<%= settings.owner %>"
 func = "initOrUpgradeNft"
-args = ["0x6163636f756e744e667400000000000000000000000000000000000000000000", "Synthetix Account Token", "SACCT", "https://synthetix.io", "<%= contracts.AccountRouter.address %>"]
+args = ["0x6163636f756e744e667400000000000000000000000000000000000000000000", "Synthetix Account", "SACCT", "https://synthetix.io", "<%= contracts.AccountRouter.address %>"]
 depends = ["invoke.acquire_ownership", "run.deploy_account"]
 
+factory.AccountProxy.abiOf = "AccountRouter"
+factory.AccountProxy.event = "AssociatedSystemSet"
+factory.AccountProxy.arg = 2
+
 [invoke.init_snx]
-target = ["Synthetix"]
+target = ["CoreProxy"]
 from = "<%= settings.owner %>"
 func = "initOrUpgradeToken"
 args = ["0x534e58546f6b656e000000000000000000000000000000000000000000000000", "Synthetix System Token", "SNX", 18, "<%= contracts.SNXRouter.address %>"]
 depends = ["invoke.acquire_ownership", "run.deploy_snx"]
 
+factory.SNXProxy.abiOf = "SNXRouter"
+factory.SNXProxy.event = "AssociatedSystemSet"
+factory.SNXProxy.arg = 2
+
 [invoke.init_esnx]
-target = ["Synthetix"]
+target = ["CoreProxy"]
 from = "<%= settings.owner %>"
 func = "initOrUpgradeToken"
 args = ["0x65534e58546f6b656e0000000000000000000000000000000000000000000000", "Escrowed Synthetix", "eSNX", 18, "<%= contracts.ESNXRouter.address %>"]
 depends = ["invoke.acquire_ownership", "run.deploy_esnx"]
 
+factory.ESNXProxy.abiOf = "ESNXRouter"
+factory.ESNXProxy.event = "AssociatedSystemSet"
+factory.ESNXProxy.arg = 2
+
 [invoke.init_usd]
-target = ["Synthetix"]
+target = ["CoreProxy"]
 from = "<%= settings.owner %>"
 func = "initOrUpgradeToken"
-args = ["0x555344546f6b656e000000000000000000000000000000000000000000000000", "Synthetix USD Token", "snxUSD", 18, "<%= contracts.USDRouter.address %>"]
+args = ["0x555344546f6b656e000000000000000000000000000000000000000000000000", "Synthetic USD Token v3", "snxUSD", 18, "<%= contracts.USDRouter.address %>"]
 depends = ["invoke.acquire_ownership", "run.deploy_usd"]
+
+factory.USDProxy.abiOf = "USDRouter"
+factory.USDProxy.event = "AssociatedSystemSet"
+factory.USDProxy.arg = 2

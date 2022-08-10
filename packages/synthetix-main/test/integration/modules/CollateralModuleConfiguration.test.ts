@@ -1,25 +1,20 @@
-const { ethers } = hre;
-const assert = require('assert/strict');
-const assertBn = require('@synthetixio/core-js/utils/assertions/assert-bignumber');
-const assertRevert = require('@synthetixio/core-js/utils/assertions/assert-revert');
-const { bootstrap } = require('@synthetixio/deployer/utils/tests');
-const initializer = require('../../helpers/initializer');
+import { ethers } from 'hardhat';
+import assert from 'assert/strict';
+import assertBn from '@synthetixio/core-js/utils/assertions/assert-bignumber';
+import assertRevert from '@synthetixio/core-js/utils/assertions/assert-revert';
+import { bootstrap } from '../bootstrap';
+import { ethers as Ethers } from 'ethers';
 
-describe('CollateralModule Configuration (SCCP)', function () {
-  const { proxyAddress } = bootstrap(initializer);
+describe('systems().Core Configuration (SCCP)', function () {
+  const { signers, systems } = bootstrap();
 
-  let CollateralModule;
-  let Collateral, CollateralPriceFeed;
+  let systemOwner: Ethers.Signer, user1: Ethers.Signer;
 
-  let systemOwner, user1;
+  let Collateral: Ethers.Contract;
+  let CollateralPriceFeed: Ethers.Contract;
 
   before('identify signers', async () => {
-    [systemOwner] = await ethers.getSigners();
-    [, user1] = await ethers.getSigners();
-  });
-
-  before('identify contract', async () => {
-    CollateralModule = await ethers.getContractAt('CollateralModule', proxyAddress());
+    [systemOwner, user1] = signers();
   });
 
   before('add one collateral', async () => {
@@ -36,7 +31,7 @@ describe('CollateralModule Configuration (SCCP)', function () {
     await (await CollateralPriceFeed.connect(systemOwner).mockSetCurrentPrice(1)).wait();
 
     await (
-      await CollateralModule.connect(systemOwner).adjustCollateralType(
+      await systems().Core.connect(systemOwner).adjustCollateralType(
         Collateral.address,
         CollateralPriceFeed.address,
         400,
@@ -48,11 +43,11 @@ describe('CollateralModule Configuration (SCCP)', function () {
 
   it('is well configured', async () => {
     assert.equal(
-      (await CollateralModule.getCollateralTypes(false))[0].tokenAddress,
+      (await systems().Core.getCollateralTypes(false))[0].tokenAddress,
       Collateral.address
     );
 
-    const collateralType = await CollateralModule.getCollateralType(Collateral.address);
+    const collateralType = await systems().Core.getCollateralType(Collateral.address);
     console.log(collateralType);
 
     assert.equal(collateralType.tokenAddress, Collateral.address);
@@ -63,7 +58,7 @@ describe('CollateralModule Configuration (SCCP)', function () {
   });
 
   describe('When the systemOwner adds another collaterals', () => {
-    let AnotherCollateral, AnotherCollateralPriceFeed;
+    let AnotherCollateral: Ethers.Contract, AnotherCollateralPriceFeed: Ethers.Contract;
     before('add another collateral', async () => {
       let factory;
 
@@ -78,7 +73,7 @@ describe('CollateralModule Configuration (SCCP)', function () {
 
       await (await AnotherCollateralPriceFeed.connect(systemOwner).mockSetCurrentPrice(100)).wait();
 
-      const tx = await CollateralModule.connect(systemOwner).adjustCollateralType(
+      const tx = await systems().Core.connect(systemOwner).adjustCollateralType(
         AnotherCollateral.address,
         AnotherCollateralPriceFeed.address,
         400,
@@ -89,12 +84,12 @@ describe('CollateralModule Configuration (SCCP)', function () {
     });
 
     it('is added', async () => {
-      const collaterals = await CollateralModule.getCollateralTypes(false);
+      const collaterals = await systems().Core.getCollateralTypes(false);
       assert.equal(collaterals[1].tokenAddress, AnotherCollateral.address);
     });
 
     it('has the right configuration', async () => {
-      const collateralType = await CollateralModule.getCollateralType(AnotherCollateral.address);
+      const collateralType = await systems().Core.getCollateralType(AnotherCollateral.address);
       assert.equal(collateralType.priceFeed, AnotherCollateralPriceFeed.address);
       assertBn.equal(collateralType.targetCRatio, 400);
       assertBn.equal(collateralType.minimumCRatio, 200);
@@ -103,7 +98,7 @@ describe('CollateralModule Configuration (SCCP)', function () {
 
     describe('When the systemOwner updates the new collateral data', () => {
       before('updates the collateral', async () => {
-        const tx = await CollateralModule.connect(systemOwner).adjustCollateralType(
+        const tx = await systems().Core.connect(systemOwner).adjustCollateralType(
           AnotherCollateral.address,
           AnotherCollateralPriceFeed.address,
           300,
@@ -114,7 +109,7 @@ describe('CollateralModule Configuration (SCCP)', function () {
       });
 
       it('is updated', async () => {
-        const collateralType = await CollateralModule.getCollateralType(AnotherCollateral.address);
+        const collateralType = await systems().Core.getCollateralType(AnotherCollateral.address);
         assert.equal(collateralType.priceFeed, AnotherCollateralPriceFeed.address);
         assertBn.equal(collateralType.targetCRatio, 300);
         assertBn.equal(collateralType.minimumCRatio, 250);
@@ -124,7 +119,7 @@ describe('CollateralModule Configuration (SCCP)', function () {
 
     describe('When the systemOwner disables the new collateral', () => {
       before('disables the collateral', async () => {
-        const tx = await CollateralModule.connect(systemOwner).adjustCollateralType(
+        const tx = await systems().Core.connect(systemOwner).adjustCollateralType(
           AnotherCollateral.address,
           AnotherCollateralPriceFeed.address,
           400,
@@ -135,28 +130,28 @@ describe('CollateralModule Configuration (SCCP)', function () {
       });
 
       it('is not shown in enabled list', async () => {
-        const allCollaterals = await CollateralModule.getCollateralTypes(false);
-        const enabledCollaterals = await CollateralModule.getCollateralTypes(true);
+        const allCollaterals = await systems().Core.getCollateralTypes(false);
+        const enabledCollaterals = await systems().Core.getCollateralTypes(true);
 
         assert.equal(
-          allCollaterals.some((v) => v.tokenAddress === AnotherCollateral.address),
+          allCollaterals.some((v: any) => v.tokenAddress === AnotherCollateral.address),
           true
         );
         assert.equal(
-          enabledCollaterals.some((v) => v.tokenAddress === AnotherCollateral.address),
+          enabledCollaterals.some((v: any) => v.tokenAddress === AnotherCollateral.address),
           false
         );
       });
 
       it('is disabled', async () => {
-        const collateralType = await CollateralModule.getCollateralType(AnotherCollateral.address);
+        const collateralType = await systems().Core.getCollateralType(AnotherCollateral.address);
         assert.equal(collateralType.enabled, false);
       });
     });
   });
 
   describe('When another user attempts to interact with collaterals', () => {
-    let OtherCollateral, OtherCollateralPriceFeed;
+    let OtherCollateral: Ethers.Contract, OtherCollateralPriceFeed: Ethers.Contract;
     before('create the other collateral', async () => {
       let factory;
 
@@ -174,27 +169,27 @@ describe('CollateralModule Configuration (SCCP)', function () {
 
     it('reverts when attempting to add', async () => {
       await assertRevert(
-        CollateralModule.connect(user1).adjustCollateralType(
+        systems().Core.connect(user1).adjustCollateralType(
           OtherCollateral.address,
           OtherCollateralPriceFeed.address,
           400,
           200,
           false
         ),
-        `Unauthorized("${user1.address}")`
+        `Unauthorized("${await user1.getAddress()}")`
       );
     });
 
     it('reverts when attempting to update', async () => {
       await assertRevert(
-        CollateralModule.connect(user1).adjustCollateralType(
+        systems().Core.connect(user1).adjustCollateralType(
           Collateral.address,
           CollateralPriceFeed.address,
           300,
           250,
           false
         ),
-        `Unauthorized("${user1.address}")`
+        `Unauthorized("${await user1.getAddress()}")`
       );
     });
   });

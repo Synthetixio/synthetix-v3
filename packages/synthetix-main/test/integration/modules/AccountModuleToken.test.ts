@@ -1,73 +1,73 @@
-const { ethers } = hre;
-const assert = require('assert/strict');
-const assertBn = require('@synthetixio/core-js/utils/assertions/assert-bignumber');
-const assertRevert = require('@synthetixio/core-js/utils/assertions/assert-revert');
-const { findEvent } = require('@synthetixio/core-js/utils/ethers/events');
-const { bootstrap } = require('@synthetixio/deployer/utils/tests');
-const initializer = require('../../helpers/initializer');
+import ethers from 'ethers';
+import assert from 'assert/strict';
+import assertBn from '@synthetixio/core-js/utils/assertions/assert-bignumber';
+import assertRevert from '@synthetixio/core-js/utils/assertions/assert-revert';
+import { findEvent } from '@synthetixio/core-js/utils/ethers/events';
+import { bootstrap } from '../bootstrap';
 
-describe('AccountModule - AccountToken', function () {
-  const { proxyAddress } = bootstrap(initializer);
+describe('systems().Account - systems().Account', function () {
+  const { signers, systems } = bootstrap();
 
-  let owner, user1, user2, userAdmin, user4;
+  describe('systems().Account init', async () => {
+    it('systems().Account is deployed', async () => {
+      const address = await systems().Core.getAccountAddress();
 
-  let AccountModule, accountTokenAddress, AccountToken;
+      // at this point, should be equal to account module address
+      assert.equal(address, systems().Account.address);
+    });
+
+    it('systems().Account parameters are correct', async () => {
+      assert.equal(await systems().Account.name(), 'Synthetix Account');
+      assert.equal(await systems().Account.symbol(), 'SACCT');
+    });
+  });
+
+  let owner: ethers.Signer, user1: ethers.Signer, user2: ethers.Signer, userAdmin: ethers.Signer, user4: ethers.Signer;
 
   before('identify signers', async () => {
-    [owner, user1, user2, userAdmin, user4] = await ethers.getSigners();
-  });
-
-  before('identify modules', async () => {
-    AccountModule = await ethers.getContractAt('AccountModule', proxyAddress());
-  });
-
-  before('Initialize (Create a AccountToken token)', async () => {
-    await (await AccountModule.connect(owner).initializeAccountModule()).wait();
-    accountTokenAddress = await AccountModule.getAccountAddress();
-
-    AccountToken = await ethers.getContractAt('AccountToken', accountTokenAddress);
+    [owner, user1, user2, userAdmin, user4] = signers();
   });
 
   describe('when attempting to mint an account token from the satellite', async () => {
     it('reverts', async () => {
       await assertRevert(
-        AccountToken.connect(user1).mint(user1.address, 1),
-        `Unauthorized("${user1.address}")`
+        systems().Account.connect(user1).mint(await user1.getAddress(), 1),
+        `Unauthorized("${user1.getAddress()}")`
       );
     });
   });
 
-  describe('When minting an AccountToken', async () => {
-    let receipt;
+  describe('When minting an systems().Account', async () => {
+    let receipt: ethers.providers.TransactionReceipt;
 
     before('mint an accoun token', async () => {
-      const tx = await AccountModule.connect(user1).createAccount(1);
+      const tx = await systems().Account.connect(user1).createAccount(1);
       receipt = await tx.wait();
     });
 
     it('emmited an event', async () => {
-      const event = findEvent({ receipt, eventName: 'AccountMinted', contract: AccountToken });
+      const event = findEvent({ receipt, eventName: 'AccountMinted', contract: systems().Account });
 
-      assert.equal(event.args.owner, user1.address);
+      assert.equal(event.args.owner, await user1.getAddress());
       assertBn.equal(event.args.accountId, 1);
     });
 
     it('is created', async () => {
-      assert.equal(await AccountToken.ownerOf(1), user1.address);
-      assertBn.equal(await AccountToken.balanceOf(user1.address), 1);
+      assert.equal(await systems().Account.ownerOf(1), await user1.getAddress());
+      assertBn.equal(await systems().Account.balanceOf(await user1.getAddress()), 1);
     });
 
-    describe('when trying to mint the same AccountTokenId', () => {
+    describe('when trying to mint the same systems().AccountId', () => {
       it('reverts', async () => {
-        await assertRevert(AccountModule.connect(user2).createAccount(1), 'TokenAlreadyMinted(1)');
+        await assertRevert(systems().Account.connect(user2).createAccount(1), 'TokenAlreadyMinted(1)');
       });
     });
 
     describe('when attempting to call transferAccount directly', async () => {
       it('reverts', async () => {
         await assertRevert(
-          AccountModule.connect(user1).transferAccount(user2.address, 1),
-          `OnlyTokenProxyAllowed("${user1.address}")`
+          systems().Account.connect(user1).transferAccount(await user2.getAddress(), 1),
+          `OnlyTokenProxyAllowed("${await user1.getAddress()}")`
         );
       });
     });
@@ -76,10 +76,10 @@ describe('AccountModule - AccountToken', function () {
       describe('before granting access', async () => {
         it('does not have granted roles', async () => {
           assert.equal(
-            await AccountModule.hasRole(
+            await systems().Account.hasRole(
               1,
               ethers.utils.formatBytes32String('stake'),
-              user2.address
+              await user2.getAddress()
             ),
             false
           );
@@ -89,13 +89,13 @@ describe('AccountModule - AccountToken', function () {
       describe('when attempting to assign a role when not authorized', async () => {
         it('reverts', async () => {
           await assertRevert(
-            AccountModule.connect(user2).grantRole(
+            systems().Account.connect(user2).grantRole(
               1,
               ethers.utils.formatBytes32String('stake'),
-              user2.address
+              await user2.getAddress()
             ),
             `RoleNotAuthorized(1, "${ethers.utils.formatBytes32String('modifyPermission')}", "${
-              user2.address
+              await user2.getAddress()
             }")`
           );
         });
@@ -103,10 +103,10 @@ describe('AccountModule - AccountToken', function () {
 
       describe('when a role is granted/revoked', async () => {
         before('grant a role', async () => {
-          const tx = await AccountModule.connect(user1).grantRole(
+          const tx = await systems().Account.connect(user1).grantRole(
             1,
             ethers.utils.formatBytes32String('stake'),
-            user2.address
+            await user2.getAddress()
           );
           receipt = await tx.wait();
         });
@@ -116,16 +116,16 @@ describe('AccountModule - AccountToken', function () {
 
           assertBn.equal(event.args.accountId, 1);
           assert.equal(event.args.role, ethers.utils.formatBytes32String('stake'));
-          assert.equal(event.args.target, user2.address);
-          assert.equal(event.args.executedBy, user1.address);
+          assert.equal(event.args.target, await user2.getAddress());
+          assert.equal(event.args.executedBy, await user1.getAddress());
         });
 
         it('shows the role granted', async () => {
           assert.equal(
-            await AccountModule.hasRole(
+            await systems().Account.hasRole(
               1,
               ethers.utils.formatBytes32String('stake'),
-              user2.address
+              await user2.getAddress()
             ),
             true
           );
@@ -133,10 +133,10 @@ describe('AccountModule - AccountToken', function () {
 
         describe('when revoking the role', async () => {
           before('grant a role', async () => {
-            const tx = await AccountModule.connect(user1).revokeRole(
+            const tx = await systems().Account.connect(user1).revokeRole(
               1,
               ethers.utils.formatBytes32String('stake'),
-              user2.address
+              await user2.getAddress()
             );
             receipt = await tx.wait();
           });
@@ -146,16 +146,16 @@ describe('AccountModule - AccountToken', function () {
 
             assertBn.equal(event.args.accountId, 1);
             assert.equal(event.args.role, ethers.utils.formatBytes32String('stake'));
-            assert.equal(event.args.target, user2.address);
-            assert.equal(event.args.executedBy, user1.address);
+            assert.equal(event.args.target, await user2.getAddress());
+            assert.equal(event.args.executedBy, await user1.getAddress());
           });
 
           it('shows the role was revoked', async () => {
             assert.equal(
-              await AccountModule.hasRole(
+              await systems().Account.hasRole(
                 1,
                 ethers.utils.formatBytes32String('stake'),
-                user2.address
+                await user2.getAddress()
               ),
               false
             );
@@ -165,20 +165,20 @@ describe('AccountModule - AccountToken', function () {
 
       describe('when renouncing a role', async () => {
         before('grant a role', async () => {
-          const tx = await AccountModule.connect(user1).grantRole(
+          const tx = await systems().Account.connect(user1).grantRole(
             1,
             ethers.utils.formatBytes32String('stake'),
-            user2.address
+            await user2.getAddress()
           );
           receipt = await tx.wait();
         });
 
         it('shows the role granted', async () => {
           assert.equal(
-            await AccountModule.hasRole(
+            await systems().Account.hasRole(
               1,
               ethers.utils.formatBytes32String('stake'),
-              user2.address
+              await user2.getAddress()
             ),
             true
           );
@@ -187,13 +187,13 @@ describe('AccountModule - AccountToken', function () {
         describe('when attempting to renounce a role not granted', async () => {
           it('reverts', async () => {
             await assertRevert(
-              AccountModule.connect(user1).renounceRole(
+              systems().Account.connect(user1).renounceRole(
                 1,
                 ethers.utils.formatBytes32String('stake'),
-                user2.address
+                await user2.getAddress()
               ),
               `RoleNotAuthorized(1, "${ethers.utils.formatBytes32String('renounceRole')}", "${
-                user2.address
+                await user2.getAddress()
               }")`
             );
           });
@@ -201,10 +201,10 @@ describe('AccountModule - AccountToken', function () {
 
         describe('when renouncing the role', async () => {
           before('grant a role', async () => {
-            const tx = await AccountModule.connect(user2).renounceRole(
+            const tx = await systems().Account.connect(user2).renounceRole(
               1,
               ethers.utils.formatBytes32String('stake'),
-              user2.address
+              await user2.getAddress()
             );
             receipt = await tx.wait();
           });
@@ -214,16 +214,16 @@ describe('AccountModule - AccountToken', function () {
 
             assertBn.equal(event.args.accountId, 1);
             assert.equal(event.args.role, ethers.utils.formatBytes32String('stake'));
-            assert.equal(event.args.target, user2.address);
-            assert.equal(event.args.executedBy, user2.address);
+            assert.equal(event.args.target, await user2.getAddress());
+            assert.equal(event.args.executedBy, await user2.getAddress());
           });
 
           it('shows the role was revoked', async () => {
             assert.equal(
-              await AccountModule.hasRole(
+              await systems().Account.hasRole(
                 1,
                 ethers.utils.formatBytes32String('stake'),
-                user2.address
+                await user2.getAddress()
               ),
               false
             );
@@ -234,19 +234,19 @@ describe('AccountModule - AccountToken', function () {
       describe('when a "modifyPermission" role holder tries to grant more access', () => {
         before('grant "modifyPermission" role to userAdmin', async () => {
           await (
-            await AccountModule.connect(user1).grantRole(
+            await systems().Account.connect(user1).grantRole(
               1,
               ethers.utils.formatBytes32String('modifyPermission'),
-              userAdmin.address
+              await userAdmin.getAddress()
             )
           ).wait();
         });
 
         before('grant another user a role', async () => {
-          const tx = await await AccountModule.connect(userAdmin).grantRole(
+          const tx = await await systems().Account.connect(userAdmin).grantRole(
             1,
             ethers.utils.formatBytes32String('another'),
-            user4.address
+            await user4.getAddress()
           );
           receipt = await tx.wait();
         });
@@ -256,16 +256,16 @@ describe('AccountModule - AccountToken', function () {
 
           assertBn.equal(event.args.accountId, 1);
           assert.equal(event.args.role, ethers.utils.formatBytes32String('another'));
-          assert.equal(event.args.target, user4.address);
-          assert.equal(event.args.executedBy, userAdmin.address);
+          assert.equal(event.args.target, await user4.getAddress());
+          assert.equal(event.args.executedBy, await userAdmin.getAddress());
         });
 
         it('role is granted', async () => {
           assert.equal(
-            await AccountModule.hasRole(
+            await systems().Account.hasRole(
               1,
               ethers.utils.formatBytes32String('another'),
-              user4.address
+              await user4.getAddress()
             ),
             true
           );
@@ -273,10 +273,10 @@ describe('AccountModule - AccountToken', function () {
 
         describe('when an admin tries to revoke more access', () => {
           before('revoke another user a role', async () => {
-            const tx = await await AccountModule.connect(userAdmin).revokeRole(
+            const tx = await await systems().Account.connect(userAdmin).revokeRole(
               1,
               ethers.utils.formatBytes32String('another'),
-              user4.address
+              await user4.getAddress()
             );
             receipt = await tx.wait();
           });
@@ -286,16 +286,16 @@ describe('AccountModule - AccountToken', function () {
 
             assertBn.equal(event.args.accountId, 1);
             assert.equal(event.args.role, ethers.utils.formatBytes32String('another'));
-            assert.equal(event.args.target, user4.address);
-            assert.equal(event.args.executedBy, userAdmin.address);
+            assert.equal(event.args.target, await user4.getAddress());
+            assert.equal(event.args.executedBy, await userAdmin.getAddress());
           });
 
           it('role is revoked', async () => {
             assert.equal(
-              await AccountModule.hasRole(
+              await systems().Account.hasRole(
                 1,
                 ethers.utils.formatBytes32String('another'),
-                user4.address
+                await user4.getAddress()
               ),
               false
             );

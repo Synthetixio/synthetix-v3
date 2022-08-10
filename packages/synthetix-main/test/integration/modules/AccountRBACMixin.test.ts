@@ -1,39 +1,26 @@
-const { ethers } = hre;
-const assert = require('assert/strict');
-const assertBn = require('@synthetixio/core-js/utils/assertions/assert-bignumber');
-const assertRevert = require('@synthetixio/core-js/utils/assertions/assert-revert');
-const { bootstrap } = require('@synthetixio/deployer/utils/tests');
-const initializer = require('../../helpers/initializer');
+/*const { ethers } = hre;
+import assert from 'assert/strict';
+import assertBn from '@synthetixio/core-js/utils/assertions/assert-bignumber';
+import assertRevert from '@synthetixio/core-js/utils/assertions/assert-revert';
+import { bootstrap } from '../bootstrap';
+import { ethers } from 'ethers';
 
 describe('AccountRBACMixin', function () {
-  const { proxyAddress } = bootstrap(initializer);
+  const { signers, systems } = bootstrap();
 
-  let owner, user1, user2, user3;
-
-  let AccountModule, accountTokenAddress, AccountToken;
-  let AccountRBACMixinMock;
+  let owner: ethers.Signer, user1: ethers.Signer, user2: ethers.Signer, user3: ethers.Signer;
 
   before('identify signers', async () => {
-    [owner, user1, user2, user3] = await ethers.getSigners();
-  });
-
-  before('identify modules', async () => {
-    AccountModule = await ethers.getContractAt('AccountModule', proxyAddress());
-    await (await AccountModule.connect(owner).initializeAccountModule()).wait();
-    accountTokenAddress = await AccountModule.getAccountAddress();
-
-    AccountToken = await ethers.getContractAt('AccountToken', accountTokenAddress);
-
-    AccountRBACMixinMock = await ethers.getContractAt('AccountRBACMixinModuleMock', proxyAddress());
+    [owner, user1, user2, user3] = signers();
   });
 
   before('mint an account token', async () => {
-    await (await AccountModule.connect(user1).createAccount(1)).wait();
+    await (await systems().Core.connect(user1).createAccount(1)).wait();
   });
 
   it('is minted', async () => {
-    assert.equal(await AccountToken.ownerOf(1), user1.address);
-    assertBn.equal(await AccountToken.balanceOf(user1.address), 1);
+    assert.equal(await systems().Account.ownerOf(1), user1.address);
+    assertBn.equal(await systems().Account.balanceOf(user1.address), 1);
   });
 
   describe('when accessing as owner', () => {
@@ -51,16 +38,16 @@ describe('AccountRBACMixin', function () {
       });
     });
 
-    describe('when transfering ownership of accountToken', async () => {
+    describe('when transfering ownership of systems().Account', async () => {
       before('transfer to user2', async () => {
         await (
-          await AccountToken.connect(user1).transferFrom(user1.address, user2.address, 1)
+          await systems().Account.connect(user1).transferFrom(user1.address, user2.address, 1)
         ).wait();
       });
 
       after('transfer back to user1', async () => {
         await (
-          await AccountToken.connect(user2).transferFrom(user2.address, user1.address, 1)
+          await systems().Account.connect(user2).transferFrom(user2.address, user1.address, 1)
         ).wait();
       });
 
@@ -84,7 +71,7 @@ describe('AccountRBACMixin', function () {
     describe('when granting access', async () => {
       before('grant access to some users', async () => {
         await (
-          await AccountModule.connect(user1).grantRole(
+          await systems().Core.connect(user1).grantRole(
             1,
             ethers.utils.formatBytes32String('stake'),
             user2.address
@@ -92,7 +79,7 @@ describe('AccountRBACMixin', function () {
         ).wait();
 
         await (
-          await AccountModule.connect(user1).grantRole(
+          await systems().Core.connect(user1).grantRole(
             1,
             ethers.utils.formatBytes32String('otherRole'),
             user3.address
@@ -119,7 +106,7 @@ describe('AccountRBACMixin', function () {
       describe('when attempting to access after the role was revoked', async () => {
         before('revoke access to user2', async () => {
           await (
-            await AccountModule.connect(user1).revokeRole(
+            await systems().Core.connect(user1).revokeRole(
               1,
               ethers.utils.formatBytes32String('stake'),
               user2.address
@@ -139,3 +126,4 @@ describe('AccountRBACMixin', function () {
     });
   });
 });
+*/

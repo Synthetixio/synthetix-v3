@@ -1,50 +1,38 @@
-const { ethers } = hre;
-const assert = require('assert/strict');
-const assertBn = require('@synthetixio/core-js/utils/assertions/assert-bignumber');
-const assertRevert = require('@synthetixio/core-js/utils/assertions/assert-revert');
-const { findEvent } = require('@synthetixio/core-js/utils/ethers/events');
-const { bootstrap } = require('@synthetixio/deployer/utils/tests');
-const initializer = require('../../helpers/initializer');
+import hre from 'hardhat';
+import assert from 'assert/strict';
+import assertBn from '@synthetixio/core-js/utils/assertions/assert-bignumber';
+import assertRevert from '@synthetixio/core-js/utils/assertions/assert-revert';
+import { findEvent } from '@synthetixio/core-js/utils/ethers/events';
+import { bootstrap } from '../bootstrap';
 
-describe('FundModule - Funds Admin', function () {
-  const { proxyAddress } = bootstrap(initializer);
+import { ethers } from 'ethers';
 
-  let owner, fundAdmin, user1, user2;
+describe('systems().Core - Funds Admin', function () {
+  const { signers, systems } = bootstrap();
 
-  let CollateralModule, Collateral, AggregatorV3Mock;
-  let AccountModule, MarketManagerModule;
-  let FundModule, VaultModule;
+  let owner: ethers.Signer, fundAdmin: ethers.Signer, user1: ethers.Signer, user2: ethers.Signer;
+
+  let Collateral: ethers.Contract, AggregatorV3Mock: ethers.Contract;
 
   before('identify signers', async () => {
-    [owner, fundAdmin, user1, user2] = await ethers.getSigners();
-  });
-
-  before('identify modules', async () => {
-    FundModule = await ethers.getContractAt('FundModule', proxyAddress());
-    VaultModule = await ethers.getContractAt('VaultModule', proxyAddress());
-
-    CollateralModule = await ethers.getContractAt('CollateralModule', proxyAddress());
-    AccountModule = await ethers.getContractAt('AccountModule', proxyAddress());
-    await (await AccountModule.connect(owner).initializeAccountModule()).wait();
-
-    MarketManagerModule = await ethers.getContractAt('MarketManagerModule', proxyAddress());
+    [owner, fundAdmin, user1, user2] = signers();
   });
 
   before('add one collateral', async () => {
     let factory;
 
-    factory = await ethers.getContractFactory('CollateralMock');
+    factory = await hre.ethers.getContractFactory('CollateralMock');
     Collateral = await factory.deploy();
 
     await (await Collateral.connect(owner).initialize('Synthetix Token', 'SNX', 18)).wait();
 
-    factory = await ethers.getContractFactory('AggregatorV3Mock');
+    factory = await hre.ethers.getContractFactory('AggregatorV3Mock');
     AggregatorV3Mock = await factory.deploy();
 
     await (await AggregatorV3Mock.connect(owner).mockSetCurrentPrice(1)).wait();
 
     await (
-      await CollateralModule.connect(owner).adjustCollateralType(
+      await systems().Core.connect(owner).adjustCollateralType(
         Collateral.address,
         AggregatorV3Mock.address,
         400,
@@ -55,41 +43,41 @@ describe('FundModule - Funds Admin', function () {
   });
 
   before('mint some account tokens', async () => {
-    await (await AccountModule.connect(user1).createAccount(1)).wait();
-    await (await AccountModule.connect(user2).createAccount(2)).wait();
+    await (await systems().Core.connect(user1).createAccount(1)).wait();
+    await (await systems().Core.connect(user2).createAccount(2)).wait();
   });
 
   before('mint some collateral to the user', async () => {
-    await (await Collateral.mint(user1.address, 1000)).wait();
-    await (await Collateral.mint(user2.address, 1000)).wait();
+    await (await Collateral.mint(await user1.getAddress(), 1000)).wait();
+    await (await Collateral.mint(await user2.getAddress(), 1000)).wait();
   });
 
-  before('approve AccountModule to operate with the user collateral', async () => {
+  before('approve systems().Core to operate with the user collateral', async () => {
     await (
-      await Collateral.connect(user1).approve(AccountModule.address, ethers.constants.MaxUint256)
+      await Collateral.connect(user1).approve(systems().Core.address, ethers.constants.MaxUint256)
     ).wait();
     await (
-      await Collateral.connect(user2).approve(AccountModule.address, ethers.constants.MaxUint256)
+      await Collateral.connect(user2).approve(systems().Core.address, ethers.constants.MaxUint256)
     ).wait();
   });
 
   before('stake some collateral', async () => {
-    await (await CollateralModule.connect(user1).stake(1, Collateral.address, 100)).wait();
+    await (await systems().Core.connect(user1).stake(1, Collateral.address, 100)).wait();
   });
 
   before('mint a fund token', async () => {
-    await (await FundModule.connect(user1).createFund(1, fundAdmin.address)).wait();
+    await (await systems().Core.connect(user1).createFund(1, await fundAdmin.getAddress())).wait();
   });
 
   it('fund is created', async () => {
-    assert.equal(await FundModule.ownerOf(1), fundAdmin.address);
+    assert.equal(await systems().Core.ownerOf(1), await fundAdmin.getAddress());
   });
 
   describe('When setting up the Fund positions', async () => {
     describe('when attempting to set the positions of a non existent fund', async () => {
       it('reverts', async () => {
         await assertRevert(
-          FundModule.connect(fundAdmin).setFundPosition(2, [1], [1], [0, 0]),
+          systems().Core.connect(fundAdmin).setFundPosition(2, [1], [1], [0, 0]),
           'FundNotFound(2)'
         );
       });
@@ -98,8 +86,8 @@ describe('FundModule - Funds Admin', function () {
     describe('when a regular user attempts to set the positions', async () => {
       it('reverts', async () => {
         await assertRevert(
-          FundModule.connect(user1).setFundPosition(1, [1], [1], [0, 0]),
-          `Unauthorized("${user1.address}")`
+          systems().Core.connect(user1).setFundPosition(1, [1], [1], [0, 0]),
+          `Unauthorized("${await user1.getAddress()}")`
         );
       });
     });
@@ -107,43 +95,43 @@ describe('FundModule - Funds Admin', function () {
     describe('when attempting to set the positions with not matching number of positions', async () => {
       it('reverts with more weights than markets', async () => {
         await assertRevert(
-          FundModule.connect(fundAdmin).setFundPosition(1, [1], [1, 2], [0, 0]),
+          systems().Core.connect(fundAdmin).setFundPosition(1, [1], [1, 2], [0, 0]),
           'InvalidParameters()'
         );
       });
 
       it('reverts with more markets than weights', async () => {
         await assertRevert(
-          FundModule.connect(fundAdmin).setFundPosition(1, [1, 2], [1], [0, 0]),
+          systems().Core.connect(fundAdmin).setFundPosition(1, [1, 2], [1], [0, 0]),
           'InvalidParameters()'
         );
       });
     });
 
     describe('when adjusting a fund positions', async () => {
-      let receipt;
+      let receipt: ethers.providers.TransactionReceipt;
 
       before('set dummy markets', async () => {
         let factory;
 
-        factory = await ethers.getContractFactory('MarketMock');
+        factory = await hre.ethers.getContractFactory('MarketMock');
         const Market1 = await factory.deploy();
-        factory = await ethers.getContractFactory('MarketMock');
+        factory = await hre.ethers.getContractFactory('MarketMock');
         const Market2 = await factory.deploy();
 
-        await (await MarketManagerModule.registerMarket(Market1.address)).wait();
-        await (await MarketManagerModule.registerMarket(Market2.address)).wait();
+        await (await systems().Core.registerMarket(Market1.address)).wait();
+        await (await systems().Core.registerMarket(Market2.address)).wait();
       });
 
       before('adjust fund positions', async () => {
-        const tx = await FundModule.connect(fundAdmin).setFundPosition(1, [1, 2], [1, 1], [0, 0]);
+        const tx = await systems().Core.connect(fundAdmin).setFundPosition(1, [1, 2], [1, 1], [0, 0]);
         receipt = await tx.wait();
       });
 
       it('emmited an event', async () => {
         const event = findEvent({ receipt, eventName: 'FundPositionSet' });
 
-        assert.equal(event.args.executedBy, fundAdmin.address);
+        assert.equal(event.args.executedBy, await fundAdmin.getAddress());
         assertBn.equal(event.args.fundId, 1);
         assert.equal(event.args.markets.length, 2);
         assert.equal(event.args.weights.length, 2);
@@ -155,7 +143,7 @@ describe('FundModule - Funds Admin', function () {
 
       it('is created', async () => {
         let markets, weights;
-        [markets, weights] = await FundModule.getFundPosition(1);
+        [markets, weights] = await systems().Core.getFundPosition(1);
         assert.equal(markets.length, 2);
         assert.equal(weights.length, 2);
         assertBn.equal(markets[0], 1);
@@ -167,10 +155,10 @@ describe('FundModule - Funds Admin', function () {
       describe('when operating with the fund', async () => {
         //
         describe('when delegting collateral to a fund', async () => {
-          let liquidityItemId;
+          let liquidityItemId: ethers.BigNumber;
 
           before('delegate some collateral', async () => {
-            const tx = await VaultModule.connect(user1).delegateCollateral(
+            const tx = await systems().Core.connect(user1).delegateCollateral(
               1,
               1,
               Collateral.address,
@@ -206,7 +194,7 @@ describe('FundModule - Funds Admin', function () {
 
           describe('when adding to the same liquidityId', async () => {
             before('delegate some collateral', async () => {
-              const tx = await VaultModule.connect(user1).delegateCollateral(
+              const tx = await systems().Core.connect(user1).delegateCollateral(
                 1,
                 1,
                 Collateral.address,
@@ -242,7 +230,7 @@ describe('FundModule - Funds Admin', function () {
 
           describe('when decreasing from to same liquidityId', async () => {
             before('delegate some collateral', async () => {
-              const tx = await VaultModule.connect(user1).delegateCollateral(
+              const tx = await systems().Core.connect(user1).delegateCollateral(
                 1,
                 1,
                 Collateral.address,
@@ -278,7 +266,7 @@ describe('FundModule - Funds Admin', function () {
 
           describe('when removing liquidityId', async () => {
             before('delegate some collateral', async () => {
-              const tx = await VaultModule.connect(user1).delegateCollateral(
+              const tx = await systems().Core.connect(user1).delegateCollateral(
                 1,
                 1,
                 Collateral.address,

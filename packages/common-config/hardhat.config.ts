@@ -4,16 +4,15 @@ const dotenv = require('dotenv');
 // Load common .env file at ./packages/config-common/.env
 dotenv.config({ path: path.resolve(__dirname, '.env') });
 
-require('@nomiclabs/hardhat-ethers');
-require('hardhat-contract-sizer');
-require('solidity-coverage');
-require('@synthetixio/deployer');
-require('@synthetixio/cli');
+import '@nomiclabs/hardhat-ethers';
+import 'hardhat-contract-sizer';
+import 'solidity-coverage';
+import '@synthetixio/deployer';
+import '@synthetixio/cli';
 
-/**
- * @type import('hardhat/config').HardhatUserConfig
- */
-module.exports = {
+import 'hardhat-cannon';
+
+const config = {
   solidity: {
     version: '0.8.11',
     settings: {
@@ -47,3 +46,5 @@ module.exports = {
     username: 'synthetix-services',
   },
 };
+
+export default config;

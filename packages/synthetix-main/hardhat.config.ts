@@ -1,12 +1,20 @@
-import '@typechain/hardhat'
-import '@nomiclabs/hardhat-ethers'
-import 'hardhat-cannon';
+//import '@typechain/hardhat'
 
-const config = require('@synthetixio/common-config/hardhat.config.js');
+import '@nomiclabs/hardhat-ethers';
+import { HardhatUserConfig } from 'hardhat/types';
 
-module.exports = {
-  ...config,
+import commonConfig from '@synthetixio/common-config/hardhat.config';
+
+const config: HardhatUserConfig = {
+  ...commonConfig,
+  solidity: "0.8.11",
+};
+
+export default config;
+
+/*export default {
+  ...require('@synthetixio/common-config/hardhat.config.js'),
   deployer: {
     proxyContract: 'Synthetix',
   },
-};
+};*/
