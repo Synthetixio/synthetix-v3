@@ -1,5 +1,15 @@
 import assert from 'assert/strict';
-import sinon from 'sinon';
+
+
+// TODO: catch 22 because for some reason the `declares.d.ts` in the
+// helpers dir is doing nothing to help us here
+// and declaring the module specifically here does nothing either
+// if we install `@types/sinon` there seems to be a bug internal
+// to the lib that causes regular build to fail
+// so we have to require
+const sinon = require('sinon');  // eslint-disable-line
+
+
 import {
   takeSnapshot,
   restoreSnapshot,
