@@ -3,8 +3,8 @@ const { parseFullyQualifiedName } = require('hardhat/utils/contract-names');
 const {
   findImportedContractFullyQualifiedName,
   findContractDependencies,
-} = require('@synthetixio/core-js/utils/ast/finders');
-const { capitalize } = require('@synthetixio/core-js/utils/misc/strings');
+} = require('@synthetixio/core-js/dist/utils/ast/finders');
+const { capitalize } = require('@synthetixio/core-js/dist/utils/misc/strings');
 const { SUBTASK_FIND_CONTRACTS } = require('../task-names');
 
 /**

@@ -69,6 +69,7 @@ function getMemberUpdates(
     const previous = previousStruct.struct.members[i];
     if (!current) {
       removals.push({
+        completeStruct: false,
         contract: previousStruct.contract.name,
         struct: previousStruct.struct.name,
         old: previous,
@@ -77,6 +78,7 @@ function getMemberUpdates(
     }
     if (!previous) {
       appends.push({
+        completeStruct: false,
         contract: currentStruct.contract.name,
         struct: currentStruct.struct.name,
         new: current,
@@ -85,6 +87,7 @@ function getMemberUpdates(
     }
     if (current.name !== previous.name || current.type !== previous.type) {
       modifications.push({
+        completeStruct: false,
         contract: currentStruct.contract.name,
         struct: currentStruct.struct.name,
         old: previous,

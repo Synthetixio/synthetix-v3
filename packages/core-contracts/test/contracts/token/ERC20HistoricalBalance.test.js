@@ -1,7 +1,7 @@
 const { ethers } = hre;
-const { advanceBlock, getBlock } = require('@synthetixio/core-js/utils/hardhat/rpc');
-const assertRevert = require('@synthetixio/core-js/utils/assertions/assert-revert');
-const assertBn = require('@synthetixio/core-js/utils/assertions/assert-bignumber');
+const { advanceBlock, getBlock } = require('@synthetixio/core-js/dist/utils/hardhat/rpc');
+const { default: assertRevert } = require('@synthetixio/core-js/dist/utils/assertions/assert-revert');
+const assertBn = require('@synthetixio/core-js/dist/utils/assertions/assert-bignumber');
 
 describe('ERC20HistoricalBalance', () => {
   let ERC20;

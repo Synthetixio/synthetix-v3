@@ -14,6 +14,7 @@
   "license": "MIT",
   "homepage": "https://github.com/Synthetixio/synthetix-v3#readme",
   "scripts": {
+    "build": "npm run --workspaces --if-present build",
     "test": "npm run --workspaces --if-present test",
     "coverage": "npm run --workspaces --if-present coverage",
     "lint:js": "eslint '**/*.ts'",

@@ -1,4 +1,4 @@
-const { default: logger } = require('@synthetixio/core-js/utils/io/logger');
+const { default: logger } = require('@synthetixio/core-js/dist/utils/io/logger');
 
 async function processTransaction({ transaction, description, hre }) {
   logger.info(`Processing transaction ${transaction.hash}...`);

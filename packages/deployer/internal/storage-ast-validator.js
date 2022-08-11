@@ -4,11 +4,11 @@ const {
   findYulStorageSlotAssignments,
   findContractStateVariables,
   findContractNode,
-} = require('@synthetixio/core-js/utils/ast/finders');
-const { onlyUnique } = require('@synthetixio/core-js/utils/misc/array-filters');
-const { buildContractsStructMap } = require('@synthetixio/core-js/utils/ast/storage-struct');
-const { compareStorageStructs } = require('@synthetixio/core-js/utils/ast/comparator');
-const { onlyRepeated } = require('@synthetixio/core-js/utils/misc/array-filters');
+} = require('@synthetixio/core-js/dist/utils/ast/finders');
+const { onlyUnique } = require('@synthetixio/core-js/dist/utils/misc/array-filters');
+const { buildContractsStructMap } = require('@synthetixio/core-js/dist/utils/ast/storage-struct');
+const { compareStorageStructs } = require('@synthetixio/core-js/dist/utils/ast/comparator');
+const { onlyRepeated } = require('@synthetixio/core-js/dist/utils/misc/array-filters');
 
 class ModuleStorageASTValidator {
   constructor(moduleFullyQualifiedNames, astNodes, previousAstNodes = {}) {

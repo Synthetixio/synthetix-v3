@@ -1,8 +1,8 @@
 import hre from 'hardhat';
 import assert from 'assert/strict';
-import assertBn from '@synthetixio/core-js/utils/assertions/assert-bignumber';
-import assertRevert from '@synthetixio/core-js/utils/assertions/assert-revert';
-import { findEvent } from '@synthetixio/core-js/utils/ethers/events';
+import assertBn from '@synthetixio/core-js/dist/utils/assertions/assert-bignumber';
+import assertRevert from '@synthetixio/core-js/dist/utils/assertions/assert-revert';
+import { findEvent } from '@synthetixio/core-js/dist/utils/ethers/events';
 import { bootstrap } from '../bootstrap';
 import { ethers } from 'ethers';
 

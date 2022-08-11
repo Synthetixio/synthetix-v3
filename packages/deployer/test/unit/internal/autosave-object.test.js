@@ -2,7 +2,7 @@ const assert = require('assert/strict');
 const del = require('del');
 const fs = require('fs');
 const autosaveObject = require('../../../internal/autosave-object');
-const { default: logger } = require('@synthetixio/core-js/utils/io/logger');
+const { default: logger } = require('@synthetixio/core-js/dist/utils/io/logger');
 
 const FILE_PATH = 'test/fixtures/files/autosave.json';
 const INITIAL_OBJ = {

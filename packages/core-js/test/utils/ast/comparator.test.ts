@@ -1,9 +1,10 @@
 import { equal } from 'assert/strict';
 import { clone } from '../../../utils/misc/clone';
 import { compareStorageStructs } from '../../../utils/ast/comparator';
+import { ContractsStruct } from '../../../utils/ast/storage-struct';
 
 describe('utils/ast/comparator.js compareStorageStructs', function () {
-  const previousStructsMap = [
+  const previousStructsMap: ContractsStruct[] = [
     {
       contract: {
         name: 'GlobalNamespace',
@@ -72,7 +73,7 @@ describe('utils/ast/comparator.js compareStorageStructs', function () {
         ],
       },
     },
-  ];
+  ] as any;
 
   describe('compareStorageStructs no updates', function () {
     it('detects no changes when both structMaps are equal', function () {

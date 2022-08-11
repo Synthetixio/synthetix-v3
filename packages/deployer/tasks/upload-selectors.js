@@ -1,5 +1,5 @@
 const { task } = require('hardhat/config');
-const { default: logger } = require('@synthetixio/core-js/utils/io/logger');
+const { default: logger } = require('@synthetixio/core-js/dist/utils/io/logger');
 const fourbytes = require('../internal/fourbytes');
 const { TASK_UPLOAD_SELECTORS, SUBTASK_GET_SOURCES_ABIS } = require('../task-names');
 

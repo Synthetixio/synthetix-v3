@@ -1,6 +1,6 @@
 const { subtask } = require('hardhat/config');
 
-const { default: logger } = require('@synthetixio/core-js/utils/io/logger');
+const { default: logger } = require('@synthetixio/core-js/dist/utils/io/logger');
 const filterValues = require('filter-values');
 const { SUBTASK_DEPLOY_CONTRACTS, SUBTASK_DEPLOY_MODULES } = require('../task-names');
 

@@ -1,10 +1,10 @@
 const chalk = require('chalk');
-const logger = require('@synthetixio/core-js/utils/io/logger');
+const { default: logger } = require('@synthetixio/core-js/dist/utils/io/logger');
 const { subtask } = require('hardhat/config');
 const { SUBTASK_PRINT_INFO } = require('../task-names');
-const { readPackageJson } = require('@synthetixio/core-js/utils/misc/npm');
-const { getCommit, getBranch } = require('@synthetixio/core-js/utils/misc/git');
-const relativePath = require('@synthetixio/core-js/utils/misc/relative-path');
+const { readPackageJson } = require('@synthetixio/core-js/dist/utils/misc/npm');
+const { getCommit, getBranch } = require('@synthetixio/core-js/dist/utils/misc/git');
+const { default: relativePath } = require('@synthetixio/core-js/dist/utils/misc/relative-path');
 
 subtask(SUBTASK_PRINT_INFO, 'Prints info about the interaction with a particular system').setAction(
   async (taskArguments) => {

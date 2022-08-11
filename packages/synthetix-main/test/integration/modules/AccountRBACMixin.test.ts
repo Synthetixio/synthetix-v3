@@ -1,6 +1,6 @@
 import assert from 'assert/strict';
-import assertBn from '@synthetixio/core-js/utils/assertions/assert-bignumber';
-import assertRevert from '@synthetixio/core-js/utils/assertions/assert-revert';
+import assertBn from '@synthetixio/core-js/dist/utils/assertions/assert-bignumber';
+import assertRevert from '@synthetixio/core-js/dist/utils/assertions/assert-revert';
 import { bootstrap } from '../bootstrap';
 import { ethers } from 'ethers';
 
