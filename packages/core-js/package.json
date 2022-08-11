@@ -5,13 +5,14 @@
   "private": true,
   "scripts": {
     "test": "./node_modules/.bin/mocha --require ts-node/register",
-    "coverage": "nyc mocha",
+    "coverage": "nyc npm run test",
     "test:watch": "mocha --watch"
   },
   "dependencies": {
     "chalk": "4.1.2"
   },
   "devDependencies": {
+    "@istanbuljs/nyc-config-typescript": "1.0.2",
     "@types/prompts": "2.0.14",
     "@types/sinon": "10.0.13",
     "ethers": "5.6.9",

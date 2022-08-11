@@ -1,6 +1,7 @@
 {
+  "extends": "@istanbuljs/nyc-config-typescript",
   "all": true,
-  "include": ["utils/**/*.js"],
+  "include": ["utils/**/*.ts"],
   "check-coverage": true,
   "reporter": ["lcov", "text"],
   "branches": 31,
