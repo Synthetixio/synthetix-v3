@@ -3,25 +3,31 @@ import { findContractNodeVariables, findContractNodeStructs } from './finders';
 import { ContractDefinition, StructDefinition } from 'solidity-ast';
 
 export type StructMember = {
-    name: string,
-    type: string | null,
-    contractName: string,
-    contractId: number
+  name: string;
+  type: string | null;
+  contractName: string;
+  contractId: number;
 };
 
 export type ContractsStruct = {
-  contract: { name: string, id: number };
-  struct:{ name: string, members: StructMember[] };
+  contract: { name: string; id: number };
+  struct: { name: string; members: StructMember[] };
 };
 
-export async function buildContractsStructMap(contractNodes: ContractDefinition[]) {
+export async function buildContractsStructMap(
+  contractNodes: ContractDefinition[]
+) {
   const structs: ContractsStruct[] = [];
 
   for (const contractNode of contractNodes) {
     for (const structDefinition of findContractNodeStructs(contractNode)) {
       let members: StructMember[] = [];
 
-      members = _flatStructMembers(contractNodes, structDefinition.canonicalName, members);
+      members = _flatStructMembers(
+        contractNodes,
+        structDefinition.canonicalName,
+        members
+      );
 
       structs.push({
         contract: { name: contractNode.name, id: contractNode.id },
@@ -35,11 +41,20 @@ export async function buildContractsStructMap(contractNodes: ContractDefinition[
   return structs;
 }
 
-function _flatStructMembers(contractNodes: ContractDefinition[], canonicalName: string, members: StructMember[]) {
+function _flatStructMembers(
+  contractNodes: ContractDefinition[],
+  canonicalName: string,
+  members: StructMember[]
+) {
   for (const currentContractNode of contractNodes) {
-    for (const currentStructDefinition of findContractNodeStructs(currentContractNode)) {
+    for (const currentStructDefinition of findContractNodeStructs(
+      currentContractNode
+    )) {
       if (canonicalName === currentStructDefinition.canonicalName) {
-        for (const member of findContractNodeVariables(currentStructDefinition as any)) { // TODO
+        for (const member of findContractNodeVariables(
+          currentStructDefinition as any
+        )) {
+          // TODO
           members.push({
             name: member.name,
             type: member.typeDescriptions.typeString || null,
@@ -47,7 +62,11 @@ function _flatStructMembers(contractNodes: ContractDefinition[], canonicalName: 
             contractId: currentContractNode.id,
           });
 
-          if (member.typeDescriptions && member.typeDescriptions.typeString && member.typeDescriptions.typeString.startsWith('struct')) {
+          if (
+            member.typeDescriptions &&
+            member.typeDescriptions.typeString &&
+            member.typeDescriptions.typeString.startsWith('struct')
+          ) {
             _flatStructMembers(
               contractNodes,
               member.typeDescriptions.typeString.replace('struct ', ''),

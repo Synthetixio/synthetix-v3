@@ -15,26 +15,35 @@ describe('USDTokenModule', function () {
 
   describe('mintInitialSystemToken()', () => {
     it('only the owner can call', async () => {
-        assertRevert(
-            systems().Core.connect(user1).mintInitialSystemToken(await owner.getAddress(), 1e18),
-            'Unauthorized',
-            systems().Core
-        );
+      assertRevert(
+        systems()
+          .Core.connect(user1)
+          .mintInitialSystemToken(await owner.getAddress(), 1e18),
+        'Unauthorized',
+        systems().Core
+      );
     });
 
     it('works when totalSupply is 0', async () => {
-        const amount = ethers.utils.parseEther('1');
+      const amount = ethers.utils.parseEther('1');
 
-        await systems().Core.connect(owner).mintInitialSystemToken(await user1.getAddress(), amount)
-        assertBn.equal(await systems().SNX.balanceOf(await user1.getAddress()), amount);
+      await systems()
+        .Core.connect(owner)
+        .mintInitialSystemToken(await user1.getAddress(), amount);
+      assertBn.equal(
+        await systems().SNX.balanceOf(await user1.getAddress()),
+        amount
+      );
     });
 
     it('reverts when totalSupply is not 0', async () => {
-        assertRevert(
-            systems().Core.connect(owner).mintInitialSystemToken(await user1.getAddress(), 1e18),
-            'AlreadyInitialized',
-            systems().Core
-        );
+      assertRevert(
+        systems()
+          .Core.connect(owner)
+          .mintInitialSystemToken(await user1.getAddress(), 1e18),
+        'AlreadyInitialized',
+        systems().Core
+      );
     });
   });
 });

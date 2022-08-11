@@ -13,9 +13,14 @@ import "../../mixins/MarketManagerMixin.sol";
 import "../../mixins/AccountRBACMixin.sol";
 import "../../mixins/FundMixin.sol";
 
-contract MarketManagerModule is IMarketManagerModule, MarketManagerStorage, MarketManagerMixin, AssociatedSystemsMixin, OwnableMixin {
-
-    bytes32 constant private _USD_TOKEN = "USDToken";
+contract MarketManagerModule is
+    IMarketManagerModule,
+    MarketManagerStorage,
+    MarketManagerMixin,
+    AssociatedSystemsMixin,
+    OwnableMixin
+{
+    bytes32 private constant _USD_TOKEN = "USDToken";
 
     error MarketAlreadyRegistered(address market);
 
@@ -81,7 +86,6 @@ contract MarketManagerModule is IMarketManagerModule, MarketManagerStorage, Mark
 
         // verify if the market is authorized to burn the USD for the target
         ITokenModule usdToken = _getToken(_USD_TOKEN);
-
 
         uint originalAllowance = usdToken.allowance(target, msg.sender);
         require(originalAllowance >= amount, "insufficient allowance");

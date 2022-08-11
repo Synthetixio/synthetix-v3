@@ -10,7 +10,10 @@ import { ethers } from 'ethers';
 describe('FundModule Admin', function () {
   const { signers, systems } = bootstrap();
 
-  let owner: ethers.Signer, fundAdmin: ethers.Signer, user1: ethers.Signer, user2: ethers.Signer;
+  let owner: ethers.Signer,
+    fundAdmin: ethers.Signer,
+    user1: ethers.Signer,
+    user2: ethers.Signer;
 
   let Collateral: ethers.Contract, AggregatorV3Mock: ethers.Contract;
 
@@ -24,7 +27,9 @@ describe('FundModule Admin', function () {
     factory = await hre.ethers.getContractFactory('CollateralMock');
     Collateral = await factory.connect(owner).deploy();
 
-    await (await Collateral.connect(owner).initialize('Synthetix Token', 'SNX', 18)).wait();
+    await (
+      await Collateral.connect(owner).initialize('Synthetix Token', 'SNX', 18)
+    ).wait();
 
     factory = await hre.ethers.getContractFactory('AggregatorV3Mock');
     AggregatorV3Mock = await factory.connect(owner).deploy();
@@ -32,13 +37,15 @@ describe('FundModule Admin', function () {
     await (await AggregatorV3Mock.connect(owner).mockSetCurrentPrice(1)).wait();
 
     await (
-      await systems().Core.connect(owner).adjustCollateralType(
-        Collateral.address,
-        AggregatorV3Mock.address,
-        400,
-        200,
-        true
-      )
+      await systems()
+        .Core.connect(owner)
+        .adjustCollateralType(
+          Collateral.address,
+          AggregatorV3Mock.address,
+          400,
+          200,
+          true
+        )
     ).wait();
   });
 
@@ -52,21 +59,36 @@ describe('FundModule Admin', function () {
     await (await Collateral.mint(await user2.getAddress(), 1000)).wait();
   });
 
-  before('approve systems().Core to operate with the user collateral', async () => {
-    await (
-      await Collateral.connect(user1).approve(systems().Core.address, ethers.constants.MaxUint256)
-    ).wait();
-    await (
-      await Collateral.connect(user2).approve(systems().Core.address, ethers.constants.MaxUint256)
-    ).wait();
-  });
+  before(
+    'approve systems().Core to operate with the user collateral',
+    async () => {
+      await (
+        await Collateral.connect(user1).approve(
+          systems().Core.address,
+          ethers.constants.MaxUint256
+        )
+      ).wait();
+      await (
+        await Collateral.connect(user2).approve(
+          systems().Core.address,
+          ethers.constants.MaxUint256
+        )
+      ).wait();
+    }
+  );
 
   before('stake some collateral', async () => {
-    await (await systems().Core.connect(user1).stake(1, Collateral.address, 100)).wait();
+    await (
+      await systems().Core.connect(user1).stake(1, Collateral.address, 100)
+    ).wait();
   });
 
   before('mint a fund token', async () => {
-    await (await systems().Core.connect(user1).createFund(1, await fundAdmin.getAddress())).wait();
+    await (
+      await systems()
+        .Core.connect(user1)
+        .createFund(1, await fundAdmin.getAddress())
+    ).wait();
   });
 
   it('fund is created', async () => {
@@ -77,7 +99,9 @@ describe('FundModule Admin', function () {
     describe('when attempting to set the positions of a non existent fund', async () => {
       it('reverts', async () => {
         await assertRevert(
-          systems().Core.connect(fundAdmin).setFundPosition(2, [1], [1], [0, 0]),
+          systems()
+            .Core.connect(fundAdmin)
+            .setFundPosition(2, [1], [1], [0, 0]),
           'FundNotFound("2")',
           systems().Core
         );
@@ -97,7 +121,9 @@ describe('FundModule Admin', function () {
     describe('when attempting to set the positions with not matching number of positions', async () => {
       it('reverts with more weights than markets', async () => {
         await assertRevert(
-          systems().Core.connect(fundAdmin).setFundPosition(1, [1], [1, 2], [0, 0]),
+          systems()
+            .Core.connect(fundAdmin)
+            .setFundPosition(1, [1], [1, 2], [0, 0]),
           'InvalidParameters()',
           systems().Core
         );
@@ -105,7 +131,9 @@ describe('FundModule Admin', function () {
 
       it('reverts with more markets than weights', async () => {
         await assertRevert(
-          systems().Core.connect(fundAdmin).setFundPosition(1, [1, 2], [1], [0, 0]),
+          systems()
+            .Core.connect(fundAdmin)
+            .setFundPosition(1, [1, 2], [1], [0, 0]),
           'InvalidParameters()',
           systems().Core
         );
@@ -116,18 +144,22 @@ describe('FundModule Admin', function () {
       let receipt: ethers.providers.TransactionReceipt;
 
       before('set dummy markets', async () => {
-        let factory;
-
-        factory = await hre.ethers.getContractFactory('MarketMock');
+        const factory = await hre.ethers.getContractFactory('MarketMock');
         const Market1 = await factory.connect(owner).deploy();
         const Market2 = await factory.connect(owner).deploy();
 
-        await (await systems().Core.connect(owner).registerMarket(Market1.address)).wait();
-        await (await systems().Core.connect(owner).registerMarket(Market2.address)).wait();
+        await (
+          await systems().Core.connect(owner).registerMarket(Market1.address)
+        ).wait();
+        await (
+          await systems().Core.connect(owner).registerMarket(Market2.address)
+        ).wait();
       });
 
       before('adjust fund positions', async () => {
-        const tx = await systems().Core.connect(fundAdmin).setFundPosition(1, [1, 2], [1, 1], [0, 0]);
+        const tx = await systems()
+          .Core.connect(fundAdmin)
+          .setFundPosition(1, [1, 2], [1, 1], [0, 0]);
         receipt = await tx.wait();
       });
 
@@ -145,8 +177,7 @@ describe('FundModule Admin', function () {
       });
 
       it('is created', async () => {
-        let markets, weights;
-        [markets, weights] = await systems().Core.getFundPosition(1);
+        const [markets, weights] = await systems().Core.getFundPosition(1);
         assert.equal(markets.length, 2);
         assert.equal(weights.length, 2);
         assertBn.equal(markets[0], 1);
@@ -161,18 +192,17 @@ describe('FundModule Admin', function () {
           let liquidityItemId: ethers.BigNumber;
 
           before('delegate some collateral', async () => {
-            const tx = await systems().Core.connect(user1).delegateCollateral(
-              1,
-              1,
-              Collateral.address,
-              10,
-              1
-            );
+            const tx = await systems()
+              .Core.connect(user1)
+              .delegateCollateral(1, 1, Collateral.address, 10, 1);
             receipt = await tx.wait();
           });
 
           it('emmited a DelegationUpdated event', async () => {
-            const event = findEvent({ receipt, eventName: 'DelegationUpdated' });
+            const event = findEvent({
+              receipt,
+              eventName: 'DelegationUpdated',
+            });
             liquidityItemId = event.args.liquidityItemId;
 
             assertBn.equal(event.args.fundId, 1);
@@ -197,18 +227,17 @@ describe('FundModule Admin', function () {
 
           describe('when adding to the same liquidityId', async () => {
             before('delegate some collateral', async () => {
-              const tx = await systems().Core.connect(user1).delegateCollateral(
-                1,
-                1,
-                Collateral.address,
-                20,
-                1
-              );
+              const tx = await systems()
+                .Core.connect(user1)
+                .delegateCollateral(1, 1, Collateral.address, 20, 1);
               receipt = await tx.wait();
             });
 
             it('emmited a DelegationUpdated event', async () => {
-              const event = findEvent({ receipt, eventName: 'DelegationUpdated' });
+              const event = findEvent({
+                receipt,
+                eventName: 'DelegationUpdated',
+              });
 
               assert.equal(event.args.liquidityItemId, liquidityItemId);
               assertBn.equal(event.args.fundId, 1);
@@ -219,7 +248,10 @@ describe('FundModule Admin', function () {
             });
 
             it('emmited a PositionIncreased event', async () => {
-              const event = findEvent({ receipt, eventName: 'PositionIncreased' });
+              const event = findEvent({
+                receipt,
+                eventName: 'PositionIncreased',
+              });
 
               assert.equal(event.args.liquidityItemId, liquidityItemId);
               assertBn.equal(event.args.fundId, 1);
@@ -233,18 +265,17 @@ describe('FundModule Admin', function () {
 
           describe('when decreasing from to same liquidityId', async () => {
             before('delegate some collateral', async () => {
-              const tx = await systems().Core.connect(user1).delegateCollateral(
-                1,
-                1,
-                Collateral.address,
-                1,
-                1
-              );
+              const tx = await systems()
+                .Core.connect(user1)
+                .delegateCollateral(1, 1, Collateral.address, 1, 1);
               receipt = await tx.wait();
             });
 
             it('emmited a DelegationUpdated event', async () => {
-              const event = findEvent({ receipt, eventName: 'DelegationUpdated' });
+              const event = findEvent({
+                receipt,
+                eventName: 'DelegationUpdated',
+              });
 
               assert.equal(event.args.liquidityItemId, liquidityItemId);
               assertBn.equal(event.args.fundId, 1);
@@ -255,7 +286,10 @@ describe('FundModule Admin', function () {
             });
 
             it('emmited a PositionDecreased event', async () => {
-              const event = findEvent({ receipt, eventName: 'PositionDecreased' });
+              const event = findEvent({
+                receipt,
+                eventName: 'PositionDecreased',
+              });
 
               assert.equal(event.args.liquidityItemId, liquidityItemId);
               assertBn.equal(event.args.fundId, 1);
@@ -269,18 +303,17 @@ describe('FundModule Admin', function () {
 
           describe('when removing liquidityId', async () => {
             before('delegate some collateral', async () => {
-              const tx = await systems().Core.connect(user1).delegateCollateral(
-                1,
-                1,
-                Collateral.address,
-                0,
-                1
-              );
+              const tx = await systems()
+                .Core.connect(user1)
+                .delegateCollateral(1, 1, Collateral.address, 0, 1);
               receipt = await tx.wait();
             });
 
             it('emmited a DelegationUpdated event', async () => {
-              const event = findEvent({ receipt, eventName: 'DelegationUpdated' });
+              const event = findEvent({
+                receipt,
+                eventName: 'DelegationUpdated',
+              });
 
               assert.equal(event.args.liquidityItemId, liquidityItemId);
               assertBn.equal(event.args.fundId, 1);
@@ -291,7 +324,10 @@ describe('FundModule Admin', function () {
             });
 
             it('emmited a PositionRemoved event', async () => {
-              const event = findEvent({ receipt, eventName: 'PositionRemoved' });
+              const event = findEvent({
+                receipt,
+                eventName: 'PositionRemoved',
+              });
 
               assert.equal(event.args.liquidityItemId, liquidityItemId);
               assertBn.equal(event.args.fundId, 1);

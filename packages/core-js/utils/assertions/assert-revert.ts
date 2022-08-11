@@ -1,4 +1,4 @@
-import { ethers } from "ethers";
+import { ethers } from 'ethers';
 
 function getErrorData(err: any): string | null {
   if (err.data) {
@@ -12,7 +12,11 @@ function getErrorData(err: any): string | null {
   return null;
 }
 
-export default async function assertRevert(tx: Promise<ethers.providers.TransactionResponse>, expectedMessage: string, contract?: ethers.Contract) {
+export default async function assertRevert(
+  tx: Promise<ethers.providers.TransactionResponse>,
+  expectedMessage: string,
+  contract?: ethers.Contract
+) {
   let error: any | null = null;
 
   try {
@@ -25,7 +29,6 @@ export default async function assertRevert(tx: Promise<ethers.providers.Transact
   if (!error) {
     throw new Error('Transaction was expected to revert, but it did not');
   } else if (expectedMessage) {
-
     // parse the error
     const errorData = getErrorData(error);
 
@@ -33,7 +36,13 @@ export default async function assertRevert(tx: Promise<ethers.providers.Transact
     if (errorData && contract) {
       const parsed = contract.interface.parseError(errorData);
 
-      receivedMessage = `${parsed.name}(${parsed.args ? parsed.args.map(v => v.toString ? '"' + v.toString() + '"' : v).join(', ') : ''})`
+      receivedMessage = `${parsed.name}(${
+        parsed.args
+          ? parsed.args
+            .map((v) => (v.toString ? '"' + v.toString() + '"' : v))
+            .join(', ')
+          : ''
+      })`;
     }
 
     if (!receivedMessage.includes(expectedMessage)) {
@@ -43,8 +52,12 @@ export default async function assertRevert(tx: Promise<ethers.providers.Transact
       // Basically, the first time tests are run, the revert reason is not parsed,
       // but the second time it is parsed just fine;
       if (
-        receivedMessage.includes('reverted with an unrecognized custom error') ||
-        receivedMessage.includes('revert with unrecognized return data or custom error')
+        receivedMessage.includes(
+          'reverted with an unrecognized custom error'
+        ) ||
+        receivedMessage.includes(
+          'revert with unrecognized return data or custom error'
+        )
       ) {
         console.warn(
           `WARNING: assert-revert was unable to parse revert reason. The reason will be ignored in this test: ${receivedMessage}`
@@ -58,4 +71,4 @@ export default async function assertRevert(tx: Promise<ethers.providers.Transact
       );
     }
   }
-};
+}

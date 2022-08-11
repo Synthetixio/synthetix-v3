@@ -16,10 +16,26 @@ describe('FundModule Configuration (SCCP)', function () {
   });
 
   before('Create some Funds', async () => {
-    await (await systems().Core.connect(user1).createFund(1, await user1.getAddress())).wait();
-    await (await systems().Core.connect(user1).createFund(2, await user1.getAddress())).wait();
-    await (await systems().Core.connect(user1).createFund(3, await user1.getAddress())).wait();
-    await (await systems().Core.connect(user1).createFund(4, await user1.getAddress())).wait();
+    await (
+      await systems()
+        .Core.connect(user1)
+        .createFund(1, await user1.getAddress())
+    ).wait();
+    await (
+      await systems()
+        .Core.connect(user1)
+        .createFund(2, await user1.getAddress())
+    ).wait();
+    await (
+      await systems()
+        .Core.connect(user1)
+        .createFund(3, await user1.getAddress())
+    ).wait();
+    await (
+      await systems()
+        .Core.connect(user1)
+        .createFund(4, await user1.getAddress())
+    ).wait();
   });
 
   it('created the funds', async () => {
@@ -130,8 +146,8 @@ describe('FundModule Configuration (SCCP)', function () {
     });
 
     it('is added', async () => {
-      const approvedFunds = (await systems().Core.getApprovedFunds()).map((e: ethers.BigNumber) =>
-        e.toString()
+      const approvedFunds = (await systems().Core.getApprovedFunds()).map(
+        (e: ethers.BigNumber) => e.toString()
       );
 
       assert.equal(approvedFunds.length, 1);
@@ -156,8 +172,8 @@ describe('FundModule Configuration (SCCP)', function () {
       });
 
       it('is added', async () => {
-        const approvedFunds = (await systems().Core.getApprovedFunds()).map((e: ethers.BigNumber) =>
-          e.toString()
+        const approvedFunds = (await systems().Core.getApprovedFunds()).map(
+          (e: ethers.BigNumber) => e.toString()
         );
 
         assert.equal(approvedFunds.length, 2);
@@ -183,14 +199,17 @@ describe('FundModule Configuration (SCCP)', function () {
         });
 
         it('emmited an event', async () => {
-          const event = findEvent({ receipt, eventName: 'FundApprovedRemoved' });
+          const event = findEvent({
+            receipt,
+            eventName: 'FundApprovedRemoved',
+          });
 
           assertBn.equal(event.args.fundId, 3);
         });
 
         it('is removed', async () => {
-          const approvedFunds = (await systems().Core.getApprovedFunds()).map((e: ethers.BigNumber) =>
-            e.toString()
+          const approvedFunds = (await systems().Core.getApprovedFunds()).map(
+            (e: ethers.BigNumber) => e.toString()
           );
 
           assert.equal(approvedFunds.length, 1);

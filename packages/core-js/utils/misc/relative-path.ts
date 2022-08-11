@@ -9,4 +9,4 @@
  */
 export default function relativePath(filepath: string, from = process.cwd()) {
   return filepath.replace(new RegExp(`^${from}/`), '');
-};
+}

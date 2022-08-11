@@ -3,12 +3,15 @@ import { BigNumber, BigNumberish } from 'ethers';
 
 class BigNumberAssertionError extends AssertionError {}
 
-// https://stackoverflow.com/questions/56863875/typescript-how-do-you-filter-a-types-properties-to-those-of-a-certain-type
+// https://stackoverflow.com/questions/56863875/
+// typescript-how-do-you-filter-a-types-properties-to-those-of-a-certain-type
 type KeysMatching<T extends object, V> = {
-  [K in keyof T]-?: T[K] extends V ? K : never
+  [K in keyof T]-?: T[K] extends V ? K : never;
 }[keyof T];
 
-function _createAssertBN(operator: KeysMatching<BigNumber, (v: BigNumberish) => boolean>) {
+function _createAssertBN(
+  operator: KeysMatching<BigNumber, (v: BigNumberish) => boolean>
+) {
   return function _assertBn(a: BigNumberish, b: BigNumberish) {
     const result = BigNumber.from(a)[operator](b);
 
@@ -72,8 +75,8 @@ export = {
       throw new BigNumberAssertionError({
         actual: a,
         expected: BigNumber.from(0),
-        operator: 'isZero'
-      })
+        operator: 'isZero',
+      });
     }
   },
 };

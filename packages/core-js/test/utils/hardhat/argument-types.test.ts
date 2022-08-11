@@ -1,5 +1,9 @@
 import { equal, notEqual, throws, doesNotThrow } from 'assert/strict';
-import { alphanumeric, address, oneOf } from '../../../utils/hardhat/argument-types';
+import {
+  alphanumeric,
+  address,
+  oneOf,
+} from '../../../utils/hardhat/argument-types';
 
 describe('utils/hardhat/argument-types.js', function () {
   describe('alphanumeric', () => {
@@ -57,10 +61,16 @@ describe('utils/hardhat/argument-types.js', function () {
 
     it('validates correctly', () => {
       doesNotThrow(() => {
-        address.validate('argName', '0x23618e81e3f5cdf7f54c3d65f7fbc0abf5b21e8f');
+        address.validate(
+          'argName',
+          '0x23618e81e3f5cdf7f54c3d65f7fbc0abf5b21e8f'
+        );
       });
       doesNotThrow(() => {
-        address.validate('argName', '0x23618e81e3f5cdf7f54c3d65f7fbc0abf5b21e8f');
+        address.validate(
+          'argName',
+          '0x23618e81e3f5cdf7f54c3d65f7fbc0abf5b21e8f'
+        );
       });
       throws(() => {
         address.validate('argName', 'word.1234');

@@ -47,7 +47,9 @@ describe('utils/io/prompter.js', function () {
 
         let exited = false;
         const exitCache = process.exit;
-        process.exit = (() => { exited = true; }) as () => never;
+        process.exit = (() => {
+          exited = true;
+        }) as () => never;
 
         try {
           await prompter.confirmAction('something?');

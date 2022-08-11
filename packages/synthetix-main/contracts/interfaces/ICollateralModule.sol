@@ -69,5 +69,9 @@ interface ICollateralModule {
     ) external;
 
     /// @notice Redeems the system escrow tokens into reward tokens
-    function redeemReward(uint accountId, uint amount, uint duration) external;
+    function redeemReward(
+        uint accountId,
+        uint amount,
+        uint duration
+    ) external;
 }

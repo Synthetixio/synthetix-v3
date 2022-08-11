@@ -12,11 +12,15 @@ module.exports.deploy = async function deploy(runtime, prefix, modules) {
   if (runtime?.provider) {
     hre.ethers.provider = runtime.provider;
   }
-  
+
   if (runtime?.getDefaultSigner) {
     console.log('overriding signers');
-    hre.ethers.getSigners = async () => { return [await runtime.getDefaultSigner('deployer', prefix)]; };
-    hre.ethers.getSigner = async () => { hre.ethers.getSigners()[0]; };
+    hre.ethers.getSigners = async () => {
+      return [await runtime.getDefaultSigner('deployer', prefix)];
+    };
+    hre.ethers.getSigner = async () => {
+      hre.ethers.getSigners()[0];
+    };
   }
 
   const instance = prefix.toLowerCase();

@@ -1,6 +1,18 @@
 import path from 'path';
 import { equal, notEqual, deepEqual } from 'assert/strict';
-import {findContractDependencies,findFunctionSelectors,findFunctionNodes,findContractNodeStructs,findContractNodeVariables,findContractStateVariables,findYulCaseValues,findYulStorageSlotAssignments,findContractDefinitions,findContractNode,findImportedContractFullyQualifiedName} from '../../../utils/ast/finders';
+import {
+  findContractDependencies,
+  findFunctionSelectors,
+  findFunctionNodes,
+  findContractNodeStructs,
+  findContractNodeVariables,
+  findContractStateVariables,
+  findYulCaseValues,
+  findYulStorageSlotAssignments,
+  findContractDefinitions,
+  findContractNode,
+  findImportedContractFullyQualifiedName,
+} from '../../../utils/ast/finders';
 import asts from '../../fixtures/asts.json';
 import noContractAst from '../../fixtures/no-contract-ast.json';
 import parseContracts from '../../helpers/parse-contracts';
@@ -14,7 +26,13 @@ describe('utils/ast/finders.js find AST artifacts', function () {
   let sampleProjectAstNodes: SourceUnit[];
 
   before('load sample-project artifacts', async function () {
-    const envPath = path.resolve(__dirname, '..', '..', 'fixtures', 'sample-project');
+    const envPath = path.resolve(
+      __dirname,
+      '..',
+      '..',
+      'fixtures',
+      'sample-project'
+    );
     sampleProject = await parseContracts(envPath);
     sampleProjectAstNodes = Object.values(sampleProject.asts);
   });
@@ -56,7 +74,11 @@ describe('utils/ast/finders.js find AST artifacts', function () {
         'contracts/modules/SettingsModule.sol:SettingsModule',
         astNodes
       );
-      equal(dependencies.length, 5, 'SettingsModule should have 5 dependencies');
+      equal(
+        dependencies.length,
+        5,
+        'SettingsModule should have 5 dependencies'
+      );
 
       equal(
         dependencies.includes(
@@ -73,11 +95,18 @@ describe('utils/ast/finders.js find AST artifacts', function () {
       const AnotherModule = 'contracts/modules/AnotherModule.sol:AnotherModule';
       const selectors = findFunctionSelectors(AnotherModule, astNodes);
       equal(selectors.length, 1, 'AnotherModule should have 1 selector');
-      equal(selectors[0].selector, '0x45aa2181', 'AnotherModule selector should be 0x45aa2181');
+      equal(
+        selectors[0].selector,
+        '0x45aa2181',
+        'AnotherModule selector should be 0x45aa2181'
+      );
     });
 
     it('doesnt find selectors from a contract that doesnt expose any', function () {
-      const selectors = findFunctionSelectors('contracts/Router.sol:Router', astNodes);
+      const selectors = findFunctionSelectors(
+        'contracts/Router.sol:Router',
+        astNodes
+      );
       equal(selectors.length, 0, 'Router should not have any selector');
     });
   });
@@ -103,14 +132,19 @@ describe('utils/ast/finders.js find AST artifacts', function () {
     });
 
     it('doesnt find selectors from a contract that doesnt expose any', function () {
-      const selectors = findFunctionSelectors('contracts/Router.sol:Router', astNodes);
+      const selectors = findFunctionSelectors(
+        'contracts/Router.sol:Router',
+        astNodes
+      );
       equal(selectors.length, 0, 'Router should not have any selector');
     });
   });
 
   describe('find all the contract definitions on the given node', function () {
     it('finds the expected contract definition on the node', function () {
-      const nodes = findContractDefinitions(asts['AnotherModule'] as SourceUnit);
+      const nodes = findContractDefinitions(
+        asts['AnotherModule'] as SourceUnit
+      );
       equal(nodes.length, 1);
       equal(nodes[0].nodeType, 'ContractDefinition');
       equal(nodes[0].name, 'AnotherModule');
@@ -124,7 +158,9 @@ describe('utils/ast/finders.js find AST artifacts', function () {
 
   describe('find contract node structs', function () {
     it('finds a contract struct', function () {
-      const node = findContractNodeStructs(asts['SettingsNamespace'] as unknown as ContractDefinition);
+      const node = findContractNodeStructs(
+        asts['SettingsNamespace'] as unknown as ContractDefinition
+      );
       notEqual(node, undefined);
       equal(node.length, 1);
       equal(node[0].nodeType, 'StructDefinition');
@@ -132,14 +168,20 @@ describe('utils/ast/finders.js find AST artifacts', function () {
     });
 
     it('doesnt find a struct from a contract without one', function () {
-      const node = findContractNodeStructs(asts['AnotherModule'] as unknown as ContractDefinition);
+      const node = findContractNodeStructs(
+        asts['AnotherModule'] as unknown as ContractDefinition
+      );
       equal(node.length, 0);
     });
   });
 
   describe('find contract node variables', function () {
     it('finds a variable node with a valid name', function () {
-      const node = findContractNodeVariables(findContractNodeStructs(asts['SettingsNamespace'] as unknown as ContractDefinition)[0]);
+      const node = findContractNodeVariables(
+        findContractNodeStructs(
+          asts['SettingsNamespace'] as unknown as ContractDefinition
+        )[0]
+      );
 
       notEqual(node, undefined);
       equal(node.length, 1);
@@ -154,7 +196,9 @@ describe('utils/ast/finders.js find AST artifacts', function () {
         'contracts/SampleModule.sol:SampleModule',
         sampleProjectAstNodes
       );
-      const node = findContractStateVariables(contractNode as unknown as StructDefinition); // TODO
+      const node = findContractStateVariables(
+        contractNode as unknown as StructDefinition
+      ); // TODO
       equal(node.length, 0);
     });
 
@@ -163,26 +207,33 @@ describe('utils/ast/finders.js find AST artifacts', function () {
         'contracts/TokenModule.sol:TokenModule',
         sampleProjectAstNodes
       );
-      const node = findContractStateVariables(contractNode as unknown as StructDefinition); // TODO
+      const node = findContractStateVariables(
+        contractNode as unknown as StructDefinition
+      ); // TODO
       equal(node.length, 1);
     });
   });
 
   describe('find case vaules (YUL)', function () {
     it('finds case values from Router contract', function () {
-      const routerSelectors = findYulCaseValues(asts['Router'] as unknown as StructDefinition);
+      const routerSelectors = findYulCaseValues(
+        asts['Router'] as unknown as StructDefinition
+      );
       notEqual(routerSelectors, undefined);
       equal(routerSelectors.length > 2, true);
       equal(
         routerSelectors.some(
-          (v) => v.selector === '0x45aa2181' && v.value!.name === '_ANOTHER_MODULE'
+          (v) =>
+            v.selector === '0x45aa2181' && v.value!.name === '_ANOTHER_MODULE'
         ),
         true
       );
     });
 
     it('doesnt find case values on not-case contract', function () {
-      const routerSelectors = findYulCaseValues(asts['AnotherModule'] as unknown as StructDefinition);
+      const routerSelectors = findYulCaseValues(
+        asts['AnotherModule'] as unknown as StructDefinition
+      );
       notEqual(routerSelectors, undefined);
       equal(routerSelectors.length == 0, true);
     });
@@ -190,14 +241,21 @@ describe('utils/ast/finders.js find AST artifacts', function () {
 
   describe('find storage slot assignments (YUL)', function () {
     it('finds storage slot assignemnts', function () {
-      const slots = findYulStorageSlotAssignments(asts['SettingsNamespace'] as unknown as ContractDefinition);
+      const slots = findYulStorageSlotAssignments(
+        asts['SettingsNamespace'] as unknown as ContractDefinition
+      );
       notEqual(slots, undefined);
       equal(slots.length, 1);
-      equal(slots[0], '0x64b748fbda347b7e22c5029a23b4e647df311daee8f2a42947ab7ccf61af2e87');
+      equal(
+        slots[0],
+        '0x64b748fbda347b7e22c5029a23b4e647df311daee8f2a42947ab7ccf61af2e87'
+      );
     });
 
     it('doesnt find storage slot assignemnts', function () {
-      const slots = findYulStorageSlotAssignments(asts['AnotherModule'] as unknown as ContractDefinition);
+      const slots = findYulStorageSlotAssignments(
+        asts['AnotherModule'] as unknown as ContractDefinition
+      );
       notEqual(slots, undefined);
       equal(slots.length == 0, true);
     });
@@ -211,7 +269,10 @@ describe('utils/ast/finders.js find AST artifacts', function () {
         sampleProjectAstNodes
       );
 
-      equal(result, '@synthetixio/core-contracts/contracts/token/ERC20.sol:ERC20');
+      equal(
+        result,
+        '@synthetixio/core-contracts/contracts/token/ERC20.sol:ERC20'
+      );
     });
 
     it('finds a aliased imported contract', function () {
@@ -221,7 +282,10 @@ describe('utils/ast/finders.js find AST artifacts', function () {
         sampleProjectAstNodes
       );
 
-      equal(result, '@synthetixio/core-contracts/contracts/token/ERC721.sol:ERC721');
+      equal(
+        result,
+        '@synthetixio/core-contracts/contracts/token/ERC721.sol:ERC721'
+      );
     });
 
     it('returns undefined when not finding it', function () {

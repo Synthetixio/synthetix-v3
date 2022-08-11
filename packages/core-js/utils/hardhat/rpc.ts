@@ -1,4 +1,4 @@
-import { ethers } from "ethers";
+import { ethers } from 'ethers';
 
 export async function takeSnapshot(provider: ethers.providers.JsonRpcProvider) {
   const snapshotId = await provider.send('evm_snapshot', []);
@@ -8,19 +8,28 @@ export async function takeSnapshot(provider: ethers.providers.JsonRpcProvider) {
   return snapshotId;
 }
 
-export async function restoreSnapshot(snapshotId: any, provider: ethers.providers.JsonRpcProvider) {
+export async function restoreSnapshot(
+  snapshotId: any,
+  provider: ethers.providers.JsonRpcProvider
+) {
   await provider.send('evm_revert', [snapshotId]);
 
   await mineBlock(provider);
 }
 
-export async function fastForward(seconds: number, provider: ethers.providers.JsonRpcProvider) {
+export async function fastForward(
+  seconds: number,
+  provider: ethers.providers.JsonRpcProvider
+) {
   await provider.send('evm_increaseTime', [seconds]);
 
   await mineBlock(provider);
 }
 
-export async function fastForwardTo(time: number, provider: ethers.providers.JsonRpcProvider) {
+export async function fastForwardTo(
+  time: number,
+  provider: ethers.providers.JsonRpcProvider
+) {
   const now = await getTime(provider);
 
   if (time < now) {

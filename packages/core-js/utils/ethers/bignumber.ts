@@ -1,4 +1,4 @@
-import { ethers } from "ethers";
+import { ethers } from 'ethers';
 
 export const BN_ONE = ethers.BigNumber.from(1);
 export const BN_TWO = ethers.BigNumber.from(2);

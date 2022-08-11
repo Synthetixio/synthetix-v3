@@ -1,6 +1,12 @@
 import { ContractsStruct } from './storage-struct';
 
-export function compareStorageStructs({ previousStructsMap, currentStructsMap }: { previousStructsMap: ContractsStruct[], currentStructsMap: ContractsStruct[] }) {
+export function compareStorageStructs({
+  previousStructsMap,
+  currentStructsMap,
+}: {
+  previousStructsMap: ContractsStruct[];
+  currentStructsMap: ContractsStruct[];
+}) {
   const appends = [];
   const modifications = [];
   const removals = [];
@@ -36,13 +42,21 @@ export function compareStorageStructs({ previousStructsMap, currentStructsMap }:
   return { appends, modifications, removals };
 }
 
-function findStructInList(element: ContractsStruct, listOfElements: ContractsStruct[]) {
+function findStructInList(
+  element: ContractsStruct,
+  listOfElements: ContractsStruct[]
+) {
   return listOfElements.find(
-    (v) => v.contract.name === element.contract.name && v.struct.name === element.struct.name
+    (v) =>
+      v.contract.name === element.contract.name &&
+      v.struct.name === element.struct.name
   );
 }
 
-function getMemberUpdates(previousStruct: ContractsStruct, currentStruct: ContractsStruct) {
+function getMemberUpdates(
+  previousStruct: ContractsStruct,
+  currentStruct: ContractsStruct
+) {
   const appends = [];
   const modifications = [];
   const removals = [];

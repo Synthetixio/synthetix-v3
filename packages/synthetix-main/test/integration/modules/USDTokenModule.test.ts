@@ -12,7 +12,9 @@ describe('USDTokenModule', function () {
   });
 
   it('USD is deployed and registered', async () => {
-    const info = await systems().Core.getAssociatedSystem(ethers.utils.formatBytes32String('USDToken'));
+    const info = await systems().Core.getAssociatedSystem(
+      ethers.utils.formatBytes32String('USDToken')
+    );
     assert.equal(info.proxy, systems().USD.address);
   });
 

@@ -1,5 +1,5 @@
-const { default: logger } = require('@synthetixio/core-js/utils/io/logger')
-const { default: prompter } = require('@synthetixio/core-js/utils/io/prompter')
+const { default: logger } = require('@synthetixio/core-js/utils/io/logger');
+const { default: prompter } = require('@synthetixio/core-js/utils/io/prompter');
 const { subtask } = require('hardhat/config');
 const { processTransaction } = require('../internal/process-transactions');
 const { UPGRADE_ABI } = require('../internal/abis');

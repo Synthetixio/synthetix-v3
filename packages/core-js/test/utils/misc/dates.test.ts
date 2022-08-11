@@ -1,5 +1,10 @@
 import { ok, equal, deepEqual, throws } from 'assert/strict';
-import { formatDate, getUnixTimestamp, fromUnixTimestamp, daysToSeconds } from '../../../utils/misc/dates';
+import {
+  formatDate,
+  getUnixTimestamp,
+  fromUnixTimestamp,
+  daysToSeconds,
+} from '../../../utils/misc/dates';
 
 describe('utils/misc/dates.js', function () {
   describe('formatDate', function () {

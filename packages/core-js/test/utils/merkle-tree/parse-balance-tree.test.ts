@@ -9,7 +9,8 @@ function hexStringToBuffer(data: string) {
 
 describe('utils/merkle-tree/parse-balance-tree.js', function () {
   describe('when parsing vaild input data', () => {
-    let inputData: { [address: string]: ethers.BigNumberish }, parsedTree: ReturnType<typeof parseBalanceMap>;
+    let inputData: { [address: string]: ethers.BigNumberish },
+      parsedTree: ReturnType<typeof parseBalanceMap>;
 
     before('build tree', () => {
       inputData = {};

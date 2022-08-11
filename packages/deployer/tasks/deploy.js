@@ -24,8 +24,8 @@ const {
 } = require('../task-names');
 
 const { default: logger } = require('@synthetixio/core-js/utils/io/logger');
-const { default: prompter } = require('@synthetixio/core-js/utils/io/prompter')
-const types = require('@synthetixio/core-js/utils/hardhat/argument-types')
+const { default: prompter } = require('@synthetixio/core-js/utils/io/prompter');
+const types = require('@synthetixio/core-js/utils/hardhat/argument-types');
 const { ContractValidationError } = require('../internal/errors');
 const { readPackageJson } = require('@synthetixio/core-js/utils/misc/npm');
 

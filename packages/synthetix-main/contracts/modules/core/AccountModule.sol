@@ -11,8 +11,7 @@ import "@synthetixio/core-modules/contracts/mixins/AssociatedSystemsMixin.sol";
 import "../../mixins/AccountRBACMixin.sol";
 
 contract AccountModule is IAccountModule, OwnableMixin, AccountRBACMixin, AssociatedSystemsMixin {
-
-    bytes32 constant private _ACCOUNT_SYSTEM = "accountNft";
+    bytes32 private constant _ACCOUNT_SYSTEM = "accountNft";
 
     using SetUtil for SetUtil.AddressSet;
     using SetUtil for SetUtil.Bytes32Set;

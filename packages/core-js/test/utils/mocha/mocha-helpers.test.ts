@@ -13,6 +13,9 @@ describe('utils/tests.js', () => {
     const gasUsed = 1337;
     printGasUsed({ test, gasUsed });
 
-    assert.equal(test._runnable.title, `Hello (${chalk.green(gasUsed)}${chalk.gray(' gas)')}`);
+    assert.equal(
+      test._runnable.title,
+      `Hello (${chalk.green(gasUsed)}${chalk.gray(' gas)')}`
+    );
   });
 });

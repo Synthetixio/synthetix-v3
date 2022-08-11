@@ -30,8 +30,8 @@ contract VaultModule is
     using SetUtil for SetUtil.AddressSet;
     using MathUtil for uint256;
 
-    uint constant private _MAX_REWARD_DISTRIBUTIONS = 10;
-    bytes32 constant private _USD_TOKEN = "USDToken";
+    uint private constant _MAX_REWARD_DISTRIBUTIONS = 10;
+    bytes32 private constant _USD_TOKEN = "USDToken";
 
     error InvalidLeverage(uint leverage);
 
@@ -265,7 +265,7 @@ contract VaultModule is
     function distributeRewards(
         uint fundId,
         address collateralType,
-        uint index, 
+        uint index,
         address distributor,
         uint amount,
         uint start,
@@ -274,9 +274,10 @@ contract VaultModule is
         if (index > _MAX_REWARD_DISTRIBUTIONS) {
             revert InvalidParameters();
         }
-        
-        RewardDistribution storage existingDistribution = 
-            _fundVaultStore().fundVaults[fundId][collateralType].rewards[index];
+
+        RewardDistribution storage existingDistribution = _fundVaultStore().fundVaults[fundId][collateralType].rewards[
+            index
+        ];
 
         // to call this function must be either:
         // 1. fund owner
@@ -303,13 +304,16 @@ contract VaultModule is
         emit RewardsDistributionSet(fundId, collateralType, index, distributor, amount, start, duration);
     }
 
-    function claimRewards(uint fundId, address collateralType, uint accountId) external override onlyRoleAuthorized(accountId, "rewardsClaim") {
-        RewardDistribution[] storage dists = 
-            _fundVaultStore().fundVaults[fundId][collateralType].rewards;
+    function claimRewards(
+        uint fundId,
+        address collateralType,
+        uint accountId
+    ) external override onlyRoleAuthorized(accountId, "rewardsClaim") {
+        RewardDistribution[] storage dists = _fundVaultStore().fundVaults[fundId][collateralType].rewards;
 
         uint[] memory availableRewards = _getAvailableRewards(fundId, collateralType, accountId);
 
-        for (uint i = 0;i < availableRewards.length;i++) {
+        for (uint i = 0; i < availableRewards.length; i++) {
             dists[i].lastAccumulated[accountId] = dists[i].accumulatedPerShare;
 
             // todo: reentrancy protection?
@@ -320,17 +324,24 @@ contract VaultModule is
     }
 
     // this call is mutable but its intended to be used as a static call to see your current account rewards if you were to claim now
-    function getAvailableRewards(uint fundId, address token, uint accountId) external returns (uint[] memory) {
+    function getAvailableRewards(
+        uint fundId,
+        address token,
+        uint accountId
+    ) external returns (uint[] memory) {
         return _getAvailableRewards(fundId, token, accountId);
     }
 
-    function _updateRewards(uint fundId, address collateralType, uint sharesSupply) internal {
-        RewardDistribution[] storage dists = 
-            _fundVaultStore().fundVaults[fundId][collateralType].rewards;
+    function _updateRewards(
+        uint fundId,
+        address collateralType,
+        uint sharesSupply
+    ) internal {
+        RewardDistribution[] storage dists = _fundVaultStore().fundVaults[fundId][collateralType].rewards;
 
         uint curTime = block.timestamp;
 
-        for (uint i = 0;i < dists.length;i++) {
+        for (uint i = 0; i < dists.length; i++) {
             if (address(dists[i].distributor) == address(0) || dists[i].start > curTime) {
                 continue;
             }
@@ -338,12 +349,11 @@ contract VaultModule is
             // determine whether this is an instant distribution or a delayed distribution
             if (dists[i].duration == 0 && dists[i].lastUpdate < dists[i].start) {
                 dists[i].accumulatedPerShare += dists[i].amount / uint128(sharesSupply);
-            }
-            else if (dists[i].lastUpdate < dists[i].start + dists[i].duration) {
+            } else if (dists[i].lastUpdate < dists[i].start + dists[i].duration) {
                 // find out what is "newly" distributed
-                uint lastUpdateDistributed = dists[i].amount * (dists[i].lastUpdate - dists[i].start) / dists[i].duration;
-                
-                uint curUpdateDistributed = dists[i].amount * (curTime - dists[i].start) / dists[i].duration;
+                uint lastUpdateDistributed = (dists[i].amount * (dists[i].lastUpdate - dists[i].start)) / dists[i].duration;
+
+                uint curUpdateDistributed = (dists[i].amount * (curTime - dists[i].start)) / dists[i].duration;
                 if (dists[i].start + dists[i].duration < curTime) {
                     curUpdateDistributed = dists[i].amount;
                 }
@@ -355,20 +365,20 @@ contract VaultModule is
         }
     }
 
-    function _getAvailableRewards(uint fundId, address collateralType, uint accountId) internal returns (uint[] memory) {
+    function _getAvailableRewards(
+        uint fundId,
+        address collateralType,
+        uint accountId
+    ) internal returns (uint[] memory) {
         // get the current shares supply for update rewards
-        
 
         _updateRewards(fundId, collateralType, _totalShares(fundId, collateralType));
 
-        RewardDistribution[] storage dists = 
-            _fundVaultStore().fundVaults[fundId][collateralType].rewards;
+        RewardDistribution[] storage dists = _fundVaultStore().fundVaults[fundId][collateralType].rewards;
 
         uint curTime = block.timestamp;
 
-        for (uint i = 0;i < dists.length;i++) {
-
-        }
+        for (uint i = 0; i < dists.length; i++) {}
     }
 
     // ---------------------------------------

@@ -19,7 +19,9 @@ describe('FundModule Create / Ownership', function () {
     let receipt: ethers.providers.TransactionReceipt;
 
     before('create a fund', async () => {
-      const tx = await systems().Core.connect(user1).createFund(1, await user1.getAddress());
+      const tx = await systems()
+        .Core.connect(user1)
+        .createFund(1, await user1.getAddress());
       receipt = await tx.wait();
     });
 
@@ -37,7 +39,9 @@ describe('FundModule Create / Ownership', function () {
     describe('when trying to create the same systems().CoreId', () => {
       it('reverts', async () => {
         await assertRevert(
-          systems().Core.connect(user2).createFund(1, await user1.getAddress()),
+          systems()
+            .Core.connect(user2)
+            .createFund(1, await user1.getAddress()),
           'FundAlreadyExists("1")',
           systems().Core
         );
@@ -58,7 +62,9 @@ describe('FundModule Create / Ownership', function () {
       describe('when nominating a new owner', async () => {
         let receipt: ethers.providers.TransactionReceipt;
         before('', async () => {
-          const tx = await systems().Core.connect(user1).nominateNewFundOwner(await user2.getAddress(), 1);
+          const tx = await systems()
+            .Core.connect(user1)
+            .nominateNewFundOwner(await user2.getAddress(), 1);
           receipt = await tx.wait();
         });
 
@@ -71,24 +77,38 @@ describe('FundModule Create / Ownership', function () {
 
         describe('when accepting the ownership', async () => {
           before('accept ownership', async () => {
-            const tx = await systems().Core.connect(user2).acceptFundOwnership(1);
+            const tx = await systems()
+              .Core.connect(user2)
+              .acceptFundOwnership(1);
             receipt = await tx.wait();
           });
 
           after('return ownership to user1', async () => {
-            await (await systems().Core.connect(user2).nominateNewFundOwner(await user1.getAddress(), 1)).wait();
-            await (await systems().Core.connect(user1).acceptFundOwnership(1)).wait();
+            await (
+              await systems()
+                .Core.connect(user2)
+                .nominateNewFundOwner(await user1.getAddress(), 1)
+            ).wait();
+            await (
+              await systems().Core.connect(user1).acceptFundOwnership(1)
+            ).wait();
           });
 
           it('emits an event', async () => {
-            const event = findEvent({ receipt, eventName: 'OwnershipAccepted' });
+            const event = findEvent({
+              receipt,
+              eventName: 'OwnershipAccepted',
+            });
 
             assertBn.equal(event.args.fundId, 1);
             assert.equal(event.args.newOwner, await user2.getAddress());
           });
 
           it('is the new owner', async () => {
-            assert.equal(await systems().Core.ownerOf(1), await user2.getAddress());
+            assert.equal(
+              await systems().Core.ownerOf(1),
+              await user2.getAddress()
+            );
           });
         });
       });
@@ -96,12 +116,16 @@ describe('FundModule Create / Ownership', function () {
       describe('when renouncing the ownership', async () => {
         let receipt: ethers.providers.TransactionReceipt;
         before('nominate the new owner', async () => {
-          const tx = await systems().Core.connect(user1).nominateNewFundOwner(await user2.getAddress(), 1);
+          const tx = await systems()
+            .Core.connect(user1)
+            .nominateNewFundOwner(await user2.getAddress(), 1);
           receipt = await tx.wait();
         });
 
         before('renounce nomination', async () => {
-          const tx = await systems().Core.connect(user2).renounceFundNomination(1);
+          const tx = await systems()
+            .Core.connect(user2)
+            .renounceFundNomination(1);
           receipt = await tx.wait();
         });
 
@@ -113,7 +137,10 @@ describe('FundModule Create / Ownership', function () {
         });
 
         it('ownership did not change', async () => {
-          assert.equal(await systems().Core.ownerOf(1), await user1.getAddress());
+          assert.equal(
+            await systems().Core.ownerOf(1),
+            await user1.getAddress()
+          );
         });
 
         describe('when attempting to accept the nomination after renouncing to it', async () => {

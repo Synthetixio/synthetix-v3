@@ -1,6 +1,14 @@
 import assert from 'assert/strict';
 import sinon from 'sinon';
-import { takeSnapshot, restoreSnapshot, advanceBlock, fastForward, fastForwardTo, getBlock, getTime } from '../../../utils/hardhat/rpc';
+import {
+  takeSnapshot,
+  restoreSnapshot,
+  advanceBlock,
+  fastForward,
+  fastForwardTo,
+  getBlock,
+  getTime,
+} from '../../../utils/hardhat/rpc';
 
 const fakeProvider = {
   async send() {
@@ -91,7 +99,11 @@ describe('utils/hardhat/rpc.js', () => {
         try {
           await fastForwardTo(1000, provider);
         } catch (err) {
-          assert.ok((err as Error).toString().includes('Cannot fast forward to a past date'));
+          assert.ok(
+            (err as Error)
+              .toString()
+              .includes('Cannot fast forward to a past date')
+          );
         }
       });
     });

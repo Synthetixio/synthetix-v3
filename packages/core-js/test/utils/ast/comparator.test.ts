@@ -1,6 +1,6 @@
-const { equal } = require('assert/strict');
-const { clone } = require('../../../utils/misc/clone');
-const { compareStorageStructs } = require('../../../utils/ast/comparator');
+import { equal } from 'assert/strict';
+import { clone } from '../../../utils/misc/clone';
+import { compareStorageStructs } from '../../../utils/ast/comparator';
 
 describe('utils/ast/comparator.js compareStorageStructs', function () {
   const previousStructsMap = [
@@ -76,7 +76,7 @@ describe('utils/ast/comparator.js compareStorageStructs', function () {
 
   describe('compareStorageStructs no updates', function () {
     it('detects no changes when both structMaps are equal', function () {
-      let currentStructsMap = clone(previousStructsMap);
+      const currentStructsMap = clone(previousStructsMap);
       const result = compareStorageStructs({
         previousStructsMap,
         currentStructsMap,
@@ -89,7 +89,7 @@ describe('utils/ast/comparator.js compareStorageStructs', function () {
 
   describe('compareStorageStructs with appends', function () {
     it('detects new contract added', function () {
-      let currentStructsMap = clone(previousStructsMap);
+      const currentStructsMap = clone(previousStructsMap);
       currentStructsMap.push({
         contract: {
           name: 'AnotherNamespace',
@@ -120,7 +120,7 @@ describe('utils/ast/comparator.js compareStorageStructs', function () {
     });
 
     it('detects new member appended', function () {
-      let currentStructsMap = clone(previousStructsMap);
+      const currentStructsMap = clone(previousStructsMap);
       currentStructsMap[0].struct.members.push({
         name: 'newValue',
         type: 'uint256',
@@ -135,7 +135,7 @@ describe('utils/ast/comparator.js compareStorageStructs', function () {
     });
 
     it('detects new member added before the last one', function () {
-      let currentStructsMap = clone(previousStructsMap);
+      const currentStructsMap = clone(previousStructsMap);
       currentStructsMap[0].struct.members.unshift({
         name: 'newValue',
         type: 'uint256',
@@ -153,7 +153,7 @@ describe('utils/ast/comparator.js compareStorageStructs', function () {
 
   describe('compareStorageStructs with removals', function () {
     it('detects whole contract removed', function () {
-      let currentStructsMap = clone(previousStructsMap);
+      const currentStructsMap = clone(previousStructsMap);
       currentStructsMap.pop();
       const result = compareStorageStructs({
         previousStructsMap,
@@ -165,7 +165,7 @@ describe('utils/ast/comparator.js compareStorageStructs', function () {
     });
 
     it('detects member removed', function () {
-      let currentStructsMap = clone(previousStructsMap);
+      const currentStructsMap = clone(previousStructsMap);
       currentStructsMap[0].struct.members.pop();
       const result = compareStorageStructs({
         previousStructsMap,
@@ -179,7 +179,7 @@ describe('utils/ast/comparator.js compareStorageStructs', function () {
 
   describe('compareStorageStructs with modifications', function () {
     it('detects member name updated', function () {
-      let currentStructsMap = clone(previousStructsMap);
+      const currentStructsMap = clone(previousStructsMap);
       currentStructsMap[0].struct.members[0].name = 'modifiedName';
       const result = compareStorageStructs({
         previousStructsMap,
@@ -191,9 +191,11 @@ describe('utils/ast/comparator.js compareStorageStructs', function () {
     });
 
     it('detects member type updated', function () {
-      let currentStructsMap = clone(previousStructsMap);
+      const currentStructsMap = clone(previousStructsMap);
       currentStructsMap[0].struct.members[0].type =
-        currentStructsMap[0].struct.members[0].type == 'uint256' ? 'address' : 'uint256';
+        currentStructsMap[0].struct.members[0].type == 'uint256'
+          ? 'address'
+          : 'uint256';
       const result = compareStorageStructs({
         previousStructsMap,
         currentStructsMap,

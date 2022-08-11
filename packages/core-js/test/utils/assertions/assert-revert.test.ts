@@ -3,11 +3,15 @@ import { ethers } from 'ethers';
 import assertRevert from '../../../utils/assertions/assert-revert';
 
 function mockValidTx() {
-  return Promise.resolve({ wait: () => Promise.resolve() }) as never as Promise<ethers.providers.TransactionResponse>;
+  return Promise.resolve({
+    wait: () => Promise.resolve(),
+  }) as never as Promise<ethers.providers.TransactionResponse>;
 }
 
 function mockRevertingTx(errorMsg = '') {
-  return Promise.resolve({ wait: () => Promise.reject(new Error(errorMsg)) }) as Promise<ethers.providers.TransactionResponse>;
+  return Promise.resolve({
+    wait: () => Promise.reject(new Error(errorMsg)),
+  }) as Promise<ethers.providers.TransactionResponse>;
 }
 
 describe('utils/assertions/assert-revert.js', function () {

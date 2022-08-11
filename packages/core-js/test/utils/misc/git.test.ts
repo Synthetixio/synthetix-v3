@@ -1,7 +1,9 @@
 import assert from 'assert/strict';
 import { getCommit, getBranch } from '../../../utils/misc/git';
 
-const execSync = (cmd: string) => require('child_process').execSync(cmd).toString().trim();
+import child_process from 'child_process';
+
+const execSync = (cmd: string) => child_process.execSync(cmd).toString().trim();
 
 describe('utils/misc/git.js', function () {
   it('can retrieve the current commit', function () {

@@ -1,5 +1,5 @@
 const del = require('del');
-const { default: logger } = require('@synthetixio/core-js/utils/io/logger')
+const { default: logger } = require('@synthetixio/core-js/utils/io/logger');
 const { subtask } = require('hardhat/config');
 const { SUBTASK_FINALIZE_DEPLOYMENT } = require('../task-names');
 

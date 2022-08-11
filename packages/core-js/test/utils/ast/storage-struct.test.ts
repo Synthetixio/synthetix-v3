@@ -11,7 +11,13 @@ describe('utils/ast/storage-struct.js', function () {
     let sampleProject: ReturnType<typeof parseContracts> & { asts: any }; // ???
 
     before('load sample-project artifacts', async function () {
-      const envPath = path.resolve(__dirname, '..', '..', 'fixtures', 'sample-project');
+      const envPath = path.resolve(
+        __dirname,
+        '..',
+        '..',
+        'fixtures',
+        'sample-project'
+      );
       sampleProject = await parseContracts(envPath);
     });
 
@@ -43,10 +49,14 @@ describe('utils/ast/storage-struct.js', function () {
     });
 
     it('should find all the members', () => {
-      const contractStruct = structsMap.find((item) => item.contract.name === 'ElectionStorage')!;
+      const contractStruct = structsMap.find(
+        (item) => item.contract.name === 'ElectionStorage'
+      )!;
       notEqual(contractStruct, undefined);
       equal(
-        contractStruct.struct.members.some((v) => v.name === 'initialized' && v.type === 'bool'),
+        contractStruct.struct.members.some(
+          (v) => v.name === 'initialized' && v.type === 'bool'
+        ),
         true
       );
       equal(

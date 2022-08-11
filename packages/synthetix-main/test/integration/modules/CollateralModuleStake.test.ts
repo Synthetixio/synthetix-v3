@@ -11,7 +11,11 @@ describe('CollateralModule Stake', function () {
 
   let Collateral: Ethers.Contract, CollateralPriceFeed: Ethers.Contract;
 
-  let owner: Ethers.Signer, user1: Ethers.Signer, user2: Ethers.Signer, user3: Ethers.Signer, user4: Ethers.Signer;
+  let owner: Ethers.Signer,
+    user1: Ethers.Signer,
+    user2: Ethers.Signer,
+    user3: Ethers.Signer,
+    user4: Ethers.Signer;
 
   before('identify signers', async () => {
     [owner, user1, user2, user3, user4] = signers();
@@ -23,21 +27,27 @@ describe('CollateralModule Stake', function () {
     factory = await ethers.getContractFactory('CollateralMock');
     Collateral = await factory.connect(owner).deploy();
 
-    await (await Collateral.connect(owner).initialize('Synthetix Token', 'SNX', 18)).wait();
+    await (
+      await Collateral.connect(owner).initialize('Synthetix Token', 'SNX', 18)
+    ).wait();
 
     factory = await ethers.getContractFactory('AggregatorV3Mock');
     CollateralPriceFeed = await factory.deploy();
 
-    await (await CollateralPriceFeed.connect(owner).mockSetCurrentPrice(1)).wait();
+    await (
+      await CollateralPriceFeed.connect(owner).mockSetCurrentPrice(1)
+    ).wait();
 
     await (
-      await systems().Core.connect(owner).adjustCollateralType(
-        Collateral.address,
-        CollateralPriceFeed.address,
-        400,
-        200,
-        true
-      )
+      await systems()
+        .Core.connect(owner)
+        .adjustCollateralType(
+          Collateral.address,
+          CollateralPriceFeed.address,
+          400,
+          200,
+          true
+        )
     ).wait();
   });
 
@@ -51,14 +61,23 @@ describe('CollateralModule Stake', function () {
     await (await Collateral.mint(await user2.getAddress(), 1000)).wait();
   });
 
-  before('approve systems().Core to operate with the user collateral', async () => {
-    await (
-      await Collateral.connect(user1).approve(systems().Core.address, ethers.constants.MaxUint256)
-    ).wait();
-    await (
-      await Collateral.connect(user2).approve(systems().Core.address, ethers.constants.MaxUint256)
-    ).wait();
-  });
+  before(
+    'approve systems().Core to operate with the user collateral',
+    async () => {
+      await (
+        await Collateral.connect(user1).approve(
+          systems().Core.address,
+          ethers.constants.MaxUint256
+        )
+      ).wait();
+      await (
+        await Collateral.connect(user2).approve(
+          systems().Core.address,
+          ethers.constants.MaxUint256
+        )
+      ).wait();
+    }
+  );
 
   it('is well configured', async () => {
     assert.equal(
@@ -66,7 +85,9 @@ describe('CollateralModule Stake', function () {
       Collateral.address
     );
 
-    const collateralType = await systems().Core.getCollateralType(Collateral.address);
+    const collateralType = await systems().Core.getCollateralType(
+      Collateral.address
+    );
 
     assert.equal(collateralType.priceFeed, CollateralPriceFeed.address);
     assertBn.equal(collateralType.targetCRatio, 400);
@@ -78,8 +99,14 @@ describe('CollateralModule Stake', function () {
     let receipt: Ethers.providers.TransactionReceipt;
     describe('sanity check', async () => {
       it('systems().Accounts has the right balance', async () => {
-        assertBn.equal(await Collateral.balanceOf(await user1.getAddress()), 1000);
-        assertBn.equal(await Collateral.balanceOf(await user2.getAddress()), 1000);
+        assertBn.equal(
+          await Collateral.balanceOf(await user1.getAddress()),
+          1000
+        );
+        assertBn.equal(
+          await Collateral.balanceOf(await user2.getAddress()),
+          1000
+        );
         assertBn.equal(await Collateral.balanceOf(systems().Core.address), 0);
       });
     });
@@ -96,7 +123,9 @@ describe('CollateralModule Stake', function () {
 
     describe('stake', () => {
       before('stake some collateral', async () => {
-        const tx = await systems().Core.connect(user1).stake(1, Collateral.address, 100);
+        const tx = await systems()
+          .Core.connect(user1)
+          .stake(1, Collateral.address, 100);
         receipt = await tx.wait();
       });
 
@@ -110,8 +139,14 @@ describe('CollateralModule Stake', function () {
       });
 
       it('is staked', async () => {
-        const totals = await systems().Core.getAccountCollateralTotals(1, Collateral.address);
-        const free = await systems().Core.getAccountUnstakebleCollateral(1, Collateral.address);
+        const totals = await systems().Core.getAccountCollateralTotals(
+          1,
+          Collateral.address
+        );
+        const free = await systems().Core.getAccountUnstakebleCollateral(
+          1,
+          Collateral.address
+        );
         const unassigned = await systems().Core.getAccountUnassignedCollateral(
           1,
           Collateral.address
@@ -124,7 +159,10 @@ describe('CollateralModule Stake', function () {
         assertBn.equal(unassigned, 100);
 
         // In Collateral balances
-        assertBn.equal(await Collateral.balanceOf(await user1.getAddress()), 900);
+        assertBn.equal(
+          await Collateral.balanceOf(await user1.getAddress()),
+          900
+        );
         assertBn.equal(await Collateral.balanceOf(systems().Core.address), 100);
       });
     });
@@ -142,7 +180,9 @@ describe('CollateralModule Stake', function () {
 
       describe('unstake', () => {
         before('unstake some collateral', async () => {
-          const tx = await systems().Core.connect(user1).unstake(1, Collateral.address, 100);
+          const tx = await systems()
+            .Core.connect(user1)
+            .unstake(1, Collateral.address, 100);
           receipt = await tx.wait();
         });
 
@@ -156,12 +196,19 @@ describe('CollateralModule Stake', function () {
         });
 
         it('is unstaked', async () => {
-          const totals = await systems().Core.getAccountCollateralTotals(1, Collateral.address);
-          const free = await systems().Core.getAccountUnstakebleCollateral(1, Collateral.address);
-          const unassigned = await systems().Core.getAccountUnassignedCollateral(
+          const totals = await systems().Core.getAccountCollateralTotals(
             1,
             Collateral.address
           );
+          const free = await systems().Core.getAccountUnstakebleCollateral(
+            1,
+            Collateral.address
+          );
+          const unassigned =
+            await systems().Core.getAccountUnassignedCollateral(
+              1,
+              Collateral.address
+            );
 
           assertBn.equal(totals[0], 0);
           assertBn.equal(totals[1], 0);
@@ -170,17 +217,32 @@ describe('CollateralModule Stake', function () {
           assertBn.equal(unassigned, 0);
 
           // In Collateral balances
-          assertBn.equal(await Collateral.balanceOf(await user1.getAddress()), 1000);
-          assertBn.equal(await Collateral.balanceOf(systems().Account.address), 0);
+          assertBn.equal(
+            await Collateral.balanceOf(await user1.getAddress()),
+            1000
+          );
+          assertBn.equal(
+            await Collateral.balanceOf(systems().Account.address),
+            0
+          );
         });
       });
     });
 
     describe('post sanity check', async () => {
       it('systems().Accounts has the right balance', async () => {
-        assertBn.equal(await Collateral.balanceOf(await user1.getAddress()), 1000);
-        assertBn.equal(await Collateral.balanceOf(await user2.getAddress()), 1000);
-        assertBn.equal(await Collateral.balanceOf(systems().Account.address), 0);
+        assertBn.equal(
+          await Collateral.balanceOf(await user1.getAddress()),
+          1000
+        );
+        assertBn.equal(
+          await Collateral.balanceOf(await user2.getAddress()),
+          1000
+        );
+        assertBn.equal(
+          await Collateral.balanceOf(systems().Account.address),
+          0
+        );
       });
     });
   });
@@ -204,14 +266,16 @@ describe('CollateralModule Stake', function () {
 
     it('reverts when trying to grant access', async () => {
       await assertRevert(
-        systems().Core.connect(user2).grantRole(
-          1,
-          ethers.utils.formatBytes32String('stake'),
-          await user2.getAddress()
-        ),
-        `NotAuthorized("1", "${ethers.utils.formatBytes32String('modifyPermission')}", "${
-          await user2.getAddress()
-        }")`,
+        systems()
+          .Core.connect(user2)
+          .grantRole(
+            1,
+            ethers.utils.formatBytes32String('stake'),
+            await user2.getAddress()
+          ),
+        `NotAuthorized("1", "${ethers.utils.formatBytes32String(
+          'modifyPermission'
+        )}", "${await user2.getAddress()}")`,
         systems().Core
       );
     });
@@ -220,44 +284,68 @@ describe('CollateralModule Stake', function () {
   describe('when an authorized address operates with the systems().Account', () => {
     before('authorize some users', async () => {
       await (
-        await systems().Core.connect(user1).grantRole(
-          1,
-          ethers.utils.formatBytes32String('stake'),
-          await user2.getAddress()
-        )
+        await systems()
+          .Core.connect(user1)
+          .grantRole(
+            1,
+            ethers.utils.formatBytes32String('stake'),
+            await user2.getAddress()
+          )
       ).wait();
       await (
-        await systems().Core.connect(user1).grantRole(
-          1,
-          ethers.utils.formatBytes32String('unstake'),
-          await user3.getAddress()
-        )
+        await systems()
+          .Core.connect(user1)
+          .grantRole(
+            1,
+            ethers.utils.formatBytes32String('unstake'),
+            await user3.getAddress()
+          )
       ).wait();
     });
 
     it('roles are granted', async () => {
       assert.equal(
-        await systems().Core.hasRole(1, ethers.utils.formatBytes32String('stake'), await user2.getAddress()),
+        await systems().Core.hasRole(
+          1,
+          ethers.utils.formatBytes32String('stake'),
+          await user2.getAddress()
+        ),
         true
       );
       assert.equal(
-        await systems().Core.hasRole(1, ethers.utils.formatBytes32String('unstake'), await user3.getAddress()),
+        await systems().Core.hasRole(
+          1,
+          ethers.utils.formatBytes32String('unstake'),
+          await user3.getAddress()
+        ),
         true
       );
       assert.equal(
-        await systems().Core.hasRole(1, ethers.utils.formatBytes32String('other'), await user4.getAddress()),
+        await systems().Core.hasRole(
+          1,
+          ethers.utils.formatBytes32String('other'),
+          await user4.getAddress()
+        ),
         false
       );
     });
 
     describe('when some collateral is staked', () => {
       before('stake some collateral', async () => {
-        await (await systems().Core.connect(user2).stake(1, Collateral.address, 100)).wait();
+        await (
+          await systems().Core.connect(user2).stake(1, Collateral.address, 100)
+        ).wait();
       });
 
       it('is staked', async () => {
-        const totals = await systems().Core.getAccountCollateralTotals(1, Collateral.address);
-        const free = await systems().Core.getAccountUnstakebleCollateral(1, Collateral.address);
+        const totals = await systems().Core.getAccountCollateralTotals(
+          1,
+          Collateral.address
+        );
+        const free = await systems().Core.getAccountUnstakebleCollateral(
+          1,
+          Collateral.address
+        );
         const unassigned = await systems().Core.getAccountUnassignedCollateral(
           1,
           Collateral.address
@@ -270,22 +358,36 @@ describe('CollateralModule Stake', function () {
         assertBn.equal(unassigned, 100);
 
         // In Collateral balances
-        assertBn.equal(await Collateral.balanceOf(await user1.getAddress()), 900);
+        assertBn.equal(
+          await Collateral.balanceOf(await user1.getAddress()),
+          900
+        );
         assertBn.equal(await Collateral.balanceOf(systems().Core.address), 100);
       });
 
       describe('when some collateral is unstaked', () => {
         before('unstake some collateral', async () => {
-          await (await systems().Core.connect(user3).unstake(1, Collateral.address, 100)).wait();
+          await (
+            await systems()
+              .Core.connect(user3)
+              .unstake(1, Collateral.address, 100)
+          ).wait();
         });
 
         it('is unstaked', async () => {
-          const totals = await systems().Core.getAccountCollateralTotals(1, Collateral.address);
-          const free = await systems().Core.getAccountUnstakebleCollateral(1, Collateral.address);
-          const unassigned = await systems().Core.getAccountUnassignedCollateral(
+          const totals = await systems().Core.getAccountCollateralTotals(
             1,
             Collateral.address
           );
+          const free = await systems().Core.getAccountUnstakebleCollateral(
+            1,
+            Collateral.address
+          );
+          const unassigned =
+            await systems().Core.getAccountUnassignedCollateral(
+              1,
+              Collateral.address
+            );
 
           assertBn.equal(totals[0], 0);
           assertBn.equal(totals[1], 0);
@@ -294,7 +396,10 @@ describe('CollateralModule Stake', function () {
           assertBn.equal(unassigned, 0);
 
           // In Collateral balances
-          assertBn.equal(await Collateral.balanceOf(await user1.getAddress()), 1000);
+          assertBn.equal(
+            await Collateral.balanceOf(await user1.getAddress()),
+            1000
+          );
           assertBn.equal(await Collateral.balanceOf(systems().Core.address), 0);
         });
       });

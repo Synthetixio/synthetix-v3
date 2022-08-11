@@ -38,21 +38,16 @@ contract FundVaultStorage is IVaultModuleStorage {
     }
 
     struct RewardDistribution {
-        // 3rd party smart contract which holds/mints the funds 
+        // 3rd party smart contract which holds/mints the funds
         IRewardsDistributor distributor;
-
         // total amount of the distribution
         uint128 amount;
-
         // set to 0 to instantly distribute rewards
         uint64 start;
-
         // set to 0 to instantly distribute rewards
         uint64 duration;
-
         uint128 accumulatedPerShare;
         uint64 lastUpdate;
-
         mapping(uint => uint128) lastAccumulated;
     }
 

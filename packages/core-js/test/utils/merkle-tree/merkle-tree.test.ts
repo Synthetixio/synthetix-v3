@@ -28,8 +28,14 @@ describe('utils/merkle-tree/merkle-tree.js', function () {
     });
 
     it('hex proofs are valid', function () {
-      deepEqual(['0x' + elements[1].toString('hex')], tree.getHexProof(elements[0]));
-      deepEqual(['0x' + elements[0].toString('hex')], tree.getHexProof(elements[1]));
+      deepEqual(
+        ['0x' + elements[1].toString('hex')],
+        tree.getHexProof(elements[0])
+      );
+      deepEqual(
+        ['0x' + elements[0].toString('hex')],
+        tree.getHexProof(elements[1])
+      );
     });
   });
 
@@ -69,7 +75,8 @@ describe('utils/merkle-tree/merkle-tree.js', function () {
     });
 
     it('root is valid (calculated offline)', function () {
-      const root = '0x851a1a8eeb1f817cd7f713c0e25ba14bffb4d3d1c8fbc9c1682a254640592df5';
+      const root =
+        '0x851a1a8eeb1f817cd7f713c0e25ba14bffb4d3d1c8fbc9c1682a254640592df5';
       deepEqual(root, tree.getHexRoot());
     });
   });
@@ -104,8 +111,14 @@ describe('utils/merkle-tree/merkle-tree.js', function () {
       const hash1 = Buffer.from('1');
       const hash2 = Buffer.from('2');
 
-      deepEqual(MerkleTree.combinedHash(hash1, hash2), keccak256(Buffer.concat([hash1, hash2])));
-      deepEqual(MerkleTree.combinedHash(hash2, hash1), keccak256(Buffer.concat([hash1, hash2])));
+      deepEqual(
+        MerkleTree.combinedHash(hash1, hash2),
+        keccak256(Buffer.concat([hash1, hash2]))
+      );
+      deepEqual(
+        MerkleTree.combinedHash(hash2, hash1),
+        keccak256(Buffer.concat([hash1, hash2]))
+      );
       deepEqual(MerkleTree.combinedHash(null, hash2), hash2);
       deepEqual(MerkleTree.combinedHash(hash1, null), hash1);
     });

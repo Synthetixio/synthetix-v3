@@ -10,7 +10,10 @@ describe('utils/misc/array-filters.js', function () {
 
   describe('#onlyUnique', function () {
     it('leaves only unqiue values', function () {
-      deepEqual([1, 2, 3, null], [1, 2, 2, 3, null, null, null].filter(onlyUnique));
+      deepEqual(
+        [1, 2, 3, null],
+        [1, 2, 2, 3, null, null, null].filter(onlyUnique)
+      );
     });
   });
 });

@@ -3,8 +3,8 @@ const path = require('path');
 const mkdirp = require('mkdirp');
 const { subtask } = require('hardhat/config');
 
-const { default: prompter } = require('@synthetixio/core-js/utils/io/prompter')
-const { default: relativePath } = require('@synthetixio/core-js/utils/misc/relative-path')
+const { default: prompter } = require('@synthetixio/core-js/utils/io/prompter');
+const { default: relativePath } = require('@synthetixio/core-js/utils/misc/relative-path');
 const { formatDate } = require('@synthetixio/core-js/utils/misc/dates');
 const { getDeploymentFolder, getAllDeploymentFiles } = require('../utils/deployments');
 const { SUBTASK_CREATE_DEPLOYMENT } = require('../task-names');

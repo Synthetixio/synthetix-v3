@@ -10,12 +10,19 @@ import "@synthetixio/core-modules/contracts/mixins/AssociatedSystemsMixin.sol";
 import "../../mixins/AccountRBACMixin.sol";
 import "../../mixins/CollateralMixin.sol";
 
-contract CollateralModule is ICollateralModule, CollateralStorage, OwnableMixin, AccountRBACMixin, CollateralMixin, AssociatedSystemsMixin {
-    bytes32 constant private _REDEEMABLE_REWARDS_TOKEN = "eSNXToken";
-    bytes32 constant private _REWARDED_TOKEN = "SNXToken";
+contract CollateralModule is
+    ICollateralModule,
+    CollateralStorage,
+    OwnableMixin,
+    AccountRBACMixin,
+    CollateralMixin,
+    AssociatedSystemsMixin
+{
+    bytes32 private constant _REDEEMABLE_REWARDS_TOKEN = "eSNXToken";
+    bytes32 private constant _REWARDED_TOKEN = "SNXToken";
 
     // 86400 * 365.26
-    uint  constant private _SECONDS_PER_YEAR = 31558464;
+    uint private constant _SECONDS_PER_YEAR = 31558464;
 
     using SetUtil for SetUtil.AddressSet;
 
@@ -147,7 +154,7 @@ contract CollateralModule is ICollateralModule, CollateralStorage, OwnableMixin,
     }
 
     function getAccountUnstakebleCollateral(uint accountId, address collateralType) public view override returns (uint) {
-        (uint256 total, uint256 assigned, uint256 locked,) = _getAccountCollateralTotals(accountId, collateralType);
+        (uint256 total, uint256 assigned, uint256 locked, ) = _getAccountCollateralTotals(accountId, collateralType);
 
         if (locked > assigned) {
             return total - locked;
@@ -169,7 +176,11 @@ contract CollateralModule is ICollateralModule, CollateralStorage, OwnableMixin,
         );
     }
 
-    function redeemReward(uint accountId, uint amount, uint duration) external override {
+    function redeemReward(
+        uint accountId,
+        uint amount,
+        uint duration
+    ) external override {
         ITokenModule redeemableRewardsToken = _getToken(_REDEEMABLE_REWARDS_TOKEN);
         ITokenModule rewardedToken = _getToken(_REWARDED_TOKEN);
 
@@ -177,7 +188,9 @@ contract CollateralModule is ICollateralModule, CollateralStorage, OwnableMixin,
             revert InvalidCollateralType(address(rewardedToken));
         }
 
-        StakedCollateralData storage collateralData = _collateralStore().stakedCollateralsDataByAccountId[accountId][address(rewardedToken)];
+        StakedCollateralData storage collateralData = _collateralStore().stakedCollateralsDataByAccountId[accountId][
+            address(rewardedToken)
+        ];
         uint rewardTokenMinted = _calculateRewardTokenMinted(amount, duration);
 
         redeemableRewardsToken.burn(msg.sender, amount);
@@ -186,11 +199,10 @@ contract CollateralModule is ICollateralModule, CollateralStorage, OwnableMixin,
         // adjust the user reward curve
         CurvesLibrary.PolynomialCurve memory oldCurve = collateralData.escrow;
 
-        CurvesLibrary.PolynomialCurve memory newCurve = 
-            CurvesLibrary.generateCurve(
-                CurvesLibrary.Point(block.timestamp, rewardTokenMinted),
-                CurvesLibrary.Point(block.timestamp / 2, rewardTokenMinted / 2),
-                CurvesLibrary.Point(block.timestamp + duration, 0)
+        CurvesLibrary.PolynomialCurve memory newCurve = CurvesLibrary.generateCurve(
+            CurvesLibrary.Point(block.timestamp, rewardTokenMinted),
+            CurvesLibrary.Point(block.timestamp / 2, rewardTokenMinted / 2),
+            CurvesLibrary.Point(block.timestamp + duration, 0)
         );
 
         collateralData.escrow = CurvesLibrary.combineCurves(oldCurve, newCurve);
@@ -209,7 +221,7 @@ contract CollateralModule is ICollateralModule, CollateralStorage, OwnableMixin,
     /////////////////////////////////////////////////
 
     function _calculateRewardTokenMinted(uint amount, uint duration) internal pure returns (uint) {
-        return amount * duration / _SECONDS_PER_YEAR;
+        return (amount * duration) / _SECONDS_PER_YEAR;
     }
 
     function _cleanExpiredLocks(

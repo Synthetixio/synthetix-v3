@@ -8,9 +8,9 @@ import "@synthetixio/core-contracts/contracts/errors/InitError.sol";
 
 import "../../interfaces/IUtilsModule.sol";
 
-// 
+//
 contract UtilsModule is IUtilsModule, AssociatedSystemsMixin, OwnableMixin {
-    bytes32 constant private _SYSTEM_TOKEN = "SNXToken";
+    bytes32 private constant _SYSTEM_TOKEN = "SNXToken";
 
     function mintInitialSystemToken(address to, uint amount) external override onlyOwner {
         ITokenModule systemToken = _getToken(_SYSTEM_TOKEN);

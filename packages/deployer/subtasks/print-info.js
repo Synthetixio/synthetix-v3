@@ -2,9 +2,9 @@ const chalk = require('chalk');
 const { subtask } = require('hardhat/config');
 const filterValues = require('filter-values');
 
-const { default: logger } = require('@synthetixio/core-js/utils/io/logger')
-const { default: prompter } = require('@synthetixio/core-js/utils/io/prompter')
-const { default: relativePath } = require('@synthetixio/core-js/utils/misc/relative-path')
+const { default: logger } = require('@synthetixio/core-js/utils/io/logger');
+const { default: prompter } = require('@synthetixio/core-js/utils/io/prompter');
+const { default: relativePath } = require('@synthetixio/core-js/utils/misc/relative-path');
 const { getCommit, getBranch } = require('@synthetixio/core-js/utils/misc/git');
 const { SUBTASK_PRINT_INFO } = require('../task-names');
 

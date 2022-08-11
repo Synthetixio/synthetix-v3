@@ -1,12 +1,17 @@
 import { BigNumber, BigNumberish, ethers } from 'ethers';
 import bn from '../../../utils/assertions/assert-bignumber';
 
-// https://stackoverflow.com/questions/56863875/typescript-how-do-you-filter-a-types-properties-to-those-of-a-certain-type
+// https://stackoverflow.com/questions/56863875/
+// typescript-how-do-you-filter-a-types-properties-to-those-of-a-certain-type
 type KeysMatching<T extends object, V> = {
-  [K in keyof T]-?: T[K] extends V ? K : never
+  [K in keyof T]-?: T[K] extends V ? K : never;
 }[keyof T];
 
-function not(operator: KeysMatching<typeof bn, (a: BigNumberish, b: BigNumberish) => void>, a: ethers.BigNumberish, b: ethers.BigNumberish) {
+function not(
+  operator: KeysMatching<typeof bn, (a: BigNumberish, b: BigNumberish) => void>,
+  a: ethers.BigNumberish,
+  b: ethers.BigNumberish
+) {
   try {
     bn[operator](a, b);
     throw new Error(`Expected to throw: bn.${operator}(${a}, ${b})`);

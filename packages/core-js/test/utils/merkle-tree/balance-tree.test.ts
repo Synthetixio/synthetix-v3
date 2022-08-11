@@ -7,12 +7,16 @@ function hexStringToBuffer(data: string) {
 }
 
 describe('utils/merkle-tree/balance-tree.js', function () {
-  let balances: { account: string, amount: ethers.BigNumberish }[], tree: BalanceTree;
+  let balances: { account: string; amount: ethers.BigNumberish }[],
+    tree: BalanceTree;
 
   before('build tree', () => {
     balances = [];
     for (let i = 0; i < 10; i++) {
-      balances.push({ account: ethers.Wallet.createRandom().address, amount: i + 1 });
+      balances.push({
+        account: ethers.Wallet.createRandom().address,
+        amount: i + 1,
+      });
     }
 
     tree = new BalanceTree(balances);
@@ -41,7 +45,10 @@ describe('utils/merkle-tree/balance-tree.js', function () {
     before('build wrong tree', () => {
       const newBalances = [];
       for (let i = 0; i < 10; i++) {
-        newBalances.push({ account: ethers.Wallet.createRandom().address, amount: i + 2 });
+        newBalances.push({
+          account: ethers.Wallet.createRandom().address,
+          amount: i + 2,
+        });
       }
 
       wrongTree = new BalanceTree(newBalances);

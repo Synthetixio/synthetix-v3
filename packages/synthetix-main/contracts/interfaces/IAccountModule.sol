@@ -8,7 +8,7 @@ import "@synthetixio/core-modules/contracts/interfaces/INftModule.sol";
 interface IAccountModule is ISatelliteFactory {
     /// @notice gets the AccountToken address.
     function getAccountAddress() external view returns (INftModule);
-    
+
     /// @notice creates a new accountToken (NFT)
     function createAccount(uint256 accountId) external;
 

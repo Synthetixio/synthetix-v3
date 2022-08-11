@@ -37,7 +37,9 @@ export default async function parseContracts(envPath: string) {
       throw new Error('buildInfo not found from fully qualified name');
     }
 
-    for (const [sourceName, attributes] of Object.entries(buildInfo.output.sources)) {
+    for (const [sourceName, attributes] of Object.entries(
+      buildInfo.output.sources
+    )) {
       asts[sourceName] = attributes.ast;
     }
   }
@@ -48,4 +50,4 @@ export default async function parseContracts(envPath: string) {
   cache[envPath].asts = asts;
 
   return cache[envPath];
-};
+}
