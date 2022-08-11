@@ -21,6 +21,7 @@ jobs:
           node-version: "16.8.0"
           cache: "npm"
       - run: npm ci
+        run: npm run build
       - name: Compile contracts
         run: npm run --workspace=./packages/${{ matrix.package }} compile-contracts
       - name: Execute size command
