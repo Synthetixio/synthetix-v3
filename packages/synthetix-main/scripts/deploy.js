@@ -41,7 +41,7 @@ module.exports.deploy = async function deploy(runtime, prefix, modules) {
 
   const contracts = Object.values(deployInfo.contracts).reduce((contracts, c) => {
     // TODO: bug causes proxy contract to be included
-    if (c.contractName === 'Synthetix') {
+    if (c.contractName === 'Proxy') {
       return contracts;
     }
 

@@ -1,5 +1,5 @@
 const { task } = require('hardhat/config');
-const types = require('@synthetixio/core-js/utils/hardhat/argument-types');
+const types = require('@synthetixio/core-js/utils/hardhat/argument-types')
 const {
   TASK_DEPLOY_MULTICALL_ABI,
   SUBTASK_GET_DEPLOYMENT_INFO,

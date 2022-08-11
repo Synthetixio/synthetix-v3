@@ -6,7 +6,7 @@ import { findEvent } from '@synthetixio/core-js/utils/ethers/events';
 import { bootstrap } from '../bootstrap';
 import { ethers as Ethers } from 'ethers';
 
-describe('systems().Core Stake', function () {
+describe('CollateralModule Stake', function () {
   const { signers, systems } = bootstrap();
 
   let Collateral: Ethers.Contract, CollateralPriceFeed: Ethers.Contract;
@@ -21,7 +21,7 @@ describe('systems().Core Stake', function () {
     let factory;
 
     factory = await ethers.getContractFactory('CollateralMock');
-    Collateral = await factory.deploy();
+    Collateral = await factory.connect(owner).deploy();
 
     await (await Collateral.connect(owner).initialize('Synthetix Token', 'SNX', 18)).wait();
 
@@ -88,7 +88,8 @@ describe('systems().Core Stake', function () {
       it('reverts', async () => {
         await assertRevert(
           systems().Core.connect(user1).stake(1, Collateral.address, 10000),
-          'InsufficientBalance'
+          'InsufficientBalance',
+          Collateral
         );
       });
     });
@@ -133,7 +134,8 @@ describe('systems().Core Stake', function () {
         it('reverts', async () => {
           await assertRevert(
             systems().Core.connect(user1).unstake(1, Collateral.address, 101),
-            'InsufficientAvailableCollateral'
+            'InsufficientAvailableCollateral',
+            systems().Core
           );
         });
       });
@@ -187,14 +189,16 @@ describe('systems().Core Stake', function () {
     it('reverts when trying to stake', async () => {
       await assertRevert(
         systems().Core.connect(user2).stake(1, Collateral.address, 100),
-        `NotAuthorized(1, "0x7374616b65000000000000000000000000000000000000000000000000000000", "${await user2.getAddress()}")`
+        `NotAuthorized("1", "0x7374616b65000000000000000000000000000000000000000000000000000000", "${await user2.getAddress()}")`,
+        systems().Core
       );
     });
 
     it('reverts when trying to unstake', async () => {
       await assertRevert(
         systems().Core.connect(user2).unstake(1, Collateral.address, 100),
-        `NotAuthorized(1, "0x756e7374616b6500000000000000000000000000000000000000000000000000", "${await user2.getAddress()}")`
+        `NotAuthorized("1", "0x756e7374616b6500000000000000000000000000000000000000000000000000", "${await user2.getAddress()}")`,
+        systems().Core
       );
     });
 
@@ -205,9 +209,10 @@ describe('systems().Core Stake', function () {
           ethers.utils.formatBytes32String('stake'),
           await user2.getAddress()
         ),
-        `NotAuthorized(1, "${ethers.utils.formatBytes32String('modifyPermission')}", "${
+        `NotAuthorized("1", "${ethers.utils.formatBytes32String('modifyPermission')}", "${
           await user2.getAddress()
-        }")`
+        }")`,
+        systems().Core
       );
     });
   });

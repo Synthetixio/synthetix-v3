@@ -14,34 +14,34 @@ defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
 exec = "scripts/deploy.js"
 func = "deploy"
 args = ["Account", ".*/(account|common)/.*"]
-modified = ["contracts/modules/account", "scripts"]
+modified = ["contracts/modules/account", "contracts/modules/common", "scripts"]
 
 [run.deploy_snx]
 exec = "scripts/deploy.js"
 func = "deploy"
 args = ["SNX", ".*/(snx|common)/.*"]
-modified = ["contracts/modules/snx", "scripts"]
+modified = ["contracts/modules/snx", "contracts/modules/common", "scripts"]
 
 [run.deploy_usd]
 exec = "scripts/deploy.js"
 func = "deploy"
 args = ["USD", ".*/(usd|common)/.*"]
-modified = ["contracts/modules/usd", "scripts"]
+modified = ["contracts/modules/usd", "contracts/modules/common", "scripts"]
 
 [run.deploy_esnx]
 exec = "scripts/deploy.js"
 func = "deploy"
 args = ["ESNX", ".*/(esnx|common)/.*"]
-modified = ["contracts/modules/esnx", "scripts"]
+modified = ["contracts/modules/esnx", "contracts/modules/common", "scripts"]
 
 [run.deploy_core]
 exec = "scripts/deploy.js"
 func = "deploy"
 args = ["Core", ".*/(core|common)/.*"]
-modified = ["contracts/modules/core", "scripts"]
+modified = ["contracts/modules/core", "contracts/modules/common", "contracts/utils", "scripts"]
 
 [contract.CoreProxy]
-artifact = "Synthetix"
+artifact = "Proxy"
 args = ["<%= contracts.CoreRouter.address %>"]
 abi = "CoreRouter"
 

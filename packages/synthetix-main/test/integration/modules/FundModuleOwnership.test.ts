@@ -6,7 +6,7 @@ import { findEvent } from '@synthetixio/core-js/utils/ethers/events';
 import { bootstrap } from '../bootstrap';
 import { ethers } from 'ethers';
 
-describe('systems().Core - Create / Ownership', function () {
+describe('FundModule Create / Ownership', function () {
   const { signers, systems } = bootstrap();
 
   let user1: ethers.Signer, user2: ethers.Signer;
@@ -38,7 +38,8 @@ describe('systems().Core - Create / Ownership', function () {
       it('reverts', async () => {
         await assertRevert(
           systems().Core.connect(user2).createFund(1, await user1.getAddress()),
-          'FundAlreadyExists(1)'
+          'FundAlreadyExists("1")',
+          systems().Core
         );
       });
     });
@@ -48,7 +49,8 @@ describe('systems().Core - Create / Ownership', function () {
         it('reverts', async () => {
           await assertRevert(
             systems().Core.connect(user2).acceptFundOwnership(1),
-            `Unauthorized("${await user2.getAddress()}")`
+            `Unauthorized("${await user2.getAddress()}")`,
+            systems().Core
           );
         });
       });
@@ -118,7 +120,8 @@ describe('systems().Core - Create / Ownership', function () {
           it('reverts', async () => {
             await assertRevert(
               systems().Core.connect(user2).acceptFundOwnership(1),
-              `Unauthorized("${await user2.getAddress()}")`
+              `Unauthorized("${await user2.getAddress()}")`,
+              systems().Core
             );
           });
         });

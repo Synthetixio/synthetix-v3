@@ -14,8 +14,8 @@ function _createAssertBN(operator: KeysMatching<BigNumber, (v: BigNumberish) => 
 
     if (!result) {
       throw new BigNumberAssertionError({
-        actual: b,
-        expected: a,
+        actual: b.toString(),
+        expected: a.toString(),
         operator,
       });
     }

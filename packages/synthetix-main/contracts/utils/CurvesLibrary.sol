@@ -24,7 +24,11 @@ library CurvesLibrary {
     }
 
     function calculateValueAtCurvePoint(PolynomialCurve memory curve, uint x) internal pure returns (uint y) {
-        if (x < curve.start || x > curve.end) revert ValueOutOfRange();
+        if (x < curve.start) {
+            x = curve.start;
+        } else if (x > curve.end) {
+            x = curve.end;
+        }
         int xInt = int(x);
         return uint(curve.a.mulDecimal(xInt.mulDecimal(xInt)) + curve.b.mulDecimal(xInt) + curve.c);
     }

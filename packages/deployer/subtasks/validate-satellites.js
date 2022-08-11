@@ -1,5 +1,5 @@
 const { subtask } = require('hardhat/config');
-const logger = require('@synthetixio/core-js/utils/io/logger');
+const { default: logger } = require('@synthetixio/core-js/utils/io/logger')
 const SatellitesValidator = require('../internal/satellites-validator');
 const { SUBTASK_VALIDATE_SATELLITES } = require('../task-names');
 

@@ -5,7 +5,7 @@ import assertRevert from '@synthetixio/core-js/utils/assertions/assert-revert';
 import { bootstrap } from '../bootstrap';
 import { ethers as Ethers } from 'ethers';
 
-describe('systems().Core Configuration (SCCP)', function () {
+describe('CollateralManagerConfiguration (SCCP)', function () {
   const { signers, systems } = bootstrap();
 
   let systemOwner: Ethers.Signer, user1: Ethers.Signer;
@@ -21,12 +21,12 @@ describe('systems().Core Configuration (SCCP)', function () {
     let factory;
 
     factory = await ethers.getContractFactory('CollateralMock');
-    Collateral = await factory.deploy();
+    Collateral = await factory.connect(systemOwner).deploy();
 
     await (await Collateral.connect(systemOwner).initialize('Synthetix Token', 'SNX', 18)).wait();
 
     factory = await ethers.getContractFactory('AggregatorV3Mock');
-    CollateralPriceFeed = await factory.deploy();
+    CollateralPriceFeed = await factory.connect(systemOwner).deploy();
 
     await (await CollateralPriceFeed.connect(systemOwner).mockSetCurrentPrice(1)).wait();
 
@@ -63,13 +63,13 @@ describe('systems().Core Configuration (SCCP)', function () {
       let factory;
 
       factory = await ethers.getContractFactory('CollateralMock');
-      AnotherCollateral = await factory.deploy();
+      AnotherCollateral = await factory.connect(systemOwner).deploy();
       await (
         await AnotherCollateral.connect(systemOwner).initialize('Another Token', 'ANT', 18)
       ).wait();
 
       factory = await ethers.getContractFactory('AggregatorV3Mock');
-      AnotherCollateralPriceFeed = await factory.deploy();
+      AnotherCollateralPriceFeed = await factory.connect(systemOwner).deploy();
 
       await (await AnotherCollateralPriceFeed.connect(systemOwner).mockSetCurrentPrice(100)).wait();
 
@@ -156,13 +156,13 @@ describe('systems().Core Configuration (SCCP)', function () {
       let factory;
 
       factory = await ethers.getContractFactory('CollateralMock');
-      OtherCollateral = await factory.deploy();
+      OtherCollateral = await factory.connect(systemOwner).deploy();
       await (
         await OtherCollateral.connect(systemOwner).initialize('Another Token', 'ANT', 18)
       ).wait();
 
       factory = await ethers.getContractFactory('AggregatorV3Mock');
-      OtherCollateralPriceFeed = await factory.deploy();
+      OtherCollateralPriceFeed = await factory.connect(systemOwner).deploy();
 
       await (await OtherCollateralPriceFeed.connect(systemOwner).mockSetCurrentPrice(100)).wait();
     });
@@ -176,7 +176,8 @@ describe('systems().Core Configuration (SCCP)', function () {
           200,
           false
         ),
-        `Unauthorized("${await user1.getAddress()}")`
+        `Unauthorized("${await user1.getAddress()}")`,
+        systems().Core
       );
     });
 
@@ -189,7 +190,8 @@ describe('systems().Core Configuration (SCCP)', function () {
           250,
           false
         ),
-        `Unauthorized("${await user1.getAddress()}")`
+        `Unauthorized("${await user1.getAddress()}")`,
+        systems().Core
       );
     });
   });

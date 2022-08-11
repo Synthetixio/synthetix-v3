@@ -6,7 +6,7 @@ import { findEvent } from '@synthetixio/core-js/utils/ethers/events';
 import { bootstrap } from '../bootstrap';
 import { ethers } from 'ethers';
 
-describe('systems().Core - Configuration (SCCP)', function () {
+describe('FundModule Configuration (SCCP)', function () {
   const { signers, systems } = bootstrap();
 
   let owner: ethers.Signer, user1: ethers.Signer;
@@ -40,7 +40,8 @@ describe('systems().Core - Configuration (SCCP)', function () {
     it('reverts', async () => {
       await assertRevert(
         systems().Core.connect(user1).setPreferredFund(1),
-        `Unauthorized("${await user1.getAddress()}")`
+        `Unauthorized("${await user1.getAddress()}")`,
+        systems().Core
       );
     });
   });
@@ -49,7 +50,8 @@ describe('systems().Core - Configuration (SCCP)', function () {
     it('reverts', async () => {
       await assertRevert(
         systems().Core.connect(user1).addApprovedFund(1),
-        `Unauthorized("${await user1.getAddress()}")`
+        `Unauthorized("${await user1.getAddress()}")`,
+        systems().Core
       );
     });
   });
@@ -58,7 +60,8 @@ describe('systems().Core - Configuration (SCCP)', function () {
     it('reverts', async () => {
       await assertRevert(
         systems().Core.connect(user1).removeApprovedFund(1),
-        `Unauthorized("${await user1.getAddress()}")`
+        `Unauthorized("${await user1.getAddress()}")`,
+        systems().Core
       );
     });
   });
@@ -67,7 +70,8 @@ describe('systems().Core - Configuration (SCCP)', function () {
     it('reverts', async () => {
       await assertRevert(
         systems().Core.connect(owner).setPreferredFund(5),
-        'FundNotFound(5)'
+        'FundNotFound("5")',
+        systems().Core
       );
     });
   });
@@ -76,7 +80,8 @@ describe('systems().Core - Configuration (SCCP)', function () {
     it('reverts', async () => {
       await assertRevert(
         systems().Core.connect(owner).addApprovedFund(5),
-        'FundNotFound(5)'
+        'FundNotFound("5")',
+        systems().Core
       );
     });
   });
@@ -85,7 +90,8 @@ describe('systems().Core - Configuration (SCCP)', function () {
     it('reverts', async () => {
       await assertRevert(
         systems().Core.connect(owner).addApprovedFund(5),
-        'FundNotFound(5)'
+        'FundNotFound("5")',
+        systems().Core
       );
     });
   });
@@ -137,7 +143,8 @@ describe('systems().Core - Configuration (SCCP)', function () {
       it('reverts', async () => {
         await assertRevert(
           systems().Core.connect(owner).addApprovedFund(3),
-          'FundAlreadyApproved(3)'
+          'FundAlreadyApproved("3")',
+          systems().Core
         );
       });
     });
@@ -163,7 +170,8 @@ describe('systems().Core - Configuration (SCCP)', function () {
         it('reverts', async () => {
           await assertRevert(
             systems().Core.connect(owner).removeApprovedFund(1),
-            'FundNotFound(1)'
+            'FundNotFound("1")',
+            systems().Core
           );
         });
       });

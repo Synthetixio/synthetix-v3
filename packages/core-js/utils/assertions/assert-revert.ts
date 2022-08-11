@@ -1,18 +1,40 @@
 import { ethers } from "ethers";
 
-export default async function assertRevert(tx: Promise<ethers.providers.TransactionResponse>, expectedMessage: string) {
-  let error: Error | null = null;
+function getErrorData(err: any): string | null {
+  if (err.data) {
+    return err.data;
+  }
+
+  if (err.error) {
+    return getErrorData(err.error);
+  }
+
+  return null;
+}
+
+export default async function assertRevert(tx: Promise<ethers.providers.TransactionResponse>, expectedMessage: string, contract?: ethers.Contract) {
+  let error: any | null = null;
 
   try {
     await (await tx).wait();
+    await tx;
   } catch (err) {
-    error = err as Error;
+    error = err;
   }
 
   if (!error) {
     throw new Error('Transaction was expected to revert, but it did not');
   } else if (expectedMessage) {
-    const receivedMessage = error.toString();
+
+    // parse the error
+    const errorData = getErrorData(error);
+
+    let receivedMessage = error.toString();
+    if (errorData && contract) {
+      const parsed = contract.interface.parseError(errorData);
+
+      receivedMessage = `${parsed.name}(${parsed.args ? parsed.args.map(v => v.toString ? '"' + v.toString() + '"' : v).join(', ') : ''})`
+    }
 
     if (!receivedMessage.includes(expectedMessage)) {
       // ----------------------------------------------------------------------------

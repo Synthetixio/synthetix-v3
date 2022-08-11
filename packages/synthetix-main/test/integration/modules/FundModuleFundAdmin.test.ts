@@ -7,7 +7,7 @@ import { bootstrap } from '../bootstrap';
 
 import { ethers } from 'ethers';
 
-describe('systems().Core - Funds Admin', function () {
+describe('FundModule Admin', function () {
   const { signers, systems } = bootstrap();
 
   let owner: ethers.Signer, fundAdmin: ethers.Signer, user1: ethers.Signer, user2: ethers.Signer;
@@ -22,12 +22,12 @@ describe('systems().Core - Funds Admin', function () {
     let factory;
 
     factory = await hre.ethers.getContractFactory('CollateralMock');
-    Collateral = await factory.deploy();
+    Collateral = await factory.connect(owner).deploy();
 
     await (await Collateral.connect(owner).initialize('Synthetix Token', 'SNX', 18)).wait();
 
     factory = await hre.ethers.getContractFactory('AggregatorV3Mock');
-    AggregatorV3Mock = await factory.deploy();
+    AggregatorV3Mock = await factory.connect(owner).deploy();
 
     await (await AggregatorV3Mock.connect(owner).mockSetCurrentPrice(1)).wait();
 
@@ -78,7 +78,8 @@ describe('systems().Core - Funds Admin', function () {
       it('reverts', async () => {
         await assertRevert(
           systems().Core.connect(fundAdmin).setFundPosition(2, [1], [1], [0, 0]),
-          'FundNotFound(2)'
+          'FundNotFound("2")',
+          systems().Core
         );
       });
     });
@@ -87,7 +88,8 @@ describe('systems().Core - Funds Admin', function () {
       it('reverts', async () => {
         await assertRevert(
           systems().Core.connect(user1).setFundPosition(1, [1], [1], [0, 0]),
-          `Unauthorized("${await user1.getAddress()}")`
+          `Unauthorized("${await user1.getAddress()}")`,
+          systems().Core
         );
       });
     });
@@ -96,14 +98,16 @@ describe('systems().Core - Funds Admin', function () {
       it('reverts with more weights than markets', async () => {
         await assertRevert(
           systems().Core.connect(fundAdmin).setFundPosition(1, [1], [1, 2], [0, 0]),
-          'InvalidParameters()'
+          'InvalidParameters()',
+          systems().Core
         );
       });
 
       it('reverts with more markets than weights', async () => {
         await assertRevert(
           systems().Core.connect(fundAdmin).setFundPosition(1, [1, 2], [1], [0, 0]),
-          'InvalidParameters()'
+          'InvalidParameters()',
+          systems().Core
         );
       });
     });
@@ -115,12 +119,11 @@ describe('systems().Core - Funds Admin', function () {
         let factory;
 
         factory = await hre.ethers.getContractFactory('MarketMock');
-        const Market1 = await factory.deploy();
-        factory = await hre.ethers.getContractFactory('MarketMock');
-        const Market2 = await factory.deploy();
+        const Market1 = await factory.connect(owner).deploy();
+        const Market2 = await factory.connect(owner).deploy();
 
-        await (await systems().Core.registerMarket(Market1.address)).wait();
-        await (await systems().Core.registerMarket(Market2.address)).wait();
+        await (await systems().Core.connect(owner).registerMarket(Market1.address)).wait();
+        await (await systems().Core.connect(owner).registerMarket(Market2.address)).wait();
       });
 
       before('adjust fund positions', async () => {

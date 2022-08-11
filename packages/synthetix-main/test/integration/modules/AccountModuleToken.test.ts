@@ -1,22 +1,22 @@
-import ethers from 'ethers';
+import { ethers } from 'ethers';
 import assert from 'assert/strict';
 import assertBn from '@synthetixio/core-js/utils/assertions/assert-bignumber';
 import assertRevert from '@synthetixio/core-js/utils/assertions/assert-revert';
 import { findEvent } from '@synthetixio/core-js/utils/ethers/events';
 import { bootstrap } from '../bootstrap';
 
-describe('systems().Account - systems().Account', function () {
+describe('AccountModule and AccountToken', function () {
   const { signers, systems } = bootstrap();
 
-  describe('systems().Account init', async () => {
-    it('systems().Account is deployed', async () => {
+  describe('AccountToken init', async () => {
+    it('AccountToken is deployed', async () => {
       const address = await systems().Core.getAccountAddress();
 
       // at this point, should be equal to account module address
       assert.equal(address, systems().Account.address);
     });
 
-    it('systems().Account parameters are correct', async () => {
+    it('AccountToken parameters are correct', async () => {
       assert.equal(await systems().Account.name(), 'Synthetix Account');
       assert.equal(await systems().Account.symbol(), 'SACCT');
     });
@@ -32,24 +32,25 @@ describe('systems().Account - systems().Account', function () {
     it('reverts', async () => {
       await assertRevert(
         systems().Account.connect(user1).mint(await user1.getAddress(), 1),
-        `Unauthorized("${user1.getAddress()}")`
+        `Unauthorized("${await user1.getAddress()}")`,
+        systems().Account
       );
     });
   });
 
-  describe('When minting an systems().Account', async () => {
+  describe('When minting an AccountToken', async () => {
     let receipt: ethers.providers.TransactionReceipt;
 
     before('mint an accoun token', async () => {
-      const tx = await systems().Account.connect(user1).createAccount(1);
+      const tx = await systems().Core.connect(user1).createAccount(1);
       receipt = await tx.wait();
     });
 
     it('emmited an event', async () => {
-      const event = findEvent({ receipt, eventName: 'AccountMinted', contract: systems().Account });
+      const event = findEvent({ receipt, eventName: 'Mint', contract: systems().Account });
 
       assert.equal(event.args.owner, await user1.getAddress());
-      assertBn.equal(event.args.accountId, 1);
+      assertBn.equal(event.args.nftId, 1);
     });
 
     it('is created', async () => {
@@ -59,15 +60,16 @@ describe('systems().Account - systems().Account', function () {
 
     describe('when trying to mint the same systems().AccountId', () => {
       it('reverts', async () => {
-        await assertRevert(systems().Account.connect(user2).createAccount(1), 'TokenAlreadyMinted(1)');
+        await assertRevert(systems().Core.connect(user2).createAccount(1), 'TokenAlreadyMinted("1")', systems().Account);
       });
     });
 
     describe('when attempting to call transferAccount directly', async () => {
       it('reverts', async () => {
         await assertRevert(
-          systems().Account.connect(user1).transferAccount(await user2.getAddress(), 1),
-          `OnlyTokenProxyAllowed("${await user1.getAddress()}")`
+          systems().Core.connect(user1).transferAccount(await user2.getAddress(), 1),
+          `OnlyTokenProxyAllowed("${await user1.getAddress()}")`,
+          systems().Core
         );
       });
     });
@@ -76,7 +78,7 @@ describe('systems().Account - systems().Account', function () {
       describe('before granting access', async () => {
         it('does not have granted roles', async () => {
           assert.equal(
-            await systems().Account.hasRole(
+            await systems().Core.hasRole(
               1,
               ethers.utils.formatBytes32String('stake'),
               await user2.getAddress()
@@ -89,21 +91,22 @@ describe('systems().Account - systems().Account', function () {
       describe('when attempting to assign a role when not authorized', async () => {
         it('reverts', async () => {
           await assertRevert(
-            systems().Account.connect(user2).grantRole(
+            systems().Core.connect(user2).grantRole(
               1,
               ethers.utils.formatBytes32String('stake'),
               await user2.getAddress()
             ),
-            `RoleNotAuthorized(1, "${ethers.utils.formatBytes32String('modifyPermission')}", "${
+            `RoleNotAuthorized("1", "${ethers.utils.formatBytes32String('modifyPermission')}", "${
               await user2.getAddress()
-            }")`
+            }")`,
+            systems().Core
           );
         });
       });
 
       describe('when a role is granted/revoked', async () => {
         before('grant a role', async () => {
-          const tx = await systems().Account.connect(user1).grantRole(
+          const tx = await systems().Core.connect(user1).grantRole(
             1,
             ethers.utils.formatBytes32String('stake'),
             await user2.getAddress()
@@ -122,7 +125,7 @@ describe('systems().Account - systems().Account', function () {
 
         it('shows the role granted', async () => {
           assert.equal(
-            await systems().Account.hasRole(
+            await systems().Core.hasRole(
               1,
               ethers.utils.formatBytes32String('stake'),
               await user2.getAddress()
@@ -133,7 +136,7 @@ describe('systems().Account - systems().Account', function () {
 
         describe('when revoking the role', async () => {
           before('grant a role', async () => {
-            const tx = await systems().Account.connect(user1).revokeRole(
+            const tx = await systems().Core.connect(user1).revokeRole(
               1,
               ethers.utils.formatBytes32String('stake'),
               await user2.getAddress()
@@ -152,7 +155,7 @@ describe('systems().Account - systems().Account', function () {
 
           it('shows the role was revoked', async () => {
             assert.equal(
-              await systems().Account.hasRole(
+              await systems().Core.hasRole(
                 1,
                 ethers.utils.formatBytes32String('stake'),
                 await user2.getAddress()
@@ -165,7 +168,7 @@ describe('systems().Account - systems().Account', function () {
 
       describe('when renouncing a role', async () => {
         before('grant a role', async () => {
-          const tx = await systems().Account.connect(user1).grantRole(
+          const tx = await systems().Core.connect(user1).grantRole(
             1,
             ethers.utils.formatBytes32String('stake'),
             await user2.getAddress()
@@ -175,7 +178,7 @@ describe('systems().Account - systems().Account', function () {
 
         it('shows the role granted', async () => {
           assert.equal(
-            await systems().Account.hasRole(
+            await systems().Core.hasRole(
               1,
               ethers.utils.formatBytes32String('stake'),
               await user2.getAddress()
@@ -187,21 +190,22 @@ describe('systems().Account - systems().Account', function () {
         describe('when attempting to renounce a role not granted', async () => {
           it('reverts', async () => {
             await assertRevert(
-              systems().Account.connect(user1).renounceRole(
+              systems().Core.connect(user1).renounceRole(
                 1,
                 ethers.utils.formatBytes32String('stake'),
                 await user2.getAddress()
               ),
-              `RoleNotAuthorized(1, "${ethers.utils.formatBytes32String('renounceRole')}", "${
+              `RoleNotAuthorized("1", "${ethers.utils.formatBytes32String('renounceRole')}", "${
                 await user2.getAddress()
-              }")`
+              }")`,
+              systems().Core
             );
           });
         });
 
         describe('when renouncing the role', async () => {
           before('grant a role', async () => {
-            const tx = await systems().Account.connect(user2).renounceRole(
+            const tx = await systems().Core.connect(user2).renounceRole(
               1,
               ethers.utils.formatBytes32String('stake'),
               await user2.getAddress()
@@ -220,7 +224,7 @@ describe('systems().Account - systems().Account', function () {
 
           it('shows the role was revoked', async () => {
             assert.equal(
-              await systems().Account.hasRole(
+              await systems().Core.hasRole(
                 1,
                 ethers.utils.formatBytes32String('stake'),
                 await user2.getAddress()
@@ -234,7 +238,7 @@ describe('systems().Account - systems().Account', function () {
       describe('when a "modifyPermission" role holder tries to grant more access', () => {
         before('grant "modifyPermission" role to userAdmin', async () => {
           await (
-            await systems().Account.connect(user1).grantRole(
+            await systems().Core.connect(user1).grantRole(
               1,
               ethers.utils.formatBytes32String('modifyPermission'),
               await userAdmin.getAddress()
@@ -243,7 +247,7 @@ describe('systems().Account - systems().Account', function () {
         });
 
         before('grant another user a role', async () => {
-          const tx = await await systems().Account.connect(userAdmin).grantRole(
+          const tx = await await systems().Core.connect(userAdmin).grantRole(
             1,
             ethers.utils.formatBytes32String('another'),
             await user4.getAddress()
@@ -262,7 +266,7 @@ describe('systems().Account - systems().Account', function () {
 
         it('role is granted', async () => {
           assert.equal(
-            await systems().Account.hasRole(
+            await systems().Core.hasRole(
               1,
               ethers.utils.formatBytes32String('another'),
               await user4.getAddress()
@@ -273,7 +277,7 @@ describe('systems().Account - systems().Account', function () {
 
         describe('when an admin tries to revoke more access', () => {
           before('revoke another user a role', async () => {
-            const tx = await await systems().Account.connect(userAdmin).revokeRole(
+            const tx = await await systems().Core.connect(userAdmin).revokeRole(
               1,
               ethers.utils.formatBytes32String('another'),
               await user4.getAddress()
@@ -292,7 +296,7 @@ describe('systems().Account - systems().Account', function () {
 
           it('role is revoked', async () => {
             assert.equal(
-              await systems().Account.hasRole(
+              await systems().Core.hasRole(
                 1,
                 ethers.utils.formatBytes32String('another'),
                 await user4.getAddress()
