@@ -33,8 +33,8 @@ jobs:
           node-version: "16.8.0"
           cache: "npm"
       - run: npm ci
+      - run: npm run build
       - name: Execute tests
-        run: npm run build
         run: npm run --workspace=./packages/${{ matrix.package }} coverage
       - name: Upload ${{ matrix.package }} coverage to Codecov
         uses: codecov/codecov-action@v2
@@ -51,7 +51,7 @@ jobs:
           node-version: "16.8.0"
           cache: "npm"
       - run: npm ci
-        run: npm run build
+      - run: npm run build
       - name: Execute tests
         run: npm --workspace=./packages/cli test
 
@@ -64,5 +64,5 @@ jobs:
           node-version: "16.8.0"
           cache: "npm"
       - run: npm ci
-        run: npm run build
+      - run: npm run build
       - run: npm --workspace=./packages/sample-project test
