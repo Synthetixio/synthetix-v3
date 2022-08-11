@@ -16,8 +16,8 @@
   "scripts": {
     "test": "npm run --workspaces --if-present test",
     "coverage": "npm run --workspaces --if-present coverage",
-    "lint:js": "prettier --check '**/*.ts' && eslint '**/*.ts'",
-    "lint:js:fix": "prettier --write '**/*.ts' && eslint --fix '**/*.ts'",
+    "lint:js": "eslint '**/*.ts'",
+    "lint:js:fix": "eslint --fix '**/*.ts'",
     "lint:sol": "prettier --check 'packages/**/*.sol' && solhint 'packages/**/*.sol'",
     "lint:sol:fix": "prettier --write 'packages/**/*.sol' && solhint --fix 'packages/**/*.sol'",
     "lint:quick": "pretty-quick --check --staged --pattern '**/*.(js|sol)'",
