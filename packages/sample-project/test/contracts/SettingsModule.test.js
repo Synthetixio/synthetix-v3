@@ -1,5 +1,5 @@
 const { ethers } = hre;
-const assertRevert = require('@synthetixio/core-js/dist/utils/assertions/assert-revert');
+const { default: assertRevert } = require('@synthetixio/core-js/dist/utils/assertions/assert-revert');
 const { bootstrap } = require('@synthetixio/deployer/utils/tests');
 const assertBn = require('@synthetixio/core-js/dist/utils/assertions/assert-bignumber');
 const initializer = require('@synthetixio/core-modules/test/helpers/initializer');
