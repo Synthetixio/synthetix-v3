@@ -14,11 +14,6 @@ jobs:
             core-modules,
             deployer,
             synthetix-main,
-            spartan-council,
-            grants-council,
-            treasury-council,
-            ambassador-council,
-            synthetix-governance,
           ]
         include:
           - package: core-contracts
@@ -31,16 +26,6 @@ jobs:
             coverage-file: packages/deployer/coverage/lcov.info
           - package: synthetix-main
             coverage-file: packages/synthetix-main/coverage.json
-          - package: spartan-council
-            coverage-file: packages/spartan-council/coverage.json
-          - package: grants-council
-            coverage-file: packages/grants-council/coverage.json
-          - package: treasury-council
-            coverage-file: packages/treasury-council/coverage.json
-          - package: ambassador-council
-            coverage-file: packages/ambassador-council/coverage.json
-          - package: synthetix-governance
-            coverage-file: packages/synthetix-governance/coverage.json
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v2

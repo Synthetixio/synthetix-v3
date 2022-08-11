@@ -29,6 +29,7 @@
     "eslint": "7.32.0",
     "eslint-plugin-no-only-tests": "2.6.0",
     "hardhat": "2.9.3",
+    "node-fetch": "2.6.7",
     "pre-commit": "1.2.2",
     "prettier": "2.3.2",
     "prettier-plugin-solidity": "1.0.0-beta.17",
