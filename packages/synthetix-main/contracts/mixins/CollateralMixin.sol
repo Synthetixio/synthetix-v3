@@ -4,7 +4,6 @@ pragma solidity ^0.8.0;
 import "../storage/CollateralStorage.sol";
 
 import "../interfaces/external/IAggregatorV3Interface.sol";
-import "../interfaces/external/IRewardsDistributor.sol";
 
 contract CollateralMixin is CollateralStorage {
     using SetUtil for SetUtil.AddressSet;
@@ -23,6 +22,10 @@ contract CollateralMixin is CollateralStorage {
     function _getCollateralValue(address collateralType) internal view returns (uint) {
         (, int256 answer, , , ) = IAggregatorV3Interface(_collateralStore().collateralsData[collateralType].priceFeed)
             .latestRoundData();
+
+        // sanity check
+        // TODO: this will be removed when we get the oracle manager
+        require(answer > 0, "The collateral value is 0");
 
         return uint(answer);
     }

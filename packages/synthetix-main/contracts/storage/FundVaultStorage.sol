@@ -5,7 +5,7 @@ import "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
 
 import "../interfaces/IVaultModuleStorage.sol";
 
-import "../interfaces/external/IRewardsDistributor.sol";
+import "../interfaces/external/IRewardDistributor.sol";
 
 contract FundVaultStorage is IVaultModuleStorage {
     struct FundVaultStore {
@@ -39,14 +39,14 @@ contract FundVaultStorage is IVaultModuleStorage {
 
     struct RewardDistribution {
         // 3rd party smart contract which holds/mints the funds
-        IRewardsDistributor distributor;
+        IRewardDistributor distributor;
         // total amount of the distribution
         uint128 amount;
-        // set to 0 to instantly distribute rewards
+        // set to <= block.timestamp to distribute immediately to currently staked users
         uint64 start;
-        // set to 0 to instantly distribute rewards
-        uint64 duration;
         uint128 accumulatedPerShare;
+        uint64 duration;
+        // set to 0 to instantly distribute rewards
         uint64 lastUpdate;
         mapping(uint => uint128) lastAccumulated;
     }

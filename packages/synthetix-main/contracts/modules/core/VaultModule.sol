@@ -43,7 +43,7 @@ contract VaultModule is
         uint leverage
     ) external override onlyRoleAuthorized(accountId, "assign") collateralEnabled(collateralType) fundExists(fundId) {
         // Fix leverage to 1 until it's enabled
-        if (leverage != 1) revert InvalidLeverage(leverage);
+        if (leverage != MathUtil.UNIT) revert InvalidLeverage(leverage);
 
         bytes32 lid = _getLiquidityItemId(accountId, fundId, collateralType);
 
@@ -102,6 +102,7 @@ contract VaultModule is
         uint amount,
         uint leverage
     ) internal {
+
         VaultData storage vaultData = _fundVaultStore().fundVaults[fundId][collateralType];
         uint collateralValue = amount * _getCollateralValue(collateralType);
 
@@ -247,7 +248,7 @@ contract VaultModule is
         uint collateralValue,
         uint leverage
     ) internal view returns (uint) {
-        uint leveragedCollateralValue = collateralValue * leverage;
+        uint leveragedCollateralValue = _calculateInitialDebt(collateralValue, leverage);
         uint totalShares = _totalShares(fundId, collateralType);
         uint totalCollateralValue = _totalCollateral(fundId, collateralType);
 
@@ -255,7 +256,7 @@ contract VaultModule is
     }
 
     function _calculateInitialDebt(uint collateralValue, uint leverage) internal pure returns (uint) {
-        return leverage * collateralValue;
+        return collateralValue.mulDecimal(leverage);
     }
 
     // ---------------------------------------
@@ -275,9 +276,16 @@ contract VaultModule is
             revert InvalidParameters();
         }
 
-        RewardDistribution storage existingDistribution = _fundVaultStore().fundVaults[fundId][collateralType].rewards[
-            index
-        ];
+        RewardDistribution[] storage dists = _fundVaultStore().fundVaults[fundId][collateralType].rewards;
+
+        if (index > dists.length) {
+            revert InvalidParameters();
+        }
+        else if (index == dists.length) {
+            dists.push(); // extend the size of the array by 1
+        }
+
+        RewardDistribution storage existingDistribution = dists[index];
 
         // to call this function must be either:
         // 1. fund owner
@@ -290,18 +298,35 @@ contract VaultModule is
             revert InvalidParameters();
         }
 
-        // set stuff
-        existingDistribution.distributor = IRewardsDistributor(distributor);
-        existingDistribution.start = uint64(start);
-        existingDistribution.duration = uint64(duration);
+        uint curTime = block.timestamp;
+        uint totalShares = _totalShares(fundId, collateralType);
 
-        // the amount is actually the amount distributed already *plus* whatever has been specified now
-        uint alreadyDistributed = 0;
-        existingDistribution.amount = uint128(amount);
+        if (start + duration <= block.timestamp) {
+            if (totalShares == 0) {
+                revert EmptyVault(fundId, collateralType);
+            }
 
-        _updateRewards(fundId, collateralType, _totalShares(fundId, collateralType));
+            // instant distribution--immediately disperse amount
+            existingDistribution.accumulatedPerShare += uint128(amount.divDecimal(totalShares));
+            existingDistribution.lastUpdate = uint64(curTime);
+            existingDistribution.distributor = IRewardDistributor(distributor);
+            existingDistribution.start = 0;
+            existingDistribution.duration = 0;
+            existingDistribution.amount = 0;
+        }
+        else {
+            // set distribution schedule
+            existingDistribution.distributor = IRewardDistributor(distributor);
+            existingDistribution.start = uint64(start < curTime ? curTime: start);
+            existingDistribution.duration = uint64(duration);
 
-        emit RewardsDistributionSet(fundId, collateralType, index, distributor, amount, start, duration);
+            // the amount is actually the amount distributed already *plus* whatever has been specified now
+            existingDistribution.amount = uint128(amount);
+
+           _updateRewards(fundId, collateralType, totalShares);
+        }
+
+        emit RewardDistributionSet(fundId, collateralType, index, distributor, amount, start, duration);
     }
 
     function claimRewards(
@@ -317,9 +342,10 @@ contract VaultModule is
             dists[i].lastAccumulated[accountId] = dists[i].accumulatedPerShare;
 
             // todo: reentrancy protection?
-            dists[i].distributor.payout(fundId, collateralType, msg.sender, availableRewards[i]);
-
-            emit RewardsClaimed(fundId, collateralType, accountId, i, availableRewards[i]);
+            if (availableRewards[i] > 0) {
+                dists[i].distributor.payout(fundId, collateralType, msg.sender, availableRewards[i]);
+                emit RewardsClaimed(fundId, collateralType, accountId, i, availableRewards[i]);
+            }
         }
     }
 
@@ -337,6 +363,15 @@ contract VaultModule is
         address collateralType,
         uint sharesSupply
     ) internal {
+        /*if (sharesSupply == 0) {
+            // cannot process distributed rewards if a pool is empty.
+
+            require(sharesSupply > 0, "Shares supply is 0 when updating rewards");
+            // effictively what will happen here is the rewards will be processed for the next
+            // person that adds liquidity to this pool, if there are any rewards outstanding
+            return;
+        }*/
+
         RewardDistribution[] storage dists = _fundVaultStore().fundVaults[fundId][collateralType].rewards;
 
         uint curTime = block.timestamp;
@@ -348,7 +383,7 @@ contract VaultModule is
 
             // determine whether this is an instant distribution or a delayed distribution
             if (dists[i].duration == 0 && dists[i].lastUpdate < dists[i].start) {
-                dists[i].accumulatedPerShare += dists[i].amount / uint128(sharesSupply);
+                dists[i].accumulatedPerShare += uint128(uint256(dists[i].amount).divDecimal(sharesSupply));
             } else if (dists[i].lastUpdate < dists[i].start + dists[i].duration) {
                 // find out what is "newly" distributed
                 uint lastUpdateDistributed = (dists[i].amount * (dists[i].lastUpdate - dists[i].start)) / dists[i].duration;
@@ -370,15 +405,24 @@ contract VaultModule is
         address collateralType,
         uint accountId
     ) internal returns (uint[] memory) {
-        // get the current shares supply for update rewards
+        (uint accountShares, ,) = _accountAmounts(accountId, fundId, collateralType);
+        //return new uint[](0);
 
         _updateRewards(fundId, collateralType, _totalShares(fundId, collateralType));
 
         RewardDistribution[] storage dists = _fundVaultStore().fundVaults[fundId][collateralType].rewards;
 
-        uint curTime = block.timestamp;
+        uint[] memory rewards = new uint[](dists.length);
 
-        for (uint i = 0; i < dists.length; i++) {}
+        for (uint i = 0; i < dists.length; i++) {
+            if (address(dists[i].distributor) == address(0)) {
+                continue;
+            }
+
+            rewards[i] = accountShares.mulDecimal(dists[i].accumulatedPerShare - dists[i].lastAccumulated[accountId]);
+        }
+
+        return rewards;
     }
 
     // ---------------------------------------
@@ -428,7 +472,7 @@ contract VaultModule is
         uint fundId,
         address collateralType
     ) external view override returns (uint) {
-        (, uint accountCollateralValue) = _accountDebtAndCollateral(accountId, fundId, collateralType);
+        (, , uint accountCollateralValue) = _accountAmounts(accountId, fundId, collateralType);
         return accountCollateralValue;
     }
 
@@ -437,7 +481,7 @@ contract VaultModule is
         uint fundId,
         address collateralType
     ) external view override returns (uint) {
-        (uint accountDebt, ) = _accountDebtAndCollateral(accountId, fundId, collateralType);
+        (, uint accountDebt, ) = _accountAmounts(accountId, fundId, collateralType);
         return accountDebt;
     }
 
@@ -486,17 +530,5 @@ contract VaultModule is
         }
 
         return liquidityItems;
-    }
-
-    // ---------------------------------------
-    // Helpers / Internals
-    // ---------------------------------------
-
-    function _getLiquidityItemId(
-        uint accountId,
-        uint fundId,
-        address collateralType
-    ) internal pure returns (bytes32) {
-        return keccak256(abi.encodePacked(accountId, fundId, collateralType));
     }
 }

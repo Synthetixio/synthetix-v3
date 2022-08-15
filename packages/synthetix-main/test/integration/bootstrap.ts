@@ -29,20 +29,26 @@ export function bootstrap() {
 
   let systems: { [key: string]: ethers.Contract };
 
-  before(async () => {
+  before(async function() {
+    // allow extra time to build the cannon deployment if required
+    this.timeout(300000);
+
+    const rawSigs = await hre.ethers.getSigners();
+
     await hre.run('cannon:build');
 
     provider = new ethers.providers.JsonRpcProvider('http://localhost:8545');
 
     signers = [];
 
-    for (const s of await hre.ethers.getSigners()) {
-      await provider.send('hardhat_impersonateAccount', [s.address]);
+    for (const s of rawSigs) {
+      console.log(await s.getAddress());
+      await provider.send('hardhat_impersonateAccount', [await s.getAddress()]);
       await provider.send('hardhat_setBalance', [
-        s.address,
+        await s.getAddress(),
         '10000000000000000000000',
       ]);
-      signers.push(await provider.getSigner(s.address));
+      signers.push(await provider.getSigner(await s.getAddress()));
     }
 
     systems = await loadSystems(provider);

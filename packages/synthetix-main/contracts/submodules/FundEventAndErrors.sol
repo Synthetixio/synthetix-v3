@@ -7,6 +7,7 @@ contract FundEventAndErrors {
     error FundAlreadyApproved(uint fundId);
     error FundNotFound(uint fundId);
     error OnlyTokenProxyAllowed(address origin);
+    error EmptyVault(uint fundId, address collateralType);
 
     event FundCreated(address owner, uint256 fundId);
     event NominatedNewOwner(address nominatedOwner, uint256 fundId);
@@ -17,7 +18,7 @@ contract FundEventAndErrors {
     event FundApprovedAdded(uint256 fundId);
     event FundApprovedRemoved(uint256 fundId);
 
-    event RewardsDistributionSet(
+    event RewardDistributionSet(
         uint indexed fundId,
         address indexed token,
         uint indexed index,
