@@ -21,7 +21,6 @@ describe('UUPSProxy', () => {
     describe('when setting an EOA as the first implementation', () => {
       it('reverts', async () => {
         const factory = await ethers.getContractFactory('UUPSProxy');
-        //console.log(await ethers.getContractAt('UUPSProxy', ethers.constants.ZeroAddress));
         await assertRevert(
           factory.deploy(user.address), `NotAContract(\\"${user.address}\\")`,
           await ethers.getContractAt('UUPSProxy', user.address)
