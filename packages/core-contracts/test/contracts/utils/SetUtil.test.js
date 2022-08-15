@@ -1,7 +1,7 @@
 const { ethers } = hre;
 const assert = require('assert/strict');
-const assertBn = require('@synthetixio/core-js/utils/assertions/assert-bignumber');
-const assertRevert = require('@synthetixio/core-js/utils/assertions/assert-revert');
+const assertBn = require('@synthetixio/core-js/dist/utils/assertions/assert-bignumber');
+const { default: assertRevert } = require('@synthetixio/core-js/dist/utils/assertions/assert-revert');
 
 describe('SetUtil', () => {
   const repeater = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];

@@ -14,10 +14,11 @@
   "license": "MIT",
   "homepage": "https://github.com/Synthetixio/synthetix-v3#readme",
   "scripts": {
+    "build": "npm run --workspaces --if-present build",
     "test": "npm run --workspaces --if-present test",
     "coverage": "npm run --workspaces --if-present coverage",
-    "lint:js": "prettier --check '**/*.js' && eslint '**/*.js'",
-    "lint:js:fix": "prettier --write '**/*.js' && eslint --fix '**/*.js'",
+    "lint:js": "eslint '**/*.ts'",
+    "lint:js:fix": "eslint --fix '**/*.ts'",
     "lint:sol": "prettier --check 'packages/**/*.sol' && solhint 'packages/**/*.sol'",
     "lint:sol:fix": "prettier --write 'packages/**/*.sol' && solhint --fix 'packages/**/*.sol'",
     "lint:quick": "pretty-quick --check --staged --pattern '**/*.(js|sol)'",
@@ -26,6 +27,8 @@
     "check-packages": "bin/check-packages"
   },
   "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "5.33.0",
+    "@typescript-eslint/parser": "5.33.0",
     "eslint": "7.32.0",
     "eslint-plugin-no-only-tests": "2.6.0",
     "hardhat": "2.9.3",
@@ -34,7 +37,8 @@
     "prettier": "2.3.2",
     "prettier-plugin-solidity": "1.0.0-beta.17",
     "pretty-quick": "3.1.1",
-    "solhint": "3.3.6"
+    "solhint": "3.3.6",
+    "typescript": "4.7.4"
   },
   "pre-commit": [
     "lint:quick",

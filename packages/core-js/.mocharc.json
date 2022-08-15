@@ -1,5 +1,5 @@
 {
-  "spec": ["test/**/*.test.js"],
+  "spec": ["test/**/*.test.ts"],
   "timeout": 10000,
-  "watch-files": ["utils/**/*.js", "test/**/*.js"]
+  "watch-files": ["utils/**/*.ts", "test/**/*.ts"]
 }

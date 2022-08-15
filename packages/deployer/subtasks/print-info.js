@@ -2,10 +2,10 @@ const chalk = require('chalk');
 const { subtask } = require('hardhat/config');
 const filterValues = require('filter-values');
 
-const logger = require('@synthetixio/core-js/utils/io/logger');
-const prompter = require('@synthetixio/core-js/utils/io/prompter');
-const relativePath = require('@synthetixio/core-js/utils/misc/relative-path');
-const { getCommit, getBranch } = require('@synthetixio/core-js/utils/misc/git');
+const { default: logger } = require('@synthetixio/core-js/dist/utils/io/logger');
+const { default: prompter } = require('@synthetixio/core-js/dist/utils/io/prompter');
+const { default: relativePath } = require('@synthetixio/core-js/dist/utils/misc/relative-path');
+const { getCommit, getBranch } = require('@synthetixio/core-js/dist/utils/misc/git');
 const { SUBTASK_PRINT_INFO } = require('../task-names');
 
 subtask(SUBTASK_PRINT_INFO, 'Prints info about a deployment.').setAction(async (taskArguments) => {
@@ -33,9 +33,9 @@ async function _printInfo(taskArguments) {
 
   const signer = (await hre.ethers.getSigners())[0];
   const balance = hre.ethers.utils.formatEther(
-    await hre.ethers.provider.getBalance(signer.address)
+    await hre.ethers.provider.getBalance(await signer.getAddress())
   );
-  logger.log(chalk.gray(`signer: ${signer.address}`));
+  logger.log(chalk.gray(`signer: ${await signer.getAddress()}`));
   logger.log(chalk.gray(`signer balance: ${balance} ETH`));
 
   const deploymentModules = Object.keys(

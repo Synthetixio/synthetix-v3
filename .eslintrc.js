@@ -1,5 +1,5 @@
 module.exports = {
-  extends: ['eslint:recommended'],
+  extends: ['eslint:recommended', 'plugin:@typescript-eslint/recommended'],
   env: {
     es2020: true,
     mocha: true,
@@ -12,6 +12,7 @@ module.exports = {
     Promise: 'readonly',
   },
   plugins: ['no-only-tests'],
+  parser: '@typescript-eslint/parser',
   parserOptions: {
     ecmaVersion: 12,
   },

@@ -1,6 +1,6 @@
 const { subtask } = require('hardhat/config');
 const { getFullyQualifiedName } = require('hardhat/utils/contract-names');
-const logger = require('@synthetixio/core-js/utils/io/logger');
+const { default: logger } = require('@synthetixio/core-js/dist/utils/io/logger');
 const { initContractData } = require('../internal/process-contracts');
 const { ContractValidationError } = require('../internal/errors');
 const { SUBTASK_SYNC_PROXY } = require('../task-names');

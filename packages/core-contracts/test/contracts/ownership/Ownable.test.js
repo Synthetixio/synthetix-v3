@@ -1,7 +1,7 @@
 const { ethers } = hre;
 const assert = require('assert/strict');
-const assertRevert = require('@synthetixio/core-js/utils/assertions/assert-revert');
-const { findEvent } = require('@synthetixio/core-js/utils/ethers/events');
+const { default: assertRevert } = require('@synthetixio/core-js/dist/utils/assertions/assert-revert');
+const { findEvent } = require('@synthetixio/core-js/dist/utils/ethers/events');
 
 describe('Ownable', () => {
   let Ownable;

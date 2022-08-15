@@ -13,45 +13,87 @@ defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
 [run.deploy_account]
 exec = "scripts/deploy.js"
 func = "deploy"
-args = ["Account", ".*/account/.*"]
-modified = ["contracts/modules/account", "scripts"]
+args = ["Account", ".*/(account|common)/.*"]
+modified = ["contracts/modules/account", "contracts/modules/common", "scripts"]
+
+[run.deploy_snx]
+exec = "scripts/deploy.js"
+func = "deploy"
+args = ["SNX", ".*/(snx|common)/.*"]
+modified = ["contracts/modules/snx", "contracts/modules/common", "scripts"]
 
 [run.deploy_usd]
 exec = "scripts/deploy.js"
 func = "deploy"
-args = ["USD", ".*/usd/.*"]
-modified = ["contracts/modules/usd", "scripts"]
+args = ["USD", ".*/(usd|common)/.*"]
+modified = ["contracts/modules/usd", "contracts/modules/common", "scripts"]
 
 [run.deploy_esnx]
 exec = "scripts/deploy.js"
 func = "deploy"
-args = ["ESNX", ".*/esnx/.*"]
-modified = ["contracts/modules/esnx", "scripts"]
+args = ["ESNX", ".*/(esnx|common)/.*"]
+modified = ["contracts/modules/esnx", "contracts/modules/common", "scripts"]
 
 [run.deploy_core]
 exec = "scripts/deploy.js"
 func = "deploy"
-args = ["Core", ".*/core/.*"]
-modified = ["contracts/modules/core", "scripts"]
-depends = ["run.deploy_account", "run.deploy_usd", "run.deploy_esnx"]
+args = ["Core", ".*/(core|common)/.*"]
+modified = ["contracts/modules/core", "contracts/modules/common", "contracts/utils", "scripts"]
+
+[contract.CoreProxy]
+artifact = "Proxy"
+args = ["<%= contracts.CoreRouter.address %>"]
+abi = "CoreRouter"
+
+depends = ["run.deploy_core"]
+
+[invoke.acquire_ownership]
+target = ["CoreProxy"]
+from = "<%= settings.owner %>"
+func = "initializeOwnerModule"
+args = ["<%= settings.owner %>"]
+depends = ["contract.CoreProxy"]
 
 [invoke.init_account]
 target = ["CoreProxy"]
 from = "<%= settings.owner %>"
-func = "initOrUpgradeToken"
-args = ["<%= contracts.AccountProxy.address %>"]
-depends = ["run.deploy_core"]
+func = "initOrUpgradeNft"
+args = ["0x6163636f756e744e667400000000000000000000000000000000000000000000", "Synthetix Account", "SACCT", "https://synthetix.io", "<%= contracts.AccountRouter.address %>"]
+depends = ["invoke.acquire_ownership", "run.deploy_account"]
 
-[invoke.init_usd]
+factory.AccountProxy.abiOf = "AccountRouter"
+factory.AccountProxy.event = "AssociatedSystemSet"
+factory.AccountProxy.arg = 2
+
+[invoke.init_snx]
 target = ["CoreProxy"]
 from = "<%= settings.owner %>"
 func = "initOrUpgradeToken"
-args = ["<%= contracts.USDProxy.address %>"]
-depends = ["run.deploy_core"]
+args = ["0x534e58546f6b656e000000000000000000000000000000000000000000000000", "Synthetix System Token", "SNX", 18, "<%= contracts.SNXRouter.address %>"]
+depends = ["invoke.acquire_ownership", "run.deploy_snx"]
+
+factory.SNXProxy.abiOf = "SNXRouter"
+factory.SNXProxy.event = "AssociatedSystemSet"
+factory.SNXProxy.arg = 2
 
 [invoke.init_esnx]
 target = ["CoreProxy"]
 from = "<%= settings.owner %>"
 func = "initOrUpgradeToken"
-args = ["<%= contracts.ESNXProxy.address %>"]
-depends = ["run.deploy_core"]
+args = ["0x65534e58546f6b656e0000000000000000000000000000000000000000000000", "Escrowed Synthetix", "eSNX", 18, "<%= contracts.ESNXRouter.address %>"]
+depends = ["invoke.acquire_ownership", "run.deploy_esnx"]
+
+factory.ESNXProxy.abiOf = "ESNXRouter"
+factory.ESNXProxy.event = "AssociatedSystemSet"
+factory.ESNXProxy.arg = 2
+
+[invoke.init_usd]
+target = ["CoreProxy"]
+from = "<%= settings.owner %>"
+func = "initOrUpgradeToken"
+args = ["0x555344546f6b656e000000000000000000000000000000000000000000000000", "Synthetic USD Token v3", "snxUSD", 18, "<%= contracts.USDRouter.address %>"]
+depends = ["invoke.acquire_ownership", "run.deploy_usd"]
+
+factory.USDProxy.abiOf = "USDRouter"
+factory.USDProxy.event = "AssociatedSystemSet"
+factory.USDProxy.arg = 2

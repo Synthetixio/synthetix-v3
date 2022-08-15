@@ -1,6 +1,6 @@
 const { subtask } = require('hardhat/config');
 const { getFullyQualifiedName } = require('hardhat/utils/contract-names');
-const logger = require('@synthetixio/core-js/utils/io/logger');
+const { default: logger } = require('@synthetixio/core-js/dist/utils/io/logger');
 const { initContractData } = require('../internal/process-contracts');
 const RouterSourceValidator = require('../internal/router-source-validator');
 const RouterASTValidator = require('../internal/router-ast-validator');

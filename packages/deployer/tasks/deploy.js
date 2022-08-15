@@ -23,11 +23,11 @@ const {
   TASK_DEPLOY,
 } = require('../task-names');
 
-const logger = require('@synthetixio/core-js/utils/io/logger');
-const prompter = require('@synthetixio/core-js/utils/io/prompter');
-const types = require('@synthetixio/core-js/utils/hardhat/argument-types');
+const { default: logger } = require('@synthetixio/core-js/dist/utils/io/logger');
+const { default: prompter } = require('@synthetixio/core-js/dist/utils/io/prompter');
+const types = require('@synthetixio/core-js/dist/utils/hardhat/argument-types');
 const { ContractValidationError } = require('../internal/errors');
-const { readPackageJson } = require('@synthetixio/core-js/utils/misc/npm');
+const { readPackageJson } = require('@synthetixio/core-js/dist/utils/misc/npm');
 
 task(TASK_DEPLOY, 'Deploys all system modules')
   .addFlag('noConfirm', 'Skip all confirmation prompts', false)

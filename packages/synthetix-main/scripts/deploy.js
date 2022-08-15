@@ -13,6 +13,16 @@ module.exports.deploy = async function deploy(runtime, prefix, modules) {
     hre.ethers.provider = runtime.provider;
   }
 
+  if (runtime?.getDefaultSigner) {
+    console.log('overriding signers');
+    hre.ethers.getSigners = async () => {
+      return [await runtime.getDefaultSigner('deployer', prefix)];
+    };
+    hre.ethers.getSigner = async () => {
+      hre.ethers.getSigners()[0];
+    };
+  }
+
   const instance = prefix.toLowerCase();
 
   const info = {
@@ -26,6 +36,7 @@ module.exports.deploy = async function deploy(runtime, prefix, modules) {
     noConfirm: true,
     quiet: false,
     clear: isHHNetwork,
+    skipProxy: true,
     instance,
     modules,
   });
@@ -33,6 +44,11 @@ module.exports.deploy = async function deploy(runtime, prefix, modules) {
   const { abis, info: deployInfo } = await hre.run(SUBTASK_GET_DEPLOYMENT_INFO, { instance });
 
   const contracts = Object.values(deployInfo.contracts).reduce((contracts, c) => {
+    // TODO: bug causes proxy contract to be included
+    if (c.contractName === 'Proxy') {
+      return contracts;
+    }
+
     if (contracts[c.contractName]) {
       throw new Error(`Contract name repeated: "${c.contractName}"`);
     }

@@ -2,10 +2,10 @@ const {
   findContractNode,
   findYulCaseValues,
   findFunctionSelectors,
-} = require('@synthetixio/core-js/utils/ast/finders');
+} = require('@synthetixio/core-js/dist/utils/ast/finders');
 const { getModulesSelectors } = require('./contract-helper');
 const { toPrivateConstantCase } = require('./router-helper');
-const { onlyRepeated } = require('@synthetixio/core-js/utils/misc/array-filters');
+const { onlyRepeated } = require('@synthetixio/core-js/dist/utils/misc/array-filters');
 
 class RouterASTValidator {
   constructor(routerFullyQualifiedName, astNodes) {

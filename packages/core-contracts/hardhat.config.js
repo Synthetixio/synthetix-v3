@@ -1,1 +1,1 @@
-module.exports = require('@synthetixio/common-config/hardhat.config.js');
+module.exports = require('@synthetixio/common-config/hardhat.config.legacy');
