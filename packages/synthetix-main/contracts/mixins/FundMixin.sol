@@ -91,8 +91,7 @@ contract FundMixin is FundModuleStorage, FundVaultStorage, FundEventAndErrors, C
         debt = vaultData.usdByAccount[accountId] + // add debt from USD minted
             collateralValue +
             li.initialDebt -
-            li.shares.mulDecimal(perShareValue) *
-            li.leverage;
+            li.shares.mulDecimal(perShareValue).mulDecimal(li.leverage);
     }
 
     function _collateralizationRatio(
@@ -121,7 +120,7 @@ contract FundMixin is FundModuleStorage, FundVaultStorage, FundEventAndErrors, C
 
         uint totalCollateralValue = _totalCollateral(fundId, collateralType);
 
-        return totalCollateralValue == 0 ? 1 : totalCollateralValue.divDecimal(totalShares);
+        return totalCollateralValue == 0 ? MathUtil.UNIT : totalCollateralValue.divDecimal(totalShares);
     }
 
     function _deleteLiquidityItem(bytes32 liquidityItemId, LiquidityItem storage liquidityItem) internal {

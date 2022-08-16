@@ -5,9 +5,9 @@ library SharesLibrary {
     function sharesToAmount(
         uint totalShares,
         uint totalAmount,
-        uint amount
+        uint shares
     ) internal pure returns (uint) {
-        return totalAmount == 0 ? amount : amount * (totalShares / totalAmount);
+        return totalShares == 0 ? 0 : shares * totalAmount / totalShares;
     }
 
     function amountToShares(
@@ -15,6 +15,6 @@ library SharesLibrary {
         uint totalAmount,
         uint amount
     ) internal pure returns (uint) {
-        return totalShares == 0 ? amount : (amount * totalShares) / totalAmount;
+        return totalAmount == 0 ? amount : amount * totalShares / totalAmount;
     }
 }

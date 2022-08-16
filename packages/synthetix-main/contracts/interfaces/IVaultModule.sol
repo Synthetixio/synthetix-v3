@@ -43,6 +43,12 @@ interface IVaultModule is IVaultModuleStorage {
         uint accountId
     ) external returns (uint[] memory);
 
+    /// @notice returns the number of individual units of amount emitted per second per share for the given fundId, collateralType vault
+    function getCurrentRewardAccumulation(
+        uint fundId,
+        address collateralType
+    ) external view returns (uint[] memory);
+
     /// @notice mints USD for a fund/account from a collateralType. if CRatio is valid
     function mintUSD(
         uint accountId,
