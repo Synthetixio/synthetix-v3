@@ -90,29 +90,45 @@ contract FundModule is IFundModule, FundEventAndErrors, AccountRBACMixin, FundMi
         uint[] calldata maxDebtShareValues
     ) external override fundExists(fundId) onlyFundOwner(fundId, msg.sender) {
         if (markets.length != weights.length || markets.length != maxDebtShareValues.length) {
-            revert InvalidParameters();
+            revert InvalidParameters("markets.length,weights.length,maxDebtShareValues.length", "must match");
         }
 
-        FundData storage fund = _fundModuleStore().funds[fundId];
+        FundData storage fundData = _fundModuleStore().funds[fundId];
 
         // _rebalanceFund with second parameter in true will clean up the distribution
         // TODO improve how the fund positions are changed and only update what is different
         _rebalanceFundPositions(fundId, true);
 
         // Cleanup previous distribution
-        delete fund.fundDistribution;
-        fund.totalWeights = 0;
 
-        for (uint i = 0; i < markets.length; i++) {
-            // TODO check if market exists when markets are created
+        uint totalWeight = 0;
+        uint i = 0;
+
+        for (; i < (markets.length < fundData.fundDistribution.length ? markets.length : fundData.fundDistribution.length); i++) {
+            MarketDistribution storage distribution = fundData.fundDistribution[i];
+            distribution.market = markets[i];
+            distribution.weight = uint128(weights[i]);
+            distribution.maxDebtShareValue = uint128(maxDebtShareValues[i]);
+
+            totalWeight += weights[i];
+        }
+
+        for (; i < markets.length; i++) {
             MarketDistribution memory distribution;
             distribution.market = markets[i];
-            distribution.weight = weights[i];
-            distribution.maxDebtShareValue = maxDebtShareValues[i];
+            distribution.weight = uint128(weights[i]);
+            distribution.maxDebtShareValue = uint128(maxDebtShareValues[i]);
 
-            fund.fundDistribution.push(distribution);
-            fund.totalWeights += weights[i];
+            fundData.fundDistribution.push(distribution);
+
+            totalWeight += weights[i];
         }
+
+        for (; i < fundData.fundDistribution.length; i++) {
+            fundData.fundDistribution.pop();
+        }
+
+        fundData.totalWeights = totalWeight;
 
         _rebalanceFundPositions(fundId, false);
 

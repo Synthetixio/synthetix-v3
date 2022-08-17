@@ -116,7 +116,7 @@ contract CollateralModule is
         uint256 availableCollateral = getAccountUnstakebleCollateral(accountId, collateralType);
 
         if (availableCollateral < amount) {
-            revert InsufficientAvailableCollateral(accountId, collateralType, amount);
+            revert InsufficientAccountCollateral(accountId, collateralType, amount);
         }
 
         StakedCollateralData storage collateralData = _collateralStore().stakedCollateralsDataByAccountId[accountId][

@@ -9,7 +9,7 @@ contract CollateralMixin is CollateralStorage {
     using SetUtil for SetUtil.AddressSet;
 
     error InvalidCollateralType(address collateralType);
-    error InsufficientAvailableCollateral(uint accountId, address collateralType, uint requestedAmount);
+    error InsufficientAccountCollateral(uint accountId, address collateralType, uint requestedAmount);
 
     modifier collateralEnabled(address collateralType) {
         if (!_collateralStore().collateralsData[collateralType].enabled) {

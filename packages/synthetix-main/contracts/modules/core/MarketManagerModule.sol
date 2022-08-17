@@ -63,9 +63,7 @@ contract MarketManagerModule is
 
     function fundBalance(uint marketId, uint fundId) external view override returns (int) {
         MarketData storage marketData = _marketManagerStore().markets[marketId];
-        return
-            int((marketData.fundliquidityShares[fundId] / marketData.totalLiquidityShares)) *
-            (_totalBalance(marketId) - marketData.fundInitialBalance[fundId]);
+        return marketData.lastMarketBalance * int(marketData.fundliquidityShares[fundId]) / int(marketData.totalLiquidityShares);
     }
 
     function totalBalance(uint marketId) external view override returns (int) {

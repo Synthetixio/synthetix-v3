@@ -120,7 +120,7 @@ describe('FundModule Configuration (SCCP)', function () {
       receipt = await tx.wait();
     });
 
-    it('emmited an event', async () => {
+    it('emitted an event', async () => {
       const event = findEvent({ receipt, eventName: 'PreferredFundSet' });
 
       assertBn.equal(event.args.fundId, 2);
@@ -139,7 +139,7 @@ describe('FundModule Configuration (SCCP)', function () {
       receipt = await tx.wait();
     });
 
-    it('emmited an event', async () => {
+    it('emitted an event', async () => {
       const event = findEvent({ receipt, eventName: 'FundApprovedAdded' });
 
       assertBn.equal(event.args.fundId, 3);
@@ -198,7 +198,7 @@ describe('FundModule Configuration (SCCP)', function () {
           receipt = await tx.wait();
         });
 
-        it('emmited an event', async () => {
+        it('emitted an event', async () => {
           const event = findEvent({
             receipt,
             eventName: 'FundApprovedRemoved',

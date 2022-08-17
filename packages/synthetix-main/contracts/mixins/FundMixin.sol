@@ -35,39 +35,42 @@ contract FundMixin is FundModuleStorage, FundVaultStorage, FundEventAndErrors, C
         FundData storage fundData = _fundModuleStore().funds[fundId];
         uint totalWeights = _fundModuleStore().funds[fundId].totalWeights;
 
+        uint totalAllocatableLiquidity = 0;
+        for (uint idx = 0; idx < _fundVaultStore().fundCollateralTypes[fundId].length(); idx++) {
+            address collateralType = _fundVaultStore().fundCollateralTypes[fundId].valueAt(idx);
+            totalAllocatableLiquidity += _totalVaultLiquidity(fundId, collateralType);
+        }
+
+        int cumulativeDebtChange = 0;
+
         for (uint i = 0; i < fundData.fundDistribution.length; i++) {
             MarketDistribution storage marketDistribution = fundData.fundDistribution[i];
             uint weight = clearsLiquidity ? 0 : marketDistribution.weight;
-            _distributeLiquidity(
-                fundId,
-                marketDistribution.market,
-                marketDistribution.maxDebtShareValue,
-                weight,
-                totalWeights
-            );
+            uint amount = totalAllocatableLiquidity * weight / totalWeights;
+
+            cumulativeDebtChange +=
+                _rebalanceMarket(marketDistribution.market, fundId, marketDistribution.maxDebtShareValue, amount);
         }
+
+        fundData.lastDebt += cumulativeDebtChange;
     }
 
-    function _distributeLiquidity(
-        uint fundId,
-        uint marketId,
-        uint maxDebtShareValue,
-        uint marketWeight,
-        uint totalWeight
-    ) internal {
-        // Rebalance Markets per type of collateral (individual fund-collateral vaults)
-        for (uint idx = 1; idx < _fundVaultStore().fundCollateralTypes[fundId].length(); idx++) {
-            // TODO Verify with product if there's only one collateral type allowed per fund
-            // If there's only one collateralType per fund => this for loop is not needed since
-            // will iterate only once
-            address collateralType = _fundVaultStore().fundCollateralTypes[fundId].valueAt(idx);
+    function _distributeFundVaultDebt(uint fundId) internal {
+        FundData storage fundData = _fundModuleStore().funds[fundId];
 
-            uint collateral = _fundVaultStore().fundVaults[fundId][collateralType].totalCollateral;
-            uint collateralValue = collateral.mulDecimal(_getCollateralValue(collateralType));
+        // first, ensure any debt is accrued with the markets as currently balanced
 
-            uint toAssign = (collateralValue * marketWeight) / totalWeight;
-            _rebalanceMarket(marketId, fundId, maxDebtShareValue, toAssign); //rebalanceMarket from MarketMixin
+        uint[] memory marketIds = new uint[](fundData.fundDistribution.length);
+
+        for (uint i = 0;i < marketIds.length;i++) {
+            marketIds[i] = fundData.fundDistribution[i].market;
         }
+
+        _distributeMarketFundDebt(marketIds);
+
+        // then, accrue the debt
+        // todo: gas usage could be improved here
+        _rebalanceFundPositions(fundId, false);
     }
 
     function _accountAmounts(
@@ -86,12 +89,12 @@ contract FundMixin is FundModuleStorage, FundVaultStorage, FundEventAndErrors, C
             _getLiquidityItemId(accountId, fundId, collateralType)
         ];
 
-        collateralValue = li.collateralAmount.mulDecimal(collateralPrice);
+        collateralValue = uint(li.collateralAmount).mulDecimal(collateralPrice);
         shares = li.shares;
-        debt = vaultData.usdByAccount[accountId] + // add debt from USD minted
-            collateralValue +
-            li.initialDebt -
-            li.shares.mulDecimal(perShareValue).mulDecimal(li.leverage);
+
+        // todo: run _distributeVaultFundDebt
+        // todo: should be shares multiplied by value of shares
+        debt = uint(int(shares.divDecimal(li.leverage)) + int(li.lastDebt));
     }
 
     function _collateralizationRatio(
@@ -111,6 +114,11 @@ contract FundMixin is FundModuleStorage, FundVaultStorage, FundEventAndErrors, C
         return _fundVaultStore().fundVaults[fundId][collateralType].totalShares;
     }
 
+    function _totalVaultLiquidity(uint fundId, address collateralType) internal view returns (uint) {
+        VaultData storage vaultData = _fundVaultStore().fundVaults[fundId][collateralType];
+        return uint(vaultData.totalShares).mulDecimal(vaultData.sharesMultiplier);
+    }
+
     function _perShareCollateral(uint fundId, address collateralType) internal view returns (uint) {
         uint totalShares = _totalShares(fundId, collateralType);
 
@@ -126,24 +134,21 @@ contract FundMixin is FundModuleStorage, FundVaultStorage, FundEventAndErrors, C
     function _deleteLiquidityItem(bytes32 liquidityItemId, LiquidityItem storage liquidityItem) internal {
         VaultData storage vaultData = _fundVaultStore().fundVaults[liquidityItem.fundId][liquidityItem.collateralType];
 
-        uint oldAmount = liquidityItem.collateralAmount;
-        uint oldSharesAmount = liquidityItem.shares;
+        uint128 oldAmount = liquidityItem.collateralAmount;
+        uint128 oldSharesAmount = liquidityItem.shares;
         // uint oldnitialDebt = liquidityItem.initialDebt;
         // TODO check if is enabled to remove position comparing old and new data
 
         vaultData.liquidityItemIds.remove(liquidityItemId);
-        _fundVaultStore().accountliquidityItems[liquidityItem.accountId].remove(liquidityItemId);
 
         liquidityItem.collateralAmount = 0;
         liquidityItem.shares = 0;
-        liquidityItem.initialDebt = 0; // how that works with amount adjustments?
+        liquidityItem.lastDebt = 0; // how that works with amount adjustments?
 
         _fundVaultStore().liquidityItems[liquidityItemId] = liquidityItem;
 
         vaultData.totalShares -= oldSharesAmount;
         vaultData.totalCollateral -= oldAmount;
-
-        emit PositionRemoved(liquidityItemId, liquidityItem.accountId, liquidityItem.fundId, liquidityItem.collateralType);
     }
 
     // ---------------------------------------

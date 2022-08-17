@@ -1,10 +1,10 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "./IVaultModuleStorage.sol";
+import "../storage/FundVaultStorage.sol";
 
 /// @title Module for managing funds and assignments per account
-interface IVaultModule is IVaultModuleStorage {
+interface IVaultModule {
     // /// @notice external access to rebalanceMarkets
     // function rebalanceMarkets(uint fundId) external; // TODO Maybe is internal
 
@@ -28,16 +28,9 @@ interface IVaultModule is IVaultModuleStorage {
         uint duration
     ) external;
 
-    /// @notice retrieves all available rewards for delegation to a vault to the caller's account
+    /// @notice retrieves the amount of available rewards, and claims them.
+    /// this function should be called to get currently available rewards using `callStatic`
     function claimRewards(
-        uint fundId,
-        address token,
-        uint accountId
-    ) external;
-
-    /// @notice retrieves the amount of rewards . This call is mutable becuase it internally calls `updateRewards` to determine
-    /// the most up-to-date amounts, but normally this should be executed with `callStatic`
-    function getAvailableRewards(
         uint fundId,
         address token,
         uint accountId
@@ -96,11 +89,11 @@ interface IVaultModule is IVaultModuleStorage {
     function debtPerShare(uint fundId, address collateralType) external view returns (uint);
 
     /// @notice gets liquidityItem details for a liquidityItemId
-    function getLiquidityItem(bytes32 liquidityItemId) external view returns (LiquidityItem memory liquidityItem);
+    function getLiquidityItem(bytes32 liquidityItemId) external view returns (FundVaultStorage.LiquidityItem memory liquidityItem);
 
     /// @notice gets list of liquidityItemIds for an accountId
     function getAccountLiquidityItemIds(uint accountId) external view returns (bytes32[] memory liquidityItemIds);
 
     /// @notice gets list of liquidityItem details for an accountId
-    function getAccountLiquidityItems(uint accountId) external view returns (LiquidityItem[] memory liquidityItems);
+    function getAccountLiquidityItems(uint accountId) external view returns (FundVaultStorage.LiquidityItem[] memory liquidityItems);
 }

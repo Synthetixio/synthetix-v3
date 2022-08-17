@@ -163,7 +163,7 @@ describe('FundModule Admin', function () {
         receipt = await tx.wait();
       });
 
-      it('emmited an event', async () => {
+      it('emitted an event', async () => {
         const event = findEvent({ receipt, eventName: 'FundPositionSet' });
 
         assert.equal(event.args.executedBy, await fundAdmin.getAddress());
@@ -198,7 +198,7 @@ describe('FundModule Admin', function () {
             receipt = await tx.wait();
           });
 
-          it('emmited a DelegationUpdated event', async () => {
+          it('emitted a DelegationUpdated event', async () => {
             const event = findEvent({
               receipt,
               eventName: 'DelegationUpdated',
@@ -213,7 +213,7 @@ describe('FundModule Admin', function () {
             assert.equal(event.args.collateralType, Collateral.address);
           });
 
-          it('emmited a PositionAdded event', async () => {
+          it('emitted a PositionAdded event', async () => {
             const event = findEvent({ receipt, eventName: 'PositionAdded' });
 
             assert.equal(event.args.liquidityItemId, liquidityItemId);
@@ -234,7 +234,7 @@ describe('FundModule Admin', function () {
               receipt = await tx.wait();
             });
 
-            it('emmited a DelegationUpdated event', async () => {
+            it('emitted a DelegationUpdated event', async () => {
               const event = findEvent({
                 receipt,
                 eventName: 'DelegationUpdated',
@@ -248,7 +248,7 @@ describe('FundModule Admin', function () {
               assert.equal(event.args.collateralType, Collateral.address);
             });
 
-            it('emmited a PositionIncreased event', async () => {
+            it('emitted a PositionIncreased event', async () => {
               const event = findEvent({
                 receipt,
                 eventName: 'PositionIncreased',
@@ -272,7 +272,7 @@ describe('FundModule Admin', function () {
               receipt = await tx.wait();
             });
 
-            it('emmited a DelegationUpdated event', async () => {
+            it('emitted a DelegationUpdated event', async () => {
               const event = findEvent({
                 receipt,
                 eventName: 'DelegationUpdated',
@@ -286,7 +286,7 @@ describe('FundModule Admin', function () {
               assert.equal(event.args.collateralType, Collateral.address);
             });
 
-            it('emmited a PositionDecreased event', async () => {
+            it('emitted a PositionDecreased event', async () => {
               const event = findEvent({
                 receipt,
                 eventName: 'PositionDecreased',
@@ -310,7 +310,7 @@ describe('FundModule Admin', function () {
               receipt = await tx.wait();
             });
 
-            it('emmited a DelegationUpdated event', async () => {
+            it('emitted a DelegationUpdated event', async () => {
               const event = findEvent({
                 receipt,
                 eventName: 'DelegationUpdated',
@@ -324,7 +324,7 @@ describe('FundModule Admin', function () {
               assert.equal(event.args.collateralType, Collateral.address);
             });
 
-            it('emmited a PositionRemoved event', async () => {
+            it('emitted a PositionRemoved event', async () => {
               const event = findEvent({
                 receipt,
                 eventName: 'PositionRemoved',

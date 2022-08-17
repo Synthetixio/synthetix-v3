@@ -7,12 +7,14 @@ import "../interfaces/IMarket.sol";
 import "../storage/MarketManagerStorage.sol";
 
 contract MarketManagerMixin is MarketManagerStorage {
+    using SharesLibrary for SharesLibrary.Distribution;
+
     function _rebalanceMarket(
         uint marketId,
         uint fundId,
         uint maxDebtShareValue, // (in USD)
         uint amount // in collateralValue (USD)
-    ) internal {
+    ) internal returns (int debtChange) {
         // this function is called by the fund at rebalance markets
         MarketData storage marketData = _marketManagerStore().markets[marketId];
 
@@ -20,7 +22,7 @@ contract MarketManagerMixin is MarketManagerStorage {
         _adjustMaxShareValue(marketData, fundId, maxDebtShareValue, amount);
 
         // Adjust fund shares
-        _adjustFundShares(marketData, fundId, amount);
+        return _adjustFundShares(marketData, fundId, amount);
     }
 
     function _adjustMaxShareValue(
@@ -60,13 +62,20 @@ contract MarketManagerMixin is MarketManagerStorage {
         MarketData storage marketData,
         uint fundId,
         uint amount
-    ) internal {
+    ) internal returns (int debtChange) {
         uint currentFundShares = marketData.fundliquidityShares[fundId];
         uint currentFundAmount = SharesLibrary.sharesToAmount(
             marketData.totalLiquidityShares,
             marketData.totalDelegatedCollateralValue,
             currentFundShares
         );
+
+        // if this market is being newly funded, ensure the `amountPerShare` is set to `1` to start
+        if (marketData.totalLiquidityShares == 0) {
+            marketData.debtDist.amountPerShare = uint128(MathUtil.UNIT);
+        }
+
+        debtChange = marketData.debtDist.updateDistributionActor(fundId, currentFundShares, marketData.totalLiquidityShares);
 
         if (amount >= currentFundAmount) {
             // liquidity provided by the fund increased. Add the delta
@@ -77,7 +86,6 @@ contract MarketManagerMixin is MarketManagerStorage {
                 deltaAmount
             );
             marketData.fundliquidityShares[fundId] += deltaShares;
-            marketData.fundInitialBalance[fundId] += int(deltaAmount);
             marketData.totalLiquidityShares += deltaShares;
             marketData.totalDelegatedCollateralValue += deltaAmount;
         } else {
@@ -89,15 +97,28 @@ contract MarketManagerMixin is MarketManagerStorage {
                 deltaAmount
             );
             marketData.fundliquidityShares[fundId] -= deltaShares;
-            marketData.fundInitialBalance[fundId] -= int(deltaAmount);
             marketData.totalLiquidityShares -= deltaShares;
             marketData.totalDelegatedCollateralValue -= deltaAmount;
         }
     }
 
-    // function _supplyTarget(uint marketId) internal view returns (uint) {
-    //     return uint(int(_marketManagerStore().markets[marketId].totalDelegatedCollateralValue) + _totalBalance(marketId));
-    // }
+    function _distributeMarketFundDebt(uint[] memory marketIds) internal {
+        // figure out how much debt is in all the fund attached markets. then distribute. then report.
+
+        // TODO: when adjusting debt here, determine if there is a fund which needs to be removed/added from
+        // distribution. if so, do an intermediate distribute
+        
+        for (uint i = 0;i < marketIds.length;i++) {
+            // get the latest market balance
+            int balance = _totalBalance(marketIds[i]);
+
+            MarketData storage marketData = _marketManagerStore().markets[marketIds[i]];
+
+            marketData.debtDist.distribute(marketData.totalLiquidityShares, balance - marketData.lastMarketBalance, 0, 0);
+
+            marketData.lastMarketBalance = balance;
+        }
+    }
 
     function _totalBalance(uint marketId) internal view returns (int) {
         return

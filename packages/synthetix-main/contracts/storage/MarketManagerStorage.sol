@@ -1,6 +1,8 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import "../utils/SharesLibrary.sol";
+
 contract MarketManagerStorage {
     struct MarketManagerStore {
         mapping(uint => MarketData) markets;
@@ -16,8 +18,11 @@ contract MarketManagerStorage {
         uint256 maxMarketDebtShare;
         // credit shares
         mapping(uint => uint256) fundliquidityShares;
-        mapping(uint => int256) fundInitialBalance;
         mapping(uint => uint256) fundMaxDebtShareValue;
+
+        int256 lastMarketBalance;
+
+        SharesLibrary.Distribution debtDist;
     }
 
     function _marketManagerStore() internal pure returns (MarketManagerStore storage store) {

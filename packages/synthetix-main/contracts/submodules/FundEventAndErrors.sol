@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 contract FundEventAndErrors {
     error FundAlreadyExists(uint fundId);
-    error InvalidParameters();
+    error InvalidParameters(string incorrectParameter, string help);
     error FundAlreadyApproved(uint fundId);
     error FundNotFound(uint fundId);
     error OnlyTokenProxyAllowed(address origin);
@@ -37,36 +37,5 @@ contract FundEventAndErrors {
         address collateralType,
         uint amount,
         uint leverage
-    );
-
-    event PositionAdded(
-        bytes32 liquidityItemId,
-        uint accountId,
-        uint fundId,
-        address collateralType,
-        uint amount,
-        uint leverage,
-        uint shares,
-        uint initialDebt
-    );
-    event PositionRemoved(bytes32 liquidityItemId, uint accountId, uint fundId, address collateralType);
-    event PositionIncreased(
-        bytes32 liquidityItemId,
-        uint fundId,
-        address collateralType,
-        uint amount,
-        uint leverage,
-        uint shares,
-        uint initialDebt
-    );
-
-    event PositionDecreased(
-        bytes32 liquidityItemId,
-        uint fundId,
-        address collateralType,
-        uint amount,
-        uint leverage,
-        uint shares,
-        uint initialDebt
     );
 }

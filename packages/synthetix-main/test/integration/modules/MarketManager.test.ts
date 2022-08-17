@@ -47,7 +47,7 @@ describe.skip('MarketManager', function () {
       ).wait();
     });
 
-    it('emmited an event', async () => {
+    it('emitted an event', async () => {
       const event = findEvent({ receipt, eventName: 'MarketRegistered' });
       assert(event.args.market, Market1.address);
       market1id = event.args.marketId;
