@@ -2,7 +2,7 @@ const { subtask } = require('hardhat/config');
 const { SUBTASK_EXECUTE_CALL } = require('../task-names');
 const { default: logger } = require('@synthetixio/core-js/dist/utils/io/logger');
 const chalk = require('chalk');
-const prompter = require('@synthetixio/core-js/dist/utils/io/prompter');
+const { default: prompter } = require('@synthetixio/core-js/dist/utils/io/prompter');
 const {
   getFullFunctionSignature,
   getFullEventSignature,

@@ -32,7 +32,7 @@ describe('execute-call', function () {
       await this.cli.printed('This is a write transaction!');
     });
 
-    it.only('shows gas estimation', async function () {
+    it('shows gas estimation', async function () {
       await this.cli.printed('Estimated gas: ');
     });
 
