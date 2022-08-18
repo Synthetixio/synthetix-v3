@@ -1,10 +1,10 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@synthetixio/core-contracts/contracts/interfaces/IERC721.sol";
+import "@synthetixio/core-contracts/contracts/interfaces/IERC721Enumerable.sol";
 
 /// @title NFT token identifying an Account
-interface INftModule is IERC721 {
+interface INftModule is IERC721Enumerable {
     /// @notice returns if `initialize` has been called by the owner
     function isInitialized() external returns (bool);
 
