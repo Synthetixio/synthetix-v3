@@ -18,39 +18,29 @@ contract FundVaultStorage {
         /// @dev fund vaults (per collateral)
         mapping(uint256 => mapping(address => VaultData)) fundVaults;
 
-        /// @dev tracks debt for each vault
-        mapping(uint256 => SharesLibrary.Distribution) debtDists;
+        /// @dev tracks debt for each fund
+        mapping(uint256 => SharesLibrary.Distribution) fundDists;
     }
     
     /// @notice LiquidityItem struct definition. Account/CollateralType/FundId uniquiely identifies it
     struct LiquidityItem {
-        uint256 accountId;
-        address collateralType;
-        uint256 fundId;
-        
-        uint128 shares;
+        uint128 usdMinted;
+        int128 cumulativeDebt;
+
         uint128 leverage;
-
-        uint128 collateralAmount;
-        int128 lastDebt;
-
     }
 
     struct VaultData {
-        /// @dev total shares distributed
-        uint128 totalShares;
-        /// @dev if there are liquidations, this value will be multiplied by `totalShares` to determine the value of the shares wrt the rest of the fund
+        /// @dev if there are liquidations, this value will be multiplied by any share counts to determine the value of the shares wrt the rest of the fund
         uint128 sharesMultiplier;
 
         /// @dev total liquidity delegated to this vault
         uint128 totalCollateral;
+
         /// @dev total USD minted
-        uint128 totalUSD;
 
         /// @dev LiquidityItem ids in this fund
         SetUtil.Bytes32Set liquidityItemIds;
-        /// @dev minted USD
-        mapping(uint256 => uint256) usdByAccount;
 
         /// @dev tracks debt for each user
         SharesLibrary.Distribution debtDist;

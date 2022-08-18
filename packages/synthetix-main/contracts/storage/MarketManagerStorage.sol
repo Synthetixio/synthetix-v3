@@ -2,6 +2,7 @@
 pragma solidity ^0.8.0;
 
 import "../utils/SharesLibrary.sol";
+import "../utils/Heap.sol";
 
 contract MarketManagerStorage {
     struct MarketManagerStore {
@@ -14,11 +15,12 @@ contract MarketManagerStorage {
         address marketAddress;
         int256 issuance; // TODO this can be negative. How to deal with that?
         uint256 totalDelegatedCollateralValue;
-        uint256 totalLiquidityShares;
+        
+        // used to disconnect funds from a market if it goes above a certain debt per debt share
+        Heap.Data fundMaxDebtShares;
+
+        // used to stop the market from minting more sUSD without checking each fund individually
         uint256 maxMarketDebtShare;
-        // credit shares
-        mapping(uint => uint256) fundliquidityShares;
-        mapping(uint => uint256) fundMaxDebtShareValue;
 
         int256 lastMarketBalance;
 

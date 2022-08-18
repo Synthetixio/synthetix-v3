@@ -17,9 +17,6 @@ contract FundModuleStorage {
         MarketDistribution[] fundDistribution;
         /// @dev fund name
         string name;
-
-        /// @dev the debt accrued by the fund, as measured by the last _distributeFundMarketDebt call
-        int lastDebt;
     }
 
     /**

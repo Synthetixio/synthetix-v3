@@ -59,7 +59,7 @@ interface IVaultModule {
     ) external;
 
     /// @notice gets the CRatio for an account/collateral in a fund
-    function collateralizationRatio(
+    function accountCollateralRatio(
         uint accountId,
         uint fundId,
         address collateralType
