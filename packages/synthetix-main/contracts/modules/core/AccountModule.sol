@@ -9,6 +9,7 @@ import "../../storage/AccountModuleStorage.sol";
 
 import "@synthetixio/core-modules/contracts/mixins/AssociatedSystemsMixin.sol";
 import "../../mixins/AccountRBACMixin.sol";
+import "hardhat/console.sol";
 
 contract AccountModule is IAccountModule, OwnableMixin, AccountRBACMixin, AssociatedSystemsMixin {
     bytes32 private constant _ACCOUNT_SYSTEM = "accountNft";
@@ -26,6 +27,22 @@ contract AccountModule is IAccountModule, OwnableMixin, AccountRBACMixin, Associ
 
     function getAccountAddress() public view override returns (INftModule) {
         return _getNft(_ACCOUNT_SYSTEM);
+    }
+
+    function getAccountPermissions(uint accountId) external view returns (AccountPermission[] memory) {
+        AccountRBAC storage accountRbac = _accountModuleStore().accountsRBAC[accountId];
+
+        uint allPermissionsLength = accountRbac.permissionAddresses.length();
+        AccountPermission[] memory allPermissions = new AccountPermission[](allPermissionsLength);
+        for (uint i = 0; i < allPermissionsLength; i++) {
+            address permissionAddress = accountRbac.permissionAddresses.valueAt(i + 1);
+            allPermissions[i] = AccountPermission({
+                target: permissionAddress,
+                roles: accountRbac.permissions[permissionAddress].values()
+            });
+        }
+
+        return allPermissions;
     }
 
     // ---------------------------------------

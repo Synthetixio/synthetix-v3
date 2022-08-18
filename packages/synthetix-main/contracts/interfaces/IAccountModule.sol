@@ -3,11 +3,19 @@ pragma solidity ^0.8.0;
 
 import "@synthetixio/core-contracts/contracts/interfaces/ISatelliteFactory.sol";
 import "@synthetixio/core-modules/contracts/interfaces/INftModule.sol";
+import "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
 
 /// @title Module for managing account token (NFT) and accounts, each account is represented by an NFT
 interface IAccountModule is ISatelliteFactory {
+    struct AccountPermission {
+        address target;
+        bytes32[] roles;
+    }
+
     /// @notice gets the AccountToken address.
     function getAccountAddress() external view returns (INftModule);
+
+    function getAccountPermissions(uint accountId) external view returns (AccountPermission[] memory);
 
     /// @notice creates a new accountToken (NFT)
     function createAccount(uint256 accountId) external;
