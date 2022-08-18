@@ -1,5 +1,5 @@
 const assert = require('assert/strict');
-const { bootstrap } = require('@synthetixio/deployer/utils/tests');
+const { bootstrap } = require('@synthetixio/hardhat-router/utils/tests');
 const initializer = require('@synthetixio/core-modules/test/helpers/initializer');
 
 const { ethers } = hre;

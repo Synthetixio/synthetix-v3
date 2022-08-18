@@ -1,7 +1,7 @@
 {
-  "name": "@synthetixio/deployer",
-  "version": "3.0.0",
-  "description": "Synthetix deployer",
+  "name": "@synthetixio/hardhat-router",
+  "version": "1.0.0",
+  "description": "Synthetix Router Proxy Architecture Manager",
   "main": "index.js",
   "keywords": [
     "hardhat",

@@ -4,7 +4,7 @@ const { SUBTASK_GET_DEPLOYMENT_INFO } = require('../task-names');
 const {
   getAllDeploymentFiles,
   getDeploymentExtendedFiles,
-} = require('@synthetixio/deployer/utils/deployments');
+} = require('@synthetixio/hardhat-router/utils/deployments');
 
 const fs = require('fs');
 
@@ -14,7 +14,8 @@ subtask(
   async ({ instance }, hre) => {
     if (!instance) throw new Error('"instance" param is required');
 
-    // deployer leaves its result in JSON files. We only care about the current and "extension"
+    // hardhat-router leaves its result in JSON files,
+    // we only care about the current and "extension".
     const [currentDeploymentFile] = getAllDeploymentFiles({ network: hre.network.name, instance });
     const extendedFile = getDeploymentExtendedFiles(currentDeploymentFile);
 

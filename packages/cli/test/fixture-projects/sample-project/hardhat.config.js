@@ -1,5 +1,5 @@
 require('@nomiclabs/hardhat-ethers');
-require('@synthetixio/deployer');
+require('@synthetixio/hardhat-router');
 require('../../..');
 
 module.exports = {

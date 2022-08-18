@@ -1,6 +1,6 @@
 const fs = require('fs');
 const path = require('path');
-const { TASK_DEPLOY } = require('@synthetixio/deployer/task-names');
+const { TASK_DEPLOY } = require('@synthetixio/hardhat-router/task-names');
 const { resetHardhatContext } = require('hardhat/plugins-testing');
 
 function loadEnvironment(fixtureProjectName, networkName = 'hardhat') {

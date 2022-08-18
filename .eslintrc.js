@@ -26,4 +26,12 @@ module.exports = {
     'max-len': ['error', { code: 160, comments: 100 }],
     'max-params': ['error', 3], // If a function requires more than 3 parameters, please compact them using objects: { param1, param2, param3 }
   },
+  overrides: [
+    {
+      files: ['*.js'],
+      rules: {
+        '@typescript-eslint/no-var-requires': false,
+      },
+    },
+  ],
 };

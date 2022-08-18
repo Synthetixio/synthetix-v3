@@ -3,7 +3,7 @@ const {
   TASK_DEPLOY,
   SUBTASK_GET_MULTICALL_ABI,
   SUBTASK_GET_DEPLOYMENT_INFO,
-} = require('@synthetixio/deployer/task-names');
+} = require('@synthetixio/hardhat-router/task-names');
 
 /**
  * Generate the file contracts/Router.sol including the given modules in its source.

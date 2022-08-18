@@ -12,7 +12,7 @@ jobs:
             core-contracts,
             core-js,
             core-modules,
-            deployer,
+            hardhat-router,
             synthetix-main,
           ]
         include:
@@ -22,8 +22,8 @@ jobs:
             coverage-file: packages/core-js/coverage/lcov.info
           - package: core-modules
             coverage-file: packages/core-modules/coverage.json
-          - package: deployer
-            coverage-file: packages/deployer/coverage/lcov.info
+          - package: hardhat-router
+            coverage-file: packages/hardhat-router/coverage/lcov.info
           - package: synthetix-main
             coverage-file: packages/synthetix-main/coverage.json
     steps:
