@@ -30,7 +30,7 @@ module.exports = {
     {
       files: ['*.js'],
       rules: {
-        '@typescript-eslint/no-var-requires': false,
+        '@typescript-eslint/no-var-requires': 0,
       },
     },
   ],
