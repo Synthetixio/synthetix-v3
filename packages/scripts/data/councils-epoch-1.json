@@ -15,7 +15,8 @@
       "0xF68D2BfCecd7895BBa05a7451Dd09A1749026454"
     ],
     "councilTokenName": "Synthetix Ambassador Council Token",
-    "councilTokenSymbol": "SNX-ACT"
+    "councilTokenSymbol": "SNX-ACT",
+    "minimumActiveMembers": "2"
   },
   {
     "name": "grants-council",
@@ -35,7 +36,8 @@
       "0xbF49B454818783D12Bf4f3375ff17C59015e66Cb"
     ],
     "councilTokenName": "Synthetix Grants Council Token",
-    "councilTokenSymbol": "SNX-GCT"
+    "councilTokenSymbol": "SNX-GCT",
+    "minimumActiveMembers": "4"
   },
   {
     "name": "spartan-council",
@@ -58,7 +60,8 @@
       "0xDF09B6BB09FdEe5f8d4c17C6642F0A54D6A7654A"
     ],
     "councilTokenName": "Synthetix Spartan Council Token",
-    "councilTokenSymbol": "SNX-SCT"
+    "councilTokenSymbol": "SNX-SCT",
+    "minimumActiveMembers": "7"
   },
   {
     "name": "treasury-council",
@@ -77,6 +80,7 @@
       "0x0e859372c72b01cc86BD4B6dF28Dd57E08226A1a"
     ],
     "councilTokenName": "Synthetix Treasury Council Token",
-    "councilTokenSymbol": "SNX-TCT"
+    "councilTokenSymbol": "SNX-TCT",
+    "minimumActiveMembers": "3"
   }
 ]

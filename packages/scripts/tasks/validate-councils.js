@@ -87,6 +87,15 @@ async function validateCouncil({ Council, council }) {
   });
 
   await validate({
+    action: Council.getMinimumActiveMembers(),
+    expectedResult: council.minimumActiveMembers,
+    validation: (result, expectedResult) => result.toString() === expectedResult,
+    successFn: (result) => logger.success(`Minimum active members is: ${result}`),
+    errorFn: (result, expected) =>
+      logger.error(`Was expecting minimum active members to be ${expected}, but received ${result}`),
+  });
+
+  await validate({
     action: Council.getEpochIndex(),
     expectedResult: council.epochIndex,
     validation: (result, expectedResult) => result.toString() === expectedResult,
