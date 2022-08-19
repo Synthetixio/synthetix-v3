@@ -31,8 +31,13 @@ contract FundVaultStorage {
     }
 
     struct VaultData {
+        /// @dev cached collateral price
+        uint128 collateralPrice;
         /// @dev if there are liquidations, this value will be multiplied by any share counts to determine the value of the shares wrt the rest of the fund
         uint128 sharesMultiplier;
+
+        /// @dev the amount of debt accrued. starts at 0. this is technically a cached value, but it is needed for liquidations
+        int128 totalDebt;
 
         /// @dev total liquidity delegated to this vault
         uint128 totalCollateral;
@@ -52,7 +57,17 @@ contract FundVaultStorage {
     struct RewardDistribution {
         // 3rd party smart contract which holds/mints the funds
         IRewardDistributor distributor;
-        SharesLibrary.Distribution reward;
+
+        SharesLibrary.DistributionEntry entry;
+
+        uint128 rewardPerShare;
+
+        mapping(uint256 => RewardDistributionStatus) actorInfo;
+    }
+
+    struct RewardDistributionStatus {
+        uint128 lastRewardPerShare;
+        uint128 pendingSend;
     }
 
     function _fundVaultStore() internal pure returns (FundVaultStore storage store) {

@@ -13,7 +13,7 @@ contract MarketManagerMixin is MarketManagerStorage {
     function _rebalanceMarket(
         uint marketId,
         uint fundId,
-        uint maxDebtShareValue, // (in USD)
+        int maxDebtShareValue, // (in USD)
         uint amount // in collateralValue (USD)
     ) internal returns (int debtChange) {
         // this function is called by the fund at rebalance markets
@@ -21,37 +21,36 @@ contract MarketManagerMixin is MarketManagerStorage {
 
         _distributeMarket(marketData);
 
-        // Adjust maxShareValue weighted average
-        //_adjustMaxShareValue(marketData, fundId, maxDebtShareValue, amount);
-
-        // Adjust fund shares
-        return _adjustFundShares(marketData, fundId, amount, maxDebtShareValue);
+        if (marketData.debtDist.valuePerShare > maxDebtShareValue) {
+            // Adjust fund shares
+            return _adjustFundShares(marketData, fundId, amount, maxDebtShareValue);
+        }
     }
 
     function _adjustFundShares(
         MarketData storage marketData,
         uint fundId,
         uint newLiquidity,
-        uint newMaxShareValue
+        int newFundMaxShareValue
     ) internal returns (int debtChange) {
         uint oldLiquidity = marketData.debtDist.getActorShares(bytes32(fundId));
-        uint oldMaxDebtShareValue = uint(uint128(-marketData.fundMaxDebtShares.getById(uint128(fundId)).priority));
+        int oldFundMaxDebtShareValue = -marketData.fundMaxDebtShares.getById(uint128(fundId)).priority;
         uint oldTotalLiquidity = marketData.debtDist.totalShares;
         debtChange = marketData.debtDist.updateDistributionActor(bytes32(fundId), newLiquidity);
 
         // recalculate max market debt share
-        uint oldMaxMarketDebtShare = marketData.maxMarketDebtShare;
-        uint newMaxMarketDebtShare = oldMaxMarketDebtShare -
-            ((oldMaxDebtShareValue * oldLiquidity) / oldTotalLiquidity) +
-            ((newMaxShareValue * newLiquidity) / marketData.debtDist.totalShares);
+        int oldMaxMarketDebtShare = int(marketData.maxMarketDebt) / int128(marketData.debtDist.totalShares);
+        int newMaxMarketDebtShare = oldMaxMarketDebtShare -
+            (oldFundMaxDebtShareValue * int(oldLiquidity) / int(oldTotalLiquidity)) +
+            (newFundMaxShareValue * int(newLiquidity) / int128(marketData.debtDist.totalShares));
 
         newMaxMarketDebtShare =
             newMaxMarketDebtShare +
-            ((oldMaxMarketDebtShare * oldLiquidity) / oldTotalLiquidity) -
-            ((newMaxMarketDebtShare * newLiquidity) / marketData.debtDist.totalShares);
+            (oldMaxMarketDebtShare * int(oldLiquidity) / int(oldTotalLiquidity)) -
+            (oldMaxMarketDebtShare * int(newLiquidity) / int128(marketData.debtDist.totalShares));
 
-        marketData.fundMaxDebtShares.insert(uint128(fundId), -int128(int(newMaxShareValue)));
-        marketData.maxMarketDebtShare = newMaxMarketDebtShare;
+        marketData.fundMaxDebtShares.insert(uint128(fundId), -int128(int(newFundMaxShareValue)));
+        marketData.maxMarketDebt = int128(newMaxMarketDebtShare * int128(marketData.debtDist.totalShares) / MathUtil.INT_UNIT);
     }
 
     function _distributeMarket(
@@ -62,13 +61,15 @@ contract MarketManagerMixin is MarketManagerStorage {
 
         int curBalance = marketData.lastMarketBalance;
 
+        int targetDebtPerDebtShare = targetBalance * MathUtil.INT_UNIT / int128(marketData.debtDist.totalShares);
+
         // this loop should rarely execute. When it does, it only executes once for each fund that passes the limit.
         // controls need to happen elsewhere to ensure markets don't get hit with useless funds which cause people to fail withdraw
-        while (-marketData.fundMaxDebtShares.getMax().priority < targetBalance) {
+        while (-marketData.fundMaxDebtShares.getMax().priority < targetDebtPerDebtShare) {
             Heap.Node memory nextRemove = marketData.fundMaxDebtShares.extractMax();
 
             // distribute to limit
-            marketData.debtDist.distribute(-nextRemove.priority - curBalance, 0, 0);
+            marketData.debtDist.distribute(-nextRemove.priority - curBalance);
             curBalance = -nextRemove.priority;
 
 
@@ -78,9 +79,9 @@ contract MarketManagerMixin is MarketManagerStorage {
 
         // todo: loop for putting funds back in as well?
 
-        marketData.debtDist.distribute(targetBalance - curBalance, 0, 0);
+        marketData.debtDist.distribute(targetBalance - curBalance);
 
-        marketData.lastMarketBalance = targetBalance;
+        marketData.lastMarketBalance = int128(targetBalance);
     }
 
     function _totalBalance(MarketData storage marketData) internal view returns (int) {

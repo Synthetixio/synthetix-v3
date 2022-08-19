@@ -28,7 +28,15 @@ interface IVaultModule {
         uint duration
     ) external;
 
-    /// @notice retrieves the amount of available rewards, and claims them.
+    /// @notice retrieves the amount of available rewards.
+    /// this function should be called to get currently available rewards using `callStatic`
+    function getAvailableRewards(
+        uint fundId,
+        address token,
+        uint accountId
+    ) external returns (uint[] memory);
+
+    /// @notice retrieves the amount of available rewards, and claims them to the caller's account.
     /// this function should be called to get currently available rewards using `callStatic`
     function claimRewards(
         uint fundId,
@@ -63,14 +71,14 @@ interface IVaultModule {
         uint accountId,
         uint fundId,
         address collateralType
-    ) external view returns (uint);
+    ) external returns (uint);
 
     /// @notice gets the account debt in a fund for a collateral
     function accountFundDebt(
         uint accountId,
         uint fundId,
         address collateralType
-    ) external view returns (uint);
+    ) external returns (int);
 
     /// @notice gets the account collateral value in a fund for a collateral
     function accountFundCollateralValue(
@@ -80,13 +88,13 @@ interface IVaultModule {
     ) external view returns (uint);
 
     /// @notice gets the total fund debt
-    function fundDebt(uint fundId, address collateralType) external view returns (uint);
+    function fundDebt(uint fundId, address collateralType) external returns (int);
 
     /// @notice gets the total fund debtShares
     function totalDebtShares(uint fundId, address collateralType) external view returns (uint);
 
     /// @notice gets the debt per share (USD value) for a fund
-    function debtPerShare(uint fundId, address collateralType) external view returns (uint);
+    function debtPerShare(uint fundId, address collateralType) external returns (int);
 
     /// @notice gets liquidityItem details for a liquidityItemId
     function getLiquidityItem(bytes32 liquidityItemId) external view returns (FundVaultStorage.LiquidityItem memory liquidityItem);

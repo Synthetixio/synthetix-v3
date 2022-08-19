@@ -16,7 +16,13 @@ interface ILiquidationModule {
         uint accountId,
         uint fundId,
         address collateralType
-    ) external;
+    ) external returns (uint amountRewarded, uint debtLiquidated, uint collateralLiquidated);
+
+    /// @notice liquidates an entire vault. can only be done if the vault itself is undercollateralized
+    function liquidateVault(
+        uint fundId,
+        address collateralType
+    ) external returns (uint amountRewarded, uint collateralLiquidated);
 
     /// @notice returns if the account is liquidable on the fundId - collateralType pair
     function isLiquidatable(

@@ -12,17 +12,15 @@ contract MarketManagerStorage {
     }
 
     struct MarketData {
+
+        // used to stop the market from minting more sUSD without checking each fund individually
+        int128 issuance;
+        int128 lastMarketBalance;
+        int128 maxMarketDebt;
         address marketAddress;
-        int256 issuance; // TODO this can be negative. How to deal with that?
-        uint256 totalDelegatedCollateralValue;
         
         // used to disconnect funds from a market if it goes above a certain debt per debt share
         Heap.Data fundMaxDebtShares;
-
-        // used to stop the market from minting more sUSD without checking each fund individually
-        uint256 maxMarketDebtShare;
-
-        int256 lastMarketBalance;
 
         SharesLibrary.Distribution debtDist;
     }

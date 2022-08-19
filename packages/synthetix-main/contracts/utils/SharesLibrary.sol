@@ -12,17 +12,19 @@ library SharesLibrary {
         int128 lastValuePerShare;
     }
 
-    struct Distribution {
-        // total amount of the distribution
-        int128 valuePerShare;
-        uint128 totalShares;
-
+    struct DistributionEntry {
         // amount which should be applied to valuePerShare at the given time below, or 
         int128 scheduledValue;
         // set to <= block.timestamp to distribute immediately to currently staked users
         int64 start;
         int32 duration;
         int32 lastUpdate;
+    }
+
+    struct Distribution {
+        // total amount of the distribution
+        int128 valuePerShare;
+        uint128 totalShares;
 
         // used for tracking individual user ids within 
         mapping(bytes32 => DistributionActor) actorInfo;
@@ -33,80 +35,97 @@ library SharesLibrary {
      */
     function distribute(
         Distribution storage dist,
+        int amount
+    ) internal {
+        // instant distribution--immediately disperse amount
+        dist.valuePerShare = int128(dist.valuePerShare) + 
+            int128(amount * 1e18 / int128(dist.totalShares));
+    }
+
+    /**
+     * this function allows for more special cases such as distributing at a future date or distributing over time.
+     * if you want to apply the distribution to the pool, call `distribute` with the return value. Otherwise, you can
+     * record this independantly as well
+     */
+    function distributeWithEntry(
+        Distribution storage dist,
+        DistributionEntry storage entry, 
         int amount,
         uint start,
         uint duration
-    ) internal {
+    ) internal returns (int diff) {
         int curTime = int128(int(block.timestamp));
 
         // ensure any previously active distribution has applied
-        updateDistribution(dist);
+        diff += updateDistributionEntry(entry, dist.totalShares);
 
         if (start + duration <= uint(curTime)) {
             // update any rewards which may have accrued since last run
 
             // instant distribution--immediately disperse amount
-            dist.valuePerShare = int128(dist.valuePerShare) + 
-                int128(amount * 1e18 / int128(dist.totalShares));
-            dist.lastUpdate = int32(curTime);
-            dist.start = 0;
-            dist.duration = 0;
-            dist.scheduledValue = 0;
+            diff += amount * 1e18 / int128(dist.totalShares);
+
+            entry.lastUpdate = int32(curTime);
+            entry.start = 0;
+            entry.duration = 0;
+            entry.scheduledValue = 0;
         }
         else {
             // set distribution schedule
-            dist.scheduledValue = int128(amount);
-            dist.start = int64(int(start));
-            dist.duration = int32(int(duration));
+            entry.scheduledValue = int128(amount);
+            entry.start = int64(int(start));
+            entry.duration = int32(int(duration));
 
             // the amount is actually the amount distributed already *plus* whatever has been specified now
-            dist.lastUpdate = 0;
+            entry.lastUpdate = 0;
 
-            updateDistribution(dist);
+            diff += updateDistributionEntry(entry, dist.totalShares);
         }
     }
 
     /**
      * call every time before `totalShares` changes
      */
-    function updateDistribution(
-        Distribution storage dist
-    ) internal {
-        if (dist.scheduledValue == 0 || dist.totalShares == 0) {
+    function updateDistributionEntry(
+        DistributionEntry storage entry,
+        uint totalShares
+    ) internal returns (int128) {
+        if (entry.scheduledValue == 0 || totalShares == 0) {
             // cannot process distributed rewards if a pool is empty.
-            return;
+            return 0;
         }
 
         // exciting type casting here
         int128 curTime = int128(int(block.timestamp));
 
-        if (curTime < dist.start) {
-            return;
+        int valuePerShareChange = 0;
+
+        if (curTime < entry.start) {
+            return 0;
         }
         
         // determine whether this is an instant distribution or a delayed distribution
-        if (dist.duration == 0 && dist.lastUpdate < dist.start) {
-            dist.valuePerShare = int128((int(dist.valuePerShare) + dist.scheduledValue) * 1e18 / int128(dist.totalShares));
-        } else if (dist.lastUpdate < dist.start + dist.duration) {
-            //revert Test(dists[i].start, dists[i].duration, curTime, dists[i].lastUpdate, dists[i].amount);
+        if (entry.duration == 0 && entry.lastUpdate < entry.start) {
+            valuePerShareChange = entry.scheduledValue * 1e18 / int(totalShares);
+        } else if (entry.lastUpdate < entry.start + entry.duration) {
             // find out what is "newly" distributed
-            int128 lastUpdateDistributed = dist.lastUpdate < dist.start ? 
+            int128 lastUpdateDistributed = entry.lastUpdate < entry.start ? 
                 int128(0) : 
-                (dist.scheduledValue * (dist.lastUpdate - dist.start)) / dist.duration;
+                (entry.scheduledValue * (entry.lastUpdate - entry.start)) / entry.duration;
 
             
 
-            int128 curUpdateDistributed = dist.scheduledValue;
-            if (curTime < dist.start + dist.duration) {
-                curUpdateDistributed = (curUpdateDistributed * (curTime - dist.start)) / dist.duration;
+            int128 curUpdateDistributed = entry.scheduledValue;
+            if (curTime < entry.start + entry.duration) {
+                curUpdateDistributed = (curUpdateDistributed * (curTime - entry.start)) / entry.duration;
             }
 
-            //revert Test(curUpdateDistributed, lastUpdateDistributed, sharesSupply, dists[i].start, curTime);
-
-            dist.valuePerShare += int128(int(curUpdateDistributed - lastUpdateDistributed) * 1e18 / int128(dist.totalShares));
+            valuePerShareChange = int(curUpdateDistributed - lastUpdateDistributed) * 1e18 / int(totalShares);
         }
 
-        dist.lastUpdate = int32(curTime);
+        entry.lastUpdate = int32(curTime);
+
+        return int128(valuePerShareChange);
     }
 
     function updateDistributionActor(
@@ -114,8 +133,6 @@ library SharesLibrary {
         bytes32 actorId,
         uint shares
     ) internal returns (int changedAmount) {
-        updateDistribution(dist);
-
         DistributionActor storage actor = dist.actorInfo[actorId];
 
         // use the previous number of shares when calculating the changed amount

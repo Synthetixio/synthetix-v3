@@ -87,11 +87,14 @@ contract FundModule is IFundModule, FundEventAndErrors, AccountRBACMixin, FundMi
         uint fundId,
         uint[] calldata markets,
         uint[] calldata weights,
-        uint[] calldata maxDebtShareValues
+        int[] calldata maxDebtShareValues
     ) external override fundExists(fundId) onlyFundOwner(fundId, msg.sender) {
         if (markets.length != weights.length || markets.length != maxDebtShareValues.length) {
             revert InvalidParameters("markets.length,weights.length,maxDebtShareValues.length", "must match");
         }
+
+        // TODO: check max debt share value must be low enough that the fund
+        // would be solvent
 
         FundData storage fundData = _fundModuleStore().funds[fundId];
 
@@ -108,7 +111,7 @@ contract FundModule is IFundModule, FundEventAndErrors, AccountRBACMixin, FundMi
             MarketDistribution storage distribution = fundData.fundDistribution[i];
             distribution.market = markets[i];
             distribution.weight = uint128(weights[i]);
-            distribution.maxDebtShareValue = uint128(maxDebtShareValues[i]);
+            distribution.maxDebtShareValue = int128(maxDebtShareValues[i]);
 
             totalWeight += weights[i];
         }
@@ -117,7 +120,7 @@ contract FundModule is IFundModule, FundEventAndErrors, AccountRBACMixin, FundMi
             MarketDistribution memory distribution;
             distribution.market = markets[i];
             distribution.weight = uint128(weights[i]);
-            distribution.maxDebtShareValue = uint128(maxDebtShareValues[i]);
+            distribution.maxDebtShareValue = int128(maxDebtShareValues[i]);
 
             fundData.fundDistribution.push(distribution);
 
@@ -142,14 +145,14 @@ contract FundModule is IFundModule, FundEventAndErrors, AccountRBACMixin, FundMi
         returns (
             uint[] memory,
             uint[] memory,
-            uint[] memory
+            int[] memory
         )
     {
         FundData storage fund = _fundModuleStore().funds[fundId];
 
         uint[] memory markets = new uint[](fund.fundDistribution.length);
         uint[] memory weights = new uint[](fund.fundDistribution.length);
-        uint[] memory maxDebtShareValues = new uint[](fund.fundDistribution.length);
+        int[] memory maxDebtShareValues = new int[](fund.fundDistribution.length);
 
         for (uint i = 0; i < fund.fundDistribution.length; i++) {
             markets[i] = fund.fundDistribution[i].market;

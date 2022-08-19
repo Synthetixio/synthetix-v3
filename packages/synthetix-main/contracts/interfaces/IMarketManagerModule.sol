@@ -20,9 +20,6 @@ interface IMarketManagerModule {
     /// @notice gets the total balance of the market
     function totalBalance(uint marketId) external view returns (int);
 
-    /// @notice gets the total balance of a fund
-    function fundBalance(uint marketId, uint fundId) external view returns (int);
-
     /// @notice target deposits amount of synths to the marketId
     function deposit(
         uint marketId,

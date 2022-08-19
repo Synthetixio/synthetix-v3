@@ -61,13 +61,14 @@ contract MarketManagerModule is
         return _availableLiquidity(marketId);
     }
 
-    function fundBalance(uint marketId, uint fundId) external view override returns (int) {
+    /*function fundBalance(uint marketId, uint fundId) external view override returns (int) {
         MarketData storage marketData = _marketManagerStore().markets[marketId];
         return marketData.lastMarketBalance * int(marketData.fundliquidityShares[fundId]) / int(marketData.totalLiquidityShares);
-    }
+    }*/
 
     function totalBalance(uint marketId) external view override returns (int) {
-        return _totalBalance(marketId);
+        MarketData storage marketData = _marketManagerStore().markets[marketId];
+        return _totalBalance(marketData);
     }
 
     // deposit will burn USD
@@ -89,7 +90,7 @@ contract MarketManagerModule is
         require(originalAllowance >= amount, "insufficient allowance");
 
         // Adjust accounting
-        marketData.issuance -= int(amount);
+        marketData.issuance -= int128(int(amount));
 
         // burn USD
         usdToken.burn(target, amount);
@@ -111,7 +112,7 @@ contract MarketManagerModule is
         if (int(amount) > int(_availableLiquidity(marketId))) revert NotEnoughLiquidity(marketId, amount);
 
         // Adjust accounting
-        marketData.issuance += int(amount);
+        marketData.issuance += int128(int(amount));
 
         // mint some USD
         _getToken(_USD_TOKEN).mint(target, amount);
@@ -120,8 +121,12 @@ contract MarketManagerModule is
     function _availableLiquidity(uint marketId) internal view returns (uint) {
         MarketData storage marketData = _marketManagerStore().markets[marketId];
 
-        if (marketData.issuance > 0 && marketData.issuance >= int(marketData.totalDelegatedCollateralValue)) return 0;
+        int maxIssuance = marketData.maxMarketDebt - marketData.issuance;
 
-        return uint(int(marketData.totalDelegatedCollateralValue) - marketData.issuance);
+        if (maxIssuance <= 0) {
+            return 0;
+        }
+
+        return uint(maxIssuance);
     }
 }

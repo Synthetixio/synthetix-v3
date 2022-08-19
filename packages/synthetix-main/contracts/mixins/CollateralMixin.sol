@@ -73,7 +73,15 @@ contract CollateralMixin is CollateralStorage {
         return CurvesLibrary.calculateValueAtCurvePoint(escrow, block.timestamp);
     }
 
+    function _getCollateralTargetCRatio(address collateralType) internal view returns (uint) {
+        return _collateralStore().collateralsData[collateralType].targetCRatio;
+    }
+
     function _getCollateralMinimumCRatio(address collateralType) internal view returns (uint) {
         return _collateralStore().collateralsData[collateralType].minimumCRatio;
+    }
+
+    function _getCollateralLiquidationReward(address collateralType) internal view returns (uint) {
+        return _collateralStore().collateralsData[collateralType].liquidationReward;
     }
 }
