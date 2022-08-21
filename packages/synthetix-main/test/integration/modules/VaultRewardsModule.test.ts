@@ -4,9 +4,8 @@ import { ethers } from 'ethers';
 import assertBn from '@synthetixio/core-js/dist/utils/assertions/assert-bignumber';
 import assertRevert from '@synthetixio/core-js/dist/utils/assertions/assert-revert';
 import { getBlockTimestamp } from '@synthetixio/core-js/dist/utils/ethers/provider';
-import { addSnapshotBeforeRestoreAfterEach } from '../../utils';
 
-describe('VaultModule', function () {
+describe('VaultRewardsModule', function () {
   const {
     provider,
     signers,

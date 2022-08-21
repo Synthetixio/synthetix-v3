@@ -37,6 +37,11 @@ contract FundMixin is FundModuleStorage, FundVaultStorage, FundEventAndErrors, C
         FundData storage fundData = _fundModuleStore().funds[fundId];
         uint totalWeights = _fundModuleStore().funds[fundId].totalWeights;
 
+        if (totalWeights == 0) {
+            // nothing to rebalance
+            return;
+        }
+
         SharesLibrary.Distribution storage fundDist = _fundVaultStore().fundDists[fundId];
 
         // at this point, shares represent USD liquidity
@@ -111,6 +116,36 @@ contract FundMixin is FundModuleStorage, FundVaultStorage, FundEventAndErrors, C
         return li.cumulativeDebt + int128(li.usdMinted);
     }
 
+    //error Test(uint rps,uint lrps);
+
+    function _updateAvailableRewards(
+        VaultData storage vaultData,
+        uint accountId
+    ) internal returns (uint[] memory) {
+        RewardDistribution[] storage dists = vaultData.rewards;
+
+        uint totalShares = vaultData.debtDist.totalShares;
+
+        uint[] memory rewards = new uint[](dists.length);
+        for (uint i = 0; i < dists.length; i++) {
+            if (address(dists[i].distributor) == address(0)) {
+                continue;
+            }
+
+            dists[i].rewardPerShare += uint128(SharesLibrary.updateDistributionEntry(dists[i].entry, totalShares));
+
+            dists[i].actorInfo[accountId].pendingSend += 
+                uint128(uint(vaultData.debtDist.getActorShares(bytes32(accountId)) * 
+                (dists[i].rewardPerShare - dists[i].actorInfo[accountId].lastRewardPerShare) / 1e18));
+
+            dists[i].actorInfo[accountId].lastRewardPerShare = dists[i].rewardPerShare;
+
+            rewards[i] = dists[i].actorInfo[accountId].pendingSend;
+        }
+
+        return rewards;
+    }
+
     function _accountCollateral(
         uint accountId,
         uint fundId,
@@ -126,11 +161,19 @@ contract FundMixin is FundModuleStorage, FundVaultStorage, FundEventAndErrors, C
 
         shares = vaultData.debtDist.getActorShares(bytes32(accountId));
 
-        collateralAmount = vaultData.totalCollateral * 
-            shares.divDecimal(li.leverage) / 
-            vaultData.debtDist.totalShares;
+        if (shares == 0) {
+            // TODO: in the future, its possible user has collateral in account
+            // but no leverage. if that is the case, we need to account for that here
+            collateralAmount = 0;
+            collateralValue = 0;
+        }
+        else {
+            collateralAmount = vaultData.totalCollateral * 
+                shares.divDecimal(li.leverage) / 
+                vaultData.debtDist.totalShares;
 
-        collateralValue = collateralAmount.mulDecimal(collateralPrice);
+            collateralValue = collateralAmount.mulDecimal(collateralPrice);
+        }
     }
 
     function _accountCollateralRatio(

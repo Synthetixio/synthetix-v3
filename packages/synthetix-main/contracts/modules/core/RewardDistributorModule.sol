@@ -17,6 +17,8 @@ import "../../submodules/FundEventAndErrors.sol";
 contract RewardDistributorModule is IRewardDistributorModule, IRewardDistributor, AssociatedSystemsMixin, OwnableMixin, RewardDistributorStorage {
     bytes32 private constant _REDEEMABLE_REWARDS_TOKEN = "eSNXToken";
 
+    error InsufficientRewardAllocation(uint requestedAmount, uint remainingAllocation);
+
     function setRewardAllocation(uint fundId, uint allocation) external override onlyOwner {
         _rewardDistributorStore().allocatedFunds[fundId] = allocation;
     }
@@ -38,7 +40,7 @@ contract RewardDistributorModule is IRewardDistributorModule, IRewardDistributor
 
         // fund must be approved in the core system
         if (_rewardDistributorStore().allocatedFunds[fundId] < amount) {
-            revert AccessError.Unauthorized(msg.sender);
+            revert InsufficientRewardAllocation(amount, _rewardDistributorStore().allocatedFunds[fundId]);
         }
 
         ITokenModule rewardToken = _getToken(_REDEEMABLE_REWARDS_TOKEN);

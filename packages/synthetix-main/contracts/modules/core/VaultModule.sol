@@ -32,7 +32,6 @@ contract VaultModule is
 
     using SharesLibrary for SharesLibrary.Distribution;
 
-    uint private constant _MAX_REWARD_DISTRIBUTIONS = 10;
     bytes32 private constant _USD_TOKEN = "USDToken";
 
     error InvalidLeverage(uint leverage);
@@ -47,6 +46,7 @@ contract VaultModule is
         uint leverage
     ) external override onlyRoleAuthorized(accountId, "assign") collateralEnabled(collateralType) fundExists(fundId) {
         // Fix leverage to 1 until it's enabled
+        // TODO: we will probably at least want to test <1 leverage
         if (leverage != MathUtil.UNIT) revert InvalidLeverage(leverage);
 
         VaultData storage vaultData = _fundVaultStore().fundVaults[fundId][collateralType];
@@ -76,7 +76,8 @@ contract VaultModule is
 
             uint shares = _calculateShares(vaultData, collateralAmount, leverage);
 
-            if (shares == 0) {
+            // prevent users from specifying an infitesimly small amount such that they don't get any shares
+            if (shares == 0 && collateralAmount > 0) {
                 revert InvalidParameters("amount", "must be large enough for 1 share");
             }
 
@@ -114,151 +115,16 @@ contract VaultModule is
         uint collateralAmount,
         uint leverage
     ) internal view returns (uint) {
-        return uint(vaultData.debtDist.totalShares) * collateralAmount / vaultData.totalCollateral * leverage;
+        uint totalCollateral = vaultData.totalCollateral;
+        if (totalCollateral == 0) {
+            return collateralAmount.mulDecimal(leverage);
+        }
+
+        return uint(vaultData.debtDist.totalShares) * collateralAmount / totalCollateral * leverage;
     }
 
     function _calculateInitialDebt(uint collateralValue, uint leverage) internal pure returns (uint) {
         return collateralValue.mulDecimal(leverage);
-    }
-
-    // ---------------------------------------
-    // Associated Rewards
-    // ---------------------------------------
-
-    function distributeRewards(
-        uint fundId,
-        address collateralType,
-        uint index,
-        address distributor,
-        uint amount,
-        uint start,
-        uint duration
-    ) external override {
-        if (index > _MAX_REWARD_DISTRIBUTIONS) {
-            revert InvalidParameters("index", "too large");
-        }
-
-        VaultData storage vaultData = _fundVaultStore().fundVaults[fundId][collateralType];
-        RewardDistribution[] storage dists = vaultData.rewards;
-
-        if (index > dists.length) {
-            revert InvalidParameters("index", "should be next index");
-        }
-        else if (index == dists.length) {
-            dists.push(); // extend the size of the array by 1
-        }
-
-        RewardDistribution storage existingDistribution = dists[index];
-
-        // to call this function must be either:
-        // 1. fund owner
-        // 2. the registered distributor contract
-        if (_ownerOf(fundId) != msg.sender && address(existingDistribution.distributor) != msg.sender) {
-            revert AccessError.Unauthorized(msg.sender);
-        }
-
-        if ((_ownerOf(fundId) != msg.sender && distributor != msg.sender) || distributor == address(0)) {
-            revert InvalidParameters("distributor", "must be non-zero");
-        }
-
-        uint curTime = block.timestamp;
-
-        existingDistribution.rewardPerShare += uint128(uint(
-            vaultData.debtDist.distributeWithEntry(existingDistribution.entry, int(amount), start, duration)));
-
-        emit RewardDistributionSet(fundId, collateralType, index, distributor, amount, start, duration);
-    }
-
-    function getAvailableRewards(
-        uint fundId,
-        address collateralType,
-        uint accountId
-    ) external override onlyRoleAuthorized(accountId, "assign") returns (uint[] memory) {
-        VaultData storage vaultData = _fundVaultStore().fundVaults[fundId][collateralType];
-        return _updateAvailableRewards(vaultData, accountId);
-    }
-
-    function getCurrentRewardAccumulation(
-        uint fundId,
-        address collateralType
-    ) external override view returns (uint[] memory) {
-
-        return _getCurrentRewardAccumulation(fundId, collateralType);
-    }
-
-    function claimRewards(
-        uint fundId,
-        address collateralType,
-        uint accountId
-    ) external override returns (uint[] memory) {
-        VaultData storage vaultData = _fundVaultStore().fundVaults[fundId][collateralType];
-        uint[] memory rewards = _updateAvailableRewards(vaultData, accountId);
-
-        for (uint i = 0; i < rewards.length; i++) {
-            if (rewards[i] > 0) {
-                // todo: reentrancy protection?
-                vaultData.rewards[i].distributor.payout(fundId, collateralType, msg.sender, rewards[i]);
-                emit RewardsClaimed(fundId, collateralType, accountId, i, rewards[i]);
-            }
-        }
-
-        return rewards;
-    }
-
-    function _updateAvailableRewards(
-        VaultData storage vaultData,
-        uint accountId
-    ) internal returns (uint[] memory) {
-        RewardDistribution[] storage dists = vaultData.rewards;
-
-        uint totalShares = vaultData.debtDist.totalShares;
-
-        uint[] memory rewards = new uint[](dists.length);
-        for (uint i = 0; i < dists.length; i++) {
-            if (address(dists[i].distributor) == address(0)) {
-                continue;
-            }
-
-            dists[i].rewardPerShare += uint128(SharesLibrary.updateDistributionEntry(dists[i].entry, totalShares));
-
-            dists[i].actorInfo[accountId].pendingSend += uint128(vaultData.debtDist.getActorShares(bytes32(accountId)) * 
-                dists[i].actorInfo[accountId].lastRewardPerShare / 
-                dists[i].rewardPerShare);
-
-            dists[i].actorInfo[accountId].lastRewardPerShare = dists[i].rewardPerShare;
-
-            rewards[i] = dists[i].actorInfo[accountId].pendingSend;
-        }
-
-        return rewards;
-    }
-
-    function _getCurrentRewardAccumulation(
-        uint fundId,
-        address collateralType
-    ) internal view returns (uint[] memory) {
-        VaultData storage vaultData = _fundVaultStore().fundVaults[fundId][collateralType];
-        RewardDistribution[] storage dists = vaultData.rewards;
-
-        int curTime = int(block.timestamp);
-
-        uint[] memory rates = new uint[](dists.length);
-
-        for (uint i = 0; i < dists.length; i++) {
-            if (
-                address(dists[i].distributor) == address(0) || 
-                dists[i].entry.start > curTime ||
-                dists[i].entry.start + dists[i].entry.duration <= curTime
-            ) {
-                continue;
-            }
-
-            rates[i] = uint(int(dists[i].entry.scheduledValue))
-                .divDecimal(uint(int(dists[i].entry.duration))
-                .divDecimal(vaultData.debtDist.totalShares));
-        }
-
-        return rates;
     }
 
     // ---------------------------------------
@@ -354,7 +220,7 @@ contract VaultModule is
         return _fundVaultStore().fundVaults[fundId][collateralType].totalDebt;
     }
 
-    function totalDebtShares(uint fundId, address collateralType) external view override returns (uint) {
+    function totalVaultShares(uint fundId, address collateralType) external view override returns (uint) {
         return _fundVaultStore().fundVaults[fundId][collateralType].debtDist.totalShares;
     }
 

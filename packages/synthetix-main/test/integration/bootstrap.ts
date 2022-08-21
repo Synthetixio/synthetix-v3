@@ -82,7 +82,7 @@ export function bootstrapWithStakedFund() {
     await aggregator.mockSetCurrentPrice(ethers.utils.parseEther('1'));
   });
 
-  before(async function () {
+  before('delegate collateral', async function () {
     const [owner, user1] = r.signers();
 
     // mint initial snx
@@ -123,7 +123,7 @@ export function bootstrapWithStakedFund() {
     );
   });
 
-  before(async () => {
+  before('snapshot', async () => {
     snapshotId = await r.provider().send('evm_snapshot', []);
   });
 

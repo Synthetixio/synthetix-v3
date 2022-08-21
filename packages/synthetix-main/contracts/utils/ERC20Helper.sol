@@ -15,7 +15,7 @@ library ERC20Helper {
         (bool success, bytes memory data) =
             token.call(abi.encodeWithSelector(IERC20.transfer.selector, to, value));
 
-        if (!success || (data.length != 0 && abi.decode(data, (bool)))) {
+        if (!success || (data.length != 0 && !abi.decode(data, (bool)))) {
             revert FailedTransfer(address(this), to, value);
         }
     }
@@ -29,7 +29,7 @@ library ERC20Helper {
         (bool success, bytes memory data) =
             token.call(abi.encodeWithSelector(IERC20.transferFrom.selector, from, to, value));
 
-        if (!success || (data.length != 0 && abi.decode(data, (bool)))) {
+        if (!success || (data.length != 0 && !abi.decode(data, (bool)))) {
             revert FailedTransfer(from, to, value);
         }
     }

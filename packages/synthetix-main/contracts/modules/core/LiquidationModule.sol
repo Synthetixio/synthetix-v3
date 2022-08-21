@@ -30,7 +30,7 @@ contract LiquidationsModule is ILiquidationModule, LiquidationModuleStorage, Col
         collateralLiquidated = cl;
 
 
-        if (rawDebt < 0 || !_isLiquidatable(collateralType, uint(rawDebt), collateralValue)) {
+        if (rawDebt <= 0 || !_isLiquidatable(collateralType, uint(rawDebt), collateralValue)) {
             revert IneligibleForLiquidation(
                 collateralValue, 
                 debtLiquidated, 

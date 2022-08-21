@@ -37,9 +37,19 @@ library SharesLibrary {
         Distribution storage dist,
         int amount
     ) internal {
+        if (amount == 0) {
+            return;
+        }
+
+        uint totalShares = dist.totalShares;
+
+        if (totalShares == 0) {
+            revert InvalidParameters("amount", "can't distribute to empty distribution");
+        }
+
         // instant distribution--immediately disperse amount
         dist.valuePerShare = int128(dist.valuePerShare) + 
-            int128(amount * 1e18 / int128(dist.totalShares));
+            int128(amount * 1e18 / int(totalShares));
     }
 
     /**
@@ -54,6 +64,13 @@ library SharesLibrary {
         uint start,
         uint duration
     ) internal returns (int diff) {
+
+        uint totalShares = dist.totalShares;
+
+        if (totalShares == 0) {
+            revert InvalidParameters("amount", "can't distribute to empty distribution");
+        }
+
         int curTime = int128(int(block.timestamp));
 
         // ensure any previously active distribution has applied
@@ -63,9 +80,9 @@ library SharesLibrary {
             // update any rewards which may have accrued since last run
 
             // instant distribution--immediately disperse amount
-            diff += amount * 1e18 / int128(dist.totalShares);
+            diff += amount * 1e18 / int(totalShares);
 
-            entry.lastUpdate = int32(curTime);
+            entry.lastUpdate = 0;
             entry.start = 0;
             entry.duration = 0;
             entry.scheduledValue = 0;
@@ -106,16 +123,16 @@ library SharesLibrary {
         
         // determine whether this is an instant distribution or a delayed distribution
         if (entry.duration == 0 && entry.lastUpdate < entry.start) {
-            valuePerShareChange = entry.scheduledValue * 1e18 / int(totalShares);
+            valuePerShareChange = int(entry.scheduledValue) * 1e18 / int(totalShares);
         } else if (entry.lastUpdate < entry.start + entry.duration) {
             // find out what is "newly" distributed
-            int128 lastUpdateDistributed = entry.lastUpdate < entry.start ? 
+            int lastUpdateDistributed = entry.lastUpdate < entry.start ? 
                 int128(0) : 
                 (entry.scheduledValue * (entry.lastUpdate - entry.start)) / entry.duration;
 
             
 
-            int128 curUpdateDistributed = entry.scheduledValue;
+            int curUpdateDistributed = entry.scheduledValue;
             if (curTime < entry.start + entry.duration) {
                 curUpdateDistributed = (curUpdateDistributed * (curTime - entry.start)) / entry.duration;
             }

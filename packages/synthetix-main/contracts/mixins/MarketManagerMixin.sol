@@ -39,15 +39,20 @@ contract MarketManagerMixin is MarketManagerStorage {
         debtChange = marketData.debtDist.updateDistributionActor(bytes32(fundId), newLiquidity);
 
         // recalculate max market debt share
-        int oldMaxMarketDebtShare = int(marketData.maxMarketDebt) / int128(marketData.debtDist.totalShares);
-        int newMaxMarketDebtShare = oldMaxMarketDebtShare -
-            (oldFundMaxDebtShareValue * int(oldLiquidity) / int(oldTotalLiquidity)) +
-            (newFundMaxShareValue * int(newLiquidity) / int128(marketData.debtDist.totalShares));
+        int newMaxMarketDebtShare = newFundMaxShareValue;
 
-        newMaxMarketDebtShare =
-            newMaxMarketDebtShare +
-            (oldMaxMarketDebtShare * int(oldLiquidity) / int(oldTotalLiquidity)) -
-            (oldMaxMarketDebtShare * int(newLiquidity) / int128(marketData.debtDist.totalShares));
+        if (oldTotalLiquidity > 0 && newLiquidity > 0) {
+            int oldMaxMarketDebtShare = int(marketData.maxMarketDebt) / int128(marketData.debtDist.totalShares);
+
+            newMaxMarketDebtShare = oldMaxMarketDebtShare -
+                (oldFundMaxDebtShareValue * int(oldLiquidity) / int(oldTotalLiquidity)) +
+                (newFundMaxShareValue * int(newLiquidity) / int128(marketData.debtDist.totalShares));
+
+            newMaxMarketDebtShare =
+                newMaxMarketDebtShare +
+                (oldMaxMarketDebtShare * int(oldLiquidity) / int(oldTotalLiquidity)) -
+                (oldMaxMarketDebtShare * int(newLiquidity) / int128(marketData.debtDist.totalShares));
+        }
 
         marketData.fundMaxDebtShares.insert(uint128(fundId), -int128(int(newFundMaxShareValue)));
         marketData.maxMarketDebt = int128(newMaxMarketDebtShare * int128(marketData.debtDist.totalShares) / MathUtil.INT_UNIT);
@@ -56,6 +61,11 @@ contract MarketManagerMixin is MarketManagerStorage {
     function _distributeMarket(
         MarketData storage marketData
     ) internal {
+        if (marketData.debtDist.totalShares == 0) {
+            // market cannot distribute (or accumulate) any debt when there are no shares
+            return;
+        }
+
         // get the latest market balance
         int targetBalance = _totalBalance(marketData);
 

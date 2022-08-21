@@ -9,8 +9,6 @@ describe('RewardDistributorModule', function () {
     systems,
     accountId,
     fundId,
-    depositAmount,
-    aggregator,
     collateralAddress
   } = bootstrapWithStakedFund();
 
@@ -58,7 +56,7 @@ describe('RewardDistributorModule', function () {
     });
 
     it('reports correct amount of rewards gathered', async () => {
-      assertBn.equal((await systems().Core.callStatic.getAvailableRewards(
+      assertBn.equal((await systems().Core.callStatic.claimRewards(
         fundId,
         collateralAddress(),
         accountId
@@ -76,7 +74,7 @@ describe('RewardDistributorModule', function () {
     });
 
     describe('re-applied', () => {
-      before(async () => {
+      before('re-distribute', async () => {
         await systems().Core.connect(owner).distributeRewards(
           fundId, 
           collateralAddress(), 

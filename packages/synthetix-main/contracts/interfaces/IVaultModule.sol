@@ -17,39 +17,6 @@ interface IVaultModule {
         uint leverage
     ) external;
 
-    /// @notice called by fund owner or an existing distributor to set up rewards for vault participants
-    function distributeRewards(
-        uint fundId,
-        address token,
-        uint index,
-        address distributor,
-        uint amount,
-        uint start,
-        uint duration
-    ) external;
-
-    /// @notice retrieves the amount of available rewards.
-    /// this function should be called to get currently available rewards using `callStatic`
-    function getAvailableRewards(
-        uint fundId,
-        address token,
-        uint accountId
-    ) external returns (uint[] memory);
-
-    /// @notice retrieves the amount of available rewards, and claims them to the caller's account.
-    /// this function should be called to get currently available rewards using `callStatic`
-    function claimRewards(
-        uint fundId,
-        address token,
-        uint accountId
-    ) external returns (uint[] memory);
-
-    /// @notice returns the number of individual units of amount emitted per second per share for the given fundId, collateralType vault
-    function getCurrentRewardAccumulation(
-        uint fundId,
-        address collateralType
-    ) external view returns (uint[] memory);
-
     /// @notice mints USD for a fund/account from a collateralType. if CRatio is valid
     function mintUSD(
         uint accountId,
@@ -91,7 +58,7 @@ interface IVaultModule {
     function fundDebt(uint fundId, address collateralType) external returns (int);
 
     /// @notice gets the total fund debtShares
-    function totalDebtShares(uint fundId, address collateralType) external view returns (uint);
+    function totalVaultShares(uint fundId, address collateralType) external view returns (uint);
 
     /// @notice gets the debt per share (USD value) for a fund
     function debtPerShare(uint fundId, address collateralType) external returns (int);

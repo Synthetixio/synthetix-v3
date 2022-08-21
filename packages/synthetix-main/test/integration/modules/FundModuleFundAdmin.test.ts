@@ -124,7 +124,7 @@ describe('FundModule Admin', function () {
           systems()
             .Core.connect(fundAdmin)
             .setFundPosition(1, [1], [1, 2], [0, 0]),
-          'InvalidParameters()',
+          'InvalidParameters("markets.length,weights.length,maxDebtShareValues.length", "must match")',
           systems().Core
         );
       });
@@ -134,7 +134,7 @@ describe('FundModule Admin', function () {
           systems()
             .Core.connect(fundAdmin)
             .setFundPosition(1, [1, 2], [1], [0, 0]),
-          'InvalidParameters()',
+          'InvalidParameters("markets.length,weights.length,maxDebtShareValues.length", "must match")',
           systems().Core
         );
       });
@@ -213,19 +213,6 @@ describe('FundModule Admin', function () {
             assert.equal(event.args.collateralType, Collateral.address);
           });
 
-          it('emitted a PositionAdded event', async () => {
-            const event = findEvent({ receipt, eventName: 'PositionAdded' });
-
-            assert.equal(event.args.liquidityItemId, liquidityItemId);
-            assertBn.equal(event.args.fundId, 1);
-            assertBn.equal(event.args.accountId, 1);
-            assertBn.equal(event.args.amount, 10);
-            assertBn.equal(event.args.leverage, ethers.utils.parseEther('1'));
-            assert.equal(event.args.collateralType, Collateral.address);
-            assertBn.equal(event.args.shares, 10);
-            assertBn.equal(event.args.initialDebt, 10);
-          });
-
           describe('when adding to the same liquidityId', async () => {
             before('delegate some collateral', async () => {
               const tx = await systems()
@@ -246,21 +233,6 @@ describe('FundModule Admin', function () {
               assertBn.equal(event.args.amount, 20);
               assertBn.equal(event.args.leverage, ethers.utils.parseEther('1'));
               assert.equal(event.args.collateralType, Collateral.address);
-            });
-
-            it('emitted a PositionIncreased event', async () => {
-              const event = findEvent({
-                receipt,
-                eventName: 'PositionIncreased',
-              });
-
-              assert.equal(event.args.liquidityItemId, liquidityItemId);
-              assertBn.equal(event.args.fundId, 1);
-              assertBn.equal(event.args.amount, 20);
-              assertBn.equal(event.args.leverage, ethers.utils.parseEther('1'));
-              assert.equal(event.args.collateralType, Collateral.address);
-              assertBn.equal(event.args.shares, 20);
-              assertBn.equal(event.args.initialDebt, 20);
             });
           });
 
@@ -285,21 +257,6 @@ describe('FundModule Admin', function () {
               assertBn.equal(event.args.leverage, ethers.utils.parseEther('1'));
               assert.equal(event.args.collateralType, Collateral.address);
             });
-
-            it('emitted a PositionDecreased event', async () => {
-              const event = findEvent({
-                receipt,
-                eventName: 'PositionDecreased',
-              });
-
-              assert.equal(event.args.liquidityItemId, liquidityItemId);
-              assertBn.equal(event.args.fundId, 1);
-              assertBn.equal(event.args.amount, 1);
-              assertBn.equal(event.args.leverage, ethers.utils.parseEther('1'));
-              assert.equal(event.args.collateralType, Collateral.address);
-              assertBn.equal(event.args.shares, 1);
-              assertBn.equal(event.args.initialDebt, 1);
-            });
           });
 
           describe('when removing liquidityId', async () => {
@@ -321,18 +278,6 @@ describe('FundModule Admin', function () {
               assertBn.equal(event.args.accountId, 1);
               assertBn.equal(event.args.amount, 0);
               assertBn.equal(event.args.leverage, ethers.utils.parseEther('1'));
-              assert.equal(event.args.collateralType, Collateral.address);
-            });
-
-            it('emitted a PositionRemoved event', async () => {
-              const event = findEvent({
-                receipt,
-                eventName: 'PositionRemoved',
-              });
-
-              assert.equal(event.args.liquidityItemId, liquidityItemId);
-              assertBn.equal(event.args.fundId, 1);
-              assertBn.equal(event.args.accountId, 1);
               assert.equal(event.args.collateralType, Collateral.address);
             });
           });
