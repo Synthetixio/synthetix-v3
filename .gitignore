@@ -2,6 +2,7 @@
 .env
 .nyc_output
 .vscode
+**/dist/*
 artifacts
 cache
 coverage
