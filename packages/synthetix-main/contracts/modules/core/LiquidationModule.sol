@@ -26,6 +26,7 @@ contract LiquidationsModule is ILiquidationModule, LiquidationModuleStorage, Col
         address collateralType
     ) external override returns (uint amountRewarded, uint debtLiquidated, uint collateralLiquidated) {
         int rawDebt = _updateAccountDebt(accountId, fundId, collateralType);
+
         (uint cl, uint collateralValue,) = _accountCollateral(accountId, fundId, collateralType);
         collateralLiquidated = cl;
 

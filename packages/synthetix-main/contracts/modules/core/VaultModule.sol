@@ -92,7 +92,7 @@ contract VaultModule is
 
             liquidityItem.leverage = uint128(leverage);
 
-            _updateAccountDebt(accountId, fundId, collateralType);
+            //_updateAccountDebt(accountId, fundId, collateralType);
 
             // this is the most efficient time to check the resulting collateralization ratio, since 
             // user's debt and collateral price have been fully updated
@@ -120,7 +120,7 @@ contract VaultModule is
             return collateralAmount.mulDecimal(leverage);
         }
 
-        return uint(vaultData.debtDist.totalShares) * collateralAmount / totalCollateral * leverage;
+        return leverage.mulDecimal(uint(vaultData.debtDist.totalShares) * collateralAmount / totalCollateral);
     }
 
     function _calculateInitialDebt(uint collateralValue, uint leverage) internal pure returns (uint) {
@@ -139,6 +139,7 @@ contract VaultModule is
     ) external override onlyRoleAuthorized(accountId, "mint") {
         // check if they have sufficient c-ratio to mint that amount
         int debt = _updateAccountDebt(accountId, fundId, collateralType);
+
         (uint collateralValue,,) = _accountCollateral(accountId, fundId, collateralType);
 
         int newDebt = debt + int(amount);
@@ -157,7 +158,7 @@ contract VaultModule is
         uint fundId,
         address collateralType,
         uint amount
-    ) external override onlyRoleAuthorized(accountId, "burn") {
+    ) external override {
         int debt = _updateAccountDebt(accountId, fundId, collateralType);
 
         if (debt < 0) {
@@ -196,16 +197,15 @@ contract VaultModule is
         return _accountCollateralRatio(fundId, accountId, collateralType);
     }
 
-    function accountFundCollateralValue(
+    function accountVaultCollateral(
         uint accountId,
         uint fundId,
         address collateralType
-    ) external view override returns (uint) {
-        (, uint accountCollateralValue, ) = _accountCollateral(accountId, fundId, collateralType);
-        return accountCollateralValue;
+    ) external view override returns (uint amount, uint value, uint shares) {
+        return _accountCollateral(accountId, fundId, collateralType);
     }
 
-    function accountFundDebt(
+    function accountVaultDebt(
         uint accountId,
         uint fundId,
         address collateralType
@@ -234,7 +234,7 @@ contract VaultModule is
     function _verifyCollateralRatio(address collateralType, uint debt, uint collateralValue) internal view {
         uint targetCratio = _getCollateralTargetCRatio(collateralType);
 
-        if (debt != 0 && collateralValue.divDecimal(debt) > targetCratio) {
+        if (debt != 0 && collateralValue.divDecimal(debt) < targetCratio) {
             revert InsufficientCollateralRatio(collateralValue, debt, collateralValue.divDecimal(debt), targetCratio);
         }
     }
@@ -245,27 +245,5 @@ contract VaultModule is
 
     function getLiquidityItem(bytes32 liquidityItemId) public view override returns (LiquidityItem memory liquidityItem) {
         return _fundVaultStore().liquidityItems[liquidityItemId];
-    }
-
-    function getAccountLiquidityItemIds(uint accountId) public view override returns (bytes32[] memory liquidityItemIds) {
-        // TODO: generate liquidity item ids from list of available fund colalteral types
-        return new bytes32[](0);
-    }
-
-    function getAccountLiquidityItems(uint accountId)
-        external
-        view
-        override
-        returns (LiquidityItem[] memory liquidityItems)
-    {
-        bytes32[] memory liquidityItemIds = getAccountLiquidityItemIds(accountId);
-
-        liquidityItems = new LiquidityItem[](liquidityItemIds.length);
-
-        for (uint i = 0; i < liquidityItemIds.length; i++) {
-            liquidityItems[i] = getLiquidityItem(liquidityItemIds[i]);
-        }
-
-        return liquidityItems;
     }
 }

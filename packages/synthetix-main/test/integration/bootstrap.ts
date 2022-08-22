@@ -86,7 +86,7 @@ export function bootstrapWithStakedFund() {
     const [owner, user1] = r.signers();
 
     // mint initial snx
-    await r.systems().Core.connect(owner).mintInitialSystemToken(await user1.getAddress(), depositAmount);
+    await r.systems().Core.connect(owner).mintInitialSystemToken(await user1.getAddress(), depositAmount.mul(10));
 
     // deploy an aggregator
     collateralAddress = r.systems().SNX.address;
@@ -137,6 +137,7 @@ export function bootstrapWithStakedFund() {
     aggregator: () => aggregator,
     accountId,
     fundId,
+    collateralContract: () => r.systems().SNX,
     collateralAddress: () => collateralAddress,
     depositAmount,
     restore

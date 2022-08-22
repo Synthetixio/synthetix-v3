@@ -128,13 +128,13 @@ library SharesLibrary {
             // find out what is "newly" distributed
             int lastUpdateDistributed = entry.lastUpdate < entry.start ? 
                 int128(0) : 
-                (entry.scheduledValue * (entry.lastUpdate - entry.start)) / entry.duration;
+                int(entry.scheduledValue) * (entry.lastUpdate - entry.start) / entry.duration;
 
             
 
             int curUpdateDistributed = entry.scheduledValue;
             if (curTime < entry.start + entry.duration) {
-                curUpdateDistributed = (curUpdateDistributed * (curTime - entry.start)) / entry.duration;
+                curUpdateDistributed = curUpdateDistributed * (curTime - entry.start) / entry.duration;
             }
 
             valuePerShareChange = int(curUpdateDistributed - lastUpdateDistributed) * 1e18 / int(totalShares);
@@ -153,9 +153,9 @@ library SharesLibrary {
         DistributionActor storage actor = dist.actorInfo[actorId];
 
         // use the previous number of shares when calculating the changed amount
-        changedAmount = int(int128(actor.shares)) * (dist.valuePerShare - actor.lastValuePerShare) / 1e18;
+        changedAmount = int(dist.valuePerShare - actor.lastValuePerShare) * int(int128(actor.shares)) / 1e18;
 
-        dist.totalShares = dist.totalShares + uint128(shares) - actor.shares;
+        dist.totalShares = uint128(dist.totalShares + shares - actor.shares);
 
         actor.lastValuePerShare = dist.valuePerShare;
         actor.shares = uint128(shares);
@@ -165,7 +165,7 @@ library SharesLibrary {
         Distribution storage dist,
         bytes32 actorId
     ) internal view returns (int value) {
-        return int(int128(dist.actorInfo[actorId].shares)) * dist.valuePerShare / 1e18;
+        return int(dist.valuePerShare) * int128(dist.actorInfo[actorId].shares) / 1e18;
     }
 
     function getActorShares(
@@ -181,7 +181,7 @@ library SharesLibrary {
         Distribution storage dist,
         int value
     ) internal view returns (uint shares) {
-        if (dist.valuePerShare * value < 0) {
+        if (int(dist.valuePerShare) * value < 0) {
             revert InvalidParameters("value", "results in negative shares");
         }
 

@@ -168,7 +168,7 @@ contract FundMixin is FundModuleStorage, FundVaultStorage, FundEventAndErrors, C
             collateralValue = 0;
         }
         else {
-            collateralAmount = vaultData.totalCollateral * 
+            collateralAmount = uint(vaultData.totalCollateral) * 
                 shares.divDecimal(li.leverage) / 
                 vaultData.debtDist.totalShares;
 

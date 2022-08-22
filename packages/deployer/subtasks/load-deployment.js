@@ -21,6 +21,7 @@ subtask(SUBTASK_LOAD_DEPLOYMENT, 'Loads deployment artifacts for a particular in
     hre.deployer.paths.deployment = currentDeploymentFile;
     hre.deployer.paths.sources = sources;
     hre.deployer.paths.abis = abis;
+    hre.deployer.paths.cache = hre.config.deployer.paths.cache;
 
     hre.deployer.deployment = {
       general: readOnly
