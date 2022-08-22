@@ -42,7 +42,7 @@ describe('deploy:verify', function () {
     it('made the appropiate verify calls', async function () {
       await hre.run(TASK_DEPLOY_VERIFY, { quiet: true, instance: 'test' });
 
-      const contracts = Object.values(hre.deployer.deployment.general.contracts);
+      const contracts = Object.values(hre.router.deployment.general.contracts);
       const expected = contracts.map((c) => {
         const r = {
           address: c.deployedAddress,
@@ -65,7 +65,7 @@ describe('deploy:verify', function () {
     describe('when trying to verify an incomplete deployment', function () {
       it('throws an error', async function () {
         await hre.run(SUBTASK_LOAD_DEPLOYMENT, { instance: 'test' });
-        hre.deployer.deployment.general.properties.completed = false;
+        hre.router.deployment.general.properties.completed = false;
 
         try {
           await rejects(() => hre.run(TASK_DEPLOY_VERIFY, { quiet: true, instance: 'test' }), {
@@ -73,7 +73,7 @@ describe('deploy:verify', function () {
           });
         } finally {
           await hre.run(SUBTASK_LOAD_DEPLOYMENT, { instance: 'test' });
-          hre.deployer.deployment.general.properties.completed = true;
+          hre.router.deployment.general.properties.completed = true;
         }
       });
     });
@@ -88,7 +88,7 @@ describe('deploy:verify', function () {
           contract,
         });
 
-        const SomeModule = Object.values(hre.deployer.deployment.general.contracts).find(
+        const SomeModule = Object.values(hre.router.deployment.general.contracts).find(
           (c) => c.contractFullyQualifiedName === contract
         );
 

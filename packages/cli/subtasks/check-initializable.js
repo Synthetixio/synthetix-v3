@@ -9,7 +9,7 @@ subtask(
   'Check if current contract is initializable and if it is initialized'
 ).setAction(async (taskArguments, hre) => {
   const address = hre.cli.contractDeployedAddress;
-  const abi = hre.deployer.deployment.abis[hre.cli.contractFullyQualifiedName];
+  const abi = hre.router.deployment.abis[hre.cli.contractFullyQualifiedName];
   const abiFunctions = abi.filter((abiItem) => abiItem.name && abiItem.type === 'function');
 
   const { contractName } = parseFullyQualifiedName(hre.cli.contractFullyQualifiedName);

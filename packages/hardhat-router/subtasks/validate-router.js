@@ -56,7 +56,7 @@ async function _runSourceValidations() {
 async function _runASTValidations(routerFullyQualifiedName) {
   const errorsFound = [];
 
-  const astNodes = Object.values(hre.deployer.deployment.sources).map((val) => val.ast);
+  const astNodes = Object.values(hre.router.deployment.sources).map((val) => val.ast);
   const validator = new RouterASTValidator(routerFullyQualifiedName, astNodes);
 
   logger.debug('Validating Router compiled code');

@@ -28,7 +28,7 @@ subtask(
     }
 
     return {
-      folder: hre.config.deployer.paths.deployments,
+      folder: hre.config.router.paths.deployments,
       network: hre.network.name,
       instance,
       info,

@@ -23,7 +23,7 @@ subtask(SUBTASK_CREATE_DEPLOYMENT, 'Creates the necessary deployment files, if n
     const { instance, alias } = taskArguments;
 
     const info = {
-      folder: hre.config.deployer.paths.deployments,
+      folder: hre.config.router.paths.deployments,
       network: hre.network.name,
       instance,
     };

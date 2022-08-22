@@ -8,11 +8,7 @@ subtask(
   SUBTASK_CANCEL_DEPLOYMENT,
   'Stop current deployment execution and delete created data files'
 ).setAction(async (_, hre) => {
-  const toDelete = [
-    hre.deployer.paths.deployment,
-    hre.deployer.paths.sources,
-    hre.deployer.paths.abis,
-  ];
+  const toDelete = [hre.router.paths.deployment, hre.router.paths.sources, hre.router.paths.abis];
 
   logger.info('Deleting generated files:');
   toDelete.forEach((file) => logger.info(`  ${relativePath(file)}`));

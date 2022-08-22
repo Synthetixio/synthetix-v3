@@ -25,7 +25,7 @@ subtask(SUBTASK_FIND_CONTRACTS, 'Get the list of contracts that can be interacte
 );
 
 function _getDeploymentContracts(hre) {
-  return Object.values(hre.deployer.deployment.general.contracts).map((artifact) => ({
+  return Object.values(hre.router.deployment.general.contracts).map((artifact) => ({
     contractName: artifact.contractName,
     contractFullyQualifiedName: artifact.contractFullyQualifiedName,
     contractDeployedAddress: artifact.isModule ? artifact.proxyAddress : artifact.deployedAddress,
@@ -35,14 +35,14 @@ function _getDeploymentContracts(hre) {
 async function _getSatellites(hre) {
   const satellites = [];
 
-  const sources = hre.deployer.deployment.sources;
-  const modulesArtifacts = Object.values(hre.deployer.deployment.general.contracts).filter(
+  const sources = hre.router.deployment.sources;
+  const modulesArtifacts = Object.values(hre.router.deployment.general.contracts).filter(
     ({ isModule }) => isModule
   );
 
   for (const { contractFullyQualifiedName, proxyAddress } of modulesArtifacts) {
     const { sourceName, contractName } = parseFullyQualifiedName(contractFullyQualifiedName);
-    const baseAstNode = hre.deployer.deployment.sources[sourceName].ast;
+    const baseAstNode = hre.router.deployment.sources[sourceName].ast;
     const astNodes = Object.values(sources).map((source) => source.ast);
 
     const dependencies = findContractDependencies(contractFullyQualifiedName, astNodes).map(
@@ -55,7 +55,7 @@ async function _getSatellites(hre) {
     }
 
     // Ask the Satellite Factory contract if it already deployed any Satellites
-    const abi = hre.deployer.deployment.abis[contractFullyQualifiedName];
+    const abi = hre.router.deployment.abis[contractFullyQualifiedName];
     const contract = new hre.ethers.Contract(proxyAddress, abi, hre.ethers.provider);
     const results = await contract[`get${capitalize(contractName)}Satellites`]();
 

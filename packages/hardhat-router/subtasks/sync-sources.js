@@ -16,7 +16,7 @@ subtask(
 ).setAction(async ({ modules }, hre) => {
   logger.subtitle('Syncing solidity sources with deployment data');
 
-  const { previousDeployment } = hre.deployer;
+  const { previousDeployment } = hre.router;
   const modulesFullyQualifiedNames = await getModulesFullyQualifiedNames(
     modules ? new RegExp(modules) : /.*/
   );

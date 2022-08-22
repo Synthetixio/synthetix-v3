@@ -9,19 +9,15 @@ const { SUBTASK_FINALIZE_DEPLOYMENT } = require('../task-names');
 subtask(SUBTASK_FINALIZE_DEPLOYMENT).setAction(async (_, hre) => {
   logger.subtitle('Finalizing deployment');
 
-  if (hre.deployer.deployment.general.properties.totalGasUsed === '0') {
+  if (hre.router.deployment.general.properties.totalGasUsed === '0') {
     logger.checked('Deployment did not produce any changes, deleting temp files');
 
-    const toDelete = [
-      hre.deployer.paths.deployment,
-      hre.deployer.paths.sources,
-      hre.deployer.paths.abis,
-    ];
+    const toDelete = [hre.router.paths.deployment, hre.router.paths.sources, hre.router.paths.abis];
 
     await del(toDelete);
   } else {
     logger.complete('Deployment marked as completed');
 
-    hre.deployer.deployment.general.properties.completed = true;
+    hre.router.deployment.general.properties.completed = true;
   }
 });

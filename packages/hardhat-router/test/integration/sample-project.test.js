@@ -57,7 +57,7 @@ describe('sample-project', function () {
         });
 
         // Third deployment, with changes
-        const MODULES = hre.config.deployer.paths.modules;
+        const MODULES = hre.config.router.paths.modules;
         const CONTRACTS = path.resolve(__dirname, '..', 'fixtures', 'contracts');
 
         const SomeModuleOriginal = await readFile(path.join(MODULES, 'SomeModule.sol'));

@@ -28,7 +28,7 @@ task(TASK_DEPLOY_VERIFY, 'Verify deployment contracts using Etherscan API')
 
     await hre.run(SUBTASK_LOAD_DEPLOYMENT, { readOnly: true, instance });
 
-    const deployment = hre.deployer.deployment.general;
+    const deployment = hre.router.deployment.general;
 
     if (!deployment.properties.completed) {
       throw new HardhatPluginError(
@@ -56,7 +56,7 @@ task(TASK_DEPLOY_VERIFY, 'Verify deployment contracts using Etherscan API')
 
       if (isProxy) {
         // Verify Proxy only First deployment
-        if (hre.deployer.previousDeployment) continue;
+        if (hre.router.previousDeployment) continue;
         // Add Router address for Proxy constructor
         const Router = contracts.find((c) => c.isRouter);
         constructorArguments.push(Router.deployedAddress);

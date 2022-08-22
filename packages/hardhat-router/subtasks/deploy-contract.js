@@ -11,7 +11,7 @@ subtask(
   'Deploys the given contract and update the contractData object.'
 ).setAction(
   async ({ contractFullyQualifiedName, constructorArgs = [], requireConfirmation = true }) => {
-    const contractData = hre.deployer.deployment.general.contracts[contractFullyQualifiedName];
+    const contractData = hre.router.deployment.general.contracts[contractFullyQualifiedName];
 
     if (!contractData) {
       throw new Error(

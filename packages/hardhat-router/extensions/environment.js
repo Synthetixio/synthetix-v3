@@ -2,11 +2,11 @@ const path = require('path');
 const { extendEnvironment } = require('hardhat/config');
 
 extendEnvironment((hre) => {
-  if (hre.deployer) {
+  if (hre.router) {
     throw new Error('Deployer plugin already loaded.');
   }
 
-  hre.deployer = {
+  hre.router = {
     paths: {
       routerTemplate: path.resolve(__dirname, '../templates/Router.sol.mustache'),
       deployment: null,
@@ -17,8 +17,8 @@ extendEnvironment((hre) => {
     previousDeployment: null,
   };
 
-  // Prevent any properties being added to hre.deployer
+  // Prevent any properties being added to hre.router
   // other than those defined above.
-  Object.preventExtensions(hre.deployer);
-  Object.preventExtensions(hre.deployer.paths);
+  Object.preventExtensions(hre.router);
+  Object.preventExtensions(hre.router.paths);
 });

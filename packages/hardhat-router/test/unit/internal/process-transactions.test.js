@@ -22,7 +22,7 @@ describe('internal/process-transactions.js', function () {
   });
 
   beforeEach('mock deployment data', async function () {
-    hre.deployer = {
+    hre.router = {
       deployment: {
         general: {
           transactions: {},
@@ -36,7 +36,7 @@ describe('internal/process-transactions.js', function () {
 
   describe('before sending a transaction', function () {
     it('shows txs list empty', async function () {
-      deepStrictEqual(hre.deployer.deployment.general.transactions, {});
+      deepStrictEqual(hre.router.deployment.general.transactions, {});
     });
 
     describe('when trying to send a tx that fails', async function () {
@@ -55,7 +55,7 @@ describe('internal/process-transactions.js', function () {
       });
 
       it('registers a transaction in the deployment data', async function () {
-        equal(hre.deployer.deployment.general.transactions[transaction.hash].status, 'failed');
+        equal(hre.router.deployment.general.transactions[transaction.hash].status, 'failed');
       });
     });
 
@@ -69,7 +69,7 @@ describe('internal/process-transactions.js', function () {
       });
 
       it('registers a transaction in the deployment data', async function () {
-        const tx = hre.deployer.deployment.general.transactions[transaction.hash];
+        const tx = hre.router.deployment.general.transactions[transaction.hash];
         equal(tx.status, 'confirmed');
         equal(tx.description, 'test');
       });
@@ -79,7 +79,7 @@ describe('internal/process-transactions.js', function () {
       });
 
       it('records total gas used', async function () {
-        equal(receipt.gasUsed.toString(), hre.deployer.deployment.general.properties.totalGasUsed);
+        equal(receipt.gasUsed.toString(), hre.router.deployment.general.properties.totalGasUsed);
       });
     });
   });

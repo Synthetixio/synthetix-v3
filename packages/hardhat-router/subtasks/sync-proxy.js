@@ -13,23 +13,23 @@ subtask(SUBTASK_SYNC_PROXY, 'Compile and sync the source from the Proxy.').setAc
   async (_, hre) => {
     logger.subtitle('Syncing and compiling source from the Proxy');
 
-    const contractName = hre.config.deployer.proxyContract;
+    const contractName = hre.config.router.proxyContract;
     const { sourceName } = await hre.artifacts.readArtifact(contractName);
     const proxyFullyQualifiedName = getFullyQualifiedName(sourceName, contractName);
 
     await initContractData(proxyFullyQualifiedName, { isProxy: true });
 
-    const proxyData = Object.values(hre.deployer.deployment.general.contracts).find(
+    const proxyData = Object.values(hre.router.deployment.general.contracts).find(
       (data) => data.isProxy
     );
     const previousProxyData = Object.values(
-      hre.deployer.previousDeployment?.general.contracts || {}
+      hre.router.previousDeployment?.general.contracts || {}
     ).find((data) => data.isProxy);
 
     const currentBytecode = proxyData.deployedBytecodeHash;
     const previousBytecode = previousProxyData?.deployedBytecodeHash;
 
-    if (hre.deployer.previousDeployment && !previousBytecode) {
+    if (hre.router.previousDeployment && !previousBytecode) {
       throw new ContractValidationError(
         'Proxy contract cannot be deleted or have its name changed'
       );

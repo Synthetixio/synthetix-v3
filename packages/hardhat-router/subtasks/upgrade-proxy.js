@@ -8,7 +8,7 @@ const { SUBTASK_UPGRADE_PROXY } = require('../task-names');
 subtask(SUBTASK_UPGRADE_PROXY, 'Upgrades the main proxy if needed').setAction(async (_, hre) => {
   logger.subtitle('Upgrading main proxy');
 
-  const contracts = Object.values(hre.deployer.deployment.general.contracts);
+  const contracts = Object.values(hre.router.deployment.general.contracts);
   const routerData = contracts.find((data) => data.isRouter);
   const proxyData = contracts.find((data) => data.isProxy);
 
@@ -28,7 +28,7 @@ subtask(SUBTASK_UPGRADE_PROXY, 'Upgrades the main proxy if needed').setAction(as
 
   if (activeImplementationAddress !== routerAddress) {
     logger.notice(
-      `Main Proxy upgrade needed - Proxy implementation ${activeImplementationAddress} is different from the latest deployer router`
+      `Main Proxy upgrade needed - Proxy implementation ${activeImplementationAddress} is different from the latest hardhat-router`
     );
 
     await prompter.confirmAction('Upgrade system');

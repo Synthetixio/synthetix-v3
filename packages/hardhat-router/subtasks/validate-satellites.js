@@ -6,10 +6,10 @@ const { SUBTASK_VALIDATE_SATELLITES } = require('../task-names');
 subtask(SUBTASK_VALIDATE_SATELLITES).setAction(async (_, hre) => {
   logger.subtitle('Validating satellite factory contracts');
 
-  const moduleFullyQualifiedNames = Object.values(hre.deployer.deployment.general.contracts)
+  const moduleFullyQualifiedNames = Object.values(hre.router.deployment.general.contracts)
     .filter(({ isModule }) => isModule)
     .map((c) => c.contractFullyQualifiedName);
-  const astNodes = Object.values(hre.deployer.deployment.sources).map((val) => val.ast);
+  const astNodes = Object.values(hre.router.deployment.sources).map((val) => val.ast);
   const validator = new SatellitesValidator(moduleFullyQualifiedNames, astNodes);
 
   const errorsFound = [];

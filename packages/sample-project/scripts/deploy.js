@@ -16,7 +16,7 @@ module.exports.deploy = async function deploy(runtime, prefix, modules) {
   const instance = prefix.toLowerCase();
 
   const info = {
-    folder: hre.config.deployer.paths.deployments,
+    folder: hre.config.router.paths.deployments,
     network: hre.network.name,
     instance,
   };

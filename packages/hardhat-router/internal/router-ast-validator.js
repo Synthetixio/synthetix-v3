@@ -49,7 +49,7 @@ class RouterASTValidator {
   }
 
   async findUnreachableModuleSelectors() {
-    const modulesDeploymentData = Object.values(hre.deployer.deployment.general.contracts).filter(
+    const modulesDeploymentData = Object.values(hre.router.deployment.general.contracts).filter(
       (c) => c.isModule
     );
 

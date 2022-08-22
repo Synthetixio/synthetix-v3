@@ -2,12 +2,12 @@ const { parseFullyQualifiedName } = require('hardhat/utils/contract-names');
 const { getBytecodeHash } = require('@synthetixio/core-js/dist/utils/ethers/contracts');
 
 /**
- * Initialize contract metadata on hre.deployer.deployment.*
+ * Initialize contract metadata on hre.router.deployment.*
  * This will in turn save all the necessary data to deployments file.
  * @param {string} contractFullyQualifiedName
  */
 async function initContractData(contractFullyQualifiedName, extraData = {}) {
-  const { deployment, previousDeployment } = hre.deployer;
+  const { deployment, previousDeployment } = hre.router;
 
   const { sourceName, contractName } = parseFullyQualifiedName(contractFullyQualifiedName);
   const { deployedBytecode } = await hre.artifacts.readArtifact(contractFullyQualifiedName);
@@ -35,7 +35,7 @@ async function initContractData(contractFullyQualifiedName, extraData = {}) {
  * @param {string} contractFullyQualifiedName
  */
 async function _initContractSource(contractFullyQualifiedName) {
-  const { deployment } = hre.deployer;
+  const { deployment } = hre.router;
 
   const buildInfo = await hre.artifacts.getBuildInfo(contractFullyQualifiedName);
 

@@ -18,11 +18,11 @@ subtask(SUBTASK_LOAD_DEPLOYMENT, 'Loads deployment artifacts for a particular in
 
     const { sources, abis } = getDeploymentExtendedFiles(currentDeploymentFile);
 
-    hre.deployer.paths.deployment = currentDeploymentFile;
-    hre.deployer.paths.sources = sources;
-    hre.deployer.paths.abis = abis;
+    hre.router.paths.deployment = currentDeploymentFile;
+    hre.router.paths.sources = sources;
+    hre.router.paths.abis = abis;
 
-    hre.deployer.deployment = {
+    hre.router.deployment = {
       general: readOnly
         ? JSON.parse(fs.readFileSync(currentDeploymentFile))
         : autosaveObject(currentDeploymentFile),
@@ -32,7 +32,7 @@ subtask(SUBTASK_LOAD_DEPLOYMENT, 'Loads deployment artifacts for a particular in
 
     if (previousDeploymentFile) {
       const { sources: previousSources } = getDeploymentExtendedFiles(previousDeploymentFile);
-      hre.deployer.previousDeployment = {
+      hre.router.previousDeployment = {
         general: JSON.parse(fs.readFileSync(previousDeploymentFile)),
         sources: JSON.parse(fs.readFileSync(previousSources)),
       };

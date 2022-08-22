@@ -27,7 +27,7 @@ async function _printInfo(taskArguments) {
 
   logger.log(chalk.gray(`provider: ${hre.network.config.url}`));
   logger.log(chalk.gray(`instance: ${taskArguments.instance}`));
-  logger.log(chalk.gray(`deployment: ${relativePath(hre.deployer.paths.deployment)}`));
+  logger.log(chalk.gray(`deployment: ${relativePath(hre.router.paths.deployment)}`));
 
   const signer = (await hre.ethers.getSigners())[0];
   const balance = hre.ethers.utils.formatEther(

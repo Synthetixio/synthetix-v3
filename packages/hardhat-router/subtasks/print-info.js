@@ -29,7 +29,7 @@ async function _printInfo(taskArguments) {
   logger.log(chalk.gray(`provider: ${hre.network.config.url}`));
   logger.log(chalk.gray(`instance: ${taskArguments.instance}`));
   logger.log(chalk.gray(`debug: ${taskArguments.debug}`));
-  logger.log(chalk.gray(`deployment: ${relativePath(hre.deployer.paths.deployment)}`));
+  logger.log(chalk.gray(`deployment: ${relativePath(hre.router.paths.deployment)}`));
 
   const signer = (await hre.ethers.getSigners())[0];
   const balance = hre.ethers.utils.formatEther(
@@ -39,7 +39,7 @@ async function _printInfo(taskArguments) {
   logger.log(chalk.gray(`signer balance: ${balance} ETH`));
 
   const deploymentModules = Object.keys(
-    filterValues(hre.deployer.deployment.general.contracts, (c) => c.isModule)
+    filterValues(hre.router.deployment.general.contracts, (c) => c.isModule)
   );
 
   logger.log(chalk.gray('deployment modules:'));
@@ -55,5 +55,5 @@ async function _printInfo(taskArguments) {
   logger.boxEnd();
 
   logger.debug('Deployer configuration:');
-  logger.debug(JSON.stringify(hre.config.deployer, null, 2));
+  logger.debug(JSON.stringify(hre.config.router, null, 2));
 }

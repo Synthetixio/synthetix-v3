@@ -12,7 +12,7 @@ subtask(
   'Delete all previous deployment data on the current environment'
 ).setAction(async ({ instance }, hre) => {
   const deploymentsFolder = getDeploymentFolder({
-    folder: hre.config.deployer.paths.deployments,
+    folder: hre.config.router.paths.deployments,
     network: hre.network.name,
     instance,
   });

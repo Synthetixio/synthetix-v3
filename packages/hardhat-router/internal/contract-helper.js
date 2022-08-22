@@ -1,7 +1,9 @@
 const path = require('path');
 const { parseFullyQualifiedName } = require('hardhat/utils/contract-names');
 const { getSelectors } = require('@synthetixio/core-js/dist/utils/ethers/contracts');
-const { deployedContractHasBytescode } = require('@synthetixio/core-js/dist/utils/ethers/contracts');
+const {
+  deployedContractHasBytescode,
+} = require('@synthetixio/core-js/dist/utils/ethers/contracts');
 const { onlyRepeated } = require('@synthetixio/core-js/dist/utils/misc/array-filters');
 
 async function isAlreadyDeployed(contractData) {
@@ -25,7 +27,7 @@ async function getAllSelectors(contractFullyQualifiedNames) {
 
   for (const name of contractFullyQualifiedNames) {
     const { contractName, abi } = await hre.artifacts.readArtifact(name);
-    const selectors = await getSelectors(abi, hre.config.deployer.routerFunctionFilter);
+    const selectors = await getSelectors(abi, hre.config.router.routerFunctionFilter);
 
     allSelectors.push(...selectors.map((s) => ({ ...s, contractName })));
   }
@@ -36,7 +38,7 @@ async function getAllSelectors(contractFullyQualifiedNames) {
 }
 
 async function getModulesSelectors() {
-  const contractNames = Object.entries(hre.deployer.deployment.general.contracts)
+  const contractNames = Object.entries(hre.router.deployment.general.contracts)
     .filter(([, c]) => c.isModule)
     .map(([name]) => name);
 
@@ -65,7 +67,7 @@ function findDuplicateSelectors(selectors) {
  */
 function contractIsModule(contractSourcePath) {
   const source = path.resolve(hre.config.paths.root, contractSourcePath);
-  return source.startsWith(`${hre.config.deployer.paths.modules}${path.sep}`);
+  return source.startsWith(`${hre.config.router.paths.modules}${path.sep}`);
 }
 
 /**

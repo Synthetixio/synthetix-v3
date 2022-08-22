@@ -34,7 +34,7 @@ describe('custom-proxy', function () {
         clear: true,
       });
 
-      hre.config.deployer.proxyContract = 'AlternativeProxy';
+      hre.config.router.proxyContract = 'AlternativeProxy';
 
       await rejects(async () => {
         await deployOnEnvironment(hre, {
@@ -46,7 +46,7 @@ describe('custom-proxy', function () {
     it('throws an error when editing the proxy contract', async function () {
       this.timeout(60000);
 
-      hre.config.deployer.proxyContract = 'Proxy';
+      hre.config.router.proxyContract = 'Proxy';
 
       const { root, sources } = hre.config.paths;
 

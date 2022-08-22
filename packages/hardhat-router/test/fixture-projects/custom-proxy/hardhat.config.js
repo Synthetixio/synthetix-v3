@@ -11,7 +11,7 @@ module.exports = {
       },
     },
   },
-  deployer: {
+  router: {
     proxyContract: 'CustomProxy',
   },
 };

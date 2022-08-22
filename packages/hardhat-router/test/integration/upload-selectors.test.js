@@ -58,7 +58,7 @@ describe('deploy:upload-selectors', function () {
     it('correctly filters a single contract', async function () {
       const contractName = 'contracts/modules/SomeModule.sol:SomeModule';
       const contractAbi = filterBy(
-        hre.deployer.deployment.abis[contractName],
+        hre.router.deployment.abis[contractName],
         'type',
         'function',
         'event'
@@ -74,9 +74,9 @@ describe('deploy:upload-selectors', function () {
 
     it('correctly filters a multiple contracts', async function () {
       const contractName1 = 'contracts/modules/SomeModule.sol:SomeModule';
-      const contractAbi1 = hre.deployer.deployment.abis[contractName1];
+      const contractAbi1 = hre.router.deployment.abis[contractName1];
       const contractName2 = 'contracts/token/Token.sol:Token';
-      const contractAbi2 = hre.deployer.deployment.abis[contractName2];
+      const contractAbi2 = hre.router.deployment.abis[contractName2];
 
       const expectedAbi = filterBy([...contractAbi1, ...contractAbi2], 'type', 'function', 'event');
 

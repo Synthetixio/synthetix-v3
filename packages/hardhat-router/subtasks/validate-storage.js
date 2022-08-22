@@ -8,12 +8,12 @@ const { SUBTASK_VALIDATE_STORAGE } = require('../task-names');
 subtask(SUBTASK_VALIDATE_STORAGE).setAction(async (_, hre) => {
   logger.subtitle('Validating module storage usage');
 
-  const moduleFullyQualifiedNames = Object.values(hre.deployer.deployment.general.contracts)
+  const moduleFullyQualifiedNames = Object.values(hre.router.deployment.general.contracts)
     .filter(({ isModule }) => isModule)
     .map((c) => c.contractFullyQualifiedName);
-  const astNodes = Object.values(hre.deployer.deployment.sources).map((val) => val.ast);
-  const previousAsts = hre.deployer.previousDeployment
-    ? Object.values(hre.deployer.previousDeployment.sources).map((val) => val.ast)
+  const astNodes = Object.values(hre.router.deployment.sources).map((val) => val.ast);
+  const previousAsts = hre.router.previousDeployment
+    ? Object.values(hre.router.previousDeployment.sources).map((val) => val.ast)
     : [];
 
   const validator = new ModuleStorageASTValidator(

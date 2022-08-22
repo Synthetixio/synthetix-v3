@@ -32,7 +32,7 @@ describe('utils/deployments.js', function () {
     });
 
     info = {
-      folder: hre.config.deployer.paths.deployments,
+      folder: hre.config.router.paths.deployments,
       network: hre.config.defaultNetwork,
       instance: 'test',
     };

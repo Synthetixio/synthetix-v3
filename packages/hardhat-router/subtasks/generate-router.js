@@ -16,7 +16,7 @@ subtask(
   'Reads deployed modules from the deployment data file and generates the source for a new router contract.'
 ).setAction(async ({ modules }, hre) => {
   if (!modules) {
-    modules = filterValues(hre.deployer.deployment.general.contracts, (c) => c.isModule);
+    modules = filterValues(hre.router.deployment.general.contracts, (c) => c.isModule);
   }
 
   const routerName = 'Router';
@@ -38,7 +38,7 @@ subtask(
 
   const binaryData = _buildBinaryData({ selectors });
 
-  const generatedSource = renderTemplate(hre.deployer.paths.routerTemplate, {
+  const generatedSource = renderTemplate(hre.router.paths.routerTemplate, {
     moduleName: routerName,
     modules: _renderModules(modulesData),
     selectors: _renderSelectors({ binaryData }),

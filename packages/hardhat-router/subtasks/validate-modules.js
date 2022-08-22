@@ -7,7 +7,7 @@ const { SUBTASK_VALIDATE_MODULES } = require('../task-names');
 subtask(SUBTASK_VALIDATE_MODULES).setAction(async (_, hre) => {
   logger.subtitle('Validating modules');
 
-  const modulesFullyQualifiedNames = Object.entries(hre.deployer.deployment.general.contracts)
+  const modulesFullyQualifiedNames = Object.entries(hre.router.deployment.general.contracts)
     .filter(([, attrs]) => attrs.isModule)
     .map(([name]) => name);
 

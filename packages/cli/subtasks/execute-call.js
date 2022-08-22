@@ -11,7 +11,7 @@ const {
 
 subtask(SUBTASK_EXECUTE_CALL, 'Execute the current tx').setAction(async (taskArguments, hre) => {
   const address = hre.cli.contractDeployedAddress;
-  const abi = hre.deployer.deployment.abis[hre.cli.contractFullyQualifiedName];
+  const abi = hre.router.deployment.abis[hre.cli.contractFullyQualifiedName];
 
   const functionAbi = hre.cli.functionAbi;
   const functionSignature = getFunctionSignature(functionAbi);
@@ -103,7 +103,7 @@ function _printEventsInReceipt(receipt) {
 
     receipt.events.forEach((event) => {
       if (event.event) {
-        const abi = hre.deployer.deployment.abis[hre.cli.contractFullyQualifiedName];
+        const abi = hre.router.deployment.abis[hre.cli.contractFullyQualifiedName];
         const eventAbi = abi.find((abiItem) => abiItem.name === event.event);
 
         console.log(chalk.green(`✓ ${getFullEventSignature(eventAbi, event)}`));

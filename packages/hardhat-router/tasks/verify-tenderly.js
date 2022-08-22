@@ -23,7 +23,7 @@ task(TASK_DEPLOY_VERIFY_TENDERLY, 'Verify deployment contracts using Tenderly AP
 
     await hre.run(SUBTASK_LOAD_DEPLOYMENT, { readOnly: true, instance });
 
-    const deployment = hre.deployer.deployment.general;
+    const deployment = hre.router.deployment.general;
 
     if (!deployment.properties.completed) {
       throw new HardhatPluginError(
@@ -34,7 +34,7 @@ task(TASK_DEPLOY_VERIFY_TENDERLY, 'Verify deployment contracts using Tenderly AP
 
     const contractsToVerify = Object.values(deployment.contracts).filter((c) => {
       // Verify Proxy only First deployment
-      if (c.isProxy && hre.deployer.previousDeployment) return false;
+      if (c.isProxy && hre.router.previousDeployment) return false;
       // Filter contract by param
       if (contract && c.contractFullyQualifiedName !== contract) return false;
       return true;

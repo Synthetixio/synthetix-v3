@@ -12,7 +12,11 @@
       }
     },
     {
-      "files": ["*.js", "*.md"],
+      "files": [
+        "*.js",
+        "*.ts",
+        "*.md"
+      ],
       "options": {
         "printWidth": 100,
         "semi": true,
@@ -22,7 +26,11 @@
       }
     },
     {
-      "files": ["*.js", "*.json"],
+      "files": [
+        "*.js",
+        "*.ts",
+        "*.json"
+      ],
       "options": {
         "useTabs": false
       }

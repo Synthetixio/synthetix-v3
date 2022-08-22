@@ -35,7 +35,7 @@ describe('deploy:verify-tenderly', function () {
     it('made the appropiate verify calls', async function () {
       await hre.run(TASK_DEPLOY_VERIFY_TENDERLY, { quiet: true, instance: 'test' });
 
-      const contracts = Object.values(hre.deployer.deployment.general.contracts);
+      const contracts = Object.values(hre.router.deployment.general.contracts);
       const expected = contracts.map((c) => ({
         address: c.deployedAddress,
         name: c.contractName,
@@ -48,7 +48,7 @@ describe('deploy:verify-tenderly', function () {
     describe('when trying to verify an incomplete deployment', function () {
       it('throws an error', async function () {
         await hre.run(SUBTASK_LOAD_DEPLOYMENT, { instance: 'test' });
-        hre.deployer.deployment.general.properties.completed = false;
+        hre.router.deployment.general.properties.completed = false;
 
         try {
           await rejects(
@@ -59,7 +59,7 @@ describe('deploy:verify-tenderly', function () {
           );
         } finally {
           await hre.run(SUBTASK_LOAD_DEPLOYMENT, { instance: 'test' });
-          hre.deployer.deployment.general.properties.completed = true;
+          hre.router.deployment.general.properties.completed = true;
         }
       });
     });
@@ -74,7 +74,7 @@ describe('deploy:verify-tenderly', function () {
           contract,
         });
 
-        const SomeModule = Object.values(hre.deployer.deployment.general.contracts).find(
+        const SomeModule = Object.values(hre.router.deployment.general.contracts).find(
           (c) => c.contractFullyQualifiedName === contract
         );
 

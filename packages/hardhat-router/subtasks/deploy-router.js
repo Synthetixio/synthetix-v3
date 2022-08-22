@@ -6,7 +6,7 @@ const { SUBTASK_DEPLOY_CONTRACT, SUBTASK_DEPLOY_ROUTER } = require('../task-name
 subtask(SUBTASK_DEPLOY_ROUTER).setAction(async (_, hre) => {
   logger.subtitle('Deploying router');
 
-  const routerData = Object.values(hre.deployer.deployment.general.contracts).find(
+  const routerData = Object.values(hre.router.deployment.general.contracts).find(
     (data) => data.isRouter
   );
 

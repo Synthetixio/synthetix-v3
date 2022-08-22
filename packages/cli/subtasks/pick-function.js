@@ -7,9 +7,9 @@ const { getSelectors } = require('@synthetixio/core-js/dist/utils/ethers/contrac
 
 subtask(SUBTASK_PICK_FUNCTION, 'Pick a function from the given contract').setAction(
   async (taskArguments, hre) => {
-    const abi = hre.deployer.deployment.abis[hre.cli.contractFullyQualifiedName];
+    const abi = hre.router.deployment.abis[hre.cli.contractFullyQualifiedName];
     const abiFunctions = abi.filter((abiItem) => abiItem.name && abiItem.type === 'function');
-    const selectors = await getSelectors(abi, hre.config.deployer.routerFunctionFilter);
+    const selectors = await getSelectors(abi, hre.config.router.routerFunctionFilter);
 
     const choices = abiFunctions.map((functionAbi) => {
       const fullSignature = getFullFunctionSignature(functionAbi);

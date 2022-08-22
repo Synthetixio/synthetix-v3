@@ -7,14 +7,14 @@ const { SUBTASK_VALIDATE_INTERFACES } = require('../task-names');
 subtask(SUBTASK_VALIDATE_INTERFACES).setAction(async (_, hre) => {
   logger.subtitle('Validating all visible functions are defined in interfaces');
 
-  const moduleFullyQualifiedNames = Object.values(hre.deployer.deployment.general.contracts)
+  const moduleFullyQualifiedNames = Object.values(hre.router.deployment.general.contracts)
     .filter(({ isModule }) => isModule)
     .map((c) => c.contractFullyQualifiedName);
-  const astNodes = Object.values(hre.deployer.deployment.sources).map((val) => val.ast);
+  const astNodes = Object.values(hre.router.deployment.sources).map((val) => val.ast);
   const validator = new InterfaceCoverageASTValidator(
     moduleFullyQualifiedNames,
     astNodes,
-    hre.config.deployer.routerFunctionFilter
+    hre.config.router.routerFunctionFilter
   );
 
   const errorsFound = validator.findFunctionsNotDefinedInInterfaces();
