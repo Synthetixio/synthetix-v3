@@ -1,9 +1,9 @@
 import hre from 'hardhat';
 import assert from 'assert/strict';
-import assertRevert from '@synthetixio/core-js/dist/utils/assertions/assert-revert';
-import { findEvent } from '@synthetixio/core-js/dist/utils/ethers/events';
+import assertRevert from '@synthetixio/core-utils/dist/utils/assertions/assert-revert';
+import { findEvent } from '@synthetixio/core-utils/dist/utils/ethers/events';
 import { bootstrap } from '../bootstrap';
-import assertBn from '@synthetixio/core-js/dist/utils/assertions/assert-bignumber';
+import assertBn from '@synthetixio/core-utils/dist/utils/assertions/assert-bignumber';
 import { ethers } from 'ethers';
 
 describe.skip('MarketManager', function () {
@@ -25,26 +25,18 @@ describe.skip('MarketManager', function () {
     // Use USDTokenMock to manually mint USD
     const factory = await hre.ethers.getContractFactory('USDTokenMock');
     const USDTokenMock = await factory.connect(owner).deploy();
-    await (
-      await systems()
-        .Core.connect(owner)
-        .initOrUpgradeToken(USDTokenMock.address)
-    ).wait();
+    await (await systems().Core.connect(owner).initOrUpgradeToken(USDTokenMock.address)).wait();
   });
 
   before('create dummy markets', async () => {
-    Market1 = await (await hre.ethers.getContractFactory('MarketMock'))
-      .connect(owner)
-      .deploy();
+    Market1 = await (await hre.ethers.getContractFactory('MarketMock')).connect(owner).deploy();
   });
 
   describe('when a market is registered', async () => {
     let receipt: ethers.providers.TransactionReceipt;
 
     before('register a market', async () => {
-      receipt = await (
-        await systems().Core.connect(owner).registerMarket(Market1.address)
-      ).wait();
+      receipt = await (await systems().Core.connect(owner).registerMarket(Market1.address)).wait();
     });
 
     it('emmited an event', async () => {
@@ -52,11 +44,7 @@ describe.skip('MarketManager', function () {
       assert(event.args.market, Market1.address);
       market1id = event.args.marketId;
       await (
-        await Market1.connect(owner).initialize(
-          systems().Core.address,
-          market1id,
-          One
-        )
+        await Market1.connect(owner).initialize(systems().Core.address, market1id, One)
       ).wait();
       assert.equal(market1id.toNumber(), 1);
     });
@@ -92,12 +80,8 @@ describe.skip('MarketManager', function () {
         let liquidityBefore: ethers.BigNumber;
         before('mint USD to use market', async () => {
           liquidityBefore = await systems().Core.liquidity(market1id);
-          await (
-            await systems().USD.connect(user1)['mint(uint256)'](Hundred)
-          ).wait();
-          await (
-            await systems().USD.connect(user1).approve(Market1.address, Hundred)
-          ).wait();
+          await (await systems().USD.connect(user1)['mint(uint256)'](Hundred)).wait();
+          await (await systems().USD.connect(user1).approve(Market1.address, Hundred)).wait();
         });
 
         before('user1 buys some synth (deposit USD)', async () => {

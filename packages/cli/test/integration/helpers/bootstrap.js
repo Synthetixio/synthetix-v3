@@ -1,5 +1,5 @@
 const path = require('path');
-const { loadEnvironment } = require('@synthetixio/deployer/test/helpers/use-environment');
+const { loadEnvironment } = require('@synthetixio/hardhat-router/test/helpers/use-environment');
 const CliRunner = require('./cli-runner');
 
 function bootstrap() {

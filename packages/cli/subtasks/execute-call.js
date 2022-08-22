@@ -1,8 +1,8 @@
 const { subtask } = require('hardhat/config');
 const { SUBTASK_EXECUTE_CALL } = require('../task-names');
-const { default: logger } = require('@synthetixio/core-js/dist/utils/io/logger');
+const { default: logger } = require('@synthetixio/core-utils/dist/utils/io/logger');
 const chalk = require('chalk');
-const prompter = require('@synthetixio/core-js/dist/utils/io/prompter');
+const { default: prompter } = require('@synthetixio/core-utils/dist/utils/io/prompter');
 const {
   getFullFunctionSignature,
   getFullEventSignature,
@@ -11,7 +11,7 @@ const {
 
 subtask(SUBTASK_EXECUTE_CALL, 'Execute the current tx').setAction(async (taskArguments, hre) => {
   const address = hre.cli.contractDeployedAddress;
-  const abi = hre.deployer.deployment.abis[hre.cli.contractFullyQualifiedName];
+  const abi = hre.router.deployment.abis[hre.cli.contractFullyQualifiedName];
 
   const functionAbi = hre.cli.functionAbi;
   const functionSignature = getFunctionSignature(functionAbi);
@@ -103,7 +103,7 @@ function _printEventsInReceipt(receipt) {
 
     receipt.events.forEach((event) => {
       if (event.event) {
-        const abi = hre.deployer.deployment.abis[hre.cli.contractFullyQualifiedName];
+        const abi = hre.router.deployment.abis[hre.cli.contractFullyQualifiedName];
         const eventAbi = abi.find((abiItem) => abiItem.name === event.event);
 
         console.log(chalk.green(`✓ ${getFullEventSignature(eventAbi, event)}`));

@@ -1,5 +1,5 @@
 name = "synthetix-sample-project"
-description = "Sample usage of the deployer"
+description = "Sample usage of the router manager"
 
 # `salt` here only affects proxy contract
 [setting.salt]

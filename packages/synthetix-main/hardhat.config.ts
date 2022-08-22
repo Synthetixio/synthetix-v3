@@ -1,9 +1,9 @@
 //import '@typechain/hardhat'
 
 import '@nomiclabs/hardhat-ethers';
-import { HardhatUserConfig } from 'hardhat/types';
 
 import commonConfig from '@synthetixio/common-config/hardhat.config';
+import { HardhatUserConfig } from 'hardhat/types';
 
 const config: HardhatUserConfig = {
   ...commonConfig,
@@ -14,7 +14,7 @@ export default config;
 
 /*export default {
   ...require('@synthetixio/common-config/hardhat.config.js'),
-  deployer: {
+  router: {
     proxyContract: 'Synthetix',
   },
 };*/

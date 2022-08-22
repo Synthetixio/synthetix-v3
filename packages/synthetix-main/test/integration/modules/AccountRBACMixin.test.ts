@@ -1,6 +1,6 @@
 import assert from 'assert/strict';
-import assertBn from '@synthetixio/core-js/dist/utils/assertions/assert-bignumber';
-import assertRevert from '@synthetixio/core-js/dist/utils/assertions/assert-revert';
+import assertBn from '@synthetixio/core-utils/dist/utils/assertions/assert-bignumber';
+import assertRevert from '@synthetixio/core-utils/dist/utils/assertions/assert-revert';
 import { bootstrap } from '../bootstrap';
 import { ethers } from 'ethers';
 
@@ -8,10 +8,7 @@ import { ethers } from 'ethers';
 describe.skip('AccountRBACMixin', function () {
   const { signers, systems } = bootstrap();
 
-  let owner: ethers.Signer,
-    user1: ethers.Signer,
-    user2: ethers.Signer,
-    user3: ethers.Signer;
+  let owner: ethers.Signer, user1: ethers.Signer, user2: ethers.Signer, user3: ethers.Signer;
 
   let AccountRBACMixinMock: ethers.Contract;
 
@@ -25,17 +22,12 @@ describe.skip('AccountRBACMixin', function () {
 
   it('is minted', async () => {
     assert.equal(await systems().Account.ownerOf(1), await user1.getAddress());
-    assertBn.equal(
-      await systems().Account.balanceOf(await user1.getAddress()),
-      1
-    );
+    assertBn.equal(await systems().Account.balanceOf(await user1.getAddress()), 1);
   });
 
   describe('when accessing as owner', () => {
     it('can interact with the contract', async () => {
-      await (
-        await AccountRBACMixinMock.connect(user1).interactWithAccount(1, 42)
-      ).wait();
+      await (await AccountRBACMixinMock.connect(user1).interactWithAccount(1, 42)).wait();
       assertBn.equal(await AccountRBACMixinMock.getRBACValue(), 42);
     });
 
@@ -68,9 +60,7 @@ describe.skip('AccountRBACMixin', function () {
       });
 
       it('can interact with the contract', async () => {
-        await (
-          await AccountRBACMixinMock.connect(user2).interactWithAccount(1, 43)
-        ).wait();
+        await (await AccountRBACMixinMock.connect(user2).interactWithAccount(1, 43)).wait();
         assertBn.equal(await AccountRBACMixinMock.getRBACValue(), 43);
       });
 
@@ -91,28 +81,18 @@ describe.skip('AccountRBACMixin', function () {
         await (
           await systems()
             .Core.connect(user1)
-            .grantRole(
-              1,
-              ethers.utils.formatBytes32String('stake'),
-              await user2.getAddress()
-            )
+            .grantRole(1, ethers.utils.formatBytes32String('stake'), await user2.getAddress())
         ).wait();
 
         await (
           await systems()
             .Core.connect(user1)
-            .grantRole(
-              1,
-              ethers.utils.formatBytes32String('otherRole'),
-              await user3.getAddress()
-            )
+            .grantRole(1, ethers.utils.formatBytes32String('otherRole'), await user3.getAddress())
         ).wait();
       });
 
       it('can interact with the contract', async () => {
-        await (
-          await AccountRBACMixinMock.connect(user2).interactWithAccount(1, 44)
-        ).wait();
+        await (await AccountRBACMixinMock.connect(user2).interactWithAccount(1, 44)).wait();
         assertBn.equal(await AccountRBACMixinMock.getRBACValue(), 44);
       });
 
@@ -132,11 +112,7 @@ describe.skip('AccountRBACMixin', function () {
           await (
             await systems()
               .Core.connect(user1)
-              .revokeRole(
-                1,
-                ethers.utils.formatBytes32String('stake'),
-                await user2.getAddress()
-              )
+              .revokeRole(1, ethers.utils.formatBytes32String('stake'), await user2.getAddress())
           ).wait();
         });
 

@@ -1,5 +1,5 @@
 require('@nomiclabs/hardhat-ethers');
-require('@synthetixio/deployer');
+require('@synthetixio/hardhat-router');
 require('hardhat-cannon');
 
 module.exports = {
@@ -17,5 +17,5 @@ module.exports = {
       url: 'http://localhost:8545',
     },
   },
-  deployer: {},
+  router: {},
 };
