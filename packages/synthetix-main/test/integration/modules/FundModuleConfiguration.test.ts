@@ -39,7 +39,6 @@ describe('FundModule Configuration (SCCP)', function () {
   });
 
   it('created the funds', async () => {
-    console.log(await systems().Core.ownerOf(1));
     assert.equal(await systems().Core.ownerOf(1), await user1.getAddress());
     assert.equal(await systems().Core.ownerOf(2), await user1.getAddress());
     assert.equal(await systems().Core.ownerOf(3), await user1.getAddress());

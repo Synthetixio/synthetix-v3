@@ -55,7 +55,10 @@ interface IVaultModule {
     ) external view returns (uint amount, uint value, uint shares);
 
     /// @notice gets the total fund debt
-    function fundDebt(uint fundId, address collateralType) external returns (int);
+    function vaultDebt(uint fundId, address collateralType) external returns (int);
+
+    /// @notice gets total vault collateral and its value
+    function vaultCollateral(uint fundId, address collateralType) external returns (uint amount, uint value);
 
     /// @notice gets the total fund debtShares
     function totalVaultShares(uint fundId, address collateralType) external view returns (uint);

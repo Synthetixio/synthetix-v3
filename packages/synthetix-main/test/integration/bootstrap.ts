@@ -3,6 +3,7 @@ import hre from 'hardhat';
 import { ethers, providers } from 'ethers';
 
 import fs from 'fs/promises';
+import { snapshotCheckpoint } from '../utils';
 
 async function loadSystems(provider: ethers.providers.Provider) {
   // todo typechain
@@ -42,7 +43,6 @@ export function bootstrap() {
     signers = [];
 
     for (const s of rawSigs) {
-      console.log(await s.getAddress());
       await provider.send('hardhat_impersonateAccount', [await s.getAddress()]);
       await provider.send('hardhat_setBalance', [
         await s.getAddress(),
@@ -123,14 +123,7 @@ export function bootstrapWithStakedFund() {
     );
   });
 
-  before('snapshot', async () => {
-    snapshotId = await r.provider().send('evm_snapshot', []);
-  });
-
-  async function restore() {
-    await r.provider().send('evm_revert', [snapshotId]);
-    snapshotId = await r.provider().send('evm_snapshot', []);
-  }
+  const restore = snapshotCheckpoint(r.provider);
 
   return {
     ...r,

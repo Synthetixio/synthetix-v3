@@ -1,14 +1,16 @@
 import { ethers } from "ethers";
 
-export function addSnapshotBeforeRestoreAfterEach(provider: () => ethers.providers.JsonRpcProvider) {      
-    let snapshotId: any;
+export function snapshotCheckpoint(provider: () => ethers.providers.JsonRpcProvider) {
+  let snapshotId: any;
 
-    before(async () => {
-      snapshotId = await provider().send('evm_snapshot', []);
-    });
+  before('snapshot', async () => {
+    snapshotId = await provider().send('evm_snapshot', []);
+  });
 
-    afterEach(async () => {
-      await provider().send('evm_revert', [snapshotId]);
-    });
+  const restore = async () => {
+    await provider().send('evm_revert', [snapshotId]);
+    snapshotId = await provider().send('evm_snapshot', []);
+  }
 
+  return restore;
 }

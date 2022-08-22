@@ -21,7 +21,7 @@ contract MarketManagerMixin is MarketManagerStorage {
 
         _distributeMarket(marketData);
 
-        if (marketData.debtDist.valuePerShare > maxDebtShareValue) {
+        if (marketData.debtDist.valuePerShare < maxDebtShareValue) {
             // Adjust fund shares
             return _adjustFundShares(marketData, fundId, amount, maxDebtShareValue);
         }
@@ -39,23 +39,23 @@ contract MarketManagerMixin is MarketManagerStorage {
         debtChange = marketData.debtDist.updateDistributionActor(bytes32(fundId), newLiquidity);
 
         // recalculate max market debt share
-        int newMaxMarketDebtShare = newFundMaxShareValue;
+        int newMarketMaxShareValue = newFundMaxShareValue;
 
         if (oldTotalLiquidity > 0 && newLiquidity > 0) {
-            int oldMaxMarketDebtShare = int(marketData.maxMarketDebt) / int128(marketData.debtDist.totalShares);
+            int oldMarketMaxShareValue = int(marketData.maxMarketDebt) / int128(marketData.debtDist.totalShares);
 
-            newMaxMarketDebtShare = oldMaxMarketDebtShare -
+            newMarketMaxShareValue = oldMarketMaxShareValue -
                 (oldFundMaxDebtShareValue * int(oldLiquidity) / int(oldTotalLiquidity)) +
                 (newFundMaxShareValue * int(newLiquidity) / int128(marketData.debtDist.totalShares));
 
-            newMaxMarketDebtShare =
-                newMaxMarketDebtShare +
-                (oldMaxMarketDebtShare * int(oldLiquidity) / int(oldTotalLiquidity)) -
-                (oldMaxMarketDebtShare * int(newLiquidity) / int128(marketData.debtDist.totalShares));
+            newMarketMaxShareValue =
+                newMarketMaxShareValue +
+                (oldMarketMaxShareValue * int(oldLiquidity) / int(oldTotalLiquidity)) -
+                (oldMarketMaxShareValue * int(newLiquidity) / int128(marketData.debtDist.totalShares));
         }
 
         marketData.fundMaxDebtShares.insert(uint128(fundId), -int128(int(newFundMaxShareValue)));
-        marketData.maxMarketDebt = int128(newMaxMarketDebtShare * int128(marketData.debtDist.totalShares) / MathUtil.INT_UNIT);
+        marketData.maxMarketDebt = int128((newMarketMaxShareValue * int(int128(marketData.debtDist.totalShares))) / MathUtil.INT_UNIT);
     }
 
     function _distributeMarket(

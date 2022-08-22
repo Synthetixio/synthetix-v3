@@ -144,7 +144,7 @@ describe('FundModule Admin', function () {
       let receipt: ethers.providers.TransactionReceipt;
 
       before('set dummy markets', async () => {
-        const factory = await hre.ethers.getContractFactory('MarketMock');
+        const factory = await hre.ethers.getContractFactory('MockMarket');
         const Market1 = await factory.connect(owner).deploy();
         const Market2 = await factory.connect(owner).deploy();
 
@@ -203,7 +203,6 @@ describe('FundModule Admin', function () {
               receipt,
               eventName: 'DelegationUpdated',
             });
-            console.log('receipt', receipt);
             liquidityItemId = event.args.liquidityItemId;
 
             assertBn.equal(event.args.fundId, 1);

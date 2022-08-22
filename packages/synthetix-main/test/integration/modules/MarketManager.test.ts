@@ -33,7 +33,7 @@ describe.skip('MarketManager', function () {
   });
 
   before('create dummy markets', async () => {
-    Market1 = await (await hre.ethers.getContractFactory('MarketMock'))
+    Market1 = await (await hre.ethers.getContractFactory('MockMarket'))
       .connect(owner)
       .deploy();
   });

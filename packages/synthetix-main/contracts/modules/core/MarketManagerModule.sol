@@ -57,7 +57,7 @@ contract MarketManagerModule is
     //     uint amount // solhint-disable-next-line no-empty-blocks
     // ) internal {}
 
-    function liquidity(uint marketId) external view override returns (uint) {
+    function marketLiquidity(uint marketId) external view override returns (uint) {
         return _availableLiquidity(marketId);
     }
 
@@ -66,7 +66,7 @@ contract MarketManagerModule is
         return marketData.lastMarketBalance * int(marketData.fundliquidityShares[fundId]) / int(marketData.totalLiquidityShares);
     }*/
 
-    function totalBalance(uint marketId) external view override returns (int) {
+    function marketTotalBalance(uint marketId) external view override returns (int) {
         MarketData storage marketData = _marketManagerStore().markets[marketId];
         return _totalBalance(marketData);
     }

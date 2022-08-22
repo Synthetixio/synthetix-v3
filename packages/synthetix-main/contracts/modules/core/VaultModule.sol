@@ -90,9 +90,11 @@ contract VaultModule is
                 oldCollateralAmount
             );
 
+
             liquidityItem.leverage = uint128(leverage);
 
-            //_updateAccountDebt(accountId, fundId, collateralType);
+            // this will ensure the new distribution information is passed up the chain to the markets
+            _updateAccountDebt(accountId, fundId, collateralType);
 
             // this is the most efficient time to check the resulting collateralization ratio, since 
             // user's debt and collateral price have been fully updated
@@ -213,7 +215,12 @@ contract VaultModule is
         return _updateAccountDebt(accountId, fundId, collateralType);
     }
 
-    function fundDebt(uint fundId, address collateralType) public override returns (int) {
+    function vaultCollateral(uint fundId, address collateralType) public override returns (uint amount, uint value) {
+        amount = _fundVaultStore().fundVaults[fundId][collateralType].totalCollateral;
+        value = amount.mulDecimal(_getCollateralValue(collateralType));
+    }
+
+    function vaultDebt(uint fundId, address collateralType) public override returns (int) {
 
         _distributeVaultDebt(fundId, collateralType);
 

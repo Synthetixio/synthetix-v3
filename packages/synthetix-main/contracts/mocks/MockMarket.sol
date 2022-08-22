@@ -5,7 +5,7 @@ import "@synthetixio/core-contracts/contracts/utils/MathUtil.sol";
 import "../interfaces/IMarket.sol";
 import "../interfaces/IMarketManagerModule.sol";
 
-contract MarketMock is IMarket {
+contract MockMarket is IMarket {
     using MathUtil for uint256;
 
     int private _balance;

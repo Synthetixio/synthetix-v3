@@ -62,7 +62,6 @@ contract FundMixin is FundModuleStorage, FundVaultStorage, FundEventAndErrors, C
     }
 
     function _distributeFundDebt(uint fundId) internal {
-        // then, accrue the debt
         _rebalanceFundPositions(fundId, false);
     }
 
@@ -78,6 +77,9 @@ contract FundMixin is FundModuleStorage, FundVaultStorage, FundEventAndErrors, C
 
         vaultData.collateralPrice = uint128(collateralPrice);
 
+        // TODO: this second `_distributeFundDebt` call is really only needed for distributing the most up-to-date debt info from the markets (
+        // which needs to happen prior to the `updateDistributionActor` call), but
+        // we don't need to rebalance them
         _distributeFundDebt(fundId);
 
         uint newVaultShares = uint(vaultData.debtDist.totalShares)
@@ -88,6 +90,8 @@ contract FundMixin is FundModuleStorage, FundVaultStorage, FundEventAndErrors, C
             bytes32(fundId), 
             newVaultShares
         );
+
+        _distributeFundDebt(fundId);
 
         vaultData.debtDist.distribute(debtChange);
 
