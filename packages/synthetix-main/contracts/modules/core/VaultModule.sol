@@ -13,7 +13,7 @@ import "../../utils/SharesLibrary.sol";
 
 import "../../storage/FundVaultStorage.sol";
 import "../../interfaces/IVaultModule.sol";
-import "../../interfaces/IUSDToken.sol";
+import "../../interfaces/IUSDTokenModule.sol";
 
 import "../../submodules/FundEventAndErrors.sol";
 
