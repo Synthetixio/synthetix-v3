@@ -1,6 +1,8 @@
 const { ethers } = hre;
 const assert = require('assert/strict');
-const { default: MerkleTree } = require('@synthetixio/core-js/dist/utils/merkle-tree/merkle-tree.js');
+const {
+  default: MerkleTree,
+} = require('@synthetixio/core-utils/dist/utils/merkle-tree/merkle-tree.js');
 
 describe('MerkleProof', () => {
   let MerkleProof;

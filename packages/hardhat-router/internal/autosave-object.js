@@ -1,6 +1,6 @@
 const fs = require('fs');
-const { default: logger } = require('@synthetixio/core-js/dist/utils/io/logger');
-const { default: relativePath } = require('@synthetixio/core-js/dist/utils/misc/relative-path');
+const { default: logger } = require('@synthetixio/core-utils/dist/utils/io/logger');
+const { default: relativePath } = require('@synthetixio/core-utils/dist/utils/misc/relative-path');
 
 const write = (file, data) => fs.writeFileSync(file, JSON.stringify(data, null, 2));
 

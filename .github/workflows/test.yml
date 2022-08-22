@@ -10,7 +10,7 @@ jobs:
         package:
           [
             core-contracts,
-            core-js,
+            core-utils,
             core-modules,
             hardhat-router,
             synthetix-main,
@@ -18,8 +18,8 @@ jobs:
         include:
           - package: core-contracts
             coverage-file: packages/core-contracts/coverage.json
-          - package: core-js
-            coverage-file: packages/core-js/coverage/lcov.info
+          - package: core-utils
+            coverage-file: packages/core-utils/coverage/lcov.info
           - package: core-modules
             coverage-file: packages/core-modules/coverage.json
           - package: hardhat-router

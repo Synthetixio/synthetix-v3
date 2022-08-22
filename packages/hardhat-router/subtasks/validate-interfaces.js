@@ -1,5 +1,5 @@
 const { subtask } = require('hardhat/config');
-const { default: logger } = require('@synthetixio/core-js/dist/utils/io/logger');
+const { default: logger } = require('@synthetixio/core-utils/dist/utils/io/logger');
 const InterfaceCoverageASTValidator = require('../internal/interface-ast-validator');
 const { ContractValidationError } = require('../internal/errors');
 const { SUBTASK_VALIDATE_INTERFACES } = require('../task-names');

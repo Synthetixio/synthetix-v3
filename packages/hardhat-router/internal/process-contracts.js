@@ -1,5 +1,5 @@
 const { parseFullyQualifiedName } = require('hardhat/utils/contract-names');
-const { getBytecodeHash } = require('@synthetixio/core-js/dist/utils/ethers/contracts');
+const { getBytecodeHash } = require('@synthetixio/core-utils/dist/utils/ethers/contracts');
 
 /**
  * Initialize contract metadata on hre.router.deployment.*

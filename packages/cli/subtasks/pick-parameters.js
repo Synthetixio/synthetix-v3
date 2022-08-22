@@ -1,7 +1,7 @@
 const { subtask } = require('hardhat/config');
 const { SUBTASK_PICK_PARAMETERS } = require('../task-names');
 const prompts = require('prompts');
-const { default: logger } = require('@synthetixio/core-js/dist/utils/io/logger');
+const { default: logger } = require('@synthetixio/core-utils/dist/utils/io/logger');
 
 subtask(SUBTASK_PICK_PARAMETERS, 'Populate the selected function parameters').setAction(
   async (taskArguments, hre) => {

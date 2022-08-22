@@ -1,5 +1,5 @@
 {
-  "name": "@synthetixio/core-js",
+  "name": "@synthetixio/core-utils",
   "version": "1.0.0",
   "description": "Common JS utils for Synthetix",
   "private": true,

@@ -1,8 +1,8 @@
 import assert from 'assert/strict';
 import { bootstrap } from '../bootstrap';
 import { ethers } from 'ethers';
-import assertRevert from '@synthetixio/core-js/dist/utils/assertions/assert-revert';
-import assertBn from '@synthetixio/core-js/dist/utils/assertions/assert-bignumber';
+import assertRevert from '@synthetixio/core-utils/dist/utils/assertions/assert-revert';
+import assertBn from '@synthetixio/core-utils/dist/utils/assertions/assert-bignumber';
 
 describe('USDTokenModule', function () {
   const { signers, systems } = bootstrap();
@@ -30,10 +30,7 @@ describe('USDTokenModule', function () {
       await systems()
         .Core.connect(owner)
         .mintInitialSystemToken(await user1.getAddress(), amount);
-      assertBn.equal(
-        await systems().SNX.balanceOf(await user1.getAddress()),
-        amount
-      );
+      assertBn.equal(await systems().SNX.balanceOf(await user1.getAddress()), amount);
     });
 
     it('reverts when totalSupply is not 0', async () => {

@@ -2,10 +2,10 @@ const chalk = require('chalk');
 const { subtask } = require('hardhat/config');
 const filterValues = require('filter-values');
 
-const { default: logger } = require('@synthetixio/core-js/dist/utils/io/logger');
-const { default: prompter } = require('@synthetixio/core-js/dist/utils/io/prompter');
-const { default: relativePath } = require('@synthetixio/core-js/dist/utils/misc/relative-path');
-const { getCommit, getBranch } = require('@synthetixio/core-js/dist/utils/misc/git');
+const { default: logger } = require('@synthetixio/core-utils/dist/utils/io/logger');
+const { default: prompter } = require('@synthetixio/core-utils/dist/utils/io/prompter');
+const { default: relativePath } = require('@synthetixio/core-utils/dist/utils/misc/relative-path');
+const { getCommit, getBranch } = require('@synthetixio/core-utils/dist/utils/misc/git');
 const { SUBTASK_PRINT_INFO } = require('../task-names');
 
 subtask(SUBTASK_PRINT_INFO, 'Prints info about a deployment.').setAction(async (taskArguments) => {

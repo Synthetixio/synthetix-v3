@@ -1,7 +1,7 @@
 import { ethers } from 'hardhat';
 import assert from 'assert/strict';
-import assertBn from '@synthetixio/core-js/dist/utils/assertions/assert-bignumber';
-import assertRevert from '@synthetixio/core-js/dist/utils/assertions/assert-revert';
+import assertBn from '@synthetixio/core-utils/dist/utils/assertions/assert-bignumber';
+import assertRevert from '@synthetixio/core-utils/dist/utils/assertions/assert-revert';
 import { bootstrap } from '../bootstrap';
 import { ethers as Ethers } from 'ethers';
 
@@ -23,31 +23,17 @@ describe('CollateralManagerConfiguration (SCCP)', function () {
     factory = await ethers.getContractFactory('CollateralMock');
     Collateral = await factory.connect(systemOwner).deploy();
 
-    await (
-      await Collateral.connect(systemOwner).initialize(
-        'Synthetix Token',
-        'SNX',
-        18
-      )
-    ).wait();
+    await (await Collateral.connect(systemOwner).initialize('Synthetix Token', 'SNX', 18)).wait();
 
     factory = await ethers.getContractFactory('AggregatorV3Mock');
     CollateralPriceFeed = await factory.connect(systemOwner).deploy();
 
-    await (
-      await CollateralPriceFeed.connect(systemOwner).mockSetCurrentPrice(1)
-    ).wait();
+    await (await CollateralPriceFeed.connect(systemOwner).mockSetCurrentPrice(1)).wait();
 
     await (
       await systems()
         .Core.connect(systemOwner)
-        .adjustCollateralType(
-          Collateral.address,
-          CollateralPriceFeed.address,
-          400,
-          200,
-          false
-        )
+        .adjustCollateralType(Collateral.address, CollateralPriceFeed.address, 400, 200, false)
     ).wait();
   });
 
@@ -57,9 +43,7 @@ describe('CollateralManagerConfiguration (SCCP)', function () {
       Collateral.address
     );
 
-    const collateralType = await systems().Core.getCollateralType(
-      Collateral.address
-    );
+    const collateralType = await systems().Core.getCollateralType(Collateral.address);
     console.log(collateralType);
 
     assert.equal(collateralType.tokenAddress, Collateral.address);
@@ -70,29 +54,20 @@ describe('CollateralManagerConfiguration (SCCP)', function () {
   });
 
   describe('When the systemOwner adds another collaterals', () => {
-    let AnotherCollateral: Ethers.Contract,
-      AnotherCollateralPriceFeed: Ethers.Contract;
+    let AnotherCollateral: Ethers.Contract, AnotherCollateralPriceFeed: Ethers.Contract;
     before('add another collateral', async () => {
       let factory;
 
       factory = await ethers.getContractFactory('CollateralMock');
       AnotherCollateral = await factory.connect(systemOwner).deploy();
       await (
-        await AnotherCollateral.connect(systemOwner).initialize(
-          'Another Token',
-          'ANT',
-          18
-        )
+        await AnotherCollateral.connect(systemOwner).initialize('Another Token', 'ANT', 18)
       ).wait();
 
       factory = await ethers.getContractFactory('AggregatorV3Mock');
       AnotherCollateralPriceFeed = await factory.connect(systemOwner).deploy();
 
-      await (
-        await AnotherCollateralPriceFeed.connect(
-          systemOwner
-        ).mockSetCurrentPrice(100)
-      ).wait();
+      await (await AnotherCollateralPriceFeed.connect(systemOwner).mockSetCurrentPrice(100)).wait();
 
       const tx = await systems()
         .Core.connect(systemOwner)
@@ -112,13 +87,8 @@ describe('CollateralManagerConfiguration (SCCP)', function () {
     });
 
     it('has the right configuration', async () => {
-      const collateralType = await systems().Core.getCollateralType(
-        AnotherCollateral.address
-      );
-      assert.equal(
-        collateralType.priceFeed,
-        AnotherCollateralPriceFeed.address
-      );
+      const collateralType = await systems().Core.getCollateralType(AnotherCollateral.address);
+      assert.equal(collateralType.priceFeed, AnotherCollateralPriceFeed.address);
       assertBn.equal(collateralType.targetCRatio, 400);
       assertBn.equal(collateralType.minimumCRatio, 200);
       assert.equal(collateralType.enabled, false);
@@ -139,13 +109,8 @@ describe('CollateralManagerConfiguration (SCCP)', function () {
       });
 
       it('is updated', async () => {
-        const collateralType = await systems().Core.getCollateralType(
-          AnotherCollateral.address
-        );
-        assert.equal(
-          collateralType.priceFeed,
-          AnotherCollateralPriceFeed.address
-        );
+        const collateralType = await systems().Core.getCollateralType(AnotherCollateral.address);
+        assert.equal(collateralType.priceFeed, AnotherCollateralPriceFeed.address);
         assertBn.equal(collateralType.targetCRatio, 300);
         assertBn.equal(collateralType.minimumCRatio, 250);
         assert.equal(collateralType.enabled, false);
@@ -168,57 +133,40 @@ describe('CollateralManagerConfiguration (SCCP)', function () {
 
       it('is not shown in enabled list', async () => {
         const allCollaterals = await systems().Core.getCollateralTypes(false);
-        const enabledCollaterals = await systems().Core.getCollateralTypes(
-          true
-        );
+        const enabledCollaterals = await systems().Core.getCollateralTypes(true);
 
         assert.equal(
-          allCollaterals.some(
-            (v: any) => v.tokenAddress === AnotherCollateral.address
-          ),
+          allCollaterals.some((v: any) => v.tokenAddress === AnotherCollateral.address),
           true
         );
         assert.equal(
-          enabledCollaterals.some(
-            (v: any) => v.tokenAddress === AnotherCollateral.address
-          ),
+          enabledCollaterals.some((v: any) => v.tokenAddress === AnotherCollateral.address),
           false
         );
       });
 
       it('is disabled', async () => {
-        const collateralType = await systems().Core.getCollateralType(
-          AnotherCollateral.address
-        );
+        const collateralType = await systems().Core.getCollateralType(AnotherCollateral.address);
         assert.equal(collateralType.enabled, false);
       });
     });
   });
 
   describe('When another user attempts to interact with collaterals', () => {
-    let OtherCollateral: Ethers.Contract,
-      OtherCollateralPriceFeed: Ethers.Contract;
+    let OtherCollateral: Ethers.Contract, OtherCollateralPriceFeed: Ethers.Contract;
     before('create the other collateral', async () => {
       let factory;
 
       factory = await ethers.getContractFactory('CollateralMock');
       OtherCollateral = await factory.connect(systemOwner).deploy();
       await (
-        await OtherCollateral.connect(systemOwner).initialize(
-          'Another Token',
-          'ANT',
-          18
-        )
+        await OtherCollateral.connect(systemOwner).initialize('Another Token', 'ANT', 18)
       ).wait();
 
       factory = await ethers.getContractFactory('AggregatorV3Mock');
       OtherCollateralPriceFeed = await factory.connect(systemOwner).deploy();
 
-      await (
-        await OtherCollateralPriceFeed.connect(systemOwner).mockSetCurrentPrice(
-          100
-        )
-      ).wait();
+      await (await OtherCollateralPriceFeed.connect(systemOwner).mockSetCurrentPrice(100)).wait();
     });
 
     it('reverts when attempting to add', async () => {
@@ -241,13 +189,7 @@ describe('CollateralManagerConfiguration (SCCP)', function () {
       await assertRevert(
         systems()
           .Core.connect(user1)
-          .adjustCollateralType(
-            Collateral.address,
-            CollateralPriceFeed.address,
-            300,
-            250,
-            false
-          ),
+          .adjustCollateralType(Collateral.address, CollateralPriceFeed.address, 300, 250, false),
         `Unauthorized("${await user1.getAddress()}")`,
         systems().Core
       );

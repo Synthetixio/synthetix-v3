@@ -1,9 +1,9 @@
 const { equal, ok } = require('assert/strict');
-const { findContractDefinitions } = require('@synthetixio/core-js/dist/utils/ast/finders');
+const { findContractDefinitions } = require('@synthetixio/core-utils/dist/utils/ast/finders');
 const ModuleStorageASTValidator = require('../../../internal/storage-ast-validator');
-const asts = require('@synthetixio/core-js/test/fixtures/asts.json');
-const variableNode = require('@synthetixio/core-js/test/fixtures/variableDefNodeAst.json');
-const { clone } = require('@synthetixio/core-js/dist/utils/misc/clone');
+const asts = require('@synthetixio/core-utils/test/fixtures/asts.json');
+const variableNode = require('@synthetixio/core-utils/test/fixtures/variableDefNodeAst.json');
+const { clone } = require('@synthetixio/core-utils/dist/utils/misc/clone');
 
 describe('internal/storage-ast-validator.js', function () {
   const fqNames = Object.values(asts).flatMap((sourceNode) =>

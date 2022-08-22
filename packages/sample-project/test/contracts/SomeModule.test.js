@@ -1,8 +1,8 @@
 const { ethers } = hre;
 const assert = require('assert/strict');
-const { findEvent } = require('@synthetixio/core-js/dist/utils/ethers/events');
+const { findEvent } = require('@synthetixio/core-utils/dist/utils/ethers/events');
 const { bootstrap } = require('@synthetixio/hardhat-router/utils/tests');
-const assertBn = require('@synthetixio/core-js/dist/utils/assertions/assert-bignumber');
+const assertBn = require('@synthetixio/core-utils/dist/utils/assertions/assert-bignumber');
 const initializer = require('@synthetixio/core-modules/test/helpers/initializer');
 
 describe('SomeModule', () => {

@@ -1,7 +1,7 @@
 const { task } = require('hardhat/config');
 const { HardhatPluginError } = require('hardhat/plugins');
-const { default: logger } = require('@synthetixio/core-js/dist/utils/io/logger');
-const types = require('@synthetixio/core-js/dist/utils/hardhat/argument-types');
+const { default: logger } = require('@synthetixio/core-utils/dist/utils/io/logger');
+const types = require('@synthetixio/core-utils/dist/utils/hardhat/argument-types');
 const { SUBTASK_LOAD_DEPLOYMENT, TASK_DEPLOY_VERIFY_TENDERLY } = require('../task-names');
 
 task(TASK_DEPLOY_VERIFY_TENDERLY, 'Verify deployment contracts using Tenderly API')

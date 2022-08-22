@@ -1,8 +1,8 @@
 import hre from 'hardhat';
 import assert from 'assert/strict';
-import assertBn from '@synthetixio/core-js/dist/utils/assertions/assert-bignumber';
-import assertRevert from '@synthetixio/core-js/dist/utils/assertions/assert-revert';
-import { findEvent } from '@synthetixio/core-js/dist/utils/ethers/events';
+import assertBn from '@synthetixio/core-utils/dist/utils/assertions/assert-bignumber';
+import assertRevert from '@synthetixio/core-utils/dist/utils/assertions/assert-revert';
+import { findEvent } from '@synthetixio/core-utils/dist/utils/ethers/events';
 import { bootstrap } from '../bootstrap';
 
 import { ethers } from 'ethers';
@@ -10,10 +10,7 @@ import { ethers } from 'ethers';
 describe('FundModule Admin', function () {
   const { signers, systems } = bootstrap();
 
-  let owner: ethers.Signer,
-    fundAdmin: ethers.Signer,
-    user1: ethers.Signer,
-    user2: ethers.Signer;
+  let owner: ethers.Signer, fundAdmin: ethers.Signer, user1: ethers.Signer, user2: ethers.Signer;
 
   let Collateral: ethers.Contract, AggregatorV3Mock: ethers.Contract;
 
@@ -27,9 +24,7 @@ describe('FundModule Admin', function () {
     factory = await hre.ethers.getContractFactory('CollateralMock');
     Collateral = await factory.connect(owner).deploy();
 
-    await (
-      await Collateral.connect(owner).initialize('Synthetix Token', 'SNX', 18)
-    ).wait();
+    await (await Collateral.connect(owner).initialize('Synthetix Token', 'SNX', 18)).wait();
 
     factory = await hre.ethers.getContractFactory('AggregatorV3Mock');
     AggregatorV3Mock = await factory.connect(owner).deploy();
@@ -39,13 +34,7 @@ describe('FundModule Admin', function () {
     await (
       await systems()
         .Core.connect(owner)
-        .adjustCollateralType(
-          Collateral.address,
-          AggregatorV3Mock.address,
-          400,
-          200,
-          true
-        )
+        .adjustCollateralType(Collateral.address, AggregatorV3Mock.address, 400, 200, true)
     ).wait();
   });
 
@@ -59,28 +48,17 @@ describe('FundModule Admin', function () {
     await (await Collateral.mint(await user2.getAddress(), 1000)).wait();
   });
 
-  before(
-    'approve systems().Core to operate with the user collateral',
-    async () => {
-      await (
-        await Collateral.connect(user1).approve(
-          systems().Core.address,
-          ethers.constants.MaxUint256
-        )
-      ).wait();
-      await (
-        await Collateral.connect(user2).approve(
-          systems().Core.address,
-          ethers.constants.MaxUint256
-        )
-      ).wait();
-    }
-  );
+  before('approve systems().Core to operate with the user collateral', async () => {
+    await (
+      await Collateral.connect(user1).approve(systems().Core.address, ethers.constants.MaxUint256)
+    ).wait();
+    await (
+      await Collateral.connect(user2).approve(systems().Core.address, ethers.constants.MaxUint256)
+    ).wait();
+  });
 
   before('stake some collateral', async () => {
-    await (
-      await systems().Core.connect(user1).stake(1, Collateral.address, 100)
-    ).wait();
+    await (await systems().Core.connect(user1).stake(1, Collateral.address, 100)).wait();
   });
 
   before('mint a fund token', async () => {
@@ -99,9 +77,7 @@ describe('FundModule Admin', function () {
     describe('when attempting to set the positions of a non existent fund', async () => {
       it('reverts', async () => {
         await assertRevert(
-          systems()
-            .Core.connect(fundAdmin)
-            .setFundPosition(2, [1], [1], [0, 0]),
+          systems().Core.connect(fundAdmin).setFundPosition(2, [1], [1], [0, 0]),
           'FundNotFound("2")',
           systems().Core
         );
@@ -121,9 +97,7 @@ describe('FundModule Admin', function () {
     describe('when attempting to set the positions with not matching number of positions', async () => {
       it('reverts with more weights than markets', async () => {
         await assertRevert(
-          systems()
-            .Core.connect(fundAdmin)
-            .setFundPosition(1, [1], [1, 2], [0, 0]),
+          systems().Core.connect(fundAdmin).setFundPosition(1, [1], [1, 2], [0, 0]),
           'InvalidParameters()',
           systems().Core
         );
@@ -131,9 +105,7 @@ describe('FundModule Admin', function () {
 
       it('reverts with more markets than weights', async () => {
         await assertRevert(
-          systems()
-            .Core.connect(fundAdmin)
-            .setFundPosition(1, [1, 2], [1], [0, 0]),
+          systems().Core.connect(fundAdmin).setFundPosition(1, [1, 2], [1], [0, 0]),
           'InvalidParameters()',
           systems().Core
         );
@@ -148,12 +120,8 @@ describe('FundModule Admin', function () {
         const Market1 = await factory.connect(owner).deploy();
         const Market2 = await factory.connect(owner).deploy();
 
-        await (
-          await systems().Core.connect(owner).registerMarket(Market1.address)
-        ).wait();
-        await (
-          await systems().Core.connect(owner).registerMarket(Market2.address)
-        ).wait();
+        await (await systems().Core.connect(owner).registerMarket(Market1.address)).wait();
+        await (await systems().Core.connect(owner).registerMarket(Market2.address)).wait();
       });
 
       before('adjust fund positions', async () => {
