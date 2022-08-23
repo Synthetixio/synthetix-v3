@@ -1,4 +1,5 @@
 import { HelperOptions, Utils } from 'handlebars';
+import { DocItemWithContext } from 'solidity-docgen/dist/site';
 
 /**
  * Returns a Markdown heading marker. An optional number increases the heading level.
@@ -70,4 +71,15 @@ export function formatTitle(text?: string) {
       .trim();
   }
   return text;
+}
+
+// Inspired by https://github.com/OpenZeppelin/solidity-docgen/issues/385
+export function inheritedItems(this: DocItemWithContext) {
+  if (this.nodeType === 'ContractDefinition') {
+    const { deref } = this.__item_context.build;
+    const parents = this.linearizedBaseContracts.map(deref('ContractDefinition'));
+    return parents.reduce((prev: any, curr) => {
+      return prev.concat(curr.nodes);
+    }, []);
+  }
 }

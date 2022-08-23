@@ -1,0 +1,13 @@
+{{>common}}
+
+{{#each items}}
+{{#hsection}}
+{{>item}}
+{{/hsection}}
+{{/each}}
+
+{{#each (inheritedItems)}}
+{{#hsection}}
+{{>item}}
+{{/hsection}}
+{{/each}}

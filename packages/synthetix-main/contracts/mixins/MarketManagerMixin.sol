@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import "../utils/SharesLibrary.sol";
-import "../interfaces/IMarket.sol";
+import "../interfaces/external/IMarket.sol";
 
 import "../storage/MarketManagerStorage.sol";
 
@@ -44,23 +44,24 @@ contract MarketManagerMixin is MarketManagerStorage {
         if (oldTotalLiquidity > 0 && newLiquidity > 0) {
             int oldMarketMaxShareValue = int(marketData.maxMarketDebt) / int128(marketData.debtDist.totalShares);
 
-            newMarketMaxShareValue = oldMarketMaxShareValue -
-                (oldFundMaxDebtShareValue * int(oldLiquidity) / int(oldTotalLiquidity)) +
-                (newFundMaxShareValue * int(newLiquidity) / int128(marketData.debtDist.totalShares));
+            newMarketMaxShareValue =
+                oldMarketMaxShareValue -
+                ((oldFundMaxDebtShareValue * int(oldLiquidity)) / int(oldTotalLiquidity)) +
+                ((newFundMaxShareValue * int(newLiquidity)) / int128(marketData.debtDist.totalShares));
 
             newMarketMaxShareValue =
                 newMarketMaxShareValue +
-                (oldMarketMaxShareValue * int(oldLiquidity) / int(oldTotalLiquidity)) -
-                (oldMarketMaxShareValue * int(newLiquidity) / int128(marketData.debtDist.totalShares));
+                ((oldMarketMaxShareValue * int(oldLiquidity)) / int(oldTotalLiquidity)) -
+                ((oldMarketMaxShareValue * int(newLiquidity)) / int128(marketData.debtDist.totalShares));
         }
 
         marketData.fundMaxDebtShares.insert(uint128(fundId), -int128(int(newFundMaxShareValue)));
-        marketData.maxMarketDebt = int128((newMarketMaxShareValue * int(int128(marketData.debtDist.totalShares))) / MathUtil.INT_UNIT);
+        marketData.maxMarketDebt = int128(
+            (newMarketMaxShareValue * int(int128(marketData.debtDist.totalShares))) / MathUtil.INT_UNIT
+        );
     }
 
-    function _distributeMarket(
-        MarketData storage marketData
-    ) internal {
+    function _distributeMarket(MarketData storage marketData) internal {
         if (marketData.debtDist.totalShares == 0) {
             // market cannot distribute (or accumulate) any debt when there are no shares
             return;
@@ -71,7 +72,7 @@ contract MarketManagerMixin is MarketManagerStorage {
 
         int curBalance = marketData.lastMarketBalance;
 
-        int targetDebtPerDebtShare = targetBalance * MathUtil.INT_UNIT / int128(marketData.debtDist.totalShares);
+        int targetDebtPerDebtShare = (targetBalance * MathUtil.INT_UNIT) / int128(marketData.debtDist.totalShares);
 
         // this loop should rarely execute. When it does, it only executes once for each fund that passes the limit.
         // controls need to happen elsewhere to ensure markets don't get hit with useless funds which cause people to fail withdraw
@@ -81,7 +82,6 @@ contract MarketManagerMixin is MarketManagerStorage {
             // distribute to limit
             marketData.debtDist.distribute(-nextRemove.priority - curBalance);
             curBalance = -nextRemove.priority;
-
 
             // detach market from fund
             marketData.debtDist.updateDistributionActor(bytes32(uint(nextRemove.id)), 0);
@@ -95,8 +95,6 @@ contract MarketManagerMixin is MarketManagerStorage {
     }
 
     function _totalBalance(MarketData storage marketData) internal view returns (int) {
-        return
-            IMarket(marketData.marketAddress).balance() +
-                marketData.issuance;
+        return IMarket(marketData.marketAddress).balance() + marketData.issuance;
     }
 }
