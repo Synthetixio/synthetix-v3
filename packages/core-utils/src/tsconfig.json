@@ -4,10 +4,14 @@
     "module": "commonjs",
     "strict": true,
     "esModuleInterop": true,
-    "outDir": "dist",
+    "outDir": "../dist",
+    "baseUrl": ".",
+    "rootDir": ".",
     "resolveJsonModule": true,
     "declaration": true,
-    "declarationMap": true
+    "declarationMap": true,
+    "sourceMap": true
   },
-  "include": ["./src", "./test"]
+  "include": ["./**/*.ts", "./**/*.json"],
+  "exclude": []
 }
