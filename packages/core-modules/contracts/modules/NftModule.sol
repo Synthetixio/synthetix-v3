@@ -35,13 +35,4 @@ contract NftModule is INftModule, ERC721Enumerable, NftStorage, InitializableMix
 
         store.initialized = true;
     }
-
-    // ---------------------------------------
-    // Mint/Transfer
-    // ---------------------------------------
-    function mint(address owner, uint256 nftId) external override onlyOwner {
-        _mint(owner, nftId);
-
-        emit Mint(owner, nftId);
-    }
 }
