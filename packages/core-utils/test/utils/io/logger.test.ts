@@ -1,6 +1,7 @@
-import { equal, deepEqual } from 'assert/strict';
 import chalk from 'chalk';
-import logger from '../../../utils/io/logger';
+import { deepEqual, equal } from 'assert/strict';
+
+import logger from '../../../src/utils/io/logger';
 
 describe('utils/io/prompter.js', () => {
   let logged: any[][] = [];

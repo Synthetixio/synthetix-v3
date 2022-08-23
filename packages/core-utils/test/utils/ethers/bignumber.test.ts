@@ -1,6 +1,7 @@
 import { ethers } from 'ethers';
-import assertBn from '../../../utils/assertions/assert-bignumber';
-import { bnSqrt } from '../../../utils/ethers/bignumber';
+
+import assertBn from '../../../src/utils/assertions/assert-bignumber';
+import { bnSqrt } from '../../../src/utils/ethers/bignumber';
 
 describe('utils/ethers/bignumber.js', () => {
   it('can calculate square roots', async () => {

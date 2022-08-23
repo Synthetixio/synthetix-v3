@@ -1,7 +1,7 @@
 import assert from 'assert/strict';
-import { getCommit, getBranch } from '../../../utils/misc/git';
-
 import child_process from 'child_process';
+
+import { getBranch, getCommit } from '../../../src/utils/misc/git';
 
 const execSync = (cmd: string) => child_process.execSync(cmd).toString().trim();
 
