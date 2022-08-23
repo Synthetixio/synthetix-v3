@@ -31,22 +31,28 @@ async function initContractData(contractFullyQualifiedName, extraData = {}) {
     sourceName,
   };
 
-  const cachedSourceInfo = path.join(hre.deployer.paths.cache, 'source-abis', deployedBytecodeHash + '.json');
+  const cachedSourceInfo = path.join(
+    hre.router.paths.cache,
+    'source-abis',
+    deployedBytecodeHash + '.json'
+  );
   if (fs.existsSync(cachedSourceInfo)) {
-    const data = JSON.parse(fs.readFileSync(cachedSourceInfo))
+    const data = JSON.parse(fs.readFileSync(cachedSourceInfo));
     deployment.sources[sourceName] = data.sourceInfo;
     deployment.abis[`${sourceName}:${contractName}`] = data.abiInfo;
-  }
-  else {
+  } else {
     await _initContractSource(contractFullyQualifiedName);
 
     // save the resulting artifacts
     await mkdirp(dirname(cachedSourceInfo));
 
-    fs.writeFileSync(cachedSourceInfo, JSON.stringify({
-      sourceInfo: deployment.sources[sourceName],
-      abiInfo: deployment.abis[`${sourceName}:${contractName}`]
-    }));
+    fs.writeFileSync(
+      cachedSourceInfo,
+      JSON.stringify({
+        sourceInfo: deployment.sources[sourceName],
+        abiInfo: deployment.abis[`${sourceName}:${contractName}`],
+      })
+    );
   }
 }
 
