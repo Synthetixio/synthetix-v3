@@ -14,7 +14,7 @@ describe('VaultRewardsModule', function () {
 
   let Collateral;
 
-  let rewardAmount = ethers.utils.parseEther('1000');
+  const rewardAmount = ethers.utils.parseEther('1000');
 
   before('identify signers', async () => {
     [owner, user1, user2] = signers();
@@ -41,7 +41,7 @@ describe('VaultRewardsModule', function () {
           0, // timestamp
           0
         ),
-        `Unauthorized`,
+        'Unauthorized',
         systems().Core
       );
     });
