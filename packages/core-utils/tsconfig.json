@@ -1,13 +1,15 @@
 {
-  "compilerOptions": {
-    "target": "es2018",
-    "module": "commonjs",
-    "strict": true,
-    "esModuleInterop": true,
-    "outDir": "dist",
-    "resolveJsonModule": true,
-    "declaration": true,
-    "declarationMap": true
-  },
-  "include": ["./src", "./test"]
+    "compilerOptions": {
+        "target": "es2018",
+        "module": "commonjs",
+        "strict": true,
+        "esModuleInterop": true,
+        "resolveJsonModule": true,
+        "declaration": true,
+        "declarationMap": true,
+        "sourceMap": true,
+        "outDir": ".."
+    },
+    "include": ["./**/*.ts", "./**/*.json"],
+    "exclude": []
 }
