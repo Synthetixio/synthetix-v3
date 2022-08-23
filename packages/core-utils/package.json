@@ -2,10 +2,9 @@
   "name": "@synthetixio/core-utils",
   "version": "1.0.0",
   "description": "Common JS utils for Synthetix",
-  "private": true,
   "scripts": {
     "build": "tsc",
-    "test": "./node_modules/.bin/mocha --require ts-node/register",
+    "test": "mocha --require ts-node/register",
     "coverage": "nyc npm run test",
     "test:watch": "mocha --watch"
   },
