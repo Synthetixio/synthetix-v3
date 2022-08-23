@@ -107,7 +107,7 @@ interface IAccountTokenModule is INftModule {
      *
      * Emits an {ApprovalForAll} event.
      */
-    function setApprovalForAll(address operator, bool _approved) external;
+    function setApprovalForAll(address operator, bool approved) external;
 
     /**
      * @dev Returns the account approved for `tokenId` token.
