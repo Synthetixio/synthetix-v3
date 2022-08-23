@@ -11,7 +11,7 @@ interface IFundModule {
         uint fundId,
         uint[] calldata markets,
         uint[] calldata weights,
-        uint[] calldata maxDebtShareValues
+        int[] calldata maxDebtShareValues
     ) external;
 
     /// @notice gets the fund positions
@@ -21,7 +21,7 @@ interface IFundModule {
         returns (
             uint[] memory markets,
             uint[] memory weights,
-            uint[] memory maxDebtShareValues
+            int[] memory maxDebtShareValues
         );
 
     /// @notice sets the fund name

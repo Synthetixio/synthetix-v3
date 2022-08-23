@@ -53,7 +53,7 @@ describe('AccountModule and AccountToken', function () {
       receipt = await tx.wait();
     });
 
-    it('emmited an event', async () => {
+    it('emitted an event', async () => {
       const event = findEvent({
         receipt,
         eventName: 'Mint',

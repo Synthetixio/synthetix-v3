@@ -15,6 +15,8 @@ contract FundMixin is FundModuleStorage, FundVaultStorage, FundEventAndErrors, C
     using SetUtil for SetUtil.Bytes32Set;
     using MathUtil for uint256;
 
+    using SharesLibrary for SharesLibrary.Distribution;
+
     function _ownerOf(uint256 fundId) internal view returns (address) {
         return _fundModuleStore().funds[fundId].owner;
     }
@@ -35,121 +37,174 @@ contract FundMixin is FundModuleStorage, FundVaultStorage, FundEventAndErrors, C
         FundData storage fundData = _fundModuleStore().funds[fundId];
         uint totalWeights = _fundModuleStore().funds[fundId].totalWeights;
 
+        if (totalWeights == 0) {
+            // nothing to rebalance
+            return;
+        }
+
+        SharesLibrary.Distribution storage fundDist = _fundVaultStore().fundDists[fundId];
+
+        // at this point, shares represent USD liquidity
+        // TODO: with liquidations, probably need to apply a multiplier here
+        uint totalAllocatableLiquidity = fundDist.totalShares;
+        int cumulativeDebtChange = 0;
+
         for (uint i = 0; i < fundData.fundDistribution.length; i++) {
             MarketDistribution storage marketDistribution = fundData.fundDistribution[i];
             uint weight = clearsLiquidity ? 0 : marketDistribution.weight;
-            _distributeLiquidity(
-                fundId,
-                marketDistribution.market,
-                marketDistribution.maxDebtShareValue,
-                weight,
-                totalWeights
-            );
+            uint amount = totalAllocatableLiquidity * weight / totalWeights;
+
+            cumulativeDebtChange +=
+                _rebalanceMarket(marketDistribution.market, fundId, marketDistribution.maxDebtShareValue, amount);
         }
+
+        fundDist.distribute(cumulativeDebtChange);
     }
 
-    function _distributeLiquidity(
-        uint fundId,
-        uint marketId,
-        uint maxDebtShareValue,
-        uint marketWeight,
-        uint totalWeight
-    ) internal {
-        // Rebalance Markets per type of collateral (individual fund-collateral vaults)
-        for (uint idx = 1; idx < _fundVaultStore().fundCollateralTypes[fundId].length(); idx++) {
-            // TODO Verify with product if there's only one collateral type allowed per fund
-            // If there's only one collateralType per fund => this for loop is not needed since
-            // will iterate only once
-            address collateralType = _fundVaultStore().fundCollateralTypes[fundId].valueAt(idx);
-
-            uint collateral = _fundVaultStore().fundVaults[fundId][collateralType].totalCollateral;
-            uint collateralValue = collateral.mulDecimal(_getCollateralValue(collateralType));
-
-            uint toAssign = (collateralValue * marketWeight) / totalWeight;
-            _rebalanceMarket(marketId, fundId, maxDebtShareValue, toAssign); //rebalanceMarket from MarketMixin
-        }
+    function _distributeFundDebt(uint fundId) internal {
+        _rebalanceFundPositions(fundId, false);
     }
 
-    function _accountDebtAndCollateral(
-        uint accountId,
-        uint fundId,
-        address collateralType
-    ) internal view returns (uint, uint) {
+    function _distributeVaultDebt(uint fundId, address collateralType) internal {
         VaultData storage vaultData = _fundVaultStore().fundVaults[fundId][collateralType];
 
-        uint perShareCollateral = _perShareCollateral(fundId, collateralType);
+        // update vault collateral price
         uint collateralPrice = _getCollateralValue(collateralType);
-        uint perShareValue = perShareCollateral.mulDecimal(collateralPrice);
 
-        uint accountCollateralValue;
-        uint accountDebt = vaultData.usdByAccount[accountId]; // add debt from USD minted
-        SetUtil.Bytes32Set storage accountliquidityItems = vaultData.liquidityItemsByAccount[accountId];
-
-        for (uint i = 1; i < accountliquidityItems.length() + 1; i++) {
-            bytes32 itemId = accountliquidityItems.valueAt(i);
-            LiquidityItem storage item = _fundVaultStore().liquidityItems[itemId];
-
-            assert(item.collateralType == collateralType); // sanity check. There shouldn't be any liquidity item with different collateral here
-
-            uint itemAccountCollateralValue = item.collateralAmount.mulDecimal(collateralPrice);
-
-            accountCollateralValue += itemAccountCollateralValue;
-
-            //TODO review formula
-            accountDebt +=
-                itemAccountCollateralValue +
-                item.initialDebt -
-                item.shares.mulDecimal(perShareValue) *
-                item.leverage;
+        if (vaultData.sharesMultiplier == 0) {
+            vaultData.sharesMultiplier = uint128(MathUtil.UNIT);
         }
 
-        return (accountDebt, accountCollateralValue);
+        vaultData.collateralPrice = uint128(collateralPrice);
+
+        // TODO: this second `_distributeFundDebt` call is really only needed for distributing the most up-to-date debt info from the markets (
+        // which needs to happen prior to the `updateDistributionActor` call), but
+        // we don't need to rebalance them
+        _distributeFundDebt(fundId);
+
+        uint newVaultShares = uint(vaultData.debtDist.totalShares)
+            .mulDecimal(vaultData.sharesMultiplier)
+            .mulDecimal(collateralPrice);
+
+        int debtChange = _fundVaultStore().fundDists[fundId].updateDistributionActor(
+            bytes32(fundId), 
+            newVaultShares
+        );
+
+        _distributeFundDebt(fundId);
+
+        vaultData.debtDist.distribute(debtChange);
+
+        // total debt unfortunately needs to be cached here for liquidations
+        vaultData.totalDebt += int128(debtChange);
     }
 
-    function _collateralizationRatio(
+    function _updateAccountDebt(
         uint accountId,
         uint fundId,
         address collateralType
-    ) internal view returns (uint) {
-        (uint accountDebt, uint accountCollateralValue) = _accountDebtAndCollateral(accountId, fundId, collateralType);
-        return accountCollateralValue.divDecimal(accountDebt);
+    ) internal returns (int currentDebt) {
+
+        _distributeVaultDebt(fundId, collateralType);
+
+        VaultData storage vaultData = _fundVaultStore().fundVaults[fundId][collateralType];
+        LiquidityItem storage li = _fundVaultStore().liquidityItems[
+            _getLiquidityItemId(accountId, fundId, collateralType)
+        ];
+
+        li.cumulativeDebt += int128(vaultData.debtDist.updateDistributionActor(
+            bytes32(accountId), 
+            vaultData.debtDist.getActorShares(bytes32(accountId))
+        ));
+
+        return li.cumulativeDebt + int128(li.usdMinted);
+    }
+
+    //error Test(uint rps,uint lrps);
+
+    function _updateAvailableRewards(
+        VaultData storage vaultData,
+        uint accountId
+    ) internal returns (uint[] memory) {
+        RewardDistribution[] storage dists = vaultData.rewards;
+
+        uint totalShares = vaultData.debtDist.totalShares;
+
+        uint[] memory rewards = new uint[](dists.length);
+        for (uint i = 0; i < dists.length; i++) {
+            if (address(dists[i].distributor) == address(0)) {
+                continue;
+            }
+
+            dists[i].rewardPerShare += uint128(SharesLibrary.updateDistributionEntry(dists[i].entry, totalShares));
+
+            dists[i].actorInfo[accountId].pendingSend += 
+                uint128(uint(vaultData.debtDist.getActorShares(bytes32(accountId)) * 
+                (dists[i].rewardPerShare - dists[i].actorInfo[accountId].lastRewardPerShare) / 1e18));
+
+            dists[i].actorInfo[accountId].lastRewardPerShare = dists[i].rewardPerShare;
+
+            rewards[i] = dists[i].actorInfo[accountId].pendingSend;
+        }
+
+        return rewards;
+    }
+
+    function _accountCollateral(
+        uint accountId,
+        uint fundId,
+        address collateralType
+    ) internal view returns (uint collateralAmount, uint collateralValue, uint shares) {
+        VaultData storage vaultData = _fundVaultStore().fundVaults[fundId][collateralType];
+
+        LiquidityItem storage li = _fundVaultStore().liquidityItems[
+            _getLiquidityItemId(accountId, fundId, collateralType)
+        ];
+
+        uint collateralPrice = _getCollateralValue(collateralType);
+
+        shares = vaultData.debtDist.getActorShares(bytes32(accountId));
+
+        if (shares == 0) {
+            // TODO: in the future, its possible user has collateral in account
+            // but no leverage. if that is the case, we need to account for that here
+            collateralAmount = 0;
+            collateralValue = 0;
+        }
+        else {
+            collateralAmount = uint(vaultData.totalCollateral) * 
+                shares.divDecimal(li.leverage) / 
+                vaultData.debtDist.totalShares;
+
+            collateralValue = collateralAmount.mulDecimal(collateralPrice);
+        }
+    }
+
+    function _accountCollateralRatio(
+        uint accountId,
+        uint fundId,
+        address collateralType
+    ) internal returns (uint) {
+        (, uint accountCollateralValue, ) = _accountCollateral(accountId, fundId, collateralType);
+        int accountDebt = _updateAccountDebt(accountId, fundId, collateralType);
+
+        // if they have a credit, just treat their debt as 0
+        return accountCollateralValue.divDecimal(accountDebt < 0 ? 0 : uint(accountDebt));
     }
 
     function _totalCollateral(uint fundId, address collateralType) internal view returns (uint) {
         return _fundVaultStore().fundVaults[fundId][collateralType].totalCollateral;
     }
 
-    function _totalShares(uint fundId, address collateralType) internal view returns (uint) {
-        return _fundVaultStore().fundVaults[fundId][collateralType].totalShares;
-    }
+    // ---------------------------------------
+    // Helpers / Internals
+    // ---------------------------------------
 
-    function _perShareCollateral(uint fundId, address collateralType) internal view returns (uint) {
-        uint totalShares = _totalShares(fundId, collateralType);
-        uint totalCollateralValue = _totalCollateral(fundId, collateralType);
-
-        return totalCollateralValue == 0 ? 1 : totalCollateralValue.divDecimal(totalShares);
-    }
-
-    function _deleteLiquidityItem(bytes32 liquidityItemId, LiquidityItem storage liquidityItem) internal {
-        VaultData storage vaultData = _fundVaultStore().fundVaults[liquidityItem.fundId][liquidityItem.collateralType];
-
-        uint oldAmount = liquidityItem.collateralAmount;
-        uint oldSharesAmount = liquidityItem.shares;
-        // uint oldnitialDebt = liquidityItem.initialDebt;
-        // TODO check if is enabled to remove position comparing old and new data
-
-        vaultData.liquidityItemIds.remove(liquidityItemId);
-        _fundVaultStore().accountliquidityItems[liquidityItem.accountId].remove(liquidityItemId);
-
-        liquidityItem.collateralAmount = 0;
-        liquidityItem.shares = 0;
-        liquidityItem.initialDebt = 0; // how that works with amount adjustments?
-
-        _fundVaultStore().liquidityItems[liquidityItemId] = liquidityItem;
-
-        vaultData.totalShares -= oldSharesAmount;
-        vaultData.totalCollateral -= oldAmount;
-
-        emit PositionRemoved(liquidityItemId, liquidityItem.accountId, liquidityItem.fundId, liquidityItem.collateralType);
+    function _getLiquidityItemId(
+        uint accountId,
+        uint fundId,
+        address collateralType
+    ) internal pure returns (bytes32) {
+        return keccak256(abi.encodePacked(accountId, fundId, collateralType));
     }
 }

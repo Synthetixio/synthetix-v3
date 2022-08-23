@@ -1,6 +1,9 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import "../utils/SharesLibrary.sol";
+import "../utils/Heap.sol";
+
 contract MarketManagerStorage {
     struct MarketManagerStore {
         mapping(uint => MarketData) markets;
@@ -9,15 +12,17 @@ contract MarketManagerStorage {
     }
 
     struct MarketData {
+
+        // used to stop the market from minting more sUSD without checking each fund individually
+        int128 issuance;
+        int128 lastMarketBalance;
+        int128 maxMarketDebt;
         address marketAddress;
-        int256 issuance; // TODO this can be negative. How to deal with that?
-        uint256 totalDelegatedCollateralValue;
-        uint256 totalLiquidityShares;
-        uint256 maxMarketDebtShare;
-        // credit shares
-        mapping(uint => uint256) fundliquidityShares;
-        mapping(uint => int256) fundInitialBalance;
-        mapping(uint => uint256) fundMaxDebtShareValue;
+        
+        // used to disconnect funds from a market if it goes above a certain debt per debt share
+        Heap.Data fundMaxDebtShares;
+
+        SharesLibrary.Distribution debtDist;
     }
 
     function _marketManagerStore() internal pure returns (MarketManagerStore storage store) {

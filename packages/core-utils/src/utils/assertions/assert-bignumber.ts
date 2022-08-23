@@ -17,8 +17,8 @@ function _createAssertBN(
 
     if (!result) {
       throw new BigNumberAssertionError({
-        actual: b.toString(),
-        expected: a.toString(),
+        actual: a.toString(),
+        expected: b.toString(),
         operator,
       });
     }

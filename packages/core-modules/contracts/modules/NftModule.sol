@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@synthetixio/core-contracts/contracts/token/ERC721.sol";
+import "@synthetixio/core-contracts/contracts/token/ERC721Enumerable.sol";
 import "@synthetixio/core-contracts/contracts/utils/AddressUtil.sol";
 import "@synthetixio/core-contracts/contracts/initializable/InitializableMixin.sol";
 import "@synthetixio/core-contracts/contracts/ownership/OwnableMixin.sol";
@@ -11,7 +11,7 @@ import "../storage/NftStorage.sol";
 
 import "../interfaces/INftModule.sol";
 
-contract NftModule is INftModule, ERC721, NftStorage, InitializableMixin, OwnableMixin {
+contract NftModule is INftModule, ERC721Enumerable, NftStorage, InitializableMixin, OwnableMixin {
     event Mint(address owner, uint nftId);
 
     // ---------------------------------------

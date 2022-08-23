@@ -45,7 +45,6 @@ describe('CollateralManagerConfiguration (SCCP)', function () {
     );
 
     const collateralType = await systems().Core.getCollateralType(Collateral.address);
-    console.log(collateralType);
 
     assert.equal(collateralType.tokenAddress, Collateral.address);
     assert.equal(collateralType.priceFeed, CollateralPriceFeed.address);

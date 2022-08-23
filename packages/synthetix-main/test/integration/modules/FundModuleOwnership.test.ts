@@ -26,7 +26,7 @@ describe('FundModule Create / Ownership', function () {
       receipt = await tx.wait();
     });
 
-    it('emmited an event', async () => {
+    it('emitted an event', async () => {
       const event = findEvent({ receipt, eventName: 'FundCreated' });
 
       assert.equal(event.args.owner, await user1.getAddress());
