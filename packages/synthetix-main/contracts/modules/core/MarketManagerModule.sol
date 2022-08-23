@@ -5,7 +5,7 @@ import "@synthetixio/core-contracts/contracts/ownership/OwnableMixin.sol";
 import "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
 
 import "../../interfaces/IMarketManagerModule.sol";
-import "../../interfaces/IUSDToken.sol";
+import "../../interfaces/IUSDTokenModule.sol";
 import "../../storage/MarketManagerStorage.sol";
 
 import "@synthetixio/core-modules/contracts/mixins/AssociatedSystemsMixin.sol";
@@ -57,19 +57,18 @@ contract MarketManagerModule is
     //     uint amount // solhint-disable-next-line no-empty-blocks
     // ) internal {}
 
-    function liquidity(uint marketId) external view override returns (uint) {
+    function marketLiquidity(uint marketId) external view override returns (uint) {
         return _availableLiquidity(marketId);
     }
 
-    function fundBalance(uint marketId, uint fundId) external view override returns (int) {
+    /*function fundBalance(uint marketId, uint fundId) external view override returns (int) {
         MarketData storage marketData = _marketManagerStore().markets[marketId];
-        return
-            int((marketData.fundliquidityShares[fundId] / marketData.totalLiquidityShares)) *
-            (_totalBalance(marketId) - marketData.fundInitialBalance[fundId]);
-    }
+        return marketData.lastMarketBalance * int(marketData.fundliquidityShares[fundId]) / int(marketData.totalLiquidityShares);
+    }*/
 
-    function totalBalance(uint marketId) external view override returns (int) {
-        return _totalBalance(marketId);
+    function marketTotalBalance(uint marketId) external view override returns (int) {
+        MarketData storage marketData = _marketManagerStore().markets[marketId];
+        return _totalBalance(marketData);
     }
 
     // deposit will burn USD
@@ -91,7 +90,7 @@ contract MarketManagerModule is
         require(originalAllowance >= amount, "insufficient allowance");
 
         // Adjust accounting
-        marketData.issuance -= int(amount);
+        marketData.issuance -= int128(int(amount));
 
         // burn USD
         usdToken.burn(target, amount);
@@ -113,7 +112,7 @@ contract MarketManagerModule is
         if (int(amount) > int(_availableLiquidity(marketId))) revert NotEnoughLiquidity(marketId, amount);
 
         // Adjust accounting
-        marketData.issuance += int(amount);
+        marketData.issuance += int128(int(amount));
 
         // mint some USD
         _getToken(_USD_TOKEN).mint(target, amount);
@@ -122,8 +121,12 @@ contract MarketManagerModule is
     function _availableLiquidity(uint marketId) internal view returns (uint) {
         MarketData storage marketData = _marketManagerStore().markets[marketId];
 
-        if (marketData.issuance > 0 && marketData.issuance >= int(marketData.totalDelegatedCollateralValue)) return 0;
+        int maxIssuance = marketData.maxMarketDebt - marketData.issuance;
 
-        return uint(int(marketData.totalDelegatedCollateralValue) - marketData.issuance);
+        if (maxIssuance <= 0) {
+            return 0;
+        }
+
+        return uint(maxIssuance);
     }
 }

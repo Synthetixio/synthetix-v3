@@ -18,4 +18,5 @@ extendConfig((config, userConfig) => {
   // Resolve the absolute path from the root of the configurable path
   config.router.paths.deployments = path.resolve(root, config.router.paths.deployments);
   config.router.paths.modules = path.resolve(sources, config.router.paths.modules);
+  config.router.paths.cache = path.resolve(root, config.router.paths.cache);
 });

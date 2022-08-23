@@ -1,9 +1,10 @@
-import { ethers } from 'hardhat';
 import assert from 'assert/strict';
 import assertBn from '@synthetixio/core-utils/dist/utils/assertions/assert-bignumber';
 import assertRevert from '@synthetixio/core-utils/dist/utils/assertions/assert-revert';
-import { bootstrap } from '../bootstrap';
 import { ethers as Ethers } from 'ethers';
+import { ethers } from 'hardhat';
+
+import { bootstrap } from '../bootstrap';
 
 describe('CollateralManagerConfiguration (SCCP)', function () {
   const { signers, systems } = bootstrap();
@@ -44,7 +45,6 @@ describe('CollateralManagerConfiguration (SCCP)', function () {
     );
 
     const collateralType = await systems().Core.getCollateralType(Collateral.address);
-    console.log(collateralType);
 
     assert.equal(collateralType.tokenAddress, Collateral.address);
     assert.equal(collateralType.priceFeed, CollateralPriceFeed.address);

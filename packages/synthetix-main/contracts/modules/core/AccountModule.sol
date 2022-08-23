@@ -28,6 +28,20 @@ contract AccountModule is IAccountModule, OwnableMixin, AccountRBACMixin, Associ
         return _getNft(_ACCOUNT_SYSTEM);
     }
 
+    function getAccountPermissions(uint accountId) external view returns (AccountPermission[] memory permissions) {
+        AccountRBAC storage accountRbac = _accountModuleStore().accountsRBAC[accountId];
+
+        uint allPermissionsLength = accountRbac.permissionAddresses.length();
+        permissions = new AccountPermission[](allPermissionsLength);
+        for (uint i = 1; i < allPermissionsLength; i++) {
+            address permissionAddress = accountRbac.permissionAddresses.valueAt(i);
+            permissions[i - 1] = AccountPermission({
+                target: permissionAddress,
+                roles: accountRbac.permissions[permissionAddress].values()
+            });
+        }
+    }
+
     // ---------------------------------------
     // Business Logic
     // ---------------------------------------
