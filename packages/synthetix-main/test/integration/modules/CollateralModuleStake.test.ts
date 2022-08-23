@@ -115,8 +115,8 @@ describe('CollateralModule Stake', function () {
       it('reverts', async () => {
         await assertRevert(
           systems().Core.connect(user1).stake(1, Collateral.address, 10000),
-          'InsufficientBalance',
-          Collateral
+          'FailedTransfer',
+          systems().Core
         );
       });
     });
@@ -172,7 +172,7 @@ describe('CollateralModule Stake', function () {
         it('reverts', async () => {
           await assertRevert(
             systems().Core.connect(user1).unstake(1, Collateral.address, 101),
-            'InsufficientAvailableCollateral',
+            'InsufficientAccountCollateral',
             systems().Core
           );
         });

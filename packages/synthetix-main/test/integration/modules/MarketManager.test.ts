@@ -33,7 +33,7 @@ describe.skip('MarketManager', function () {
   });
 
   before('create dummy markets', async () => {
-    Market1 = await (await hre.ethers.getContractFactory('MarketMock'))
+    Market1 = await (await hre.ethers.getContractFactory('MockMarket'))
       .connect(owner)
       .deploy();
   });
@@ -47,7 +47,7 @@ describe.skip('MarketManager', function () {
       ).wait();
     });
 
-    it('emmited an event', async () => {
+    it('emitted an event', async () => {
       const event = findEvent({ receipt, eventName: 'MarketRegistered' });
       assert(event.args.market, Market1.address);
       market1id = event.args.marketId;

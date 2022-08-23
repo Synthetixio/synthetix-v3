@@ -3,10 +3,11 @@ pragma solidity ^0.8.0;
 
 contract FundEventAndErrors {
     error FundAlreadyExists(uint fundId);
-    error InvalidParameters();
+    error InvalidParameters(string incorrectParameter, string help);
     error FundAlreadyApproved(uint fundId);
     error FundNotFound(uint fundId);
     error OnlyTokenProxyAllowed(address origin);
+    error EmptyVault(uint fundId, address collateralType);
 
     event FundCreated(address owner, uint256 fundId);
     event NominatedNewOwner(address nominatedOwner, uint256 fundId);
@@ -17,7 +18,7 @@ contract FundEventAndErrors {
     event FundApprovedAdded(uint256 fundId);
     event FundApprovedRemoved(uint256 fundId);
 
-    event RewardsDistributionSet(
+    event RewardDistributionSet(
         uint indexed fundId,
         address indexed token,
         uint indexed index,
@@ -36,36 +37,5 @@ contract FundEventAndErrors {
         address collateralType,
         uint amount,
         uint leverage
-    );
-
-    event PositionAdded(
-        bytes32 liquidityItemId,
-        uint accountId,
-        uint fundId,
-        address collateralType,
-        uint amount,
-        uint leverage,
-        uint shares,
-        uint initialDebt
-    );
-    event PositionRemoved(bytes32 liquidityItemId, uint accountId, uint fundId, address collateralType);
-    event PositionIncreased(
-        bytes32 liquidityItemId,
-        uint fundId,
-        address collateralType,
-        uint amount,
-        uint leverage,
-        uint shares,
-        uint initialDebt
-    );
-
-    event PositionDecreased(
-        bytes32 liquidityItemId,
-        uint fundId,
-        address collateralType,
-        uint amount,
-        uint leverage,
-        uint shares,
-        uint initialDebt
     );
 }
