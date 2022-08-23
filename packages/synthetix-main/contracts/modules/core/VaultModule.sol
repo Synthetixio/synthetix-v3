@@ -58,11 +58,11 @@ contract VaultModule is
         ];
 
         // get the current collateral situation
-        (uint oldCollateralAmount,,) = _accountCollateral(accountId, fundId, collateralType);
+        (uint oldCollateralAmount, , ) = _accountCollateral(accountId, fundId, collateralType);
 
         // if increasing collateral additionally check they have enough collateral
         if (
-            collateralAmount > oldCollateralAmount && 
+            collateralAmount > oldCollateralAmount &&
             _getAccountUnassignedCollateral(accountId, collateralType) < collateralAmount - oldCollateralAmount
         ) {
             revert InsufficientAccountCollateral(accountId, collateralType, collateralAmount);
@@ -81,35 +81,36 @@ contract VaultModule is
                 revert InvalidParameters("amount", "must be large enough for 1 share");
             }
 
-            liquidityItem.cumulativeDebt += 
-                int128(vaultData.debtDist.updateDistributionActor(bytes32(accountId), shares));
-            
-            vaultData.totalCollateral = uint128(
-                vaultData.totalCollateral + 
-                collateralAmount - 
-                oldCollateralAmount
-            );
+            liquidityItem.cumulativeDebt += int128(vaultData.debtDist.updateDistributionActor(bytes32(accountId), shares));
 
+            vaultData.totalCollateral = uint128(vaultData.totalCollateral + collateralAmount - oldCollateralAmount);
 
             liquidityItem.leverage = uint128(leverage);
 
             // this will ensure the new distribution information is passed up the chain to the markets
             _updateAccountDebt(accountId, fundId, collateralType);
 
-            // this is the most efficient time to check the resulting collateralization ratio, since 
+            // this is the most efficient time to check the resulting collateralization ratio, since
             // user's debt and collateral price have been fully updated
             if (collateralAmount < oldCollateralAmount) {
                 int debt = int(liquidityItem.cumulativeDebt) + int128(liquidityItem.usdMinted);
-                
+
                 _verifyCollateralRatio(
-                    collateralType, 
-                    debt < 0 ? 0 : uint(debt), 
+                    collateralType,
+                    debt < 0 ? 0 : uint(debt),
                     collateralAmount.mulDecimal(vaultData.collateralPrice)
                 );
             }
         }
 
-        emit DelegationUpdated(_getLiquidityItemId(accountId, fundId, collateralType), accountId, fundId, collateralType, collateralAmount, leverage);
+        emit DelegationUpdated(
+            _getLiquidityItemId(accountId, fundId, collateralType),
+            accountId,
+            fundId,
+            collateralType,
+            collateralAmount,
+            leverage
+        );
     }
 
     function _calculateShares(
@@ -122,7 +123,7 @@ contract VaultModule is
             return collateralAmount.mulDecimal(leverage);
         }
 
-        return leverage.mulDecimal(uint(vaultData.debtDist.totalShares) * collateralAmount / totalCollateral);
+        return leverage.mulDecimal((uint(vaultData.debtDist.totalShares) * collateralAmount) / totalCollateral);
     }
 
     function _calculateInitialDebt(uint collateralValue, uint leverage) internal pure returns (uint) {
@@ -142,7 +143,7 @@ contract VaultModule is
         // check if they have sufficient c-ratio to mint that amount
         int debt = _updateAccountDebt(accountId, fundId, collateralType);
 
-        (uint collateralValue,,) = _accountCollateral(accountId, fundId, collateralType);
+        (uint collateralValue, , ) = _accountCollateral(accountId, fundId, collateralType);
 
         int newDebt = debt + int(amount);
 
@@ -150,7 +151,9 @@ contract VaultModule is
             _verifyCollateralRatio(collateralType, uint(newDebt), collateralValue);
         }
 
-        _fundVaultStore().liquidityItems[_getLiquidityItemId(accountId, fundId, collateralType)].usdMinted += uint128(amount);
+        _fundVaultStore().liquidityItems[_getLiquidityItemId(accountId, fundId, collateralType)].usdMinted += uint128(
+            amount
+        );
 
         _getToken(_USD_TOKEN).mint(msg.sender, amount);
     }
@@ -178,8 +181,7 @@ contract VaultModule is
 
         if (li.usdMinted > amount) {
             li.usdMinted -= uint128(amount);
-        }
-        else {
+        } else {
             li.cumulativeDebt -= int128(int(amount)) - int128(li.usdMinted);
             li.usdMinted = 0;
         }
@@ -203,7 +205,16 @@ contract VaultModule is
         uint accountId,
         uint fundId,
         address collateralType
-    ) external view override returns (uint amount, uint value, uint shares) {
+    )
+        external
+        view
+        override
+        returns (
+            uint amount,
+            uint value,
+            uint shares
+        )
+    {
         return _accountCollateral(accountId, fundId, collateralType);
     }
 
@@ -221,7 +232,6 @@ contract VaultModule is
     }
 
     function vaultDebt(uint fundId, address collateralType) public override returns (int) {
-
         _distributeVaultDebt(fundId, collateralType);
 
         return _fundVaultStore().fundVaults[fundId][collateralType].totalDebt;
@@ -234,11 +244,16 @@ contract VaultModule is
     function debtPerShare(uint fundId, address collateralType) external override returns (int) {
         _distributeVaultDebt(fundId, collateralType);
 
-        return _fundVaultStore().fundVaults[fundId][collateralType].totalDebt /
+        return
+            _fundVaultStore().fundVaults[fundId][collateralType].totalDebt /
             int128(_fundVaultStore().fundVaults[fundId][collateralType].debtDist.totalShares);
     }
 
-    function _verifyCollateralRatio(address collateralType, uint debt, uint collateralValue) internal view {
+    function _verifyCollateralRatio(
+        address collateralType,
+        uint debt,
+        uint collateralValue
+    ) internal view {
         uint targetCratio = _getCollateralTargetCRatio(collateralType);
 
         if (debt != 0 && collateralValue.divDecimal(debt) < targetCratio) {

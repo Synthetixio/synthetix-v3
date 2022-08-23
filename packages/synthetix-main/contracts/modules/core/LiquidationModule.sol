@@ -11,12 +11,18 @@ import "../../utils/ERC20Helper.sol";
 import "../../utils/SharesLibrary.sol";
 
 contract LiquidationsModule is ILiquidationModule, LiquidationModuleStorage, CollateralMixin, FundMixin {
-
     using MathUtil for uint;
     using ERC20Helper for address;
     using SharesLibrary for SharesLibrary.Distribution;
 
-    event Liquidation(uint indexed accountId, uint indexed fundId, address indexed collateralType, uint debtLiquidated, uint collateralLiquidated, uint amountRewarded);
+    event Liquidation(
+        uint indexed accountId,
+        uint indexed fundId,
+        address indexed collateralType,
+        uint debtLiquidated,
+        uint collateralLiquidated,
+        uint amountRewarded
+    );
 
     error IneligibleForLiquidation(uint collateralValue, uint debt, uint currentCRatio, uint cratio);
 
@@ -24,18 +30,25 @@ contract LiquidationsModule is ILiquidationModule, LiquidationModuleStorage, Col
         uint accountId,
         uint fundId,
         address collateralType
-    ) external override returns (uint amountRewarded, uint debtLiquidated, uint collateralLiquidated) {
+    )
+        external
+        override
+        returns (
+            uint amountRewarded,
+            uint debtLiquidated,
+            uint collateralLiquidated
+        )
+    {
         int rawDebt = _updateAccountDebt(accountId, fundId, collateralType);
 
-        (uint cl, uint collateralValue,) = _accountCollateral(accountId, fundId, collateralType);
+        (uint cl, uint collateralValue, ) = _accountCollateral(accountId, fundId, collateralType);
         collateralLiquidated = cl;
-
 
         if (rawDebt <= 0 || !_isLiquidatable(collateralType, uint(rawDebt), collateralValue)) {
             revert IneligibleForLiquidation(
-                collateralValue, 
-                debtLiquidated, 
-                collateralValue.divDecimal(debtLiquidated), 
+                collateralValue,
+                debtLiquidated,
+                collateralValue.divDecimal(debtLiquidated),
                 _getCollateralMinimumCRatio(collateralType)
             );
         }
@@ -52,17 +65,18 @@ contract LiquidationsModule is ILiquidationModule, LiquidationModuleStorage, Col
         // auto split proportionally between all debt holders
         uint oldShares = vaultData.debtDist.getActorShares(bytes32(accountId));
         vaultData.debtDist.updateDistributionActor(bytes32(accountId), 0);
-        
+
         // feed the debt back into the vault
         vaultData.debtDist.distribute(int(debtLiquidated));
 
         // update debt adjustments
-        vaultData.sharesMultiplier = uint128(uint(vaultData.sharesMultiplier).mulDecimal(
-            (oldShares + vaultData.debtDist.totalShares) / vaultData.debtDist.totalShares
-        ));
+        vaultData.sharesMultiplier = uint128(
+            uint(vaultData.sharesMultiplier).mulDecimal(
+                (oldShares + vaultData.debtDist.totalShares) / vaultData.debtDist.totalShares
+            )
+        );
 
         // TODO: adjust global rewards curve to temp lock user's acquired assets
-
 
         // clear liquidity item
         liquidityItem.usdMinted = 0;
@@ -79,17 +93,17 @@ contract LiquidationsModule is ILiquidationModule, LiquidationModuleStorage, Col
         emit Liquidation(accountId, fundId, collateralType, debtLiquidated, collateralLiquidated, amountRewarded);
     }
 
-
-    function liquidateVault(
-        uint fundId,
-        address collateralType
-    ) external override returns (uint amountRewarded, uint collateralLiquidated) {
+    function liquidateVault(uint fundId, address collateralType)
+        external
+        override
+        returns (uint amountRewarded, uint collateralLiquidated)
+    {
         // 'classic' style liquidation for entire value, partial liquidation allow
     }
 
     function _isLiquidatable(
         address collateralType,
-        uint debt, 
+        uint debt,
         uint collateralValue
     ) internal view returns (bool) {
         return collateralValue.divDecimal(debt) < _getCollateralMinimumCRatio(collateralType);
@@ -101,7 +115,7 @@ contract LiquidationsModule is ILiquidationModule, LiquidationModuleStorage, Col
         address collateralType
     ) external override returns (bool) {
         int rawDebt = _updateAccountDebt(accountId, fundId, collateralType);
-        (,uint collateralValue,) = _accountCollateral(accountId, fundId, collateralType);
-        return rawDebt >= 0 &&  _isLiquidatable(collateralType, uint(rawDebt), collateralValue);
+        (, uint collateralValue, ) = _accountCollateral(accountId, fundId, collateralType);
+        return rawDebt >= 0 && _isLiquidatable(collateralType, uint(rawDebt), collateralValue);
     }
 }
