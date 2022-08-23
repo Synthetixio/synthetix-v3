@@ -13,10 +13,14 @@ module.exports.deploy = async function deploy(runtime, prefix, modules) {
     hre.ethers.provider = runtime.provider;
   }
 
+  const cachedGetSigners = hre.ethers.getSigners;
+  const cachedGetSigner = hre.ethers.getSigner;
+
   if (runtime?.getDefaultSigner) {
     console.log('overriding signers');
+    const defaultSigner = await runtime.getDefaultSigner('deployer', prefix);
     hre.ethers.getSigners = async () => {
-      return [await runtime.getDefaultSigner('deployer', prefix)];
+      return [defaultSigner];
     };
     hre.ethers.getSigner = async () => {
       hre.ethers.getSigners()[0];
@@ -64,6 +68,8 @@ module.exports.deploy = async function deploy(runtime, prefix, modules) {
 
   // Set the multicall ABI on the Proxy
   contracts[prefix + 'Router'].abi = await hre.run(SUBTASK_GET_MULTICALL_ABI, { info, instance });
+  hre.ethers.getSigners = cachedGetSigners;
+  hre.ethers.getSigner = cachedGetSigner;
 
   return {
     contracts,
