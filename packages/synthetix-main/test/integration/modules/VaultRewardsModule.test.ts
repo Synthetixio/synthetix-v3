@@ -1,8 +1,8 @@
-import assertBn from '@synthetixio/core-utils/dist/utils/assertions/assert-bignumber';
-import assertRevert from '@synthetixio/core-utils/dist/utils/assertions/assert-revert';
+import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
+import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import hre from 'hardhat';
 import { ethers } from 'ethers';
-import { getBlockTimestamp } from '@synthetixio/core-utils/dist/utils/ethers/provider';
+import { getBlockTimestamp } from '@synthetixio/core-utils/utils/ethers/provider';
 
 import { bootstrapWithStakedFund } from '../bootstrap';
 
@@ -10,20 +10,18 @@ describe('VaultRewardsModule', function () {
   const { provider, signers, systems, fundId, collateralAddress, accountId, restore } =
     bootstrapWithStakedFund();
 
-  let owner: ethers.Signer, user1: ethers.Signer, user2: ethers.Signer;
+  let owner: ethers.Signer, user1: ethers.Signer;
 
   let Collateral;
 
-  let rewardAmount = ethers.utils.parseEther('1000');
+  const rewardAmount = ethers.utils.parseEther('1000');
 
   before('identify signers', async () => {
-    [owner, user1, user2] = signers();
+    [owner, user1] = signers();
   });
 
   before('deploy fake reward token', async () => {
-    let factory;
-
-    factory = await hre.ethers.getContractFactory('CollateralMock');
+    const factory = await hre.ethers.getContractFactory('CollateralMock');
     Collateral = await factory.connect(owner).deploy();
 
     await (await Collateral.connect(owner).initialize('Fake Reward', 'FAKE', 18)).wait();
@@ -41,7 +39,7 @@ describe('VaultRewardsModule', function () {
           0, // timestamp
           0
         ),
-        `Unauthorized`,
+        'Unauthorized',
         systems().Core
       );
     });
@@ -50,7 +48,8 @@ describe('VaultRewardsModule', function () {
       describe('in the past', () => {
         before(restore);
         before(async () => {
-          // distribute rewards multiple times to see what happens of many distributions happen in the past
+          // distribute rewards multiple times to see what happens of many
+          // distributions happen in the past
           await systems().Core.connect(owner).distributeRewards(
             fundId,
             collateralAddress(),
@@ -81,7 +80,8 @@ describe('VaultRewardsModule', function () {
             0
           );
 
-          // one distribution in the future to ensure switching from past to future works as expected
+          // one distribution in the future to ensure switching from past to
+          // future works as expected
           await systems()
             .Core.connect(owner)
             .distributeRewards(
@@ -385,7 +385,8 @@ describe('VaultRewardsModule', function () {
                 );
             });
 
-            // this test is skipped for now because, among all the other tests, it does not behave as expected
+            // this test is skipped for now because, among all the other tests,
+            // it does not behave as expected
             it.skip('distributes portion of rewards immediately', async () => {
               const rewards = await systems().Core.callStatic.getAvailableRewards(
                 fundId,

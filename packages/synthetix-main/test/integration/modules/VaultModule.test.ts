@@ -1,5 +1,5 @@
-import assertBn from '@synthetixio/core-utils/dist/utils/assertions/assert-bignumber';
-import assertRevert from '@synthetixio/core-utils/dist/utils/assertions/assert-revert';
+import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
+import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import hre from 'hardhat';
 import { ethers } from 'ethers';
 
@@ -54,6 +54,7 @@ describe('VaultModule', function () {
 
   const restore = snapshotCheckpoint(provider);
 
+  // eslint-disable-next-line max-params
   function verifyAccountState(
     accountId: number,
     fundId: number,
@@ -110,7 +111,7 @@ describe('VaultModule', function () {
             depositAmount.mul(2),
             ethers.utils.parseEther('1.1')
           ),
-        `InvalidLeverage`,
+        'InvalidLeverage',
         systems().Core
       );
     });
@@ -182,7 +183,8 @@ describe('VaultModule', function () {
           verifyAccountState(user2AccountId, fundId, depositAmount.div(3), depositAmount.div(100))
         );
 
-        // these exposure tests should be enabled when exposures other than 1 are allowed (which might be something we want to do)
+        // these exposure tests should be enabled when exposures other than 1 are
+        // allowed(which might be something we want to do)
         describe.skip('increase exposure', async () => {
           before('delegate', async () => {
             await systems().Core.connect(user2).delegateCollateral(
@@ -410,7 +412,7 @@ describe('VaultModule', function () {
         systems()
           .Core.connect(user1)
           .mintUSD(accountId, fundId, collateralAddress(), depositAmount),
-        `InsufficientCollateralRatio`,
+        'InsufficientCollateralRatio',
         systems().Core
       );
     });

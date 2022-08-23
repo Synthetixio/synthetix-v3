@@ -1,4 +1,4 @@
-import { ethers } from "ethers";
+import { ethers } from 'ethers';
 
 export function snapshotCheckpoint(provider: () => ethers.providers.JsonRpcProvider) {
   let snapshotId: any;
@@ -10,7 +10,7 @@ export function snapshotCheckpoint(provider: () => ethers.providers.JsonRpcProvi
   const restore = async () => {
     await provider().send('evm_revert', [snapshotId]);
     snapshotId = await provider().send('evm_snapshot', []);
-  }
+  };
 
   return restore;
 }
