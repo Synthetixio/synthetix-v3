@@ -6,7 +6,8 @@
     "build": "tsc",
     "test": "mocha --require ts-node/register",
     "coverage": "nyc npm run test",
-    "test:watch": "mocha --watch"
+    "test:watch": "mocha --watch",
+    "prepublishOnly": "npm run build"
   },
   "dependencies": {
     "chalk": "4.1.2"
