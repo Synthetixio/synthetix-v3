@@ -8,6 +8,14 @@
     "deploy",
     "solidity"
   ],
+  "files": [
+    "extensions",
+    "internal",
+    "subtasks",
+    "tasks",
+    "templates",
+    "utils"
+  ],
   "author": "Synthetix",
   "license": "MIT",
   "scripts": {
