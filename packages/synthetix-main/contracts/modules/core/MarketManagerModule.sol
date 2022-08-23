@@ -5,7 +5,7 @@ import "@synthetixio/core-contracts/contracts/ownership/OwnableMixin.sol";
 import "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
 
 import "../../interfaces/IMarketManagerModule.sol";
-import "../../interfaces/IUSDToken.sol";
+import "../../interfaces/IUSDTokenModule.sol";
 import "../../storage/MarketManagerStorage.sol";
 
 import "@synthetixio/core-modules/contracts/mixins/AssociatedSystemsMixin.sol";
