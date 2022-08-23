@@ -1,4 +1,4 @@
-import { HelperOptions, Utils } from "handlebars";
+import { HelperOptions, Utils } from 'handlebars';
 
 /**
  * Returns a Markdown heading marker. An optional number increases the heading level.
@@ -11,7 +11,7 @@ export function h(opts: HelperOptions): string;
 export function h(hsublevel: number, opts: HelperOptions): string;
 export function h(hsublevel: number | HelperOptions, opts?: HelperOptions) {
   const { hlevel } = getHLevel(hsublevel, opts);
-  return new Array(hlevel).fill("#").join("") + " ";
+  return new Array(hlevel).fill('#').join('') + ' ';
 }
 
 /**
@@ -23,11 +23,7 @@ export function h(hsublevel: number | HelperOptions, opts?: HelperOptions) {
  */
 export function hsection(opts: HelperOptions): string;
 export function hsection(hsublevel: number, opts: HelperOptions): string;
-export function hsection(
-  this: unknown,
-  hsublevel: number | HelperOptions,
-  opts?: HelperOptions
-) {
+export function hsection(this: unknown, hsublevel: number | HelperOptions, opts?: HelperOptions) {
   let hlevel;
   ({ hlevel, opts } = getHLevel(hsublevel, opts));
   opts.data = Utils.createFrame(opts.data);
@@ -39,7 +35,7 @@ export function hsection(
  * Helper for dealing with the optional hsublevel argument.
  */
 function getHLevel(hsublevel: number | HelperOptions, opts?: HelperOptions) {
-  if (typeof hsublevel === "number") {
+  if (typeof hsublevel === 'number') {
     opts = opts!;
     hsublevel = Math.max(1, hsublevel);
   } else {
@@ -51,26 +47,26 @@ function getHLevel(hsublevel: number | HelperOptions, opts?: HelperOptions) {
 }
 
 export function trim(text: string) {
-  if (typeof text === "string") {
+  if (typeof text === 'string') {
     return text.trim();
   }
 }
 
 export function joinLines(text?: string) {
-  if (typeof text === "string") {
-    return text.replace(/\n+/g, " ");
+  if (typeof text === 'string') {
+    return text.replace(/\n+/g, ' ');
   }
 }
 
 export function formatTitle(text?: string) {
   if (
-    typeof text === "string" &&
-    text.startsWith("I") &&
-    (text.endsWith("Module") || text.endsWith("ModuleStorage"))
+    typeof text === 'string' &&
+    text.startsWith('I') &&
+    (text.endsWith('Module') || text.endsWith('ModuleStorage'))
   ) {
     text = text
       .substring(1)
-      .replace(/([A-Z][a-z])/g, " $1")
+      .replace(/([A-Z][a-z])/g, ' $1')
       .trim();
   }
   return text;
