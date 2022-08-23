@@ -1,9 +1,7 @@
 const { ethers } = hre;
 const assert = require('assert/strict');
-const {
-  default: assertRevert,
-} = require('@synthetixio/core-utils/dist/utils/assertions/assert-revert');
-const assertBn = require('@synthetixio/core-utils/dist/utils/assertions/assert-bignumber');
+const { default: assertRevert } = require('@synthetixio/core-utils/utils/assertions/assert-revert');
+const assertBn = require('@synthetixio/core-utils/utils/assertions/assert-bignumber');
 
 describe('ERC721Enumerable', () => {
   let ERC721Enumerable;

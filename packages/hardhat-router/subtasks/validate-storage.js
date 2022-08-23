@@ -1,6 +1,6 @@
 const { subtask } = require('hardhat/config');
-const { default: logger } = require('@synthetixio/core-utils/dist/utils/io/logger');
-const { default: prompter } = require('@synthetixio/core-utils/dist/utils/io/prompter');
+const { default: logger } = require('@synthetixio/core-utils/utils/io/logger');
+const { default: prompter } = require('@synthetixio/core-utils/utils/io/prompter');
 const ModuleStorageASTValidator = require('../internal/storage-ast-validator');
 const { ContractValidationError } = require('../internal/errors');
 const { SUBTASK_VALIDATE_STORAGE } = require('../task-names');

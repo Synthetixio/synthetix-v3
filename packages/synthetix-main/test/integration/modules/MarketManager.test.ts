@@ -1,10 +1,11 @@
-import hre from 'hardhat';
 import assert from 'assert/strict';
-import assertRevert from '@synthetixio/core-utils/dist/utils/assertions/assert-revert';
-import { findEvent } from '@synthetixio/core-utils/dist/utils/ethers/events';
-import { bootstrap } from '../bootstrap';
-import assertBn from '@synthetixio/core-utils/dist/utils/assertions/assert-bignumber';
+import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
+import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
+import hre from 'hardhat';
 import { ethers } from 'ethers';
+import { findEvent } from '@synthetixio/core-utils/utils/ethers/events';
+
+import { bootstrap } from '../bootstrap';
 
 describe.skip('MarketManager', function () {
   const { signers, systems } = bootstrap();

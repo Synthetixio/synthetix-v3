@@ -1,5 +1,5 @@
 const { subtask } = require('hardhat/config');
-const { default: logger } = require('@synthetixio/core-utils/dist/utils/io/logger');
+const { default: logger } = require('@synthetixio/core-utils/utils/io/logger');
 const { getAllSelectors, findDuplicateSelectors } = require('../internal/contract-helper');
 const { ContractValidationError } = require('../internal/errors');
 const { SUBTASK_VALIDATE_MODULES } = require('../task-names');

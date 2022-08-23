@@ -1,7 +1,7 @@
 const { equal, deepStrictEqual } = require('assert/strict');
 const { processTransaction } = require('../../../internal/process-transactions');
 const { loadEnvironment } = require('../../helpers/use-environment');
-const { default: logger } = require('@synthetixio/core-utils/dist/utils/io/logger');
+const { default: logger } = require('@synthetixio/core-utils/utils/io/logger');
 
 describe('internal/process-transactions.js', function () {
   let signer;
