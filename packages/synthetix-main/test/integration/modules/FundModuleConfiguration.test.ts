@@ -1,8 +1,8 @@
 import hre from 'hardhat';
 import assert from 'assert/strict';
-import assertBn from '@synthetixio/core-js/dist/utils/assertions/assert-bignumber';
-import assertRevert from '@synthetixio/core-js/dist/utils/assertions/assert-revert';
-import { findEvent } from '@synthetixio/core-js/dist/utils/ethers/events';
+import assertBn from '@synthetixio/core-utils/dist/utils/assertions/assert-bignumber';
+import assertRevert from '@synthetixio/core-utils/dist/utils/assertions/assert-revert';
+import { findEvent } from '@synthetixio/core-utils/dist/utils/ethers/events';
 import { bootstrap } from '../bootstrap';
 import { ethers } from 'ethers';
 
@@ -145,8 +145,8 @@ describe('FundModule Configuration (SCCP)', function () {
     });
 
     it('is added', async () => {
-      const approvedFunds = (await systems().Core.getApprovedFunds()).map(
-        (e: ethers.BigNumber) => e.toString()
+      const approvedFunds = (await systems().Core.getApprovedFunds()).map((e: ethers.BigNumber) =>
+        e.toString()
       );
 
       assert.equal(approvedFunds.length, 1);
@@ -171,8 +171,8 @@ describe('FundModule Configuration (SCCP)', function () {
       });
 
       it('is added', async () => {
-        const approvedFunds = (await systems().Core.getApprovedFunds()).map(
-          (e: ethers.BigNumber) => e.toString()
+        const approvedFunds = (await systems().Core.getApprovedFunds()).map((e: ethers.BigNumber) =>
+          e.toString()
         );
 
         assert.equal(approvedFunds.length, 2);

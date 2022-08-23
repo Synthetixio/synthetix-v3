@@ -1,8 +1,10 @@
 const { ethers } = hre;
 const assert = require('assert/strict');
-const { default: assertRevert } = require('@synthetixio/core-js/dist/utils/assertions/assert-revert');
-const assertBn = require('@synthetixio/core-js/dist/utils/assertions/assert-bignumber');
-const { findEvent } = require('@synthetixio/core-js/dist/utils/ethers/events');
+const {
+  default: assertRevert,
+} = require('@synthetixio/core-utils/dist/utils/assertions/assert-revert');
+const assertBn = require('@synthetixio/core-utils/dist/utils/assertions/assert-bignumber');
+const { findEvent } = require('@synthetixio/core-utils/dist/utils/ethers/events');
 
 describe('UUPSProxy', () => {
   let UUPSProxy, Instance, Implementation;
@@ -23,7 +25,8 @@ describe('UUPSProxy', () => {
         const factory = await ethers.getContractFactory('UUPSProxy');
         //console.log(await ethers.getContractAt('UUPSProxy', ethers.constants.ZeroAddress));
         await assertRevert(
-          factory.deploy(user.address), `NotAContract(\\"${user.address}\\")`,
+          factory.deploy(user.address),
+          `NotAContract(\\"${user.address}\\")`,
           await ethers.getContractAt('UUPSProxy', user.address)
         );
       });
@@ -101,7 +104,7 @@ describe('UUPSProxy', () => {
     describe('when trying to upgrade to an EOA', () => {
       it('reverts', async () => {
         await assertRevert(
-          Instance.upgradeTo(user.address), 
+          Instance.upgradeTo(user.address),
           `NotAContract("${user.address}")`,
           ethers.getContractAt('UUPSProxy', ethers.constants.ZeroAddress)
         );
@@ -111,7 +114,7 @@ describe('UUPSProxy', () => {
     describe('when trying to upgrade to the current implementation', () => {
       it('reverts', async () => {
         await assertRevert(
-          Instance.upgradeTo(Implementation.address), 
+          Instance.upgradeTo(Implementation.address),
           'NoChange()',
           ethers.getContractAt('UUPSProxy', ethers.constants.ZeroAddress)
         );
@@ -122,7 +125,7 @@ describe('UUPSProxy', () => {
       it('reverts', async () => {
         const zeroAddress = '0x0000000000000000000000000000000000000000';
         await assertRevert(
-          Instance.upgradeTo(zeroAddress), 
+          Instance.upgradeTo(zeroAddress),
           'ZeroAddress',
           ethers.getContractAt('UUPSProxy', ethers.constants.ZeroAddress)
         );

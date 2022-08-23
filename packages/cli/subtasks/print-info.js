@@ -1,10 +1,10 @@
 const chalk = require('chalk');
-const { default: logger } = require('@synthetixio/core-js/dist/utils/io/logger');
+const { default: logger } = require('@synthetixio/core-utils/dist/utils/io/logger');
 const { subtask } = require('hardhat/config');
 const { SUBTASK_PRINT_INFO } = require('../task-names');
-const { readPackageJson } = require('@synthetixio/core-js/dist/utils/misc/npm');
-const { getCommit, getBranch } = require('@synthetixio/core-js/dist/utils/misc/git');
-const { default: relativePath } = require('@synthetixio/core-js/dist/utils/misc/relative-path');
+const { readPackageJson } = require('@synthetixio/core-utils/dist/utils/misc/npm');
+const { getCommit, getBranch } = require('@synthetixio/core-utils/dist/utils/misc/git');
+const { default: relativePath } = require('@synthetixio/core-utils/dist/utils/misc/relative-path');
 
 subtask(SUBTASK_PRINT_INFO, 'Prints info about the interaction with a particular system').setAction(
   async (taskArguments) => {
@@ -27,7 +27,7 @@ async function _printInfo(taskArguments) {
 
   logger.log(chalk.gray(`provider: ${hre.network.config.url}`));
   logger.log(chalk.gray(`instance: ${taskArguments.instance}`));
-  logger.log(chalk.gray(`deployment: ${relativePath(hre.deployer.paths.deployment)}`));
+  logger.log(chalk.gray(`deployment: ${relativePath(hre.router.paths.deployment)}`));
 
   const signer = (await hre.ethers.getSigners())[0];
   const balance = hre.ethers.utils.formatEther(

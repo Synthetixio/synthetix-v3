@@ -1,8 +1,10 @@
 const { ethers } = hre;
 const assert = require('assert/strict');
-const assertBn = require('@synthetixio/core-js/dist/utils/assertions/assert-bignumber');
-const { default: assertRevert } = require('@synthetixio/core-js/dist/utils/assertions/assert-revert');
-const { bootstrap } = require('@synthetixio/deployer/utils/tests');
+const assertBn = require('@synthetixio/core-utils/dist/utils/assertions/assert-bignumber');
+const {
+  default: assertRevert,
+} = require('@synthetixio/core-utils/dist/utils/assertions/assert-revert');
+const { bootstrap } = require('@synthetixio/hardhat-router/utils/tests');
 const initializer = require('@synthetixio/core-modules/test/helpers/initializer');
 
 describe('OwnerModule', () => {

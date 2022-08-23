@@ -12,7 +12,7 @@ jobs:
           node-version: 16
 
       # Step necessary for making sure that the developer correctly updated
-      # dependencies using npm workspaces, e.g.: npm i -w packages/core-js some-dependency
+      # dependencies using npm workspaces, e.g.: npm i -w packages/core-utils some-dependency
       # More info: https://docs.npmjs.com/cli/v7/using-npm/workspaces
       - name: Check package-lock.json files are not present on packages/*
         run: bin/check-packages

@@ -1,8 +1,8 @@
 import hre from 'hardhat';
 import assert from 'assert/strict';
-import assertBn from '@synthetixio/core-js/dist/utils/assertions/assert-bignumber';
-import assertRevert from '@synthetixio/core-js/dist/utils/assertions/assert-revert';
-import { findEvent } from '@synthetixio/core-js/dist/utils/ethers/events';
+import assertBn from '@synthetixio/core-utils/dist/utils/assertions/assert-bignumber';
+import assertRevert from '@synthetixio/core-utils/dist/utils/assertions/assert-revert';
+import { findEvent } from '@synthetixio/core-utils/dist/utils/ethers/events';
 import { bootstrap } from '../bootstrap';
 import { ethers } from 'ethers';
 
@@ -77,9 +77,7 @@ describe('FundModule Create / Ownership', function () {
 
         describe('when accepting the ownership', async () => {
           before('accept ownership', async () => {
-            const tx = await systems()
-              .Core.connect(user2)
-              .acceptFundOwnership(1);
+            const tx = await systems().Core.connect(user2).acceptFundOwnership(1);
             receipt = await tx.wait();
           });
 
@@ -89,9 +87,7 @@ describe('FundModule Create / Ownership', function () {
                 .Core.connect(user2)
                 .nominateNewFundOwner(await user1.getAddress(), 1)
             ).wait();
-            await (
-              await systems().Core.connect(user1).acceptFundOwnership(1)
-            ).wait();
+            await (await systems().Core.connect(user1).acceptFundOwnership(1)).wait();
           });
 
           it('emits an event', async () => {
@@ -105,10 +101,7 @@ describe('FundModule Create / Ownership', function () {
           });
 
           it('is the new owner', async () => {
-            assert.equal(
-              await systems().Core.ownerOf(1),
-              await user2.getAddress()
-            );
+            assert.equal(await systems().Core.ownerOf(1), await user2.getAddress());
           });
         });
       });
@@ -123,9 +116,7 @@ describe('FundModule Create / Ownership', function () {
         });
 
         before('renounce nomination', async () => {
-          const tx = await systems()
-            .Core.connect(user2)
-            .renounceFundNomination(1);
+          const tx = await systems().Core.connect(user2).renounceFundNomination(1);
           receipt = await tx.wait();
         });
 
@@ -137,10 +128,7 @@ describe('FundModule Create / Ownership', function () {
         });
 
         it('ownership did not change', async () => {
-          assert.equal(
-            await systems().Core.ownerOf(1),
-            await user1.getAddress()
-          );
+          assert.equal(await systems().Core.ownerOf(1), await user1.getAddress());
         });
 
         describe('when attempting to accept the nomination after renouncing to it', async () => {

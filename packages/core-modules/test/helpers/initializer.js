@@ -1,4 +1,4 @@
-const { getProxyAddress } = require('@synthetixio/deployer/utils/deployments');
+const { getProxyAddress } = require('@synthetixio/hardhat-router/utils/deployments');
 
 module.exports = async function initializer(deploymentInfo) {
   const proxyAddress = getProxyAddress(deploymentInfo);

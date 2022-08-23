@@ -1,13 +1,15 @@
-import path from 'path';
+import path from 'node:path';
 import dotenv from 'dotenv';
 
+// Load common .env file from root
+dotenv.config({ path: path.resolve(__dirname, '..', '..', '.env') });
 // Load common .env file at ./packages/config-common/.env
 dotenv.config({ path: path.resolve(__dirname, '.env') });
 
 import '@nomiclabs/hardhat-ethers';
 import 'hardhat-contract-sizer';
 import 'solidity-coverage';
-import '@synthetixio/deployer';
+import '@synthetixio/hardhat-router';
 import '@synthetixio/cli';
 
 import 'hardhat-cannon';

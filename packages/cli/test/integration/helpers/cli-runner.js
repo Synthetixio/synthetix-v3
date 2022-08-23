@@ -11,8 +11,6 @@ const START_DELAY = 3000;
 const INTERACT_DELAY = 1000;
 
 class CliRunner {
-  constructor() {}
-
   start() {
     this.errors = [];
     this.buffer = '';
