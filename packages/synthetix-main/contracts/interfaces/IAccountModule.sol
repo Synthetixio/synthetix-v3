@@ -6,6 +6,10 @@ import "@synthetixio/core-modules/contracts/interfaces/INftModule.sol";
 
 /// @title Module for managing account token (NFT) and accounts, each account is represented by an NFT
 interface IAccountModule is ISatelliteFactory {
+    event AccountCreated(address accountAddress);
+    event RoleGranted(uint accountId, bytes32 role, address target, address executedBy);
+    event RoleRevoked(uint accountId, bytes32 role, address target, address executedBy);
+
     struct AccountPermission {
         address target;
         bytes32[] roles;
@@ -18,9 +22,6 @@ interface IAccountModule is ISatelliteFactory {
 
     /// @notice creates a new accountToken (NFT)
     function createAccount(uint256 accountId) external;
-
-    /// @notice creates a new accountToken (NFT)
-    function transferAccount(address to, uint256 accountId) external;
 
     /// @notice grants "target" address the "role" role for the "accountId" account token NFT
     function grantRole(

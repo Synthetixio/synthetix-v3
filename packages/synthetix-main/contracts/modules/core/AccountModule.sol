@@ -16,11 +16,6 @@ contract AccountModule is IAccountModule, OwnableMixin, AccountRBACMixin, Associ
     using SetUtil for SetUtil.AddressSet;
     using SetUtil for SetUtil.Bytes32Set;
 
-    event AccountCreated(address accountAddress);
-
-    event RoleGranted(uint accountId, bytes32 role, address target, address executedBy);
-    event RoleRevoked(uint accountId, bytes32 role, address target, address executedBy);
-
     error OnlyTokenProxyAllowed(address origin);
     error InvalidRole();
 
@@ -49,10 +44,6 @@ contract AccountModule is IAccountModule, OwnableMixin, AccountRBACMixin, Associ
         getAccountAddress().mint(msg.sender, accountId);
 
         _accountModuleStore().accountsRBAC[accountId].owner = msg.sender;
-    }
-
-    function transferAccount(address to, uint256 accountId) external override onlyFromTokenProxy {
-        _accountModuleStore().accountsRBAC[accountId].owner = to;
     }
 
     function hasRole(
