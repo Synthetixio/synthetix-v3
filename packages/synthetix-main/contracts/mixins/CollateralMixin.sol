@@ -84,4 +84,18 @@ contract CollateralMixin is CollateralStorage {
     function _getCollateralLiquidationReward(address collateralType) internal view returns (uint) {
         return _collateralStore().collateralsData[collateralType].liquidationReward;
     }
+
+    function _depositCollateral(uint accountId, address collateralType, uint amount) internal {
+        StakedCollateralData storage collateralData = _collateralStore().stakedCollateralsDataByAccountId[accountId][
+            collateralType
+        ];
+
+        if (!collateralData.isSet) {
+            // new collateral
+            collateralData.isSet = true;
+            collateralData.amount = amount;
+        } else {
+            collateralData.amount += amount;
+        }
+    }
 }

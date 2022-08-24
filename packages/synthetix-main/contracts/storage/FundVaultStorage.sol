@@ -17,9 +17,6 @@ contract FundVaultStorage {
         
         /// @dev fund vaults (per collateral)
         mapping(uint256 => mapping(address => VaultData)) fundVaults;
-
-        /// @dev tracks debt for each fund
-        mapping(uint256 => SharesLibrary.Distribution) fundDists;
     }
     
     /// @notice LiquidityItem struct definition. Account/CollateralType/FundId uniquiely identifies it
@@ -31,10 +28,13 @@ contract FundVaultStorage {
     }
 
     struct VaultData {
+        /// @dev if vault is fully liquidated, this will be incremented to indicate reset shares
+        uint epoch;
+
         /// @dev cached collateral price
         uint128 collateralPrice;
         /// @dev if there are liquidations, this value will be multiplied by any share counts to determine the value of the shares wrt the rest of the fund
-        uint128 sharesMultiplier;
+        uint128 liquidityMultiplier;
 
         /// @dev the amount of debt accrued. starts at 0. this is technically a cached value, but it is needed for liquidations
         int128 totalDebt;
@@ -42,16 +42,14 @@ contract FundVaultStorage {
         /// @dev total liquidity delegated to this vault
         uint128 totalCollateral;
 
-        /// @dev total USD minted
-
-        /// @dev LiquidityItem ids in this fund
-        SetUtil.Bytes32Set liquidityItemIds;
-
         /// @dev tracks debt for each user
         SharesLibrary.Distribution debtDist;
 
         /// @dev rewards
         RewardDistribution[] rewards;
+
+        /// @dev last epoch which an account was seen for. If this differs from , shares are reset
+        mapping (uint256 => uint) lastEpoch;
     }
 
     struct RewardDistribution {

@@ -72,8 +72,6 @@ export function bootstrapWithStakedFund() {
   let collateralAddress: string;
   const depositAmount = ethers.utils.parseEther('1000');
 
-  let snapshotId: any;
-
   before('deploy mock aggregator', async () => {
     const [owner] = r.signers();
     const factory = await hre.ethers.getContractFactory('AggregatorV3Mock');
@@ -86,7 +84,7 @@ export function bootstrapWithStakedFund() {
     const [owner, user1] = r.signers();
 
     // mint initial snx
-    await r.systems().Core.connect(owner).mintInitialSystemToken(await user1.getAddress(), depositAmount.mul(10));
+    await r.systems().Core.connect(owner).mintInitialSystemToken(await user1.getAddress(), depositAmount.mul(1000));
 
     // deploy an aggregator
     collateralAddress = r.systems().SNX.address;
@@ -98,6 +96,7 @@ export function bootstrapWithStakedFund() {
       aggregator.address, 
       "5000000000000000000", 
       "1500000000000000000", 
+      "20000000000000000000",
       true
     );
 
@@ -135,4 +134,48 @@ export function bootstrapWithStakedFund() {
     depositAmount,
     restore
   };
+}
+
+
+export function bootstrapWithMockMarketAndFund() {
+  const r = bootstrapWithStakedFund();
+
+  let MockMarket: ethers.Contract;
+  let marketId: ethers.BigNumber;
+
+  before('deploy and connect fake market', async () => {
+    const [owner, user1] = r.signers();
+
+    const factory = await hre.ethers.getContractFactory('MockMarket');
+
+    MockMarket = await factory.connect(owner).deploy();
+
+    marketId = await r.systems().Core.connect(user1).callStatic.registerMarket(MockMarket.address);
+
+    await r.systems().Core.connect(user1).registerMarket(MockMarket.address);
+
+    await MockMarket.connect(owner).initialize(
+      r.systems().Core.address,
+      marketId,
+      ethers.utils.parseEther('1')
+    );
+
+    await r.systems()
+      .Core.connect(owner)
+      .setFundPosition(
+        r.fundId,
+        [marketId],
+        [ethers.utils.parseEther('1')],
+        [ethers.utils.parseEther('10000000')]
+      );
+  });
+
+  const restore = snapshotCheckpoint(r.provider);
+
+  return {
+    ...r,
+    MockMarket: () => MockMarket,
+    marketId: () => marketId,
+    restore
+  }
 }

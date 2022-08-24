@@ -42,11 +42,10 @@ contract FundMixin is FundModuleStorage, FundVaultStorage, FundEventAndErrors, C
             return;
         }
 
-        SharesLibrary.Distribution storage fundDist = _fundVaultStore().fundDists[fundId];
+        SharesLibrary.Distribution storage fundDist = _fundModuleStore().funds[fundId].debtDist;
 
-        // at this point, shares represent USD liquidity
-        // TODO: with liquidations, probably need to apply a multiplier here
-        uint totalAllocatableLiquidity = fundDist.totalShares;
+        // after applying the fund share multiplier, we have USD liquidity
+        uint totalAllocatableLiquidity = _fundModuleStore().funds[fundId].totalLiquidity;
         int cumulativeDebtChange = 0;
 
         for (uint i = 0; i < fundData.fundDistribution.length; i++) {
@@ -66,13 +65,17 @@ contract FundMixin is FundModuleStorage, FundVaultStorage, FundEventAndErrors, C
     }
 
     function _distributeVaultDebt(uint fundId, address collateralType) internal {
+        FundData storage fundData  = _fundModuleStore().funds[fundId];
         VaultData storage vaultData = _fundVaultStore().fundVaults[fundId][collateralType];
 
         // update vault collateral price
         uint collateralPrice = _getCollateralValue(collateralType);
 
-        if (vaultData.sharesMultiplier == 0) {
-            vaultData.sharesMultiplier = uint128(MathUtil.UNIT);
+        uint liquidityMultiplier = vaultData.liquidityMultiplier;
+
+        if (liquidityMultiplier == 0) {
+            liquidityMultiplier = MathUtil.UNIT;
+            vaultData.liquidityMultiplier = uint128(liquidityMultiplier);
         }
 
         vaultData.collateralPrice = uint128(collateralPrice);
@@ -82,14 +85,22 @@ contract FundMixin is FundModuleStorage, FundVaultStorage, FundEventAndErrors, C
         // we don't need to rebalance them
         _distributeFundDebt(fundId);
 
+        uint oldVaultShares = fundData.debtDist.getActorShares(bytes32(fundId));
+
         uint newVaultShares = uint(vaultData.debtDist.totalShares)
-            .mulDecimal(vaultData.sharesMultiplier)
             .mulDecimal(collateralPrice);
 
-        int debtChange = _fundVaultStore().fundDists[fundId].updateDistributionActor(
+        int debtChange = fundData.debtDist.updateDistributionActor(
             bytes32(fundId), 
             newVaultShares
         );
+
+        // update totalLiquidity
+        _fundModuleStore().funds[fundId].totalLiquidity =
+            uint128(_fundModuleStore().funds[fundId].totalLiquidity +
+            newVaultShares.mulDecimal(vaultData.liquidityMultiplier) -
+            oldVaultShares.mulDecimal(vaultData.liquidityMultiplier));
+
 
         _distributeFundDebt(fundId);
 
@@ -119,8 +130,6 @@ contract FundMixin is FundModuleStorage, FundVaultStorage, FundEventAndErrors, C
 
         return li.cumulativeDebt + int128(li.usdMinted);
     }
-
-    //error Test(uint rps,uint lrps);
 
     function _updateAvailableRewards(
         VaultData storage vaultData,
@@ -190,6 +199,31 @@ contract FundMixin is FundModuleStorage, FundVaultStorage, FundEventAndErrors, C
 
         // if they have a credit, just treat their debt as 0
         return accountCollateralValue.divDecimal(accountDebt < 0 ? 0 : uint(accountDebt));
+    }
+
+    function _vaultDebt(
+        uint fundId,
+        address collateralType
+    ) internal returns (int) {
+        _distributeVaultDebt(fundId, collateralType);
+
+        VaultData storage vaultData = _fundVaultStore().fundVaults[fundId][collateralType];
+        return vaultData.totalDebt;
+    }
+
+    function _vaultCollateralRatio(
+        uint fundId,
+        address collateralType
+    ) internal returns (uint) {
+
+        VaultData storage vaultData = _fundVaultStore().fundVaults[fundId][collateralType];
+
+        uint collateralValue = uint(vaultData.totalCollateral).mulDecimal(_getCollateralValue(collateralType));
+
+        int debt = _vaultDebt(fundId, collateralType);
+
+        // if they have a credit, just treat their debt as 0
+        return collateralValue.divDecimal(debt < 0 ? 0 : uint(debt));
     }
 
     function _totalCollateral(uint fundId, address collateralType) internal view returns (uint) {

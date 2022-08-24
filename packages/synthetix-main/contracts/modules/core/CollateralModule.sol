@@ -32,7 +32,7 @@ contract CollateralModule is
 
     error OutOfBounds();
 
-    event CollateralAdjusted(address collateralType, address priceFeed, uint targetCRatio, uint minimumCRatio, bool enabled);
+    event CollateralAdjusted(address collateralType, address priceFeed, uint targetCRatio, uint minimumCRatio, uint liquidationReward, bool enabled);
     event CollateralStaked(uint accountId, address collateralType, uint amount, address executedBy);
     event CollateralUnstaked(uint accountId, address collateralType, uint amount, address executedBy);
 
@@ -41,19 +41,24 @@ contract CollateralModule is
         address priceFeed,
         uint targetCRatio,
         uint minimumCRatio,
+        uint liquidationReward,
         bool enabled
     ) external override onlyOwner {
         if (!_collateralStore().collaterals.contains(collateralType)) {
             // Add a collateral entry
             _collateralStore().collaterals.add(collateralType);
         }
-        _collateralStore().collateralsData[collateralType].tokenAddress = collateralType;
-        _collateralStore().collateralsData[collateralType].targetCRatio = targetCRatio;
-        _collateralStore().collateralsData[collateralType].minimumCRatio = minimumCRatio;
-        _collateralStore().collateralsData[collateralType].priceFeed = priceFeed;
-        _collateralStore().collateralsData[collateralType].enabled = enabled;
 
-        emit CollateralAdjusted(collateralType, priceFeed, targetCRatio, minimumCRatio, enabled);
+        CollateralData storage collateralData = _collateralStore().collateralsData[collateralType];
+
+        collateralData.tokenAddress = collateralType;
+        collateralData.targetCRatio = targetCRatio;
+        collateralData.minimumCRatio = minimumCRatio;
+        collateralData.priceFeed = priceFeed;
+        collateralData.liquidationReward = liquidationReward;
+        collateralData.enabled = enabled;
+
+        emit CollateralAdjusted(collateralType, priceFeed, targetCRatio, minimumCRatio, liquidationReward, enabled);
     }
 
     function getCollateralTypes(bool hideDisabled)
@@ -94,20 +99,10 @@ contract CollateralModule is
         address collateralType,
         uint amount
     ) public override onlyRoleAuthorized(accountId, "stake") collateralEnabled(collateralType) {
-        StakedCollateralData storage collateralData = _collateralStore().stakedCollateralsDataByAccountId[accountId][
-            collateralType
-        ];
-
         // TODO Use SafeTransferFrom
         collateralType.safeTransferFrom(_accountOwner(accountId), address(this), amount);
 
-        if (!collateralData.isSet) {
-            // new collateral
-            collateralData.isSet = true;
-            collateralData.amount = amount;
-        } else {
-            collateralData.amount += amount;
-        }
+        _depositCollateral(accountId, collateralType, amount);
 
         emit CollateralStaked(accountId, collateralType, amount, msg.sender);
     }

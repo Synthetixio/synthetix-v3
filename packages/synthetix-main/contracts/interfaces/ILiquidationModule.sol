@@ -18,10 +18,14 @@ interface ILiquidationModule {
         address collateralType
     ) external returns (uint amountRewarded, uint debtLiquidated, uint collateralLiquidated);
 
-    /// @notice liquidates an entire vault. can only be done if the vault itself is undercollateralized
+    /// @notice liquidates an entire vault. can only be done if the vault itself is undercollateralized. 
+    /// liquidateAsAccountId determines which account to deposit the siezed collateral into (this is necessary particularly if the collateral in the vault is vesting)
+    /// Will only liquidate a portion of the debt for the vault if `maxUsd` is supplied
     function liquidateVault(
         uint fundId,
-        address collateralType
+        address collateralType,
+        uint liquidateAsAccountId,
+        uint maxUsd
     ) external returns (uint amountRewarded, uint collateralLiquidated);
 
     /// @notice returns if the account is liquidable on the fundId - collateralType pair

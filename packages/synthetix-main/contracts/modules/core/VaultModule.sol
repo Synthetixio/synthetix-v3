@@ -81,17 +81,15 @@ contract VaultModule is
                 revert InvalidParameters("amount", "must be large enough for 1 share");
             }
 
-            liquidityItem.cumulativeDebt += 
-                int128(vaultData.debtDist.updateDistributionActor(bytes32(accountId), shares));
-            
+            _applyAccountShares(vaultData, liquidityItem, accountId, shares);
+
+            liquidityItem.leverage = uint128(leverage);
+
             vaultData.totalCollateral = uint128(
                 vaultData.totalCollateral + 
                 collateralAmount - 
                 oldCollateralAmount
             );
-
-
-            liquidityItem.leverage = uint128(leverage);
 
             // this will ensure the new distribution information is passed up the chain to the markets
             _updateAccountDebt(accountId, fundId, collateralType);
@@ -127,6 +125,26 @@ contract VaultModule is
 
     function _calculateInitialDebt(uint collateralValue, uint leverage) internal pure returns (uint) {
         return collateralValue.mulDecimal(leverage);
+    }
+
+    function _applyAccountShares(VaultData storage vaultData, LiquidityItem storage liquidityItem, uint accountId, uint shares) internal {
+        if (vaultData.totalCollateral == 0) {
+            vaultData.epoch++;
+        }
+
+        int debtChange = vaultData.debtDist.updateDistributionActor(bytes32(accountId), shares);
+
+        // check if this account is new
+        if (vaultData.lastEpoch[accountId] == vaultData.epoch) {
+            liquidityItem.cumulativeDebt += int128(debtChange);
+        }
+        else {
+            // may have carried over values from previously, so clear them
+            liquidityItem.cumulativeDebt = 0;
+            liquidityItem.usdMinted = 0;
+
+            vaultData.lastEpoch[accountId] = vaultData.epoch;
+        }
     }
 
     // ---------------------------------------
@@ -199,6 +217,10 @@ contract VaultModule is
         return _accountCollateralRatio(fundId, accountId, collateralType);
     }
 
+    function vaultCollateralRatio(uint fundId, address collateralType) external override returns (uint) {
+        return _vaultCollateralRatio(fundId, collateralType);
+    }
+
     function accountVaultCollateral(
         uint accountId,
         uint fundId,
@@ -215,7 +237,7 @@ contract VaultModule is
         return _updateAccountDebt(accountId, fundId, collateralType);
     }
 
-    function vaultCollateral(uint fundId, address collateralType) public override returns (uint amount, uint value) {
+    function vaultCollateral(uint fundId, address collateralType) public view override returns (uint amount, uint value) {
         amount = _fundVaultStore().fundVaults[fundId][collateralType].totalCollateral;
         value = amount.mulDecimal(_getCollateralValue(collateralType));
     }

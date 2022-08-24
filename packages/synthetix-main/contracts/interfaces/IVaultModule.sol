@@ -33,7 +33,7 @@ interface IVaultModule {
         uint amount
     ) external;
 
-    /// @notice gets the CRatio for an account/collateral in a fund
+    /// @notice gets the account collateral value divided by the latest vault debt
     function accountCollateralRatio(
         uint accountId,
         uint fundId,
@@ -59,6 +59,9 @@ interface IVaultModule {
 
     /// @notice gets total vault collateral and its value
     function vaultCollateral(uint fundId, address collateralType) external returns (uint amount, uint value);
+
+    /// @notice gets the vault collateral value divided by latest vault debt
+    function vaultCollateralRatio(uint fundId, address collateralType) external returns (uint);
 
     /// @notice gets the total fund debtShares
     function totalVaultShares(uint fundId, address collateralType) external view returns (uint);

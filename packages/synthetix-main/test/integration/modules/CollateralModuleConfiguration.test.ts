@@ -76,6 +76,7 @@ describe('CollateralManagerConfiguration (SCCP)', function () {
           AnotherCollateralPriceFeed.address,
           400,
           200,
+          0,
           false
         );
       await tx.wait();
@@ -103,6 +104,7 @@ describe('CollateralManagerConfiguration (SCCP)', function () {
             AnotherCollateralPriceFeed.address,
             300,
             250,
+            0,
             false
           );
         await tx.wait();
@@ -126,6 +128,7 @@ describe('CollateralManagerConfiguration (SCCP)', function () {
             AnotherCollateralPriceFeed.address,
             400,
             200,
+            0,
             false
           );
         await tx.wait();
@@ -178,6 +181,7 @@ describe('CollateralManagerConfiguration (SCCP)', function () {
             OtherCollateralPriceFeed.address,
             400,
             200,
+            0,
             false
           ),
         `Unauthorized("${await user1.getAddress()}")`,
@@ -189,7 +193,7 @@ describe('CollateralManagerConfiguration (SCCP)', function () {
       await assertRevert(
         systems()
           .Core.connect(user1)
-          .adjustCollateralType(Collateral.address, CollateralPriceFeed.address, 300, 250, false),
+          .adjustCollateralType(Collateral.address, CollateralPriceFeed.address, 300, 250, 0, false),
         `Unauthorized("${await user1.getAddress()}")`,
         systems().Core
       );

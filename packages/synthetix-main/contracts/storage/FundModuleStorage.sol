@@ -1,12 +1,16 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import "../utils/SharesLibrary.sol";
+
 contract FundModuleStorage {
     struct FundModuleStore {
         mapping(uint256 => FundData) funds; // fund metadata by fundId
     }
 
     struct FundData {
+        /// @dev fund name
+        string name;
         /// @dev fund owner
         address owner;
         /// @dev nominated fund owner
@@ -15,8 +19,16 @@ contract FundModuleStorage {
         uint256 totalWeights; // sum of distribution weights
         /// @dev fund distribution
         MarketDistribution[] fundDistribution;
-        /// @dev fund name
-        string name;
+
+        /// @dev tracks debt for the fund
+        SharesLibrary.Distribution debtDist;
+
+        /// @dev tracks USD liquidity provided by connected vaults. Unfortunately this value has to be computed/updated separately from shares
+        /// because liquidations can cause share count to deviate from actual liquidity.
+        uint128 totalLiquidity;
+
+        // we might want to use this in the future, can be renamed when that time comes, possibly liquidation related
+        uint128 unused;
     }
 
     /**
