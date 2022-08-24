@@ -7,48 +7,95 @@ import "./IAccountTokenModule.sol";
 /// @title Module for managing account token (NFT) and accounts, each account is represented by an NFT
 
 interface IAccountModule {
-    event AccountCreated(address accountAddress);
-    event RoleGranted(uint accountId, bytes32 role, address target, address executedBy);
-    event RoleRevoked(uint accountId, bytes32 role, address target, address executedBy);
+    /**
+     * @dev Emitted when an account token with id `accountId` is minted to `sender`.
+     */
+    event AccountCreated(address indexed sender, uint indexed accountId);
+
+    /**
+     * @dev Emitted when `target` is granted `role` by `sender` for account `accountId`.
+     */
+    event RoleGranted(uint indexed accountId, bytes32 indexed role, address indexed target, address sender);
+
+    /**
+     * @dev Emitted when `target` has `role` renounced or revoked by `sender` for account `accountId`.
+     */
+    event RoleRevoked(uint indexed accountId, bytes32 indexed role, address indexed target, address sender);
 
     struct AccountPermission {
         address target;
         bytes32[] roles;
     }
 
-    /// @notice gets the AccountToken address.
-    function getAccountAddress() external view returns (IAccountTokenModule);
-
+    /**
+     * @dev Returns an array of `AccountPermission` for the provided `accountId`.
+     */
     function getAccountPermissions(uint accountId) external view returns (AccountPermission[] memory);
 
-    /// @notice creates a new accountToken (NFT)
-    function createAccount(uint256 accountId) external;
+    /**
+     * @dev Mints an account token with id `requestedAccountId` to `msg.sender`.
+     *
+     * Requirements:
+     *
+     * - `requestedAccountId` must not already be minted.
+     *
+     * Emits a {AccountCreated} event.
+     */
+    function createAccount(uint256 requestedAccountId) external;
 
-    /// @notice grants "target" address the "role" role for the "accountId" account token NFT
+    /**
+     * @dev Grants `role` to `target` for account `accountId`.
+     *
+     * Requirements:
+     *
+     * - `msg.sender` must own the account token with ID `accountId` or have the "admin" role.
+     *
+     * Emits a {RoleGranted} event.
+     */
     function grantRole(
         uint accountId,
         bytes32 role,
         address target
     ) external;
 
-    /// @notice revokes "target" address the "role" role for the "accountId" account token NFT
+    /**
+     * @dev Revokes `role` from `target` for account `accountId`.
+     *
+     * Requirements:
+     *
+     * - `msg.sender` must own the account token with ID `accountId` or have the "admin" role.
+     *
+     * Emits a {RoleRevoked} event.
+     */
     function revokeRole(
         uint accountId,
         bytes32 role,
         address target
     ) external;
 
-    /// @notice the sender (must be the same as "target") renounces to the "role" role for the "accountId" account token NFT
+    /**
+     * @dev Revokes `role` from `target` for account `accountId`.
+     *
+     * Requirements:
+     *
+     * - `msg.sender` must equal `target`
+     *
+     * Emits a {RoleRevoked} event.
+     */
     function renounceRole(
         uint accountId,
         bytes32 role,
         address target
     ) external;
 
-    /// @notice checks if the "target" address has the "role" role granted for the "accountId" account token NFT
+    /**
+     * @dev Returns `true` if `target` has been granted `role` for account `accountId`.
+     */
     function hasRole(
         uint accountId,
         bytes32 role,
         address target
     ) external view returns (bool);
+
+    function getAccountAddress() external view returns (IAccountTokenModule);
 }
