@@ -3,52 +3,71 @@ pragma solidity ^0.8.0;
 
 import "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
 
-import "../interfaces/IVaultModuleStorage.sol";
+import "../interfaces/external/IRewardDistributor.sol";
 
-import "../interfaces/external/IRewardsDistributor.sol";
+import "../utils/SharesLibrary.sol";
 
-contract FundVaultStorage is IVaultModuleStorage {
+contract FundVaultStorage {
     struct FundVaultStore {
-        /// @dev account liquidity items
-        mapping(uint256 => SetUtil.Bytes32Set) accountliquidityItems;
         /// @dev liquidity items data
         mapping(bytes32 => LiquidityItem) liquidityItems;
-        /// @dev collateral types enabled/used per fund
+
+        /// @dev collaterals which are currently deposited in the fund
         mapping(uint256 => SetUtil.AddressSet) fundCollateralTypes;
+        
         /// @dev fund vaults (per collateral)
         mapping(uint256 => mapping(address => VaultData)) fundVaults;
+
+        /// @dev tracks debt for each fund
+        mapping(uint256 => SharesLibrary.Distribution) fundDists;
+    }
+    
+    /// @notice LiquidityItem struct definition. Account/CollateralType/FundId uniquiely identifies it
+    struct LiquidityItem {
+        uint128 usdMinted;
+        int128 cumulativeDebt;
+
+        uint128 leverage;
     }
 
     struct VaultData {
-        /// @dev total shares distributed
-        uint256 totalShares;
+        /// @dev cached collateral price
+        uint128 collateralPrice;
+        /// @dev if there are liquidations, this value will be multiplied by any share counts to determine the value of the shares wrt the rest of the fund
+        uint128 sharesMultiplier;
+
+        /// @dev the amount of debt accrued. starts at 0. this is technically a cached value, but it is needed for liquidations
+        int128 totalDebt;
+
         /// @dev total liquidity delegated to this vault
-        uint256 totalCollateral;
+        uint128 totalCollateral;
+
         /// @dev total USD minted
-        uint256 totalUSD;
+
         /// @dev LiquidityItem ids in this fund
         SetUtil.Bytes32Set liquidityItemIds;
-        // Accessory data to simplify views and calculations
-        /// @dev LiquidityItem ids by account
-        mapping(uint256 => SetUtil.Bytes32Set) liquidityItemsByAccount;
-        /// @dev minted USD
-        mapping(uint256 => uint256) usdByAccount;
+
+        /// @dev tracks debt for each user
+        SharesLibrary.Distribution debtDist;
+
         /// @dev rewards
         RewardDistribution[] rewards;
     }
 
     struct RewardDistribution {
         // 3rd party smart contract which holds/mints the funds
-        IRewardsDistributor distributor;
-        // total amount of the distribution
-        uint128 amount;
-        // set to 0 to instantly distribute rewards
-        uint64 start;
-        // set to 0 to instantly distribute rewards
-        uint64 duration;
-        uint128 accumulatedPerShare;
-        uint64 lastUpdate;
-        mapping(uint => uint128) lastAccumulated;
+        IRewardDistributor distributor;
+
+        SharesLibrary.DistributionEntry entry;
+
+        uint128 rewardPerShare;
+
+        mapping(uint256 => RewardDistributionStatus) actorInfo;
+    }
+
+    struct RewardDistributionStatus {
+        uint128 lastRewardPerShare;
+        uint128 pendingSend;
     }
 
     function _fundVaultStore() internal pure returns (FundVaultStore storage store) {

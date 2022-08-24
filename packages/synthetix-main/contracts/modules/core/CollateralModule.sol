@@ -10,6 +10,8 @@ import "@synthetixio/core-modules/contracts/mixins/AssociatedSystemsMixin.sol";
 import "../../mixins/AccountRBACMixin.sol";
 import "../../mixins/CollateralMixin.sol";
 
+import "../../utils/ERC20Helper.sol";
+
 contract CollateralModule is
     ICollateralModule,
     CollateralStorage,
@@ -18,13 +20,15 @@ contract CollateralModule is
     CollateralMixin,
     AssociatedSystemsMixin
 {
+    using SetUtil for SetUtil.AddressSet;
+    using ERC20Helper for address;
+
+
     bytes32 private constant _REDEEMABLE_REWARDS_TOKEN = "eSNXToken";
     bytes32 private constant _REWARDED_TOKEN = "SNXToken";
 
     // 86400 * 365.26
     uint private constant _SECONDS_PER_YEAR = 31558464;
-
-    using SetUtil for SetUtil.AddressSet;
 
     error OutOfBounds();
 
@@ -95,7 +99,7 @@ contract CollateralModule is
         ];
 
         // TODO Use SafeTransferFrom
-        IERC20(collateralType).transferFrom(_accountOwner(accountId), address(this), amount);
+        collateralType.safeTransferFrom(_accountOwner(accountId), address(this), amount);
 
         if (!collateralData.isSet) {
             // new collateral
@@ -116,7 +120,7 @@ contract CollateralModule is
         uint256 availableCollateral = getAccountUnstakebleCollateral(accountId, collateralType);
 
         if (availableCollateral < amount) {
-            revert InsufficientAvailableCollateral(accountId, collateralType, amount);
+            revert InsufficientAccountCollateral(accountId, collateralType, amount);
         }
 
         StakedCollateralData storage collateralData = _collateralStore().stakedCollateralsDataByAccountId[accountId][
@@ -127,8 +131,7 @@ contract CollateralModule is
 
         emit CollateralUnstaked(accountId, collateralType, amount, msg.sender);
 
-        // TODO Use SafeTransfer
-        IERC20(collateralType).transfer(_accountOwner(accountId), amount);
+        collateralType.safeTransfer(_accountOwner(accountId), amount);
     }
 
     function getAccountCollaterals(uint accountId) external view override returns (address[] memory collateralTypes) {

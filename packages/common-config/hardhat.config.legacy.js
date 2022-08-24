@@ -36,6 +36,11 @@ const config = {
       url: process.env.NETWORK_ENDPOINT || 'https://mainnet.optimism.io',
       accounts: process.env.DEPLOYER_PRIVATE_KEY ? [process.env.DEPLOYER_PRIVATE_KEY] : [],
     },
+    goerli: {
+      url: `https://goerli.infura.io/v3/${process.env.INFURA_KEY}`,
+      accounts: process.env.DEPLOYER_PRIVATE_KEY ? [process.env.DEPLOYER_PRIVATE_KEY] : [],
+      chainId: 5,
+    },
   },
   contractSizer: {
     strict: true,

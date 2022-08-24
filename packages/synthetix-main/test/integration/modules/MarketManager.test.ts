@@ -1,10 +1,11 @@
-import hre from 'hardhat';
 import assert from 'assert/strict';
-import assertRevert from '@synthetixio/core-utils/dist/utils/assertions/assert-revert';
-import { findEvent } from '@synthetixio/core-utils/dist/utils/ethers/events';
-import { bootstrap } from '../bootstrap';
 import assertBn from '@synthetixio/core-utils/dist/utils/assertions/assert-bignumber';
+import assertRevert from '@synthetixio/core-utils/dist/utils/assertions/assert-revert';
+import hre from 'hardhat';
 import { ethers } from 'ethers';
+import { findEvent } from '@synthetixio/core-utils/dist/utils/ethers/events';
+
+import { bootstrap } from '../bootstrap';
 
 describe.skip('MarketManager', function () {
   const { signers, systems } = bootstrap();
@@ -29,7 +30,7 @@ describe.skip('MarketManager', function () {
   });
 
   before('create dummy markets', async () => {
-    Market1 = await (await hre.ethers.getContractFactory('MarketMock')).connect(owner).deploy();
+    Market1 = await (await hre.ethers.getContractFactory('MockMarket')).connect(owner).deploy();
   });
 
   describe('when a market is registered', async () => {
@@ -39,7 +40,7 @@ describe.skip('MarketManager', function () {
       receipt = await (await systems().Core.connect(owner).registerMarket(Market1.address)).wait();
     });
 
-    it('emmited an event', async () => {
+    it('emitted an event', async () => {
       const event = findEvent({ receipt, eventName: 'MarketRegistered' });
       assert(event.args.market, Market1.address);
       market1id = event.args.marketId;

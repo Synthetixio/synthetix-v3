@@ -1,6 +1,11 @@
 const { parseFullyQualifiedName } = require('hardhat/utils/contract-names');
 const { getBytecodeHash } = require('@synthetixio/core-utils/dist/utils/ethers/contracts');
 
+const path = require('path');
+const fs = require('fs');
+const mkdirp = require('mkdirp');
+const { dirname } = require('path');
+
 /**
  * Initialize contract metadata on hre.router.deployment.*
  * This will in turn save all the necessary data to deployments file.
@@ -26,7 +31,29 @@ async function initContractData(contractFullyQualifiedName, extraData = {}) {
     sourceName,
   };
 
-  await _initContractSource(contractFullyQualifiedName);
+  const cachedSourceInfo = path.join(
+    hre.router.paths.cache,
+    'source-abis',
+    deployedBytecodeHash + '.json'
+  );
+  if (fs.existsSync(cachedSourceInfo)) {
+    const data = JSON.parse(fs.readFileSync(cachedSourceInfo));
+    deployment.sources[sourceName] = data.sourceInfo;
+    deployment.abis[`${sourceName}:${contractName}`] = data.abiInfo;
+  } else {
+    await _initContractSource(contractFullyQualifiedName);
+
+    // save the resulting artifacts
+    await mkdirp(dirname(cachedSourceInfo));
+
+    fs.writeFileSync(
+      cachedSourceInfo,
+      JSON.stringify({
+        sourceInfo: deployment.sources[sourceName],
+        abiInfo: deployment.abis[`${sourceName}:${contractName}`],
+      })
+    );
+  }
 }
 
 /**
