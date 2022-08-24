@@ -5,6 +5,7 @@ import "@synthetixio/core-contracts/contracts/ownership/OwnableMixin.sol";
 import "@synthetixio/core-contracts/contracts/proxy/UUPSProxy.sol";
 import "@synthetixio/core-modules/contracts/interfaces/INftModule.sol";
 import "../../interfaces/IAccountModule.sol";
+import "../../interfaces/IAccountTokenModule.sol";
 import "../../storage/AccountModuleStorage.sol";
 
 import "@synthetixio/core-modules/contracts/mixins/AssociatedSystemsMixin.sol";
@@ -19,8 +20,8 @@ contract AccountModule is IAccountModule, OwnableMixin, AccountRBACMixin, Associ
     error OnlyTokenProxyAllowed(address origin);
     error InvalidRole();
 
-    function getAccountAddress() public view override returns (INftModule) {
-        return _getNft(_ACCOUNT_SYSTEM);
+    function getAccountTokenAddress() public view override returns (address) {
+        return _getSystemAddress(_ACCOUNT_SYSTEM);
     }
 
     function getAccountPermissions(uint accountId) external view returns (AccountPermission[] memory permissions) {
@@ -41,7 +42,8 @@ contract AccountModule is IAccountModule, OwnableMixin, AccountRBACMixin, Associ
     // Business Logic
     // ---------------------------------------
     function createAccount(uint256 requestedAccountId) external override {
-        getAccountAddress().mint(msg.sender, requestedAccountId);
+        IAccountTokenModule accountTokenModule = IAccountTokenModule(getAccountTokenAddress());
+        accountTokenModule.mint(msg.sender, requestedAccountId);
 
         _accountModuleStore().accountsRBAC[requestedAccountId].owner = msg.sender;
 
@@ -117,7 +119,7 @@ contract AccountModule is IAccountModule, OwnableMixin, AccountRBACMixin, Associ
     }
 
     modifier onlyFromTokenProxy() {
-        if (msg.sender != address(getAccountAddress())) {
+        if (msg.sender != getAccountTokenAddress()) {
             revert OnlyTokenProxyAllowed(msg.sender);
         }
 

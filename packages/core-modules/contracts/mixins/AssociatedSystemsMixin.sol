@@ -14,6 +14,10 @@ contract AssociatedSystemsMixin is AssociatedSystemsStorage {
     bytes32 internal constant _KIND_ERC721 = "erc721";
     bytes32 internal constant _KIND_UNMANAGED = "unmanaged";
 
+    function _getSystemAddress(bytes32 id) internal view returns (address) {
+        return _associatedSystemsStore().satellites[id].proxy;
+    }
+
     function _getToken(bytes32 id) internal view returns (ITokenModule) {
         _requireKind(id, _KIND_ERC20);
         return ITokenModule(_associatedSystemsStore().satellites[id].proxy);

@@ -1,9 +1,6 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@synthetixio/core-modules/contracts/interfaces/INftModule.sol";
-import "./IAccountTokenModule.sol";
-
 /// @title Module for managing account token (NFT) and accounts, each account is represented by an NFT
 interface IAccountModule {
     /**
@@ -96,5 +93,8 @@ interface IAccountModule {
         address target
     ) external view returns (bool);
 
-    function getAccountAddress() external view returns (IAccountTokenModule);
+    /**
+     * @dev Returns the address for the account token used by the module.
+     */
+    function getAccountTokenAddress() external view returns (address);
 }
