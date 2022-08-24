@@ -90,16 +90,8 @@ contract AccountModule is IAccountModule, OwnableMixin, AccountRBACMixin, Associ
         _revokeRole(accountId, role, target);
     }
 
-    function renounceRole(
-        uint accountId,
-        bytes32 role,
-        address target
-    ) external override {
-        if (msg.sender != target) {
-            revert RoleNotAuthorized(accountId, "renounceRole", target);
-        }
-
-        _revokeRole(accountId, role, target);
+    function renounceRole(uint accountId, bytes32 role) external override {
+        _revokeRole(accountId, role, msg.sender);
     }
 
     function _revokeRole(

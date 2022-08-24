@@ -70,19 +70,11 @@ interface IAccountModule {
     ) external;
 
     /**
-     * @dev Revokes `role` from `target` for account `accountId`.
-     *
-     * Requirements:
-     *
-     * - `msg.sender` must equal `target`
+     * @dev Revokes `role` from `msg.sender` for account `accountId`.
      *
      * Emits a {RoleRevoked} event.
      */
-    function renounceRole(
-        uint accountId,
-        bytes32 role,
-        address target
-    ) external;
+    function renounceRole(uint accountId, bytes32 role) external;
 
     /**
      * @dev Returns `true` if `target` has been granted `role` for account `accountId`.
