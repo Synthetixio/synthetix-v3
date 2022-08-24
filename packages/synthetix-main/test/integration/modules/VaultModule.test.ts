@@ -110,7 +110,7 @@ describe('VaultModule', function () {
             depositAmount.mul(2),
             ethers.utils.parseEther('1.1')
           ),
-        `InvalidLeverage`,
+        'InvalidLeverage',
         systems().Core
       );
     });
@@ -410,7 +410,7 @@ describe('VaultModule', function () {
         systems()
           .Core.connect(user1)
           .mintUSD(accountId, fundId, collateralAddress(), depositAmount),
-        `InsufficientCollateralRatio`,
+        'InsufficientCollateralRatio',
         systems().Core
       );
     });

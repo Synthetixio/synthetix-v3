@@ -67,8 +67,8 @@ export function bootstrapWithStakedFund() {
 
   let aggregator: ethers.Contract;
 
-  let accountId = 1;
-  let fundId = 1;
+  const accountId = 1;
+  const fundId = 1;
   let collateralAddress: string;
   const depositAmount = ethers.utils.parseEther('1000');
 
@@ -96,8 +96,8 @@ export function bootstrapWithStakedFund() {
     await r.systems().Core.connect(owner).adjustCollateralType(
       collateralAddress, 
       aggregator.address, 
-      "5000000000000000000", 
-      "1500000000000000000", 
+      '5000000000000000000', 
+      '1500000000000000000', 
       true
     );
 

@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import "@synthetixio/core-contracts/contracts/utils/MathUtil.sol";
-import "../interfaces/IMarket.sol";
+import "../interfaces/external/IMarket.sol";
 import "../interfaces/IMarketManagerModule.sol";
 
 contract MockMarket is IMarket {
