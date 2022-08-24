@@ -12,11 +12,6 @@ import "../storage/NftStorage.sol";
 import "../interfaces/INftModule.sol";
 
 contract NftModule is INftModule, ERC721Enumerable, NftStorage, InitializableMixin, OwnableMixin {
-    event Mint(address owner, uint nftId);
-
-    // ---------------------------------------
-    // Chores
-    // ---------------------------------------
     function _isInitialized() internal view override returns (bool) {
         return _nftStore().initialized;
     }

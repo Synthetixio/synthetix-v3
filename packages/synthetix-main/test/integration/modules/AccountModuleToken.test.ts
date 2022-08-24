@@ -79,18 +79,6 @@ describe('AccountModule and AccountToken', function () {
       });
     });
 
-    describe('when attempting to call transferAccount directly', async () => {
-      it('reverts', async () => {
-        await assertRevert(
-          systems()
-            .Core.connect(user1)
-            .transferAccount(await user2.getAddress(), 1),
-          `OnlyTokenProxyAllowed("${await user1.getAddress()}")`,
-          systems().Core
-        );
-      });
-    });
-
     describe('when granting roles', async () => {
       describe('before granting access', async () => {
         it('does not have granted roles', async () => {

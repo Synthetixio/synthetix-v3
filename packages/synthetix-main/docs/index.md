@@ -2,75 +2,29 @@
 
 ## Account Module
 
-### AccountPermission
-
-```solidity
-struct AccountPermission {
-  address target;
-  bytes32[] roles;
-}
-```
-### getAccountAddress
+### AccountCreated
 
   ```solidity
-  function getAccountAddress() external view returns (contract INftModule)
+  event AccountCreated(address sender, uint256 accountId)
   ```
 
-gets the AccountToken address.
+  _Emitted when an account token with id `accountId` is minted to `sender`._
 
-### getAccountPermissions
+### RoleGranted
 
   ```solidity
-  function getAccountPermissions(uint256 accountId) external view returns (struct IAccountModule.AccountPermission[])
+  event RoleGranted(uint256 accountId, bytes32 role, address target, address sender)
   ```
 
-### createAccount
+  _Emitted when `target` is granted `role` by `sender` for account `accountId`._
+
+### RoleRevoked
 
   ```solidity
-  function createAccount(uint256 accountId) external
+  event RoleRevoked(uint256 accountId, bytes32 role, address target, address sender)
   ```
 
-creates a new accountToken (NFT)
-
-### transferAccount
-
-  ```solidity
-  function transferAccount(address to, uint256 accountId) external
-  ```
-
-creates a new accountToken (NFT)
-
-### grantRole
-
-  ```solidity
-  function grantRole(uint256 accountId, bytes32 role, address target) external
-  ```
-
-grants "target" address the "role" role for the "accountId" account token NFT
-
-### revokeRole
-
-  ```solidity
-  function revokeRole(uint256 accountId, bytes32 role, address target) external
-  ```
-
-revokes "target" address the "role" role for the "accountId" account token NFT
-
-### renounceRole
-
-  ```solidity
-  function renounceRole(uint256 accountId, bytes32 role, address target) external
-  ```
-
-the sender (must be the same as "target") renounces to the "role" role for the "accountId" account token NFT
-
-### hasRole
-
-  ```solidity
-  function hasRole(uint256 accountId, bytes32 role, address target) external view returns (bool)
-  ```
-
-checks if the "target" address has the "role" role granted for the "accountId" account token NFT
+  _Emitted when `target` has `role` renounced or revoked by `sender` for account `accountId`._
 
 ### AccountPermission
 
@@ -80,35 +34,27 @@ struct AccountPermission {
   bytes32[] roles;
 }
 ```
-### getAccountAddress
-
-  ```solidity
-  function getAccountAddress() external view returns (contract INftModule)
-  ```
-
-gets the AccountToken address.
-
 ### getAccountPermissions
 
   ```solidity
   function getAccountPermissions(uint256 accountId) external view returns (struct IAccountModule.AccountPermission[])
   ```
 
+  _Returns an array of `AccountPermission` for the provided `accountId`._
+
 ### createAccount
 
   ```solidity
-  function createAccount(uint256 accountId) external
+  function createAccount(uint256 requestedAccountId) external
   ```
 
-creates a new accountToken (NFT)
+  _Mints an account token with id `requestedAccountId` to `msg.sender`.
 
-### transferAccount
+Requirements:
 
-  ```solidity
-  function transferAccount(address to, uint256 accountId) external
-  ```
+- `requestedAccountId` must not already be minted.
 
-creates a new accountToken (NFT)
+Emits a {AccountCreated} event._
 
 ### grantRole
 
@@ -116,7 +62,13 @@ creates a new accountToken (NFT)
   function grantRole(uint256 accountId, bytes32 role, address target) external
   ```
 
-grants "target" address the "role" role for the "accountId" account token NFT
+  _Grants `role` to `target` for account `accountId`.
+
+Requirements:
+
+- `msg.sender` must own the account token with ID `accountId` or have the "admin" role.
+
+Emits a {RoleGranted} event._
 
 ### revokeRole
 
@@ -124,15 +76,23 @@ grants "target" address the "role" role for the "accountId" account token NFT
   function revokeRole(uint256 accountId, bytes32 role, address target) external
   ```
 
-revokes "target" address the "role" role for the "accountId" account token NFT
+  _Revokes `role` from `target` for account `accountId`.
+
+Requirements:
+
+- `msg.sender` must own the account token with ID `accountId` or have the "admin" role.
+
+Emits a {RoleRevoked} event._
 
 ### renounceRole
 
   ```solidity
-  function renounceRole(uint256 accountId, bytes32 role, address target) external
+  function renounceRole(uint256 accountId, bytes32 role) external
   ```
 
-the sender (must be the same as "target") renounces to the "role" role for the "accountId" account token NFT
+  _Revokes `role` from `msg.sender` for account `accountId`.
+
+Emits a {RoleRevoked} event._
 
 ### hasRole
 
@@ -140,35 +100,133 @@ the sender (must be the same as "target") renounces to the "role" role for the "
   function hasRole(uint256 accountId, bytes32 role, address target) external view returns (bool)
   ```
 
-checks if the "target" address has the "role" role granted for the "accountId" account token NFT
+  _Returns `true` if `target` has been granted `role` for account `accountId`._
 
-### Satellite
+### getAccountTokenAddress
+
+  ```solidity
+  function getAccountTokenAddress() external view returns (address)
+  ```
+
+  _Returns the address for the account token used by the module._
+
+### AccountCreated
+
+  ```solidity
+  event AccountCreated(address sender, uint256 accountId)
+  ```
+
+  _Emitted when an account token with id `accountId` is minted to `sender`._
+
+### RoleGranted
+
+  ```solidity
+  event RoleGranted(uint256 accountId, bytes32 role, address target, address sender)
+  ```
+
+  _Emitted when `target` is granted `role` by `sender` for account `accountId`._
+
+### RoleRevoked
+
+  ```solidity
+  event RoleRevoked(uint256 accountId, bytes32 role, address target, address sender)
+  ```
+
+  _Emitted when `target` has `role` renounced or revoked by `sender` for account `accountId`._
+
+### AccountPermission
 
 ```solidity
-struct Satellite {
-  bytes32 name;
-  bytes32 contractName;
-  address deployedAddress;
+struct AccountPermission {
+  address target;
+  bytes32[] roles;
 }
 ```
+### getAccountPermissions
+
+  ```solidity
+  function getAccountPermissions(uint256 accountId) external view returns (struct IAccountModule.AccountPermission[])
+  ```
+
+  _Returns an array of `AccountPermission` for the provided `accountId`._
+
+### createAccount
+
+  ```solidity
+  function createAccount(uint256 requestedAccountId) external
+  ```
+
+  _Mints an account token with id `requestedAccountId` to `msg.sender`.
+
+Requirements:
+
+- `requestedAccountId` must not already be minted.
+
+Emits a {AccountCreated} event._
+
+### grantRole
+
+  ```solidity
+  function grantRole(uint256 accountId, bytes32 role, address target) external
+  ```
+
+  _Grants `role` to `target` for account `accountId`.
+
+Requirements:
+
+- `msg.sender` must own the account token with ID `accountId` or have the "admin" role.
+
+Emits a {RoleGranted} event._
+
+### revokeRole
+
+  ```solidity
+  function revokeRole(uint256 accountId, bytes32 role, address target) external
+  ```
+
+  _Revokes `role` from `target` for account `accountId`.
+
+Requirements:
+
+- `msg.sender` must own the account token with ID `accountId` or have the "admin" role.
+
+Emits a {RoleRevoked} event._
+
+### renounceRole
+
+  ```solidity
+  function renounceRole(uint256 accountId, bytes32 role) external
+  ```
+
+  _Revokes `role` from `msg.sender` for account `accountId`.
+
+Emits a {RoleRevoked} event._
+
+### hasRole
+
+  ```solidity
+  function hasRole(uint256 accountId, bytes32 role, address target) external view returns (bool)
+  ```
+
+  _Returns `true` if `target` has been granted `role` for account `accountId`._
+
+### getAccountTokenAddress
+
+  ```solidity
+  function getAccountTokenAddress() external view returns (address)
+  ```
+
+  _Returns the address for the account token used by the module._
 
 ## Account Token Module
 
-### isInitialized
+### Mint
 
   ```solidity
-  function isInitialized() external returns (bool)
+  event Mint(address owner, uint256 tokenId)
   ```
 
-returns if `initialize` has been called by the owner
-
-### initialize
-
-  ```solidity
-  function initialize(string tokenName, string tokenSymbol, string uri) external
-  ```
-
-allows owner to initialize the token after attaching a proxy
+  _Emitted when `tokenId` token is minted._
 
 ### mint
 
@@ -176,7 +234,57 @@ allows owner to initialize the token after attaching a proxy
   function mint(address owner, uint256 requestedAccountId) external
   ```
 
-mints a new token (NFT) with the "requestedAccountId" id owned by "owner". It can ol=nly be called by the system
+  _Mints a new token with the `requestedAccountId` as the ID, owned by `owner`
+
+This function is only used internally by the system. See `createAccount` in the Account Module.
+
+Requirements:
+
+- `msg.sender` must be the owner of the contract.
+- `requestedAccountId` must not already be minted.
+
+Emits a {Mint} event._
+
+### Mint
+
+  ```solidity
+  event Mint(address owner, uint256 tokenId)
+  ```
+
+  _Emitted when `tokenId` token is minted._
+
+### mint
+
+  ```solidity
+  function mint(address owner, uint256 requestedAccountId) external
+  ```
+
+  _Mints a new token with the `requestedAccountId` as the ID, owned by `owner`
+
+This function is only used internally by the system. See `createAccount` in the Account Module.
+
+Requirements:
+
+- `msg.sender` must be the owner of the contract.
+- `requestedAccountId` must not already be minted.
+
+Emits a {Mint} event._
+
+### isInitialized
+
+  ```solidity
+  function isInitialized() external returns (bool)
+  ```
+
+Returns if `initialize` has been called by the owner
+
+### initialize
+
+  ```solidity
+  function initialize(string tokenName, string tokenSymbol, string uri) external
+  ```
+
+Allows owner to initialize the token after attaching a proxy
 
 ### totalSupply
 
@@ -231,14 +339,22 @@ Use along with {totalSupply} to enumerate all tokens._
 ### balanceOf
 
   ```solidity
-  function balanceOf(address owner) external view returns (uint256)
+  function balanceOf(address owner) external view returns (uint256 balance)
   ```
+
+  _Returns the number of tokens in ``owner``'s account._
 
 ### ownerOf
 
   ```solidity
-  function ownerOf(uint256 tokenId) external view returns (address)
+  function ownerOf(uint256 tokenId) external view returns (address owner)
   ```
+
+  _Returns the owner of the `tokenId` token.
+
+Requirements:
+
+- `tokenId` must exist._
 
 ### safeTransferFrom
 
@@ -246,11 +362,36 @@ Use along with {totalSupply} to enumerate all tokens._
   function safeTransferFrom(address from, address to, uint256 tokenId, bytes data) external
   ```
 
+  _Safely transfers `tokenId` token from `from` to `to`.
+
+Requirements:
+
+- `from` cannot be the zero address.
+- `to` cannot be the zero address.
+- `tokenId` token must exist and be owned by `from`.
+- If the caller is not `from`, it must be approved to move this token by either {approve} or {setApprovalForAll}.
+- If `to` refers to a smart contract, it must implement {IERC721Receiver-onERC721Received}, which is called upon a safe transfer.
+
+Emits a {Transfer} event._
+
 ### safeTransferFrom
 
   ```solidity
   function safeTransferFrom(address from, address to, uint256 tokenId) external
   ```
+
+  _Safely transfers `tokenId` token from `from` to `to`, checking first that contract recipients
+are aware of the ERC721 protocol to prevent tokens from being forever locked.
+
+Requirements:
+
+- `from` cannot be the zero address.
+- `to` cannot be the zero address.
+- `tokenId` token must exist and be owned by `from`.
+- If the caller is not `from`, it must have been allowed to move this token by either {approve} or {setApprovalForAll}.
+- If `to` refers to a smart contract, it must implement {IERC721Receiver-onERC721Received}, which is called upon a safe transfer.
+
+Emits a {Transfer} event._
 
 ### transferFrom
 
@@ -258,11 +399,36 @@ Use along with {totalSupply} to enumerate all tokens._
   function transferFrom(address from, address to, uint256 tokenId) external
   ```
 
+  _Transfers `tokenId` token from `from` to `to`.
+
+WARNING: Usage of this method is discouraged, use {safeTransferFrom} whenever possible.
+
+Requirements:
+
+- `from` cannot be the zero address.
+- `to` cannot be the zero address.
+- `tokenId` token must be owned by `from`.
+- If the caller is not `from`, it must be approved to move this token by either {approve} or {setApprovalForAll}.
+
+Emits a {Transfer} event._
+
 ### approve
 
   ```solidity
-  function approve(address approved, uint256 tokenId) external
+  function approve(address to, uint256 tokenId) external
   ```
+
+  _Gives permission to `to` to transfer `tokenId` token to another account.
+The approval is cleared when the token is transferred.
+
+Only a single account can be approved at a time, so approving the zero address clears previous approvals.
+
+Requirements:
+
+- The caller must own the token or be an approved operator.
+- `tokenId` must exist.
+
+Emits an {Approval} event._
 
 ### setApprovalForAll
 
@@ -270,11 +436,26 @@ Use along with {totalSupply} to enumerate all tokens._
   function setApprovalForAll(address operator, bool approved) external
   ```
 
+  _Approve or remove `operator` as an operator for the caller.
+Operators can call {transferFrom} or {safeTransferFrom} for any token owned by the caller.
+
+Requirements:
+
+- The `operator` cannot be the caller.
+
+Emits an {ApprovalForAll} event._
+
 ### getApproved
 
   ```solidity
-  function getApproved(uint256 tokenId) external view returns (address)
+  function getApproved(uint256 tokenId) external view returns (address operator)
   ```
+
+  _Returns the account approved for `tokenId` token.
+
+Requirements:
+
+- `tokenId` must exist._
 
 ### isApprovedForAll
 
@@ -282,11 +463,9 @@ Use along with {totalSupply} to enumerate all tokens._
   function isApprovedForAll(address owner, address operator) external view returns (bool)
   ```
 
-### supportsInterface
+  _Returns if the `operator` is allowed to manage all of the assets of `owner`.
 
-  ```solidity
-  function supportsInterface(bytes4 interfaceID) external view returns (bool)
-  ```
+See {setApprovalForAll}_
 
 ## Collateral Module
 
@@ -934,14 +1113,6 @@ upgrades the USDToken implementation.
 
 gets the USDToken address.
 
-### getUSDTokenModuleSatellites
-
-  ```solidity
-  function getUSDTokenModuleSatellites() external view returns (struct ISatelliteFactory.Satellite[])
-  ```
-
-gets the USDToken Satellites created (only one, at idx 0).
-
 ### initializeUSDTokenModule
 
   ```solidity
@@ -973,24 +1144,6 @@ upgrades the USDToken implementation.
   ```
 
 gets the USDToken address.
-
-### getUSDTokenModuleSatellites
-
-  ```solidity
-  function getUSDTokenModuleSatellites() external view returns (struct ISatelliteFactory.Satellite[])
-  ```
-
-gets the USDToken Satellites created (only one, at idx 0).
-
-### Satellite
-
-```solidity
-struct Satellite {
-  bytes32 name;
-  bytes32 contractName;
-  address deployedAddress;
-}
-```
 
 ## Vault Module
 
@@ -1169,36 +1322,6 @@ gets the debt per share (USD value) for a fund
   ```
 
 gets liquidityItem details for a liquidityItemId
-
-## Vault Module Storage
-
-### LiquidityItem
-
-```solidity
-struct LiquidityItem {
-  uint256 accountId;
-  address collateralType;
-  uint256 fundId;
-  uint256 collateralAmount;
-  uint256 shares;
-  uint256 initialDebt;
-  uint256 leverage;
-}
-```
-
-### LiquidityItem
-
-```solidity
-struct LiquidityItem {
-  uint256 accountId;
-  address collateralType;
-  uint256 fundId;
-  uint256 collateralAmount;
-  uint256 shares;
-  uint256 initialDebt;
-  uint256 leverage;
-}
-```
 
 ## Vault Rewards Module
 

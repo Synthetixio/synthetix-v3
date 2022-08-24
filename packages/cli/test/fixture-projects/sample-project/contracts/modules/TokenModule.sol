@@ -1,12 +1,11 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@synthetixio/core-contracts/contracts/satellite/SatelliteFactory.sol";
 import "../storage/TokenStorage.sol";
 import {Token as BaseToken} from "../token/Token.sol";
 import "../interfaces/ITokenModule.sol";
 
-contract TokenModule is SatelliteFactory, TokenStorage, ITokenModule {
+contract TokenModule is TokenStorage, ITokenModule {
     function _getSatellites() internal view override returns (Satellite[] memory) {
         return _tokenStore().tokens;
     }
