@@ -41,6 +41,7 @@ module.exports.deploy = async function deploy(runtime, prefix, modules) {
     quiet: false,
     clear: isHHNetwork,
     skipProxy: true,
+    skipRouter: true,
     instance,
     modules,
   });
@@ -49,7 +50,7 @@ module.exports.deploy = async function deploy(runtime, prefix, modules) {
 
   const contracts = Object.values(deployInfo.contracts).reduce((contracts, c) => {
     // TODO: bug causes proxy contract to be included
-    if (c.contractName === 'Proxy') {
+    if (['Proxy', 'Router'].includes(c.contractName)) {
       return contracts;
     }
 
@@ -67,7 +68,8 @@ module.exports.deploy = async function deploy(runtime, prefix, modules) {
   }, {});
 
   // Set the multicall ABI on the Proxy
-  contracts[prefix + 'Router'].abi = await hre.run(SUBTASK_GET_MULTICALL_ABI, { info, instance });
+  // contracts[prefix + 'Router'].abi = await hre.run(SUBTASK_GET_MULTICALL_ABI, { info, instance });
+
   hre.ethers.getSigners = cachedGetSigners;
   hre.ethers.getSigner = cachedGetSigner;
 

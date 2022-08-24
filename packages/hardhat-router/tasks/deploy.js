@@ -32,6 +32,7 @@ const { readPackageJson } = require('@synthetixio/core-utils/utils/misc/npm');
 task(TASK_DEPLOY, 'Deploys all system modules')
   .addFlag('noConfirm', 'Skip all confirmation prompts', false)
   .addFlag('skipProxy', 'Do not deploy the UUPS proxy', false)
+  .addFlag('skipRouter', 'Do not deploy generated Router contract', false)
   .addFlag('debug', 'Display debug logs', false)
   .addFlag('quiet', 'Silence all output', false)
   .addFlag('clear', 'Clear all previous deployment data for the selected network', false)
@@ -47,7 +48,7 @@ task(TASK_DEPLOY, 'Deploys all system modules')
     types.alphanumeric
   )
   .setAction(async (taskArguments, hre) => {
-    const { clear, debug, quiet, noConfirm, skipProxy } = taskArguments;
+    const { clear, debug, quiet, noConfirm, skipProxy, skipRouter } = taskArguments;
 
     logger.quiet = quiet;
     logger.debugging = debug;
@@ -82,7 +83,10 @@ task(TASK_DEPLOY, 'Deploys all system modules')
       await hre.run(SUBTASK_GENERATE_ROUTER_SOURCE);
       await _compile(hre, quiet);
       await hre.run(SUBTASK_VALIDATE_ROUTER);
-      await hre.run(SUBTASK_DEPLOY_ROUTER);
+
+      if (!skipRouter) {
+        await hre.run(SUBTASK_DEPLOY_ROUTER);
+      }
 
       if (!skipProxy) {
         await hre.run(SUBTASK_DEPLOY_PROXY);
