@@ -3,8 +3,8 @@ pragma solidity ^0.8.0;
 
 import "@synthetixio/core-contracts/contracts/ownership/OwnableMixin.sol";
 import "@synthetixio/core-contracts/contracts/proxy/UUPSProxy.sol";
+import "@synthetixio/core-modules/contracts/interfaces/INftModule.sol";
 import "../../interfaces/IAccountModule.sol";
-import "../../interfaces/IAccountTokenModule.sol";
 import "../../storage/AccountModuleStorage.sol";
 
 import "@synthetixio/core-modules/contracts/mixins/AssociatedSystemsMixin.sol";
@@ -19,8 +19,8 @@ contract AccountModule is IAccountModule, OwnableMixin, AccountRBACMixin, Associ
     error OnlyTokenProxyAllowed(address origin);
     error InvalidRole();
 
-    function getAccountAddress() public view override returns (IAccountTokenModule) {
-        return IAccountTokenModule(_getNft(_ACCOUNT_SYSTEM));
+    function getAccountAddress() public view override returns (INftModule) {
+        return _getNft(_ACCOUNT_SYSTEM);
     }
 
     function getAccountPermissions(uint accountId) external view returns (AccountPermission[] memory permissions) {

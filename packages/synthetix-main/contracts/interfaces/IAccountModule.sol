@@ -7,6 +7,10 @@ import "./IAccountTokenModule.sol";
 /// @title Module for managing account token (NFT) and accounts, each account is represented by an NFT
 
 interface IAccountModule {
+    event AccountCreated(address accountAddress);
+    event RoleGranted(uint accountId, bytes32 role, address target, address executedBy);
+    event RoleRevoked(uint accountId, bytes32 role, address target, address executedBy);
+
     struct AccountPermission {
         address target;
         bytes32[] roles;

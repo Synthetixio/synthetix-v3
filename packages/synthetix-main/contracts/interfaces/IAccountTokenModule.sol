@@ -11,10 +11,13 @@ interface IAccountTokenModule is INftModule {
     event Mint(address indexed owner, uint256 indexed tokenId);
 
     /**
-     * @dev Mints a new token with the `requestedAccountId` as the ID, owned by `owner`.
+     * @dev Mints a new token with the `requestedAccountId` as the ID, owned by `owner`
+     *
+     * This function is only used internally by the system. See `createAccount` in the Account Module.
      *
      * Requirements:
      *
+     * - `msg.sender` must be the owner of the contract.
      * - `requestedAccountId` must not already be minted.
      *
      * Emits a {Mint} event.
