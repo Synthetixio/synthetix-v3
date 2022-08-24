@@ -45,7 +45,7 @@ contract AccountModule is IAccountModule, OwnableMixin, AccountRBACMixin, Associ
 
         _accountModuleStore().accountsRBAC[requestedAccountId].owner = msg.sender;
 
-        emit AccountCreated(msg.sender, requestedAccountId)
+        emit AccountCreated(msg.sender, requestedAccountId);
     }
 
     function hasRole(

@@ -17,7 +17,7 @@ const { SUBTASK_FIND_CONTRACTS } = require('../task-names');
  */
 subtask(SUBTASK_FIND_CONTRACTS, 'Get the list of contracts that can be interacted with').setAction(
   async (_, hre) => {
-    return _getDeploymentContracts(hre)
+    return _getDeploymentContracts(hre);
   }
 );
 

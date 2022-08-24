@@ -5,7 +5,6 @@ import "@synthetixio/core-modules/contracts/interfaces/INftModule.sol";
 import "./IAccountTokenModule.sol";
 
 /// @title Module for managing account token (NFT) and accounts, each account is represented by an NFT
-
 interface IAccountModule {
     /**
      * @dev Emitted when an account token with id `accountId` is minted to `sender`.
