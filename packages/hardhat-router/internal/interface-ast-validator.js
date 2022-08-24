@@ -2,7 +2,7 @@ const {
   findContractDependencies,
   findFunctionNodes,
   findContractNode,
-} = require('@synthetixio/core-utils/dist/utils/ast/finders');
+} = require('@synthetixio/core-utils/utils/ast/finders');
 
 class InterfaceCoverageASTValidator {
   constructor(contractFullyQualifiedNames, astNodes, visibleFunctionsFilter) {

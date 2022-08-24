@@ -1,8 +1,9 @@
 /* eslint @typescript-eslint/no-var-requires: 0 */
 
-import { ethers } from 'ethers';
 import assert from 'assert/strict';
-import { findEvent } from '../../../utils/ethers/events';
+import { ethers } from 'ethers';
+
+import { findEvent } from '../../../src/utils/ethers/events';
 
 // TODO
 const parsedTxReceipt = require('../../fixtures/parsed-tx-receipt');
@@ -18,18 +19,12 @@ describe('utils/ethers/events.js', () => {
     });
 
     assert.equal(event.event, 'ValueSet');
-    assert.equal(
-      event.args.sender,
-      '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266'
-    );
+    assert.equal(event.args.sender, '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266');
     assert.equal(event.args.value, '42');
   });
 
   it('returns undefined if it cannot find any event', async () => {
-    assert.equal(
-      findEvent({ receipt: unparsedTxReceipt, eventName: 'InvalidEvent' }),
-      undefined
-    );
+    assert.equal(findEvent({ receipt: unparsedTxReceipt, eventName: 'InvalidEvent' }), undefined);
   });
 
   it('can retrieve events from a deployment transaction receipt if a contract interface is provided', async () => {
@@ -45,9 +40,6 @@ describe('utils/ethers/events.js', () => {
     });
 
     assert.equal(event.event, 'Test');
-    assert.equal(
-      event.args.sender,
-      '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266'
-    );
+    assert.equal(event.args.sender, '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266');
   });
 });

@@ -1,7 +1,8 @@
 import { equal } from 'assert/strict';
-import { clone } from '../../../utils/misc/clone';
-import { compareStorageStructs } from '../../../utils/ast/comparator';
-import { ContractsStruct } from '../../../utils/ast/storage-struct';
+
+import { ContractsStruct } from '../../../src/utils/ast/storage-struct';
+import { clone } from '../../../src/utils/misc/clone';
+import { compareStorageStructs } from '../../../src/utils/ast/comparator';
 
 describe('utils/ast/comparator.js compareStorageStructs', function () {
   const previousStructsMap: ContractsStruct[] = [
@@ -194,9 +195,7 @@ describe('utils/ast/comparator.js compareStorageStructs', function () {
     it('detects member type updated', function () {
       const currentStructsMap = clone(previousStructsMap);
       currentStructsMap[0].struct.members[0].type =
-        currentStructsMap[0].struct.members[0].type == 'uint256'
-          ? 'address'
-          : 'uint256';
+        currentStructsMap[0].struct.members[0].type == 'uint256' ? 'address' : 'uint256';
       const result = compareStorageStructs({
         previousStructsMap,
         currentStructsMap,

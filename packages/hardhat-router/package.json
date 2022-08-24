@@ -8,6 +8,14 @@
     "deploy",
     "solidity"
   ],
+  "files": [
+    "extensions",
+    "internal",
+    "subtasks",
+    "tasks",
+    "templates",
+    "utils"
+  ],
   "author": "Synthetix",
   "license": "MIT",
   "scripts": {
@@ -21,6 +29,7 @@
   },
   "dependencies": {
     "@nomiclabs/hardhat-etherscan": "3.0.3",
+    "@synthetixio/core-utils": "1.0.0",
     "@tenderly/hardhat-tenderly": "1.0.15",
     "axios": "0.27.2",
     "chalk": "4.1.2",

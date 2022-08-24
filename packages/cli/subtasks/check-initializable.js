@@ -1,7 +1,7 @@
 const { subtask } = require('hardhat/config');
 const { parseFullyQualifiedName } = require('hardhat/utils/contract-names');
-const { capitalize } = require('@synthetixio/core-utils/dist/utils/misc/strings');
-const { default: logger } = require('@synthetixio/core-utils/dist/utils/io/logger');
+const { capitalize } = require('@synthetixio/core-utils/utils/misc/strings');
+const { default: logger } = require('@synthetixio/core-utils/utils/io/logger');
 const { SUBTASK_CHECK_INITIALIZATION } = require('../task-names');
 
 subtask(

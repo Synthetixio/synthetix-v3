@@ -1,5 +1,6 @@
 import { BigNumber, BigNumberish, ethers } from 'ethers';
-import bn from '../../../utils/assertions/assert-bignumber';
+
+import bn from '../../../src/utils/assertions/assert-bignumber';
 
 // https://stackoverflow.com/questions/56863875/
 // typescript-how-do-you-filter-a-types-properties-to-those-of-a-certain-type

@@ -107,7 +107,11 @@ contract FundModule is IFundModule, FundEventAndErrors, AccountRBACMixin, FundMi
         uint totalWeight = 0;
         uint i = 0;
 
-        for (; i < (markets.length < fundData.fundDistribution.length ? markets.length : fundData.fundDistribution.length); i++) {
+        for (
+            ;
+            i < (markets.length < fundData.fundDistribution.length ? markets.length : fundData.fundDistribution.length);
+            i++
+        ) {
             MarketDistribution storage distribution = fundData.fundDistribution[i];
             distribution.market = markets[i];
             distribution.weight = uint128(weights[i]);

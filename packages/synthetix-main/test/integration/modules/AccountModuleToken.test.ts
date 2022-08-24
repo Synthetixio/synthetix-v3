@@ -1,8 +1,9 @@
-import { ethers } from 'ethers';
 import assert from 'assert/strict';
-import assertBn from '@synthetixio/core-utils/dist/utils/assertions/assert-bignumber';
-import assertRevert from '@synthetixio/core-utils/dist/utils/assertions/assert-revert';
-import { findEvent } from '@synthetixio/core-utils/dist/utils/ethers/events';
+import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
+import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
+import { ethers } from 'ethers';
+import { findEvent } from '@synthetixio/core-utils/utils/ethers/events';
+
 import { bootstrap } from '../bootstrap';
 
 describe('AccountModule and AccountToken', function () {
@@ -74,18 +75,6 @@ describe('AccountModule and AccountToken', function () {
           systems().Core.connect(user2).createAccount(1),
           'TokenAlreadyMinted("1")',
           systems().Account
-        );
-      });
-    });
-
-    describe('when attempting to call transferAccount directly', async () => {
-      it('reverts', async () => {
-        await assertRevert(
-          systems()
-            .Core.connect(user1)
-            .transferAccount(await user2.getAddress(), 1),
-          `OnlyTokenProxyAllowed("${await user1.getAddress()}")`,
-          systems().Core
         );
       });
     });

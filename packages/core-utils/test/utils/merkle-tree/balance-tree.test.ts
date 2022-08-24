@@ -1,14 +1,14 @@
-import { ethers } from 'ethers';
 import { equal } from 'assert/strict';
-import BalanceTree from '../../../utils/merkle-tree/balance-tree';
+import { ethers } from 'ethers';
+
+import BalanceTree from '../../../src/utils/merkle-tree/balance-tree';
 
 function hexStringToBuffer(data: string) {
   return Buffer.from(data.substring(2), 'hex');
 }
 
 describe('utils/merkle-tree/balance-tree.js', function () {
-  let balances: { account: string; amount: ethers.BigNumberish }[],
-    tree: BalanceTree;
+  let balances: { account: string; amount: ethers.BigNumberish }[], tree: BalanceTree;
 
   before('build tree', () => {
     balances = [];

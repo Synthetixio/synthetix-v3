@@ -1,6 +1,7 @@
-import { rejects } from 'assert/strict';
 import { ethers } from 'ethers';
-import assertRevert from '../../../utils/assertions/assert-revert';
+import { rejects } from 'assert/strict';
+
+import assertRevert from '../../../src/utils/assertions/assert-revert';
 
 function mockValidTx() {
   return Promise.resolve({

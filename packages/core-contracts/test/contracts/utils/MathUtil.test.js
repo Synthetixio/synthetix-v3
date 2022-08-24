@@ -1,9 +1,7 @@
 const { ethers } = hre;
-const assertBn = require('@synthetixio/core-utils/dist/utils/assertions/assert-bignumber');
-const {
-  default: assertRevert,
-} = require('@synthetixio/core-utils/dist/utils/assertions/assert-revert');
-const { bnSqrt } = require('@synthetixio/core-utils/dist/utils/ethers/bignumber');
+const assertBn = require('@synthetixio/core-utils/utils/assertions/assert-bignumber');
+const { default: assertRevert } = require('@synthetixio/core-utils/utils/assertions/assert-revert');
+const { bnSqrt } = require('@synthetixio/core-utils/utils/ethers/bignumber');
 
 function s(base, exp) {
   return ethers.BigNumber.from(base).mul(ethers.BigNumber.from(10).pow(exp));

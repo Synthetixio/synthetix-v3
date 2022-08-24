@@ -23,7 +23,6 @@ contract CollateralModule is
     using SetUtil for SetUtil.AddressSet;
     using ERC20Helper for address;
 
-
     bytes32 private constant _REDEEMABLE_REWARDS_TOKEN = "eSNXToken";
     bytes32 private constant _REWARDED_TOKEN = "SNXToken";
 
