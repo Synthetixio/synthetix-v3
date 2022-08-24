@@ -1,5 +1,6 @@
 import { equal } from 'assert/strict';
-import { capitalize } from '../../../utils/misc/strings';
+
+import { capitalize } from '../../../src/utils/misc/strings';
 
 describe('utils/misc/strings.js', function () {
   it('returns the strings with the correct format', function () {

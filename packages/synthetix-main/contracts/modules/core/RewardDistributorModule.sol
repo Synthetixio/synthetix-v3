@@ -1,4 +1,3 @@
-
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
@@ -14,7 +13,13 @@ import "../../storage/RewardDistributorStorage.sol";
 import "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
 import "../../submodules/FundEventAndErrors.sol";
 
-contract RewardDistributorModule is IRewardDistributorModule, IRewardDistributor, AssociatedSystemsMixin, OwnableMixin, RewardDistributorStorage {
+contract RewardDistributorModule is
+    IRewardDistributorModule,
+    IRewardDistributor,
+    AssociatedSystemsMixin,
+    OwnableMixin,
+    RewardDistributorStorage
+{
     bytes32 private constant _REDEEMABLE_REWARDS_TOKEN = "eSNXToken";
 
     error InsufficientRewardAllocation(uint requestedAmount, uint remainingAllocation);
@@ -23,7 +28,7 @@ contract RewardDistributorModule is IRewardDistributorModule, IRewardDistributor
         _rewardDistributorStore().allocatedFunds[fundId] = allocation;
     }
 
-    function getRewardAllocation(uint fundId) external override view returns (uint) {
+    function getRewardAllocation(uint fundId) external view override returns (uint) {
         return _rewardDistributorStore().allocatedFunds[fundId];
     }
 
@@ -47,7 +52,6 @@ contract RewardDistributorModule is IRewardDistributorModule, IRewardDistributor
 
         _rewardDistributorStore().allocatedFunds[fundId] -= amount;
         rewardToken.mint(to, amount);
-        
 
         return true;
     }

@@ -1,5 +1,5 @@
 const { parseFullyQualifiedName } = require('hardhat/utils/contract-names');
-const { getBytecodeHash } = require('@synthetixio/core-utils/dist/utils/ethers/contracts');
+const { getBytecodeHash } = require('@synthetixio/core-utils/utils/ethers/contracts');
 
 const path = require('path');
 const fs = require('fs');

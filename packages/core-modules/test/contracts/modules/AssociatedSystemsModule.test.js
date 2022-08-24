@@ -1,11 +1,9 @@
 const { ethers } = hre;
 const assert = require('assert/strict');
-const {
-  default: assertRevert,
-} = require('@synthetixio/core-utils/dist/utils/assertions/assert-revert');
+const { default: assertRevert } = require('@synthetixio/core-utils/utils/assertions/assert-revert');
 const { bootstrap } = require('@synthetixio/hardhat-router/utils/tests');
 const initializer = require('@synthetixio/core-modules/test/helpers/initializer');
-const { findEvent } = require('@synthetixio/core-utils/dist/utils/ethers/events');
+const { findEvent } = require('@synthetixio/core-utils/utils/ethers/events');
 
 const toBytes32 = ethers.utils.formatBytes32String;
 

@@ -3,7 +3,7 @@ const { SUBTASK_PICK_FUNCTION, SUBTASK_CHECK_INITIALIZATION } = require('../task
 const chalk = require('chalk');
 const autocomplete = require('../internal/autocomplete');
 const { getFullFunctionSignature } = require('../internal/signatures');
-const { getSelectors } = require('@synthetixio/core-utils/dist/utils/ethers/contracts');
+const { getSelectors } = require('@synthetixio/core-utils/utils/ethers/contracts');
 
 subtask(SUBTASK_PICK_FUNCTION, 'Pick a function from the given contract').setAction(
   async (taskArguments, hre) => {

@@ -1,10 +1,8 @@
 const path = require('path');
 const { parseFullyQualifiedName } = require('hardhat/utils/contract-names');
-const { getSelectors } = require('@synthetixio/core-utils/dist/utils/ethers/contracts');
-const {
-  deployedContractHasBytescode,
-} = require('@synthetixio/core-utils/dist/utils/ethers/contracts');
-const { onlyRepeated } = require('@synthetixio/core-utils/dist/utils/misc/array-filters');
+const { getSelectors } = require('@synthetixio/core-utils/utils/ethers/contracts');
+const { deployedContractHasBytescode } = require('@synthetixio/core-utils/utils/ethers/contracts');
+const { onlyRepeated } = require('@synthetixio/core-utils/utils/misc/array-filters');
 
 async function isAlreadyDeployed(contractData) {
   if (!contractData.deployedAddress) {

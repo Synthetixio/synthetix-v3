@@ -52,10 +52,14 @@ contract FundMixin is FundModuleStorage, FundVaultStorage, FundEventAndErrors, C
         for (uint i = 0; i < fundData.fundDistribution.length; i++) {
             MarketDistribution storage marketDistribution = fundData.fundDistribution[i];
             uint weight = clearsLiquidity ? 0 : marketDistribution.weight;
-            uint amount = totalAllocatableLiquidity * weight / totalWeights;
+            uint amount = (totalAllocatableLiquidity * weight) / totalWeights;
 
-            cumulativeDebtChange +=
-                _rebalanceMarket(marketDistribution.market, fundId, marketDistribution.maxDebtShareValue, amount);
+            cumulativeDebtChange += _rebalanceMarket(
+                marketDistribution.market,
+                fundId,
+                marketDistribution.maxDebtShareValue,
+                amount
+            );
         }
 
         fundDist.distribute(cumulativeDebtChange);
@@ -82,14 +86,11 @@ contract FundMixin is FundModuleStorage, FundVaultStorage, FundEventAndErrors, C
         // we don't need to rebalance them
         _distributeFundDebt(fundId);
 
-        uint newVaultShares = uint(vaultData.debtDist.totalShares)
-            .mulDecimal(vaultData.sharesMultiplier)
-            .mulDecimal(collateralPrice);
-
-        int debtChange = _fundVaultStore().fundDists[fundId].updateDistributionActor(
-            bytes32(fundId), 
-            newVaultShares
+        uint newVaultShares = uint(vaultData.debtDist.totalShares).mulDecimal(vaultData.sharesMultiplier).mulDecimal(
+            collateralPrice
         );
+
+        int debtChange = _fundVaultStore().fundDists[fundId].updateDistributionActor(bytes32(fundId), newVaultShares);
 
         _distributeFundDebt(fundId);
 
@@ -104,28 +105,24 @@ contract FundMixin is FundModuleStorage, FundVaultStorage, FundEventAndErrors, C
         uint fundId,
         address collateralType
     ) internal returns (int currentDebt) {
-
         _distributeVaultDebt(fundId, collateralType);
 
         VaultData storage vaultData = _fundVaultStore().fundVaults[fundId][collateralType];
-        LiquidityItem storage li = _fundVaultStore().liquidityItems[
-            _getLiquidityItemId(accountId, fundId, collateralType)
-        ];
+        LiquidityItem storage li = _fundVaultStore().liquidityItems[_getLiquidityItemId(accountId, fundId, collateralType)];
 
-        li.cumulativeDebt += int128(vaultData.debtDist.updateDistributionActor(
-            bytes32(accountId), 
-            vaultData.debtDist.getActorShares(bytes32(accountId))
-        ));
+        li.cumulativeDebt += int128(
+            vaultData.debtDist.updateDistributionActor(
+                bytes32(accountId),
+                vaultData.debtDist.getActorShares(bytes32(accountId))
+            )
+        );
 
         return li.cumulativeDebt + int128(li.usdMinted);
     }
 
     //error Test(uint rps,uint lrps);
 
-    function _updateAvailableRewards(
-        VaultData storage vaultData,
-        uint accountId
-    ) internal returns (uint[] memory) {
+    function _updateAvailableRewards(VaultData storage vaultData, uint accountId) internal returns (uint[] memory) {
         RewardDistribution[] storage dists = vaultData.rewards;
 
         uint totalShares = vaultData.debtDist.totalShares;
@@ -138,9 +135,12 @@ contract FundMixin is FundModuleStorage, FundVaultStorage, FundEventAndErrors, C
 
             dists[i].rewardPerShare += uint128(SharesLibrary.updateDistributionEntry(dists[i].entry, totalShares));
 
-            dists[i].actorInfo[accountId].pendingSend += 
-                uint128(uint(vaultData.debtDist.getActorShares(bytes32(accountId)) * 
-                (dists[i].rewardPerShare - dists[i].actorInfo[accountId].lastRewardPerShare) / 1e18));
+            dists[i].actorInfo[accountId].pendingSend += uint128(
+                uint(
+                    (vaultData.debtDist.getActorShares(bytes32(accountId)) *
+                        (dists[i].rewardPerShare - dists[i].actorInfo[accountId].lastRewardPerShare)) / 1e18
+                )
+            );
 
             dists[i].actorInfo[accountId].lastRewardPerShare = dists[i].rewardPerShare;
 
@@ -154,12 +154,18 @@ contract FundMixin is FundModuleStorage, FundVaultStorage, FundEventAndErrors, C
         uint accountId,
         uint fundId,
         address collateralType
-    ) internal view returns (uint collateralAmount, uint collateralValue, uint shares) {
+    )
+        internal
+        view
+        returns (
+            uint collateralAmount,
+            uint collateralValue,
+            uint shares
+        )
+    {
         VaultData storage vaultData = _fundVaultStore().fundVaults[fundId][collateralType];
 
-        LiquidityItem storage li = _fundVaultStore().liquidityItems[
-            _getLiquidityItemId(accountId, fundId, collateralType)
-        ];
+        LiquidityItem storage li = _fundVaultStore().liquidityItems[_getLiquidityItemId(accountId, fundId, collateralType)];
 
         uint collateralPrice = _getCollateralValue(collateralType);
 
@@ -170,10 +176,9 @@ contract FundMixin is FundModuleStorage, FundVaultStorage, FundEventAndErrors, C
             // but no leverage. if that is the case, we need to account for that here
             collateralAmount = 0;
             collateralValue = 0;
-        }
-        else {
-            collateralAmount = uint(vaultData.totalCollateral) * 
-                shares.divDecimal(li.leverage) / 
+        } else {
+            collateralAmount =
+                (uint(vaultData.totalCollateral) * shares.divDecimal(li.leverage)) /
                 vaultData.debtDist.totalShares;
 
             collateralValue = collateralAmount.mulDecimal(collateralPrice);

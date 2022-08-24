@@ -1,8 +1,8 @@
 const { task } = require('hardhat/config');
 const { HardhatPluginError } = require('hardhat/plugins');
 const { TASK_VERIFY_VERIFY } = require('@nomiclabs/hardhat-etherscan/dist/src/constants');
-const { default: logger } = require('@synthetixio/core-utils/dist/utils/io/logger');
-const types = require('@synthetixio/core-utils/dist/utils/hardhat/argument-types');
+const { default: logger } = require('@synthetixio/core-utils/utils/io/logger');
+const types = require('@synthetixio/core-utils/utils/hardhat/argument-types');
 const {
   SUBTASK_GENERATE_ROUTER_SOURCE,
   SUBTASK_LOAD_DEPLOYMENT,

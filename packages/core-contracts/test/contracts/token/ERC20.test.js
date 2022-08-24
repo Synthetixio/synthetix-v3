@@ -1,10 +1,8 @@
 const { ethers } = hre;
 const assert = require('assert/strict');
-const {
-  default: assertRevert,
-} = require('@synthetixio/core-utils/dist/utils/assertions/assert-revert');
-const assertBn = require('@synthetixio/core-utils/dist/utils/assertions/assert-bignumber');
-const { findEvent } = require('@synthetixio/core-utils/dist/utils/ethers/events');
+const { default: assertRevert } = require('@synthetixio/core-utils/utils/assertions/assert-revert');
+const assertBn = require('@synthetixio/core-utils/utils/assertions/assert-bignumber');
+const { findEvent } = require('@synthetixio/core-utils/utils/ethers/events');
 
 describe('ERC20', () => {
   let ERC20;

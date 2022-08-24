@@ -1,8 +1,9 @@
-import { ethers } from 'ethers';
 import assert from 'assert/strict';
-import assertBn from '@synthetixio/core-utils/dist/utils/assertions/assert-bignumber';
-import assertRevert from '@synthetixio/core-utils/dist/utils/assertions/assert-revert';
-import { findEvent } from '@synthetixio/core-utils/dist/utils/ethers/events';
+import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
+import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
+import { ethers } from 'ethers';
+import { findEvent } from '@synthetixio/core-utils/utils/ethers/events';
+
 import { bootstrap } from '../bootstrap';
 
 describe('AccountModule and AccountToken', function () {

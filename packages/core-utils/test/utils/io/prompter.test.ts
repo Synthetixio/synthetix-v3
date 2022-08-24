@@ -1,5 +1,6 @@
 import { equal } from 'assert/strict';
-import prompter from '../../../utils/io/prompter';
+
+import prompter from '../../../src/utils/io/prompter';
 
 describe('utils/io/prompter.js', function () {
   describe('when noConfirm is enabled', function () {

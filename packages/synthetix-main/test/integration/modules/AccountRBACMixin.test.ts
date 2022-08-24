@@ -1,8 +1,9 @@
 import assert from 'assert/strict';
-import assertBn from '@synthetixio/core-utils/dist/utils/assertions/assert-bignumber';
-import assertRevert from '@synthetixio/core-utils/dist/utils/assertions/assert-revert';
-import { bootstrap } from '../bootstrap';
+import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
+import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import { ethers } from 'ethers';
+
+import { bootstrap } from '../bootstrap';
 
 // TODO
 describe.skip('AccountRBACMixin', function () {

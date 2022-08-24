@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 contract RewardDistributorStorage {
     struct RewardDistributorStore {
-        mapping (uint => uint) allocatedFunds;
+        mapping(uint => uint) allocatedFunds;
     }
 
     function _rewardDistributorStore() internal pure returns (RewardDistributorStore storage store) {

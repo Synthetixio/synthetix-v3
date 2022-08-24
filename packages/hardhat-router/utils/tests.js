@@ -3,7 +3,7 @@ const {
   getProxyAddress,
   getRouterAddress,
 } = require('@synthetixio/hardhat-router/utils/deployments');
-const { takeSnapshot, restoreSnapshot } = require('@synthetixio/core-utils/dist/utils/hardhat/rpc');
+const { takeSnapshot, restoreSnapshot } = require('@synthetixio/core-utils/utils/hardhat/rpc');
 
 function bootstrap(initializer = () => {}, customDeployOptions = {}) {
   let snapshotId;

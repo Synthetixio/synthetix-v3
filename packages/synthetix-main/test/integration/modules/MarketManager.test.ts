@@ -1,9 +1,9 @@
 import assert from 'assert/strict';
-import assertBn from '@synthetixio/core-utils/dist/utils/assertions/assert-bignumber';
-import assertRevert from '@synthetixio/core-utils/dist/utils/assertions/assert-revert';
+import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
+import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import hre from 'hardhat';
 import { ethers } from 'ethers';
-import { findEvent } from '@synthetixio/core-utils/dist/utils/ethers/events';
+import { findEvent } from '@synthetixio/core-utils/utils/ethers/events';
 
 import { bootstrap } from '../bootstrap';
 

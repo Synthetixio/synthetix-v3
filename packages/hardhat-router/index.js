@@ -1,4 +1,4 @@
-const { requireAll } = require('@synthetixio/core-utils/dist/utils/misc/require-all');
+const { requireAll } = require('@synthetixio/core-utils/utils/misc/require-all');
 
 require('@nomiclabs/hardhat-etherscan');
 require('@tenderly/hardhat-tenderly');
