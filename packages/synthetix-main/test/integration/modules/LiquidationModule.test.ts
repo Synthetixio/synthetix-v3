@@ -7,7 +7,7 @@ import { findEvent } from '@synthetixio/core-utils/dist/utils/ethers/events';
 
 import { bootstrap, bootstrapWithMockMarketAndFund } from '../bootstrap';
 
-describe.only('LiquidationModule', function () {
+describe('LiquidationModule', function () {
   const {
     signers,
     systems,
