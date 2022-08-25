@@ -81,7 +81,7 @@ library SharesLibrary {
             // update any rewards which may have accrued since last run
 
             // instant distribution--immediately disperse amount
-            diff += amount * 1e27 / int(totalShares);
+            diff += amount * 1e18 / int(totalShares);
 
             entry.lastUpdate = 0;
             entry.start = 0;
@@ -124,7 +124,7 @@ library SharesLibrary {
         
         // determine whether this is an instant distribution or a delayed distribution
         if (entry.duration == 0 && entry.lastUpdate < entry.start) {
-            valuePerShareChange = int(entry.scheduledValue) * 1e27 / int(totalSharesAmount);
+            valuePerShareChange = int(entry.scheduledValue) * 1e18 / int(totalSharesAmount);
         } else if (entry.lastUpdate < entry.start + entry.duration) {
             // find out what is "newly" distributed
             int lastUpdateDistributed = entry.lastUpdate < entry.start ? 
@@ -138,7 +138,7 @@ library SharesLibrary {
                 curUpdateDistributed = curUpdateDistributed * (curTime - entry.start) / entry.duration;
             }
 
-            valuePerShareChange = int(curUpdateDistributed - lastUpdateDistributed) * 1e27 / int(totalSharesAmount);
+            valuePerShareChange = int(curUpdateDistributed - lastUpdateDistributed) * 1e18 / int(totalSharesAmount);
         }
 
         entry.lastUpdate = int32(curTime);
