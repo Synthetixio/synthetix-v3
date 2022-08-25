@@ -31,7 +31,6 @@ contract FundEventAndErrors {
 
     event FundPositionSet(uint fundId, uint[] markets, uint[] weights, address executedBy);
     event DelegationUpdated(
-        bytes32 liquidityItemId,
         uint accountId,
         uint fundId,
         address collateralType,

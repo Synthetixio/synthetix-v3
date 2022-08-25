@@ -7,7 +7,7 @@ import { findEvent } from '@synthetixio/core-utils/dist/utils/ethers/events';
 
 import { bootstrap, bootstrapWithMockMarketAndFund } from '../bootstrap';
 
-describe.only('LiquidationModule', function () {
+describe('LiquidationModule', function () {
   const {
     signers,
     systems,
@@ -16,6 +16,7 @@ describe.only('LiquidationModule', function () {
     fundId,
     accountId,
     MockMarket,
+    marketId,
     depositAmount,
     restore
   } = bootstrapWithMockMarketAndFund();
@@ -46,14 +47,17 @@ describe.only('LiquidationModule', function () {
       // this should put us very close to 110% c-ratio
       const debtAmount = depositAmount.mul(ethers.utils.parseEther('1')).div(ethers.utils.parseEther('1.1'));
 
+      before('take out a loan', async () => {
+        await systems().Core.connect(user1).mintUSD(accountId, fundId, collateralAddress(), debtAmount.div(10));
+      });
+
       before('going into debt', async () => {
         await MockMarket().connect(user1).setBalance(
-          debtAmount
+          debtAmount.mul(9).div(10)
         );
 
         // sanity
-        assertBn.gt(await systems().Core.callStatic.vaultDebt(fundId, collateralAddress()), debtAmount.sub(10000));
-        assertBn.lt(await systems().Core.callStatic.vaultDebt(fundId, collateralAddress()), debtAmount.add(10000));
+        assertBn.near(await systems().Core.callStatic.vaultDebt(fundId, collateralAddress()), debtAmount);
       });
 
       it('cannot liquidate when its the only account in the pool', async () => {
@@ -111,11 +115,16 @@ describe.only('LiquidationModule', function () {
         it('redistributes debt among remaining staker', async () => {
           // vault should stilel have same amounts (minus collateral from reward)
           assertBn.equal((await systems().Core.callStatic.vaultCollateral(fundId, collateralAddress()))[0], depositAmount.mul(11).sub(liquidationReward));
-          assertBn.equal(await systems().Core.callStatic.vaultDebt(fundId, collateralAddress()), debtAmount);
+          assertBn.near(await systems().Core.callStatic.vaultDebt(fundId, collateralAddress()), debtAmount);
+
+          assertBn.equal(
+            await systems().Core.callStatic.vaultDebt(fundId, collateralAddress()),
+            await systems().Core.callStatic.accountVaultDebt(accountId2, fundId, collateralAddress())
+          );
         });
 
-        it('has correct amount of total liquidity registered to the market', async () => {
-
+        it('has reduced amount of total liquidity registered to the market', async () => {
+          assertBn.equal(await systems().Core.callStatic.marketLiquidity(marketId()), depositAmount.mul(11).sub(liquidationReward));
         });
 
         it('emits correct event', async () => {

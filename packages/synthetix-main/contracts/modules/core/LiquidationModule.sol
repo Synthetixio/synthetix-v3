@@ -51,39 +51,41 @@ contract LiquidationsModule is ILiquidationModule, LiquidationModuleStorage, Ass
         debtLiquidated = uint(rawDebt);
 
         VaultData storage vaultData = _fundVaultStore().fundVaults[fundId][collateralType];
+        VaultEpochData storage epochData = vaultData.epochData[vaultData.epoch];
 
-        LiquidityItem storage liquidityItem = _fundVaultStore().liquidityItems[
-            _getLiquidityItemId(accountId, fundId, collateralType)
-        ];
+        uint oldShares = epochData.debtDist.getActorShares(bytes32(accountId));
 
-        uint oldShares = vaultData.debtDist.getActorShares(bytes32(accountId));
-
-        if (vaultData.debtDist.totalShares == oldShares) {
+        if (epochData.debtDist.totalShares == oldShares) {
             // will be left with 0 shares, which can't be socialized
             revert MustBeVaultLiquidated();
         }
 
+        amountRewarded = _getCollateralLiquidationReward(collateralType);
+
+        if (amountRewarded >= uint(epochData.collateralDist.totalValue())) {
+            // vault is too small to be liquidated socialized
+            revert MustBeVaultLiquidated();
+        }
+
+        // need to do this before modifying any actor information
+        _updateAvailableRewards(epochData, vaultData.rewards, accountId);
+
         // take away all the user's shares. by not giving the user back their portion of collateral, it will be
         // auto split proportionally between all debt holders
-        vaultData.debtDist.updateDistributionActor(bytes32(accountId), 0);
+        epochData.collateralDist.updateActorShares(bytes32(accountId), 0);
+        epochData.debtDist.updateActorShares(bytes32(accountId), 0);
+        epochData.usdDebtDist.updateActorShares(bytes32(accountId), 0);
         
-        // feed the debt back into the vault
-        vaultData.debtDist.distribute(int(debtLiquidated));
+        // use distribute to socialize the debt/collateral we just erased
+        epochData.collateralDist.distribute(int(collateralLiquidated - amountRewarded));
+        epochData.debtDist.distribute(int(debtLiquidated));
+        epochData.unclaimedDebt += int128(int(debtLiquidated));
 
         _applyLiquidationToMultiplier(fundId, collateralType, oldShares);
 
         // TODO: adjust global rewards curve to temp lock user's acquired assets
 
-
-        // clear liquidity item
-        liquidityItem.usdMinted = 0;
-        liquidityItem.cumulativeDebt = 0;
-
-        liquidityItem.leverage = 0;
-
         // send reward
-        amountRewarded = _getCollateralLiquidationReward(collateralType);
-        vaultData.totalCollateral -= uint128(amountRewarded);
         collateralType.safeTransfer(msg.sender, amountRewarded);
 
         // TODO: send any remaining collateral to the liquidated account? need to have a liquidation penalty setting or something
@@ -112,7 +114,7 @@ contract LiquidationsModule is ILiquidationModule, LiquidationModuleStorage, Ass
         
         uint vaultDebt = rawVaultDebt < 0 ? 0 : uint(rawVaultDebt);
         
-        uint collateralValue = uint(vaultData.totalCollateral).mulDecimal(_getCollateralValue(collateralType));
+        (, uint collateralValue) = _vaultCollateral(fundId, collateralType);
 
         if (!_isLiquidatable(collateralType, vaultDebt, collateralValue)) {
             revert IneligibleForLiquidation(
@@ -123,28 +125,44 @@ contract LiquidationsModule is ILiquidationModule, LiquidationModuleStorage, Ass
             );
         }
 
-        amountLiquidated = vaultDebt < maxUsd ? vaultDebt : maxUsd;
-        collateralRewarded = vaultData.totalCollateral * amountLiquidated / vaultDebt;
+        if (vaultDebt < maxUsd) {
+            // full vault liquidation
+            _getToken(_USD_TOKEN).burn(msg.sender, vaultDebt);
 
-        // pull in USD
-        _getToken(_USD_TOKEN).burn(msg.sender, amountLiquidated);
+            amountLiquidated = vaultDebt;
+            collateralRewarded = uint(vaultData.epochData[vaultData.epoch].collateralDist.totalValue());
 
 
-        // repay the debt
-        vaultData.debtDist.distribute(-int(amountLiquidated));
-        vaultData.totalDebt = vaultData.totalDebt - int128(int(amountLiquidated));
+            bytes32 vaultActorId =  bytes32(uint(uint160(collateralType)));
 
-        // take away the collateral
-        vaultData.totalCollateral -= uint128(collateralRewarded);
+            // inform the fund that this market is exiting (note the debt has already been rolled into vaultData so no change)
+            _fundModuleStore().funds[fundId].debtDist.updateActorShares(vaultActorId, 0);
+
+            // reboot the vault
+            vaultData.epoch++;
+        }
+        else {
+            // partial vault liquidation
+            _getToken(_USD_TOKEN).burn(msg.sender, maxUsd);
+
+            VaultEpochData storage epochData = vaultData.epochData[vaultData.epoch];
+
+            amountLiquidated = maxUsd;
+            collateralRewarded = uint(epochData.collateralDist.totalValue()) * amountLiquidated / vaultDebt;
+
+            // repay the debt
+            epochData.debtDist.distribute(-int(amountLiquidated));
+            epochData.unclaimedDebt -= int128(int(amountLiquidated));
+
+            // take away the collateral
+            epochData.collateralDist.distribute(-int(collateralRewarded));
+
+            // TODO this is probably wrong
+            _applyLiquidationToMultiplier(fundId, collateralType, amountLiquidated.divDecimal(vaultDebt));
+        }
 
         // award the collateral that was just taken to the specified account
         _depositCollateral(liquidateAsAccountId, collateralType, collateralRewarded);
-
-        // final fund cleanup
-        if (vaultData.totalCollateral == 0) {
-            vaultData.debtDist.totalShares = 0;
-            vaultData.liquidityMultiplier = 0;
-        }
 
         // TODO: apply locking curve
 
@@ -175,20 +193,21 @@ contract LiquidationsModule is ILiquidationModule, LiquidationModuleStorage, Ass
 
     function _applyLiquidationToMultiplier(uint fundId, address collateralType, uint liquidatedShares) internal {
         VaultData storage vaultData = _fundVaultStore().fundVaults[fundId][collateralType];
+        VaultEpochData storage epochData = vaultData.epochData[vaultData.epoch];
 
-        uint oldTotalShares = liquidatedShares + vaultData.debtDist.totalShares;
+        uint oldTotalShares = liquidatedShares + epochData.debtDist.totalShares;
 
-        uint newliquidityMultiplier = uint(vaultData.liquidityMultiplier).mulDecimal(
-            oldTotalShares / vaultData.debtDist.totalShares
-        );
+        uint newLiquidityMultiplier = uint(epochData.liquidityMultiplier) *
+            oldTotalShares / 
+            epochData.debtDist.totalShares;
 
         // update totalLiquidity (to stay exact)
         _fundModuleStore().funds[fundId].totalLiquidity = 
             uint128(uint(_fundModuleStore().funds[fundId].totalLiquidity) +
-            uint(vaultData.debtDist.totalShares).mulDecimal(newliquidityMultiplier) -
-            oldTotalShares.mulDecimal(vaultData.liquidityMultiplier));
+            uint(epochData.debtDist.totalShares).mulDecimal(newLiquidityMultiplier) -
+            oldTotalShares.mulDecimal(epochData.liquidityMultiplier));
 
         // update debt adjustments
-        vaultData.liquidityMultiplier = uint128(newliquidityMultiplier);
+        epochData.liquidityMultiplier = uint128(newLiquidityMultiplier);
     }
 }

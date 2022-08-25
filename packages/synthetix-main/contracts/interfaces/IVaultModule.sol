@@ -65,10 +65,4 @@ interface IVaultModule {
 
     /// @notice gets the total fund debtShares
     function totalVaultShares(uint fundId, address collateralType) external view returns (uint);
-
-    /// @notice gets the debt per share (USD value) for a fund
-    function debtPerShare(uint fundId, address collateralType) external returns (int);
-
-    /// @notice gets liquidityItem details for a liquidityItemId
-    function getLiquidityItem(bytes32 liquidityItemId) external view returns (FundVaultStorage.LiquidityItem memory liquidityItem);
 }

@@ -36,7 +36,7 @@ contract MarketManagerMixin is MarketManagerStorage {
         uint oldLiquidity = marketData.debtDist.getActorShares(bytes32(fundId));
         int oldFundMaxDebtShareValue = -marketData.fundMaxDebtShares.getById(uint128(fundId)).priority;
         uint oldTotalLiquidity = marketData.debtDist.totalShares;
-        debtChange = marketData.debtDist.updateDistributionActor(bytes32(fundId), newLiquidity);
+        debtChange = marketData.debtDist.updateActorShares(bytes32(fundId), newLiquidity);
 
         // recalculate max market debt share
         int newMarketMaxShareValue = newFundMaxShareValue;
@@ -84,7 +84,7 @@ contract MarketManagerMixin is MarketManagerStorage {
 
 
             // detach market from fund
-            marketData.debtDist.updateDistributionActor(bytes32(uint(nextRemove.id)), 0);
+            marketData.debtDist.updateActorShares(bytes32(uint(nextRemove.id)), 0);
         }
 
         // todo: loop for putting funds back in as well?

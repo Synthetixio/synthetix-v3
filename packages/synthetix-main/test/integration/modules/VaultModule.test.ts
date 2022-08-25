@@ -48,7 +48,7 @@ describe('VaultModule', function () {
         fundId,
         [marketId],
         [ethers.utils.parseEther('1')],
-        [ethers.utils.parseEther('10000000')]
+        [ethers.utils.parseEther('10000000000000000')]
       );
   });
 
@@ -72,6 +72,29 @@ describe('VaultModule', function () {
       );
     };
   }
+
+  describe('fresh vault', async () => {
+    it('returns 0 debt', async () => {
+      assertBn.equal(
+        await systems().Core.callStatic.vaultDebt(0, collateralAddress()),
+        0
+      );
+    });
+
+    it('returns 0 collateral', async () => {
+      assertBn.equal(
+        (await systems().Core.callStatic.vaultCollateral(0, collateralAddress()))[0],
+        0
+      );
+    });
+
+    it('returns 0 collateral ratio', async () => {
+      assertBn.equal(
+        await systems().Core.callStatic.vaultCollateralRatio(0, collateralAddress()),
+        0
+      );
+    })
+  });
 
   describe('delegateCollateral()', async () => {
     it(
@@ -157,6 +180,7 @@ describe('VaultModule', function () {
           await systems()
             .Core.connect(user2)
             .stake(user2AccountId, collateralAddress(), depositAmount.mul(2));
+          
           await systems().Core.connect(user2).delegateCollateral(
             user2AccountId,
             fundId,
@@ -365,7 +389,7 @@ describe('VaultModule', function () {
     describe('first user leaves', async () => {
       before(restore);
       before('erase debt', async () => {
-        await MockMarket.connect(user1).setBalance(-100);
+        await MockMarket.connect(user1).setBalance(0);
       });
 
       before('undelegate', async () => {

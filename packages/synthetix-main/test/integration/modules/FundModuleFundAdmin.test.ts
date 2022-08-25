@@ -34,7 +34,7 @@ describe('FundModule Admin', function () {
     await (
       await systems()
         .Core.connect(owner)
-        .adjustCollateralType(Collateral.address, AggregatorV3Mock.address, 400, 200, true)
+        .adjustCollateralType(Collateral.address, AggregatorV3Mock.address, 400, 200, 0, true)
     ).wait();
   });
 

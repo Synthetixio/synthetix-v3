@@ -34,7 +34,7 @@ describe('CollateralManagerConfiguration (SCCP)', function () {
     await (
       await systems()
         .Core.connect(systemOwner)
-        .adjustCollateralType(Collateral.address, CollateralPriceFeed.address, 400, 200, false)
+        .adjustCollateralType(Collateral.address, CollateralPriceFeed.address, 400, 200, 0, false)
     ).wait();
   });
 

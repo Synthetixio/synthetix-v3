@@ -37,7 +37,7 @@ describe('CollateralModule Stake', function () {
     await (
       await systems()
         .Core.connect(owner)
-        .adjustCollateralType(Collateral.address, CollateralPriceFeed.address, 400, 200, true)
+        .adjustCollateralType(Collateral.address, CollateralPriceFeed.address, 400, 200, 0, true)
     ).wait();
   });
 

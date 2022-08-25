@@ -9,8 +9,6 @@ import "../utils/SharesLibrary.sol";
 
 contract FundVaultStorage {
     struct FundVaultStore {
-        /// @dev liquidity items data
-        mapping(bytes32 => LiquidityItem) liquidityItems;
 
         /// @dev collaterals which are currently deposited in the fund
         mapping(uint256 => SetUtil.AddressSet) fundCollateralTypes;
@@ -18,13 +16,22 @@ contract FundVaultStorage {
         /// @dev fund vaults (per collateral)
         mapping(uint256 => mapping(address => VaultData)) fundVaults;
     }
-    
-    /// @notice LiquidityItem struct definition. Account/CollateralType/FundId uniquiely identifies it
-    struct LiquidityItem {
-        uint128 usdMinted;
-        int128 cumulativeDebt;
 
-        uint128 leverage;
+    struct VaultEpochData {
+        /// @dev amount of debt which has not been rolled into `usdDebtDist`. Needed to keep track of overall vaultDebt
+        int128 unclaimedDebt;
+
+        /// @dev if there are liquidations, this value will be multiplied by any share counts to determine the value of the shares wrt the rest of the fund
+        uint128 liquidityMultiplier;
+
+        /// @dev tracks debt for each user
+        SharesLibrary.Distribution debtDist;
+
+        /// @dev tracks collateral for each user
+        SharesLibrary.Distribution collateralDist;
+
+        /// @dev tracks usd for each user
+        SharesLibrary.Distribution usdDebtDist;
     }
 
     struct VaultData {
@@ -33,23 +40,12 @@ contract FundVaultStorage {
 
         /// @dev cached collateral price
         uint128 collateralPrice;
-        /// @dev if there are liquidations, this value will be multiplied by any share counts to determine the value of the shares wrt the rest of the fund
-        uint128 liquidityMultiplier;
-
-        /// @dev the amount of debt accrued. starts at 0. this is technically a cached value, but it is needed for liquidations
-        int128 totalDebt;
-
-        /// @dev total liquidity delegated to this vault
-        uint128 totalCollateral;
 
         /// @dev tracks debt for each user
-        SharesLibrary.Distribution debtDist;
+        mapping(uint => VaultEpochData) epochData;
 
         /// @dev rewards
         RewardDistribution[] rewards;
-
-        /// @dev last epoch which an account was seen for. If this differs from , shares are reset
-        mapping (uint256 => uint) lastEpoch;
     }
 
     struct RewardDistribution {
