@@ -15,5 +15,7 @@ contract AccountTokenModule is IAccountTokenModule, NftModule {
         address from,
         address to,
         uint256 tokenId
-    ) internal virtual {}
+    ) internal virtual {
+        IAccountModule(_getOwner()).notifyAccountTransfer(to, tokenId);
+    }
 }

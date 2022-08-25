@@ -58,7 +58,7 @@ contract AccountModule is IAccountModule, OwnableMixin, AccountRBACMixin, Associ
         emit AccountCreated(msg.sender, requestedAccountId);
     }
 
-    function updateOnAccountTransfer(address to, uint256 accountId) external override onlyAccountToken {
+    function notifyAccountTransfer(address to, uint256 accountId) external override onlyAccountToken {
         _accountModuleStore().accountsRBAC[accountId].owner = to;
 
         // TODO: Consider revoking all permissions when the NFT is transferred?
