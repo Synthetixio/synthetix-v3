@@ -22,14 +22,16 @@ contract MarketManagerModule is
 {
     bytes32 private constant _USD_TOKEN = "USDToken";
 
-    error MarketAlreadyRegistered(address market);
+    error MarketAlreadyRegistered(address market, uint existingMarketId);
 
-    event MarketRegistered(address market, uint marketId);
+    event MarketRegistered(address indexed market, uint marketId);
 
     error NotEnoughLiquidity(uint marketId, uint amount);
 
+    error MarketDepositNotApproved(address market, address from, uint requestedAmount, uint approvedAmount);
+
     function registerMarket(address market) external override returns (uint marketId) {
-        if (_marketManagerStore().marketIds[market] > 0) revert MarketAlreadyRegistered(market);
+        if (_marketManagerStore().marketIds[market] > 0) revert MarketAlreadyRegistered(market, _marketManagerStore().marketIds[market] );
         uint lastMarketId = _marketManagerStore().lastMarketId++;
         marketId = lastMarketId + 1;
 
@@ -87,7 +89,10 @@ contract MarketManagerModule is
         ITokenModule usdToken = _getToken(_USD_TOKEN);
 
         uint originalAllowance = usdToken.allowance(target, msg.sender);
-        require(originalAllowance >= amount, "insufficient allowance");
+
+        if (originalAllowance < amount) {
+            revert MarketDepositNotApproved(target, msg.sender, amount, originalAllowance);
+        }
 
         // Adjust accounting
         marketData.issuance -= int128(int(amount));
@@ -105,6 +110,7 @@ contract MarketManagerModule is
         address target,
         uint amount
     ) external override {
+        revert("made it in");
         MarketData storage marketData = _marketManagerStore().markets[marketId];
 
         if (msg.sender != marketData.marketAddress) revert AccessError.Unauthorized(msg.sender);
@@ -121,12 +127,12 @@ contract MarketManagerModule is
     function _availableLiquidity(uint marketId) internal view returns (uint) {
         MarketData storage marketData = _marketManagerStore().markets[marketId];
 
-        int maxIssuance = marketData.maxMarketDebt - marketData.issuance;
+        int remaining = marketData.maxMarketDebt - marketData.issuance;
 
-        if (maxIssuance <= 0) {
+        if (remaining <= 0) {
             return 0;
         }
 
-        return uint(maxIssuance);
+        return uint(remaining);
     }
 }

@@ -8,7 +8,7 @@ import "../interfaces/IMarketManagerModule.sol";
 contract MockMarket is IMarket {
     using MathUtil for uint256;
 
-    int private _balance;
+    uint private _balance;
     uint private _price;
 
     address private _proxy;
@@ -25,22 +25,22 @@ contract MockMarket is IMarket {
     }
 
     function buySynth(uint amount) external {
-        _balance -= int(amount);
+        _balance += amount;
         uint toDeposit = amount.divDecimal(_price);
         IMarketManagerModule(_proxy).deposit(_marketId, msg.sender, toDeposit);
     }
 
     function sellSynth(uint amount) external {
-        _balance += int(amount);
+        _balance -= amount;
         uint toDeposit = amount.divDecimal(_price);
         IMarketManagerModule(_proxy).withdraw(_marketId, msg.sender, toDeposit);
     }
 
-    function setBalance(int newBalance) external {
+    function setBalance(uint newBalance) external {
         _balance = newBalance;
     }
 
-    function balance() external view override returns (int) {
+    function balance() external view override returns (uint) {
         return _balance;
     }
 

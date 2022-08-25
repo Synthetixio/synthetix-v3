@@ -3,6 +3,6 @@ pragma solidity ^0.8.0;
 
 /// @title Interface a Market needs to adhere.
 interface IMarket {
-    /// @notice returns the balance of the market
-    function balance() external view returns (int);
+    /// @notice returns amount of USD that the market would try to mint if everything was withdrawn
+    function balance() external view returns (uint);
 }

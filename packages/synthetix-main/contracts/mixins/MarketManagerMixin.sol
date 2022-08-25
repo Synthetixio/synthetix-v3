@@ -96,7 +96,7 @@ contract MarketManagerMixin is MarketManagerStorage {
 
     function _totalBalance(MarketData storage marketData) internal view returns (int) {
         return
-            IMarket(marketData.marketAddress).balance() +
+            int(IMarket(marketData.marketAddress).balance()) +
                 marketData.issuance;
     }
 }
