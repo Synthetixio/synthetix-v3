@@ -62,7 +62,7 @@ contract AccountModule is IAccountModule, OwnableMixin, AccountRBACMixin, Associ
         uint accountId,
         bytes32 role,
         address target
-    ) external override onlyRoleAuthorized(accountId, "modifyPermission") {
+    ) external override onlyRoleAuthorized(accountId, _ROLE_MODIFY) {
         if (target == address(0)) {
             revert AddressError.ZeroAddress();
         }
@@ -86,7 +86,7 @@ contract AccountModule is IAccountModule, OwnableMixin, AccountRBACMixin, Associ
         uint accountId,
         bytes32 role,
         address target
-    ) external override onlyRoleAuthorized(accountId, "modifyPermission") {
+    ) external override onlyRoleAuthorized(accountId, _ROLE_MODIFY) {
         _revokeRole(accountId, role, target);
     }
 
