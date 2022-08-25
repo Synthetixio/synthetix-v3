@@ -20,9 +20,7 @@ export function findEvent({
   let events = (receipt as any).events as any;
 
   if (!receipt) {
-    throw new Error(
-      `receipt when searching for event ${eventName} is null/undefined.`
-    );
+    throw new Error(`receipt when searching for event ${eventName} is null/undefined.`);
   }
 
   if (!receipt.logs) {
@@ -31,10 +29,7 @@ export function findEvent({
     );
   }
 
-  if (
-    (contract && !events) ||
-    (events.some((e: any) => e.event === undefined) && contract)
-  ) {
+  if ((contract && !events) || (events.some((e: any) => e.event === undefined) && contract)) {
     events = parseLogs({ contract, logs: receipt.logs });
   }
 
@@ -52,13 +47,7 @@ export function findEvent({
  * @param {logs} logs An array of raw unparsed logs
  * @returns {array} The array of parsed events
  */
-export function parseLogs({
-  contract,
-  logs,
-}: {
-  contract: ethers.Contract;
-  logs: any[];
-}) {
+export function parseLogs({ contract, logs }: { contract: ethers.Contract; logs: any[] }) {
   // TODO
   return logs.map((log) => {
     const event: any = contract.interface.parseLog(log);
