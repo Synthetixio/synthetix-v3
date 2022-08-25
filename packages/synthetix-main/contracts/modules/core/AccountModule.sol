@@ -20,6 +20,14 @@ contract AccountModule is IAccountModule, OwnableMixin, AccountRBACMixin, Associ
     error OnlyTokenProxyAllowed(address origin);
     error InvalidRole();
 
+    modifier onlyAccountToken() {
+        if (msg.sender != address(getAccountTokenAddress())) {
+            revert OnlyTokenProxyAllowed(msg.sender);
+        }
+
+        _;
+    }
+
     function getAccountTokenAddress() public view override returns (address) {
         return _getSystemAddress(_ACCOUNT_SYSTEM);
     }
@@ -48,6 +56,12 @@ contract AccountModule is IAccountModule, OwnableMixin, AccountRBACMixin, Associ
         _accountModuleStore().accountsRBAC[requestedAccountId].owner = msg.sender;
 
         emit AccountCreated(msg.sender, requestedAccountId);
+    }
+
+    function updateOnAccountTransfer(address to, uint256 accountId) external override onlyAccountToken {
+        _accountModuleStore().accountsRBAC[accountId].owner = to;
+
+        // TODO: Consider revoking all permissions when the NFT is transferred?
     }
 
     function hasRole(
@@ -108,13 +122,5 @@ contract AccountModule is IAccountModule, OwnableMixin, AccountRBACMixin, Associ
         }
 
         emit RoleRevoked(accountId, role, target, msg.sender);
-    }
-
-    modifier onlyFromTokenProxy() {
-        if (msg.sender != getAccountTokenAddress()) {
-            revert OnlyTokenProxyAllowed(msg.sender);
-        }
-
-        _;
     }
 }

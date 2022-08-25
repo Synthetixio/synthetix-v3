@@ -10,4 +10,10 @@ contract AccountTokenModule is IAccountTokenModule, NftModule {
 
         emit Mint(owner, nftId);
     }
+
+    function _postTransfer(
+        address from,
+        address to,
+        uint256 tokenId
+    ) internal virtual {}
 }
