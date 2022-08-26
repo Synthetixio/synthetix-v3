@@ -7,7 +7,7 @@ const { findEvent } = require('@synthetixio/core-utils/utils/ethers/events');
 
 const toBytes32 = ethers.utils.formatBytes32String;
 
-describe('AssociatedSystemsModule', () => {
+describe.only('AssociatedSystemsModule', () => {
   const { proxyAddress } = bootstrap(initializer, {
     modules: '.*(Owner|Upgrade|AssociatedSystems).*',
   });

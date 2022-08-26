@@ -9,7 +9,7 @@ contract AssociatedSystemsStorage {
     }
 
     struct AssociatedSystemsStore {
-        mapping(bytes32 => AssociatedSystem) satellites;
+        mapping(bytes32 => AssociatedSystem) systems;
     }
 
     // solhint-disable-next-line func-name-mixedcase

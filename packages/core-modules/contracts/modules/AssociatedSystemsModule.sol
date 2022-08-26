@@ -21,12 +21,12 @@ contract AssociatedSystemsModule is IAssociatedSystemsModule, OwnableMixin, Asso
     ) external override onlyOwner {
         AssociatedSystemsStore storage store = _associatedSystemsStore();
 
-        if (store.satellites[id].proxy != address(0)) {
+        if (store.systems[id].proxy != address(0)) {
             _requireKind(id, _KIND_ERC20);
 
-            store.satellites[id].impl = impl;
+            store.systems[id].impl = impl;
 
-            address proxy = store.satellites[id].proxy;
+            address proxy = store.systems[id].proxy;
 
             // tell the associated proxy to upgrade to the new implementation
             IUUPSImplementation(proxy).upgradeTo(impl);
@@ -52,10 +52,10 @@ contract AssociatedSystemsModule is IAssociatedSystemsModule, OwnableMixin, Asso
     ) external override onlyOwner {
         AssociatedSystemsStore storage store = _associatedSystemsStore();
 
-        if (store.satellites[id].proxy != address(0)) {
+        if (store.systems[id].proxy != address(0)) {
             _requireKind(id, _KIND_ERC721);
 
-            address proxy = store.satellites[id].proxy;
+            address proxy = store.systems[id].proxy;
 
             // tell the associated proxy to upgrade to the new implementation
             IUUPSImplementation(proxy).upgradeTo(impl);
@@ -92,13 +92,13 @@ contract AssociatedSystemsModule is IAssociatedSystemsModule, OwnableMixin, Asso
         address proxy,
         address impl
     ) internal {
-        _associatedSystemsStore().satellites[id] = AssociatedSystem(proxy, impl, kind);
+        _associatedSystemsStore().systems[id] = AssociatedSystem(proxy, impl, kind);
         emit AssociatedSystemSet(kind, id, proxy, impl);
     }
 
     function getAssociatedSystem(bytes32 id) external view override returns (address proxy, bytes32 kind) {
-        proxy = _associatedSystemsStore().satellites[id].proxy;
-        kind = _associatedSystemsStore().satellites[id].kind;
+        proxy = _associatedSystemsStore().systems[id].proxy;
+        kind = _associatedSystemsStore().systems[id].kind;
     }
 
     event AssociatedSystemSet(bytes32 indexed kind, bytes32 indexed id, address proxy, address impl);
