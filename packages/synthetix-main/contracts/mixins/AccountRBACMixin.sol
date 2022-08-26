@@ -8,6 +8,12 @@ contract AccountRBACMixin is AccountModuleStorage {
 
     error RoleNotAuthorized(uint accountId, bytes32 role, address target);
 
+    bytes32 internal constant _ROLE_MODIFY = "ROLE_MODIFY";
+    bytes32 internal constant _ROLE_STAKE = "ROLE_STAKE";
+    bytes32 internal constant _ROLE_UNSTAKE = "ROLE_UNSTAKE";
+    bytes32 internal constant _ROLE_ASSIGN = "ROLE_ASSIGN";
+    bytes32 internal constant _ROLE_MINT = "ROLE_MINT";
+
     modifier onlyRoleAuthorized(uint accountId, bytes32 role) {
         if (!_authorized(accountId, role, msg.sender)) {
             revert RoleNotAuthorized(accountId, role, msg.sender);

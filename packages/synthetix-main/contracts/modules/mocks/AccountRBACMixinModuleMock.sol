@@ -6,7 +6,11 @@ import "../../mocks/IAccountRBACMixinModuleMock.sol";
 import "../../mocks/AccountRBACMixinModuleMockStorage.sol";
 
 contract AccountRBACMixinModuleMock is IAccountRBACMixinModuleMock, AccountRBACMixinModuleMockStorage, AccountRBACMixin {
-    function interactWithAccount(uint accountId, uint inputValue) external override onlyRoleAuthorized(accountId, "stake") {
+    function interactWithAccount(uint accountId, uint inputValue)
+        external
+        override
+        onlyRoleAuthorized(accountId, _ROLE_STAKE)
+    {
         _mixinModuleMockStore().rbacValue = inputValue;
     }
 

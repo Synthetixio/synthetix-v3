@@ -92,7 +92,7 @@ contract CollateralModule is
         uint accountId,
         address collateralType,
         uint amount
-    ) public override onlyRoleAuthorized(accountId, "stake") collateralEnabled(collateralType) {
+    ) public override onlyRoleAuthorized(accountId, _ROLE_STAKE) collateralEnabled(collateralType) {
         StakedCollateralData storage collateralData = _collateralStore().stakedCollateralsDataByAccountId[accountId][
             collateralType
         ];
@@ -115,7 +115,7 @@ contract CollateralModule is
         uint accountId,
         address collateralType,
         uint amount
-    ) public override onlyRoleAuthorized(accountId, "unstake") {
+    ) public override onlyRoleAuthorized(accountId, _ROLE_UNSTAKE) {
         uint256 availableCollateral = getAccountUnstakebleCollateral(accountId, collateralType);
 
         if (availableCollateral < amount) {

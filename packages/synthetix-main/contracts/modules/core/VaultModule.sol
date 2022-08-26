@@ -44,7 +44,7 @@ contract VaultModule is
         address collateralType,
         uint collateralAmount,
         uint leverage
-    ) external override onlyRoleAuthorized(accountId, "assign") collateralEnabled(collateralType) fundExists(fundId) {
+    ) external override onlyRoleAuthorized(accountId, _ROLE_ASSIGN) collateralEnabled(collateralType) fundExists(fundId) {
         // Fix leverage to 1 until it's enabled
         // TODO: we will probably at least want to test <1 leverage
         if (leverage != MathUtil.UNIT) revert InvalidLeverage(leverage);
@@ -139,7 +139,7 @@ contract VaultModule is
         uint fundId,
         address collateralType,
         uint amount
-    ) external override onlyRoleAuthorized(accountId, "mint") {
+    ) external override onlyRoleAuthorized(accountId, _ROLE_MINT) {
         // check if they have sufficient c-ratio to mint that amount
         int debt = _updateAccountDebt(accountId, fundId, collateralType);
 
