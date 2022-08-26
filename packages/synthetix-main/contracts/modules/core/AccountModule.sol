@@ -17,12 +17,12 @@ contract AccountModule is IAccountModule, OwnableMixin, AccountRBACMixin, Associ
     using SetUtil for SetUtil.AddressSet;
     using SetUtil for SetUtil.Bytes32Set;
 
-    error OnlyTokenProxyAllowed(address origin);
+    error OnlyAccountTokenProxy(address origin);
     error InvalidRole();
 
     modifier onlyAccountToken() {
         if (msg.sender != address(getAccountTokenAddress())) {
-            revert OnlyTokenProxyAllowed(msg.sender);
+            revert OnlyAccountTokenProxy(msg.sender);
         }
 
         _;
