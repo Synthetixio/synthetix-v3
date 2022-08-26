@@ -5,7 +5,6 @@ on: [push]
 jobs:
   test:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
     strategy:
       matrix:
         package:
@@ -45,7 +44,6 @@ jobs:
 
   test-cli:
     runs-on: ubuntu-latest
-    timeout-minutes: 3
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v2
@@ -59,7 +57,6 @@ jobs:
 
   test-sample:
     runs-on: ubuntu-latest
-    timeout-minutes: 3
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v2
