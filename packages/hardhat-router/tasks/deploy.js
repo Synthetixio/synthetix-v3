@@ -75,7 +75,6 @@ task(TASK_DEPLOY, 'Deploys all system modules')
       await hre.run(SUBTASK_VALIDATE_STORAGE);
       await hre.run(SUBTASK_VALIDATE_MODULES);
       await hre.run(SUBTASK_VALIDATE_INTERFACES);
-      await hre.run(SUBTASK_VALIDATE_SATELLITES);
       await hre.run(SUBTASK_DEPLOY_MODULES);
       await hre.run(SUBTASK_GENERATE_ROUTER_SOURCE);
       await _compile(hre, quiet);
