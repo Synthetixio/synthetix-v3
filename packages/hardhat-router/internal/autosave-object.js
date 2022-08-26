@@ -1,6 +1,7 @@
 const fs = require('fs');
 const { default: logger } = require('@synthetixio/core-utils/utils/io/logger');
 const { default: relativePath } = require('@synthetixio/core-utils/utils/misc/relative-path');
+const debounce = require('lodash.debounce');
 
 const write = (file, data) => fs.writeFileSync(file, JSON.stringify(data, null, 2));
 
@@ -23,6 +24,8 @@ module.exports = function autosaveObject(file, initialState = {}) {
 
   const data = JSON.parse(fs.readFileSync(file));
 
+  const _write = debounce(() => write(file, data), 0);
+
   const handler = {
     get: (target, key) => {
       if (typeof target[key] === 'object' && target[key] !== null) {
@@ -42,7 +45,7 @@ module.exports = function autosaveObject(file, initialState = {}) {
         logger.debug('No changes - skipping write to file');
       } else {
         target[key] = value;
-        write(file, data);
+        _write(file, data);
         logger.debug(`File saved (${Date.now() - now}ms): ${relativePath(file)}`);
       }
 

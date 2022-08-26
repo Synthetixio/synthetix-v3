@@ -14,20 +14,14 @@ export type ContractsStruct = {
   struct: { name: string; members: StructMember[] };
 };
 
-export async function buildContractsStructMap(
-  contractNodes: ContractDefinition[]
-) {
+export async function buildContractsStructMap(contractNodes: ContractDefinition[]) {
   const structs: ContractsStruct[] = [];
 
   for (const contractNode of contractNodes) {
     for (const structDefinition of findContractNodeStructs(contractNode)) {
       let members: StructMember[] = [];
 
-      members = _flatStructMembers(
-        contractNodes,
-        structDefinition.canonicalName,
-        members
-      );
+      members = _flatStructMembers(contractNodes, structDefinition.canonicalName, members);
 
       structs.push({
         contract: { name: contractNode.name, id: contractNode.id },
@@ -47,13 +41,9 @@ function _flatStructMembers(
   members: StructMember[]
 ) {
   for (const currentContractNode of contractNodes) {
-    for (const currentStructDefinition of findContractNodeStructs(
-      currentContractNode
-    )) {
+    for (const currentStructDefinition of findContractNodeStructs(currentContractNode)) {
       if (canonicalName === currentStructDefinition.canonicalName) {
-        for (const member of findContractNodeVariables(
-          currentStructDefinition as any
-        )) {
+        for (const member of findContractNodeVariables(currentStructDefinition as any)) {
           // TODO
           members.push({
             name: member.name,

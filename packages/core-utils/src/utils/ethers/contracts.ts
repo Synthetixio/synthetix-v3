@@ -6,9 +6,7 @@ export async function deployedContractHasBytescode(
   provider: ethers.providers.Provider
 ) {
   const sourceBytecodeHash = getBytecodeHash(bytecode);
-  const remoteBytecodeHash = getBytecodeHash(
-    await getRemoteBytecode(contractAddress, provider)
-  );
+  const remoteBytecodeHash = getBytecodeHash(await getRemoteBytecode(contractAddress, provider));
 
   return sourceBytecodeHash === remoteBytecodeHash;
 }
@@ -17,10 +15,7 @@ export function getBytecodeHash(bytecode: string) {
   return ethers.utils.sha256(bytecode);
 }
 
-export async function getRemoteBytecode(
-  address: string,
-  provider: ethers.providers.Provider
-) {
+export async function getRemoteBytecode(address: string, provider: ethers.providers.Provider) {
   return await provider.getCode(address);
 }
 

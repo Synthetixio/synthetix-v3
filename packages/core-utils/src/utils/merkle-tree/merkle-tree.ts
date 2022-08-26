@@ -12,13 +12,10 @@ export default class MerkleTree {
     // Deduplicate elements
     this.elements = MerkleTree._bufDedup(this.elements);
 
-    this.bufferElementPositionIndex = this.elements.reduce(
-      (memo, el, index) => {
-        memo[bufferToHex(el)] = index;
-        return memo;
-      },
-      {} as typeof this.bufferElementPositionIndex
-    );
+    this.bufferElementPositionIndex = this.elements.reduce((memo, el, index) => {
+      memo[bufferToHex(el)] = index;
+      return memo;
+    }, {} as typeof this.bufferElementPositionIndex);
 
     // Create layers
     this.layers = this.getLayers(this.elements);
