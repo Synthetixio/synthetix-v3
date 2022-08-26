@@ -2,14 +2,13 @@
 pragma solidity ^0.8.0;
 
 contract AssociatedSystemsStorage {
-    struct AssociatedSystem {
-        address proxy;
-        address impl;
-        bytes32 kind;
-    }
-
     struct AssociatedSystemsStore {
         mapping(bytes32 => AssociatedSystem) systems;
+    }
+
+    struct AssociatedSystem {
+        address proxy;
+        address implementation;
     }
 
     // solhint-disable-next-line func-name-mixedcase

@@ -12,64 +12,38 @@ import "../interfaces/ITokenModule.sol";
 import "../interfaces/INftModule.sol";
 
 contract AssociatedSystemsModule is IAssociatedSystemsModule, OwnableMixin, AssociatedSystemsMixin {
-    function initOrUpgradeToken(
-        bytes32 id,
-        string memory name,
-        string memory symbol,
-        uint8 decimals,
-        address impl
-    ) external override onlyOwner {
-        AssociatedSystemsStore storage store = _associatedSystemsStore();
-
-        if (store.systems[id].proxy != address(0)) {
-            _requireKind(id, _KIND_ERC20);
-
-            store.systems[id].impl = impl;
-
-            address proxy = store.systems[id].proxy;
-
-            // tell the associated proxy to upgrade to the new implementation
-            IUUPSImplementation(proxy).upgradeTo(impl);
-
-            _setAssociatedSystem(id, _KIND_ERC20, proxy, impl);
-        } else {
-            // create a new proxy and own it
-            address proxy = address(new UUPSProxy(impl));
-
-            IOwnerModule(proxy).initializeOwnerModule(address(this));
-            ITokenModule(proxy).initialize(name, symbol, decimals);
-
-            _setAssociatedSystem(id, _KIND_ERC20, proxy, impl);
-        }
-    }
-
-    function initOrUpgradeNft(
+    function initOrUpgradeSystem(
         bytes32 id,
         string memory name,
         string memory symbol,
         string memory uri,
         address impl
     ) external override onlyOwner {
-        AssociatedSystemsStore storage store = _associatedSystemsStore();
+        AssociatedSystem storage system = _associatedSystemsStore().systems[id];
 
-        if (store.systems[id].proxy != address(0)) {
-            _requireKind(id, _KIND_ERC721);
-
-            address proxy = store.systems[id].proxy;
-
-            // tell the associated proxy to upgrade to the new implementation
-            IUUPSImplementation(proxy).upgradeTo(impl);
-
-            _setAssociatedSystem(id, _KIND_ERC721, proxy, impl);
+        if (system.proxy == address(0)) {
+            _createProxy();
         } else {
-            // create a new proxy and own it
-            address proxy = address(new UUPSProxy(impl));
-
-            IOwnerModule(proxy).initializeOwnerModule(address(this));
-            INftModule(proxy).initialize(name, symbol, uri);
-
-            _setAssociatedSystem(id, _KIND_ERC721, proxy, impl);
+            _upgradeProxy();
         }
+    }
+
+    function _createProxy() internal {
+        address proxy = address(new UUPSProxy(impl));
+
+        IOwnerModule(proxy).initializeOwnerModule(address(this));
+        INftModule(proxy).initialize(name, symbol, uri);
+
+        _setAssociatedSystem(id, _KIND_ERC721, proxy, impl);
+    }
+
+    function _upgradeProxy() internal {
+        address proxy = store.systems[id].proxy;
+
+        // tell the associated proxy to upgrade to the new implementation
+        IUUPSImplementation(proxy).upgradeTo(impl);
+
+        _setAssociatedSystem(id, _KIND_ERC721, proxy, impl);
     }
 
     /**
