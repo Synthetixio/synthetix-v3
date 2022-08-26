@@ -114,7 +114,7 @@ async function _compile(hre, quiet) {
   }
 
   try {
-    await hre.run(TASK_COMPILE, { force: true, quiet: true });
+    await hre.run(TASK_COMPILE, { force: false, quiet: true });
   } finally {
     if (logCache) console.log = logCache;
   }
