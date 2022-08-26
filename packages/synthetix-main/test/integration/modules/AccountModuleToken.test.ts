@@ -9,19 +9,19 @@ import { bootstrap } from '../bootstrap';
 describe('AccountModule and AccountToken', function () {
   const { signers, systems } = bootstrap();
 
-  describe('AccountToken init', async () => {
-    it('AccountToken is deployed', async () => {
-      const address = await systems().Core.getAccountAddress();
+  // describe('AccountToken init', async () => {
+  //   // it('AccountToken is deployed', async () => {
+  //   //   const address = await systems().Core.getAccountAddress();
 
-      // at this point, should be equal to account module address
-      assert.equal(address, systems().Account.address);
-    });
+  //   //   // at this point, should be equal to account module address
+  //   //   assert.equal(address, systems().Account.address);
+  //   // });
 
-    it('AccountToken parameters are correct', async () => {
-      assert.equal(await systems().Account.name(), 'Synthetix Account');
-      assert.equal(await systems().Account.symbol(), 'SACCT');
-    });
-  });
+  //   // it('AccountToken parameters are correct', async () => {
+  //   //   assert.equal(await systems().Account.name(), 'Synthetix Account');
+  //   //   assert.equal(await systems().Account.symbol(), 'SACCT');
+  //   // });
+  // });
 
   let owner: ethers.Signer,
     user1: ethers.Signer,
@@ -33,17 +33,17 @@ describe('AccountModule and AccountToken', function () {
     [owner, user1, user2, userAdmin, user4] = signers();
   });
 
-  describe('when attempting to mint an account token from the satellite', async () => {
-    it('reverts', async () => {
-      await assertRevert(
-        systems()
-          .Account.connect(user1)
-          .mint(await user1.getAddress(), 1),
-        `Unauthorized("${await user1.getAddress()}")`,
-        systems().Account
-      );
-    });
-  });
+  // describe('when attempting to mint an account token from the satellite', async () => {
+  //   it('reverts', async () => {
+  //     await assertRevert(
+  //       systems()
+  //         .Account.connect(user1)
+  //         .mint(await user1.getAddress(), 1),
+  //       `Unauthorized("${await user1.getAddress()}")`,
+  //       systems().Account
+  //     );
+  //   });
+  // });
 
   describe('When minting an AccountToken', async () => {
     let receipt: ethers.providers.TransactionReceipt;
