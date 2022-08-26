@@ -1,7 +1,11 @@
 const { task } = require('hardhat/config');
 const { TASK_COMPILE } = require('hardhat/builtin-tasks/task-names');
 const { setTimeout } = require('node:timers/promises');
-
+const { default: logger } = require('@synthetixio/core-utils/utils/io/logger');
+const { default: prompter } = require('@synthetixio/core-utils/utils/io/prompter');
+const types = require('@synthetixio/core-utils/utils/hardhat/argument-types');
+const { readPackageJson } = require('@synthetixio/core-utils/utils/misc/npm');
+const { ContractValidationError } = require('../internal/errors');
 const {
   SUBTASK_CANCEL_DEPLOYMENT,
   SUBTASK_CLEAR_DEPLOYMENTS,
@@ -22,12 +26,6 @@ const {
   SUBTASK_VALIDATE_STORAGE,
   TASK_DEPLOY,
 } = require('../task-names');
-
-const { default: logger } = require('@synthetixio/core-utils/utils/io/logger');
-const { default: prompter } = require('@synthetixio/core-utils/utils/io/prompter');
-const types = require('@synthetixio/core-utils/utils/hardhat/argument-types');
-const { ContractValidationError } = require('../internal/errors');
-const { readPackageJson } = require('@synthetixio/core-utils/utils/misc/npm');
 
 task(TASK_DEPLOY, 'Deploys all system modules')
   .addFlag('noConfirm', 'Skip all confirmation prompts', false)
