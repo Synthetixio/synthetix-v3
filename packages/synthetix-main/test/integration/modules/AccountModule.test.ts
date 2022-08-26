@@ -13,6 +13,14 @@ describe.only('AccountModule and AccountTokenModule', function () {
 
   let receipt: ethers.providers.TransactionReceipt;
 
+  const Roles = {
+    MODIFY: "ROLE_MODIFY",
+    STAKE: "ROLE_STAKE",
+    UNSTAKE: "ROLE_UNSTAKE",
+    ASSIGN: "ROLE_ASSIGN",
+    MINT: "ROLE_MINT",
+  };
+
   before('identify signers', async () => {
     [, user1, user2] = signers();
   });
@@ -78,6 +86,50 @@ describe.only('AccountModule and AccountTokenModule', function () {
 
       it('records the owner in the core system', async function () {
         assert.equal(await systems().Core.accountOwner(1), await user1.getAddress());
+      });
+
+      describe('when a user tries to create an acccount that already exists', () => {
+        it('reverts', async () => {
+          await assertRevert(
+            systems().Core.connect(user2).createAccount(1),
+            'TokenAlreadyMinted("1")',
+            systems().Account
+          );
+        });
+      });
+
+      describe('before roles have been granted', function () {
+        it('shows that certain roles have not been granted', async () => {
+          async function assertDoesNotHaveRole(accountAddress: string, accountId: number, role: string) {
+            assert.equal(
+              await systems().Core.hasRole(
+                accountId,
+                ethers.utils.formatBytes32String(role),
+                accountAddress
+              ),
+              false
+            );
+          }
+
+          const userAddress = await user1.getAddress();
+          await assertDoesNotHaveRole(userAddress, 1, Roles.STAKE);
+          await assertDoesNotHaveRole(userAddress, 1, Roles.MODIFY);
+          await assertDoesNotHaveRole(userAddress, 1, Roles.ASSIGN);
+        });
+      });
+
+      describe('when a non-authorized user attempts to grant roles', async () => {
+        it('reverts', async () => {
+          await assertRevert(
+            systems()
+              .Core.connect(user2)
+              .grantRole(1, ethers.utils.formatBytes32String(Roles.STAKE), await user2.getAddress()),
+            `RoleNotAuthorized("1", "${ethers.utils.formatBytes32String(
+              Roles.MODIFY
+            )}", "${await user2.getAddress()}")`,
+            systems().Core
+          );
+        });
       });
 
       describe('when an account NFT is transferred', function () {
