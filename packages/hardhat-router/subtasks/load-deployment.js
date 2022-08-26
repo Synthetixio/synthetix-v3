@@ -1,4 +1,5 @@
 const fs = require('fs');
+const { setTimeout } = require('node:timers/promises');
 const { subtask } = require('hardhat/config');
 
 const { getAllDeploymentFiles, getDeploymentExtendedFiles } = require('../utils/deployments');
@@ -37,5 +38,7 @@ subtask(SUBTASK_LOAD_DEPLOYMENT, 'Loads deployment artifacts for a particular in
         sources: JSON.parse(fs.readFileSync(previousSources)),
       };
     }
+
+    await setTimeout(1);
   }
 );
