@@ -1,27 +1,28 @@
-import fs from 'fs/promises';
 import hre from 'hardhat';
+import { ChainBuilderContext } from '@usecannon/builder';
 import { ethers } from 'ethers';
 
 import { snapshotCheckpoint } from '../utils';
 
-async function loadSystems(provider: ethers.providers.Provider) {
+async function loadSystems(
+  contracts: ChainBuilderContext['contracts'],
+  provider: ethers.providers.Provider
+) {
   // todo typechain
   const systems: { [name: string]: ethers.Contract } = {};
 
-  const basepath = hre.config.paths.root + `/deployments/${hre.network.name}`;
+  const proxies = Object.keys(contracts).filter((name) => name.endsWith('Proxy'));
 
-  for (const file of await fs.readdir(basepath)) {
-    const m = file.match(/^(.*)Proxy.json$/);
-    if (m) {
-      const info = JSON.parse((await fs.readFile(basepath + '/' + file)).toString('utf-8'));
-      systems[m[1]] = new ethers.Contract(info.address, info.abi, provider);
-    }
+  for (const proxyName of proxies) {
+    const { address, abi } = contracts[proxyName];
+    const name = proxyName.slice(0, -5); // remove "Proxy" from the end
+    systems[name] = new ethers.Contract(address, abi, provider);
   }
 
   return systems;
 }
 
-let _provider: ethers.providers.JsonRpcProvider;
+let provider: ethers.providers.JsonRpcProvider;
 
 let signers: ethers.Signer[];
 
@@ -35,30 +36,30 @@ before(async function () {
 
   const cannonInfo = await hre.run('cannon:build');
 
-  _provider = cannonInfo.provider;
+  provider = cannonInfo.provider;
   signers = cannonInfo.signers;
 
   try {
-    await _provider.send('anvil_setBlockTimestampInterval', [1]);
+    await provider.send('anvil_setBlockTimestampInterval', [1]);
   } catch (err) {
     console.warn('failed when setting block timestamp interval', err);
   }
 
-  baseSystemSnapshot = await _provider.send('evm_snapshot', []);
+  baseSystemSnapshot = await provider.send('evm_snapshot', []);
 
-  systems = await loadSystems(_provider);
+  systems = await loadSystems(cannonInfo.outputs.contracts, provider);
 
   console.log('completed initial bootstrap');
 });
 
 export function bootstrap() {
   before(async () => {
-    await _provider.send('evm_revert', [baseSystemSnapshot]);
-    baseSystemSnapshot = await _provider.send('evm_snapshot', []);
+    await provider.send('evm_revert', [baseSystemSnapshot]);
+    baseSystemSnapshot = await provider.send('evm_snapshot', []);
   });
 
   return {
-    provider: () => _provider,
+    provider: () => provider,
     signers: () => signers,
     owner: () => signers[0],
     systems: () => systems,
