@@ -12,7 +12,6 @@ extendEnvironment((hre) => {
       deployment: null,
       sources: null,
       abis: null,
-      cache: null,
     },
     deployment: null,
     previousDeployment: null,

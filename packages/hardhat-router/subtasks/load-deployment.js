@@ -1,4 +1,5 @@
 const fs = require('fs');
+const { setTimeout } = require('node:timers/promises');
 const { subtask } = require('hardhat/config');
 
 const { getAllDeploymentFiles, getDeploymentExtendedFiles } = require('../utils/deployments');
@@ -21,7 +22,6 @@ subtask(SUBTASK_LOAD_DEPLOYMENT, 'Loads deployment artifacts for a particular in
     hre.router.paths.deployment = currentDeploymentFile;
     hre.router.paths.sources = sources;
     hre.router.paths.abis = abis;
-    hre.router.paths.cache = hre.config.router.paths.cache;
 
     hre.router.deployment = {
       general: readOnly
@@ -38,5 +38,7 @@ subtask(SUBTASK_LOAD_DEPLOYMENT, 'Loads deployment artifacts for a particular in
         sources: JSON.parse(fs.readFileSync(previousSources)),
       };
     }
+
+    await setTimeout(1);
   }
 );

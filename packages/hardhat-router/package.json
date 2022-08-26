@@ -36,6 +36,7 @@
     "del": "6.0.0",
     "filter-values": "0.4.1",
     "glob": "7.1.7",
+    "lodash.debounce": "4.0.8",
     "mkdirp": "1.0.4",
     "mustache": "4.2.0",
     "solidity-ast": "0.4.26",
