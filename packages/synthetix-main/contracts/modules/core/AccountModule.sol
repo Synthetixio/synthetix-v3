@@ -19,6 +19,7 @@ contract AccountModule is IAccountModule, OwnableMixin, AccountRBACMixin, Associ
 
     error OnlyAccountTokenProxy(address origin);
     error InvalidRole();
+    error RoleNotGranted(uint accountId, bytes32 role, address target);
 
     modifier onlyAccountToken() {
         if (msg.sender != address(getAccountTokenAddress())) {
@@ -112,6 +113,10 @@ contract AccountModule is IAccountModule, OwnableMixin, AccountRBACMixin, Associ
         address target
     ) internal {
         AccountRBAC storage accountData = _accountModuleStore().accountsRBAC[accountId];
+
+        if (!_hasRole(accountId, role, target)) {
+            revert RoleNotGranted(accountId, role, target);
+        }
 
         accountData.permissions[target].remove(role);
 
