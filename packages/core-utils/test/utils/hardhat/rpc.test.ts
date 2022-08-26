@@ -18,7 +18,6 @@ import {
 // so we have to require
 const sinon = require('sinon'); // eslint-disable-line
 
-
 const fakeProvider = {
   async send() {
     return 42;

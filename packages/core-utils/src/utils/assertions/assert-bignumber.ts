@@ -9,9 +9,7 @@ type KeysMatching<T extends object, V> = {
   [K in keyof T]-?: T[K] extends V ? K : never;
 }[keyof T];
 
-function _createAssertBN(
-  operator: KeysMatching<BigNumber, (v: BigNumberish) => boolean>
-) {
+function _createAssertBN(operator: KeysMatching<BigNumber, (v: BigNumberish) => boolean>) {
   return function _assertBn(a: BigNumberish, b: BigNumberish) {
     const result = BigNumber.from(a)[operator](b);
 
