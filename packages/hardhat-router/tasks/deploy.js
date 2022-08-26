@@ -1,5 +1,6 @@
 const { task } = require('hardhat/config');
 const { TASK_COMPILE } = require('hardhat/builtin-tasks/task-names');
+const { setTimeout } = require('node:timers/promises');
 
 const {
   SUBTASK_CANCEL_DEPLOYMENT,
@@ -94,6 +95,10 @@ task(TASK_DEPLOY, 'Deploys all system modules')
       }
 
       throw err;
+    } finally {
+      // TODO remove autosave object and change it for something more explicit.
+      // Make sure that all the changes are persisted to the deployment artifacts
+      await setTimeout(1);
     }
   });
 
