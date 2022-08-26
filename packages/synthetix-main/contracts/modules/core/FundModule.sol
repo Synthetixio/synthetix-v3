@@ -93,16 +93,11 @@ contract FundModule is IFundModule, FundEventAndErrors, AccountRBACMixin, FundMi
             revert InvalidParameters("markets.length,weights.length,maxDebtShareValues.length", "must match");
         }
 
-        // TODO: check max debt share value must be low enough that the fund
-        // would be solvent
+        // TODO: this is not super efficient. we only call this to gather the debt accumulated from deployed funds
+        // would be better if we could eliminate the call at the end somehow
+        _rebalanceFundPositions(fundId);
 
         FundData storage fundData = _fundModuleStore().funds[fundId];
-
-        // _rebalanceFund with second parameter in true will clean up the distribution
-        // TODO improve how the fund positions are changed and only update what is different
-        _rebalanceFundPositions(fundId, true);
-
-        // Cleanup previous distribution
 
         uint totalWeight = 0;
         uint i = 0;
@@ -127,13 +122,17 @@ contract FundModule is IFundModule, FundEventAndErrors, AccountRBACMixin, FundMi
             totalWeight += weights[i];
         }
 
-        for (; i < fundData.fundDistribution.length; i++) {
+        uint popped = fundData.fundDistribution.length - i;
+        for (i = 0; i < popped; i++) {
+            _rebalanceMarket(fundData.fundDistribution[fundData.fundDistribution.length - 1].market, fundId, 0, 0);
             fundData.fundDistribution.pop();
         }
 
+
+
         fundData.totalWeights = totalWeight;
 
-        _rebalanceFundPositions(fundId, false);
+        _rebalanceFundPositions(fundId);
 
         emit FundPositionSet(fundId, markets, weights, msg.sender);
     }

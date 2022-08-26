@@ -166,7 +166,7 @@ export function bootstrapWithMockMarketAndFund() {
         r.fundId,
         [marketId],
         [ethers.utils.parseEther('1')],
-        [ethers.utils.parseEther('10000000000000000')]
+        [ethers.utils.parseEther('1')]
       );
   });
 

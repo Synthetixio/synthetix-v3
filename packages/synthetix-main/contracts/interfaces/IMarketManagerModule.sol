@@ -17,6 +17,10 @@ interface IMarketManagerModule {
     /// @notice gets the liquidity of the market
     function marketLiquidity(uint marketId) external view returns (uint);
 
+    /// @notice gets the USD value of the collateral backing this market.
+    /// This function does not determine the market should consider available to it. Use `marketLiquidity` instaed.
+    function marketCollateralValue(uint marketId) external view returns (uint);
+
     /// @notice gets the total balance of the market
     function marketTotalBalance(uint marketId) external view returns (int);
 

@@ -10,6 +10,8 @@ contract MarketManagerMixin is MarketManagerStorage {
     using SharesLibrary for SharesLibrary.Distribution;
     using Heap for Heap.Data;
 
+    error MarketNotFound(uint marketId);
+
     function _rebalanceMarket(
         uint marketId,
         uint fundId,
@@ -19,12 +21,16 @@ contract MarketManagerMixin is MarketManagerStorage {
         // this function is called by the fund at rebalance markets
         MarketData storage marketData = _marketManagerStore().markets[marketId];
 
+        if (marketData.marketAddress == address(0)) {
+            revert MarketNotFound(marketId);
+        }
+
         _distributeMarket(marketData);
 
-        if (marketData.debtDist.valuePerShare < maxDebtShareValue) {
+        //if (marketData.debtDist.valuePerShare < maxDebtShareValue) {
             // Adjust fund shares
             return _adjustFundShares(marketData, fundId, amount, maxDebtShareValue);
-        }
+        //}
     }
 
     function _adjustFundShares(
@@ -34,28 +40,22 @@ contract MarketManagerMixin is MarketManagerStorage {
         int newFundMaxShareValue
     ) internal returns (int debtChange) {
         uint oldLiquidity = marketData.debtDist.getActorShares(bytes32(fundId));
-        int oldFundMaxDebtShareValue = -marketData.fundMaxDebtShares.getById(uint128(fundId)).priority;
-        uint oldTotalLiquidity = marketData.debtDist.totalShares;
+        int oldFundMaxShareValue = -marketData.fundMaxDebtShares.getById(uint128(fundId)).priority;
+
         debtChange = marketData.debtDist.updateActorShares(bytes32(fundId), newLiquidity);
 
-        // recalculate max market debt share
-        int newMarketMaxShareValue = newFundMaxShareValue;
+        // recalculate max market debt nominator
+        marketData.maxMarketDebtNominator = 
+            marketData.maxMarketDebtNominator +
+            int(newLiquidity) * newFundMaxShareValue -
+            int(oldLiquidity) * oldFundMaxShareValue;
 
-        if (oldTotalLiquidity > 0 && newLiquidity > 0) {
-            int oldMarketMaxShareValue = int(marketData.maxMarketDebt) / int128(marketData.debtDist.totalShares);
-
-            newMarketMaxShareValue = oldMarketMaxShareValue -
-                (oldFundMaxDebtShareValue * int(oldLiquidity) / int(oldTotalLiquidity)) +
-                (newFundMaxShareValue * int(newLiquidity) / int128(marketData.debtDist.totalShares));
-
-            newMarketMaxShareValue =
-                newMarketMaxShareValue +
-                (oldMarketMaxShareValue * int(oldLiquidity) / int(oldTotalLiquidity)) -
-                (oldMarketMaxShareValue * int(newLiquidity) / int128(marketData.debtDist.totalShares));
+        if (newLiquidity > 0) {
+            marketData.fundMaxDebtShares.insert(uint128(fundId), -int128(int(newFundMaxShareValue)));
         }
-
-        marketData.fundMaxDebtShares.insert(uint128(fundId), -int128(int(newFundMaxShareValue)));
-        marketData.maxMarketDebt = int128((newMarketMaxShareValue * int(int128(marketData.debtDist.totalShares))) / MathUtil.INT_UNIT);
+        else {
+            marketData.fundMaxDebtShares.extractById(uint128(fundId));
+        }
     }
 
     function _distributeMarket(
@@ -71,7 +71,7 @@ contract MarketManagerMixin is MarketManagerStorage {
 
         int curBalance = marketData.lastMarketBalance;
 
-        int targetDebtPerDebtShare = targetBalance * MathUtil.INT_UNIT / int128(marketData.debtDist.totalShares);
+        /*int targetDebtPerDebtShare = targetBalance * MathUtil.INT_UNIT / int128(marketData.debtDist.totalShares);
 
         // this loop should rarely execute. When it does, it only executes once for each fund that passes the limit.
         // controls need to happen elsewhere to ensure markets don't get hit with useless funds which cause people to fail withdraw
@@ -85,7 +85,7 @@ contract MarketManagerMixin is MarketManagerStorage {
 
             // detach market from fund
             marketData.debtDist.updateActorShares(bytes32(uint(nextRemove.id)), 0);
-        }
+        }*/
 
         // todo: loop for putting funds back in as well?
 

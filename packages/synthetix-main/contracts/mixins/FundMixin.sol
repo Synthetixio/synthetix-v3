@@ -33,7 +33,7 @@ contract FundMixin is FundModuleStorage, FundVaultStorage, FundEventAndErrors, C
         _;
     }
 
-    function _rebalanceFundPositions(uint fundId, bool clearsLiquidity) internal {
+    function _rebalanceFundPositions(uint fundId) internal {
         FundData storage fundData = _fundModuleStore().funds[fundId];
         uint totalWeights = _fundModuleStore().funds[fundId].totalWeights;
 
@@ -50,7 +50,7 @@ contract FundMixin is FundModuleStorage, FundVaultStorage, FundEventAndErrors, C
 
         for (uint i = 0; i < fundData.fundDistribution.length; i++) {
             MarketDistribution storage marketDistribution = fundData.fundDistribution[i];
-            uint weight = clearsLiquidity ? 0 : marketDistribution.weight;
+            uint weight = marketDistribution.weight;
             uint amount = totalAllocatableLiquidity * weight / totalWeights;
 
             cumulativeDebtChange +=
@@ -61,7 +61,7 @@ contract FundMixin is FundModuleStorage, FundVaultStorage, FundEventAndErrors, C
     }
 
     function _distributeFundDebt(uint fundId) internal {
-        _rebalanceFundPositions(fundId, false);
+        _rebalanceFundPositions(fundId);
     }
 
     function _distributeVaultDebt(uint fundId, address collateralType) internal {

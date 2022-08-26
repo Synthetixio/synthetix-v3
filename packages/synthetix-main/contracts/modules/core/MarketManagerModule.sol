@@ -43,30 +43,15 @@ contract MarketManagerModule is
         return marketId;
     }
 
-    // function setSupplyTarget(
-    //     uint marketId,
-    //     uint fundId,
-    //     uint amount // solhint-disable-next-line no-empty-blocks
-    // ) external override {}
-
-    // function supplyTarget(uint marketId) external view override returns (uint) {
-    //     return _supplyTarget(marketId);
-    // }
-
-    // function _setLiquidity(
-    //     uint marketId,
-    //     uint fundId,
-    //     uint amount // solhint-disable-next-line no-empty-blocks
-    // ) internal {}
-
     function marketLiquidity(uint marketId) external view override returns (uint) {
         return _availableLiquidity(marketId);
     }
 
-    /*function fundBalance(uint marketId, uint fundId) external view override returns (int) {
+    function marketCollateralValue(uint marketId) external view override returns (uint) {
         MarketData storage marketData = _marketManagerStore().markets[marketId];
-        return marketData.lastMarketBalance * int(marketData.fundliquidityShares[fundId]) / int(marketData.totalLiquidityShares);
-    }*/
+
+        return marketData.debtDist.totalShares;
+    }
 
     function marketTotalBalance(uint marketId) external view override returns (int) {
         MarketData storage marketData = _marketManagerStore().markets[marketId];
@@ -110,7 +95,6 @@ contract MarketManagerModule is
         address target,
         uint amount
     ) external override {
-        revert("made it in");
         MarketData storage marketData = _marketManagerStore().markets[marketId];
 
         if (msg.sender != marketData.marketAddress) revert AccessError.Unauthorized(msg.sender);
@@ -127,7 +111,8 @@ contract MarketManagerModule is
     function _availableLiquidity(uint marketId) internal view returns (uint) {
         MarketData storage marketData = _marketManagerStore().markets[marketId];
 
-        int remaining = marketData.maxMarketDebt - marketData.issuance;
+        int remaining = marketData.maxMarketDebtNominator / 1e18 - marketData.issuance;
+        
 
         if (remaining <= 0) {
             return 0;
