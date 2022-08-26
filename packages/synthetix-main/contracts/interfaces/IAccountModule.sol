@@ -40,6 +40,15 @@ interface IAccountModule {
     function createAccount(uint256 requestedAccountId) external;
 
     /**
+     * @dev Allows the account token to notify the system when a transfer has occurred
+     *
+     * Requirements:
+     *
+     * - `msg.sender` must be the account token.
+     */
+    function notifyAccountTransfer(address to, uint256 accountId) external;
+
+    /**
      * @dev Grants `role` to `target` for account `accountId`.
      *
      * Requirements:
@@ -89,4 +98,9 @@ interface IAccountModule {
      * @dev Returns the address for the account token used by the module.
      */
     function getAccountTokenAddress() external view returns (address);
+
+    /**
+     * @dev Returns the address that owns a given account, as recorded by the system.
+     */
+    function accountOwner(uint accountId) external view returns (address);
 }

@@ -60,8 +60,6 @@ contract AccountModule is IAccountModule, OwnableMixin, AccountRBACMixin, Associ
 
     function notifyAccountTransfer(address to, uint256 accountId) external override onlyAccountToken {
         _accountModuleStore().accountsRBAC[accountId].owner = to;
-
-        // TODO: Consider revoking all permissions when the NFT is transferred?
     }
 
     function hasRole(
@@ -122,5 +120,9 @@ contract AccountModule is IAccountModule, OwnableMixin, AccountRBACMixin, Associ
         }
 
         emit RoleRevoked(accountId, role, target, msg.sender);
+    }
+
+    function accountOwner(uint accountId) external view returns (address) {
+        return _accountOwner(accountId);
     }
 }
