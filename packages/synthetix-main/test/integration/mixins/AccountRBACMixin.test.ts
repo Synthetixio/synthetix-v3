@@ -8,7 +8,7 @@ const Roles = {
   MINT: ethers.utils.formatBytes32String('ROLE_MINT'),
 };
 
-describe.only('AccountRBACMixin', function () {
+describe('AccountRBACMixin', function () {
   const { signers, systems } = bootstrap();
 
   let user1: ethers.Signer;
