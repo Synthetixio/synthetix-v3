@@ -2,7 +2,7 @@ import assert from 'assert/strict';
 import { bootstrap } from '../bootstrap';
 import { ethers } from 'ethers';
 
-describe('USDTokenModule', function () {
+describe.skip('USDTokenModule', function () {
   const { signers, systems } = bootstrap();
 
   let owner: ethers.Signer, user1: ethers.Signer;

@@ -7,7 +7,7 @@ import { findEvent } from '@synthetixio/core-utils/utils/ethers/events';
 
 import { bootstrap } from '../bootstrap';
 
-describe('FundModule Configuration (SCCP)', function () {
+describe.skip('FundModule Configuration (SCCP)', function () {
   const { signers, systems } = bootstrap();
 
   let owner: ethers.Signer, user1: ethers.Signer;
