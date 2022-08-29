@@ -2152,3 +2152,909 @@ Redeems the system escrow tokens into reward tokens
 
   _DEPENDENT ON 305_
 
+## Collateral Module
+
+### CollateralConfigured
+
+  ```solidity
+  event CollateralConfigured(address collateralType, address priceFeed, uint256 targetCRatio, uint256 minimumCRatio, bool enabled)
+  ```
+
+Emitted when a collateral type’s configuration is created or updated.
+
+### CollateralStaked
+
+  ```solidity
+  event CollateralStaked(uint256 accountId, address collateralType, uint256 amount, address sender)
+  ```
+
+Emitted when `amount` of collateral of type `collateralType` is staked to account `accountId` by `sender`.
+
+### CollateralUnstaked
+
+  ```solidity
+  event CollateralUnstaked(uint256 accountId, address collateralType, uint256 amount, address sender)
+  ```
+
+Emitted when `amount` of collateral of type `collateralType` is unstaked from account `accountId` by `sender`.
+
+### adjustCollateralType
+
+  ```solidity
+  function adjustCollateralType(address collateralType, address priceFeed, uint256 targetCRatio, uint256 minimumCRatio, bool enabled) external
+  ```
+
+Creates or updates the configuration for given `collateralType`.
+
+Requirements:
+
+- `msg.sender` must be the owner of the system.
+
+Emits a {CollateralConfigured} event.
+
+### getCollateralTypes
+
+  ```solidity
+  function getCollateralTypes(bool hideDisabled) external view returns (struct CollateralStorage.CollateralData[] collaterals)
+  ```
+
+Returns a list of detailed information pertaining to all collateral types registered in the system.
+
+### getCollateralType
+
+  ```solidity
+  function getCollateralType(address collateralType) external view returns (struct CollateralStorage.CollateralData collateral)
+  ```
+
+Returns detailed information pertaining the specified collateral type.
+
+### stake
+
+  ```solidity
+  function stake(uint256 accountId, address collateralType, uint256 amount) external
+  ```
+
+Stakes `amount` of collateral of type `collateralType` into account `accountId`.
+
+Requirements:
+
+- `msg.sender` must be the owner of the account, have the `ADMIN` permission, or have the `STAKE` permission.
+
+Emits a {CollateralStaked} event.
+
+### unstake
+
+  ```solidity
+  function unstake(uint256 accountId, address collateralType, uint256 amount) external
+  ```
+
+Unstakes `amount` of collateral of type `collateralType` from account `accountId`.
+
+Requirements:
+
+- `msg.sender` must be the owner of the account, have the `ADMIN` permission, or have the `UNSTAKE` permission.
+
+Emits a {CollateralUnstaked} event.
+
+### getAccountCollateral
+
+  ```solidity
+  function getAccountCollateral(uint256 accountId, address collateralType) external view returns (uint256 totalStaked, uint256 totalAssigned)
+  ```
+
+Returns the total values pertaining to account `accountId` for `collateralType`.
+
+### getAccountAvailableCollateral
+
+  ```solidity
+  function getAccountAvailableCollateral(uint256 accountId, address collateralType) external view returns (uint256)
+  ```
+
+Returns the amount of collateral of type `collateralType` staked with account `accountId` that can be unstaked or delegated.
+
+### CollateralConfigured
+
+  ```solidity
+  event CollateralConfigured(address collateralType, address priceFeed, uint256 targetCRatio, uint256 minimumCRatio, bool enabled)
+  ```
+
+Emitted when a collateral type’s configuration is created or updated.
+
+### CollateralStaked
+
+  ```solidity
+  event CollateralStaked(uint256 accountId, address collateralType, uint256 amount, address sender)
+  ```
+
+Emitted when `amount` of collateral of type `collateralType` is staked to account `accountId` by `sender`.
+
+### CollateralUnstaked
+
+  ```solidity
+  event CollateralUnstaked(uint256 accountId, address collateralType, uint256 amount, address sender)
+  ```
+
+Emitted when `amount` of collateral of type `collateralType` is unstaked from account `accountId` by `sender`.
+
+### adjustCollateralType
+
+  ```solidity
+  function adjustCollateralType(address collateralType, address priceFeed, uint256 targetCRatio, uint256 minimumCRatio, bool enabled) external
+  ```
+
+Creates or updates the configuration for given `collateralType`.
+
+Requirements:
+
+- `msg.sender` must be the owner of the system.
+
+Emits a {CollateralConfigured} event.
+
+### getCollateralTypes
+
+  ```solidity
+  function getCollateralTypes(bool hideDisabled) external view returns (struct CollateralStorage.CollateralData[] collaterals)
+  ```
+
+Returns a list of detailed information pertaining to all collateral types registered in the system.
+
+### getCollateralType
+
+  ```solidity
+  function getCollateralType(address collateralType) external view returns (struct CollateralStorage.CollateralData collateral)
+  ```
+
+Returns detailed information pertaining the specified collateral type.
+
+### stake
+
+  ```solidity
+  function stake(uint256 accountId, address collateralType, uint256 amount) external
+  ```
+
+Stakes `amount` of collateral of type `collateralType` into account `accountId`.
+
+Requirements:
+
+- `msg.sender` must be the owner of the account, have the `ADMIN` permission, or have the `STAKE` permission.
+
+Emits a {CollateralStaked} event.
+
+### unstake
+
+  ```solidity
+  function unstake(uint256 accountId, address collateralType, uint256 amount) external
+  ```
+
+Unstakes `amount` of collateral of type `collateralType` from account `accountId`.
+
+Requirements:
+
+- `msg.sender` must be the owner of the account, have the `ADMIN` permission, or have the `UNSTAKE` permission.
+
+Emits a {CollateralUnstaked} event.
+
+### getAccountCollateral
+
+  ```solidity
+  function getAccountCollateral(uint256 accountId, address collateralType) external view returns (uint256 totalStaked, uint256 totalAssigned)
+  ```
+
+Returns the total values pertaining to account `accountId` for `collateralType`.
+
+### getAccountAvailableCollateral
+
+  ```solidity
+  function getAccountAvailableCollateral(uint256 accountId, address collateralType) external view returns (uint256)
+  ```
+
+Returns the amount of collateral of type `collateralType` staked with account `accountId` that can be unstaked or delegated.
+
+## Fund Configuration Module
+
+### setPreferredFund
+
+  ```solidity
+  function setPreferredFund(uint256 fundId) external
+  ```
+
+SCCP sets the preferred fund
+
+### addApprovedFund
+
+  ```solidity
+  function addApprovedFund(uint256 fundId) external
+  ```
+
+SCCP adds a fundId to the approved list
+
+### removeApprovedFund
+
+  ```solidity
+  function removeApprovedFund(uint256 fundId) external
+  ```
+
+SCCP removes a fundId to the approved list
+
+### getPreferredFund
+
+  ```solidity
+  function getPreferredFund() external view returns (uint256)
+  ```
+
+gets the preferred fund
+
+### getApprovedFunds
+
+  ```solidity
+  function getApprovedFunds() external view returns (uint256[])
+  ```
+
+gets the approved funds (list of fundIds)
+
+### setPreferredFund
+
+  ```solidity
+  function setPreferredFund(uint256 fundId) external
+  ```
+
+SCCP sets the preferred fund
+
+### addApprovedFund
+
+  ```solidity
+  function addApprovedFund(uint256 fundId) external
+  ```
+
+SCCP adds a fundId to the approved list
+
+### removeApprovedFund
+
+  ```solidity
+  function removeApprovedFund(uint256 fundId) external
+  ```
+
+SCCP removes a fundId to the approved list
+
+### getPreferredFund
+
+  ```solidity
+  function getPreferredFund() external view returns (uint256)
+  ```
+
+gets the preferred fund
+
+### getApprovedFunds
+
+  ```solidity
+  function getApprovedFunds() external view returns (uint256[])
+  ```
+
+gets the approved funds (list of fundIds)
+
+## Fund Module
+
+### createFund
+
+  ```solidity
+  function createFund(uint256 requestedFundId, address owner) external
+  ```
+
+creates a new fundToken (NFT)
+
+### setFundPosition
+
+  ```solidity
+  function setFundPosition(uint256 fundId, uint256[] markets, uint256[] weights, int256[] maxDebtShareValues) external
+  ```
+
+sets the fund positions (only fundToken owner)
+
+### getFundPosition
+
+  ```solidity
+  function getFundPosition(uint256 fundId) external view returns (uint256[] markets, uint256[] weights, int256[] maxDebtShareValues)
+  ```
+
+gets the fund positions
+
+### setFundName
+
+  ```solidity
+  function setFundName(uint256 fundId, string name) external
+  ```
+
+sets the fund name
+
+### getFundName
+
+  ```solidity
+  function getFundName(uint256 fundId) external view returns (string fundName)
+  ```
+
+gets the fund name
+
+### nominateNewFundOwner
+
+  ```solidity
+  function nominateNewFundOwner(address nominatedOwner, uint256 fundId) external
+  ```
+
+nominates a new fund owner
+
+### acceptFundOwnership
+
+  ```solidity
+  function acceptFundOwnership(uint256 fundId) external
+  ```
+
+accepts ownership by nominated owner
+
+### renounceFundNomination
+
+  ```solidity
+  function renounceFundNomination(uint256 fundId) external
+  ```
+
+renounces ownership by nominated owner
+
+### ownerOf
+
+  ```solidity
+  function ownerOf(uint256 fundId) external view returns (address)
+  ```
+
+gets owner of fundId
+
+### nominatedOwnerOf
+
+  ```solidity
+  function nominatedOwnerOf(uint256 fundId) external view returns (address)
+  ```
+
+gets nominatedOwner of fundId
+
+### createFund
+
+  ```solidity
+  function createFund(uint256 requestedFundId, address owner) external
+  ```
+
+creates a new fundToken (NFT)
+
+### setFundPosition
+
+  ```solidity
+  function setFundPosition(uint256 fundId, uint256[] markets, uint256[] weights, int256[] maxDebtShareValues) external
+  ```
+
+sets the fund positions (only fundToken owner)
+
+### getFundPosition
+
+  ```solidity
+  function getFundPosition(uint256 fundId) external view returns (uint256[] markets, uint256[] weights, int256[] maxDebtShareValues)
+  ```
+
+gets the fund positions
+
+### setFundName
+
+  ```solidity
+  function setFundName(uint256 fundId, string name) external
+  ```
+
+sets the fund name
+
+### getFundName
+
+  ```solidity
+  function getFundName(uint256 fundId) external view returns (string fundName)
+  ```
+
+gets the fund name
+
+### nominateNewFundOwner
+
+  ```solidity
+  function nominateNewFundOwner(address nominatedOwner, uint256 fundId) external
+  ```
+
+nominates a new fund owner
+
+### acceptFundOwnership
+
+  ```solidity
+  function acceptFundOwnership(uint256 fundId) external
+  ```
+
+accepts ownership by nominated owner
+
+### renounceFundNomination
+
+  ```solidity
+  function renounceFundNomination(uint256 fundId) external
+  ```
+
+renounces ownership by nominated owner
+
+### ownerOf
+
+  ```solidity
+  function ownerOf(uint256 fundId) external view returns (address)
+  ```
+
+gets owner of fundId
+
+### nominatedOwnerOf
+
+  ```solidity
+  function nominatedOwnerOf(uint256 fundId) external view returns (address)
+  ```
+
+gets nominatedOwner of fundId
+
+## Liquidation Module
+
+### LiqudationInformation
+
+```solidity
+struct LiqudationInformation {
+  struct CurvesLibrary.PolynomialCurve curve;
+  mapping(uint256 => uint256) initialAmount;
+  uint256 accumulated;
+}
+```
+### liquidate
+
+  ```solidity
+  function liquidate(uint256 accountId, uint256 fundId, address collateralType) external returns (uint256 amountRewarded, uint256 debtLiquidated, uint256 collateralLiquidated)
+  ```
+
+liquidates the required collateral of the account delegated to the fundId
+
+### liquidateVault
+
+  ```solidity
+  function liquidateVault(uint256 fundId, address collateralType) external returns (uint256 amountRewarded, uint256 collateralLiquidated)
+  ```
+
+liquidates an entire vault. can only be done if the vault itself is undercollateralized
+
+### isLiquidatable
+
+  ```solidity
+  function isLiquidatable(uint256 accountId, uint256 fundId, address collateralType) external returns (bool)
+  ```
+
+returns if the account is liquidable on the fundId - collateralType pair
+
+### LiqudationInformation
+
+```solidity
+struct LiqudationInformation {
+  struct CurvesLibrary.PolynomialCurve curve;
+  mapping(uint256 => uint256) initialAmount;
+  uint256 accumulated;
+}
+```
+### liquidate
+
+  ```solidity
+  function liquidate(uint256 accountId, uint256 fundId, address collateralType) external returns (uint256 amountRewarded, uint256 debtLiquidated, uint256 collateralLiquidated)
+  ```
+
+liquidates the required collateral of the account delegated to the fundId
+
+### liquidateVault
+
+  ```solidity
+  function liquidateVault(uint256 fundId, address collateralType) external returns (uint256 amountRewarded, uint256 collateralLiquidated)
+  ```
+
+liquidates an entire vault. can only be done if the vault itself is undercollateralized
+
+### isLiquidatable
+
+  ```solidity
+  function isLiquidatable(uint256 accountId, uint256 fundId, address collateralType) external returns (bool)
+  ```
+
+returns if the account is liquidable on the fundId - collateralType pair
+
+## Market Manager Module
+
+### registerMarket
+
+  ```solidity
+  function registerMarket(address market) external returns (uint256)
+  ```
+
+registers a new market
+
+### marketLiquidity
+
+  ```solidity
+  function marketLiquidity(uint256 marketId) external view returns (uint256)
+  ```
+
+gets the liquidity of the market
+
+### marketTotalBalance
+
+  ```solidity
+  function marketTotalBalance(uint256 marketId) external view returns (int256)
+  ```
+
+gets the total balance of the market
+
+### deposit
+
+  ```solidity
+  function deposit(uint256 marketId, address target, uint256 amount) external
+  ```
+
+target deposits amount of synths to the marketId
+
+### withdraw
+
+  ```solidity
+  function withdraw(uint256 marketId, address target, uint256 amount) external
+  ```
+
+target withdraws amount of synths to the marketId
+
+### registerMarket
+
+  ```solidity
+  function registerMarket(address market) external returns (uint256)
+  ```
+
+registers a new market
+
+### marketLiquidity
+
+  ```solidity
+  function marketLiquidity(uint256 marketId) external view returns (uint256)
+  ```
+
+gets the liquidity of the market
+
+### marketTotalBalance
+
+  ```solidity
+  function marketTotalBalance(uint256 marketId) external view returns (int256)
+  ```
+
+gets the total balance of the market
+
+### deposit
+
+  ```solidity
+  function deposit(uint256 marketId, address target, uint256 amount) external
+  ```
+
+target deposits amount of synths to the marketId
+
+### withdraw
+
+  ```solidity
+  function withdraw(uint256 marketId, address target, uint256 amount) external
+  ```
+
+target withdraws amount of synths to the marketId
+
+## USD Token Module
+
+### initializeUSDTokenModule
+
+  ```solidity
+  function initializeUSDTokenModule() external
+  ```
+
+initializes the USD Token Module. Creates the first USD token implementation and takes ownership by the system
+
+### isUSDTokenModuleInitialized
+
+  ```solidity
+  function isUSDTokenModuleInitialized() external view returns (bool)
+  ```
+
+shows whether the module has been initialized
+
+### upgradeUSDImplementation
+
+  ```solidity
+  function upgradeUSDImplementation(address newUSDTokenImplementation) external
+  ```
+
+upgrades the USDToken implementation.
+
+### getUSDTokenAddress
+
+  ```solidity
+  function getUSDTokenAddress() external view returns (address)
+  ```
+
+gets the USDToken address.
+
+### initializeUSDTokenModule
+
+  ```solidity
+  function initializeUSDTokenModule() external
+  ```
+
+initializes the USD Token Module. Creates the first USD token implementation and takes ownership by the system
+
+### isUSDTokenModuleInitialized
+
+  ```solidity
+  function isUSDTokenModuleInitialized() external view returns (bool)
+  ```
+
+shows whether the module has been initialized
+
+### upgradeUSDImplementation
+
+  ```solidity
+  function upgradeUSDImplementation(address newUSDTokenImplementation) external
+  ```
+
+upgrades the USDToken implementation.
+
+### getUSDTokenAddress
+
+  ```solidity
+  function getUSDTokenAddress() external view returns (address)
+  ```
+
+gets the USDToken address.
+
+## Vault Module
+
+### delegateCollateral
+
+  ```solidity
+  function delegateCollateral(uint256 accountId, uint256 fundId, address collateralType, uint256 amount, uint256 leverage) external
+  ```
+
+delegates (creates, adjust or remove a delegation) collateral from an account
+
+### mintUSD
+
+  ```solidity
+  function mintUSD(uint256 accountId, uint256 fundId, address collateralType, uint256 amount) external
+  ```
+
+mints USD for a fund/account from a collateralType. if CRatio is valid
+
+### burnUSD
+
+  ```solidity
+  function burnUSD(uint256 accountId, uint256 fundId, address collateralType, uint256 amount) external
+  ```
+
+burns USD for a fund/account from a collateralType
+
+### accountCollateralRatio
+
+  ```solidity
+  function accountCollateralRatio(uint256 accountId, uint256 fundId, address collateralType) external returns (uint256)
+  ```
+
+gets the CRatio for an account/collateral in a fund
+
+### accountVaultDebt
+
+  ```solidity
+  function accountVaultDebt(uint256 accountId, uint256 fundId, address collateralType) external returns (int256)
+  ```
+
+gets the account debt in a fund for a collateral
+
+### accountVaultCollateral
+
+  ```solidity
+  function accountVaultCollateral(uint256 accountId, uint256 fundId, address collateralType) external view returns (uint256 amount, uint256 value, uint256 shares)
+  ```
+
+gets the account collateral value in a fund for a collateral
+
+### vaultDebt
+
+  ```solidity
+  function vaultDebt(uint256 fundId, address collateralType) external returns (int256)
+  ```
+
+gets the total fund debt
+
+### vaultCollateral
+
+  ```solidity
+  function vaultCollateral(uint256 fundId, address collateralType) external returns (uint256 amount, uint256 value)
+  ```
+
+gets total vault collateral and its value
+
+### totalVaultShares
+
+  ```solidity
+  function totalVaultShares(uint256 fundId, address collateralType) external view returns (uint256)
+  ```
+
+gets the total fund debtShares
+
+### debtPerShare
+
+  ```solidity
+  function debtPerShare(uint256 fundId, address collateralType) external returns (int256)
+  ```
+
+gets the debt per share (USD value) for a fund
+
+### getLiquidityItem
+
+  ```solidity
+  function getLiquidityItem(bytes32 liquidityItemId) external view returns (struct FundVaultStorage.LiquidityItem liquidityItem)
+  ```
+
+gets liquidityItem details for a liquidityItemId
+
+### delegateCollateral
+
+  ```solidity
+  function delegateCollateral(uint256 accountId, uint256 fundId, address collateralType, uint256 amount, uint256 leverage) external
+  ```
+
+delegates (creates, adjust or remove a delegation) collateral from an account
+
+### mintUSD
+
+  ```solidity
+  function mintUSD(uint256 accountId, uint256 fundId, address collateralType, uint256 amount) external
+  ```
+
+mints USD for a fund/account from a collateralType. if CRatio is valid
+
+### burnUSD
+
+  ```solidity
+  function burnUSD(uint256 accountId, uint256 fundId, address collateralType, uint256 amount) external
+  ```
+
+burns USD for a fund/account from a collateralType
+
+### accountCollateralRatio
+
+  ```solidity
+  function accountCollateralRatio(uint256 accountId, uint256 fundId, address collateralType) external returns (uint256)
+  ```
+
+gets the CRatio for an account/collateral in a fund
+
+### accountVaultDebt
+
+  ```solidity
+  function accountVaultDebt(uint256 accountId, uint256 fundId, address collateralType) external returns (int256)
+  ```
+
+gets the account debt in a fund for a collateral
+
+### accountVaultCollateral
+
+  ```solidity
+  function accountVaultCollateral(uint256 accountId, uint256 fundId, address collateralType) external view returns (uint256 amount, uint256 value, uint256 shares)
+  ```
+
+gets the account collateral value in a fund for a collateral
+
+### vaultDebt
+
+  ```solidity
+  function vaultDebt(uint256 fundId, address collateralType) external returns (int256)
+  ```
+
+gets the total fund debt
+
+### vaultCollateral
+
+  ```solidity
+  function vaultCollateral(uint256 fundId, address collateralType) external returns (uint256 amount, uint256 value)
+  ```
+
+gets total vault collateral and its value
+
+### totalVaultShares
+
+  ```solidity
+  function totalVaultShares(uint256 fundId, address collateralType) external view returns (uint256)
+  ```
+
+gets the total fund debtShares
+
+### debtPerShare
+
+  ```solidity
+  function debtPerShare(uint256 fundId, address collateralType) external returns (int256)
+  ```
+
+gets the debt per share (USD value) for a fund
+
+### getLiquidityItem
+
+  ```solidity
+  function getLiquidityItem(bytes32 liquidityItemId) external view returns (struct FundVaultStorage.LiquidityItem liquidityItem)
+  ```
+
+gets liquidityItem details for a liquidityItemId
+
+## Vault Rewards Module
+
+### distributeRewards
+
+  ```solidity
+  function distributeRewards(uint256 fundId, address token, uint256 index, address distributor, uint256 amount, uint256 start, uint256 duration) external
+  ```
+
+called by fund owner or an existing distributor to set up rewards for vault participants
+
+### getAvailableRewards
+
+  ```solidity
+  function getAvailableRewards(uint256 fundId, address token, uint256 accountId) external returns (uint256[])
+  ```
+
+retrieves the amount of available rewards.
+this function should be called to get currently available rewards using `callStatic`
+
+### claimRewards
+
+  ```solidity
+  function claimRewards(uint256 fundId, address token, uint256 accountId) external returns (uint256[])
+  ```
+
+retrieves the amount of available rewards, and claims them to the caller's account.
+this function should be called to get currently available rewards using `callStatic`
+
+### getCurrentRewardAccumulation
+
+  ```solidity
+  function getCurrentRewardAccumulation(uint256 fundId, address collateralType) external view returns (uint256[])
+  ```
+
+returns the number of individual units of amount emitted per second per share for the given fundId, collateralType vault
+
+### distributeRewards
+
+  ```solidity
+  function distributeRewards(uint256 fundId, address token, uint256 index, address distributor, uint256 amount, uint256 start, uint256 duration) external
+  ```
+
+called by fund owner or an existing distributor to set up rewards for vault participants
+
+### getAvailableRewards
+
+  ```solidity
+  function getAvailableRewards(uint256 fundId, address token, uint256 accountId) external returns (uint256[])
+  ```
+
+retrieves the amount of available rewards.
+this function should be called to get currently available rewards using `callStatic`
+
+### claimRewards
+
+  ```solidity
+  function claimRewards(uint256 fundId, address token, uint256 accountId) external returns (uint256[])
+  ```
+
+retrieves the amount of available rewards, and claims them to the caller's account.
+this function should be called to get currently available rewards using `callStatic`
+
+### getCurrentRewardAccumulation
+
+  ```solidity
+  function getCurrentRewardAccumulation(uint256 fundId, address collateralType) external view returns (uint256[])
+  ```
+
+returns the number of individual units of amount emitted per second per share for the given fundId, collateralType vault
+

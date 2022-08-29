@@ -98,11 +98,15 @@ interface ICollateralModule {
         view
         returns (
             uint totalStaked,
-            uint totalAssigned,
-            uint totalLocked,
-            uint totalEscrowed
+            uint totalAssigned
+            //uint totalLocked,
+            //uint totalEscrowed
         );
 
+    /// @notice Returns the amount of collateral of type `collateralType` staked with account `accountId` that can be unstaked or delegated.
+    function getAccountAvailableCollateral(uint accountId, address collateralType) external view returns (uint);
+
+    /*
     /// @notice Returns the amount of collateral of type `collateralType` staked with account `accountId` that can be unstaked.
     /// @dev DEPENDENT ON 305 (Would be combined with `getAccountUnstakebleCollateral` into `getAccountAvailableCollateral`)
     function getAccountUnstakebleCollateral(uint accountId, address collateralType) external view returns (uint);
@@ -127,4 +131,5 @@ interface ICollateralModule {
         uint amount,
         uint duration
     ) external;
+*/
 }

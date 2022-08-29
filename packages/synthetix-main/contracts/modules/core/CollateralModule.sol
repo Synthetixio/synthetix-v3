@@ -112,7 +112,7 @@ contract CollateralModule is
         address collateralType,
         uint amount
     ) public override onlyRoleAuthorized(accountId, "unstake") {
-        uint256 availableCollateral = getAccountUnstakebleCollateral(accountId, collateralType);
+        uint256 availableCollateral = getAccountAvailableCollateral(accountId, collateralType); // getAccountUnstakebleCollateral(accountId, collateralType);
 
         if (availableCollateral < amount) {
             revert InsufficientAccountCollateral(accountId, collateralType, amount);
@@ -133,20 +133,18 @@ contract CollateralModule is
         external
         view
         override
-        returns (
-            uint256 totalStaked,
-            uint256 totalAssigned,
-            uint256 totalLocked,
-            uint256 totalEscrowed
-        )
+        returns (uint256 totalStaked, uint256 totalAssigned)
+    //uint256 totalLocked,
+    //uint256 totalEscrowed
     {
         return _getAccountCollateralTotals(accountId, collateralType);
     }
 
-    function getAccountUnassignedCollateral(uint accountId, address collateralType) public view override returns (uint) {
+    function getAccountAvailableCollateral(uint accountId, address collateralType) public view override returns (uint) {
         return _getAccountUnassignedCollateral(accountId, collateralType);
     }
 
+    /*
     function getAccountUnstakebleCollateral(uint accountId, address collateralType) public view override returns (uint) {
         (uint256 total, uint256 assigned, uint256 locked, ) = _getAccountCollateralTotals(accountId, collateralType);
 
@@ -209,11 +207,13 @@ contract CollateralModule is
             collateralData.amount += amount;
         }
     }
+*/
 
     /////////////////////////////////////////////////
     // INTERNALS
     /////////////////////////////////////////////////
 
+    /*
     function _calculateRewardTokenMinted(uint amount, uint duration) internal pure returns (uint) {
         return (amount * duration) / _SECONDS_PER_YEAR;
     }
@@ -245,4 +245,5 @@ contract CollateralModule is
             }
         }
     }
+*/
 }
