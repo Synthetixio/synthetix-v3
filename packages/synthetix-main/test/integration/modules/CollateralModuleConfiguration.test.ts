@@ -6,7 +6,7 @@ import { ethers } from 'hardhat';
 
 import { bootstrap } from '../bootstrap';
 
-describe('CollateralManagerConfiguration (SCCP)', function () {
+describe.skip('CollateralManagerConfiguration (SCCP)', function () {
   const { signers, systems } = bootstrap();
 
   let systemOwner: Ethers.Signer, user1: Ethers.Signer;

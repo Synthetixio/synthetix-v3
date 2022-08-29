@@ -7,7 +7,7 @@ import { findEvent } from '@synthetixio/core-utils/utils/ethers/events';
 
 import { bootstrap } from '../bootstrap';
 
-describe('FundModule Create / Ownership', function () {
+describe.skip('FundModule Create / Ownership', function () {
   const { signers, systems } = bootstrap();
 
   let user1: ethers.Signer, user2: ethers.Signer;
