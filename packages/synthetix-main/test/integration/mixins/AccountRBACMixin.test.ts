@@ -1,129 +1,163 @@
-import assert from 'assert/strict';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import { ethers } from 'ethers';
-
 import { bootstrap } from '../bootstrap';
 
-// TODO
-describe.skip('AccountRBACMixin', function () {
+const Permissions = {
+  STAKE: ethers.utils.formatBytes32String('STAKE'),
+  MINT: ethers.utils.formatBytes32String('MINT'),
+};
+
+describe('AccountRBACMixin', function () {
   const { signers, systems } = bootstrap();
 
-  let owner: ethers.Signer, user1: ethers.Signer, user2: ethers.Signer, user3: ethers.Signer;
+  let user1: ethers.Signer;
+  let user2: ethers.Signer;
+  let user3: ethers.Signer;
 
-  let AccountRBACMixinMock: ethers.Contract;
+  function canStake({ user }: { user: number }) {
+    let value = Math.round(10000 * Math.random());
 
-  before('identify signers', async () => {
-    [owner, user1, user2, user3] = signers();
-  });
+    describe(`when user${user} stakes`, function () {
+      before('stake', async function () {
+        const signer = signers()[user];
 
-  before('mint an account token', async () => {
-    await (await systems().Core.connect(user1).createAccount(1)).wait();
-  });
+        await (await systems().Core.connect(signer).mock_AccountRBACMixin_stake(1, value));
+      });
 
-  it('is minted', async () => {
-    assert.equal(await systems().Account.ownerOf(1), await user1.getAddress());
-    assertBn.equal(await systems().Account.balanceOf(await user1.getAddress()), 1);
-  });
-
-  describe('when accessing as owner', () => {
-    it('can interact with the contract', async () => {
-      await (await AccountRBACMixinMock.connect(user1).interactWithAccount(1, 42)).wait();
-      assertBn.equal(await AccountRBACMixinMock.getRBACValue(), 42);
+      it('sets the mock value', async function () {
+        assertBn.equal(await systems().Core.mock_AccountRBACMixin_getStakeMock(), value);
+      });
     });
+  }
 
-    describe('when attempting to interact as non owner', async () => {
-      it('reverts', async () => {
+  function canMint({ user }: { user: number }) {
+    let value = Math.round(10000 * Math.random());
+
+    describe(`when user${user} mints`, function () {
+      before('mint', async function () {
+        const signer = signers()[user];
+
+        await (await systems().Core.connect(signer).mock_AccountRBACMixin_mint(1, value));
+      });
+
+      it('sets the mock value', async function () {
+        assertBn.equal(await systems().Core.mock_AccountRBACMixin_getMintMock(), value);
+      });
+    });
+  }
+
+  function cannotStake({ user }: { user: number }) {
+    describe(`when user${user} tries to stake`, function () {
+      it('reverts', async function () {
+        const signer = signers()[user];
+
         await assertRevert(
-          AccountRBACMixinMock.connect(user2).interactWithAccount(1, 1337),
-          `RoleNotAuthorized(1, "${ethers.utils.formatBytes32String(
-            'stake'
-          )}", "${user2.getAddress()}")`
+          systems().Core.connect(signer).mock_AccountRBACMixin_stake(1, 666),
+          `PermissionDenied("1", "${Permissions.STAKE}", "${await signer.getAddress()}")`,
+          systems().Core
         );
       });
     });
+  }
 
-    describe('when transfering ownership of systems().Account', async () => {
-      before('transfer to user2', async () => {
-        await (
-          await systems()
-            .Account.connect(user1)
-            .transferFrom(user1.getAddress(), user2.getAddress(), 1)
-        ).wait();
-      });
+  function cannotMint({ user }: { user: number }) {
+    describe(`when user${user} tries to mint`, function () {
+      it('reverts', async function () {
+        const signer = signers()[user];
 
-      after('transfer back to user1', async () => {
-        await (
-          await systems()
-            .Account.connect(user2)
-            .transferFrom(user2.getAddress(), user1.getAddress(), 1)
-        ).wait();
-      });
-
-      it('can interact with the contract', async () => {
-        await (await AccountRBACMixinMock.connect(user2).interactWithAccount(1, 43)).wait();
-        assertBn.equal(await AccountRBACMixinMock.getRBACValue(), 43);
-      });
-
-      describe('when attempting to interact as non owner', async () => {
-        it('reverts', async () => {
-          await assertRevert(
-            AccountRBACMixinMock.connect(user1).interactWithAccount(1, 1337),
-            `RoleNotAuthorized(1, "${ethers.utils.formatBytes32String(
-              'stake'
-            )}", "${await user1.getAddress()}")`
-          );
-        });
+        await assertRevert(
+          systems().Core.connect(signer).mock_AccountRBACMixin_mint(1, 666),
+          `PermissionDenied("1", "${Permissions.MINT}", "${await signer.getAddress()}")`,
+          systems().Core
+        );
       });
     });
+  }
 
-    describe('when granting access', async () => {
-      before('grant', async () => {
-        await (
-          await systems()
-            .Core.connect(user1)
-            .grantRole(1, ethers.utils.formatBytes32String('stake'), await user2.getAddress())
-        ).wait();
+  describe('AccountRBACMixin', function () {
+    before('identify signers', async () => {
+      [, user1, user2, user3] = signers();
+    });
 
-        await (
-          await systems()
-            .Core.connect(user1)
-            .grantRole(1, ethers.utils.formatBytes32String('otherRole'), await user3.getAddress())
-        ).wait();
+    before('create an account', async () => {
+      await (await systems().Core.connect(user1).createAccount(1)).wait();
+    });
+
+    describe('before granting access to any account', function () {
+      canStake({ user: 1 });
+      canMint({ user: 1 });
+      cannotStake({ user: 2 });
+      cannotMint({ user: 2 });
+      cannotStake({ user: 3 });
+      cannotMint({ user: 3 });
+    });
+
+    describe('when granting stake access to user2', function () {
+      before('grant', async function () {
+        await (await systems().Core.connect(user1).grantPermission(1, Permissions.STAKE, await user2.getAddress())).wait();
       });
 
-      it('can interact with the contract', async () => {
-        await (await AccountRBACMixinMock.connect(user2).interactWithAccount(1, 44)).wait();
-        assertBn.equal(await AccountRBACMixinMock.getRBACValue(), 44);
-      });
+      canStake({ user: 1 });
+      canMint({ user: 1 });
+      canStake({ user: 2 });
+      cannotMint({ user: 2 });
+      cannotStake({ user: 3 });
+      cannotMint({ user: 3 });
 
-      describe('when attempting to interact as non owner / non authorized with that role', async () => {
-        it('reverts', async () => {
-          await assertRevert(
-            AccountRBACMixinMock.connect(user3).interactWithAccount(1, 1337),
-            `RoleNotAuthorized(1, "${ethers.utils.formatBytes32String(
-              'stake'
-            )}", "${await user3.getAddress()}")`
-          );
-        });
-      });
-
-      describe('when attempting to access after the role was revoked', async () => {
-        before('revoke access to user2', async () => {
-          await (
-            await systems()
-              .Core.connect(user1)
-              .revokeRole(1, ethers.utils.formatBytes32String('stake'), await user2.getAddress())
-          ).wait();
+      describe('when granting mint access to user2', function () {
+        before('grant', async function () {
+          await (await systems().Core.connect(user1).grantPermission(1, Permissions.MINT, await user2.getAddress())).wait();
         });
 
-        it('reverts', async () => {
-          await assertRevert(
-            AccountRBACMixinMock.connect(user2).interactWithAccount(1, 1337),
-            `RoleNotAuthorized(1, "${ethers.utils.formatBytes32String(
-              'stake'
-            )}", "${await user2.getAddress()}")`
-          );
+        canStake({ user: 1 });
+        canMint({ user: 1 });
+        canStake({ user: 2 });
+        canMint({ user: 2 });
+        cannotStake({ user: 3 });
+        cannotMint({ user: 3 });
+
+        describe('when revoking stake access from user2', function () {
+          before('revoke', async function () {
+            await (await systems().Core.connect(user1).revokePermission(1, Permissions.STAKE, await user2.getAddress())).wait();
+          });
+
+          canStake({ user: 1 });
+          canMint({ user: 1 });
+          canMint({ user: 2 });
+          cannotStake({ user: 2 });
+          cannotStake({ user: 3 });
+          cannotMint({ user: 3 });
+
+          describe('when granting stake access to user3', function () {
+            before('grant', async function () {
+              await (await systems().Core.connect(user1).grantPermission(1, Permissions.STAKE, await user3.getAddress())).wait();
+            });
+
+            canStake({ user: 1 });
+            canMint({ user: 1 });
+            canMint({ user: 2 });
+            cannotStake({ user: 2 });
+            canStake({ user: 3 });
+            cannotMint({ user: 3 });
+
+            describe('when the account owner transfers the account to user3', function () {
+              before('transfer account', async function () {
+                await (await systems().Account.connect(user1).transferFrom(
+                  await user1.getAddress(),
+                  await user3.getAddress(),
+                  1
+                )).wait();
+              });
+
+              cannotStake({ user: 1 });
+              cannotMint({ user: 1 });
+              canMint({ user: 2 });
+              cannotStake({ user: 2 });
+              canStake({ user: 3 });
+              canMint({ user: 3 });
+            });
+          });
         });
       });
     });

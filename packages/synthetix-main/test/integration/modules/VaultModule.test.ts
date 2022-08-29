@@ -6,7 +6,7 @@ import { ethers } from 'ethers';
 import { bootstrapWithStakedFund } from '../bootstrap';
 import { snapshotCheckpoint } from '../../utils';
 
-describe('VaultModule', function () {
+describe.skip('VaultModule', function () {
   const {
     signers,
     systems,

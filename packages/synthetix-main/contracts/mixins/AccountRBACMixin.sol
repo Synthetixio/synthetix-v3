@@ -13,6 +13,7 @@ contract AccountRBACMixin is AccountModuleStorage {
     bytes32 internal constant _UNSTAKE_PERMISSION = "UNSTAKE";
     bytes32 internal constant _ASSIGN_PERMISSION = "ASSIGN";
     bytes32 internal constant _MINT_PERMISSION = "MINT";
+    bytes32 internal constant _ADMIN_PERMISSION = "ADMIN";
 
     modifier onlyWithPerimission(uint accountId, bytes32 permission) {
         if (!_authorized(accountId, permission, msg.sender)) {
@@ -37,7 +38,9 @@ contract AccountRBACMixin is AccountModuleStorage {
         bytes32 permission,
         address target
     ) internal view returns (bool) {
-        return ((target == _accountOwner(accountId)) || (_hasPermission(accountId, permission, target)));
+        return ((target == _accountOwner(accountId)) ||
+            _hasPermission(accountId, _ADMIN_PERMISSION, target) ||
+            _hasPermission(accountId, permission, target));
     }
 
     function _accountOwner(uint accountId) internal view returns (address) {
