@@ -1,5 +1,203 @@
 # Solidity API
 
+## Collateral Module
+
+### CollateralConfigured
+
+  ```solidity
+  event CollateralConfigured(address collateralType, address priceFeed, uint256 targetCRatio, uint256 minimumCRatio, bool enabled)
+  ```
+
+Emitted when a collateral type’s configuration is created or updated.
+
+### CollateralDeposited
+
+  ```solidity
+  event CollateralDeposited(uint256 accountId, address collateralType, uint256 amount, address sender)
+  ```
+
+Emitted when `amount` of collateral of type `collateralType` is deposited to account `accountId` by `sender`.
+
+### CollateralWithdrawn
+
+  ```solidity
+  event CollateralWithdrawn(uint256 accountId, address collateralType, uint256 amount, address sender)
+  ```
+
+Emitted when `amount` of collateral of type `collateralType` is withdrawn from account `accountId` by `sender`.
+
+### adjustCollateralType
+
+  ```solidity
+  function adjustCollateralType(address collateralType, address priceFeed, uint256 targetCRatio, uint256 minimumCRatio, bool enabled) external
+  ```
+
+Creates or updates the configuration for given `collateralType`.
+
+Requirements:
+
+- `msg.sender` must be the owner of the system.
+
+Emits a {CollateralConfigured} event.
+
+### getCollateralTypes
+
+  ```solidity
+  function getCollateralTypes(bool hideDisabled) external view returns (struct CollateralStorage.CollateralData[] collaterals)
+  ```
+
+Returns a list of detailed information pertaining to all collateral types registered in the system.
+
+### getCollateralType
+
+  ```solidity
+  function getCollateralType(address collateralType) external view returns (struct CollateralStorage.CollateralData collateral)
+  ```
+
+Returns detailed information pertaining the specified collateral type.
+
+### depositCollateral
+
+  ```solidity
+  function depositCollateral(uint256 accountId, address collateralType, uint256 amount) external
+  ```
+
+Deposits `amount` of collateral of type `collateralType` into account `accountId`.
+
+Requirements:
+
+- `msg.sender` must be the owner of the account, have the `ADMIN` permission, or have the `DEPOSIT` permission.
+
+Emits a {CollateralDeposited} event.
+
+### withdrawCollateral
+
+  ```solidity
+  function withdrawCollateral(uint256 accountId, address collateralType, uint256 amount) external
+  ```
+
+Withdraws `amount` of collateral of type `collateralType` from account `accountId`.
+
+Requirements:
+
+- `msg.sender` must be the owner of the account, have the `ADMIN` permission, or have the `WITHDRAW` permission.
+
+Emits a {CollateralWithdrawn} event.
+
+### getAccountCollateral
+
+  ```solidity
+  function getAccountCollateral(uint256 accountId, address collateralType) external view returns (uint256 totalDeposited, uint256 totalAssigned)
+  ```
+
+Returns the total values pertaining to account `accountId` for `collateralType`.
+
+### getAccountAvailableCollateral
+
+  ```solidity
+  function getAccountAvailableCollateral(uint256 accountId, address collateralType) external view returns (uint256)
+  ```
+
+Returns the amount of collateral of type `collateralType` deposited with account `accountId` that can be withdrawn or delegated.
+
+### CollateralConfigured
+
+  ```solidity
+  event CollateralConfigured(address collateralType, address priceFeed, uint256 targetCRatio, uint256 minimumCRatio, bool enabled)
+  ```
+
+Emitted when a collateral type’s configuration is created or updated.
+
+### CollateralDeposited
+
+  ```solidity
+  event CollateralDeposited(uint256 accountId, address collateralType, uint256 amount, address sender)
+  ```
+
+Emitted when `amount` of collateral of type `collateralType` is deposited to account `accountId` by `sender`.
+
+### CollateralWithdrawn
+
+  ```solidity
+  event CollateralWithdrawn(uint256 accountId, address collateralType, uint256 amount, address sender)
+  ```
+
+Emitted when `amount` of collateral of type `collateralType` is withdrawn from account `accountId` by `sender`.
+
+### adjustCollateralType
+
+  ```solidity
+  function adjustCollateralType(address collateralType, address priceFeed, uint256 targetCRatio, uint256 minimumCRatio, bool enabled) external
+  ```
+
+Creates or updates the configuration for given `collateralType`.
+
+Requirements:
+
+- `msg.sender` must be the owner of the system.
+
+Emits a {CollateralConfigured} event.
+
+### getCollateralTypes
+
+  ```solidity
+  function getCollateralTypes(bool hideDisabled) external view returns (struct CollateralStorage.CollateralData[] collaterals)
+  ```
+
+Returns a list of detailed information pertaining to all collateral types registered in the system.
+
+### getCollateralType
+
+  ```solidity
+  function getCollateralType(address collateralType) external view returns (struct CollateralStorage.CollateralData collateral)
+  ```
+
+Returns detailed information pertaining the specified collateral type.
+
+### depositCollateral
+
+  ```solidity
+  function depositCollateral(uint256 accountId, address collateralType, uint256 amount) external
+  ```
+
+Deposits `amount` of collateral of type `collateralType` into account `accountId`.
+
+Requirements:
+
+- `msg.sender` must be the owner of the account, have the `ADMIN` permission, or have the `DEPOSIT` permission.
+
+Emits a {CollateralDeposited} event.
+
+### withdrawCollateral
+
+  ```solidity
+  function withdrawCollateral(uint256 accountId, address collateralType, uint256 amount) external
+  ```
+
+Withdraws `amount` of collateral of type `collateralType` from account `accountId`.
+
+Requirements:
+
+- `msg.sender` must be the owner of the account, have the `ADMIN` permission, or have the `WITHDRAW` permission.
+
+Emits a {CollateralWithdrawn} event.
+
+### getAccountCollateral
+
+  ```solidity
+  function getAccountCollateral(uint256 accountId, address collateralType) external view returns (uint256 totalDeposited, uint256 totalAssigned)
+  ```
+
+Returns the total values pertaining to account `accountId` for `collateralType`.
+
+### getAccountAvailableCollateral
+
+  ```solidity
+  function getAccountAvailableCollateral(uint256 accountId, address collateralType) external view returns (uint256)
+  ```
+
+Returns the amount of collateral of type `collateralType` deposited with account `accountId` that can be withdrawn or delegated.
+
 ## Account Module
 
 ### AccountCreated
@@ -8,39 +206,39 @@
   event AccountCreated(address sender, uint256 accountId)
   ```
 
-  _Emitted when an account token with id `accountId` is minted to `sender`._
+Emitted when an account token with id `accountId` is minted to `sender`.
 
-### RoleGranted
-
-  ```solidity
-  event RoleGranted(uint256 accountId, bytes32 role, address target, address sender)
-  ```
-
-  _Emitted when `target` is granted `role` by `sender` for account `accountId`._
-
-### RoleRevoked
+### PermissionGranted
 
   ```solidity
-  event RoleRevoked(uint256 accountId, bytes32 role, address target, address sender)
+  event PermissionGranted(uint256 accountId, bytes32 permission, address target, address sender)
   ```
 
-  _Emitted when `target` has `role` renounced or revoked by `sender` for account `accountId`._
+Emitted when `target` is granted `permission` by `sender` for account `accountId`.
 
-### AccountPermission
+### PermissionRevoked
+
+  ```solidity
+  event PermissionRevoked(uint256 accountId, bytes32 permission, address target, address sender)
+  ```
+
+Emitted when `target` has `permission` renounced or revoked by `sender` for account `accountId`.
+
+### AccountPermissions
 
 ```solidity
-struct AccountPermission {
+struct AccountPermissions {
   address target;
-  bytes32[] roles;
+  bytes32[] permissions;
 }
 ```
 ### getAccountPermissions
 
   ```solidity
-  function getAccountPermissions(uint256 accountId) external view returns (struct IAccountModule.AccountPermission[])
+  function getAccountPermissions(uint256 accountId) external view returns (struct IAccountModule.AccountPermissions[])
   ```
 
-  _Returns an array of `AccountPermission` for the provided `accountId`._
+Returns an array of `AccountPermission` for the provided `accountId`.
 
 ### createAccount
 
@@ -48,59 +246,71 @@ struct AccountPermission {
   function createAccount(uint256 requestedAccountId) external
   ```
 
-  _Mints an account token with id `requestedAccountId` to `msg.sender`.
+Mints an account token with id `requestedAccountId` to `msg.sender`.
 
 Requirements:
 
 - `requestedAccountId` must not already be minted.
 
-Emits a {AccountCreated} event._
+Emits a {AccountCreated} event.
 
-### grantRole
+### notifyAccountTransfer
 
   ```solidity
-  function grantRole(uint256 accountId, bytes32 role, address target) external
+  function notifyAccountTransfer(address to, uint256 accountId) external
   ```
 
-  _Grants `role` to `target` for account `accountId`.
+Grants `permission` to `target` for account `accountId`.
 
 Requirements:
 
-- `msg.sender` must own the account token with ID `accountId` or have the "admin" role.
+- `msg.sender` must be the account token.
 
-Emits a {RoleGranted} event._
-
-### revokeRole
+### grantPermission
 
   ```solidity
-  function revokeRole(uint256 accountId, bytes32 role, address target) external
+  function grantPermission(uint256 accountId, bytes32 permission, address target) external
   ```
 
-  _Revokes `role` from `target` for account `accountId`.
+  _Grants `permission` to `target` for account `accountId`.
 
 Requirements:
 
-- `msg.sender` must own the account token with ID `accountId` or have the "admin" role.
+- `msg.sender` must own the account token with ID `accountId` or have the "admin" permission.
 
-Emits a {RoleRevoked} event._
+Emits a {PermissionGranted} event._
 
-### renounceRole
-
-  ```solidity
-  function renounceRole(uint256 accountId, bytes32 role) external
-  ```
-
-  _Revokes `role` from `msg.sender` for account `accountId`.
-
-Emits a {RoleRevoked} event._
-
-### hasRole
+### revokePermission
 
   ```solidity
-  function hasRole(uint256 accountId, bytes32 role, address target) external view returns (bool)
+  function revokePermission(uint256 accountId, bytes32 permission, address target) external
   ```
 
-  _Returns `true` if `target` has been granted `role` for account `accountId`._
+Revokes `permission` from `target` for account `accountId`.
+
+Requirements:
+
+- `msg.sender` must own the account token with ID `accountId` or have the "admin" permission.
+
+Emits a {PermissionRevoked} event.
+
+### renouncePermission
+
+  ```solidity
+  function renouncePermission(uint256 accountId, bytes32 permission) external
+  ```
+
+Revokes `permission` from `msg.sender` for account `accountId`.
+
+Emits a {PermissionRevoked} event.
+
+### hasPermission
+
+  ```solidity
+  function hasPermission(uint256 accountId, bytes32 permission, address target) external view returns (bool)
+  ```
+
+Returns `true` if `target` has been granted `permission` for account `accountId`.
 
 ### getAccountTokenAddress
 
@@ -108,7 +318,15 @@ Emits a {RoleRevoked} event._
   function getAccountTokenAddress() external view returns (address)
   ```
 
-  _Returns the address for the account token used by the module._
+Returns the address for the account token used by the module.
+
+### accountOwner
+
+  ```solidity
+  function accountOwner(uint256 accountId) external view returns (address)
+  ```
+
+Returns the address that owns a given account, as recorded by the system.
 
 ### AccountCreated
 
@@ -116,39 +334,39 @@ Emits a {RoleRevoked} event._
   event AccountCreated(address sender, uint256 accountId)
   ```
 
-  _Emitted when an account token with id `accountId` is minted to `sender`._
+Emitted when an account token with id `accountId` is minted to `sender`.
 
-### RoleGranted
-
-  ```solidity
-  event RoleGranted(uint256 accountId, bytes32 role, address target, address sender)
-  ```
-
-  _Emitted when `target` is granted `role` by `sender` for account `accountId`._
-
-### RoleRevoked
+### PermissionGranted
 
   ```solidity
-  event RoleRevoked(uint256 accountId, bytes32 role, address target, address sender)
+  event PermissionGranted(uint256 accountId, bytes32 permission, address target, address sender)
   ```
 
-  _Emitted when `target` has `role` renounced or revoked by `sender` for account `accountId`._
+Emitted when `target` is granted `permission` by `sender` for account `accountId`.
 
-### AccountPermission
+### PermissionRevoked
+
+  ```solidity
+  event PermissionRevoked(uint256 accountId, bytes32 permission, address target, address sender)
+  ```
+
+Emitted when `target` has `permission` renounced or revoked by `sender` for account `accountId`.
+
+### AccountPermissions
 
 ```solidity
-struct AccountPermission {
+struct AccountPermissions {
   address target;
-  bytes32[] roles;
+  bytes32[] permissions;
 }
 ```
 ### getAccountPermissions
 
   ```solidity
-  function getAccountPermissions(uint256 accountId) external view returns (struct IAccountModule.AccountPermission[])
+  function getAccountPermissions(uint256 accountId) external view returns (struct IAccountModule.AccountPermissions[])
   ```
 
-  _Returns an array of `AccountPermission` for the provided `accountId`._
+Returns an array of `AccountPermission` for the provided `accountId`.
 
 ### createAccount
 
@@ -156,59 +374,71 @@ struct AccountPermission {
   function createAccount(uint256 requestedAccountId) external
   ```
 
-  _Mints an account token with id `requestedAccountId` to `msg.sender`.
+Mints an account token with id `requestedAccountId` to `msg.sender`.
 
 Requirements:
 
 - `requestedAccountId` must not already be minted.
 
-Emits a {AccountCreated} event._
+Emits a {AccountCreated} event.
 
-### grantRole
+### notifyAccountTransfer
 
   ```solidity
-  function grantRole(uint256 accountId, bytes32 role, address target) external
+  function notifyAccountTransfer(address to, uint256 accountId) external
   ```
 
-  _Grants `role` to `target` for account `accountId`.
+Grants `permission` to `target` for account `accountId`.
 
 Requirements:
 
-- `msg.sender` must own the account token with ID `accountId` or have the "admin" role.
+- `msg.sender` must be the account token.
 
-Emits a {RoleGranted} event._
-
-### revokeRole
+### grantPermission
 
   ```solidity
-  function revokeRole(uint256 accountId, bytes32 role, address target) external
+  function grantPermission(uint256 accountId, bytes32 permission, address target) external
   ```
 
-  _Revokes `role` from `target` for account `accountId`.
+  _Grants `permission` to `target` for account `accountId`.
 
 Requirements:
 
-- `msg.sender` must own the account token with ID `accountId` or have the "admin" role.
+- `msg.sender` must own the account token with ID `accountId` or have the "admin" permission.
 
-Emits a {RoleRevoked} event._
+Emits a {PermissionGranted} event._
 
-### renounceRole
-
-  ```solidity
-  function renounceRole(uint256 accountId, bytes32 role) external
-  ```
-
-  _Revokes `role` from `msg.sender` for account `accountId`.
-
-Emits a {RoleRevoked} event._
-
-### hasRole
+### revokePermission
 
   ```solidity
-  function hasRole(uint256 accountId, bytes32 role, address target) external view returns (bool)
+  function revokePermission(uint256 accountId, bytes32 permission, address target) external
   ```
 
-  _Returns `true` if `target` has been granted `role` for account `accountId`._
+Revokes `permission` from `target` for account `accountId`.
+
+Requirements:
+
+- `msg.sender` must own the account token with ID `accountId` or have the "admin" permission.
+
+Emits a {PermissionRevoked} event.
+
+### renouncePermission
+
+  ```solidity
+  function renouncePermission(uint256 accountId, bytes32 permission) external
+  ```
+
+Revokes `permission` from `msg.sender` for account `accountId`.
+
+Emits a {PermissionRevoked} event.
+
+### hasPermission
+
+  ```solidity
+  function hasPermission(uint256 accountId, bytes32 permission, address target) external view returns (bool)
+  ```
+
+Returns `true` if `target` has been granted `permission` for account `accountId`.
 
 ### getAccountTokenAddress
 
@@ -216,7 +446,15 @@ Emits a {RoleRevoked} event._
   function getAccountTokenAddress() external view returns (address)
   ```
 
-  _Returns the address for the account token used by the module._
+Returns the address for the account token used by the module.
+
+### accountOwner
+
+  ```solidity
+  function accountOwner(uint256 accountId) external view returns (address)
+  ```
+
+Returns the address that owns a given account, as recorded by the system.
 
 ## Account Token Module
 
@@ -469,93 +707,29 @@ See {setApprovalForAll}_
 
 ## Collateral Module
 
-### adjustCollateralType
+### CollateralConfigured
 
   ```solidity
-  function adjustCollateralType(address collateralType, address priceFeed, uint256 targetCRatio, uint256 minimumCRatio, bool enabled) external
+  event CollateralConfigured(address collateralType, address priceFeed, uint256 targetCRatio, uint256 minimumCRatio, bool enabled)
   ```
 
-SCCP Adds or Adjusts (can be enabled or re-enabled) a collateral type
+Emitted when a collateral type’s configuration is created or updated.
 
-### getCollateralTypes
+### CollateralDeposited
 
   ```solidity
-  function getCollateralTypes(bool hideDisabled) external view returns (struct CollateralStorage.CollateralData[] collaterals)
+  event CollateralDeposited(uint256 accountId, address collateralType, uint256 amount, address sender)
   ```
 
-Gets a list of approved collateral types
+Emitted when `amount` of collateral of type `collateralType` is deposited to account `accountId` by `sender`.
 
-### getCollateralType
+### CollateralWithdrawn
 
   ```solidity
-  function getCollateralType(address collateralType) external view returns (struct CollateralStorage.CollateralData collateral)
+  event CollateralWithdrawn(uint256 accountId, address collateralType, uint256 amount, address sender)
   ```
 
-Gets the information of a particular approved collateral type
-
-### stake
-
-  ```solidity
-  function stake(uint256 accountId, address collateralType, uint256 amount) external
-  ```
-
-Stakes collateral for an account (by the account owner or an address with 'stake' role). Transfers the collateral from the account owner.
-
-### unstake
-
-  ```solidity
-  function unstake(uint256 accountId, address collateralType, uint256 amount) external
-  ```
-
-Unstakes collateral for an account (by the account owner or an address with 'unstake' role). Transfers the collateral to the account owner
-
-### getAccountCollaterals
-
-  ```solidity
-  function getAccountCollaterals(uint256 accountId) external view returns (address[] collateralTypes)
-  ```
-
-Gets the list of collateral staked by an accountId
-
-### getAccountCollateralTotals
-
-  ```solidity
-  function getAccountCollateralTotals(uint256 accountId, address collateralType) external view returns (uint256 totalStaked, uint256 totalAssigned, uint256 totalLocked, uint256 totalEscrowed)
-  ```
-
-Gets stats for an account staked collateral.
-
-### getAccountUnstakebleCollateral
-
-  ```solidity
-  function getAccountUnstakebleCollateral(uint256 accountId, address collateralType) external view returns (uint256)
-  ```
-
-Gets the account's free collateral of collateralType that can be unstaked.
-
-### getAccountUnassignedCollateral
-
-  ```solidity
-  function getAccountUnassignedCollateral(uint256 accountId, address collateralType) external view returns (uint256)
-  ```
-
-Gets the account's unassigned collateral of collateralType that can be assigned to a fund.
-
-### cleanExpiredLocks
-
-  ```solidity
-  function cleanExpiredLocks(uint256 accountId, address collateralType, uint256 offset, uint256 items) external
-  ```
-
-Clean expired locks from locked collateral arrays for an account/collateral type. It includes offset and items to prevent gas exhaustion. If both, offset and items, are 0 it will traverse the whole array (unlimited)
-
-### redeemReward
-
-  ```solidity
-  function redeemReward(uint256 accountId, uint256 amount, uint256 duration) external
-  ```
-
-Redeems the system escrow tokens into reward tokens
+Emitted when `amount` of collateral of type `collateralType` is withdrawn from account `accountId` by `sender`.
 
 ### adjustCollateralType
 
@@ -563,7 +737,13 @@ Redeems the system escrow tokens into reward tokens
   function adjustCollateralType(address collateralType, address priceFeed, uint256 targetCRatio, uint256 minimumCRatio, bool enabled) external
   ```
 
-SCCP Adds or Adjusts (can be enabled or re-enabled) a collateral type
+Creates or updates the configuration for given `collateralType`.
+
+Requirements:
+
+- `msg.sender` must be the owner of the system.
+
+Emits a {CollateralConfigured} event.
 
 ### getCollateralTypes
 
@@ -571,7 +751,7 @@ SCCP Adds or Adjusts (can be enabled or re-enabled) a collateral type
   function getCollateralTypes(bool hideDisabled) external view returns (struct CollateralStorage.CollateralData[] collaterals)
   ```
 
-Gets a list of approved collateral types
+Returns a list of detailed information pertaining to all collateral types registered in the system.
 
 ### getCollateralType
 
@@ -579,71 +759,149 @@ Gets a list of approved collateral types
   function getCollateralType(address collateralType) external view returns (struct CollateralStorage.CollateralData collateral)
   ```
 
-Gets the information of a particular approved collateral type
+Returns detailed information pertaining the specified collateral type.
 
-### stake
-
-  ```solidity
-  function stake(uint256 accountId, address collateralType, uint256 amount) external
-  ```
-
-Stakes collateral for an account (by the account owner or an address with 'stake' role). Transfers the collateral from the account owner.
-
-### unstake
+### depositCollateral
 
   ```solidity
-  function unstake(uint256 accountId, address collateralType, uint256 amount) external
+  function depositCollateral(uint256 accountId, address collateralType, uint256 amount) external
   ```
 
-Unstakes collateral for an account (by the account owner or an address with 'unstake' role). Transfers the collateral to the account owner
+Deposits `amount` of collateral of type `collateralType` into account `accountId`.
 
-### getAccountCollaterals
+Requirements:
+
+- `msg.sender` must be the owner of the account, have the `ADMIN` permission, or have the `DEPOSIT` permission.
+
+Emits a {CollateralDeposited} event.
+
+### withdrawCollateral
 
   ```solidity
-  function getAccountCollaterals(uint256 accountId) external view returns (address[] collateralTypes)
+  function withdrawCollateral(uint256 accountId, address collateralType, uint256 amount) external
   ```
 
-Gets the list of collateral staked by an accountId
+Withdraws `amount` of collateral of type `collateralType` from account `accountId`.
 
-### getAccountCollateralTotals
+Requirements:
+
+- `msg.sender` must be the owner of the account, have the `ADMIN` permission, or have the `WITHDRAW` permission.
+
+Emits a {CollateralWithdrawn} event.
+
+### getAccountCollateral
 
   ```solidity
-  function getAccountCollateralTotals(uint256 accountId, address collateralType) external view returns (uint256 totalStaked, uint256 totalAssigned, uint256 totalLocked, uint256 totalEscrowed)
+  function getAccountCollateral(uint256 accountId, address collateralType) external view returns (uint256 totalStaked, uint256 totalAssigned)
   ```
 
-Gets stats for an account staked collateral.
+Returns the total values pertaining to account `accountId` for `collateralType`.
 
-### getAccountUnstakebleCollateral
+### getAccountAvailableCollateral
 
   ```solidity
-  function getAccountUnstakebleCollateral(uint256 accountId, address collateralType) external view returns (uint256)
+  function getAccountAvailableCollateral(uint256 accountId, address collateralType) external view returns (uint256)
   ```
 
-Gets the account's free collateral of collateralType that can be unstaked.
+Returns the amount of collateral of type `collateralType` deposited with account `accountId` that can be withdrawn or delegated.
 
-### getAccountUnassignedCollateral
+### CollateralConfigured
 
   ```solidity
-  function getAccountUnassignedCollateral(uint256 accountId, address collateralType) external view returns (uint256)
+  event CollateralConfigured(address collateralType, address priceFeed, uint256 targetCRatio, uint256 minimumCRatio, bool enabled)
   ```
 
-Gets the account's unassigned collateral of collateralType that can be assigned to a fund.
+Emitted when a collateral type’s configuration is created or updated.
 
-### cleanExpiredLocks
+### CollateralDeposited
 
   ```solidity
-  function cleanExpiredLocks(uint256 accountId, address collateralType, uint256 offset, uint256 items) external
+  event CollateralDeposited(uint256 accountId, address collateralType, uint256 amount, address sender)
   ```
 
-Clean expired locks from locked collateral arrays for an account/collateral type. It includes offset and items to prevent gas exhaustion. If both, offset and items, are 0 it will traverse the whole array (unlimited)
+Emitted when `amount` of collateral of type `collateralType` is deposited to account `accountId` by `sender`.
 
-### redeemReward
+### CollateralWithdrawn
 
   ```solidity
-  function redeemReward(uint256 accountId, uint256 amount, uint256 duration) external
+  event CollateralWithdrawn(uint256 accountId, address collateralType, uint256 amount, address sender)
   ```
 
-Redeems the system escrow tokens into reward tokens
+Emitted when `amount` of collateral of type `collateralType` is withdrawn from account `accountId` by `sender`.
+
+### adjustCollateralType
+
+  ```solidity
+  function adjustCollateralType(address collateralType, address priceFeed, uint256 targetCRatio, uint256 minimumCRatio, bool enabled) external
+  ```
+
+Creates or updates the configuration for given `collateralType`.
+
+Requirements:
+
+- `msg.sender` must be the owner of the system.
+
+Emits a {CollateralConfigured} event.
+
+### getCollateralTypes
+
+  ```solidity
+  function getCollateralTypes(bool hideDisabled) external view returns (struct CollateralStorage.CollateralData[] collaterals)
+  ```
+
+Returns a list of detailed information pertaining to all collateral types registered in the system.
+
+### getCollateralType
+
+  ```solidity
+  function getCollateralType(address collateralType) external view returns (struct CollateralStorage.CollateralData collateral)
+  ```
+
+Returns detailed information pertaining the specified collateral type.
+
+### depositCollateral
+
+  ```solidity
+  function depositCollateral(uint256 accountId, address collateralType, uint256 amount) external
+  ```
+
+Deposits `amount` of collateral of type `collateralType` into account `accountId`.
+
+Requirements:
+
+- `msg.sender` must be the owner of the account, have the `ADMIN` permission, or have the `DEPOSIT` permission.
+
+Emits a {CollateralDeposited} event.
+
+### withdrawCollateral
+
+  ```solidity
+  function withdrawCollateral(uint256 accountId, address collateralType, uint256 amount) external
+  ```
+
+Withdraws `amount` of collateral of type `collateralType` from account `accountId`.
+
+Requirements:
+
+- `msg.sender` must be the owner of the account, have the `ADMIN` permission, or have the `WITHDRAW` permission.
+
+Emits a {CollateralWithdrawn} event.
+
+### getAccountCollateral
+
+  ```solidity
+  function getAccountCollateral(uint256 accountId, address collateralType) external view returns (uint256 totalStaked, uint256 totalAssigned)
+  ```
+
+Returns the total values pertaining to account `accountId` for `collateralType`.
+
+### getAccountAvailableCollateral
+
+  ```solidity
+  function getAccountAvailableCollateral(uint256 accountId, address collateralType) external view returns (uint256)
+  ```
+
+Returns the amount of collateral of type `collateralType` deposited with account `accountId` that can be withdrawn or delegated.
 
 ## Fund Configuration Module
 
@@ -983,18 +1241,18 @@ gets the liquidity of the market
 
 gets the total balance of the market
 
-### deposit
+### depositUsd
 
   ```solidity
-  function deposit(uint256 marketId, address target, uint256 amount) external
+  function depositUsd(uint256 marketId, address target, uint256 amount) external
   ```
 
 target deposits amount of synths to the marketId
 
-### withdraw
+### withdrawUsd
 
   ```solidity
-  function withdraw(uint256 marketId, address target, uint256 amount) external
+  function withdrawUsd(uint256 marketId, address target, uint256 amount) external
   ```
 
 target withdraws amount of synths to the marketId
@@ -1023,18 +1281,18 @@ gets the liquidity of the market
 
 gets the total balance of the market
 
-### deposit
+### depositUsd
 
   ```solidity
-  function deposit(uint256 marketId, address target, uint256 amount) external
+  function depositUsd(uint256 marketId, address target, uint256 amount) external
   ```
 
 target deposits amount of synths to the marketId
 
-### withdraw
+### withdrawUsd
 
   ```solidity
-  function withdraw(uint256 marketId, address target, uint256 amount) external
+  function withdrawUsd(uint256 marketId, address target, uint256 amount) external
   ```
 
 target withdraws amount of synths to the marketId
@@ -1322,6 +1580,36 @@ gets the debt per share (USD value) for a fund
   ```
 
 gets liquidityItem details for a liquidityItemId
+
+## Vault Module Storage
+
+### LiquidityItem
+
+```solidity
+struct LiquidityItem {
+  uint256 accountId;
+  address collateralType;
+  uint256 fundId;
+  uint256 collateralAmount;
+  uint256 shares;
+  uint256 initialDebt;
+  uint256 leverage;
+}
+```
+
+### LiquidityItem
+
+```solidity
+struct LiquidityItem {
+  uint256 accountId;
+  address collateralType;
+  uint256 fundId;
+  uint256 collateralAmount;
+  uint256 shares;
+  uint256 initialDebt;
+  uint256 leverage;
+}
+```
 
 ## Vault Rewards Module
 

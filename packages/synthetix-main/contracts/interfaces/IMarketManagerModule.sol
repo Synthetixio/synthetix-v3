@@ -21,14 +21,14 @@ interface IMarketManagerModule {
     function marketTotalBalance(uint marketId) external view returns (int);
 
     /// @notice target deposits amount of synths to the marketId
-    function deposit(
+    function depositUsd(
         uint marketId,
         address target,
         uint amount
     ) external;
 
     /// @notice target withdraws amount of synths to the marketId
-    function withdraw(
+    function withdrawUsd(
         uint marketId,
         address target,
         uint amount

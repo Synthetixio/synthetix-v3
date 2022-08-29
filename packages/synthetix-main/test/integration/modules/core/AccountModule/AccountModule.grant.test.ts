@@ -18,7 +18,7 @@ describe('AccountModule', function () {
   let snapshotId: number;
 
   const Permissions = {
-    STAKE: ethers.utils.formatBytes32String('STAKE'),
+    DEPOSIT: ethers.utils.formatBytes32String('DEPOSIT'),
     ADMIN: ethers.utils.formatBytes32String('ADMIN'),
   };
 
@@ -35,7 +35,7 @@ describe('AccountModule', function () {
     describe('before permissions have been granted', function () {
       it('shows that certain permissions have not been granted', async () => {
         assert.equal(
-          await systems().Core.hasPermission(1, Permissions.STAKE, await user1.getAddress()),
+          await systems().Core.hasPermission(1, Permissions.DEPOSIT, await user1.getAddress()),
           false
         );
         assert.equal(
@@ -50,7 +50,7 @@ describe('AccountModule', function () {
         await assertRevert(
           systems()
             .Core.connect(user2)
-            .grantPermission(1, Permissions.STAKE, await user2.getAddress()),
+            .grantPermission(1, Permissions.DEPOSIT, await user2.getAddress()),
           `PermissionDenied("1", "${Permissions.ADMIN}", "${await user2.getAddress()}")`,
           systems().Core
         );
@@ -61,13 +61,13 @@ describe('AccountModule', function () {
       before('grant the permission', async function () {
         const tx = await systems()
           .Core.connect(user1)
-          .grantPermission(1, Permissions.STAKE, await user2.getAddress());
+          .grantPermission(1, Permissions.DEPOSIT, await user2.getAddress());
         receipt = await tx.wait();
       });
 
       it('shows that the permission is granted', async function () {
         assert.equal(
-          await systems().Core.hasPermission(1, Permissions.STAKE, await user2.getAddress()),
+          await systems().Core.hasPermission(1, Permissions.DEPOSIT, await user2.getAddress()),
           true
         );
       });
@@ -76,7 +76,7 @@ describe('AccountModule', function () {
         const event = findEvent({ receipt, eventName: 'PermissionGranted' });
 
         assertBn.equal(event.args.accountId, 1);
-        assert.equal(event.args.permission, Permissions.STAKE);
+        assert.equal(event.args.permission, Permissions.DEPOSIT);
         assert.equal(event.args.target, await user2.getAddress());
         assert.equal(event.args.sender, await user1.getAddress());
       });
@@ -97,7 +97,7 @@ describe('AccountModule', function () {
         });
 
         before('renounce the permission', async () => {
-          const tx = await systems().Core.connect(user2).renouncePermission(1, Permissions.STAKE);
+          const tx = await systems().Core.connect(user2).renouncePermission(1, Permissions.DEPOSIT);
           receipt = await tx.wait();
         });
 
@@ -107,7 +107,7 @@ describe('AccountModule', function () {
 
         it('shows that the permission was renounced', async () => {
           assert.equal(
-            await systems().Core.hasPermission(1, Permissions.STAKE, await user2.getAddress()),
+            await systems().Core.hasPermission(1, Permissions.DEPOSIT, await user2.getAddress()),
             false
           );
         });
@@ -116,7 +116,7 @@ describe('AccountModule', function () {
           const event = findEvent({ receipt, eventName: 'PermissionRevoked' });
 
           assertBn.equal(event.args.accountId, 1);
-          assert.equal(event.args.permission, Permissions.STAKE);
+          assert.equal(event.args.permission, Permissions.DEPOSIT);
           assert.equal(event.args.target, await user2.getAddress());
           assert.equal(event.args.sender, await user2.getAddress());
         });
@@ -130,7 +130,7 @@ describe('AccountModule', function () {
         before('revoke the permission', async () => {
           const tx = await systems()
             .Core.connect(user1)
-            .revokePermission(1, Permissions.STAKE, await user2.getAddress());
+            .revokePermission(1, Permissions.DEPOSIT, await user2.getAddress());
           receipt = await tx.wait();
         });
 
@@ -140,7 +140,7 @@ describe('AccountModule', function () {
 
         it('shows that the permission was revoked', async () => {
           assert.equal(
-            await systems().Core.hasPermission(1, Permissions.STAKE, await user2.getAddress()),
+            await systems().Core.hasPermission(1, Permissions.DEPOSIT, await user2.getAddress()),
             false
           );
         });
@@ -149,7 +149,7 @@ describe('AccountModule', function () {
           const event = findEvent({ receipt, eventName: 'PermissionRevoked' });
 
           assertBn.equal(event.args.accountId, 1);
-          assert.equal(event.args.permission, Permissions.STAKE);
+          assert.equal(event.args.permission, Permissions.DEPOSIT);
           assert.equal(event.args.target, await user2.getAddress());
           assert.equal(event.args.sender, await user1.getAddress());
         });
@@ -175,13 +175,13 @@ describe('AccountModule', function () {
         before('admin grants a permission', async function () {
           const tx = await systems()
             .Core.connect(user2)
-            .grantPermission(1, Permissions.STAKE, await user3.getAddress());
+            .grantPermission(1, Permissions.DEPOSIT, await user3.getAddress());
           receipt = await tx.wait();
         });
 
         it('shows that the permission is granted', async function () {
           assert.equal(
-            await systems().Core.hasPermission(1, Permissions.STAKE, await user3.getAddress()),
+            await systems().Core.hasPermission(1, Permissions.DEPOSIT, await user3.getAddress()),
             true
           );
         });

@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 contract AccountRBACMixinModuleMockStorage {
     struct AccountRBACMixinModuleMockStore {
-        uint256 stakeMock;
+        uint256 depositMock;
         uint256 mintMock;
     }
 

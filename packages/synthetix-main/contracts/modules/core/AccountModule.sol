@@ -75,7 +75,7 @@ contract AccountModule is IAccountModule, OwnableMixin, AccountRBACMixin, Associ
         uint accountId,
         bytes32 permission,
         address target
-    ) external override onlyWithPerimission(accountId, _ADMIN_PERMISSION) {
+    ) external override onlyWithPermission(accountId, _ADMIN_PERMISSION) {
         if (target == address(0)) {
             revert AddressError.ZeroAddress();
         }
@@ -99,7 +99,7 @@ contract AccountModule is IAccountModule, OwnableMixin, AccountRBACMixin, Associ
         uint accountId,
         bytes32 permission,
         address target
-    ) external override onlyWithPerimission(accountId, _ADMIN_PERMISSION) {
+    ) external override onlyWithPermission(accountId, _ADMIN_PERMISSION) {
         _revokePermission(accountId, permission, target);
     }
 
