@@ -4,11 +4,11 @@ import hre from 'hardhat';
 import { ethers } from 'ethers';
 import { getBlockTimestamp } from '@synthetixio/core-utils/utils/ethers/provider';
 
-import { bootstrapWithStakedFund } from '../bootstrap';
+import { bootstrapWithStakedPool } from '../bootstrap';
 
 describe('VaultRewardsModule', function () {
-  const { provider, signers, systems, fundId, collateralAddress, accountId, restore } =
-    bootstrapWithStakedFund();
+  const { provider, signers, systems, poolId, collateralAddress, accountId, restore } =
+    bootstrapWithStakedPool();
 
   let owner: ethers.Signer, user1: ethers.Signer;
 
@@ -31,7 +31,7 @@ describe('VaultRewardsModule', function () {
     it('only works with owner', async () => {
       assertRevert(
         systems().Core.connect(user1).distributeRewards(
-          fundId,
+          poolId,
           collateralAddress(),
           0,
           systems().Core.address, // rewards are distributed by the rewards distributor on self
@@ -51,7 +51,7 @@ describe('VaultRewardsModule', function () {
           // distribute rewards multiple times to see what happens
           // of many distributions happen in the past
           await systems().Core.connect(owner).distributeRewards(
-            fundId,
+            poolId,
             collateralAddress(),
             0,
             systems().Core.address, // rewards are distributed by the rewards distributor on self
@@ -61,7 +61,7 @@ describe('VaultRewardsModule', function () {
           );
 
           await systems().Core.connect(owner).distributeRewards(
-            fundId,
+            poolId,
             collateralAddress(),
             0,
             systems().Core.address, // rewards are distributed by the rewards distributor on self
@@ -71,7 +71,7 @@ describe('VaultRewardsModule', function () {
           );
 
           await systems().Core.connect(owner).distributeRewards(
-            fundId,
+            poolId,
             collateralAddress(),
             0,
             systems().Core.address, // rewards are distributed by the rewards distributor on self
@@ -85,7 +85,7 @@ describe('VaultRewardsModule', function () {
           await systems()
             .Core.connect(owner)
             .distributeRewards(
-              fundId,
+              poolId,
               collateralAddress(),
               0,
               systems().Core.address, // rewards are distributed by the rewards distributor on self
@@ -97,7 +97,7 @@ describe('VaultRewardsModule', function () {
 
         it('is distributed', async () => {
           const rewards = await systems().Core.callStatic.getAvailableRewards(
-            fundId,
+            poolId,
             collateralAddress(),
             accountId
           );
@@ -112,7 +112,7 @@ describe('VaultRewardsModule', function () {
           await systems()
             .Core.connect(owner)
             .distributeRewards(
-              fundId,
+              poolId,
               collateralAddress(),
               0,
               systems().Core.address, // rewards are distributed by the rewards distributor on self
@@ -125,7 +125,7 @@ describe('VaultRewardsModule', function () {
           await systems()
             .Core.connect(owner)
             .distributeRewards(
-              fundId,
+              poolId,
               collateralAddress(),
               0,
               systems().Core.address, // rewards are distributed by the rewards distributor on self
@@ -137,7 +137,7 @@ describe('VaultRewardsModule', function () {
           await systems()
             .Core.connect(owner)
             .distributeRewards(
-              fundId,
+              poolId,
               collateralAddress(),
               0,
               systems().Core.address, // rewards are distributed by the rewards distributor on self
@@ -149,7 +149,7 @@ describe('VaultRewardsModule', function () {
 
         it('is not distributed future yet', async () => {
           const rewards = await systems().Core.callStatic.getAvailableRewards(
-            fundId,
+            poolId,
             collateralAddress(),
             accountId
           );
@@ -160,7 +160,7 @@ describe('VaultRewardsModule', function () {
 
         it('has no rate', async () => {
           const rates = await systems().Core.getCurrentRewardAccumulation(
-            fundId,
+            poolId,
             collateralAddress()
           );
 
@@ -175,7 +175,7 @@ describe('VaultRewardsModule', function () {
           it('is distributed', async () => {
             // should have received 2 distributions
             const rewards = await systems().Core.callStatic.getAvailableRewards(
-              fundId,
+              poolId,
               collateralAddress(),
               accountId
             );
@@ -184,7 +184,7 @@ describe('VaultRewardsModule', function () {
 
           it('has no rate', async () => {
             const rates = await systems().Core.getCurrentRewardAccumulation(
-              fundId,
+              poolId,
               collateralAddress()
             );
 
@@ -201,7 +201,7 @@ describe('VaultRewardsModule', function () {
           await systems()
             .Core.connect(owner)
             .distributeRewards(
-              fundId,
+              poolId,
               collateralAddress(),
               0,
               systems().Core.address, // rewards are distributed by the rewards distributor on self
@@ -213,7 +213,7 @@ describe('VaultRewardsModule', function () {
           await systems()
             .Core.connect(owner)
             .distributeRewards(
-              fundId,
+              poolId,
               collateralAddress(),
               0,
               systems().Core.address, // rewards are distributed by the rewards distributor on self
@@ -226,7 +226,7 @@ describe('VaultRewardsModule', function () {
           await systems()
             .Core.connect(owner)
             .distributeRewards(
-              fundId,
+              poolId,
               collateralAddress(),
               0,
               systems().Core.address, // rewards are distributed by the rewards distributor on self
@@ -238,7 +238,7 @@ describe('VaultRewardsModule', function () {
 
         it('is fully distributed', async () => {
           const rewards = await systems().Core.callStatic.getAvailableRewards(
-            fundId,
+            poolId,
             collateralAddress(),
             accountId
           );
@@ -254,7 +254,7 @@ describe('VaultRewardsModule', function () {
           await systems()
             .Core.connect(owner)
             .distributeRewards(
-              fundId,
+              poolId,
               collateralAddress(),
               0,
               systems().Core.address, // rewards are distributed by the rewards distributor on self
@@ -267,7 +267,7 @@ describe('VaultRewardsModule', function () {
           await systems()
             .Core.connect(owner)
             .distributeRewards(
-              fundId,
+              poolId,
               collateralAddress(),
               0,
               systems().Core.address, // rewards are distributed by the rewards distributor on self
@@ -280,7 +280,7 @@ describe('VaultRewardsModule', function () {
           await systems()
             .Core.connect(owner)
             .distributeRewards(
-              fundId,
+              poolId,
               collateralAddress(),
               0,
               systems().Core.address, // rewards are distributed by the rewards distributor on self
@@ -292,7 +292,7 @@ describe('VaultRewardsModule', function () {
 
         it('does not distribute future', async () => {
           const rewards = await systems().Core.callStatic.getAvailableRewards(
-            fundId,
+            poolId,
             collateralAddress(),
             accountId
           );
@@ -307,7 +307,7 @@ describe('VaultRewardsModule', function () {
 
           it('is fully distributed', async () => {
             const rewards = await systems().Core.callStatic.getAvailableRewards(
-              fundId,
+              poolId,
               collateralAddress(),
               accountId
             );
@@ -323,7 +323,7 @@ describe('VaultRewardsModule', function () {
           await systems()
             .Core.connect(owner)
             .distributeRewards(
-              fundId,
+              poolId,
               collateralAddress(),
               0,
               systems().Core.address, // rewards are distributed by the rewards distributor on self
@@ -335,7 +335,7 @@ describe('VaultRewardsModule', function () {
           await systems()
             .Core.connect(owner)
             .distributeRewards(
-              fundId,
+              poolId,
               collateralAddress(),
               0,
               systems().Core.address, // rewards are distributed by the rewards distributor on self
@@ -347,7 +347,7 @@ describe('VaultRewardsModule', function () {
 
         it('distributes portion of rewards immediately', async () => {
           const rewards = await systems().Core.callStatic.getAvailableRewards(
-            fundId,
+            poolId,
             collateralAddress(),
             accountId
           );
@@ -362,7 +362,7 @@ describe('VaultRewardsModule', function () {
 
           it('distributes more portion of rewards', async () => {
             const rewards = await systems().Core.callStatic.getAvailableRewards(
-              fundId,
+              poolId,
               collateralAddress(),
               accountId
             );
@@ -375,7 +375,7 @@ describe('VaultRewardsModule', function () {
               await systems()
                 .Core.connect(owner)
                 .distributeRewards(
-                  fundId,
+                  poolId,
                   collateralAddress(),
                   0,
                   systems().Core.address, // rewards are distributed by the rewards distributor on self
@@ -389,7 +389,7 @@ describe('VaultRewardsModule', function () {
             // the other tests, it does not behave as expected
             it.skip('distributes portion of rewards immediately', async () => {
               const rewards = await systems().Core.callStatic.getAvailableRewards(
-                fundId,
+                poolId,
                 collateralAddress(),
                 accountId
               );
@@ -407,7 +407,7 @@ describe('VaultRewardsModule', function () {
 
               it('distributes more portion of rewards', async () => {
                 const rewards = await systems().Core.callStatic.getAvailableRewards(
-                  fundId,
+                  poolId,
                   collateralAddress(),
                   accountId
                 );

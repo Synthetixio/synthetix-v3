@@ -5,7 +5,7 @@ pragma solidity ^0.8.0;
 interface IRewardsDistributor {
     /// called by system
     function payout(
-        uint fundId,
+        uint poolId,
         address token,
         address to,
         uint amount

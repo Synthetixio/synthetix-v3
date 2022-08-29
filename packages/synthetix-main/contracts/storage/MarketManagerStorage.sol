@@ -20,10 +20,10 @@ contract MarketManagerStorage {
         uint128 capacity;
         /// @notice the amount of debt the last time the debt was distributed
         int128 lastMarketBalance;
-        // used to disconnect funds from a market if it goes above a certain debt per debt share
-        Heap.Data inRangeFunds;
-        // used to attach/reattach funds to a market if it goes below a certain debt per debt share
-        Heap.Data outRangeFunds;
+        // used to disconnect pools from a market if it goes above a certain debt per debt share
+        Heap.Data inRangePools;
+        // used to attach/reattach pools to a market if it goes below a certain debt per debt share
+        Heap.Data outRangePools;
         SharesLibrary.Distribution debtDist;
     }
 

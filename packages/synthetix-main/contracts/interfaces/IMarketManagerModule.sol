@@ -8,7 +8,7 @@ interface IMarketManagerModule {
 
     // function setSupplyTarget(
     //     uint marketId,
-    //     uint fundId,
+    //     uint poolId,
     //     uint amount
     // ) external;
 

@@ -3,7 +3,7 @@ import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert
 import hre from 'hardhat';
 import { ethers } from 'ethers';
 
-import { bootstrapWithStakedFund } from '../bootstrap';
+import { bootstrapWithStakedPool } from '../bootstrap';
 import { snapshotCheckpoint } from '../../utils';
 
 describe('VaultModule', function () {
@@ -12,11 +12,11 @@ describe('VaultModule', function () {
     systems,
     provider,
     accountId,
-    fundId,
+    poolId,
     depositAmount,
     collateralContract,
     collateralAddress,
-  } = bootstrapWithStakedFund();
+  } = bootstrapWithStakedPool();
 
   let owner: ethers.Signer, user1: ethers.Signer, user2: ethers.Signer;
 
@@ -44,8 +44,8 @@ describe('VaultModule', function () {
 
     await systems()
       .Core.connect(owner)
-      .setFundPosition(
-        fundId,
+      .setPoolPosition(
+        poolId,
         [marketId],
         [ethers.utils.parseEther('1')],
         [ethers.utils.parseEther('10000000000000000')]
@@ -57,18 +57,18 @@ describe('VaultModule', function () {
   // eslint-disable-next-line max-params
   function verifyAccountState(
     accountId: number,
-    fundId: number,
+    poolId: number,
     collateralAmount: ethers.BigNumberish,
     debt: ethers.BigNumberish
   ) {
     return async () => {
       assertBn.equal(
-        (await systems().Core.accountVaultCollateral(accountId, fundId, collateralAddress()))
+        (await systems().Core.accountVaultCollateral(accountId, poolId, collateralAddress()))
           .amount,
         collateralAmount
       );
       assertBn.equal(
-        await systems().Core.callStatic.accountVaultDebt(accountId, fundId, collateralAddress()),
+        await systems().Core.callStatic.accountVaultDebt(accountId, poolId, collateralAddress()),
         debt
       );
     };
@@ -97,7 +97,7 @@ describe('VaultModule', function () {
   describe('delegateCollateral()', async () => {
     it(
       'after bootstrap have correct amounts',
-      verifyAccountState(accountId, fundId, depositAmount, 0)
+      verifyAccountState(accountId, poolId, depositAmount, 0)
     );
 
     it('after bootstrap liquidity is delegated all the way back to the market', async () => {
@@ -110,7 +110,7 @@ describe('VaultModule', function () {
           .Core.connect(user2)
           .delegateCollateral(
             accountId,
-            fundId,
+            poolId,
             collateralAddress(),
             depositAmount.mul(2),
             ethers.utils.parseEther('1')
@@ -126,7 +126,7 @@ describe('VaultModule', function () {
           .Core.connect(user2)
           .delegateCollateral(
             accountId,
-            fundId,
+            poolId,
             collateralAddress(),
             depositAmount.mul(2),
             ethers.utils.parseEther('1.1')
@@ -138,7 +138,7 @@ describe('VaultModule', function () {
 
     it(
       'user1 has expected initial position',
-      verifyAccountState(accountId, fundId, depositAmount, 0)
+      verifyAccountState(accountId, poolId, depositAmount, 0)
     );
 
     describe('market debt accumulation', () => {
@@ -150,14 +150,14 @@ describe('VaultModule', function () {
 
       it('has allocated debt to vault', async () => {
         assertBn.equal(
-          await systems().Core.connect(user2).callStatic.vaultDebt(fundId, collateralAddress()),
+          await systems().Core.connect(user2).callStatic.vaultDebt(poolId, collateralAddress()),
           startingDebt
         );
       });
 
       it(
         'user1 has become indebted',
-        verifyAccountState(accountId, fundId, depositAmount, startingDebt)
+        verifyAccountState(accountId, poolId, depositAmount, startingDebt)
       );
 
       describe('second user delegates', async () => {
@@ -181,7 +181,7 @@ describe('VaultModule', function () {
 
           await systems().Core.connect(user2).delegateCollateral(
             user2AccountId,
-            fundId,
+            poolId,
             collateralAddress(),
             depositAmount.div(3), // user1 75%, user2 25%
             ethers.utils.parseEther('1')
@@ -189,7 +189,7 @@ describe('VaultModule', function () {
 
           await systems().Core.connect(user2).mintUSD(
             user2AccountId,
-            fundId,
+            poolId,
             collateralAddress(),
             depositAmount.div(100) // should be enough collateral to mint this
           );
@@ -197,11 +197,11 @@ describe('VaultModule', function () {
 
         it(
           'user1 still has correct position',
-          verifyAccountState(accountId, fundId, depositAmount, startingDebt)
+          verifyAccountState(accountId, poolId, depositAmount, startingDebt)
         );
         it(
           'user2 still has correct position',
-          verifyAccountState(user2AccountId, fundId, depositAmount.div(3), depositAmount.div(100))
+          verifyAccountState(user2AccountId, poolId, depositAmount.div(3), depositAmount.div(100))
         );
 
         // these exposure tests should be enabled when exposures other
@@ -210,7 +210,7 @@ describe('VaultModule', function () {
           before('delegate', async () => {
             await systems().Core.connect(user2).delegateCollateral(
               user2AccountId,
-              fundId,
+              poolId,
               collateralAddress(),
               depositAmount.div(3), // user1 50%, user2 50%
               ethers.utils.parseEther('1')
@@ -219,11 +219,11 @@ describe('VaultModule', function () {
 
           it(
             'user1 still has correct position',
-            verifyAccountState(accountId, fundId, depositAmount, 0)
+            verifyAccountState(accountId, poolId, depositAmount, 0)
           );
           it(
             'user2 still has correct position',
-            verifyAccountState(user2AccountId, fundId, depositAmount.div(3), depositAmount.div(100))
+            verifyAccountState(user2AccountId, poolId, depositAmount.div(3), depositAmount.div(100))
           );
         });
 
@@ -231,7 +231,7 @@ describe('VaultModule', function () {
           before('delegate', async () => {
             await systems().Core.connect(user2).delegateCollateral(
               user2AccountId,
-              fundId,
+              poolId,
               collateralAddress(),
               depositAmount.div(3), // user1 50%, user2 50%
               ethers.utils.parseEther('1')
@@ -240,11 +240,11 @@ describe('VaultModule', function () {
 
           it(
             'user1 still has correct position',
-            verifyAccountState(accountId, fundId, depositAmount, startingDebt)
+            verifyAccountState(accountId, poolId, depositAmount, startingDebt)
           );
           it(
             'user2 still has correct position',
-            verifyAccountState(user2AccountId, fundId, depositAmount.div(3), depositAmount.div(100))
+            verifyAccountState(user2AccountId, poolId, depositAmount.div(3), depositAmount.div(100))
           );
         });
 
@@ -252,7 +252,7 @@ describe('VaultModule', function () {
           before('delegate', async () => {
             await systems().Core.connect(user2).delegateCollateral(
               user2AccountId,
-              fundId,
+              poolId,
               collateralAddress,
               depositAmount.div(3), // user1 50%, user2 50%
               ethers.utils.parseEther('1')
@@ -267,7 +267,7 @@ describe('VaultModule', function () {
                 .Core.connect(user2)
                 .delegateCollateral(
                   user2AccountId,
-                  fundId,
+                  poolId,
                   collateralAddress(),
                   depositAmount.mul(3),
                   ethers.utils.parseEther('1')
@@ -281,7 +281,7 @@ describe('VaultModule', function () {
             before('delegate', async () => {
               await systems().Core.connect(user2).delegateCollateral(
                 user2AccountId,
-                fundId,
+                poolId,
                 collateralAddress(),
                 depositAmount, // user1 50%, user2 50%
                 ethers.utils.parseEther('1')
@@ -290,11 +290,11 @@ describe('VaultModule', function () {
 
             it(
               'user1 still has correct position',
-              verifyAccountState(accountId, fundId, depositAmount, startingDebt)
+              verifyAccountState(accountId, poolId, depositAmount, startingDebt)
             );
             it(
               'user2 position is increased',
-              verifyAccountState(user2AccountId, fundId, depositAmount, depositAmount.div(100))
+              verifyAccountState(user2AccountId, poolId, depositAmount, depositAmount.div(100))
             );
           });
         });
@@ -306,7 +306,7 @@ describe('VaultModule', function () {
                 .Core.connect(user2)
                 .delegateCollateral(
                   user2AccountId,
-                  fundId,
+                  poolId,
                   collateralAddress(),
                   depositAmount.div(100),
                   ethers.utils.parseEther('1')
@@ -322,7 +322,7 @@ describe('VaultModule', function () {
                 .Core.connect(user2)
                 .delegateCollateral(
                   user2AccountId,
-                  fundId,
+                  poolId,
                   collateralAddress(),
                   depositAmount.div(10),
                   ethers.utils.parseEther('1')
@@ -331,13 +331,13 @@ describe('VaultModule', function () {
 
             it(
               'user1 still has correct position',
-              verifyAccountState(accountId, fundId, depositAmount, startingDebt)
+              verifyAccountState(accountId, poolId, depositAmount, startingDebt)
             );
             it(
               'user2 position is decreased',
               verifyAccountState(
                 user2AccountId,
-                fundId,
+                poolId,
                 depositAmount.div(10),
                 depositAmount.div(100)
               )
@@ -349,7 +349,7 @@ describe('VaultModule', function () {
           before('repay debt', async () => {
             await systems()
               .Core.connect(user2)
-              .burnUSD(user2AccountId, fundId, collateralAddress(), depositAmount.div(100));
+              .burnUSD(user2AccountId, poolId, collateralAddress(), depositAmount.div(100));
           });
 
           before('delegate', async () => {
@@ -357,7 +357,7 @@ describe('VaultModule', function () {
               .Core.connect(user2)
               .delegateCollateral(
                 user2AccountId,
-                fundId,
+                poolId,
                 collateralAddress(),
                 0,
                 ethers.utils.parseEther('1')
@@ -366,14 +366,14 @@ describe('VaultModule', function () {
 
           it(
             'user1 still has correct position',
-            verifyAccountState(accountId, fundId, depositAmount, startingDebt)
+            verifyAccountState(accountId, poolId, depositAmount, startingDebt)
           );
-          it('user2 position is closed', verifyAccountState(user2AccountId, fundId, 0, 0));
+          it('user2 position is closed', verifyAccountState(user2AccountId, poolId, 0, 0));
 
           it('lets user2 re-stake again', async () => {
             await systems().Core.connect(user2).delegateCollateral(
               user2AccountId,
-              fundId,
+              poolId,
               collateralAddress(),
               depositAmount.div(3), // user1 75%, user2 25%
               ethers.utils.parseEther('1')
@@ -396,7 +396,7 @@ describe('VaultModule', function () {
           .Core.connect(user1)
           .delegateCollateral(
             accountId,
-            fundId,
+            poolId,
             collateralAddress(),
             0,
             ethers.utils.parseEther('1')
@@ -404,14 +404,14 @@ describe('VaultModule', function () {
       });
 
       // now the pool is empty
-      it('exited user1 position', verifyAccountState(accountId, fundId, 0, 0));
+      it('exited user1 position', verifyAccountState(accountId, poolId, 0, 0));
 
       it('vault is empty', async () => {
         assertBn.equal(
-          (await systems().Core.callStatic.vaultCollateral(fundId, collateralAddress())).amount,
+          (await systems().Core.callStatic.vaultCollateral(poolId, collateralAddress())).amount,
           0
         );
-        assertBn.equal(await systems().Core.callStatic.vaultDebt(fundId, collateralAddress()), 0);
+        assertBn.equal(await systems().Core.callStatic.vaultDebt(poolId, collateralAddress()), 0);
       });
     });
   });
@@ -422,7 +422,7 @@ describe('VaultModule', function () {
       assertRevert(
         systems()
           .Core.connect(user2)
-          .mintUSD(accountId, fundId, collateralAddress(), depositAmount.mul(10)),
+          .mintUSD(accountId, poolId, collateralAddress(), depositAmount.mul(10)),
         `Unauthorized("${await user2.getAddress()}")`,
         systems().Core
       );
@@ -432,7 +432,7 @@ describe('VaultModule', function () {
       assertRevert(
         systems()
           .Core.connect(user1)
-          .mintUSD(accountId, fundId, collateralAddress(), depositAmount),
+          .mintUSD(accountId, poolId, collateralAddress(), depositAmount),
         'InsufficientCollateralRatio',
         systems().Core
       );
@@ -442,7 +442,7 @@ describe('VaultModule', function () {
       before('mint', async () => {
         await systems().Core.connect(user1).mintUSD(
           accountId,
-          fundId,
+          poolId,
           collateralAddress(),
           depositAmount.div(10) // should be enough
         );
@@ -450,7 +450,7 @@ describe('VaultModule', function () {
 
       it(
         'has correct debt',
-        verifyAccountState(accountId, fundId, depositAmount, depositAmount.div(10))
+        verifyAccountState(accountId, poolId, depositAmount, depositAmount.div(10))
       );
 
       it('sent USD to user1', async () => {
@@ -464,7 +464,7 @@ describe('VaultModule', function () {
         before('mint again', async () => {
           await systems().Core.connect(user1).mintUSD(
             accountId,
-            fundId,
+            poolId,
             collateralAddress(),
             depositAmount.div(10) // should be enough
           );
@@ -472,7 +472,7 @@ describe('VaultModule', function () {
 
         it(
           'has correct debt',
-          verifyAccountState(accountId, fundId, depositAmount, depositAmount.div(5))
+          verifyAccountState(accountId, poolId, depositAmount, depositAmount.div(5))
         );
 
         it('sent more USD to user1', async () => {
@@ -490,7 +490,7 @@ describe('VaultModule', function () {
     before('mint', async () => {
       await systems()
         .Core.connect(user1)
-        .mintUSD(accountId, fundId, collateralAddress(), depositAmount.div(10));
+        .mintUSD(accountId, poolId, collateralAddress(), depositAmount.div(10));
     });
 
     describe('burn from other account', async () => {
@@ -504,10 +504,10 @@ describe('VaultModule', function () {
       before('other account burn', async () => {
         await systems()
           .Core.connect(user2)
-          .burnUSD(accountId, fundId, collateralAddress(), depositAmount.div(10));
+          .burnUSD(accountId, poolId, collateralAddress(), depositAmount.div(10));
       });
 
-      it('has correct debt', verifyAccountState(accountId, fundId, depositAmount, 0));
+      it('has correct debt', verifyAccountState(accountId, poolId, depositAmount, 0));
 
       it('took away from user2', async () => {
         assertBn.equal(await systems().USD.balanceOf(await user2.getAddress()), 0);

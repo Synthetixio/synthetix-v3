@@ -11,7 +11,7 @@ import "@synthetixio/core-modules/contracts/mixins/AssociatedSystemsMixin.sol";
 import "../../storage/RewardDistributorStorage.sol";
 
 import "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
-import "../../submodules/FundEventAndErrors.sol";
+import "../../submodules/PoolEventAndErrors.sol";
 
 contract RewardDistributorModule is
     IRewardDistributorModule,
@@ -24,17 +24,17 @@ contract RewardDistributorModule is
 
     error InsufficientRewardAllocation(uint requestedAmount, uint remainingAllocation);
 
-    function setRewardAllocation(uint fundId, uint allocation) external override onlyOwner {
-        _rewardDistributorStore().allocatedFunds[fundId] = allocation;
+    function setRewardAllocation(uint poolId, uint allocation) external override onlyOwner {
+        _rewardDistributorStore().allocatedPools[poolId] = allocation;
     }
 
-    function getRewardAllocation(uint fundId) external view override returns (uint) {
-        return _rewardDistributorStore().allocatedFunds[fundId];
+    function getRewardAllocation(uint poolId) external view override returns (uint) {
+        return _rewardDistributorStore().allocatedPools[poolId];
     }
 
     function payout(
-        uint fundId,
-        address, // we dont care about/check the fund token
+        uint poolId,
+        address, // we dont care about/check the pool token
         address to,
         uint amount
     ) external override returns (bool) {
@@ -43,14 +43,14 @@ contract RewardDistributorModule is
             revert AccessError.Unauthorized(msg.sender);
         }
 
-        // fund must be approved in the core system
-        if (_rewardDistributorStore().allocatedFunds[fundId] < amount) {
-            revert InsufficientRewardAllocation(amount, _rewardDistributorStore().allocatedFunds[fundId]);
+        // pool must be approved in the core system
+        if (_rewardDistributorStore().allocatedPools[poolId] < amount) {
+            revert InsufficientRewardAllocation(amount, _rewardDistributorStore().allocatedPools[poolId]);
         }
 
         ITokenModule rewardToken = _getToken(_REDEEMABLE_REWARDS_TOKEN);
 
-        _rewardDistributorStore().allocatedFunds[fundId] -= amount;
+        _rewardDistributorStore().allocatedPools[poolId] -= amount;
         rewardToken.mint(to, amount);
 
         return true;

@@ -2,10 +2,10 @@ import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber'
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import { ethers } from 'ethers';
 
-import { bootstrapWithStakedFund } from '../bootstrap';
+import { bootstrapWithStakedPool } from '../bootstrap';
 
 describe('RewardDistributorModule', function () {
-  const { signers, systems, accountId, fundId, collateralAddress } = bootstrapWithStakedFund();
+  const { signers, systems, accountId, poolId, collateralAddress } = bootstrapWithStakedPool();
 
   let owner: ethers.Signer, user1: ethers.Signer;
 
@@ -34,12 +34,12 @@ describe('RewardDistributorModule', function () {
     const rewardAmount = ethers.utils.parseEther('10000');
 
     before('set up', async () => {
-      // allocate rewards to the fund
-      await systems().Core.connect(owner).setRewardAllocation(fundId, rewardAmount);
+      // allocate rewards to the pool
+      await systems().Core.connect(owner).setRewardAllocation(poolId, rewardAmount);
 
       // distribute
       await systems().Core.connect(owner).distributeRewards(
-        fundId,
+        poolId,
         collateralAddress(),
         0,
         systems().Core.address, // rewards are distributed by the rewards distributor on self
@@ -51,13 +51,13 @@ describe('RewardDistributorModule', function () {
 
     it('reports correct amount of rewards gathered', async () => {
       assertBn.equal(
-        (await systems().Core.callStatic.claimRewards(fundId, collateralAddress(), accountId))[0],
+        (await systems().Core.callStatic.claimRewards(poolId, collateralAddress(), accountId))[0],
         rewardAmount.div(2)
       );
     });
 
     it('distributes some rewards', async () => {
-      await systems().Core.connect(user1).claimRewards(fundId, collateralAddress(), accountId);
+      await systems().Core.connect(user1).claimRewards(poolId, collateralAddress(), accountId);
 
       assertBn.equal(await systems().ESNX.balanceOf(await user1.getAddress()), rewardAmount.div(2));
     });
@@ -65,7 +65,7 @@ describe('RewardDistributorModule', function () {
     describe('re-applied', () => {
       before('re-distribute', async () => {
         await systems().Core.connect(owner).distributeRewards(
-          fundId,
+          poolId,
           collateralAddress(),
           0,
           systems().Core.address, // rewards are distributed by the rewards distributor on self
@@ -79,7 +79,7 @@ describe('RewardDistributorModule', function () {
         assertBn.equal(
           (
             await systems().Core.callStatic.getAvailableRewards(
-              fundId,
+              poolId,
               collateralAddress(),
               accountId
             )
@@ -90,17 +90,17 @@ describe('RewardDistributorModule', function () {
 
       it('does not distribute rewards if allocation is exceeded', async () => {
         assertRevert(
-          systems().Core.connect(user1).claimRewards(fundId, systems().SNX.address, accountId),
+          systems().Core.connect(user1).claimRewards(poolId, systems().SNX.address, accountId),
           'Unauthorized',
           systems().Core
         );
       });
 
       it('distributes rewards if allocation is re-applied', async () => {
-        await systems().Core.connect(owner).setRewardAllocation(fundId, rewardAmount);
+        await systems().Core.connect(owner).setRewardAllocation(poolId, rewardAmount);
 
         // test from earlier already distributed rewards so we can just retry same txn from earlier
-        await systems().Core.connect(user1).claimRewards(fundId, systems().SNX.address, accountId);
+        await systems().Core.connect(user1).claimRewards(poolId, systems().SNX.address, accountId);
 
         assertBn.equal(
           await systems().ESNX.balanceOf(await user1.getAddress()),
