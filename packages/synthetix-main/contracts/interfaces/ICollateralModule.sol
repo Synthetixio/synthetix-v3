@@ -26,14 +26,14 @@ interface ICollateralModule {
         view
         returns (CollateralStorage.CollateralData memory collateral);
 
-    /// @notice Stakes collateral for an account (by the account owner or an address with 'stake' role). Transfers the collateral from the account owner.
+    /// @notice Stakes collateral for an account (by the account owner or an address with 'stake' permission). Transfers the collateral from the account owner.
     function stake(
         uint accountId,
         address collateralType,
         uint amount
     ) external;
 
-    /// @notice Unstakes collateral for an account (by the account owner or an address with 'unstake' role). Transfers the collateral to the account owner
+    /// @notice Unstakes collateral for an account (by the account owner or an address with 'unstake' permission). Transfers the collateral to the account owner
     function unstake(
         uint accountId,
         address collateralType,

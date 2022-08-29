@@ -6,38 +6,38 @@ import "../storage/AccountModuleStorage.sol";
 contract AccountRBACMixin is AccountModuleStorage {
     using SetUtil for SetUtil.Bytes32Set;
 
-    error RoleNotAuthorized(uint accountId, bytes32 role, address target);
+    error PermissionDenied(uint accountId, bytes32 permission, address target);
 
-    bytes32 internal constant _ROLE_MODIFY = "ROLE_MODIFY";
-    bytes32 internal constant _ROLE_STAKE = "ROLE_STAKE";
-    bytes32 internal constant _ROLE_UNSTAKE = "ROLE_UNSTAKE";
-    bytes32 internal constant _ROLE_ASSIGN = "ROLE_ASSIGN";
-    bytes32 internal constant _ROLE_MINT = "ROLE_MINT";
+    bytes32 internal constant _MODIFY_PERMISSION = "MODIFY";
+    bytes32 internal constant _STAKE_PERMISSION = "STAKE";
+    bytes32 internal constant _UNSTAKE_PERMISSION = "UNSTAKE";
+    bytes32 internal constant _ASSIGN_PERMISSION = "ASSIGN";
+    bytes32 internal constant _MINT_PERMISSION = "MINT";
 
-    modifier onlyRoleAuthorized(uint accountId, bytes32 role) {
-        if (!_authorized(accountId, role, msg.sender)) {
-            revert RoleNotAuthorized(accountId, role, msg.sender);
+    modifier onlyWithPerimission(uint accountId, bytes32 permission) {
+        if (!_authorized(accountId, permission, msg.sender)) {
+            revert PermissionDenied(accountId, permission, msg.sender);
         }
 
         _;
     }
 
-    function _hasRole(
+    function _hasPermission(
         uint256 accountId,
-        bytes32 role,
+        bytes32 permission,
         address target
     ) internal view returns (bool) {
         AccountRBAC storage accountRBAC = _accountModuleStore().accountsRBAC[accountId];
 
-        return target != address(0) && accountRBAC.permissions[target].contains(role);
+        return target != address(0) && accountRBAC.permissions[target].contains(permission);
     }
 
     function _authorized(
         uint accountId,
-        bytes32 role,
+        bytes32 permission,
         address target
     ) internal view returns (bool) {
-        return ((target == _accountOwner(accountId)) || (_hasRole(accountId, role, target)));
+        return ((target == _accountOwner(accountId)) || (_hasPermission(accountId, permission, target)));
     }
 
     function _accountOwner(uint accountId) internal view returns (address) {

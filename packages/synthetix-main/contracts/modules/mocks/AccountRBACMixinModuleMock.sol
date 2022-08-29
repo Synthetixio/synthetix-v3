@@ -9,7 +9,7 @@ contract AccountRBACMixinModuleMock is IAccountRBACMixinModuleMock, AccountRBACM
     function interactWithAccount(uint accountId, uint inputValue)
         external
         override
-        onlyRoleAuthorized(accountId, _ROLE_STAKE)
+        onlyWithPerimission(accountId, _STAKE_PERMISSION)
     {
         _mixinModuleMockStore().rbacValue = inputValue;
     }
