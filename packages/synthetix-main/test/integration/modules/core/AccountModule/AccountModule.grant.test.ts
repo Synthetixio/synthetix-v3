@@ -11,6 +11,7 @@ describe.only('AccountModule', function () {
 
   let user1: ethers.Signer;
   let user2: ethers.Signer;
+  let user3: ethers.Signer;
 
   let receipt: ethers.providers.TransactionReceipt;
 
@@ -19,11 +20,12 @@ describe.only('AccountModule', function () {
   const Roles = {
     MODIFY: ethers.utils.formatBytes32String('ROLE_MODIFY'),
     STAKE: ethers.utils.formatBytes32String('ROLE_STAKE'),
+    ADMIN: ethers.utils.formatBytes32String('ROLE_ADMIN'),
   };
 
   describe('AccountModule - Granting, revoking, and renouncing roles', function () {
     before('identify signers', async () => {
-      [, user1, user2] = signers();
+      [, user1, user2, user3] = signers();
     });
 
     before('create the account', async function () {
@@ -33,20 +35,9 @@ describe.only('AccountModule', function () {
 
     describe('before roles have been granted', function () {
       it('shows that certain roles have not been granted', async () => {
+        assert.equal(await systems().Core.hasRole(1, Roles.STAKE, await user1.getAddress()), false);
         assert.equal(
-          await systems().Core.hasRole(
-            1,
-            Roles.STAKE,
-            await user1.getAddress()
-          ),
-          false
-        );
-        assert.equal(
-          await systems().Core.hasRole(
-            1,
-            Roles.MODIFY,
-            await user1.getAddress()
-          ),
+          await systems().Core.hasRole(1, Roles.MODIFY, await user1.getAddress()),
           false
         );
       });
@@ -73,14 +64,7 @@ describe.only('AccountModule', function () {
       });
 
       it('shows that the role is granted', async function () {
-        assert.equal(
-          await systems().Core.hasRole(
-            1,
-            Roles.STAKE,
-            await user2.getAddress()
-          ),
-          true
-        );
+        assert.equal(await systems().Core.hasRole(1, Roles.STAKE, await user2.getAddress()), true);
       });
 
       it('emits a RoleGranted event', async function () {
@@ -95,12 +79,7 @@ describe.only('AccountModule', function () {
       describe('when attempting to renounce a role that was not granted', async () => {
         it('reverts', async () => {
           await assertRevert(
-            systems()
-              .Core.connect(user2)
-              .renounceRole(
-                1,
-                Roles.MODIFY,
-              ),
+            systems().Core.connect(user2).renounceRole(1, Roles.MODIFY),
             `RoleNotGranted("1", "${Roles.MODIFY}", "${await user2.getAddress()}")`,
             systems().Core
           );
@@ -113,9 +92,7 @@ describe.only('AccountModule', function () {
         });
 
         before('renounce the role', async () => {
-          const tx = await systems()
-            .Core.connect(user2)
-            .renounceRole(1, Roles.STAKE);
+          const tx = await systems().Core.connect(user2).renounceRole(1, Roles.STAKE);
           receipt = await tx.wait();
         });
 
@@ -125,11 +102,7 @@ describe.only('AccountModule', function () {
 
         it('shows that the role was renounced', async () => {
           assert.equal(
-            await systems().Core.hasRole(
-              1,
-              Roles.STAKE,
-              await user2.getAddress()
-            ),
+            await systems().Core.hasRole(1, Roles.STAKE, await user2.getAddress()),
             false
           );
         });
@@ -162,11 +135,7 @@ describe.only('AccountModule', function () {
 
         it('shows that the role was revoked', async () => {
           assert.equal(
-            await systems().Core.hasRole(
-              1,
-              Roles.STAKE,
-              await user2.getAddress()
-            ),
+            await systems().Core.hasRole(1, Roles.STAKE, await user2.getAddress()),
             false
           );
         });
@@ -178,6 +147,56 @@ describe.only('AccountModule', function () {
           assert.equal(event.args.role, Roles.STAKE);
           assert.equal(event.args.target, await user2.getAddress());
           assert.equal(event.args.sender, await user1.getAddress());
+        });
+      });
+    });
+
+    describe('when an Admin role is granted by the owner', function () {
+      before('owner grants the admin role', async function () {
+        const tx = await systems()
+          .Core.connect(user1)
+          .grantRole(1, Roles.ADMIN, await user2.getAddress());
+        receipt = await tx.wait();
+      });
+
+      it('shows that the admin role is granted by the owner', async function () {
+        assert.equal(await systems().Core.hasRole(1, Roles.ADMIN, await user2.getAddress()), true);
+      });
+
+      describe('admin is able to grant role', async () => {
+        before('admin grants a role', async function () {
+          const tx = await systems()
+            .Core.connect(user2)
+            .grantRole(1, Roles.STAKE, await user3.getAddress());
+          receipt = await tx.wait();
+        });
+
+        it('shows that the role is granted', async function () {
+          assert.equal(
+            await systems().Core.hasRole(1, Roles.STAKE, await user3.getAddress()),
+            true
+          );
+        });
+      });
+
+      describe('admin is able to revoke a role', async () => {
+        before('grant role', async function () {
+          const tx = await systems()
+            .Core.connect(user1)
+            .grantRole(1, Roles.MODIFY, await user3.getAddress());
+          receipt = await tx.wait();
+        });
+
+        it('shows that the admin can revoke the role', async function () {
+          const tx = await systems()
+            .Core.connect(user2)
+            .revokeRole(1, Roles.MODIFY, await user3.getAddress());
+          receipt = await tx.wait();
+
+          assert.equal(
+            await systems().Core.hasRole(1, Roles.MODIFY, await user3.getAddress()),
+            false
+          );
         });
       });
     });

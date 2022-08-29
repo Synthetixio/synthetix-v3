@@ -1,6 +1,6 @@
 import hre from 'hardhat';
 
-import { ethers, providers } from 'ethers';
+import { ethers } from 'ethers';
 
 import fs from 'fs/promises';
 import { snapshotCheckpoint } from '../utils';

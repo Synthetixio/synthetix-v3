@@ -13,6 +13,7 @@ contract AccountRBACMixin is AccountModuleStorage {
     bytes32 internal constant _ROLE_UNSTAKE = "ROLE_UNSTAKE";
     bytes32 internal constant _ROLE_ASSIGN = "ROLE_ASSIGN";
     bytes32 internal constant _ROLE_MINT = "ROLE_MINT";
+    bytes32 internal constant _ROLE_ADMIN = "ROLE_ADMIN";
 
     modifier onlyRoleAuthorized(uint accountId, bytes32 role) {
         if (!_authorized(accountId, role, msg.sender)) {
@@ -37,7 +38,9 @@ contract AccountRBACMixin is AccountModuleStorage {
         bytes32 role,
         address target
     ) internal view returns (bool) {
-        return ((target == _accountOwner(accountId)) || (_hasRole(accountId, role, target)));
+        return ((target == _accountOwner(accountId)) ||
+            _hasRole(accountId, _ROLE_ADMIN, target) ||
+            _hasRole(accountId, role, target));
     }
 
     function _accountOwner(uint accountId) internal view returns (address) {
