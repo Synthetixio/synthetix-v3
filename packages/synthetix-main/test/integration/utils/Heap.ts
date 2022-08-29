@@ -12,7 +12,7 @@ async function insertHeapData(heap: ethers.Contract, count: number, salt = 'salt
     return vals;
 }
 
-describe.only('Heap',  async () => {
+describe('Heap',  async () => {
   let heap: ethers.Contract;
 
   beforeEach('initialize fresh heap', async () => {

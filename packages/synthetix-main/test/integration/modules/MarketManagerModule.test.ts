@@ -7,7 +7,7 @@ import { ethers } from 'ethers';
 
 import { bootstrapWithMockMarketAndFund } from '../bootstrap';
 
-describe.only('MarketManagerModule', function () {
+describe('MarketManagerModule', function () {
   const {
     signers,
     systems,

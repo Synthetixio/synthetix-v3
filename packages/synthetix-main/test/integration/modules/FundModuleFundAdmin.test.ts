@@ -8,7 +8,7 @@ import { findEvent } from '@synthetixio/core-utils/dist/utils/ethers/events';
 import { bootstrap, bootstrapWithMockMarketAndFund } from '../bootstrap';
 import { snapshotCheckpoint } from '../../utils';
 
-describe.only('FundModule Admin', function () {
+describe('FundModule Admin', function () {
   const { 
     signers, 
     systems,
@@ -228,6 +228,10 @@ describe.only('FundModule Admin', function () {
         assertBn.equal(await systems().Core.connect(owner).marketLiquidity(marketId()), One.mul(2));
       });
 
+      it('market collateral value is amount of only vault 2', async () => {
+        assertBn.equal(await systems().Core.connect(user1).callStatic.marketCollateralValue(marketId()), depositAmount);
+      });
+
       describe('and then the market goes below max debt and the fund is bumped', async () => {
         before('buy into the market', async () => {
           // to go below max debt, we have to get user to invest in the market, and then reset the market
@@ -300,6 +304,7 @@ describe.only('FundModule Admin', function () {
                 console.log('MARKET DPS', await systems().Core.connect(user1).callStatic.marketDebtPerShare(marketId()));
                 console.log('NEEDED DPS', One.mul(One.mul(-1)).div(depositAmount));
                 await MockMarket().connect(user1).setBalance(Hundred.mul(2));
+                await systems().Core.connect(user1).vaultDebt(fundId, collateralAddress());
                 console.log('NEW MARKET DPS', await systems().Core.connect(user1).callStatic.marketDebtPerShare(marketId()));
                 //await systems().Core.connect(user1).vaultDebt(fundId, collateralAddress());
                 //await systems().Core.connect(user1).vaultDebt(fundId, collateralAddress());
@@ -320,6 +325,10 @@ describe.only('FundModule Admin', function () {
                 // still below limit though
                 assertBn.equal(await systems().Core.callStatic.vaultDebt(secondFundId, collateralAddress()), One);
               });
+
+              it('market collateral value is amount of only vault 2', async () => {
+                assertBn.equal(await systems().Core.connect(user1).callStatic.marketCollateralValue(marketId()), depositAmount);
+              });
             });
 
             describe('and then the market reports balance above both pools limits', () => {
@@ -330,6 +339,8 @@ describe.only('FundModule Admin', function () {
                 console.log('NEEDED DPS', One.mul(One).div(depositAmount).mul(2));
                 console.log('MARKET COLLAT', await systems().Core.connect(user1).callStatic.marketCollateralValue(marketId()));
                 await MockMarket().connect(user1).setBalance(Hundred.mul(1234));
+                await systems().Core.connect(user1).vaultDebt(fundId, collateralAddress());
+                await systems().Core.connect(user1).vaultDebt(secondFundId, collateralAddress());
                 console.log('NEW MARKET DPS', await systems().Core.connect(user1).callStatic.marketDebtPerShare(marketId()));
                 console.log('FUND OPS', await systems().Core.connect(user1).callStatic.getFundPosition(secondFundId));
                 console.log('MARKET COLLAT', await systems().Core.connect(user1).callStatic.marketCollateralValue(marketId()));
@@ -346,6 +357,10 @@ describe.only('FundModule Admin', function () {
               it('vault 2 assumes expected amount of debt', async () => {
                 assertBn.equal(await systems().Core.callStatic.vaultDebt(secondFundId, collateralAddress()), One.mul(2));
               });
+
+              it('the market has no more collateral assigned to it', async () => {
+                assertBn.equal(await systems().Core.connect(user1).callStatic.marketCollateralValue(marketId()), 0);
+              })
             });
           });
         });

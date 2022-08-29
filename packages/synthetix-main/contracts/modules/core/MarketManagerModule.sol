@@ -70,7 +70,7 @@ contract MarketManagerModule is
         address target,
         uint amount
     ) external override {
-        
+
         MarketData storage marketData = _marketManagerStore().markets[marketId];
 
         if (msg.sender != marketData.marketAddress) revert AccessError.Unauthorized(msg.sender);

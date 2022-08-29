@@ -43,7 +43,7 @@ contract MarketManagerMixin is MarketManagerStorage, FundModuleStorage {
         uint oldLiquidity = marketData.debtDist.getActorShares(bytes32(fundId));
         int oldFundMaxShareValue = -marketData.inRangeFunds.getById(uint128(fundId)).priority;
 
-        if (newFundMaxShareValue < marketData.debtDist.valuePerShare / 1e9) {
+        if (newFundMaxShareValue <= marketData.debtDist.valuePerShare / 1e9) {
             // this will ensure calculations below can correctly gauge shares changes
             newLiquidity = 0;
             marketData.inRangeFunds.extractById(uint128(fundId));
@@ -90,9 +90,6 @@ contract MarketManagerMixin is MarketManagerStorage, FundModuleStorage {
                 -marketData.inRangeFunds.getMax().priority < targetDebtPerDebtShare && 
                 i < maxIter
             ; i++) {
-
-            //require(marketData.inRangeFunds.size() == 2, "Should be 2!");
-
             Heap.Node memory nextRemove = marketData.inRangeFunds.extractMax();
 
             // distribute to limit
@@ -106,9 +103,11 @@ contract MarketManagerMixin is MarketManagerStorage, FundModuleStorage {
 
             curBalance += debtAmount;
 
+            // sanity
             require(marketData.debtDist.getActorShares(bytes32(uint(nextRemove.id))) > 0, "attempting to remove actor with no shares");
 
             // detach market from fund (the fund will remain "detached" until the fund manager specifies a new debtDist)
+
             int newFundDebt = marketData.debtDist.updateActorShares(bytes32(uint(nextRemove.id)), 0);
             _fundModuleStore().funds[nextRemove.id].debtDist.distribute(newFundDebt);
 
