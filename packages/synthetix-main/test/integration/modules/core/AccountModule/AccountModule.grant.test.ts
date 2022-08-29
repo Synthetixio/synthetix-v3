@@ -6,7 +6,7 @@ import { findEvent } from '@synthetixio/core-utils/utils/ethers/events';
 import { takeSnapshot, restoreSnapshot } from '@synthetixio/core-utils/utils/hardhat/rpc';
 import { bootstrap } from '../../../bootstrap';
 
-describe.only('AccountModule', function () {
+describe('AccountModule', function () {
   const { signers, systems, provider } = bootstrap();
 
   let user1: ethers.Signer;

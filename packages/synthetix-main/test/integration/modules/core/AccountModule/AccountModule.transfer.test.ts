@@ -3,7 +3,7 @@ import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber'
 import { ethers } from 'ethers';
 import { bootstrap } from '../../../bootstrap';
 
-describe.only('AccountModule', function () {
+describe('AccountModule', function () {
   const { signers, systems } = bootstrap();
 
   let user1: ethers.Signer;

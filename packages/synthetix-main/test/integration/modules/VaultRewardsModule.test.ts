@@ -6,7 +6,7 @@ import { getBlockTimestamp } from '@synthetixio/core-utils/utils/ethers/provider
 
 import { bootstrapWithStakedFund } from '../bootstrap';
 
-describe('VaultRewardsModule', function () {
+describe.skip('VaultRewardsModule', function () {
   const { provider, signers, systems, fundId, collateralAddress, accountId, restore } =
     bootstrapWithStakedFund();
 

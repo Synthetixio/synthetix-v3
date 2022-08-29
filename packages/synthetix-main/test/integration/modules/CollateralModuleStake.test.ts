@@ -7,7 +7,7 @@ import { findEvent } from '@synthetixio/core-utils/utils/ethers/events';
 
 import { bootstrap } from '../bootstrap';
 
-describe('CollateralModule Stake', function () {
+describe.skip('CollateralModule Stake', function () {
   const { signers, systems } = bootstrap();
 
   let Collateral: Ethers.Contract, CollateralPriceFeed: Ethers.Contract;

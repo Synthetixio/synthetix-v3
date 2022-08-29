@@ -1,7 +1,7 @@
 import assert from 'assert/strict';
 import { bootstrap } from '../../../bootstrap';
 
-describe.only('AccountModule', function () {
+describe('AccountModule', function () {
   const { systems } = bootstrap();
 
   describe('AccountModule - Initialization', function () {

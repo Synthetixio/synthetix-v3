@@ -2,7 +2,7 @@ import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert
 import { ethers } from 'ethers';
 import { bootstrap } from '../../../bootstrap';
 
-describe.only('AccountTokenModule', function () {
+describe('AccountTokenModule', function () {
   const { signers, systems } = bootstrap();
 
   let user1: ethers.Signer;
