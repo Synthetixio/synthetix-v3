@@ -4,17 +4,17 @@ pragma solidity ^0.8.0;
 /// @title Module for managing account token (NFT) and accounts, each account is represented by an NFT
 interface IAccountModule {
     /**
-     * @dev Emitted when an account token with id `accountId` is minted to `sender`.
+     * @notice Emitted when an account token with id `accountId` is minted to `sender`.
      */
     event AccountCreated(address indexed sender, uint indexed accountId);
 
     /**
-     * @dev Emitted when `target` is granted `role` by `sender` for account `accountId`.
+     * @notice Emitted when `target` is granted `role` by `sender` for account `accountId`.
      */
     event RoleGranted(uint indexed accountId, bytes32 indexed role, address indexed target, address sender);
 
     /**
-     * @dev Emitted when `target` has `role` renounced or revoked by `sender` for account `accountId`.
+     * @notice Emitted when `target` has `role` renounced or revoked by `sender` for account `accountId`.
      */
     event RoleRevoked(uint indexed accountId, bytes32 indexed role, address indexed target, address sender);
 
@@ -24,12 +24,12 @@ interface IAccountModule {
     }
 
     /**
-     * @dev Returns an array of `AccountPermission` for the provided `accountId`.
+     * @notice Returns an array of `AccountPermission` for the provided `accountId`.
      */
     function getAccountPermissions(uint accountId) external view returns (AccountPermission[] memory);
 
     /**
-     * @dev Mints an account token with id `requestedAccountId` to `msg.sender`.
+     * @notice Mints an account token with id `requestedAccountId` to `msg.sender`.
      *
      * Requirements:
      *
@@ -40,7 +40,7 @@ interface IAccountModule {
     function createAccount(uint256 requestedAccountId) external;
 
     /**
-     * @dev Grants `role` to `target` for account `accountId`.
+     * @notice Grants `role` to `target` for account `accountId`.
      *
      * Requirements:
      *
@@ -55,7 +55,7 @@ interface IAccountModule {
     ) external;
 
     /**
-     * @dev Revokes `role` from `target` for account `accountId`.
+     * @notice Revokes `role` from `target` for account `accountId`.
      *
      * Requirements:
      *
@@ -70,14 +70,14 @@ interface IAccountModule {
     ) external;
 
     /**
-     * @dev Revokes `role` from `msg.sender` for account `accountId`.
+     * @notice Revokes `role` from `msg.sender` for account `accountId`.
      *
      * Emits a {RoleRevoked} event.
      */
     function renounceRole(uint accountId, bytes32 role) external;
 
     /**
-     * @dev Returns `true` if `target` has been granted `role` for account `accountId`.
+     * @notice Returns `true` if `target` has been granted `role` for account `accountId`.
      */
     function hasRole(
         uint accountId,
@@ -86,7 +86,7 @@ interface IAccountModule {
     ) external view returns (bool);
 
     /**
-     * @dev Returns the address for the account token used by the module.
+     * @notice Returns the address for the account token used by the module.
      */
     function getAccountTokenAddress() external view returns (address);
 }

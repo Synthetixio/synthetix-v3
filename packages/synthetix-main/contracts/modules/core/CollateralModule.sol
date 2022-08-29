@@ -31,10 +31,6 @@ contract CollateralModule is
 
     error OutOfBounds();
 
-    event CollateralAdjusted(address collateralType, address priceFeed, uint targetCRatio, uint minimumCRatio, bool enabled);
-    event CollateralStaked(uint accountId, address collateralType, uint amount, address executedBy);
-    event CollateralUnstaked(uint accountId, address collateralType, uint amount, address executedBy);
-
     function adjustCollateralType(
         address collateralType,
         address priceFeed,
@@ -52,7 +48,7 @@ contract CollateralModule is
         _collateralStore().collateralsData[collateralType].priceFeed = priceFeed;
         _collateralStore().collateralsData[collateralType].enabled = enabled;
 
-        emit CollateralAdjusted(collateralType, priceFeed, targetCRatio, minimumCRatio, enabled);
+        emit CollateralConfigured(collateralType, priceFeed, targetCRatio, minimumCRatio, enabled);
     }
 
     function getCollateralTypes(bool hideDisabled)
@@ -133,11 +129,7 @@ contract CollateralModule is
         collateralType.safeTransfer(_accountOwner(accountId), amount);
     }
 
-    function getAccountCollaterals(uint accountId) external view override returns (address[] memory collateralTypes) {
-        return _collateralStore().stakedCollateralsByAccountId[accountId].values();
-    }
-
-    function getAccountCollateralTotals(uint accountId, address collateralType)
+    function getAccountCollateral(uint accountId, address collateralType)
         external
         view
         override
