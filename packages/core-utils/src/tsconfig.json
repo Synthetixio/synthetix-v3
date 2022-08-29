@@ -3,7 +3,7 @@
   "compilerOptions": {
     "baseUrl": ".",
     "rootDir": ".",
-    "outDir": ".."
+    "outDir": "../dist"
   },
   "include": ["./**/*.ts"],
   "exclude": []

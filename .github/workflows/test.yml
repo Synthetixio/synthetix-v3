@@ -38,7 +38,6 @@ jobs:
           cache: "npm"
       - run: npm ci
       - run: npm run build
-      - run: npm run --workspace=./packages/core-utils build
       - name: Execute tests
         run: npm run --workspace=./packages/${{ matrix.package }} coverage
       - name: Upload ${{ matrix.package }} coverage to Codecov
