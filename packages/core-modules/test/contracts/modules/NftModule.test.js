@@ -4,7 +4,7 @@ const { default: assertRevert } = require('@synthetixio/core-utils/utils/asserti
 const { bootstrap } = require('@synthetixio/hardhat-router/utils/tests');
 const initializer = require('@synthetixio/core-modules/test/helpers/initializer');
 
-describe('NftModule', () => {
+describe.skip('NftModule', () => {
   const { proxyAddress } = bootstrap(initializer, { modules: '.*(Owner|Upgrade|Nft).*' });
 
   let NftModule;

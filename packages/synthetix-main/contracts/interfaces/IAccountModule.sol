@@ -9,24 +9,24 @@ interface IAccountModule {
     event AccountCreated(address indexed sender, uint indexed accountId);
 
     /**
-     * @notice Emitted when `target` is granted `role` by `sender` for account `accountId`.
+     * @notice Emitted when `target` is granted `permission` by `sender` for account `accountId`.
      */
-    event RoleGranted(uint indexed accountId, bytes32 indexed role, address indexed target, address sender);
+    event PermissionGranted(uint indexed accountId, bytes32 indexed permission, address indexed target, address sender);
 
     /**
-     * @notice Emitted when `target` has `role` renounced or revoked by `sender` for account `accountId`.
+     * @notice Emitted when `target` has `permission` renounced or revoked by `sender` for account `accountId`.
      */
-    event RoleRevoked(uint indexed accountId, bytes32 indexed role, address indexed target, address sender);
+    event PermissionRevoked(uint indexed accountId, bytes32 indexed permission, address indexed target, address sender);
 
-    struct AccountPermission {
+    struct AccountPermissions {
         address target;
-        bytes32[] roles;
+        bytes32[] permissions;
     }
 
     /**
      * @notice Returns an array of `AccountPermission` for the provided `accountId`.
      */
-    function getAccountPermissions(uint accountId) external view returns (AccountPermission[] memory);
+    function getAccountPermissions(uint accountId) external view returns (AccountPermissions[] memory);
 
     /**
      * @notice Mints an account token with id `requestedAccountId` to `msg.sender`.
@@ -40,48 +40,57 @@ interface IAccountModule {
     function createAccount(uint256 requestedAccountId) external;
 
     /**
-     * @notice Grants `role` to `target` for account `accountId`.
+     * @notice Grants `permission` to `target` for account `accountId`.
      *
      * Requirements:
      *
-     * - `msg.sender` must own the account token with ID `accountId` or have the "admin" role.
-     *
-     * Emits a {RoleGranted} event.
+     * - `msg.sender` must be the account token.
      */
-    function grantRole(
+    function notifyAccountTransfer(address to, uint256 accountId) external;
+
+    /**
+     * @dev Grants `permission` to `target` for account `accountId`.
+     *
+     * Requirements:
+     *
+     * - `msg.sender` must own the account token with ID `accountId` or have the "admin" permission.
+     *
+     * Emits a {PermissionGranted} event.
+     */
+    function grantPermission(
         uint accountId,
-        bytes32 role,
+        bytes32 permission,
         address target
     ) external;
 
     /**
-     * @notice Revokes `role` from `target` for account `accountId`.
+     * @notice Revokes `permission` from `target` for account `accountId`.
      *
      * Requirements:
      *
-     * - `msg.sender` must own the account token with ID `accountId` or have the "admin" role.
+     * - `msg.sender` must own the account token with ID `accountId` or have the "admin" permission.
      *
-     * Emits a {RoleRevoked} event.
+     * Emits a {PermissionRevoked} event.
      */
-    function revokeRole(
+    function revokePermission(
         uint accountId,
-        bytes32 role,
+        bytes32 permission,
         address target
     ) external;
 
     /**
-     * @notice Revokes `role` from `msg.sender` for account `accountId`.
+     * @notice Revokes `permission` from `msg.sender` for account `accountId`.
      *
-     * Emits a {RoleRevoked} event.
+     * Emits a {PermissionRevoked} event.
      */
-    function renounceRole(uint accountId, bytes32 role) external;
+    function renouncePermission(uint accountId, bytes32 permission) external;
 
     /**
-     * @notice Returns `true` if `target` has been granted `role` for account `accountId`.
+     * @notice Returns `true` if `target` has been granted `permission` for account `accountId`.
      */
-    function hasRole(
+    function hasPermission(
         uint accountId,
-        bytes32 role,
+        bytes32 permission,
         address target
     ) external view returns (bool);
 
@@ -89,4 +98,9 @@ interface IAccountModule {
      * @notice Returns the address for the account token used by the module.
      */
     function getAccountTokenAddress() external view returns (address);
+
+    /**
+     * @notice Returns the address that owns a given account, as recorded by the system.
+     */
+    function accountOwner(uint accountId) external view returns (address);
 }
