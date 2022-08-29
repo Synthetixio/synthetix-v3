@@ -17,13 +17,13 @@ describe('AccountModule', function () {
 
   let snapshotId: number;
 
-  const Roles = {
-    MODIFY: ethers.utils.formatBytes32String('ROLE_MODIFY'),
-    STAKE: ethers.utils.formatBytes32String('ROLE_STAKE'),
-    ADMIN: ethers.utils.formatBytes32String('ROLE_ADMIN'),
+  const Permissions = {
+    MODIFY: ethers.utils.formatBytes32String('MODIFY'),
+    STAKE: ethers.utils.formatBytes32String('STAKE'),
+    ADMIN: ethers.utils.formatBytes32String('ADMIN'),
   };
 
-  describe('AccountModule - Granting, revoking, and renouncing roles', function () {
+  describe('AccountModule - Granting, revoking, and renouncing permissions', function () {
     before('identify signers', async () => {
       [, user1, user2, user3] = signers();
     });
@@ -33,66 +33,72 @@ describe('AccountModule', function () {
       receipt = await tx.wait();
     });
 
-    describe('before roles have been granted', function () {
-      it('shows that certain roles have not been granted', async () => {
-        assert.equal(await systems().Core.hasRole(1, Roles.STAKE, await user1.getAddress()), false);
+    describe('before permissions have been granted', function () {
+      it('shows that certain permissions have not been granted', async () => {
         assert.equal(
-          await systems().Core.hasRole(1, Roles.MODIFY, await user1.getAddress()),
+          await systems().Core.hasPermission(1, Permissions.STAKE, await user1.getAddress()),
+          false
+        );
+        assert.equal(
+          await systems().Core.hasPermission(1, Permissions.MODIFY, await user1.getAddress()),
           false
         );
       });
     });
 
-    describe('when a non-authorized user attempts to grant roles', async () => {
+    describe('when a non-authorized user attempts to grant permissions', async () => {
       it('reverts', async () => {
         await assertRevert(
           systems()
             .Core.connect(user2)
-            .grantRole(1, Roles.STAKE, await user2.getAddress()),
-          `RoleNotAuthorized("1", "${Roles.MODIFY}", "${await user2.getAddress()}")`,
+            .grantPermission(1, Permissions.STAKE, await user2.getAddress()),
+          `PermissionDenied("1", "${Permissions.MODIFY}", "${await user2.getAddress()}")`,
           systems().Core
         );
       });
     });
 
-    describe('when a role is granted by the owner', function () {
-      before('grant the role', async function () {
+    describe('when a permission is granted by the owner', function () {
+      before('grant the permission', async function () {
         const tx = await systems()
           .Core.connect(user1)
-          .grantRole(1, Roles.STAKE, await user2.getAddress());
+          .grantPermission(1, Permissions.STAKE, await user2.getAddress());
         receipt = await tx.wait();
       });
 
-      it('shows that the role is granted', async function () {
-        assert.equal(await systems().Core.hasRole(1, Roles.STAKE, await user2.getAddress()), true);
+      it('shows that the permission is granted', async function () {
+        assert.equal(
+          await systems().Core.hasPermission(1, Permissions.STAKE, await user2.getAddress()),
+          true
+        );
       });
 
-      it('emits a RoleGranted event', async function () {
-        const event = findEvent({ receipt, eventName: 'RoleGranted' });
+      it('emits a PermissionGranted event', async function () {
+        const event = findEvent({ receipt, eventName: 'PermissionGranted' });
 
         assertBn.equal(event.args.accountId, 1);
-        assert.equal(event.args.role, Roles.STAKE);
+        assert.equal(event.args.permission, Permissions.STAKE);
         assert.equal(event.args.target, await user2.getAddress());
         assert.equal(event.args.sender, await user1.getAddress());
       });
 
-      describe('when attempting to renounce a role that was not granted', async () => {
+      describe('when attempting to renounce a permission that was not granted', async () => {
         it('reverts', async () => {
           await assertRevert(
-            systems().Core.connect(user2).renounceRole(1, Roles.MODIFY),
-            `RoleNotGranted("1", "${Roles.MODIFY}", "${await user2.getAddress()}")`,
+            systems().Core.connect(user2).renouncePermission(1, Permissions.MODIFY),
+            `PermissionNotGranted("1", "${Permissions.MODIFY}", "${await user2.getAddress()}")`,
             systems().Core
           );
         });
       });
 
-      describe('when a role is renounced', function () {
+      describe('when a permission is renounced', function () {
         before('take snapshot', async function () {
           snapshotId = await takeSnapshot(provider());
         });
 
-        before('renounce the role', async () => {
-          const tx = await systems().Core.connect(user2).renounceRole(1, Roles.STAKE);
+        before('renounce the permission', async () => {
+          const tx = await systems().Core.connect(user2).renouncePermission(1, Permissions.STAKE);
           receipt = await tx.wait();
         });
 
@@ -100,32 +106,32 @@ describe('AccountModule', function () {
           await restoreSnapshot(snapshotId, provider());
         });
 
-        it('shows that the role was renounced', async () => {
+        it('shows that the permission was renounced', async () => {
           assert.equal(
-            await systems().Core.hasRole(1, Roles.STAKE, await user2.getAddress()),
+            await systems().Core.hasPermission(1, Permissions.STAKE, await user2.getAddress()),
             false
           );
         });
 
-        it('emits a RoleRevoked event', async () => {
-          const event = findEvent({ receipt, eventName: 'RoleRevoked' });
+        it('emits a PermissionRevoked event', async () => {
+          const event = findEvent({ receipt, eventName: 'PermissionRevoked' });
 
           assertBn.equal(event.args.accountId, 1);
-          assert.equal(event.args.role, Roles.STAKE);
+          assert.equal(event.args.permission, Permissions.STAKE);
           assert.equal(event.args.target, await user2.getAddress());
           assert.equal(event.args.sender, await user2.getAddress());
         });
       });
 
-      describe('when a role is revoked', function () {
+      describe('when a permission is revoked', function () {
         before('take snapshot', async function () {
           snapshotId = await takeSnapshot(provider());
         });
 
-        before('revoke the role', async () => {
+        before('revoke the permission', async () => {
           const tx = await systems()
             .Core.connect(user1)
-            .revokeRole(1, Roles.STAKE, await user2.getAddress());
+            .revokePermission(1, Permissions.STAKE, await user2.getAddress());
           receipt = await tx.wait();
         });
 
@@ -133,68 +139,71 @@ describe('AccountModule', function () {
           await restoreSnapshot(snapshotId, provider());
         });
 
-        it('shows that the role was revoked', async () => {
+        it('shows that the permission was revoked', async () => {
           assert.equal(
-            await systems().Core.hasRole(1, Roles.STAKE, await user2.getAddress()),
+            await systems().Core.hasPermission(1, Permissions.STAKE, await user2.getAddress()),
             false
           );
         });
 
-        it('emits a RoleRevoked event', async () => {
-          const event = findEvent({ receipt, eventName: 'RoleRevoked' });
+        it('emits a PermissionRevoked event', async () => {
+          const event = findEvent({ receipt, eventName: 'PermissionRevoked' });
 
           assertBn.equal(event.args.accountId, 1);
-          assert.equal(event.args.role, Roles.STAKE);
+          assert.equal(event.args.permission, Permissions.STAKE);
           assert.equal(event.args.target, await user2.getAddress());
           assert.equal(event.args.sender, await user1.getAddress());
         });
       });
     });
 
-    describe('when an Admin role is granted by the owner', function () {
-      before('owner grants the admin role', async function () {
+    describe('when an Admin permission is granted by the owner', function () {
+      before('owner grants the admin permission', async function () {
         const tx = await systems()
           .Core.connect(user1)
-          .grantRole(1, Roles.ADMIN, await user2.getAddress());
+          .grantPermission(1, Permissions.ADMIN, await user2.getAddress());
         receipt = await tx.wait();
       });
 
-      it('shows that the admin role is granted by the owner', async function () {
-        assert.equal(await systems().Core.hasRole(1, Roles.ADMIN, await user2.getAddress()), true);
+      it('shows that the admin permission is granted by the owner', async function () {
+        assert.equal(
+          await systems().Core.hasPermission(1, Permissions.ADMIN, await user2.getAddress()),
+          true
+        );
       });
 
-      describe('admin is able to grant role', async () => {
-        before('admin grants a role', async function () {
+      describe('admin is able to grant permission', async () => {
+        before('admin grants a permission', async function () {
           const tx = await systems()
             .Core.connect(user2)
-            .grantRole(1, Roles.STAKE, await user3.getAddress());
+            .grantPermission(1, Permissions.STAKE, await user3.getAddress());
           receipt = await tx.wait();
         });
 
-        it('shows that the role is granted', async function () {
+        it('shows that the permission is granted', async function () {
           assert.equal(
-            await systems().Core.hasRole(1, Roles.STAKE, await user3.getAddress()),
+            await systems().Core.hasPermission(1, Permissions.STAKE, await user3.getAddress()),
             true
           );
         });
       });
 
-      describe('admin is able to revoke a role', async () => {
-        before('grant role', async function () {
+      describe('admin is able to revoke a permission', async () => {
+        before('grant permission', async function () {
           const tx = await systems()
             .Core.connect(user1)
-            .grantRole(1, Roles.MODIFY, await user3.getAddress());
+            .grantPermission(1, Permissions.MODIFY, await user3.getAddress());
           receipt = await tx.wait();
         });
 
-        it('shows that the admin can revoke the role', async function () {
+        it('shows that the admin can revoke the permission', async function () {
           const tx = await systems()
             .Core.connect(user2)
-            .revokeRole(1, Roles.MODIFY, await user3.getAddress());
+            .revokePermission(1, Permissions.MODIFY, await user3.getAddress());
           receipt = await tx.wait();
 
           assert.equal(
-            await systems().Core.hasRole(1, Roles.MODIFY, await user3.getAddress()),
+            await systems().Core.hasPermission(1, Permissions.MODIFY, await user3.getAddress()),
             false
           );
         });

@@ -3,9 +3,9 @@ import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert
 import { ethers } from 'ethers';
 import { bootstrap } from '../bootstrap';
 
-const Roles = {
-  STAKE: ethers.utils.formatBytes32String('ROLE_STAKE'),
-  MINT: ethers.utils.formatBytes32String('ROLE_MINT'),
+const Permissions = {
+  STAKE: ethers.utils.formatBytes32String('STAKE'),
+  MINT: ethers.utils.formatBytes32String('MINT'),
 };
 
 describe('AccountRBACMixin', function () {
@@ -54,7 +54,7 @@ describe('AccountRBACMixin', function () {
 
         await assertRevert(
           systems().Core.connect(signer).mock_AccountRBACMixin_stake(1, 666),
-          `RoleNotAuthorized("1", "${Roles.STAKE}", "${await signer.getAddress()}")`,
+          `PermissionDenied("1", "${Permissions.STAKE}", "${await signer.getAddress()}")`,
           systems().Core
         );
       });
@@ -68,7 +68,7 @@ describe('AccountRBACMixin', function () {
 
         await assertRevert(
           systems().Core.connect(signer).mock_AccountRBACMixin_mint(1, 666),
-          `RoleNotAuthorized("1", "${Roles.MINT}", "${await signer.getAddress()}")`,
+          `PermissionDenied("1", "${Permissions.MINT}", "${await signer.getAddress()}")`,
           systems().Core
         );
       });
@@ -95,7 +95,7 @@ describe('AccountRBACMixin', function () {
 
     describe('when granting stake access to user2', function () {
       before('grant', async function () {
-        await (await systems().Core.connect(user1).grantRole(1, Roles.STAKE, await user2.getAddress())).wait();
+        await (await systems().Core.connect(user1).grantPermission(1, Permissions.STAKE, await user2.getAddress())).wait();
       });
 
       canStake({ user: 1 });
@@ -107,7 +107,7 @@ describe('AccountRBACMixin', function () {
 
       describe('when granting mint access to user2', function () {
         before('grant', async function () {
-          await (await systems().Core.connect(user1).grantRole(1, Roles.MINT, await user2.getAddress())).wait();
+          await (await systems().Core.connect(user1).grantPermission(1, Permissions.MINT, await user2.getAddress())).wait();
         });
 
         canStake({ user: 1 });
@@ -119,7 +119,7 @@ describe('AccountRBACMixin', function () {
 
         describe('when revoking stake access from user2', function () {
           before('revoke', async function () {
-            await (await systems().Core.connect(user1).revokeRole(1, Roles.STAKE, await user2.getAddress())).wait();
+            await (await systems().Core.connect(user1).revokePermission(1, Permissions.STAKE, await user2.getAddress())).wait();
           });
 
           canStake({ user: 1 });
@@ -131,7 +131,7 @@ describe('AccountRBACMixin', function () {
 
           describe('when granting stake access to user3', function () {
             before('grant', async function () {
-              await (await systems().Core.connect(user1).grantRole(1, Roles.STAKE, await user3.getAddress())).wait();
+              await (await systems().Core.connect(user1).grantPermission(1, Permissions.STAKE, await user3.getAddress())).wait();
             });
 
             canStake({ user: 1 });

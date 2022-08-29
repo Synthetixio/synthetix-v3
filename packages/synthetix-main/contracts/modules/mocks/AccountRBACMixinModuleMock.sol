@@ -9,7 +9,7 @@ contract AccountRBACMixinModuleMock is IAccountRBACMixinModuleMock, AccountRBACM
     function mock_AccountRBACMixin_stake(uint accountId, uint newStakeMock)
         external
         override
-        onlyRoleAuthorized(accountId, _ROLE_STAKE)
+        onlyWithPerimission(accountId, _STAKE_PERMISSION)
     {
         _mixinModuleMockStore().stakeMock = newStakeMock;
     }
@@ -17,7 +17,7 @@ contract AccountRBACMixinModuleMock is IAccountRBACMixinModuleMock, AccountRBACM
     function mock_AccountRBACMixin_mint(uint accountId, uint newMintMock)
         external
         override
-        onlyRoleAuthorized(accountId, _ROLE_MINT)
+        onlyWithPerimission(accountId, _MINT_PERMISSION)
     {
         _mixinModuleMockStore().mintMock = newMintMock;
     }
