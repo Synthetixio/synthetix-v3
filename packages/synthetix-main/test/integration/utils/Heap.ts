@@ -4,12 +4,12 @@ import hre from 'hardhat';
 import assertBn from '@synthetixio/core-utils/dist/utils/assertions/assert-bignumber';
 
 async function insertHeapData(heap: ethers.Contract, count: number, salt = 'salt') {
-    let vals = Array.from({length: count}, (_, index) => ethers.BigNumber.from('0x' + ethers.utils.solidityKeccak256(['string'], [salt + index]).slice(64)));
-    for (const i in vals) {
-        await heap.insert(i, vals[i]);
-    }
+  const vals = Array.from({length: count}, (_, index) => ethers.BigNumber.from('0x' + ethers.utils.solidityKeccak256(['string'], [salt + index]).slice(64)));
+  for (const i in vals) {
+    await heap.insert(i, vals[i]);
+  }
 
-    return vals;
+  return vals;
 }
 
 describe('Heap',  async () => {
@@ -25,13 +25,13 @@ describe('Heap',  async () => {
     let lastPrio = (await heap.callStatic.extractMax()).priority;
 
     for (let i = 0;i < 100; i++) {
-        const getNode = await heap.getMax();
-        const node = await heap.callStatic.extractMax();
-        await heap.extractMax();
+      const getNode = await heap.getMax();
+      const node = await heap.callStatic.extractMax();
+      await heap.extractMax();
 
-        assertBn.equal(getNode.id, node.id);
-        assertBn.lte(node.priority, lastPrio);
-        lastPrio = node.priority;
+      assertBn.equal(getNode.id, node.id);
+      assertBn.lte(node.priority, lastPrio);
+      lastPrio = node.priority;
     }
 
     assertBn.isZero(await heap.size());
@@ -42,14 +42,14 @@ describe('Heap',  async () => {
     const vals = await insertHeapData(heap, 100, 'updated');
 
     for (let i = 0;i < 100; i++) {
-        const getNode = await heap.getById(i);
-        const node = await heap.callStatic.extractById(i);
-        await heap.extractById(i);
+      const getNode = await heap.getById(i);
+      const node = await heap.callStatic.extractById(i);
+      await heap.extractById(i);
 
-        assertBn.equal(getNode.id, node.id);
-        assertBn.equal(getNode.priority, node.priority);
-        assertBn.equal(node.id, i);
-        assertBn.equal(node.priority, vals[i]);
+      assertBn.equal(getNode.id, node.id);
+      assertBn.equal(getNode.priority, node.priority);
+      assertBn.equal(node.id, i);
+      assertBn.equal(node.priority, vals[i]);
     }
 
     assertBn.isZero(await heap.size());
@@ -64,13 +64,13 @@ describe('Heap',  async () => {
     let lastPrio = (await heap.callStatic.extractMax()).priority;
 
     for (let i = 0;i < 100; i++) {
-        const getNode = await heap.getMax();
-        const node = await heap.callStatic.extractMax();
-        await heap.extractMax();
+      const getNode = await heap.getMax();
+      const node = await heap.callStatic.extractMax();
+      await heap.extractMax();
 
-        assertBn.equal(getNode.id, node.id);
-        assertBn.lte(node.priority, lastPrio);
-        lastPrio = node.priority;
+      assertBn.equal(getNode.id, node.id);
+      assertBn.lte(node.priority, lastPrio);
+      lastPrio = node.priority;
     }
 
     assertBn.isZero(await heap.size());

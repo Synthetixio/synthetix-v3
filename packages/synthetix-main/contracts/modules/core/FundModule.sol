@@ -105,7 +105,11 @@ contract FundModule is IFundModule, FundEventAndErrors, AccountRBACMixin, FundMi
         {
             uint lastMarketId = 0;
 
-            for (; i < (markets.length < fundData.fundDistribution.length ? markets.length : fundData.fundDistribution.length); i++) {
+            for (
+                ;
+                i < (markets.length < fundData.fundDistribution.length ? markets.length : fundData.fundDistribution.length);
+                i++
+            ) {
                 if (markets[i] <= lastMarketId) {
                     revert InvalidParameters("markets", "must be supplied in strictly ascending order");
                 }
@@ -141,8 +145,6 @@ contract FundModule is IFundModule, FundEventAndErrors, AccountRBACMixin, FundMi
             _rebalanceMarket(fundData.fundDistribution[fundData.fundDistribution.length - 1].market, fundId, 0, 0);
             fundData.fundDistribution.pop();
         }
-
-
 
         fundData.totalWeights = totalWeight;
 

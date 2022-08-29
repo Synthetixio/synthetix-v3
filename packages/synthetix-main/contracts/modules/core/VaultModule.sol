@@ -55,11 +55,11 @@ contract VaultModule is
         _updateAvailableRewards(epochData, vaultData.rewards, accountId);
 
         // get the current collateral situation
-        (uint oldCollateralAmount,,) = _accountCollateral(accountId, fundId, collateralType);
+        (uint oldCollateralAmount, , ) = _accountCollateral(accountId, fundId, collateralType);
 
         // if increasing collateral additionally check they have enough collateral
         if (
-            collateralAmount > oldCollateralAmount && 
+            collateralAmount > oldCollateralAmount &&
             _getAccountUnassignedCollateral(accountId, collateralType) < collateralAmount - oldCollateralAmount
         ) {
             revert InsufficientAccountCollateral(accountId, collateralType, collateralAmount);
@@ -86,17 +86,16 @@ contract VaultModule is
 
             // this will ensure the new distribution information is passed up the chain to the markets
             _updateAccountDebt(accountId, fundId, collateralType);
-            
         }
 
-        // this is the most efficient time to check the resulting collateralization ratio, since 
+        // this is the most efficient time to check the resulting collateralization ratio, since
         // user's debt and collateral price have been fully updated
         if (collateralAmount < oldCollateralAmount) {
             int debt = epochData.usdDebtDist.getActorValue(actorId);
-            
+
             _verifyCollateralRatio(
-                collateralType, 
-                debt < 0 ? 0 : uint(debt), 
+                collateralType,
+                debt < 0 ? 0 : uint(debt),
                 collateralAmount.mulDecimal(vaultData.collateralPrice)
             );
         }
@@ -114,7 +113,7 @@ contract VaultModule is
             return collateralAmount.mulDecimal(leverage);
         }
 
-        return leverage.mulDecimal(uint(epochData.debtDist.totalShares) * collateralAmount / totalCollateral);
+        return leverage.mulDecimal((uint(epochData.debtDist.totalShares) * collateralAmount) / totalCollateral);
     }
 
     // ---------------------------------------
@@ -130,7 +129,7 @@ contract VaultModule is
         // check if they have sufficient c-ratio to mint that amount
         int debt = _updateAccountDebt(accountId, fundId, collateralType);
 
-        (uint collateralValue,,) = _accountCollateral(accountId, fundId, collateralType);
+        (uint collateralValue, , ) = _accountCollateral(accountId, fundId, collateralType);
 
         int newDebt = debt + int(amount);
 
@@ -145,7 +144,6 @@ contract VaultModule is
         _fundModuleStore().funds[fundId].totalLiquidity -= int128(int(amount));
         _getToken(_USD_TOKEN).mint(msg.sender, amount);
     }
-    
 
     function burnUSD(
         uint accountId,
@@ -193,7 +191,16 @@ contract VaultModule is
         uint accountId,
         uint fundId,
         address collateralType
-    ) external view override returns (uint amount, uint value, uint shares) {
+    )
+        external
+        view
+        override
+        returns (
+            uint amount,
+            uint value,
+            uint shares
+        )
+    {
         return _accountCollateral(accountId, fundId, collateralType);
     }
 
@@ -220,7 +227,11 @@ contract VaultModule is
         return uint(epochData.debtDist.totalShares).mulDecimal(epochData.liquidityMultiplier);
     }
 
-    function _verifyCollateralRatio(address collateralType, uint debt, uint collateralValue) internal view {
+    function _verifyCollateralRatio(
+        address collateralType,
+        uint debt,
+        uint collateralValue
+    ) internal view {
         uint targetCratio = _getCollateralTargetCRatio(collateralType);
 
         if (debt != 0 && collateralValue.divDecimal(debt) < targetCratio) {

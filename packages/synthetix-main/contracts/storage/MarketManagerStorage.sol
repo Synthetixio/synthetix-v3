@@ -13,22 +13,16 @@ contract MarketManagerStorage {
 
     struct MarketData {
         address marketAddress;
-
         /// @notice the difference between the USD burnt by the market, and the amount minted
         int128 issuance;
-
         /// @notice the total amount of USD that the market could withdraw right now
         uint128 capacity;
-
         /// @notice the amount of debt the last time the debt was distributed
         int128 lastMarketBalance;
-        
         // used to disconnect funds from a market if it goes above a certain debt per debt share
         Heap.Data inRangeFunds;
-
         // used to attach/reattach funds to a market if it goes below a certain debt per debt share
         Heap.Data outRangeFunds;
-
         SharesLibrary.Distribution debtDist;
     }
 

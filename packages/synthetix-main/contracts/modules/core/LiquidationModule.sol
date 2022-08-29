@@ -12,15 +12,33 @@ import "@synthetixio/core-modules/contracts/mixins/AssociatedSystemsMixin.sol";
 import "../../utils/ERC20Helper.sol";
 import "../../utils/SharesLibrary.sol";
 
-
-contract LiquidationsModule is ILiquidationModule, LiquidationModuleStorage, AssociatedSystemsMixin, CollateralMixin, FundMixin, AccountRBACMixin {
-
+contract LiquidationsModule is
+    ILiquidationModule,
+    LiquidationModuleStorage,
+    AssociatedSystemsMixin,
+    CollateralMixin,
+    FundMixin,
+    AccountRBACMixin
+{
     using MathUtil for uint;
     using ERC20Helper for address;
     using SharesLibrary for SharesLibrary.Distribution;
 
-    event Liquidation(uint indexed accountId, uint indexed fundId, address indexed collateralType, uint debtLiquidated, uint collateralLiquidated, uint amountRewarded);
-    event VaultLiquidation(uint indexed fundId, address indexed collateralType, uint debtLiquidated, uint collateralLiquidated, uint amountRewarded);
+    event Liquidation(
+        uint indexed accountId,
+        uint indexed fundId,
+        address indexed collateralType,
+        uint debtLiquidated,
+        uint collateralLiquidated,
+        uint amountRewarded
+    );
+    event VaultLiquidation(
+        uint indexed fundId,
+        address indexed collateralType,
+        uint debtLiquidated,
+        uint collateralLiquidated,
+        uint amountRewarded
+    );
 
     error IneligibleForLiquidation(uint collateralValue, uint debt, uint currentCRatio, uint cratio);
 
@@ -28,23 +46,29 @@ contract LiquidationsModule is ILiquidationModule, LiquidationModuleStorage, Ass
 
     bytes32 private constant _USD_TOKEN = "USDToken";
 
-    
     function liquidate(
         uint accountId,
         uint fundId,
         address collateralType
-    ) external override returns (uint amountRewarded, uint debtLiquidated, uint collateralLiquidated) {
+    )
+        external
+        override
+        returns (
+            uint amountRewarded,
+            uint debtLiquidated,
+            uint collateralLiquidated
+        )
+    {
         int rawDebt = _updateAccountDebt(accountId, fundId, collateralType);
 
-        (uint cl, uint collateralValue,) = _accountCollateral(accountId, fundId, collateralType);
+        (uint cl, uint collateralValue, ) = _accountCollateral(accountId, fundId, collateralType);
         collateralLiquidated = cl;
-
 
         if (rawDebt <= 0 || !_isLiquidatable(collateralType, uint(rawDebt), collateralValue)) {
             revert IneligibleForLiquidation(
-                collateralValue, 
-                debtLiquidated, 
-                debtLiquidated == 0 ? 0 : collateralValue.divDecimal(debtLiquidated), 
+                collateralValue,
+                debtLiquidated,
+                debtLiquidated == 0 ? 0 : collateralValue.divDecimal(debtLiquidated),
                 _getCollateralMinimumCRatio(collateralType)
             );
         }
@@ -76,14 +100,16 @@ contract LiquidationsModule is ILiquidationModule, LiquidationModuleStorage, Ass
         epochData.collateralDist.updateActorShares(bytes32(accountId), 0);
         epochData.debtDist.updateActorShares(bytes32(accountId), 0);
         epochData.usdDebtDist.updateActorShares(bytes32(accountId), 0);
-        
+
         // use distribute to socialize the debt/collateral we just erased
         epochData.collateralDist.distribute(int(collateralLiquidated - amountRewarded));
         epochData.debtDist.distribute(int(debtLiquidated));
         epochData.unclaimedDebt += int128(int(debtLiquidated));
 
         // update the fund
-        _fundModuleStore().funds[fundId].totalLiquidity -= int128(int(amountRewarded.mulDecimal(_getCollateralValue(collateralType))));
+        _fundModuleStore().funds[fundId].totalLiquidity -= int128(
+            int(amountRewarded.mulDecimal(_getCollateralValue(collateralType)))
+        );
 
         _applyLiquidationToMultiplier(fundId, collateralType, oldShares);
 
@@ -96,7 +122,6 @@ contract LiquidationsModule is ILiquidationModule, LiquidationModuleStorage, Ass
 
         emit Liquidation(accountId, fundId, collateralType, debtLiquidated, collateralLiquidated, amountRewarded);
     }
-
 
     function liquidateVault(
         uint fundId,
@@ -115,16 +140,16 @@ contract LiquidationsModule is ILiquidationModule, LiquidationModuleStorage, Ass
         VaultData storage vaultData = _fundVaultStore().fundVaults[fundId][collateralType];
 
         int rawVaultDebt = _vaultDebt(fundId, collateralType);
-        
+
         uint vaultDebt = rawVaultDebt < 0 ? 0 : uint(rawVaultDebt);
-        
+
         (, uint collateralValue) = _vaultCollateral(fundId, collateralType);
 
         if (!_isLiquidatable(collateralType, vaultDebt, collateralValue)) {
             revert IneligibleForLiquidation(
-                collateralValue, 
-                vaultDebt, 
-                vaultDebt > 0 ? collateralValue.divDecimal(vaultDebt) : 0, 
+                collateralValue,
+                vaultDebt,
+                vaultDebt > 0 ? collateralValue.divDecimal(vaultDebt) : 0,
                 _getCollateralMinimumCRatio(collateralType)
             );
         }
@@ -136,23 +161,21 @@ contract LiquidationsModule is ILiquidationModule, LiquidationModuleStorage, Ass
             amountLiquidated = vaultDebt;
             collateralRewarded = uint(vaultData.epochData[vaultData.epoch].collateralDist.totalValue());
 
-
-            bytes32 vaultActorId =  bytes32(uint(uint160(collateralType)));
+            bytes32 vaultActorId = bytes32(uint(uint160(collateralType)));
 
             // inform the fund that this market is exiting (note the debt has already been rolled into vaultData so no change)
             _fundModuleStore().funds[fundId].debtDist.updateActorShares(vaultActorId, 0);
 
             // reboot the vault
             vaultData.epoch++;
-        }
-        else {
+        } else {
             // partial vault liquidation
             _getToken(_USD_TOKEN).burn(msg.sender, maxUsd);
 
             VaultEpochData storage epochData = vaultData.epochData[vaultData.epoch];
 
             amountLiquidated = maxUsd;
-            collateralRewarded = uint(epochData.collateralDist.totalValue()) * amountLiquidated / vaultDebt;
+            collateralRewarded = (uint(epochData.collateralDist.totalValue()) * amountLiquidated) / vaultDebt;
 
             // repay the debt
             epochData.debtDist.distribute(-int(amountLiquidated));
@@ -167,8 +190,8 @@ contract LiquidationsModule is ILiquidationModule, LiquidationModuleStorage, Ass
 
         // update the fund (debt was repayed but collateral was taken)
         _fundModuleStore().funds[fundId].totalLiquidity += int128(
-            int(amountLiquidated) - 
-            int(collateralRewarded.mulDecimal(_getCollateralValue(collateralType))));
+            int(amountLiquidated) - int(collateralRewarded.mulDecimal(_getCollateralValue(collateralType)))
+        );
 
         // award the collateral that was just taken to the specified account
         _depositCollateral(liquidateAsAccountId, collateralType, collateralRewarded);
@@ -178,7 +201,7 @@ contract LiquidationsModule is ILiquidationModule, LiquidationModuleStorage, Ass
 
     function _isLiquidatable(
         address collateralType,
-        uint debt, 
+        uint debt,
         uint collateralValue
     ) internal view returns (bool) {
         if (debt == 0) {
@@ -194,25 +217,29 @@ contract LiquidationsModule is ILiquidationModule, LiquidationModuleStorage, Ass
         address collateralType
     ) external override returns (bool) {
         int rawDebt = _updateAccountDebt(accountId, fundId, collateralType);
-        (,uint collateralValue,) = _accountCollateral(accountId, fundId, collateralType);
-        return rawDebt >= 0 &&  _isLiquidatable(collateralType, uint(rawDebt), collateralValue);
+        (, uint collateralValue, ) = _accountCollateral(accountId, fundId, collateralType);
+        return rawDebt >= 0 && _isLiquidatable(collateralType, uint(rawDebt), collateralValue);
     }
 
-    function _applyLiquidationToMultiplier(uint fundId, address collateralType, uint liquidatedShares) internal {
+    function _applyLiquidationToMultiplier(
+        uint fundId,
+        address collateralType,
+        uint liquidatedShares
+    ) internal {
         VaultData storage vaultData = _fundVaultStore().fundVaults[fundId][collateralType];
         VaultEpochData storage epochData = vaultData.epochData[vaultData.epoch];
 
         uint oldTotalShares = liquidatedShares + epochData.debtDist.totalShares;
 
-        uint newLiquidityMultiplier = uint(epochData.liquidityMultiplier) *
-            oldTotalShares / 
+        uint newLiquidityMultiplier = (uint(epochData.liquidityMultiplier) * oldTotalShares) /
             epochData.debtDist.totalShares;
 
         // update totalLiquidity (to stay exact)
-        _fundModuleStore().funds[fundId].totalLiquidity = 
-            int128(_fundModuleStore().funds[fundId].totalLiquidity +
-            int(uint(epochData.debtDist.totalShares).mulDecimal(newLiquidityMultiplier)) -
-            int(oldTotalShares.mulDecimal(epochData.liquidityMultiplier)));
+        _fundModuleStore().funds[fundId].totalLiquidity = int128(
+            _fundModuleStore().funds[fundId].totalLiquidity +
+                int(uint(epochData.debtDist.totalShares).mulDecimal(newLiquidityMultiplier)) -
+                int(oldTotalShares.mulDecimal(epochData.liquidityMultiplier))
+        );
 
         // update debt adjustments
         epochData.liquidityMultiplier = uint128(newLiquidityMultiplier);

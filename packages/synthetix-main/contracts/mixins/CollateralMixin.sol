@@ -67,8 +67,10 @@ contract CollateralMixin is CollateralStorage, FundVaultStorage {
             collateralType
         ];
         uint totalAssigned = 0;
-        for (uint i = 0;i < stakedCollateral.funds.length;i++) {
-            FundVaultStorage.VaultData storage vaultData = _fundVaultStore().fundVaults[stakedCollateral.funds[i]][collateralType];
+        for (uint i = 0; i < stakedCollateral.funds.length; i++) {
+            FundVaultStorage.VaultData storage vaultData = _fundVaultStore().fundVaults[stakedCollateral.funds[i]][
+                collateralType
+            ];
             totalAssigned += uint(vaultData.epochData[vaultData.epoch].collateralDist.getActorValue(bytes32(accountId)));
         }
 
@@ -103,7 +105,11 @@ contract CollateralMixin is CollateralStorage, FundVaultStorage {
         return _collateralStore().collateralsData[collateralType].liquidationReward;
     }
 
-    function _depositCollateral(uint accountId, address collateralType, uint amount) internal {
+    function _depositCollateral(
+        uint accountId,
+        address collateralType,
+        uint amount
+    ) internal {
         StakedCollateralData storage collateralData = _collateralStore().stakedCollateralsDataByAccountId[accountId][
             collateralType
         ];

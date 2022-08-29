@@ -102,7 +102,7 @@ describe('MarketManagerModule', function () {
       it('accrues no debt', async () => {
         // should only have the one USD minted earlier
         assertBn.equal(await systems().Core.callStatic.vaultDebt(fundId, collateralAddress()), One);
-      })
+      });
     });
   });
 
@@ -117,7 +117,8 @@ describe('MarketManagerModule', function () {
         txn = await MockMarket().connect(user1).buySynth(One);
       });
 
-      // TODO: this test is tempermental and fails with unusual errors, though I know it is passinga s of writing through other measn
+      // TODO: this test is tempermental and fails with unusual errors, though 
+      // I know it is passinga s of writing through other means
       it.skip('reverts if not enough liquidity', async () => {
         await MockMarket().connect(user1).setBalance(Hundred.mul(100000));
 

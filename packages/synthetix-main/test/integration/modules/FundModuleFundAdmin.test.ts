@@ -42,11 +42,11 @@ describe('FundModule Admin', function () {
 
     it('fails when fund already exists', async () => {
       
-    })
+    });
 
     describe('success', async () => {
 
-    })
+    });
 
     before('create a fund', async () => {
       await (
@@ -59,7 +59,7 @@ describe('FundModule Admin', function () {
     it('fund is created', async () => {
       assert.equal(await systems().Core.ownerOf(secondFundId), await user1.getAddress());
     });
-  })
+  });
 
   describe('setFundPosition()', async () => {
 
@@ -112,7 +112,8 @@ describe('FundModule Admin', function () {
       );
     });
 
-    // in particular, this test needs to go here because we want to see it fail even when there is no liquidity to rebalance
+    // in particular, this test needs to go here because we want to see it fail
+    // even when there is no liquidity to rebalance
     it('reverts when a marketId does not exist', async () => {
       await assertRevert(
         systems().Core.connect(owner).setFundPosition(fundId, [1, 2, 92197628], [1, 1, 1], [0, 0, 0]),
@@ -191,13 +192,14 @@ describe('FundModule Admin', function () {
             });
 
             it('markets have same available liquidity', async () => {
-              // marketId() gets to keep its available liquidity because when the market exited when it did it "committed"
+              // marketId() gets to keep its available liquidity because when 
+              // the market exited when it did it "committed"
               assertBn.equal(await systems().Core.connect(owner).marketLiquidity(marketId()), debtAmount);
 
               // marketId2 never reported an increased balance so its liquidity is 0 as ever
               assertBn.equal(await systems().Core.connect(owner).marketLiquidity(marketId2), 0);
             });
-          })
+          });
         });
       });
     });
@@ -214,13 +216,15 @@ describe('FundModule Admin', function () {
         await systems().Core.connect(owner).setFundPosition(fundId, [marketId()], [1], [One.mul(One.mul(-1)).div(depositAmount)]);
       });
 
-      // the second fund is here to test the calculation weighted average and to test fund entering/joining after debt shifts
+      // the second fund is here to test the calculation weighted average 
+      // and to test fund entering/joining after debt shifts
       before('set second fund position position', async () => {
         await systems().Core.connect(user1).delegateCollateral(
           accountId,
           secondFundId,
           collateralAddress(),
-          // deposit much more than the fundId pool so as to skew the limit much higher than what it set
+          // deposit much more than the fundId pool so as to 
+          // skew the limit much higher than what it set
           depositAmount,
           ethers.utils.parseEther('1')
         );
@@ -238,7 +242,8 @@ describe('FundModule Admin', function () {
 
       describe('and then the market goes below max debt and the fund is bumped', async () => {
         before('buy into the market', async () => {
-          // to go below max debt, we have to get user to invest in the market, and then reset the market
+          // to go below max debt, we have to get user to invest 
+          // in the market, and then reset the market
 
           // aquire USD from the zero fund
           await systems().Core.connect(user1).delegateCollateral(
@@ -332,7 +337,8 @@ describe('FundModule Admin', function () {
               before('set market', async () => {
                 await MockMarket().connect(user1).setBalance(Hundred.mul(1234));
 
-                // TODO: if the following line is removed/reordered an unusual error appears where `secondFundId` assumes the full amount of debt
+                // TODO: if the following line is removed/reordered an unusual error 
+                // appears where `secondFundId` assumes the full amount of debt
                 // we have to investigate this
                 await systems().Core.connect(user1).vaultDebt(fundId, collateralAddress());
                 await systems().Core.connect(user1).vaultDebt(secondFundId, collateralAddress());
@@ -353,7 +359,7 @@ describe('FundModule Admin', function () {
               it('the market has no more collateral assigned to it', async () => {
                 await systems().Core.connect(user1).vaultDebt(fundId, collateralAddress());
                 assertBn.equal(await systems().Core.connect(user1).callStatic.marketCollateralValue(marketId()), 0);
-              })
+              });
             });
           });
         });
@@ -386,7 +392,7 @@ describe('FundModule Admin', function () {
         });
 
         it('marketLiquidity reflects configured by fund', async () => {
-        assertBn.equal(await systems().Core.connect(owner).marketLiquidity(marketId()), depositAmount);
+          assertBn.equal(await systems().Core.connect(owner).marketLiquidity(marketId()), depositAmount);
         });
       });
     });
@@ -398,7 +404,7 @@ describe('FundModule Admin', function () {
         systems().Core.connect(user1).setMinLiquidityRatio(ethers.utils.parseEther('2')),
         'Unauthorized',
         systems().Core
-      )
+      );
     });
 
     describe('when invoked successfully', async () => {

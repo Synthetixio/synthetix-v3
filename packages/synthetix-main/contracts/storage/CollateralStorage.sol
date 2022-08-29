@@ -17,19 +17,14 @@ contract CollateralStorage {
     struct CollateralData {
         /// must be true for staking or collateral delegation
         bool enabled;
-
         /// accounts cannot mint sUSD if their debt brings their cratio below this value
         uint targetCRatio;
-
-        /// accounts below the ratio specified here are immediately liquidated 
+        /// accounts below the ratio specified here are immediately liquidated
         uint minimumCRatio;
-
         /// amount of token to award when an account is liquidated with this collateral type
         uint liquidationReward;
-
         /// address which reports the current price of the collateral
         address priceFeed;
-
         /// address which should be used for transferring this collateral
         address tokenAddress;
     }

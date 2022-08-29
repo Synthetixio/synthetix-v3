@@ -30,7 +30,9 @@ export default async function assertEvent(
       }
 
       seenEvents.push(text);
-    } catch {}
+    } catch {
+      // noop
+    }
   }
 
   throw new Error(`Receipt did not contain an event "${expectedMatch}". List of parsed events:\n${seenEvents.join('\n')}`);

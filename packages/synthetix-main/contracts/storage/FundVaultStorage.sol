@@ -9,10 +9,8 @@ import "../utils/SharesLibrary.sol";
 
 contract FundVaultStorage {
     struct FundVaultStore {
-
         /// @dev collaterals which are currently deposited in the fund
         mapping(uint256 => SetUtil.AddressSet) fundCollateralTypes;
-        
         /// @dev fund vaults (per collateral)
         mapping(uint256 => mapping(address => VaultData)) fundVaults;
     }
@@ -20,16 +18,12 @@ contract FundVaultStorage {
     struct VaultEpochData {
         /// @dev amount of debt which has not been rolled into `usdDebtDist`. Needed to keep track of overall vaultDebt
         int128 unclaimedDebt;
-
         /// @dev if there are liquidations, this value will be multiplied by any share counts to determine the value of the shares wrt the rest of the fund
         uint128 liquidityMultiplier;
-
         /// @dev tracks debt for each user
         SharesLibrary.Distribution debtDist;
-
         /// @dev tracks collateral for each user
         SharesLibrary.Distribution collateralDist;
-
         /// @dev tracks usd for each user
         SharesLibrary.Distribution usdDebtDist;
     }
@@ -37,13 +31,10 @@ contract FundVaultStorage {
     struct VaultData {
         /// @dev if vault is fully liquidated, this will be incremented to indicate reset shares
         uint epoch;
-
         /// @dev cached collateral price
         uint128 collateralPrice;
-
         /// @dev tracks debt for each user
         mapping(uint => VaultEpochData) epochData;
-
         /// @dev rewards
         RewardDistribution[] rewards;
     }
@@ -51,11 +42,8 @@ contract FundVaultStorage {
     struct RewardDistribution {
         // 3rd party smart contract which holds/mints the funds
         IRewardDistributor distributor;
-
         SharesLibrary.DistributionEntry entry;
-
         uint128 rewardPerShare;
-
         mapping(uint256 => RewardDistributionStatus) actorInfo;
     }
 

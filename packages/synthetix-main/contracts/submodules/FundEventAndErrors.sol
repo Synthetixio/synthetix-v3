@@ -30,11 +30,5 @@ contract FundEventAndErrors {
     event RewardsClaimed(uint indexed fundId, address indexed token, uint indexed accountId, uint index, uint amountClaimed);
 
     event FundPositionSet(uint fundId, uint[] markets, uint[] weights, address executedBy);
-    event DelegationUpdated(
-        uint accountId,
-        uint fundId,
-        address collateralType,
-        uint amount,
-        uint leverage
-    );
+    event DelegationUpdated(uint accountId, uint fundId, address collateralType, uint amount, uint leverage);
 }

@@ -68,7 +68,7 @@ describe('LiquidationModule', function () {
           ),
           'MustBeVaultLiquidated()',
           systems().Core
-        )
+        );
       });
 
       // a second account is required to "absorb" the debt which is coming from the first account
@@ -134,7 +134,7 @@ describe('LiquidationModule', function () {
 
         });
       });
-    })
+    });
   });
 
   describe('liquidateVault()', () => {
@@ -163,7 +163,7 @@ describe('LiquidationModule', function () {
         ),
         'InvalidParameters("liquidateAsAccountId',
         systems().Core
-      )
+      );
     });
 
     it('does not allow liquidation of vault with healthy c-ratio', async () => {
@@ -245,7 +245,10 @@ describe('LiquidationModule', function () {
           const sentAmount = depositAmount.sub((await systems().Core.vaultCollateral(fundId, collateralAddress()))[0]);
 
           assertBn.near(sentAmount, depositAmount.div(4));
-          assertBn.equal((await systems().Core.getAccountCollateralTotals(liquidatorAccountId, collateralAddress()))[0] , sentAmount.add(depositAmount.mul(50)));
+          assertBn.equal((
+            await systems().Core.getAccountCollateralTotals(liquidatorAccountId, collateralAddress()))[0] , 
+          sentAmount.add(depositAmount.mul(50))
+          );
         });
 
 

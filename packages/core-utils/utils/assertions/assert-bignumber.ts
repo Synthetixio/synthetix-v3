@@ -96,7 +96,7 @@ export = {
         actual: abn,
         expected: bbn,
         operator: 'near'
-      })
+      });
     }
   },
 };

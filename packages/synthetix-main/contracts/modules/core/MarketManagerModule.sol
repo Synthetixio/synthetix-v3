@@ -29,7 +29,8 @@ contract MarketManagerModule is
     error MarketDepositNotApproved(address market, address from, uint requestedAmount, uint approvedAmount);
 
     function registerMarket(address market) external override returns (uint marketId) {
-        if (_marketManagerStore().marketIds[market] > 0) revert MarketAlreadyRegistered(market, _marketManagerStore().marketIds[market] );
+        if (_marketManagerStore().marketIds[market] > 0)
+            revert MarketAlreadyRegistered(market, _marketManagerStore().marketIds[market]);
         uint lastMarketId = _marketManagerStore().lastMarketId++;
         marketId = lastMarketId + 1;
 
@@ -40,7 +41,6 @@ contract MarketManagerModule is
 
         return marketId;
     }
-    
 
     function marketLiquidity(uint marketId) external view override returns (uint) {
         return _marketManagerStore().markets[marketId].capacity;
@@ -70,7 +70,6 @@ contract MarketManagerModule is
         address target,
         uint amount
     ) external override {
-
         MarketData storage marketData = _marketManagerStore().markets[marketId];
 
         if (msg.sender != marketData.marketAddress) revert AccessError.Unauthorized(msg.sender);

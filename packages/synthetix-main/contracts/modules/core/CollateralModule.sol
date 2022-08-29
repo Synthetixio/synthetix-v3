@@ -23,7 +23,6 @@ contract CollateralModule is
     using SetUtil for SetUtil.AddressSet;
     using ERC20Helper for address;
 
-
     bytes32 private constant _REDEEMABLE_REWARDS_TOKEN = "eSNXToken";
     bytes32 private constant _REWARDED_TOKEN = "SNXToken";
 
@@ -32,7 +31,14 @@ contract CollateralModule is
 
     error OutOfBounds();
 
-    event CollateralAdjusted(address collateralType, address priceFeed, uint targetCRatio, uint minimumCRatio, uint liquidationReward, bool enabled);
+    event CollateralAdjusted(
+        address collateralType,
+        address priceFeed,
+        uint targetCRatio,
+        uint minimumCRatio,
+        uint liquidationReward,
+        bool enabled
+    );
     event CollateralStaked(uint accountId, address collateralType, uint amount, address executedBy);
     event CollateralUnstaked(uint accountId, address collateralType, uint amount, address executedBy);
 

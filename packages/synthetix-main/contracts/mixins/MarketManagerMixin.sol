@@ -50,8 +50,7 @@ contract MarketManagerMixin is MarketManagerStorage, FundModuleStorage {
             // this will ensure calculations below can correctly gauge shares changes
             newLiquidity = 0;
             marketData.inRangeFunds.extractById(uint128(fundId));
-        }
-        else {
+        } else {
             marketData.inRangeFunds.insert(uint128(fundId), -int128(int(newFundMaxShareValue)));
         }
 
@@ -59,21 +58,20 @@ contract MarketManagerMixin is MarketManagerStorage, FundModuleStorage {
 
         // recalculate market capacity
         if (newFundMaxShareValue > marketData.debtDist.valuePerShare / 1e9) {
-            marketData.capacity += uint128(uint((newFundMaxShareValue - marketData.debtDist.valuePerShare / 1e9))
-                .mulDecimal(newLiquidity));
+            marketData.capacity += uint128(
+                uint((newFundMaxShareValue - marketData.debtDist.valuePerShare / 1e9)).mulDecimal(newLiquidity)
+            );
         }
 
         if (oldFundMaxShareValue > marketData.debtDist.valuePerShare / 1e9) {
-            marketData.capacity -= uint128(uint((oldFundMaxShareValue - marketData.debtDist.valuePerShare / 1e9))
-                .mulDecimal(oldLiquidity));
+            marketData.capacity -= uint128(
+                uint((oldFundMaxShareValue - marketData.debtDist.valuePerShare / 1e9)).mulDecimal(oldLiquidity)
+            );
         }
     }
 
     // the second parameter exists to act as an escape hatch/discourage aginst griefing
-    function _distributeMarket(
-        MarketData storage marketData,
-        uint maxIter
-    ) internal {
+    function _distributeMarket(MarketData storage marketData, uint maxIter) internal {
         if (marketData.debtDist.totalShares == 0) {
             // market cannot distribute (or accumulate) any debt when there are no shares
             return;
@@ -84,22 +82,25 @@ contract MarketManagerMixin is MarketManagerStorage, FundModuleStorage {
 
         int curBalance = marketData.lastMarketBalance;
 
-        int targetDebtPerDebtShare = marketData.debtDist.valuePerShare / 1e9 + (((targetBalance - curBalance) * MathUtil.INT_UNIT) / int128(marketData.debtDist.totalShares));
+        int targetDebtPerDebtShare = marketData.debtDist.valuePerShare /
+            1e9 +
+            (((targetBalance - curBalance) * MathUtil.INT_UNIT) / int128(marketData.debtDist.totalShares));
 
         // this loop should rarely execute the body. When it does, it only executes once for each fund that passes the limit.
         // since `_distributeMarket` is not run for most funds, market users are not hit with any overhead as a result of this,
-        // additionally, 
+        // additionally,
         for (
-            uint i = 0; 
-                marketData.inRangeFunds.size() > 0 && 
-                -marketData.inRangeFunds.getMax().priority < targetDebtPerDebtShare && 
-                i < maxIter
-            ; i++) {
+            uint i = 0;
+            marketData.inRangeFunds.size() > 0 &&
+                -marketData.inRangeFunds.getMax().priority < targetDebtPerDebtShare &&
+                i < maxIter;
+            i++
+        ) {
             Heap.Node memory nextRemove = marketData.inRangeFunds.extractMax();
 
             // distribute to limit
-            int debtAmount = (int(int128(marketData.debtDist.totalShares)) * 
-                (-nextRemove.priority - marketData.debtDist.valuePerShare/1e9)) / 1e18;
+            int debtAmount = (int(int128(marketData.debtDist.totalShares)) *
+                (-nextRemove.priority - marketData.debtDist.valuePerShare / 1e9)) / 1e18;
 
             marketData.debtDist.distribute(debtAmount);
 
@@ -109,7 +110,7 @@ contract MarketManagerMixin is MarketManagerStorage, FundModuleStorage {
             curBalance += debtAmount;
 
             // sanity
-            require(marketData.debtDist.getActorShares(bytes32(uint(nextRemove.id))) > 0, "attempting to remove actor with no shares");
+            require(marketData.debtDist.getActorShares(bytes32(uint(nextRemove.id))) > 0, "no shares on actor removal");
 
             // detach market from fund (the fund will remain "detached" until the fund manager specifies a new debtDist)
 
@@ -125,7 +126,9 @@ contract MarketManagerMixin is MarketManagerStorage, FundModuleStorage {
                 return;
             }
 
-            targetDebtPerDebtShare = marketData.debtDist.valuePerShare + (((targetBalance - curBalance) * MathUtil.INT_UNIT) / int128(marketData.debtDist.totalShares));
+            targetDebtPerDebtShare =
+                marketData.debtDist.valuePerShare +
+                (((targetBalance - curBalance) * MathUtil.INT_UNIT) / int128(marketData.debtDist.totalShares));
         }
 
         marketData.debtDist.distribute(targetBalance - curBalance);
@@ -133,8 +136,6 @@ contract MarketManagerMixin is MarketManagerStorage, FundModuleStorage {
     }
 
     function _totalBalance(MarketData storage marketData) internal view returns (int) {
-        return
-            int(IMarket(marketData.marketAddress).balance()) +
-                marketData.issuance;
+        return int(IMarket(marketData.marketAddress).balance()) + marketData.issuance;
     }
 }

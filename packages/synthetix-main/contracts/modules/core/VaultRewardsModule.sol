@@ -56,8 +56,7 @@ contract VaultRewardsModule is
 
         if (index > dists.length) {
             revert InvalidParameters("index", "should be next index");
-        }
-        else if (index == dists.length) {
+        } else if (index == dists.length) {
             dists.push(); // extend the size of the array by 1
         }
 
@@ -74,9 +73,10 @@ contract VaultRewardsModule is
             revert InvalidParameters("distributor", "must be non-zero");
         }
 
-        existingDistribution.rewardPerShare += uint128(uint(
-            epochData.debtDist.distributeWithEntry(existingDistribution.entry, int(amount), start, duration)));
-        
+        existingDistribution.rewardPerShare += uint128(
+            uint(epochData.debtDist.distributeWithEntry(existingDistribution.entry, int(amount), start, duration))
+        );
+
         existingDistribution.distributor = IRewardDistributor(distributor);
 
         emit RewardDistributionSet(fundId, collateralType, index, distributor, amount, start, duration);
@@ -92,11 +92,12 @@ contract VaultRewardsModule is
         return _updateAvailableRewards(epochData, vaultData.rewards, accountId);
     }
 
-    function getCurrentRewardAccumulation(
-        uint fundId,
-        address collateralType
-    ) external override view returns (uint[] memory) {
-
+    function getCurrentRewardAccumulation(uint fundId, address collateralType)
+        external
+        view
+        override
+        returns (uint[] memory)
+    {
         return _getCurrentRewardAccumulation(fundId, collateralType);
     }
 
@@ -118,14 +119,10 @@ contract VaultRewardsModule is
             }
         }
 
-
         return rewards;
     }
 
-    function _getCurrentRewardAccumulation(
-        uint fundId,
-        address collateralType
-    ) internal view returns (uint[] memory) {
+    function _getCurrentRewardAccumulation(uint fundId, address collateralType) internal view returns (uint[] memory) {
         VaultData storage vaultData = _fundVaultStore().fundVaults[fundId][collateralType];
         VaultEpochData storage epochData = vaultData.epochData[vaultData.epoch];
         RewardDistribution[] storage dists = vaultData.rewards;
@@ -136,16 +133,16 @@ contract VaultRewardsModule is
 
         for (uint i = 0; i < dists.length; i++) {
             if (
-                address(dists[i].distributor) == address(0) || 
+                address(dists[i].distributor) == address(0) ||
                 dists[i].entry.start > curTime ||
                 dists[i].entry.start + dists[i].entry.duration <= curTime
             ) {
                 continue;
             }
 
-            rates[i] = uint(int(dists[i].entry.scheduledValue))
-                .divDecimal(uint(int(dists[i].entry.duration))
-                .divDecimal(epochData.debtDist.totalShares));
+            rates[i] = uint(int(dists[i].entry.scheduledValue)).divDecimal(
+                uint(int(dists[i].entry.duration)).divDecimal(epochData.debtDist.totalShares)
+            );
         }
 
         return rates;
