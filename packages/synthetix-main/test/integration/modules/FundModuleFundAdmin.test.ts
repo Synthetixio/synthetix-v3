@@ -207,7 +207,6 @@ describe('FundModule Admin', function () {
       before(restore);
       before('set fund position', async () => {
         await systems().Core.connect(owner).setFundPosition(fundId, [marketId()], [1], [One.mul(One.mul(-1)).div(depositAmount)]);
-        console.log(await systems().Core.vaultCollateral(fundId, collateralAddress()));
       });
 
       // the second fund is here to test the calculation weighted average and to test fund entering/joining after debt shifts
@@ -299,17 +298,8 @@ describe('FundModule Admin', function () {
               before(restore);
               // testing the "soft" limit
               before('set market', async () => {
-                console.log('second fund debt', await systems().Core.callStatic.vaultDebt(secondFundId, collateralAddress()));
-
-                console.log('MARKET DPS', await systems().Core.connect(user1).callStatic.marketDebtPerShare(marketId()));
-                console.log('NEEDED DPS', One.mul(One.mul(-1)).div(depositAmount));
                 await MockMarket().connect(user1).setBalance(Hundred.mul(2));
                 await systems().Core.connect(user1).vaultDebt(fundId, collateralAddress());
-                console.log('NEW MARKET DPS', await systems().Core.connect(user1).callStatic.marketDebtPerShare(marketId()));
-                //await systems().Core.connect(user1).vaultDebt(fundId, collateralAddress());
-                //await systems().Core.connect(user1).vaultDebt(fundId, collateralAddress());
-                console.log('first fund debt', await systems().Core.callStatic.vaultDebt(fundId, collateralAddress()));
-                console.log('second fund debt', await systems().Core.callStatic.vaultDebt(secondFundId, collateralAddress()));
               });
 
               it('has same amount liquidity available + the allowed amount by the vault', async () => {
@@ -335,15 +325,9 @@ describe('FundModule Admin', function () {
               before(restore);
               // testing the "soft" limit
               before('set market', async () => {
-                console.log('MARKET DPS', await systems().Core.connect(user1).callStatic.marketDebtPerShare(marketId()));
-                console.log('NEEDED DPS', One.mul(One).div(depositAmount).mul(2));
-                console.log('MARKET COLLAT', await systems().Core.connect(user1).callStatic.marketCollateralValue(marketId()));
                 await MockMarket().connect(user1).setBalance(Hundred.mul(1234));
                 await systems().Core.connect(user1).vaultDebt(fundId, collateralAddress());
                 await systems().Core.connect(user1).vaultDebt(secondFundId, collateralAddress());
-                console.log('NEW MARKET DPS', await systems().Core.connect(user1).callStatic.marketDebtPerShare(marketId()));
-                console.log('FUND OPS', await systems().Core.connect(user1).callStatic.getFundPosition(secondFundId));
-                console.log('MARKET COLLAT', await systems().Core.connect(user1).callStatic.marketCollateralValue(marketId()));
               });
 
               it('has same amount liquidity available + the allowed amount by the vault', async () => {
