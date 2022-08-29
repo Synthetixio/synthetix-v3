@@ -1,5 +1,6 @@
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import { ethers } from 'ethers';
+
 import { bootstrap } from '../../../bootstrap';
 
 describe('AccountTokenModule', function () {
