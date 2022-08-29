@@ -22,12 +22,11 @@ contract MarketManagerModule is
 {
     bytes32 private constant _USD_TOKEN = "USDToken";
 
-    error MarketAlreadyRegistered(address market, uint existingMarketId);
 
     event MarketRegistered(address indexed market, uint marketId);
 
+    error MarketAlreadyRegistered(address market, uint existingMarketId);
     error NotEnoughLiquidity(uint marketId, uint amount);
-
     error MarketDepositNotApproved(address market, address from, uint requestedAmount, uint approvedAmount);
 
     function registerMarket(address market) external override returns (uint marketId) {
@@ -44,7 +43,7 @@ contract MarketManagerModule is
     }
 
     function marketLiquidity(uint marketId) external view override returns (uint) {
-        return _availableLiquidity(marketId);
+        return _marketManagerStore().markets[marketId].capacity;
     }
 
     function marketCollateralValue(uint marketId) external view override returns (uint) {
@@ -58,14 +57,20 @@ contract MarketManagerModule is
         return _totalBalance(marketData);
     }
 
+    function marketDebtPerShare(uint marketId) external override returns (int) {
+        MarketData storage marketData = _marketManagerStore().markets[marketId];
+        _distributeMarket(marketData, 999999999);
+
+        return marketData.debtDist.valuePerShare / 1e9;
+    }
+
     // deposit will burn USD
     function deposit(
         uint marketId,
         address target,
         uint amount
     ) external override {
-        // Consider re-implementing without allowance and just USD.transferFrom(msg.sender);
-
+        
         MarketData storage marketData = _marketManagerStore().markets[marketId];
 
         if (msg.sender != marketData.marketAddress) revert AccessError.Unauthorized(msg.sender);
@@ -80,6 +85,7 @@ contract MarketManagerModule is
         }
 
         // Adjust accounting
+        marketData.capacity += uint128(amount);
         marketData.issuance -= int128(int(amount));
 
         // burn USD
@@ -99,25 +105,13 @@ contract MarketManagerModule is
 
         if (msg.sender != marketData.marketAddress) revert AccessError.Unauthorized(msg.sender);
 
-        if (int(amount) > int(_availableLiquidity(marketId))) revert NotEnoughLiquidity(marketId, amount);
+        if (amount > marketData.capacity) revert NotEnoughLiquidity(marketId, amount);
 
         // Adjust accounting
+        marketData.capacity -= uint128(amount);
         marketData.issuance += int128(int(amount));
 
         // mint some USD
         _getToken(_USD_TOKEN).mint(target, amount);
-    }
-
-    function _availableLiquidity(uint marketId) internal view returns (uint) {
-        MarketData storage marketData = _marketManagerStore().markets[marketId];
-
-        int remaining = marketData.maxMarketDebtNominator / 1e18 - marketData.issuance;
-        
-
-        if (remaining <= 0) {
-            return 0;
-        }
-
-        return uint(remaining);
     }
 }

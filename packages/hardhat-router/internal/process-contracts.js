@@ -36,12 +36,15 @@ async function initContractData(contractFullyQualifiedName, extraData = {}) {
     'source-abis',
     deployedBytecodeHash + '.json'
   );
-  if (fs.existsSync(cachedSourceInfo)) {
+
+
+  await _initContractSource(contractFullyQualifiedName);
+
+  /*if (fs.existsSync(cachedSourceInfo)) {
     const data = JSON.parse(fs.readFileSync(cachedSourceInfo));
     deployment.sources[sourceName] = data.sourceInfo;
     deployment.abis[`${sourceName}:${contractName}`] = data.abiInfo;
   } else {
-    await _initContractSource(contractFullyQualifiedName);
 
     // save the resulting artifacts
     await mkdirp(dirname(cachedSourceInfo));
@@ -53,7 +56,7 @@ async function initContractData(contractFullyQualifiedName, extraData = {}) {
         abiInfo: deployment.abis[`${sourceName}:${contractName}`],
       })
     );
-  }
+  }*/
 }
 
 /**
@@ -77,7 +80,9 @@ async function _initContractSource(contractFullyQualifiedName) {
 
   // Save the asts for the entire dependency tree
   for (const [sourceName, attributes] of Object.entries(buildInfo.output.sources)) {
-    deployment.sources[sourceName].ast = attributes.ast;
+    if(!deployment.sources[sourceName].ast) {
+      deployment.sources[sourceName].ast = attributes.ast;
+    }
   }
 
   // Save the ABIs of all the contracts

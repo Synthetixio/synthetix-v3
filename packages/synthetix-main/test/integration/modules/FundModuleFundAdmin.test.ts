@@ -13,6 +13,7 @@ describe.only('FundModule Admin', function () {
     signers, 
     systems,
     provider,
+    accountId,
     fundId,
     MockMarket,
     marketId,
@@ -21,7 +22,7 @@ describe.only('FundModule Admin', function () {
     restore
   } = bootstrapWithMockMarketAndFund();
 
-  let owner: ethers.Signer, fundAdmin: ethers.Signer, user2: ethers.Signer, user3: ethers.Signer;
+  let owner: ethers.Signer, user1: ethers.Signer, user2: ethers.Signer, user3: ethers.Signer;
 
   let Collateral: ethers.Contract, AggregatorV3Mock: ethers.Contract;
 
@@ -34,7 +35,7 @@ describe.only('FundModule Admin', function () {
   const Hundred = ethers.utils.parseEther('100');
 
   before('identify signers', async () => {
-    [owner, fundAdmin, user2, user3] = signers();
+    [owner, user1, user2, user3] = signers();
   });
 
   describe('createFund()', async () => {
@@ -51,13 +52,13 @@ describe.only('FundModule Admin', function () {
     before('create a fund', async () => {
       await (
         await systems()
-          .Core.connect(fundAdmin)
-          .createFund(secondFundId, await fundAdmin.getAddress())
+          .Core.connect(user1)
+          .createFund(secondFundId, await user1.getAddress())
       ).wait();
     });
   
     it('fund is created', async () => {
-      assert.equal(await systems().Core.ownerOf(secondFundId), await fundAdmin.getAddress());
+      assert.equal(await systems().Core.ownerOf(secondFundId), await user1.getAddress());
     });
   })
 
@@ -82,7 +83,7 @@ describe.only('FundModule Admin', function () {
 
     it('reverts when fund does not exist', async () => {
       await assertRevert(
-        systems().Core.connect(fundAdmin).setFundPosition(834693286, [1], [1], [0, 0]),
+        systems().Core.connect(user1).setFundPosition(834693286, [1], [1], [0, 0]),
         `FundNotFound("${834693286}")`,
         systems().Core
       );
@@ -97,7 +98,6 @@ describe.only('FundModule Admin', function () {
     });
 
     it('reverts with more weights than markets', async () => {
-      console.log(await systems().Core.ownerOf(fundId));
       await assertRevert(
         systems().Core.connect(owner).setFundPosition(fundId, [1], [1, 2], [0, 0]),
         'InvalidParameters("markets.length,weights.length,maxDebtShareValues.length", "must match")',
@@ -116,8 +116,16 @@ describe.only('FundModule Admin', function () {
     // in particular, this test needs to go here because we want to see it fail even when there is no liquidity to rebalance
     it('reverts when a marketId does not exist', async () => {
       await assertRevert(
-        systems().Core.connect(owner).setFundPosition(fundId, [1, 92197628, 2], [1, 1, 1], [0, 0, 0]),
+        systems().Core.connect(owner).setFundPosition(fundId, [1, 2, 92197628], [1, 1, 1], [0, 0, 0]),
         'MarketNotFound("92197628")',
+        systems().Core
+      );
+    });
+
+    it('reverts when a marketId is duplicated', async () => {
+      await assertRevert(
+        systems().Core.connect(owner).setFundPosition(fundId, [1, 1], [1, 1], [0, 0]),
+        'InvalidParameters("markets"',
         systems().Core
       );
     });
@@ -127,6 +135,8 @@ describe.only('FundModule Admin', function () {
     });
 
     describe('repeat fund sets position', async () => {
+      before(restore);
+
       before('set fund position', async () => {
         await systems().Core.connect(owner).setFundPosition(fundId, [marketId()], [1], [One]);
       });
@@ -137,11 +147,15 @@ describe.only('FundModule Admin', function () {
 
       describe('fund changes staking position to add another market', async () => {
         before('set fund position', async () => {
-          await systems().Core.connect(owner).setFundPosition(fundId, [marketId2, marketId()], [3,1], [One, One]);
+          await systems().Core.connect(owner).setFundPosition(fundId, [marketId(), marketId2], [1,3], [One, One]);
         });
 
         it('returns fund position correctly', async () => {
-          assert.deepEqual(await systems().Core.getFundPosition(fundId), [[ethers.BigNumber.from(marketId2), marketId()],[ethers.BigNumber.from(3), ethers.BigNumber.from(1)],[One, One]]);
+          assert.deepEqual(await systems().Core.getFundPosition(fundId), [
+            [marketId(), ethers.BigNumber.from(marketId2)],
+            [ethers.BigNumber.from(1), ethers.BigNumber.from(3)],
+            [One, One]
+          ]);
         });
 
         it('sets market available liquidity', async () => {
@@ -149,11 +163,11 @@ describe.only('FundModule Admin', function () {
           assertBn.equal(await systems().Core.connect(owner).marketLiquidity(marketId2), depositAmount.mul(3).div(4));
         });
 
-        describe('market commits balance that goes above fund max', () => {
+        describe('market a little debt (below fund max)', () => {
           const debtAmount = Hundred.div(10);
 
           before('set market debt', async () => {
-            await MockMarket().connect(owner).setBalance(debtAmount);
+            await (await MockMarket().connect(owner).setBalance(debtAmount)).wait();
           });
 
           it('market gave the end vault debt', async () => {
@@ -166,9 +180,7 @@ describe.only('FundModule Admin', function () {
 
           describe('exit the markets', () => {
             before('set fund position', async () => {
-              console.log(await systems().Core.connect(owner).marketCollateralValue(marketId()));
               await systems().Core.connect(owner).setFundPosition(fundId, [], [], []);
-              console.log(await systems().Core.connect(owner).marketCollateralValue(marketId()));
             });
 
             it('returns fund position correctly', async () => {
@@ -179,193 +191,165 @@ describe.only('FundModule Admin', function () {
               assertBn.equal(await systems().Core.callStatic.vaultDebt(fundId, collateralAddress()), debtAmount);
             });
 
-            it('markets have 0 available liquidity', async () => {
-              assertBn.equal(await systems().Core.connect(owner).marketLiquidity(marketId()), 0);
+            it('markets have same available liquidity', async () => {
+              // marketId() gets to keep its available liquidity because when the market exited when it did it "committed"
+              assertBn.equal(await systems().Core.connect(owner).marketLiquidity(marketId()), debtAmount);
+
+              // marketId2 never reported an increased balance so its liquidity is 0 as ever
               assertBn.equal(await systems().Core.connect(owner).marketLiquidity(marketId2), 0);
             });
           })
         });
       });
-
-      describe('additional fund joins the party', async () => {
-
-      });
     });
 
-    /*describe('when multiple funds and markets exist', async () => {
-      before('add second collateral', async () => {
-        let factory;
-
-        factory = await hre.ethers.getContractFactory('CollateralMock');
-        Collateral = await factory.connect(owner).deploy();
-
-        await (await Collateral.connect(owner).initialize('Synthetix Token', 'SNX', 18)).wait();
-
-        factory = await hre.ethers.getContractFactory('AggregatorV3Mock');
-        AggregatorV3Mock = await factory.connect(owner).deploy();
-
-        await (await AggregatorV3Mock.connect(owner).mockSetCurrentPrice(1)).wait();
-
-        await (
-          await systems()
-            .Core.connect(owner)
-            .adjustCollateralType(Collateral.address, AggregatorV3Mock.address, 400, 200, 0, true)
-        ).wait();
+    describe('sets max debt below current debt share', async () => {
+      before(restore);
+      before('set fund position', async () => {
+        await systems().Core.connect(owner).setFundPosition(fundId, [marketId()], [1], [One.mul(One.mul(-1)).div(depositAmount)]);
+        console.log(await systems().Core.vaultCollateral(fundId, collateralAddress()));
       });
 
-      before('mint some account tokens', async () => {
-        await (await systems().Core.connect(user2).createAccount(user2AccountId)).wait();
-        await (await systems().Core.connect(user3).createAccount(user3AccountId)).wait();
+      // the second fund is here to test the calculation weighted average and to test fund entering/joining after debt shifts
+      before('set second fund position position', async () => {
+        await systems().Core.connect(user1).delegateCollateral(
+          accountId,
+          secondFundId,
+          collateralAddress(),
+          // deposit much more than the fundId pool so as to skew the limit much higher than what it set
+          depositAmount,
+          ethers.utils.parseEther('1')
+        );
+
+        await systems().Core.connect(user1).setFundPosition(secondFundId, [marketId()], [1], [One.mul(One).div(depositAmount).mul(2)]);
       });
 
-      before('mint some collateral to the user', async () => {
-        await (await Collateral.mint(await user2.getAddress(), Hundred)).wait();
-        await (await Collateral.mint(await user3.getAddress(), Hundred)).wait();
+      it('has only second fund market available liquidity', async () => {
+        assertBn.equal(await systems().Core.connect(owner).marketLiquidity(marketId()), One.mul(2));
       });
 
-      before('approve systems().Core to operate with the user collateral', async () => {
-        await (
-          await Collateral.connect(user2).approve(systems().Core.address, ethers.constants.MaxUint256)
-        ).wait();
-        await (
-          await Collateral.connect(user3).approve(systems().Core.address, ethers.constants.MaxUint256)
-        ).wait();
-      });
+      describe('and then the market goes below max debt and the fund is bumped', async () => {
+        before('buy into the market', async () => {
+          // to go below max debt, we have to get user to invest in the market, and then reset the market
 
-      before('stake some collateral', async () => {
-        await (await systems().Core.connect(user2).stake(2, Collateral.address, Hundred)).wait();
-        await (await systems().Core.connect(user2).stake(2, Collateral.address, Hundred)).wait();
-      });
+          // aquire USD from the zero fund
+          await systems().Core.connect(user1).delegateCollateral(
+            accountId,
+            0,
+            collateralAddress(),
+            depositAmount,
+            ethers.utils.parseEther('1')
+          );
 
-      describe('')
-  
-        before('adjust fund positions', async () => {
-          const tx = await systems()
-            .Core.connect(fundAdmin)
-            .setFundPosition(1, [1, 2], [1, 1], [0, 0]);
-          receipt = await tx.wait();
+          await systems().Core.connect(user1).mintUSD(accountId, 0, collateralAddress(), Hundred);
+          await systems().USD.connect(user1).approve(MockMarket().address, Hundred);
+          await MockMarket().connect(user1).buySynth(Hundred);
+
+          // "bump" the vault to get it to accept the position (in case there is a bug)
+          await systems().Core.connect(user1).vaultDebt(fundId, collateralAddress());
         });
-  
-        it('emitted an event', async () => {
-          const event = findEvent({ receipt, eventName: 'FundPositionSet' });
-  
-          assert.equal(event.args.executedBy, await fundAdmin.getAddress());
-          assertBn.equal(event.args.fundId, 1);
-          assert.equal(event.args.markets.length, 2);
-          assert.equal(event.args.weights.length, 2);
-          assertBn.equal(event.args.markets[0], 1);
-          assertBn.equal(event.args.markets[1], 2);
-          assertBn.equal(event.args.weights[0], 1);
-          assertBn.equal(event.args.weights[1], 1);
+
+        it('has same amount liquidity available + the allowed amount by the vault', async () => {
+          assertBn.equal(await systems().Core.connect(owner).marketLiquidity(marketId()), One.mul(2).add(Hundred));
+
+          // market hasn't reported any reduction in balance
+          assertBn.equal(await systems().Core.connect(owner).marketTotalBalance(marketId()), 0);
         });
-  
-        it('is created', async () => {
-          const [markets, weights] = await systems().Core.getFundPosition(1);
-          assert.equal(markets.length, 2);
-          assert.equal(weights.length, 2);
-          assertBn.equal(markets[0], 1);
-          assertBn.equal(markets[1], 2);
-          assertBn.equal(weights[0], 1);
-          assertBn.equal(weights[1], 1);
+
+        it('did not change debt for connected vault', async () => {
+          assertBn.equal(await systems().Core.callStatic.vaultDebt(fundId, collateralAddress()), 0);
         });
-  
-        describe('when operating with the fund', async () => {
-          //
-          describe('when delegting collateral to a fund', async () => {
-            let liquidityItemId: ethers.BigNumber;
-  
-            before('delegate some collateral', async () => {
-              const tx = await systems()
-                .Core.connect(user2)
-                .delegateCollateral(1, 1, Collateral.address, 10, ethers.utils.parseEther('1'));
-              receipt = await tx.wait();
+
+        describe('and then the market reports 0 balance', () => {
+          before('set market', async () => {
+            await MockMarket().connect(user1).setBalance(0);
+            await systems().Core.connect(user1).vaultDebt(fundId, collateralAddress());
+          });
+
+          it('has accurate amount liquidity available', async () => {
+            // should be exactly 201 (market1 99 + market2 2 + 100 deposit)
+            assertBn.equal(await systems().Core.connect(owner).marketLiquidity(marketId()), Hundred.mul(2).add(One));
+          });
+
+          it('vault isnt credited because it wasnt bumped early enough', async () => {
+            assertBn.equal(await systems().Core.callStatic.vaultDebt(fundId, collateralAddress()), 0);
+          });
+
+          describe('and then the market reports 50 balance', () => {
+            before('', async () => {
+              await MockMarket().connect(user1).setBalance(Hundred.div(2));
             });
-  
-            it('emitted a DelegationUpdated event', async () => {
-              const event = findEvent({
-                receipt,
-                eventName: 'DelegationUpdated',
-              });
-              liquidityItemId = event.args.liquidityItemId;
-  
-              assertBn.equal(event.args.fundId, 1);
-              assertBn.equal(event.args.accountId, 1);
-              assertBn.equal(event.args.amount, 10);
-              assertBn.equal(event.args.leverage, ethers.utils.parseEther('1'));
-              assert.equal(event.args.collateralType, Collateral.address);
+
+            it('has same amount liquidity available', async () => {
+              assertBn.equal(await systems().Core.connect(owner).marketLiquidity(marketId()), Hundred.mul(2).add(One));
             });
-  
-            describe('when adding to the same liquidityId', async () => {
-              before('delegate some collateral', async () => {
-                const tx = await systems()
-                  .Core.connect(user2)
-                  .delegateCollateral(1, 1, Collateral.address, 20, ethers.utils.parseEther('1'));
-                receipt = await tx.wait();
-              });
-  
-              it('emitted a DelegationUpdated event', async () => {
-                const event = findEvent({
-                  receipt,
-                  eventName: 'DelegationUpdated',
-                });
-  
-                assert.equal(event.args.liquidityItemId, liquidityItemId);
-                assertBn.equal(event.args.fundId, 1);
-                assertBn.equal(event.args.accountId, 1);
-                assertBn.equal(event.args.amount, 20);
-                assertBn.equal(event.args.leverage, ethers.utils.parseEther('1'));
-                assert.equal(event.args.collateralType, Collateral.address);
-              });
+
+            it('vault is debted', async () => {
+              // div 2 twice because the vault has half the debt of the pool
+              assertBn.equal(await systems().Core.callStatic.vaultDebt(fundId, collateralAddress()), Hundred.div(2).div(2));
             });
-  
-            describe('when decreasing from to same liquidityId', async () => {
-              before('delegate some collateral', async () => {
-                const tx = await systems()
-                  .Core.connect(user2)
-                  .delegateCollateral(1, 1, Collateral.address, 1, ethers.utils.parseEther('1'));
-                receipt = await tx.wait();
+
+            const restore = snapshotCheckpoint(provider);
+
+            describe('and then the market reports balance above limit again', () => {
+              before(restore);
+              // testing the "soft" limit
+              before('set market', async () => {
+                console.log('second fund debt', await systems().Core.callStatic.vaultDebt(secondFundId, collateralAddress()));
+
+                console.log('MARKET DPS', await systems().Core.connect(user1).callStatic.marketDebtPerShare(marketId()));
+                console.log('NEEDED DPS', One.mul(One.mul(-1)).div(depositAmount));
+                await MockMarket().connect(user1).setBalance(Hundred.mul(2));
+                console.log('NEW MARKET DPS', await systems().Core.connect(user1).callStatic.marketDebtPerShare(marketId()));
+                //await systems().Core.connect(user1).vaultDebt(fundId, collateralAddress());
+                //await systems().Core.connect(user1).vaultDebt(fundId, collateralAddress());
+                console.log('first fund debt', await systems().Core.callStatic.vaultDebt(fundId, collateralAddress()));
+                console.log('second fund debt', await systems().Core.callStatic.vaultDebt(secondFundId, collateralAddress()));
               });
-  
-              it('emitted a DelegationUpdated event', async () => {
-                const event = findEvent({
-                  receipt,
-                  eventName: 'DelegationUpdated',
-                });
-  
-                assert.equal(event.args.liquidityItemId, liquidityItemId);
-                assertBn.equal(event.args.fundId, 1);
-                assertBn.equal(event.args.accountId, 1);
-                assertBn.equal(event.args.amount, 1);
-                assertBn.equal(event.args.leverage, ethers.utils.parseEther('1'));
-                assert.equal(event.args.collateralType, Collateral.address);
+
+              it('has same amount liquidity available + the allowed amount by the vault', async () => {
+                assertBn.equal(await systems().Core.connect(owner).marketLiquidity(marketId()), Hundred.mul(2).add(One));
+              });
+
+              it('vault assumes expected amount of debt', async () => {
+                assertBn.equal(await systems().Core.callStatic.vaultDebt(fundId, collateralAddress()), Hundred.sub(One));
+              });
+
+              it('vault 2 assumes expected amount of debt', async () => {
+                // vault 2 assumes the 1 dollar in debt that was not absorbed by the first fund
+                // still below limit though
+                assertBn.equal(await systems().Core.callStatic.vaultDebt(secondFundId, collateralAddress()), One);
               });
             });
-  
-            describe('when removing liquidityId', async () => {
-              before('delegate some collateral', async () => {
-                const tx = await systems()
-                  .Core.connect(user2)
-                  .delegateCollateral(1, 1, Collateral.address, 0, ethers.utils.parseEther('1'));
-                receipt = await tx.wait();
+
+            describe('and then the market reports balance above both pools limits', () => {
+              before(restore);
+              // testing the "soft" limit
+              before('set market', async () => {
+                console.log('MARKET DPS', await systems().Core.connect(user1).callStatic.marketDebtPerShare(marketId()));
+                console.log('NEEDED DPS', One.mul(One).div(depositAmount).mul(2));
+                console.log('MARKET COLLAT', await systems().Core.connect(user1).callStatic.marketCollateralValue(marketId()));
+                await MockMarket().connect(user1).setBalance(Hundred.mul(1234));
+                console.log('NEW MARKET DPS', await systems().Core.connect(user1).callStatic.marketDebtPerShare(marketId()));
+                console.log('FUND OPS', await systems().Core.connect(user1).callStatic.getFundPosition(secondFundId));
+                console.log('MARKET COLLAT', await systems().Core.connect(user1).callStatic.marketCollateralValue(marketId()));
               });
-  
-              it('emitted a DelegationUpdated event', async () => {
-                const event = findEvent({
-                  receipt,
-                  eventName: 'DelegationUpdated',
-                });
-  
-                assert.equal(event.args.liquidityItemId, liquidityItemId);
-                assertBn.equal(event.args.fundId, 1);
-                assertBn.equal(event.args.accountId, 1);
-                assertBn.equal(event.args.amount, 0);
-                assertBn.equal(event.args.leverage, ethers.utils.parseEther('1'));
-                assert.equal(event.args.collateralType, Collateral.address);
+
+              it('has same amount liquidity available + the allowed amount by the vault', async () => {
+                assertBn.equal(await systems().Core.connect(owner).marketLiquidity(marketId()), Hundred.mul(2).add(One));
+              });
+
+              it('vault assumes expected amount of debt', async () => {
+                assertBn.equal(await systems().Core.callStatic.vaultDebt(fundId, collateralAddress()), Hundred.sub(One));
+              });
+
+              it('vault 2 assumes expected amount of debt', async () => {
+                assertBn.equal(await systems().Core.callStatic.vaultDebt(secondFundId, collateralAddress()), One.mul(2));
               });
             });
           });
         });
-      });
-    });*/
+      })
+    });
   });
 });

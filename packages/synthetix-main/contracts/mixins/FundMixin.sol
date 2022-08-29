@@ -35,17 +35,17 @@ contract FundMixin is FundModuleStorage, FundVaultStorage, FundEventAndErrors, C
 
     function _rebalanceFundPositions(uint fundId) internal {
         FundData storage fundData = _fundModuleStore().funds[fundId];
-        uint totalWeights = _fundModuleStore().funds[fundId].totalWeights;
+        uint totalWeights = fundData.totalWeights;
 
         if (totalWeights == 0) {
             // nothing to rebalance
             return;
         }
 
-        SharesLibrary.Distribution storage fundDist = _fundModuleStore().funds[fundId].debtDist;
+        SharesLibrary.Distribution storage fundDist = fundData.debtDist;
 
         // after applying the fund share multiplier, we have USD liquidity
-        uint totalAllocatableLiquidity = _fundModuleStore().funds[fundId].totalLiquidity;
+        uint totalAllocatableLiquidity = fundData.totalLiquidity;
         int cumulativeDebtChange = 0;
 
         for (uint i = 0; i < fundData.fundDistribution.length; i++) {

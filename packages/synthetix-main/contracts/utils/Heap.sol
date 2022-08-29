@@ -26,10 +26,27 @@ library Heap{ // default max-heap
 
   function insert(Data storage self, uint128 id, int128 priority) internal returns(Node memory){//√
     if(self.nodes.length == 0){ init(self); }// test on-the-fly-init
-    self.idCount++;
-    self.nodes.push();
-    Node memory n = Node(id, priority);
-    _bubbleUp(self, n, self.nodes.length-1);
+
+    Node memory n;
+
+    // MODIFIED: support updates
+    if (self.indices[id] > 0) {
+      n = self.nodes[self.indices[id]];
+      int128 oldPriority = n.priority;
+      n.priority = priority;
+      if (priority > oldPriority) {
+        _bubbleUp(self, n, self.indices[id]);
+      } else if (oldPriority < priority) {
+        _bubbleDown(self, n, self.indices[id]);
+      }
+    }
+    else {
+      self.idCount++;
+      self.nodes.push();
+      n = Node(id, priority);
+      _bubbleUp(self, n, self.nodes.length-1);
+    }
+
     return n;
   }
   function extractMax(Data storage self) internal returns(Node memory){//√

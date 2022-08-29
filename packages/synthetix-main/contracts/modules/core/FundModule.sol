@@ -102,24 +102,38 @@ contract FundModule is IFundModule, FundEventAndErrors, AccountRBACMixin, FundMi
         uint totalWeight = 0;
         uint i = 0;
 
-        for (; i < (markets.length < fundData.fundDistribution.length ? markets.length : fundData.fundDistribution.length); i++) {
-            MarketDistribution storage distribution = fundData.fundDistribution[i];
-            distribution.market = markets[i];
-            distribution.weight = uint128(weights[i]);
-            distribution.maxDebtShareValue = int128(maxDebtShareValues[i]);
+        {
+            uint lastMarketId = 0;
 
-            totalWeight += weights[i];
-        }
+            for (; i < (markets.length < fundData.fundDistribution.length ? markets.length : fundData.fundDistribution.length); i++) {
+                if (markets[i] <= lastMarketId) {
+                    revert InvalidParameters("markets", "must be supplied in strictly ascending order");
+                }
+                lastMarketId = markets[i];
 
-        for (; i < markets.length; i++) {
-            MarketDistribution memory distribution;
-            distribution.market = markets[i];
-            distribution.weight = uint128(weights[i]);
-            distribution.maxDebtShareValue = int128(maxDebtShareValues[i]);
+                MarketDistribution storage distribution = fundData.fundDistribution[i];
+                distribution.market = markets[i];
+                distribution.weight = uint128(weights[i]);
+                distribution.maxDebtShareValue = int128(maxDebtShareValues[i]);
 
-            fundData.fundDistribution.push(distribution);
+                totalWeight += weights[i];
+            }
 
-            totalWeight += weights[i];
+            for (; i < markets.length; i++) {
+                if (markets[i] <= lastMarketId) {
+                    revert InvalidParameters("markets", "must be supplied in strictly ascending order");
+                }
+                lastMarketId = markets[i];
+
+                MarketDistribution memory distribution;
+                distribution.market = markets[i];
+                distribution.weight = uint128(weights[i]);
+                distribution.maxDebtShareValue = int128(maxDebtShareValues[i]);
+
+                fundData.fundDistribution.push(distribution);
+
+                totalWeight += weights[i];
+            }
         }
 
         uint popped = fundData.fundDistribution.length - i;

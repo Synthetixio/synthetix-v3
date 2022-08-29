@@ -164,7 +164,7 @@ library SharesLibrary {
 
         dist.totalShares = uint128(dist.totalShares + shares - actor.shares);
 
-        actor.lastValuePerShare = dist.valuePerShare;
+        actor.lastValuePerShare = shares == 0 ? int128(0) : dist.valuePerShare;
         actor.shares = uint128(shares);
     }
 
