@@ -18,7 +18,6 @@ describe('AccountModule', function () {
   let snapshotId: number;
 
   const Permissions = {
-    MODIFY: ethers.utils.formatBytes32String('MODIFY'),
     STAKE: ethers.utils.formatBytes32String('STAKE'),
     ADMIN: ethers.utils.formatBytes32String('ADMIN'),
   };
@@ -40,7 +39,7 @@ describe('AccountModule', function () {
           false
         );
         assert.equal(
-          await systems().Core.hasPermission(1, Permissions.MODIFY, await user1.getAddress()),
+          await systems().Core.hasPermission(1, Permissions.ADMIN, await user1.getAddress()),
           false
         );
       });
@@ -52,7 +51,7 @@ describe('AccountModule', function () {
           systems()
             .Core.connect(user2)
             .grantPermission(1, Permissions.STAKE, await user2.getAddress()),
-          `PermissionDenied("1", "${Permissions.MODIFY}", "${await user2.getAddress()}")`,
+          `PermissionDenied("1", "${Permissions.ADMIN}", "${await user2.getAddress()}")`,
           systems().Core
         );
       });
@@ -85,8 +84,8 @@ describe('AccountModule', function () {
       describe('when attempting to renounce a permission that was not granted', async () => {
         it('reverts', async () => {
           await assertRevert(
-            systems().Core.connect(user2).renouncePermission(1, Permissions.MODIFY),
-            `PermissionNotGranted("1", "${Permissions.MODIFY}", "${await user2.getAddress()}")`,
+            systems().Core.connect(user2).renouncePermission(1, Permissions.ADMIN),
+            `PermissionNotGranted("1", "${Permissions.ADMIN}", "${await user2.getAddress()}")`,
             systems().Core
           );
         });
@@ -192,18 +191,18 @@ describe('AccountModule', function () {
         before('grant permission', async function () {
           const tx = await systems()
             .Core.connect(user1)
-            .grantPermission(1, Permissions.MODIFY, await user3.getAddress());
+            .grantPermission(1, Permissions.ADMIN, await user3.getAddress());
           receipt = await tx.wait();
         });
 
         it('shows that the admin can revoke the permission', async function () {
           const tx = await systems()
             .Core.connect(user2)
-            .revokePermission(1, Permissions.MODIFY, await user3.getAddress());
+            .revokePermission(1, Permissions.ADMIN, await user3.getAddress());
           receipt = await tx.wait();
 
           assert.equal(
-            await systems().Core.hasPermission(1, Permissions.MODIFY, await user3.getAddress()),
+            await systems().Core.hasPermission(1, Permissions.ADMIN, await user3.getAddress()),
             false
           );
         });
