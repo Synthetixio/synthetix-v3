@@ -1,4 +1,5 @@
 const path = require('path');
+const { setTimeout } = require('node:timers/promises');
 const { deepEqual, rejects, equal } = require('assert/strict');
 const { TASK_DEPLOY_VERIFY_TENDERLY, SUBTASK_LOAD_DEPLOYMENT } = require('../../task-names');
 const { loadEnvironment, deployOnEnvironment } = require('../helpers/use-environment');
@@ -49,6 +50,7 @@ describe('deploy:verify-tenderly', function () {
       it('throws an error', async function () {
         await hre.run(SUBTASK_LOAD_DEPLOYMENT, { instance: 'test' });
         hre.router.deployment.general.properties.completed = false;
+        await setTimeout(1);
 
         try {
           await rejects(
@@ -60,6 +62,7 @@ describe('deploy:verify-tenderly', function () {
         } finally {
           await hre.run(SUBTASK_LOAD_DEPLOYMENT, { instance: 'test' });
           hre.router.deployment.general.properties.completed = true;
+          await setTimeout(1);
         }
       });
     });

@@ -65,7 +65,7 @@ contract MarketManagerModule is
     }
 
     // deposit will burn USD
-    function deposit(
+    function depositUsd(
         uint marketId,
         address target,
         uint amount
@@ -95,7 +95,7 @@ contract MarketManagerModule is
     }
 
     // withdraw will mint USD
-    function withdraw(
+    function withdrawUsd(
         uint marketId,
         address target,
         uint amount

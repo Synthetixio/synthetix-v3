@@ -1,8 +1,7 @@
-import hre from 'hardhat';
-
-import { ethers, providers } from 'ethers';
-
 import fs from 'fs/promises';
+import hre from 'hardhat';
+import { ethers } from 'ethers';
+
 import { snapshotCheckpoint } from '../utils';
 
 async function loadSystems(provider: ethers.providers.Provider) {
@@ -14,9 +13,7 @@ async function loadSystems(provider: ethers.providers.Provider) {
   for (const file of await fs.readdir(basepath)) {
     const m = file.match(/^(.*)Proxy.json$/);
     if (m) {
-      const info = JSON.parse(
-        (await fs.readFile(basepath + '/' + file)).toString('utf-8')
-      );
+      const info = JSON.parse((await fs.readFile(basepath + '/' + file)).toString('utf-8'));
       systems[m[1]] = new ethers.Contract(info.address, info.abi, provider);
     }
   }
@@ -30,11 +27,9 @@ export function bootstrap() {
 
   let systems: { [key: string]: ethers.Contract };
 
-  before(async function() {
+  before(async function () {
     // allow extra time to build the cannon deployment if required
     this.timeout(300000);
-
-    const rawSigs = [...await hre.ethers.getSigners()];
 
     await hre.run('cannon:build');
 
@@ -42,13 +37,36 @@ export function bootstrap() {
 
     signers = [];
 
-    for (const s of rawSigs) {
-      await provider.send('hardhat_impersonateAccount', [await s.getAddress()]);
+    const rawSigs = [...(await hre.ethers.getSigners())];
+
+    // Create default hardhat wallets
+    const defaultAddresses = [
+      '0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d',
+      '0x5de4111afa1a4b94908f83103eb1f1706367c2e68ca870fc3fb9a804cdab365a',
+      '0x7c852118294e51e653712a81e05800f419141751be58f605c371e15141b007a6',
+      '0x47e179ec197488593b187f80a00eb0da91f1b9d0b13f8733639f19c30a34926a',
+      '0x8b3a350cf5c34c9194ca85829a2df0ec3153be0318b5e2d3348e872092edffba',
+      '0x92db14e403b83dfe3df233f83dfa3a0d7096f21ca9b0d6d6b8d88b2b4ec1564e',
+      '0x4bbbf85ce3377467afe5d46f804f221813b2bb87f24d81f60f1fcdbf7cbf4356',
+      '0xdbda1821b80551c9d65939329250298aa3472ba22feea921c0cf5d620ea67b97',
+      '0x2a871d0798f97d79848a013d4936a73bf4cc922c825d33c1cf7073dff6d409c6',
+      '0xf214f2b2cd398c806f84e317254e0f0b801d0643303237d97a22a48e01628897',
+    ];
+
+    // Complete given signers with default hardhat wallets, to make sure
+    // that we always have default accounts to test stuff
+    for (let i = 0; i < defaultAddresses.length - 1; i++) {
+      const signer = rawSigs[i]
+        ? await provider.getSigner(await rawSigs[i].getAddress())
+        : new ethers.Wallet(defaultAddresses[i], provider);
+
+      await provider.send('hardhat_impersonateAccount', [await signer.getAddress()]);
       await provider.send('hardhat_setBalance', [
-        await s.getAddress(),
+        await signer.getAddress(),
         '10000000000000000000000',
       ]);
-      signers.push(await provider.getSigner(await s.getAddress()));
+
+      signers.push(signer);
     }
 
     systems = await loadSystems(provider);
@@ -89,7 +107,6 @@ export function bootstrapWithStakedFund() {
     // deploy an aggregator
     collateralAddress = r.systems().SNX.address;
 
-
     // add snx as collateral, 
     await r.systems().Core.connect(owner).adjustCollateralType(
       collateralAddress, 
@@ -101,7 +118,10 @@ export function bootstrapWithStakedFund() {
     );
 
     // create fund
-    await r.systems().Core.connect(owner).createFund(fundId, await owner.getAddress());
+    await r
+      .systems()
+      .Core.connect(owner)
+      .createFund(fundId, await owner.getAddress());
 
     // create user account
     await r.systems().Core.connect(user1).createAccount(accountId);
@@ -110,16 +130,19 @@ export function bootstrapWithStakedFund() {
     await r.systems().SNX.connect(user1).approve(r.systems().Core.address, depositAmount.mul(10));
 
     // stake collateral
-    await r.systems().Core.connect(user1).stake(accountId, collateralAddress, depositAmount.mul(10));
+    await r.systems().Core.connect(user1).depositCollateral(accountId, collateralAddress, depositAmount.mul(10));
 
     // invest in the fund
-    await r.systems().Core.connect(user1).delegateCollateral(
-      accountId,
-      fundId,
-      collateralAddress,
-      depositAmount,
-      ethers.utils.parseEther('1')
-    );
+    await r
+      .systems()
+      .Core.connect(user1)
+      .delegateCollateral(
+        accountId,
+        fundId,
+        collateralAddress,
+        depositAmount,
+        ethers.utils.parseEther('1')
+      );
   });
 
   const restore = snapshotCheckpoint(r.provider);
@@ -132,10 +155,9 @@ export function bootstrapWithStakedFund() {
     collateralContract: () => r.systems().SNX,
     collateralAddress: () => collateralAddress,
     depositAmount,
-    restore
+    restore,
   };
 }
-
 
 export function bootstrapWithMockMarketAndFund() {
   const r = bootstrapWithStakedFund();

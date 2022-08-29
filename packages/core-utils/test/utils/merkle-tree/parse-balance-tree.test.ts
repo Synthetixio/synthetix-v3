@@ -1,7 +1,8 @@
+import { equal, ok, throws } from 'assert/strict';
 import { ethers } from 'ethers';
-import { ok, equal, throws } from 'assert/strict';
-import { parseBalanceMap } from '../../../utils/merkle-tree/parse-balance-tree';
-import BalanceTree from '../../../utils/merkle-tree/balance-tree';
+
+import BalanceTree from '../../../src/utils/merkle-tree/balance-tree';
+import { parseBalanceMap } from '../../../src/utils/merkle-tree/parse-balance-tree';
 
 function hexStringToBuffer(data: string) {
   return Buffer.from(data.substring(2), 'hex');

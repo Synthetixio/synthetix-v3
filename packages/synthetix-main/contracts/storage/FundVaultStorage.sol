@@ -15,6 +15,7 @@ contract FundVaultStorage {
         mapping(uint256 => mapping(address => VaultData)) fundVaults;
     }
 
+    /// @notice represents the data in a vault which is valid only during the operation of a liquidation cycle
     struct VaultEpochData {
         /// @dev amount of debt which has not been rolled into `usdDebtDist`. Needed to keep track of overall vaultDebt
         int128 unclaimedDebt;
@@ -33,7 +34,7 @@ contract FundVaultStorage {
         uint epoch;
         /// @dev cached collateral price
         uint128 collateralPrice;
-        /// @dev tracks debt for each user
+        /// @dev the data for all the different liquidation cycles
         mapping(uint => VaultEpochData) epochData;
         /// @dev rewards
         RewardDistribution[] rewards;

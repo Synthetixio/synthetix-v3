@@ -8,6 +8,14 @@
     "deploy",
     "solidity"
   ],
+  "files": [
+    "extensions",
+    "internal",
+    "subtasks",
+    "tasks",
+    "templates",
+    "utils"
+  ],
   "author": "Synthetix",
   "license": "MIT",
   "scripts": {
@@ -21,12 +29,14 @@
   },
   "dependencies": {
     "@nomiclabs/hardhat-etherscan": "3.0.3",
+    "@synthetixio/core-utils": "1.0.0",
     "@tenderly/hardhat-tenderly": "1.0.15",
     "axios": "0.27.2",
     "chalk": "4.1.2",
     "del": "6.0.0",
     "filter-values": "0.4.1",
     "glob": "7.1.7",
+    "lodash.debounce": "4.0.8",
     "mkdirp": "1.0.4",
     "mustache": "4.2.0",
     "solidity-ast": "0.4.26",

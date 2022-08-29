@@ -20,7 +20,6 @@ module.exports = {
   SUBTASK_VALIDATE_INTERFACES: 'hardhat-router-validate-interfaces',
   SUBTASK_VALIDATE_MODULES: 'hardhat-router-validate-modules',
   SUBTASK_VALIDATE_ROUTER: 'hardhat-router-validate-router',
-  SUBTASK_VALIDATE_SATELLITES: 'hardhat-router-validate-satellites',
   SUBTASK_VALIDATE_STORAGE: 'hardhat-router-validate-storage',
   TASK_DEPLOY: 'deploy',
   TASK_DEPLOY_MULTICALL_ABI: 'deploy:multicall-abi',

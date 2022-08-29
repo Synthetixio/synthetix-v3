@@ -1,10 +1,5 @@
 const { parseFullyQualifiedName } = require('hardhat/utils/contract-names');
-const { getBytecodeHash } = require('@synthetixio/core-utils/dist/utils/ethers/contracts');
-
-const path = require('path');
-const fs = require('fs');
-const mkdirp = require('mkdirp');
-const { dirname } = require('path');
+const { getBytecodeHash } = require('@synthetixio/core-utils/utils/ethers/contracts');
 
 /**
  * Initialize contract metadata on hre.router.deployment.*
@@ -31,32 +26,7 @@ async function initContractData(contractFullyQualifiedName, extraData = {}) {
     sourceName,
   };
 
-  const cachedSourceInfo = path.join(
-    hre.router.paths.cache,
-    'source-abis',
-    deployedBytecodeHash + '.json'
-  );
-
-
   await _initContractSource(contractFullyQualifiedName);
-
-  /*if (fs.existsSync(cachedSourceInfo)) {
-    const data = JSON.parse(fs.readFileSync(cachedSourceInfo));
-    deployment.sources[sourceName] = data.sourceInfo;
-    deployment.abis[`${sourceName}:${contractName}`] = data.abiInfo;
-  } else {
-
-    // save the resulting artifacts
-    await mkdirp(dirname(cachedSourceInfo));
-
-    fs.writeFileSync(
-      cachedSourceInfo,
-      JSON.stringify({
-        sourceInfo: deployment.sources[sourceName],
-        abiInfo: deployment.abis[`${sourceName}:${contractName}`],
-      })
-    );
-  }*/
 }
 
 /**
@@ -75,12 +45,14 @@ async function _initContractSource(contractFullyQualifiedName) {
       deployment.sources[sourceName] = {};
     }
 
-    deployment.sources[sourceName].sourceCode = attributes.content;
+    if (!deployment.sources[sourceName].sourceCode) {
+      deployment.sources[sourceName].sourceCode = attributes.content;
+    }
   }
 
   // Save the asts for the entire dependency tree
   for (const [sourceName, attributes] of Object.entries(buildInfo.output.sources)) {
-    if(!deployment.sources[sourceName].ast) {
+    if (!deployment.sources[sourceName].ast) {
       deployment.sources[sourceName].ast = attributes.ast;
     }
   }
@@ -88,7 +60,10 @@ async function _initContractSource(contractFullyQualifiedName) {
   // Save the ABIs of all the contracts
   for (const [sourceName, contracts] of Object.entries(buildInfo.output.contracts)) {
     for (const [contractName, attributes] of Object.entries(contracts)) {
-      deployment.abis[`${sourceName}:${contractName}`] = attributes.abi;
+      const key = `${sourceName}:${contractName}`;
+      if (!deployment.abis[key]) {
+        deployment.abis[key] = attributes.abi;
+      }
     }
   }
 }

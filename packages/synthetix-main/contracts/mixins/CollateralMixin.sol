@@ -37,33 +37,28 @@ contract CollateralMixin is CollateralStorage, FundVaultStorage {
     function _getAccountCollateralTotals(uint accountId, address collateralType)
         internal
         view
-        returns (
-            uint256 totalStaked,
-            uint256 totalAssigned,
-            uint256 totalLocked,
-            uint256 totalEscrowed
-        )
+        returns (uint256 totalDeposited, uint256 totalAssigned)
     {
-        StakedCollateralData storage stakedCollateral = _collateralStore().stakedCollateralsDataByAccountId[accountId][
+        DepositedCollateralData storage stakedCollateral = _collateralStore().depositedCollateralDataByAccountId[accountId][
             collateralType
         ];
         totalAssigned = _getAccountAssignedCollateral(accountId, collateralType);
-        totalStaked = totalAssigned + stakedCollateral.availableAmount;
-        totalLocked = _getTotalLocked(stakedCollateral.locks);
-        totalEscrowed = _getLockedEscrow(stakedCollateral.escrow);
+        totalDeposited = totalAssigned + stakedCollateral.availableAmount;
+        //totalLocked = _getTotalLocked(stakedCollateral.locks);
+        //totalEscrowed = _getLockedEscrow(stakedCollateral.escrow);
 
-        return (totalStaked, totalAssigned, totalLocked, totalEscrowed);
+        return (totalDeposited, totalAssigned); //, totalLocked, totalEscrowed);
     }
 
     function _getAccountUnassignedCollateral(uint accountId, address collateralType) internal view returns (uint) {
-        StakedCollateralData storage stakedCollateral = _collateralStore().stakedCollateralsDataByAccountId[accountId][
+        DepositedCollateralData storage stakedCollateral = _collateralStore().depositedCollateralDataByAccountId[accountId][
             collateralType
         ];
         return stakedCollateral.availableAmount;
     }
 
     function _getAccountAssignedCollateral(uint accountId, address collateralType) internal view returns (uint) {
-        StakedCollateralData storage stakedCollateral = _collateralStore().stakedCollateralsDataByAccountId[accountId][
+        DepositedCollateralData storage stakedCollateral = _collateralStore().depositedCollateralDataByAccountId[accountId][
             collateralType
         ];
         uint totalAssigned = 0;
@@ -77,7 +72,7 @@ contract CollateralMixin is CollateralStorage, FundVaultStorage {
         return totalAssigned;
     }
 
-    function _getTotalLocked(StakedCollateralLock[] storage locks) internal view returns (uint) {
+    function _getTotalLocked(DepositedCollateralLock[] storage locks) internal view returns (uint) {
         uint64 currentTime = uint64(block.timestamp);
         uint256 locked;
 
@@ -110,7 +105,7 @@ contract CollateralMixin is CollateralStorage, FundVaultStorage {
         address collateralType,
         uint amount
     ) internal {
-        StakedCollateralData storage collateralData = _collateralStore().stakedCollateralsDataByAccountId[accountId][
+        DepositedCollateralData storage collateralData = _collateralStore().depositedCollateralDataByAccountId[accountId][
             collateralType
         ];
 

@@ -32,6 +32,7 @@ contract LiquidationsModule is
         uint collateralLiquidated,
         uint amountRewarded
     );
+
     event VaultLiquidation(
         uint indexed fundId,
         address indexed collateralType,
@@ -112,8 +113,6 @@ contract LiquidationsModule is
         );
 
         _applyLiquidationToMultiplier(fundId, collateralType, oldShares);
-
-        // TODO: adjust global rewards curve to temp lock user's acquired assets
 
         // send reward
         collateralType.safeTransfer(msg.sender, amountRewarded);

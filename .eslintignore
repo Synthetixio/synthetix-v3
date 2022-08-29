@@ -1,3 +1,4 @@
 build/*
 **/coverage*
 packages/*/dist
+packages/core-utils/utils

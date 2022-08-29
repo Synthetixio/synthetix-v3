@@ -27,14 +27,14 @@ interface IMarketManagerModule {
     function marketDebtPerShare(uint marketId) external returns (int);
 
     /// @notice target deposits amount of synths to the marketId
-    function deposit(
+    function depositUsd(
         uint marketId,
         address target,
         uint amount
     ) external;
 
     /// @notice target withdraws amount of synths to the marketId
-    function withdraw(
+    function withdrawUsd(
         uint marketId,
         address target,
         uint amount

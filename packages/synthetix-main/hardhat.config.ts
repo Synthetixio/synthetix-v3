@@ -11,7 +11,6 @@ const config = {
   docgen: {
     exclude: [
       './interfaces/external',
-      './interfaces/IMarket.sol',
       './interfaces/IUtilsModule.sol',
       './modules',
       './mixins',

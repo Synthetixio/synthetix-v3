@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import "@synthetixio/core-contracts/contracts/utils/MathUtil.sol";
-import "../interfaces/IMarket.sol";
+import "../interfaces/external/IMarket.sol";
 import "../interfaces/IMarketManagerModule.sol";
 
 contract MockMarket is IMarket {
@@ -27,13 +27,13 @@ contract MockMarket is IMarket {
     function buySynth(uint amount) external {
         _balance += amount;
         uint toDeposit = amount.divDecimal(_price);
-        IMarketManagerModule(_proxy).deposit(_marketId, msg.sender, toDeposit);
+        IMarketManagerModule(_proxy).depositUsd(_marketId, msg.sender, toDeposit);
     }
 
     function sellSynth(uint amount) external {
         _balance -= amount;
         uint toDeposit = amount.divDecimal(_price);
-        IMarketManagerModule(_proxy).withdraw(_marketId, msg.sender, toDeposit);
+        IMarketManagerModule(_proxy).withdrawUsd(_marketId, msg.sender, toDeposit);
     }
 
     function setBalance(uint newBalance) external {

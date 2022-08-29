@@ -8,8 +8,8 @@ const {
   SUBTASK_EXECUTE_CALL,
 } = require('../task-names');
 const { SUBTASK_LOAD_DEPLOYMENT } = require('@synthetixio/hardhat-router/task-names');
-const types = require('@synthetixio/core-utils/dist/utils/hardhat/argument-types');
-const { default: logger } = require('@synthetixio/core-utils/dist/utils/io/logger');
+const types = require('@synthetixio/core-utils/utils/hardhat/argument-types');
+const { default: logger } = require('@synthetixio/core-utils/utils/io/logger');
 
 task(TASK_INTERACT, 'Interacts with a given modular system deployment')
   .addOptionalParam(

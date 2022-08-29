@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import "../utils/SharesLibrary.sol";
-import "../interfaces/IMarket.sol";
+import "../interfaces/external/IMarket.sol";
 
 import "../storage/MarketManagerStorage.sol";
 import "../storage/FundModuleStorage.sol";

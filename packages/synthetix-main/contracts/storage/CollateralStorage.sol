@@ -8,10 +8,9 @@ import "../utils/CurvesLibrary.sol";
 contract CollateralStorage {
     struct CollateralStore {
         mapping(address => CollateralData) collateralsData; // CollateralData per collateralType (address)
-        SetUtil.AddressSet collaterals; // approved collaterals
-        // Staked Collaterals
-        mapping(uint => SetUtil.AddressSet) stakedCollateralsByAccountId;
-        mapping(uint => mapping(address => StakedCollateralData)) stakedCollateralsDataByAccountId;
+        SetUtil.AddressSet collaterals; // approved collateral
+        mapping(uint => SetUtil.AddressSet) depositedCollateralByAccountId;
+        mapping(uint => mapping(address => DepositedCollateralData)) depositedCollateralDataByAccountId;
     }
 
     struct CollateralData {
@@ -29,15 +28,15 @@ contract CollateralStorage {
         address tokenAddress;
     }
 
-    struct StakedCollateralData {
+    struct DepositedCollateralData {
         bool isSet;
         uint256 availableAmount; // adjustable (stake/unstake)
-        CurvesLibrary.PolynomialCurve escrow;
+        //CurvesLibrary.PolynomialCurve escrow;
         uint[] funds;
-        StakedCollateralLock[] locks;
+        //StakedCollateralLock[] locks;
     }
 
-    struct StakedCollateralLock {
+    struct DepositedCollateralLock {
         uint256 amount; // adjustable (stake/unstake)
         uint64 lockExpirationTime; // adjustable (assign/unassign)
     }

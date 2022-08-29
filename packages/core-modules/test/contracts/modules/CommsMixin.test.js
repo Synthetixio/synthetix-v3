@@ -1,9 +1,7 @@
 const { ethers } = hre;
-const assertBn = require('@synthetixio/core-utils/dist/utils/assertions/assert-bignumber');
-const {
-  default: assertRevert,
-} = require('@synthetixio/core-utils/dist/utils/assertions/assert-revert');
-const { printGasUsed } = require('@synthetixio/core-utils/dist/utils/mocha/mocha-helpers');
+const assertBn = require('@synthetixio/core-utils/utils/assertions/assert-bignumber');
+const { default: assertRevert } = require('@synthetixio/core-utils/utils/assertions/assert-revert');
+const { printGasUsed } = require('@synthetixio/core-utils/utils/mocha/mocha-helpers');
 const { bootstrap } = require('@synthetixio/hardhat-router/utils/tests');
 const initializer = require('@synthetixio/core-modules/test/helpers/initializer');
 

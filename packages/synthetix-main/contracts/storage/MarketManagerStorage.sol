@@ -12,6 +12,7 @@ contract MarketManagerStorage {
     }
 
     struct MarketData {
+        /// @notice the address which is used by the market to communicate with the core system. Implements `IMarket` interface
         address marketAddress;
         /// @notice the difference between the USD burnt by the market, and the amount minted
         int128 issuance;

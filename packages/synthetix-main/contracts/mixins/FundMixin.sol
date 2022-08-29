@@ -165,6 +165,7 @@ contract FundMixin is FundModuleStorage, FundVaultStorage, FundEventAndErrors, C
             dists[i].actorInfo[accountId].pendingSend += uint128(
                 uint(
                     (epochData.debtDist.getActorShares(bytes32(accountId)) *
+
                         (dists[i].rewardPerShare - dists[i].actorInfo[accountId].lastRewardPerShare)) / 1e18
                 )
             );

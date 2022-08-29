@@ -82,7 +82,7 @@ describe('LiquidationModule', function () {
           await collateralContract().connect(user1).transfer(await user2.getAddress(), depositAmount.mul(10));
           await collateralContract().connect(user2).approve(systems().Core.address, depositAmount.mul(10));
           await systems().Core.connect(user2).createAccount(accountId2);
-          await systems().Core.connect(user2).stake(accountId2, collateralAddress(), depositAmount.mul(10));
+          await systems().Core.connect(user2).depositCollateral(accountId2, collateralAddress(), depositAmount.mul(10));
 
           // use the zero fund to get minted USD
           await systems().Core.connect(user2).delegateCollateral(
@@ -210,7 +210,7 @@ describe('LiquidationModule', function () {
         before('fund liquidator account', async () => {
           await collateralContract().connect(user1).transfer(await user2.getAddress(), depositAmount.mul(50));
           await collateralContract().connect(user2).approve(systems().Core.address, depositAmount.mul(50));
-          await systems().Core.connect(user2).stake(liquidatorAccountId, collateralAddress(), depositAmount.mul(50));
+          await systems().Core.connect(user2).depositCollateral(liquidatorAccountId, collateralAddress(), depositAmount.mul(50));
 
           // use the zero fund to get minted USD
           await systems().Core.connect(user2).delegateCollateral(
@@ -246,7 +246,7 @@ describe('LiquidationModule', function () {
 
           assertBn.near(sentAmount, depositAmount.div(4));
           assertBn.equal((
-            await systems().Core.getAccountCollateralTotals(liquidatorAccountId, collateralAddress()))[0] , 
+            await systems().Core.getAccountCollateral(liquidatorAccountId, collateralAddress()))[0] , 
           sentAmount.add(depositAmount.mul(50))
           );
         });
@@ -271,7 +271,7 @@ describe('LiquidationModule', function () {
           });
 
           it('sends collateral to the requested accountId', async() => {
-            assertBn.equal((await systems().Core.getAccountCollateralTotals(liquidatorAccountId, collateralAddress()))[0] , depositAmount.mul(51));
+            assertBn.equal((await systems().Core.getAccountCollateral(liquidatorAccountId, collateralAddress()))[0] , depositAmount.mul(51));
           });
 
           it('vault is reset', async () => {

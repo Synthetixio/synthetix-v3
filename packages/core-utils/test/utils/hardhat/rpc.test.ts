@@ -1,5 +1,14 @@
 import assert from 'assert/strict';
 
+import {
+  advanceBlock,
+  fastForward,
+  fastForwardTo,
+  getBlock,
+  getTime,
+  restoreSnapshot,
+  takeSnapshot,
+} from '../../../src/utils/hardhat/rpc';
 
 // TODO: catch 22 because for some reason the `declares.d.ts` in the
 // helpers dir is doing nothing to help us here
@@ -7,18 +16,7 @@ import assert from 'assert/strict';
 // if we install `@types/sinon` there seems to be a bug internal
 // to the lib that causes regular build to fail
 // so we have to require
-const sinon = require('sinon');  // eslint-disable-line
-
-
-import {
-  takeSnapshot,
-  restoreSnapshot,
-  advanceBlock,
-  fastForward,
-  fastForwardTo,
-  getBlock,
-  getTime,
-} from '../../../utils/hardhat/rpc';
+const sinon = require('sinon'); // eslint-disable-line
 
 const fakeProvider = {
   async send() {
@@ -109,11 +107,7 @@ describe('utils/hardhat/rpc.js', () => {
         try {
           await fastForwardTo(1000, provider);
         } catch (err) {
-          assert.ok(
-            (err as Error)
-              .toString()
-              .includes('Cannot fast forward to a past date')
-          );
+          assert.ok((err as Error).toString().includes('Cannot fast forward to a past date'));
         }
       });
     });

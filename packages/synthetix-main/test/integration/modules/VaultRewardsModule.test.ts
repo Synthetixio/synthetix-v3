@@ -1,8 +1,8 @@
-import assertBn from '@synthetixio/core-utils/dist/utils/assertions/assert-bignumber';
-import assertRevert from '@synthetixio/core-utils/dist/utils/assertions/assert-revert';
+import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
+import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import hre from 'hardhat';
 import { ethers } from 'ethers';
-import { getBlockTimestamp } from '@synthetixio/core-utils/dist/utils/ethers/provider';
+import { getBlockTimestamp } from '@synthetixio/core-utils/utils/ethers/provider';
 
 import { bootstrapWithStakedFund } from '../bootstrap';
 
@@ -10,14 +10,14 @@ describe('VaultRewardsModule', function () {
   const { provider, signers, systems, fundId, collateralAddress, accountId, restore } =
     bootstrapWithStakedFund();
 
-  let owner: ethers.Signer, user1: ethers.Signer, user2: ethers.Signer;
+  let owner: ethers.Signer, user1: ethers.Signer;
 
   let Collateral;
 
   const rewardAmount = ethers.utils.parseEther('1000');
 
   before('identify signers', async () => {
-    [owner, user1, user2] = signers();
+    [owner, user1] = signers();
   });
 
   before('deploy fake reward token', async () => {

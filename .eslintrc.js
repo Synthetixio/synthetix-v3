@@ -1,5 +1,6 @@
 module.exports = {
-  extends: ['eslint:recommended', 'plugin:@typescript-eslint/recommended'],
+  root: true,
+  extends: ['eslint:recommended', 'plugin:@typescript-eslint/recommended', 'prettier'],
   env: {
     es2020: true,
     mocha: true,
@@ -19,7 +20,7 @@ module.exports = {
   rules: {
     'no-only-tests/no-only-tests': 'error',
     indent: ['error', 2],
-    'linebreak-style': ['error', 'unix'],
+    'linebreak-style': 0,
     quotes: ['error', 'single'],
     semi: ['error', 'always'],
     'no-inner-declarations': 'off',

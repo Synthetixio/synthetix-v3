@@ -23,24 +23,13 @@ contract CollateralModule is
     using SetUtil for SetUtil.AddressSet;
     using ERC20Helper for address;
 
-    bytes32 private constant _REDEEMABLE_REWARDS_TOKEN = "eSNXToken";
-    bytes32 private constant _REWARDED_TOKEN = "SNXToken";
+    //bytes32 private constant _REDEEMABLE_REWARDS_TOKEN = "eSNXToken";
+    //bytes32 private constant _REWARDED_TOKEN = "SNXToken";
 
     // 86400 * 365.26
     uint private constant _SECONDS_PER_YEAR = 31558464;
 
     error OutOfBounds();
-
-    event CollateralAdjusted(
-        address collateralType,
-        address priceFeed,
-        uint targetCRatio,
-        uint minimumCRatio,
-        uint liquidationReward,
-        bool enabled
-    );
-    event CollateralStaked(uint accountId, address collateralType, uint amount, address executedBy);
-    event CollateralUnstaked(uint accountId, address collateralType, uint amount, address executedBy);
 
     function adjustCollateralType(
         address collateralType,
@@ -64,7 +53,7 @@ contract CollateralModule is
         collateralData.liquidationReward = liquidationReward;
         collateralData.enabled = enabled;
 
-        emit CollateralAdjusted(collateralType, priceFeed, targetCRatio, minimumCRatio, liquidationReward, enabled);
+        emit CollateralConfigured(collateralType, priceFeed, targetCRatio, minimumCRatio, liquidationReward, enabled);
     }
 
     function getCollateralTypes(bool hideDisabled)
@@ -97,66 +86,59 @@ contract CollateralModule is
     }
 
     /////////////////////////////////////////////////
-    // STAKE  /  UNSTAKE
+    // DEPOSIT  /  WITHDRAW
     /////////////////////////////////////////////////
 
-    function stake(
+    function depositCollateral(
         uint accountId,
         address collateralType,
         uint amount
-    ) public override onlyRoleAuthorized(accountId, "stake") collateralEnabled(collateralType) {
-        // TODO Use SafeTransferFrom
+    ) public override onlyWithPermission(accountId, _DEPOSIT_PERMISSION) collateralEnabled(collateralType) {
         collateralType.safeTransferFrom(_accountOwner(accountId), address(this), amount);
 
         _depositCollateral(accountId, collateralType, amount);
 
-        emit CollateralStaked(accountId, collateralType, amount, msg.sender);
+        emit CollateralDeposited(accountId, collateralType, amount, msg.sender);
     }
 
-    function unstake(
+    function withdrawCollateral(
         uint accountId,
         address collateralType,
         uint amount
-    ) public override onlyRoleAuthorized(accountId, "unstake") {
-        uint256 availableCollateral = getAccountUnstakebleCollateral(accountId, collateralType);
+    ) public override onlyWithPermission(accountId, _WITHDRAW_PERMISSION) {
+        uint256 availableCollateral = getAccountAvailableCollateral(accountId, collateralType);
 
         if (availableCollateral < amount) {
             revert InsufficientAccountCollateral(accountId, collateralType, amount);
         }
 
-        StakedCollateralData storage collateralData = _collateralStore().stakedCollateralsDataByAccountId[accountId][
+        DepositedCollateralData storage collateralData = _collateralStore().depositedCollateralDataByAccountId[accountId][
             collateralType
         ];
 
         collateralData.availableAmount -= amount;
 
-        emit CollateralUnstaked(accountId, collateralType, amount, msg.sender);
+        emit CollateralWithdrawn(accountId, collateralType, amount, msg.sender);
 
         collateralType.safeTransfer(_accountOwner(accountId), amount);
     }
 
-    function getAccountCollaterals(uint accountId) external view override returns (address[] memory collateralTypes) {
-        return _collateralStore().stakedCollateralsByAccountId[accountId].values();
-    }
-
-    function getAccountCollateralTotals(uint accountId, address collateralType)
+    function getAccountCollateral(uint accountId, address collateralType)
         external
         view
         override
-        returns (
-            uint256 totalStaked,
-            uint256 totalAssigned,
-            uint256 totalLocked,
-            uint256 totalEscrowed
-        )
+        returns (uint256 totalStaked, uint256 totalAssigned)
+    //uint256 totalLocked,
+    //uint256 totalEscrowed
     {
         return _getAccountCollateralTotals(accountId, collateralType);
     }
 
-    function getAccountUnassignedCollateral(uint accountId, address collateralType) public view override returns (uint) {
+    function getAccountAvailableCollateral(uint accountId, address collateralType) public view override returns (uint) {
         return _getAccountUnassignedCollateral(accountId, collateralType);
     }
 
+    /*
     function getAccountUnstakebleCollateral(uint accountId, address collateralType) public view override returns (uint) {
         (uint256 total, uint256 assigned, uint256 locked, ) = _getAccountCollateralTotals(accountId, collateralType);
 
@@ -192,7 +174,7 @@ contract CollateralModule is
             revert InvalidCollateralType(address(rewardedToken));
         }
 
-        StakedCollateralData storage collateralData = _collateralStore().stakedCollateralsDataByAccountId[accountId][
+        DepositedCollateralData storage collateralData = _collateralStore().stakedCollateralsDataByAccountId[accountId][
             address(rewardedToken)
         ];
         uint rewardTokenMinted = _calculateRewardTokenMinted(amount, duration);
@@ -219,11 +201,13 @@ contract CollateralModule is
             collateralData.availableAmount += amount;
         }
     }
+*/
 
     /////////////////////////////////////////////////
     // INTERNALS
     /////////////////////////////////////////////////
 
+    /*
     function _calculateRewardTokenMinted(uint amount, uint duration) internal pure returns (uint) {
         return (amount * duration) / _SECONDS_PER_YEAR;
     }
@@ -255,4 +239,5 @@ contract CollateralModule is
             }
         }
     }
+*/
 }

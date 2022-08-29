@@ -1,5 +1,6 @@
 const path = require('path');
 const { deepEqual, rejects, equal } = require('assert/strict');
+const { setTimeout } = require('node:timers/promises');
 const { task } = require('hardhat/config');
 const { TASK_VERIFY_VERIFY } = require('@nomiclabs/hardhat-etherscan/dist/src/constants');
 const { TASK_DEPLOY_VERIFY, SUBTASK_LOAD_DEPLOYMENT } = require('../../task-names');
@@ -66,6 +67,7 @@ describe('deploy:verify', function () {
       it('throws an error', async function () {
         await hre.run(SUBTASK_LOAD_DEPLOYMENT, { instance: 'test' });
         hre.router.deployment.general.properties.completed = false;
+        await setTimeout(1);
 
         try {
           await rejects(() => hre.run(TASK_DEPLOY_VERIFY, { quiet: true, instance: 'test' }), {
@@ -74,6 +76,7 @@ describe('deploy:verify', function () {
         } finally {
           await hre.run(SUBTASK_LOAD_DEPLOYMENT, { instance: 'test' });
           hre.router.deployment.general.properties.completed = true;
+          await setTimeout(1);
         }
       });
     });

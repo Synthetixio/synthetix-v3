@@ -1,5 +1,6 @@
 import assert from 'assert/strict';
-import { readPackageJson } from '../../../utils/misc/npm';
+
+import { readPackageJson } from '../../../src/utils/misc/npm';
 
 describe('utils/misc/npm.js', function () {
   it('can retrieve the package.json of the project', function () {

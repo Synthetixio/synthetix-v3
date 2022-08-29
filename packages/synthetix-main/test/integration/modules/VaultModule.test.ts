@@ -1,5 +1,5 @@
-import assertBn from '@synthetixio/core-utils/dist/utils/assertions/assert-bignumber';
-import assertRevert from '@synthetixio/core-utils/dist/utils/assertions/assert-revert';
+import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
+import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import hre from 'hardhat';
 import { ethers } from 'ethers';
 
@@ -54,6 +54,7 @@ describe('VaultModule', function () {
 
   const restore = snapshotCheckpoint(provider);
 
+  // eslint-disable-next-line max-params
   function verifyAccountState(
     accountId: number,
     fundId: number,
@@ -179,7 +180,7 @@ describe('VaultModule', function () {
 
           await systems()
             .Core.connect(user2)
-            .stake(user2AccountId, collateralAddress(), depositAmount.mul(2));
+            .depositCollateral(user2AccountId, collateralAddress(), depositAmount.mul(2));
           
           await systems().Core.connect(user2).delegateCollateral(
             user2AccountId,
@@ -213,7 +214,7 @@ describe('VaultModule', function () {
             await systems().Core.connect(user2).delegateCollateral(
               user2AccountId,
               fundId,
-              collateralAddress,
+              collateralAddress(),
               depositAmount.div(3), // user1 50%, user2 50%
               ethers.utils.parseEther('1')
             );
@@ -234,7 +235,7 @@ describe('VaultModule', function () {
             await systems().Core.connect(user2).delegateCollateral(
               user2AccountId,
               fundId,
-              collateralAddress,
+              collateralAddress(),
               depositAmount.div(3), // user1 50%, user2 50%
               ethers.utils.parseEther('1')
             );
@@ -250,7 +251,7 @@ describe('VaultModule', function () {
           );
         });
 
-        describe.skip('remove exposure', async () => {
+        describe('remove exposure', async () => {
           before('delegate', async () => {
             await systems().Core.connect(user2).delegateCollateral(
               user2AccountId,

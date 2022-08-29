@@ -1,8 +1,9 @@
 const assert = require('assert/strict');
+const { setTimeout } = require('node:timers/promises');
 const del = require('del');
 const fs = require('fs');
 const autosaveObject = require('../../../internal/autosave-object');
-const { default: logger } = require('@synthetixio/core-utils/dist/utils/io/logger');
+const { default: logger } = require('@synthetixio/core-utils/utils/io/logger');
 
 const FILE_PATH = 'test/fixtures/files/autosave.json';
 const INITIAL_OBJ = {
@@ -15,13 +16,17 @@ describe('internal/autosave-object.js', function () {
   let obj;
   let logs = '';
 
+  function _escapeRegExp(string) {
+    return new RegExp(string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+  }
+
   function _fileContains(str) {
-    const txt = fs.readFileSync(FILE_PATH);
-    assert.ok(txt.includes(str));
+    const txt = fs.readFileSync(FILE_PATH).toString();
+    assert.match(txt, _escapeRegExp(str));
   }
 
   function _logsContain(str) {
-    assert.ok(logs.includes(str));
+    assert.match(logs, _escapeRegExp(str));
   }
 
   before('configure logger', async function () {
@@ -70,6 +75,7 @@ describe('internal/autosave-object.js', function () {
     after('restore object', async function () {
       obj.value = 42;
       obj.sub = null;
+      await setTimeout(0);
     });
 
     it('logged opening the file', async function () {
@@ -84,6 +90,7 @@ describe('internal/autosave-object.js', function () {
     describe('when changing a value in the object', function () {
       before('alter the obj in javascript', async function () {
         obj.value = 1337;
+        await setTimeout(0);
       });
 
       it('modifies the file', async function () {
@@ -119,6 +126,7 @@ describe('internal/autosave-object.js', function () {
 
       before('add sub-object', async function () {
         obj.sub = sub;
+        await setTimeout(0);
       });
 
       it('sets the value in the object', async function () {
