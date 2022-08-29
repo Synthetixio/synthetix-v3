@@ -6,7 +6,7 @@ import { ethers } from 'ethers';
 import { bootstrapWithStakedFund } from '../bootstrap';
 import { snapshotCheckpoint } from '../../utils';
 
-describe.skip('VaultModule', function () {
+describe('VaultModule', function () {
   const {
     signers,
     systems,
@@ -48,7 +48,7 @@ describe.skip('VaultModule', function () {
         fundId,
         [marketId],
         [ethers.utils.parseEther('1')],
-        [ethers.utils.parseEther('10000000')]
+        [ethers.utils.parseEther('10000000000000000')]
       );
   });
 
@@ -73,6 +73,26 @@ describe.skip('VaultModule', function () {
       );
     };
   }
+
+  describe('fresh vault', async () => {
+    it('returns 0 debt', async () => {
+      assertBn.equal(await systems().Core.callStatic.vaultDebt(0, collateralAddress()), 0);
+    });
+
+    it('returns 0 collateral', async () => {
+      assertBn.equal(
+        (await systems().Core.callStatic.vaultCollateral(0, collateralAddress()))[0],
+        0
+      );
+    });
+
+    it('returns 0 collateral ratio', async () => {
+      assertBn.equal(
+        await systems().Core.callStatic.vaultCollateralRatio(0, collateralAddress()),
+        0
+      );
+    });
+  });
 
   describe('delegateCollateral()', async () => {
     it(
@@ -157,7 +177,8 @@ describe.skip('VaultModule', function () {
 
           await systems()
             .Core.connect(user2)
-            .stake(user2AccountId, collateralAddress(), depositAmount.mul(2));
+            .depositCollateral(user2AccountId, collateralAddress(), depositAmount.mul(2));
+
           await systems().Core.connect(user2).delegateCollateral(
             user2AccountId,
             fundId,
@@ -183,14 +204,14 @@ describe.skip('VaultModule', function () {
           verifyAccountState(user2AccountId, fundId, depositAmount.div(3), depositAmount.div(100))
         );
 
-        // these exposure tests should be enabled when exposures other than 1 are
-        // allowed(which might be something we want to do)
+        // these exposure tests should be enabled when exposures other
+        // than 1 are allowed (which might be something we want to do)
         describe.skip('increase exposure', async () => {
           before('delegate', async () => {
             await systems().Core.connect(user2).delegateCollateral(
               user2AccountId,
               fundId,
-              collateralAddress,
+              collateralAddress(),
               depositAmount.div(3), // user1 50%, user2 50%
               ethers.utils.parseEther('1')
             );
@@ -211,7 +232,7 @@ describe.skip('VaultModule', function () {
             await systems().Core.connect(user2).delegateCollateral(
               user2AccountId,
               fundId,
-              collateralAddress,
+              collateralAddress(),
               depositAmount.div(3), // user1 50%, user2 50%
               ethers.utils.parseEther('1')
             );
@@ -227,7 +248,7 @@ describe.skip('VaultModule', function () {
           );
         });
 
-        describe.skip('remove exposure', async () => {
+        describe('remove exposure', async () => {
           before('delegate', async () => {
             await systems().Core.connect(user2).delegateCollateral(
               user2AccountId,
@@ -367,7 +388,7 @@ describe.skip('VaultModule', function () {
     describe('first user leaves', async () => {
       before(restore);
       before('erase debt', async () => {
-        await MockMarket.connect(user1).setBalance(-100);
+        await MockMarket.connect(user1).setBalance(0);
       });
 
       before('undelegate', async () => {

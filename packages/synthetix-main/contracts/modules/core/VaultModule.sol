@@ -56,12 +56,9 @@ contract VaultModule is
         if (leverage != MathUtil.UNIT) revert InvalidLeverage(leverage);
 
         VaultData storage vaultData = _fundVaultStore().fundVaults[fundId][collateralType];
+        VaultEpochData storage epochData = vaultData.epochData[vaultData.epoch];
 
-        _updateAvailableRewards(vaultData, accountId);
-
-        LiquidityItem storage liquidityItem = _fundVaultStore().liquidityItems[
-            _getLiquidityItemId(accountId, fundId, collateralType)
-        ];
+        _updateAvailableRewards(epochData, vaultData.rewards, accountId);
 
         // get the current collateral situation
         (uint oldCollateralAmount, , ) = _accountCollateral(accountId, fundId, collateralType);
@@ -74,66 +71,55 @@ contract VaultModule is
             revert InsufficientAccountCollateral(accountId, collateralType, collateralAmount);
         }
 
+        bytes32 actorId = bytes32(accountId);
+
         // stack too deep after this
         {
             // if decreasing collateral additionally check they have sufficient c-ratio
 
             _distributeVaultDebt(fundId, collateralType);
 
-            uint shares = _calculateShares(vaultData, collateralAmount, leverage);
+            uint debtShares = _calculateDebtShares(epochData, collateralAmount, leverage);
 
             // prevent users from specifying an infitesimly small amount such that they don't get any shares
-            if (shares == 0 && collateralAmount > 0) {
+            if (debtShares == 0 && collateralAmount > 0) {
                 revert InvalidParameters("amount", "must be large enough for 1 share");
             }
 
-            liquidityItem.cumulativeDebt += int128(vaultData.debtDist.updateDistributionActor(bytes32(accountId), shares));
-
-            vaultData.totalCollateral = uint128(vaultData.totalCollateral + collateralAmount - oldCollateralAmount);
-
-            liquidityItem.leverage = uint128(leverage);
+            epochData.collateralDist.updateActorValue(actorId, int(collateralAmount));
+            epochData.debtDist.updateActorShares(actorId, debtShares);
+            // no update for usd because no usd issued
 
             // this will ensure the new distribution information is passed up the chain to the markets
             _updateAccountDebt(accountId, fundId, collateralType);
-
-            // this is the most efficient time to check the resulting collateralization ratio, since
-            // user's debt and collateral price have been fully updated
-            if (collateralAmount < oldCollateralAmount) {
-                int debt = int(liquidityItem.cumulativeDebt) + int128(liquidityItem.usdMinted);
-
-                _verifyCollateralRatio(
-                    collateralType,
-                    debt < 0 ? 0 : uint(debt),
-                    collateralAmount.mulDecimal(vaultData.collateralPrice)
-                );
-            }
         }
 
-        emit DelegationUpdated(
-            _getLiquidityItemId(accountId, fundId, collateralType),
-            accountId,
-            fundId,
-            collateralType,
-            collateralAmount,
-            leverage
-        );
+        // this is the most efficient time to check the resulting collateralization ratio, since
+        // user's debt and collateral price have been fully updated
+        if (collateralAmount < oldCollateralAmount) {
+            int debt = epochData.usdDebtDist.getActorValue(actorId);
+
+            _verifyCollateralRatio(
+                collateralType,
+                debt < 0 ? 0 : uint(debt),
+                collateralAmount.mulDecimal(vaultData.collateralPrice)
+            );
+        }
+
+        emit DelegationUpdated(accountId, fundId, collateralType, collateralAmount, leverage);
     }
 
-    function _calculateShares(
-        VaultData storage vaultData,
+    function _calculateDebtShares(
+        VaultEpochData storage epochData,
         uint collateralAmount,
         uint leverage
     ) internal view returns (uint) {
-        uint totalCollateral = vaultData.totalCollateral;
+        uint totalCollateral = uint(epochData.collateralDist.totalValue());
         if (totalCollateral == 0) {
             return collateralAmount.mulDecimal(leverage);
         }
 
-        return leverage.mulDecimal((uint(vaultData.debtDist.totalShares) * collateralAmount) / totalCollateral);
-    }
-
-    function _calculateInitialDebt(uint collateralValue, uint leverage) internal pure returns (uint) {
-        return collateralValue.mulDecimal(leverage);
+        return leverage.mulDecimal((uint(epochData.debtDist.totalShares) * collateralAmount) / totalCollateral);
     }
 
     // ---------------------------------------
@@ -157,10 +143,11 @@ contract VaultModule is
             _verifyCollateralRatio(collateralType, uint(newDebt), collateralValue);
         }
 
-        _fundVaultStore().liquidityItems[_getLiquidityItemId(accountId, fundId, collateralType)].usdMinted += uint128(
-            amount
-        );
+        VaultData storage vaultData = _fundVaultStore().fundVaults[fundId][collateralType];
+        VaultEpochData storage epochData = vaultData.epochData[vaultData.epoch];
 
+        epochData.usdDebtDist.updateActorValue(bytes32(accountId), newDebt);
+        _fundModuleStore().funds[fundId].totalLiquidity -= int128(int(amount));
         _getToken(_USD_TOKEN).mint(msg.sender, amount);
     }
 
@@ -177,22 +164,17 @@ contract VaultModule is
             revert InsufficientDebt(debt);
         }
 
-        LiquidityItem storage li = _fundVaultStore().liquidityItems[_getLiquidityItemId(accountId, fundId, collateralType)];
-
         if (debt < int(amount)) {
             amount = uint(debt);
         }
 
-        // pay off usdMinted first (order doesn't really matter since it all becomes debt anyway)
-
-        if (li.usdMinted > amount) {
-            li.usdMinted -= uint128(amount);
-        } else {
-            li.cumulativeDebt -= int128(int(amount)) - int128(li.usdMinted);
-            li.usdMinted = 0;
-        }
-
         _getToken(_USD_TOKEN).burn(msg.sender, amount);
+
+        VaultData storage vaultData = _fundVaultStore().fundVaults[fundId][collateralType];
+        VaultEpochData storage epochData = vaultData.epochData[vaultData.epoch];
+
+        epochData.usdDebtDist.updateActorValue(bytes32(accountId), debt - int(amount));
+        _fundModuleStore().funds[fundId].totalLiquidity += int128(int(amount));
     }
 
     // ---------------------------------------
@@ -205,6 +187,10 @@ contract VaultModule is
         address collateralType
     ) external override returns (uint) {
         return _accountCollateralRatio(fundId, accountId, collateralType);
+    }
+
+    function vaultCollateralRatio(uint fundId, address collateralType) external override returns (uint) {
+        return _vaultCollateralRatio(fundId, collateralType);
     }
 
     function accountVaultCollateral(
@@ -232,27 +218,19 @@ contract VaultModule is
         return _updateAccountDebt(accountId, fundId, collateralType);
     }
 
-    function vaultCollateral(uint fundId, address collateralType) public override returns (uint amount, uint value) {
-        amount = _fundVaultStore().fundVaults[fundId][collateralType].totalCollateral;
-        value = amount.mulDecimal(_getCollateralValue(collateralType));
+    function vaultCollateral(uint fundId, address collateralType) public view override returns (uint amount, uint value) {
+        return _vaultCollateral(fundId, collateralType);
     }
 
     function vaultDebt(uint fundId, address collateralType) public override returns (int) {
-        _distributeVaultDebt(fundId, collateralType);
-
-        return _fundVaultStore().fundVaults[fundId][collateralType].totalDebt;
+        return _vaultDebt(fundId, collateralType);
     }
 
     function totalVaultShares(uint fundId, address collateralType) external view override returns (uint) {
-        return _fundVaultStore().fundVaults[fundId][collateralType].debtDist.totalShares;
-    }
+        VaultData storage vaultData = _fundVaultStore().fundVaults[fundId][collateralType];
+        VaultEpochData storage epochData = vaultData.epochData[vaultData.epoch];
 
-    function debtPerShare(uint fundId, address collateralType) external override returns (int) {
-        _distributeVaultDebt(fundId, collateralType);
-
-        return
-            _fundVaultStore().fundVaults[fundId][collateralType].totalDebt /
-            int128(_fundVaultStore().fundVaults[fundId][collateralType].debtDist.totalShares);
+        return uint(epochData.debtDist.totalShares).mulDecimal(epochData.liquidityMultiplier);
     }
 
     function _verifyCollateralRatio(
@@ -265,13 +243,5 @@ contract VaultModule is
         if (debt != 0 && collateralValue.divDecimal(debt) < targetCratio) {
             revert InsufficientCollateralRatio(collateralValue, debt, collateralValue.divDecimal(debt), targetCratio);
         }
-    }
-
-    // ---------------------------------------
-    // Views
-    // ---------------------------------------
-
-    function getLiquidityItem(bytes32 liquidityItemId) public view override returns (LiquidityItem memory liquidityItem) {
-        return _fundVaultStore().liquidityItems[liquidityItemId];
     }
 }

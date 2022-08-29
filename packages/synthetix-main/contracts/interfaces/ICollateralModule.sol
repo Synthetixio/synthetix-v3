@@ -13,6 +13,7 @@ interface ICollateralModule {
         address priceFeed,
         uint targetCRatio,
         uint minimumCRatio,
+        uint liquidationReward,
         bool enabled
     );
 
@@ -41,6 +42,7 @@ interface ICollateralModule {
         address priceFeed,
         uint targetCRatio,
         uint minimumCRatio,
+        uint liquidationReward,
         bool enabled
     ) external;
 

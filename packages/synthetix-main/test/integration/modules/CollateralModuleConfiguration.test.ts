@@ -6,7 +6,7 @@ import { ethers } from 'hardhat';
 
 import { bootstrap } from '../bootstrap';
 
-describe.skip('CollateralManagerConfiguration (SCCP)', function () {
+describe('CollateralManagerConfiguration (SCCP)', function () {
   const { signers, systems } = bootstrap();
 
   let systemOwner: Ethers.Signer, user1: Ethers.Signer;
@@ -34,7 +34,7 @@ describe.skip('CollateralManagerConfiguration (SCCP)', function () {
     await (
       await systems()
         .Core.connect(systemOwner)
-        .adjustCollateralType(Collateral.address, CollateralPriceFeed.address, 400, 200, false)
+        .adjustCollateralType(Collateral.address, CollateralPriceFeed.address, 400, 200, 0, false)
     ).wait();
   });
 
@@ -76,6 +76,7 @@ describe.skip('CollateralManagerConfiguration (SCCP)', function () {
           AnotherCollateralPriceFeed.address,
           400,
           200,
+          0,
           false
         );
       await tx.wait();
@@ -103,6 +104,7 @@ describe.skip('CollateralManagerConfiguration (SCCP)', function () {
             AnotherCollateralPriceFeed.address,
             300,
             250,
+            0,
             false
           );
         await tx.wait();
@@ -126,6 +128,7 @@ describe.skip('CollateralManagerConfiguration (SCCP)', function () {
             AnotherCollateralPriceFeed.address,
             400,
             200,
+            0,
             false
           );
         await tx.wait();
@@ -178,6 +181,7 @@ describe.skip('CollateralManagerConfiguration (SCCP)', function () {
             OtherCollateralPriceFeed.address,
             400,
             200,
+            0,
             false
           ),
         `Unauthorized("${await user1.getAddress()}")`,
@@ -189,7 +193,14 @@ describe.skip('CollateralManagerConfiguration (SCCP)', function () {
       await assertRevert(
         systems()
           .Core.connect(user1)
-          .adjustCollateralType(Collateral.address, CollateralPriceFeed.address, 300, 250, false),
+          .adjustCollateralType(
+            Collateral.address,
+            CollateralPriceFeed.address,
+            300,
+            250,
+            0,
+            false
+          ),
         `Unauthorized("${await user1.getAddress()}")`,
         systems().Core
       );

@@ -90,8 +90,6 @@ export function bootstrapWithStakedFund() {
   let collateralAddress: string;
   const depositAmount = ethers.utils.parseEther('1000');
 
-  let snapshotId: any;
-
   before('deploy mock aggregator', async () => {
     const [owner] = r.signers();
     const factory = await hre.ethers.getContractFactory('AggregatorV3Mock');
@@ -107,7 +105,7 @@ export function bootstrapWithStakedFund() {
     await r
       .systems()
       .Core.connect(owner)
-      .mintInitialSystemToken(await user1.getAddress(), depositAmount.mul(10));
+      .mintInitialSystemToken(await user1.getAddress(), depositAmount.mul(1000));
 
     // deploy an aggregator
     collateralAddress = r.systems().SNX.address;
@@ -121,6 +119,7 @@ export function bootstrapWithStakedFund() {
         aggregator.address,
         '5000000000000000000',
         '1500000000000000000',
+        '20000000000000000000',
         true
       );
 
@@ -134,13 +133,13 @@ export function bootstrapWithStakedFund() {
     await r.systems().Core.connect(user1).createAccount(accountId);
 
     // approve
-    await r.systems().SNX.connect(user1).approve(r.systems().Core.address, depositAmount);
+    await r.systems().SNX.connect(user1).approve(r.systems().Core.address, depositAmount.mul(10));
 
-    // deposit collateral
+    // stake collateral
     await r
       .systems()
       .Core.connect(user1)
-      .depositCollateral(accountId, collateralAddress, depositAmount);
+      .depositCollateral(accountId, collateralAddress, depositAmount.mul(10));
 
     // invest in the fund
     await r
@@ -165,6 +164,50 @@ export function bootstrapWithStakedFund() {
     collateralContract: () => r.systems().SNX,
     collateralAddress: () => collateralAddress,
     depositAmount,
+    restore,
+  };
+}
+
+export function bootstrapWithMockMarketAndFund() {
+  const r = bootstrapWithStakedFund();
+
+  let MockMarket: ethers.Contract;
+  let marketId: ethers.BigNumber;
+
+  before('deploy and connect fake market', async () => {
+    const [owner, user1] = r.signers();
+
+    const factory = await hre.ethers.getContractFactory('MockMarket');
+
+    MockMarket = await factory.connect(owner).deploy();
+
+    marketId = await r.systems().Core.connect(user1).callStatic.registerMarket(MockMarket.address);
+
+    await r.systems().Core.connect(user1).registerMarket(MockMarket.address);
+
+    await MockMarket.connect(owner).initialize(
+      r.systems().Core.address,
+      marketId,
+      ethers.utils.parseEther('1')
+    );
+
+    await r
+      .systems()
+      .Core.connect(owner)
+      .setFundPosition(
+        r.fundId,
+        [marketId],
+        [ethers.utils.parseEther('1')],
+        [ethers.utils.parseEther('1')]
+      );
+  });
+
+  const restore = snapshotCheckpoint(r.provider);
+
+  return {
+    ...r,
+    MockMarket: () => MockMarket,
+    marketId: () => marketId,
     restore,
   };
 }

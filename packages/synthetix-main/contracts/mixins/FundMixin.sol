@@ -33,31 +33,35 @@ contract FundMixin is FundModuleStorage, FundVaultStorage, FundEventAndErrors, C
         _;
     }
 
-    function _rebalanceFundPositions(uint fundId, bool clearsLiquidity) internal {
+    function _rebalanceFundPositions(uint fundId) internal {
         FundData storage fundData = _fundModuleStore().funds[fundId];
-        uint totalWeights = _fundModuleStore().funds[fundId].totalWeights;
+        uint totalWeights = fundData.totalWeights;
 
         if (totalWeights == 0) {
             // nothing to rebalance
             return;
         }
 
-        SharesLibrary.Distribution storage fundDist = _fundVaultStore().fundDists[fundId];
+        SharesLibrary.Distribution storage fundDist = fundData.debtDist;
 
-        // at this point, shares represent USD liquidity
-        // TODO: with liquidations, probably need to apply a multiplier here
-        uint totalAllocatableLiquidity = fundDist.totalShares;
+        // after applying the fund share multiplier, we have USD liquidity
+
+        int totalAllocatableLiquidity = fundData.totalLiquidity;
         int cumulativeDebtChange = 0;
 
         for (uint i = 0; i < fundData.fundDistribution.length; i++) {
             MarketDistribution storage marketDistribution = fundData.fundDistribution[i];
-            uint weight = clearsLiquidity ? 0 : marketDistribution.weight;
-            uint amount = (totalAllocatableLiquidity * weight) / totalWeights;
+            uint weight = marketDistribution.weight;
+            uint amount = totalAllocatableLiquidity > 0 ? (uint(totalAllocatableLiquidity) * weight) / totalWeights : 0;
+
+            int permissibleLiquidity = _calculatePermissibleLiquidity(marketDistribution.market);
 
             cumulativeDebtChange += _rebalanceMarket(
                 marketDistribution.market,
                 fundId,
-                marketDistribution.maxDebtShareValue,
+                permissibleLiquidity < marketDistribution.maxDebtShareValue
+                    ? permissibleLiquidity
+                    : marketDistribution.maxDebtShareValue,
                 amount
             );
         }
@@ -65,39 +69,61 @@ contract FundMixin is FundModuleStorage, FundVaultStorage, FundEventAndErrors, C
         fundDist.distribute(cumulativeDebtChange);
     }
 
+    function _calculatePermissibleLiquidity(uint marketId) internal view returns (int) {
+        MarketData storage marketData = _marketManagerStore().markets[marketId];
+        uint minRatio = _fundModuleStore().minLiquidityRatio;
+        return
+            marketData.debtDist.valuePerShare / 1e9 + int(minRatio > 0 ? MathUtil.UNIT.divDecimal(minRatio) : MathUtil.UNIT);
+    }
+
     function _distributeFundDebt(uint fundId) internal {
-        _rebalanceFundPositions(fundId, false);
+        _rebalanceFundPositions(fundId);
     }
 
     function _distributeVaultDebt(uint fundId, address collateralType) internal {
+        FundData storage fundData = _fundModuleStore().funds[fundId];
         VaultData storage vaultData = _fundVaultStore().fundVaults[fundId][collateralType];
+        VaultEpochData storage epochData = vaultData.epochData[vaultData.epoch];
 
         // update vault collateral price
         uint collateralPrice = _getCollateralValue(collateralType);
 
-        if (vaultData.sharesMultiplier == 0) {
-            vaultData.sharesMultiplier = uint128(MathUtil.UNIT);
+        uint liquidityMultiplier = epochData.liquidityMultiplier;
+
+        if (liquidityMultiplier == 0) {
+            liquidityMultiplier = MathUtil.UNIT;
+            epochData.liquidityMultiplier = uint128(liquidityMultiplier);
         }
 
         vaultData.collateralPrice = uint128(collateralPrice);
 
         // TODO: this second `_distributeFundDebt` call is really only needed for distributing the most up-to-date debt info from the markets (
-        // which needs to happen prior to the `updateDistributionActor` call), but
+        // which needs to happen prior to the `` call), but
         // we don't need to rebalance them
         _distributeFundDebt(fundId);
 
-        uint newVaultShares = uint(vaultData.debtDist.totalShares).mulDecimal(vaultData.sharesMultiplier).mulDecimal(
-            collateralPrice
+        bytes32 actorId = bytes32(uint(uint160(collateralType)));
+
+        uint oldVaultShares = fundData.debtDist.getActorShares(actorId);
+
+        uint newVaultShares = uint(epochData.debtDist.totalShares).mulDecimal(collateralPrice);
+
+        int debtChange = fundData.debtDist.updateActorShares(actorId, newVaultShares);
+
+        // update totalLiquidity
+        _fundModuleStore().funds[fundId].totalLiquidity += int128( // change in liquidity value
+            int(newVaultShares.mulDecimal(epochData.liquidityMultiplier)) -
+                int(oldVaultShares.mulDecimal(epochData.liquidityMultiplier)) -
+                // change in vault debt
+                debtChange
         );
 
-        int debtChange = _fundVaultStore().fundDists[fundId].updateDistributionActor(bytes32(fundId), newVaultShares);
-
-        _distributeFundDebt(fundId);
-
-        vaultData.debtDist.distribute(debtChange);
+        epochData.debtDist.distribute(debtChange);
 
         // total debt unfortunately needs to be cached here for liquidations
-        vaultData.totalDebt += int128(debtChange);
+        epochData.unclaimedDebt += int128(debtChange);
+
+        _distributeFundDebt(fundId);
     }
 
     function _updateAccountDebt(
@@ -108,24 +134,25 @@ contract FundMixin is FundModuleStorage, FundVaultStorage, FundEventAndErrors, C
         _distributeVaultDebt(fundId, collateralType);
 
         VaultData storage vaultData = _fundVaultStore().fundVaults[fundId][collateralType];
-        LiquidityItem storage li = _fundVaultStore().liquidityItems[_getLiquidityItemId(accountId, fundId, collateralType)];
+        VaultEpochData storage epochData = vaultData.epochData[vaultData.epoch];
 
-        li.cumulativeDebt += int128(
-            vaultData.debtDist.updateDistributionActor(
-                bytes32(accountId),
-                vaultData.debtDist.getActorShares(bytes32(accountId))
-            )
-        );
+        bytes32 actorId = bytes32(accountId);
 
-        return li.cumulativeDebt + int128(li.usdMinted);
+        currentDebt = epochData.usdDebtDist.getActorValue(actorId);
+        int newDebt = epochData.debtDist.accumulateActor(actorId);
+
+        currentDebt += newDebt;
+
+        epochData.usdDebtDist.updateActorValue(actorId, currentDebt);
+        epochData.unclaimedDebt -= int128(newDebt);
     }
 
-    //error Test(uint rps,uint lrps);
-
-    function _updateAvailableRewards(VaultData storage vaultData, uint accountId) internal returns (uint[] memory) {
-        RewardDistribution[] storage dists = vaultData.rewards;
-
-        uint totalShares = vaultData.debtDist.totalShares;
+    function _updateAvailableRewards(
+        VaultEpochData storage epochData,
+        RewardDistribution[] storage dists,
+        uint accountId
+    ) internal returns (uint[] memory) {
+        uint totalShares = epochData.debtDist.totalShares;
 
         uint[] memory rewards = new uint[](dists.length);
         for (uint i = 0; i < dists.length; i++) {
@@ -133,11 +160,11 @@ contract FundMixin is FundModuleStorage, FundVaultStorage, FundEventAndErrors, C
                 continue;
             }
 
-            dists[i].rewardPerShare += uint128(SharesLibrary.updateDistributionEntry(dists[i].entry, totalShares));
+            dists[i].rewardPerShare += uint128(SharesLibrary.updateEntry(dists[i].entry, totalShares));
 
             dists[i].actorInfo[accountId].pendingSend += uint128(
                 uint(
-                    (vaultData.debtDist.getActorShares(bytes32(accountId)) *
+                    (epochData.debtDist.getActorShares(bytes32(accountId)) *
                         (dists[i].rewardPerShare - dists[i].actorInfo[accountId].lastRewardPerShare)) / 1e18
                 )
             );
@@ -164,25 +191,14 @@ contract FundMixin is FundModuleStorage, FundVaultStorage, FundEventAndErrors, C
         )
     {
         VaultData storage vaultData = _fundVaultStore().fundVaults[fundId][collateralType];
-
-        LiquidityItem storage li = _fundVaultStore().liquidityItems[_getLiquidityItemId(accountId, fundId, collateralType)];
+        VaultEpochData storage epochData = vaultData.epochData[vaultData.epoch];
 
         uint collateralPrice = _getCollateralValue(collateralType);
 
-        shares = vaultData.debtDist.getActorShares(bytes32(accountId));
+        collateralAmount = uint(epochData.collateralDist.getActorValue(bytes32(accountId)));
+        collateralValue = collateralPrice.mulDecimal(collateralAmount);
 
-        if (shares == 0) {
-            // TODO: in the future, its possible user has collateral in account
-            // but no leverage. if that is the case, we need to account for that here
-            collateralAmount = 0;
-            collateralValue = 0;
-        } else {
-            collateralAmount =
-                (uint(vaultData.totalCollateral) * shares.divDecimal(li.leverage)) /
-                vaultData.debtDist.totalShares;
-
-            collateralValue = collateralAmount.mulDecimal(collateralPrice);
-        }
+        shares = epochData.debtDist.totalShares;
     }
 
     function _accountCollateralRatio(
@@ -197,19 +213,33 @@ contract FundMixin is FundModuleStorage, FundVaultStorage, FundEventAndErrors, C
         return accountCollateralValue.divDecimal(accountDebt < 0 ? 0 : uint(accountDebt));
     }
 
-    function _totalCollateral(uint fundId, address collateralType) internal view returns (uint) {
-        return _fundVaultStore().fundVaults[fundId][collateralType].totalCollateral;
+    function _vaultDebt(uint fundId, address collateralType) internal returns (int) {
+        _distributeVaultDebt(fundId, collateralType);
+
+        VaultData storage vaultData = _fundVaultStore().fundVaults[fundId][collateralType];
+        VaultEpochData storage epochData = vaultData.epochData[vaultData.epoch];
+
+        return epochData.unclaimedDebt + epochData.usdDebtDist.totalValue();
     }
 
-    // ---------------------------------------
-    // Helpers / Internals
-    // ---------------------------------------
+    function _vaultCollateralRatio(uint fundId, address collateralType) internal returns (uint) {
+        (, uint collateralValue) = _vaultCollateral(fundId, collateralType);
 
-    function _getLiquidityItemId(
-        uint accountId,
-        uint fundId,
-        address collateralType
-    ) internal pure returns (bytes32) {
-        return keccak256(abi.encodePacked(accountId, fundId, collateralType));
+        int debt = _vaultDebt(fundId, collateralType);
+
+        // if they have a credit, just treat their debt as 0
+        return debt <= 0 ? 0 : collateralValue.divDecimal(uint(debt));
+    }
+
+    function _vaultCollateral(uint fundId, address collateralType)
+        internal
+        view
+        returns (uint collateralAmount, uint collateralValue)
+    {
+        VaultData storage vaultData = _fundVaultStore().fundVaults[fundId][collateralType];
+        VaultEpochData storage epochData = vaultData.epochData[vaultData.epoch];
+
+        collateralAmount = uint(epochData.collateralDist.totalValue());
+        collateralValue = _getCollateralValue(collateralType).mulDecimal(collateralAmount);
     }
 }

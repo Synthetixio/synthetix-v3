@@ -2,11 +2,15 @@
 pragma solidity ^0.8.0;
 
 import "../storage/CollateralStorage.sol";
+import "../storage/FundVaultStorage.sol";
 
 import "../interfaces/external/IAggregatorV3Interface.sol";
 
-contract CollateralMixin is CollateralStorage {
+import "../utils/SharesLibrary.sol";
+
+contract CollateralMixin is CollateralStorage, FundVaultStorage {
     using SetUtil for SetUtil.AddressSet;
+    using SharesLibrary for SharesLibrary.Distribution;
 
     error InvalidCollateralType(address collateralType);
     error InsufficientAccountCollateral(uint accountId, address collateralType, uint requestedAmount);
@@ -34,24 +38,38 @@ contract CollateralMixin is CollateralStorage {
         internal
         view
         returns (uint256 totalDeposited, uint256 totalAssigned)
-    //uint256 totalLocked,
-    //uint256 totalEscrowed
     {
-        DepositedCollateralData storage depositedCollateral = _collateralStore().depositedCollateralDataByAccountId[
-            accountId
-        ][collateralType];
-        totalDeposited = depositedCollateral.amount;
-        totalAssigned = depositedCollateral.assignedAmount;
-        //totalLocked = _getTotalLocked(depositedCollateral.locks);
-        //totalEscrowed = _getLockedEscrow(depositedCollateral.escrow);
+        DepositedCollateralData storage stakedCollateral = _collateralStore().depositedCollateralDataByAccountId[accountId][
+            collateralType
+        ];
+        totalAssigned = _getAccountAssignedCollateral(accountId, collateralType);
+        totalDeposited = totalAssigned + stakedCollateral.availableAmount;
+        //totalLocked = _getTotalLocked(stakedCollateral.locks);
+        //totalEscrowed = _getLockedEscrow(stakedCollateral.escrow);
 
         return (totalDeposited, totalAssigned); //, totalLocked, totalEscrowed);
     }
 
     function _getAccountUnassignedCollateral(uint accountId, address collateralType) internal view returns (uint) {
-        (uint256 total, uint256 assigned) = _getAccountCollateralTotals(accountId, collateralType);
+        DepositedCollateralData storage stakedCollateral = _collateralStore().depositedCollateralDataByAccountId[accountId][
+            collateralType
+        ];
+        return stakedCollateral.availableAmount;
+    }
 
-        return total - assigned;
+    function _getAccountAssignedCollateral(uint accountId, address collateralType) internal view returns (uint) {
+        DepositedCollateralData storage stakedCollateral = _collateralStore().depositedCollateralDataByAccountId[accountId][
+            collateralType
+        ];
+        uint totalAssigned = 0;
+        for (uint i = 0; i < stakedCollateral.funds.length; i++) {
+            FundVaultStorage.VaultData storage vaultData = _fundVaultStore().fundVaults[stakedCollateral.funds[i]][
+                collateralType
+            ];
+            totalAssigned += uint(vaultData.epochData[vaultData.epoch].collateralDist.getActorValue(bytes32(accountId)));
+        }
+
+        return totalAssigned;
     }
 
     function _getTotalLocked(DepositedCollateralLock[] storage locks) internal view returns (uint) {
@@ -80,5 +98,23 @@ contract CollateralMixin is CollateralStorage {
 
     function _getCollateralLiquidationReward(address collateralType) internal view returns (uint) {
         return _collateralStore().collateralsData[collateralType].liquidationReward;
+    }
+
+    function _depositCollateral(
+        uint accountId,
+        address collateralType,
+        uint amount
+    ) internal {
+        DepositedCollateralData storage collateralData = _collateralStore().depositedCollateralDataByAccountId[accountId][
+            collateralType
+        ];
+
+        if (!collateralData.isSet) {
+            // new collateral
+            collateralData.isSet = true;
+            collateralData.availableAmount = amount;
+        } else {
+            collateralData.availableAmount += amount;
+        }
     }
 }

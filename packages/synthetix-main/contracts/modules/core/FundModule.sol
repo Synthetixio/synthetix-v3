@@ -93,51 +93,62 @@ contract FundModule is IFundModule, FundEventAndErrors, AccountRBACMixin, FundMi
             revert InvalidParameters("markets.length,weights.length,maxDebtShareValues.length", "must match");
         }
 
-        // TODO: check max debt share value must be low enough that the fund
-        // would be solvent
+        // TODO: this is not super efficient. we only call this to gather the debt accumulated from deployed funds
+        // would be better if we could eliminate the call at the end somehow
+        _rebalanceFundPositions(fundId);
 
         FundData storage fundData = _fundModuleStore().funds[fundId];
-
-        // _rebalanceFund with second parameter in true will clean up the distribution
-        // TODO improve how the fund positions are changed and only update what is different
-        _rebalanceFundPositions(fundId, true);
-
-        // Cleanup previous distribution
 
         uint totalWeight = 0;
         uint i = 0;
 
-        for (
-            ;
-            i < (markets.length < fundData.fundDistribution.length ? markets.length : fundData.fundDistribution.length);
-            i++
-        ) {
-            MarketDistribution storage distribution = fundData.fundDistribution[i];
-            distribution.market = markets[i];
-            distribution.weight = uint128(weights[i]);
-            distribution.maxDebtShareValue = int128(maxDebtShareValues[i]);
+        {
+            uint lastMarketId = 0;
 
-            totalWeight += weights[i];
+            for (
+                ;
+                i < (markets.length < fundData.fundDistribution.length ? markets.length : fundData.fundDistribution.length);
+                i++
+            ) {
+                if (markets[i] <= lastMarketId) {
+                    revert InvalidParameters("markets", "must be supplied in strictly ascending order");
+                }
+                lastMarketId = markets[i];
+
+                MarketDistribution storage distribution = fundData.fundDistribution[i];
+                distribution.market = markets[i];
+                distribution.weight = uint128(weights[i]);
+                distribution.maxDebtShareValue = int128(maxDebtShareValues[i]);
+
+                totalWeight += weights[i];
+            }
+
+            for (; i < markets.length; i++) {
+                if (markets[i] <= lastMarketId) {
+                    revert InvalidParameters("markets", "must be supplied in strictly ascending order");
+                }
+                lastMarketId = markets[i];
+
+                MarketDistribution memory distribution;
+                distribution.market = markets[i];
+                distribution.weight = uint128(weights[i]);
+                distribution.maxDebtShareValue = int128(maxDebtShareValues[i]);
+
+                fundData.fundDistribution.push(distribution);
+
+                totalWeight += weights[i];
+            }
         }
 
-        for (; i < markets.length; i++) {
-            MarketDistribution memory distribution;
-            distribution.market = markets[i];
-            distribution.weight = uint128(weights[i]);
-            distribution.maxDebtShareValue = int128(maxDebtShareValues[i]);
-
-            fundData.fundDistribution.push(distribution);
-
-            totalWeight += weights[i];
-        }
-
-        for (; i < fundData.fundDistribution.length; i++) {
+        uint popped = fundData.fundDistribution.length - i;
+        for (i = 0; i < popped; i++) {
+            _rebalanceMarket(fundData.fundDistribution[fundData.fundDistribution.length - 1].market, fundId, 0, 0);
             fundData.fundDistribution.pop();
         }
 
         fundData.totalWeights = totalWeight;
 
-        _rebalanceFundPositions(fundId, false);
+        _rebalanceFundPositions(fundId);
 
         emit FundPositionSet(fundId, markets, weights, msg.sender);
     }
@@ -178,5 +189,16 @@ contract FundModule is IFundModule, FundEventAndErrors, AccountRBACMixin, FundMi
 
     function getFundName(uint fundId) external view override returns (string memory fundName) {
         return _fundModuleStore().funds[fundId].name;
+    }
+
+    // ---------------------------------------
+    // system owner
+    // ---------------------------------------
+    function setMinLiquidityRatio(uint minLiquidityRatio) external override onlyOwner {
+        _fundModuleStore().minLiquidityRatio = minLiquidityRatio;
+    }
+
+    function getMinLiquidityRatio() external view override returns (uint) {
+        return _fundModuleStore().minLiquidityRatio;
     }
 }

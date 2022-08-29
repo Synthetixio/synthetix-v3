@@ -6,7 +6,7 @@ import { getBlockTimestamp } from '@synthetixio/core-utils/utils/ethers/provider
 
 import { bootstrapWithStakedFund } from '../bootstrap';
 
-describe.skip('VaultRewardsModule', function () {
+describe('VaultRewardsModule', function () {
   const { provider, signers, systems, fundId, collateralAddress, accountId, restore } =
     bootstrapWithStakedFund();
 
@@ -48,8 +48,8 @@ describe.skip('VaultRewardsModule', function () {
       describe('in the past', () => {
         before(restore);
         before(async () => {
-          // distribute rewards multiple times to see what happens of many
-          // distributions happen in the past
+          // distribute rewards multiple times to see what happens
+          // of many distributions happen in the past
           await systems().Core.connect(owner).distributeRewards(
             fundId,
             collateralAddress(),
@@ -80,8 +80,8 @@ describe.skip('VaultRewardsModule', function () {
             0
           );
 
-          // one distribution in the future to ensure switching from past to
-          // future works as expected
+          // one distribution in the future to ensure switching
+          // from past to future works as expected
           await systems()
             .Core.connect(owner)
             .distributeRewards(
@@ -385,8 +385,8 @@ describe.skip('VaultRewardsModule', function () {
                 );
             });
 
-            // this test is skipped for now because, among all the other tests,
-            // it does not behave as expected
+            // this test is skipped for now because, among all
+            // the other tests, it does not behave as expected
             it.skip('distributes portion of rewards immediately', async () => {
               const rewards = await systems().Core.callStatic.getAvailableRewards(
                 fundId,

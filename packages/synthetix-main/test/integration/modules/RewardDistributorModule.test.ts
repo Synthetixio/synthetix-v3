@@ -4,7 +4,7 @@ import { ethers } from 'ethers';
 
 import { bootstrapWithStakedFund } from '../bootstrap';
 
-describe.skip('RewardDistributorModule', function () {
+describe('RewardDistributorModule', function () {
   const { signers, systems, accountId, fundId, collateralAddress } = bootstrapWithStakedFund();
 
   let owner: ethers.Signer, user1: ethers.Signer;

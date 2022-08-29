@@ -34,10 +34,17 @@ library Heap {
         if (self.nodes.length == 0) {
             init(self);
         } // test on-the-fly-init
+
+        Node memory n;
+
+        // MODIFIED: support updates
+        extractById(self, id);
+
         self.idCount++;
         self.nodes.push();
-        Node memory n = Node(id, priority);
+        n = Node(id, priority);
         _bubbleUp(self, n, self.nodes.length - 1);
+
         return n;
     }
 

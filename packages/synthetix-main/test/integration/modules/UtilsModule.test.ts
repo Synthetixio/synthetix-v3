@@ -5,7 +5,7 @@ import { ethers } from 'ethers';
 
 import { bootstrap } from '../bootstrap';
 
-describe.skip('USDTokenModule', function () {
+describe('USDTokenModule', function () {
   const { signers, systems } = bootstrap();
 
   let owner: ethers.Signer, user1: ethers.Signer;
