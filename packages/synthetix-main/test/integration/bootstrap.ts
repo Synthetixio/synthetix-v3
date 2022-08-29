@@ -136,8 +136,11 @@ export function bootstrapWithStakedFund() {
     // approve
     await r.systems().SNX.connect(user1).approve(r.systems().Core.address, depositAmount);
 
-    // stake collateral
-    await r.systems().Core.connect(user1).stake(accountId, collateralAddress, depositAmount);
+    // deposit collateral
+    await r
+      .systems()
+      .Core.connect(user1)
+      .depositCollateral(accountId, collateralAddress, depositAmount);
 
     // invest in the fund
     await r

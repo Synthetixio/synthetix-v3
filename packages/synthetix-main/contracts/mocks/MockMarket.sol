@@ -27,13 +27,13 @@ contract MockMarket is IMarket {
     function buySynth(uint amount) external {
         _balance -= int(amount);
         uint toDeposit = amount.divDecimal(_price);
-        IMarketManagerModule(_proxy).deposit(_marketId, msg.sender, toDeposit);
+        IMarketManagerModule(_proxy).depositUsd(_marketId, msg.sender, toDeposit);
     }
 
     function sellSynth(uint amount) external {
         _balance += int(amount);
         uint toDeposit = amount.divDecimal(_price);
-        IMarketManagerModule(_proxy).withdraw(_marketId, msg.sender, toDeposit);
+        IMarketManagerModule(_proxy).withdrawUsd(_marketId, msg.sender, toDeposit);
     }
 
     function setBalance(int newBalance) external {

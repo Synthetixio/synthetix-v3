@@ -33,19 +33,19 @@ contract CollateralMixin is CollateralStorage {
     function _getAccountCollateralTotals(uint accountId, address collateralType)
         internal
         view
-        returns (uint256 totalStaked, uint256 totalAssigned)
+        returns (uint256 totalDeposited, uint256 totalAssigned)
     //uint256 totalLocked,
     //uint256 totalEscrowed
     {
-        StakedCollateralData storage stakedCollateral = _collateralStore().stakedCollateralsDataByAccountId[accountId][
-            collateralType
-        ];
-        totalStaked = stakedCollateral.amount;
-        totalAssigned = stakedCollateral.assignedAmount;
-        //totalLocked = _getTotalLocked(stakedCollateral.locks);
-        //totalEscrowed = _getLockedEscrow(stakedCollateral.escrow);
+        DepositedCollateralData storage depositedCollateral = _collateralStore().depositedCollateralDataByAccountId[
+            accountId
+        ][collateralType];
+        totalDeposited = depositedCollateral.amount;
+        totalAssigned = depositedCollateral.assignedAmount;
+        //totalLocked = _getTotalLocked(depositedCollateral.locks);
+        //totalEscrowed = _getLockedEscrow(depositedCollateral.escrow);
 
-        return (totalStaked, totalAssigned); //, totalLocked, totalEscrowed);
+        return (totalDeposited, totalAssigned); //, totalLocked, totalEscrowed);
     }
 
     function _getAccountUnassignedCollateral(uint accountId, address collateralType) internal view returns (uint) {
@@ -54,7 +54,7 @@ contract CollateralMixin is CollateralStorage {
         return total - assigned;
     }
 
-    function _getTotalLocked(StakedCollateralLock[] storage locks) internal view returns (uint) {
+    function _getTotalLocked(DepositedCollateralLock[] storage locks) internal view returns (uint) {
         uint64 currentTime = uint64(block.timestamp);
         uint256 locked;
 

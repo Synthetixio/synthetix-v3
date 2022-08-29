@@ -23,8 +23,8 @@ contract CollateralModule is
     using SetUtil for SetUtil.AddressSet;
     using ERC20Helper for address;
 
-    bytes32 private constant _REDEEMABLE_REWARDS_TOKEN = "eSNXToken";
-    bytes32 private constant _REWARDED_TOKEN = "SNXToken";
+    //bytes32 private constant _REDEEMABLE_REWARDS_TOKEN = "eSNXToken";
+    //bytes32 private constant _REWARDED_TOKEN = "SNXToken";
 
     // 86400 * 365.26
     uint private constant _SECONDS_PER_YEAR = 31558464;
@@ -81,19 +81,18 @@ contract CollateralModule is
     }
 
     /////////////////////////////////////////////////
-    // STAKE  /  UNSTAKE
+    // DEPOSIT  /  WITHDRAW
     /////////////////////////////////////////////////
 
-    function stake(
+    function depositCollateral(
         uint accountId,
         address collateralType,
         uint amount
-    ) public override onlyWithPerimission(accountId, _STAKE_PERMISSION) collateralEnabled(collateralType) {
-        StakedCollateralData storage collateralData = _collateralStore().stakedCollateralsDataByAccountId[accountId][
+    ) public override onlyWithPermission(accountId, _DEPOSIT_PERMISSION) collateralEnabled(collateralType) {
+        DepositedCollateralData storage collateralData = _collateralStore().depositedCollateralDataByAccountId[accountId][
             collateralType
         ];
 
-        // TODO Use SafeTransferFrom
         collateralType.safeTransferFrom(_accountOwner(accountId), address(this), amount);
 
         if (!collateralData.isSet) {
@@ -104,27 +103,27 @@ contract CollateralModule is
             collateralData.amount += amount;
         }
 
-        emit CollateralStaked(accountId, collateralType, amount, msg.sender);
+        emit CollateralDeposited(accountId, collateralType, amount, msg.sender);
     }
 
-    function unstake(
+    function withdrawCollateral(
         uint accountId,
         address collateralType,
         uint amount
-    ) public override onlyWithPerimission(accountId, _UNSTAKE_PERMISSION) {
-        uint256 availableCollateral = getAccountUnstakebleCollateral(accountId, collateralType);
+    ) public override onlyWithPermission(accountId, _WITHDRAW_PERMISSION) {
+        uint256 availableCollateral = getAccountAvailableCollateral(accountId, collateralType);
 
         if (availableCollateral < amount) {
             revert InsufficientAccountCollateral(accountId, collateralType, amount);
         }
 
-        StakedCollateralData storage collateralData = _collateralStore().stakedCollateralsDataByAccountId[accountId][
+        DepositedCollateralData storage collateralData = _collateralStore().depositedCollateralDataByAccountId[accountId][
             collateralType
         ];
 
         collateralData.amount -= amount;
 
-        emit CollateralUnstaked(accountId, collateralType, amount, msg.sender);
+        emit CollateralWithdrawn(accountId, collateralType, amount, msg.sender);
 
         collateralType.safeTransfer(_accountOwner(accountId), amount);
     }
@@ -180,7 +179,7 @@ contract CollateralModule is
             revert InvalidCollateralType(address(rewardedToken));
         }
 
-        StakedCollateralData storage collateralData = _collateralStore().stakedCollateralsDataByAccountId[accountId][
+        DepositedCollateralData storage collateralData = _collateralStore().stakedCollateralsDataByAccountId[accountId][
             address(rewardedToken)
         ];
         uint rewardTokenMinted = _calculateRewardTokenMinted(amount, duration);

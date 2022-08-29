@@ -4,7 +4,7 @@ import { ethers } from 'ethers';
 import { bootstrap } from '../bootstrap';
 
 const Permissions = {
-  STAKE: ethers.utils.formatBytes32String('STAKE'),
+  DEPOSIT: ethers.utils.formatBytes32String('DEPOSIT'),
   MINT: ethers.utils.formatBytes32String('MINT'),
 };
 
@@ -15,18 +15,18 @@ describe('AccountRBACMixin', function () {
   let user2: ethers.Signer;
   let user3: ethers.Signer;
 
-  function canStake({ user }: { user: number }) {
+  function canDeposit({ user }: { user: number }) {
     const value = Math.round(10000 * Math.random());
 
-    describe(`when user${user} stakes`, function () {
-      before('stake', async function () {
+    describe(`when user${user} deposits`, function () {
+      before('deposit', async function () {
         const signer = signers()[user];
 
-        await await systems().Core.connect(signer).mock_AccountRBACMixin_stake(1, value);
+        await await systems().Core.connect(signer).mock_AccountRBACMixin_deposit(1, value);
       });
 
       it('sets the mock value', async function () {
-        assertBn.equal(await systems().Core.mock_AccountRBACMixin_getStakeMock(), value);
+        assertBn.equal(await systems().Core.mock_AccountRBACMixin_getDepositMock(), value);
       });
     });
   }
@@ -47,14 +47,14 @@ describe('AccountRBACMixin', function () {
     });
   }
 
-  function cannotStake({ user }: { user: number }) {
-    describe(`when user${user} tries to stake`, function () {
+  function cannotDeposit({ user }: { user: number }) {
+    describe(`when user${user} tries to deposit`, function () {
       it('reverts', async function () {
         const signer = signers()[user];
 
         await assertRevert(
-          systems().Core.connect(signer).mock_AccountRBACMixin_stake(1, 666),
-          `PermissionDenied("1", "${Permissions.STAKE}", "${await signer.getAddress()}")`,
+          systems().Core.connect(signer).mock_AccountRBACMixin_deposit(1, 666),
+          `PermissionDenied("1", "${Permissions.DEPOSIT}", "${await signer.getAddress()}")`,
           systems().Core
         );
       });
@@ -85,28 +85,28 @@ describe('AccountRBACMixin', function () {
     });
 
     describe('before granting access to any account', function () {
-      canStake({ user: 1 });
+      canDeposit({ user: 1 });
       canMint({ user: 1 });
-      cannotStake({ user: 2 });
+      cannotDeposit({ user: 2 });
       cannotMint({ user: 2 });
-      cannotStake({ user: 3 });
+      cannotDeposit({ user: 3 });
       cannotMint({ user: 3 });
     });
 
-    describe('when granting stake access to user2', function () {
+    describe('when granting deposit access to user2', function () {
       before('grant', async function () {
         await (
           await systems()
             .Core.connect(user1)
-            .grantPermission(1, Permissions.STAKE, await user2.getAddress())
+            .grantPermission(1, Permissions.DEPOSIT, await user2.getAddress())
         ).wait();
       });
 
-      canStake({ user: 1 });
+      canDeposit({ user: 1 });
       canMint({ user: 1 });
-      canStake({ user: 2 });
+      canDeposit({ user: 2 });
       cannotMint({ user: 2 });
-      cannotStake({ user: 3 });
+      cannotDeposit({ user: 3 });
       cannotMint({ user: 3 });
 
       describe('when granting mint access to user2', function () {
@@ -118,43 +118,43 @@ describe('AccountRBACMixin', function () {
           ).wait();
         });
 
-        canStake({ user: 1 });
+        canDeposit({ user: 1 });
         canMint({ user: 1 });
-        canStake({ user: 2 });
+        canDeposit({ user: 2 });
         canMint({ user: 2 });
-        cannotStake({ user: 3 });
+        cannotDeposit({ user: 3 });
         cannotMint({ user: 3 });
 
-        describe('when revoking stake access from user2', function () {
+        describe('when revoking deposit access from user2', function () {
           before('revoke', async function () {
             await (
               await systems()
                 .Core.connect(user1)
-                .revokePermission(1, Permissions.STAKE, await user2.getAddress())
+                .revokePermission(1, Permissions.DEPOSIT, await user2.getAddress())
             ).wait();
           });
 
-          canStake({ user: 1 });
+          canDeposit({ user: 1 });
           canMint({ user: 1 });
           canMint({ user: 2 });
-          cannotStake({ user: 2 });
-          cannotStake({ user: 3 });
+          cannotDeposit({ user: 2 });
+          cannotDeposit({ user: 3 });
           cannotMint({ user: 3 });
 
-          describe('when granting stake access to user3', function () {
+          describe('when granting deposit access to user3', function () {
             before('grant', async function () {
               await (
                 await systems()
                   .Core.connect(user1)
-                  .grantPermission(1, Permissions.STAKE, await user3.getAddress())
+                  .grantPermission(1, Permissions.DEPOSIT, await user3.getAddress())
               ).wait();
             });
 
-            canStake({ user: 1 });
+            canDeposit({ user: 1 });
             canMint({ user: 1 });
             canMint({ user: 2 });
-            cannotStake({ user: 2 });
-            canStake({ user: 3 });
+            cannotDeposit({ user: 2 });
+            canDeposit({ user: 3 });
             cannotMint({ user: 3 });
 
             describe('when the account owner transfers the account to user3', function () {
@@ -166,11 +166,11 @@ describe('AccountRBACMixin', function () {
                 ).wait();
               });
 
-              cannotStake({ user: 1 });
+              cannotDeposit({ user: 1 });
               cannotMint({ user: 1 });
               canMint({ user: 2 });
-              cannotStake({ user: 2 });
-              canStake({ user: 3 });
+              cannotDeposit({ user: 2 });
+              canDeposit({ user: 3 });
               canMint({ user: 3 });
             });
           });

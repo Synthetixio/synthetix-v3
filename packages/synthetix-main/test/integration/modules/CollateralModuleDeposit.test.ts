@@ -7,7 +7,7 @@ import { findEvent } from '@synthetixio/core-utils/utils/ethers/events';
 
 import { bootstrap } from '../bootstrap';
 
-describe.skip('CollateralModule Stake', function () {
+describe.skip('CollateralModule Deposit', function () {
   const { signers, systems } = bootstrap();
 
   let Collateral: Ethers.Contract, CollateralPriceFeed: Ethers.Contract;
@@ -75,7 +75,7 @@ describe.skip('CollateralModule Stake', function () {
     assert.equal(collateralType.enabled, true);
   });
 
-  describe('when some collateral is staked', () => {
+  describe('when some collateral is deposited', () => {
     let receipt: Ethers.providers.TransactionReceipt;
     describe('sanity check', async () => {
       it('systems().Accounts has the right balance', async () => {
@@ -85,24 +85,26 @@ describe.skip('CollateralModule Stake', function () {
       });
     });
 
-    describe('when attempting to stake more than available collateral', () => {
+    describe('when attempting to deposit more than available collateral', () => {
       it('reverts', async () => {
         await assertRevert(
-          systems().Core.connect(user1).stake(1, Collateral.address, 10000),
+          systems().Core.connect(user1).depositCollateral(1, Collateral.address, 10000),
           'FailedTransfer',
           systems().Core
         );
       });
     });
 
-    describe('stake', () => {
-      before('stake some collateral', async () => {
-        const tx = await systems().Core.connect(user1).stake(1, Collateral.address, 100);
+    describe('deposit', () => {
+      before('deposit some collateral', async () => {
+        const tx = await systems()
+          .Core.connect(user1)
+          .depositCollateral(1, Collateral.address, 100);
         receipt = await tx.wait();
       });
 
       it('emits an event', async () => {
-        const event = findEvent({ receipt, eventName: 'CollateralStaked' });
+        const event = findEvent({ receipt, eventName: 'CollateralDepositd' });
 
         assertBn.equal(event.args.accountId, 1);
         assert.equal(event.args.collateralType, Collateral.address);
@@ -110,9 +112,9 @@ describe.skip('CollateralModule Stake', function () {
         assert.equal(event.args.executedBy, await user1.getAddress());
       });
 
-      it('is staked', async () => {
+      it('is deposited', async () => {
         const totals = await systems().Core.getAccountCollateralTotals(1, Collateral.address);
-        const free = await systems().Core.getAccountUnstakebleCollateral(1, Collateral.address);
+        const free = await systems().Core.getAccountUndepositbleCollateral(1, Collateral.address);
         const unassigned = await systems().Core.getAccountUnassignedCollateral(
           1,
           Collateral.address
@@ -130,25 +132,27 @@ describe.skip('CollateralModule Stake', function () {
       });
     });
 
-    describe('when some collateral is unstaked', () => {
-      describe('when attempting to stake more than available collateral', () => {
+    describe('when some collateral is deposited', () => {
+      describe('when attempting to deposit more than available collateral', () => {
         it('reverts', async () => {
           await assertRevert(
-            systems().Core.connect(user1).unstake(1, Collateral.address, 101),
+            systems().Core.connect(user1).withdrawCollateral(1, Collateral.address, 101),
             'InsufficientAccountCollateral',
             systems().Core
           );
         });
       });
 
-      describe('unstake', () => {
-        before('unstake some collateral', async () => {
-          const tx = await systems().Core.connect(user1).unstake(1, Collateral.address, 100);
+      describe('withdrawCollateral', () => {
+        before('withdrawCollateral some collateral', async () => {
+          const tx = await systems()
+            .Core.connect(user1)
+            .withdrawCollateral(1, Collateral.address, 100);
           receipt = await tx.wait();
         });
 
         it('emits an event', async () => {
-          const event = findEvent({ receipt, eventName: 'CollateralUnstaked' });
+          const event = findEvent({ receipt, eventName: 'CollateralWithdrawn' });
 
           assertBn.equal(event.args.accountId, 1);
           assert.equal(event.args.collateralType, Collateral.address);
@@ -156,9 +160,9 @@ describe.skip('CollateralModule Stake', function () {
           assert.equal(event.args.executedBy, await user1.getAddress());
         });
 
-        it('is unstaked', async () => {
+        it('is withdrawCollateraled', async () => {
           const totals = await systems().Core.getAccountCollateralTotals(1, Collateral.address);
-          const free = await systems().Core.getAccountUnstakebleCollateral(1, Collateral.address);
+          const free = await systems().Core.getAccountUndepositbleCollateral(1, Collateral.address);
           const unassigned = await systems().Core.getAccountUnassignedCollateral(
             1,
             Collateral.address
@@ -187,17 +191,17 @@ describe.skip('CollateralModule Stake', function () {
   });
 
   describe('when an unauthorized address tries to operate in the systems().Account', () => {
-    it('reverts when trying to stake', async () => {
+    it('reverts when trying to deposit', async () => {
       await assertRevert(
-        systems().Core.connect(user2).stake(1, Collateral.address, 100),
+        systems().Core.connect(user2).depositCollateral(1, Collateral.address, 100),
         `NotAuthorized("1", "0x7374616b65000000000000000000000000000000000000000000000000000000", "${await user2.getAddress()}")`,
         systems().Core
       );
     });
 
-    it('reverts when trying to unstake', async () => {
+    it('reverts when trying to withdrawCollateral', async () => {
       await assertRevert(
-        systems().Core.connect(user2).unstake(1, Collateral.address, 100),
+        systems().Core.connect(user2).withdrawnCollateral(1, Collateral.address, 100),
         `NotAuthorized("1", "0x756e7374616b6500000000000000000000000000000000000000000000000000", "${await user2.getAddress()}")`,
         systems().Core
       );
@@ -207,7 +211,7 @@ describe.skip('CollateralModule Stake', function () {
       await assertRevert(
         systems()
           .Core.connect(user2)
-          .grantRole(1, ethers.utils.formatBytes32String('stake'), await user2.getAddress()),
+          .grantRole(1, ethers.utils.formatBytes32String('DEPOSIT'), await user2.getAddress()),
         `NotAuthorized("1", "${ethers.utils.formatBytes32String(
           'modifyPermission'
         )}", "${await user2.getAddress()}")`,
@@ -221,12 +225,16 @@ describe.skip('CollateralModule Stake', function () {
       await (
         await systems()
           .Core.connect(user1)
-          .grantRole(1, ethers.utils.formatBytes32String('stake'), await user2.getAddress())
+          .grantRole(1, ethers.utils.formatBytes32String('DEPOSIT'), await user2.getAddress())
       ).wait();
       await (
         await systems()
           .Core.connect(user1)
-          .grantRole(1, ethers.utils.formatBytes32String('unstake'), await user3.getAddress())
+          .grantRole(
+            1,
+            ethers.utils.formatBytes32String('withdrawCollateral'),
+            await user3.getAddress()
+          )
       ).wait();
     });
 
@@ -234,7 +242,7 @@ describe.skip('CollateralModule Stake', function () {
       assert.equal(
         await systems().Core.hasRole(
           1,
-          ethers.utils.formatBytes32String('stake'),
+          ethers.utils.formatBytes32String('DEPOSIT'),
           await user2.getAddress()
         ),
         true
@@ -242,7 +250,7 @@ describe.skip('CollateralModule Stake', function () {
       assert.equal(
         await systems().Core.hasRole(
           1,
-          ethers.utils.formatBytes32String('unstake'),
+          ethers.utils.formatBytes32String('withdrawCollateral'),
           await user3.getAddress()
         ),
         true
@@ -257,14 +265,16 @@ describe.skip('CollateralModule Stake', function () {
       );
     });
 
-    describe('when some collateral is staked', () => {
-      before('stake some collateral', async () => {
-        await (await systems().Core.connect(user2).stake(1, Collateral.address, 100)).wait();
+    describe('when some collateral is deposited', () => {
+      before('deposit some collateral', async () => {
+        await (
+          await systems().Core.connect(user2).depositCollateral(1, Collateral.address, 100)
+        ).wait();
       });
 
-      it('is staked', async () => {
+      it('is deposited', async () => {
         const totals = await systems().Core.getAccountCollateralTotals(1, Collateral.address);
-        const free = await systems().Core.getAccountUnstakebleCollateral(1, Collateral.address);
+        const free = await systems().Core.getAccountUndepositbleCollateral(1, Collateral.address);
         const unassigned = await systems().Core.getAccountUnassignedCollateral(
           1,
           Collateral.address
@@ -281,14 +291,16 @@ describe.skip('CollateralModule Stake', function () {
         assertBn.equal(await Collateral.balanceOf(systems().Core.address), 100);
       });
 
-      describe('when some collateral is unstaked', () => {
-        before('unstake some collateral', async () => {
-          await (await systems().Core.connect(user3).unstake(1, Collateral.address, 100)).wait();
+      describe('when some collateral is withdrawCollateraled', () => {
+        before('withdrawCollateral some collateral', async () => {
+          await (
+            await systems().Core.connect(user3).withdrawCollateral(1, Collateral.address, 100)
+          ).wait();
         });
 
-        it('is unstaked', async () => {
+        it('is withdrawCollateraled', async () => {
           const totals = await systems().Core.getAccountCollateralTotals(1, Collateral.address);
-          const free = await systems().Core.getAccountUnstakebleCollateral(1, Collateral.address);
+          const free = await systems().Core.getAccountUndepositbleCollateral(1, Collateral.address);
           const unassigned = await systems().Core.getAccountUnassignedCollateral(
             1,
             Collateral.address

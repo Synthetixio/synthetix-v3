@@ -47,7 +47,7 @@ contract VaultModule is
     )
         external
         override
-        onlyWithPerimission(accountId, _ASSIGN_PERMISSION)
+        onlyWithPermission(accountId, _ASSIGN_PERMISSION)
         collateralEnabled(collateralType)
         fundExists(fundId)
     {
@@ -145,7 +145,7 @@ contract VaultModule is
         uint fundId,
         address collateralType,
         uint amount
-    ) external override onlyWithPerimission(accountId, _MINT_PERMISSION) {
+    ) external override onlyWithPermission(accountId, _MINT_PERMISSION) {
         // check if they have sufficient c-ratio to mint that amount
         int debt = _updateAccountDebt(accountId, fundId, collateralType);
 

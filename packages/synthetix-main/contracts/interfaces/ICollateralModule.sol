@@ -17,14 +17,14 @@ interface ICollateralModule {
     );
 
     /**
-     * @notice Emitted when `amount` of collateral of type `collateralType` is staked to account `accountId` by `sender`.
+     * @notice Emitted when `amount` of collateral of type `collateralType` is deposited to account `accountId` by `sender`.
      */
-    event CollateralStaked(uint accountId, address collateralType, uint amount, address sender);
+    event CollateralDeposited(uint accountId, address collateralType, uint amount, address sender);
 
     /**
-     * @notice Emitted when `amount` of collateral of type `collateralType` is unstaked from account `accountId` by `sender`.
+     * @notice Emitted when `amount` of collateral of type `collateralType` is withdrawn from account `accountId` by `sender`.
      */
-    event CollateralUnstaked(uint accountId, address collateralType, uint amount, address sender);
+    event CollateralWithdrawn(uint accountId, address collateralType, uint amount, address sender);
 
     /**
      * @notice Creates or updates the configuration for given `collateralType`.
@@ -61,32 +61,32 @@ interface ICollateralModule {
         returns (CollateralStorage.CollateralData memory collateral);
 
     /**
-     * @notice Stakes `amount` of collateral of type `collateralType` into account `accountId`.
+     * @notice Deposits `amount` of collateral of type `collateralType` into account `accountId`.
      *
      * Requirements:
      *
-     * - `msg.sender` must be the owner of the account, have the `ADMIN` permission, or have the `STAKE` permission.
+     * - `msg.sender` must be the owner of the account, have the `ADMIN` permission, or have the `DEPOSIT` permission.
      *
-     * Emits a {CollateralStaked} event.
+     * Emits a {CollateralDeposited} event.
      *
      */
-    function stake(
+    function depositCollateral(
         uint accountId,
         address collateralType,
         uint amount
     ) external;
 
     /**
-     * @notice Unstakes `amount` of collateral of type `collateralType` from account `accountId`.
+     * @notice Withdraws `amount` of collateral of type `collateralType` from account `accountId`.
      *
      * Requirements:
      *
-     * - `msg.sender` must be the owner of the account, have the `ADMIN` permission, or have the `UNSTAKE` permission.
+     * - `msg.sender` must be the owner of the account, have the `ADMIN` permission, or have the `WITHDRAW` permission.
      *
-     * Emits a {CollateralUnstaked} event.
+     * Emits a {CollateralWithdrawn} event.
      *
      */
-    function unstake(
+    function withdrawCollateral(
         uint accountId,
         address collateralType,
         uint amount
@@ -97,13 +97,13 @@ interface ICollateralModule {
         external
         view
         returns (
-            uint totalStaked,
+            uint totalDeposited,
             uint totalAssigned
             //uint totalLocked,
             //uint totalEscrowed
         );
 
-    /// @notice Returns the amount of collateral of type `collateralType` staked with account `accountId` that can be unstaked or delegated.
+    /// @notice Returns the amount of collateral of type `collateralType` deposited with account `accountId` that can be withdrawn or delegated.
     function getAccountAvailableCollateral(uint accountId, address collateralType) external view returns (uint);
 
     /*

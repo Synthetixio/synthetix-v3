@@ -8,13 +8,13 @@ contract AccountRBACMixin is AccountModuleStorage {
 
     error PermissionDenied(uint accountId, bytes32 permission, address target);
 
-    bytes32 internal constant _STAKE_PERMISSION = "STAKE";
-    bytes32 internal constant _UNSTAKE_PERMISSION = "UNSTAKE";
+    bytes32 internal constant _DEPOSIT_PERMISSION = "DEPOSIT";
+    bytes32 internal constant _WITHDRAW_PERMISSION = "WITHDRAW";
     bytes32 internal constant _ASSIGN_PERMISSION = "ASSIGN";
     bytes32 internal constant _MINT_PERMISSION = "MINT";
     bytes32 internal constant _ADMIN_PERMISSION = "ADMIN";
 
-    modifier onlyWithPerimission(uint accountId, bytes32 permission) {
+    modifier onlyWithPermission(uint accountId, bytes32 permission) {
         if (!_authorized(accountId, permission, msg.sender)) {
             revert PermissionDenied(accountId, permission, msg.sender);
         }
