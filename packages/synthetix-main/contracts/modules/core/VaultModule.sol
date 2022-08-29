@@ -7,24 +7,24 @@ import "@synthetixio/core-contracts/contracts/utils/MathUtil.sol";
 
 import "@synthetixio/core-modules/contracts/mixins/AssociatedSystemsMixin.sol";
 import "../../mixins/AccountRBACMixin.sol";
-import "../../mixins/FundMixin.sol";
+import "../../mixins/PoolMixin.sol";
 
 import "../../utils/SharesLibrary.sol";
 
-import "../../storage/FundVaultStorage.sol";
+import "../../storage/PoolVaultStorage.sol";
 import "../../interfaces/IVaultModule.sol";
 import "../../interfaces/IUSDTokenModule.sol";
 
-import "../../submodules/FundEventAndErrors.sol";
+import "../../submodules/PoolEventAndErrors.sol";
 
 contract VaultModule is
     IVaultModule,
-    FundVaultStorage,
-    FundEventAndErrors,
+    PoolVaultStorage,
+    PoolEventAndErrors,
     AccountRBACMixin,
     OwnableMixin,
     AssociatedSystemsMixin,
-    FundMixin
+    PoolMixin
 {
     using SetUtil for SetUtil.Bytes32Set;
     using SetUtil for SetUtil.AddressSet;
@@ -40,7 +40,7 @@ contract VaultModule is
 
     function delegateCollateral(
         uint accountId,
-        uint fundId,
+        uint poolId,
         address collateralType,
         uint collateralAmount,
         uint leverage
@@ -49,19 +49,19 @@ contract VaultModule is
         override
         onlyWithPermission(accountId, _ASSIGN_PERMISSION)
         collateralEnabled(collateralType)
-        fundExists(fundId)
+        poolExists(poolId)
     {
         // Fix leverage to 1 until it's enabled
         // TODO: we will probably at least want to test <1 leverage
         if (leverage != MathUtil.UNIT) revert InvalidLeverage(leverage);
 
-        VaultData storage vaultData = _fundVaultStore().fundVaults[fundId][collateralType];
+        VaultData storage vaultData = _poolVaultStore().poolVaults[poolId][collateralType];
         VaultEpochData storage epochData = vaultData.epochData[vaultData.epoch];
 
         _updateAvailableRewards(epochData, vaultData.rewards, accountId);
 
         // get the current collateral situation
-        (uint oldCollateralAmount, , ) = _accountCollateral(accountId, fundId, collateralType);
+        (uint oldCollateralAmount, , ) = _accountCollateral(accountId, poolId, collateralType);
 
         // if increasing collateral additionally check they have enough collateral
         if (
@@ -77,7 +77,7 @@ contract VaultModule is
         {
             // if decreasing collateral additionally check they have sufficient c-ratio
 
-            _distributeVaultDebt(fundId, collateralType);
+            _distributeVaultDebt(poolId, collateralType);
 
             uint debtShares = _calculateDebtShares(epochData, collateralAmount, leverage);
 
@@ -91,7 +91,7 @@ contract VaultModule is
             // no update for usd because no usd issued
 
             // this will ensure the new distribution information is passed up the chain to the markets
-            _updateAccountDebt(accountId, fundId, collateralType);
+            _updateAccountDebt(accountId, poolId, collateralType);
         }
 
         // this is the most efficient time to check the resulting collateralization ratio, since
@@ -106,7 +106,7 @@ contract VaultModule is
             );
         }
 
-        emit DelegationUpdated(accountId, fundId, collateralType, collateralAmount, leverage);
+        emit DelegationUpdated(accountId, poolId, collateralType, collateralAmount, leverage);
     }
 
     function _calculateDebtShares(
@@ -128,14 +128,14 @@ contract VaultModule is
 
     function mintUSD(
         uint accountId,
-        uint fundId,
+        uint poolId,
         address collateralType,
         uint amount
     ) external override onlyWithPermission(accountId, _MINT_PERMISSION) {
         // check if they have sufficient c-ratio to mint that amount
-        int debt = _updateAccountDebt(accountId, fundId, collateralType);
+        int debt = _updateAccountDebt(accountId, poolId, collateralType);
 
-        (uint collateralValue, , ) = _accountCollateral(accountId, fundId, collateralType);
+        (uint collateralValue, , ) = _accountCollateral(accountId, poolId, collateralType);
 
         int newDebt = debt + int(amount);
 
@@ -143,21 +143,21 @@ contract VaultModule is
             _verifyCollateralRatio(collateralType, uint(newDebt), collateralValue);
         }
 
-        VaultData storage vaultData = _fundVaultStore().fundVaults[fundId][collateralType];
+        VaultData storage vaultData = _poolVaultStore().poolVaults[poolId][collateralType];
         VaultEpochData storage epochData = vaultData.epochData[vaultData.epoch];
 
         epochData.usdDebtDist.updateActorValue(bytes32(accountId), newDebt);
-        _fundModuleStore().funds[fundId].totalLiquidity -= int128(int(amount));
+        _poolModuleStore().pools[poolId].totalLiquidity -= int128(int(amount));
         _getToken(_USD_TOKEN).mint(msg.sender, amount);
     }
 
     function burnUSD(
         uint accountId,
-        uint fundId,
+        uint poolId,
         address collateralType,
         uint amount
     ) external override {
-        int debt = _updateAccountDebt(accountId, fundId, collateralType);
+        int debt = _updateAccountDebt(accountId, poolId, collateralType);
 
         if (debt < 0) {
             // user shouldn't be able to burn more usd if they already have negative debt
@@ -170,11 +170,11 @@ contract VaultModule is
 
         _getToken(_USD_TOKEN).burn(msg.sender, amount);
 
-        VaultData storage vaultData = _fundVaultStore().fundVaults[fundId][collateralType];
+        VaultData storage vaultData = _poolVaultStore().poolVaults[poolId][collateralType];
         VaultEpochData storage epochData = vaultData.epochData[vaultData.epoch];
 
         epochData.usdDebtDist.updateActorValue(bytes32(accountId), debt - int(amount));
-        _fundModuleStore().funds[fundId].totalLiquidity += int128(int(amount));
+        _poolModuleStore().pools[poolId].totalLiquidity += int128(int(amount));
     }
 
     // ---------------------------------------
@@ -183,19 +183,19 @@ contract VaultModule is
 
     function accountCollateralRatio(
         uint accountId,
-        uint fundId,
+        uint poolId,
         address collateralType
     ) external override returns (uint) {
-        return _accountCollateralRatio(fundId, accountId, collateralType);
+        return _accountCollateralRatio(poolId, accountId, collateralType);
     }
 
-    function vaultCollateralRatio(uint fundId, address collateralType) external override returns (uint) {
-        return _vaultCollateralRatio(fundId, collateralType);
+    function vaultCollateralRatio(uint poolId, address collateralType) external override returns (uint) {
+        return _vaultCollateralRatio(poolId, collateralType);
     }
 
     function accountVaultCollateral(
         uint accountId,
-        uint fundId,
+        uint poolId,
         address collateralType
     )
         external
@@ -207,27 +207,27 @@ contract VaultModule is
             uint shares
         )
     {
-        return _accountCollateral(accountId, fundId, collateralType);
+        return _accountCollateral(accountId, poolId, collateralType);
     }
 
     function accountVaultDebt(
         uint accountId,
-        uint fundId,
+        uint poolId,
         address collateralType
     ) external override returns (int) {
-        return _updateAccountDebt(accountId, fundId, collateralType);
+        return _updateAccountDebt(accountId, poolId, collateralType);
     }
 
-    function vaultCollateral(uint fundId, address collateralType) public view override returns (uint amount, uint value) {
-        return _vaultCollateral(fundId, collateralType);
+    function vaultCollateral(uint poolId, address collateralType) public view override returns (uint amount, uint value) {
+        return _vaultCollateral(poolId, collateralType);
     }
 
-    function vaultDebt(uint fundId, address collateralType) public override returns (int) {
-        return _vaultDebt(fundId, collateralType);
+    function vaultDebt(uint poolId, address collateralType) public override returns (int) {
+        return _vaultDebt(poolId, collateralType);
     }
 
-    function totalVaultShares(uint fundId, address collateralType) external view override returns (uint) {
-        VaultData storage vaultData = _fundVaultStore().fundVaults[fundId][collateralType];
+    function totalVaultShares(uint poolId, address collateralType) external view override returns (uint) {
+        VaultData storage vaultData = _poolVaultStore().poolVaults[poolId][collateralType];
         VaultEpochData storage epochData = vaultData.epochData[vaultData.epoch];
 
         return uint(epochData.debtDist.totalShares).mulDecimal(epochData.liquidityMultiplier);

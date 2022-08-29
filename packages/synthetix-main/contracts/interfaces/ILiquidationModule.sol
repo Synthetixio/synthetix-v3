@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 import "../utils/CurvesLibrary.sol";
 
-/// @title Liquidates the collateral for an account in a fund
+/// @title Liquidates the collateral for an account in a pool
 interface ILiquidationModule {
     struct LiqudationInformation {
         CurvesLibrary.PolynomialCurve curve;
@@ -11,10 +11,10 @@ interface ILiquidationModule {
         uint accumulated; // how much accumulation per debt share (updated before anyone enters/leaves the vaults)
     }
 
-    /// @notice liquidates the required collateral of the account delegated to the fundId
+    /// @notice liquidates the required collateral of the account delegated to the poolId
     function liquidate(
         uint accountId,
-        uint fundId,
+        uint poolId,
         address collateralType
     )
         external
@@ -28,16 +28,16 @@ interface ILiquidationModule {
     /// liquidateAsAccountId determines which account to deposit the siezed collateral into (this is necessary particularly if the collateral in the vault is vesting)
     /// Will only liquidate a portion of the debt for the vault if `maxUsd` is supplied
     function liquidateVault(
-        uint fundId,
+        uint poolId,
         address collateralType,
         uint liquidateAsAccountId,
         uint maxUsd
     ) external returns (uint amountRewarded, uint collateralLiquidated);
 
-    /// @notice returns if the account is liquidable on the fundId - collateralType pair
+    /// @notice returns if the account is liquidable on the poolId - collateralType pair
     function isLiquidatable(
         uint accountId,
-        uint fundId,
+        uint poolId,
         address collateralType
     ) external returns (bool);
 }

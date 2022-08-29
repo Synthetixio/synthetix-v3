@@ -1,11 +1,11 @@
 import assert from 'assert/strict';
-import assertBn from '@synthetixio/core-utils/dist/utils/assertions/assert-bignumber';
-import assertRevert from '@synthetixio/core-utils/dist/utils/assertions/assert-revert';
-import assertEvent from '@synthetixio/core-utils/dist/utils/assertions/assert-event';
+import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
+import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
+import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import hre from 'hardhat';
 import { ethers } from 'ethers';
 
-import { bootstrapWithMockMarketAndFund } from '../bootstrap';
+import { bootstrapWithMockMarketAndPool } from '../bootstrap';
 
 describe('MarketManagerModule', function () {
   const {
@@ -13,13 +13,13 @@ describe('MarketManagerModule', function () {
     systems,
     collateralAddress,
     collateralContract,
-    fundId,
+    poolId,
     accountId,
     MockMarket,
     marketId,
     depositAmount,
     restore,
-  } = bootstrapWithMockMarketAndFund();
+  } = bootstrapWithMockMarketAndPool();
 
   const One = ethers.utils.parseEther('1');
   const Hundred = ethers.utils.parseEther('100');
@@ -75,7 +75,7 @@ describe('MarketManagerModule', function () {
     let txn: ethers.providers.TransactionResponse;
 
     before('acquire USD', async () => {
-      await systems().Core.connect(user1).mintUSD(accountId, fundId, collateralAddress(), One);
+      await systems().Core.connect(user1).mintUSD(accountId, poolId, collateralAddress(), One);
     });
 
     it('should not work if user has not approved', async () => {
@@ -111,7 +111,7 @@ describe('MarketManagerModule', function () {
 
       it('accrues no debt', async () => {
         // should only have the one USD minted earlier
-        assertBn.equal(await systems().Core.callStatic.vaultDebt(fundId, collateralAddress()), One);
+        assertBn.equal(await systems().Core.callStatic.vaultDebt(poolId, collateralAddress()), One);
       });
     });
   });
@@ -119,10 +119,10 @@ describe('MarketManagerModule', function () {
   describe('withdraw()', async () => {
     before(restore);
 
-    describe('deposit into the fund', async () => {
+    describe('deposit into the pool', async () => {
       let txn: ethers.providers.TransactionResponse;
       before('mint USD to use market', async () => {
-        await systems().Core.connect(user1).mintUSD(accountId, fundId, collateralAddress(), One);
+        await systems().Core.connect(user1).mintUSD(accountId, poolId, collateralAddress(), One);
         await systems().USD.connect(user1).approve(MockMarket().address, One);
         txn = await MockMarket().connect(user1).buySynth(One);
       });

@@ -80,13 +80,13 @@ export function bootstrap() {
   };
 }
 
-export function bootstrapWithStakedFund() {
+export function bootstrapWithStakedPool() {
   const r = bootstrap();
 
   let aggregator: ethers.Contract;
 
   const accountId = 1;
-  const fundId = 1;
+  const poolId = 1;
   let collateralAddress: string;
   const depositAmount = ethers.utils.parseEther('1000');
 
@@ -123,11 +123,11 @@ export function bootstrapWithStakedFund() {
         true
       );
 
-    // create fund
+    // create pool
     await r
       .systems()
       .Core.connect(owner)
-      .createFund(fundId, await owner.getAddress());
+      .createPool(poolId, await owner.getAddress());
 
     // create user account
     await r.systems().Core.connect(user1).createAccount(accountId);
@@ -141,13 +141,13 @@ export function bootstrapWithStakedFund() {
       .Core.connect(user1)
       .depositCollateral(accountId, collateralAddress, depositAmount.mul(10));
 
-    // invest in the fund
+    // invest in the pool
     await r
       .systems()
       .Core.connect(user1)
       .delegateCollateral(
         accountId,
-        fundId,
+        poolId,
         collateralAddress,
         depositAmount,
         ethers.utils.parseEther('1')
@@ -160,7 +160,7 @@ export function bootstrapWithStakedFund() {
     ...r,
     aggregator: () => aggregator,
     accountId,
-    fundId,
+    poolId,
     collateralContract: () => r.systems().SNX,
     collateralAddress: () => collateralAddress,
     depositAmount,
@@ -168,8 +168,8 @@ export function bootstrapWithStakedFund() {
   };
 }
 
-export function bootstrapWithMockMarketAndFund() {
-  const r = bootstrapWithStakedFund();
+export function bootstrapWithMockMarketAndPool() {
+  const r = bootstrapWithStakedPool();
 
   let MockMarket: ethers.Contract;
   let marketId: ethers.BigNumber;
@@ -194,8 +194,8 @@ export function bootstrapWithMockMarketAndFund() {
     await r
       .systems()
       .Core.connect(owner)
-      .setFundPosition(
-        r.fundId,
+      .setPoolPosition(
+        r.poolId,
         [marketId],
         [ethers.utils.parseEther('1')],
         [ethers.utils.parseEther('1')]

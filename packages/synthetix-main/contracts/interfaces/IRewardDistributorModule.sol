@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 interface IRewardDistributorModule {
-    function setRewardAllocation(uint fundId, uint allocation) external;
+    function setRewardAllocation(uint poolId, uint allocation) external;
 
-    function getRewardAllocation(uint fundId) external view returns (uint);
+    function getRewardAllocation(uint poolId) external view returns (uint);
 }

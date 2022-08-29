@@ -1,7 +1,7 @@
 import { ethers } from 'ethers';
 import hre from 'hardhat';
 
-import assertBn from '@synthetixio/core-utils/dist/utils/assertions/assert-bignumber';
+import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 
 async function insertHeapData(heap: ethers.Contract, count: number, salt = 'salt') {
   const vals = Array.from({ length: count }, (_, index) =>

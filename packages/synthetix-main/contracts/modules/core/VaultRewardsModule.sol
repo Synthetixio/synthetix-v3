@@ -7,23 +7,23 @@ import "@synthetixio/core-contracts/contracts/utils/MathUtil.sol";
 
 import "@synthetixio/core-modules/contracts/mixins/AssociatedSystemsMixin.sol";
 import "../../mixins/AccountRBACMixin.sol";
-import "../../mixins/FundMixin.sol";
+import "../../mixins/PoolMixin.sol";
 
 import "../../utils/SharesLibrary.sol";
 
-import "../../storage/FundVaultStorage.sol";
+import "../../storage/PoolVaultStorage.sol";
 import "../../interfaces/IVaultRewardsModule.sol";
 
-import "../../submodules/FundEventAndErrors.sol";
+import "../../submodules/PoolEventAndErrors.sol";
 
 contract VaultRewardsModule is
     IVaultRewardsModule,
-    FundVaultStorage,
-    FundEventAndErrors,
+    PoolVaultStorage,
+    PoolEventAndErrors,
     AccountRBACMixin,
     OwnableMixin,
     AssociatedSystemsMixin,
-    FundMixin
+    PoolMixin
 {
     using SetUtil for SetUtil.Bytes32Set;
     using MathUtil for uint256;
@@ -37,7 +37,7 @@ contract VaultRewardsModule is
     // ---------------------------------------
 
     function distributeRewards(
-        uint fundId,
+        uint poolId,
         address collateralType,
         uint index,
         address distributor,
@@ -49,7 +49,7 @@ contract VaultRewardsModule is
             revert InvalidParameters("index", "too large");
         }
 
-        VaultData storage vaultData = _fundVaultStore().fundVaults[fundId][collateralType];
+        VaultData storage vaultData = _poolVaultStore().poolVaults[poolId][collateralType];
         VaultEpochData storage epochData = vaultData.epochData[vaultData.epoch];
 
         RewardDistribution[] storage dists = vaultData.rewards;
@@ -63,13 +63,13 @@ contract VaultRewardsModule is
         RewardDistribution storage existingDistribution = dists[index];
 
         // to call this function must be either:
-        // 1. fund owner
+        // 1. pool owner
         // 2. the registered distributor contract
-        if (_ownerOf(fundId) != msg.sender && address(existingDistribution.distributor) != msg.sender) {
+        if (_ownerOf(poolId) != msg.sender && address(existingDistribution.distributor) != msg.sender) {
             revert AccessError.Unauthorized(msg.sender);
         }
 
-        if ((_ownerOf(fundId) != msg.sender && distributor != msg.sender) || distributor == address(0)) {
+        if ((_ownerOf(poolId) != msg.sender && distributor != msg.sender) || distributor == address(0)) {
             revert InvalidParameters("distributor", "must be non-zero");
         }
 
@@ -79,51 +79,51 @@ contract VaultRewardsModule is
 
         existingDistribution.distributor = IRewardDistributor(distributor);
 
-        emit RewardDistributionSet(fundId, collateralType, index, distributor, amount, start, duration);
+        emit RewardDistributionSet(poolId, collateralType, index, distributor, amount, start, duration);
     }
 
     function getAvailableRewards(
-        uint fundId,
+        uint poolId,
         address collateralType,
         uint accountId
     ) external override returns (uint[] memory) {
-        VaultData storage vaultData = _fundVaultStore().fundVaults[fundId][collateralType];
+        VaultData storage vaultData = _poolVaultStore().poolVaults[poolId][collateralType];
         VaultEpochData storage epochData = vaultData.epochData[vaultData.epoch];
         return _updateAvailableRewards(epochData, vaultData.rewards, accountId);
     }
 
-    function getCurrentRewardAccumulation(uint fundId, address collateralType)
+    function getCurrentRewardAccumulation(uint poolId, address collateralType)
         external
         view
         override
         returns (uint[] memory)
     {
-        return _getCurrentRewardAccumulation(fundId, collateralType);
+        return _getCurrentRewardAccumulation(poolId, collateralType);
     }
 
     function claimRewards(
-        uint fundId,
+        uint poolId,
         address collateralType,
         uint accountId
     ) external override returns (uint[] memory) {
-        VaultData storage vaultData = _fundVaultStore().fundVaults[fundId][collateralType];
+        VaultData storage vaultData = _poolVaultStore().poolVaults[poolId][collateralType];
         VaultEpochData storage epochData = vaultData.epochData[vaultData.epoch];
         uint[] memory rewards = _updateAvailableRewards(epochData, vaultData.rewards, accountId);
 
         for (uint i = 0; i < rewards.length; i++) {
             if (rewards[i] > 0) {
                 // todo: reentrancy protection?
-                vaultData.rewards[i].distributor.payout(fundId, collateralType, msg.sender, rewards[i]);
+                vaultData.rewards[i].distributor.payout(poolId, collateralType, msg.sender, rewards[i]);
                 vaultData.rewards[i].actorInfo[accountId].pendingSend = 0;
-                emit RewardsClaimed(fundId, collateralType, accountId, i, rewards[i]);
+                emit RewardsClaimed(poolId, collateralType, accountId, i, rewards[i]);
             }
         }
 
         return rewards;
     }
 
-    function _getCurrentRewardAccumulation(uint fundId, address collateralType) internal view returns (uint[] memory) {
-        VaultData storage vaultData = _fundVaultStore().fundVaults[fundId][collateralType];
+    function _getCurrentRewardAccumulation(uint poolId, address collateralType) internal view returns (uint[] memory) {
+        VaultData storage vaultData = _poolVaultStore().poolVaults[poolId][collateralType];
         VaultEpochData storage epochData = vaultData.epochData[vaultData.epoch];
         RewardDistribution[] storage dists = vaultData.rewards;
 

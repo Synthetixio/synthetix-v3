@@ -1,11 +1,11 @@
 import assert from 'assert/strict';
-import assertBn from '@synthetixio/core-utils/dist/utils/assertions/assert-bignumber';
-import assertRevert from '@synthetixio/core-utils/dist/utils/assertions/assert-revert';
+import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
+import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import hre from 'hardhat';
 import { ethers } from 'ethers';
-import { findEvent } from '@synthetixio/core-utils/dist/utils/ethers/events';
+import { findEvent } from '@synthetixio/core-utils/utils/ethers/events';
 
-import { bootstrap, bootstrapWithMockMarketAndFund } from '../bootstrap';
+import { bootstrap, bootstrapWithMockMarketAndPool } from '../bootstrap';
 
 describe('LiquidationModule', function () {
   const {
@@ -13,13 +13,13 @@ describe('LiquidationModule', function () {
     systems,
     collateralAddress,
     collateralContract,
-    fundId,
+    poolId,
     accountId,
     MockMarket,
     marketId,
     depositAmount,
     restore,
-  } = bootstrapWithMockMarketAndFund();
+  } = bootstrapWithMockMarketAndPool();
 
   let owner: ethers.Signer, user1: ethers.Signer, user2: ethers.Signer;
 
@@ -32,7 +32,7 @@ describe('LiquidationModule', function () {
 
     it('does not allow liquidation of account with healthy c-ratio', async () => {
       await assertRevert(
-        systems().Core.connect(user1).liquidate(accountId, fundId, collateralAddress()),
+        systems().Core.connect(user1).liquidate(accountId, poolId, collateralAddress()),
         'IneligibleForLiquidation("1000000000000000000000", "0", "0", "1500000000000000000")',
         systems().Core
       );
@@ -47,7 +47,7 @@ describe('LiquidationModule', function () {
       before('take out a loan', async () => {
         await systems()
           .Core.connect(user1)
-          .mintUSD(accountId, fundId, collateralAddress(), debtAmount.div(10));
+          .mintUSD(accountId, poolId, collateralAddress(), debtAmount.div(10));
       });
 
       before('going into debt', async () => {
@@ -55,14 +55,14 @@ describe('LiquidationModule', function () {
 
         // sanity
         assertBn.near(
-          await systems().Core.callStatic.vaultDebt(fundId, collateralAddress()),
+          await systems().Core.callStatic.vaultDebt(poolId, collateralAddress()),
           debtAmount
         );
       });
 
       it('cannot liquidate when its the only account in the pool', async () => {
         assertRevert(
-          systems().Core.connect(user2).liquidate(accountId, fundId, collateralAddress()),
+          systems().Core.connect(user2).liquidate(accountId, poolId, collateralAddress()),
           'MustBeVaultLiquidated()',
           systems().Core
         );
@@ -87,12 +87,12 @@ describe('LiquidationModule', function () {
             .Core.connect(user2)
             .depositCollateral(accountId2, collateralAddress(), depositAmount.mul(10));
 
-          // use the zero fund to get minted USD
+          // use the zero pool to get minted USD
           await systems()
             .Core.connect(user2)
             .delegateCollateral(
               accountId2,
-              fundId,
+              poolId,
               collateralAddress(),
               depositAmount.mul(10),
               ethers.utils.parseEther('1')
@@ -100,7 +100,7 @@ describe('LiquidationModule', function () {
         });
 
         before('liquidate', async () => {
-          await systems().Core.connect(user2).liquidate(accountId, fundId, collateralAddress());
+          await systems().Core.connect(user2).liquidate(accountId, poolId, collateralAddress());
         });
 
         it('erases the liquidated account', async () => {
@@ -108,13 +108,13 @@ describe('LiquidationModule', function () {
             (
               await systems().Core.callStatic.accountVaultCollateral(
                 accountId,
-                fundId,
+                poolId,
                 collateralAddress()
               )
             )[0]
           );
           assertBn.isZero(
-            await systems().Core.callStatic.accountVaultDebt(accountId, fundId, collateralAddress())
+            await systems().Core.callStatic.accountVaultDebt(accountId, poolId, collateralAddress())
           );
         });
 
@@ -128,19 +128,19 @@ describe('LiquidationModule', function () {
         it('redistributes debt among remaining staker', async () => {
           // vault should stilel have same amounts (minus collateral from reward)
           assertBn.equal(
-            (await systems().Core.callStatic.vaultCollateral(fundId, collateralAddress()))[0],
+            (await systems().Core.callStatic.vaultCollateral(poolId, collateralAddress()))[0],
             depositAmount.mul(11).sub(liquidationReward)
           );
           assertBn.near(
-            await systems().Core.callStatic.vaultDebt(fundId, collateralAddress()),
+            await systems().Core.callStatic.vaultDebt(poolId, collateralAddress()),
             debtAmount
           );
 
           assertBn.equal(
-            await systems().Core.callStatic.vaultDebt(fundId, collateralAddress()),
+            await systems().Core.callStatic.vaultDebt(poolId, collateralAddress()),
             await systems().Core.callStatic.accountVaultDebt(
               accountId2,
-              fundId,
+              poolId,
               collateralAddress()
             )
           );
@@ -164,7 +164,7 @@ describe('LiquidationModule', function () {
 
     it('does not allow liquidation with 0 max usd', async () => {
       await assertRevert(
-        systems().Core.connect(user1).liquidateVault(fundId, collateralAddress(), accountId, 0),
+        systems().Core.connect(user1).liquidateVault(poolId, collateralAddress(), accountId, 0),
         'InvalidParameters("maxUsd',
         systems().Core
       );
@@ -174,7 +174,7 @@ describe('LiquidationModule', function () {
       await assertRevert(
         systems()
           .Core.connect(user1)
-          .liquidateVault(fundId, collateralAddress(), 382387423936, ethers.utils.parseEther('1')),
+          .liquidateVault(poolId, collateralAddress(), 382387423936, ethers.utils.parseEther('1')),
         'InvalidParameters("liquidateAsAccountId',
         systems().Core
       );
@@ -184,7 +184,7 @@ describe('LiquidationModule', function () {
       await assertRevert(
         systems()
           .Core.connect(user1)
-          .liquidateVault(fundId, collateralAddress(), accountId, ethers.utils.parseEther('1')),
+          .liquidateVault(poolId, collateralAddress(), accountId, ethers.utils.parseEther('1')),
         'IneligibleForLiquidation("1000000000000000000000", "0", "0", "1500000000000000000")',
         systems().Core
       );
@@ -199,7 +199,7 @@ describe('LiquidationModule', function () {
       before('take out a loan', async () => {
         await systems()
           .Core.connect(user1)
-          .mintUSD(accountId, fundId, collateralAddress(), debtAmount.div(10));
+          .mintUSD(accountId, poolId, collateralAddress(), debtAmount.div(10));
       });
 
       before('going into debt', async () => {
@@ -207,7 +207,7 @@ describe('LiquidationModule', function () {
 
         // sanity
         assertBn.near(
-          await systems().Core.callStatic.vaultDebt(fundId, collateralAddress()),
+          await systems().Core.callStatic.vaultDebt(poolId, collateralAddress()),
           debtAmount
         );
       });
@@ -223,7 +223,7 @@ describe('LiquidationModule', function () {
           await systems().Core.connect(user2).createAccount(liquidatorAccountId);
         });
 
-        before('fund liquidator account', async () => {
+        before('pool liquidator account', async () => {
           await collateralContract()
             .connect(user1)
             .transfer(await user2.getAddress(), depositAmount.mul(50));
@@ -234,7 +234,7 @@ describe('LiquidationModule', function () {
             .Core.connect(user2)
             .depositCollateral(liquidatorAccountId, collateralAddress(), depositAmount.mul(50));
 
-          // use the zero fund to get minted USD
+          // use the zero pool to get minted USD
           await systems()
             .Core.connect(user2)
             .delegateCollateral(
@@ -252,7 +252,7 @@ describe('LiquidationModule', function () {
 
         before('record collateral ratio', async () => {
           preCollateralRatio = await systems().Core.callStatic.vaultCollateralRatio(
-            fundId,
+            poolId,
             collateralAddress()
           );
         });
@@ -260,7 +260,7 @@ describe('LiquidationModule', function () {
         before('liquidate', async () => {
           await systems()
             .Core.connect(user2)
-            .liquidateVault(fundId, collateralAddress(), liquidatorAccountId, debtAmount.div(4));
+            .liquidateVault(poolId, collateralAddress(), liquidatorAccountId, debtAmount.div(4));
         });
 
         it('deducts USD from the caller', async () => {
@@ -272,7 +272,7 @@ describe('LiquidationModule', function () {
 
         it('transfers some of vault collateral amount', async () => {
           const sentAmount = depositAmount.sub(
-            (await systems().Core.vaultCollateral(fundId, collateralAddress()))[0]
+            (await systems().Core.vaultCollateral(poolId, collateralAddress()))[0]
           );
 
           assertBn.near(sentAmount, depositAmount.div(4));
@@ -286,7 +286,7 @@ describe('LiquidationModule', function () {
 
         it('keeps market c-ratio the same', async () => {
           assertBn.equal(
-            await systems().Core.callStatic.vaultCollateralRatio(fundId, collateralAddress()),
+            await systems().Core.callStatic.vaultCollateralRatio(poolId, collateralAddress()),
             preCollateralRatio
           );
         });
@@ -297,7 +297,7 @@ describe('LiquidationModule', function () {
           before('liquidate', async () => {
             await systems()
               .Core.connect(user2)
-              .liquidateVault(fundId, collateralAddress(), liquidatorAccountId, debtAmount);
+              .liquidateVault(poolId, collateralAddress(), liquidatorAccountId, debtAmount);
           });
 
           it('sends collateral to the requested accountId', async () => {
@@ -310,8 +310,8 @@ describe('LiquidationModule', function () {
           });
 
           it('vault is reset', async () => {
-            assertBn.isZero((await systems().Core.vaultCollateral(fundId, collateralAddress()))[0]);
-            assertBn.isZero(await systems().Core.callStatic.vaultDebt(fundId, collateralAddress()));
+            assertBn.isZero((await systems().Core.vaultCollateral(poolId, collateralAddress()))[0]);
+            assertBn.isZero(await systems().Core.callStatic.vaultDebt(poolId, collateralAddress()));
           });
 
           it('emits correct event', async () => {});

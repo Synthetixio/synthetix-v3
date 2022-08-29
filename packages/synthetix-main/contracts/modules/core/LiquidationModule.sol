@@ -5,7 +5,7 @@ import "../../interfaces/ILiquidationModule.sol";
 import "../../storage/LiquidationModuleStorage.sol";
 
 import "../../mixins/CollateralMixin.sol";
-import "../../mixins/FundMixin.sol";
+import "../../mixins/PoolMixin.sol";
 import "../../mixins/AccountRBACMixin.sol";
 import "@synthetixio/core-modules/contracts/mixins/AssociatedSystemsMixin.sol";
 
@@ -17,7 +17,7 @@ contract LiquidationsModule is
     LiquidationModuleStorage,
     AssociatedSystemsMixin,
     CollateralMixin,
-    FundMixin,
+    PoolMixin,
     AccountRBACMixin
 {
     using MathUtil for uint;
@@ -26,7 +26,7 @@ contract LiquidationsModule is
 
     event Liquidation(
         uint indexed accountId,
-        uint indexed fundId,
+        uint indexed poolId,
         address indexed collateralType,
         uint debtLiquidated,
         uint collateralLiquidated,
@@ -34,7 +34,7 @@ contract LiquidationsModule is
     );
 
     event VaultLiquidation(
-        uint indexed fundId,
+        uint indexed poolId,
         address indexed collateralType,
         uint debtLiquidated,
         uint collateralLiquidated,
@@ -49,7 +49,7 @@ contract LiquidationsModule is
 
     function liquidate(
         uint accountId,
-        uint fundId,
+        uint poolId,
         address collateralType
     )
         external
@@ -60,9 +60,9 @@ contract LiquidationsModule is
             uint collateralLiquidated
         )
     {
-        int rawDebt = _updateAccountDebt(accountId, fundId, collateralType);
+        int rawDebt = _updateAccountDebt(accountId, poolId, collateralType);
 
-        (uint cl, uint collateralValue, ) = _accountCollateral(accountId, fundId, collateralType);
+        (uint cl, uint collateralValue, ) = _accountCollateral(accountId, poolId, collateralType);
         collateralLiquidated = cl;
 
         if (rawDebt <= 0 || !_isLiquidatable(collateralType, uint(rawDebt), collateralValue)) {
@@ -76,7 +76,7 @@ contract LiquidationsModule is
 
         debtLiquidated = uint(rawDebt);
 
-        VaultData storage vaultData = _fundVaultStore().fundVaults[fundId][collateralType];
+        VaultData storage vaultData = _poolVaultStore().poolVaults[poolId][collateralType];
         VaultEpochData storage epochData = vaultData.epochData[vaultData.epoch];
 
         uint oldShares = epochData.debtDist.getActorShares(bytes32(accountId));
@@ -107,23 +107,23 @@ contract LiquidationsModule is
         epochData.debtDist.distribute(int(debtLiquidated));
         epochData.unclaimedDebt += int128(int(debtLiquidated));
 
-        // update the fund
-        _fundModuleStore().funds[fundId].totalLiquidity -= int128(
+        // update the pool
+        _poolModuleStore().pools[poolId].totalLiquidity -= int128(
             int(amountRewarded.mulDecimal(_getCollateralValue(collateralType)))
         );
 
-        _applyLiquidationToMultiplier(fundId, collateralType, oldShares);
+        _applyLiquidationToMultiplier(poolId, collateralType, oldShares);
 
         // send reward
         collateralType.safeTransfer(msg.sender, amountRewarded);
 
         // TODO: send any remaining collateral to the liquidated account? need to have a liquidation penalty setting or something
 
-        emit Liquidation(accountId, fundId, collateralType, debtLiquidated, collateralLiquidated, amountRewarded);
+        emit Liquidation(accountId, poolId, collateralType, debtLiquidated, collateralLiquidated, amountRewarded);
     }
 
     function liquidateVault(
-        uint fundId,
+        uint poolId,
         address collateralType,
         uint liquidateAsAccountId,
         uint maxUsd
@@ -136,13 +136,13 @@ contract LiquidationsModule is
             revert InvalidParameters("maxUsd", "must be higher than 0");
         }
 
-        VaultData storage vaultData = _fundVaultStore().fundVaults[fundId][collateralType];
+        VaultData storage vaultData = _poolVaultStore().poolVaults[poolId][collateralType];
 
-        int rawVaultDebt = _vaultDebt(fundId, collateralType);
+        int rawVaultDebt = _vaultDebt(poolId, collateralType);
 
         uint vaultDebt = rawVaultDebt < 0 ? 0 : uint(rawVaultDebt);
 
-        (, uint collateralValue) = _vaultCollateral(fundId, collateralType);
+        (, uint collateralValue) = _vaultCollateral(poolId, collateralType);
 
         if (!_isLiquidatable(collateralType, vaultDebt, collateralValue)) {
             revert IneligibleForLiquidation(
@@ -162,8 +162,8 @@ contract LiquidationsModule is
 
             bytes32 vaultActorId = bytes32(uint(uint160(collateralType)));
 
-            // inform the fund that this market is exiting (note the debt has already been rolled into vaultData so no change)
-            _fundModuleStore().funds[fundId].debtDist.updateActorShares(vaultActorId, 0);
+            // inform the pool that this market is exiting (note the debt has already been rolled into vaultData so no change)
+            _poolModuleStore().pools[poolId].debtDist.updateActorShares(vaultActorId, 0);
 
             // reboot the vault
             vaultData.epoch++;
@@ -184,18 +184,18 @@ contract LiquidationsModule is
             epochData.collateralDist.distribute(-int(collateralRewarded));
 
             // TODO this is probably wrong
-            _applyLiquidationToMultiplier(fundId, collateralType, amountLiquidated.divDecimal(vaultDebt));
+            _applyLiquidationToMultiplier(poolId, collateralType, amountLiquidated.divDecimal(vaultDebt));
         }
 
-        // update the fund (debt was repayed but collateral was taken)
-        _fundModuleStore().funds[fundId].totalLiquidity += int128(
+        // update the pool (debt was repayed but collateral was taken)
+        _poolModuleStore().pools[poolId].totalLiquidity += int128(
             int(amountLiquidated) - int(collateralRewarded.mulDecimal(_getCollateralValue(collateralType)))
         );
 
         // award the collateral that was just taken to the specified account
         _depositCollateral(liquidateAsAccountId, collateralType, collateralRewarded);
 
-        emit VaultLiquidation(fundId, collateralType, amountLiquidated, collateralRewarded, collateralRewarded);
+        emit VaultLiquidation(poolId, collateralType, amountLiquidated, collateralRewarded, collateralRewarded);
     }
 
     function _isLiquidatable(
@@ -212,20 +212,20 @@ contract LiquidationsModule is
 
     function isLiquidatable(
         uint accountId,
-        uint fundId,
+        uint poolId,
         address collateralType
     ) external override returns (bool) {
-        int rawDebt = _updateAccountDebt(accountId, fundId, collateralType);
-        (, uint collateralValue, ) = _accountCollateral(accountId, fundId, collateralType);
+        int rawDebt = _updateAccountDebt(accountId, poolId, collateralType);
+        (, uint collateralValue, ) = _accountCollateral(accountId, poolId, collateralType);
         return rawDebt >= 0 && _isLiquidatable(collateralType, uint(rawDebt), collateralValue);
     }
 
     function _applyLiquidationToMultiplier(
-        uint fundId,
+        uint poolId,
         address collateralType,
         uint liquidatedShares
     ) internal {
-        VaultData storage vaultData = _fundVaultStore().fundVaults[fundId][collateralType];
+        VaultData storage vaultData = _poolVaultStore().poolVaults[poolId][collateralType];
         VaultEpochData storage epochData = vaultData.epochData[vaultData.epoch];
 
         uint oldTotalShares = liquidatedShares + epochData.debtDist.totalShares;
@@ -234,8 +234,8 @@ contract LiquidationsModule is
             epochData.debtDist.totalShares;
 
         // update totalLiquidity (to stay exact)
-        _fundModuleStore().funds[fundId].totalLiquidity = int128(
-            _fundModuleStore().funds[fundId].totalLiquidity +
+        _poolModuleStore().pools[poolId].totalLiquidity = int128(
+            _poolModuleStore().pools[poolId].totalLiquidity +
                 int(uint(epochData.debtDist.totalShares).mulDecimal(newLiquidityMultiplier)) -
                 int(oldTotalShares.mulDecimal(epochData.liquidityMultiplier))
         );

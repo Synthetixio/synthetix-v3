@@ -5,9 +5,9 @@ import "../utils/SharesLibrary.sol";
 import "../interfaces/external/IMarket.sol";
 
 import "../storage/MarketManagerStorage.sol";
-import "../storage/FundModuleStorage.sol";
+import "../storage/PoolModuleStorage.sol";
 
-contract MarketManagerMixin is MarketManagerStorage, FundModuleStorage {
+contract MarketManagerMixin is MarketManagerStorage, PoolModuleStorage {
     using MathUtil for uint256;
     using SharesLibrary for SharesLibrary.Distribution;
     using Heap for Heap.Data;
@@ -18,11 +18,11 @@ contract MarketManagerMixin is MarketManagerStorage, FundModuleStorage {
 
     function _rebalanceMarket(
         uint marketId,
-        uint fundId,
+        uint poolId,
         int maxDebtShareValue, // (in USD)
         uint amount // in collateralValue (USD)
     ) internal returns (int debtChange) {
-        // this function is called by the fund at rebalance markets
+        // this function is called by the pool at rebalance markets
         MarketData storage marketData = _marketManagerStore().markets[marketId];
 
         if (marketData.marketAddress == address(0)) {
@@ -31,41 +31,41 @@ contract MarketManagerMixin is MarketManagerStorage, FundModuleStorage {
 
         _distributeMarket(marketData, 9999999999);
 
-        return _adjustFundShares(marketData, fundId, amount, maxDebtShareValue);
+        return _adjustPoolShares(marketData, poolId, amount, maxDebtShareValue);
     }
 
-    function _adjustFundShares(
+    function _adjustPoolShares(
         MarketData storage marketData,
-        uint fundId,
+        uint poolId,
         uint newLiquidity,
-        int newFundMaxShareValue
+        int newPoolMaxShareValue
     ) internal returns (int debtChange) {
-        uint oldLiquidity = marketData.debtDist.getActorShares(bytes32(fundId));
-        int oldFundMaxShareValue = -marketData.inRangeFunds.getById(uint128(fundId)).priority;
+        uint oldLiquidity = marketData.debtDist.getActorShares(bytes32(poolId));
+        int oldPoolMaxShareValue = -marketData.inRangePools.getById(uint128(poolId)).priority;
 
-        //require(oldFundMaxShareValue == 0, "value is not 0");
-        //require(newFundMaxShareValue == 0, "new fund max share value is in fact set");
+        //require(oldPoolMaxShareValue == 0, "value is not 0");
+        //require(newPoolMaxShareValue == 0, "new pool max share value is in fact set");
 
-        if (newFundMaxShareValue <= marketData.debtDist.valuePerShare / 1e9) {
+        if (newPoolMaxShareValue <= marketData.debtDist.valuePerShare / 1e9) {
             // this will ensure calculations below can correctly gauge shares changes
             newLiquidity = 0;
-            marketData.inRangeFunds.extractById(uint128(fundId));
+            marketData.inRangePools.extractById(uint128(poolId));
         } else {
-            marketData.inRangeFunds.insert(uint128(fundId), -int128(int(newFundMaxShareValue)));
+            marketData.inRangePools.insert(uint128(poolId), -int128(int(newPoolMaxShareValue)));
         }
 
-        debtChange = marketData.debtDist.updateActorShares(bytes32(fundId), newLiquidity);
+        debtChange = marketData.debtDist.updateActorShares(bytes32(poolId), newLiquidity);
 
         // recalculate market capacity
-        if (newFundMaxShareValue > marketData.debtDist.valuePerShare / 1e9) {
+        if (newPoolMaxShareValue > marketData.debtDist.valuePerShare / 1e9) {
             marketData.capacity += uint128(
-                uint((newFundMaxShareValue - marketData.debtDist.valuePerShare / 1e9)).mulDecimal(newLiquidity)
+                uint((newPoolMaxShareValue - marketData.debtDist.valuePerShare / 1e9)).mulDecimal(newLiquidity)
             );
         }
 
-        if (oldFundMaxShareValue > marketData.debtDist.valuePerShare / 1e9) {
+        if (oldPoolMaxShareValue > marketData.debtDist.valuePerShare / 1e9) {
             marketData.capacity -= uint128(
-                uint((oldFundMaxShareValue - marketData.debtDist.valuePerShare / 1e9)).mulDecimal(oldLiquidity)
+                uint((oldPoolMaxShareValue - marketData.debtDist.valuePerShare / 1e9)).mulDecimal(oldLiquidity)
             );
         }
     }
@@ -86,17 +86,17 @@ contract MarketManagerMixin is MarketManagerStorage, FundModuleStorage {
             1e9 +
             (((targetBalance - curBalance) * MathUtil.INT_UNIT) / int128(marketData.debtDist.totalShares));
 
-        // this loop should rarely execute the body. When it does, it only executes once for each fund that passes the limit.
-        // since `_distributeMarket` is not run for most funds, market users are not hit with any overhead as a result of this,
+        // this loop should rarely execute the body. When it does, it only executes once for each pool that passes the limit.
+        // since `_distributeMarket` is not run for most pools, market users are not hit with any overhead as a result of this,
         // additionally,
         for (
             uint i = 0;
-            marketData.inRangeFunds.size() > 0 &&
-                -marketData.inRangeFunds.getMax().priority < targetDebtPerDebtShare &&
+            marketData.inRangePools.size() > 0 &&
+                -marketData.inRangePools.getMax().priority < targetDebtPerDebtShare &&
                 i < maxIter;
             i++
         ) {
-            Heap.Node memory nextRemove = marketData.inRangeFunds.extractMax();
+            Heap.Node memory nextRemove = marketData.inRangePools.extractMax();
 
             // distribute to limit
             int debtAmount = (int(int128(marketData.debtDist.totalShares)) *
@@ -112,16 +112,16 @@ contract MarketManagerMixin is MarketManagerStorage, FundModuleStorage {
             // sanity
             require(marketData.debtDist.getActorShares(bytes32(uint(nextRemove.id))) > 0, "no shares on actor removal");
 
-            // detach market from fund (the fund will remain "detached" until the fund manager specifies a new debtDist)
+            // detach market from pool (the pool will remain "detached" until the pool manager specifies a new debtDist)
 
-            int newFundDebt = marketData.debtDist.updateActorShares(bytes32(uint(nextRemove.id)), 0);
-            _fundModuleStore().funds[nextRemove.id].debtDist.distribute(newFundDebt);
+            int newPoolDebt = marketData.debtDist.updateActorShares(bytes32(uint(nextRemove.id)), 0);
+            _poolModuleStore().pools[nextRemove.id].debtDist.distribute(newPoolDebt);
 
-            // note: we don't have to update the capacity because fund max share value - valuePerShare = 0, so no change
-            // and conceptually it makes sense because this funds contribution to the capacity should have been used at this point
+            // note: we don't have to update the capacity because pool max share value - valuePerShare = 0, so no change
+            // and conceptually it makes sense because this pools contribution to the capacity should have been used at this point
 
             if (marketData.debtDist.totalShares == 0) {
-                // we just popped the last fund, can't move the market balance any higher
+                // we just popped the last pool, can't move the market balance any higher
                 marketData.lastMarketBalance = int128(curBalance);
                 return;
             }
