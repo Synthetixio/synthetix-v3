@@ -30,22 +30,12 @@ library Heap{ // default max-heap
     Node memory n;
 
     // MODIFIED: support updates
-    if (self.indices[id] > 0) {
-      n = self.nodes[self.indices[id]];
-      int128 oldPriority = n.priority;
-      n.priority = priority;
-      if (priority > oldPriority) {
-        _bubbleUp(self, n, self.indices[id]);
-      } else if (oldPriority < priority) {
-        _bubbleDown(self, n, self.indices[id]);
-      }
-    }
-    else {
-      self.idCount++;
-      self.nodes.push();
-      n = Node(id, priority);
-      _bubbleUp(self, n, self.nodes.length-1);
-    }
+    extractById(self, id);
+
+    self.idCount++;
+    self.nodes.push();
+    n = Node(id, priority);
+    _bubbleUp(self, n, self.nodes.length-1);
 
     return n;
   }

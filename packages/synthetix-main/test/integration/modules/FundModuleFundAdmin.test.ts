@@ -3,9 +3,8 @@ import assertBn from '@synthetixio/core-utils/dist/utils/assertions/assert-bignu
 import assertRevert from '@synthetixio/core-utils/dist/utils/assertions/assert-revert';
 import hre from 'hardhat';
 import { ethers } from 'ethers';
-import { findEvent } from '@synthetixio/core-utils/dist/utils/ethers/events';
 
-import { bootstrap, bootstrapWithMockMarketAndFund } from '../bootstrap';
+import { bootstrapWithMockMarketAndFund } from '../bootstrap';
 import { snapshotCheckpoint } from '../../utils';
 
 describe('FundModule Admin', function () {
@@ -205,6 +204,12 @@ describe('FundModule Admin', function () {
 
     describe('sets max debt below current debt share', async () => {
       before(restore);
+
+      before('raise maxLiquidityRatio', async () => {
+        // need to do this for the below test to work
+        await systems().Core.connect(owner).setMinLiquidityRatio(ethers.utils.parseEther('0.2'));
+      });
+      
       before('set fund position', async () => {
         await systems().Core.connect(owner).setFundPosition(fundId, [marketId()], [1], [One.mul(One.mul(-1)).div(depositAmount)]);
       });
@@ -299,7 +304,6 @@ describe('FundModule Admin', function () {
               // testing the "soft" limit
               before('set market', async () => {
                 await MockMarket().connect(user1).setBalance(Hundred.mul(2));
-                await systems().Core.connect(user1).vaultDebt(fundId, collateralAddress());
               });
 
               it('has same amount liquidity available + the allowed amount by the vault', async () => {
@@ -317,6 +321,7 @@ describe('FundModule Admin', function () {
               });
 
               it('market collateral value is amount of only vault 2', async () => {
+                await systems().Core.connect(user1).vaultDebt(fundId, collateralAddress());
                 assertBn.equal(await systems().Core.connect(user1).callStatic.marketCollateralValue(marketId()), depositAmount);
               });
             });
@@ -326,6 +331,9 @@ describe('FundModule Admin', function () {
               // testing the "soft" limit
               before('set market', async () => {
                 await MockMarket().connect(user1).setBalance(Hundred.mul(1234));
+
+                // TODO: if the following line is removed/reordered an unusual error appears where `secondFundId` assumes the full amount of debt
+                // we have to investigate this
                 await systems().Core.connect(user1).vaultDebt(fundId, collateralAddress());
                 await systems().Core.connect(user1).vaultDebt(secondFundId, collateralAddress());
               });
@@ -343,12 +351,64 @@ describe('FundModule Admin', function () {
               });
 
               it('the market has no more collateral assigned to it', async () => {
+                await systems().Core.connect(user1).vaultDebt(fundId, collateralAddress());
                 assertBn.equal(await systems().Core.connect(user1).callStatic.marketCollateralValue(marketId()), 0);
               })
             });
           });
         });
-      })
+      });
+    });
+
+    describe('when limit is higher than minLiquidityRatio', async () => {
+      before(restore);
+
+      before('set minLiquidityRatio', async () => {
+        // need to do this for the below test to work
+        await systems().Core.connect(owner).setMinLiquidityRatio(ethers.utils.parseEther('2'));
+      });
+
+      before('set fund position', async () => {
+        await systems().Core.connect(owner).setFundPosition(fundId, [marketId()], [1], [One]);
+        await systems().Core.connect(user1).vaultDebt(fundId, collateralAddress());
+      });
+
+      it('marketLiquidity reflects minLiquidityRatio', async () => {
+        assertBn.equal(await systems().Core.connect(owner).marketLiquidity(marketId()), depositAmount.div(2));
+      });
+
+      describe('when minLiquidityRatio is decreased', async () => {
+        before('set minLiquidityRatio', async () => {
+          await systems().Core.connect(owner).setMinLiquidityRatio(ethers.utils.parseEther('1'));
+
+          // bump the vault
+          await systems().Core.connect(user1).vaultDebt(fundId, collateralAddress());
+        });
+
+        it('marketLiquidity reflects configured by fund', async () => {
+        assertBn.equal(await systems().Core.connect(owner).marketLiquidity(marketId()), depositAmount);
+        });
+      });
+    });
+  });
+
+  describe('setMinLiquidityRatio()', async () => {
+    it('only works for owner', async () => {
+      assertRevert(
+        systems().Core.connect(user1).setMinLiquidityRatio(ethers.utils.parseEther('2')),
+        'Unauthorized',
+        systems().Core
+      )
+    });
+
+    describe('when invoked successfully', async () => {
+      before('set', async () => {
+        await systems().Core.connect(owner).setMinLiquidityRatio(ethers.utils.parseEther('2'));
+      });
+
+      it('is set', async () => {
+        assertBn.equal(await systems().Core.getMinLiquidityRatio(), ethers.utils.parseEther('2'));
+      });
     });
   });
 });

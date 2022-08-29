@@ -43,6 +43,9 @@ contract MarketManagerMixin is MarketManagerStorage, FundModuleStorage {
         uint oldLiquidity = marketData.debtDist.getActorShares(bytes32(fundId));
         int oldFundMaxShareValue = -marketData.inRangeFunds.getById(uint128(fundId)).priority;
 
+        //require(oldFundMaxShareValue == 0, "value is not 0");
+        //require(newFundMaxShareValue == 0, "new fund max share value is in fact set");
+
         if (newFundMaxShareValue <= marketData.debtDist.valuePerShare / 1e9) {
             // this will ensure calculations below can correctly gauge shares changes
             newLiquidity = 0;
@@ -56,11 +59,13 @@ contract MarketManagerMixin is MarketManagerStorage, FundModuleStorage {
 
         // recalculate market capacity
         if (newFundMaxShareValue > marketData.debtDist.valuePerShare / 1e9) {
-            marketData.capacity += uint128(uint((newFundMaxShareValue - marketData.debtDist.valuePerShare / 1e9)).mulDecimal(newLiquidity));
+            marketData.capacity += uint128(uint((newFundMaxShareValue - marketData.debtDist.valuePerShare / 1e9))
+                .mulDecimal(newLiquidity));
         }
 
         if (oldFundMaxShareValue > marketData.debtDist.valuePerShare / 1e9) {
-            marketData.capacity -= uint128(uint((oldFundMaxShareValue - marketData.debtDist.valuePerShare / 1e9)).mulDecimal(oldLiquidity));
+            marketData.capacity -= uint128(uint((oldFundMaxShareValue - marketData.debtDist.valuePerShare / 1e9))
+                .mulDecimal(oldLiquidity));
         }
     }
 

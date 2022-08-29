@@ -38,7 +38,8 @@ describe('Heap',  async () => {
   });
 
   it('extractById()', async () => {
-    const vals = await insertHeapData(heap, 100);
+    await insertHeapData(heap, 100);
+    const vals = await insertHeapData(heap, 100, 'updated');
 
     for (let i = 0;i < 100; i++) {
         const getNode = await heap.getById(i);
@@ -46,6 +47,7 @@ describe('Heap',  async () => {
         await heap.extractById(i);
 
         assertBn.equal(getNode.id, node.id);
+        assertBn.equal(getNode.priority, node.priority);
         assertBn.equal(node.id, i);
         assertBn.equal(node.priority, vals[i]);
     }

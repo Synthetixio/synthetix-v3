@@ -45,19 +45,33 @@ contract FundMixin is FundModuleStorage, FundVaultStorage, FundEventAndErrors, C
         SharesLibrary.Distribution storage fundDist = fundData.debtDist;
 
         // after applying the fund share multiplier, we have USD liquidity
-        uint totalAllocatableLiquidity = fundData.totalLiquidity;
+
+        int totalAllocatableLiquidity = fundData.totalLiquidity;
         int cumulativeDebtChange = 0;
 
         for (uint i = 0; i < fundData.fundDistribution.length; i++) {
             MarketDistribution storage marketDistribution = fundData.fundDistribution[i];
             uint weight = marketDistribution.weight;
-            uint amount = totalAllocatableLiquidity * weight / totalWeights;
+            uint amount = totalAllocatableLiquidity > 0 ? uint(totalAllocatableLiquidity) * weight / totalWeights : 0;
+
+            int permissibleLiquidity = _calculatePermissibleLiquidity(marketDistribution.market);
 
             cumulativeDebtChange +=
-                _rebalanceMarket(marketDistribution.market, fundId, marketDistribution.maxDebtShareValue, amount);
+                _rebalanceMarket(
+                    marketDistribution.market, 
+                    fundId, 
+                    permissibleLiquidity < marketDistribution.maxDebtShareValue ? permissibleLiquidity : marketDistribution.maxDebtShareValue, 
+                    amount
+                );
         }
 
         fundDist.distribute(cumulativeDebtChange);
+    }
+
+    function _calculatePermissibleLiquidity(uint marketId) internal view returns (int) {
+        MarketData storage marketData = _marketManagerStore().markets[marketId];
+        uint minRatio = _fundModuleStore().minLiquidityRatio;
+        return marketData.debtDist.valuePerShare / 1e9 + int(minRatio > 0 ? MathUtil.UNIT.divDecimal(minRatio) : MathUtil.UNIT);
     }
 
     function _distributeFundDebt(uint fundId) internal {
@@ -99,17 +113,19 @@ contract FundMixin is FundModuleStorage, FundVaultStorage, FundEventAndErrors, C
         );
 
         // update totalLiquidity
-        _fundModuleStore().funds[fundId].totalLiquidity =
-            uint128(_fundModuleStore().funds[fundId].totalLiquidity +
-            newVaultShares.mulDecimal(epochData.liquidityMultiplier) -
-            oldVaultShares.mulDecimal(epochData.liquidityMultiplier));
-
-        _distributeFundDebt(fundId);
+        _fundModuleStore().funds[fundId].totalLiquidity +=
+            // change in liquidity value
+            int128(int(newVaultShares.mulDecimal(epochData.liquidityMultiplier)) -
+            int(oldVaultShares.mulDecimal(epochData.liquidityMultiplier)) -
+            // change in vault debt
+            debtChange);
 
         epochData.debtDist.distribute(debtChange);
 
         // total debt unfortunately needs to be cached here for liquidations
         epochData.unclaimedDebt += int128(debtChange);
+
+        _distributeFundDebt(fundId);
     }
 
     function _updateAccountDebt(

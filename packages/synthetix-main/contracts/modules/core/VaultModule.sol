@@ -142,8 +142,10 @@ contract VaultModule is
         VaultEpochData storage epochData = vaultData.epochData[vaultData.epoch];
 
         epochData.usdDebtDist.updateActorValue(bytes32(accountId), newDebt);
+        _fundModuleStore().funds[fundId].totalLiquidity -= int128(int(amount));
         _getToken(_USD_TOKEN).mint(msg.sender, amount);
     }
+    
 
     function burnUSD(
         uint accountId,
@@ -168,6 +170,7 @@ contract VaultModule is
         VaultEpochData storage epochData = vaultData.epochData[vaultData.epoch];
 
         epochData.usdDebtDist.updateActorValue(bytes32(accountId), debt - int(amount));
+        _fundModuleStore().funds[fundId].totalLiquidity += int128(int(amount));
     }
 
     // ---------------------------------------

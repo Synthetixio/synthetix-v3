@@ -122,7 +122,7 @@ contract CollateralModule is
             collateralType
         ];
 
-        collateralData.amount -= amount;
+        collateralData.availableAmount -= amount;
 
         emit CollateralUnstaked(accountId, collateralType, amount, msg.sender);
 
@@ -208,9 +208,9 @@ contract CollateralModule is
         if (!collateralData.isSet) {
             // new collateral
             collateralData.isSet = true;
-            collateralData.amount = amount;
+            collateralData.availableAmount = amount;
         } else {
-            collateralData.amount += amount;
+            collateralData.availableAmount += amount;
         }
     }
 

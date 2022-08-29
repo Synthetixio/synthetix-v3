@@ -5,6 +5,9 @@ import "../utils/SharesLibrary.sol";
 
 contract FundModuleStorage {
     struct FundModuleStore {
+
+        uint minLiquidityRatio;
+
         mapping(uint256 => FundData) funds; // fund metadata by fundId
     }
 
@@ -25,7 +28,8 @@ contract FundModuleStorage {
 
         /// @dev tracks USD liquidity provided by connected vaults. Unfortunately this value has to be computed/updated separately from shares
         /// because liquidations can cause share count to deviate from actual liquidity.
-        uint128 totalLiquidity;
+        /// Is signed integer because a fund could technically go completely underwater, but this is unlikely
+        int128 totalLiquidity;
 
         // we might want to use this in the future, can be renamed when that time comes, possibly liquidation related
         uint128 unused;

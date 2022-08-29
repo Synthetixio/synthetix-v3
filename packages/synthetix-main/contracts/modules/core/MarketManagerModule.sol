@@ -22,7 +22,6 @@ contract MarketManagerModule is
 {
     bytes32 private constant _USD_TOKEN = "USDToken";
 
-
     event MarketRegistered(address indexed market, uint marketId);
 
     error MarketAlreadyRegistered(address market, uint existingMarketId);
@@ -41,6 +40,7 @@ contract MarketManagerModule is
 
         return marketId;
     }
+    
 
     function marketLiquidity(uint marketId) external view override returns (uint) {
         return _marketManagerStore().markets[marketId].capacity;

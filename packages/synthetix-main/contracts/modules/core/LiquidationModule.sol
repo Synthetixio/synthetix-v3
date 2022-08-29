@@ -28,6 +28,7 @@ contract LiquidationsModule is ILiquidationModule, LiquidationModuleStorage, Ass
 
     bytes32 private constant _USD_TOKEN = "USDToken";
 
+    
     function liquidate(
         uint accountId,
         uint fundId,
@@ -80,6 +81,9 @@ contract LiquidationsModule is ILiquidationModule, LiquidationModuleStorage, Ass
         epochData.collateralDist.distribute(int(collateralLiquidated - amountRewarded));
         epochData.debtDist.distribute(int(debtLiquidated));
         epochData.unclaimedDebt += int128(int(debtLiquidated));
+
+        // update the fund
+        _fundModuleStore().funds[fundId].totalLiquidity -= int128(int(amountRewarded.mulDecimal(_getCollateralValue(collateralType))));
 
         _applyLiquidationToMultiplier(fundId, collateralType, oldShares);
 
@@ -161,10 +165,13 @@ contract LiquidationsModule is ILiquidationModule, LiquidationModuleStorage, Ass
             _applyLiquidationToMultiplier(fundId, collateralType, amountLiquidated.divDecimal(vaultDebt));
         }
 
+        // update the fund (debt was repayed but collateral was taken)
+        _fundModuleStore().funds[fundId].totalLiquidity += int128(
+            int(amountLiquidated) - 
+            int(collateralRewarded.mulDecimal(_getCollateralValue(collateralType))));
+
         // award the collateral that was just taken to the specified account
         _depositCollateral(liquidateAsAccountId, collateralType, collateralRewarded);
-
-        // TODO: apply locking curve
 
         emit VaultLiquidation(fundId, collateralType, amountLiquidated, collateralRewarded, collateralRewarded);
     }
@@ -203,9 +210,9 @@ contract LiquidationsModule is ILiquidationModule, LiquidationModuleStorage, Ass
 
         // update totalLiquidity (to stay exact)
         _fundModuleStore().funds[fundId].totalLiquidity = 
-            uint128(uint(_fundModuleStore().funds[fundId].totalLiquidity) +
-            uint(epochData.debtDist.totalShares).mulDecimal(newLiquidityMultiplier) -
-            oldTotalShares.mulDecimal(epochData.liquidityMultiplier));
+            int128(_fundModuleStore().funds[fundId].totalLiquidity +
+            int(uint(epochData.debtDist.totalShares).mulDecimal(newLiquidityMultiplier)) -
+            int(oldTotalShares.mulDecimal(epochData.liquidityMultiplier)));
 
         // update debt adjustments
         epochData.liquidityMultiplier = uint128(newLiquidityMultiplier);

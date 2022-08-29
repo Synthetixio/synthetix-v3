@@ -188,4 +188,15 @@ contract FundModule is IFundModule, FundEventAndErrors, AccountRBACMixin, FundMi
     function getFundName(uint fundId) external view override returns (string memory fundName) {
         return _fundModuleStore().funds[fundId].name;
     }
+
+    // ---------------------------------------
+    // system owner
+    // ---------------------------------------
+    function setMinLiquidityRatio(uint minLiquidityRatio) external override onlyOwner {
+        _fundModuleStore().minLiquidityRatio = minLiquidityRatio;
+    }
+
+    function getMinLiquidityRatio() external view override returns (uint) {
+        return _fundModuleStore().minLiquidityRatio;
+    }
 }

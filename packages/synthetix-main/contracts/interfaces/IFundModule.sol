@@ -44,4 +44,10 @@ interface IFundModule {
 
     /// @notice gets nominatedOwner of fundId
     function nominatedOwnerOf(uint256 fundId) external view returns (address);
+
+    /// @notice places a cap on what proportion of free vault liquidity may be used towards a fund. only owner.
+    function setMinLiquidityRatio(uint minLiquidityRatio) external;
+
+    /// @notice returns the liquidity ratio cap for delegation of liquidity by funds to markets
+    function getMinLiquidityRatio() external view returns (uint);
 }

@@ -36,9 +36,9 @@ contract CollateralStorage {
 
     struct StakedCollateralData {
         bool isSet;
-        uint256 amount; // adjustable (stake/unstake)
-        uint256 assignedAmount; // adjustable (assign/unassign)
+        uint256 availableAmount; // adjustable (stake/unstake)
         CurvesLibrary.PolynomialCurve escrow;
+        uint[] funds;
         StakedCollateralLock[] locks;
     }
 
