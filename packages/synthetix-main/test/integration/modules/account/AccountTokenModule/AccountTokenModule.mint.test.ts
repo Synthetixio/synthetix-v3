@@ -15,12 +15,13 @@ describe('AccountTokenModule', function () {
   describe('AccountTokenModule - Minting', function () {
     describe('when a user attempts to mint an account token via the account system directly', async function () {
       it('reverts', async function () {
+        const { Account } = systems();
+        const address = await user1.getAddress();
+
         await assertRevert(
-          systems()
-            .Account.connect(user1)
-            .mint(await user1.getAddress(), 1),
-          `Unauthorized("${await user1.getAddress()}")`,
-          systems().Account
+          Account.connect(user1).mint(address, 1),
+          `Unauthorized("${address}")`,
+          Account
         );
       });
     });
