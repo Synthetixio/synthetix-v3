@@ -27,7 +27,7 @@ jobs:
           - package: synthetix-main
             coverage-file: packages/synthetix-main/coverage.json
     steps:
-      - name: Install Foundry
+      - name: Install Foundry (Cannon)
         uses: foundry-rs/foundry-toolchain@v1
         with:
           version: nightly
