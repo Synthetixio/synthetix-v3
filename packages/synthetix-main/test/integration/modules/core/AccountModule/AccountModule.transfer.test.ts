@@ -20,7 +20,9 @@ describe('AccountModule', function () {
 
     describe('when an account NFT is transferred', function () {
       before('transfer the account', async function () {
-        await systems().Account.connect(user1).transferFrom(await user1.getAddress(), await user2.getAddress(), 1);
+        await systems()
+          .Account.connect(user1)
+          .transferFrom(await user1.getAddress(), await user2.getAddress(), 1);
       });
 
       it('records the new owner in the account system', async function () {

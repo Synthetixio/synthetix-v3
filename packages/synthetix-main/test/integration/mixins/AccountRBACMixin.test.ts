@@ -16,13 +16,13 @@ describe('AccountRBACMixin', function () {
   let user3: ethers.Signer;
 
   function canStake({ user }: { user: number }) {
-    let value = Math.round(10000 * Math.random());
+    const value = Math.round(10000 * Math.random());
 
     describe(`when user${user} stakes`, function () {
       before('stake', async function () {
         const signer = signers()[user];
 
-        await (await systems().Core.connect(signer).mock_AccountRBACMixin_stake(1, value));
+        await await systems().Core.connect(signer).mock_AccountRBACMixin_stake(1, value);
       });
 
       it('sets the mock value', async function () {
@@ -32,13 +32,13 @@ describe('AccountRBACMixin', function () {
   }
 
   function canMint({ user }: { user: number }) {
-    let value = Math.round(10000 * Math.random());
+    const value = Math.round(10000 * Math.random());
 
     describe(`when user${user} mints`, function () {
       before('mint', async function () {
         const signer = signers()[user];
 
-        await (await systems().Core.connect(signer).mock_AccountRBACMixin_mint(1, value));
+        await await systems().Core.connect(signer).mock_AccountRBACMixin_mint(1, value);
       });
 
       it('sets the mock value', async function () {
@@ -95,7 +95,11 @@ describe('AccountRBACMixin', function () {
 
     describe('when granting stake access to user2', function () {
       before('grant', async function () {
-        await (await systems().Core.connect(user1).grantPermission(1, Permissions.STAKE, await user2.getAddress())).wait();
+        await (
+          await systems()
+            .Core.connect(user1)
+            .grantPermission(1, Permissions.STAKE, await user2.getAddress())
+        ).wait();
       });
 
       canStake({ user: 1 });
@@ -107,7 +111,11 @@ describe('AccountRBACMixin', function () {
 
       describe('when granting mint access to user2', function () {
         before('grant', async function () {
-          await (await systems().Core.connect(user1).grantPermission(1, Permissions.MINT, await user2.getAddress())).wait();
+          await (
+            await systems()
+              .Core.connect(user1)
+              .grantPermission(1, Permissions.MINT, await user2.getAddress())
+          ).wait();
         });
 
         canStake({ user: 1 });
@@ -119,7 +127,11 @@ describe('AccountRBACMixin', function () {
 
         describe('when revoking stake access from user2', function () {
           before('revoke', async function () {
-            await (await systems().Core.connect(user1).revokePermission(1, Permissions.STAKE, await user2.getAddress())).wait();
+            await (
+              await systems()
+                .Core.connect(user1)
+                .revokePermission(1, Permissions.STAKE, await user2.getAddress())
+            ).wait();
           });
 
           canStake({ user: 1 });
@@ -131,7 +143,11 @@ describe('AccountRBACMixin', function () {
 
           describe('when granting stake access to user3', function () {
             before('grant', async function () {
-              await (await systems().Core.connect(user1).grantPermission(1, Permissions.STAKE, await user3.getAddress())).wait();
+              await (
+                await systems()
+                  .Core.connect(user1)
+                  .grantPermission(1, Permissions.STAKE, await user3.getAddress())
+              ).wait();
             });
 
             canStake({ user: 1 });
@@ -143,11 +159,11 @@ describe('AccountRBACMixin', function () {
 
             describe('when the account owner transfers the account to user3', function () {
               before('transfer account', async function () {
-                await (await systems().Account.connect(user1).transferFrom(
-                  await user1.getAddress(),
-                  await user3.getAddress(),
-                  1
-                )).wait();
+                await (
+                  await systems()
+                    .Account.connect(user1)
+                    .transferFrom(await user1.getAddress(), await user3.getAddress(), 1)
+                ).wait();
               });
 
               cannotStake({ user: 1 });

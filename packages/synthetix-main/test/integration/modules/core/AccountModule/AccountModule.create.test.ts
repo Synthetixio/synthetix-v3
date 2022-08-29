@@ -39,7 +39,7 @@ describe('AccountModule', function () {
         const event = findEvent({
           receipt,
           eventName: 'Mint',
-          contract: systems().Account
+          contract: systems().Account,
         });
 
         assert.equal(event.args.owner, await user1.getAddress());
