@@ -102,20 +102,26 @@ export function bootstrapWithStakedFund() {
     const [owner, user1] = r.signers();
 
     // mint initial snx
-    await r.systems().Core.connect(owner).mintInitialSystemToken(await user1.getAddress(), depositAmount.mul(1000));
+    await r
+      .systems()
+      .Core.connect(owner)
+      .mintInitialSystemToken(await user1.getAddress(), depositAmount.mul(1000));
 
     // deploy an aggregator
     collateralAddress = r.systems().SNX.address;
 
-    // add snx as collateral, 
-    await r.systems().Core.connect(owner).adjustCollateralType(
-      collateralAddress, 
-      aggregator.address, 
-      '5000000000000000000', 
-      '1500000000000000000', 
-      '20000000000000000000',
-      true
-    );
+    // add snx as collateral,
+    await r
+      .systems()
+      .Core.connect(owner)
+      .adjustCollateralType(
+        collateralAddress,
+        aggregator.address,
+        '5000000000000000000',
+        '1500000000000000000',
+        '20000000000000000000',
+        true
+      );
 
     // create fund
     await r
@@ -130,7 +136,10 @@ export function bootstrapWithStakedFund() {
     await r.systems().SNX.connect(user1).approve(r.systems().Core.address, depositAmount.mul(10));
 
     // stake collateral
-    await r.systems().Core.connect(user1).depositCollateral(accountId, collateralAddress, depositAmount.mul(10));
+    await r
+      .systems()
+      .Core.connect(user1)
+      .depositCollateral(accountId, collateralAddress, depositAmount.mul(10));
 
     // invest in the fund
     await r
@@ -182,7 +191,8 @@ export function bootstrapWithMockMarketAndFund() {
       ethers.utils.parseEther('1')
     );
 
-    await r.systems()
+    await r
+      .systems()
       .Core.connect(owner)
       .setFundPosition(
         r.fundId,
@@ -198,6 +208,6 @@ export function bootstrapWithMockMarketAndFund() {
     ...r,
     MockMarket: () => MockMarket,
     marketId: () => marketId,
-    restore
+    restore,
   };
 }

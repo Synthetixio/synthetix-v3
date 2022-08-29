@@ -76,10 +76,7 @@ describe('VaultModule', function () {
 
   describe('fresh vault', async () => {
     it('returns 0 debt', async () => {
-      assertBn.equal(
-        await systems().Core.callStatic.vaultDebt(0, collateralAddress()),
-        0
-      );
+      assertBn.equal(await systems().Core.callStatic.vaultDebt(0, collateralAddress()), 0);
     });
 
     it('returns 0 collateral', async () => {
@@ -181,7 +178,7 @@ describe('VaultModule', function () {
           await systems()
             .Core.connect(user2)
             .depositCollateral(user2AccountId, collateralAddress(), depositAmount.mul(2));
-          
+
           await systems().Core.connect(user2).delegateCollateral(
             user2AccountId,
             fundId,
@@ -207,7 +204,7 @@ describe('VaultModule', function () {
           verifyAccountState(user2AccountId, fundId, depositAmount.div(3), depositAmount.div(100))
         );
 
-        // these exposure tests should be enabled when exposures other 
+        // these exposure tests should be enabled when exposures other
         // than 1 are allowed (which might be something we want to do)
         describe.skip('increase exposure', async () => {
           before('delegate', async () => {

@@ -18,7 +18,7 @@ describe('MarketManagerModule', function () {
     MockMarket,
     marketId,
     depositAmount,
-    restore
+    restore,
   } = bootstrapWithMockMarketAndFund();
 
   const One = ethers.utils.parseEther('1');
@@ -47,17 +47,23 @@ describe('MarketManagerModule', function () {
       const expectedMarketId = marketId().add(1);
 
       before('register', async () => {
-        txn = await systems().Core.connect(owner).registerMarket(await user1.getAddress());
+        txn = await systems()
+          .Core.connect(owner)
+          .registerMarket(await user1.getAddress());
       });
 
       it('emits correct event', async () => {
-        await assertEvent(txn, `MarketRegistered("${await user1.getAddress()}", "${expectedMarketId}")`, systems().Core);
+        await assertEvent(
+          txn,
+          `MarketRegistered("${await user1.getAddress()}", "${expectedMarketId}")`,
+          systems().Core
+        );
       });
 
       it('liquidity is zero', async () => {
         assertBn.isZero(await systems().Core.marketLiquidity(expectedMarketId));
       });
-  
+
       it('totalBalance is zero', async () => {
         assertBn.isZero(await systems().Core.marketTotalBalance(expectedMarketId));
       });
@@ -73,10 +79,11 @@ describe('MarketManagerModule', function () {
     });
 
     it('should not work if user has not approved', async () => {
-
       assertRevert(
         MockMarket().connect(user1).buySynth(One),
-        `MarketDepositNotApproved(${MockMarket().address}, ${await user1.getAddress()}, ${One.toString()}, "0")`,
+        `MarketDepositNotApproved(${
+          MockMarket().address
+        }, ${await user1.getAddress()}, ${One.toString()}, "0")`,
         systems().Core
       );
     });
@@ -90,11 +97,14 @@ describe('MarketManagerModule', function () {
       it('takes USD away', async () => {
         assertBn.isZero(await systems().USD.balanceOf(await user1.getAddress()));
       });
-  
+
       it('increases marketLiquidity', async () => {
-        assertBn.equal(await systems().Core.connect(user1).marketLiquidity(marketId()), depositAmount.add(One));
+        assertBn.equal(
+          await systems().Core.connect(user1).marketLiquidity(marketId()),
+          depositAmount.add(One)
+        );
       });
-  
+
       it('leaves totalBalance the same', async () => {
         assertBn.isZero(await systems().Core.connect(user1).marketTotalBalance(marketId()));
       });
@@ -117,7 +127,7 @@ describe('MarketManagerModule', function () {
         txn = await MockMarket().connect(user1).buySynth(One);
       });
 
-      // TODO: this test is tempermental and fails with unusual errors, though 
+      // TODO: this test is tempermental and fails with unusual errors, though
       // I know it is passinga s of writing through other means
       it.skip('reverts if not enough liquidity', async () => {
         await MockMarket().connect(user1).setBalance(Hundred.mul(100000));
@@ -140,7 +150,7 @@ describe('MarketManagerModule', function () {
           const liquidity = await systems().Core.marketLiquidity(marketId());
           assertBn.equal(liquidity, depositAmount.add(One.div(2)));
         });
-  
+
         it('leaves totalBalance the same', async () => {
           assertBn.isZero(await systems().Core.connect(user1).marketTotalBalance(marketId()));
         });
@@ -153,16 +163,16 @@ describe('MarketManagerModule', function () {
           before('mint USD to use market', async () => {
             txn = await MockMarket().connect(user1).sellSynth(One.div(2));
           });
-  
+
           it('decreased available liquidity', async () => {
             const liquidity = await systems().Core.marketLiquidity(marketId());
             assertBn.equal(liquidity, depositAmount);
           });
-    
+
           it('leaves totalBalance the same', async () => {
             assertBn.isZero(await systems().Core.connect(user1).marketTotalBalance(marketId()));
           });
-  
+
           it('makes USD', async () => {
             assertBn.equal(await systems().USD.balanceOf(await user1.getAddress()), One);
           });

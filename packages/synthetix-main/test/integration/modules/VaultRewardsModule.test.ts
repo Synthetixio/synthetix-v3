@@ -48,7 +48,7 @@ describe('VaultRewardsModule', function () {
       describe('in the past', () => {
         before(restore);
         before(async () => {
-          // distribute rewards multiple times to see what happens 
+          // distribute rewards multiple times to see what happens
           // of many distributions happen in the past
           await systems().Core.connect(owner).distributeRewards(
             fundId,
@@ -80,7 +80,7 @@ describe('VaultRewardsModule', function () {
             0
           );
 
-          // one distribution in the future to ensure switching 
+          // one distribution in the future to ensure switching
           // from past to future works as expected
           await systems()
             .Core.connect(owner)
@@ -385,7 +385,7 @@ describe('VaultRewardsModule', function () {
                 );
             });
 
-            // this test is skipped for now because, among all 
+            // this test is skipped for now because, among all
             // the other tests, it does not behave as expected
             it.skip('distributes portion of rewards immediately', async () => {
               const rewards = await systems().Core.callStatic.getAvailableRewards(

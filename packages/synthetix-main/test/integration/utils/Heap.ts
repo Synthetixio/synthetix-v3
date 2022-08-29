@@ -4,7 +4,11 @@ import hre from 'hardhat';
 import assertBn from '@synthetixio/core-utils/dist/utils/assertions/assert-bignumber';
 
 async function insertHeapData(heap: ethers.Contract, count: number, salt = 'salt') {
-  const vals = Array.from({length: count}, (_, index) => ethers.BigNumber.from('0x' + ethers.utils.solidityKeccak256(['string'], [salt + index]).slice(64)));
+  const vals = Array.from({ length: count }, (_, index) =>
+    ethers.BigNumber.from(
+      '0x' + ethers.utils.solidityKeccak256(['string'], [salt + index]).slice(64)
+    )
+  );
   for (const i in vals) {
     await heap.insert(i, vals[i]);
   }
@@ -12,11 +16,13 @@ async function insertHeapData(heap: ethers.Contract, count: number, salt = 'salt
   return vals;
 }
 
-describe('Heap',  async () => {
+describe('Heap', async () => {
   let heap: ethers.Contract;
 
   beforeEach('initialize fresh heap', async () => {
-    heap = (await (await hre.ethers.getContractFactory('MockHeap')).deploy()).connect((await hre.ethers.getSigners())[0]);
+    heap = (await (await hre.ethers.getContractFactory('MockHeap')).deploy()).connect(
+      (await hre.ethers.getSigners())[0]
+    );
   });
 
   it('extractMax()', async () => {
@@ -24,7 +30,7 @@ describe('Heap',  async () => {
 
     let lastPrio = (await heap.callStatic.extractMax()).priority;
 
-    for (let i = 0;i < 100; i++) {
+    for (let i = 0; i < 100; i++) {
       const getNode = await heap.getMax();
       const node = await heap.callStatic.extractMax();
       await heap.extractMax();
@@ -41,7 +47,7 @@ describe('Heap',  async () => {
     await insertHeapData(heap, 100);
     const vals = await insertHeapData(heap, 100, 'updated');
 
-    for (let i = 0;i < 100; i++) {
+    for (let i = 0; i < 100; i++) {
       const getNode = await heap.getById(i);
       const node = await heap.callStatic.extractById(i);
       await heap.extractById(i);
@@ -63,7 +69,7 @@ describe('Heap',  async () => {
 
     let lastPrio = (await heap.callStatic.extractMax()).priority;
 
-    for (let i = 0;i < 100; i++) {
+    for (let i = 0; i < 100; i++) {
       const getNode = await heap.getMax();
       const node = await heap.callStatic.extractMax();
       await heap.extractMax();

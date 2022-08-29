@@ -96,17 +96,18 @@ describe('CollateralModule Deposit', function () {
 
     describe('deposit', () => {
       before('deposit some collateral', async () => {
-        const tx = await systems().Core.connect(user1).depositCollateral(1, Collateral.address, 100);
+        const tx = await systems()
+          .Core.connect(user1)
+          .depositCollateral(1, Collateral.address, 100);
         receipt = await tx.wait();
       });
 
       it('emits an event', async () => {
-
         assertEvent(
           receipt,
           `CollateralDeposited("1", "${Collateral.address}", "100", "${await user1.getAddress()}")`,
           systems().Core
-        )
+        );
       });
 
       it('is deposited', async () => {
@@ -141,7 +142,9 @@ describe('CollateralModule Deposit', function () {
 
       describe('withdraw', () => {
         before('withdraw some collateral', async () => {
-          const tx = await systems().Core.connect(user1).withdrawCollateral(1, Collateral.address, 100);
+          const tx = await systems()
+            .Core.connect(user1)
+            .withdrawCollateral(1, Collateral.address, 100);
           receipt = await tx.wait();
         });
 
@@ -203,7 +206,11 @@ describe('CollateralModule Deposit', function () {
       await assertRevert(
         systems()
           .Core.connect(user2)
-          .grantPermission(1, ethers.utils.formatBytes32String('DEPOSIT'), await user2.getAddress()),
+          .grantPermission(
+            1,
+            ethers.utils.formatBytes32String('DEPOSIT'),
+            await user2.getAddress()
+          ),
         `PermissionDenied("1", "0x41444d494e000000000000000000000000000000000000000000000000000000", "${await user2.getAddress()}")`,
         systems().Core
       );
@@ -220,7 +227,11 @@ describe('CollateralModule Deposit', function () {
       await (
         await systems()
           .Core.connect(user1)
-          .grantPermission(1, ethers.utils.formatBytes32String('WITHDRAW'), await user3.getAddress())
+          .grantPermission(
+            1,
+            ethers.utils.formatBytes32String('WITHDRAW'),
+            await user3.getAddress()
+          )
       ).wait();
     });
 
@@ -253,7 +264,9 @@ describe('CollateralModule Deposit', function () {
 
     describe('when some collateral is deposited', () => {
       before('deposit some collateral', async () => {
-        await (await systems().Core.connect(user2).depositCollateral(1, Collateral.address, 100)).wait();
+        await (
+          await systems().Core.connect(user2).depositCollateral(1, Collateral.address, 100)
+        ).wait();
       });
 
       it('is deposited', async () => {
@@ -276,7 +289,9 @@ describe('CollateralModule Deposit', function () {
 
       describe('when some collateral is withdrawn', () => {
         before('withdraw some collateral', async () => {
-          await (await systems().Core.connect(user3).withdrawCollateral(1, Collateral.address, 100)).wait();
+          await (
+            await systems().Core.connect(user3).withdrawCollateral(1, Collateral.address, 100)
+          ).wait();
         });
 
         it('is withdrawn', async () => {
