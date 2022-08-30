@@ -21,6 +21,7 @@ export async function getRemoteBytecode(address: string, provider: ethers.provid
 
 export async function getSelectors(
   contractAbi: ethers.ContractInterface,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   functionFilter = (_: string) => true
 ) {
   const contract = await new ethers.Contract(

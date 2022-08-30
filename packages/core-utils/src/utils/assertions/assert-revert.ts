@@ -1,6 +1,15 @@
 import { ethers } from 'ethers';
 
-function getErrorData(err: any): string | null {
+interface ErrorObject {
+  data?: string;
+  error?: ErrorObject;
+}
+
+function getErrorData(err: ErrorObject): string | null {
+  if (!err) {
+    throw new Error('Missing error object');
+  }
+
   if (err.data) {
     return err.data;
   }
