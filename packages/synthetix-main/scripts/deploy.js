@@ -19,11 +19,17 @@ module.exports.deploy = async function deploy(runtime, prefix, modules) {
   if (runtime?.getDefaultSigner) {
     console.log('overriding signers');
     const defaultSigner = await runtime.getDefaultSigner('deployer', prefix);
+
     hre.ethers.getSigners = async () => {
       return [defaultSigner];
     };
-    hre.ethers.getSigner = async () => {
-      hre.ethers.getSigners()[0];
+
+    hre.ethers.getSigner = async (address) => {
+      if (address !== defaultSigner.address) {
+        throw new Error(`Invalid signer "${address}"`);
+      }
+
+      return defaultSigner;
     };
   }
 
