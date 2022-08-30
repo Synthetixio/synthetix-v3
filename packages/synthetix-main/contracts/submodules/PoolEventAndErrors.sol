@@ -30,5 +30,4 @@ contract PoolEventAndErrors {
     event RewardsClaimed(uint indexed poolId, address indexed token, uint indexed accountId, uint index, uint amountClaimed);
 
     event PoolPositionSet(uint poolId, uint[] markets, uint[] weights, address executedBy);
-    event DelegationUpdated(uint accountId, uint poolId, address collateralType, uint amount, uint leverage);
 }

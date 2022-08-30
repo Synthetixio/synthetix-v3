@@ -114,7 +114,7 @@ export function bootstrapWithStakedPool() {
     await r
       .systems()
       .Core.connect(owner)
-      .adjustCollateralType(
+      .configureCollateralType(
         collateralAddress,
         aggregator.address,
         '5000000000000000000',

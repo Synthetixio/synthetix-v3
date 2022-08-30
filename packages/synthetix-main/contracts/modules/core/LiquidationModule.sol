@@ -60,9 +60,9 @@ contract LiquidationsModule is
             uint collateralLiquidated
         )
     {
-        int rawDebt = _updateAccountDebt(accountId, poolId, collateralType);
+        int rawDebt = _updatePositionDebt(accountId, poolId, collateralType);
 
-        (uint cl, uint collateralValue, ) = _accountCollateral(accountId, poolId, collateralType);
+        (uint cl, uint collateralValue, ) = _positionCollateral(accountId, poolId, collateralType);
         collateralLiquidated = cl;
 
         if (rawDebt <= 0 || !_isLiquidatable(collateralType, uint(rawDebt), collateralValue)) {
@@ -70,7 +70,7 @@ contract LiquidationsModule is
                 collateralValue,
                 debtLiquidated,
                 debtLiquidated == 0 ? 0 : collateralValue.divDecimal(debtLiquidated),
-                _getCollateralMinimumCRatio(collateralType)
+                _collateralMinimumCRatio(collateralType)
             );
         }
 
@@ -86,7 +86,7 @@ contract LiquidationsModule is
             revert MustBeVaultLiquidated();
         }
 
-        amountRewarded = _getCollateralLiquidationReward(collateralType);
+        amountRewarded = _collateralLiquidationReward(collateralType);
 
         if (amountRewarded >= uint(epochData.collateralDist.totalValue())) {
             // vault is too small to be liquidated socialized
@@ -109,7 +109,7 @@ contract LiquidationsModule is
 
         // update the pool
         _poolModuleStore().pools[poolId].totalLiquidity -= int128(
-            int(amountRewarded.mulDecimal(_getCollateralValue(collateralType)))
+            int(amountRewarded.mulDecimal(_collateralValue(collateralType)))
         );
 
         _applyLiquidationToMultiplier(poolId, collateralType, oldShares);
@@ -140,24 +140,24 @@ contract LiquidationsModule is
 
         int rawVaultDebt = _vaultDebt(poolId, collateralType);
 
-        uint vaultDebt = rawVaultDebt < 0 ? 0 : uint(rawVaultDebt);
+        uint getVaultDebt = rawVaultDebt < 0 ? 0 : uint(rawVaultDebt);
 
         (, uint collateralValue) = _vaultCollateral(poolId, collateralType);
 
-        if (!_isLiquidatable(collateralType, vaultDebt, collateralValue)) {
+        if (!_isLiquidatable(collateralType, getVaultDebt, collateralValue)) {
             revert IneligibleForLiquidation(
                 collateralValue,
-                vaultDebt,
-                vaultDebt > 0 ? collateralValue.divDecimal(vaultDebt) : 0,
-                _getCollateralMinimumCRatio(collateralType)
+                getVaultDebt,
+                getVaultDebt > 0 ? collateralValue.divDecimal(getVaultDebt) : 0,
+                _collateralMinimumCRatio(collateralType)
             );
         }
 
-        if (vaultDebt < maxUsd) {
+        if (getVaultDebt < maxUsd) {
             // full vault liquidation
-            _getToken(_USD_TOKEN).burn(msg.sender, vaultDebt);
+            _getToken(_USD_TOKEN).burn(msg.sender, getVaultDebt);
 
-            amountLiquidated = vaultDebt;
+            amountLiquidated = getVaultDebt;
             collateralRewarded = uint(vaultData.epochData[vaultData.epoch].collateralDist.totalValue());
 
             bytes32 vaultActorId = bytes32(uint(uint160(collateralType)));
@@ -174,7 +174,7 @@ contract LiquidationsModule is
             VaultEpochData storage epochData = vaultData.epochData[vaultData.epoch];
 
             amountLiquidated = maxUsd;
-            collateralRewarded = (uint(epochData.collateralDist.totalValue()) * amountLiquidated) / vaultDebt;
+            collateralRewarded = (uint(epochData.collateralDist.totalValue()) * amountLiquidated) / getVaultDebt;
 
             // repay the debt
             epochData.debtDist.distribute(-int(amountLiquidated));
@@ -184,12 +184,12 @@ contract LiquidationsModule is
             epochData.collateralDist.distribute(-int(collateralRewarded));
 
             // TODO this is probably wrong
-            _applyLiquidationToMultiplier(poolId, collateralType, amountLiquidated.divDecimal(vaultDebt));
+            _applyLiquidationToMultiplier(poolId, collateralType, amountLiquidated.divDecimal(getVaultDebt));
         }
 
         // update the pool (debt was repayed but collateral was taken)
         _poolModuleStore().pools[poolId].totalLiquidity += int128(
-            int(amountLiquidated) - int(collateralRewarded.mulDecimal(_getCollateralValue(collateralType)))
+            int(amountLiquidated) - int(collateralRewarded.mulDecimal(_collateralValue(collateralType)))
         );
 
         // award the collateral that was just taken to the specified account
@@ -207,7 +207,7 @@ contract LiquidationsModule is
             return false;
         }
 
-        return collateralValue.divDecimal(debt) < _getCollateralMinimumCRatio(collateralType);
+        return collateralValue.divDecimal(debt) < _collateralMinimumCRatio(collateralType);
     }
 
     function isLiquidatable(
@@ -215,8 +215,8 @@ contract LiquidationsModule is
         uint poolId,
         address collateralType
     ) external override returns (bool) {
-        int rawDebt = _updateAccountDebt(accountId, poolId, collateralType);
-        (, uint collateralValue, ) = _accountCollateral(accountId, poolId, collateralType);
+        int rawDebt = _updatePositionDebt(accountId, poolId, collateralType);
+        (, uint collateralValue, ) = _positionCollateral(accountId, poolId, collateralType);
         return rawDebt >= 0 && _isLiquidatable(collateralType, uint(rawDebt), collateralValue);
     }
 

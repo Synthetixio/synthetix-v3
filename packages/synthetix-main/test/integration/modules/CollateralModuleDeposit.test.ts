@@ -37,7 +37,7 @@ describe('CollateralModule Deposit', function () {
     await (
       await systems()
         .Core.connect(owner)
-        .adjustCollateralType(Collateral.address, CollateralPriceFeed.address, 400, 200, 0, true)
+        .configureCollateralType(Collateral.address, CollateralPriceFeed.address, 400, 200, 0, true)
     ).wait();
   });
 

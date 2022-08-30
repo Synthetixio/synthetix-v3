@@ -47,7 +47,7 @@ describe('LiquidationModule', function () {
       before('take out a loan', async () => {
         await systems()
           .Core.connect(user1)
-          .mintUSD(accountId, poolId, collateralAddress(), debtAmount.div(10));
+          .mintUsd(accountId, poolId, collateralAddress(), debtAmount.div(10));
       });
 
       before('going into debt', async () => {
@@ -55,7 +55,7 @@ describe('LiquidationModule', function () {
 
         // sanity
         assertBn.near(
-          await systems().Core.callStatic.vaultDebt(poolId, collateralAddress()),
+          await systems().Core.callStatic.getVaultDebt(poolId, collateralAddress()),
           debtAmount
         );
       });
@@ -106,7 +106,7 @@ describe('LiquidationModule', function () {
         it('erases the liquidated account', async () => {
           assertBn.isZero(
             (
-              await systems().Core.callStatic.accountVaultCollateral(
+              await systems().Core.callStatic.getPositionCollateral(
                 accountId,
                 poolId,
                 collateralAddress()
@@ -114,7 +114,7 @@ describe('LiquidationModule', function () {
             )[0]
           );
           assertBn.isZero(
-            await systems().Core.callStatic.accountVaultDebt(accountId, poolId, collateralAddress())
+            await systems().Core.callStatic.getPositionDebt(accountId, poolId, collateralAddress())
           );
         });
 
@@ -128,21 +128,17 @@ describe('LiquidationModule', function () {
         it('redistributes debt among remaining staker', async () => {
           // vault should stilel have same amounts (minus collateral from reward)
           assertBn.equal(
-            (await systems().Core.callStatic.vaultCollateral(poolId, collateralAddress()))[0],
+            (await systems().Core.callStatic.getVaultCollateral(poolId, collateralAddress()))[0],
             depositAmount.mul(11).sub(liquidationReward)
           );
           assertBn.near(
-            await systems().Core.callStatic.vaultDebt(poolId, collateralAddress()),
+            await systems().Core.callStatic.getVaultDebt(poolId, collateralAddress()),
             debtAmount
           );
 
           assertBn.equal(
-            await systems().Core.callStatic.vaultDebt(poolId, collateralAddress()),
-            await systems().Core.callStatic.accountVaultDebt(
-              accountId2,
-              poolId,
-              collateralAddress()
-            )
+            await systems().Core.callStatic.getVaultDebt(poolId, collateralAddress()),
+            await systems().Core.callStatic.getPositionDebt(accountId2, poolId, collateralAddress())
           );
         });
 
@@ -199,7 +195,7 @@ describe('LiquidationModule', function () {
       before('take out a loan', async () => {
         await systems()
           .Core.connect(user1)
-          .mintUSD(accountId, poolId, collateralAddress(), debtAmount.div(10));
+          .mintUsd(accountId, poolId, collateralAddress(), debtAmount.div(10));
       });
 
       before('going into debt', async () => {
@@ -207,7 +203,7 @@ describe('LiquidationModule', function () {
 
         // sanity
         assertBn.near(
-          await systems().Core.callStatic.vaultDebt(poolId, collateralAddress()),
+          await systems().Core.callStatic.getVaultDebt(poolId, collateralAddress()),
           debtAmount
         );
       });
@@ -247,11 +243,11 @@ describe('LiquidationModule', function () {
 
           await systems()
             .Core.connect(user2)
-            .mintUSD(liquidatorAccountId, 0, collateralAddress(), liquidatorAccountStartingBalance);
+            .mintUsd(liquidatorAccountId, 0, collateralAddress(), liquidatorAccountStartingBalance);
         });
 
         before('record collateral ratio', async () => {
-          preCollateralRatio = await systems().Core.callStatic.vaultCollateralRatio(
+          preCollateralRatio = await systems().Core.callStatic.getVaultCollateralRatio(
             poolId,
             collateralAddress()
           );
@@ -272,7 +268,7 @@ describe('LiquidationModule', function () {
 
         it('transfers some of vault collateral amount', async () => {
           const sentAmount = depositAmount.sub(
-            (await systems().Core.vaultCollateral(poolId, collateralAddress()))[0]
+            (await systems().Core.getVaultCollateral(poolId, collateralAddress()))[0]
           );
 
           assertBn.near(sentAmount, depositAmount.div(4));
@@ -286,7 +282,7 @@ describe('LiquidationModule', function () {
 
         it('keeps market c-ratio the same', async () => {
           assertBn.equal(
-            await systems().Core.callStatic.vaultCollateralRatio(poolId, collateralAddress()),
+            await systems().Core.callStatic.getVaultCollateralRatio(poolId, collateralAddress()),
             preCollateralRatio
           );
         });
@@ -310,8 +306,12 @@ describe('LiquidationModule', function () {
           });
 
           it('vault is reset', async () => {
-            assertBn.isZero((await systems().Core.vaultCollateral(poolId, collateralAddress()))[0]);
-            assertBn.isZero(await systems().Core.callStatic.vaultDebt(poolId, collateralAddress()));
+            assertBn.isZero(
+              (await systems().Core.getVaultCollateral(poolId, collateralAddress()))[0]
+            );
+            assertBn.isZero(
+              await systems().Core.callStatic.getVaultDebt(poolId, collateralAddress())
+            );
           });
 
           it('emits correct event', async () => {});

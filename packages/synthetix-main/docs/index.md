@@ -74,13 +74,13 @@ Requirements:
   function grantPermission(uint256 accountId, bytes32 permission, address target) external
   ```
 
-  _Grants `permission` to `target` for account `accountId`.
+Grants `permission` to `target` for account `accountId`.
 
 Requirements:
 
 - `msg.sender` must own the account token with ID `accountId` or have the "admin" permission.
 
-Emits a {PermissionGranted} event._
+Emits a {PermissionGranted} event.
 
 ### revokePermission
 
@@ -122,10 +122,10 @@ Returns `true` if `target` has been granted `permission` for account `accountId`
 
 Returns the address for the account token used by the module.
 
-### accountOwner
+### getAccountOwner
 
   ```solidity
-  function accountOwner(uint256 accountId) external view returns (address)
+  function getAccountOwner(uint256 accountId) external view returns (address)
   ```
 
 Returns the address that owns a given account, as recorded by the system.
@@ -202,13 +202,13 @@ Requirements:
   function grantPermission(uint256 accountId, bytes32 permission, address target) external
   ```
 
-  _Grants `permission` to `target` for account `accountId`.
+Grants `permission` to `target` for account `accountId`.
 
 Requirements:
 
 - `msg.sender` must own the account token with ID `accountId` or have the "admin" permission.
 
-Emits a {PermissionGranted} event._
+Emits a {PermissionGranted} event.
 
 ### revokePermission
 
@@ -250,10 +250,10 @@ Returns `true` if `target` has been granted `permission` for account `accountId`
 
 Returns the address for the account token used by the module.
 
-### accountOwner
+### getAccountOwner
 
   ```solidity
-  function accountOwner(uint256 accountId) external view returns (address)
+  function getAccountOwner(uint256 accountId) external view returns (address)
   ```
 
 Returns the address that owns a given account, as recorded by the system.
@@ -509,10 +509,10 @@ See {setApprovalForAll}_
 
 ## Collateral Module
 
-### CollateralConfigured
+### CollateralTypeConfigured
 
   ```solidity
-  event CollateralConfigured(address collateralType, address priceFeed, uint256 targetCRatio, uint256 minimumCRatio, uint256 liquidationReward, bool enabled)
+  event CollateralTypeConfigured(address collateralType, address priceFeed, uint256 targetCollateralizationRatio, uint256 minimumCollateralizationRatio, uint256 liquidationReward, bool enabled)
   ```
 
 Emitted when a collateral type’s configuration is created or updated.
@@ -533,10 +533,10 @@ Emitted when `amount` of collateral of type `collateralType` is deposited to acc
 
 Emitted when `amount` of collateral of type `collateralType` is withdrawn from account `accountId` by `sender`.
 
-### adjustCollateralType
+### configureCollateralType
 
   ```solidity
-  function adjustCollateralType(address collateralType, address priceFeed, uint256 targetCRatio, uint256 minimumCRatio, uint256 liquidationReward, bool enabled) external
+  function configureCollateralType(address collateralType, address priceFeed, uint256 targetCRatio, uint256 minimumCRatio, uint256 liquidationReward, bool enabled) external
   ```
 
 Creates or updates the configuration for given `collateralType`.
@@ -545,7 +545,7 @@ Requirements:
 
 - `msg.sender` must be the owner of the system.
 
-Emits a {CollateralConfigured} event.
+Emits a {CollateralTypeConfigured} event.
 
 ### getCollateralTypes
 
@@ -607,10 +607,10 @@ Returns the total values pertaining to account `accountId` for `collateralType`.
 
 Returns the amount of collateral of type `collateralType` deposited with account `accountId` that can be withdrawn or delegated.
 
-### CollateralConfigured
+### CollateralTypeConfigured
 
   ```solidity
-  event CollateralConfigured(address collateralType, address priceFeed, uint256 targetCRatio, uint256 minimumCRatio, uint256 liquidationReward, bool enabled)
+  event CollateralTypeConfigured(address collateralType, address priceFeed, uint256 targetCollateralizationRatio, uint256 minimumCollateralizationRatio, uint256 liquidationReward, bool enabled)
   ```
 
 Emitted when a collateral type’s configuration is created or updated.
@@ -631,10 +631,10 @@ Emitted when `amount` of collateral of type `collateralType` is deposited to acc
 
 Emitted when `amount` of collateral of type `collateralType` is withdrawn from account `accountId` by `sender`.
 
-### adjustCollateralType
+### configureCollateralType
 
   ```solidity
-  function adjustCollateralType(address collateralType, address priceFeed, uint256 targetCRatio, uint256 minimumCRatio, uint256 liquidationReward, bool enabled) external
+  function configureCollateralType(address collateralType, address priceFeed, uint256 targetCRatio, uint256 minimumCRatio, uint256 liquidationReward, bool enabled) external
   ```
 
 Creates or updates the configuration for given `collateralType`.
@@ -643,7 +643,7 @@ Requirements:
 
 - `msg.sender` must be the owner of the system.
 
-Emits a {CollateralConfigured} event.
+Emits a {CollateralTypeConfigured} event.
 
 ### getCollateralTypes
 
@@ -1273,85 +1273,29 @@ gets the USDToken address.
 
 ## Vault Module
 
-### delegateCollateral
+### DelegationUpdated
 
   ```solidity
-  function delegateCollateral(uint256 accountId, uint256 poolId, address collateralType, uint256 amount, uint256 leverage) external
+  event DelegationUpdated(uint256 accountId, uint256 poolId, address collateralType, uint256 amount, uint256 leverage, address sender)
   ```
 
-delegates (creates, adjust or remove a delegation) collateral from an account
+Emitted when {sender} updates the delegation of collateral in the specified staking position.
 
-### mintUSD
+### UsdMinted
 
   ```solidity
-  function mintUSD(uint256 accountId, uint256 poolId, address collateralType, uint256 amount) external
+  event UsdMinted(uint256 accountId, uint256 poolId, address collateralType, uint256 amount, address sender)
   ```
 
-mints USD for a pool/account from a collateralType. if CRatio is valid
+Emitted when {sender} mints {amount} of snxUSD with the specified staking position.
 
-### burnUSD
+### UsdBurned
 
   ```solidity
-  function burnUSD(uint256 accountId, uint256 poolId, address collateralType, uint256 amount) external
+  event UsdBurned(uint256 accountId, uint256 poolId, address collateralType, uint256 amount, address sender)
   ```
 
-burns USD for a pool/account from a collateralType
-
-### accountCollateralRatio
-
-  ```solidity
-  function accountCollateralRatio(uint256 accountId, uint256 poolId, address collateralType) external returns (uint256)
-  ```
-
-gets the account collateral value divided by the latest vault debt
-
-### accountVaultDebt
-
-  ```solidity
-  function accountVaultDebt(uint256 accountId, uint256 poolId, address collateralType) external returns (int256)
-  ```
-
-gets the account debt in a pool for a collateral
-
-### accountVaultCollateral
-
-  ```solidity
-  function accountVaultCollateral(uint256 accountId, uint256 poolId, address collateralType) external view returns (uint256 amount, uint256 value, uint256 shares)
-  ```
-
-gets the account collateral value in a pool for a collateral
-
-### vaultDebt
-
-  ```solidity
-  function vaultDebt(uint256 poolId, address collateralType) external returns (int256)
-  ```
-
-gets the total pool debt
-
-### vaultCollateral
-
-  ```solidity
-  function vaultCollateral(uint256 poolId, address collateralType) external returns (uint256 amount, uint256 value)
-  ```
-
-gets total vault collateral and its value
-
-### vaultCollateralRatio
-
-  ```solidity
-  function vaultCollateralRatio(uint256 poolId, address collateralType) external returns (uint256)
-  ```
-
-gets the vault collateral value divided by latest vault debt
-
-### totalVaultShares
-
-  ```solidity
-  function totalVaultShares(uint256 poolId, address collateralType) external view returns (uint256)
-  ```
-
-gets the total pool debtShares
+Emitted when {sender} burns {amount} of snxUSD with the specified staking position.
 
 ### delegateCollateral
 
@@ -1359,79 +1303,303 @@ gets the total pool debtShares
   function delegateCollateral(uint256 accountId, uint256 poolId, address collateralType, uint256 amount, uint256 leverage) external
   ```
 
-delegates (creates, adjust or remove a delegation) collateral from an account
+Delegates (creates, adjust or remove a delegation) collateral from an account.
 
-### mintUSD
+Requirements:
 
-  ```solidity
-  function mintUSD(uint256 accountId, uint256 poolId, address collateralType, uint256 amount) external
-  ```
+- `msg.sender` must be the owner of the account, have the `ADMIN` permission, or have the `DELEGATE` permission.
+- If increasing the amount delegated, it must not exceed the available collateral (`getAccountAvailableCollateral`) associated with the account.
 
-mints USD for a pool/account from a collateralType. if CRatio is valid
+Emits a {DelegationUpdated} event.
 
-### burnUSD
-
-  ```solidity
-  function burnUSD(uint256 accountId, uint256 poolId, address collateralType, uint256 amount) external
-  ```
-
-burns USD for a pool/account from a collateralType
-
-### accountCollateralRatio
+### mintUsd
 
   ```solidity
-  function accountCollateralRatio(uint256 accountId, uint256 poolId, address collateralType) external returns (uint256)
+  function mintUsd(uint256 accountId, uint256 poolId, address collateralType, uint256 amount) external
   ```
 
-gets the account collateral value divided by the latest vault debt
+Mints {amount} of snxUSD with the specified staking position.
 
-### accountVaultDebt
+Requirements:
+
+- `msg.sender` must be the owner of the account, have the `ADMIN` permission, or have the `MINT` permission.
+- After minting, the collateralization ratio of the staking position must not be below the target collateralization ratio for the corresponding collateral type.
+
+Emits a {UsdMinted} event.
+
+### burnUsd
 
   ```solidity
-  function accountVaultDebt(uint256 accountId, uint256 poolId, address collateralType) external returns (int256)
+  function burnUsd(uint256 accountId, uint256 poolId, address collateralType, uint256 amount) external
   ```
 
-gets the account debt in a pool for a collateral
+Burns {amount} of snxUSD with the specified staking position.
 
-### accountVaultCollateral
+Requirements:
+
+- `msg.sender` must be the owner of the account, have the `ADMIN` permission, or have the `BURN` permission.
+
+Emits a {UsdMinted} event.
+
+### getPositionCollateralizationRatio
 
   ```solidity
-  function accountVaultCollateral(uint256 accountId, uint256 poolId, address collateralType) external view returns (uint256 amount, uint256 value, uint256 shares)
+  function getPositionCollateralizationRatio(uint256 accountId, uint256 poolId, address collateralType) external returns (uint256)
   ```
 
-gets the account collateral value in a pool for a collateral
+Returns the collateralization ratio of the specified staking position. If debt is negative, this function will return 0.
 
-### vaultDebt
+  _Call this function using `callStatic` to treat it as a view function.
+The return value is a percentage with 18 decimals places._
+
+### getPositionDebt
 
   ```solidity
-  function vaultDebt(uint256 poolId, address collateralType) external returns (int256)
+  function getPositionDebt(uint256 accountId, uint256 poolId, address collateralType) external returns (int256)
   ```
 
-gets the total pool debt
+Returns the debt of the specified staking position. Credit is expressed as negative debt.
 
-### vaultCollateral
+  _Call this function using `callStatic` to treat it as a view function.
+The return value is denominated in dollars with 18 decimal places._
+
+### getPositionCollateral
 
   ```solidity
-  function vaultCollateral(uint256 poolId, address collateralType) external returns (uint256 amount, uint256 value)
+  function getPositionCollateral(uint256 accountId, uint256 poolId, address collateralType) external view returns (uint256 collateralAmount, uint256 collateralValue)
   ```
 
-gets total vault collateral and its value
+Returns the amount and value of the collateral associated with the specified staking position.
 
-### vaultCollateralRatio
+  _Call this function using `callStatic` to treat it as a view function.
+collateralAmount is represented as an integer with 18 decimals.
+collateralValue is represented as an integer with the number of decimals specified by the collateralType._
+
+### getPositionPoolShares
 
   ```solidity
-  function vaultCollateralRatio(uint256 poolId, address collateralType) external returns (uint256)
+  function getPositionPoolShares(uint256 accountId, uint256 poolId, address collateralType) external view returns (uint256)
   ```
 
-gets the vault collateral value divided by latest vault debt
+Returns the number of shares associated with the specified staking position.
 
-### totalVaultShares
+  _The return value is represented as an integer with 18 decimals._
+
+### getPosition
 
   ```solidity
-  function totalVaultShares(uint256 poolId, address collateralType) external view returns (uint256)
+  function getPosition(uint256 accountId, uint256 poolId, address collateralType) external returns (uint256 collateralAmount, uint256 collateralValue, uint256 poolShares, int256 debt, uint256 collateralizationRatio)
   ```
 
-gets the total pool debtShares
+Returns all information pertaining to a specified staking position in the vault module.
+
+### getVaultDebt
+
+  ```solidity
+  function getVaultDebt(uint256 poolId, address collateralType) external returns (int256)
+  ```
+
+Returns the total debt (or credit) that the vault is responsible for. Credit is expressed as negative debt.
+
+  _Call this function using `callStatic` to treat it as a view function.
+The return value is denominated in dollars with 18 decimal places._
+
+### getVaultCollateral
+
+  ```solidity
+  function getVaultCollateral(uint256 poolId, address collateralType) external returns (uint256 collateralAmount, uint256 collateralValue)
+  ```
+
+Returns the amount and value of the collateral held by the vault.
+
+  _Call this function using `callStatic` to treat it as a view function.
+collateralAmount is represented as an integer with 18 decimals.
+collateralValue is represented as an integer with the number of decimals specified by the collateralType._
+
+### getVaultCollateralRatio
+
+  ```solidity
+  function getVaultCollateralRatio(uint256 poolId, address collateralType) external returns (uint256)
+  ```
+
+Returns the collateralization ratio of the vault. If debt is negative, this function will return 0.
+
+  _Call this function using `callStatic` to treat it as a view function.
+The return value is a percentage with 18 decimals places._
+
+### getVaultShares
+
+  ```solidity
+  function getVaultShares(uint256 poolId, address collateralType) external view returns (uint256)
+  ```
+
+Returns the total number of shares issued by this vault.
+
+  _The return value is represented as an integer with 18 decimals._
+
+### DelegationUpdated
+
+  ```solidity
+  event DelegationUpdated(uint256 accountId, uint256 poolId, address collateralType, uint256 amount, uint256 leverage, address sender)
+  ```
+
+Emitted when {sender} updates the delegation of collateral in the specified staking position.
+
+### UsdMinted
+
+  ```solidity
+  event UsdMinted(uint256 accountId, uint256 poolId, address collateralType, uint256 amount, address sender)
+  ```
+
+Emitted when {sender} mints {amount} of snxUSD with the specified staking position.
+
+### UsdBurned
+
+  ```solidity
+  event UsdBurned(uint256 accountId, uint256 poolId, address collateralType, uint256 amount, address sender)
+  ```
+
+Emitted when {sender} burns {amount} of snxUSD with the specified staking position.
+
+### delegateCollateral
+
+  ```solidity
+  function delegateCollateral(uint256 accountId, uint256 poolId, address collateralType, uint256 amount, uint256 leverage) external
+  ```
+
+Delegates (creates, adjust or remove a delegation) collateral from an account.
+
+Requirements:
+
+- `msg.sender` must be the owner of the account, have the `ADMIN` permission, or have the `DELEGATE` permission.
+- If increasing the amount delegated, it must not exceed the available collateral (`getAccountAvailableCollateral`) associated with the account.
+
+Emits a {DelegationUpdated} event.
+
+### mintUsd
+
+  ```solidity
+  function mintUsd(uint256 accountId, uint256 poolId, address collateralType, uint256 amount) external
+  ```
+
+Mints {amount} of snxUSD with the specified staking position.
+
+Requirements:
+
+- `msg.sender` must be the owner of the account, have the `ADMIN` permission, or have the `MINT` permission.
+- After minting, the collateralization ratio of the staking position must not be below the target collateralization ratio for the corresponding collateral type.
+
+Emits a {UsdMinted} event.
+
+### burnUsd
+
+  ```solidity
+  function burnUsd(uint256 accountId, uint256 poolId, address collateralType, uint256 amount) external
+  ```
+
+Burns {amount} of snxUSD with the specified staking position.
+
+Requirements:
+
+- `msg.sender` must be the owner of the account, have the `ADMIN` permission, or have the `BURN` permission.
+
+Emits a {UsdMinted} event.
+
+### getPositionCollateralizationRatio
+
+  ```solidity
+  function getPositionCollateralizationRatio(uint256 accountId, uint256 poolId, address collateralType) external returns (uint256)
+  ```
+
+Returns the collateralization ratio of the specified staking position. If debt is negative, this function will return 0.
+
+  _Call this function using `callStatic` to treat it as a view function.
+The return value is a percentage with 18 decimals places._
+
+### getPositionDebt
+
+  ```solidity
+  function getPositionDebt(uint256 accountId, uint256 poolId, address collateralType) external returns (int256)
+  ```
+
+Returns the debt of the specified staking position. Credit is expressed as negative debt.
+
+  _Call this function using `callStatic` to treat it as a view function.
+The return value is denominated in dollars with 18 decimal places._
+
+### getPositionCollateral
+
+  ```solidity
+  function getPositionCollateral(uint256 accountId, uint256 poolId, address collateralType) external view returns (uint256 collateralAmount, uint256 collateralValue)
+  ```
+
+Returns the amount and value of the collateral associated with the specified staking position.
+
+  _Call this function using `callStatic` to treat it as a view function.
+collateralAmount is represented as an integer with 18 decimals.
+collateralValue is represented as an integer with the number of decimals specified by the collateralType._
+
+### getPositionPoolShares
+
+  ```solidity
+  function getPositionPoolShares(uint256 accountId, uint256 poolId, address collateralType) external view returns (uint256)
+  ```
+
+Returns the number of shares associated with the specified staking position.
+
+  _The return value is represented as an integer with 18 decimals._
+
+### getPosition
+
+  ```solidity
+  function getPosition(uint256 accountId, uint256 poolId, address collateralType) external returns (uint256 collateralAmount, uint256 collateralValue, uint256 poolShares, int256 debt, uint256 collateralizationRatio)
+  ```
+
+Returns all information pertaining to a specified staking position in the vault module.
+
+### getVaultDebt
+
+  ```solidity
+  function getVaultDebt(uint256 poolId, address collateralType) external returns (int256)
+  ```
+
+Returns the total debt (or credit) that the vault is responsible for. Credit is expressed as negative debt.
+
+  _Call this function using `callStatic` to treat it as a view function.
+The return value is denominated in dollars with 18 decimal places._
+
+### getVaultCollateral
+
+  ```solidity
+  function getVaultCollateral(uint256 poolId, address collateralType) external returns (uint256 collateralAmount, uint256 collateralValue)
+  ```
+
+Returns the amount and value of the collateral held by the vault.
+
+  _Call this function using `callStatic` to treat it as a view function.
+collateralAmount is represented as an integer with 18 decimals.
+collateralValue is represented as an integer with the number of decimals specified by the collateralType._
+
+### getVaultCollateralRatio
+
+  ```solidity
+  function getVaultCollateralRatio(uint256 poolId, address collateralType) external returns (uint256)
+  ```
+
+Returns the collateralization ratio of the vault. If debt is negative, this function will return 0.
+
+  _Call this function using `callStatic` to treat it as a view function.
+The return value is a percentage with 18 decimals places._
+
+### getVaultShares
+
+  ```solidity
+  function getVaultShares(uint256 poolId, address collateralType) external view returns (uint256)
+  ```
+
+Returns the total number of shares issued by this vault.
+
+  _The return value is represented as an integer with 18 decimals._
 
 ## Vault Module Storage
 

@@ -34,7 +34,14 @@ describe('CollateralManagerConfiguration (SCCP)', function () {
     await (
       await systems()
         .Core.connect(systemOwner)
-        .adjustCollateralType(Collateral.address, CollateralPriceFeed.address, 400, 200, 0, false)
+        .configureCollateralType(
+          Collateral.address,
+          CollateralPriceFeed.address,
+          400,
+          200,
+          0,
+          false
+        )
     ).wait();
   });
 
@@ -71,7 +78,7 @@ describe('CollateralManagerConfiguration (SCCP)', function () {
 
       const tx = await systems()
         .Core.connect(systemOwner)
-        .adjustCollateralType(
+        .configureCollateralType(
           AnotherCollateral.address,
           AnotherCollateralPriceFeed.address,
           400,
@@ -99,7 +106,7 @@ describe('CollateralManagerConfiguration (SCCP)', function () {
       before('updates the collateral', async () => {
         const tx = await systems()
           .Core.connect(systemOwner)
-          .adjustCollateralType(
+          .configureCollateralType(
             AnotherCollateral.address,
             AnotherCollateralPriceFeed.address,
             300,
@@ -123,7 +130,7 @@ describe('CollateralManagerConfiguration (SCCP)', function () {
       before('disables the collateral', async () => {
         const tx = await systems()
           .Core.connect(systemOwner)
-          .adjustCollateralType(
+          .configureCollateralType(
             AnotherCollateral.address,
             AnotherCollateralPriceFeed.address,
             400,
@@ -176,7 +183,7 @@ describe('CollateralManagerConfiguration (SCCP)', function () {
       await assertRevert(
         systems()
           .Core.connect(user1)
-          .adjustCollateralType(
+          .configureCollateralType(
             OtherCollateral.address,
             OtherCollateralPriceFeed.address,
             400,
@@ -193,7 +200,7 @@ describe('CollateralManagerConfiguration (SCCP)', function () {
       await assertRevert(
         systems()
           .Core.connect(user1)
-          .adjustCollateralType(
+          .configureCollateralType(
             Collateral.address,
             CollateralPriceFeed.address,
             300,

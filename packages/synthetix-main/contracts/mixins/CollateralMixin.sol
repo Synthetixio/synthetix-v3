@@ -23,7 +23,7 @@ contract CollateralMixin is CollateralStorage, PoolVaultStorage {
         _;
     }
 
-    function _getCollateralValue(address collateralType) internal view returns (uint) {
+    function _collateralValue(address collateralType) internal view returns (uint) {
         (, int256 answer, , , ) = IAggregatorV3Interface(_collateralStore().collateralsData[collateralType].priceFeed)
             .latestRoundData();
 
@@ -88,15 +88,15 @@ contract CollateralMixin is CollateralStorage, PoolVaultStorage {
         return CurvesLibrary.calculateValueAtCurvePoint(escrow, block.timestamp);
     }
 
-    function _getCollateralTargetCRatio(address collateralType) internal view returns (uint) {
+    function _collateralTargetCRatio(address collateralType) internal view returns (uint) {
         return _collateralStore().collateralsData[collateralType].targetCRatio;
     }
 
-    function _getCollateralMinimumCRatio(address collateralType) internal view returns (uint) {
+    function _collateralMinimumCRatio(address collateralType) internal view returns (uint) {
         return _collateralStore().collateralsData[collateralType].minimumCRatio;
     }
 
-    function _getCollateralLiquidationReward(address collateralType) internal view returns (uint) {
+    function _collateralLiquidationReward(address collateralType) internal view returns (uint) {
         return _collateralStore().collateralsData[collateralType].liquidationReward;
     }
 
