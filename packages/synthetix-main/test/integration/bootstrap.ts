@@ -21,8 +21,10 @@ async function loadSystems(provider: ethers.providers.Provider) {
   return systems;
 }
 
+let _provider: ethers.providers.JsonRpcProvider;
+
 export function bootstrap() {
-  let provider: ethers.providers.JsonRpcProvider;
+  // let provider: ethers.providers.JsonRpcProvider;
   let signers: ethers.Signer[];
 
   let systems: { [key: string]: ethers.Contract };
@@ -33,7 +35,9 @@ export function bootstrap() {
 
     await hre.run('cannon:build');
 
-    provider = new ethers.providers.JsonRpcProvider('http://localhost:8545');
+    if (!_provider) {
+      _provider = new ethers.providers.JsonRpcProvider('http://localhost:8545');
+    }
 
     signers = [];
 
@@ -57,11 +61,11 @@ export function bootstrap() {
     // that we always have default accounts to test stuff
     for (let i = 0; i < defaultAddresses.length - 1; i++) {
       const signer = rawSigs[i]
-        ? await provider.getSigner(await rawSigs[i].getAddress())
-        : new ethers.Wallet(defaultAddresses[i], provider);
+        ? await _provider.getSigner(await rawSigs[i].getAddress())
+        : new ethers.Wallet(defaultAddresses[i], _provider);
 
-      await provider.send('hardhat_impersonateAccount', [await signer.getAddress()]);
-      await provider.send('hardhat_setBalance', [
+      await _provider.send('hardhat_impersonateAccount', [await signer.getAddress()]);
+      await _provider.send('hardhat_setBalance', [
         await signer.getAddress(),
         '10000000000000000000000',
       ]);
@@ -69,11 +73,11 @@ export function bootstrap() {
       signers.push(signer);
     }
 
-    systems = await loadSystems(provider);
+    systems = await loadSystems(_provider);
   });
 
   return {
-    provider: () => provider,
+    provider: () => _provider,
     signers: () => signers,
     owner: () => signers[0],
     systems: () => systems,
