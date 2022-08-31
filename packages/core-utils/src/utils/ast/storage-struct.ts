@@ -1,6 +1,6 @@
-import { findContractNodeVariables, findContractNodeStructs } from './finders';
-
 import { ContractDefinition, StructDefinition } from 'solidity-ast';
+
+import { findContractNodeStructs, findContractNodeVariables } from './finders';
 
 export type StructMember = {
   name: string;
@@ -43,7 +43,9 @@ function _flatStructMembers(
   for (const currentContractNode of contractNodes) {
     for (const currentStructDefinition of findContractNodeStructs(currentContractNode)) {
       if (canonicalName === currentStructDefinition.canonicalName) {
-        for (const member of findContractNodeVariables(currentStructDefinition as any)) {
+        for (const member of findContractNodeVariables(
+          currentStructDefinition as StructDefinition
+        )) {
           // TODO
           members.push({
             name: member.name,

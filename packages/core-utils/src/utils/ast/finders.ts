@@ -61,7 +61,7 @@ export function findContractStateVariables(contractNode: StructDefinition) {
 export function findYulStorageSlotAssignments(contractNode: ContractDefinition) {
   return Array.from(findAll('YulAssignment', contractNode))
     .filter((assignment) => assignment.variableNames[0].name.endsWith('.slot'))
-    .map((assignment) => (assignment.value as any).value); // TODO
+    .map((assignment) => (assignment.value as { value?: unknown }).value); // TODO
 }
 
 /**

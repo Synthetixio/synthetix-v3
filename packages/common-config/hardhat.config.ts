@@ -1,20 +1,20 @@
-import path from 'node:path';
+import '@nomiclabs/hardhat-ethers';
+import 'hardhat-contract-sizer';
+import 'solidity-coverage';
+import '@synthetixio/hardhat-router';
+import '@synthetixio/cli';
+import 'hardhat-cannon';
+
 import dotenv from 'dotenv';
+import path from 'node:path';
 
 // Load common .env file from root
 dotenv.config({ path: path.resolve(__dirname, '..', '..', '.env') });
 // Load common .env file at ./packages/config-common/.env
 dotenv.config({ path: path.resolve(__dirname, '.env') });
 
-import '@nomiclabs/hardhat-ethers';
-import 'hardhat-contract-sizer';
-import 'solidity-coverage';
-import '@synthetixio/hardhat-router';
-import '@synthetixio/cli';
-
-import 'hardhat-cannon';
-
 const config = {
+  defaultNetwork: 'local',
   solidity: {
     version: '0.8.11',
     settings: {
