@@ -348,7 +348,7 @@ describe('VaultModule', function () {
           before('repay debt', async () => {
             await systems()
               .Core.connect(user2)
-              .burnUSD(user2AccountId, poolId, collateralAddress(), depositAmount.div(100));
+              .burnUsd(user2AccountId, poolId, collateralAddress(), depositAmount.div(100));
           });
 
           before('delegate', async () => {
@@ -506,7 +506,7 @@ describe('VaultModule', function () {
       before('other account burn', async () => {
         await systems()
           .Core.connect(user2)
-          .burnUSD(accountId, poolId, collateralAddress(), depositAmount.div(10));
+          .burnUsd(accountId, poolId, collateralAddress(), depositAmount.div(10));
       });
 
       it('has correct debt', verifyAccountState(accountId, poolId, depositAmount, 0));

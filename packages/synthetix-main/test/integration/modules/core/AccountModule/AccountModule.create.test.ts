@@ -52,7 +52,7 @@ describe('AccountModule', function () {
       });
 
       it('records the owner in the core system', async function () {
-        assert.equal(await systems().Core.accountOwner(1), await user1.getAddress());
+        assert.equal(await systems().Core.getAccountOwner(1), await user1.getAddress());
       });
 
       describe('when a user tries to create an acccount with an accountId that already exists', () => {

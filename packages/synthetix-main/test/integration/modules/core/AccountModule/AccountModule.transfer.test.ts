@@ -33,7 +33,7 @@ describe('AccountModule', function () {
       });
 
       it('records the new owner in the core system', async function () {
-        assert.equal(await systems().Core.accountOwner(1), await user2.getAddress());
+        assert.equal(await systems().Core.getAccountOwner(1), await user2.getAddress());
       });
     });
   });
