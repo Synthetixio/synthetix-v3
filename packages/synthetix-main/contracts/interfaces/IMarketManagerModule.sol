@@ -3,6 +3,8 @@ pragma solidity ^0.8.0;
 
 /// @title Market Manager Module. Manages registered markets
 interface IMarketManagerModule {
+    event MarketRegistered(address indexed market, uint marketId);
+
     /// @notice registers a new market
     function registerMarket(address market) external returns (uint);
 

@@ -1836,3 +1836,499 @@ places a cap on what proportion of free vault liquidity may be used towards a po
 
 returns the liquidity ratio cap for delegation of liquidity by pools to markets
 
+## Pool Module
+
+### PoolCreated
+
+  ```solidity
+  event PoolCreated(uint256 poolId, address owner)
+  ```
+
+### NominatedPoolOwner
+
+  ```solidity
+  event NominatedPoolOwner(uint256 poolId, address owner)
+  ```
+
+### PoolOwnershipAccepted
+
+  ```solidity
+  event PoolOwnershipAccepted(uint256 poolId, address owner)
+  ```
+
+### PoolNominationRenounced
+
+  ```solidity
+  event PoolNominationRenounced(uint256 poolId, address owner)
+  ```
+
+### PoolNominationRevoked
+
+  ```solidity
+  event PoolNominationRevoked(uint256 poolId, address owner)
+  ```
+
+### PoolOwnershipRenounced
+
+  ```solidity
+  event PoolOwnershipRenounced(uint256 poolId, address owner)
+  ```
+
+### PoolNameUpdated
+
+  ```solidity
+  event PoolNameUpdated(uint256 poolId, string name, address sender)
+  ```
+
+### PoolPositionSet
+
+  ```solidity
+  event PoolPositionSet(uint256 poolId, uint256[] markets, uint256[] weights, address executedBy)
+  ```
+
+### createPool
+
+  ```solidity
+  function createPool(uint256 requestedPoolId, address owner) external
+  ```
+
+creates a new pool
+
+### setPoolPosition
+
+  ```solidity
+  function setPoolPosition(uint256 poolId, uint256[] markets, uint256[] weights, int256[] maxDebtShareValues) external
+  ```
+
+sets the pool positions (only poolToken owner)
+
+### getPoolPosition
+
+  ```solidity
+  function getPoolPosition(uint256 poolId) external view returns (uint256[] markets, uint256[] weights, int256[] maxDebtShareValues)
+  ```
+
+gets the pool positions
+
+### setPoolName
+
+  ```solidity
+  function setPoolName(uint256 poolId, string name) external
+  ```
+
+sets the pool name
+
+### getPoolName
+
+  ```solidity
+  function getPoolName(uint256 poolId) external view returns (string poolName)
+  ```
+
+gets the pool name
+
+### nominatePoolOwner
+
+  ```solidity
+  function nominatePoolOwner(address nominatedOwner, uint256 poolId) external
+  ```
+
+nominates a new pool owner
+
+### acceptPoolOwnership
+
+  ```solidity
+  function acceptPoolOwnership(uint256 poolId) external
+  ```
+
+accepts ownership by nominated owner
+
+### renouncePoolNomination
+
+  ```solidity
+  function renouncePoolNomination(uint256 poolId) external
+  ```
+
+renounces nomination by nominated owner
+
+### renouncePoolOwnership
+
+  ```solidity
+  function renouncePoolOwnership(uint256 poolId) external
+  ```
+
+renounces ownership by owner
+
+### ownerOfPool
+
+  ```solidity
+  function ownerOfPool(uint256 poolId) external view returns (address)
+  ```
+
+gets owner of poolId
+
+### getNominatedPoolOwner
+
+  ```solidity
+  function getNominatedPoolOwner(uint256 poolId) external view returns (address)
+  ```
+
+gets nominatedOwner of poolId
+
+### setMinLiquidityRatio
+
+  ```solidity
+  function setMinLiquidityRatio(uint256 minLiquidityRatio) external
+  ```
+
+places a cap on what proportion of free vault liquidity may be used towards a pool. only owner.
+
+### getMinLiquidityRatio
+
+  ```solidity
+  function getMinLiquidityRatio() external view returns (uint256)
+  ```
+
+returns the liquidity ratio cap for delegation of liquidity by pools to markets
+
+### PoolCreated
+
+  ```solidity
+  event PoolCreated(uint256 poolId, address owner)
+  ```
+
+### NominatedPoolOwner
+
+  ```solidity
+  event NominatedPoolOwner(uint256 poolId, address owner)
+  ```
+
+### PoolOwnershipAccepted
+
+  ```solidity
+  event PoolOwnershipAccepted(uint256 poolId, address owner)
+  ```
+
+### PoolNominationRenounced
+
+  ```solidity
+  event PoolNominationRenounced(uint256 poolId, address owner)
+  ```
+
+### PoolNominationRevoked
+
+  ```solidity
+  event PoolNominationRevoked(uint256 poolId, address owner)
+  ```
+
+### PoolOwnershipRenounced
+
+  ```solidity
+  event PoolOwnershipRenounced(uint256 poolId, address owner)
+  ```
+
+### PoolNameUpdated
+
+  ```solidity
+  event PoolNameUpdated(uint256 poolId, string name, address sender)
+  ```
+
+### PoolPositionSet
+
+  ```solidity
+  event PoolPositionSet(uint256 poolId, uint256[] markets, uint256[] weights, address executedBy)
+  ```
+
+### createPool
+
+  ```solidity
+  function createPool(uint256 requestedPoolId, address owner) external
+  ```
+
+creates a new pool
+
+### setPoolPosition
+
+  ```solidity
+  function setPoolPosition(uint256 poolId, uint256[] markets, uint256[] weights, int256[] maxDebtShareValues) external
+  ```
+
+sets the pool positions (only poolToken owner)
+
+### getPoolPosition
+
+  ```solidity
+  function getPoolPosition(uint256 poolId) external view returns (uint256[] markets, uint256[] weights, int256[] maxDebtShareValues)
+  ```
+
+gets the pool positions
+
+### setPoolName
+
+  ```solidity
+  function setPoolName(uint256 poolId, string name) external
+  ```
+
+sets the pool name
+
+### getPoolName
+
+  ```solidity
+  function getPoolName(uint256 poolId) external view returns (string poolName)
+  ```
+
+gets the pool name
+
+### nominatePoolOwner
+
+  ```solidity
+  function nominatePoolOwner(address nominatedOwner, uint256 poolId) external
+  ```
+
+nominates a new pool owner
+
+### acceptPoolOwnership
+
+  ```solidity
+  function acceptPoolOwnership(uint256 poolId) external
+  ```
+
+accepts ownership by nominated owner
+
+### renouncePoolNomination
+
+  ```solidity
+  function renouncePoolNomination(uint256 poolId) external
+  ```
+
+renounces nomination by nominated owner
+
+### renouncePoolOwnership
+
+  ```solidity
+  function renouncePoolOwnership(uint256 poolId) external
+  ```
+
+renounces ownership by owner
+
+### ownerOfPool
+
+  ```solidity
+  function ownerOfPool(uint256 poolId) external view returns (address)
+  ```
+
+gets owner of poolId
+
+### getNominatedPoolOwner
+
+  ```solidity
+  function getNominatedPoolOwner(uint256 poolId) external view returns (address)
+  ```
+
+gets nominatedOwner of poolId
+
+### setMinLiquidityRatio
+
+  ```solidity
+  function setMinLiquidityRatio(uint256 minLiquidityRatio) external
+  ```
+
+places a cap on what proportion of free vault liquidity may be used towards a pool. only owner.
+
+### getMinLiquidityRatio
+
+  ```solidity
+  function getMinLiquidityRatio() external view returns (uint256)
+  ```
+
+returns the liquidity ratio cap for delegation of liquidity by pools to markets
+
+## Market Manager Module
+
+### MarketRegistered
+
+  ```solidity
+  event MarketRegistered(address market, uint256 marketId)
+  ```
+
+### registerMarket
+
+  ```solidity
+  function registerMarket(address market) external returns (uint256)
+  ```
+
+registers a new market
+
+### marketLiquidity
+
+  ```solidity
+  function marketLiquidity(uint256 marketId) external view returns (uint256)
+  ```
+
+gets the liquidity of the market
+
+### marketCollateralValue
+
+  ```solidity
+  function marketCollateralValue(uint256 marketId) external view returns (uint256)
+  ```
+
+gets the USD value of the collateral backing this market.
+This function does not determine the market should consider available to it. Use `marketLiquidity` instaed.
+
+### marketTotalBalance
+
+  ```solidity
+  function marketTotalBalance(uint256 marketId) external view returns (int256)
+  ```
+
+gets the total balance of the market
+
+### marketDebtPerShare
+
+  ```solidity
+  function marketDebtPerShare(uint256 marketId) external returns (int256)
+  ```
+
+### depositUsd
+
+  ```solidity
+  function depositUsd(uint256 marketId, address target, uint256 amount) external
+  ```
+
+target deposits amount of synths to the marketId
+
+### withdrawUsd
+
+  ```solidity
+  function withdrawUsd(uint256 marketId, address target, uint256 amount) external
+  ```
+
+target withdraws amount of synths to the marketId
+
+### MarketRegistered
+
+  ```solidity
+  event MarketRegistered(address market, uint256 marketId)
+  ```
+
+### registerMarket
+
+  ```solidity
+  function registerMarket(address market) external returns (uint256)
+  ```
+
+registers a new market
+
+### marketLiquidity
+
+  ```solidity
+  function marketLiquidity(uint256 marketId) external view returns (uint256)
+  ```
+
+gets the liquidity of the market
+
+### marketCollateralValue
+
+  ```solidity
+  function marketCollateralValue(uint256 marketId) external view returns (uint256)
+  ```
+
+gets the USD value of the collateral backing this market.
+This function does not determine the market should consider available to it. Use `marketLiquidity` instaed.
+
+### marketTotalBalance
+
+  ```solidity
+  function marketTotalBalance(uint256 marketId) external view returns (int256)
+  ```
+
+gets the total balance of the market
+
+### marketDebtPerShare
+
+  ```solidity
+  function marketDebtPerShare(uint256 marketId) external returns (int256)
+  ```
+
+### depositUsd
+
+  ```solidity
+  function depositUsd(uint256 marketId, address target, uint256 amount) external
+  ```
+
+target deposits amount of synths to the marketId
+
+### withdrawUsd
+
+  ```solidity
+  function withdrawUsd(uint256 marketId, address target, uint256 amount) external
+  ```
+
+target withdraws amount of synths to the marketId
+
+## USD Token Module
+
+### initializeUSDTokenModule
+
+  ```solidity
+  function initializeUSDTokenModule() external
+  ```
+
+initializes the USD Token Module. Creates the first USD token implementation and takes ownership by the system
+
+### isUSDTokenModuleInitialized
+
+  ```solidity
+  function isUSDTokenModuleInitialized() external view returns (bool)
+  ```
+
+shows whether the module has been initialized
+
+### upgradeUSDImplementation
+
+  ```solidity
+  function upgradeUSDImplementation(address newUSDTokenImplementation) external
+  ```
+
+upgrades the USDToken implementation.
+
+### getUSDTokenAddress
+
+  ```solidity
+  function getUSDTokenAddress() external view returns (address)
+  ```
+
+gets the USDToken address.
+
+### initializeUSDTokenModule
+
+  ```solidity
+  function initializeUSDTokenModule() external
+  ```
+
+initializes the USD Token Module. Creates the first USD token implementation and takes ownership by the system
+
+### isUSDTokenModuleInitialized
+
+  ```solidity
+  function isUSDTokenModuleInitialized() external view returns (bool)
+  ```
+
+shows whether the module has been initialized
+
+### upgradeUSDImplementation
+
+  ```solidity
+  function upgradeUSDImplementation(address newUSDTokenImplementation) external
+  ```
+
+upgrades the USDToken implementation.
+
+### getUSDTokenAddress
+
+  ```solidity
+  function getUSDTokenAddress() external view returns (address)
+  ```
+
+gets the USDToken address.
+

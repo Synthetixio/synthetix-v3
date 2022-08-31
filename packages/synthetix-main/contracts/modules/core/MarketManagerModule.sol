@@ -22,8 +22,6 @@ contract MarketManagerModule is
 {
     bytes32 private constant _USD_TOKEN = "USDToken";
 
-    event MarketRegistered(address indexed market, uint marketId);
-
     error MarketAlreadyRegistered(address market, uint existingMarketId);
     error NotEnoughLiquidity(uint marketId, uint amount);
     error MarketDepositNotApproved(address market, address from, uint requestedAmount, uint approvedAmount);
