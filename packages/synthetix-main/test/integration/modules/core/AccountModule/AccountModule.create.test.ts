@@ -2,8 +2,8 @@ import assert from 'assert/strict';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import { ethers } from 'ethers';
-import { findEvent } from '@synthetixio/core-utils/utils/ethers/events';
 import { bootstrap } from '../../../bootstrap';
+import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 
 describe('AccountModule', function () {
   const { signers, systems } = bootstrap();
@@ -25,25 +25,19 @@ describe('AccountModule', function () {
       });
 
       it('emitted an AccountCreated event', async function () {
-        const event = findEvent({
+        assertEvent(
           receipt,
-          eventName: 'AccountCreated',
-        });
-
-        assert.equal(event.args.sender, await user1.getAddress());
-        assertBn.equal(event.args.accountId, 1);
+          `AccountCreated(${await user1.getAddress()}, "1")`,
+          systems().Core
+        );
       });
 
-      // TODO: Fix bug in util - fails to find event
-      it.skip('emitted a Mint event', async function () {
-        const event = findEvent({
+      it('emitted a Mint event', async function () {
+        assertEvent(
           receipt,
-          eventName: 'Mint',
-          contract: systems().Account,
-        });
-
-        assert.equal(event.args.owner, await user1.getAddress());
-        assertBn.equal(event.args.tokenId, 1);
+          `Transfer("0x0000000000000000000000000000000000000000", ${await user1.getAddress()}, "1")`,
+          systems().Core
+        );
       });
 
       it('records the owner in the account system', async function () {
