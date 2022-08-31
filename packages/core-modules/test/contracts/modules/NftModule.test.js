@@ -4,6 +4,8 @@ const { default: assertRevert } = require('@synthetixio/core-utils/utils/asserti
 const { bootstrap } = require('@synthetixio/hardhat-router/utils/tests');
 const initializer = require('@synthetixio/core-modules/test/helpers/initializer');
 
+// TODO: We can probably delete NftModule at this point.
+// It no longer has a mint function, and is thus pretty much a direct wrapper of ERC721Enumerable
 describe.skip('NftModule', () => {
   const { proxyAddress } = bootstrap(initializer, { modules: '.*(Owner|Upgrade|Nft).*' });
 
