@@ -14,7 +14,6 @@ dotenv.config({ path: path.resolve(__dirname, '..', '..', '.env') });
 dotenv.config({ path: path.resolve(__dirname, '.env') });
 
 const config = {
-  defaultNetwork: 'local',
   solidity: {
     version: '0.8.11',
     settings: {
