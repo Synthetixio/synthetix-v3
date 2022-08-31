@@ -10,7 +10,6 @@ const {
  */
 module.exports.deploy = async function deploy(runtime, prefix, modules) {
   if (runtime?.provider) {
-    console.log('overriding provider');
     hre.ethers.provider = runtime.provider;
   }
 
@@ -18,7 +17,6 @@ module.exports.deploy = async function deploy(runtime, prefix, modules) {
   const cachedGetSigner = hre.ethers.getSigner;
 
   if (runtime?.getDefaultSigner) {
-    console.log('overriding signers');
     const defaultSigner = await runtime.getDefaultSigner('deployer', prefix);
 
     const signers = [defaultSigner];
