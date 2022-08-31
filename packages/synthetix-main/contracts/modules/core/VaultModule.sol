@@ -15,17 +15,7 @@ import "../../storage/PoolVaultStorage.sol";
 import "../../interfaces/IVaultModule.sol";
 import "../../interfaces/IUSDTokenModule.sol";
 
-import "../../submodules/PoolEventAndErrors.sol";
-
-contract VaultModule is
-    IVaultModule,
-    PoolVaultStorage,
-    PoolEventAndErrors,
-    AccountRBACMixin,
-    OwnableMixin,
-    AssociatedSystemsMixin,
-    PoolMixin
-{
+contract VaultModule is IVaultModule, PoolVaultStorage, AccountRBACMixin, OwnableMixin, AssociatedSystemsMixin, PoolMixin {
     using SetUtil for SetUtil.Bytes32Set;
     using SetUtil for SetUtil.AddressSet;
     using MathUtil for uint256;
@@ -37,6 +27,7 @@ contract VaultModule is
     error InvalidLeverage(uint leverage);
     error InsufficientCollateralRatio(uint collateralValue, uint debt, uint ratio, uint minRatio);
     error InsufficientDebt(int currentDebt);
+    error InvalidParameters(string incorrectParameter, string help);
 
     function delegateCollateral(
         uint accountId,

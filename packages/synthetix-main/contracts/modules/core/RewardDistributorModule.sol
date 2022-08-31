@@ -11,7 +11,6 @@ import "@synthetixio/core-modules/contracts/mixins/AssociatedSystemsMixin.sol";
 import "../../storage/RewardDistributorStorage.sol";
 
 import "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
-import "../../submodules/PoolEventAndErrors.sol";
 
 contract RewardDistributorModule is
     IRewardDistributorModule,

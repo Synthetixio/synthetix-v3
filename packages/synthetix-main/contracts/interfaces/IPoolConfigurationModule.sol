@@ -3,6 +3,10 @@ pragma solidity ^0.8.0;
 
 /// @title Module for managing preferred and approved pools via SCCPs
 interface IPoolConfigurationModule {
+    event PreferredPoolSet(uint256 poolId);
+    event PoolApprovedAdded(uint256 poolId);
+    event PoolApprovedRemoved(uint256 poolId);
+
     /// @notice SCCP sets the preferred pool
     function setPreferredPool(uint poolId) external;
 

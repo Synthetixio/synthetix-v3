@@ -6,15 +6,10 @@ import "@synthetixio/core-contracts/contracts/ownership/OwnableMixin.sol";
 import "../../interfaces/IPoolConfigurationModule.sol";
 import "../../storage/PoolConfigurationStorage.sol";
 import "../../mixins/PoolMixin.sol";
-import "../../submodules/PoolEventAndErrors.sol";
 
-contract PoolConfigurationModule is
-    IPoolConfigurationModule,
-    PoolConfigurationStorage,
-    PoolEventAndErrors,
-    PoolMixin,
-    OwnableMixin
-{
+contract PoolConfigurationModule is IPoolConfigurationModule, PoolConfigurationStorage, PoolMixin, OwnableMixin {
+    error PoolAlreadyApproved(uint poolId);
+
     function setPreferredPool(uint poolId) external override onlyOwner poolExists(poolId) {
         _poolConfigurationStore().preferredPool = poolId;
 

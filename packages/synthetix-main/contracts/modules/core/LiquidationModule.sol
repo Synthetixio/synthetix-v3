@@ -23,23 +23,7 @@ contract LiquidationsModule is
     using MathUtil for uint;
     using ERC20Helper for address;
     using SharesLibrary for SharesLibrary.Distribution;
-
-    event Liquidation(
-        uint indexed accountId,
-        uint indexed poolId,
-        address indexed collateralType,
-        uint debtLiquidated,
-        uint collateralLiquidated,
-        uint amountRewarded
-    );
-
-    event VaultLiquidation(
-        uint indexed poolId,
-        address indexed collateralType,
-        uint debtLiquidated,
-        uint collateralLiquidated,
-        uint amountRewarded
-    );
+    error InvalidParameters(string incorrectParameter, string help);
 
     error IneligibleForLiquidation(uint collateralValue, uint debt, uint currentCRatio, uint cratio);
 

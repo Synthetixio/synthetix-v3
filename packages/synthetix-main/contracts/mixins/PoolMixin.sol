@@ -8,14 +8,15 @@ import "../mixins/MarketManagerMixin.sol";
 
 import "../storage/PoolModuleStorage.sol";
 import "../storage/PoolVaultStorage.sol";
-import "../submodules/PoolEventAndErrors.sol";
 
-contract PoolMixin is PoolModuleStorage, PoolVaultStorage, PoolEventAndErrors, CollateralMixin, MarketManagerMixin {
+contract PoolMixin is PoolModuleStorage, PoolVaultStorage, CollateralMixin, MarketManagerMixin {
     using SetUtil for SetUtil.AddressSet;
     using SetUtil for SetUtil.Bytes32Set;
     using MathUtil for uint256;
 
     using SharesLibrary for SharesLibrary.Distribution;
+
+    error PoolNotFound(uint poolId);
 
     function _ownerOf(uint256 poolId) internal view returns (address) {
         return _poolModuleStore().pools[poolId].owner;

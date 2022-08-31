@@ -14,12 +14,9 @@ import "../../utils/SharesLibrary.sol";
 import "../../storage/PoolVaultStorage.sol";
 import "../../interfaces/IVaultRewardsModule.sol";
 
-import "../../submodules/PoolEventAndErrors.sol";
-
 contract VaultRewardsModule is
     IVaultRewardsModule,
     PoolVaultStorage,
-    PoolEventAndErrors,
     AccountRBACMixin,
     OwnableMixin,
     AssociatedSystemsMixin,
@@ -29,6 +26,7 @@ contract VaultRewardsModule is
     using MathUtil for uint256;
 
     using SharesLibrary for SharesLibrary.Distribution;
+    error InvalidParameters(string incorrectParameter, string help);
 
     uint private constant _MAX_REWARD_DISTRIBUTIONS = 10;
 

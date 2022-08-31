@@ -3,6 +3,17 @@ pragma solidity ^0.8.0;
 
 /// @title Module for managing pools and assignments per account
 interface IVaultRewardsModule {
+    event RewardDistributionSet(
+        uint indexed poolId,
+        address indexed token,
+        uint indexed index,
+        address distributor,
+        uint totalRewarded,
+        uint start,
+        uint duration
+    );
+    event RewardsClaimed(uint indexed poolId, address indexed token, uint indexed accountId, uint index, uint amountClaimed);
+
     /// @notice called by pool owner or an existing distributor to set up rewards for vault participants
     function distributeRewards(
         uint poolId,
