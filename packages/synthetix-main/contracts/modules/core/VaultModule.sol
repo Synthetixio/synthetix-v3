@@ -79,15 +79,15 @@ contract VaultModule is
 
             _distributeVaultDebt(poolId, collateralType);
 
-            uint poolShares = _calculatePoolShares(epochData, collateralAmount, leverage);
+            uint vaultShares = _calculateVaultShares(epochData, collateralAmount, leverage);
 
             // prevent users from specifying an infitesimly small amount such that they don't get any shares
-            if (poolShares == 0 && collateralAmount > 0) {
+            if (vaultShares == 0 && collateralAmount > 0) {
                 revert InvalidParameters("amount", "must be large enough for 1 share");
             }
 
             epochData.collateralDist.updateActorValue(actorId, int(collateralAmount));
-            epochData.debtDist.updateActorShares(actorId, poolShares);
+            epochData.debtDist.updateActorShares(actorId, vaultShares);
             // no update for usd because no usd issued
 
             // this will ensure the new distribution information is passed up the chain to the markets
@@ -109,7 +109,7 @@ contract VaultModule is
         emit DelegationUpdated(accountId, poolId, collateralType, collateralAmount, leverage, msg.sender);
     }
 
-    function _calculatePoolShares(
+    function _calculateVaultShares(
         VaultEpochData storage epochData,
         uint collateralAmount,
         uint leverage
@@ -205,7 +205,7 @@ contract VaultModule is
         (amount, value, ) = _positionCollateral(accountId, poolId, collateralType);
     }
 
-    function getPositionPoolShares(
+    function getPositionVaultShares(
         uint accountId,
         uint poolId,
         address collateralType
@@ -224,13 +224,13 @@ contract VaultModule is
         returns (
             uint collateralAmount,
             uint collateralValue,
-            uint poolShares,
+            uint vaultShares,
             int debt,
             uint collateralizationRatio
         )
     {
         debt = _updatePositionDebt(accountId, poolId, collateralType);
-        (collateralAmount, collateralValue, poolShares) = _positionCollateral(accountId, poolId, collateralType);
+        (collateralAmount, collateralValue, vaultShares) = _positionCollateral(accountId, poolId, collateralType);
         collateralizationRatio = _positionCollateralizationRatio(poolId, accountId, collateralType);
     }
 

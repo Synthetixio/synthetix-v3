@@ -31,10 +31,10 @@ contract MarketManagerMixin is MarketManagerStorage, PoolModuleStorage {
 
         _distributeMarket(marketData, 9999999999);
 
-        return _adjustPoolShares(marketData, poolId, amount, maxDebtShareValue);
+        return _adjustVaultShares(marketData, poolId, amount, maxDebtShareValue);
     }
 
-    function _adjustPoolShares(
+    function _adjustVaultShares(
         MarketData storage marketData,
         uint poolId,
         uint newLiquidity,

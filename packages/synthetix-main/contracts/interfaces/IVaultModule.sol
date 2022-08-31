@@ -129,7 +129,7 @@ interface IVaultModule {
      * @notice Returns the number of shares associated with the specified staking position.
      * @dev The return value is represented as an integer with 18 decimals.
      **/
-    function getPositionPoolShares(
+    function getPositionVaultShares(
         uint accountId,
         uint poolId,
         address collateralType
@@ -147,7 +147,7 @@ interface IVaultModule {
         returns (
             uint collateralAmount,
             uint collateralValue,
-            uint poolShares,
+            uint vaultShares,
             int debt,
             uint collateralizationRatio
         );
