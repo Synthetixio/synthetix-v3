@@ -23,7 +23,7 @@ contract CollateralMixin is CollateralStorage, PoolVaultStorage {
         _;
     }
 
-    function _collateralValue(address collateralType) internal view returns (uint) {
+    function _getCollateralValue(address collateralType) internal view returns (uint) {
         (, int256 answer, , , ) = IAggregatorV3Interface(_collateralStore().collateralsData[collateralType].priceFeed)
             .latestRoundData();
 
