@@ -140,24 +140,24 @@ contract LiquidationsModule is
 
         int rawVaultDebt = _vaultDebt(poolId, collateralType);
 
-        uint getVaultDebt = rawVaultDebt < 0 ? 0 : uint(rawVaultDebt);
+        uint vaultDebt = rawVaultDebt < 0 ? 0 : uint(rawVaultDebt);
 
         (, uint collateralValue) = _vaultCollateral(poolId, collateralType);
 
-        if (!_isLiquidatable(collateralType, getVaultDebt, collateralValue)) {
+        if (!_isLiquidatable(collateralType, vaultDebt, collateralValue)) {
             revert IneligibleForLiquidation(
                 collateralValue,
-                getVaultDebt,
-                getVaultDebt > 0 ? collateralValue.divDecimal(getVaultDebt) : 0,
+                vaultDebt,
+                vaultDebt > 0 ? collateralValue.divDecimal(vaultDebt) : 0,
                 _collateralMinimumCRatio(collateralType)
             );
         }
 
-        if (getVaultDebt < maxUsd) {
+        if (vaultDebt < maxUsd) {
             // full vault liquidation
-            _getToken(_USD_TOKEN).burn(msg.sender, getVaultDebt);
+            _getToken(_USD_TOKEN).burn(msg.sender, vaultDebt);
 
-            amountLiquidated = getVaultDebt;
+            amountLiquidated = vaultDebt;
             collateralRewarded = uint(vaultData.epochData[vaultData.epoch].collateralDist.totalValue());
 
             bytes32 vaultActorId = bytes32(uint(uint160(collateralType)));
@@ -174,7 +174,7 @@ contract LiquidationsModule is
             VaultEpochData storage epochData = vaultData.epochData[vaultData.epoch];
 
             amountLiquidated = maxUsd;
-            collateralRewarded = (uint(epochData.collateralDist.totalValue()) * amountLiquidated) / getVaultDebt;
+            collateralRewarded = (uint(epochData.collateralDist.totalValue()) * amountLiquidated) / vaultDebt;
 
             // repay the debt
             epochData.debtDist.distribute(-int(amountLiquidated));
@@ -184,7 +184,7 @@ contract LiquidationsModule is
             epochData.collateralDist.distribute(-int(collateralRewarded));
 
             // TODO this is probably wrong
-            _applyLiquidationToMultiplier(poolId, collateralType, amountLiquidated.divDecimal(getVaultDebt));
+            _applyLiquidationToMultiplier(poolId, collateralType, amountLiquidated.divDecimal(vaultDebt));
         }
 
         // update the pool (debt was repayed but collateral was taken)

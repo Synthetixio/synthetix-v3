@@ -126,16 +126,6 @@ interface IVaultModule {
     ) external view returns (uint collateralAmount, uint collateralValue);
 
     /**
-     * @notice Returns the number of shares associated with the specified staking position.
-     * @dev The return value is represented as an integer with 18 decimals.
-     **/
-    function getPositionVaultShares(
-        uint accountId,
-        uint poolId,
-        address collateralType
-    ) external view returns (uint);
-
-    /**
      * @notice Returns all information pertaining to a specified staking position in the vault module.
      **/
     function getPosition(
@@ -147,7 +137,6 @@ interface IVaultModule {
         returns (
             uint collateralAmount,
             uint collateralValue,
-            uint vaultShares,
             int debt,
             uint collateralizationRatio
         );
@@ -175,10 +164,4 @@ interface IVaultModule {
      * @dev The return value is a percentage with 18 decimals places.
      */
     function getVaultCollateralRatio(uint poolId, address collateralType) external returns (uint);
-
-    /**
-     * @notice Returns the total number of shares issued by this vault.
-     * @dev The return value is represented as an integer with 18 decimals.
-     **/
-    function getVaultShares(uint poolId, address collateralType) external view returns (uint);
 }

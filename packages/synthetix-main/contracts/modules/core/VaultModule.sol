@@ -205,15 +205,6 @@ contract VaultModule is
         (amount, value, ) = _positionCollateral(accountId, poolId, collateralType);
     }
 
-    function getPositionVaultShares(
-        uint accountId,
-        uint poolId,
-        address collateralType
-    ) external view override returns (uint) {
-        (, , uint shares) = _positionCollateral(accountId, poolId, collateralType);
-        return shares;
-    }
-
     function getPosition(
         uint accountId,
         uint poolId,
@@ -224,13 +215,12 @@ contract VaultModule is
         returns (
             uint collateralAmount,
             uint collateralValue,
-            uint vaultShares,
             int debt,
             uint collateralizationRatio
         )
     {
         debt = _updatePositionDebt(accountId, poolId, collateralType);
-        (collateralAmount, collateralValue, vaultShares) = _positionCollateral(accountId, poolId, collateralType);
+        (collateralAmount, collateralValue, ) = _positionCollateral(accountId, poolId, collateralType);
         collateralizationRatio = _positionCollateralizationRatio(poolId, accountId, collateralType);
     }
 
@@ -248,13 +238,6 @@ contract VaultModule is
 
     function getVaultDebt(uint poolId, address collateralType) public override returns (int) {
         return _vaultDebt(poolId, collateralType);
-    }
-
-    function getVaultShares(uint poolId, address collateralType) external view override returns (uint) {
-        VaultData storage vaultData = _poolVaultStore().poolVaults[poolId][collateralType];
-        VaultEpochData storage epochData = vaultData.epochData[vaultData.epoch];
-
-        return uint(epochData.debtDist.totalShares).mulDecimal(epochData.liquidityMultiplier);
     }
 
     function _verifyCollateralRatio(
