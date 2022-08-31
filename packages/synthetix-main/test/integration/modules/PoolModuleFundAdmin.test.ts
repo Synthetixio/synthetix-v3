@@ -184,7 +184,7 @@ describe('PoolModule Admin', function () {
 
           it('market gave the end vault debt', async () => {
             assertBn.equal(
-              await systems().Core.callStatic.vaultDebt(poolId, collateralAddress()),
+              await systems().Core.callStatic.getVaultDebt(poolId, collateralAddress()),
               debtAmount
             );
           });
@@ -207,7 +207,7 @@ describe('PoolModule Admin', function () {
 
             it('debt is still assigned', async () => {
               assertBn.equal(
-                await systems().Core.callStatic.vaultDebt(poolId, collateralAddress()),
+                await systems().Core.callStatic.getVaultDebt(poolId, collateralAddress()),
                 debtAmount
               );
             });
@@ -292,12 +292,12 @@ describe('PoolModule Admin', function () {
               ethers.utils.parseEther('1')
             );
 
-          await systems().Core.connect(user1).mintUSD(accountId, 0, collateralAddress(), Hundred);
+          await systems().Core.connect(user1).mintUsd(accountId, 0, collateralAddress(), Hundred);
           await systems().USD.connect(user1).approve(MockMarket().address, Hundred);
           await MockMarket().connect(user1).buySynth(Hundred);
 
           // "bump" the vault to get it to accept the position (in case there is a bug)
-          await systems().Core.connect(user1).vaultDebt(poolId, collateralAddress());
+          await systems().Core.connect(user1).getVaultDebt(poolId, collateralAddress());
         });
 
         it('has same amount liquidity available + the allowed amount by the vault', async () => {
@@ -311,13 +311,16 @@ describe('PoolModule Admin', function () {
         });
 
         it('did not change debt for connected vault', async () => {
-          assertBn.equal(await systems().Core.callStatic.vaultDebt(poolId, collateralAddress()), 0);
+          assertBn.equal(
+            await systems().Core.callStatic.getVaultDebt(poolId, collateralAddress()),
+            0
+          );
         });
 
         describe('and then the market reports 0 balance', () => {
           before('set market', async () => {
             await MockMarket().connect(user1).setBalance(0);
-            await systems().Core.connect(user1).vaultDebt(poolId, collateralAddress());
+            await systems().Core.connect(user1).getVaultDebt(poolId, collateralAddress());
           });
 
           it('has accurate amount liquidity available', async () => {
@@ -330,7 +333,7 @@ describe('PoolModule Admin', function () {
 
           it('vault isnt credited because it wasnt bumped early enough', async () => {
             assertBn.equal(
-              await systems().Core.callStatic.vaultDebt(poolId, collateralAddress()),
+              await systems().Core.callStatic.getVaultDebt(poolId, collateralAddress()),
               0
             );
           });
@@ -350,7 +353,7 @@ describe('PoolModule Admin', function () {
             it('vault is debted', async () => {
               // div 2 twice because the vault has half the debt of the pool
               assertBn.equal(
-                await systems().Core.callStatic.vaultDebt(poolId, collateralAddress()),
+                await systems().Core.callStatic.getVaultDebt(poolId, collateralAddress()),
                 Hundred.div(2).div(2)
               );
             });
@@ -373,7 +376,7 @@ describe('PoolModule Admin', function () {
 
               it('vault assumes expected amount of debt', async () => {
                 assertBn.equal(
-                  await systems().Core.callStatic.vaultDebt(poolId, collateralAddress()),
+                  await systems().Core.callStatic.getVaultDebt(poolId, collateralAddress()),
                   Hundred.sub(One)
                 );
               });
@@ -382,13 +385,13 @@ describe('PoolModule Admin', function () {
                 // vault 2 assumes the 1 dollar in debt that was not absorbed by the first pool
                 // still below limit though
                 assertBn.equal(
-                  await systems().Core.callStatic.vaultDebt(secondPoolId, collateralAddress()),
+                  await systems().Core.callStatic.getVaultDebt(secondPoolId, collateralAddress()),
                   One
                 );
               });
 
               it('market collateral value is amount of only vault 2', async () => {
-                await systems().Core.connect(user1).vaultDebt(poolId, collateralAddress());
+                await systems().Core.connect(user1).getVaultDebt(poolId, collateralAddress());
                 assertBn.equal(
                   await systems().Core.connect(user1).callStatic.marketCollateralValue(marketId()),
                   depositAmount
@@ -405,8 +408,8 @@ describe('PoolModule Admin', function () {
                 // TODO: if the following line is removed/reordered an unusual error
                 // appears where `secondPoolId` assumes the full amount of debt
                 // we have to investigate this
-                await systems().Core.connect(user1).vaultDebt(poolId, collateralAddress());
-                await systems().Core.connect(user1).vaultDebt(secondPoolId, collateralAddress());
+                await systems().Core.connect(user1).getVaultDebt(poolId, collateralAddress());
+                await systems().Core.connect(user1).getVaultDebt(secondPoolId, collateralAddress());
               });
 
               it('has same amount liquidity available + the allowed amount by the vault', async () => {
@@ -418,20 +421,20 @@ describe('PoolModule Admin', function () {
 
               it('vault assumes expected amount of debt', async () => {
                 assertBn.equal(
-                  await systems().Core.callStatic.vaultDebt(poolId, collateralAddress()),
+                  await systems().Core.callStatic.getVaultDebt(poolId, collateralAddress()),
                   Hundred.sub(One)
                 );
               });
 
               it('vault 2 assumes expected amount of debt', async () => {
                 assertBn.equal(
-                  await systems().Core.callStatic.vaultDebt(secondPoolId, collateralAddress()),
+                  await systems().Core.callStatic.getVaultDebt(secondPoolId, collateralAddress()),
                   One.mul(2)
                 );
               });
 
               it('the market has no more collateral assigned to it', async () => {
-                await systems().Core.connect(user1).vaultDebt(poolId, collateralAddress());
+                await systems().Core.connect(user1).getVaultDebt(poolId, collateralAddress());
                 assertBn.equal(
                   await systems().Core.connect(user1).callStatic.marketCollateralValue(marketId()),
                   0
@@ -453,7 +456,7 @@ describe('PoolModule Admin', function () {
 
       before('set pool position', async () => {
         await systems().Core.connect(owner).setPoolPosition(poolId, [marketId()], [1], [One]);
-        await systems().Core.connect(user1).vaultDebt(poolId, collateralAddress());
+        await systems().Core.connect(user1).getVaultDebt(poolId, collateralAddress());
       });
 
       it('marketLiquidity reflects minLiquidityRatio', async () => {
@@ -468,7 +471,7 @@ describe('PoolModule Admin', function () {
           await systems().Core.connect(owner).setMinLiquidityRatio(ethers.utils.parseEther('1'));
 
           // bump the vault
-          await systems().Core.connect(user1).vaultDebt(poolId, collateralAddress());
+          await systems().Core.connect(user1).getVaultDebt(poolId, collateralAddress());
         });
 
         it('marketLiquidity reflects configured by pool', async () => {

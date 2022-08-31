@@ -49,7 +49,7 @@ interface IAccountModule {
     function notifyAccountTransfer(address to, uint256 accountId) external;
 
     /**
-     * @dev Grants `permission` to `target` for account `accountId`.
+     * @notice Grants `permission` to `target` for account `accountId`.
      *
      * Requirements:
      *
@@ -102,5 +102,5 @@ interface IAccountModule {
     /**
      * @notice Returns the address that owns a given account, as recorded by the system.
      */
-    function accountOwner(uint accountId) external view returns (address);
+    function getAccountOwner(uint accountId) external view returns (address);
 }

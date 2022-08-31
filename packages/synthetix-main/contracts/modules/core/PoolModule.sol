@@ -5,14 +5,18 @@ import "@synthetixio/core-contracts/contracts/ownership/OwnableMixin.sol";
 import "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
 import "@synthetixio/core-contracts/contracts/errors/AddressError.sol";
 
-import "../../submodules/PoolEventAndErrors.sol";
 import "../../interfaces/IPoolModule.sol";
 import "../../storage/PoolModuleStorage.sol";
 
 import "../../mixins/AccountRBACMixin.sol";
 import "../../mixins/PoolMixin.sol";
 
-contract PoolModule is IPoolModule, PoolEventAndErrors, AccountRBACMixin, PoolMixin, OwnableMixin {
+contract PoolModule is IPoolModule, AccountRBACMixin, PoolMixin, OwnableMixin {
+    error PoolAlreadyExists(uint poolId);
+    error OnlyTokenProxyAllowed(address origin);
+    error EmptyVault(uint poolId, address collateralType);
+    error InvalidParameters(string incorrectParameter, string help);
+
     // ---------------------------------------
     // Minting
     // ---------------------------------------

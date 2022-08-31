@@ -8,24 +8,24 @@ interface ICollateralModule {
     /**
      * @notice Emitted when a collateral type’s configuration is created or updated.
      */
-    event CollateralConfigured(
-        address collateralType,
-        address priceFeed,
-        uint targetCRatio,
-        uint minimumCRatio,
+    event CollateralTypeConfigured(
+        address indexed collateralType,
+        address indexed priceFeed,
+        uint targetCollateralizationRatio,
+        uint minimumCollateralizationRatio,
         uint liquidationReward,
-        bool enabled
+        bool indexed enabled
     );
 
     /**
      * @notice Emitted when `amount` of collateral of type `collateralType` is deposited to account `accountId` by `sender`.
      */
-    event CollateralDeposited(uint accountId, address collateralType, uint amount, address sender);
+    event CollateralDeposited(uint indexed accountId, address indexed collateralType, uint amount, address indexed sender);
 
     /**
      * @notice Emitted when `amount` of collateral of type `collateralType` is withdrawn from account `accountId` by `sender`.
      */
-    event CollateralWithdrawn(uint accountId, address collateralType, uint amount, address sender);
+    event CollateralWithdrawn(uint indexed accountId, address indexed collateralType, uint amount, address indexed sender);
 
     /**
      * @notice Creates or updates the configuration for given `collateralType`.
@@ -34,10 +34,10 @@ interface ICollateralModule {
      *
      * - `msg.sender` must be the owner of the system.
      *
-     * Emits a {CollateralConfigured} event.
+     * Emits a {CollateralTypeConfigured} event.
      *
      */
-    function adjustCollateralType(
+    function configureCollateralType(
         address collateralType,
         address priceFeed,
         uint targetCRatio,

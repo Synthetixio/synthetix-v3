@@ -63,12 +63,11 @@ describe('VaultModule', function () {
   ) {
     return async () => {
       assertBn.equal(
-        (await systems().Core.accountVaultCollateral(accountId, poolId, collateralAddress()))
-          .amount,
+        (await systems().Core.getPositionCollateral(accountId, poolId, collateralAddress())).amount,
         collateralAmount
       );
       assertBn.equal(
-        await systems().Core.callStatic.accountVaultDebt(accountId, poolId, collateralAddress()),
+        await systems().Core.callStatic.getPositionDebt(accountId, poolId, collateralAddress()),
         debt
       );
     };
@@ -76,19 +75,19 @@ describe('VaultModule', function () {
 
   describe('fresh vault', async () => {
     it('returns 0 debt', async () => {
-      assertBn.equal(await systems().Core.callStatic.vaultDebt(0, collateralAddress()), 0);
+      assertBn.equal(await systems().Core.callStatic.getVaultDebt(0, collateralAddress()), 0);
     });
 
     it('returns 0 collateral', async () => {
       assertBn.equal(
-        (await systems().Core.callStatic.vaultCollateral(0, collateralAddress()))[0],
+        (await systems().Core.callStatic.getVaultCollateral(0, collateralAddress()))[0],
         0
       );
     });
 
     it('returns 0 collateral ratio', async () => {
       assertBn.equal(
-        await systems().Core.callStatic.vaultCollateralRatio(0, collateralAddress()),
+        await systems().Core.callStatic.getVaultCollateralRatio(0, collateralAddress()),
         0
       );
     });
@@ -150,7 +149,7 @@ describe('VaultModule', function () {
 
       it('has allocated debt to vault', async () => {
         assertBn.equal(
-          await systems().Core.connect(user2).callStatic.vaultDebt(poolId, collateralAddress()),
+          await systems().Core.connect(user2).callStatic.getVaultDebt(poolId, collateralAddress()),
           startingDebt
         );
       });
@@ -187,7 +186,7 @@ describe('VaultModule', function () {
             ethers.utils.parseEther('1')
           );
 
-          await systems().Core.connect(user2).mintUSD(
+          await systems().Core.connect(user2).mintUsd(
             user2AccountId,
             poolId,
             collateralAddress(),
@@ -408,21 +407,24 @@ describe('VaultModule', function () {
 
       it('vault is empty', async () => {
         assertBn.equal(
-          (await systems().Core.callStatic.vaultCollateral(poolId, collateralAddress())).amount,
+          (await systems().Core.callStatic.getVaultCollateral(poolId, collateralAddress())).amount,
           0
         );
-        assertBn.equal(await systems().Core.callStatic.vaultDebt(poolId, collateralAddress()), 0);
+        assertBn.equal(
+          await systems().Core.callStatic.getVaultDebt(poolId, collateralAddress()),
+          0
+        );
       });
     });
   });
 
-  describe('mintUSD()', async () => {
+  describe('mintUsd()', async () => {
     before(restore);
     it('verifies permission for account', async () => {
       assertRevert(
         systems()
           .Core.connect(user2)
-          .mintUSD(accountId, poolId, collateralAddress(), depositAmount.mul(10)),
+          .mintUsd(accountId, poolId, collateralAddress(), depositAmount.mul(10)),
         `Unauthorized("${await user2.getAddress()}")`,
         systems().Core
       );
@@ -432,7 +434,7 @@ describe('VaultModule', function () {
       assertRevert(
         systems()
           .Core.connect(user1)
-          .mintUSD(accountId, poolId, collateralAddress(), depositAmount),
+          .mintUsd(accountId, poolId, collateralAddress(), depositAmount),
         'InsufficientCollateralRatio',
         systems().Core
       );
@@ -440,7 +442,7 @@ describe('VaultModule', function () {
 
     describe('successful mint', () => {
       before('mint', async () => {
-        await systems().Core.connect(user1).mintUSD(
+        await systems().Core.connect(user1).mintUsd(
           accountId,
           poolId,
           collateralAddress(),
@@ -462,7 +464,7 @@ describe('VaultModule', function () {
 
       describe('subsequent mint', () => {
         before('mint again', async () => {
-          await systems().Core.connect(user1).mintUSD(
+          await systems().Core.connect(user1).mintUsd(
             accountId,
             poolId,
             collateralAddress(),
@@ -490,7 +492,7 @@ describe('VaultModule', function () {
     before('mint', async () => {
       await systems()
         .Core.connect(user1)
-        .mintUSD(accountId, poolId, collateralAddress(), depositAmount.div(10));
+        .mintUsd(accountId, poolId, collateralAddress(), depositAmount.div(10));
     });
 
     describe('burn from other account', async () => {

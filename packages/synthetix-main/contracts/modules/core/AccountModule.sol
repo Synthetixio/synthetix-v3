@@ -127,7 +127,7 @@ contract AccountModule is IAccountModule, OwnableMixin, AccountRBACMixin, Associ
         emit PermissionRevoked(accountId, permission, target, msg.sender);
     }
 
-    function accountOwner(uint accountId) external view returns (address) {
+    function getAccountOwner(uint accountId) external view returns (address) {
         return _accountOwner(accountId);
     }
 }

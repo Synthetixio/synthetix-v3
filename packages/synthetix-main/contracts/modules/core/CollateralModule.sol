@@ -31,7 +31,7 @@ contract CollateralModule is
 
     error OutOfBounds();
 
-    function adjustCollateralType(
+    function configureCollateralType(
         address collateralType,
         address priceFeed,
         uint targetCRatio,
@@ -53,7 +53,7 @@ contract CollateralModule is
         collateralData.liquidationReward = liquidationReward;
         collateralData.enabled = enabled;
 
-        emit CollateralConfigured(collateralType, priceFeed, targetCRatio, minimumCRatio, liquidationReward, enabled);
+        emit CollateralTypeConfigured(collateralType, priceFeed, targetCRatio, minimumCRatio, liquidationReward, enabled);
     }
 
     function getCollateralTypes(bool hideDisabled)

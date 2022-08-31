@@ -17,7 +17,7 @@ contract PoolVaultStorage {
 
     /// @notice represents the data in a vault which is valid only during the operation of a liquidation cycle
     struct VaultEpochData {
-        /// @dev amount of debt which has not been rolled into `usdDebtDist`. Needed to keep track of overall vaultDebt
+        /// @dev amount of debt which has not been rolled into `usdDebtDist`. Needed to keep track of overall getVaultDebt
         int128 unclaimedDebt;
         /// @dev if there are liquidations, this value will be multiplied by any share counts to determine the value of the shares wrt the rest of the pool
         uint128 liquidityMultiplier;

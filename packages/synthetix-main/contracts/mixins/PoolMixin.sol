@@ -8,14 +8,15 @@ import "../mixins/MarketManagerMixin.sol";
 
 import "../storage/PoolModuleStorage.sol";
 import "../storage/PoolVaultStorage.sol";
-import "../submodules/PoolEventAndErrors.sol";
 
-contract PoolMixin is PoolModuleStorage, PoolVaultStorage, PoolEventAndErrors, CollateralMixin, MarketManagerMixin {
+contract PoolMixin is PoolModuleStorage, PoolVaultStorage, CollateralMixin, MarketManagerMixin {
     using SetUtil for SetUtil.AddressSet;
     using SetUtil for SetUtil.Bytes32Set;
     using MathUtil for uint256;
 
     using SharesLibrary for SharesLibrary.Distribution;
+
+    error PoolNotFound(uint poolId);
 
     function _ownerOf(uint256 poolId) internal view returns (address) {
         return _poolModuleStore().pools[poolId].owner;
@@ -126,7 +127,7 @@ contract PoolMixin is PoolModuleStorage, PoolVaultStorage, PoolEventAndErrors, C
         _distributePoolDebt(poolId);
     }
 
-    function _updateAccountDebt(
+    function _updatePositionDebt(
         uint accountId,
         uint poolId,
         address collateralType
@@ -177,7 +178,7 @@ contract PoolMixin is PoolModuleStorage, PoolVaultStorage, PoolEventAndErrors, C
         return rewards;
     }
 
-    function _accountCollateral(
+    function _positionCollateral(
         uint accountId,
         uint poolId,
         address collateralType
@@ -201,16 +202,16 @@ contract PoolMixin is PoolModuleStorage, PoolVaultStorage, PoolEventAndErrors, C
         shares = epochData.debtDist.totalShares;
     }
 
-    function _accountCollateralRatio(
+    function _positionCollateralizationRatio(
         uint accountId,
         uint poolId,
         address collateralType
     ) internal returns (uint) {
-        (, uint accountCollateralValue, ) = _accountCollateral(accountId, poolId, collateralType);
-        int accountDebt = _updateAccountDebt(accountId, poolId, collateralType);
+        (, uint getPositionCollateralValue, ) = _positionCollateral(accountId, poolId, collateralType);
+        int getPositionDebt = _updatePositionDebt(accountId, poolId, collateralType);
 
         // if they have a credit, just treat their debt as 0
-        return accountCollateralValue.divDecimal(accountDebt < 0 ? 0 : uint(accountDebt));
+        return getPositionCollateralValue.divDecimal(getPositionDebt < 0 ? 0 : uint(getPositionDebt));
     }
 
     function _vaultDebt(uint poolId, address collateralType) internal returns (int) {

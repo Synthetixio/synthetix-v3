@@ -5,6 +5,23 @@ import "../utils/CurvesLibrary.sol";
 
 /// @title Liquidates the collateral for an account in a pool
 interface ILiquidationModule {
+    event Liquidation(
+        uint indexed accountId,
+        uint indexed poolId,
+        address indexed collateralType,
+        uint debtLiquidated,
+        uint collateralLiquidated,
+        uint amountRewarded
+    );
+
+    event VaultLiquidation(
+        uint indexed poolId,
+        address indexed collateralType,
+        uint debtLiquidated,
+        uint collateralLiquidated,
+        uint amountRewarded
+    );
+
     struct LiqudationInformation {
         CurvesLibrary.PolynomialCurve curve;
         mapping(uint => uint) initialAmount; // key is accountId, amount is accumulated when you entered the vault

@@ -23,23 +23,7 @@ contract LiquidationsModule is
     using MathUtil for uint;
     using ERC20Helper for address;
     using SharesLibrary for SharesLibrary.Distribution;
-
-    event Liquidation(
-        uint indexed accountId,
-        uint indexed poolId,
-        address indexed collateralType,
-        uint debtLiquidated,
-        uint collateralLiquidated,
-        uint amountRewarded
-    );
-
-    event VaultLiquidation(
-        uint indexed poolId,
-        address indexed collateralType,
-        uint debtLiquidated,
-        uint collateralLiquidated,
-        uint amountRewarded
-    );
+    error InvalidParameters(string incorrectParameter, string help);
 
     error IneligibleForLiquidation(uint collateralValue, uint debt, uint currentCRatio, uint cratio);
 
@@ -60,9 +44,9 @@ contract LiquidationsModule is
             uint collateralLiquidated
         )
     {
-        int rawDebt = _updateAccountDebt(accountId, poolId, collateralType);
+        int rawDebt = _updatePositionDebt(accountId, poolId, collateralType);
 
-        (uint cl, uint collateralValue, ) = _accountCollateral(accountId, poolId, collateralType);
+        (uint cl, uint collateralValue, ) = _positionCollateral(accountId, poolId, collateralType);
         collateralLiquidated = cl;
 
         if (rawDebt <= 0 || !_isLiquidatable(collateralType, uint(rawDebt), collateralValue)) {
@@ -70,7 +54,7 @@ contract LiquidationsModule is
                 collateralValue,
                 debtLiquidated,
                 debtLiquidated == 0 ? 0 : collateralValue.divDecimal(debtLiquidated),
-                _getCollateralMinimumCRatio(collateralType)
+                _collateralMinimumCRatio(collateralType)
             );
         }
 
@@ -86,7 +70,7 @@ contract LiquidationsModule is
             revert MustBeVaultLiquidated();
         }
 
-        amountRewarded = _getCollateralLiquidationReward(collateralType);
+        amountRewarded = _collateralLiquidationReward(collateralType);
 
         if (amountRewarded >= uint(epochData.collateralDist.totalValue())) {
             // vault is too small to be liquidated socialized
@@ -149,7 +133,7 @@ contract LiquidationsModule is
                 collateralValue,
                 vaultDebt,
                 vaultDebt > 0 ? collateralValue.divDecimal(vaultDebt) : 0,
-                _getCollateralMinimumCRatio(collateralType)
+                _collateralMinimumCRatio(collateralType)
             );
         }
 
@@ -207,7 +191,7 @@ contract LiquidationsModule is
             return false;
         }
 
-        return collateralValue.divDecimal(debt) < _getCollateralMinimumCRatio(collateralType);
+        return collateralValue.divDecimal(debt) < _collateralMinimumCRatio(collateralType);
     }
 
     function isLiquidatable(
@@ -215,8 +199,8 @@ contract LiquidationsModule is
         uint poolId,
         address collateralType
     ) external override returns (bool) {
-        int rawDebt = _updateAccountDebt(accountId, poolId, collateralType);
-        (, uint collateralValue, ) = _accountCollateral(accountId, poolId, collateralType);
+        int rawDebt = _updatePositionDebt(accountId, poolId, collateralType);
+        (, uint collateralValue, ) = _positionCollateral(accountId, poolId, collateralType);
         return rawDebt >= 0 && _isLiquidatable(collateralType, uint(rawDebt), collateralValue);
     }
 

@@ -3,6 +3,12 @@ pragma solidity ^0.8.0;
 
 /// @title Module for managing pool token and pools positions distribution
 interface IPoolModule {
+    event PoolCreated(address owner, uint256 poolId);
+    event NominatedNewOwner(address nominatedOwner, uint256 poolId);
+    event OwnershipAccepted(address newOwner, uint256 poolId);
+    event OwnershipRenounced(address target, uint256 poolId);
+    event PoolPositionSet(uint poolId, uint[] markets, uint[] weights, address executedBy);
+
     /// @notice creates a new poolToken (NFT)
     function createPool(uint requestedPoolId, address owner) external;
 
