@@ -3,10 +3,11 @@ import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert
 import hre from 'hardhat';
 import { ethers } from 'ethers';
 import { getBlockTimestamp } from '@synthetixio/core-utils/utils/ethers/provider';
+import { fastForward } from '@synthetixio/core-utils/utils/hardhat/rpc';
 
 import { bootstrapWithStakedPool } from '../bootstrap';
 
-describe.skip('VaultRewardsModule', function () {
+describe('VaultRewardsModule', function () {
   const { provider, signers, systems, poolId, collateralAddress, accountId, restore } =
     bootstrapWithStakedPool();
 
@@ -49,7 +50,7 @@ describe.skip('VaultRewardsModule', function () {
         before(restore);
         before(async () => {
           // distribute rewards multiple times to see what happens
-          // of many distributions happen in the past
+          // if many distributions happen in the past
           await systems().Core.connect(owner).distributeRewards(
             poolId,
             collateralAddress(),
@@ -169,7 +170,7 @@ describe.skip('VaultRewardsModule', function () {
 
         describe('after time passes', () => {
           before(async () => {
-            await provider().send('evm_increaseTime', [30]);
+            await fastForward(30, provider());
           });
 
           it('is distributed', async () => {
@@ -302,7 +303,7 @@ describe.skip('VaultRewardsModule', function () {
 
         describe('after time passes', () => {
           before(async () => {
-            await provider().send('evm_increaseTime', [200]);
+            await fastForward(200, provider());
           });
 
           it('is fully distributed', async () => {
@@ -357,7 +358,7 @@ describe.skip('VaultRewardsModule', function () {
 
         describe('after time passes', () => {
           before(async () => {
-            await provider().send('evm_increaseTime', [25]);
+            await fastForward(25, provider());
           });
 
           it('distributes more portion of rewards', async () => {
@@ -402,7 +403,7 @@ describe.skip('VaultRewardsModule', function () {
 
             describe('after more time', () => {
               before(async () => {
-                await provider().send('evm_increaseTime', [100]);
+                await fastForward(100, provider());
               });
 
               it('distributes more portion of rewards', async () => {
