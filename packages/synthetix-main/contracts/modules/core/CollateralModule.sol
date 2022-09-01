@@ -126,9 +126,9 @@ contract CollateralModule is
 
         collateralData.availableAmount -= amount;
 
-        emit CollateralWithdrawn(accountId, collateralType, amount, msg.sender);
-
         collateralType.safeTransfer(_accountOwner(accountId), amount);
+
+        emit CollateralWithdrawn(accountId, collateralType, amount, msg.sender);
     }
 
     function getAccountCollateral(uint accountId, address collateralType)
