@@ -6,8 +6,8 @@ import { fastForwardTo, getTime } from '@synthetixio/core-utils/utils/hardhat/rp
 
 import { bootstrapWithStakedPool } from '../bootstrap';
 
-// TODO: These tests fail inconsistently on CI because of time discrepancies. They need to be reworked.
-// Disabling them on the meantime until SIP 305 is official.
+// TODO: These tests fail inconsistently on CI because of time discrepancies.
+// They need to be reworked. Disabling them on the meantime until SIP 305 is official.
 describe('VaultRewardsModule', function () {
   const { provider, signers, systems, poolId, collateralAddress, accountId, restore } =
     bootstrapWithStakedPool();
