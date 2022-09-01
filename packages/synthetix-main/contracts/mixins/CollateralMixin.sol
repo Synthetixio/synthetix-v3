@@ -68,9 +68,7 @@ contract CollateralMixin is CollateralStorage, PoolVaultStorage {
         for (uint i = 0; i < stakedCollateral.pools.length; i++) {
             uint poolIdx = stakedCollateral.pools[i];
 
-            PoolVaultStorage.VaultData storage vaultData = _poolVaultStore().poolVaults[poolIdx][
-                collateralType
-            ];
+            PoolVaultStorage.VaultData storage vaultData = _poolVaultStore().poolVaults[poolIdx][collateralType];
 
             totalAssigned += uint(vaultData.epochData[vaultData.epoch].collateralDist.getActorValue(bytes32(accountId)));
         }

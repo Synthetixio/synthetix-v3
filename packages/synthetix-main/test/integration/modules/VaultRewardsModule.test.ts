@@ -158,7 +158,7 @@ describe('VaultRewardsModule', function () {
               rewardAmount,
               startTime + 30, // timestamp
               0
-          );
+            );
         });
 
         it('is not distributed future yet', async () => {
@@ -423,7 +423,9 @@ describe('VaultRewardsModule', function () {
               // should have received only the one past reward
               assertBn.equal(
                 rewards[0],
-                rewardAmount.add(rewardAmount.mul(76).div(100)).add(rewardAmount.mul(1000).mul(111).div(200))
+                rewardAmount
+                  .add(rewardAmount.mul(76).div(100))
+                  .add(rewardAmount.mul(1000).mul(111).div(200))
               );
             });
 
@@ -440,7 +442,10 @@ describe('VaultRewardsModule', function () {
                 );
                 // should have received only the one past reward
                 // +1 because block being mined by earlier txn
-                assertBn.equal(rewards[0], rewardAmount.mul(1001).add(rewardAmount.mul(76).div(100)));
+                assertBn.equal(
+                  rewards[0],
+                  rewardAmount.mul(1001).add(rewardAmount.mul(76).div(100))
+                );
               });
             });
           });
