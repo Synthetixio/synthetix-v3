@@ -39,19 +39,22 @@ contract CollateralModule is
         uint liquidationReward,
         bool enabled
     ) external override onlyOwner {
-        if (!_collateralStore().collaterals.contains(collateralType)) {
-            // Add a collateral entry
-            _collateralStore().collaterals.add(collateralType);
+        CollateralStore storage store = _collateralStore();
+
+        SetUtil.AddressSet storage collaterals = store.collaterals;
+
+        if (!collaterals.contains(collateralType)) {
+            collaterals.add(collateralType);
         }
 
-        CollateralData storage collateralData = _collateralStore().collateralsData[collateralType];
+        CollateralData storage collateral = store.collateralsData[collateralType];
 
-        collateralData.tokenAddress = collateralType;
-        collateralData.targetCRatio = targetCRatio;
-        collateralData.minimumCRatio = minimumCRatio;
-        collateralData.priceFeed = priceFeed;
-        collateralData.liquidationReward = liquidationReward;
-        collateralData.enabled = enabled;
+        collateral.tokenAddress = collateralType;
+        collateral.targetCRatio = targetCRatio;
+        collateral.minimumCRatio = minimumCRatio;
+        collateral.priceFeed = priceFeed;
+        collateral.liquidationReward = liquidationReward;
+        collateral.enabled = enabled;
 
         emit CollateralTypeConfigured(collateralType, priceFeed, targetCRatio, minimumCRatio, liquidationReward, enabled);
     }
