@@ -10,13 +10,13 @@ interface IPoolModule {
     event PoolNominationRevoked(uint256 indexed poolId, address indexed owner);
     event PoolOwnershipRenounced(uint256 indexed poolId, address indexed owner);
     event PoolNameUpdated(uint256 indexed poolId, string indexed name, address indexed sender);
-    event PoolPositionSet(uint indexed poolId, uint[] indexed markets, uint[] indexed weights, address executedBy);
+    event PoolConfigurationSet(uint indexed poolId, uint[] indexed markets, uint[] indexed weights, address executedBy);
 
     /// @notice creates a new pool
     function createPool(uint requestedPoolId, address owner) external;
 
     /// @notice sets the pool positions (only poolToken owner)
-    function setPoolPosition(
+    function setPoolConfiguration(
         uint poolId,
         uint[] calldata markets,
         uint[] calldata weights,
@@ -24,7 +24,7 @@ interface IPoolModule {
     ) external;
 
     /// @notice gets the pool positions
-    function getPoolPosition(uint poolId)
+    function getPoolConfiguration(uint poolId)
         external
         view
         returns (
@@ -52,7 +52,7 @@ interface IPoolModule {
     function renouncePoolOwnership(uint256 poolId) external;
 
     /// @notice gets owner of poolId
-    function ownerOfPool(uint256 poolId) external view returns (address);
+    function getPoolOwner(uint256 poolId) external view returns (address);
 
     /// @notice gets nominatedOwner of poolId
     function getNominatedPoolOwner(uint256 poolId) external view returns (address);

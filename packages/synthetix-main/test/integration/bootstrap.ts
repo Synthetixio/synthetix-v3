@@ -199,7 +199,7 @@ export function bootstrapWithMockMarketAndPool() {
     await r
       .systems()
       .Core.connect(owner)
-      .setPoolPosition(
+      .setPoolConfiguration(
         r.poolId,
         [marketId],
         [ethers.utils.parseEther('1')],

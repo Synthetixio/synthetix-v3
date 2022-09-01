@@ -67,7 +67,7 @@ contract PoolModule is IPoolModule, AccountRBACMixin, PoolMixin, OwnableMixin {
         emit PoolNominationRenounced(poolId, msg.sender);
     }
 
-    function ownerOfPool(uint256 poolId) external view override returns (address) {
+    function getPoolOwner(uint256 poolId) external view override returns (address) {
         return _ownerOf(poolId);
     }
 
@@ -84,7 +84,7 @@ contract PoolModule is IPoolModule, AccountRBACMixin, PoolMixin, OwnableMixin {
     // ---------------------------------------
     // pool admin
     // ---------------------------------------
-    function setPoolPosition(
+    function setPoolConfiguration(
         uint poolId,
         uint[] calldata markets,
         uint[] calldata weights,
@@ -96,7 +96,7 @@ contract PoolModule is IPoolModule, AccountRBACMixin, PoolMixin, OwnableMixin {
 
         // TODO: this is not super efficient. we only call this to gather the debt accumulated from deployed pools
         // would be better if we could eliminate the call at the end somehow
-        _rebalancePoolPositions(poolId);
+        _rebalancePoolConfigurations(poolId);
 
         PoolData storage poolData = _poolModuleStore().pools[poolId];
 
@@ -149,12 +149,12 @@ contract PoolModule is IPoolModule, AccountRBACMixin, PoolMixin, OwnableMixin {
 
         poolData.totalWeights = totalWeight;
 
-        _rebalancePoolPositions(poolId);
+        _rebalancePoolConfigurations(poolId);
 
-        emit PoolPositionSet(poolId, markets, weights, msg.sender);
+        emit PoolConfigurationSet(poolId, markets, weights, msg.sender);
     }
 
-    function getPoolPosition(uint poolId)
+    function getPoolConfiguration(uint poolId)
         external
         view
         override

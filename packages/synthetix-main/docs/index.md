@@ -352,10 +352,10 @@ gets the approved pools (list of poolIds)
   event OwnershipRenounced(address target, uint256 poolId)
   ```
 
-### PoolPositionSet
+### PoolConfigurationSet
 
   ```solidity
-  event PoolPositionSet(uint256 poolId, uint256[] markets, uint256[] weights, address executedBy)
+  event PoolConfigurationSet(uint256 poolId, uint256[] markets, uint256[] weights, address executedBy)
   ```
 
 ### createPool
@@ -364,23 +364,25 @@ gets the approved pools (list of poolIds)
   function createPool(uint256 requestedPoolId, address owner) external
   ```
 
-creates a new poolToken (NFT)
+creates a new poolToken
 
-### setPoolPosition
-
-  ```solidity
-  function setPoolPosition(uint256 poolId, uint256[] markets, uint256[] weights, int256[] maxDebtShareValues) external
-  ```
-
-sets the pool positions (only poolToken owner)
-
-### getPoolPosition
+### setPoolConfiguration
 
   ```solidity
-  function getPoolPosition(uint256 poolId) external view returns (uint256[] markets, uint256[] weights, int256[] maxDebtShareValues)
+  function setPoolConfiguration(uint256 poolId, uint256[] markets, uint256[] weights, int256[] maxDebtShareValues) external
   ```
 
-gets the pool positions
+sets the pool positions (only poolToken o
+
+### getPoolConfiguration
+
+  ```solidity
+  function getPoolConfiguration(uint256 poolId) external view returns (uint256[] markets, uint256[] weights, int256[] maxDebtShareValues)
+  ```
+
+nal;
+
+gets the pool
 
 ### setPoolName
 
@@ -388,7 +390,9 @@ gets the pool positions
   function setPoolName(uint256 poolId, string name) external
   ```
 
-sets the pool name
+);
+
+set
 
 ### getPoolName
 
@@ -396,7 +400,9 @@ sets the pool name
   function getPoolName(uint256 poolId) external view returns (string poolName)
   ```
 
-gets the pool name
+external;
+
+get
 
 ### nominateNewPoolOwner
 
@@ -404,7 +410,9 @@ gets the pool name
   function nominateNewPoolOwner(address nominatedOwner, uint256 poolId) external
   ```
 
-nominates a new pool owner
+oolName);
+
+nominates a
 
 ### acceptPoolOwnership
 
@@ -412,7 +420,9 @@ nominates a new pool owner
   function acceptPoolOwnership(uint256 poolId) external
   ```
 
-accepts ownership by nominated owner
+external;
+
+accepts ownership by
 
 ### renouncePoolNomination
 
@@ -420,7 +430,9 @@ accepts ownership by nominated owner
   function renouncePoolNomination(uint256 poolId) external
   ```
 
-renounces ownership by nominated owner
+external;
+
+renounces ownership by
 
 ### ownerOf
 
@@ -428,7 +440,9 @@ renounces ownership by nominated owner
   function ownerOf(uint256 poolId) external view returns (address)
   ```
 
-gets owner of poolId
+external;
+
+gets
 
 ### nominatedOwnerOf
 
@@ -436,7 +450,9 @@ gets owner of poolId
   function nominatedOwnerOf(uint256 poolId) external view returns (address)
   ```
 
-gets nominatedOwner of poolId
+address);
+
+gets nominated
 
 ### setMinLiquidityRatio
 
@@ -444,7 +460,9 @@ gets nominatedOwner of poolId
   function setMinLiquidityRatio(uint256 minLiquidityRatio) external
   ```
 
-places a cap on what proportion of free vault liquidity may be used towards a pool. only owner.
+address);
+
+places a cap on what proportion of free vault liquidity may be used towards a po
 
 ### getMinLiquidityRatio
 
@@ -452,7 +470,9 @@ places a cap on what proportion of free vault liquidity may be used towards a po
   function getMinLiquidityRatio() external view returns (uint256)
   ```
 
-returns the liquidity ratio cap for delegation of liquidity by pools to markets
+external;
+
+returns the liquidity ratio cap for delegation of liquidity by p
 
 ### PoolCreated
 
@@ -478,10 +498,10 @@ returns the liquidity ratio cap for delegation of liquidity by pools to markets
   event OwnershipRenounced(address target, uint256 poolId)
   ```
 
-### PoolPositionSet
+### PoolConfigurationSet
 
   ```solidity
-  event PoolPositionSet(uint256 poolId, uint256[] markets, uint256[] weights, address executedBy)
+  event PoolConfigurationSet(uint256 poolId, uint256[] markets, uint256[] weights, address executedBy)
   ```
 
 ### createPool
@@ -490,23 +510,25 @@ returns the liquidity ratio cap for delegation of liquidity by pools to markets
   function createPool(uint256 requestedPoolId, address owner) external
   ```
 
-creates a new poolToken (NFT)
+creates a new poolToken
 
-### setPoolPosition
-
-  ```solidity
-  function setPoolPosition(uint256 poolId, uint256[] markets, uint256[] weights, int256[] maxDebtShareValues) external
-  ```
-
-sets the pool positions (only poolToken owner)
-
-### getPoolPosition
+### setPoolConfiguration
 
   ```solidity
-  function getPoolPosition(uint256 poolId) external view returns (uint256[] markets, uint256[] weights, int256[] maxDebtShareValues)
+  function setPoolConfiguration(uint256 poolId, uint256[] markets, uint256[] weights, int256[] maxDebtShareValues) external
   ```
 
-gets the pool positions
+sets the pool positions (only poolToken o
+
+### getPoolConfiguration
+
+  ```solidity
+  function getPoolConfiguration(uint256 poolId) external view returns (uint256[] markets, uint256[] weights, int256[] maxDebtShareValues)
+  ```
+
+nal;
+
+gets the pool
 
 ### setPoolName
 
@@ -514,7 +536,9 @@ gets the pool positions
   function setPoolName(uint256 poolId, string name) external
   ```
 
-sets the pool name
+);
+
+set
 
 ### getPoolName
 
@@ -522,7 +546,9 @@ sets the pool name
   function getPoolName(uint256 poolId) external view returns (string poolName)
   ```
 
-gets the pool name
+external;
+
+get
 
 ### nominateNewPoolOwner
 
@@ -530,7 +556,9 @@ gets the pool name
   function nominateNewPoolOwner(address nominatedOwner, uint256 poolId) external
   ```
 
-nominates a new pool owner
+oolName);
+
+nominates a
 
 ### acceptPoolOwnership
 
@@ -538,7 +566,9 @@ nominates a new pool owner
   function acceptPoolOwnership(uint256 poolId) external
   ```
 
-accepts ownership by nominated owner
+external;
+
+accepts ownership by
 
 ### renouncePoolNomination
 
@@ -546,7 +576,9 @@ accepts ownership by nominated owner
   function renouncePoolNomination(uint256 poolId) external
   ```
 
-renounces ownership by nominated owner
+external;
+
+renounces ownership by
 
 ### ownerOf
 
@@ -554,7 +586,9 @@ renounces ownership by nominated owner
   function ownerOf(uint256 poolId) external view returns (address)
   ```
 
-gets owner of poolId
+external;
+
+gets
 
 ### nominatedOwnerOf
 
@@ -562,7 +596,9 @@ gets owner of poolId
   function nominatedOwnerOf(uint256 poolId) external view returns (address)
   ```
 
-gets nominatedOwner of poolId
+address);
+
+gets nominated
 
 ### setMinLiquidityRatio
 
@@ -570,7 +606,9 @@ gets nominatedOwner of poolId
   function setMinLiquidityRatio(uint256 minLiquidityRatio) external
   ```
 
-places a cap on what proportion of free vault liquidity may be used towards a pool. only owner.
+address);
+
+places a cap on what proportion of free vault liquidity may be used towards a po
 
 ### getMinLiquidityRatio
 
@@ -578,7 +616,9 @@ places a cap on what proportion of free vault liquidity may be used towards a po
   function getMinLiquidityRatio() external view returns (uint256)
   ```
 
-returns the liquidity ratio cap for delegation of liquidity by pools to markets
+external;
+
+returns the liquidity ratio cap for delegation of liquidity by p
 
 ## Reward Distributor Module
 
@@ -1608,10 +1648,10 @@ gets the approved pools (list of poolIds)
   event OwnershipRenounced(address target, uint256 poolId)
   ```
 
-### PoolPositionSet
+### PoolConfigurationSet
 
   ```solidity
-  event PoolPositionSet(uint256 poolId, uint256[] markets, uint256[] weights, address executedBy)
+  event PoolConfigurationSet(uint256 poolId, uint256[] markets, uint256[] weights, address executedBy)
   ```
 
 ### createPool
@@ -1620,23 +1660,25 @@ gets the approved pools (list of poolIds)
   function createPool(uint256 requestedPoolId, address owner) external
   ```
 
-creates a new poolToken (NFT)
+creates a new poolToken
 
-### setPoolPosition
-
-  ```solidity
-  function setPoolPosition(uint256 poolId, uint256[] markets, uint256[] weights, int256[] maxDebtShareValues) external
-  ```
-
-sets the pool positions (only poolToken owner)
-
-### getPoolPosition
+### setPoolConfiguration
 
   ```solidity
-  function getPoolPosition(uint256 poolId) external view returns (uint256[] markets, uint256[] weights, int256[] maxDebtShareValues)
+  function setPoolConfiguration(uint256 poolId, uint256[] markets, uint256[] weights, int256[] maxDebtShareValues) external
   ```
 
-gets the pool positions
+sets the pool positions (only poolToken o
+
+### getPoolConfiguration
+
+  ```solidity
+  function getPoolConfiguration(uint256 poolId) external view returns (uint256[] markets, uint256[] weights, int256[] maxDebtShareValues)
+  ```
+
+nal;
+
+gets the pool
 
 ### setPoolName
 
@@ -1644,7 +1686,9 @@ gets the pool positions
   function setPoolName(uint256 poolId, string name) external
   ```
 
-sets the pool name
+);
+
+set
 
 ### getPoolName
 
@@ -1652,7 +1696,9 @@ sets the pool name
   function getPoolName(uint256 poolId) external view returns (string poolName)
   ```
 
-gets the pool name
+external;
+
+get
 
 ### nominateNewPoolOwner
 
@@ -1660,7 +1706,9 @@ gets the pool name
   function nominateNewPoolOwner(address nominatedOwner, uint256 poolId) external
   ```
 
-nominates a new pool owner
+oolName);
+
+nominates a
 
 ### acceptPoolOwnership
 
@@ -1668,7 +1716,9 @@ nominates a new pool owner
   function acceptPoolOwnership(uint256 poolId) external
   ```
 
-accepts ownership by nominated owner
+external;
+
+accepts ownership by
 
 ### renouncePoolNomination
 
@@ -1676,7 +1726,9 @@ accepts ownership by nominated owner
   function renouncePoolNomination(uint256 poolId) external
   ```
 
-renounces ownership by nominated owner
+external;
+
+renounces ownership by
 
 ### ownerOf
 
@@ -1684,7 +1736,9 @@ renounces ownership by nominated owner
   function ownerOf(uint256 poolId) external view returns (address)
   ```
 
-gets owner of poolId
+external;
+
+gets
 
 ### nominatedOwnerOf
 
@@ -1692,7 +1746,9 @@ gets owner of poolId
   function nominatedOwnerOf(uint256 poolId) external view returns (address)
   ```
 
-gets nominatedOwner of poolId
+address);
+
+gets nominated
 
 ### setMinLiquidityRatio
 
@@ -1700,7 +1756,9 @@ gets nominatedOwner of poolId
   function setMinLiquidityRatio(uint256 minLiquidityRatio) external
   ```
 
-places a cap on what proportion of free vault liquidity may be used towards a pool. only owner.
+address);
+
+places a cap on what proportion of free vault liquidity may be used towards a po
 
 ### getMinLiquidityRatio
 
@@ -1708,7 +1766,9 @@ places a cap on what proportion of free vault liquidity may be used towards a po
   function getMinLiquidityRatio() external view returns (uint256)
   ```
 
-returns the liquidity ratio cap for delegation of liquidity by pools to markets
+external;
+
+returns the liquidity ratio cap for delegation of liquidity by p
 
 ### PoolCreated
 
@@ -1734,10 +1794,10 @@ returns the liquidity ratio cap for delegation of liquidity by pools to markets
   event OwnershipRenounced(address target, uint256 poolId)
   ```
 
-### PoolPositionSet
+### PoolConfigurationSet
 
   ```solidity
-  event PoolPositionSet(uint256 poolId, uint256[] markets, uint256[] weights, address executedBy)
+  event PoolConfigurationSet(uint256 poolId, uint256[] markets, uint256[] weights, address executedBy)
   ```
 
 ### createPool
@@ -1746,23 +1806,25 @@ returns the liquidity ratio cap for delegation of liquidity by pools to markets
   function createPool(uint256 requestedPoolId, address owner) external
   ```
 
-creates a new poolToken (NFT)
+creates a new poolToken
 
-### setPoolPosition
-
-  ```solidity
-  function setPoolPosition(uint256 poolId, uint256[] markets, uint256[] weights, int256[] maxDebtShareValues) external
-  ```
-
-sets the pool positions (only poolToken owner)
-
-### getPoolPosition
+### setPoolConfiguration
 
   ```solidity
-  function getPoolPosition(uint256 poolId) external view returns (uint256[] markets, uint256[] weights, int256[] maxDebtShareValues)
+  function setPoolConfiguration(uint256 poolId, uint256[] markets, uint256[] weights, int256[] maxDebtShareValues) external
   ```
 
-gets the pool positions
+sets the pool positions (only poolToken o
+
+### getPoolConfiguration
+
+  ```solidity
+  function getPoolConfiguration(uint256 poolId) external view returns (uint256[] markets, uint256[] weights, int256[] maxDebtShareValues)
+  ```
+
+nal;
+
+gets the pool
 
 ### setPoolName
 
@@ -1770,7 +1832,9 @@ gets the pool positions
   function setPoolName(uint256 poolId, string name) external
   ```
 
-sets the pool name
+);
+
+set
 
 ### getPoolName
 
@@ -1778,7 +1842,9 @@ sets the pool name
   function getPoolName(uint256 poolId) external view returns (string poolName)
   ```
 
-gets the pool name
+external;
+
+get
 
 ### nominateNewPoolOwner
 
@@ -1786,7 +1852,9 @@ gets the pool name
   function nominateNewPoolOwner(address nominatedOwner, uint256 poolId) external
   ```
 
-nominates a new pool owner
+oolName);
+
+nominates a
 
 ### acceptPoolOwnership
 
@@ -1794,7 +1862,9 @@ nominates a new pool owner
   function acceptPoolOwnership(uint256 poolId) external
   ```
 
-accepts ownership by nominated owner
+external;
+
+accepts ownership by
 
 ### renouncePoolNomination
 
@@ -1802,7 +1872,9 @@ accepts ownership by nominated owner
   function renouncePoolNomination(uint256 poolId) external
   ```
 
-renounces ownership by nominated owner
+external;
+
+renounces ownership by
 
 ### ownerOf
 
@@ -1810,7 +1882,9 @@ renounces ownership by nominated owner
   function ownerOf(uint256 poolId) external view returns (address)
   ```
 
-gets owner of poolId
+external;
+
+gets
 
 ### nominatedOwnerOf
 
@@ -1818,7 +1892,9 @@ gets owner of poolId
   function nominatedOwnerOf(uint256 poolId) external view returns (address)
   ```
 
-gets nominatedOwner of poolId
+address);
+
+gets nominated
 
 ### setMinLiquidityRatio
 
@@ -1826,7 +1902,9 @@ gets nominatedOwner of poolId
   function setMinLiquidityRatio(uint256 minLiquidityRatio) external
   ```
 
-places a cap on what proportion of free vault liquidity may be used towards a pool. only owner.
+address);
+
+places a cap on what proportion of free vault liquidity may be used towards a po
 
 ### getMinLiquidityRatio
 
@@ -1834,7 +1912,133 @@ places a cap on what proportion of free vault liquidity may be used towards a po
   function getMinLiquidityRatio() external view returns (uint256)
   ```
 
-returns the liquidity ratio cap for delegation of liquidity by pools to markets
+external;
+
+returns the liquidity ratio cap for delegation of liquidity by p
+
+## Market Manager Module
+
+### MarketRegistered
+
+  ```solidity
+  event MarketRegistered(address market, uint256 marketId)
+  ```
+
+### registerMarket
+
+  ```solidity
+  function registerMarket(address market) external returns (uint256)
+  ```
+
+registers a new market
+
+### marketLiquidity
+
+  ```solidity
+  function marketLiquidity(uint256 marketId) external view returns (uint256)
+  ```
+
+gets the liquidity of the market
+
+### marketCollateralValue
+
+  ```solidity
+  function marketCollateralValue(uint256 marketId) external view returns (uint256)
+  ```
+
+gets the USD value of the collateral backing this market.
+This function does not determine the market should consider available to it. Use `marketLiquidity` instaed.
+
+### marketTotalBalance
+
+  ```solidity
+  function marketTotalBalance(uint256 marketId) external view returns (int256)
+  ```
+
+gets the total balance of the market
+
+### marketDebtPerShare
+
+  ```solidity
+  function marketDebtPerShare(uint256 marketId) external returns (int256)
+  ```
+
+### depositUsd
+
+  ```solidity
+  function depositUsd(uint256 marketId, address target, uint256 amount) external
+  ```
+
+target deposits amount of synths to the marketId
+
+### withdrawUsd
+
+  ```solidity
+  function withdrawUsd(uint256 marketId, address target, uint256 amount) external
+  ```
+
+target withdraws amount of synths to the marketId
+
+### MarketRegistered
+
+  ```solidity
+  event MarketRegistered(address market, uint256 marketId)
+  ```
+
+### registerMarket
+
+  ```solidity
+  function registerMarket(address market) external returns (uint256)
+  ```
+
+registers a new market
+
+### marketLiquidity
+
+  ```solidity
+  function marketLiquidity(uint256 marketId) external view returns (uint256)
+  ```
+
+gets the liquidity of the market
+
+### marketCollateralValue
+
+  ```solidity
+  function marketCollateralValue(uint256 marketId) external view returns (uint256)
+  ```
+
+gets the USD value of the collateral backing this market.
+This function does not determine the market should consider available to it. Use `marketLiquidity` instaed.
+
+### marketTotalBalance
+
+  ```solidity
+  function marketTotalBalance(uint256 marketId) external view returns (int256)
+  ```
+
+gets the total balance of the market
+
+### marketDebtPerShare
+
+  ```solidity
+  function marketDebtPerShare(uint256 marketId) external returns (int256)
+  ```
+
+### depositUsd
+
+  ```solidity
+  function depositUsd(uint256 marketId, address target, uint256 amount) external
+  ```
+
+target deposits amount of synths to the marketId
+
+### withdrawUsd
+
+  ```solidity
+  function withdrawUsd(uint256 marketId, address target, uint256 amount) external
+  ```
+
+target withdraws amount of synths to the marketId
 
 ## Pool Module
 
@@ -1880,10 +2084,10 @@ returns the liquidity ratio cap for delegation of liquidity by pools to markets
   event PoolNameUpdated(uint256 poolId, string name, address sender)
   ```
 
-### PoolPositionSet
+### PoolConfigurationSet
 
   ```solidity
-  event PoolPositionSet(uint256 poolId, uint256[] markets, uint256[] weights, address executedBy)
+  event PoolConfigurationSet(uint256 poolId, uint256[] markets, uint256[] weights, address executedBy)
   ```
 
 ### createPool
@@ -1894,18 +2098,18 @@ returns the liquidity ratio cap for delegation of liquidity by pools to markets
 
 creates a new pool
 
-### setPoolPosition
+### setPoolConfiguration
 
   ```solidity
-  function setPoolPosition(uint256 poolId, uint256[] markets, uint256[] weights, int256[] maxDebtShareValues) external
+  function setPoolConfiguration(uint256 poolId, uint256[] markets, uint256[] weights, int256[] maxDebtShareValues) external
   ```
 
 sets the pool positions (only poolToken owner)
 
-### getPoolPosition
+### getPoolConfiguration
 
   ```solidity
-  function getPoolPosition(uint256 poolId) external view returns (uint256[] markets, uint256[] weights, int256[] maxDebtShareValues)
+  function getPoolConfiguration(uint256 poolId) external view returns (uint256[] markets, uint256[] weights, int256[] maxDebtShareValues)
   ```
 
 gets the pool positions
@@ -1958,10 +2162,10 @@ renounces nomination by nominated owner
 
 renounces ownership by owner
 
-### ownerOfPool
+### getPoolOwner
 
   ```solidity
-  function ownerOfPool(uint256 poolId) external view returns (address)
+  function getPoolOwner(uint256 poolId) external view returns (address)
   ```
 
 gets owner of poolId
@@ -2032,10 +2236,10 @@ returns the liquidity ratio cap for delegation of liquidity by pools to markets
   event PoolNameUpdated(uint256 poolId, string name, address sender)
   ```
 
-### PoolPositionSet
+### PoolConfigurationSet
 
   ```solidity
-  event PoolPositionSet(uint256 poolId, uint256[] markets, uint256[] weights, address executedBy)
+  event PoolConfigurationSet(uint256 poolId, uint256[] markets, uint256[] weights, address executedBy)
   ```
 
 ### createPool
@@ -2046,18 +2250,18 @@ returns the liquidity ratio cap for delegation of liquidity by pools to markets
 
 creates a new pool
 
-### setPoolPosition
+### setPoolConfiguration
 
   ```solidity
-  function setPoolPosition(uint256 poolId, uint256[] markets, uint256[] weights, int256[] maxDebtShareValues) external
+  function setPoolConfiguration(uint256 poolId, uint256[] markets, uint256[] weights, int256[] maxDebtShareValues) external
   ```
 
 sets the pool positions (only poolToken owner)
 
-### getPoolPosition
+### getPoolConfiguration
 
   ```solidity
-  function getPoolPosition(uint256 poolId) external view returns (uint256[] markets, uint256[] weights, int256[] maxDebtShareValues)
+  function getPoolConfiguration(uint256 poolId) external view returns (uint256[] markets, uint256[] weights, int256[] maxDebtShareValues)
   ```
 
 gets the pool positions
@@ -2110,10 +2314,10 @@ renounces nomination by nominated owner
 
 renounces ownership by owner
 
-### ownerOfPool
+### getPoolOwner
 
   ```solidity
-  function ownerOfPool(uint256 poolId) external view returns (address)
+  function getPoolOwner(uint256 poolId) external view returns (address)
   ```
 
 gets owner of poolId
@@ -2141,6 +2345,458 @@ places a cap on what proportion of free vault liquidity may be used towards a po
   ```
 
 returns the liquidity ratio cap for delegation of liquidity by pools to markets
+
+## USD Token Module
+
+### initializeUSDTokenModule
+
+  ```solidity
+  function initializeUSDTokenModule() external
+  ```
+
+initializes the USD Token Module. Creates the first USD token implementation and takes ownership by the system
+
+### isUSDTokenModuleInitialized
+
+  ```solidity
+  function isUSDTokenModuleInitialized() external view returns (bool)
+  ```
+
+shows whether the module has been initialized
+
+### upgradeUSDImplementation
+
+  ```solidity
+  function upgradeUSDImplementation(address newUSDTokenImplementation) external
+  ```
+
+upgrades the USDToken implementation.
+
+### getUSDTokenAddress
+
+  ```solidity
+  function getUSDTokenAddress() external view returns (address)
+  ```
+
+gets the USDToken address.
+
+### initializeUSDTokenModule
+
+  ```solidity
+  function initializeUSDTokenModule() external
+  ```
+
+initializes the USD Token Module. Creates the first USD token implementation and takes ownership by the system
+
+### isUSDTokenModuleInitialized
+
+  ```solidity
+  function isUSDTokenModuleInitialized() external view returns (bool)
+  ```
+
+shows whether the module has been initialized
+
+### upgradeUSDImplementation
+
+  ```solidity
+  function upgradeUSDImplementation(address newUSDTokenImplementation) external
+  ```
+
+upgrades the USDToken implementation.
+
+### getUSDTokenAddress
+
+  ```solidity
+  function getUSDTokenAddress() external view returns (address)
+  ```
+
+gets the USDToken address.
+
+## Vault Module
+
+### DelegationUpdated
+
+  ```solidity
+  event DelegationUpdated(uint256 accountId, uint256 poolId, address collateralType, uint256 amount, uint256 leverage, address sender)
+  ```
+
+Emitted when {sender} updates the delegation of collateral in the specified staking position.
+
+### UsdMinted
+
+  ```solidity
+  event UsdMinted(uint256 accountId, uint256 poolId, address collateralType, uint256 amount, address sender)
+  ```
+
+Emitted when {sender} mints {amount} of snxUSD with the specified staking position.
+
+### UsdBurned
+
+  ```solidity
+  event UsdBurned(uint256 accountId, uint256 poolId, address collateralType, uint256 amount, address sender)
+  ```
+
+Emitted when {sender} burns {amount} of snxUSD with the specified staking position.
+
+### delegateCollateral
+
+  ```solidity
+  function delegateCollateral(uint256 accountId, uint256 poolId, address collateralType, uint256 amount, uint256 leverage) external
+  ```
+
+Delegates (creates, adjust or remove a delegation) collateral from an account.
+
+Requirements:
+
+- `msg.sender` must be the owner of the account, have the `ADMIN` permission, or have the `DELEGATE` permission.
+- If increasing the amount delegated, it must not exceed the available collateral (`getAccountAvailableCollateral`) associated with the account.
+- If decreasing the amount delegated, the staking position must have a colalteralization ratio greater than the target collateralization ratio for the corresponding collateral type.
+
+Emits a {DelegationUpdated} event.
+
+### mintUsd
+
+  ```solidity
+  function mintUsd(uint256 accountId, uint256 poolId, address collateralType, uint256 amount) external
+  ```
+
+Mints {amount} of snxUSD with the specified staking position.
+
+Requirements:
+
+- `msg.sender` must be the owner of the account, have the `ADMIN` permission, or have the `MINT` permission.
+- After minting, the collateralization ratio of the staking position must not be below the target collateralization ratio for the corresponding collateral type.
+
+Emits a {UsdMinted} event.
+
+### burnUsd
+
+  ```solidity
+  function burnUsd(uint256 accountId, uint256 poolId, address collateralType, uint256 amount) external
+  ```
+
+Burns {amount} of snxUSD with the specified staking position.
+
+Requirements:
+
+- `msg.sender` must be the owner of the account, have the `ADMIN` permission, or have the `BURN` permission.
+
+Emits a {UsdMinted} event.
+
+### getPositionCollateralizationRatio
+
+  ```solidity
+  function getPositionCollateralizationRatio(uint256 accountId, uint256 poolId, address collateralType) external returns (uint256)
+  ```
+
+Returns the collateralization ratio of the specified staking position. If debt is negative, this function will return 0.
+
+  _Call this function using `callStatic` to treat it as a view function.
+The return value is a percentage with 18 decimals places._
+
+### getPositionDebt
+
+  ```solidity
+  function getPositionDebt(uint256 accountId, uint256 poolId, address collateralType) external returns (int256)
+  ```
+
+Returns the debt of the specified staking position. Credit is expressed as negative debt.
+
+  _Call this function using `callStatic` to treat it as a view function.
+The return value is denominated in dollars with 18 decimal places._
+
+### getPositionCollateral
+
+  ```solidity
+  function getPositionCollateral(uint256 accountId, uint256 poolId, address collateralType) external view returns (uint256 collateralAmount, uint256 collateralValue)
+  ```
+
+Returns the amount and value of the collateral associated with the specified staking position.
+
+  _Call this function using `callStatic` to treat it as a view function.
+collateralAmount is represented as an integer with 18 decimals.
+collateralValue is represented as an integer with the number of decimals specified by the collateralType._
+
+### getPosition
+
+  ```solidity
+  function getPosition(uint256 accountId, uint256 poolId, address collateralType) external returns (uint256 collateralAmount, uint256 collateralValue, int256 debt, uint256 collateralizationRatio)
+  ```
+
+Returns all information pertaining to a specified staking position in the vault module.
+
+### getVaultDebt
+
+  ```solidity
+  function getVaultDebt(uint256 poolId, address collateralType) external returns (int256)
+  ```
+
+Returns the total debt (or credit) that the vault is responsible for. Credit is expressed as negative debt.
+
+  _Call this function using `callStatic` to treat it as a view function.
+The return value is denominated in dollars with 18 decimal places._
+
+### getVaultCollateral
+
+  ```solidity
+  function getVaultCollateral(uint256 poolId, address collateralType) external returns (uint256 collateralAmount, uint256 collateralValue)
+  ```
+
+Returns the amount and value of the collateral held by the vault.
+
+  _Call this function using `callStatic` to treat it as a view function.
+collateralAmount is represented as an integer with 18 decimals.
+collateralValue is represented as an integer with the number of decimals specified by the collateralType._
+
+### getVaultCollateralRatio
+
+  ```solidity
+  function getVaultCollateralRatio(uint256 poolId, address collateralType) external returns (uint256)
+  ```
+
+Returns the collateralization ratio of the vault. If debt is negative, this function will return 0.
+
+  _Call this function using `callStatic` to treat it as a view function.
+The return value is a percentage with 18 decimals places._
+
+### DelegationUpdated
+
+  ```solidity
+  event DelegationUpdated(uint256 accountId, uint256 poolId, address collateralType, uint256 amount, uint256 leverage, address sender)
+  ```
+
+Emitted when {sender} updates the delegation of collateral in the specified staking position.
+
+### UsdMinted
+
+  ```solidity
+  event UsdMinted(uint256 accountId, uint256 poolId, address collateralType, uint256 amount, address sender)
+  ```
+
+Emitted when {sender} mints {amount} of snxUSD with the specified staking position.
+
+### UsdBurned
+
+  ```solidity
+  event UsdBurned(uint256 accountId, uint256 poolId, address collateralType, uint256 amount, address sender)
+  ```
+
+Emitted when {sender} burns {amount} of snxUSD with the specified staking position.
+
+### delegateCollateral
+
+  ```solidity
+  function delegateCollateral(uint256 accountId, uint256 poolId, address collateralType, uint256 amount, uint256 leverage) external
+  ```
+
+Delegates (creates, adjust or remove a delegation) collateral from an account.
+
+Requirements:
+
+- `msg.sender` must be the owner of the account, have the `ADMIN` permission, or have the `DELEGATE` permission.
+- If increasing the amount delegated, it must not exceed the available collateral (`getAccountAvailableCollateral`) associated with the account.
+- If decreasing the amount delegated, the staking position must have a colalteralization ratio greater than the target collateralization ratio for the corresponding collateral type.
+
+Emits a {DelegationUpdated} event.
+
+### mintUsd
+
+  ```solidity
+  function mintUsd(uint256 accountId, uint256 poolId, address collateralType, uint256 amount) external
+  ```
+
+Mints {amount} of snxUSD with the specified staking position.
+
+Requirements:
+
+- `msg.sender` must be the owner of the account, have the `ADMIN` permission, or have the `MINT` permission.
+- After minting, the collateralization ratio of the staking position must not be below the target collateralization ratio for the corresponding collateral type.
+
+Emits a {UsdMinted} event.
+
+### burnUsd
+
+  ```solidity
+  function burnUsd(uint256 accountId, uint256 poolId, address collateralType, uint256 amount) external
+  ```
+
+Burns {amount} of snxUSD with the specified staking position.
+
+Requirements:
+
+- `msg.sender` must be the owner of the account, have the `ADMIN` permission, or have the `BURN` permission.
+
+Emits a {UsdMinted} event.
+
+### getPositionCollateralizationRatio
+
+  ```solidity
+  function getPositionCollateralizationRatio(uint256 accountId, uint256 poolId, address collateralType) external returns (uint256)
+  ```
+
+Returns the collateralization ratio of the specified staking position. If debt is negative, this function will return 0.
+
+  _Call this function using `callStatic` to treat it as a view function.
+The return value is a percentage with 18 decimals places._
+
+### getPositionDebt
+
+  ```solidity
+  function getPositionDebt(uint256 accountId, uint256 poolId, address collateralType) external returns (int256)
+  ```
+
+Returns the debt of the specified staking position. Credit is expressed as negative debt.
+
+  _Call this function using `callStatic` to treat it as a view function.
+The return value is denominated in dollars with 18 decimal places._
+
+### getPositionCollateral
+
+  ```solidity
+  function getPositionCollateral(uint256 accountId, uint256 poolId, address collateralType) external view returns (uint256 collateralAmount, uint256 collateralValue)
+  ```
+
+Returns the amount and value of the collateral associated with the specified staking position.
+
+  _Call this function using `callStatic` to treat it as a view function.
+collateralAmount is represented as an integer with 18 decimals.
+collateralValue is represented as an integer with the number of decimals specified by the collateralType._
+
+### getPosition
+
+  ```solidity
+  function getPosition(uint256 accountId, uint256 poolId, address collateralType) external returns (uint256 collateralAmount, uint256 collateralValue, int256 debt, uint256 collateralizationRatio)
+  ```
+
+Returns all information pertaining to a specified staking position in the vault module.
+
+### getVaultDebt
+
+  ```solidity
+  function getVaultDebt(uint256 poolId, address collateralType) external returns (int256)
+  ```
+
+Returns the total debt (or credit) that the vault is responsible for. Credit is expressed as negative debt.
+
+  _Call this function using `callStatic` to treat it as a view function.
+The return value is denominated in dollars with 18 decimal places._
+
+### getVaultCollateral
+
+  ```solidity
+  function getVaultCollateral(uint256 poolId, address collateralType) external returns (uint256 collateralAmount, uint256 collateralValue)
+  ```
+
+Returns the amount and value of the collateral held by the vault.
+
+  _Call this function using `callStatic` to treat it as a view function.
+collateralAmount is represented as an integer with 18 decimals.
+collateralValue is represented as an integer with the number of decimals specified by the collateralType._
+
+### getVaultCollateralRatio
+
+  ```solidity
+  function getVaultCollateralRatio(uint256 poolId, address collateralType) external returns (uint256)
+  ```
+
+Returns the collateralization ratio of the vault. If debt is negative, this function will return 0.
+
+  _Call this function using `callStatic` to treat it as a view function.
+The return value is a percentage with 18 decimals places._
+
+## Vault Rewards Module
+
+### RewardDistributionSet
+
+  ```solidity
+  event RewardDistributionSet(uint256 poolId, address token, uint256 index, address distributor, uint256 totalRewarded, uint256 start, uint256 duration)
+  ```
+
+### RewardsClaimed
+
+  ```solidity
+  event RewardsClaimed(uint256 poolId, address token, uint256 accountId, uint256 index, uint256 amountClaimed)
+  ```
+
+### distributeRewards
+
+  ```solidity
+  function distributeRewards(uint256 poolId, address token, uint256 index, address distributor, uint256 amount, uint256 start, uint256 duration) external
+  ```
+
+called by pool owner or an existing distributor to set up rewards for vault participants
+
+### getAvailableRewards
+
+  ```solidity
+  function getAvailableRewards(uint256 poolId, address token, uint256 accountId) external returns (uint256[])
+  ```
+
+retrieves the amount of available rewards.
+this function should be called to get currently available rewards using `callStatic`
+
+### claimRewards
+
+  ```solidity
+  function claimRewards(uint256 poolId, address token, uint256 accountId) external returns (uint256[])
+  ```
+
+retrieves the amount of available rewards, and claims them to the caller's account.
+this function should be called to get currently available rewards using `callStatic`
+
+### getCurrentRewardAccumulation
+
+  ```solidity
+  function getCurrentRewardAccumulation(uint256 poolId, address collateralType) external view returns (uint256[])
+  ```
+
+returns the number of individual units of amount emitted per second per share for the given poolId, collateralType vault
+
+### RewardDistributionSet
+
+  ```solidity
+  event RewardDistributionSet(uint256 poolId, address token, uint256 index, address distributor, uint256 totalRewarded, uint256 start, uint256 duration)
+  ```
+
+### RewardsClaimed
+
+  ```solidity
+  event RewardsClaimed(uint256 poolId, address token, uint256 accountId, uint256 index, uint256 amountClaimed)
+  ```
+
+### distributeRewards
+
+  ```solidity
+  function distributeRewards(uint256 poolId, address token, uint256 index, address distributor, uint256 amount, uint256 start, uint256 duration) external
+  ```
+
+called by pool owner or an existing distributor to set up rewards for vault participants
+
+### getAvailableRewards
+
+  ```solidity
+  function getAvailableRewards(uint256 poolId, address token, uint256 accountId) external returns (uint256[])
+  ```
+
+retrieves the amount of available rewards.
+this function should be called to get currently available rewards using `callStatic`
+
+### claimRewards
+
+  ```solidity
+  function claimRewards(uint256 poolId, address token, uint256 accountId) external returns (uint256[])
+  ```
+
+retrieves the amount of available rewards, and claims them to the caller's account.
+this function should be called to get currently available rewards using `callStatic`
+
+### getCurrentRewardAccumulation
+
+  ```solidity
+  function getCurrentRewardAccumulation(uint256 poolId, address collateralType) external view returns (uint256[])
+  ```
+
+returns the number of individual units of amount emitted per second per share for the given poolId, collateralType vault
 
 ## Market Manager Module
 
