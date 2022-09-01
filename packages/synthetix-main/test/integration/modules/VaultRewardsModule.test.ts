@@ -3,14 +3,18 @@ import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert
 import hre from 'hardhat';
 import { ethers } from 'ethers';
 import { getBlockTimestamp } from '@synthetixio/core-utils/utils/ethers/provider';
-import { fastForward as originalFastForward } from '@synthetixio/core-utils/utils/hardhat/rpc';
-import { setTimeout } from 'node:timers/promises';
+import {
+  fastForward as originalFastForward,
+  getTime,
+} from '@synthetixio/core-utils/utils/hardhat/rpc';
 
 import { bootstrapWithStakedPool } from '../bootstrap';
 
 const fastForward = async (seconds: number, provider: ethers.providers.JsonRpcProvider) => {
+  const before = await getTime(provider);
   await originalFastForward(seconds, provider);
-  await setTimeout(1000);
+  const after = await getTime(provider);
+  console.log({ seconds, before, after });
 };
 
 describe.only('VaultRewardsModule', function () {
