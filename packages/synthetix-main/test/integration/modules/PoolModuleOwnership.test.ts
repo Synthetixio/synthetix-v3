@@ -1,10 +1,7 @@
 import assert from 'assert/strict';
-import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
-import hre from 'hardhat';
+import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import { ethers } from 'ethers';
-import { findEvent } from '@synthetixio/core-utils/utils/ethers/events';
-
 import { bootstrap } from '../bootstrap';
 
 describe('PoolModule Create / Ownership', function () {
@@ -27,14 +24,15 @@ describe('PoolModule Create / Ownership', function () {
     });
 
     it('emitted an event', async () => {
-      const event = findEvent({ receipt, eventName: 'PoolCreated' });
-
-      assert.equal(event.args.owner, await user1.getAddress());
-      assertBn.equal(event.args.poolId, 1);
+      assertEvent(
+        receipt,
+        `PoolCreated("1", "${await user1.getAddress()}")`,
+        systems().Core
+      );
     });
 
     it('is created', async () => {
-      assert.equal(await systems().Core.ownerOf(1), await user1.getAddress());
+      assert.equal(await systems().Core.getPoolOwner(1), await user1.getAddress());
     });
 
     describe('when trying to create the same systems().CoreId', () => {
@@ -65,15 +63,16 @@ describe('PoolModule Create / Ownership', function () {
         before('', async () => {
           const tx = await systems()
             .Core.connect(user1)
-            .nominateNewPoolOwner(await user2.getAddress(), 1);
+            .nominatePoolOwner(await user2.getAddress(), 1);
           receipt = await tx.wait();
         });
 
         it('emits an event', async () => {
-          const event = findEvent({ receipt, eventName: 'NominatedNewOwner' });
-
-          assertBn.equal(event.args.poolId, 1);
-          assert.equal(event.args.nominatedOwner, await user2.getAddress());
+          assertEvent(
+            receipt,
+            `NominatedPoolOwner("1", "${await user2.getAddress()}")`,
+            systems().Core
+          );
         });
 
         describe('when accepting the ownership', async () => {
@@ -86,23 +85,21 @@ describe('PoolModule Create / Ownership', function () {
             await (
               await systems()
                 .Core.connect(user2)
-                .nominateNewPoolOwner(await user1.getAddress(), 1)
+                .nominatePoolOwner(await user1.getAddress(), 1)
             ).wait();
             await (await systems().Core.connect(user1).acceptPoolOwnership(1)).wait();
           });
 
           it('emits an event', async () => {
-            const event = findEvent({
+            assertEvent(
               receipt,
-              eventName: 'OwnershipAccepted',
-            });
-
-            assertBn.equal(event.args.poolId, 1);
-            assert.equal(event.args.newOwner, await user2.getAddress());
+              `PoolOwnershipAccepted("1", "${await user2.getAddress()}")`,
+              systems().Core
+            );
           });
 
           it('is the new owner', async () => {
-            assert.equal(await systems().Core.ownerOf(1), await user2.getAddress());
+            assert.equal(await systems().Core.getPoolOwner(1), await user2.getAddress());
           });
         });
       });
@@ -112,7 +109,7 @@ describe('PoolModule Create / Ownership', function () {
         before('nominate the new owner', async () => {
           const tx = await systems()
             .Core.connect(user1)
-            .nominateNewPoolOwner(await user2.getAddress(), 1);
+            .nominatePoolOwner(await user2.getAddress(), 1);
           receipt = await tx.wait();
         });
 
@@ -122,14 +119,15 @@ describe('PoolModule Create / Ownership', function () {
         });
 
         it('emits an event', async () => {
-          const event = findEvent({ receipt, eventName: 'OwnershipRenounced' });
-
-          assertBn.equal(event.args.poolId, 1);
-          assert.equal(event.args.target, await user2.getAddress());
+          assertEvent(
+            receipt,
+            `OwnershipRenounced("1", "${await user2.getAddress()}")`,
+            systems().Core
+          );
         });
 
         it('ownership did not change', async () => {
-          assert.equal(await systems().Core.ownerOf(1), await user1.getAddress());
+          assert.equal(await systems().Core.getPoolOwner(1), await user1.getAddress());
         });
 
         describe('when attempting to accept the nomination after renouncing to it', async () => {
