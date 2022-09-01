@@ -2,12 +2,18 @@ import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber'
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import hre from 'hardhat';
 import { ethers } from 'ethers';
-import { fastForward } from '@synthetixio/core-utils/utils/hardhat/rpc';
 import { getBlockTimestamp } from '@synthetixio/core-utils/utils/ethers/provider';
+import { fastForward as originalFastForward } from '@synthetixio/core-utils/utils/hardhat/rpc';
+import { setTimeout } from 'node:timers/promises';
 
 import { bootstrapWithStakedPool } from '../bootstrap';
 
-describe('VaultRewardsModule', function () {
+const fastForward = async (seconds: number, provider: ethers.providers.JsonRpcProvider) => {
+  await originalFastForward(seconds, provider);
+  await setTimeout(1000);
+};
+
+describe.only('VaultRewardsModule', function () {
   const { provider, signers, systems, poolId, collateralAddress, accountId, restore } =
     bootstrapWithStakedPool();
 
