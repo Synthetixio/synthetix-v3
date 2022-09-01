@@ -2,12 +2,12 @@ import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber'
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import hre from 'hardhat';
 import { ethers } from 'ethers';
-import { getBlockTimestamp } from '@synthetixio/core-utils/utils/ethers/provider';
 import { fastForward } from '@synthetixio/core-utils/utils/hardhat/rpc';
+import { getBlockTimestamp } from '@synthetixio/core-utils/utils/ethers/provider';
 
 import { bootstrapWithStakedPool } from '../bootstrap';
 
-describe('VaultRewardsModule', function () {
+describe.only('VaultRewardsModule', function () {
   const { provider, signers, systems, poolId, collateralAddress, accountId, restore } =
     bootstrapWithStakedPool();
 
