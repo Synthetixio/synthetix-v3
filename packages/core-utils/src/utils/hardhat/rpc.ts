@@ -21,13 +21,9 @@ export async function fastForward(seconds: number, provider: ethers.providers.Js
 }
 
 export async function fastForwardTo(time: number, provider: ethers.providers.JsonRpcProvider) {
-  const now = await getTime(provider);
+  await provider.send('evm_setNextBlockTimestamp', [time]);
 
-  if (time < now) {
-    throw 'Cannot fast forward to a past date.';
-  }
-
-  await fastForward(time - now, provider);
+  await mineBlock(provider);
 }
 
 export async function getTime(provider: ethers.providers.JsonRpcProvider) {
