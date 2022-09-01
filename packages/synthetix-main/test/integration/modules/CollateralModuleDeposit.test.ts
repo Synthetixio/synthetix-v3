@@ -2,11 +2,11 @@ import { ethers } from 'hardhat';
 import assert from 'assert/strict';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
-import { bootstrap } from '../../../bootstrap';
+import { bootstrap } from '../bootstrap';
 import { ethers as Ethers } from 'ethers';
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 
-describe.only('CollateralModule Deposit', function () {
+describe('CollateralModule Deposit', function () {
   const { signers, systems } = bootstrap();
 
   let Collateral: Ethers.Contract, CollateralPriceFeed: Ethers.Contract;
