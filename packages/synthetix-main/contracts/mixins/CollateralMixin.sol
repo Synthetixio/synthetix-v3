@@ -42,6 +42,7 @@ contract CollateralMixin is CollateralStorage, PoolVaultStorage {
         DepositedCollateralData storage stakedCollateral = _collateralStore().depositedCollateralDataByAccountId[accountId][
             collateralType
         ];
+
         totalAssigned = _getAccountAssignedCollateral(accountId, collateralType);
         totalDeposited = totalAssigned + stakedCollateral.availableAmount;
         //totalLocked = _getTotalLocked(stakedCollateral.locks);
@@ -54,6 +55,7 @@ contract CollateralMixin is CollateralStorage, PoolVaultStorage {
         DepositedCollateralData storage stakedCollateral = _collateralStore().depositedCollateralDataByAccountId[accountId][
             collateralType
         ];
+
         return stakedCollateral.availableAmount;
     }
 
