@@ -276,7 +276,7 @@ describe('PoolModule Admin', function () {
 
       it('market collateral value is amount of only vault 2', async () => {
         assertBn.equal(
-          await systems().Core.connect(user1).callStatic.marketCollateralValue(marketId()),
+          await systems().Core.connect(user1).callStatic.marketCollateral(marketId()),
           depositAmount
         );
       });
@@ -398,7 +398,7 @@ describe('PoolModule Admin', function () {
               it('market collateral value is amount of only vault 2', async () => {
                 await systems().Core.connect(user1).getVaultDebt(poolId, collateralAddress());
                 assertBn.equal(
-                  await systems().Core.connect(user1).callStatic.marketCollateralValue(marketId()),
+                  await systems().Core.connect(user1).callStatic.marketCollateral(marketId()),
                   depositAmount
                 );
               });
@@ -441,7 +441,7 @@ describe('PoolModule Admin', function () {
               it('the market has no more collateral assigned to it', async () => {
                 await systems().Core.connect(user1).getVaultDebt(poolId, collateralAddress());
                 assertBn.equal(
-                  await systems().Core.connect(user1).callStatic.marketCollateralValue(marketId()),
+                  await systems().Core.connect(user1).callStatic.marketCollateral(marketId()),
                   0
                 );
               });

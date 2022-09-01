@@ -135,6 +135,10 @@ contract MarketManagerMixin is MarketManagerStorage, PoolModuleStorage {
         marketData.lastMarketBalance = int128(targetBalance);
     }
 
+    function _reportedBalance(MarketData storage marketData) internal view returns (uint) {
+        return IMarket(marketData.marketAddress).balance();
+    }
+
     function _totalBalance(MarketData storage marketData) internal view returns (int) {
         return int(IMarket(marketData.marketAddress).balance()) + marketData.issuance;
     }

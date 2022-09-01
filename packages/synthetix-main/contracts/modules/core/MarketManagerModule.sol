@@ -32,6 +32,8 @@ contract MarketManagerModule is
         uint lastMarketId = _marketManagerStore().lastMarketId++;
         marketId = lastMarketId + 1;
 
+        // Can we verify that `market` conforms to the IMarket interface here? (i.e. has a `balance()` function?)
+
         _marketManagerStore().marketIds[market] = marketId;
         _marketManagerStore().markets[marketId].marketAddress = market;
 
@@ -40,11 +42,21 @@ contract MarketManagerModule is
         return marketId;
     }
 
-    function marketLiquidity(uint marketId) external view override returns (uint) {
+    function withdrawableUsd(uint marketId) external view override returns (uint) {
         return _marketManagerStore().markets[marketId].capacity;
     }
 
-    function marketCollateralValue(uint marketId) external view override returns (uint) {
+    function marketIssuance(uint marketId) external view override returns (int128) {
+        MarketData storage marketData = _marketManagerStore().markets[marketId];
+        return marketData.issuance;
+    }
+
+    function marketReportedBalance(uint marketId) external view override returns (uint) {
+        MarketData storage marketData = _marketManagerStore().markets[marketId];
+        return _reportedBalance(marketData);
+    }
+
+    function marketCollateral(uint marketId) external view override returns (uint) {
         MarketData storage marketData = _marketManagerStore().markets[marketId];
 
         return marketData.debtDist.totalShares;
@@ -62,7 +74,6 @@ contract MarketManagerModule is
         return marketData.debtDist.valuePerShare / 1e9;
     }
 
-    // deposit will burn USD
     function depositUsd(
         uint marketId,
         address target,
@@ -90,9 +101,10 @@ contract MarketManagerModule is
 
         // Adjust allowance
         usdToken.setAllowance(target, msg.sender, originalAllowance - amount);
+
+        emit UsdDeposited(marketId, target, amount, msg.sender);
     }
 
-    // withdraw will mint USD
     function withdrawUsd(
         uint marketId,
         address target,
@@ -110,5 +122,7 @@ contract MarketManagerModule is
 
         // mint some USD
         _getToken(_USD_TOKEN).mint(target, amount);
+
+        emit UsdWithdrawn(marketId, target, amount, msg.sender);
     }
 }
