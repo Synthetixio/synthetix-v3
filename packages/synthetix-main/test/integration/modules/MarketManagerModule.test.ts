@@ -61,11 +61,11 @@ describe('MarketManagerModule', function () {
       });
 
       it('liquidity is zero', async () => {
-        assertBn.isZero(await systems().Core.marketLiquidity(expectedMarketId));
+        assertBn.isZero(await systems().Core.getMarketCollateral(expectedMarketId));
       });
 
       it('totalBalance is zero', async () => {
-        assertBn.isZero(await systems().Core.marketTotalBalance(expectedMarketId));
+        assertBn.isZero(await systems().Core.getMarketTotalBalance(expectedMarketId));
       });
     });
   });
@@ -98,15 +98,15 @@ describe('MarketManagerModule', function () {
         assertBn.isZero(await systems().USD.balanceOf(await user1.getAddress()));
       });
 
-      it('increases marketLiquidity', async () => {
+      it('increases withdrawableUsd', async () => {
         assertBn.equal(
-          await systems().Core.connect(user1).marketLiquidity(marketId()),
+          await systems().Core.connect(user1).getWithdrawableUsd(marketId()),
           depositAmount.add(One)
         );
       });
 
       it('leaves totalBalance the same', async () => {
-        assertBn.isZero(await systems().Core.connect(user1).marketTotalBalance(marketId()));
+        assertBn.isZero(await systems().Core.connect(user1).getMarketTotalBalance(marketId()));
       });
 
       it('accrues no debt', async () => {
@@ -149,13 +149,13 @@ describe('MarketManagerModule', function () {
           txn = await (await MockMarket().connect(user1).sellSynth(One.div(2))).wait();
         });
 
-        it('decreased available liquidity', async () => {
-          const liquidity = await systems().Core.marketLiquidity(marketId());
+        it('decreased withdrawable usd', async () => {
+          const liquidity = await systems().Core.getWithdrawableUsd(marketId());
           assertBn.equal(liquidity, depositAmount.add(One.div(2)));
         });
 
         it('leaves totalBalance the same', async () => {
-          assertBn.isZero(await systems().Core.connect(user1).marketTotalBalance(marketId()));
+          assertBn.isZero(await systems().Core.connect(user1).getMarketTotalBalance(marketId()));
         });
 
         it('makes USD', async () => {
@@ -167,13 +167,13 @@ describe('MarketManagerModule', function () {
             txn = await MockMarket().connect(user1).sellSynth(One.div(2));
           });
 
-          it('decreased available liquidity', async () => {
-            const liquidity = await systems().Core.marketLiquidity(marketId());
+          it('decreased withdrawable usd', async () => {
+            const liquidity = await systems().Core.getWithdrawableUsd(marketId());
             assertBn.equal(liquidity, depositAmount);
           });
 
           it('leaves totalBalance the same', async () => {
-            assertBn.isZero(await systems().Core.connect(user1).marketTotalBalance(marketId()));
+            assertBn.isZero(await systems().Core.connect(user1).getMarketTotalBalance(marketId()));
           });
 
           it('makes USD', async () => {
