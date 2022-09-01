@@ -2,9 +2,7 @@ import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber'
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import hre from 'hardhat';
 import { ethers } from 'ethers';
-import { fastForward } from '@synthetixio/core-utils/utils/hardhat/rpc';
-import { getBlockTimestamp } from '@synthetixio/core-utils/utils/ethers/provider';
-
+import { fastForwardTo, getTime } from '@synthetixio/core-utils/utils/hardhat/rpc';
 import { bootstrapWithStakedPool } from '../bootstrap';
 
 describe('VaultRewardsModule', function () {
@@ -16,6 +14,8 @@ describe('VaultRewardsModule', function () {
   let Collateral;
 
   const rewardAmount = ethers.utils.parseEther('1000');
+
+  let startTime: number;
 
   before('identify signers', async () => {
     [owner, user1] = signers();
@@ -49,6 +49,8 @@ describe('VaultRewardsModule', function () {
       describe('in the past', () => {
         before(restore);
         before(async () => {
+          startTime = await getTime(provider());
+
           // distribute rewards multiple times to see what happens
           // if many distributions happen in the past
           await systems().Core.connect(owner).distributeRewards(
@@ -61,6 +63,8 @@ describe('VaultRewardsModule', function () {
             0
           );
 
+          startTime = await getTime(provider());
+
           await systems().Core.connect(owner).distributeRewards(
             poolId,
             collateralAddress(),
@@ -70,6 +74,8 @@ describe('VaultRewardsModule', function () {
             1, // timestamp
             0
           );
+
+          startTime = await getTime(provider());
 
           await systems().Core.connect(owner).distributeRewards(
             poolId,
@@ -91,7 +97,7 @@ describe('VaultRewardsModule', function () {
               0,
               systems().Core.address, // rewards are distributed by the rewards distributor on self
               rewardAmount,
-              (await getBlockTimestamp(provider())) + 10000000, // timestamp
+              startTime + 10000000, // timestamp
               0
             );
         });
@@ -110,6 +116,8 @@ describe('VaultRewardsModule', function () {
       describe('in the future', () => {
         before(restore);
         before(async () => {
+          startTime = await getTime(provider());
+
           await systems()
             .Core.connect(owner)
             .distributeRewards(
@@ -118,9 +126,11 @@ describe('VaultRewardsModule', function () {
               0,
               systems().Core.address, // rewards are distributed by the rewards distributor on self
               rewardAmount,
-              (await getBlockTimestamp(provider())) + 10, // timestamp
+              startTime + 10, // timestamp
               0
             );
+
+          startTime = await getTime(provider());
 
           // distribute one in the past to ensure switching from past to future works
           await systems()
@@ -131,7 +141,7 @@ describe('VaultRewardsModule', function () {
               0,
               systems().Core.address, // rewards are distributed by the rewards distributor on self
               rewardAmount,
-              (await getBlockTimestamp(provider())) - 10, // timestamp
+              startTime - 10, // timestamp
               0
             );
 
@@ -143,7 +153,7 @@ describe('VaultRewardsModule', function () {
               0,
               systems().Core.address, // rewards are distributed by the rewards distributor on self
               rewardAmount,
-              (await getBlockTimestamp(provider())) + 30, // timestamp
+              startTime + 30, // timestamp
               0
             );
         });
@@ -170,7 +180,7 @@ describe('VaultRewardsModule', function () {
 
         describe('after time passes', () => {
           before(async () => {
-            await fastForward(30, provider());
+            await fastForwardTo(startTime + 30, provider());
           });
 
           it('is distributed', async () => {
@@ -207,7 +217,7 @@ describe('VaultRewardsModule', function () {
               0,
               systems().Core.address, // rewards are distributed by the rewards distributor on self
               rewardAmount,
-              (await getBlockTimestamp(provider())) - 100, // timestamp
+              startTime - 100, // timestamp
               100
             );
 
@@ -219,7 +229,7 @@ describe('VaultRewardsModule', function () {
               0,
               systems().Core.address, // rewards are distributed by the rewards distributor on self
               rewardAmount,
-              (await getBlockTimestamp(provider())) - 50, // timestamp
+              startTime - 50, // timestamp
               50
             );
 
@@ -232,7 +242,7 @@ describe('VaultRewardsModule', function () {
               0,
               systems().Core.address, // rewards are distributed by the rewards distributor on self
               rewardAmount,
-              (await getBlockTimestamp(provider())) + 50, // timestamp
+              startTime + 50, // timestamp
               50
             );
         });
@@ -251,6 +261,8 @@ describe('VaultRewardsModule', function () {
       describe('in the future', () => {
         before(restore);
         before(async () => {
+          startTime = await getTime(provider());
+
           // this first one should never be received
           await systems()
             .Core.connect(owner)
@@ -260,9 +272,11 @@ describe('VaultRewardsModule', function () {
               0,
               systems().Core.address, // rewards are distributed by the rewards distributor on self
               rewardAmount,
-              (await getBlockTimestamp(provider())) + 200, // timestamp
+              startTime + 200, // timestamp
               200
             );
+
+          startTime = await getTime(provider());
 
           // should b e received immediately
           await systems()
@@ -273,9 +287,11 @@ describe('VaultRewardsModule', function () {
               0,
               systems().Core.address, // rewards are distributed by the rewards distributor on self
               rewardAmount,
-              (await getBlockTimestamp(provider())) - 50, // timestamp
+              startTime - 50, // timestamp
               10
             );
+
+          startTime = await getTime(provider());
 
           // add one after to test behavior of future distribution
           await systems()
@@ -286,7 +302,7 @@ describe('VaultRewardsModule', function () {
               0,
               systems().Core.address, // rewards are distributed by the rewards distributor on self
               rewardAmount,
-              (await getBlockTimestamp(provider())) + 100, // timestamp
+              startTime + 100, // timestamp
               100
             );
         });
@@ -303,7 +319,7 @@ describe('VaultRewardsModule', function () {
 
         describe('after time passes', () => {
           before(async () => {
-            await fastForward(200, provider());
+            await fastForwardTo(startTime + 200, provider());
           });
 
           it('is fully distributed', async () => {
@@ -321,17 +337,7 @@ describe('VaultRewardsModule', function () {
       describe('within duration', () => {
         before(restore);
         before(async () => {
-          await systems()
-            .Core.connect(owner)
-            .distributeRewards(
-              poolId,
-              collateralAddress(),
-              0,
-              systems().Core.address, // rewards are distributed by the rewards distributor on self
-              rewardAmount,
-              (await getBlockTimestamp(provider())) - 50, // timestamp
-              0
-            );
+          startTime = await getTime(provider());
 
           await systems()
             .Core.connect(owner)
@@ -341,7 +347,21 @@ describe('VaultRewardsModule', function () {
               0,
               systems().Core.address, // rewards are distributed by the rewards distributor on self
               rewardAmount,
-              (await getBlockTimestamp(provider())) - 50, // timestamp
+              startTime - 50, // timestamp
+              0
+            );
+
+          startTime = await getTime(provider());
+
+          await systems()
+            .Core.connect(owner)
+            .distributeRewards(
+              poolId,
+              collateralAddress(),
+              0,
+              systems().Core.address, // rewards are distributed by the rewards distributor on self
+              rewardAmount,
+              startTime - 50, // timestamp
               100
             );
         });
@@ -358,7 +378,7 @@ describe('VaultRewardsModule', function () {
 
         describe('after time passes', () => {
           before(async () => {
-            await fastForward(25, provider());
+            await fastForwardTo(startTime + 25, provider());
           });
 
           it('distributes more portion of rewards', async () => {
@@ -373,6 +393,8 @@ describe('VaultRewardsModule', function () {
 
           describe('new distribution', () => {
             before(async () => {
+              startTime = await getTime(provider());
+
               await systems()
                 .Core.connect(owner)
                 .distributeRewards(
@@ -381,7 +403,7 @@ describe('VaultRewardsModule', function () {
                   0,
                   systems().Core.address, // rewards are distributed by the rewards distributor on self
                   rewardAmount,
-                  (await getBlockTimestamp(provider())) - 110, // timestamp
+                  startTime - 110, // timestamp
                   200
                 );
             });
@@ -403,7 +425,7 @@ describe('VaultRewardsModule', function () {
 
             describe('after more time', () => {
               before(async () => {
-                await fastForward(100, provider());
+                await fastForwardTo(startTime + 100, provider());
               });
 
               it('distributes more portion of rewards', async () => {
