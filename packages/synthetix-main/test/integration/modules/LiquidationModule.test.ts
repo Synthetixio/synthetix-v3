@@ -145,7 +145,7 @@ describe('LiquidationModule', function () {
         // TODO enable when market tests are passing
         it.skip('has reduced amount of total liquidity registered to the market', async () => {
           assertBn.equal(
-            await systems().Core.callStatic.marketLiquidity(marketId()),
+            await systems().Core.callStatic.getMarketCollateral(marketId()),
             depositAmount.mul(11).sub(liquidationReward)
           );
         });

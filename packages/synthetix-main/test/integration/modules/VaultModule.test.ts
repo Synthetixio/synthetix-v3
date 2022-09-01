@@ -100,7 +100,7 @@ describe('VaultModule', function () {
     );
 
     it('after bootstrap liquidity is delegated all the way back to the market', async () => {
-      assertBn.gt(await systems().Core.callStatic.marketLiquidity(marketId), 0);
+      assertBn.gt(await systems().Core.callStatic.getMarketCollateral(marketId), 0);
     });
 
     it('verifies permission for account', async () => {

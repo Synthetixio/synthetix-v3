@@ -128,9 +128,9 @@ describe('PoolModule Admin', function () {
       );
     });
 
-    it('default configuration sets market available liquidity', async () => {
+    it('default configuration sets market collateral', async () => {
       assertBn.equal(
-        await systems().Core.connect(owner).marketLiquidity(marketId()),
+        await systems().Core.connect(owner).getMarketCollateral(marketId()),
         depositAmount
       );
     });
@@ -142,9 +142,9 @@ describe('PoolModule Admin', function () {
         await systems().Core.connect(owner).setPoolConfiguration(poolId, [marketId()], [1], [One]);
       });
 
-      it('sets market available liquidity', async () => {
+      it('sets market collateral', async () => {
         assertBn.equal(
-          await systems().Core.connect(owner).marketLiquidity(marketId()),
+          await systems().Core.connect(owner).getMarketCollateral(marketId()),
           depositAmount
         );
       });
@@ -166,11 +166,11 @@ describe('PoolModule Admin', function () {
 
         it('sets market available liquidity', async () => {
           assertBn.equal(
-            await systems().Core.connect(owner).marketLiquidity(marketId()),
+            await systems().Core.connect(owner).getMarketCollateral(marketId()),
             depositAmount.div(4)
           );
           assertBn.equal(
-            await systems().Core.connect(owner).marketLiquidity(marketId2),
+            await systems().Core.connect(owner).getMarketCollateral(marketId2),
             depositAmount.mul(3).div(4)
           );
         });
@@ -189,9 +189,9 @@ describe('PoolModule Admin', function () {
             );
           });
 
-          it('market still has available liquidity', async () => {
+          it('market still has withdrawable usd', async () => {
             assertBn.equal(
-              await systems().Core.connect(owner).marketLiquidity(marketId()),
+              await systems().Core.connect(owner).getWithdrawableUsd(marketId()),
               depositAmount.div(4)
             );
           });
@@ -216,12 +216,12 @@ describe('PoolModule Admin', function () {
               // marketId() gets to keep its available liquidity because when
               // the market exited when it did it "committed"
               assertBn.equal(
-                await systems().Core.connect(owner).marketLiquidity(marketId()),
+                await systems().Core.connect(owner).getWithdrawableUsd(marketId()),
                 debtAmount
               );
 
               // marketId2 never reported an increased balance so its liquidity is 0 as ever
-              assertBn.equal(await systems().Core.connect(owner).marketLiquidity(marketId2), 0);
+              assertBn.equal(await systems().Core.connect(owner).getMarketCollateral(marketId2), 0);
             });
           });
         });
@@ -270,13 +270,16 @@ describe('PoolModule Admin', function () {
           );
       });
 
-      it('has only second pool market available liquidity', async () => {
-        assertBn.equal(await systems().Core.connect(owner).marketLiquidity(marketId()), One.mul(2));
+      it('has only second pool market withdrawable usd', async () => {
+        assertBn.equal(
+          await systems().Core.connect(owner).getWithdrawableUsd(marketId()),
+          One.mul(2)
+        );
       });
 
       it('market collateral value is amount of only vault 2', async () => {
         assertBn.equal(
-          await systems().Core.connect(user1).callStatic.marketCollateral(marketId()),
+          await systems().Core.connect(user1).callStatic.getMarketCollateral(marketId()),
           depositAmount
         );
       });
@@ -305,14 +308,14 @@ describe('PoolModule Admin', function () {
           await systems().Core.connect(user1).getVaultDebt(poolId, collateralAddress());
         });
 
-        it('has same amount liquidity available + the allowed amount by the vault', async () => {
+        it('has same amount withdrawable usd + the allowed amount by the vault', async () => {
           assertBn.equal(
-            await systems().Core.connect(owner).marketLiquidity(marketId()),
+            await systems().Core.connect(owner).getWithdrawableUsd(marketId()),
             One.mul(2).add(Hundred)
           );
 
           // market hasn't reported any reduction in balance
-          assertBn.equal(await systems().Core.connect(owner).marketTotalBalance(marketId()), 0);
+          assertBn.equal(await systems().Core.connect(owner).getMarketTotalBalance(marketId()), 0);
         });
 
         it('did not change debt for connected vault', async () => {
@@ -328,10 +331,10 @@ describe('PoolModule Admin', function () {
             await systems().Core.connect(user1).getVaultDebt(poolId, collateralAddress());
           });
 
-          it('has accurate amount liquidity available', async () => {
+          it('has accurate amount withdrawable usd', async () => {
             // should be exactly 201 (market1 99 + market2 2 + 100 deposit)
             assertBn.equal(
-              await systems().Core.connect(owner).marketLiquidity(marketId()),
+              await systems().Core.connect(owner).getWithdrawableUsd(marketId()),
               Hundred.mul(2).add(One)
             );
           });
@@ -348,9 +351,9 @@ describe('PoolModule Admin', function () {
               await MockMarket().connect(user1).setBalance(Hundred.div(2));
             });
 
-            it('has same amount liquidity available', async () => {
+            it('has same amount of withdrawable usd', async () => {
               assertBn.equal(
-                await systems().Core.connect(owner).marketLiquidity(marketId()),
+                await systems().Core.connect(owner).getWithdrawableUsd(marketId()),
                 Hundred.mul(2).add(One)
               );
             });
@@ -372,9 +375,9 @@ describe('PoolModule Admin', function () {
                 await MockMarket().connect(user1).setBalance(Hundred.mul(2));
               });
 
-              it('has same amount liquidity available + the allowed amount by the vault', async () => {
+              it('has same amount withdrawable usd + the allowed amount by the vault', async () => {
                 assertBn.equal(
-                  await systems().Core.connect(owner).marketLiquidity(marketId()),
+                  await systems().Core.connect(owner).getWithdrawableUsd(marketId()),
                   Hundred.mul(2).add(One)
                 );
               });
@@ -398,7 +401,7 @@ describe('PoolModule Admin', function () {
               it('market collateral value is amount of only vault 2', async () => {
                 await systems().Core.connect(user1).getVaultDebt(poolId, collateralAddress());
                 assertBn.equal(
-                  await systems().Core.connect(user1).callStatic.marketCollateral(marketId()),
+                  await systems().Core.connect(user1).callStatic.getMarketCollateral(marketId()),
                   depositAmount
                 );
               });
@@ -417,9 +420,9 @@ describe('PoolModule Admin', function () {
                 await systems().Core.connect(user1).getVaultDebt(secondPoolId, collateralAddress());
               });
 
-              it('has same amount liquidity available + the allowed amount by the vault', async () => {
+              it('has same amount withdrawable usd + the allowed amount by the vault', async () => {
                 assertBn.equal(
-                  await systems().Core.connect(owner).marketLiquidity(marketId()),
+                  await systems().Core.connect(owner).getWithdrawableUsd(marketId()),
                   Hundred.mul(2).add(One)
                 );
               });
@@ -441,7 +444,7 @@ describe('PoolModule Admin', function () {
               it('the market has no more collateral assigned to it', async () => {
                 await systems().Core.connect(user1).getVaultDebt(poolId, collateralAddress());
                 assertBn.equal(
-                  await systems().Core.connect(user1).callStatic.marketCollateral(marketId()),
+                  await systems().Core.connect(user1).callStatic.getMarketCollateral(marketId()),
                   0
                 );
               });
@@ -464,9 +467,9 @@ describe('PoolModule Admin', function () {
         await systems().Core.connect(user1).getVaultDebt(poolId, collateralAddress());
       });
 
-      it('marketLiquidity reflects minLiquidityRatio', async () => {
+      it('withdrawable usd reflects minLiquidityRatio', async () => {
         assertBn.equal(
-          await systems().Core.connect(owner).marketLiquidity(marketId()),
+          await systems().Core.connect(owner).getWithdrawableUsd(marketId()),
           depositAmount.div(2)
         );
       });
@@ -479,9 +482,9 @@ describe('PoolModule Admin', function () {
           await systems().Core.connect(user1).getVaultDebt(poolId, collateralAddress());
         });
 
-        it('marketLiquidity reflects configured by pool', async () => {
+        it('withdrawable usd reflects configured by pool', async () => {
           assertBn.equal(
-            await systems().Core.connect(owner).marketLiquidity(marketId()),
+            await systems().Core.connect(owner).getWithdrawableUsd(marketId()),
             depositAmount
           );
         });
