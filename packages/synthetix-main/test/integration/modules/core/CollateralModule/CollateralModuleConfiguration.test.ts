@@ -4,7 +4,7 @@ import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert
 import { ethers as Ethers } from 'ethers';
 import { ethers } from 'hardhat';
 
-import { bootstrap } from '../bootstrap';
+import { bootstrap } from '../../../bootstrap';
 
 describe('CollateralManagerConfiguration (SCCP)', function () {
   const { signers, systems } = bootstrap();
