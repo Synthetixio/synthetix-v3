@@ -34,7 +34,7 @@ contract PoolMixin is PoolModuleStorage, PoolVaultStorage, CollateralMixin, Mark
         _;
     }
 
-    function _rebalancePoolPositions(uint poolId) internal {
+    function _rebalancePoolConfigurations(uint poolId) internal {
         PoolData storage poolData = _poolModuleStore().pools[poolId];
         uint totalWeights = poolData.totalWeights;
 
@@ -78,7 +78,7 @@ contract PoolMixin is PoolModuleStorage, PoolVaultStorage, CollateralMixin, Mark
     }
 
     function _distributePoolDebt(uint poolId) internal {
-        _rebalancePoolPositions(poolId);
+        _rebalancePoolConfigurations(poolId);
     }
 
     function _distributeVaultDebt(uint poolId, address collateralType) internal {

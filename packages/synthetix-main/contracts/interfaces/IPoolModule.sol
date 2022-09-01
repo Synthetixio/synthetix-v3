@@ -3,17 +3,20 @@ pragma solidity ^0.8.0;
 
 /// @title Module for managing pool token and pools positions distribution
 interface IPoolModule {
-    event PoolCreated(address owner, uint256 poolId);
-    event NominatedNewOwner(address nominatedOwner, uint256 poolId);
-    event OwnershipAccepted(address newOwner, uint256 poolId);
-    event OwnershipRenounced(address target, uint256 poolId);
-    event PoolPositionSet(uint poolId, uint[] markets, uint[] weights, address executedBy);
+    event PoolCreated(uint256 indexed poolId, address indexed owner);
+    event NominatedPoolOwner(uint256 indexed poolId, address indexed owner);
+    event PoolOwnershipAccepted(uint256 indexed poolId, address indexed owner);
+    event PoolNominationRenounced(uint256 indexed poolId, address indexed owner);
+    event PoolNominationRevoked(uint256 indexed poolId, address indexed owner);
+    event PoolOwnershipRenounced(uint256 indexed poolId, address indexed owner);
+    event PoolNameUpdated(uint256 indexed poolId, string indexed name, address indexed sender);
+    event PoolConfigurationSet(uint indexed poolId, uint[] indexed markets, uint[] indexed weights, address executedBy);
 
-    /// @notice creates a new poolToken (NFT)
+    /// @notice creates a new pool
     function createPool(uint requestedPoolId, address owner) external;
 
     /// @notice sets the pool positions (only poolToken owner)
-    function setPoolPosition(
+    function setPoolConfiguration(
         uint poolId,
         uint[] calldata markets,
         uint[] calldata weights,
@@ -21,7 +24,7 @@ interface IPoolModule {
     ) external;
 
     /// @notice gets the pool positions
-    function getPoolPosition(uint poolId)
+    function getPoolConfiguration(uint poolId)
         external
         view
         returns (
@@ -37,19 +40,22 @@ interface IPoolModule {
     function getPoolName(uint poolId) external view returns (string memory poolName);
 
     /// @notice nominates a new pool owner
-    function nominateNewPoolOwner(address nominatedOwner, uint256 poolId) external;
+    function nominatePoolOwner(address nominatedOwner, uint256 poolId) external;
 
     /// @notice accepts ownership by nominated owner
     function acceptPoolOwnership(uint256 poolId) external;
 
-    /// @notice renounces ownership by nominated owner
+    /// @notice renounces nomination by nominated owner
     function renouncePoolNomination(uint256 poolId) external;
 
+    /// @notice renounces ownership by owner
+    function renouncePoolOwnership(uint256 poolId) external;
+
     /// @notice gets owner of poolId
-    function ownerOf(uint256 poolId) external view returns (address);
+    function getPoolOwner(uint256 poolId) external view returns (address);
 
     /// @notice gets nominatedOwner of poolId
-    function nominatedOwnerOf(uint256 poolId) external view returns (address);
+    function getNominatedPoolOwner(uint256 poolId) external view returns (address);
 
     /// @notice places a cap on what proportion of free vault liquidity may be used towards a pool. only owner.
     function setMinLiquidityRatio(uint minLiquidityRatio) external;

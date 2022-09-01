@@ -44,7 +44,7 @@ describe('VaultModule', function () {
 
     await systems()
       .Core.connect(owner)
-      .setPoolPosition(
+      .setPoolConfiguration(
         poolId,
         [marketId],
         [ethers.utils.parseEther('1')],
