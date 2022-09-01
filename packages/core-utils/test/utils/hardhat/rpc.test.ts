@@ -102,16 +102,6 @@ describe('utils/hardhat/rpc.js', () => {
   });
 
   describe('when calling fastForwardTo', () => {
-    describe('to the past', function () {
-      it('throws', async function () {
-        try {
-          await fastForwardTo(1000, provider);
-        } catch (err) {
-          assert.ok((err as Error).toString().includes('Cannot fast forward to a past date'));
-        }
-      });
-    });
-
     describe('to the future', function () {
       before('clear spy history', () => {
         provider.send.resetHistory();
@@ -126,8 +116,8 @@ describe('utils/hardhat/rpc.js', () => {
       });
 
       it('calls the provider.send with the right params', () => {
-        assert.equal(provider.send.getCall(0).args[0], 'evm_increaseTime');
-        assert.deepEqual(provider.send.getCall(0).args[1], [10000 - 1337]);
+        assert.equal(provider.send.getCall(0).args[0], 'evm_setNextBlockTimestamp');
+        assert.deepEqual(provider.send.getCall(0).args[1], [10000]);
 
         assert.equal(provider.send.getCall(1).args[0], 'evm_mine');
       });

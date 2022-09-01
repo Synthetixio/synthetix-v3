@@ -364,7 +364,7 @@ describe('VaultRewardsModule', function () {
               0,
               systems().Core.address, // rewards are distributed by the rewards distributor on self
               rewardAmount,
-              startTime - 50, // timestamp
+              startTime - 50, // timestamp (time advances exactly 1 second due to block being mined)
               100
             );
         });
@@ -376,7 +376,8 @@ describe('VaultRewardsModule', function () {
             accountId
           );
           // should have received only the one past reward
-          assertBn.equal(rewards[0], rewardAmount.add(rewardAmount.mul(50).div(100)));
+          // 51 because block advances by exactly 1 second due to mine
+          assertBn.equal(rewards[0], rewardAmount.add(rewardAmount.mul(51).div(100)));
         });
 
         describe('after time passes', () => {
@@ -405,7 +406,7 @@ describe('VaultRewardsModule', function () {
                   collateralAddress(),
                   0,
                   systems().Core.address, // rewards are distributed by the rewards distributor on self
-                  rewardAmount,
+                  rewardAmount.mul(1000),
                   startTime - 110, // timestamp
                   200
                 );
@@ -413,7 +414,7 @@ describe('VaultRewardsModule', function () {
 
             // this test is skipped for now because, among all
             // the other tests, it does not behave as expected
-            it.skip('distributes portion of rewards immediately', async () => {
+            it('distributes portion of rewards immediately', async () => {
               const rewards = await systems().Core.callStatic.getAvailableRewards(
                 poolId,
                 collateralAddress(),
@@ -422,7 +423,9 @@ describe('VaultRewardsModule', function () {
               // should have received only the one past reward
               assertBn.equal(
                 rewards[0],
-                rewardAmount.add(rewardAmount.mul(75).div(100)).add(rewardAmount.mul(110).div(200))
+                rewardAmount
+                  .add(rewardAmount.mul(76).div(100))
+                  .add(rewardAmount.mul(1000).mul(111).div(200))
               );
             });
 
@@ -438,7 +441,11 @@ describe('VaultRewardsModule', function () {
                   accountId
                 );
                 // should have received only the one past reward
-                assertBn.equal(rewards[0], rewardAmount.mul(2).add(rewardAmount.mul(75).div(100)));
+                // +1 because block being mined by earlier txn
+                assertBn.equal(
+                  rewards[0],
+                  rewardAmount.mul(1001).add(rewardAmount.mul(76).div(100))
+                );
               });
             });
           });
