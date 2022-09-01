@@ -90,8 +90,7 @@ contract CollateralModule is
         override
         returns (CollateralStorage.CollateralData memory)
     {
-        CollateralData storage collateral = _collateralStore().collateralsData[collateralType];
-        return collateral;
+        return _collateralStore().collateralsData[collateralType];
     }
 
     /////////////////////////////////////////////////

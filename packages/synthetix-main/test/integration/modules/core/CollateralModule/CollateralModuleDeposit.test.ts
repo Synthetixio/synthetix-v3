@@ -6,7 +6,7 @@ import { bootstrap } from '../../../bootstrap';
 import { ethers as Ethers } from 'ethers';
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 
-describe('CollateralModule Deposit', function () {
+describe.only('CollateralModule Deposit', function () {
   const { signers, systems } = bootstrap();
 
   let Collateral: Ethers.Contract, CollateralPriceFeed: Ethers.Contract;
