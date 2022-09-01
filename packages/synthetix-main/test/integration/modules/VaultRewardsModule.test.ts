@@ -12,7 +12,7 @@ import { bootstrapWithStakedPool } from '../bootstrap';
 
 const fastForward = async (seconds: number, provider: ethers.providers.JsonRpcProvider) => {
   const before = await getTime(provider);
-  await originalFastForward(seconds, provider);
+  await originalFastForward(seconds + 1, provider);
   const after = await getTime(provider);
   console.log({ seconds, before, after });
 };
