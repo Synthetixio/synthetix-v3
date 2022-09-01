@@ -42,32 +42,32 @@ contract MarketManagerModule is
         return marketId;
     }
 
-    function withdrawableUsd(uint marketId) external view override returns (uint) {
+    function getWithdrawableUsd(uint marketId) external view override returns (uint) {
         return _marketManagerStore().markets[marketId].capacity;
     }
 
-    function marketIssuance(uint marketId) external view override returns (int128) {
+    function getMarketIssuance(uint marketId) external view override returns (int128) {
         MarketData storage marketData = _marketManagerStore().markets[marketId];
         return marketData.issuance;
     }
 
-    function marketReportedBalance(uint marketId) external view override returns (uint) {
+    function getMarketReportedBalance(uint marketId) external view override returns (uint) {
         MarketData storage marketData = _marketManagerStore().markets[marketId];
         return _reportedBalance(marketData);
     }
 
-    function marketCollateral(uint marketId) external view override returns (uint) {
+    function getMarketCollateral(uint marketId) external view override returns (uint) {
         MarketData storage marketData = _marketManagerStore().markets[marketId];
 
         return marketData.debtDist.totalShares;
     }
 
-    function marketTotalBalance(uint marketId) external view override returns (int) {
+    function getMarketTotalBalance(uint marketId) external view override returns (int) {
         MarketData storage marketData = _marketManagerStore().markets[marketId];
         return _totalBalance(marketData);
     }
 
-    function marketDebtPerShare(uint marketId) external override returns (int) {
+    function getMarketDebtPerShare(uint marketId) external override returns (int) {
         MarketData storage marketData = _marketManagerStore().markets[marketId];
         _distributeMarket(marketData, 999999999);
 

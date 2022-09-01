@@ -25,19 +25,19 @@ interface IMarketManagerModule {
     ) external;
 
     /// @notice gets the liquidity of the market
-    function withdrawableUsd(uint marketId) external view returns (uint);
+    function getWithdrawableUsd(uint marketId) external view returns (uint);
 
     /// @notice gets net snxUSD withdrawn - deposited by the market
-    function marketIssuance(uint marketId) external view returns (int128);
+    function getMarketIssuance(uint marketId) external view returns (int128);
 
     /// @notice gets the total balance of the market
-    function marketReportedBalance(uint marketId) external view returns (uint);
+    function getMarketReportedBalance(uint marketId) external view returns (uint);
 
     /// @notice gets the total balance of the market (marketIssuance + marketReportedBalance)
-    function marketTotalBalance(uint marketId) external view returns (int);
+    function getMarketTotalBalance(uint marketId) external view returns (int);
 
     /// @notice gets the snxUSD value of the collateral backing this market.
-    function marketCollateral(uint marketId) external view returns (uint);
+    function getMarketCollateral(uint marketId) external view returns (uint);
 
-    function marketDebtPerShare(uint marketId) external returns (int);
+    function getMarketDebtPerShare(uint marketId) external returns (int);
 }
