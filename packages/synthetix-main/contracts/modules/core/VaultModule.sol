@@ -126,7 +126,7 @@ contract VaultModule is IVaultModule, PoolVaultStorage, AccountRBACMixin, Ownabl
         // check if they have sufficient c-ratio to mint that amount
         int debt = _updatePositionDebt(accountId, poolId, collateralType);
 
-        (uint collateralValue, , ) = _positionCollateral(accountId, poolId, collateralType);
+        (, uint collateralValue, ) = _positionCollateral(accountId, poolId, collateralType);
 
         int newDebt = debt + int(amount);
 
