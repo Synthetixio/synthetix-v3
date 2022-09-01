@@ -1,7 +1,8 @@
 import assert from 'assert/strict';
-import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
+import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import { ethers } from 'ethers';
+
 import { bootstrap } from '../bootstrap';
 
 describe('PoolModule Create / Ownership', function () {
@@ -24,11 +25,7 @@ describe('PoolModule Create / Ownership', function () {
     });
 
     it('emitted an event', async () => {
-      assertEvent(
-        receipt,
-        `PoolCreated("1", "${await user1.getAddress()}")`,
-        systems().Core
-      );
+      assertEvent(receipt, `PoolCreated("1", "${await user1.getAddress()}")`, systems().Core);
     });
 
     it('is created', async () => {

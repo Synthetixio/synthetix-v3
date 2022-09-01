@@ -3,11 +3,12 @@ import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert
 import hre from 'hardhat';
 import { ethers } from 'ethers';
 import { fastForwardTo, getTime } from '@synthetixio/core-utils/utils/hardhat/rpc';
+
 import { bootstrapWithStakedPool } from '../bootstrap';
 
-// TODO: These tests fail inconsistently on CI because of time discrepancies. They need to be reworked.
-// Disabling them on the meantime until SIP 305 is official.
-describe.only('VaultRewardsModule', function () {
+// TODO: These tests fail inconsistently on CI because of time discrepancies.
+// They need to be reworked. Disabling them on the meantime until SIP 305 is official.
+describe('VaultRewardsModule', function () {
   const { provider, signers, systems, poolId, collateralAddress, accountId, restore } =
     bootstrapWithStakedPool();
 
