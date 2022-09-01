@@ -40,10 +40,10 @@ describe('PoolModule Configuration (SCCP)', function () {
   });
 
   it('created the pools', async () => {
-    assert.equal(await systems().Core.ownerOf(1), await user1.getAddress());
-    assert.equal(await systems().Core.ownerOf(2), await user1.getAddress());
-    assert.equal(await systems().Core.ownerOf(3), await user1.getAddress());
-    assert.equal(await systems().Core.ownerOf(4), await user1.getAddress());
+    assert.equal(await systems().Core.getPoolOwner(1), await user1.getAddress());
+    assert.equal(await systems().Core.getPoolOwner(2), await user1.getAddress());
+    assert.equal(await systems().Core.getPoolOwner(3), await user1.getAddress());
+    assert.equal(await systems().Core.getPoolOwner(4), await user1.getAddress());
   });
 
   it('does not have any approved or prefered pool at creation time', async () => {

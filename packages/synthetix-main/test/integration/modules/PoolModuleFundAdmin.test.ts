@@ -54,7 +54,7 @@ describe('PoolModule Admin', function () {
     });
 
     it('pool is created', async () => {
-      assert.equal(await systems().Core.ownerOf(secondPoolId), await user1.getAddress());
+      assert.equal(await systems().Core.getPoolOwner(secondPoolId), await user1.getAddress());
     });
   });
 
