@@ -39,19 +39,21 @@ contract CollateralModule is
         uint liquidationReward,
         bool enabled
     ) external override onlyOwner {
-        if (!_collateralStore().collaterals.contains(collateralType)) {
-            // Add a collateral entry
-            _collateralStore().collaterals.add(collateralType);
+        CollateralStore storage store = _collateralStore();
+        SetUtil.AddressSet storage collaterals = store.collaterals;
+
+        if (!collaterals.contains(collateralType)) {
+            collaterals.add(collateralType);
         }
 
-        CollateralData storage collateralData = _collateralStore().collateralsData[collateralType];
+        CollateralData storage collateral = store.collateralsData[collateralType];
 
-        collateralData.tokenAddress = collateralType;
-        collateralData.targetCRatio = targetCRatio;
-        collateralData.minimumCRatio = minimumCRatio;
-        collateralData.priceFeed = priceFeed;
-        collateralData.liquidationReward = liquidationReward;
-        collateralData.enabled = enabled;
+        collateral.tokenAddress = collateralType;
+        collateral.targetCRatio = targetCRatio;
+        collateral.minimumCRatio = minimumCRatio;
+        collateral.priceFeed = priceFeed;
+        collateral.liquidationReward = liquidationReward;
+        collateral.enabled = enabled;
 
         emit CollateralTypeConfigured(collateralType, priceFeed, targetCRatio, minimumCRatio, liquidationReward, enabled);
     }
@@ -62,17 +64,24 @@ contract CollateralModule is
         override
         returns (CollateralStorage.CollateralData[] memory)
     {
-        CollateralData[] memory collaterals = new CollateralData[](_collateralStore().collaterals.length());
+        CollateralStore storage store = _collateralStore();
+        SetUtil.AddressSet storage collaterals = store.collaterals;
+
+        uint numCollaterals = collaterals.length();
+        CollateralData[] memory filteredCollaterals = new CollateralData[](numCollaterals);
 
         uint collateralsIdx;
-        for (uint i = 0; i < _collateralStore().collaterals.length(); i++) {
-            address collateralType = _collateralStore().collaterals.valueAt(i + 1);
-            if (!hideDisabled || _collateralStore().collateralsData[collateralType].enabled) {
-                collaterals[collateralsIdx++] = _collateralStore().collateralsData[collateralType];
+        for (uint i = 1; i <= numCollaterals; i++) {
+            address collateralType = collaterals.valueAt(i);
+
+            CollateralData storage collateral = store.collateralsData[collateralType];
+
+            if (!hideDisabled || collateral.enabled) {
+                filteredCollaterals[collateralsIdx++] = collateral;
             }
         }
 
-        return collaterals;
+        return filteredCollaterals;
     }
 
     function getCollateralType(address collateralType)
@@ -81,8 +90,7 @@ contract CollateralModule is
         override
         returns (CollateralStorage.CollateralData memory)
     {
-        CollateralData storage collateral = _collateralStore().collateralsData[collateralType];
-        return collateral;
+        return _collateralStore().collateralsData[collateralType];
     }
 
     /////////////////////////////////////////////////
@@ -118,9 +126,9 @@ contract CollateralModule is
 
         collateralData.availableAmount -= amount;
 
-        emit CollateralWithdrawn(accountId, collateralType, amount, msg.sender);
-
         collateralType.safeTransfer(_accountOwner(accountId), amount);
+
+        emit CollateralWithdrawn(accountId, collateralType, amount, msg.sender);
     }
 
     function getAccountCollateral(uint accountId, address collateralType)
