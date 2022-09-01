@@ -114,10 +114,10 @@ registers a new market
 
 gets the liquidity of the market
 
-### marketCollateralValue
+### marketCollateral
 
   ```solidity
-  function marketCollateralValue(uint256 marketId) external view returns (uint256)
+  function marketCollateral(uint256 marketId) external view returns (uint256)
   ```
 
 gets the USD value of the collateral backing this market.
@@ -129,7 +129,7 @@ This function does not determine the market should consider available to it. Use
   function marketTotalBalance(uint256 marketId) external view returns (int256)
   ```
 
-gets the total balance of the market
+/ @notice gets the total balance of the market
 
 ### marketDebtPerShare
 
@@ -143,7 +143,7 @@ gets the total balance of the market
   function depositUsd(uint256 marketId, address target, uint256 amount) external
   ```
 
-target deposits amount of synths to the marketId
+target deposits amount of synths to the mark
 
 ### withdrawUsd
 
@@ -151,7 +151,7 @@ target deposits amount of synths to the marketId
   function withdrawUsd(uint256 marketId, address target, uint256 amount) external
   ```
 
-target withdraws amount of synths to the marketId
+target withdraws amount of synths to the mark
 
 ### registerMarket
 
@@ -169,10 +169,10 @@ registers a new market
 
 gets the liquidity of the market
 
-### marketCollateralValue
+### marketCollateral
 
   ```solidity
-  function marketCollateralValue(uint256 marketId) external view returns (uint256)
+  function marketCollateral(uint256 marketId) external view returns (uint256)
   ```
 
 gets the USD value of the collateral backing this market.
@@ -184,7 +184,7 @@ This function does not determine the market should consider available to it. Use
   function marketTotalBalance(uint256 marketId) external view returns (int256)
   ```
 
-gets the total balance of the market
+/ @notice gets the total balance of the market
 
 ### marketDebtPerShare
 
@@ -198,7 +198,7 @@ gets the total balance of the market
   function depositUsd(uint256 marketId, address target, uint256 amount) external
   ```
 
-target deposits amount of synths to the marketId
+target deposits amount of synths to the mark
 
 ### withdrawUsd
 
@@ -206,7 +206,7 @@ target deposits amount of synths to the marketId
   function withdrawUsd(uint256 marketId, address target, uint256 amount) external
   ```
 
-target withdraws amount of synths to the marketId
+target withdraws amount of synths to the mark
 
 ## Pool Configuration Module
 
@@ -1410,10 +1410,10 @@ registers a new market
 
 gets the liquidity of the market
 
-### marketCollateralValue
+### marketCollateral
 
   ```solidity
-  function marketCollateralValue(uint256 marketId) external view returns (uint256)
+  function marketCollateral(uint256 marketId) external view returns (uint256)
   ```
 
 gets the USD value of the collateral backing this market.
@@ -1425,7 +1425,7 @@ This function does not determine the market should consider available to it. Use
   function marketTotalBalance(uint256 marketId) external view returns (int256)
   ```
 
-gets the total balance of the market
+/ @notice gets the total balance of the market
 
 ### marketDebtPerShare
 
@@ -1439,7 +1439,7 @@ gets the total balance of the market
   function depositUsd(uint256 marketId, address target, uint256 amount) external
   ```
 
-target deposits amount of synths to the marketId
+target deposits amount of synths to the mark
 
 ### withdrawUsd
 
@@ -1447,7 +1447,7 @@ target deposits amount of synths to the marketId
   function withdrawUsd(uint256 marketId, address target, uint256 amount) external
   ```
 
-target withdraws amount of synths to the marketId
+target withdraws amount of synths to the mark
 
 ### registerMarket
 
@@ -1465,10 +1465,10 @@ registers a new market
 
 gets the liquidity of the market
 
-### marketCollateralValue
+### marketCollateral
 
   ```solidity
-  function marketCollateralValue(uint256 marketId) external view returns (uint256)
+  function marketCollateral(uint256 marketId) external view returns (uint256)
   ```
 
 gets the USD value of the collateral backing this market.
@@ -1480,7 +1480,7 @@ This function does not determine the market should consider available to it. Use
   function marketTotalBalance(uint256 marketId) external view returns (int256)
   ```
 
-gets the total balance of the market
+/ @notice gets the total balance of the market
 
 ### marketDebtPerShare
 
@@ -1494,7 +1494,7 @@ gets the total balance of the market
   function depositUsd(uint256 marketId, address target, uint256 amount) external
   ```
 
-target deposits amount of synths to the marketId
+target deposits amount of synths to the mark
 
 ### withdrawUsd
 
@@ -1502,7 +1502,7 @@ target deposits amount of synths to the marketId
   function withdrawUsd(uint256 marketId, address target, uint256 amount) external
   ```
 
-target withdraws amount of synths to the marketId
+target withdraws amount of synths to the mark
 
 ## Pool Configuration Module
 
@@ -1924,6 +1924,18 @@ returns the liquidity ratio cap for delegation of liquidity by p
   event MarketRegistered(address market, uint256 marketId)
   ```
 
+### UsdDeposited
+
+  ```solidity
+  event UsdDeposited(uint256 marketId, address target, uint256 amount, address sender)
+  ```
+
+### UsdWithdrawn
+
+  ```solidity
+  event UsdWithdrawn(uint256 marketId, address target, uint256 amount, address sender)
+  ```
+
 ### registerMarket
 
   ```solidity
@@ -1931,37 +1943,6 @@ returns the liquidity ratio cap for delegation of liquidity by p
   ```
 
 registers a new market
-
-### marketLiquidity
-
-  ```solidity
-  function marketLiquidity(uint256 marketId) external view returns (uint256)
-  ```
-
-gets the liquidity of the market
-
-### marketCollateralValue
-
-  ```solidity
-  function marketCollateralValue(uint256 marketId) external view returns (uint256)
-  ```
-
-gets the USD value of the collateral backing this market.
-This function does not determine the market should consider available to it. Use `marketLiquidity` instaed.
-
-### marketTotalBalance
-
-  ```solidity
-  function marketTotalBalance(uint256 marketId) external view returns (int256)
-  ```
-
-gets the total balance of the market
-
-### marketDebtPerShare
-
-  ```solidity
-  function marketDebtPerShare(uint256 marketId) external returns (int256)
-  ```
 
 ### depositUsd
 
@@ -1978,6 +1959,52 @@ target deposits amount of synths to the marketId
   ```
 
 target withdraws amount of synths to the marketId
+
+### getWithdrawableUsd
+
+  ```solidity
+  function getWithdrawableUsd(uint256 marketId) external view returns (uint256)
+  ```
+
+gets the liquidity of the market
+
+### getMarketIssuance
+
+  ```solidity
+  function getMarketIssuance(uint256 marketId) external view returns (int128)
+  ```
+
+gets net snxUSD withdrawn - deposited by the market
+
+### getMarketReportedBalance
+
+  ```solidity
+  function getMarketReportedBalance(uint256 marketId) external view returns (uint256)
+  ```
+
+gets the total balance of the market
+
+### getMarketTotalBalance
+
+  ```solidity
+  function getMarketTotalBalance(uint256 marketId) external view returns (int256)
+  ```
+
+gets the total balance of the market (marketIssuance + marketReportedBalance)
+
+### getMarketCollateral
+
+  ```solidity
+  function getMarketCollateral(uint256 marketId) external view returns (uint256)
+  ```
+
+gets the snxUSD value of the collateral backing this market.
+
+### getMarketDebtPerShare
+
+  ```solidity
+  function getMarketDebtPerShare(uint256 marketId) external returns (int256)
+  ```
 
 ### MarketRegistered
 
@@ -1985,6 +2012,18 @@ target withdraws amount of synths to the marketId
   event MarketRegistered(address market, uint256 marketId)
   ```
 
+### UsdDeposited
+
+  ```solidity
+  event UsdDeposited(uint256 marketId, address target, uint256 amount, address sender)
+  ```
+
+### UsdWithdrawn
+
+  ```solidity
+  event UsdWithdrawn(uint256 marketId, address target, uint256 amount, address sender)
+  ```
+
 ### registerMarket
 
   ```solidity
@@ -1992,37 +2031,6 @@ target withdraws amount of synths to the marketId
   ```
 
 registers a new market
-
-### marketLiquidity
-
-  ```solidity
-  function marketLiquidity(uint256 marketId) external view returns (uint256)
-  ```
-
-gets the liquidity of the market
-
-### marketCollateralValue
-
-  ```solidity
-  function marketCollateralValue(uint256 marketId) external view returns (uint256)
-  ```
-
-gets the USD value of the collateral backing this market.
-This function does not determine the market should consider available to it. Use `marketLiquidity` instaed.
-
-### marketTotalBalance
-
-  ```solidity
-  function marketTotalBalance(uint256 marketId) external view returns (int256)
-  ```
-
-gets the total balance of the market
-
-### marketDebtPerShare
-
-  ```solidity
-  function marketDebtPerShare(uint256 marketId) external returns (int256)
-  ```
 
 ### depositUsd
 
@@ -2039,6 +2047,304 @@ target deposits amount of synths to the marketId
   ```
 
 target withdraws amount of synths to the marketId
+
+### getWithdrawableUsd
+
+  ```solidity
+  function getWithdrawableUsd(uint256 marketId) external view returns (uint256)
+  ```
+
+gets the liquidity of the market
+
+### getMarketIssuance
+
+  ```solidity
+  function getMarketIssuance(uint256 marketId) external view returns (int128)
+  ```
+
+gets net snxUSD withdrawn - deposited by the market
+
+### getMarketReportedBalance
+
+  ```solidity
+  function getMarketReportedBalance(uint256 marketId) external view returns (uint256)
+  ```
+
+gets the total balance of the market
+
+### getMarketTotalBalance
+
+  ```solidity
+  function getMarketTotalBalance(uint256 marketId) external view returns (int256)
+  ```
+
+gets the total balance of the market (marketIssuance + marketReportedBalance)
+
+### getMarketCollateral
+
+  ```solidity
+  function getMarketCollateral(uint256 marketId) external view returns (uint256)
+  ```
+
+gets the snxUSD value of the collateral backing this market.
+
+### getMarketDebtPerShare
+
+  ```solidity
+  function getMarketDebtPerShare(uint256 marketId) external returns (int256)
+  ```
+
+## USD Token Module
+
+### initializeUSDTokenModule
+
+  ```solidity
+  function initializeUSDTokenModule() external
+  ```
+
+initializes the USD Token Module. Creates the first USD token implementation and takes ownership by the system
+
+### isUSDTokenModuleInitialized
+
+  ```solidity
+  function isUSDTokenModuleInitialized() external view returns (bool)
+  ```
+
+shows whether the module has been initialized
+
+### upgradeUSDImplementation
+
+  ```solidity
+  function upgradeUSDImplementation(address newUSDTokenImplementation) external
+  ```
+
+upgrades the USDToken implementation.
+
+### getUSDTokenAddress
+
+  ```solidity
+  function getUSDTokenAddress() external view returns (address)
+  ```
+
+gets the USDToken address.
+
+### initializeUSDTokenModule
+
+  ```solidity
+  function initializeUSDTokenModule() external
+  ```
+
+initializes the USD Token Module. Creates the first USD token implementation and takes ownership by the system
+
+### isUSDTokenModuleInitialized
+
+  ```solidity
+  function isUSDTokenModuleInitialized() external view returns (bool)
+  ```
+
+shows whether the module has been initialized
+
+### upgradeUSDImplementation
+
+  ```solidity
+  function upgradeUSDImplementation(address newUSDTokenImplementation) external
+  ```
+
+upgrades the USDToken implementation.
+
+### getUSDTokenAddress
+
+  ```solidity
+  function getUSDTokenAddress() external view returns (address)
+  ```
+
+gets the USDToken address.
+
+## Market Manager Module
+
+### MarketRegistered
+
+  ```solidity
+  event MarketRegistered(address market, uint256 marketId)
+  ```
+
+### UsdDeposited
+
+  ```solidity
+  event UsdDeposited(uint256 marketId, address target, uint256 amount, address sender)
+  ```
+
+### UsdWithdrawn
+
+  ```solidity
+  event UsdWithdrawn(uint256 marketId, address target, uint256 amount, address sender)
+  ```
+
+### registerMarket
+
+  ```solidity
+  function registerMarket(address market) external returns (uint256)
+  ```
+
+registers a new market
+
+### depositUsd
+
+  ```solidity
+  function depositUsd(uint256 marketId, address target, uint256 amount) external
+  ```
+
+target deposits amount of synths to the marketId
+
+### withdrawUsd
+
+  ```solidity
+  function withdrawUsd(uint256 marketId, address target, uint256 amount) external
+  ```
+
+target withdraws amount of synths to the marketId
+
+### withdrawableUsd
+
+  ```solidity
+  function withdrawableUsd(uint256 marketId) external view returns (uint256)
+  ```
+
+gets the liquidity of the market
+
+### marketIssuance
+
+  ```solidity
+  function marketIssuance(uint256 marketId) external view returns (int128)
+  ```
+
+gets net snxUSD withdrawn - deposited by the mar
+
+### marketReportedBalance
+
+  ```solidity
+  function marketReportedBalance(uint256 marketId) external view returns (uint256)
+  ```
+
+gets the total balance of the
+
+### marketTotalBalance
+
+  ```solidity
+  function marketTotalBalance(uint256 marketId) external view returns (int256)
+  ```
+
+t);
+
+gets the total balance of the market (marketIssuance + marketReporte
+
+### marketCollateral
+
+  ```solidity
+  function marketCollateral(uint256 marketId) external view returns (uint256)
+  ```
+
+(int);
+
+gets the snxUSD value of the collateral backing
+
+### marketDebtPerShare
+
+  ```solidity
+  function marketDebtPerShare(uint256 marketId) external returns (int256)
+  ```
+
+### MarketRegistered
+
+  ```solidity
+  event MarketRegistered(address market, uint256 marketId)
+  ```
+
+### UsdDeposited
+
+  ```solidity
+  event UsdDeposited(uint256 marketId, address target, uint256 amount, address sender)
+  ```
+
+### UsdWithdrawn
+
+  ```solidity
+  event UsdWithdrawn(uint256 marketId, address target, uint256 amount, address sender)
+  ```
+
+### registerMarket
+
+  ```solidity
+  function registerMarket(address market) external returns (uint256)
+  ```
+
+registers a new market
+
+### depositUsd
+
+  ```solidity
+  function depositUsd(uint256 marketId, address target, uint256 amount) external
+  ```
+
+target deposits amount of synths to the marketId
+
+### withdrawUsd
+
+  ```solidity
+  function withdrawUsd(uint256 marketId, address target, uint256 amount) external
+  ```
+
+target withdraws amount of synths to the marketId
+
+### withdrawableUsd
+
+  ```solidity
+  function withdrawableUsd(uint256 marketId) external view returns (uint256)
+  ```
+
+gets the liquidity of the market
+
+### marketIssuance
+
+  ```solidity
+  function marketIssuance(uint256 marketId) external view returns (int128)
+  ```
+
+gets net snxUSD withdrawn - deposited by the mar
+
+### marketReportedBalance
+
+  ```solidity
+  function marketReportedBalance(uint256 marketId) external view returns (uint256)
+  ```
+
+gets the total balance of the
+
+### marketTotalBalance
+
+  ```solidity
+  function marketTotalBalance(uint256 marketId) external view returns (int256)
+  ```
+
+t);
+
+gets the total balance of the market (marketIssuance + marketReporte
+
+### marketCollateral
+
+  ```solidity
+  function marketCollateral(uint256 marketId) external view returns (uint256)
+  ```
+
+(int);
+
+gets the snxUSD value of the collateral backing
+
+### marketDebtPerShare
+
+  ```solidity
+  function marketDebtPerShare(uint256 marketId) external returns (int256)
+  ```
 
 ## Pool Module
 
@@ -2822,10 +3128,10 @@ registers a new market
 
 gets the liquidity of the market
 
-### marketCollateralValue
+### marketCollateral
 
   ```solidity
-  function marketCollateralValue(uint256 marketId) external view returns (uint256)
+  function marketCollateral(uint256 marketId) external view returns (uint256)
   ```
 
 gets the USD value of the collateral backing this market.
@@ -2837,7 +3143,7 @@ This function does not determine the market should consider available to it. Use
   function marketTotalBalance(uint256 marketId) external view returns (int256)
   ```
 
-gets the total balance of the market
+/ @notice gets the total balance of the market
 
 ### marketDebtPerShare
 
@@ -2851,7 +3157,7 @@ gets the total balance of the market
   function depositUsd(uint256 marketId, address target, uint256 amount) external
   ```
 
-target deposits amount of synths to the marketId
+target deposits amount of synths to the mark
 
 ### withdrawUsd
 
@@ -2859,7 +3165,7 @@ target deposits amount of synths to the marketId
   function withdrawUsd(uint256 marketId, address target, uint256 amount) external
   ```
 
-target withdraws amount of synths to the marketId
+target withdraws amount of synths to the mark
 
 ### MarketRegistered
 
@@ -2883,10 +3189,10 @@ registers a new market
 
 gets the liquidity of the market
 
-### marketCollateralValue
+### marketCollateral
 
   ```solidity
-  function marketCollateralValue(uint256 marketId) external view returns (uint256)
+  function marketCollateral(uint256 marketId) external view returns (uint256)
   ```
 
 gets the USD value of the collateral backing this market.
@@ -2898,7 +3204,7 @@ This function does not determine the market should consider available to it. Use
   function marketTotalBalance(uint256 marketId) external view returns (int256)
   ```
 
-gets the total balance of the market
+/ @notice gets the total balance of the market
 
 ### marketDebtPerShare
 
@@ -2912,7 +3218,7 @@ gets the total balance of the market
   function depositUsd(uint256 marketId, address target, uint256 amount) external
   ```
 
-target deposits amount of synths to the marketId
+target deposits amount of synths to the mark
 
 ### withdrawUsd
 
@@ -2920,71 +3226,5 @@ target deposits amount of synths to the marketId
   function withdrawUsd(uint256 marketId, address target, uint256 amount) external
   ```
 
-target withdraws amount of synths to the marketId
-
-## USD Token Module
-
-### initializeUSDTokenModule
-
-  ```solidity
-  function initializeUSDTokenModule() external
-  ```
-
-initializes the USD Token Module. Creates the first USD token implementation and takes ownership by the system
-
-### isUSDTokenModuleInitialized
-
-  ```solidity
-  function isUSDTokenModuleInitialized() external view returns (bool)
-  ```
-
-shows whether the module has been initialized
-
-### upgradeUSDImplementation
-
-  ```solidity
-  function upgradeUSDImplementation(address newUSDTokenImplementation) external
-  ```
-
-upgrades the USDToken implementation.
-
-### getUSDTokenAddress
-
-  ```solidity
-  function getUSDTokenAddress() external view returns (address)
-  ```
-
-gets the USDToken address.
-
-### initializeUSDTokenModule
-
-  ```solidity
-  function initializeUSDTokenModule() external
-  ```
-
-initializes the USD Token Module. Creates the first USD token implementation and takes ownership by the system
-
-### isUSDTokenModuleInitialized
-
-  ```solidity
-  function isUSDTokenModuleInitialized() external view returns (bool)
-  ```
-
-shows whether the module has been initialized
-
-### upgradeUSDImplementation
-
-  ```solidity
-  function upgradeUSDImplementation(address newUSDTokenImplementation) external
-  ```
-
-upgrades the USDToken implementation.
-
-### getUSDTokenAddress
-
-  ```solidity
-  function getUSDTokenAddress() external view returns (address)
-  ```
-
-gets the USDToken address.
+target withdraws amount of synths to the mark
 
