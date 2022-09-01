@@ -7,7 +7,7 @@ import { getBlockTimestamp } from '@synthetixio/core-utils/utils/ethers/provider
 
 import { bootstrapWithStakedPool } from '../bootstrap';
 
-describe.only('VaultRewardsModule', function () {
+describe('VaultRewardsModule', function () {
   const { provider, signers, systems, poolId, collateralAddress, accountId, restore } =
     bootstrapWithStakedPool();
 
