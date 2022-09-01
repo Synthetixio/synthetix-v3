@@ -40,7 +40,6 @@ contract CollateralModule is
         bool enabled
     ) external override onlyOwner {
         CollateralStore storage store = _collateralStore();
-
         SetUtil.AddressSet storage collaterals = store.collaterals;
 
         if (!collaterals.contains(collateralType)) {
@@ -65,17 +64,24 @@ contract CollateralModule is
         override
         returns (CollateralStorage.CollateralData[] memory)
     {
-        CollateralData[] memory collaterals = new CollateralData[](_collateralStore().collaterals.length());
+        CollateralStore storage store = _collateralStore();
+        SetUtil.AddressSet storage collaterals = store.collaterals;
+
+        uint numCollaterals = collaterals.length();
+        CollateralData[] memory filteredCollaterals = new CollateralData[](numCollaterals);
 
         uint collateralsIdx;
-        for (uint i = 0; i < _collateralStore().collaterals.length(); i++) {
-            address collateralType = _collateralStore().collaterals.valueAt(i + 1);
-            if (!hideDisabled || _collateralStore().collateralsData[collateralType].enabled) {
-                collaterals[collateralsIdx++] = _collateralStore().collateralsData[collateralType];
+        for (uint i = 1; i <= numCollaterals; i++) {
+            address collateralType = collaterals.valueAt(i);
+
+            CollateralData storage collateral = store.collateralsData[collateralType];
+
+            if (!hideDisabled || collateral.enabled) {
+                filteredCollaterals[collateralsIdx++] = collateral;
             }
         }
 
-        return collaterals;
+        return filteredCollaterals;
     }
 
     function getCollateralType(address collateralType)
