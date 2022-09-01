@@ -1,9 +1,10 @@
 import assert from 'assert/strict';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
+import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import { ethers } from 'ethers';
+
 import { bootstrap } from '../../../bootstrap';
-import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 
 describe('AccountModule', function () {
   const { signers, systems } = bootstrap();
@@ -25,11 +26,7 @@ describe('AccountModule', function () {
       });
 
       it('emitted an AccountCreated event', async function () {
-        assertEvent(
-          receipt,
-          `AccountCreated(${await user1.getAddress()}, "1")`,
-          systems().Core
-        );
+        assertEvent(receipt, `AccountCreated(${await user1.getAddress()}, "1")`, systems().Core);
       });
 
       it('emitted a Mint event', async function () {
