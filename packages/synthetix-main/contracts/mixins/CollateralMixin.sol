@@ -63,11 +63,15 @@ contract CollateralMixin is CollateralStorage, PoolVaultStorage {
         DepositedCollateralData storage stakedCollateral = _collateralStore().depositedCollateralDataByAccountId[accountId][
             collateralType
         ];
+
         uint totalAssigned = 0;
         for (uint i = 0; i < stakedCollateral.pools.length; i++) {
-            PoolVaultStorage.VaultData storage vaultData = _poolVaultStore().poolVaults[stakedCollateral.pools[i]][
+            uint poolIdx = stakedCollateral.pools[i];
+
+            PoolVaultStorage.VaultData storage vaultData = _poolVaultStore().poolVaults[poolIdx][
                 collateralType
             ];
+
             totalAssigned += uint(vaultData.epochData[vaultData.epoch].collateralDist.getActorValue(bytes32(accountId)));
         }
 
@@ -76,13 +80,16 @@ contract CollateralMixin is CollateralStorage, PoolVaultStorage {
 
     function _getTotalLocked(DepositedCollateralLock[] storage locks) internal view returns (uint) {
         uint64 currentTime = uint64(block.timestamp);
-        uint256 locked;
 
+        uint256 locked;
         for (uint i = 0; i < locks.length; i++) {
-            if (locks[i].lockExpirationTime > currentTime) {
-                locked += locks[i].amount;
+            DepositedCollateralLock storage lock = locks[i];
+
+            if (lock.lockExpirationTime > currentTime) {
+                locked += lock.amount;
             }
         }
+
         return locked;
     }
 
