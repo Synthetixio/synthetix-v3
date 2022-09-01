@@ -60,7 +60,7 @@ jobs:
       - run: npm ci
       - run: npm run build
       - name: Execute tests
-        run: npm run --workspace=./packages/synthetix-main test
+        run: DEBUG=cannon* npm run --workspace=./packages/synthetix-main test
 
   test-cli:
     runs-on: ubuntu-latest
