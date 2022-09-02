@@ -8,7 +8,7 @@ interface ICollateralModule {
     /**
      * @notice Emitted when a collateral type’s configuration is created or updated.
      */
-    event CollateralTypeConfigured(
+    event CollateralConfigured(
         address indexed collateralType,
         address indexed priceFeed,
         uint targetCollateralizationRatio,
@@ -34,7 +34,7 @@ interface ICollateralModule {
      *
      * - `msg.sender` must be the owner of the system.
      *
-     * Emits a {CollateralTypeConfigured} event.
+     * Emits a {CollateralConfigured} event.
      *
      */
     function configureCollateral(

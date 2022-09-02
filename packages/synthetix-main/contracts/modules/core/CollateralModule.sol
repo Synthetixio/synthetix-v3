@@ -55,7 +55,7 @@ contract CollateralModule is
         collateral.liquidationReward = liquidationReward;
         collateral.enabled = enabled;
 
-        emit CollateralTypeConfigured(collateralType, priceFeed, targetCRatio, minimumCRatio, liquidationReward, enabled);
+        emit CollateralConfigured(collateralType, priceFeed, targetCRatio, minimumCRatio, liquidationReward, enabled);
     }
 
     function getCollateralConfigurations(bool hideDisabled)
