@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 /// @title Module for managing pools and assignments per account
-interface IVaultRewardsModule {
+interface IRewardsModule {
     event RewardDistributionSet(
         uint indexed poolId,
         address indexed token,

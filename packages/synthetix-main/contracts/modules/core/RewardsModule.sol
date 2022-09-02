@@ -12,10 +12,10 @@ import "../../mixins/PoolMixin.sol";
 import "../../utils/SharesLibrary.sol";
 
 import "../../storage/PoolVaultStorage.sol";
-import "../../interfaces/IVaultRewardsModule.sol";
+import "../../interfaces/IRewardsModule.sol";
 
-contract VaultRewardsModule is
-    IVaultRewardsModule,
+contract RewardsModule is
+    IRewardsModule,
     PoolVaultStorage,
     AccountRBACMixin,
     OwnableMixin,
