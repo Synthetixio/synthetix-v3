@@ -5,7 +5,7 @@ import { ethers as Ethers } from 'ethers';
 import { ethers } from 'hardhat';
 import { bootstrap } from '../../../bootstrap';
 
-describe.only('CollateralModule', function () {
+describe('CollateralModule', function () {
   const { signers, systems } = bootstrap();
 
   let systemOwner: Ethers.Signer, user1: Ethers.Signer;
@@ -78,7 +78,7 @@ describe.only('CollateralModule', function () {
     );
   }
 
-  describe('CollateralModule - Collateral Configuration', function () {
+  describe('CollateralModule - Collateral configuration', function () {
     before('identify signers', async () => {
       [systemOwner, user1] = signers();
     });
