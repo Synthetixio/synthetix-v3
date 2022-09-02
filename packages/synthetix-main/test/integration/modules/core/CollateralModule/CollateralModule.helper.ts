@@ -9,7 +9,7 @@ export async function addCollateral(
   targetCRatio: number,
   minimumCRatio: number,
   owner: Ethers.Signer,
-  core: Ethers.Contract,
+  core: Ethers.Contract
 ) {
   let factory;
 
@@ -24,7 +24,8 @@ export async function addCollateral(
   await (await CollateralPriceFeed.connect(owner).mockSetCurrentPrice(1)).wait();
 
   await (
-    await core.connect(owner)
+    await core
+      .connect(owner)
       .configureCollateralType(
         Collateral.address,
         CollateralPriceFeed.address,
@@ -45,7 +46,7 @@ export async function verifyCollateral(
   expectedCRatio: number,
   expectedMinimumCRatio: number,
   expectedToBeEnabled: boolean,
-  core: Ethers.Contract,
+  core: Ethers.Contract
 ) {
   assert.equal(
     (await core.getCollateralTypes(false))[collateralIdx].tokenAddress,
@@ -61,7 +62,12 @@ export async function verifyCollateral(
   assert.equal(collateralType.enabled, expectedToBeEnabled);
 }
 
-export async function verifyCollateralListed(Collateral: Ethers.Contract, listed: boolean, hideDisabled: boolean, core: Ethers.Contract) {
+export async function verifyCollateralListed(
+  Collateral: Ethers.Contract,
+  listed: boolean,
+  hideDisabled: boolean,
+  core: Ethers.Contract
+) {
   const collaterals = await core.getCollateralTypes(hideDisabled);
 
   assert.equal(

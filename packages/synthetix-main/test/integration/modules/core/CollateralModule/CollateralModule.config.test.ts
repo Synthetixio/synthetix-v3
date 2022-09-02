@@ -23,14 +23,7 @@ describe('CollateralModule', function () {
         await assertRevert(
           systems()
             .Core.connect(user1)
-            .configureCollateralType(
-              dummyAddress,
-              dummyAddress,
-              400,
-              200,
-              0,
-              false
-            ),
+            .configureCollateralType(dummyAddress, dummyAddress, 400, 200, 0, false),
           `Unauthorized("${await user1.getAddress()}")`,
           systems().Core
         );
@@ -39,7 +32,14 @@ describe('CollateralModule', function () {
 
     describe('when the first collateral is added', function () {
       before('add collateral', async () => {
-        ({ Collateral, CollateralPriceFeed } = await addCollateral('Synthetix Token', 'SNX', 400, 200, systemOwner, systems().Core));
+        ({ Collateral, CollateralPriceFeed } = await addCollateral(
+          'Synthetix Token',
+          'SNX',
+          400,
+          200,
+          systemOwner,
+          systems().Core
+        ));
       });
 
       it('is well configured', async () => {
@@ -52,11 +52,20 @@ describe('CollateralModule', function () {
 
       describe('when a second collateral is added', () => {
         before('add collateral', async () => {
-          ({ Collateral: AnotherCollateral, CollateralPriceFeed: AnotherCollateralPriceFeed } = await addCollateral('Another Token', 'ANT', 400, 200, systemOwner, systems().Core));
+          ({ Collateral: AnotherCollateral, CollateralPriceFeed: AnotherCollateralPriceFeed } =
+            await addCollateral('Another Token', 'ANT', 400, 200, systemOwner, systems().Core));
         });
 
         it('is well configured', async () => {
-          await verifyCollateral(1, AnotherCollateral, AnotherCollateralPriceFeed, 400, 200, true, systems().Core);
+          await verifyCollateral(
+            1,
+            AnotherCollateral,
+            AnotherCollateralPriceFeed,
+            400,
+            200,
+            true,
+            systems().Core
+          );
         });
 
         it('shows in the collateral list', async function () {
@@ -98,7 +107,15 @@ describe('CollateralModule', function () {
           });
 
           it('is well configured', async () => {
-            await verifyCollateral(1, AnotherCollateral, AnotherCollateralPriceFeed, 300, 250, true, systems().Core);
+            await verifyCollateral(
+              1,
+              AnotherCollateral,
+              AnotherCollateralPriceFeed,
+              300,
+              250,
+              true,
+              systems().Core
+            );
           });
 
           it('shows in the collateral list', async function () {
@@ -122,7 +139,15 @@ describe('CollateralModule', function () {
           });
 
           it('is well configured', async () => {
-            await verifyCollateral(1, AnotherCollateral, AnotherCollateralPriceFeed, 300, 250, false, systems().Core);
+            await verifyCollateral(
+              1,
+              AnotherCollateral,
+              AnotherCollateralPriceFeed,
+              300,
+              250,
+              false,
+              systems().Core
+            );
           });
 
           it('shows in the collateral list', async function () {

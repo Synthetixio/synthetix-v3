@@ -11,9 +11,7 @@ describe('CollateralModule', function () {
 
   let Collateral: Ethers.Contract, CollateralPriceFeed: Ethers.Contract;
 
-  let owner: Ethers.Signer,
-    user1: Ethers.Signer,
-    user2: Ethers.Signer;
+  let owner: Ethers.Signer, user1: Ethers.Signer, user2: Ethers.Signer;
 
   let receipt: Ethers.providers.TransactionReceipt;
 
@@ -29,7 +27,14 @@ describe('CollateralModule', function () {
 
     describe('when a collateral is addded', function () {
       before('add collateral type', async () => {
-        ({ Collateral, CollateralPriceFeed } = await addCollateral('Synthetix Token', 'SNX', 400, 200, owner, systems().Core));
+        ({ Collateral, CollateralPriceFeed } = await addCollateral(
+          'Synthetix Token',
+          'SNX',
+          400,
+          200,
+          owner,
+          systems().Core
+        ));
       });
 
       it('is well configured', async () => {
@@ -51,10 +56,16 @@ describe('CollateralModule', function () {
         describe('when accounts provide allowance', function () {
           before('approve', async () => {
             await (
-              await Collateral.connect(user1).approve(systems().Core.address, ethers.constants.MaxUint256)
+              await Collateral.connect(user1).approve(
+                systems().Core.address,
+                ethers.constants.MaxUint256
+              )
             ).wait();
             await (
-              await Collateral.connect(user2).approve(systems().Core.address, ethers.constants.MaxUint256)
+              await Collateral.connect(user2).approve(
+                systems().Core.address,
+                ethers.constants.MaxUint256
+              )
             ).wait();
           });
 
@@ -79,7 +90,9 @@ describe('CollateralModule', function () {
             it('emits an event', async () => {
               assertEvent(
                 receipt,
-                `CollateralDeposited("1", "${Collateral.address}", "100", "${await user1.getAddress()}")`,
+                `CollateralDeposited("1", "${
+                  Collateral.address
+                }", "100", "${await user1.getAddress()}")`,
                 systems().Core
               );
             });
@@ -90,8 +103,14 @@ describe('CollateralModule', function () {
             });
 
             it('shows that the collateral has been registered', async function () {
-              const [totalStaked, totalAssigned] = await systems().Core.getAccountCollateral(1, Collateral.address);
-              const totalAvailable = await systems().Core.getAccountAvailableCollateral(1, Collateral.address);
+              const [totalStaked, totalAssigned] = await systems().Core.getAccountCollateral(
+                1,
+                Collateral.address
+              );
+              const totalAvailable = await systems().Core.getAccountAvailableCollateral(
+                1,
+                Collateral.address
+              );
 
               assertBn.equal(totalStaked, 100);
               assertBn.equal(totalAssigned, 0);
@@ -119,7 +138,9 @@ describe('CollateralModule', function () {
               it('emits an event', async () => {
                 assertEvent(
                   receipt,
-                  `CollateralWithdrawn("1", "${Collateral.address}", "100", "${await user1.getAddress()}")`,
+                  `CollateralWithdrawn("1", "${
+                    Collateral.address
+                  }", "100", "${await user1.getAddress()}")`,
                   systems().Core
                 );
               });
@@ -130,8 +151,14 @@ describe('CollateralModule', function () {
               });
 
               it('shows that the registered collateral has been updated accordingly', async function () {
-                const [totalStaked, totalAssigned] = await systems().Core.getAccountCollateral(1, Collateral.address);
-                const totalAvailable = await systems().Core.getAccountAvailableCollateral(1, Collateral.address);
+                const [totalStaked, totalAssigned] = await systems().Core.getAccountCollateral(
+                  1,
+                  Collateral.address
+                );
+                const totalAvailable = await systems().Core.getAccountAvailableCollateral(
+                  1,
+                  Collateral.address
+                );
 
                 assertBn.equal(totalStaked, 0);
                 assertBn.equal(totalAssigned, 0);
