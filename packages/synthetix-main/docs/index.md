@@ -1146,7 +1146,7 @@ Emits a {CollateralTypeConfigured} event.
 ### getCollateralTypes
 
 ```solidity
-function getCollateralTypes(bool hideDisabled) external view returns (struct CollateralStorage.CollateralData[] collaterals)
+function getCollateralConfigurations(bool hideDisabled) external view returns (struct CollateralStorage.CollateralData[] collaterals)
 ```
 
 Returns a list of detailed information pertaining to all collateral types registered in the system.
@@ -1154,7 +1154,7 @@ Returns a list of detailed information pertaining to all collateral types regist
 ### getCollateralType
 
 ```solidity
-function getCollateralType(address collateralType) external view returns (struct CollateralStorage.CollateralData collateral)
+function getCollateralConfiguration(address collateralType) external view returns (struct CollateralStorage.CollateralData collateral)
 ```
 
 Returns detailed information pertaining the specified collateral type.
@@ -1244,7 +1244,7 @@ Emits a {CollateralTypeConfigured} event.
 ### getCollateralTypes
 
 ```solidity
-function getCollateralTypes(bool hideDisabled) external view returns (struct CollateralStorage.CollateralData[] collaterals)
+function getCollateralConfigurations(bool hideDisabled) external view returns (struct CollateralStorage.CollateralData[] collaterals)
 ```
 
 Returns a list of detailed information pertaining to all collateral types registered in the system.
@@ -1252,7 +1252,7 @@ Returns a list of detailed information pertaining to all collateral types regist
 ### getCollateralType
 
 ```solidity
-function getCollateralType(address collateralType) external view returns (struct CollateralStorage.CollateralData collateral)
+function getCollateralConfiguration(address collateralType) external view returns (struct CollateralStorage.CollateralData collateral)
 ```
 
 Returns detailed information pertaining the specified collateral type.

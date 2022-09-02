@@ -49,7 +49,7 @@ interface ICollateralModule {
     /**
      * @notice Returns a list of detailed information pertaining to all collateral types registered in the system.
      */
-    function getCollateralTypes(bool hideDisabled)
+    function getCollateralConfigurations(bool hideDisabled)
         external
         view
         returns (CollateralStorage.CollateralData[] memory collaterals);
@@ -57,7 +57,7 @@ interface ICollateralModule {
     /**
      * @notice Returns detailed information pertaining the specified collateral type.
      */
-    function getCollateralType(address collateralType)
+    function getCollateralConfiguration(address collateralType)
         external
         view
         returns (CollateralStorage.CollateralData memory collateral);

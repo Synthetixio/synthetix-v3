@@ -58,7 +58,7 @@ contract CollateralModule is
         emit CollateralTypeConfigured(collateralType, priceFeed, targetCRatio, minimumCRatio, liquidationReward, enabled);
     }
 
-    function getCollateralTypes(bool hideDisabled)
+    function getCollateralConfigurations(bool hideDisabled)
         external
         view
         override
@@ -84,7 +84,7 @@ contract CollateralModule is
         return filteredCollaterals;
     }
 
-    function getCollateralType(address collateralType)
+    function getCollateralConfiguration(address collateralType)
         external
         view
         override
