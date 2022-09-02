@@ -5,6 +5,7 @@ import { ethers } from 'ethers';
 import { findEvent } from '@synthetixio/core-utils/utils/ethers/events';
 import { takeSnapshot, restoreSnapshot } from '@synthetixio/core-utils/utils/hardhat/rpc';
 import { bootstrap } from '../../../bootstrap';
+import Permissions from '../../../mixins/AcccountRBACMixin.permissions';
 
 describe('AccountModule', function () {
   const { signers, systems, provider } = bootstrap();
@@ -16,11 +17,6 @@ describe('AccountModule', function () {
   let receipt: ethers.providers.TransactionReceipt;
 
   let snapshotId: number;
-
-  const Permissions = {
-    DEPOSIT: ethers.utils.formatBytes32String('DEPOSIT'),
-    ADMIN: ethers.utils.formatBytes32String('ADMIN'),
-  };
 
   describe('AccountModule - Granting, revoking, and renouncing permissions', function () {
     before('identify signers', async () => {
