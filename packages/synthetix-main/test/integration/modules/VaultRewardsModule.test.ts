@@ -376,8 +376,8 @@ describe('VaultRewardsModule', function () {
             accountId
           );
           // should have received only the one past reward
-          // 52 because block advances by exactly 1 second due to mine, and another 1 second for simulate
-          assertBn.equal(rewards[0], rewardAmount.add(rewardAmount.mul(52).div(100)));
+          // 51 because block advances by exactly 1 second due to mine
+          assertBn.equal(rewards[0], rewardAmount.add(rewardAmount.mul(51).div(100)));
         });
 
         describe('after time passes', () => {
@@ -392,7 +392,7 @@ describe('VaultRewardsModule', function () {
               accountId
             );
             // should have received only the one past reward + 1 second for simulate
-            assertBn.equal(rewards[0], rewardAmount.add(rewardAmount.mul(76).div(100)));
+            assertBn.equal(rewards[0], rewardAmount.add(rewardAmount.mul(75).div(100)));
           });
 
           describe('new distribution', () => {
@@ -425,7 +425,7 @@ describe('VaultRewardsModule', function () {
                 rewards[0],
                 rewardAmount
                   .add(rewardAmount.mul(76).div(100))
-                  .add(rewardAmount.mul(1000).mul(112).div(200))
+                  .add(rewardAmount.mul(1000).mul(111).div(200))
               );
             });
 
