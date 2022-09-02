@@ -37,7 +37,7 @@ interface ICollateralModule {
      * Emits a {CollateralTypeConfigured} event.
      *
      */
-    function configureCollateralType(
+    function configureCollateral(
         address collateralType,
         address priceFeed,
         uint targetCRatio,

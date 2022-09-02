@@ -3,7 +3,7 @@ import { ethers as Ethers } from 'ethers';
 import { bootstrap } from '../../../bootstrap';
 import { addCollateral, verifyCollateral, verifyCollateralListed } from './CollateralModule.helper';
 
-describe('CollateralModule', function () {
+describe.only('CollateralModule', function () {
   const { signers, systems } = bootstrap();
 
   let systemOwner: Ethers.Signer, user1: Ethers.Signer;
@@ -23,7 +23,7 @@ describe('CollateralModule', function () {
         await assertRevert(
           systems()
             .Core.connect(user1)
-            .configureCollateralType(dummyAddress, dummyAddress, 400, 200, 0, false),
+            .configureCollateral(dummyAddress, dummyAddress, 400, 200, 0, false),
           `Unauthorized("${await user1.getAddress()}")`,
           systems().Core
         );
@@ -77,7 +77,7 @@ describe('CollateralModule', function () {
             await assertRevert(
               systems()
                 .Core.connect(user1)
-                .configureCollateralType(
+                .configureCollateral(
                   AnotherCollateral.address,
                   AnotherCollateralPriceFeed.address,
                   200,
@@ -95,7 +95,7 @@ describe('CollateralModule', function () {
           before('update the collateral', async () => {
             const tx = await systems()
               .Core.connect(systemOwner)
-              .configureCollateralType(
+              .configureCollateral(
                 AnotherCollateral.address,
                 AnotherCollateralPriceFeed.address,
                 300,
@@ -127,7 +127,7 @@ describe('CollateralModule', function () {
           before('disable the collateral', async () => {
             const tx = await systems()
               .Core.connect(systemOwner)
-              .configureCollateralType(
+              .configureCollateral(
                 AnotherCollateral.address,
                 AnotherCollateralPriceFeed.address,
                 300,

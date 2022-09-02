@@ -31,7 +31,7 @@ contract CollateralModule is
 
     error OutOfBounds();
 
-    function configureCollateralType(
+    function configureCollateral(
         address collateralType,
         address priceFeed,
         uint targetCRatio,

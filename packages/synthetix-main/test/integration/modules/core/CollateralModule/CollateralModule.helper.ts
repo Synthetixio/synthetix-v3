@@ -26,7 +26,7 @@ export async function addCollateral(
   await (
     await core
       .connect(owner)
-      .configureCollateralType(
+      .configureCollateral(
         Collateral.address,
         CollateralPriceFeed.address,
         targetCRatio,

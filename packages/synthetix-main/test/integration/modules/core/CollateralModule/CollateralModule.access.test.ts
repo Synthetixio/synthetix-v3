@@ -6,7 +6,7 @@ import { ethers as Ethers } from 'ethers';
 import { addCollateral, verifyCollateral } from './CollateralModule.helper';
 import Permissions from '../../../mixins/AcccountRBACMixin.permissions';
 
-describe('CollateralModule', function () {
+describe.only('CollateralModule', function () {
   const { signers, systems } = bootstrap();
 
   let Collateral: Ethers.Contract, CollateralPriceFeed: Ethers.Contract;
