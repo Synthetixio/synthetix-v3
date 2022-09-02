@@ -1,11 +1,12 @@
 import { ethers } from 'hardhat';
-import assert from 'assert/strict';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import { bootstrap } from '../../../bootstrap';
 import { ethers as Ethers } from 'ethers';
+import { addCollateral, verifyCollateral } from './CollateralModule.helper';
+import Permissions from '../../../mixins/AcccountRBACMixin.permissions';
 
-describe.only('CollateralModule', function () {
+describe('CollateralModule', function () {
   const { signers, systems } = bootstrap();
 
   let Collateral: Ethers.Contract, CollateralPriceFeed: Ethers.Contract;
@@ -27,37 +28,11 @@ describe.only('CollateralModule', function () {
 
     describe('when a collateral is addded', function () {
       before('add collateral type', async () => {
-        let factory;
-
-        factory = await ethers.getContractFactory('CollateralMock');
-        Collateral = await factory.connect(owner).deploy();
-
-        await (await Collateral.connect(owner).initialize('Synthetix Token', 'SNX', 18)).wait();
-
-        factory = await ethers.getContractFactory('AggregatorV3Mock');
-        CollateralPriceFeed = await factory.deploy();
-
-        await (await CollateralPriceFeed.connect(owner).mockSetCurrentPrice(1)).wait();
-
-        await (
-          await systems()
-            .Core.connect(owner)
-            .configureCollateralType(Collateral.address, CollateralPriceFeed.address, 400, 200, 0, true)
-        ).wait();
+        ({ Collateral, CollateralPriceFeed } = await addCollateral('Synthetix Token', 'SNX', 400, 200, owner, systems().Core));
       });
 
       it('is well configured', async () => {
-        assert.equal(
-          (await systems().Core.getCollateralTypes(false))[0].tokenAddress,
-          Collateral.address
-        );
-
-        const collateralType = await systems().Core.getCollateralType(Collateral.address);
-
-        assert.equal(collateralType.priceFeed, CollateralPriceFeed.address);
-        assertBn.equal(collateralType.targetCRatio, 400);
-        assertBn.equal(collateralType.minimumCRatio, 200);
-        assert.equal(collateralType.enabled, true);
+        await verifyCollateral(0, Collateral, CollateralPriceFeed, 400, 200, true, systems().Core);
       });
 
       describe('when accounts have tokens', function () {
@@ -86,7 +61,7 @@ describe.only('CollateralModule', function () {
             it('reverts', async () => {
               await assertRevert(
                 systems().Core.connect(user2).depositCollateral(1, Collateral.address, 100),
-                `PermissionDenied("1", "0x4445504f53495400000000000000000000000000000000000000000000000000", "${await user2.getAddress()}")`,
+                `PermissionDenied("1", "${Permissions.DEPOSIT}", "${await user2.getAddress()}")`,
                 systems().Core
               );
             });
@@ -96,7 +71,7 @@ describe.only('CollateralModule', function () {
             it('reverts', async () => {
               await assertRevert(
                 systems().Core.connect(user2).withdrawCollateral(1, Collateral.address, 100),
-                `PermissionDenied("1", "0x5749544844524157000000000000000000000000000000000000000000000000", "${await user2.getAddress()}")`,
+                `PermissionDenied("1", "${Permissions.WITHDRAW}", "${await user2.getAddress()}")`,
                 systems().Core
               );
             });

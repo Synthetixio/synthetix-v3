@@ -1,82 +1,15 @@
-import assert from 'assert/strict';
-import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import { ethers as Ethers } from 'ethers';
-import { ethers } from 'hardhat';
 import { bootstrap } from '../../../bootstrap';
+import { addCollateral, verifyCollateral, verifyCollateralListed } from './CollateralModule.helper';
 
-describe.only('CollateralModule', function () {
+describe('CollateralModule', function () {
   const { signers, systems } = bootstrap();
 
   let systemOwner: Ethers.Signer, user1: Ethers.Signer;
 
   let Collateral: Ethers.Contract, CollateralPriceFeed: Ethers.Contract;
   let AnotherCollateral: Ethers.Contract, AnotherCollateralPriceFeed: Ethers.Contract;
-
-  async function addCollateral(
-    tokenName: string,
-    tokenSymbol: string,
-    targetCRatio: number,
-    minimumCRatio: number,
-  ) {
-    let factory;
-
-    factory = await ethers.getContractFactory('CollateralMock');
-    const Collateral = await factory.connect(systemOwner).deploy();
-
-    await (await Collateral.connect(systemOwner).initialize(tokenName, tokenSymbol, 18)).wait();
-
-    factory = await ethers.getContractFactory('AggregatorV3Mock');
-    const CollateralPriceFeed = await factory.connect(systemOwner).deploy();
-
-    await (await CollateralPriceFeed.connect(systemOwner).mockSetCurrentPrice(1)).wait();
-
-    await (
-      await systems()
-        .Core.connect(systemOwner)
-        .configureCollateralType(
-          Collateral.address,
-          CollateralPriceFeed.address,
-          targetCRatio,
-          minimumCRatio,
-          0,
-          true
-        )
-    ).wait();
-
-    return { Collateral, CollateralPriceFeed };
-  }
-
-  async function verifyCollateral(
-    collateralIdx: number,
-    Collateral: Ethers.Contract,
-    CollateralPriceFeed: Ethers.Contract,
-    expectedCRatio: number,
-    expectedMinimumCRatio: number,
-    expectedToBeEnabled: boolean,
-  ) {
-    assert.equal(
-      (await systems().Core.getCollateralTypes(false))[collateralIdx].tokenAddress,
-      Collateral.address
-    );
-
-    const collateralType = await systems().Core.getCollateralType(Collateral.address);
-
-    assert.equal(collateralType.tokenAddress, Collateral.address);
-    assert.equal(collateralType.priceFeed, CollateralPriceFeed.address);
-    assertBn.equal(collateralType.targetCRatio, expectedCRatio);
-    assertBn.equal(collateralType.minimumCRatio, expectedMinimumCRatio);
-    assert.equal(collateralType.enabled, expectedToBeEnabled);
-  }
-
-  async function verifyCollateralListed(Collateral: Ethers.Contract, listed: boolean, hideDisabled: boolean) {
-    const collaterals = await systems().Core.getCollateralTypes(hideDisabled);
-
-    assert.equal(
-      collaterals.some((v: any) => v.tokenAddress === Collateral.address),
-      listed
-    );
-  }
 
   describe('CollateralModule - Collateral configuration', function () {
     before('identify signers', async () => {
@@ -106,28 +39,28 @@ describe.only('CollateralModule', function () {
 
     describe('when the first collateral is added', function () {
       before('add collateral', async () => {
-        ({ Collateral, CollateralPriceFeed } = await addCollateral('Synthetix Token', 'SNX', 400, 200));
+        ({ Collateral, CollateralPriceFeed } = await addCollateral('Synthetix Token', 'SNX', 400, 200, systemOwner, systems().Core));
       });
 
       it('is well configured', async () => {
-        await verifyCollateral(0, Collateral, CollateralPriceFeed, 400, 200, true);
+        await verifyCollateral(0, Collateral, CollateralPriceFeed, 400, 200, true, systems().Core);
       });
 
       it('shows in the collateral list', async function () {
-        await verifyCollateralListed(Collateral, true, true);
+        await verifyCollateralListed(Collateral, true, true, systems().Core);
       });
 
       describe('when a second collateral is added', () => {
         before('add collateral', async () => {
-          ({ Collateral: AnotherCollateral, CollateralPriceFeed: AnotherCollateralPriceFeed } = await addCollateral('Another Token', 'ANT', 400, 200));
+          ({ Collateral: AnotherCollateral, CollateralPriceFeed: AnotherCollateralPriceFeed } = await addCollateral('Another Token', 'ANT', 400, 200, systemOwner, systems().Core));
         });
 
         it('is well configured', async () => {
-          await verifyCollateral(1, AnotherCollateral, AnotherCollateralPriceFeed, 400, 200, true);
+          await verifyCollateral(1, AnotherCollateral, AnotherCollateralPriceFeed, 400, 200, true, systems().Core);
         });
 
         it('shows in the collateral list', async function () {
-          await verifyCollateralListed(AnotherCollateral, true, true);
+          await verifyCollateralListed(AnotherCollateral, true, true, systems().Core);
         });
 
         describe('when a regular user attempts to update the second collateral', function () {
@@ -165,11 +98,11 @@ describe.only('CollateralModule', function () {
           });
 
           it('is well configured', async () => {
-            await verifyCollateral(1, AnotherCollateral, AnotherCollateralPriceFeed, 300, 250, true);
+            await verifyCollateral(1, AnotherCollateral, AnotherCollateralPriceFeed, 300, 250, true, systems().Core);
           });
 
           it('shows in the collateral list', async function () {
-            await verifyCollateralListed(AnotherCollateral, true, true);
+            await verifyCollateralListed(AnotherCollateral, true, true, systems().Core);
           });
         });
 
@@ -189,12 +122,12 @@ describe.only('CollateralModule', function () {
           });
 
           it('is well configured', async () => {
-            await verifyCollateral(1, AnotherCollateral, AnotherCollateralPriceFeed, 300, 250, false);
+            await verifyCollateral(1, AnotherCollateral, AnotherCollateralPriceFeed, 300, 250, false, systems().Core);
           });
 
           it('shows in the collateral list', async function () {
-            await verifyCollateralListed(AnotherCollateral, true, false);
-            await verifyCollateralListed(AnotherCollateral, false, true);
+            await verifyCollateralListed(AnotherCollateral, true, false, systems().Core);
+            await verifyCollateralListed(AnotherCollateral, false, true, systems().Core);
           });
         });
       });
