@@ -5,7 +5,7 @@ import { ethers as Ethers } from 'ethers';
 import { ethers } from 'hardhat';
 import { bootstrap } from '../../../bootstrap';
 
-describe('CollateralModule', function () {
+describe.only('CollateralModule', function () {
   const { signers, systems } = bootstrap();
 
   let systemOwner: Ethers.Signer, user1: Ethers.Signer;

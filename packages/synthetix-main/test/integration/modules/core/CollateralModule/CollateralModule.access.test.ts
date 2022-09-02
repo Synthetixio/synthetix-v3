@@ -4,9 +4,8 @@ import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber'
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import { bootstrap } from '../../../bootstrap';
 import { ethers as Ethers } from 'ethers';
-import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 
-describe('CollateralModule', function () {
+describe.only('CollateralModule', function () {
   const { signers, systems } = bootstrap();
 
   let Collateral: Ethers.Contract, CollateralPriceFeed: Ethers.Contract;
@@ -14,14 +13,11 @@ describe('CollateralModule', function () {
   let owner: Ethers.Signer,
     user1: Ethers.Signer,
     user2: Ethers.Signer,
-    user3: Ethers.Signer,
-    user4: Ethers.Signer;
+    user3: Ethers.Signer;
 
-  let receipt: Ethers.providers.TransactionReceipt;
-
-  describe('CollateralModule - Depoositing and withdrawing', function () {
+  describe('CollateralModule - Access control', function () {
     before('identify signers', async () => {
-      [owner, user1, user2, user3, user4] = signers();
+      [owner, user1, user2, user3] = signers();
     });
 
     before('create some accounts', async () => {
@@ -86,40 +82,28 @@ describe('CollateralModule', function () {
             ).wait();
           });
 
-          describe('when an unauthorized address tries to operate in the systems().Account', () => {
-            it('reverts when trying to withdraw', async () => {
+          describe('when an unauthorized account tries to deposit collateral', function () {
+            it('reverts', async () => {
               await assertRevert(
                 systems().Core.connect(user2).depositCollateral(1, Collateral.address, 100),
                 `PermissionDenied("1", "0x4445504f53495400000000000000000000000000000000000000000000000000", "${await user2.getAddress()}")`,
                 systems().Core
               );
             });
+          });
 
-            it('reverts when trying to withdrawCollateral', async () => {
+          describe('when an unauthorized account tries to withdraw collateral', function () {
+            it('reverts', async () => {
               await assertRevert(
                 systems().Core.connect(user2).withdrawCollateral(1, Collateral.address, 100),
                 `PermissionDenied("1", "0x5749544844524157000000000000000000000000000000000000000000000000", "${await user2.getAddress()}")`,
                 systems().Core
               );
             });
-
-            it('reverts when trying to grant access', async () => {
-              await assertRevert(
-                systems()
-                  .Core.connect(user2)
-                  .grantPermission(
-                    1,
-                    ethers.utils.formatBytes32String('DEPOSIT'),
-                    await user2.getAddress()
-                  ),
-                `PermissionDenied("1", "0x41444d494e000000000000000000000000000000000000000000000000000000", "${await user2.getAddress()}")`,
-                systems().Core
-              );
-            });
           });
 
-          describe('when an authorized address operates with the systems().Account', () => {
-            before('authorize some users', async () => {
+          describe('when an account authorizes other users to operate', function () {
+            before('grant DEPOSIT and WITHDRAW permissions', async () => {
               await (
                 await systems()
                   .Core.connect(user1)
@@ -136,81 +120,46 @@ describe('CollateralModule', function () {
               ).wait();
             });
 
-            it('roles are granted', async () => {
-              assert.equal(
-                await systems().Core.hasPermission(
-                  1,
-                  ethers.utils.formatBytes32String('DEPOSIT'),
-                  await user2.getAddress()
-                ),
-                true
-              );
-              assert.equal(
-                await systems().Core.hasPermission(
-                  1,
-                  ethers.utils.formatBytes32String('WITHDRAW'),
-                  await user3.getAddress()
-                ),
-                true
-              );
-              assert.equal(
-                await systems().Core.hasPermission(
-                  1,
-                  ethers.utils.formatBytes32String('OTHER'),
-                  await user4.getAddress()
-                ),
-                false
-              );
-            });
-
-            describe('when some collateral is deposited', () => {
+            describe('when the authorized account deposits collateral', function () {
               before('deposit some collateral', async () => {
                 await (
                   await systems().Core.connect(user2).depositCollateral(1, Collateral.address, 100)
                 ).wait();
               });
 
-              it('is deposited', async () => {
-                const totals = await systems().Core.getAccountCollateral(1, Collateral.address);
-                const free = await systems().Core.getAccountAvailableCollateral(1, Collateral.address);
-                const unassigned = await systems().Core.getAccountAvailableCollateral(
-                  1,
-                  Collateral.address
-                );
-
-                assertBn.equal(totals[0], 100);
-                assertBn.equal(totals[1], 0);
-                assertBn.equal(free, 100);
-                assertBn.equal(unassigned, 100);
-
-                // In Collateral balances
+              it('shows that tokens have moved', async function () {
                 assertBn.equal(await Collateral.balanceOf(await user1.getAddress()), 900);
                 assertBn.equal(await Collateral.balanceOf(systems().Core.address), 100);
               });
 
-              describe('when some collateral is withdrawn', () => {
+              it('shows that the collateral has been registered', async function () {
+                const [totalStaked, totalAssigned] = await systems().Core.getAccountCollateral(1, Collateral.address);
+                const totalAvailable = await systems().Core.getAccountAvailableCollateral(1, Collateral.address);
+
+                assertBn.equal(totalStaked, 100);
+                assertBn.equal(totalAssigned, 0);
+                assertBn.equal(totalAvailable, 100);
+              });
+
+              describe('when the authorized account withdraws collateral', function () {
                 before('withdraw some collateral', async () => {
                   await (
                     await systems().Core.connect(user3).withdrawCollateral(1, Collateral.address, 100)
                   ).wait();
                 });
 
-                it('is withdrawn', async () => {
-                  const totals = await systems().Core.getAccountCollateral(1, Collateral.address);
-                  const free = await systems().Core.getAccountAvailableCollateral(1, Collateral.address);
-                  const unassigned = await systems().Core.getAccountAvailableCollateral(
-                    1,
-                    Collateral.address
-                  );
-
-                  assertBn.equal(totals[0], 0);
-                  assertBn.equal(totals[1], 0);
-                  assertBn.equal(free, 0);
-                  assertBn.equal(unassigned, 0);
-
-                  // In Collateral balances
+                it('shows that tokens have moved', async function () {
                   assertBn.equal(await Collateral.balanceOf(await user1.getAddress()), 1000);
                   assertBn.equal(await Collateral.balanceOf(systems().Core.address), 0);
+                });
+
+                it('shows that the collateral has been registered', async function () {
+                  const [totalStaked, totalAssigned] = await systems().Core.getAccountCollateral(1, Collateral.address);
+                  const totalAvailable = await systems().Core.getAccountAvailableCollateral(1, Collateral.address);
+
+                  assertBn.equal(totalStaked, 0);
+                  assertBn.equal(totalAssigned, 0);
+                  assertBn.equal(totalAvailable, 0);
                 });
               });
             });
