@@ -120,9 +120,7 @@ contract CollateralModule is
             revert InsufficientAccountCollateral(accountId, collateralType, amount);
         }
 
-        DepositedCollateralData storage collateralData = _collateralStore().depositedCollateralDataByAccountId[accountId][
-            collateralType
-        ];
+        CollateralData storage collateralData = _collateralStore().collateralDataByAccountId[accountId][collateralType];
 
         collateralData.availableAmount -= amount;
 
@@ -182,7 +180,7 @@ contract CollateralModule is
             revert InvalidCollateral(address(rewardedToken));
         }
 
-        DepositedCollateralData storage collateralData = _collateralStore().stakedCollateralsDataByAccountId[accountId][
+        CollateralData storage collateralData = _collateralStore().stakedCollateralsDataByAccountId[accountId][
             address(rewardedToken)
         ];
         uint rewardTokenMinted = _calculateRewardTokenMinted(amount, duration);

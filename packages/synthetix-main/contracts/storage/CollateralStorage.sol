@@ -9,8 +9,8 @@ contract CollateralStorage {
     struct CollateralStore {
         mapping(address => CollateralConfiguration) collateralConfigurations; // CollateralConfiguration per collateralType (address)
         SetUtil.AddressSet collateralTypes; // approved collateral
-        mapping(uint => SetUtil.AddressSet) depositedCollateralTypesByAccountId;
-        mapping(uint => mapping(address => DepositedCollateralData)) depositedCollateralDataByAccountId;
+        mapping(uint => SetUtil.AddressSet) collateralTypesByAccountId;
+        mapping(uint => mapping(address => CollateralData)) collateralDataByAccountId;
     }
 
     struct CollateralConfiguration {
@@ -28,7 +28,7 @@ contract CollateralStorage {
         address tokenAddress;
     }
 
-    struct DepositedCollateralData {
+    struct CollateralData {
         bool isSet;
         uint256 availableAmount; // adjustable (stake/unstake)
         //CurvesLibrary.PolynomialCurve escrow;
@@ -36,7 +36,7 @@ contract CollateralStorage {
         //StakedCollateralLock[] locks;
     }
 
-    struct DepositedCollateralLock {
+    struct CollateralLock {
         uint256 amount; // adjustable (stake/unstake)
         uint64 lockExpirationTime; // adjustable (assign/unassign)
     }
