@@ -9,7 +9,7 @@ contract CollateralStorage {
     struct CollateralStore {
         mapping(address => CollateralConfiguration) collateralConfigurations; // CollateralConfiguration per collateralType (address)
         SetUtil.AddressSet collateralTypes; // approved collateral
-        mapping(uint => SetUtil.AddressSet) depositedCollateralByAccountId;
+        mapping(uint => SetUtil.AddressSet) depositedCollateralTypesByAccountId;
         mapping(uint => mapping(address => DepositedCollateralData)) depositedCollateralDataByAccountId;
     }
 
