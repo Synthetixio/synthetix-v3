@@ -30,6 +30,16 @@ describe('SetUtil', () => {
     );
   });
 
+  describe('UintSet', function () {
+    const randomUint = () => ethers.utils.parseEther(`${Math.floor(1000000000 * Math.random())}`);
+
+    itSupportsType(
+      'UintSet',
+      repeater.map(() => randomUint()),
+      randomUint()
+    );
+  });
+
   // -----------------------------------------
   // Behaviors
   // -----------------------------------------
@@ -86,7 +96,7 @@ describe('SetUtil', () => {
         for (let index = 0; index < expectedValues.length; index++) {
           const position = index + 1;
 
-          assert.equal(await SampleSet.valueAt(position), expectedValues[index]);
+          assert.deepEqual(await SampleSet.valueAt(position), expectedValues[index]);
         }
       });
 

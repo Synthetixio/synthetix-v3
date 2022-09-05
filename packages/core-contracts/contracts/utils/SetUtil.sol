@@ -3,6 +3,57 @@ pragma solidity ^0.8.0;
 
 library SetUtil {
     // ----------------------------------------
+    // Uint support
+    // ----------------------------------------
+
+    struct UintSet {
+        Bytes32Set raw;
+    }
+
+    function add(UintSet storage set, uint value) internal {
+        add(set.raw, bytes32(value));
+    }
+
+    function remove(UintSet storage set, uint value) internal {
+        remove(set.raw, bytes32(value));
+    }
+
+    function replace(
+        UintSet storage set,
+        uint value,
+        uint newValue
+    ) internal {
+        replace(set.raw, bytes32(value), bytes32(newValue));
+    }
+
+    function contains(UintSet storage set, uint value) internal view returns (bool) {
+        return contains(set.raw, bytes32(value));
+    }
+
+    function length(UintSet storage set) internal view returns (uint) {
+        return length(set.raw);
+    }
+
+    function valueAt(UintSet storage set, uint position) internal view returns (uint) {
+        return uint(valueAt(set.raw, position));
+    }
+
+    function positionOf(UintSet storage set, uint value) internal view returns (uint) {
+        return positionOf(set.raw, bytes32(value));
+    }
+
+    function values(UintSet storage set) internal view returns (uint[] memory) {
+        bytes32[] memory store = values(set.raw);
+        uint[] memory result;
+
+        assembly {
+            result := store
+        }
+
+        return result;
+    }
+
+    // ----------------------------------------
     // Address support
     // ----------------------------------------
 
