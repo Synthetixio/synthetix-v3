@@ -7,13 +7,13 @@ import "../utils/CurvesLibrary.sol";
 
 contract CollateralStorage {
     struct CollateralStore {
-        mapping(address => CollateralData) collateralsData; // CollateralData per collateralType (address)
+        mapping(address => CollateralConfiguration) collateralsData; // CollateralConfiguration per collateralType (address)
         SetUtil.AddressSet collaterals; // approved collateral
         mapping(uint => SetUtil.AddressSet) depositedCollateralByAccountId;
         mapping(uint => mapping(address => DepositedCollateralData)) depositedCollateralDataByAccountId;
     }
 
-    struct CollateralData {
+    struct CollateralConfiguration {
         /// must be true for staking or collateral delegation
         bool enabled;
         /// accounts cannot mint sUSD if their debt brings their cratio below this value

@@ -46,7 +46,7 @@ contract CollateralModule is
             collaterals.add(collateralType);
         }
 
-        CollateralData storage collateral = store.collateralsData[collateralType];
+        CollateralConfiguration storage collateral = store.collateralsData[collateralType];
 
         collateral.tokenAddress = collateralType;
         collateral.targetCRatio = targetCRatio;
@@ -62,19 +62,19 @@ contract CollateralModule is
         external
         view
         override
-        returns (CollateralStorage.CollateralData[] memory)
+        returns (CollateralStorage.CollateralConfiguration[] memory)
     {
         CollateralStore storage store = _collateralStore();
         SetUtil.AddressSet storage collaterals = store.collaterals;
 
         uint numCollaterals = collaterals.length();
-        CollateralData[] memory filteredCollaterals = new CollateralData[](numCollaterals);
+        CollateralConfiguration[] memory filteredCollaterals = new CollateralConfiguration[](numCollaterals);
 
         uint collateralsIdx;
         for (uint i = 1; i <= numCollaterals; i++) {
             address collateralType = collaterals.valueAt(i);
 
-            CollateralData storage collateral = store.collateralsData[collateralType];
+            CollateralConfiguration storage collateral = store.collateralsData[collateralType];
 
             if (!hideDisabled || collateral.enabled) {
                 filteredCollaterals[collateralsIdx++] = collateral;
@@ -88,7 +88,7 @@ contract CollateralModule is
         external
         view
         override
-        returns (CollateralStorage.CollateralData memory)
+        returns (CollateralStorage.CollateralConfiguration memory)
     {
         return _collateralStore().collateralsData[collateralType];
     }

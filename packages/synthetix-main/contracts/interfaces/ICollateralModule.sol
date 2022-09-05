@@ -52,7 +52,7 @@ interface ICollateralModule {
     function getCollateralConfigurations(bool hideDisabled)
         external
         view
-        returns (CollateralStorage.CollateralData[] memory collaterals);
+        returns (CollateralStorage.CollateralConfiguration[] memory collaterals);
 
     /**
      * @notice Returns detailed information pertaining the specified collateral type.
@@ -60,7 +60,7 @@ interface ICollateralModule {
     function getCollateralConfiguration(address collateralType)
         external
         view
-        returns (CollateralStorage.CollateralData memory collateral);
+        returns (CollateralStorage.CollateralConfiguration memory collateral);
 
     /**
      * @notice Deposits `amount` of collateral of type `collateralType` into account `accountId`.
