@@ -179,7 +179,7 @@ contract CollateralModule is
         ITokenModule rewardedToken = _getToken(_REWARDED_TOKEN);
 
         if (!_collateralStore().collateralsData[address(rewardedToken)].enabled) {
-            revert InvalidCollateralType(address(rewardedToken));
+            revert InvalidCollateral(address(rewardedToken));
         }
 
         DepositedCollateralData storage collateralData = _collateralStore().stakedCollateralsDataByAccountId[accountId][

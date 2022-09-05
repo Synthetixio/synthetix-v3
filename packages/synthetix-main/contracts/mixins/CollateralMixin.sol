@@ -12,12 +12,12 @@ contract CollateralMixin is CollateralStorage, PoolVaultStorage {
     using SetUtil for SetUtil.AddressSet;
     using SharesLibrary for SharesLibrary.Distribution;
 
-    error InvalidCollateralType(address collateralType);
+    error InvalidCollateral(address collateralType);
     error InsufficientAccountCollateral(uint accountId, address collateralType, uint requestedAmount);
 
     modifier collateralEnabled(address collateralType) {
         if (!_collateralStore().collateralsData[collateralType].enabled) {
-            revert InvalidCollateralType(collateralType);
+            revert InvalidCollateral(collateralType);
         }
 
         _;
