@@ -5,7 +5,7 @@ import { ethers as Ethers } from 'ethers';
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import { bootstrap } from '../../../bootstrap';
 
-describe.only('PoolConfigurationModule', function () {
+describe('PoolConfigurationModule', function () {
   const { signers, systems } = bootstrap();
 
   let owner: Ethers.Signer, user1: Ethers.Signer;
