@@ -1,10 +1,12 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
+
 contract PoolConfigurationStorage {
     struct PoolConfigurationStore {
-        uint256 preferredPool;
-        uint256[] approvedPools;
+        uint preferredPool;
+        SetUtil.UintSet approvedPools;
     }
 
     function _poolConfigurationStore() internal pure returns (PoolConfigurationStore storage store) {

@@ -136,7 +136,7 @@ describe.only('PoolConfigurationModule', function () {
             it('reverts', async () => {
               await assertRevert(
                 systems().Core.connect(owner).addApprovedPool(3),
-                'PoolAlreadyApproved("3")',
+                'ValueAlreadyInSet()',
                 systems().Core
               );
             });
