@@ -6,7 +6,7 @@ import { ethers as Ethers } from 'ethers';
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import { addCollateral, verifyCollateral } from './CollateralModule.helper';
 
-describe.only('CollateralModule', function () {
+describe('CollateralModule', function () {
   const { signers, systems } = bootstrap();
 
   let Collateral: Ethers.Contract, CollateralPriceFeed: Ethers.Contract;

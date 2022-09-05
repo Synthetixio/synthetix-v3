@@ -3,7 +3,7 @@ import { ethers as Ethers } from 'ethers';
 import { bootstrap } from '../../../bootstrap';
 import { addCollateral, verifyCollateral, verifyCollateralListed } from './CollateralModule.helper';
 
-describe.only('CollateralModule', function () {
+describe('CollateralModule', function () {
   const { signers, systems } = bootstrap();
 
   let systemOwner: Ethers.Signer, user1: Ethers.Signer;
