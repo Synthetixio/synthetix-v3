@@ -46,7 +46,7 @@ contract CollateralModule is
             collaterals.add(collateralType);
         }
 
-        CollateralConfiguration storage collateral = store.collateralsData[collateralType];
+        CollateralConfiguration storage collateral = store.collateralConfigurations[collateralType];
 
         collateral.tokenAddress = collateralType;
         collateral.targetCRatio = targetCRatio;
@@ -74,7 +74,7 @@ contract CollateralModule is
         for (uint i = 1; i <= numCollaterals; i++) {
             address collateralType = collaterals.valueAt(i);
 
-            CollateralConfiguration storage collateral = store.collateralsData[collateralType];
+            CollateralConfiguration storage collateral = store.collateralConfigurations[collateralType];
 
             if (!hideDisabled || collateral.enabled) {
                 filteredCollaterals[collateralsIdx++] = collateral;
@@ -90,7 +90,7 @@ contract CollateralModule is
         override
         returns (CollateralStorage.CollateralConfiguration memory)
     {
-        return _collateralStore().collateralsData[collateralType];
+        return _collateralStore().collateralConfigurations[collateralType];
     }
 
     /////////////////////////////////////////////////
@@ -178,7 +178,7 @@ contract CollateralModule is
         ITokenModule redeemableRewardsToken = _getToken(_REDEEMABLE_REWARDS_TOKEN);
         ITokenModule rewardedToken = _getToken(_REWARDED_TOKEN);
 
-        if (!_collateralStore().collateralsData[address(rewardedToken)].enabled) {
+        if (!_collateralStore().collateralConfigurations[address(rewardedToken)].enabled) {
             revert InvalidCollateral(address(rewardedToken));
         }
 

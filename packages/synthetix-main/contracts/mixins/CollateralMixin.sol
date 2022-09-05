@@ -16,7 +16,7 @@ contract CollateralMixin is CollateralStorage, PoolVaultStorage {
     error InsufficientAccountCollateral(uint accountId, address collateralType, uint requestedAmount);
 
     modifier collateralEnabled(address collateralType) {
-        if (!_collateralStore().collateralsData[collateralType].enabled) {
+        if (!_collateralStore().collateralConfigurations[collateralType].enabled) {
             revert InvalidCollateral(collateralType);
         }
 
@@ -24,8 +24,9 @@ contract CollateralMixin is CollateralStorage, PoolVaultStorage {
     }
 
     function _getCollateralValue(address collateralType) internal view returns (uint) {
-        (, int256 answer, , , ) = IAggregatorV3Interface(_collateralStore().collateralsData[collateralType].priceFeed)
-            .latestRoundData();
+        (, int256 answer, , , ) = IAggregatorV3Interface(
+            _collateralStore().collateralConfigurations[collateralType].priceFeed
+        ).latestRoundData();
 
         // sanity check
         // TODO: this will be removed when we get the oracle manager
@@ -96,15 +97,15 @@ contract CollateralMixin is CollateralStorage, PoolVaultStorage {
     }
 
     function _collateralTargetCRatio(address collateralType) internal view returns (uint) {
-        return _collateralStore().collateralsData[collateralType].targetCRatio;
+        return _collateralStore().collateralConfigurations[collateralType].targetCRatio;
     }
 
     function _collateralMinimumCRatio(address collateralType) internal view returns (uint) {
-        return _collateralStore().collateralsData[collateralType].minimumCRatio;
+        return _collateralStore().collateralConfigurations[collateralType].minimumCRatio;
     }
 
     function _collateralLiquidationReward(address collateralType) internal view returns (uint) {
-        return _collateralStore().collateralsData[collateralType].liquidationReward;
+        return _collateralStore().collateralConfigurations[collateralType].liquidationReward;
     }
 
     function _depositCollateral(

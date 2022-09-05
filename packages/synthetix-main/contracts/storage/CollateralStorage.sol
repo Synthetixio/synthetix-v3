@@ -7,7 +7,7 @@ import "../utils/CurvesLibrary.sol";
 
 contract CollateralStorage {
     struct CollateralStore {
-        mapping(address => CollateralConfiguration) collateralsData; // CollateralConfiguration per collateralType (address)
+        mapping(address => CollateralConfiguration) collateralConfigurations; // CollateralConfiguration per collateralType (address)
         SetUtil.AddressSet collaterals; // approved collateral
         mapping(uint => SetUtil.AddressSet) depositedCollateralByAccountId;
         mapping(uint => mapping(address => DepositedCollateralData)) depositedCollateralDataByAccountId;
