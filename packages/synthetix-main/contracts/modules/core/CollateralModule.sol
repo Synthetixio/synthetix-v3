@@ -40,7 +40,7 @@ contract CollateralModule is
         bool enabled
     ) external override onlyOwner {
         CollateralStore storage store = _collateralStore();
-        SetUtil.AddressSet storage collateralTypes = store\.collateralTypes;
+        SetUtil.AddressSet storage collateralTypes = store.collateralTypes;
 
         if (!collateralTypes.contains(collateralType)) {
             collateralTypes.add(collateralType);
@@ -65,7 +65,7 @@ contract CollateralModule is
         returns (CollateralStorage.CollateralConfiguration[] memory)
     {
         CollateralStore storage store = _collateralStore();
-        SetUtil.AddressSet storage collateralTypes = store\.collateralTypes;
+        SetUtil.AddressSet storage collateralTypes = store.collateralTypes;
 
         uint numCollaterals = collateralTypes.length();
         CollateralConfiguration[] memory filteredCollaterals = new CollateralConfiguration[](numCollaterals);
