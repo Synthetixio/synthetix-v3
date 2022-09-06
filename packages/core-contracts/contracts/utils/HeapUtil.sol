@@ -5,7 +5,7 @@ pragma solidity ^0.8.0;
 // Author: Zac Mitton
 // License: MIT
 
-library Heap {
+library HeapUtil {
     // default max-heap
 
     uint private constant _ROOT_INDEX = 1;

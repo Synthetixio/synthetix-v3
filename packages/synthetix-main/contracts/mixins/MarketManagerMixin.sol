@@ -10,7 +10,7 @@ import "../storage/PoolModuleStorage.sol";
 contract MarketManagerMixin is MarketManagerStorage, PoolModuleStorage {
     using MathUtil for uint256;
     using SharesLibrary for SharesLibrary.Distribution;
-    using Heap for Heap.Data;
+    using HeapUtil for HeapUtil.Data;
 
     error MarketNotFound(uint marketId);
 
@@ -96,7 +96,7 @@ contract MarketManagerMixin is MarketManagerStorage, PoolModuleStorage {
                 i < maxIter;
             i++
         ) {
-            Heap.Node memory nextRemove = marketData.inRangePools.extractMax();
+            HeapUtil.Node memory nextRemove = marketData.inRangePools.extractMax();
 
             // distribute to limit
             int debtAmount = (int(int128(marketData.debtDist.totalShares)) *
