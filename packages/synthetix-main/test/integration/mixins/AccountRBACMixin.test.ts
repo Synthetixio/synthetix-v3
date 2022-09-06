@@ -22,11 +22,11 @@ describe('AccountRBACMixin', function () {
       before('deposit', async function () {
         const signer = signers()[user];
 
-        await await systems().Core.connect(signer).mock_AccountRBACMixin_deposit(1, value);
+        await await systems().Core.connect(signer).mockAccountRBACMixinDeposit(1, value);
       });
 
       it('sets the mock value', async function () {
-        assertBn.equal(await systems().Core.mock_AccountRBACMixin_getDepositMock(), value);
+        assertBn.equal(await systems().Core.mockAccountRBACMixinGetDepositMock(), value);
       });
     });
   }
@@ -38,11 +38,11 @@ describe('AccountRBACMixin', function () {
       before('mint', async function () {
         const signer = signers()[user];
 
-        await await systems().Core.connect(signer).mock_AccountRBACMixin_mint(1, value);
+        await await systems().Core.connect(signer).mockAccountRBACMixinMint(1, value);
       });
 
       it('sets the mock value', async function () {
-        assertBn.equal(await systems().Core.mock_AccountRBACMixin_getMintMock(), value);
+        assertBn.equal(await systems().Core.mockAccountRBACMixinGetMintMock(), value);
       });
     });
   }
@@ -53,7 +53,7 @@ describe('AccountRBACMixin', function () {
         const signer = signers()[user];
 
         await assertRevert(
-          systems().Core.connect(signer).mock_AccountRBACMixin_deposit(1, 666),
+          systems().Core.connect(signer).mockAccountRBACMixinDeposit(1, 666),
           `PermissionDenied("1", "${Permissions.DEPOSIT}", "${await signer.getAddress()}")`,
           systems().Core
         );
@@ -67,7 +67,7 @@ describe('AccountRBACMixin', function () {
         const signer = signers()[user];
 
         await assertRevert(
-          systems().Core.connect(signer).mock_AccountRBACMixin_mint(1, 666),
+          systems().Core.connect(signer).mockAccountRBACMixinMint(1, 666),
           `PermissionDenied("1", "${Permissions.MINT}", "${await signer.getAddress()}")`,
           systems().Core
         );

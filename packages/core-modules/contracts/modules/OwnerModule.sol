@@ -5,7 +5,6 @@ import "@synthetixio/core-contracts/contracts/ownership/Ownable.sol";
 import "@synthetixio/core-contracts/contracts/initializable/InitializableMixin.sol";
 import "../interfaces/IOwnerModule.sol";
 
-// solhint-disable-next-line no-empty-blocks
 contract OwnerModule is Ownable, IOwnerModule, InitializableMixin {
     function _isInitialized() internal view override returns (bool) {
         return _ownableStore().initialized;
