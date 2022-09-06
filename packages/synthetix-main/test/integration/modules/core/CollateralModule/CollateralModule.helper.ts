@@ -71,7 +71,7 @@ export async function verifyCollateralListed(
   const collaterals = await core.getCollateralConfigurations(hideDisabled);
 
   assert.equal(
-    collaterals.some((v: any) => v.tokenAddress === Collateral.address),
+    collaterals.some((v: { tokenAddress: string }) => v.tokenAddress === Collateral.address),
     listed
   );
 }
