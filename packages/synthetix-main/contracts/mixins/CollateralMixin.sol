@@ -12,20 +12,21 @@ contract CollateralMixin is CollateralStorage, PoolVaultStorage {
     using SetUtil for SetUtil.AddressSet;
     using SharesLibrary for SharesLibrary.Distribution;
 
-    error InvalidCollateralType(address collateralType);
+    error InvalidCollateral(address collateralType);
     error InsufficientAccountCollateral(uint accountId, address collateralType, uint requestedAmount);
 
     modifier collateralEnabled(address collateralType) {
-        if (!_collateralStore().collateralsData[collateralType].enabled) {
-            revert InvalidCollateralType(collateralType);
+        if (!_collateralStore().collateralConfigurations[collateralType].enabled) {
+            revert InvalidCollateral(collateralType);
         }
 
         _;
     }
 
     function _getCollateralValue(address collateralType) internal view returns (uint) {
-        (, int256 answer, , , ) = IAggregatorV3Interface(_collateralStore().collateralsData[collateralType].priceFeed)
-            .latestRoundData();
+        (, int256 answer, , , ) = IAggregatorV3Interface(
+            _collateralStore().collateralConfigurations[collateralType].priceFeed
+        ).latestRoundData();
 
         // sanity check
         // TODO: this will be removed when we get the oracle manager
@@ -39,9 +40,7 @@ contract CollateralMixin is CollateralStorage, PoolVaultStorage {
         view
         returns (uint256 totalDeposited, uint256 totalAssigned)
     {
-        DepositedCollateralData storage stakedCollateral = _collateralStore().depositedCollateralDataByAccountId[accountId][
-            collateralType
-        ];
+        CollateralData storage stakedCollateral = _collateralStore().collateralDataByAccountId[accountId][collateralType];
 
         totalAssigned = _getAccountAssignedCollateral(accountId, collateralType);
         totalDeposited = totalAssigned + stakedCollateral.availableAmount;
@@ -52,17 +51,13 @@ contract CollateralMixin is CollateralStorage, PoolVaultStorage {
     }
 
     function _getAccountUnassignedCollateral(uint accountId, address collateralType) internal view returns (uint) {
-        DepositedCollateralData storage stakedCollateral = _collateralStore().depositedCollateralDataByAccountId[accountId][
-            collateralType
-        ];
+        CollateralData storage stakedCollateral = _collateralStore().collateralDataByAccountId[accountId][collateralType];
 
         return stakedCollateral.availableAmount;
     }
 
     function _getAccountAssignedCollateral(uint accountId, address collateralType) internal view returns (uint) {
-        DepositedCollateralData storage stakedCollateral = _collateralStore().depositedCollateralDataByAccountId[accountId][
-            collateralType
-        ];
+        CollateralData storage stakedCollateral = _collateralStore().collateralDataByAccountId[accountId][collateralType];
 
         uint totalAssigned = 0;
         for (uint i = 0; i < stakedCollateral.pools.length; i++) {
@@ -76,12 +71,12 @@ contract CollateralMixin is CollateralStorage, PoolVaultStorage {
         return totalAssigned;
     }
 
-    function _getTotalLocked(DepositedCollateralLock[] storage locks) internal view returns (uint) {
+    function _getTotalLocked(CollateralLock[] storage locks) internal view returns (uint) {
         uint64 currentTime = uint64(block.timestamp);
 
         uint256 locked;
         for (uint i = 0; i < locks.length; i++) {
-            DepositedCollateralLock storage lock = locks[i];
+            CollateralLock storage lock = locks[i];
 
             if (lock.lockExpirationTime > currentTime) {
                 locked += lock.amount;
@@ -96,15 +91,15 @@ contract CollateralMixin is CollateralStorage, PoolVaultStorage {
     }
 
     function _collateralTargetCRatio(address collateralType) internal view returns (uint) {
-        return _collateralStore().collateralsData[collateralType].targetCRatio;
+        return _collateralStore().collateralConfigurations[collateralType].targetCRatio;
     }
 
     function _collateralMinimumCRatio(address collateralType) internal view returns (uint) {
-        return _collateralStore().collateralsData[collateralType].minimumCRatio;
+        return _collateralStore().collateralConfigurations[collateralType].minimumCRatio;
     }
 
     function _collateralLiquidationReward(address collateralType) internal view returns (uint) {
-        return _collateralStore().collateralsData[collateralType].liquidationReward;
+        return _collateralStore().collateralConfigurations[collateralType].liquidationReward;
     }
 
     function _depositCollateral(
@@ -112,9 +107,7 @@ contract CollateralMixin is CollateralStorage, PoolVaultStorage {
         address collateralType,
         uint amount
     ) internal {
-        DepositedCollateralData storage collateralData = _collateralStore().depositedCollateralDataByAccountId[accountId][
-            collateralType
-        ];
+        CollateralData storage collateralData = _collateralStore().collateralDataByAccountId[accountId][collateralType];
 
         if (!collateralData.isSet) {
             // new collateral

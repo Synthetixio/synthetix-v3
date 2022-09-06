@@ -31,7 +31,7 @@ contract CollateralModule is
 
     error OutOfBounds();
 
-    function configureCollateralType(
+    function configureCollateral(
         address collateralType,
         address priceFeed,
         uint targetCRatio,
@@ -40,13 +40,13 @@ contract CollateralModule is
         bool enabled
     ) external override onlyOwner {
         CollateralStore storage store = _collateralStore();
-        SetUtil.AddressSet storage collaterals = store.collaterals;
+        SetUtil.AddressSet storage collateralTypes = store.collateralTypes;
 
-        if (!collaterals.contains(collateralType)) {
-            collaterals.add(collateralType);
+        if (!collateralTypes.contains(collateralType)) {
+            collateralTypes.add(collateralType);
         }
 
-        CollateralData storage collateral = store.collateralsData[collateralType];
+        CollateralConfiguration storage collateral = store.collateralConfigurations[collateralType];
 
         collateral.tokenAddress = collateralType;
         collateral.targetCRatio = targetCRatio;
@@ -55,26 +55,26 @@ contract CollateralModule is
         collateral.liquidationReward = liquidationReward;
         collateral.enabled = enabled;
 
-        emit CollateralTypeConfigured(collateralType, priceFeed, targetCRatio, minimumCRatio, liquidationReward, enabled);
+        emit CollateralConfigured(collateralType, priceFeed, targetCRatio, minimumCRatio, liquidationReward, enabled);
     }
 
-    function getCollateralTypes(bool hideDisabled)
+    function getCollateralConfigurations(bool hideDisabled)
         external
         view
         override
-        returns (CollateralStorage.CollateralData[] memory)
+        returns (CollateralStorage.CollateralConfiguration[] memory)
     {
         CollateralStore storage store = _collateralStore();
-        SetUtil.AddressSet storage collaterals = store.collaterals;
+        SetUtil.AddressSet storage collateralTypes = store.collateralTypes;
 
-        uint numCollaterals = collaterals.length();
-        CollateralData[] memory filteredCollaterals = new CollateralData[](numCollaterals);
+        uint numCollaterals = collateralTypes.length();
+        CollateralConfiguration[] memory filteredCollaterals = new CollateralConfiguration[](numCollaterals);
 
         uint collateralsIdx;
         for (uint i = 1; i <= numCollaterals; i++) {
-            address collateralType = collaterals.valueAt(i);
+            address collateralType = collateralTypes.valueAt(i);
 
-            CollateralData storage collateral = store.collateralsData[collateralType];
+            CollateralConfiguration storage collateral = store.collateralConfigurations[collateralType];
 
             if (!hideDisabled || collateral.enabled) {
                 filteredCollaterals[collateralsIdx++] = collateral;
@@ -84,13 +84,13 @@ contract CollateralModule is
         return filteredCollaterals;
     }
 
-    function getCollateralType(address collateralType)
+    function getCollateralConfiguration(address collateralType)
         external
         view
         override
-        returns (CollateralStorage.CollateralData memory)
+        returns (CollateralStorage.CollateralConfiguration memory)
     {
-        return _collateralStore().collateralsData[collateralType];
+        return _collateralStore().collateralConfigurations[collateralType];
     }
 
     /////////////////////////////////////////////////
@@ -120,9 +120,7 @@ contract CollateralModule is
             revert InsufficientAccountCollateral(accountId, collateralType, amount);
         }
 
-        DepositedCollateralData storage collateralData = _collateralStore().depositedCollateralDataByAccountId[accountId][
-            collateralType
-        ];
+        CollateralData storage collateralData = _collateralStore().collateralDataByAccountId[accountId][collateralType];
 
         collateralData.availableAmount -= amount;
 
@@ -178,11 +176,11 @@ contract CollateralModule is
         ITokenModule redeemableRewardsToken = _getToken(_REDEEMABLE_REWARDS_TOKEN);
         ITokenModule rewardedToken = _getToken(_REWARDED_TOKEN);
 
-        if (!_collateralStore().collateralsData[address(rewardedToken)].enabled) {
-            revert InvalidCollateralType(address(rewardedToken));
+        if (!_collateralStore().collateralConfigurations[address(rewardedToken)].enabled) {
+            revert InvalidCollateral(address(rewardedToken));
         }
 
-        DepositedCollateralData storage collateralData = _collateralStore().stakedCollateralsDataByAccountId[accountId][
+        CollateralData storage collateralData = _collateralStore().stakedCollateralsDataByAccountId[accountId][
             address(rewardedToken)
         ];
         uint rewardTokenMinted = _calculateRewardTokenMinted(amount, duration);

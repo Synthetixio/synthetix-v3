@@ -26,7 +26,7 @@ export async function addCollateral(
   await (
     await core
       .connect(owner)
-      .configureCollateralType(
+      .configureCollateral(
         Collateral.address,
         CollateralPriceFeed.address,
         targetCRatio,
@@ -49,11 +49,11 @@ export async function verifyCollateral(
   core: Ethers.Contract
 ) {
   assert.equal(
-    (await core.getCollateralTypes(false))[collateralIdx].tokenAddress,
+    (await core.getCollateralConfigurations(false))[collateralIdx].tokenAddress,
     Collateral.address
   );
 
-  const collateralType = await core.getCollateralType(Collateral.address);
+  const collateralType = await core.getCollateralConfiguration(Collateral.address);
 
   assert.equal(collateralType.tokenAddress, Collateral.address);
   assert.equal(collateralType.priceFeed, CollateralPriceFeed.address);
@@ -68,7 +68,7 @@ export async function verifyCollateralListed(
   hideDisabled: boolean,
   core: Ethers.Contract
 ) {
-  const collaterals = await core.getCollateralTypes(hideDisabled);
+  const collaterals = await core.getCollateralConfigurations(hideDisabled);
 
   assert.equal(
     collaterals.some((v: any) => v.tokenAddress === Collateral.address),
