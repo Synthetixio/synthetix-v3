@@ -1,8 +1,6 @@
-import assert from 'assert/strict';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
-import hre from 'hardhat';
 import { ethers } from 'ethers';
 
 import { bootstrapWithMockMarketAndPool } from '../bootstrap';
@@ -12,7 +10,6 @@ describe('MarketManagerModule', function () {
     signers,
     systems,
     collateralAddress,
-    collateralContract,
     poolId,
     accountId,
     MockMarket,
@@ -25,6 +22,8 @@ describe('MarketManagerModule', function () {
   const Hundred = ethers.utils.parseEther('100');
 
   let owner: ethers.Signer, user1: ethers.Signer;
+
+  let txn: ethers.providers.TransactionResponse;
 
   before('identify signers', async () => {
     [owner, user1] = signers();
@@ -42,8 +41,6 @@ describe('MarketManagerModule', function () {
     });
 
     describe('successful', async () => {
-      let txn: ethers.providers.TransactionResponse;
-
       const expectedMarketId = marketId().add(1);
 
       before('register', async () => {
@@ -72,7 +69,6 @@ describe('MarketManagerModule', function () {
 
   describe('deposit()', async () => {
     before(restore);
-    let txn: ethers.providers.TransactionResponse;
 
     before('acquire USD', async () => {
       await systems().Core.connect(user1).mintUsd(accountId, poolId, collateralAddress(), One);
@@ -123,7 +119,6 @@ describe('MarketManagerModule', function () {
     before(restore);
 
     describe('deposit into the pool', async () => {
-      let txn: ethers.providers.TransactionResponse;
       before('mint USD to use market', async () => {
         await systems().Core.connect(user1).mintUsd(accountId, poolId, collateralAddress(), One);
         await systems().USD.connect(user1).approve(MockMarket().address, One);

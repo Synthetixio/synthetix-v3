@@ -1,7 +1,7 @@
 import { ethers } from 'ethers';
 
 export function snapshotCheckpoint(provider: () => ethers.providers.JsonRpcProvider) {
-  let snapshotId: any;
+  let snapshotId: number;
 
   before('snapshot', async () => {
     snapshotId = await provider().send('evm_snapshot', []);

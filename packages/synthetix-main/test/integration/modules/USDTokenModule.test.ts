@@ -3,13 +3,7 @@ import { bootstrap } from '../bootstrap';
 import { ethers } from 'ethers';
 
 describe('USDTokenModule', function () {
-  const { signers, systems } = bootstrap();
-
-  let owner: ethers.Signer, user1: ethers.Signer;
-
-  before('identify signers', async () => {
-    [owner, user1] = signers();
-  });
+  const { systems } = bootstrap();
 
   it('USD is deployed and registered', async () => {
     const info = await systems().Core.getAssociatedSystem(
