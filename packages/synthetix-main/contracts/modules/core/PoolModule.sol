@@ -40,6 +40,7 @@ contract PoolModule is IPoolModule, AccountRBACMixin, PoolMixin, OwnableMixin {
     // ---------------------------------------
     // Ownership
     // ---------------------------------------
+
     function nominatePoolOwner(address nominatedOwner, uint256 poolId) external override onlyPoolOwner(poolId, msg.sender) {
         _poolModuleStore().pools[poolId].nominatedOwner = nominatedOwner;
 
@@ -47,22 +48,26 @@ contract PoolModule is IPoolModule, AccountRBACMixin, PoolMixin, OwnableMixin {
     }
 
     function acceptPoolOwnership(uint256 poolId) external override {
-        if (_poolModuleStore().pools[poolId].nominatedOwner != msg.sender) {
+        PoolData storage pool = _poolModuleStore().pools[poolId];
+
+        if (pool.nominatedOwner != msg.sender) {
             revert AccessError.Unauthorized(msg.sender);
         }
 
-        _poolModuleStore().pools[poolId].owner = msg.sender;
-        _poolModuleStore().pools[poolId].nominatedOwner = address(0);
+        pool.owner = msg.sender;
+        pool.nominatedOwner = address(0);
 
         emit PoolOwnershipAccepted(poolId, msg.sender);
     }
 
     function renouncePoolNomination(uint256 poolId) external override {
-        if (_poolModuleStore().pools[poolId].nominatedOwner != msg.sender) {
+        PoolData storage pool = _poolModuleStore().pools[poolId];
+
+        if (pool.nominatedOwner != msg.sender) {
             revert AccessError.Unauthorized(msg.sender);
         }
 
-        _poolModuleStore().pools[poolId].nominatedOwner = address(0);
+        pool.nominatedOwner = address(0);
 
         emit PoolNominationRenounced(poolId, msg.sender);
     }
