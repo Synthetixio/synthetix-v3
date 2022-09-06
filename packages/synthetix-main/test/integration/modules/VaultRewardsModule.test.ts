@@ -391,7 +391,7 @@ describe('VaultRewardsModule', function () {
               collateralAddress(),
               accountId
             );
-            // should have received only the one past reward
+            // should have received only the one past reward + 1 second for simulate
             assertBn.equal(rewards[0], rewardAmount.add(rewardAmount.mul(75).div(100)));
           });
 
@@ -442,6 +442,7 @@ describe('VaultRewardsModule', function () {
                 );
                 // should have received only the one past reward
                 // +1 because block being mined by earlier txn
+                // +1 because the simulation adds an additional second
                 assertBn.equal(
                   rewards[0],
                   rewardAmount.mul(1001).add(rewardAmount.mul(76).div(100))
