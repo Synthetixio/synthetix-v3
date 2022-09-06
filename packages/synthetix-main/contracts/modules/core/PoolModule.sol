@@ -38,7 +38,7 @@ contract PoolModule is IPoolModule, AccountRBACMixin, PoolMixin, OwnableMixin {
     }
 
     // ---------------------------------------
-    // Ownership
+    // Pool ownership
     // ---------------------------------------
 
     function nominatePoolOwner(address nominatedOwner, uint256 poolId) external override onlyPoolOwner(poolId, msg.sender) {
@@ -87,8 +87,9 @@ contract PoolModule is IPoolModule, AccountRBACMixin, PoolMixin, OwnableMixin {
     }
 
     // ---------------------------------------
-    // pool admin
+    // Pool administration
     // ---------------------------------------
+
     function setPoolConfiguration(
         uint poolId,
         uint[] calldata markets,
@@ -199,9 +200,6 @@ contract PoolModule is IPoolModule, AccountRBACMixin, PoolMixin, OwnableMixin {
         return _poolModuleStore().pools[poolId].name;
     }
 
-    // ---------------------------------------
-    // system owner
-    // ---------------------------------------
     function setMinLiquidityRatio(uint minLiquidityRatio) external override onlyOwner {
         _poolModuleStore().minLiquidityRatio = minLiquidityRatio;
     }
