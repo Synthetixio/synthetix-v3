@@ -14,10 +14,10 @@ event Liquidation(uint256 accountId, uint256 poolId, address collateralType, uin
 event VaultLiquidation(uint256 poolId, address collateralType, uint256 debtLiquidated, uint256 collateralLiquidated, uint256 amountRewarded)
 ```
 
-### LiqudationInformation
+### LiquidationInformation
 
 ```solidity
-struct LiqudationInformation {
+struct LiquidationInformation {
   struct CurvesLibrary.PolynomialCurve curve;
   mapping(uint256 => uint256) initialAmount;
   uint256 accumulated;
@@ -62,10 +62,10 @@ event Liquidation(uint256 accountId, uint256 poolId, address collateralType, uin
 event VaultLiquidation(uint256 poolId, address collateralType, uint256 debtLiquidated, uint256 collateralLiquidated, uint256 amountRewarded)
 ```
 
-### LiqudationInformation
+### LiquidationInformation
 
 ```solidity
-struct LiqudationInformation {
+struct LiquidationInformation {
   struct CurvesLibrary.PolynomialCurve curve;
   mapping(uint256 => uint256) initialAmount;
   uint256 accumulated;
@@ -1315,10 +1315,10 @@ event Liquidation(uint256 accountId, uint256 poolId, address collateralType, uin
 event VaultLiquidation(uint256 poolId, address collateralType, uint256 debtLiquidated, uint256 collateralLiquidated, uint256 amountRewarded)
 ```
 
-### LiqudationInformation
+### LiquidationInformation
 
 ```solidity
-struct LiqudationInformation {
+struct LiquidationInformation {
   struct CurvesLibrary.PolynomialCurve curve;
   mapping(uint256 => uint256) initialAmount;
   uint256 accumulated;
@@ -1363,10 +1363,10 @@ event Liquidation(uint256 accountId, uint256 poolId, address collateralType, uin
 event VaultLiquidation(uint256 poolId, address collateralType, uint256 debtLiquidated, uint256 collateralLiquidated, uint256 amountRewarded)
 ```
 
-### LiqudationInformation
+### LiquidationInformation
 
 ```solidity
-struct LiqudationInformation {
+struct LiquidationInformation {
   struct CurvesLibrary.PolynomialCurve curve;
   mapping(uint256 => uint256) initialAmount;
   uint256 accumulated;
