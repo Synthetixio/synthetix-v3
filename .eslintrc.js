@@ -25,7 +25,6 @@ module.exports = {
     semi: ['error', 'always'],
     'no-inner-declarations': 'off',
     'max-len': ['error', { code: 160, comments: 100 }],
-    'max-params': ['error', 5], // If a function requires more than 3 parameters, please compact them using objects: { param1, param2, param3 }
     '@typescript-eslint/no-empty-function': 0,
   },
   overrides: [

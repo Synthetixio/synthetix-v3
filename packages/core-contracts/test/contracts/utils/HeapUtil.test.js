@@ -1,9 +1,8 @@
-import { ethers } from 'ethers';
-import hre from 'hardhat';
+const { ethers } = require('ethers');
+const hre = require('hardhat');
+const assertBn = require('@synthetixio/core-utils/utils/assertions/assert-bignumber');
 
-import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
-
-async function insertHeapData(heap: ethers.Contract, count: number, salt = 'salt') {
+async function insertHeapData(heap, count, salt = 'salt') {
   const vals = Array.from({ length: count }, (_, index) =>
     ethers.BigNumber.from(
       '0x' + ethers.utils.solidityKeccak256(['string'], [salt + index]).slice(64)
@@ -16,11 +15,11 @@ async function insertHeapData(heap: ethers.Contract, count: number, salt = 'salt
   return vals;
 }
 
-describe('Heap', async () => {
-  let heap: ethers.Contract;
+describe('HeapUtil', async () => {
+  let heap;
 
   beforeEach('initialize fresh heap', async () => {
-    heap = (await (await hre.ethers.getContractFactory('MockHeap')).deploy()).connect(
+    heap = (await (await hre.ethers.getContractFactory('HeapUtilMock')).deploy()).connect(
       (await hre.ethers.getSigners())[0]
     );
   });

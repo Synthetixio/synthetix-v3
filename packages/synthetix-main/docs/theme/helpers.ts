@@ -37,7 +37,10 @@ export function hsection(this: unknown, hsublevel: number | HelperOptions, opts?
  */
 function getHLevel(hsublevel: number | HelperOptions, opts?: HelperOptions) {
   if (typeof hsublevel === 'number') {
-    opts = opts!;
+    if (!opts) {
+      throw new Error('Helper options not defined');
+    }
+
     hsublevel = Math.max(1, hsublevel);
   } else {
     opts = hsublevel;
@@ -78,7 +81,9 @@ export function inheritedItems(this: DocItemWithContext) {
   if (this.nodeType === 'ContractDefinition') {
     const { deref } = this.__item_context.build;
     const parents = this.linearizedBaseContracts.map(deref('ContractDefinition'));
-    return parents.reduce((prev: any, curr) => {
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return parents.reduce((prev: any, curr: any) => {
       return prev.concat(curr.nodes);
     }, []);
   }

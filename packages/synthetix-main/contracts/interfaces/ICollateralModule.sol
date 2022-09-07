@@ -8,7 +8,7 @@ interface ICollateralModule {
     /**
      * @notice Emitted when a collateral type’s configuration is created or updated.
      */
-    event CollateralTypeConfigured(
+    event CollateralConfigured(
         address indexed collateralType,
         address indexed priceFeed,
         uint targetCollateralizationRatio,
@@ -34,10 +34,10 @@ interface ICollateralModule {
      *
      * - `msg.sender` must be the owner of the system.
      *
-     * Emits a {CollateralTypeConfigured} event.
+     * Emits a {CollateralConfigured} event.
      *
      */
-    function configureCollateralType(
+    function configureCollateral(
         address collateralType,
         address priceFeed,
         uint targetCRatio,
@@ -49,18 +49,18 @@ interface ICollateralModule {
     /**
      * @notice Returns a list of detailed information pertaining to all collateral types registered in the system.
      */
-    function getCollateralTypes(bool hideDisabled)
+    function getCollateralConfigurations(bool hideDisabled)
         external
         view
-        returns (CollateralStorage.CollateralData[] memory collaterals);
+        returns (CollateralStorage.CollateralConfiguration[] memory collaterals);
 
     /**
      * @notice Returns detailed information pertaining the specified collateral type.
      */
-    function getCollateralType(address collateralType)
+    function getCollateralConfiguration(address collateralType)
         external
         view
-        returns (CollateralStorage.CollateralData memory collateral);
+        returns (CollateralStorage.CollateralConfiguration memory collateral);
 
     /**
      * @notice Deposits `amount` of collateral of type `collateralType` into account `accountId`.

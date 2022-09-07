@@ -3,4 +3,7 @@ pragma solidity ^0.8.0;
 
 import "@synthetixio/core-modules/contracts/modules/TokenModule.sol";
 
-contract USDTokenModule is TokenModule {}
+// solhint-disable-next-line no-empty-blocks
+contract USDTokenModule is TokenModule {
+
+}

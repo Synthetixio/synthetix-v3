@@ -509,10 +509,10 @@ See {setApprovalForAll}_
 
 ## Collateral Module
 
-### CollateralTypeConfigured
+### CollateralConfigured
 
   ```solidity
-  event CollateralTypeConfigured(address collateralType, address priceFeed, uint256 targetCollateralizationRatio, uint256 minimumCollateralizationRatio, uint256 liquidationReward, bool enabled)
+  event CollateralConfigured(address collateralType, address priceFeed, uint256 targetCollateralizationRatio, uint256 minimumCollateralizationRatio, uint256 liquidationReward, bool enabled)
   ```
 
 Emitted when a collateral type’s configuration is created or updated.
@@ -533,10 +533,10 @@ Emitted when `amount` of collateral of type `collateralType` is deposited to acc
 
 Emitted when `amount` of collateral of type `collateralType` is withdrawn from account `accountId` by `sender`.
 
-### configureCollateralType
+### configureCollateral
 
   ```solidity
-  function configureCollateralType(address collateralType, address priceFeed, uint256 targetCRatio, uint256 minimumCRatio, uint256 liquidationReward, bool enabled) external
+  function configureCollateral(address collateralType, address priceFeed, uint256 targetCRatio, uint256 minimumCRatio, uint256 liquidationReward, bool enabled) external
   ```
 
 Creates or updates the configuration for given `collateralType`.
@@ -545,20 +545,20 @@ Requirements:
 
 - `msg.sender` must be the owner of the system.
 
-Emits a {CollateralTypeConfigured} event.
+Emits a {CollateralConfigured} event.
 
-### getCollateralTypes
+### getCollateralConfigurations
 
   ```solidity
-  function getCollateralTypes(bool hideDisabled) external view returns (struct CollateralStorage.CollateralData[] collaterals)
+  function getCollateralConfigurations(bool hideDisabled) external view returns (struct CollateralStorage.CollateralConfiguration[] collaterals)
   ```
 
 Returns a list of detailed information pertaining to all collateral types registered in the system.
 
-### getCollateralType
+### getCollateralConfiguration
 
   ```solidity
-  function getCollateralType(address collateralType) external view returns (struct CollateralStorage.CollateralData collateral)
+  function getCollateralConfiguration(address collateralType) external view returns (struct CollateralStorage.CollateralConfiguration collateral)
   ```
 
 Returns detailed information pertaining the specified collateral type.
@@ -607,10 +607,10 @@ Returns the total values pertaining to account `accountId` for `collateralType`.
 
 Returns the amount of collateral of type `collateralType` deposited with account `accountId` that can be withdrawn or delegated.
 
-### CollateralTypeConfigured
+### CollateralConfigured
 
   ```solidity
-  event CollateralTypeConfigured(address collateralType, address priceFeed, uint256 targetCollateralizationRatio, uint256 minimumCollateralizationRatio, uint256 liquidationReward, bool enabled)
+  event CollateralConfigured(address collateralType, address priceFeed, uint256 targetCollateralizationRatio, uint256 minimumCollateralizationRatio, uint256 liquidationReward, bool enabled)
   ```
 
 Emitted when a collateral type’s configuration is created or updated.
@@ -631,10 +631,10 @@ Emitted when `amount` of collateral of type `collateralType` is deposited to acc
 
 Emitted when `amount` of collateral of type `collateralType` is withdrawn from account `accountId` by `sender`.
 
-### configureCollateralType
+### configureCollateral
 
   ```solidity
-  function configureCollateralType(address collateralType, address priceFeed, uint256 targetCRatio, uint256 minimumCRatio, uint256 liquidationReward, bool enabled) external
+  function configureCollateral(address collateralType, address priceFeed, uint256 targetCRatio, uint256 minimumCRatio, uint256 liquidationReward, bool enabled) external
   ```
 
 Creates or updates the configuration for given `collateralType`.
@@ -643,20 +643,20 @@ Requirements:
 
 - `msg.sender` must be the owner of the system.
 
-Emits a {CollateralTypeConfigured} event.
+Emits a {CollateralConfigured} event.
 
-### getCollateralTypes
+### getCollateralConfigurations
 
   ```solidity
-  function getCollateralTypes(bool hideDisabled) external view returns (struct CollateralStorage.CollateralData[] collaterals)
+  function getCollateralConfigurations(bool hideDisabled) external view returns (struct CollateralStorage.CollateralConfiguration[] collaterals)
   ```
 
 Returns a list of detailed information pertaining to all collateral types registered in the system.
 
-### getCollateralType
+### getCollateralConfiguration
 
   ```solidity
-  function getCollateralType(address collateralType) external view returns (struct CollateralStorage.CollateralData collateral)
+  function getCollateralConfiguration(address collateralType) external view returns (struct CollateralStorage.CollateralConfiguration collateral)
   ```
 
 Returns detailed information pertaining the specified collateral type.
@@ -977,20 +977,6 @@ gets the snxUSD value of the collateral backing this market.
 
   ```solidity
   function getMarketDebtPerShare(uint256 marketId) external returns (int256)
-  ```
-
-## Multicall Module
-
-### multicall
-
-  ```solidity
-  function multicall(bytes[] data) external payable returns (bytes[] results)
-  ```
-
-### multicall
-
-  ```solidity
-  function multicall(bytes[] data) external payable returns (bytes[] results)
   ```
 
 ## Pool Configuration Module
@@ -1416,32 +1402,6 @@ places a cap on what proportion of free vault liquidity may be used towards a po
   ```
 
 returns the liquidity ratio cap for delegation of liquidity by pools to markets
-
-## Reward Distributor Module
-
-### setRewardAllocation
-
-  ```solidity
-  function setRewardAllocation(uint256 poolId, uint256 allocation) external
-  ```
-
-### getRewardAllocation
-
-  ```solidity
-  function getRewardAllocation(uint256 poolId) external view returns (uint256)
-  ```
-
-### setRewardAllocation
-
-  ```solidity
-  function setRewardAllocation(uint256 poolId, uint256 allocation) external
-  ```
-
-### getRewardAllocation
-
-  ```solidity
-  function getRewardAllocation(uint256 poolId) external view returns (uint256)
-  ```
 
 ## Rewards Manager Module
 

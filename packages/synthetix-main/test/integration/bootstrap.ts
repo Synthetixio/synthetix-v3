@@ -60,6 +60,8 @@ export function bootstrap() {
       ),
     ];
 
+    await _provider.send('anvil_setBlockTimestampInterval', [1]);
+
     // Complete given signers with default hardhat wallets, to make sure
     // that we always have default accounts to test stuff
     for (const rawSigner of rawSigners) {
@@ -119,7 +121,7 @@ export function bootstrapWithStakedPool() {
     await r
       .systems()
       .Core.connect(owner)
-      .configureCollateralType(
+      .configureCollateral(
         collateralAddress,
         aggregator.address,
         '5000000000000000000',

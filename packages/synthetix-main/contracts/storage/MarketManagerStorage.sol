@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import "../utils/SharesLibrary.sol";
-import "../utils/Heap.sol";
+import "@synthetixio/core-contracts/contracts/utils/HeapUtil.sol";
 
 contract MarketManagerStorage {
     struct MarketManagerStore {
@@ -21,9 +21,9 @@ contract MarketManagerStorage {
         /// @notice the amount of debt the last time the debt was distributed
         int128 lastMarketBalance;
         // used to disconnect pools from a market if it goes above a certain debt per debt share
-        Heap.Data inRangePools;
+        HeapUtil.Data inRangePools;
         // used to attach/reattach pools to a market if it goes below a certain debt per debt share
-        Heap.Data outRangePools;
+        HeapUtil.Data outRangePools;
         SharesLibrary.Distribution debtDist;
     }
 

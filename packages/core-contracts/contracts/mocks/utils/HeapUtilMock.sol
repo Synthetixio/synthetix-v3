@@ -1,43 +1,44 @@
 // pragma solidity 0.4.24;
 pragma experimental ABIEncoderV2;
-import "../utils/Heap.sol";
+import "../../utils/HeapUtil.sol";
 
 // this is a simple contract that uses the heap library.
 // https://github.com/zmitton/eth-heap/blob/master/contracts/PublicHeap.sol
-contract MockHeap {
-    using Heap for Heap.Data;
-    Heap.Data public data;
+contract HeapUtilMock {
+    using HeapUtil for HeapUtil.Data;
+
+    HeapUtil.Data public data;
 
     constructor() public {
         data.init();
     }
 
-    function insert(uint128 id, int128 priority) public returns (Heap.Node memory) {
+    function insert(uint128 id, int128 priority) public returns (HeapUtil.Node memory) {
         return data.insert(id, priority);
     }
 
-    function extractMax() public returns (Heap.Node memory) {
+    function extractMax() public returns (HeapUtil.Node memory) {
         return data.extractMax();
     }
 
-    function extractById(uint128 id) public returns (Heap.Node memory) {
+    function extractById(uint128 id) public returns (HeapUtil.Node memory) {
         return data.extractById(id);
     }
 
     //view
-    function dump() public view returns (Heap.Node[] memory) {
+    function dump() public view returns (HeapUtil.Node[] memory) {
         return data.dump();
     }
 
-    function getMax() public view returns (Heap.Node memory) {
+    function getMax() public view returns (HeapUtil.Node memory) {
         return data.getMax();
     }
 
-    function getById(uint128 id) public view returns (Heap.Node memory) {
+    function getById(uint128 id) public view returns (HeapUtil.Node memory) {
         return data.getById(id);
     }
 
-    function getByIndex(uint i) public view returns (Heap.Node memory) {
+    function getByIndex(uint i) public view returns (HeapUtil.Node memory) {
         return data.getByIndex(i);
     }
 

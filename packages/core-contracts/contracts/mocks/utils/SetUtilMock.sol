@@ -78,3 +78,41 @@ contract AddressSetMock {
         return _set.values();
     }
 }
+
+contract UintSetMock {
+    using SetUtil for SetUtil.UintSet;
+
+    SetUtil.UintSet private _set;
+
+    function add(uint value) external {
+        _set.add(value);
+    }
+
+    function remove(uint value) external {
+        _set.remove(value);
+    }
+
+    function replace(uint value, uint newValue) external {
+        _set.replace(value, newValue);
+    }
+
+    function contains(uint value) external view returns (bool) {
+        return _set.contains(value);
+    }
+
+    function length() external view returns (uint) {
+        return _set.length();
+    }
+
+    function valueAt(uint position) external view returns (uint) {
+        return _set.valueAt(position);
+    }
+
+    function positionOf(uint value) external view returns (uint) {
+        return _set.positionOf(value);
+    }
+
+    function values() external view returns (uint[] memory) {
+        return _set.values();
+    }
+}

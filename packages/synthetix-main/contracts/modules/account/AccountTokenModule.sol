@@ -13,7 +13,7 @@ contract AccountTokenModule is IAccountTokenModule, NftModule {
     }
 
     function _postTransfer(
-        address from,
+        address, // from (unused)
         address to,
         uint256 tokenId
     ) internal virtual override {

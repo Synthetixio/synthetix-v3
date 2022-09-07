@@ -3,7 +3,6 @@ import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber'
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import hre from 'hardhat';
 import { ethers } from 'ethers';
-import { findEvent } from '@synthetixio/core-utils/utils/ethers/events';
 
 import { bootstrapWithMockMarketAndPool } from '../bootstrap';
 import { snapshotCheckpoint } from '../../utils';
@@ -22,12 +21,7 @@ describe('PoolModule Admin', function () {
     restore,
   } = bootstrapWithMockMarketAndPool();
 
-  let owner: ethers.Signer, user1: ethers.Signer, user2: ethers.Signer, user3: ethers.Signer;
-
-  let Collateral: ethers.Contract, AggregatorV3Mock: ethers.Contract;
-
-  const user2AccountId = 2;
-  const user3AccountId = 3;
+  let owner: ethers.Signer, user1: ethers.Signer, user2: ethers.Signer;
 
   const secondPoolId = 3384692;
 
@@ -35,7 +29,7 @@ describe('PoolModule Admin', function () {
   const Hundred = ethers.utils.parseEther('100');
 
   before('identify signers', async () => {
-    [owner, user1, user2, user3] = signers();
+    [owner, user1, user2] = signers();
   });
 
   describe('createPool()', async () => {
@@ -59,11 +53,7 @@ describe('PoolModule Admin', function () {
   });
 
   describe('setPoolConfiguration()', async () => {
-    let MockMarket2: ethers.Contract;
-    let MockMarket3: ethers.Contract;
-
     const marketId2 = 2;
-    const marketId3 = 3;
 
     before('set dummy markets', async () => {
       const factory = await hre.ethers.getContractFactory('MockMarket');
