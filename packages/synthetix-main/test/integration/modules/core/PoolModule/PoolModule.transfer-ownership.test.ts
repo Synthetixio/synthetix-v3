@@ -4,14 +4,14 @@ import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert
 import { ethers as Ethers } from 'ethers';
 import { bootstrap } from '../../../bootstrap';
 
-describe.only('PoolModule', function () {
+describe('PoolModule', function () {
   const { signers, systems } = bootstrap();
 
   let user1: Ethers.Signer, user2: Ethers.Signer;
 
   let receipt: Ethers.providers.TransactionReceipt;
 
-  describe('PoolModule - Creation and ownership', function () {
+  describe('PoolModule - Transfer ownership', function () {
     before('identify signers', async () => {
       [, user1, user2] = signers();
     });

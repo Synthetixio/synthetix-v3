@@ -3,11 +3,10 @@ import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber'
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import hre from 'hardhat';
 import { ethers } from 'ethers';
-
 import { bootstrapWithMockMarketAndPool } from '../../../bootstrap';
 import { snapshotCheckpoint } from '../../../../utils';
 
-describe('PoolModule Admin', function () {
+describe.only('PoolModule OLD', function () {
   const {
     signers,
     systems,
@@ -66,57 +65,57 @@ describe('PoolModule Admin', function () {
 
     const restore = snapshotCheckpoint(provider);
 
-    it('reverts when pool does not exist', async () => {
-      await assertRevert(
-        systems().Core.connect(user1).setPoolConfiguration(834693286, [1], [1], [0, 0]),
-        `PoolNotFound("${834693286}")`,
-        systems().Core
-      );
-    });
+    // it('reverts when pool does not exist', async () => {
+    //   await assertRevert(
+    //     systems().Core.connect(user1).setPoolConfiguration(834693286, [1], [1], [0, 0]),
+    //     `PoolNotFound("${834693286}")`,
+    //     systems().Core
+    //   );
+    // });
 
-    it('reverts when not owner', async () => {
-      await assertRevert(
-        systems().Core.connect(user2).setPoolConfiguration(poolId, [1], [1], [0, 0]),
-        `Unauthorized("${await user2.getAddress()}")`,
-        systems().Core
-      );
-    });
+    // it('reverts when not owner', async () => {
+    //   await assertRevert(
+    //     systems().Core.connect(user2).setPoolConfiguration(poolId, [1], [1], [0, 0]),
+    //     `Unauthorized("${await user2.getAddress()}")`,
+    //     systems().Core
+    //   );
+    // });
 
-    it('reverts with more weights than markets', async () => {
-      await assertRevert(
-        systems().Core.connect(owner).setPoolConfiguration(poolId, [1], [1, 2], [0, 0]),
-        'InvalidParameters("markets.length,weights.length,maxDebtShareValues.length", "must match")',
-        systems().Core
-      );
-    });
+    // it('reverts with more weights than markets', async () => {
+    //   await assertRevert(
+    //     systems().Core.connect(owner).setPoolConfiguration(poolId, [1], [1, 2], [0, 0]),
+    //     'InvalidParameters("markets.length,weights.length,maxDebtShareValues.length", "must match")',
+    //     systems().Core
+    //   );
+    // });
 
-    it('reverts with more markets than weights', async () => {
-      await assertRevert(
-        systems().Core.connect(owner).setPoolConfiguration(poolId, [1, 2], [1], [0, 0]),
-        'InvalidParameters("markets.length,weights.length,maxDebtShareValues.length", "must match")',
-        systems().Core
-      );
-    });
+    // it('reverts with more markets than weights', async () => {
+    //   await assertRevert(
+    //     systems().Core.connect(owner).setPoolConfiguration(poolId, [1, 2], [1], [0, 0]),
+    //     'InvalidParameters("markets.length,weights.length,maxDebtShareValues.length", "must match")',
+    //     systems().Core
+    //   );
+    // });
 
     // in particular, this test needs to go here because we want to see it fail
     // even when there is no liquidity to rebalance
-    it('reverts when a marketId does not exist', async () => {
-      await assertRevert(
-        systems()
-          .Core.connect(owner)
-          .setPoolConfiguration(poolId, [1, 2, 92197628], [1, 1, 1], [0, 0, 0]),
-        'MarketNotFound("92197628")',
-        systems().Core
-      );
-    });
+    // it('reverts when a marketId does not exist', async () => {
+    //   await assertRevert(
+    //     systems()
+    //       .Core.connect(owner)
+    //       .setPoolConfiguration(poolId, [1, 2, 92197628], [1, 1, 1], [0, 0, 0]),
+    //     'MarketNotFound("92197628")',
+    //     systems().Core
+    //   );
+    // });
 
-    it('reverts when a marketId is duplicated', async () => {
-      await assertRevert(
-        systems().Core.connect(owner).setPoolConfiguration(poolId, [1, 1], [1, 1], [0, 0]),
-        'InvalidParameters("markets"',
-        systems().Core
-      );
-    });
+    // it('reverts when a marketId is duplicated', async () => {
+    //   await assertRevert(
+    //     systems().Core.connect(owner).setPoolConfiguration(poolId, [1, 1], [1, 1], [0, 0]),
+    //     'InvalidParameters("markets"',
+    //     systems().Core
+    //   );
+    // });
 
     it('default configuration sets market collateral', async () => {
       assertBn.equal(
@@ -482,23 +481,23 @@ describe('PoolModule Admin', function () {
     });
   });
 
-  describe('setMinLiquidityRatio()', async () => {
-    it('only works for owner', async () => {
-      assertRevert(
-        systems().Core.connect(user1).setMinLiquidityRatio(ethers.utils.parseEther('2')),
-        'Unauthorized',
-        systems().Core
-      );
-    });
+  // describe('setMinLiquidityRatio()', async () => {
+  //   // it('only works for owner', async () => {
+  //   //   assertRevert(
+  //   //     systems().Core.connect(user1).setMinLiquidityRatio(ethers.utils.parseEther('2')),
+  //   //     'Unauthorized',
+  //   //     systems().Core
+  //   //   );
+  //   // });
 
-    describe('when invoked successfully', async () => {
-      before('set', async () => {
-        await systems().Core.connect(owner).setMinLiquidityRatio(ethers.utils.parseEther('2'));
-      });
+  //   // describe('when invoked successfully', async () => {
+  //   //   before('set', async () => {
+  //   //     await systems().Core.connect(owner).setMinLiquidityRatio(ethers.utils.parseEther('2'));
+  //   //   });
 
-      it('is set', async () => {
-        assertBn.equal(await systems().Core.getMinLiquidityRatio(), ethers.utils.parseEther('2'));
-      });
-    });
-  });
+  //   //   it('is set', async () => {
+  //   //     assertBn.equal(await systems().Core.getMinLiquidityRatio(), ethers.utils.parseEther('2'));
+  //   //   });
+  //   // });
+  // });
 });
