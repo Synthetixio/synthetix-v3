@@ -26,18 +26,27 @@ contract MarketManagerModule is
     error NotEnoughLiquidity(uint marketId, uint amount);
     error MarketDepositNotApproved(address market, address from, uint requestedAmount, uint approvedAmount);
 
-    function registerMarket(address market) external override returns (uint marketId) {
-        if (_marketManagerStore().marketIds[market] > 0)
-            revert MarketAlreadyRegistered(market, _marketManagerStore().marketIds[market]);
-        uint lastMarketId = _marketManagerStore().lastMarketId++;
+    function registerMarket(address marketAddress) external override returns (uint marketId) {
+        MarketManagerStore storage store = _marketManagerStore();
+
+        marketId = store.marketIds[marketAddress];
+
+        if (marketId > 0) {
+            revert MarketAlreadyRegistered(marketAddress, marketId);
+        }
+
+        // Read the lastMarketId from storage, and increment 1,
+        // both locally and in the store
+        uint lastMarketId = store.lastMarketId++;
         marketId = lastMarketId + 1;
 
-        // Can we verify that `market` conforms to the IMarket interface here? (i.e. has a `balance()` function?)
+        // TODO: Can we verify that `market` conforms to the IMarket interface here?
+        // (i.e. has a `balance()` function?)
 
-        _marketManagerStore().marketIds[market] = marketId;
-        _marketManagerStore().markets[marketId].marketAddress = market;
+        store.marketIds[marketAddress] = marketId;
+        store.markets[marketId].marketAddress = marketAddress;
 
-        emit MarketRegistered(market, marketId);
+        emit MarketRegistered(marketAddress, marketId);
 
         return marketId;
     }
