@@ -104,28 +104,31 @@ contract MarketManagerModule is
         address target,
         uint amount
     ) external override onlyMarket(marketId) {
+        address market = msg.sender;
+
         MarketData storage marketData = _marketManagerStore().markets[marketId];
 
-        // verify if the market is authorized to burn the USD for the target
         ITokenModule usdToken = _getToken(_USD_TOKEN);
 
-        uint originalAllowance = usdToken.allowance(target, msg.sender);
-
+        // Verify that the market has allowance to spend the user's snxUSD
+        uint originalAllowance = usdToken.allowance(target, market);
         if (originalAllowance < amount) {
-            revert MarketDepositNotApproved(target, msg.sender, amount, originalAllowance);
+            revert MarketDepositNotApproved(target, market, amount, originalAllowance);
         }
 
         // Adjust accounting
         marketData.capacity += uint128(amount);
         marketData.issuance -= int128(int(amount));
 
-        // burn USD
+        // Burn the user's snxUSD
+        // Note: The market manager could transfer the snxUSD to itself,
+        // but burning it has the additional benefit of completely taking it out of circulation
         usdToken.burn(target, amount);
 
-        // Adjust allowance
-        usdToken.setAllowance(target, msg.sender, originalAllowance - amount);
+        // Reduce the market's allowance on the user's snxUSD
+        usdToken.setAllowance(target, market, originalAllowance - amount);
 
-        emit UsdDeposited(marketId, target, amount, msg.sender);
+        emit UsdDeposited(marketId, target, amount, market);
     }
 
     function withdrawUsd(
