@@ -1,6 +1,6 @@
 {
   "name": "@synthetixio/hardhat-router",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Synthetix Router Proxy Architecture Manager",
   "main": "index.js",
   "keywords": [
