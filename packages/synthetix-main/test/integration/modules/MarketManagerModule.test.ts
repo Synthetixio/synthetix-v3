@@ -67,6 +67,26 @@ describe.only('MarketManagerModule', function () {
     });
   });
 
+  describe('when anything but the market tries to deposit', function () {
+    it('reverts', async function () {
+      assertRevert(
+        systems().Core.connect(user1).depositUsd(1),
+        `Unauthorized(${await user1.getAddress()})`,
+        systems().Core
+      );
+    });
+  });
+
+  describe('when anything but the market tries to withdraw', function () {
+    it('reverts', async function () {
+      assertRevert(
+        systems().Core.connect(user1).withdrawUsd(1),
+        `Unauthorized(${await user1.getAddress()})`,
+        systems().Core
+      );
+    });
+  });
+
   describe('deposit()', async () => {
     before(restore);
 

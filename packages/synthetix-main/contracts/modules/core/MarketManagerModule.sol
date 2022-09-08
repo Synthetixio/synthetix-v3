@@ -26,6 +26,16 @@ contract MarketManagerModule is
     error NotEnoughLiquidity(uint marketId, uint amount);
     error MarketDepositNotApproved(address market, address from, uint requestedAmount, uint approvedAmount);
 
+    modifier onlyMarket(uint marketId) {
+        MarketData storage marketData = _marketManagerStore().markets[marketId];
+
+        if (msg.sender != marketData.marketAddress) {
+            revert AccessError.Unauthorized(msg.sender);
+        }
+
+        _;
+    }
+
     function registerMarket(address marketAddress) external override returns (uint marketId) {
         MarketManagerStore storage store = _marketManagerStore();
 
@@ -93,10 +103,8 @@ contract MarketManagerModule is
         uint marketId,
         address target,
         uint amount
-    ) external override {
+    ) external override onlyMarket(marketId) {
         MarketData storage marketData = _marketManagerStore().markets[marketId];
-
-        if (msg.sender != marketData.marketAddress) revert AccessError.Unauthorized(msg.sender);
 
         // verify if the market is authorized to burn the USD for the target
         ITokenModule usdToken = _getToken(_USD_TOKEN);
@@ -124,10 +132,8 @@ contract MarketManagerModule is
         uint marketId,
         address target,
         uint amount
-    ) external override {
+    ) external override onlyMarket(marketId) {
         MarketData storage marketData = _marketManagerStore().markets[marketId];
-
-        if (msg.sender != marketData.marketAddress) revert AccessError.Unauthorized(msg.sender);
 
         if (amount > marketData.capacity) revert NotEnoughLiquidity(marketId, amount);
 
