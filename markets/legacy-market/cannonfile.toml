@@ -3,3 +3,17 @@ source = "synthetix:2"
 
 [import.v3]
 source = "synthetix:3"
+
+[contract.market]
+artifact = "LegacyMarket"
+args = ["<%= imports.v2x.contracts.AddressResolver.address", "<%= imports.v3.contracts.CoreProxy.address %>"]
+
+[invoke.associate]
+target = ["v2x.AddressResolver"]
+func = "registerAddresses"
+args = [["LegacyMarket"], ["<%= contracts.market.address %>"]]
+
+[invoke.authorizedBroker]
+target = ["v3.SynthetixDebtShare"]
+func = "addAuthorizedBroker"
+args = ["<%= contracts.market.address %>"]
