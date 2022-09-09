@@ -54,11 +54,11 @@ contract LegacyMarket is IMarket {
         _migrate(msg.sender, accountId);
     }
 
-    migateOnBehalf(address migrant, uint accountId) external onlyOwner {
-        _migrate(migrant, accountId);
+    migateOnBehalf(address staker, uint accountId) external onlyOwner {
+        _migrate(staker, accountId);
     }
 
-    function _migrate(address migrant, uint accountId) {
+    function _migrate(address staker, uint accountId) {
 
         ISynthetix oldSynthetix = IIssuer(this.v2xResolver.getAddress("ProxySynthetix"));
 
@@ -68,16 +68,16 @@ contract LegacyMarket is IMarket {
             revert NothingToMigrate();
         }
 
-        uint collateralMigrated = oldSynthetix.balanceOf(migrant);
-        uint debtSharesMigrated = oldDebtShares.balanceOf(migrant);
+        uint collateralMigrated = oldSynthetix.balanceOf(staker);
+        uint debtSharesMigrated = oldDebtShares.balanceOf(staker);
 
         uint debtSharesValueMigrated = something;
 
         this.v2xResolver.getAddress("LiquidatorRewards").claim();
 
-        oldSynthetix.transferFrom(migrant, address(this), collateralMigrated);
+        oldSynthetix.transferFrom(staker, address(this), collateralMigrated);
 
-        oldDebtShares.transferFrom(migrant, address(this), debtSharesMigrated);
+        oldDebtShares.transferFrom(staker, address(this), debtSharesMigrated);
 
         this.v3System.createAccount(accountId);
 
@@ -94,5 +94,7 @@ contract LegacyMarket is IMarket {
         );
 
         this.v3System.associateDebt(accountId, poolId, address(oldSynthetix), debtSharesValueMigrated);
+
+        this.v3AccountToken.transfer(staker, accountId);
     }
 }
