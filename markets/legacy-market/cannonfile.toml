@@ -1,0 +1,5 @@
+[import.v2x]
+source = "synthetix:2"
+
+[import.v3]
+source = "synthetix:3"
