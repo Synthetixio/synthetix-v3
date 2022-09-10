@@ -3,6 +3,7 @@ import 'hardhat-contract-sizer';
 import 'solidity-coverage';
 import '@synthetixio/hardhat-router';
 import '@synthetixio/cli';
+import 'hardhat-gas-reporter';
 import 'hardhat-cannon';
 
 import dotenv from 'dotenv';
@@ -23,6 +24,7 @@ const config = {
       },
     },
   },
+  defaultNetwork: 'cannon',
   networks: {
     local: {
       url: 'http://localhost:8545',
@@ -40,6 +42,9 @@ const config = {
       accounts: process.env.DEPLOYER_PRIVATE_KEY ? [process.env.DEPLOYER_PRIVATE_KEY] : [],
       chainId: 5,
     },
+  },
+  gasReporter: {
+    url: 'http://localhost:8545'
   },
   contractSizer: {
     strict: true,
