@@ -48,7 +48,7 @@ describe('LiquidationModule', function () {
       });
 
       before('going into debt', async () => {
-        await MockMarket().connect(user1).setReportedBalance(debtAmount.mul(9).div(10));
+        await MockMarket().connect(user1).setReportedDebt(debtAmount.mul(9).div(10));
 
         // sanity
         assertBn.near(
@@ -196,7 +196,7 @@ describe('LiquidationModule', function () {
       });
 
       before('going into debt', async () => {
-        await MockMarket().connect(user1).setReportedBalance(debtAmount.mul(9).div(10));
+        await MockMarket().connect(user1).setReportedDebt(debtAmount.mul(9).div(10));
 
         // sanity
         assertBn.near(
