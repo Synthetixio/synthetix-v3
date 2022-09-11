@@ -144,7 +144,7 @@ describe('VaultModule', function () {
       const startingDebt = ethers.utils.parseEther('100');
 
       before('user1 goes into debt', async () => {
-        await MockMarket.connect(user1).setBalance(startingDebt);
+        await MockMarket.connect(user1).setReportedBalance(startingDebt);
       });
 
       it('has allocated debt to vault', async () => {
@@ -387,7 +387,7 @@ describe('VaultModule', function () {
     describe('first user leaves', async () => {
       before(restore);
       before('erase debt', async () => {
-        await MockMarket.connect(user1).setBalance(0);
+        await MockMarket.connect(user1).setReportedBalance(0);
       });
 
       before('undelegate', async () => {
