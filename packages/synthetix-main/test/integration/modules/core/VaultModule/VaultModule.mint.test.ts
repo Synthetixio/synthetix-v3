@@ -132,37 +132,6 @@ describe.only('VaultModule', function () {
             });
           });
 
-          // TODO: I don't see how this will fail with Unauthorized,
-          // since there is no access control in this function.
-          // Seems to be reverting but assertRevert ignores the error reason
-          describe('when an unauthorized user tries to burn', function () {
-            it('reverts', async function () {
-              // Reverts, and does not throw here, but I don't see why the
-              // contract code should throw this error.
-              // assertRevert(
-              //   systems()
-              //     .Core.connect(user2)
-              //     .burnUsd(accountId, poolId, collateralAddress(), mintAmount),
-              //   `Unauthorized("${await user2.getAddress()}")`,
-              //   systems().Core
-              // );
-
-              // Reverts and throws here, but I don't see the error reason.
-              await systems()
-                .Core.connect(user2)
-                .burnUsd(accountId, poolId, collateralAddress(), mintAmount);
-
-              // Reverts, and does not fail. Seems to ignore error reason.
-              // assertRevert(
-              //   systems()
-              //     .Core.connect(user2)
-              //     .burnUsd(accountId, poolId, collateralAddress(), mintAmount),
-              //   `Blah`,
-              //   systems().Core
-              // );
-            });
-          });
-
           describe('when the user transfers snxUSD to another account', function () {
             before('transfer', async () => {
               await systems()
