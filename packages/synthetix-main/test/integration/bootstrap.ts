@@ -36,9 +36,6 @@ before(async function () {
   const cannonInfo = await hre.run('cannon:build');
 
   _provider = cannonInfo.provider;
-
-  console.log(_provider);
-
   signers = cannonInfo.signers;
 
   await _provider.send('anvil_setBlockTimestampInterval', [1]);
