@@ -8,7 +8,6 @@ import commonConfig from '@synthetixio/common-config/hardhat.config';
 const config = {
   ...commonConfig,
   solidity: '0.8.11',
-  //defaultNetwork: 'localhost',
   docgen: {
     exclude: [
       './interfaces/external',

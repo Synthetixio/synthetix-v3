@@ -43,6 +43,7 @@ const config = {
       chainId: 5,
     },
   },
+  defaultNetwork: 'cannon',
   gasReporter: {
     url: 'http://localhost:8545'
   },

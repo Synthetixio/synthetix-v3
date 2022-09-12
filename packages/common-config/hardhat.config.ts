@@ -44,7 +44,7 @@ const config = {
     },
   },
   gasReporter: {
-    url: 'http://localhost:8545'
+    enabled: !!process.env.REPORT_GAS
   },
   contractSizer: {
     strict: true,

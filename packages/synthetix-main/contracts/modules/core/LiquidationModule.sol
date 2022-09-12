@@ -103,7 +103,6 @@ contract LiquidationsModule is
 
         // TODO: send any remaining collateral to the liquidated account? need to have a liquidation penalty setting or something
 
-        revert("Forced failure");
         emit Liquidation(accountId, poolId, collateralType, debtLiquidated, collateralLiquidated, amountRewarded);
     }
 
