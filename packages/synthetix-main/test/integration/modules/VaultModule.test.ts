@@ -119,21 +119,21 @@ describe('VaultModule', function () {
       );
     });
 
-    it('verifies leverage', async () => {
-      assertRevert(
-        systems()
-          .Core.connect(user2)
-          .delegateCollateral(
-            accountId,
-            poolId,
-            collateralAddress(),
-            depositAmount.mul(2),
-            ethers.utils.parseEther('1.1')
-          ),
-        'InvalidLeverage',
-        systems().Core
-      );
-    });
+    // it('verifies leverage', async () => {
+    //   assertRevert(
+    //     systems()
+    //       .Core.connect(user2)
+    //       .delegateCollateral(
+    //         accountId,
+    //         poolId,
+    //         collateralAddress(),
+    //         depositAmount.mul(2),
+    //         ethers.utils.parseEther('1.1')
+    //       ),
+    //     'InvalidLeverage',
+    //     systems().Core
+    //   );
+    // });
 
     it(
       'user1 has expected initial position',
@@ -205,47 +205,47 @@ describe('VaultModule', function () {
 
         // these exposure tests should be enabled when exposures other
         // than 1 are allowed (which might be something we want to do)
-        describe.skip('increase exposure', async () => {
-          before('delegate', async () => {
-            await systems().Core.connect(user2).delegateCollateral(
-              user2AccountId,
-              poolId,
-              collateralAddress(),
-              depositAmount.div(3), // user1 50%, user2 50%
-              ethers.utils.parseEther('1')
-            );
-          });
+        // describe.skip('increase exposure', async () => {
+        //   before('delegate', async () => {
+        //     await systems().Core.connect(user2).delegateCollateral(
+        //       user2AccountId,
+        //       poolId,
+        //       collateralAddress(),
+        //       depositAmount.div(3), // user1 50%, user2 50%
+        //       ethers.utils.parseEther('1')
+        //     );
+        //   });
 
-          it(
-            'user1 still has correct position',
-            verifyAccountState(accountId, poolId, depositAmount, 0)
-          );
-          it(
-            'user2 still has correct position',
-            verifyAccountState(user2AccountId, poolId, depositAmount.div(3), depositAmount.div(100))
-          );
-        });
+        //   it(
+        //     'user1 still has correct position',
+        //     verifyAccountState(accountId, poolId, depositAmount, 0)
+        //   );
+        //   it(
+        //     'user2 still has correct position',
+        //     verifyAccountState(user2AccountId, poolId, depositAmount.div(3), depositAmount.div(100))
+        //   );
+        // });
 
-        describe.skip('reduce exposure', async () => {
-          before('delegate', async () => {
-            await systems().Core.connect(user2).delegateCollateral(
-              user2AccountId,
-              poolId,
-              collateralAddress(),
-              depositAmount.div(3), // user1 50%, user2 50%
-              ethers.utils.parseEther('1')
-            );
-          });
+        // describe.skip('reduce exposure', async () => {
+        //   before('delegate', async () => {
+        //     await systems().Core.connect(user2).delegateCollateral(
+        //       user2AccountId,
+        //       poolId,
+        //       collateralAddress(),
+        //       depositAmount.div(3), // user1 50%, user2 50%
+        //       ethers.utils.parseEther('1')
+        //     );
+        //   });
 
-          it(
-            'user1 still has correct position',
-            verifyAccountState(accountId, poolId, depositAmount, startingDebt)
-          );
-          it(
-            'user2 still has correct position',
-            verifyAccountState(user2AccountId, poolId, depositAmount.div(3), depositAmount.div(100))
-          );
-        });
+        //   it(
+        //     'user1 still has correct position',
+        //     verifyAccountState(accountId, poolId, depositAmount, startingDebt)
+        //   );
+        //   it(
+        //     'user2 still has correct position',
+        //     verifyAccountState(user2AccountId, poolId, depositAmount.div(3), depositAmount.div(100))
+        //   );
+        // });
 
         describe('remove exposure', async () => {
           before('delegate', async () => {
