@@ -164,11 +164,11 @@ describe('VaultModule', function () {
 
         before('second user delegates and mints', async () => {
           // user1 has extra collateral available
-          await collateralContract()
-            .connect(user1)
-            .transfer(await user2.getAddress(), depositAmount.mul(2));
+          // await collateralContract()
+          //   .connect(user1)
+          //   .transfer(await user2.getAddress(), depositAmount.mul(2));
 
-          await systems().Core.connect(user2).createAccount(user2AccountId);
+          // await systems().Core.connect(user2).createAccount(user2AccountId);
 
           await collateralContract()
             .connect(user2)

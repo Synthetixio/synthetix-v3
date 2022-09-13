@@ -3,7 +3,7 @@ import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert
 import { ethers } from 'ethers';
 import { bootstrapWithStakedPool } from '../../../bootstrap';
 
-describe.only('VaultModule', function () {
+describe('VaultModule', function () {
   const {
     signers,
     systems,
