@@ -12,7 +12,7 @@ jobs:
             core-utils,
             core-modules,
             hardhat-router,
-            # synthetix-main,
+            synthetix-main,
           ]
         include:
           - package: core-contracts
