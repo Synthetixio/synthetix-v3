@@ -23,7 +23,7 @@ function getErrorData(err: ErrorObject): string | null {
 
 export default async function assertRevert(
   tx: Promise<ethers.providers.TransactionResponse>,
-  expectedMessage: string,
+  expectedMessage = 'transaction failed',
   contract?: ethers.Contract
 ) {
   let error: any | null = null;
