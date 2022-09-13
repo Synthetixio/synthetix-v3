@@ -28,7 +28,8 @@ describe('utils/ast/finders.js find AST artifacts', function () {
   before('load sample-project artifacts', async function () {
     const envPath = path.resolve(__dirname, '..', '..', 'fixtures', 'sample-project');
     sampleProject = await parseContracts(envPath);
-    sampleProjectAstNodes = Object.values(sampleProject.asts);
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    sampleProjectAstNodes = Object.values(sampleProject.asts!);
   });
 
   describe('find contract node', function () {
@@ -229,7 +230,8 @@ describe('utils/ast/finders.js find AST artifacts', function () {
     it('finds a globally imported contract', function () {
       const result = findImportedContractFullyQualifiedName(
         'ERC20',
-        sampleProject.asts['contracts/Token.sol'],
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        sampleProject.asts!['contracts/Token.sol'],
         sampleProjectAstNodes
       );
 
@@ -239,7 +241,8 @@ describe('utils/ast/finders.js find AST artifacts', function () {
     it('finds a aliased imported contract', function () {
       const result = findImportedContractFullyQualifiedName(
         'ERC721Base',
-        sampleProject.asts['contracts/Token.sol'],
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        sampleProject.asts!['contracts/Token.sol'],
         sampleProjectAstNodes
       );
 
@@ -249,7 +252,8 @@ describe('utils/ast/finders.js find AST artifacts', function () {
     it('returns undefined when not finding it', function () {
       const result = findImportedContractFullyQualifiedName(
         'UnexistantContract',
-        sampleProject.asts['contracts/Token.sol'],
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        sampleProject.asts!['contracts/Token.sol'],
         sampleProjectAstNodes
       );
 

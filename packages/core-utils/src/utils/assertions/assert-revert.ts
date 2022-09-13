@@ -26,13 +26,13 @@ export default async function assertRevert(
   expectedMessage?: string,
   contract?: ethers.Contract
 ) {
-  let error: any | null = null;
+  let error: ErrorObject | null = null;
 
   try {
     await (await tx).wait();
     await tx;
   } catch (err) {
-    error = err;
+    error = err as ErrorObject;
   }
 
   if (!error) {

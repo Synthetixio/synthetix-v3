@@ -1,3 +1,4 @@
+import { LogDescription } from '@ethersproject/abi/lib/interface';
 import { ethers } from 'ethers';
 
 /**
@@ -17,10 +18,14 @@ export function findEvent({
   eventName: string;
   contract?: ethers.Contract;
 }) {
-  let events = (receipt as any).events as any;
-
   if (!receipt) {
     throw new Error(`receipt when searching for event ${eventName} is null/undefined.`);
+  }
+
+  let { events } = receipt as ethers.ContractReceipt;
+
+  if (!events) {
+    throw new Error(`no events found on receipt for when searching for event ${eventName}`);
   }
 
   if (!receipt.logs) {
@@ -29,11 +34,11 @@ export function findEvent({
     );
   }
 
-  if ((contract && !events) || (events.some((e: any) => e.event === undefined) && contract)) {
+  if ((contract && !events) || (events.some((e) => e.event === undefined) && contract)) {
     events = parseLogs({ contract, logs: receipt.logs });
   }
 
-  events = events.filter((e: any) => e.event === eventName);
+  events = events.filter((e) => e.event === eventName);
   if (!events || events.length === 0) {
     return undefined;
   }
@@ -47,12 +52,16 @@ export function findEvent({
  * @param {logs} logs An array of raw unparsed logs
  * @returns {array} The array of parsed events
  */
-export function parseLogs({ contract, logs }: { contract: ethers.Contract; logs: any[] }) {
-  // TODO
+export function parseLogs({
+  contract,
+  logs,
+}: {
+  contract: ethers.Contract;
+  logs: ethers.providers.Log[];
+}) {
   return logs.map((log) => {
-    const event: any = contract.interface.parseLog(log);
-    event.event = event.name;
-
+    const event = contract.interface.parseLog(log) as unknown as ethers.Event;
+    event.event = (event as unknown as LogDescription).name;
     return event;
   });
 }
