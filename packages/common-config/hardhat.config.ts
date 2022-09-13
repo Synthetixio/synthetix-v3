@@ -44,7 +44,7 @@ const config = {
     },
   },
   gasReporter: {
-    enabled: !!process.env.REPORT_GAS
+    enabled: !!process.env.REPORT_GAS,
   },
   contractSizer: {
     strict: true,

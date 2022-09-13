@@ -39,7 +39,6 @@ before(async function () {
   signers = cannonInfo.signers;
 
   try {
-
     await _provider.send('anvil_setBlockTimestampInterval', [1]);
   } catch (err) {
     console.warn('failed when setting block timestamp interval', err);

@@ -45,7 +45,7 @@ const config = {
   },
   defaultNetwork: 'cannon',
   gasReporter: {
-    url: 'http://localhost:8545'
+    url: 'http://localhost:8545',
   },
   contractSizer: {
     strict: true,
