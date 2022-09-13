@@ -7,12 +7,13 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        package: [
+        package:
+          [
             core-contracts,
             core-utils,
             core-modules,
             hardhat-router,
-            # synthetix-main,
+            synthetix-main,
           ]
         include:
           - package: core-contracts
@@ -23,13 +24,14 @@ jobs:
             coverage-file: packages/core-modules/coverage.json
           - package: hardhat-router
             coverage-file: packages/hardhat-router/coverage/lcov.info
-          # - package: synthetix-main
-          #   coverage-file: packages/synthetix-main/coverage.json
+          - package: synthetix-main
+            coverage-file: packages/synthetix-main/coverage.json
     steps:
       - name: Install Foundry (Cannon)
         uses: foundry-rs/foundry-toolchain@v1
         with:
           version: nightly
+      - run: anvil -V
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v2
         with:
@@ -60,7 +62,7 @@ jobs:
       - run: npm ci
       - run: npm run build
       - name: Execute tests
-        run: DEBUG=cannon* npm run --workspace=./packages/synthetix-main test
+        run: REPORT_GAS=true npm run --workspace=./packages/synthetix-main test
 
   test-cli:
     runs-on: ubuntu-latest

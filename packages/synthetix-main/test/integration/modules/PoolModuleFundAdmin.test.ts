@@ -484,7 +484,7 @@ describe('PoolModule Admin', function () {
 
   describe('setMinLiquidityRatio()', async () => {
     it('only works for owner', async () => {
-      assertRevert(
+      await assertRevert(
         systems().Core.connect(user1).setMinLiquidityRatio(ethers.utils.parseEther('2')),
         'Unauthorized',
         systems().Core

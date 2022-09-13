@@ -1,6 +1,6 @@
 module.exports = {
   root: true,
-  extends: ['eslint:recommended', 'plugin:@typescript-eslint/recommended', 'prettier'],
+  extends: ['eslint:recommended', 'prettier'],
   env: {
     es2020: true,
     mocha: true,
@@ -25,12 +25,17 @@ module.exports = {
     semi: ['error', 'always'],
     'no-inner-declarations': 'off',
     'max-len': ['error', { code: 160, comments: 100 }],
-    '@typescript-eslint/no-empty-function': 0,
   },
   overrides: [
     {
-      files: ['*.js'],
+      files: ['*.ts', '*.tsx'],
+      extends: ['plugin:@typescript-eslint/recommended'],
+      parserOptions: {
+        project: ['./tsconfig.json'],
+      },
       rules: {
+        '@typescript-eslint/no-floating-promises': 'error',
+        '@typescript-eslint/no-empty-function': 0,
         '@typescript-eslint/no-var-requires': 0,
       },
     },
