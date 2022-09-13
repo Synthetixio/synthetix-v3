@@ -2,7 +2,7 @@ import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber'
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import hre from 'hardhat';
 import { ethers } from 'ethers';
-
+import Permissions from '../mixins/AcccountRBACMixin.permissions';
 import { bootstrapWithStakedPool } from '../bootstrap';
 import { snapshotCheckpoint } from '../../utils';
 
@@ -114,7 +114,7 @@ describe('VaultModule', function () {
             depositAmount.mul(2),
             ethers.utils.parseEther('1')
           ),
-        `PermissionDenied("${await user2.getAddress()}")`,
+        `PermissionDenied("1", "${Permissions.ASSIGN}", "${await user2.getAddress()}")`,
         systems().Core
       );
     });
@@ -122,7 +122,7 @@ describe('VaultModule', function () {
     it('verifies leverage', async () => {
       await assertRevert(
         systems()
-          .Core.connect(user2)
+          .Core.connect(user1)
           .delegateCollateral(
             accountId,
             poolId,
@@ -425,7 +425,7 @@ describe('VaultModule', function () {
         systems()
           .Core.connect(user2)
           .mintUsd(accountId, poolId, collateralAddress(), depositAmount.mul(10)),
-        `PermissionDenied("${await user2.getAddress()}")`,
+        `PermissionDenied("1", "${Permissions.MINT}", "${await user2.getAddress()}")`,
         systems().Core
       );
     });

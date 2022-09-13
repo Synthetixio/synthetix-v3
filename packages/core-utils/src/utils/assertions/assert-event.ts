@@ -21,11 +21,11 @@ export default async function assertEvent(
           : ''
       })`;
 
+      seenEvents.push(text);
+
       if (text.match(expectedMatch) || text.toLowerCase().includes(expectedMatch.toLowerCase())) {
         return;
       }
-
-      seenEvents.push(text);
     } catch {
       // noop
     }
