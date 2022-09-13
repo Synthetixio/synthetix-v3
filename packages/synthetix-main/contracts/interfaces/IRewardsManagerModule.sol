@@ -2,8 +2,8 @@
 pragma solidity ^0.8.0;
 
 /// @title Module for managing pools and assignments per account
-interface IVaultRewardsModule {
-    event RewardDistributionSet(
+interface IRewardsManagerModule {
+    event RewardDistributed(
         uint indexed poolId,
         address indexed token,
         uint indexed index,
@@ -25,17 +25,16 @@ interface IVaultRewardsModule {
         uint duration
     ) external;
 
-    /// @notice retrieves the amount of available rewards.
-    /// this function should be called to get currently available rewards using `callStatic`
-    function getAvailableRewards(
+    /// @notice retrieves the amount of available rewards, and claims them to the caller's account.
+    function claimRewards(
         uint poolId,
         address token,
         uint accountId
     ) external returns (uint[] memory);
 
-    /// @notice retrieves the amount of available rewards, and claims them to the caller's account.
-    /// this function should be called to get currently available rewards using `callStatic`
-    function claimRewards(
+    /// @notice retrieves the amount of available rewards.
+    /// @dev this function should be called to get currently available rewards using `callStatic`
+    function getAvailableRewards(
         uint poolId,
         address token,
         uint accountId

@@ -12,10 +12,10 @@ import "../../mixins/PoolMixin.sol";
 import "../../utils/SharesLibrary.sol";
 
 import "../../storage/PoolVaultStorage.sol";
-import "../../interfaces/IVaultRewardsModule.sol";
+import "../../interfaces/IRewardsManagerModule.sol";
 
-contract VaultRewardsModule is
-    IVaultRewardsModule,
+contract RewardsManagerModule is
+    IRewardsManagerModule,
     PoolVaultStorage,
     AccountRBACMixin,
     OwnableMixin,
@@ -77,7 +77,7 @@ contract VaultRewardsModule is
 
         existingDistribution.distributor = IRewardDistributor(distributor);
 
-        emit RewardDistributionSet(poolId, collateralType, index, distributor, amount, start, duration);
+        emit RewardDistributed(poolId, collateralType, index, distributor, amount, start, duration);
     }
 
     function getAvailableRewards(
