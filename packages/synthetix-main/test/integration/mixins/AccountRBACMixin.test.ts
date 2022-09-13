@@ -2,11 +2,7 @@ import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber'
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import { ethers } from 'ethers';
 import { bootstrap } from '../bootstrap';
-
-const Permissions = {
-  DEPOSIT: ethers.utils.formatBytes32String('DEPOSIT'),
-  MINT: ethers.utils.formatBytes32String('MINT'),
-};
+import Permissions from './AcccountRBACMixin.permissions';
 
 describe('AccountRBACMixin', function () {
   const { signers, systems } = bootstrap();
