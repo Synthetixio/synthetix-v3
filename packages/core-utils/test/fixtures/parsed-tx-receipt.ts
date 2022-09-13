@@ -1,0 +1,61 @@
+/* eslint max-len: 0 */
+
+import { ethers } from 'ethers';
+
+export default {
+  to: '0x09635F643e140090A9A8Dcd712eD6285858ceBef',
+  from: '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266',
+  contractAddress: null,
+  transactionIndex: 0,
+  gasUsed: {
+    type: 'BigNumber',
+    hex: '0x8dac',
+  },
+  logsBloom:
+    '0x00000000000000000000080000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000080000000000008000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000',
+  blockHash: '0x48eb1d3cc2e7e7645890eb4d419224abfad06e7c19ff7d0d6c7e73a9b3ca8a93',
+  transactionHash: '0x0a5a04a58ec6ba103437dd6c562df8519b7ed15bf6339ce886daa343d7fccfb9',
+  logs: [
+    {
+      transactionIndex: 0,
+      blockNumber: 43,
+      transactionHash: '0x0a5a04a58ec6ba103437dd6c562df8519b7ed15bf6339ce886daa343d7fccfb9',
+      address: '0x09635F643e140090A9A8Dcd712eD6285858ceBef',
+      topics: ['0xf3f57717dff9f5f10af315efdbfadc60c42152c11fc0c3c413bbfbdc661f143c'],
+      data: '0x000000000000000000000000f39fd6e51aad88f6f4ce6ab8827279cfffb92266000000000000000000000000000000000000000000000000000000000000002a',
+      logIndex: 0,
+      blockHash: '0x48eb1d3cc2e7e7645890eb4d419224abfad06e7c19ff7d0d6c7e73a9b3ca8a93',
+    },
+  ],
+  blockNumber: 43,
+  confirmations: 1,
+  cumulativeGasUsed: {
+    type: 'BigNumber',
+    hex: '0x8dac',
+  },
+  effectiveGasPrice: {
+    type: 'BigNumber',
+    hex: '0xcb8972',
+  },
+  status: 1,
+  type: 2,
+  byzantium: true,
+  events: [
+    {
+      transactionIndex: 0,
+      blockNumber: 43,
+      transactionHash: '0x0a5a04a58ec6ba103437dd6c562df8519b7ed15bf6339ce886daa343d7fccfb9',
+      address: '0x09635F643e140090A9A8Dcd712eD6285858ceBef',
+      topics: ['0xf3f57717dff9f5f10af315efdbfadc60c42152c11fc0c3c413bbfbdc661f143c'],
+      data: '0x000000000000000000000000f39fd6e51aad88f6f4ce6ab8827279cfffb92266000000000000000000000000000000000000000000000000000000000000002a',
+      logIndex: 0,
+      blockHash: '0x48eb1d3cc2e7e7645890eb4d419224abfad06e7c19ff7d0d6c7e73a9b3ca8a93',
+      args: {
+        sender: '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266',
+        value: '42',
+      },
+      event: 'ValueSet',
+      eventSignature: 'ValueSet(address,uint256)',
+    },
+  ],
+} as unknown as ethers.providers.TransactionReceipt;

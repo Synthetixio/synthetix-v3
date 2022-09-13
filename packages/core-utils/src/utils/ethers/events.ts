@@ -24,22 +24,25 @@ export function findEvent({
 
   let { events } = receipt as ethers.ContractReceipt;
 
-  if (!events) {
-    throw new Error(`no events found on receipt for when searching for event ${eventName}`);
-  }
-
   if (!receipt.logs) {
     throw new Error(
       `no logs found when searching for event ${eventName}. Did you actually pass a transaction receipt into findEvent?`
     );
   }
 
-  if ((contract && !events) || (events.some((e) => e.event === undefined) && contract)) {
+  if (
+    (contract && !events) ||
+    (Array.isArray(events) && events.some((e) => e.event === undefined) && contract)
+  ) {
     events = parseLogs({ contract, logs: receipt.logs });
   }
 
+  if (!Array.isArray(events)) {
+    throw new Error('missing events object');
+  }
+
   events = events.filter((e) => e.event === eventName);
-  if (!events || events.length === 0) {
+  if (events.length === 0) {
     return undefined;
   }
 
