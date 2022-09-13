@@ -23,8 +23,8 @@ jobs:
             coverage-file: packages/core-modules/coverage.json
           - package: hardhat-router
             coverage-file: packages/hardhat-router/coverage/lcov.info
-          # - package: synthetix-main
-          #   coverage-file: packages/synthetix-main/coverage.json
+          - package: synthetix-main
+            coverage-file: packages/synthetix-main/coverage.json
     steps:
       - name: Install Foundry (Cannon)
         uses: foundry-rs/foundry-toolchain@v1
