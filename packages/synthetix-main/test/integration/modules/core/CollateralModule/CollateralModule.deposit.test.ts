@@ -88,7 +88,7 @@ describe('CollateralModule', function () {
             });
 
             it('emits an event', async () => {
-              assertEvent(
+              await assertEvent(
                 receipt,
                 `CollateralDeposited("1", "${
                   Collateral.address
@@ -136,7 +136,7 @@ describe('CollateralModule', function () {
               });
 
               it('emits an event', async () => {
-                assertEvent(
+                await assertEvent(
                   receipt,
                   `CollateralWithdrawn("1", "${
                     Collateral.address

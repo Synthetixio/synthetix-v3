@@ -33,7 +33,7 @@ describe('VaultRewardsModule', function () {
 
   describe('distributeRewards()', () => {
     it('only works with owner', async () => {
-      assertRevert(
+      await assertRevert(
         systems().Core.connect(user1).distributeRewards(
           poolId,
           collateralAddress(),

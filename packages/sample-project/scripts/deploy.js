@@ -57,5 +57,5 @@ module.exports.deploy = async function deploy(runtime, prefix, modules) {
 };
 
 if (module == require.main) {
-  module.exports.deploy().then(console.log);
+  module.exports.deploy().then(console.log).catch(console.error);
 }

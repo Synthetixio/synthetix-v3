@@ -37,7 +37,7 @@ export default {
     this._log(`${this.prepend}${msg}${completeStr}${this.postpend}`);
   },
 
-  async title(msg: string) {
+  title(msg: string) {
     if (this.quiet) {
       return;
     }
