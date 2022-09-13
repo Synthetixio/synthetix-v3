@@ -38,7 +38,12 @@ before(async function () {
   _provider = cannonInfo.provider;
   signers = cannonInfo.signers;
 
-  await _provider.send('anvil_setBlockTimestampInterval', [1]);
+  try {
+
+    await _provider.send('anvil_setBlockTimestampInterval', [1]);
+  } catch (err) {
+    console.warn('failed when setting block timestamp interval', err);
+  }
 
   baseSystemSnapshot = await _provider.send('evm_snapshot', []);
 
