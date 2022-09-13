@@ -51,9 +51,9 @@ contract MarketManagerModule is
         return marketData.issuance;
     }
 
-    function getMarketReportedBalance(uint marketId) external view override returns (uint) {
+    function getMarketReportedDebt(uint marketId) external view override returns (uint) {
         MarketData storage marketData = _marketManagerStore().markets[marketId];
-        return _getReportedBalance(marketData);
+        return _getReportedDebt(marketData);
     }
 
     function getMarketCollateral(uint marketId) external view override returns (uint) {

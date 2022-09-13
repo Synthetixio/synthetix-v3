@@ -135,7 +135,7 @@ describe('MarketManagerModule', function () {
       // TODO: this test is tempermental and fails with unusual errors, though
       // I know it is passinga s of writing through other means
       it.skip('reverts if not enough liquidity', async () => {
-        await MockMarket().connect(user1).setBalance(Hundred.mul(100000));
+        await MockMarket().connect(user1).setReportedDebt(Hundred.mul(100000));
 
         await assertRevert(
           MockMarket().connect(user1).callStatic.sellSynth(Hundred.mul(100000)),
@@ -143,7 +143,7 @@ describe('MarketManagerModule', function () {
           systems().Core
         );
 
-        await MockMarket().connect(user1).setBalance(0);
+        await MockMarket().connect(user1).setReportedDebt(0);
       });
 
       describe('withdraw some from the market', async () => {

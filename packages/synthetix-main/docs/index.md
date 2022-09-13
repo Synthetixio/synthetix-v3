@@ -1150,3 +1150,181 @@ Returns the collateralization ratio of the vault. If debt is negative, this func
   _Call this function using `callStatic` to treat it as a view function.
 The return value is a percentage with 18 decimals places._
 
+## Market Manager Module
+
+### MarketRegistered
+
+  ```solidity
+  event MarketRegistered(address market, uint256 marketId)
+  ```
+
+### UsdDeposited
+
+  ```solidity
+  event UsdDeposited(uint256 marketId, address target, uint256 amount, address sender)
+  ```
+
+### UsdWithdrawn
+
+  ```solidity
+  event UsdWithdrawn(uint256 marketId, address target, uint256 amount, address sender)
+  ```
+
+### registerMarket
+
+  ```solidity
+  function registerMarket(address market) external returns (uint256)
+  ```
+
+registers a new market
+
+### depositUsd
+
+  ```solidity
+  function depositUsd(uint256 marketId, address target, uint256 amount) external
+  ```
+
+target deposits amount of synths to the marketId
+
+### withdrawUsd
+
+  ```solidity
+  function withdrawUsd(uint256 marketId, address target, uint256 amount) external
+  ```
+
+target withdraws amount of synths to the marketId
+
+### getWithdrawableUsd
+
+  ```solidity
+  function getWithdrawableUsd(uint256 marketId) external view returns (uint256)
+  ```
+
+gets the liquidity of the market
+
+### getMarketIssuance
+
+  ```solidity
+  function getMarketIssuance(uint256 marketId) external view returns (int128)
+  ```
+
+gets net snxUSD withdrawn - deposited by the market
+
+### getMarketReportedDebt
+
+  ```solidity
+  function getMarketReportedDebt(uint256 marketId) external view returns (uint256)
+  ```
+
+gets the total balance of the market
+
+### getMarketTotalBalance
+
+  ```solidity
+  function getMarketTotalBalance(uint256 marketId) external view returns (int256)
+  ```
+
+gets the total balance of the market (marketIssuance + marketReportedDebt)
+
+### getMarketCollateral
+
+  ```solidity
+  function getMarketCollateral(uint256 marketId) external view returns (uint256)
+  ```
+
+gets the snxUSD value of the collateral backing this market.
+
+### getMarketDebtPerShare
+
+  ```solidity
+  function getMarketDebtPerShare(uint256 marketId) external returns (int256)
+  ```
+
+### MarketRegistered
+
+  ```solidity
+  event MarketRegistered(address market, uint256 marketId)
+  ```
+
+### UsdDeposited
+
+  ```solidity
+  event UsdDeposited(uint256 marketId, address target, uint256 amount, address sender)
+  ```
+
+### UsdWithdrawn
+
+  ```solidity
+  event UsdWithdrawn(uint256 marketId, address target, uint256 amount, address sender)
+  ```
+
+### registerMarket
+
+  ```solidity
+  function registerMarket(address market) external returns (uint256)
+  ```
+
+registers a new market
+
+### depositUsd
+
+  ```solidity
+  function depositUsd(uint256 marketId, address target, uint256 amount) external
+  ```
+
+target deposits amount of synths to the marketId
+
+### withdrawUsd
+
+  ```solidity
+  function withdrawUsd(uint256 marketId, address target, uint256 amount) external
+  ```
+
+target withdraws amount of synths to the marketId
+
+### getWithdrawableUsd
+
+  ```solidity
+  function getWithdrawableUsd(uint256 marketId) external view returns (uint256)
+  ```
+
+gets the liquidity of the market
+
+### getMarketIssuance
+
+  ```solidity
+  function getMarketIssuance(uint256 marketId) external view returns (int128)
+  ```
+
+gets net snxUSD withdrawn - deposited by the market
+
+### getMarketReportedDebt
+
+  ```solidity
+  function getMarketReportedDebt(uint256 marketId) external view returns (uint256)
+  ```
+
+gets the total balance of the market
+
+### getMarketTotalBalance
+
+  ```solidity
+  function getMarketTotalBalance(uint256 marketId) external view returns (int256)
+  ```
+
+gets the total balance of the market (marketIssuance + marketReportedDebt)
+
+### getMarketCollateral
+
+  ```solidity
+  function getMarketCollateral(uint256 marketId) external view returns (uint256)
+  ```
+
+gets the snxUSD value of the collateral backing this market.
+
+### getMarketDebtPerShare
+
+  ```solidity
+  function getMarketDebtPerShare(uint256 marketId) external returns (int256)
+  ```
+

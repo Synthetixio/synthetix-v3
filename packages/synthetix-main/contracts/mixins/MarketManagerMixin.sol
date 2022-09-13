@@ -135,11 +135,11 @@ contract MarketManagerMixin is MarketManagerStorage, PoolModuleStorage {
         marketData.lastMarketBalance = int128(targetBalance);
     }
 
-    function _getReportedBalance(MarketData storage marketData) internal view returns (uint) {
-        return IMarket(marketData.marketAddress).balance();
+    function _getReportedDebt(MarketData storage marketData) internal view returns (uint) {
+        return IMarket(marketData.marketAddress).reportedDebt();
     }
 
     function _totalBalance(MarketData storage marketData) internal view returns (int) {
-        return int(IMarket(marketData.marketAddress).balance()) + marketData.issuance;
+        return int(IMarket(marketData.marketAddress).reportedDebt()) + marketData.issuance;
     }
 }
