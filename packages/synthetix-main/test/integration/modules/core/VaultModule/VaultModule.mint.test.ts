@@ -2,8 +2,9 @@ import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber'
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import { ethers } from 'ethers';
 import { bootstrapWithStakedPool } from '../../../bootstrap';
+import Permissions from '../../../mixins/AcccountRBACMixin.permissions';
 
-describe('VaultModule', function () {
+describe.only('VaultModule', function () {
   const {
     signers,
     systems,
@@ -36,11 +37,11 @@ describe('VaultModule', function () {
 
       describe('when an unauthorized user tries to mint', function () {
         it('reverts', async function () {
-          assertRevert(
+          await assertRevert(
             systems()
               .Core.connect(user2)
               .mintUsd(accountId, poolId, collateralAddress(), depositAmount.mul(10)),
-            `Unauthorized("${await user2.getAddress()}")`,
+            `PermissionDenied("1", "${Permissions.MINT}", "${await user2.getAddress()}")`,
             systems().Core
           );
         });
@@ -48,7 +49,7 @@ describe('VaultModule', function () {
 
       describe('when a user tries to mint to below c-ratio (150%)', function () {
         it('reverts', async () => {
-          assertRevert(
+          await assertRevert(
             systems()
               .Core.connect(user1)
               .mintUsd(accountId, poolId, collateralAddress(), depositAmount), // Would take c-ratio to < 150%

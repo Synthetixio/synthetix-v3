@@ -3,7 +3,7 @@ import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert
 import { ethers } from 'ethers';
 import { bootstrapWithStakedPool } from '../../../bootstrap';
 
-describe('VaultModule', function () {
+describe.only('VaultModule', function () {
   const {
     signers,
     systems,
@@ -28,9 +28,9 @@ describe('VaultModule', function () {
     describe('when a pool is setup and user1 has deposited and delegated to it', function () {
       describe('when a user tries to delegate with any leverage other than 1', function () {
         it('reverts', async () => {
-          assertRevert(
+          await assertRevert(
             systems()
-              .Core.connect(user2)
+              .Core.connect(user1)
               .delegateCollateral(
                 accountId,
                 poolId,

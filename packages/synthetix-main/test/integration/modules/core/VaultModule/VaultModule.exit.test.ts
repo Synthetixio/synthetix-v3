@@ -1,9 +1,8 @@
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
-import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import { ethers } from 'ethers';
 import { bootstrapWithStakedPool } from '../../../bootstrap';
 
-describe('VaultModule', function () {
+describe.only('VaultModule', function () {
   const {
     signers,
     systems,
