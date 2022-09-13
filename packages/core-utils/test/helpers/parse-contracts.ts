@@ -5,6 +5,8 @@ import { resetHardhatContext } from 'hardhat/plugins-testing';
 
 const cache: { [path: string]: { asts?: { [key: string]: SourceUnit } } } = {};
 
+export type ParsedContracts = Awaited<ReturnType<typeof parseContracts>>;
+
 /**
  * Helper function to be able to get the ASTs of a given hardhat project, and
  * after compiling it returns the current running environment to its original state.

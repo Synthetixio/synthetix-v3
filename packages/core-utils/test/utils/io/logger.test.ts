@@ -4,7 +4,7 @@ import { deepEqual, equal } from 'assert/strict';
 import logger from '../../../src/utils/io/logger';
 
 describe('utils/io/prompter.js', () => {
-  let logged: any[][] = [];
+  let logged: unknown[][] = [];
 
   before('disable chalk color usage', () => {
     chalk.level = 0;

@@ -4,7 +4,7 @@ import { deepEqual, equal, notEqual } from 'assert/strict';
 
 import asts from '../../fixtures/asts.json';
 import noContractAst from '../../fixtures/no-contract-ast.json';
-import parseContracts from '../../helpers/parse-contracts';
+import parseContracts, { ParsedContracts } from '../../helpers/parse-contracts';
 import {
   findContractDefinitions,
   findContractDependencies,
@@ -22,7 +22,7 @@ import {
 const astNodes = Object.values(asts) as SourceUnit[];
 
 describe('utils/ast/finders.js find AST artifacts', function () {
-  let sampleProject: Awaited<ReturnType<typeof parseContracts>>;
+  let sampleProject: ParsedContracts;
   let sampleProjectAstNodes: SourceUnit[];
 
   before('load sample-project artifacts', async function () {

@@ -29,14 +29,10 @@ const fakeProvider = {
 };
 
 describe('utils/hardhat/rpc.js', () => {
-  let provider: any;
-
-  before(function () {
-    provider = sinon.spy(fakeProvider);
-  });
+  const provider = sinon.spy(fakeProvider);
 
   describe('when taking a snapshot', () => {
-    let snapshotId: any;
+    let snapshotId: string;
 
     before('clear spy history', () => {
       provider.send.resetHistory();

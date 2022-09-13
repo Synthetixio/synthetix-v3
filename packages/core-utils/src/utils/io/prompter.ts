@@ -6,7 +6,9 @@ export default {
   noConfirm: false,
 
   // Used for testing.
-  _prompt: prompts.bind(prompts),
+  _prompt: prompts.bind(prompts) as unknown as (
+    args: Parameters<typeof prompts>[0]
+  ) => Promise<{ confirmation: boolean }>,
 
   /**
    * Ask the user for confirmation

@@ -1,14 +1,14 @@
 import path from 'path';
 import { deepEqual, equal, notEqual } from 'assert/strict';
 
-import parseContracts from '../../helpers/parse-contracts';
-import { buildContractsStructMap } from '../../../src/utils/ast/storage-struct';
+import parseContracts, { ParsedContracts } from '../../helpers/parse-contracts';
+import { ContractsStruct, buildContractsStructMap } from '../../../src/utils/ast/storage-struct';
 import { findContractDefinitions } from '../../../src/utils/ast/finders';
 
 describe('utils/ast/storage-struct.js', function () {
   describe('build a contracts struct map', () => {
-    let structsMap: Awaited<ReturnType<typeof buildContractsStructMap>>;
-    let sampleProject: ReturnType<typeof parseContracts> & { asts: any }; // ???
+    let structsMap: ContractsStruct[];
+    let sampleProject: ParsedContracts;
 
     before('load sample-project artifacts', async function () {
       const envPath = path.resolve(__dirname, '..', '..', 'fixtures', 'sample-project');
@@ -17,7 +17,7 @@ describe('utils/ast/storage-struct.js', function () {
 
     before('builds a contract struct map from an asts object', async () => {
       const contractNodes = findContractDefinitions(
-        sampleProject.asts['contracts/ElectionStorage.sol']
+        sampleProject.asts!['contracts/ElectionStorage.sol']
       );
       structsMap = await buildContractsStructMap(contractNodes);
     });

@@ -1,4 +1,4 @@
-import { deepEqual, equal, ok, throws } from 'assert/strict';
+import { deepEqual, equal, ok } from 'assert/strict';
 
 import {
   daysToSeconds,
