@@ -26,11 +26,15 @@ describe('AccountModule', function () {
       });
 
       it('emitted an AccountCreated event', async function () {
-        assertEvent(receipt, `AccountCreated(${await user1.getAddress()}, "1")`, systems().Core);
+        await assertEvent(
+          receipt,
+          `AccountCreated(${await user1.getAddress()}, "1")`,
+          systems().Core
+        );
       });
 
       it('emitted a Mint event', async function () {
-        assertEvent(
+        await assertEvent(
           receipt,
           `Transfer("0x0000000000000000000000000000000000000000", ${await user1.getAddress()}, "1")`,
           systems().Core

@@ -15,7 +15,7 @@ describe('USDTokenModule', function () {
 
   describe('mintInitialSystemToken()', () => {
     it('only the owner can call', async () => {
-      assertRevert(
+      await assertRevert(
         systems()
           .Core.connect(user1)
           .mintInitialSystemToken(await owner.getAddress(), 1e18),
@@ -34,7 +34,7 @@ describe('USDTokenModule', function () {
     });
 
     it('reverts when totalSupply is not 0', async () => {
-      assertRevert(
+      await assertRevert(
         systems()
           .Core.connect(owner)
           .mintInitialSystemToken(await user1.getAddress(), 1e18),

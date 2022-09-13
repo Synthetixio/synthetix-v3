@@ -75,7 +75,7 @@ describe('MarketManagerModule', function () {
     });
 
     it('should not work if user has not approved', async () => {
-      assertRevert(
+      await assertRevert(
         MockMarket().connect(user1).buySynth(One),
         `MarketDepositNotApproved(${
           MockMarket().address
