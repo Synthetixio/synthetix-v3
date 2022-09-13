@@ -122,7 +122,7 @@ describe('VaultModule', function () {
     it('verifies leverage', async () => {
       await assertRevert(
         systems()
-          .Core.connect(user2)
+          .Core.connect(user1)
           .delegateCollateral(
             accountId,
             poolId,
