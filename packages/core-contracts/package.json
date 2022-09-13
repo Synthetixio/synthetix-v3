@@ -15,8 +15,8 @@
     "!contracts/mocks"
   ],
   "scripts": {
-    "test": "hardhat test",
-    "coverage": "hardhat coverage",
+    "test": "hardhat test --network hardhat",
+    "coverage": "hardhat coverage --network hardhat",
     "compile-contracts": "hardhat compile",
     "size-contracts": "hardhat size-contracts"
   }

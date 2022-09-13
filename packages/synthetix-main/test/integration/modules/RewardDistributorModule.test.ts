@@ -15,7 +15,7 @@ describe('RewardDistributorModule', function () {
 
   describe('setRewardAllocation()', async () => {
     it('is only owner', async () => {
-      assertRevert(
+      await assertRevert(
         systems().Core.connect(user1).setRewardAllocation(1234, 100000000),
         `Unauthorized("${await user1.getAddress()}")`,
         systems().Core
@@ -89,9 +89,9 @@ describe('RewardDistributorModule', function () {
       });
 
       it('does not distribute rewards if allocation is exceeded', async () => {
-        assertRevert(
+        await assertRevert(
           systems().Core.connect(user1).claimRewards(poolId, systems().SNX.address, accountId),
-          'Unauthorized',
+          'InsufficientRewardAllocation',
           systems().Core
         );
       });

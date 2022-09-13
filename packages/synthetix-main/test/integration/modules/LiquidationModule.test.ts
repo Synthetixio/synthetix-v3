@@ -58,7 +58,7 @@ describe('LiquidationModule', function () {
       });
 
       it('cannot liquidate when its the only account in the pool', async () => {
-        assertRevert(
+        await assertRevert(
           systems().Core.connect(user2).liquidate(accountId, poolId, collateralAddress()),
           'MustBeVaultLiquidated()',
           systems().Core

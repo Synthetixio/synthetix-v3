@@ -9,7 +9,7 @@ function bootstrap(initializer = () => {}, customDeployOptions = {}) {
   let snapshotId;
 
   const deploymentInfo = {
-    network: hre.config.defaultNetwork,
+    network: 'hardhat',
     instance: customDeployOptions.instance || 'test',
   };
 

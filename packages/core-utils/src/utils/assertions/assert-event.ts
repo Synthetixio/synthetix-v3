@@ -13,7 +13,7 @@ export default async function assertEvent(
 
   for (const log of (receipt as ethers.providers.TransactionReceipt).logs) {
     try {
-      const parsed = contract.interface.parseError(log.data);
+      const parsed = contract.interface.parseLog(log);
 
       const text = `${parsed.name}(${
         parsed.args
@@ -21,11 +21,11 @@ export default async function assertEvent(
           : ''
       })`;
 
-      if (text.match(expectedMatch)) {
+      seenEvents.push(text);
+
+      if (text.match(expectedMatch) || text.toLowerCase().includes(expectedMatch.toLowerCase())) {
         return;
       }
-
-      seenEvents.push(text);
     } catch {
       // noop
     }

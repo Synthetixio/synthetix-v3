@@ -10,6 +10,7 @@ require('@nomiclabs/hardhat-ethers');
 require('hardhat-contract-sizer');
 require('solidity-coverage');
 require('@synthetixio/hardhat-router');
+require('hardhat-gas-reporter');
 require('@synthetixio/cli');
 
 require('hardhat-cannon');
@@ -41,6 +42,10 @@ const config = {
       accounts: process.env.DEPLOYER_PRIVATE_KEY ? [process.env.DEPLOYER_PRIVATE_KEY] : [],
       chainId: 5,
     },
+  },
+  defaultNetwork: 'cannon',
+  gasReporter: {
+    url: 'http://localhost:8545',
   },
   contractSizer: {
     strict: true,
