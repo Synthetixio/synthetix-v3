@@ -120,7 +120,7 @@ describe('PoolConfigurationModule', function () {
           });
 
           it('emitted an event', async () => {
-            await assertEvent(receipt, 'PoolApprovedAdded("3"', systems().Core);
+            await assertEvent(receipt, 'PoolApprovedAdded("3")', systems().Core);
           });
 
           it('shows that the pool is approved', async () => {
@@ -159,7 +159,7 @@ describe('PoolConfigurationModule', function () {
             });
 
             it('emitted an event', async () => {
-              await assertEvent(receipt, 'PoolApprovedRemoved("3"', systems().Core);
+              await assertEvent(receipt, 'PoolApprovedRemoved("3")', systems().Core);
             });
 
             it('shows that the pool is no longer approved', async () => {
