@@ -12,6 +12,8 @@ contract LegacyMarket is IMarket {
     using MathUtil for uint256;
 
     uint public marketId;
+    bool public pauseStablecoinConversion;
+    bool public pauseMigration;
 
     IAddressResolver public v2xResolver;
     ICoreProxy public v3System;
@@ -37,6 +39,7 @@ contract LegacyMarket is IMarket {
     }
 
     convertUSD(uint amount) external {
+        require(!pauseStablecoinConversion, "Stablecoin conversion has been paused");
         if (balance() < amount) {
             revert InsufficientCollateralMigrated(amount, balance());
         }
@@ -51,6 +54,7 @@ contract LegacyMarket is IMarket {
     }
 
     migrate(uint accountId) external {
+        require(!pauseMigration, "Migration has been paused");
         _migrate(msg.sender, accountId);
     }
 
@@ -97,4 +101,13 @@ contract LegacyMarket is IMarket {
 
         this.v3AccountToken.transfer(staker, accountId);
     }
+
+    function togglePauseStablecoinConversion() external onlyOwner {
+        pauseStablecoinConversion = !pauseStablecoinConversion;
+    }
+    
+    function togglePauseMigration() external onlyOwner {
+        pauseMigration = !pauseMigration;
+    }
+
 }
