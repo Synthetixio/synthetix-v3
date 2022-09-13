@@ -3,7 +3,6 @@ module.exports = {
   extends: ['eslint:recommended', 'prettier'],
   env: {
     es2020: true,
-    mocha: true,
     node: true,
     es6: true,
   },
@@ -16,7 +15,10 @@ module.exports = {
   parser: '@typescript-eslint/parser',
   parserOptions: {
     ecmaVersion: 12,
+    tsconfigRootDir: __dirname,
+    project: ['./packages/*/tsconfig.json', './packages/*/tsconfig.eslint.json'],
   },
+  ignorePatterns: ['.eslintrc.js'],
   rules: {
     'no-only-tests/no-only-tests': 'error',
     indent: ['error', 2],
@@ -38,6 +40,12 @@ module.exports = {
         '@typescript-eslint/no-var-requires': 0,
         '@typescript-eslint/no-non-null-assertion': 0,
         '@typescript-eslint/no-empty-function': 0,
+      },
+    },
+    {
+      files: ['./packages/*/test/**/*.{j,t}s'],
+      env: {
+        mocha: true,
       },
     },
   ],

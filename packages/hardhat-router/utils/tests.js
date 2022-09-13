@@ -1,3 +1,5 @@
+/* eslint-env mocha */
+
 const { TASK_DEPLOY } = require('@synthetixio/hardhat-router/task-names');
 const {
   getProxyAddress,
