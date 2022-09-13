@@ -120,7 +120,7 @@ describe('VaultModule', function () {
     });
 
     // it('verifies leverage', async () => {
-    //   assertRevert(
+    //   await assertRevert(
     //     systems()
     //       .Core.connect(user2)
     //       .delegateCollateral(
@@ -421,7 +421,7 @@ describe('VaultModule', function () {
   // describe('mintUsd()', async () => {
   // before(restore);
   // it('verifies permission for account', async () => {
-  //   assertRevert(
+  //   await assertRevert(
   //     systems()
   //       .Core.connect(user2)
   //       .mintUsd(accountId, poolId, collateralAddress(), depositAmount.mul(10)),
@@ -431,7 +431,7 @@ describe('VaultModule', function () {
   // });
 
   // it('verifies sufficient c-ratio', async () => {
-  //   assertRevert(
+  //   await assertRevert(
   //     systems()
   //       .Core.connect(user1)
   //       .mintUsd(accountId, poolId, collateralAddress(), depositAmount),
