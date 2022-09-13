@@ -91,7 +91,7 @@ describe('RewardDistributorModule', function () {
       it('does not distribute rewards if allocation is exceeded', async () => {
         await assertRevert(
           systems().Core.connect(user1).claimRewards(poolId, systems().SNX.address, accountId),
-          'Unauthorized',
+          'InsufficientRewardAllocation',
           systems().Core
         );
       });

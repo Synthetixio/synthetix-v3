@@ -114,7 +114,7 @@ describe('VaultModule', function () {
             depositAmount.mul(2),
             ethers.utils.parseEther('1')
           ),
-        `Unauthorized("${await user2.getAddress()}")`,
+        `PermissionDenied("${await user2.getAddress()}")`,
         systems().Core
       );
     });
@@ -271,7 +271,7 @@ describe('VaultModule', function () {
                   depositAmount.mul(3),
                   ethers.utils.parseEther('1')
                 ),
-              'InsufficientAvailableCollateral',
+              'InsufficientAccountCollateral',
               systems().Core
             );
           });
@@ -425,7 +425,7 @@ describe('VaultModule', function () {
         systems()
           .Core.connect(user2)
           .mintUsd(accountId, poolId, collateralAddress(), depositAmount.mul(10)),
-        `Unauthorized("${await user2.getAddress()}")`,
+        `PermissionDenied("${await user2.getAddress()}")`,
         systems().Core
       );
     });

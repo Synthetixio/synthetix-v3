@@ -118,7 +118,7 @@ describe('PoolModule Create / Ownership', function () {
         it('emits an event', async () => {
           await assertEvent(
             receipt,
-            `OwnershipRenounced("1", "${await user2.getAddress()}")`,
+            `PoolNominationRenounced("1", "${await user2.getAddress()}")`,
             systems().Core
           );
         });

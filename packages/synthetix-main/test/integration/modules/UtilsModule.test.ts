@@ -4,7 +4,7 @@ import { ethers } from 'ethers';
 
 import { bootstrap } from '../bootstrap';
 
-describe('USDTokenModule', function () {
+describe('UtilsModule', function () {
   const { signers, systems } = bootstrap();
 
   let owner: ethers.Signer, user1: ethers.Signer;
@@ -18,7 +18,7 @@ describe('USDTokenModule', function () {
       await assertRevert(
         systems()
           .Core.connect(user1)
-          .mintInitialSystemToken(await owner.getAddress(), 1e18),
+          .mintInitialSystemToken(await owner.getAddress(), 1e6),
         'Unauthorized',
         systems().Core
       );
@@ -37,7 +37,7 @@ describe('USDTokenModule', function () {
       await assertRevert(
         systems()
           .Core.connect(owner)
-          .mintInitialSystemToken(await user1.getAddress(), 1e18),
+          .mintInitialSystemToken(await user1.getAddress(), 1e6),
         'AlreadyInitialized',
         systems().Core
       );
