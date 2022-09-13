@@ -9,6 +9,6 @@
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "2.0.5",
     "hardhat": "2.9.3",
-    "hardhat-cannon": "1.0.27"
+    "hardhat-cannon": "1.0.31"
   }
 }

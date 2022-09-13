@@ -22,7 +22,7 @@ interface ILiquidationModule {
         uint amountRewarded
     );
 
-    struct LiqudationInformation {
+    struct LiquidationInformation {
         CurvesLibrary.PolynomialCurve curve;
         mapping(uint => uint) initialAmount; // key is accountId, amount is accumulated when you entered the vault
         uint accumulated; // how much accumulation per debt share (updated before anyone enters/leaves the vaults)
