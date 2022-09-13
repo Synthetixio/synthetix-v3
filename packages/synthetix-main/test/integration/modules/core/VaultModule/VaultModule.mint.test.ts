@@ -4,7 +4,7 @@ import { ethers } from 'ethers';
 import { bootstrapWithStakedPool } from '../../../bootstrap';
 import Permissions from '../../../mixins/AcccountRBACMixin.permissions';
 
-describe.only('VaultModule', function () {
+describe('VaultModule', function () {
   const {
     signers,
     systems,
@@ -20,7 +20,7 @@ describe.only('VaultModule', function () {
 
   let mintAmount: ethers.BigNumber;
 
-  describe('VaultModule - Minting and burning', function () {
+  describe('VaultModule - Minting and burning snxUSD', function () {
     before('identify signers', async () => {
       [owner, user1, user2] = signers();
     });

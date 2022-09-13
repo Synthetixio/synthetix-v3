@@ -167,31 +167,26 @@ describe('VaultModule', function () {
           // await collateralContract()
           //   .connect(user1)
           //   .transfer(await user2.getAddress(), depositAmount.mul(2));
-
           // await systems().Core.connect(user2).createAccount(user2AccountId);
-
-          await collateralContract()
-            .connect(user2)
-            .approve(systems().Core.address, depositAmount.mul(2));
-
-          await systems()
-            .Core.connect(user2)
-            .depositCollateral(user2AccountId, collateralAddress(), depositAmount.mul(2));
-
-          await systems().Core.connect(user2).delegateCollateral(
-            user2AccountId,
-            poolId,
-            collateralAddress(),
-            depositAmount.div(3), // user1 75%, user2 25%
-            ethers.utils.parseEther('1')
-          );
-
-          await systems().Core.connect(user2).mintUsd(
-            user2AccountId,
-            poolId,
-            collateralAddress(),
-            depositAmount.div(100) // should be enough collateral to mint this
-          );
+          // await collateralContract()
+          //   .connect(user2)
+          //   .approve(systems().Core.address, depositAmount.mul(2));
+          // await systems()
+          //   .Core.connect(user2)
+          //   .depositCollateral(user2AccountId, collateralAddress(), depositAmount.mul(2));
+          // await systems().Core.connect(user2).delegateCollateral(
+          //   user2AccountId,
+          //   poolId,
+          //   collateralAddress(),
+          //   depositAmount.div(3), // user1 75%, user2 25%
+          //   ethers.utils.parseEther('1')
+          // );
+          // await systems().Core.connect(user2).mintUsd(
+          //   user2AccountId,
+          //   poolId,
+          //   collateralAddress(),
+          //   depositAmount.div(100) // should be enough collateral to mint this
+          // );
         });
 
         it(
@@ -247,34 +242,34 @@ describe('VaultModule', function () {
         //   );
         // });
 
-        describe('remove exposure', async () => {
-          before('delegate', async () => {
-            await systems().Core.connect(user2).delegateCollateral(
-              user2AccountId,
-              poolId,
-              collateralAddress,
-              depositAmount.div(3), // user1 50%, user2 50%
-              ethers.utils.parseEther('1')
-            );
-          });
-        });
+        // describe('remove exposure', async () => {
+        //   before('delegate', async () => {
+        //     await systems().Core.connect(user2).delegateCollateral(
+        //       user2AccountId,
+        //       poolId,
+        //       collateralAddress,
+        //       depositAmount.div(3), // user1 50%, user2 50%
+        //       ethers.utils.parseEther('1')
+        //     );
+        //   });
+        // });
 
         describe('increase collateral', async () => {
-          it('fails when not enough available collateral in account', async () => {
-            await assertRevert(
-              systems()
-                .Core.connect(user2)
-                .delegateCollateral(
-                  user2AccountId,
-                  poolId,
-                  collateralAddress(),
-                  depositAmount.mul(3),
-                  ethers.utils.parseEther('1')
-                ),
-              'InsufficientAccountCollateral',
-              systems().Core
-            );
-          });
+          // it('fails when not enough available collateral in account', async () => {
+          //   await assertRevert(
+          //     systems()
+          //       .Core.connect(user2)
+          //       .delegateCollateral(
+          //         user2AccountId,
+          //         poolId,
+          //         collateralAddress(),
+          //         depositAmount.mul(3),
+          //         ethers.utils.parseEther('1')
+          //       ),
+          //     'InsufficientAccountCollateral',
+          //     systems().Core
+          //   );
+          // });
 
           describe('success', () => {
             before('delegate', async () => {

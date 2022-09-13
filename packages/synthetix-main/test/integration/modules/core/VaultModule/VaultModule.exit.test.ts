@@ -2,7 +2,7 @@ import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber'
 import { ethers } from 'ethers';
 import { bootstrapWithStakedPool } from '../../../bootstrap';
 
-describe.only('VaultModule', function () {
+describe('VaultModule', function () {
   const {
     signers,
     systems,
@@ -18,7 +18,7 @@ describe.only('VaultModule', function () {
 
   let mintAmount: ethers.BigNumber;
 
-  describe('VaultModule - Entering and exiting', function () {
+  describe('VaultModule - Entering and exiting a pool', function () {
     before('identify signers', async () => {
       [owner, user1, user2] = signers();
     });
