@@ -38,7 +38,7 @@ jobs:
       - run: npm ci
       - run: npm run build
       - name: Execute tests
-        run: npm run --workspace=./packages/${{ matrix.package }} coverage
+        run: npm run --workspace=./packages/${{ matrix.package }} coverage --network hardhat
       - name: Upload ${{ matrix.package }} coverage to Codecov
         uses: codecov/codecov-action@v2
         with:
