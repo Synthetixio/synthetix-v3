@@ -95,7 +95,7 @@ describe('PoolConfigurationModule', function () {
           });
 
           it('emitted an event', async () => {
-            await assertEvent(receipt, 'PreferredPoolSet("1"', systems().Core);
+            await assertEvent(receipt, 'PreferredPoolSet("2")', systems().Core);
           });
 
           it('reflects the preferred pool', async () => {
