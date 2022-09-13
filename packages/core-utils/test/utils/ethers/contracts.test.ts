@@ -9,7 +9,7 @@ import {
   getSelectors,
 } from '../../../src/utils/ethers/contracts';
 
-describe('utils/ethers/contracts.js', function () {
+describe('utils/ethers/contracts.ts', function () {
   const dummyAddress = '0x0000000000000000000000000000000000000001';
   const dummyBytecode =
     '0x363d3d373d3d3d363d73bebebebebebebebebebebebebebebebebebebebe5af43d82803e903d91602b57fd5bf3';
@@ -22,18 +22,18 @@ describe('utils/ethers/contracts.js', function () {
     assert.equal(getBytecodeHash(dummyBytecode), dummyBytecodeHash);
   });
 
-  it('can retrieve the bytecode of a contract', async () => {
+  it('can retrieve the bytecode of a contract', async function () {
     assert.equal(await getRemoteBytecode(dummyAddress, dummyProvider), dummyBytecode);
   });
 
-  it('can compare bytecodes', async () => {
+  it('can compare bytecodes', async function () {
     assert.equal(
       await deployedContractHasBytescode(dummyAddress, dummyBytecode, dummyProvider),
       true
     );
   });
 
-  it('can retrieve contract selectors', async () => {
+  it('can retrieve contract selectors', async function () {
     assert.deepEqual(await getSelectors(dummyABI), [
       {
         name: 'transfer',

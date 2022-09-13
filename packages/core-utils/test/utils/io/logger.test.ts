@@ -3,24 +3,24 @@ import { deepEqual, equal } from 'assert/strict';
 
 import logger from '../../../src/utils/io/logger';
 
-describe('utils/io/prompter.js', () => {
+describe('utils/io/prompter.ts', function () {
   let logged: unknown[][] = [];
 
-  before('disable chalk color usage', () => {
+  before('disable chalk color usage', function () {
     chalk.level = 0;
   });
 
-  before('capture output', () => {
+  before('capture output', function () {
     logger._log = (...args) => {
       logged.push(args);
     };
   });
 
-  beforeEach('reset captured output', () => {
+  beforeEach('reset captured output', function () {
     logged = [];
   });
 
-  it('starts with the correct default props', () => {
+  it('starts with the correct default props', function () {
     equal(logger.quiet, false);
     equal(logger.debugging, false);
     equal(logger.prepend, '');
@@ -28,12 +28,12 @@ describe('utils/io/prompter.js', () => {
     equal(logger.boxing, false);
   });
 
-  describe('when quiet is not enabled', () => {
-    before('disable quiet', () => {
+  describe('when quiet is not enabled', function () {
+    before('disable quiet', function () {
       logger.quiet = false;
     });
 
-    it('prints logs to the console', () => {
+    it('prints logs to the console', function () {
       logger.log('hello');
       logger.info('hello');
       logger.notice('hello');
@@ -81,7 +81,7 @@ describe('utils/io/prompter.js', () => {
       ]);
     });
 
-    it('should log when debugging is enabled', () => {
+    it('should log when debugging is enabled', function () {
       logger.debugging = true;
       try {
         logger.debug('debugging!');
@@ -92,12 +92,12 @@ describe('utils/io/prompter.js', () => {
     });
   });
 
-  describe('when quiet is enabled', () => {
-    before('enable quiet', () => {
+  describe('when quiet is enabled', function () {
+    before('enable quiet', function () {
       logger.quiet = true;
     });
 
-    it('does not record any logs', () => {
+    it('does not record any logs', function () {
       logger.log('hello');
       logger.info('hello');
       logger.notice('hello');

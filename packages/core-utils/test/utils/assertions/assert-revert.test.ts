@@ -15,7 +15,7 @@ function mockRevertingTx(errorMsg = '') {
   }) as Promise<ethers.providers.TransactionResponse>;
 }
 
-describe('utils/assertions/assert-revert.js', function () {
+describe('utils/assertions/assert-revert.ts', function () {
   describe('#assertRevert', function () {
     it('resolves when correctly reverting', async function () {
       await assertRevert(mockRevertingTx(), '');

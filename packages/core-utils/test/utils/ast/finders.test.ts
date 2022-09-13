@@ -21,7 +21,7 @@ import {
 
 const astNodes = Object.values(asts) as SourceUnit[];
 
-describe('utils/ast/finders.js find AST artifacts', function () {
+describe('utils/ast/finders.ts find AST artifacts', function () {
   let sampleProject: ParsedContracts;
   let sampleProjectAstNodes: SourceUnit[];
 

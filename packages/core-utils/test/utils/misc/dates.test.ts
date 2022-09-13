@@ -7,7 +7,7 @@ import {
   getUnixTimestamp,
 } from '../../../src/utils/misc/dates';
 
-describe('utils/misc/dates.js', function () {
+describe('utils/misc/dates.ts', function () {
   describe('formatDate', function () {
     it('returns the date with the correct format', function () {
       const result = formatDate();

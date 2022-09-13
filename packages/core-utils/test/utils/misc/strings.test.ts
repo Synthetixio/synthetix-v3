@@ -2,7 +2,7 @@ import { equal } from 'assert/strict';
 
 import { capitalize } from '../../../src/utils/misc/strings';
 
-describe('utils/misc/strings.js', function () {
+describe('utils/misc/strings.ts', function () {
   it('returns the strings with the correct format', function () {
     equal(capitalize('someText'), 'SomeText');
     equal(capitalize('SomeText'), 'SomeText');

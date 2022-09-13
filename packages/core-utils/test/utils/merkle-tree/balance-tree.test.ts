@@ -7,10 +7,10 @@ function hexStringToBuffer(data: string) {
   return Buffer.from(data.substring(2), 'hex');
 }
 
-describe('utils/merkle-tree/balance-tree.js', function () {
+describe('utils/merkle-tree/balance-tree.ts', function () {
   let balances: { account: string; amount: ethers.BigNumberish }[], tree: BalanceTree;
 
-  before('build tree', () => {
+  before('build tree', function () {
     balances = [];
     for (let i = 0; i < 10; i++) {
       balances.push({
@@ -22,7 +22,7 @@ describe('utils/merkle-tree/balance-tree.js', function () {
     tree = new BalanceTree(balances);
   });
 
-  describe('when validating a proof against the right root', () => {
+  describe('when validating a proof against the right root', function () {
     it('is validated', function () {
       const proof = tree.getProof(balances[0].account, balances[0].amount);
       const root = tree.getHexRoot();
@@ -40,9 +40,9 @@ describe('utils/merkle-tree/balance-tree.js', function () {
     });
   });
 
-  describe('when validating a proof against a wrong root', () => {
+  describe('when validating a proof against a wrong root', function () {
     let wrongTree: BalanceTree;
-    before('build wrong tree', () => {
+    before('build wrong tree', function () {
       const newBalances = [];
       for (let i = 0; i < 10; i++) {
         newBalances.push({
@@ -70,7 +70,7 @@ describe('utils/merkle-tree/balance-tree.js', function () {
     });
   });
 
-  describe('when validating a proof from another element', () => {
+  describe('when validating a proof from another element', function () {
     it('is rejected', function () {
       const proof = tree.getProof(balances[0].account, balances[0].amount);
       const root = tree.getHexRoot();

@@ -8,12 +8,12 @@ function hexStringToBuffer(data: string) {
   return Buffer.from(data.substring(2), 'hex');
 }
 
-describe('utils/merkle-tree/parse-balance-tree.js', function () {
-  describe('when parsing vaild input data', () => {
+describe('utils/merkle-tree/parse-balance-tree.ts', function () {
+  describe('when parsing vaild input data', function () {
     let inputData: { [address: string]: ethers.BigNumberish },
       parsedTree: ReturnType<typeof parseBalanceMap>;
 
-    before('build tree', () => {
+    before('build tree', function () {
       inputData = {};
       for (let i = 0; i < 10; i++) {
         inputData[ethers.Wallet.createRandom().address] = '' + (i + 1);
@@ -22,7 +22,7 @@ describe('utils/merkle-tree/parse-balance-tree.js', function () {
       parsedTree = parseBalanceMap(inputData);
     });
 
-    it('gets a parsed tree with the right format', () => {
+    it('gets a parsed tree with the right format', function () {
       ok(typeof parsedTree === 'object');
       ok(typeof parsedTree.merkleRoot === 'string');
 
@@ -35,7 +35,7 @@ describe('utils/merkle-tree/parse-balance-tree.js', function () {
       ok(typeof parsedTree.claims[key].proof[0] === 'string');
     });
 
-    it('gets a valid proof for the tree root', () => {
+    it('gets a valid proof for the tree root', function () {
       const account = Object.keys(parsedTree.claims)[0];
 
       equal(
@@ -50,10 +50,10 @@ describe('utils/merkle-tree/parse-balance-tree.js', function () {
     });
   });
 
-  describe('when attempting to parse an invalid address', () => {
+  describe('when attempting to parse an invalid address', function () {
     let inputData: { [address: string]: ethers.BigNumberish };
 
-    before('build input data', () => {
+    before('build input data', function () {
       inputData = {};
       for (let i = 0; i < 10; i++) {
         inputData[ethers.Wallet.createRandom().address] = '' + (i + 1);
@@ -61,16 +61,16 @@ describe('utils/merkle-tree/parse-balance-tree.js', function () {
       inputData['0x00112233'] = '12';
     });
 
-    it('throws an arror', () => {
+    it('throws an arror', function () {
       throws(() => {
         parseBalanceMap(inputData);
       }, 'Error: Found invalid address: 0x00112233');
     });
   });
-  describe('when attempting to parse an zero balance', () => {
+  describe('when attempting to parse an zero balance', function () {
     let inputData: { [address: string]: ethers.BigNumberish };
 
-    before('build input data', () => {
+    before('build input data', function () {
       inputData = {};
       for (let i = 0; i < 10; i++) {
         inputData[ethers.Wallet.createRandom().address] = '' + (i + 1);
@@ -78,7 +78,7 @@ describe('utils/merkle-tree/parse-balance-tree.js', function () {
       inputData[ethers.Wallet.createRandom().address] = '0';
     });
 
-    it('throws an arror', () => {
+    it('throws an arror', function () {
       throws(() => {
         parseBalanceMap(inputData);
       }, 'Error: Invalid amount for account: ');

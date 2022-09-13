@@ -5,7 +5,7 @@ import { getBranch, getCommit } from '../../../src/utils/misc/git';
 
 const execSync = (cmd: string) => child_process.execSync(cmd).toString().trim();
 
-describe('utils/misc/git.js', function () {
+describe('utils/misc/git.ts', function () {
   it('can retrieve the current commit', function () {
     assert.equal(getCommit(), execSync('git rev-parse HEAD'));
   });

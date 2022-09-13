@@ -3,7 +3,7 @@ import { equal } from 'assert/strict';
 import { clone } from '../../../src/utils/misc/clone';
 import { compareStorageStructs } from '../../../src/utils/ast/comparator';
 
-describe('utils/ast/comparator.js compareStorageStructs', function () {
+describe('utils/ast/comparator.ts compareStorageStructs', function () {
   const previousStructsMap = [
     {
       contract: {
