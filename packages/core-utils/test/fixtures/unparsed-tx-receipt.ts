@@ -1,5 +1,8 @@
-/* eslint-disable */
-module.exports = {
+/* eslint max-len: 0 */
+
+import { ethers } from 'ethers';
+
+export default {
   to: '0x09635F643e140090A9A8Dcd712eD6285858ceBef',
   from: '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266',
   contractAddress: null,
@@ -54,4 +57,4 @@ module.exports = {
       eventSignature: 'ValueSet(address,uint256)',
     },
   ],
-};
+} as unknown as ethers.providers.TransactionReceipt;

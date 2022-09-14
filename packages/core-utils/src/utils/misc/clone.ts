@@ -1,3 +1,3 @@
-export function clone(objectToClone: any) {
+export function clone<T>(objectToClone: T): T {
   return JSON.parse(JSON.stringify(objectToClone));
 }

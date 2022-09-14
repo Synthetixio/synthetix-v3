@@ -1,10 +1,16 @@
 // based on https://github.com/Uniswap/merkle-distributor/tree/master/src
-import { BigNumber, utils } from 'ethers';
+import { BigNumber, BigNumberish, utils } from 'ethers';
+
 import BalanceTree from './balance-tree';
 
 const { isAddress, getAddress } = utils;
 
-export function parseBalanceMap(balances: any) {
+interface Balance {
+  address: string;
+  balance: string;
+}
+
+export function parseBalanceMap(balances: Balance[] | { [addr: string]: BigNumberish }) {
   // if balances are in an old format, process them
   /* eslint-disable indent */
   const balancesInNewFormat = Array.isArray(balances)

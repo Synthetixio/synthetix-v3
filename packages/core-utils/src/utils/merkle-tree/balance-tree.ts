@@ -1,7 +1,7 @@
-import MerkleTree from './merkle-tree';
-
 // based on https://github.com/Uniswap/merkle-distributor/tree/master/src
 import { ethers, utils } from 'ethers';
+
+import MerkleTree from './merkle-tree';
 
 export default class BalanceTree {
   tree: MerkleTree;
@@ -22,8 +22,9 @@ export default class BalanceTree {
     root: Buffer
   ) {
     let pair = BalanceTree.toNode(account, amount);
+
     for (const item of proof) {
-      pair = MerkleTree.combinedHash(pair, item as any); // TODO
+      pair = MerkleTree.combinedHash(pair, item);
     }
 
     return pair.equals(root);

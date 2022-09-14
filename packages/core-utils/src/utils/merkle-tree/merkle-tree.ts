@@ -1,8 +1,13 @@
 import { bufferToHex, keccak256 } from 'ethereumjs-util';
 
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
+interface BufferArray extends Array<Buffer> {}
+
+type BufferTree = Buffer | BufferArray;
+
 export default class MerkleTree {
   elements: Buffer[];
-  layers: any[];
+  layers: BufferTree[];
   bufferElementPositionIndex: { [key: string]: number };
 
   constructor(elements: Buffer[]) {
@@ -21,24 +26,24 @@ export default class MerkleTree {
     this.layers = this.getLayers(this.elements);
   }
 
-  getLayers(elements: Buffer[]) {
+  getLayers(elements: BufferTree) {
     if (elements.length === 0) {
       throw new Error('empty tree');
     }
 
-    const layers = [];
+    const layers: BufferTree[] = [];
     layers.push(elements);
 
     // Get next layer until we reach the root
     while (layers[layers.length - 1].length > 1) {
-      layers.push(this.getNextLayer(layers[layers.length - 1]));
+      const lastLayer = layers[layers.length - 1];
+      layers.push(this.getNextLayer(lastLayer as Buffer[]));
     }
 
     return layers;
   }
 
   getNextLayer(elements: Buffer[]) {
-    // eslint-disable-next-line max-params
     return elements.reduce((layer, el, idx, arr) => {
       if (idx % 2 === 0) {
         // Hash the current element with its pair element
@@ -51,17 +56,20 @@ export default class MerkleTree {
 
   static combinedHash(first: Buffer | null, second: Buffer | null) {
     if (!first) {
-      return second!;
+      if (!second) throw new Error('Missing second buffer');
+      return second;
     }
+
     if (!second) {
-      return first!;
+      if (!first) throw new Error('Missing first buffer');
+      return first;
     }
 
     return keccak256(MerkleTree._sortAndConcat(first, second));
   }
 
   getRoot() {
-    return this.layers[this.layers.length - 1][0];
+    return this.layers[this.layers.length - 1][0] as Buffer;
   }
 
   getHexRoot() {
@@ -75,22 +83,21 @@ export default class MerkleTree {
       throw new Error('Element does not exist in Merkle tree');
     }
 
-    return this.layers.reduce((proof, layer) => {
-      const pairElement = MerkleTree._getPairElement(idx, layer);
+    return this.layers.reduce((proof: Buffer[], layer) => {
+      const pairElement = MerkleTree._getPairElement(idx, layer as Buffer);
 
       if (pairElement) {
-        proof.push(pairElement);
+        proof.push(pairElement as unknown as Buffer);
       }
 
       idx = Math.floor(idx / 2);
 
       return proof;
-    }, []);
+    }, [] as Buffer[]);
   }
 
   getHexProof(el: Buffer) {
     const proof = this.getProof(el);
-
     return MerkleTree._bufArrToHexArr(proof);
   }
 

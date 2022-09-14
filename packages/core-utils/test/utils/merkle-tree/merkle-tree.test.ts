@@ -3,11 +3,11 @@ import { keccak256 } from 'ethereumjs-util';
 
 import MerkleTree from '../../../src/utils/merkle-tree/merkle-tree';
 
-describe('utils/merkle-tree/merkle-tree.js', function () {
+describe('utils/merkle-tree/merkle-tree.ts', function () {
   describe('basic tree', function () {
     let elements: Buffer[], root: Buffer, tree: MerkleTree;
 
-    before('create the smallest tree', () => {
+    before('create the smallest tree', function () {
       elements = [];
       elements.push(Buffer.from('1'));
       elements.push(Buffer.from('2'));
@@ -37,7 +37,7 @@ describe('utils/merkle-tree/merkle-tree.js', function () {
   describe('large tree', function () {
     let elements: Buffer[], tree: MerkleTree;
 
-    before('create a large tree', () => {
+    before('create a large tree', function () {
       elements = [];
       for (let i = 1; i < 100000; i++) {
         elements.push(Buffer.from('' + i));
@@ -76,7 +76,7 @@ describe('utils/merkle-tree/merkle-tree.js', function () {
   });
 
   describe('when creating an empty tree', function () {
-    it('throws an error', () => {
+    it('throws an error', function () {
       throws(() => {
         new MerkleTree([]);
       }, 'Error: empty tree');
@@ -86,14 +86,14 @@ describe('utils/merkle-tree/merkle-tree.js', function () {
   describe('when attempting to get the proof of an invalid element', function () {
     let elements: Buffer[], tree: MerkleTree;
 
-    before('create the smallest tree', () => {
+    before('create the smallest tree', function () {
       elements = [];
       elements.push(Buffer.from('1'));
       elements.push(Buffer.from('2'));
       tree = new MerkleTree(elements);
     });
 
-    it('throws an error', () => {
+    it('throws an error', function () {
       throws(() => {
         tree.getProof(Buffer.from('3'));
       }, 'Error: Element does not exist in Merkle tree');
@@ -101,7 +101,7 @@ describe('utils/merkle-tree/merkle-tree.js', function () {
   });
 
   describe('when combining hashes', function () {
-    it('combines two hashes', () => {
+    it('combines two hashes', function () {
       const hash1 = Buffer.from('1');
       const hash2 = Buffer.from('2');
 

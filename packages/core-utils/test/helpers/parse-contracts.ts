@@ -1,8 +1,11 @@
 import path from 'path';
+import { SourceUnit } from 'solidity-ast';
 import { TASK_COMPILE } from 'hardhat/builtin-tasks/task-names';
 import { resetHardhatContext } from 'hardhat/plugins-testing';
 
-const cache: { [path: string]: any } = {};
+const cache: { [path: string]: { asts?: { [key: string]: SourceUnit } } } = {};
+
+export type ParsedContracts = Awaited<ReturnType<typeof parseContracts>>;
 
 /**
  * Helper function to be able to get the ASTs of a given hardhat project, and
@@ -27,7 +30,7 @@ export default async function parseContracts(envPath: string) {
 
   const fullyQualifiedNames = await hre.artifacts.getAllFullyQualifiedNames();
 
-  const asts: { [key: string]: any } = {};
+  const asts: { [key: string]: SourceUnit } = {};
 
   for (const fullyQualifiedName of fullyQualifiedNames) {
     const buildInfo = await hre.artifacts.getBuildInfo(fullyQualifiedName);

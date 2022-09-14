@@ -2,7 +2,7 @@ import { equal } from 'assert/strict';
 
 import prompter from '../../../src/utils/io/prompter';
 
-describe('utils/io/prompter.js', function () {
+describe('utils/io/prompter.ts', function () {
   describe('when noConfirm is enabled', function () {
     before('enable noCofirm', function () {
       prompter.noConfirm = true;
@@ -29,22 +29,22 @@ describe('utils/io/prompter.js', function () {
 
     describe('#ask', function () {
       it('returns always the users response', async function () {
-        prompter._prompt = (async () => ({ confirmation: true })) as any;
+        prompter._prompt = async () => ({ confirmation: true });
         equal(await prompter.ask('something?'), true);
 
-        prompter._prompt = (async () => ({ confirmation: false })) as any;
+        prompter._prompt = async () => ({ confirmation: false });
         equal(await prompter.ask('another something?'), false);
       });
     });
 
     describe('#confirmAction', function () {
       it('does not halt execution when responding positively', async function () {
-        prompter._prompt = (async () => ({ confirmation: true })) as any;
+        prompter._prompt = async () => ({ confirmation: true });
         await prompter.confirmAction('something?');
       });
 
       it('halts execution when responding negatively', async function () {
-        prompter._prompt = (async () => ({ confirmation: false })) as any;
+        prompter._prompt = async () => ({ confirmation: false });
 
         let exited = false;
         const exitCache = process.exit;

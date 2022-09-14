@@ -22,7 +22,7 @@ function not(
   }
 }
 
-describe('utils/assertions/assert-bignumber.js', function () {
+describe('utils/assertions/assert-bignumber.ts', function () {
   it('correctly coerces strings and numbers to BigNumber', function () {
     bn.equal(BigNumber.from(12), BigNumber.from(12));
     bn.equal(12, BigNumber.from(12));

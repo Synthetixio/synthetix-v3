@@ -1,11 +1,10 @@
 import { equal } from 'assert/strict';
 
-import { ContractsStruct } from '../../../src/utils/ast/storage-struct';
 import { clone } from '../../../src/utils/misc/clone';
 import { compareStorageStructs } from '../../../src/utils/ast/comparator';
 
-describe('utils/ast/comparator.js compareStorageStructs', function () {
-  const previousStructsMap: ContractsStruct[] = [
+describe('utils/ast/comparator.ts compareStorageStructs', function () {
+  const previousStructsMap = [
     {
       contract: {
         name: 'GlobalNamespace',
@@ -74,7 +73,7 @@ describe('utils/ast/comparator.js compareStorageStructs', function () {
         ],
       },
     },
-  ] as any;
+  ];
 
   describe('compareStorageStructs no updates', function () {
     it('detects no changes when both structMaps are equal', function () {
@@ -82,7 +81,7 @@ describe('utils/ast/comparator.js compareStorageStructs', function () {
       const result = compareStorageStructs({
         previousStructsMap,
         currentStructsMap,
-      });
+      } as Parameters<typeof compareStorageStructs>[0]);
       equal(result.appends.length, 0);
       equal(result.modifications.length, 0);
       equal(result.removals.length, 0);
@@ -114,7 +113,7 @@ describe('utils/ast/comparator.js compareStorageStructs', function () {
       const result = compareStorageStructs({
         previousStructsMap,
         currentStructsMap,
-      });
+      } as Parameters<typeof compareStorageStructs>[0]);
       equal(result.appends.length, 1);
       equal(result.appends[0].completeStruct, true);
       equal(result.modifications.length, 0);
@@ -130,7 +129,7 @@ describe('utils/ast/comparator.js compareStorageStructs', function () {
       const result = compareStorageStructs({
         previousStructsMap,
         currentStructsMap,
-      });
+      } as Parameters<typeof compareStorageStructs>[0]);
       equal(result.appends.length, 1);
       equal(result.modifications.length, 0);
       equal(result.removals.length, 0);
@@ -145,7 +144,7 @@ describe('utils/ast/comparator.js compareStorageStructs', function () {
       const result = compareStorageStructs({
         previousStructsMap,
         currentStructsMap,
-      });
+      } as Parameters<typeof compareStorageStructs>[0]);
       equal(result.appends.length, 1);
       // two since two members changed the index
       equal(result.modifications.length, 2);
@@ -160,7 +159,7 @@ describe('utils/ast/comparator.js compareStorageStructs', function () {
       const result = compareStorageStructs({
         previousStructsMap,
         currentStructsMap,
-      });
+      } as Parameters<typeof compareStorageStructs>[0]);
       equal(result.appends.length, 0);
       equal(result.modifications.length, 0);
       equal(result.removals.length, 1);
@@ -172,7 +171,7 @@ describe('utils/ast/comparator.js compareStorageStructs', function () {
       const result = compareStorageStructs({
         previousStructsMap,
         currentStructsMap,
-      });
+      } as Parameters<typeof compareStorageStructs>[0]);
       equal(result.appends.length, 0);
       equal(result.modifications.length, 0);
       equal(result.removals.length, 1);
@@ -186,7 +185,7 @@ describe('utils/ast/comparator.js compareStorageStructs', function () {
       const result = compareStorageStructs({
         previousStructsMap,
         currentStructsMap,
-      });
+      } as Parameters<typeof compareStorageStructs>[0]);
       equal(result.appends.length, 0);
       equal(result.modifications.length, 1);
       equal(result.removals.length, 0);
@@ -199,7 +198,7 @@ describe('utils/ast/comparator.js compareStorageStructs', function () {
       const result = compareStorageStructs({
         previousStructsMap,
         currentStructsMap,
-      });
+      } as Parameters<typeof compareStorageStructs>[0]);
       equal(result.appends.length, 0);
       equal(result.modifications.length, 1);
       equal(result.removals.length, 0);
