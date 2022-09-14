@@ -46,7 +46,8 @@
     "check-packages"
   ],
   "workspaces": [
-    "packages/*"
+    "packages/*",
+    "markets/*"
   ],
   "engines": {
     "node": "16.8.0",
