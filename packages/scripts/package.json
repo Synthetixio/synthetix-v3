@@ -12,6 +12,6 @@
     "hardhat": "2.9.3",
     "inquirer": "8.2.4",
     "sort-keys": "4.2.0",
-    "synthetix": "2.73.1"
+    "synthetix": "2.76.1"
   }
 }

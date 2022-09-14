@@ -13,10 +13,10 @@ const relativePath = require('@synthetixio/core-js/utils/misc/relative-path');
 const { SynthetixDebtShare } = snx.getSource();
 
 task(
-  'get-users-debts',
+  'governance:get-users-debts',
   'Get all the addresses with their debts querying to the SynthetixDebtShare contract'
 )
-  .addParam('providerUrl', 'RPC Provider url to use.')
+  .addOptionalParam('providerUrl', 'RPC Provider url to use.')
   .addOptionalParam(
     'address',
     'SynthetixDebtShare contract address',
@@ -29,20 +29,23 @@ task(
     '14169250',
     types.int
   )
-  .addOptionalParam('untilBlock', 'Block until which to fetch data. Defaults to latest.')
+  .addOptionalParam(
+    'untilBlock',
+    'Block until which to fetch data. Defaults to latest emitted FeePeriodClosed event blockNumber.'
+  )
   .setAction(async ({ address, fromBlock, untilBlock, providerUrl }, hre) => {
     const provider = providerUrl
       ? new hre.ethers.providers.JsonRpcProvider(providerUrl)
       : hre.ethers.provider;
 
     if (!untilBlock) {
-      untilBlock = await provider.getBlockNumber();
+      untilBlock = await hre.run('governance:get-fee-period-close');
     }
 
     const filename = path.resolve(__dirname, '..', 'data', `${untilBlock}-users-debts.json`);
 
     logger.boxStart();
-    logger.log(chalk.gray(`      Provider URL: ${provider.connection.url}`));
+    logger.log(chalk.gray(`      Provider URL: ${hre.network.config.url}`));
     logger.log(chalk.gray(`  Deployed Address: ${address}`));
     logger.log(chalk.gray(`        From Block: ${fromBlock}`));
     logger.log(chalk.gray(`       Until block: ${untilBlock}`));
@@ -138,7 +141,7 @@ async function getDebts({ filename, addresses, Contract, untilBlock }) {
       logger.error(`Error processing ${address}:`);
       logger.error(err);
     }
-  }, 15);
+  }, 5);
 
   for (const address of addresses) {
     queue.push(address);

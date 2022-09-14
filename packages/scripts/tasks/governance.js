@@ -1,6 +1,8 @@
+const fs = require('fs');
 const { task } = require('hardhat/config');
 const inquirer = require('inquirer');
 const chalk = require('chalk');
+const { parseBalanceMap } = require('@synthetixio/core-js/utils/merkle-tree/parse-balance-tree');
 const types = require('@synthetixio/core-js/utils/hardhat/argument-types');
 const { formatDate } = require('@synthetixio/core-js/utils/misc/dates');
 const logger = require('@synthetixio/core-js/utils/io/logger');
@@ -204,6 +206,61 @@ task('governance:evaluate-election', 'Evaluate election of given council')
     const members = await Proxy.getCouncilMembers();
     logger.log(chalk.gray(`Current council members (${members.length}):`));
     members.forEach((address) => logger.info(address));
+  });
+
+task(
+  'governance:get-fee-period-close',
+  'Get the block number of the latest fee period close'
+).setAction(async (_, hre) => {
+  if (hre.network.name !== 'mainnet') {
+    throw new Error('This method can only be queried to mainnet');
+  }
+
+  const { address } = require('synthetix').getTarget({
+    network: 'mainnet',
+    contract: 'SynthetixBridgeToOptimism',
+  });
+
+  const SynthetixBridgeToOptimism = await hre.ethers.getContractAt(
+    [
+      {
+        anonymous: false,
+        inputs: [
+          { indexed: false, internalType: 'uint256', name: 'snxBackedDebt', type: 'uint256' },
+          { indexed: false, internalType: 'uint256', name: 'totalDebtShares', type: 'uint256' },
+        ],
+        name: 'FeePeriodClosed',
+        type: 'event',
+      },
+    ],
+    address
+  );
+
+  const events = await SynthetixBridgeToOptimism.queryFilter('FeePeriodClosed');
+
+  if (!Array.isArray(events) || events.length === 0) {
+    throw new Error('No events found with topic FeePeriodClosed');
+  }
+
+  const evt = events[events.length - 1];
+
+  logger.info('==== FeePeriodClosed ====');
+  logger.info(`eventSignature: ${evt.eventSignature}`);
+  logger.info(`contractAddress: ${evt.address}`);
+  logger.info(`blockNumber: ${evt.blockNumber}`);
+  logger.info('=========================');
+
+  return evt.blockNumber;
+});
+
+task('governance:generate-merkle-tree-from-debts')
+  .addPositionalParam('file', 'Debts json file location')
+  .setAction(async ({ file }) => {
+    const content = JSON.parse(fs.readFileSync(file).toString());
+
+    const tree = parseBalanceMap(content.debts);
+
+    console.log(JSON.stringify(tree, null, 2));
   });
 
 async function initCouncils(hre, instance) {
