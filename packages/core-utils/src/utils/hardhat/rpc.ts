@@ -1,7 +1,7 @@
 import { ethers } from 'ethers';
 
 export async function takeSnapshot(provider: ethers.providers.JsonRpcProvider) {
-  const snapshotId = await provider.send('evm_snapshot', []);
+  const snapshotId = (await provider.send('evm_snapshot', [])) as string;
 
   await mineBlock(provider);
 

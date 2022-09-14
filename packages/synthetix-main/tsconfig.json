@@ -1,12 +1,5 @@
 {
   "extends": "../../tsconfig.json",
-  "include": [
-    "hardhat.config.ts",
-    "scripts/deploy.js",
-    "docs/**/*.ts",
-    "test/**/*.ts",
-    "test/**/*.js"
-  ],
   "compilerOptions": {
     "noEmit": true
   }

@@ -16,7 +16,7 @@ module.exports = {
   parserOptions: {
     ecmaVersion: 12,
     tsconfigRootDir: __dirname,
-    project: ['./packages/*/tsconfig.json', './packages/*/tsconfig.eslint.json'],
+    project: ['./tsconfig.eslint.json'],
   },
   ignorePatterns: ['.eslintrc.js'],
   rules: {
