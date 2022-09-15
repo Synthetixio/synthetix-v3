@@ -15,6 +15,17 @@ contract ElectionSchedule is ElectionBase {
         _;
     }
 
+    /// @dev Only allow to run in any of the given two periods
+    modifier onlyInPeriods(ElectionPeriod period1, ElectionPeriod period2) {
+        ElectionPeriod currentPeriod = _getCurrentPeriod();
+
+        if (currentPeriod != period1 && currentPeriod != period2) {
+            revert NotCallableInCurrentPeriod();
+        }
+
+        _;
+    }
+
     /// @dev Determines the current period type according to the current time and the epoch's dates
     function _getCurrentPeriod() internal view returns (ElectionPeriod) {
         if (!_electionStore().initialized) {

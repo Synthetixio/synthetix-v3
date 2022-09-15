@@ -157,7 +157,7 @@ contract ElectionModule is
         external
         override
         onlyOwner
-        onlyInPeriod(ElectionPeriod.Administration)
+        onlyInPeriods(ElectionPeriod.Administration, ElectionPeriod.Nomination)
     {
         if (newSeatCount == 0) revert InvalidElectionSettings();
 

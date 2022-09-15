@@ -73,6 +73,11 @@ describe('ElectionModule (evaluate)', () => {
         await ElectionModule.connect(candidate5).nominate();
       });
 
+      it('should allow to call setNextEpochSeatCount', async function () {
+        const currentSeatCount = await ElectionModule.getNextEpochSeatCount();
+        await ElectionModule.connect(candidate1).setNextEpochSeatCount(currentSeatCount);
+      });
+
       it('shows that nominations exist', async function () {
         assertBn.equal((await ElectionModule.getNominees()).length, 5);
       });
@@ -110,6 +115,13 @@ describe('ElectionModule (evaluate)', () => {
           await ElectionModule.connect(voter10).cast(ballot3.candidates);
         });
 
+        it('should not allow to call setNextEpochSeatCount', async function () {
+          await assertRevert(
+            ElectionModule.connect(candidate1).setNextEpochSeatCount(3),
+            'NotCallableInCurrentPeriod'
+          );
+        });
+
         it('shows that ballots were registered', async function () {
           assertBn.equal(await ElectionModule.getBallotVotes(ballot1.id), 4);
           assertBn.equal(await ElectionModule.getBallotVotes(ballot2.id), 1);
@@ -119,6 +131,13 @@ describe('ElectionModule (evaluate)', () => {
         describe('when entering the evaluation period', function () {
           before('fast forward', async function () {
             await fastForwardTo(await ElectionModule.getEpochEndDate(), ethers.provider);
+          });
+
+          it('should not allow to call setNextEpochSeatCount', async function () {
+            await assertRevert(
+              ElectionModule.connect(candidate1).setNextEpochSeatCount(3),
+              'NotCallableInCurrentPeriod'
+            );
           });
 
           it('shows that the current period is Evaluation', async function () {
