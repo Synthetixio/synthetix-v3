@@ -146,11 +146,9 @@ describe('ElectionModule (settings)', () => {
               await restoreSnapshot(snapshotId, ethers.provider);
             });
 
-            it('reverts', async function () {
-              await assertRevert(
-                ElectionModule.setNextEpochSeatCount(42),
-                'NotCallableInCurrentPeriod'
-              );
+            it('allows to update', async function () {
+              const currentSeatCount = await ElectionModule.getNextEpochSeatCount();
+              await ElectionModule.setNextEpochSeatCount(currentSeatCount);
             });
           });
 

@@ -36,7 +36,7 @@ module.exports = {
       accounts: process.env.DEPLOYER_PRIVATE_KEY ? [process.env.DEPLOYER_PRIVATE_KEY] : [],
     },
     ['mainnet']: {
-      url: process.env.NETWORK_ENDPOINT,
+      url: process.env.NETWORK_ENDPOINT || 'http://127.0.0.1:8545/',
       accounts: process.env.DEPLOYER_PRIVATE_KEY ? [process.env.DEPLOYER_PRIVATE_KEY] : [],
     },
   },

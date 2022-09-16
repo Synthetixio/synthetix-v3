@@ -13,7 +13,6 @@ jobs:
             core-js,
             core-modules,
             deployer,
-            synthetix-main,
             spartan-council,
             grants-council,
             treasury-council,
