@@ -7,12 +7,12 @@ import "../interfaces/external/IRewardDistributor.sol";
 
 import "../utils/SharesLibrary.sol";
 
-contract PoolVaultStorage {
-    struct PoolVaultStore {
+contract VaultStorage {
+    struct VaultStore {
         /// @dev collaterals which are currently deposited in the pool
         mapping(uint256 => SetUtil.AddressSet) poolCollateralTypes;
         /// @dev pool vaults (per collateral)
-        mapping(uint256 => mapping(address => VaultData)) poolVaults;
+        mapping(uint256 => mapping(address => VaultData)) vaults;
     }
 
     /// @notice represents the data in a vault which is valid only during the operation of a liquidation cycle
@@ -53,9 +53,9 @@ contract PoolVaultStorage {
         uint128 pendingSend;
     }
 
-    function _poolVaultStore() internal pure returns (PoolVaultStore storage store) {
+    function _vaultStore() internal pure returns (VaultStore storage store) {
         assembly {
-            // bytes32(uint(keccak256("io.synthetix.snx.poolvault")) - 1)
+            // bytes32(uint(keccak256("io.synthetix.snx.vault")) - 1)
             store.slot := 0xb2564d94a39cc75e0cf19479aee0e393bdff4e7a76990446a22fe065e062266a
         }
     }

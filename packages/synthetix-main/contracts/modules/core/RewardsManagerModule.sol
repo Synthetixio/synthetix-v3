@@ -11,12 +11,12 @@ import "../../mixins/PoolMixin.sol";
 
 import "../../utils/SharesLibrary.sol";
 
-import "../../storage/PoolVaultStorage.sol";
+import "../../storage/VaultStorage.sol";
 import "../../interfaces/IRewardsManagerModule.sol";
 
 contract RewardsManagerModule is
     IRewardsManagerModule,
-    PoolVaultStorage,
+    VaultStorage,
     AccountRBACMixin,
     OwnableMixin,
     AssociatedSystemsMixin,
@@ -47,7 +47,7 @@ contract RewardsManagerModule is
             revert InvalidParameters("index", "too large");
         }
 
-        VaultData storage vaultData = _poolVaultStore().poolVaults[poolId][collateralType];
+        VaultData storage vaultData = _vaultStore().vaults[poolId][collateralType];
         VaultEpochData storage epochData = vaultData.epochData[vaultData.epoch];
 
         RewardDistribution[] storage dists = vaultData.rewards;
@@ -85,7 +85,7 @@ contract RewardsManagerModule is
         address collateralType,
         uint accountId
     ) external override returns (uint[] memory) {
-        VaultData storage vaultData = _poolVaultStore().poolVaults[poolId][collateralType];
+        VaultData storage vaultData = _vaultStore().vaults[poolId][collateralType];
         VaultEpochData storage epochData = vaultData.epochData[vaultData.epoch];
         return _updateAvailableRewards(epochData, vaultData.rewards, accountId);
     }
@@ -104,7 +104,7 @@ contract RewardsManagerModule is
         address collateralType,
         uint accountId
     ) external override returns (uint[] memory) {
-        VaultData storage vaultData = _poolVaultStore().poolVaults[poolId][collateralType];
+        VaultData storage vaultData = _vaultStore().vaults[poolId][collateralType];
         VaultEpochData storage epochData = vaultData.epochData[vaultData.epoch];
         uint[] memory rewards = _updateAvailableRewards(epochData, vaultData.rewards, accountId);
 
@@ -121,7 +121,7 @@ contract RewardsManagerModule is
     }
 
     function _getCurrentRewardAccumulation(uint poolId, address collateralType) internal view returns (uint[] memory) {
-        VaultData storage vaultData = _poolVaultStore().poolVaults[poolId][collateralType];
+        VaultData storage vaultData = _vaultStore().vaults[poolId][collateralType];
         VaultEpochData storage epochData = vaultData.epochData[vaultData.epoch];
         RewardDistribution[] storage dists = vaultData.rewards;
 
