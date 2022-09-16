@@ -60,7 +60,7 @@ contract LiquidationsModule is
 
         debtLiquidated = uint(rawDebt);
 
-        VaultData storage vaultData = _poolVaultStore().poolVaults[poolId][collateralType];
+        VaultData storage vaultData = _vaultStore().vaults[poolId][collateralType];
         VaultEpochData storage epochData = vaultData.epochData[vaultData.epoch];
 
         uint oldShares = epochData.debtDist.getActorShares(bytes32(accountId));
@@ -120,7 +120,7 @@ contract LiquidationsModule is
             revert InvalidParameters("maxUsd", "must be higher than 0");
         }
 
-        VaultData storage vaultData = _poolVaultStore().poolVaults[poolId][collateralType];
+        VaultData storage vaultData = _vaultStore().vaults[poolId][collateralType];
 
         int rawVaultDebt = _vaultDebt(poolId, collateralType);
 
@@ -209,7 +209,7 @@ contract LiquidationsModule is
         address collateralType,
         uint liquidatedShares
     ) internal {
-        VaultData storage vaultData = _poolVaultStore().poolVaults[poolId][collateralType];
+        VaultData storage vaultData = _vaultStore().vaults[poolId][collateralType];
         VaultEpochData storage epochData = vaultData.epochData[vaultData.epoch];
 
         uint oldTotalShares = liquidatedShares + epochData.debtDist.totalShares;
