@@ -6,7 +6,7 @@
     "nominationPeriodStartDate": "2022-09-10",
     "votingPeriodStartDate": "2022-09-17",
     "epochEndDate": "2022-10-01",
-    "nextEpochSeatCount": "3",
+    "nextEpochSeatCount": "5",
     "epochIndex": "1",
     "currentPeriod": "1",
     "councilMembers": [
