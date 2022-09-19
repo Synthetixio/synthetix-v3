@@ -53,7 +53,7 @@ contract MarketManagerModule is
 
     function getMarketReportedDebt(uint marketId) external view override returns (uint) {
         MarketData storage marketData = _marketManagerStore().markets[marketId];
-        return _getReportedDebt(marketData);
+        return _getReportedDebt(marketId, marketData);
     }
 
     function getMarketCollateral(uint marketId) external view override returns (uint) {
@@ -64,12 +64,12 @@ contract MarketManagerModule is
 
     function getMarketTotalBalance(uint marketId) external view override returns (int) {
         MarketData storage marketData = _marketManagerStore().markets[marketId];
-        return _totalBalance(marketData);
+        return _totalBalance(marketId, marketData);
     }
 
     function getMarketDebtPerShare(uint marketId) external override returns (int) {
         MarketData storage marketData = _marketManagerStore().markets[marketId];
-        _distributeMarket(marketData, 999999999);
+        _distributeMarket(marketId, marketData, 999999999);
 
         return marketData.debtDist.valuePerShare / 1e9;
     }

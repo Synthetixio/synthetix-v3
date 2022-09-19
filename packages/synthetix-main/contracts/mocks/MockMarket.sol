@@ -40,7 +40,7 @@ contract MockMarket is IMarket {
         _reportedDebt = newReportedDebt;
     }
 
-    function reportedDebt() external view override returns (uint) {
+    function reportedDebt(uint marketId) external view override returns (uint) {
         return _reportedDebt;
     }
 
