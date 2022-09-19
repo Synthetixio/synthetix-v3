@@ -22,19 +22,16 @@ contract MarketManagerModule is
 {
     bytes32 private constant _USD_TOKEN = "USDToken";
 
-    error MarketAlreadyRegistered(address market, uint existingMarketId);
     error NotEnoughLiquidity(uint marketId, uint amount);
     error MarketDepositNotApproved(address market, address from, uint requestedAmount, uint approvedAmount);
 
     function registerMarket(address market) external override returns (uint marketId) {
-        if (_marketManagerStore().marketIds[market] > 0)
-            revert MarketAlreadyRegistered(market, _marketManagerStore().marketIds[market]);
         uint lastMarketId = _marketManagerStore().lastMarketId++;
         marketId = lastMarketId + 1;
 
         // Can we verify that `market` conforms to the IMarket interface here? (i.e. has a `balance()` function?)
 
-        _marketManagerStore().marketIds[market] = marketId;
+        _marketManagerStore().marketIdsByAddress[market].push(marketId);
         _marketManagerStore().markets[marketId].marketAddress = market;
 
         emit MarketRegistered(market, marketId);
