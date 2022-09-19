@@ -114,7 +114,8 @@ contract MarketManagerModule is
 
         if (msg.sender != marketData.marketAddress) revert AccessError.Unauthorized(msg.sender);
 
-        if (amount > marketData.capacity) revert NotEnoughLiquidity(marketId, amount);
+        if (amount > marketData.capacity + _depositedCollateralValue(marketData))
+            revert NotEnoughLiquidity(marketId, amount);
 
         // Adjust accounting
         marketData.capacity -= uint128(amount);

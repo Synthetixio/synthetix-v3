@@ -3,11 +3,11 @@ pragma solidity ^0.8.0;
 
 import "../utils/SharesLibrary.sol";
 import "../interfaces/external/IMarket.sol";
-
+import "./CollateralMixin.sol";
 import "../storage/MarketManagerStorage.sol";
 import "../storage/PoolModuleStorage.sol";
 
-contract MarketManagerMixin is MarketManagerStorage, PoolModuleStorage {
+contract MarketManagerMixin is CollateralMixin, MarketManagerStorage, PoolModuleStorage {
     using MathUtil for uint256;
     using SharesLibrary for SharesLibrary.Distribution;
     using HeapUtil for HeapUtil.Data;
@@ -139,7 +139,24 @@ contract MarketManagerMixin is MarketManagerStorage, PoolModuleStorage {
         return IMarket(marketData.marketAddress).reportedDebt();
     }
 
+    function _depositedCollateralValue(MarketData storage marketData) internal view returns (uint) {
+        uint totalDepositedCollateralValue = 0;
+        address[] memory collateralTypes = _collateralStore().collateralTypes.values();
+
+        for (uint i = 0; i < collateralTypes.length; i++) {
+            address collateralType = collateralTypes[i];
+            totalDepositedCollateralValue +=
+                _getCollateralValue(collateralType) *
+                marketData.depositedCollateral[collateralType];
+        }
+
+        return totalDepositedCollateralValue;
+    }
+
     function _totalBalance(MarketData storage marketData) internal view returns (int) {
-        return int(IMarket(marketData.marketAddress).reportedDebt()) + marketData.issuance;
+        return
+            int(IMarket(marketData.marketAddress).reportedDebt()) +
+            marketData.issuance -
+            _depositedCollateralValue(marketData);
     }
 }

@@ -26,6 +26,8 @@ contract CollateralStorage {
         address priceFeed;
         /// address which should be used for transferring this collateral
         address tokenAddress;
+        // @notice the maximum amount of this collateral a given market can deposit
+        mapping(address => uint128) maximumMarketDepositable;
     }
 
     struct CollateralData {
