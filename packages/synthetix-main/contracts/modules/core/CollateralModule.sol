@@ -144,28 +144,6 @@ contract CollateralModule is
         return _getAccountUnassignedCollateral(accountId, collateralType);
     }
 
-    function depositMarketCollateral(
-        uint marketId,
-        address collateralType,
-        uint amount
-    ) public override collateralEnabled(collateralType) {
-        // check max amount from sccp maximumMarketDepositable
-        // collateralType.safeTransferFrom(_marketAddress(marketId), address(this), amount);
-        // increase accounting on MarketManagerStorage
-        // emit event
-    }
-
-    function withdrawMarketCollateral(
-        uint marketId,
-        address collateralType,
-        uint amount
-    ) public override {
-        // check max amount from total amount deposited by this market
-        // collateralType.safeTransfer(_marketAddress(marketId), amount);
-        // decrease accounting on MarketManagerStorage
-        // emit event
-    }
-
     /*
     function getAccountUnstakebleCollateral(uint accountId, address collateralType) public view override returns (uint) {
         (uint256 total, uint256 assigned, uint256 locked, ) = _getAccountCollateralTotals(accountId, collateralType);

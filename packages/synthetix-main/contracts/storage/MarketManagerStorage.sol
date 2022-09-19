@@ -26,7 +26,7 @@ contract MarketManagerStorage {
         HeapUtil.Data outRangePools;
         SharesLibrary.Distribution debtDist;
         // @notice the amount of a given collateral type deposited by this market
-        mapping(address => uint128) depositedCollateral;
+        mapping(address => uint) depositedCollateral;
     }
 
     function _marketManagerStore() internal pure returns (MarketManagerStore storage store) {
