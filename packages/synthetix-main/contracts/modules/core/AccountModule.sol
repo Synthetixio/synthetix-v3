@@ -38,7 +38,7 @@ contract AccountModule is IAccountModule, OwnableMixin, AccountRBACMixin, Associ
 
         uint allPermissionsLength = accountRbac.permissionAddresses.length();
         permissions = new AccountPermissions[](allPermissionsLength);
-        for (uint i = 1; i < allPermissionsLength; i++) {
+        for (uint i = 1; i <= allPermissionsLength; i++) {
             address permissionAddress = accountRbac.permissionAddresses.valueAt(i);
             permissions[i - 1] = AccountPermissions({
                 target: permissionAddress,
