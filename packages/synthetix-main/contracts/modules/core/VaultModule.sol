@@ -38,7 +38,7 @@ contract VaultModule is IVaultModule, VaultStorage, AccountRBACMixin, OwnableMix
     )
         external
         override
-        onlyWithPermission(accountId, _ASSIGN_PERMISSION)
+        onlyWithPermission(accountId, _DELEGATE_PERMISSION)
         collateralEnabled(collateralType)
         poolExists(poolId)
     {
