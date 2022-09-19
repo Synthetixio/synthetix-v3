@@ -5,5 +5,5 @@ export default {
   ADMIN: ethers.utils.formatBytes32String('ADMIN'),
   WITHDRAW: ethers.utils.formatBytes32String('WITHDRAW'),
   MINT: ethers.utils.formatBytes32String('MINT'),
-  ASSIGN: ethers.utils.formatBytes32String('ASSIGN'),
+  DELEGATE: ethers.utils.formatBytes32String('DELEGATE'),
 };

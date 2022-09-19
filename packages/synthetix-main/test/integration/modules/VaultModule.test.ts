@@ -114,7 +114,7 @@ describe('VaultModule', function () {
             depositAmount.mul(2),
             ethers.utils.parseEther('1')
           ),
-        `PermissionDenied("1", "${Permissions.ASSIGN}", "${await user2.getAddress()}")`,
+        `PermissionDenied("1", "${Permissions.DELEGATE}", "${await user2.getAddress()}")`,
         systems().Core
       );
     });
