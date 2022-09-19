@@ -7,7 +7,7 @@ import "./CollateralMixin.sol";
 import "../storage/MarketManagerStorage.sol";
 import "../storage/PoolModuleStorage.sol";
 
-contract MarketManagerMixin is CollateralMixin, MarketManagerStorage, PoolModuleStorage {
+contract MarketManagerMixin is MarketManagerStorage, PoolModuleStorage, CollateralMixin {
     using MathUtil for uint256;
     using SharesLibrary for SharesLibrary.Distribution;
     using HeapUtil for HeapUtil.Data;
@@ -141,13 +141,12 @@ contract MarketManagerMixin is CollateralMixin, MarketManagerStorage, PoolModule
 
     function _depositedCollateralValue(MarketData storage marketData) internal view returns (uint) {
         uint totalDepositedCollateralValue = 0;
-        address[] memory collateralTypes = _collateralStore().collateralTypes.values();
 
-        for (uint i = 0; i < collateralTypes.length; i++) {
-            address collateralType = collateralTypes[i];
+        for (uint i = 0; i < marketData.depositedCollateral.length; i++) {
+            DepositedCollateral memory depositedCollateral = marketData.depositedCollateral[i];
             totalDepositedCollateralValue +=
-                _getCollateralValue(collateralType) *
-                marketData.depositedCollateral[collateralType];
+                _getCollateralValue(depositedCollateral.collateralType) *
+                depositedCollateral.amount;
         }
 
         return totalDepositedCollateralValue;
@@ -157,6 +156,6 @@ contract MarketManagerMixin is CollateralMixin, MarketManagerStorage, PoolModule
         return
             int(IMarket(marketData.marketAddress).reportedDebt()) +
             marketData.issuance -
-            _depositedCollateralValue(marketData);
+            int(_depositedCollateralValue(marketData));
     }
 }

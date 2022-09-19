@@ -14,7 +14,7 @@ interface ICollateralModule {
         uint targetCollateralizationRatio,
         uint minimumCollateralizationRatio,
         uint liquidationReward,
-        bool indexed enabled
+        bool indexed stakingEnabled
     );
 
     /**
@@ -43,7 +43,7 @@ interface ICollateralModule {
         uint targetCRatio,
         uint minimumCRatio,
         uint liquidationReward,
-        bool enabled
+        bool stakingEnabled
     ) external;
 
     /**

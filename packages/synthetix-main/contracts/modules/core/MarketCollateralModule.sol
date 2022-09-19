@@ -26,12 +26,18 @@ contract MarketCollateralModule is
         uint maxDepositable = collateralStore.collateralConfigurations[collateralType].maximumMarketDepositable[marketId];
 
         MarketManagerStore storage marketManagerStore = _marketManagerStore();
-        uint initalAmountDeposited = marketManagerStore.markets[marketId].depositedCollateral[collateralType];
+        DepositedCollateral storage collateralEntry = _findDepositCollateralEntry(marketManagerStore.markets[marketId].depositedCollateral, collateralType);
 
-        if(initalAmountDeposited + amount <= maxDepositable) revert InsufficientMarketCollateralDepositable(marketId, collateralType, amount);
+        if(collateralEntry.collateralType == address(0)){
+            marketManagerStore.markets[marketId].depositedCollateral.push(DepositedCollateral(collateralType,0));
+            collateralEntry = marketManagerStore.markets[marketId].depositedCollateral[marketManagerStore.markets[marketId].depositedCollateral.length - 1];
+        }
+
+        if(collateralEntry.amount + amount <= maxDepositable) revert InsufficientMarketCollateralDepositable(marketId, collateralType, amount);
 
         collateralType.safeTransferFrom(marketManagerStore.markets[marketId].marketAddress, address(this), amount);
-        marketManagerStore.markets[marketId].depositedCollateral[collateralType] += amount;
+
+        collateralEntry.amount += amount;
 
         emit MarketCollateralDeposited(marketId, collateralType, amount, msg.sender);
     }
@@ -42,12 +48,23 @@ contract MarketCollateralModule is
         uint amount
     ) public override {
         MarketManagerStore storage marketManagerStore = _marketManagerStore();
-        uint initalAmountDeposited = marketManagerStore.markets[marketId].depositedCollateral[collateralType];
-        if(amount <= initalAmountDeposited) revert InsufficientMarketCollateralWithdrawable(marketId, collateralType, amount);
+        DepositedCollateral storage collateralEntry = _findDepositCollateralEntry(marketManagerStore.markets[marketId].depositedCollateral, collateralType);
+
+        if(amount <= collateralEntry.amount) revert InsufficientMarketCollateralWithdrawable(marketId, collateralType, amount);
 
         collateralType.safeTransfer(marketManagerStore.markets[marketId].marketAddress, amount);
-        marketManagerStore.markets[marketId].depositedCollateral[collateralType] -= amount;
+
+        collateralEntry.amount -= amount;
 
         emit MarketCollateralWithdrawn(marketId, collateralType, amount, msg.sender);
+    }
+
+    function _findDepositCollateralEntry(DepositedCollateral[] storage depositedCollateral, address collateralType) internal returns (DepositedCollateral storage) {
+        for (uint i = 0; i < depositedCollateral.length; i++) {
+            DepositedCollateral storage depositedCollateralEntry = depositedCollateral[i];
+            if(depositedCollateralEntry.collateralType == collateralType){
+                return depositedCollateralEntry;
+            }
+        }
     }
 }
