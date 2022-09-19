@@ -190,7 +190,7 @@ contract ElectionModule is
         emit EmergencyElectionStarted(epochIndex);
     }
 
-    function nominate() public virtual override onlyInPeriod(ElectionPeriod.Nomination) {
+    function nominate() public virtual override onlyInPeriods(ElectionPeriod.Nomination, ElectionPeriod.Vote) {
         SetUtil.AddressSet storage nominees = _getCurrentElection().nominees;
 
         if (nominees.contains(msg.sender)) revert AlreadyNominated();
