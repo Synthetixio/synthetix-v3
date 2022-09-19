@@ -71,7 +71,11 @@ contract MarketManagerMixin is MarketManagerStorage, PoolModuleStorage {
     }
 
     // the second parameter exists to act as an escape hatch/discourage aginst griefing
-    function _distributeMarket(uint marketId, MarketData storage marketData, uint maxIter) internal {
+    function _distributeMarket(
+        uint marketId,
+        MarketData storage marketData,
+        uint maxIter
+    ) internal {
         if (marketData.debtDist.totalShares == 0) {
             // market cannot distribute (or accumulate) any debt when there are no shares
             return;
