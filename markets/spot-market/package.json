@@ -1,7 +1,7 @@
 {
   "name": "@synthetixio/spot-market",
   "version": "1.0.0",
-  "description": "Core Synthetix Protocol Contracts",
+  "description": "Spot Market implementation",
   "private": true,
   "scripts": {
     "test": "hardhat test",

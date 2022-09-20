@@ -7,13 +7,6 @@ import "@synthetixio/core-contracts/contracts/utils/MathUtil.sol";
 import "@synthetixio/main/contracts/interfaces/IUSDTokenModule.sol";
 import "./Synth.sol";
 
-/*
-    - Setup proxy architecture (not needed for now)
-    - create synth market function (multiple synths) i.e mapping(uint => address) & mapping(address => PriceFeed)
-    - configured fee structure
-      - direct integrations (addresses allowed to mint/burn with special permissions)
-*/
-
 contract SpotMarket is IMarket {
     using MathUtil for uint256;
 
@@ -33,6 +26,11 @@ contract SpotMarket is IMarket {
         usdToken = IERC20(IUSDTokenModule(synthetix).getUSDTokenAddress());
     }
 
+    /* TODO: 
+        - make it ownable
+        - revert if synth exists
+        
+    */
     function registerSynth(
         string memory name,
         string memory symbol,
@@ -50,8 +48,8 @@ contract SpotMarket is IMarket {
 
     /* should this accept marketId as a param */
     function reportedDebt(uint marketId) external view override returns (uint) {
-        MarketSynth memory ms = marketSynths[marketId];
-        return ms.synth.totalSupply().mulDecimal(_getCurrentPrice(marketId));
+        MarketSynth storage market = marketSynths[marketId];
+        return market.synth.totalSupply().mulDecimal(_getCurrentPrice(marketId));
     }
 
     /*
@@ -59,6 +57,11 @@ contract SpotMarket is IMarket {
         The alternative is to have the user approve the transfer to market manager.
 
         The scenario to consider is when markets collect fees.  what's the transfer mechanism?  What should user be approving?
+    */
+    /*
+        TODO:
+        - check snxUSD approve balance for current address
+        - balance checks for amountUsd
     */
     function buy(uint marketId, uint amountUsd) external {
         // approve to this market prior to transferring to market manager (i.e collect fees)
@@ -89,6 +92,11 @@ contract SpotMarket is IMarket {
         // emit event
     }
 
+    /*
+        TODO:
+        - check snxUSD approve balance for current address
+        - balance checks for sellAmount
+    */
     function sell(uint marketId, uint sellAmount) external {
         uint currentPrice = _getCurrentPrice(marketId);
         uint amountToWithdraw = sellAmount.mulDecimal(currentPrice);
