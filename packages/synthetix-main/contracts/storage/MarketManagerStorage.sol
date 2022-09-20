@@ -27,6 +27,8 @@ contract MarketManagerStorage {
         SharesLibrary.Distribution debtDist;
         // @notice the amount of collateral deposited by this market
         DepositedCollateral[] depositedCollateral;
+        // @notice the maximum amount of a collateral type that this market can deposit
+        mapping(address => uint) maximumDepositable;
     }
 
     struct DepositedCollateral {

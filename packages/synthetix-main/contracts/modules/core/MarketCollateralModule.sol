@@ -1,17 +1,14 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import "@synthetixio/core-contracts/contracts/ownership/OwnableMixin.sol";
 import "../../interfaces/IMarketCollateralModule.sol";
 import "../../storage/CollateralStorage.sol";
 import "../../storage/MarketManagerStorage.sol";
 
 import "../../utils/ERC20Helper.sol";
 
-contract MarketCollateralModule is
-    IMarketCollateralModule,
-    CollateralStorage,
-    MarketManagerStorage
-{
+contract MarketCollateralModule is IMarketCollateralModule, CollateralStorage, MarketManagerStorage, OwnableMixin {
     using ERC20Helper for address;
 
     error InsufficientMarketCollateralDepositable(uint marketId, address collateralType, uint amountToDeposit);
@@ -22,18 +19,17 @@ contract MarketCollateralModule is
         address collateralType,
         uint amount
     ) public override {
-        CollateralStore storage collateralStore = _collateralStore();
-        uint maxDepositable = collateralStore.collateralConfigurations[collateralType].maximumMarketDepositable[marketId];
-
         MarketManagerStore storage marketManagerStore = _marketManagerStore();
-        DepositedCollateral storage collateralEntry = _findDepositCollateralEntry(marketManagerStore.markets[marketId].depositedCollateral, collateralType);
+        uint maxDepositable = marketManagerStore.markets[marketId].maximumDepositable[collateralType];
 
-        if(collateralEntry.collateralType == address(0)){
-            marketManagerStore.markets[marketId].depositedCollateral.push(DepositedCollateral(collateralType,0));
-            collateralEntry = marketManagerStore.markets[marketId].depositedCollateral[marketManagerStore.markets[marketId].depositedCollateral.length - 1];
-        }
+        uint collateralEntryIndex = _findOrCreateDepositCollateralEntry(marketId, marketManagerStore, collateralType);
 
-        if(collateralEntry.amount + amount <= maxDepositable) revert InsufficientMarketCollateralDepositable(marketId, collateralType, amount);
+        DepositedCollateral storage collateralEntry = marketManagerStore.markets[marketId].depositedCollateral[
+            collateralEntryIndex
+        ];
+
+        if (collateralEntry.amount + amount <= maxDepositable)
+            revert InsufficientMarketCollateralDepositable(marketId, collateralType, amount);
 
         collateralType.safeTransferFrom(marketManagerStore.markets[marketId].marketAddress, address(this), amount);
 
@@ -48,9 +44,13 @@ contract MarketCollateralModule is
         uint amount
     ) public override {
         MarketManagerStore storage marketManagerStore = _marketManagerStore();
-        DepositedCollateral storage collateralEntry = _findDepositCollateralEntry(marketManagerStore.markets[marketId].depositedCollateral, collateralType);
+        uint collateralEntryIndex = _findOrCreateDepositCollateralEntry(marketId, marketManagerStore, collateralType);
+        DepositedCollateral storage collateralEntry = marketManagerStore.markets[marketId].depositedCollateral[
+            collateralEntryIndex
+        ];
 
-        if(amount <= collateralEntry.amount) revert InsufficientMarketCollateralWithdrawable(marketId, collateralType, amount);
+        if (amount <= collateralEntry.amount)
+            revert InsufficientMarketCollateralWithdrawable(marketId, collateralType, amount);
 
         collateralType.safeTransfer(marketManagerStore.markets[marketId].marketAddress, amount);
 
@@ -59,12 +59,35 @@ contract MarketCollateralModule is
         emit MarketCollateralWithdrawn(marketId, collateralType, amount, msg.sender);
     }
 
-    function _findDepositCollateralEntry(DepositedCollateral[] storage depositedCollateral, address collateralType) internal returns (DepositedCollateral storage) {
+    function _findOrCreateDepositCollateralEntry(
+        uint marketId,
+        MarketManagerStore storage marketManagerStore,
+        address collateralType
+    ) internal returns (uint collateralEntryIndex) {
+        DepositedCollateral[] storage depositedCollateral = marketManagerStore.markets[marketId].depositedCollateral;
         for (uint i = 0; i < depositedCollateral.length; i++) {
             DepositedCollateral storage depositedCollateralEntry = depositedCollateral[i];
-            if(depositedCollateralEntry.collateralType == collateralType){
-                return depositedCollateralEntry;
+            if (depositedCollateralEntry.collateralType == collateralType) {
+                return i;
             }
         }
+        marketManagerStore.markets[marketId].depositedCollateral.push(DepositedCollateral(collateralType, 0));
+        return marketManagerStore.markets[marketId].depositedCollateral.length - 1;
+    }
+
+    function configureMaximumMarketCollateral(
+        uint marketId,
+        address collateralType,
+        uint amount
+    ) external override onlyOwner {
+        MarketManagerStore storage marketManagerStore = _marketManagerStore();
+        marketManagerStore.markets[marketId].maximumDepositable[collateralType] = amount;
+
+        emit MaximumMarketCollateralConfigured(marketId, collateralType, amount, msg.sender);
+    }
+
+    function getMaximumMarketCollateral(uint marketId, address collateralType) external override returns (uint) {
+        MarketManagerStore storage marketManagerStore = _marketManagerStore();
+        return marketManagerStore.markets[marketId].maximumDepositable[collateralType];
     }
 }
