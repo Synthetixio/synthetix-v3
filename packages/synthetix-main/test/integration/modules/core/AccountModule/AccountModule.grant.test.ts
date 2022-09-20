@@ -54,6 +54,19 @@ describe('AccountModule', function () {
       });
     });
 
+    describe('when a an authorized user attempts to grant an invalid permission', async () => {
+      it('reverts', async () => {
+        const invalidPermission = ethers.utils.formatBytes32String('INVALID');
+        await assertRevert(
+          systems()
+            .Core.connect(user1)
+            .grantPermission(1, invalidPermission, await user2.getAddress()),
+          `InvalidPermission("${invalidPermission}")`,
+          systems().Core
+        );
+      });
+    });
+
     describe('when a permission is granted by the owner', function () {
       before('grant the permission', async function () {
         const tx = await systems()
