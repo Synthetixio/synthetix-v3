@@ -1,0 +1,29 @@
+{
+  "name": "@synthetixio/spot-market",
+  "version": "1.0.0",
+  "description": "Core Synthetix Protocol Contracts",
+  "private": true,
+  "scripts": {
+    "test": "hardhat test",
+    "coverage": "hardhat coverage --network hardhat",
+    "compile-contracts": "hardhat compile",
+    "size-contracts": "hardhat size-contracts"
+  },
+  "keywords": [],
+  "author": "Sunny Vempati",
+  "license": "MIT",
+  "devDependencies": {
+    "@nomiclabs/hardhat-ethers": "2.1.0",
+    "@typechain/ethers-v5": "10.1.0",
+    "@typechain/hardhat": "6.1.2",
+    "@types/mocha": "9.1.1",
+    "ethers": "5.6.9",
+    "hardhat": "2.9.9",
+    "hardhat-contract-sizer": "2.1.1",
+    "solidity-coverage": "0.7.17",
+    "solidity-docgen": "0.6.0-beta.22",
+    "ts-node": "10.9.1",
+    "typechain": "8.1.0",
+    "typescript": "4.7.4"
+  }
+}

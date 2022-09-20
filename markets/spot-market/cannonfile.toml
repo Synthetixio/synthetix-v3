@@ -1,0 +1,3 @@
+[import.synthetix]
+source = "synthetix:3.0.0"
+options.owner = "<%= settings.owner %>"

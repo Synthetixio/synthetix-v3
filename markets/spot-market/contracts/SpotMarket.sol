@@ -8,17 +8,19 @@ import "@synthetixio/main/contracts/interfaces/IUSDTokenModule.sol";
 import "./Synth.sol";
 
 /*
-    - Setup proxy architecture
+    - Setup proxy architecture (not needed for now)
     - create synth market function (multiple synths) i.e mapping(uint => address) & mapping(address => PriceFeed)
     - configured fee structure
       - direct integrations (addresses allowed to mint/burn with special permissions)
 */
+
 contract SpotMarket is IMarket {
     using MathUtil for uint256;
 
     struct MarketSynth {
-        address synthAddress;
-        uint priceFeed;
+        Synth synth;
+        address priceFeed;
+        address feeManager;
     }
 
     IERC20 public btcToken;
@@ -26,8 +28,7 @@ contract SpotMarket is IMarket {
     uint public marketId;
     address public synthetix;
 
-    address[] public marketSynths;
-    mapping(address => MarketSynth) synthDetails;
+    MarketSynth[] public marketSynths;
 
     constructor(address snxAddress, address btcTokenAddress) {
         synthetix = snxAddress;
@@ -39,18 +40,33 @@ contract SpotMarket is IMarket {
     function registerSynth(
         string memory name,
         string memory symbol,
-        uint8 decimals
-    ) external {
+        uint8 decimals,
+        address priceFeed,
+        address feeManager
+    ) external returns (uint) {
         Synth newSynth = new Synth(address(this), name, symbol, decimals);
-        MarketSynth synth = new MarketSynth(address(newSynth), )
-        marketSynths.push(address(newSynth));
+        MarketSynth memory synth = MarketSynth(newSynth, priceFeed, feeManager);
+        uint synthId = marketSynths.length;
+        marketSynths.push(synth);
+
+        return synthId;
     }
 
     /* should this accept marketId as a param */
     function reportedDebt() external view override returns (uint) {
-        uint currentPrice = _getCurrentPrice();
-        // TODO: decimals
-        return btcToken.balanceOf(address(this)).mulDecimal(currentPrice);
+        uint synthLength = marketSynths.length;
+        uint totalDebt = 0;
+        /*
+            TODO: Gas is currently correlated to # of synths;
+                  add price feed for all synths to oracle manager
+        */
+        for (uint i = 0; i < synthLength; i++) {
+            MarketSynth storage synth = marketSynths[i];
+            uint synthBalance = synth.synth.balanceOf(address(this));
+            uint price = _getCurrentPrice(i);
+            totalDebt += synthBalance.mulDecimal(price);
+        }
+        return totalDebt;
     }
 
     /*
@@ -59,28 +75,50 @@ contract SpotMarket is IMarket {
 
         The scenario to consider is when markets collect fees.  what's the transfer mechanism?  What should user be approving?
     */
-    function buy(uint amountUsd) external {
+    function buy(uint synthId, uint amountUsd) external {
         // approve to this market prior to transferring to market manager (i.e collect fees)
-        uint currentPrice = _getCurrentPrice();
+        uint currentPrice = _getCurrentPrice(synthId);
         uint amountToMint = amountUsd.divDecimal(currentPrice);
 
-        btcToken.mint(msg.sender, amountToMint);
+        MarketSynth storage ms = marketSynths[synthId];
+        ms.synth.mint(msg.sender, amountToMint);
+
+        // approve to fee manager
+        // example
+        /*
+            Fee = 20% example
+            100 USD 
+            approve 100 USD to fee manager
+            call chargeFee(100 USD)
+                - fee manager charges 10 USD
+                - returns value 10 USD 
+            deposit 10 USD
+            balanceOf(this) = 80 USD
+            mint (80USD worth of synth)
+            deposit 80 USD
+        */
+        // uint amountLeft = feeManager.chargeFee(msg.sender, amountUsd);
+
         usdToken.transferFrom(msg.sender, address(this), amountUsd);
         IMarketManagerModule(synthetix).depositUsd(marketId, address(this), amountUsd);
         // emit event
     }
 
-    function sell(uint amountBtc) external {
-        uint currentPrice = _getCurrentPrice();
-        uint amountToWithdraw = amountBtc.mulDecimal(currentPrice);
+    function sell(uint synthId, uint sellAmount) external {
+        uint currentPrice = _getCurrentPrice(synthId);
+        uint amountToWithdraw = sellAmount.mulDecimal(currentPrice);
 
-        btcToken.burn(msg.sender, amountBtc);
+        MarketSynth storage ms = marketSynths[synthId];
+        ms.synth.burn(msg.sender, sellAmount);
+
         IMarketManagerModule(synthetix).withdrawUsd(marketId, msg.sender, amountToWithdraw);
         // emit event
     }
 
-    function _getCurrentPrice() internal view returns (uint) {
-        /* get from oracleManager / aggregator chainlink */
+    // TODO: OracleManager
+    // price / status of market (closed due to circuit breaker)
+    function _getCurrentPrice(uint synthId) internal pure returns (uint) {
+        /* get from oracleManager / aggregator chainlink based on synth id */
         return 1;
     }
 }
