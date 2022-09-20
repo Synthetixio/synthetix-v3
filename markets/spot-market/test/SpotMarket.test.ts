@@ -2,7 +2,7 @@ import { ethers } from 'ethers';
 
 import { bootstrapWithStakedPool } from '@synthetixio/main/test/integration/bootstrap';
 
-describe('AccountTokenModule', function () {
+describe('SpotMarket', function () {
   const { signers, systems } = bootstrapWithStakedPool();
 
   let user1: ethers.Signer;
@@ -11,15 +11,15 @@ describe('AccountTokenModule', function () {
     [, user1] = signers();
   });
 
-  describe('Spot Market', function () {
-    describe('registerMarket', async function () {
-      it('works', async function () {
-        await (
-          await systems()
-            .Core.connect(user1)
-            .createPool(1, await user1.getAddress())
-        ).wait();
-      });
+  describe('registerMarket', function () {
+    it('works', async function () {
+      await (
+        await systems()
+          .Core.connect(user1)
+          .createPool(1, await user1.getAddress())
+      ).wait();
     });
+
+    // TODO: write tests
   });
 });

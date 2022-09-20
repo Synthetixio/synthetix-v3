@@ -23,18 +23,14 @@ contract SpotMarket is IMarket {
         address feeManager;
     }
 
-    IERC20 public btcToken;
     IERC20 public usdToken;
-    uint public marketId;
     address public synthetix;
 
-    MarketSynth[] public marketSynths;
+    mapping(uint => MarketSynth) public marketSynths;
 
-    constructor(address snxAddress, address btcTokenAddress) {
+    constructor(address snxAddress) {
         synthetix = snxAddress;
-        marketId = IMarketManagerModule(synthetix).registerMarket(address(this));
         usdToken = IERC20(IUSDTokenModule(synthetix).getUSDTokenAddress());
-        btcToken = IERC20(btcTokenAddress);
     }
 
     function registerSynth(
@@ -45,28 +41,17 @@ contract SpotMarket is IMarket {
         address feeManager
     ) external returns (uint) {
         Synth newSynth = new Synth(address(this), name, symbol, decimals);
+        uint synthMarketId = IMarketManagerModule(synthetix).registerMarket(address(this));
         MarketSynth memory synth = MarketSynth(newSynth, priceFeed, feeManager);
-        uint synthId = marketSynths.length;
-        marketSynths.push(synth);
+        marketSynths[synthMarketId] = synth;
 
-        return synthId;
+        return synthMarketId;
     }
 
     /* should this accept marketId as a param */
-    function reportedDebt() external view override returns (uint) {
-        uint synthLength = marketSynths.length;
-        uint totalDebt = 0;
-        /*
-            TODO: Gas is currently correlated to # of synths;
-                  add price feed for all synths to oracle manager
-        */
-        for (uint i = 0; i < synthLength; i++) {
-            MarketSynth storage synth = marketSynths[i];
-            uint synthBalance = synth.synth.balanceOf(address(this));
-            uint price = _getCurrentPrice(i);
-            totalDebt += synthBalance.mulDecimal(price);
-        }
-        return totalDebt;
+    function reportedDebt(uint marketId) external view override returns (uint) {
+        MarketSynth memory ms = marketSynths[marketId];
+        return ms.synth.totalSupply().mulDecimal(_getCurrentPrice(marketId));
     }
 
     /*
@@ -75,13 +60,13 @@ contract SpotMarket is IMarket {
 
         The scenario to consider is when markets collect fees.  what's the transfer mechanism?  What should user be approving?
     */
-    function buy(uint synthId, uint amountUsd) external {
+    function buy(uint marketId, uint amountUsd) external {
         // approve to this market prior to transferring to market manager (i.e collect fees)
-        uint currentPrice = _getCurrentPrice(synthId);
+        uint currentPrice = _getCurrentPrice(marketId);
         uint amountToMint = amountUsd.divDecimal(currentPrice);
 
-        MarketSynth storage ms = marketSynths[synthId];
-        ms.synth.mint(msg.sender, amountToMint);
+        MarketSynth storage market = marketSynths[marketId];
+        market.synth.mint(msg.sender, amountToMint);
 
         // approve to fee manager
         // example
@@ -104,12 +89,12 @@ contract SpotMarket is IMarket {
         // emit event
     }
 
-    function sell(uint synthId, uint sellAmount) external {
-        uint currentPrice = _getCurrentPrice(synthId);
+    function sell(uint marketId, uint sellAmount) external {
+        uint currentPrice = _getCurrentPrice(marketId);
         uint amountToWithdraw = sellAmount.mulDecimal(currentPrice);
 
-        MarketSynth storage ms = marketSynths[synthId];
-        ms.synth.burn(msg.sender, sellAmount);
+        MarketSynth storage market = marketSynths[marketId];
+        market.synth.burn(msg.sender, sellAmount);
 
         IMarketManagerModule(synthetix).withdrawUsd(marketId, msg.sender, amountToWithdraw);
         // emit event
