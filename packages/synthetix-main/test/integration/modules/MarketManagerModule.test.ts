@@ -32,14 +32,6 @@ describe('MarketManagerModule', function () {
   describe('registerMarket()', async () => {
     before(restore);
 
-    it('fails if market is already registered', async () => {
-      await assertRevert(
-        systems().Core.connect(owner).registerMarket(MockMarket().address),
-        `MarketAlreadyRegistered("${MockMarket().address}", "${marketId()}")`,
-        systems().Core
-      );
-    });
-
     describe('successful', async () => {
       const expectedMarketId = marketId().add(1);
 
