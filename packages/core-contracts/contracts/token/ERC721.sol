@@ -32,6 +32,10 @@ contract ERC721 is IERC721, IERC721Metadata, ERC721Storage {
             revert InitError.AlreadyInitialized();
         }
 
+        if (bytes(tokenName).length == 0 || bytes(tokenSymbol).length == 0) {
+            revert InitError.InvalidParameters();
+        }
+
         store.name = tokenName;
         store.symbol = tokenSymbol;
         store.baseTokenURI = baseTokenURI;
