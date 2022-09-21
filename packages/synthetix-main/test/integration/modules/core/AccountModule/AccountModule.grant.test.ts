@@ -77,7 +77,7 @@ describe('AccountModule', function () {
 
         assertBn.equal(event.args.accountId, 1);
         assert.equal(event.args.permission, Permissions.DEPOSIT);
-        assert.equal(event.args.target, await user2.getAddress());
+        assert.equal(event.args.user, await user2.getAddress());
         assert.equal(event.args.sender, await user1.getAddress());
       });
 
@@ -117,7 +117,7 @@ describe('AccountModule', function () {
 
           assertBn.equal(event.args.accountId, 1);
           assert.equal(event.args.permission, Permissions.DEPOSIT);
-          assert.equal(event.args.target, await user2.getAddress());
+          assert.equal(event.args.user, await user2.getAddress());
           assert.equal(event.args.sender, await user2.getAddress());
         });
       });
@@ -150,7 +150,7 @@ describe('AccountModule', function () {
 
           assertBn.equal(event.args.accountId, 1);
           assert.equal(event.args.permission, Permissions.DEPOSIT);
-          assert.equal(event.args.target, await user2.getAddress());
+          assert.equal(event.args.user, await user2.getAddress());
           assert.equal(event.args.sender, await user1.getAddress());
         });
       });
