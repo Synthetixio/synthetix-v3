@@ -9,7 +9,7 @@ describe('MarketCollateralModule', function () {
 
   let owner: ethers.Signer, user1: ethers.Signer;
 
-  describe.only('MarketCollateralModule', function () {
+  describe('MarketCollateralModule', function () {
     before('identify signers', async () => {
       [owner, user1] = signers();
 
