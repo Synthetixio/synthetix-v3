@@ -73,6 +73,9 @@ describe('MarketCollateralModule', function () {
             .getMarketCollateralAmount(marketId(), collateralAddress()),
           1000
         );
+
+        // Withdraw the 1,000 to reset
+        await MockMarket().connect(user1).withdrawCollateral(collateralAddress(), 1000);
       });
 
       it('disallows withdrawing more collateral than it has deposited', async () => {

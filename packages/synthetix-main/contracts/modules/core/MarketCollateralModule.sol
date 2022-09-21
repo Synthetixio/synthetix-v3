@@ -28,7 +28,7 @@ contract MarketCollateralModule is IMarketCollateralModule, CollateralStorage, M
             collateralEntryIndex
         ];
 
-        if (collateralEntry.amount + amount <= maxDepositable)
+        if (collateralEntry.amount + amount > maxDepositable)
             revert InsufficientMarketCollateralDepositable(marketId, collateralType, amount);
 
         collateralType.safeTransferFrom(marketManagerStore.markets[marketId].marketAddress, address(this), amount);
