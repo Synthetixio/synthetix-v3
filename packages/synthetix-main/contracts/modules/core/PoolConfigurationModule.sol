@@ -5,35 +5,36 @@ import "@synthetixio/core-contracts/contracts/ownership/OwnableMixin.sol";
 import "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
 
 import "../../interfaces/IPoolConfigurationModule.sol";
-import "../../storage/PoolConfigurationStorage.sol";
-import "../../mixins/PoolMixin.sol";
+import "../../storage/PoolConfiguration.sol";
 
-contract PoolConfigurationModule is IPoolConfigurationModule, PoolConfigurationStorage, PoolMixin, OwnableMixin {
+import "../../storage/Pool.sol";
+
+contract PoolConfigurationModule is IPoolConfigurationModule, OwnableMixin {
     using SetUtil for SetUtil.UintSet;
 
-    function setPreferredPool(uint poolId) external override onlyOwner poolExists(poolId) {
-        _poolConfigurationStore().preferredPool = poolId;
+    function setPreferredPool(uint128 poolId) external override onlyOwner Pool.poolExists(poolId) {
+        PoolConfiguration.load().preferredPool = poolId;
 
         emit PreferredPoolSet(poolId);
     }
 
     function getPreferredPool() external view override returns (uint) {
-        return _poolConfigurationStore().preferredPool;
+        return PoolConfiguration.load().preferredPool;
     }
 
-    function addApprovedPool(uint poolId) external override onlyOwner poolExists(poolId) {
-        _poolConfigurationStore().approvedPools.add(poolId);
+    function addApprovedPool(uint128 poolId) external override onlyOwner Pool.poolExists(poolId) {
+        PoolConfiguration.load().approvedPools.add(poolId);
 
         emit PoolApprovedAdded(poolId);
     }
 
-    function removeApprovedPool(uint poolId) external override onlyOwner poolExists(poolId) {
-        _poolConfigurationStore().approvedPools.remove(poolId);
+    function removeApprovedPool(uint128 poolId) external override onlyOwner Pool.poolExists(poolId) {
+        PoolConfiguration.load().approvedPools.remove(poolId);
 
         emit PoolApprovedRemoved(poolId);
     }
 
     function getApprovedPools() external view override returns (uint[] memory) {
-        return _poolConfigurationStore().approvedPools.values();
+        return PoolConfiguration.load().approvedPools.values();
     }
 }

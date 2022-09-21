@@ -6,18 +6,18 @@ import "../../mocks/IAccountRBACMixinModuleMock.sol";
 import "../../mocks/AccountRBACMixinModuleMockStorage.sol";
 
 contract AccountRBACMixinModuleMock is IAccountRBACMixinModuleMock, AccountRBACMixinModuleMockStorage, AccountRBACMixin {
-    function mockAccountRBACMixinDeposit(uint accountId, uint newDepositMock)
+    function mockAccountRBACMixinDeposit(uint128 accountId, uint newDepositMock)
         external
         override
-        onlyWithPermission(accountId, _DEPOSIT_PERMISSION)
+        Account.onlyWithPermission(accountId, AccountRBAC._DEPOSIT_PERMISSION)
     {
         _mixinModuleMockStore().depositMock = newDepositMock;
     }
 
-    function mockAccountRBACMixinMint(uint accountId, uint newMintMock)
+    function mockAccountRBACMixinMint(uint128 accountId, uint newMintMock)
         external
         override
-        onlyWithPermission(accountId, _MINT_PERMISSION)
+        Account.onlyWithPermission(accountId, AccountRBAC._MINT_PERMISSION)
     {
         _mixinModuleMockStore().mintMock = newMintMock;
     }

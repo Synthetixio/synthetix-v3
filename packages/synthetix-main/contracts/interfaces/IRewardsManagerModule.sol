@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 /// @title Module for managing pools and assignments per account
 interface IRewardsManagerModule {
     event RewardDistributed(
-        uint indexed poolId,
+        uint128 indexed poolId,
         address indexed token,
         uint indexed index,
         address distributor,
@@ -12,11 +12,11 @@ interface IRewardsManagerModule {
         uint start,
         uint duration
     );
-    event RewardsClaimed(uint indexed poolId, address indexed token, uint indexed accountId, uint index, uint amountClaimed);
+    event RewardsClaimed(uint128 indexed poolId, address indexed token, uint128 indexed accountId, uint index, uint amountClaimed);
 
     /// @notice called by pool owner or an existing distributor to set up rewards for vault participants
     function distributeRewards(
-        uint poolId,
+        uint128 poolId,
         address token,
         uint index,
         address distributor,
@@ -27,19 +27,19 @@ interface IRewardsManagerModule {
 
     /// @notice retrieves the amount of available rewards, and claims them to the caller's account.
     function claimRewards(
-        uint poolId,
+        uint128 poolId,
         address token,
-        uint accountId
+        uint128 accountId
     ) external returns (uint[] memory);
 
     /// @notice retrieves the amount of available rewards.
     /// @dev this function should be called to get currently available rewards using `callStatic`
     function getAvailableRewards(
-        uint poolId,
+        uint128 poolId,
         address token,
-        uint accountId
+        uint128 accountId
     ) external returns (uint[] memory);
 
     /// @notice returns the number of individual units of amount emitted per second per share for the given poolId, collateralType vault
-    function getCurrentRewardAccumulation(uint poolId, address collateralType) external view returns (uint[] memory);
+    function getCurrentRewardAccumulation(uint128 poolId, address collateralType) external view returns (uint[] memory);
 }

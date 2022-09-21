@@ -6,17 +6,17 @@ interface IAccountModule {
     /**
      * @notice Emitted when an account token with id `accountId` is minted to `sender`.
      */
-    event AccountCreated(address indexed sender, uint indexed accountId);
+    event AccountCreated(address indexed sender, uint128 indexed accountId);
 
     /**
      * @notice Emitted when `target` is granted `permission` by `sender` for account `accountId`.
      */
-    event PermissionGranted(uint indexed accountId, bytes32 indexed permission, address indexed target, address sender);
+    event PermissionGranted(uint128 indexed accountId, bytes32 indexed permission, address indexed target, address sender);
 
     /**
      * @notice Emitted when `target` has `permission` renounced or revoked by `sender` for account `accountId`.
      */
-    event PermissionRevoked(uint indexed accountId, bytes32 indexed permission, address indexed target, address sender);
+    event PermissionRevoked(uint128 indexed accountId, bytes32 indexed permission, address indexed target, address sender);
 
     struct AccountPermissions {
         address target;
@@ -26,7 +26,7 @@ interface IAccountModule {
     /**
      * @notice Returns an array of `AccountPermission` for the provided `accountId`.
      */
-    function getAccountPermissions(uint accountId) external view returns (AccountPermissions[] memory);
+    function getAccountPermissions(uint128 accountId) external view returns (AccountPermissions[] memory);
 
     /**
      * @notice Mints an account token with id `requestedAccountId` to `msg.sender`.
@@ -37,7 +37,7 @@ interface IAccountModule {
      *
      * Emits a {AccountCreated} event.
      */
-    function createAccount(uint256 requestedAccountId) external;
+    function createAccount(uint128 requestedAccountId) external;
 
     /**
      * @notice Grants `permission` to `target` for account `accountId`.
@@ -58,7 +58,7 @@ interface IAccountModule {
      * Emits a {PermissionGranted} event.
      */
     function grantPermission(
-        uint accountId,
+        uint128 accountId,
         bytes32 permission,
         address target
     ) external;
@@ -73,7 +73,7 @@ interface IAccountModule {
      * Emits a {PermissionRevoked} event.
      */
     function revokePermission(
-        uint accountId,
+        uint128 accountId,
         bytes32 permission,
         address target
     ) external;
@@ -83,13 +83,13 @@ interface IAccountModule {
      *
      * Emits a {PermissionRevoked} event.
      */
-    function renouncePermission(uint accountId, bytes32 permission) external;
+    function renouncePermission(uint128 accountId, bytes32 permission) external;
 
     /**
      * @notice Returns `true` if `target` has been granted `permission` for account `accountId`.
      */
     function hasPermission(
-        uint accountId,
+        uint128 accountId,
         bytes32 permission,
         address target
     ) external view returns (bool);
@@ -102,5 +102,5 @@ interface IAccountModule {
     /**
      * @notice Returns the address that owns a given account, as recorded by the system.
      */
-    function getAccountOwner(uint accountId) external view returns (address);
+    function getAccountOwner(uint128 accountId) external view returns (address);
 }

@@ -20,12 +20,12 @@ interface ICollateralModule {
     /**
      * @notice Emitted when `amount` of collateral of type `collateralType` is deposited to account `accountId` by `sender`.
      */
-    event CollateralDeposited(uint indexed accountId, address indexed collateralType, uint amount, address indexed sender);
+    event CollateralDeposited(uint128 indexed accountId, address indexed collateralType, uint amount, address indexed sender);
 
     /**
      * @notice Emitted when `amount` of collateral of type `collateralType` is withdrawn from account `accountId` by `sender`.
      */
-    event CollateralWithdrawn(uint indexed accountId, address indexed collateralType, uint amount, address indexed sender);
+    event CollateralWithdrawn(uint128 indexed accountId, address indexed collateralType, uint amount, address indexed sender);
 
     /**
      * @notice Creates or updates the configuration for given `collateralType`.
@@ -73,7 +73,7 @@ interface ICollateralModule {
      *
      */
     function depositCollateral(
-        uint accountId,
+        uint128 accountId,
         address collateralType,
         uint amount
     ) external;
@@ -89,13 +89,13 @@ interface ICollateralModule {
      *
      */
     function withdrawCollateral(
-        uint accountId,
+        uint128 accountId,
         address collateralType,
         uint amount
     ) external;
 
     /// @notice Returns the total values pertaining to account `accountId` for `collateralType`.
-    function getAccountCollateral(uint accountId, address collateralType)
+    function getAccountCollateral(uint128 accountId, address collateralType)
         external
         view
         returns (
@@ -106,21 +106,21 @@ interface ICollateralModule {
         );
 
     /// @notice Returns the amount of collateral of type `collateralType` deposited with account `accountId` that can be withdrawn or delegated.
-    function getAccountAvailableCollateral(uint accountId, address collateralType) external view returns (uint);
+    function getAccountAvailableCollateral(uint128 accountId, address collateralType) external view returns (uint);
 
     /*
     /// @notice Returns the amount of collateral of type `collateralType` staked with account `accountId` that can be unstaked.
     /// @dev DEPENDENT ON 305 (Would be combined with `getAccountUnstakebleCollateral` into `getAccountAvailableCollateral`)
-    function getAccountUnstakebleCollateral(uint accountId, address collateralType) external view returns (uint);
+    function getAccountUnstakebleCollateral(uint128 accountId, address collateralType) external view returns (uint);
 
     /// @notice Returns the amount of collateral of type `collateralType` staked with account `accountId` that can be delegated to a pool.
     /// @dev DEPENDENT ON 305 (Would be combined with `getAccountUnstakebleCollateral` into `getAccountAvailableCollateral`)
-    function getAccountUnassignedCollateral(uint accountId, address collateralType) external view returns (uint);
+    function getAccountUnassignedCollateral(uint128 accountId, address collateralType) external view returns (uint);
 
     /// @notice Clean expired locks from locked collateral arrays for an account/collateral type. It includes offset and items to prevent gas exhaustion. If both, offset and items, are 0 it will traverse the whole array (unlimited)
     /// @dev DEPENDENT ON 305
     function cleanExpiredLocks(
-        uint accountId,
+        uint128 accountId,
         address collateralType,
         uint offset,
         uint items
@@ -129,7 +129,7 @@ interface ICollateralModule {
     /// @notice Redeems the system escrow tokens into reward tokens
     /// @dev DEPENDENT ON 305
     function redeemReward(
-        uint accountId,
+        uint128 accountId,
         uint amount,
         uint duration
     ) external;

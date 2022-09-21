@@ -5,19 +5,15 @@ import "@synthetixio/core-contracts/contracts/ownership/OwnableMixin.sol";
 import "@synthetixio/core-contracts/contracts/interfaces/IERC20.sol";
 
 import "../../interfaces/ICollateralModule.sol";
-import "../../storage/CollateralStorage.sol";
+import "../../storage/Account.sol";
+import "../../storage/CollateralConfiguration.sol";
 import "@synthetixio/core-modules/contracts/mixins/AssociatedSystemsMixin.sol";
-import "../../mixins/AccountRBACMixin.sol";
-import "../../mixins/CollateralMixin.sol";
 
 import "../../utils/ERC20Helper.sol";
 
 contract CollateralModule is
     ICollateralModule,
-    CollateralStorage,
     OwnableMixin,
-    AccountRBACMixin,
-    CollateralMixin,
     AssociatedSystemsMixin
 {
     using SetUtil for SetUtil.AddressSet;
@@ -39,22 +35,7 @@ contract CollateralModule is
         uint liquidationReward,
         bool enabled
     ) external override onlyOwner {
-        CollateralStore storage store = _collateralStore();
-        SetUtil.AddressSet storage collateralTypes = store.collateralTypes;
-
-        if (!collateralTypes.contains(collateralType)) {
-            collateralTypes.add(collateralType);
-        }
-
-        CollateralConfiguration storage collateral = store.collateralConfigurations[collateralType];
-
-        collateral.tokenAddress = collateralType;
-        collateral.targetCRatio = targetCRatio;
-        collateral.minimumCRatio = minimumCRatio;
-        collateral.priceFeed = priceFeed;
-        collateral.liquidationReward = liquidationReward;
-        collateral.enabled = enabled;
-
+        CollateralConfiguration.set(collateralType, priceFeed, targetCRatio, minimumCRatio, liquidationReward, enabled);
         emit CollateralConfigured(collateralType, priceFeed, targetCRatio, minimumCRatio, liquidationReward, enabled);
     }
 
@@ -62,19 +43,18 @@ contract CollateralModule is
         external
         view
         override
-        returns (CollateralStorage.CollateralConfiguration[] memory)
+        returns (CollateralConfiguration.Data[] memory)
     {
-        CollateralStore storage store = _collateralStore();
-        SetUtil.AddressSet storage collateralTypes = store.collateralTypes;
+        SetUtil.AddressSet storage collateralTypes = CollateralConfiguration.loadAvailableCollaterals();
 
         uint numCollaterals = collateralTypes.length();
-        CollateralConfiguration[] memory filteredCollaterals = new CollateralConfiguration[](numCollaterals);
+        CollateralConfiguration[] memory filteredCollaterals = new CollateralConfiguration.Data[](numCollaterals);
 
         uint collateralsIdx;
         for (uint i = 1; i <= numCollaterals; i++) {
             address collateralType = collateralTypes.valueAt(i);
 
-            CollateralConfiguration storage collateral = store.collateralConfigurations[collateralType];
+            CollateralConfiguration storage collateral = CollateralConfiguration.load(collateralType);
 
             if (!hideDisabled || collateral.enabled) {
                 filteredCollaterals[collateralsIdx++] = collateral;
@@ -88,9 +68,9 @@ contract CollateralModule is
         external
         view
         override
-        returns (CollateralStorage.CollateralConfiguration memory)
+        returns (CollateralConfiguration.Data memory)
     {
-        return _collateralStore().collateralConfigurations[collateralType];
+        return CollateralConfiguration.load(collateralType);
     }
 
     /////////////////////////////////////////////////
@@ -98,38 +78,32 @@ contract CollateralModule is
     /////////////////////////////////////////////////
 
     function depositCollateral(
-        uint accountId,
+        uint128 accountId,
         address collateralType,
         uint amount
-    ) public override onlyWithPermission(accountId, _DEPOSIT_PERMISSION) collateralEnabled(collateralType) {
-        collateralType.safeTransferFrom(_accountOwner(accountId), address(this), amount);
+    ) public override Account.onlyWithPermission(accountId, AccountRBAC._DEPOSIT_PERMISSION) collateralEnabled(collateralType) {
+        collateralType.safeTransferFrom(msg.sender, address(this), amount);
 
-        _depositCollateral(accountId, collateralType, amount);
+        Account.load(accountId).collaterals[collateralType].depositCollateral(accountId, collateralType, amount);
 
         emit CollateralDeposited(accountId, collateralType, amount, msg.sender);
     }
 
     function withdrawCollateral(
-        uint accountId,
+        uint128 accountId,
         address collateralType,
         uint amount
-    ) public override onlyWithPermission(accountId, _WITHDRAW_PERMISSION) {
+    ) public override Account.onlyWithPermission(accountId, AccountRBAC._WITHDRAW_PERMISSION) {
         uint256 availableCollateral = getAccountAvailableCollateral(accountId, collateralType);
-
-        if (availableCollateral < amount) {
-            revert InsufficientAccountCollateral(accountId, collateralType, amount);
-        }
-
-        CollateralData storage collateralData = _collateralStore().collateralDataByAccountId[accountId][collateralType];
-
-        collateralData.availableAmount -= amount;
+        
+        Account.load(accountId).collaterals[collateralType].deductCollateral(accountId, collateralType, amount);
 
         collateralType.safeTransfer(_accountOwner(accountId), amount);
 
         emit CollateralWithdrawn(accountId, collateralType, amount, msg.sender);
     }
 
-    function getAccountCollateral(uint accountId, address collateralType)
+    function getAccountCollateral(uint128 accountId, address collateralType)
         external
         view
         override
@@ -137,15 +111,15 @@ contract CollateralModule is
     //uint256 totalLocked,
     //uint256 totalEscrowed
     {
-        return _getAccountCollateralTotals(accountId, collateralType);
+        return Account.load(accountId).collaterals[collateralType].getAccountCollateralTotals(accountId, collateralType);
     }
 
-    function getAccountAvailableCollateral(uint accountId, address collateralType) public view override returns (uint) {
-        return _getAccountUnassignedCollateral(accountId, collateralType);
+    function getAccountAvailableCollateral(uint128 accountId, address collateralType) public view override returns (uint) {
+        return Account.load(accountId).collaterals[collateralType].getAccountUnassignedCollateral(accountId, collateralType);
     }
 
     /*
-    function getAccountUnstakebleCollateral(uint accountId, address collateralType) public view override returns (uint) {
+    function getAccountUnstakebleCollateral(uint128 accountId, address collateralType) public view override returns (uint) {
         (uint256 total, uint256 assigned, uint256 locked, ) = _getAccountCollateralTotals(accountId, collateralType);
 
         if (locked > assigned) {
@@ -156,7 +130,7 @@ contract CollateralModule is
     }
 
     function cleanExpiredLocks(
-        uint accountId,
+        uint128 accountId,
         address collateralType,
         uint offset,
         uint items
@@ -169,7 +143,7 @@ contract CollateralModule is
     }
 
     function redeemReward(
-        uint accountId,
+        uint128 accountId,
         uint amount,
         uint duration
     ) external override {

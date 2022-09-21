@@ -16,7 +16,7 @@ contract MockMarket is IMarket {
 
     function initialize(
         address proxy,
-        uint marketId,
+        uint128 marketId,
         uint initialPrice
     ) external {
         _proxy = proxy;

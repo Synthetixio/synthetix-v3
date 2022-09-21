@@ -6,26 +6,25 @@ import "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
 import "@synthetixio/core-contracts/contracts/utils/MathUtil.sol";
 
 import "@synthetixio/core-modules/contracts/mixins/AssociatedSystemsMixin.sol";
-import "../../mixins/AccountRBACMixin.sol";
-import "../../mixins/PoolMixin.sol";
 
-import "../../utils/SharesLibrary.sol";
+import "../../storage/DistributionEntry.sol";
 
-import "../../storage/VaultStorage.sol";
+import "../../storage/Pool.sol";
+
 import "../../interfaces/IRewardsManagerModule.sol";
 
 contract RewardsManagerModule is
     IRewardsManagerModule,
-    VaultStorage,
-    AccountRBACMixin,
     OwnableMixin,
-    AssociatedSystemsMixin,
-    PoolMixin
+    AssociatedSystemsMixin
 {
     using SetUtil for SetUtil.Bytes32Set;
     using MathUtil for uint256;
 
-    using SharesLibrary for SharesLibrary.Distribution;
+    using Vault for Vault.Data;
+    using Distribution for Distribution.Data;
+    using DistributionEntry for DistributionEntry.Data;
+
     error InvalidParameters(string incorrectParameter, string help);
 
     uint private constant _MAX_REWARD_DISTRIBUTIONS = 10;
@@ -35,7 +34,7 @@ contract RewardsManagerModule is
     // ---------------------------------------
 
     function distributeRewards(
-        uint poolId,
+        uint128 poolId,
         address collateralType,
         uint index,
         address distributor,
@@ -47,10 +46,9 @@ contract RewardsManagerModule is
             revert InvalidParameters("index", "too large");
         }
 
-        VaultData storage vaultData = _vaultStore().vaults[poolId][collateralType];
-        VaultEpochData storage epochData = vaultData.epochData[vaultData.epoch];
+        Pool.Data storage pool = Pool.load(poolId);
 
-        RewardDistribution[] storage dists = vaultData.rewards;
+        RewardDistribution.Data[] storage dists = pool.vaults[collateralType].rewards;
 
         if (index > dists.length) {
             revert InvalidParameters("index", "should be next index");
@@ -58,21 +56,21 @@ contract RewardsManagerModule is
             dists.push(); // extend the size of the array by 1
         }
 
-        RewardDistribution storage existingDistribution = dists[index];
+        RewardDistribution.Data storage existingDistribution = dists[index];
 
         // to call this function must be either:
         // 1. pool owner
         // 2. the registered distributor contract
-        if (_ownerOf(poolId) != msg.sender && address(existingDistribution.distributor) != msg.sender) {
+        if (pool.owner != msg.sender && address(existingDistribution.distributor) != msg.sender) {
             revert AccessError.Unauthorized(msg.sender);
         }
 
-        if ((_ownerOf(poolId) != msg.sender && distributor != msg.sender) || distributor == address(0)) {
+        if (distributor == address(0)) {
             revert InvalidParameters("distributor", "must be non-zero");
         }
 
         existingDistribution.rewardPerShare += uint128(
-            uint(epochData.debtDist.distributeWithEntry(existingDistribution.entry, int(amount), start, duration))
+            uint(existingDistribution.distribute(pool.vaults[collateralType].currentEpoch().debtDist, int(amount), start, duration))
         );
 
         existingDistribution.distributor = IRewardDistributor(distributor);
@@ -81,16 +79,15 @@ contract RewardsManagerModule is
     }
 
     function getAvailableRewards(
-        uint poolId,
+        uint128 poolId,
         address collateralType,
-        uint accountId
+        uint128 accountId
     ) external override returns (uint[] memory) {
-        VaultData storage vaultData = _vaultStore().vaults[poolId][collateralType];
-        VaultEpochData storage epochData = vaultData.epochData[vaultData.epoch];
-        return _updateAvailableRewards(epochData, vaultData.rewards, accountId);
+        Vault.Data storage vault = Pool.load(poolId).vaults[collateralType];
+        return vault.updateAvailableRewards(accountId);
     }
 
-    function getCurrentRewardAccumulation(uint poolId, address collateralType)
+    function getCurrentRewardAccumulation(uint128 poolId, address collateralType)
         external
         view
         override
@@ -100,19 +97,18 @@ contract RewardsManagerModule is
     }
 
     function claimRewards(
-        uint poolId,
+        uint128 poolId,
         address collateralType,
-        uint accountId
+        uint128 accountId
     ) external override returns (uint[] memory) {
-        VaultData storage vaultData = _vaultStore().vaults[poolId][collateralType];
-        VaultEpochData storage epochData = vaultData.epochData[vaultData.epoch];
-        uint[] memory rewards = _updateAvailableRewards(epochData, vaultData.rewards, accountId);
+        Vault.Data storage vault = Pool.load(poolId).vaults[collateralType];
+        uint[] memory rewards = vault.updateAvailableRewards(accountId);
 
         for (uint i = 0; i < rewards.length; i++) {
             if (rewards[i] > 0) {
                 // todo: reentrancy protection?
-                vaultData.rewards[i].distributor.payout(poolId, collateralType, msg.sender, rewards[i]);
-                vaultData.rewards[i].actorInfo[accountId].pendingSend = 0;
+                vault.rewards[i].distributor.payout(poolId, collateralType, msg.sender, rewards[i]);
+                vault.rewards[i].actorInfo[accountId].pendingSend = 0;
                 emit RewardsClaimed(poolId, collateralType, accountId, i, rewards[i]);
             }
         }
@@ -120,10 +116,11 @@ contract RewardsManagerModule is
         return rewards;
     }
 
-    function _getCurrentRewardAccumulation(uint poolId, address collateralType) internal view returns (uint[] memory) {
-        VaultData storage vaultData = _vaultStore().vaults[poolId][collateralType];
-        VaultEpochData storage epochData = vaultData.epochData[vaultData.epoch];
-        RewardDistribution[] storage dists = vaultData.rewards;
+    function _getCurrentRewardAccumulation(uint128 poolId, address collateralType) internal view returns (uint[] memory) {
+        Vault.Data storage vault = Pool.load(poolId).vaults[collateralType];
+        RewardDistribution.Data[] storage dists = vault.rewards;
+
+        uint totalShares = vault.currentEpoch().debtDist.totalShares;
 
         int curTime = int(block.timestamp);
 
@@ -139,7 +136,7 @@ contract RewardsManagerModule is
             }
 
             rates[i] = uint(int(dists[i].entry.scheduledValue)).divDecimal(
-                uint(int(dists[i].entry.duration)).divDecimal(epochData.debtDist.totalShares)
+                uint(int(dists[i].entry.duration)).divDecimal(totalShares)
             );
         }
 
