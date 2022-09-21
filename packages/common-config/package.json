@@ -5,7 +5,7 @@
   "private": true,
   "scripts": {},
   "devDependencies": {
-    "@nomiclabs/hardhat-ethers": "2.1.0",
+    "@nomiclabs/hardhat-ethers": "2.1.1",
     "dotenv": "16.0.1",
     "hardhat": "2.9.3",
     "hardhat-cannon": "1.0.31",

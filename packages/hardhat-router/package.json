@@ -27,7 +27,7 @@
     "test:watch": "mocha --watch"
   },
   "peerDependencies": {
-    "@nomiclabs/hardhat-ethers": "^2.0.2",
+    "@nomiclabs/hardhat-ethers": "^2.0.0",
     "hardhat": "^2.0.0"
   },
   "dependencies": {
@@ -47,7 +47,7 @@
     "use-strict": "1.0.1"
   },
   "devDependencies": {
-    "@nomiclabs/hardhat-ethers": "2.0.5",
+    "@nomiclabs/hardhat-ethers": "2.1.1",
     "hardhat": "2.9.3",
     "mocha": "9.1.1",
     "nyc": "15.1.0"
