@@ -11,6 +11,7 @@ import "../../storage/Pool.sol";
 contract PoolModule is IPoolModule, OwnableMixin {
     error PoolAlreadyExists(uint128 poolId);
     error InvalidParameters(string incorrectParameter, string help);
+    error PoolNotFound(uint128 poolId);
 
     using Pool for Pool.Data;
     using Market for Market.Data;
@@ -92,7 +93,7 @@ contract PoolModule is IPoolModule, OwnableMixin {
         uint128[] calldata markets,
         uint[] calldata weights,
         int[] calldata maxDebtShareValues
-    ) external override Pool.poolExists(poolId) onlyPoolOwner(poolId, msg.sender) {
+    ) external override poolExists(poolId) onlyPoolOwner(poolId, msg.sender) {
         if (markets.length != weights.length || markets.length != maxDebtShareValues.length) {
             revert InvalidParameters("markets.length,weights.length,maxDebtShareValues.length", "must match");
         }
@@ -185,7 +186,7 @@ contract PoolModule is IPoolModule, OwnableMixin {
     function setPoolName(uint128 poolId, string memory name)
         external
         override
-        Pool.poolExists(poolId)
+        poolExists(poolId)
         onlyPoolOwner(poolId, msg.sender)
     {
         Pool.load(poolId).name = name;
@@ -206,5 +207,13 @@ contract PoolModule is IPoolModule, OwnableMixin {
 
     function getMinLiquidityRatio() external view override returns (uint) {
         return PoolConfiguration.load().minLiquidityRatio;
+    }
+
+    modifier poolExists(uint128 poolId) {
+        if (!Pool.load(poolId).exists() && poolId != 0) {
+            revert PoolNotFound(poolId);
+        }
+
+        _;
     }
 }

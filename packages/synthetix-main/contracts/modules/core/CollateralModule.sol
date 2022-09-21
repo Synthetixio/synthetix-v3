@@ -19,6 +19,14 @@ contract CollateralModule is
     using SetUtil for SetUtil.AddressSet;
     using ERC20Helper for address;
 
+    using Account for Account.Data;
+    using AccountRBAC for AccountRBAC.Data;
+    using Collateral for Collateral.Data;
+
+    error PermissionDenied(uint128 accountId, bytes32 permission, address target);
+
+    error InvalidCollateral(address collateralType);
+
     //bytes32 private constant _REDEEMABLE_REWARDS_TOKEN = "eSNXToken";
     //bytes32 private constant _REWARDED_TOKEN = "SNXToken";
 
@@ -48,13 +56,13 @@ contract CollateralModule is
         SetUtil.AddressSet storage collateralTypes = CollateralConfiguration.loadAvailableCollaterals();
 
         uint numCollaterals = collateralTypes.length();
-        CollateralConfiguration[] memory filteredCollaterals = new CollateralConfiguration.Data[](numCollaterals);
+        CollateralConfiguration.Data[] memory filteredCollaterals = new CollateralConfiguration.Data[](numCollaterals);
 
         uint collateralsIdx;
         for (uint i = 1; i <= numCollaterals; i++) {
             address collateralType = collateralTypes.valueAt(i);
 
-            CollateralConfiguration storage collateral = CollateralConfiguration.load(collateralType);
+            CollateralConfiguration.Data storage collateral = CollateralConfiguration.load(collateralType);
 
             if (!hideDisabled || collateral.enabled) {
                 filteredCollaterals[collateralsIdx++] = collateral;
@@ -81,10 +89,10 @@ contract CollateralModule is
         uint128 accountId,
         address collateralType,
         uint amount
-    ) public override Account.onlyWithPermission(accountId, AccountRBAC._DEPOSIT_PERMISSION) collateralEnabled(collateralType) {
+    ) public override onlyWithPermission(accountId, AccountRBAC._DEPOSIT_PERMISSION) collateralEnabled(collateralType) {
         collateralType.safeTransferFrom(msg.sender, address(this), amount);
 
-        Account.load(accountId).collaterals[collateralType].depositCollateral(accountId, collateralType, amount);
+        Account.load(accountId).collaterals[collateralType].depositCollateral(amount);
 
         emit CollateralDeposited(accountId, collateralType, amount, msg.sender);
     }
@@ -93,12 +101,12 @@ contract CollateralModule is
         uint128 accountId,
         address collateralType,
         uint amount
-    ) public override Account.onlyWithPermission(accountId, AccountRBAC._WITHDRAW_PERMISSION) {
+    ) public override onlyWithPermission(accountId, AccountRBAC._WITHDRAW_PERMISSION) {
         uint256 availableCollateral = getAccountAvailableCollateral(accountId, collateralType);
         
-        Account.load(accountId).collaterals[collateralType].deductCollateral(accountId, collateralType, amount);
+        Account.load(accountId).collaterals[collateralType].deductCollateral(amount);
 
-        collateralType.safeTransfer(_accountOwner(accountId), amount);
+        collateralType.safeTransfer(msg.sender, amount);
 
         emit CollateralWithdrawn(accountId, collateralType, amount, msg.sender);
     }
@@ -111,11 +119,11 @@ contract CollateralModule is
     //uint256 totalLocked,
     //uint256 totalEscrowed
     {
-        return Account.load(accountId).collaterals[collateralType].getAccountCollateralTotals(accountId, collateralType);
+        return Account.load(accountId).getCollateralTotals(collateralType);
     }
 
     function getAccountAvailableCollateral(uint128 accountId, address collateralType) public view override returns (uint) {
-        return Account.load(accountId).collaterals[collateralType].getAccountUnassignedCollateral(accountId, collateralType);
+        return Account.load(accountId).collaterals[collateralType].availableAmount;
     }
 
     /*
@@ -220,4 +228,20 @@ contract CollateralModule is
         }
     }
 */
+
+    modifier onlyWithPermission(uint128 accountId, bytes32 permission) {
+        if (!Account.load(accountId).rbac.authorized(permission, msg.sender)) {
+            revert PermissionDenied(accountId, permission, msg.sender);
+        }
+
+        _;
+    }
+
+    modifier collateralEnabled(address collateralType) {
+        if (!CollateralConfiguration.load(collateralType).enabled) {
+            revert InvalidCollateral(collateralType);
+        }
+
+        _;
+    }
 }

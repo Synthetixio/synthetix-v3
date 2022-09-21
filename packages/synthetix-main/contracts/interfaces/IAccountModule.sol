@@ -46,7 +46,7 @@ interface IAccountModule {
      *
      * - `msg.sender` must be the account token.
      */
-    function notifyAccountTransfer(address to, uint256 accountId) external;
+    function notifyAccountTransfer(address to, uint128 accountId) external;
 
     /**
      * @notice Grants `permission` to `target` for account `accountId`.

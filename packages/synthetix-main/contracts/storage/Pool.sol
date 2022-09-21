@@ -15,8 +15,6 @@ library Pool {
 
     using MathUtil for uint256;
 
-    error PoolNotFound(uint128 poolId);
-
     struct Data {
         /// @dev the id of this pool
         uint128 id;
@@ -219,13 +217,5 @@ library Pool {
 
         // if they have a credit, just treat their debt as 0
         return getPositionCollateralValue.divDecimal(getPositionDebt < 0 ? 0 : uint(getPositionDebt));
-    }
-
-    modifier poolExists(uint128 poolId) {
-        if (!exists(load(poolId)) && poolId != 0) {
-            revert PoolNotFound(poolId);
-        }
-
-        _;
     }
 }

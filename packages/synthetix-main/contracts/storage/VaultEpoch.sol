@@ -6,6 +6,8 @@ import "./Distribution.sol";
 library VaultEpoch {
     using Distribution for Distribution.Data;
 
+    using MathUtil for uint256;
+
     struct Data {
         /// @dev amount of debt which has not been rolled into `usdDebtDist`. Needed to keep track of overall getVaultDebt
         int128 unclaimedDebt;
@@ -51,5 +53,18 @@ library VaultEpoch {
 
     function getAccountCollateral(Data storage self, uint128 accountId) internal view returns (uint amount) {
         return uint(self.collateralDist.getActorValue(accountToActor(accountId)));
+    }
+
+    function calculateVaultShares(
+        Data storage self,
+        uint collateralAmount,
+        uint leverage
+    ) internal view returns (uint) {
+        uint totalCollateral = uint(self.collateralDist.totalValue());
+        if (totalCollateral == 0) {
+            return collateralAmount.mulDecimal(leverage);
+        }
+
+        return leverage.mulDecimal((uint(self.debtDist.totalShares) * collateralAmount) / totalCollateral);
     }
 }

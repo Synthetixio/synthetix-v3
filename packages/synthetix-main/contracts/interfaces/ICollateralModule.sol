@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "../storage/CollateralStorage.sol";
+import "../storage/CollateralConfiguration.sol";
 
 /// @title Module for managing collateral
 interface ICollateralModule {
@@ -52,7 +52,7 @@ interface ICollateralModule {
     function getCollateralConfigurations(bool hideDisabled)
         external
         view
-        returns (CollateralStorage.CollateralConfiguration[] memory collaterals);
+        returns (CollateralConfiguration.Data[] memory collaterals);
 
     /**
      * @notice Returns detailed information pertaining the specified collateral type.
@@ -60,7 +60,7 @@ interface ICollateralModule {
     function getCollateralConfiguration(address collateralType)
         external
         view
-        returns (CollateralStorage.CollateralConfiguration memory collateral);
+        returns (CollateralConfiguration.Data memory collateral);
 
     /**
      * @notice Deposits `amount` of collateral of type `collateralType` into account `accountId`.

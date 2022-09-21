@@ -21,6 +21,8 @@ contract AccountModule is IAccountModule, OwnableMixin, AssociatedSystemsMixin {
 
     error OnlyAccountTokenProxy(address origin);
 
+    error PermissionDenied(uint128 accountId, bytes32 permission, address target);
+
     modifier onlyAccountToken() {
         if (msg.sender != address(getAccountTokenAddress())) {
             revert OnlyAccountTokenProxy(msg.sender);
@@ -59,7 +61,7 @@ contract AccountModule is IAccountModule, OwnableMixin, AssociatedSystemsMixin {
         emit AccountCreated(msg.sender, requestedAccountId);
     }
 
-    function notifyAccountTransfer(address to, uint256 accountId) external override onlyAccountToken {
+    function notifyAccountTransfer(address to, uint128 accountId) external override onlyAccountToken {
         Account.load(accountId).rbac.setOwner(to);
     }
 
@@ -75,7 +77,7 @@ contract AccountModule is IAccountModule, OwnableMixin, AssociatedSystemsMixin {
         uint128 accountId,
         bytes32 permission,
         address target
-    ) external override Account.onlyWithPermission(accountId, AccountRBAC._ADMIN_PERMISSION) {
+    ) external override onlyWithPermission(accountId, AccountRBAC._ADMIN_PERMISSION) {
         Account.load(accountId).rbac.grantPermission(permission, target);
 
         emit PermissionGranted(accountId, permission, target, msg.sender);
@@ -85,7 +87,7 @@ contract AccountModule is IAccountModule, OwnableMixin, AssociatedSystemsMixin {
         uint128 accountId,
         bytes32 permission,
         address target
-    ) external override Account.onlyWithPermission(accountId, AccountRBAC._ADMIN_PERMISSION) {
+    ) external override onlyWithPermission(accountId, AccountRBAC._ADMIN_PERMISSION) {
         Account.load(accountId).rbac.revokePermission(permission, target);
 
         emit PermissionRevoked(accountId, permission, target, msg.sender);
@@ -99,5 +101,13 @@ contract AccountModule is IAccountModule, OwnableMixin, AssociatedSystemsMixin {
 
     function getAccountOwner(uint128 accountId) external view returns (address) {
         return Account.load(accountId).rbac.owner;
+    }
+
+    modifier onlyWithPermission(uint128 accountId, bytes32 permission) {
+        if (!Account.load(accountId).rbac.authorized(permission, msg.sender)) {
+            revert PermissionDenied(accountId, permission, msg.sender);
+        }
+
+        _;
     }
 }

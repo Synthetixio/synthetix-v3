@@ -10,9 +10,8 @@ library Account {
     using AccountRBAC for AccountRBAC.Data;
     using Pool for Pool.Data;
 
-    error PermissionDenied(uint128 accountId, bytes32 permission, address target);
-
     struct Data {
+        uint128 id;
         AccountRBAC.Data rbac;
         SetUtil.AddressSet activeCollaterals;
         mapping(address => Collateral.Data) collaterals;
@@ -25,22 +24,19 @@ library Account {
         }
     }
 
-    modifier onlyWithPermission(uint128 accountId, bytes32 permission) {
-        if (!load(accountId).rbac.authorized(permission, msg.sender)) {
-            revert PermissionDenied(accountId, permission, msg.sender);
-        }
+    function create(uint128 id, address owner) internal returns (Data storage self) {
+        self = load(id);
 
-        _;
+        self.id = id;
+        self.rbac.owner = owner;
     }
 
-    function getCollateralTotals(uint128 accountId, address collateralType)
+    function getCollateralTotals(Data storage self, address collateralType)
         internal
         view
         returns (uint256 totalDeposited, uint256 totalAssigned)
     {
-        Data storage self = load(accountId);
-        
-        totalAssigned = getAssignedCollateral(accountId, collateralType);
+        totalAssigned = getAssignedCollateral(self, collateralType);
         totalDeposited = totalAssigned + self.collaterals[collateralType].availableAmount;
         //totalLocked = _getTotalLocked(stakedCollateral.locks);
         //totalEscrowed = _getLockedEscrow(stakedCollateral.escrow);
@@ -48,16 +44,14 @@ library Account {
         return (totalDeposited, totalAssigned); //, totalLocked, totalEscrowed);
     }
 
-    function getAssignedCollateral(uint128 accountId, address collateralType) internal view returns (uint) {
-        Data storage self = load(accountId);
-
+    function getAssignedCollateral(Data storage self, address collateralType) internal view returns (uint) {
         uint totalAssigned = 0;
         for (uint i = 0; i < self.collaterals[collateralType].pools.length; i++) {
             uint128 poolIdx = self.collaterals[collateralType].pools[i];
 
-            Pool.Data storage poolData = Pool.load(poolIdx);
+            Pool.Data storage pool = Pool.load(poolIdx);
 
-            (uint collateralAmount,,) = poolData.currentAccountCollateral(collateralType, accountId);
+            (uint collateralAmount,,) = pool.currentAccountCollateral(collateralType, self.id);
             totalAssigned += collateralAmount;
         }
 

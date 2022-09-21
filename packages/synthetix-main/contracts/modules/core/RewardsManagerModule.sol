@@ -70,7 +70,7 @@ contract RewardsManagerModule is
         }
 
         existingDistribution.rewardPerShare += uint128(
-            uint(existingDistribution.distribute(pool.vaults[collateralType].currentEpoch().debtDist, int(amount), start, duration))
+            uint(existingDistribution.entry.distribute(pool.vaults[collateralType].currentEpoch().debtDist, int(amount), start, duration))
         );
 
         existingDistribution.distributor = IRewardDistributor(distributor);
