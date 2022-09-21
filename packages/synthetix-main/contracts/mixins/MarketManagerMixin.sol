@@ -156,9 +156,9 @@ contract MarketManagerMixin is MarketManagerStorage, PoolModuleStorage, Collater
         return totalDepositedCollateralValue;
     }
 
-    function _totalBalance(MarketData storage marketData) internal view returns (int) {
+    function _totalBalance(uint marketId, MarketData storage marketData) internal view returns (int) {
         return
-            int(IMarket(marketData.marketAddress).reportedDebt()) +
+            int(IMarket(marketData.marketAddress).reportedDebt(marketId)) +
             marketData.issuance -
             int(_depositedCollateralValue(marketData));
     }
