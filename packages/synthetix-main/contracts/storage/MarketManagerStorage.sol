@@ -7,7 +7,7 @@ import "@synthetixio/core-contracts/contracts/utils/HeapUtil.sol";
 contract MarketManagerStorage {
     struct MarketManagerStore {
         mapping(uint => MarketData) markets;
-        mapping(address => uint) marketIds;
+        mapping(address => uint[]) marketIdsByAddress;
         uint lastMarketId;
     }
 

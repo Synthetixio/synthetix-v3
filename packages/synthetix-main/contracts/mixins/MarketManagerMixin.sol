@@ -29,7 +29,7 @@ contract MarketManagerMixin is MarketManagerStorage, PoolModuleStorage, Collater
             revert MarketNotFound(marketId);
         }
 
-        _distributeMarket(marketData, 9999999999);
+        _distributeMarket(marketId, marketData, 9999999999);
 
         return _adjustVaultShares(marketData, poolId, amount, maxDebtShareValue);
     }
@@ -71,14 +71,18 @@ contract MarketManagerMixin is MarketManagerStorage, PoolModuleStorage, Collater
     }
 
     // the second parameter exists to act as an escape hatch/discourage aginst griefing
-    function _distributeMarket(MarketData storage marketData, uint maxIter) internal {
+    function _distributeMarket(
+        uint marketId,
+        MarketData storage marketData,
+        uint maxIter
+    ) internal {
         if (marketData.debtDist.totalShares == 0) {
             // market cannot distribute (or accumulate) any debt when there are no shares
             return;
         }
 
         // get the latest market balance
-        int targetBalance = _totalBalance(marketData);
+        int targetBalance = _totalBalance(marketId, marketData);
 
         int curBalance = marketData.lastMarketBalance;
 
@@ -135,10 +139,11 @@ contract MarketManagerMixin is MarketManagerStorage, PoolModuleStorage, Collater
         marketData.lastMarketBalance = int128(targetBalance);
     }
 
-    function _getReportedDebt(MarketData storage marketData) internal view returns (uint) {
-        return IMarket(marketData.marketAddress).reportedDebt();
+    function _getReportedDebt(uint marketId, MarketData storage marketData) internal view returns (uint) {
+        return IMarket(marketData.marketAddress).reportedDebt(marketId);
     }
 
+<<<<<<< HEAD
     function _depositedCollateralValue(MarketData storage marketData) internal view returns (uint) {
         uint totalDepositedCollateralValue = 0;
 
@@ -157,5 +162,9 @@ contract MarketManagerMixin is MarketManagerStorage, PoolModuleStorage, Collater
             int(IMarket(marketData.marketAddress).reportedDebt()) +
             marketData.issuance -
             int(_depositedCollateralValue(marketData));
+=======
+    function _totalBalance(uint marketId, MarketData storage marketData) internal view returns (int) {
+        return int(IMarket(marketData.marketAddress).reportedDebt(marketId)) + marketData.issuance;
+>>>>>>> main
     }
 }
