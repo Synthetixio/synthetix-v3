@@ -93,6 +93,10 @@ contract CollateralModule is
         return _collateralStore().collateralConfigurations[collateralType];
     }
 
+    function getCollateralValue(address collateralType) external view override returns (uint) {
+        return _getCollateralValue(collateralType);
+    }
+
     /////////////////////////////////////////////////
     // DEPOSIT  /  WITHDRAW
     /////////////////////////////////////////////////

@@ -49,7 +49,7 @@ contract MarketCollateralModule is IMarketCollateralModule, CollateralStorage, M
             collateralEntryIndex
         ];
 
-        if (amount <= collateralEntry.amount)
+        if (amount < collateralEntry.amount)
             revert InsufficientMarketCollateralWithdrawable(marketId, collateralType, amount);
 
         collateralType.safeTransfer(marketManagerStore.markets[marketId].marketAddress, amount);
@@ -86,7 +86,18 @@ contract MarketCollateralModule is IMarketCollateralModule, CollateralStorage, M
         emit MaximumMarketCollateralConfigured(marketId, collateralType, amount, msg.sender);
     }
 
-    function getMaximumMarketCollateral(uint marketId, address collateralType) external override returns (uint) {
+    function getMarketCollateralAmount(uint marketId, address collateralType) external view override returns (uint) {
+        MarketManagerStore storage marketManagerStore = _marketManagerStore();
+        DepositedCollateral[] storage depositedCollateral = marketManagerStore.markets[marketId].depositedCollateral;
+        for (uint i = 0; i < depositedCollateral.length; i++) {
+            DepositedCollateral storage depositedCollateralEntry = depositedCollateral[i];
+            if (depositedCollateralEntry.collateralType == collateralType) {
+                return depositedCollateralEntry.amount;
+            }
+        }
+    }
+
+    function getMaximumMarketCollateral(uint marketId, address collateralType) external view override returns (uint) {
         MarketManagerStore storage marketManagerStore = _marketManagerStore();
         return marketManagerStore.markets[marketId].maximumDepositable[collateralType];
     }

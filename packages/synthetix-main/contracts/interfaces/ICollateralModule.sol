@@ -63,6 +63,11 @@ interface ICollateralModule {
         returns (CollateralStorage.CollateralConfiguration memory collateral);
 
     /**
+     * @notice Returns the current value of a specified collateral type
+     */
+    function getCollateralValue(address collateralType) external view returns (uint);
+
+    /**
      * @notice Deposits `amount` of collateral of type `collateralType` into account `accountId`.
      *
      * Requirements:

@@ -23,6 +23,8 @@ interface IMarketCollateralModule {
 
     function getMaximumMarketCollateral(uint marketId, address collateralType) external returns (uint);
 
+    function getMarketCollateralAmount(uint marketId, address collateralType) external returns (uint);
+
     /**
      * @notice Emitted when `amount` of collateral of type `collateralType` is deposited to market `marketId` by `sender`.
      */
