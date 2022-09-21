@@ -56,6 +56,11 @@ describe('MarketCollateralModule', function () {
       });
 
       it('only allows the market to deposit the maximum amount', async () => {
+        // The owner assigns a maximum of 1,000
+        await systems()
+          .Core.connect(owner)
+          .configureMaximumMarketCollateral(marketId(), collateralAddress(), 1000);
+
         await collateralContract().connect(user1).approve(MockMarket().address, 1000);
         await MockMarket().connect(user1).depositCollateral(collateralAddress(), 500);
 
@@ -79,6 +84,11 @@ describe('MarketCollateralModule', function () {
       });
 
       it('disallows withdrawing more collateral than it has deposited', async () => {
+        // The owner assigns a maximum of 1,000
+        await systems()
+          .Core.connect(owner)
+          .configureMaximumMarketCollateral(marketId(), collateralAddress(), 1000);
+
         await collateralContract().connect(user1).approve(MockMarket().address, 1000);
         await MockMarket().connect(user1).depositCollateral(collateralAddress(), 500);
 
@@ -115,6 +125,11 @@ describe('MarketCollateralModule', function () {
       });
 
       it('modifies values as expected ', async () => {
+        // The owner assigns a maximum of 1,000
+        await systems()
+          .Core.connect(owner)
+          .configureMaximumMarketCollateral(marketId(), collateralAddress(), 1000);
+
         const initialProtocolBalance = await collateralContract()
           .connect(user1)
           .balanceOf(systems().Core.address);
