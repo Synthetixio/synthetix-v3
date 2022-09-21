@@ -75,7 +75,7 @@ jobs:
       - run: npm ci
       - run: npm run build
       - name: Execute tests
-        run: npm --workspace=./packages/cli test
+        run: NODE_NO_WARNINGS=1 npm --workspace=./packages/cli test
 
   test-sample:
     runs-on: ubuntu-latest
