@@ -1,10 +1,11 @@
-import { ethers } from 'hardhat';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
-import { bootstrap } from '../../../bootstrap';
 import { ethers as Ethers } from 'ethers';
-import { addCollateral, verifyCollateral } from './CollateralModule.helper';
+import { ethers } from 'hardhat';
+
 import Permissions from '../../../mixins/AcccountRBACMixin.permissions';
+import { addCollateral, verifyCollateral } from './CollateralModule.helper';
+import { bootstrap } from '../../../bootstrap';
 
 describe('CollateralModule', function () {
   const { signers, systems } = bootstrap();

@@ -5,7 +5,7 @@
   "private": true,
   "scripts": {
     "test": "hardhat test",
-    "coverage": "hardhat coverage --network hardhat",
+    "coverage": "hardhat --network cannon coverage",
     "compile-contracts": "hardhat compile",
     "size-contracts": "hardhat size-contracts"
   },

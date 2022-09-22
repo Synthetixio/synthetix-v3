@@ -7,25 +7,24 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        package:
-          [
-            core-contracts,
+        package: [
+            # core-contracts,
             core-utils,
             core-modules,
             hardhat-router,
-            synthetix-main,
+            # synthetix-main,
           ]
         include:
-          - package: core-contracts
-            coverage-file: packages/core-contracts/coverage.json
+          # - package: core-contracts
+          #   coverage-file: packages/core-contracts/coverage.json
           - package: core-utils
             coverage-file: packages/core-utils/coverage/lcov.info
           - package: core-modules
             coverage-file: packages/core-modules/coverage.json
           - package: hardhat-router
             coverage-file: packages/hardhat-router/coverage/lcov.info
-          - package: synthetix-main
-            coverage-file: packages/synthetix-main/coverage.json
+          # - package: synthetix-main
+          #   coverage-file: packages/synthetix-main/coverage.json
     steps:
       - name: Install Foundry (Cannon)
         uses: foundry-rs/foundry-toolchain@v1
