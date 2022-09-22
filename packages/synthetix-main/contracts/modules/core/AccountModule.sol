@@ -60,6 +60,7 @@ contract AccountModule is IAccountModule, OwnableMixin, AccountRBACMixin, Associ
     }
 
     function notifyAccountTransfer(address to, uint256 accountId) external override onlyAccountToken {
+        _revokePermissions(accountId, _accountModuleStore().accountsRBAC[accountId].owner);
         _accountModuleStore().accountsRBAC[accountId].owner = to;
     }
 
@@ -125,6 +126,16 @@ contract AccountModule is IAccountModule, OwnableMixin, AccountRBACMixin, Associ
         }
 
         emit PermissionRevoked(accountId, permission, user, msg.sender);
+    }
+
+    function _revokePermissions(uint accountId, address user) internal {
+        AccountRBAC storage accountData = _accountModuleStore().accountsRBAC[accountId];
+
+        bytes32[] memory permissions = accountData.permissions[user].values();
+
+        for (uint i = 1; i <= permissions.length; i++) {
+            _revokePermission(accountId, permissions[i - 1], user);
+        }
     }
 
     function getAccountOwner(uint accountId) external view returns (address) {
