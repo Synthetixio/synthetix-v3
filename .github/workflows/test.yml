@@ -8,15 +8,15 @@ jobs:
     strategy:
       matrix:
         package: [
-            core-contracts,
+            # core-contracts,
             core-utils,
             core-modules,
             hardhat-router,
             # synthetix-main,
           ]
         include:
-          - package: core-contracts
-            coverage-file: packages/core-contracts/coverage.json
+          # - package: core-contracts
+          #   coverage-file: packages/core-contracts/coverage.json
           - package: core-utils
             coverage-file: packages/core-utils/coverage/lcov.info
           - package: core-modules
