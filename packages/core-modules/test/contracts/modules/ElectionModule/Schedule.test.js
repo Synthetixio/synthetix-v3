@@ -50,10 +50,12 @@ describe('ElectionModule (schedule)', () => {
         await assertRevert(ElectionModule.nominate(), 'NotCallableInCurrentPeriod');
       });
     });
+  };
 
+  const itRejectsWithdrawals = () => {
     describe('when trying to call the withdrawNomination function', function () {
       it('reverts', async function () {
-        await assertRevert(ElectionModule.nominate(), 'NotCallableInCurrentPeriod');
+        await assertRevert(ElectionModule.withdrawNomination(), 'NotCallableInCurrentPeriod');
       });
     });
   };
@@ -64,7 +66,9 @@ describe('ElectionModule (schedule)', () => {
         await ElectionModule.nominate();
       });
     });
+  };
 
+  const itAcceptsWithdrawals = () => {
     describe('when a user withdraws its nomination', function () {
       it('does not revert', async function () {
         await ElectionModule.withdrawNomination();
@@ -382,6 +386,7 @@ describe('ElectionModule (schedule)', () => {
 
     describe('while in the Administration period', function () {
       itRejectsNominations();
+      itRejectsWithdrawals();
       itRejectsVotes();
       itRejectsEvaluations();
       itAcceptsAdjustments();
@@ -408,6 +413,7 @@ describe('ElectionModule (schedule)', () => {
       });
 
       itAcceptsNominations();
+      itAcceptsWithdrawals();
       itRejectsVotes();
       itRejectsEvaluations();
       itRejectsAdjustments();
@@ -437,7 +443,8 @@ describe('ElectionModule (schedule)', () => {
         assertBn.equal(await ElectionModule.getCurrentPeriod(), ElectionPeriod.Vote);
       });
 
-      itRejectsNominations();
+      itAcceptsNominations();
+      itRejectsWithdrawals();
       itAcceptsVotes();
       itRejectsEvaluations();
       itRejectsAdjustments();
@@ -461,6 +468,7 @@ describe('ElectionModule (schedule)', () => {
       });
 
       itRejectsNominations();
+      itRejectsWithdrawals();
       itRejectsVotes();
       itRejectsAdjustments();
       itAcceptsEvaluations();

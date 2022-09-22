@@ -8,22 +8,30 @@ import "@synthetixio/core-contracts/contracts/errors/InitError.sol";
 contract ElectionSchedule is ElectionBase {
     /// @dev Used to allow certain functions to only operate within a given period
     modifier onlyInPeriod(ElectionPeriod period) {
-        if (_getCurrentPeriod() != period) {
-            revert NotCallableInCurrentPeriod();
-        }
+        _onlyInPeriod(period);
 
         _;
     }
 
+    function _onlyInPeriod(ElectionPeriod period) private view {
+        if (_getCurrentPeriod() != period) {
+            revert NotCallableInCurrentPeriod();
+        }
+    }
+
     /// @dev Only allow to run in any of the given two periods
     modifier onlyInPeriods(ElectionPeriod period1, ElectionPeriod period2) {
+        _onlyInPeriods(period1, period2);
+
+        _;
+    }
+
+    function _onlyInPeriods(ElectionPeriod period1, ElectionPeriod period2) private view {
         ElectionPeriod currentPeriod = _getCurrentPeriod();
 
         if (currentPeriod != period1 && currentPeriod != period2) {
             revert NotCallableInCurrentPeriod();
         }
-
-        _;
     }
 
     /// @dev Determines the current period type according to the current time and the epoch's dates
