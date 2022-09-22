@@ -50,7 +50,7 @@ contract ERC721 is IERC721, IERC721Metadata, ERC721Storage {
 
     function balanceOf(address holder) public view virtual override returns (uint) {
         if (holder == address(0)) {
-            revert AddressError.ZeroAddress();
+            return 0;
         }
 
         return _erc721Store().balanceOf[holder];
@@ -58,7 +58,7 @@ contract ERC721 is IERC721, IERC721Metadata, ERC721Storage {
 
     function ownerOf(uint256 tokenId) public view virtual override returns (address) {
         if (!_exists(tokenId)) {
-            revert TokenDoesNotExist(tokenId);
+            return address(0);
         }
 
         return _erc721Store().ownerOf[tokenId];
@@ -74,7 +74,7 @@ contract ERC721 is IERC721, IERC721Metadata, ERC721Storage {
 
     function tokenURI(uint256 tokenId) external view virtual override returns (string memory) {
         if (!_exists(tokenId)) {
-            revert TokenDoesNotExist(tokenId);
+            return "";
         }
 
         string memory baseURI = _erc721Store().baseTokenURI;
