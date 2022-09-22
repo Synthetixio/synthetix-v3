@@ -88,6 +88,26 @@ describe('ElectionModule (nominate)', () => {
       );
     });
 
+    describe('when entering the administration period', function () {
+      describe('when nominating', function () {
+        it('reverts', async function () {
+          await assertRevert(
+            ElectionModule.connect(users[2]).nominate(),
+            'NotCallableInCurrentPeriod'
+          );
+        });
+      });
+
+      describe('when withdrawing a nomination', function () {
+        it('reverts', async function () {
+          await assertRevert(
+            ElectionModule.connect(users[2]).withdrawNomination(),
+            'NotCallableInCurrentPeriod'
+          );
+        });
+      });
+    });
+
     describe('when entering the nomination period', function () {
       before('fast forward', async function () {
         await fastForwardTo(await ElectionModule.getNominationPeriodStartDate(), ethers.provider);
@@ -174,6 +194,53 @@ describe('ElectionModule (nominate)', () => {
 
                 itProperlyRecordsNominees();
               });
+            });
+          });
+        });
+      });
+
+      describe('when entering the voting period', function () {
+        before('fast forward', async function () {
+          await fastForwardTo(await ElectionModule.getVotingPeriodStartDate(), ethers.provider);
+        });
+
+        describe('when nominating', function () {
+          before('nominate', async function () {
+            await nominate(users[7]);
+          });
+
+          itProperlyRecordsNominees();
+        });
+
+        describe('when withdrawing a nomination', function () {
+          it('reverts', async function () {
+            await assertRevert(
+              ElectionModule.connect(users[2]).withdrawNomination(),
+              'NotCallableInCurrentPeriod'
+            );
+          });
+        });
+
+        describe('when entering the evaluation period', function () {
+          before('fast forward', async function () {
+            await fastForwardTo(await ElectionModule.getEpochEndDate(), ethers.provider);
+          });
+
+          describe('when nominating', function () {
+            it('reverts', async function () {
+              await assertRevert(
+                ElectionModule.connect(users[2]).nominate(),
+                'NotCallableInCurrentPeriod'
+              );
+            });
+          });
+
+          describe('when withdrawing a nomination', function () {
+            it('reverts', async function () {
+              await assertRevert(
+                ElectionModule.connect(users[2]).withdrawNomination(),
+                'NotCallableInCurrentPeriod'
+              );
             });
           });
         });

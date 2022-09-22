@@ -16,19 +16,36 @@ describe('ElectionModule (evaluate)', () => {
 
   let epochIndexBefore;
 
-  let candidate1, candidate2, candidate3, candidate4, candidate5;
-  let voter1, voter2, voter3, voter4, voter5, voter6, voter7, voter8, voter9, voter10;
+  let candidate1, candidate2, candidate3, candidate4, candidate5, candidate6;
+  let voter1, voter2, voter3, voter4, voter5, voter6, voter7, voter8, voter9, voter10, voter11;
 
-  let ballot1, ballot2, ballot3;
+  let ballot1, ballot2, ballot3, ballot4;
 
   let receipt;
 
   before('identify signers', async () => {
     const users = await ethers.getSigners();
 
-    [candidate1, candidate2, candidate3, candidate4, candidate5] = users;
-    [, , , , , voter1, voter2, voter3, voter4, voter5, voter6, voter7, voter8, voter9, voter10] =
-      users;
+    [candidate1, candidate2, candidate3, candidate4, candidate5, candidate6] = users;
+    [
+      ,
+      ,
+      ,
+      ,
+      ,
+      ,
+      voter1,
+      voter2,
+      voter3,
+      voter4,
+      voter5,
+      voter6,
+      voter7,
+      voter8,
+      voter9,
+      voter10,
+      voter11,
+    ] = users;
   });
 
   before('identify modules', async () => {
@@ -128,6 +145,27 @@ describe('ElectionModule (evaluate)', () => {
           assertBn.equal(await ElectionModule.getBallotVotes(ballot3.id), 5);
         });
 
+        describe('when nominating in the voting period', function () {
+          before('form ballots', async function () {
+            ballot4 = {
+              candidates: [candidate6.address],
+              id: await ElectionModule.calculateBallotId([candidate6.address]),
+            };
+          });
+
+          before('nominate', async function () {
+            await ElectionModule.connect(candidate6).nominate();
+          });
+
+          before('vote', async function () {
+            await ElectionModule.connect(voter11).cast(ballot4.candidates);
+          });
+
+          it('shows that ballots were registered', async function () {
+            assertBn.equal(await ElectionModule.getBallotVotes(ballot4.id), 1);
+          });
+        });
+
         describe('when entering the evaluation period', function () {
           before('fast forward', async function () {
             await fastForwardTo(await ElectionModule.getEpochEndDate(), ethers.provider);
@@ -174,7 +212,7 @@ describe('ElectionModule (evaluate)', () => {
                 assert.ok(event);
                 assertBn.equal(event.args.epochIndex, 0);
                 assertBn.equal(event.args.evaluatedBallots, 1);
-                assertBn.equal(event.args.totalBallots, 3);
+                assertBn.equal(event.args.totalBallots, 4);
               });
 
               it('shows that the epoch is not evaluated', async function () {
@@ -200,7 +238,7 @@ describe('ElectionModule (evaluate)', () => {
 
                   assert.ok(event);
                   assertBn.equal(event.args.epochIndex, 0);
-                  assertBn.equal(event.args.totalBallots, 3);
+                  assertBn.equal(event.args.totalBallots, 4);
                 });
 
                 it('shows that the epoch is evaluated', async function () {
@@ -213,6 +251,7 @@ describe('ElectionModule (evaluate)', () => {
                   assertBn.equal(await ElectionModule.getCandidateVotes(candidate3.address), 1);
                   assertBn.equal(await ElectionModule.getCandidateVotes(candidate4.address), 0);
                   assertBn.equal(await ElectionModule.getCandidateVotes(candidate5.address), 5);
+                  assertBn.equal(await ElectionModule.getCandidateVotes(candidate6.address), 1);
                 });
 
                 it('shows the election winners', async function () {
