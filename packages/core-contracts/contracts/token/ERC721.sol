@@ -173,6 +173,10 @@ contract ERC721 is IERC721, IERC721Metadata, ERC721Storage {
             revert AddressError.ZeroAddress();
         }
 
+        if (tokenId == 0) {
+            revert InitError.InvalidParameters();
+        }
+
         if (_exists(tokenId)) {
             revert TokenAlreadyMinted(tokenId);
         }
