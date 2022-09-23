@@ -31,7 +31,7 @@ describe('UUPSProxy', () => {
       it('reverts', async () => {
         await assertRevert(
           UUPSProxyFactory.deploy(user.address),
-          `NotAContract(\\"${user.address}\\")`,
+          `NotAContract("${user.address}")`,
           UUPSProxy
         );
       });
