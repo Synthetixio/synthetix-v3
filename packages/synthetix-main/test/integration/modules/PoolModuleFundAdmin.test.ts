@@ -69,7 +69,7 @@ describe('PoolModule Admin', function () {
     it('reverts when pool does not exist', async () => {
       await assertRevert(
         systems().Core.connect(user1).setPoolConfiguration(834693286, [1], [1], [0, 0]),
-        `PoolNotFound("${834693286}")`,
+        'PoolNotFound(834693286)',
         systems().Core
       );
     });
@@ -105,7 +105,7 @@ describe('PoolModule Admin', function () {
         systems()
           .Core.connect(owner)
           .setPoolConfiguration(poolId, [1, 2, 92197628], [1, 1, 1], [0, 0, 0]),
-        'MarketNotFound("92197628")',
+        'MarketNotFound(92197628)',
         systems().Core
       );
     });

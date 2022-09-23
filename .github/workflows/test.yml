@@ -7,24 +7,25 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        package: [
-            # core-contracts,
+        package:
+          [
+            core-contracts,
             core-utils,
             core-modules,
             hardhat-router,
-            # synthetix-main,
+            synthetix-main,
           ]
         include:
-          # - package: core-contracts
-          #   coverage-file: packages/core-contracts/coverage.json
+          - package: core-contracts
+            coverage-file: packages/core-contracts/coverage.json
           - package: core-utils
             coverage-file: packages/core-utils/coverage/lcov.info
           - package: core-modules
             coverage-file: packages/core-modules/coverage.json
           - package: hardhat-router
             coverage-file: packages/hardhat-router/coverage/lcov.info
-          # - package: synthetix-main
-          #   coverage-file: packages/synthetix-main/coverage.json
+          - package: synthetix-main
+            coverage-file: packages/synthetix-main/coverage.json
     steps:
       - name: Install Foundry (Cannon)
         uses: foundry-rs/foundry-toolchain@v1
@@ -45,23 +46,6 @@ jobs:
         with:
           files: ${{ matrix.coverage-file }}
           flags: ${{ matrix.package }}
-
-  synthetix-main-test:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Install Foundry (Cannon)
-        uses: foundry-rs/foundry-toolchain@v1
-        with:
-          version: nightly
-      - uses: actions/checkout@v2
-      - uses: actions/setup-node@v2
-        with:
-          node-version: "16.8.0"
-          cache: "npm"
-      - run: npm ci
-      - run: npm run build
-      - name: Execute tests
-        run: REPORT_GAS=true npm run --workspace=./packages/synthetix-main test
 
   test-cli:
     runs-on: ubuntu-latest

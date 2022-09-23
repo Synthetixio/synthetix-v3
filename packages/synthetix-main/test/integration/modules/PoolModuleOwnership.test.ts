@@ -25,7 +25,7 @@ describe('PoolModule Create / Ownership', function () {
     });
 
     it('emitted an event', async () => {
-      await assertEvent(receipt, `PoolCreated("1", "${await user1.getAddress()}")`, systems().Core);
+      await assertEvent(receipt, `PoolCreated(1, "${await user1.getAddress()}")`, systems().Core);
     });
 
     it('is created', async () => {
@@ -38,7 +38,7 @@ describe('PoolModule Create / Ownership', function () {
           systems()
             .Core.connect(user2)
             .createPool(1, await user1.getAddress()),
-          'PoolAlreadyExists("1")',
+          'PoolAlreadyExists(1)',
           systems().Core
         );
       });
@@ -67,7 +67,7 @@ describe('PoolModule Create / Ownership', function () {
         it('emits an event', async () => {
           await assertEvent(
             receipt,
-            `NominatedPoolOwner("1", "${await user2.getAddress()}")`,
+            `NominatedPoolOwner(1, "${await user2.getAddress()}")`,
             systems().Core
           );
         });
@@ -90,7 +90,7 @@ describe('PoolModule Create / Ownership', function () {
           it('emits an event', async () => {
             await assertEvent(
               receipt,
-              `PoolOwnershipAccepted("1", "${await user2.getAddress()}")`,
+              `PoolOwnershipAccepted(1, "${await user2.getAddress()}")`,
               systems().Core
             );
           });
@@ -118,7 +118,7 @@ describe('PoolModule Create / Ownership', function () {
         it('emits an event', async () => {
           await assertEvent(
             receipt,
-            `PoolNominationRenounced("1", "${await user2.getAddress()}")`,
+            `PoolNominationRenounced(1, "${await user2.getAddress()}")`,
             systems().Core
           );
         });
