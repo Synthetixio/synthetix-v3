@@ -34,7 +34,9 @@ before(async function () {
   // allow extra time to build the cannon deployment if required
   this.timeout(300000);
 
-  const cannonInfo = await hre.run('cannon:build');
+  const cmd = hre.network.name === 'cannon' ? 'build' : 'deploy';
+
+  const cannonInfo = await hre.run(`cannon:${cmd}`);
 
   provider = cannonInfo.provider;
   signers = cannonInfo.signers;
