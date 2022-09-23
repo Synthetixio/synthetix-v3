@@ -28,6 +28,7 @@ const config = {
   networks: {
     local: {
       url: 'http://localhost:8545',
+      chainId: 31337,
     },
     ['optimistic-kovan']: {
       url: process.env.NETWORK_ENDPOINT || 'https://kovan.optimism.io',

@@ -1,3 +1,4 @@
+import { AbiHelpers } from 'hardhat/internal/util/abi-helpers';
 import { ethers } from 'ethers';
 
 interface ErrorObject {
@@ -26,13 +27,13 @@ export default async function assertRevert(
   expectedMessage?: string,
   contract?: ethers.Contract
 ) {
-  let error: ErrorObject | null = null;
+  let error: { [k: string]: unknown } | null = null;
 
   try {
     await (await tx).wait();
     await tx;
   } catch (err) {
-    error = err as ErrorObject;
+    error = err as { [k: string]: unknown };
   }
 
   if (!error) {
@@ -41,14 +42,12 @@ export default async function assertRevert(
     // parse the error
     const errorData = getErrorData(error);
 
-    let receivedMessage = error.toString();
+    let receivedMessage = (error.reason as string) ?? error.toString();
     if (errorData && contract) {
       const parsed = contract.interface.parseError(errorData);
 
       receivedMessage = `${parsed.name}(${
-        parsed.args
-          ? parsed.args.map((v) => (v.toString ? '"' + v.toString() + '"' : v)).join(', ')
-          : ''
+        parsed.args ? AbiHelpers.formatValues(parsed.args as unknown[]) : ''
       })`;
     }
 

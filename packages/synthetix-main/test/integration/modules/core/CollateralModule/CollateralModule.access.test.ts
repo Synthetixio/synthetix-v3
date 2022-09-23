@@ -72,7 +72,7 @@ describe('CollateralModule', function () {
             it('reverts', async () => {
               await assertRevert(
                 systems().Core.connect(user2).depositCollateral(1, Collateral.address, 100),
-                `PermissionDenied("1", "${Permissions.DEPOSIT}", "${await user2.getAddress()}")`,
+                `PermissionDenied(1, "${Permissions.DEPOSIT}", "${await user2.getAddress()}")`,
                 systems().Core
               );
             });
@@ -82,7 +82,7 @@ describe('CollateralModule', function () {
             it('reverts', async () => {
               await assertRevert(
                 systems().Core.connect(user2).withdrawCollateral(1, Collateral.address, 100),
-                `PermissionDenied("1", "${Permissions.WITHDRAW}", "${await user2.getAddress()}")`,
+                `PermissionDenied(1, "${Permissions.WITHDRAW}", "${await user2.getAddress()}")`,
                 systems().Core
               );
             });
