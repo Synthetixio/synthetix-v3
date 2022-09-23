@@ -33,7 +33,7 @@ before(async function () {
   // allow extra time to build the cannon deployment if required
   this.timeout(300000);
 
-  const cannonInfo = await hre.run('cannon:build');
+  const cannonInfo = await hre.run('cannon:build', { settings: [ 'additionalModules=core|test'] });
 
   _provider = cannonInfo.provider;
   signers = cannonInfo.signers;
@@ -96,7 +96,7 @@ export function bootstrapWithStakedPool() {
     collateralAddress = r.systems().SNX.address;
 
     // add snx as collateral,
-    await r
+    await (await r
       .systems()
       .Core.connect(owner)
       .configureCollateral(
@@ -106,7 +106,7 @@ export function bootstrapWithStakedPool() {
         '1500000000000000000',
         '20000000000000000000',
         true
-      );
+      )).wait();
 
     // create pool
     await r

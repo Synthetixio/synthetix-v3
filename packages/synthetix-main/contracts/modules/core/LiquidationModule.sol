@@ -47,6 +47,7 @@ contract LiquidationsModule is
     {
         Pool.Data storage pool = Pool.load(poolId);
         CollateralConfiguration.Data storage collateralConfig = CollateralConfiguration.load(collateralType);
+        VaultEpoch.Data storage epoch = pool.vaults[collateralType].currentEpoch();
 
         int rawDebt = pool.updateAccountDebt(collateralType, accountId);
 
@@ -64,32 +65,34 @@ contract LiquidationsModule is
 
         debtLiquidated = uint(rawDebt);
 
-        VaultEpoch.Data storage vaultEpoch = pool.vaults[collateralType].currentEpoch();
+        uint oldShares = epoch.debtDist.getActorShares(bytes32(uint(uint128(accountId))));
 
-        uint oldShares = vaultEpoch.debtDist.getActorShares(bytes32(uint(uint128(accountId))));
-
-        if (vaultEpoch.debtDist.totalShares == oldShares) {
+        if (epoch.debtDist.totalShares == oldShares) {
             // will be left with 0 shares, which can't be socialized
             revert MustBeVaultLiquidated();
         }
 
         amountRewarded = collateralConfig.liquidationReward;
 
-        if (amountRewarded >= uint(vaultEpoch.collateralDist.totalValue())) {
+        if (amountRewarded >= uint(epoch.collateralDist.totalValue())) {
             // vault is too small to be liquidated socialized
             revert MustBeVaultLiquidated();
         }
 
-        // this will wipe the user from this vault (the debt/collateral/etc will still remain, however)
-        pool.vaults[collateralType].clearAccount(accountId);
+        // this will clear the user's account the same way as if they had unstaked normally
+        epoch.setAccount(accountId, 0, 0);
 
-        // update the pool
-        // TODO: move this into dedicated functions
-        pool.totalLiquidity -= int128(
-            int(amountRewarded.mulDecimal(collateralConfig.getCollateralValue()))
-        );
+        // we don't give the collateral back to the user though--it gets 
+        // fed back into the vault proportionally to the amount of collateral you have
+        // the vault might end up with less overall collateral if liquidation reward 
+        // is greater than the acutal collateral in this user's account
+        epoch.collateralDist.distribute(int(collateralLiquidated) - int(amountRewarded));
 
-        _applyLiquidationToMultiplier(poolId, collateralType, oldShares);
+        // debt isnt cleared when someone unstakes by default, so we do it separately here
+        epoch.usdDebtDist.updateActorShares(bytes32(uint(accountId)), 0);
+
+        // now we feed the debt back in also
+        epoch.distributeDebt(int(debtLiquidated));
 
         // send reward
         collateralType.safeTransfer(msg.sender, amountRewarded);
@@ -157,19 +160,14 @@ contract LiquidationsModule is
 
             // take away the collateral
             epoch.collateralDist.distribute(-int(collateralRewarded));
-
-            // TODO this is probably wrong
-            _applyLiquidationToMultiplier(poolId, collateralType, amountLiquidated.divDecimal(vaultDebt));
         }
 
-        // update the pool (debt was repayed but collateral was taken)
-        // TODO: better functions
-        pool.totalLiquidity += int128(
-            int(amountLiquidated) - int(collateralRewarded.mulDecimal(collateralConfig.getCollateralValue()))
-        );
-
         // award the collateral that was just taken to the specified account
-        Account.load(liquidateAsAccountId).collaterals[collateralType].depositCollateral(collateralRewarded);
+        console.log("collateral rewarded", collateralRewarded, Account.load(liquidateAsAccountId).collaterals[collateralType].availableAmount);
+        Account.load(liquidateAsAccountId).collaterals[collateralType]
+            .depositCollateral(collateralRewarded);
+        console.log("complete", collateralRewarded, Account.load(liquidateAsAccountId).collaterals[collateralType].availableAmount);
+
 
         emit VaultLiquidation(poolId, collateralType, amountLiquidated, collateralRewarded, collateralRewarded);
     }
@@ -195,32 +193,5 @@ contract LiquidationsModule is
         int rawDebt = pool.updateAccountDebt(collateralType, accountId);
         (, uint collateralValue, ) = pool.currentAccountCollateral(collateralType, accountId);
         return rawDebt >= 0 && _isLiquidatable(collateralType, uint(rawDebt), collateralValue);
-    }
-
-    /**
-     * TODO: this function belongs in vault or something
-     */
-    function _applyLiquidationToMultiplier(
-        uint128 poolId,
-        address collateralType,
-        uint liquidatedShares
-    ) internal {
-        Pool.Data storage pool = Pool.load(poolId);
-        VaultEpoch.Data storage epochData = pool.vaults[collateralType].currentEpoch();
-
-        uint oldTotalShares = liquidatedShares + epochData.debtDist.totalShares;
-
-        uint newLiquidityMultiplier = (uint(epochData.liquidityMultiplier) * oldTotalShares) /
-            epochData.debtDist.totalShares;
-
-        // update totalLiquidity (to stay exact)
-        pool.totalLiquidity = int128(
-            pool.totalLiquidity +
-                int(uint(epochData.debtDist.totalShares).mulDecimal(newLiquidityMultiplier)) -
-                int(oldTotalShares.mulDecimal(epochData.liquidityMultiplier))
-        );
-
-        // update debt adjustments
-        epochData.liquidityMultiplier = uint128(newLiquidityMultiplier);
     }
 }

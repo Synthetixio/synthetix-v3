@@ -9,6 +9,8 @@ import "./Distribution.sol";
 
 import "../interfaces/external/IMarket.sol";
 
+import "hardhat/console.sol";
+
 library Market {
     using Distribution for Distribution.Data;
     using HeapUtil for HeapUtil.Data;
@@ -68,13 +70,15 @@ library Market {
     function create(address market) internal returns (Market.Data storage self) {
         uint128 id = loadLastId();
 
+        id++;
+
         self = load(id);
 
         self.id = id;
         self.marketAddress = market;
 
         // set indexes
-        storeLastId(id++);
+        storeLastId(id);
         loadIdsByAddress(market).push(id);
     }
     
@@ -88,16 +92,20 @@ library Market {
 
 
     function rebalance(
-        Data storage self,
+        uint128 marketId,
         uint128 poolId,
         int maxDebtShareValue, // (in USD)
         uint amount // in collateralValue (USD)
     ) internal returns (int debtChange) {
+        Data storage self = load(marketId);
+
         // this function is called by the pool at rebalance markets
 
         if (self.marketAddress == address(0)) {
-            revert MarketNotFound(self.id);
+            revert MarketNotFound(marketId);
         }
+
+        console.log("ENTER REBALANCE");
 
         distributeDebt(self, 9999999999);
 
@@ -110,6 +118,7 @@ library Market {
         uint newLiquidity,
         int newPoolMaxShareValue
     ) internal returns (int debtChange) {
+        console.log("ENTER ADJUST SHARES", newLiquidity, uint(newPoolMaxShareValue));
         uint oldLiquidity = self.debtDist.getActorShares(bytes32(uint(poolId)));
         int oldPoolMaxShareValue = -self.inRangePools.getById(uint128(poolId)).priority;
 
@@ -123,6 +132,8 @@ library Market {
         } else {
             self.inRangePools.insert(uint128(poolId), -int128(int(newPoolMaxShareValue)));
         }
+
+        console.log("update shares", newLiquidity);
 
         debtChange = self.poolPendingDebt[poolId] + self.debtDist.updateActorShares(bytes32(uint(poolId)), newLiquidity);
         self.poolPendingDebt[poolId] = 0;
@@ -152,11 +163,13 @@ library Market {
     ) internal {
         if (self.debtDist.totalShares == 0) {
             // market cannot distribute (or accumulate) any debt when there are no shares
+            console.log("didnt see any shares", uint(int(self.debtDist.valuePerShare / 1e9)));
             return;
         }
 
         // get the latest market balance
         int targetBalance = totalBalance(self);
+        console.log("new target balance", uint(targetBalance));
 
         int curBalance = self.lastMarketBalance;
 

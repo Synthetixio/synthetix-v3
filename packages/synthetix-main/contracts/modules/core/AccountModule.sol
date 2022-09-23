@@ -23,6 +23,8 @@ contract AccountModule is IAccountModule, OwnableMixin, AssociatedSystemsMixin {
 
     error PermissionDenied(uint128 accountId, bytes32 permission, address target);
 
+    error PermissionNotGranted(uint128 accountId, bytes32 permission, address target);
+
     modifier onlyAccountToken() {
         if (msg.sender != address(getAccountTokenAddress())) {
             revert OnlyAccountTokenProxy(msg.sender);
@@ -56,7 +58,7 @@ contract AccountModule is IAccountModule, OwnableMixin, AssociatedSystemsMixin {
         IAccountTokenModule accountTokenModule = IAccountTokenModule(getAccountTokenAddress());
         accountTokenModule.mint(msg.sender, requestedAccountId);
 
-        Account.load(requestedAccountId).rbac.setOwner(msg.sender);
+        Account.create(requestedAccountId, msg.sender);
 
         emit AccountCreated(msg.sender, requestedAccountId);
     }
@@ -94,6 +96,10 @@ contract AccountModule is IAccountModule, OwnableMixin, AssociatedSystemsMixin {
     }
 
     function renouncePermission(uint128 accountId, bytes32 permission) external override {
+        if (!Account.load(accountId).rbac.hasPermission(permission, msg.sender)) {
+            revert PermissionNotGranted(accountId, permission, msg.sender);
+        }
+
         Account.load(accountId).rbac.revokePermission(permission, msg.sender);
 
         emit PermissionRevoked(accountId, permission, msg.sender, msg.sender);

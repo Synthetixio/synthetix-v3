@@ -8,7 +8,6 @@ library AccountRBAC {
     using SetUtil for SetUtil.Bytes32Set;
     using SetUtil for SetUtil.AddressSet;
 
-    error PermissionNotGranted(bytes32 permission, address target);
     error InvalidPermission();
 
     struct Data {
@@ -55,10 +54,6 @@ library AccountRBAC {
         bytes32 permission,
         address target
     ) internal {
-        if (!hasPermission(self, permission, target)) {
-            revert PermissionNotGranted(permission, target);
-        }
-
         self.permissions[target].remove(permission);
 
         if (self.permissions[target].length() == 0) {

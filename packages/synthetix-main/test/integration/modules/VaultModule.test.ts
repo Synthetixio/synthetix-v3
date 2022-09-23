@@ -2,7 +2,7 @@ import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber'
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import hre from 'hardhat';
 import { ethers } from 'ethers';
-import Permissions from '../mixins/AcccountRBACMixin.permissions';
+import Permissions from '../storage/AcccountRBACMixin.permissions';
 import { bootstrapWithStakedPool } from '../bootstrap';
 import { snapshotCheckpoint } from '../../utils';
 
@@ -261,6 +261,7 @@ describe('VaultModule', function () {
 
         describe('increase collateral', async () => {
           it('fails when not enough available collateral in account', async () => {
+            console.log(Object.keys(systems().Core.interface.errors).sort())
             await assertRevert(
               systems()
                 .Core.connect(user2)

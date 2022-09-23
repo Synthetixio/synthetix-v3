@@ -72,7 +72,11 @@ library CollateralConfiguration {
         _;
     }
 
-    function getCollateralValue(Data storage self) internal view returns (uint) {
+    function getCollateralPrice(Data storage self) internal view returns (uint) {
+        if (!self.enabled) {
+            revert InvalidCollateral(self.tokenAddress);
+        }
+
         (, int256 answer, , , ) = IAggregatorV3Interface(self.priceFeed).latestRoundData();
 
         // sanity check

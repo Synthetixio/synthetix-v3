@@ -118,7 +118,7 @@ describe('PoolModule Admin', function () {
       );
     });
 
-    it('default configuration sets market collateral', async () => {
+    it('bootstrap configuration sets market collateral', async () => {
       assertBn.equal(
         await systems().Core.connect(owner).getMarketCollateral(marketId()),
         depositAmount

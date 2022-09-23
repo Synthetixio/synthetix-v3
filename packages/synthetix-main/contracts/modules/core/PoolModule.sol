@@ -29,8 +29,7 @@ contract PoolModule is IPoolModule, OwnableMixin {
             revert AddressError.ZeroAddress();
         }
 
-        // todo
-        if (Pool.load(requestedPoolId).exists() || requestedPoolId == 0) {
+        if (Pool.exists(requestedPoolId)) {
             revert PoolAlreadyExists(requestedPoolId);
         }
 
@@ -108,7 +107,7 @@ contract PoolModule is IPoolModule, OwnableMixin {
         uint i = 0;
 
         {
-            uint lastMarketId = 0;
+            uint128 lastMarketId = 0;
 
             for (
                 ;
@@ -147,11 +146,11 @@ contract PoolModule is IPoolModule, OwnableMixin {
 
         uint popped = pool.poolDistribution.length - i;
         for (i = 0; i < popped; i++) {
-            Market.load(pool.poolDistribution[pool.poolDistribution.length - 1].market).rebalance(poolId, 0, 0);
+            Market.rebalance(pool.poolDistribution[pool.poolDistribution.length - 1].market, poolId, 0, 0);
             pool.poolDistribution.pop();
         }
 
-        pool.totalWeights = totalWeight;
+        pool.totalWeights = uint128(totalWeight);
 
         pool.rebalanceConfigurations();
 
@@ -210,7 +209,7 @@ contract PoolModule is IPoolModule, OwnableMixin {
     }
 
     modifier poolExists(uint128 poolId) {
-        if (!Pool.load(poolId).exists() && poolId != 0) {
+        if (!Pool.exists(poolId)) {
             revert PoolNotFound(poolId);
         }
 

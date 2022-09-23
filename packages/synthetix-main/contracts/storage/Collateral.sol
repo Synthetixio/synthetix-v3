@@ -6,14 +6,11 @@ import "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
 import "./Pool.sol";
 
 library Collateral {
-
-    error InsufficientAccountCollateral(uint amount);
-
     struct Data {
         bool isSet;
         uint256 availableAmount; // adjustable (stake/unstake)
         //CurvesLibrary.PolynomialCurve escrow;
-        uint128[] pools;
+        SetUtil.UintSet pools;
         //StakedCollateralLock[] locks;
     }
 
@@ -34,10 +31,6 @@ library Collateral {
         Data storage self,
         uint amount
     ) internal {
-        if (self.availableAmount < amount) {
-            revert InsufficientAccountCollateral(amount);
-        }
-
         self.availableAmount -= amount;
     }
 }

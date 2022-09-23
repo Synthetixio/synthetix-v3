@@ -7,7 +7,6 @@ import "./RewardDistribution.sol";
 import "./CollateralConfiguration.sol";
 
 library Vault {
-    using CollateralConfiguration for CollateralConfiguration.Data;
     using VaultEpoch for VaultEpoch.Data;
     using Distribution for Distribution.Data;
     using DistributionEntry for DistributionEntry.Data;
@@ -15,13 +14,12 @@ library Vault {
     using MathUtil for uint256;
 
     struct Data {
-        /// @dev the collateral type this vault corresponds to
-        address collateralType;
-
         /// @dev if vault is fully liquidated, this will be incremented to indicate reset shares
         uint epoch;
-        /// @dev cached collateral price
-        uint128 collateralPrice;
+
+        uint128 prevUsdWeight;
+        uint128 prevRemainingLiquidity;
+
         /// @dev the data for all the different liquidation cycles
         mapping(uint => VaultEpoch.Data) epochData;
         /// @dev rewards
@@ -32,21 +30,25 @@ library Vault {
         return self.epochData[self.epoch];
     }
 
-    function updateCollateralValue(Data storage self) internal returns (uint) {
+    function measureLiquidity(Data storage self, uint collateralPrice) internal returns (
+        uint usdWeight,
+        int deltaUsdWeight,
+        uint remainingLiquidity,
+        int deltaRemainingLiquidity
+    ) {
         VaultEpoch.Data storage epochData = currentEpoch(self);
 
-        uint collateralPrice = CollateralConfiguration.load(self.collateralType).getCollateralValue();
+        usdWeight = uint(epochData.debtDist.totalShares).mulDecimal(collateralPrice);
 
-        uint liquidityMultiplier = epochData.liquidityMultiplier;
+        int vaultDepositedValue = int(uint(epochData.collateralDist.totalValue()).mulDecimal(collateralPrice));
+        int vaultAccruedDebt = epochData.totalDebt();
+        remainingLiquidity = vaultDepositedValue > epochData.totalDebt() ? uint(vaultDepositedValue - vaultAccruedDebt) : 0;
 
-        if (liquidityMultiplier == 0) {
-            liquidityMultiplier = MathUtil.UNIT;
-            epochData.liquidityMultiplier = uint128(liquidityMultiplier);
-        }
+        deltaUsdWeight = int(usdWeight) - int(int128(self.prevUsdWeight));
+        deltaRemainingLiquidity = int(remainingLiquidity) - int(int128(self.prevRemainingLiquidity));
 
-        self.collateralPrice = uint128(collateralPrice);
-
-        return uint(epochData.debtDist.totalShares).mulDecimal(collateralPrice).mulDecimal(liquidityMultiplier);
+        self.prevUsdWeight = uint128(usdWeight);
+        self.prevRemainingLiquidity = uint128(remainingLiquidity);
     }
 
     function distributeDebt(Data storage self, int debtChange) internal {
@@ -76,7 +78,7 @@ library Vault {
 
             dist.actorInfo[accountId].pendingSend += uint128(
                 (actorShares * (dist.rewardPerShare - dist.actorInfo[accountId].lastRewardPerShare)) / 1e18
-                );
+            );
 
             dist.actorInfo[accountId].lastRewardPerShare = dist.rewardPerShare;
 
@@ -86,26 +88,8 @@ library Vault {
         return rewards;
     }
 
-    function clearAccount(Data storage self, uint128 accountId) internal {
-        // need to do this before modifying any actor information
-        updateAvailableRewards(self, accountId);
-
-        // take away all the user's shares. by not giving the user back their portion of collateral, it will be
-        // auto split proportionally between all debt holders
-        currentEpoch(self).clearAccount(accountId);
-    }
-
     function reset(Data storage self) internal {
         self.epoch++;
-    }
-
-    function currentCollateralRatio(Data storage self) internal view returns (uint) {
-        (, uint collateralValue) = currentCollateral(self);
-
-        int debt = currentDebt(self);
-
-        // if they have a credit, just treat their debt as 0
-        return debt <= 0 ? 0 : collateralValue.divDecimal(uint(debt));
     }
 
     function currentDebt(Data storage self) internal view returns (int) {
@@ -116,22 +100,19 @@ library Vault {
     function currentCollateral(Data storage self)
         internal
         view
-        returns (uint collateralAmount, uint collateralValue)
+        returns (uint collateralAmount)
     {
         VaultEpoch.Data storage epochData = currentEpoch(self);
 
         collateralAmount = uint(epochData.collateralDist.totalValue());
-        collateralValue = CollateralConfiguration.load(self.collateralType).getCollateralValue();
     }
 
     function currentAccountCollateral(Data storage self, uint128 accountId) internal view
         returns (
             uint collateralAmount,
-            uint collateralValue,
             uint shares
         ) {
         collateralAmount = currentEpoch(self).getAccountCollateral(accountId);
-        collateralValue = uint(self.collateralPrice).mulDecimal(collateralAmount);
 
         shares = currentEpoch(self).debtDist.totalShares;
     }

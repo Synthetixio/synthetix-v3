@@ -3,16 +3,18 @@ pragma solidity ^0.8.0;
 
 import "./Distribution.sol";
 
+import "hardhat/console.sol";
+
 library VaultEpoch {
     using Distribution for Distribution.Data;
 
     using MathUtil for uint256;
 
+    error InvalidParameters(string incorrectParameter, string help);
+
     struct Data {
         /// @dev amount of debt which has not been rolled into `usdDebtDist`. Needed to keep track of overall getVaultDebt
         int128 unclaimedDebt;
-        /// @dev if there are liquidations, this value will be multiplied by any share counts to determine the value of the shares wrt the rest of the pool
-        uint128 liquidityMultiplier;
         /// @dev tracks debt for each user
         Distribution.Data debtDist;
         /// @dev tracks collateral for each user
@@ -44,27 +46,25 @@ library VaultEpoch {
         self.unclaimedDebt -= int128(newDebt);
     }
 
-    function clearAccount(Data storage self, uint128 accountId) internal {
+    function setAccount(Data storage self, uint128 accountId, uint collateralAmount, uint leverage) internal {
         bytes32 actorId = accountToActor(accountId);
-        self.collateralDist.updateActorShares(actorId, 0);
-        self.debtDist.updateActorShares(actorId, 0);
-        self.usdDebtDist.updateActorShares(actorId, 0);
+
+        // ensure account debt is rolled in before we do next things
+        updateAccountDebt(self, accountId);
+
+        console.log("SET ACCOUNT", collateralAmount);
+
+        self.collateralDist.updateActorValue(actorId, int(collateralAmount));
+        self.debtDist.updateActorShares(actorId, self.collateralDist.getActorShares(actorId).mulDecimal(leverage));
+
+        console.log("GOT SHARES", self.debtDist.totalShares);
+    }
+
+    function totalDebt(Data storage self) internal view returns (int) {
+        return int(self.unclaimedDebt + self.usdDebtDist.totalValue());
     }
 
     function getAccountCollateral(Data storage self, uint128 accountId) internal view returns (uint amount) {
         return uint(self.collateralDist.getActorValue(accountToActor(accountId)));
-    }
-
-    function calculateVaultShares(
-        Data storage self,
-        uint collateralAmount,
-        uint leverage
-    ) internal view returns (uint) {
-        uint totalCollateral = uint(self.collateralDist.totalValue());
-        if (totalCollateral == 0) {
-            return collateralAmount.mulDecimal(leverage);
-        }
-
-        return leverage.mulDecimal((uint(self.debtDist.totalShares) * collateralAmount) / totalCollateral);
     }
 }

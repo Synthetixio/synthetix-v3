@@ -13,7 +13,10 @@ import "../../storage/Pool.sol";
 import "../../interfaces/IVaultModule.sol";
 import "../../interfaces/IUSDTokenModule.sol";
 
+import "hardhat/console.sol";
+
 contract VaultModule is IVaultModule, AssociatedSystemsMixin, OwnableMixin {
+    using SetUtil for SetUtil.UintSet;
     using SetUtil for SetUtil.Bytes32Set;
     using SetUtil for SetUtil.AddressSet;
     using MathUtil for uint256;
@@ -28,6 +31,7 @@ contract VaultModule is IVaultModule, AssociatedSystemsMixin, OwnableMixin {
 
     bytes32 private constant _USD_TOKEN = "USDToken";
 
+    error InsufficientAccountCollateral(uint requestedAmount);
     error PermissionDenied(uint128 accountId, bytes32 permission, address target);
     error PoolNotFound(uint128 poolId);
     error InvalidLeverage(uint leverage);
@@ -35,7 +39,6 @@ contract VaultModule is IVaultModule, AssociatedSystemsMixin, OwnableMixin {
     error InsufficientDebt(int currentDebt);
     error InvalidParameters(string incorrectParameter, string help);
     error InvalidCollateral(address collateralType);
-    error InsufficientAccountCollateral(uint accountId, address collateralType, uint requestedAmount);
 
     function delegateCollateral(
         uint128 accountId,
@@ -54,54 +57,60 @@ contract VaultModule is IVaultModule, AssociatedSystemsMixin, OwnableMixin {
         // TODO: we will probably at least want to test <1 leverage
         if (leverage != MathUtil.UNIT) revert InvalidLeverage(leverage);
 
-        Pool.Data storage pool = Pool.load(poolId);
-        Vault.Data storage vault = pool.vaults[collateralType];
+        Vault.Data storage vault = Pool.load(poolId).vaults[collateralType];
 
         vault.updateAvailableRewards(accountId);
 
         // get the current collateral situation
-        (uint oldCollateralAmount, , ) = vault.currentAccountCollateral(accountId);
+        (uint oldCollateralAmount,) = vault.currentAccountCollateral(accountId);
+        uint collateralPrice;
 
         // if increasing collateral additionally check they have enough collateral
         if (
             collateralAmount > oldCollateralAmount &&
             Account.load(accountId).collaterals[collateralType].availableAmount < collateralAmount - oldCollateralAmount
         ) {
-            revert InsufficientAccountCollateral(accountId, collateralType, collateralAmount);
+            revert InsufficientAccountCollateral(collateralAmount);
         }
 
         bytes32 actorId = bytes32(uint(accountId));
 
         // stack too deep after this
         {
-            // if decreasing collateral additionally check they have sufficient c-ratio
+            Pool.Data storage pool = Pool.load(poolId);
+            // the current user may have accumulated some debt which needs to be rolled in before changing shares
+            pool.updateAccountDebt(collateralType, accountId);
 
-            pool.recalculateVaultCollateral(collateralType);
+            Collateral.Data storage collateral = Account.load(accountId).collaterals[collateralType];
 
-            uint vaultShares = vault.currentEpoch().calculateVaultShares(collateralAmount, leverage);
-
-            // prevent users from specifying an infitesimly small amount such that they don't get any shares
-            if (vaultShares == 0 && collateralAmount > 0) {
-                revert InvalidParameters("amount", "must be large enough for 1 share");
+            // adjust the user's current account collateral to reflect the change in delegation
+            if (collateralAmount > oldCollateralAmount) {
+                collateral.deductCollateral(collateralAmount - oldCollateralAmount);
+            } else {
+                collateral.depositCollateral(oldCollateralAmount - collateralAmount);
             }
 
-            vault.currentEpoch().collateralDist.updateActorValue(actorId, int(collateralAmount));
-            vault.currentEpoch().debtDist.updateActorShares(actorId, vaultShares);
-            // no update for usd because no usd issued
+            if (collateralAmount > 0 && !collateral.pools.contains(uint(poolId))) {
+                collateral.pools.add(poolId);
+            } else if (collateral.pools.contains((uint(poolId)))) {
+                collateral.pools.remove(poolId);
+            }
 
-            // this will ensure the new distribution information is passed up the chain to the markets
-            pool.updateAccountDebt(collateralType, accountId);
+            vault.currentEpoch().setAccount(accountId, collateralAmount, leverage);
+            // no update for usd because no usd issued
+            collateralPrice = pool.recalculateVaultCollateral(collateralType);
         }
 
         // this is the most efficient time to check the resulting collateralization ratio, since
         // user's debt and collateral price have been fully updated
         if (collateralAmount < oldCollateralAmount) {
             int debt = vault.currentEpoch().usdDebtDist.getActorValue(actorId);
+            //(, uint collateralValue,) = pool.currentAccountCollateral(collateralType, accountId);
 
             _verifyCollateralRatio(
                 collateralType,
                 debt < 0 ? 0 : uint(debt),
-                collateralAmount.mulDecimal(vault.collateralPrice)
+                collateralAmount.mulDecimal(collateralPrice)
             );
         }
 
@@ -123,7 +132,7 @@ contract VaultModule is IVaultModule, AssociatedSystemsMixin, OwnableMixin {
 
         int debt = pool.updateAccountDebt(collateralType, accountId);
 
-        (, uint collateralValue, ) = pool.vaults[collateralType].currentAccountCollateral(accountId);
+        (, uint collateralValue, ) = pool.currentAccountCollateral(collateralType, accountId);
 
         int newDebt = debt + int(amount);
 
@@ -134,7 +143,7 @@ contract VaultModule is IVaultModule, AssociatedSystemsMixin, OwnableMixin {
         VaultEpoch.Data storage epoch = Pool.load(poolId).vaults[collateralType].currentEpoch();
 
         epoch.usdDebtDist.updateActorValue(bytes32(uint(accountId)), newDebt);
-        pool.totalLiquidity -= int128(int(amount));
+        pool.recalculateVaultCollateral(collateralType);
         _getToken(_USD_TOKEN).mint(msg.sender, amount);
 
         emit UsdMinted(accountId, poolId, collateralType, amount, msg.sender);
@@ -164,7 +173,7 @@ contract VaultModule is IVaultModule, AssociatedSystemsMixin, OwnableMixin {
         VaultEpoch.Data storage epoch = Pool.load(poolId).vaults[collateralType].currentEpoch();
 
         epoch.usdDebtDist.updateActorValue(bytes32(uint(accountId)), debt - int(amount));
-        Pool.load(poolId).totalLiquidity += int128(int(amount));
+        pool.recalculateVaultCollateral(collateralType);
 
         emit UsdBurned(accountId, poolId, collateralType, amount, msg.sender);
     }
@@ -259,7 +268,7 @@ contract VaultModule is IVaultModule, AssociatedSystemsMixin, OwnableMixin {
     }
 
     modifier poolExists(uint128 poolId) {
-        if (!Pool.load(poolId).exists()) {
+        if (!Pool.exists(poolId)) {
             revert PoolNotFound(poolId);
         }
         _;

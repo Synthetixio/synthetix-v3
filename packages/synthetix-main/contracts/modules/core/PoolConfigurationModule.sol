@@ -43,7 +43,7 @@ contract PoolConfigurationModule is IPoolConfigurationModule, OwnableMixin {
     }
 
     modifier poolExists(uint128 poolId) {
-        if (!Pool.load(poolId).exists()) {
+        if (!Pool.exists(poolId)) {
             revert PoolNotFound(poolId);
         }
         _;

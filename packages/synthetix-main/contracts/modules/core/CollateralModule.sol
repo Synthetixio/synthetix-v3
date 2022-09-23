@@ -11,6 +11,8 @@ import "@synthetixio/core-modules/contracts/mixins/AssociatedSystemsMixin.sol";
 
 import "../../utils/ERC20Helper.sol";
 
+import "hardhat/console.sol";
+
 contract CollateralModule is
     ICollateralModule,
     OwnableMixin,
@@ -35,6 +37,8 @@ contract CollateralModule is
 
     error OutOfBounds();
 
+    error InsufficientAccountCollateral(uint amount);
+
     function configureCollateral(
         address collateralType,
         address priceFeed,
@@ -43,6 +47,7 @@ contract CollateralModule is
         uint liquidationReward,
         bool enabled
     ) external override onlyOwner {
+        console.log("configuring collateral", collateralType, priceFeed);
         CollateralConfiguration.set(collateralType, priceFeed, targetCRatio, minimumCRatio, liquidationReward, enabled);
         emit CollateralConfigured(collateralType, priceFeed, targetCRatio, minimumCRatio, liquidationReward, enabled);
     }
@@ -90,7 +95,9 @@ contract CollateralModule is
         address collateralType,
         uint amount
     ) public override onlyWithPermission(accountId, AccountRBAC._DEPOSIT_PERMISSION) collateralEnabled(collateralType) {
-        collateralType.safeTransferFrom(msg.sender, address(this), amount);
+        // TODO: deposit (and withdraw) should be transferring from/to msg.sender
+        // if the user has permission for such operation then it is most natural for that to be the case
+        collateralType.safeTransferFrom(Account.load(accountId).rbac.owner, address(this), amount);
 
         Account.load(accountId).collaterals[collateralType].depositCollateral(amount);
 
@@ -102,11 +109,13 @@ contract CollateralModule is
         address collateralType,
         uint amount
     ) public override onlyWithPermission(accountId, AccountRBAC._WITHDRAW_PERMISSION) {
-        uint256 availableCollateral = getAccountAvailableCollateral(accountId, collateralType);
-        
+        if (Account.load(accountId).collaterals[collateralType].availableAmount < amount) {
+            revert InsufficientAccountCollateral(amount);
+        }
+
         Account.load(accountId).collaterals[collateralType].deductCollateral(amount);
 
-        collateralType.safeTransfer(msg.sender, amount);
+        collateralType.safeTransfer(Account.load(accountId).rbac.owner, amount);
 
         emit CollateralWithdrawn(accountId, collateralType, amount, msg.sender);
     }

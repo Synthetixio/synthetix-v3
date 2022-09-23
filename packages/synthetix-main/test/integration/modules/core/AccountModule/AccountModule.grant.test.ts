@@ -5,7 +5,7 @@ import { ethers } from 'ethers';
 import { findSingleEvent } from '@synthetixio/core-utils/utils/ethers/events';
 import { restoreSnapshot, takeSnapshot } from '@synthetixio/core-utils/utils/hardhat/rpc';
 
-import Permissions from '../../../mixins/AcccountRBACMixin.permissions';
+import Permissions from '../../../storage/AcccountRBACMixin.permissions';
 import { bootstrap } from '../../../bootstrap';
 
 describe('AccountModule', function () {
