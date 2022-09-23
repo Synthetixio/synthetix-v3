@@ -60,7 +60,7 @@ export default async function assertRevert(
   if (!error) {
     throw new Error('Transaction was expected to revert, but it did not');
   } else if (expectedMessage) {
-    const receivedMessage = getCustomError(error) ?? error.toString();
+    const receivedMessage = getCustomError(error, contract) ?? error.toString();
 
     if (!receivedMessage.includes(expectedMessage)) {
       // ----------------------------------------------------------------------------
