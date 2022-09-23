@@ -42,7 +42,7 @@ export default async function assertRevert(
     // parse the error
     const errorData = getErrorData(error);
 
-    let receivedMessage = (error.reason as string) ?? error.toString();
+    let receivedMessage = error.toString();
     if (errorData && contract) {
       const parsed = contract.interface.parseError(errorData);
 
