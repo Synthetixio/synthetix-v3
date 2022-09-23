@@ -18,25 +18,31 @@ describe('UUPSProxy', () => {
   });
 
   describe('when deploying the proxy with invalid parameters', () => {
+    let UUPSProxyFactory;
+
+    before('deploy the implementation', async () => {
+      const factory = await ethers.getContractFactory('ImplementationMockA');
+      UUPSProxyFactory = await ethers.getContractFactory('UUPSProxy');
+      Implementation = await factory.deploy();
+      UUPSProxy = UUPSProxyFactory.deploy(Implementation.address);
+    });
+
     describe('when setting an EOA as the first implementation', () => {
       it('reverts', async () => {
-        const factory = await ethers.getContractFactory('UUPSProxy');
-        //console.log(await ethers.getContractAt('UUPSProxy', ethers.constants.ZeroAddress));
         await assertRevert(
-          factory.deploy(user.address),
+          UUPSProxyFactory.deploy(user.address),
           `NotAContract(\\"${user.address}\\")`,
-          await ethers.getContractAt('UUPSProxy', user.address)
+          UUPSProxy
         );
       });
     });
 
     describe('when setting the zero address as the first implementation', () => {
       it('reverts', async () => {
-        const factory = await ethers.getContractFactory('UUPSProxy');
         await assertRevert(
-          factory.deploy('0x0000000000000000000000000000000000000000'),
+          UUPSProxyFactory.deploy('0x0000000000000000000000000000000000000000'),
           'ZeroAddress()',
-          await ethers.getContractAt('UUPSProxy', user.address)
+          UUPSProxy
         );
       });
     });
