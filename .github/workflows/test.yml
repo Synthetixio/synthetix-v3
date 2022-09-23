@@ -7,16 +7,17 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        package: [
+        package:
+          [
             core-contracts,
             core-utils,
             core-modules,
             hardhat-router,
-            # synthetix-main,
+            synthetix-main,
           ]
         include:
-          # - package: core-contracts
-          #   coverage-file: packages/core-contracts/coverage.json
+          - package: core-contracts
+            coverage-file: packages/core-contracts/coverage.json
           - package: core-utils
             coverage-file: packages/core-utils/coverage/lcov.info
           - package: core-modules
