@@ -127,7 +127,7 @@ contract LegacyMarket is Ownable/* is IMarket*/ {
         pauseStablecoinConversion = paused;
     }
     
-    function togglePauseMigration(bool paused) external onlyOwner {
+    function setPauseMigration(bool paused) external onlyOwner {
         pauseMigration = paused;
     }
 
