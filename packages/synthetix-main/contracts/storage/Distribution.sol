@@ -8,15 +8,6 @@ import "./DistributionActor.sol";
 library Distribution {
     error InvalidParameters(string incorrectParameter, string help);
 
-    struct DistributionEntry {
-        // amount which should be applied to valuePerShare at the given time below, or
-        int128 scheduledValue;
-        // set to <= block.timestamp to distribute immediately to currently staked users
-        int64 start;
-        int32 duration;
-        int32 lastUpdate;
-    }
-
     struct Data {
         // total number of shares
         uint128 totalShares;
