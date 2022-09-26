@@ -6,11 +6,14 @@
   "scripts": {},
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "2.1.1",
+    "@typechain/ethers-v5": "10.1.0",
+    "@typechain/hardhat": "6.1.3",
     "dotenv": "16.0.1",
     "hardhat": "2.11.2",
     "hardhat-cannon": "1.1.2",
     "hardhat-contract-sizer": "2.1.1",
     "hardhat-gas-reporter": "1.0.9",
-    "solidity-coverage": "0.7.17"
+    "solidity-coverage": "0.7.17",
+    "typechain": "8.1.0"
   }
 }
