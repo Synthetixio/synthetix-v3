@@ -1,113 +1,141 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@synthetixio/synthetix-main/contracts/interfaces/external/IMarket.sol";
+//import "@synthetixio/synthetix-main/contracts/interfaces/external/IMarket.sol";
+
+import "synthetix/contracts/interfaces/IAddressResolver.sol";
+import "synthetix/contracts/interfaces/ILiquidatorRewards.sol";
 import "synthetix/contracts/interfaces/IIssuer.sol";
+import "synthetix/contracts/interfaces/ISynthetixDebtShare.sol";
+import "synthetix/contracts/interfaces/ISynthetix.sol";
 
-import "./interfaces/IAddressResolver.sol";
-import "./interfaces/IIssuer.sol";
-import "./interfaces/ISynthetixDebtShare.sol";
+import "./interfaces/IV3CoreProxy.sol";
 
-contract LegacyMarket is IMarket {
+import "@synthetixio/core-contracts/contracts/ownership/Ownable.sol";
+import "@synthetixio/core-contracts/contracts/interfaces/IERC20.sol";
+import "@synthetixio/core-contracts/contracts/interfaces/IERC721.sol";
+
+import "@synthetixio/core-contracts/contracts/utils/MathUtil.sol";
+
+contract LegacyMarket is Ownable/* is IMarket*/ {
     using MathUtil for uint256;
 
-    uint public marketId;
+    uint128 public marketId;
     bool public pauseStablecoinConversion;
     bool public pauseMigration;
 
     IAddressResolver public v2xResolver;
-    ICoreProxy public v3System;
+    IV3CoreProxy public v3System;
 
     error NothingToMigrate();
-    error InsufficientCollateralMigrated();
+    error InsufficientCollateralMigrated(uint amountRequested, uint amountAvailable);
+    error Paused();
 
-    constructor(address v2xResolver, uint128 v3System) {
-        this.v2xResolver = IAddressResolver(v2xResolver);
-        this.v3System = ISynthetix(v3System);
+    constructor(IAddressResolver v2xResolverAddress, IV3CoreProxy v3SystemAddress) {
+        v2xResolver = v2xResolverAddress;
+        v3System = v3SystemAddress;
 
-        marketId = this.v3System.registerMarket(address(this));
+        marketId = v3System.registerMarket(address(this));
     }
 
-    function balance() public view {
-        IIssuer iss = IIssuer(this.v2xResolver.getAddress("Issuer"));
+    function balance() public view returns (uint) {
+        IIssuer iss = IIssuer(v2xResolver.getAddress("Issuer"));
 
         return iss.debtBalanceOf(address(this), "sUSD");
     }
 
-    function locked() external view {
+    function locked() external pure returns (uint) {
         return 0;
     }
 
-    convertUSD(uint amount) external {
-        require(!pauseStablecoinConversion, "Stablecoin conversion has been paused");
+    function convertUSD(uint amount) external {
+        if (pauseStablecoinConversion) {
+            revert Paused();
+        }
+
         if (balance() < amount) {
             revert InsufficientCollateralMigrated(amount, balance());
         }
 
-        IERC20 oldUSD = IERC20(this.v2xResolver.getAddress("ProxysUSD"));
-        ISynthetix oldSynthetix = IIssuer(this.v2xResolver.getAddress("ProxySynthetix"));
+        IERC20 oldUSD = IERC20(v2xResolver.getAddress("ProxysUSD"));
+        ISynthetix oldSynthetix = ISynthetix(v2xResolver.getAddress("ProxySynthetix"));
 
         oldUSD.transferFrom(msg.sender, address(this), amount);
         oldSynthetix.burnSynths(amount);
 
-        v3System.withdraw(msg.sender, amount);
+        v3System.withdrawUSD(marketId, msg.sender, amount);
     }
 
-    migrate(uint accountId) external {
-        require(!pauseMigration, "Migration has been paused");
+    function migrate(uint128 accountId) external {
+        if (pauseMigration) {
+            revert Paused();
+        }
+
         _migrate(msg.sender, accountId);
     }
 
-    migateOnBehalf(address staker, uint accountId) external onlyOwner {
+    function migateOnBehalf(address staker, uint128 accountId) external onlyOwner {
         _migrate(staker, accountId);
     }
 
-    function _migrate(address staker, uint accountId) {
+    function _migrate(address staker, uint128 accountId) internal {
 
-        ISynthetix oldSynthetix = IIssuer(this.v2xResolver.getAddress("ProxySynthetix"));
+        ILiquidatorRewards(v2xResolver.getAddress("LiquidatorRewards")).getReward(staker);
 
-        ISynthetixDebtShare oldDebtShares = IIssuer(this.v2xResolver.getAddress("SynthetixDebtShare"));
+        IERC20 oldSynthetix = IERC20(v2xResolver.getAddress("ProxySynthetix"));
 
-        if (oldDebtShares == 0) {
-            revert NothingToMigrate();
-        }
+        ISynthetixDebtShare oldDebtShares = ISynthetixDebtShare(v2xResolver.getAddress("SynthetixDebtShare"));
 
         uint collateralMigrated = oldSynthetix.balanceOf(staker);
         uint debtSharesMigrated = oldDebtShares.balanceOf(staker);
 
-        uint debtSharesValueMigrated = something;
+        if (collateralMigrated == 0 || debtSharesMigrated == 0) {
+            revert NothingToMigrate();
+        }
 
-        this.v2xResolver.getAddress("LiquidatorRewards").claim();
+        uint debtValueMigrated = _calculateDebtValueMigrated(debtSharesMigrated);
 
         oldSynthetix.transferFrom(staker, address(this), collateralMigrated);
 
         oldDebtShares.transferFrom(staker, address(this), debtSharesMigrated);
 
-        this.v3System.createAccount(accountId);
+        v3System.createAccount(accountId);
 
-        this.v3System.depositCollateral(accountId, address(oldSynthetix), collateralMigrated);
+        v3System.depositCollateral(accountId, address(oldSynthetix), collateralMigrated);
 
-        uint preferredPoolId = this.v3System.getPreferredPool();
+        uint128 preferredPoolId = v3System.getPreferredPool();
 
-        this.v3System.delegateCollateral(
+        v3System.delegateCollateral(
             accountId,
-            poolId,
+            preferredPoolId,
             address(oldSynthetix),
             collateralMigrated,
             MathUtil.UNIT
         );
 
-        this.v3System.associateDebt(accountId, poolId, address(oldSynthetix), debtSharesValueMigrated);
+        v3System.associateDebt(
+            accountId,
+            preferredPoolId,
+            address(oldSynthetix),
+            debtValueMigrated
+        );
 
-        this.v3AccountToken.transfer(staker, accountId);
+        IERC721(v3System.getAccountTokenAddress()).safeTransferFrom(address(this), staker, accountId);
     }
 
-    function togglePauseStablecoinConversion() external onlyOwner {
-        pauseStablecoinConversion = !pauseStablecoinConversion;
+    function setPauseStablecoinConversion(bool paused) external onlyOwner {
+        pauseStablecoinConversion = paused;
     }
     
-    function togglePauseMigration() external onlyOwner {
-        pauseMigration = !pauseMigration;
+    function togglePauseMigration(bool paused) external onlyOwner {
+        pauseMigration = paused;
+    }
+
+    function _calculateDebtValueMigrated(uint debtSharesMigrated) internal view returns (uint) {
+        (uint totalSystemDebt, uint totalDebtShares, ) = IIssuer(v2xResolver.getAddress("Issuer"))
+            .allNetworksDebtInfo();
+        
+        return debtSharesMigrated * totalSystemDebt / totalDebtShares;
     }
 
 }
