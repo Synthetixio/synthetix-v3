@@ -14,10 +14,7 @@ library Collateral {
         //StakedCollateralLock[] locks;
     }
 
-    function depositCollateral(
-        Data storage self,
-        uint amount
-    ) internal {
+    function depositCollateral(Data storage self, uint amount) internal {
         if (!self.isSet) {
             // new collateral
             self.isSet = true;
@@ -27,10 +24,7 @@ library Collateral {
         }
     }
 
-    function deductCollateral(
-        Data storage self,
-        uint amount
-    ) internal {
+    function deductCollateral(Data storage self, uint amount) internal {
         self.availableAmount -= amount;
     }
 }

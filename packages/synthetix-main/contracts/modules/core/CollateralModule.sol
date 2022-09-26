@@ -13,11 +13,7 @@ import "../../utils/ERC20Helper.sol";
 
 import "hardhat/console.sol";
 
-contract CollateralModule is
-    ICollateralModule,
-    OwnableMixin,
-    AssociatedSystemsMixin
-{
+contract CollateralModule is ICollateralModule, OwnableMixin, AssociatedSystemsMixin {
     using SetUtil for SetUtil.AddressSet;
     using ERC20Helper for address;
 

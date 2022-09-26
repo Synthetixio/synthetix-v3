@@ -13,11 +13,7 @@ import "../../storage/Pool.sol";
 
 import "../../interfaces/IRewardsManagerModule.sol";
 
-contract RewardsManagerModule is
-    IRewardsManagerModule,
-    OwnableMixin,
-    AssociatedSystemsMixin
-{
+contract RewardsManagerModule is IRewardsManagerModule, OwnableMixin, AssociatedSystemsMixin {
     using SetUtil for SetUtil.Bytes32Set;
     using MathUtil for uint256;
 
@@ -70,7 +66,14 @@ contract RewardsManagerModule is
         }
 
         existingDistribution.rewardPerShare += uint128(
-            uint(existingDistribution.entry.distribute(pool.vaults[collateralType].currentEpoch().debtDist, int(amount), start, duration))
+            uint(
+                existingDistribution.entry.distribute(
+                    pool.vaults[collateralType].currentEpoch().debtDist,
+                    int(amount),
+                    start,
+                    duration
+                )
+            )
         );
 
         existingDistribution.distributor = IRewardDistributor(distributor);

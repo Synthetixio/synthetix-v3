@@ -62,7 +62,7 @@ contract VaultModule is IVaultModule, AssociatedSystemsMixin, OwnableMixin {
         vault.updateAvailableRewards(accountId);
 
         // get the current collateral situation
-        (uint oldCollateralAmount,) = vault.currentAccountCollateral(accountId);
+        (uint oldCollateralAmount, ) = vault.currentAccountCollateral(accountId);
         uint collateralPrice;
 
         // if increasing collateral additionally check they have enough collateral
@@ -107,11 +107,7 @@ contract VaultModule is IVaultModule, AssociatedSystemsMixin, OwnableMixin {
             int debt = vault.currentEpoch().usdDebtDist.getActorValue(actorId);
             //(, uint collateralValue,) = pool.currentAccountCollateral(collateralType, accountId);
 
-            _verifyCollateralRatio(
-                collateralType,
-                debt < 0 ? 0 : uint(debt),
-                collateralAmount.mulDecimal(collateralPrice)
-            );
+            _verifyCollateralRatio(collateralType, debt < 0 ? 0 : uint(debt), collateralAmount.mulDecimal(collateralPrice));
         }
 
         emit DelegationUpdated(accountId, poolId, collateralType, collateralAmount, leverage, msg.sender);
@@ -168,7 +164,6 @@ contract VaultModule is IVaultModule, AssociatedSystemsMixin, OwnableMixin {
         }
 
         _getToken(_USD_TOKEN).burn(msg.sender, amount);
-
 
         VaultEpoch.Data storage epoch = Pool.load(poolId).vaults[collateralType].currentEpoch();
 
@@ -231,7 +226,12 @@ contract VaultModule is IVaultModule, AssociatedSystemsMixin, OwnableMixin {
         return Pool.load(poolId).updateAccountDebt(collateralType, accountId);
     }
 
-    function getVaultCollateral(uint128 poolId, address collateralType) public view override returns (uint amount, uint value) {
+    function getVaultCollateral(uint128 poolId, address collateralType)
+        public
+        view
+        override
+        returns (uint amount, uint value)
+    {
         return Pool.load(poolId).currentVaultCollateral(collateralType);
     }
 

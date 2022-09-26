@@ -3,7 +3,6 @@ pragma solidity ^0.8.0;
 
 import "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
 
-
 /**
  * Market Distribution is set by assigning weights to markets
  * the proportion for a market is obtained as market_distribution / totalWeights

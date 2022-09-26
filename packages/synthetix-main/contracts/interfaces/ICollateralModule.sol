@@ -20,12 +20,22 @@ interface ICollateralModule {
     /**
      * @notice Emitted when `amount` of collateral of type `collateralType` is deposited to account `accountId` by `sender`.
      */
-    event CollateralDeposited(uint128 indexed accountId, address indexed collateralType, uint amount, address indexed sender);
+    event CollateralDeposited(
+        uint128 indexed accountId,
+        address indexed collateralType,
+        uint amount,
+        address indexed sender
+    );
 
     /**
      * @notice Emitted when `amount` of collateral of type `collateralType` is withdrawn from account `accountId` by `sender`.
      */
-    event CollateralWithdrawn(uint128 indexed accountId, address indexed collateralType, uint amount, address indexed sender);
+    event CollateralWithdrawn(
+        uint128 indexed accountId,
+        address indexed collateralType,
+        uint amount,
+        address indexed sender
+    );
 
     /**
      * @notice Creates or updates the configuration for given `collateralType`.

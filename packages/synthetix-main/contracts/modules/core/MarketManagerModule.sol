@@ -12,11 +12,7 @@ import "../../storage/Account.sol";
 
 import "@synthetixio/core-modules/contracts/mixins/AssociatedSystemsMixin.sol";
 
-contract MarketManagerModule is
-    IMarketManagerModule,
-    AssociatedSystemsMixin,
-    OwnableMixin
-{
+contract MarketManagerModule is IMarketManagerModule, AssociatedSystemsMixin, OwnableMixin {
     using Market for Market.Data;
 
     bytes32 private constant _USD_TOKEN = "USDToken";
@@ -56,7 +52,7 @@ contract MarketManagerModule is
 
     function getMarketDebtPerShare(uint128 marketId) external override returns (int) {
         Market.Data storage market = Market.load(marketId);
-        
+
         market.distributeDebt(999999999);
 
         return market.debtDist.valuePerShare / 1e9;

@@ -102,7 +102,6 @@ contract PoolModule is IPoolModule, OwnableMixin {
         Pool.Data storage pool = Pool.load(poolId);
         pool.distributeDebt();
 
-
         uint totalWeight = 0;
         uint i = 0;
 

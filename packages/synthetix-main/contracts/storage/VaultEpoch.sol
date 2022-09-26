@@ -46,7 +46,12 @@ library VaultEpoch {
         self.unclaimedDebt -= int128(newDebt);
     }
 
-    function setAccount(Data storage self, uint128 accountId, uint collateralAmount, uint leverage) internal {
+    function setAccount(
+        Data storage self,
+        uint128 accountId,
+        uint collateralAmount,
+        uint leverage
+    ) internal {
         bytes32 actorId = accountToActor(accountId);
 
         // ensure account debt is rolled in before we do next things

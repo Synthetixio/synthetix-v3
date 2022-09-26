@@ -34,9 +34,8 @@ library Pool {
         MarketDistribution.Data[] poolDistribution;
         /// @dev tracks debt for the pool
         Distribution.Data debtDist;
-
         SetUtil.AddressSet collateralTypes;
-        mapping (address => Vault.Data) vaults;
+        mapping(address => Vault.Data) vaults;
     }
 
     function load(uint128 id) internal pure returns (Data storage data) {
@@ -81,8 +80,8 @@ library Pool {
 
             int permissibleLiquidity = calculatePermissibleLiquidity(
                 self,
-                marketData, 
-                self.totalRemainingLiquidity * weight / totalWeights
+                marketData,
+                (self.totalRemainingLiquidity * weight) / totalWeights
             );
 
             console.log("permissible liquidity", uint(permissibleLiquidity));
@@ -103,12 +102,17 @@ library Pool {
         poolDist.distribute(cumulativeDebtChange);
     }
 
-    function calculatePermissibleLiquidity(Data storage self, Market.Data storage marketData, uint remainingLiquidity) internal view returns (int) {
+    function calculatePermissibleLiquidity(
+        Data storage self,
+        Market.Data storage marketData,
+        uint remainingLiquidity
+    ) internal view returns (int) {
         uint minRatio = PoolConfiguration.load().minLiquidityRatio;
         return
-            marketData.debtDist.valuePerShare / 1e9 + int(minRatio > 0 ? 
-                remainingLiquidity.divDecimal(minRatio).divDecimal(self.debtDist.totalShares) : 
-                MathUtil.UNIT
+            marketData.debtDist.valuePerShare /
+            1e9 +
+            int(
+                minRatio > 0 ? remainingLiquidity.divDecimal(minRatio).divDecimal(self.debtDist.totalShares) : MathUtil.UNIT
             );
     }
 
@@ -129,7 +133,7 @@ library Pool {
         console.log("GOT USD WEIGHT", usdWeight);
         int debtChange = self.debtDist.updateActorShares(actorId, usdWeight);
         console.log("vault accum", uint(debtChange));
-        
+
         self.totalRemainingLiquidity = uint128(int128(self.totalRemainingLiquidity) + int128(deltaRemainingLiquidity));
 
         self.vaults[collateralType].distributeDebt(debtChange);
@@ -147,10 +151,7 @@ library Pool {
         return self.vaults[collateralType].updateAccountDebt(accountId);
     }
 
-    function resetVault(
-        Data storage self,
-        address collateralType
-    ) internal {
+    function resetVault(Data storage self, address collateralType) internal {
         // reboot the vault
         self.vaults[collateralType].reset();
 
@@ -173,7 +174,9 @@ library Pool {
         return self.vaults[collateralType].currentDebt();
     }
 
-    function currentVaultCollateral(Data storage self, address collateralType) internal view
+    function currentVaultCollateral(Data storage self, address collateralType)
+        internal
+        view
         returns (uint collateralAmount, uint collateralValue)
     {
         collateralAmount = self.vaults[collateralType].currentCollateral();
@@ -185,16 +188,16 @@ library Pool {
         address collateralType,
         uint128 accountId
     )
-        internal view
+        internal
+        view
         returns (
             uint collateralAmount,
             uint collateralValue,
             uint shares
         )
     {
-        (collateralAmount,shares) = self.vaults[collateralType].currentAccountCollateral(accountId);
-        collateralValue = CollateralConfiguration.load(collateralType).getCollateralPrice()
-            .mulDecimal(collateralAmount);
+        (collateralAmount, shares) = self.vaults[collateralType].currentAccountCollateral(accountId);
+        collateralValue = CollateralConfiguration.load(collateralType).getCollateralPrice().mulDecimal(collateralAmount);
     }
 
     function currentAccountCollateralizationRatio(

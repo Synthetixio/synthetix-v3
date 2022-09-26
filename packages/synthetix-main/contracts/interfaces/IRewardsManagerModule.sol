@@ -12,7 +12,13 @@ interface IRewardsManagerModule {
         uint start,
         uint duration
     );
-    event RewardsClaimed(uint128 indexed poolId, address indexed token, uint128 indexed accountId, uint index, uint amountClaimed);
+    event RewardsClaimed(
+        uint128 indexed poolId,
+        address indexed token,
+        uint128 indexed accountId,
+        uint index,
+        uint amountClaimed
+    );
 
     /// @notice called by pool owner or an existing distributor to set up rewards for vault participants
     function distributeRewards(

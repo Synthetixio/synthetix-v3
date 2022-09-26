@@ -21,7 +21,6 @@ library Market {
     struct Data {
         /// @notice the id of this market
         uint128 id;
-
         /// @notice the address which is used by the market to communicate with the core system. Implements `IMarket` interface
         address marketAddress;
         /// @notice the difference between the USD burnt by the market, and the amount minted
@@ -35,8 +34,7 @@ library Market {
         // used to attach/reattach pools to a market if it goes below a certain debt per debt share
         HeapUtil.Data outRangePools;
         Distribution.Data debtDist;
-
-        mapping (uint128 => int) poolPendingDebt;
+        mapping(uint128 => int) poolPendingDebt;
     }
 
     function load(uint128 id) internal pure returns (Data storage data) {
@@ -81,7 +79,7 @@ library Market {
         storeLastId(id);
         loadIdsByAddress(market).push(id);
     }
-    
+
     function getReportedDebt(Data storage self) internal view returns (uint) {
         return IMarket(self.marketAddress).reportedDebt(self.id);
     }
@@ -89,7 +87,6 @@ library Market {
     function totalBalance(Data storage self) internal view returns (int) {
         return int(getReportedDebt(self)) + self.issuance;
     }
-
 
     function rebalance(
         uint128 marketId,
@@ -157,10 +154,7 @@ library Market {
      * Rotates recorded allocation of debt to any connected pools.
      * NOTE: this function should be called before any pool alters its liquidity allocation (see `rebalance` above)
      */
-    function distributeDebt(
-        Data storage self,
-        uint maxIter
-    ) internal {
+    function distributeDebt(Data storage self, uint maxIter) internal {
         if (self.debtDist.totalShares == 0) {
             // market cannot distribute (or accumulate) any debt when there are no shares
             console.log("didnt see any shares", uint(int(self.debtDist.valuePerShare / 1e9)));
@@ -182,9 +176,7 @@ library Market {
         // additionally,
         for (
             uint i = 0;
-            self.inRangePools.size() > 0 &&
-                -self.inRangePools.getMax().priority < targetDebtPerDebtShare &&
-                i < maxIter;
+            self.inRangePools.size() > 0 && -self.inRangePools.getMax().priority < targetDebtPerDebtShare && i < maxIter;
             i++
         ) {
             HeapUtil.Node memory nextRemove = self.inRangePools.extractMax();

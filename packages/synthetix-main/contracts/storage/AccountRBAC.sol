@@ -22,10 +22,7 @@ library AccountRBAC {
     bytes32 internal constant _MINT_PERMISSION = "MINT";
     bytes32 internal constant _ADMIN_PERMISSION = "ADMIN";
 
-    function setOwner(
-        Data storage self,
-        address owner
-    ) internal {
+    function setOwner(Data storage self, address owner) internal {
         self.owner = owner;
     }
 

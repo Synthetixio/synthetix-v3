@@ -10,10 +10,7 @@ import "@synthetixio/core-modules/contracts/mixins/AssociatedSystemsMixin.sol";
 
 import "../../utils/ERC20Helper.sol";
 
-contract LiquidationsModule is
-    ILiquidationModule,
-    AssociatedSystemsMixin
-{
+contract LiquidationsModule is ILiquidationModule, AssociatedSystemsMixin {
     using MathUtil for uint;
     using ERC20Helper for address;
 
@@ -82,9 +79,9 @@ contract LiquidationsModule is
         // this will clear the user's account the same way as if they had unstaked normally
         epoch.setAccount(accountId, 0, 0);
 
-        // we don't give the collateral back to the user though--it gets 
+        // we don't give the collateral back to the user though--it gets
         // fed back into the vault proportionally to the amount of collateral you have
-        // the vault might end up with less overall collateral if liquidation reward 
+        // the vault might end up with less overall collateral if liquidation reward
         // is greater than the acutal collateral in this user's account
         epoch.collateralDist.distribute(int(collateralLiquidated) - int(amountRewarded));
 
@@ -163,11 +160,17 @@ contract LiquidationsModule is
         }
 
         // award the collateral that was just taken to the specified account
-        console.log("collateral rewarded", collateralRewarded, Account.load(liquidateAsAccountId).collaterals[collateralType].availableAmount);
-        Account.load(liquidateAsAccountId).collaterals[collateralType]
-            .depositCollateral(collateralRewarded);
-        console.log("complete", collateralRewarded, Account.load(liquidateAsAccountId).collaterals[collateralType].availableAmount);
-
+        console.log(
+            "collateral rewarded",
+            collateralRewarded,
+            Account.load(liquidateAsAccountId).collaterals[collateralType].availableAmount
+        );
+        Account.load(liquidateAsAccountId).collaterals[collateralType].depositCollateral(collateralRewarded);
+        console.log(
+            "complete",
+            collateralRewarded,
+            Account.load(liquidateAsAccountId).collaterals[collateralType].availableAmount
+        );
 
         emit VaultLiquidation(poolId, collateralType, amountLiquidated, collateralRewarded, collateralRewarded);
     }
