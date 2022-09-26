@@ -8,11 +8,5 @@ interface IMarketFeeManager {
         uint marketId,
         uint amount,
         address synthetix
-    )
-        external
-        returns (
-            uint amountUsable, // $80
-            uint amountBurned, // $100 -> $10 burned -> $10 fees sent to rewards distributor
-            uint feesCollected // $20
-        );
+    ) external returns (uint amountUsable, uint feesCollected);
 }

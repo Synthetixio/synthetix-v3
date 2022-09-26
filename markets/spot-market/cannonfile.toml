@@ -1,3 +1,6 @@
+name = "spot-market"
+description = "Spot market implementation"
+
 [import.synthetix]
 source = "synthetix-main:1.0.0"
 options.owner = "<%= settings.owner %>"

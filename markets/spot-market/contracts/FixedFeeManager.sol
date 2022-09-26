@@ -35,15 +35,7 @@ contract FixedFeeManager is IMarketFeeManager {
         uint marketId,
         uint amount,
         address synthAddress
-    )
-        external
-        override
-        returns (
-            uint amountUsable,
-            uint amountBurned,
-            uint feesCollected
-        )
-    {
+    ) external override returns (uint amountUsable, uint feesCollected) {
         require(usdToken.allowance(msg.sender, address(this)) >= amount, "Not enough allowance");
 
         // ISynth synth = ISynth(ISpotMarket(msg.sender).getMarket(marketId));
@@ -51,7 +43,6 @@ contract FixedFeeManager is IMarketFeeManager {
         feesCollected = amount.mulDecimal(fixedFee).divDecimal(10000);
 
         usdToken.transferFrom(msg.sender, address(this), feesCollected);
-        amountBurned = 0;
         amountUsable = amount - feesCollected;
     }
 }

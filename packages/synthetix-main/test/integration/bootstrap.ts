@@ -1,6 +1,7 @@
 import hre from 'hardhat';
 import { ChainBuilderContext } from '@usecannon/builder';
 import { ethers } from 'ethers';
+import path from 'path';
 
 import { snapshotCheckpoint } from '../utils';
 
@@ -16,7 +17,8 @@ async function loadSystems(
   for (const proxyName of proxies) {
     const { address, abi } = contracts[proxyName];
     const name = proxyName.slice(0, -5); // remove "Proxy" from the end
-    systems[name] = new ethers.Contract(address, abi, provider);
+    const system = name.match(/[^.]*$/)?.toString();
+    systems[system ?? name] = new ethers.Contract(address, abi, provider);
   }
 
   return systems;
@@ -80,6 +82,7 @@ export function bootstrapWithStakedPool() {
 
   before('deploy mock aggregator', async () => {
     const [owner] = r.signers();
+
     const factory = await hre.ethers.getContractFactory('AggregatorV3Mock');
     aggregator = await factory.connect(owner).deploy();
 
@@ -115,7 +118,7 @@ export function bootstrapWithStakedPool() {
     await r
       .systems()
       .Core.connect(owner)
-      .createPool(poolId, await owner.getAddress());
+      .createPool(1, await owner.getAddress());
 
     // create user account
     await r.systems().Core.connect(user1).createAccount(accountId);

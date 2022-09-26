@@ -16,7 +16,7 @@ describe('SpotMarket', function () {
       await (
         await systems()
           .Core.connect(user1)
-          .createPool(1, await user1.getAddress())
+          .createPool(2, await user1.getAddress())
       ).wait();
     });
 

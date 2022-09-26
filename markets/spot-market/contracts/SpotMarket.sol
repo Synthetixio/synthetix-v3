@@ -38,11 +38,12 @@ contract SpotMarket is ISpotMarket, Ownable {
         address priceFeed,
         address feeManager
     ) external override onlyOwner returns (uint) {
-        // TODO: find elegant way to check if synth already exists
         Synth newSynth = new Synth(address(this), name, symbol, decimals);
         uint synthMarketId = IMarketManagerModule(synthetix).registerMarket(address(this));
         MarketSynth memory synth = MarketSynth(newSynth, priceFeed, feeManager);
         marketSynths[synthMarketId] = synth;
+
+        emit SynthRegistered(synthMarketId);
 
         return synthMarketId;
     }
@@ -63,19 +64,20 @@ contract SpotMarket is ISpotMarket, Ownable {
         return market.synth.totalSupply().mulDecimal(_getCurrentPrice(marketId));
     }
 
-    /*
-        Should depositUsd have msg.sender as a parameter or assume it's always the market transferring the amount?
-        The alternative is to have the user approve the transfer to market manager.
-
-        The scenario to consider is when markets collect fees.  what's the transfer mechanism?  What should user be approving?
-    */
-    function buy(uint marketId, uint amountUsd) external override {
-        require(usdToken.balanceOf(msg.sender) >= amountUsd, "Insufficient balance");
-        require(usdToken.allowance(msg.sender, address(this)) >= amountUsd, "Insufficient allowance");
+    function buy(uint marketId, uint amountUsd) external override returns (uint) {
+        if (usdToken.balanceOf(msg.sender) < amountUsd) {
+            revert InsufficientFunds();
+        }
+        if (usdToken.allowance(msg.sender, address(this)) < amountUsd) {
+            revert InsufficientAllowance();
+        }
 
         MarketSynth storage market = marketSynths[marketId];
 
-        (uint amountUsable, , ) = IMarketFeeManager(market.feeManager).processFees(
+        usdToken.transferFrom(msg.sender, address(this), amountUsd);
+        usdToken.approve(market.feeManager, amountUsd);
+
+        (uint amountUsable, uint feesCollected) = IMarketFeeManager(market.feeManager).processFees(
             msg.sender,
             marketId,
             amountUsd,
@@ -86,25 +88,32 @@ contract SpotMarket is ISpotMarket, Ownable {
         uint amountToMint = amountUsable.divDecimal(currentPrice);
         market.synth.mint(msg.sender, amountToMint);
 
-        usdToken.transferFrom(msg.sender, address(this), amountUsd);
-        IMarketManagerModule(synthetix).depositUsd(marketId, address(this), amountUsd);
-        // emit event
+        IMarketManagerModule(synthetix).depositUsd(marketId, address(this), amountUsable);
+        emit SynthBought(marketId, amountToMint, feesCollected);
+
+        return amountToMint;
     }
 
-    /*
-        TODO: check if user has sellAmount balance of synth
-    */
-    function sell(uint marketId, uint sellAmount) external override {
+    function sell(uint marketId, uint sellAmount) external override returns (uint) {
         uint currentPrice = _getCurrentPrice(marketId);
         uint amountToWithdraw = sellAmount.mulDecimal(currentPrice);
 
         MarketSynth storage market = marketSynths[marketId];
-
-        require(market.synth.balanceOf(msg.sender) >= sellAmount, "Insufficient balance");
         market.synth.burn(msg.sender, sellAmount);
 
-        IMarketManagerModule(synthetix).withdrawUsd(marketId, msg.sender, amountToWithdraw);
-        // emit event
+        IMarketManagerModule(synthetix).withdrawUsd(marketId, address(this), amountToWithdraw);
+        (uint returnAmount, uint feesCollected) = _manageFees(marketId, amountToWithdraw);
+
+        usdToken.transfer(msg.sender, returnAmount);
+        emit SynthSold(marketId, returnAmount, feesCollected);
+
+        return returnAmount;
+    }
+
+    function _manageFees(uint marketId, uint amountUsd) internal returns (uint, uint) {
+        MarketSynth storage market = marketSynths[marketId];
+        usdToken.approve(market.feeManager, amountUsd);
+        return IMarketFeeManager(market.feeManager).processFees(msg.sender, marketId, amountUsd, synthetix);
     }
 
     // TODO: interact with OracleManager to get price for market synth
