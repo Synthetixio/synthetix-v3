@@ -6,7 +6,9 @@ dotenv.config({ path: path.resolve(__dirname, '..', '..', '.env') });
 // Load common .env file at ./packages/config-common/.env
 dotenv.config({ path: path.resolve(__dirname, '.env') });
 
+require('@typechain/hardhat');
 require('@nomiclabs/hardhat-ethers');
+//require('@nomiclabs/hardhat-waffle');
 require('hardhat-contract-sizer');
 require('solidity-coverage');
 require('@synthetixio/hardhat-router');
