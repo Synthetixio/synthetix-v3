@@ -1,3 +1,4 @@
+import { AbiHelpers } from 'hardhat/internal/util/abi-helpers';
 import { ethers } from 'ethers';
 
 interface ErrorObject {
@@ -21,36 +22,45 @@ function getErrorData(err: ErrorObject): string | null {
   return null;
 }
 
+const CUSTOM_ERROR_PREFIX =
+  'VM Exception while processing transaction: reverted with custom error ';
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function getCustomError(error: any, contract?: ethers.Contract): string | null {
+  const errorData = getErrorData(error);
+
+  if (errorData && contract) {
+    const parsed = contract.interface.parseError(errorData);
+    return `${parsed.name}(${
+      parsed.args ? AbiHelpers.formatValues(parsed.args as unknown[]) : ''
+    })`;
+  }
+
+  if (typeof error?.reason === 'string' && error.reason.startsWith(CUSTOM_ERROR_PREFIX)) {
+    return error?.reason.slice(CUSTOM_ERROR_PREFIX.length + 1, -1);
+  }
+
+  return null;
+}
+
 export default async function assertRevert(
   tx: Promise<ethers.providers.TransactionResponse>,
   expectedMessage?: string,
   contract?: ethers.Contract
 ) {
-  let error: ErrorObject | null = null;
+  let error: { [k: string]: unknown } | null = null;
 
   try {
     await (await tx).wait();
     await tx;
   } catch (err) {
-    error = err as ErrorObject;
+    error = err as { [k: string]: unknown };
   }
 
   if (!error) {
     throw new Error('Transaction was expected to revert, but it did not');
   } else if (expectedMessage) {
-    // parse the error
-    const errorData = getErrorData(error);
-
-    let receivedMessage = error.toString();
-    if (errorData && contract) {
-      const parsed = contract.interface.parseError(errorData);
-
-      receivedMessage = `${parsed.name}(${
-        parsed.args
-          ? parsed.args.map((v) => (v.toString ? '"' + v.toString() + '"' : v)).join(', ')
-          : ''
-      })`;
-    }
+    const receivedMessage = getCustomError(error, contract) ?? error.toString();
 
     if (!receivedMessage.includes(expectedMessage)) {
       // ----------------------------------------------------------------------------

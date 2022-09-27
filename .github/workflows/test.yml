@@ -47,23 +47,6 @@ jobs:
           files: ${{ matrix.coverage-file }}
           flags: ${{ matrix.package }}
 
-  synthetix-main-test:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Install Foundry (Cannon)
-        uses: foundry-rs/foundry-toolchain@v1
-        with:
-          version: nightly
-      - uses: actions/checkout@v2
-      - uses: actions/setup-node@v2
-        with:
-          node-version: "16.8.0"
-          cache: "npm"
-      - run: npm ci
-      - run: npm run build
-      - name: Execute tests
-        run: REPORT_GAS=true npm run --workspace=./packages/synthetix-main test
-
   test-cli:
     runs-on: ubuntu-latest
     steps:

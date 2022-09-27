@@ -1,10 +1,11 @@
-import { ethers } from 'hardhat';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
-import { bootstrap } from '../../../bootstrap';
 import { ethers as Ethers } from 'ethers';
-import { addCollateral, verifyCollateral } from './CollateralModule.helper';
+import { ethers } from 'hardhat';
+
 import Permissions from '../../../mixins/AcccountRBACMixin.permissions';
+import { addCollateral, verifyCollateral } from './CollateralModule.helper';
+import { bootstrap } from '../../../bootstrap';
 
 describe('CollateralModule', function () {
   const { signers, systems } = bootstrap();
@@ -71,7 +72,7 @@ describe('CollateralModule', function () {
             it('reverts', async () => {
               await assertRevert(
                 systems().Core.connect(user2).depositCollateral(1, Collateral.address, 100),
-                `PermissionDenied("1", "${Permissions.DEPOSIT}", "${await user2.getAddress()}")`,
+                `PermissionDenied(1, "${Permissions.DEPOSIT}", "${await user2.getAddress()}")`,
                 systems().Core
               );
             });
@@ -81,7 +82,7 @@ describe('CollateralModule', function () {
             it('reverts', async () => {
               await assertRevert(
                 systems().Core.connect(user2).withdrawCollateral(1, Collateral.address, 100),
-                `PermissionDenied("1", "${Permissions.WITHDRAW}", "${await user2.getAddress()}")`,
+                `PermissionDenied(1, "${Permissions.WITHDRAW}", "${await user2.getAddress()}")`,
                 systems().Core
               );
             });
