@@ -114,13 +114,11 @@ contract CollateralModule is
         address collateralType,
         uint amount
     ) public override onlyWithPermission(accountId, _WITHDRAW_PERMISSION) {
-        uint256 availableCollateral = getAccountAvailableCollateral(accountId, collateralType);
+        CollateralData storage collateralData = _collateralStore().collateralDataByAccountId[accountId][collateralType];
 
-        if (availableCollateral < amount) {
+        if (collateralData.availableAmount < amount) {
             revert InsufficientAccountCollateral(accountId, collateralType, amount);
         }
-
-        CollateralData storage collateralData = _collateralStore().collateralDataByAccountId[accountId][collateralType];
 
         collateralData.availableAmount -= amount;
 
