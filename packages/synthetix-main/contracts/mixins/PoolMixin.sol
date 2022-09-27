@@ -34,6 +34,18 @@ contract PoolMixin is PoolModuleStorage, VaultStorage, CollateralMixin, MarketMa
         _;
     }
 
+    function _poolHasMarket(uint poolId, uint marketId) internal view returns (bool) {
+        PoolData storage poolData = _poolModuleStore().pools[poolId];
+
+        for (uint i = 0; i < poolData.poolDistribution.length; i++) {
+            if (poolData.poolDistribution[i].market == marketId) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     function _rebalancePoolConfigurations(uint poolId) internal {
         PoolData storage poolData = _poolModuleStore().pools[poolId];
         uint totalWeights = poolData.totalWeights;

@@ -27,11 +27,13 @@ contract AssignDebtModule is
     bytes32 private constant _USD_TOKEN = "USDToken";
 
     error Unauthorized(address actual);
+    error NotFundedByPool(uint marketId, uint poolId);
+    error InsufficientCollateralRatio(uint collateralValue, uint debt, uint ratio, uint minRatio);
 
     function associateDebt(uint marketId, uint poolId, address collateralType, uint accountId, uint amount) external returns (int) {
 
         // load up the vault
-        VaultData storage vaultData = _poolVaultStore().poolVaults[poolId][collateralType];
+        VaultData storage vaultData = _vaultStore().vaults[poolId][collateralType];
         VaultEpochData storage epochData = vaultData.epochData[vaultData.epoch];
 
         MarketData storage marketData = _marketManagerStore().markets[marketId];
@@ -41,9 +43,13 @@ contract AssignDebtModule is
             revert Unauthorized(msg.sender);
         }
 
+        // market must appear in pool configuration
+        if (!_poolHasMarket(poolId, marketId)) {
+            revert NotFundedByPool(marketId, poolId);
+        }
+
         // verify the requested account actually has collateral to cover the new debt
         bytes32 actorId = bytes32(accountId);
-        epochData.collateralDist.getActorValue(actorId);
 
         // subtract the requested amount of debt from the market
         // this debt should have been accumulated just now anyway so 
@@ -56,12 +62,24 @@ contract AssignDebtModule is
         int updatedDebt = epochData.usdDebtDist.getActorValue(actorId) + int(amount);
 
         // verify the c ratio
-        // TODO
-        //if ()
+        _verifyCollateralRatio(collateralType, uint(updatedDebt > 0 ? updatedDebt : int(0)), _getCollateralValue(collateralType)
+            .mulDecimal(uint(epochData.collateralDist.getActorValue(actorId))));
 
         epochData.usdDebtDist.updateActorValue(actorId, updatedDebt);
 
         // done
         return updatedDebt;
+    }
+
+    function _verifyCollateralRatio(
+        address collateralType,
+        uint debt,
+        uint collateralValue
+    ) internal view {
+        uint targetCratio = _collateralTargetCRatio(collateralType);
+
+        if (debt != 0 && collateralValue.divDecimal(debt) < targetCratio) {
+            revert InsufficientCollateralRatio(collateralValue, debt, collateralValue.divDecimal(debt), targetCratio);
+        }
     }
 }

@@ -26,18 +26,31 @@ describe.only('AssociateDebtModule', function () {
 
   describe('associateDebt()', () => {
 
-    const amount = ethers.utils.parseEther('1');
+    const amount = ethers.utils.parseEther('13');
 
     it('only works from the configured market address', async () => {
-      await assertRevert(systems().Core.associateDebt(marketId, poolId, collateralAddress(), accountId, amount, { from: owner }));
+      await assertRevert(
+        systems().Core.connect(user2).associateDebt(marketId(), poolId, collateralAddress(), accountId, amount),
+        'Unauthorized',
+        systems().Core
+      );
     });
 
+    // TODO: the errors are not being properly parsed by ethers (or cannon) here for some reason...
     it('only works when the market is actually included in the pool', async () => {
-      await assertRevert(await MockMarket().callAssociateDebt(marketId, 828374, collateralAddress(), accountId, amount));
+      await assertRevert(
+        await MockMarket().connect(user2).callAssociateDebt(828374, collateralAddress(), accountId, amount),
+        /*`NotFundedByPool("${marketId()}", "828374")`,
+        systems().Core*/
+      );
     });
 
     it('only works when the target account has enough collateral', async () => {
-      await assertRevert(await MockMarket().callAssociateDebt(marketId, poolId, collateralAddress(), accountId, amount.mul(100000000)));
+      await assertRevert(
+        await MockMarket().connect(user2).callAssociateDebt(poolId, collateralAddress(), accountId, amount.mul(100000000)),
+        /*`InsufficientCollateralRatio`,
+        systems().Core*/
+      );
     });
 
     describe('with a second staker', async () => {
@@ -79,9 +92,18 @@ describe.only('AssociateDebtModule', function () {
         });
   
         before('invoke', async () => {
-          await MockMarket().callAssociateDebt(marketId(), poolId, collateralAddress(), user2AccountId, amount);
-  
-          assertBn.equal(await systems().SNX.balanceOf(await user1.getAddress()), amount);
+          assertBn.equal(
+            await systems().Core.callStatic.getPositionDebt(user2AccountId, poolId, collateralAddress()),
+            0
+          );
+
+          await MockMarket().connect(user2).callAssociateDebt(poolId, collateralAddress(), user2AccountId, amount);
+
+          assertBn.equal(await MockMarket().reportedDebt(0), amount);
+          assertBn.equal(
+            await systems().Core.callStatic.getMarketTotalBalance(marketId()),
+            0
+          );
         });
   
         it('reduces market issuance', async () => {
@@ -93,7 +115,7 @@ describe.only('AssociateDebtModule', function () {
   
         it('increases user debt', async () => {
           assertBn.equal(
-            await systems().Core.getPositionDebt(poolId, collateralAddress(), user2AccountId),
+            await systems().Core.callStatic.getPositionDebt(user2AccountId, poolId, collateralAddress()),
             amount
           );
         });
@@ -102,7 +124,7 @@ describe.only('AssociateDebtModule', function () {
           // the mock market contract is programmed to not affect overall market debt during the operation,
           // which is usually what we would expect
           assertBn.equal(
-            await systems().Core.getPositionDebt(poolId, collateralAddress(), accountId),
+            await systems().Core.callStatic.getPositionDebt(accountId, poolId, collateralAddress()),
             0
           );
         });
