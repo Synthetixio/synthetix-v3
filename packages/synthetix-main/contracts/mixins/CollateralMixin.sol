@@ -10,6 +10,7 @@ import "../utils/SharesLibrary.sol";
 
 contract CollateralMixin is CollateralStorage, VaultStorage {
     using SetUtil for SetUtil.AddressSet;
+    using SetUtil for SetUtil.UintSet;
     using SharesLibrary for SharesLibrary.Distribution;
 
     error InvalidCollateral(address collateralType);
@@ -60,8 +61,8 @@ contract CollateralMixin is CollateralStorage, VaultStorage {
         CollateralData storage stakedCollateral = _collateralStore().collateralDataByAccountId[accountId][collateralType];
 
         uint totalAssigned = 0;
-        for (uint i = 0; i < stakedCollateral.pools.length; i++) {
-            uint poolIdx = stakedCollateral.pools[i];
+        for (uint i = 0; i < stakedCollateral.pools.length(); i++) {
+            uint poolIdx = stakedCollateral.pools.valueAt(i);
 
             VaultStorage.VaultData storage vaultData = _vaultStore().vaults[poolIdx][collateralType];
 
@@ -115,6 +116,17 @@ contract CollateralMixin is CollateralStorage, VaultStorage {
             collateralData.availableAmount = amount;
         } else {
             collateralData.availableAmount += amount;
+        }
+    }
+
+    function _setDelegatePoolId(
+        uint accountId,
+        uint poolId,
+        address collateralType
+    ) internal {
+        CollateralData storage stakedCollateral = _collateralStore().collateralDataByAccountId[accountId][collateralType];
+        if (!stakedCollateral.pools.contains(poolId)) {
+            stakedCollateral.pools.add(poolId);
         }
     }
 }

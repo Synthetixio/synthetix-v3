@@ -83,6 +83,7 @@ contract VaultModule is IVaultModule, VaultStorage, AccountRBACMixin, OwnableMix
 
             // this will ensure the new distribution information is passed up the chain to the markets
             _updatePositionDebt(accountId, poolId, collateralType);
+            _setDelegatePoolId(accountId, poolId, collateralType);
         }
 
         // this is the most efficient time to check the resulting collateralization ratio, since
