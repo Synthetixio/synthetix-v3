@@ -24,7 +24,7 @@
     "solidity-coverage": "0.7.17",
     "solidity-docgen": "0.6.0-beta.22",
     "synthetix": "2.77.0-alpha",
-    "@synthetixio/synthetix-main": "1.0.0",
+    "@synthetixio/main": "1.0.0",
     "ts-node": "10.9.1",
     "typechain": "8.1.0",
     "typescript": "4.7.4"

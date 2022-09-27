@@ -52,9 +52,7 @@ async function _initContractSource(contractFullyQualifiedName) {
 
   // Save the asts for the entire dependency tree
   for (const [sourceName, attributes] of Object.entries(buildInfo.output.sources)) {
-    if (!deployment.sources[sourceName].ast) {
-      deployment.sources[sourceName].ast = attributes.ast;
-    }
+    deployment.sources[sourceName].ast = attributes.ast;
   }
 
   // Save the ABIs of all the contracts

@@ -1,10 +1,11 @@
-import { ethers } from 'hardhat';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
-import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
-import { bootstrap } from '../../../bootstrap';
-import { ethers as Ethers } from 'ethers';
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
+import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
+import { ethers as Ethers } from 'ethers';
+import { ethers } from 'hardhat';
+
 import { addCollateral, verifyCollateral } from './CollateralModule.helper';
+import { bootstrap } from '../../../bootstrap';
 
 describe('CollateralModule', function () {
   const { signers, systems } = bootstrap();
@@ -88,11 +89,11 @@ describe('CollateralModule', function () {
             });
 
             it('emits an event', async () => {
-              assertEvent(
+              await assertEvent(
                 receipt,
-                `CollateralDeposited("1", "${
+                `CollateralDeposited(1, "${
                   Collateral.address
-                }", "100", "${await user1.getAddress()}")`,
+                }", 100, "${await user1.getAddress()}")`,
                 systems().Core
               );
             });
@@ -136,11 +137,11 @@ describe('CollateralModule', function () {
               });
 
               it('emits an event', async () => {
-                assertEvent(
+                await assertEvent(
                   receipt,
-                  `CollateralWithdrawn("1", "${
+                  `CollateralWithdrawn(1, "${
                     Collateral.address
-                  }", "100", "${await user1.getAddress()}")`,
+                  }", 100, "${await user1.getAddress()}")`,
                   systems().Core
                 );
               });

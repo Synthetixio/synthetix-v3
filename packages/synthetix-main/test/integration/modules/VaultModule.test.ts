@@ -3,6 +3,7 @@ import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert
 import hre from 'hardhat';
 import { ethers } from 'ethers';
 
+import Permissions from '../mixins/AcccountRBACMixin.permissions';
 import { bootstrapWithStakedPool } from '../bootstrap';
 import { snapshotCheckpoint } from '../../utils';
 
@@ -104,7 +105,7 @@ describe('VaultModule', function () {
     });
 
     it('verifies permission for account', async () => {
-      assertRevert(
+      await assertRevert(
         systems()
           .Core.connect(user2)
           .delegateCollateral(
@@ -114,15 +115,15 @@ describe('VaultModule', function () {
             depositAmount.mul(2),
             ethers.utils.parseEther('1')
           ),
-        `Unauthorized("${await user2.getAddress()}")`,
+        `PermissionDenied(1, "${Permissions.DELEGATE}", "${await user2.getAddress()}")`,
         systems().Core
       );
     });
 
     it('verifies leverage', async () => {
-      assertRevert(
+      await assertRevert(
         systems()
-          .Core.connect(user2)
+          .Core.connect(user1)
           .delegateCollateral(
             accountId,
             poolId,
@@ -144,7 +145,7 @@ describe('VaultModule', function () {
       const startingDebt = ethers.utils.parseEther('100');
 
       before('user1 goes into debt', async () => {
-        await MockMarket.connect(user1).setBalance(startingDebt);
+        await MockMarket.connect(user1).setReportedDebt(startingDebt);
       });
 
       it('has allocated debt to vault', async () => {
@@ -261,7 +262,7 @@ describe('VaultModule', function () {
 
         describe('increase collateral', async () => {
           it('fails when not enough available collateral in account', async () => {
-            assertRevert(
+            await assertRevert(
               systems()
                 .Core.connect(user2)
                 .delegateCollateral(
@@ -271,7 +272,7 @@ describe('VaultModule', function () {
                   depositAmount.mul(3),
                   ethers.utils.parseEther('1')
                 ),
-              'InsufficientAvailableCollateral',
+              'InsufficientAccountCollateral',
               systems().Core
             );
           });
@@ -300,7 +301,7 @@ describe('VaultModule', function () {
 
         describe('decrease collateral', async () => {
           it('fails when insufficient c-ratio', async () => {
-            assertRevert(
+            await assertRevert(
               systems()
                 .Core.connect(user2)
                 .delegateCollateral(
@@ -387,7 +388,7 @@ describe('VaultModule', function () {
     describe('first user leaves', async () => {
       before(restore);
       before('erase debt', async () => {
-        await MockMarket.connect(user1).setBalance(0);
+        await MockMarket.connect(user1).setReportedDebt(0);
       });
 
       before('undelegate', async () => {
@@ -421,17 +422,17 @@ describe('VaultModule', function () {
   describe('mintUsd()', async () => {
     before(restore);
     it('verifies permission for account', async () => {
-      assertRevert(
+      await assertRevert(
         systems()
           .Core.connect(user2)
           .mintUsd(accountId, poolId, collateralAddress(), depositAmount.mul(10)),
-        `Unauthorized("${await user2.getAddress()}")`,
+        `PermissionDenied(1, "${Permissions.MINT}", "${await user2.getAddress()}")`,
         systems().Core
       );
     });
 
     it('verifies sufficient c-ratio', async () => {
-      assertRevert(
+      await assertRevert(
         systems()
           .Core.connect(user1)
           .mintUsd(accountId, poolId, collateralAddress(), depositAmount),

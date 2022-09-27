@@ -1,3 +1,5 @@
+/* eslint-env mocha */
+
 const { TASK_DEPLOY } = require('@synthetixio/hardhat-router/task-names');
 const {
   getProxyAddress,
@@ -9,7 +11,7 @@ function bootstrap(initializer = () => {}, customDeployOptions = {}) {
   let snapshotId;
 
   const deploymentInfo = {
-    network: hre.config.defaultNetwork,
+    network: 'hardhat',
     instance: customDeployOptions.instance || 'test',
   };
 

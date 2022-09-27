@@ -22,19 +22,16 @@ contract MarketManagerModule is
 {
     bytes32 private constant _USD_TOKEN = "USDToken";
 
-    error MarketAlreadyRegistered(address market, uint existingMarketId);
     error NotEnoughLiquidity(uint marketId, uint amount);
     error MarketDepositNotApproved(address market, address from, uint requestedAmount, uint approvedAmount);
 
     function registerMarket(address market) external override returns (uint marketId) {
-        if (_marketManagerStore().marketIds[market] > 0)
-            revert MarketAlreadyRegistered(market, _marketManagerStore().marketIds[market]);
         uint lastMarketId = _marketManagerStore().lastMarketId++;
         marketId = lastMarketId + 1;
 
         // Can we verify that `market` conforms to the IMarket interface here? (i.e. has a `balance()` function?)
 
-        _marketManagerStore().marketIds[market] = marketId;
+        _marketManagerStore().marketIdsByAddress[market].push(marketId);
         _marketManagerStore().markets[marketId].marketAddress = market;
 
         emit MarketRegistered(market, marketId);
@@ -51,9 +48,9 @@ contract MarketManagerModule is
         return marketData.issuance;
     }
 
-    function getMarketReportedBalance(uint marketId) external view override returns (uint) {
+    function getMarketReportedDebt(uint marketId) external view override returns (uint) {
         MarketData storage marketData = _marketManagerStore().markets[marketId];
-        return _getReportedBalance(marketData);
+        return _getReportedDebt(marketId, marketData);
     }
 
     function getMarketCollateral(uint marketId) external view override returns (uint) {
@@ -64,12 +61,12 @@ contract MarketManagerModule is
 
     function getMarketTotalBalance(uint marketId) external view override returns (int) {
         MarketData storage marketData = _marketManagerStore().markets[marketId];
-        return _totalBalance(marketData);
+        return _totalBalance(marketId, marketData);
     }
 
     function getMarketDebtPerShare(uint marketId) external override returns (int) {
         MarketData storage marketData = _marketManagerStore().markets[marketId];
-        _distributeMarket(marketData, 999999999);
+        _distributeMarket(marketId, marketData, 999999999);
 
         return marketData.debtDist.valuePerShare / 1e9;
     }

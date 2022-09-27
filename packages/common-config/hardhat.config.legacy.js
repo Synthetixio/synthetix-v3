@@ -6,10 +6,13 @@ dotenv.config({ path: path.resolve(__dirname, '..', '..', '.env') });
 // Load common .env file at ./packages/config-common/.env
 dotenv.config({ path: path.resolve(__dirname, '.env') });
 
+require('@typechain/hardhat');
 require('@nomiclabs/hardhat-ethers');
+//require('@nomiclabs/hardhat-waffle');
 require('hardhat-contract-sizer');
 require('solidity-coverage');
 require('@synthetixio/hardhat-router');
+require('hardhat-gas-reporter');
 require('@synthetixio/cli');
 
 require('hardhat-cannon');
@@ -41,6 +44,10 @@ const config = {
       accounts: process.env.DEPLOYER_PRIVATE_KEY ? [process.env.DEPLOYER_PRIVATE_KEY] : [],
       chainId: 5,
     },
+  },
+  defaultNetwork: 'cannon',
+  gasReporter: {
+    url: 'http://localhost:8545',
   },
   contractSizer: {
     strict: true,

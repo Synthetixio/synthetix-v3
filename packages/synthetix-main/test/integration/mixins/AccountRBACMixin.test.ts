@@ -1,12 +1,9 @@
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import { ethers } from 'ethers';
-import { bootstrap } from '../bootstrap';
 
-const Permissions = {
-  DEPOSIT: ethers.utils.formatBytes32String('DEPOSIT'),
-  MINT: ethers.utils.formatBytes32String('MINT'),
-};
+import Permissions from './AcccountRBACMixin.permissions';
+import { bootstrap } from '../bootstrap';
 
 describe('AccountRBACMixin', function () {
   const { signers, systems } = bootstrap();
@@ -54,7 +51,7 @@ describe('AccountRBACMixin', function () {
 
         await assertRevert(
           systems().Core.connect(signer).mockAccountRBACMixinDeposit(1, 666),
-          `PermissionDenied("1", "${Permissions.DEPOSIT}", "${await signer.getAddress()}")`,
+          `PermissionDenied(1, "${Permissions.DEPOSIT}", "${await signer.getAddress()}")`,
           systems().Core
         );
       });
@@ -68,7 +65,7 @@ describe('AccountRBACMixin', function () {
 
         await assertRevert(
           systems().Core.connect(signer).mockAccountRBACMixinMint(1, 666),
-          `PermissionDenied("1", "${Permissions.MINT}", "${await signer.getAddress()}")`,
+          `PermissionDenied(1, "${Permissions.MINT}", "${await signer.getAddress()}")`,
           systems().Core
         );
       });

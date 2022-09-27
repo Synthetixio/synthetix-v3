@@ -1,4 +1,5 @@
-const { requireAll } = require('@synthetixio/core-utils/utils/misc/require-all');
+const fs = require('fs');
+const path = require('path');
 
 require('@nomiclabs/hardhat-etherscan');
 require('@tenderly/hardhat-tenderly');
@@ -7,6 +8,13 @@ require('@tenderly/hardhat-tenderly');
 require('use-strict');
 
 // Loads all plugin files.
-requireAll(`${__dirname}/tasks`);
-requireAll(`${__dirname}/subtasks`);
-requireAll(`${__dirname}/extensions`);
+_requireAll(`${__dirname}/tasks`);
+_requireAll(`${__dirname}/subtasks`);
+_requireAll(`${__dirname}/extensions`);
+
+function _requireAll(pathname) {
+  return fs
+    .readdirSync(path.resolve(pathname))
+    .filter((filename) => path.extname(filename) === '.js')
+    .map((filename) => require(path.resolve(pathname, filename)));
+}

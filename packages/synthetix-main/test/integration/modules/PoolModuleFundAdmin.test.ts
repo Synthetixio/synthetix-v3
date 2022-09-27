@@ -69,7 +69,7 @@ describe('PoolModule Admin', function () {
     it('reverts when pool does not exist', async () => {
       await assertRevert(
         systems().Core.connect(user1).setPoolConfiguration(834693286, [1], [1], [0, 0]),
-        `PoolNotFound("${834693286}")`,
+        'PoolNotFound(834693286)',
         systems().Core
       );
     });
@@ -105,7 +105,7 @@ describe('PoolModule Admin', function () {
         systems()
           .Core.connect(owner)
           .setPoolConfiguration(poolId, [1, 2, 92197628], [1, 1, 1], [0, 0, 0]),
-        'MarketNotFound("92197628")',
+        'MarketNotFound(92197628)',
         systems().Core
       );
     });
@@ -169,7 +169,7 @@ describe('PoolModule Admin', function () {
           const debtAmount = Hundred.div(10);
 
           before('set market debt', async () => {
-            await (await MockMarket().connect(owner).setBalance(debtAmount)).wait();
+            await (await MockMarket().connect(owner).setReportedDebt(debtAmount)).wait();
           });
 
           it('market gave the end vault debt', async () => {
@@ -317,7 +317,7 @@ describe('PoolModule Admin', function () {
 
         describe('and then the market reports 0 balance', () => {
           before('set market', async () => {
-            await MockMarket().connect(user1).setBalance(0);
+            await MockMarket().connect(user1).setReportedDebt(0);
             await systems().Core.connect(user1).getVaultDebt(poolId, collateralAddress());
           });
 
@@ -338,7 +338,7 @@ describe('PoolModule Admin', function () {
 
           describe('and then the market reports 50 balance', () => {
             before('', async () => {
-              await MockMarket().connect(user1).setBalance(Hundred.div(2));
+              await MockMarket().connect(user1).setReportedDebt(Hundred.div(2));
             });
 
             it('has same amount of withdrawable usd', async () => {
@@ -362,7 +362,7 @@ describe('PoolModule Admin', function () {
               before(restore);
               // testing the "soft" limit
               before('set market', async () => {
-                await MockMarket().connect(user1).setBalance(Hundred.mul(2));
+                await MockMarket().connect(user1).setReportedDebt(Hundred.mul(2));
               });
 
               it('has same amount withdrawable usd + the allowed amount by the vault', async () => {
@@ -401,7 +401,7 @@ describe('PoolModule Admin', function () {
               before(restore);
               // testing the "soft" limit
               before('set market', async () => {
-                await MockMarket().connect(user1).setBalance(Hundred.mul(1234));
+                await MockMarket().connect(user1).setReportedDebt(Hundred.mul(1234));
 
                 // TODO: if the following line is removed/reordered an unusual error
                 // appears where `secondPoolId` assumes the full amount of debt
@@ -484,7 +484,7 @@ describe('PoolModule Admin', function () {
 
   describe('setMinLiquidityRatio()', async () => {
     it('only works for owner', async () => {
-      assertRevert(
+      await assertRevert(
         systems().Core.connect(user1).setMinLiquidityRatio(ethers.utils.parseEther('2')),
         'Unauthorized',
         systems().Core

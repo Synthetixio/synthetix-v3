@@ -1,4 +1,5 @@
 name = "synthetix-sample-project"
+version = "<%= package.version %>"
 description = "Sample usage of the router manager"
 
 # `salt` here only affects proxy contract

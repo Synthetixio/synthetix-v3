@@ -17,10 +17,10 @@
     "build": "npm run --workspaces --if-present build",
     "test": "npm run --workspaces --if-present test",
     "coverage": "npm run --workspaces --if-present coverage",
-    "lint:js": "prettier --check '**/*.{t,j}s' && eslint '**/*.{t,j}s'",
-    "lint:js:fix": "prettier --write '**/*.{t,j}s' && eslint --fix '**/*.{t,j}s'",
-    "lint:sol": "prettier --check 'packages/**/*.sol' && solhint 'packages/**/*.sol'",
-    "lint:sol:fix": "prettier --write 'packages/**/*.sol' && solhint --fix 'packages/**/*.sol'",
+    "lint:js": "prettier --check '**/*.{t,j}s' && eslint --max-warnings=0 '**/*.{t,j}s'",
+    "lint:js:fix": "prettier --write '**/*.{t,j}s' && eslint --max-warnings=0 --fix '**/*.{t,j}s'",
+    "lint:sol": "prettier --check 'packages/**/*.sol' && solhint --max-warnings=0 'packages/**/*.sol'",
+    "lint:sol:fix": "prettier --write 'packages/**/*.sol' && solhint --max-warnings=0 --fix  'packages/**/*.sol'",
     "lint:quick": "pretty-quick --check --staged --pattern '**/*.(js|ts|sol)'",
     "lint:fix": "npm run lint:js:fix && npm run lint:sol:fix",
     "lint": "npm run lint:js && npm run lint:sol",
@@ -50,7 +50,7 @@
     "markets/*"
   ],
   "engines": {
-    "node": "16.8.0",
-    "npm": "7.21.0"
+    "node": "^16.16.0",
+    "npm": "^8.11.0"
   }
 }

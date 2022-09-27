@@ -11,11 +11,11 @@ import "../../mixins/PoolMixin.sol";
 
 import "../../utils/SharesLibrary.sol";
 
-import "../../storage/PoolVaultStorage.sol";
+import "../../storage/VaultStorage.sol";
 import "../../interfaces/IVaultModule.sol";
 import "../../interfaces/IUSDTokenModule.sol";
 
-contract VaultModule is IVaultModule, PoolVaultStorage, AccountRBACMixin, OwnableMixin, AssociatedSystemsMixin, PoolMixin {
+contract VaultModule is IVaultModule, VaultStorage, AccountRBACMixin, OwnableMixin, AssociatedSystemsMixin, PoolMixin {
     using SetUtil for SetUtil.Bytes32Set;
     using SetUtil for SetUtil.AddressSet;
     using MathUtil for uint256;
@@ -38,7 +38,7 @@ contract VaultModule is IVaultModule, PoolVaultStorage, AccountRBACMixin, Ownabl
     )
         external
         override
-        onlyWithPermission(accountId, _ASSIGN_PERMISSION)
+        onlyWithPermission(accountId, _DELEGATE_PERMISSION)
         collateralEnabled(collateralType)
         poolExists(poolId)
     {
@@ -46,7 +46,7 @@ contract VaultModule is IVaultModule, PoolVaultStorage, AccountRBACMixin, Ownabl
         // TODO: we will probably at least want to test <1 leverage
         if (leverage != MathUtil.UNIT) revert InvalidLeverage(leverage);
 
-        VaultData storage vaultData = _poolVaultStore().poolVaults[poolId][collateralType];
+        VaultData storage vaultData = _vaultStore().vaults[poolId][collateralType];
         VaultEpochData storage epochData = vaultData.epochData[vaultData.epoch];
 
         _updateAvailableRewards(epochData, vaultData.rewards, accountId);
@@ -134,7 +134,7 @@ contract VaultModule is IVaultModule, PoolVaultStorage, AccountRBACMixin, Ownabl
             _verifyCollateralRatio(collateralType, uint(newDebt), collateralValue);
         }
 
-        VaultData storage vaultData = _poolVaultStore().poolVaults[poolId][collateralType];
+        VaultData storage vaultData = _vaultStore().vaults[poolId][collateralType];
         VaultEpochData storage epochData = vaultData.epochData[vaultData.epoch];
 
         epochData.usdDebtDist.updateActorValue(bytes32(accountId), newDebt);
@@ -163,7 +163,7 @@ contract VaultModule is IVaultModule, PoolVaultStorage, AccountRBACMixin, Ownabl
 
         _getToken(_USD_TOKEN).burn(msg.sender, amount);
 
-        VaultData storage vaultData = _poolVaultStore().poolVaults[poolId][collateralType];
+        VaultData storage vaultData = _vaultStore().vaults[poolId][collateralType];
         VaultEpochData storage epochData = vaultData.epochData[vaultData.epoch];
 
         epochData.usdDebtDist.updateActorValue(bytes32(accountId), debt - int(amount));

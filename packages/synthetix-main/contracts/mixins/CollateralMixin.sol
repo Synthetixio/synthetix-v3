@@ -2,13 +2,13 @@
 pragma solidity ^0.8.0;
 
 import "../storage/CollateralStorage.sol";
-import "../storage/PoolVaultStorage.sol";
+import "../storage/VaultStorage.sol";
 
 import "../interfaces/external/IAggregatorV3Interface.sol";
 
 import "../utils/SharesLibrary.sol";
 
-contract CollateralMixin is CollateralStorage, PoolVaultStorage {
+contract CollateralMixin is CollateralStorage, VaultStorage {
     using SetUtil for SetUtil.AddressSet;
     using SharesLibrary for SharesLibrary.Distribution;
 
@@ -63,7 +63,7 @@ contract CollateralMixin is CollateralStorage, PoolVaultStorage {
         for (uint i = 0; i < stakedCollateral.pools.length; i++) {
             uint poolIdx = stakedCollateral.pools[i];
 
-            PoolVaultStorage.VaultData storage vaultData = _poolVaultStore().poolVaults[poolIdx][collateralType];
+            VaultStorage.VaultData storage vaultData = _vaultStore().vaults[poolIdx][collateralType];
 
             totalAssigned += uint(vaultData.epochData[vaultData.epoch].collateralDist.getActorValue(bytes32(accountId)));
         }

@@ -9,7 +9,7 @@ import "../interfaces/IAssociateDebtModule.sol";
 contract MockMarket is IMarket {
     using MathUtil for uint256;
 
-    uint private _balance;
+    uint private _reportedDebt;
     uint private _price;
 
     address private _proxy;
@@ -37,23 +37,23 @@ contract MockMarket is IMarket {
     }
 
     function buySynth(uint amount) external {
-        _balance += amount;
+        _reportedDebt += amount;
         uint toDeposit = amount.divDecimal(_price);
         IMarketManagerModule(_proxy).depositUsd(_marketId, msg.sender, toDeposit);
     }
 
     function sellSynth(uint amount) external {
-        _balance -= amount;
+        _reportedDebt -= amount;
         uint toDeposit = amount.divDecimal(_price);
         IMarketManagerModule(_proxy).withdrawUsd(_marketId, msg.sender, toDeposit);
     }
 
-    function setBalance(uint newBalance) external {
-        _balance = newBalance;
+    function setReportedDebt(uint newReportedDebt) external {
+        _reportedDebt = newReportedDebt;
     }
 
-    function balance() external view override returns (uint) {
-        return _balance;
+    function reportedDebt(uint) external view override returns (uint) {
+        return _reportedDebt;
     }
 
     function setPrice(uint newPrice) external {

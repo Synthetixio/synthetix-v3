@@ -7,9 +7,9 @@ import "../mixins/CollateralMixin.sol";
 import "../mixins/MarketManagerMixin.sol";
 
 import "../storage/PoolModuleStorage.sol";
-import "../storage/PoolVaultStorage.sol";
+import "../storage/VaultStorage.sol";
 
-contract PoolMixin is PoolModuleStorage, PoolVaultStorage, CollateralMixin, MarketManagerMixin {
+contract PoolMixin is PoolModuleStorage, VaultStorage, CollateralMixin, MarketManagerMixin {
     using SetUtil for SetUtil.AddressSet;
     using SetUtil for SetUtil.Bytes32Set;
     using MathUtil for uint256;
@@ -83,7 +83,7 @@ contract PoolMixin is PoolModuleStorage, PoolVaultStorage, CollateralMixin, Mark
 
     function _distributeVaultDebt(uint poolId, address collateralType) internal {
         PoolData storage poolData = _poolModuleStore().pools[poolId];
-        VaultData storage vaultData = _poolVaultStore().poolVaults[poolId][collateralType];
+        VaultData storage vaultData = _vaultStore().vaults[poolId][collateralType];
         VaultEpochData storage epochData = vaultData.epochData[vaultData.epoch];
 
         // update vault collateral price
@@ -134,7 +134,7 @@ contract PoolMixin is PoolModuleStorage, PoolVaultStorage, CollateralMixin, Mark
     ) internal returns (int currentDebt) {
         _distributeVaultDebt(poolId, collateralType);
 
-        VaultData storage vaultData = _poolVaultStore().poolVaults[poolId][collateralType];
+        VaultData storage vaultData = _vaultStore().vaults[poolId][collateralType];
         VaultEpochData storage epochData = vaultData.epochData[vaultData.epoch];
 
         bytes32 actorId = bytes32(accountId);
@@ -191,7 +191,7 @@ contract PoolMixin is PoolModuleStorage, PoolVaultStorage, CollateralMixin, Mark
             uint shares
         )
     {
-        VaultData storage vaultData = _poolVaultStore().poolVaults[poolId][collateralType];
+        VaultData storage vaultData = _vaultStore().vaults[poolId][collateralType];
         VaultEpochData storage epochData = vaultData.epochData[vaultData.epoch];
 
         uint collateralPrice = _getCollateralValue(collateralType);
@@ -217,7 +217,7 @@ contract PoolMixin is PoolModuleStorage, PoolVaultStorage, CollateralMixin, Mark
     function _vaultDebt(uint poolId, address collateralType) internal returns (int) {
         _distributeVaultDebt(poolId, collateralType);
 
-        VaultData storage vaultData = _poolVaultStore().poolVaults[poolId][collateralType];
+        VaultData storage vaultData = _vaultStore().vaults[poolId][collateralType];
         VaultEpochData storage epochData = vaultData.epochData[vaultData.epoch];
 
         return epochData.unclaimedDebt + epochData.usdDebtDist.totalValue();
@@ -237,7 +237,7 @@ contract PoolMixin is PoolModuleStorage, PoolVaultStorage, CollateralMixin, Mark
         view
         returns (uint collateralAmount, uint collateralValue)
     {
-        VaultData storage vaultData = _poolVaultStore().poolVaults[poolId][collateralType];
+        VaultData storage vaultData = _vaultStore().vaults[poolId][collateralType];
         VaultEpochData storage epochData = vaultData.epochData[vaultData.epoch];
 
         collateralAmount = uint(epochData.collateralDist.totalValue());

@@ -1,86 +1,67 @@
-import fs from 'fs/promises';
 import hre from 'hardhat';
+import { ChainBuilderContext } from '@usecannon/builder';
 import { ethers } from 'ethers';
 
 import { snapshotCheckpoint } from '../utils';
 
-async function loadSystems(provider: ethers.providers.Provider) {
+async function loadSystems(
+  contracts: ChainBuilderContext['contracts'],
+  provider: ethers.providers.Provider
+) {
   // todo typechain
   const systems: { [name: string]: ethers.Contract } = {};
 
-  const basepath = hre.config.paths.root + '/deployments/hardhat';
+  const proxies = Object.keys(contracts).filter((name) => name.endsWith('Proxy'));
 
-  for (const file of await fs.readdir(basepath)) {
-    const m = file.match(/^(.*)Proxy.json$/);
-    if (m) {
-      const info = JSON.parse((await fs.readFile(basepath + '/' + file)).toString('utf-8'));
-      systems[m[1]] = new ethers.Contract(info.address, info.abi, provider);
-    }
+  for (const proxyName of proxies) {
+    const { address, abi } = contracts[proxyName];
+    const name = proxyName.slice(0, -5); // remove "Proxy" from the end
+    systems[name] = new ethers.Contract(address, abi, provider);
   }
 
   return systems;
 }
 
-let _provider: ethers.providers.JsonRpcProvider;
+let provider: ethers.providers.JsonRpcProvider;
+
+let signers: ethers.Signer[];
+
+let systems: { [key: string]: ethers.Contract };
+
+let baseSystemSnapshot: unknown;
+
+before(async function () {
+  // allow extra time to build the cannon deployment if required
+  this.timeout(300000);
+
+  const cmd = hre.network.name === 'cannon' ? 'build' : 'deploy';
+
+  const cannonInfo = await hre.run(`cannon:${cmd}`);
+
+  provider = cannonInfo.provider;
+  signers = cannonInfo.signers;
+
+  try {
+    await provider.send('anvil_setBlockTimestampInterval', [1]);
+  } catch (err) {
+    console.warn('failed when setting block timestamp interval', err);
+  }
+
+  baseSystemSnapshot = await provider.send('evm_snapshot', []);
+
+  systems = await loadSystems(cannonInfo.outputs.contracts, provider);
+
+  console.log('completed initial bootstrap');
+});
 
 export function bootstrap() {
-  let signers: ethers.Signer[];
-
-  let systems: { [key: string]: ethers.Contract };
-
-  before(async function () {
-    // allow extra time to build the cannon deployment if required
-    this.timeout(300000);
-
-    await hre.run('cannon:build');
-
-    if (!_provider) {
-      _provider = new ethers.providers.JsonRpcProvider('http://localhost:8545');
-    }
-
-    signers = [];
-
-    const rawSigners = [
-      ...(await hre.ethers.getSigners()),
-      new hre.ethers.Wallet(
-        '0x5de4111afa1a4b94908f83103eb1f1706367c2e68ca870fc3fb9a804cdab365a',
-        _provider
-      ),
-      new hre.ethers.Wallet(
-        '0x7c852118294e51e653712a81e05800f419141751be58f605c371e15141b007a6',
-        _provider
-      ),
-      new hre.ethers.Wallet(
-        '0x47e179ec197488593b187f80a00eb0da91f1b9d0b13f8733639f19c30a34926a',
-        _provider
-      ),
-      new hre.ethers.Wallet(
-        '0x8b3a350cf5c34c9194ca85829a2df0ec3153be0318b5e2d3348e872092edffba',
-        _provider
-      ),
-    ];
-
-    await _provider.send('anvil_setBlockTimestampInterval', [1]);
-
-    // Complete given signers with default hardhat wallets, to make sure
-    // that we always have default accounts to test stuff
-    for (const rawSigner of rawSigners) {
-      const signer = await _provider.getSigner(await rawSigner.getAddress());
-
-      await _provider.send('hardhat_impersonateAccount', [await signer.getAddress()]);
-      await _provider.send('hardhat_setBalance', [
-        await signer.getAddress(),
-        '10000000000000000000000',
-      ]);
-
-      signers.push(signer);
-    }
-
-    systems = await loadSystems(_provider);
+  before(async () => {
+    await provider.send('evm_revert', [baseSystemSnapshot]);
+    baseSystemSnapshot = await provider.send('evm_snapshot', []);
   });
 
   return {
-    provider: () => _provider,
+    provider: () => provider,
     signers: () => signers,
     owner: () => signers[0],
     systems: () => systems,

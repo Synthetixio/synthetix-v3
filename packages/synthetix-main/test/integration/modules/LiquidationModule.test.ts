@@ -30,7 +30,7 @@ describe('LiquidationModule', function () {
     it('does not allow liquidation of account with healthy c-ratio', async () => {
       await assertRevert(
         systems().Core.connect(user1).liquidate(accountId, poolId, collateralAddress()),
-        'IneligibleForLiquidation("1000000000000000000000", "0", "0", "1500000000000000000")',
+        'IneligibleForLiquidation(1000000000000000000000, 0, 0, 1500000000000000000)',
         systems().Core
       );
     });
@@ -48,7 +48,7 @@ describe('LiquidationModule', function () {
       });
 
       before('going into debt', async () => {
-        await MockMarket().connect(user1).setBalance(debtAmount.mul(9).div(10));
+        await MockMarket().connect(user1).setReportedDebt(debtAmount.mul(9).div(10));
 
         // sanity
         assertBn.near(
@@ -58,7 +58,7 @@ describe('LiquidationModule', function () {
       });
 
       it('cannot liquidate when its the only account in the pool', async () => {
-        assertRevert(
+        await assertRevert(
           systems().Core.connect(user2).liquidate(accountId, poolId, collateralAddress()),
           'MustBeVaultLiquidated()',
           systems().Core
@@ -178,7 +178,7 @@ describe('LiquidationModule', function () {
         systems()
           .Core.connect(user1)
           .liquidateVault(poolId, collateralAddress(), accountId, ethers.utils.parseEther('1')),
-        'IneligibleForLiquidation("1000000000000000000000", "0", "0", "1500000000000000000")',
+        'IneligibleForLiquidation(1000000000000000000000, 0, 0, 1500000000000000000)',
         systems().Core
       );
     });
@@ -196,7 +196,7 @@ describe('LiquidationModule', function () {
       });
 
       before('going into debt', async () => {
-        await MockMarket().connect(user1).setBalance(debtAmount.mul(9).div(10));
+        await MockMarket().connect(user1).setReportedDebt(debtAmount.mul(9).div(10));
 
         // sanity
         assertBn.near(

@@ -11,12 +11,12 @@ import "../../mixins/PoolMixin.sol";
 
 import "../../utils/SharesLibrary.sol";
 
-import "../../storage/PoolVaultStorage.sol";
-import "../../interfaces/IVaultRewardsModule.sol";
+import "../../storage/VaultStorage.sol";
+import "../../interfaces/IRewardsManagerModule.sol";
 
-contract VaultRewardsModule is
-    IVaultRewardsModule,
-    PoolVaultStorage,
+contract RewardsManagerModule is
+    IRewardsManagerModule,
+    VaultStorage,
     AccountRBACMixin,
     OwnableMixin,
     AssociatedSystemsMixin,
@@ -47,7 +47,7 @@ contract VaultRewardsModule is
             revert InvalidParameters("index", "too large");
         }
 
-        VaultData storage vaultData = _poolVaultStore().poolVaults[poolId][collateralType];
+        VaultData storage vaultData = _vaultStore().vaults[poolId][collateralType];
         VaultEpochData storage epochData = vaultData.epochData[vaultData.epoch];
 
         RewardDistribution[] storage dists = vaultData.rewards;
@@ -77,7 +77,7 @@ contract VaultRewardsModule is
 
         existingDistribution.distributor = IRewardDistributor(distributor);
 
-        emit RewardDistributionSet(poolId, collateralType, index, distributor, amount, start, duration);
+        emit RewardDistributed(poolId, collateralType, index, distributor, amount, start, duration);
     }
 
     function getAvailableRewards(
@@ -85,7 +85,7 @@ contract VaultRewardsModule is
         address collateralType,
         uint accountId
     ) external override returns (uint[] memory) {
-        VaultData storage vaultData = _poolVaultStore().poolVaults[poolId][collateralType];
+        VaultData storage vaultData = _vaultStore().vaults[poolId][collateralType];
         VaultEpochData storage epochData = vaultData.epochData[vaultData.epoch];
         return _updateAvailableRewards(epochData, vaultData.rewards, accountId);
     }
@@ -104,7 +104,7 @@ contract VaultRewardsModule is
         address collateralType,
         uint accountId
     ) external override returns (uint[] memory) {
-        VaultData storage vaultData = _poolVaultStore().poolVaults[poolId][collateralType];
+        VaultData storage vaultData = _vaultStore().vaults[poolId][collateralType];
         VaultEpochData storage epochData = vaultData.epochData[vaultData.epoch];
         uint[] memory rewards = _updateAvailableRewards(epochData, vaultData.rewards, accountId);
 
@@ -121,7 +121,7 @@ contract VaultRewardsModule is
     }
 
     function _getCurrentRewardAccumulation(uint poolId, address collateralType) internal view returns (uint[] memory) {
-        VaultData storage vaultData = _poolVaultStore().poolVaults[poolId][collateralType];
+        VaultData storage vaultData = _vaultStore().vaults[poolId][collateralType];
         VaultEpochData storage epochData = vaultData.epochData[vaultData.epoch];
         RewardDistribution[] storage dists = vaultData.rewards;
 

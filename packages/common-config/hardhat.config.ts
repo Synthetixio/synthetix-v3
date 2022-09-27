@@ -1,8 +1,11 @@
+import '@typechain/hardhat';
 import '@nomiclabs/hardhat-ethers';
+//import '@nomiclabs/hardhat-waffle';
 import 'hardhat-contract-sizer';
 import 'solidity-coverage';
 import '@synthetixio/hardhat-router';
 import '@synthetixio/cli';
+import 'hardhat-gas-reporter';
 import 'hardhat-cannon';
 
 import dotenv from 'dotenv';
@@ -23,9 +26,11 @@ const config = {
       },
     },
   },
+  defaultNetwork: 'cannon',
   networks: {
     local: {
       url: 'http://localhost:8545',
+      chainId: 31337,
     },
     ['optimistic-kovan']: {
       url: process.env.NETWORK_ENDPOINT || 'https://kovan.optimism.io',
@@ -41,6 +46,9 @@ const config = {
       chainId: 5,
     },
   },
+  gasReporter: {
+    enabled: !!process.env.REPORT_GAS,
+  },
   contractSizer: {
     strict: true,
   },
@@ -50,6 +58,18 @@ const config = {
   tenderly: {
     project: 'synthetix',
     username: 'synthetix-services',
+  },
+  cannon: {
+    ipfsConnection: {
+      protocol: 'https',
+      host: 'ipfs.infura.io',
+      port: 5001,
+      headers: {
+        authorization: `Basic ${Buffer.from(
+          process.env.INFURA_IPFS_ID + ':' + process.env.INFURA_IPFS_SECRET
+        ).toString('base64')}`,
+      },
+    },
   },
 };
 

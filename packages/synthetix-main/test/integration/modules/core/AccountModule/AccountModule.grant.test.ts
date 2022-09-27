@@ -2,10 +2,11 @@ import assert from 'assert/strict';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import { ethers } from 'ethers';
-import { findEvent } from '@synthetixio/core-utils/utils/ethers/events';
-import { takeSnapshot, restoreSnapshot } from '@synthetixio/core-utils/utils/hardhat/rpc';
-import { bootstrap } from '../../../bootstrap';
+import { findSingleEvent } from '@synthetixio/core-utils/utils/ethers/events';
+import { restoreSnapshot, takeSnapshot } from '@synthetixio/core-utils/utils/hardhat/rpc';
+
 import Permissions from '../../../mixins/AcccountRBACMixin.permissions';
+import { bootstrap } from '../../../bootstrap';
 
 describe('AccountModule', function () {
   const { signers, systems, provider } = bootstrap();
@@ -16,7 +17,7 @@ describe('AccountModule', function () {
 
   let receipt: ethers.providers.TransactionReceipt;
 
-  let snapshotId: number;
+  let snapshotId: string;
 
   describe('AccountModule - Granting, revoking, and renouncing permissions', function () {
     before('identify signers', async () => {
@@ -47,7 +48,7 @@ describe('AccountModule', function () {
           systems()
             .Core.connect(user2)
             .grantPermission(1, Permissions.DEPOSIT, await user2.getAddress()),
-          `PermissionDenied("1", "${Permissions.ADMIN}", "${await user2.getAddress()}")`,
+          `PermissionDenied(1, "${Permissions.ADMIN}", "${await user2.getAddress()}")`,
           systems().Core
         );
       });
@@ -69,7 +70,10 @@ describe('AccountModule', function () {
       });
 
       it('emits a PermissionGranted event', async function () {
-        const event = findEvent({ receipt, eventName: 'PermissionGranted' });
+        const event = findSingleEvent({
+          receipt,
+          eventName: 'PermissionGranted',
+        });
 
         assertBn.equal(event.args.accountId, 1);
         assert.equal(event.args.permission, Permissions.DEPOSIT);
@@ -81,7 +85,7 @@ describe('AccountModule', function () {
         it('reverts', async () => {
           await assertRevert(
             systems().Core.connect(user2).renouncePermission(1, Permissions.ADMIN),
-            `PermissionNotGranted("1", "${Permissions.ADMIN}", "${await user2.getAddress()}")`,
+            `PermissionNotGranted(1, "${Permissions.ADMIN}", "${await user2.getAddress()}")`,
             systems().Core
           );
         });
@@ -109,7 +113,7 @@ describe('AccountModule', function () {
         });
 
         it('emits a PermissionRevoked event', async () => {
-          const event = findEvent({ receipt, eventName: 'PermissionRevoked' });
+          const event = findSingleEvent({ receipt, eventName: 'PermissionRevoked' });
 
           assertBn.equal(event.args.accountId, 1);
           assert.equal(event.args.permission, Permissions.DEPOSIT);
@@ -142,7 +146,7 @@ describe('AccountModule', function () {
         });
 
         it('emits a PermissionRevoked event', async () => {
-          const event = findEvent({ receipt, eventName: 'PermissionRevoked' });
+          const event = findSingleEvent({ receipt, eventName: 'PermissionRevoked' });
 
           assertBn.equal(event.args.accountId, 1);
           assert.equal(event.args.permission, Permissions.DEPOSIT);
