@@ -93,7 +93,7 @@ contract LiquidationsModule is
 
         // update the pool
         _poolModuleStore().pools[poolId].totalLiquidity -= int128(
-            int(amountRewarded.mulDecimal(_getCollateralValue(collateralType)))
+            int(amountRewarded.mulDecimal(_getCollateralPrice(collateralType)))
         );
 
         _applyLiquidationToMultiplier(poolId, collateralType, oldShares);
@@ -173,7 +173,7 @@ contract LiquidationsModule is
 
         // update the pool (debt was repayed but collateral was taken)
         _poolModuleStore().pools[poolId].totalLiquidity += int128(
-            int(amountLiquidated) - int(collateralRewarded.mulDecimal(_getCollateralValue(collateralType)))
+            int(amountLiquidated) - int(collateralRewarded.mulDecimal(_getCollateralPrice(collateralType)))
         );
 
         // award the collateral that was just taken to the specified account
