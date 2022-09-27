@@ -69,9 +69,7 @@ describe('MarketCollateralModule', function () {
         await MockMarket().connect(user1).depositCollateral(collateralAddress(), 500);
 
         // Verify that we cannot deposit a total of 1,001
-        await assertRevert(
-          await MockMarket().connect(user1).depositCollateral(collateralAddress(), 501)
-        );
+        await assertRevert(MockMarket().connect(user1).depositCollateral(collateralAddress(), 501));
 
         await MockMarket().connect(user1).depositCollateral(collateralAddress(), 500);
 
@@ -101,7 +99,7 @@ describe('MarketCollateralModule', function () {
 
         // Verify that 501 cannot be withdrawn
         await assertRevert(
-          await MockMarket().connect(user1).withdrawCollateral(collateralAddress(), 501)
+          MockMarket().connect(user1).withdrawCollateral(collateralAddress(), 501)
         );
 
         // Verify that the total amount deposited is still 500
