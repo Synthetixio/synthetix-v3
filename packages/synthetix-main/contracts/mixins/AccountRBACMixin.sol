@@ -7,6 +7,7 @@ contract AccountRBACMixin is AccountModuleStorage {
     using SetUtil for SetUtil.Bytes32Set;
 
     error PermissionDenied(uint accountId, bytes32 permission, address target);
+    error InvalidPermission(bytes32 permission);
 
     bytes32 internal constant _DEPOSIT_PERMISSION = "DEPOSIT";
     bytes32 internal constant _WITHDRAW_PERMISSION = "WITHDRAW";
@@ -17,6 +18,20 @@ contract AccountRBACMixin is AccountModuleStorage {
     modifier onlyWithPermission(uint accountId, bytes32 permission) {
         if (!_authorized(accountId, permission, msg.sender)) {
             revert PermissionDenied(accountId, permission, msg.sender);
+        }
+
+        _;
+    }
+
+    modifier isPermissionValid(bytes32 permission) {
+        if (
+            permission != _DEPOSIT_PERMISSION &&
+            permission != _WITHDRAW_PERMISSION &&
+            permission != _DELEGATE_PERMISSION &&
+            permission != _MINT_PERMISSION &&
+            permission != _ADMIN_PERMISSION
+        ) {
+            revert InvalidPermission(permission);
         }
 
         _;
