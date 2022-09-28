@@ -95,6 +95,15 @@ interface IAccountModule {
     ) external view returns (bool);
 
     /**
+     * @notice Returns `true` if `target` is authorized to `permission` for account `accountId`.
+     */
+    function isAuthorized(
+        uint accountId,
+        bytes32 permission,
+        address target
+    ) external view returns (bool);
+
+    /**
      * @notice Returns the address for the account token used by the module.
      */
     function getAccountTokenAddress() external view returns (address);

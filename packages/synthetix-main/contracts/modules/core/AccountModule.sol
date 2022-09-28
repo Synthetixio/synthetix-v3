@@ -18,7 +18,6 @@ contract AccountModule is IAccountModule, OwnableMixin, AccountRBACMixin, Associ
     using SetUtil for SetUtil.Bytes32Set;
 
     error OnlyAccountTokenProxy(address origin);
-    error InvalidPermission();
     error PermissionNotGranted(uint accountId, bytes32 permission, address user);
 
     modifier onlyAccountToken() {
@@ -72,17 +71,21 @@ contract AccountModule is IAccountModule, OwnableMixin, AccountRBACMixin, Associ
         return _hasPermission(accountId, permission, user);
     }
 
+    function isAuthorized(
+        uint256 accountId,
+        bytes32 permission,
+        address target
+    ) public view override returns (bool) {
+        return _authorized(accountId, permission, target);
+    }
+
     function grantPermission(
         uint accountId,
         bytes32 permission,
         address user
-    ) external override onlyWithPermission(accountId, _ADMIN_PERMISSION) {
+    ) external override onlyWithPermission(accountId, _ADMIN_PERMISSION) isPermissionValid(permission) {
         if (user == address(0)) {
             revert AddressError.ZeroAddress();
-        }
-
-        if (permission == "") {
-            revert InvalidPermission();
         }
 
         AccountRBAC storage accountRbac = _accountModuleStore().accountsRBAC[accountId];
