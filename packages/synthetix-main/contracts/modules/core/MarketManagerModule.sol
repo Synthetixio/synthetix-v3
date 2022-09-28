@@ -30,8 +30,8 @@ contract MarketManagerModule is IMarketManagerModule, AssociatedSystemsMixin, Ow
         return marketId;
     }
 
-    function getWithdrawableUsd(uint128 marketId) external view override returns (uint) {
-        return Market.load(marketId).capacity;
+    function getWithdrawableUsd(uint128 marketId) public view override returns (uint) {
+        return Market.load(marketId).capacity + Market.load(marketId).getDepositedCollateralValue();
     }
 
     function getMarketIssuance(uint128 marketId) external view override returns (int128) {
@@ -98,7 +98,7 @@ contract MarketManagerModule is IMarketManagerModule, AssociatedSystemsMixin, Ow
 
         if (msg.sender != marketData.marketAddress) revert AccessError.Unauthorized(msg.sender);
 
-        if (amount > marketData.capacity) revert NotEnoughLiquidity(marketId, amount);
+        if (amount > getWithdrawableUsd(marketId)) revert NotEnoughLiquidity(marketId, amount);
 
         // Adjust accounting
         marketData.capacity -= uint128(amount);

@@ -11,8 +11,6 @@ import "@synthetixio/core-modules/contracts/mixins/AssociatedSystemsMixin.sol";
 
 import "../../utils/ERC20Helper.sol";
 
-import "hardhat/console.sol";
-
 contract CollateralModule is ICollateralModule, OwnableMixin, AssociatedSystemsMixin {
     using SetUtil for SetUtil.AddressSet;
     using ERC20Helper for address;
@@ -41,11 +39,17 @@ contract CollateralModule is ICollateralModule, OwnableMixin, AssociatedSystemsM
         uint targetCRatio,
         uint minimumCRatio,
         uint liquidationReward,
-        bool enabled
+        bool stakingEnabled
     ) external override onlyOwner {
-        console.log("configuring collateral", collateralType, priceFeed);
-        CollateralConfiguration.set(collateralType, priceFeed, targetCRatio, minimumCRatio, liquidationReward, enabled);
-        emit CollateralConfigured(collateralType, priceFeed, targetCRatio, minimumCRatio, liquidationReward, enabled);
+        CollateralConfiguration.set(
+            collateralType,
+            priceFeed,
+            targetCRatio,
+            minimumCRatio,
+            liquidationReward,
+            stakingEnabled
+        );
+        emit CollateralConfigured(collateralType, priceFeed, targetCRatio, minimumCRatio, liquidationReward, stakingEnabled);
     }
 
     function getCollateralConfigurations(bool hideDisabled)
@@ -65,7 +69,7 @@ contract CollateralModule is ICollateralModule, OwnableMixin, AssociatedSystemsM
 
             CollateralConfiguration.Data storage collateral = CollateralConfiguration.load(collateralType);
 
-            if (!hideDisabled || collateral.enabled) {
+            if (!hideDisabled || collateral.stakingEnabled) {
                 filteredCollaterals[collateralsIdx++] = collateral;
             }
         }
@@ -80,6 +84,10 @@ contract CollateralModule is ICollateralModule, OwnableMixin, AssociatedSystemsM
         returns (CollateralConfiguration.Data memory)
     {
         return CollateralConfiguration.load(collateralType);
+    }
+
+    function getCollateralValue(address collateralType) external view override returns (uint) {
+        return CollateralConfiguration.getCollateralValue(CollateralConfiguration.load(collateralType));
     }
 
     /////////////////////////////////////////////////
@@ -243,7 +251,7 @@ contract CollateralModule is ICollateralModule, OwnableMixin, AssociatedSystemsM
     }
 
     modifier collateralEnabled(address collateralType) {
-        if (!CollateralConfiguration.load(collateralType).enabled) {
+        if (!CollateralConfiguration.load(collateralType).stakingEnabled) {
             revert InvalidCollateral(collateralType);
         }
 

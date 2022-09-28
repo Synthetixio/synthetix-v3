@@ -14,7 +14,7 @@ interface ICollateralModule {
         uint targetCollateralizationRatio,
         uint minimumCollateralizationRatio,
         uint liquidationReward,
-        bool indexed enabled
+        bool indexed stakingEnabled
     );
 
     /**
@@ -53,7 +53,7 @@ interface ICollateralModule {
         uint targetCRatio,
         uint minimumCRatio,
         uint liquidationReward,
-        bool enabled
+        bool stakingEnabled
     ) external;
 
     /**
@@ -71,6 +71,11 @@ interface ICollateralModule {
         external
         view
         returns (CollateralConfiguration.Data memory collateral);
+
+    /**
+     * @notice Returns the current value of a specified collateral type
+     */
+    function getCollateralValue(address collateralType) external view returns (uint);
 
     /**
      * @notice Deposits `amount` of collateral of type `collateralType` into account `accountId`.

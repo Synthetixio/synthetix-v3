@@ -12,7 +12,7 @@ library CollateralConfiguration {
 
     struct Data {
         /// must be true for staking or collateral delegation
-        bool enabled;
+        bool stakingEnabled;
         /// accounts cannot mint sUSD if their debt brings their cratio below this value
         uint targetCRatio;
         /// accounts below the ratio specified here are immediately liquidated
@@ -45,7 +45,7 @@ library CollateralConfiguration {
         uint targetCRatio,
         uint minimumCRatio,
         uint liquidationReward,
-        bool enabled
+        bool stakingEnabled
     ) internal {
         SetUtil.AddressSet storage collateralTypes = loadAvailableCollaterals();
 
@@ -61,11 +61,11 @@ library CollateralConfiguration {
         collateral.minimumCRatio = minimumCRatio;
         collateral.priceFeed = priceFeed;
         collateral.liquidationReward = liquidationReward;
-        collateral.enabled = enabled;
+        collateral.stakingEnabled = stakingEnabled;
     }
 
     modifier collateralEnabled(address token) {
-        if (!load(token).enabled) {
+        if (!load(token).stakingEnabled) {
             revert InvalidCollateral(token);
         }
 
@@ -73,10 +73,20 @@ library CollateralConfiguration {
     }
 
     function getCollateralPrice(Data storage self) internal view returns (uint) {
-        if (!self.enabled) {
+        if (!self.stakingEnabled) {
             revert InvalidCollateral(self.tokenAddress);
         }
 
+        (, int256 answer, , , ) = IAggregatorV3Interface(self.priceFeed).latestRoundData();
+
+        // sanity check
+        // TODO: this will be removed when we get the oracle manager
+        require(answer > 0, "The collateral value is 0");
+
+        return uint(answer);
+    }
+
+    function getCollateralValue(Data storage self) internal view returns (uint) {
         (, int256 answer, , , ) = IAggregatorV3Interface(self.priceFeed).latestRoundData();
 
         // sanity check

@@ -2,8 +2,10 @@
 pragma solidity ^0.8.0;
 
 import "@synthetixio/core-contracts/contracts/utils/MathUtil.sol";
+import "@synthetixio/core-contracts/contracts/interfaces/IERC20.sol";
 import "../interfaces/external/IMarket.sol";
 import "../interfaces/IMarketManagerModule.sol";
+import "../interfaces/IMarketCollateralModule.sol";
 
 contract MockMarket is IMarket {
     using MathUtil for uint256;
@@ -50,5 +52,16 @@ contract MockMarket is IMarket {
 
     function price() external view returns (uint) {
         return _price;
+    }
+
+    function depositCollateral(address collateralType, uint amount) external {
+        IERC20(collateralType).transferFrom(msg.sender, address(this), amount);
+        IERC20(collateralType).approve(_proxy, amount);
+        IMarketCollateralModule(_proxy).depositMarketCollateral(_marketId, collateralType, amount);
+    }
+
+    function withdrawCollateral(address collateralType, uint amount) external {
+        IMarketCollateralModule(_proxy).withdrawMarketCollateral(_marketId, collateralType, amount);
+        IERC20(collateralType).transfer(msg.sender, amount);
     }
 }

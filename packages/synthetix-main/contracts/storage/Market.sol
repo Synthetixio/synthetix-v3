@@ -6,6 +6,7 @@ import "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
 import "@synthetixio/core-contracts/contracts/utils/HeapUtil.sol";
 
 import "./Distribution.sol";
+import "./CollateralConfiguration.sol";
 
 import "../interfaces/external/IMarket.sol";
 
@@ -35,6 +36,15 @@ library Market {
         HeapUtil.Data outRangePools;
         Distribution.Data debtDist;
         mapping(uint128 => int) poolPendingDebt;
+        // @notice the amount of collateral deposited by this market
+        DepositedCollateral[] depositedCollateral;
+        // @notice the maximum amount of a collateral type that this market can deposit
+        mapping(address => uint) maximumDepositable;
+    }
+
+    struct DepositedCollateral {
+        address collateralType;
+        uint amount;
     }
 
     function load(uint128 id) internal pure returns (Data storage data) {
@@ -86,6 +96,21 @@ library Market {
 
     function totalBalance(Data storage self) internal view returns (int) {
         return int(getReportedDebt(self)) + self.issuance;
+    }
+
+    function getDepositedCollateralValue(Data storage self) internal view returns (uint) {
+        uint totalDepositedCollateralValue = 0;
+
+        for (uint i = 0; i < self.depositedCollateral.length; i++) {
+            DepositedCollateral memory depositedCollateral = self.depositedCollateral[i];
+            totalDepositedCollateralValue +=
+                CollateralConfiguration.getCollateralValue(
+                    CollateralConfiguration.load(depositedCollateral.collateralType)
+                ) *
+                depositedCollateral.amount;
+        }
+
+        return totalDepositedCollateralValue;
     }
 
     function rebalance(

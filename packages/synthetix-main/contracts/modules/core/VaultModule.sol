@@ -260,7 +260,7 @@ contract VaultModule is IVaultModule, AssociatedSystemsMixin, OwnableMixin {
     }
 
     modifier collateralEnabled(address collateralType) {
-        if (!CollateralConfiguration.load(collateralType).enabled) {
+        if (!CollateralConfiguration.load(collateralType).stakingEnabled) {
             revert InvalidCollateral(collateralType);
         }
 
