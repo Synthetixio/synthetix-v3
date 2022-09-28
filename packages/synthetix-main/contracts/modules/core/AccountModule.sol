@@ -70,6 +70,14 @@ contract AccountModule is IAccountModule, OwnableMixin, AccountRBACMixin, Associ
         return _hasPermission(accountId, permission, target);
     }
 
+    function isAuthorized(
+        uint256 accountId,
+        bytes32 permission,
+        address target
+    ) public view override returns (bool) {
+        return _authorized(accountId, permission, target);
+    }
+
     function grantPermission(
         uint accountId,
         bytes32 permission,

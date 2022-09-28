@@ -40,6 +40,22 @@ describe('AccountModule', function () {
           false
         );
       });
+      it('shows that the owner is authorized', async function () {
+        assert.equal(
+          await systems().Core.isAuthorized(1, Permissions.ADMIN, await user1.getAddress()),
+          true
+        );
+      });
+      it('shows that the other uesr not authorized', async function () {
+        assert.equal(
+          await systems().Core.isAuthorized(1, Permissions.ADMIN, await user2.getAddress()),
+          false
+        );
+        assert.equal(
+          await systems().Core.isAuthorized(1, Permissions.DEPOSIT, await user2.getAddress()),
+          false
+        );
+      });
     });
 
     describe('when a non-authorized user attempts to grant permissions', async () => {
@@ -180,6 +196,29 @@ describe('AccountModule', function () {
       it('shows that the admin permission is granted by the owner', async function () {
         assert.equal(
           await systems().Core.hasPermission(1, Permissions.ADMIN, await user2.getAddress()),
+          true
+        );
+      });
+
+      it('shows that the admin is authorized to all permissions', async function () {
+        assert.equal(
+          await systems().Core.isAuthorized(1, Permissions.ADMIN, await user2.getAddress()),
+          true
+        );
+        assert.equal(
+          await systems().Core.isAuthorized(1, Permissions.DELEGATE, await user2.getAddress()),
+          true
+        );
+        assert.equal(
+          await systems().Core.isAuthorized(1, Permissions.DEPOSIT, await user2.getAddress()),
+          true
+        );
+        assert.equal(
+          await systems().Core.isAuthorized(1, Permissions.MINT, await user2.getAddress()),
+          true
+        );
+        assert.equal(
+          await systems().Core.isAuthorized(1, Permissions.WITHDRAW, await user2.getAddress()),
           true
         );
       });
