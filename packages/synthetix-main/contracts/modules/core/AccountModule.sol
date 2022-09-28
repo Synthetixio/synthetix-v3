@@ -18,7 +18,7 @@ contract AccountModule is IAccountModule, OwnableMixin, AccountRBACMixin, Associ
     using SetUtil for SetUtil.Bytes32Set;
 
     error OnlyAccountTokenProxy(address origin);
-    error PermissionNotGranted(uint accountId, bytes32 permission, address target);
+    error PermissionNotGranted(uint accountId, bytes32 permission, address user);
 
     modifier onlyAccountToken() {
         if (msg.sender != address(getAccountTokenAddress())) {
@@ -40,7 +40,7 @@ contract AccountModule is IAccountModule, OwnableMixin, AccountRBACMixin, Associ
         for (uint i = 1; i <= allPermissionsLength; i++) {
             address permissionAddress = accountRbac.permissionAddresses.valueAt(i);
             permissions[i - 1] = AccountPermissions({
-                target: permissionAddress,
+                user: permissionAddress,
                 permissions: accountRbac.permissions[permissionAddress].values()
             });
         }
@@ -59,15 +59,16 @@ contract AccountModule is IAccountModule, OwnableMixin, AccountRBACMixin, Associ
     }
 
     function notifyAccountTransfer(address to, uint256 accountId) external override onlyAccountToken {
+        _revokePermissions(accountId, _accountModuleStore().accountsRBAC[accountId].owner);
         _accountModuleStore().accountsRBAC[accountId].owner = to;
     }
 
     function hasPermission(
         uint256 accountId,
         bytes32 permission,
-        address target
+        address user
     ) public view override returns (bool) {
-        return _hasPermission(accountId, permission, target);
+        return _hasPermission(accountId, permission, user);
     }
 
     function isAuthorized(
@@ -81,29 +82,29 @@ contract AccountModule is IAccountModule, OwnableMixin, AccountRBACMixin, Associ
     function grantPermission(
         uint accountId,
         bytes32 permission,
-        address target
+        address user
     ) external override onlyWithPermission(accountId, _ADMIN_PERMISSION) isPermissionValid(permission) {
-        if (target == address(0)) {
+        if (user == address(0)) {
             revert AddressError.ZeroAddress();
         }
 
         AccountRBAC storage accountRbac = _accountModuleStore().accountsRBAC[accountId];
 
-        if (!accountRbac.permissionAddresses.contains(target)) {
-            accountRbac.permissionAddresses.add(target);
+        if (!accountRbac.permissionAddresses.contains(user)) {
+            accountRbac.permissionAddresses.add(user);
         }
 
-        accountRbac.permissions[target].add(permission);
+        accountRbac.permissions[user].add(permission);
 
-        emit PermissionGranted(accountId, permission, target, msg.sender);
+        emit PermissionGranted(accountId, permission, user, msg.sender);
     }
 
     function revokePermission(
         uint accountId,
         bytes32 permission,
-        address target
+        address user
     ) external override onlyWithPermission(accountId, _ADMIN_PERMISSION) {
-        _revokePermission(accountId, permission, target);
+        _revokePermission(accountId, permission, user);
     }
 
     function renouncePermission(uint accountId, bytes32 permission) external override {
@@ -113,21 +114,31 @@ contract AccountModule is IAccountModule, OwnableMixin, AccountRBACMixin, Associ
     function _revokePermission(
         uint accountId,
         bytes32 permission,
-        address target
+        address user
     ) internal {
         AccountRBAC storage accountData = _accountModuleStore().accountsRBAC[accountId];
 
-        if (!_hasPermission(accountId, permission, target)) {
-            revert PermissionNotGranted(accountId, permission, target);
+        if (!_hasPermission(accountId, permission, user)) {
+            revert PermissionNotGranted(accountId, permission, user);
         }
 
-        accountData.permissions[target].remove(permission);
+        accountData.permissions[user].remove(permission);
 
-        if (accountData.permissions[target].length() == 0) {
-            accountData.permissionAddresses.remove(target);
+        if (accountData.permissions[user].length() == 0) {
+            accountData.permissionAddresses.remove(user);
         }
 
-        emit PermissionRevoked(accountId, permission, target, msg.sender);
+        emit PermissionRevoked(accountId, permission, user, msg.sender);
+    }
+
+    function _revokePermissions(uint accountId, address user) internal {
+        AccountRBAC storage accountData = _accountModuleStore().accountsRBAC[accountId];
+
+        bytes32[] memory permissions = accountData.permissions[user].values();
+
+        for (uint i = 1; i <= permissions.length; i++) {
+            _revokePermission(accountId, permissions[i - 1], user);
+        }
     }
 
     function getAccountOwner(uint accountId) external view returns (address) {

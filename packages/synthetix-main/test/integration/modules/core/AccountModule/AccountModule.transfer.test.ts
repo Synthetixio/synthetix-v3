@@ -2,6 +2,7 @@ import assert from 'assert/strict';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import { ethers } from 'ethers';
 import { bootstrap } from '../../../bootstrap';
+import Permissions from '../../../mixins/AcccountRBACMixin.permissions';
 
 describe('AccountModule', function () {
   const { signers, systems } = bootstrap();
@@ -20,6 +21,11 @@ describe('AccountModule', function () {
 
     describe('when an account NFT is transferred', function () {
       before('transfer the account', async function () {
+        const tx = await systems()
+          .Core.connect(user1)
+          .grantPermission(1, Permissions.DELEGATE, await user1.getAddress());
+        await tx.wait();
+
         await systems()
           .Account.connect(user1)
           .transferFrom(await user1.getAddress(), await user2.getAddress(), 1);
@@ -34,6 +40,13 @@ describe('AccountModule', function () {
 
       it('records the new owner in the core system', async function () {
         assert.equal(await systems().Core.getAccountOwner(1), await user2.getAddress());
+      });
+
+      it('shows the previous owner permissions have been revoked', async () => {
+        assert.equal(
+          await systems().Core.hasPermission(1, Permissions.DELEGATE, await user1.getAddress()),
+          false
+        );
       });
     });
   });

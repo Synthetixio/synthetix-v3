@@ -6,7 +6,7 @@ import "../storage/AccountModuleStorage.sol";
 contract AccountRBACMixin is AccountModuleStorage {
     using SetUtil for SetUtil.Bytes32Set;
 
-    error PermissionDenied(uint accountId, bytes32 permission, address target);
+    error PermissionDenied(uint accountId, bytes32 permission, address user);
     error InvalidPermission(bytes32 permission);
 
     bytes32 internal constant _DEPOSIT_PERMISSION = "DEPOSIT";
@@ -40,21 +40,21 @@ contract AccountRBACMixin is AccountModuleStorage {
     function _hasPermission(
         uint256 accountId,
         bytes32 permission,
-        address target
+        address user
     ) internal view returns (bool) {
         AccountRBAC storage accountRBAC = _accountModuleStore().accountsRBAC[accountId];
 
-        return target != address(0) && accountRBAC.permissions[target].contains(permission);
+        return user != address(0) && accountRBAC.permissions[user].contains(permission);
     }
 
     function _authorized(
         uint accountId,
         bytes32 permission,
-        address target
+        address user
     ) internal view returns (bool) {
-        return ((target == _accountOwner(accountId)) ||
-            _hasPermission(accountId, _ADMIN_PERMISSION, target) ||
-            _hasPermission(accountId, permission, target));
+        return ((user == _accountOwner(accountId)) ||
+            _hasPermission(accountId, _ADMIN_PERMISSION, user) ||
+            _hasPermission(accountId, permission, user));
     }
 
     function _accountOwner(uint accountId) internal view returns (address) {

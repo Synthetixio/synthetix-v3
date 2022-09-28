@@ -13,24 +13,24 @@ Emitted when an account token with id `accountId` is minted to `sender`.
 ### PermissionGranted
 
   ```solidity
-  event PermissionGranted(uint256 accountId, bytes32 permission, address target, address sender)
+  event PermissionGranted(uint256 accountId, bytes32 permission, address user, address sender)
   ```
 
-Emitted when `target` is granted `permission` by `sender` for account `accountId`.
+Emitted when `user` is granted `permission` by `sender` for account `accountId`.
 
 ### PermissionRevoked
 
   ```solidity
-  event PermissionRevoked(uint256 accountId, bytes32 permission, address target, address sender)
+  event PermissionRevoked(uint256 accountId, bytes32 permission, address user, address sender)
   ```
 
-Emitted when `target` has `permission` renounced or revoked by `sender` for account `accountId`.
+Emitted when `user` has `permission` renounced or revoked by `sender` for account `accountId`.
 
 ### AccountPermissions
 
 ```solidity
 struct AccountPermissions {
-  address target;
+  address user;
   bytes32[] permissions;
 }
 ```
@@ -62,7 +62,7 @@ Emits a {AccountCreated} event.
   function notifyAccountTransfer(address to, uint256 accountId) external
   ```
 
-Grants `permission` to `target` for account `accountId`.
+Grants `permission` to `user` for account `accountId`.
 
 Requirements:
 
@@ -71,10 +71,10 @@ Requirements:
 ### grantPermission
 
   ```solidity
-  function grantPermission(uint256 accountId, bytes32 permission, address target) external
+  function grantPermission(uint256 accountId, bytes32 permission, address user) external
   ```
 
-Grants `permission` to `target` for account `accountId`.
+Grants `permission` to `user` for account `accountId`.
 
 Requirements:
 
@@ -85,10 +85,10 @@ Emits a {PermissionGranted} event.
 ### revokePermission
 
   ```solidity
-  function revokePermission(uint256 accountId, bytes32 permission, address target) external
+  function revokePermission(uint256 accountId, bytes32 permission, address user) external
   ```
 
-Revokes `permission` from `target` for account `accountId`.
+Revokes `permission` from `user` for account `accountId`.
 
 Requirements:
 
@@ -109,10 +109,10 @@ Emits a {PermissionRevoked} event.
 ### hasPermission
 
   ```solidity
-  function hasPermission(uint256 accountId, bytes32 permission, address target) external view returns (bool)
+  function hasPermission(uint256 accountId, bytes32 permission, address user) external view returns (bool)
   ```
 
-Returns `true` if `target` has been granted `permission` for account `accountId`.
+Returns `true` if `user` has been granted `permission` for account `accountId`.
 
 ### getAccountTokenAddress
 
@@ -141,24 +141,24 @@ Emitted when an account token with id `accountId` is minted to `sender`.
 ### PermissionGranted
 
   ```solidity
-  event PermissionGranted(uint256 accountId, bytes32 permission, address target, address sender)
+  event PermissionGranted(uint256 accountId, bytes32 permission, address user, address sender)
   ```
 
-Emitted when `target` is granted `permission` by `sender` for account `accountId`.
+Emitted when `user` is granted `permission` by `sender` for account `accountId`.
 
 ### PermissionRevoked
 
   ```solidity
-  event PermissionRevoked(uint256 accountId, bytes32 permission, address target, address sender)
+  event PermissionRevoked(uint256 accountId, bytes32 permission, address user, address sender)
   ```
 
-Emitted when `target` has `permission` renounced or revoked by `sender` for account `accountId`.
+Emitted when `user` has `permission` renounced or revoked by `sender` for account `accountId`.
 
 ### AccountPermissions
 
 ```solidity
 struct AccountPermissions {
-  address target;
+  address user;
   bytes32[] permissions;
 }
 ```
@@ -190,7 +190,7 @@ Emits a {AccountCreated} event.
   function notifyAccountTransfer(address to, uint256 accountId) external
   ```
 
-Grants `permission` to `target` for account `accountId`.
+Grants `permission` to `user` for account `accountId`.
 
 Requirements:
 
@@ -199,10 +199,10 @@ Requirements:
 ### grantPermission
 
   ```solidity
-  function grantPermission(uint256 accountId, bytes32 permission, address target) external
+  function grantPermission(uint256 accountId, bytes32 permission, address user) external
   ```
 
-Grants `permission` to `target` for account `accountId`.
+Grants `permission` to `user` for account `accountId`.
 
 Requirements:
 
@@ -213,10 +213,10 @@ Emits a {PermissionGranted} event.
 ### revokePermission
 
   ```solidity
-  function revokePermission(uint256 accountId, bytes32 permission, address target) external
+  function revokePermission(uint256 accountId, bytes32 permission, address user) external
   ```
 
-Revokes `permission` from `target` for account `accountId`.
+Revokes `permission` from `user` for account `accountId`.
 
 Requirements:
 
@@ -237,10 +237,10 @@ Emits a {PermissionRevoked} event.
 ### hasPermission
 
   ```solidity
-  function hasPermission(uint256 accountId, bytes32 permission, address target) external view returns (bool)
+  function hasPermission(uint256 accountId, bytes32 permission, address user) external view returns (bool)
   ```
 
-Returns `true` if `target` has been granted `permission` for account `accountId`.
+Returns `true` if `user` has been granted `permission` for account `accountId`.
 
 ### getAccountTokenAddress
 
@@ -512,7 +512,7 @@ See {setApprovalForAll}_
 ### CollateralConfigured
 
   ```solidity
-  event CollateralConfigured(address collateralType, address priceFeed, uint256 targetCollateralizationRatio, uint256 minimumCollateralizationRatio, uint256 liquidationReward, bool enabled)
+  event CollateralConfigured(address collateralType, address priceFeed, uint256 userCollateralizationRatio, uint256 minimumCollateralizationRatio, uint256 liquidationReward, bool enabled)
   ```
 
 Emitted when a collateral type’s configuration is created or updated.
@@ -536,7 +536,7 @@ Emitted when `amount` of collateral of type `collateralType` is withdrawn from a
 ### configureCollateral
 
   ```solidity
-  function configureCollateral(address collateralType, address priceFeed, uint256 targetCRatio, uint256 minimumCRatio, uint256 liquidationReward, bool enabled) external
+  function configureCollateral(address collateralType, address priceFeed, uint256 userCRatio, uint256 minimumCRatio, uint256 liquidationReward, bool enabled) external
   ```
 
 Creates or updates the configuration for given `collateralType`.
@@ -610,7 +610,7 @@ Returns the amount of collateral of type `collateralType` deposited with account
 ### CollateralConfigured
 
   ```solidity
-  event CollateralConfigured(address collateralType, address priceFeed, uint256 targetCollateralizationRatio, uint256 minimumCollateralizationRatio, uint256 liquidationReward, bool enabled)
+  event CollateralConfigured(address collateralType, address priceFeed, uint256 userCollateralizationRatio, uint256 minimumCollateralizationRatio, uint256 liquidationReward, bool enabled)
   ```
 
 Emitted when a collateral type’s configuration is created or updated.
@@ -634,7 +634,7 @@ Emitted when `amount` of collateral of type `collateralType` is withdrawn from a
 ### configureCollateral
 
   ```solidity
-  function configureCollateral(address collateralType, address priceFeed, uint256 targetCRatio, uint256 minimumCRatio, uint256 liquidationReward, bool enabled) external
+  function configureCollateral(address collateralType, address priceFeed, uint256 userCRatio, uint256 minimumCRatio, uint256 liquidationReward, bool enabled) external
   ```
 
 Creates or updates the configuration for given `collateralType`.
@@ -812,13 +812,13 @@ returns if the account is liquidable on the poolId - collateralType pair
 ### UsdDeposited
 
   ```solidity
-  event UsdDeposited(uint256 marketId, address target, uint256 amount, address sender)
+  event UsdDeposited(uint256 marketId, address user, uint256 amount, address sender)
   ```
 
 ### UsdWithdrawn
 
   ```solidity
-  event UsdWithdrawn(uint256 marketId, address target, uint256 amount, address sender)
+  event UsdWithdrawn(uint256 marketId, address user, uint256 amount, address sender)
   ```
 
 ### registerMarket
@@ -832,18 +832,18 @@ registers a new market
 ### depositUsd
 
   ```solidity
-  function depositUsd(uint256 marketId, address target, uint256 amount) external
+  function depositUsd(uint256 marketId, address user, uint256 amount) external
   ```
 
-target deposits amount of synths to the marketId
+user deposits amount of synths to the marketId
 
 ### withdrawUsd
 
   ```solidity
-  function withdrawUsd(uint256 marketId, address target, uint256 amount) external
+  function withdrawUsd(uint256 marketId, address user, uint256 amount) external
   ```
 
-target withdraws amount of synths to the marketId
+user withdraws amount of synths to the marketId
 
 ### getWithdrawableUsd
 
@@ -900,13 +900,13 @@ gets the snxUSD value of the collateral backing this market.
 ### UsdDeposited
 
   ```solidity
-  event UsdDeposited(uint256 marketId, address target, uint256 amount, address sender)
+  event UsdDeposited(uint256 marketId, address user, uint256 amount, address sender)
   ```
 
 ### UsdWithdrawn
 
   ```solidity
-  event UsdWithdrawn(uint256 marketId, address target, uint256 amount, address sender)
+  event UsdWithdrawn(uint256 marketId, address user, uint256 amount, address sender)
   ```
 
 ### registerMarket
@@ -920,18 +920,18 @@ registers a new market
 ### depositUsd
 
   ```solidity
-  function depositUsd(uint256 marketId, address target, uint256 amount) external
+  function depositUsd(uint256 marketId, address user, uint256 amount) external
   ```
 
-target deposits amount of synths to the marketId
+user deposits amount of synths to the marketId
 
 ### withdrawUsd
 
   ```solidity
-  function withdrawUsd(uint256 marketId, address target, uint256 amount) external
+  function withdrawUsd(uint256 marketId, address user, uint256 amount) external
   ```
 
-target withdraws amount of synths to the marketId
+user withdraws amount of synths to the marketId
 
 ### getWithdrawableUsd
 
@@ -2002,13 +2002,13 @@ returns if the account is liquidable on the poolId - collateralType pair
 ### UsdDeposited
 
   ```solidity
-  event UsdDeposited(uint256 marketId, address target, uint256 amount, address sender)
+  event UsdDeposited(uint256 marketId, address user, uint256 amount, address sender)
   ```
 
 ### UsdWithdrawn
 
   ```solidity
-  event UsdWithdrawn(uint256 marketId, address target, uint256 amount, address sender)
+  event UsdWithdrawn(uint256 marketId, address user, uint256 amount, address sender)
   ```
 
 ### registerMarket
@@ -2022,18 +2022,18 @@ registers a new market
 ### depositUsd
 
   ```solidity
-  function depositUsd(uint256 marketId, address target, uint256 amount) external
+  function depositUsd(uint256 marketId, address user, uint256 amount) external
   ```
 
-target deposits amount of synths to the marketId
+user deposits amount of synths to the marketId
 
 ### withdrawUsd
 
   ```solidity
-  function withdrawUsd(uint256 marketId, address target, uint256 amount) external
+  function withdrawUsd(uint256 marketId, address user, uint256 amount) external
   ```
 
-target withdraws amount of synths to the marketId
+user withdraws amount of synths to the marketId
 
 ### getWithdrawableUsd
 
@@ -2090,13 +2090,13 @@ gets the snxUSD value of the collateral backing this market.
 ### UsdDeposited
 
   ```solidity
-  event UsdDeposited(uint256 marketId, address target, uint256 amount, address sender)
+  event UsdDeposited(uint256 marketId, address user, uint256 amount, address sender)
   ```
 
 ### UsdWithdrawn
 
   ```solidity
-  event UsdWithdrawn(uint256 marketId, address target, uint256 amount, address sender)
+  event UsdWithdrawn(uint256 marketId, address user, uint256 amount, address sender)
   ```
 
 ### registerMarket
@@ -2110,18 +2110,18 @@ registers a new market
 ### depositUsd
 
   ```solidity
-  function depositUsd(uint256 marketId, address target, uint256 amount) external
+  function depositUsd(uint256 marketId, address user, uint256 amount) external
   ```
 
-target deposits amount of synths to the marketId
+user deposits amount of synths to the marketId
 
 ### withdrawUsd
 
   ```solidity
-  function withdrawUsd(uint256 marketId, address target, uint256 amount) external
+  function withdrawUsd(uint256 marketId, address user, uint256 amount) external
   ```
 
-target withdraws amount of synths to the marketId
+user withdraws amount of synths to the marketId
 
 ### getWithdrawableUsd
 
