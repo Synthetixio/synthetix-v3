@@ -30,7 +30,7 @@ describe('LiquidationModule', function () {
     it('does not allow liquidation of account with healthy c-ratio', async () => {
       await assertRevert(
         systems().Core.connect(user1).liquidate(accountId, poolId, collateralAddress()),
-        'IneligibleForLiquidation("1000000000000000000000", "0", "0", "1500000000000000000")',
+        'IneligibleForLiquidation(1000000000000000000000, 0, 0, 1500000000000000000)',
         systems().Core
       );
     });
@@ -178,7 +178,7 @@ describe('LiquidationModule', function () {
         systems()
           .Core.connect(user1)
           .liquidateVault(poolId, collateralAddress(), accountId, ethers.utils.parseEther('1')),
-        'IneligibleForLiquidation("1000000000000000000000", "0", "0", "1500000000000000000")',
+        'IneligibleForLiquidation(1000000000000000000000, 0, 0, 1500000000000000000)',
         systems().Core
       );
     });

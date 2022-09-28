@@ -114,7 +114,7 @@ describe('VaultModule', function () {
             depositAmount.mul(2),
             ethers.utils.parseEther('1')
           ),
-        `PermissionDenied("1", "${Permissions.DELEGATE}", "${await user2.getAddress()}")`,
+        `PermissionDenied(1, "${Permissions.DELEGATE}", "${await user2.getAddress()}")`,
         systems().Core
       );
     });
@@ -426,7 +426,7 @@ describe('VaultModule', function () {
         systems()
           .Core.connect(user2)
           .mintUsd(accountId, poolId, collateralAddress(), depositAmount.mul(10)),
-        `PermissionDenied("1", "${Permissions.MINT}", "${await user2.getAddress()}")`,
+        `PermissionDenied(1, "${Permissions.MINT}", "${await user2.getAddress()}")`,
         systems().Core
       );
     });

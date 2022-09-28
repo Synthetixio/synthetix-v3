@@ -1,6 +1,7 @@
 {
   "extends": "./tsconfig.json",
   "include": ["./packages/**/*.ts", "./packages/**/*.js"],
+  "exclude": [],
   "compilerOptions": {
     "noEmit": true
   }

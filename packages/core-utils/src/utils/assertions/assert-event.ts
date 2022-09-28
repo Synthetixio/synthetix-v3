@@ -1,3 +1,4 @@
+import { AbiHelpers } from 'hardhat/internal/util/abi-helpers';
 import { ethers } from 'ethers';
 
 export default async function assertEvent(
@@ -16,9 +17,7 @@ export default async function assertEvent(
       const parsed = contract.interface.parseLog(log);
 
       const text = `${parsed.name}(${
-        parsed.args
-          ? parsed.args.map((v) => (v.toString ? '"' + v.toString() + '"' : v)).join(', ')
-          : ''
+        parsed.args ? AbiHelpers.formatValues(parsed.args as unknown[]) : ''
       })`;
 
       seenEvents.push(text);
