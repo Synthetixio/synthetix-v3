@@ -53,7 +53,7 @@ contract CollateralModule is
         collateral.minimumCRatio = minimumCRatio;
         collateral.priceFeed = priceFeed;
         collateral.liquidationReward = liquidationReward;
-        collateral.enabled = enabled;
+        collateral.stakingEnabled = enabled;
 
         emit CollateralConfigured(collateralType, priceFeed, targetCRatio, minimumCRatio, liquidationReward, enabled);
     }
@@ -76,7 +76,7 @@ contract CollateralModule is
 
             CollateralConfiguration storage collateral = store.collateralConfigurations[collateralType];
 
-            if (!hideDisabled || collateral.enabled) {
+            if (!hideDisabled || collateral.stakingEnabled) {
                 filteredCollaterals[collateralsIdx++] = collateral;
             }
         }
@@ -91,6 +91,10 @@ contract CollateralModule is
         returns (CollateralStorage.CollateralConfiguration memory)
     {
         return _collateralStore().collateralConfigurations[collateralType];
+    }
+
+    function getCollateralValue(address collateralType) external view override returns (uint) {
+        return _getCollateralValue(collateralType);
     }
 
     /////////////////////////////////////////////////

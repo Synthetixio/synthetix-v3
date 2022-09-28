@@ -16,7 +16,7 @@ contract CollateralMixin is CollateralStorage, VaultStorage {
     error InsufficientAccountCollateral(uint accountId, address collateralType, uint requestedAmount);
 
     modifier collateralEnabled(address collateralType) {
-        if (!_collateralStore().collateralConfigurations[collateralType].enabled) {
+        if (!_collateralStore().collateralConfigurations[collateralType].stakingEnabled) {
             revert InvalidCollateral(collateralType);
         }
 
