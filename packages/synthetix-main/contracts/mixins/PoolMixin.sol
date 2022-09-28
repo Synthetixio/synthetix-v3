@@ -9,7 +9,7 @@ import "../mixins/MarketManagerMixin.sol";
 import "../storage/PoolModuleStorage.sol";
 import "../storage/VaultStorage.sol";
 
-contract PoolMixin is PoolModuleStorage, VaultStorage, CollateralMixin, MarketManagerMixin {
+contract PoolMixin is PoolModuleStorage, VaultStorage, MarketManagerMixin {
     using SetUtil for SetUtil.AddressSet;
     using SetUtil for SetUtil.Bytes32Set;
     using MathUtil for uint256;
