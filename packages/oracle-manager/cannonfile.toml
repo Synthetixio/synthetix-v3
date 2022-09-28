@@ -1,0 +1,3 @@
+name = "oracle-manager"
+version = "<%= package.version %>"
+description = "Core synthetix oracle manager"
