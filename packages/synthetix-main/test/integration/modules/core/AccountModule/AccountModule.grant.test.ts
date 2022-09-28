@@ -40,6 +40,22 @@ describe('AccountModule', function () {
           false
         );
       });
+      it('shows that the owner is authorized', async function () {
+        assert.equal(
+          await systems().Core.isAuthorized(1, Permissions.ADMIN, await user1.getAddress()),
+          true
+        );
+      });
+      it('shows that the other uesr not authorized', async function () {
+        assert.equal(
+          await systems().Core.isAuthorized(1, Permissions.ADMIN, await user2.getAddress()),
+          false
+        );
+        assert.equal(
+          await systems().Core.isAuthorized(1, Permissions.DEPOSIT, await user2.getAddress()),
+          false
+        );
+      });
     });
 
     describe('when a non-authorized user attempts to grant permissions', async () => {
@@ -49,6 +65,19 @@ describe('AccountModule', function () {
             .Core.connect(user2)
             .grantPermission(1, Permissions.DEPOSIT, await user2.getAddress()),
           `PermissionDenied(1, "${Permissions.ADMIN}", "${await user2.getAddress()}")`,
+          systems().Core
+        );
+      });
+    });
+
+    describe('when a an authorized user attempts to grant an invalid permission', async () => {
+      it('reverts', async () => {
+        const invalidPermission = ethers.utils.formatBytes32String('INVALID');
+        await assertRevert(
+          systems()
+            .Core.connect(user1)
+            .grantPermission(1, invalidPermission, await user2.getAddress()),
+          `InvalidPermission("${invalidPermission}")`,
           systems().Core
         );
       });
@@ -77,7 +106,7 @@ describe('AccountModule', function () {
 
         assertBn.equal(event.args.accountId, 1);
         assert.equal(event.args.permission, Permissions.DEPOSIT);
-        assert.equal(event.args.target, await user2.getAddress());
+        assert.equal(event.args.user, await user2.getAddress());
         assert.equal(event.args.sender, await user1.getAddress());
       });
 
@@ -117,7 +146,7 @@ describe('AccountModule', function () {
 
           assertBn.equal(event.args.accountId, 1);
           assert.equal(event.args.permission, Permissions.DEPOSIT);
-          assert.equal(event.args.target, await user2.getAddress());
+          assert.equal(event.args.user, await user2.getAddress());
           assert.equal(event.args.sender, await user2.getAddress());
         });
       });
@@ -150,7 +179,7 @@ describe('AccountModule', function () {
 
           assertBn.equal(event.args.accountId, 1);
           assert.equal(event.args.permission, Permissions.DEPOSIT);
-          assert.equal(event.args.target, await user2.getAddress());
+          assert.equal(event.args.user, await user2.getAddress());
           assert.equal(event.args.sender, await user1.getAddress());
         });
       });
@@ -167,6 +196,29 @@ describe('AccountModule', function () {
       it('shows that the admin permission is granted by the owner', async function () {
         assert.equal(
           await systems().Core.hasPermission(1, Permissions.ADMIN, await user2.getAddress()),
+          true
+        );
+      });
+
+      it('shows that the admin is authorized to all permissions', async function () {
+        assert.equal(
+          await systems().Core.isAuthorized(1, Permissions.ADMIN, await user2.getAddress()),
+          true
+        );
+        assert.equal(
+          await systems().Core.isAuthorized(1, Permissions.DELEGATE, await user2.getAddress()),
+          true
+        );
+        assert.equal(
+          await systems().Core.isAuthorized(1, Permissions.DEPOSIT, await user2.getAddress()),
+          true
+        );
+        assert.equal(
+          await systems().Core.isAuthorized(1, Permissions.MINT, await user2.getAddress()),
+          true
+        );
+        assert.equal(
+          await systems().Core.isAuthorized(1, Permissions.WITHDRAW, await user2.getAddress()),
           true
         );
       });
