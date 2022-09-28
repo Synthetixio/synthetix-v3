@@ -9,17 +9,17 @@ interface IAccountModule {
     event AccountCreated(address indexed sender, uint indexed accountId);
 
     /**
-     * @notice Emitted when `target` is granted `permission` by `sender` for account `accountId`.
+     * @notice Emitted when `user` is granted `permission` by `sender` for account `accountId`.
      */
-    event PermissionGranted(uint indexed accountId, bytes32 indexed permission, address indexed target, address sender);
+    event PermissionGranted(uint indexed accountId, bytes32 indexed permission, address indexed user, address sender);
 
     /**
-     * @notice Emitted when `target` has `permission` renounced or revoked by `sender` for account `accountId`.
+     * @notice Emitted when `user` has `permission` renounced or revoked by `sender` for account `accountId`.
      */
-    event PermissionRevoked(uint indexed accountId, bytes32 indexed permission, address indexed target, address sender);
+    event PermissionRevoked(uint indexed accountId, bytes32 indexed permission, address indexed user, address sender);
 
     struct AccountPermissions {
-        address target;
+        address user;
         bytes32[] permissions;
     }
 
@@ -40,7 +40,7 @@ interface IAccountModule {
     function createAccount(uint256 requestedAccountId) external;
 
     /**
-     * @notice Grants `permission` to `target` for account `accountId`.
+     * @notice Grants `permission` to `user` for account `accountId`.
      *
      * Requirements:
      *
@@ -49,7 +49,7 @@ interface IAccountModule {
     function notifyAccountTransfer(address to, uint256 accountId) external;
 
     /**
-     * @notice Grants `permission` to `target` for account `accountId`.
+     * @notice Grants `permission` to `user` for account `accountId`.
      *
      * Requirements:
      *
@@ -60,11 +60,11 @@ interface IAccountModule {
     function grantPermission(
         uint accountId,
         bytes32 permission,
-        address target
+        address user
     ) external;
 
     /**
-     * @notice Revokes `permission` from `target` for account `accountId`.
+     * @notice Revokes `permission` from `user` for account `accountId`.
      *
      * Requirements:
      *
@@ -75,7 +75,7 @@ interface IAccountModule {
     function revokePermission(
         uint accountId,
         bytes32 permission,
-        address target
+        address user
     ) external;
 
     /**
@@ -86,9 +86,18 @@ interface IAccountModule {
     function renouncePermission(uint accountId, bytes32 permission) external;
 
     /**
-     * @notice Returns `true` if `target` has been granted `permission` for account `accountId`.
+     * @notice Returns `true` if `user` has been granted `permission` for account `accountId`.
      */
     function hasPermission(
+        uint accountId,
+        bytes32 permission,
+        address user
+    ) external view returns (bool);
+
+    /**
+     * @notice Returns `true` if `target` is authorized to `permission` for account `accountId`.
+     */
+    function isAuthorized(
         uint accountId,
         bytes32 permission,
         address target
