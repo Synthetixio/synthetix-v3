@@ -41,7 +41,7 @@ contract MarketManagerModule is
 
     function getWithdrawableUsd(uint marketId) public view override returns (uint) {
         MarketData storage marketData = _marketManagerStore().markets[marketId];
-        return marketData.capacity + _depositedCollateralValue(marketData);
+        return marketData.capacity + _depositedCollateralValue(marketData.depositedCollateral);
     }
 
     function getMarketIssuance(uint marketId) external view override returns (int128) {
