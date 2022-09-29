@@ -28,11 +28,17 @@ contract CollateralMixin is CollateralStorage, VaultStorage {
             _collateralStore().collateralConfigurations[collateralType].priceFeed
         ).latestRoundData();
 
+        uint decimals = IAggregatorV3Interface(
+            _collateralStore().collateralConfigurations[collateralType].priceFeed
+        ).decimals();
+
+        uint finalAnswer = uint(answer) * 10 ** 18 / 10 ** decimals;
+
         // sanity check
         // TODO: this will be removed when we get the oracle manager
-        require(answer > 0, "The collateral value is 0");
+        require(finalAnswer > 0, "The collateral value is 0");
 
-        return uint(answer);
+        return finalAnswer;
     }
 
     function _getAccountCollateralTotals(uint accountId, address collateralType)

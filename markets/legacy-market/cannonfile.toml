@@ -1,19 +1,99 @@
+name = "synthetix-legacy-market"
+version = "0.1.0"
+description = "Representation of Synthetix v2x, v3, and the LegacyMarket which allows for migration between them"
+
+[setting.sc_pool_id]
+defaultValue = "1"
+
+[setting.market_id]
+defaultValue = "1"
+
+[setting.pool_owner]
+defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
+
 [import.v2x]
-source = "synthetix:2"
+source = "synthetix:2.99.0"
 
 [import.v3]
-source = "synthetix:3"
+source = "synthetix:3.0.0-lm"
 
+[invoke.configureSnxCollateral]
+target = ["v3.CoreProxy"]
+func = "configureCollateral"
+args = [
+    "<%= imports.v2x.contracts.ProxySynthetix.address %>",
+    "<%= imports.v2x.imports.aggregator_snx.contracts.aggregator.address %>",
+    "3000000000000000000", # target c-ratio
+    "2000000000000000000", # liquidation c-ratio
+    "1000000000000000000", # liquidation reward (in wei)
+    true
+]
+
+fromCall.func = "owner"
+
+depends = ["import.v2x", "import.v3"]
+
+# deploy the legacy market
 [contract.market]
 artifact = "LegacyMarket"
-args = ["<%= imports.v2x.contracts.AddressResolver.address", "<%= imports.v3.contracts.CoreProxy.address %>"]
 
+args = [
+    "<%= imports.v2x.contracts.AddressResolver.address %>",
+    "<%= imports.v3.contracts.CoreProxy.address %>"
+]
+
+depends = ["import.v2x", "import.v3"]
+
+# set up on v2x
 [invoke.associate]
 target = ["v2x.AddressResolver"]
-func = "registerAddresses"
-args = [["LegacyMarket"], ["<%= contracts.market.address %>"]]
+func = "importAddresses"
+args = [
+    ["0x4c65676163794d61726b65740000000000000000000000000000000000000000"],
+    # TODO nested interpolation
+    ["0xE4AC8cB106974e2B5acCDfD7651e5d54c29E053c"]
+]
+
+fromCall.func = "owner"
+
+depends = ["contract.market"]
 
 [invoke.authorizedBroker]
-target = ["v3.SynthetixDebtShare"]
+target = ["v2x.SynthetixDebtShare"]
 func = "addAuthorizedBroker"
 args = ["<%= contracts.market.address %>"]
+
+fromCall.func = "owner"
+
+depends = ["contract.market"]
+
+# create spartan council pool
+[invoke.createPool]
+target = ["v3.CoreProxy"]
+func = "createPool"
+args = ["<%= settings.sc_pool_id %>", "<%= settings.pool_owner %>"]
+
+depends = ["contract.market"]
+
+[invoke.configurePool]
+target = ["v3.CoreProxy"]
+func = "setPoolConfiguration"
+args = [
+    "<%= settings.sc_pool_id %>",
+    ["1"],
+    [1],
+    [1]
+]
+
+from = "<%= settings.pool_owner %>"
+
+depends = ["invoke.createPool"]
+
+[invoke.preferPool]
+target = ["v3.CoreProxy"]
+func = "setPreferredPool"
+args = ["<%= settings.sc_pool_id %>"]
+
+fromCall.func = "owner"
+
+depends = ["invoke.createPool"]

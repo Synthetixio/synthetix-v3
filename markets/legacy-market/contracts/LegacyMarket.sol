@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-//import "@synthetixio/synthetix-main/contracts/interfaces/external/IMarket.sol";
+import "@synthetixio/main/contracts/interfaces/external/IMarket.sol";
 
 import "synthetix/contracts/interfaces/IAddressResolver.sol";
 import "synthetix/contracts/interfaces/ILiquidatorRewards.sol";
@@ -17,7 +17,9 @@ import "@synthetixio/core-contracts/contracts/interfaces/IERC721.sol";
 
 import "@synthetixio/core-contracts/contracts/utils/MathUtil.sol";
 
-contract LegacyMarket is Ownable/* is IMarket*/ {
+import "hardhat/console.sol";
+
+contract LegacyMarket is Ownable, IMarket {
     using MathUtil for uint256;
 
     uint128 public marketId;
@@ -31,20 +33,29 @@ contract LegacyMarket is Ownable/* is IMarket*/ {
     error InsufficientCollateralMigrated(uint amountRequested, uint amountAvailable);
     error Paused();
 
+    event AccountMigrated(address indexed account, uint indexed accountId, uint collateralAmount, uint debtAmount);
+
     constructor(IAddressResolver v2xResolverAddress, IV3CoreProxy v3SystemAddress) {
         v2xResolver = v2xResolverAddress;
         v3System = v3SystemAddress;
 
         marketId = v3System.registerMarket(address(this));
+        IERC20(v2xResolverAddress.getAddress("ProxySynthetix")).approve(address(v3SystemAddress), type(uint).max);
     }
 
-    function balance() public view returns (uint) {
-        IIssuer iss = IIssuer(v2xResolver.getAddress("Issuer"));
+    function reportedDebt(uint requestedMarketId) public view returns (uint) {
+        if (marketId == requestedMarketId) {
 
-        return iss.debtBalanceOf(address(this), "sUSD");
+
+            IIssuer iss = IIssuer(v2xResolver.getAddress("Issuer"));
+
+            return iss.debtBalanceOf(address(this), "sUSD");
+        }
+
+        return 0;
     }
 
-    function locked() external pure returns (uint) {
+    function locked(uint/* requestedMarketId*/) external pure returns (uint) {
         return 0;
     }
 
@@ -53,8 +64,8 @@ contract LegacyMarket is Ownable/* is IMarket*/ {
             revert Paused();
         }
 
-        if (balance() < amount) {
-            revert InsufficientCollateralMigrated(amount, balance());
+        if (reportedDebt(marketId) < amount) {
+            revert InsufficientCollateralMigrated(amount, reportedDebt(marketId));
         }
 
         IERC20 oldUSD = IERC20(v2xResolver.getAddress("ProxysUSD"));
@@ -74,7 +85,7 @@ contract LegacyMarket is Ownable/* is IMarket*/ {
         _migrate(msg.sender, accountId);
     }
 
-    function migateOnBehalf(address staker, uint128 accountId) external onlyOwner {
+    function migrateOnBehalf(address staker, uint128 accountId) external onlyOwner {
         _migrate(staker, accountId);
     }
 
@@ -95,13 +106,15 @@ contract LegacyMarket is Ownable/* is IMarket*/ {
 
         uint debtValueMigrated = _calculateDebtValueMigrated(debtSharesMigrated);
 
-        oldSynthetix.transferFrom(staker, address(this), collateralMigrated);
-
+        // transfer debt shares first so we can remove SNX from user's account
         oldDebtShares.transferFrom(staker, address(this), debtSharesMigrated);
+
+        oldSynthetix.transferFrom(staker, address(this), collateralMigrated);
 
         v3System.createAccount(accountId);
 
         v3System.depositCollateral(accountId, address(oldSynthetix), collateralMigrated);
+
 
         uint128 preferredPoolId = v3System.getPreferredPool();
 
@@ -113,14 +126,19 @@ contract LegacyMarket is Ownable/* is IMarket*/ {
             MathUtil.UNIT
         );
 
+        console.log("associated");
+
         v3System.associateDebt(
-            accountId,
+            marketId,
             preferredPoolId,
             address(oldSynthetix),
+            accountId,
             debtValueMigrated
         );
 
         IERC721(v3System.getAccountTokenAddress()).safeTransferFrom(address(this), staker, accountId);
+
+        emit AccountMigrated(staker, accountId, collateralMigrated, debtValueMigrated);
     }
 
     function setPauseStablecoinConversion(bool paused) external onlyOwner {
