@@ -147,15 +147,15 @@ describe('LegacyMarket', () => {
                 });
 
                 it('cleared liquidation rewards balance', async () => {
-                    assertBn.isZero(await liquidationRewards.earned(snxStakerAddress));
+                    assertBn.equal(await liquidationRewards.earned(snxStakerAddress), 0);
                 });
 
                 it('removed all snx balance', async () => {
-                    assertBn.isZero(await snxToken.balanceOf(snxStakerAddress));
+                    assertBn.equal(await snxToken.balanceOf(snxStakerAddress), 0);
                 });
 
                 it('revoked escrow entries', async () => {
-                    assertBn.isZero(await rewardEscrow.totalEscrowedAccountBalance(snxStakerAddress));
+                    assertBn.equal(await rewardEscrow.totalEscrowedAccountBalance(snxStakerAddress), 0);
                 });
 
                 it('has all collateral in v3 account', async () => {
@@ -172,7 +172,7 @@ describe('LegacyMarket', () => {
                 });
 
                 it('undertook debt shares from user account', async () => {
-                    assertBn.isZero(await synthetixDebtShare.balanceOf(snxStakerAddress));
+                    assertBn.equal(await synthetixDebtShare.balanceOf(snxStakerAddress), 0);
                 });
 
                 it('sent v3 account to user', async () => {
