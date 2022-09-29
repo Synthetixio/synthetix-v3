@@ -3,29 +3,31 @@ pragma solidity ^0.8.0;
 
 import "@synthetixio/main/contracts/interfaces/IMarketManagerModule.sol";
 import "@synthetixio/core-contracts/contracts/utils/MathUtil.sol";
-import "@synthetixio/main/contracts/interfaces/IUSDTokenModule.sol";
 import "@synthetixio/core-contracts/contracts/ownership/Ownable.sol";
 import "@synthetixio/market-fee-manager/interfaces/IMarketFeeManager.sol";
+import "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
 import "../interfaces/ISpotMarket.sol";
-import "./Synth.sol";
+
+import "hardhat/console.sol";
 
 contract SpotMarket is ISpotMarket, Ownable {
     using MathUtil for uint256;
 
-    struct MarketSynth {
-        Synth synth;
-        address priceFeed; // will become oracle manager id
-        address feeManager;
-    }
+    error InsufficientFunds();
+    error InsufficientAllowance();
 
-    IERC20 public usdToken;
+    ITokenModule public usdToken;
     address public synthetix;
 
     mapping(uint => MarketSynth) public marketSynths;
 
-    constructor(address snxAddress, address marketOwner) {
+    constructor(
+        address marketOwner,
+        address snxAddress,
+        address usdTokenAddress
+    ) {
         synthetix = snxAddress;
-        usdToken = IERC20(IUSDTokenModule(synthetix).getUSDTokenAddress());
+        usdToken = ITokenModule(usdTokenAddress);
 
         nominateNewOwner(marketOwner);
         acceptOwnership();
@@ -40,7 +42,7 @@ contract SpotMarket is ISpotMarket, Ownable {
     ) external override onlyOwner returns (uint) {
         Synth newSynth = new Synth(address(this), name, symbol, decimals);
         uint synthMarketId = IMarketManagerModule(synthetix).registerMarket(address(this));
-        MarketSynth memory synth = MarketSynth(newSynth, priceFeed, feeManager);
+        MarketSynth memory synth = MarketSynth(newSynth, priceFeed, feeManager, synthMarketId);
         marketSynths[synthMarketId] = synth;
 
         emit SynthRegistered(synthMarketId);
@@ -48,8 +50,8 @@ contract SpotMarket is ISpotMarket, Ownable {
         return synthMarketId;
     }
 
-    function getMarket(uint marketId) external view override returns (address synthAddress) {
-        synthAddress = address(marketSynths[marketId].synth);
+    function getMarket(uint marketId) external view override returns (MarketSynth memory) {
+        return marketSynths[marketId];
     }
 
     // TODO: interact with OracleManager to get price for market synth
@@ -64,6 +66,36 @@ contract SpotMarket is ISpotMarket, Ownable {
         return market.synth.totalSupply().mulDecimal(_getCurrentPrice(marketId));
     }
 
+    function updateFeeManager(uint marketId, address newFeeManager) external override onlyOwner {
+        marketSynths[marketId].feeManager = newFeeManager;
+    }
+
+    function exchange(
+        uint fromMarketId,
+        uint toMarketId,
+        uint amount
+    ) external override returns (uint) {
+        MarketSynth storage fromMarket = marketSynths[fromMarketId];
+        MarketSynth storage toMarket = marketSynths[toMarketId];
+
+        uint amountUsd = _synthUsdExchangeRate(fromMarketId, amount);
+
+        // transfer funds into contract (required for collecting fees)
+        IMarketManagerModule(synthetix).withdrawUsd(fromMarketId, address(this), amountUsd);
+        // TODO: (verify this is what we want): apply fees using feeManager for synth trading into
+        (uint amountUsable, uint feesCollected) = _manageFees(toMarket, amountUsd);
+
+        uint amountToMint = _usdSynthExchangeRate(toMarketId, amountUsable);
+
+        // mint & burn synths
+        fromMarket.synth.burn(msg.sender, amount);
+        toMarket.synth.mint(msg.sender, amountToMint);
+
+        emit SynthExchanged(fromMarketId, toMarketId, amountToMint, feesCollected);
+
+        return amountToMint;
+    }
+
     function buy(uint marketId, uint amountUsd) external override returns (uint) {
         if (usdToken.balanceOf(msg.sender) < amountUsd) {
             revert InsufficientFunds();
@@ -75,34 +107,27 @@ contract SpotMarket is ISpotMarket, Ownable {
         MarketSynth storage market = marketSynths[marketId];
 
         usdToken.transferFrom(msg.sender, address(this), amountUsd);
-        usdToken.approve(market.feeManager, amountUsd);
+        (uint amountUsable, uint feesCollected) = _manageFees(market, amountUsd);
 
-        (uint amountUsable, uint feesCollected) = IMarketFeeManager(market.feeManager).processFees(
-            msg.sender,
-            marketId,
-            amountUsd,
-            synthetix
-        );
-        // approve to this market prior to transferring to market manager (i.e collect fees)
-        uint currentPrice = _getCurrentPrice(marketId);
-        uint amountToMint = amountUsable.divDecimal(currentPrice);
+        uint amountToMint = _usdSynthExchangeRate(marketId, amountUsable);
         market.synth.mint(msg.sender, amountToMint);
 
+        usdToken.approve(address(this), amountUsable); // required for market manager
         IMarketManagerModule(synthetix).depositUsd(marketId, address(this), amountUsable);
+
         emit SynthBought(marketId, amountToMint, feesCollected);
 
         return amountToMint;
     }
 
     function sell(uint marketId, uint sellAmount) external override returns (uint) {
-        uint currentPrice = _getCurrentPrice(marketId);
-        uint amountToWithdraw = sellAmount.mulDecimal(currentPrice);
+        uint amountToWithdraw = _synthUsdExchangeRate(marketId, sellAmount);
 
         MarketSynth storage market = marketSynths[marketId];
         market.synth.burn(msg.sender, sellAmount);
 
         IMarketManagerModule(synthetix).withdrawUsd(marketId, address(this), amountToWithdraw);
-        (uint returnAmount, uint feesCollected) = _manageFees(marketId, amountToWithdraw);
+        (uint returnAmount, uint feesCollected) = _manageFees(market, amountToWithdraw);
 
         usdToken.transfer(msg.sender, returnAmount);
         emit SynthSold(marketId, returnAmount, feesCollected);
@@ -110,10 +135,20 @@ contract SpotMarket is ISpotMarket, Ownable {
         return returnAmount;
     }
 
-    function _manageFees(uint marketId, uint amountUsd) internal returns (uint, uint) {
-        MarketSynth storage market = marketSynths[marketId];
+    // TODO: change from pure once _getCurrentPrice is implemented
+    function _synthUsdExchangeRate(uint marketId, uint sellAmount) internal pure returns (uint amountUsd) {
+        uint currentPrice = _getCurrentPrice(marketId);
+        amountUsd = sellAmount.mulDecimal(currentPrice);
+    }
+
+    function _usdSynthExchangeRate(uint marketId, uint amountUsd) internal pure returns (uint synthAmount) {
+        uint currentPrice = _getCurrentPrice(marketId);
+        synthAmount = amountUsd.divDecimal(currentPrice);
+    }
+
+    function _manageFees(MarketSynth storage market, uint amountUsd) internal returns (uint, uint) {
         usdToken.approve(market.feeManager, amountUsd);
-        return IMarketFeeManager(market.feeManager).processFees(msg.sender, marketId, amountUsd, synthetix);
+        return IMarketFeeManager(market.feeManager).processFees(msg.sender, market.marketId, amountUsd);
     }
 
     // TODO: interact with OracleManager to get price for market synth

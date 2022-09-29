@@ -6,7 +6,6 @@ interface IMarketFeeManager {
     function processFees(
         address transactor,
         uint marketId,
-        uint amount,
-        address synthetix
+        uint amount
     ) external returns (uint amountUsable, uint feesCollected);
 }

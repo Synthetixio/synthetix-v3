@@ -13,28 +13,39 @@ contract FixedFeeManager is IMarketFeeManager {
     using MathUtil for uint256;
 
     address public owner;
-    uint public fixedFee; // in bips
     IERC20 public usdToken;
+    uint public fixedFee; // in bips
+    address public synthetix;
 
     modifier onlyOwner() {
         require(msg.sender == owner, "Only owner");
         _;
     }
 
-    constructor(address feeOwner, address usdTokenAddress) {
+    constructor(
+        address feeOwner,
+        address usdTokenAddress,
+        address synthetixAddress,
+        uint fixedFeeAmount
+    ) {
         owner = feeOwner;
         usdToken = IERC20(usdTokenAddress);
+        fixedFee = fixedFeeAmount;
+        synthetix = synthetixAddress;
     }
 
     function setFixedFee(uint fee) external onlyOwner {
         fixedFee = fee;
     }
 
+    function withdrawFees(address receiver) external onlyOwner {
+        usdToken.transfer(receiver, usdToken.balanceOf(address(this)));
+    }
+
     function processFees(
         address transactor,
         uint marketId,
-        uint amount,
-        address synthAddress
+        uint amount
     ) external override returns (uint amountUsable, uint feesCollected) {
         require(usdToken.allowance(msg.sender, address(this)) >= amount, "Not enough allowance");
 
