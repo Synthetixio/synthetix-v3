@@ -94,7 +94,7 @@ contract CollateralModule is
     }
 
     function getCollateralValue(address collateralType) external view override returns (uint) {
-        return _getCollateralValue(collateralType);
+        return _getCollateralPrice(collateralType);
     }
 
     /////////////////////////////////////////////////

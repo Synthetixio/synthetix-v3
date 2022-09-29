@@ -149,7 +149,7 @@ contract MarketManagerMixin is MarketManagerStorage, PoolModuleStorage, Collater
         for (uint i = 0; i < depositedCollateral.length; i++) {
             DepositedCollateral memory depositedCollateral = depositedCollateral[i];
             totalDepositedCollateralValue +=
-                _getCollateralValue(depositedCollateral.collateralType) *
+                _getCollateralPrice(depositedCollateral.collateralType) *
                 depositedCollateral.amount;
         }
 
