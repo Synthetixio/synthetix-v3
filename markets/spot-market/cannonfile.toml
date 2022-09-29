@@ -1,6 +1,10 @@
 name = "spot-market"
 description = "Spot market implementation"
 
+[setting.owner]
+description = "Admin user for the system"
+defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
+
 [import.synthetix]
 source = "synthetix-main:1.0.0"
-options.owner = "<%= settings.owner %>"
+options.owner = "<%= setting.owner %>"
