@@ -56,7 +56,7 @@ describe('SpotMarket', function () {
   });
 
   it('emits event', async () => {
-    await assertEvent(synthRegisterTxn, `SynthRegistered("${expectedMarketId}")`, spotMarket);
+    await assertEvent(synthRegisterTxn, `SynthRegistered(${expectedMarketId})`, spotMarket);
   });
 
   before('connect market to pool', async () => {
@@ -98,7 +98,7 @@ describe('SpotMarket', function () {
     });
 
     it('emitted event', async () => {
-      await assertEvent(buyTxn, `SynthBought("1", "${synthMinted}", "${fee}")`, spotMarket);
+      await assertEvent(buyTxn, `SynthBought(1, ${synthMinted}, ${fee})`, spotMarket);
     });
 
     it('transferred correct amount of synth', async () => {
@@ -128,11 +128,7 @@ describe('SpotMarket', function () {
     });
 
     it('emitted sell event', async () => {
-      await assertEvent(
-        sellTxn,
-        `SynthSold("1", "${amountReceived}", "${expectedFees}")`,
-        spotMarket
-      );
+      await assertEvent(sellTxn, `SynthSold(1, ${amountReceived}, ${expectedFees})`, spotMarket);
     });
 
     it('transferred correct amount of usd', async () => {
@@ -178,7 +174,7 @@ describe('SpotMarket', function () {
     it('emits event', async () => {
       await assertEvent(
         exchangeTxn,
-        `SynthExchanged("${expectedMarketId}", "${idiotMarketId}", "${synthReceived}", "${expectedFees}")`,
+        `SynthExchanged(${expectedMarketId}, ${idiotMarketId}, ${synthReceived}, ${expectedFees})`,
         spotMarket
       );
     });

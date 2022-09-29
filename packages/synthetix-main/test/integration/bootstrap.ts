@@ -1,7 +1,6 @@
 import hre from 'hardhat';
 import { ChainBuilderContext } from '@usecannon/builder';
 import { ethers } from 'ethers';
-import path from 'path';
 
 import { snapshotCheckpoint } from '../utils';
 
@@ -17,8 +16,7 @@ async function loadSystems(
   for (const proxyName of proxies) {
     const { address, abi } = contracts[proxyName];
     const name = proxyName.slice(0, -5); // remove "Proxy" from the end
-    const system = name.match(/[^.]*$/)?.toString();
-    systems[system ?? name] = new ethers.Contract(address, abi, provider);
+    systems[name] = new ethers.Contract(address, abi, provider);
   }
 
   return systems;
@@ -28,7 +26,7 @@ let provider: ethers.providers.JsonRpcProvider;
 
 let signers: ethers.Signer[];
 
-let systems: { [key: string]: ethers.Contract };
+let systems: Record<string, ethers.Contract>;
 
 let baseSystemSnapshot: unknown;
 
@@ -50,8 +48,14 @@ before(async function () {
   }
 
   baseSystemSnapshot = await provider.send('evm_snapshot', []);
+  const { outputs } = cannonInfo;
 
-  systems = await loadSystems(cannonInfo.outputs.contracts, provider);
+  // load local and imported contracts
+  const contracts = {
+    ...(outputs.contracts ?? {}),
+    ...(outputs.imports?.synthetix?.contracts ?? {}),
+  };
+  systems = await loadSystems(contracts, provider);
 
   console.log('completed initial bootstrap');
 });
@@ -118,7 +122,7 @@ export function bootstrapWithStakedPool() {
     await r
       .systems()
       .Core.connect(owner)
-      .createPool(1, await owner.getAddress());
+      .createPool(poolId, await owner.getAddress());
 
     // create user account
     await r.systems().Core.connect(user1).createAccount(accountId);
