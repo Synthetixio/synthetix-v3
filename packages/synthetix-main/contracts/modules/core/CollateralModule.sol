@@ -135,7 +135,7 @@ contract CollateralModule is
         external
         view
         override
-        returns (uint256 totalStaked, uint256 totalAssigned)
+        returns (uint256 totalDeposited, uint256 totalAssigned)
     //uint256 totalLocked,
     //uint256 totalEscrowed
     {
