@@ -94,7 +94,7 @@ contract CollateralModule is
     }
 
     function getCollateralValue(address collateralType) external view override returns (uint) {
-        return _getCollateralValue(collateralType);
+        return _getCollateralPrice(collateralType);
     }
 
     /////////////////////////////////////////////////
@@ -118,13 +118,11 @@ contract CollateralModule is
         address collateralType,
         uint amount
     ) public override onlyWithPermission(accountId, _WITHDRAW_PERMISSION) {
-        uint256 availableCollateral = getAccountAvailableCollateral(accountId, collateralType);
+        CollateralData storage collateralData = _collateralStore().collateralDataByAccountId[accountId][collateralType];
 
-        if (availableCollateral < amount) {
+        if (collateralData.availableAmount < amount) {
             revert InsufficientAccountCollateral(accountId, collateralType, amount);
         }
-
-        CollateralData storage collateralData = _collateralStore().collateralDataByAccountId[accountId][collateralType];
 
         collateralData.availableAmount -= amount;
 
@@ -137,7 +135,7 @@ contract CollateralModule is
         external
         view
         override
-        returns (uint256 totalStaked, uint256 totalAssigned)
+        returns (uint256 totalDeposited, uint256 totalAssigned)
     //uint256 totalLocked,
     //uint256 totalEscrowed
     {

@@ -87,7 +87,7 @@ contract PoolMixin is PoolModuleStorage, VaultStorage, MarketManagerMixin {
         VaultEpochData storage epochData = vaultData.epochData[vaultData.epoch];
 
         // update vault collateral price
-        uint collateralPrice = _getCollateralValue(collateralType);
+        uint collateralPrice = _getCollateralPrice(collateralType);
 
         uint liquidityMultiplier = epochData.liquidityMultiplier;
 
@@ -194,7 +194,7 @@ contract PoolMixin is PoolModuleStorage, VaultStorage, MarketManagerMixin {
         VaultData storage vaultData = _vaultStore().vaults[poolId][collateralType];
         VaultEpochData storage epochData = vaultData.epochData[vaultData.epoch];
 
-        uint collateralPrice = _getCollateralValue(collateralType);
+        uint collateralPrice = _getCollateralPrice(collateralType);
 
         collateralAmount = uint(epochData.collateralDist.getActorValue(bytes32(accountId)));
         collateralValue = collateralPrice.mulDecimal(collateralAmount);
@@ -241,6 +241,6 @@ contract PoolMixin is PoolModuleStorage, VaultStorage, MarketManagerMixin {
         VaultEpochData storage epochData = vaultData.epochData[vaultData.epoch];
 
         collateralAmount = uint(epochData.collateralDist.totalValue());
-        collateralValue = _getCollateralValue(collateralType).mulDecimal(collateralAmount);
+        collateralValue = _getCollateralPrice(collateralType).mulDecimal(collateralAmount);
     }
 }
