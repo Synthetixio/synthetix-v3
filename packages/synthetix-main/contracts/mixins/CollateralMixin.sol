@@ -118,4 +118,15 @@ contract CollateralMixin is CollateralStorage, VaultStorage {
             collateralData.availableAmount += amount;
         }
     }
+
+    function _setDelegatePoolId(
+        uint accountId,
+        uint poolId,
+        address collateralType
+    ) internal {
+        CollateralData storage stakedCollateral = _collateralStore().collateralDataByAccountId[accountId][collateralType];
+        if (!stakedCollateral.pools.contains(poolId)) {
+            stakedCollateral.pools.add(poolId);
+        }
+    }
 }
