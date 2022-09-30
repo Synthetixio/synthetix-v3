@@ -5,16 +5,14 @@ import "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
 
 contract ReducerStorage {
     struct ReducerStore {
-         mapping(bytes32 => NodeDefenition) defs
+        mapping(bytes32 => NodeDefenition)
     }
 
     struct NodeDefenition {
         bytes32[] parents;
-        // uint nodeType => define enum 
+        // uint nodeType => define enum exteranl
         uint[] parameters
     }
-
-    params = [int(myEnum.max), int(myEnum.min)]
 
     struct NodeData {
         uint price;
@@ -30,3 +28,5 @@ contract ReducerStorage {
         }
     }
 }
+
+[]
