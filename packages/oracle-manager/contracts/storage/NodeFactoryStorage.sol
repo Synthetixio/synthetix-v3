@@ -1,17 +1,22 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
-
-contract ReducerStorage {
-    struct ReducerStore {
-        mapping(bytes32 => NodeDefenition)
+contract NodeFactoryStorage {
+    enum NodeType {
+        REDUCER,
+        EXTERNAL,
+        CHAINLINK,
+        UNISWAP
     }
 
     struct NodeDefenition {
         bytes32[] parents;
-        // uint nodeType => define enum exteranl
-        uint[] parameters
+        NodeType nodeType;
+        bytes parameters;
+    }
+
+    struct NodeFactoryStore {
+        mapping(bytes32 => NodeDefenition) nodes;
     }
 
     struct NodeData {
@@ -21,12 +26,10 @@ contract ReducerStorage {
         uint liquidityScore;
     }
 
-    function _reducerStore() internal pure returns (ReducerStore storage store) {
+    function _nodeFactoryStore() internal pure returns (NodeFactoryStore storage store) {
         assembly {
             // bytes32(uint(keccak256("io.synthetix.snx.accountmodule")) - 1)
             store.slot := 0xa02d1156ddedf1a9cbc88cd7ce7868a5600323fb301d1e51e70fd83a1b670815
         }
     }
 }
-
-[]
