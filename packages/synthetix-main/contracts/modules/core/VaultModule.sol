@@ -100,6 +100,7 @@ contract VaultModule is IVaultModule, AssociatedSystemsMixin, OwnableMixin {
             // no update for usd because no usd issued
             collateralPrice = pool.recalculateVaultCollateral(collateralType);
         }
+        _setDelegatePoolId(accountId, poolId, collateralType);
 
         // this is the most efficient time to check the resulting collateralization ratio, since
         // user's debt and collateral price have been fully updated
@@ -132,6 +133,8 @@ contract VaultModule is IVaultModule, AssociatedSystemsMixin, OwnableMixin {
 
         int newDebt = debt + int(amount);
 
+        require(newDebt > debt, "Incorrect new debt");
+
         if (newDebt > 0) {
             _verifyCollateralRatio(collateralType, uint(newDebt), collateralValue);
         }
@@ -140,6 +143,7 @@ contract VaultModule is IVaultModule, AssociatedSystemsMixin, OwnableMixin {
 
         epoch.usdDebtDist.updateActorValue(bytes32(uint(accountId)), newDebt);
         pool.recalculateVaultCollateral(collateralType);
+        require(int(amount) == int128(int(amount)), "Incorrect amount specified");
         _getToken(_USD_TOKEN).mint(msg.sender, amount);
 
         emit UsdMinted(accountId, poolId, collateralType, amount, msg.sender);
@@ -248,6 +252,17 @@ contract VaultModule is IVaultModule, AssociatedSystemsMixin, OwnableMixin {
 
         if (debt != 0 && collateralValue.divDecimal(debt) < config.targetCRatio) {
             revert InsufficientCollateralRatio(collateralValue, debt, collateralValue.divDecimal(debt), config.targetCRatio);
+        }
+    }
+
+    function _setDelegatePoolId(
+        uint accountId,
+        uint poolId,
+        address collateralType
+    ) internal {
+        Collateral.Data storage stakedCollateral = Collateral.load(collateralType);
+        if (!stakedCollateral.pools.contains(poolId)) {
+            stakedCollateral.pools.add(poolId);
         }
     }
 

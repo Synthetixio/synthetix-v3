@@ -160,7 +160,7 @@ describe('MarketCollateralModule', function () {
 
         // Retrieve collateral value
         const collateralValue = (
-          await systems().Core.connect(user1).getCollateralValue(collateralAddress())
+          await systems().Core.connect(user1).getCollateralPrice(collateralAddress())
         ).mul(1000);
 
         // getWithdrawableUsd increases by the collateral value

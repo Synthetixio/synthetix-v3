@@ -73,20 +73,6 @@ library CollateralConfiguration {
     }
 
     function getCollateralPrice(Data storage self) internal view returns (uint) {
-        if (!self.stakingEnabled) {
-            revert InvalidCollateral(self.tokenAddress);
-        }
-
-        (, int256 answer, , , ) = IAggregatorV3Interface(self.priceFeed).latestRoundData();
-
-        // sanity check
-        // TODO: this will be removed when we get the oracle manager
-        require(answer > 0, "The collateral value is 0");
-
-        return uint(answer);
-    }
-
-    function getCollateralValue(Data storage self) internal view returns (uint) {
         (, int256 answer, , , ) = IAggregatorV3Interface(self.priceFeed).latestRoundData();
 
         // sanity check

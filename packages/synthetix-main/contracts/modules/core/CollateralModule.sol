@@ -86,8 +86,8 @@ contract CollateralModule is ICollateralModule, OwnableMixin, AssociatedSystemsM
         return CollateralConfiguration.load(collateralType);
     }
 
-    function getCollateralValue(address collateralType) external view override returns (uint) {
-        return CollateralConfiguration.getCollateralValue(CollateralConfiguration.load(collateralType));
+    function getCollateralPrice(address collateralType) external view override returns (uint) {
+        return CollateralConfiguration.getCollateralPrice(CollateralConfiguration.load(collateralType));
     }
 
     /////////////////////////////////////////////////
@@ -128,7 +128,7 @@ contract CollateralModule is ICollateralModule, OwnableMixin, AssociatedSystemsM
         external
         view
         override
-        returns (uint256 totalStaked, uint256 totalAssigned)
+        returns (uint256 totalDeposited, uint256 totalAssigned)
     //uint256 totalLocked,
     //uint256 totalEscrowed
     {

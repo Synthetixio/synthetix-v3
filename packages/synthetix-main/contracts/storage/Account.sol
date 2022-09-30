@@ -48,17 +48,15 @@ library Account {
     function getAssignedCollateral(Data storage self, address collateralType) internal view returns (uint) {
         uint totalAssigned = 0;
 
-        uint[] memory pools = self.collaterals[collateralType].pools.values();
+        SetUtil.UintSet storage pools = self.collaterals[collateralType].pools;
 
-        console.log("GETTING ASSIGNED", pools.length);
-        for (uint i = 0; i < pools.length; i++) {
-            uint128 poolIdx = uint128(pools[i]);
+        for (uint i = 1; i <= pools.length(); i++) {
+            uint128 poolIdx = pools.valueAt(i);
 
             Pool.Data storage pool = Pool.load(poolIdx);
 
             (uint collateralAmount, , ) = pool.currentAccountCollateral(collateralType, self.id);
             totalAssigned += collateralAmount;
-            console.log("ASSIGNED", collateralAmount, self.id);
         }
 
         return totalAssigned;

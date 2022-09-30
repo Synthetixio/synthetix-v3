@@ -104,7 +104,7 @@ library Market {
         for (uint i = 0; i < self.depositedCollateral.length; i++) {
             DepositedCollateral memory depositedCollateral = self.depositedCollateral[i];
             totalDepositedCollateralValue +=
-                CollateralConfiguration.getCollateralValue(
+                CollateralConfiguration.getCollateralPrice(
                     CollateralConfiguration.load(depositedCollateral.collateralType)
                 ) *
                 depositedCollateral.amount;
