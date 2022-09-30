@@ -5,18 +5,19 @@ import "../../storage/ReducerStorage.sol";
 import "../../interfaces/IReducerModule.sol";
 
 contract ReducerModule is IReducerModule, ReducerStorage {
-    constructor(address[] memory nodes) {
-        _reducerStore().reducers = nodes;
-    }
+    // function configure(NodeDefenition storage nodeDefStorage) {
+        
+    // } 
 
-    function getPrice() external returns (NodeData memory price) {
-        address[] storage reducers = _reducerStore().reducers;
-        NodeData[] memory prices = new NodeData[](reducers.length);
-        for (uint256 i = 0; i < reducers.length; i++) {
-            NodeData memory result = IReducerModule(reducers[i]).getPrice();
-            prices[i] = result;
-        }
-        price = _processNode(prices);
+    function getPrice(uint[] memory parameters, NodeData[] memory prices) external returns (NodeData memory price) {
+        // address[] storage reducers = _reducerStore().reducers;
+        // NodeData[] memory prices = new NodeData[](reducers.length);
+        // for (uint256 i = 0; i < reducers.length; i++) {
+        //     NodeData memory result = IReducerModule(reducers[i]).getPrice();
+        //     prices[i] = result;
+        // }
+        // price = _processNode(prices);
+        switch()
     }
 
     function _processNode(NodeData[] memory prices) internal pure returns (NodeData memory price) {
