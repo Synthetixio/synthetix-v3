@@ -2,14 +2,14 @@ pragma solidity ^0.8.0;
 
 import "@synthetixio/core-contracts/contracts/interfaces/IERC20.sol";
 import "@synthetixio/core-contracts/contracts/utils/MathUtil.sol";
-import "../interfaces/external/IMarketFeeManager.sol";
+import "../interfaces/external/IMarketFee.sol";
 import "../interfaces/ISynth.sol";
 import "../interfaces/ISpotMarket.sol";
 
 /* 
     Fixed Fee mechanism for Spot Market
 */
-contract FixedFeeManager is IMarketFeeManager {
+contract FixedFee is IMarketFee {
     using MathUtil for uint256;
 
     address public owner;

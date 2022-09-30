@@ -2,6 +2,28 @@ name = "spot-market"
 version = "<%= package.version %>"
 description = "Spot market implementation"
 
+[setting.marketOwner]
+description = "spot market and fixed fee manager owner"
+defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
+
 [import.synthetix]
 source = "synthetix-main:1.0.0"
-options.owner = "<%= settings.owner %>"
+
+[contract.FixedFee]
+artifact = "FixedFee"
+args = [
+  "<%= settings.marketOwner %>",
+  "<%= imports.synthetix.contracts.USDProxy.address %>",
+  "<%= imports.synthetix.contracts.CoreProxy.address %>",
+  "20",
+]
+depends = ["import.synthetix"]
+
+[contract.SpotMarket]
+artifact = "SpotMarket"
+args = [
+  "<%= settings.marketOwner %>",
+  "<%= imports.synthetix.contracts.CoreProxy.address %>",
+  "<%= imports.synthetix.contracts.USDProxy.address %>"
+]
+depends = ["contract.FixedFee"]

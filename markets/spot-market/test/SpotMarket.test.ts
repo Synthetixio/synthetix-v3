@@ -10,7 +10,7 @@ describe('SpotMarket', function () {
   const expectedMarketId = 1;
 
   let owner: Ethers.Signer, staker1: Ethers.Signer, marketOwner: Ethers.Signer;
-  let fixedFeeManager: Ethers.Contract, spotMarket: Ethers.Contract;
+  let fixedFee: Ethers.Contract, spotMarket: Ethers.Contract;
   let collateralAddress: string;
 
   before('identify collateral address', () => {
@@ -22,8 +22,8 @@ describe('SpotMarket', function () {
   });
 
   before('deploy fee manager', async () => {
-    const factory = await ethers.getContractFactory('FixedFeeManager');
-    fixedFeeManager = await factory
+    const factory = await ethers.getContractFactory('FixedFee');
+    fixedFee = await factory
       .connect(marketOwner)
       .deploy(await marketOwner.getAddress(), systems().USD.address, systems().Core.address, 20);
   });
@@ -45,13 +45,7 @@ describe('SpotMarket', function () {
     synthRegisterTxn = await (
       await spotMarket
         .connect(marketOwner)
-        .registerSynth(
-          name,
-          symbol,
-          decimals,
-          Ethers.constants.AddressZero,
-          fixedFeeManager.address
-        )
+        .registerSynth(name, symbol, decimals, Ethers.constants.AddressZero, fixedFee.address)
     ).wait();
   });
 
@@ -152,7 +146,7 @@ describe('SpotMarket', function () {
             'sIDIOT',
             18,
             Ethers.constants.AddressZero,
-            fixedFeeManager.address
+            fixedFee.address
           )
       ).wait();
     });
