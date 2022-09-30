@@ -1,8 +1,8 @@
 pragma solidity ^0.8.0;
 
-import "@synthetixio/market-fee-manager/interfaces/IMarketFeeManager.sol";
 import "@synthetixio/core-contracts/contracts/interfaces/IERC20.sol";
 import "@synthetixio/core-contracts/contracts/utils/MathUtil.sol";
+import "../interfaces/external/IMarketFeeManager.sol";
 import "../interfaces/ISynth.sol";
 import "../interfaces/ISpotMarket.sol";
 
