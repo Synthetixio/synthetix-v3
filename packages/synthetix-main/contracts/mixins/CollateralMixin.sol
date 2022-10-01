@@ -44,16 +44,16 @@ contract CollateralMixin is CollateralStorage, VaultStorage {
     function _getAccountCollateralTotals(uint accountId, address collateralType)
         internal
         view
-        returns (uint256 totalDeposited, uint256 totalAssigned)
+        returns (uint256 totalDeposited, uint256 totalAssigned, uint256 totalLocked)
     {
         CollateralData storage stakedCollateral = _collateralStore().collateralDataByAccountId[accountId][collateralType];
 
         totalAssigned = _getAccountAssignedCollateral(accountId, collateralType);
         totalDeposited = totalAssigned + stakedCollateral.availableAmount;
-        //totalLocked = _getTotalLocked(stakedCollateral.locks);
+        totalLocked = _getTotalLocked(stakedCollateral.locks);
         //totalEscrowed = _getLockedEscrow(stakedCollateral.escrow);
 
-        return (totalDeposited, totalAssigned); //, totalLocked, totalEscrowed);
+        return (totalDeposited, totalAssigned, totalLocked); //, totalEscrowed);
     }
 
     function _getAccountUnassignedCollateral(uint accountId, address collateralType) internal view returns (uint) {

@@ -7,8 +7,10 @@ import "synthetix/contracts/interfaces/IAddressResolver.sol";
 import "synthetix/contracts/interfaces/ILiquidatorRewards.sol";
 import "synthetix/contracts/interfaces/IIssuer.sol";
 import "synthetix/contracts/interfaces/ISynthetixDebtShare.sol";
-import "synthetix/contracts/interfaces/ISynthetix.sol";
 
+
+import "./interfaces/ISynthetix.sol";
+import "./interfaces/IRewardEscrowV2.sol";
 import "./interfaces/IV3CoreProxy.sol";
 
 import "@synthetixio/core-contracts/contracts/ownership/Ownable.sol";
@@ -90,31 +92,32 @@ contract LegacyMarket is Ownable, IMarket {
     }
 
     function _migrate(address staker, uint128 accountId) internal {
+        ISynthetix oldSynthetix = ISynthetix(v2xResolver.getAddress("ProxySynthetix"));
 
-        ILiquidatorRewards(v2xResolver.getAddress("LiquidatorRewards")).getReward(staker);
+        VestingEntries.VestingEntryWithID[] memory oldEscrows = IRewardEscrowV2(v2xResolver.getAddress("RewardEscrowV2")).getVestingSchedules(
+            staker,
+            0,
+            1000
+        );
 
-        IERC20 oldSynthetix = IERC20(v2xResolver.getAddress("ProxySynthetix"));
-
-        ISynthetixDebtShare oldDebtShares = ISynthetixDebtShare(v2xResolver.getAddress("SynthetixDebtShare"));
-
-        uint collateralMigrated = oldSynthetix.balanceOf(staker);
-        uint debtSharesMigrated = oldDebtShares.balanceOf(staker);
-
-        if (collateralMigrated == 0 || debtSharesMigrated == 0) {
-            revert NothingToMigrate();
-        }
-
-        uint debtValueMigrated = _calculateDebtValueMigrated(debtSharesMigrated);
-
-        // transfer debt shares first so we can remove SNX from user's account
-        oldDebtShares.transferFrom(staker, address(this), debtSharesMigrated);
-
-        oldSynthetix.transferFrom(staker, address(this), collateralMigrated);
+        // transfer all collateral from the user to our account
+        (uint collateralMigrated, uint debtValueMigrated) = _gatherFromV2x(staker);
 
         v3System.createAccount(accountId);
 
         v3System.depositCollateral(accountId, address(oldSynthetix), collateralMigrated);
 
+        uint curTime = block.timestamp;
+        for (uint i = 0;i < oldEscrows.length;i++) {
+            if (oldEscrows[i].endTime > curTime) {
+                v3System.createLock(
+                    accountId,
+                    address(oldSynthetix),
+                    oldEscrows[i].escrowAmount,
+                    oldEscrows[i].endTime
+                );
+            }
+        }
 
         uint128 preferredPoolId = v3System.getPreferredPool();
 
@@ -125,8 +128,6 @@ contract LegacyMarket is Ownable, IMarket {
             collateralMigrated,
             MathUtil.UNIT
         );
-
-        console.log("associated");
 
         v3System.associateDebt(
             marketId,
@@ -139,6 +140,32 @@ contract LegacyMarket is Ownable, IMarket {
         IERC721(v3System.getAccountTokenAddress()).safeTransferFrom(address(this), staker, accountId);
 
         emit AccountMigrated(staker, accountId, collateralMigrated, debtValueMigrated);
+    }
+
+    function _gatherFromV2x(address staker) internal returns (uint totalCollateralAmount, uint totalDebtAmount) {
+        ISynthetix oldSynthetix = ISynthetix(v2xResolver.getAddress("ProxySynthetix"));
+        ISynthetixDebtShare oldDebtShares = ISynthetixDebtShare(v2xResolver.getAddress("SynthetixDebtShare"));
+
+        // ensure liquidator rewards are collected
+        ILiquidatorRewards(v2xResolver.getAddress("LiquidatorRewards")).getReward(staker);
+
+        uint unlockedSnx = IERC20(address(oldSynthetix)).balanceOf(staker);
+        totalCollateralAmount = ISynthetix(v2xResolver.getAddress("Synthetix")).collateral(staker);
+        uint debtSharesMigrated = oldDebtShares.balanceOf(staker);
+
+        if (totalCollateralAmount == 0 || debtSharesMigrated == 0) {
+            revert NothingToMigrate();
+        }
+
+        totalDebtAmount = _calculateDebtValueMigrated(debtSharesMigrated);
+
+        // transfer debt shares first so we can remove SNX from user's account
+        oldDebtShares.transferFrom(staker, address(this), debtSharesMigrated);
+
+        IERC20(address(oldSynthetix)).transferFrom(staker, address(this), unlockedSnx);
+
+        // all escrow should be revoked
+        ISynthetix(v2xResolver.getAddress("Synthetix")).revokeAllEscrow(staker);
     }
 
     function setPauseStablecoinConversion(bool paused) external onlyOwner {

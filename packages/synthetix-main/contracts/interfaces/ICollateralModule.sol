@@ -100,13 +100,31 @@ interface ICollateralModule {
         view
         returns (
             uint totalDeposited,
-            uint totalAssigned
-            //uint totalLocked,
+            uint totalAssigned,
+            uint totalLocked
             //uint totalEscrowed
         );
 
     /// @notice Returns the amount of collateral of type `collateralType` deposited with account `accountId` that can be withdrawn or delegated.
     function getAccountAvailableCollateral(uint accountId, address collateralType) external view returns (uint);
+
+    /// @notice Clean expired locks from locked collateral arrays for an account/collateral type. It includes offset and items to prevent gas exhaustion. If both, offset and items, are 0 it will traverse the whole array (unlimited)
+    /// @dev DEPENDENT ON 305
+    function cleanExpiredLocks(
+        uint accountId,
+        address collateralType,
+        uint offset,
+        uint items
+    ) external;
+    
+    /// @notice Create a new lock on the given account. you must have `admin` permission on the specified account to create a lock.
+    /// There is currently no benefit to calling this function. it is simply for allowing pre-created accounts to have locks on them if your protocol requires it.
+    function createLock(
+        uint accountId,
+        address collateralType,
+        uint amount,
+        uint64 expireTimestamp
+    ) external;
 
     /*
     /// @notice Returns the amount of collateral of type `collateralType` staked with account `accountId` that can be unstaked.
@@ -117,14 +135,6 @@ interface ICollateralModule {
     /// @dev DEPENDENT ON 305 (Would be combined with `getAccountUnstakebleCollateral` into `getAccountAvailableCollateral`)
     function getAccountUnassignedCollateral(uint accountId, address collateralType) external view returns (uint);
 
-    /// @notice Clean expired locks from locked collateral arrays for an account/collateral type. It includes offset and items to prevent gas exhaustion. If both, offset and items, are 0 it will traverse the whole array (unlimited)
-    /// @dev DEPENDENT ON 305
-    function cleanExpiredLocks(
-        uint accountId,
-        address collateralType,
-        uint offset,
-        uint items
-    ) external;
 
     /// @notice Redeems the system escrow tokens into reward tokens
     /// @dev DEPENDENT ON 305

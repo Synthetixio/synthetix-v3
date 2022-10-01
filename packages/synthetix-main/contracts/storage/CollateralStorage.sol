@@ -33,7 +33,7 @@ contract CollateralStorage {
         uint256 availableAmount; // adjustable (stake/unstake)
         //CurvesLibrary.PolynomialCurve escrow;
         uint[] pools;
-        //StakedCollateralLock[] locks;
+        CollateralLock[] locks;
     }
 
     struct CollateralLock {

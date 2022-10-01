@@ -14,6 +14,8 @@ interface IV3CoreProxy {
         uint amount
     ) external;
 
+    
+
     function delegateCollateral(
         uint accountId,
         uint poolId,
@@ -27,4 +29,11 @@ interface IV3CoreProxy {
     function getAccountTokenAddress() external returns (address);
 
     function getPreferredPool() external returns (uint128);
+
+    function createLock(
+        uint accountId,
+        address collateralType,
+        uint amount,
+        uint64 expireTimestamp
+    ) external;
 }
