@@ -32,6 +32,10 @@ contract ERC721 is IERC721, IERC721Metadata, ERC721Storage {
             revert InitError.AlreadyInitialized();
         }
 
+        if (bytes(tokenName).length == 0 || bytes(tokenSymbol).length == 0) {
+            revert InitError.InvalidParameters();
+        }
+
         store.name = tokenName;
         store.symbol = tokenSymbol;
         store.baseTokenURI = baseTokenURI;
@@ -46,7 +50,7 @@ contract ERC721 is IERC721, IERC721Metadata, ERC721Storage {
 
     function balanceOf(address holder) public view virtual override returns (uint) {
         if (holder == address(0)) {
-            revert AddressError.ZeroAddress();
+            return 0;
         }
 
         return _erc721Store().balanceOf[holder];
@@ -54,7 +58,7 @@ contract ERC721 is IERC721, IERC721Metadata, ERC721Storage {
 
     function ownerOf(uint256 tokenId) public view virtual override returns (address) {
         if (!_exists(tokenId)) {
-            revert TokenDoesNotExist(tokenId);
+            return address(0);
         }
 
         return _erc721Store().ownerOf[tokenId];
@@ -70,7 +74,7 @@ contract ERC721 is IERC721, IERC721Metadata, ERC721Storage {
 
     function tokenURI(uint256 tokenId) external view virtual override returns (string memory) {
         if (!_exists(tokenId)) {
-            revert TokenDoesNotExist(tokenId);
+            return "";
         }
 
         string memory baseURI = _erc721Store().baseTokenURI;
@@ -167,6 +171,10 @@ contract ERC721 is IERC721, IERC721Metadata, ERC721Storage {
         ERC721Store storage store = _erc721Store();
         if (to == address(0)) {
             revert AddressError.ZeroAddress();
+        }
+
+        if (tokenId == 0) {
+            revert InitError.InvalidParameters();
         }
 
         if (_exists(tokenId)) {

@@ -62,7 +62,7 @@ contract AssignDebtModule is
         int updatedDebt = epochData.usdDebtDist.getActorValue(actorId) + int(amount);
 
         // verify the c ratio
-        _verifyCollateralRatio(collateralType, uint(updatedDebt > 0 ? updatedDebt : int(0)), _getCollateralValue(collateralType)
+        _verifyCollateralRatio(collateralType, uint(updatedDebt > 0 ? updatedDebt : int(0)), _getCollateralPrice(collateralType)
             .mulDecimal(uint(epochData.collateralDist.getActorValue(actorId))));
 
         epochData.usdDebtDist.updateActorValue(actorId, updatedDebt);

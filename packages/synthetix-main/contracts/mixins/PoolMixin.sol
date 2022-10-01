@@ -9,7 +9,7 @@ import "../mixins/MarketManagerMixin.sol";
 import "../storage/PoolModuleStorage.sol";
 import "../storage/VaultStorage.sol";
 
-contract PoolMixin is PoolModuleStorage, VaultStorage, CollateralMixin, MarketManagerMixin {
+contract PoolMixin is PoolModuleStorage, VaultStorage, MarketManagerMixin {
     using SetUtil for SetUtil.AddressSet;
     using SetUtil for SetUtil.Bytes32Set;
     using MathUtil for uint256;
@@ -99,7 +99,7 @@ contract PoolMixin is PoolModuleStorage, VaultStorage, CollateralMixin, MarketMa
         VaultEpochData storage epochData = vaultData.epochData[vaultData.epoch];
 
         // update vault collateral price
-        uint collateralPrice = _getCollateralValue(collateralType);
+        uint collateralPrice = _getCollateralPrice(collateralType);
 
         uint liquidityMultiplier = epochData.liquidityMultiplier;
 
@@ -206,7 +206,7 @@ contract PoolMixin is PoolModuleStorage, VaultStorage, CollateralMixin, MarketMa
         VaultData storage vaultData = _vaultStore().vaults[poolId][collateralType];
         VaultEpochData storage epochData = vaultData.epochData[vaultData.epoch];
 
-        uint collateralPrice = _getCollateralValue(collateralType);
+        uint collateralPrice = _getCollateralPrice(collateralType);
 
         collateralAmount = uint(epochData.collateralDist.getActorValue(bytes32(accountId)));
         collateralValue = collateralPrice.mulDecimal(collateralAmount);
@@ -253,6 +253,6 @@ contract PoolMixin is PoolModuleStorage, VaultStorage, CollateralMixin, MarketMa
         VaultEpochData storage epochData = vaultData.epochData[vaultData.epoch];
 
         collateralAmount = uint(epochData.collateralDist.totalValue());
-        collateralValue = _getCollateralValue(collateralType).mulDecimal(collateralAmount);
+        collateralValue = _getCollateralPrice(collateralType).mulDecimal(collateralAmount);
     }
 }

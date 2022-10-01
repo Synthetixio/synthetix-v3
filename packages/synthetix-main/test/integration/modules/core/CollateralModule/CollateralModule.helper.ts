@@ -59,7 +59,7 @@ export async function verifyCollateral(
   assert.equal(collateralType.priceFeed, CollateralPriceFeed.address);
   assertBn.equal(collateralType.targetCRatio, expectedCRatio);
   assertBn.equal(collateralType.minimumCRatio, expectedMinimumCRatio);
-  assert.equal(collateralType.enabled, expectedToBeEnabled);
+  assert.equal(collateralType.stakingEnabled, expectedToBeEnabled);
 }
 
 export async function verifyCollateralListed(

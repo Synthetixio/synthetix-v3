@@ -15,7 +15,7 @@ contract CollateralStorage {
 
     struct CollateralConfiguration {
         /// must be true for staking or collateral delegation
-        bool enabled;
+        bool stakingEnabled;
         /// accounts cannot mint sUSD if their debt brings their cratio below this value
         uint targetCRatio;
         /// accounts below the ratio specified here are immediately liquidated
@@ -32,7 +32,7 @@ contract CollateralStorage {
         bool isSet;
         uint256 availableAmount; // adjustable (stake/unstake)
         //CurvesLibrary.PolynomialCurve escrow;
-        uint[] pools;
+        SetUtil.UintSet pools;
         CollateralLock[] locks;
     }
 
