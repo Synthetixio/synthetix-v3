@@ -33,16 +33,20 @@ contract LegacyMarket is Ownable, IMarket {
 
     error NothingToMigrate();
     error InsufficientCollateralMigrated(uint amountRequested, uint amountAvailable);
+    error InvalidParameters(string param, string reason);
     error Paused();
 
     event AccountMigrated(address indexed account, uint indexed accountId, uint collateralAmount, uint debtAmount);
+    event ConvertedUSD(address indexed account, uint amount);
 
-    constructor(IAddressResolver v2xResolverAddress, IV3CoreProxy v3SystemAddress) {
+    constructor(address owner, IAddressResolver v2xResolverAddress, IV3CoreProxy v3SystemAddress) {
         v2xResolver = v2xResolverAddress;
         v3System = v3SystemAddress;
 
         marketId = v3System.registerMarket(address(this));
         IERC20(v2xResolverAddress.getAddress("ProxySynthetix")).approve(address(v3SystemAddress), type(uint).max);
+
+        _ownableStore().owner = owner;
     }
 
     function reportedDebt(uint requestedMarketId) public view returns (uint) {
@@ -66,17 +70,23 @@ contract LegacyMarket is Ownable, IMarket {
             revert Paused();
         }
 
-        if (reportedDebt(marketId) < amount) {
+        if (amount == 0) {
+            revert InvalidParameters("amount", "Should be non-zero");
+        }
+
+        if (amount > reportedDebt(marketId)) {
             revert InsufficientCollateralMigrated(amount, reportedDebt(marketId));
         }
 
         IERC20 oldUSD = IERC20(v2xResolver.getAddress("ProxysUSD"));
-        ISynthetix oldSynthetix = ISynthetix(v2xResolver.getAddress("ProxySynthetix"));
+        ISynthetix oldSynthetix = ISynthetix(v2xResolver.getAddress("Synthetix"));
 
         oldUSD.transferFrom(msg.sender, address(this), amount);
         oldSynthetix.burnSynths(amount);
 
-        v3System.withdrawUSD(marketId, msg.sender, amount);
+        v3System.withdrawUsd(uint(marketId), msg.sender, amount);
+
+        emit ConvertedUSD(msg.sender, amount);
     }
 
     function migrate(uint128 accountId) external {
@@ -164,8 +174,10 @@ contract LegacyMarket is Ownable, IMarket {
 
         IERC20(address(oldSynthetix)).transferFrom(staker, address(this), unlockedSnx);
 
-        // all escrow should be revoked
-        ISynthetix(v2xResolver.getAddress("Synthetix")).revokeAllEscrow(staker);
+        // ensure escrow should be revoked
+        if (unlockedSnx < totalCollateralAmount) {
+            ISynthetix(v2xResolver.getAddress("Synthetix")).revokeAllEscrow(staker);
+        }
     }
 
     function setPauseStablecoinConversion(bool paused) external onlyOwner {

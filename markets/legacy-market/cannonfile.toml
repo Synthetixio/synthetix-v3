@@ -8,6 +8,9 @@ defaultValue = "1"
 [setting.market_id]
 defaultValue = "1"
 
+[setting.owner]
+defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
+
 [setting.pool_owner]
 defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
 
@@ -38,6 +41,7 @@ depends = ["import.v2x", "import.v3"]
 artifact = "LegacyMarket"
 
 args = [
+    "<%= settings.owner %>",
     "<%= imports.v2x.contracts.AddressResolver.address %>",
     "<%= imports.v3.contracts.CoreProxy.address %>"
 ]
@@ -51,7 +55,8 @@ func = "importAddresses"
 args = [
     ["0x4c65676163794d61726b65740000000000000000000000000000000000000000"],
     # TODO nested interpolation
-    ["0x7dA35c7eE680A1e81eFCb2e9edD0c8D039D5211e"]
+    ["<%= contracts.market.address %>"]
+    #["0x7dA35c7eE680A1e81eFCb2e9edD0c8D039D5211e"]
 ]
 
 fromCall.func = "owner"

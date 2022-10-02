@@ -3,8 +3,12 @@ pragma solidity ^0.8.0;
 
 interface IV3CoreProxy {
     function registerMarket(address marketAddress) external returns (uint128);
-
-    function withdrawUSD(uint256 marketId, address to, uint amount) external;
+    
+    function withdrawUsd(
+        uint marketId,
+        address target,
+        uint amount
+    ) external;
 
     function createAccount(uint256 requestedAccountId) external;
 

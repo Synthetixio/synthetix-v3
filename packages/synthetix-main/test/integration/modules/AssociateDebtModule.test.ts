@@ -15,13 +15,12 @@ describe('AssociateDebtModule', function () {
     MockMarket,
     marketId,
     depositAmount,
-    restore,
   } = bootstrapWithMockMarketAndPool();
 
-  let owner: ethers.Signer, user1: ethers.Signer, user2: ethers.Signer;
+  let user1: ethers.Signer, user2: ethers.Signer;
 
   before('identify signers', async () => {
-    [owner, user1, user2] = signers();
+    [, user1, user2] = signers();
   });
 
   describe('associateDebt()', () => {
