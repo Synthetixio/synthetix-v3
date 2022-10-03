@@ -4,7 +4,7 @@ pragma solidity >=0.8.0;
 import "../storage/NodeFactoryStorage.sol";
 
 library ExternalNodeLibrary {
-    function proccess(NodeFactoryStorage.NodeData[] memory prices, bytes memory parameters)
+    function process(NodeFactoryStorage.NodeData[] memory prices, bytes memory parameters)
         internal
         pure
         returns (NodeFactoryStorage.NodeData memory)

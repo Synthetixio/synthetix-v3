@@ -9,14 +9,14 @@ contract NodeFactoryStorage {
         UNISWAP
     }
 
-    struct NodeDefenition {
+    struct NodeDefinition {
         bytes32[] parents;
         NodeType nodeType;
         bytes parameters;
     }
 
     struct NodeFactoryStore {
-        mapping(bytes32 => NodeDefenition) nodes;
+        mapping(bytes32 => NodeDefinition) nodes;
     }
 
     struct NodeData {
