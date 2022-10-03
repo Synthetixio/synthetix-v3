@@ -9,8 +9,7 @@ library ReducerNodeLibrary {
         MIN
     }
 
-
-    function proccess(NodeFactoryStorage.NodeData[] memory prices, bytes memory parameters)
+    function process(NodeFactoryStorage.NodeData[] memory prices, bytes memory parameters)
         internal
         pure
         returns (NodeFactoryStorage.NodeData memory)
@@ -22,17 +21,14 @@ library ReducerNodeLibrary {
         // uint volatilityScore;
         // uint liquidityScore;
         // [priceAction, timestampAction, volatilityScoreAction, liquidityScoreAction] = parameters;
-
         // NodeFactoryStorage.NodeData memory output;
         // for(uint i = 0; i < prices.length; i++) {
         //     if(parameters[0] == Operations.MAX) {
-        //         output.price = 
+        //         output.price =
         //     }
         // }
-
         // output.price = 1000 uniswap;
         // output.timestamp = 10 chainlinks;
-
         // return output;
     }
 
@@ -44,5 +40,4 @@ library ReducerNodeLibrary {
         // exp: finds the max price
         price = prices[0];
     }
-    
 }
