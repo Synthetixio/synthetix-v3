@@ -10,6 +10,8 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: 18
+          cache: 'npm'
+          cache-dependency-path: '**/package-lock.json'
 
       # Step necessary for making sure that the developer correctly updated
       # dependencies using npm workspaces, e.g.: npm i -w packages/core-utils some-dependency
