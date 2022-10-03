@@ -39,21 +39,21 @@ describe('AssociateDebtModule', function () {
     // TODO: the errors are not being properly parsed by ethers (or cannon) here for some reason...
     it('only works when the market is actually included in the pool', async () => {
       await assertRevert(
-        await MockMarket()
+        MockMarket()
           .connect(user2)
           .callAssociateDebt(828374, collateralAddress(), accountId, amount)
-        /*`NotFundedByPool("${marketId()}", "828374")`,
-        systems().Core*/
+        //`NotFundedByPool("${marketId()}", "828374")`,
+        //systems().Core
       );
     });
 
     it('only works when the target account has enough collateral', async () => {
       await assertRevert(
-        await MockMarket()
+        MockMarket()
           .connect(user2)
           .callAssociateDebt(poolId, collateralAddress(), accountId, amount.mul(100000000))
-        /*`InsufficientCollateralRatio`,
-        systems().Core*/
+        //`InsufficientCollateralRatio`,
+        //systems().Core
       );
     });
 
