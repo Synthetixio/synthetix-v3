@@ -5,6 +5,8 @@ import "../../storage/NodeFactoryStorage.sol";
 import "../../interfaces/INodeFactoryModule.sol";
 import "../../utils/ReducerNodeLibrary.sol";
 import "../../utils/ExternalNodeLibrary.sol";
+import "../../utils/ChainlinkNodeLibrary.sol";
+import "../../utils/PythNodeLibrary.sol";
 
 contract NodeFactoryModule is INodeFactoryModule, NodeFactoryStorage {
     function registerNode(NodeDefinition memory nodeDefinition) external returns (bytes32 nodeId) {
@@ -27,6 +29,10 @@ contract NodeFactoryModule is INodeFactoryModule, NodeFactoryStorage {
         } else if (nodeDefinition.nodeType == NodeType.EXTERNAL) {
             // call external node library
             return ExternalNodeLibrary.process(prices, nodeDefinition.parameters);
+        } else if (nodeDefinition.nodeType == NodeType.CHAINLINK) {
+            return ChainlinkNodeLibrary.process(prices, nodeDefinition.parameters);
+        } else if (nodeDefinition.nodeType == NodeType.PYTH) {
+            return PythNodeLibrary.process(prices, nodeDefinition.parameters);
         } else {
             revert("Unsupported Node Type");
         }
