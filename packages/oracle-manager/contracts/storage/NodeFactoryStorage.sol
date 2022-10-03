@@ -6,7 +6,7 @@ contract NodeFactoryStorage {
         REDUCER,
         EXTERNAL,
         CHAINLINK,
-        UNISWAP
+        PYTH
     }
 
     struct NodeDefinition {
@@ -20,7 +20,7 @@ contract NodeFactoryStorage {
     }
 
     struct NodeData {
-        uint price;
+        int price;
         uint timestamp;
         uint volatilityScore;
         uint liquidityScore;
@@ -28,8 +28,8 @@ contract NodeFactoryStorage {
 
     function _nodeFactoryStore() internal pure returns (NodeFactoryStore storage store) {
         assembly {
-            // bytes32(uint(keccak256("io.synthetix.snx.accountmodule")) - 1)
-            store.slot := 0xa02d1156ddedf1a9cbc88cd7ce7868a5600323fb301d1e51e70fd83a1b670815
+            // bytes32(uint(keccak256("io.synthetix.oracle-manager.node-factory")) - 1)
+            store.slot := 0xa01cbbc58636cff8e850ea840c97c0df1a3bc90537758f50c9feb4d82dc4aa69
         }
     }
 }
