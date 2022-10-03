@@ -9,21 +9,31 @@ defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
 [import.synthetix]
 source = "synthetix-main:1.0.0"
 
-[contract.FixedFee]
-artifact = "FixedFee"
-args = [
-  "<%= settings.marketOwner %>",
-  "<%= imports.synthetix.contracts.USDProxy.address %>",
-  "<%= imports.synthetix.contracts.CoreProxy.address %>",
-  "20",
-]
-depends = ["import.synthetix"]
+[run.deploy_spot_market]
+exec = "scripts/deploy.js"
+func = "deploy"
+args = ["SpotMarket", ".*"]
+modified = ["contracts", "scripts"]
 
-[contract.SpotMarket]
-artifact = "SpotMarket"
+[contract.SpotProxy]
+artifact = "Proxy"
+args = ["<%= contracts.SpotMarketRouter.address %>"]
+abi = "SpotMarketRouter"
+depends = ["run.deploy_spot_market"]
+
+[invoke.acquire_ownership]
+target = ["SpotProxy"]
+from = "<%= settings.marketOwner %>"
+func = "initializeOwnerModule"
+args = ["<%= settings.marketOwner %>"]
+depends = ["contract.SpotProxy"]
+
+[invoke.set_systems]
+target = ["SpotProxy"]
+from = "<%= settings.marketOwner %>"
+func = "setExternalSystems"
 args = [
-  "<%= settings.marketOwner %>",
   "<%= imports.synthetix.contracts.CoreProxy.address %>",
   "<%= imports.synthetix.contracts.USDProxy.address %>"
 ]
-depends = ["contract.FixedFee"]
+depends = ["import.synthetix", "invoke.acquire_ownership"]

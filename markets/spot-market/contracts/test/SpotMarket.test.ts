@@ -18,6 +18,7 @@ describe('SpotMarket', function () {
   });
 
   before('identify signers', () => {
+    console.log('WTF');
     [owner, staker1, marketOwner] = signers();
   });
 

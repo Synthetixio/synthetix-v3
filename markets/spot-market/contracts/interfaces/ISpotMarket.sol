@@ -2,21 +2,17 @@
 pragma solidity ^0.8.0;
 
 import "@synthetixio/main/contracts/interfaces/external/IMarket.sol";
-import "../contracts/Synth.sol";
+import "../storage/SpotMarketStorage.sol";
+import "../modules/SynthModule.sol";
 
 /// @title Spot Market Interface
 interface ISpotMarket is IMarket {
-    event SynthRegistered(uint indexed synthMarketId);
+    event SynthRegistered(uint indexed synthMarketId, address synthAddress);
     event SynthBought(uint indexed synthMarketId, uint synthReturned, uint feesCollected);
     event SynthSold(uint indexed synthMarketId, uint amountReturned, uint feesCollected);
     event SynthExchanged(uint indexed fromMarketId, uint indexed toMarketId, uint amountReturned, uint feesCollected);
 
-    struct MarketSynth {
-        Synth synth;
-        address priceFeed; // will become oracle manager id
-        address feeManager;
-        uint marketId;
-    }
+    function setExternalSystems(address snxAddress, address usdTokenAddress) external;
 
     function registerSynth(
         string memory name,
@@ -26,7 +22,7 @@ interface ISpotMarket is IMarket {
         address feeManager
     ) external returns (uint);
 
-    function getMarket(uint marketId) external view returns (MarketSynth memory);
+    function getMarket(uint marketId) external view returns (SpotMarketStorage.MarketSynth memory);
 
     function getSynthPrice(uint marketId) external pure returns (uint);
 

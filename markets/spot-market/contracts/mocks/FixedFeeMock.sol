@@ -2,7 +2,6 @@ pragma solidity ^0.8.0;
 
 import "@synthetixio/core-contracts/contracts/interfaces/IERC20.sol";
 import "@synthetixio/core-contracts/contracts/utils/MathUtil.sol";
-import "../storage/FixedFeeStorage.sol";
 import "../interfaces/external/IMarketFee.sol";
 import "../interfaces/ISynth.sol";
 import "../interfaces/ISpotMarket.sol";
@@ -10,13 +9,13 @@ import "../interfaces/ISpotMarket.sol";
 /* 
     Fixed Fee mechanism for Spot Market
 */
-contract FixedFeeModule is IMarketFee, FixedFeeStorage {
+contract FixedFeeMock is IMarketFee {
     using MathUtil for uint256;
 
-    modifier onlyOwner() {
-        require(msg.sender == owner, "Only owner");
-        _;
-    }
+    address public owner;
+    IERC20 public usdToken;
+    uint public fixedFee; // in bips
+    address public synthetix;
 
     constructor(
         address feeOwner,
@@ -28,14 +27,6 @@ contract FixedFeeModule is IMarketFee, FixedFeeStorage {
         usdToken = IERC20(usdTokenAddress);
         fixedFee = fixedFeeAmount;
         synthetix = synthetixAddress;
-    }
-
-    function setFixedFee(uint fee) external onlyOwner {
-        fixedFee = fee;
-    }
-
-    function withdrawFees(address receiver) external onlyOwner {
-        usdToken.transfer(receiver, usdToken.balanceOf(address(this)));
     }
 
     function processFees(
