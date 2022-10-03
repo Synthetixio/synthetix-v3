@@ -46,8 +46,7 @@
     "check-packages"
   ],
   "workspaces": [
-    "packages/*",
-    "markets/*"
+    "packages/*"
   ],
   "engines": {
     "node": "^16.16.0",
