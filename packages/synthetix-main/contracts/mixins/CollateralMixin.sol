@@ -29,11 +29,10 @@ contract CollateralMixin is CollateralStorage, VaultStorage {
             _collateralStore().collateralConfigurations[collateralType].priceFeed
         ).latestRoundData();
 
-        uint decimals = IAggregatorV3Interface(
-            _collateralStore().collateralConfigurations[collateralType].priceFeed
-        ).decimals();
+        uint decimals = IAggregatorV3Interface(_collateralStore().collateralConfigurations[collateralType].priceFeed)
+            .decimals();
 
-        uint finalAnswer = uint(answer) * 10 ** 18 / 10 ** decimals;
+        uint finalAnswer = (uint(answer) * 10**18) / 10**decimals;
 
         // sanity check
         // TODO: this will be removed when we get the oracle manager
@@ -45,7 +44,11 @@ contract CollateralMixin is CollateralStorage, VaultStorage {
     function _getAccountCollateralTotals(uint accountId, address collateralType)
         internal
         view
-        returns (uint256 totalDeposited, uint256 totalAssigned, uint256 totalLocked)
+        returns (
+            uint256 totalDeposited,
+            uint256 totalAssigned,
+            uint256 totalLocked
+        )
     {
         CollateralData storage stakedCollateral = _collateralStore().collateralDataByAccountId[accountId][collateralType];
 

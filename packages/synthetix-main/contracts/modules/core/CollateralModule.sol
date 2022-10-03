@@ -135,7 +135,11 @@ contract CollateralModule is
         external
         view
         override
-        returns (uint256 totalDeposited, uint256 totalAssigned, uint256 totalLocked)
+        returns (
+            uint256 totalDeposited,
+            uint256 totalAssigned,
+            uint256 totalLocked
+        )
     //uint256 totalEscrowed
     {
         return _getAccountCollateralTotals(accountId, collateralType);
@@ -151,11 +155,7 @@ contract CollateralModule is
         uint offset,
         uint items
     ) external override {
-        _cleanExpiredLocks(
-            _collateralStore().collateralDataByAccountId[accountId][collateralType].locks,
-            offset,
-            items
-        );
+        _cleanExpiredLocks(_collateralStore().collateralDataByAccountId[accountId][collateralType].locks, offset, items);
     }
 
     function createLock(
@@ -164,16 +164,15 @@ contract CollateralModule is
         uint amount,
         uint64 expireTimestamp
     ) external override onlyWithPermission(accountId, _ADMIN_PERMISSION) {
-        (uint totalStaked,, uint totalLocked) = _getAccountCollateralTotals(accountId, collateralType);
+        (uint totalStaked, , uint totalLocked) = _getAccountCollateralTotals(accountId, collateralType);
 
         if (totalStaked - totalLocked < amount) {
             revert InsufficientAccountCollateral(accountId, collateralType, amount);
         }
 
-        _collateralStore().collateralDataByAccountId[accountId][collateralType].locks.push(CollateralLock(
-            amount,
-            expireTimestamp
-        ));
+        _collateralStore().collateralDataByAccountId[accountId][collateralType].locks.push(
+            CollateralLock(amount, expireTimestamp)
+        );
     }
 
     /*function getAccountUnstakebleCollateral(uint accountId, address collateralType) public view override returns (uint) {

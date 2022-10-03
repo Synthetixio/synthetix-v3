@@ -2,7 +2,7 @@ import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import { ethers } from 'ethers';
 import hre from 'hardhat';
-import { LegacyMarket__factory, synthetix } from '../../typechain-types';
+import { LegacyMarket__factory } from '../../typechain-types';
 
 import { LegacyMarket } from '../../typechain-types/contracts/LegacyMarket';
 
@@ -17,8 +17,7 @@ async function getImpersonatedSigner(provider: ethers.providers.JsonRpcProvider,
 }
 
 describe('LegacyMarket', () => {
-  let owner: ethers.Signer,
-    snxStaker: ethers.Signer;
+  let owner: ethers.Signer, snxStaker: ethers.Signer;
 
   let snxStakerAddress: string;
 
@@ -94,7 +93,7 @@ describe('LegacyMarket', () => {
       outputs.imports.v3.contracts.USDProxy.address,
       outputs.imports.v3.contracts.USDProxy.abi,
       provider
-    )
+    );
 
     cannonProvider = provider;
   });
@@ -104,7 +103,6 @@ describe('LegacyMarket', () => {
   const restore = snapshotCheckpoint(() => cannonProvider);
 
   describe('convertUSD()', async () => {
-
     before(restore);
 
     before('approve', async () => {
@@ -129,18 +127,25 @@ describe('LegacyMarket', () => {
         console.log(wei(await snxToken.balanceOf(snxStakerAddress)).toString());
 
         // sanity
-        console.log((await v3System.getPositionCollateral(
-          migratedAccountId,
-          await v3System.getPreferredPool(),
-          snxToken.address
-        )).value.toString());
-        assertBn.gte(await v3System.getWithdrawableUsd(await market.marketId()), convertedAmount.toBN());
+        console.log(
+          (
+            await v3System.getPositionCollateral(
+              migratedAccountId,
+              await v3System.getPreferredPool(),
+              snxToken.address
+            )
+          ).value.toString()
+        );
+        assertBn.gte(
+          await v3System.getWithdrawableUsd(await market.marketId()),
+          convertedAmount.toBN()
+        );
       });
 
       it('fails when convertUSD is 0', async () => {
         await assertRevert(
           market.connect(snxStaker).convertUSD(wei(1).toBN()),
-          'InvalidParameters',
+          'InvalidParameters'
         );
       });
 
@@ -159,7 +164,6 @@ describe('LegacyMarket', () => {
 
         before('record priors', async () => {
           beforeMarketBalance = wei(await v3System.getMarketIssuance(await market.marketId()));
-
         });
 
         before('when invoked', async () => {
@@ -175,11 +179,18 @@ describe('LegacyMarket', () => {
         });
 
         it('reduced market balance', async () => {
-          assertBn.equal(await v3System.marketTotalBalance(await market.marketId()), beforeMarketBalance.sub(convertedAmount).toBN());
+          assertBn.equal(
+            await v3System.marketTotalBalance(await market.marketId()),
+            beforeMarketBalance.sub(convertedAmount).toBN()
+          );
         });
 
         it('emitted an event', async () => {
-          await assertEvent(txn, `ConvertedUSD(${snxStakerAddress}, ${convertedAmount.toBN().toString()})`, market);
+          await assertEvent(
+            txn,
+            `ConvertedUSD(${snxStakerAddress}, ${convertedAmount.toBN().toString()})`,
+            market
+          );
         });
       });
     });
@@ -222,13 +233,13 @@ describe('LegacyMarket', () => {
       // sanity
       let beforeCollateral: Wei;
       let beforeDebt: Wei;
-      let beforeDebtShares: Wei;
+      //let beforeDebtShares: Wei;
       before('calculate before values', async () => {
         beforeCollateral = wei(await snxToken.collateral(snxStakerAddress));
         beforeDebt = wei(
           await snxToken.debtBalanceOf(snxStakerAddress, ethers.utils.formatBytes32String('sUSD'))
         );
-        beforeDebtShares = wei(await synthetixDebtShare.balanceOf(snxStakerAddress));
+        //beforeDebtShares = wei(await synthetixDebtShare.balanceOf(snxStakerAddress));
 
         // sanity
         assertBn.equal(
@@ -312,7 +323,7 @@ describe('LegacyMarket', () => {
     });
 
     describe('when all accounts migrate to v3', () => {
-      const allStakingAccounts: string[] = [];
+      //const allStakingAccounts: string[] = [];
 
       before('get list of all staking accounts', async () => {});
 

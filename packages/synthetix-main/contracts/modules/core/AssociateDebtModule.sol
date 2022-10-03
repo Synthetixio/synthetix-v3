@@ -30,8 +30,13 @@ contract AssignDebtModule is
     error NotFundedByPool(uint marketId, uint poolId);
     error InsufficientCollateralRatio(uint collateralValue, uint debt, uint ratio, uint minRatio);
 
-    function associateDebt(uint marketId, uint poolId, address collateralType, uint accountId, uint amount) external returns (int) {
-
+    function associateDebt(
+        uint marketId,
+        uint poolId,
+        address collateralType,
+        uint accountId,
+        uint amount
+    ) external returns (int) {
         // load up the vault
         VaultData storage vaultData = _vaultStore().vaults[poolId][collateralType];
         VaultEpochData storage epochData = vaultData.epochData[vaultData.epoch];
@@ -52,7 +57,7 @@ contract AssignDebtModule is
         bytes32 actorId = bytes32(accountId);
 
         // subtract the requested amount of debt from the market
-        // this debt should have been accumulated just now anyway so 
+        // this debt should have been accumulated just now anyway so
         marketData.issuance -= int128(int(amount));
 
         // register account debt
@@ -62,8 +67,11 @@ contract AssignDebtModule is
         int updatedDebt = epochData.usdDebtDist.getActorValue(actorId) + int(amount);
 
         // verify the c ratio
-        _verifyCollateralRatio(collateralType, uint(updatedDebt > 0 ? updatedDebt : int(0)), _getCollateralPrice(collateralType)
-            .mulDecimal(uint(epochData.collateralDist.getActorValue(actorId))));
+        _verifyCollateralRatio(
+            collateralType,
+            uint(updatedDebt > 0 ? updatedDebt : int(0)),
+            _getCollateralPrice(collateralType).mulDecimal(uint(epochData.collateralDist.getActorValue(actorId)))
+        );
 
         epochData.usdDebtDist.updateActorValue(actorId, updatedDebt);
 

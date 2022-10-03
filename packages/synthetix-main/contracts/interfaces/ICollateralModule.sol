@@ -121,7 +121,7 @@ interface ICollateralModule {
         uint offset,
         uint items
     ) external;
-    
+
     /// @notice Create a new lock on the given account. you must have `admin` permission on the specified account to create a lock.
     /// There is currently no benefit to calling this function. it is simply for allowing pre-created accounts to have locks on them if your protocol requires it.
     function createLock(
