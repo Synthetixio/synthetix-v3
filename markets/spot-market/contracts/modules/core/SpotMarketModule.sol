@@ -5,9 +5,9 @@ import "@synthetixio/main/contracts/interfaces/IMarketManagerModule.sol";
 import "@synthetixio/core-contracts/contracts/utils/MathUtil.sol";
 import "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
 import "@synthetixio/core-contracts/contracts/ownership/OwnableMixin.sol";
-import "../interfaces/ISpotMarket.sol";
-import "../interfaces/external/IMarketFee.sol";
-import "../storage/SpotMarketStorage.sol";
+import "../../interfaces/ISpotMarket.sol";
+import "../../interfaces/external/IMarketFee.sol";
+import "../../storage/SpotMarketStorage.sol";
 
 contract SpotMarketModule is ISpotMarket, SpotMarketStorage, OwnableMixin {
     using MathUtil for uint256;

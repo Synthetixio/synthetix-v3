@@ -12,7 +12,7 @@ source = "synthetix-main:1.0.0"
 [run.deploy_spot_market]
 exec = "scripts/deploy.js"
 func = "deploy"
-args = ["SpotMarket", ".*"]
+args = ["SpotMarket", ".*/(core|common)/.*"]
 modified = ["contracts", "scripts"]
 
 [contract.SpotProxy]
