@@ -79,6 +79,7 @@ export function bootstrapWithNodes() {
   let nodeId2: string;
   let collateralAddress: string;
   const depositAmount = ethers.utils.parseEther('1000');
+  const abi = ethers.utils.defaultAbiCoder;
 
   before('deploy mock aggregator', async () => {
     const [owner] = r.signers();
@@ -93,7 +94,6 @@ export function bootstrapWithNodes() {
 
   before('register leaf nodes', async function () {
     const [owner] = r.signers();
-    const abi = ethers.utils.defaultAbiCoder;
     const params1 = abi.encode(['address'], [aggregator.address]);
     const params2 = abi.encode(['address'], [aggregator2.address]);
 
@@ -116,6 +116,7 @@ export function bootstrapWithNodes() {
     collateralContract: () => r.systems().SNX,
     collateralAddress: () => collateralAddress,
     depositAmount,
+    abi,
     restore,
   };
 }

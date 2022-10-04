@@ -14,6 +14,13 @@ library ReducerNodeLibrary {
         pure
         returns (NodeFactoryStorage.NodeData memory)
     {
+        Operations operation = abi.decode(parameters, (Operations));
+        if (operation == Operations.MAX) {
+            return max(prices);
+        }
+        if (operation == Operations.MIN) {
+            return min(prices);
+        }
         // checks parameters and call the relevant function
         // parameters[0] == Operations.MAX
         //  uint price;
@@ -35,9 +42,27 @@ library ReducerNodeLibrary {
     function max(NodeFactoryStorage.NodeData[] memory prices)
         internal
         pure
-        returns (NodeFactoryStorage.NodeData memory price)
+        returns (NodeFactoryStorage.NodeData memory maxPrice)
     {
-        // exp: finds the max price
-        price = prices[0];
+        for (uint256 i = 0; i < prices.length; i++) {
+            if (prices[i].price > maxPrice.price) {
+                maxPrice = prices[i];
+            }
+        }
+        return maxPrice;
+    }
+
+    function min(NodeFactoryStorage.NodeData[] memory prices)
+        internal
+        pure
+        returns (NodeFactoryStorage.NodeData memory minPrice)
+    {
+        minPrice = prices[0];
+        for (uint256 i = 0; i < prices.length; i++) {
+            if (prices[i].price < minPrice.price) {
+                minPrice = prices[i];
+            }
+        }
+        return minPrice;
     }
 }

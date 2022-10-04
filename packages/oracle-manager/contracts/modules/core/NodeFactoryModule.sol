@@ -54,12 +54,12 @@ contract NodeFactoryModule is INodeFactoryModule, NodeMixin {
         onlyValidNodeType(nodeDefinition.nodeType)
         returns (bytes32 nodeId)
     {
-        //check and make sure all nodeDefinition.parents are already registered
-        for (uint256 i = 0; i < nodeDefinition.parents.length; i++) {
-            if (!_nodeIsRegistered(nodeDefinition.parents[i])) {
-                revert("Parent not registered");
-            }
-        }
+        // //check and make sure all nodeDefinition.parents are already registered
+        // for (uint256 i = 0; i < nodeDefinition.parents.length; i++) {
+        //     if (!_nodeIsRegistered(nodeDefinition.parents[i])) {
+        //         revert("Parent not registered");
+        //     }
+        // }
 
         nodeId = _getNodeId(nodeDefinition);
         _nodeFactoryStore().nodes[nodeId] = nodeDefinition;
