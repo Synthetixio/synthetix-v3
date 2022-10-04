@@ -5,6 +5,7 @@ import "../../interfaces/INodeFactoryModule.sol";
 import "../../utils/ReducerNodeLibrary.sol";
 import "../../utils/ExternalNodeLibrary.sol";
 import "../../utils/PythNodeLibrary.sol";
+import "../../utils/ChainlinkNodeLIbrary.sol";
 import "../../mixins/NodeMixin.sol";
 
 contract NodeFactoryModule is INodeFactoryModule, NodeMixin {
@@ -20,6 +21,24 @@ contract NodeFactoryModule is INodeFactoryModule, NodeMixin {
         });
 
         return _registerNode(nodeDefinition);
+    }
+
+    function getNodeId(
+        bytes32[] memory parents,
+        NodeType nodeType,
+        bytes memory parameters
+    ) external view returns (bytes32) {
+        NodeDefinition memory nodeDefinition = NodeDefinition({
+            parents: parents,
+            nodeType: nodeType,
+            parameters: parameters
+        });
+
+        return _getNodeId(nodeDefinition);
+    }
+
+    function getNode(bytes32 nodeId) external view returns (NodeDefinition memory) {
+        return _getNode(nodeId);
     }
 
     function process(bytes32 nodeId) external view returns (NodeData memory) {
@@ -60,13 +79,11 @@ contract NodeFactoryModule is INodeFactoryModule, NodeMixin {
         }
 
         if (nodeDefinition.nodeType == NodeType.REDUCER) {
-            // call reducer node library
             return ReducerNodeLibrary.process(prices, nodeDefinition.parameters);
         } else if (nodeDefinition.nodeType == NodeType.EXTERNAL) {
-            // call external node library
             return ExternalNodeLibrary.process(prices, nodeDefinition.parameters);
         } else if (nodeDefinition.nodeType == NodeType.CHAINLINK) {
-            // return ChainlinkNodeLibrary.process(nodeDefinition.parameters);
+            return ChainlinkNodeLibrary.process(nodeDefinition.parameters);
         } else if (nodeDefinition.nodeType == NodeType.PYTH) {
             return PythNodeLibrary.process(nodeDefinition.parameters);
         } else {

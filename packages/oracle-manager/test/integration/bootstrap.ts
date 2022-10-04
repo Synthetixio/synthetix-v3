@@ -3,6 +3,7 @@ import { ChainBuilderContext } from '@usecannon/builder';
 import { ethers } from 'ethers';
 
 import { snapshotCheckpoint } from '../utils';
+import NodeTypes from './mixins/Node.types';
 
 async function loadSystems(
   contracts: ChainBuilderContext['contracts'],
@@ -72,9 +73,10 @@ export function bootstrapWithNodes() {
   const r = bootstrap();
 
   let aggregator: ethers.Contract;
+  let aggregator2: ethers.Contract;
 
-  const accountId = 1;
-  const poolId = 1;
+  let nodeId1: string;
+  let nodeId2: string;
   let collateralAddress: string;
   const depositAmount = ethers.utils.parseEther('1000');
 
@@ -84,15 +86,24 @@ export function bootstrapWithNodes() {
     aggregator = await factory.connect(owner).deploy();
 
     await aggregator.mockSetCurrentPrice(ethers.utils.parseEther('1'));
+
+    aggregator2 = await factory.connect(owner).deploy();
+    await aggregator2.mockSetCurrentPrice(ethers.utils.parseEther('0.9'));
   });
 
-  before('register a node', async function () {
+  before('register leaf nodes', async function () {
     const [owner] = r.signers();
+    const abi = ethers.utils.defaultAbiCoder;
+    const params1 = abi.encode(['address'], [aggregator.address]);
+    const params2 = abi.encode(['address'], [aggregator2.address]);
 
-    // register node
-    const nodeId = await r.systems().Core.connect(owner).registerNode([], 3, aggregator.address);
-    await nodeId.wait();
-    console.log('nodeId:');
+    // register node 1
+    await r.systems().Core.connect(owner).registerNode([], NodeTypes.CHAINLINK, params1);
+    nodeId1 = await r.systems().Core.connect(owner).getNodeId([], NodeTypes.CHAINLINK, params1);
+
+    // register node 2
+    await r.systems().Core.connect(owner).registerNode([], NodeTypes.CHAINLINK, params2);
+    nodeId2 = await r.systems().Core.connect(owner).getNodeId([], NodeTypes.CHAINLINK, params2);
   });
 
   const restore = snapshotCheckpoint(r.provider);
@@ -100,8 +111,8 @@ export function bootstrapWithNodes() {
   return {
     ...r,
     aggregator: () => aggregator,
-    accountId,
-    poolId,
+    nodeId1: () => nodeId1,
+    nodeId2: () => nodeId2,
     collateralContract: () => r.systems().SNX,
     collateralAddress: () => collateralAddress,
     depositAmount,
