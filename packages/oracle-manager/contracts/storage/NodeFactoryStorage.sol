@@ -3,6 +3,7 @@ pragma solidity ^0.8.0;
 
 contract NodeFactoryStorage {
     enum NodeType {
+        NONE,
         REDUCER,
         EXTERNAL,
         CHAINLINK,
