@@ -86,6 +86,19 @@ export function bootstrapWithNodes() {
     await aggregator.mockSetCurrentPrice(ethers.utils.parseEther('1'));
   });
 
+  before('register a node', async function () {
+    const [owner] = r.signers();
+
+    // register node
+    const nodeId = await r.systems().Core.connect(owner).registerNode({
+      parents: [],
+      nodeType: 3,
+      parameters: aggregator.address,
+    });
+
+    console.log('nodeId:', nodeId);
+  });
+
   const restore = snapshotCheckpoint(r.provider);
 
   return {

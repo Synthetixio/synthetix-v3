@@ -11,8 +11,10 @@ const config = {
   docgen: {
     exclude: [
       './interfaces/external',
-      './utils',
       './modules',
+      './mixins',
+      './mocks',
+      './utils',
       './storage',
       './Proxy.sol',
       './Router.sol',
