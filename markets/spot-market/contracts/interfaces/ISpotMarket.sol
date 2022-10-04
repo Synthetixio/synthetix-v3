@@ -3,11 +3,10 @@ pragma solidity ^0.8.0;
 
 import "@synthetixio/main/contracts/interfaces/external/IMarket.sol";
 import "../storage/SpotMarketStorage.sol";
-import "../modules/SynthModule.sol";
 
 /// @title Spot Market Interface
 interface ISpotMarket is IMarket {
-    event SynthRegistered(uint indexed synthMarketId, address synthAddress);
+    event SynthRegistered(uint indexed synthMarketId);
     event SynthBought(uint indexed synthMarketId, uint synthReturned, uint feesCollected);
     event SynthSold(uint indexed synthMarketId, uint amountReturned, uint feesCollected);
     event SynthExchanged(uint indexed fromMarketId, uint indexed toMarketId, uint amountReturned, uint feesCollected);
@@ -15,9 +14,7 @@ interface ISpotMarket is IMarket {
     function setExternalSystems(address snxAddress, address usdTokenAddress) external;
 
     function registerSynth(
-        string memory name,
-        string memory symbol,
-        uint8 decimals,
+        address synth,
         address priceFeed,
         address feeManager
     ) external returns (uint);

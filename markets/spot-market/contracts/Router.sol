@@ -11,6 +11,7 @@ contract Router {
     error UnknownSelector(bytes4 sel);
 
     address private constant _SPOT_MARKET_MODULE = 0x5FbDB2315678afecb367f032d93F642f64180aa3;
+    address private constant _SYNTH_FACTORY_MODULE = 0xDc64a140Aa3E981100a9becA4E685f962f0cF6C9;
     address private constant _SYNTH = 0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512;
     address private constant _OWNER_MODULE = 0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0;
     address private constant _UPGRADE_MODULE = 0xCf7Ed3AccA5a467e9e704C703E8D87F634fB0Fc9;
@@ -32,8 +33,8 @@ contract Router {
             let sig32 := shr(224, sig4)
 
             function findImplementation(sig) -> result {
-                if lt(sig,0x718fe928) {
-                    if lt(sig,0x3659cfe6) {
+                if lt(sig,0x79ba5097) {
+                    if lt(sig,0x392e53cd) {
                         if lt(sig,0x23b872dd) {
                             switch sig
                             case 0x06fdde03 { result := _SYNTH } // Synth.name()
@@ -45,41 +46,41 @@ contract Router {
                         }
                         switch sig
                         case 0x23b872dd { result := _SYNTH } // Synth.transferFrom()
-                        case 0x2433aa0c { result := _SPOT_MARKET_MODULE } // SpotMarketModule.registerSynth()
-                        case 0x2d22bef9 { result := _SPOT_MARKET_MODULE } // SpotMarketModule.initOrUpgradeNft()
+                        case 0x2d22bef9 { result := _SYNTH_FACTORY_MODULE } // SynthFactoryModule.initOrUpgradeNft()
                         case 0x313ce567 { result := _SYNTH } // Synth.decimals()
                         case 0x35eb2824 { result := _OWNER_MODULE } // OwnerModule.isOwnerModuleInitialized()
+                        case 0x3659cfe6 { result := _UPGRADE_MODULE } // UpgradeModule.upgradeTo()
                         leave
                     }
                     switch sig
-                    case 0x3659cfe6 { result := _UPGRADE_MODULE } // UpgradeModule.upgradeTo()
                     case 0x392e53cd { result := _SYNTH } // Synth.isInitialized()
                     case 0x3b85eb70 { result := _SPOT_MARKET_MODULE } // SpotMarketModule.getSynthPrice()
                     case 0x40c10f19 { result := _SYNTH } // Synth.mint()
                     case 0x53a47bb7 { result := _OWNER_MODULE } // OwnerModule.nominatedOwner()
-                    case 0x60988e09 { result := _SPOT_MARKET_MODULE } // SpotMarketModule.getAssociatedSystem()
+                    case 0x60988e09 { result := _SYNTH_FACTORY_MODULE } // SynthFactoryModule.getAssociatedSystem()
                     case 0x624bd96d { result := _OWNER_MODULE } // OwnerModule.initializeOwnerModule()
                     case 0x6d4d9e9b { result := _SPOT_MARKET_MODULE } // SpotMarketModule.setExternalSystems()
                     case 0x70a08231 { result := _SYNTH } // Synth.balanceOf()
+                    case 0x718fe928 { result := _OWNER_MODULE } // OwnerModule.renounceNomination()
                     leave
                 }
                 if lt(sig,0xc7f62cda) {
                     switch sig
-                    case 0x718fe928 { result := _OWNER_MODULE } // OwnerModule.renounceNomination()
                     case 0x79ba5097 { result := _OWNER_MODULE } // OwnerModule.acceptOwnership()
                     case 0x83e5ba9d { result := _SPOT_MARKET_MODULE } // SpotMarketModule.reportedDebt()
+                    case 0x87b43e4c { result := _SPOT_MARKET_MODULE } // SpotMarketModule.registerSynth()
                     case 0x8da5cb5b { result := _OWNER_MODULE } // OwnerModule.owner()
                     case 0x95d89b41 { result := _SYNTH } // Synth.symbol()
                     case 0x9dc29fac { result := _SYNTH } // Synth.burn()
                     case 0xa9059cbb { result := _SYNTH } // Synth.transfer()
                     case 0xaaf10f42 { result := _UPGRADE_MODULE } // UpgradeModule.getImplementation()
-                    case 0xc6f79537 { result := _SPOT_MARKET_MODULE } // SpotMarketModule.initOrUpgradeToken()
+                    case 0xc6f79537 { result := _SYNTH_FACTORY_MODULE } // SynthFactoryModule.initOrUpgradeToken()
                     leave
                 }
                 switch sig
                 case 0xc7f62cda { result := _UPGRADE_MODULE } // UpgradeModule.simulateUpgradeTo()
                 case 0xd034eef6 { result := _SPOT_MARKET_MODULE } // SpotMarketModule.updateFeeManager()
-                case 0xd245d983 { result := _SPOT_MARKET_MODULE } // SpotMarketModule.registerUnmanagedSystem()
+                case 0xd245d983 { result := _SYNTH_FACTORY_MODULE } // SynthFactoryModule.registerUnmanagedSystem()
                 case 0xd42abed3 { result := _SPOT_MARKET_MODULE } // SpotMarketModule.exchange()
                 case 0xd6febde8 { result := _SPOT_MARKET_MODULE } // SpotMarketModule.buy()
                 case 0xd79875eb { result := _SPOT_MARKET_MODULE } // SpotMarketModule.sell()

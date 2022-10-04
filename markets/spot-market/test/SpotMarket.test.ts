@@ -9,7 +9,7 @@ describe('SpotMarket', function () {
   const { signers, systems, poolId, accountId, depositAmount } = bootstrapWithStakedPool();
   const expectedMarketId = 1;
 
-  let owner: Ethers.Signer, staker1: Ethers.Signer, marketOwner: Ethers.Signer;
+  let owner: Ethers.Signer, staker1: Ethers.Signer;
   let fixedFee: Ethers.Contract, spotMarket: Ethers.Contract;
   let collateralAddress: string;
 
@@ -19,33 +19,40 @@ describe('SpotMarket', function () {
 
   before('identify signers', () => {
     console.log('WTF');
-    [owner, staker1, marketOwner] = signers();
+    [owner, staker1] = signers();
   });
 
   before('deploy fee manager', async () => {
-    const factory = await ethers.getContractFactory('FixedFee');
+    console.log('SYSTEMS', Object.keys(systems()));
+    const factory = await ethers.getContractFactory('FixedFeeMock');
     fixedFee = await factory
-      .connect(marketOwner)
-      .deploy(await marketOwner.getAddress(), systems().USD.address, systems().Core.address, 20);
-  });
-
-  before('deploy spot market', async () => {
-    const factory = await ethers.getContractFactory('SpotMarket');
-    spotMarket = await factory
-      .connect(marketOwner)
-      .deploy(await marketOwner.getAddress(), systems().Core.address, systems().USD.address);
+      .connect(owner)
+      .deploy(await owner.getAddress(), systems().USD.address, systems().Core.address, 20);
   });
 
   const name = 'Synthetix BTC';
   const symbol = 'snxBTC';
   const decimals = 18;
 
-  let synthRegisterTxn: Ethers.providers.TransactionResponse;
+  let synthRegisterTxn: Ethers.providers.TransactionResponse, synthAddress: string;
+
+  before('create associated system synth', async () => {
+    const id = Ethers.utils.formatBytes32String('sBTCToken');
+    const synthContract = await ethers.getContractFactory('Synth');
+    const synthImpl = await synthContract.deploy();
+    console.log('PARAMS', id, name, symbol, decimals, synthImpl.address);
+    await systems()
+      .Spot.connect(owner)
+      .initOrUpgradeToken(id, name, symbol, decimals, synthImpl.address);
+
+    // const blah = await systems().Spot.getAssociatedSystem(id);
+    // console.log('BLAH', blah);
+  });
 
   before('register synth', async () => {
     synthRegisterTxn = await (
-      await spotMarket
-        .connect(marketOwner)
+      await systems()
+        .Spot.connect(owner)
         .registerSynth(name, symbol, decimals, Ethers.constants.AddressZero, fixedFee.address)
     ).wait();
   });
@@ -141,7 +148,7 @@ describe('SpotMarket', function () {
     before('register another synth', async () => {
       await (
         await spotMarket
-          .connect(marketOwner)
+          .connect(owner)
           .registerSynth(
             'Synthetix Idiot',
             'sIDIOT',

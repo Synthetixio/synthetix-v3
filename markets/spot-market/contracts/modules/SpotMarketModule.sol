@@ -4,12 +4,12 @@ pragma solidity ^0.8.0;
 import "@synthetixio/main/contracts/interfaces/IMarketManagerModule.sol";
 import "@synthetixio/core-contracts/contracts/utils/MathUtil.sol";
 import "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
-import "@synthetixio/core-modules/contracts/modules/AssociatedSystemsModule.sol";
+import "@synthetixio/core-contracts/contracts/ownership/OwnableMixin.sol";
 import "../interfaces/ISpotMarket.sol";
 import "../interfaces/external/IMarketFee.sol";
 import "../storage/SpotMarketStorage.sol";
 
-contract SpotMarketModule is ISpotMarket, SpotMarketStorage, OwnableMixin, AssociatedSystemsModule {
+contract SpotMarketModule is ISpotMarket, SpotMarketStorage, OwnableMixin {
     using MathUtil for uint256;
 
     error InsufficientFunds();
@@ -23,26 +23,24 @@ contract SpotMarketModule is ISpotMarket, SpotMarketStorage, OwnableMixin, Assoc
     }
 
     function registerSynth(
-        string memory name,
-        string memory symbol,
-        uint8 decimals,
+        address synth,
         address priceFeed,
         address feeManager
     ) external override onlyOwner returns (uint) {
         SpotMarketStore storage store = _spotMarketStore();
 
-        bytes32 tokenId = bytes32(abi.encodePacked(name, symbol));
-        address synthImpl = address(new Synth());
+        // bytes32 tokenId = bytes32(abi.encodePacked(name, symbol));
+        // address synthImpl = address(new Synth());
 
-        IAssociatedSystemsModule synthFactory = IAssociatedSystemsModule(address(this));
-        synthFactory.initOrUpgradeToken(tokenId, name, symbol, decimals, synthImpl);
-        (address synthProxyAddress, ) = synthFactory.getAssociatedSystem(tokenId);
+        // IAssociatedSystemsModule synthFactory = IAssociatedSystemsModule(address(this));
+        // synthFactory.initOrUpgradeToken(tokenId, name, symbol, decimals, synthImpl);
+        // (address synthProxyAddress, ) = getAssociatedSystem(tokenId);
 
         uint synthMarketId = IMarketManagerModule(store.synthetix).registerMarket(address(this));
-        MarketSynth memory synth = MarketSynth(ITokenModule(synthProxyAddress), priceFeed, feeManager, synthMarketId);
-        store.marketSynths[synthMarketId] = synth;
+        MarketSynth memory newSynth = MarketSynth(ITokenModule(synth), priceFeed, feeManager, synthMarketId);
+        store.marketSynths[synthMarketId] = newSynth;
 
-        emit SynthRegistered(synthMarketId, synthProxyAddress);
+        emit SynthRegistered(synthMarketId);
 
         return synthMarketId;
     }
