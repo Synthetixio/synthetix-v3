@@ -9,7 +9,7 @@ import "../interfaces/ISpotMarket.sol";
 /* 
     Fixed Fee mechanism for Spot Market
 */
-contract FixedFeeMock is IMarketFee {
+contract FixedFee is IMarketFee {
     using MathUtil for uint256;
 
     address public owner;

@@ -5,17 +5,13 @@ import "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
 import "../interfaces/ISpotMarket.sol";
 
 contract SpotMarketStorage {
-    struct MarketSynth {
-        ITokenModule synth;
-        address priceFeed; // will become oracle manager id
-        address feeManager;
-        uint marketId;
-    }
-
     struct SpotMarketStore {
         ITokenModule usdToken;
         address synthetix;
-        mapping(uint => MarketSynth) marketSynths;
+        address priceFeed; // will become oracle manager id
+        address feeManager;
+        uint marketId;
+        bool initialized;
     }
 
     function _spotMarketStore() internal pure returns (SpotMarketStore storage store) {

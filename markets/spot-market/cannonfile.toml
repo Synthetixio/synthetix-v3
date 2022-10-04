@@ -3,7 +3,7 @@ version = "<%= package.version %>"
 description = "Spot market implementation"
 
 [setting.marketOwner]
-description = "spot market and fixed fee manager owner"
+description = "spot market owner"
 defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
 
 [import.synthetix]
@@ -12,7 +12,7 @@ source = "synthetix-main:1.0.0"
 [run.deploy_spot_market]
 exec = "scripts/deploy.js"
 func = "deploy"
-args = ["SpotMarket", ".*/(core|common)/.*"]
+args = ["SpotMarket", ".*"]
 modified = ["contracts", "scripts"]
 
 [contract.SpotProxy]
@@ -28,12 +28,27 @@ func = "initializeOwnerModule"
 args = ["<%= settings.marketOwner %>"]
 depends = ["contract.SpotProxy"]
 
-[invoke.set_systems]
+[contract.FixedFeeCalculator]
+artifact = "FixedFee"
+args = [
+  "<%= settings.marketOwner %>",
+  "<%= imports.synthetix.contracts.USDProxy.address %>",
+  "<%= imports.synthetix.contracts.CoreProxy.address %>",
+  20
+]
+depends = ["import.synthetix"]
+
+[invoke.init]
 target = ["SpotProxy"]
 from = "<%= settings.marketOwner %>"
-func = "setExternalSystems"
+func = "initialize"
 args = [
   "<%= imports.synthetix.contracts.CoreProxy.address %>",
-  "<%= imports.synthetix.contracts.USDProxy.address %>"
+  "<%= imports.synthetix.contracts.USDProxy.address %>",
+  "Synthetic BTC",
+  "snxBTC",
+  18,
+  "<%= contracts.FixedFeeCalculator.address %>",
+  "<%= contracts.FixedFeeCalculator.address %>", # TODO: import oracle manager here
 ]
-depends = ["import.synthetix", "invoke.acquire_ownership"]
+depends = ["invoke.acquire_ownership", "contract.FixedFeeCalculator"]

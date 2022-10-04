@@ -10,7 +10,6 @@ describe('SpotMarket', function () {
   const expectedMarketId = 1;
 
   let owner: Ethers.Signer, staker1: Ethers.Signer;
-  let fixedFee: Ethers.Contract, spotMarket: Ethers.Contract;
   let collateralAddress: string;
 
   before('identify collateral address', () => {
@@ -18,47 +17,7 @@ describe('SpotMarket', function () {
   });
 
   before('identify signers', () => {
-    console.log('WTF');
     [owner, staker1] = signers();
-  });
-
-  before('deploy fee manager', async () => {
-    console.log('SYSTEMS', Object.keys(systems()));
-    const factory = await ethers.getContractFactory('FixedFeeMock');
-    fixedFee = await factory
-      .connect(owner)
-      .deploy(await owner.getAddress(), systems().USD.address, systems().Core.address, 20);
-  });
-
-  const name = 'Synthetix BTC';
-  const symbol = 'snxBTC';
-  const decimals = 18;
-
-  let synthRegisterTxn: Ethers.providers.TransactionResponse, synthAddress: string;
-
-  before('create associated system synth', async () => {
-    const id = Ethers.utils.formatBytes32String('sBTCToken');
-    const synthContract = await ethers.getContractFactory('Synth');
-    const synthImpl = await synthContract.deploy();
-    console.log('PARAMS', id, name, symbol, decimals, synthImpl.address);
-    await systems()
-      .Spot.connect(owner)
-      .initOrUpgradeToken(id, name, symbol, decimals, synthImpl.address);
-
-    // const blah = await systems().Spot.getAssociatedSystem(id);
-    // console.log('BLAH', blah);
-  });
-
-  before('register synth', async () => {
-    synthRegisterTxn = await (
-      await systems()
-        .Spot.connect(owner)
-        .registerSynth(name, symbol, decimals, Ethers.constants.AddressZero, fixedFee.address)
-    ).wait();
-  });
-
-  it('emits event', async () => {
-    await assertEvent(synthRegisterTxn, `SynthRegistered(${expectedMarketId})`, spotMarket);
   });
 
   before('connect market to pool', async () => {
@@ -76,12 +35,6 @@ describe('SpotMarket', function () {
   const startingAmount = depositAmount.div(10);
   const fee = startingAmount.mul(20).div(10000); // fixed fee manager
   const synthMinted = Ethers.utils.parseEther(startingAmount.sub(fee).toString());
-  let snxBtc: Ethers.Contract;
-  before('identify snxBtc', async () => {
-    const market = await spotMarket.getMarket(expectedMarketId);
-
-    snxBtc = await ethers.getContractAt('Synth', market.synth);
-  });
 
   before('staker mints usd', async () => {
     await systems()
@@ -93,18 +46,16 @@ describe('SpotMarket', function () {
     let buyTxn: Ethers.providers.TransactionResponse;
 
     before('buy synth', async () => {
-      await systems().USD.connect(staker1).approve(spotMarket.address, depositAmount.div(10));
-      buyTxn = await (
-        await spotMarket.connect(staker1).buy(expectedMarketId, depositAmount.div(10))
-      ).wait();
+      await systems().USD.connect(staker1).approve(systems().Spot.address, depositAmount.div(10));
+      buyTxn = await (await systems().Spot.connect(staker1).buy(depositAmount.div(10))).wait();
     });
 
     it('emitted event', async () => {
-      await assertEvent(buyTxn, `SynthBought(1, ${synthMinted}, ${fee})`, spotMarket);
+      await assertEvent(buyTxn, `SynthBought(1, ${synthMinted}, ${fee})`, systems().Spot);
     });
 
     it('transferred correct amount of synth', async () => {
-      assertBn.equal(await snxBtc.balanceOf(await staker1.getAddress()), synthMinted);
+      assertBn.equal(await systems().Spot.balanceOf(await staker1.getAddress()), synthMinted);
     });
   });
 
@@ -124,60 +75,21 @@ describe('SpotMarket', function () {
     });
 
     before('sell synth', async () => {
-      sellTxn = await (
-        await spotMarket.connect(staker1).sell(expectedMarketId, synthMinted.div(2))
-      ).wait();
+      sellTxn = await (await systems().Spot.connect(staker1).sell(synthMinted.div(2))).wait();
     });
 
     it('emitted sell event', async () => {
-      await assertEvent(sellTxn, `SynthSold(1, ${amountReceived}, ${expectedFees})`, spotMarket);
+      await assertEvent(
+        sellTxn,
+        `SynthSold(1, ${amountReceived}, ${expectedFees})`,
+        systems().Spot
+      );
     });
 
     it('transferred correct amount of usd', async () => {
       assertBn.equal(
         await systems().USD.balanceOf(await staker1.getAddress()),
         previousBalance.add(amountReceived)
-      );
-    });
-  });
-
-  describe('exchange', async () => {
-    const idiotMarketId = 2;
-    let exchangeTxn: Ethers.providers.TransactionResponse;
-
-    before('register another synth', async () => {
-      await (
-        await spotMarket
-          .connect(owner)
-          .registerSynth(
-            'Synthetix Idiot',
-            'sIDIOT',
-            18,
-            Ethers.constants.AddressZero,
-            fixedFee.address
-          )
-      ).wait();
-    });
-
-    const synthToExchange = synthMinted.div(4);
-    const synthToExchangeInUsd = synthToExchange.div(Ethers.BigNumber.from(10).pow(18));
-    const expectedFees = synthToExchangeInUsd.mul(20).div(10000);
-    const synthReceived = Ethers.utils.parseEther(
-      synthToExchangeInUsd.sub(expectedFees).toString()
-    );
-
-    before('exchange to sIDIOT', async () => {
-      await systems().USD.connect(staker1).approve(spotMarket.address, depositAmount.div(10));
-      exchangeTxn = await (
-        await spotMarket.connect(staker1).exchange(expectedMarketId, idiotMarketId, synthToExchange)
-      ).wait();
-    });
-
-    it('emits event', async () => {
-      await assertEvent(
-        exchangeTxn,
-        `SynthExchanged(${expectedMarketId}, ${idiotMarketId}, ${synthReceived}, ${expectedFees})`,
-        spotMarket
       );
     });
   });

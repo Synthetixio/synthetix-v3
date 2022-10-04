@@ -9,29 +9,22 @@ interface ISpotMarket is IMarket {
     event SynthRegistered(uint indexed synthMarketId);
     event SynthBought(uint indexed synthMarketId, uint synthReturned, uint feesCollected);
     event SynthSold(uint indexed synthMarketId, uint amountReturned, uint feesCollected);
-    event SynthExchanged(uint indexed fromMarketId, uint indexed toMarketId, uint amountReturned, uint feesCollected);
 
-    function setExternalSystems(address snxAddress, address usdTokenAddress) external;
+    function isInitialized() external view returns (bool);
 
-    function registerSynth(
-        address synth,
+    function initialize(
+        address snxAddress,
+        address usdTokenAddress,
+        string memory name,
+        string memory symbol,
+        uint8 decimals,
         address priceFeed,
         address feeManager
-    ) external returns (uint);
+    ) external;
 
-    function getMarket(uint marketId) external view returns (SpotMarketStorage.MarketSynth memory);
+    function updateFeeManager(address newFeeManager) external;
 
-    function getSynthPrice(uint marketId) external pure returns (uint);
+    function buy(uint amountUsd) external returns (uint);
 
-    function updateFeeManager(uint marketId, address newFeeManager) external;
-
-    function buy(uint marketId, uint amountUsd) external returns (uint);
-
-    function sell(uint marketId, uint sellAmount) external returns (uint);
-
-    function exchange(
-        uint fromMarketId,
-        uint toMarketId,
-        uint amount
-    ) external returns (uint);
+    function sell(uint sellAmount) external returns (uint);
 }
