@@ -20,7 +20,7 @@ contract NodeFactoryStorage {
     }
 
     struct NodeData {
-        int price;
+        int256 price;
         uint timestamp;
         uint volatilityScore;
         uint liquidityScore;
