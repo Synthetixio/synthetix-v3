@@ -5,7 +5,11 @@ import "../storage/NodeFactoryStorage.sol";
 
 /// @title Module for managing nodes
 interface INodeFactoryModule {
-    function registerNode(NodeFactoryStorage.NodeDefinition memory nodeDefinition) external returns (bytes32 nodeId);
+    function registerNode(
+        bytes32[] memory parents,
+        NodeFactoryStorage.NodeType nodeType,
+        bytes memory parameters
+    ) external returns (bytes32 nodeId);
 
     function process(bytes32 nodeId) external view returns (NodeFactoryStorage.NodeData memory price);
 }
