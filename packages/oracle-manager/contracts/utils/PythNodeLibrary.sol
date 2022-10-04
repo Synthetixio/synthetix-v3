@@ -5,11 +5,7 @@ import "../storage/NodeFactoryStorage.sol";
 import "../interfaces/external/IPyth.sol";
 
 library PythNodeLibrary {
-    function process(NodeFactoryStorage.NodeData[] memory, bytes memory parameters)
-        internal
-        view
-        returns (NodeFactoryStorage.NodeData memory)
-    {
+    function process(bytes memory parameters) internal view returns (NodeFactoryStorage.NodeData memory) {
         (IPyth pyth, bytes32 priceFeedId) = abi.decode(parameters, (IPyth, bytes32));
         PythStructs.Price memory pythPrice = pyth.getPrice(priceFeedId);
 

@@ -9,7 +9,14 @@ const config = {
   ...commonConfig,
   solidity: '0.8.11',
   docgen: {
-    exclude: ['./interfaces/external', './modules', './storage', './Proxy.sol', './Router.sol'],
+    exclude: [
+      './interfaces/external',
+      './utils',
+      './modules',
+      './storage',
+      './Proxy.sol',
+      './Router.sol',
+    ],
   },
 };
 

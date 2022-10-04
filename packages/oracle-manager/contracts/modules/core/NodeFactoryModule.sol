@@ -16,6 +16,14 @@ contract NodeFactoryModule is INodeFactoryModule, NodeFactoryStorage {
     }
 
     function process(bytes32 nodeId) external view returns (NodeData memory price) {
+        return _process(nodeId);
+    }
+
+    function _getNodeId(NodeDefinition memory nodeDefinition) internal pure returns (bytes32 nodeId) {
+        nodeId = keccak256(abi.encode(nodeDefinition.parents, nodeDefinition.nodeType, nodeDefinition.parameters));
+    }
+
+    function _process(bytes32 nodeId) internal view returns (NodeData memory price) {
         NodeDefinition memory nodeDefinition = _nodeFactoryStore().nodes[nodeId];
 
         NodeData[] memory prices = new NodeData[](nodeDefinition.parents.length);
@@ -30,15 +38,11 @@ contract NodeFactoryModule is INodeFactoryModule, NodeFactoryStorage {
             // call external node library
             return ExternalNodeLibrary.process(prices, nodeDefinition.parameters);
         } else if (nodeDefinition.nodeType == NodeType.CHAINLINK) {
-            return ChainlinkNodeLibrary.process(prices, nodeDefinition.parameters);
+            // return ChainlinkNodeLibrary.process(nodeDefinition.parameters);
         } else if (nodeDefinition.nodeType == NodeType.PYTH) {
-            return PythNodeLibrary.process(prices, nodeDefinition.parameters);
+            return PythNodeLibrary.process(nodeDefinition.parameters);
         } else {
             revert("Unsupported Node Type");
         }
-    }
-
-    function _getNodeId(NodeDefinition memory nodeDefinition) internal pure returns (bytes32 nodeId) {
-        nodeId = keccak256(abi.encode(nodeDefinition.parents, nodeDefinition.nodeType, nodeDefinition.parameters));
     }
 }
