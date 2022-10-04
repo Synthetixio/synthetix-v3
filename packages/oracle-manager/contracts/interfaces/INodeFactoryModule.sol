@@ -9,7 +9,15 @@ interface INodeFactoryModule {
         bytes32[] memory parents,
         NodeFactoryStorage.NodeType nodeType,
         bytes memory parameters
-    ) external returns (bytes32 nodeId);
+    ) external returns (bytes32);
 
-    function process(bytes32 nodeId) external view returns (NodeFactoryStorage.NodeData memory price);
+    function getNodeId(
+        bytes32[] memory parents,
+        NodeFactoryStorage.NodeType nodeType,
+        bytes memory parameters
+    ) external returns (bytes32);
+
+    function getNode(bytes32 nodeId) external view returns (NodeFactoryStorage.NodeDefinition memory);
+
+    function process(bytes32 nodeId) external view returns (NodeFactoryStorage.NodeData memory);
 }
