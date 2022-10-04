@@ -90,13 +90,9 @@ export function bootstrapWithNodes() {
     const [owner] = r.signers();
 
     // register node
-    const nodeId = await r.systems().Core.connect(owner).registerNode({
-      parents: [],
-      nodeType: 3,
-      parameters: aggregator.address,
-    });
-
-    console.log('nodeId:', nodeId);
+    const nodeId = await r.systems().Core.connect(owner).registerNode([], 3, aggregator.address);
+    await nodeId.wait();
+    console.log('nodeId:');
   });
 
   const restore = snapshotCheckpoint(r.provider);

@@ -4,12 +4,21 @@ pragma solidity ^0.8.0;
 import "../../interfaces/INodeFactoryModule.sol";
 import "../../utils/ReducerNodeLibrary.sol";
 import "../../utils/ExternalNodeLibrary.sol";
-// import "../../utils/ChainlinkNodeLibrary.sol";
 import "../../utils/PythNodeLibrary.sol";
 import "../../mixins/NodeMixin.sol";
 
 contract NodeFactoryModule is INodeFactoryModule, NodeMixin {
-    function registerNode(NodeDefinition memory nodeDefinition) external returns (bytes32) {
+    function registerNode(
+        bytes32[] memory parents,
+        NodeType nodeType,
+        bytes memory parameters
+    ) external returns (bytes32) {
+        NodeDefinition memory nodeDefinition = NodeDefinition({
+            parents: parents,
+            nodeType: nodeType,
+            parameters: parameters
+        });
+
         return _registerNode(nodeDefinition);
     }
 
