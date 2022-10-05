@@ -1,4 +1,4 @@
-name = "synthetix-main"
+name = "synthetix"
 version = "<%= package.version %>"
 description = "Core synthetix system"
 

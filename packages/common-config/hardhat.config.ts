@@ -32,6 +32,10 @@ const config = {
       url: 'http://localhost:8545',
       chainId: 31337,
     },
+    mainnet: {
+      url: process.env.NETWORK_ENDPOINT || 'https://mainnet.infura.io/v3/' + process.env.INFURA_API_KEY,
+      accounts: process.env.DEPLOYER_PRIVATE_KEY ? [process.env.DEPLOYER_PRIVATE_KEY] : [],
+    },
     ['optimistic-kovan']: {
       url: process.env.NETWORK_ENDPOINT || 'https://kovan.optimism.io',
       accounts: process.env.DEPLOYER_PRIVATE_KEY ? [process.env.DEPLOYER_PRIVATE_KEY] : [],
@@ -60,16 +64,10 @@ const config = {
     username: 'synthetix-services',
   },
   cannon: {
-    ipfsConnection: {
-      protocol: 'https',
-      host: 'ipfs.infura.io',
-      port: 5001,
-      headers: {
-        authorization: `Basic ${Buffer.from(
-          process.env.INFURA_IPFS_ID + ':' + process.env.INFURA_IPFS_SECRET
-        ).toString('base64')}`,
-      },
-    },
+    ipfsEndpoint: 'https://ipfs.infura.io:5001',
+    ipfsAuthorizationHeader: `Basic ${Buffer.from(
+      process.env.INFURA_IPFS_ID + ':' + process.env.INFURA_IPFS_SECRET
+   ).toString('base64')}`,
   },
 };
 
