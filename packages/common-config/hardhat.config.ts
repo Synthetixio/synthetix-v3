@@ -33,7 +33,9 @@ const config = {
       chainId: 31337,
     },
     mainnet: {
-      url: process.env.NETWORK_ENDPOINT || 'https://mainnet.infura.io/v3/' + process.env.INFURA_API_KEY,
+      url:
+        process.env.NETWORK_ENDPOINT ||
+        'https://mainnet.infura.io/v3/' + process.env.INFURA_API_KEY,
       accounts: process.env.DEPLOYER_PRIVATE_KEY ? [process.env.DEPLOYER_PRIVATE_KEY] : [],
     },
     ['optimistic-kovan']: {
@@ -67,7 +69,7 @@ const config = {
     ipfsEndpoint: 'https://ipfs.infura.io:5001',
     ipfsAuthorizationHeader: `Basic ${Buffer.from(
       process.env.INFURA_IPFS_ID + ':' + process.env.INFURA_IPFS_SECRET
-   ).toString('base64')}`,
+    ).toString('base64')}`,
   },
 };
 
