@@ -25,6 +25,15 @@ contract MarketManagerStorage {
         // used to attach/reattach pools to a market if it goes below a certain debt per debt share
         HeapUtil.Data outRangePools;
         SharesLibrary.Distribution debtDist;
+        // @notice the amount of collateral deposited by this market
+        DepositedCollateral[] depositedCollateral;
+        // @notice the maximum amount of a collateral type that this market can deposit
+        mapping(address => uint) maximumDepositable;
+    }
+
+    struct DepositedCollateral {
+        address collateralType;
+        uint amount;
     }
 
     function _marketManagerStore() internal pure returns (MarketManagerStore storage store) {

@@ -53,7 +53,7 @@ contract CollateralModule is
         collateral.minimumCRatio = minimumCRatio;
         collateral.priceFeed = priceFeed;
         collateral.liquidationReward = liquidationReward;
-        collateral.enabled = enabled;
+        collateral.stakingEnabled = enabled;
 
         emit CollateralConfigured(collateralType, priceFeed, targetCRatio, minimumCRatio, liquidationReward, enabled);
     }
@@ -76,7 +76,7 @@ contract CollateralModule is
 
             CollateralConfiguration storage collateral = store.collateralConfigurations[collateralType];
 
-            if (!hideDisabled || collateral.enabled) {
+            if (!hideDisabled || collateral.stakingEnabled) {
                 filteredCollaterals[collateralsIdx++] = collateral;
             }
         }
@@ -91,6 +91,10 @@ contract CollateralModule is
         returns (CollateralStorage.CollateralConfiguration memory)
     {
         return _collateralStore().collateralConfigurations[collateralType];
+    }
+
+    function getCollateralValue(address collateralType) external view override returns (uint) {
+        return _getCollateralPrice(collateralType);
     }
 
     /////////////////////////////////////////////////
@@ -114,13 +118,11 @@ contract CollateralModule is
         address collateralType,
         uint amount
     ) public override onlyWithPermission(accountId, _WITHDRAW_PERMISSION) {
-        uint256 availableCollateral = getAccountAvailableCollateral(accountId, collateralType);
+        CollateralData storage collateralData = _collateralStore().collateralDataByAccountId[accountId][collateralType];
 
-        if (availableCollateral < amount) {
+        if (collateralData.availableAmount < amount) {
             revert InsufficientAccountCollateral(accountId, collateralType, amount);
         }
-
-        CollateralData storage collateralData = _collateralStore().collateralDataByAccountId[accountId][collateralType];
 
         collateralData.availableAmount -= amount;
 
@@ -133,7 +135,7 @@ contract CollateralModule is
         external
         view
         override
-        returns (uint256 totalStaked, uint256 totalAssigned)
+        returns (uint256 totalDeposited, uint256 totalAssigned)
     //uint256 totalLocked,
     //uint256 totalEscrowed
     {

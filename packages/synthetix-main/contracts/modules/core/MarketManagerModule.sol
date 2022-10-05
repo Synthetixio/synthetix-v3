@@ -39,8 +39,9 @@ contract MarketManagerModule is
         return marketId;
     }
 
-    function getWithdrawableUsd(uint marketId) external view override returns (uint) {
-        return _marketManagerStore().markets[marketId].capacity;
+    function getWithdrawableUsd(uint marketId) public view override returns (uint) {
+        MarketData storage marketData = _marketManagerStore().markets[marketId];
+        return marketData.capacity + _depositedCollateralValue(marketData.depositedCollateral);
     }
 
     function getMarketIssuance(uint marketId) external view override returns (int128) {
@@ -111,7 +112,7 @@ contract MarketManagerModule is
 
         if (msg.sender != marketData.marketAddress) revert AccessError.Unauthorized(msg.sender);
 
-        if (amount > marketData.capacity) revert NotEnoughLiquidity(marketId, amount);
+        if (amount > getWithdrawableUsd(marketId)) revert NotEnoughLiquidity(marketId, amount);
 
         // Adjust accounting
         marketData.capacity -= uint128(amount);

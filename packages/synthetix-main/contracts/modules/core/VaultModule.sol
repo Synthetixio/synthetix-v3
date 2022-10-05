@@ -84,6 +84,7 @@ contract VaultModule is IVaultModule, VaultStorage, AccountRBACMixin, OwnableMix
             // this will ensure the new distribution information is passed up the chain to the markets
             _updatePositionDebt(accountId, poolId, collateralType);
         }
+        _setDelegatePoolId(accountId, poolId, collateralType);
 
         // this is the most efficient time to check the resulting collateralization ratio, since
         // user's debt and collateral price have been fully updated
@@ -130,6 +131,8 @@ contract VaultModule is IVaultModule, VaultStorage, AccountRBACMixin, OwnableMix
 
         int newDebt = debt + int(amount);
 
+        require(newDebt > debt, "Incorrect new debt");
+
         if (newDebt > 0) {
             _verifyCollateralRatio(collateralType, uint(newDebt), collateralValue);
         }
@@ -138,6 +141,9 @@ contract VaultModule is IVaultModule, VaultStorage, AccountRBACMixin, OwnableMix
         VaultEpochData storage epochData = vaultData.epochData[vaultData.epoch];
 
         epochData.usdDebtDist.updateActorValue(bytes32(accountId), newDebt);
+
+        require(int(amount) == int128(int(amount)), "Incorrect amount specified");
+
         _poolModuleStore().pools[poolId].totalLiquidity -= int128(int(amount));
         _getToken(_USD_TOKEN).mint(msg.sender, amount);
 

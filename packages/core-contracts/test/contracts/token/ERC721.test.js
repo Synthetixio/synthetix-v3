@@ -55,8 +55,8 @@ describe('ERC721', () => {
       assertBn.equal(await ERC721.balanceOf(user1.address), 0);
     });
 
-    it('reverts checking the balance of 0x0 address', async () => {
-      await assertRevert(ERC721.balanceOf(ethers.constants.AddressZero), 'ZeroAddress');
+    it('returns default 0 for balance of 0x0 address', async () => {
+      assertBn.equal(await ERC721.balanceOf(ethers.constants.AddressZero), 0);
     });
   });
 
@@ -87,8 +87,8 @@ describe('ERC721', () => {
       assert.equal(await ERC721.ownerOf(token42), user1.address);
     });
 
-    it('reverts checking the owner for a wrong NFT Id', async () => {
-      await assertRevert(ERC721.ownerOf(24), 'TokenDoesNotExist(24)');
+    it('returns default address zero for owner of a wrong NFT Id', async () => {
+      assert.equal(await ERC721.ownerOf(24), ethers.constants.AddressZero);
     });
 
     describe('when attempting to mint again an existent Token', async () => {
@@ -111,8 +111,8 @@ describe('ERC721', () => {
         assert.equal(await ERC721.tokenURI(token42), '');
       });
 
-      it('reverts for an invalid tokenID', async () => {
-        await assertRevert(ERC721.tokenURI(24), 'TokenDoesNotExist(24)');
+      it('returns default "" for an invalid tokenID', async () => {
+        assert.equal(await ERC721.tokenURI(24), '');
       });
     });
 
@@ -544,6 +544,14 @@ describe('ERC721', () => {
           });
         });
       });
+    });
+  });
+
+  describe('When attempting to initialize it with invalid values', () => {
+    it('reverts', async () => {
+      const factory = await ethers.getContractFactory('ERC721Mock');
+      let ERC721 = await factory.deploy();
+      await assertRevert(ERC721.initialize('', '', ''), 'InvalidParameters()');
     });
   });
 });

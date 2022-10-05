@@ -1,6 +1,5 @@
 const { ethers } = hre;
 const assert = require('assert/strict');
-const { default: assertRevert } = require('@synthetixio/core-utils/utils/assertions/assert-revert');
 const assertBn = require('@synthetixio/core-utils/utils/assertions/assert-bignumber');
 
 describe('ERC721Enumerable', () => {
@@ -37,11 +36,7 @@ describe('ERC721Enumerable', () => {
       assertBn.equal(await ERC721Enumerable.tokenOfOwnerByIndex(user1.address, 0), 100);
       assertBn.equal(await ERC721Enumerable.tokenOfOwnerByIndex(user1.address, 1), 101);
       assertBn.equal(await ERC721Enumerable.tokenOfOwnerByIndex(user2.address, 0), 200);
-
-      await assertRevert(
-        ERC721Enumerable.tokenOfOwnerByIndex(user1.address, 2),
-        'IndexOutOfBounds()'
-      );
+      assertBn.equal(await ERC721Enumerable.tokenOfOwnerByIndex(user1.address, 2), 0);
     });
   });
 
@@ -52,10 +47,7 @@ describe('ERC721Enumerable', () => {
       await ERC721Enumerable.burn(301);
 
       assertBn.equal(await ERC721Enumerable.tokenOfOwnerByIndex(user1.address, 0), 300);
-      await assertRevert(
-        ERC721Enumerable.tokenOfOwnerByIndex(user1.address, 1),
-        'IndexOutOfBounds()'
-      );
+      assertBn.equal(await ERC721Enumerable.tokenOfOwnerByIndex(user1.address, 1), 0);
     });
   });
 
@@ -67,10 +59,7 @@ describe('ERC721Enumerable', () => {
 
       assertBn.equal(await ERC721Enumerable.tokenOfOwnerByIndex(user1.address, 0), 400);
       assertBn.equal(await ERC721Enumerable.tokenOfOwnerByIndex(user2.address, 0), 401);
-      await assertRevert(
-        ERC721Enumerable.tokenOfOwnerByIndex(user1.address, 1),
-        'IndexOutOfBounds()'
-      );
+      assertBn.equal(await ERC721Enumerable.tokenOfOwnerByIndex(user1.address, 1), 0);
     });
   });
 
@@ -86,7 +75,7 @@ describe('ERC721Enumerable', () => {
       assertBn.equal(await ERC721Enumerable.totalSupply(), 6);
       assertBn.equal(await ERC721Enumerable.tokenByIndex(0), 400);
       assertBn.equal(await ERC721Enumerable.tokenByIndex(5), 405);
-      await assertRevert(ERC721Enumerable.tokenByIndex(6), 'IndexOutOfBounds()');
+      assertBn.equal(await ERC721Enumerable.tokenByIndex(6), 0);
     });
   });
 });

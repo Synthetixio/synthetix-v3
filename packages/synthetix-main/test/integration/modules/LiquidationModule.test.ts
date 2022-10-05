@@ -269,12 +269,16 @@ describe('LiquidationModule', function () {
           );
 
           assertBn.near(sentAmount, depositAmount.div(4));
-          assertBn.equal(
-            (
-              await systems().Core.getAccountCollateral(liquidatorAccountId, collateralAddress())
-            )[0],
-            sentAmount.add(depositAmount.mul(50))
+
+          const liquidatorAccountCollateral = await systems().Core.getAccountCollateral(
+            liquidatorAccountId,
+            collateralAddress()
           );
+          const deposited = liquidatorAccountCollateral[0];
+          const assigned = liquidatorAccountCollateral[1];
+          const availableAmount = deposited.sub(assigned);
+
+          assertBn.equal(availableAmount, sentAmount.add(depositAmount.mul(50)));
         });
 
         it('keeps market c-ratio the same', async () => {
@@ -294,12 +298,15 @@ describe('LiquidationModule', function () {
           });
 
           it('sends collateral to the requested accountId', async () => {
-            assertBn.equal(
-              (
-                await systems().Core.getAccountCollateral(liquidatorAccountId, collateralAddress())
-              )[0],
-              depositAmount.mul(51)
+            const liquidatorAccountCollateral = await systems().Core.getAccountCollateral(
+              liquidatorAccountId,
+              collateralAddress()
             );
+            const deposited = liquidatorAccountCollateral[0];
+            const assigned = liquidatorAccountCollateral[1];
+            const availableAmount = deposited.sub(assigned);
+
+            assertBn.equal(availableAmount, depositAmount.mul(51));
           });
 
           it('vault is reset', async () => {
