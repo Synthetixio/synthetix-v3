@@ -5,6 +5,7 @@ import "@synthetixio/core-contracts/contracts/utils/MathUtil.sol";
 import "@synthetixio/core-contracts/contracts/interfaces/IERC20.sol";
 import "../interfaces/external/IMarket.sol";
 import "../interfaces/IMarketManagerModule.sol";
+import "../interfaces/IAssociateDebtModule.sol";
 import "../interfaces/IMarketCollateralModule.sol";
 
 contract MockMarket is IMarket {
@@ -24,6 +25,17 @@ contract MockMarket is IMarket {
         _proxy = proxy;
         _marketId = marketId;
         _price = initialPrice;
+    }
+
+    function callAssociateDebt(
+        uint poolId,
+        address collateralType,
+        uint accountId,
+        uint amount
+    ) external {
+        _reportedDebt += amount;
+
+        IAssociateDebtModule(_proxy).associateDebt(_marketId, poolId, collateralType, accountId, amount);
     }
 
     function buySynth(uint amount) external {

@@ -29,26 +29,35 @@ contract CollateralMixin is CollateralStorage, VaultStorage {
             _collateralStore().collateralConfigurations[collateralType].priceFeed
         ).latestRoundData();
 
+        uint decimals = IAggregatorV3Interface(_collateralStore().collateralConfigurations[collateralType].priceFeed)
+            .decimals();
+
+        uint finalAnswer = (uint(answer) * 10**18) / 10**decimals;
+
         // sanity check
         // TODO: this will be removed when we get the oracle manager
-        require(answer > 0, "The collateral value is 0");
+        require(finalAnswer > 0, "The collateral value is 0");
 
-        return uint(answer);
+        return finalAnswer;
     }
 
     function _getAccountCollateralTotals(uint accountId, address collateralType)
         internal
         view
-        returns (uint256 totalDeposited, uint256 totalAssigned)
+        returns (
+            uint256 totalDeposited,
+            uint256 totalAssigned,
+            uint256 totalLocked
+        )
     {
         CollateralData storage stakedCollateral = _collateralStore().collateralDataByAccountId[accountId][collateralType];
 
         totalAssigned = _getAccountAssignedCollateral(accountId, collateralType);
         totalDeposited = totalAssigned + stakedCollateral.availableAmount;
-        //totalLocked = _getTotalLocked(stakedCollateral.locks);
+        totalLocked = _getTotalLocked(stakedCollateral.locks);
         //totalEscrowed = _getLockedEscrow(stakedCollateral.escrow);
 
-        return (totalDeposited, totalAssigned); //, totalLocked, totalEscrowed);
+        return (totalDeposited, totalAssigned, totalLocked); //, totalEscrowed);
     }
 
     function _getAccountUnassignedCollateral(uint accountId, address collateralType) internal view returns (uint) {

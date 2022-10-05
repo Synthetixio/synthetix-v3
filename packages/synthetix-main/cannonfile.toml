@@ -1,5 +1,5 @@
-name = "synthetix-main"
-version = "<%= package.version %>"
+name = "synthetix"
+version = "3.0.0-lm"
 description = "Core synthetix system"
 
 # `salt` here only affects proxy contract
