@@ -7,12 +7,14 @@ import NodeTypes from '../mixins/Node.types';
 import NodeOperations from '../mixins/Node.operations';
 
 describe('NodeModule', function () {
-  const { signers, systems, nodeId1, nodeId2, abi } = bootstrapWithNodes();
+  const { signers, systems, nodeId1, nodeId2, nodeId3, abi } = bootstrapWithNodes();
 
-  let owner: ethers.Signer, user1: ethers.Signer, user2: ethers.Signer;
+  let owner: ethers.Signer;
+  let parents: string[];
 
   before('identify signers', async () => {
-    [owner, user1, user2] = signers();
+    [owner] = signers();
+    parents = [nodeId1(), nodeId2(), nodeId3()];
   });
 
   it('make sure mock aggregator node is set up', async () => {
@@ -30,7 +32,6 @@ describe('NodeModule', function () {
 
   it('register a max reducer', async () => {
     const params = abi.encode(['int'], [NodeOperations.MAX]);
-    const parents = [nodeId1(), nodeId2()];
 
     await systems().Core.connect(owner).registerNode(parents, NodeTypes.REDUCER, params);
 
@@ -44,7 +45,45 @@ describe('NodeModule', function () {
 
   it('register a min reducer', async () => {
     const params = abi.encode(['int'], [NodeOperations.MIN]);
-    const parents = [nodeId1(), nodeId2()];
+
+    await systems().Core.connect(owner).registerNode(parents, NodeTypes.REDUCER, params);
+
+    const nodeId = await systems()
+      .Core.connect(owner)
+      .getNodeId(parents, NodeTypes.REDUCER, params);
+
+    const priceData = await systems().Core.connect(owner).process(nodeId);
+    assertBn.equal(priceData.price, ethers.utils.parseEther('0.5'));
+  });
+
+  it('register a mean reducer', async () => {
+    const params = abi.encode(['int'], [NodeOperations.MEAN]);
+
+    await systems().Core.connect(owner).registerNode(parents, NodeTypes.REDUCER, params);
+
+    const nodeId = await systems()
+      .Core.connect(owner)
+      .getNodeId(parents, NodeTypes.REDUCER, params);
+
+    const priceData = await systems().Core.connect(owner).process(nodeId);
+    assertBn.equal(priceData.price, ethers.utils.parseEther('0.8'));
+  });
+
+  it('register a median reducer', async () => {
+    const params = abi.encode(['int'], [NodeOperations.MEDIAN]);
+
+    await systems().Core.connect(owner).registerNode(parents, NodeTypes.REDUCER, params);
+
+    const nodeId = await systems()
+      .Core.connect(owner)
+      .getNodeId(parents, NodeTypes.REDUCER, params);
+
+    const priceData = await systems().Core.connect(owner).process(nodeId);
+    assertBn.equal(priceData.price, ethers.utils.parseEther('0.9'));
+  });
+
+  it('register a recent reducer', async () => {
+    const params = abi.encode(['int'], [NodeOperations.RECENT]);
 
     await systems().Core.connect(owner).registerNode(parents, NodeTypes.REDUCER, params);
 

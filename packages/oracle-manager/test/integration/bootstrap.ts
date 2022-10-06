@@ -74,9 +74,11 @@ export function bootstrapWithNodes() {
 
   let aggregator: ethers.Contract;
   let aggregator2: ethers.Contract;
+  let aggregator3: ethers.Contract;
 
   let nodeId1: string;
   let nodeId2: string;
+  let nodeId3: string;
   let collateralAddress: string;
   const depositAmount = ethers.utils.parseEther('1000');
   const abi = ethers.utils.defaultAbiCoder;
@@ -88,6 +90,9 @@ export function bootstrapWithNodes() {
 
     await aggregator.mockSetCurrentPrice(ethers.utils.parseEther('1'));
 
+    aggregator3 = await factory.connect(owner).deploy();
+    await aggregator3.mockSetCurrentPrice(ethers.utils.parseEther('0.5'));
+
     aggregator2 = await factory.connect(owner).deploy();
     await aggregator2.mockSetCurrentPrice(ethers.utils.parseEther('0.9'));
   });
@@ -96,6 +101,7 @@ export function bootstrapWithNodes() {
     const [owner] = r.signers();
     const params1 = abi.encode(['address'], [aggregator.address]);
     const params2 = abi.encode(['address'], [aggregator2.address]);
+    const params3 = abi.encode(['address'], [aggregator3.address]);
 
     // register node 1
     await r.systems().Core.connect(owner).registerNode([], NodeTypes.CHAINLINK, params1);
@@ -104,6 +110,9 @@ export function bootstrapWithNodes() {
     // register node 2
     await r.systems().Core.connect(owner).registerNode([], NodeTypes.CHAINLINK, params2);
     nodeId2 = await r.systems().Core.connect(owner).getNodeId([], NodeTypes.CHAINLINK, params2);
+
+    await r.systems().Core.connect(owner).registerNode([], NodeTypes.CHAINLINK, params3);
+    nodeId3 = await r.systems().Core.connect(owner).getNodeId([], NodeTypes.CHAINLINK, params3);
   });
 
   const restore = snapshotCheckpoint(r.provider);
@@ -113,6 +122,7 @@ export function bootstrapWithNodes() {
     aggregator: () => aggregator,
     nodeId1: () => nodeId1,
     nodeId2: () => nodeId2,
+    nodeId3: () => nodeId3,
     collateralContract: () => r.systems().SNX,
     collateralAddress: () => collateralAddress,
     depositAmount,
