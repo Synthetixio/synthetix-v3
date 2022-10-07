@@ -6,12 +6,22 @@ import "../interfaces/ISpotMarket.sol";
 
 contract SpotMarketStorage {
     struct SpotMarketStore {
+        PriceFeed priceFeed;
         ITokenModule usdToken;
+        Wrapper wrapper;
         address synthetix;
-        address priceFeed; // will become oracle manager id
         address feeManager;
         uint marketId;
         bool initialized;
+    }
+
+    struct Wrapper {
+        address collateralType;
+    }
+
+    struct PriceFeed {
+        bytes buyFeedId;
+        bytes sellFeedId;
     }
 
     function _spotMarketStore() internal pure returns (SpotMarketStore storage store) {

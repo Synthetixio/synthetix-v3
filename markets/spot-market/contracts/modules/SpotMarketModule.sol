@@ -7,14 +7,15 @@ import "@synthetixio/core-modules/contracts/modules/TokenModule.sol";
 import "@synthetixio/core-contracts/contracts/initializable/InitializableMixin.sol";
 import "@synthetixio/core-contracts/contracts/ownership/OwnableMixin.sol";
 import "@synthetixio/core-contracts/contracts/token/ERC20.sol";
+import "../mixins/FeeMixin.sol";
+import "../mixins/PriceMixin.sol";
+import "../mixins/SynthMixin.sol";
 import "../interfaces/ISpotMarket.sol";
-import "../interfaces/external/IMarketFee.sol";
-import "../storage/SpotMarketStorage.sol";
+import "../interfaces/ISpotMarketFee.sol";
 
-contract SpotMarketModule is ISpotMarket, SpotMarketStorage, ERC20, OwnableMixin, InitializableMixin {
+contract SpotMarketModule is ISpotMarket, FeeMixin, PriceMixin, SynthMixin, OwnableMixin, InitializableMixin {
     using MathUtil for uint256;
 
-    error InsufficientFunds();
     error IncorrectMarket();
 
     function _isInitialized() internal view override returns (bool) {
@@ -31,8 +32,9 @@ contract SpotMarketModule is ISpotMarket, SpotMarketStorage, ERC20, OwnableMixin
         string memory name,
         string memory symbol,
         uint8 decimals,
-        address priceFeed,
-        address feeManager
+        address feeManager,
+        bytes memory buyFeedId,
+        bytes memory sellFeedId
     ) external override onlyOwner {
         SpotMarketStore storage store = _spotMarketStore();
         // initialize token
@@ -45,7 +47,8 @@ contract SpotMarketModule is ISpotMarket, SpotMarketStorage, ERC20, OwnableMixin
         // set storage
         store.marketId = synthMarketId;
         store.feeManager = feeManager;
-        store.priceFeed = priceFeed;
+        store.priceFeed = PriceFeed(buyFeedId, sellFeedId);
+
         // emit event
         emit SynthRegistered(synthMarketId);
         // we're initialized
@@ -66,24 +69,28 @@ contract SpotMarketModule is ISpotMarket, SpotMarketStorage, ERC20, OwnableMixin
         _spotMarketStore().feeManager = newFeeManager;
     }
 
+    function updatePriceFeed(PriceFeed memory priceFeed) external override onlyOwner {
+        _spotMarketStore().priceFeed = priceFeed;
+    }
+
     function buy(uint amountUsd) external override onlyIfInitialized returns (uint) {
         SpotMarketStore storage store = _spotMarketStore();
 
+        uint allowance = store.usdToken.allowance(msg.sender, address(this));
         if (store.usdToken.balanceOf(msg.sender) < amountUsd) {
             revert InsufficientFunds();
         }
-        if (store.usdToken.allowance(msg.sender, address(this)) < amountUsd) {
-            revert InsufficientAllowance(amountUsd, store.usdToken.allowance(msg.sender, address(this)));
+        if (allowance < amountUsd) {
+            revert InsufficientAllowance(amountUsd, allowance);
         }
 
         store.usdToken.transferFrom(msg.sender, address(this), amountUsd);
-        (uint amountUsable, uint feesCollected) = _manageFees(store, amountUsd);
+        (uint amountUsable, uint feesCollected) = _processFees(store, amountUsd, ISpotMarketFee.TradeType.BUY);
 
         uint amountToMint = _usdSynthExchangeRate(amountUsable);
         _mint(msg.sender, amountToMint);
 
-        // check with db on market manager to check for msg sender being the target
-        store.usdToken.approve(address(this), amountUsable); // required for market manager
+        store.usdToken.approve(address(this), amountUsable);
         IMarketManagerModule(store.synthetix).depositUsd(store.marketId, address(this), amountUsable);
 
         emit SynthBought(store.marketId, amountToMint, feesCollected);
@@ -98,7 +105,8 @@ contract SpotMarketModule is ISpotMarket, SpotMarketStorage, ERC20, OwnableMixin
         _burn(msg.sender, sellAmount);
 
         IMarketManagerModule(store.synthetix).withdrawUsd(store.marketId, address(this), amountToWithdraw);
-        (uint returnAmount, uint feesCollected) = _manageFees(store, amountToWithdraw);
+
+        (uint returnAmount, uint feesCollected) = _processFees(store, amountToWithdraw, ISpotMarketFee.TradeType.SELL);
 
         store.usdToken.transfer(msg.sender, returnAmount);
         emit SynthSold(store.marketId, returnAmount, feesCollected);
@@ -106,25 +114,12 @@ contract SpotMarketModule is ISpotMarket, SpotMarketStorage, ERC20, OwnableMixin
         return returnAmount;
     }
 
-    // TODO: change from pure once _getCurrentPrice is implemented
-    function _synthUsdExchangeRate(uint sellAmount) internal pure returns (uint amountUsd) {
-        uint currentPrice = _getCurrentPrice();
-        amountUsd = sellAmount.mulDecimal(currentPrice);
+    function getBuyQuote(uint amountUsd) external view override returns (uint, uint) {
+        return _quote(amountUsd, ISpotMarketFee.TradeType.BUY);
     }
 
-    function _usdSynthExchangeRate(uint amountUsd) internal pure returns (uint synthAmount) {
-        uint currentPrice = _getCurrentPrice();
-        synthAmount = amountUsd.divDecimal(currentPrice);
-    }
-
-    function _manageFees(SpotMarketStore storage store, uint amountUsd) internal returns (uint, uint) {
-        store.usdToken.approve(store.feeManager, amountUsd);
-        return IMarketFee(store.feeManager).processFees(msg.sender, store.marketId, amountUsd);
-    }
-
-    // TODO: interact with OracleManager to get price for market synth
-    function _getCurrentPrice() internal pure returns (uint) {
-        /* get from oracleManager / aggregator chainlink based on synth id */
-        return 1;
+    function getSellQuote(uint amountSynth) external view override returns (uint, uint) {
+        uint usdAmount = _synthUsdExchangeRate(amountSynth);
+        return _quote(usdAmount, ISpotMarketFee.TradeType.SELL);
     }
 }

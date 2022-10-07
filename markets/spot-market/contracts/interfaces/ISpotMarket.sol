@@ -18,13 +18,20 @@ interface ISpotMarket is IMarket {
         string memory name,
         string memory symbol,
         uint8 decimals,
-        address priceFeed,
-        address feeManager
+        address feeManager,
+        bytes memory buyFeedId,
+        bytes memory sellFeedId
     ) external;
 
     function updateFeeManager(address newFeeManager) external;
 
+    function updatePriceFeed(SpotMarketStorage.PriceFeed memory priceFeed) external;
+
     function buy(uint amountUsd) external returns (uint);
 
     function sell(uint sellAmount) external returns (uint);
+
+    function getBuyQuote(uint amountUsd) external view returns (uint, uint);
+
+    function getSellQuote(uint amountSynth) external view returns (uint, uint);
 }
