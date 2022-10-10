@@ -8,15 +8,10 @@ contract SpotMarketStorage {
     struct SpotMarketStore {
         PriceFeed priceFeed;
         ITokenModule usdToken;
-        Wrapper wrapper;
         address synthetix;
         address feeManager;
         uint marketId;
         bool initialized;
-    }
-
-    struct Wrapper {
-        address collateralType;
     }
 
     struct PriceFeed {

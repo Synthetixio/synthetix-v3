@@ -9,14 +9,15 @@ import "@synthetixio/core-contracts/contracts/ownership/OwnableMixin.sol";
 import "@synthetixio/core-contracts/contracts/token/ERC20.sol";
 import "../mixins/FeeMixin.sol";
 import "../mixins/PriceMixin.sol";
-import "../mixins/SynthMixin.sol";
+import "../mixins/SpotMarketMixin.sol";
 import "../interfaces/ISpotMarket.sol";
 import "../interfaces/ISpotMarketFee.sol";
 
-contract SpotMarketModule is ISpotMarket, FeeMixin, PriceMixin, SynthMixin, OwnableMixin, InitializableMixin {
+contract SpotMarketModule is ISpotMarket, ERC20, FeeMixin, PriceMixin, OwnableMixin, InitializableMixin {
     using MathUtil for uint256;
 
     error IncorrectMarket();
+    error InsufficientFunds();
 
     function _isInitialized() internal view override returns (bool) {
         return _spotMarketStore().initialized;
@@ -115,11 +116,11 @@ contract SpotMarketModule is ISpotMarket, FeeMixin, PriceMixin, SynthMixin, Owna
     }
 
     function getBuyQuote(uint amountUsd) external view override returns (uint, uint) {
-        return _quote(amountUsd, ISpotMarketFee.TradeType.BUY);
+        return _quote(_spotMarketStore(), amountUsd, ISpotMarketFee.TradeType.BUY);
     }
 
     function getSellQuote(uint amountSynth) external view override returns (uint, uint) {
         uint usdAmount = _synthUsdExchangeRate(amountSynth);
-        return _quote(usdAmount, ISpotMarketFee.TradeType.SELL);
+        return _quote(_spotMarketStore(), usdAmount, ISpotMarketFee.TradeType.SELL);
     }
 }

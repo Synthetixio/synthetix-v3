@@ -5,7 +5,7 @@ import "@synthetixio/core-contracts/contracts/utils/MathUtil.sol";
 import "../storage/SpotMarketStorage.sol";
 import "../interfaces/ISpotMarketFee.sol";
 
-contract PriceMixin is SpotMarketStorage {
+contract PriceMixin {
     using MathUtil for uint256;
 
     // TODO: change from pure once _getCurrentPrice is implemented
@@ -19,9 +19,11 @@ contract PriceMixin is SpotMarketStorage {
         synthAmount = amountUsd.divDecimal(currentPrice);
     }
 
-    function _quote(uint amountUsd, ISpotMarketFee.TradeType tradeType) internal view returns (uint, uint) {
-        SpotMarketStore storage store = _spotMarketStore();
-
+    function _quote(
+        SpotMarketStorage.SpotMarketStore storage store,
+        uint amountUsd,
+        ISpotMarketFee.TradeType tradeType
+    ) internal view returns (uint, uint) {
         return ISpotMarketFee(store.feeManager).getFeesQuote(msg.sender, store.marketId, amountUsd, tradeType);
     }
 

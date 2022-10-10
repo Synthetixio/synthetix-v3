@@ -48,7 +48,8 @@ args = [
   "Synthetic BTC",
   "snxBTC",
   18,
-  "<%= contracts.FixedFeeCalculator.address %>",
-  "<%= contracts.FixedFeeCalculator.address %>", # TODO: import oracle manager here
+  "<%= contract.FixedFeeCalculator %>",
+  "0xtest", # TODO: buy node id (oracle manager)
+  "0xtest", # TODO: sell node id (oracle manager)
 ]
 depends = ["invoke.acquire_ownership", "contract.FixedFeeCalculator"]

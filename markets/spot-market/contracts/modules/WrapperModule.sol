@@ -8,10 +8,10 @@ import "../interfaces/IWrapper.sol";
 import "../storage/WrapperStorage.sol";
 import "../mixins/FeeMixin.sol";
 import "../mixins/PriceMixin.sol";
-import "../mixins/SynthMixin.sol";
 
-contract WrapperModule is IWrapper, SynthMixin, FeeMixin, PriceMixin, WrapperStorage, OwnableMixin {
+contract WrapperModule is IWrapper, SpotMarketMixin, FeeMixin, PriceMixin, WrapperStorage, OwnableMixin {
     error WrappingNotInitialized();
+    error InsufficientAllowance(uint required, uint existing);
 
     modifier onlyEnabledWrapper() {
         if (!_wrapperStore().wrappingEnabled) revert WrappingNotInitialized();
@@ -42,7 +42,7 @@ contract WrapperModule is IWrapper, SynthMixin, FeeMixin, PriceMixin, WrapperSto
         // set supply cap on market collateral module
         IMarketCollateralModule(store.synthetix).configureMaximumMarketCollateral(
             store.marketId,
-            store.wrapper.collateralType,
+            _wrapperStore().collateralType,
             supplyCap
         );
 
@@ -98,16 +98,16 @@ contract WrapperModule is IWrapper, SynthMixin, FeeMixin, PriceMixin, WrapperSto
     }
 
     function getWrapQuote(uint wrapAmount) external view returns (uint, uint) {
-        return _wrapQuote(wrapAmount, ISpotMarketFee.TradeType.WRAP);
+        return _wrapperQuote(wrapAmount, ISpotMarketFee.TradeType.WRAP);
     }
 
     function getUnwrapQuote(uint unwrapAmount) external view returns (uint, uint) {
-        return _wrapQuote(unwrapAmount, ISpotMarketFee.TradeType.UNWRAP);
+        return _wrapperQuote(unwrapAmount, ISpotMarketFee.TradeType.UNWRAP);
     }
 
-    function _wrapQuote(uint amount, ISpotMarketFee.TradeType tradeType) internal view returns (uint, uint) {
+    function _wrapperQuote(uint amount, ISpotMarketFee.TradeType tradeType) internal view returns (uint, uint) {
         uint usdAmount = _synthUsdExchangeRate(amount);
-        (uint returnAmount, uint feesCollected) = _quote(usdAmount, tradeType);
+        (uint returnAmount, uint feesCollected) = _quote(_spotMarketStore(), usdAmount, tradeType);
         return (_usdSynthExchangeRate(returnAmount), feesCollected);
     }
 }

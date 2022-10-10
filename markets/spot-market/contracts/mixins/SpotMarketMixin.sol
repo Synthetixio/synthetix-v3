@@ -2,7 +2,8 @@
 pragma solidity ^0.8.0;
 
 import "@synthetixio/core-contracts/contracts/token/ERC20.sol";
+import "../storage/SpotMarketStorage.sol";
 
-contract SynthMixin is ERC20 {
+contract SpotMarketMixin is SpotMarketStorage {
     error InsufficientFunds();
 }
