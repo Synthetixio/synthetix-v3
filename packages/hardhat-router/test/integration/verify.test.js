@@ -3,7 +3,7 @@ const { deepEqual, rejects, equal } = require('assert/strict');
 const { setTimeout } = require('node:timers/promises');
 const { task } = require('hardhat/config');
 const { TASK_VERIFY_VERIFY } = require('@nomiclabs/hardhat-etherscan/dist/src/constants');
-const { TASK_DEPLOY_VERIFY, SUBTASK_LOAD_DEPLOYMENT } = require('../../task-names');
+const { TASK_DEPLOY_VERIFY, SUBTASK_LOAD_DEPLOYMENT } = require('../../src/task-names');
 const { loadEnvironment, deployOnEnvironment } = require('../helpers/use-environment');
 
 describe('deploy:verify', function () {

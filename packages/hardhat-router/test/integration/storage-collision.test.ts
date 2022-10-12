@@ -1,9 +1,10 @@
-const { loadEnvironment, deployOnEnvironment } = require('../helpers/use-environment');
-const { rejects } = require('assert/strict');
-const { ContractValidationError } = require('../../internal/errors');
+import { rejects } from 'assert/strict';
+import { HardhatRuntimeEnvironment } from 'hardhat/types';
+import { loadEnvironment, deployOnEnvironment } from '../helpers/use-environment';
+import { ContractValidationError } from '../../src/internal/errors';
 
 describe.skip('storage-collision', function () {
-  let hre;
+  let hre: HardhatRuntimeEnvironment;
 
   beforeEach('set fixture project', function () {
     hre = loadEnvironment('storage-collision');

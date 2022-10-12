@@ -1,5 +1,20 @@
-const path = require('path');
-const { extendEnvironment } = require('hardhat/config');
+import path from 'node:path';
+import { extendEnvironment } from 'hardhat/config';
+
+declare module 'hardhat/types/runtime' {
+  export interface HardhatRuntimeEnvironment {
+    router: {
+      paths: {
+        routerTemplate: string;
+        deployment: string | null;
+        sources: string | null;
+        abis: string | null;
+      };
+      deployment: string | null;
+      previousDeployment: string | null;
+    };
+  }
+}
 
 extendEnvironment((hre) => {
   if (hre.router) {

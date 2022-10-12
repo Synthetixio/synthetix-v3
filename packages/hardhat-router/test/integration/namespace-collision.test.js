@@ -1,6 +1,6 @@
 const { loadEnvironment, deployOnEnvironment } = require('../helpers/use-environment');
 const { rejects } = require('assert/strict');
-const { ContractValidationError } = require('../../internal/errors');
+const { ContractValidationError } = require('../../src/internal/errors');
 
 describe('namespace-collision', function () {
   let hre;
