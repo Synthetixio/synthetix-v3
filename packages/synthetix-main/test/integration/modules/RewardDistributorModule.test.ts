@@ -38,7 +38,7 @@ describe('RewardDistributorModule', function () {
       await systems().Core.connect(owner).setRewardAllocation(poolId, rewardAmount);
 
       // distribute
-      await systems().Core.connect(owner).distributeRewards(
+      await systems().Core.connect(owner).setRewardsDistribution(
         poolId,
         collateralAddress(),
         0,
@@ -64,7 +64,7 @@ describe('RewardDistributorModule', function () {
 
     describe('re-applied', () => {
       before('re-distribute', async () => {
-        await systems().Core.connect(owner).distributeRewards(
+        await systems().Core.connect(owner).setRewardsDistribution(
           poolId,
           collateralAddress(),
           0,
