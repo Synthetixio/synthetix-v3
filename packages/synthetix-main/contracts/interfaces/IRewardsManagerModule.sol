@@ -15,7 +15,7 @@ interface IRewardsManagerModule {
     event RewardsClaimed(uint indexed poolId, address indexed token, uint indexed accountId, uint index, uint amountClaimed);
 
     /// @notice called by pool owner or an existing distributor to set up rewards for vault participants
-    function distributeRewards(
+    function setRewardsDistribution(
         uint poolId,
         address token,
         uint index,

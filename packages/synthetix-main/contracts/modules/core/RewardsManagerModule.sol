@@ -34,7 +34,7 @@ contract RewardsManagerModule is
     // Associated Rewards
     // ---------------------------------------
 
-    function distributeRewards(
+    function setRewardsDistribution(
         uint poolId,
         address collateralType,
         uint index,
