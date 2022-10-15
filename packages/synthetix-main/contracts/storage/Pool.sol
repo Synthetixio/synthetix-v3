@@ -84,8 +84,6 @@ library Pool {
                 (self.totalRemainingLiquidity * weight) / totalWeights
             );
 
-            console.log("permissible liquidity", uint(permissibleLiquidity));
-
             cumulativeDebtChange += Market.rebalance(
                 marketDistribution.market,
                 self.id,
@@ -94,10 +92,7 @@ library Pool {
                     : marketDistribution.maxDebtShareValue,
                 amount
             );
-            console.log("market accum", uint(cumulativeDebtChange));
         }
-
-        console.log("pool accum", uint(cumulativeDebtChange), self.poolDistribution.length);
 
         poolDist.distribute(cumulativeDebtChange);
     }
@@ -140,9 +135,7 @@ library Pool {
         bytes32 actorId = bytes32(uint(uint160(collateralType)));
         (uint usdWeight, , , int deltaRemainingLiquidity) = self.vaults[collateralType].measureLiquidity(collateralPrice);
 
-        console.log("GOT USD WEIGHT", usdWeight);
         int debtChange = self.debtDist.updateActorShares(actorId, usdWeight);
-        console.log("vault accum", uint(debtChange));
 
         self.totalRemainingLiquidity = uint128(int128(self.totalRemainingLiquidity) + int128(deltaRemainingLiquidity));
 

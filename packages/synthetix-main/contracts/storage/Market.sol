@@ -95,7 +95,7 @@ library Market {
     }
 
     function totalBalance(Data storage self) internal view returns (int) {
-        return int(getReportedDebt(self)) + self.issuance;
+        return int(getReportedDebt(self)) + self.issuance - int(getDepositedCollateralValue(self));
     }
 
     function getDepositedCollateralValue(Data storage self) internal view returns (uint) {
@@ -127,8 +127,6 @@ library Market {
             revert MarketNotFound(marketId);
         }
 
-        console.log("ENTER REBALANCE");
-
         distributeDebt(self, 9999999999);
 
         return adjustVaultShares(self, poolId, amount, maxDebtShareValue);
@@ -140,7 +138,6 @@ library Market {
         uint newLiquidity,
         int newPoolMaxShareValue
     ) internal returns (int debtChange) {
-        console.log("ENTER ADJUST SHARES", newLiquidity, uint(newPoolMaxShareValue));
         uint oldLiquidity = self.debtDist.getActorShares(bytes32(uint(poolId)));
         int oldPoolMaxShareValue = -self.inRangePools.getById(uint128(poolId)).priority;
 
@@ -154,8 +151,6 @@ library Market {
         } else {
             self.inRangePools.insert(uint128(poolId), -int128(int(newPoolMaxShareValue)));
         }
-
-        console.log("update shares", newLiquidity);
 
         debtChange = self.poolPendingDebt[poolId] + self.debtDist.updateActorShares(bytes32(uint(poolId)), newLiquidity);
         self.poolPendingDebt[poolId] = 0;
@@ -182,14 +177,11 @@ library Market {
     function distributeDebt(Data storage self, uint maxIter) internal {
         if (self.debtDist.totalShares == 0) {
             // market cannot distribute (or accumulate) any debt when there are no shares
-            console.log("didnt see any shares", uint(int(self.debtDist.valuePerShare / 1e9)));
             return;
         }
 
         // get the latest market balance
         int targetBalance = totalBalance(self);
-        console.log("new target balance", uint(targetBalance));
-
         int curBalance = self.lastMarketBalance;
 
         int targetDebtPerDebtShare = self.debtDist.valuePerShare /

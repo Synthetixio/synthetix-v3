@@ -121,7 +121,7 @@ describe('MarketCollateralModule', function () {
         );
       });
 
-      it('modifies values as expected ', async () => {
+      it('modifies values as expected', async () => {
         const initialProtocolBalance = await collateralContract()
           .connect(user1)
           .balanceOf(systems().Core.address);

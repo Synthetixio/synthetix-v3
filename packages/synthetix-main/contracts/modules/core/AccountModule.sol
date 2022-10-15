@@ -66,7 +66,10 @@ contract AccountModule is IAccountModule, OwnableMixin, AssociatedSystemsMixin {
     }
 
     function notifyAccountTransfer(address to, uint128 accountId) external override onlyAccountToken {
-        Account.load(accountId).rbac.setOwner(to);
+        Account.Data storage account = Account.load(accountId);
+
+        account.rbac.revokeAllPermissions(account.rbac.owner);
+        account.rbac.setOwner(to);
     }
 
     function hasPermission(
@@ -82,7 +85,7 @@ contract AccountModule is IAccountModule, OwnableMixin, AssociatedSystemsMixin {
         bytes32 permission,
         address user
     ) public view override returns (bool) {
-        return Account.load(accountId).rbac.hasPermission(permission, user);
+        return Account.load(accountId).rbac.authorized(permission, user);
     }
 
     function grantPermission(

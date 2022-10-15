@@ -163,9 +163,7 @@ contract CollateralModule is ICollateralModule, OwnableMixin, AssociatedSystemsM
             revert InsufficientAccountCollateral(amount);
         }
 
-        Account.load(accountId).collaterals[collateralType].locks.push(
-            CollateralLock.Data(amount, expireTimestamp)
-        );
+        Account.load(accountId).collaterals[collateralType].locks.push(CollateralLock.Data(amount, expireTimestamp));
     }
 
     /*function getAccountUnstakebleCollateral(uint accountId, address collateralType) public view override returns (uint) {

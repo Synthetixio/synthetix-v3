@@ -13,8 +13,6 @@ import "../../storage/Pool.sol";
 import "../../interfaces/IVaultModule.sol";
 import "../../interfaces/IUSDTokenModule.sol";
 
-import "hardhat/console.sol";
-
 contract VaultModule is IVaultModule, AssociatedSystemsMixin, OwnableMixin {
     using SetUtil for SetUtil.UintSet;
     using SetUtil for SetUtil.Bytes32Set;

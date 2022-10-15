@@ -278,7 +278,7 @@ describe('LiquidationModule', function () {
           const assigned = liquidatorAccountCollateral[1];
           const availableAmount = deposited.sub(assigned);
 
-          assertBn.equal(availableAmount, sentAmount.add(depositAmount.mul(50)));
+          assertBn.equal(availableAmount, sentAmount);
         });
 
         it('keeps market c-ratio the same', async () => {
@@ -306,7 +306,7 @@ describe('LiquidationModule', function () {
             const assigned = liquidatorAccountCollateral[1];
             const availableAmount = deposited.sub(assigned);
 
-            assertBn.equal(availableAmount, depositAmount.mul(51));
+            assertBn.equal(availableAmount, depositAmount);
           });
 
           it('vault is reset', async () => {

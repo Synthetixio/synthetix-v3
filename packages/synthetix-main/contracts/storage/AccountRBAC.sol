@@ -58,6 +58,14 @@ library AccountRBAC {
         }
     }
 
+    function revokeAllPermissions(Data storage self, address user) internal {
+        bytes32[] memory permissions = self.permissions[user].values();
+
+        for (uint i = 1; i <= permissions.length; i++) {
+            revokePermission(self, permissions[i - 1], user);
+        }
+    }
+
     function hasPermission(
         Data storage self,
         bytes32 permission,

@@ -68,7 +68,9 @@ contract AssignDebtModule is IAssociateDebtModule {
         _verifyCollateralRatio(
             collateralType,
             uint(updatedDebt > 0 ? updatedDebt : int(0)),
-            CollateralConfiguration.load(collateralType).getCollateralPrice().mulDecimal(uint(epochData.collateralDist.getActorValue(actorId)))
+            CollateralConfiguration.load(collateralType).getCollateralPrice().mulDecimal(
+                uint(epochData.collateralDist.getActorValue(actorId))
+            )
         );
 
         epochData.usdDebtDist.updateActorValue(actorId, updatedDebt);

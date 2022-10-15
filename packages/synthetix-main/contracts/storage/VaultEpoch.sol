@@ -57,12 +57,8 @@ library VaultEpoch {
         // ensure account debt is rolled in before we do next things
         updateAccountDebt(self, accountId);
 
-        console.log("SET ACCOUNT", collateralAmount);
-
         self.collateralDist.updateActorValue(actorId, int(collateralAmount));
         self.debtDist.updateActorShares(actorId, self.collateralDist.getActorShares(actorId).mulDecimal(leverage));
-
-        console.log("GOT SHARES", self.debtDist.totalShares);
     }
 
     function totalDebt(Data storage self) internal view returns (int) {

@@ -160,17 +160,7 @@ contract LiquidationsModule is ILiquidationModule, AssociatedSystemsMixin {
         }
 
         // award the collateral that was just taken to the specified account
-        console.log(
-            "collateral rewarded",
-            collateralRewarded,
-            Account.load(liquidateAsAccountId).collaterals[collateralType].availableAmount
-        );
         Account.load(liquidateAsAccountId).collaterals[collateralType].depositCollateral(collateralRewarded);
-        console.log(
-            "complete",
-            collateralRewarded,
-            Account.load(liquidateAsAccountId).collaterals[collateralType].availableAmount
-        );
 
         emit VaultLiquidation(poolId, collateralType, amountLiquidated, collateralRewarded, collateralRewarded);
     }

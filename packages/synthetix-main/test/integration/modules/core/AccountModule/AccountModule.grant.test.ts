@@ -32,11 +32,11 @@ describe('AccountModule', function () {
     describe('before permissions have been granted', function () {
       it('shows that certain permissions have not been granted', async () => {
         assert.equal(
-          await systems().Core.hasPermission(1, Permissions.DEPOSIT, await user1.getAddress()),
+          await systems().Core.hasPermission(1, Permissions.DEPOSIT, await user2.getAddress()),
           false
         );
         assert.equal(
-          await systems().Core.hasPermission(1, Permissions.ADMIN, await user1.getAddress()),
+          await systems().Core.hasPermission(1, Permissions.ADMIN, await user2.getAddress()),
           false
         );
       });
@@ -46,7 +46,7 @@ describe('AccountModule', function () {
           true
         );
       });
-      it('shows that the other uesr not authorized', async function () {
+      it('shows that the other user not authorized', async function () {
         assert.equal(
           await systems().Core.isAuthorized(1, Permissions.ADMIN, await user2.getAddress()),
           false

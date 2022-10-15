@@ -36,7 +36,11 @@ library Account {
     function getCollateralTotals(Data storage self, address collateralType)
         internal
         view
-        returns (uint256 totalDeposited, uint256 totalAssigned, uint256 totalLocked)
+        returns (
+            uint256 totalDeposited,
+            uint256 totalAssigned,
+            uint256 totalLocked
+        )
     {
         totalAssigned = getAssignedCollateral(self, collateralType);
         totalDeposited = totalAssigned + self.collaterals[collateralType].availableAmount;
