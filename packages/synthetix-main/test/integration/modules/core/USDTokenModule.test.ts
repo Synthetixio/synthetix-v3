@@ -1,5 +1,5 @@
 import assert from 'assert/strict';
-import { bootstrap } from '../bootstrap';
+import { bootstrap } from '../../bootstrap';
 import { ethers } from 'ethers';
 
 describe('USDTokenModule', function () {

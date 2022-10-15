@@ -3,7 +3,7 @@ import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import { ethers } from 'ethers';
 
-import { bootstrap } from '../bootstrap';
+import { bootstrap } from '../../bootstrap';
 
 describe('PoolModule Create / Ownership', function () {
   const { signers, systems } = bootstrap();

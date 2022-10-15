@@ -2,7 +2,7 @@ import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber'
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import { ethers } from 'ethers';
 
-import { bootstrapWithMockMarketAndPool } from '../bootstrap';
+import { bootstrapWithMockMarketAndPool } from '../../bootstrap';
 
 describe('LiquidationModule', function () {
   const {

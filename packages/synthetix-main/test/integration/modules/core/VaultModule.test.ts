@@ -2,9 +2,9 @@ import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber'
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import hre from 'hardhat';
 import { ethers } from 'ethers';
-import Permissions from '../storage/AcccountRBACMixin.permissions';
-import { bootstrapWithStakedPool } from '../bootstrap';
-import { snapshotCheckpoint } from '../../utils';
+import Permissions from '../../storage/AcccountRBACMixin.permissions';
+import { bootstrapWithStakedPool } from '../../bootstrap';
+import { snapshotCheckpoint } from '../../../utils';
 
 describe('VaultModule', function () {
   const {

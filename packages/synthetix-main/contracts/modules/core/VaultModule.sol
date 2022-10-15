@@ -256,11 +256,11 @@ contract VaultModule is IVaultModule, AssociatedSystemsMixin, OwnableMixin {
     }
 
     function _setDelegatePoolId(
-        uint accountId,
-        uint poolId,
+        uint128 accountId,
+        uint128 poolId,
         address collateralType
     ) internal {
-        Collateral.Data storage stakedCollateral = Collateral.load(collateralType);
+        Collateral.Data storage stakedCollateral = Account.load(accountId).collaterals[collateralType];
         if (!stakedCollateral.pools.contains(poolId)) {
             stakedCollateral.pools.add(poolId);
         }

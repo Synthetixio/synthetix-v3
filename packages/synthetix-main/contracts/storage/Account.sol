@@ -51,7 +51,7 @@ library Account {
         SetUtil.UintSet storage pools = self.collaterals[collateralType].pools;
 
         for (uint i = 1; i <= pools.length(); i++) {
-            uint128 poolIdx = pools.valueAt(i);
+            uint128 poolIdx = uint128(pools.valueAt(i));
 
             Pool.Data storage pool = Pool.load(poolIdx);
 
