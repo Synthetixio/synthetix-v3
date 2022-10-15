@@ -53,10 +53,10 @@ contract MarketCollateralModule is IMarketCollateralModule, OwnableMixin {
         emit MarketCollateralWithdrawn(marketId, collateralType, amount, msg.sender);
     }
 
-    function _findOrCreateDepositCollateralEntry(
-        Market.Data storage marketData,
-        address collateralType
-    ) internal returns (uint collateralEntryIndex) {
+    function _findOrCreateDepositCollateralEntry(Market.Data storage marketData, address collateralType)
+        internal
+        returns (uint collateralEntryIndex)
+    {
         Market.DepositedCollateral[] storage depositedCollateral = marketData.depositedCollateral;
         for (uint i = 0; i < depositedCollateral.length; i++) {
             Market.DepositedCollateral storage depositedCollateralEntry = depositedCollateral[i];
