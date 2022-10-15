@@ -36,7 +36,9 @@ before(async function () {
 
   const cmd = hre.network.name === 'cannon' ? 'build' : 'deploy';
 
-  const cannonInfo = await hre.run(`cannon:${cmd}`, { settings: /*['additionalModules=core|test']*/ });
+  const cannonInfo = await hre.run(`cannon:${cmd}`, {
+    /*settings: ['additionalModules=core|test']*/
+  });
 
   provider = cannonInfo.provider;
   signers = cannonInfo.signers;
