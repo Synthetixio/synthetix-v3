@@ -1,4 +1,4 @@
-import assert from 'assert/strict';
+import assert from 'node:assert';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import hre from 'hardhat';

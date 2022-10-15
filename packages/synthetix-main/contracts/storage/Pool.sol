@@ -120,6 +120,16 @@ library Pool {
         return id == 0 || load(id).id == id;
     }
 
+    function hasMarket(Data storage self, uint128 marketId) internal view returns (bool) {
+        for (uint i = 0; i < self.poolDistribution.length; i++) {
+            if (self.poolDistribution[i].market == marketId) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     function recalculateVaultCollateral(Data storage self, address collateralType) internal returns (uint collateralPrice) {
         // assign accumulated debt
         distributeDebt(self);

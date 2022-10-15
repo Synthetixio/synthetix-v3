@@ -7,6 +7,7 @@ import "@synthetixio/core-contracts/contracts/interfaces/IERC20.sol";
 import "../../interfaces/ICollateralModule.sol";
 import "../../storage/Account.sol";
 import "../../storage/CollateralConfiguration.sol";
+import "../../storage/CollateralLock.sol";
 import "@synthetixio/core-modules/contracts/mixins/AssociatedSystemsMixin.sol";
 
 import "../../utils/ERC20Helper.sol";
@@ -128,9 +129,11 @@ contract CollateralModule is ICollateralModule, OwnableMixin, AssociatedSystemsM
         external
         view
         override
-        returns (uint256 totalDeposited, uint256 totalAssigned)
-    //uint256 totalLocked,
-    //uint256 totalEscrowed
+        returns (
+            uint256 totalDeposited,
+            uint256 totalAssigned,
+            uint256 totalLocked
+        )
     {
         return Account.load(accountId).getCollateralTotals(collateralType);
     }
@@ -139,8 +142,33 @@ contract CollateralModule is ICollateralModule, OwnableMixin, AssociatedSystemsM
         return Account.load(accountId).collaterals[collateralType].availableAmount;
     }
 
-    /*
-    function getAccountUnstakebleCollateral(uint128 accountId, address collateralType) public view override returns (uint) {
+    function cleanExpiredLocks(
+        uint128 accountId,
+        address collateralType,
+        uint offset,
+        uint items
+    ) external override {
+        _cleanExpiredLocks(Account.load(accountId).collaterals[collateralType].locks, offset, items);
+    }
+
+    function createLock(
+        uint128 accountId,
+        address collateralType,
+        uint amount,
+        uint64 expireTimestamp
+    ) external override onlyWithPermission(accountId, AccountRBAC._ADMIN_PERMISSION) {
+        (uint totalStaked, , uint totalLocked) = Account.load(accountId).getCollateralTotals(collateralType);
+
+        if (totalStaked - totalLocked < amount) {
+            revert InsufficientAccountCollateral(amount);
+        }
+
+        Account.load(accountId).collaterals[collateralType].locks.push(
+            CollateralLock.Data(amount, expireTimestamp)
+        );
+    }
+
+    /*function getAccountUnstakebleCollateral(uint accountId, address collateralType) public view override returns (uint) {
         (uint256 total, uint256 assigned, uint256 locked, ) = _getAccountCollateralTotals(accountId, collateralType);
 
         if (locked > assigned) {
@@ -148,19 +176,6 @@ contract CollateralModule is ICollateralModule, OwnableMixin, AssociatedSystemsM
         }
 
         return total - assigned;
-    }
-
-    function cleanExpiredLocks(
-        uint128 accountId,
-        address collateralType,
-        uint offset,
-        uint items
-    ) external override {
-        _cleanExpiredLocks(
-            _collateralStore().stakedCollateralsDataByAccountId[accountId][collateralType].locks,
-            offset,
-            items
-        );
     }
 
     function redeemReward(
@@ -202,7 +217,7 @@ contract CollateralModule is ICollateralModule, OwnableMixin, AssociatedSystemsM
             collateralData.availableAmount += amount;
         }
     }
-*/
+
 
     /////////////////////////////////////////////////
     // INTERNALS
@@ -211,10 +226,10 @@ contract CollateralModule is ICollateralModule, OwnableMixin, AssociatedSystemsM
     /*
     function _calculateRewardTokenMinted(uint amount, uint duration) internal pure returns (uint) {
         return (amount * duration) / _SECONDS_PER_YEAR;
-    }
+    }*/
 
     function _cleanExpiredLocks(
-        StakedCollateralLock[] storage locks,
+        CollateralLock.Data[] storage locks,
         uint offset,
         uint items
     ) internal {
@@ -240,7 +255,6 @@ contract CollateralModule is ICollateralModule, OwnableMixin, AssociatedSystemsM
             }
         }
     }
-*/
 
     modifier onlyWithPermission(uint128 accountId, bytes32 permission) {
         if (!Account.load(accountId).rbac.authorized(permission, msg.sender)) {

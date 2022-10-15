@@ -9,6 +9,7 @@ import "./Pool.sol";
 library Account {
     using AccountRBAC for AccountRBAC.Data;
     using Pool for Pool.Data;
+    using Collateral for Collateral.Data;
     using SetUtil for SetUtil.UintSet;
 
     struct Data {
@@ -35,14 +36,14 @@ library Account {
     function getCollateralTotals(Data storage self, address collateralType)
         internal
         view
-        returns (uint256 totalDeposited, uint256 totalAssigned)
+        returns (uint256 totalDeposited, uint256 totalAssigned, uint256 totalLocked)
     {
         totalAssigned = getAssignedCollateral(self, collateralType);
         totalDeposited = totalAssigned + self.collaterals[collateralType].availableAmount;
-        //totalLocked = _getTotalLocked(stakedCollateral.locks);
+        totalLocked = self.collaterals[collateralType].getTotalLocked();
         //totalEscrowed = _getLockedEscrow(stakedCollateral.escrow);
 
-        return (totalDeposited, totalAssigned); //, totalLocked, totalEscrowed);
+        return (totalDeposited, totalAssigned, totalLocked); //, totalEscrowed);
     }
 
     function getAssignedCollateral(Data storage self, address collateralType) internal view returns (uint) {
