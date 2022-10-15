@@ -20,7 +20,7 @@ contract MarketCollateralModule is IMarketCollateralModule, OwnableMixin {
         Market.Data storage marketData = Market.load(marketId);
         uint maxDepositable = marketData.maximumDepositable[collateralType];
 
-        uint collateralEntryIndex = _findOrCreateDepositCollateralEntry(marketId, marketData, collateralType);
+        uint collateralEntryIndex = _findOrCreateDepositCollateralEntry(marketData, collateralType);
 
         Market.DepositedCollateral storage collateralEntry = marketData.depositedCollateral[collateralEntryIndex];
 
@@ -40,7 +40,7 @@ contract MarketCollateralModule is IMarketCollateralModule, OwnableMixin {
         uint amount
     ) public override {
         Market.Data storage marketData = Market.load(marketId);
-        uint collateralEntryIndex = _findOrCreateDepositCollateralEntry(marketId, marketData, collateralType);
+        uint collateralEntryIndex = _findOrCreateDepositCollateralEntry(marketData, collateralType);
         Market.DepositedCollateral storage collateralEntry = marketData.depositedCollateral[collateralEntryIndex];
 
         if (amount < collateralEntry.amount)
@@ -54,7 +54,6 @@ contract MarketCollateralModule is IMarketCollateralModule, OwnableMixin {
     }
 
     function _findOrCreateDepositCollateralEntry(
-        uint128 marketId,
         Market.Data storage marketData,
         address collateralType
     ) internal returns (uint collateralEntryIndex) {
