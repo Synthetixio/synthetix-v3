@@ -8,8 +8,6 @@ import "./Vault.sol";
 import "./Market.sol";
 import "./PoolConfiguration.sol";
 
-import "hardhat/console.sol";
-
 library Pool {
     using CollateralConfiguration for CollateralConfiguration.Data;
     using Market for Market.Data;

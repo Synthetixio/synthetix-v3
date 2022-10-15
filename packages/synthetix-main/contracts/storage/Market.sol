@@ -10,8 +10,6 @@ import "./CollateralConfiguration.sol";
 
 import "../interfaces/external/IMarket.sol";
 
-import "hardhat/console.sol";
-
 library Market {
     using Distribution for Distribution.Data;
     using HeapUtil for HeapUtil.Data;

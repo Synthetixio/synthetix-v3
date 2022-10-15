@@ -3,8 +3,6 @@ pragma solidity ^0.8.0;
 
 import "./Distribution.sol";
 
-import "hardhat/console.sol";
-
 library VaultEpoch {
     using Distribution for Distribution.Data;
 
