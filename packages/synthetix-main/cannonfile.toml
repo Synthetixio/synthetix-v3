@@ -43,7 +43,7 @@ modified = ["contracts/modules/esnx", "contracts/modules/common", "scripts"]
 exec = "scripts/deploy.js"
 func = "deploy"
 args = ["Core", ".*/(core|common)/.*"]
-modified = ["contracts/modules/core", "contracts/modules/common", "contracts/modules/test", "contracts/storage", "contracts/utils", "scripts"]
+modified = ["contracts/modules/core", "contracts/modules/common", "contracts/storage", "contracts/utils", "scripts"]
 
 [contract.CoreProxy]
 artifact = "Proxy"
