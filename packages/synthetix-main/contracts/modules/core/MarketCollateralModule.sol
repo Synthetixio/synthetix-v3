@@ -49,7 +49,7 @@ contract MarketCollateralModule is IMarketCollateralModule, OwnableMixin {
         uint collateralEntryIndex = _findOrCreateDepositCollateralEntry(marketData, collateralType);
         Market.DepositedCollateral storage collateralEntry = marketData.depositedCollateral[collateralEntryIndex];
 
-        if (amount < collateralEntry.amount) {
+        if (amount > collateralEntry.amount) {
             revert InsufficientMarketCollateralWithdrawable(marketId, collateralType, amount);
         }
 

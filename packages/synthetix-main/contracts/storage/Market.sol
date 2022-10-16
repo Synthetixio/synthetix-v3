@@ -104,8 +104,9 @@ library Market {
             totalDepositedCollateralValue +=
                 CollateralConfiguration.getCollateralPrice(
                     CollateralConfiguration.load(depositedCollateral.collateralType)
-                ) *
-                depositedCollateral.amount;
+                ).mulDecimal(
+                    depositedCollateral.amount
+                );
         }
 
         return totalDepositedCollateralValue;
