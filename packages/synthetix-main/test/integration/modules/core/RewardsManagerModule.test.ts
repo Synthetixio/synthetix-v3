@@ -479,11 +479,7 @@ describe('RewardsManagerModule', function () {
 
     it('only works with owner', async () => {
       await assertRevert(
-        systems().Core.connect(user2).claimRewards(
-          poolId,
-          collateralAddress(),
-          accountId
-        ),
+        systems().Core.connect(user2).claimRewards(poolId, collateralAddress(), accountId),
         'PermissionDenied',
         systems().Core
       );
@@ -491,11 +487,7 @@ describe('RewardsManagerModule', function () {
 
     describe('successful claim', () => {
       before('claim', async () => {
-        await systems().Core.connect(user1).claimRewards(
-          poolId,
-          collateralAddress(),
-          accountId
-        );
+        await systems().Core.connect(user1).claimRewards(poolId, collateralAddress(), accountId);
       });
 
       it('pays out', async () => {
@@ -511,18 +503,11 @@ describe('RewardsManagerModule', function () {
         // should have received only the one past reward
         // +1 because block being mined by earlier txn
         // +1 because the simulation adds an additional second
-        assertBn.equal(
-          rewards[0],
-          0
-        );
+        assertBn.equal(rewards[0], 0);
       });
 
       it('doesnt get any rewards on subsequent claim', async () => {
-        await systems().Core.connect(user1).claimRewards(
-          poolId,
-          collateralAddress(),
-          accountId
-        );
+        await systems().Core.connect(user1).claimRewards(poolId, collateralAddress(), accountId);
 
         assertBn.equal(await Collateral.balanceOf(await user1.getAddress()), rewardAmount);
       });
@@ -541,15 +526,14 @@ describe('RewardsManagerModule', function () {
         });
 
         before('claim', async () => {
-          await systems().Core.connect(user1).claimRewards(
-            poolId,
-            collateralAddress(),
-            accountId
-          );
+          await systems().Core.connect(user1).claimRewards(poolId, collateralAddress(), accountId);
         });
 
         it('pays out', async () => {
-          assertBn.equal(await Collateral.balanceOf(await user1.getAddress()), rewardAmount.add(rewardAmount.div(2)));
+          assertBn.equal(
+            await Collateral.balanceOf(await user1.getAddress()),
+            rewardAmount.add(rewardAmount.div(2))
+          );
         });
 
         it('returns no rewards remaining', async () => {
@@ -561,20 +545,16 @@ describe('RewardsManagerModule', function () {
           // should have received only the one past reward
           // +1 because block being mined by earlier txn
           // +1 because the simulation adds an additional second
-          assertBn.equal(
-            rewards[0],
-            0
-          );
+          assertBn.equal(rewards[0], 0);
         });
 
         it('doesnt get any rewards on subsequent claim', async () => {
-          await systems().Core.connect(user1).claimRewards(
-            poolId,
-            collateralAddress(),
-            accountId
-          );
+          await systems().Core.connect(user1).claimRewards(poolId, collateralAddress(), accountId);
 
-          assertBn.equal(await Collateral.balanceOf(await user1.getAddress()), rewardAmount.add(rewardAmount.div(2)));
+          assertBn.equal(
+            await Collateral.balanceOf(await user1.getAddress()),
+            rewardAmount.add(rewardAmount.div(2))
+          );
         });
       });
     });
