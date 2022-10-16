@@ -70,21 +70,12 @@ contract MarketManagerModule is IMarketManagerModule, AssociatedSystemsMixin, Ow
         // verify if the market is authorized to burn the USD for the target
         ITokenModule usdToken = _getToken(_USD_TOKEN);
 
-        uint originalAllowance = usdToken.allowance(target, msg.sender);
-
-        if (originalAllowance < amount) {
-            revert MarketDepositNotApproved(target, msg.sender, amount, originalAllowance);
-        }
-
         // Adjust accounting
         market.capacity += uint128(amount);
         market.issuance -= int128(int(amount));
 
         // burn USD
-        usdToken.burn(target, amount);
-
-        // Adjust allowance
-        usdToken.setAllowance(target, msg.sender, originalAllowance - amount);
+        IUSDTokenModule(address(usdToken)).burnWithAllowance(target, msg.sender, amount);
 
         emit UsdDeposited(marketId, target, amount, msg.sender);
     }

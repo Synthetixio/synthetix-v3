@@ -18,6 +18,9 @@ contract MarketCollateralModule is IMarketCollateralModule, OwnableMixin {
         uint amount
     ) public override {
         Market.Data storage marketData = Market.load(marketId);
+
+        if (msg.sender != marketData.marketAddress) revert AccessError.Unauthorized(msg.sender);
+
         uint maxDepositable = marketData.maximumDepositable[collateralType];
 
         uint collateralEntryIndex = _findOrCreateDepositCollateralEntry(marketData, collateralType);
@@ -40,15 +43,19 @@ contract MarketCollateralModule is IMarketCollateralModule, OwnableMixin {
         uint amount
     ) public override {
         Market.Data storage marketData = Market.load(marketId);
+
+        if (msg.sender != marketData.marketAddress) revert AccessError.Unauthorized(msg.sender);
+
         uint collateralEntryIndex = _findOrCreateDepositCollateralEntry(marketData, collateralType);
         Market.DepositedCollateral storage collateralEntry = marketData.depositedCollateral[collateralEntryIndex];
 
-        if (amount < collateralEntry.amount)
+        if (amount < collateralEntry.amount) {
             revert InsufficientMarketCollateralWithdrawable(marketId, collateralType, amount);
-
-        collateralType.safeTransfer(marketData.marketAddress, amount);
+        }
 
         collateralEntry.amount -= amount;
+
+        collateralType.safeTransfer(marketData.marketAddress, amount);
 
         emit MarketCollateralWithdrawn(marketId, collateralType, amount, msg.sender);
     }
