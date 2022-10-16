@@ -2,7 +2,7 @@ import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber'
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import { ethers } from 'ethers';
 
-import { bootstrapWithMockMarketAndPool } from '../bootstrap';
+import { bootstrapWithMockMarketAndPool } from '../../bootstrap';
 
 describe('LiquidationModule', function () {
   const {
@@ -278,7 +278,7 @@ describe('LiquidationModule', function () {
           const assigned = liquidatorAccountCollateral[1];
           const availableAmount = deposited.sub(assigned);
 
-          assertBn.equal(availableAmount, sentAmount.add(depositAmount.mul(50)));
+          assertBn.equal(availableAmount, sentAmount);
         });
 
         it('keeps market c-ratio the same', async () => {
@@ -306,7 +306,7 @@ describe('LiquidationModule', function () {
             const assigned = liquidatorAccountCollateral[1];
             const availableAmount = deposited.sub(assigned);
 
-            assertBn.equal(availableAmount, depositAmount.mul(51));
+            assertBn.equal(availableAmount, depositAmount);
           });
 
           it('vault is reset', async () => {

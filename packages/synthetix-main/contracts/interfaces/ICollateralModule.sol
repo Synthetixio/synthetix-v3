@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "../storage/CollateralStorage.sol";
+import "../storage/CollateralConfiguration.sol";
 
 /// @title Module for managing collateral
 interface ICollateralModule {
@@ -20,12 +20,22 @@ interface ICollateralModule {
     /**
      * @notice Emitted when `amount` of collateral of type `collateralType` is deposited to account `accountId` by `sender`.
      */
-    event CollateralDeposited(uint indexed accountId, address indexed collateralType, uint amount, address indexed sender);
+    event CollateralDeposited(
+        uint128 indexed accountId,
+        address indexed collateralType,
+        uint amount,
+        address indexed sender
+    );
 
     /**
      * @notice Emitted when `amount` of collateral of type `collateralType` is withdrawn from account `accountId` by `sender`.
      */
-    event CollateralWithdrawn(uint indexed accountId, address indexed collateralType, uint amount, address indexed sender);
+    event CollateralWithdrawn(
+        uint128 indexed accountId,
+        address indexed collateralType,
+        uint amount,
+        address indexed sender
+    );
 
     /**
      * @notice Creates or updates the configuration for given `collateralType`.
@@ -52,7 +62,7 @@ interface ICollateralModule {
     function getCollateralConfigurations(bool hideDisabled)
         external
         view
-        returns (CollateralStorage.CollateralConfiguration[] memory collaterals);
+        returns (CollateralConfiguration.Data[] memory collaterals);
 
     /**
      * @notice Returns detailed information pertaining the specified collateral type.
@@ -60,12 +70,12 @@ interface ICollateralModule {
     function getCollateralConfiguration(address collateralType)
         external
         view
-        returns (CollateralStorage.CollateralConfiguration memory collateral);
+        returns (CollateralConfiguration.Data memory collateral);
 
     /**
      * @notice Returns the current value of a specified collateral type
      */
-    function getCollateralValue(address collateralType) external view returns (uint);
+    function getCollateralPrice(address collateralType) external view returns (uint);
 
     /**
      * @notice Deposits `amount` of collateral of type `collateralType` into account `accountId`.
@@ -78,7 +88,7 @@ interface ICollateralModule {
      *
      */
     function depositCollateral(
-        uint accountId,
+        uint128 accountId,
         address collateralType,
         uint amount
     ) external;
@@ -94,13 +104,13 @@ interface ICollateralModule {
      *
      */
     function withdrawCollateral(
-        uint accountId,
+        uint128 accountId,
         address collateralType,
         uint amount
     ) external;
 
     /// @notice Returns the total values pertaining to account `accountId` for `collateralType`.
-    function getAccountCollateral(uint accountId, address collateralType)
+    function getAccountCollateral(uint128 accountId, address collateralType)
         external
         view
         returns (
@@ -111,12 +121,12 @@ interface ICollateralModule {
         );
 
     /// @notice Returns the amount of collateral of type `collateralType` deposited with account `accountId` that can be withdrawn or delegated.
-    function getAccountAvailableCollateral(uint accountId, address collateralType) external view returns (uint);
+    function getAccountAvailableCollateral(uint128 accountId, address collateralType) external view returns (uint);
 
     /// @notice Clean expired locks from locked collateral arrays for an account/collateral type. It includes offset and items to prevent gas exhaustion. If both, offset and items, are 0 it will traverse the whole array (unlimited)
     /// @dev DEPENDENT ON 305
     function cleanExpiredLocks(
-        uint accountId,
+        uint128 accountId,
         address collateralType,
         uint offset,
         uint items
@@ -125,7 +135,7 @@ interface ICollateralModule {
     /// @notice Create a new lock on the given account. you must have `admin` permission on the specified account to create a lock.
     /// There is currently no benefit to calling this function. it is simply for allowing pre-created accounts to have locks on them if your protocol requires it.
     function createLock(
-        uint accountId,
+        uint128 accountId,
         address collateralType,
         uint amount,
         uint64 expireTimestamp
@@ -144,7 +154,7 @@ interface ICollateralModule {
     /// @notice Redeems the system escrow tokens into reward tokens
     /// @dev DEPENDENT ON 305
     function redeemReward(
-        uint accountId,
+        uint128 accountId,
         uint amount,
         uint duration
     ) external;

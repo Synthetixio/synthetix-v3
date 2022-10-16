@@ -3,7 +3,7 @@ import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import { ethers } from 'ethers';
 
-import { bootstrapWithMockMarketAndPool } from '../bootstrap';
+import { bootstrapWithMockMarketAndPool } from '../../bootstrap';
 
 describe('MarketManagerModule', function () {
   const {

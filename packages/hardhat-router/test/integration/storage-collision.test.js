@@ -2,7 +2,7 @@ const { loadEnvironment, deployOnEnvironment } = require('../helpers/use-environ
 const { rejects } = require('assert/strict');
 const { ContractValidationError } = require('../../internal/errors');
 
-describe('storage-collision', function () {
+describe.skip('storage-collision', function () {
   let hre;
 
   beforeEach('set fixture project', function () {

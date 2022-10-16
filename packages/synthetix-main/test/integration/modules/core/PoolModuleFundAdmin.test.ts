@@ -4,8 +4,8 @@ import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert
 import hre from 'hardhat';
 import { ethers } from 'ethers';
 
-import { bootstrapWithMockMarketAndPool } from '../bootstrap';
-import { snapshotCheckpoint } from '../../utils';
+import { bootstrapWithMockMarketAndPool } from '../../bootstrap';
+import { snapshotCheckpoint } from '../../../utils';
 
 describe('PoolModule Admin', function () {
   const {
@@ -118,7 +118,7 @@ describe('PoolModule Admin', function () {
       );
     });
 
-    it('default configuration sets market collateral', async () => {
+    it('bootstrap configuration sets market collateral', async () => {
       assertBn.equal(
         await systems().Core.connect(owner).getMarketCollateral(marketId()),
         depositAmount

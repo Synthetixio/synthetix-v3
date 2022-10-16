@@ -36,7 +36,9 @@ before(async function () {
 
   const cmd = hre.network.name === 'cannon' ? 'build' : 'deploy';
 
-  const cannonInfo = await hre.run(`cannon:${cmd}`);
+  const cannonInfo = await hre.run(`cannon:${cmd}`, {
+    /*settings: ['additionalModules=core|test']*/
+  });
 
   provider = cannonInfo.provider;
   signers = cannonInfo.signers;
@@ -99,17 +101,19 @@ export function bootstrapWithStakedPool() {
     collateralAddress = r.systems().SNX.address;
 
     // add snx as collateral,
-    await r
-      .systems()
-      .Core.connect(owner)
-      .configureCollateral(
-        collateralAddress,
-        aggregator.address,
-        '5000000000000000000',
-        '1500000000000000000',
-        '20000000000000000000',
-        true
-      );
+    await (
+      await r
+        .systems()
+        .Core.connect(owner)
+        .configureCollateral(
+          collateralAddress,
+          aggregator.address,
+          '5000000000000000000',
+          '1500000000000000000',
+          '20000000000000000000',
+          true
+        )
+    ).wait();
 
     // create pool
     await r

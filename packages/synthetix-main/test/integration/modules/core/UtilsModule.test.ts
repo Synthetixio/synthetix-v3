@@ -2,7 +2,7 @@ import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber'
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import { ethers } from 'ethers';
 
-import { bootstrap } from '../bootstrap';
+import { bootstrap } from '../../bootstrap';
 
 describe('UtilsModule', function () {
   const { signers, systems } = bootstrap();

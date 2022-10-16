@@ -11,6 +11,10 @@ defaultValue = "main"
 description = "Admin user for the system"
 defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
 
+[setting.additionalModules]
+description = "Any additional modules which should be deployed"
+defaultValue = "core"
+
 [run.deploy_account]
 exec = "scripts/deploy.js"
 func = "deploy"
@@ -38,8 +42,8 @@ modified = ["contracts/modules/esnx", "contracts/modules/common", "scripts"]
 [run.deploy_core]
 exec = "scripts/deploy.js"
 func = "deploy"
-args = ["Core", ".*/(core|common|mocks)/.*"]
-modified = ["contracts/modules/core", "contracts/modules/common", "contracts/modules/mocks", "contracts/utils", "scripts"]
+args = ["Core", ".*/(core|common)/.*"]
+modified = ["contracts/modules/core", "contracts/modules/common", "contracts/storage", "contracts/utils", "scripts"]
 
 [contract.CoreProxy]
 artifact = "Proxy"

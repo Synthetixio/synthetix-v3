@@ -2,9 +2,10 @@ import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber'
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import { ethers } from 'ethers';
 
-import { bootstrapWithStakedPool } from '../bootstrap';
+import { bootstrapWithStakedPool } from '../../bootstrap';
 
-describe('RewardDistributorModule', function () {
+// skipped because we are waiting for the SC to make a final decision on rewards
+describe.skip('RewardDistributorModule', function () {
   const { signers, systems, accountId, poolId, collateralAddress } = bootstrapWithStakedPool();
 
   let owner: ethers.Signer, user1: ethers.Signer;

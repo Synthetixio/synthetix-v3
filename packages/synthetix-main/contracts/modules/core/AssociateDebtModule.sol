@@ -2,27 +2,25 @@
 pragma solidity ^0.8.0;
 
 import "../../interfaces/IAssociateDebtModule.sol";
-import "../../storage/LiquidationModuleStorage.sol";
 
-import "../../mixins/CollateralMixin.sol";
-import "../../mixins/PoolMixin.sol";
-import "../../mixins/AccountRBACMixin.sol";
 import "@synthetixio/core-modules/contracts/mixins/AssociatedSystemsMixin.sol";
 
 import "../../utils/ERC20Helper.sol";
-import "../../utils/SharesLibrary.sol";
 
-contract AssignDebtModule is
-    IAssociateDebtModule,
-    LiquidationModuleStorage,
-    AssociatedSystemsMixin,
-    CollateralMixin,
-    PoolMixin,
-    AccountRBACMixin
-{
+import "@synthetixio/core-contracts/contracts/utils/MathUtil.sol";
+
+import "../../storage/Distribution.sol";
+import "../../storage/Pool.sol";
+import "../../storage/Market.sol";
+
+contract AssignDebtModule is IAssociateDebtModule {
     using MathUtil for uint;
     using ERC20Helper for address;
-    using SharesLibrary for SharesLibrary.Distribution;
+
+    using Distribution for Distribution.Data;
+    using Pool for Pool.Data;
+    using Vault for Vault.Data;
+    using CollateralConfiguration for CollateralConfiguration.Data;
 
     bytes32 private constant _USD_TOKEN = "USDToken";
 
@@ -31,17 +29,17 @@ contract AssignDebtModule is
     error InsufficientCollateralRatio(uint collateralValue, uint debt, uint ratio, uint minRatio);
 
     function associateDebt(
-        uint marketId,
-        uint poolId,
+        uint128 marketId,
+        uint128 poolId,
         address collateralType,
-        uint accountId,
+        uint128 accountId,
         uint amount
     ) external returns (int) {
         // load up the vault
-        VaultData storage vaultData = _vaultStore().vaults[poolId][collateralType];
-        VaultEpochData storage epochData = vaultData.epochData[vaultData.epoch];
+        Pool.Data storage poolData = Pool.load(poolId);
+        VaultEpoch.Data storage epochData = poolData.vaults[collateralType].currentEpoch();
 
-        MarketData storage marketData = _marketManagerStore().markets[marketId];
+        Market.Data storage marketData = Market.load(marketId);
 
         // market must match up
         if (msg.sender != marketData.marketAddress) {
@@ -49,19 +47,19 @@ contract AssignDebtModule is
         }
 
         // market must appear in pool configuration
-        if (!_poolHasMarket(poolId, marketId)) {
+        if (!poolData.hasMarket(marketId)) {
             revert NotFundedByPool(marketId, poolId);
         }
 
         // verify the requested account actually has collateral to cover the new debt
-        bytes32 actorId = bytes32(accountId);
+        bytes32 actorId = bytes32(uint(accountId));
 
         // subtract the requested amount of debt from the market
         // this debt should have been accumulated just now anyway so
         marketData.issuance -= int128(int(amount));
 
         // register account debt
-        _updatePositionDebt(accountId, poolId, collateralType);
+        poolData.updateAccountDebt(collateralType, accountId);
 
         // increase account debt
         int updatedDebt = epochData.usdDebtDist.getActorValue(actorId) + int(amount);
@@ -70,7 +68,9 @@ contract AssignDebtModule is
         _verifyCollateralRatio(
             collateralType,
             uint(updatedDebt > 0 ? updatedDebt : int(0)),
-            _getCollateralPrice(collateralType).mulDecimal(uint(epochData.collateralDist.getActorValue(actorId)))
+            CollateralConfiguration.load(collateralType).getCollateralPrice().mulDecimal(
+                uint(epochData.collateralDist.getActorValue(actorId))
+            )
         );
 
         epochData.usdDebtDist.updateActorValue(actorId, updatedDebt);
@@ -84,7 +84,7 @@ contract AssignDebtModule is
         uint debt,
         uint collateralValue
     ) internal view {
-        uint targetCratio = _collateralTargetCRatio(collateralType);
+        uint targetCratio = CollateralConfiguration.load(collateralType).targetCRatio;
 
         if (debt != 0 && collateralValue.divDecimal(debt) < targetCratio) {
             revert InsufficientCollateralRatio(collateralValue, debt, collateralValue.divDecimal(debt), targetCratio);

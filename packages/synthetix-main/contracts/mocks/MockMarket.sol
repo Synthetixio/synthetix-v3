@@ -15,11 +15,11 @@ contract MockMarket is IMarket {
     uint private _price;
 
     address private _proxy;
-    uint private _marketId;
+    uint128 private _marketId;
 
     function initialize(
         address proxy,
-        uint marketId,
+        uint128 marketId,
         uint initialPrice
     ) external {
         _proxy = proxy;
@@ -28,9 +28,9 @@ contract MockMarket is IMarket {
     }
 
     function callAssociateDebt(
-        uint poolId,
+        uint128 poolId,
         address collateralType,
-        uint accountId,
+        uint128 accountId,
         uint amount
     ) external {
         _reportedDebt += amount;
@@ -54,7 +54,7 @@ contract MockMarket is IMarket {
         _reportedDebt = newReportedDebt;
     }
 
-    function reportedDebt(uint) external view override returns (uint) {
+    function reportedDebt(uint128) external view override returns (uint) {
         return _reportedDebt;
     }
 

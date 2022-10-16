@@ -6,39 +6,48 @@ import "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
 import "@synthetixio/core-contracts/contracts/utils/MathUtil.sol";
 
 import "@synthetixio/core-modules/contracts/mixins/AssociatedSystemsMixin.sol";
-import "../../mixins/AccountRBACMixin.sol";
-import "../../mixins/PoolMixin.sol";
 
-import "../../utils/SharesLibrary.sol";
+import "../../storage/Account.sol";
+import "../../storage/Pool.sol";
 
-import "../../storage/VaultStorage.sol";
 import "../../interfaces/IVaultModule.sol";
 import "../../interfaces/IUSDTokenModule.sol";
 
-contract VaultModule is IVaultModule, VaultStorage, AccountRBACMixin, OwnableMixin, AssociatedSystemsMixin, PoolMixin {
+contract VaultModule is IVaultModule, AssociatedSystemsMixin, OwnableMixin {
+    using SetUtil for SetUtil.UintSet;
     using SetUtil for SetUtil.Bytes32Set;
     using SetUtil for SetUtil.AddressSet;
     using MathUtil for uint256;
 
-    using SharesLibrary for SharesLibrary.Distribution;
+    using Pool for Pool.Data;
+    using Vault for Vault.Data;
+    using VaultEpoch for VaultEpoch.Data;
+    using Collateral for Collateral.Data;
+    using AccountRBAC for AccountRBAC.Data;
+
+    using Distribution for Distribution.Data;
 
     bytes32 private constant _USD_TOKEN = "USDToken";
 
+    error InsufficientAccountCollateral(uint requestedAmount);
+    error PermissionDenied(uint128 accountId, bytes32 permission, address target);
+    error PoolNotFound(uint128 poolId);
     error InvalidLeverage(uint leverage);
     error InsufficientCollateralRatio(uint collateralValue, uint debt, uint ratio, uint minRatio);
     error InsufficientDebt(int currentDebt);
     error InvalidParameters(string incorrectParameter, string help);
+    error InvalidCollateral(address collateralType);
 
     function delegateCollateral(
-        uint accountId,
-        uint poolId,
+        uint128 accountId,
+        uint128 poolId,
         address collateralType,
         uint collateralAmount,
         uint leverage
     )
         external
         override
-        onlyWithPermission(accountId, _DELEGATE_PERMISSION)
+        onlyWithPermission(accountId, AccountRBAC._DELEGATE_PERMISSION)
         collateralEnabled(collateralType)
         poolExists(poolId)
     {
@@ -46,72 +55,61 @@ contract VaultModule is IVaultModule, VaultStorage, AccountRBACMixin, OwnableMix
         // TODO: we will probably at least want to test <1 leverage
         if (leverage != MathUtil.UNIT) revert InvalidLeverage(leverage);
 
-        VaultData storage vaultData = _vaultStore().vaults[poolId][collateralType];
-        VaultEpochData storage epochData = vaultData.epochData[vaultData.epoch];
+        Vault.Data storage vault = Pool.load(poolId).vaults[collateralType];
 
-        _updateAvailableRewards(epochData, vaultData.rewards, accountId);
+        vault.updateAvailableRewards(accountId);
 
         // get the current collateral situation
-        (uint oldCollateralAmount, , ) = _positionCollateral(accountId, poolId, collateralType);
+        (uint oldCollateralAmount, ) = vault.currentAccountCollateral(accountId);
+        uint collateralPrice;
 
         // if increasing collateral additionally check they have enough collateral
         if (
             collateralAmount > oldCollateralAmount &&
-            _getAccountUnassignedCollateral(accountId, collateralType) < collateralAmount - oldCollateralAmount
+            Account.load(accountId).collaterals[collateralType].availableAmount < collateralAmount - oldCollateralAmount
         ) {
-            revert InsufficientAccountCollateral(accountId, collateralType, collateralAmount);
+            revert InsufficientAccountCollateral(collateralAmount);
         }
 
-        bytes32 actorId = bytes32(accountId);
+        bytes32 actorId = bytes32(uint(accountId));
 
         // stack too deep after this
         {
-            // if decreasing collateral additionally check they have sufficient c-ratio
+            Pool.Data storage pool = Pool.load(poolId);
+            // the current user may have accumulated some debt which needs to be rolled in before changing shares
+            pool.updateAccountDebt(collateralType, accountId);
 
-            _distributeVaultDebt(poolId, collateralType);
+            Collateral.Data storage collateral = Account.load(accountId).collaterals[collateralType];
 
-            uint vaultShares = _calculateVaultShares(epochData, collateralAmount, leverage);
-
-            // prevent users from specifying an infitesimly small amount such that they don't get any shares
-            if (vaultShares == 0 && collateralAmount > 0) {
-                revert InvalidParameters("amount", "must be large enough for 1 share");
+            // adjust the user's current account collateral to reflect the change in delegation
+            if (collateralAmount > oldCollateralAmount) {
+                collateral.deductCollateral(collateralAmount - oldCollateralAmount);
+            } else {
+                collateral.depositCollateral(oldCollateralAmount - collateralAmount);
             }
 
-            epochData.collateralDist.updateActorValue(actorId, int(collateralAmount));
-            epochData.debtDist.updateActorShares(actorId, vaultShares);
-            // no update for usd because no usd issued
+            if (collateralAmount > 0 && !collateral.pools.contains(uint(poolId))) {
+                collateral.pools.add(poolId);
+            } else if (collateral.pools.contains((uint(poolId)))) {
+                collateral.pools.remove(poolId);
+            }
 
-            // this will ensure the new distribution information is passed up the chain to the markets
-            _updatePositionDebt(accountId, poolId, collateralType);
+            vault.currentEpoch().setAccount(accountId, collateralAmount, leverage);
+            // no update for usd because no usd issued
+            collateralPrice = pool.recalculateVaultCollateral(collateralType);
         }
         _setDelegatePoolId(accountId, poolId, collateralType);
 
         // this is the most efficient time to check the resulting collateralization ratio, since
         // user's debt and collateral price have been fully updated
         if (collateralAmount < oldCollateralAmount) {
-            int debt = epochData.usdDebtDist.getActorValue(actorId);
+            int debt = vault.currentEpoch().usdDebtDist.getActorValue(actorId);
+            //(, uint collateralValue,) = pool.currentAccountCollateral(collateralType, accountId);
 
-            _verifyCollateralRatio(
-                collateralType,
-                debt < 0 ? 0 : uint(debt),
-                collateralAmount.mulDecimal(vaultData.collateralPrice)
-            );
+            _verifyCollateralRatio(collateralType, debt < 0 ? 0 : uint(debt), collateralAmount.mulDecimal(collateralPrice));
         }
 
         emit DelegationUpdated(accountId, poolId, collateralType, collateralAmount, leverage, msg.sender);
-    }
-
-    function _calculateVaultShares(
-        VaultEpochData storage epochData,
-        uint collateralAmount,
-        uint leverage
-    ) internal view returns (uint) {
-        uint totalCollateral = uint(epochData.collateralDist.totalValue());
-        if (totalCollateral == 0) {
-            return collateralAmount.mulDecimal(leverage);
-        }
-
-        return leverage.mulDecimal((uint(epochData.debtDist.totalShares) * collateralAmount) / totalCollateral);
     }
 
     // ---------------------------------------
@@ -119,15 +117,17 @@ contract VaultModule is IVaultModule, VaultStorage, AccountRBACMixin, OwnableMix
     // ---------------------------------------
 
     function mintUsd(
-        uint accountId,
-        uint poolId,
+        uint128 accountId,
+        uint128 poolId,
         address collateralType,
         uint amount
-    ) external override onlyWithPermission(accountId, _MINT_PERMISSION) {
+    ) external override onlyWithPermission(accountId, AccountRBAC._MINT_PERMISSION) {
         // check if they have sufficient c-ratio to mint that amount
-        int debt = _updatePositionDebt(accountId, poolId, collateralType);
+        Pool.Data storage pool = Pool.load(poolId);
 
-        (, uint collateralValue, ) = _positionCollateral(accountId, poolId, collateralType);
+        int debt = pool.updateAccountDebt(collateralType, accountId);
+
+        (, uint collateralValue, ) = pool.currentAccountCollateral(collateralType, accountId);
 
         int newDebt = debt + int(amount);
 
@@ -137,26 +137,24 @@ contract VaultModule is IVaultModule, VaultStorage, AccountRBACMixin, OwnableMix
             _verifyCollateralRatio(collateralType, uint(newDebt), collateralValue);
         }
 
-        VaultData storage vaultData = _vaultStore().vaults[poolId][collateralType];
-        VaultEpochData storage epochData = vaultData.epochData[vaultData.epoch];
+        VaultEpoch.Data storage epoch = Pool.load(poolId).vaults[collateralType].currentEpoch();
 
-        epochData.usdDebtDist.updateActorValue(bytes32(accountId), newDebt);
-
+        epoch.usdDebtDist.updateActorValue(bytes32(uint(accountId)), newDebt);
+        pool.recalculateVaultCollateral(collateralType);
         require(int(amount) == int128(int(amount)), "Incorrect amount specified");
-
-        _poolModuleStore().pools[poolId].totalLiquidity -= int128(int(amount));
         _getToken(_USD_TOKEN).mint(msg.sender, amount);
 
         emit UsdMinted(accountId, poolId, collateralType, amount, msg.sender);
     }
 
     function burnUsd(
-        uint accountId,
-        uint poolId,
+        uint128 accountId,
+        uint128 poolId,
         address collateralType,
         uint amount
     ) external override {
-        int debt = _updatePositionDebt(accountId, poolId, collateralType);
+        Pool.Data storage pool = Pool.load(poolId);
+        int debt = pool.updateAccountDebt(collateralType, accountId);
 
         if (debt < 0) {
             // user shouldn't be able to burn more usd if they already have negative debt
@@ -169,11 +167,10 @@ contract VaultModule is IVaultModule, VaultStorage, AccountRBACMixin, OwnableMix
 
         _getToken(_USD_TOKEN).burn(msg.sender, amount);
 
-        VaultData storage vaultData = _vaultStore().vaults[poolId][collateralType];
-        VaultEpochData storage epochData = vaultData.epochData[vaultData.epoch];
+        VaultEpoch.Data storage epoch = Pool.load(poolId).vaults[collateralType].currentEpoch();
 
-        epochData.usdDebtDist.updateActorValue(bytes32(accountId), debt - int(amount));
-        _poolModuleStore().pools[poolId].totalLiquidity += int128(int(amount));
+        epoch.usdDebtDist.updateActorValue(bytes32(uint(accountId)), debt - int(amount));
+        pool.recalculateVaultCollateral(collateralType);
 
         emit UsdBurned(accountId, poolId, collateralType, amount, msg.sender);
     }
@@ -183,28 +180,28 @@ contract VaultModule is IVaultModule, VaultStorage, AccountRBACMixin, OwnableMix
     // ---------------------------------------
 
     function getPositionCollateralizationRatio(
-        uint accountId,
-        uint poolId,
+        uint128 accountId,
+        uint128 poolId,
         address collateralType
     ) external override returns (uint) {
-        return _positionCollateralizationRatio(poolId, accountId, collateralType);
+        return Pool.load(poolId).currentAccountCollateralizationRatio(collateralType, accountId);
     }
 
-    function getVaultCollateralRatio(uint poolId, address collateralType) external override returns (uint) {
-        return _vaultCollateralRatio(poolId, collateralType);
+    function getVaultCollateralRatio(uint128 poolId, address collateralType) external override returns (uint) {
+        return Pool.load(poolId).currentVaultCollateralRatio(collateralType);
     }
 
     function getPositionCollateral(
-        uint accountId,
-        uint poolId,
+        uint128 accountId,
+        uint128 poolId,
         address collateralType
     ) external view override returns (uint amount, uint value) {
-        (amount, value, ) = _positionCollateral(accountId, poolId, collateralType);
+        (amount, value, ) = Pool.load(poolId).currentAccountCollateral(collateralType, accountId);
     }
 
     function getPosition(
-        uint accountId,
-        uint poolId,
+        uint128 accountId,
+        uint128 poolId,
         address collateralType
     )
         external
@@ -216,25 +213,32 @@ contract VaultModule is IVaultModule, VaultStorage, AccountRBACMixin, OwnableMix
             uint collateralizationRatio
         )
     {
-        debt = _updatePositionDebt(accountId, poolId, collateralType);
-        (collateralAmount, collateralValue, ) = _positionCollateral(accountId, poolId, collateralType);
-        collateralizationRatio = _positionCollateralizationRatio(poolId, accountId, collateralType);
+        Pool.Data storage pool = Pool.load(poolId);
+
+        debt = pool.updateAccountDebt(collateralType, accountId);
+        (collateralAmount, collateralValue, ) = pool.currentAccountCollateral(collateralType, accountId);
+        collateralizationRatio = pool.currentAccountCollateralizationRatio(collateralType, accountId);
     }
 
     function getPositionDebt(
-        uint accountId,
-        uint poolId,
+        uint128 accountId,
+        uint128 poolId,
         address collateralType
     ) external override returns (int) {
-        return _updatePositionDebt(accountId, poolId, collateralType);
+        return Pool.load(poolId).updateAccountDebt(collateralType, accountId);
     }
 
-    function getVaultCollateral(uint poolId, address collateralType) public view override returns (uint amount, uint value) {
-        return _vaultCollateral(poolId, collateralType);
+    function getVaultCollateral(uint128 poolId, address collateralType)
+        public
+        view
+        override
+        returns (uint amount, uint value)
+    {
+        return Pool.load(poolId).currentVaultCollateral(collateralType);
     }
 
-    function getVaultDebt(uint poolId, address collateralType) public override returns (int) {
-        return _vaultDebt(poolId, collateralType);
+    function getVaultDebt(uint128 poolId, address collateralType) public override returns (int) {
+        return Pool.load(poolId).currentVaultDebt(collateralType);
     }
 
     function _verifyCollateralRatio(
@@ -242,10 +246,44 @@ contract VaultModule is IVaultModule, VaultStorage, AccountRBACMixin, OwnableMix
         uint debt,
         uint collateralValue
     ) internal view {
-        uint targetCratio = _collateralTargetCRatio(collateralType);
+        CollateralConfiguration.Data storage config = CollateralConfiguration.load(collateralType);
 
-        if (debt != 0 && collateralValue.divDecimal(debt) < targetCratio) {
-            revert InsufficientCollateralRatio(collateralValue, debt, collateralValue.divDecimal(debt), targetCratio);
+        if (debt != 0 && collateralValue.divDecimal(debt) < config.targetCRatio) {
+            revert InsufficientCollateralRatio(collateralValue, debt, collateralValue.divDecimal(debt), config.targetCRatio);
         }
+    }
+
+    function _setDelegatePoolId(
+        uint128 accountId,
+        uint128 poolId,
+        address collateralType
+    ) internal {
+        Collateral.Data storage stakedCollateral = Account.load(accountId).collaterals[collateralType];
+        if (!stakedCollateral.pools.contains(poolId)) {
+            stakedCollateral.pools.add(poolId);
+        }
+    }
+
+    modifier onlyWithPermission(uint128 accountId, bytes32 permission) {
+        if (!Account.load(accountId).rbac.authorized(permission, msg.sender)) {
+            revert PermissionDenied(accountId, permission, msg.sender);
+        }
+
+        _;
+    }
+
+    modifier collateralEnabled(address collateralType) {
+        if (!CollateralConfiguration.load(collateralType).stakingEnabled) {
+            revert InvalidCollateral(collateralType);
+        }
+
+        _;
+    }
+
+    modifier poolExists(uint128 poolId) {
+        if (!Pool.exists(poolId)) {
+            revert PoolNotFound(poolId);
+        }
+        _;
     }
 }

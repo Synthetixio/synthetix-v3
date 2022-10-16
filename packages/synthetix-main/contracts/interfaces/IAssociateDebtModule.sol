@@ -10,10 +10,10 @@ interface IAssociateDebtModule {
      * market toward an individual
      */
     function associateDebt(
-        uint marketId,
-        uint poolId,
+        uint128 marketId,
+        uint128 poolId,
         address collateralType,
-        uint accountId,
+        uint128 accountId,
         uint amount
     ) external returns (int);
 }
