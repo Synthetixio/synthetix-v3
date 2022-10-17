@@ -6,19 +6,26 @@ import "@synthetixio/core-contracts/contracts/proxy/UUPSProxy.sol";
 import "@synthetixio/core-modules/contracts/interfaces/INftModule.sol";
 import "../../interfaces/IAccountModule.sol";
 import "../../interfaces/IAccountTokenModule.sol";
-import "../../storage/AccountModuleStorage.sol";
+import "../../storage/Account.sol";
 
 import "@synthetixio/core-modules/contracts/mixins/AssociatedSystemsMixin.sol";
-import "../../mixins/AccountRBACMixin.sol";
 
-contract AccountModule is IAccountModule, OwnableMixin, AccountRBACMixin, AssociatedSystemsMixin {
+contract AccountModule is IAccountModule, OwnableMixin, AssociatedSystemsMixin {
     bytes32 private constant _ACCOUNT_SYSTEM = "accountNft";
 
     using SetUtil for SetUtil.AddressSet;
     using SetUtil for SetUtil.Bytes32Set;
 
+    using AccountRBAC for AccountRBAC.Data;
+    using Account for Account.Data;
+
     error OnlyAccountTokenProxy(address origin);
-    error PermissionNotGranted(uint accountId, bytes32 permission, address user);
+
+    error PermissionDenied(uint128 accountId, bytes32 permission, address user);
+
+    error PermissionNotGranted(uint128 accountId, bytes32 permission, address user);
+
+    error InvalidPermission(bytes32 permission);
 
     modifier onlyAccountToken() {
         if (msg.sender != address(getAccountTokenAddress())) {
@@ -32,8 +39,8 @@ contract AccountModule is IAccountModule, OwnableMixin, AccountRBACMixin, Associ
         return _getSystemAddress(_ACCOUNT_SYSTEM);
     }
 
-    function getAccountPermissions(uint accountId) external view returns (AccountPermissions[] memory permissions) {
-        AccountRBAC storage accountRbac = _accountModuleStore().accountsRBAC[accountId];
+    function getAccountPermissions(uint128 accountId) external view returns (AccountPermissions[] memory permissions) {
+        AccountRBAC.Data storage accountRbac = Account.load(accountId).rbac;
 
         uint allPermissionsLength = accountRbac.permissionAddresses.length();
         permissions = new AccountPermissions[](allPermissionsLength);
@@ -49,99 +56,101 @@ contract AccountModule is IAccountModule, OwnableMixin, AccountRBACMixin, Associ
     // ---------------------------------------
     // Business Logic
     // ---------------------------------------
-    function createAccount(uint256 requestedAccountId) external override {
+    function createAccount(uint128 requestedAccountId) external override {
         IAccountTokenModule accountTokenModule = IAccountTokenModule(getAccountTokenAddress());
         accountTokenModule.mint(msg.sender, requestedAccountId);
 
-        _accountModuleStore().accountsRBAC[requestedAccountId].owner = msg.sender;
+        Account.create(requestedAccountId, msg.sender);
 
         emit AccountCreated(msg.sender, requestedAccountId);
     }
 
-    function notifyAccountTransfer(address to, uint256 accountId) external override onlyAccountToken {
-        _revokePermissions(accountId, _accountModuleStore().accountsRBAC[accountId].owner);
-        _accountModuleStore().accountsRBAC[accountId].owner = to;
+    function notifyAccountTransfer(address to, uint128 accountId) external override onlyAccountToken {
+        Account.Data storage account = Account.load(accountId);
+
+        account.rbac.revokeAllPermissions(account.rbac.owner);
+        account.rbac.setOwner(to);
     }
 
     function hasPermission(
-        uint256 accountId,
+        uint128 accountId,
         bytes32 permission,
         address user
     ) public view override returns (bool) {
-        return _hasPermission(accountId, permission, user);
+        return Account.load(accountId).rbac.hasPermission(permission, user);
     }
 
     function isAuthorized(
-        uint256 accountId,
+        uint128 accountId,
         bytes32 permission,
-        address target
+        address user
     ) public view override returns (bool) {
-        return _authorized(accountId, permission, target);
+        return Account.load(accountId).rbac.authorized(permission, user);
     }
 
     function grantPermission(
-        uint accountId,
+        uint128 accountId,
         bytes32 permission,
         address user
-    ) external override onlyWithPermission(accountId, _ADMIN_PERMISSION) isPermissionValid(permission) {
-        if (user == address(0)) {
-            revert AddressError.ZeroAddress();
-        }
-
-        AccountRBAC storage accountRbac = _accountModuleStore().accountsRBAC[accountId];
-
-        if (!accountRbac.permissionAddresses.contains(user)) {
-            accountRbac.permissionAddresses.add(user);
-        }
-
-        accountRbac.permissions[user].add(permission);
+    ) external override onlyWithPermission(accountId, AccountRBAC._ADMIN_PERMISSION) isPermissionValid(permission) {
+        Account.load(accountId).rbac.grantPermission(permission, user);
 
         emit PermissionGranted(accountId, permission, user, msg.sender);
     }
 
     function revokePermission(
-        uint accountId,
+        uint128 accountId,
         bytes32 permission,
         address user
-    ) external override onlyWithPermission(accountId, _ADMIN_PERMISSION) {
-        _revokePermission(accountId, permission, user);
-    }
-
-    function renouncePermission(uint accountId, bytes32 permission) external override {
-        _revokePermission(accountId, permission, msg.sender);
-    }
-
-    function _revokePermission(
-        uint accountId,
-        bytes32 permission,
-        address user
-    ) internal {
-        AccountRBAC storage accountData = _accountModuleStore().accountsRBAC[accountId];
-
-        if (!_hasPermission(accountId, permission, user)) {
-            revert PermissionNotGranted(accountId, permission, user);
-        }
-
-        accountData.permissions[user].remove(permission);
-
-        if (accountData.permissions[user].length() == 0) {
-            accountData.permissionAddresses.remove(user);
-        }
+    ) external override onlyWithPermission(accountId, AccountRBAC._ADMIN_PERMISSION) {
+        Account.load(accountId).rbac.revokePermission(permission, user);
 
         emit PermissionRevoked(accountId, permission, user, msg.sender);
     }
 
-    function _revokePermissions(uint accountId, address user) internal {
-        AccountRBAC storage accountData = _accountModuleStore().accountsRBAC[accountId];
-
-        bytes32[] memory permissions = accountData.permissions[user].values();
-
-        for (uint i = 1; i <= permissions.length; i++) {
-            _revokePermission(accountId, permissions[i - 1], user);
+    function renouncePermission(uint128 accountId, bytes32 permission) external override {
+        if (!Account.load(accountId).rbac.hasPermission(permission, msg.sender)) {
+            revert PermissionNotGranted(accountId, permission, msg.sender);
         }
+
+        Account.load(accountId).rbac.revokePermission(permission, msg.sender);
+
+        emit PermissionRevoked(accountId, permission, msg.sender, msg.sender);
     }
 
-    function getAccountOwner(uint accountId) external view returns (address) {
-        return _accountOwner(accountId);
+    function getAccountOwner(uint128 accountId) public view returns (address) {
+        return Account.load(accountId).rbac.owner;
+    }
+
+    modifier onlyWithPermission(uint128 accountId, bytes32 permission) {
+        if (!_authorized(accountId, permission, msg.sender)) {
+            revert PermissionDenied(accountId, permission, msg.sender);
+        }
+
+        _;
+    }
+
+    modifier isPermissionValid(bytes32 permission) {
+        if (
+            permission != AccountRBAC._DEPOSIT_PERMISSION &&
+            permission != AccountRBAC._WITHDRAW_PERMISSION &&
+            permission != AccountRBAC._DELEGATE_PERMISSION &&
+            permission != AccountRBAC._MINT_PERMISSION &&
+            permission != AccountRBAC._ADMIN_PERMISSION
+        ) {
+            revert InvalidPermission(permission);
+        }
+
+        _;
+    }
+
+    function _authorized(
+        uint128 accountId,
+        bytes32 permission,
+        address user
+    ) internal view returns (bool) {
+        return ((user == getAccountOwner(accountId)) ||
+            Account.load(accountId).rbac.hasPermission(AccountRBAC._ADMIN_PERMISSION, user) ||
+            Account.load(accountId).rbac.hasPermission(permission, user));
     }
 }

@@ -5,6 +5,7 @@ import "@synthetixio/core-contracts/contracts/utils/MathUtil.sol";
 import "@synthetixio/core-contracts/contracts/interfaces/IERC20.sol";
 import "../interfaces/external/IMarket.sol";
 import "../interfaces/IMarketManagerModule.sol";
+import "../interfaces/IAssociateDebtModule.sol";
 import "../interfaces/IMarketCollateralModule.sol";
 
 contract MockMarket is IMarket {
@@ -14,16 +15,27 @@ contract MockMarket is IMarket {
     uint private _price;
 
     address private _proxy;
-    uint private _marketId;
+    uint128 private _marketId;
 
     function initialize(
         address proxy,
-        uint marketId,
+        uint128 marketId,
         uint initialPrice
     ) external {
         _proxy = proxy;
         _marketId = marketId;
         _price = initialPrice;
+    }
+
+    function callAssociateDebt(
+        uint128 poolId,
+        address collateralType,
+        uint128 accountId,
+        uint amount
+    ) external {
+        _reportedDebt += amount;
+
+        IAssociateDebtModule(_proxy).associateDebt(_marketId, poolId, collateralType, accountId, amount);
     }
 
     function buySynth(uint amount) external {
@@ -42,7 +54,7 @@ contract MockMarket is IMarket {
         _reportedDebt = newReportedDebt;
     }
 
-    function reportedDebt(uint) external view override returns (uint) {
+    function reportedDebt(uint128) external view override returns (uint) {
         return _reportedDebt;
     }
 

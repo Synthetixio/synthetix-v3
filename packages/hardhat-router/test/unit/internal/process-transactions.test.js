@@ -1,5 +1,5 @@
 const { equal, deepStrictEqual } = require('assert/strict');
-const { processTransaction } = require('../../../internal/process-transactions');
+const { processTransaction } = require('../../../src/internal/process-transactions');
 const { loadEnvironment } = require('../../helpers/use-environment');
 const { default: logger } = require('@synthetixio/core-utils/utils/io/logger');
 

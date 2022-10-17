@@ -2,7 +2,7 @@ const assert = require('assert/strict');
 const { setTimeout } = require('node:timers/promises');
 const del = require('del');
 const fs = require('fs');
-const autosaveObject = require('../../../internal/autosave-object');
+const autosaveObject = require('../../../src/internal/autosave-object');
 const { default: logger } = require('@synthetixio/core-utils/utils/io/logger');
 
 const FILE_PATH = 'test/fixtures/files/autosave.json';

@@ -1,7 +1,7 @@
 const { ethers } = hre;
 const assertBn = require('@synthetixio/core-utils/utils/assertions/assert-bignumber');
 const { default: assertRevert } = require('@synthetixio/core-utils/utils/assertions/assert-revert');
-const { bootstrap } = require('@synthetixio/hardhat-router/utils/tests');
+const { bootstrap } = require('@synthetixio/hardhat-router/dist/utils/tests');
 const initializer = require('@synthetixio/core-modules/test/helpers/initializer');
 
 describe('RouterCoverage', () => {

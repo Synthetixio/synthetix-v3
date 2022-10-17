@@ -27,6 +27,7 @@
     "check-packages": "bin/check-packages"
   },
   "devDependencies": {
+    "@types/node": "18.8.5",
     "@typescript-eslint/eslint-plugin": "5.33.0",
     "@typescript-eslint/parser": "5.33.0",
     "eslint": "7.32.0",

@@ -1,6 +1,6 @@
 const path = require('path');
 const { equal } = require('assert/strict');
-const { TASK_DEPLOY_MULTICALL_ABI } = require('../../task-names');
+const { TASK_DEPLOY_MULTICALL_ABI } = require('../../src/task-names');
 const { loadEnvironment, deployOnEnvironment } = require('../helpers/use-environment');
 const { copyFile, unlink, readFile, writeFile } = require('fs/promises');
 
