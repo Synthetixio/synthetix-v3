@@ -3,7 +3,7 @@ import path from 'path';
 import glob from 'glob';
 import naturalCompare from 'string-natural-compare';
 import { configDefaults } from '../internal/config-defaults';
-import { DeploymentAbis, DeploymentData, DeploymentSources } from 'types';
+import { DeploymentAbis, DeploymentData, DeploymentSources } from '../types';
 
 export interface DeploymentInfo {
   network: string;
