@@ -1,16 +1,14 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "../storage/VaultStorage.sol";
-
 /// @title Module for staking positions in vaults
 interface IVaultModule {
     /**
      * @notice Emitted when {sender} updates the delegation of collateral in the specified staking position.
      */
     event DelegationUpdated(
-        uint indexed accountId,
-        uint indexed poolId,
+        uint128 indexed accountId,
+        uint128 indexed poolId,
         address collateralType,
         uint amount,
         uint leverage,
@@ -21,8 +19,8 @@ interface IVaultModule {
      * @notice Emitted when {sender} mints {amount} of snxUSD with the specified staking position.
      */
     event UsdMinted(
-        uint indexed accountId,
-        uint indexed poolId,
+        uint128 indexed accountId,
+        uint128 indexed poolId,
         address collateralType,
         uint amount,
         address indexed sender
@@ -32,8 +30,8 @@ interface IVaultModule {
      * @notice Emitted when {sender} burns {amount} of snxUSD with the specified staking position.
      */
     event UsdBurned(
-        uint indexed accountId,
-        uint indexed poolId,
+        uint128 indexed accountId,
+        uint128 indexed poolId,
         address collateralType,
         uint amount,
         address indexed sender
@@ -51,8 +49,8 @@ interface IVaultModule {
      * Emits a {DelegationUpdated} event.
      */
     function delegateCollateral(
-        uint accountId,
-        uint poolId,
+        uint128 accountId,
+        uint128 poolId,
         address collateralType,
         uint amount,
         uint leverage
@@ -69,8 +67,8 @@ interface IVaultModule {
      * Emits a {UsdMinted} event.
      */
     function mintUsd(
-        uint accountId,
-        uint poolId,
+        uint128 accountId,
+        uint128 poolId,
         address collateralType,
         uint amount
     ) external;
@@ -85,8 +83,8 @@ interface IVaultModule {
      * Emits a {UsdMinted} event.
      */
     function burnUsd(
-        uint accountId,
-        uint poolId,
+        uint128 accountId,
+        uint128 poolId,
         address collateralType,
         uint amount
     ) external;
@@ -97,8 +95,8 @@ interface IVaultModule {
      * @dev The return value is a percentage with 18 decimals places.
      */
     function getPositionCollateralizationRatio(
-        uint accountId,
-        uint poolId,
+        uint128 accountId,
+        uint128 poolId,
         address collateralType
     ) external returns (uint);
 
@@ -108,8 +106,8 @@ interface IVaultModule {
      * @dev The return value is denominated in dollars with 18 decimal places.
      */
     function getPositionDebt(
-        uint accountId,
-        uint poolId,
+        uint128 accountId,
+        uint128 poolId,
         address collateralType
     ) external returns (int);
 
@@ -120,8 +118,8 @@ interface IVaultModule {
      * @dev collateralValue is represented as an integer with the number of decimals specified by the collateralType.
      */
     function getPositionCollateral(
-        uint accountId,
-        uint poolId,
+        uint128 accountId,
+        uint128 poolId,
         address collateralType
     ) external view returns (uint collateralAmount, uint collateralValue);
 
@@ -129,8 +127,8 @@ interface IVaultModule {
      * @notice Returns all information pertaining to a specified staking position in the vault module.
      **/
     function getPosition(
-        uint accountId,
-        uint poolId,
+        uint128 accountId,
+        uint128 poolId,
         address collateralType
     )
         external
@@ -146,7 +144,7 @@ interface IVaultModule {
      * @dev Call this function using `callStatic` to treat it as a view function.
      * @dev The return value is denominated in dollars with 18 decimal places.
      **/
-    function getVaultDebt(uint poolId, address collateralType) external returns (int);
+    function getVaultDebt(uint128 poolId, address collateralType) external returns (int);
 
     /**
      * @notice Returns the amount and value of the collateral held by the vault.
@@ -154,7 +152,7 @@ interface IVaultModule {
      * @dev collateralAmount is represented as an integer with 18 decimals.
      * @dev collateralValue is represented as an integer with the number of decimals specified by the collateralType.
      */
-    function getVaultCollateral(uint poolId, address collateralType)
+    function getVaultCollateral(uint128 poolId, address collateralType)
         external
         returns (uint collateralAmount, uint collateralValue);
 
@@ -163,5 +161,5 @@ interface IVaultModule {
      * @dev Call this function using `callStatic` to treat it as a view function.
      * @dev The return value is a percentage with 18 decimals places.
      */
-    function getVaultCollateralRatio(uint poolId, address collateralType) external returns (uint);
+    function getVaultCollateralRatio(uint128 poolId, address collateralType) external returns (uint);
 }

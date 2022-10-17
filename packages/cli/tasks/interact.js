@@ -7,7 +7,7 @@ const {
   SUBTASK_PICK_PARAMETERS,
   SUBTASK_EXECUTE_CALL,
 } = require('../task-names');
-const { SUBTASK_LOAD_DEPLOYMENT } = require('@synthetixio/hardhat-router/task-names');
+const { SUBTASK_LOAD_DEPLOYMENT } = require('@synthetixio/hardhat-router/dist/task-names');
 const types = require('@synthetixio/core-utils/utils/hardhat/argument-types');
 const { default: logger } = require('@synthetixio/core-utils/utils/io/logger');
 

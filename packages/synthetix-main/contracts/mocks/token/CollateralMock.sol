@@ -23,7 +23,7 @@ contract CollateralMock is ERC20, IRewardDistributor {
 
     // permissionless payout for convenience testing
     function payout(
-        uint,
+        uint128,
         address,
         address to,
         uint amount

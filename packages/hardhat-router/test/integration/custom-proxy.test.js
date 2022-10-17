@@ -1,7 +1,7 @@
 const path = require('path');
 const { loadEnvironment, deployOnEnvironment } = require('../helpers/use-environment');
 const { rejects } = require('assert/strict');
-const { ContractValidationError } = require('../../internal/errors');
+const { ContractValidationError } = require('../../src/internal/errors');
 const { copyFile } = require('fs/promises');
 
 describe('custom-proxy', function () {

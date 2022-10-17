@@ -8,13 +8,13 @@ interface IPoolConfigurationModule {
     event PoolApprovedRemoved(uint256 poolId);
 
     /// @notice SCCP sets the preferred pool
-    function setPreferredPool(uint poolId) external;
+    function setPreferredPool(uint128 poolId) external;
 
     /// @notice SCCP adds a poolId to the approved list
-    function addApprovedPool(uint poolId) external;
+    function addApprovedPool(uint128 poolId) external;
 
     /// @notice SCCP removes a poolId to the approved list
-    function removeApprovedPool(uint poolId) external;
+    function removeApprovedPool(uint128 poolId) external;
 
     /// @notice gets the preferred pool
     function getPreferredPool() external view returns (uint);

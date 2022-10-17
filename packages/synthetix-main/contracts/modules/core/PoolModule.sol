@@ -6,33 +6,34 @@ import "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
 import "@synthetixio/core-contracts/contracts/errors/AddressError.sol";
 
 import "../../interfaces/IPoolModule.sol";
-import "../../storage/PoolModuleStorage.sol";
+import "../../storage/Pool.sol";
 
-import "../../mixins/AccountRBACMixin.sol";
-import "../../mixins/PoolMixin.sol";
-
-contract PoolModule is IPoolModule, AccountRBACMixin, PoolMixin, OwnableMixin {
-    error PoolAlreadyExists(uint poolId);
+contract PoolModule is IPoolModule, OwnableMixin {
+    error PoolAlreadyExists(uint128 poolId);
     error InvalidParameters(string incorrectParameter, string help);
+    error PoolNotFound(uint128 poolId);
 
-    modifier onlyPoolOwner(uint poolId, address requestor) {
-        if (_ownerOf(poolId) != requestor) {
+    using Pool for Pool.Data;
+    using Market for Market.Data;
+
+    modifier onlyPoolOwner(uint128 poolId, address requestor) {
+        if (Pool.load(poolId).owner != requestor) {
             revert AccessError.Unauthorized(requestor);
         }
 
         _;
     }
 
-    function createPool(uint requestedPoolId, address owner) external override {
+    function createPool(uint128 requestedPoolId, address owner) external override {
         if (owner == address(0)) {
             revert AddressError.ZeroAddress();
         }
 
-        if (_exists(requestedPoolId)) {
+        if (Pool.exists(requestedPoolId)) {
             revert PoolAlreadyExists(requestedPoolId);
         }
 
-        _poolModuleStore().pools[requestedPoolId].owner = owner;
+        Pool.create(requestedPoolId, owner);
 
         emit PoolCreated(requestedPoolId, owner);
     }
@@ -40,43 +41,45 @@ contract PoolModule is IPoolModule, AccountRBACMixin, PoolMixin, OwnableMixin {
     // ---------------------------------------
     // Ownership
     // ---------------------------------------
-    function nominatePoolOwner(address nominatedOwner, uint256 poolId) external override onlyPoolOwner(poolId, msg.sender) {
-        _poolModuleStore().pools[poolId].nominatedOwner = nominatedOwner;
+    function nominatePoolOwner(address nominatedOwner, uint128 poolId) external override onlyPoolOwner(poolId, msg.sender) {
+        Pool.load(poolId).nominatedOwner = nominatedOwner;
 
         emit NominatedPoolOwner(poolId, nominatedOwner);
     }
 
-    function acceptPoolOwnership(uint256 poolId) external override {
-        if (_poolModuleStore().pools[poolId].nominatedOwner != msg.sender) {
+    function acceptPoolOwnership(uint128 poolId) external override {
+        Pool.Data storage pool = Pool.load(poolId);
+        if (pool.nominatedOwner != msg.sender) {
             revert AccessError.Unauthorized(msg.sender);
         }
 
-        _poolModuleStore().pools[poolId].owner = msg.sender;
-        _poolModuleStore().pools[poolId].nominatedOwner = address(0);
+        pool.owner = msg.sender;
+        pool.nominatedOwner = address(0);
 
         emit PoolOwnershipAccepted(poolId, msg.sender);
     }
 
-    function renouncePoolNomination(uint256 poolId) external override {
-        if (_poolModuleStore().pools[poolId].nominatedOwner != msg.sender) {
+    function renouncePoolNomination(uint128 poolId) external override {
+        Pool.Data storage pool = Pool.load(poolId);
+        if (pool.nominatedOwner != msg.sender) {
             revert AccessError.Unauthorized(msg.sender);
         }
 
-        _poolModuleStore().pools[poolId].nominatedOwner = address(0);
+        pool.nominatedOwner = address(0);
 
         emit PoolNominationRenounced(poolId, msg.sender);
     }
 
-    function getPoolOwner(uint256 poolId) external view override returns (address) {
-        return _ownerOf(poolId);
+    function getPoolOwner(uint128 poolId) external view override returns (address) {
+        return Pool.load(poolId).owner;
     }
 
-    function getNominatedPoolOwner(uint256 poolId) external view override returns (address) {
-        return _poolModuleStore().pools[poolId].nominatedOwner;
+    function getNominatedPoolOwner(uint128 poolId) external view override returns (address) {
+        return Pool.load(poolId).nominatedOwner;
     }
 
-    function renouncePoolOwnership(uint256 poolId) external override onlyPoolOwner(poolId, msg.sender) {
-        _poolModuleStore().pools[poolId].nominatedOwner = address(0);
+    function renouncePoolOwnership(uint128 poolId) external override onlyPoolOwner(poolId, msg.sender) {
+        Pool.load(poolId).nominatedOwner = address(0);
 
         emit PoolOwnershipRenounced(poolId, msg.sender);
     }
@@ -85,8 +88,8 @@ contract PoolModule is IPoolModule, AccountRBACMixin, PoolMixin, OwnableMixin {
     // pool admin
     // ---------------------------------------
     function setPoolConfiguration(
-        uint poolId,
-        uint[] calldata markets,
+        uint128 poolId,
+        uint128[] calldata markets,
         uint[] calldata weights,
         int[] calldata maxDebtShareValues
     ) external override poolExists(poolId) onlyPoolOwner(poolId, msg.sender) {
@@ -96,19 +99,18 @@ contract PoolModule is IPoolModule, AccountRBACMixin, PoolMixin, OwnableMixin {
 
         // TODO: this is not super efficient. we only call this to gather the debt accumulated from deployed pools
         // would be better if we could eliminate the call at the end somehow
-        _rebalancePoolConfigurations(poolId);
-
-        PoolData storage poolData = _poolModuleStore().pools[poolId];
+        Pool.Data storage pool = Pool.load(poolId);
+        pool.distributeDebt();
 
         uint totalWeight = 0;
         uint i = 0;
 
         {
-            uint lastMarketId = 0;
+            uint128 lastMarketId = 0;
 
             for (
                 ;
-                i < (markets.length < poolData.poolDistribution.length ? markets.length : poolData.poolDistribution.length);
+                i < (markets.length < pool.poolDistribution.length ? markets.length : pool.poolDistribution.length);
                 i++
             ) {
                 if (markets[i] <= lastMarketId) {
@@ -116,7 +118,7 @@ contract PoolModule is IPoolModule, AccountRBACMixin, PoolMixin, OwnableMixin {
                 }
                 lastMarketId = markets[i];
 
-                MarketDistribution storage distribution = poolData.poolDistribution[i];
+                MarketDistribution.Data storage distribution = pool.poolDistribution[i];
                 distribution.market = markets[i];
                 distribution.weight = uint128(weights[i]);
                 distribution.maxDebtShareValue = int128(maxDebtShareValues[i]);
@@ -130,31 +132,31 @@ contract PoolModule is IPoolModule, AccountRBACMixin, PoolMixin, OwnableMixin {
                 }
                 lastMarketId = markets[i];
 
-                MarketDistribution memory distribution;
+                MarketDistribution.Data memory distribution;
                 distribution.market = markets[i];
                 distribution.weight = uint128(weights[i]);
                 distribution.maxDebtShareValue = int128(maxDebtShareValues[i]);
 
-                poolData.poolDistribution.push(distribution);
+                pool.poolDistribution.push(distribution);
 
                 totalWeight += weights[i];
             }
         }
 
-        uint popped = poolData.poolDistribution.length - i;
+        uint popped = pool.poolDistribution.length - i;
         for (i = 0; i < popped; i++) {
-            _rebalanceMarket(poolData.poolDistribution[poolData.poolDistribution.length - 1].market, poolId, 0, 0);
-            poolData.poolDistribution.pop();
+            Market.rebalance(pool.poolDistribution[pool.poolDistribution.length - 1].market, poolId, 0, 0);
+            pool.poolDistribution.pop();
         }
 
-        poolData.totalWeights = totalWeight;
+        pool.totalWeights = uint128(totalWeight);
 
-        _rebalancePoolConfigurations(poolId);
+        pool.rebalanceConfigurations();
 
         emit PoolConfigurationSet(poolId, markets, weights, msg.sender);
     }
 
-    function getPoolConfiguration(uint poolId)
+    function getPoolConfiguration(uint128 poolId)
         external
         view
         override
@@ -164,7 +166,7 @@ contract PoolModule is IPoolModule, AccountRBACMixin, PoolMixin, OwnableMixin {
             int[] memory
         )
     {
-        PoolData storage pool = _poolModuleStore().pools[poolId];
+        Pool.Data storage pool = Pool.load(poolId);
 
         uint[] memory markets = new uint[](pool.poolDistribution.length);
         uint[] memory weights = new uint[](pool.poolDistribution.length);
@@ -179,29 +181,37 @@ contract PoolModule is IPoolModule, AccountRBACMixin, PoolMixin, OwnableMixin {
         return (markets, weights, maxDebtShareValues);
     }
 
-    function setPoolName(uint poolId, string memory name)
+    function setPoolName(uint128 poolId, string memory name)
         external
         override
         poolExists(poolId)
         onlyPoolOwner(poolId, msg.sender)
     {
-        _poolModuleStore().pools[poolId].name = name;
+        Pool.load(poolId).name = name;
 
         emit PoolNameUpdated(poolId, name, msg.sender);
     }
 
-    function getPoolName(uint poolId) external view override returns (string memory poolName) {
-        return _poolModuleStore().pools[poolId].name;
+    function getPoolName(uint128 poolId) external view override returns (string memory poolName) {
+        return Pool.load(poolId).name;
     }
 
     // ---------------------------------------
     // system owner
     // ---------------------------------------
     function setMinLiquidityRatio(uint minLiquidityRatio) external override onlyOwner {
-        _poolModuleStore().minLiquidityRatio = minLiquidityRatio;
+        PoolConfiguration.load().minLiquidityRatio = minLiquidityRatio;
     }
 
     function getMinLiquidityRatio() external view override returns (uint) {
-        return _poolModuleStore().minLiquidityRatio;
+        return PoolConfiguration.load().minLiquidityRatio;
+    }
+
+    modifier poolExists(uint128 poolId) {
+        if (!Pool.exists(poolId)) {
+            revert PoolNotFound(poolId);
+        }
+
+        _;
     }
 }

@@ -6,8 +6,8 @@ import "../utils/CurvesLibrary.sol";
 /// @title Liquidates the collateral for an account in a pool
 interface ILiquidationModule {
     event Liquidation(
-        uint indexed accountId,
-        uint indexed poolId,
+        uint128 indexed accountId,
+        uint128 indexed poolId,
         address indexed collateralType,
         uint debtLiquidated,
         uint collateralLiquidated,
@@ -15,7 +15,7 @@ interface ILiquidationModule {
     );
 
     event VaultLiquidation(
-        uint indexed poolId,
+        uint128 indexed poolId,
         address indexed collateralType,
         uint debtLiquidated,
         uint collateralLiquidated,
@@ -30,8 +30,8 @@ interface ILiquidationModule {
 
     /// @notice liquidates the required collateral of the account delegated to the poolId
     function liquidate(
-        uint accountId,
-        uint poolId,
+        uint128 accountId,
+        uint128 poolId,
         address collateralType
     )
         external
@@ -45,16 +45,16 @@ interface ILiquidationModule {
     /// liquidateAsAccountId determines which account to deposit the siezed collateral into (this is necessary particularly if the collateral in the vault is vesting)
     /// Will only liquidate a portion of the debt for the vault if `maxUsd` is supplied
     function liquidateVault(
-        uint poolId,
+        uint128 poolId,
         address collateralType,
-        uint liquidateAsAccountId,
+        uint128 liquidateAsAccountId,
         uint maxUsd
     ) external returns (uint amountRewarded, uint collateralLiquidated);
 
     /// @notice returns if the account is liquidable on the poolId - collateralType pair
     function isLiquidatable(
-        uint accountId,
-        uint poolId,
+        uint128 accountId,
+        uint128 poolId,
         address collateralType
     ) external returns (bool);
 }
