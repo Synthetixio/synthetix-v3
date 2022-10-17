@@ -8,6 +8,7 @@ contract SpotMarketStorage {
     struct SpotMarketStore {
         PriceFeed priceFeed;
         ITokenModule usdToken;
+        ITokenModule synth;
         address synthetix;
         address feeManager;
         uint marketId;

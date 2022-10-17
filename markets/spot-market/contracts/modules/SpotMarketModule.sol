@@ -3,21 +3,30 @@ pragma solidity ^0.8.0;
 
 import "@synthetixio/main/contracts/interfaces/IMarketManagerModule.sol";
 import "@synthetixio/core-contracts/contracts/utils/MathUtil.sol";
-import "@synthetixio/core-modules/contracts/modules/TokenModule.sol";
+import "@synthetixio/core-modules/contracts/interfaces/IOwnerModule.sol";
+import "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
 import "@synthetixio/core-contracts/contracts/initializable/InitializableMixin.sol";
 import "@synthetixio/core-contracts/contracts/ownership/OwnableMixin.sol";
 import "@synthetixio/core-contracts/contracts/token/ERC20.sol";
 import "../mixins/FeeMixin.sol";
 import "../mixins/PriceMixin.sol";
 import "../mixins/SpotMarketMixin.sol";
+import "../mixins/SynthMixin.sol";
 import "../interfaces/ISpotMarket.sol";
 import "../interfaces/ISpotMarketFee.sol";
 
-contract SpotMarketModule is ISpotMarket, ERC20, FeeMixin, PriceMixin, OwnableMixin, InitializableMixin {
+contract SpotMarketModule is
+    ISpotMarket,
+    SynthMixin,
+    SpotMarketMixin,
+    FeeMixin,
+    PriceMixin,
+    OwnableMixin,
+    InitializableMixin
+{
     using MathUtil for uint256;
 
     error IncorrectMarket();
-    error InsufficientFunds();
 
     function _isInitialized() internal view override returns (bool) {
         return _spotMarketStore().initialized;
@@ -30,19 +39,20 @@ contract SpotMarketModule is ISpotMarket, ERC20, FeeMixin, PriceMixin, OwnableMi
     function initialize(
         address snxAddress,
         address usdTokenAddress,
-        string memory name,
-        string memory symbol,
-        uint8 decimals,
+        string memory tokenName,
+        string memory tokenSymbol,
+        uint8 tokenDecimals,
         address feeManager,
         bytes memory buyFeedId,
         bytes memory sellFeedId
     ) external override onlyOwner {
         SpotMarketStore storage store = _spotMarketStore();
-        // initialize token
-        _initialize(name, symbol, decimals);
 
         store.synthetix = snxAddress;
         store.usdToken = ITokenModule(usdTokenAddress);
+
+        _initializeToken(tokenName, tokenSymbol, tokenDecimals);
+
         // register with market manager
         uint synthMarketId = IMarketManagerModule(store.synthetix).registerMarket(address(this));
         // set storage
@@ -63,7 +73,7 @@ contract SpotMarketModule is ISpotMarket, ERC20, FeeMixin, PriceMixin, OwnableMi
             revert IncorrectMarket();
         }
 
-        return totalSupply().mulDecimal(_getCurrentPrice());
+        return store.synth.totalSupply().mulDecimal(_getCurrentPrice());
     }
 
     function updateFeeManager(address newFeeManager) external override onlyOwner {

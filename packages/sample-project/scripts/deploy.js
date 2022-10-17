@@ -13,6 +13,29 @@ module.exports.deploy = async function deploy(runtime, prefix, modules) {
     hre.ethers.provider = runtime.provider;
   }
 
+  const cachedGetSigners = hre.ethers.getSigners;
+  const cachedGetSigner = hre.ethers.getSigner;
+
+  if (runtime?.getDefaultSigner) {
+    const defaultSigner = await runtime.getDefaultSigner('deployer', prefix);
+
+    const signers = [defaultSigner];
+
+    hre.ethers.getSigners = async () => {
+      return [...signers];
+    };
+
+    hre.ethers.getSigner = async (address) => {
+      const signer = signers.find((s) => s.address === address);
+
+      if (!signer) {
+        throw new Error(`Invalid signer "${address}"`);
+      }
+
+      return signer;
+    };
+  }
+
   const instance = prefix.toLowerCase();
 
   const info = {
@@ -21,20 +44,24 @@ module.exports.deploy = async function deploy(runtime, prefix, modules) {
     instance,
   };
 
-  const isHHNetwork = hre.network.name === 'hardhat';
+  const isHHNetwork = ['hardhat', 'cannon'].includes(hre.network.name);
   await hre.run(TASK_DEPLOY, {
     noConfirm: true,
     quiet: false,
     clear: isHHNetwork,
+    skipProxy: true,
     instance,
     modules,
-    skipProxy: true,
   });
 
   const { abis, info: deployInfo } = await hre.run(SUBTASK_GET_DEPLOYMENT_INFO, { instance });
 
-  console.log('deploy info', await hre.run(SUBTASK_GET_DEPLOYMENT_INFO, { instance }));
   const contracts = Object.values(deployInfo.contracts).reduce((contracts, c) => {
+    // TODO: bug causes proxy contract to be included
+    if (c.contractName === 'Proxy') {
+      return contracts;
+    }
+
     if (contracts[c.contractName]) {
       throw new Error(`Contract name repeated: "${c.contractName}"`);
     }
@@ -50,6 +77,8 @@ module.exports.deploy = async function deploy(runtime, prefix, modules) {
 
   // Set the multicall ABI on the Proxy
   contracts[prefix + 'Router'].abi = await hre.run(SUBTASK_GET_MULTICALL_ABI, { info, instance });
+  hre.ethers.getSigners = cachedGetSigners;
+  hre.ethers.getSigner = cachedGetSigner;
 
   return {
     contracts,
@@ -57,5 +86,5 @@ module.exports.deploy = async function deploy(runtime, prefix, modules) {
 };
 
 if (module == require.main) {
-  module.exports.deploy().then(console.log).catch(console.error);
+  module.exports.deploy().then(console.log).catch(console.log);
 }

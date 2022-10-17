@@ -8,10 +8,11 @@ import "../interfaces/IWrapper.sol";
 import "../storage/WrapperStorage.sol";
 import "../mixins/FeeMixin.sol";
 import "../mixins/PriceMixin.sol";
+import "../mixins/SpotMarketMixin.sol";
+import "../mixins/SynthMixin.sol";
 
-contract WrapperModule is IWrapper, SpotMarketMixin, FeeMixin, PriceMixin, WrapperStorage, OwnableMixin {
+contract WrapperModule is IWrapper, SynthMixin, SpotMarketMixin, FeeMixin, PriceMixin, WrapperStorage, OwnableMixin {
     error WrappingNotInitialized();
-    error InsufficientAllowance(uint required, uint existing);
 
     modifier onlyEnabledWrapper() {
         if (!_wrapperStore().wrappingEnabled) revert WrappingNotInitialized();
@@ -77,9 +78,10 @@ contract WrapperModule is IWrapper, SpotMarketMixin, FeeMixin, PriceMixin, Wrapp
 
     function unwrap(uint unwrapAmount) external override onlyEnabledWrapper returns (uint amountToWithdraw) {
         SpotMarketStore storage store = _spotMarketStore();
+        WrapperStore storage wrapperStore = _wrapperStore();
 
-        if (balanceOf(msg.sender) < unwrapAmount) revert InsufficientFunds();
-        uint allowance = allowance(msg.sender, address(this));
+        if (_getBalanceOf(msg.sender) < unwrapAmount) revert InsufficientFunds();
+        uint allowance = _getAllowance(msg.sender, address(this));
         if (allowance < unwrapAmount) revert InsufficientAllowance(unwrapAmount, allowance);
 
         uint unwrapAmountInUsd = _synthUsdExchangeRate(unwrapAmount);
@@ -89,10 +91,11 @@ contract WrapperModule is IWrapper, SpotMarketMixin, FeeMixin, PriceMixin, Wrapp
 
         IMarketCollateralModule(store.synthetix).withdrawMarketCollateral(
             store.marketId,
-            _wrapperStore().collateralType,
+            wrapperStore.collateralType,
             amountToWithdraw
         );
-        transfer(msg.sender, amountToWithdraw);
+        ITokenModule(wrapperStore.collateralType).transfer(msg.sender, amountToWithdraw);
+        _burn(msg.sender, unwrapAmount);
 
         emit SynthUnwrapped(store.marketId, amountToWithdraw, feesCollected);
     }

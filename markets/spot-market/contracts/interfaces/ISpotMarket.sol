@@ -15,9 +15,9 @@ interface ISpotMarket is IMarket {
     function initialize(
         address snxAddress,
         address usdTokenAddress,
-        string memory name,
-        string memory symbol,
-        uint8 decimals,
+        string memory tokenName,
+        string memory tokenSymbol,
+        uint8 tokenDecimals,
         address feeManager,
         bytes memory buyFeedId,
         bytes memory sellFeedId
