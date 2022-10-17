@@ -34,4 +34,6 @@ interface ISpotMarket is IMarket {
     function getBuyQuote(uint amountUsd) external view returns (uint, uint);
 
     function getSellQuote(uint amountSynth) external view returns (uint, uint);
+
+    function getMarketId() external view returns (uint128);
 }

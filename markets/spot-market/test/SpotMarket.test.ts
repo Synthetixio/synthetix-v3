@@ -46,16 +46,20 @@ describe('SpotMarket', function () {
     let buyTxn: Ethers.providers.TransactionResponse;
 
     before('buy synth', async () => {
-      await systems().USD.connect(staker1).approve(systems().Spot.address, depositAmount.div(10));
-      buyTxn = await (await systems().Spot.connect(staker1).buy(depositAmount.div(10))).wait();
+      await systems()
+        .USD.connect(staker1)
+        .approve(systems().SpotMarket.address, depositAmount.div(10));
+      buyTxn = await (
+        await systems().SpotMarket.connect(staker1).buy(depositAmount.div(10))
+      ).wait();
     });
 
     it('emitted event', async () => {
-      await assertEvent(buyTxn, `SynthBought(1, ${synthMinted}, ${fee})`, systems().Spot);
+      await assertEvent(buyTxn, `SynthBought(1, ${synthMinted}, ${fee})`, systems().SpotMarket);
     });
 
     it('transferred correct amount of synth', async () => {
-      assertBn.equal(await systems().Spot.balanceOf(await staker1.getAddress()), synthMinted);
+      assertBn.equal(await systems().SpotMarket.balanceOf(await staker1.getAddress()), synthMinted);
     });
   });
 
@@ -75,14 +79,14 @@ describe('SpotMarket', function () {
     });
 
     before('sell synth', async () => {
-      sellTxn = await (await systems().Spot.connect(staker1).sell(synthMinted.div(2))).wait();
+      sellTxn = await (await systems().SpotMarket.connect(staker1).sell(synthMinted.div(2))).wait();
     });
 
     it('emitted sell event', async () => {
       await assertEvent(
         sellTxn,
         `SynthSold(1, ${amountReceived}, ${expectedFees})`,
-        systems().Spot
+        systems().SpotMarket
       );
     });
 

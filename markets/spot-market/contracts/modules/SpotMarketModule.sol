@@ -54,7 +54,7 @@ contract SpotMarketModule is
         _initializeToken(tokenName, tokenSymbol, tokenDecimals);
 
         // register with market manager
-        uint synthMarketId = IMarketManagerModule(store.synthetix).registerMarket(address(this));
+        uint128 synthMarketId = IMarketManagerModule(store.synthetix).registerMarket(address(this));
         // set storage
         store.marketId = synthMarketId;
         store.feeManager = feeManager;
@@ -67,13 +67,17 @@ contract SpotMarketModule is
     }
 
     /* should this accept marketId as a param */
-    function reportedDebt(uint marketId) external view override returns (uint) {
+    function reportedDebt(uint128 marketId) external view override returns (uint) {
         SpotMarketStore storage store = _spotMarketStore();
         if (store.marketId != marketId) {
             revert IncorrectMarket();
         }
 
-        return store.synth.totalSupply().mulDecimal(_getCurrentPrice());
+        return _getTotalSupply().mulDecimal(_getCurrentPrice());
+    }
+
+    function getMarketId() external view override returns (uint128) {
+        return _spotMarketStore().marketId;
     }
 
     function updateFeeManager(address newFeeManager) external override onlyOwner {

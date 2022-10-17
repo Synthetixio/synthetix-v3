@@ -7,13 +7,13 @@ description = "spot market owner"
 defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
 
 [import.synthetix]
-source = "synthetix-main:1.0.0"
+source = "synthetix:3.0.0-lm"
 
 [run.deploy_spot_market]
 exec = "scripts/deploy.js"
 func = "deploy"
 args = ["SpotMarket", ".*"]
-modified = ["contracts/modules/core", "scripts"]
+modified = ["contracts", "scripts"]
 
 [contract.SpotMarketProxy]
 artifact = "Proxy"
@@ -32,14 +32,14 @@ args = [
 depends = ["import.synthetix"]
 
 [invoke.acquire_ownership]
-target = ["MarketProxy"]
+target = ["SpotMarketProxy"]
 from = "<%= settings.marketOwner %>"
 func = "initializeOwnerModule"
 args = ["<%= settings.marketOwner %>"]
-depends = ["contract.MarketProxy"]
+depends = ["contract.SpotMarketProxy"]
 
 [invoke.init_market]
-target = ["MarketProxy"]
+target = ["SpotMarketProxy"]
 from = "<%= settings.marketOwner %>"
 func = "initialize"
 args = [
