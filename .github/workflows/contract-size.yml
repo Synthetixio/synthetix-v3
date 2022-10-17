@@ -15,7 +15,6 @@ jobs:
         with:
           node-version: "16.16.0"
           cache: "npm"
-          cache-dependency-path: "**/package-lock.json"
       - run: npm ci
       - run: npm run build
       - name: Compile contracts
