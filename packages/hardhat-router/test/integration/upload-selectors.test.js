@@ -1,7 +1,7 @@
 const path = require('path');
 const { ok, equal, deepEqual, rejects } = require('assert/strict');
-const fourbytes = require('../../internal/fourbytes');
-const { TASK_UPLOAD_SELECTORS } = require('../../task-names');
+const fourbytes = require('../../src/internal/fourbytes');
+const { TASK_UPLOAD_SELECTORS } = require('../../src/task-names');
 const { loadEnvironment, deployOnEnvironment } = require('../helpers/use-environment');
 
 describe('deploy:upload-selectors', function () {

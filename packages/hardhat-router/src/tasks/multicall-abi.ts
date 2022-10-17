@@ -1,10 +1,16 @@
-const { task } = require('hardhat/config');
-const types = require('@synthetixio/core-utils/utils/hardhat/argument-types');
-const {
+import { task } from 'hardhat/config';
+import * as types from '@synthetixio/core-utils/utils/hardhat/argument-types';
+import {
   TASK_DEPLOY_MULTICALL_ABI,
   SUBTASK_GET_DEPLOYMENT_INFO,
   SUBTASK_GET_MULTICALL_ABI,
-} = require('../task-names');
+} from '../task-names';
+
+export interface MulticallAbiTaskParams {
+  quiet?: boolean;
+  instance?: string;
+  include: string;
+}
 
 task(
   TASK_DEPLOY_MULTICALL_ABI,
@@ -18,7 +24,7 @@ task(
     types.alphanumeric
   )
   .addOptionalParam('include', 'optional comma separated modules to include', '')
-  .setAction(async ({ quiet, instance, include }, hre) => {
+  .setAction(async ({ quiet, instance, include }: MulticallAbiTaskParams, hre) => {
     const whitelist = include
       .split(',')
       .map((name) => name.trim())

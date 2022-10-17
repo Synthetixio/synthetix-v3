@@ -2,7 +2,9 @@
   "name": "@synthetixio/hardhat-router",
   "version": "1.0.5",
   "description": "Synthetix Router Proxy Architecture Manager",
-  "main": "index.js",
+  "main": "dist/index.js",
+  "source": "src/index.ts",
+  "types": "dist/index.d.ts",
   "keywords": [
     "hardhat",
     "deploy",
@@ -22,9 +24,11 @@
   "author": "Synthetix",
   "license": "MIT",
   "scripts": {
-    "test": "mocha",
-    "coverage": "nyc mocha",
-    "test:watch": "mocha --watch"
+    "build": "tsc --project src/tsconfig.json",
+    "test": "TS_NODE_PROJECT='test/tsconfig.json' mocha -r ts-node/register -r tsconfig-paths/register",
+    "coverage": "nyc npm run test",
+    "test:watch": "mocha --watch",
+    "prepublishOnly": "npm run build"
   },
   "peerDependencies": {
     "@nomiclabs/hardhat-ethers": "^2.0.0",
@@ -43,13 +47,14 @@
     "mkdirp": "1.0.4",
     "mustache": "4.2.0",
     "solidity-ast": "0.4.26",
-    "string-natural-compare": "3.0.1",
-    "use-strict": "1.0.1"
+    "string-natural-compare": "3.0.1"
   },
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "2.1.1",
+    "@types/string-natural-compare": "3.0.2",
     "hardhat": "2.11.2",
     "mocha": "9.1.1",
-    "nyc": "15.1.0"
+    "nyc": "15.1.0",
+    "tsconfig-paths": "4.1.0"
   }
 }

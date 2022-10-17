@@ -1,6 +1,6 @@
-const { task, subtask } = require('hardhat/config');
-const { default: logger } = require('@synthetixio/core-utils/utils/io/logger');
-const taskNames = require('../task-names');
+import { task, subtask } from 'hardhat/config';
+import logger from '@synthetixio/core-utils/utils/io/logger';
+import * as taskNames from '../task-names';
 
 for (const [taskKey, taskName] of Object.entries(taskNames)) {
   const factory = taskKey.startsWith('TASK_') ? task : subtask;

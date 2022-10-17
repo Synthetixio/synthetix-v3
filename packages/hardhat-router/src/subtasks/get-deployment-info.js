@@ -1,12 +1,7 @@
+const fs = require('node:fs');
 const { subtask } = require('hardhat/config');
 const { SUBTASK_GET_DEPLOYMENT_INFO } = require('../task-names');
-
-const {
-  getAllDeploymentFiles,
-  getDeploymentExtendedFiles,
-} = require('@synthetixio/hardhat-router/utils/deployments');
-
-const fs = require('fs');
+const { getAllDeploymentFiles, getDeploymentExtendedFiles } = require('../utils/deployments');
 
 subtask(
   SUBTASK_GET_DEPLOYMENT_INFO,

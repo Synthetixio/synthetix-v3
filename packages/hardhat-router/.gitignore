@@ -1,3 +1,7 @@
+# Deployment Output from Tests
 test/fixture-projects/*/deployments/local
 test/fixture-projects/*/deployments/hardhat
 test/fixture-projects/*/contracts/Router.sol
+
+# Build Output
+dist/

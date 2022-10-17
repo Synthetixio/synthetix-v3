@@ -1,9 +1,11 @@
-const fs = require('fs');
-const path = require('path');
-const { TASK_DEPLOY } = require('@synthetixio/hardhat-router/task-names');
-const { resetHardhatContext } = require('hardhat/plugins-testing');
+import fs from 'node:fs';
+import path from 'node:path';
+import { HardhatRuntimeEnvironment } from 'hardhat/types';
+import { resetHardhatContext } from 'hardhat/plugins-testing';
+import { TASK_DEPLOY } from '../../src/task-names';
+import type { DeployTaskParams } from '../../src/tasks/deploy';
 
-function loadEnvironment(fixtureProjectName, networkName = 'hardhat') {
+export function loadEnvironment(fixtureProjectName: string, networkName = 'hardhat') {
   resetHardhatContext();
 
   let envPath = fixtureProjectName;
@@ -19,7 +21,10 @@ function loadEnvironment(fixtureProjectName, networkName = 'hardhat') {
   return require('hardhat');
 }
 
-async function deployOnEnvironment(hre, customOptions = {}) {
+export async function deployOnEnvironment(
+  hre: HardhatRuntimeEnvironment,
+  customOptions: DeployTaskParams = {}
+) {
   const deploymentInfo = {
     network: hre.config.defaultNetwork,
     instance: 'test',
@@ -38,7 +43,7 @@ async function deployOnEnvironment(hre, customOptions = {}) {
     try {
       initializer = require(path.join(hre.config.paths.root, 'test', 'helpers', 'initializer'));
     } catch (err) {
-      if (err.code !== 'MODULE_NOT_FOUND') {
+      if ((err as { code: string }).code !== 'MODULE_NOT_FOUND') {
         throw err;
       }
     }
@@ -49,7 +54,7 @@ async function deployOnEnvironment(hre, customOptions = {}) {
   }
 }
 
-function _getEnvironmentPath(fixtureProjectName) {
+function _getEnvironmentPath(fixtureProjectName: string) {
   const pathname = path.resolve(__dirname, '..', 'fixture-projects', fixtureProjectName);
 
   if (!fs.existsSync(pathname)) {
@@ -58,8 +63,3 @@ function _getEnvironmentPath(fixtureProjectName) {
 
   return pathname;
 }
-
-module.exports = {
-  loadEnvironment,
-  deployOnEnvironment,
-};
