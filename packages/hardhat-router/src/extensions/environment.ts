@@ -23,7 +23,7 @@ extendEnvironment((hre) => {
 
   hre.router = {
     paths: {
-      routerTemplate: path.resolve(__dirname, '../templates/Router.sol.mustache'),
+      routerTemplate: path.resolve(__dirname, '../../templates/Router.sol.mustache'),
       deployment: null,
       sources: null,
       abis: null,
