@@ -1,7 +1,5 @@
 const path = require('path');
-const {
-  loadEnvironment,
-} = require('@synthetixio/hardhat-router/dist/test/helpers/use-environment');
+const { resetHardhatContext } = require('hardhat/plugins-testing');
 const CliRunner = require('./cli-runner');
 
 function bootstrap() {
@@ -16,7 +14,7 @@ function bootstrap() {
       'sample-project'
     );
 
-    this.hre = loadEnvironment(folder, 'local');
+    this.hre = _loadEnvironment(folder, 'local');
   });
 
   before('prep the cli helper', async function () {
@@ -26,6 +24,15 @@ function bootstrap() {
   after('clear output buffer', async function () {
     this.cli.clear();
   });
+}
+
+function _loadEnvironment(fixtureProjectName, networkName = 'hardhat') {
+  resetHardhatContext();
+
+  process.chdir(fixtureProjectName);
+  process.env.HARDHAT_NETWORK = networkName;
+
+  return require('hardhat');
 }
 
 module.exports = bootstrap;
