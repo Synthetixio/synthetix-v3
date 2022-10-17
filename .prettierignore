@@ -5,4 +5,4 @@ build/
 **/coverage*
 Router.sol
 packages/core-utils/utils
-packages/synthetix-main/typechain-types
+packages/*/typechain-types
