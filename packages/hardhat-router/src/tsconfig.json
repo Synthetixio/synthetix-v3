@@ -7,6 +7,6 @@
     "allowJs": true,
     "composite": true
   },
-  "include": ["./**/*.ts", "./**/*.js"],
+  "include": ["./**/*.ts", "./**/*.js", "./**/*.json"],
   "exclude": []
 }
