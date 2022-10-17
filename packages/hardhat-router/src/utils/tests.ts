@@ -3,8 +3,8 @@
 import hre from 'hardhat';
 import { takeSnapshot, restoreSnapshot } from '@synthetixio/core-utils/utils/hardhat/rpc';
 import { TASK_DEPLOY } from '../task-names';
-import { DeploymentInfo, getProxyAddress, getRouterAddress } from './deployments';
 import type { DeployTaskParams } from '../tasks/deploy';
+import { DeploymentInfo, getProxyAddress, getRouterAddress } from './deployments';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const getHardhatProvider = () => (hre as any).ethers!.provider;
