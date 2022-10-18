@@ -13,6 +13,7 @@ library AccountRBAC {
     bytes32 internal constant _WITHDRAW_PERMISSION = "WITHDRAW";
     bytes32 internal constant _DELEGATE_PERMISSION = "DELEGATE";
     bytes32 internal constant _MINT_PERMISSION = "MINT";
+    bytes32 internal constant _REWARDS_PERMISSION = "REWARDS";
 
     error InvalidPermission();
 

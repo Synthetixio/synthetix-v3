@@ -5,14 +5,15 @@ import { ethers } from 'ethers';
 import { fastForwardTo, getTime } from '@synthetixio/core-utils/utils/hardhat/rpc';
 
 import { bootstrapWithStakedPool } from '../../bootstrap';
+import { snapshotCheckpoint } from '../../../utils';
 
 // TODO: These tests fail inconsistently on CI because of time discrepancies.
 // They need to be reworked. Disabling them on the meantime until SIP 305 is official.
 describe('RewardsManagerModule', function () {
-  const { provider, signers, systems, poolId, collateralAddress, accountId, restore } =
+  const { provider, signers, systems, poolId, collateralAddress, accountId } =
     bootstrapWithStakedPool();
 
-  let owner: ethers.Signer, user1: ethers.Signer;
+  let owner: ethers.Signer, user1: ethers.Signer, user2: ethers.Signer;
 
   let Collateral;
 
@@ -21,7 +22,7 @@ describe('RewardsManagerModule', function () {
   let startTime: number;
 
   before('identify signers', async () => {
-    [owner, user1] = signers();
+    [owner, user1, user2] = signers();
   });
 
   before('deploy fake reward token', async () => {
@@ -31,7 +32,11 @@ describe('RewardsManagerModule', function () {
     await (await Collateral.connect(owner).initialize('Fake Reward', 'FAKE', 18)).wait();
   });
 
+  const restore = snapshotCheckpoint(provider);
+
   describe('setRewardsDistribution()', () => {
+    before(restore);
+
     it('only works with owner', async () => {
       await assertRevert(
         systems().Core.connect(user1).setRewardsDistribution(
@@ -455,5 +460,103 @@ describe('RewardsManagerModule', function () {
     });
 
     describe('wallets joining and leaving', () => {});
+  });
+
+  describe('claimRewards()', async () => {
+    before(restore);
+
+    before('distribute some reward', async () => {
+      await systems().Core.connect(owner).setRewardsDistribution(
+        poolId,
+        collateralAddress(),
+        0,
+        Collateral.address, // rewards are distributed by the rewards distributor on self
+        rewardAmount,
+        0, // timestamp
+        0
+      );
+    });
+
+    it('only works with owner', async () => {
+      await assertRevert(
+        systems().Core.connect(user2).claimRewards(poolId, collateralAddress(), accountId),
+        'PermissionDenied',
+        systems().Core
+      );
+    });
+
+    describe('successful claim', () => {
+      before('claim', async () => {
+        await systems().Core.connect(user1).claimRewards(poolId, collateralAddress(), accountId);
+      });
+
+      it('pays out', async () => {
+        assertBn.equal(await Collateral.balanceOf(await user1.getAddress()), rewardAmount);
+      });
+
+      it('returns no rewards remaining', async () => {
+        const rewards = await systems().Core.callStatic.getAvailableRewards(
+          poolId,
+          collateralAddress(),
+          accountId
+        );
+        // should have received only the one past reward
+        // +1 because block being mined by earlier txn
+        // +1 because the simulation adds an additional second
+        assertBn.equal(rewards[0], 0);
+      });
+
+      it('doesnt get any rewards on subsequent claim', async () => {
+        await systems().Core.connect(user1).claimRewards(poolId, collateralAddress(), accountId);
+
+        assertBn.equal(await Collateral.balanceOf(await user1.getAddress()), rewardAmount);
+      });
+
+      describe('second payout', async () => {
+        before('distribute some reward', async () => {
+          await systems().Core.connect(owner).setRewardsDistribution(
+            poolId,
+            collateralAddress(),
+            0,
+            Collateral.address, // rewards are distributed by the rewards distributor on self
+            rewardAmount.div(2),
+            0, // timestamp
+            0
+          );
+        });
+
+        before('claim', async () => {
+          await systems().Core.connect(user1).claimRewards(poolId, collateralAddress(), accountId);
+        });
+
+        it('pays out', async () => {
+          assertBn.equal(
+            await Collateral.balanceOf(await user1.getAddress()),
+            rewardAmount.add(rewardAmount.div(2))
+          );
+        });
+
+        it('returns no rewards remaining', async () => {
+          const rewards = await systems().Core.callStatic.getAvailableRewards(
+            poolId,
+            collateralAddress(),
+            accountId
+          );
+          // should have received only the one past reward
+          // +1 because block being mined by earlier txn
+          // +1 because the simulation adds an additional second
+          assertBn.equal(rewards[0], 0);
+        });
+
+        it('doesnt get any rewards on subsequent claim', async () => {
+          await systems().Core.connect(user1).claimRewards(poolId, collateralAddress(), accountId);
+
+          assertBn.equal(
+            await Collateral.balanceOf(await user1.getAddress()),
+            rewardAmount.add(rewardAmount.div(2))
+          );
+        });
+      });
+    });
   });
 });

@@ -51,6 +51,8 @@ contract LiquidationsModule is ILiquidationModule, AssociatedSystemsMixin {
         (uint cl, uint collateralValue, ) = pool.currentAccountCollateral(collateralType, accountId);
         collateralLiquidated = cl;
 
+        debtLiquidated = uint(rawDebt);
+
         if (rawDebt <= 0 || !_isLiquidatable(collateralType, uint(rawDebt), collateralValue)) {
             revert IneligibleForLiquidation(
                 collateralValue,
@@ -59,8 +61,6 @@ contract LiquidationsModule is ILiquidationModule, AssociatedSystemsMixin {
                 collateralConfig.minimumCRatio
             );
         }
-
-        debtLiquidated = uint(rawDebt);
 
         uint oldShares = epoch.debtDist.getActorShares(bytes32(uint(uint128(accountId))));
 
@@ -133,7 +133,7 @@ contract LiquidationsModule is ILiquidationModule, AssociatedSystemsMixin {
             );
         }
 
-        if (vaultDebt < maxUsd) {
+        if (vaultDebt <= maxUsd) {
             // full vault liquidation
             _getToken(_USD_TOKEN).burn(msg.sender, vaultDebt);
 
