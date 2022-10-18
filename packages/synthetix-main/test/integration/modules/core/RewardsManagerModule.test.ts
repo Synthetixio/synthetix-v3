@@ -466,7 +466,7 @@ describe('RewardsManagerModule', function () {
     before(restore);
 
     before('distribute some reward', async () => {
-      await systems().Core.connect(owner).distributeRewards(
+      await systems().Core.connect(owner).setRewardsDistribution(
         poolId,
         collateralAddress(),
         0,
@@ -514,7 +514,7 @@ describe('RewardsManagerModule', function () {
 
       describe('second payout', async () => {
         before('distribute some reward', async () => {
-          await systems().Core.connect(owner).distributeRewards(
+          await systems().Core.connect(owner).setRewardsDistribution(
             poolId,
             collateralAddress(),
             0,
