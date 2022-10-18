@@ -5,8 +5,10 @@ import 'solidity-docgen';
 
 import commonConfig from '@synthetixio/common-config/hardhat.config';
 
+const { cannon, ...commonConfigWithCannon } = commonConfig;
+
 const config = {
-  ...commonConfig,
+  ...commonConfigWithCannon,
   solidity: '0.8.11',
 };
 
