@@ -69,5 +69,9 @@ contract SynthMixin is ERC20Storage {
     function _getTotalSupply() internal view returns (uint) {
         return _erc20Store().totalSupply;
     }
+
+    function _getName() internal view returns (string memory) {
+        return _erc20Store().name;
+    }
     // -------
 }

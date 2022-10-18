@@ -7,7 +7,7 @@ description = "spot market owner"
 defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
 
 [import.synthetix]
-source = "synthetix:3.0.0-lm"
+source = "synthetix:3"
 
 [run.deploy_spot_market]
 exec = "scripts/deploy.js"

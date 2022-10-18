@@ -76,6 +76,10 @@ contract SpotMarketModule is
         return _getTotalSupply().mulDecimal(_getCurrentPrice());
     }
 
+    function name(uint marketId) external view returns (string memory) {
+        return string(string.concat(bytes(_getName()), " Spot Market"));
+    }
+
     function getMarketId() external view override returns (uint128) {
         return _spotMarketStore().marketId;
     }
