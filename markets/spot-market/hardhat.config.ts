@@ -5,6 +5,7 @@ import 'solidity-docgen';
 
 import commonConfig from '@synthetixio/common-config/hardhat.config';
 
+// eslint-disable-next-line
 const { cannon, ...commonConfigWithCannon } = commonConfig;
 
 const config = {
