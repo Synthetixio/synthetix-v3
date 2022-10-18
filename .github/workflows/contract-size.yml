@@ -7,20 +7,14 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        package:
-          [
-            core-contracts,
-            core-modules,
-            synthetix-main,
-          ]
+        package: [core-contracts, core-modules, synthetix-main]
 
     steps:
       - uses: actions/checkout@v2
       - uses: actions/setup-node@v3
         with:
-          node-version: "16.8.0"
-          cache: 'npm'
-          cache-dependency-path: '**/package-lock.json'
+          node-version: "16.16.0"
+          cache: "npm"
       - run: npm ci
       - run: npm run build
       - name: Compile contracts

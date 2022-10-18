@@ -34,12 +34,12 @@ describe('RewardsManagerModule', function () {
 
   const restore = snapshotCheckpoint(provider);
 
-  describe('distributeRewards()', () => {
+  describe('setRewardsDistribution()', () => {
     before(restore);
 
     it('only works with owner', async () => {
       await assertRevert(
-        systems().Core.connect(user1).distributeRewards(
+        systems().Core.connect(user1).setRewardsDistribution(
           poolId,
           collateralAddress(),
           0,
@@ -61,7 +61,7 @@ describe('RewardsManagerModule', function () {
 
           // distribute rewards multiple times to see what happens
           // if many distributions happen in the past
-          await systems().Core.connect(owner).distributeRewards(
+          await systems().Core.connect(owner).setRewardsDistribution(
             poolId,
             collateralAddress(),
             0,
@@ -73,7 +73,7 @@ describe('RewardsManagerModule', function () {
 
           startTime = await getTime(provider());
 
-          await systems().Core.connect(owner).distributeRewards(
+          await systems().Core.connect(owner).setRewardsDistribution(
             poolId,
             collateralAddress(),
             0,
@@ -85,7 +85,7 @@ describe('RewardsManagerModule', function () {
 
           startTime = await getTime(provider());
 
-          await systems().Core.connect(owner).distributeRewards(
+          await systems().Core.connect(owner).setRewardsDistribution(
             poolId,
             collateralAddress(),
             0,
@@ -99,7 +99,7 @@ describe('RewardsManagerModule', function () {
           // from past to future works as expected
           await systems()
             .Core.connect(owner)
-            .distributeRewards(
+            .setRewardsDistribution(
               poolId,
               collateralAddress(),
               0,
@@ -128,7 +128,7 @@ describe('RewardsManagerModule', function () {
 
           await systems()
             .Core.connect(owner)
-            .distributeRewards(
+            .setRewardsDistribution(
               poolId,
               collateralAddress(),
               0,
@@ -143,7 +143,7 @@ describe('RewardsManagerModule', function () {
           // distribute one in the past to ensure switching from past to future works
           await systems()
             .Core.connect(owner)
-            .distributeRewards(
+            .setRewardsDistribution(
               poolId,
               collateralAddress(),
               0,
@@ -155,7 +155,7 @@ describe('RewardsManagerModule', function () {
 
           await systems()
             .Core.connect(owner)
-            .distributeRewards(
+            .setRewardsDistribution(
               poolId,
               collateralAddress(),
               0,
@@ -219,7 +219,7 @@ describe('RewardsManagerModule', function () {
         before(async () => {
           await systems()
             .Core.connect(owner)
-            .distributeRewards(
+            .setRewardsDistribution(
               poolId,
               collateralAddress(),
               0,
@@ -231,7 +231,7 @@ describe('RewardsManagerModule', function () {
 
           await systems()
             .Core.connect(owner)
-            .distributeRewards(
+            .setRewardsDistribution(
               poolId,
               collateralAddress(),
               0,
@@ -244,7 +244,7 @@ describe('RewardsManagerModule', function () {
           // add one after to test behavior of future distribution
           await systems()
             .Core.connect(owner)
-            .distributeRewards(
+            .setRewardsDistribution(
               poolId,
               collateralAddress(),
               0,
@@ -274,7 +274,7 @@ describe('RewardsManagerModule', function () {
           // this first one should never be received
           await systems()
             .Core.connect(owner)
-            .distributeRewards(
+            .setRewardsDistribution(
               poolId,
               collateralAddress(),
               0,
@@ -289,7 +289,7 @@ describe('RewardsManagerModule', function () {
           // should b e received immediately
           await systems()
             .Core.connect(owner)
-            .distributeRewards(
+            .setRewardsDistribution(
               poolId,
               collateralAddress(),
               0,
@@ -304,7 +304,7 @@ describe('RewardsManagerModule', function () {
           // add one after to test behavior of future distribution
           await systems()
             .Core.connect(owner)
-            .distributeRewards(
+            .setRewardsDistribution(
               poolId,
               collateralAddress(),
               0,
@@ -349,7 +349,7 @@ describe('RewardsManagerModule', function () {
 
           await systems()
             .Core.connect(owner)
-            .distributeRewards(
+            .setRewardsDistribution(
               poolId,
               collateralAddress(),
               0,
@@ -363,7 +363,7 @@ describe('RewardsManagerModule', function () {
 
           await systems()
             .Core.connect(owner)
-            .distributeRewards(
+            .setRewardsDistribution(
               poolId,
               collateralAddress(),
               0,
@@ -406,7 +406,7 @@ describe('RewardsManagerModule', function () {
 
               await systems()
                 .Core.connect(owner)
-                .distributeRewards(
+                .setRewardsDistribution(
                   poolId,
                   collateralAddress(),
                   0,

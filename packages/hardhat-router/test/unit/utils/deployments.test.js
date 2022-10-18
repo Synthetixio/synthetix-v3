@@ -12,7 +12,7 @@ const {
   getDeploymentFile,
   getAllDeploymentFiles,
   getDeploymentFolder,
-} = require('../../../utils/deployments');
+} = require('../../../src/utils/deployments');
 
 describe('utils/deployments.js', function () {
   let hre, info, deploymentFile;

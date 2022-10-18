@@ -1,11 +1,14 @@
 {
-  "spec": ["test/unit/**/*.test.js", "test/integration/**/*.test.js"],
+  "spec": [
+    "test/unit/**/*.test.{j,t}s",
+    "test/integration/**/*.test.{j,t}s"
+  ],
   "timeout": 10000,
   "watch-files": [
-    "internal/**/*.js",
-    "subtasks/**/*.js",
-    "tasks/**/*.js",
-    "test/src/**/*.js",
-    "utils/**/*.js"
+    "internal/**/*.{j,t}s",
+    "subtasks/**/*.{j,t}s",
+    "tasks/**/*.{j,t}s",
+    "test/src/**/*.{j,t}s",
+    "utils/**/*.{j,t}s"
   ]
 }

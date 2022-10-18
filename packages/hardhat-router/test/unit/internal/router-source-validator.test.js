@@ -1,7 +1,7 @@
 const { deepStrictEqual } = require('assert/strict');
 const fs = require('fs/promises');
 const path = require('path');
-const RouterSourceValidator = require('../../../internal/router-source-validator');
+const RouterSourceValidator = require('../../../src/internal/router-source-validator');
 
 const loadRouter = async (name) => {
   return await fs

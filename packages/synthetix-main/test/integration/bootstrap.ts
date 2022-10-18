@@ -26,7 +26,7 @@ let provider: ethers.providers.JsonRpcProvider;
 
 let signers: ethers.Signer[];
 
-let systems: { [key: string]: ethers.Contract };
+let systems: Record<string, ethers.Contract>;
 
 let baseSystemSnapshot: unknown;
 
@@ -50,8 +50,14 @@ before(async function () {
   }
 
   baseSystemSnapshot = await provider.send('evm_snapshot', []);
+  const { outputs } = cannonInfo;
 
-  systems = await loadSystems(cannonInfo.outputs.contracts, provider);
+  // load local and imported contracts
+  const contracts = {
+    ...(outputs.contracts ?? {}),
+    ...(outputs.imports?.synthetix?.contracts ?? {}),
+  };
+  systems = await loadSystems(contracts, provider);
 
   console.log('completed initial bootstrap');
 });
@@ -82,6 +88,7 @@ export function bootstrapWithStakedPool() {
 
   before('deploy mock aggregator', async () => {
     const [owner] = r.signers();
+
     const factory = await hre.ethers.getContractFactory('AggregatorV3Mock');
     aggregator = await factory.connect(owner).deploy();
 
