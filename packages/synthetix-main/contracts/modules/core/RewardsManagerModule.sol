@@ -29,7 +29,7 @@ contract RewardsManagerModule is IRewardsManagerModule, OwnableMixin, Associated
     // Associated Rewards
     // ---------------------------------------
 
-    function distributeRewards(
+    function setRewardsDistribution(
         uint128 poolId,
         address collateralType,
         uint index,
