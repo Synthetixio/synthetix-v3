@@ -4,6 +4,9 @@
   "description": "Spot Market implementation",
   "private": true,
   "scripts": {
+    "start": "npm run build && npm run cannon",
+    "build": "npx hardhat cannon:build",
+    "cannon": "npx cannon spot-market:1.0.0",
     "test": "hardhat test",
     "coverage": "hardhat coverage --network hardhat",
     "compile-contracts": "hardhat compile",
