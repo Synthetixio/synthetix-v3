@@ -1,3 +1,4 @@
+import path from 'node:path';
 import { JsonFragment } from '@ethersproject/abi';
 import { getSelectors } from '@synthetixio/core-utils/utils/ethers/contracts';
 import { renderTemplate } from './generate-contracts';
@@ -6,10 +7,10 @@ import { toPrivateConstantCase } from './router-helper';
 const TAB = '    ';
 
 interface Props {
-  routerName: string;
-  template: string;
-  contracts: ContractData[];
+  routerName?: string;
+  template?: string;
   functionFilter?: (fnName: string) => boolean;
+  contracts: ContractData[];
 }
 
 interface ContractData {
@@ -31,9 +32,9 @@ interface BinaryData {
 
 export function generateRouter({
   routerName = 'Router',
-  template,
-  contracts,
+  template = path.resolve(__dirname, '..', '..', 'templates', 'Router.sol.mustache'),
   functionFilter,
+  contracts,
 }: Props) {
   const selectors = _getAllSelectors(contracts, functionFilter);
   const binaryData = _buildBinaryData(selectors);

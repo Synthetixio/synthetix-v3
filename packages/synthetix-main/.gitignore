@@ -1,6 +1,6 @@
 deployments/local
 deployments/hardhat
-contracts/Router.sol
+contracts/*Router.sol
 
 cannon
 typechain-types
