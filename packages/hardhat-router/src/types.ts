@@ -33,13 +33,13 @@ export interface DeploymentData {
   };
 }
 
-export interface DeploymentAbis {
+export interface DeploymentSources {
   [sourceName: string]: {
     sourceCode: string;
     ast: SourceUnit;
   };
 }
 
-export interface DeploymentSources {
+export interface DeploymentAbis {
   [contractFullyQualifiedName: string]: ReadonlyArray<JsonFragment>;
 }

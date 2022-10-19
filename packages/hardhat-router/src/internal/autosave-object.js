@@ -37,9 +37,12 @@ module.exports = function autosaveObject(file, initialState = {}) {
 
     set: (target, key, value) => {
       const now = Date.now();
-      logger.debug('Setting property:');
-      logger.debug(`  > key: ${key}`);
-      logger.debug(`  > value: ${JSON.stringify(value)}`);
+
+      if (logger.debugging) {
+        logger.debug('Setting property:');
+        logger.debug(`  > key: ${key}`);
+        logger.debug(`  > value: ${JSON.stringify(value)}`);
+      }
 
       if (target[key] === value) {
         logger.debug('No changes - skipping write to file');

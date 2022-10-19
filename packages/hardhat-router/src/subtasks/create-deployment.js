@@ -67,7 +67,7 @@ async function _createNewDeploymentFileIfNeeded({ deploymentFiles, deploymentsFo
 
   // Check that the given alias is available
   if (alias) {
-    const exists = deploymentFiles.some((file) => file.endsWith(`-${alias}.json`));
+    const exists = deploymentFiles.find((file) => file.endsWith(`-${alias}.json`));
     if (exists) {
       throw new Error(
         `The alias "${alias}" is already used by the deployment "${relativePath(exists)}"`

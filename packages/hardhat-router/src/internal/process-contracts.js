@@ -41,13 +41,8 @@ async function _initContractSource(contractFullyQualifiedName) {
 
   // Save the source code for the entire dependency tree
   for (const [sourceName, attributes] of Object.entries(buildInfo.input.sources)) {
-    if (!deployment.sources[sourceName]) {
-      deployment.sources[sourceName] = {};
-    }
-
-    if (!deployment.sources[sourceName].sourceCode) {
-      deployment.sources[sourceName].sourceCode = attributes.content;
-    }
+    deployment.sources[sourceName] = {};
+    deployment.sources[sourceName].sourceCode = attributes.content;
   }
 
   // Save the asts for the entire dependency tree
@@ -59,9 +54,7 @@ async function _initContractSource(contractFullyQualifiedName) {
   for (const [sourceName, contracts] of Object.entries(buildInfo.output.contracts)) {
     for (const [contractName, attributes] of Object.entries(contracts)) {
       const key = `${sourceName}:${contractName}`;
-      if (!deployment.abis[key]) {
-        deployment.abis[key] = attributes.abi;
-      }
+      deployment.abis[key] = attributes.abi;
     }
   }
 }

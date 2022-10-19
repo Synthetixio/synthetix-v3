@@ -97,7 +97,9 @@ task(TASK_DEPLOY, 'Deploys all system modules')
 
       if (!skipProxy) {
         await hre.run(SUBTASK_DEPLOY_PROXY);
-        await hre.run(SUBTASK_UPGRADE_PROXY);
+        if (!clear) {
+          await hre.run(SUBTASK_UPGRADE_PROXY);
+        }
       }
 
       await hre.run(SUBTASK_FINALIZE_DEPLOYMENT);

@@ -1,5 +1,7 @@
-const fs = require('fs');
-const path = require('path');
+import fs from 'node:fs';
+import path from 'node:path';
+
+import type { HardhatConfig } from 'hardhat/types';
 
 /**
  * Converts the contracts name to private _CONSTANT_CASE format.
@@ -8,17 +10,12 @@ const path = require('path');
  *   'Proxy' => '_PROXY'
  *   'ERC20Token' => '_ERC20_TOKEN'
  */
-function toPrivateConstantCase(name) {
+export function toPrivateConstantCase(name: string) {
   return name.replace(/(?<![A-Z])[A-Z]/g, '_$&').toUpperCase();
 }
 
-function getRouterSource() {
-  const routerPath = path.join(hre.config.paths.sources, 'Router.sol');
+export function getRouterSource(config: HardhatConfig) {
+  const routerPath = path.join(config.paths.sources, 'Router.sol');
   const source = fs.readFileSync(routerPath).toString();
   return source;
 }
-
-module.exports = {
-  toPrivateConstantCase,
-  getRouterSource,
-};

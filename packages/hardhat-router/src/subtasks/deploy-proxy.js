@@ -1,5 +1,5 @@
-const { default: logger } = require('@synthetixio/core-utils/utils/io/logger');
 const { subtask } = require('hardhat/config');
+const { default: logger } = require('@synthetixio/core-utils/utils/io/logger');
 const { SUBTASK_DEPLOY_PROXY, SUBTASK_DEPLOY_CONTRACT } = require('../task-names');
 
 subtask(SUBTASK_DEPLOY_PROXY, 'Deploys the main proxy if needed').setAction(async (_, hre) => {

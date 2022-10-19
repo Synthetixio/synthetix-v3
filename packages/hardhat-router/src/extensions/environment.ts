@@ -1,5 +1,6 @@
 import path from 'node:path';
 import { extendEnvironment } from 'hardhat/config';
+import { DeploymentAbis, DeploymentData, DeploymentSources } from '../types';
 
 declare module 'hardhat/types/runtime' {
   export interface HardhatRuntimeEnvironment {
@@ -10,8 +11,15 @@ declare module 'hardhat/types/runtime' {
         sources: string | null;
         abis: string | null;
       };
-      deployment: string | null;
-      previousDeployment: string | null;
+      deployment: {
+        general: DeploymentData;
+        sources: DeploymentSources;
+        abis: DeploymentAbis;
+      } | null;
+      previousDeployment: {
+        general: DeploymentData;
+        sources: DeploymentSources;
+      } | null;
     };
   }
 }
