@@ -12,7 +12,7 @@ const { SUBTASK_GENERATE_ROUTER_SOURCE } = require('../task-names');
 const TAB = '    ';
 
 subtask(
-  SUBTASK_GENERATE_ROUTER_SOURCE,
+  'generate-router-old',
   'Reads deployed modules from the deployment data file and generates the source for a new router contract.'
 ).setAction(async ({ modules }, hre) => {
   if (!modules) {
@@ -46,13 +46,15 @@ subtask(
 
   logger.debug(`Generated source: ${generatedSource}`);
 
-  const currentSource = fs.existsSync(routerPath) ? fs.readFileSync(routerPath, 'utf8') : '';
-  if (currentSource !== generatedSource) {
-    fs.writeFileSync(routerPath, generatedSource);
-    logger.success(`Router code generated and written to ${relativeRouterPath}`);
-  } else {
-    logger.checked('Router source did not change');
-  }
+  return generatedSource;
+
+  // const currentSource = fs.existsSync(routerPath) ? fs.readFileSync(routerPath, 'utf8') : '';
+  // if (currentSource !== generatedSource) {
+  //   fs.writeFileSync(routerPath, generatedSource);
+  //   logger.success(`Router code generated and written to ${relativeRouterPath}`);
+  // } else {
+  //   logger.checked('Router source did not change');
+  // }
 });
 
 function _renderSelectors({ binaryData }) {

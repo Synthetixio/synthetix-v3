@@ -14,7 +14,7 @@ const {
   getDeploymentFolder,
 } = require('../../../src/utils/deployments');
 
-describe('utils/deployments.js', function () {
+describe.only('utils/deployments.js', function () {
   let hre, info, deploymentFile;
 
   const parseDeploymentFile = () => JSON.parse(fs.readFileSync(deploymentFile, 'utf8'));

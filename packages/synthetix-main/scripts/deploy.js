@@ -67,6 +67,8 @@ module.exports.deploy = async function deploy(runtime, prefix, modules) {
     }
 
     contracts[prefix + c.contractName] = {
+      contractName: c.contractName,
+      sourceName: c.sourceName,
       address: c.deployedAddress,
       abi: abis[c.contractFullyQualifiedName],
       deployTxnHash: c.deployTransaction,

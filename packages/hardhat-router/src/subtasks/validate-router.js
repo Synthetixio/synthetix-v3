@@ -38,7 +38,7 @@ async function _runSourceValidations() {
 
   const validator = new RouterSourceValidator({
     getModulesSelectors,
-    getRouterSource,
+    getRouterSource: () => getRouterSource(hre.config),
   });
 
   logger.debug('Validating Router source code');
