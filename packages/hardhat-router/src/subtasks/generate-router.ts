@@ -29,6 +29,7 @@ subtask(
     routerName,
     template,
     contracts,
+    functionFilter: hre.config.router.routerFunctionFilter,
   });
 
   const currentSource = fs.existsSync(routerPath) ? fs.readFileSync(routerPath, 'utf8') : '';

@@ -9,6 +9,7 @@ interface Props {
   routerName: string;
   template: string;
   contracts: ContractData[];
+  functionFilter?: (fnName: string) => boolean;
 }
 
 interface ContractData {
@@ -28,8 +29,13 @@ interface BinaryData {
   children: BinaryData[];
 }
 
-export function generateRouter({ routerName = 'Router', template, contracts }: Props) {
-  const selectors = _getAllSelectors(contracts);
+export function generateRouter({
+  routerName = 'Router',
+  template,
+  contracts,
+  functionFilter,
+}: Props) {
+  const selectors = _getAllSelectors(contracts, functionFilter);
   const binaryData = _buildBinaryData(selectors);
 
   return renderTemplate(template, {
@@ -39,10 +45,13 @@ export function generateRouter({ routerName = 'Router', template, contracts }: P
   });
 }
 
-function _getAllSelectors(contracts: ContractData[]): FunctionSelector[] {
+function _getAllSelectors(
+  contracts: ContractData[],
+  functionFilter: Props['functionFilter']
+): FunctionSelector[] {
   return contracts
     .flatMap(({ contractName, abi }) =>
-      getSelectors(abi).map((s) => ({
+      getSelectors(abi, functionFilter).map((s) => ({
         contractName,
         ...s,
       }))
