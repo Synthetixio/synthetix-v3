@@ -25,6 +25,7 @@
   "license": "MIT",
   "scripts": {
     "build": "tsc --project src/tsconfig.json",
+    "watch": "npm run build -- --watch",
     "test": "TS_NODE_PROJECT='test/tsconfig.json' mocha -r ts-node/register -r tsconfig-paths/register",
     "coverage": "nyc npm run test",
     "test:watch": "mocha --watch",
