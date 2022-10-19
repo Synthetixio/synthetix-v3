@@ -33,7 +33,7 @@ export async function deployOnEnvironment(
   await hre.run(TASK_DEPLOY, {
     ...deploymentInfo,
     noConfirm: true,
-    quiet: false,
+    quiet: true,
     ...customOptions,
   });
 
