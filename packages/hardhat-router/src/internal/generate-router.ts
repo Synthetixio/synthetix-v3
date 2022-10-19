@@ -40,12 +40,16 @@ export function generateRouter({ routerName = 'Router', template, contracts }: P
 }
 
 function _getAllSelectors(contracts: ContractData[]): FunctionSelector[] {
-  return contracts.flatMap(({ contractName, abi }) =>
-    getSelectors(abi).map((s) => ({
-      contractName,
-      ...s,
-    }))
-  );
+  return contracts
+    .flatMap(({ contractName, abi }) =>
+      getSelectors(abi).map((s) => ({
+        contractName,
+        ...s,
+      }))
+    )
+    .sort((a, b) => {
+      return Number.parseInt(a.selector, 16) - Number.parseInt(b.selector, 16);
+    });
 }
 
 function _renderSelectors(binaryData: BinaryData) {
