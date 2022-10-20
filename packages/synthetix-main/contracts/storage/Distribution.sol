@@ -172,7 +172,7 @@ library Distribution {
         actor.shares = uint128(shares);
 
         uint128 deltaActorShares = shares - actor.shares;
-        dist.totalShares += deltaShares;
+        dist.totalShares += deltaActorShares;
 
         // Note: No need to udpate actor.lastValuePerShare
         // because they contributed value to the distribution.
