@@ -79,12 +79,18 @@ func = "generate"
 args = ["AccountRouter", "contracts/modules/common", "contracts/modules/account"]
 modified = []
 
+[contract.account_router]
+artifact = "contracts/AccountRouter"
+
 # SNX Router
 [run.snx_generate_router]
 exec = "../hardhat-router/dist/cannon/router.js"
 func = "generate"
 args = ["SNXRouter", "contracts/modules/common", "contracts/modules/snx"]
 modified = []
+
+[contract.snx_router]
+artifact = "contracts/SNXRouter"
 
 # USD Router
 [run.usd_generate_router]
@@ -93,6 +99,9 @@ func = "generate"
 args = ["USDRouter", "contracts/modules/common", "contracts/modules/usd"]
 modified = []
 
+[contract.usd_router]
+artifact = "contracts/USDRouter"
+
 # ESNX Router
 [run.esnx_generate_router]
 exec = "../hardhat-router/dist/cannon/router.js"
@@ -100,12 +109,18 @@ func = "generate"
 args = ["ESNXRouter", "contracts/modules/common", "contracts/modules/esnx"]
 modified = []
 
+[contract.esnx_router]
+artifact = "contracts/ESNXRouter"
+
 # Core Router
 [run.core_generate_router]
 exec = "../hardhat-router/dist/cannon/router.js"
 func = "generate"
 args = ["CoreRouter", "contracts/modules/common", "contracts/modules/core"]
 modified = []
+
+[contract.core_router]
+artifact = "contracts/CoreRouter"
 
 # [run.deploy_core]
 # exec = "scripts/deploy.js"
