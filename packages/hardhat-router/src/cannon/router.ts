@@ -30,8 +30,6 @@ exports.generate = async function generate(
     })
   );
 
-  console.log(runtime);
-
   const generatedSource = generateRouter({
     routerName,
     functionFilter: hre.config.router.routerFunctionFilter,
