@@ -11,7 +11,7 @@ library DistributionActor {
          */
         uint128 shares;
         /**
-         * @dev The actor's last known value per share in the associated distribution.
+         * @dev The valuePerShare at the time that their number of shares was last altered.
          */
         int128 lastValuePerShare;
     }
