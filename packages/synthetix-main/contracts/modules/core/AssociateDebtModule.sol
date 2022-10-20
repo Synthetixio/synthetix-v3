@@ -13,7 +13,7 @@ import "../../storage/Distribution.sol";
 import "../../storage/Pool.sol";
 import "../../storage/Market.sol";
 
-contract AssignDebtModule is IAssociateDebtModule {
+contract AssociateDebtModule is IAssociateDebtModule {
     using MathUtil for uint;
     using ERC20Helper for address;
 

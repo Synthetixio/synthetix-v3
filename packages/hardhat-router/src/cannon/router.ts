@@ -1,5 +1,6 @@
+import fs from 'node:fs/promises';
+import path from 'node:path';
 import hre from 'hardhat';
-import { parseFullyQualifiedName } from 'hardhat/utils/contract-names';
 import { generateRouter } from '../internal/generate-router';
 
 import type { ChainBuilderRuntime } from '@usecannon/builder/dist/src/types';
@@ -14,21 +15,22 @@ exports.generate = async function generate(
 ) {
   const allContracts = await hre.artifacts.getAllFullyQualifiedNames();
   const normalizedPaths = contractPaths.map((p) => (p.endsWith('/') ? p : `${p}/`));
-  const modulesFqNames = allContracts.filter((c) => normalizedPaths.some((p) => c.startsWith(p)));
+  const modulesFqNames = normalizedPaths.length
+    ? allContracts.filter((c) => normalizedPaths.some((p) => c.startsWith(p)))
+    : allContracts;
 
-  console.log(runtime);
-
-  const contracts: Parameters<typeof generateRouter>[0]['contracts'] = await Promise.all(
+  const contracts = await Promise.all(
     modulesFqNames.map(async (fqName) => {
       const { contractName, abi } = await runtime.getArtifact(fqName);
-
       return {
         contractName,
         abi,
-        deployedAddress: '0x00',
+        deployedAddress: '0x0000000000000000000000000000000000000001', // TODO get the deployedAddress from the ctx
       };
     })
   );
+
+  console.log(runtime);
 
   const generatedSource = generateRouter({
     routerName,
@@ -36,7 +38,8 @@ exports.generate = async function generate(
     contracts,
   });
 
-  console.log(generatedSource);
+  const routerPath = path.join(hre.config.paths.sources, `${routerName}.sol`);
+  await fs.writeFile(routerPath, generatedSource);
 
   return { contracts: {} };
 };

@@ -15,40 +15,97 @@ defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
 description = "Any additional modules which should be deployed"
 defaultValue = "core"
 
-# Common Contracts
 [contract.owner_module]
 artifact = "contracts/modules/common/OwnerModule.sol:OwnerModule"
 
 [contract.upgrade_module]
 artifact = "contracts/modules/common/UpgradeModule.sol:UpgradeModule"
 
-# Account
 [contract.account_token_module]
 artifact = "contracts/modules/account/AccountTokenModule.sol:AccountTokenModule"
 
+[contract.snx_token_module]
+artifact = "contracts/modules/snx/SNXTokenModule.sol:SNXTokenModule"
+
+[contract.usd_token_module]
+artifact = "contracts/modules/usd/USDTokenModule.sol:USDTokenModule"
+
+[contract.esnx_token_module]
+artifact = "contracts/modules/esnx/ESNXTokenModule.sol:ESNXTokenModule"
+
+[contract.core_account_module]
+artifact = "contracts/modules/core/AccountModule.sol:AccountModule"
+
+[contract.core_associate_debt_module]
+artifact = "contracts/modules/core/AssociateDebtModule.sol:AssociateDebtModule"
+
+[contract.core_associated_systems_module]
+artifact = "contracts/modules/core/AssociatedSystemsModule.sol:AssociatedSystemsModule"
+
+[contract.core_collateral_module]
+artifact = "contracts/modules/core/CollateralModule.sol:CollateralModule"
+
+[contract.core_liquidation_module]
+artifact = "contracts/modules/core/LiquidationModule.sol:LiquidationModule"
+
+[contract.core_market_collateral_module]
+artifact = "contracts/modules/core/MarketCollateralModule.sol:MarketCollateralModule"
+
+[contract.core_market_manager_module]
+artifact = "contracts/modules/core/MarketManagerModule.sol:MarketManagerModule"
+
+[contract.core_multicall_module]
+artifact = "contracts/modules/core/MulticallModule.sol:MulticallModule"
+
+[contract.core_pool_configuration_module]
+artifact = "contracts/modules/core/PoolConfigurationModule.sol:PoolConfigurationModule"
+
+[contract.core_pool_module]
+artifact = "contracts/modules/core/PoolModule.sol:PoolModule"
+
+[contract.core_rewards_manager_module]
+artifact = "contracts/modules/core/RewardsManagerModule.sol:RewardsManagerModule"
+
+[contract.core_utils_module]
+artifact = "contracts/modules/core/UtilsModule.sol:UtilsModule"
+
+[contract.core_vault_module]
+artifact = "contracts/modules/core/VaultModule.sol:VaultModule"
+
+# Account Router
 [run.account_generate_router]
 exec = "../hardhat-router/dist/cannon/router.js"
 func = "generate"
 args = ["AccountRouter", "contracts/modules/common", "contracts/modules/account"]
-modified = ["contracts/modules/common", "contracts/modules/account"]
+modified = []
 
-# [run.deploy_snx]
-# exec = "scripts/deploy.js"
-# func = "deploy"
-# args = ["SNX", ".*/(snx|common)/.*"]
-# modified = ["contracts/modules/snx", "contracts/modules/common", "scripts"]
+# SNX Router
+[run.snx_generate_router]
+exec = "../hardhat-router/dist/cannon/router.js"
+func = "generate"
+args = ["SNXRouter", "contracts/modules/common", "contracts/modules/snx"]
+modified = []
 
-# [run.deploy_usd]
-# exec = "scripts/deploy.js"
-# func = "deploy"
-# args = ["USD", ".*/(usd|common)/.*"]
-# modified = ["contracts/modules/usd", "contracts/modules/common", "scripts"]
+# USD Router
+[run.usd_generate_router]
+exec = "../hardhat-router/dist/cannon/router.js"
+func = "generate"
+args = ["USDRouter", "contracts/modules/common", "contracts/modules/usd"]
+modified = []
 
-# [run.deploy_esnx]
-# exec = "scripts/deploy.js"
-# func = "deploy"
-# args = ["ESNX", ".*/(esnx|common)/.*"]
-# modified = ["contracts/modules/esnx", "contracts/modules/common", "scripts"]
+# ESNX Router
+[run.esnx_generate_router]
+exec = "../hardhat-router/dist/cannon/router.js"
+func = "generate"
+args = ["ESNXRouter", "contracts/modules/common", "contracts/modules/esnx"]
+modified = []
+
+# Core Router
+[run.core_generate_router]
+exec = "../hardhat-router/dist/cannon/router.js"
+func = "generate"
+args = ["CoreRouter", "contracts/modules/common", "contracts/modules/core"]
+modified = []
 
 # [run.deploy_core]
 # exec = "scripts/deploy.js"
