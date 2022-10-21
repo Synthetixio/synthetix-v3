@@ -21,6 +21,9 @@ artifact = "contracts/modules/common/OwnerModule.sol:OwnerModule"
 [contract.common_upgrade_module]
 artifact = "contracts/modules/common/UpgradeModule.sol:UpgradeModule"
 
+[contract.common_initial_upgrade]
+artifact = "contracts/modules/common/InitialUpgrade.sol:InitialUpgrade"
+
 [contract.core_account_module]
 artifact = "contracts/modules/core/AccountModule.sol:AccountModule"
 
@@ -101,16 +104,20 @@ artifact = "contracts/CoreRouter.sol:CoreRouter"
 
 [contract.core_proxy]
 artifact = "contracts/Proxy.sol:Proxy"
-args = ["<%= contracts.core_router.address %>"]
-depends = ["contract.core_router"]
+args = ["<%= contracts.common_initial_upgrade.address %>"]
+depends = ["contract.common_initial_upgrade"]
 
 [invoke.upgrade_core_proxy]
 target = ["core_proxy"]
-abi = "<%= contracts.common_owner_module.abi %>"
+abi = "contracts/modules/common/UpgradeModule.sol:UpgradeModule"
 from = "<%= settings.owner %>"
-func = "safeUpgradeTo"
+func = "upgradeTo"
 args = ["<%= contracts.core_router.address %>"]
-depends = ["contract.core_proxy", "contract.common_owner_module"]
+depends = [
+  "contract.core_proxy",
+  "contract.common_owner_module",
+  "contract.common_upgrade_module"
+]
 
 # Account
 [run.account_generate_router]
@@ -129,16 +136,20 @@ artifact = "contracts/AccountRouter.sol:AccountRouter"
 
 [contract.account_proxy]
 artifact = "contracts/Proxy.sol:Proxy"
-args = ["<%= contracts.account_router.address %>"]
-depends = ["contract.account_router"]
+args = ["<%= contracts.common_initial_upgrade.address %>"]
+depends = ["contract.common_initial_upgrade"]
 
 [invoke.upgrade_account_proxy]
 target = ["account_proxy"]
-abi = "<%= contracts.common_owner_module.abi %>"
+abi = "contracts/modules/common/UpgradeModule.sol:UpgradeModule"
 from = "<%= settings.owner %>"
-func = "safeUpgradeTo"
+func = "upgradeTo"
 args = ["<%= contracts.account_router.address %>"]
-depends = ["contract.account_proxy", "contract.common_owner_module"]
+depends = [
+  "contract.account_proxy",
+  "contract.common_owner_module",
+  "contract.common_upgrade_module"
+]
 
 # ESNX
 [run.esnx_generate_router]
@@ -157,16 +168,20 @@ artifact = "contracts/ESNXRouter.sol:ESNXRouter"
 
 [contract.esnx_proxy]
 artifact = "contracts/Proxy.sol:Proxy"
-args = ["<%= contracts.esnx_router.address %>"]
-depends = ["contract.esnx_router"]
+args = ["<%= contracts.common_initial_upgrade.address %>"]
+depends = ["contract.common_initial_upgrade"]
 
 [invoke.upgrade_esnx_proxy]
 target = ["esnx_proxy"]
-abi = "<%= contracts.common_owner_module.abi %>"
+abi = "contracts/modules/common/UpgradeModule.sol:UpgradeModule"
 from = "<%= settings.owner %>"
-func = "safeUpgradeTo"
+func = "upgradeTo"
 args = ["<%= contracts.esnx_router.address %>"]
-depends = ["contract.esnx_proxy", "contract.common_owner_module"]
+depends = [
+  "contract.esnx_proxy",
+  "contract.common_owner_module",
+  "contract.common_upgrade_module"
+]
 
 # SNX
 [run.snx_generate_router]
@@ -185,16 +200,20 @@ artifact = "contracts/SNXRouter.sol:SNXRouter"
 
 [contract.snx_proxy]
 artifact = "contracts/Proxy.sol:Proxy"
-args = ["<%= contracts.snx_router.address %>"]
-depends = ["contract.snx_router"]
+args = ["<%= contracts.common_initial_upgrade.address %>"]
+depends = ["contract.common_initial_upgrade"]
 
 [invoke.upgrade_snx_proxy]
 target = ["snx_proxy"]
-abi = "<%= contracts.common_owner_module.abi %>"
+abi = "contracts/modules/common/UpgradeModule.sol:UpgradeModule"
 from = "<%= settings.owner %>"
-func = "safeUpgradeTo"
+func = "upgradeTo"
 args = ["<%= contracts.snx_router.address %>"]
-depends = ["contract.snx_proxy", "contract.common_owner_module"]
+depends = [
+  "contract.snx_proxy",
+  "contract.common_owner_module",
+  "contract.common_upgrade_module"
+]
 
 # USD
 [run.usd_generate_router]
@@ -213,28 +232,36 @@ artifact = "contracts/USDRouter.sol:USDRouter"
 
 [contract.usd_proxy]
 artifact = "contracts/Proxy.sol:Proxy"
-args = ["<%= contracts.usd_router.address %>"]
-depends = ["contract.usd_router"]
+args = ["<%= contracts.common_initial_upgrade.address %>"]
+depends = ["contract.common_initial_upgrade"]
 
 [invoke.upgrade_usd_proxy]
 target = ["usd_proxy"]
-abi = "<%= contracts.common_owner_module.abi %>"
+abi = "contracts/modules/common/UpgradeModule.sol:UpgradeModule"
 from = "<%= settings.owner %>"
-func = "safeUpgradeTo"
+func = "upgradeTo"
 args = ["<%= contracts.usd_router.address %>"]
-depends = ["contract.usd_proxy", "contract.common_owner_module"]
+depends = [
+  "contract.usd_proxy",
+  "contract.common_owner_module",
+  "contract.common_upgrade_module"
+]
 
 [invoke.acquire_ownership]
 target = ["core_proxy"]
-abi = "<%= contracts.common_owner_module.abi %>"
+abi = "contracts/modules/common/UpgradeModule.sol:UpgradeModule"
 from = "<%= settings.owner %>"
 func = "initializeOwnerModule"
 args = ["<%= settings.owner %>"]
-depends = ["contract.core_proxy", "contract.common_owner_module"]
+depends = [
+  "contract.core_proxy",
+  "contract.common_owner_module",
+  "contract.common_upgrade_module"
+]
 
 [invoke.init_account]
 target = ["core_proxy"]
-abi = "<%= contracts.core_associated_systems_module.abi %>"
+abi = "contracts/modules/core/AssociatedSystemsModule.sol:AssociatedSystemsModule"
 from = "<%= settings.owner %>"
 func = "initOrUpgradeNft"
 args = [
@@ -255,7 +282,7 @@ factory.account_proxy.arg = 2
 
 [invoke.init_snx]
 target = ["core_proxy"]
-abi = "<%= contracts.core_associated_systems_module.abi %>"
+abi = "contracts/modules/core/AssociatedSystemsModule.sol:AssociatedSystemsModule"
 from = "<%= settings.owner %>"
 func = "initOrUpgradeToken"
 args = [
@@ -276,7 +303,7 @@ factory.snx_proxy.arg = 2
 
 [invoke.init_esnx]
 target = ["core_proxy"]
-abi = "<%= contracts.core_associated_systems_module.abi %>"
+abi = "contracts/modules/core/AssociatedSystemsModule.sol:AssociatedSystemsModule"
 from = "<%= settings.owner %>"
 func = "initOrUpgradeToken"
 args = [
@@ -297,6 +324,7 @@ factory.esnx_proxy.arg = 2
 
 [invoke.init_usd]
 target = ["core_proxy"]
+abi = "contracts/modules/core/AssociatedSystemsModule.sol:AssociatedSystemsModule"
 from = "<%= settings.owner %>"
 func = "initOrUpgradeToken"
 args = [
