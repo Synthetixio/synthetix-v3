@@ -4,16 +4,22 @@ pragma solidity ^0.8.0;
 import "@synthetixio/core-contracts/contracts/utils/MathUtil.sol";
 
 import "./DistributionActor.sol";
+import "../errors/ParameterError.sol";
 
 /**
- // TODO: Remove USD, it can be other tokens or quantity
- * @title Tracks value, which can be any quantity, distributed amongst a set of actors using shares.
+ * @title Tracks value distributed amongst a set of actors using shares. A share represents a unit in which the total value is distributed, and thus the granilarity of the distribution.
  *
- * A share represents a unit in which the total value is distributed. The total value is `totalShares * valuePerShare`.
+ * The total value is `totalShares * valuePerShare`.
  *
  * Actors can be anything, not just addresses, and are thus bytes32. I.e. an accountId, a poolId, etc.
  *
- * Example:
+ * A distribution is ultimately a way to maintain balances amongst a set of actors in a way in which the value of such balances can be updated without having to loop through individual actors.
+ *
+ * This object is intended to be used in two different exclusive modes:
+ * - Actors enter the distribution by adding value (see updateActorValue()),
+ * - Actors enter the distribution without adding value (see updateActorShares()).
+ *
+ * Example 1. Distribution in which actors enter by adding value (updateActorValue):
  * 1) The distribution is initialized with a single actor and a value of 100 USD
  * - shares:
  *   - actor1: 1 (100 USD)
@@ -36,34 +42,65 @@ import "./DistributionActor.sol";
  * - valuePerShare: 100 USD
  * - totalValue: 250 USD
  *
- * TODO: Example about actors entering without adding value.
+ * Example 2. Distribution in which actors enter without adding value (updateActorShares):
+ * 1) The distribution is initialized with two actors and no value
+ * - shares:
+ *   - actor1: 1 (0 USD)
+ *   - actor2: 1 (0 USD)
+ * - totalShares: 2 (0 USD)
+ * - valuePerShare: 0 USD
+ * - totalValue: 0 USD
+ * 2) 100 USD of value is distributed (see distributeValue())
+ * - shares:
+ *   - actor1: 1 (50 USD)
+ *   - actor2: 1 (50 USD)
+ * - totalShares: 2 (100 USD)
+ * - valuePerShare: 50 USD
+ * - totalValue: 100 USD
+ * 3) Actor 1's shares are duplicated
+ * - shares:
+ *   - actor1: 2 (100 USD)
+ *   - actor2: 1 (50 USD)
+ * - totalShares: 3 (150 USD)
+ * - valuePerShare: 50 USD
+ * - totalValue: 150 USD
  */
 library Distribution {
     /**
-     * @notice Thrown when an invalid parameter is used in a function.
-     * TODO: Could be deduped and reused in a common Errors library.
+     * @dev Thrown when an attempt is made to distribute value to a distribution
+     * with no shares.
      */
-    error InvalidParameters(string incorrectParameter, string help);
+    error EmptyDistribution();
+    /**
+     * @dev Thrown when an attempt is made to add value to a distribution
+     * whose valuePerShare is zero.
+     */
+    error ZeroValuePerShare();
+    /**
+     * @dev Thrown when a single distribution is used in the two modes mentioned above.
+     */
+    error InconsistentDistribution();
 
     /**
      * @dev The properties of a Distribution object.
      */
     struct Data {
         /**
-         * @dev The total number of shares in the distribution representing the granularity of the distribution.
+         * @dev The total number of shares in the distribution.
          */
         uint128 totalShares;
         /**
-         * @dev The value of each share or unit of the distribution.
+         * @dev The value of each share of the distribution.
          *
-         * The total value is `totalShares * valuePerShare`.
-         *
-         * This value is encoded as a precise decimal, that is it has 1e27 decimals instead of the default 1e18.
-         * i.e. shares = (value * 1e9).divDecimal(valuePerShare)
+         * This value is encoded internally as a "precise integer", which uses 27 digits of precision
+         * instead of the usual 1e18 digits of precision used by the "ether" unit and other tokens.
+         * i.e:
+         * - 1 ether = 1e18
+         * - 1 preciseInteger = 1e27
          */
         int128 valuePerShare;
         /**
-         * @dev Tracks individual actor information, such as how many shares an actor has, etc.
+         * @dev Tracks individual actor information, such as how many shares an actor has.
          */
         mapping(bytes32 => DistributionActor.Data) actorInfo;
     }
@@ -71,10 +108,8 @@ library Distribution {
     /**
      * @dev Adds or removes value to the distribution. The value is
      * distributed into each individual share by altering the distribution's `valuePerShare`.
-     *
-     * TODO: Consider renaming to distributeValue(). Ok to rename -
      */
-    function distribute(Data storage dist, int amount) internal {
+    function distributeValue(Data storage dist, int amount) internal {
         if (amount == 0) {
             return;
         }
@@ -82,13 +117,13 @@ library Distribution {
         uint totalShares = dist.totalShares;
 
         if (totalShares == 0) {
-            revert InvalidParameters("amount", "can't distribute to empty distribution");
+            revert EmptyDistribution();
         }
 
-        // TODO: Comment or express why value needs to be multiplied by 1e27
-        int128 deltaValuePerShare = int128((amount * 1e27) / int(totalShares));
+        int amountHighPrecision = amount * 1e27;
+        int deltaValuePerShare = amountHighPrecision / int(totalShares);
 
-        dist.valuePerShare += deltaValuePerShare;
+        dist.valuePerShare += int128(deltaValuePerShare);
     }
 
     /**
@@ -101,7 +136,8 @@ library Distribution {
      *
      * Returns the actor's individual change in value.
      *
-     * TODO: I don't yet understand the purpose of lastValuePerShare, and why it needs to be stored per-actor.
+     * Note: A distribution is intended to either use updateActorShares or updateActorValue, but not both
+     * during the distribution's lifetime.
      */
     function updateActorShares(
         Data storage dist,
@@ -114,26 +150,16 @@ library Distribution {
         // the last time the actor's shares were updated.
         int128 deltaValuePerShare = dist.valuePerShare - actor.lastValuePerShare;
 
-        // use the previous number of shares when calculating the changed amount
-        // TODO: Comment or express why shares need to be scaled down by 1e27.
-        // TODO: Consider renaming changedValue to deltaActorValue.
-        changedValue = (deltaValuePerShare * int(int128(actor.shares))) / 1e27;
+        // Calculate the total change in the actor's value.
+        int changedValueHighPrecision = deltaValuePerShare * int(int128(actor.shares));
+        changedValue = changedValueHighPrecision / 1e27;
 
-        // TODO: Modify shares function parameter type to uint128?
         actor.shares = uint128(shares);
 
-        uint128 deltaActorShares = shares - actor.shares;
-        dist.totalShares += deltaActorShares;
+        uint deltaActorShares = shares - actor.shares;
+        dist.totalShares += uint128(deltaActorShares);
 
         actor.lastValuePerShare = shares == 0 ? int128(0) : dist.valuePerShare;
-    }
-
-    /**
-     * @dev Upadates an actor's lastValuePerShare to the distribution's current valuePerShare, and
-     * returns the total change in value for the actor.
-     */
-    function accumulateActor(Data storage dist, bytes32 actorId) internal returns (int changedValue) {
-        return updateActorShares(dist, actorId, getActorShares(dist, actorId));
     }
 
     /**
@@ -145,7 +171,8 @@ library Distribution {
      *
      * Returns the amount by which the distribution's number of shares changed.
      *
-     * TODO: Require that lastValuePerShare is zero
+     * Note: A distribution is intended to either use updateActorShares or updateActorValue, but not both
+     * during the distribution's lifetime.
      */
     function updateActorValue(
         Data storage dist,
@@ -153,8 +180,13 @@ library Distribution {
         int value
     ) internal returns (uint shares) {
         if (dist.valuePerShare == 0 && dist.totalShares != 0) {
-            // TODO: valuePerShare is not a parameter of this function, so why use InvalidParameters?
-            revert InvalidParameters("valuePerShare", "shares still exist when no value per share remains");
+            revert ZeroValuePerShare();
+        }
+
+        DistributionActor.Data storage actor = dist.actorInfo[actorId];
+
+        if (actor.lastValuePerShare != 0) {
+            revert InconsistentDistribution();
         }
 
         // Calculate the number of shares that the
@@ -163,27 +195,32 @@ library Distribution {
         // If the distribution is empty, set valuePerShare to 1,
         // and the number of shares to the given value.
         if (dist.totalShares == 0) {
-            // TODO: Why is 1 = 1e27? - Because its one high precision decimal
             dist.valuePerShare = 1e27;
-            // Ensure value is positive.
-            shares = uint(value > 0 ? value : -value);
+            shares = uint(value > 0 ? value : -value); // Ensure value is positive
         }
         // If the distribution is not empty, the number of shares
         // is determined by the valuePerShare.
         else {
-            // TODO: Why not use value / valuePerShare? -> done this way to avoid losing precision
+            // Calculate number of shares this way instead of value / valuePerShare,
+            // in order to avoid precision loss.
             shares = uint((value * int128(dist.totalShares)) / totalValue(dist));
         }
 
-        DistributionActor.Data storage actor = dist.actorInfo[actorId];
-
         actor.shares = uint128(shares);
 
-        uint128 deltaActorShares = shares - actor.shares;
-        dist.totalShares += deltaActorShares;
+        uint deltaActorShares = shares - actor.shares;
+        dist.totalShares += uint128(deltaActorShares);
 
         // Note: No need to udpate actor.lastValuePerShare
         // because they contributed value to the distribution.
+    }
+
+    /**
+     * @dev Upadates an actor's lastValuePerShare to the distribution's current valuePerShare, and
+     * returns the total change in value for the actor.
+     */
+    function accumulateActor(Data storage dist, bytes32 actorId) internal returns (int changedValue) {
+        return updateActorShares(dist, actorId, getActorShares(dist, actorId));
     }
 
     /**
@@ -219,10 +256,11 @@ library Distribution {
      */
     function sharesForValue(Data storage dist, int value) internal view returns (uint shares) {
         if (int(dist.valuePerShare) * value < 0) {
-            revert InvalidParameters("value", "results in negative shares");
+            revert ParameterError.InvalidParameter("value", "results in negative shares");
         }
 
-        // TODO: Comment or express why shares need to be scaled down by 1e27.
-        return uint((value * 1e27) / dist.valuePerShare);
+        int valueHighPrecision = value * 1e27;
+
+        return uint(valueHighPrecision / dist.valuePerShare);
     }
 }
