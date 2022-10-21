@@ -19,15 +19,11 @@ export async function getRemoteBytecode(address: string, provider: ethers.provid
   return await provider.getCode(address);
 }
 
-export async function getSelectors(
+export function getSelectors(
   contractAbi: ethers.ContractInterface,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  functionFilter = (_: string) => true
+  functionFilter: (fnName: string) => boolean = () => true
 ) {
-  const contract = await new ethers.Contract(
-    '0x0000000000000000000000000000000000000001',
-    contractAbi
-  );
+  const contract = new ethers.Contract('0x0000000000000000000000000000000000000001', contractAbi);
 
   return contract.interface.fragments.reduce((selectors, fragment) => {
     if (fragment.type === 'function' && functionFilter(fragment.name)) {

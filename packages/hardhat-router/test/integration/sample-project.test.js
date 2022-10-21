@@ -8,6 +8,8 @@ describe('sample-project', function () {
   let hre;
 
   beforeEach('set fixture project', function () {
+    this.timeout(90000);
+
     hre = loadEnvironment(
       path.dirname(require.resolve('@synthetixio/sample-project/package.json'))
     );
