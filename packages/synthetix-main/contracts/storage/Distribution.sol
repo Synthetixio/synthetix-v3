@@ -7,13 +7,14 @@ import "./DistributionActor.sol";
 import "../errors/ParameterError.sol";
 
 /**
- * @title Tracks value distributed amongst a set of actors using shares. A share represents a unit in which the total value is distributed, and thus the granilarity of the distribution.
+ * @title Divides a quantity of value between a set of actors, proportional to the number of shares they have.
+ * Most importantly, the total value can be updated in a way that doesn't require iterating or looping through all actors.
+
+ * The total value is `totalShares * valuePerShare`, and can be derived or integrated in a single calculation.
  *
- * The total value is `totalShares * valuePerShare`.
+ * A share represents a unit in which the total value is divided, and thus the granularity of the distribution.
  *
  * Actors can be anything, not just addresses, and are thus bytes32. I.e. an accountId, a poolId, etc.
- *
- * A distribution is ultimately a way to maintain balances amongst a set of actors in a way in which the value of such balances can be updated without having to loop through individual actors.
  *
  * This object is intended to be used in two different exclusive modes:
  * - Actors enter the distribution by adding value (see updateActorValue()),
@@ -209,13 +210,13 @@ library Distribution {
         dist.totalShares = uint128(dist.totalShares + shares - actor.shares);
 
         actor.shares = uint128(shares);
-        // Note: No need to udpate actor.lastValuePerShare
+        // Note: No need to update actor.lastValuePerShare
         // because they contributed value to the distribution.
     }
 
     /**
-     * @dev Upadates an actor's lastValuePerShare to the distribution's current valuePerShare, and
-     * returns the total change in value for the actor.
+     * @dev Updates an actor's lastValuePerShare to the distribution's current valuePerShare, and
+     * returns the change in value for the actor, since their last update.
      */
     function accumulateActor(Data storage dist, bytes32 actorId) internal returns (int changedValue) {
         return updateActorShares(dist, actorId, getActorShares(dist, actorId));
