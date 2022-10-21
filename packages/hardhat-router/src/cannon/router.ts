@@ -13,6 +13,11 @@ exports.generate = async function generate(
   routerName: string,
   ...contractPaths: string[]
 ) {
+  const addresses = Object.values(runtime.provider.artifacts.contracts!).reduce((a, c) => {
+    a[`${c.sourceName}:${c.contractName}`] = c.address;
+    return a;
+  }, {} as { [contractFqName: string]: string });
+
   const allContracts = await hre.artifacts.getAllFullyQualifiedNames();
   const normalizedPaths = contractPaths.map((p) => (p.endsWith('/') ? p : `${p}/`));
   const modulesFqNames = normalizedPaths.length
@@ -22,10 +27,15 @@ exports.generate = async function generate(
   const contracts = await Promise.all(
     modulesFqNames.map(async (fqName) => {
       const { contractName, abi } = await runtime.getArtifact(fqName);
+
+      if (!addresses[fqName]) {
+        throw new Error(`Missing contract address declaration for ${fqName}`);
+      }
+
       return {
         contractName,
         abi,
-        deployedAddress: '0x0000000000000000000000000000000000000001', // TODO get the deployedAddress from the ctx
+        deployedAddress: addresses[fqName],
       };
     })
   );
