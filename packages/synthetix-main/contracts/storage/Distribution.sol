@@ -154,11 +154,10 @@ library Distribution {
         int changedValueHighPrecision = deltaValuePerShare * int(int128(actor.shares));
         changedValue = changedValueHighPrecision / 1e27;
 
+        // Modify the total shares with the actor's change in shares.
+        dist.totalShares = uint128(dist.totalShares + shares - actor.shares);
+
         actor.shares = uint128(shares);
-
-        uint deltaActorShares = shares - actor.shares;
-        dist.totalShares += uint128(deltaActorShares);
-
         actor.lastValuePerShare = shares == 0 ? int128(0) : dist.valuePerShare;
     }
 
@@ -206,11 +205,10 @@ library Distribution {
             shares = uint((value * int128(dist.totalShares)) / totalValue(dist));
         }
 
+        // Modify the total shares with the actor's change in shares.
+        dist.totalShares = uint128(dist.totalShares + shares - actor.shares);
+
         actor.shares = uint128(shares);
-
-        uint deltaActorShares = shares - actor.shares;
-        dist.totalShares += uint128(deltaActorShares);
-
         // Note: No need to udpate actor.lastValuePerShare
         // because they contributed value to the distribution.
     }
