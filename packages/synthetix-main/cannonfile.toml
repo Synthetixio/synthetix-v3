@@ -127,6 +127,19 @@ depends = [
 [contract.account_router]
 artifact = "contracts/AccountRouter.sol:AccountRouter"
 
+[contract.account_proxy]
+artifact = "contracts/Proxy.sol:Proxy"
+args = ["<%= contracts.account_router.address %>"]
+depends = ["contract.account_router"]
+
+[invoke.upgrade_account_proxy]
+target = ["account_proxy"]
+abi = "<%= contracts.common_owner_module.abi %>"
+from = "<%= settings.owner %>"
+func = "safeUpgradeTo"
+args = ["<%= contracts.account_router.address %>"]
+depends = ["contract.account_proxy", "contract.common_owner_module"]
+
 # ESNX
 [run.esnx_generate_router]
 exec = "../hardhat-router/dist/cannon/router.js"
@@ -141,6 +154,19 @@ depends = [
 
 [contract.esnx_router]
 artifact = "contracts/ESNXRouter.sol:ESNXRouter"
+
+[contract.esnx_proxy]
+artifact = "contracts/Proxy.sol:Proxy"
+args = ["<%= contracts.esnx_router.address %>"]
+depends = ["contract.esnx_router"]
+
+[invoke.upgrade_esnx_proxy]
+target = ["esnx_proxy"]
+abi = "<%= contracts.common_owner_module.abi %>"
+from = "<%= settings.owner %>"
+func = "safeUpgradeTo"
+args = ["<%= contracts.esnx_router.address %>"]
+depends = ["contract.esnx_proxy", "contract.common_owner_module"]
 
 # SNX
 [run.snx_generate_router]
@@ -157,6 +183,19 @@ depends = [
 [contract.snx_router]
 artifact = "contracts/SNXRouter.sol:SNXRouter"
 
+[contract.snx_proxy]
+artifact = "contracts/Proxy.sol:Proxy"
+args = ["<%= contracts.snx_router.address %>"]
+depends = ["contract.snx_router"]
+
+[invoke.upgrade_snx_proxy]
+target = ["snx_proxy"]
+abi = "<%= contracts.common_owner_module.abi %>"
+from = "<%= settings.owner %>"
+func = "safeUpgradeTo"
+args = ["<%= contracts.snx_router.address %>"]
+depends = ["contract.snx_proxy", "contract.common_owner_module"]
+
 # USD
 [run.usd_generate_router]
 exec = "../hardhat-router/dist/cannon/router.js"
@@ -172,18 +211,18 @@ depends = [
 [contract.usd_router]
 artifact = "contracts/USDRouter.sol:USDRouter"
 
-# [run.deploy_core]
-# exec = "scripts/deploy.js"
-# func = "deploy"
-# args = ["Core", ".*/(core|common)/.*"]
-# modified = ["contracts/modules/core", "contracts/modules/common", "contracts/storage", "contracts/utils", "scripts"]
+[contract.usd_proxy]
+artifact = "contracts/Proxy.sol:Proxy"
+args = ["<%= contracts.usd_router.address %>"]
+depends = ["contract.usd_router"]
 
-# [contract.CoreProxy]
-# artifact = "Proxy"
-# args = ["<%= contracts.CoreRouter.address %>"]
-# abi = "CoreRouter"
-
-# depends = ["run.deploy_core"]
+[invoke.upgrade_usd_proxy]
+target = ["usd_proxy"]
+abi = "<%= contracts.common_owner_module.abi %>"
+from = "<%= settings.owner %>"
+func = "safeUpgradeTo"
+args = ["<%= contracts.usd_router.address %>"]
+depends = ["contract.usd_proxy", "contract.common_owner_module"]
 
 # [invoke.acquire_ownership]
 # target = ["CoreProxy"]
