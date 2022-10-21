@@ -1,0 +1,25 @@
+name = "oracle-manager"
+version = "<%= package.version %>"
+description = "Core synthetix oracle manager"
+
+# `salt` here only affects proxy contract
+[setting.salt]
+description = "Change this to a unique string when deploying multiple instances of the system. Note that only the proxy contract will be unique."
+defaultValue = "main"
+
+[setting.owner]
+description = "Admin user for the system"
+defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
+
+[run.deploy]
+exec = "scripts/deploy.js"
+func = "deploy"
+args = ["Core", ".*/(core|common|mocks)/.*"]
+modified = ["contracts/modules/core", "contracts/utils", "scripts"]
+
+[contract.Proxy]
+artifact = "Proxy"
+args = ["<%= contracts.CoreRouter.address %>"]
+abi = "CoreRouter"
+
+depends = ["run.deploy"]
