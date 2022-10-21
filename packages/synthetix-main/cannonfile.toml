@@ -224,23 +224,35 @@ func = "safeUpgradeTo"
 args = ["<%= contracts.usd_router.address %>"]
 depends = ["contract.usd_proxy", "contract.common_owner_module"]
 
-# [invoke.acquire_ownership]
-# target = ["CoreProxy"]
-# from = "<%= settings.owner %>"
-# func = "initializeOwnerModule"
-# args = ["<%= settings.owner %>"]
-# depends = ["contract.CoreProxy"]
+[invoke.acquire_ownership]
+target = ["core_proxy"]
+abi = "<%= contracts.common_owner_module.abi %>"
+from = "<%= settings.owner %>"
+func = "initializeOwnerModule"
+args = ["<%= settings.owner %>"]
+depends = ["contract.core_proxy", "contract.common_owner_module"]
 
-# [invoke.init_account]
-# target = ["CoreProxy"]
-# from = "<%= settings.owner %>"
-# func = "initOrUpgradeNft"
-# args = ["0x6163636f756e744e667400000000000000000000000000000000000000000000", "Synthetix Account", "SACCT", "https://synthetix.io", "<%= contracts.AccountRouter.address %>"]
-# depends = ["invoke.acquire_ownership", "run.deploy_account"]
-
-# factory.AccountProxy.abiOf = "AccountRouter"
-# factory.AccountProxy.event = "AssociatedSystemSet"
-# factory.AccountProxy.arg = 2
+[invoke.init_account]
+target = ["core_proxy"]
+abi = "<%= contracts.core_associated_systems_module.abi %>"
+from = "<%= settings.owner %>"
+func = "initOrUpgradeNft"
+args = [
+  "0x6163636f756e744e667400000000000000000000000000000000000000000000",
+  "Synthetix Account",
+  "SACCT",
+  "https://synthetix.io",
+  "<%= contracts.account_router.address %>"
+]
+depends = [
+  "invoke.acquire_ownership",
+  "run.deploy_account",
+  "contract.account_router",
+  "contract.core_associated_systems_module"
+]
+factory.account_proxy.abiOf = "account_router"
+factory.account_proxy.event = "AssociatedSystemSet"
+factory.account_proxy.arg = 2
 
 # [invoke.init_snx]
 # target = ["CoreProxy"]
