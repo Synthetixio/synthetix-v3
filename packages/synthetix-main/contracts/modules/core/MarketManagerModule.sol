@@ -22,7 +22,7 @@ contract MarketManagerModule is IMarketManagerModule {
     error NotEnoughLiquidity(uint128 marketId, uint amount);
     error MarketDepositNotApproved(address market, address from, uint requestedAmount, uint approvedAmount);
 
-    function registerMarket(address market) external override returns (uint128 marketId) {
+    function registerMarket(address market) external override onlyIfFeatureFlag("market") returns (uint128 marketId) {
         // Can we verify that `market` conforms to the IMarket interface here? (i.e. has a `balance()` function?)
 
         marketId = Market.create(market).id;
