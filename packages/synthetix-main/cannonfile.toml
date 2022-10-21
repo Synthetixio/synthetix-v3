@@ -72,7 +72,7 @@ artifact = "contracts/modules/snx/SNXTokenModule.sol:SNXTokenModule"
 [contract.usd_token_module]
 artifact = "contracts/modules/usd/USDTokenModule.sol:USDTokenModule"
 
-# Core Router
+# Core
 [run.core_generate_router]
 exec = "../hardhat-router/dist/cannon/router.js"
 func = "generate"
@@ -96,11 +96,23 @@ depends = [
   "contract.core_vault_module"
 ]
 
-
 [contract.core_router]
 artifact = "contracts/CoreRouter.sol:CoreRouter"
 
-# Account Router
+[contract.core_proxy]
+artifact = "contracts/Proxy.sol:Proxy"
+args = ["<%= contracts.core_router.address %>"]
+depends = ["contract.core_router"]
+
+[invoke.upgrade_core_proxy]
+target = ["core_proxy"]
+abi = "<%= contracts.common_owner_module.abi %>"
+from = "<%= settings.owner %>"
+func = "safeUpgradeTo"
+args = ["<%= contracts.core_router.address %>"]
+depends = ["contract.core_proxy", "contract.common_owner_module"]
+
+# Account
 [run.account_generate_router]
 exec = "../hardhat-router/dist/cannon/router.js"
 func = "generate"
@@ -115,7 +127,7 @@ depends = [
 [contract.account_router]
 artifact = "contracts/AccountRouter.sol:AccountRouter"
 
-# ESNX Router
+# ESNX
 [run.esnx_generate_router]
 exec = "../hardhat-router/dist/cannon/router.js"
 func = "generate"
@@ -130,7 +142,7 @@ depends = [
 [contract.esnx_router]
 artifact = "contracts/ESNXRouter.sol:ESNXRouter"
 
-# SNX Router
+# SNX
 [run.snx_generate_router]
 exec = "../hardhat-router/dist/cannon/router.js"
 func = "generate"
@@ -145,7 +157,7 @@ depends = [
 [contract.snx_router]
 artifact = "contracts/SNXRouter.sol:SNXRouter"
 
-# USD Router
+# USD
 [run.usd_generate_router]
 exec = "../hardhat-router/dist/cannon/router.js"
 func = "generate"
