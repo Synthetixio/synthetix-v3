@@ -8,13 +8,13 @@ import "@synthetixio/core-contracts/contracts/errors/AddressError.sol";
 import "../../interfaces/IPoolModule.sol";
 import "../../storage/Pool.sol";
 
-import "hardhat/console.sol";
-
 contract PoolModule is IPoolModule, OwnableMixin {
     error PoolAlreadyExists(uint128 poolId);
     error InvalidParameters(string incorrectParameter, string help);
     error PoolNotFound(uint128 poolId);
     error CapacityLocked(uint marketId);
+
+    using MathUtil for uint;
 
     using Pool for Pool.Data;
     using Market for Market.Data;
@@ -100,7 +100,7 @@ contract PoolModule is IPoolModule, OwnableMixin {
         // would be better if we could eliminate the call at the end somehow
         pool.distributeDebt();
 
-        uint128[] memory postVerifyLock = _verifyPoolConfigurationChange(pool, newDistributions);
+        (uint128[] memory postVerifyLocks, uint128[] memory removedMarkets) = _verifyPoolConfigurationChange(pool, newDistributions);
 
         uint totalWeight = 0;
 
@@ -121,19 +121,24 @@ contract PoolModule is IPoolModule, OwnableMixin {
             totalWeight += newDistributions[i].weight;
         }
 
+        // remove any excess
         uint popped = pool.poolDistribution.length - i;
         for (i = 0; i < popped; i++) {
-            Market.rebalance(pool.poolDistribution[pool.poolDistribution.length - 1].market, poolId, 0, 0);
             pool.poolDistribution.pop();
+        }
+
+        // edge case: removed markets (markets which should be implicitly set to `0` as a result of not being included)
+        for (i = 0;i < removedMarkets.length && removedMarkets[i] != 0;i++) {
+            Market.rebalance(removedMarkets[i], poolId, 0, 0);
         }
 
         pool.totalWeights = uint128(totalWeight);
 
         pool.rebalanceConfigurations();
 
-        for (i = 0; i < postVerifyLock.length && postVerifyLock[i] != 0; i++) {
-            if (Market.load(postVerifyLock[i]).isCapacityLocked()) {
-                revert CapacityLocked(postVerifyLock[i]);
+        for (i = 0; i < postVerifyLocks.length && postVerifyLocks[i] != 0; i++) {
+            if (Market.load(postVerifyLocks[i]).isCapacityLocked()) {
+                revert CapacityLocked(postVerifyLocks[i]);
             }
         }
 
@@ -188,12 +193,20 @@ contract PoolModule is IPoolModule, OwnableMixin {
     function _verifyPoolConfigurationChange(
         Pool.Data storage pool,
         MarketDistribution.Data[] memory newDistributions
-    ) internal view returns (uint128[] memory postVerifyLock) {
+    ) internal view returns (uint128[] memory postVerifyLocks, uint128[] memory removedMarkets) {
         uint oldIdx = 0;
-        uint postVerifyLockIdx = 0;
+        uint postVerifyLocksIdx = 0;
+        uint removedMarketsIdx = 0;
         uint128 lastMarketId = 0;
 
-        postVerifyLock = new uint128[](newDistributions.length);
+        postVerifyLocks = new uint128[](pool.poolDistribution.length);
+        removedMarkets = new uint128[](pool.poolDistribution.length);
+
+        // first we need the total weight of the new distribution
+        uint totalWeight = 0;
+        for (uint i = 0; i < newDistributions.length; i++) {
+            totalWeight += newDistributions[i].weight;
+        }
 
         for (uint i = 0; i < newDistributions.length; i++) {
             if (newDistributions[i].market <= lastMarketId) {
@@ -209,7 +222,8 @@ contract PoolModule is IPoolModule, OwnableMixin {
                 // market has been removed
 
                 // need to verify market is not capacity locked 
-                postVerifyLock[postVerifyLockIdx++] = pool.poolDistribution[oldIdx].market;
+                postVerifyLocks[postVerifyLocksIdx++] = pool.poolDistribution[oldIdx].market;
+                removedMarkets[removedMarketsIdx++] = postVerifyLocks[postVerifyLocksIdx - 1];
 
                 oldIdx++;
             }
@@ -218,12 +232,15 @@ contract PoolModule is IPoolModule, OwnableMixin {
                 // market has been updated
 
                 // any divestment requires verify of capacity lock
+                // multiply by 1e9 to make sure we have comparable precision in case of very small values
                 if (
-                    pool.poolDistribution[oldIdx].maxDebtShareValue < newDistributions[i].maxDebtShareValue || 
-                    pool.poolDistribution[oldIdx].weight < newDistributions[i].weight
+                    newDistributions[i].maxDebtShareValue < pool.poolDistribution[oldIdx].maxDebtShareValue || 
+                    uint(newDistributions[i].weight * 1e9).divDecimal(totalWeight) < uint(pool.poolDistribution[oldIdx].weight * 1e9).divDecimal(pool.totalWeights)
                 ) {
-                    postVerifyLock[postVerifyLockIdx++] = newDistributions[i].market;
+                    postVerifyLocks[postVerifyLocksIdx++] = newDistributions[i].market;
                 }
+
+                oldIdx++;
             }
             else {
                 // market has been added
@@ -233,6 +250,7 @@ contract PoolModule is IPoolModule, OwnableMixin {
 
         while (oldIdx < pool.poolDistribution.length) {
             // market has been removed
+            removedMarkets[removedMarketsIdx++] = pool.poolDistribution[oldIdx].market;
             oldIdx++;
         }
     }

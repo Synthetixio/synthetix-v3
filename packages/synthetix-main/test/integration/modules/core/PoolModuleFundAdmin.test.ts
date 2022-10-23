@@ -120,7 +120,7 @@ describe('PoolModule Admin', function () {
       );
     });
 
-    it('bootstrap configuration sets market collateral', async () => {
+    it('sets market collateral configuration on bootstrap', async () => {
       assertBn.equal(
         await systems().Core.connect(owner).getMarketCollateral(marketId()),
         depositAmount
@@ -194,7 +194,108 @@ describe('PoolModule Admin', function () {
             );
           });
 
-          describe('exit the markets', () => {
+          it('cannot exit if market is locked', async () => {
+            await MockMarket().setLocked(ethers.utils.parseEther('1000'));
+
+            await assertRevert(
+              systems()
+              .Core.connect(owner)
+              .setPoolConfiguration(poolId, [
+                { market: marketId(), weight: 1, maxDebtShareValue: One },
+                { market: marketId2, weight: 9, maxDebtShareValue: One } // increase the weight of the other market to make the first market lower liquidity by comparison
+              ]),
+              'CapacityLocked',
+              systems().Core
+            );
+
+
+            // reduce market lock
+            await MockMarket().setLocked(ethers.utils.parseEther('105'));
+
+            // now the call should work (call static to not modify the state)
+            await systems()
+              .Core.connect(owner).callStatic
+              .setPoolConfiguration(poolId, [
+                { market: marketId(), weight: 1, maxDebtShareValue: One },
+                { market: marketId2, weight: 9, maxDebtShareValue: One } // increase the weight of the other market to make the first market lower liquidity by comparison
+              ])
+
+            // but a full pull-out shouldn't work
+            await assertRevert(
+              systems()
+              .Core.connect(owner)
+              .setPoolConfiguration(poolId, [
+                { market: marketId2, weight: 9, maxDebtShareValue: One } // increase the weight of the other market to make the first market lower liquidity by comparison
+              ]),
+              'CapacityLocked',
+              //systems().Core
+            );
+
+            // undo lock change
+            await MockMarket().setLocked(ethers.utils.parseEther('0'));
+          });
+
+          describe('exit first market', () => {
+            const restore = snapshotCheckpoint(provider);
+
+            before('set pool position', async () => {
+              await systems()
+              .Core.connect(owner)
+              .setPoolConfiguration(poolId, [
+                { market: marketId2, weight: 3, maxDebtShareValue: One }
+              ]);
+            });
+
+            it('returns pool position correctly', async () => {
+              const distributions = await systems().Core.getPoolConfiguration(poolId);
+
+              assertBn.equal(distributions[0].market, marketId2);
+              assertBn.equal(distributions[0].weight, 3);
+              assertBn.equal(distributions[0].maxDebtShareValue, One);
+            });
+
+            it('markets have same available liquidity', async () => {
+              // marketId() gets to keep its available liquidity because when
+              // the market exited when it did it "committed"
+              assertBn.equal(
+                await systems().Core.connect(owner).getWithdrawableUsd(marketId()),
+                debtAmount
+              );
+
+              assertBn.equal(await systems().Core.connect(owner).getMarketCollateral(marketId()), 0);
+            });
+
+            after(restore);
+          });
+
+          describe('exit second market', () => {
+            const restore = snapshotCheckpoint(provider);
+
+            before('set pool position', async () => {
+              await systems()
+              .Core.connect(owner)
+              .setPoolConfiguration(poolId, [
+                { market: marketId(), weight: 2, maxDebtShareValue: One.mul(2) },
+              ]);
+            });
+
+            it('returns pool position correctly', async () => {
+              const distributions = await systems().Core.getPoolConfiguration(poolId);
+
+              assertBn.equal(distributions[0].market, marketId());
+              assertBn.equal(distributions[0].weight, 2);
+              assertBn.equal(distributions[0].maxDebtShareValue, One.mul(2));
+            });
+
+            it('available liquidity taken away from second market', async () => {
+              // marketId2 never reported an increased balance so its liquidity is 0 as ever
+              assertBn.equal(await systems().Core.connect(owner).getMarketCollateral(marketId2), 0);
+            });
+
+            after(restore);
+          });
+
+          describe('exit both market', () => {
             before('set pool position', async () => {
               await systems().Core.connect(owner).setPoolConfiguration(poolId, []);
             });
