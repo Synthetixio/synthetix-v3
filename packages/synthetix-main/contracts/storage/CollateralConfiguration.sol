@@ -2,13 +2,16 @@
 pragma solidity ^0.8.0;
 
 import "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
+import "@synthetixio/core-contracts/contracts/utils/MathUtil.sol";
 
 import "../interfaces/external/IAggregatorV3Interface.sol";
 
 library CollateralConfiguration {
     using SetUtil for SetUtil.AddressSet;
+    using MathUtil for uint256;
 
     error InvalidCollateral(address collateralType);
+    error InsufficientCollateralRatio(uint collateralValue, uint debt, uint ratio, uint minRatio);
 
     struct Data {
         /// must be true for staking or collateral delegation
@@ -80,5 +83,17 @@ library CollateralConfiguration {
         require(answer > 0, "The collateral value is 0");
 
         return uint(answer);
+    }
+
+
+
+    function verifyCollateralRatio(
+        Data storage self,
+        uint debt,
+        uint collateralValue
+    ) internal view {
+        if (debt != 0 && collateralValue.divDecimal(debt) < self.targetCRatio) {
+            revert InsufficientCollateralRatio(collateralValue, debt, collateralValue.divDecimal(debt), self.targetCRatio);
+        }
     }
 }
