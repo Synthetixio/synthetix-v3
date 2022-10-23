@@ -35,8 +35,6 @@ describe('FeatureFlagModule', () => {
   let setupTx;
   before('setup feature flag', async () => {
     setupTx = await FeatureFlagModule.connect(owner).setFeatureFlag(FEATURE_FLAG_NAME, true);
-    // .to.emit(FeatureFlagModule, 'FeatureFlagSet')
-    // .withArgs(FEATURE_FLAG_NAME, true);
   });
 
   it('emits event', async () => {
