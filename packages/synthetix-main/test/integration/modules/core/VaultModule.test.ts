@@ -1,3 +1,4 @@
+import assert from 'assert/strict';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import hre from 'hardhat';
@@ -192,6 +193,16 @@ describe('VaultModule', function () {
           );
         });
 
+        // lock enough collateral that the market will *become* capacity locked when the user withdraws
+        const locked = ethers.utils.parseEther('1400');
+
+        // NOTE: if you are looking at this block and wondering if it would affect your test, this is to ensure all below cases are covered with locking.
+        // when position is increased, it should not be affected by locking
+        // when a position is decreased, it should only be allowed if the capacity does not become locked
+        before('market locks some capacity', async () => {
+            await MockMarket.setLocked(locked);
+        });
+
         it(
           'user1 still has correct position',
           verifyAccountState(accountId, poolId, depositAmount, startingDebt)
@@ -311,6 +322,28 @@ describe('VaultModule', function () {
               'InsufficientCollateralRatio',
               systems().Core
             );
+          });
+
+          it('fails when market becomes capacity locked', async () => {
+            // sanity
+            assert.ok(!await systems().Core.connect(user2).callStatic.isMarketCapacityLocked(marketId));
+
+            await assertRevert(
+              systems()
+                .Core.connect(user2)
+                .delegateCollateral(
+                  user2AccountId,
+                  poolId,
+                  collateralAddress(),
+                  depositAmount.div(10),
+                  ethers.utils.parseEther('1')
+              ),
+              `CapacityLocked(${marketId})`,
+              systems().Core
+            );
+
+            // allow future tests to work without being locked
+            await MockMarket.setLocked(ethers.utils.parseEther('500'));
           });
 
           describe('success', () => {

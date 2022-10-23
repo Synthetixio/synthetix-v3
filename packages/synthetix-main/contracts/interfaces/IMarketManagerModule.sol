@@ -40,4 +40,6 @@ interface IMarketManagerModule {
     function getMarketCollateral(uint128 marketId) external view returns (uint);
 
     function getMarketDebtPerShare(uint128 marketId) external returns (int);
+
+    function isMarketCapacityLocked(uint128 marketId) external view returns (bool);
 }
