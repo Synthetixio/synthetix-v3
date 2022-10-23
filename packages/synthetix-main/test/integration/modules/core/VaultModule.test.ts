@@ -45,10 +45,13 @@ describe('VaultModule', function () {
 
     await systems()
       .Core.connect(owner)
-      .setPoolConfiguration(
-        poolId,
-        [{ market: marketId, weight: ethers.utils.parseEther('1'), maxDebtShareValue: ethers.utils.parseEther('10000000000000000') }]
-      );
+      .setPoolConfiguration(poolId, [
+        {
+          market: marketId,
+          weight: ethers.utils.parseEther('1'),
+          maxDebtShareValue: ethers.utils.parseEther('10000000000000000'),
+        },
+      ]);
   });
 
   const restore = snapshotCheckpoint(provider);
@@ -193,14 +196,17 @@ describe('VaultModule', function () {
           );
         });
 
-        // lock enough collateral that the market will *become* capacity locked when the user withdraws
+        // lock enough collateral that the market will *become* capacity locked when the user
+        // withdraws
         const locked = ethers.utils.parseEther('1400');
 
-        // NOTE: if you are looking at this block and wondering if it would affect your test, this is to ensure all below cases are covered with locking.
+        // NOTE: if you are looking at this block and wondering if it would affect your test,
+        // this is to ensure all below cases are covered with locking.
         // when position is increased, it should not be affected by locking
-        // when a position is decreased, it should only be allowed if the capacity does not become locked
+        // when a position is decreased, it should only be allowed if the capacity does
+        // not become locked
         before('market locks some capacity', async () => {
-            await MockMarket.setLocked(locked);
+          await MockMarket.setLocked(locked);
         });
 
         it(
@@ -326,7 +332,9 @@ describe('VaultModule', function () {
 
           it('fails when market becomes capacity locked', async () => {
             // sanity
-            assert.ok(!await systems().Core.connect(user2).callStatic.isMarketCapacityLocked(marketId));
+            assert.ok(
+              !(await systems().Core.connect(user2).callStatic.isMarketCapacityLocked(marketId))
+            );
 
             await assertRevert(
               systems()
@@ -337,7 +345,7 @@ describe('VaultModule', function () {
                   collateralAddress(),
                   depositAmount.div(10),
                   ethers.utils.parseEther('1')
-              ),
+                ),
               `CapacityLocked(${marketId})`,
               systems().Core
             );

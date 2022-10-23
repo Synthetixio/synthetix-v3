@@ -117,7 +117,11 @@ library Market {
         return self.debtDist.getActorShares(bytes32(uint(poolId)));
     }
 
-    function getCapacityContribution(Data storage self, uint liquidityShares, int maxDebtShareValue) internal view returns (uint contribution) {
+    function getCapacityContribution(
+        Data storage self,
+        uint liquidityShares,
+        int maxDebtShareValue
+    ) internal view returns (uint contribution) {
         return uint((maxDebtShareValue - self.debtDist.valuePerShare / 1e9)).mulDecimal(liquidityShares);
     }
 

@@ -190,7 +190,10 @@ library Pool {
             Market.Data storage market = Market.load(self.poolDistribution[i].market);
 
             uint unlocked = market.capacity - market.getLockedLiquidity();
-            uint contributedCapacity = market.getCapacityContribution(market.getPoolLiquidity(self.id), self.poolDistribution[i].maxDebtShareValue);
+            uint contributedCapacity = market.getCapacityContribution(
+                market.getPoolLiquidity(self.id),
+                self.poolDistribution[i].maxDebtShareValue
+            );
 
             if (unlocked < contributedCapacity) {
                 locked += contributedCapacity - unlocked;

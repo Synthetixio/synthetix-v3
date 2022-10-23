@@ -12,28 +12,16 @@ interface IPoolModule {
     event PoolNominationRevoked(uint128 indexed poolId, address indexed owner);
     event PoolOwnershipRenounced(uint128 indexed poolId, address indexed owner);
     event PoolNameUpdated(uint128 indexed poolId, string indexed name, address indexed sender);
-    event PoolConfigurationSet(
-        uint128 indexed poolId,
-        MarketDistribution.Data[] indexed markets,
-        address executedBy
-    );
+    event PoolConfigurationSet(uint128 indexed poolId, MarketDistribution.Data[] indexed markets, address executedBy);
 
     /// @notice creates a new pool
     function createPool(uint128 requestedPoolId, address owner) external;
 
     /// @notice sets the pool positions (only poolToken owner)
-    function setPoolConfiguration(
-        uint128 poolId,
-        MarketDistribution.Data[] memory marketDistribution
-    ) external;
+    function setPoolConfiguration(uint128 poolId, MarketDistribution.Data[] memory marketDistribution) external;
 
     /// @notice gets the pool positions
-    function getPoolConfiguration(uint128 poolId)
-        external
-        view
-        returns (
-            MarketDistribution.Data[] memory markets
-        );
+    function getPoolConfiguration(uint128 poolId) external view returns (MarketDistribution.Data[] memory markets);
 
     /// @notice sets the pool name
     function setPoolName(uint128 poolId, string memory name) external;

@@ -7,15 +7,8 @@ import { bootstrapWithStakedPool } from '../../bootstrap';
 import { snapshotCheckpoint } from '../../../utils';
 
 describe('IssueUSDModule', function () {
-  const {
-    signers,
-    systems,
-    provider,
-    accountId,
-    poolId,
-    depositAmount,
-    collateralAddress,
-  } = bootstrapWithStakedPool();
+  const { signers, systems, provider, accountId, poolId, depositAmount, collateralAddress } =
+    bootstrapWithStakedPool();
 
   let owner: ethers.Signer, user1: ethers.Signer, user2: ethers.Signer;
 
@@ -43,10 +36,13 @@ describe('IssueUSDModule', function () {
 
     await systems()
       .Core.connect(owner)
-      .setPoolConfiguration(
-        poolId,
-        [{ market: marketId, weight: ethers.utils.parseEther('1'), maxDebtShareValue: ethers.utils.parseEther('10000000000000000') }]
-      );
+      .setPoolConfiguration(poolId, [
+        {
+          market: marketId,
+          weight: ethers.utils.parseEther('1'),
+          maxDebtShareValue: ethers.utils.parseEther('10000000000000000'),
+        },
+      ]);
   });
 
   const restore = snapshotCheckpoint(provider);

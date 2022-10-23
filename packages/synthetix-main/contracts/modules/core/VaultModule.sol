@@ -102,10 +102,15 @@ contract VaultModule is IVaultModule, OwnableMixin {
             int debt = vault.currentEpoch().usdDebtDist.getActorValue(actorId);
             //(, uint collateralValue,) = pool.currentAccountCollateral(collateralType, accountId);
 
-            CollateralConfiguration.load(collateralType).verifyCollateralRatio(debt < 0 ? 0 : uint(debt), collateralAmount.mulDecimal(collateralPrice));
+            CollateralConfiguration.load(collateralType).verifyCollateralRatio(
+                debt < 0 ? 0 : uint(debt),
+                collateralAmount.mulDecimal(collateralPrice)
+            );
         }
 
-        if (collateralAmount < oldCollateralAmount /* || leverage < oldLeverage */) {
+        if (
+            collateralAmount < oldCollateralAmount /* || leverage < oldLeverage */
+        ) {
             // if pool contains any capacity-locked markets, account cannot reduce their position
             _verifyNotCapacityLocked(poolId);
         }
