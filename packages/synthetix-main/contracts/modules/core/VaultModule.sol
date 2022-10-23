@@ -37,6 +37,7 @@ contract VaultModule is IVaultModule, AssociatedSystemsMixin, OwnableMixin {
     error InsufficientDebt(int currentDebt);
     error InvalidParameters(string incorrectParameter, string help);
     error InvalidCollateral(address collateralType);
+    error CapacityLocked(uint marketId);
 
     function delegateCollateral(
         uint128 accountId,
@@ -107,6 +108,11 @@ contract VaultModule is IVaultModule, AssociatedSystemsMixin, OwnableMixin {
             //(, uint collateralValue,) = pool.currentAccountCollateral(collateralType, accountId);
 
             _verifyCollateralRatio(collateralType, debt < 0 ? 0 : uint(debt), collateralAmount.mulDecimal(collateralPrice));
+        }
+
+        if (collateralAmount < oldCollateralAmount /* || leverage < oldLeverage */) {
+            // if pool contains any capacity-locked markets, account cannot reduce their position
+            _verifyNotCapacityLocked(poolId);
         }
 
         emit DelegationUpdated(accountId, poolId, collateralType, collateralAmount, leverage, msg.sender);
@@ -250,6 +256,16 @@ contract VaultModule is IVaultModule, AssociatedSystemsMixin, OwnableMixin {
 
         if (debt != 0 && collateralValue.divDecimal(debt) < config.targetCRatio) {
             revert InsufficientCollateralRatio(collateralValue, debt, collateralValue.divDecimal(debt), config.targetCRatio);
+        }
+    }
+
+    function _verifyNotCapacityLocked(uint128 poolId) internal view {
+        Pool.Data storage pool = Pool.load(poolId);
+
+        Market.Data storage market = pool.findMarketCapacityLocked();
+
+        if (market.id > 0) {
+            revert CapacityLocked(market.id);
         }
     }
 

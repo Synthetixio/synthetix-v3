@@ -68,7 +68,7 @@ describe('PoolModule Admin', function () {
 
     it('reverts when pool does not exist', async () => {
       await assertRevert(
-        systems().Core.connect(user1).setPoolConfiguration(834693286, [1], [1], [0, 0]),
+        systems().Core.connect(user1).setPoolConfiguration(834693286, [{ market: 1, weight: 1, maxDebtShareValue: 0 }]),
         'PoolNotFound(834693286)',
         systems().Core
       );
@@ -76,24 +76,8 @@ describe('PoolModule Admin', function () {
 
     it('reverts when not owner', async () => {
       await assertRevert(
-        systems().Core.connect(user2).setPoolConfiguration(poolId, [1], [1], [0, 0]),
+        systems().Core.connect(user2).setPoolConfiguration(poolId, [{ market: 1, weight: 1, maxDebtShareValue: 0 }]),
         `Unauthorized("${await user2.getAddress()}")`,
-        systems().Core
-      );
-    });
-
-    it('reverts with more weights than markets', async () => {
-      await assertRevert(
-        systems().Core.connect(owner).setPoolConfiguration(poolId, [1], [1, 2], [0, 0]),
-        'InvalidParameters("markets.length,weights.length,maxDebtShareValues.length", "must match")',
-        systems().Core
-      );
-    });
-
-    it('reverts with more markets than weights', async () => {
-      await assertRevert(
-        systems().Core.connect(owner).setPoolConfiguration(poolId, [1, 2], [1], [0, 0]),
-        'InvalidParameters("markets.length,weights.length,maxDebtShareValues.length", "must match")',
         systems().Core
       );
     });
@@ -104,7 +88,11 @@ describe('PoolModule Admin', function () {
       await assertRevert(
         systems()
           .Core.connect(owner)
-          .setPoolConfiguration(poolId, [1, 2, 92197628], [1, 1, 1], [0, 0, 0]),
+          .setPoolConfiguration(poolId, [
+            { market: 1, weight: 1, maxDebtShareValue: 0 },
+            { market: 2, weight: 1, maxDebtShareValue: 0 },
+            { market: 92197628, weight: 1, maxDebtShareValue: 0 }
+           ]),
         'MarketNotFound(92197628)',
         systems().Core
       );
@@ -112,8 +100,22 @@ describe('PoolModule Admin', function () {
 
     it('reverts when a marketId is duplicated', async () => {
       await assertRevert(
-        systems().Core.connect(owner).setPoolConfiguration(poolId, [1, 1], [1, 1], [0, 0]),
+        systems().Core.connect(owner).setPoolConfiguration(poolId, [
+          { market: 1, weight: 1, maxDebtShareValue: 0 },
+          { market: 1, weight: 2, maxDebtShareValue: 0 },
+         ]),
         'InvalidParameters("markets"',
+        systems().Core
+      );
+    });
+
+    it('reverts when a weight is 0', async () => {
+      await assertRevert(
+        systems().Core.connect(owner).setPoolConfiguration(poolId, [
+          { market: 1, weight: 1, maxDebtShareValue: 0 },
+          { market: 2, weight: 0, maxDebtShareValue: 0 },
+         ]),
+        'InvalidParameters("weights"',
         systems().Core
       );
     });
@@ -129,7 +131,7 @@ describe('PoolModule Admin', function () {
       before(restore);
 
       before('set pool position', async () => {
-        await systems().Core.connect(owner).setPoolConfiguration(poolId, [marketId()], [1], [One]);
+        await systems().Core.connect(owner).setPoolConfiguration(poolId, [{ market: marketId(), weight: 1, maxDebtShareValue: One }]);
       });
 
       it('sets market collateral', async () => {
@@ -143,15 +145,21 @@ describe('PoolModule Admin', function () {
         before('set pool position', async () => {
           await systems()
             .Core.connect(owner)
-            .setPoolConfiguration(poolId, [marketId(), marketId2], [1, 3], [One, One]);
+            .setPoolConfiguration(poolId, [
+              { market: marketId(), weight: 1, maxDebtShareValue: One },
+              { market: marketId2, weight: 3, maxDebtShareValue: One }
+            ]);
         });
 
         it('returns pool position correctly', async () => {
-          assert.deepEqual(await systems().Core.getPoolConfiguration(poolId), [
-            [marketId(), ethers.BigNumber.from(marketId2)],
-            [ethers.BigNumber.from(1), ethers.BigNumber.from(3)],
-            [One, One],
-          ]);
+          const distributions = await systems().Core.getPoolConfiguration(poolId);
+
+          assertBn.equal(distributions[0].market, marketId());
+          assertBn.equal(distributions[0].weight, 1);
+          assertBn.equal(distributions[0].maxDebtShareValue, One);
+          assertBn.equal(distributions[1].market, marketId2);
+          assertBn.equal(distributions[1].weight, 3);
+          assertBn.equal(distributions[1].maxDebtShareValue, One);
         });
 
         it('sets market available liquidity', async () => {
@@ -188,11 +196,11 @@ describe('PoolModule Admin', function () {
 
           describe('exit the markets', () => {
             before('set pool position', async () => {
-              await systems().Core.connect(owner).setPoolConfiguration(poolId, [], [], []);
+              await systems().Core.connect(owner).setPoolConfiguration(poolId, []);
             });
 
             it('returns pool position correctly', async () => {
-              assert.deepEqual(await systems().Core.getPoolConfiguration(poolId), [[], [], []]);
+              assert.deepEqual(await systems().Core.getPoolConfiguration(poolId), []);
             });
 
             it('debt is still assigned', async () => {
@@ -231,9 +239,7 @@ describe('PoolModule Admin', function () {
           .Core.connect(owner)
           .setPoolConfiguration(
             poolId,
-            [marketId()],
-            [1],
-            [One.mul(One.mul(-1)).div(depositAmount)]
+            [{ market: marketId(), weight: 1, maxDebtShareValue: One.mul(One.mul(-1)).div(depositAmount) }]
           );
       });
 
@@ -254,9 +260,7 @@ describe('PoolModule Admin', function () {
           .Core.connect(user1)
           .setPoolConfiguration(
             secondPoolId,
-            [marketId()],
-            [1],
-            [One.mul(One).div(depositAmount).mul(2)]
+            [{ market: marketId(), weight: 1, maxDebtShareValue: One.mul(One).div(depositAmount).mul(2) }]
           );
       });
 
@@ -453,7 +457,7 @@ describe('PoolModule Admin', function () {
       });
 
       before('set pool position', async () => {
-        await systems().Core.connect(owner).setPoolConfiguration(poolId, [marketId()], [1], [One]);
+        await systems().Core.connect(owner).setPoolConfiguration(poolId, [{ market: marketId(), weight: 1, maxDebtShareValue: One }]);
         await systems().Core.connect(user1).getVaultDebt(poolId, collateralAddress());
       });
 

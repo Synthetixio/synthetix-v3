@@ -46,9 +46,7 @@ describe('VaultModule', function () {
       .Core.connect(owner)
       .setPoolConfiguration(
         poolId,
-        [marketId],
-        [ethers.utils.parseEther('1')],
-        [ethers.utils.parseEther('10000000000000000')]
+        [{ market: marketId, weight: ethers.utils.parseEther('1'), maxDebtShareValue: ethers.utils.parseEther('10000000000000000') }]
       );
   });
 

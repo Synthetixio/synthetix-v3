@@ -195,9 +195,7 @@ export function bootstrapWithMockMarketAndPool() {
       .Core.connect(owner)
       .setPoolConfiguration(
         r.poolId,
-        [marketId],
-        [ethers.utils.parseEther('1')],
-        [ethers.utils.parseEther('1')]
+        [{ market: marketId, weight: ethers.utils.parseEther('1'), maxDebtShareValue: ethers.utils.parseEther('1') }],
       );
   });
 

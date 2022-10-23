@@ -8,4 +8,8 @@ interface IMarket {
 
     /// @notice returns amount of USD that the market would try to mint if everything was withdrawn
     function reportedDebt(uint128 marketId) external view returns (uint);
+
+    /// @notice returns the amount of collateral which should (in addition to `reportedDebt`) be prevented from withdrawing from this market
+    /// if your market does not require locking, set this to `0`
+    function locked(uint128 marketId) external view returns (uint);
 }

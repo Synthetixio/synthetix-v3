@@ -1,6 +1,8 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import "../storage/MarketDistribution.sol";
+
 /// @title Module for managing pool token and pools positions distribution
 interface IPoolModule {
     event PoolCreated(uint128 indexed poolId, address indexed owner);
@@ -12,8 +14,7 @@ interface IPoolModule {
     event PoolNameUpdated(uint128 indexed poolId, string indexed name, address indexed sender);
     event PoolConfigurationSet(
         uint128 indexed poolId,
-        uint128[] indexed markets,
-        uint[] indexed weights,
+        MarketDistribution.Data[] indexed markets,
         address executedBy
     );
 
@@ -23,9 +24,7 @@ interface IPoolModule {
     /// @notice sets the pool positions (only poolToken owner)
     function setPoolConfiguration(
         uint128 poolId,
-        uint128[] calldata markets,
-        uint[] calldata weights,
-        int[] calldata maxDebtShareValues
+        MarketDistribution.Data[] memory marketDistribution
     ) external;
 
     /// @notice gets the pool positions
@@ -33,9 +32,7 @@ interface IPoolModule {
         external
         view
         returns (
-            uint[] memory markets,
-            uint[] memory weights,
-            int[] memory maxDebtShareValues
+            MarketDistribution.Data[] memory markets
         );
 
     /// @notice sets the pool name
