@@ -72,8 +72,8 @@ artifact = "contracts/modules/snx/SNXTokenModule.sol:SNXTokenModule"
 [contract.USDTokenModule]
 artifact = "contracts/modules/usd/USDTokenModule.sol:USDTokenModule"
 
-[contract.InitialTarget]
-artifact = "InitialTarget"
+[contract.InitialModuleBundle]
+artifact = "InitialModuleBundle"
 
 # Core
 [run.core_generate_router]
@@ -101,21 +101,54 @@ depends = [
 
 [contract.CoreRouter]
 artifact = "contracts/CoreRouter.sol:CoreRouter"
+abiOf = [
+  "OwnerModule",
+  "UpgradeModule",
+  "AccountModule",
+  "AssociateDebtModule",
+  "AssociatedSystemsModule",
+  "CollateralModule",
+  "LiquidationModule",
+  "MarketCollateralModule",
+  "MarketManagerModule",
+  "MulticallModule",
+  "PoolConfigurationModule",
+  "PoolModule",
+  "RewardsManagerModule",
+  "UtilsModule",
+  "VaultModule"
+]
 depends = ["run.core_generate_router"]
 
-[contract.CoreProxy]
+[contract.InitialCoreProxy]
 artifact = "contracts/Proxy.sol:Proxy"
-args = ["<%= contracts.InitialTarget.address %>"]
-depends = ["contract.InitialTarget"]
+args = ["<%= contracts.InitialModuleBundle.address %>"]
+abiOf = ["InitialModuleBundle"]
+
+depends = ["contract.InitialModuleBundle"]
+
+[invoke.acquire_ownership]
+target = ["InitialCoreProxy"]
+from = "<%= settings.owner %>"
+func = "initializeOwnerModule"
+args = ["<%= settings.owner %>"]
+depends = [
+  "contract.InitialCoreProxy",
+]
 
 [invoke.upgrade_core_proxy]
-target = ["CoreProxy"]
-abi = "contracts/modules/common/UpgradeModule.sol:UpgradeModule"
+target = ["InitialCoreProxy"]
+abi = "UpgradeModule"
 from = "<%= settings.owner %>"
 func = "upgradeTo"
 args = ["<%= contracts.CoreRouter.address %>"]
+
+factory.CoreProxy.abiOf = ["CoreRouter"]
+factory.CoreProxy.event = "Upgraded"
+factory.CoreProxy.arg = 0
+
 depends = [
-  "contract.CoreProxy",
+  "invoke.acquire_ownership",
   "contract.CoreRouter"
 ]
 
@@ -133,6 +166,11 @@ depends = [
 
 [contract.AccountRouter]
 artifact = "contracts/AccountRouter.sol:AccountRouter"
+abiOf = [
+  "OwnerModule",
+  "UpgradeModule",
+  "AccountTokenModule"
+]
 depends = ["run.account_generate_router"]
 
 # ESNX
@@ -149,6 +187,11 @@ depends = [
 
 [contract.ESNXRouter]
 artifact = "contracts/ESNXRouter.sol:ESNXRouter"
+abiOf = [
+  "OwnerModule",
+  "UpgradeModule",
+  "ESNXTokenModule"
+]
 depends = ["run.esnx_generate_router"]
 
 # SNX
@@ -165,6 +208,11 @@ depends = [
 
 [contract.SNXRouter]
 artifact = "contracts/SNXRouter.sol:SNXRouter"
+abiOf = [
+  "OwnerModule",
+  "UpgradeModule",
+  "SNXTokenModule"
+]
 depends = ["run.snx_generate_router"]
 
 # USD
@@ -181,18 +229,14 @@ depends = [
 
 [contract.USDRouter]
 artifact = "contracts/USDRouter.sol:USDRouter"
+abiOf = [
+  "OwnerModule",
+  "UpgradeModule",
+  "USDTokenModule"
+]
 depends = ["run.usd_generate_router"]
 
 # Post stuff
-
-[invoke.acquire_ownership]
-target = ["CoreProxy"]
-from = "<%= settings.owner %>"
-func = "initializeOwnerModule"
-args = ["<%= settings.owner %>"]
-depends = [
-  "invoke.upgrade_core_proxy",
-]
 
 [invoke.init_account]
 target = ["CoreProxy"]
@@ -206,10 +250,10 @@ args = [
   "<%= contracts.AccountRouter.address %>"
 ]
 depends = [
-  "invoke.acquire_ownership",
+  "invoke.upgrade_core_proxy",
   "contract.AccountRouter",
 ]
-factory.AccountProxy.abiOf = "AccountRouter"
+factory.AccountProxy.abiOf = ["AccountRouter"]
 factory.AccountProxy.event = "AssociatedSystemSet"
 factory.AccountProxy.arg = 2
 
@@ -225,10 +269,10 @@ args = [
   "<%= contracts.SNXRouter.address %>"
 ]
 depends = [
-  "invoke.acquire_ownership",
+  "invoke.upgrade_core_proxy",
   "contract.SNXRouter",
 ]
-factory.SNXProxy.abiOf = "SNXRouter"
+factory.SNXProxy.abiOf = ["SNXRouter"]
 factory.SNXProxy.event = "AssociatedSystemSet"
 factory.SNXProxy.arg = 2
 
@@ -244,10 +288,10 @@ args = [
   "<%= contracts.ESNXRouter.address %>"
 ]
 depends = [
-  "invoke.acquire_ownership",
+  "invoke.upgrade_core_proxy",
   "contract.ESNXRouter",
 ]
-factory.ESNXProxy.abiOf = "ESNXRouter"
+factory.ESNXProxy.abiOf = ["ESNXRouter"]
 factory.ESNXProxy.event = "AssociatedSystemSet"
 factory.ESNXProxy.arg = 2
 
@@ -263,9 +307,9 @@ args = [
   "<%= contracts.USDRouter.address %>"
 ]
 depends = [
-  "invoke.acquire_ownership",
+  "invoke.upgrade_core_proxy",
   "contract.USDRouter",
 ]
-factory.USDProxy.abiOf = "USDRouter"
+factory.USDProxy.abiOf = ["USDRouter"]
 factory.USDProxy.event = "AssociatedSystemSet"
 factory.USDProxy.arg = 2
