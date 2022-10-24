@@ -13,6 +13,12 @@ import "@synthetixio/core-modules/contracts/mixins/AssociatedSystemsMixin.sol";
 // TODO: Move to core-contracts
 import "../../utils/ERC20Helper.sol";
 
+/**
+ * @title TODO
+ *
+ * TODO: Consider splitting this into CollateralConfigurationModule and CollateralModule.
+ * The former is for owner only stuff, and the latter for users.
+ */
 contract CollateralModule is ICollateralModule, OwnableMixin, AssociatedSystemsMixin {
     using SetUtil for SetUtil.AddressSet;
     using ERC20Helper for address;
@@ -35,6 +41,9 @@ contract CollateralModule is ICollateralModule, OwnableMixin, AssociatedSystemsM
 
     error InsufficientAccountCollateral(uint amount);
 
+    /**
+     * @dev See {ICollateralModule-configureCollateral}.
+     */
     function configureCollateral(
         address collateralType,
         address priceFeed,
@@ -54,6 +63,9 @@ contract CollateralModule is ICollateralModule, OwnableMixin, AssociatedSystemsM
         emit CollateralConfigured(collateralType, priceFeed, targetCRatio, minimumCRatio, liquidationReward, stakingEnabled);
     }
 
+    /**
+     * @dev See {ICollateralModule-getCollateralConfigurations}.
+     */
     function getCollateralConfigurations(bool hideDisabled)
         external
         view
@@ -79,6 +91,9 @@ contract CollateralModule is ICollateralModule, OwnableMixin, AssociatedSystemsM
         return filteredCollaterals;
     }
 
+    /**
+     * @dev See {ICollateralModule-getCollateralConfiguration}.
+     */
     function getCollateralConfiguration(address collateralType)
         external
         view
@@ -126,22 +141,30 @@ contract CollateralModule is ICollateralModule, OwnableMixin, AssociatedSystemsM
         emit CollateralDeposited(accountId, collateralType, amount, msg.sender);
     }
 
+    /**
+     * @dev See {ICollateralModule-withdrawCollateral}.
+     */
     function withdrawCollateral(
         uint128 accountId,
         address collateralType,
         uint amount
     ) public override onlyWithPermission(accountId, AccountRBAC._WITHDRAW_PERMISSION) {
-        if (Account.load(accountId).collaterals[collateralType].availableAmount < amount) {
+        Account.Data storage account = Account.load(accountId);
+
+        if (account.collaterals[collateralType].availableAmount < amount) {
             revert InsufficientAccountCollateral(amount);
         }
 
-        Account.load(accountId).collaterals[collateralType].deductCollateral(amount);
+        account.collaterals[collateralType].deductCollateral(amount);
 
-        collateralType.safeTransfer(Account.load(accountId).rbac.owner, amount);
+        collateralType.safeTransfer(account.rbac.owner, amount);
 
         emit CollateralWithdrawn(accountId, collateralType, amount, msg.sender);
     }
 
+    /**
+     * @dev See {ICollateralModule-getAccountCollateral}.
+     */
     function getAccountCollateral(uint128 accountId, address collateralType)
         external
         view
@@ -155,10 +178,16 @@ contract CollateralModule is ICollateralModule, OwnableMixin, AssociatedSystemsM
         return Account.load(accountId).getCollateralTotals(collateralType);
     }
 
+    /**
+     * @dev See {ICollateralModule-getAccountAvailableCollateral}.
+     */
     function getAccountAvailableCollateral(uint128 accountId, address collateralType) public view override returns (uint) {
         return Account.load(accountId).collaterals[collateralType].availableAmount;
     }
 
+    /**
+     * @dev See {ICollateralModule-cleanExpiredLocks}.
+     */
     function cleanExpiredLocks(
         uint128 accountId,
         address collateralType,
@@ -168,6 +197,9 @@ contract CollateralModule is ICollateralModule, OwnableMixin, AssociatedSystemsM
         _cleanExpiredLocks(Account.load(accountId).collaterals[collateralType].locks, offset, items);
     }
 
+    /**
+     * @dev See {ICollateralModule-createLock}.
+     */
     function createLock(
         uint128 accountId,
         address collateralType,
@@ -243,6 +275,9 @@ contract CollateralModule is ICollateralModule, OwnableMixin, AssociatedSystemsM
         return (amount * duration) / _SECONDS_PER_YEAR;
     }*/
 
+    /**
+     * @dev TODO
+     */
     function _cleanExpiredLocks(
         CollateralLock.Data[] storage locks,
         uint offset,
@@ -271,6 +306,9 @@ contract CollateralModule is ICollateralModule, OwnableMixin, AssociatedSystemsM
         }
     }
 
+    /**
+     * @dev TODO
+     */
     modifier onlyWithPermission(uint128 accountId, bytes32 permission) {
         if (!Account.load(accountId).rbac.authorized(permission, msg.sender)) {
             revert PermissionDenied(accountId, permission, msg.sender);
@@ -279,6 +317,9 @@ contract CollateralModule is ICollateralModule, OwnableMixin, AssociatedSystemsM
         _;
     }
 
+    /**
+     * @dev TODO
+     */
     modifier collateralEnabled(address collateralType) {
         if (!CollateralConfiguration.load(collateralType).stakingEnabled) {
             revert InvalidCollateral(collateralType);

@@ -82,9 +82,6 @@ library Distribution {
      */
     error InconsistentDistribution();
 
-    /**
-     * @dev The properties of a Distribution object.
-     */
     struct Data {
         /**
          * @dev The total number of shares in the distribution.
