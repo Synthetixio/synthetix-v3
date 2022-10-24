@@ -11,7 +11,6 @@ import "../../storage/CollateralConfiguration.sol";
 import "../../storage/CollateralLock.sol";
 import "@synthetixio/core-modules/contracts/mixins/AssociatedSystemsMixin.sol";
 
-// TODO: Move to core-contracts
 import "../../utils/ERC20Helper.sol";
 
 /**

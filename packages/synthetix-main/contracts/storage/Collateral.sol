@@ -69,8 +69,8 @@ library Collateral {
     /**
      * @dev Returns the total amount in this collateral entry that is locked.
      *
-     * Sweeps through all existing locks and accumulates the its amount
-     * if its unlock date is in the future.
+     * Sweeps through all existing locks and accumulates their amount,
+     * if their unlock date is in the future.
      */
     function getTotalLocked(Data storage self) internal view returns (uint) {
         uint64 currentTime = uint64(block.timestamp);

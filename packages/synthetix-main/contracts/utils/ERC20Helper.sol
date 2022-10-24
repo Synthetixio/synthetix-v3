@@ -3,6 +3,7 @@ pragma solidity >=0.8.0;
 
 import "@synthetixio/core-contracts/contracts/interfaces/IERC20.sol";
 
+// TODO: Move to core-contracts
 library ERC20Helper {
     error FailedTransfer(address from, address to, uint value);
 
