@@ -5,6 +5,7 @@ import { ethers } from 'ethers';
 import { bootstrapWithNodes } from '../bootstrap';
 import NodeTypes from '../mixins/Node.types';
 import NodeOperations from '../mixins/Node.operations';
+import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 
 describe('NodeModule', function () {
   const { signers, systems, nodeId1, nodeId2, nodeId3, abi } = bootstrapWithNodes();
@@ -94,5 +95,17 @@ describe('NodeModule', function () {
 
     const priceData = await systems().Core.connect(owner).process(nodeId);
     assertBn.equal(priceData.price, ethers.utils.parseEther('0.9'));
+  });
+
+  it('reverts on register a node with invalid parent', async () => {
+    const invalidNode = abi.encode(['int'], [0]);
+
+    await assertRevert(
+      systems()
+        .Core.connect(owner)
+        .registerNode([invalidNode], NodeTypes.REDUCER, abi.encode(['int'], [NodeOperations.MAX])),
+      `NodeNotRegistered("${invalidNode}")`,
+      systems().Core
+    );
   });
 });

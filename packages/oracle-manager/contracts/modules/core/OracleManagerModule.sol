@@ -13,6 +13,7 @@ import "../../storage/NodeDefinition.sol";
 
 contract OracleManagerModule is IOracleManagerModule {
     error UnsupportedNodeType(uint nodeType);
+    error NodeNotRegistered(bytes32 nodeId);
 
     function registerNode(
         bytes32[] memory parents,
@@ -82,12 +83,12 @@ contract OracleManagerModule is IOracleManagerModule {
         onlyValidNodeType(nodeDefinition.nodeType)
         returns (bytes32 nodeId)
     {
-        // //check and make sure all nodeDefinition.parents are already registered
-        // for (uint256 i = 0; i < nodeDefinition.parents.length; i++) {
-        //     if (!_nodeIsRegistered(nodeDefinition.parents[i])) {
-        //         revert("Parent not registered");
-        //     }
-        // }
+        // checks nodeDefinition.parents if they are valid
+        for (uint256 i = 0; i < nodeDefinition.parents.length; i++) {
+            if (!_nodeIsRegistered(nodeDefinition.parents[i])) {
+                revert NodeNotRegistered(nodeDefinition.parents[i]);
+            }
+        }
 
         nodeId = _getNodeId(nodeDefinition);
         Node.load().nodes[nodeId] = nodeDefinition;
