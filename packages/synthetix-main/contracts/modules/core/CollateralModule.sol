@@ -299,7 +299,7 @@ contract CollateralModule is ICollateralModule, OwnableMixin, AccountMixin, Asso
     }*/
 
     /**
-     * @dev TODO
+     * @dev Requires that the given collateral type is enabled for staking.
      */
     modifier collateralEnabled(address collateralType) {
         if (!CollateralConfiguration.load(collateralType).stakingEnabled) {
