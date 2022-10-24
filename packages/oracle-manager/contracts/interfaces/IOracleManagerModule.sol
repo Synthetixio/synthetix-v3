@@ -19,5 +19,5 @@ interface IOracleManagerModule {
 
     function getNode(bytes32 nodeId) external view returns (OracleManagerStorage.NodeDefinition memory);
 
-    function process(bytes32 nodeId) external returns (OracleManagerStorage.NodeData memory);
+    function process(bytes32 nodeId) external view returns (OracleManagerStorage.NodeData memory);
 }

@@ -24,7 +24,10 @@ describe('NodeModule', function () {
 
   it('Test price on leaf nodes', async () => {
     let priceData = await systems().Core.connect(owner).process(nodeId1());
+    console.log('priceData:', priceData);
     assertBn.equal(priceData.price, ethers.utils.parseEther('1'));
+
+
 
     priceData = await systems().Core.connect(owner).process(nodeId2());
     assertBn.equal(priceData.price, ethers.utils.parseEther('0.9'));

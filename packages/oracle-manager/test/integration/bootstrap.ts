@@ -17,7 +17,7 @@ async function loadSystems(
   for (const proxyName of proxies) {
     const { address, abi } = contracts[proxyName];
     const name = proxyName.slice(0, -5); // remove "Proxy" from the end
-    systems[name] = new ethers.Contract(address, abi, provider);
+    systems[name || 'Core'] = new ethers.Contract(address, abi, provider);
   }
 
   return systems;

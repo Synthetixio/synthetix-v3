@@ -43,7 +43,7 @@ contract OracleManagerModule is IOracleManagerModule, NodeMixin {
         return _getNode(nodeId);
     }
 
-    function process(bytes32 nodeId) external returns (NodeData memory) {
+    function process(bytes32 nodeId) external view returns (NodeData memory) {
         return _process(nodeId);
     }
 
@@ -72,7 +72,7 @@ contract OracleManagerModule is IOracleManagerModule, NodeMixin {
         return (nodeDefinition.nodeType != NodeType.NONE);
     }
 
-    function _process(bytes32 nodeId) internal returns (NodeData memory price) {
+    function _process(bytes32 nodeId) internal view returns (NodeData memory price) {
         NodeDefinition memory nodeDefinition = _oracleManagerStore().nodes[nodeId];
 
         NodeData[] memory prices = new NodeData[](nodeDefinition.parents.length);

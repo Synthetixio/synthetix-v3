@@ -3,7 +3,7 @@ const {
   TASK_DEPLOY,
   SUBTASK_GET_MULTICALL_ABI,
   SUBTASK_GET_DEPLOYMENT_INFO,
-} = require('@synthetixio/hardhat-router/task-names');
+} = require('@synthetixio/hardhat-router/dist/task-names');
 
 /**
  * Generate the file contracts/Router.sol including the given modules in its source.
@@ -67,6 +67,8 @@ module.exports.deploy = async function deploy(runtime, prefix, modules) {
     }
 
     contracts[prefix + c.contractName] = {
+      contractName: c.contractName,
+      sourceName: c.sourceName,
       address: c.deployedAddress,
       abi: abis[c.contractFullyQualifiedName],
       deployTxnHash: c.deployTransaction,

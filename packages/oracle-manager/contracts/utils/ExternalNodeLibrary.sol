@@ -7,6 +7,7 @@ import "../interfaces/external/IExternalNode.sol";
 library ExternalNodeLibrary {
     function process(OracleManagerStorage.NodeData[] memory prices, bytes memory parameters)
         internal
+        view
         returns (OracleManagerStorage.NodeData memory)
     {
         IExternalNode externalNode = IExternalNode(abi.decode(parameters, (address)));

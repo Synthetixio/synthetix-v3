@@ -7,5 +7,6 @@ import "../../storage/OracleManagerStorage.sol";
 interface IExternalNode {
     function process(OracleManagerStorage.NodeData[] memory prices, bytes memory parameters)
         external
+        view
         returns (OracleManagerStorage.NodeData memory);
 }
