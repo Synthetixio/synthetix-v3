@@ -100,7 +100,7 @@ depends = [
 ]
 
 [contract.CoreRouter]
-artifact = "contracts/CoreRouter.sol:CoreRouter"
+artifact = "contracts/routers/chain-<%= chainId %>/CoreRouter.sol:CoreRouter"
 abiOf = [
   "OwnerModule",
   "UpgradeModule",
@@ -165,7 +165,7 @@ depends = [
 ]
 
 [contract.AccountRouter]
-artifact = "contracts/AccountRouter.sol:AccountRouter"
+artifact = "contracts/routers/chain-<%= chainId %>/AccountRouter.sol:AccountRouter"
 abiOf = [
   "OwnerModule",
   "UpgradeModule",
@@ -186,7 +186,7 @@ depends = [
 ]
 
 [contract.ESNXRouter]
-artifact = "contracts/ESNXRouter.sol:ESNXRouter"
+artifact = "contracts/routers/chain-<%= chainId %>/ESNXRouter.sol:ESNXRouter"
 abiOf = [
   "OwnerModule",
   "UpgradeModule",
@@ -207,7 +207,7 @@ depends = [
 ]
 
 [contract.SNXRouter]
-artifact = "contracts/SNXRouter.sol:SNXRouter"
+artifact = "contracts/routers/chain-<%= chainId %>/SNXRouter.sol:SNXRouter"
 abiOf = [
   "OwnerModule",
   "UpgradeModule",
@@ -228,7 +228,7 @@ depends = [
 ]
 
 [contract.USDRouter]
-artifact = "contracts/USDRouter.sol:USDRouter"
+artifact = "contracts/routers/chain-<%= chainId %>/USDRouter.sol:USDRouter"
 abiOf = [
   "OwnerModule",
   "UpgradeModule",

@@ -52,6 +52,7 @@
   },
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "2.1.1",
+    "@types/mkdirp": "1.0.2",
     "@types/mustache": "4.2.1",
     "@types/string-natural-compare": "3.0.2",
     "hardhat": "2.11.2",

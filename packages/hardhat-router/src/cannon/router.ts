@@ -1,5 +1,6 @@
 import fs from 'node:fs/promises';
-import path from 'node:path';
+import mkdirp from 'mkdirp';
+import path, { dirname } from 'node:path';
 import hre from 'hardhat';
 import { generateRouter } from '../internal/generate-router';
 
@@ -46,7 +47,9 @@ exports.generate = async function generate(
     contracts,
   });
 
-  const routerPath = path.join(hre.config.paths.sources, `${routerName}.sol`);
+  const routerPath = path.join(hre.config.paths.sources, `routers/chain-${hre.network.config.chainId}`, `${routerName}.sol`);
+  await mkdirp(dirname(routerPath));
+
   await fs.writeFile(routerPath, generatedSource);
 
   // need to re-run compile to ensure artifact is available to cannon
