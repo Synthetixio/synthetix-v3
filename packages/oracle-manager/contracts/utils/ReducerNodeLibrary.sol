@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0;
 
-import "../storage/OracleManagerStorage.sol";
+import "../storage/NodeData.sol";
 
 library ReducerNodeLibrary {
     error UnsupportedOperation(uint operation);
@@ -14,11 +14,7 @@ library ReducerNodeLibrary {
         RECENT
     }
 
-    function process(OracleManagerStorage.NodeData[] memory prices, bytes memory parameters)
-        internal
-        pure
-        returns (OracleManagerStorage.NodeData memory)
-    {
+    function process(NodeData.Data[] memory prices, bytes memory parameters) internal pure returns (NodeData.Data memory) {
         Operations operation = abi.decode(parameters, (Operations));
 
         if (operation == Operations.MAX) {
@@ -40,20 +36,12 @@ library ReducerNodeLibrary {
         revert UnsupportedOperation(uint(operation));
     }
 
-    function median(OracleManagerStorage.NodeData[] memory prices)
-        internal
-        pure
-        returns (OracleManagerStorage.NodeData memory medianPrice)
-    {
+    function median(NodeData.Data[] memory prices) internal pure returns (NodeData.Data memory medianPrice) {
         quickSort(prices, int(0), int(prices.length - 1));
         return prices[uint(prices.length / 2)];
     }
 
-    function mean(OracleManagerStorage.NodeData[] memory prices)
-        internal
-        pure
-        returns (OracleManagerStorage.NodeData memory meanPrice)
-    {
+    function mean(NodeData.Data[] memory prices) internal pure returns (NodeData.Data memory meanPrice) {
         for (uint256 i = 0; i < prices.length; i++) {
             meanPrice.price += prices[i].price;
             meanPrice.timestamp += prices[i].timestamp;
@@ -63,11 +51,7 @@ library ReducerNodeLibrary {
         meanPrice.timestamp = meanPrice.timestamp / prices.length;
     }
 
-    function recent(OracleManagerStorage.NodeData[] memory prices)
-        internal
-        pure
-        returns (OracleManagerStorage.NodeData memory recentPrice)
-    {
+    function recent(NodeData.Data[] memory prices) internal pure returns (NodeData.Data memory recentPrice) {
         for (uint256 i = 0; i < prices.length; i++) {
             if (prices[i].timestamp > recentPrice.timestamp) {
                 recentPrice = prices[i];
@@ -75,11 +59,7 @@ library ReducerNodeLibrary {
         }
     }
 
-    function max(OracleManagerStorage.NodeData[] memory prices)
-        internal
-        pure
-        returns (OracleManagerStorage.NodeData memory maxPrice)
-    {
+    function max(NodeData.Data[] memory prices) internal pure returns (NodeData.Data memory maxPrice) {
         for (uint256 i = 0; i < prices.length; i++) {
             if (prices[i].price > maxPrice.price) {
                 maxPrice = prices[i];
@@ -87,11 +67,7 @@ library ReducerNodeLibrary {
         }
     }
 
-    function min(OracleManagerStorage.NodeData[] memory prices)
-        internal
-        pure
-        returns (OracleManagerStorage.NodeData memory minPrice)
-    {
+    function min(NodeData.Data[] memory prices) internal pure returns (NodeData.Data memory minPrice) {
         minPrice = prices[0];
         for (uint256 i = 0; i < prices.length; i++) {
             if (prices[i].price < minPrice.price) {
@@ -101,7 +77,7 @@ library ReducerNodeLibrary {
     }
 
     function quickSort(
-        OracleManagerStorage.NodeData[] memory arr,
+        NodeData.Data[] memory arr,
         int left,
         int right
     ) internal pure {
