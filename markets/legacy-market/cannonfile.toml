@@ -8,7 +8,7 @@ defaultValue = "1"
 [setting.market_id]
 defaultValue = "1"
 
-[setting.owner]
+[setting.owner] # this has to be the same owner as CoreProxy
 defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
 
 [setting.pool_owner]
@@ -36,29 +36,13 @@ fromCall.func = "owner"
 
 depends = ["import.v2x", "import.v3"]
 
-# enable pool creation feature
-[invoke.enablePoolCreation]
-target = ["v3.CoreProxy"]
-func = "setFeatureFlag"
-args = ["0x706f6f6c00000000000000000000000000000000000000000000000000000000", true] # formatBytes32String("pool")
-fromCall.func = "owner"
-depends = ["import.v3"]
-
-# enable market creation feature
-[invoke.enableMarketCreation]
-target = ["v3.CoreProxy"]
-func = "setFeatureFlag"
-args = ["0x6d61726b65740000000000000000000000000000000000000000000000000000", true] # formatBytes32String("market")
-fromCall.func = "owner"
-depends = ["import.v3"]
-
 # add pool owner to pool feature flag allow list
 [invoke.addPoolOwnerToPoolFeatureFlag]
 target = ["v3.CoreProxy"]
 func = "addToFeatureFlag"
 args = ["0x706f6f6c00000000000000000000000000000000000000000000000000000000", "<%= settings.pool_owner %>"] # formatBytes32String("pool")
 fromCall.func = "owner"
-depends = ["invoke.enablePoolCreation"]
+depends = ["import.v3"]
 
 # add pool owner to market feature flag allow list
 [invoke.addPoolOwnerToMarketFeatureFlag]
@@ -66,7 +50,7 @@ target = ["v3.CoreProxy"]
 func = "addToFeatureFlag"
 args = ["0x6d61726b65740000000000000000000000000000000000000000000000000000", "<%= settings.pool_owner %>"] # formatBytes32String("market")
 fromCall.func = "owner"
-depends = ["invoke.enableMarketCreation"]
+depends = ["import.v3"]
 
 # deploy the legacy market
 [contract.market]

@@ -71,10 +71,8 @@ export function bootstrap() {
     baseSystemSnapshot = await provider.send('evm_snapshot', []);
   });
 
-  before('enable feature flags', async () => {
+  before('give owner permission to create pools and markets', async () => {
     const owner = signers[0];
-    await systems.Core.connect(owner).setFeatureFlag(POOL_FEATURE_FLAG, true);
-    await systems.Core.connect(owner).setFeatureFlag(MARKET_FEATURE_FLAG, true);
     await systems.Core.connect(owner).addToFeatureFlag(POOL_FEATURE_FLAG, await owner.getAddress());
     await systems.Core.connect(owner).addToFeatureFlag(
       MARKET_FEATURE_FLAG,
