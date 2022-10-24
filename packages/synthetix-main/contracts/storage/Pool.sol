@@ -92,7 +92,7 @@ library Pool {
             );
         }
 
-        poolDist.distribute(cumulativeDebtChange);
+        poolDist.distributeValue(cumulativeDebtChange);
     }
 
     function calculatePermissibleLiquidity(

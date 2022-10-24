@@ -26,7 +26,7 @@ library VaultEpoch {
     }
 
     function distributeDebt(Data storage self, int debtChange) internal {
-        self.debtDist.distribute(debtChange);
+        self.debtDist.distributeValue(debtChange);
 
         // total debt unfortunately needs to be cached here for liquidations
         self.unclaimedDebt += int128(debtChange);
