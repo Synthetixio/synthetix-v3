@@ -13,7 +13,7 @@ source = "synthetix:3"
 [invoke.enablePoolCreation]
 target = ["v3.CoreProxy"]
 func = "setFeatureFlag"
-args = ["0x706f6f6c00000000000000000000000000000000000000000000000000000000", true] # formatBytes32String("pool")
+args = ["0x6d61726b65740000000000000000000000000000000000000000000000000000", true] # formatBytes32String("market")
 fromCall.func = "owner"
 depends = ["import.synthetix"]
 
@@ -21,7 +21,7 @@ depends = ["import.synthetix"]
 [invoke.addPoolOwnerToFeatureFlag]
 target = ["v3.CoreProxy"]
 func = "addToFeatureFlag"
-args = ["0x706f6f6c00000000000000000000000000000000000000000000000000000000", "<%= settings.marketOwner %>"] # formatBytes32String("pool")
+args = ["0x6d61726b65740000000000000000000000000000000000000000000000000000", "<%= settings.marketOwner %>"] # formatBytes32String("market")
 fromCall.func = "owner"
 depends = ["invoke.enablePoolCreation"]
 

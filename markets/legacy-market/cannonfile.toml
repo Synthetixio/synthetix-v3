@@ -44,13 +44,29 @@ args = ["0x706f6f6c00000000000000000000000000000000000000000000000000000000", tr
 fromCall.func = "owner"
 depends = ["import.v3"]
 
-# add pool owner to feature flag allow list
-[invoke.addPoolOwnerToFeatureFlag]
+# enable market creation feature
+[invoke.enableMarketCreation]
+target = ["v3.CoreProxy"]
+func = "setFeatureFlag"
+args = ["0x6d61726b65740000000000000000000000000000000000000000000000000000", true] # formatBytes32String("market")
+fromCall.func = "owner"
+depends = ["import.v3"]
+
+# add pool owner to pool feature flag allow list
+[invoke.addPoolOwnerToPoolFeatureFlag]
 target = ["v3.CoreProxy"]
 func = "addToFeatureFlag"
 args = ["0x706f6f6c00000000000000000000000000000000000000000000000000000000", "<%= settings.pool_owner %>"] # formatBytes32String("pool")
 fromCall.func = "owner"
 depends = ["invoke.enablePoolCreation"]
+
+# add pool owner to market feature flag allow list
+[invoke.addPoolOwnerToMarketFeatureFlag]
+target = ["v3.CoreProxy"]
+func = "addToFeatureFlag"
+args = ["0x6d61726b65740000000000000000000000000000000000000000000000000000", "<%= settings.pool_owner %>"] # formatBytes32String("market")
+fromCall.func = "owner"
+depends = ["invoke.enableMarketCreation"]
 
 # deploy the legacy market
 [contract.market]
@@ -94,7 +110,7 @@ target = ["v3.CoreProxy"]
 func = "createPool"
 args = ["<%= settings.sc_pool_id %>", "<%= settings.pool_owner %>"]
 
-depends = ["invoke.enablePoolCreation", "contract.market"]
+depends = ["invoke.addPoolOwnerToPoolFeatureFlag", "contract.market"]
 
 [invoke.configurePool]
 target = ["v3.CoreProxy"]
