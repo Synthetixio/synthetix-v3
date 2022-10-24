@@ -15,7 +15,7 @@ import "@synthetixio/core-modules/contracts/mixins/AssociatedSystemsMixin.sol";
 import "../../utils/ERC20Helper.sol";
 
 /**
- * @title TODO
+ * @title {ICollateralModule-configureCollateral}
  *
  * TODO: Consider splitting this into CollateralConfigurationModule and CollateralModule.
  * The former is for owner only stuff, and the latter for users.
@@ -227,13 +227,15 @@ contract CollateralModule is ICollateralModule, OwnableMixin, AccountMixin, Asso
         uint amount,
         uint64 expireTimestamp
     ) external override onlyWithPermission(accountId, AccountRBAC._ADMIN_PERMISSION) {
-        (uint totalStaked, , uint totalLocked) = Account.load(accountId).getCollateralTotals(collateralType);
+        Account.Data storage account = Account.load(accountId);
+
+        (uint totalStaked, , uint totalLocked) = account.getCollateralTotals(collateralType);
 
         if (totalStaked - totalLocked < amount) {
             revert InsufficientAccountCollateral(amount);
         }
 
-        Account.load(accountId).collaterals[collateralType].locks.push(CollateralLock.Data(amount, expireTimestamp));
+        account.collaterals[collateralType].locks.push(CollateralLock.Data(amount, expireTimestamp));
     }
 
     /*function getAccountUnstakebleCollateral(uint accountId, address collateralType) public view override returns (uint) {
