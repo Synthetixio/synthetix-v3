@@ -11,7 +11,7 @@ source = "synthetix:3"
 
 # enable pool creation feature
 [invoke.enablePoolCreation]
-target = ["v3.CoreProxy"]
+target = ["synthetix.CoreProxy"]
 func = "setFeatureFlag"
 args = ["0x6d61726b65740000000000000000000000000000000000000000000000000000", true] # formatBytes32String("market")
 fromCall.func = "owner"
@@ -19,7 +19,7 @@ depends = ["import.synthetix"]
 
 # add pool owner to feature flag allow list
 [invoke.addPoolOwnerToFeatureFlag]
-target = ["v3.CoreProxy"]
+target = ["synthetix.CoreProxy"]
 func = "addToFeatureFlag"
 args = ["0x6d61726b65740000000000000000000000000000000000000000000000000000", "<%= settings.marketOwner %>"] # formatBytes32String("market")
 fromCall.func = "owner"
