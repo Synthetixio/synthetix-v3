@@ -11,11 +11,12 @@ import "../../storage/DistributionEntry.sol";
 
 import "../../storage/Account.sol";
 import "../../storage/AccountRBAC.sol";
+import "../../mixins/AccountMixin.sol";
 import "../../storage/Pool.sol";
 
 import "../../interfaces/IRewardsManagerModule.sol";
 
-contract RewardsManagerModule is IRewardsManagerModule, OwnableMixin, AssociatedSystemsMixin {
+contract RewardsManagerModule is IRewardsManagerModule, OwnableMixin, AccountMixin, AssociatedSystemsMixin {
     using SetUtil for SetUtil.Bytes32Set;
     using MathUtil for uint256;
 
@@ -23,7 +24,6 @@ contract RewardsManagerModule is IRewardsManagerModule, OwnableMixin, Associated
     using Distribution for Distribution.Data;
     using DistributionEntry for DistributionEntry.Data;
 
-    error PermissionDenied(uint128 accountId, bytes32 permission, address target);
     error InvalidParameters(string incorrectParameter, string help);
 
     uint private constant _MAX_REWARD_DISTRIBUTIONS = 10;
@@ -147,13 +147,5 @@ contract RewardsManagerModule is IRewardsManagerModule, OwnableMixin, Associated
         }
 
         return rates;
-    }
-
-    modifier onlyWithPermission(uint128 accountId, bytes32 permission) {
-        if (!AccountRBAC.authorized(Account.load(accountId).rbac, permission, msg.sender)) {
-            revert PermissionDenied(accountId, permission, msg.sender);
-        }
-
-        _;
     }
 }

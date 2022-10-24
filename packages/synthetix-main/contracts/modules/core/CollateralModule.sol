@@ -6,6 +6,7 @@ import "@synthetixio/core-contracts/contracts/interfaces/IERC20.sol";
 
 import "../../interfaces/ICollateralModule.sol";
 import "../../storage/Account.sol";
+import "../../mixins/AccountMixin.sol";
 import "../../storage/CollateralConfiguration.sol";
 import "../../storage/CollateralLock.sol";
 import "@synthetixio/core-modules/contracts/mixins/AssociatedSystemsMixin.sol";
@@ -19,15 +20,13 @@ import "../../utils/ERC20Helper.sol";
  * TODO: Consider splitting this into CollateralConfigurationModule and CollateralModule.
  * The former is for owner only stuff, and the latter for users.
  */
-contract CollateralModule is ICollateralModule, OwnableMixin, AssociatedSystemsMixin {
+contract CollateralModule is ICollateralModule, OwnableMixin, AccountMixin, AssociatedSystemsMixin {
     using SetUtil for SetUtil.AddressSet;
     using ERC20Helper for address;
 
     using Account for Account.Data;
     using AccountRBAC for AccountRBAC.Data;
     using Collateral for Collateral.Data;
-
-    error PermissionDenied(uint128 accountId, bytes32 permission, address target);
 
     error InvalidCollateral(address collateralType);
 
@@ -296,17 +295,6 @@ contract CollateralModule is ICollateralModule, OwnableMixin, AssociatedSystemsM
     function _calculateRewardTokenMinted(uint amount, uint duration) internal pure returns (uint) {
         return (amount * duration) / _SECONDS_PER_YEAR;
     }*/
-
-    /**
-     * @dev TODO
-     */
-    modifier onlyWithPermission(uint128 accountId, bytes32 permission) {
-        if (!Account.load(accountId).rbac.authorized(permission, msg.sender)) {
-            revert PermissionDenied(accountId, permission, msg.sender);
-        }
-
-        _;
-    }
 
     /**
      * @dev TODO
