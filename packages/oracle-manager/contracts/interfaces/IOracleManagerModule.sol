@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "../storage/NodeData.sol";
+import "../storage/Node.sol";
 import "../storage/NodeDefinition.sol";
 
 /// @title Module for managing nodes
@@ -20,5 +20,5 @@ interface IOracleManagerModule {
 
     function getNode(bytes32 nodeId) external view returns (NodeDefinition.Data memory);
 
-    function process(bytes32 nodeId) external view returns (NodeData.Data memory);
+    function process(bytes32 nodeId) external view returns (Node.Data memory);
 }

@@ -8,7 +8,6 @@ import "../../utils/PythNodeLibrary.sol";
 import "../../utils/ChainlinkNodeLibrary.sol";
 
 import "../../storage/Node.sol";
-import "../../storage/NodeData.sol";
 import "../../storage/NodeDefinition.sol";
 
 contract OracleManagerModule is IOracleManagerModule {
@@ -43,16 +42,16 @@ contract OracleManagerModule is IOracleManagerModule {
         return _getNodeId(nodeDefinition);
     }
 
-    function getNode(bytes32 nodeId) external view returns (NodeDefinition.Data memory) {
+    function getNode(bytes32 nodeId) external pure returns (NodeDefinition.Data memory) {
         return _getNode(nodeId);
     }
 
-    function process(bytes32 nodeId) external view returns (NodeData.Data memory) {
+    function process(bytes32 nodeId) external view returns (Node.Data memory) {
         return _process(nodeId);
     }
 
-    function _getNode(bytes32 nodeId) internal view returns (NodeDefinition.Data memory nodeDefinition) {
-        nodeDefinition = Node.load().nodes[nodeId];
+    function _getNode(bytes32 nodeId) internal pure returns (NodeDefinition.Data storage) {
+        return NodeDefinition.load(nodeId);
     }
 
     modifier onlyValidNodeType(NodeDefinition.NodeType nodeType) {
@@ -74,8 +73,8 @@ contract OracleManagerModule is IOracleManagerModule {
         return false;
     }
 
-    function _getNodeId(NodeDefinition.Data memory nodeDefinition) internal pure returns (bytes32 nodeId) {
-        nodeId = keccak256(abi.encode(nodeDefinition.parents, nodeDefinition.nodeType, nodeDefinition.parameters));
+    function _getNodeId(NodeDefinition.Data memory nodeDefinition) internal pure returns (bytes32) {
+        return NodeDefinition.getId(nodeDefinition);
     }
 
     function _registerNode(NodeDefinition.Data memory nodeDefinition)
@@ -90,19 +89,18 @@ contract OracleManagerModule is IOracleManagerModule {
             }
         }
 
-        nodeId = _getNodeId(nodeDefinition);
-        Node.load().nodes[nodeId] = nodeDefinition;
+        (, nodeId) = NodeDefinition.create(nodeDefinition);
     }
 
     function _nodeIsRegistered(bytes32 nodeId) internal view returns (bool) {
-        NodeDefinition.Data memory nodeDefinition = Node.load().nodes[nodeId];
+        NodeDefinition.Data storage nodeDefinition = NodeDefinition.load(nodeId);
         return (nodeDefinition.nodeType != NodeDefinition.NodeType.NONE);
     }
 
-    function _process(bytes32 nodeId) internal view returns (NodeData.Data memory price) {
-        NodeDefinition.Data memory nodeDefinition = Node.load().nodes[nodeId];
+    function _process(bytes32 nodeId) internal view returns (Node.Data memory price) {
+        NodeDefinition.Data storage nodeDefinition = NodeDefinition.load(nodeId);
 
-        NodeData.Data[] memory prices = new NodeData.Data[](nodeDefinition.parents.length);
+        Node.Data[] memory prices = new Node.Data[](nodeDefinition.parents.length);
         for (uint256 i = 0; i < nodeDefinition.parents.length; i++) {
             prices[i] = this.process(nodeDefinition.parents[i]);
         }
