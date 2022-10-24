@@ -10,6 +10,7 @@ import "../../storage/CollateralConfiguration.sol";
 import "../../storage/CollateralLock.sol";
 import "@synthetixio/core-modules/contracts/mixins/AssociatedSystemsMixin.sol";
 
+// TODO: Move to core-contracts
 import "../../utils/ERC20Helper.sol";
 
 contract CollateralModule is ICollateralModule, OwnableMixin, AssociatedSystemsMixin {
@@ -95,16 +96,32 @@ contract CollateralModule is ICollateralModule, OwnableMixin, AssociatedSystemsM
     // DEPOSIT  /  WITHDRAW
     /////////////////////////////////////////////////
 
+    /**
+     * @dev See {ICollateralModule-depositCollateral}.
+     */
     function depositCollateral(
         uint128 accountId,
         address collateralType,
         uint amount
     ) public override onlyWithPermission(accountId, AccountRBAC._DEPOSIT_PERMISSION) collateralEnabled(collateralType) {
-        // TODO: deposit (and withdraw) should be transferring from/to msg.sender
-        // if the user has permission for such operation then it is most natural for that to be the case
-        collateralType.safeTransferFrom(Account.load(accountId).rbac.owner, address(this), amount);
+        Account.Data storage account = Account.load(accountId);
 
-        Account.load(accountId).collaterals[collateralType].depositCollateral(amount);
+        // TODO: Deposit/withdraw should be transferring from/to msg.sender,
+        // instead of the account's owner address.
+        // If msg.sender has permission for a deposit/withdraw operation,
+        // then it is most natural for the collateral to be pulled from msg.sender.
+        address user = account.rbac.owner;
+
+        address self = address(this);
+
+        uint allowance = IERC20(collateralType).allowance(user, self);
+        if (allowance < amount) {
+            revert IERC20.InsufficientAllowance(amount, allowance);
+        }
+
+        collateralType.safeTransferFrom(user, self, amount);
+
+        account.collaterals[collateralType].depositCollateral(amount);
 
         emit CollateralDeposited(accountId, collateralType, amount, msg.sender);
     }
