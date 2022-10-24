@@ -15,108 +15,108 @@ defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
 description = "Any additional modules which should be deployed"
 defaultValue = "core"
 
-[contract.common_owner_module]
+[contract.OwnerModule]
 artifact = "contracts/modules/common/OwnerModule.sol:OwnerModule"
 
-[contract.common_upgrade_module]
+[contract.UpgradeModule]
 artifact = "contracts/modules/common/UpgradeModule.sol:UpgradeModule"
 
-[contract.common_initial_upgrade]
-artifact = "contracts/modules/common/InitialUpgrade.sol:InitialUpgrade"
-
-[contract.core_account_module]
+[contract.AccountModule]
 artifact = "contracts/modules/core/AccountModule.sol:AccountModule"
 
-[contract.core_associate_debt_module]
+[contract.AssociateDebtModule]
 artifact = "contracts/modules/core/AssociateDebtModule.sol:AssociateDebtModule"
 
-[contract.core_associated_systems_module]
+[contract.AssociatedSystemsModule]
 artifact = "contracts/modules/core/AssociatedSystemsModule.sol:AssociatedSystemsModule"
 
-[contract.core_collateral_module]
+[contract.CollateralModule]
 artifact = "contracts/modules/core/CollateralModule.sol:CollateralModule"
 
-[contract.core_liquidation_module]
+[contract.LiquidationModule]
 artifact = "contracts/modules/core/LiquidationModule.sol:LiquidationModule"
 
-[contract.core_market_collateral_module]
+[contract.MarketCollateralModule]
 artifact = "contracts/modules/core/MarketCollateralModule.sol:MarketCollateralModule"
 
-[contract.core_market_manager_module]
+[contract.MarketManagerModule]
 artifact = "contracts/modules/core/MarketManagerModule.sol:MarketManagerModule"
 
-[contract.core_multicall_module]
+[contract.MulticallModule]
 artifact = "contracts/modules/core/MulticallModule.sol:MulticallModule"
 
-[contract.core_pool_configuration_module]
+[contract.PoolConfigurationModule]
 artifact = "contracts/modules/core/PoolConfigurationModule.sol:PoolConfigurationModule"
 
-[contract.core_pool_module]
+[contract.PoolModule]
 artifact = "contracts/modules/core/PoolModule.sol:PoolModule"
 
-[contract.core_rewards_manager_module]
+[contract.RewardsManagerModule]
 artifact = "contracts/modules/core/RewardsManagerModule.sol:RewardsManagerModule"
 
-[contract.core_utils_module]
+[contract.UtilsModule]
 artifact = "contracts/modules/core/UtilsModule.sol:UtilsModule"
 
-[contract.core_vault_module]
+[contract.VaultModule]
 artifact = "contracts/modules/core/VaultModule.sol:VaultModule"
 
-[contract.account_token_module]
+[contract.AccountTokenModule]
 artifact = "contracts/modules/account/AccountTokenModule.sol:AccountTokenModule"
 
-[contract.esnx_token_module]
+[contract.ESNXTokenModule]
 artifact = "contracts/modules/esnx/ESNXTokenModule.sol:ESNXTokenModule"
 
-[contract.snx_token_module]
+[contract.SNXTokenModule]
 artifact = "contracts/modules/snx/SNXTokenModule.sol:SNXTokenModule"
 
-[contract.usd_token_module]
+[contract.USDTokenModule]
 artifact = "contracts/modules/usd/USDTokenModule.sol:USDTokenModule"
+
+[contract.InitialTarget]
+artifact = "InitialTarget"
 
 # Core
 [run.core_generate_router]
 exec = "../hardhat-router/dist/cannon/router.js"
 func = "generate"
 args = ["CoreRouter", "contracts/modules/common", "contracts/modules/core"]
-modified = ["contracts/modules/common", "contracts/modules/core"]
+modified = []
 depends = [
-  "contract.common_owner_module",
-  "contract.common_upgrade_module",
-  "contract.core_account_module",
-  "contract.core_associate_debt_module",
-  "contract.core_associated_systems_module",
-  "contract.core_collateral_module",
-  "contract.core_liquidation_module",
-  "contract.core_market_collateral_module",
-  "contract.core_market_manager_module",
-  "contract.core_multicall_module",
-  "contract.core_pool_configuration_module",
-  "contract.core_pool_module",
-  "contract.core_rewards_manager_module",
-  "contract.core_utils_module",
-  "contract.core_vault_module"
+  "contract.OwnerModule",
+  "contract.UpgradeModule",
+  "contract.AccountModule",
+  "contract.AssociateDebtModule",
+  "contract.AssociatedSystemsModule",
+  "contract.CollateralModule",
+  "contract.LiquidationModule",
+  "contract.MarketCollateralModule",
+  "contract.MarketManagerModule",
+  "contract.MulticallModule",
+  "contract.PoolConfigurationModule",
+  "contract.PoolModule",
+  "contract.RewardsManagerModule",
+  "contract.UtilsModule",
+  "contract.VaultModule"
 ]
 
-[contract.core_router]
+[contract.CoreRouter]
 artifact = "contracts/CoreRouter.sol:CoreRouter"
+depends = ["run.core_generate_router"]
 
-[contract.core_proxy]
+[contract.CoreProxy]
 artifact = "contracts/Proxy.sol:Proxy"
-args = ["<%= contracts.common_initial_upgrade.address %>"]
-depends = ["contract.common_initial_upgrade"]
+args = ["<%= contracts.InitialTarget.address %>"]
+depends = ["contract.InitialTarget"]
 
 [invoke.upgrade_core_proxy]
-target = ["core_proxy"]
+target = ["CoreProxy"]
 abi = "contracts/modules/common/UpgradeModule.sol:UpgradeModule"
 from = "<%= settings.owner %>"
 func = "upgradeTo"
-args = ["<%= contracts.core_router.address %>"]
+args = ["<%= contracts.CoreRouter.address %>"]
 depends = [
-  "contract.core_proxy",
-  "contract.common_owner_module",
-  "contract.common_upgrade_module"
+  "contract.CoreProxy",
+  "contract.CoreRouter"
 ]
 
 # Account
@@ -126,30 +126,14 @@ func = "generate"
 args = ["AccountRouter", "contracts/modules/common", "contracts/modules/account"]
 modified = ["contracts/modules/common", "contracts/modules/account"]
 depends = [
-  "contract.common_owner_module",
-  "contract.common_upgrade_module",
-  "contract.account_token_module"
+  "contract.OwnerModule",
+  "contract.UpgradeModule",
+  "contract.AccountTokenModule"
 ]
 
-[contract.account_router]
+[contract.AccountRouter]
 artifact = "contracts/AccountRouter.sol:AccountRouter"
-
-[contract.account_proxy]
-artifact = "contracts/Proxy.sol:Proxy"
-args = ["<%= contracts.common_initial_upgrade.address %>"]
-depends = ["contract.common_initial_upgrade"]
-
-[invoke.upgrade_account_proxy]
-target = ["account_proxy"]
-abi = "contracts/modules/common/UpgradeModule.sol:UpgradeModule"
-from = "<%= settings.owner %>"
-func = "upgradeTo"
-args = ["<%= contracts.account_router.address %>"]
-depends = [
-  "contract.account_proxy",
-  "contract.common_owner_module",
-  "contract.common_upgrade_module"
-]
+depends = ["run.account_generate_router"]
 
 # ESNX
 [run.esnx_generate_router]
@@ -158,30 +142,14 @@ func = "generate"
 args = ["ESNXRouter", "contracts/modules/common", "contracts/modules/esnx"]
 modified = ["contracts/modules/common", "contracts/modules/esnx"]
 depends = [
-  "contract.common_owner_module",
-  "contract.common_upgrade_module",
-  "contract.esnx_token_module"
+  "contract.OwnerModule",
+  "contract.UpgradeModule",
+  "contract.ESNXTokenModule"
 ]
 
-[contract.esnx_router]
+[contract.ESNXRouter]
 artifact = "contracts/ESNXRouter.sol:ESNXRouter"
-
-[contract.esnx_proxy]
-artifact = "contracts/Proxy.sol:Proxy"
-args = ["<%= contracts.common_initial_upgrade.address %>"]
-depends = ["contract.common_initial_upgrade"]
-
-[invoke.upgrade_esnx_proxy]
-target = ["esnx_proxy"]
-abi = "contracts/modules/common/UpgradeModule.sol:UpgradeModule"
-from = "<%= settings.owner %>"
-func = "upgradeTo"
-args = ["<%= contracts.esnx_router.address %>"]
-depends = [
-  "contract.esnx_proxy",
-  "contract.common_owner_module",
-  "contract.common_upgrade_module"
-]
+depends = ["run.esnx_generate_router"]
 
 # SNX
 [run.snx_generate_router]
@@ -190,30 +158,14 @@ func = "generate"
 args = ["SNXRouter", "contracts/modules/common", "contracts/modules/snx"]
 modified = ["contracts/modules/common", "contracts/modules/snx"]
 depends = [
-  "contract.common_owner_module",
-  "contract.common_upgrade_module",
-  "contract.snx_token_module"
+  "contract.OwnerModule",
+  "contract.UpgradeModule",
+  "contract.SNXTokenModule"
 ]
 
-[contract.snx_router]
+[contract.SNXRouter]
 artifact = "contracts/SNXRouter.sol:SNXRouter"
-
-[contract.snx_proxy]
-artifact = "contracts/Proxy.sol:Proxy"
-args = ["<%= contracts.common_initial_upgrade.address %>"]
-depends = ["contract.common_initial_upgrade"]
-
-[invoke.upgrade_snx_proxy]
-target = ["snx_proxy"]
-abi = "contracts/modules/common/UpgradeModule.sol:UpgradeModule"
-from = "<%= settings.owner %>"
-func = "upgradeTo"
-args = ["<%= contracts.snx_router.address %>"]
-depends = [
-  "contract.snx_proxy",
-  "contract.common_owner_module",
-  "contract.common_upgrade_module"
-]
+depends = ["run.snx_generate_router"]
 
 # USD
 [run.usd_generate_router]
@@ -222,46 +174,28 @@ func = "generate"
 args = ["USDRouter", "contracts/modules/common", "contracts/modules/usd"]
 modified = ["contracts/modules/common", "contracts/modules/usd"]
 depends = [
-  "contract.common_owner_module",
-  "contract.common_upgrade_module",
-  "contract.usd_token_module"
+  "contract.OwnerModule",
+  "contract.UpgradeModule",
+  "contract.USDTokenModule"
 ]
 
-[contract.usd_router]
+[contract.USDRouter]
 artifact = "contracts/USDRouter.sol:USDRouter"
+depends = ["run.usd_generate_router"]
 
-[contract.usd_proxy]
-artifact = "contracts/Proxy.sol:Proxy"
-args = ["<%= contracts.common_initial_upgrade.address %>"]
-depends = ["contract.common_initial_upgrade"]
-
-[invoke.upgrade_usd_proxy]
-target = ["usd_proxy"]
-abi = "contracts/modules/common/UpgradeModule.sol:UpgradeModule"
-from = "<%= settings.owner %>"
-func = "upgradeTo"
-args = ["<%= contracts.usd_router.address %>"]
-depends = [
-  "contract.usd_proxy",
-  "contract.common_owner_module",
-  "contract.common_upgrade_module"
-]
+# Post stuff
 
 [invoke.acquire_ownership]
-target = ["core_proxy"]
-abi = "contracts/modules/common/UpgradeModule.sol:UpgradeModule"
+target = ["CoreProxy"]
 from = "<%= settings.owner %>"
 func = "initializeOwnerModule"
 args = ["<%= settings.owner %>"]
 depends = [
-  "contract.core_proxy",
-  "contract.common_owner_module",
-  "contract.common_upgrade_module"
+  "invoke.upgrade_core_proxy",
 ]
 
 [invoke.init_account]
-target = ["core_proxy"]
-abi = "contracts/modules/core/AssociatedSystemsModule.sol:AssociatedSystemsModule"
+target = ["CoreProxy"]
 from = "<%= settings.owner %>"
 func = "initOrUpgradeNft"
 args = [
@@ -269,20 +203,18 @@ args = [
   "Synthetix Account",
   "SACCT",
   "https://synthetix.io",
-  "<%= contracts.account_router.address %>"
+  "<%= contracts.AccountRouter.address %>"
 ]
 depends = [
   "invoke.acquire_ownership",
-  "contract.account_proxy",
-  "contract.core_associated_systems_module"
+  "contract.AccountRouter",
 ]
-factory.account_proxy.abiOf = "core_associated_systems_module"
-factory.account_proxy.event = "AssociatedSystemSet"
-factory.account_proxy.arg = 2
+factory.AccountProxy.abiOf = "AccountRouter"
+factory.AccountProxy.event = "AssociatedSystemSet"
+factory.AccountProxy.arg = 2
 
 [invoke.init_snx]
-target = ["core_proxy"]
-abi = "contracts/modules/core/AssociatedSystemsModule.sol:AssociatedSystemsModule"
+target = ["CoreProxy"]
 from = "<%= settings.owner %>"
 func = "initOrUpgradeToken"
 args = [
@@ -290,20 +222,18 @@ args = [
   "Synthetix System Token",
   "SNX",
   18,
-  "<%= contracts.snx_router.address %>"
+  "<%= contracts.SNXRouter.address %>"
 ]
 depends = [
   "invoke.acquire_ownership",
-  "contract.snx_proxy",
-  "contract.core_associated_systems_module"
+  "contract.SNXRouter",
 ]
-factory.snx_proxy.abiOf = "core_associated_systems_module"
-factory.snx_proxy.event = "AssociatedSystemSet"
-factory.snx_proxy.arg = 2
+factory.SNXProxy.abiOf = "SNXRouter"
+factory.SNXProxy.event = "AssociatedSystemSet"
+factory.SNXProxy.arg = 2
 
 [invoke.init_esnx]
-target = ["core_proxy"]
-abi = "contracts/modules/core/AssociatedSystemsModule.sol:AssociatedSystemsModule"
+target = ["CoreProxy"]
 from = "<%= settings.owner %>"
 func = "initOrUpgradeToken"
 args = [
@@ -311,20 +241,18 @@ args = [
   "Escrowed Synthetix",
   "eSNX",
   18,
-  "<%= contracts.esnx_router.address %>"
+  "<%= contracts.ESNXRouter.address %>"
 ]
 depends = [
   "invoke.acquire_ownership",
-  "contract.esnx_proxy",
-  "contract.core_associated_systems_module"
+  "contract.ESNXRouter",
 ]
-factory.esnx_proxy.abiOf = "core_associated_systems_module"
-factory.esnx_proxy.event = "AssociatedSystemSet"
-factory.esnx_proxy.arg = 2
+factory.ESNXProxy.abiOf = "ESNXRouter"
+factory.ESNXProxy.event = "AssociatedSystemSet"
+factory.ESNXProxy.arg = 2
 
 [invoke.init_usd]
-target = ["core_proxy"]
-abi = "contracts/modules/core/AssociatedSystemsModule.sol:AssociatedSystemsModule"
+target = ["CoreProxy"]
 from = "<%= settings.owner %>"
 func = "initOrUpgradeToken"
 args = [
@@ -332,13 +260,12 @@ args = [
   "Synthetic USD Token v3",
   "snxUSD",
   18,
-  "<%= contracts.usd_router.address %>"
+  "<%= contracts.USDRouter.address %>"
 ]
 depends = [
   "invoke.acquire_ownership",
-  "contract.usd_proxy",
-  "contract.core_associated_systems_module"
+  "contract.USDRouter",
 ]
-factory.usd_proxy.abiOf = "core_associated_systems_module"
-factory.usd_proxy.event = "AssociatedSystemSet"
-factory.usd_proxy.arg = 2
+factory.USDProxy.abiOf = "USDRouter"
+factory.USDProxy.event = "AssociatedSystemSet"
+factory.USDProxy.arg = 2

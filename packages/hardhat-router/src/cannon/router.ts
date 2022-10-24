@@ -49,5 +49,8 @@ exports.generate = async function generate(
   const routerPath = path.join(hre.config.paths.sources, `${routerName}.sol`);
   await fs.writeFile(routerPath, generatedSource);
 
+  // need to re-run compile to ensure artifact is available to cannon
+  await hre.run('compile');
+
   return { contracts: {} };
 };
