@@ -9,6 +9,22 @@ defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
 [import.synthetix]
 source = "synthetix:3"
 
+# enable pool creation feature
+[invoke.enablePoolCreation]
+target = ["v3.CoreProxy"]
+func = "setFeatureFlag"
+args = ["0x706f6f6c00000000000000000000000000000000000000000000000000000000", true] # formatBytes32String("pool")
+fromCall.func = "owner"
+depends = ["import.synthetix"]
+
+# add pool owner to feature flag allow list
+[invoke.addPoolOwnerToFeatureFlag]
+target = ["v3.CoreProxy"]
+func = "addToFeatureFlag"
+args = ["0x706f6f6c00000000000000000000000000000000000000000000000000000000", "<%= settings.marketOwner %>"] # formatBytes32String("pool")
+fromCall.func = "owner"
+depends = ["invoke.enablePoolCreation"]
+
 [run.deploy_spot_market]
 exec = "scripts/deploy.js"
 func = "deploy"

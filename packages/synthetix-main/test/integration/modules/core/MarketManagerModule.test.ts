@@ -21,21 +21,29 @@ describe('MarketManagerModule', function () {
   const One = ethers.utils.parseEther('1');
   const Hundred = ethers.utils.parseEther('100');
 
-  let owner: ethers.Signer, user1: ethers.Signer;
+  let owner: ethers.Signer, user1: ethers.Signer, user2: ethers.Signer;
 
   let txn: ethers.providers.TransactionResponse;
 
   before('identify signers', async () => {
-    [owner, user1] = signers();
+    [owner, user1, user2] = signers();
   });
 
   describe('registerMarket()', async () => {
     before(restore);
 
+    it('does not allow non-permissioned user to register market', async () => {
+      await assertRevert(
+        systems().Core.connect(user2).registerMarket(user1.getAddress()),
+        'Unauthorized'
+      );
+    });
+
     describe('successful', async () => {
       const expectedMarketId = marketId().add(1);
 
       before('register', async () => {
+        // user1 has access to register market from bootstrapWithMockMarketAndPool
         txn = await systems()
           .Core.connect(owner)
           .registerMarket(await user1.getAddress());

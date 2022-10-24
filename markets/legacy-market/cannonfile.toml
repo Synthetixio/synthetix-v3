@@ -36,6 +36,22 @@ fromCall.func = "owner"
 
 depends = ["import.v2x", "import.v3"]
 
+# enable pool creation feature
+[invoke.enablePoolCreation]
+target = ["v3.CoreProxy"]
+func = "setFeatureFlag"
+args = ["0x706f6f6c00000000000000000000000000000000000000000000000000000000", true] # formatBytes32String("pool")
+fromCall.func = "owner"
+depends = ["import.v3"]
+
+# add pool owner to feature flag allow list
+[invoke.addPoolOwnerToFeatureFlag]
+target = ["v3.CoreProxy"]
+func = "addToFeatureFlag"
+args = ["0x706f6f6c00000000000000000000000000000000000000000000000000000000", "<%= settings.pool_owner %>"] # formatBytes32String("pool")
+fromCall.func = "owner"
+depends = ["invoke.enablePoolCreation"]
+
 # deploy the legacy market
 [contract.market]
 artifact = "LegacyMarket"
@@ -71,22 +87,6 @@ args = ["<%= contracts.market.address %>"]
 fromCall.func = "owner"
 
 depends = ["contract.market"]
-
-# enable pool creation feature
-[invoke.enablePoolCreation]
-target = ["v3.CoreProxy"]
-func = "setFeatureFlag"
-args = ["0x706f6f6c00000000000000000000000000000000000000000000000000000000", true] # formatBytes32String("pool")
-fromCall.func = "owner"
-depends = ["import.v3"]
-
-# add pool owner to feature flag allow list
-[invoke.addPoolOwnerToFeatureFlag]
-target = ["v3.CoreProxy"]
-func = "addToFeatureFlag"
-args = ["0x706f6f6c00000000000000000000000000000000000000000000000000000000", "<%= settings.pool_owner %>"] # formatBytes32String("pool")
-fromCall.func = "owner"
-depends = ["invoke.enablePoolCreation"]
 
 # create spartan council pool
 [invoke.createPool]
