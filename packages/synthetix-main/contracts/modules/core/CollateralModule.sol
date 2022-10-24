@@ -194,7 +194,29 @@ contract CollateralModule is ICollateralModule, OwnableMixin, AssociatedSystemsM
         uint offset,
         uint items
     ) external override {
-        _cleanExpiredLocks(Account.load(accountId).collaterals[collateralType].locks, offset, items);
+        CollateralLock.Data[] storage locks = Account.load(accountId).collaterals[collateralType].locks;
+
+        if (offset > locks.length || items > locks.length) {
+            revert OutOfBounds();
+        }
+
+        uint64 currentTime = uint64(block.timestamp);
+
+        if (offset == 0 && items == 0) {
+            // not specified, use all array
+            items = locks.length;
+        }
+
+        uint index = offset;
+        while (index < locks.length) {
+            if (locks[index].lockExpirationTime <= currentTime) {
+                // remove item
+                locks[index] = locks[locks.length - 1];
+                locks.pop();
+            } else {
+                index++;
+            }
+        }
     }
 
     /**
@@ -274,37 +296,6 @@ contract CollateralModule is ICollateralModule, OwnableMixin, AssociatedSystemsM
     function _calculateRewardTokenMinted(uint amount, uint duration) internal pure returns (uint) {
         return (amount * duration) / _SECONDS_PER_YEAR;
     }*/
-
-    /**
-     * @dev TODO
-     */
-    function _cleanExpiredLocks(
-        CollateralLock.Data[] storage locks,
-        uint offset,
-        uint items
-    ) internal {
-        if (offset > locks.length || items > locks.length) {
-            revert OutOfBounds();
-        }
-
-        uint64 currentTime = uint64(block.timestamp);
-
-        if (offset == 0 && items == 0) {
-            // not specified, use all array
-            items = locks.length;
-        }
-
-        uint index = offset;
-        while (index < locks.length) {
-            if (locks[index].lockExpirationTime <= currentTime) {
-                // remove item
-                locks[index] = locks[locks.length - 1];
-                locks.pop();
-            } else {
-                index++;
-            }
-        }
-    }
 
     /**
      * @dev TODO
