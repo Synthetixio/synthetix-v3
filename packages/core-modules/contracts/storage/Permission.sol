@@ -12,7 +12,6 @@ library Permission {
     function load() internal pure returns (Data storage store) {
         bytes32 s = keccak256(abi.encode("FeatureFlag.Permission"));
         assembly {
-            // bytes32(uint(keccak256("io.synthetix.featureFlag")) - 1)
             store.slot := s
         }
     }

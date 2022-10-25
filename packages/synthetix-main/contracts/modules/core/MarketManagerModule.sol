@@ -11,6 +11,7 @@ import "../../storage/Market.sol";
 import "../../storage/Account.sol";
 
 import "@synthetixio/core-modules/contracts/storage/AssociatedSystem.sol";
+import "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
 
 contract MarketManagerModule is IMarketManagerModule {
     using Market for Market.Data;
@@ -22,7 +23,8 @@ contract MarketManagerModule is IMarketManagerModule {
     error NotEnoughLiquidity(uint128 marketId, uint amount);
     error MarketDepositNotApproved(address market, address from, uint requestedAmount, uint approvedAmount);
 
-    function registerMarket(address market) external override onlyIfFeatureFlag("market") returns (uint128 marketId) {
+    function registerMarket(address market) external override returns (uint128 marketId) {
+        FeatureFlag.onlyIfFeatureFlag("pool");
         // Can we verify that `market` conforms to the IMarket interface here? (i.e. has a `balance()` function?)
 
         marketId = Market.create(market).id;

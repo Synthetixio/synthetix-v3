@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 import "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
 import "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
 import "@synthetixio/core-contracts/contracts/errors/AddressError.sol";
-import "@synthetixio/core-modules/contracts/mixins/FeatureFlagMixin.sol";
+import "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
 
 import "../../interfaces/IPoolModule.sol";
 import "../../storage/Pool.sol";
@@ -25,7 +25,9 @@ contract PoolModule is IPoolModule {
         _;
     }
 
-    function createPool(uint128 requestedPoolId, address owner) external override onlyIfFeatureFlag("pool") {
+    function createPool(uint128 requestedPoolId, address owner) external override {
+        FeatureFlag.onlyIfFeatureFlag("pool");
+
         if (owner == address(0)) {
             revert AddressError.ZeroAddress();
         }
