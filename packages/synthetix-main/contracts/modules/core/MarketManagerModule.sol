@@ -24,7 +24,7 @@ contract MarketManagerModule is IMarketManagerModule {
     error MarketDepositNotApproved(address market, address from, uint requestedAmount, uint approvedAmount);
 
     function registerMarket(address market) external override returns (uint128 marketId) {
-        FeatureFlag.onlyIfFeatureFlag("pool");
+        FeatureFlag.onlyIfFeatureFlag("market");
         // Can we verify that `market` conforms to the IMarket interface here? (i.e. has a `balance()` function?)
 
         marketId = Market.create(market).id;
