@@ -25,7 +25,7 @@ library VaultEpoch {
         /**
          * @dev Tracks debt for each user.
          */
-        Distribution.Data debtDist;
+        Distribution.Data incomingDebtDist;
         /**
          * @dev Tracks collateral for each user.
          *
@@ -37,9 +37,9 @@ library VaultEpoch {
          *
          * TODO: What is the difference between USD debt and debt?
          * Probably want to rename.
-         * - debtDist is an inbox, holds all the debt since the user's last interaction with the system
-         * debtDist can change because of any market change: price changes, (in v2x context price is the only way, in the future, it will be other things, there will be many other things).
-         * - consolidatedDebtDist is cumulative - debtDist gets rolled into this when user interacts - could also be a mapping, but like collateral, it is needed for socialization, on a liquidation debt is also socialized - mint/burn directly modify this guy - repay debt affects this too
+         * - incomingDebtDist is an inbox, holds all the debt since the user's last interaction with the system
+         * incomingDebtDist can change because of any market change: price changes, (in v2x context price is the only way, in the future, it will be other things, there will be many other things).
+         * - consolidatedDebtDist is cumulative - incomingDebtDist gets rolled into this when user interacts - could also be a mapping, but like collateral, it is needed for socialization, on a liquidation debt is also socialized - mint/burn directly modify this guy - repay debt affects this too
          *
          * consolidatedDebt? cumulativeDEbt
          */
@@ -62,7 +62,7 @@ library VaultEpoch {
      * Ticker - called from liquidations
      */
     function distributeDebt(Data storage self, int debtChange) internal {
-        self.debtDist.distributeValue(debtChange);
+        self.incomingDebtDist.distributeValue(debtChange);
 
         // total debt unfortunately needs to be cached here for liquidations
         self.unclaimedDebt += int128(debtChange);
@@ -80,7 +80,7 @@ library VaultEpoch {
         bytes32 actorId = accountToActor(accountId);
 
         currentDebt = self.consolidatedDebtDist.getActorValue(actorId);
-        int newDebt = self.debtDist.accumulateActor(actorId);
+        int newDebt = self.incomingDebtDist.accumulateActor(actorId);
 
         currentDebt += newDebt;
 
@@ -107,7 +107,7 @@ library VaultEpoch {
         updateAccountDebt(self, accountId);
 
         self.collateralDist.updateActorValue(actorId, int(collateralAmount));
-        self.debtDist.updateActorShares(actorId, self.collateralDist.getActorShares(actorId).mulDecimal(leverage));
+        self.incomingDebtDist.updateActorShares(actorId, self.collateralDist.getActorShares(actorId).mulDecimal(leverage));
     }
 
     /**

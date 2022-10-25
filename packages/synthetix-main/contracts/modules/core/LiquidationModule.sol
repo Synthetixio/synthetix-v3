@@ -62,9 +62,9 @@ contract LiquidationsModule is ILiquidationModule, AssociatedSystemsMixin {
             );
         }
 
-        uint oldShares = epoch.debtDist.getActorShares(bytes32(uint(uint128(accountId))));
+        uint oldShares = epoch.incomingDebtDist.getActorShares(bytes32(uint(uint128(accountId))));
 
-        if (epoch.debtDist.totalShares == oldShares) {
+        if (epoch.incomingDebtDist.totalShares == oldShares) {
             // will be left with 0 shares, which can't be socialized
             revert MustBeVaultLiquidated();
         }
@@ -152,7 +152,7 @@ contract LiquidationsModule is ILiquidationModule, AssociatedSystemsMixin {
 
             // repay the debt
             // TODO: better data structures
-            epoch.debtDist.distributeValue(-int(amountLiquidated));
+            epoch.incomingDebtDist.distributeValue(-int(amountLiquidated));
             epoch.unclaimedDebt -= int128(int(amountLiquidated));
 
             // take away the collateral
