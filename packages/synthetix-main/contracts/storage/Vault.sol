@@ -58,6 +58,11 @@ library Vault {
 
     /**
      * @dev TODO
+     *
+     * Called by another function in Pool at entry point for ticker, sets the liquidity shares within the pool
+     * Part of ticker chain
+     *
+     * Returns the amount of collateral that this vault is providing in net USD terms
      */
     function measureLiquidity(Data storage self, uint collateralPrice)
         internal
@@ -146,7 +151,7 @@ library Vault {
     /**
      * @dev Returns the Vault's total collateral value in the current epoch.
      *
-     * TODO: What does this mean?
+     * TODO
      */
     function currentCollateral(Data storage self) internal view returns (uint collateralAmount) {
         VaultEpoch.Data storage epochData = currentEpoch(self);
@@ -158,6 +163,8 @@ library Vault {
      * @dev TODO
      *
      * TODO: Semantic overloading here? It also returns debt, not only collateral.
+     *
+     * Probably very few use shares, so split out
      */
     function currentAccountCollateral(Data storage self, uint128 accountId)
         internal
