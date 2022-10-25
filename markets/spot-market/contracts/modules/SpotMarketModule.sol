@@ -6,12 +6,9 @@ import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import "@synthetixio/core-modules/contracts/interfaces/IOwnerModule.sol";
 import "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
 import "@synthetixio/core-contracts/contracts/initializable/InitializableMixin.sol";
-import "@synthetixio/core-contracts/contracts/ownership/OwnableMixin.sol";
-import "@synthetixio/core-contracts/contracts/token/ERC20.sol";
+import "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
 import "../mixins/FeeMixin.sol";
 import "../mixins/PriceMixin.sol";
-import "../mixins/SpotMarketMixin.sol";
-import "../mixins/SynthMixin.sol";
 import "../interfaces/ISpotMarket.sol";
 import "../interfaces/ISpotMarketFee.sol";
 
@@ -45,7 +42,9 @@ contract SpotMarketModule is
         address feeManager,
         bytes memory buyFeedId,
         bytes memory sellFeedId
-    ) external override onlyOwner {
+    ) external override {
+        OwnableStorage.onlyOwner();
+        ERC20Storage.Data storage store = ERC20Storage.load();
         SpotMarketStore storage store = _spotMarketStore();
 
         store.synthetix = snxAddress;
