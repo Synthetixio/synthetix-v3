@@ -157,7 +157,7 @@ contract VaultModule is IVaultModule, AssociatedSystemsMixin, OwnableMixin, Acco
         // this is the most efficient time to check the resulting collateralization ratio, since
         // user's debt and collateral price have been fully updated
         if (collateralAmount < oldCollateralAmount) {
-            int debt = vault.currentEpoch().usdDebtDist.getActorValue(actorId);
+            int debt = vault.currentEpoch().consolidatedDebtDist.getActorValue(actorId);
             //(, uint collateralValue,) = pool.currentAccountCollateral(collateralType, accountId);
 
             _verifyCollateralRatio(collateralType, debt < 0 ? 0 : uint(debt), collateralAmount.mulDecimal(collateralPrice));
@@ -196,7 +196,7 @@ contract VaultModule is IVaultModule, AssociatedSystemsMixin, OwnableMixin, Acco
 
         VaultEpoch.Data storage epoch = Pool.load(poolId).vaults[collateralType].currentEpoch();
 
-        epoch.usdDebtDist.updateActorValue(bytes32(uint(accountId)), newDebt);
+        epoch.consolidatedDebtDist.updateActorValue(bytes32(uint(accountId)), newDebt);
         pool.recalculateVaultCollateral(collateralType);
         require(int(amount) == int128(int(amount)), "Incorrect amount specified");
         _getToken(_USD_TOKEN).mint(msg.sender, amount);
@@ -229,7 +229,7 @@ contract VaultModule is IVaultModule, AssociatedSystemsMixin, OwnableMixin, Acco
 
         VaultEpoch.Data storage epoch = Pool.load(poolId).vaults[collateralType].currentEpoch();
 
-        epoch.usdDebtDist.updateActorValue(bytes32(uint(accountId)), debt - int(amount));
+        epoch.consolidatedDebtDist.updateActorValue(bytes32(uint(accountId)), debt - int(amount));
         pool.recalculateVaultCollateral(collateralType);
 
         emit UsdBurned(accountId, poolId, collateralType, amount, msg.sender);

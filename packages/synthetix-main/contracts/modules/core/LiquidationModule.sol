@@ -86,7 +86,7 @@ contract LiquidationsModule is ILiquidationModule, AssociatedSystemsMixin {
         epoch.collateralDist.distributeValue(int(collateralLiquidated) - int(amountRewarded));
 
         // debt isn't cleared when someone unstakes by default, so we do it separately here
-        epoch.usdDebtDist.updateActorShares(bytes32(uint(accountId)), 0);
+        epoch.consolidatedDebtDist.updateActorShares(bytes32(uint(accountId)), 0);
 
         // now we feed the debt back in also
         epoch.distributeDebt(int(debtLiquidated));

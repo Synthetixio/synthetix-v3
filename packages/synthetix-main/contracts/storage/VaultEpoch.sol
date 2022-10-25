@@ -14,7 +14,7 @@ library VaultEpoch {
         /**
          * @dev
          *
-         * Amount of debt which has not been rolled into `usdDebtDist`.
+         * Amount of debt which has not been rolled into `consolidatedDebtDist`.
          * Needed to keep track of overall getVaultDebt.
          *
          * TODO: Wut?
@@ -39,11 +39,11 @@ library VaultEpoch {
          * Probably want to rename.
          * - debtDist is an inbox, holds all the debt since the user's last interaction with the system
          * debtDist can change because of any market change: price changes, (in v2x context price is the only way, in the future, it will be other things, there will be many other things).
-         * - usdDebtDist is cumulative - debtDist gets rolled into this when user interacts - could also be a mapping, but like collateral, it is needed for socialization, on a liquidation debt is also socialized - mint/burn directly modify this guy - repay debt affects this too
+         * - consolidatedDebtDist is cumulative - debtDist gets rolled into this when user interacts - could also be a mapping, but like collateral, it is needed for socialization, on a liquidation debt is also socialized - mint/burn directly modify this guy - repay debt affects this too
          *
          * consolidatedDebt? cumulativeDEbt
          */
-        Distribution.Data usdDebtDist;
+        Distribution.Data consolidatedDebtDist;
     }
 
     /**
@@ -79,12 +79,12 @@ library VaultEpoch {
     function updateAccountDebt(Data storage self, uint128 accountId) internal returns (int currentDebt) {
         bytes32 actorId = accountToActor(accountId);
 
-        currentDebt = self.usdDebtDist.getActorValue(actorId);
+        currentDebt = self.consolidatedDebtDist.getActorValue(actorId);
         int newDebt = self.debtDist.accumulateActor(actorId);
 
         currentDebt += newDebt;
 
-        self.usdDebtDist.updateActorValue(actorId, currentDebt);
+        self.consolidatedDebtDist.updateActorValue(actorId, currentDebt);
         self.unclaimedDebt -= int128(newDebt);
     }
 
@@ -117,7 +117,7 @@ library VaultEpoch {
      * (only thing?)
      */
     function totalDebt(Data storage self) internal view returns (int) {
-        return int(self.unclaimedDebt + self.usdDebtDist.totalValue());
+        return int(self.unclaimedDebt + self.consolidatedDebtDist.totalValue());
     }
 
     /**

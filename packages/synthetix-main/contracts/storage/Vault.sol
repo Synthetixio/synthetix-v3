@@ -147,7 +147,7 @@ library Vault {
     function currentDebt(Data storage self) internal view returns (int) {
         VaultEpoch.Data storage epochData = currentEpoch(self);
 
-        return epochData.unclaimedDebt + epochData.usdDebtDist.totalValue();
+        return epochData.unclaimedDebt + epochData.consolidatedDebtDist.totalValue();
     }
 
     /**
