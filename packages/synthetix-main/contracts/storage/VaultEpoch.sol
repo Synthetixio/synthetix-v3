@@ -4,7 +4,14 @@ pragma solidity ^0.8.0;
 import "./Distribution.sol";
 
 /**
- * @title TODO
+ * @title Tracks collateral and debt distributions in a pool for a specific collateral type, for a given epoch.
+ *
+ * Collateral is tracked in a distribution as opposed to in a regular mapping because liquidations cause collateral to be socialized. If collateral was tracked using a regular mapping, such socialization would be difficult and require looping through individual balances, or some other sort of complex and expensive mechanism.
+ *
+ * Debt is also tracked in a distribution for the same reason, but it is additionally split in two: incoming and consolidated debt.
+ *
+ * Incoming debt is modified when a liquidations occurs.
+ * Consolidated debt is updated when users interact with the system.
  */
 library VaultEpoch {
     using Distribution for Distribution.Data;
@@ -12,36 +19,40 @@ library VaultEpoch {
 
     struct Data {
         /**
-         * @dev
+         * @dev Amount of debt in this Vault that is yet to be consolidated.
          *
-         * Amount of debt which has not been rolled into `consolidatedDebtDist`.
-         * Needed to keep track of overall getVaultDebt.
-         *
-         * TODO: Wut?
-         *
-         * Buffer for socializations that haven't been consolidated yet
+         * E.g. when a given amount of debt is socialized during a liquidation, but it yet hasn't been rolled into consolidatedDebtDist.
          */
         int128 unconsolidatedDebt;
         /**
-         * @dev Tracks debt for each user.
+         * @dev Tracks incoming debt for each user.
+         *
+         * Holds a user's debt since their last interaction with the system.
+         *
+         * This distribution can change because of any change in a market, most commonly because of the price of an asset changing.
+         *
+         * Is rolled into or consolidated into consolidatedDebtDist when users interact with the system.
          */
         Distribution.Data incomingDebtDist;
         /**
          * @dev Tracks collateral for each user.
          *
-         * TODO: Helps with socialized liquidation of collateral in liquidations.
+         * Uses a distribution instead of a regular market because of the way collateral is socialized during liquidations.
+         *
+         * A regular mapping would require looping over the mapping of each account's collateral, or moving the liquidated
+         * collateral into a place where it could later be claimed. With a distribution, liquidated collateral can be
+         * socialized very easily.
          */
         Distribution.Data collateralDist;
         /**
-         * @dev Tracks usd debt for each user.
+         * @dev Tracks consolidated debt for each user.
          *
-         * TODO: What is the difference between USD debt and debt?
-         * Probably want to rename.
-         * - incomingDebtDist is an inbox, holds all the debt since the user's last interaction with the system
-         * incomingDebtDist can change because of any market change: price changes, (in v2x context price is the only way, in the future, it will be other things, there will be many other things).
-         * - consolidatedDebtDist is cumulative - incomingDebtDist gets rolled into this when user interacts - could also be a mapping, but like collateral, it is needed for socialization, on a liquidation debt is also socialized - mint/burn directly modify this guy - repay debt affects this too
+         * Is modified when a user interacts with the system, rolling in or consolidating their incomingDebt into itself.
          *
-         * consolidatedDebt? cumulativeDEbt
+         * Can also be modified directly when users mint or burn USD, or repay debt.
+         *
+         * As with collateral tracking, this could also use a regular mapping, but uses a distribution to facilitate
+         * socialization of debt during liquidations. See `collateralDist`.
          */
         Distribution.Data consolidatedDebtDist;
     }
