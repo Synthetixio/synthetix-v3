@@ -82,10 +82,10 @@ contract LiquidationsModule is ILiquidationModule, AssociatedSystemsMixin {
         // we don't give the collateral back to the user though--it gets
         // fed back into the vault proportionally to the amount of collateral you have
         // the vault might end up with less overall collateral if liquidation reward
-        // is greater than the acutal collateral in this user's account
+        // is greater than the actual collateral in this user's account
         epoch.collateralDist.distributeValue(int(collateralLiquidated) - int(amountRewarded));
 
-        // debt isnt cleared when someone unstakes by default, so we do it separately here
+        // debt isn't cleared when someone unstakes by default, so we do it separately here
         epoch.usdDebtDist.updateActorShares(bytes32(uint(accountId)), 0);
 
         // now we feed the debt back in also

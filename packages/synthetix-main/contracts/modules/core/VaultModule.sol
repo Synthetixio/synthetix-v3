@@ -42,6 +42,8 @@ contract VaultModule is IVaultModule, AssociatedSystemsMixin, OwnableMixin, Acco
 
     /**
      * @dev See {IVaultModule-delegateCollateral}.
+     *
+     * TODO: This function is too long, does too many things, needs to be split into sub-functions.
      */
     function delegateCollateral(
         uint128 accountId,
@@ -56,17 +58,29 @@ contract VaultModule is IVaultModule, AssociatedSystemsMixin, OwnableMixin, Acco
         collateralEnabled(collateralType)
         poolExists(poolId)
     {
-        // Fix leverage to 1 until it's enabled.
-        // TODO: we will probably at least want to test <1 leverage.
+        // Pin leverage to 1 until the feature is enabled.
+        // TODO: We will probably at least want to test <1 leverage before that.
         if (leverage != MathUtil.UNIT) revert InvalidLeverage(leverage);
+
+        // -------------------------------------
+        // TICKER - UPDATE REWARDS
+        // -------------------------------------
 
         Vault.Data storage vault = Pool.load(poolId).vaults[collateralType];
 
         vault.updateAvailableRewards(accountId);
 
+        // -------------------------------------
+        // GET CURRENT COLLATERAL
+        // -------------------------------------
+
         // get the current collateral situation
         (uint oldCollateralAmount, ) = vault.currentAccountCollateral(accountId);
         uint collateralPrice;
+
+        // -------------------------------------
+        // CHECK ACCOUNT HAS AVAILABLE COLLATERAL
+        // -------------------------------------
 
         // if increasing collateral additionally check they have enough collateral
         if (
@@ -78,13 +92,26 @@ contract VaultModule is IVaultModule, AssociatedSystemsMixin, OwnableMixin, Acco
 
         bytes32 actorId = bytes32(uint(accountId));
 
+        // -------------------------------------
+        // ???
+        // -------------------------------------
+
         // stack too deep after this
         {
+            // -------------------------------------
+            // ???
+            // -------------------------------------
+
             Pool.Data storage pool = Pool.load(poolId);
+
             // the current user may have accumulated some debt which needs to be rolled in before changing shares
             pool.updateAccountDebt(collateralType, accountId);
 
             Collateral.Data storage collateral = Account.load(accountId).collaterals[collateralType];
+
+            // -------------------------------------
+            // MODIFY USER COLLATERAL
+            // -------------------------------------
 
             // adjust the user's current account collateral to reflect the change in delegation
             if (collateralAmount > oldCollateralAmount) {
@@ -93,17 +120,39 @@ contract VaultModule is IVaultModule, AssociatedSystemsMixin, OwnableMixin, Acco
                 collateral.depositCollateral(oldCollateralAmount - collateralAmount);
             }
 
+            // -------------------------------------
+            // ADD POOL TO COLLATERAL'S POOL ARRAY
+            // -------------------------------------
+
             if (collateralAmount > 0 && !collateral.pools.contains(uint(poolId))) {
                 collateral.pools.add(poolId);
             } else if (collateral.pools.contains((uint(poolId)))) {
                 collateral.pools.remove(poolId);
             }
 
+            // -------------------------------------
+            // Updates account debt and collateral distributions
+            // -------------------------------------
+
             vault.currentEpoch().setAccount(accountId, collateralAmount, leverage);
+
+            // -------------------------------------
+            // Recalculates the pool's collateral ?
+            // -------------------------------------
+
             // no update for usd because no usd issued
             collateralPrice = pool.recalculateVaultCollateral(collateralType);
         }
+
+        // -------------------------------------
+        // ???
+        // -------------------------------------
+
         _setDelegatePoolId(accountId, poolId, collateralType);
+
+        // -------------------------------------
+        // ???
+        // -------------------------------------
 
         // this is the most efficient time to check the resulting collateralization ratio, since
         // user's debt and collateral price have been fully updated

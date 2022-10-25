@@ -9,10 +9,10 @@ import "./CollateralConfiguration.sol";
 /**
  * @title Tracks collateral and debt distributions in a pool, for a specific collateral type.
  *
- * I.e. if a pool supports SNX and ETH collateral, it will have an SNX Vault and an ETH Vault.
+ * I.e. if a pool supports SNX and ETH collaterals, it will have an SNX Vault, and an ETH Vault.
  *
- * The Vault data structure is itself split into VaultEpoch data structures. This facilitates liquidations,
- * so that whenever a liquidation occurs, instead of having to traverse and reset data, a new epoch can simply
+ * The Vault data structure is itself split into VaultEpoch sub-data structures. This facilitates liquidations,
+ * so that whenever a liquidation occurs, instead of having to traverse and reset all data, a new epoch can simply
  * be created, effectively wiping all data, whilst having a record of the data before the liquidation event.
  *
  * TODO
@@ -127,7 +127,8 @@ library Vault {
     }
 
     /**
-     * @dev TODO
+     * @dev Increments the current epoch index, effectively target a
+     * completely blank new VaultEpoch data structure.
      */
     function reset(Data storage self) internal {
         self.epoch++;
@@ -138,11 +139,14 @@ library Vault {
      */
     function currentDebt(Data storage self) internal view returns (int) {
         VaultEpoch.Data storage epochData = currentEpoch(self);
+
         return epochData.unclaimedDebt + epochData.usdDebtDist.totalValue();
     }
 
     /**
-     * @dev TODO
+     * @dev Returns the Vault's total collateral value in the current epoch.
+     *
+     * TODO: What does this mean?
      */
     function currentCollateral(Data storage self) internal view returns (uint collateralAmount) {
         VaultEpoch.Data storage epochData = currentEpoch(self);
@@ -152,6 +156,8 @@ library Vault {
 
     /**
      * @dev TODO
+     *
+     * TODO: Semantic overloading here? It also returns debt, not only collateral.
      */
     function currentAccountCollateral(Data storage self, uint128 accountId)
         internal

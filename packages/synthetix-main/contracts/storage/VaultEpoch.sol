@@ -10,9 +10,6 @@ library VaultEpoch {
     using Distribution for Distribution.Data;
     using MathUtil for uint256;
 
-    // TODO: Use common lib
-    error InvalidParameters(string incorrectParameter, string help);
-
     struct Data {
         /**
          * @dev Amount of debt which has not been rolled into `usdDebtDist`.
@@ -38,7 +35,7 @@ library VaultEpoch {
     }
 
     /**
-     * @dev TODO
+     * @dev Converts an account id to an actor id used in Distribution objects.
      *
      * TODO: Consider moving this into a DistributionMixin, and use everywhere.
      * Seeing multiple uses of bytes32(uint(uint | address)), in the code.
@@ -98,7 +95,9 @@ library VaultEpoch {
     }
 
     /**
-     * @dev TODO
+     * @dev Returns an account's value in the Vault's collateral distribution.
+     *
+     * TODO: What does this mean?
      */
     function getAccountCollateral(Data storage self, uint128 accountId) internal view returns (uint amount) {
         return uint(self.collateralDist.getActorValue(accountToActor(accountId)));
