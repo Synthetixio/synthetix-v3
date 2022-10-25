@@ -14,7 +14,7 @@ import "@synthetixio/core-modules/contracts/mixins/AssociatedSystemsMixin.sol";
 import "../../utils/ERC20Helper.sol";
 
 /**
- * @title {ICollateralModule-configureCollateral}
+ * @title {ICollateralModule}
  *
  * TODO: Consider splitting this into CollateralConfigurationModule and CollateralModule.
  * The former is for owner only stuff, and the latter for users.

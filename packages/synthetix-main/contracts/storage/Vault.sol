@@ -6,28 +6,59 @@ import "./RewardDistribution.sol";
 
 import "./CollateralConfiguration.sol";
 
+/**
+ * @title Tracks collateral and debt distributions in a pool, for a specific collateral type.
+ *
+ * I.e. if a pool supports SNX and ETH collateral, it will have an SNX Vault and an ETH Vault.
+ *
+ * The Vault data structure is itself split into VaultEpoch data structures. This facilitates liquidations,
+ * so that whenever a liquidation occurs, instead of having to traverse and reset data, a new epoch can simply
+ * be created, effectively wiping all data, whilst having a record of the data before the liquidation event.
+ *
+ * TODO
+ */
 library Vault {
     using VaultEpoch for VaultEpoch.Data;
     using Distribution for Distribution.Data;
     using DistributionEntry for DistributionEntry.Data;
-
     using MathUtil for uint256;
 
     struct Data {
-        /// @dev if vault is fully liquidated, this will be incremented to indicate reset shares
+        /**
+         * @dev TODO
+         *
+         * If a Vault is fully liquidated, this will be incremented to indicate
+         * shares being reset.
+         */
         uint epoch;
+        /**
+         * @dev TODO
+         */
         uint128 prevUsdWeight;
+        /**
+         * @dev TODO
+         */
         uint128 prevRemainingLiquidity;
-        /// @dev the data for all the different liquidation cycles
+        /**
+         * @dev Vault data for all the liquidation cycles divided into epochs.
+         */
         mapping(uint => VaultEpoch.Data) epochData;
-        /// @dev rewards
+        /**
+         * @dev TODO
+         */
         RewardDistribution.Data[] rewards;
     }
 
+    /**
+     * @dev TODO
+     */
     function currentEpoch(Data storage self) internal view returns (VaultEpoch.Data storage) {
         return self.epochData[self.epoch];
     }
 
+    /**
+     * @dev TODO
+     */
     function measureLiquidity(Data storage self, uint collateralPrice)
         internal
         returns (
@@ -52,14 +83,23 @@ library Vault {
         self.prevRemainingLiquidity = uint128(remainingLiquidity);
     }
 
+    /**
+     * @dev TODO
+     */
     function distributeDebt(Data storage self, int debtChange) internal {
         currentEpoch(self).distributeDebt(debtChange);
     }
 
+    /**
+     * @dev TODO
+     */
     function updateAccountDebt(Data storage self, uint128 accountId) internal returns (int) {
         return currentEpoch(self).updateAccountDebt(accountId);
     }
 
+    /**
+     * @dev TODO
+     */
     function updateAvailableRewards(Data storage self, uint128 accountId) internal returns (uint[] memory) {
         uint totalShares = currentEpoch(self).debtDist.totalShares;
         uint actorShares = currentEpoch(self).debtDist.getActorShares(bytes32(uint(accountId)));
@@ -86,21 +126,33 @@ library Vault {
         return rewards;
     }
 
+    /**
+     * @dev TODO
+     */
     function reset(Data storage self) internal {
         self.epoch++;
     }
 
+    /**
+     * @dev TODO
+     */
     function currentDebt(Data storage self) internal view returns (int) {
         VaultEpoch.Data storage epochData = currentEpoch(self);
         return epochData.unclaimedDebt + epochData.usdDebtDist.totalValue();
     }
 
+    /**
+     * @dev TODO
+     */
     function currentCollateral(Data storage self) internal view returns (uint collateralAmount) {
         VaultEpoch.Data storage epochData = currentEpoch(self);
 
         collateralAmount = uint(epochData.collateralDist.totalValue());
     }
 
+    /**
+     * @dev TODO
+     */
     function currentAccountCollateral(Data storage self, uint128 accountId)
         internal
         view

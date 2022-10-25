@@ -14,22 +14,24 @@ import "../../storage/Pool.sol";
 import "../../interfaces/IVaultModule.sol";
 import "../../interfaces/IUSDTokenModule.sol";
 
+/**
+ * @title {IVaultModule}
+ */
 contract VaultModule is IVaultModule, AssociatedSystemsMixin, OwnableMixin, AccountMixin {
     using SetUtil for SetUtil.UintSet;
     using SetUtil for SetUtil.Bytes32Set;
     using SetUtil for SetUtil.AddressSet;
     using MathUtil for uint256;
-
     using Pool for Pool.Data;
     using Vault for Vault.Data;
     using VaultEpoch for VaultEpoch.Data;
     using Collateral for Collateral.Data;
     using AccountRBAC for AccountRBAC.Data;
-
     using Distribution for Distribution.Data;
 
     bytes32 private constant _USD_TOKEN = "USDToken";
 
+    // TODO: Consider moving all errors to interfaces.
     error InsufficientAccountCollateral(uint requestedAmount);
     error PoolNotFound(uint128 poolId);
     error InvalidLeverage(uint leverage);
@@ -38,6 +40,9 @@ contract VaultModule is IVaultModule, AssociatedSystemsMixin, OwnableMixin, Acco
     error InvalidParameters(string incorrectParameter, string help);
     error InvalidCollateral(address collateralType);
 
+    /**
+     * @dev See {IVaultModule-delegateCollateral}.
+     */
     function delegateCollateral(
         uint128 accountId,
         uint128 poolId,
@@ -51,8 +56,8 @@ contract VaultModule is IVaultModule, AssociatedSystemsMixin, OwnableMixin, Acco
         collateralEnabled(collateralType)
         poolExists(poolId)
     {
-        // Fix leverage to 1 until it's enabled
-        // TODO: we will probably at least want to test <1 leverage
+        // Fix leverage to 1 until it's enabled.
+        // TODO: we will probably at least want to test <1 leverage.
         if (leverage != MathUtil.UNIT) revert InvalidLeverage(leverage);
 
         Vault.Data storage vault = Pool.load(poolId).vaults[collateralType];
@@ -116,6 +121,9 @@ contract VaultModule is IVaultModule, AssociatedSystemsMixin, OwnableMixin, Acco
     // Mint/Burn USD
     // ---------------------------------------
 
+    /**
+     * @dev See {IVaultModule-mintUsd}.
+     */
     function mintUsd(
         uint128 accountId,
         uint128 poolId,
@@ -147,6 +155,9 @@ contract VaultModule is IVaultModule, AssociatedSystemsMixin, OwnableMixin, Acco
         emit UsdMinted(accountId, poolId, collateralType, amount, msg.sender);
     }
 
+    /**
+     * @dev See {IVaultModule-burnUsd}.
+     */
     function burnUsd(
         uint128 accountId,
         uint128 poolId,
@@ -179,6 +190,9 @@ contract VaultModule is IVaultModule, AssociatedSystemsMixin, OwnableMixin, Acco
     // Collateralization Ratio and Debt Queries
     // ---------------------------------------
 
+    /**
+     * @dev See {IVaultModule-getPositionCollateralizationRatio}.
+     */
     function getPositionCollateralizationRatio(
         uint128 accountId,
         uint128 poolId,
@@ -187,10 +201,16 @@ contract VaultModule is IVaultModule, AssociatedSystemsMixin, OwnableMixin, Acco
         return Pool.load(poolId).currentAccountCollateralizationRatio(collateralType, accountId);
     }
 
+    /**
+     * @dev See {IVaultModule-getVaultCollateralRatio}.
+     */
     function getVaultCollateralRatio(uint128 poolId, address collateralType) external override returns (uint) {
         return Pool.load(poolId).currentVaultCollateralRatio(collateralType);
     }
 
+    /**
+     * @dev See {IVaultModule-getPositionCollateral}.
+     */
     function getPositionCollateral(
         uint128 accountId,
         uint128 poolId,
@@ -199,6 +219,9 @@ contract VaultModule is IVaultModule, AssociatedSystemsMixin, OwnableMixin, Acco
         (amount, value, ) = Pool.load(poolId).currentAccountCollateral(collateralType, accountId);
     }
 
+    /**
+     * @dev See {IVaultModule-getPosition}.
+     */
     function getPosition(
         uint128 accountId,
         uint128 poolId,
@@ -220,6 +243,9 @@ contract VaultModule is IVaultModule, AssociatedSystemsMixin, OwnableMixin, Acco
         collateralizationRatio = pool.currentAccountCollateralizationRatio(collateralType, accountId);
     }
 
+    /**
+     * @dev See {IVaultModule-getPositionDebt}.
+     */
     function getPositionDebt(
         uint128 accountId,
         uint128 poolId,
@@ -228,6 +254,9 @@ contract VaultModule is IVaultModule, AssociatedSystemsMixin, OwnableMixin, Acco
         return Pool.load(poolId).updateAccountDebt(collateralType, accountId);
     }
 
+    /**
+     * @dev See {IVaultModule-getVaultCollateral}.
+     */
     function getVaultCollateral(uint128 poolId, address collateralType)
         public
         view
@@ -237,10 +266,16 @@ contract VaultModule is IVaultModule, AssociatedSystemsMixin, OwnableMixin, Acco
         return Pool.load(poolId).currentVaultCollateral(collateralType);
     }
 
+    /**
+     * @dev See {IVaultModule-getVaultDebt}.
+     */
     function getVaultDebt(uint128 poolId, address collateralType) public override returns (int) {
         return Pool.load(poolId).currentVaultDebt(collateralType);
     }
 
+    /**
+     * @dev TODO
+     */
     function _verifyCollateralRatio(
         address collateralType,
         uint debt,
@@ -253,6 +288,9 @@ contract VaultModule is IVaultModule, AssociatedSystemsMixin, OwnableMixin, Acco
         }
     }
 
+    /**
+     * @dev TODO
+     */
     function _setDelegatePoolId(
         uint128 accountId,
         uint128 poolId,
@@ -264,6 +302,9 @@ contract VaultModule is IVaultModule, AssociatedSystemsMixin, OwnableMixin, Acco
         }
     }
 
+    /**
+     * @dev TODO move to common util and document
+     */
     modifier collateralEnabled(address collateralType) {
         if (!CollateralConfiguration.load(collateralType).stakingEnabled) {
             revert InvalidCollateral(collateralType);
@@ -272,6 +313,10 @@ contract VaultModule is IVaultModule, AssociatedSystemsMixin, OwnableMixin, Acco
         _;
     }
 
+    /**
+     * @dev TODO document
+     * TODO if used by others, move to a mixin
+     */
     modifier poolExists(uint128 poolId) {
         if (!Pool.exists(poolId)) {
             revert PoolNotFound(poolId);
