@@ -8,11 +8,4 @@ library Permission {
         bool enabled;
         SetUtil.AddressSet permissionedAddresses;
     }
-
-    function load() internal pure returns (Data storage store) {
-        bytes32 s = keccak256(abi.encode("FeatureFlag.Permission"));
-        assembly {
-            store.slot := s
-        }
-    }
 }
