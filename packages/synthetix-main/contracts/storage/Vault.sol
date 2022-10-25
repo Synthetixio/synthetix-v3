@@ -7,13 +7,15 @@ import "./RewardDistribution.sol";
 import "./CollateralConfiguration.sol";
 
 /**
- * @title Tracks collateral and debt distributions in a pool, for a specific collateral type.
+ * @title Tracks collateral and debt distributions in a pool for a specific collateral type.
  *
  * I.e. if a pool supports SNX and ETH collaterals, it will have an SNX Vault, and an ETH Vault.
  *
  * The Vault data structure is itself split into VaultEpoch sub-data structures. This facilitates liquidations,
  * so that whenever a liquidation occurs, instead of having to traverse and reset all data, a new epoch can simply
  * be created, effectively wiping all data, whilst having a record of the data before the liquidation event.
+ *
+ * It is recommended to understand VaultEpoch before understanding this object.
  *
  * TODO
  */
