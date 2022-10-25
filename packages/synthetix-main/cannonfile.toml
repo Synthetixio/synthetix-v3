@@ -83,6 +83,7 @@ args = ["CoreRouter", "contracts/modules/common", "contracts/modules/core"]
 modified = []
 depends = [
   "contract.OwnerModule",
+  "contract.FeatureFlagModule",
   "contract.UpgradeModule",
   "contract.AccountModule",
   "contract.AssociateDebtModule",
@@ -103,6 +104,7 @@ depends = [
 artifact = "contracts/routers/chain-<%= chainId %>/CoreRouter.sol:CoreRouter"
 abiOf = [
   "OwnerModule",
+  "FeatureFlagModule",
   "UpgradeModule",
   "AccountModule",
   "AssociateDebtModule",
