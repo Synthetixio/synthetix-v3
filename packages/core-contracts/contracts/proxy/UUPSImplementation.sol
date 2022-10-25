@@ -8,7 +8,7 @@ import "../utils/AddressUtil.sol";
 import "./ProxyStorage.sol";
 
 abstract contract UUPSImplementation is IUUPSImplementation, ProxyStorage {
-    event Upgraded(address implementation);
+    event Upgraded(address indexed self, address implementation);
 
     error ImplementationIsSterile(address implementation);
     error UpgradeSimulationFailed();
@@ -34,7 +34,7 @@ abstract contract UUPSImplementation is IUUPSImplementation, ProxyStorage {
 
         store.implementation = newImplementation;
 
-        emit Upgraded(newImplementation);
+        emit Upgraded(address(this), newImplementation);
     }
 
     function _implementationIsSterile(address candidateImplementation) internal virtual returns (bool) {

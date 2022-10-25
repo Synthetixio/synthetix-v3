@@ -10,7 +10,7 @@ import "@synthetixio/core-modules/contracts/mixins/AssociatedSystemsMixin.sol";
 
 import "../../utils/ERC20Helper.sol";
 
-contract LiquidationsModule is ILiquidationModule, AssociatedSystemsMixin {
+contract LiquidationModule is ILiquidationModule, AssociatedSystemsMixin {
     using MathUtil for uint;
     using ERC20Helper for address;
 
