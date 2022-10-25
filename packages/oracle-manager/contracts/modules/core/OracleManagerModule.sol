@@ -14,6 +14,8 @@ contract OracleManagerModule is IOracleManagerModule {
     error UnsupportedNodeType(uint nodeType);
     error NodeNotRegistered(bytes32 nodeId);
 
+    event NodeRegistered(bytes32 nodeId, bytes32[] parents, NodeDefinition.NodeType nodeType, bytes parameters);
+
     function registerNode(
         bytes32[] memory parents,
         NodeDefinition.NodeType nodeType,
@@ -63,14 +65,10 @@ contract OracleManagerModule is IOracleManagerModule {
     }
 
     function _validateNodeType(NodeDefinition.NodeType nodeType) internal pure returns (bool) {
-        if (
-            NodeDefinition.NodeType.REDUCER == nodeType ||
+        return (NodeDefinition.NodeType.REDUCER == nodeType ||
             NodeDefinition.NodeType.EXTERNAL == nodeType ||
             NodeDefinition.NodeType.CHAINLINK == nodeType ||
-            NodeDefinition.NodeType.PYTH == nodeType
-        ) return true;
-
-        return false;
+            NodeDefinition.NodeType.PYTH == nodeType);
     }
 
     function _getNodeId(NodeDefinition.Data memory nodeDefinition) internal pure returns (bytes32) {
@@ -82,17 +80,24 @@ contract OracleManagerModule is IOracleManagerModule {
         onlyValidNodeType(nodeDefinition.nodeType)
         returns (bytes32 nodeId)
     {
+        nodeId = _getNodeId(nodeDefinition);
+        //checks if the node is already registered
+        if (_isNodeRegistered(nodeId)) {
+            return nodeId;
+        }
         // checks nodeDefinition.parents if they are valid
         for (uint256 i = 0; i < nodeDefinition.parents.length; i++) {
-            if (!_nodeIsRegistered(nodeDefinition.parents[i])) {
+            if (!_isNodeRegistered(nodeDefinition.parents[i])) {
                 revert NodeNotRegistered(nodeDefinition.parents[i]);
             }
         }
 
         (, nodeId) = NodeDefinition.create(nodeDefinition);
+
+        emit NodeRegistered(nodeId, nodeDefinition.parents, nodeDefinition.nodeType, nodeDefinition.parameters);
     }
 
-    function _nodeIsRegistered(bytes32 nodeId) internal view returns (bool) {
+    function _isNodeRegistered(bytes32 nodeId) internal view returns (bool) {
         NodeDefinition.Data storage nodeDefinition = NodeDefinition.load(nodeId);
         return (nodeDefinition.nodeType != NodeDefinition.NodeType.NONE);
     }

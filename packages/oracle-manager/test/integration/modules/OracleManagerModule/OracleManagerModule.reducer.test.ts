@@ -5,7 +5,7 @@ import { bootstrapWithNodes } from '../../bootstrap';
 import NodeTypes from '../../mixins/Node.types';
 import NodeOperations from '../../mixins/Node.operations';
 
-describe('Oracle manager module reducer', function () {
+describe('OracleManagerModule', function () {
   const { signers, systems, nodeId1, nodeId2, nodeId3, abi } = bootstrapWithNodes();
 
   let owner: ethers.Signer;
