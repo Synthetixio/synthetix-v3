@@ -6,14 +6,15 @@ import "../../interfaces/ILiquidationModule.sol";
 import "../../storage/Collateral.sol";
 import "../../storage/Pool.sol";
 import "../../storage/Account.sol";
-import "@synthetixio/core-modules/contracts/mixins/AssociatedSystemsMixin.sol";
+import "@synthetixio/core-modules/contracts/storage/AssociatedSystem.sol";
 
 import "../../utils/ERC20Helper.sol";
 
-contract LiquidationModule is ILiquidationModule, AssociatedSystemsMixin {
+contract LiquidationModule is ILiquidationModule {
     using MathUtil for uint;
     using ERC20Helper for address;
 
+    using AssociatedSystem for AssociatedSystem.Data;
     using CollateralConfiguration for CollateralConfiguration.Data;
     using Collateral for Collateral.Data;
     using Pool for Pool.Data;
@@ -135,7 +136,7 @@ contract LiquidationModule is ILiquidationModule, AssociatedSystemsMixin {
 
         if (vaultDebt <= maxUsd) {
             // full vault liquidation
-            _getToken(_USD_TOKEN).burn(msg.sender, vaultDebt);
+            AssociatedSystem.load(_USD_TOKEN).asToken().burn(msg.sender, vaultDebt);
 
             amountLiquidated = vaultDebt;
             collateralRewarded = uint(vault.currentEpoch().collateralDist.totalValue());
@@ -143,7 +144,7 @@ contract LiquidationModule is ILiquidationModule, AssociatedSystemsMixin {
             pool.resetVault(collateralType);
         } else {
             // partial vault liquidation
-            _getToken(_USD_TOKEN).burn(msg.sender, maxUsd);
+            AssociatedSystem.load(_USD_TOKEN).asToken().burn(msg.sender, maxUsd);
 
             VaultEpoch.Data storage epoch = vault.currentEpoch();
 

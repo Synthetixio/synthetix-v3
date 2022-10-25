@@ -9,11 +9,15 @@ contract USDTokenModule is TokenModule, IUSDTokenModule {
         address from,
         address spender,
         uint amount
-    ) external onlyOwner {
-        if (amount < _erc20Store().allowance[from][spender]) {
-            revert InsufficientAllowance(amount, _erc20Store().allowance[from][spender]);
+    ) external {
+        OwnableStorage.onlyOwner();
+
+        ERC20Storage.Data storage store = ERC20Storage.load();
+
+        if (amount < store.allowance[from][spender]) {
+            revert InsufficientAllowance(amount, store.allowance[from][spender]);
         }
-        _erc20Store().allowance[from][spender] -= amount;
+        store.allowance[from][spender] -= amount;
         _burn(from, amount);
     }
 }

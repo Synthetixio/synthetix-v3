@@ -1,22 +1,18 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@synthetixio/core-contracts/contracts/ownership/OwnableMixin.sol";
 import "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
 import "@synthetixio/core-contracts/contracts/utils/MathUtil.sol";
-
-import "@synthetixio/core-modules/contracts/mixins/AssociatedSystemsMixin.sol";
 
 import "../../storage/DistributionEntry.sol";
 
 import "../../storage/Account.sol";
 import "../../storage/AccountRBAC.sol";
-import "../../mixins/AccountMixin.sol";
 import "../../storage/Pool.sol";
 
 import "../../interfaces/IRewardsManagerModule.sol";
 
-contract RewardsManagerModule is IRewardsManagerModule, OwnableMixin, AccountMixin, AssociatedSystemsMixin {
+contract RewardsManagerModule is IRewardsManagerModule {
     using SetUtil for SetUtil.Bytes32Set;
     using MathUtil for uint256;
 
@@ -106,7 +102,9 @@ contract RewardsManagerModule is IRewardsManagerModule, OwnableMixin, AccountMix
         uint128 poolId,
         address collateralType,
         uint128 accountId
-    ) external override onlyWithPermission(accountId, AccountRBAC._REWARDS_PERMISSION) returns (uint[] memory) {
+    ) external override returns (uint[] memory) {
+        Account.onlyWithPermission(accountId, AccountRBAC._REWARDS_PERMISSION);
+
         Vault.Data storage vault = Pool.load(poolId).vaults[collateralType];
         uint[] memory rewards = vault.updateAvailableRewards(accountId);
 

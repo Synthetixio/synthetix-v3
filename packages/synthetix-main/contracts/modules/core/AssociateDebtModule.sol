@@ -3,8 +3,6 @@ pragma solidity ^0.8.0;
 
 import "../../interfaces/IAssociateDebtModule.sol";
 
-import "@synthetixio/core-modules/contracts/mixins/AssociatedSystemsMixin.sol";
-
 import "../../utils/ERC20Helper.sol";
 
 import "@synthetixio/core-contracts/contracts/utils/MathUtil.sol";

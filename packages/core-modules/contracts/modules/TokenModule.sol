@@ -2,14 +2,14 @@
 pragma solidity ^0.8.0;
 
 import "@synthetixio/core-contracts/contracts/initializable/InitializableMixin.sol";
-import "@synthetixio/core-contracts/contracts/ownership/OwnableMixin.sol";
+import "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
 import "@synthetixio/core-contracts/contracts/token/ERC20.sol";
 import "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
 import "../interfaces/ITokenModule.sol";
 
-contract TokenModule is ITokenModule, ERC20, InitializableMixin, OwnableMixin {
+contract TokenModule is ITokenModule, ERC20, InitializableMixin {
     function _isInitialized() internal view override returns (bool) {
-        return _erc20Store().decimals != 0;
+        return ERC20Storage.load().decimals != 0;
     }
 
     function isInitialized() external view returns (bool) {
@@ -20,15 +20,18 @@ contract TokenModule is ITokenModule, ERC20, InitializableMixin, OwnableMixin {
         string memory tokenName,
         string memory tokenSymbol,
         uint8 tokenDecimals
-    ) public onlyOwner {
+    ) public {
+        OwnableStorage.onlyOwner();
         _initialize(tokenName, tokenSymbol, tokenDecimals);
     }
 
-    function burn(address from, uint256 amount) external override onlyOwner {
+    function burn(address from, uint256 amount) external override {
+        OwnableStorage.onlyOwner();
         _burn(from, amount);
     }
 
-    function mint(address to, uint256 amount) external override onlyOwner {
+    function mint(address to, uint256 amount) external override {
+        OwnableStorage.onlyOwner();
         _mint(to, amount);
     }
 
@@ -36,7 +39,8 @@ contract TokenModule is ITokenModule, ERC20, InitializableMixin, OwnableMixin {
         address from,
         address spender,
         uint amount
-    ) external override onlyOwner {
-        _erc20Store().allowance[from][spender] = amount;
+    ) external override {
+        OwnableStorage.onlyOwner();
+        ERC20Storage.load().allowance[from][spender] = amount;
     }
 }

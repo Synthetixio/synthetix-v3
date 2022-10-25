@@ -1,12 +1,12 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@synthetixio/core-contracts/contracts/ownership/OwnableMixin.sol";
+import "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
 import "../../interfaces/IMarketCollateralModule.sol";
 import "../../utils/ERC20Helper.sol";
 import "../../storage/Market.sol";
 
-contract MarketCollateralModule is IMarketCollateralModule, OwnableMixin {
+contract MarketCollateralModule is IMarketCollateralModule {
     using ERC20Helper for address;
 
     error InsufficientMarketCollateralDepositable(uint128 marketId, address collateralType, uint amountToDeposit);
@@ -79,7 +79,9 @@ contract MarketCollateralModule is IMarketCollateralModule, OwnableMixin {
         uint128 marketId,
         address collateralType,
         uint amount
-    ) external override onlyOwner {
+    ) external override {
+        OwnableStorage.onlyOwner();
+
         Market.Data storage marketData = Market.load(marketId);
         marketData.maximumDepositable[collateralType] = amount;
 
