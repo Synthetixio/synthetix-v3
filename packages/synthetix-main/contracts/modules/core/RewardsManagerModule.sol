@@ -1,11 +1,8 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@synthetixio/core-contracts/contracts/ownership/OwnableMixin.sol";
 import "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
 import "@synthetixio/core-contracts/contracts/utils/MathUtil.sol";
-
-import "@synthetixio/core-modules/contracts/mixins/AssociatedSystemsMixin.sol";
 
 import "../../storage/DistributionEntry.sol";
 
@@ -15,7 +12,7 @@ import "../../storage/Pool.sol";
 
 import "../../interfaces/IRewardsManagerModule.sol";
 
-contract RewardsManagerModule is IRewardsManagerModule, OwnableMixin, AssociatedSystemsMixin {
+contract RewardsManagerModule is IRewardsManagerModule {
     using SetUtil for SetUtil.Bytes32Set;
     using MathUtil for uint256;
 

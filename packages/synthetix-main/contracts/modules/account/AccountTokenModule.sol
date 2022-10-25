@@ -6,7 +6,8 @@ import "../../../contracts/interfaces/IAccountTokenModule.sol";
 import "../../../contracts/interfaces/IAccountModule.sol";
 
 contract AccountTokenModule is IAccountTokenModule, NftModule {
-    function mint(address owner, uint256 nftId) external onlyOwner {
+    function mint(address owner, uint256 nftId) external {
+        OwnableStorage.onlyOwner();
         _mint(owner, nftId);
 
         emit Mint(owner, nftId);
@@ -17,6 +18,6 @@ contract AccountTokenModule is IAccountTokenModule, NftModule {
         address to,
         uint256 tokenId
     ) internal virtual override {
-        IAccountModule(_getOwner()).notifyAccountTransfer(to, uint128(tokenId));
+        IAccountModule(OwnableStorage.getOwner()).notifyAccountTransfer(to, uint128(tokenId));
     }
 }

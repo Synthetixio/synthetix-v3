@@ -1,37 +1,42 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@synthetixio/core-contracts/contracts/ownership/OwnableMixin.sol";
+import "@synthetixio/core-contracts/contracts/errors/InitError.sol";
+import "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
 import "@synthetixio/core-contracts/contracts/proxy/UUPSProxy.sol";
 import "../interfaces/IAssociatedSystemsModule.sol";
-import "../mixins/AssociatedSystemsMixin.sol";
 
 import "@synthetixio/core-contracts/contracts/interfaces/IUUPSImplementation.sol";
 import "../interfaces/IOwnerModule.sol";
 import "../interfaces/ITokenModule.sol";
 import "../interfaces/INftModule.sol";
 
-contract AssociatedSystemsModule is IAssociatedSystemsModule, OwnableMixin, AssociatedSystemsMixin {
+import "../storage/AssociatedSystem.sol";
+
+contract AssociatedSystemsModule is IAssociatedSystemsModule {
+    using AssociatedSystem for AssociatedSystem.Data;
+
     function initOrUpgradeToken(
         bytes32 id,
         string memory name,
         string memory symbol,
         uint8 decimals,
         address impl
-    ) external override onlyOwner {
-        AssociatedSystemsStore storage store = _associatedSystemsStore();
+    ) external override {
+        OwnableStorage.onlyOwner();
+        AssociatedSystem.Data storage store = AssociatedSystem.load(id);
 
-        if (store.satellites[id].proxy != address(0)) {
-            _requireKind(id, _KIND_ERC20);
+        if (store.proxy != address(0)) {
+            store.expectKind(AssociatedSystem.KIND_ERC20);
 
-            store.satellites[id].impl = impl;
+            store.impl = impl;
 
-            address proxy = store.satellites[id].proxy;
+            address proxy = store.proxy;
 
             // tell the associated proxy to upgrade to the new implementation
             IUUPSImplementation(proxy).upgradeTo(impl);
 
-            _setAssociatedSystem(id, _KIND_ERC20, proxy, impl);
+            _setAssociatedSystem(id, AssociatedSystem.KIND_ERC20, proxy, impl);
         } else {
             // create a new proxy and own it
             address proxy = address(new UUPSProxy(impl));
@@ -39,7 +44,7 @@ contract AssociatedSystemsModule is IAssociatedSystemsModule, OwnableMixin, Asso
             IOwnerModule(proxy).initializeOwnerModule(address(this));
             ITokenModule(proxy).initialize(name, symbol, decimals);
 
-            _setAssociatedSystem(id, _KIND_ERC20, proxy, impl);
+            _setAssociatedSystem(id, AssociatedSystem.KIND_ERC20, proxy, impl);
         }
     }
 
@@ -49,18 +54,19 @@ contract AssociatedSystemsModule is IAssociatedSystemsModule, OwnableMixin, Asso
         string memory symbol,
         string memory uri,
         address impl
-    ) external override onlyOwner {
-        AssociatedSystemsStore storage store = _associatedSystemsStore();
+    ) external override {
+        OwnableStorage.onlyOwner();
+        AssociatedSystem.Data storage store = AssociatedSystem.load(id);
 
-        if (store.satellites[id].proxy != address(0)) {
-            _requireKind(id, _KIND_ERC721);
+        if (store.proxy != address(0)) {
+            store.expectKind(AssociatedSystem.KIND_ERC721);
 
-            address proxy = store.satellites[id].proxy;
+            address proxy = store.proxy;
 
             // tell the associated proxy to upgrade to the new implementation
             IUUPSImplementation(proxy).upgradeTo(impl);
 
-            _setAssociatedSystem(id, _KIND_ERC721, proxy, impl);
+            _setAssociatedSystem(id, AssociatedSystem.KIND_ERC721, proxy, impl);
         } else {
             // create a new proxy and own it
             address proxy = address(new UUPSProxy(impl));
@@ -68,7 +74,7 @@ contract AssociatedSystemsModule is IAssociatedSystemsModule, OwnableMixin, Asso
             IOwnerModule(proxy).initializeOwnerModule(address(this));
             INftModule(proxy).initialize(name, symbol, uri);
 
-            _setAssociatedSystem(id, _KIND_ERC721, proxy, impl);
+            _setAssociatedSystem(id, AssociatedSystem.KIND_ERC721, proxy, impl);
         }
     }
 
@@ -79,11 +85,12 @@ contract AssociatedSystemsModule is IAssociatedSystemsModule, OwnableMixin, Asso
      * *NOTE:* the contract you are connecting should still be owned by your dao. The
      * system is not expected to be able to do upgrades for you.
      */
-    function registerUnmanagedSystem(bytes32 id, address endpoint) external override onlyOwner {
+    function registerUnmanagedSystem(bytes32 id, address endpoint) external override {
+        OwnableStorage.onlyOwner();
         // empty string require kind will make sure the system is either unregistered or already unmanaged
-        _requireKind(id, "");
+        AssociatedSystem.load(id).expectKind("");
 
-        _setAssociatedSystem(id, _KIND_UNMANAGED, endpoint, endpoint);
+        _setAssociatedSystem(id, AssociatedSystem.KIND_UNMANAGED, endpoint, endpoint);
     }
 
     function _setAssociatedSystem(
@@ -92,13 +99,24 @@ contract AssociatedSystemsModule is IAssociatedSystemsModule, OwnableMixin, Asso
         address proxy,
         address impl
     ) internal {
-        _associatedSystemsStore().satellites[id] = AssociatedSystem(proxy, impl, kind);
+        AssociatedSystem.Data storage store = AssociatedSystem.load(id);
+        store.proxy = proxy;
+        store.impl = impl;
+        store.kind = kind;
         emit AssociatedSystemSet(kind, id, proxy, impl);
     }
 
     function getAssociatedSystem(bytes32 id) external view override returns (address proxy, bytes32 kind) {
-        proxy = _associatedSystemsStore().satellites[id].proxy;
-        kind = _associatedSystemsStore().satellites[id].kind;
+        proxy = AssociatedSystem.load(id).proxy;
+        kind = AssociatedSystem.load(id).kind;
+    }
+
+    modifier onlyIfAssociated(bytes32 id) {
+        if (address(AssociatedSystem.load(id).proxy) == address(0)) {
+            revert InitError.NotInitialized();
+        }
+
+        _;
     }
 
     event AssociatedSystemSet(bytes32 indexed kind, bytes32 indexed id, address proxy, address impl);

@@ -1,18 +1,18 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@synthetixio/core-contracts/contracts/ownership/OwnableMixin.sol";
+import "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
 import "@synthetixio/core-contracts/contracts/interfaces/IERC20.sol";
 
 import "../../interfaces/ICollateralModule.sol";
 import "../../storage/Account.sol";
 import "../../storage/CollateralConfiguration.sol";
 import "../../storage/CollateralLock.sol";
-import "@synthetixio/core-modules/contracts/mixins/AssociatedSystemsMixin.sol";
+import "@synthetixio/core-modules/contracts/storage/AssociatedSystem.sol";
 
 import "../../utils/ERC20Helper.sol";
 
-contract CollateralModule is ICollateralModule, OwnableMixin, AssociatedSystemsMixin {
+contract CollateralModule is ICollateralModule {
     using SetUtil for SetUtil.AddressSet;
     using ERC20Helper for address;
 
@@ -41,7 +41,8 @@ contract CollateralModule is ICollateralModule, OwnableMixin, AssociatedSystemsM
         uint minimumCRatio,
         uint liquidationReward,
         bool stakingEnabled
-    ) external override onlyOwner {
+    ) external override {
+        OwnableStorage.onlyOwner();
         CollateralConfiguration.set(
             collateralType,
             priceFeed,

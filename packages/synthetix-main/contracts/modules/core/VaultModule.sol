@@ -1,11 +1,11 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@synthetixio/core-contracts/contracts/ownership/OwnableMixin.sol";
+import "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
 import "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
 import "@synthetixio/core-contracts/contracts/utils/MathUtil.sol";
 
-import "@synthetixio/core-modules/contracts/mixins/AssociatedSystemsMixin.sol";
+import "@synthetixio/core-modules/contracts/storage/AssociatedSystem.sol";
 
 import "../../storage/Account.sol";
 import "../../storage/Pool.sol";
@@ -13,12 +13,13 @@ import "../../storage/Pool.sol";
 import "../../interfaces/IVaultModule.sol";
 import "../../interfaces/IUSDTokenModule.sol";
 
-contract VaultModule is IVaultModule, AssociatedSystemsMixin, OwnableMixin {
+contract VaultModule is IVaultModule {
     using SetUtil for SetUtil.UintSet;
     using SetUtil for SetUtil.Bytes32Set;
     using SetUtil for SetUtil.AddressSet;
     using MathUtil for uint256;
 
+    using AssociatedSystem for AssociatedSystem.Data;
     using Pool for Pool.Data;
     using Vault for Vault.Data;
     using VaultEpoch for VaultEpoch.Data;
@@ -142,7 +143,7 @@ contract VaultModule is IVaultModule, AssociatedSystemsMixin, OwnableMixin {
         epoch.usdDebtDist.updateActorValue(bytes32(uint(accountId)), newDebt);
         pool.recalculateVaultCollateral(collateralType);
         require(int(amount) == int128(int(amount)), "Incorrect amount specified");
-        _getToken(_USD_TOKEN).mint(msg.sender, amount);
+        AssociatedSystem.load(_USD_TOKEN).asToken().mint(msg.sender, amount);
 
         emit UsdMinted(accountId, poolId, collateralType, amount, msg.sender);
     }
@@ -165,7 +166,7 @@ contract VaultModule is IVaultModule, AssociatedSystemsMixin, OwnableMixin {
             amount = uint(debt);
         }
 
-        _getToken(_USD_TOKEN).burn(msg.sender, amount);
+        AssociatedSystem.load(_USD_TOKEN).asToken().burn(msg.sender, amount);
 
         VaultEpoch.Data storage epoch = Pool.load(poolId).vaults[collateralType].currentEpoch();
 
