@@ -153,7 +153,7 @@ contract LiquidationsModule is ILiquidationModule, AssociatedSystemsMixin {
             // repay the debt
             // TODO: better data structures
             epoch.incomingDebtDist.distributeValue(-int(amountLiquidated));
-            epoch.unclaimedDebt -= int128(int(amountLiquidated));
+            epoch.unconsolidatedDebt -= int128(int(amountLiquidated));
 
             // take away the collateral
             epoch.collateralDist.distributeValue(-int(collateralRewarded));

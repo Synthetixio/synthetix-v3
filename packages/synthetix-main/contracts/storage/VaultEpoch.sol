@@ -21,7 +21,7 @@ library VaultEpoch {
          *
          * Buffer for socializations that haven't been consolidated yet
          */
-        int128 unclaimedDebt;
+        int128 unconsolidatedDebt;
         /**
          * @dev Tracks debt for each user.
          */
@@ -65,7 +65,7 @@ library VaultEpoch {
         self.incomingDebtDist.distributeValue(debtChange);
 
         // total debt unfortunately needs to be cached here for liquidations
-        self.unclaimedDebt += int128(debtChange);
+        self.unconsolidatedDebt += int128(debtChange);
     }
 
     /**
@@ -85,7 +85,7 @@ library VaultEpoch {
         currentDebt += newDebt;
 
         self.consolidatedDebtDist.updateActorValue(actorId, currentDebt);
-        self.unclaimedDebt -= int128(newDebt);
+        self.unconsolidatedDebt -= int128(newDebt);
     }
 
     /**
@@ -117,7 +117,7 @@ library VaultEpoch {
      * (only thing?)
      */
     function totalDebt(Data storage self) internal view returns (int) {
-        return int(self.unclaimedDebt + self.consolidatedDebtDist.totalValue());
+        return int(self.unconsolidatedDebt + self.consolidatedDebtDist.totalValue());
     }
 
     /**
