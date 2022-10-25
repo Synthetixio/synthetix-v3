@@ -3,6 +3,6 @@ packages/*/node_modules/
 packages/*/dist/
 build/
 **/coverage*
-Router.sol
 packages/core-utils/utils
 packages/*/typechain-types
+contracts/routers

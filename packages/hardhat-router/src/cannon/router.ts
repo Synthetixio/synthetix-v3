@@ -47,7 +47,11 @@ exports.generate = async function generate(
     contracts,
   });
 
-  const routerPath = path.join(hre.config.paths.sources, `routers/chain-${hre.network.config.chainId}`, `${routerName}.sol`);
+  const routerPath = path.join(
+    hre.config.paths.sources,
+    `routers/chain-${hre.network.config.chainId}`,
+    `${routerName}.sol`
+  );
   await mkdirp(dirname(routerPath));
 
   await fs.writeFile(routerPath, generatedSource);

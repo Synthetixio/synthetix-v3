@@ -31,10 +31,18 @@ contract Router {
 
             function findImplementation(sig) -> result {
                 switch sig
-                case 0x20965255 { result := _SOME_MODULE } // SomeModule.getValue()
-                case 0x3659cfe6 { result := _UPGRADE_MODULE } // UpgradeModule.upgradeTo()
-                case 0xaaf10f42 { result := _UPGRADE_MODULE } // UpgradeModule.getImplementation()
-                case 0xc7f62cda { result := _UPGRADE_MODULE } // UpgradeModule.simulateUpgradeTo()
+                case 0x20965255 {
+                    result := _SOME_MODULE
+                } // SomeModule.getValue()
+                case 0x3659cfe6 {
+                    result := _UPGRADE_MODULE
+                } // UpgradeModule.upgradeTo()
+                case 0xaaf10f42 {
+                    result := _UPGRADE_MODULE
+                } // UpgradeModule.getImplementation()
+                case 0xc7f62cda {
+                    result := _UPGRADE_MODULE
+                } // UpgradeModule.simulateUpgradeTo()
                 leave
             }
 
