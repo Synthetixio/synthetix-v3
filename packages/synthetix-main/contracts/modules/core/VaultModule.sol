@@ -8,12 +8,13 @@ import "@synthetixio/core-contracts/contracts/utils/MathUtil.sol";
 import "@synthetixio/core-modules/contracts/mixins/AssociatedSystemsMixin.sol";
 
 import "../../storage/Account.sol";
+import "../../mixins/AccountMixin.sol";
 import "../../storage/Pool.sol";
 
 import "../../interfaces/IVaultModule.sol";
 import "../../interfaces/IUSDTokenModule.sol";
 
-contract VaultModule is IVaultModule, AssociatedSystemsMixin, OwnableMixin {
+contract VaultModule is IVaultModule, AssociatedSystemsMixin, OwnableMixin, AccountMixin {
     using SetUtil for SetUtil.UintSet;
     using SetUtil for SetUtil.Bytes32Set;
     using SetUtil for SetUtil.AddressSet;
@@ -30,7 +31,6 @@ contract VaultModule is IVaultModule, AssociatedSystemsMixin, OwnableMixin {
     bytes32 private constant _USD_TOKEN = "USDToken";
 
     error InsufficientAccountCollateral(uint requestedAmount);
-    error PermissionDenied(uint128 accountId, bytes32 permission, address target);
     error PoolNotFound(uint128 poolId);
     error InvalidLeverage(uint leverage);
     error InsufficientCollateralRatio(uint collateralValue, uint debt, uint ratio, uint minRatio);
@@ -262,14 +262,6 @@ contract VaultModule is IVaultModule, AssociatedSystemsMixin, OwnableMixin {
         if (!stakedCollateral.pools.contains(poolId)) {
             stakedCollateral.pools.add(poolId);
         }
-    }
-
-    modifier onlyWithPermission(uint128 accountId, bytes32 permission) {
-        if (!Account.load(accountId).rbac.authorized(permission, msg.sender)) {
-            revert PermissionDenied(accountId, permission, msg.sender);
-        }
-
-        _;
     }
 
     modifier collateralEnabled(address collateralType) {
