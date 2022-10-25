@@ -12,7 +12,9 @@ library VaultEpoch {
 
     struct Data {
         /**
-         * @dev Amount of debt which has not been rolled into `usdDebtDist`.
+         * @dev
+         *
+         * Amount of debt which has not been rolled into `usdDebtDist`.
          * Needed to keep track of overall getVaultDebt.
          *
          * TODO: Wut?
