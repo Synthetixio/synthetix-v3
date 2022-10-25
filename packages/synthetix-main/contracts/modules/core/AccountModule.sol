@@ -21,8 +21,6 @@ contract AccountModule is IAccountModule {
 
     error OnlyAccountTokenProxy(address origin);
 
-    error PermissionDenied(uint128 accountId, bytes32 permission, address user);
-
     error PermissionNotGranted(uint128 accountId, bytes32 permission, address user);
 
     error InvalidPermission(bytes32 permission);
@@ -92,7 +90,9 @@ contract AccountModule is IAccountModule {
         uint128 accountId,
         bytes32 permission,
         address user
-    ) external override onlyWithPermission(accountId, AccountRBAC._ADMIN_PERMISSION) isPermissionValid(permission) {
+    ) external override isPermissionValid(permission) {
+        Account.onlyWithPermission(accountId, AccountRBAC._ADMIN_PERMISSION);
+        
         Account.load(accountId).rbac.grantPermission(permission, user);
 
         emit PermissionGranted(accountId, permission, user, msg.sender);
@@ -102,7 +102,9 @@ contract AccountModule is IAccountModule {
         uint128 accountId,
         bytes32 permission,
         address user
-    ) external override onlyWithPermission(accountId, AccountRBAC._ADMIN_PERMISSION) {
+    ) external override {
+        Account.onlyWithPermission(accountId, AccountRBAC._ADMIN_PERMISSION);
+        
         Account.load(accountId).rbac.revokePermission(permission, user);
 
         emit PermissionRevoked(accountId, permission, user, msg.sender);
@@ -122,14 +124,6 @@ contract AccountModule is IAccountModule {
         return Account.load(accountId).rbac.owner;
     }
 
-    modifier onlyWithPermission(uint128 accountId, bytes32 permission) {
-        if (!_authorized(accountId, permission, msg.sender)) {
-            revert PermissionDenied(accountId, permission, msg.sender);
-        }
-
-        _;
-    }
-
     modifier isPermissionValid(bytes32 permission) {
         if (
             permission != AccountRBAC._DEPOSIT_PERMISSION &&
@@ -142,15 +136,5 @@ contract AccountModule is IAccountModule {
         }
 
         _;
-    }
-
-    function _authorized(
-        uint128 accountId,
-        bytes32 permission,
-        address user
-    ) internal view returns (bool) {
-        return ((user == getAccountOwner(accountId)) ||
-            Account.load(accountId).rbac.hasPermission(AccountRBAC._ADMIN_PERMISSION, user) ||
-            Account.load(accountId).rbac.hasPermission(permission, user));
     }
 }

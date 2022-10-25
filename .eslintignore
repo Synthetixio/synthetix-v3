@@ -2,3 +2,4 @@ packages/*/coverage
 packages/*/dist
 packages/core-utils/utils
 packages/*/typechain-types
+contracts/routers

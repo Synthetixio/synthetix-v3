@@ -20,7 +20,6 @@ contract RewardsManagerModule is IRewardsManagerModule {
     using Distribution for Distribution.Data;
     using DistributionEntry for DistributionEntry.Data;
 
-    error PermissionDenied(uint128 accountId, bytes32 permission, address target);
     error InvalidParameters(string incorrectParameter, string help);
 
     uint private constant _MAX_REWARD_DISTRIBUTIONS = 10;
@@ -103,7 +102,9 @@ contract RewardsManagerModule is IRewardsManagerModule {
         uint128 poolId,
         address collateralType,
         uint128 accountId
-    ) external override onlyWithPermission(accountId, AccountRBAC._REWARDS_PERMISSION) returns (uint[] memory) {
+    ) external override returns (uint[] memory) {
+        Account.onlyWithPermission(accountId, AccountRBAC._REWARDS_PERMISSION);
+
         Vault.Data storage vault = Pool.load(poolId).vaults[collateralType];
         uint[] memory rewards = vault.updateAvailableRewards(accountId);
 
@@ -144,13 +145,5 @@ contract RewardsManagerModule is IRewardsManagerModule {
         }
 
         return rates;
-    }
-
-    modifier onlyWithPermission(uint128 accountId, bytes32 permission) {
-        if (!AccountRBAC.authorized(Account.load(accountId).rbac, permission, msg.sender)) {
-            revert PermissionDenied(accountId, permission, msg.sender);
-        }
-
-        _;
     }
 }

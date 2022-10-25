@@ -12,6 +12,8 @@ library Account {
     using Collateral for Collateral.Data;
     using SetUtil for SetUtil.UintSet;
 
+    error PermissionDenied(uint128 accountId, bytes32 permission, address target);
+
     struct Data {
         uint128 id;
         AccountRBAC.Data rbac;
@@ -65,5 +67,14 @@ library Account {
         }
 
         return totalAssigned;
+    }
+
+    /**
+     * @dev Requires that the given account has the specified permission.
+     */
+    function onlyWithPermission(uint128 accountId, bytes32 permission) internal view {
+        if (!Account.load(accountId).rbac.authorized(permission, msg.sender)) {
+            revert PermissionDenied(accountId, permission, msg.sender);
+        }
     }
 }

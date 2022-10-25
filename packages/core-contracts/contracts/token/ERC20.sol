@@ -15,9 +15,6 @@ contract ERC20 is IERC20 {
     event Transfer(address indexed from, address indexed to, uint amount);
     event Approval(address indexed owner, address indexed spender, uint amount);
 
-    error InsufficientAllowance(uint required, uint existing);
-    error InsufficientBalance(uint required, uint existing);
-
     function _initialize(
         string memory tokenName,
         string memory tokenSymbol,

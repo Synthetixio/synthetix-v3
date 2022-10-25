@@ -31,7 +31,6 @@ contract VaultModule is IVaultModule {
     bytes32 private constant _USD_TOKEN = "USDToken";
 
     error InsufficientAccountCollateral(uint requestedAmount);
-    error PermissionDenied(uint128 accountId, bytes32 permission, address target);
     error PoolNotFound(uint128 poolId);
     error InvalidLeverage(uint leverage);
     error InsufficientCollateralRatio(uint collateralValue, uint debt, uint ratio, uint minRatio);
@@ -48,10 +47,11 @@ contract VaultModule is IVaultModule {
     )
         external
         override
-        onlyWithPermission(accountId, AccountRBAC._DELEGATE_PERMISSION)
         collateralEnabled(collateralType)
         poolExists(poolId)
     {
+        Account.onlyWithPermission(accountId, AccountRBAC._DELEGATE_PERMISSION);
+
         // Fix leverage to 1 until it's enabled
         // TODO: we will probably at least want to test <1 leverage
         if (leverage != MathUtil.UNIT) revert InvalidLeverage(leverage);
@@ -122,7 +122,9 @@ contract VaultModule is IVaultModule {
         uint128 poolId,
         address collateralType,
         uint amount
-    ) external override onlyWithPermission(accountId, AccountRBAC._MINT_PERMISSION) {
+    ) external override {
+        Account.onlyWithPermission(accountId, AccountRBAC._MINT_PERMISSION);
+
         // check if they have sufficient c-ratio to mint that amount
         Pool.Data storage pool = Pool.load(poolId);
 
@@ -263,14 +265,6 @@ contract VaultModule is IVaultModule {
         if (!stakedCollateral.pools.contains(poolId)) {
             stakedCollateral.pools.add(poolId);
         }
-    }
-
-    modifier onlyWithPermission(uint128 accountId, bytes32 permission) {
-        if (!Account.load(accountId).rbac.authorized(permission, msg.sender)) {
-            revert PermissionDenied(accountId, permission, msg.sender);
-        }
-
-        _;
     }
 
     modifier collateralEnabled(address collateralType) {
