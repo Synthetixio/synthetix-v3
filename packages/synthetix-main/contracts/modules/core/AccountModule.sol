@@ -92,7 +92,7 @@ contract AccountModule is IAccountModule {
         address user
     ) external override isPermissionValid(permission) {
         Account.onlyWithPermission(accountId, AccountRBAC._ADMIN_PERMISSION);
-        
+
         Account.load(accountId).rbac.grantPermission(permission, user);
 
         emit PermissionGranted(accountId, permission, user, msg.sender);
@@ -104,7 +104,7 @@ contract AccountModule is IAccountModule {
         address user
     ) external override {
         Account.onlyWithPermission(accountId, AccountRBAC._ADMIN_PERMISSION);
-        
+
         Account.load(accountId).rbac.revokePermission(permission, user);
 
         emit PermissionRevoked(accountId, permission, user, msg.sender);

@@ -44,12 +44,7 @@ contract VaultModule is IVaultModule {
         address collateralType,
         uint collateralAmount,
         uint leverage
-    )
-        external
-        override
-        collateralEnabled(collateralType)
-        poolExists(poolId)
-    {
+    ) external override collateralEnabled(collateralType) poolExists(poolId) {
         Account.onlyWithPermission(accountId, AccountRBAC._DELEGATE_PERMISSION);
 
         // Fix leverage to 1 until it's enabled
