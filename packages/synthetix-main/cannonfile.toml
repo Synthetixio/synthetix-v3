@@ -63,9 +63,6 @@ artifact = "contracts/modules/core/VaultModule.sol:VaultModule"
 [contract.AccountTokenModule]
 artifact = "contracts/modules/account/AccountTokenModule.sol:AccountTokenModule"
 
-[contract.ESNXTokenModule]
-artifact = "contracts/modules/esnx/ESNXTokenModule.sol:ESNXTokenModule"
-
 [contract.SNXTokenModule]
 artifact = "contracts/modules/snx/SNXTokenModule.sol:SNXTokenModule"
 
@@ -173,27 +170,6 @@ abiOf = [
 ]
 depends = ["run.account_generate_router"]
 
-# ESNX
-[run.esnx_generate_router]
-exec = "../hardhat-router/dist/cannon/router.js"
-func = "generate"
-args = ["ESNXRouter", "contracts/modules/common", "contracts/modules/esnx"]
-modified = ["contracts/modules/common", "contracts/modules/esnx"]
-depends = [
-  "contract.OwnerModule",
-  "contract.UpgradeModule",
-  "contract.ESNXTokenModule"
-]
-
-[contract.ESNXRouter]
-artifact = "contracts/routers/chain-<%= chainId %>/ESNXRouter.sol:ESNXRouter"
-abiOf = [
-  "OwnerModule",
-  "UpgradeModule",
-  "ESNXTokenModule"
-]
-depends = ["run.esnx_generate_router"]
-
 # SNX
 [run.snx_generate_router]
 exec = "../hardhat-router/dist/cannon/router.js"
@@ -275,25 +251,6 @@ depends = [
 factory.SNXProxy.abiOf = ["SNXRouter"]
 factory.SNXProxy.event = "AssociatedSystemSet"
 factory.SNXProxy.arg = 2
-
-[invoke.init_esnx]
-target = ["CoreProxy"]
-from = "<%= settings.owner %>"
-func = "initOrUpgradeToken"
-args = [
-  "0x65534e58546f6b656e0000000000000000000000000000000000000000000000",
-  "Escrowed Synthetix",
-  "eSNX",
-  18,
-  "<%= contracts.ESNXRouter.address %>"
-]
-depends = [
-  "invoke.upgrade_core_proxy",
-  "contract.ESNXRouter",
-]
-factory.ESNXProxy.abiOf = ["ESNXRouter"]
-factory.ESNXProxy.event = "AssociatedSystemSet"
-factory.ESNXProxy.arg = 2
 
 [invoke.init_usd]
 target = ["CoreProxy"]
