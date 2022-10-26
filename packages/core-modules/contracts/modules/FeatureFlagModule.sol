@@ -27,7 +27,7 @@ contract FeatureFlagModule is IFeatureFlag {
         emit FeatureFlagAddressAdded(feature, permissioned);
     }
 
-    function addToFeatureFlag(bytes32 feature, address[] calldata permissioned) external override {
+    function addMultipleToFeatureFlag(bytes32 feature, address[] calldata permissioned) external override {
         OwnableStorage.onlyOwner();
 
         FeatureFlag.Data storage data = FeatureFlag.load();
@@ -45,7 +45,7 @@ contract FeatureFlagModule is IFeatureFlag {
         emit FeatureFlagAddressRemoved(feature, permissioned);
     }
 
-    function removeFromFeatureFlag(bytes32 feature, address[] calldata permissioned) external override {
+    function removeMultipleFromFeatureFlag(bytes32 feature, address[] calldata permissioned) external override {
         OwnableStorage.onlyOwner();
 
         FeatureFlag.Data storage data = FeatureFlag.load();
