@@ -48,7 +48,7 @@ const config = {
     ['optimistic-mainnet']: {
       url:
         process.env.NETWORK_ENDPOINT ||
-        `https://optimism-goerli.infura.io/v3/${process.env.INFURA_API_KEY}`,
+        `https://optimism.infura.io/v3/${process.env.INFURA_API_KEY}`,
       accounts: process.env.DEPLOYER_PRIVATE_KEY ? [process.env.DEPLOYER_PRIVATE_KEY] : [],
       chainId: 10,
     },
