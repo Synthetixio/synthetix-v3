@@ -31,7 +31,7 @@ contract FeatureFlagModule is IFeatureFlag {
         OwnableStorage.onlyOwner();
 
         FeatureFlag.Data storage data = FeatureFlag.load();
-        
+
         for (uint i = 0; i < permissioned.length; i++) {
             data.featureFlags[feature].permissionedAddresses.add(permissioned[i]);
             emit FeatureFlagAddressAdded(feature, permissioned[i]);
@@ -49,7 +49,7 @@ contract FeatureFlagModule is IFeatureFlag {
         OwnableStorage.onlyOwner();
 
         FeatureFlag.Data storage data = FeatureFlag.load();
-        
+
         for (uint i = 0; i < permissioned.length; i++) {
             data.featureFlags[feature].permissionedAddresses.remove(permissioned[i]);
             emit FeatureFlagAddressRemoved(feature, permissioned[i]);
