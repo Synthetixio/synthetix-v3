@@ -39,14 +39,18 @@ const config = {
       accounts: process.env.DEPLOYER_PRIVATE_KEY ? [process.env.DEPLOYER_PRIVATE_KEY] : [],
     },
     ['optimistic-goerli']: {
-      url: process.env.NETWORK_ENDPOINT || `https://optimism-goerli.infura.io/v3/${process.env.INFURA_API_KEY}`,
+      url:
+        process.env.NETWORK_ENDPOINT ||
+        `https://optimism-goerli.infura.io/v3/${process.env.INFURA_API_KEY}`,
       accounts: process.env.DEPLOYER_PRIVATE_KEY ? [process.env.DEPLOYER_PRIVATE_KEY] : [],
-      chainId: 420
+      chainId: 420,
     },
     ['optimistic-mainnet']: {
-      url: process.env.NETWORK_ENDPOINT || `https://optimism-goerli.infura.io/v3/${process.env.INFURA_API_KEY}`,
+      url:
+        process.env.NETWORK_ENDPOINT ||
+        `https://optimism-goerli.infura.io/v3/${process.env.INFURA_API_KEY}`,
       accounts: process.env.DEPLOYER_PRIVATE_KEY ? [process.env.DEPLOYER_PRIVATE_KEY] : [],
-      chainId: 10
+      chainId: 10,
     },
     goerli: {
       url: `https://goerli.infura.io/v3/${process.env.INFURA_API_KEY}`,
@@ -56,7 +60,7 @@ const config = {
     ['avalanche-fuji']: {
       url: `https://avalanche-fuji.infura.io/v3/${process.env.INFURA_API_KEY}`,
       accounts: process.env.DEPLOYER_PRIVATE_KEY ? [process.env.DEPLOYER_PRIVATE_KEY] : [],
-      chainId: 43113
+      chainId: 43113,
     },
   },
   gasReporter: {
@@ -72,7 +76,7 @@ const config = {
       optimisticEthereum: process.env.OVM_ETHERSCAN_API_KEY,
       optimisticGoerli: process.env.OVM_ETHERSCAN_API_KEY,
       avalancheFujiTestnet: process.env.ETHERSCAN_API_KEY,
-    }
+    },
   },
   tenderly: {
     project: 'synthetix',
