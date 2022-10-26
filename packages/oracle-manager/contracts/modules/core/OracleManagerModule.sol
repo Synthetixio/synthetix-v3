@@ -16,6 +16,7 @@ contract OracleManagerModule is IOracleManagerModule {
 
     event NodeRegistered(bytes32 nodeId, bytes32[] parents, NodeDefinition.NodeType nodeType, bytes parameters);
 
+    /// @notice registers a new node
     function registerNode(
         bytes32[] memory parents,
         NodeDefinition.NodeType nodeType,
@@ -30,6 +31,7 @@ contract OracleManagerModule is IOracleManagerModule {
         return _registerNode(nodeDefinition);
     }
 
+    /// @notice get the node Id by passing nodeDefinition
     function getNodeId(
         bytes32[] memory parents,
         NodeDefinition.NodeType nodeType,
@@ -44,10 +46,12 @@ contract OracleManagerModule is IOracleManagerModule {
         return _getNodeId(nodeDefinition);
     }
 
+    /// @notice get a node by nodeId
     function getNode(bytes32 nodeId) external pure returns (NodeDefinition.Data memory) {
         return _getNode(nodeId);
     }
 
+    /// @notice the function to process the prices based on the node's type
     function process(bytes32 nodeId) external view returns (Node.Data memory) {
         return _process(nodeId);
     }
