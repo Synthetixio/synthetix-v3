@@ -1,0 +1,27 @@
+name = "synthetix-spartan-council-pool"
+version = "0.0.0"
+description = "Creates the spartan council pool"
+
+[setting.snx_package]
+defaultValue = "synthetix:3"
+
+[import.system]
+source = "<%= settings.snx_package %>"
+
+[invoke.create_preferred_pool]
+target = ["system.CoreProxy"]
+func = "createPool"
+args = [
+    1,
+    "<%= settings.owner %>",
+]
+depends=["import.system"]
+
+[invoke.set_preferred_pool]
+target = ["system.CoreProxy"]
+func = "setPreferredPool"
+from = "<%= settings.owner %>"
+args = [
+    1,
+]
+depends=["invoke.create_preferred_pool"]

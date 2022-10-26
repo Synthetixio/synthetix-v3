@@ -28,7 +28,7 @@ artifact = "contracts/modules/core/AccountModule.sol:AccountModule"
 artifact = "contracts/modules/core/AssociateDebtModule.sol:AssociateDebtModule"
 
 [contract.AssociatedSystemsModule]
-artifact = "contracts/modules/core/AssociatedSystemsModule.sol:AssociatedSystemsModule"
+artifact = "contracts/modules/associated-systems/AssociatedSystemsModule.sol:AssociatedSystemsModule"
 
 [contract.CollateralModule]
 artifact = "contracts/modules/core/CollateralModule.sol:CollateralModule"
@@ -79,7 +79,7 @@ artifact = "InitialModuleBundle"
 [run.core_generate_router]
 exec = "../hardhat-router/dist/cannon/router.js"
 func = "generate"
-args = ["CoreRouter", "contracts/modules/common", "contracts/modules/core"]
+args = ["CoreRouter", "contracts/modules/common", "contracts/modules/core", "contracts/modules/associated-systems"]
 modified = []
 depends = [
   "contract.OwnerModule",
@@ -219,11 +219,12 @@ depends = ["run.snx_generate_router"]
 [run.usd_generate_router]
 exec = "../hardhat-router/dist/cannon/router.js"
 func = "generate"
-args = ["USDRouter", "contracts/modules/common", "contracts/modules/usd"]
+args = ["USDRouter", "contracts/modules/common", "contracts/modules/usd", "contracts/modules/associated-systems"]
 modified = ["contracts/modules/common", "contracts/modules/usd"]
 depends = [
   "contract.OwnerModule",
   "contract.UpgradeModule",
+  "contract.AssociatedSystemsModule",
   "contract.USDTokenModule"
 ]
 
@@ -232,6 +233,7 @@ artifact = "contracts/routers/chain-<%= chainId %>/USDRouter.sol:USDRouter"
 abiOf = [
   "OwnerModule",
   "UpgradeModule",
+  "AssociatedSystemsModule",
   "USDTokenModule"
 ]
 depends = ["run.usd_generate_router"]
