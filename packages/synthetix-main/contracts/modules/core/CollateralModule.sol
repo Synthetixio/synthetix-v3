@@ -28,9 +28,6 @@ contract CollateralModule is ICollateralModule {
 
     error InvalidCollateral(address collateralType);
 
-    //bytes32 private constant _REDEEMABLE_REWARDS_TOKEN = "eSNXToken";
-    //bytes32 private constant _REWARDED_TOKEN = "SNXToken";
-
     // 86400 * 365.26
     uint private constant _SECONDS_PER_YEAR = 31558464;
 
