@@ -19,7 +19,7 @@ defaultValue = "core"
 artifact = "contracts/modules/common/OwnerModule.sol:OwnerModule"
 
 [contract.FeatureFlagModule]
-artifact = "contracts/modules/common/FeatureFlagModule.sol:FeatureFlagModule"
+artifact = "contracts/modules/core/FeatureFlagModule.sol:FeatureFlagModule"
 
 [contract.UpgradeModule]
 artifact = "contracts/modules/common/UpgradeModule.sol:UpgradeModule"
