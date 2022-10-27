@@ -64,12 +64,10 @@ library CollateralConfiguration {
         collateral.stakingEnabled = stakingEnabled;
     }
 
-    modifier collateralEnabled(address token) {
+    function collateralEnabled(address token) internal {
         if (!load(token).stakingEnabled) {
             revert InvalidCollateral(token);
         }
-
-        _;
     }
 
     function getCollateralPrice(Data storage self) internal view returns (uint) {

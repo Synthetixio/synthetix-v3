@@ -49,8 +49,8 @@ contract LiquidationModule is ILiquidationModule {
 
         int rawDebt = pool.updateAccountDebt(collateralType, accountId);
 
-        (uint cl, uint collateralValue, ) = pool.currentAccountCollateral(collateralType, accountId);
-        collateralLiquidated = cl;
+        (uint collateralAmount, uint collateralValue) = pool.currentAccountCollateral(collateralType, accountId);
+        collateralLiquidated = collateralAmount;
 
         debtLiquidated = uint(rawDebt);
 
@@ -63,9 +63,9 @@ contract LiquidationModule is ILiquidationModule {
             );
         }
 
-        uint oldShares = epoch.debtDist.getActorShares(bytes32(uint(uint128(accountId))));
+        uint oldShares = epoch.incomingDebtDist.getActorShares(bytes32(uint(uint128(accountId))));
 
-        if (epoch.debtDist.totalShares == oldShares) {
+        if (epoch.incomingDebtDist.totalShares == oldShares) {
             // will be left with 0 shares, which can't be socialized
             revert MustBeVaultLiquidated();
         }
@@ -78,16 +78,16 @@ contract LiquidationModule is ILiquidationModule {
         }
 
         // this will clear the user's account the same way as if they had unstaked normally
-        epoch.setAccount(accountId, 0, 0);
+        epoch.updateAccountPosition(accountId, 0, 0);
 
         // we don't give the collateral back to the user though--it gets
         // fed back into the vault proportionally to the amount of collateral you have
         // the vault might end up with less overall collateral if liquidation reward
-        // is greater than the acutal collateral in this user's account
+        // is greater than the actual collateral in this user's account
         epoch.collateralDist.distributeValue(int(collateralLiquidated) - int(amountRewarded));
 
-        // debt isnt cleared when someone unstakes by default, so we do it separately here
-        epoch.usdDebtDist.updateActorShares(bytes32(uint(accountId)), 0);
+        // debt isn't cleared when someone unstakes by default, so we do it separately here
+        epoch.consolidatedDebtDist.updateActorShares(bytes32(uint(accountId)), 0);
 
         // now we feed the debt back in also
         epoch.distributeDebt(int(debtLiquidated));
@@ -153,8 +153,8 @@ contract LiquidationModule is ILiquidationModule {
 
             // repay the debt
             // TODO: better data structures
-            epoch.debtDist.distributeValue(-int(amountLiquidated));
-            epoch.unclaimedDebt -= int128(int(amountLiquidated));
+            epoch.incomingDebtDist.distributeValue(-int(amountLiquidated));
+            epoch.unconsolidatedDebt -= int128(int(amountLiquidated));
 
             // take away the collateral
             epoch.collateralDist.distributeValue(-int(collateralRewarded));
@@ -185,7 +185,7 @@ contract LiquidationModule is ILiquidationModule {
     ) external override returns (bool) {
         Pool.Data storage pool = Pool.load(poolId);
         int rawDebt = pool.updateAccountDebt(collateralType, accountId);
-        (, uint collateralValue, ) = pool.currentAccountCollateral(collateralType, accountId);
+        (, uint collateralValue) = pool.currentAccountCollateral(collateralType, accountId);
         return rawDebt >= 0 && _isLiquidatable(collateralType, uint(rawDebt), collateralValue);
     }
 }
