@@ -16,5 +16,5 @@ interface IFeatureFlagModule {
     function isFeatureFlagEnabled(bytes32 feature) external view returns (bool);
 
     /// @notice Returns the addresses that have permission for a feature flag
-    function getFeatureFlagPermissionedAddresses(bytes32 feature) external view returns (address[] memory);
+    function getFeatureFlagAddresses(bytes32 feature) external view returns (address[] memory);
 }

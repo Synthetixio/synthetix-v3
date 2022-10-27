@@ -38,12 +38,7 @@ contract FeatureFlagModule is IFeatureFlagModule {
         return FeatureFlag.load(feature).enabled;
     }
 
-    function getFeatureFlagPermissionedAddresses(bytes32 feature)
-        external
-        view
-        override
-        returns (address[] memory)
-    {
+    function getFeatureFlagAddresses(bytes32 feature) external view override returns (address[] memory) {
         return FeatureFlag.load(feature).permissionedAddresses.values();
     }
 }
