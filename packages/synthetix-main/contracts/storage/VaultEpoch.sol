@@ -105,8 +105,6 @@ library VaultEpoch {
      * according to the collateral they delegated and the leverage used.
      *
      * Called whenever a user's collateral changes.
-     *
-     * TODO: Rename to updateAccountCollateralAndDebtExposure?
      */
     function updateAccountPosition(
         Data storage self,
