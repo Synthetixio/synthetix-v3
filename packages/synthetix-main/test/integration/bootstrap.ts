@@ -4,6 +4,9 @@ import { ethers } from 'ethers';
 
 import { snapshotCheckpoint } from '../utils';
 
+const POOL_FEATURE_FLAG = ethers.utils.formatBytes32String('createPool');
+const MARKET_FEATURE_FLAG = ethers.utils.formatBytes32String('registerMarket');
+
 async function loadSystems(
   contracts: ChainBuilderContext['contracts'],
   provider: ethers.providers.Provider
@@ -66,6 +69,15 @@ export function bootstrap() {
   before(async () => {
     await provider.send('evm_revert', [baseSystemSnapshot]);
     baseSystemSnapshot = await provider.send('evm_snapshot', []);
+  });
+
+  before('give owner permission to create pools and markets', async () => {
+    const owner = signers[0];
+    await systems.Core.connect(owner).addToFeatureFlag(POOL_FEATURE_FLAG, await owner.getAddress());
+    await systems.Core.connect(owner).addToFeatureFlag(
+      MARKET_FEATURE_FLAG,
+      await owner.getAddress()
+    );
   });
 
   return {
@@ -179,6 +191,9 @@ export function bootstrapWithMockMarketAndPool() {
     const factory = await hre.ethers.getContractFactory('MockMarket');
 
     MockMarket = await factory.connect(owner).deploy();
+
+    // give user1 permission to register market
+    await r.systems().Core.connect(owner).addToFeatureFlag(MARKET_FEATURE_FLAG, user1.getAddress());
 
     marketId = await r.systems().Core.connect(user1).callStatic.registerMarket(MockMarket.address);
 

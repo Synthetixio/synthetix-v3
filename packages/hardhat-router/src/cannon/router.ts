@@ -30,7 +30,9 @@ exports.generate = async function generate(
       const { contractName, abi } = await runtime.getArtifact(fqName);
 
       if (!addresses[fqName]) {
-        throw new Error(`Missing contract address declaration for ${fqName}`);
+        throw new Error(
+          `Missing contract address declaration for ${fqName}. You need to add the contract on the "depends" field of the current step.`
+        );
       }
 
       return {

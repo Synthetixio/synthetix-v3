@@ -8,14 +8,29 @@ import { bootstrap } from '../../bootstrap';
 describe('PoolModule Create / Ownership', function () {
   const { signers, systems } = bootstrap();
 
-  let user1: ethers.Signer, user2: ethers.Signer;
+  let owner: ethers.Signer, user1: ethers.Signer, user2: ethers.Signer;
 
   before('identify signers', async () => {
-    [, user1, user2] = signers();
+    [owner, user1, user2] = signers();
+  });
+
+  it('should revert if user does not have permission to create pool', async () => {
+    await assertRevert(
+      systems()
+        .Core.connect(user1)
+        .createPool(1, await user1.getAddress()),
+      'Unauthorized'
+    );
   });
 
   describe('When creating a Pool', async () => {
     let receipt: ethers.providers.TransactionReceipt;
+
+    before('give user1 permission', async () => {
+      await systems()
+        .Core.connect(owner)
+        .addToFeatureFlag(ethers.utils.formatBytes32String('createPool'), user1.getAddress());
+    });
 
     before('create a pool', async () => {
       const tx = await systems()
@@ -33,6 +48,12 @@ describe('PoolModule Create / Ownership', function () {
     });
 
     describe('when trying to create the same systems().CoreId', () => {
+      before('give user2 permission', async () => {
+        await systems()
+          .Core.connect(owner)
+          .addToFeatureFlag(ethers.utils.formatBytes32String('createPool'), user2.getAddress());
+      });
+
       it('reverts', async () => {
         await assertRevert(
           systems()
