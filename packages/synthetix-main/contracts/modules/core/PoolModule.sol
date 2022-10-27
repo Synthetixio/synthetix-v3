@@ -4,6 +4,7 @@ pragma solidity ^0.8.0;
 import "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
 import "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
 import "@synthetixio/core-contracts/contracts/errors/AddressError.sol";
+import "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
 
 import "../../interfaces/IPoolModule.sol";
 import "../../storage/Pool.sol";
@@ -16,6 +17,8 @@ contract PoolModule is IPoolModule {
     using Pool for Pool.Data;
     using Market for Market.Data;
 
+    bytes32 private constant _POOL_FEATURE_FLAG = "createPool";
+
     modifier onlyPoolOwner(uint128 poolId, address requestor) {
         if (Pool.load(poolId).owner != requestor) {
             revert AccessError.Unauthorized(requestor);
@@ -25,6 +28,8 @@ contract PoolModule is IPoolModule {
     }
 
     function createPool(uint128 requestedPoolId, address owner) external override {
+        FeatureFlag.ensureEnabled(_POOL_FEATURE_FLAG);
+
         if (owner == address(0)) {
             revert AddressError.ZeroAddress();
         }

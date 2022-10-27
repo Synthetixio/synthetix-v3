@@ -18,6 +18,9 @@ defaultValue = "core"
 [contract.OwnerModule]
 artifact = "contracts/modules/common/OwnerModule.sol:OwnerModule"
 
+[contract.FeatureFlagModule]
+artifact = "contracts/modules/core/FeatureFlagModule.sol:FeatureFlagModule"
+
 [contract.UpgradeModule]
 artifact = "contracts/modules/common/UpgradeModule.sol:UpgradeModule"
 
@@ -81,6 +84,7 @@ modified = []
 depends = [
   "contract.OwnerModule",
   "contract.UpgradeModule",
+  "contract.FeatureFlagModule",
   "contract.AccountModule",
   "contract.AssociateDebtModule",
   "contract.AssociatedSystemsModule",
@@ -100,6 +104,7 @@ depends = [
 artifact = "contracts/routers/chain-<%= chainId %>/CoreRouter.sol:CoreRouter"
 abiOf = [
   "OwnerModule",
+  "FeatureFlagModule",
   "UpgradeModule",
   "AccountModule",
   "AssociateDebtModule",
@@ -210,6 +215,20 @@ abiOf = [
 depends = ["run.usd_generate_router"]
 
 # Post stuff
+
+[invoke.enablePoolCreation]
+target = ["CoreProxy"]
+func = "setFeatureFlag"
+args = ["0x637265617465506f6f6c00000000000000000000000000000000000000000000", true] # formatBytes32String("createPool")
+fromCall.func = "owner"
+depends = ["invoke.upgrade_core_proxy"]
+
+[invoke.enableMarketCreation]
+target = ["CoreProxy"]
+func = "setFeatureFlag"
+args = ["0x72656769737465724d61726b6574000000000000000000000000000000000000", true] # formatBytes32String("registerMarket")
+fromCall.func = "owner"
+depends = ["invoke.upgrade_core_proxy"]
 
 [invoke.init_account]
 target = ["CoreProxy"]
