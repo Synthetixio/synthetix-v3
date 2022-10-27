@@ -89,7 +89,7 @@ contract PoolModule is IPoolModule {
         uint[] calldata weights,
         int[] calldata maxDebtShareValues
     ) external override {
-        Pool.poolExists(poolId);
+        Pool.requireExists(poolId);
         Pool.onlyPoolOwner(poolId, msg.sender);
 
         if (markets.length != weights.length || markets.length != maxDebtShareValues.length) {
@@ -181,7 +181,7 @@ contract PoolModule is IPoolModule {
     }
 
     function setPoolName(uint128 poolId, string memory name) external override {
-        Pool.poolExists(poolId);
+        Pool.requireExists(poolId);
         Pool.onlyPoolOwner(poolId, msg.sender);
 
         Pool.load(poolId).name = name;

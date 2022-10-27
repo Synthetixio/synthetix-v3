@@ -208,7 +208,7 @@ library Pool {
         return getPositionCollateralValue.divDecimal(getPositionDebt < 0 ? 0 : uint(getPositionDebt));
     }
 
-    function poolExists(uint128 poolId) internal {
+    function requireExists(uint128 poolId) internal {
         if (!Pool.exists(poolId)) {
             revert PoolNotFound(poolId);
         }
