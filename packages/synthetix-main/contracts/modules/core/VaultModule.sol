@@ -1,14 +1,13 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@synthetixio/core-contracts/contracts/ownership/OwnableMixin.sol";
+import "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
 import "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
 import "@synthetixio/core-contracts/contracts/utils/MathUtil.sol";
 
-import "@synthetixio/core-modules/contracts/mixins/AssociatedSystemsMixin.sol";
+import "@synthetixio/core-modules/contracts/storage/AssociatedSystem.sol";
 
 import "../../storage/Account.sol";
-import "../../mixins/AccountMixin.sol";
 import "../../storage/Pool.sol";
 
 import "../../interfaces/IVaultModule.sol";
@@ -17,11 +16,12 @@ import "../../interfaces/IUSDTokenModule.sol";
 /**
  * @title See {IVaultModule}
  */
-contract VaultModule is IVaultModule, AssociatedSystemsMixin, OwnableMixin, AccountMixin {
+contract VaultModule is IVaultModule {
     using SetUtil for SetUtil.UintSet;
     using SetUtil for SetUtil.Bytes32Set;
     using SetUtil for SetUtil.AddressSet;
     using MathUtil for uint256;
+    using AssociatedSystem for AssociatedSystem.Data;
     using Pool for Pool.Data;
     using Vault for Vault.Data;
     using VaultEpoch for VaultEpoch.Data;
@@ -52,13 +52,13 @@ contract VaultModule is IVaultModule, AssociatedSystemsMixin, OwnableMixin, Acco
         address collateralType,
         uint collateralAmount,
         uint leverage
-    ) external override onlyWithPermission(accountId, AccountRBAC._DELEGATE_PERMISSION) {
+    ) external override {
         Pool.poolExists(poolId);
-
         CollateralConfiguration.collateralEnabled(collateralType);
+        Account.onlyWithPermission(accountId, AccountRBAC._DELEGATE_PERMISSION);
 
-        // Pin leverage to 1 until the feature is enabled.
-        // TODO: We will probably at least want to test <1 leverage before that.
+        // Fix leverage to 1 until it's enabled
+        // TODO: we will probably at least want to test <1 leverage
         if (leverage != MathUtil.UNIT) revert InvalidLeverage(leverage);
 
         Vault.Data storage vault = Pool.load(poolId).vaults[collateralType];
@@ -133,7 +133,10 @@ contract VaultModule is IVaultModule, AssociatedSystemsMixin, OwnableMixin, Acco
         uint128 poolId,
         address collateralType,
         uint amount
-    ) external override onlyWithPermission(accountId, AccountRBAC._MINT_PERMISSION) {
+    ) external override {
+        Account.onlyWithPermission(accountId, AccountRBAC._MINT_PERMISSION);
+
+        // check if they have sufficient c-ratio to mint that amount
         Pool.Data storage pool = Pool.load(poolId);
 
         int debt = pool.updateAccountDebt(collateralType, accountId);
@@ -154,7 +157,7 @@ contract VaultModule is IVaultModule, AssociatedSystemsMixin, OwnableMixin, Acco
         epoch.consolidatedDebtDist.updateActorValue(bytes32(uint(accountId)), newDebt);
         pool.recalculateVaultCollateral(collateralType);
         require(int(amount) == int128(int(amount)), "Incorrect amount specified");
-        _getToken(_USD_TOKEN).mint(msg.sender, amount);
+        AssociatedSystem.load(_USD_TOKEN).asToken().mint(msg.sender, amount);
 
         emit UsdMinted(accountId, poolId, collateralType, amount, msg.sender);
     }
@@ -180,7 +183,7 @@ contract VaultModule is IVaultModule, AssociatedSystemsMixin, OwnableMixin, Acco
             amount = uint(debt);
         }
 
-        _getToken(_USD_TOKEN).burn(msg.sender, amount);
+        AssociatedSystem.load(_USD_TOKEN).asToken().burn(msg.sender, amount);
 
         VaultEpoch.Data storage epoch = pool.vaults[collateralType].currentEpoch();
 

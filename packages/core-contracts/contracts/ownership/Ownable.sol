@@ -1,19 +1,19 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "./OwnableMixin.sol";
+import "./OwnableStorage.sol";
 import "../interfaces/IOwnable.sol";
 import "../errors/AddressError.sol";
 import "../errors/ChangeError.sol";
 
-contract Ownable is IOwnable, OwnableMixin {
+contract Ownable is IOwnable {
     event OwnerNominated(address newOwner);
     event OwnerChanged(address oldOwner, address newOwner);
 
     error NotNominated(address addr);
 
     function acceptOwnership() public override {
-        OwnableStore storage store = _ownableStore();
+        OwnableStorage.Data storage store = OwnableStorage.load();
 
         address currentNominatedOwner = store.nominatedOwner;
         if (msg.sender != currentNominatedOwner) {
@@ -27,7 +27,7 @@ contract Ownable is IOwnable, OwnableMixin {
     }
 
     function nominateNewOwner(address newNominatedOwner) public override onlyOwnerIfSet {
-        OwnableStore storage store = _ownableStore();
+        OwnableStorage.Data storage store = OwnableStorage.load();
 
         if (newNominatedOwner == address(0)) {
             revert AddressError.ZeroAddress();
@@ -42,7 +42,7 @@ contract Ownable is IOwnable, OwnableMixin {
     }
 
     function renounceNomination() external override {
-        OwnableStore storage store = _ownableStore();
+        OwnableStorage.Data storage store = OwnableStorage.load();
 
         if (store.nominatedOwner != msg.sender) {
             revert NotNominated(msg.sender);
@@ -52,10 +52,27 @@ contract Ownable is IOwnable, OwnableMixin {
     }
 
     function owner() external view override returns (address) {
-        return _ownableStore().owner;
+        return OwnableStorage.load().owner;
     }
 
     function nominatedOwner() external view override returns (address) {
-        return _ownableStore().nominatedOwner;
+        return OwnableStorage.load().nominatedOwner;
+    }
+
+    modifier onlyOwner() {
+        OwnableStorage.onlyOwner();
+
+        _;
+    }
+
+    modifier onlyOwnerIfSet() {
+        address theOwner = OwnableStorage.getOwner();
+
+        // if owner is set then check if msg.sender is the owner
+        if (theOwner != address(0)) {
+            OwnableStorage.onlyOwner();
+        }
+
+        _;
     }
 }

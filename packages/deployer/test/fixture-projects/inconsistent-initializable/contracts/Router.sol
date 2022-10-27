@@ -30,8 +30,12 @@ contract Router {
 
             function findImplementation(sig) -> result {
                 switch sig
-                case 0x24dbfe84 { result := _INITIALIZABLE_MODULE } // InitializableModule.initializeAnotherNameModule()
-                case 0xda18410b { result := _INITIALIZABLE_MODULE } // InitializableModule.isAnotherNameModuleInitialized()
+                case 0x24dbfe84 {
+                    result := _INITIALIZABLE_MODULE
+                } // InitializableModule.initializeAnotherNameModule()
+                case 0xda18410b {
+                    result := _INITIALIZABLE_MODULE
+                } // InitializableModule.isAnotherNameModuleInitialized()
                 leave
             }
 

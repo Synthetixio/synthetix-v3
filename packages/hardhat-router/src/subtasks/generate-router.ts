@@ -9,7 +9,7 @@ import { SUBTASK_GENERATE_ROUTER_SOURCE } from '../task-names';
 subtask(
   SUBTASK_GENERATE_ROUTER_SOURCE,
   'Reads deployed modules from the deployment data file and generates the source for a new router contract.'
-).setAction(async ({ routerName = 'Router' }, hre) => {
+).setAction(async ({ routerName = 'Router', template }, hre) => {
   const routerPath = path.join(hre.config.paths.sources, `${routerName}.sol`);
   const relativeRouterPath = relativePath(routerPath, hre.config.paths.root);
   const modules = Object.values(hre.router.deployment!.general.contracts).filter((c) => c.isModule);
@@ -22,8 +22,6 @@ subtask(
 
   logger.subtitle('Generating router source');
   logger.debug(`location: ${relativeRouterPath} | modules: ${contracts.length}`);
-
-  const template = path.resolve(__dirname, '..', '..', 'templates', 'Router.sol.mustache');
 
   const generatedSource = generateRouter({
     routerName,

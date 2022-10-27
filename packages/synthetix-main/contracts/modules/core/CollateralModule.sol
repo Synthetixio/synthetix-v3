@@ -1,15 +1,14 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@synthetixio/core-contracts/contracts/ownership/OwnableMixin.sol";
+import "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
 import "@synthetixio/core-contracts/contracts/interfaces/IERC20.sol";
 
 import "../../interfaces/ICollateralModule.sol";
 import "../../storage/Account.sol";
-import "../../mixins/AccountMixin.sol";
 import "../../storage/CollateralConfiguration.sol";
 import "../../storage/CollateralLock.sol";
-import "@synthetixio/core-modules/contracts/mixins/AssociatedSystemsMixin.sol";
+import "@synthetixio/core-modules/contracts/storage/AssociatedSystem.sol";
 
 import "../../utils/ERC20Helper.sol";
 
@@ -19,7 +18,7 @@ import "../../utils/ERC20Helper.sol";
  * TODO: Consider splitting this into CollateralConfigurationModule and CollateralModule.
  * The former is for owner only stuff, and the latter for users.
  */
-contract CollateralModule is ICollateralModule, OwnableMixin, AccountMixin, AssociatedSystemsMixin {
+contract CollateralModule is ICollateralModule {
     using SetUtil for SetUtil.AddressSet;
     using ERC20Helper for address;
     using CollateralConfiguration for CollateralConfiguration.Data;
@@ -28,9 +27,6 @@ contract CollateralModule is ICollateralModule, OwnableMixin, AccountMixin, Asso
     using Collateral for Collateral.Data;
 
     error InvalidCollateral(address collateralType);
-
-    //bytes32 private constant _REDEEMABLE_REWARDS_TOKEN = "eSNXToken";
-    //bytes32 private constant _REWARDED_TOKEN = "SNXToken";
 
     // 86400 * 365.26
     uint private constant _SECONDS_PER_YEAR = 31558464;
@@ -49,7 +45,8 @@ contract CollateralModule is ICollateralModule, OwnableMixin, AccountMixin, Asso
         uint minimumCRatio,
         uint liquidationReward,
         bool stakingEnabled
-    ) external override onlyOwner {
+    ) external override {
+        OwnableStorage.onlyOwner();
         CollateralConfiguration.set(
             collateralType,
             priceFeed,
@@ -116,8 +113,9 @@ contract CollateralModule is ICollateralModule, OwnableMixin, AccountMixin, Asso
         uint128 accountId,
         address collateralType,
         uint amount
-    ) public override onlyWithPermission(accountId, AccountRBAC._DEPOSIT_PERMISSION) {
+    ) public override {
         CollateralConfiguration.collateralEnabled(collateralType);
+        Account.onlyWithPermission(accountId, AccountRBAC._DEPOSIT_PERMISSION);
 
         Account.Data storage account = Account.load(accountId);
 
@@ -148,7 +146,9 @@ contract CollateralModule is ICollateralModule, OwnableMixin, AccountMixin, Asso
         uint128 accountId,
         address collateralType,
         uint amount
-    ) public override onlyWithPermission(accountId, AccountRBAC._WITHDRAW_PERMISSION) {
+    ) public override {
+        Account.onlyWithPermission(accountId, AccountRBAC._WITHDRAW_PERMISSION);
+
         Account.Data storage account = Account.load(accountId);
 
         if (account.collaterals[collateralType].availableAmount < amount) {
@@ -227,7 +227,9 @@ contract CollateralModule is ICollateralModule, OwnableMixin, AccountMixin, Asso
         address collateralType,
         uint amount,
         uint64 expireTimestamp
-    ) external override onlyWithPermission(accountId, AccountRBAC._ADMIN_PERMISSION) {
+    ) external override {
+        Account.onlyWithPermission(accountId, AccountRBAC._ADMIN_PERMISSION);
+
         Account.Data storage account = Account.load(accountId);
 
         (uint totalStaked, , uint totalLocked) = account.getCollateralTotals(collateralType);

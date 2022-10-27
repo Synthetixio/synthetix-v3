@@ -10,7 +10,7 @@ import "./ERC20HistoricalBalanceStorage.sol";
     * OpenZeppelin - https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC20/extensions/ERC20Votes.sol
 */
 
-contract ERC20HistoricalBalance is ERC20, IERC20HistoricalBalance, ERC20HistoricalBalanceStorage {
+contract ERC20HistoricalBalance is ERC20, IERC20HistoricalBalance {
     error InvalidUint32Number(uint blockNumber);
     error BlockNumberNotYetMined(uint blockNumber);
 
@@ -19,7 +19,7 @@ contract ERC20HistoricalBalance is ERC20, IERC20HistoricalBalance, ERC20Historic
             revert BlockNumberNotYetMined(blockNumber);
         }
 
-        return _checkpointsLookup(_erc20HistoricalBalanceStore().totalSupplyCheckpoints, blockNumber);
+        return _checkpointsLookup(ERC20HistoricalBalanceStorage.load().totalSupplyCheckpoints, blockNumber);
     }
 
     function balanceOfAt(address owner, uint blockNumber) public view override returns (uint) {
@@ -27,10 +27,14 @@ contract ERC20HistoricalBalance is ERC20, IERC20HistoricalBalance, ERC20Historic
             revert BlockNumberNotYetMined(blockNumber);
         }
 
-        return _checkpointsLookup(_erc20HistoricalBalanceStore().checkpoints[owner], blockNumber);
+        return _checkpointsLookup(ERC20HistoricalBalanceStorage.load().checkpoints[owner], blockNumber);
     }
 
-    function _checkpointsLookup(Checkpoint[] storage ckpts, uint256 blockNumber) private view returns (uint256) {
+    function _checkpointsLookup(ERC20HistoricalBalanceStorage.Checkpoint[] storage ckpts, uint256 blockNumber)
+        private
+        view
+        returns (uint256)
+    {
         // We run a binary search to look for the earliest checkpoint taken after `blockNumber`.
         //
         // During the loop, the index of the wanted checkpoint remains in the range [low-1, high).
@@ -70,14 +74,14 @@ contract ERC20HistoricalBalance is ERC20, IERC20HistoricalBalance, ERC20Historic
         super._mint(to, amount);
 
         _moveBalance(address(0), to, amount);
-        _writeCheckpoint(_erc20HistoricalBalanceStore().totalSupplyCheckpoints, _add, amount);
+        _writeCheckpoint(ERC20HistoricalBalanceStorage.load().totalSupplyCheckpoints, _add, amount);
     }
 
     function _burn(address from, uint256 amount) internal override {
         super._burn(from, amount);
 
         _moveBalance(from, address(0), amount);
-        _writeCheckpoint(_erc20HistoricalBalanceStore().totalSupplyCheckpoints, _subtract, amount);
+        _writeCheckpoint(ERC20HistoricalBalanceStorage.load().totalSupplyCheckpoints, _subtract, amount);
     }
 
     function _moveBalance(
@@ -87,17 +91,17 @@ contract ERC20HistoricalBalance is ERC20, IERC20HistoricalBalance, ERC20Historic
     ) private {
         if (src != dst && amount > 0) {
             if (src != address(0)) {
-                _writeCheckpoint(_erc20HistoricalBalanceStore().checkpoints[src], _subtract, amount);
+                _writeCheckpoint(ERC20HistoricalBalanceStorage.load().checkpoints[src], _subtract, amount);
             }
 
             if (dst != address(0)) {
-                _writeCheckpoint(_erc20HistoricalBalanceStore().checkpoints[dst], _add, amount);
+                _writeCheckpoint(ERC20HistoricalBalanceStorage.load().checkpoints[dst], _add, amount);
             }
         }
     }
 
     function _writeCheckpoint(
-        Checkpoint[] storage ckpts,
+        ERC20HistoricalBalanceStorage.Checkpoint[] storage ckpts,
         function(uint256, uint256) view returns (uint256) op,
         uint256 delta
     ) private {
@@ -108,7 +112,9 @@ contract ERC20HistoricalBalance is ERC20, IERC20HistoricalBalance, ERC20Historic
         if (pos > 0 && ckpts[pos - 1].fromBlock == block.number) {
             ckpts[pos - 1].balance = newWeight;
         } else {
-            ckpts.push(Checkpoint({fromBlock: _safeCastToUint32(block.number), balance: newWeight}));
+            ckpts.push(
+                ERC20HistoricalBalanceStorage.Checkpoint({fromBlock: _safeCastToUint32(block.number), balance: newWeight})
+            );
         }
     }
 
@@ -125,7 +131,7 @@ contract ERC20HistoricalBalance is ERC20, IERC20HistoricalBalance, ERC20Historic
         return (a & b) + (a ^ b) / 2;
     }
 
-    function _safeCastToUint32(uint256 number) internal returns (uint32) {
+    function _safeCastToUint32(uint256 number) internal view returns (uint32) {
         if (block.number > type(uint32).max) {
             revert InvalidUint32Number(block.number);
         }

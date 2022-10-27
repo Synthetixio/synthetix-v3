@@ -1,14 +1,14 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@synthetixio/core-contracts/contracts/ownership/OwnableMixin.sol";
+import "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
 import "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
 import "@synthetixio/core-contracts/contracts/errors/AddressError.sol";
 
 import "../../interfaces/IPoolModule.sol";
 import "../../storage/Pool.sol";
 
-contract PoolModule is IPoolModule, OwnableMixin {
+contract PoolModule is IPoolModule {
     error PoolAlreadyExists(uint128 poolId);
     error InvalidParameters(string incorrectParameter, string help);
     error PoolNotFound(uint128 poolId);
@@ -196,7 +196,8 @@ contract PoolModule is IPoolModule, OwnableMixin {
     // ---------------------------------------
     // system owner
     // ---------------------------------------
-    function setMinLiquidityRatio(uint minLiquidityRatio) external override onlyOwner {
+    function setMinLiquidityRatio(uint minLiquidityRatio) external override {
+        OwnableStorage.onlyOwner();
         PoolConfiguration.load().minLiquidityRatio = minLiquidityRatio;
     }
 

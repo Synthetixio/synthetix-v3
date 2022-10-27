@@ -11,7 +11,7 @@ import "./ERC20Storage.sol";
     * Rari-Capital - https://github.com/Rari-Capital/solmate/blob/main/src/tokens/ERC20.sol
 */
 
-contract ERC20 is IERC20, ERC20Storage {
+contract ERC20 is IERC20 {
     event Transfer(address indexed from, address indexed to, uint amount);
     event Approval(address indexed owner, address indexed spender, uint amount);
 
@@ -20,7 +20,7 @@ contract ERC20 is IERC20, ERC20Storage {
         string memory tokenSymbol,
         uint8 tokenDecimals
     ) internal virtual {
-        ERC20Store storage store = _erc20Store();
+        ERC20Storage.Data storage store = ERC20Storage.load();
 
         if (bytes(store.name).length > 0 || bytes(store.symbol).length > 0 || store.decimals > 0) {
             revert InitError.AlreadyInitialized();
@@ -32,31 +32,31 @@ contract ERC20 is IERC20, ERC20Storage {
     }
 
     function name() external view override returns (string memory) {
-        return _erc20Store().name;
+        return ERC20Storage.load().name;
     }
 
     function symbol() external view override returns (string memory) {
-        return _erc20Store().symbol;
+        return ERC20Storage.load().symbol;
     }
 
     function decimals() external view override returns (uint8) {
-        return _erc20Store().decimals;
+        return ERC20Storage.load().decimals;
     }
 
     function totalSupply() external view override returns (uint) {
-        return _erc20Store().totalSupply;
+        return ERC20Storage.load().totalSupply;
     }
 
     function allowance(address owner, address spender) public view override returns (uint) {
-        return _erc20Store().allowance[owner][spender];
+        return ERC20Storage.load().allowance[owner][spender];
     }
 
     function balanceOf(address owner) public view override returns (uint) {
-        return _erc20Store().balanceOf[owner];
+        return ERC20Storage.load().balanceOf[owner];
     }
 
     function approve(address spender, uint256 amount) public override returns (bool) {
-        _erc20Store().allowance[msg.sender][spender] = amount;
+        ERC20Storage.load().allowance[msg.sender][spender] = amount;
 
         emit Approval(msg.sender, spender, amount);
 
@@ -74,7 +74,7 @@ contract ERC20 is IERC20, ERC20Storage {
         address to,
         uint amount
     ) external override returns (bool) {
-        ERC20Store storage store = _erc20Store();
+        ERC20Storage.Data storage store = ERC20Storage.load();
 
         uint256 currentAllowance = store.allowance[from][msg.sender];
         if (currentAllowance < amount) {
@@ -95,7 +95,7 @@ contract ERC20 is IERC20, ERC20Storage {
         address to,
         uint256 amount
     ) internal virtual {
-        ERC20Store storage store = _erc20Store();
+        ERC20Storage.Data storage store = ERC20Storage.load();
 
         uint256 accountBalance = store.balanceOf[from];
         if (accountBalance < amount) {
@@ -115,7 +115,7 @@ contract ERC20 is IERC20, ERC20Storage {
     }
 
     function _mint(address to, uint256 amount) internal virtual {
-        ERC20Store storage store = _erc20Store();
+        ERC20Storage.Data storage store = ERC20Storage.load();
 
         store.totalSupply += amount;
 
@@ -128,7 +128,7 @@ contract ERC20 is IERC20, ERC20Storage {
     }
 
     function _burn(address from, uint256 amount) internal virtual {
-        ERC20Store storage store = _erc20Store();
+        ERC20Storage.Data storage store = ERC20Storage.load();
 
         uint256 accountBalance = store.balanceOf[from];
         if (accountBalance < amount) {
