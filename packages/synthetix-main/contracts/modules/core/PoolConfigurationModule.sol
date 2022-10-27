@@ -14,9 +14,6 @@ contract PoolConfigurationModule is IPoolConfigurationModule {
 
     using Pool for Pool.Data;
 
-    function setPreferredPool(uint128 poolId) external override onlyOwner {
-        Pool.poolExists(poolId);
-
     function setPreferredPool(uint128 poolId) external override {
         OwnableStorage.onlyOwner();
         Pool.poolExists(poolId);
