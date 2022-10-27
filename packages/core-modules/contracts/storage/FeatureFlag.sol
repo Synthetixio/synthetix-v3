@@ -7,8 +7,6 @@ import "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
 library FeatureFlag {
     using SetUtil for SetUtil.AddressSet;
 
-    error FeatureUnavailable();
-
     struct Data {
         bytes32 name;
         bool enabled;
@@ -25,11 +23,7 @@ library FeatureFlag {
     function ensureEnabled(bytes32 feature) internal view {
         Data storage store = FeatureFlag.load(feature);
 
-        if (!store.enabled) {
-            revert FeatureUnavailable();
-        }
-
-        if (!store.permissionedAddresses.contains(msg.sender)) {
+        if (store.enabled && !store.permissionedAddresses.contains(msg.sender)) {
             revert AccessError.Unauthorized(msg.sender);
         }
     }

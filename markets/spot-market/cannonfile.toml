@@ -30,7 +30,7 @@ depends = ["run.deploy_spot_market"]
 target = ["synthetix.CoreProxy"]
 func = "addToFeatureFlag"
 from = "<%= settings.coreProxyOwner %>"
-args = ["0x6d61726b65740000000000000000000000000000000000000000000000000000", "<%= contracts.SpotMarketProxy.address %>"] # formatBytes32String("market")
+args = ["0x72656769737465724d61726b6574000000000000000000000000000000000000", "<%= contracts.SpotMarketProxy.address %>"] # formatBytes32String("registerMarket")
 depends = ['import.synthetix', 'contract.SpotMarketProxy']
 
 [contract.FixedFeeCalculator]

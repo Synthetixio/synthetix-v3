@@ -122,16 +122,14 @@ describe('FeatureFlagModule', () => {
     });
   });
 
-  describe('disable feature flag for all', async () => {
+  describe('enable feature for all', async () => {
     before('disable feature flag', async () => {
       await FeatureFlagModule.connect(owner).setFeatureFlag(FEATURE_FLAG_NAME, false);
     });
 
     it('reverts when feature flag is disabled', async () => {
-      await assertRevert(
-        SampleFeatureFlagModule.connect(permissionedUser).setFeatureFlaggedValue(25),
-        'FeatureUnavailable'
-      );
+      await SampleFeatureFlagModule.connect(user).setFeatureFlaggedValue(25);
+      assertBn.equal(await SampleFeatureFlagModule.getFeatureFlaggedValue(), 25);
     });
   });
 });

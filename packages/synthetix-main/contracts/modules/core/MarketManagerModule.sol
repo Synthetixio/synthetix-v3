@@ -19,7 +19,7 @@ contract MarketManagerModule is IMarketManagerModule {
     using AssociatedSystem for AssociatedSystem.Data;
 
     bytes32 private constant _USD_TOKEN = "USDToken";
-    bytes32 private constant _MARKET_FEATURE_FLAG = "market";
+    bytes32 private constant _MARKET_FEATURE_FLAG = "registerMarket";
 
     error NotEnoughLiquidity(uint128 marketId, uint amount);
     error MarketDepositNotApproved(address market, address from, uint requestedAmount, uint approvedAmount);

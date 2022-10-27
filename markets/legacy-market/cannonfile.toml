@@ -40,7 +40,7 @@ depends = ["import.v2x", "import.v3"]
 [invoke.addPoolOwnerToPoolFeatureFlag]
 target = ["v3.CoreProxy"]
 func = "addToFeatureFlag"
-args = ["0x706f6f6c00000000000000000000000000000000000000000000000000000000", "<%= settings.pool_owner %>"] # formatBytes32String("pool")
+args = ["0x637265617465506f6f6c00000000000000000000000000000000000000000000", "<%= settings.pool_owner %>"] # formatBytes32String("createPool")
 fromCall.func = "owner"
 depends = ["import.v3"]
 
@@ -48,7 +48,7 @@ depends = ["import.v3"]
 [invoke.addPoolOwnerToMarketFeatureFlag]
 target = ["v3.CoreProxy"]
 func = "addToFeatureFlag"
-args = ["0x6d61726b65740000000000000000000000000000000000000000000000000000", "<%= settings.pool_owner %>"] # formatBytes32String("market")
+args = ["0x72656769737465724d61726b6574000000000000000000000000000000000000", "<%= settings.pool_owner %>"] # formatBytes32String("registerMarket")
 fromCall.func = "owner"
 depends = ["import.v3"]
 

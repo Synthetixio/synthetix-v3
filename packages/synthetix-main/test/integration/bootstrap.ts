@@ -4,8 +4,8 @@ import { ethers } from 'ethers';
 
 import { snapshotCheckpoint } from '../utils';
 
-const POOL_FEATURE_FLAG = ethers.utils.formatBytes32String('pool');
-const MARKET_FEATURE_FLAG = ethers.utils.formatBytes32String('market');
+const POOL_FEATURE_FLAG = ethers.utils.formatBytes32String('createPool');
+const MARKET_FEATURE_FLAG = ethers.utils.formatBytes32String('registerMarket');
 
 async function loadSystems(
   contracts: ChainBuilderContext['contracts'],

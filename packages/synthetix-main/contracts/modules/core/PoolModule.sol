@@ -17,7 +17,7 @@ contract PoolModule is IPoolModule {
     using Pool for Pool.Data;
     using Market for Market.Data;
 
-    bytes32 private constant _POOL_FEATURE_FLAG = "pool";
+    bytes32 private constant _POOL_FEATURE_FLAG = "createPool";
 
     modifier onlyPoolOwner(uint128 poolId, address requestor) {
         if (Pool.load(poolId).owner != requestor) {
