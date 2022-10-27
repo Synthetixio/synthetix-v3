@@ -78,7 +78,7 @@ contract LiquidationModule is ILiquidationModule {
         }
 
         // this will clear the user's account the same way as if they had unstaked normally
-        epoch.setAccount(accountId, 0, 0);
+        epoch.updateAccountPosition(accountId, 0, 0);
 
         // we don't give the collateral back to the user though--it gets
         // fed back into the vault proportionally to the amount of collateral you have

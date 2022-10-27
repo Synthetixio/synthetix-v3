@@ -87,8 +87,6 @@ library VaultEpoch {
      *
      * Called as a ticker from various parts of the system, usually whenever the
      * real debt of a user needs to be known.
-     *
-     * TODO: Rename to consolidateAccountDebt?
      */
     function consolidateAccountDebt(Data storage self, uint128 accountId) internal returns (int currentDebt) {
         bytes32 actorId = accountToActor(accountId);
@@ -110,7 +108,7 @@ library VaultEpoch {
      *
      * TODO: Rename to updateAccountCollateralAndDebtExposure?
      */
-    function setAccount(
+    function updateAccountPosition(
         Data storage self,
         uint128 accountId,
         uint collateralAmount,

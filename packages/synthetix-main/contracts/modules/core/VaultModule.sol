@@ -101,7 +101,7 @@ contract VaultModule is IVaultModule {
                 collateral.pools.remove(poolId);
             }
 
-            vault.currentEpoch().setAccount(accountId, collateralAmount, leverage);
+            vault.currentEpoch().updateAccountPosition(accountId, collateralAmount, leverage);
 
             // no update for usd because no usd issued
             collateralPrice = pool.recalculateVaultCollateral(collateralType);
