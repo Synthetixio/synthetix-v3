@@ -33,7 +33,7 @@ library Vault {
         /**
          * @dev Unused property, maintained for backwards compatibility in storage layout.
          */
-        uint128 _unused;
+        uint128 unused_;
         /**
          * @dev The previous liquidity of the vault (collateral - debt), when the system was last interacted with.
          */
