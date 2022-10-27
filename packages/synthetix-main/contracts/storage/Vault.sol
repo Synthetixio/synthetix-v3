@@ -31,16 +31,11 @@ library Vault {
          */
         uint epoch;
         /**
-         * @dev The value of the vault's incoming debt distribution,
-         * valued at the price of the vault's collateral, when the system was last interacted with.
-         *
-         * TODO: This value doesn't seem to be used anywhere in the code. Consider removing it.
+         * @dev Unused property, maintained for backwards compatibility in storage layout.
          */
-        uint128 prevUsdWeight;
+        uint128 _unused;
         /**
          * @dev The previous liquidity of the vault (collateral - debt), when the system was last interacted with.
-         *
-         * TODO: This value doesn't seem to be used anywhere in the code. Consider removing it.
          */
         uint128 prevRemainingLiquidity;
         /**
@@ -72,7 +67,6 @@ library Vault {
         internal
         returns (
             uint usdWeight,
-            int deltaUsdWeight,
             uint remainingLiquidity,
             int deltaRemainingLiquidity
         )
@@ -85,10 +79,8 @@ library Vault {
         int vaultAccruedDebt = epochData.totalDebt();
         remainingLiquidity = vaultDepositedValue > vaultAccruedDebt ? uint(vaultDepositedValue - vaultAccruedDebt) : 0;
 
-        deltaUsdWeight = int(usdWeight) - int(int128(self.prevUsdWeight));
         deltaRemainingLiquidity = int(remainingLiquidity) - int(int128(self.prevRemainingLiquidity));
 
-        self.prevUsdWeight = uint128(usdWeight);
         self.prevRemainingLiquidity = uint128(remainingLiquidity);
     }
 

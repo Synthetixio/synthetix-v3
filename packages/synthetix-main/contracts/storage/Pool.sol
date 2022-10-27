@@ -134,7 +134,7 @@ library Pool {
         collateralPrice = CollateralConfiguration.load(collateralType).getCollateralPrice();
 
         bytes32 actorId = bytes32(uint(uint160(collateralType)));
-        (uint usdWeight, , , int deltaRemainingLiquidity) = self.vaults[collateralType].updateLiquidity(collateralPrice);
+        (uint usdWeight, , int deltaRemainingLiquidity) = self.vaults[collateralType].updateLiquidity(collateralPrice);
 
         int debtChange = self.debtDist.updateActorShares(actorId, usdWeight);
 
