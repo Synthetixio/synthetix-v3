@@ -30,7 +30,10 @@ describe('VaultModule', function () {
   before('give user1 permission to register market', async () => {
     await systems()
       .Core.connect(owner)
-      .addToFeatureFlag(ethers.utils.formatBytes32String('market'), await user1.getAddress());
+      .addToFeatureFlag(
+        ethers.utils.formatBytes32String('registerMarket'),
+        await user1.getAddress()
+      );
   });
 
   before('deploy and connect fake market', async () => {

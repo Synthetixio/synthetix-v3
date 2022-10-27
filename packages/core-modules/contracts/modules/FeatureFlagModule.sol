@@ -4,9 +4,9 @@ pragma solidity ^0.8.0;
 import "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
 import "../storage/FeatureFlag.sol";
 
-import "../interfaces/IFeatureFlag.sol";
+import "../interfaces/IFeatureFlagModule.sol";
 
-contract FeatureFlagModule is IFeatureFlag {
+contract FeatureFlagModule is IFeatureFlagModule {
     using SetUtil for SetUtil.AddressSet;
 
     event FeatureFlagSet(bytes32 feature, bool value);
@@ -32,5 +32,18 @@ contract FeatureFlagModule is IFeatureFlag {
         FeatureFlag.load(feature).permissionedAddresses.remove(permissioned);
 
         emit FeatureFlagAddressRemoved(feature, permissioned);
+    }
+
+    function isFeatureFlagEnabled(bytes32 feature) external view override returns (bool) {
+        return FeatureFlag.load(feature).enabled;
+    }
+
+    function getFeatureFlagPermissionedAddresses(bytes32 feature)
+        external
+        view
+        override
+        returns (address[] memory)
+    {
+        return FeatureFlag.load(feature).permissionedAddresses.values();
     }
 }
