@@ -7,20 +7,13 @@ import "@synthetixio/core-modules/contracts/interfaces/IOwnerModule.sol";
 import "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
 import "@synthetixio/core-contracts/contracts/initializable/InitializableMixin.sol";
 import "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
+import "@synthetixio/core-contracts/contracts/token/ERC20Storage.sol";
 import "../mixins/FeeMixin.sol";
 import "../mixins/PriceMixin.sol";
 import "../interfaces/ISpotMarket.sol";
 import "../interfaces/ISpotMarketFee.sol";
 
-contract SpotMarketModule is
-    ISpotMarket,
-    SynthMixin,
-    SpotMarketMixin,
-    FeeMixin,
-    PriceMixin,
-    OwnableMixin,
-    InitializableMixin
-{
+contract SpotMarketModule is ISpotMarket, SpotMarketMixin, FeeMixin, PriceMixin, InitializableMixin {
     using DecimalMath for uint256;
 
     error IncorrectMarket();
@@ -50,7 +43,7 @@ contract SpotMarketModule is
         store.synthetix = snxAddress;
         store.usdToken = ITokenModule(usdTokenAddress);
 
-        _initializeToken(tokenName, tokenSymbol, tokenDecimals);
+        ERC20Storage.init(tokenName, tokenSymbol, tokenDecimals);
 
         // register with market manager
         uint128 synthMarketId = IMarketManagerModule(store.synthetix).registerMarket(address(this));
