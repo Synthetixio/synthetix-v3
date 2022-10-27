@@ -94,8 +94,8 @@ library Vault {
     /**
      * @dev Consolidates an accounts debt.
      */
-    function updateAccountDebt(Data storage self, uint128 accountId) internal returns (int) {
-        return currentEpoch(self).updateAccountDebt(accountId);
+    function consolidateAccountDebt(Data storage self, uint128 accountId) internal returns (int) {
+        return currentEpoch(self).consolidateAccountDebt(accountId);
     }
 
     /**

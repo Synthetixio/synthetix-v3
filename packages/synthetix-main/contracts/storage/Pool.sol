@@ -152,7 +152,7 @@ library Pool {
     ) internal returns (int debt) {
         recalculateVaultCollateral(self, collateralType);
 
-        return self.vaults[collateralType].updateAccountDebt(accountId);
+        return self.vaults[collateralType].consolidateAccountDebt(accountId);
     }
 
     function resetVault(Data storage self, address collateralType) internal {

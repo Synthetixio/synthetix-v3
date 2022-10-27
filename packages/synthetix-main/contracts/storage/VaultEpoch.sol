@@ -90,7 +90,7 @@ library VaultEpoch {
      *
      * TODO: Rename to consolidateAccountDebt?
      */
-    function updateAccountDebt(Data storage self, uint128 accountId) internal returns (int currentDebt) {
+    function consolidateAccountDebt(Data storage self, uint128 accountId) internal returns (int currentDebt) {
         bytes32 actorId = accountToActor(accountId);
 
         currentDebt = self.consolidatedDebtDist.getActorValue(actorId);
@@ -119,7 +119,7 @@ library VaultEpoch {
         bytes32 actorId = accountToActor(accountId);
 
         // Ensure account debt is consolidated before we do next things.
-        updateAccountDebt(self, accountId);
+        consolidateAccountDebt(self, accountId);
 
         self.collateralDist.updateActorValue(actorId, int(collateralAmount));
         self.incomingDebtDist.updateActorShares(actorId, self.collateralDist.getActorShares(actorId).mulDecimal(leverage));
