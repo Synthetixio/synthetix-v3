@@ -4,9 +4,10 @@ pragma solidity ^0.8.0;
 import "./Distribution.sol";
 import "./MarketDistribution.sol";
 import "./Vault.sol";
-
 import "./Market.sol";
 import "./PoolConfiguration.sol";
+
+import "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
 
 library Pool {
     using CollateralConfiguration for CollateralConfiguration.Data;
@@ -15,6 +16,8 @@ library Pool {
     using Distribution for Distribution.Data;
 
     using MathUtil for uint256;
+
+    error PoolNotFound(uint128 poolId);
 
     struct Data {
         /// @dev the id of this pool
@@ -188,16 +191,8 @@ library Pool {
         Data storage self,
         address collateralType,
         uint128 accountId
-    )
-        internal
-        view
-        returns (
-            uint collateralAmount,
-            uint collateralValue,
-            uint shares
-        )
-    {
-        (collateralAmount, shares) = self.vaults[collateralType].currentAccountCollateral(accountId);
+    ) internal view returns (uint collateralAmount, uint collateralValue) {
+        collateralAmount = self.vaults[collateralType].currentAccountCollateral(accountId);
         collateralValue = CollateralConfiguration.load(collateralType).getCollateralPrice().mulDecimal(collateralAmount);
     }
 
@@ -206,10 +201,22 @@ library Pool {
         address collateralType,
         uint128 accountId
     ) internal returns (uint) {
-        (, uint getPositionCollateralValue, ) = currentAccountCollateral(self, collateralType, accountId);
+        (, uint getPositionCollateralValue) = currentAccountCollateral(self, collateralType, accountId);
         int getPositionDebt = updateAccountDebt(self, collateralType, accountId);
 
         // if they have a credit, just treat their debt as 0
         return getPositionCollateralValue.divDecimal(getPositionDebt < 0 ? 0 : uint(getPositionDebt));
+    }
+
+    function poolExists(uint128 poolId) internal {
+        if (!Pool.exists(poolId)) {
+            revert PoolNotFound(poolId);
+        }
+    }
+
+    function onlyPoolOwner(uint128 poolId, address requestor) internal {
+        if (Pool.load(poolId).owner != requestor) {
+            revert AccessError.Unauthorized(requestor);
+        }
     }
 }

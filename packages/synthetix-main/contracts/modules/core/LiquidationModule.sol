@@ -48,8 +48,8 @@ contract LiquidationsModule is ILiquidationModule, AssociatedSystemsMixin {
 
         int rawDebt = pool.updateAccountDebt(collateralType, accountId);
 
-        (uint cl, uint collateralValue, ) = pool.currentAccountCollateral(collateralType, accountId);
-        collateralLiquidated = cl;
+        (uint collateralAmount, uint collateralValue) = pool.currentAccountCollateral(collateralType, accountId);
+        collateralLiquidated = collateralAmount;
 
         debtLiquidated = uint(rawDebt);
 
@@ -184,7 +184,7 @@ contract LiquidationsModule is ILiquidationModule, AssociatedSystemsMixin {
     ) external override returns (bool) {
         Pool.Data storage pool = Pool.load(poolId);
         int rawDebt = pool.updateAccountDebt(collateralType, accountId);
-        (, uint collateralValue, ) = pool.currentAccountCollateral(collateralType, accountId);
+        (, uint collateralValue) = pool.currentAccountCollateral(collateralType, accountId);
         return rawDebt >= 0 && _isLiquidatable(collateralType, uint(rawDebt), collateralValue);
     }
 }

@@ -14,9 +14,9 @@ contract PoolConfigurationModule is IPoolConfigurationModule, OwnableMixin {
 
     using Pool for Pool.Data;
 
-    error PoolNotFound(uint128 poolId);
+    function setPreferredPool(uint128 poolId) external override onlyOwner {
+        Pool.poolExists(poolId);
 
-    function setPreferredPool(uint128 poolId) external override onlyOwner poolExists(poolId) {
         PoolConfiguration.load().preferredPool = poolId;
 
         emit PreferredPoolSet(poolId);
@@ -26,13 +26,17 @@ contract PoolConfigurationModule is IPoolConfigurationModule, OwnableMixin {
         return PoolConfiguration.load().preferredPool;
     }
 
-    function addApprovedPool(uint128 poolId) external override onlyOwner poolExists(poolId) {
+    function addApprovedPool(uint128 poolId) external override onlyOwner {
+        Pool.poolExists(poolId);
+
         PoolConfiguration.load().approvedPools.add(poolId);
 
         emit PoolApprovedAdded(poolId);
     }
 
-    function removeApprovedPool(uint128 poolId) external override onlyOwner poolExists(poolId) {
+    function removeApprovedPool(uint128 poolId) external override onlyOwner {
+        Pool.poolExists(poolId);
+
         PoolConfiguration.load().approvedPools.remove(poolId);
 
         emit PoolApprovedRemoved(poolId);
@@ -40,12 +44,5 @@ contract PoolConfigurationModule is IPoolConfigurationModule, OwnableMixin {
 
     function getApprovedPools() external view override returns (uint[] memory) {
         return PoolConfiguration.load().approvedPools.values();
-    }
-
-    modifier poolExists(uint128 poolId) {
-        if (!Pool.exists(poolId)) {
-            revert PoolNotFound(poolId);
-        }
-        _;
     }
 }

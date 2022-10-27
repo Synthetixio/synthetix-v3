@@ -16,14 +16,6 @@ contract PoolModule is IPoolModule, OwnableMixin {
     using Pool for Pool.Data;
     using Market for Market.Data;
 
-    modifier onlyPoolOwner(uint128 poolId, address requestor) {
-        if (Pool.load(poolId).owner != requestor) {
-            revert AccessError.Unauthorized(requestor);
-        }
-
-        _;
-    }
-
     function createPool(uint128 requestedPoolId, address owner) external override {
         if (owner == address(0)) {
             revert AddressError.ZeroAddress();
@@ -41,7 +33,9 @@ contract PoolModule is IPoolModule, OwnableMixin {
     // ---------------------------------------
     // Ownership
     // ---------------------------------------
-    function nominatePoolOwner(address nominatedOwner, uint128 poolId) external override onlyPoolOwner(poolId, msg.sender) {
+    function nominatePoolOwner(address nominatedOwner, uint128 poolId) external override {
+        Pool.onlyPoolOwner(poolId, msg.sender);
+
         Pool.load(poolId).nominatedOwner = nominatedOwner;
 
         emit NominatedPoolOwner(poolId, nominatedOwner);
@@ -78,7 +72,9 @@ contract PoolModule is IPoolModule, OwnableMixin {
         return Pool.load(poolId).nominatedOwner;
     }
 
-    function renouncePoolOwnership(uint128 poolId) external override onlyPoolOwner(poolId, msg.sender) {
+    function renouncePoolOwnership(uint128 poolId) external override {
+        Pool.onlyPoolOwner(poolId, msg.sender);
+
         Pool.load(poolId).nominatedOwner = address(0);
 
         emit PoolOwnershipRenounced(poolId, msg.sender);
@@ -92,7 +88,10 @@ contract PoolModule is IPoolModule, OwnableMixin {
         uint128[] calldata markets,
         uint[] calldata weights,
         int[] calldata maxDebtShareValues
-    ) external override poolExists(poolId) onlyPoolOwner(poolId, msg.sender) {
+    ) external override {
+        Pool.poolExists(poolId);
+        Pool.onlyPoolOwner(poolId, msg.sender);
+
         if (markets.length != weights.length || markets.length != maxDebtShareValues.length) {
             revert InvalidParameters("markets.length,weights.length,maxDebtShareValues.length", "must match");
         }
@@ -181,12 +180,10 @@ contract PoolModule is IPoolModule, OwnableMixin {
         return (markets, weights, maxDebtShareValues);
     }
 
-    function setPoolName(uint128 poolId, string memory name)
-        external
-        override
-        poolExists(poolId)
-        onlyPoolOwner(poolId, msg.sender)
-    {
+    function setPoolName(uint128 poolId, string memory name) external override {
+        Pool.poolExists(poolId);
+        Pool.onlyPoolOwner(poolId, msg.sender);
+
         Pool.load(poolId).name = name;
 
         emit PoolNameUpdated(poolId, name, msg.sender);
@@ -205,13 +202,5 @@ contract PoolModule is IPoolModule, OwnableMixin {
 
     function getMinLiquidityRatio() external view override returns (uint) {
         return PoolConfiguration.load().minLiquidityRatio;
-    }
-
-    modifier poolExists(uint128 poolId) {
-        if (!Pool.exists(poolId)) {
-            revert PoolNotFound(poolId);
-        }
-
-        _;
     }
 }

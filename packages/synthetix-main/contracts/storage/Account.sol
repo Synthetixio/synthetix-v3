@@ -60,7 +60,7 @@ library Account {
 
             Pool.Data storage pool = Pool.load(poolIdx);
 
-            (uint collateralAmount, , ) = pool.currentAccountCollateral(collateralType, self.id);
+            (uint collateralAmount, ) = pool.currentAccountCollateral(collateralType, self.id);
             totalAssigned += collateralAmount;
         }
 
