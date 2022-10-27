@@ -1,12 +1,12 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "../storage/SpotMarketStorage.sol";
+import "../storage/SpotMarket.sol";
 import "../interfaces/ISpotMarketFee.sol";
 
-contract FeeMixin {
+contract FeeHelper {
     function _processFees(
-        SpotMarketStorage.SpotMarketStore storage store,
+        SpotMarket.Data storage store,
         uint amountUsd,
         ISpotMarketFee.TradeType tradeType
     ) internal returns (uint amountUsable, uint feesCollected) {

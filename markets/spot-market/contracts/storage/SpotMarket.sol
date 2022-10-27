@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 import "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
 import "../interfaces/ISpotMarket.sol";
 
-contract SpotMarket {
+library SpotMarket {
     struct Data {
         bytes buyFeedId;
         bytes sellFeedId;
@@ -15,7 +15,7 @@ contract SpotMarket {
         bool initialized;
     }
 
-    function _spotMarketStore() internal pure returns (Data storage store) {
+    function load() internal pure returns (Data storage store) {
         bytes32 s = keccak256(abi.encode("SpotMarket"));
         assembly {
             store.slot := s

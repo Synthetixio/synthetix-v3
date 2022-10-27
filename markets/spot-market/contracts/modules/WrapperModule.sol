@@ -2,28 +2,27 @@
 pragma solidity ^0.8.0;
 
 import "@synthetixio/core-contracts/contracts/interfaces/IERC20.sol";
-import "@synthetixio/core-contracts/contracts/ownership/OwnableMixin.sol";
 import "@synthetixio/main/contracts/interfaces/IMarketCollateralModule.sol";
 import "../interfaces/IWrapper.sol";
-import "../storage/WrapperStorage.sol";
-import "../mixins/FeeMixin.sol";
-import "../mixins/PriceMixin.sol";
-import "../mixins/SpotMarketMixin.sol";
-import "../mixins/SynthMixin.sol";
+import "../storage/Wrapper.sol";
+import "../storage/SpotMarket.sol";
+import "../helpers/FeeHelper.sol";
+import "../helpers/PriceHelper.sol";
+import "../helpers/SynthHelper.sol";
 
-contract WrapperModule is IWrapper, SynthMixin, SpotMarketMixin, FeeMixin, PriceMixin, WrapperStorage, OwnableMixin {
+contract WrapperModule is IWrapper, SynthHelper, PriceHelper, FeeHelper {
     error WrappingNotInitialized();
 
     modifier onlyEnabledWrapper() {
-        if (!_wrapperStore().wrappingEnabled) revert WrappingNotInitialized();
+        if (!Wrapper.load().wrappingEnabled) revert WrappingNotInitialized();
 
         _;
     }
 
     function initializeWrapper(uint supplyCap, address collateralType) external override onlyOwner {
         // check if collateral type is supported?
-        WrapperStore storage wrapperStore = _wrapperStore();
-        SpotMarketStore storage spotMarketStore = _spotMarketStore();
+        Wrapper.Data storage wrapperStore = Wrapper.load();
+        SpotMarket.Data storage spotMarketStore = SpotMarket.load();
         // store supported collateral type
         wrapperStore.collateralType = collateralType;
         wrapperStore.wrappingEnabled = true;
@@ -39,7 +38,7 @@ contract WrapperModule is IWrapper, SynthMixin, SpotMarketMixin, FeeMixin, Price
     }
 
     function updateSupplyCap(uint supplyCap) external override onlyOwner {
-        SpotMarketStore storage store = _spotMarketStore();
+        SpotMarket.Data storage spotMarketStore = SpotMarket.load();
         // set supply cap on market collateral module
         IMarketCollateralModule(store.synthetix).configureMaximumMarketCollateral(
             store.marketId,
@@ -51,8 +50,7 @@ contract WrapperModule is IWrapper, SynthMixin, SpotMarketMixin, FeeMixin, Price
     }
 
     function wrap(uint wrapAmount) external override onlyEnabledWrapper returns (uint amountToMint) {
-        SpotMarketStore storage store = _spotMarketStore();
-        WrapperStore storage wrapperStore = _wrapperStore();
+        Wrapper.Data storage wrapperStore = Wrapper.load();
 
         IERC20 wrappingCollateral = IERC20(wrapperStore.collateralType);
 
@@ -77,8 +75,7 @@ contract WrapperModule is IWrapper, SynthMixin, SpotMarketMixin, FeeMixin, Price
     }
 
     function unwrap(uint unwrapAmount) external override onlyEnabledWrapper returns (uint amountToWithdraw) {
-        SpotMarketStore storage store = _spotMarketStore();
-        WrapperStore storage wrapperStore = _wrapperStore();
+        Wrapper.Data storage wrapperStore = Wrapper.load();
 
         if (_getBalanceOf(msg.sender) < unwrapAmount) revert InsufficientFunds();
         uint allowance = _getAllowance(msg.sender, address(this));

@@ -2,10 +2,10 @@
 pragma solidity ^0.8.0;
 
 import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
-import "../storage/SpotMarketStorage.sol";
+import "../storage/SpotMarket.sol";
 import "../interfaces/ISpotMarketFee.sol";
 
-contract PriceMixin {
+contract PriceHelper {
     using DecimalMath for uint256;
 
     // TODO: change from pure once _getCurrentPrice is implemented
@@ -20,7 +20,7 @@ contract PriceMixin {
     }
 
     function _quote(
-        SpotMarketStorage.SpotMarketStore storage store,
+        SpotMarket.Data storage store,
         uint amountUsd,
         ISpotMarketFee.TradeType tradeType
     ) internal view returns (uint, uint) {

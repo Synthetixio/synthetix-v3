@@ -8,12 +8,14 @@ import "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
 import "@synthetixio/core-contracts/contracts/initializable/InitializableMixin.sol";
 import "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
 import "@synthetixio/core-contracts/contracts/token/ERC20Storage.sol";
-import "../mixins/FeeMixin.sol";
-import "../mixins/PriceMixin.sol";
+import "../storage/SpotMarket.sol";
+import "../helpers/FeeHelper.sol";
+import "../helpers/PriceHelper.sol";
+import "../helpers/SynthHelper.sol";
 import "../interfaces/ISpotMarket.sol";
 import "../interfaces/ISpotMarketFee.sol";
 
-contract SpotMarketModule is ISpotMarket, SpotMarketMixin, FeeMixin, PriceMixin, InitializableMixin {
+contract SpotMarketModule is ISpotMarket, SynthHelper, FeeHelper, PriceHelper, InitializableMixin {
     using DecimalMath for uint256;
 
     error IncorrectMarket();
@@ -37,8 +39,7 @@ contract SpotMarketModule is ISpotMarket, SpotMarketMixin, FeeMixin, PriceMixin,
         bytes memory sellFeedId
     ) external override {
         OwnableStorage.onlyOwner();
-        ERC20Storage.Data storage store = ERC20Storage.load();
-        SpotMarketStore storage store = _spotMarketStore();
+        SpotMarket.Data storage store = SpotMarket.load();
 
         store.synthetix = snxAddress;
         store.usdToken = ITokenModule(usdTokenAddress);
@@ -60,12 +61,12 @@ contract SpotMarketModule is ISpotMarket, SpotMarketMixin, FeeMixin, PriceMixin,
 
     /* should this accept marketId as a param */
     function reportedDebt(uint128 marketId) external view override returns (uint) {
-        SpotMarketStore storage store = _spotMarketStore();
+        SpotMarket.Data storage store = SpotMarket.load();
         if (store.marketId != marketId) {
             revert IncorrectMarket();
         }
 
-        return _getTotalSupply().mulDecimal(_getCurrentPrice());
+        return _getTotalSupply.mulDecimal(_getCurrentPrice());
     }
 
     function name(uint128 marketId) external view returns (string memory) {
@@ -73,19 +74,19 @@ contract SpotMarketModule is ISpotMarket, SpotMarketMixin, FeeMixin, PriceMixin,
     }
 
     function getMarketId() external view override returns (uint128) {
-        return _spotMarketStore().marketId;
+        return SpotMarket.load().marketId;
     }
 
     function updateFeeManager(address newFeeManager) external override onlyOwner {
-        _spotMarketStore().feeManager = newFeeManager;
+        SpotMarket.load().feeManager = newFeeManager;
     }
 
     function updatePriceFeed(PriceFeed memory priceFeed) external override onlyOwner {
-        _spotMarketStore().priceFeed = priceFeed;
+        SpotMarket.load().priceFeed = priceFeed;
     }
 
     function buy(uint amountUsd) external override onlyIfInitialized returns (uint) {
-        SpotMarketStore storage store = _spotMarketStore();
+        SpotMarket.Data storage store = SpotMarket.load();
 
         uint allowance = store.usdToken.allowance(msg.sender, address(this));
         if (store.usdToken.balanceOf(msg.sender) < amountUsd) {
@@ -110,7 +111,7 @@ contract SpotMarketModule is ISpotMarket, SpotMarketMixin, FeeMixin, PriceMixin,
     }
 
     function sell(uint sellAmount) external override onlyIfInitialized returns (uint) {
-        SpotMarketStore storage store = _spotMarketStore();
+        SpotMarket.Data storage store = SpotMarket.load();
 
         uint amountToWithdraw = _synthUsdExchangeRate(sellAmount);
         _burn(msg.sender, sellAmount);
@@ -126,11 +127,11 @@ contract SpotMarketModule is ISpotMarket, SpotMarketMixin, FeeMixin, PriceMixin,
     }
 
     function getBuyQuote(uint amountUsd) external view override returns (uint, uint) {
-        return _quote(_spotMarketStore(), amountUsd, ISpotMarketFee.TradeType.BUY);
+        return _quote(SpotMarket.load(), amountUsd, ISpotMarketFee.TradeType.BUY);
     }
 
     function getSellQuote(uint amountSynth) external view override returns (uint, uint) {
         uint usdAmount = _synthUsdExchangeRate(amountSynth);
-        return _quote(_spotMarketStore(), usdAmount, ISpotMarketFee.TradeType.SELL);
+        return _quote(SpotMarket.load(), usdAmount, ISpotMarketFee.TradeType.SELL);
     }
 }
