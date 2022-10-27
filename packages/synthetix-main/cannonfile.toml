@@ -70,7 +70,7 @@ artifact = "contracts/modules/snx/SNXTokenModule.sol:SNXTokenModule"
 artifact = "contracts/modules/usd/USDTokenModule.sol:USDTokenModule"
 
 [contract.InitialModuleBundle]
-artifact = "InitialModuleBundle"
+artifact = "contracts/modules/InitialModuleBundle.sol:InitialModuleBundle"
 
 # Core
 [run.core_generate_router]
@@ -121,7 +121,6 @@ depends = ["run.core_generate_router"]
 artifact = "contracts/Proxy.sol:Proxy"
 args = ["<%= contracts.InitialModuleBundle.address %>"]
 abiOf = ["InitialModuleBundle"]
-
 depends = ["contract.InitialModuleBundle"]
 
 [invoke.acquire_ownership]
@@ -129,9 +128,7 @@ target = ["InitialCoreProxy"]
 from = "<%= settings.owner %>"
 func = "initializeOwnerModule"
 args = ["<%= settings.owner %>"]
-depends = [
-  "contract.InitialCoreProxy",
-]
+depends = ["contract.InitialCoreProxy"]
 
 [invoke.upgrade_core_proxy]
 target = ["InitialCoreProxy"]
