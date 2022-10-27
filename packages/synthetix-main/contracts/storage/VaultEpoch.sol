@@ -10,7 +10,6 @@ import "./Distribution.sol";
  *
  * Debt is also tracked in a distribution for the same reason, but it is additionally split in two distributions: incoming and consolidated debt.
  *
- * TODO
  * Incoming debt is modified when a liquidations occurs.
  * Consolidated debt is updated when users interact with the system.
  */
@@ -44,8 +43,6 @@ library VaultEpoch {
          * A regular mapping would require looping over the mapping of each account's collateral, or moving the liquidated
          * collateral into a place where it could later be claimed. With a distribution, liquidated collateral can be
          * socialized very easily.
-         *
-         * TODO: Consider renaming to delegatedCollateralDist
          */
         Distribution.Data collateralDist;
         /**

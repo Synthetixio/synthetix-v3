@@ -67,10 +67,8 @@ library Vault {
      * vaults' liquidity shares within the them.
      *
      * Returns the amount of collateral that this vault is providing in net USD terms.
-     *
-     * TODO: Consider renaming to updateVaultLiquidity, measure suggests read-only
      */
-    function measureLiquidity(Data storage self, uint collateralPrice)
+    function updateLiquidity(Data storage self, uint collateralPrice)
         internal
         returns (
             uint usdWeight,
