@@ -42,7 +42,7 @@ describe('PoolModule Admin', function () {
     before('give user1 permission to create pool', async () => {
       await systems()
         .Core.connect(owner)
-        .addMultipleToFeatureFlag(ethers.utils.formatBytes32String('pool'), [user1.getAddress()]);
+        .addToFeatureFlag(ethers.utils.formatBytes32String('pool'), user1.getAddress());
     });
 
     before('create a pool', async () => {

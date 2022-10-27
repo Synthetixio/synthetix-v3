@@ -17,6 +17,8 @@ contract PoolModule is IPoolModule {
     using Pool for Pool.Data;
     using Market for Market.Data;
 
+    bytes32 private constant _POOL_FEATURE_FLAG = "pool";
+
     modifier onlyPoolOwner(uint128 poolId, address requestor) {
         if (Pool.load(poolId).owner != requestor) {
             revert AccessError.Unauthorized(requestor);
@@ -26,7 +28,7 @@ contract PoolModule is IPoolModule {
     }
 
     function createPool(uint128 requestedPoolId, address owner) external override {
-        FeatureFlag.onlyIfFeatureFlag("pool");
+        FeatureFlag.ensureEnabled(_POOL_FEATURE_FLAG);
 
         if (owner == address(0)) {
             revert AddressError.ZeroAddress();

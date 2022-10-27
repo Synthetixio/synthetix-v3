@@ -7,7 +7,7 @@ import "../../storage/FeatureFlag.sol";
 
 contract SampleFeatureFlagModule is ISampleFeatureFlagModule {
     function setFeatureFlaggedValue(uint valueToSet) external {
-        FeatureFlag.onlyIfFeatureFlag("SAMPLE_FEATURE");
+        FeatureFlag.ensureEnabled("SAMPLE_FEATURE");
         SampleStorage.load().someValue = valueToSet;
     }
 

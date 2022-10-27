@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
-import "./Permission.sol";
+import "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
 
 library FeatureFlag {
     using SetUtil for SetUtil.AddressSet;
@@ -10,24 +10,26 @@ library FeatureFlag {
     error FeatureUnavailable();
 
     struct Data {
-        mapping(bytes32 => Permission.Data) featureFlags;
+        bytes32 name;
+        bool enabled;
+        SetUtil.AddressSet permissionedAddresses;
     }
 
-    function load() internal pure returns (Data storage store) {
-        bytes32 s = keccak256(abi.encode("FeatureFlag"));
+    function load(bytes32 featureName) internal pure returns (Data storage store) {
+        bytes32 s = keccak256(abi.encode("FeatureFlag", featureName));
         assembly {
             store.slot := s
         }
     }
 
-    function onlyIfFeatureFlag(bytes32 feature) internal view {
-        Data storage store = FeatureFlag.load();
+    function ensureEnabled(bytes32 feature) internal view {
+        Data storage store = FeatureFlag.load(feature);
 
-        if (!store.featureFlags[feature].enabled) {
+        if (!store.enabled) {
             revert FeatureUnavailable();
         }
 
-        if (!store.featureFlags[feature].permissionedAddresses.contains(msg.sender)) {
+        if (!store.permissionedAddresses.contains(msg.sender)) {
             revert AccessError.Unauthorized(msg.sender);
         }
     }
