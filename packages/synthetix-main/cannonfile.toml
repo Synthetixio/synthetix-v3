@@ -163,7 +163,6 @@ modified = ["contracts/modules/common", "contracts/modules/account"]
 depends = [
   "contract.OwnerModule",
   "contract.UpgradeModule",
-  "contract.FeatureFlagModule",
   "contract.AccountTokenModule"
 ]
 
@@ -185,7 +184,6 @@ modified = ["contracts/modules/common", "contracts/modules/snx"]
 depends = [
   "contract.OwnerModule",
   "contract.UpgradeModule",
-  "contract.FeatureFlagModule",
   "contract.SNXTokenModule"
 ]
 
@@ -207,7 +205,6 @@ modified = ["contracts/modules/common", "contracts/modules/usd"]
 depends = [
   "contract.OwnerModule",
   "contract.UpgradeModule",
-  "contract.FeatureFlagModule",
   "contract.USDTokenModule"
 ]
 
