@@ -34,9 +34,13 @@ contract UtilsModule is IUtilsModule {
         systemToken.mint(to, amount);
     }
 
-    function registerCcip(address ccipSend, address ccipReceive, address ccipTokenPool) external override {
+    function registerCcip(
+        address ccipSend,
+        address ccipReceive,
+        address ccipTokenPool
+    ) external override {
         OwnableStorage.onlyOwner();
-        
+
         IAssociatedSystemsModule usdToken = IAssociatedSystemsModule(AssociatedSystem.load(_USD_TOKEN).proxy);
 
         usdToken.registerUnmanagedSystem(_CCIP_CHAINLINK_SEND, ccipSend);

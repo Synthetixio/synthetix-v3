@@ -9,7 +9,6 @@ import "../../interfaces/external/IEVM2AnySubscriptionOnRampRouterInterface.sol"
 import "@synthetixio/core-modules/contracts/storage/AssociatedSystem.sol";
 
 contract USDTokenModule is ERC20, InitializableMixin, IUSDTokenModule {
-
     uint private constant _TRANSFER_GAS_LIMIT = 100000;
 
     bytes32 private constant _CCIP_CHAINLINK_SEND = "ccipChainlinkSend";
@@ -42,22 +41,20 @@ contract USDTokenModule is ERC20, InitializableMixin, IUSDTokenModule {
         ERC20Storage.load().allowance[from][spender] = amount;
     }
 
-    function mint(
-        address target,
-        uint amount
-    ) external override {
-        if (msg.sender != OwnableStorage.getOwner() && msg.sender != AssociatedSystem.load(_CCIP_CHAINLINK_TOKEN_POOL).proxy) {
+    function mint(address target, uint amount) external override {
+        if (
+            msg.sender != OwnableStorage.getOwner() && msg.sender != AssociatedSystem.load(_CCIP_CHAINLINK_TOKEN_POOL).proxy
+        ) {
             revert AccessError.Unauthorized(msg.sender);
         }
 
         _mint(target, amount);
     }
 
-    function burn(
-        address target,
-        uint amount
-    ) external override {
-        if (msg.sender != OwnableStorage.getOwner() && msg.sender != AssociatedSystem.load(_CCIP_CHAINLINK_TOKEN_POOL).proxy) {
+    function burn(address target, uint amount) external override {
+        if (
+            msg.sender != OwnableStorage.getOwner() && msg.sender != AssociatedSystem.load(_CCIP_CHAINLINK_TOKEN_POOL).proxy
+        ) {
             revert AccessError.Unauthorized(msg.sender);
         }
 
@@ -80,7 +77,11 @@ contract USDTokenModule is ERC20, InitializableMixin, IUSDTokenModule {
         _burn(from, amount);
     }
 
-    function transferCrossChain(uint destChainId, address to, uint amount) external returns (uint feesPaid) {
+    function transferCrossChain(
+        uint destChainId,
+        address to,
+        uint amount
+    ) external returns (uint feesPaid) {
         // TODO: collect fees
         // TODO: emit appropriate event
 

@@ -12,5 +12,9 @@ interface IUSDTokenModule is ITokenModule {
     ) external;
 
     // transfers tokens, but with the ability to send them cross-chain
-    function transferCrossChain(uint destChainId, address, uint amount) external returns (uint feesPaid);
+    function transferCrossChain(
+        uint destChainId,
+        address,
+        uint amount
+    ) external returns (uint feesPaid);
 }

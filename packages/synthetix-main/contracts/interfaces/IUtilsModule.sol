@@ -8,5 +8,9 @@ interface IUtilsModule {
     function mintInitialSystemToken(address to, uint amount) external;
 
     // allows for enabling of CCIP support
-    function registerCcip(address ccipSend, address ccipReceive, address ccipTokenPool) external;
+    function registerCcip(
+        address ccipSend,
+        address ccipReceive,
+        address ccipTokenPool
+    ) external;
 }

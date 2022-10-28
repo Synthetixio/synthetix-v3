@@ -17,10 +17,9 @@ interface IEVM2AnySubscriptionOnRampRouterInterface {
     }
 
     /**
-    * @notice Request a message to be sent to the destination chain
-    * @param destChainId The destination chain ID
-    * @param message The message payload
-    */
-    function ccipSend(uint256 destChainId, EVM2AnySubscriptionMessage calldata message)
-        external;
+     * @notice Request a message to be sent to the destination chain
+     * @param destChainId The destination chain ID
+     * @param message The message payload
+     */
+    function ccipSend(uint256 destChainId, EVM2AnySubscriptionMessage calldata message) external;
 }
