@@ -4,6 +4,7 @@ pragma solidity ^0.8.0;
 import "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
 import "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
 import "@synthetixio/core-contracts/contracts/errors/AddressError.sol";
+import "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
 
 import "../../interfaces/IPoolModule.sol";
 import "../../storage/Pool.sol";
@@ -16,15 +17,11 @@ contract PoolModule is IPoolModule {
     using Pool for Pool.Data;
     using Market for Market.Data;
 
-    modifier onlyPoolOwner(uint128 poolId, address requestor) {
-        if (Pool.load(poolId).owner != requestor) {
-            revert AccessError.Unauthorized(requestor);
-        }
-
-        _;
-    }
+    bytes32 private constant _POOL_FEATURE_FLAG = "createPool";
 
     function createPool(uint128 requestedPoolId, address owner) external override {
+        FeatureFlag.ensureEnabled(_POOL_FEATURE_FLAG);
+
         if (owner == address(0)) {
             revert AddressError.ZeroAddress();
         }
@@ -41,7 +38,9 @@ contract PoolModule is IPoolModule {
     // ---------------------------------------
     // Ownership
     // ---------------------------------------
-    function nominatePoolOwner(address nominatedOwner, uint128 poolId) external override onlyPoolOwner(poolId, msg.sender) {
+    function nominatePoolOwner(address nominatedOwner, uint128 poolId) external override {
+        Pool.onlyPoolOwner(poolId, msg.sender);
+
         Pool.load(poolId).nominatedOwner = nominatedOwner;
 
         emit NominatedPoolOwner(poolId, nominatedOwner);
@@ -78,7 +77,9 @@ contract PoolModule is IPoolModule {
         return Pool.load(poolId).nominatedOwner;
     }
 
-    function renouncePoolOwnership(uint128 poolId) external override onlyPoolOwner(poolId, msg.sender) {
+    function renouncePoolOwnership(uint128 poolId) external override {
+        Pool.onlyPoolOwner(poolId, msg.sender);
+
         Pool.load(poolId).nominatedOwner = address(0);
 
         emit PoolOwnershipRenounced(poolId, msg.sender);
@@ -92,7 +93,10 @@ contract PoolModule is IPoolModule {
         uint128[] calldata markets,
         uint[] calldata weights,
         int[] calldata maxDebtShareValues
-    ) external override poolExists(poolId) onlyPoolOwner(poolId, msg.sender) {
+    ) external override {
+        Pool.requireExists(poolId);
+        Pool.onlyPoolOwner(poolId, msg.sender);
+
         if (markets.length != weights.length || markets.length != maxDebtShareValues.length) {
             revert InvalidParameters("markets.length,weights.length,maxDebtShareValues.length", "must match");
         }
@@ -181,12 +185,10 @@ contract PoolModule is IPoolModule {
         return (markets, weights, maxDebtShareValues);
     }
 
-    function setPoolName(uint128 poolId, string memory name)
-        external
-        override
-        poolExists(poolId)
-        onlyPoolOwner(poolId, msg.sender)
-    {
+    function setPoolName(uint128 poolId, string memory name) external override {
+        Pool.requireExists(poolId);
+        Pool.onlyPoolOwner(poolId, msg.sender);
+
         Pool.load(poolId).name = name;
 
         emit PoolNameUpdated(poolId, name, msg.sender);
@@ -206,13 +208,5 @@ contract PoolModule is IPoolModule {
 
     function getMinLiquidityRatio() external view override returns (uint) {
         return PoolConfiguration.load().minLiquidityRatio;
-    }
-
-    modifier poolExists(uint128 poolId) {
-        if (!Pool.exists(poolId)) {
-            revert PoolNotFound(poolId);
-        }
-
-        _;
     }
 }

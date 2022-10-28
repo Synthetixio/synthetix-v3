@@ -67,7 +67,7 @@ contract RewardsManagerModule is IRewardsManagerModule {
         existingDistribution.rewardPerShare += uint128(
             uint(
                 existingDistribution.entry.distribute(
-                    pool.vaults[collateralType].currentEpoch().debtDist,
+                    pool.vaults[collateralType].currentEpoch().incomingDebtDist,
                     int(amount),
                     start,
                     duration
@@ -124,7 +124,7 @@ contract RewardsManagerModule is IRewardsManagerModule {
         Vault.Data storage vault = Pool.load(poolId).vaults[collateralType];
         RewardDistribution.Data[] storage dists = vault.rewards;
 
-        uint totalShares = vault.currentEpoch().debtDist.totalShares;
+        uint totalShares = vault.currentEpoch().incomingDebtDist.totalShares;
 
         int curTime = int(block.timestamp);
 

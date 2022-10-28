@@ -27,6 +27,12 @@ describe('PoolConfigurationModule', function () {
     });
 
     describe('when some pools are created', function () {
+      before('give user1 permission to create pools', async () => {
+        await systems()
+          .Core.connect(owner)
+          .addToFeatureFlag(Ethers.utils.formatBytes32String('createPool'), user1.getAddress());
+      });
+
       before('create', async () => {
         await createPool(1, user1);
         await createPool(2, user1);

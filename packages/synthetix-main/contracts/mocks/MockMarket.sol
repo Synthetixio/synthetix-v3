@@ -58,6 +58,10 @@ contract MockMarket is IMarket {
         return _reportedDebt;
     }
 
+    function name(uint128) external view override returns (string memory) {
+        return "MockMarket";
+    }
+
     function setPrice(uint newPrice) external {
         _price = newPrice;
     }

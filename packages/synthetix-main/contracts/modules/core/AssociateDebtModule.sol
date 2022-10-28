@@ -60,7 +60,7 @@ contract AssociateDebtModule is IAssociateDebtModule {
         poolData.updateAccountDebt(collateralType, accountId);
 
         // increase account debt
-        int updatedDebt = epochData.usdDebtDist.getActorValue(actorId) + int(amount);
+        int updatedDebt = epochData.consolidatedDebtDist.getActorValue(actorId) + int(amount);
 
         // verify the c ratio
         _verifyCollateralRatio(
@@ -71,7 +71,7 @@ contract AssociateDebtModule is IAssociateDebtModule {
             )
         );
 
-        epochData.usdDebtDist.updateActorValue(actorId, updatedDebt);
+        epochData.consolidatedDebtDist.updateActorValue(actorId, updatedDebt);
 
         // done
         return updatedDebt;

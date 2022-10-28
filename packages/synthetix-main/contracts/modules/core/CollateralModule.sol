@@ -13,7 +13,7 @@ import "@synthetixio/core-modules/contracts/storage/AssociatedSystem.sol";
 import "../../utils/ERC20Helper.sol";
 
 /**
- * @title {ICollateralModule-configureCollateral}
+ * @title See {ICollateralModule}
  *
  * TODO: Consider splitting this into CollateralConfigurationModule and CollateralModule.
  * The former is for owner only stuff, and the latter for users.
@@ -21,15 +21,12 @@ import "../../utils/ERC20Helper.sol";
 contract CollateralModule is ICollateralModule {
     using SetUtil for SetUtil.AddressSet;
     using ERC20Helper for address;
-
+    using CollateralConfiguration for CollateralConfiguration.Data;
     using Account for Account.Data;
     using AccountRBAC for AccountRBAC.Data;
     using Collateral for Collateral.Data;
 
     error InvalidCollateral(address collateralType);
-
-    //bytes32 private constant _REDEEMABLE_REWARDS_TOKEN = "eSNXToken";
-    //bytes32 private constant _REWARDED_TOKEN = "SNXToken";
 
     // 86400 * 365.26
     uint private constant _SECONDS_PER_YEAR = 31558464;
@@ -116,7 +113,8 @@ contract CollateralModule is ICollateralModule {
         uint128 accountId,
         address collateralType,
         uint amount
-    ) public override collateralEnabled(collateralType) {
+    ) public override {
+        CollateralConfiguration.collateralEnabled(collateralType);
         Account.onlyWithPermission(accountId, AccountRBAC._DEPOSIT_PERMISSION);
 
         Account.Data storage account = Account.load(accountId);
@@ -302,15 +300,4 @@ contract CollateralModule is ICollateralModule {
     function _calculateRewardTokenMinted(uint amount, uint duration) internal pure returns (uint) {
         return (amount * duration) / _SECONDS_PER_YEAR;
     }*/
-
-    /**
-     * @dev Requires that the given collateral type is enabled for staking.
-     */
-    modifier collateralEnabled(address collateralType) {
-        if (!CollateralConfiguration.load(collateralType).stakingEnabled) {
-            revert InvalidCollateral(collateralType);
-        }
-
-        _;
-    }
 }

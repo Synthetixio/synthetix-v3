@@ -8,7 +8,6 @@ import "synthetix/contracts/interfaces/ILiquidatorRewards.sol";
 import "synthetix/contracts/interfaces/IIssuer.sol";
 import "synthetix/contracts/interfaces/ISynthetixDebtShare.sol";
 
-
 import "./interfaces/ISynthetix.sol";
 import "./interfaces/IRewardEscrowV2.sol";
 import "./interfaces/IV3CoreProxy.sol";
@@ -39,7 +38,11 @@ contract LegacyMarket is Ownable, IMarket {
     event AccountMigrated(address indexed account, uint indexed accountId, uint collateralAmount, uint debtAmount);
     event ConvertedUSD(address indexed account, uint amount);
 
-    constructor(address owner, IAddressResolver v2xResolverAddress, IV3CoreProxy v3SystemAddress) {
+    constructor(
+        address owner,
+        IAddressResolver v2xResolverAddress,
+        IV3CoreProxy v3SystemAddress
+    ) {
         v2xResolver = v2xResolverAddress;
         v3System = v3SystemAddress;
 
@@ -49,10 +52,8 @@ contract LegacyMarket is Ownable, IMarket {
         _ownableStore().owner = owner;
     }
 
-    function reportedDebt(uint requestedMarketId) public view returns (uint) {
+    function reportedDebt(uint128 requestedMarketId) public view returns (uint) {
         if (marketId == requestedMarketId) {
-
-
             IIssuer iss = IIssuer(v2xResolver.getAddress("Issuer"));
 
             return iss.debtBalanceOf(address(this), "sUSD");
@@ -61,7 +62,13 @@ contract LegacyMarket is Ownable, IMarket {
         return 0;
     }
 
-    function locked(uint/* requestedMarketId*/) external pure returns (uint) {
+    function name(uint128 marketId) external view returns (string memory) {
+        return "Legacy Market";
+    }
+
+    function locked(
+        uint /* requestedMarketId*/
+    ) external pure returns (uint) {
         return 0;
     }
 
@@ -104,11 +111,8 @@ contract LegacyMarket is Ownable, IMarket {
     function _migrate(address staker, uint128 accountId) internal {
         ISynthetix oldSynthetix = ISynthetix(v2xResolver.getAddress("ProxySynthetix"));
 
-        VestingEntries.VestingEntryWithID[] memory oldEscrows = IRewardEscrowV2(v2xResolver.getAddress("RewardEscrowV2")).getVestingSchedules(
-            staker,
-            0,
-            1000
-        );
+        VestingEntries.VestingEntryWithID[] memory oldEscrows = IRewardEscrowV2(v2xResolver.getAddress("RewardEscrowV2"))
+            .getVestingSchedules(staker, 0, 1000);
 
         // transfer all collateral from the user to our account
         (uint collateralMigrated, uint debtValueMigrated) = _gatherFromV2x(staker);
@@ -118,34 +122,17 @@ contract LegacyMarket is Ownable, IMarket {
         v3System.depositCollateral(accountId, address(oldSynthetix), collateralMigrated);
 
         uint curTime = block.timestamp;
-        for (uint i = 0;i < oldEscrows.length;i++) {
+        for (uint i = 0; i < oldEscrows.length; i++) {
             if (oldEscrows[i].endTime > curTime) {
-                v3System.createLock(
-                    accountId,
-                    address(oldSynthetix),
-                    oldEscrows[i].escrowAmount,
-                    oldEscrows[i].endTime
-                );
+                v3System.createLock(accountId, address(oldSynthetix), oldEscrows[i].escrowAmount, oldEscrows[i].endTime);
             }
         }
 
         uint128 preferredPoolId = v3System.getPreferredPool();
 
-        v3System.delegateCollateral(
-            accountId,
-            preferredPoolId,
-            address(oldSynthetix),
-            collateralMigrated,
-            MathUtil.UNIT
-        );
+        v3System.delegateCollateral(accountId, preferredPoolId, address(oldSynthetix), collateralMigrated, MathUtil.UNIT);
 
-        v3System.associateDebt(
-            marketId,
-            preferredPoolId,
-            address(oldSynthetix),
-            accountId,
-            debtValueMigrated
-        );
+        v3System.associateDebt(marketId, preferredPoolId, address(oldSynthetix), accountId, debtValueMigrated);
 
         IERC721(v3System.getAccountTokenAddress()).safeTransferFrom(address(this), staker, accountId);
 
@@ -183,16 +170,14 @@ contract LegacyMarket is Ownable, IMarket {
     function setPauseStablecoinConversion(bool paused) external onlyOwner {
         pauseStablecoinConversion = paused;
     }
-    
+
     function setPauseMigration(bool paused) external onlyOwner {
         pauseMigration = paused;
     }
 
     function _calculateDebtValueMigrated(uint debtSharesMigrated) internal view returns (uint) {
-        (uint totalSystemDebt, uint totalDebtShares, ) = IIssuer(v2xResolver.getAddress("Issuer"))
-            .allNetworksDebtInfo();
-        
-        return debtSharesMigrated * totalSystemDebt / totalDebtShares;
-    }
+        (uint totalSystemDebt, uint totalDebtShares, ) = IIssuer(v2xResolver.getAddress("Issuer")).allNetworksDebtInfo();
 
+        return (debtSharesMigrated * totalSystemDebt) / totalDebtShares;
+    }
 }

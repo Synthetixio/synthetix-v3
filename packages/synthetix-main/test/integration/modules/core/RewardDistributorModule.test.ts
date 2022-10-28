@@ -60,7 +60,7 @@ describe.skip('RewardDistributorModule', function () {
     it('distributes some rewards', async () => {
       await systems().Core.connect(user1).claimRewards(poolId, collateralAddress(), accountId);
 
-      assertBn.equal(await systems().ESNX.balanceOf(await user1.getAddress()), rewardAmount.div(2));
+      assertBn.equal(await systems().SNX.balanceOf(await user1.getAddress()), rewardAmount.div(2));
     });
 
     describe('re-applied', () => {
@@ -104,7 +104,7 @@ describe.skip('RewardDistributorModule', function () {
         await systems().Core.connect(user1).claimRewards(poolId, systems().SNX.address, accountId);
 
         assertBn.equal(
-          await systems().ESNX.balanceOf(await user1.getAddress()),
+          await systems().SNX.balanceOf(await user1.getAddress()),
           rewardAmount.add(rewardAmount.div(2))
         );
       });

@@ -2,12 +2,16 @@ name = "spot-market"
 version = "<%= package.version %>"
 description = "Spot market implementation"
 
+[setting.coreProxyOwner]
+description = "owner of v3 core proxy"
+defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
+
 [setting.marketOwner]
 description = "spot market owner"
 defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
 
 [import.synthetix]
-source = "synthetix:3"
+source = "synthetix:3.0.0-lm"
 
 [run.deploy_spot_market]
 exec = "scripts/deploy.js"
@@ -20,6 +24,14 @@ artifact = "Proxy"
 args = ["<%= contracts.SpotMarketRouter.address %>"]
 abi = "SpotMarketRouter"
 depends = ["run.deploy_spot_market"]
+
+# add pool owner to feature flag allow list
+[invoke.addSpotMarketToFeatureFlag]
+target = ["synthetix.CoreProxy"]
+func = "addToFeatureFlag"
+from = "<%= settings.coreProxyOwner %>"
+args = ["0x72656769737465724d61726b6574000000000000000000000000000000000000", "<%= contracts.SpotMarketProxy.address %>"] # formatBytes32String("registerMarket")
+depends = ['import.synthetix', 'contract.SpotMarketProxy']
 
 [contract.FixedFeeCalculator]
 artifact = "FixedFee"
