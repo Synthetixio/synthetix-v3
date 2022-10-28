@@ -80,7 +80,7 @@ artifact = "InitialModuleBundle"
 exec = "../hardhat-router/dist/cannon/router.js"
 func = "generate"
 args = ["CoreRouter", "contracts/modules/common", "contracts/modules/core", "contracts/modules/associated-systems"]
-modified = []
+modified = ["contracts/modules/common", "contracts/modules/core"]
 depends = [
   "contract.OwnerModule",
   "contract.UpgradeModule",

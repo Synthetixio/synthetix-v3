@@ -80,7 +80,7 @@ contract USDTokenModule is ERC20, InitializableMixin, IUSDTokenModule {
         _burn(from, amount);
     }
 
-    function transferCrossChain(uint destChainId, address, uint amount) external returns (bool executed, uint feesPaid) {
+    function transferCrossChain(uint destChainId, address to, uint amount) external returns (uint feesPaid) {
         // TODO: collect fees
         // TODO: emit appropriate event
 
@@ -93,7 +93,7 @@ contract USDTokenModule is ERC20, InitializableMixin, IUSDTokenModule {
         IEVM2AnySubscriptionOnRampRouterInterface(AssociatedSystem.load(_CCIP_CHAINLINK_SEND).proxy).ccipSend(
             destChainId,
             IEVM2AnySubscriptionOnRampRouterInterface.EVM2AnySubscriptionMessage(
-                abi.encode(address(0)), // Address of the receiver on the destination chain for EVM chains use abi.encode(destAddress).
+                abi.encode(to), // Address of the receiver on the destination chain for EVM chains use abi.encode(destAddress).
                 "", // Bytes that we wish to send to the receiver
                 tokens, // The ERC20 tokens we wish to send for EVM source chains
                 amounts, // The amount of ERC20 tokens we wish to send for EVM source chains
@@ -101,6 +101,6 @@ contract USDTokenModule is ERC20, InitializableMixin, IUSDTokenModule {
             )
         );
 
-        return (true, 0);
+        return (0);
     }
 }
