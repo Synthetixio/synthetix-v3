@@ -6,4 +6,11 @@ interface IUtilsModule {
     // when the system is first initialized, no system token exists and therefore we need a way to mint it in order to get the system started from 0
     // this function is only callable by the owner and the `totalSupply` of the SNX token must be 0
     function mintInitialSystemToken(address to, uint amount) external;
+
+    // allows for enabling of CCIP support
+    function registerCcip(
+        address ccipSend,
+        address ccipReceive,
+        address ccipTokenPool
+    ) external;
 }
