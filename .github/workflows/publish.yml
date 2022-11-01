@@ -1,0 +1,54 @@
+name: Lint
+
+on:
+  pull_request: {}
+  push:
+    branches:
+      - 'master'
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install Foundry (Cannon)
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: nightly
+      - run: anvil -V
+      - uses: actions/setup-node@v3
+        with:
+          node-version: "16.16.0"
+          cache: "npm"    steps:
+      - uses: actions/checkout@v2
+      - run: npm ci
+      - run: npm run build
+
+      # start the base release
+      - name: cannon:build
+        run: npx hardhat cannon:build
+        working-directory: ./packages/synthetix-main
+
+      # pull in all the active networks (TODO)
+      # these are needed mostly for convenience but also becuase it most accurately represents the state of the chain if
+      # we include the unreleased changes in this built package
+      #- name: cannon:upgrade
+      #  run: |
+      #    npx hardhat cannon:
+
+      # push to registry
+      - id: publish
+        name: cannon:publish
+        run: npm run cannon:publish --skip-register >> $GITHUB_OUTPUT
+        working-directory: ./packages/synthetix-main
+
+      # put a note on any PRs that includes the IPFS download information
+      - if: github.event.pull_request.base.ref == 'main'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: 'core system deployment now available: \n\n```\n${{steps.id.outputs.*}}\n\n```'
+            })
