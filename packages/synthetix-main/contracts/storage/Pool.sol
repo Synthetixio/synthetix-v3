@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import "./Distribution.sol";
-import "./MarketDistribution.sol";
+import "./MarketConfiguration.sol";
 import "./Vault.sol";
 import "./Market.sol";
 import "./PoolConfiguration.sol";
@@ -20,6 +20,7 @@ library Pool {
     using MathUtil for uint256;
 
     error PoolNotFound(uint128 poolId);
+    error PoolAlreadyExists(uint128 poolId);
 
     struct Data {
         /**
@@ -56,10 +57,10 @@ library Pool {
         /**
          * @dev TODO
          */
-        // TODO: Rename to marketDistribution? Also, the name "distribution" is confusing, since it seems to refer to the distribution concept used in Vaults, etc.
+        // TODO: Rename to marketConfiguration? Also, the name "distribution" is confusing, since it seems to refer to the distribution concept used in Vaults, etc.
         /// @dev pool distribution
         // TODO: Understand rebalanceConfigurations()
-        MarketDistribution.Data[] poolDistribution;
+        MarketConfiguration.Data[] marketConfigurations;
         /**
          * @dev TODO
          */
@@ -91,15 +92,16 @@ library Pool {
     }
 
     /**
-     * @dev TODO Creates a pool for the given id and assigns the caller as its owner.
+     * @dev Creates a pool for the given id, and assigns the caller as its owner.
      *
-     * Reverts if the pool already exists.
-     * TODO: Revert if pool already exists. As is, anyone can take over any pool.
+     * Reverts if the specified pool already exists.
      */
     function create(uint128 id, address owner) internal returns (Pool.Data storage self) {
-        self = load(id);
+        if (Pool.exists(id)) {
+            revert PoolAlreadyExists(id);
+        }
 
-        // TODO: throw if pool is already created?
+        self = load(id);
 
         self.id = id;
         self.owner = owner;
@@ -107,6 +109,7 @@ library Pool {
 
     /**
      * @dev TODO
+     * TODO: Understand rebalanceConfigurations()
      */
     function distributeDebt(Data storage self) internal {
         rebalanceConfigurations(self);
@@ -114,7 +117,10 @@ library Pool {
 
     /**
      * @dev TODO
-     * TODO: Understand called functions.
+     *
+     * TODO: Understand calculatePermissibleLiquidity()
+     * TODO: Understand Market.rebalance()
+     * TODO: Understand poolDist.distributeValue()
      */
     function rebalanceConfigurations(Data storage self) internal {
         uint totalWeights = self.totalWeights;
@@ -131,25 +137,22 @@ library Pool {
         int totalAllocatableLiquidity = int128(self.debtDist.totalShares);
         int cumulativeDebtChange = 0;
 
-        for (uint i = 0; i < self.poolDistribution.length; i++) {
-            MarketDistribution.Data storage marketDistribution = self.poolDistribution[i];
-            uint weight = marketDistribution.weight;
+        for (uint i = 0; i < self.marketConfigurations.length; i++) {
+            MarketConfiguration.Data storage marketConfiguration = self.marketConfigurations[i];
+            uint weight = marketConfiguration.weight;
             uint amount = totalAllocatableLiquidity > 0 ? (uint(totalAllocatableLiquidity) * weight) / totalWeights : 0;
 
-            Market.Data storage marketData = Market.load(marketDistribution.market);
+            Market.Data storage marketData = Market.load(marketConfiguration.market);
 
-            int permissibleLiquidity = calculatePermissibleLiquidity(
-                self,
-                marketData,
-                (self.totalRemainingLiquidity * weight) / totalWeights
-            );
+            uint proRataLiquidity = (self.totalRemainingLiquidity * weight) / totalWeights;
+            int permissibleLiquidity = calculateMarketPermissibleLiquidity(self, marketData, proRataLiquidity);
 
             cumulativeDebtChange += Market.rebalance(
-                marketDistribution.market,
+                marketConfiguration.market,
                 self.id,
-                permissibleLiquidity < marketDistribution.maxDebtShareValue
+                permissibleLiquidity < marketConfiguration.maxDebtShareValue
                     ? permissibleLiquidity
-                    : marketDistribution.maxDebtShareValue,
+                    : marketConfiguration.maxDebtShareValue,
                 amount
             );
         }
@@ -159,20 +162,28 @@ library Pool {
 
     /**
      * @dev TODO
+     *
+     * TODO: Understand debt distribution.
      * TODO: Understand math.
+     * TODO: Consider rename.
      */
-    function calculatePermissibleLiquidity(
+    function calculateMarketPermissibleLiquidity(
         Data storage self,
         Market.Data storage marketData,
-        uint remainingLiquidity
+        uint proRataLiquidity
     ) internal view returns (int) {
-        uint minRatio = PoolConfiguration.load().minLiquidityRatio;
-        return
-            marketData.debtDist.valuePerShare /
-            1e9 +
-            int(
-                minRatio > 0 ? remainingLiquidity.divDecimal(minRatio).divDecimal(self.debtDist.totalShares) : MathUtil.UNIT
-            );
+        uint minLiquidityRatio = PoolConfiguration.load().minLiquidityRatio;
+
+        // Value per share is high precision (1e27), so downscale to 1e18.
+        int128 marketDebtValuePerShare = marketData.debtDist.valuePerShare / 1e9;
+
+        if (minLiquidityRatio == 0) {
+            return marketDebtValuePerShare + int(MathUtil.UNIT);
+        }
+
+        // TODO name accordingly once I understand the math.
+        int thing = int(proRataLiquidity.divDecimal(minLiquidityRatio).divDecimal(self.debtDist.totalShares));
+        return marketDebtValuePerShare + thing;
     }
 
     /**
@@ -190,8 +201,8 @@ library Pool {
      * TODO: Wouldn't it help to use a set here?
      */
     function hasMarket(Data storage self, uint128 marketId) internal view returns (bool) {
-        for (uint i = 0; i < self.poolDistribution.length; i++) {
-            if (self.poolDistribution[i].market == marketId) {
+        for (uint i = 0; i < self.marketConfigurations.length; i++) {
+            if (self.marketConfigurations[i].market == marketId) {
                 return true;
             }
         }

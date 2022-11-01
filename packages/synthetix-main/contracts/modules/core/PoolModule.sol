@@ -10,7 +10,6 @@ import "../../interfaces/IPoolModule.sol";
 import "../../storage/Pool.sol";
 
 contract PoolModule is IPoolModule {
-    error PoolAlreadyExists(uint128 poolId);
     error InvalidParameters(string incorrectParameter, string help);
     error PoolNotFound(uint128 poolId);
 
@@ -24,10 +23,6 @@ contract PoolModule is IPoolModule {
 
         if (owner == address(0)) {
             revert AddressError.ZeroAddress();
-        }
-
-        if (Pool.exists(requestedPoolId)) {
-            revert PoolAlreadyExists(requestedPoolId);
         }
 
         Pool.create(requestedPoolId, owner);
@@ -114,7 +109,7 @@ contract PoolModule is IPoolModule {
 
             for (
                 ;
-                i < (markets.length < pool.poolDistribution.length ? markets.length : pool.poolDistribution.length);
+                i < (markets.length < pool.marketConfigurations.length ? markets.length : pool.marketConfigurations.length);
                 i++
             ) {
                 if (markets[i] <= lastMarketId) {
@@ -122,7 +117,7 @@ contract PoolModule is IPoolModule {
                 }
                 lastMarketId = markets[i];
 
-                MarketDistribution.Data storage distribution = pool.poolDistribution[i];
+                MarketConfiguration.Data storage distribution = pool.marketConfigurations[i];
                 distribution.market = markets[i];
                 distribution.weight = uint128(weights[i]);
                 distribution.maxDebtShareValue = int128(maxDebtShareValues[i]);
@@ -136,21 +131,21 @@ contract PoolModule is IPoolModule {
                 }
                 lastMarketId = markets[i];
 
-                MarketDistribution.Data memory distribution;
+                MarketConfiguration.Data memory distribution;
                 distribution.market = markets[i];
                 distribution.weight = uint128(weights[i]);
                 distribution.maxDebtShareValue = int128(maxDebtShareValues[i]);
 
-                pool.poolDistribution.push(distribution);
+                pool.marketConfigurations.push(distribution);
 
                 totalWeight += weights[i];
             }
         }
 
-        uint popped = pool.poolDistribution.length - i;
+        uint popped = pool.marketConfigurations.length - i;
         for (i = 0; i < popped; i++) {
-            Market.rebalance(pool.poolDistribution[pool.poolDistribution.length - 1].market, poolId, 0, 0);
-            pool.poolDistribution.pop();
+            Market.rebalance(pool.marketConfigurations[pool.marketConfigurations.length - 1].market, poolId, 0, 0);
+            pool.marketConfigurations.pop();
         }
 
         pool.totalWeights = uint128(totalWeight);
@@ -172,14 +167,16 @@ contract PoolModule is IPoolModule {
     {
         Pool.Data storage pool = Pool.load(poolId);
 
-        uint[] memory markets = new uint[](pool.poolDistribution.length);
-        uint[] memory weights = new uint[](pool.poolDistribution.length);
-        int[] memory maxDebtShareValues = new int[](pool.poolDistribution.length);
+        // TODO: Dedup reading from storage
 
-        for (uint i = 0; i < pool.poolDistribution.length; i++) {
-            markets[i] = pool.poolDistribution[i].market;
-            weights[i] = pool.poolDistribution[i].weight;
-            maxDebtShareValues[i] = pool.poolDistribution[i].maxDebtShareValue;
+        uint[] memory markets = new uint[](pool.marketConfigurations.length);
+        uint[] memory weights = new uint[](pool.marketConfigurations.length);
+        int[] memory maxDebtShareValues = new int[](pool.marketConfigurations.length);
+
+        for (uint i = 0; i < pool.marketConfigurations.length; i++) {
+            markets[i] = pool.marketConfigurations[i].market;
+            weights[i] = pool.marketConfigurations[i].weight;
+            maxDebtShareValues[i] = pool.marketConfigurations[i].maxDebtShareValue;
         }
 
         return (markets, weights, maxDebtShareValues);
@@ -203,6 +200,7 @@ contract PoolModule is IPoolModule {
     // ---------------------------------------
     function setMinLiquidityRatio(uint minLiquidityRatio) external override {
         OwnableStorage.onlyOwner();
+
         PoolConfiguration.load().minLiquidityRatio = minLiquidityRatio;
     }
 
