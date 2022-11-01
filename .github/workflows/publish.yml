@@ -1,4 +1,4 @@
-name: Lint
+name: Publish Cannon
 
 on:
   pull_request: {}
