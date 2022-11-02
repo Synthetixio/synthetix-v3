@@ -39,7 +39,7 @@ jobs:
       # push to registry
       - id: publish
         name: cannon:publish
-        run: npm run cannon:publish --skip-register >> $GITHUB_OUTPUT
+        run: npx hardhat cannon:publish --skip-register synthetix:${jq -r .version < package.json} >> $GITHUB_OUTPUT
         working-directory: ./packages/synthetix-main
 
       # put a note on any PRs that includes the IPFS download information
