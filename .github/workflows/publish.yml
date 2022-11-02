@@ -42,17 +42,21 @@ jobs:
         env:
           INFURA_IPFS_ID: ${{ secrets.INFURA_IPFS_ID }}
           INFURA_IPFS_SECRET: ${{ secrets.INFURA_IPFS_SECRET }}
-        run: npx hardhat cannon:publish --skip-register synthetix:$(jq -r .version < package.json) >> $GITHUB_STEP_SUMMARY
+        # run the publish and extract the Qm... string
+        run: |
+          export result=$(npx hardhat cannon:publish --skip-register synthetix:$(jq -r .version < package.json)) 
+          echo "$result" >> $GITHUB_STEP_SUMMARY
+          echo "cannon_package=ipfs:$(echo "$result" | sed 's/.* \(Qm[^ ]*\).*/\1/')" >> $GITHUB_OUTPUT
         working-directory: ./packages/synthetix-main
 
       # put a note on any PRs that includes the IPFS download information
-      #- if: github.event.pull_request.base.ref == 'main'
-      #  uses: actions/github-script@v6
-      #  with:
-      #    script: |
-      #      github.rest.issues.createComment({
-      #        issue_number: context.issue.number,
-      #        owner: context.repo.owner,
-      #        repo: context.repo.repo,
-      #        body: 'core system deployment now available: \n\n```\n${{steps.id.outputs.*}}\n\n```'
-      #      })
+      - if: github.event.pull_request.base.ref == 'main'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: 'Core system deployment now available at `${{steps.id.outputs.cannon_package}}`'
+            })
