@@ -19,7 +19,7 @@ jobs:
       - uses: actions/setup-node@v3
         with:
           node-version: "16.16.0"
-          cache: "npm"    steps:
+          cache: "npm"
       - uses: actions/checkout@v2
       - run: npm ci
       - run: npm run build
