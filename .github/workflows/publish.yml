@@ -47,6 +47,8 @@ jobs:
           export result=$(npx hardhat cannon:publish --skip-register synthetix:$(jq -r .version < package.json)) 
           echo "$result" >> $GITHUB_STEP_SUMMARY
           echo "cannon_package=ipfs:$(echo "$result" | sed -n 's/.* \(Qm[^ ]*\).*/\1/p')" >> $GITHUB_OUTPUT
+          echo "THE OUTPUTS ARE"
+          cat $GITHUB_OUTPUT
         working-directory: ./packages/synthetix-main
 
       # put a note on any PRs that includes the IPFS download information
