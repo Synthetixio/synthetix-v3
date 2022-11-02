@@ -5,10 +5,10 @@ on:
   push:
     branches:
       - 'master'
-      - 'gst'
+      #- 'gst'
 
 jobs:
-  lint:
+  publish:
     runs-on: ubuntu-latest
     steps:
       - name: Install Foundry (Cannon)
