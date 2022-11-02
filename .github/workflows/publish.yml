@@ -60,5 +60,5 @@ jobs:
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: 'Core system deployment now available `npx @usecannon/cli ${{steps.id.outputs.cannon_package}}`'
+              body: 'Core system deployment now available `npx @usecannon/cli ${{steps.publish.outputs.cannon_package}}`'
             })
