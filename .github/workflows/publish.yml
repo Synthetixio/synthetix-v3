@@ -39,6 +39,9 @@ jobs:
       # push to registry
       - id: publish
         name: cannon:publish
+        env:
+          INFURA_IPFS_ID: ${{ secrets.INFURA_IPFS_ID }}
+          INFURA_IPFS_SECRET: ${{ secrets.INFURA_IPFS_SECRET }}
         run: npx hardhat cannon:publish --skip-register synthetix:$(jq -r .version < package.json) >> $GITHUB_OUTPUT
         working-directory: ./packages/synthetix-main
 
