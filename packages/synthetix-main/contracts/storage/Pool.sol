@@ -42,30 +42,29 @@ library Pool {
          */
         address nominatedOwner;
         /**
-         * @dev TODO
+         * @dev Sum of all market weights.
+         *
+         * Market weights are tracked in MarketConfiguration.weight. The ratio of market.weight / totalWeights determines the pro-rata share of the market to the pool's liquidity, as well as how much the pool is exposed to the market's debt.
          */
-        /// @dev sum of all distributions for the pool
-        /// sum of distribution weights
-        // TODO: Understand rebalanceConfigurations()
         uint128 totalWeights;
         /**
          * @dev TODO
          */
         /// sum of all vaults last revealed remaining liquidity
-        // TODO: Understand rebalanceConfigurations()
+        // TODO: Understand distributeDebt()
         uint128 totalRemainingLiquidity;
         /**
          * @dev TODO
          */
         // TODO: Rename to marketConfiguration? Also, the name "distribution" is confusing, since it seems to refer to the distribution concept used in Vaults, etc.
         /// @dev pool distribution
-        // TODO: Understand rebalanceConfigurations()
+        // TODO: Understand distributeDebt()
         MarketConfiguration.Data[] marketConfigurations;
         /**
          * @dev TODO
          */
         /// @dev tracks debt for the pool
-        // TODO: Understand rebalanceConfigurations()
+        // TODO: Understand distributeDebt()
         Distribution.Data debtDist;
         /**
          * @dev TODO Collateral types delegated to this pool.
@@ -109,43 +108,43 @@ library Pool {
 
     /**
      * @dev TODO
-     * TODO: Understand rebalanceConfigurations()
-     */
-    function distributeDebt(Data storage self) internal {
-        rebalanceConfigurations(self);
-    }
-
-    /**
-     * @dev TODO
      *
      * TODO: Understand calculatePermissibleLiquidity()
      * TODO: Understand Market.rebalance()
      * TODO: Understand poolDist.distributeValue()
      */
-    function rebalanceConfigurations(Data storage self) internal {
+    function distributeDebt(Data storage self) internal {
         uint totalWeights = self.totalWeights;
 
         if (totalWeights == 0) {
-            // nothing to rebalance
-            return;
+            return; // Nothing to rebalance.
         }
-
-        Distribution.Data storage poolDist = self.debtDist;
 
         // after applying the pool share multiplier, we have USD liquidity
 
+        // Read from storage once, before entering the loop below.
         int totalAllocatableLiquidity = int128(self.debtDist.totalShares);
+        uint128 totalRemainingLiquidity = self.totalRemainingLiquidity;
+
         int cumulativeDebtChange = 0;
 
+        // Loop through the pool's configured markets.
         for (uint i = 0; i < self.marketConfigurations.length; i++) {
             MarketConfiguration.Data storage marketConfiguration = self.marketConfigurations[i];
+
             uint weight = marketConfiguration.weight;
-            uint amount = totalAllocatableLiquidity > 0 ? (uint(totalAllocatableLiquidity) * weight) / totalWeights : 0;
+
+            // TODO: Possible CRITICAL BUG - If the int totalAllocatableLiquidity is negative, the casting to uint
+            // below will cause an overflow; a tiny negative number becomes a humongous positive number.
+            // We might need to do a general review of how ints are casted into uints for calculations that involve both types.
+            uint proRataAllocatableLiquidity = (uint(totalAllocatableLiquidity) * weight) / totalWeights;
+            // TODO: Why this? Shouldn't this be an equal and negative values be truncated at totalAllocatableLiquidity?
+            proRataAllocatableLiquidity = totalAllocatableLiquidity > 0 ? proRataAllocatableLiquidity : 0;
+
+            uint proRataRemainingLiquidity = (totalRemainingLiquidity * weight) / totalWeights;
 
             Market.Data storage marketData = Market.load(marketConfiguration.market);
-
-            uint proRataLiquidity = (self.totalRemainingLiquidity * weight) / totalWeights;
-            int permissibleLiquidity = calculateMarketPermissibleLiquidity(self, marketData, proRataLiquidity);
+            int permissibleLiquidity = calculateMarketPermissibleLiquidity(self, marketData, proRataRemainingLiquidity);
 
             cumulativeDebtChange += Market.rebalance(
                 marketConfiguration.market,
@@ -153,11 +152,11 @@ library Pool {
                 permissibleLiquidity < marketConfiguration.maxDebtShareValue
                     ? permissibleLiquidity
                     : marketConfiguration.maxDebtShareValue,
-                amount
+                proRataAllocatableLiquidity
             );
         }
 
-        poolDist.distributeValue(cumulativeDebtChange);
+        self.debtDist.distributeValue(cumulativeDebtChange);
     }
 
     /**
@@ -215,7 +214,7 @@ library Pool {
      *
      * // TODO: Understand distributeDebt().
      * // TODO: Review interactions with Vault.
-     * // TODO: Understand rebalanceConfigurations().
+     * // TODO: Understand distributeDebt().
      */
     function recalculateVaultCollateral(Data storage self, address collateralType) internal returns (uint collateralPrice) {
         // assign accumulated debt
@@ -233,7 +232,7 @@ library Pool {
 
         self.vaults[collateralType].distributeDebt(debtChange);
 
-        rebalanceConfigurations(self);
+        distributeDebt(self);
     }
 
     /**

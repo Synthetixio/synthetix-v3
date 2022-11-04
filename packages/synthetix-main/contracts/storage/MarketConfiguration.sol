@@ -18,6 +18,8 @@ library MarketConfiguration {
     struct Data {
         /**
          * @dev TODO
+         *
+         * TODO: Rename to marketId?
          */
         /// @dev market baked by this pool
         uint128 market;

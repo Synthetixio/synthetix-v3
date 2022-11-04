@@ -150,7 +150,7 @@ contract PoolModule is IPoolModule {
 
         pool.totalWeights = uint128(totalWeight);
 
-        pool.rebalanceConfigurations();
+        pool.distributeDebt();
 
         emit PoolConfigurationSet(poolId, markets, weights, msg.sender);
     }
