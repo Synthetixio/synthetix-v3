@@ -117,10 +117,10 @@ contract PoolModule is IPoolModule {
                 }
                 lastMarketId = markets[i];
 
-                MarketConfiguration.Data storage distribution = pool.marketConfigurations[i];
-                distribution.market = markets[i];
-                distribution.weight = uint128(weights[i]);
-                distribution.maxDebtShareValue = int128(maxDebtShareValues[i]);
+                MarketConfiguration.Data storage marketConfig = pool.marketConfigurations[i];
+                marketConfig.market = markets[i];
+                marketConfig.weight = uint128(weights[i]);
+                marketConfig.maxDebtShareValue = int128(maxDebtShareValues[i]);
 
                 totalWeight += weights[i];
             }
@@ -131,12 +131,12 @@ contract PoolModule is IPoolModule {
                 }
                 lastMarketId = markets[i];
 
-                MarketConfiguration.Data memory distribution;
-                distribution.market = markets[i];
-                distribution.weight = uint128(weights[i]);
-                distribution.maxDebtShareValue = int128(maxDebtShareValues[i]);
+                MarketConfiguration.Data memory marketConfig;
+                marketConfig.market = markets[i];
+                marketConfig.weight = uint128(weights[i]);
+                marketConfig.maxDebtShareValue = int128(maxDebtShareValues[i]);
 
-                pool.marketConfigurations.push(distribution);
+                pool.marketConfigurations.push(marketConfig);
 
                 totalWeight += weights[i];
             }
