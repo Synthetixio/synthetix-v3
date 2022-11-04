@@ -9,7 +9,7 @@ import { snapshotCheckpoint } from '../../../utils';
 
 // TODO: These tests fail inconsistently on CI because of time discrepancies.
 // They need to be reworked. Disabling them on the meantime until SIP 305 is official.
-describe('RewardsManagerModule', function () {
+describe.only('RewardsManagerModule', function () {
   const { provider, signers, systems, poolId, collateralAddress, accountId } =
     bootstrapWithStakedPool();
 
@@ -453,6 +453,12 @@ describe('RewardsManagerModule', function () {
 
   describe('claimRewards()', async () => {
     before(restore);
+
+    before(async () => {
+      await systems()
+        .Core.connect(owner)
+        .registerRewardsDistribution(poolId, collateralAddress(), 0, Collateral.address);
+    });
 
     before('distribute some reward', async () => {
       await systems().Core.connect(owner).setRewardsDistribution(
