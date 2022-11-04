@@ -6,6 +6,8 @@ import Permissions from '../../storage/AcccountRBACMixin.permissions';
 import { bootstrapWithStakedPool } from '../../bootstrap';
 import { snapshotCheckpoint } from '../../../utils';
 
+const MARKET_FEATURE_FLAG = ethers.utils.formatBytes32String('registerMarket');
+
 describe('IssueUSDModule', function () {
   const { signers, systems, provider, accountId, poolId, depositAmount, collateralAddress } =
     bootstrapWithStakedPool();
@@ -23,6 +25,8 @@ describe('IssueUSDModule', function () {
     const factory = await hre.ethers.getContractFactory('MockMarket');
 
     MockMarket = await factory.connect(owner).deploy();
+
+    await systems().Core.connect(owner).addToFeatureFlag(MARKET_FEATURE_FLAG, user1.getAddress());
 
     marketId = await systems().Core.connect(user1).callStatic.registerMarket(MockMarket.address);
 

@@ -3,14 +3,15 @@ pragma solidity ^0.8.0;
 
 import "../../interfaces/IIssueUSDModule.sol";
 
-import "@synthetixio/core-modules/contracts/mixins/AssociatedSystemsMixin.sol";
+import "@synthetixio/core-modules/contracts/storage/AssociatedSystem.sol";
 
 import "../../storage/Account.sol";
 import "../../storage/Pool.sol";
 import "../../storage/CollateralConfiguration.sol";
 
-contract IssueUSDModule is IIssueUSDModule, AssociatedSystemsMixin {
+contract IssueUSDModule is IIssueUSDModule {
     using AccountRBAC for AccountRBAC.Data;
+    using AssociatedSystem for AssociatedSystem.Data;
     using Pool for Pool.Data;
     using CollateralConfiguration for CollateralConfiguration.Data;
     using Vault for Vault.Data;
@@ -33,7 +34,7 @@ contract IssueUSDModule is IIssueUSDModule, AssociatedSystemsMixin {
 
         int debt = pool.updateAccountDebt(collateralType, accountId);
 
-        (, uint collateralValue, ) = pool.currentAccountCollateral(collateralType, accountId);
+        (, uint collateralValue) = pool.currentAccountCollateral(collateralType, accountId);
 
         int newDebt = debt + int(amount);
 
@@ -45,10 +46,10 @@ contract IssueUSDModule is IIssueUSDModule, AssociatedSystemsMixin {
 
         VaultEpoch.Data storage epoch = Pool.load(poolId).vaults[collateralType].currentEpoch();
 
-        epoch.usdDebtDist.updateActorValue(bytes32(uint(accountId)), newDebt);
+        epoch.consolidatedDebtDist.updateActorValue(bytes32(uint(accountId)), newDebt);
         pool.recalculateVaultCollateral(collateralType);
         require(int(amount) == int128(int(amount)), "Incorrect amount specified");
-        _getToken(_USD_TOKEN).mint(msg.sender, amount);
+        AssociatedSystem.load(_USD_TOKEN).asToken().mint(msg.sender, amount);
 
         emit UsdMinted(accountId, poolId, collateralType, amount, msg.sender);
     }
@@ -71,11 +72,11 @@ contract IssueUSDModule is IIssueUSDModule, AssociatedSystemsMixin {
             amount = uint(debt);
         }
 
-        _getToken(_USD_TOKEN).burn(msg.sender, amount);
+        AssociatedSystem.load(_USD_TOKEN).asToken().burn(msg.sender, amount);
 
         VaultEpoch.Data storage epoch = Pool.load(poolId).vaults[collateralType].currentEpoch();
 
-        epoch.usdDebtDist.updateActorValue(bytes32(uint(accountId)), debt - int(amount));
+        epoch.consolidatedDebtDist.updateActorValue(bytes32(uint(accountId)), debt - int(amount));
         pool.recalculateVaultCollateral(collateralType);
 
         emit UsdBurned(accountId, poolId, collateralType, amount, msg.sender);

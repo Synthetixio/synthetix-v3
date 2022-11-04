@@ -36,6 +36,9 @@ artifact = "contracts/modules/associated-systems/AssociatedSystemsModule.sol:Ass
 [contract.CollateralModule]
 artifact = "contracts/modules/core/CollateralModule.sol:CollateralModule"
 
+[contract.IssueUSDModule]
+artifact = "contracts/modules/core/IssueUSDModule.sol:IssueUSDModule"
+
 [contract.LiquidationModule]
 artifact = "contracts/modules/core/LiquidationModule.sol:LiquidationModule"
 
@@ -89,6 +92,7 @@ depends = [
   "contract.AssociateDebtModule",
   "contract.AssociatedSystemsModule",
   "contract.CollateralModule",
+  "contract.IssueUSDModule",
   "contract.LiquidationModule",
   "contract.MarketCollateralModule",
   "contract.MarketManagerModule",
@@ -110,6 +114,7 @@ abiOf = [
   "AssociateDebtModule",
   "AssociatedSystemsModule",
   "CollateralModule",
+  "IssueUSDModule",
   "LiquidationModule",
   "MarketCollateralModule",
   "MarketManagerModule",
