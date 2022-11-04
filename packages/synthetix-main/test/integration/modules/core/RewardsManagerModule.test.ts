@@ -9,7 +9,7 @@ import { snapshotCheckpoint } from '../../../utils';
 
 // TODO: These tests fail inconsistently on CI because of time discrepancies.
 // They need to be reworked. Disabling them on the meantime until SIP 305 is official.
-describe.only('RewardsManagerModule', function () {
+describe('RewardsManagerModule', function () {
   const { provider, signers, systems, poolId, collateralAddress, accountId } =
     bootstrapWithStakedPool();
 
@@ -30,6 +30,13 @@ describe.only('RewardsManagerModule', function () {
     Collateral = await factory.connect(owner).deploy();
 
     await (await Collateral.connect(owner).initialize('Fake Reward', 'FAKE', 18)).wait();
+  });
+
+  before(async () => {
+    //register reward distribution
+    await systems()
+      .Core.connect(owner)
+      .registerRewardsDistribution(poolId, collateralAddress(), 0, systems().Core.address);
   });
 
   const restore = snapshotCheckpoint(provider);
@@ -58,13 +65,6 @@ describe.only('RewardsManagerModule', function () {
 
           // distribute rewards multiple times to see what happens
           // if many distributions happen in the past
-          await systems().Core.connect(owner).registerRewardsDistribution(
-            poolId,
-            collateralAddress(),
-            0,
-            systems().Core.address // rewards are distributed by the rewards distributor on self
-          );
-
           await systems().Core.connect(owner).setRewardsDistribution(
             poolId,
             collateralAddress(),
@@ -163,7 +163,7 @@ describe.only('RewardsManagerModule', function () {
             );
         });
 
-        it.only('is not distributed future yet', async () => {
+        it('is not distributed future yet', async () => {
           const rewards = await systems().Core.callStatic.getAvailableRewards(
             poolId,
             collateralAddress(),
@@ -221,7 +221,6 @@ describe.only('RewardsManagerModule', function () {
               poolId,
               collateralAddress(),
               0,
-              systems().Core.address, // rewards are distributed by the rewards distributor on self
               rewardAmount,
               startTime - 100, // timestamp
               100
@@ -233,7 +232,6 @@ describe.only('RewardsManagerModule', function () {
               poolId,
               collateralAddress(),
               0,
-              systems().Core.address, // rewards are distributed by the rewards distributor on self
               rewardAmount,
               startTime - 50, // timestamp
               50
@@ -246,7 +244,6 @@ describe.only('RewardsManagerModule', function () {
               poolId,
               collateralAddress(),
               0,
-              systems().Core.address, // rewards are distributed by the rewards distributor on self
               rewardAmount,
               startTime + 50, // timestamp
               50
@@ -276,7 +273,6 @@ describe.only('RewardsManagerModule', function () {
               poolId,
               collateralAddress(),
               0,
-              systems().Core.address, // rewards are distributed by the rewards distributor on self
               rewardAmount,
               startTime + 200, // timestamp
               200
@@ -291,7 +287,6 @@ describe.only('RewardsManagerModule', function () {
               poolId,
               collateralAddress(),
               0,
-              systems().Core.address, // rewards are distributed by the rewards distributor on self
               rewardAmount,
               startTime - 50, // timestamp
               10
@@ -306,7 +301,6 @@ describe.only('RewardsManagerModule', function () {
               poolId,
               collateralAddress(),
               0,
-              systems().Core.address, // rewards are distributed by the rewards distributor on self
               rewardAmount,
               startTime + 100, // timestamp
               100
@@ -351,7 +345,6 @@ describe.only('RewardsManagerModule', function () {
               poolId,
               collateralAddress(),
               0,
-              systems().Core.address, // rewards are distributed by the rewards distributor on self
               rewardAmount,
               startTime - 50, // timestamp
               0
@@ -365,7 +358,6 @@ describe.only('RewardsManagerModule', function () {
               poolId,
               collateralAddress(),
               0,
-              systems().Core.address, // rewards are distributed by the rewards distributor on self
               rewardAmount,
               startTime - 50, // timestamp (time advances exactly 1 second due to block being mined)
               100
@@ -408,7 +400,6 @@ describe.only('RewardsManagerModule', function () {
                   poolId,
                   collateralAddress(),
                   0,
-                  systems().Core.address, // rewards are distributed by the rewards distributor on self
                   rewardAmount.mul(1000),
                   startTime - 110, // timestamp
                   200
@@ -468,7 +459,6 @@ describe.only('RewardsManagerModule', function () {
         poolId,
         collateralAddress(),
         0,
-        Collateral.address, // rewards are distributed by the rewards distributor on self
         rewardAmount,
         0, // timestamp
         0
@@ -516,7 +506,6 @@ describe.only('RewardsManagerModule', function () {
             poolId,
             collateralAddress(),
             0,
-            Collateral.address, // rewards are distributed by the rewards distributor on self
             rewardAmount.div(2),
             0, // timestamp
             0
