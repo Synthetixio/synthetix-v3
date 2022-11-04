@@ -2,6 +2,9 @@
 pragma solidity ^0.8.0;
 
 interface IERC20 {
+    error InsufficientAllowance(uint required, uint existing);
+    error InsufficientBalance(uint required, uint existing);
+
     function name() external view returns (string memory);
 
     function symbol() external view returns (string memory);

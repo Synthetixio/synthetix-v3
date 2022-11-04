@@ -7,7 +7,7 @@ import "../interfaces/IOwnerModule.sol";
 
 contract OwnerModule is Ownable, IOwnerModule, InitializableMixin {
     function _isInitialized() internal view override returns (bool) {
-        return _ownableStore().initialized;
+        return OwnableStorage.load().initialized;
     }
 
     function isOwnerModuleInitialized() external view override returns (bool) {
@@ -18,6 +18,6 @@ contract OwnerModule is Ownable, IOwnerModule, InitializableMixin {
         nominateNewOwner(initialOwner);
         acceptOwnership();
 
-        _ownableStore().initialized = true;
+        OwnableStorage.load().initialized = true;
     }
 }

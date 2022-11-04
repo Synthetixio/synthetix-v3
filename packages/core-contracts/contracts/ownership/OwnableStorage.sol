@@ -1,17 +1,29 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-contract OwnableStorage {
-    struct OwnableStore {
+import "../errors/AccessError.sol";
+
+library OwnableStorage {
+    struct Data {
         bool initialized;
         address owner;
         address nominatedOwner;
     }
 
-    function _ownableStore() internal pure returns (OwnableStore storage store) {
+    function load() internal pure returns (Data storage store) {
+        bytes32 s = keccak256(abi.encode("Ownable"));
         assembly {
-            // bytes32(uint(keccak256("io.synthetix.ownable")) - 1)
-            store.slot := 0x66d20a9eef910d2df763b9de0d390f3cc67f7d52c6475118cd57fa98be8cf6cb
+            store.slot := s
         }
+    }
+
+    function onlyOwner() internal view {
+        if (msg.sender != getOwner()) {
+            revert AccessError.Unauthorized(msg.sender);
+        }
+    }
+
+    function getOwner() internal view returns (address) {
+        return OwnableStorage.load().owner;
     }
 }

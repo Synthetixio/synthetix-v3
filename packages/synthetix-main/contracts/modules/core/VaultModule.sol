@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@synthetixio/core-contracts/contracts/ownership/OwnableMixin.sol";
+import "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
 import "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
 import "@synthetixio/core-contracts/contracts/utils/MathUtil.sol";
 
@@ -11,42 +11,46 @@ import "../../storage/Pool.sol";
 import "../../interfaces/IVaultModule.sol";
 import "../../interfaces/IUSDTokenModule.sol";
 
-contract VaultModule is IVaultModule, OwnableMixin {
+/**
+ * @title See {IVaultModule}
+ */
+contract VaultModule is IVaultModule {
     using SetUtil for SetUtil.UintSet;
     using SetUtil for SetUtil.Bytes32Set;
     using SetUtil for SetUtil.AddressSet;
     using MathUtil for uint256;
-
     using Pool for Pool.Data;
     using Vault for Vault.Data;
     using VaultEpoch for VaultEpoch.Data;
     using Collateral for Collateral.Data;
     using CollateralConfiguration for CollateralConfiguration.Data;
     using AccountRBAC for AccountRBAC.Data;
-
     using Distribution for Distribution.Data;
+    using CollateralConfiguration for CollateralConfiguration.Data;
 
     error InsufficientAccountCollateral(uint requestedAmount);
-    error PermissionDenied(uint128 accountId, bytes32 permission, address target);
     error PoolNotFound(uint128 poolId);
     error InvalidLeverage(uint leverage);
     error InvalidParameters(string incorrectParameter, string help);
     error InvalidCollateral(address collateralType);
     error CapacityLocked(uint marketId);
 
+    /**
+     * @dev See {IVaultModule-delegateCollateral}.
+     *
+     * TODO: This function is too long, does too many things, needs to be split into sub-functions.
+     */
     function delegateCollateral(
         uint128 accountId,
         uint128 poolId,
         address collateralType,
         uint collateralAmount,
         uint leverage
-    )
-        external
-        override
-        onlyWithPermission(accountId, AccountRBAC._DELEGATE_PERMISSION)
-        collateralEnabled(collateralType)
-        poolExists(poolId)
-    {
+    ) external override {
+        Pool.requireExists(poolId);
+        CollateralConfiguration.collateralEnabled(collateralType);
+        Account.onlyWithPermission(accountId, AccountRBAC._DELEGATE_PERMISSION);
+
         // Fix leverage to 1 until it's enabled
         // TODO: we will probably at least want to test <1 leverage
         if (leverage != MathUtil.UNIT) revert InvalidLeverage(leverage);
@@ -56,7 +60,7 @@ contract VaultModule is IVaultModule, OwnableMixin {
         vault.updateAvailableRewards(accountId);
 
         // get the current collateral situation
-        (uint oldCollateralAmount, ) = vault.currentAccountCollateral(accountId);
+        uint oldCollateralAmount = vault.currentAccountCollateral(accountId);
         uint collateralPrice;
 
         // if increasing collateral additionally check they have enough collateral
@@ -72,6 +76,7 @@ contract VaultModule is IVaultModule, OwnableMixin {
         // stack too deep after this
         {
             Pool.Data storage pool = Pool.load(poolId);
+
             // the current user may have accumulated some debt which needs to be rolled in before changing shares
             pool.updateAccountDebt(collateralType, accountId);
 
@@ -90,17 +95,19 @@ contract VaultModule is IVaultModule, OwnableMixin {
                 collateral.pools.remove(poolId);
             }
 
-            vault.currentEpoch().setAccount(accountId, collateralAmount, leverage);
+            vault.currentEpoch().updateAccountPosition(accountId, collateralAmount, leverage);
+
             // no update for usd because no usd issued
             collateralPrice = pool.recalculateVaultCollateral(collateralType);
         }
+
         _setDelegatePoolId(accountId, poolId, collateralType);
 
         // this is the most efficient time to check the resulting collateralization ratio, since
         // user's debt and collateral price have been fully updated
         if (collateralAmount < oldCollateralAmount) {
-            int debt = vault.currentEpoch().usdDebtDist.getActorValue(actorId);
-            //(, uint collateralValue,) = pool.currentAccountCollateral(collateralType, accountId);
+            int debt = vault.currentEpoch().consolidatedDebtDist.getActorValue(actorId);
+            //(, uint collateralValue) = pool.currentAccountCollateral(collateralType, accountId);
 
             CollateralConfiguration.load(collateralType).verifyCollateralRatio(
                 debt < 0 ? 0 : uint(debt),
@@ -122,6 +129,9 @@ contract VaultModule is IVaultModule, OwnableMixin {
     // Collateralization Ratio and Debt Queries
     // ---------------------------------------
 
+    /**
+     * @dev See {IVaultModule-getPositionCollateralizationRatio}.
+     */
     function getPositionCollateralizationRatio(
         uint128 accountId,
         uint128 poolId,
@@ -130,18 +140,27 @@ contract VaultModule is IVaultModule, OwnableMixin {
         return Pool.load(poolId).currentAccountCollateralizationRatio(collateralType, accountId);
     }
 
+    /**
+     * @dev See {IVaultModule-getVaultCollateralRatio}.
+     */
     function getVaultCollateralRatio(uint128 poolId, address collateralType) external override returns (uint) {
         return Pool.load(poolId).currentVaultCollateralRatio(collateralType);
     }
 
+    /**
+     * @dev See {IVaultModule-getPositionCollateral}.
+     */
     function getPositionCollateral(
         uint128 accountId,
         uint128 poolId,
         address collateralType
     ) external view override returns (uint amount, uint value) {
-        (amount, value, ) = Pool.load(poolId).currentAccountCollateral(collateralType, accountId);
+        (amount, value) = Pool.load(poolId).currentAccountCollateral(collateralType, accountId);
     }
 
+    /**
+     * @dev See {IVaultModule-getPosition}.
+     */
     function getPosition(
         uint128 accountId,
         uint128 poolId,
@@ -159,10 +178,13 @@ contract VaultModule is IVaultModule, OwnableMixin {
         Pool.Data storage pool = Pool.load(poolId);
 
         debt = pool.updateAccountDebt(collateralType, accountId);
-        (collateralAmount, collateralValue, ) = pool.currentAccountCollateral(collateralType, accountId);
+        (collateralAmount, collateralValue) = pool.currentAccountCollateral(collateralType, accountId);
         collateralizationRatio = pool.currentAccountCollateralizationRatio(collateralType, accountId);
     }
 
+    /**
+     * @dev See {IVaultModule-getPositionDebt}.
+     */
     function getPositionDebt(
         uint128 accountId,
         uint128 poolId,
@@ -171,6 +193,9 @@ contract VaultModule is IVaultModule, OwnableMixin {
         return Pool.load(poolId).updateAccountDebt(collateralType, accountId);
     }
 
+    /**
+     * @dev See {IVaultModule-getVaultCollateral}.
+     */
     function getVaultCollateral(uint128 poolId, address collateralType)
         public
         view
@@ -180,6 +205,9 @@ contract VaultModule is IVaultModule, OwnableMixin {
         return Pool.load(poolId).currentVaultCollateral(collateralType);
     }
 
+    /**
+     * @dev See {IVaultModule-getVaultDebt}.
+     */
     function getVaultDebt(uint128 poolId, address collateralType) public override returns (int) {
         return Pool.load(poolId).currentVaultDebt(collateralType);
     }
@@ -194,37 +222,18 @@ contract VaultModule is IVaultModule, OwnableMixin {
         }
     }
 
+    /**
+     * @dev Registers the pool to which users delegates collateral to.
+     */
     function _setDelegatePoolId(
         uint128 accountId,
         uint128 poolId,
         address collateralType
     ) internal {
         Collateral.Data storage stakedCollateral = Account.load(accountId).collaterals[collateralType];
+
         if (!stakedCollateral.pools.contains(poolId)) {
             stakedCollateral.pools.add(poolId);
         }
-    }
-
-    modifier onlyWithPermission(uint128 accountId, bytes32 permission) {
-        if (!Account.load(accountId).rbac.authorized(permission, msg.sender)) {
-            revert PermissionDenied(accountId, permission, msg.sender);
-        }
-
-        _;
-    }
-
-    modifier collateralEnabled(address collateralType) {
-        if (!CollateralConfiguration.load(collateralType).stakingEnabled) {
-            revert InvalidCollateral(collateralType);
-        }
-
-        _;
-    }
-
-    modifier poolExists(uint128 poolId) {
-        if (!Pool.exists(poolId)) {
-            revert PoolNotFound(poolId);
-        }
-        _;
     }
 }

@@ -1,11 +1,8 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@synthetixio/core-contracts/contracts/ownership/OwnableMixin.sol";
 import "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
 import "@synthetixio/core-contracts/contracts/utils/MathUtil.sol";
-
-import "@synthetixio/core-modules/contracts/mixins/AssociatedSystemsMixin.sol";
 
 import "../../storage/DistributionEntry.sol";
 
@@ -15,7 +12,7 @@ import "../../storage/Pool.sol";
 
 import "../../interfaces/IRewardsManagerModule.sol";
 
-contract RewardsManagerModule is IRewardsManagerModule, OwnableMixin, AssociatedSystemsMixin {
+contract RewardsManagerModule is IRewardsManagerModule {
     using SetUtil for SetUtil.Bytes32Set;
     using MathUtil for uint256;
 
@@ -23,7 +20,6 @@ contract RewardsManagerModule is IRewardsManagerModule, OwnableMixin, Associated
     using Distribution for Distribution.Data;
     using DistributionEntry for DistributionEntry.Data;
 
-    error PermissionDenied(uint128 accountId, bytes32 permission, address target);
     error InvalidParameters(string incorrectParameter, string help);
 
     uint private constant _MAX_REWARD_DISTRIBUTIONS = 10;
@@ -71,7 +67,7 @@ contract RewardsManagerModule is IRewardsManagerModule, OwnableMixin, Associated
         existingDistribution.rewardPerShare += uint128(
             uint(
                 existingDistribution.entry.distribute(
-                    pool.vaults[collateralType].currentEpoch().debtDist,
+                    pool.vaults[collateralType].currentEpoch().incomingDebtDist,
                     int(amount),
                     start,
                     duration
@@ -106,7 +102,9 @@ contract RewardsManagerModule is IRewardsManagerModule, OwnableMixin, Associated
         uint128 poolId,
         address collateralType,
         uint128 accountId
-    ) external override onlyWithPermission(accountId, AccountRBAC._REWARDS_PERMISSION) returns (uint[] memory) {
+    ) external override returns (uint[] memory) {
+        Account.onlyWithPermission(accountId, AccountRBAC._REWARDS_PERMISSION);
+
         Vault.Data storage vault = Pool.load(poolId).vaults[collateralType];
         uint[] memory rewards = vault.updateAvailableRewards(accountId);
 
@@ -126,7 +124,7 @@ contract RewardsManagerModule is IRewardsManagerModule, OwnableMixin, Associated
         Vault.Data storage vault = Pool.load(poolId).vaults[collateralType];
         RewardDistribution.Data[] storage dists = vault.rewards;
 
-        uint totalShares = vault.currentEpoch().debtDist.totalShares;
+        uint totalShares = vault.currentEpoch().incomingDebtDist.totalShares;
 
         int curTime = int(block.timestamp);
 
@@ -147,13 +145,5 @@ contract RewardsManagerModule is IRewardsManagerModule, OwnableMixin, Associated
         }
 
         return rates;
-    }
-
-    modifier onlyWithPermission(uint128 accountId, bytes32 permission) {
-        if (!AccountRBAC.authorized(Account.load(accountId).rbac, permission, msg.sender)) {
-            revert PermissionDenied(accountId, permission, msg.sender);
-        }
-
-        _;
     }
 }

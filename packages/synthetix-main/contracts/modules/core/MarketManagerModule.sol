@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@synthetixio/core-contracts/contracts/ownership/OwnableMixin.sol";
+import "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
 import "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
 
 import "../../interfaces/IMarketManagerModule.sol";
@@ -10,17 +10,22 @@ import "../../interfaces/IUSDTokenModule.sol";
 import "../../storage/Market.sol";
 import "../../storage/Account.sol";
 
-import "@synthetixio/core-modules/contracts/mixins/AssociatedSystemsMixin.sol";
+import "@synthetixio/core-modules/contracts/storage/AssociatedSystem.sol";
+import "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
 
-contract MarketManagerModule is IMarketManagerModule, AssociatedSystemsMixin, OwnableMixin {
+contract MarketManagerModule is IMarketManagerModule {
     using Market for Market.Data;
 
+    using AssociatedSystem for AssociatedSystem.Data;
+
     bytes32 private constant _USD_TOKEN = "USDToken";
+    bytes32 private constant _MARKET_FEATURE_FLAG = "registerMarket";
 
     error NotEnoughLiquidity(uint128 marketId, uint amount);
     error MarketDepositNotApproved(address market, address from, uint requestedAmount, uint approvedAmount);
 
     function registerMarket(address market) external override returns (uint128 marketId) {
+        FeatureFlag.ensureEnabled(_MARKET_FEATURE_FLAG);
         // Can we verify that `market` conforms to the IMarket interface here? (i.e. has a `balance()` function?)
 
         marketId = Market.create(market).id;
@@ -72,7 +77,7 @@ contract MarketManagerModule is IMarketManagerModule, AssociatedSystemsMixin, Ow
         if (msg.sender != market.marketAddress) revert AccessError.Unauthorized(msg.sender);
 
         // verify if the market is authorized to burn the USD for the target
-        ITokenModule usdToken = _getToken(_USD_TOKEN);
+        ITokenModule usdToken = AssociatedSystem.load(_USD_TOKEN).asToken();
 
         // Adjust accounting
         market.capacity += uint128(amount);
@@ -100,7 +105,7 @@ contract MarketManagerModule is IMarketManagerModule, AssociatedSystemsMixin, Ow
         marketData.issuance += int128(int(amount));
 
         // mint some USD
-        _getToken(_USD_TOKEN).mint(target, amount);
+        AssociatedSystem.load(_USD_TOKEN).asToken().mint(target, amount);
 
         emit UsdWithdrawn(marketId, target, amount, msg.sender);
     }

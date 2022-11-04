@@ -1,16 +1,16 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@synthetixio/core-contracts/contracts/ownership/OwnableMixin.sol";
+import "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
 import "@synthetixio/core-contracts/contracts/proxy/UUPSProxy.sol";
 import "@synthetixio/core-modules/contracts/interfaces/INftModule.sol";
 import "../../interfaces/IAccountModule.sol";
 import "../../interfaces/IAccountTokenModule.sol";
 import "../../storage/Account.sol";
 
-import "@synthetixio/core-modules/contracts/mixins/AssociatedSystemsMixin.sol";
+import "@synthetixio/core-modules/contracts/storage/AssociatedSystem.sol";
 
-contract AccountModule is IAccountModule, OwnableMixin, AssociatedSystemsMixin {
+contract AccountModule is IAccountModule {
     bytes32 private constant _ACCOUNT_SYSTEM = "accountNft";
 
     using SetUtil for SetUtil.AddressSet;
@@ -20,8 +20,6 @@ contract AccountModule is IAccountModule, OwnableMixin, AssociatedSystemsMixin {
     using Account for Account.Data;
 
     error OnlyAccountTokenProxy(address origin);
-
-    error PermissionDenied(uint128 accountId, bytes32 permission, address user);
 
     error PermissionNotGranted(uint128 accountId, bytes32 permission, address user);
 
@@ -36,7 +34,7 @@ contract AccountModule is IAccountModule, OwnableMixin, AssociatedSystemsMixin {
     }
 
     function getAccountTokenAddress() public view override returns (address) {
-        return _getSystemAddress(_ACCOUNT_SYSTEM);
+        return AssociatedSystem.load(_ACCOUNT_SYSTEM).proxy;
     }
 
     function getAccountPermissions(uint128 accountId) external view returns (AccountPermissions[] memory permissions) {
@@ -92,7 +90,9 @@ contract AccountModule is IAccountModule, OwnableMixin, AssociatedSystemsMixin {
         uint128 accountId,
         bytes32 permission,
         address user
-    ) external override onlyWithPermission(accountId, AccountRBAC._ADMIN_PERMISSION) isPermissionValid(permission) {
+    ) external override isPermissionValid(permission) {
+        Account.onlyWithPermission(accountId, AccountRBAC._ADMIN_PERMISSION);
+
         Account.load(accountId).rbac.grantPermission(permission, user);
 
         emit PermissionGranted(accountId, permission, user, msg.sender);
@@ -102,7 +102,9 @@ contract AccountModule is IAccountModule, OwnableMixin, AssociatedSystemsMixin {
         uint128 accountId,
         bytes32 permission,
         address user
-    ) external override onlyWithPermission(accountId, AccountRBAC._ADMIN_PERMISSION) {
+    ) external override {
+        Account.onlyWithPermission(accountId, AccountRBAC._ADMIN_PERMISSION);
+
         Account.load(accountId).rbac.revokePermission(permission, user);
 
         emit PermissionRevoked(accountId, permission, user, msg.sender);
@@ -122,14 +124,6 @@ contract AccountModule is IAccountModule, OwnableMixin, AssociatedSystemsMixin {
         return Account.load(accountId).rbac.owner;
     }
 
-    modifier onlyWithPermission(uint128 accountId, bytes32 permission) {
-        if (!_authorized(accountId, permission, msg.sender)) {
-            revert PermissionDenied(accountId, permission, msg.sender);
-        }
-
-        _;
-    }
-
     modifier isPermissionValid(bytes32 permission) {
         if (
             permission != AccountRBAC._DEPOSIT_PERMISSION &&
@@ -142,15 +136,5 @@ contract AccountModule is IAccountModule, OwnableMixin, AssociatedSystemsMixin {
         }
 
         _;
-    }
-
-    function _authorized(
-        uint128 accountId,
-        bytes32 permission,
-        address user
-    ) internal view returns (bool) {
-        return ((user == getAccountOwner(accountId)) ||
-            Account.load(accountId).rbac.hasPermission(AccountRBAC._ADMIN_PERMISSION, user) ||
-            Account.load(accountId).rbac.hasPermission(permission, user));
     }
 }

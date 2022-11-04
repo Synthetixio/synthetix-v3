@@ -11,8 +11,52 @@ defaultValue = "main"
 description = "Admin user for the system"
 defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
 
-[run.deploy]
-exec = "scripts/deploy.js"
-func = "deploy"
-args = ["System", ".*"]
-modified = ["contracts", "scripts"]
+[contract.OwnerModule]
+artifact = "contracts/modules/OwnerModule.sol:OwnerModule"
+
+[contract.UpgradeModule]
+artifact = "contracts/modules/UpgradeModule.sol:UpgradeModule"
+
+[contract.InitializableModule]
+artifact = "InitializableModule"
+
+[contract.SettingsModule]
+artifact = "SettingsModule"
+
+[contract.SomeModule]
+artifact = "SomeModule"
+
+[contract.AnotherModule]
+artifact = "AnotherModule"
+
+[run.generate_router]
+exec = "../hardhat-router/dist/cannon/router.js"
+func = "generate"
+args = ["Router", "contracts/modules"]
+modified = []
+depends = [
+  "contract.OwnerModule",
+  "contract.UpgradeModule",
+  "contract.InitializableModule",
+  "contract.SettingsModule",
+  "contract.SomeModule",
+  "contract.AnotherModule"
+]
+
+[contract.Router]
+artifact = "contracts/routers/chain-<%= chainId %>/Router.sol:Router"
+abiOf = [
+  "OwnerModule",
+  "UpgradeModule",
+  "InitializableModule",
+  "SettingsModule",
+  "SomeModule",
+  "AnotherModule"
+]
+depends = ["run.generate_router"]
+
+[contract.Proxy]
+artifact = "contracts/Proxy.sol:Proxy"
+args = ["<%= contracts.Router.address %>"]
+abiOf = ["Router"]
+depends = ["contract.Router"]

@@ -39,6 +39,12 @@ describe('PoolModule Admin', function () {
 
     describe('success', async () => {});
 
+    before('give user1 permission to create pool', async () => {
+      await systems()
+        .Core.connect(owner)
+        .addToFeatureFlag(ethers.utils.formatBytes32String('createPool'), user1.getAddress());
+    });
+
     before('create a pool', async () => {
       await (
         await systems()
@@ -60,6 +66,7 @@ describe('PoolModule Admin', function () {
       const MockMarket2 = await factory.connect(owner).deploy();
       const MockMarket3 = await factory.connect(owner).deploy();
 
+      // owner has permission to register markets via bootstrap
       await (await systems().Core.connect(owner).registerMarket(MockMarket2.address)).wait();
       await (await systems().Core.connect(owner).registerMarket(MockMarket3.address)).wait();
     });

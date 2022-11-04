@@ -3,8 +3,6 @@ pragma solidity ^0.8.0;
 
 import "../../interfaces/IAssociateDebtModule.sol";
 
-import "@synthetixio/core-modules/contracts/mixins/AssociatedSystemsMixin.sol";
-
 import "../../utils/ERC20Helper.sol";
 
 import "@synthetixio/core-contracts/contracts/utils/MathUtil.sol";
@@ -13,7 +11,7 @@ import "../../storage/Distribution.sol";
 import "../../storage/Pool.sol";
 import "../../storage/Market.sol";
 
-contract AssignDebtModule is IAssociateDebtModule {
+contract AssociateDebtModule is IAssociateDebtModule {
     using MathUtil for uint;
     using ERC20Helper for address;
 
@@ -62,7 +60,7 @@ contract AssignDebtModule is IAssociateDebtModule {
         poolData.updateAccountDebt(collateralType, accountId);
 
         // increase account debt
-        int updatedDebt = epochData.usdDebtDist.getActorValue(actorId) + int(amount);
+        int updatedDebt = epochData.consolidatedDebtDist.getActorValue(actorId) + int(amount);
 
         // verify the c ratio
         _verifyCollateralRatio(
@@ -73,7 +71,7 @@ contract AssignDebtModule is IAssociateDebtModule {
             )
         );
 
-        epochData.usdDebtDist.updateActorValue(actorId, updatedDebt);
+        epochData.consolidatedDebtDist.updateActorValue(actorId, updatedDebt);
 
         // done
         return updatedDebt;

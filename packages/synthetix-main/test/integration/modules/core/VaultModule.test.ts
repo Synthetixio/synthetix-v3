@@ -28,6 +28,15 @@ describe('VaultModule', function () {
     [owner, user1, user2] = signers();
   });
 
+  before('give user1 permission to register market', async () => {
+    await systems()
+      .Core.connect(owner)
+      .addToFeatureFlag(
+        ethers.utils.formatBytes32String('registerMarket'),
+        await user1.getAddress()
+      );
+  });
+
   before('deploy and connect fake market', async () => {
     const factory = await hre.ethers.getContractFactory('MockMarket');
 

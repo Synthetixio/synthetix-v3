@@ -214,7 +214,7 @@ library Market {
             int debtAmount = (int(int128(self.debtDist.totalShares)) *
                 (-nextRemove.priority - self.debtDist.valuePerShare / 1e9)) / 1e18;
 
-            self.debtDist.distribute(debtAmount);
+            self.debtDist.distributeValue(debtAmount);
 
             // sanity
             //require(self.debtDist.valuePerShare/1e9 == -nextRemove.priority, "distribution calculation is borked");
@@ -243,7 +243,7 @@ library Market {
                 (((targetBalance - curBalance) * MathUtil.INT_UNIT) / int128(self.debtDist.totalShares));
         }
 
-        self.debtDist.distribute(targetBalance - curBalance);
+        self.debtDist.distributeValue(targetBalance - curBalance);
         self.lastMarketBalance = int128(targetBalance);
     }
 }

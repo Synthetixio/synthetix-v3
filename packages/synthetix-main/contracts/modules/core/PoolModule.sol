@@ -1,14 +1,15 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@synthetixio/core-contracts/contracts/ownership/OwnableMixin.sol";
+import "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
 import "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
 import "@synthetixio/core-contracts/contracts/errors/AddressError.sol";
+import "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
 
 import "../../interfaces/IPoolModule.sol";
 import "../../storage/Pool.sol";
 
-contract PoolModule is IPoolModule, OwnableMixin {
+contract PoolModule is IPoolModule {
     error PoolAlreadyExists(uint128 poolId);
     error InvalidParameters(string incorrectParameter, string help);
     error PoolNotFound(uint128 poolId);
@@ -19,15 +20,11 @@ contract PoolModule is IPoolModule, OwnableMixin {
     using Pool for Pool.Data;
     using Market for Market.Data;
 
-    modifier onlyPoolOwner(uint128 poolId, address requestor) {
-        if (Pool.load(poolId).owner != requestor) {
-            revert AccessError.Unauthorized(requestor);
-        }
-
-        _;
-    }
+    bytes32 private constant _POOL_FEATURE_FLAG = "createPool";
 
     function createPool(uint128 requestedPoolId, address owner) external override {
+        FeatureFlag.ensureEnabled(_POOL_FEATURE_FLAG);
+
         if (owner == address(0)) {
             revert AddressError.ZeroAddress();
         }
@@ -44,7 +41,9 @@ contract PoolModule is IPoolModule, OwnableMixin {
     // ---------------------------------------
     // Ownership
     // ---------------------------------------
-    function nominatePoolOwner(address nominatedOwner, uint128 poolId) external override onlyPoolOwner(poolId, msg.sender) {
+    function nominatePoolOwner(address nominatedOwner, uint128 poolId) external override {
+        Pool.onlyPoolOwner(poolId, msg.sender);
+
         Pool.load(poolId).nominatedOwner = nominatedOwner;
 
         emit NominatedPoolOwner(poolId, nominatedOwner);
@@ -81,7 +80,9 @@ contract PoolModule is IPoolModule, OwnableMixin {
         return Pool.load(poolId).nominatedOwner;
     }
 
-    function renouncePoolOwnership(uint128 poolId) external override onlyPoolOwner(poolId, msg.sender) {
+    function renouncePoolOwnership(uint128 poolId) external override {
+        Pool.onlyPoolOwner(poolId, msg.sender);
+
         Pool.load(poolId).nominatedOwner = address(0);
 
         emit PoolOwnershipRenounced(poolId, msg.sender);
@@ -93,9 +94,9 @@ contract PoolModule is IPoolModule, OwnableMixin {
     function setPoolConfiguration(uint128 poolId, MarketDistribution.Data[] memory newDistributions)
         external
         override
-        poolExists(poolId)
-        onlyPoolOwner(poolId, msg.sender)
     {
+        Pool.requireExists(poolId);
+        Pool.onlyPoolOwner(poolId, msg.sender);
         Pool.Data storage pool = Pool.load(poolId);
 
         // TODO: this is not super efficient. we only call this to gather the debt accumulated from deployed pools
@@ -166,12 +167,10 @@ contract PoolModule is IPoolModule, OwnableMixin {
         return distributions;
     }
 
-    function setPoolName(uint128 poolId, string memory name)
-        external
-        override
-        poolExists(poolId)
-        onlyPoolOwner(poolId, msg.sender)
-    {
+    function setPoolName(uint128 poolId, string memory name) external override {
+        Pool.requireExists(poolId);
+        Pool.onlyPoolOwner(poolId, msg.sender);
+
         Pool.load(poolId).name = name;
 
         emit PoolNameUpdated(poolId, name, msg.sender);
@@ -184,7 +183,8 @@ contract PoolModule is IPoolModule, OwnableMixin {
     // ---------------------------------------
     // system owner
     // ---------------------------------------
-    function setMinLiquidityRatio(uint minLiquidityRatio) external override onlyOwner {
+    function setMinLiquidityRatio(uint minLiquidityRatio) external override {
+        OwnableStorage.onlyOwner();
         PoolConfiguration.load().minLiquidityRatio = minLiquidityRatio;
     }
 
@@ -261,13 +261,5 @@ contract PoolModule is IPoolModule, OwnableMixin {
             removedMarkets[removedMarketsIdx++] = pool.poolDistribution[oldIdx].market;
             oldIdx++;
         }
-    }
-
-    modifier poolExists(uint128 poolId) {
-        if (!Pool.exists(poolId)) {
-            revert PoolNotFound(poolId);
-        }
-
-        _;
     }
 }

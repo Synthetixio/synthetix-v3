@@ -1,0 +1,15 @@
+//SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
+
+library Initialized {
+    struct Data {
+        bool initialized;
+    }
+
+    function load(bytes32 id) internal pure returns (Data storage store) {
+        bytes32 s = keccak256(abi.encode("Initialized", id));
+        assembly {
+            store.slot := s
+        }
+    }
+}
