@@ -91,10 +91,7 @@ contract PoolModule is IPoolModule {
     // ---------------------------------------
     // pool admin
     // ---------------------------------------
-    function setPoolConfiguration(uint128 poolId, MarketDistribution.Data[] memory newDistributions)
-        external
-        override
-    {
+    function setPoolConfiguration(uint128 poolId, MarketDistribution.Data[] memory newDistributions) external override {
         Pool.requireExists(poolId);
         Pool.onlyPoolOwner(poolId, msg.sender);
         Pool.Data storage pool = Pool.load(poolId);
