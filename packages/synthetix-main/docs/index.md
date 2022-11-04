@@ -1631,10 +1631,10 @@ returns the liquidity ratio cap for delegation of liquidity by pools to markets
   event RewardsClaimed(uint128 poolId, address token, uint128 accountId, uint256 index, uint256 amountClaimed)
   ```
 
-### setRewardsDistribution
+### distributeRewards
 
   ```solidity
-  function setRewardsDistribution(uint128 poolId, address token, uint256 index, address distributor, uint256 amount, uint256 start, uint256 duration) external
+  function distributeRewards(uint128 poolId, address token, uint256 index, address distributor, uint256 amount, uint256 start, uint256 duration) external
   ```
 
 called by pool owner or an existing distributor to set up rewards for vault participants
@@ -1677,10 +1677,10 @@ returns the number of individual units of amount emitted per second per share fo
   event RewardsClaimed(uint128 poolId, address token, uint128 accountId, uint256 index, uint256 amountClaimed)
   ```
 
-### setRewardsDistribution
+### distributeRewards
 
   ```solidity
-  function setRewardsDistribution(uint128 poolId, address token, uint256 index, address distributor, uint256 amount, uint256 start, uint256 duration) external
+  function distributeRewards(uint128 poolId, address token, uint256 index, address distributor, uint256 amount, uint256 start, uint256 duration) external
   ```
 
 called by pool owner or an existing distributor to set up rewards for vault participants

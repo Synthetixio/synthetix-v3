@@ -21,7 +21,7 @@ interface IRewardsManagerModule {
     );
 
     /// @notice called by pool owner or an existing distributor to register rewards for vault participants
-    function registerRewardsDistribution(
+    function registerRewardsDistributor(
         uint128 poolId,
         address token,
         uint index,
@@ -29,7 +29,7 @@ interface IRewardsManagerModule {
     ) external;
 
     /// @notice called by pool owner or an existing distributor to set up rewards for vault participants
-    function setRewardsDistribution(
+    function distributeRewards(
         uint128 poolId,
         address token,
         uint index,

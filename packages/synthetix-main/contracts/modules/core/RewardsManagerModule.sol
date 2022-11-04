@@ -28,7 +28,7 @@ contract RewardsManagerModule is IRewardsManagerModule {
     // Associated Rewards
     // ---------------------------------------
 
-    function registerRewardsDistribution(
+    function registerRewardsDistributor(
         uint128 poolId,
         address collateralType,
         uint index,
@@ -64,7 +64,7 @@ contract RewardsManagerModule is IRewardsManagerModule {
         existingDistribution.distributor = IRewardDistributor(distributor);
     }
 
-    function setRewardsDistribution(
+    function distributeRewards(
         uint128 poolId,
         address collateralType,
         uint index,
