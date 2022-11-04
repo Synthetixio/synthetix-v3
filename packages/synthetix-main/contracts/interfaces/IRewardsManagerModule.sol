@@ -20,12 +20,19 @@ interface IRewardsManagerModule {
         uint amountClaimed
     );
 
+    /// @notice called by pool owner or an existing distributor to register rewards for vault participants
+    function registerRewardsDistribution(
+        uint128 poolId,
+        address token,
+        uint index,
+        address distributor
+    ) external;
+
     /// @notice called by pool owner or an existing distributor to set up rewards for vault participants
     function setRewardsDistribution(
         uint128 poolId,
         address token,
         uint index,
-        address distributor,
         uint amount,
         uint start,
         uint duration

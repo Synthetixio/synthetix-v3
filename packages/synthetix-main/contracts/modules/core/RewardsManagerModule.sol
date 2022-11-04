@@ -28,14 +28,11 @@ contract RewardsManagerModule is IRewardsManagerModule {
     // Associated Rewards
     // ---------------------------------------
 
-    function setRewardsDistribution(
+    function registerRewardsDistribution(
         uint128 poolId,
         address collateralType,
         uint index,
-        address distributor,
-        uint amount,
-        uint start,
-        uint duration
+        address distributor
     ) external override {
         if (index > _MAX_REWARD_DISTRIBUTIONS) {
             revert InvalidParameters("index", "too large");
@@ -64,6 +61,33 @@ contract RewardsManagerModule is IRewardsManagerModule {
             revert InvalidParameters("distributor", "must be non-zero");
         }
 
+        existingDistribution.distributor = IRewardDistributor(distributor);
+    }
+
+    function setRewardsDistribution(
+        uint128 poolId,
+        address collateralType,
+        uint index,
+        uint amount,
+        uint start,
+        uint duration
+    ) external override {
+        Pool.Data storage pool = Pool.load(poolId);
+        RewardDistribution.Data[] storage dists = pool.vaults[collateralType].rewards;
+
+        if (index >= dists.length) {
+            revert InvalidParameters("index", "reward is not distributed yet");
+        }
+
+        RewardDistribution.Data storage existingDistribution = dists[index];
+
+        // to call this function must be either:
+        // 1. pool owner
+        // 2. the registered distributor contract
+        if (pool.owner != msg.sender && address(existingDistribution.distributor) != msg.sender) {
+            revert AccessError.Unauthorized(msg.sender);
+        }
+
         existingDistribution.rewardPerShare += uint128(
             uint(
                 existingDistribution.entry.distribute(
@@ -75,9 +99,15 @@ contract RewardsManagerModule is IRewardsManagerModule {
             )
         );
 
-        existingDistribution.distributor = IRewardDistributor(distributor);
-
-        emit RewardDistributed(poolId, collateralType, index, distributor, amount, start, duration);
+        emit RewardDistributed(
+            poolId,
+            collateralType,
+            index,
+            address(existingDistribution.distributor),
+            amount,
+            start,
+            duration
+        );
     }
 
     function getAvailableRewards(

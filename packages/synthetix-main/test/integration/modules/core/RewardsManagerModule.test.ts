@@ -9,7 +9,7 @@ import { snapshotCheckpoint } from '../../../utils';
 
 // TODO: These tests fail inconsistently on CI because of time discrepancies.
 // They need to be reworked. Disabling them on the meantime until SIP 305 is official.
-describe('RewardsManagerModule', function () {
+describe.only('RewardsManagerModule', function () {
   const { provider, signers, systems, poolId, collateralAddress, accountId } =
     bootstrapWithStakedPool();
 
@@ -34,19 +34,16 @@ describe('RewardsManagerModule', function () {
 
   const restore = snapshotCheckpoint(provider);
 
-  describe('setRewardsDistribution()', () => {
+  describe('registerRewardsDistribution()', () => {
     before(restore);
 
     it('only works with owner', async () => {
       await assertRevert(
-        systems().Core.connect(user1).setRewardsDistribution(
+        systems().Core.connect(user1).registerRewardsDistribution(
           poolId,
           collateralAddress(),
           0,
-          systems().Core.address, // rewards are distributed by the rewards distributor on self
-          rewardAmount.div(2),
-          0, // timestamp
-          0
+          systems().Core.address // rewards are distributed by the rewards distributor on self
         ),
         'Unauthorized',
         systems().Core
@@ -61,11 +58,17 @@ describe('RewardsManagerModule', function () {
 
           // distribute rewards multiple times to see what happens
           // if many distributions happen in the past
+          await systems().Core.connect(owner).registerRewardsDistribution(
+            poolId,
+            collateralAddress(),
+            0,
+            systems().Core.address // rewards are distributed by the rewards distributor on self
+          );
+
           await systems().Core.connect(owner).setRewardsDistribution(
             poolId,
             collateralAddress(),
             0,
-            systems().Core.address, // rewards are distributed by the rewards distributor on self
             rewardAmount,
             0, // timestamp
             0
@@ -77,7 +80,6 @@ describe('RewardsManagerModule', function () {
             poolId,
             collateralAddress(),
             0,
-            systems().Core.address, // rewards are distributed by the rewards distributor on self
             rewardAmount,
             1, // timestamp
             0
@@ -89,7 +91,6 @@ describe('RewardsManagerModule', function () {
             poolId,
             collateralAddress(),
             0,
-            systems().Core.address, // rewards are distributed by the rewards distributor on self
             rewardAmount,
             1, // timestamp
             0
@@ -103,7 +104,6 @@ describe('RewardsManagerModule', function () {
               poolId,
               collateralAddress(),
               0,
-              systems().Core.address, // rewards are distributed by the rewards distributor on self
               rewardAmount,
               startTime + 10000000, // timestamp
               0
@@ -132,7 +132,6 @@ describe('RewardsManagerModule', function () {
               poolId,
               collateralAddress(),
               0,
-              systems().Core.address, // rewards are distributed by the rewards distributor on self
               rewardAmount,
               startTime + 10, // timestamp
               0
@@ -147,7 +146,6 @@ describe('RewardsManagerModule', function () {
               poolId,
               collateralAddress(),
               0,
-              systems().Core.address, // rewards are distributed by the rewards distributor on self
               rewardAmount,
               startTime - 10, // timestamp
               0
@@ -159,19 +157,19 @@ describe('RewardsManagerModule', function () {
               poolId,
               collateralAddress(),
               0,
-              systems().Core.address, // rewards are distributed by the rewards distributor on self
               rewardAmount,
               startTime + 30, // timestamp
               0
             );
         });
 
-        it('is not distributed future yet', async () => {
+        it.only('is not distributed future yet', async () => {
           const rewards = await systems().Core.callStatic.getAvailableRewards(
             poolId,
             collateralAddress(),
             accountId
           );
+          console.log('rewards:', rewards);
 
           // only one reward should have been distributed
           assertBn.equal(rewards[0], rewardAmount);
