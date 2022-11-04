@@ -24,27 +24,31 @@ library Pool {
 
     struct Data {
         /**
-         * @dev Unique numeric identifier for the pool.
+         * @dev Numeric identifier for the pool.
+         *
+         * Must be unique.
          */
         uint128 id;
         /**
-         * @dev Non-unique text identifier for the pool.
+         * @dev Text identifier for the pool.
+         *
+         * Not required to be unique.
          */
         string name;
         /**
-         * @dev Creator of the pool, which has additional access rights for configuring the pool.
+         * @dev Creator of the pool, which has configuration access rights for the pool.
          *
          * See onlyPoolOwner.
          */
         address owner;
         /**
-         * @dev Allows the current pool owner to nominate a new owner, and thus transfer pool configuration control.
+         * @dev Allows the current pool owner to nominate a new owner, and thus transfer pool configuration credentials.
          */
         address nominatedOwner;
         /**
          * @dev Sum of all market weights.
          *
-         * Market weights are tracked in MarketConfiguration.weight. The ratio of market.weight / totalWeights determines the pro-rata share of the market to the pool's liquidity, as well as how much the pool is exposed to the market's debt.
+         * Market weights are tracked in MarketConfiguration.weight, one for each market. The ratio of each market.weight / totalWeights determines the pro-rata share of the market to the pool's total liquidity, as well as on what proportion the pool is exposed to the market's debt.
          */
         uint128 totalWeights;
         /**
@@ -56,8 +60,7 @@ library Pool {
         /**
          * @dev TODO
          */
-        // TODO: Rename to marketConfiguration? Also, the name "distribution" is confusing, since it seems to refer to the distribution concept used in Vaults, etc.
-        /// @dev pool distribution
+        /// @dev Market distribution
         // TODO: Understand distributeDebt()
         MarketConfiguration.Data[] marketConfigurations;
         /**
@@ -73,7 +76,7 @@ library Pool {
          */
         SetUtil.AddressSet collateralTypes;
         /**
-         * @dev Tracks user collateral and debt distribution for each collateral type.
+         * @dev Tracks collateral and debt distribution for each user, for each collateral type, in this pool.
          */
         mapping(address => Vault.Data) vaults;
     }
@@ -120,19 +123,23 @@ library Pool {
             return; // Nothing to rebalance.
         }
 
+        // TODO: Put this comment in a better context?
         // after applying the pool share multiplier, we have USD liquidity
 
         // Read from storage once, before entering the loop below.
+        // These values should not change while iterating.
         int totalAllocatableLiquidity = int128(self.debtDist.totalShares);
         uint128 totalRemainingLiquidity = self.totalRemainingLiquidity;
 
         int cumulativeDebtChange = 0;
 
-        // Loop through the pool's configured markets.
+        // Loop through the pool's markets.
         for (uint i = 0; i < self.marketConfigurations.length; i++) {
             MarketConfiguration.Data storage marketConfiguration = self.marketConfigurations[i];
 
             uint weight = marketConfiguration.weight;
+
+            // Note: the factor weight / totalWeights is not deduped below to maintain numeric precision.
 
             // TODO: Possible CRITICAL BUG - If the int totalAllocatableLiquidity is negative, the casting to uint
             // below will cause an overflow; a tiny negative number becomes a humongous positive number.
