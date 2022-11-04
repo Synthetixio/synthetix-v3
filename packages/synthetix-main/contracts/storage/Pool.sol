@@ -53,6 +53,8 @@ library Pool {
         uint128 totalWeights;
         /**
          * @dev TODO
+         *
+         * Cache variable. The sum of all of the dollar value of the collateral of all vaults - the amount of debt that is accumulated to all the vaults.
          */
         /// sum of all vaults last revealed remaining liquidity
         // TODO: Understand distributeDebt()
@@ -65,6 +67,20 @@ library Pool {
         MarketConfiguration.Data[] marketConfigurations;
         /**
          * @dev TODO
+         *
+         * Debt distribution chain.
+         *
+         * Market level - first place that debt gets accumulated
+         * Each market has many pools connected to it. Distributes that debt to the pools based on how much liquidity they are providing.
+         *
+         * Pool - this here <<====================
+         * Each pool has many vaults connected to it. Distributes debt to the vaults based on how much liquidity they are providing.
+         *
+         * Vaults to users - last place that debt gets accumulated, but consolidated when users interact, very end of the chain
+         * Each vault has many accounts connected to it. Distributes debt to the users based on how much liquidity they are providing.
+         *
+         * - Trigger: When user interacts, they ping this chain to be updated
+         * - Trigger: setPoolConfiguration
          */
         /// @dev tracks debt for the pool
         // TODO: Understand distributeDebt()
@@ -112,6 +128,14 @@ library Pool {
     /**
      * @dev TODO
      *
+     * Ticker
+     *
+     * Two things:
+     * 1) Recalculates amount of liquidity available for all the markets, updates that on the market level
+     * 2) As it does this, gets back the amount of debt accum on each of the market, so it passes that down the distribution chain
+     *
+     * As the debt is changing the value of the shares is changes as well, so makes sense to do both at once.
+     *
      * TODO: Understand calculatePermissibleLiquidity()
      * TODO: Understand Market.rebalance()
      * TODO: Understand poolDist.distributeValue()
@@ -129,6 +153,7 @@ library Pool {
         // Read from storage once, before entering the loop below.
         // These values should not change while iterating.
         int totalAllocatableLiquidity = int128(self.debtDist.totalShares);
+        // TODO: Watch out for shadowing here...
         uint128 totalRemainingLiquidity = self.totalRemainingLiquidity;
 
         int cumulativeDebtChange = 0;
@@ -141,13 +166,14 @@ library Pool {
 
             // Note: the factor weight / totalWeights is not deduped below to maintain numeric precision.
 
+            // TODO: Review variable renaming here one more time, might have broken something.
+
             // TODO: Possible CRITICAL BUG - If the int totalAllocatableLiquidity is negative, the casting to uint
             // below will cause an overflow; a tiny negative number becomes a humongous positive number.
             // We might need to do a general review of how ints are casted into uints for calculations that involve both types.
-            uint proRataAllocatableLiquidity = (uint(totalAllocatableLiquidity) * weight) / totalWeights;
-            // TODO: Why this? Shouldn't this be an equal and negative values be truncated at totalAllocatableLiquidity?
-            proRataAllocatableLiquidity = totalAllocatableLiquidity > 0 ? proRataAllocatableLiquidity : 0;
-
+            uint proRataAllocatableLiquidity = totalAllocatableLiquidity > 0
+                ? (uint(totalAllocatableLiquidity) * weight) / totalWeights
+                : 0;
             uint proRataRemainingLiquidity = (totalRemainingLiquidity * weight) / totalWeights;
 
             Market.Data storage marketData = Market.load(marketConfiguration.market);
@@ -163,11 +189,22 @@ library Pool {
             );
         }
 
+        // TODO Passes the debt accumulated down the chain
         self.debtDist.distributeValue(cumulativeDebtChange);
     }
 
     /**
      * @dev TODO
+     *
+     * System enforced fail safe.
+     *
+     * Prevent a market from taking too much debt.
+     * Determines max value proportional for the market.
+     * min: 200%
+     *
+     * Secondary limit maxDebtPerShare, which is more per market.
+     *
+     * 2 fail safes.
      *
      * TODO: Understand debt distribution.
      * TODO: Understand math.
@@ -188,6 +225,7 @@ library Pool {
         }
 
         // TODO name accordingly once I understand the math.
+        // maxShareValueIncrease?
         int thing = int(proRataLiquidity.divDecimal(minLiquidityRatio).divDecimal(self.debtDist.totalShares));
         return marketDebtValuePerShare + thing;
     }
@@ -218,6 +256,16 @@ library Pool {
 
     /**
      * @dev TODO
+     *
+     * Ticker
+     *
+     * If You give it a vault, calculates updated amount of collateral and assign debt to it
+     * Going further down the chain from the market, down the debt distribution chain
+     *
+     * Up chain - markets
+     * Down chain - users
+     *
+     * If possible, remove call to dsitribute
      *
      * // TODO: Understand distributeDebt().
      * // TODO: Review interactions with Vault.
