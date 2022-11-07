@@ -4,7 +4,6 @@ import '@nomiclabs/hardhat-ethers';
 import 'hardhat-contract-sizer';
 import 'solidity-coverage';
 import '@synthetixio/hardhat-router';
-import '@synthetixio/cli';
 import 'hardhat-gas-reporter';
 import 'hardhat-cannon';
 
