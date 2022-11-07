@@ -9,7 +9,6 @@ import './deploy-router';
 import './finalize-deployment';
 import './generate-router';
 import './get-deployment-info';
-import './get-multicall-abi';
 import './get-sources-abis';
 import './load-deployment';
 import './print-info';
