@@ -12,7 +12,7 @@ subtask(
 
   const filtered = contractFullyQualifiedNames.filter((fqName) => {
     const { sourceName } = parseFullyQualifiedName(fqName);
-    if (!contractIsInSources(sourceName)) return false;
+    if (!contractIsInSources(sourceName, hre)) return false;
     if (whitelist.length && !whitelist.includes(fqName)) return false;
     return true;
   });

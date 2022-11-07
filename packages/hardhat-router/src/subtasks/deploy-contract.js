@@ -19,7 +19,7 @@ subtask(
       );
     }
 
-    if (await isAlreadyDeployed(contractData)) {
+    if (await isAlreadyDeployed(contractData, hre, hre.ethers.provider)) {
       return false;
     }
 
