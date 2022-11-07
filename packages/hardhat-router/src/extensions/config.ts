@@ -3,30 +3,6 @@ import { extendConfig } from 'hardhat/config';
 import { HardhatConfig, HardhatUserConfig } from 'hardhat/types';
 import { configDefaults } from '../internal/config-defaults';
 
-declare module 'hardhat/types/config' {
-  export interface HardhatConfig {
-    router: {
-      proxyContract: string;
-      routerFunctionFilter: (fnName: string) => boolean;
-      paths: {
-        deployments: string;
-        modules: string;
-      };
-    };
-  }
-
-  export interface HardhatUserConfig {
-    router?: {
-      proxyContract?: string;
-      routerFunctionFilter?: (fnName: string) => boolean;
-      paths?: {
-        deployments?: string;
-        modules?: string;
-      };
-    };
-  }
-}
-
 extendConfig((config: HardhatConfig, userConfig: Readonly<HardhatUserConfig>) => {
   const { root, sources } = config.paths;
   const { router: givenConfig = {} } = userConfig;
