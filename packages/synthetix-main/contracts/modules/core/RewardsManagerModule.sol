@@ -93,7 +93,7 @@ contract RewardsManagerModule is IRewardsManagerModule {
             )
         );
 
-        emit RewardDistributed(poolId, collateralType, address(distributor), amount, start, duration);
+        emit RewardsDistributed(poolId, collateralType, address(distributor), amount, start, duration);
     }
 
     function getAvailableRewards(
