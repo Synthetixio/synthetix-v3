@@ -69,15 +69,15 @@ const config = {
   contractSizer: {
     strict: true,
   },
-  // etherscan: {
-  //   apiKey: {
-  //     mainnet: process.env.ETHERSCAN_API_KEY,
-  //     rinkeby: process.env.ETHERSCAN_API_KEY,
-  //     optimisticEthereum: process.env.OVM_ETHERSCAN_API_KEY,
-  //     optimisticGoerli: process.env.OVM_ETHERSCAN_API_KEY,
-  //     avalancheFujiTestnet: process.env.ETHERSCAN_API_KEY,
-  //   },
-  // },
+  etherscan: {
+    apiKey: {
+      mainnet: process.env.ETHERSCAN_API_KEY,
+      rinkeby: process.env.ETHERSCAN_API_KEY,
+      optimisticEthereum: process.env.OVM_ETHERSCAN_API_KEY,
+      optimisticGoerli: process.env.OVM_ETHERSCAN_API_KEY,
+      avalancheFujiTestnet: process.env.ETHERSCAN_API_KEY,
+    },
+  },
   tenderly: {
     project: 'synthetix',
     username: 'synthetix-services',
