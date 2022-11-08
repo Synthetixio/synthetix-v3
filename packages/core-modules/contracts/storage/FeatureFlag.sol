@@ -23,7 +23,7 @@ library FeatureFlag {
     function ensureEnabled(bytes32 feature) internal view {
         Data storage store = FeatureFlag.load(feature);
 
-        if (store.enabled && !store.permissionedAddresses.contains(msg.sender)) {
+        if (!store.enabled && !store.permissionedAddresses.contains(msg.sender)) {
             revert AccessError.Unauthorized(msg.sender);
         }
     }
