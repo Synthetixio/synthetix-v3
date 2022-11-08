@@ -25,50 +25,46 @@ describe('FeatureFlagModule', () => {
     SampleFeatureFlagModule = await ethers.getContractAt('SampleFeatureFlagModule', proxyAddress());
   });
 
-  it('does not allow non-owners to set feature flags', async () => {
-    await assertRevert(
-      FeatureFlagModule.connect(user).setFeatureFlag(FEATURE_FLAG_NAME, true),
-      'Unauthorized'
-    );
-  });
+  describe('when a feature flag is enabled', async () => {
+    let addAddressTx;
+    before('setup permissioned user for feature flag', async () => {
+      addAddressTx = await FeatureFlagModule.connect(owner).addToFeatureFlag(
+        FEATURE_FLAG_NAME,
+        permissionedUser.address
+      );
+    });
 
-  let setupTx;
-  before('setup feature flag', async () => {
-    setupTx = await FeatureFlagModule.connect(owner).setFeatureFlag(FEATURE_FLAG_NAME, true);
-  });
+    it('does not allow non-owners to set feature flags', async () => {
+      await assertRevert(
+        FeatureFlagModule.connect(user).setFeatureFlag(FEATURE_FLAG_NAME, true),
+        'Unauthorized'
+      );
+    });
 
-  it('emits event', async () => {
-    await assertEvent(setupTx, `FeatureFlagSet("${FEATURE_FLAG_NAME}", true)`, FeatureFlagModule);
-  });
+    it('does not allow non-owners to set feature flag addresses', async () => {
+      await assertRevert(
+        FeatureFlagModule.connect(user).addToFeatureFlag(
+          FEATURE_FLAG_NAME,
+          permissionedUser.address
+        ),
+        'FeatureUnavailable'
+      );
+    });
 
-  it('does not allow non-owners to set feature flag addresses', async () => {
-    await assertRevert(
-      FeatureFlagModule.connect(user).addToFeatureFlag(FEATURE_FLAG_NAME, permissionedUser.address),
-      'Unauthorized'
-    );
-  });
-
-  let addAddressTx;
-  before('setup permissioned user for feature flag', async () => {
-    addAddressTx = await FeatureFlagModule.connect(owner).addToFeatureFlag(
-      FEATURE_FLAG_NAME,
-      permissionedUser.address
-    );
-  });
-
-  it('emits event for adding address', async () => {
-    await assertEvent(
-      addAddressTx,
-      `FeatureFlagAddressAdded("${FEATURE_FLAG_NAME}", "${permissionedUser.address}")`,
-      FeatureFlagModule
-    );
+    it('emits event for adding address', async () => {
+      await assertEvent(
+        addAddressTx,
+        `FeatureFlagAddressAdded("${FEATURE_FLAG_NAME}", "${permissionedUser.address}")`,
+        FeatureFlagModule
+      );
+    });
   });
 
   describe('call function behind feature flag', async () => {
     it('reverts when user does not have permission', async () => {
       await assertRevert(
         SampleFeatureFlagModule.connect(user).setFeatureFlaggedValue(15),
-        'Unauthorized'
+        'FeatureUnavailable'
       );
     });
 
@@ -84,7 +80,7 @@ describe('FeatureFlagModule', () => {
         FEATURE_FLAG_NAME,
         permissionedUser.address
       ),
-      'Unauthorized'
+      'FeatureUnavailable'
     );
 
     await assertRevert(
@@ -92,7 +88,7 @@ describe('FeatureFlagModule', () => {
         FEATURE_FLAG_NAME,
         permissionedUser.address
       ),
-      'Unauthorized'
+      'FeatureUnavailable'
     );
   });
 
@@ -117,14 +113,19 @@ describe('FeatureFlagModule', () => {
     it('does not allow removed permissionedUser to set value', async () => {
       await assertRevert(
         SampleFeatureFlagModule.connect(permissionedUser).setFeatureFlaggedValue(25),
-        'Unauthorized'
+        'FeatureUnavailable'
       );
     });
   });
 
   describe('enable feature for all', async () => {
-    before('disable feature flag', async () => {
-      await FeatureFlagModule.connect(owner).setFeatureFlag(FEATURE_FLAG_NAME, false);
+    let setupTx;
+    before('allow all', async () => {
+      setupTx = await FeatureFlagModule.connect(owner).setFeatureFlag(FEATURE_FLAG_NAME, true);
+    });
+
+    it('emits event', async () => {
+      await assertEvent(setupTx, `FeatureFlagSet("${FEATURE_FLAG_NAME}", true)`, FeatureFlagModule);
     });
 
     it('reverts when feature flag is disabled', async () => {

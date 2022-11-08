@@ -12,8 +12,8 @@ interface IFeatureFlagModule {
     /// @notice Remove an address and remove its permission for a feature flag
     function removeFromFeatureFlag(bytes32 feature, address permissioned) external;
 
-    /// @notice Returns if feature flag is enabled
-    function isFeatureFlagEnabled(bytes32 feature) external view returns (bool);
+    /// @notice Returns if feature flag is active
+    function isFeatureFlagActive(bytes32 feature) external view returns (bool);
 
     /// @notice Returns the addresses that have permission for a feature flag
     function getFeatureFlagAddresses(bytes32 feature) external view returns (address[] memory);

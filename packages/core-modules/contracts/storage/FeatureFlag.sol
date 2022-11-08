@@ -1,15 +1,16 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
 import "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
 
 library FeatureFlag {
     using SetUtil for SetUtil.AddressSet;
 
+    error FeatureUnavailable();
+
     struct Data {
         bytes32 name;
-        bool enabled;
+        bool allowAll;
         SetUtil.AddressSet permissionedAddresses;
     }
 
@@ -20,11 +21,11 @@ library FeatureFlag {
         }
     }
 
-    function ensureEnabled(bytes32 feature) internal view {
+    function ensureAccessToFeature(bytes32 feature) internal view {
         Data storage store = FeatureFlag.load(feature);
 
-        if (store.enabled && !store.permissionedAddresses.contains(msg.sender)) {
-            revert AccessError.Unauthorized(msg.sender);
+        if (!store.allowAll && !store.permissionedAddresses.contains(msg.sender)) {
+            revert FeatureUnavailable();
         }
     }
 }
