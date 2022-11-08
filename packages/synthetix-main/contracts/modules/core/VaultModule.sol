@@ -5,8 +5,6 @@ import "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
 import "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
 import "@synthetixio/core-contracts/contracts/utils/MathUtil.sol";
 
-import "@synthetixio/core-modules/contracts/storage/AssociatedSystem.sol";
-
 import "../../storage/Account.sol";
 import "../../storage/Pool.sol";
 
@@ -21,25 +19,21 @@ contract VaultModule is IVaultModule {
     using SetUtil for SetUtil.Bytes32Set;
     using SetUtil for SetUtil.AddressSet;
     using MathUtil for uint256;
-    using AssociatedSystem for AssociatedSystem.Data;
     using Pool for Pool.Data;
     using Vault for Vault.Data;
     using VaultEpoch for VaultEpoch.Data;
     using Collateral for Collateral.Data;
+    using CollateralConfiguration for CollateralConfiguration.Data;
     using AccountRBAC for AccountRBAC.Data;
     using Distribution for Distribution.Data;
     using CollateralConfiguration for CollateralConfiguration.Data;
 
-    bytes32 private constant _USD_TOKEN = "USDToken";
-
-    // TODO: Consider moving all errors to interfaces.
     error InsufficientAccountCollateral(uint requestedAmount);
     error PoolNotFound(uint128 poolId);
     error InvalidLeverage(uint leverage);
-    error InsufficientCollateralRatio(uint collateralValue, uint debt, uint ratio, uint minRatio);
-    error InsufficientDebt(int currentDebt);
     error InvalidParameters(string incorrectParameter, string help);
     error InvalidCollateral(address collateralType);
+    error CapacityLocked(uint marketId);
 
     /**
      * @dev See {IVaultModule-delegateCollateral}.
@@ -115,82 +109,20 @@ contract VaultModule is IVaultModule {
             int debt = vault.currentEpoch().consolidatedDebtDist.getActorValue(actorId);
             //(, uint collateralValue) = pool.currentAccountCollateral(collateralType, accountId);
 
-            _verifyCollateralRatio(collateralType, debt < 0 ? 0 : uint(debt), collateralAmount.mulDecimal(collateralPrice));
+            CollateralConfiguration.load(collateralType).verifyCollateralRatio(
+                debt < 0 ? 0 : uint(debt),
+                collateralAmount.mulDecimal(collateralPrice)
+            );
+        }
+
+        if (
+            collateralAmount < oldCollateralAmount /* || leverage < oldLeverage */
+        ) {
+            // if pool contains any capacity-locked markets, account cannot reduce their position
+            _verifyNotCapacityLocked(poolId);
         }
 
         emit DelegationUpdated(accountId, poolId, collateralType, collateralAmount, leverage, msg.sender);
-    }
-
-    // ---------------------------------------
-    // Mint/Burn USD
-    // ---------------------------------------
-
-    /**
-     * @dev See {IVaultModule-mintUsd}.
-     */
-    function mintUsd(
-        uint128 accountId,
-        uint128 poolId,
-        address collateralType,
-        uint amount
-    ) external override {
-        Account.onlyWithPermission(accountId, AccountRBAC._MINT_PERMISSION);
-
-        // check if they have sufficient c-ratio to mint that amount
-        Pool.Data storage pool = Pool.load(poolId);
-
-        int debt = pool.updateAccountDebt(collateralType, accountId);
-
-        (, uint collateralValue) = pool.currentAccountCollateral(collateralType, accountId);
-
-        int newDebt = debt + int(amount);
-
-        require(newDebt > debt, "Incorrect new debt");
-
-        // check if they have sufficient c-ratio to mint that amount
-        if (newDebt > 0) {
-            _verifyCollateralRatio(collateralType, uint(newDebt), collateralValue);
-        }
-
-        VaultEpoch.Data storage epoch = pool.vaults[collateralType].currentEpoch();
-
-        epoch.consolidatedDebtDist.updateActorValue(bytes32(uint(accountId)), newDebt);
-        pool.recalculateVaultCollateral(collateralType);
-        require(int(amount) == int128(int(amount)), "Incorrect amount specified");
-        AssociatedSystem.load(_USD_TOKEN).asToken().mint(msg.sender, amount);
-
-        emit UsdMinted(accountId, poolId, collateralType, amount, msg.sender);
-    }
-
-    /**
-     * @dev See {IVaultModule-burnUsd}.
-     */
-    function burnUsd(
-        uint128 accountId,
-        uint128 poolId,
-        address collateralType,
-        uint amount
-    ) external override {
-        Pool.Data storage pool = Pool.load(poolId);
-        int debt = pool.updateAccountDebt(collateralType, accountId);
-
-        if (debt < 0) {
-            // user shouldn't be able to burn more usd if they already have negative debt
-            revert InsufficientDebt(debt);
-        }
-
-        if (debt < int(amount)) {
-            amount = uint(debt);
-        }
-
-        AssociatedSystem.load(_USD_TOKEN).asToken().burn(msg.sender, amount);
-
-        VaultEpoch.Data storage epoch = pool.vaults[collateralType].currentEpoch();
-
-        epoch.consolidatedDebtDist.updateActorValue(bytes32(uint(accountId)), debt - int(amount));
-        pool.recalculateVaultCollateral(collateralType);
-
-        emit UsdBurned(accountId, poolId, collateralType, amount, msg.sender);
     }
 
     // ---------------------------------------
@@ -280,18 +212,13 @@ contract VaultModule is IVaultModule {
         return Pool.load(poolId).currentVaultDebt(collateralType);
     }
 
-    /**
-     * @dev Verifies that a user's c-ratio is above target.
-     */
-    function _verifyCollateralRatio(
-        address collateralType,
-        uint debt,
-        uint collateralValue
-    ) internal view {
-        CollateralConfiguration.Data storage config = CollateralConfiguration.load(collateralType);
+    function _verifyNotCapacityLocked(uint128 poolId) internal view {
+        Pool.Data storage pool = Pool.load(poolId);
 
-        if (debt != 0 && collateralValue.divDecimal(debt) < config.targetCRatio) {
-            revert InsufficientCollateralRatio(collateralValue, debt, collateralValue.divDecimal(debt), config.targetCRatio);
+        Market.Data storage market = pool.findMarketCapacityLocked();
+
+        if (market.id > 0) {
+            revert CapacityLocked(market.id);
         }
     }
 

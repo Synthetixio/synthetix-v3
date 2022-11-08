@@ -63,6 +63,10 @@ contract MarketManagerModule is IMarketManagerModule {
         return market.debtDist.valuePerShare / 1e9;
     }
 
+    function isMarketCapacityLocked(uint128 marketId) external view override returns (bool) {
+        return Market.load(marketId).isCapacityLocked();
+    }
+
     function depositUsd(
         uint128 marketId,
         address target,

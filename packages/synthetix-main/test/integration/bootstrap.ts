@@ -208,12 +208,13 @@ export function bootstrapWithMockMarketAndPool() {
     await r
       .systems()
       .Core.connect(owner)
-      .setPoolConfiguration(
-        r.poolId,
-        [marketId],
-        [ethers.utils.parseEther('1')],
-        [ethers.utils.parseEther('1')]
-      );
+      .setPoolConfiguration(r.poolId, [
+        {
+          market: marketId,
+          weight: ethers.utils.parseEther('1'),
+          maxDebtShareValue: ethers.utils.parseEther('1'),
+        },
+      ]);
   });
 
   const restore = snapshotCheckpoint(r.provider);

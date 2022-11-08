@@ -12,6 +12,7 @@ contract MockMarket is IMarket {
     using MathUtil for uint256;
 
     uint private _reportedDebt;
+    uint private _locked;
     uint private _price;
 
     address private _proxy;
@@ -54,12 +55,20 @@ contract MockMarket is IMarket {
         _reportedDebt = newReportedDebt;
     }
 
+    function setLocked(uint newLocked) external {
+        _locked = newLocked;
+    }
+
     function reportedDebt(uint128) external view override returns (uint) {
         return _reportedDebt;
     }
 
     function name(uint128) external view override returns (string memory) {
         return "MockMarket";
+    }
+
+    function locked(uint128) external view override returns (uint) {
+        return _locked;
     }
 
     function setPrice(uint newPrice) external {
