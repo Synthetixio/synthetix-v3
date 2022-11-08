@@ -9,7 +9,7 @@ defaultValue = "main"
 
 [setting.owner]
 description = "Admin user for the system"
-defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
+defaultValue = "0xEB045D78d273107348b0300c01D29B7552D622ab"
 
 [setting.additionalModules]
 description = "Any additional modules which should be deployed"
@@ -245,7 +245,7 @@ args = [
 ]
 depends = [
   "invoke.upgrade_core_proxy",
-  "contract.AccountRouter",
+  "contract.AccountRouter"
 ]
 factory.AccountProxy.abiOf = ["AccountRouter"]
 factory.AccountProxy.event = "AssociatedSystemSet"
@@ -264,7 +264,7 @@ args = [
 ]
 depends = [
   "invoke.upgrade_core_proxy",
-  "contract.SNXRouter",
+  "contract.SNXRouter"
 ]
 factory.SNXProxy.abiOf = ["SNXRouter"]
 factory.SNXProxy.event = "AssociatedSystemSet"
@@ -283,7 +283,7 @@ args = [
 ]
 depends = [
   "invoke.upgrade_core_proxy",
-  "contract.USDRouter",
+  "contract.USDRouter"
 ]
 factory.USDProxy.abiOf = ["USDRouter"]
 factory.USDProxy.event = "AssociatedSystemSet"
