@@ -30,6 +30,7 @@ interface IRewardsManagerModule {
     function distributeRewards(
         uint128 poolId,
         address token,
+        address distributor,
         uint amount,
         uint start,
         uint duration
