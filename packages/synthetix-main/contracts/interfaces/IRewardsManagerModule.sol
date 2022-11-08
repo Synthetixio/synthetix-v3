@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 /// @title Module for managing pools and assignments per account
 interface IRewardsManagerModule {
-    event RewardDistributed(
+    event RewardsDistributed(
         uint128 indexed poolId,
         address indexed token,
         address distributor,
@@ -30,7 +30,6 @@ interface IRewardsManagerModule {
     function distributeRewards(
         uint128 poolId,
         address token,
-        address distributor,
         uint amount,
         uint start,
         uint duration

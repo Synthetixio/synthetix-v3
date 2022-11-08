@@ -9,7 +9,7 @@ defaultValue = "main"
 
 [setting.owner]
 description = "Admin user for the system"
-defaultValue = "0xEB045D78d273107348b0300c01D29B7552D622ab"
+defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
 
 [setting.additionalModules]
 description = "Any additional modules which should be deployed"
