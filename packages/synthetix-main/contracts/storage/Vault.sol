@@ -22,6 +22,7 @@ library Vault {
     using Distribution for Distribution.Data;
     using DistributionEntry for DistributionEntry.Data;
     using MathUtil for uint256;
+    using SetUtil for SetUtil.Bytes32Set;
 
     struct Data {
         /**
@@ -45,7 +46,11 @@ library Vault {
         /**
          * @dev Tracks available rewards, per user, for this vault.
          */
-        RewardDistribution.Data[] rewards;
+        mapping(bytes32 => RewardDistribution.Data) rewards;
+        /**
+         * @dev Tracks reward, ids, for this vault.
+         */
+        SetUtil.Bytes32Set rewardIds;
     }
 
     /**
@@ -106,9 +111,9 @@ library Vault {
         uint totalShares = currentEpoch(self).incomingDebtDist.totalShares;
         uint actorShares = currentEpoch(self).incomingDebtDist.getActorShares(bytes32(uint(accountId)));
 
-        uint[] memory rewards = new uint[](self.rewards.length);
-        for (uint i = 0; i < rewards.length; i++) {
-            RewardDistribution.Data storage dist = self.rewards[i];
+        uint[] memory rewards = new uint[](self.rewardIds.length());
+        for (uint i = 0; i < self.rewardIds.length(); i++) {
+            RewardDistribution.Data storage dist = self.rewards[self.rewardIds.valueAt(i + 1)];
 
             if (address(dist.distributor) == address(0)) {
                 continue;

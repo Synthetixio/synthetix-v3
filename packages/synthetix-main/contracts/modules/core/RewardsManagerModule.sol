@@ -31,66 +31,60 @@ contract RewardsManagerModule is IRewardsManagerModule {
     function registerRewardsDistributor(
         uint128 poolId,
         address collateralType,
-        uint index,
         address distributor
     ) external override {
-        if (index > _MAX_REWARD_DISTRIBUTIONS) {
-            revert InvalidParameters("index", "too large");
-        }
-
         Pool.Data storage pool = Pool.load(poolId);
+        SetUtil.Bytes32Set storage rewardIds = pool.vaults[collateralType].rewardIds;
 
-        RewardDistribution.Data[] storage dists = pool.vaults[collateralType].rewards;
-
-        if (index > dists.length) {
-            revert InvalidParameters("index", "should be next index");
-        } else if (index == dists.length) {
-            dists.push(); // extend the size of the array by 1
-        }
-
-        RewardDistribution.Data storage existingDistribution = dists[index];
-
-        // to call this function must be either:
-        // 1. pool owner
-        // 2. the registered distributor contract
-        if (pool.owner != msg.sender && address(existingDistribution.distributor) != msg.sender) {
+        if (pool.owner != msg.sender) {
             revert AccessError.Unauthorized(msg.sender);
         }
 
+        if (rewardIds.length() > _MAX_REWARD_DISTRIBUTIONS) {
+            revert InvalidParameters("index", "too large");
+        }
+
+        bytes32 rewardId = keccak256(abi.encode(poolId, collateralType, distributor));
+
+        if (rewardIds.contains(rewardId)) {
+            revert InvalidParameters("reward", "is already registered");
+        }
+
+        rewardIds.add(rewardId);
         if (distributor == address(0)) {
             revert InvalidParameters("distributor", "must be non-zero");
         }
-
-        existingDistribution.distributor = IRewardDistributor(distributor);
+        pool.vaults[collateralType].rewards[rewardId].distributor = IRewardDistributor(distributor);
     }
 
     function distributeRewards(
         uint128 poolId,
         address collateralType,
-        uint index,
+        address distributor,
         uint amount,
         uint start,
         uint duration
     ) external override {
         Pool.Data storage pool = Pool.load(poolId);
-        RewardDistribution.Data[] storage dists = pool.vaults[collateralType].rewards;
+        SetUtil.Bytes32Set storage rewardIds = pool.vaults[collateralType].rewardIds;
+        bytes32 rewardId = keccak256(abi.encode(poolId, collateralType, distributor));
 
-        if (index >= dists.length) {
-            revert InvalidParameters("index", "reward is not distributed yet");
+        if (!rewardIds.contains(rewardId)) {
+            revert InvalidParameters("poolId-collateralType-distributor", "reward is not registered");
         }
 
-        RewardDistribution.Data storage existingDistribution = dists[index];
+        RewardDistribution.Data storage reward = pool.vaults[collateralType].rewards[rewardId];
 
         // to call this function must be either:
         // 1. pool owner
         // 2. the registered distributor contract
-        if (pool.owner != msg.sender && address(existingDistribution.distributor) != msg.sender) {
+        if (pool.owner != msg.sender && address(reward.distributor) != msg.sender) {
             revert AccessError.Unauthorized(msg.sender);
         }
 
-        existingDistribution.rewardPerShare += uint128(
+        reward.rewardPerShare += uint128(
             uint(
-                existingDistribution.entry.distribute(
+                reward.entry.distribute(
                     pool.vaults[collateralType].currentEpoch().incomingDebtDist,
                     int(amount),
                     start,
@@ -99,15 +93,7 @@ contract RewardsManagerModule is IRewardsManagerModule {
             )
         );
 
-        emit RewardDistributed(
-            poolId,
-            collateralType,
-            index,
-            address(existingDistribution.distributor),
-            amount,
-            start,
-            duration
-        );
+        emit RewardDistributed(poolId, collateralType, address(distributor), amount, start, duration);
     }
 
     function getAvailableRewards(
@@ -137,13 +123,14 @@ contract RewardsManagerModule is IRewardsManagerModule {
 
         Vault.Data storage vault = Pool.load(poolId).vaults[collateralType];
         uint[] memory rewards = vault.updateAvailableRewards(accountId);
+        SetUtil.Bytes32Set storage rewardIds = vault.rewardIds;
 
-        for (uint i = 0; i < rewards.length; i++) {
-            if (rewards[i] > 0) {
+        for (uint i = 1; i <= rewards.length; i++) {
+            if (rewards[i - 1] > 0) {
                 // todo: reentrancy protection?
-                vault.rewards[i].distributor.payout(poolId, collateralType, msg.sender, rewards[i]);
-                vault.rewards[i].actorInfo[accountId].pendingSend = 0;
-                emit RewardsClaimed(poolId, collateralType, accountId, i, rewards[i]);
+                vault.rewards[rewardIds.valueAt(i)].distributor.payout(poolId, collateralType, msg.sender, rewards[i - 1]);
+                vault.rewards[rewardIds.valueAt(i)].actorInfo[accountId].pendingSend = 0;
+                emit RewardsClaimed(poolId, collateralType, accountId, i - 1, rewards[i - 1]);
             }
         }
 
@@ -152,25 +139,26 @@ contract RewardsManagerModule is IRewardsManagerModule {
 
     function _getCurrentRewardAccumulation(uint128 poolId, address collateralType) internal view returns (uint[] memory) {
         Vault.Data storage vault = Pool.load(poolId).vaults[collateralType];
-        RewardDistribution.Data[] storage dists = vault.rewards;
+        SetUtil.Bytes32Set storage rewardIds = vault.rewardIds;
 
         uint totalShares = vault.currentEpoch().incomingDebtDist.totalShares;
 
         int curTime = int(block.timestamp);
 
-        uint[] memory rates = new uint[](dists.length);
+        uint[] memory rates = new uint[](rewardIds.length());
 
-        for (uint i = 0; i < dists.length; i++) {
+        for (uint i = 1; i <= rewardIds.length(); i++) {
             if (
-                address(dists[i].distributor) == address(0) ||
-                dists[i].entry.start > curTime ||
-                dists[i].entry.start + dists[i].entry.duration <= curTime
+                address(vault.rewards[rewardIds.valueAt(i)].distributor) == address(0) ||
+                vault.rewards[rewardIds.valueAt(i)].entry.start > curTime ||
+                vault.rewards[rewardIds.valueAt(i)].entry.start + vault.rewards[rewardIds.valueAt(i)].entry.duration <=
+                curTime
             ) {
                 continue;
             }
 
-            rates[i] = uint(int(dists[i].entry.scheduledValue)).divDecimal(
-                uint(int(dists[i].entry.duration)).divDecimal(totalShares)
+            rates[i - 1] = uint(int(vault.rewards[rewardIds.valueAt(i)].entry.scheduledValue)).divDecimal(
+                uint(int(vault.rewards[rewardIds.valueAt(i)].entry.duration)).divDecimal(totalShares)
             );
         }
 

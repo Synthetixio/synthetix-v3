@@ -40,7 +40,7 @@ describe('RewardsManagerModule', function () {
     //register reward distribution
     await systems()
       .Core.connect(owner)
-      .registerRewardsDistributor(poolId, collateralAddress(), 0, systems().Core.address);
+      .registerRewardsDistributor(poolId, collateralAddress(), systems().Core.address);
   });
 
   const restore = snapshotCheckpoint(provider);
@@ -53,7 +53,6 @@ describe('RewardsManagerModule', function () {
         systems().Core.connect(user1).registerRewardsDistributor(
           poolId,
           collateralAddress(),
-          0,
           systems().Core.address // rewards are distributed by the rewards distributor on self
         ),
         'Unauthorized',
@@ -72,7 +71,7 @@ describe('RewardsManagerModule', function () {
           await systems().Core.connect(owner).distributeRewards(
             poolId,
             collateralAddress(),
-            0,
+            systems().Core.address,
             rewardAmount,
             0, // timestamp
             0
@@ -83,7 +82,7 @@ describe('RewardsManagerModule', function () {
           await systems().Core.connect(owner).distributeRewards(
             poolId,
             collateralAddress(),
-            0,
+            systems().Core.address,
             rewardAmount,
             1, // timestamp
             0
@@ -94,7 +93,7 @@ describe('RewardsManagerModule', function () {
           await systems().Core.connect(owner).distributeRewards(
             poolId,
             collateralAddress(),
-            0,
+            systems().Core.address,
             rewardAmount,
             1, // timestamp
             0
@@ -107,7 +106,7 @@ describe('RewardsManagerModule', function () {
             .distributeRewards(
               poolId,
               collateralAddress(),
-              0,
+              systems().Core.address,
               rewardAmount,
               startTime + 10000000, // timestamp
               0
@@ -135,7 +134,7 @@ describe('RewardsManagerModule', function () {
             .distributeRewards(
               poolId,
               collateralAddress(),
-              0,
+              systems().Core.address,
               rewardAmount,
               startTime + 10, // timestamp
               0
@@ -149,7 +148,7 @@ describe('RewardsManagerModule', function () {
             .distributeRewards(
               poolId,
               collateralAddress(),
-              0,
+              systems().Core.address,
               rewardAmount,
               startTime - 10, // timestamp
               0
@@ -160,7 +159,7 @@ describe('RewardsManagerModule', function () {
             .distributeRewards(
               poolId,
               collateralAddress(),
-              0,
+              systems().Core.address,
               rewardAmount,
               startTime + 30, // timestamp
               0
@@ -173,7 +172,6 @@ describe('RewardsManagerModule', function () {
             collateralAddress(),
             accountId
           );
-          console.log('rewards:', rewards);
 
           // only one reward should have been distributed
           assertBn.equal(rewards[0], rewardAmount);
@@ -224,7 +222,7 @@ describe('RewardsManagerModule', function () {
             .distributeRewards(
               poolId,
               collateralAddress(),
-              0,
+              systems().Core.address,
               rewardAmount,
               startTime - 100, // timestamp
               100
@@ -235,7 +233,7 @@ describe('RewardsManagerModule', function () {
             .distributeRewards(
               poolId,
               collateralAddress(),
-              0,
+              systems().Core.address,
               rewardAmount,
               startTime - 50, // timestamp
               50
@@ -247,7 +245,7 @@ describe('RewardsManagerModule', function () {
             .distributeRewards(
               poolId,
               collateralAddress(),
-              0,
+              systems().Core.address,
               rewardAmount,
               startTime + 50, // timestamp
               50
@@ -276,7 +274,7 @@ describe('RewardsManagerModule', function () {
             .distributeRewards(
               poolId,
               collateralAddress(),
-              0,
+              systems().Core.address,
               rewardAmount,
               startTime + 200, // timestamp
               200
@@ -290,7 +288,7 @@ describe('RewardsManagerModule', function () {
             .distributeRewards(
               poolId,
               collateralAddress(),
-              0,
+              systems().Core.address,
               rewardAmount,
               startTime - 50, // timestamp
               10
@@ -304,7 +302,7 @@ describe('RewardsManagerModule', function () {
             .distributeRewards(
               poolId,
               collateralAddress(),
-              0,
+              systems().Core.address,
               rewardAmount,
               startTime + 100, // timestamp
               100
@@ -348,7 +346,7 @@ describe('RewardsManagerModule', function () {
             .distributeRewards(
               poolId,
               collateralAddress(),
-              0,
+              systems().Core.address,
               rewardAmount,
               startTime - 50, // timestamp
               0
@@ -361,7 +359,7 @@ describe('RewardsManagerModule', function () {
             .distributeRewards(
               poolId,
               collateralAddress(),
-              0,
+              systems().Core.address,
               rewardAmount,
               startTime - 50, // timestamp (time advances exactly 1 second due to block being mined)
               100
@@ -403,7 +401,7 @@ describe('RewardsManagerModule', function () {
                 .distributeRewards(
                   poolId,
                   collateralAddress(),
-                  0,
+                  systems().Core.address,
                   rewardAmount.mul(1000),
                   startTime - 110, // timestamp
                   200
@@ -461,14 +459,14 @@ describe('RewardsManagerModule', function () {
     before(async () => {
       await systems()
         .Core.connect(owner)
-        .registerRewardsDistributor(poolId, collateralAddress(), 0, Collateral.address);
+        .registerRewardsDistributor(poolId, collateralAddress(), Collateral.address);
     });
 
     before('distribute some reward', async () => {
       await systems().Core.connect(owner).distributeRewards(
         poolId,
         collateralAddress(),
-        0,
+        Collateral.address,
         rewardAmount,
         0, // timestamp
         0
@@ -515,7 +513,7 @@ describe('RewardsManagerModule', function () {
           await systems().Core.connect(owner).distributeRewards(
             poolId,
             collateralAddress(),
-            0,
+            Collateral.address,
             rewardAmount.div(2),
             0, // timestamp
             0

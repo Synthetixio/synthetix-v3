@@ -6,7 +6,6 @@ interface IRewardsManagerModule {
     event RewardDistributed(
         uint128 indexed poolId,
         address indexed token,
-        uint indexed index,
         address distributor,
         uint totalRewarded,
         uint start,
@@ -24,7 +23,6 @@ interface IRewardsManagerModule {
     function registerRewardsDistributor(
         uint128 poolId,
         address token,
-        uint index,
         address distributor
     ) external;
 
@@ -32,7 +30,7 @@ interface IRewardsManagerModule {
     function distributeRewards(
         uint128 poolId,
         address token,
-        uint index,
+        address distributor,
         uint amount,
         uint start,
         uint duration
