@@ -6,7 +6,7 @@ const { default: assertRevert } = require('@synthetixio/core-utils/utils/asserti
 const { bootstrap } = require('@synthetixio/hardhat-router/dist/utils/tests');
 const initializer = require('@synthetixio/core-modules/test/helpers/initializer');
 
-describe.only('FeatureFlagModule', () => {
+describe('FeatureFlagModule', () => {
   const { proxyAddress } = bootstrap(initializer, {
     modules: '.*(FeatureFlagModule|SampleFeatureFlagModule|Owner|Upgrade).*',
   });
