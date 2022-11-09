@@ -60,27 +60,20 @@ contract RewardsManagerModule is IRewardsManagerModule {
     function distributeRewards(
         uint128 poolId,
         address collateralType,
-        address distributor,
         uint amount,
         uint start,
         uint duration
     ) external override {
         Pool.Data storage pool = Pool.load(poolId);
         SetUtil.Bytes32Set storage rewardIds = pool.vaults[collateralType].rewardIds;
-        bytes32 rewardId = keccak256(abi.encode(poolId, collateralType, distributor));
+        // this function is called by the reward distributor
+        bytes32 rewardId = keccak256(abi.encode(poolId, collateralType, msg.sender));
 
         if (!rewardIds.contains(rewardId)) {
             revert InvalidParameters("poolId-collateralType-distributor", "reward is not registered");
         }
 
         RewardDistribution.Data storage reward = pool.vaults[collateralType].rewards[rewardId];
-
-        // to call this function must be either:
-        // 1. pool owner
-        // 2. the registered distributor contract
-        if (pool.owner != msg.sender && address(reward.distributor) != msg.sender) {
-            revert AccessError.Unauthorized(msg.sender);
-        }
 
         reward.rewardPerShare += uint128(
             uint(
@@ -93,7 +86,7 @@ contract RewardsManagerModule is IRewardsManagerModule {
             )
         );
 
-        emit RewardsDistributed(poolId, collateralType, address(distributor), amount, start, duration);
+        emit RewardsDistributed(poolId, collateralType, msg.sender, amount, start, duration);
     }
 
     function getAvailableRewards(
