@@ -12,9 +12,9 @@ interface IRewardsManagerModule {
         uint duration
     );
     event RewardsClaimed(
+        uint128 indexed accountId,
         uint128 indexed poolId,
         address indexed collateralType,
-        uint128 indexed accountId,
         uint index,
         uint amountClaimed
     );

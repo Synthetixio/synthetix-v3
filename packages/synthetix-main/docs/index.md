@@ -1628,7 +1628,7 @@ returns the liquidity ratio cap for delegation of liquidity by pools to markets
 ### RewardsClaimed
 
   ```solidity
-  event RewardsClaimed(uint128 poolId, address token, uint128 accountId, uint256 index, uint256 amountClaimed)
+  event RewardsClaimed(uint128 accountId, uint128 poolId, address token, uint256 index, uint256 amountClaimed)
   ```
 
 ### distributeRewards
@@ -1674,7 +1674,7 @@ returns the number of individual units of amount emitted per second per share fo
 ### RewardsClaimed
 
   ```solidity
-  event RewardsClaimed(uint128 poolId, address token, uint128 accountId, uint256 index, uint256 amountClaimed)
+  event RewardsClaimed(uint128 accountId, uint128 poolId, address token, uint256 index, uint256 amountClaimed)
   ```
 
 ### distributeRewards
