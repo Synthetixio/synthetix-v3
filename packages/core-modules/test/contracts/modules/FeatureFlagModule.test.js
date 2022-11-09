@@ -105,7 +105,7 @@ describe('FeatureFlagModule', () => {
     it('emits event', async () => {
       await assertEvent(
         removeAddressTx,
-        `FeatureFlagAddressRemoved("${FEATURE_FLAG_NAME}", "${permissionedUser.address}")`,
+        `FeatureFlagAllowlistRemoved("${FEATURE_FLAG_NAME}", "${permissionedUser.address}")`,
         FeatureFlagModule
       );
     });
