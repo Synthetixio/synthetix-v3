@@ -26,10 +26,11 @@ contract CollateralMock is ERC20, IRewardDistributor {
     function payout(
         uint128,
         address,
-        address to,
+        uint128,
+        address sender,
         uint amount
     ) external returns (bool) {
-        _mint(to, amount);
+        _mint(sender, amount);
         return true;
     }
 

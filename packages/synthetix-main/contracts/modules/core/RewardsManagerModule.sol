@@ -121,7 +121,13 @@ contract RewardsManagerModule is IRewardsManagerModule {
         for (uint i = 1; i <= rewards.length; i++) {
             if (rewards[i - 1] > 0) {
                 // todo: reentrancy protection?
-                vault.rewards[rewardIds.valueAt(i)].distributor.payout(poolId, collateralType, msg.sender, rewards[i - 1]);
+                vault.rewards[rewardIds.valueAt(i)].distributor.payout(
+                    poolId,
+                    collateralType,
+                    accountId,
+                    msg.sender,
+                    rewards[i - 1]
+                );
                 vault.rewards[rewardIds.valueAt(i)].actorInfo[accountId].pendingSend = 0;
                 emit RewardsClaimed(poolId, collateralType, accountId, i - 1, rewards[i - 1]);
             }

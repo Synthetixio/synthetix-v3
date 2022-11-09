@@ -6,8 +6,9 @@ interface IRewardDistributor {
     /// called by system
     function payout(
         uint128 poolId,
-        address token,
-        address to,
+        address collateralType,
+        uint128 accountId,
+        address sender,
         uint amount
     ) external returns (bool);
 }
