@@ -11,7 +11,7 @@ contract FeatureFlagModule is IFeatureFlagModule {
 
     event FeatureFlagAllowAllSet(bytes32 feature, bool value);
     event FeatureFlagAllowlistAdded(bytes32 feature, address account);
-    event FeatureFlagAllowListRemoved(bytes32 feature, address account);
+    event FeatureFlagAllowlistRemoved(bytes32 feature, address account);
 
     function setFeatureFlagAllowAll(bytes32 feature, bool allowAll) external override {
         OwnableStorage.onlyOwner();
@@ -31,7 +31,7 @@ contract FeatureFlagModule is IFeatureFlagModule {
         OwnableStorage.onlyOwner();
         FeatureFlag.load(feature).permissionedAddresses.remove(permissioned);
 
-        emit FeatureFlagAllowListRemoved(feature, permissioned);
+        emit FeatureFlagAllowlistRemoved(feature, permissioned);
     }
 
     function getFeatureFlagAllowAll(bytes32 feature) external view override returns (bool) {
