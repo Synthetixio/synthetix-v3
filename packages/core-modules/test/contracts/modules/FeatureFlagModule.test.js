@@ -54,7 +54,7 @@ describe('FeatureFlagModule', () => {
     it('emits event for adding address', async () => {
       await assertEvent(
         addAddressTx,
-        `FeatureFlagAddressAdded("${FEATURE_FLAG_NAME}", "${permissionedUser.address}")`,
+        `FeatureFlagAllowlistAdded("${FEATURE_FLAG_NAME}", "${permissionedUser.address}")`,
         FeatureFlagModule
       );
     });
@@ -76,7 +76,7 @@ describe('FeatureFlagModule', () => {
 
   it('does not allow non-owners to remove feature flag addresses', async () => {
     await assertRevert(
-      FeatureFlagModule.connect(user).removeFromFreatureFlagAllowlist(
+      FeatureFlagModule.connect(user).removeFromFeatureFlagAllowlist(
         FEATURE_FLAG_NAME,
         permissionedUser.address
       ),
@@ -84,7 +84,7 @@ describe('FeatureFlagModule', () => {
     );
 
     await assertRevert(
-      FeatureFlagModule.connect(permissionedUser).removeFromFreatureFlagAllowlist(
+      FeatureFlagModule.connect(permissionedUser).removeFromFeatureFlagAllowlist(
         FEATURE_FLAG_NAME,
         permissionedUser.address
       ),
@@ -96,7 +96,7 @@ describe('FeatureFlagModule', () => {
     let removeAddressTx;
 
     before('remove user', async () => {
-      removeAddressTx = await FeatureFlagModule.connect(owner).removeFromFreatureFlagAllowlist(
+      removeAddressTx = await FeatureFlagModule.connect(owner).removeFromFeatureFlagAllowlist(
         FEATURE_FLAG_NAME,
         permissionedUser.address
       );
@@ -128,7 +128,11 @@ describe('FeatureFlagModule', () => {
     });
 
     it('emits event', async () => {
-      await assertEvent(setupTx, `FeatureFlagSet("${FEATURE_FLAG_NAME}", true)`, FeatureFlagModule);
+      await assertEvent(
+        setupTx,
+        `FeatureFlagAllowAllSet("${FEATURE_FLAG_NAME}", true)`,
+        FeatureFlagModule
+      );
     });
 
     it('reverts when feature flag is disabled', async () => {

@@ -10,7 +10,7 @@ interface IFeatureFlagModule {
     function addToFeatureFlagAllowlist(bytes32 feature, address permissioned) external;
 
     /// @notice Remove an address and remove its permission for a feature flag
-    function removeFromFreatureFlagAllowlist(bytes32 feature, address permissioned) external;
+    function removeFromFeatureFlagAllowlist(bytes32 feature, address permissioned) external;
 
     /// @notice Returns allowAll boolean value for a feature flag
     function getFeatureFlagAllowAll(bytes32 feature) external view returns (bool);
