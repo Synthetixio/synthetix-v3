@@ -32,15 +32,33 @@ contract Router {
 
             function findImplementation(sig) -> result {
                 switch sig
-                case 0x2f3b21a2 { result := _SOME_MODULE } // SomeModule.setUintValue()
-                case 0x3659cfe6 { result := _UPGRADE_MODULE } // UpgradeModule.upgradeTo()
-                case 0x55ec6354 { result := _SOME_MODULE } // SomeModule.getUintValue()
-                case 0xa5b0930d { result := _SOME_MODULE } // SomeModule.getAddressArray()
-                case 0xa91d1b07 { result := _INITIALIZABLE_MODULE } // InitializableModule.initializeInitializableModule()
-                case 0xaaf10f42 { result := _UPGRADE_MODULE } // UpgradeModule.getImplementation()
-                case 0xc7f62cda { result := _UPGRADE_MODULE } // UpgradeModule.simulateUpgradeTo()
-                case 0xd578fb8b { result := _SOME_MODULE } // SomeModule.setAddressArray()
-                case 0xfd393dd9 { result := _INITIALIZABLE_MODULE } // InitializableModule.isInitializableModuleInitialized()
+                case 0x2f3b21a2 {
+                    result := _SOME_MODULE
+                } // SomeModule.setUintValue()
+                case 0x3659cfe6 {
+                    result := _UPGRADE_MODULE
+                } // UpgradeModule.upgradeTo()
+                case 0x55ec6354 {
+                    result := _SOME_MODULE
+                } // SomeModule.getUintValue()
+                case 0xa5b0930d {
+                    result := _SOME_MODULE
+                } // SomeModule.getAddressArray()
+                case 0xa91d1b07 {
+                    result := _INITIALIZABLE_MODULE
+                } // InitializableModule.initializeInitializableModule()
+                case 0xaaf10f42 {
+                    result := _UPGRADE_MODULE
+                } // UpgradeModule.getImplementation()
+                case 0xc7f62cda {
+                    result := _UPGRADE_MODULE
+                } // UpgradeModule.simulateUpgradeTo()
+                case 0xd578fb8b {
+                    result := _SOME_MODULE
+                } // SomeModule.setAddressArray()
+                case 0xfd393dd9 {
+                    result := _INITIALIZABLE_MODULE
+                } // InitializableModule.isInitializableModuleInitialized()
                 leave
             }
 
