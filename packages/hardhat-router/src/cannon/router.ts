@@ -1,6 +1,6 @@
 import fs from 'node:fs/promises';
-import mkdirp from 'mkdirp';
 import path, { dirname } from 'node:path';
+import mkdirp from 'mkdirp';
 import hre from 'hardhat';
 import { generateRouter } from '../internal/generate-router';
 
@@ -14,11 +14,14 @@ exports.generate = async function generate(
   routerName: string,
   ...contractPaths: string[]
 ) {
+  // TODO find an alternative to using runtime.provider for getting contracts addresses
   const addresses = Object.values(runtime.provider.artifacts.contracts!).reduce((a, c) => {
     a[`${c.sourceName}:${c.contractName}`] = c.address;
     return a;
   }, {} as { [contractFqName: string]: string });
 
+  // TODO modify cannon to be able to access the current step and get the required
+  //      contracts from the "depends" field, to avoid repetition
   const allContracts = await hre.artifacts.getAllFullyQualifiedNames();
   const normalizedPaths = contractPaths.map((p) => (p.endsWith('/') ? p : `${p}/`));
   const modulesFqNames = normalizedPaths.length

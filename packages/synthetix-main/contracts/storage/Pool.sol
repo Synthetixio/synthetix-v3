@@ -326,8 +326,42 @@ library Pool {
         return debt > 0 ? uint(debt).divDecimal(collateralValue) : 0;
     }
 
+    function findMarketCapacityLocked(Data storage self) internal view returns (Market.Data storage lockedMarketId) {
+        for (uint i = 0; i < self.poolDistribution.length; i++) {
+            Market.Data storage market = Market.load(self.poolDistribution[i].market);
+
+            if (market.isCapacityLocked()) {
+                return market;
+            }
+        }
+
+        return Market.load(0);
+    }
+
     /**
-     * @dev Returns the vault's debt for the given collateral type.
+     * @dev returns if a portion of the liquidity in this pool cannot be withdrawn due to upstream market `locked`
+     */
+    function getLockedLiquidityObligation(Data storage self) internal view returns (uint) {
+        uint locked = 0;
+        for (uint i = 0; i < self.poolDistribution.length; i++) {
+            Market.Data storage market = Market.load(self.poolDistribution[i].market);
+
+            uint unlocked = market.capacity - market.getLockedLiquidity();
+            uint contributedCapacity = market.getCapacityContribution(
+                market.getPoolLiquidity(self.id),
+                self.poolDistribution[i].maxDebtShareValue
+            );
+
+            if (unlocked < contributedCapacity) {
+                locked += contributedCapacity - unlocked;
+            }
+        }
+
+        return locked;
+    }
+
+    /**
+     * @dev Returns the debt of the vault that tracks the given collateral type.
      *
      * The vault's debt is the vault's share of the total debt of the pool, or its share of the total debt of the markets connected to the pool. The size of this share depends on how much collateral the pool provides to the pool.
      *

@@ -1,3 +1,4 @@
+import assert from 'assert/strict';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import hre from 'hardhat';
@@ -53,12 +54,13 @@ describe('VaultModule', function () {
 
     await systems()
       .Core.connect(owner)
-      .setPoolConfiguration(
-        poolId,
-        [marketId],
-        [ethers.utils.parseEther('1')],
-        [ethers.utils.parseEther('10000000000000000')]
-      );
+      .setPoolConfiguration(poolId, [
+        {
+          market: marketId,
+          weight: ethers.utils.parseEther('1'),
+          maxDebtShareValue: ethers.utils.parseEther('10000000000000000'),
+        },
+      ]);
   });
 
   const restore = snapshotCheckpoint(provider);
@@ -203,6 +205,19 @@ describe('VaultModule', function () {
           );
         });
 
+        // lock enough collateral that the market will *become* capacity locked when the user
+        // withdraws
+        const locked = ethers.utils.parseEther('1400');
+
+        // NOTE: if you are looking at this block and wondering if it would affect your test,
+        // this is to ensure all below cases are covered with locking.
+        // when position is increased, it should not be affected by locking
+        // when a position is decreased, it should only be allowed if the capacity does
+        // not become locked
+        before('market locks some capacity', async () => {
+          await MockMarket.setLocked(locked);
+        });
+
         it(
           'user1 still has correct position',
           verifyAccountState(accountId, poolId, depositAmount, startingDebt)
@@ -324,6 +339,30 @@ describe('VaultModule', function () {
             );
           });
 
+          it('fails when market becomes capacity locked', async () => {
+            // sanity
+            assert.ok(
+              !(await systems().Core.connect(user2).callStatic.isMarketCapacityLocked(marketId))
+            );
+
+            await assertRevert(
+              systems()
+                .Core.connect(user2)
+                .delegateCollateral(
+                  user2AccountId,
+                  poolId,
+                  collateralAddress(),
+                  depositAmount.div(10),
+                  ethers.utils.parseEther('1')
+                ),
+              `CapacityLocked(${marketId})`,
+              systems().Core
+            );
+
+            // allow future tests to work without being locked
+            await MockMarket.setLocked(ethers.utils.parseEther('500'));
+          });
+
           describe('success', () => {
             before('delegate', async () => {
               await systems()
@@ -423,105 +462,6 @@ describe('VaultModule', function () {
           await systems().Core.callStatic.getVaultDebt(poolId, collateralAddress()),
           0
         );
-      });
-    });
-  });
-
-  describe('mintUsd()', async () => {
-    before(restore);
-    it('verifies permission for account', async () => {
-      await assertRevert(
-        systems()
-          .Core.connect(user2)
-          .mintUsd(accountId, poolId, collateralAddress(), depositAmount.mul(10)),
-        `PermissionDenied(1, "${Permissions.MINT}", "${await user2.getAddress()}")`,
-        systems().Core
-      );
-    });
-
-    it('verifies sufficient c-ratio', async () => {
-      await assertRevert(
-        systems()
-          .Core.connect(user1)
-          .mintUsd(accountId, poolId, collateralAddress(), depositAmount),
-        'InsufficientCollateralRatio',
-        systems().Core
-      );
-    });
-
-    describe('successful mint', () => {
-      before('mint', async () => {
-        await systems().Core.connect(user1).mintUsd(
-          accountId,
-          poolId,
-          collateralAddress(),
-          depositAmount.div(10) // should be enough
-        );
-      });
-
-      it(
-        'has correct debt',
-        verifyAccountState(accountId, poolId, depositAmount, depositAmount.div(10))
-      );
-
-      it('sent USD to user1', async () => {
-        assertBn.equal(
-          await systems().USD.balanceOf(await user1.getAddress()),
-          depositAmount.div(10)
-        );
-      });
-
-      describe('subsequent mint', () => {
-        before('mint again', async () => {
-          await systems().Core.connect(user1).mintUsd(
-            accountId,
-            poolId,
-            collateralAddress(),
-            depositAmount.div(10) // should be enough
-          );
-        });
-
-        it(
-          'has correct debt',
-          verifyAccountState(accountId, poolId, depositAmount, depositAmount.div(5))
-        );
-
-        it('sent more USD to user1', async () => {
-          assertBn.equal(
-            await systems().USD.balanceOf(await user1.getAddress()),
-            depositAmount.div(5)
-          );
-        });
-      });
-    });
-  });
-
-  describe('burnUSD()', async () => {
-    before(restore);
-    before('mint', async () => {
-      await systems()
-        .Core.connect(user1)
-        .mintUsd(accountId, poolId, collateralAddress(), depositAmount.div(10));
-    });
-
-    describe('burn from other account', async () => {
-      before('transfer burn collateral', async () => {
-        // send the collateral to account 2 so it can burn on behalf
-        await systems()
-          .USD.connect(user1)
-          .transfer(await user2.getAddress(), depositAmount.div(10));
-      });
-
-      before('other account burn', async () => {
-        await systems()
-          .Core.connect(user2)
-          .burnUsd(accountId, poolId, collateralAddress(), depositAmount.div(10));
-      });
-
-      it('has correct debt', verifyAccountState(accountId, poolId, depositAmount, 0));
-
-      it('took away from user2', async () => {
-        assertBn.equal(await systems().USD.balanceOf(await user2.getAddress()), 0);
       });
     });
   });

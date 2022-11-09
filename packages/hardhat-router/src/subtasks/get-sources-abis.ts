@@ -1,7 +1,8 @@
-const { subtask } = require('hardhat/config');
-const { parseFullyQualifiedName } = require('hardhat/utils/contract-names');
-const { contractIsInSources } = require('../internal/contract-helper');
-const { SUBTASK_GET_SOURCES_ABIS } = require('../task-names');
+import { subtask } from 'hardhat/config';
+import { parseFullyQualifiedName } from 'hardhat/utils/contract-names';
+import { contractIsInSources } from '../internal/contract-helper';
+import { SUBTASK_GET_SOURCES_ABIS } from '../task-names';
+import type { DeploymentAbis } from '../types';
 
 subtask(
   SUBTASK_GET_SOURCES_ABIS,
@@ -11,12 +12,12 @@ subtask(
 
   const filtered = contractFullyQualifiedNames.filter((fqName) => {
     const { sourceName } = parseFullyQualifiedName(fqName);
-    if (!contractIsInSources(sourceName)) return false;
+    if (!contractIsInSources(sourceName, hre)) return false;
     if (whitelist.length && !whitelist.includes(fqName)) return false;
     return true;
   });
 
-  const result = {};
+  const result: DeploymentAbis = {};
 
   await Promise.all(
     filtered.map(async (fqName) => {

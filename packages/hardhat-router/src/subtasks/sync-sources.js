@@ -18,7 +18,8 @@ subtask(
 
   const { previousDeployment } = hre.router;
   const modulesFullyQualifiedNames = await getModulesFullyQualifiedNames(
-    modules ? new RegExp(modules) : /.*/
+    modules ? new RegExp(modules) : /.*/,
+    hre
   );
 
   const removed = await _removeDeletedSources({ modulesFullyQualifiedNames, previousDeployment });

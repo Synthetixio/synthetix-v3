@@ -1,6 +1,21 @@
 import { SourceUnit } from 'solidity-ast';
 import { JsonFragment } from '@ethersproject/abi';
 
+export interface ContractData {
+  deployedAddress: string;
+  deployTransaction: string;
+  deployedBytecodeHash: string;
+  contractFullyQualifiedName: string;
+  contractName: string;
+  sourceName: string;
+  deploymentBlock: number;
+  deploymentCommit: string;
+  proxyAddress?: string;
+  isModule?: boolean;
+  isProxy?: boolean;
+  isRouter?: boolean;
+}
+
 export interface DeploymentData {
   properties: {
     completed: boolean;
@@ -16,20 +31,7 @@ export interface DeploymentData {
   };
 
   contracts: {
-    [contractFullyQualifiedName: string]: {
-      deployedAddress: string;
-      deployTransaction: string;
-      deployedBytecodeHash: string;
-      contractFullyQualifiedName: string;
-      contractName: string;
-      sourceName: string;
-      deploymentBlock: number;
-      deploymentCommit: string;
-      proxyAddress?: string;
-      isModule?: boolean;
-      isProxy?: boolean;
-      isRouter?: boolean;
-    };
+    [contractFullyQualifiedName: string]: ContractData;
   };
 }
 

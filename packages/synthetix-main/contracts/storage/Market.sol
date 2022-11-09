@@ -93,6 +93,10 @@ library Market {
         return IMarket(self.marketAddress).reportedDebt(self.id);
     }
 
+    function getLockedLiquidity(Data storage self) internal view returns (uint) {
+        return IMarket(self.marketAddress).locked(self.id);
+    }
+
     function totalBalance(Data storage self) internal view returns (int) {
         return int(getReportedDebt(self)) + self.issuance - int(getDepositedCollateralValue(self));
     }
@@ -108,6 +112,22 @@ library Market {
         }
 
         return totalDepositedCollateralValue;
+    }
+
+    function getPoolLiquidity(Data storage self, uint128 poolId) internal view returns (uint) {
+        return self.debtDist.getActorShares(bytes32(uint(poolId)));
+    }
+
+    function getCapacityContribution(
+        Data storage self,
+        uint liquidityShares,
+        int maxDebtShareValue
+    ) internal view returns (uint contribution) {
+        return uint((maxDebtShareValue - self.debtDist.valuePerShare / 1e9)).mulDecimal(liquidityShares);
+    }
+
+    function isCapacityLocked(Data storage self) internal view returns (bool) {
+        return self.capacity < getLockedLiquidity(self);
     }
 
     function rebalance(
@@ -135,7 +155,7 @@ library Market {
         uint newLiquidity,
         int newPoolMaxShareValue
     ) internal returns (int debtChange) {
-        uint oldLiquidity = self.debtDist.getActorShares(bytes32(uint(poolId)));
+        uint oldLiquidity = getPoolLiquidity(self, poolId);
         int oldPoolMaxShareValue = -self.inRangePools.getById(uint128(poolId)).priority;
 
         //require(oldPoolMaxShareValue == 0, "value is not 0");
@@ -154,15 +174,11 @@ library Market {
 
         // recalculate market capacity
         if (newPoolMaxShareValue > self.debtDist.valuePerShare / 1e9) {
-            self.capacity += uint128(
-                uint((newPoolMaxShareValue - self.debtDist.valuePerShare / 1e9)).mulDecimal(newLiquidity)
-            );
+            self.capacity += uint128(getCapacityContribution(self, newLiquidity, newPoolMaxShareValue));
         }
 
         if (oldPoolMaxShareValue > self.debtDist.valuePerShare / 1e9) {
-            self.capacity -= uint128(
-                uint((oldPoolMaxShareValue - self.debtDist.valuePerShare / 1e9)).mulDecimal(oldLiquidity)
-            );
+            self.capacity -= uint128(getCapacityContribution(self, oldLiquidity, oldPoolMaxShareValue));
         }
     }
 
