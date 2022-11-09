@@ -37,7 +37,7 @@ async function _runSourceValidations() {
   const errorsFound = [];
 
   const validator = new RouterSourceValidator({
-    getModulesSelectors,
+    getModulesSelectors: () => getModulesSelectors(hre),
     getRouterSource: () => getRouterSource(hre.config),
   });
 

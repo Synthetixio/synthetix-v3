@@ -1,10 +1,11 @@
 /* istanbul ignore file */
 
-const axios = require('axios');
+import axios from 'axios';
+import { JsonFragment } from '@ethersproject/abi';
 
-const action = (actionName) => `https://www.4byte.directory/api/v1/${actionName}/`;
+const action = (actionName: string) => `https://www.4byte.directory/api/v1/${actionName}/`;
 
-exports.importAbi = async function (abi) {
+export async function importAbi(abi: JsonFragment[]) {
   const { data } = await axios({
     method: 'post',
     url: action('import-abi'),
@@ -15,4 +16,4 @@ exports.importAbi = async function (abi) {
   });
 
   return data;
-};
+}

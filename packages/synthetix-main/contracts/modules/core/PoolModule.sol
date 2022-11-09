@@ -20,7 +20,7 @@ contract PoolModule is IPoolModule {
     bytes32 private constant _POOL_FEATURE_FLAG = "createPool";
 
     function createPool(uint128 requestedPoolId, address owner) external override {
-        FeatureFlag.ensureEnabled(_POOL_FEATURE_FLAG);
+        FeatureFlag.ensureAccessToFeature(_POOL_FEATURE_FLAG);
 
         if (owner == address(0)) {
             revert AddressError.ZeroAddress();

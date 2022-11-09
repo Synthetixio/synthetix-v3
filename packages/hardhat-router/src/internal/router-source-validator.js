@@ -5,7 +5,7 @@ class RouterSourceValidator {
   }
 
   async findRepeatedModuleSelectors() {
-    const moduleSelectors = await this.getModulesSelectors();
+    const moduleSelectors = await this.getModulesSelectors(hre);
     const source = await this.getRouterSource();
 
     const errors = [];

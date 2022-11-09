@@ -15,7 +15,7 @@ class RouterASTValidator {
   }
 
   async findMissingModuleSelectors() {
-    const moduleSelectors = await getModulesSelectors();
+    const moduleSelectors = await getModulesSelectors(hre);
 
     const errors = [];
 

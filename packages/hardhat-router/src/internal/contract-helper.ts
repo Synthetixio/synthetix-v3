@@ -1,10 +1,18 @@
-const path = require('path');
-const { parseFullyQualifiedName } = require('hardhat/utils/contract-names');
-const { getSelectors } = require('@synthetixio/core-utils/utils/ethers/contracts');
-const { deployedContractHasBytescode } = require('@synthetixio/core-utils/utils/ethers/contracts');
-const { onlyRepeated } = require('@synthetixio/core-utils/utils/misc/array-filters');
+import path from 'node:path';
+import { HardhatRuntimeEnvironment } from 'hardhat/types';
+import { parseFullyQualifiedName } from 'hardhat/utils/contract-names';
+import { getSelectors } from '@synthetixio/core-utils/utils/ethers/contracts';
+import { deployedContractHasBytescode } from '@synthetixio/core-utils/utils/ethers/contracts';
+import { onlyRepeated } from '@synthetixio/core-utils/utils/misc/array-filters';
+import { ContractData } from '../types';
 
-async function isAlreadyDeployed(contractData) {
+import type { Provider } from '@ethersproject/abstract-provider';
+
+export async function isAlreadyDeployed(
+  contractData: ContractData,
+  hre: HardhatRuntimeEnvironment,
+  provider: Provider
+) {
   if (!contractData.deployedAddress) {
     return false;
   }
@@ -16,11 +24,14 @@ async function isAlreadyDeployed(contractData) {
   return deployedContractHasBytescode(
     contractData.deployedAddress,
     contractArtifacts.deployedBytecode,
-    hre.ethers.provider
+    provider
   );
 }
 
-async function getAllSelectors(contractFullyQualifiedNames) {
+export async function getAllSelectors(
+  contractFullyQualifiedNames: string[],
+  hre: HardhatRuntimeEnvironment
+) {
   const allSelectors = [];
 
   for (const name of contractFullyQualifiedNames) {
@@ -35,15 +46,21 @@ async function getAllSelectors(contractFullyQualifiedNames) {
   });
 }
 
-async function getModulesSelectors() {
-  const contractNames = Object.entries(hre.router.deployment.general.contracts)
+export async function getModulesSelectors(hre: HardhatRuntimeEnvironment) {
+  const contractNames = Object.entries(hre.router.deployment!.general.contracts)
     .filter(([, c]) => c.isModule)
     .map(([name]) => name);
 
-  return await getAllSelectors(contractNames);
+  return await getAllSelectors(contractNames, hre);
 }
 
-function findDuplicateSelectors(selectors) {
+interface ContractFunctionSelector {
+  name: string;
+  selector: string;
+  contractName: string;
+}
+
+export function findDuplicateSelectors(selectors: ContractFunctionSelector[]) {
   const duplicates = selectors.map((s) => s.selector).filter(onlyRepeated);
 
   const ocurrences = duplicates.map((duplicate) => {
@@ -59,21 +76,11 @@ function findDuplicateSelectors(selectors) {
 }
 
 /**
- * Check if the given contract path is inside the modules folder.
- * @param {string} contractSourcePath contract path to file, e.g.: contracts/modules/SomeModule.sol
- * @returns {boolean}
- */
-function contractIsModule(contractSourcePath) {
-  const source = path.resolve(hre.config.paths.root, contractSourcePath);
-  return source.startsWith(`${hre.config.router.paths.modules}${path.sep}`);
-}
-
-/**
  * Check if the given contract path is inside the sources folder.
  * @param {string} contractSourcePath contract path to file, e.g.: contracts/modules/SomeModule.sol
  * @returns {boolean}
  */
-function contractIsInSources(contractSourcePath) {
+export function contractIsInSources(contractSourcePath: string, hre: HardhatRuntimeEnvironment) {
   const source = path.resolve(hre.config.paths.root, contractSourcePath);
   return source.startsWith(`${hre.config.paths.sources}${path.sep}`);
 }
@@ -84,21 +91,16 @@ function contractIsInSources(contractSourcePath) {
  * @param filters RegExp to match for module inclusion
  * @returns {string[]} fqn of all matching modules
  */
-async function getModulesFullyQualifiedNames(filter = /.*/) {
+export async function getModulesFullyQualifiedNames(filter = /.*/, hre: HardhatRuntimeEnvironment) {
   const names = await hre.artifacts.getAllFullyQualifiedNames();
 
   return names.filter((name) => {
     const { sourceName } = parseFullyQualifiedName(name);
-    return contractIsModule(sourceName) && name.match(filter);
+    return _contractIsModule(sourceName, hre) && name.match(filter);
   });
 }
 
-module.exports = {
-  findDuplicateSelectors,
-  getAllSelectors,
-  getModulesSelectors,
-  isAlreadyDeployed,
-  contractIsModule,
-  contractIsInSources,
-  getModulesFullyQualifiedNames,
-};
+function _contractIsModule(contractSourcePath: string, hre: HardhatRuntimeEnvironment) {
+  const source = path.resolve(hre.config.paths.root, contractSourcePath);
+  return source.startsWith(`${hre.config.router.paths.modules}${path.sep}`);
+}

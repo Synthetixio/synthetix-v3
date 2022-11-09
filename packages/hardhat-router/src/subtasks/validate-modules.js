@@ -11,7 +11,7 @@ subtask(SUBTASK_VALIDATE_MODULES).setAction(async (_, hre) => {
     .filter(([, attrs]) => attrs.isModule)
     .map(([name]) => name);
 
-  const selectors = await getAllSelectors(modulesFullyQualifiedNames);
+  const selectors = await getAllSelectors(modulesFullyQualifiedNames, hre);
   const duplicates = findDuplicateSelectors(selectors);
 
   if (duplicates) {
