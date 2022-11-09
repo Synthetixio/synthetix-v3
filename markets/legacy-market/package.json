@@ -14,7 +14,7 @@
   "license": "MIT",
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "2.1.0",
-    "@synthetixio/main": "1.0.0",
+    "@synthetixio/main": "*",
     "@synthetixio/wei": "2.74.4",
     "@typechain/ethers-v5": "10.1.0",
     "@typechain/hardhat": "6.1.2",
