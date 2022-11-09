@@ -22,10 +22,14 @@ library FeatureFlag {
     }
 
     function ensureAccessToFeature(bytes32 feature) internal view {
-        Data storage store = FeatureFlag.load(feature);
-
-        if (!store.allowAll && !store.permissionedAddresses.contains(msg.sender)) {
+        if (!hasAccess(feature, msg.sender)) {
             revert FeatureUnavailable();
         }
+    }
+
+    function hasAccess(bytes32 feature, address value) internal view returns (bool) {
+        Data storage store = FeatureFlag.load(feature);
+
+        return store.allowAll || store.permissionedAddresses.contains(value);
     }
 }

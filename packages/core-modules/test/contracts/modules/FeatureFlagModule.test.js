@@ -6,7 +6,7 @@ const { default: assertRevert } = require('@synthetixio/core-utils/utils/asserti
 const { bootstrap } = require('@synthetixio/hardhat-router/dist/utils/tests');
 const initializer = require('@synthetixio/core-modules/test/helpers/initializer');
 
-describe('FeatureFlagModule', () => {
+describe.only('FeatureFlagModule', () => {
   const { proxyAddress } = bootstrap(initializer, {
     modules: '.*(FeatureFlagModule|SampleFeatureFlagModule|Owner|Upgrade).*',
   });
@@ -28,7 +28,7 @@ describe('FeatureFlagModule', () => {
   describe('when a feature flag is enabled', async () => {
     let addAddressTx;
     before('setup permissioned user for feature flag', async () => {
-      addAddressTx = await FeatureFlagModule.connect(owner).addToFeatureFlag(
+      addAddressTx = await FeatureFlagModule.connect(owner).addToFeatureFlagAllowlist(
         FEATURE_FLAG_NAME,
         permissionedUser.address
       );
@@ -36,18 +36,18 @@ describe('FeatureFlagModule', () => {
 
     it('does not allow non-owners to set feature flags', async () => {
       await assertRevert(
-        FeatureFlagModule.connect(user).setFeatureFlag(FEATURE_FLAG_NAME, true),
+        FeatureFlagModule.connect(user).setFeatureFlagAllowAll(FEATURE_FLAG_NAME, true),
         'Unauthorized'
       );
     });
 
     it('does not allow non-owners to set feature flag addresses', async () => {
       await assertRevert(
-        FeatureFlagModule.connect(user).addToFeatureFlag(
+        FeatureFlagModule.connect(user).addToFeatureFlagAllowlist(
           FEATURE_FLAG_NAME,
           permissionedUser.address
         ),
-        'FeatureUnavailable'
+        'Unauthorized'
       );
     });
 
@@ -76,19 +76,19 @@ describe('FeatureFlagModule', () => {
 
   it('does not allow non-owners to remove feature flag addresses', async () => {
     await assertRevert(
-      FeatureFlagModule.connect(user).removeFromFeatureFlag(
+      FeatureFlagModule.connect(user).removeFromFreatureFlagAllowlist(
         FEATURE_FLAG_NAME,
         permissionedUser.address
       ),
-      'FeatureUnavailable'
+      'Unauthorized'
     );
 
     await assertRevert(
-      FeatureFlagModule.connect(permissionedUser).removeFromFeatureFlag(
+      FeatureFlagModule.connect(permissionedUser).removeFromFreatureFlagAllowlist(
         FEATURE_FLAG_NAME,
         permissionedUser.address
       ),
-      'FeatureUnavailable'
+      'Unauthorized'
     );
   });
 
@@ -96,7 +96,7 @@ describe('FeatureFlagModule', () => {
     let removeAddressTx;
 
     before('remove user', async () => {
-      removeAddressTx = await FeatureFlagModule.connect(owner).removeFromFeatureFlag(
+      removeAddressTx = await FeatureFlagModule.connect(owner).removeFromFreatureFlagAllowlist(
         FEATURE_FLAG_NAME,
         permissionedUser.address
       );
@@ -121,7 +121,10 @@ describe('FeatureFlagModule', () => {
   describe('enable feature for all', async () => {
     let setupTx;
     before('allow all', async () => {
-      setupTx = await FeatureFlagModule.connect(owner).setFeatureFlag(FEATURE_FLAG_NAME, true);
+      setupTx = await FeatureFlagModule.connect(owner).setFeatureFlagAllowAll(
+        FEATURE_FLAG_NAME,
+        true
+      );
     });
 
     it('emits event', async () => {

@@ -13,32 +13,36 @@ contract FeatureFlagModule is IFeatureFlagModule {
     event FeatureFlagAddressAdded(bytes32 feature, address account);
     event FeatureFlagAddressRemoved(bytes32 feature, address account);
 
-    function setFeatureFlag(bytes32 feature, bool allowAll) external override {
+    function setFeatureFlagAllowAll(bytes32 feature, bool allowAll) external override {
         OwnableStorage.onlyOwner();
         FeatureFlag.load(feature).allowAll = allowAll;
 
         emit FeatureFlagSet(feature, allowAll);
     }
 
-    function addToFeatureFlag(bytes32 feature, address permissioned) external override {
+    function addToFeatureFlagAllowlist(bytes32 feature, address permissioned) external override {
         OwnableStorage.onlyOwner();
         FeatureFlag.load(feature).permissionedAddresses.add(permissioned);
 
         emit FeatureFlagAddressAdded(feature, permissioned);
     }
 
-    function removeFromFeatureFlag(bytes32 feature, address permissioned) external override {
+    function removeFromFreatureFlagAllowlist(bytes32 feature, address permissioned) external override {
         OwnableStorage.onlyOwner();
         FeatureFlag.load(feature).permissionedAddresses.remove(permissioned);
 
         emit FeatureFlagAddressRemoved(feature, permissioned);
     }
 
-    function isFeatureFlagActive(bytes32 feature) external view override returns (bool) {
-        return !FeatureFlag.load(feature).allowAll;
+    function getFeatureFlagAllowAll(bytes32 feature) external view override returns (bool) {
+        return FeatureFlag.load(feature).allowAll;
     }
 
-    function getFeatureFlagAddresses(bytes32 feature) external view override returns (address[] memory) {
+    function getFeatureFlagAllowlist(bytes32 feature) external view override returns (address[] memory) {
         return FeatureFlag.load(feature).permissionedAddresses.values();
+    }
+
+    function isFeatureAllowed(bytes32 feature, address addressToCheck) external view override returns (bool) {
+        return FeatureFlag.hasAccess(feature, addressToCheck);
     }
 }
