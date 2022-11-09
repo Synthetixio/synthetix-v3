@@ -223,20 +223,6 @@ depends = ["run.usd_generate_router"]
 
 # Post stuff
 
-[invoke.enablePoolCreation]
-target = ["CoreProxy"]
-func = "setFeatureFlag"
-args = ["0x637265617465506f6f6c00000000000000000000000000000000000000000000", true] # formatBytes32String("createPool")
-fromCall.func = "owner"
-depends = ["invoke.upgrade_core_proxy"]
-
-[invoke.enableMarketCreation]
-target = ["CoreProxy"]
-func = "setFeatureFlag"
-args = ["0x72656769737465724d61726b6574000000000000000000000000000000000000", true] # formatBytes32String("registerMarket")
-fromCall.func = "owner"
-depends = ["invoke.upgrade_core_proxy"]
-
 [invoke.init_account]
 target = ["CoreProxy"]
 from = "<%= settings.owner %>"

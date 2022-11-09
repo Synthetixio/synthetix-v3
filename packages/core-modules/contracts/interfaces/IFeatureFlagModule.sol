@@ -3,18 +3,21 @@ pragma solidity ^0.8.0;
 
 /// @title Interface for feature flags
 interface IFeatureFlagModule {
-    /// @notice Set a feature flag
-    function setFeatureFlag(bytes32 feature, bool value) external;
+    /// @notice Set a feature flag to either allow all or not
+    function setFeatureFlagAllowAll(bytes32 feature, bool allowAll) external;
 
     /// @notice Add an address and give it permission for a feature flag
-    function addToFeatureFlag(bytes32 feature, address permissioned) external;
+    function addToFeatureFlagAllowlist(bytes32 feature, address permissioned) external;
 
     /// @notice Remove an address and remove its permission for a feature flag
-    function removeFromFeatureFlag(bytes32 feature, address permissioned) external;
+    function removeFromFeatureFlagAllowlist(bytes32 feature, address permissioned) external;
 
-    /// @notice Returns if feature flag is enabled
-    function isFeatureFlagEnabled(bytes32 feature) external view returns (bool);
+    /// @notice Returns allowAll boolean value for a feature flag
+    function getFeatureFlagAllowAll(bytes32 feature) external view returns (bool);
 
     /// @notice Returns the addresses that have permission for a feature flag
-    function getFeatureFlagAddresses(bytes32 feature) external view returns (address[] memory);
+    function getFeatureFlagAllowlist(bytes32 feature) external view returns (address[] memory);
+
+    /// @notice Check if address has access to feature
+    function isFeatureAllowed(bytes32 feature, address addressToCheck) external view returns (bool);
 }

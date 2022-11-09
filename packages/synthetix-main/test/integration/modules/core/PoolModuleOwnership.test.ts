@@ -19,7 +19,7 @@ describe('PoolModule Create / Ownership', function () {
       systems()
         .Core.connect(user1)
         .createPool(1, await user1.getAddress()),
-      'Unauthorized'
+      'FeatureUnavailable'
     );
   });
 
@@ -29,7 +29,10 @@ describe('PoolModule Create / Ownership', function () {
     before('give user1 permission', async () => {
       await systems()
         .Core.connect(owner)
-        .addToFeatureFlag(ethers.utils.formatBytes32String('createPool'), user1.getAddress());
+        .addToFeatureFlagAllowlist(
+          ethers.utils.formatBytes32String('createPool'),
+          user1.getAddress()
+        );
     });
 
     before('create a pool', async () => {
@@ -51,7 +54,10 @@ describe('PoolModule Create / Ownership', function () {
       before('give user2 permission', async () => {
         await systems()
           .Core.connect(owner)
-          .addToFeatureFlag(ethers.utils.formatBytes32String('createPool'), user2.getAddress());
+          .addToFeatureFlagAllowlist(
+            ethers.utils.formatBytes32String('createPool'),
+            user2.getAddress()
+          );
       });
 
       it('reverts', async () => {

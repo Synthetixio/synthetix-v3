@@ -31,7 +31,7 @@ describe('VaultModule', function () {
   before('give user1 permission to register market', async () => {
     await systems()
       .Core.connect(owner)
-      .addToFeatureFlag(
+      .addToFeatureFlagAllowlist(
         ethers.utils.formatBytes32String('registerMarket'),
         await user1.getAddress()
       );
