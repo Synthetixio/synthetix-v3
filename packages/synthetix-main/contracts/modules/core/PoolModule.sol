@@ -10,7 +10,6 @@ import "../../interfaces/IPoolModule.sol";
 import "../../storage/Pool.sol";
 
 contract PoolModule is IPoolModule {
-    error PoolAlreadyExists(uint128 poolId);
     error InvalidParameters(string incorrectParameter, string help);
     error PoolNotFound(uint128 poolId);
     error CapacityLocked(uint marketId);
@@ -27,10 +26,6 @@ contract PoolModule is IPoolModule {
 
         if (owner == address(0)) {
             revert AddressError.ZeroAddress();
-        }
-
-        if (Pool.exists(requestedPoolId)) {
-            revert PoolAlreadyExists(requestedPoolId);
         }
 
         Pool.create(requestedPoolId, owner);
@@ -91,7 +86,8 @@ contract PoolModule is IPoolModule {
     // ---------------------------------------
     // pool admin
     // ---------------------------------------
-    function setPoolConfiguration(uint128 poolId, MarketDistribution.Data[] memory newDistributions) external override {
+    // TODO: Rename newDistributions to newMarketConfigurations
+    function setPoolConfiguration(uint128 poolId, MarketConfiguration.Data[] memory newDistributions) external override {
         Pool.requireExists(poolId);
         Pool.onlyPoolOwner(poolId, msg.sender);
         Pool.Data storage pool = Pool.load(poolId);
@@ -113,25 +109,25 @@ contract PoolModule is IPoolModule {
             ;
             i <
             (
-                newDistributions.length < pool.poolDistribution.length
+                newDistributions.length < pool.marketConfigurations.length
                     ? newDistributions.length
-                    : pool.poolDistribution.length
+                    : pool.marketConfigurations.length
             );
             i++
         ) {
-            pool.poolDistribution[i] = newDistributions[i];
+            pool.marketConfigurations[i] = newDistributions[i];
             totalWeight += newDistributions[i].weight;
         }
 
         for (; i < newDistributions.length; i++) {
-            pool.poolDistribution.push(newDistributions[i]);
+            pool.marketConfigurations.push(newDistributions[i]);
             totalWeight += newDistributions[i].weight;
         }
 
         // remove any excess
-        uint popped = pool.poolDistribution.length - i;
+        uint popped = pool.marketConfigurations.length - i;
         for (i = 0; i < popped; i++) {
-            pool.poolDistribution.pop();
+            pool.marketConfigurations.pop();
         }
 
         // edge case: removed markets (markets which should be implicitly set to `0` as a result of not being included)
@@ -141,7 +137,7 @@ contract PoolModule is IPoolModule {
 
         pool.totalWeights = uint128(totalWeight);
 
-        pool.rebalanceConfigurations();
+        pool.distributeDebt();
 
         for (i = 0; i < postVerifyLocks.length && postVerifyLocks[i] != 0; i++) {
             if (Market.load(postVerifyLocks[i]).isCapacityLocked()) {
@@ -152,16 +148,18 @@ contract PoolModule is IPoolModule {
         emit PoolConfigurationSet(poolId, newDistributions, msg.sender);
     }
 
-    function getPoolConfiguration(uint128 poolId) external view override returns (MarketDistribution.Data[] memory) {
+    function getPoolConfiguration(uint128 poolId) external view override returns (MarketConfiguration.Data[] memory) {
         Pool.Data storage pool = Pool.load(poolId);
 
-        MarketDistribution.Data[] memory distributions = new MarketDistribution.Data[](pool.poolDistribution.length);
+        MarketConfiguration.Data[] memory marketConfigurations = new MarketConfiguration.Data[](
+            pool.marketConfigurations.length
+        );
 
-        for (uint i = 0; i < pool.poolDistribution.length; i++) {
-            distributions[i] = pool.poolDistribution[i];
+        for (uint i = 0; i < pool.marketConfigurations.length; i++) {
+            marketConfigurations[i] = pool.marketConfigurations[i];
         }
 
-        return distributions;
+        return marketConfigurations;
     }
 
     function setPoolName(uint128 poolId, string memory name) external override {
@@ -182,6 +180,7 @@ contract PoolModule is IPoolModule {
     // ---------------------------------------
     function setMinLiquidityRatio(uint minLiquidityRatio) external override {
         OwnableStorage.onlyOwner();
+
         PoolConfiguration.load().minLiquidityRatio = minLiquidityRatio;
     }
 
@@ -189,7 +188,7 @@ contract PoolModule is IPoolModule {
         return PoolConfiguration.load().minLiquidityRatio;
     }
 
-    function _verifyPoolConfigurationChange(Pool.Data storage pool, MarketDistribution.Data[] memory newDistributions)
+    function _verifyPoolConfigurationChange(Pool.Data storage pool, MarketConfiguration.Data[] memory newDistributions)
         internal
         view
         returns (uint128[] memory postVerifyLocks, uint128[] memory removedMarkets)
@@ -199,8 +198,8 @@ contract PoolModule is IPoolModule {
         uint removedMarketsIdx = 0;
         uint128 lastMarketId = 0;
 
-        postVerifyLocks = new uint128[](pool.poolDistribution.length);
-        removedMarkets = new uint128[](pool.poolDistribution.length);
+        postVerifyLocks = new uint128[](pool.marketConfigurations.length);
+        removedMarkets = new uint128[](pool.marketConfigurations.length);
 
         // first we need the total weight of the new distribution
         uint totalWeight = 0;
@@ -219,28 +218,30 @@ contract PoolModule is IPoolModule {
             }
 
             while (
-                oldIdx < pool.poolDistribution.length && pool.poolDistribution[oldIdx].market < newDistributions[i].market
+                oldIdx < pool.marketConfigurations.length &&
+                pool.marketConfigurations[oldIdx].market < newDistributions[i].market
             ) {
                 // market has been removed
 
                 // need to verify market is not capacity locked
-                postVerifyLocks[postVerifyLocksIdx++] = pool.poolDistribution[oldIdx].market;
+                postVerifyLocks[postVerifyLocksIdx++] = pool.marketConfigurations[oldIdx].market;
                 removedMarkets[removedMarketsIdx++] = postVerifyLocks[postVerifyLocksIdx - 1];
 
                 oldIdx++;
             }
 
             if (
-                oldIdx < pool.poolDistribution.length && pool.poolDistribution[oldIdx].market == newDistributions[i].market
+                oldIdx < pool.marketConfigurations.length &&
+                pool.marketConfigurations[oldIdx].market == newDistributions[i].market
             ) {
                 // market has been updated
 
                 // any divestment requires verify of capacity lock
                 // multiply by 1e9 to make sure we have comparable precision in case of very small values
                 if (
-                    newDistributions[i].maxDebtShareValue < pool.poolDistribution[oldIdx].maxDebtShareValue ||
+                    newDistributions[i].maxDebtShareValue < pool.marketConfigurations[oldIdx].maxDebtShareValue ||
                     uint(newDistributions[i].weight * 1e9).divDecimal(totalWeight) <
-                    uint(pool.poolDistribution[oldIdx].weight * 1e9).divDecimal(pool.totalWeights)
+                    uint(pool.marketConfigurations[oldIdx].weight * 1e9).divDecimal(pool.totalWeights)
                 ) {
                     postVerifyLocks[postVerifyLocksIdx++] = newDistributions[i].market;
                 }
@@ -253,9 +254,9 @@ contract PoolModule is IPoolModule {
             //}
         }
 
-        while (oldIdx < pool.poolDistribution.length) {
+        while (oldIdx < pool.marketConfigurations.length) {
             // market has been removed
-            removedMarkets[removedMarketsIdx++] = pool.poolDistribution[oldIdx].market;
+            removedMarkets[removedMarketsIdx++] = pool.marketConfigurations[oldIdx].market;
             oldIdx++;
         }
     }
