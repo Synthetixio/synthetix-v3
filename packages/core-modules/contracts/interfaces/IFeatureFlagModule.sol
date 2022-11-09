@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 /// @title Interface for feature flags
 interface IFeatureFlagModule {
     /// @notice Set a feature flag to either allow all or not
-    function setFeatureFlagAllowAll(bytes32 feature, bool value) external;
+    function setFeatureFlagAllowAll(bytes32 feature, bool allowAll) external;
 
     /// @notice Add an address and give it permission for a feature flag
     function addToFeatureFlagAllowlist(bytes32 feature, address permissioned) external;
