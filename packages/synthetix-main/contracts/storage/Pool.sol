@@ -326,9 +326,10 @@ library Pool {
         return debt > 0 ? uint(debt).divDecimal(collateralValue) : 0;
     }
 
+    // TODO: Document
     function findMarketCapacityLocked(Data storage self) internal view returns (Market.Data storage lockedMarketId) {
-        for (uint i = 0; i < self.poolDistribution.length; i++) {
-            Market.Data storage market = Market.load(self.poolDistribution[i].market);
+        for (uint i = 0; i < self.marketConfigurations.length; i++) {
+            Market.Data storage market = Market.load(self.marketConfigurations[i].market);
 
             if (market.isCapacityLocked()) {
                 return market;
@@ -339,17 +340,19 @@ library Pool {
     }
 
     /**
-     * @dev returns if a portion of the liquidity in this pool cannot be withdrawn due to upstream market `locked`
+     * @dev Returns if a portion of the liquidity in this pool cannot be withdrawn due to upstream market `locked`.
+     *
+     * TODO: Review documentation.
      */
     function getLockedLiquidityObligation(Data storage self) internal view returns (uint) {
         uint locked = 0;
-        for (uint i = 0; i < self.poolDistribution.length; i++) {
-            Market.Data storage market = Market.load(self.poolDistribution[i].market);
+        for (uint i = 0; i < self.marketConfigurations.length; i++) {
+            Market.Data storage market = Market.load(self.marketConfigurations[i].market);
 
             uint unlocked = market.capacity - market.getLockedLiquidity();
             uint contributedCapacity = market.getCapacityContribution(
                 market.getPoolLiquidity(self.id),
-                self.poolDistribution[i].maxDebtShareValue
+                self.marketConfigurations[i].maxDebtShareValue
             );
 
             if (unlocked < contributedCapacity) {
