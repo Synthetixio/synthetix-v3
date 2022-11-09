@@ -61,6 +61,8 @@ library Vault {
      * vaults' liquidity shares within the them.
      *
      * Returns the amount of collateral that this vault is providing in net USD terms.
+     *
+     * TODO: Consider renaming to updateCreditCapacity?
      */
     function updateLiquidity(Data storage self, uint collateralPrice)
         internal

@@ -25,6 +25,7 @@ library Market {
         /// @notice the difference between the USD burnt by the market, and the amount minted
         int128 issuance;
         /// @notice the total amount of USD that the market could withdraw right now
+        /// TODO: Consider renaming to creditCapacity
         uint128 capacity;
         /// @notice the amount of debt the last time the debt was distributed
         int128 lastMarketBalance;

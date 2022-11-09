@@ -30,6 +30,11 @@ library MarketConfiguration {
         uint128 weight;
         /**
          * @dev TODO
+         *
+         * Should be within [0, 1].
+         *
+         * TODO: Confirm range above.
+         * TODO: Make sure whenever it is set to enforce this.
          */
         /// @dev cap on debt exposure for the market
         int128 maxDebtShareValue;
