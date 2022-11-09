@@ -23,6 +23,7 @@ library FeatureFlag {
 
     function ensureAccessToFeature(bytes32 feature) internal view {
         Data storage store = FeatureFlag.load(feature);
+
         if (!store.allowAll && !store.permissionedAddresses.contains(msg.sender)) {
             revert FeatureUnavailable();
         }
