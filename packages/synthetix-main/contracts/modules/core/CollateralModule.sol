@@ -55,7 +55,14 @@ contract CollateralModule is ICollateralModule {
             liquidationReward,
             depositingEnabled
         );
-        emit CollateralConfigured(collateralType, priceFeed, targetCRatio, minimumCRatio, liquidationReward, depositingEnabled);
+        emit CollateralConfigured(
+            collateralType,
+            priceFeed,
+            targetCRatio,
+            minimumCRatio,
+            liquidationReward,
+            depositingEnabled
+        );
     }
 
     /**
