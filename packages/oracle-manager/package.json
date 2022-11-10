@@ -1,0 +1,31 @@
+{
+  "name": "@synthetixio/oracle-manager",
+  "version": "1.0.0",
+  "description": "Core Synthetix Protocol Oracle Manager",
+  "private": true,
+  "scripts": {
+    "test": "hardhat test",
+    "coverage": "npx hardhat cannon:build && hardhat --network hardhat coverage",
+    "compile-contracts": "hardhat compile",
+    "size-contracts": "hardhat size-contracts",
+    "lint:fix": "npm run lint:js:fix && npm run lint:sol:fix",
+    "lint": "npm run lint:js && npm run lint:sol"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@nomiclabs/hardhat-ethers": "2.1.1",
+    "@typechain/ethers-v5": "10.1.0",
+    "@typechain/hardhat": "6.1.2",
+    "@types/mocha": "9.1.1",
+    "ethers": "5.6.9",
+    "hardhat": "2.11.2",
+    "hardhat-contract-sizer": "2.1.1",
+    "solidity-coverage": "0.7.17",
+    "solidity-docgen": "0.6.0-beta.22",
+    "ts-node": "10.9.1",
+    "typechain": "8.1.0",
+    "typescript": "4.7.4"
+  }
+}

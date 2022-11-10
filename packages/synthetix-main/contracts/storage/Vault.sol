@@ -11,9 +11,8 @@ import "./CollateralConfiguration.sol";
  *
  * I.e. if a pool supports SNX and ETH collaterals, it will have an SNX Vault, and an ETH Vault.
  *
- * The Vault data structure is itself split into VaultEpoch sub structures. This facilitates liquidations,
- * so that whenever a liquidation occurs, instead of having to traverse and reset all data, a new epoch
- * is created, effectively wiping all data, whilst having a record of the data before the liquidation occurred.
+ * The Vault data structure is itself split into VaultEpoch sub-structures. This facilitates liquidations,
+ * so that whenever one occurs, a clean state of all data is achieved by simply incrementing the epoch index.
  *
  * It is recommended to understand VaultEpoch before understanding this object.
  */
@@ -67,6 +66,8 @@ library Vault {
      * vaults' liquidity shares within the them.
      *
      * Returns the amount of collateral that this vault is providing in net USD terms.
+     *
+     * TODO: Consider renaming to updateCreditCapacity?
      */
     function updateLiquidity(Data storage self, uint collateralPrice)
         internal
@@ -150,7 +151,7 @@ library Vault {
     }
 
     /**
-     * @dev Returns the Vault's total collateral value in the current epoch.
+     * @dev Returns the total value in the Vault's collateral distribution, for the current epoch.
      */
     function currentCollateral(Data storage self) internal view returns (uint) {
         return uint(currentEpoch(self).collateralDist.totalValue());
