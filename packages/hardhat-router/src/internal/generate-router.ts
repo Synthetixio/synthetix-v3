@@ -36,6 +36,10 @@ export function generateRouter({
   functionFilter,
   contracts,
 }: Props) {
+  if (!Array.isArray(contracts) || contracts.length === 0) {
+    throw new Error('No contracts found to render during Router generation');
+  }
+
   const selectors = _getAllSelectors(contracts, functionFilter);
   const binaryData = _buildBinaryData(selectors);
 

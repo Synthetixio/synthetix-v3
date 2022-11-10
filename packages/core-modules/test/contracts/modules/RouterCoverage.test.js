@@ -5,7 +5,9 @@ const { bootstrap } = require('@synthetixio/hardhat-router/dist/utils/tests');
 const initializer = require('@synthetixio/core-modules/test/helpers/initializer');
 
 describe('RouterCoverage', () => {
-  const { proxyAddress } = bootstrap(initializer, { modules: '.*(Owner|Upgrade).*' });
+  const { proxyAddress } = bootstrap(initializer, {
+    modules: ['OwnerModule', 'UpgradeModule'],
+  });
 
   describe('when attempting to reach an unexistent function in Router', () => {
     let WrongModuleMock;

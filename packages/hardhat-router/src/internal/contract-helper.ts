@@ -2,31 +2,9 @@ import path from 'node:path';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { parseFullyQualifiedName } from 'hardhat/utils/contract-names';
 import { getSelectors } from '@synthetixio/core-utils/utils/ethers/contracts';
-import { deployedContractHasBytescode } from '@synthetixio/core-utils/utils/ethers/contracts';
 import { onlyRepeated } from '@synthetixio/core-utils/utils/misc/array-filters';
-import { ContractData } from '../types';
-
-import type { Provider } from '@ethersproject/abstract-provider';
-
-export async function isAlreadyDeployed(
-  contractData: ContractData,
-  hre: HardhatRuntimeEnvironment,
-  provider: Provider
-) {
-  if (!contractData.deployedAddress) {
-    return false;
-  }
-
-  const contractArtifacts = await hre.artifacts.readArtifact(
-    contractData.contractFullyQualifiedName
-  );
-
-  return deployedContractHasBytescode(
-    contractData.deployedAddress,
-    contractArtifacts.deployedBytecode,
-    provider
-  );
-}
+import { DeploymentAbis } from '../types';
+import { routerFunctionFilter } from './router-function-filter';
 
 export async function getAllSelectors(
   contractFullyQualifiedNames: string[],
@@ -36,7 +14,7 @@ export async function getAllSelectors(
 
   for (const name of contractFullyQualifiedNames) {
     const { contractName, abi } = await hre.artifacts.readArtifact(name);
-    const selectors = await getSelectors(abi, hre.config.router.routerFunctionFilter);
+    const selectors = await getSelectors(abi, routerFunctionFilter);
 
     allSelectors.push(...selectors.map((s) => ({ ...s, contractName })));
   }
@@ -44,14 +22,6 @@ export async function getAllSelectors(
   return allSelectors.sort((a, b) => {
     return Number.parseInt(a.selector, 16) - Number.parseInt(b.selector, 16);
   });
-}
-
-export async function getModulesSelectors(hre: HardhatRuntimeEnvironment) {
-  const contractNames = Object.entries(hre.router.deployment!.general.contracts)
-    .filter(([, c]) => c.isModule)
-    .map(([name]) => name);
-
-  return await getAllSelectors(contractNames, hre);
 }
 
 interface ContractFunctionSelector {
@@ -77,8 +47,6 @@ export function findDuplicateSelectors(selectors: ContractFunctionSelector[]) {
 
 /**
  * Check if the given contract path is inside the sources folder.
- * @param {string} contractSourcePath contract path to file, e.g.: contracts/modules/SomeModule.sol
- * @returns {boolean}
  */
 export function contractIsInSources(contractSourcePath: string, hre: HardhatRuntimeEnvironment) {
   const source = path.resolve(hre.config.paths.root, contractSourcePath);
@@ -86,17 +54,31 @@ export function contractIsInSources(contractSourcePath: string, hre: HardhatRunt
 }
 
 /**
- * Get the list of all modules fully qualified names.
- *   e.g.: ['contracts/modules/SomeModule.sol:SomeModule', ...]
- * @param filters RegExp to match for module inclusion
- * @returns {string[]} fqn of all matching modules
+ * Get a list of all the contracts fully qualified names that are present on the
+ * local contracts/ folder.
+ * It can include a whitelist filter by contractName, contractSource,
+ * or if its included in a given folder.
  */
-export async function getModulesFullyQualifiedNames(filter = /.*/, hre: HardhatRuntimeEnvironment) {
-  const names = await hre.artifacts.getAllFullyQualifiedNames();
+export async function getSourcesFullyQualifiedNames(
+  hre: HardhatRuntimeEnvironment,
+  whitelist: string[] = []
+) {
+  const contractFullyQualifiedNames = await hre.artifacts.getAllFullyQualifiedNames();
 
-  return names.filter((name) => {
-    const { sourceName } = parseFullyQualifiedName(name);
-    return _contractIsModule(sourceName, hre) && name.match(filter);
+  return contractFullyQualifiedNames.filter((fqName) => {
+    const { sourceName, contractName } = parseFullyQualifiedName(fqName);
+    if (!contractIsInSources(sourceName, hre)) return false;
+    if (whitelist.length > 0) {
+      for (const w of whitelist) {
+        if (typeof w !== 'string' || !w) throw new Error(`Invalid whitelist item "${w}"`);
+        if (w.endsWith('/') && sourceName.startsWith(w)) return true;
+        if ([fqName, sourceName, contractName].includes(w)) return true;
+      }
+
+      return false;
+    }
+
+    return true;
   });
 }
 
@@ -114,13 +96,23 @@ export async function getStorageLibrariesFullyQualifiedNames(hre: HardhatRuntime
   });
 }
 
-function _contractIsModule(contractSourcePath: string, hre: HardhatRuntimeEnvironment) {
-  const source = path.resolve(hre.config.paths.root, contractSourcePath);
-  return source.startsWith(`${hre.config.router.paths.modules}${path.sep}`);
-}
-
 function _contractIsStorageLibrary(contractSourcePath: string) {
   // TODO: really storage libraries can be any library that has a
   // `struct Data` but this is an easy way to conform atm
-  return contractSourcePath.startsWith('contracts/storage');
+  return contractSourcePath.startsWith('contracts/storage/');
+}
+
+export async function getSourcesAbis(hre: HardhatRuntimeEnvironment, whitelist: string[] = []) {
+  const filtered = await getSourcesFullyQualifiedNames(hre, whitelist);
+
+  const result: DeploymentAbis = {};
+
+  await Promise.all(
+    filtered.map(async (fqName) => {
+      const { abi } = await hre.artifacts.readArtifact(fqName);
+      result[fqName] = abi;
+    })
+  );
+
+  return result;
 }

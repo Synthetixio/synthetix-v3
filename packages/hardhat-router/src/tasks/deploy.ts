@@ -1,116 +1,116 @@
-import { setTimeout } from 'node:timers/promises';
+import path from 'node:path';
 import { task } from 'hardhat/config';
+import { parseFullyQualifiedName } from 'hardhat/utils/contract-names';
 import { default as logger } from '@synthetixio/core-utils/utils/io/logger';
-import { default as prompter } from '@synthetixio/core-utils/utils/io/prompter';
 import * as types from '@synthetixio/core-utils/utils/hardhat/argument-types';
-import { readPackageJson } from '@synthetixio/core-utils/utils/misc/npm';
-import { ContractValidationError } from '../internal/errors';
+import { getSourcesFullyQualifiedNames } from '../internal/contract-helper';
+import { deployContract, deployContracts } from '../internal/deploy-contract';
 import {
-  SUBTASK_CANCEL_DEPLOYMENT,
-  SUBTASK_CLEAR_DEPLOYMENTS,
-  SUBTASK_CREATE_DEPLOYMENT,
-  SUBTASK_DEPLOY_MODULES,
-  SUBTASK_DEPLOY_PROXY,
-  SUBTASK_DEPLOY_ROUTER,
-  SUBTASK_FINALIZE_DEPLOYMENT,
-  SUBTASK_GENERATE_ROUTER_SOURCE,
-  SUBTASK_LOAD_DEPLOYMENT,
-  SUBTASK_PRINT_INFO,
-  SUBTASK_SYNC_PROXY,
-  SUBTASK_SYNC_SOURCES,
-  SUBTASK_UPGRADE_PROXY,
+  SUBTASK_GENERATE_ROUTER,
   SUBTASK_VALIDATE_INTERFACES,
-  SUBTASK_VALIDATE_MODULES,
-  SUBTASK_VALIDATE_ROUTER,
+  SUBTASK_VALIDATE_SELECTORS,
   TASK_DEPLOY,
 } from '../task-names';
 import { quietCompile } from '../utils/quiet-compile';
+import { DeployedContractData } from '../types';
 
 export interface DeployTaskParams {
-  noConfirm?: boolean;
-  skipProxy?: boolean;
   debug?: boolean;
   quiet?: boolean;
-  clear?: boolean;
-  alias?: string;
-  modules?: string;
-  instance?: string;
+  modules?: string[];
+  router?: string;
+  proxy?: string;
+  skipProxy?: boolean;
+  routerTemplate?: string;
 }
 
-task(TASK_DEPLOY, 'Deploys all system modules')
-  .addFlag('noConfirm', 'Skip all confirmation prompts')
-  .addFlag('skipProxy', 'Do not deploy the UUPS proxy')
+export interface DeployTaskResult {
+  contracts: { [contractName: string]: DeployedContractData };
+}
+
+task(TASK_DEPLOY, 'Deploys the given modules behind a Proxy + Router architecture')
   .addFlag('debug', 'Display debug logs')
   .addFlag('quiet', 'Silence all output')
-  .addFlag('clear', 'Clear all previous deployment data for the selected network')
-  .addOptionalParam('alias', 'The alias name for the deployment', undefined, types.alphanumeric)
   .addOptionalPositionalParam(
     'modules',
-    'Regex string for which modules are deployed to the router. Leave empty to deploy all modules.'
+    `Contract files, names, fully qualified names or folder of contracts to include
+       e.g.:
+         * All the contracts in a folder: contracts/modules/
+         * Contracts by contractName: UpgradeModule,OwnerModule
+         * By fullyQualifiedName: contracts/modules/UpgradeModule.sol:UpgradeModule
+    `,
+    ['contracts/modules/'],
+    types.stringArray
   )
   .addOptionalParam(
-    'instance',
-    'The name of the target instance for deployment',
-    'official',
-    types.alphanumeric
+    'router',
+    'Fully qualiefied name of where to save the generated Router contract',
+    'contracts/Router.sol:Router'
   )
-  .setAction(async (taskArguments: DeployTaskParams, hre) => {
-    const { clear, debug, quiet, noConfirm, skipProxy } = taskArguments;
+  .addOptionalParam(
+    'proxy',
+    'Fully qualiefied name of the existing Proxy contract to use',
+    'contracts/Proxy.sol:Proxy'
+  )
+  .addOptionalParam(
+    'routerTemplate',
+    'Custom path of template to use for rendering the Router',
+    path.resolve(__dirname, '../../templates/Router.sol.mustache')
+  )
+  .addFlag('skipProxy', 'Do not deploy the UUPS proxy')
+  .setAction(async (taskArguments: Required<DeployTaskParams>, hre) => {
+    const { debug, quiet, modules, router, proxy, skipProxy, routerTemplate } = taskArguments;
 
     logger.quiet = !!quiet;
     logger.debugging = !!debug;
-    prompter.noConfirm = !!noConfirm;
 
-    // Do not throw an error on missing package.json
-    // This is so we don't force the user to have the file on tests just for the name
-    try {
-      await logger.title(readPackageJson().name);
-    } catch (err: unknown) {
-      if ((err as { code: string }).code !== 'ENOENT') throw err;
+    if (_contractName(router) === _contractName(proxy)) {
+      throw new Error(
+        `Router and Proxy contracts cannot have the same name "${_contractName(proxy)}"`
+      );
     }
 
-    await logger.title('DEPLOYER');
+    const contracts = await getSourcesFullyQualifiedNames(hre, modules);
 
-    try {
-      if (clear) {
-        await hre.run(SUBTASK_CLEAR_DEPLOYMENTS, taskArguments);
-      }
+    await quietCompile(hre, !!quiet);
 
-      await hre.run(SUBTASK_CREATE_DEPLOYMENT, taskArguments);
-      await hre.run(SUBTASK_LOAD_DEPLOYMENT, taskArguments);
-      await quietCompile(hre, !!quiet);
-      await hre.run(SUBTASK_SYNC_SOURCES, taskArguments);
-      await hre.run(SUBTASK_SYNC_PROXY);
-      await hre.run(SUBTASK_PRINT_INFO, taskArguments);
+    // note: temporarily disabled due to library storage refactor
+    //await hre.run(SUBTASK_VALIDATE_STORAGE);
+    await hre.run(SUBTASK_VALIDATE_SELECTORS, { contracts });
+    await hre.run(SUBTASK_VALIDATE_INTERFACES, { contracts });
 
-      // note: temporarily disabled due to library storage refactor
-      //await hre.run(SUBTASK_VALIDATE_STORAGE);
+    const modulesData = await deployContracts(contracts, hre);
 
-      await hre.run(SUBTASK_VALIDATE_MODULES);
-      await hre.run(SUBTASK_VALIDATE_INTERFACES);
-      await hre.run(SUBTASK_DEPLOY_MODULES);
-      await hre.run(SUBTASK_GENERATE_ROUTER_SOURCE);
-      await quietCompile(hre, !!quiet);
-      await hre.run(SUBTASK_VALIDATE_ROUTER);
-      await hre.run(SUBTASK_DEPLOY_ROUTER);
+    await hre.run(SUBTASK_GENERATE_ROUTER, {
+      router,
+      template: routerTemplate,
+      contracts: modulesData,
+    });
 
-      if (!skipProxy) {
-        await hre.run(SUBTASK_DEPLOY_PROXY);
-        if (!clear) {
-          await hre.run(SUBTASK_UPGRADE_PROXY);
-        }
-      }
+    await quietCompile(hre, !!quiet);
 
-      await hre.run(SUBTASK_FINALIZE_DEPLOYMENT);
-    } catch (err) {
-      if (err instanceof ContractValidationError) {
-        await hre.run(SUBTASK_CANCEL_DEPLOYMENT);
-      }
+    const routerData = await deployContract({ contractFullyQualifiedName: router, hre });
 
-      throw err;
-    } finally {
-      // TODO remove autosave object and change it for something more explicit.
-      // Make sure that all the changes are persisted to the deployment artifacts
-      await setTimeout(1);
+    const deployedContracts = [...modulesData, routerData];
+
+    if (!skipProxy) {
+      const proxyData = await deployContract({
+        contractFullyQualifiedName: proxy,
+        constructorArgs: [routerData.deployedAddress],
+        hre,
+      });
+      deployedContracts.push(proxyData);
     }
+
+    const result: DeployTaskResult = { contracts: {} };
+
+    for (const contractData of deployedContracts) {
+      result.contracts[contractData.contractName] = contractData;
+    }
+
+    return result;
   });
+
+function _contractName(fqName: string) {
+  return parseFullyQualifiedName(fqName).contractName;
+}

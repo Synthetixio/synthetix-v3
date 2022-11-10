@@ -9,7 +9,7 @@ const toBytes32 = ethers.utils.formatBytes32String;
 
 describe('AssociatedSystemsModule', () => {
   const { proxyAddress } = bootstrap(initializer, {
-    modules: '.*(Owner|Upgrade|AssociatedSystems).*',
+    modules: ['OwnerModule', 'UpgradeModule', 'AssociatedSystemsModule'],
   });
 
   let AssociatedSystemsModule;
@@ -97,8 +97,7 @@ describe('AssociatedSystemsModule', () => {
       const { proxyAddress: tokenProxyAddress, routerAddress: tokenRouterAddress } = bootstrap(
         initializer,
         {
-          instance: 'atoken',
-          modules: '.*(Owner|Upgrade|Token).*',
+          modules: ['OwnerModule', 'UpgradeModule', 'TokenModule'],
         }
       );
 
@@ -169,8 +168,7 @@ describe('AssociatedSystemsModule', () => {
 
       describe('when new impl for TokenModule associated system', () => {
         const { routerAddress: newRouterAddress } = bootstrap(initializer, {
-          instance: 'anothertoken',
-          modules: '.*(Owner|Upgrade|Nft).*',
+          modules: ['OwnerModule', 'UpgradeModule', 'NftModule'],
         });
 
         before('reinit', async () => {
@@ -224,8 +222,7 @@ describe('AssociatedSystemsModule', () => {
       const { proxyAddress: nftProxyAddress, routerAddress: nftRouterAddress } = bootstrap(
         initializer,
         {
-          instance: 'annft',
-          modules: '.*(Owner|Upgrade|Nft).*',
+          modules: ['OwnerModule', 'UpgradeModule', 'NftModule'],
         }
       );
 
@@ -299,8 +296,7 @@ describe('AssociatedSystemsModule', () => {
 
       describe('when new impl for NftModule associated system', () => {
         const { routerAddress: newRouterAddress } = bootstrap(initializer, {
-          instance: 'anothernft',
-          modules: '.*(Owner|Upgrade|Nft).*',
+          modules: ['OwnerModule', 'UpgradeModule', 'NftModule'],
         });
 
         before('reinit', async () => {

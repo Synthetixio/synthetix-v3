@@ -1,14 +1,21 @@
 {
   "all": true,
-  "include": [
-    "utils/**/*.js",
-    "tasks/**/*.js",
-    "subtasks/**/*.js",
-    "internal/**/*.js"
+  "extension": [
+    ".ts"
   ],
-  "exclude": ["utils/tests.js"],
+  "include": [
+    "src/tasks/**/*.ts",
+    "src/subtasks/**/*.ts",
+    "src/internal/**/*.ts"
+  ],
+  "exclude": [
+    "**/*.d.ts"
+  ],
   "check-coverage": true,
-  "reporter": ["lcov", "text"],
+  "reporter": [
+    "lcov",
+    "text"
+  ],
   "branches": 1,
   "lines": 1,
   "functions": 1,

@@ -2,7 +2,7 @@ const { loadEnvironment, deployOnEnvironment } = require('../helpers/use-environ
 const { rejects } = require('assert/strict');
 const { ContractValidationError } = require('../../src/internal/errors');
 
-describe('missing-interface', function () {
+describe.skip('missing-interface', function () {
   let hre;
 
   beforeEach('set fixture project', function () {
