@@ -73,7 +73,7 @@ library Market {
          * The debt distribution chain will move debt from the market into its connected pools.
          *
          * Actors: Pools.
-         * Shares: TODO USD value proportional to the amount of credit that the pool provides to the market.
+         * Shares: TODO USD credit, proportional to the amount of collateral that the pool provides to the market.
          * Value per share: TODO Debt per dollar of credit.
          */
         Distribution.Data debtDist;
@@ -336,25 +336,17 @@ library Market {
             return; // Cannot distribute (or accumulate) debt when there are no shares.
         }
 
-        // Get current and last known market balance.
-        // Last known balance is cached each time this function is executed.
+        // Get current and last known market balance.  // Last known balance is cached each time this function is executed.
         // TODO: Rename to targetMarketBalance (in function below too)
         int256 targetBalance = totalBalance(self);
         int256 distributedMarketBalance = self.lastDistributedMarketBalance;
         int256 outstandingMarketBalance = targetBalance - distributedMarketBalance;
 
-        // TODO: Explain what this is...
-        // TODO: Use new function Distribution.getLowPrecisionValuePerShare().
-        // Value per share is high precision (1e27), so downscale to 1e18.
-        int128 lowPrecisionValuePerShare = self.debtDist.valuePerShare / 1e9;
-        // TODO: Why this scaling? And rename.
-        int256 xxxPrecisionOutstandingMarketBalance = outstandingMarketBalance * MathUtil.INT_UNIT;
-        // TODO: What is this? And rename.
-        int256 xxxRatio = xxxPrecisionOutstandingMarketBalance / int128(self.debtDist.totalShares);
-        // TODO: Rename to targetDebtPerShare (in fn below too)
-        int256 targetDebtPerDebtShare = lowPrecisionValuePerShare + xxxRatio;
+        // TODO: Explain this...
+        int256 targetDebtPerDebtShare = _calculateTargetDebtPerShare(self, outstandingMarketBalance);
 
         // TODO: Explain what this is, overall goal of the loop...
+        // TODO: Consider moving this to a separate function?
         // this loop should rarely execute the body. When it does, it only executes once for each pool that passes the limit.
         // since `_distributeMarket` is not run for most pools, market users are not hit with any overhead as a result of this,
         // additionally,
@@ -366,42 +358,28 @@ library Market {
             // Get the in-range-pool with the highest maximum debt share value.
             // TODO: Understand why we're getting this max.
             HeapUtil.Node memory heapNode = self.inRangePools.extractMax();
-            // TODO: Use these below - can't atm because of stack too deep errors.
-            // uint poolId = heapNode.id;
+            uint poolId = heapNode.id;
             int128 poolMaxShareValue = -heapNode.priority;
 
-            // TODO: See below. Failed attempt to extract this code into a fn call.
-            // TODO: Can call this with named parameters to avoid comments?
-            // (int256 newDistributedMarketBalance, int256 newOutstandingMarketBalance) = _processInRangePool(
-            //     heapNode.id, // poolId
-            //     -heapNode.priority, // poolMaxDebtShare
-            //     targetBalance,
-            //     distributedMarketBalance
-            // );
-            // distributedMarketBalance = newDistributedMarketBalance;
-            // outstandingMarketBalance = newOutstandingMarketBalance;
+            // TODO: Explain this...
+            int256 debtAmount = _distributeDebtToLimit(self, poolMaxShareValue);
 
-            // distribute to limit
-            // TODO: Extract and explain precision calculations.
-            int debtAmount = (int(int128(self.debtDist.totalShares)) *
-                (poolMaxShareValue - self.debtDist.valuePerShare / 1e9)) / 1e18;
-
-            self.debtDist.distributeValue(debtAmount);
-
+            // TODO: Remove if unused.
             // sanity
             //require(self.debtDist.valuePerShare/1e9 == poolMaxShareValue, "distribution calculation is borked");
 
             distributedMarketBalance += debtAmount;
             outstandingMarketBalance = targetBalance - distributedMarketBalance;
 
+            // TODO: Comment
             // sanity
-            require(self.debtDist.getActorShares(bytes32(uint(heapNode.id))) > 0, "no shares on actor removal");
+            require(self.debtDist.getActorShares(bytes32(poolId)) > 0, "no shares on actor removal");
 
             // detach market from pool (the pool will remain "detached" until the pool manager specifies a new debtDist)
 
-            // TODO: Abstracted to remove stack too deep errors.
-            // int newPoolDebt = self.debtDist.updateActorShares(bytes32(poolId), 0);
-            self.poolPendingDebt[uint128(heapNode.id)] += self.debtDist.updateActorShares(bytes32(uint(heapNode.id)), 0);
+            // TODO: Explain...
+            int newPoolDebt = self.debtDist.updateActorShares(bytes32(poolId), 0);
+            self.poolPendingDebt[uint128(poolId)] += newPoolDebt;
 
             // note: we don't have to update the capacity because pool max share value - valuePerShare = 0, so no change
             // and conceptually it makes sense because this pools contribution to the capacity should have been used at this point
@@ -423,48 +401,35 @@ library Market {
         self.lastDistributedMarketBalance = int128(targetBalance);
     }
 
-    // TODO: This is an attempt to extract logic from the function above in order to (1) Remove stack too deep errors and (2) Improve readability.
-    // ...however, the stack too deep error remains (now in this function), and readability actually becomes worse because of how many variables need
-    // ...to be passed between the functions.
-    // function _processInRangePool(
-    //     uint poolId,
-    //     int128 poolMaxShareValue,
-    //     int256 targetBalance,
-    //     int256 distributedMarketBalance,
-    //     int256 targetDebtPerDebtShare,
-    // ) private returns (int256 newDistributedMarketBalance, int256 newOutstandingMarketBalance, int256 newTargetDebtPerDebtShare) {
-    //     // distribute to limit
-    //     // TODO: Extract and explain precision calculations.
-    //     int debtAmount = (int(int128(self.debtDist.totalShares)) * (poolMaxShareValue - self.debtDist.valuePerShare / 1e9)) /
-    //         1e18;
+    function _distributeDebtToLimit(Data storage self, int128 poolMaxShareValue) private returns (int debtAmount) {
+        // distribute to limit
+        // TODO: Extract and explain precision calculations.
+        debtAmount =
+            (int(int128(self.debtDist.totalShares)) * (poolMaxShareValue - self.debtDist.valuePerShare / 1e9)) /
+            1e18;
 
-    //     self.debtDist.distributeValue(debtAmount);
+        self.debtDist.distributeValue(debtAmount);
+    }
 
-    //     // sanity
-    //     //require(self.debtDist.valuePerShare/1e9 == poolMaxShareValue, "distribution calculation is borked");
+    /**
+     * @dev TODO
+     */
+    function _calculateTargetDebtPerShare(Data storage self, int256 outstandingMarketBalance)
+        private
+        returns (int256 targetDebtPerShare)
+    {
+        // TODO: Explain what this is...
+        // TODO: Use new function Distribution.getLowPrecisionValuePerShare().
+        // Value per share is high precision (1e27), so downscale to 1e18.
+        int128 lowPrecisionValuePerShare = self.debtDist.valuePerShare / 1e9;
 
-    //     newDistributedMarketBalance = distributedMarketBalance + debtAmount;
-    //     newOutstandingMarketBalance = targetBalance - distributedMarketBalance;
+        // TODO: Why this scaling? And rename.
+        int256 xxxPrecisionOutstandingMarketBalance = outstandingMarketBalance * MathUtil.INT_UNIT;
 
-    //     // sanity
-    //     require(self.debtDist.getActorShares(bytes32(poolId)) > 0, "no shares on actor removal");
+        // TODO: What is this? And rename.
+        int256 xxxRatio = xxxPrecisionOutstandingMarketBalance / int128(self.debtDist.totalShares);
 
-    //     // detach market from pool (the pool will remain "detached" until the pool manager specifies a new debtDist)
-
-    //     int newPoolDebt = self.debtDist.updateActorShares(bytes32(poolId), 0);
-    //     self.poolPendingDebt[uint128(poolId)] += newPoolDebt;
-
-    //     // note: we don't have to update the capacity because pool max share value - valuePerShare = 0, so no change
-    //     // and conceptually it makes sense because this pools contribution to the capacity should have been used at this point
-
-    //     if (self.debtDist.totalShares == 0) {
-    //         // we just popped the last pool, can't move the market balance any higher
-    //         self.lastDistributedMarketBalance = int128(distributedMarketBalance);
-    //         return;
-    //     }
-
-    //     targetDebtPerDebtShare =
-    //         self.debtDist.valuePerShare +
-    //         ((outstandingMarketBalance * MathUtil.INT_UNIT) / int128(self.debtDist.totalShares));
-    // }
+        // TODO: Why is the target the combination of these two values?
+        targetDebtPerShare = lowPrecisionValuePerShare + xxxRatio;
+    }
 }
