@@ -44,7 +44,7 @@ contract CollateralModule is ICollateralModule {
         uint targetCRatio,
         uint minimumCRatio,
         uint liquidationReward,
-        bool stakingEnabled
+        bool depositingEnabled
     ) external override {
         OwnableStorage.onlyOwner();
         CollateralConfiguration.set(
@@ -53,9 +53,9 @@ contract CollateralModule is ICollateralModule {
             targetCRatio,
             minimumCRatio,
             liquidationReward,
-            stakingEnabled
+            depositingEnabled
         );
-        emit CollateralConfigured(collateralType, priceFeed, targetCRatio, minimumCRatio, liquidationReward, stakingEnabled);
+        emit CollateralConfigured(collateralType, priceFeed, targetCRatio, minimumCRatio, liquidationReward, depositingEnabled);
     }
 
     /**
@@ -78,7 +78,7 @@ contract CollateralModule is ICollateralModule {
 
             CollateralConfiguration.Data storage collateral = CollateralConfiguration.load(collateralType);
 
-            if (!hideDisabled || collateral.stakingEnabled) {
+            if (!hideDisabled || collateral.depositingEnabled) {
                 filteredCollaterals[collateralsIdx++] = collateral;
             }
         }
