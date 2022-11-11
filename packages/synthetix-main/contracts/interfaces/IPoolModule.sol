@@ -12,7 +12,7 @@ interface IPoolModule {
     event PoolNominationRevoked(uint128 indexed poolId, address indexed owner);
     event PoolOwnershipRenounced(uint128 indexed poolId, address indexed owner);
     event PoolNameUpdated(uint128 indexed poolId, string indexed name, address indexed sender);
-    event PoolConfigurationSet(uint128 indexed poolId, MarketConfiguration.Data[] indexed markets, address executedBy);
+    event PoolConfigurationSet(uint128 indexed poolId, MarketConfiguration.Data[] markets, address indexed sender);
 
     /// @notice creates a new pool
     function createPool(uint128 requestedPoolId, address owner) external;
