@@ -161,7 +161,7 @@ contract LiquidationModule is ILiquidationModule {
         }
 
         // award the collateral that was just taken to the specified account
-        Account.load(liquidateAsAccountId).collaterals[collateralType].depositCollateral(collateralRewarded);
+        Account.load(liquidateAsAccountId).collaterals[collateralType].deposit(collateralRewarded);
 
         emit VaultLiquidation(poolId, collateralType, amountLiquidated, collateralRewarded, collateralRewarded);
     }

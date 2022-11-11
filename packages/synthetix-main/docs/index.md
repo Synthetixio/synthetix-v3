@@ -575,18 +575,18 @@ event CollateralConfigured(address collateralType, address priceFeed, uint256 ta
 
 Emitted when a collateral type’s configuration is created or updated.
 
-### CollateralDeposited
+###Deposited
 
 ```solidity
-event CollateralDeposited(uint128 accountId, address collateralType, uint256 amount, address sender)
+eventDeposited(uint128 accountId, address collateralType, uint256 amount, address sender)
 ```
 
 Emitted when `amount` of collateral of type `collateralType` is deposited to account `accountId` by `sender`.
 
-### CollateralWithdrawn
+### Withdrawn
 
 ```solidity
-event CollateralWithdrawn(uint128 accountId, address collateralType, uint256 amount, address sender)
+event Withdrawn(uint128 accountId, address collateralType, uint256 amount, address sender)
 ```
 
 Emitted when `amount` of collateral of type `collateralType` is withdrawn from account `accountId` by `sender`.
@@ -629,10 +629,10 @@ function getCollateralPrice(address collateralType) external view returns (uint2
 
 Returns the current value of a specified collateral type
 
-### depositCollateral
+### deposit
 
 ```solidity
-function depositCollateral(uint128 accountId, address collateralType, uint256 amount) external
+function deposit(uint128 accountId, address collateralType, uint256 amount) external
 ```
 
 Deposits `amount` of collateral of type `collateralType` into account `accountId`.
@@ -643,10 +643,10 @@ Requirements:
 
 Emits a {CollateralDeposited} event.
 
-### withdrawCollateral
+### Withdraw
 
 ```solidity
-function withdrawCollateral(uint128 accountId, address collateralType, uint256 amount) external
+function Withdraw(uint128 accountId, address collateralType, uint256 amount) external
 ```
 
 Withdraws `amount` of collateral of type `collateralType` from account `accountId`.
@@ -700,18 +700,18 @@ event CollateralConfigured(address collateralType, address priceFeed, uint256 ta
 
 Emitted when a collateral type’s configuration is created or updated.
 
-### CollateralDeposited
+###Deposited
 
 ```solidity
-event CollateralDeposited(uint128 accountId, address collateralType, uint256 amount, address sender)
+eventDeposited(uint128 accountId, address collateralType, uint256 amount, address sender)
 ```
 
 Emitted when `amount` of collateral of type `collateralType` is deposited to account `accountId` by `sender`.
 
-### CollateralWithdrawn
+### Withdrawn
 
 ```solidity
-event CollateralWithdrawn(uint128 accountId, address collateralType, uint256 amount, address sender)
+event Withdrawn(uint128 accountId, address collateralType, uint256 amount, address sender)
 ```
 
 Emitted when `amount` of collateral of type `collateralType` is withdrawn from account `accountId` by `sender`.
@@ -754,10 +754,10 @@ function getCollateralPrice(address collateralType) external view returns (uint2
 
 Returns the current value of a specified collateral type
 
-### depositCollateral
+### deposit
 
 ```solidity
-function depositCollateral(uint128 accountId, address collateralType, uint256 amount) external
+function deposit(uint128 accountId, address collateralType, uint256 amount) external
 ```
 
 Deposits `amount` of collateral of type `collateralType` into account `accountId`.
@@ -768,10 +768,10 @@ Requirements:
 
 Emits a {CollateralDeposited} event.
 
-### withdrawCollateral
+### Withdraw
 
 ```solidity
-function withdrawCollateral(uint128 accountId, address collateralType, uint256 amount) external
+function Withdraw(uint128 accountId, address collateralType, uint256 amount) external
 ```
 
 Withdraws `amount` of collateral of type `collateralType` from account `accountId`.
@@ -1029,16 +1029,16 @@ event MaximumMarketCollateralConfigured(uint128 marketId, address collateralType
 event MarketRegistered(address market, uint128 marketId)
 ```
 
-### UsdDeposited
+### MarketUsdDeposited
 
 ```solidity
-event UsdDeposited(uint128 marketId, address target, uint256 amount, address sender)
+event MarketUsdDeposited(uint128 marketId, address target, uint256 amount, address sender)
 ```
 
-### UsdWithdrawn
+### MarketUsdWithdrawn
 
 ```solidity
-event UsdWithdrawn(uint128 marketId, address target, uint256 amount, address sender)
+event MarketUsdWithdrawn(uint128 marketId, address target, uint256 amount, address sender)
 ```
 
 ### registerMarket
@@ -1049,18 +1049,18 @@ function registerMarket(address market) external returns (uint128)
 
 registers a new market
 
-### depositUsd
+### depositMarketUsd
 
 ```solidity
-function depositUsd(uint128 marketId, address target, uint256 amount) external
+function depositMarketUsd(uint128 marketId, address target, uint256 amount) external
 ```
 
 target deposits amount of synths to the marketId
 
-### withdrawUsd
+### withdrawMarketUsd
 
 ```solidity
-function withdrawUsd(uint128 marketId, address target, uint256 amount) external
+function withdrawMarketUsd(uint128 marketId, address target, uint256 amount) external
 ```
 
 target withdraws amount of synths to the marketId
@@ -1117,16 +1117,16 @@ function getMarketDebtPerShare(uint128 marketId) external returns (int256)
 event MarketRegistered(address market, uint128 marketId)
 ```
 
-### UsdDeposited
+### MarketUsdDeposited
 
 ```solidity
-event UsdDeposited(uint128 marketId, address target, uint256 amount, address sender)
+event MarketUsdDeposited(uint128 marketId, address target, uint256 amount, address sender)
 ```
 
-### UsdWithdrawn
+### MarketUsdWithdrawn
 
 ```solidity
-event UsdWithdrawn(uint128 marketId, address target, uint256 amount, address sender)
+event MarketUsdWithdrawn(uint128 marketId, address target, uint256 amount, address sender)
 ```
 
 ### registerMarket
@@ -1137,18 +1137,18 @@ function registerMarket(address market) external returns (uint128)
 
 registers a new market
 
-### depositUsd
+### depositMarketUsd
 
 ```solidity
-function depositUsd(uint128 marketId, address target, uint256 amount) external
+function depositMarketUsd(uint128 marketId, address target, uint256 amount) external
 ```
 
 target deposits amount of synths to the marketId
 
-### withdrawUsd
+### withdrawMarketUsd
 
 ```solidity
-function withdrawUsd(uint128 marketId, address target, uint256 amount) external
+function withdrawMarketUsd(uint128 marketId, address target, uint256 amount) external
 ```
 
 target withdraws amount of synths to the marketId

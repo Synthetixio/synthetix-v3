@@ -23,7 +23,7 @@ contract MarketCollateralModule is IMarketCollateralModule {
 
         uint maxDepositable = marketData.maximumDepositable[collateralType];
 
-        uint collateralEntryIndex = _findOrCreateDepositCollateralEntry(marketData, collateralType);
+        uint collateralEntryIndex = _findOrCreatedepositEntry(marketData, collateralType);
 
         Market.DepositedCollateral storage collateralEntry = marketData.depositedCollateral[collateralEntryIndex];
 
@@ -46,7 +46,7 @@ contract MarketCollateralModule is IMarketCollateralModule {
 
         if (msg.sender != marketData.marketAddress) revert AccessError.Unauthorized(msg.sender);
 
-        uint collateralEntryIndex = _findOrCreateDepositCollateralEntry(marketData, collateralType);
+        uint collateralEntryIndex = _findOrCreatedepositEntry(marketData, collateralType);
         Market.DepositedCollateral storage collateralEntry = marketData.depositedCollateral[collateralEntryIndex];
 
         if (amount > collateralEntry.amount) {
@@ -60,7 +60,7 @@ contract MarketCollateralModule is IMarketCollateralModule {
         emit MarketCollateralWithdrawn(marketId, collateralType, amount, msg.sender);
     }
 
-    function _findOrCreateDepositCollateralEntry(Market.Data storage marketData, address collateralType)
+    function _findOrCreatedepositEntry(Market.Data storage marketData, address collateralType)
         internal
         returns (uint collateralEntryIndex)
     {

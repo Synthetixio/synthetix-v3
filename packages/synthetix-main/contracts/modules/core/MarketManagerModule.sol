@@ -67,7 +67,7 @@ contract MarketManagerModule is IMarketManagerModule {
         return Market.load(marketId).isCapacityLocked();
     }
 
-    function depositUsd(
+    function depositMarketUsd(
         uint128 marketId,
         address target,
         uint amount
@@ -86,10 +86,10 @@ contract MarketManagerModule is IMarketManagerModule {
         // burn USD
         IUSDTokenModule(address(usdToken)).burnWithAllowance(target, msg.sender, amount);
 
-        emit UsdDeposited(marketId, target, amount, msg.sender);
+        emit MarketUsdDeposited(marketId, target, amount, msg.sender);
     }
 
-    function withdrawUsd(
+    function withdrawMarketUsd(
         uint128 marketId,
         address target,
         uint amount
@@ -107,6 +107,6 @@ contract MarketManagerModule is IMarketManagerModule {
         // mint some USD
         AssociatedSystem.load(_USD_TOKEN).asToken().mint(target, amount);
 
-        emit UsdWithdrawn(marketId, target, amount, msg.sender);
+        emit MarketUsdWithdrawn(marketId, target, amount, msg.sender);
     }
 }

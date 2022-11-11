@@ -114,9 +114,9 @@ contract CollateralModule is ICollateralModule {
     /////////////////////////////////////////////////
 
     /**
-     * @dev See {ICollateralModule-depositCollateral}.
+     * @dev See {ICollateralModule-deposit}.
      */
-    function depositCollateral(
+    function deposit(
         uint128 accountId,
         address collateralType,
         uint amount
@@ -141,15 +141,15 @@ contract CollateralModule is ICollateralModule {
 
         collateralType.safeTransferFrom(user, self, amount);
 
-        account.collaterals[collateralType].depositCollateral(amount);
+        account.collaterals[collateralType].deposit(amount);
 
-        emit CollateralDeposited(accountId, collateralType, amount, msg.sender);
+        emit Deposited(accountId, collateralType, amount, msg.sender);
     }
 
     /**
-     * @dev See {ICollateralModule-withdrawCollateral}.
+     * @dev See {ICollateralModule-Withdraw}.
      */
-    function withdrawCollateral(
+    function Withdraw(
         uint128 accountId,
         address collateralType,
         uint amount
@@ -166,7 +166,7 @@ contract CollateralModule is ICollateralModule {
 
         collateralType.safeTransfer(account.rbac.owner, amount);
 
-        emit CollateralWithdrawn(accountId, collateralType, amount, msg.sender);
+        emit Withdrawn(accountId, collateralType, amount, msg.sender);
     }
 
     /**

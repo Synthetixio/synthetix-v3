@@ -153,7 +153,7 @@ export function bootstrapWithStakedPool() {
     await r
       .systems()
       .Core.connect(user1)
-      .depositCollateral(accountId, collateralAddress, depositAmount.mul(10));
+      .deposit(accountId, collateralAddress, depositAmount.mul(10));
 
     // invest in the pool
     await r
