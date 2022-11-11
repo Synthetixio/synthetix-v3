@@ -1,5 +1,5 @@
 //SPDX-License-Identifier: MIT
-pragma solidity ^0.8.13;
+pragma solidity ^0.8.0;
 
 import "@synthetixio/core-contracts/contracts/token/ERC20.sol";
 import "../../interfaces/external/IRewardDistributor.sol";
