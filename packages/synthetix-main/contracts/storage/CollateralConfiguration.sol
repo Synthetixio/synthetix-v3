@@ -15,7 +15,7 @@ library CollateralConfiguration {
 
     struct Data {
         /// must be true for staking or collateral delegation
-        bool stakingEnabled;
+        bool depositingEnabled;
         /// accounts cannot mint sUSD if their debt brings their cratio below this value
         uint targetCRatio;
         /// accounts below the ratio specified here are immediately liquidated
@@ -48,7 +48,7 @@ library CollateralConfiguration {
         uint targetCRatio,
         uint minimumCRatio,
         uint liquidationReward,
-        bool stakingEnabled
+        bool depositingEnabled
     ) internal {
         SetUtil.AddressSet storage collateralTypes = loadAvailableCollaterals();
 
@@ -64,11 +64,11 @@ library CollateralConfiguration {
         collateral.minimumCRatio = minimumCRatio;
         collateral.priceFeed = priceFeed;
         collateral.liquidationReward = liquidationReward;
-        collateral.stakingEnabled = stakingEnabled;
+        collateral.depositingEnabled = depositingEnabled;
     }
 
     function collateralEnabled(address token) internal {
-        if (!load(token).stakingEnabled) {
+        if (!load(token).depositingEnabled) {
             revert InvalidCollateral(token);
         }
     }
