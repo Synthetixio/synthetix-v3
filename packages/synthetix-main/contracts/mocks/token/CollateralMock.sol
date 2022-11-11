@@ -19,6 +19,7 @@ contract CollateralMock is ERC20, IRewardDistributor {
     }
 
     function mint(address recipient, uint256 amount) external {
+        // IMPORTANT: In production, this function should revert if msg.sender is not the Synthetix CoreProxy address.
         _mint(recipient, amount);
     }
 
