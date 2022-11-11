@@ -56,7 +56,7 @@ interface IRewardsManagerModule {
         uint128 poolId,
         address collateralType,
         uint128 accountId
-    ) external returns (uint[] memory);
+    ) external returns (uint[] memory, address[] memory);
 
     /// @notice returns the number of individual units of amount emitted per second per share for the given poolId, collateralType vault
     function getCurrentRewardRate(uint128 poolId, address collateralType) external view returns (uint[] memory);
