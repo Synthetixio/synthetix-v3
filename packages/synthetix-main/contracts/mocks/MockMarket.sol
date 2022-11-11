@@ -85,7 +85,7 @@ contract MockMarket is IMarket {
         IMarketCollateralModule(_proxy).depositMarketCollateral(_marketId, collateralType, amount);
     }
 
-    function Withdraw(address collateralType, uint amount) external {
+    function withdraw(address collateralType, uint amount) external {
         IMarketCollateralModule(_proxy).withdrawMarketCollateral(_marketId, collateralType, amount);
         IERC20(collateralType).transfer(msg.sender, amount);
     }

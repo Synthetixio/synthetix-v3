@@ -149,7 +149,7 @@ contract CollateralModule is ICollateralModule {
     /**
      * @dev See {ICollateralModule-Withdraw}.
      */
-    function Withdraw(
+    function withdraw(
         uint128 accountId,
         address collateralType,
         uint amount

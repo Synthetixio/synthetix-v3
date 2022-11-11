@@ -93,7 +93,7 @@ interface ICollateralModule {
      * Emits a {CollateralWithdrawn} event.
      *
      */
-    function Withdraw(
+    function withdraw(
         uint128 accountId,
         address collateralType,
         uint amount
