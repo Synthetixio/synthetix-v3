@@ -110,7 +110,7 @@ contract RewardsManagerModule is IRewardsManagerModule {
         Account.onlyWithPermission(accountId, AccountRBAC._REWARDS_PERMISSION);
 
         Vault.Data storage vault = Pool.load(poolId).vaults[collateralType];
-        (uint[] memory rewards,) = vault.updateAvailableRewards(accountId);
+        (uint[] memory rewards, ) = vault.updateAvailableRewards(accountId);
         SetUtil.Bytes32Set storage rewardIds = vault.rewardIds;
 
         for (uint i = 1; i <= rewards.length; i++) {
