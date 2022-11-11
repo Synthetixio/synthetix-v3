@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-/// @title Interface an aggregator needs to adhere.
+/// @title Interface a reward distributor.
 interface IRewardDistributor {
     /// called by system
     function payout(
@@ -9,6 +9,6 @@ interface IRewardDistributor {
         uint128 poolId,
         address collateralType,
         address sender,
-        uint amount
+        uint256 amount
     ) external returns (bool);
 }

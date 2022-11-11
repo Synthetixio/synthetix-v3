@@ -15,7 +15,7 @@ interface IRewardsManagerModule {
         uint128 indexed accountId,
         uint128 indexed poolId,
         address indexed collateralType,
-        uint index,
+        address distributor,
         uint amountClaimed
     );
 
@@ -36,11 +36,19 @@ interface IRewardsManagerModule {
     ) external;
 
     /// @notice retrieves the amount of available rewards, and claims them to the caller's account.
-    function claimRewards(
+    function claimAllRewards(
         uint128 poolId,
         address collateralType,
         uint128 accountId
     ) external returns (uint[] memory);
+
+    /// @notice retrieves the amount of available rewards, and claims them to the caller's account for a single distributor.
+    function claimRewards(
+        uint128 poolId,
+        address collateralType,
+        uint128 accountId,
+        address distributor
+    ) external returns (uint);
 
     /// @notice retrieves the amount of available rewards.
     /// @dev this function should be called to get currently available rewards using `callStatic`
@@ -51,5 +59,5 @@ interface IRewardsManagerModule {
     ) external returns (uint[] memory);
 
     /// @notice returns the number of individual units of amount emitted per second per share for the given poolId, collateralType vault
-    function getCurrentRewardAccumulation(uint128 poolId, address collateralType) external view returns (uint[] memory);
+    function getCurrentRewardRate(uint128 poolId, address collateralType) external view returns (uint[] memory);
 }

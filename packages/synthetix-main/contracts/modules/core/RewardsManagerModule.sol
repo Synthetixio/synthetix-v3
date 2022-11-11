@@ -98,16 +98,11 @@ contract RewardsManagerModule is IRewardsManagerModule {
         return vault.updateAvailableRewards(accountId);
     }
 
-    function getCurrentRewardAccumulation(uint128 poolId, address collateralType)
-        external
-        view
-        override
-        returns (uint[] memory)
-    {
-        return _getCurrentRewardAccumulation(poolId, collateralType);
+    function getCurrentRewardRate(uint128 poolId, address collateralType) external view override returns (uint[] memory) {
+        return _getCurrentRewardRate(poolId, collateralType);
     }
 
-    function claimRewards(
+    function claimAllRewards(
         uint128 poolId,
         address collateralType,
         uint128 accountId
@@ -129,14 +124,44 @@ contract RewardsManagerModule is IRewardsManagerModule {
                     rewards[i - 1]
                 );
                 vault.rewards[rewardIds.valueAt(i)].actorInfo[accountId].pendingSend = 0;
-                emit RewardsClaimed(accountId, poolId, collateralType, i - 1, rewards[i - 1]);
+                emit RewardsClaimed(
+                    accountId,
+                    poolId,
+                    collateralType,
+                    address(vault.rewards[rewardIds.valueAt(i)].distributor),
+                    rewards[i - 1]
+                );
             }
         }
 
         return rewards;
     }
 
-    function _getCurrentRewardAccumulation(uint128 poolId, address collateralType) internal view returns (uint[] memory) {
+    function claimRewards(
+        uint128 poolId,
+        address collateralType,
+        uint128 accountId,
+        address distributor
+    ) external override returns (uint) {
+        Account.onlyWithPermission(accountId, AccountRBAC._REWARDS_PERMISSION);
+
+        Vault.Data storage vault = Pool.load(poolId).vaults[collateralType];
+        bytes32 rewardId = keccak256(abi.encode(poolId, collateralType, distributor));
+
+        if (!vault.rewardIds.contains(rewardId)) {
+            revert InvalidParameters("invalid-params", "reward is not found");
+        }
+
+        uint reward = vault.updateAvailableReward(accountId, rewardId);
+
+        vault.rewards[rewardId].distributor.payout(accountId, poolId, collateralType, msg.sender, reward);
+        vault.rewards[rewardId].actorInfo[accountId].pendingSend = 0;
+        emit RewardsClaimed(accountId, poolId, collateralType, address(vault.rewards[rewardId].distributor), reward);
+
+        return reward;
+    }
+
+    function _getCurrentRewardRate(uint128 poolId, address collateralType) internal view returns (uint[] memory) {
         Vault.Data storage vault = Pool.load(poolId).vaults[collateralType];
         SetUtil.Bytes32Set storage rewardIds = vault.rewardIds;
 

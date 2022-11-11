@@ -135,6 +135,35 @@ library Vault {
     }
 
     /**
+     * @dev Traverses available rewards for this vault and the reward id, and updates an accounts
+     * claim on them according to the amount of debt shares they have.
+     */
+    function updateAvailableReward(
+        Data storage self,
+        uint128 accountId,
+        bytes32 rewardId
+    ) internal returns (uint) {
+        uint totalShares = currentEpoch(self).incomingDebtDist.totalShares;
+        uint actorShares = currentEpoch(self).incomingDebtDist.getActorShares(bytes32(uint(accountId)));
+
+        RewardDistribution.Data storage dist = self.rewards[rewardId];
+
+        if (address(dist.distributor) == address(0)) {
+            revert("No distributor");
+        }
+
+        dist.rewardPerShare += uint128(dist.entry.updateEntry(totalShares));
+
+        dist.actorInfo[accountId].pendingSend += uint128(
+            (actorShares * (dist.rewardPerShare - dist.actorInfo[accountId].lastRewardPerShare)) / 1e18
+        );
+
+        dist.actorInfo[accountId].lastRewardPerShare = dist.rewardPerShare;
+
+        return dist.actorInfo[accountId].pendingSend;
+    }
+
+    /**
      * @dev Increments the current epoch index, effectively producing a
      * completely blank new VaultEpoch data structure in the vault.
      */
