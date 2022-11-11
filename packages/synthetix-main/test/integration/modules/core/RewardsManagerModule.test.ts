@@ -419,6 +419,39 @@ describe('RewardsManagerModule', function () {
     describe('wallets joining and leaving', () => {});
   });
 
+  describe('claimRewards()', async () => {
+    before(restore);
+
+    before('distribute reward', async () => {
+      await Collateral.connect(owner).distributeRewards(
+        systems().Core.address,
+        poolId,
+        collateralAddress(),
+        rewardAmount,
+        0, // timestamp
+        0
+      );
+    });
+
+    it('only works with owner', async () => {
+      await assertRevert(
+        systems()
+          .Core.connect(user2)
+          .claimRewards(poolId, collateralAddress(), accountId, Collateral.address),
+        'PermissionDenied',
+        systems().Core
+      );
+    });
+
+    it('successful claim reward', async () => {
+      await systems()
+        .Core.connect(user1)
+        .claimRewards(poolId, collateralAddress(), accountId, Collateral.address);
+
+      assertBn.equal(await Collateral.balanceOf(await user1.getAddress()), rewardAmount);
+    });
+  });
+
   describe('claimAllRewards()', async () => {
     before(restore);
 
