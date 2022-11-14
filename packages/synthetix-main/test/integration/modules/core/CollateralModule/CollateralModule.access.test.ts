@@ -79,7 +79,7 @@ describe('CollateralModule', function () {
           describe('when an unauthorized account tries to withdraw collateral', function () {
             it('reverts', async () => {
               await assertRevert(
-                systems().Core.connect(user2).Withdraw(1, Collateral.address, 100),
+                systems().Core.connect(user2).withdraw(1, Collateral.address, 100),
                 `PermissionDenied(1, "${Permissions.WITHDRAW}", "${await user2.getAddress()}")`,
                 systems().Core
               );
@@ -138,7 +138,7 @@ describe('CollateralModule', function () {
               describe('when the authorized account withdraws collateral', function () {
                 before('withdraw some collateral', async () => {
                   await (
-                    await systems().Core.connect(user3).Withdraw(1, Collateral.address, 100)
+                    await systems().Core.connect(user3).withdraw(1, Collateral.address, 100)
                   ).wait();
                 });
 

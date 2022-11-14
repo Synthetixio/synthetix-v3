@@ -186,7 +186,7 @@ describe('MarketCollateralModule', function () {
         await assertRevert(
           MockMarket()
             .connect(user1)
-            .Withdraw(collateralAddress(), configuredMaxAmount.div(2).add(1)),
+            .withdraw(collateralAddress(), configuredMaxAmount.div(2).add(1)),
           `InsufficientMarketCollateralWithdrawable(${marketId()}, "${collateralAddress()}", ${configuredMaxAmount
             .div(2)
             .add(1)
@@ -201,7 +201,7 @@ describe('MarketCollateralModule', function () {
           tx = await (
             await MockMarket()
               .connect(user1)
-              .Withdraw(collateralAddress(), configuredMaxAmount.div(2).div(4))
+              .withdraw(collateralAddress(), configuredMaxAmount.div(2).div(4))
           ).wait();
         });
 
@@ -247,7 +247,7 @@ describe('MarketCollateralModule', function () {
             // this should be the amount remaining
             await MockMarket()
               .connect(user1)
-              .Withdraw(
+              .withdraw(
                 collateralAddress(),
                 configuredMaxAmount.div(2).sub(configuredMaxAmount.div(2).div(4))
               );

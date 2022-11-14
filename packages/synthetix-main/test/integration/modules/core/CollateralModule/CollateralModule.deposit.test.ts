@@ -119,7 +119,7 @@ describe('CollateralModule', function () {
             describe('when attempting to withdraw more than available collateral', () => {
               it('reverts', async () => {
                 await assertRevert(
-                  systems().Core.connect(user1).Withdraw(1, Collateral.address, 101),
+                  systems().Core.connect(user1).withdraw(1, Collateral.address, 101),
                   'InsufficientAccountCollateral',
                   systems().Core
                 );
@@ -128,7 +128,7 @@ describe('CollateralModule', function () {
 
             describe('when withdrawing collateral', () => {
               before('withdraw some collateral', async () => {
-                const tx = await systems().Core.connect(user1).Withdraw(1, Collateral.address, 100);
+                const tx = await systems().Core.connect(user1).withdraw(1, Collateral.address, 100);
                 receipt = await tx.wait();
               });
 
