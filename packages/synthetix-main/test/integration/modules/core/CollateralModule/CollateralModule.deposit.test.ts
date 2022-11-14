@@ -89,9 +89,7 @@ describe('CollateralModule', function () {
             it('emits an event', async () => {
               await assertEvent(
                 receipt,
-                `CollateralDeposited(1, "${
-                  Collateral.address
-                }", 100, "${await user1.getAddress()}")`,
+                `Deposited(1, "${Collateral.address}", 100, "${await user1.getAddress()}")`,
                 systems().Core
               );
             });
@@ -135,9 +133,7 @@ describe('CollateralModule', function () {
               it('emits an event', async () => {
                 await assertEvent(
                   receipt,
-                  `CollateralWithdrawn(1, "${
-                    Collateral.address
-                  }", 100, "${await user1.getAddress()}")`,
+                  `Withdrawn(1, "${Collateral.address}", 100, "${await user1.getAddress()}")`,
                   systems().Core
                 );
               });
