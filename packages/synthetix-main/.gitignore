@@ -4,8 +4,8 @@ deployments/hardhat
 cannon
 typechain-types
 
-# generated tests
-contracts/test
+# generated test modules
+contracts/modules/test
 
 # generated routers
 contracts/routers

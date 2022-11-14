@@ -4,7 +4,6 @@ import { default as prompter } from '@synthetixio/core-utils/utils/io/prompter';
 import { readPackageJson } from '@synthetixio/core-utils/utils/misc/npm';
 import {
   SUBTASK_GENERATE_TESTABLE_STORAGE,
-  SUBTASK_LOAD_DEPLOYMENT,
   SUBTASK_SYNC_SOURCES,
   TASK_GENERATE_TESTABLE,
 } from '../task-names';
@@ -45,24 +44,31 @@ task(TASK_GENERATE_TESTABLE, 'Creates generated test contracts for all storage l
     await quietCompile(hre, !!quiet);
     //await hre.run(SUBTASK_LOAD_DEPLOYMENT, { instance: 'general', ...taskArguments });
     hre.router.deployment = {
-      general: { properties: { completed: false, totalGasUsed: '0' }, transactions: {}, contracts: {}},
+      general: {
+        properties: { completed: false, totalGasUsed: '0' },
+        transactions: {},
+        contracts: {},
+      },
       sources: {},
       abis: {},
     };
 
     await hre.run(SUBTASK_SYNC_SOURCES, taskArguments);
 
+    const storageLibs = Object.values(hre.router.deployment!.general.contracts).filter(
+      ({ isStorageLibrary }) => isStorageLibrary
+    );
 
-    const storageLibs = Object.values(hre.router.deployment!.general.contracts)
-      .filter(({ isStorageLibrary }) => isStorageLibrary);
-
-    console.log('storage libs', storageLibs.map(lib => lib.contractName));
+    console.log(
+      'storage libs',
+      storageLibs.map((lib) => lib.contractName)
+    );
 
     // scan for all storage interfaces
     for (const storageLibArtifact of storageLibs) {
       await hre.run(SUBTASK_GENERATE_TESTABLE_STORAGE, {
         artifact: storageLibArtifact.contractFullyQualifiedName,
-        output: `contracts/modules/test/Testable${storageLibArtifact.contractName}Module.sol`
+        output: `contracts/modules/test/Testable${storageLibArtifact.contractName}Module.sol`,
       });
     }
   });

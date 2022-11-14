@@ -110,7 +110,7 @@ export async function getStorageLibrariesFullyQualifiedNames(hre: HardhatRuntime
 
   return names.filter((name) => {
     const { sourceName } = parseFullyQualifiedName(name);
-    return _contractIsStorageLibrary(sourceName, hre);
+    return _contractIsStorageLibrary(sourceName);
   });
 }
 
@@ -119,7 +119,8 @@ function _contractIsModule(contractSourcePath: string, hre: HardhatRuntimeEnviro
   return source.startsWith(`${hre.config.router.paths.modules}${path.sep}`);
 }
 
-function _contractIsStorageLibrary(contractSourcePath: string, hre: HardhatRuntimeEnvironment) {
-  // TODO: really storage lbiraries can be any library that has a `struct Data` but this is an easy way to conform atm
+function _contractIsStorageLibrary(contractSourcePath: string) {
+  // TODO: really storage libraries can be any library that has a
+  // `struct Data` but this is an easy way to conform atm
   return contractSourcePath.startsWith('contracts/storage');
 }

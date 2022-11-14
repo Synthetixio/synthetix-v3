@@ -1,7 +1,10 @@
 const { subtask } = require('hardhat/config');
 const { default: logger } = require('@synthetixio/core-utils/utils/io/logger');
 const { default: prompter } = require('@synthetixio/core-utils/utils/io/prompter');
-const { getModulesFullyQualifiedNames, getStorageLibrariesFullyQualifiedNames } = require('../internal/contract-helper');
+const {
+  getModulesFullyQualifiedNames,
+  getStorageLibrariesFullyQualifiedNames,
+} = require('../internal/contract-helper');
 const { initContractData } = require('../internal/process-contracts');
 const { SUBTASK_SYNC_SOURCES } = require('../task-names');
 
@@ -22,19 +25,29 @@ subtask(
     hre
   );
 
-  const storageLibrariesFullyQualifiedNames = await getStorageLibrariesFullyQualifiedNames(
-    hre
-  )
+  const storageLibrariesFullyQualifiedNames = await getStorageLibrariesFullyQualifiedNames(hre);
 
-  const removed = await _removeDeletedSources({ modulesFullyQualifiedNames, storageLibrariesFullyQualifiedNames, previousDeployment });
-  const added = await _addNewSources({ modulesFullyQualifiedNames, storageLibrariesFullyQualifiedNames, previousDeployment });
+  const removed = await _removeDeletedSources({
+    modulesFullyQualifiedNames,
+    storageLibrariesFullyQualifiedNames,
+    previousDeployment,
+  });
+  const added = await _addNewSources({
+    modulesFullyQualifiedNames,
+    storageLibrariesFullyQualifiedNames,
+    previousDeployment,
+  });
 
   if (!removed && !added) {
     logger.checked('Deployment data is in sync with sources');
   }
 });
 
-async function _removeDeletedSources({ modulesFullyQualifiedNames, storageLibrariesFullyQualifiedNames, previousDeployment }) {
+async function _removeDeletedSources({
+  modulesFullyQualifiedNames,
+  storageLibrariesFullyQualifiedNames,
+  previousDeployment,
+}) {
   if (!previousDeployment) return false;
 
   const previousFullyQualifiedNames = Object.entries(previousDeployment.general.contracts)
@@ -42,7 +55,9 @@ async function _removeDeletedSources({ modulesFullyQualifiedNames, storageLibrar
     .map(([fullyQualifiedName]) => fullyQualifiedName);
 
   const toRemove = previousFullyQualifiedNames.filter(
-    (name) => !modulesFullyQualifiedNames.includes(name) && !storageLibrariesFullyQualifiedNames.includes(name)
+    (name) =>
+      !modulesFullyQualifiedNames.includes(name) &&
+      !storageLibrariesFullyQualifiedNames.includes(name)
   );
 
   if (toRemove.length > 0) {
@@ -56,7 +71,11 @@ async function _removeDeletedSources({ modulesFullyQualifiedNames, storageLibrar
   return toRemove.length > 0;
 }
 
-async function _addNewSources({ modulesFullyQualifiedNames, storageLibrariesFullyQualifiedNames, previousDeployment }) {
+async function _addNewSources({
+  modulesFullyQualifiedNames,
+  storageLibrariesFullyQualifiedNames,
+  previousDeployment,
+}) {
   const toAdd = [];
 
   // Initialize cotract data, using previous deployed one, or empty data.

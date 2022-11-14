@@ -1,7 +1,5 @@
 import { setTimeout } from 'node:timers/promises';
 import { task } from 'hardhat/config';
-import { HardhatRuntimeEnvironment } from 'hardhat/types';
-import { TASK_COMPILE } from 'hardhat/builtin-tasks/task-names';
 import { default as logger } from '@synthetixio/core-utils/utils/io/logger';
 import { default as prompter } from '@synthetixio/core-utils/utils/io/prompter';
 import * as types from '@synthetixio/core-utils/utils/hardhat/argument-types';
