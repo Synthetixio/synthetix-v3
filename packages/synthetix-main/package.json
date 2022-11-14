@@ -4,6 +4,7 @@
   "description": "Core Synthetix Protocol Contracts",
   "private": true,
   "scripts": {
+    "build": "hardhat generate-testable",
     "test": "hardhat test",
     "coverage": "npx hardhat cannon:build && hardhat --network hardhat coverage",
     "compile-contracts": "hardhat compile",

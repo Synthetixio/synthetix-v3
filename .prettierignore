@@ -5,4 +5,5 @@ build/
 **/coverage*
 packages/core-utils/utils
 packages/*/typechain-types
-contracts/routers
+packages/*/contracts/routers
+packages/*/contracts/modules/test

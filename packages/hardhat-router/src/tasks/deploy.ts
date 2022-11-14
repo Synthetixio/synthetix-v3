@@ -1,7 +1,5 @@
 import { setTimeout } from 'node:timers/promises';
 import { task } from 'hardhat/config';
-import { HardhatRuntimeEnvironment } from 'hardhat/types';
-import { TASK_COMPILE } from 'hardhat/builtin-tasks/task-names';
 import { default as logger } from '@synthetixio/core-utils/utils/io/logger';
 import { default as prompter } from '@synthetixio/core-utils/utils/io/prompter';
 import * as types from '@synthetixio/core-utils/utils/hardhat/argument-types';
@@ -26,6 +24,7 @@ import {
   SUBTASK_VALIDATE_ROUTER,
   TASK_DEPLOY,
 } from '../task-names';
+import { quietCompile } from '../utils/quiet-compile';
 
 export interface DeployTaskParams {
   noConfirm?: boolean;
@@ -79,7 +78,7 @@ task(TASK_DEPLOY, 'Deploys all system modules')
 
       await hre.run(SUBTASK_CREATE_DEPLOYMENT, taskArguments);
       await hre.run(SUBTASK_LOAD_DEPLOYMENT, taskArguments);
-      await _compile(hre, !!quiet);
+      await quietCompile(hre, !!quiet);
       await hre.run(SUBTASK_SYNC_SOURCES, taskArguments);
       await hre.run(SUBTASK_SYNC_PROXY);
       await hre.run(SUBTASK_PRINT_INFO, taskArguments);
@@ -91,7 +90,7 @@ task(TASK_DEPLOY, 'Deploys all system modules')
       await hre.run(SUBTASK_VALIDATE_INTERFACES);
       await hre.run(SUBTASK_DEPLOY_MODULES);
       await hre.run(SUBTASK_GENERATE_ROUTER_SOURCE);
-      await _compile(hre, !!quiet);
+      await quietCompile(hre, !!quiet);
       await hre.run(SUBTASK_VALIDATE_ROUTER);
       await hre.run(SUBTASK_DEPLOY_ROUTER);
 
@@ -115,23 +114,3 @@ task(TASK_DEPLOY, 'Deploys all system modules')
       await setTimeout(1);
     }
   });
-
-/*
- * Note: Even though hardhat's compile task has a quiet option,
- * it still prints some output. This is a hack to completely silence
- * output during compile task run.
- */
-async function _compile(hre: HardhatRuntimeEnvironment, quiet: boolean) {
-  let logCache;
-
-  if (quiet) {
-    logCache = console.log;
-    console.log = () => {};
-  }
-
-  try {
-    await hre.run(TASK_COMPILE, { force: true, quiet: true });
-  } finally {
-    if (logCache) console.log = logCache;
-  }
-}
