@@ -5,7 +5,7 @@ import "@synthetixio/core-contracts/contracts/token/ERC20.sol";
 import "../../interfaces/external/IRewardDistributor.sol";
 import "../../interfaces/IRewardsManagerModule.sol";
 
-contract CollateralMock is ERC20, IRewardDistributor {
+contract CollateralMock is IRewardDistributor, ERC20 {
     function initialize(
         string memory tokenName,
         string memory tokenSymbol,
@@ -19,7 +19,6 @@ contract CollateralMock is ERC20, IRewardDistributor {
     }
 
     function mint(address recipient, uint256 amount) external {
-        // IMPORTANT: In production, this function should revert if msg.sender is not the Synthetix CoreProxy address.
         _mint(recipient, amount);
     }
 
@@ -31,6 +30,7 @@ contract CollateralMock is ERC20, IRewardDistributor {
         address sender,
         uint amount
     ) external returns (bool) {
+        // IMPORTANT: In production, this function should revert if msg.sender is not the Synthetix CoreProxy address.
         _mint(sender, amount);
         return true;
     }
@@ -44,5 +44,9 @@ contract CollateralMock is ERC20, IRewardDistributor {
         uint duration
     ) public {
         IRewardsManagerModule(rewardManager).distributeRewards(poolId, collateralType, amount, start, duration);
+    }
+
+    function token() public returns (address) {
+        return address(this);
     }
 }

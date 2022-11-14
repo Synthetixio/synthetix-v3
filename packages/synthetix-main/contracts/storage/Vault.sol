@@ -108,13 +108,7 @@ library Vault {
      * @dev Traverses available rewards for this vault, and updates an accounts
      * claim on them according to the amount of debt shares they have.
      */
-    function updateAvailableRewards(Data storage self, uint128 accountId)
-        internal
-        returns (uint[] memory, address[] memory)
-    {
-        uint totalShares = currentEpoch(self).incomingDebtDist.totalShares;
-        uint actorShares = currentEpoch(self).incomingDebtDist.getActorShares(bytes32(uint(accountId)));
-
+    function updateRewards(Data storage self, uint128 accountId) internal returns (uint[] memory, address[] memory) {
         uint[] memory rewards = new uint[](self.rewardIds.length());
         address[] memory distributors = new address[](self.rewardIds.length());
         for (uint i = 0; i < self.rewardIds.length(); i++) {
@@ -124,15 +118,7 @@ library Vault {
                 continue;
             }
 
-            dist.rewardPerShare += uint128(dist.entry.updateEntry(totalShares));
-
-            dist.actorInfo[accountId].pendingSend += uint128(
-                (actorShares * (dist.rewardPerShare - dist.actorInfo[accountId].lastRewardPerShare)) / 1e18
-            );
-
-            dist.actorInfo[accountId].lastRewardPerShare = dist.rewardPerShare;
-
-            rewards[i] = dist.actorInfo[accountId].pendingSend;
+            rewards[i] = updateReward(self, accountId, self.rewardIds.valueAt(i + 1));
             distributors[i] = address(dist.distributor);
         }
 
@@ -143,7 +129,7 @@ library Vault {
      * @dev Traverses available rewards for this vault and the reward id, and updates an accounts
      * claim on them according to the amount of debt shares they have.
      */
-    function updateAvailableReward(
+    function updateReward(
         Data storage self,
         uint128 accountId,
         bytes32 rewardId

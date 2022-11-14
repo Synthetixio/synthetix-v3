@@ -110,7 +110,7 @@ describe('RewardsManagerModule', function () {
         });
 
         it('is distributed', async () => {
-          const [rewards] = await systems().Core.callStatic.getAvailableRewards(
+          const [rewards] = await systems().Core.callStatic.getRewards(
             poolId,
             collateralAddress(),
             accountId
@@ -158,7 +158,7 @@ describe('RewardsManagerModule', function () {
         });
 
         it('is not distributed future yet', async () => {
-          const [rewards] = await systems().Core.callStatic.getAvailableRewards(
+          const [rewards] = await systems().Core.callStatic.getRewards(
             poolId,
             collateralAddress(),
             accountId
@@ -169,9 +169,13 @@ describe('RewardsManagerModule', function () {
         });
 
         it('has no rate', async () => {
-          const rates = await systems().Core.getCurrentRewardRate(poolId, collateralAddress());
+          const rate = await systems().Core.getRewardRate(
+            poolId,
+            collateralAddress(),
+            Collateral.address
+          );
 
-          assertBn.equal(rates[0], 0);
+          assertBn.equal(rate, 0);
         });
 
         describe('after time passes', () => {
@@ -181,7 +185,7 @@ describe('RewardsManagerModule', function () {
 
           it('is distributed', async () => {
             // should have received 2 distributions
-            const [rewards] = await systems().Core.callStatic.getAvailableRewards(
+            const [rewards] = await systems().Core.callStatic.getRewards(
               poolId,
               collateralAddress(),
               accountId
@@ -190,9 +194,13 @@ describe('RewardsManagerModule', function () {
           });
 
           it('has no rate', async () => {
-            const rates = await systems().Core.getCurrentRewardRate(poolId, collateralAddress());
+            const rate = await systems().Core.getRewardRate(
+              poolId,
+              collateralAddress(),
+              Collateral.address
+            );
 
-            assertBn.equal(rates[0], 0);
+            assertBn.equal(rate, 0);
           });
         });
       });
@@ -232,7 +240,7 @@ describe('RewardsManagerModule', function () {
         });
 
         it('is fully distributed', async () => {
-          const [rewards] = await systems().Core.callStatic.getAvailableRewards(
+          const [rewards] = await systems().Core.callStatic.getRewards(
             poolId,
             collateralAddress(),
             accountId
@@ -283,7 +291,7 @@ describe('RewardsManagerModule', function () {
         });
 
         it('does not distribute future', async () => {
-          const [rewards] = await systems().Core.callStatic.getAvailableRewards(
+          const [rewards] = await systems().Core.callStatic.getRewards(
             poolId,
             collateralAddress(),
             accountId
@@ -298,7 +306,7 @@ describe('RewardsManagerModule', function () {
           });
 
           it('is fully distributed', async () => {
-            const [rewards] = await systems().Core.callStatic.getAvailableRewards(
+            const [rewards] = await systems().Core.callStatic.getRewards(
               poolId,
               collateralAddress(),
               accountId
@@ -336,7 +344,7 @@ describe('RewardsManagerModule', function () {
         });
 
         it('distributes portion of rewards immediately', async () => {
-          const [rewards] = await systems().Core.callStatic.getAvailableRewards(
+          const [rewards] = await systems().Core.callStatic.getRewards(
             poolId,
             collateralAddress(),
             accountId
@@ -352,7 +360,7 @@ describe('RewardsManagerModule', function () {
           });
 
           it('distributes more portion of rewards', async () => {
-            const [rewards] = await systems().Core.callStatic.getAvailableRewards(
+            const [rewards] = await systems().Core.callStatic.getRewards(
               poolId,
               collateralAddress(),
               accountId
@@ -378,7 +386,7 @@ describe('RewardsManagerModule', function () {
             // this test is skipped for now because, among all
             // the other tests, it does not behave as expected
             it('distributes portion of rewards immediately', async () => {
-              const [rewards] = await systems().Core.callStatic.getAvailableRewards(
+              const [rewards] = await systems().Core.callStatic.getRewards(
                 poolId,
                 collateralAddress(),
                 accountId
@@ -398,7 +406,7 @@ describe('RewardsManagerModule', function () {
               });
 
               it('distributes more portion of rewards', async () => {
-                const [rewards] = await systems().Core.callStatic.getAvailableRewards(
+                const [rewards] = await systems().Core.callStatic.getRewards(
                   poolId,
                   collateralAddress(),
                   accountId
@@ -423,7 +431,7 @@ describe('RewardsManagerModule', function () {
   describe('claimRewards()', async () => {
     before(restore);
 
-    before('distribute reward', async () => {
+    before('distribute some reward', async () => {
       await Collateral.connect(owner).distributeRewards(
         systems().Core.address,
         poolId,
@@ -444,40 +452,11 @@ describe('RewardsManagerModule', function () {
       );
     });
 
-    it('successful claim reward', async () => {
-      await systems()
-        .Core.connect(user1)
-        .claimRewards(poolId, collateralAddress(), accountId, Collateral.address);
-
-      assertBn.equal(await Collateral.balanceOf(await user1.getAddress()), rewardAmount);
-    });
-  });
-
-  describe('claimAllRewards()', async () => {
-    before(restore);
-
-    before('distribute some reward', async () => {
-      await Collateral.connect(owner).distributeRewards(
-        systems().Core.address,
-        poolId,
-        collateralAddress(),
-        rewardAmount,
-        0, // timestamp
-        0
-      );
-    });
-
-    it('only works with owner', async () => {
-      await assertRevert(
-        systems().Core.connect(user2).claimAllRewards(poolId, collateralAddress(), accountId),
-        'PermissionDenied',
-        systems().Core
-      );
-    });
-
     describe('successful claim', () => {
       before('claim', async () => {
-        await systems().Core.connect(user1).claimAllRewards(poolId, collateralAddress(), accountId);
+        await systems()
+          .Core.connect(user1)
+          .claimRewards(poolId, collateralAddress(), accountId, Collateral.address);
       });
 
       it('pays out', async () => {
@@ -485,7 +464,7 @@ describe('RewardsManagerModule', function () {
       });
 
       it('returns no rewards remaining', async () => {
-        const [rewards] = await systems().Core.callStatic.getAvailableRewards(
+        const [rewards] = await systems().Core.callStatic.getRewards(
           poolId,
           collateralAddress(),
           accountId
@@ -497,7 +476,9 @@ describe('RewardsManagerModule', function () {
       });
 
       it('doesnt get any rewards on subsequent claim', async () => {
-        await systems().Core.connect(user1).claimAllRewards(poolId, collateralAddress(), accountId);
+        await systems()
+          .Core.connect(user1)
+          .claimRewards(poolId, collateralAddress(), accountId, Collateral.address);
 
         assertBn.equal(await Collateral.balanceOf(await user1.getAddress()), rewardAmount);
       });
@@ -517,7 +498,7 @@ describe('RewardsManagerModule', function () {
         before('claim', async () => {
           await systems()
             .Core.connect(user1)
-            .claimAllRewards(poolId, collateralAddress(), accountId);
+            .claimRewards(poolId, collateralAddress(), accountId, Collateral.address);
         });
 
         it('pays out', async () => {
@@ -528,7 +509,7 @@ describe('RewardsManagerModule', function () {
         });
 
         it('returns no rewards remaining', async () => {
-          const [rewards] = await systems().Core.callStatic.getAvailableRewards(
+          const [rewards] = await systems().Core.callStatic.getRewards(
             poolId,
             collateralAddress(),
             accountId
@@ -539,10 +520,10 @@ describe('RewardsManagerModule', function () {
           assertBn.equal(rewards[0], 0);
         });
 
-        it('doesnt get any rewards on subsequent claim', async () => {
+        it('does not get any rewards on subsequent claim', async () => {
           await systems()
             .Core.connect(user1)
-            .claimAllRewards(poolId, collateralAddress(), accountId);
+            .claimRewards(poolId, collateralAddress(), accountId, Collateral.address);
 
           assertBn.equal(
             await Collateral.balanceOf(await user1.getAddress()),

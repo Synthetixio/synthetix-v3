@@ -44,10 +44,10 @@ contract RewardsManagerModule is IRewardsManagerModule {
             revert InvalidParameters("index", "too large");
         }
 
-        bytes32 rewardId = keccak256(abi.encode(poolId, collateralType, distributor));
+        bytes32 rewardId = _getRewardId(poolId, collateralType, distributor);
 
         if (rewardIds.contains(rewardId)) {
-            revert InvalidParameters("reward", "is already registered");
+            revert InvalidParameters("distributor", "is already registered");
         }
 
         rewardIds.add(rewardId);
@@ -67,7 +67,7 @@ contract RewardsManagerModule is IRewardsManagerModule {
         Pool.Data storage pool = Pool.load(poolId);
         SetUtil.Bytes32Set storage rewardIds = pool.vaults[collateralType].rewardIds;
         // this function is called by the reward distributor
-        bytes32 rewardId = keccak256(abi.encode(poolId, collateralType, msg.sender));
+        bytes32 rewardId = _getRewardId(poolId, collateralType, msg.sender);
 
         if (!rewardIds.contains(rewardId)) {
             revert InvalidParameters("poolId-collateralType-distributor", "reward is not registered");
@@ -89,52 +89,21 @@ contract RewardsManagerModule is IRewardsManagerModule {
         emit RewardsDistributed(poolId, collateralType, msg.sender, amount, start, duration);
     }
 
-    function getAvailableRewards(
+    function getRewards(
         uint128 poolId,
         address collateralType,
         uint128 accountId
     ) external override returns (uint[] memory, address[] memory) {
         Vault.Data storage vault = Pool.load(poolId).vaults[collateralType];
-        return vault.updateAvailableRewards(accountId);
+        return vault.updateRewards(accountId);
     }
 
-    function getCurrentRewardRate(uint128 poolId, address collateralType) external view override returns (uint[] memory) {
-        return _getCurrentRewardRate(poolId, collateralType);
-    }
-
-    function claimAllRewards(
+    function getRewardRate(
         uint128 poolId,
         address collateralType,
-        uint128 accountId
-    ) external override returns (uint[] memory) {
-        Account.onlyWithPermission(accountId, AccountRBAC._REWARDS_PERMISSION);
-
-        Vault.Data storage vault = Pool.load(poolId).vaults[collateralType];
-        (uint[] memory rewards, ) = vault.updateAvailableRewards(accountId);
-        SetUtil.Bytes32Set storage rewardIds = vault.rewardIds;
-
-        for (uint i = 1; i <= rewards.length; i++) {
-            if (rewards[i - 1] > 0) {
-                // todo: reentrancy protection?
-                vault.rewards[rewardIds.valueAt(i)].distributor.payout(
-                    accountId,
-                    poolId,
-                    collateralType,
-                    msg.sender,
-                    rewards[i - 1]
-                );
-                vault.rewards[rewardIds.valueAt(i)].actorInfo[accountId].pendingSend = 0;
-                emit RewardsClaimed(
-                    accountId,
-                    poolId,
-                    collateralType,
-                    address(vault.rewards[rewardIds.valueAt(i)].distributor),
-                    rewards[i - 1]
-                );
-            }
-        }
-
-        return rewards;
+        address distributor
+    ) external view override returns (uint) {
+        return _getRewardRate(poolId, collateralType, distributor);
     }
 
     function claimRewards(
@@ -152,7 +121,7 @@ contract RewardsManagerModule is IRewardsManagerModule {
             revert InvalidParameters("invalid-params", "reward is not found");
         }
 
-        uint reward = vault.updateAvailableReward(accountId, rewardId);
+        uint reward = vault.updateReward(accountId, rewardId);
 
         vault.rewards[rewardId].distributor.payout(accountId, poolId, collateralType, msg.sender, reward);
         vault.rewards[rewardId].actorInfo[accountId].pendingSend = 0;
@@ -161,31 +130,36 @@ contract RewardsManagerModule is IRewardsManagerModule {
         return reward;
     }
 
-    function _getCurrentRewardRate(uint128 poolId, address collateralType) internal view returns (uint[] memory) {
+    function _getRewardRate(
+        uint128 poolId,
+        address collateralType,
+        address distributor
+    ) internal view returns (uint) {
         Vault.Data storage vault = Pool.load(poolId).vaults[collateralType];
-        SetUtil.Bytes32Set storage rewardIds = vault.rewardIds;
-
         uint totalShares = vault.currentEpoch().incomingDebtDist.totalShares;
+        bytes32 rewardId = _getRewardId(poolId, collateralType, distributor);
 
         int curTime = int(block.timestamp);
 
-        uint[] memory rates = new uint[](rewardIds.length());
-
-        for (uint i = 1; i <= rewardIds.length(); i++) {
-            if (
-                address(vault.rewards[rewardIds.valueAt(i)].distributor) == address(0) ||
-                vault.rewards[rewardIds.valueAt(i)].entry.start > curTime ||
-                vault.rewards[rewardIds.valueAt(i)].entry.start + vault.rewards[rewardIds.valueAt(i)].entry.duration <=
-                curTime
-            ) {
-                continue;
-            }
-
-            rates[i - 1] = uint(int(vault.rewards[rewardIds.valueAt(i)].entry.scheduledValue)).divDecimal(
-                uint(int(vault.rewards[rewardIds.valueAt(i)].entry.duration)).divDecimal(totalShares)
-            );
+        if (
+            address(vault.rewards[rewardId].distributor) == address(0) ||
+            vault.rewards[rewardId].entry.start > curTime ||
+            vault.rewards[rewardId].entry.start + vault.rewards[rewardId].entry.duration <= curTime
+        ) {
+            return 0;
         }
 
-        return rates;
+        return
+            uint(int(vault.rewards[rewardId].entry.scheduledValue)).divDecimal(
+                uint(int(vault.rewards[rewardId].entry.duration)).divDecimal(totalShares)
+            );
+    }
+
+    function _getRewardId(
+        uint128 poolId,
+        address collateralType,
+        address distributor
+    ) internal pure returns (bytes32) {
+        return keccak256(abi.encode(poolId, collateralType, distributor));
     }
 }

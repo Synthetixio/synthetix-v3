@@ -1833,10 +1833,10 @@ retrieves the amount of available rewards.
 
   _this function should be called to get currently available rewards using `callStatic`_
 
-### getCurrentRewardRate
+### getRewardRate
 
   ```solidity
-  function getCurrentRewardRate(uint128 poolId, address collateralType) external view returns (uint256[])
+  function getRewardRate(uint128 poolId, address collateralType) external view returns (uint256[])
   ```
 
 returns the number of individual units of amount emitted per second per share for the given poolId, collateralType vault
@@ -1895,10 +1895,10 @@ retrieves the amount of available rewards.
 
   _this function should be called to get currently available rewards using `callStatic`_
 
-### getCurrentRewardRate
+### getRewardRate
 
   ```solidity
-  function getCurrentRewardRate(uint128 poolId, address collateralType) external view returns (uint256[])
+  function getRewardRate(uint128 poolId, address collateralType) external view returns (uint256[])
   ```
 
 returns the number of individual units of amount emitted per second per share for the given poolId, collateralType vault
