@@ -28,45 +28,56 @@ contract RewardsManagerModule is IRewardsManagerModule {
     // Associated Rewards
     // ---------------------------------------
 
-    function setRewardsDistribution(
+    function registerRewardsDistributor(
         uint128 poolId,
         address collateralType,
-        uint index,
-        address distributor,
+        address distributor
+    ) external override {
+        Pool.Data storage pool = Pool.load(poolId);
+        SetUtil.Bytes32Set storage rewardIds = pool.vaults[collateralType].rewardIds;
+
+        if (pool.owner != msg.sender) {
+            revert AccessError.Unauthorized(msg.sender);
+        }
+
+        if (rewardIds.length() > _MAX_REWARD_DISTRIBUTIONS) {
+            revert InvalidParameters("index", "too large");
+        }
+
+        bytes32 rewardId = _getRewardId(poolId, collateralType, distributor);
+
+        if (rewardIds.contains(rewardId)) {
+            revert InvalidParameters("distributor", "is already registered");
+        }
+
+        rewardIds.add(rewardId);
+        if (distributor == address(0)) {
+            revert InvalidParameters("distributor", "must be non-zero");
+        }
+        pool.vaults[collateralType].rewards[rewardId].distributor = IRewardDistributor(distributor);
+    }
+
+    function distributeRewards(
+        uint128 poolId,
+        address collateralType,
         uint amount,
         uint start,
         uint duration
     ) external override {
-        if (index > _MAX_REWARD_DISTRIBUTIONS) {
-            revert InvalidParameters("index", "too large");
-        }
-
         Pool.Data storage pool = Pool.load(poolId);
+        SetUtil.Bytes32Set storage rewardIds = pool.vaults[collateralType].rewardIds;
+        // this function is called by the reward distributor
+        bytes32 rewardId = _getRewardId(poolId, collateralType, msg.sender);
 
-        RewardDistribution.Data[] storage dists = pool.vaults[collateralType].rewards;
-
-        if (index > dists.length) {
-            revert InvalidParameters("index", "should be next index");
-        } else if (index == dists.length) {
-            dists.push(); // extend the size of the array by 1
+        if (!rewardIds.contains(rewardId)) {
+            revert InvalidParameters("poolId-collateralType-distributor", "reward is not registered");
         }
 
-        RewardDistribution.Data storage existingDistribution = dists[index];
+        RewardDistribution.Data storage reward = pool.vaults[collateralType].rewards[rewardId];
 
-        // to call this function must be either:
-        // 1. pool owner
-        // 2. the registered distributor contract
-        if (pool.owner != msg.sender && address(existingDistribution.distributor) != msg.sender) {
-            revert AccessError.Unauthorized(msg.sender);
-        }
-
-        if (distributor == address(0)) {
-            revert InvalidParameters("distributor", "must be non-zero");
-        }
-
-        existingDistribution.rewardPerShare += uint128(
+        reward.rewardPerShare += uint128(
             uint(
-                existingDistribution.entry.distribute(
+                reward.entry.distribute(
                     pool.vaults[collateralType].currentEpoch().incomingDebtDist,
                     int(amount),
                     start,
@@ -75,75 +86,80 @@ contract RewardsManagerModule is IRewardsManagerModule {
             )
         );
 
-        existingDistribution.distributor = IRewardDistributor(distributor);
-
-        emit RewardDistributed(poolId, collateralType, index, distributor, amount, start, duration);
+        emit RewardsDistributed(poolId, collateralType, msg.sender, amount, start, duration);
     }
 
-    function getAvailableRewards(
+    function getRewards(
         uint128 poolId,
         address collateralType,
         uint128 accountId
-    ) external override returns (uint[] memory) {
+    ) external override returns (uint[] memory, address[] memory) {
         Vault.Data storage vault = Pool.load(poolId).vaults[collateralType];
-        return vault.updateAvailableRewards(accountId);
+        return vault.updateRewards(accountId);
     }
 
-    function getCurrentRewardAccumulation(uint128 poolId, address collateralType)
-        external
-        view
-        override
-        returns (uint[] memory)
-    {
-        return _getCurrentRewardAccumulation(poolId, collateralType);
+    function getRewardRate(
+        uint128 poolId,
+        address collateralType,
+        address distributor
+    ) external view override returns (uint) {
+        return _getRewardRate(poolId, collateralType, distributor);
     }
 
     function claimRewards(
         uint128 poolId,
         address collateralType,
-        uint128 accountId
-    ) external override returns (uint[] memory) {
+        uint128 accountId,
+        address distributor
+    ) external override returns (uint) {
         Account.onlyWithPermission(accountId, AccountRBAC._REWARDS_PERMISSION);
 
         Vault.Data storage vault = Pool.load(poolId).vaults[collateralType];
-        uint[] memory rewards = vault.updateAvailableRewards(accountId);
+        bytes32 rewardId = keccak256(abi.encode(poolId, collateralType, distributor));
 
-        for (uint i = 0; i < rewards.length; i++) {
-            if (rewards[i] > 0) {
-                // todo: reentrancy protection?
-                vault.rewards[i].distributor.payout(poolId, collateralType, msg.sender, rewards[i]);
-                vault.rewards[i].actorInfo[accountId].pendingSend = 0;
-                emit RewardsClaimed(poolId, collateralType, accountId, i, rewards[i]);
-            }
+        if (!vault.rewardIds.contains(rewardId)) {
+            revert InvalidParameters("invalid-params", "reward is not found");
         }
 
-        return rewards;
+        uint reward = vault.updateReward(accountId, rewardId);
+
+        vault.rewards[rewardId].distributor.payout(accountId, poolId, collateralType, msg.sender, reward);
+        vault.rewards[rewardId].actorInfo[accountId].pendingSend = 0;
+        emit RewardsClaimed(accountId, poolId, collateralType, address(vault.rewards[rewardId].distributor), reward);
+
+        return reward;
     }
 
-    function _getCurrentRewardAccumulation(uint128 poolId, address collateralType) internal view returns (uint[] memory) {
+    function _getRewardRate(
+        uint128 poolId,
+        address collateralType,
+        address distributor
+    ) internal view returns (uint) {
         Vault.Data storage vault = Pool.load(poolId).vaults[collateralType];
-        RewardDistribution.Data[] storage dists = vault.rewards;
-
         uint totalShares = vault.currentEpoch().incomingDebtDist.totalShares;
+        bytes32 rewardId = _getRewardId(poolId, collateralType, distributor);
 
         int curTime = int(block.timestamp);
 
-        uint[] memory rates = new uint[](dists.length);
-
-        for (uint i = 0; i < dists.length; i++) {
-            if (
-                address(dists[i].distributor) == address(0) ||
-                dists[i].entry.start > curTime ||
-                dists[i].entry.start + dists[i].entry.duration <= curTime
-            ) {
-                continue;
-            }
-
-            rates[i] = uint(int(dists[i].entry.scheduledValue)).divDecimal(
-                uint(int(dists[i].entry.duration)).divDecimal(totalShares)
-            );
+        if (
+            address(vault.rewards[rewardId].distributor) == address(0) ||
+            vault.rewards[rewardId].entry.start > curTime ||
+            vault.rewards[rewardId].entry.start + vault.rewards[rewardId].entry.duration <= curTime
+        ) {
+            return 0;
         }
 
-        return rates;
+        return
+            uint(int(vault.rewards[rewardId].entry.scheduledValue)).divDecimal(
+                uint(int(vault.rewards[rewardId].entry.duration)).divDecimal(totalShares)
+            );
+    }
+
+    function _getRewardId(
+        uint128 poolId,
+        address collateralType,
+        address distributor
+    ) internal pure returns (bytes32) {
+        return keccak256(abi.encode(poolId, collateralType, distributor));
     }
 }
