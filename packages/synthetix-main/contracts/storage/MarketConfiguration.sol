@@ -14,7 +14,7 @@ import "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
  *
  * A market's maximum debt in a pool is indicated with a maximum debt value per share.
  */
-library PoolConfiguration {
+library MarketConfiguration {
     struct Data {
         /**
          * @dev TODO
