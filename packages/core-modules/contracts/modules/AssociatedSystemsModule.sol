@@ -22,7 +22,7 @@ contract AssociatedSystemsModule is IAssociatedSystemsModule {
         string memory symbol,
         uint8 decimals,
         address impl
-    ) external override {
+    ) public override {
         OwnableStorage.onlyOwner();
         AssociatedSystem.Data storage store = AssociatedSystem.load(id);
 
