@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import "./Distribution.sol";
-import "./MarketConfiguration.sol";
+import "./PoolConfiguration.sol";
 import "./Vault.sol";
 import "./Market.sol";
 import "./PoolConfiguration.sol";
@@ -12,7 +12,7 @@ import "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
 /**
  * @title Aggregates collateral from multiple users in order to provide liquidity to a configurable set of markets.
  *
- * The set of markets is configured as an array of MarketConfiguration objects, where the weight of the market can be specified. This weight, and the aggregated total weight of all the configured markets, determines how much collateral from the pool each market has, as well as in what proportion the market passes on debt to the pool and thus to all its users.
+ * The set of markets is configured as an array of PoolConfiguration objects, where the weight of the market can be specified. This weight, and the aggregated total weight of all the configured markets, determines how much collateral from the pool each market has, as well as in what proportion the market passes on debt to the pool and thus to all its users.
  *
  * The pool tracks the collateral provided by users using an array of Vaults objects, for which there will be one per collateral type. Each vault tracks how much collateral each user has delegated to this pool, how much debt the user has because of minting USD, as well as how much corresponding debt the pool has passed on to the user.
  */
@@ -52,7 +52,7 @@ library Pool {
         /**
          * @dev Sum of all market weights.
          *
-         * Market weights are tracked in `MarketConfiguration.weight`, one for each market. The ratio of each market's `weight` to the pool's `totalWeights` determines the pro-rata share of the market to the pool's total liquidity.
+         * Market weights are tracked in `PoolConfiguration.weight`, one for each market. The ratio of each market's `weight` to the pool's `totalWeights` determines the pro-rata share of the market to the pool's total liquidity.
          *
          * Reciprocally, this pro-rata share also determines how much the pool is exposed to each market's debt.
          */
@@ -68,7 +68,7 @@ library Pool {
          *
          * See totalWeights.
          */
-        MarketConfiguration.Data[] marketConfigurations;
+        PoolConfiguration.Data[] poolConfigurations;
         /**
          * @dev A pool's debt distribution connects pools to the debt distribution chain, i.e. vaults and markets. Vaults are actors in the pool's debt distribution where the amount of shares they possess depends on the amount of collateral each vault delegates to the pool.
          *
@@ -152,10 +152,10 @@ library Pool {
 
         // Loop through the pool's markets, applying market weights, and tracking how this changes the amount of debt that this pool is responsible for.
         // This debt extracted from markets is then applied to the pool's debt distribution, which thus exposes debt to the pool's vaults.
-        for (uint i = 0; i < self.marketConfigurations.length; i++) {
-            MarketConfiguration.Data storage marketConfiguration = self.marketConfigurations[i];
+        for (uint i = 0; i < self.poolConfigurations.length; i++) {
+            PoolConfiguration.Data storage poolConfiguration = self.poolConfigurations[i];
 
-            uint weight = marketConfiguration.weight;
+            uint weight = poolConfiguration.weight;
 
             // Calculate each market's pro-rata USD liquidity.
             // Note: the factor `(weight / totalWeights)` is not deduped in the operations below to maintain numeric precision.
@@ -164,13 +164,13 @@ library Pool {
             uint marketCreditCapacity = totalCreditCapacity > 0 ? (uint(totalCreditCapacity) * weight) / totalWeights : 0;
             uint marketUnusedCreditCapacity = (unusedCreditCapacity * weight) / totalWeights;
 
-            Market.Data storage marketData = Market.load(marketConfiguration.market);
+            Market.Data storage marketData = Market.load(poolConfiguration.market);
 
             // Contain the market's maximum debt share value.
             // System-wide.
             int effectiveMaxShareValue = containMarketMaxShareValue(self, marketData, marketUnusedCreditCapacity);
             // Market-wide.
-            int configuredMaxShareValue = marketConfiguration.maxDebtShareValue;
+            int configuredMaxShareValue = poolConfiguration.maxDebtShareValue;
             effectiveMaxShareValue = effectiveMaxShareValue < configuredMaxShareValue
                 ? effectiveMaxShareValue
                 : configuredMaxShareValue;
@@ -178,7 +178,7 @@ library Pool {
             // Update each market's corresponding credit capacity.
             // The returned value represents how much the market's debt changed after changing the shares of this pool actor, which is aggregated to later be passed on the pools debt distribution.
             cumulativeDebtChange += Market.rebalance(
-                marketConfiguration.market,
+                poolConfiguration.market,
                 self.id,
                 effectiveMaxShareValue,
                 marketCreditCapacity
@@ -192,7 +192,7 @@ library Pool {
     /**
      * @dev Implements a system-wide fail safe to prevent a market from taking too much debt.
      *
-     * Note: There is a non-system-wide fail safe for each market at `MarketConfiguration.maxDebtShareValue`.
+     * Note: There is a non-system-wide fail safe for each market at `PoolConfiguration.maxDebtShareValue`.
      *
      * See `PoolConfiguration.minLiquidityRatio`.
      *
@@ -243,8 +243,8 @@ library Pool {
      * TODO: Wouldn't it help to use a Set here?
      */
     function hasMarket(Data storage self, uint128 marketId) internal view returns (bool) {
-        for (uint i = 0; i < self.marketConfigurations.length; i++) {
-            if (self.marketConfigurations[i].market == marketId) {
+        for (uint i = 0; i < self.poolConfigurations.length; i++) {
+            if (self.poolConfigurations[i].market == marketId) {
                 return true;
             }
         }
@@ -328,8 +328,8 @@ library Pool {
 
     // TODO: Document
     function findMarketCapacityLocked(Data storage self) internal view returns (Market.Data storage lockedMarketId) {
-        for (uint i = 0; i < self.marketConfigurations.length; i++) {
-            Market.Data storage market = Market.load(self.marketConfigurations[i].market);
+        for (uint i = 0; i < self.poolConfigurations.length; i++) {
+            Market.Data storage market = Market.load(self.poolConfigurations[i].market);
 
             if (market.isCapacityLocked()) {
                 return market;
@@ -346,13 +346,13 @@ library Pool {
      */
     function getLockedLiquidityObligation(Data storage self) internal view returns (uint) {
         uint locked = 0;
-        for (uint i = 0; i < self.marketConfigurations.length; i++) {
-            Market.Data storage market = Market.load(self.marketConfigurations[i].market);
+        for (uint i = 0; i < self.poolConfigurations.length; i++) {
+            Market.Data storage market = Market.load(self.poolConfigurations[i].market);
 
             uint unlocked = market.capacity - market.getLockedLiquidity();
             uint contributedCapacity = market.getCapacityContribution(
                 market.getPoolLiquidity(self.id),
-                self.marketConfigurations[i].maxDebtShareValue
+                self.poolConfigurations[i].maxDebtShareValue
             );
 
             if (unlocked < contributedCapacity) {
