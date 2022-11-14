@@ -236,7 +236,7 @@ args = [
 ]
 depends = [
   "invoke.upgrade_core_proxy",
-  "contract.AccountRouter",
+  "contract.AccountRouter"
 ]
 factory.AccountProxy.abiOf = ["AccountRouter"]
 factory.AccountProxy.event = "AssociatedSystemSet"
@@ -255,7 +255,7 @@ args = [
 ]
 depends = [
   "invoke.upgrade_core_proxy",
-  "contract.SNXRouter",
+  "contract.SNXRouter"
 ]
 factory.SNXProxy.abiOf = ["SNXRouter"]
 factory.SNXProxy.event = "AssociatedSystemSet"
@@ -274,7 +274,7 @@ args = [
 ]
 depends = [
   "invoke.upgrade_core_proxy",
-  "contract.USDRouter",
+  "contract.USDRouter"
 ]
 factory.USDProxy.abiOf = ["USDRouter"]
 factory.USDProxy.event = "AssociatedSystemSet"
