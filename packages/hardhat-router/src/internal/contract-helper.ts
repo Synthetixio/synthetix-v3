@@ -100,7 +100,26 @@ export async function getModulesFullyQualifiedNames(filter = /.*/, hre: HardhatR
   });
 }
 
+/**
+ * Get the list of all storage libraries fully qualified names.
+ *   e.g.: ['contracts/storage/Storage.sol:Storage', ...]
+ * @returns {string[]} fqn of all matching modules
+ */
+export async function getStorageLibrariesFullyQualifiedNames(hre: HardhatRuntimeEnvironment) {
+  const names = await hre.artifacts.getAllFullyQualifiedNames();
+
+  return names.filter((name) => {
+    const { sourceName } = parseFullyQualifiedName(name);
+    return _contractIsStorageLibrary(sourceName, hre);
+  });
+}
+
 function _contractIsModule(contractSourcePath: string, hre: HardhatRuntimeEnvironment) {
   const source = path.resolve(hre.config.paths.root, contractSourcePath);
   return source.startsWith(`${hre.config.router.paths.modules}${path.sep}`);
+}
+
+function _contractIsStorageLibrary(contractSourcePath: string, hre: HardhatRuntimeEnvironment) {
+  // TODO: really storage lbiraries can be any library that has a `struct Data` but this is an easy way to conform atm
+  return contractSourcePath.startsWith('contracts/storage');
 }

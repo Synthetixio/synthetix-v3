@@ -1,0 +1,59 @@
+//SPDX-License-Identifier: Unlicense
+pragma solidity ^0.8.0;
+
+// --------------------------------------------------------------------------------
+// --------------------------------------------------------------------------------
+// GENERATED CODE - do not edit manually!!
+// run npx hardhat generate-testable to regenerate
+// --------------------------------------------------------------------------------
+// --------------------------------------------------------------------------------
+
+import "{{{sourceFile}}}";
+
+contract Testable{{{libraryName}}} {
+    {{{libraryName}}}.Data private store;
+
+    {{#fields}}
+    function set_{{{name}}}({{{type}}} val) external {
+        store.{{{name}}} = val;
+    }
+
+    function get_{{{name}}}() external returns ({{type}}) {
+        return store.{{{name}}};
+    }
+
+    {{/fields}}
+
+    {{#indexedFields}}
+    function set_{{{name}}}({{{indexType}}} idx, {{{type}}} val) external {
+        store.{{{name}}}[idx] = val;
+    }
+
+    function get_{{{name}}}({{{indexType}}} idx) external returns ({{type}}) {
+        return store.{{{name}}}[idx];
+    }
+
+    {{#isArray}}
+    function push_{{{name}}}({{{type}}} val) external {
+        {{{libraryName}}}.Data store = {{{libraryName}}}.load({{{.loadInject}}});
+
+        store.{{{name}}}.push(val);
+    }
+
+    function pop_{{{name}}}() external {
+        {{{libraryName}}}.Data store = {{{libraryName}}}.load({{{.loadInject}}});
+
+        store.{{{name}}}.pop();
+    }
+
+    {{/isArray}}
+
+    {{/indexedFields}}
+
+    {{#methods}}
+    function invoke_{{{name}}}({{{params}}}) external {{#returns}}returns ({{{returns}}}) {{/returns}}{
+        return {{{libraryName}}}.{{{name}}}({{{paramsInject}}});
+    }
+
+    {{/methods}}
+}
