@@ -8,7 +8,6 @@ import "./Fee.sol";
 library SynthConfig {
     struct Data {
         address synthOwner;
-        address feeManager;
         uint128 marketId;
         Wrapper.Data wrapperData;
         Price.Data priceData;

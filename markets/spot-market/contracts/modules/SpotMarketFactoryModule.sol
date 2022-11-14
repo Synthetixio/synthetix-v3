@@ -40,7 +40,6 @@ contract SpotMarketFactoryModule is ISpotMarketFactoryModule, AssociatedSystemsM
         string memory tokenName,
         string memory tokenSymbol,
         uint8 tokenDecimals,
-        address feeManager,
         bytes memory buyFeedId,
         bytes memory sellFeedId
     ) external override returns (uint128) {
@@ -53,8 +52,8 @@ contract SpotMarketFactoryModule is ISpotMarketFactoryModule, AssociatedSystemsM
         factory.synthConfigs[synthMarketId] = SynthConfig.Data({
             priceData: Price.Data({buyFeedId: buyFeedId, sellFeedId: sellFeedId}),
             feeData: Fee.Data({interestRate: 0, fixedFee: 20}),
+            wrapperData: Wrapper.Data({collateralType: address(0), wrappingEnabled: false}),
             synthOwner: msg.sender,
-            feeManager: feeManager,
             marketId: synthMarketId
         });
 

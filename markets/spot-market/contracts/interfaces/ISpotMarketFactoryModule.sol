@@ -11,14 +11,12 @@ interface ISpotMarketFactoryModule is IMarket {
         string memory tokenName,
         string memory tokenSymbol,
         uint8 tokenDecimals,
-        address feeManager,
         bytes memory buyFeedId,
         bytes memory sellFeedId
     ) external returns (uint128 synthMarketId);
 
     function updateSynthConfiguration(
         uint128 synthMarketId,
-        address feeManager,
         bytes memory buyFeedId,
         bytes memory sellFeedId
     ) external;
