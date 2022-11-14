@@ -50,7 +50,7 @@ library Collateral {
     /**
      * @dev Increments the entry's availableCollateral.
      */
-    function depositCollateral(Data storage self, uint amount) internal {
+    function deposit(Data storage self, uint amount) internal {
         if (!self.isSet) {
             self.isSet = true;
             self.availableAmount = amount;

@@ -82,7 +82,7 @@ describe('LiquidationModule', function () {
           await systems().Core.connect(user2).createAccount(accountId2);
           await systems()
             .Core.connect(user2)
-            .depositCollateral(accountId2, collateralAddress(), depositAmount.mul(10));
+            .deposit(accountId2, collateralAddress(), depositAmount.mul(10));
 
           // use the zero pool to get minted USD
           await systems()
@@ -225,7 +225,7 @@ describe('LiquidationModule', function () {
             .approve(systems().Core.address, depositAmount.mul(50));
           await systems()
             .Core.connect(user2)
-            .depositCollateral(liquidatorAccountId, collateralAddress(), depositAmount.mul(50));
+            .deposit(liquidatorAccountId, collateralAddress(), depositAmount.mul(50));
 
           // use the zero pool to get minted USD
           await systems()

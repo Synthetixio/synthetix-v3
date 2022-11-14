@@ -110,7 +110,7 @@ contract SpotMarketModule is
         _mint(msg.sender, amountToMint);
 
         store.usdToken.approve(address(this), amountUsable);
-        IMarketManagerModule(store.synthetix).depositUsd(store.marketId, address(this), amountUsable);
+        IMarketManagerModule(store.synthetix).depositMarketUsd(store.marketId, address(this), amountUsable);
 
         emit SynthBought(store.marketId, amountToMint, feesCollected);
 
@@ -123,7 +123,7 @@ contract SpotMarketModule is
         uint amountToWithdraw = _synthUsdExchangeRate(sellAmount);
         _burn(msg.sender, sellAmount);
 
-        IMarketManagerModule(store.synthetix).withdrawUsd(store.marketId, address(this), amountToWithdraw);
+        IMarketManagerModule(store.synthetix).withdrawMarketUsd(store.marketId, address(this), amountToWithdraw);
 
         (uint returnAmount, uint feesCollected) = _processFees(store, amountToWithdraw, ISpotMarketFee.TradeType.SELL);
 

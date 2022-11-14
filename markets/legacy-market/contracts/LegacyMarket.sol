@@ -91,7 +91,7 @@ contract LegacyMarket is Ownable, IMarket {
         oldUSD.transferFrom(msg.sender, address(this), amount);
         oldSynthetix.burnSynths(amount);
 
-        v3System.withdrawUsd(uint(marketId), msg.sender, amount);
+        v3System.withdrawMarketUsd(uint(marketId), msg.sender, amount);
 
         emit ConvertedUSD(msg.sender, amount);
     }
@@ -119,7 +119,7 @@ contract LegacyMarket is Ownable, IMarket {
 
         v3System.createAccount(accountId);
 
-        v3System.depositCollateral(accountId, address(oldSynthetix), collateralMigrated);
+        v3System.deposit(accountId, address(oldSynthetix), collateralMigrated);
 
         uint curTime = block.timestamp;
         for (uint i = 0; i < oldEscrows.length; i++) {

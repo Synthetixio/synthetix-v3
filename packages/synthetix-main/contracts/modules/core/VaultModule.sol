@@ -86,7 +86,7 @@ contract VaultModule is IVaultModule {
             if (collateralAmount > oldCollateralAmount) {
                 collateral.deductCollateral(collateralAmount - oldCollateralAmount);
             } else {
-                collateral.depositCollateral(oldCollateralAmount - collateralAmount);
+                collateral.deposit(oldCollateralAmount - collateralAmount);
             }
 
             if (collateralAmount > 0 && !collateral.pools.contains(uint(poolId))) {
