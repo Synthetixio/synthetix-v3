@@ -62,7 +62,7 @@ task(TASK_GENERATE_TESTABLE, 'Creates generated test contracts for all storage l
     for (const storageLibArtifact of storageLibs) {
       await hre.run(SUBTASK_GENERATE_TESTABLE_STORAGE, {
         artifact: storageLibArtifact.contractFullyQualifiedName,
-        output: `contracts/test/Testable${storageLibArtifact.contractName}.sol`
+        output: `contracts/modules/test/Testable${storageLibArtifact.contractName}Module.sol`
       });
     }
   });

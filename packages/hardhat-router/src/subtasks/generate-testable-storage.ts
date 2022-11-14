@@ -12,6 +12,9 @@ interface TestableStorageTemplateInputs {
   sourceFile: string;
   libraryName: string;
 
+  loadParams?: string;
+  loadInject?: string;
+
   fields: {
     name: string,
     type: string
@@ -26,6 +29,8 @@ interface TestableStorageTemplateInputs {
 
   methods: {
     name: string,
+    mutability?: string,
+    usesLoad: boolean,
     params: string,
     paramsInject: string;
     returns: string,
@@ -128,7 +133,20 @@ function _generateTemplateInputs(sourceFile: string, contractName: string, sourc
       }
 
       const methods: TestableStorageTemplateInputs['methods'] = [];
+      let loadParams: TestableStorageTemplateInputs['loadParams'] = undefined;
+      let loadInject: TestableStorageTemplateInputs['loadInject'] = undefined;
+
       for (const functionDefinition of findAll('FunctionDefinition', contractDefinition)) {
+        if (functionDefinition.name === 'load') {
+          loadParams = functionDefinition.parameters.parameters
+            .map(p => `${_renderAstType(p.typeName!)}${p.storageLocation !== 'default' ? ' ' + p.storageLocation : ''} _load_${p.name}`).join(', ');
+
+          loadInject = functionDefinition.parameters.parameters
+            .map(p => '_load_' + p.name).join(', ')
+
+          continue; // we have handled the load function
+        }
+
         if (functionDefinition.returnParameters.parameters.filter(p => p.storageLocation === 'storage').length) {
           console.log(`Skipping function ${functionDefinition.name} because it returns an unsupported storage input parameter`);
           continue; // cannot return non-storage
@@ -145,6 +163,8 @@ function _generateTemplateInputs(sourceFile: string, contractName: string, sourc
 
         methods.push({
           name: functionDefinition.name,
+          mutability: functionDefinition.stateMutability === 'view' || functionDefinition.stateMutability === 'pure' ? functionDefinition.stateMutability : undefined,
+          usesLoad: storageParams.length > 0,
           params: functionDefinition.parameters.parameters
             .filter(p => p.storageLocation !== 'storage') // only non-storage values can be injected (storage values will be injected later)
             .map(p => `${_renderAstType(p.typeName!)}${p.storageLocation !== 'default' ? ' ' + p.storageLocation : ''} ${p.name}`).join(', '),
@@ -158,6 +178,8 @@ function _generateTemplateInputs(sourceFile: string, contractName: string, sourc
 
       const contractInputs: TestableStorageTemplateInputs = {
         sourceFile,
+        loadParams,
+        loadInject,
         libraryName: contractDefinition.name,
         fields,
         indexedFields,

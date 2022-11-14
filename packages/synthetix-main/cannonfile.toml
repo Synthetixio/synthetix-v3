@@ -11,10 +11,6 @@ defaultValue = "main"
 description = "Admin user for the system"
 defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
 
-[setting.additionalModules]
-description = "Any additional modules which should be deployed"
-defaultValue = "core"
-
 [contract.OwnerModule]
 artifact = "contracts/modules/common/OwnerModule.sol:OwnerModule"
 
