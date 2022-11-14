@@ -2,10 +2,8 @@
 pragma solidity ^0.8.0;
 
 import "@synthetixio/core-contracts/contracts/token/ERC20.sol";
-import "../../interfaces/external/IRewardDistributor.sol";
-import "../../interfaces/IRewardsManagerModule.sol";
 
-contract CollateralMock is IRewardDistributor, ERC20 {
+contract CollateralMock is ERC20 {
     function initialize(
         string memory tokenName,
         string memory tokenSymbol,
@@ -20,33 +18,5 @@ contract CollateralMock is IRewardDistributor, ERC20 {
 
     function mint(address recipient, uint256 amount) external {
         _mint(recipient, amount);
-    }
-
-    // permissionless payout for convenience testing
-    function payout(
-        uint128,
-        uint128,
-        address,
-        address sender,
-        uint amount
-    ) external returns (bool) {
-        // IMPORTANT: In production, this function should revert if msg.sender is not the Synthetix CoreProxy address.
-        _mint(sender, amount);
-        return true;
-    }
-
-    function distributeRewards(
-        address rewardManager,
-        uint128 poolId,
-        address collateralType,
-        uint amount,
-        uint start,
-        uint duration
-    ) public {
-        IRewardsManagerModule(rewardManager).distributeRewards(poolId, collateralType, amount, start, duration);
-    }
-
-    function token() public returns (address) {
-        return address(this);
     }
 }

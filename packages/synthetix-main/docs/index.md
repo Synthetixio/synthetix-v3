@@ -1782,13 +1782,13 @@ returns a human-readable name for a this rewards distributor
 ### RewardsDistributed
 
   ```solidity
-  event RewardsDistributed(uint128 poolId, address collateralType, address distributor, uint256 totalRewarded, uint256 start, uint256 duration)
+  event RewardsDistributed(uint128 poolId, address collateralType, address distributor, uint256 amount, uint256 start, uint256 duration)
   ```
 
 ### RewardsClaimed
 
   ```solidity
-  event RewardsClaimed(uint128 accountId, uint128 poolId, address collateralType, address distributor, uint256 amountClaimed)
+  event RewardsClaimed(uint128 accountId, uint128 poolId, address collateralType, address distributor, uint256 amount)
   ```
 
 ### registerRewardsDistributor
@@ -1807,26 +1807,18 @@ called by pool owner or an existing distributor to register rewards for vault pa
 
 called by pool owner or an existing distributor to set up rewards for vault participants
 
-### claimAllRewards
-
-  ```solidity
-  function claimAllRewards(uint128 poolId, address collateralType, uint128 accountId) external returns (uint256[])
-  ```
-
-retrieves the amount of available rewards, and claims them to the caller's account.
-
 ### claimRewards
 
   ```solidity
   function claimRewards(uint128 poolId, address collateralType, uint128 accountId, address distributor) external returns (uint256)
   ```
 
-retrieves the amount of available rewards, and claims them to the caller's account for a single distributor.
+retrieves the amount of available reward, and claims them to the caller's account for a given distributor.
 
-### getAvailableRewards
+### getRewards
 
   ```solidity
-  function getAvailableRewards(uint128 poolId, address collateralType, uint128 accountId) external returns (uint256[], address[])
+  function getRewards(uint128 poolId, address collateralType, uint128 accountId) external returns (uint256[], address[])
   ```
 
 retrieves the amount of available rewards.
@@ -1836,21 +1828,21 @@ retrieves the amount of available rewards.
 ### getRewardRate
 
   ```solidity
-  function getRewardRate(uint128 poolId, address collateralType) external view returns (uint256[])
+  function getRewardRate(uint128 poolId, address collateralType, address distributor) external view returns (uint256)
   ```
 
-returns the number of individual units of amount emitted per second per share for the given poolId, collateralType vault
+returns the number of individual units of amount emitted per second per share for the given poolId, collateralType, distributor vault
 
 ### RewardsDistributed
 
   ```solidity
-  event RewardsDistributed(uint128 poolId, address collateralType, address distributor, uint256 totalRewarded, uint256 start, uint256 duration)
+  event RewardsDistributed(uint128 poolId, address collateralType, address distributor, uint256 amount, uint256 start, uint256 duration)
   ```
 
 ### RewardsClaimed
 
   ```solidity
-  event RewardsClaimed(uint128 accountId, uint128 poolId, address collateralType, address distributor, uint256 amountClaimed)
+  event RewardsClaimed(uint128 accountId, uint128 poolId, address collateralType, address distributor, uint256 amount)
   ```
 
 ### registerRewardsDistributor
@@ -1869,26 +1861,18 @@ called by pool owner or an existing distributor to register rewards for vault pa
 
 called by pool owner or an existing distributor to set up rewards for vault participants
 
-### claimAllRewards
-
-  ```solidity
-  function claimAllRewards(uint128 poolId, address collateralType, uint128 accountId) external returns (uint256[])
-  ```
-
-retrieves the amount of available rewards, and claims them to the caller's account.
-
 ### claimRewards
 
   ```solidity
   function claimRewards(uint128 poolId, address collateralType, uint128 accountId, address distributor) external returns (uint256)
   ```
 
-retrieves the amount of available rewards, and claims them to the caller's account for a single distributor.
+retrieves the amount of available reward, and claims them to the caller's account for a given distributor.
 
-### getAvailableRewards
+### getRewards
 
   ```solidity
-  function getAvailableRewards(uint128 poolId, address collateralType, uint128 accountId) external returns (uint256[], address[])
+  function getRewards(uint128 poolId, address collateralType, uint128 accountId) external returns (uint256[], address[])
   ```
 
 retrieves the amount of available rewards.
@@ -1898,10 +1882,10 @@ retrieves the amount of available rewards.
 ### getRewardRate
 
   ```solidity
-  function getRewardRate(uint128 poolId, address collateralType) external view returns (uint256[])
+  function getRewardRate(uint128 poolId, address collateralType, address distributor) external view returns (uint256)
   ```
 
-returns the number of individual units of amount emitted per second per share for the given poolId, collateralType vault
+returns the number of individual units of amount emitted per second per share for the given poolId, collateralType, distributor vault
 
 ## USD Token Module
 

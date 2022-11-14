@@ -3,6 +3,9 @@ pragma solidity ^0.8.0;
 
 /// @title Interface a reward distributor.
 interface IRewardDistributor {
+    /// @notice Returns a human-readable name for the reward distributor
+    function name() external returns (string memory);
+
     /// @notice This function should revert if msg.sender is not the Synthetix CoreProxy address.
     function payout(
         uint128 accountId,
