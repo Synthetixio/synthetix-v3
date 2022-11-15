@@ -43,7 +43,7 @@ contract SpotMarketModule is ISpotMarketModule {
         store.synthFeesCollected[marketId] += feesCollected;
 
         store.usdToken.approve(address(this), amountUsable);
-        IMarketManagerModule(store.synthetix).depositMarketUsd(store.marketId, address(this), amountUsable);
+        IMarketManagerModule(store.synthetix).depositMarketUsd(marketId, address(this), amountUsable);
 
         emit SynthBought(marketId, amountToMint, feesCollected);
 
@@ -56,9 +56,13 @@ contract SpotMarketModule is ISpotMarketModule {
         uint amountToWithdraw = store.getPriceData(marketId).synthUsdExchangeRate(sellAmount);
         SynthUtil.getToken(marketId).burn(msg.sender, sellAmount);
 
-        IMarketManagerModule(store.synthetix).withdrawUsd(marketId, address(this), amountToWithdraw);
+        IMarketManagerModule(store.synthetix).withdrawMarketUsd(marketId, address(this), amountToWithdraw);
 
-        IMarketManagerModule(store.synthetix).withdrawMarketUsd(store.marketId, address(this), amountToWithdraw);
+        (uint returnAmount, uint feesCollected) = store.getFeeData(marketId).calculateFees(
+            msg.sender,
+            amountToWithdraw,
+            Fee.TradeType.SELL
+        );
 
         store.synthFeesCollected[marketId] += feesCollected;
 
