@@ -2,16 +2,14 @@
 pragma solidity ^0.8.0;
 
 /**
- * @title Utility library used to represent "decimals" (fixed point numbers) with integers.
+ * @title Utility library used to represent "decimals" (fixed point numbers) with integers, with two different levels of precision.
  *
- * They are represented by int(N) * int(UNIT), where UNIT is 10 ^ DECIMALS.
+ * They are represented by N * UNIT, where UNIT is the number of decimals of precision in the representation.
  *
  * Examples:
- * 1) Given DECIMALS = 2,
- * then UNIT = 10 ^ 2 = 100
+ * 1) Given UNIT = 100
  * then if A = 50, A represents the decimal 0.50
- * 2) Given DECIMALS = 18,
- * then UNIT = 10 ^ 2 = 1000000000000000000
+ * 2) Given UNIT = 1000000000000000000
  * then if A = 500000000000000000, A represents the decimal 0.500000000000000000
  */
 library DecimalMath {
