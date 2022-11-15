@@ -10,6 +10,8 @@ import "./Wrapper.sol";
 library SpotMarketFactory {
     using Price for Price.Data;
 
+    error OnlyMarketOwner(address marketOwner, address sender);
+
     struct Data {
         ITokenModule usdToken;
         address synthetix;
@@ -21,6 +23,14 @@ library SpotMarketFactory {
         bytes32 s = keccak256(abi.encode("SpotMarketFactory"));
         assembly {
             store.slot := s
+        }
+    }
+
+    function onlyMarketOwner(Data storage self, uint128 marketId) internal view {
+        address marketOwner = self.synthConfigs[marketId].owner;
+
+        if (marketOwner != msg.sender) {
+            revert OnlyMarketOwner(marketOwner, msg.sender);
         }
     }
 

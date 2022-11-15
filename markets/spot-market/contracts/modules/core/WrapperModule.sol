@@ -5,11 +5,11 @@ import "@synthetixio/core-contracts/contracts/utils/MathUtil.sol";
 import "@synthetixio/core-contracts/contracts/interfaces/IERC20.sol";
 import "@synthetixio/main/contracts/interfaces/IMarketCollateralModule.sol";
 import "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
-import "../storage/SpotMarketFactory.sol";
-import "../interfaces/IWrapper.sol";
-import "../storage/Wrapper.sol";
-import "../storage/Price.sol";
-import "../utils/SynthUtil.sol";
+import "../../storage/SpotMarketFactory.sol";
+import "../../interfaces/IWrapper.sol";
+import "../../storage/Wrapper.sol";
+import "../../storage/Price.sol";
+import "../../utils/SynthUtil.sol";
 
 contract WrapperModule is IWrapper {
     using MathUtil for uint256;

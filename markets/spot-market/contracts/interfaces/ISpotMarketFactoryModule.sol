@@ -8,18 +8,29 @@ interface ISpotMarketFactoryModule is IMarket {
     event SynthRegistered(uint indexed synthMarketId);
 
     function registerSynth(
-        string memory tokenName,
-        string memory tokenSymbol,
-        uint8 tokenDecimals,
+        address synthImpl,
+        address synthOwner,
         bytes memory buyFeedId,
-        bytes memory sellFeedId
+        bytes memory sellFeedId,
+        uint interestRate,
+        uint fixedFee,
+        bool enableWrapping,
+        address wrappingCollateralType
     ) external returns (uint128 synthMarketId);
 
-    function updateSynthConfiguration(
+    function initialize(address snxAddress, address usdTokenAddress) external;
+
+    function updateFeeData(
+        uint128 synthMarketId,
+        uint interestRate,
+        uint fixedFee
+    ) external;
+
+    function updatePriceData(
         uint128 synthMarketId,
         bytes memory buyFeedId,
         bytes memory sellFeedId
     ) external;
 
-    function initialize(address snxAddress, address usdTokenAddress) external;
+    function upgradeSynthImpl(uint128 marketId, address synthImpl) external;
 }
