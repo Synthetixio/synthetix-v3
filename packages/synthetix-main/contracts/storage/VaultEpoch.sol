@@ -15,7 +15,7 @@ import "./Distribution.sol";
  */
 library VaultEpoch {
     using Distribution for Distribution.Data;
-    using MathUtil for uint256;
+    using DecimalMath for uint256;
 
     struct Data {
         /**

@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 import "@synthetixio/core-contracts/contracts/proxy/UUPSProxy.sol";
 
 contract DepositInsuranceFund {
-    using MathUtil for uint256;
+    using DecimalMath for uint256;
 
     address public snxSystem;
     address public marketToInsure;
@@ -13,7 +13,7 @@ contract DepositInsuranceFund {
 
     uint portionCovered;
 
-    mapping (address => uint) coverages;
+    mapping(address => uint) coverages;
 
     constructor(address snxSystem, uint128 marketToInsure) UUPSProxy(firstImplementation) {
         this.snxSystem = snxSystem;
@@ -23,8 +23,7 @@ contract DepositInsuranceFund {
     function balance() {
         if (_isInsolvent()) {
             return marketToinsure.totalSupply().mulDecimal(portionCovered);
-        }
-        else {
+        } else {
             return 0;
         }
     }
@@ -48,9 +47,7 @@ contract DepositInsuranceFund {
         coverages[beneficiary] = amountToInsure;
     }
 
-    function claim(address) {
-
-    }
+    function claim(address) {}
 
     function _isInsolvent() {
         return snxSystem.totalAvailableLiquidity(marketToInsure) < this.marketToInsure.balance(marketToInsure);

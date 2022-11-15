@@ -13,7 +13,9 @@ import "../interfaces/external/IMarket.sol";
 library Market {
     using Distribution for Distribution.Data;
     using HeapUtil for HeapUtil.Data;
-    using MathUtil for uint256;
+    using DecimalMath for uint256;
+    using DecimalMath for int256;
+    using DecimalMath for int128;
 
     error MarketNotFound(uint128 marketId);
 
@@ -197,9 +199,8 @@ library Market {
         int targetBalance = totalBalance(self);
         int curBalance = self.lastMarketBalance;
 
-        int targetDebtPerDebtShare = self.debtDist.valuePerShare /
-            1e9 +
-            (((targetBalance - curBalance) * MathUtil.INT_UNIT) / int128(self.debtDist.totalShares));
+        int targetDebtPerDebtShare = self.debtDist.valuePerShare.toLowPrecisionInt128() +
+            (targetBalance - curBalance).divDecimal(int128(self.debtDist.totalShares));
 
         // this loop should rarely execute the body. When it does, it only executes once for each pool that passes the limit.
         // since `_distributeMarket` is not run for most pools, market users are not hit with any overhead as a result of this,
@@ -241,7 +242,7 @@ library Market {
 
             targetDebtPerDebtShare =
                 self.debtDist.valuePerShare +
-                (((targetBalance - curBalance) * MathUtil.INT_UNIT) / int128(self.debtDist.totalShares));
+                (((targetBalance - curBalance) * DecimalMath.UNIT_INT) / int128(self.debtDist.totalShares));
         }
 
         self.debtDist.distributeValue(targetBalance - curBalance);

@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 import "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
 import "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
-import "@synthetixio/core-contracts/contracts/utils/MathUtil.sol";
+import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 
 import "../../storage/Account.sol";
 import "../../storage/Pool.sol";
@@ -18,7 +18,7 @@ contract VaultModule is IVaultModule {
     using SetUtil for SetUtil.UintSet;
     using SetUtil for SetUtil.Bytes32Set;
     using SetUtil for SetUtil.AddressSet;
-    using MathUtil for uint256;
+    using DecimalMath for uint256;
     using Pool for Pool.Data;
     using Vault for Vault.Data;
     using VaultEpoch for VaultEpoch.Data;
@@ -53,7 +53,7 @@ contract VaultModule is IVaultModule {
 
         // Fix leverage to 1 until it's enabled
         // TODO: we will probably at least want to test <1 leverage
-        if (leverage != MathUtil.UNIT) revert InvalidLeverage(leverage);
+        if (leverage != DecimalMath.UNIT) revert InvalidLeverage(leverage);
 
         Vault.Data storage vault = Pool.load(poolId).vaults[collateralType];
 

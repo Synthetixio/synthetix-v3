@@ -20,7 +20,7 @@ library Vault {
     using VaultEpoch for VaultEpoch.Data;
     using Distribution for Distribution.Data;
     using DistributionEntry for DistributionEntry.Data;
-    using MathUtil for uint256;
+    using DecimalMath for uint256;
     using SetUtil for SetUtil.Bytes32Set;
 
     struct Data {

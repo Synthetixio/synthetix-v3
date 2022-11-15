@@ -1,60 +1,23 @@
 const { ethers } = hre;
 const assertBn = require('@synthetixio/core-utils/utils/assertions/assert-bignumber');
 const { default: assertRevert } = require('@synthetixio/core-utils/utils/assertions/assert-revert');
-const { bnSqrt } = require('@synthetixio/core-utils/utils/ethers/bignumber');
 
 function s(base, exp) {
   return ethers.BigNumber.from(base).mul(ethers.BigNumber.from(10).pow(exp));
 }
 
-describe('MathUtil', () => {
-  let MathUtil;
+describe('DecimalMath', () => {
+  let DecimalMath;
 
   before('deploy the contract', async () => {
-    const factory = await ethers.getContractFactory('MathUtilMock');
-    MathUtil = await factory.deploy();
-  });
-
-  describe('sqrt(x)', () => {
-    function sqrt(value) {
-      return Math.floor(Math.sqrt(value));
-    }
-
-    async function assertSqrt(value) {
-      assertBn.equal(await MathUtil.sqrt(value), sqrt(value));
-    }
-
-    async function assertBnSqrt(value) {
-      assertBn.equal(await MathUtil.sqrt(value), bnSqrt(value));
-    }
-
-    it('calculates small square roots', async function () {
-      await assertSqrt(0);
-      await assertSqrt(4);
-      await assertSqrt(42);
-      await assertSqrt(1337);
-      await assertSqrt(20000);
-      await assertSqrt(450000);
-      await assertSqrt(10333333);
-      await assertSqrt(100000000);
-    });
-
-    it('calculates big roots', async () => {
-      await assertBnSqrt(ethers.utils.parseEther('0'));
-      await assertBnSqrt(ethers.utils.parseEther('4'));
-      await assertBnSqrt(ethers.utils.parseEther('42'));
-      await assertBnSqrt(ethers.utils.parseEther('1337'));
-      await assertBnSqrt(ethers.utils.parseEther('20000'));
-      await assertBnSqrt(ethers.utils.parseEther('450000'));
-      await assertBnSqrt(ethers.utils.parseEther('10333333'));
-      await assertBnSqrt(ethers.utils.parseEther('100000000'));
-    });
+    const factory = await ethers.getContractFactory('DecimalMathMock');
+    DecimalMath = await factory.deploy();
   });
 
   describe('mulDivDown()', () => {
     async function assertMulDivDown(data, expected) {
       assertBn.equal(
-        await MathUtil['mulDivDown(uint256,uint256,uint256)'](
+        await DecimalMath['mulDivDown(uint256,uint256,uint256)'](
           ethers.BigNumber.from(data.x),
           ethers.BigNumber.from(data.y),
           ethers.BigNumber.from(data.denominator)
@@ -85,14 +48,14 @@ describe('MathUtil', () => {
     });
 
     it('fails on div by zero', async () => {
-      await assertRevert(MathUtil['mulDivDown(uint256,uint256,uint256)'](s(1, 18), s(1, 18), 0));
+      await assertRevert(DecimalMath['mulDivDown(uint256,uint256,uint256)'](s(1, 18), s(1, 18), 0));
     });
   });
 
   describe('mulDivUp()', () => {
     async function assertMulDivUp(data, expected) {
       assertBn.equal(
-        await MathUtil.mulDivUp(
+        await DecimalMath.mulDivUp(
           ethers.BigNumber.from(data.x),
           ethers.BigNumber.from(data.y),
           ethers.BigNumber.from(data.denominator)
@@ -123,14 +86,14 @@ describe('MathUtil', () => {
     });
 
     it('fails on div by zero', async () => {
-      await assertRevert(MathUtil.mulDivUp(s(1, 18), s(1, 18), 0));
+      await assertRevert(DecimalMath.mulDivUp(s(1, 18), s(1, 18), 0));
     });
   });
 
   describe('mulDecimal()', () => {
     async function assertMulDecimal(data, expected) {
       assertBn.equal(
-        await MathUtil['mulDecimal(uint256,uint256)'](
+        await DecimalMath['mulDecimal(uint256,uint256)'](
           ethers.BigNumber.from(data.x),
           ethers.BigNumber.from(data.y)
         ),
@@ -155,14 +118,14 @@ describe('MathUtil', () => {
     });
 
     it('fails on large numbers', async () => {
-      await assertRevert(MathUtil['mulDecimal(uint256,uint256)'](s(1, 78), 1), 'out-of-bounds');
+      await assertRevert(DecimalMath['mulDecimal(uint256,uint256)'](s(1, 78), 1), 'out-of-bounds');
     });
   });
 
   describe('divDecimal()', () => {
     async function assertDivDecimal(data, expected) {
       assertBn.equal(
-        await MathUtil['divDecimal(uint256,uint256)'](
+        await DecimalMath['divDecimal(uint256,uint256)'](
           ethers.BigNumber.from(data.x),
           ethers.BigNumber.from(data.y)
         ),
@@ -183,18 +146,18 @@ describe('MathUtil', () => {
     });
 
     it('fails on large numbers', async () => {
-      await assertRevert(MathUtil['divDecimal(uint256,uint256)'](s(1, 78), 1), 'out-of-bounds');
+      await assertRevert(DecimalMath['divDecimal(uint256,uint256)'](s(1, 78), 1), 'out-of-bounds');
     });
 
     it('fails on divide by zero', async () => {
-      await assertRevert(MathUtil['divDecimal(uint256,uint256)'](1, 0));
+      await assertRevert(DecimalMath['divDecimal(uint256,uint256)'](1, 0));
     });
   });
 
   describe('mulDivDown() Int', () => {
     async function assertmulDivDown(data, expected) {
       assertBn.equal(
-        await MathUtil['mulDivDown(int256,int256,int256)'](
+        await DecimalMath['mulDivDown(int256,int256,int256)'](
           ethers.BigNumber.from(data.x),
           ethers.BigNumber.from(data.y),
           ethers.BigNumber.from(data.denominator)
@@ -238,14 +201,14 @@ describe('MathUtil', () => {
     });
 
     it('fails on div by zero', async () => {
-      await assertRevert(MathUtil['mulDivDown(int256,int256,int256)'](s(1, 18), s(1, 18), 0));
+      await assertRevert(DecimalMath['mulDivDown(int256,int256,int256)'](s(1, 18), s(1, 18), 0));
     });
   });
 
   describe('mulDecimal() Int', () => {
     async function assertMulDecimalInt(data, expected) {
       assertBn.equal(
-        await MathUtil['mulDecimal(int256,int256)'](
+        await DecimalMath['mulDecimal(int256,int256)'](
           ethers.BigNumber.from(data.x),
           ethers.BigNumber.from(data.y)
         ),
@@ -285,14 +248,14 @@ describe('MathUtil', () => {
     });
 
     it('fails on large numbers', async () => {
-      await assertRevert(MathUtil['mulDecimal(int256,int256)'](s(1, 78), 1), 'out-of-bounds');
+      await assertRevert(DecimalMath['mulDecimal(int256,int256)'](s(1, 78), 1), 'out-of-bounds');
     });
   });
 
   describe('divDecimal() Int', () => {
     async function assertDivDecimalInt(data, expected) {
       assertBn.equal(
-        await MathUtil['divDecimal(int256,int256)'](
+        await DecimalMath['divDecimal(int256,int256)'](
           ethers.BigNumber.from(data.x),
           ethers.BigNumber.from(data.y)
         ),
@@ -328,11 +291,11 @@ describe('MathUtil', () => {
     });
 
     it('fails on large numbers', async () => {
-      await assertRevert(MathUtil['divDecimal(int256,int256)'](s(1, 78), 1), 'out-of-bounds');
+      await assertRevert(DecimalMath['divDecimal(int256,int256)'](s(1, 78), 1), 'out-of-bounds');
     });
 
     it('fails on divide by zero', async () => {
-      await assertRevert(MathUtil['divDecimal(int256,int256)'](1, 0)); // TODO
+      await assertRevert(DecimalMath['divDecimal(int256,int256)'](1, 0)); // TODO
     });
   });
 });

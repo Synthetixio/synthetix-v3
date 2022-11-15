@@ -1,19 +1,15 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "../../utils/MathUtil.sol";
+import "../../utils/DecimalMath.sol";
 
-contract MathUtilMock {
-    function sqrt(uint x) public pure returns (uint z) {
-        return MathUtil.sqrt(x);
-    }
-
+contract DecimalMathMock {
     function mulDivDown(
         uint256 x,
         uint256 y,
         uint256 denominator
     ) public pure returns (uint256) {
-        return MathUtil.mulDivDown(x, y, denominator);
+        return DecimalMath.mulDivDown(x, y, denominator);
     }
 
     function mulDivUp(
@@ -21,15 +17,15 @@ contract MathUtilMock {
         uint256 y,
         uint256 denominator
     ) public pure returns (uint256) {
-        return MathUtil.mulDivUp(x, y, denominator);
+        return DecimalMath.mulDivUp(x, y, denominator);
     }
 
     function mulDecimal(uint256 x, uint256 y) public pure returns (uint256) {
-        return MathUtil.mulDecimal(x, y);
+        return DecimalMath.mulDecimal(x, y);
     }
 
     function divDecimal(uint256 x, uint256 y) public pure returns (uint256) {
-        return MathUtil.divDecimal(x, y);
+        return DecimalMath.divDecimal(x, y);
     }
 
     function mulDivDown(
@@ -37,14 +33,14 @@ contract MathUtilMock {
         int256 y,
         int256 denominator
     ) public pure returns (int256) {
-        return MathUtil.mulDivDown(x, y, denominator);
+        return DecimalMath.mulDivDown(x, y, denominator);
     }
 
     function mulDecimal(int256 x, int256 y) public pure returns (int256) {
-        return MathUtil.mulDecimal(x, y);
+        return DecimalMath.mulDecimal(x, y);
     }
 
     function divDecimal(int256 x, int256 y) public pure returns (int256) {
-        return MathUtil.divDecimal(x, y);
+        return DecimalMath.divDecimal(x, y);
     }
 }
