@@ -47,7 +47,7 @@ describe('tasks/deploy.ts', function () {
     });
   });
 
-  describe.only('when using an environment with missing interfaces', function () {
+  describe('when using an environment with missing interfaces', function () {
     before('prepare environment', async function () {
       hre = loadEnvironment(this, 'missing-interface');
     });
