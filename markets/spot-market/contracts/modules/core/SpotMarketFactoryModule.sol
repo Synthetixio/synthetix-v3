@@ -3,6 +3,7 @@ pragma solidity ^0.8.0;
 
 import "@synthetixio/main/contracts/interfaces/IMarketManagerModule.sol";
 import "@synthetixio/core-contracts/contracts/utils/MathUtil.sol";
+import "@synthetixio/core-modules/contracts/modules/AssociatedSystemsModule.sol";
 import "@synthetixio/core-contracts/contracts/proxy/UUPSProxy.sol";
 import "@synthetixio/core-contracts/contracts/initializable/InitializableMixin.sol";
 import "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
@@ -13,7 +14,7 @@ import "../../storage/SpotMarketFactory.sol";
 import "../../storage/Price.sol";
 import "../../interfaces/ISpotMarketFactoryModule.sol";
 
-contract SpotMarketFactoryModule is ISpotMarketFactoryModule, InitializableMixin {
+contract SpotMarketFactoryModule is ISpotMarketFactoryModule, AssociatedSystemsModule, InitializableMixin {
     using MathUtil for uint256;
     using SpotMarketFactory for SpotMarketFactory.Data;
     using AssociatedSystem for AssociatedSystem.Data;
@@ -36,7 +37,10 @@ contract SpotMarketFactoryModule is ISpotMarketFactoryModule, InitializableMixin
     }
 
     function registerSynth(
-        address synthImpl,
+        string memory tokenName,
+        string memory tokenSymbol,
+        uint8 tokenDecimals,
+        address initialTokenImpl,
         address synthOwner,
         bytes memory buyFeedId,
         bytes memory sellFeedId,
@@ -48,7 +52,7 @@ contract SpotMarketFactoryModule is ISpotMarketFactoryModule, InitializableMixin
         SpotMarketFactory.Data storage factory = SpotMarketFactory.load();
         uint128 synthMarketId = IMarketManagerModule(factory.synthetix).registerMarket(address(this));
 
-        _createSynth(synthMarketId, synthImpl);
+        _initOrUpgradeToken(SynthUtil.getSystemId(synthMarketId), tokenName, tokenSymbol, tokenDecimals, initialTokenImpl);
 
         factory.synthConfigs[synthMarketId] = SynthConfig.Data({
             priceData: Price.Data({buyFeedId: buyFeedId, sellFeedId: sellFeedId}),
@@ -83,9 +87,7 @@ contract SpotMarketFactoryModule is ISpotMarketFactoryModule, InitializableMixin
         SpotMarketFactory.load().onlyMarketOwner(marketId);
 
         bytes32 synthId = SynthUtil.getSystemId(marketId);
-        AssociatedSystem.Data storage synth = AssociatedSystem.load(synthId);
-
-        synth.impl = synthImpl;
+        _upgradeToken(synthId, synthImpl);
     }
 
     function updateFeeData(
@@ -97,6 +99,8 @@ contract SpotMarketFactoryModule is ISpotMarketFactoryModule, InitializableMixin
         factory.onlyMarketOwner(synthMarketId);
 
         factory.synthConfigs[synthMarketId].feeData = Fee.Data({interestRate: interestRate, fixedFee: fixedFee});
+
+        emit SynthFeeDataUpdated(synthMarketId, interestRate, fixedFee);
     }
 
     function updatePriceData(
@@ -108,16 +112,7 @@ contract SpotMarketFactoryModule is ISpotMarketFactoryModule, InitializableMixin
         factory.onlyMarketOwner(synthMarketId);
 
         factory.synthConfigs[synthMarketId].priceData = Price.Data({buyFeedId: buyFeedId, sellFeedId: sellFeedId});
-    }
 
-    function _createSynth(uint128 marketId, address synthImpl) internal {
-        bytes32 synthId = SynthUtil.getSystemId(marketId);
-        AssociatedSystem.Data storage synth = AssociatedSystem.load(synthId);
-
-        address proxy = address(new UUPSProxy(synthImpl));
-
-        synth.proxy = proxy;
-        synth.kind = AssociatedSystem.KIND_ERC20;
-        synth.impl = synthImpl;
+        emit SynthPriceDataUpdated(synthMarketId, buyFeedId, sellFeedId);
     }
 }

@@ -3,6 +3,7 @@ pragma solidity ^0.8.0;
 
 import "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
 import "@synthetixio/core-modules/contracts/storage/AssociatedSystem.sol";
+import "@synthetixio/core-contracts/contracts/proxy/UUPSProxy.sol";
 
 library SynthUtil {
     using AssociatedSystem for AssociatedSystem.Data;
