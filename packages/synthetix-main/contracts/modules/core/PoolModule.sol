@@ -56,15 +56,24 @@ contract PoolModule is IPoolModule {
         emit PoolOwnershipAccepted(poolId, msg.sender);
     }
 
-    function renouncePoolNomination(uint128 poolId) external override {
+    function revokePoolNomination(uint128 poolId) external override {
+        Pool.onlyPoolOwner(poolId, msg.sender);
+
+        Pool.load(poolId).nominatedOwner = address(0);
+
+        emit PoolNominationRevoked(poolId, msg.sender);
+    }
+
+    function renouncePoolOwnership(uint128 poolId) external override {
         Pool.Data storage pool = Pool.load(poolId);
-        if (pool.nominatedOwner != msg.sender) {
+
+        if(pool.nominatedOwner != msg.sender) {
             revert AccessError.Unauthorized(msg.sender);
         }
 
         pool.nominatedOwner = address(0);
 
-        emit PoolNominationRenounced(poolId, msg.sender);
+        emit PoolOwnerNominationRenounced(poolId, msg.sender);
     }
 
     function getPoolOwner(uint128 poolId) external view override returns (address) {
@@ -75,13 +84,6 @@ contract PoolModule is IPoolModule {
         return Pool.load(poolId).nominatedOwner;
     }
 
-    function renouncePoolOwnership(uint128 poolId) external override {
-        Pool.onlyPoolOwner(poolId, msg.sender);
-
-        Pool.load(poolId).nominatedOwner = address(0);
-
-        emit PoolOwnershipRenounced(poolId, msg.sender);
-    }
 
     // ---------------------------------------
     // pool admin
