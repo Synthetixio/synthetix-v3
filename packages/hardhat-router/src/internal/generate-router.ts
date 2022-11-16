@@ -1,7 +1,7 @@
 import path from 'node:path';
 import { JsonFragment } from '@ethersproject/abi';
 import { getSelectors } from '@synthetixio/core-utils/utils/ethers/contracts';
-import { renderTemplate } from './generate-contracts';
+import { renderTemplate } from './render-template';
 import { toPrivateConstantCase } from './router-helper';
 
 const TAB = '    ';

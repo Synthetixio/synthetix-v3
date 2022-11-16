@@ -1,4 +1,5 @@
 import path from 'node:path';
+import { SourceUnit } from 'solidity-ast';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { parseFullyQualifiedName } from 'hardhat/utils/contract-names';
 import { getSelectors } from '@synthetixio/core-utils/utils/ethers/contracts';
@@ -115,4 +116,18 @@ export async function getSourcesAbis(hre: HardhatRuntimeEnvironment, whitelist: 
   );
 
   return result;
+}
+
+export async function getContractAst(
+  contractFullyQualifiedName: string,
+  hre: HardhatRuntimeEnvironment
+) {
+  const { sourceName } = parseFullyQualifiedName(contractFullyQualifiedName);
+  const buildInfo = await hre.artifacts.getBuildInfo(contractFullyQualifiedName);
+
+  if (!buildInfo) {
+    throw new Error(`Build info for "${contractFullyQualifiedName}" not found`);
+  }
+
+  return buildInfo.output.sources[sourceName].ast as SourceUnit;
 }

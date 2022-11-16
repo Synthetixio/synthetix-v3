@@ -25,8 +25,8 @@ task(TASK_UPLOAD_SELECTORS, 'Upload selectors from all local contracts to 4byte.
   .setAction(async ({ modules, quiet, debug }: Params, hre) => {
     await hre.run(TASK_COMPILE, { force: false, quiet: true });
 
-    logger.quiet = quiet;
-    logger.debugging = debug;
+    logger.quiet = !!quiet;
+    logger.debugging = !!debug;
 
     const abis = await getSourcesAbis(hre, modules);
     const abiValues = Object.values(abis);

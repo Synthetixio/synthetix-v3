@@ -11,7 +11,7 @@ import {
   SUBTASK_VALIDATE_SELECTORS,
   TASK_DEPLOY,
 } from '../task-names';
-import { quietCompile } from '../utils/quiet-compile';
+import { quietCompile } from '../internal/quiet-compile';
 import { DeployedContractData } from '../types';
 
 export interface DeployTaskParams {
