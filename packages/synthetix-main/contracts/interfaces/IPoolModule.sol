@@ -9,7 +9,6 @@ interface IPoolModule {
     event NominatedPoolOwner(uint128 indexed poolId, address indexed owner);
     event PoolOwnershipAccepted(uint128 indexed poolId, address indexed owner);
     event PoolNominationRenounced(uint128 indexed poolId, address indexed owner);
-    event PoolNominationRevoked(uint128 indexed poolId, address indexed owner);
     event PoolOwnershipRenounced(uint128 indexed poolId, address indexed owner);
     event PoolNameUpdated(uint128 indexed poolId, string indexed name, address indexed sender);
     event PoolConfigurationSet(uint128 indexed poolId, MarketConfiguration.Data[] markets, address indexed sender);
@@ -40,9 +39,6 @@ interface IPoolModule {
 
     /// @notice renounces ownership by owner
     function renouncePoolOwnership(uint128 poolId) external;
-
-    /// @notice revokes pool nomination
-    function revokePoolNomination(uint128 poolId) external;
 
     /// @notice gets owner of poolId
     function getPoolOwner(uint128 poolId) external view returns (address);
