@@ -3,7 +3,7 @@ import path from 'node:path';
 import { subtask } from 'hardhat/config';
 import { parseFullyQualifiedName } from 'hardhat/utils/contract-names';
 import logger from '@synthetixio/core-utils/utils/io/logger';
-import { generateRouter } from '../internal/generate-router';
+import { renderRouter } from '../internal/render-router';
 import { routerFunctionFilter } from '../internal/router-function-filter';
 import { contractIsInSources } from '../internal/contract-helper';
 import { SUBTASK_GENERATE_ROUTER } from '../task-names';
@@ -33,7 +33,7 @@ subtask(
 
     logger.debug(`generated: ${router} | modules: ${contracts.length}`);
 
-    const sourceCode = generateRouter({
+    const sourceCode = renderRouter({
       routerName: contractName,
       template,
       contracts,

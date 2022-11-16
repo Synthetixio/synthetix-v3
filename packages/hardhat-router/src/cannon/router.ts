@@ -3,7 +3,7 @@ import path, { dirname } from 'node:path';
 import hre from 'hardhat';
 import { ChainBuilderRuntime } from '@usecannon/builder/dist/src/types';
 import { parseFullyQualifiedName } from 'hardhat/utils/contract-names';
-import { generateRouter } from '../internal/generate-router';
+import { renderRouter } from '../internal/render-router';
 import { routerFunctionFilter } from '../internal/router-function-filter';
 
 /**
@@ -49,7 +49,7 @@ exports.generate = async function generate(
     })
   );
 
-  const generatedSource = generateRouter({
+  const generatedSource = renderRouter({
     routerName: routerContractName,
     functionFilter: routerFunctionFilter,
     contracts,

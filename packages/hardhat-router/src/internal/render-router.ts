@@ -30,7 +30,7 @@ interface BinaryData {
   children: BinaryData[];
 }
 
-export function generateRouter({
+export function renderRouter({
   routerName = 'Router',
   template = path.resolve(__dirname, '..', '..', 'templates', 'Router.sol.mustache'),
   functionFilter,
