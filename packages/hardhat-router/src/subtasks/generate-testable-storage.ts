@@ -154,6 +154,12 @@ function _generateTemplateInputs(
       let loadInject: TestableStorageTemplateInputs['loadInject'] = undefined;
 
       for (const functionDefinition of findAll('FunctionDefinition', contractDefinition)) {
+        if (functionDefinition.visibility === 'private') {
+          console.log(`Skipping function ${functionDefinition.name} because its private`);
+
+          continue;
+        }
+
         if (functionDefinition.name === 'load') {
           loadParams = functionDefinition.parameters.parameters
             .map(
