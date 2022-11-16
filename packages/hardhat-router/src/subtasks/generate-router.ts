@@ -1,42 +1,51 @@
-import fs from 'node:fs';
+import { writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { subtask } from 'hardhat/config';
+import { parseFullyQualifiedName } from 'hardhat/utils/contract-names';
 import logger from '@synthetixio/core-utils/utils/io/logger';
-import relativePath from '@synthetixio/core-utils/utils/misc/relative-path';
-import { generateRouter } from '../internal/generate-router';
-import { SUBTASK_GENERATE_ROUTER_SOURCE } from '../task-names';
+import { renderRouter } from '../internal/render-router';
+import { routerFunctionFilter } from '../internal/router-function-filter';
+import { contractIsInSources } from '../internal/contract-helper';
+import { SUBTASK_GENERATE_ROUTER } from '../task-names';
+import { DeployedContractData } from '../types';
+
+interface Params {
+  router?: string;
+  template?: string;
+  contracts: DeployedContractData[];
+}
 
 subtask(
-  SUBTASK_GENERATE_ROUTER_SOURCE,
+  SUBTASK_GENERATE_ROUTER,
   'Reads deployed modules from the deployment data file and generates the source for a new router contract.'
-).setAction(async ({ routerName = 'Router', template }, hre) => {
-  const routerPath = path.join(hre.config.paths.sources, `${routerName}.sol`);
-  const relativeRouterPath = relativePath(routerPath, hre.config.paths.root);
-  const modules = Object.values(hre.router.deployment!.general.contracts).filter((c) => c.isModule);
+).setAction(
+  async (
+    { router = 'contracts/Router.sol:Router', template = '', contracts = [] }: Params,
+    hre
+  ) => {
+    const { sourceName, contractName } = parseFullyQualifiedName(router);
 
-  const contracts = modules.map((c) => ({
-    contractName: c.contractName,
-    deployedAddress: c.deployedAddress,
-    abi: hre.router.deployment!.abis[c.contractFullyQualifiedName],
-  }));
+    if (!contractIsInSources(router, hre)) {
+      throw new Error(`Router contract ${router} must be inside the local sources folder`);
+    }
 
-  logger.subtitle('Generating router source');
-  logger.debug(`location: ${relativeRouterPath} | modules: ${contracts.length}`);
+    const routerPath = path.resolve(hre.config.paths.root, sourceName);
 
-  const generatedSource = generateRouter({
-    routerName,
-    template,
-    contracts,
-    functionFilter: hre.config.router.routerFunctionFilter,
-  });
+    logger.debug(`generated: ${router} | modules: ${contracts.length}`);
 
-  const currentSource = fs.existsSync(routerPath) ? fs.readFileSync(routerPath, 'utf8') : '';
-  if (currentSource !== generatedSource) {
-    fs.writeFileSync(routerPath, generatedSource);
-    logger.success(`Router code generated and written to ${relativeRouterPath}`);
-  } else {
-    logger.checked('Router source did not change');
+    const sourceCode = renderRouter({
+      routerName: contractName,
+      template,
+      contracts,
+      functionFilter: routerFunctionFilter,
+    });
+
+    await writeFile(routerPath, sourceCode);
+    logger.success(`Router code generated and written to ${sourceName}`);
+
+    return {
+      location: routerPath,
+      sourceCode,
+    };
   }
-
-  return generatedSource;
-});
+);

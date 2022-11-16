@@ -8,11 +8,9 @@ pragma solidity ^0.8.0;
 // --------------------------------------------------------------------------------
 // --------------------------------------------------------------------------------
 
-import "{{{sourceFile}}}";
+import { {{libraryName}} } from "{{{sourceFile}}}";
 
 contract Testable{{{libraryName}}}Module {
-
-
     {{#loadParams}}
     function _getInstanceStore({{{loadParams}}}) internal pure returns ({{{libraryName}}}.Data storage) {
         return {{{libraryName}}}.load({{{loadInject}}});
@@ -39,7 +37,6 @@ contract Testable{{{libraryName}}}Module {
     }
 
     {{/fields}}
-
     {{#indexedFields}}
     function {{{libraryName}}}_set_{{{name}}}({{#loadParams}}{{{loadParams}}}, {{/loadParams}}{{{indexType}}} idx, {{{type}}} val) external {
         {{{libraryName}}}.Data storage store = _getInstanceStore({{{loadInject}}});
@@ -63,8 +60,8 @@ contract Testable{{{libraryName}}}Module {
 
         store.{{{name}}}.pop();
     }
-    {{/isArray}}
 
+    {{/isArray}}
     {{/indexedFields}}
     {{#methods}}
     function {{{libraryName}}}_{{{name}}}({{#loadParams}}{{{loadParams}}}{{#params}}, {{/params}}{{/loadParams}}{{{params}}}) external{{#mutability}} {{{mutability}}}{{/mutability}} {{#returns}}returns ({{{returns}}}) {{/returns}}{

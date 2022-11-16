@@ -1,26 +1,8 @@
-import { deepEqual, equal, ok } from 'assert/strict';
+import { deepEqual, equal } from 'assert/strict';
 
-import {
-  daysToSeconds,
-  formatDate,
-  fromUnixTimestamp,
-  getUnixTimestamp,
-} from '../../../src/utils/misc/dates';
+import { daysToSeconds, fromUnixTimestamp, getUnixTimestamp } from '../../../src/utils/misc/dates';
 
 describe('utils/misc/dates.ts', function () {
-  describe('formatDate', function () {
-    it('returns the date with the correct format', function () {
-      const result = formatDate();
-      ok(/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(result));
-    });
-
-    it('returns the date with the correct format using a custom date', function () {
-      const expected = '2011-10-10';
-      const result = formatDate(new Date(Date.parse(expected)));
-      equal(result, expected);
-    });
-  });
-
   describe('getUnixTimestamp', function () {
     it('returns the current unix timestamp in seconds', async function () {
       equal(getUnixTimestamp(), Math.floor(new Date().getTime() / 1000));

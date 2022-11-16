@@ -2,7 +2,7 @@ const { loadEnvironment, deployOnEnvironment } = require('../helpers/use-environ
 const { rejects } = require('assert/strict');
 const { ContractValidationError } = require('../../src/internal/errors');
 
-describe('namespace-collision', function () {
+describe.skip('namespace-collision', function () {
   let hre;
 
   beforeEach('set fixture project', function () {

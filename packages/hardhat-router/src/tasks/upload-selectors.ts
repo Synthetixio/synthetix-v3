@@ -1,30 +1,34 @@
 import { task } from 'hardhat/config';
-import { default as logger } from '@synthetixio/core-utils/utils/io/logger';
+import { TASK_COMPILE } from 'hardhat/builtin-tasks/task-names';
 import { JsonFragment } from '@ethersproject/abi';
+import { default as logger } from '@synthetixio/core-utils/utils/io/logger';
+import * as types from '@synthetixio/core-utils/utils/hardhat/argument-types';
 import * as fourbytes from '../internal/fourbytes';
-import { TASK_UPLOAD_SELECTORS, SUBTASK_GET_SOURCES_ABIS } from '../task-names';
-import { DeploymentAbis } from '../types';
+import { getSourcesAbis } from '../internal/contract-helper';
+import { TASK_UPLOAD_SELECTORS } from '../task-names';
 
 interface Params {
-  include: string;
+  modules: string[];
   quiet: boolean;
   debug: boolean;
 }
 
 task(TASK_UPLOAD_SELECTORS, 'Upload selectors from all local contracts to 4byte.directory')
-  .addOptionalParam('include', 'optional comma separated contracts to include', '')
+  .addOptionalPositionalParam(
+    'modules',
+    'Contract files, names, fully qualified names or folder of contracts to include',
+    ['contracts/modules/'],
+    types.stringArray
+  )
   .addFlag('debug', 'Display debug logs')
   .addFlag('quiet', 'Silence all output')
-  .setAction(async ({ include, quiet, debug }: Params, hre) => {
-    const whitelist = include
-      .split(',')
-      .map((name) => name.trim())
-      .filter(Boolean);
+  .setAction(async ({ modules, quiet, debug }: Params, hre) => {
+    await hre.run(TASK_COMPILE, { force: false, quiet: true });
 
-    logger.quiet = quiet;
-    logger.debugging = debug;
+    logger.quiet = !!quiet;
+    logger.debugging = !!debug;
 
-    const abis = (await hre.run(SUBTASK_GET_SOURCES_ABIS, { whitelist })) as DeploymentAbis;
+    const abis = await getSourcesAbis(hre, modules);
     const abiValues = Object.values(abis);
 
     if (!abiValues.length) {

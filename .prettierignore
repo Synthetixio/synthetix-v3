@@ -7,3 +7,4 @@ packages/core-utils/utils
 packages/*/typechain-types
 packages/*/contracts/routers
 packages/*/contracts/modules/test
+Router.sol

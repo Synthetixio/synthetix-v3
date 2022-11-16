@@ -5,7 +5,9 @@ const { bootstrap } = require('@synthetixio/hardhat-router/dist/utils/tests');
 const initializer = require('@synthetixio/core-modules/test/helpers/initializer');
 
 describe('TokenModule', () => {
-  const { proxyAddress } = bootstrap(initializer, { modules: '.*(Owner|Upgrade|Token).*' });
+  const { proxyAddress } = bootstrap(initializer, {
+    modules: ['OwnerModule', 'UpgradeModule', 'TokenModule'],
+  });
 
   let TokenModule;
   let owner, userMint, userBurn;

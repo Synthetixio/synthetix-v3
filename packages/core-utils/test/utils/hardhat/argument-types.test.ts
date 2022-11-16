@@ -1,6 +1,11 @@
-import { doesNotThrow, equal, notEqual, throws } from 'assert/strict';
+import { doesNotThrow, equal, notEqual, throws, deepEqual } from 'assert/strict';
 
-import { address, alphanumeric, oneOf } from '../../../src/utils/hardhat/argument-types';
+import {
+  address,
+  alphanumeric,
+  oneOf,
+  stringArray,
+} from '../../../src/utils/hardhat/argument-types';
 
 describe('utils/hardhat/argument-types.ts', function () {
   describe('alphanumeric', function () {
@@ -110,6 +115,39 @@ describe('utils/hardhat/argument-types.ts', function () {
       });
       throws(() => {
         type.validate('argName', {} as unknown as string);
+      });
+    });
+  });
+
+  describe('stringArray', function () {
+    it('is well formed', function () {
+      equal(stringArray.name, 'stringArray');
+      notEqual(stringArray.parse, undefined);
+      notEqual(stringArray.validate, undefined);
+    });
+
+    it('parses strings correctly', function () {
+      deepEqual(stringArray.parse('', 'Something'), ['Something']);
+      deepEqual(stringArray.parse('', 'two,things'), ['two', 'things']);
+      deepEqual(stringArray.parse('', ', , two,things,'), ['two', 'things']);
+      deepEqual(stringArray.parse('', ''), []);
+    });
+
+    it('validates correctly', function () {
+      doesNotThrow(() => {
+        stringArray.validate('argName', ['word1234']);
+      });
+      doesNotThrow(() => {
+        stringArray.validate('argName', ['two', 'things']);
+      });
+      throws(() => {
+        stringArray.validate('argName', '' as unknown as string[]);
+      });
+      throws(() => {
+        stringArray.validate('argName', 3 as unknown as string[]);
+      });
+      throws(() => {
+        stringArray.validate('argName', false as unknown as string[]);
       });
     });
   });
