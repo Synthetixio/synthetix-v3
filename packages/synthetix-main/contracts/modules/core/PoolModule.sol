@@ -67,7 +67,7 @@ contract PoolModule is IPoolModule {
     function renouncePoolOwnership(uint128 poolId) external override {
         Pool.Data storage pool = Pool.load(poolId);
 
-        if(pool.nominatedOwner != msg.sender) {
+        if (pool.nominatedOwner != msg.sender) {
             revert AccessError.Unauthorized(msg.sender);
         }
 
@@ -83,7 +83,6 @@ contract PoolModule is IPoolModule {
     function getNominatedPoolOwner(uint128 poolId) external view override returns (address) {
         return Pool.load(poolId).nominatedOwner;
     }
-
 
     // ---------------------------------------
     // pool admin
