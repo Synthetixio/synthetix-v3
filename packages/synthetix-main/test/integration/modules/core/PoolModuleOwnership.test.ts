@@ -101,7 +101,7 @@ describe('PoolModule Create / Ownership', function () {
 
         it('emits an event when nominee renounces', async () => {
           const tx = await systems().Core.connect(user1).renouncePoolOwnership(1);
-          await tx.wait();
+          receipt = await tx.wait();
           await assertEvent(
             receipt,
             `PoolOwnerNominationRenounced(1, "${await user2.getAddress()}")`,
@@ -115,7 +115,7 @@ describe('PoolModule Create / Ownership', function () {
             .nominatePoolOwner(await user2.getAddress(), 1);
           await tx.wait();
           const tx2 = await systems().Core.connect(user1).revokePoolNomination(1);
-          await tx2.wait();
+          receipt = await tx2.wait();
           await assertEvent(
             receipt,
             `PoolNominationRevoked(1, "${await user2.getAddress()}")`,
