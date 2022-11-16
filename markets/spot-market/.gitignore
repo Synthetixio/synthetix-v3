@@ -1,0 +1,5 @@
+# generated test modules
+contracts/modules/test
+
+# generated routers
+contracts/routers
