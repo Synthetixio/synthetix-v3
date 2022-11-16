@@ -70,7 +70,6 @@ export async function getSourcesFullyQualifiedNames(
     const { sourceName, contractName } = parseFullyQualifiedName(fqName);
     if (!contractIsInSources(sourceName, hre)) return false;
     if (whitelist.length > 0) {
-      console.log({ whitelist, fqName, sourceName, contractName });
       for (const w of whitelist) {
         if (typeof w !== 'string' || !w) throw new Error(`Invalid whitelist item "${w}"`);
         if (w.endsWith('/') && sourceName.startsWith(w)) return true;

@@ -70,11 +70,9 @@ task(TASK_DEPLOY, 'Deploys the given modules behind a Proxy + Router architectur
       );
     }
 
-    const contracts = await getSourcesFullyQualifiedNames(hre, modules);
-
-    console.log({ modules, contracts });
-
     await quietCompile(hre, !!quiet);
+
+    const contracts = await getSourcesFullyQualifiedNames(hre, modules);
 
     // note: temporarily disabled due to library storage refactor
     //await hre.run(SUBTASK_VALIDATE_STORAGE);
