@@ -130,7 +130,13 @@ artifact = "contracts/modules/InitialModuleBundle.sol:InitialModuleBundle"
 [run.core_generate_router]
 exec = "../hardhat-router/dist/cannon/router.js"
 func = "generate"
-args = ["CoreRouter", "contracts/modules/common", "contracts/modules/core", "contracts/modules/associated-systems", "contracts/modules/test"]
+args = [
+  "contracts/routers/chain-<%= chainId %>/CoreRouter.sol:CoreRouter",
+  "contracts/modules/common",
+  "contracts/modules/core",
+  "contracts/modules/associated-systems",
+  "contracts/modules/test"
+]
 modified = ["contracts/modules/common", "contracts/modules/core", "contracts/modules/test"]
 depends = [
   "contract.OwnerModule",
@@ -240,7 +246,11 @@ depends = [
 [run.account_generate_router]
 exec = "../hardhat-router/dist/cannon/router.js"
 func = "generate"
-args = ["AccountRouter", "contracts/modules/common", "contracts/modules/account"]
+args = [
+  "contracts/routers/chain-<%= chainId %>/AccountRouter.sol:AccountRouter",
+  "contracts/modules/common",
+  "contracts/modules/account"
+]
 modified = ["contracts/modules/common", "contracts/modules/account"]
 depends = [
   "contract.OwnerModule",
@@ -261,7 +271,11 @@ depends = ["run.account_generate_router"]
 [run.snx_generate_router]
 exec = "../hardhat-router/dist/cannon/router.js"
 func = "generate"
-args = ["SNXRouter", "contracts/modules/common", "contracts/modules/snx"]
+args = [
+  "contracts/routers/chain-<%= chainId %>/SNXRouter.sol:SNXRouter",
+  "contracts/modules/common",
+  "contracts/modules/snx"
+]
 modified = ["contracts/modules/common", "contracts/modules/snx"]
 depends = [
   "contract.OwnerModule",
@@ -282,7 +296,12 @@ depends = ["run.snx_generate_router"]
 [run.usd_generate_router]
 exec = "../hardhat-router/dist/cannon/router.js"
 func = "generate"
-args = ["USDRouter", "contracts/modules/common", "contracts/modules/usd", "contracts/modules/associated-systems"]
+args = [
+  "contracts/routers/chain-<%= chainId %>/USDRouter.sol:USDRouter",
+  "contracts/modules/common",
+  "contracts/modules/usd",
+  "contracts/modules/associated-systems"
+]
 modified = ["contracts/modules/common", "contracts/modules/usd"]
 depends = [
   "contract.OwnerModule",
