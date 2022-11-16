@@ -23,7 +23,7 @@ artifact = "contracts/modules/UpgradeModule.sol:UpgradeModule"
 [contract.OracleManagerModule]
 artifact = "contracts/modules/OracleManagerModule.sol:OracleManagerModule"
 
-[contract.Proxy]
+[contract.InitialProxy]
 artifact = "contracts/Proxy.sol:Proxy"
 args = ["<%= contracts.InitialModuleBundle.address %>"]
 abiOf = ["InitialModuleBundle"]
@@ -49,19 +49,19 @@ abiOf = ["OracleManagerModule"]
 depends = ["run.generate_router"]
 
 [invoke.acquire_ownership]
-target = ["Proxy"]
+target = ["InitialProxy"]
 from = "<%= settings.owner %>"
 func = "initializeOwnerModule"
 args = ["<%= settings.owner %>"]
-depends = ["contract.Proxy"]
+depends = ["contract.InitialProxy"]
 
 [invoke.upgrade_proxy]
-target = ["Proxy"]
+target = ["InitialProxy"]
 abi = "UpgradeModule"
 from = "<%= settings.owner %>"
 func = "upgradeTo"
 args = ["<%= contracts.Router.address %>"]
-factory.CoreProxy.abiOf = ["Router"]
-factory.CoreProxy.event = "Upgraded"
-factory.CoreProxy.arg = 0
+factory.Proxy.abiOf = ["Router"]
+factory.Proxy.event = "Upgraded"
+factory.Proxy.arg = 0
 depends = ["invoke.acquire_ownership", "contract.Router"]
