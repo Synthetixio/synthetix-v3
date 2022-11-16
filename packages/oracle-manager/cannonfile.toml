@@ -11,15 +11,57 @@ defaultValue = "main"
 description = "Admin user for the system"
 defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
 
-[run.deploy]
-exec = "scripts/deploy.js"
-func = "deploy"
-args = ["Core", ".*/(core|common|mocks)/.*"]
-modified = ["contracts/modules/core", "contracts/utils", "scripts"]
+[contract.InitialModuleBundle]
+artifact = "@synthetixio/main/contracts/modules/InitialModuleBundle.sol:InitialModuleBundle"
 
-[contract.Proxy]
-artifact = "Proxy"
-args = ["<%= contracts.CoreRouter.address %>"]
-abi = "CoreRouter"
+[contract.OwnerModule]
+artifact = "contracts/modules/OwnerModule.sol:OwnerModule"
 
-depends = ["run.deploy"]
+[contract.UpgradeModule]
+artifact = "contracts/modules/UpgradeModule.sol:UpgradeModule"
+
+[contract.OracleManagerModule]
+artifact = "contracts/modules/OracleManagerModule.sol:OracleManagerModule"
+
+[contract.InitialProxy]
+artifact = "contracts/Proxy.sol:Proxy"
+args = ["<%= contracts.InitialModuleBundle.address %>"]
+abiOf = ["InitialModuleBundle"]
+depends = ["contract.InitialModuleBundle"]
+
+[run.generate_router]
+exec = "../hardhat-router/dist/cannon/router.js"
+func = "generate"
+args = [
+  "contracts/routers/chain-<%= chainId %>/Router.sol:Router",
+  "contracts/modules"
+]
+modified = ["contracts/modules"]
+depends = [
+  "contract.OwnerModule",
+  "contract.UpgradeModule",
+  "contract.OracleManagerModule"
+]
+
+[contract.Router]
+artifact = "contracts/routers/chain-<%= chainId %>/Router.sol:Router"
+abiOf = ["OracleManagerModule"]
+depends = ["run.generate_router"]
+
+[invoke.acquire_ownership]
+target = ["InitialProxy"]
+from = "<%= settings.owner %>"
+func = "initializeOwnerModule"
+args = ["<%= settings.owner %>"]
+depends = ["contract.InitialProxy"]
+
+[invoke.upgrade_proxy]
+target = ["InitialProxy"]
+abi = "UpgradeModule"
+from = "<%= settings.owner %>"
+func = "upgradeTo"
+args = ["<%= contracts.Router.address %>"]
+factory.Proxy.abiOf = ["Router"]
+factory.Proxy.event = "Upgraded"
+factory.Proxy.arg = 0
+depends = ["invoke.acquire_ownership", "contract.Router"]

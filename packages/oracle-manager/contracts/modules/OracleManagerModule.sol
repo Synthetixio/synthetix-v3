@@ -1,14 +1,14 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "../../interfaces/IOracleManagerModule.sol";
-import "../../utils/ReducerNodeLibrary.sol";
-import "../../utils/ExternalNodeLibrary.sol";
-import "../../utils/PythNodeLibrary.sol";
-import "../../utils/ChainlinkNodeLibrary.sol";
+import "../interfaces/IOracleManagerModule.sol";
+import "../utils/ReducerNodeLibrary.sol";
+import "../utils/ExternalNodeLibrary.sol";
+import "../utils/PythNodeLibrary.sol";
+import "../utils/ChainlinkNodeLibrary.sol";
 
-import "../../storage/Node.sol";
-import "../../storage/NodeDefinition.sol";
+import "../storage/Node.sol";
+import "../storage/NodeDefinition.sol";
 
 contract OracleManagerModule is IOracleManagerModule {
     error UnsupportedNodeType(uint nodeType);
