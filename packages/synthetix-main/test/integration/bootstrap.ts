@@ -40,7 +40,8 @@ before(async function () {
   const cmd = hre.network.name === 'cannon' ? 'build' : 'deploy';
 
   const cannonInfo = await hre.run(`cannon:${cmd}`, {
-    /*settings: ['additionalModules=core|test']*/
+    cannonfile: 'cannonfile.test.toml', // build option to override cannonfile
+    overrideManifest: 'cannonfile.test.toml', // deploy option to override cannonfile
   });
 
   provider = cannonInfo.provider;
@@ -153,7 +154,7 @@ export function bootstrapWithStakedPool() {
     await r
       .systems()
       .Core.connect(user1)
-      .depositCollateral(accountId, collateralAddress, depositAmount.mul(10));
+      .deposit(accountId, collateralAddress, depositAmount.mul(10));
 
     // invest in the pool
     await r

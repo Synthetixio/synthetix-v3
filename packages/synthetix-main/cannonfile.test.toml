@@ -71,6 +71,58 @@ artifact = "contracts/modules/snx/SNXTokenModule.sol:SNXTokenModule"
 [contract.USDTokenModule]
 artifact = "contracts/modules/usd/USDTokenModule.sol:USDTokenModule"
 
+
+# Test Modules
+[contract.TestableAccountModule]
+artifact = "contracts/modules/test/TestableAccountModule.sol:TestableAccountModule"
+
+[contract.TestableAccountRBACModule]
+artifact = "contracts/modules/test/TestableAccountRBACModule.sol:TestableAccountRBACModule"
+
+[contract.TestableCollateralModule]
+artifact = "contracts/modules/test/TestableCollateralModule.sol:TestableCollateralModule"
+
+[contract.TestableCollateralConfigurationModule]
+artifact = "contracts/modules/test/TestableCollateralConfigurationModule.sol:TestableCollateralConfigurationModule"
+
+[contract.TestableCollateralLockModule]
+artifact = "contracts/modules/test/TestableCollateralLockModule.sol:TestableCollateralLockModule"
+
+[contract.TestableDistributionModule]
+artifact = "contracts/modules/test/TestableDistributionModule.sol:TestableDistributionModule"
+
+[contract.TestableDistributionActorModule]
+artifact = "contracts/modules/test/TestableDistributionActorModule.sol:TestableDistributionActorModule"
+
+[contract.TestableDistributionEntryModule]
+artifact = "contracts/modules/test/TestableDistributionEntryModule.sol:TestableDistributionEntryModule"
+
+[contract.TestableMarketModule]
+artifact = "contracts/modules/test/TestableMarketModule.sol:TestableMarketModule"
+
+[contract.TestableMarketConfigurationModule]
+artifact = "contracts/modules/test/TestableMarketConfigurationModule.sol:TestableMarketConfigurationModule"
+
+[contract.TestablePoolModule]
+artifact = "contracts/modules/test/TestablePoolModule.sol:TestablePoolModule"
+
+[contract.TestablePoolConfigurationModule]
+artifact = "contracts/modules/test/TestablePoolConfigurationModule.sol:TestablePoolConfigurationModule"
+
+[contract.TestableRewardDistributionModule]
+artifact = "contracts/modules/test/TestableRewardDistributionModule.sol:TestableRewardDistributionModule"
+
+[contract.TestableRewardDistributionStatusModule]
+artifact = "contracts/modules/test/TestableRewardDistributionStatusModule.sol:TestableRewardDistributionStatusModule"
+
+[contract.TestableVaultEpochModule]
+artifact = "contracts/modules/test/TestableVaultEpochModule.sol:TestableVaultEpochModule"
+
+[contract.TestableVaultModule]
+artifact = "contracts/modules/test/TestableVaultModule.sol:TestableVaultModule"
+
+
+
 [contract.InitialModuleBundle]
 artifact = "contracts/modules/InitialModuleBundle.sol:InitialModuleBundle"
 
@@ -78,8 +130,8 @@ artifact = "contracts/modules/InitialModuleBundle.sol:InitialModuleBundle"
 [run.core_generate_router]
 exec = "../hardhat-router/dist/cannon/router.js"
 func = "generate"
-args = ["CoreRouter", "contracts/modules/common", "contracts/modules/core", "contracts/modules/associated-systems"]
-modified = ["contracts/modules/common", "contracts/modules/core"]
+args = ["CoreRouter", "contracts/modules/common", "contracts/modules/core", "contracts/modules/associated-systems", "contracts/modules/test"]
+modified = ["contracts/modules/common", "contracts/modules/core", "contracts/modules/test"]
 depends = [
   "contract.OwnerModule",
   "contract.UpgradeModule",
@@ -97,7 +149,23 @@ depends = [
   "contract.PoolModule",
   "contract.RewardsManagerModule",
   "contract.UtilsModule",
-  "contract.VaultModule"
+  "contract.VaultModule",
+  "contract.TestableAccountModule",
+  "contract.TestableAccountRBACModule",
+  "contract.TestableCollateralModule",
+  "contract.TestableCollateralConfigurationModule",
+  "contract.TestableCollateralLockModule",
+  "contract.TestableDistributionModule",
+  "contract.TestableDistributionActorModule",
+  "contract.TestableDistributionEntryModule",
+  "contract.TestableMarketModule",
+  "contract.TestableMarketConfigurationModule",
+  "contract.TestablePoolModule",
+  "contract.TestablePoolConfigurationModule",
+  "contract.TestableRewardDistributionModule",
+  "contract.TestableRewardDistributionStatusModule",
+  "contract.TestableVaultEpochModule",
+  "contract.TestableVaultModule",
 ]
 
 [contract.CoreRouter]
@@ -119,7 +187,23 @@ abiOf = [
   "PoolModule",
   "RewardsManagerModule",
   "UtilsModule",
-  "VaultModule"
+  "VaultModule",
+  "TestableAccountModule",
+  "TestableAccountRBACModule",
+  "TestableCollateralModule",
+  "TestableCollateralConfigurationModule",
+  "TestableCollateralLockModule",
+  "TestableDistributionModule",
+  "TestableDistributionActorModule",
+  "TestableDistributionEntryModule",
+  "TestableMarketModule",
+  "TestableMarketConfigurationModule",
+  "TestablePoolModule",
+  "TestablePoolConfigurationModule",
+  "TestableRewardDistributionModule",
+  "TestableRewardDistributionStatusModule",
+  "TestableVaultEpochModule",
+  "TestableVaultModule",
 ]
 depends = ["run.core_generate_router"]
 
@@ -232,7 +316,7 @@ args = [
 ]
 depends = [
   "invoke.upgrade_core_proxy",
-  "contract.AccountRouter"
+  "contract.AccountRouter",
 ]
 factory.AccountProxy.abiOf = ["AccountRouter"]
 factory.AccountProxy.event = "AssociatedSystemSet"
@@ -251,7 +335,7 @@ args = [
 ]
 depends = [
   "invoke.upgrade_core_proxy",
-  "contract.SNXRouter"
+  "contract.SNXRouter",
 ]
 factory.SNXProxy.abiOf = ["SNXRouter"]
 factory.SNXProxy.event = "AssociatedSystemSet"
@@ -270,7 +354,7 @@ args = [
 ]
 depends = [
   "invoke.upgrade_core_proxy",
-  "contract.USDRouter"
+  "contract.USDRouter",
 ]
 factory.USDProxy.abiOf = ["USDRouter"]
 factory.USDProxy.event = "AssociatedSystemSet"

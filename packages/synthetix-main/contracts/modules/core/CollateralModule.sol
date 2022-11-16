@@ -44,7 +44,7 @@ contract CollateralModule is ICollateralModule {
         uint targetCRatio,
         uint minimumCRatio,
         uint liquidationReward,
-        bool stakingEnabled
+        bool depositingEnabled
     ) external override {
         OwnableStorage.onlyOwner();
         CollateralConfiguration.set(
@@ -53,9 +53,16 @@ contract CollateralModule is ICollateralModule {
             targetCRatio,
             minimumCRatio,
             liquidationReward,
-            stakingEnabled
+            depositingEnabled
         );
-        emit CollateralConfigured(collateralType, priceFeed, targetCRatio, minimumCRatio, liquidationReward, stakingEnabled);
+        emit CollateralConfigured(
+            collateralType,
+            priceFeed,
+            targetCRatio,
+            minimumCRatio,
+            liquidationReward,
+            depositingEnabled
+        );
     }
 
     /**
@@ -78,7 +85,7 @@ contract CollateralModule is ICollateralModule {
 
             CollateralConfiguration.Data storage collateral = CollateralConfiguration.load(collateralType);
 
-            if (!hideDisabled || collateral.stakingEnabled) {
+            if (!hideDisabled || collateral.depositingEnabled) {
                 filteredCollaterals[collateralsIdx++] = collateral;
             }
         }
@@ -107,9 +114,9 @@ contract CollateralModule is ICollateralModule {
     /////////////////////////////////////////////////
 
     /**
-     * @dev See {ICollateralModule-depositCollateral}.
+     * @dev See {ICollateralModule-deposit}.
      */
-    function depositCollateral(
+    function deposit(
         uint128 accountId,
         address collateralType,
         uint amount
@@ -134,15 +141,15 @@ contract CollateralModule is ICollateralModule {
 
         collateralType.safeTransferFrom(user, self, amount);
 
-        account.collaterals[collateralType].depositCollateral(amount);
+        account.collaterals[collateralType].deposit(amount);
 
-        emit CollateralDeposited(accountId, collateralType, amount, msg.sender);
+        emit Deposited(accountId, collateralType, amount, msg.sender);
     }
 
     /**
-     * @dev See {ICollateralModule-withdrawCollateral}.
+     * @dev See {ICollateralModule-Withdraw}.
      */
-    function withdrawCollateral(
+    function withdraw(
         uint128 accountId,
         address collateralType,
         uint amount
@@ -159,7 +166,7 @@ contract CollateralModule is ICollateralModule {
 
         collateralType.safeTransfer(account.rbac.owner, amount);
 
-        emit CollateralWithdrawn(accountId, collateralType, amount, msg.sender);
+        emit Withdrawn(accountId, collateralType, amount, msg.sender);
     }
 
     /**

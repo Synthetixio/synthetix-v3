@@ -57,7 +57,7 @@ contract VaultModule is IVaultModule {
 
         Vault.Data storage vault = Pool.load(poolId).vaults[collateralType];
 
-        vault.updateAvailableRewards(accountId);
+        vault.updateRewards(accountId);
 
         // get the current collateral situation
         uint oldCollateralAmount = vault.currentAccountCollateral(accountId);
@@ -86,7 +86,7 @@ contract VaultModule is IVaultModule {
             if (collateralAmount > oldCollateralAmount) {
                 collateral.deductCollateral(collateralAmount - oldCollateralAmount);
             } else {
-                collateral.depositCollateral(oldCollateralAmount - collateralAmount);
+                collateral.deposit(oldCollateralAmount - collateralAmount);
             }
 
             if (collateralAmount > 0 && !collateral.pools.contains(uint(poolId))) {

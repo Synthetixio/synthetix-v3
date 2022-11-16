@@ -1,9 +1,11 @@
 deployments/local
 deployments/hardhat
-contracts/routers
 
 cannon
 typechain-types
 
+# generated test modules
+contracts/modules/test
 
-contracts/Router.sol
+# generated routers
+contracts/routers

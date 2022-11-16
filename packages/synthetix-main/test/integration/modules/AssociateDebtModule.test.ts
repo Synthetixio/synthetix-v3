@@ -75,7 +75,7 @@ describe('AssociateDebtModule', function () {
 
         await systems()
           .Core.connect(user2)
-          .depositCollateral(user2AccountId, collateralAddress(), depositAmount.mul(2));
+          .deposit(user2AccountId, collateralAddress(), depositAmount.mul(2));
 
         await systems().Core.connect(user2).delegateCollateral(
           user2AccountId,

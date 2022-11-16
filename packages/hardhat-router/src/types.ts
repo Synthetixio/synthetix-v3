@@ -12,6 +12,7 @@ export interface ContractData {
   deploymentCommit: string;
   proxyAddress?: string;
   isModule?: boolean;
+  isStorageLibrary?: boolean;
   isProxy?: boolean;
   isRouter?: boolean;
 }

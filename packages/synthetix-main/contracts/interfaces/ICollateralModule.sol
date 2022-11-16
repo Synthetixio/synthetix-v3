@@ -14,28 +14,18 @@ interface ICollateralModule {
         uint targetCollateralizationRatio,
         uint minimumCollateralizationRatio,
         uint liquidationReward,
-        bool indexed stakingEnabled
+        bool indexed depositingEnabled
     );
 
     /**
      * @notice Emitted when `amount` of collateral of type `collateralType` is deposited to account `accountId` by `sender`.
      */
-    event CollateralDeposited(
-        uint128 indexed accountId,
-        address indexed collateralType,
-        uint amount,
-        address indexed sender
-    );
+    event Deposited(uint128 indexed accountId, address indexed collateralType, uint amount, address indexed sender);
 
     /**
      * @notice Emitted when `amount` of collateral of type `collateralType` is withdrawn from account `accountId` by `sender`.
      */
-    event CollateralWithdrawn(
-        uint128 indexed accountId,
-        address indexed collateralType,
-        uint amount,
-        address indexed sender
-    );
+    event Withdrawn(uint128 indexed accountId, address indexed collateralType, uint amount, address indexed sender);
 
     /**
      * @notice Creates or updates the configuration for given `collateralType`.
@@ -53,7 +43,7 @@ interface ICollateralModule {
         uint targetCRatio,
         uint minimumCRatio,
         uint liquidationReward,
-        bool stakingEnabled
+        bool depositingEnabled
     ) external;
 
     /**
@@ -87,7 +77,7 @@ interface ICollateralModule {
      * Emits a {CollateralDeposited} event.
      *
      */
-    function depositCollateral(
+    function deposit(
         uint128 accountId,
         address collateralType,
         uint amount
@@ -103,7 +93,7 @@ interface ICollateralModule {
      * Emits a {CollateralWithdrawn} event.
      *
      */
-    function withdrawCollateral(
+    function withdraw(
         uint128 accountId,
         address collateralType,
         uint amount
