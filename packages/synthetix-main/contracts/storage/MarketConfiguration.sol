@@ -35,6 +35,7 @@ library MarketConfiguration {
          *
          * TODO: Confirm range above.
          * TODO: Make sure whenever it is set to enforce this.
+         * TODO: Rename to maxDebtPerDollarOfCollateral?
          */
         /// @dev cap on debt exposure for the market
         int128 maxDebtShareValue;
