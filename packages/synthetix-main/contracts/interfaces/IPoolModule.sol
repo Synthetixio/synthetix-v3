@@ -41,6 +41,9 @@ interface IPoolModule {
     /// @notice renounces ownership by owner
     function renouncePoolOwnership(uint128 poolId) external;
 
+    /// @notice revokes pool nomination
+    function revokePoolNomination(uint128 poolId) external;
+
     /// @notice gets owner of poolId
     function getPoolOwner(uint128 poolId) external view returns (address);
 
