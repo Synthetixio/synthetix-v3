@@ -70,6 +70,7 @@ export async function getSourcesFullyQualifiedNames(
     const { sourceName, contractName } = parseFullyQualifiedName(fqName);
     if (!contractIsInSources(sourceName, hre)) return false;
     if (whitelist.length > 0) {
+      console.log({ whitelist, fqName, sourceName, contractName });
       for (const w of whitelist) {
         if (typeof w !== 'string' || !w) throw new Error(`Invalid whitelist item "${w}"`);
         if (w.endsWith('/') && sourceName.startsWith(w)) return true;
@@ -81,26 +82,6 @@ export async function getSourcesFullyQualifiedNames(
 
     return true;
   });
-}
-
-/**
- * Get the list of all storage libraries fully qualified names.
- *   e.g.: ['contracts/storage/Storage.sol:Storage', ...]
- * @returns {string[]} fqn of all matching modules
- */
-export async function getStorageLibrariesFullyQualifiedNames(hre: HardhatRuntimeEnvironment) {
-  const names = await hre.artifacts.getAllFullyQualifiedNames();
-
-  return names.filter((name) => {
-    const { sourceName } = parseFullyQualifiedName(name);
-    return _contractIsStorageLibrary(sourceName);
-  });
-}
-
-function _contractIsStorageLibrary(contractSourcePath: string) {
-  // TODO: really storage libraries can be any library that has a
-  // `struct Data` but this is an easy way to conform atm
-  return contractSourcePath.startsWith('contracts/storage/');
 }
 
 export async function getSourcesAbis(hre: HardhatRuntimeEnvironment, whitelist: string[] = []) {
