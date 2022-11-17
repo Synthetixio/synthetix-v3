@@ -98,6 +98,8 @@ library Distribution {
          * i.e:
          * - 1 ether = 1e18
          * - 1 preciseInteger = 1e27
+         *
+         * TODO: Consider renaming to valuePerShareHighPrecision in order to be completely explicit about this.
          */
         int128 valuePerShare;
         /**

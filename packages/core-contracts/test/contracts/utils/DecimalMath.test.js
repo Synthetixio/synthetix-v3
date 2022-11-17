@@ -104,6 +104,73 @@ describe('DecimalMath', () => {
     });
   });
 
+  describe('uint128', function () {
+    before('assign signatures', async function () {
+      mulSignature = 'mulDecimalUint128(uint128,uint128)';
+      divSignature = 'divDecimalUint128(uint128,uint128)';
+      lowPrecisionSignature = 'toLowPrecisionUint128(uint128)';
+    });
+
+    describe('mulDecimal()', () => {
+      it('produces the expected results', async () => {
+        await assertMulDecimal({ x: s(25, 18), y: s(5, 18) }, s(125, 18));
+        await assertMulDecimal({ x: s(25, 16), y: s(5, 16) }, s(125, 14));
+        await assertMulDecimal({ x: s(25, 18), y: s(5, 6) }, s(125, 6));
+        await assertMulDecimal({ x: s(36, 18), y: s(2, 18) }, s(72, 18));
+      });
+
+      it('produces the expected results on edge cases', async () => {
+        await assertMulDecimal({ x: 0, y: s(1, 18) }, 0);
+        await assertMulDecimal({ x: s(1, 18), y: 0 }, 0);
+        await assertMulDecimal({ x: 0, y: 0 }, 0);
+        await assertMulDecimal({ x: s(1, 9), y: s(1, 9) }, 1);
+        await assertMulDecimal({ x: s(1, 37), y: 1 }, s(1, 19));
+      });
+
+      it('fails on large numbers', async () => {
+        await assertRevert(DecimalMath[mulSignature](s(1, 78), 1), 'out-of-bounds');
+      });
+    });
+
+    describe('divDecimal()', () => {
+      it('produces the expected results', async () => {
+        await assertDivDecimal({ x: s(20, 18), y: s(5, 18) }, s(4, 18));
+        await assertDivDecimal({ x: s(25, 16), y: s(5, 16) }, s(5, 18));
+        await assertDivDecimal({ x: s(20, 18), y: s(5, 6) }, s(4, 30));
+        await assertDivDecimal({ x: s(20, 18), y: s(5, 6) }, s(4, 30));
+      });
+
+      it('produces the expected results on edge cases', async () => {
+        await assertDivDecimal({ x: 0, y: s(1, 18) }, 0);
+        await assertDivDecimal({ x: s(1, 19), y: 1 }, s(1, 37));
+      });
+
+      it('fails on large numbers', async () => {
+        await assertRevert(DecimalMath[divSignature](s(1, 39), 1), 'out-of-bounds');
+      });
+
+      it('fails on divide by zero', async () => {
+        await assertRevert(DecimalMath[divSignature](1, 0));
+      });
+    });
+
+    describe('toLowPrecision()', function () {
+      it('produces the expected results', async function () {
+        await assertToLowPrecision({ x: s(250, 27) }, s(250, 18));
+        await assertToLowPrecision({ x: s(250, 30) }, s(250, 21));
+      });
+
+      it('produces the expected results on edge cases', async function () {
+        await assertToLowPrecision({ x: s(0, 27) }, s(0, 18));
+        await assertToLowPrecision({ x: s(1, 37) }, s(1, 28));
+      });
+
+      it('fails on large numbers', async () => {
+        await assertRevert(DecimalMath[lowPrecisionSignature](s(1, 78)), 'out-of-bounds');
+      });
+    });
+  });
+
   describe('int256', function () {
     before('assign signatures', async function () {
       mulSignature = 'mulDecimal(int256,int256)';

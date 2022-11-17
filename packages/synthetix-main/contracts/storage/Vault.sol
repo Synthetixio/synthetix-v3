@@ -21,6 +21,7 @@ library Vault {
     using Distribution for Distribution.Data;
     using DistributionEntry for DistributionEntry.Data;
     using DecimalMath for uint256;
+    using DecimalMath for int128;
     using SetUtil for SetUtil.Bytes32Set;
 
     struct Data {
@@ -146,7 +147,7 @@ library Vault {
         dist.rewardPerShare += uint128(dist.entry.updateEntry(totalShares));
 
         dist.actorInfo[accountId].pendingSend += uint128(
-            (actorShares * (dist.rewardPerShare - dist.actorInfo[accountId].lastRewardPerShare)) / 1e18
+            actorShares.mulDecimal(dist.rewardPerShare - dist.actorInfo[accountId].lastRewardPerShare)
         );
 
         dist.actorInfo[accountId].lastRewardPerShare = dist.rewardPerShare;
