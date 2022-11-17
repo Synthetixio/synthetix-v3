@@ -71,7 +71,7 @@ describe('PoolModule Create / Ownership', function () {
       });
     });
 
-    describe('when transfering to a new owner', async () => {
+    describe.only('when transfering to a new owner', async () => {
       describe('when attempting to accept before nominating', async () => {
         it('reverts', async () => {
           await assertRevert(
@@ -100,7 +100,7 @@ describe('PoolModule Create / Ownership', function () {
         });
 
         it('emits an event when nominee renounces', async () => {
-          const tx = await systems().Core.connect(user1).renouncePoolOwnership(1);
+          const tx = await systems().Core.connect(user2).renouncePoolOwnership(1);
           receipt = await tx.wait();
           await assertEvent(
             receipt,
@@ -118,15 +118,19 @@ describe('PoolModule Create / Ownership', function () {
           receipt = await tx2.wait();
           await assertEvent(
             receipt,
-            `PoolNominationRevoked(1, "${await user2.getAddress()}")`,
+            `PoolNominationRevoked(1, "${await user1.getAddress()}")`,
             systems().Core
           );
         });
 
         describe('when accepting the ownership', async () => {
           before('accept ownership', async () => {
-            const tx = await systems().Core.connect(user2).acceptPoolOwnership(1);
-            receipt = await tx.wait();
+            const tx = await systems()
+              .Core.connect(user1)
+              .nominatePoolOwner(await user2.getAddress(), 1);
+            await tx.wait();
+            const tx2 = await systems().Core.connect(user2).acceptPoolOwnership(1);
+            receipt = await tx2.wait();
           });
 
           after('return ownership to user1', async () => {
@@ -162,14 +166,14 @@ describe('PoolModule Create / Ownership', function () {
         });
 
         before('renounce nomination', async () => {
-          const tx = await systems().Core.connect(user2).renouncePoolNomination(1);
+          const tx = await systems().Core.connect(user2).renouncePoolOwnership(1);
           receipt = await tx.wait();
         });
 
         it('emits an event', async () => {
           await assertEvent(
             receipt,
-            `PoolNominationRenounced(1, "${await user2.getAddress()}")`,
+            `PoolOwnerNominationRenounced(1, "${await user2.getAddress()}")`,
             systems().Core
           );
         });
