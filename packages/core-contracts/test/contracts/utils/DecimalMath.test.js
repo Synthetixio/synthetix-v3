@@ -8,294 +8,303 @@ function s(base, exp) {
 
 describe('DecimalMath', () => {
   let DecimalMath;
+  let mulSignature, divSignature, lowPrecisionSignature;
 
   before('deploy the contract', async () => {
     const factory = await ethers.getContractFactory('DecimalMathMock');
     DecimalMath = await factory.deploy();
   });
 
-  describe('mulDivDown()', () => {
-    async function assertMulDivDown(data, expected) {
-      assertBn.equal(
-        await DecimalMath['mulDivDown(uint256,uint256,uint256)'](
-          ethers.BigNumber.from(data.x),
-          ethers.BigNumber.from(data.y),
-          ethers.BigNumber.from(data.denominator)
-        ),
-        ethers.BigNumber.from(expected)
-      );
-    }
+  async function assertMulDecimal(data, expected) {
+    assertBn.equal(
+      await DecimalMath[mulSignature](ethers.BigNumber.from(data.x), ethers.BigNumber.from(data.y)),
+      ethers.BigNumber.from(expected)
+    );
+  }
 
-    it('get the expected results', async () => {
-      await assertMulDivDown({ x: s(250, 25), y: s(50, 25), denominator: s(100, 25) }, s(125, 25));
-      await assertMulDivDown({ x: s(250, 16), y: s(50, 16), denominator: s(100, 16) }, s(125, 16));
-      await assertMulDivDown({ x: s(250, 6), y: s(50, 6), denominator: s(100, 6) }, s(125, 6));
-      await assertMulDivDown({ x: 369, y: 271, denominator: 100 }, 999);
+  async function assertDivDecimal(data, expected) {
+    assertBn.equal(
+      await DecimalMath[divSignature](ethers.BigNumber.from(data.x), ethers.BigNumber.from(data.y)),
+      ethers.BigNumber.from(expected)
+    );
+  }
 
-      await assertMulDivDown({ x: s(10, 26), y: s(10, 26), denominator: s(20, 26) }, s(5, 26));
-      await assertMulDivDown({ x: s(100, 16), y: s(100, 16), denominator: s(200, 16) }, s(50, 16));
-      await assertMulDivDown({ x: 1e8, y: 1e8, denominator: 2e8 }, 0.5e8);
+  async function assertToLowPrecision(data, expected) {
+    assertBn.equal(
+      await DecimalMath[lowPrecisionSignature](ethers.BigNumber.from(data.x)),
+      ethers.BigNumber.from(expected)
+    );
+  }
 
-      await assertMulDivDown({ x: s(2, 27), y: s(3, 27), denominator: s(2, 27) }, s(3, 27));
-      await assertMulDivDown({ x: s(3, 18), y: s(2, 18), denominator: s(3, 18) }, s(2, 18));
-      await assertMulDivDown({ x: 2e8, y: 3e8, denominator: 2e8 }, 3e8);
+  describe('uint256', function () {
+    before('assign signatures', async function () {
+      mulSignature = 'mulDecimal(uint256,uint256)';
+      divSignature = 'divDecimal(uint256,uint256)';
+      lowPrecisionSignature = 'toLowPrecision(uint256)';
     });
 
-    it('get the expected results on edge cases', async () => {
-      await assertMulDivDown({ x: 0, y: s(1, 18), denominator: s(1, 18) }, 0);
-      await assertMulDivDown({ x: s(1, 18), y: 0, denominator: s(1, 18) }, 0);
-      await assertMulDivDown({ x: 0, y: 0, denominator: s(1, 18) }, 0);
+    describe('mulDecimal()', () => {
+      it('produces the expected results', async () => {
+        await assertMulDecimal({ x: s(250, 18), y: s(50, 18) }, s(12500, 18));
+        await assertMulDecimal({ x: s(250, 16), y: s(50, 16) }, s(12500, 14));
+        await assertMulDecimal({ x: s(250, 25), y: s(50, 25) }, s(12500, 32));
+        await assertMulDecimal({ x: s(250, 18), y: s(50, 6) }, s(12500, 6));
+        await assertMulDecimal({ x: s(369, 18), y: s(271, 18) }, s(99999, 18));
+      });
+
+      it('produces the expected results on edge cases', async () => {
+        await assertMulDecimal({ x: 0, y: s(1, 18) }, 0);
+        await assertMulDecimal({ x: s(1, 18), y: 0 }, 0);
+        await assertMulDecimal({ x: 0, y: 0 }, 0);
+        await assertMulDecimal({ x: s(1, 9), y: s(1, 9) }, 1);
+        await assertMulDecimal({ x: s(1, 77), y: 1 }, s(1, 59));
+      });
+
+      it('fails on large numbers', async () => {
+        await assertRevert(DecimalMath[mulSignature](s(1, 78), 1), 'out-of-bounds');
+      });
     });
 
-    it('fails on div by zero', async () => {
-      await assertRevert(DecimalMath['mulDivDown(uint256,uint256,uint256)'](s(1, 18), s(1, 18), 0));
-    });
-  });
+    describe('divDecimal()', () => {
+      it('produces the expected results', async () => {
+        await assertDivDecimal({ x: s(250, 18), y: s(50, 18) }, s(5, 18));
+        await assertDivDecimal({ x: s(250, 16), y: s(50, 16) }, s(5, 18));
+        await assertDivDecimal({ x: s(250, 25), y: s(50, 25) }, s(5, 18));
+        await assertDivDecimal({ x: s(250, 18), y: s(50, 6) }, s(5, 30));
+      });
 
-  describe('mulDivUp()', () => {
-    async function assertMulDivUp(data, expected) {
-      assertBn.equal(
-        await DecimalMath.mulDivUp(
-          ethers.BigNumber.from(data.x),
-          ethers.BigNumber.from(data.y),
-          ethers.BigNumber.from(data.denominator)
-        ),
-        ethers.BigNumber.from(expected)
-      );
-    }
+      it('produces the expected results on edge cases', async () => {
+        await assertDivDecimal({ x: 0, y: s(1, 18) }, 0);
+        await assertDivDecimal({ x: s(1, 58), y: 1 }, s(1, 76));
+      });
 
-    it('get the expected results', async () => {
-      await assertMulDivUp({ x: s(250, 25), y: s(50, 25), denominator: s(100, 25) }, s(125, 25));
-      await assertMulDivUp({ x: s(250, 16), y: s(50, 16), denominator: s(100, 16) }, s(125, 16));
-      await assertMulDivUp({ x: s(250, 6), y: s(50, 6), denominator: s(100, 6) }, s(125, 6));
-      await assertMulDivUp({ x: 369, y: 271, denominator: 100 }, 1000);
+      it('fails on large numbers', async () => {
+        await assertRevert(DecimalMath[divSignature](s(1, 78), 1), 'out-of-bounds');
+      });
 
-      await assertMulDivUp({ x: s(10, 26), y: s(10, 26), denominator: s(20, 26) }, s(5, 26));
-      await assertMulDivUp({ x: s(100, 16), y: s(100, 16), denominator: s(200, 16) }, s(50, 16));
-      await assertMulDivUp({ x: 1e8, y: 1e8, denominator: 2e8 }, 0.5e8);
-
-      await assertMulDivUp({ x: s(2, 27), y: s(3, 27), denominator: s(2, 27) }, s(3, 27));
-      await assertMulDivUp({ x: s(3, 18), y: s(2, 18), denominator: s(3, 18) }, s(2, 18));
-      await assertMulDivUp({ x: 2e8, y: 3e8, denominator: 2e8 }, 3e8);
+      it('fails on divide by zero', async () => {
+        await assertRevert(DecimalMath[divSignature](1, 0));
+      });
     });
 
-    it('get the expected results on edge cases', async () => {
-      await assertMulDivUp({ x: 0, y: s(1, 18), denominator: s(1, 18) }, 0);
-      await assertMulDivUp({ x: s(1, 18), y: 0, denominator: s(1, 18) }, 0);
-      await assertMulDivUp({ x: 0, y: 0, denominator: s(1, 18) }, 0);
-    });
+    describe('toLowPrecision()', function () {
+      it('produces the expected results', async function () {
+        await assertToLowPrecision({ x: s(250, 27) }, s(250, 18));
+        await assertToLowPrecision({ x: s(250, 30) }, s(250, 21));
+      });
 
-    it('fails on div by zero', async () => {
-      await assertRevert(DecimalMath.mulDivUp(s(1, 18), s(1, 18), 0));
-    });
-  });
+      it('produces the expected results on edge cases', async function () {
+        await assertToLowPrecision({ x: s(0, 27) }, s(0, 18));
+        await assertToLowPrecision({ x: s(1, 58) }, s(1, 49));
+      });
 
-  describe('mulDecimal()', () => {
-    async function assertMulDecimal(data, expected) {
-      assertBn.equal(
-        await DecimalMath['mulDecimal(uint256,uint256)'](
-          ethers.BigNumber.from(data.x),
-          ethers.BigNumber.from(data.y)
-        ),
-        ethers.BigNumber.from(expected)
-      );
-    }
-
-    it('get the expected results', async () => {
-      await assertMulDecimal({ x: s(250, 18), y: s(50, 18) }, s(12500, 18));
-      await assertMulDecimal({ x: s(250, 16), y: s(50, 16) }, s(12500, 14));
-      await assertMulDecimal({ x: s(250, 25), y: s(50, 25) }, s(12500, 32));
-      await assertMulDecimal({ x: s(250, 18), y: s(50, 6) }, s(12500, 6));
-      await assertMulDecimal({ x: s(369, 18), y: s(271, 18) }, s(99999, 18));
-    });
-
-    it('get the expected results on edge cases', async () => {
-      await assertMulDecimal({ x: 0, y: s(1, 18) }, 0);
-      await assertMulDecimal({ x: s(1, 18), y: 0 }, 0);
-      await assertMulDecimal({ x: 0, y: 0 }, 0);
-      await assertMulDecimal({ x: s(1, 9), y: s(1, 9) }, 1);
-      await assertMulDecimal({ x: s(1, 77), y: 1 }, s(1, 59));
-    });
-
-    it('fails on large numbers', async () => {
-      await assertRevert(DecimalMath['mulDecimal(uint256,uint256)'](s(1, 78), 1), 'out-of-bounds');
+      it('fails on large numbers', async () => {
+        await assertRevert(DecimalMath[lowPrecisionSignature](s(1, 78)), 'out-of-bounds');
+      });
     });
   });
 
-  describe('divDecimal()', () => {
-    async function assertDivDecimal(data, expected) {
-      assertBn.equal(
-        await DecimalMath['divDecimal(uint256,uint256)'](
-          ethers.BigNumber.from(data.x),
-          ethers.BigNumber.from(data.y)
-        ),
-        ethers.BigNumber.from(expected)
-      );
-    }
-
-    it('get the expected results', async () => {
-      await assertDivDecimal({ x: s(250, 18), y: s(50, 18) }, s(5, 18));
-      await assertDivDecimal({ x: s(250, 16), y: s(50, 16) }, s(5, 18));
-      await assertDivDecimal({ x: s(250, 25), y: s(50, 25) }, s(5, 18));
-      await assertDivDecimal({ x: s(250, 18), y: s(50, 6) }, s(5, 30));
+  describe('int256', function () {
+    before('assign signatures', async function () {
+      mulSignature = 'mulDecimal(int256,int256)';
+      divSignature = 'divDecimal(int256,int256)';
+      lowPrecisionSignature = 'toLowPrecision(int256)';
     });
 
-    it('get the expected results on edge cases', async () => {
-      await assertDivDecimal({ x: 0, y: s(1, 18) }, 0);
-      await assertDivDecimal({ x: s(1, 58), y: 1 }, s(1, 76));
+    describe('mulDecimal() int256', function () {
+      it('produces the expected results', async () => {
+        await assertMulDecimal({ x: s(250, 18), y: s(50, 18) }, s(12500, 18));
+        await assertMulDecimal({ x: s(250, 16), y: s(50, 16) }, s(12500, 14));
+        await assertMulDecimal({ x: s(250, 25), y: s(50, 25) }, s(12500, 32));
+        await assertMulDecimal({ x: s(250, 18), y: s(50, 6) }, s(12500, 6));
+        await assertMulDecimal({ x: s(369, 18), y: s(271, 18) }, s(99999, 18));
+
+        await assertMulDecimal({ x: s(-250, 18), y: s(50, 18) }, s(-12500, 18));
+        await assertMulDecimal({ x: s(-250, 16), y: s(50, 16) }, s(-12500, 14));
+        await assertMulDecimal({ x: s(-250, 25), y: s(50, 25) }, s(-12500, 32));
+        await assertMulDecimal({ x: s(-250, 18), y: s(50, 6) }, s(-12500, 6));
+        await assertMulDecimal({ x: s(-369, 18), y: s(271, 18) }, s(-99999, 18));
+
+        await assertMulDecimal({ x: s(250, 18), y: s(-50, 18) }, s(-12500, 18));
+        await assertMulDecimal({ x: s(250, 16), y: s(-50, 16) }, s(-12500, 14));
+        await assertMulDecimal({ x: s(250, 25), y: s(-50, 25) }, s(-12500, 32));
+        await assertMulDecimal({ x: s(250, 18), y: s(-50, 6) }, s(-12500, 6));
+        await assertMulDecimal({ x: s(369, 18), y: s(-271, 18) }, s(-99999, 18));
+
+        await assertMulDecimal({ x: s(-250, 18), y: s(-50, 18) }, s(12500, 18));
+        await assertMulDecimal({ x: s(-250, 16), y: s(-50, 16) }, s(12500, 14));
+        await assertMulDecimal({ x: s(-250, 25), y: s(-50, 25) }, s(12500, 32));
+        await assertMulDecimal({ x: s(-250, 18), y: s(-50, 6) }, s(12500, 6));
+        await assertMulDecimal({ x: s(-369, 18), y: s(-271, 18) }, s(99999, 18));
+      });
+
+      it('produces the expected results on edge cases', async () => {
+        await assertMulDecimal({ x: 0, y: s(1, 18) }, 0);
+        await assertMulDecimal({ x: s(1, 18), y: 0 }, 0);
+        await assertMulDecimal({ x: 0, y: 0 }, 0);
+        await assertMulDecimal({ x: s(1, 9), y: s(1, 9) }, 1);
+        await assertMulDecimal({ x: s(1, 57), y: 1 }, s(1, 39));
+      });
+
+      it('fails on large numbers', async () => {
+        await assertRevert(DecimalMath[mulSignature](s(1, 77), 1), 'out-of-bounds');
+      });
     });
 
-    it('fails on large numbers', async () => {
-      await assertRevert(DecimalMath['divDecimal(uint256,uint256)'](s(1, 78), 1), 'out-of-bounds');
+    describe('divDecimal() int256', () => {
+      it('produces the expected results', async () => {
+        await assertDivDecimal({ x: s(250, 18), y: s(50, 18) }, s(5, 18));
+        await assertDivDecimal({ x: s(250, 16), y: s(50, 16) }, s(5, 18));
+        await assertDivDecimal({ x: s(250, 25), y: s(50, 25) }, s(5, 18));
+        await assertDivDecimal({ x: s(250, 18), y: s(50, 6) }, s(5, 30));
+
+        await assertDivDecimal({ x: s(-250, 18), y: s(50, 18) }, s(-5, 18));
+        await assertDivDecimal({ x: s(-250, 16), y: s(50, 16) }, s(-5, 18));
+        await assertDivDecimal({ x: s(-250, 25), y: s(50, 25) }, s(-5, 18));
+        await assertDivDecimal({ x: s(-250, 18), y: s(50, 6) }, s(-5, 30));
+
+        await assertDivDecimal({ x: s(250, 18), y: s(-50, 18) }, s(-5, 18));
+        await assertDivDecimal({ x: s(250, 16), y: s(-50, 16) }, s(-5, 18));
+        await assertDivDecimal({ x: s(250, 25), y: s(-50, 25) }, s(-5, 18));
+        await assertDivDecimal({ x: s(250, 18), y: s(-50, 6) }, s(-5, 30));
+
+        await assertDivDecimal({ x: s(-250, 18), y: s(-50, 18) }, s(5, 18));
+        await assertDivDecimal({ x: s(-250, 16), y: s(-50, 16) }, s(5, 18));
+        await assertDivDecimal({ x: s(-250, 25), y: s(-50, 25) }, s(5, 18));
+        await assertDivDecimal({ x: s(-250, 18), y: s(-50, 6) }, s(5, 30));
+      });
+
+      it('produces the expected results on edge cases', async () => {
+        await assertDivDecimal({ x: 0, y: s(1, 18) }, 0);
+        await assertDivDecimal({ x: s(1, 58), y: 1 }, s(1, 76));
+      });
+
+      it('fails on large numbers', async () => {
+        await assertRevert(DecimalMath[divSignature](s(1, 76), 1), 'out-of-bounds');
+      });
+
+      it('fails on divide by zero', async () => {
+        await assertRevert(DecimalMath[divSignature](1, 0));
+      });
     });
 
-    it('fails on divide by zero', async () => {
-      await assertRevert(DecimalMath['divDecimal(uint256,uint256)'](1, 0));
-    });
-  });
+    describe('toLowPrecision() int256', function () {
+      it('produces the expected results', async function () {
+        await assertToLowPrecision({ x: s(250, 27) }, s(250, 18));
+        await assertToLowPrecision({ x: s(250, 30) }, s(250, 21));
 
-  describe('mulDivDown() Int', () => {
-    async function assertmulDivDown(data, expected) {
-      assertBn.equal(
-        await DecimalMath['mulDivDown(int256,int256,int256)'](
-          ethers.BigNumber.from(data.x),
-          ethers.BigNumber.from(data.y),
-          ethers.BigNumber.from(data.denominator)
-        ),
-        ethers.BigNumber.from(expected)
-      );
-    }
+        await assertToLowPrecision({ x: s(-250, 27) }, s(-250, 18));
+        await assertToLowPrecision({ x: s(-250, 30) }, s(-250, 21));
+      });
 
-    it('get the expected results', async () => {
-      await assertmulDivDown({ x: s(250, 25), y: s(50, 25), denominator: s(100, 25) }, s(125, 25));
-      await assertmulDivDown({ x: s(250, 16), y: s(50, 16), denominator: s(100, 16) }, s(125, 16));
-      await assertmulDivDown({ x: s(250, 6), y: s(50, 6), denominator: s(100, 6) }, s(125, 6));
-      await assertmulDivDown({ x: 369, y: 271, denominator: 100 }, 999);
+      it('produces the expected results on edge cases', async function () {
+        await assertToLowPrecision({ x: s(0, 27) }, s(0, 18));
+        await assertToLowPrecision({ x: s(1, 58) }, s(1, 49));
+      });
 
-      await assertmulDivDown({ x: s(10, 26), y: s(10, 26), denominator: s(20, 26) }, s(5, 26));
-      await assertmulDivDown({ x: s(100, 16), y: s(100, 16), denominator: s(200, 16) }, s(50, 16));
-      await assertmulDivDown({ x: 1e8, y: 1e8, denominator: 2e8 }, 0.5e8);
-
-      await assertmulDivDown({ x: s(2, 27), y: s(3, 27), denominator: s(2, 27) }, s(3, 27));
-      await assertmulDivDown({ x: s(3, 18), y: s(2, 18), denominator: s(3, 18) }, s(2, 18));
-      await assertmulDivDown({ x: 2e8, y: 3e8, denominator: 2e8 }, 3e8);
-
-      await assertmulDivDown(
-        { x: s(-250, 18), y: s(50, 18), denominator: s(1, 18) },
-        s(-12500, 18)
-      );
-      await assertmulDivDown(
-        { x: s(250, 18), y: s(-50, 18), denominator: s(1, 18) },
-        s(-12500, 18)
-      );
-      await assertmulDivDown(
-        { x: s(-250, 18), y: s(-50, 18), denominator: s(1, 18) },
-        s(12500, 18)
-      );
-    });
-
-    it('get the expected results on edge cases', async () => {
-      await assertmulDivDown({ x: 0, y: s(1, 18), denominator: s(1, 18) }, 0);
-      await assertmulDivDown({ x: s(1, 18), y: 0, denominator: s(1, 18) }, 0);
-      await assertmulDivDown({ x: 0, y: 0, denominator: s(1, 18) }, 0);
-    });
-
-    it('fails on div by zero', async () => {
-      await assertRevert(DecimalMath['mulDivDown(int256,int256,int256)'](s(1, 18), s(1, 18), 0));
-    });
-  });
-
-  describe('mulDecimal() Int', () => {
-    async function assertMulDecimalInt(data, expected) {
-      assertBn.equal(
-        await DecimalMath['mulDecimal(int256,int256)'](
-          ethers.BigNumber.from(data.x),
-          ethers.BigNumber.from(data.y)
-        ),
-        ethers.BigNumber.from(expected)
-      );
-    }
-
-    it('get the expected results', async () => {
-      await assertMulDecimalInt({ x: s(250, 18), y: s(50, 18) }, s(12500, 18));
-      await assertMulDecimalInt({ x: s(250, 16), y: s(50, 16) }, s(12500, 14));
-      await assertMulDecimalInt({ x: s(250, 25), y: s(50, 25) }, s(12500, 32));
-      await assertMulDecimalInt({ x: s(250, 18), y: s(50, 6) }, s(12500, 6));
-      await assertMulDecimalInt({ x: s(369, 18), y: s(271, 18) }, s(99999, 18));
-
-      await assertMulDecimalInt({ x: s(-250, 18), y: s(50, 18) }, s(-12500, 18));
-      await assertMulDecimalInt({ x: s(-250, 16), y: s(50, 16) }, s(-12500, 14));
-      await assertMulDecimalInt({ x: s(-250, 25), y: s(50, 25) }, s(-12500, 32));
-      await assertMulDecimalInt({ x: s(-250, 18), y: s(50, 6) }, s(-12500, 6));
-
-      await assertMulDecimalInt({ x: s(250, 18), y: s(-50, 18) }, s(-12500, 18));
-      await assertMulDecimalInt({ x: s(250, 16), y: s(-50, 16) }, s(-12500, 14));
-      await assertMulDecimalInt({ x: s(250, 25), y: s(-50, 25) }, s(-12500, 32));
-      await assertMulDecimalInt({ x: s(250, 18), y: s(-50, 6) }, s(-12500, 6));
-
-      await assertMulDecimalInt({ x: s(-250, 18), y: s(-50, 18) }, s(12500, 18));
-      await assertMulDecimalInt({ x: s(-250, 16), y: s(-50, 16) }, s(12500, 14));
-      await assertMulDecimalInt({ x: s(-250, 25), y: s(-50, 25) }, s(12500, 32));
-      await assertMulDecimalInt({ x: s(-250, 18), y: s(-50, 6) }, s(12500, 6));
-    });
-
-    it('get the expected results on edge cases', async () => {
-      await assertMulDecimalInt({ x: 0, y: s(1, 18) }, 0);
-      await assertMulDecimalInt({ x: s(1, 18), y: 0 }, 0);
-      await assertMulDecimalInt({ x: 0, y: 0 }, 0);
-      await assertMulDecimalInt({ x: s(1, 9), y: s(1, 9) }, 1);
-      await assertMulDecimalInt({ x: s(1, 76), y: 1 }, s(1, 58));
-    });
-
-    it('fails on large numbers', async () => {
-      await assertRevert(DecimalMath['mulDecimal(int256,int256)'](s(1, 78), 1), 'out-of-bounds');
+      it('fails on large numbers', async () => {
+        await assertRevert(DecimalMath[lowPrecisionSignature](s(1, 78)), 'out-of-bounds');
+      });
     });
   });
 
-  describe('divDecimal() Int', () => {
-    async function assertDivDecimalInt(data, expected) {
-      assertBn.equal(
-        await DecimalMath['divDecimal(int256,int256)'](
-          ethers.BigNumber.from(data.x),
-          ethers.BigNumber.from(data.y)
-        ),
-        ethers.BigNumber.from(expected)
-      );
-    }
-
-    it('get the expected results', async () => {
-      await assertDivDecimalInt({ x: s(250, 18), y: s(50, 18) }, s(5, 18));
-      await assertDivDecimalInt({ x: s(250, 16), y: s(50, 16) }, s(5, 18));
-      await assertDivDecimalInt({ x: s(250, 25), y: s(50, 25) }, s(5, 18));
-      await assertDivDecimalInt({ x: s(250, 18), y: s(50, 6) }, s(5, 30));
-
-      await assertDivDecimalInt({ x: s(-250, 18), y: s(50, 18) }, s(-5, 18));
-      await assertDivDecimalInt({ x: s(-250, 16), y: s(50, 16) }, s(-5, 18));
-      await assertDivDecimalInt({ x: s(-250, 25), y: s(50, 25) }, s(-5, 18));
-      await assertDivDecimalInt({ x: s(-250, 18), y: s(50, 6) }, s(-5, 30));
-
-      await assertDivDecimalInt({ x: s(250, 18), y: s(-50, 18) }, s(-5, 18));
-      await assertDivDecimalInt({ x: s(250, 16), y: s(-50, 16) }, s(-5, 18));
-      await assertDivDecimalInt({ x: s(250, 25), y: s(-50, 25) }, s(-5, 18));
-      await assertDivDecimalInt({ x: s(250, 18), y: s(-50, 6) }, s(-5, 30));
-
-      await assertDivDecimalInt({ x: s(-250, 18), y: s(-50, 18) }, s(5, 18));
-      await assertDivDecimalInt({ x: s(-250, 16), y: s(-50, 16) }, s(5, 18));
-      await assertDivDecimalInt({ x: s(-250, 25), y: s(-50, 25) }, s(5, 18));
-      await assertDivDecimalInt({ x: s(-250, 18), y: s(-50, 6) }, s(5, 30));
+  describe('int128', function () {
+    before('assign signatures', async function () {
+      mulSignature = 'mulDecimalInt128(int128,int128)';
+      divSignature = 'divDecimalInt128(int128,int128)';
+      lowPrecisionSignature = 'toLowPrecisionInt128(int128)';
     });
 
-    it('get the expected results on edge cases', async () => {
-      await assertDivDecimalInt({ x: 0, y: s(1, 18) }, 0);
-      await assertDivDecimalInt({ x: s(1, 58), y: 1 }, s(1, 76));
+    describe('mulDecimal() int128', function () {
+      it('produces the expected results', async () => {
+        await assertMulDecimal({ x: s(25, 18), y: s(5, 18) }, s(125, 18));
+        await assertMulDecimal({ x: s(25, 16), y: s(5, 16) }, s(125, 14));
+        await assertMulDecimal({ x: s(25, 18), y: s(5, 6) }, s(125, 6));
+        await assertMulDecimal({ x: s(36, 18), y: s(2, 18) }, s(72, 18));
+
+        await assertMulDecimal({ x: s(-25, 18), y: s(5, 18) }, s(-125, 18));
+        await assertMulDecimal({ x: s(-25, 16), y: s(5, 16) }, s(-125, 14));
+        await assertMulDecimal({ x: s(-25, 18), y: s(5, 6) }, s(-125, 6));
+        await assertMulDecimal({ x: s(-36, 18), y: s(2, 18) }, s(-72, 18));
+
+        await assertMulDecimal({ x: s(25, 18), y: s(-5, 18) }, s(-125, 18));
+        await assertMulDecimal({ x: s(25, 16), y: s(-5, 16) }, s(-125, 14));
+        await assertMulDecimal({ x: s(25, 18), y: s(-5, 6) }, s(-125, 6));
+        await assertMulDecimal({ x: s(36, 18), y: s(-2, 18) }, s(-72, 18));
+
+        await assertMulDecimal({ x: s(-25, 18), y: s(-5, 18) }, s(125, 18));
+        await assertMulDecimal({ x: s(-25, 16), y: s(-5, 16) }, s(125, 14));
+        await assertMulDecimal({ x: s(-25, 18), y: s(-5, 6) }, s(125, 6));
+        await assertMulDecimal({ x: s(-36, 18), y: s(-2, 18) }, s(72, 18));
+      });
+
+      it('produces the expected results on edge cases', async () => {
+        await assertMulDecimal({ x: 0, y: s(1, 18) }, 0);
+        await assertMulDecimal({ x: s(1, 18), y: 0 }, 0);
+        await assertMulDecimal({ x: 0, y: 0 }, 0);
+        await assertMulDecimal({ x: s(1, 9), y: s(1, 9) }, 1);
+        await assertMulDecimal({ x: s(1, 37), y: 1 }, s(1, 19));
+      });
+
+      it('fails on large numbers', async () => {
+        await assertRevert(DecimalMath[mulSignature](s(1, 39), 1), 'out-of-bounds');
+      });
     });
 
-    it('fails on large numbers', async () => {
-      await assertRevert(DecimalMath['divDecimal(int256,int256)'](s(1, 78), 1), 'out-of-bounds');
+    describe('divDecimal() int128', () => {
+      it('produces the expected results', async () => {
+        await assertDivDecimal({ x: s(20, 18), y: s(5, 18) }, s(4, 18));
+        await assertDivDecimal({ x: s(25, 16), y: s(5, 16) }, s(5, 18));
+        await assertDivDecimal({ x: s(20, 18), y: s(5, 6) }, s(4, 30));
+        await assertDivDecimal({ x: s(20, 18), y: s(5, 6) }, s(4, 30));
+
+        await assertDivDecimal({ x: s(-20, 18), y: s(5, 18) }, s(-4, 18));
+        await assertDivDecimal({ x: s(-25, 16), y: s(5, 16) }, s(-5, 18));
+        await assertDivDecimal({ x: s(-20, 18), y: s(5, 6) }, s(-4, 30));
+        await assertDivDecimal({ x: s(-20, 18), y: s(5, 6) }, s(-4, 30));
+
+        await assertDivDecimal({ x: s(20, 18), y: s(-5, 18) }, s(-4, 18));
+        await assertDivDecimal({ x: s(25, 16), y: s(-5, 16) }, s(-5, 18));
+        await assertDivDecimal({ x: s(20, 18), y: s(-5, 6) }, s(-4, 30));
+        await assertDivDecimal({ x: s(20, 18), y: s(-5, 6) }, s(-4, 30));
+
+        await assertDivDecimal({ x: s(-20, 18), y: s(-5, 18) }, s(4, 18));
+        await assertDivDecimal({ x: s(-25, 16), y: s(-5, 16) }, s(5, 18));
+        await assertDivDecimal({ x: s(-20, 18), y: s(-5, 6) }, s(4, 30));
+        await assertDivDecimal({ x: s(-20, 18), y: s(-5, 6) }, s(4, 30));
+      });
+
+      it('produces the expected results on edge cases', async () => {
+        await assertDivDecimal({ x: 0, y: s(1, 18) }, 0);
+        await assertDivDecimal({ x: s(1, 19), y: 1 }, s(1, 37));
+      });
+
+      it('fails on large numbers', async () => {
+        await assertRevert(DecimalMath[divSignature](s(1, 39), 1), 'out-of-bounds');
+      });
+
+      it('fails on divide by zero', async () => {
+        await assertRevert(DecimalMath[divSignature](1, 0));
+      });
     });
 
-    it('fails on divide by zero', async () => {
-      await assertRevert(DecimalMath['divDecimal(int256,int256)'](1, 0)); // TODO
+    describe('toLowPrecision() int128', function () {
+      it('produces the expected results', async function () {
+        await assertToLowPrecision({ x: s(25, 27) }, s(25, 18));
+        await assertToLowPrecision({ x: s(25, 30) }, s(25, 21));
+
+        await assertToLowPrecision({ x: s(-25, 27) }, s(-25, 18));
+        await assertToLowPrecision({ x: s(-25, 30) }, s(-25, 21));
+      });
+
+      it('produces the expected results on edge cases', async function () {
+        await assertToLowPrecision({ x: s(0, 27) }, s(0, 18));
+        await assertToLowPrecision({ x: s(1, 37) }, s(1, 28));
+      });
+
+      it('fails on large numbers', async () => {
+        await assertRevert(DecimalMath[lowPrecisionSignature](s(1, 78)), 'out-of-bounds');
+      });
     });
   });
 });

@@ -4,21 +4,9 @@ pragma solidity ^0.8.0;
 import "../../utils/DecimalMath.sol";
 
 contract DecimalMathMock {
-    function mulDivDown(
-        uint256 x,
-        uint256 y,
-        uint256 denominator
-    ) public pure returns (uint256) {
-        return DecimalMath.mulDivDown(x, y, denominator);
-    }
-
-    function mulDivUp(
-        uint256 x,
-        uint256 y,
-        uint256 denominator
-    ) public pure returns (uint256) {
-        return DecimalMath.mulDivUp(x, y, denominator);
-    }
+    // -----------------
+    // uint256
+    // -----------------
 
     function mulDecimal(uint256 x, uint256 y) public pure returns (uint256) {
         return DecimalMath.mulDecimal(x, y);
@@ -28,13 +16,13 @@ contract DecimalMathMock {
         return DecimalMath.divDecimal(x, y);
     }
 
-    function mulDivDown(
-        int256 x,
-        int256 y,
-        int256 denominator
-    ) public pure returns (int256) {
-        return DecimalMath.mulDivDown(x, y, denominator);
+    function toLowPrecision(uint256 x) public pure returns (uint256) {
+        return DecimalMath.toLowPrecision(x);
     }
+
+    // -----------------
+    // int256
+    // -----------------
 
     function mulDecimal(int256 x, int256 y) public pure returns (int256) {
         return DecimalMath.mulDecimal(x, y);
@@ -42,5 +30,25 @@ contract DecimalMathMock {
 
     function divDecimal(int256 x, int256 y) public pure returns (int256) {
         return DecimalMath.divDecimal(x, y);
+    }
+
+    function toLowPrecision(int256 x) public pure returns (int256) {
+        return DecimalMath.toLowPrecision(x);
+    }
+
+    // -----------------
+    // int128
+    // -----------------
+
+    function mulDecimalInt128(int128 x, int128 y) public pure returns (int128) {
+        return DecimalMath.mulDecimalInt128(x, y);
+    }
+
+    function divDecimalInt128(int128 x, int128 y) public pure returns (int128) {
+        return DecimalMath.divDecimalInt128(x, y);
+    }
+
+    function toLowPrecisionInt128(int128 x) public pure returns (int128) {
+        return DecimalMath.toLowPrecisionInt128(x);
     }
 }

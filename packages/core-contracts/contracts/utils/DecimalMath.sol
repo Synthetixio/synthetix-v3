@@ -77,7 +77,7 @@ library DecimalMath {
     /**
      * @dev See toLowPrecision for uint256.
      */
-    function toLowPrecisionInt256(int256 x) internal pure returns (int256 z) {
+    function toLowPrecision(int256 x) internal pure returns (int256 z) {
         return x / 1e9;
     }
 
@@ -85,17 +85,19 @@ library DecimalMath {
     // int128
     // -----------------
 
+    // Note: Overloading doesn't seem to work for similar types, i.e. int256 and int128, so explicitly naming the functions differently here.
+
     /**
      * @dev See mulDecimal for uint256.
      */
-    function mulDecimal(int128 x, int128 y) internal pure returns (int128) {
+    function mulDecimalInt128(int128 x, int128 y) internal pure returns (int128) {
         return (x * y) / UNIT_INT128;
     }
 
     /**
      * @dev See divDecimal for uint256.
      */
-    function divDecimal(int128 x, int128 y) internal pure returns (int128) {
+    function divDecimalInt128(int128 x, int128 y) internal pure returns (int128) {
         return (x * UNIT_INT128) / y;
     }
 
