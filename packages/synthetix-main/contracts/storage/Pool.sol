@@ -21,7 +21,7 @@ library Pool {
     using Market for Market.Data;
     using Vault for Vault.Data;
     using Distribution for Distribution.Data;
-    using MathUtil for uint256;
+    using DecimalMath for uint256;
 
     error PoolNotFound(uint128 poolId);
     error PoolAlreadyExists(uint128 poolId);
@@ -219,7 +219,7 @@ library Pool {
         // if ratio > minRatio, thing > 1
         int thing;
         if (minLiquidityRatio == 0) {
-            thing = int(MathUtil.UNIT); // If minLiquidityRatio is zero, then TODO
+            thing = int(DecimalMath.UNIT); // If minLiquidityRatio is zero, then TODO
         } else {
             // maxShareValueIncrease?
             thing = int(creditCapacity.divDecimal(minLiquidityRatio).divDecimal(self.debtDist.totalShares));

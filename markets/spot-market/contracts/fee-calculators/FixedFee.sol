@@ -1,7 +1,7 @@
 pragma solidity ^0.8.0;
 
 import "@synthetixio/core-contracts/contracts/interfaces/IERC20.sol";
-import "@synthetixio/core-contracts/contracts/utils/MathUtil.sol";
+import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import "../interfaces/ISpotMarketFee.sol";
 import "../interfaces/ISpotMarket.sol";
 
@@ -9,7 +9,7 @@ import "../interfaces/ISpotMarket.sol";
     Fixed Fee mechanism for Spot Market
 */
 contract FixedFee is ISpotMarketFee {
-    using MathUtil for uint256;
+    using DecimalMath for uint256;
 
     address public owner;
     IERC20 public usdToken;

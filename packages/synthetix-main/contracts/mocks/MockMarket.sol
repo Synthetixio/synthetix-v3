@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@synthetixio/core-contracts/contracts/utils/MathUtil.sol";
+import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import "@synthetixio/core-contracts/contracts/interfaces/IERC20.sol";
 import "../interfaces/external/IMarket.sol";
 import "../interfaces/IMarketManagerModule.sol";
@@ -9,7 +9,7 @@ import "../interfaces/IAssociateDebtModule.sol";
 import "../interfaces/IMarketCollateralModule.sol";
 
 contract MockMarket is IMarket {
-    using MathUtil for uint256;
+    using DecimalMath for uint256;
 
     uint private _reportedDebt;
     uint private _locked;

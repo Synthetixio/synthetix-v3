@@ -18,7 +18,9 @@ import "../interfaces/external/IMarket.sol";
 library Market {
     using Distribution for Distribution.Data;
     using HeapUtil for HeapUtil.Data;
-    using MathUtil for uint256;
+    using DecimalMath for uint256;
+    using DecimalMath for int256;
+    using DecimalMath for int128;
 
     error MarketNotFound(uint128 marketId);
 
@@ -418,8 +420,8 @@ library Market {
         int256 outstandingBalance = targetBalance - distributedBalance;
 
         // Calculate the target value per share of the distribution if it assimilated the market's outstanding balance.
-        // TODO: All these complex scaling calculations could be removed from the code if MathUtil was able to manage ints.
-        int256 targetValuePerShare = _calculateOutstandingDebtPerShare(self, outstandingBalance);
+        int256 targetValuePerShare = self.debtDist.valuePerShare.toLowPrecisionInt128() +
+            outstandingBalance.divDecimal(int128(self.debtDist.totalShares));
 
         // Find pools for which this market's max value per share limit is exceeded.
         // Remove them, and distribute their debt up to the limit that is hit.
@@ -475,7 +477,7 @@ library Market {
             // Since shares left the market, the remaining value must be spread amongst the shares that remain in the market.
             targetValuePerShare =
                 self.debtDist.valuePerShare +
-                ((outstandingBalance * MathUtil.INT_UNIT) / int128(self.debtDist.totalShares));
+                ((outstandingBalance * DecimalMath.UNIT_INT) / int128(self.debtDist.totalShares));
         }
 
         outstandingBalance = targetBalance - distributedBalance;
@@ -512,34 +514,5 @@ library Market {
         // TODO: Consider not commenting out sanity checks.
 
         self.debtDist.distributeValue(debtAmount);
-    }
-
-    /**
-     * @dev TODO Calculates the target value per share of the market's distribution, considering its outstanding balance, i.e. the market's obligations that haven't yet been transferred into the rest of the distribution chain.
-     *
-     * TODO: Understand and document scaling here.
-     */
-    function _calculateOutstandingDebtPerShare(Data storage self, int256 outstandingMarketBalance)
-        private
-        returns (int256 targetValuePerShare)
-    {
-        // TODO: Use new function Distribution.getLowPrecisionValuePerShare().
-        // Value per share is high precision (1e27), so downscale to 1e18.
-        int128 lowPrecisionValuePerShare = self.debtDist.valuePerShare / 1e9;
-
-        // TODO: Explain scaling.
-        // So that the division below can be done.
-        // Wouldn't be necessary of the MathUtil lib worked with INTs.
-        // Ideally we would use divDecimal - which does exactly this for you.
-        // TODO: Rename once scaling is understood.
-        int256 xxxPrecisionOutstandingMarketBalance = outstandingMarketBalance * MathUtil.INT_UNIT;
-
-        // Calculate the outstanding market balance per share.
-        // TODO: Rename once scaling is understood.
-        int256 xxxPrecisionOutstandingMarketBalancePerShare = xxxPrecisionOutstandingMarketBalance /
-            int128(self.debtDist.totalShares);
-
-        // The target value per share is the current value plus the change in value.
-        targetValuePerShare = lowPrecisionValuePerShare + xxxPrecisionOutstandingMarketBalancePerShare;
     }
 }

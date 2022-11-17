@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
-import "@synthetixio/core-contracts/contracts/utils/MathUtil.sol";
+import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 
 import "../../storage/DistributionEntry.sol";
 
@@ -14,7 +14,7 @@ import "../../interfaces/IRewardsManagerModule.sol";
 
 contract RewardsManagerModule is IRewardsManagerModule {
     using SetUtil for SetUtil.Bytes32Set;
-    using MathUtil for uint256;
+    using DecimalMath for uint256;
 
     using Vault for Vault.Data;
     using Distribution for Distribution.Data;
