@@ -19,7 +19,6 @@ library Market {
     using Distribution for Distribution.Data;
     using HeapUtil for HeapUtil.Data;
     using DecimalMath for uint256;
-    using DecimalMath for uint128;
     using DecimalMath for int256;
     using DecimalMath for int128;
 
@@ -310,12 +309,8 @@ library Market {
         uint liquidityShares,
         int maxDebtShareValue
     ) internal view returns (uint contribution) {
-        // Value per share is high precision (1e27), so downscale to 1e18.
-        int128 lowPrecisionValuePerShare = self.debtDist.valuePerShare / 1e9;
-
         // Determine how much the current value per share deviates from the maximum.
-        // TODO: What if maxDebtShareValue < lowPrecisionValuePerShare? This would cause an integer overflow.
-        uint deltaValuePerShare = uint(maxDebtShareValue - lowPrecisionValuePerShare);
+        uint deltaValuePerShare = uint(maxDebtShareValue - int256(self.debtDist.valuePerShare.toLowPrecisionInt128()));
 
         return uint(deltaValuePerShare).mulDecimal(liquidityShares);
     }
@@ -379,7 +374,9 @@ library Market {
         //require(oldPoolMaxShareValue == 0, "value is not 0");
         //require(newPoolMaxShareValue == 0, "new pool max share value is in fact set");
 
-        if (newPoolMaxShareValue <= self.debtDist.valuePerShare / 1e9) {
+        int128 lowPrecisionValuePerShare = self.debtDist.valuePerShare.toLowPrecisionInt128();
+
+        if (newPoolMaxShareValue <= lowPrecisionValuePerShare) {
             // this will ensure calculations below can correctly gauge shares changes
             newLiquidity = 0;
             self.inRangePools.extractById(uint128(poolId));
@@ -391,11 +388,11 @@ library Market {
         self.poolPendingDebt[poolId] = 0;
 
         // recalculate market capacity
-        if (newPoolMaxShareValue > self.debtDist.valuePerShare / 1e9) {
+        if (newPoolMaxShareValue > lowPrecisionValuePerShare) {
             self.capacity += uint128(getCapacityContribution(self, newLiquidity, newPoolMaxShareValue));
         }
 
-        if (oldPoolMaxShareValue > self.debtDist.valuePerShare / 1e9) {
+        if (oldPoolMaxShareValue > lowPrecisionValuePerShare) {
             self.capacity -= uint128(getCapacityContribution(self, oldLiquidity, oldPoolMaxShareValue));
         }
     }
@@ -481,7 +478,7 @@ library Market {
             // Since shares left the market, the remaining value must be spread amongst the shares that remain in the market.
             targetValuePerShare =
                 self.debtDist.valuePerShare +
-                ((outstandingBalance * DecimalMath.UNIT_INT) / int128(self.debtDist.totalShares));
+                outstandingBalance.divDecimal(int256(int128(self.debtDist.totalShares)));
         }
 
         outstandingBalance = targetBalance - distributedBalance;
