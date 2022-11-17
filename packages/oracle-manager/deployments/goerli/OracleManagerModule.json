@@ -1,0 +1,186 @@
+{
+  "address": "0x7F7A2A40Ae1A5B913942D32f06DDc1E7232c33C3",
+  "abi": [
+    {
+      "type": "error",
+      "name": "NodeNotRegistered",
+      "inputs": [
+        {
+          "type": "bytes32",
+          "name": "nodeId"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "UnsupportedNodeType",
+      "inputs": [
+        {
+          "type": "uint256",
+          "name": "nodeType"
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "UnsupportedOperation",
+      "inputs": [
+        {
+          "type": "uint256",
+          "name": "operation"
+        }
+      ]
+    },
+    {
+      "type": "event",
+      "anonymous": false,
+      "name": "NodeRegistered",
+      "inputs": [
+        {
+          "type": "bytes32",
+          "name": "nodeId",
+          "indexed": false
+        },
+        {
+          "type": "bytes32[]",
+          "name": "parents",
+          "indexed": false
+        },
+        {
+          "type": "uint8",
+          "name": "nodeType",
+          "indexed": false
+        },
+        {
+          "type": "bytes",
+          "name": "parameters",
+          "indexed": false
+        }
+      ]
+    },
+    {
+      "type": "function",
+      "name": "getNode",
+      "constant": true,
+      "stateMutability": "pure",
+      "payable": false,
+      "inputs": [
+        {
+          "type": "bytes32",
+          "name": "nodeId"
+        }
+      ],
+      "outputs": [
+        {
+          "type": "tuple",
+          "components": [
+            {
+              "type": "bytes32[]",
+              "name": "parents"
+            },
+            {
+              "type": "uint8",
+              "name": "nodeType"
+            },
+            {
+              "type": "bytes",
+              "name": "parameters"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "function",
+      "name": "getNodeId",
+      "constant": true,
+      "stateMutability": "pure",
+      "payable": false,
+      "inputs": [
+        {
+          "type": "bytes32[]",
+          "name": "parents"
+        },
+        {
+          "type": "uint8",
+          "name": "nodeType"
+        },
+        {
+          "type": "bytes",
+          "name": "parameters"
+        }
+      ],
+      "outputs": [
+        {
+          "type": "bytes32"
+        }
+      ]
+    },
+    {
+      "type": "function",
+      "name": "process",
+      "constant": true,
+      "stateMutability": "view",
+      "payable": false,
+      "inputs": [
+        {
+          "type": "bytes32",
+          "name": "nodeId"
+        }
+      ],
+      "outputs": [
+        {
+          "type": "tuple",
+          "components": [
+            {
+              "type": "int256",
+              "name": "price"
+            },
+            {
+              "type": "uint256",
+              "name": "timestamp"
+            },
+            {
+              "type": "uint256",
+              "name": "volatilityScore"
+            },
+            {
+              "type": "uint256",
+              "name": "liquidityScore"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "function",
+      "name": "registerNode",
+      "constant": false,
+      "payable": false,
+      "inputs": [
+        {
+          "type": "bytes32[]",
+          "name": "parents"
+        },
+        {
+          "type": "uint8",
+          "name": "nodeType"
+        },
+        {
+          "type": "bytes",
+          "name": "parameters"
+        }
+      ],
+      "outputs": [
+        {
+          "type": "bytes32"
+        }
+      ]
+    }
+  ],
+  "constructorArgs": [],
+  "deployTxnHash": "0x63569b942fe05c2592347bc8ab7755b10846ba4f41f3c1af218cdef030dc7ae6",
+  "sourceName": "contracts/modules/OracleManagerModule.sol",
+  "contractName": "OracleManagerModule",
+  "deployedOn": "contract.OracleManagerModule"
+}

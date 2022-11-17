@@ -8,6 +8,7 @@ coverage
 node_modules
 **/coverage*
 dist
-**/deployments
+**/deployments/*
+!packages/*/deployments/goerli
 typechain-types
 Router.sol
