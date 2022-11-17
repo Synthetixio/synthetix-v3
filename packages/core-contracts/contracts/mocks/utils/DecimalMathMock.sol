@@ -21,6 +21,22 @@ contract DecimalMathMock {
     }
 
     // -----------------
+    // uint128
+    // -----------------
+
+    function mulDecimalUint128(uint128 x, uint128 y) public pure returns (uint128) {
+        return DecimalMath.mulDecimalUint128(x, y);
+    }
+
+    function divDecimalUint128(uint128 x, uint128 y) public pure returns (uint128) {
+        return DecimalMath.divDecimalUint128(x, y);
+    }
+
+    function toLowPrecisionUint128(uint128 x) public pure returns (uint128) {
+        return DecimalMath.toLowPrecisionUint128(x);
+    }
+
+    // -----------------
     // int256
     // -----------------
 

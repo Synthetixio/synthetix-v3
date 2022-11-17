@@ -16,12 +16,11 @@ library DecimalMath {
     // Numbers representing 1.0 (normal precision).
     uint256 public constant UNIT = 1e18;
     int256 public constant UNIT_INT = int256(UNIT);
+    uint128 public constant UNIT_UINT128 = uint128(UNIT);
     int128 public constant UNIT_INT128 = int128(UNIT_INT);
 
     // Numbers representing 1.0 (high precision).
     uint256 public constant UNIT_PRECISE = 1e27;
-    int256 public constant UNIT_INT_PRECISE = int256(UNIT_PRECISE);
-    int128 public constant UNIT_INT128_PRECISE = int128(UNIT_INT_PRECISE);
 
     // -----------------------------------------------------------------------
     // -----------------------------------------------------------------------
@@ -67,6 +66,33 @@ library DecimalMath {
     }
 
     // -----------------
+    // uint128
+    // -----------------
+
+    // Note: Overloading doesn't seem to work for similar types, i.e. int256 and int128, uint256 and uint128, etc, so explicitly naming the functions differently here.
+
+    /**
+     * @dev See mulDecimal for uint256.
+     */
+    function mulDecimalUint128(uint128 x, uint128 y) internal pure returns (uint128) {
+        return (x * y) / UNIT_UINT128;
+    }
+
+    /**
+     * @dev See divDecimal for uint256.
+     */
+    function divDecimalUint128(uint128 x, uint128 y) internal pure returns (uint128) {
+        return (x * UNIT_UINT128) / y;
+    }
+
+    /**
+     * @dev See toLowPrecision for uint256.
+     */
+    function toLowPrecisionUint128(uint128 x) internal pure returns (uint128 z) {
+        return x / 1e9;
+    }
+
+    // -----------------
     // int256
     // -----------------
 
@@ -94,8 +120,6 @@ library DecimalMath {
     // -----------------
     // int128
     // -----------------
-
-    // Note: Overloading doesn't seem to work for similar types, i.e. int256 and int128, so explicitly naming the functions differently here.
 
     /**
      * @dev See mulDecimal for uint256.
