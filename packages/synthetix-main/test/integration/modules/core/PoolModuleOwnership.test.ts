@@ -71,7 +71,7 @@ describe('PoolModule Create / Ownership', function () {
       });
     });
 
-    describe.only('when transfering to a new owner', async () => {
+    describe('when transfering to a new owner', async () => {
       describe('when attempting to accept before nominating', async () => {
         it('reverts', async () => {
           await assertRevert(
