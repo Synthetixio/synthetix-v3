@@ -1,10 +1,6 @@
-const { getProxyAddress } = require('@synthetixio/hardhat-router/dist/utils/deployments');
-
-module.exports = async function initializer(deploymentInfo) {
-  const proxyAddress = getProxyAddress(deploymentInfo);
+module.exports = async function initializer({ contracts }) {
   const [owner] = await hre.ethers.getSigners();
-
-  await _initializeOwnerModule(proxyAddress, owner);
+  await _initializeOwnerModule(contracts.Proxy.deployedAddress, owner);
 };
 
 async function _initializeOwnerModule(proxyAddress, owner) {

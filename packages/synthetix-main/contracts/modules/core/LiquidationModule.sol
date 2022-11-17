@@ -11,7 +11,7 @@ import "@synthetixio/core-modules/contracts/storage/AssociatedSystem.sol";
 import "../../utils/ERC20Helper.sol";
 
 contract LiquidationModule is ILiquidationModule {
-    using MathUtil for uint;
+    using DecimalMath for uint;
     using ERC20Helper for address;
 
     using AssociatedSystem for AssociatedSystem.Data;

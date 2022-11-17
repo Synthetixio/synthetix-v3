@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@synthetixio/core-contracts/contracts/utils/MathUtil.sol";
+import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 
 import "./DistributionActor.sol";
 import "../errors/ParameterError.sol";
@@ -105,6 +105,8 @@ library Distribution {
          */
         mapping(bytes32 => DistributionActor.Data) actorInfo;
     }
+
+    // TODO: Add function to retrieve a low precision value per share. This is done from multiple parts of the code and prone to errors.
 
     /**
      * @dev Adds or removes value to the distribution. The value is

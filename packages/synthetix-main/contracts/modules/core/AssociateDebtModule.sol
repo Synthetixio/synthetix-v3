@@ -5,14 +5,14 @@ import "../../interfaces/IAssociateDebtModule.sol";
 
 import "../../utils/ERC20Helper.sol";
 
-import "@synthetixio/core-contracts/contracts/utils/MathUtil.sol";
+import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 
 import "../../storage/Distribution.sol";
 import "../../storage/Pool.sol";
 import "../../storage/Market.sol";
 
 contract AssociateDebtModule is IAssociateDebtModule {
-    using MathUtil for uint;
+    using DecimalMath for uint;
     using ERC20Helper for address;
 
     using Distribution for Distribution.Data;

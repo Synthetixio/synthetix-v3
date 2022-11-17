@@ -3,47 +3,45 @@
 import hre from 'hardhat';
 import { takeSnapshot, restoreSnapshot } from '@synthetixio/core-utils/utils/hardhat/rpc';
 import { TASK_DEPLOY } from '../task-names';
-import type { DeployTaskParams } from '../tasks/deploy';
-import { DeploymentInfo, getProxyAddress, getRouterAddress } from './deployments';
+import { DeployTaskParams, DeployTaskResult } from '../tasks/deploy';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const getHardhatProvider = () => (hre as any).ethers!.provider;
 
 export function bootstrap(
-  initializer: (deploymentInfo: Partial<DeploymentInfo>) => void = () => {},
-  customDeployOptions: DeployTaskParams = {}
+  initializer: (deploymentResult: DeployTaskResult) => void = () => {},
+  customDeployOptions: Partial<DeployTaskParams> = {}
 ) {
   let snapshotId: string;
-
-  const deploymentInfo = {
-    network: hre.network.name,
-    instance: customDeployOptions.instance || 'test',
-  };
+  let result: DeployTaskResult | null = null;
 
   before('take a snapshot', async () => {
     snapshotId = await takeSnapshot(getHardhatProvider());
   });
 
   before('deploy system', async () => {
-    await hre.run(TASK_DEPLOY, {
-      instance: deploymentInfo.instance,
-      clear: true,
-      noConfirm: true,
+    const opts: DeployTaskParams = {
       quiet: true,
       ...customDeployOptions,
-    });
+    };
+
+    result = await hre.run(TASK_DEPLOY, opts);
   });
 
   before('initialize system', async () => {
-    await initializer(deploymentInfo);
+    if (!result) {
+      throw new Error('Invalid deployment result');
+    }
+
+    await initializer(result);
   });
 
   after('restore the snapshot', async () => {
     await restoreSnapshot(snapshotId, getHardhatProvider());
   });
 
-  const proxyAddress = () => getProxyAddress(deploymentInfo);
-  const routerAddress = () => getRouterAddress(deploymentInfo);
+  const proxyAddress = () => result!.contracts.Proxy.deployedAddress;
+  const routerAddress = () => result!.contracts.Router.deployedAddress;
 
-  return { deploymentInfo, proxyAddress, routerAddress };
+  return { proxyAddress, routerAddress };
 }

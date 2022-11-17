@@ -1,6 +1,6 @@
 const { loadEnvironment, deployOnEnvironment } = require('../helpers/use-environment');
 
-describe('sibling-contracts', function () {
+describe.skip('sibling-contracts', function () {
   let hre;
 
   beforeEach('set fixture project', function () {

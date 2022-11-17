@@ -1,10 +1,10 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@synthetixio/core-contracts/contracts/utils/MathUtil.sol";
+import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 
 library CurvesLibrary {
-    using MathUtil for int256;
+    using DecimalMath for int256;
 
     error ValueOutOfRange();
     error InvalidPointsOrder();

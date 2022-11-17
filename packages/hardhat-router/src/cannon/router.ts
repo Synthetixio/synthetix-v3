@@ -1,19 +1,22 @@
 import fs from 'node:fs/promises';
 import path, { dirname } from 'node:path';
-import mkdirp from 'mkdirp';
 import hre from 'hardhat';
-import { generateRouter } from '../internal/generate-router';
-
-import type { ChainBuilderRuntime } from '@usecannon/builder/dist/src/types';
+import { ChainBuilderRuntime } from '@usecannon/builder/dist/src/types';
+import { parseFullyQualifiedName } from 'hardhat/utils/contract-names';
+import { renderRouter } from '../internal/render-router';
+import { routerFunctionFilter } from '../internal/router-function-filter';
 
 /**
  * Generate the file contracts/Router.sol including the given modules in its source.
  */
 exports.generate = async function generate(
   runtime: ChainBuilderRuntime,
-  routerName: string,
+  routerFqName: string,
   ...contractPaths: string[]
 ) {
+  const { contractName: routerContractName, sourceName: routerSourceName } =
+    parseFullyQualifiedName(routerFqName);
+
   // TODO find an alternative to using runtime.provider for getting contracts addresses
   const addresses = Object.values(runtime.provider.artifacts.contracts!).reduce((a, c) => {
     a[`${c.sourceName}:${c.contractName}`] = c.address;
@@ -46,19 +49,14 @@ exports.generate = async function generate(
     })
   );
 
-  const generatedSource = generateRouter({
-    routerName,
-    functionFilter: hre.config.router.routerFunctionFilter,
+  const generatedSource = renderRouter({
+    routerName: routerContractName,
+    functionFilter: routerFunctionFilter,
     contracts,
   });
 
-  const routerPath = path.join(
-    hre.config.paths.sources,
-    `routers/chain-${hre.network.config.chainId}`,
-    `${routerName}.sol`
-  );
-  await mkdirp(dirname(routerPath));
-
+  const routerPath = path.resolve(hre.config.paths.root, routerSourceName);
+  await fs.mkdir(dirname(routerPath), { recursive: true });
   await fs.writeFile(routerPath, generatedSource);
 
   // need to re-run compile to ensure artifact is available to cannon

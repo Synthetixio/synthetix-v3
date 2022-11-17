@@ -1,12 +1,12 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@synthetixio/core-contracts/contracts/utils/MathUtil.sol";
+import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import "../storage/SpotMarketStorage.sol";
 import "../interfaces/ISpotMarketFee.sol";
 
 contract PriceMixin {
-    using MathUtil for uint256;
+    using DecimalMath for uint256;
 
     // TODO: change from pure once _getCurrentPrice is implemented
     function _synthUsdExchangeRate(uint sellAmount) internal pure returns (uint amountUsd) {

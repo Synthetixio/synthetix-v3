@@ -1,6 +1,16 @@
 import { SourceUnit } from 'solidity-ast';
 import { JsonFragment } from '@ethersproject/abi';
 
+export interface DeployedContractData {
+  constructorArgs?: unknown[];
+  abi: JsonFragment[];
+  deployedAddress: string;
+  deployTxnHash: string;
+  contractName: string;
+  sourceName: string;
+  contractFullyQualifiedName: string;
+}
+
 export interface ContractData {
   deployedAddress: string;
   deployTransaction: string;

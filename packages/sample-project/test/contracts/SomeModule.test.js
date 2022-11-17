@@ -1,59 +1,53 @@
-const { ethers } = hre;
 const assert = require('assert/strict');
 const { findEvent } = require('@synthetixio/core-utils/utils/ethers/events');
-const { bootstrap } = require('@synthetixio/hardhat-router/dist/utils/tests');
 const assertBn = require('@synthetixio/core-utils/utils/assertions/assert-bignumber');
-const initializer = require('@synthetixio/core-modules/test/helpers/initializer');
+const bootstrap = require('../bootstrap');
 
-describe('SomeModule', () => {
-  const { proxyAddress } = bootstrap(initializer);
+describe('SomeModule', function () {
+  const { getContract, getSigners } = bootstrap();
 
   let SomeModule;
-
   let owner;
 
   let receipt;
 
-  before('identify signers', async () => {
-    [owner] = await ethers.getSigners();
+  before('init', function () {
+    [owner] = getSigners();
+    SomeModule = getContract('SomeModule');
   });
 
-  before('identify modules', async () => {
-    SomeModule = await ethers.getContractAt('SomeModule', proxyAddress());
-  });
-
-  describe('when value is set', () => {
-    before('set value', async () => {
+  describe('when value is set', function () {
+    before('set value', async function () {
       const tx = await SomeModule.connect(owner).setValue(42);
       receipt = await tx.wait();
     });
 
-    it('shows that the value was set', async () => {
+    it('shows that the value was set', async function () {
       assertBn.equal(await SomeModule.getValue(), 42);
     });
 
-    it('emitted a ValueSet event', async () => {
+    it('emitted a ValueSet event', async function () {
       const event = findEvent({ receipt, eventName: 'ValueSet' });
 
-      assert.equal(event.args.sender, owner.address);
+      assert.equal(event.args.sender, await owner.getAddress());
       assertBn.equal(event.args.value, 42);
     });
   });
 
-  describe('when someValue is set', () => {
-    before('set some value', async () => {
+  describe('when someValue is set', function () {
+    before('set some value', async function () {
       const tx = await SomeModule.connect(owner).setSomeValue(1337);
       receipt = await tx.wait();
     });
 
-    it('shows that the value was set', async () => {
+    it('shows that the value was set', async function () {
       assertBn.equal(await SomeModule.getSomeValue(), 1337);
     });
 
-    it('emitted a ValueSet event', async () => {
+    it('emitted a ValueSet event', async function () {
       const event = findEvent({ receipt, eventName: 'ValueSet' });
 
-      assert.equal(event.args.sender, owner.address);
+      assert.equal(event.args.sender, await owner.getAddress());
       assertBn.equal(event.args.value, 1337);
     });
   });

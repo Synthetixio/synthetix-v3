@@ -16,12 +16,12 @@ import "@synthetixio/core-contracts/contracts/ownership/Ownable.sol";
 import "@synthetixio/core-contracts/contracts/interfaces/IERC20.sol";
 import "@synthetixio/core-contracts/contracts/interfaces/IERC721.sol";
 
-import "@synthetixio/core-contracts/contracts/utils/MathUtil.sol";
+import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 
 import "hardhat/console.sol";
 
 contract LegacyMarket is Ownable, IMarket {
-    using MathUtil for uint256;
+    using DecimalMath for uint256;
 
     uint128 public marketId;
     bool public pauseStablecoinConversion;
@@ -130,7 +130,7 @@ contract LegacyMarket is Ownable, IMarket {
 
         uint128 preferredPoolId = v3System.getPreferredPool();
 
-        v3System.delegateCollateral(accountId, preferredPoolId, address(oldSynthetix), collateralMigrated, MathUtil.UNIT);
+        v3System.delegateCollateral(accountId, preferredPoolId, address(oldSynthetix), collateralMigrated, DecimalMath.UNIT);
 
         v3System.associateDebt(marketId, preferredPoolId, address(oldSynthetix), accountId, debtValueMigrated);
 

@@ -2,13 +2,13 @@
 pragma solidity ^0.8.0;
 
 import "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
-import "@synthetixio/core-contracts/contracts/utils/MathUtil.sol";
+import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 
 import "../interfaces/external/IAggregatorV3Interface.sol";
 
 library CollateralConfiguration {
     using SetUtil for SetUtil.AddressSet;
-    using MathUtil for uint256;
+    using DecimalMath for uint256;
 
     error InvalidCollateral(address collateralType);
     error InsufficientCollateralRatio(uint collateralValue, uint debt, uint ratio, uint minRatio);

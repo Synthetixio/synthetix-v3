@@ -15,10 +15,7 @@ describe.skip('storage-collision', function () {
       this.timeout(60000);
 
       await rejects(async () => {
-        await deployOnEnvironment(hre, {
-          alias: 'first',
-          clear: true,
-        });
+        await deployOnEnvironment(hre);
       }, ContractValidationError);
     });
   });

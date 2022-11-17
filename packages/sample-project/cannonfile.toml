@@ -32,7 +32,10 @@ artifact = "AnotherModule"
 [run.generate_router]
 exec = "../hardhat-router/dist/cannon/router.js"
 func = "generate"
-args = ["Router", "contracts/modules"]
+args = [
+  "contracts/routers/chain-<%= chainId %>/Router.sol:Router",
+  "contracts/modules"
+]
 modified = []
 depends = [
   "contract.OwnerModule",

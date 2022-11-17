@@ -14,7 +14,7 @@ contract PoolModule is IPoolModule {
     error PoolNotFound(uint128 poolId);
     error CapacityLocked(uint marketId);
 
-    using MathUtil for uint;
+    using DecimalMath for uint;
 
     using Pool for Pool.Data;
     using Market for Market.Data;

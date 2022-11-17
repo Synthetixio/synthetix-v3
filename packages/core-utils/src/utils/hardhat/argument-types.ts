@@ -45,3 +45,22 @@ export const oneOf = (...values: string[]) => ({
     }
   },
 });
+
+export const stringArray = {
+  name: 'stringArray',
+  parse: (argName: string, value: string) => {
+    return value
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean);
+  },
+  validate: (argName: string, value: string[]) => {
+    if (!Array.isArray(value) || value.some((v) => typeof v !== 'string')) {
+      throw new HardhatError(ERRORS.ARGUMENTS.INVALID_VALUE_FOR_TYPE, {
+        value,
+        name: argName,
+        type: stringArray.name,
+      });
+    }
+  },
+};

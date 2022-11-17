@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import "@synthetixio/main/contracts/interfaces/IMarketManagerModule.sol";
-import "@synthetixio/core-contracts/contracts/utils/MathUtil.sol";
+import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import "@synthetixio/core-modules/contracts/interfaces/IOwnerModule.sol";
 import "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
 import "@synthetixio/core-contracts/contracts/initializable/InitializableMixin.sol";
@@ -24,7 +24,7 @@ contract SpotMarketModule is
     OwnableMixin,
     InitializableMixin
 {
-    using MathUtil for uint256;
+    using DecimalMath for uint256;
 
     error IncorrectMarket();
 

@@ -4,7 +4,7 @@ const { rejects } = require('assert/strict');
 const { ContractValidationError } = require('../../src/internal/errors');
 const { copyFile } = require('fs/promises');
 
-describe('custom-proxy', function () {
+describe.skip('custom-proxy', function () {
   let hre;
 
   beforeEach('set fixture project', function () {
@@ -15,10 +15,7 @@ describe('custom-proxy', function () {
     it('correctly executes several deployments with no changes', async function () {
       this.timeout(120000);
 
-      await deployOnEnvironment(hre, {
-        alias: 'first',
-        clear: true,
-      });
+      await deployOnEnvironment(hre);
 
       await deployOnEnvironment(hre, {
         alias: 'second',
