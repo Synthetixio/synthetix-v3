@@ -23,6 +23,16 @@ library DecimalMath {
     int256 public constant UNIT_INT_PRECISE = int256(UNIT_PRECISE);
     int128 public constant UNIT_INT128_PRECISE = int128(UNIT_INT_PRECISE);
 
+    // -----------------------------------------------------------------------
+    // -----------------------------------------------------------------------
+    // Important!
+    //
+    // Multiplication and division operations are currently not supported
+    // for high precision decimals. Using these operations on them will
+    // yield incorrect results and fail silently.
+    // -----------------------------------------------------------------------
+    // -----------------------------------------------------------------------
+
     // -----------------
     // uint256
     // -----------------
