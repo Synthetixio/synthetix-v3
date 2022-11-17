@@ -19,6 +19,7 @@ library Market {
     using Distribution for Distribution.Data;
     using HeapUtil for HeapUtil.Data;
     using DecimalMath for uint256;
+    using DecimalMath for uint128;
     using DecimalMath for int256;
     using DecimalMath for int128;
 
@@ -448,11 +449,14 @@ library Market {
             // TODO: Can reuse lowestMaxValuePerShare?
             int128 poolMaxValuePerShare = -node.priority;
 
-            // Distribute the market's debt that exceeds the maximum value per share.
-            int256 distributedDebt = _distributeDebtToLimit(self, poolMaxValuePerShare);
+            // Distribute the market's debt to the limit, i.e. for that which exceeds the maximum value per share.
+            int256 debtToLimit = int256(int128(self.debtDist.totalShares)).mulDecimal(
+                int256(poolMaxValuePerShare - self.debtDist.valuePerShare.toLowPrecisionInt128()) // Diff between current value and max value per share.
+            );
+            self.debtDist.distributeValue(debtToLimit);
 
             // Update the global distributed and outstanding balances with the debt that was just distributed.
-            distributedBalance += distributedDebt;
+            distributedBalance += debtToLimit;
             outstandingBalance = targetBalance - distributedBalance;
 
             // Sanity check: The pool should have shares in the market's debt distribution.
@@ -484,35 +488,5 @@ library Market {
         self.debtDist.distributeValue(outstandingBalance);
 
         self.lastDistributedMarketBalance = int128(targetBalance);
-    }
-
-    /**
-     * @dev TODO
-     *
-     * TODO: Could be cleaned up if it received a delta, and not the max.
-     */
-    function _distributeDebtToLimit(Data storage self, int128 poolMaxShareValue) private returns (int debtAmount) {
-        // distribute to limit
-        // We know that his pool is exceeding the limit
-        // Remove the debt of the market to the point at max
-        // Figure out how much debt that is
-        // And then distribute it
-        // -------------------------------
-        // i.e. amount of debt that would have happened upt to the point at which max is hit
-        // -------------------------------
-        // amount = liq * diff
-        // TODO: Extract and explain precision calculations.
-        debtAmount =
-            (int(int128(self.debtDist.totalShares)) * (poolMaxShareValue - self.debtDist.valuePerShare / 1e9)) /
-            1e18;
-
-        // TODO: Remove if unused. NO, its useful to understand.
-        // Could add assert here
-        // maxShareValue = valuePerShare
-        // sanity
-        //require(self.debtDist.valuePerShare/1e9 == poolMaxShareValue, "distribution calculation is borked");
-        // TODO: Consider not commenting out sanity checks.
-
-        self.debtDist.distributeValue(debtAmount);
     }
 }
