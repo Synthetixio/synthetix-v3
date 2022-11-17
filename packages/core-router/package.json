@@ -1,0 +1,19 @@
+{
+  "name": "@synthetixio/core-router",
+  "version": "1.0.0",
+  "description": "Core Synthetix Router Architecture",
+  "private": true,
+  "scripts": {
+    "test": "hardhat test",
+    "build": "tsc --project src/tsconfig.json && hardhat cannon:build",
+    "watch": "tsc --project src/tsconfig.json --watch"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@synthetixio/common-config": "*",
+    "@synthetixio/core-contracts": "*",
+    "@synthetixio/core-modules": "*"
+  }
+}

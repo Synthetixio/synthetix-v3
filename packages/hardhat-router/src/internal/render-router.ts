@@ -3,6 +3,7 @@ import { JsonFragment } from '@ethersproject/abi';
 import { getSelectors } from '@synthetixio/core-utils/utils/ethers/contracts';
 import { renderTemplate } from './render-template';
 import { toPrivateConstantCase } from './router-helper';
+import { routerFunctionFilter } from './router-function-filter';
 
 const TAB = '    ';
 
@@ -33,7 +34,7 @@ interface BinaryData {
 export function renderRouter({
   routerName = 'Router',
   template = path.resolve(__dirname, '..', '..', 'templates', 'Router.sol.mustache'),
-  functionFilter,
+  functionFilter = routerFunctionFilter,
   contracts,
 }: Props) {
   if (!Array.isArray(contracts) || contracts.length === 0) {

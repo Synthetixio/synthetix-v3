@@ -2,20 +2,22 @@ name = "synthetix-sample-project"
 version = "<%= package.version %>"
 description = "Sample usage of the router manager"
 
-# `salt` here only affects proxy contract
 [setting.salt]
 description = "Change this to a unique string when deploying multiple instances of the system. Note that only the proxy contract will be unique."
-defaultValue = "main"
+defaultValue = "sample-project"
 
 [setting.owner]
 description = "Admin user for the system"
 defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
 
-[contract.OwnerModule]
-artifact = "contracts/modules/OwnerModule.sol:OwnerModule"
+[setting.core_router_package]
+description = "Package version of @synthetixio/core-router to use"
+defaultValue = "core-router:1.0.0"
 
-[contract.UpgradeModule]
-artifact = "contracts/modules/UpgradeModule.sol:UpgradeModule"
+[import.core_router]
+source = "<%= settings.core_router_package %>"
+options.salt = "<%= settings.salt %>"
+options.owner = "<%= settings.owner %>"
 
 [contract.InitializableModule]
 artifact = "InitializableModule"
@@ -30,16 +32,16 @@ artifact = "SomeModule"
 artifact = "AnotherModule"
 
 [run.generate_router]
-exec = "../hardhat-router/dist/cannon/router.js"
+exec = "@synthetixio/core-router"
 func = "generate"
 args = [
   "contracts/routers/chain-<%= chainId %>/Router.sol:Router",
-  "contracts/modules"
+  "<%= JSON.stringify(imports.core_router.contracts.CoreModule) %>",
+  "<%= JSON.stringify(contracts) %>"
 ]
-modified = []
+modified = ["contracts"]
 depends = [
-  "contract.OwnerModule",
-  "contract.UpgradeModule",
+  "import.core_router",
   "contract.InitializableModule",
   "contract.SettingsModule",
   "contract.SomeModule",
@@ -49,8 +51,7 @@ depends = [
 [contract.Router]
 artifact = "contracts/routers/chain-<%= chainId %>/Router.sol:Router"
 abiOf = [
-  "OwnerModule",
-  "UpgradeModule",
+  "core_router.CoreModule",
   "InitializableModule",
   "SettingsModule",
   "SomeModule",
@@ -58,8 +59,12 @@ abiOf = [
 ]
 depends = ["run.generate_router"]
 
-[contract.Proxy]
-artifact = "contracts/Proxy.sol:Proxy"
+[invoke.upgrade_proxy]
+target = ["core_router.Proxy"]
+from = "<%= settings.owner %>"
+func = "upgradeTo"
 args = ["<%= contracts.Router.address %>"]
-abiOf = ["Router"]
+factory.Proxy.abiOf = ["Router"]
+factory.Proxy.event = "Upgraded"
+factory.Proxy.arg = 0
 depends = ["contract.Router"]

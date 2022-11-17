@@ -4,10 +4,12 @@
   "description": "Sample project implemeting Proxy architecture",
   "private": true,
   "scripts": {
-    "test": "hardhat test"
+    "test": "hardhat test",
+    "build": "hardhat cannon:build"
   },
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "2.1.1",
+    "@synthetixio/core-router": "*",
     "@synthetixio/hardhat-router": "*",
     "hardhat-cannon": "1.1.16"
   }
