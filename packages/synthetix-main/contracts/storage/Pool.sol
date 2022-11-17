@@ -22,6 +22,7 @@ library Pool {
     using Vault for Vault.Data;
     using Distribution for Distribution.Data;
     using DecimalMath for uint256;
+    using DecimalMath for int128;
 
     error PoolNotFound(uint128 poolId);
     error PoolAlreadyExists(uint128 poolId);
@@ -205,9 +206,6 @@ library Pool {
     ) internal view returns (int) {
         uint minLiquidityRatio = PoolConfiguration.load().minLiquidityRatio;
 
-        // Value per share is high precision (1e27), so downscale to 1e18.
-        int128 lowPrecisionMarketValuePerShare = marketData.debtDist.valuePerShare / 1e9;
-
         // TODO Explain the math in this block...
         // TODO Name `thing` variable accordingly once I understand the math.
         // thing = liquidity / minRatio / totalShares
@@ -225,7 +223,7 @@ library Pool {
             thing = int(creditCapacity.divDecimal(minLiquidityRatio).divDecimal(self.debtDist.totalShares));
         }
 
-        return lowPrecisionMarketValuePerShare + thing;
+        return int256(marketData.debtDist.valuePerShare.toLowPrecisionInt128()) + thing;
     }
 
     /**
