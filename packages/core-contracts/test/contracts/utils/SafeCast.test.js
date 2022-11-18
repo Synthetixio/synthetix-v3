@@ -10,7 +10,7 @@ function pow(base, exp) {
   return ethers.BigNumber.from(base).pow(exp);
 }
 
-describe.only('SafeCast', () => {
+describe('SafeCast', () => {
   let SafeCast;
   let castFunction;
 
