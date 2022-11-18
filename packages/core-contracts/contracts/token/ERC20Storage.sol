@@ -1,8 +1,6 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "../errors/InitError.sol";
-
 library ERC20Storage {
     struct Data {
         string name;
