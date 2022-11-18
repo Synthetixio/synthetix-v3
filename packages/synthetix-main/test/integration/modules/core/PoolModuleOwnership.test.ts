@@ -100,11 +100,11 @@ describe('PoolModule Create / Ownership', function () {
         });
 
         it('emits an event when nominee renounces', async () => {
-          const tx = await systems().Core.connect(user2).renouncePoolOwnership(1);
+          const tx = await systems().Core.connect(user2).renouncePoolNomination(1);
           receipt = await tx.wait();
           await assertEvent(
             receipt,
-            `PoolOwnerNominationRenounced(1, "${await user2.getAddress()}")`,
+            `PoolNominationRenounced(1, "${await user2.getAddress()}")`,
             systems().Core
           );
         });
@@ -166,14 +166,14 @@ describe('PoolModule Create / Ownership', function () {
         });
 
         before('renounce nomination', async () => {
-          const tx = await systems().Core.connect(user2).renouncePoolOwnership(1);
+          const tx = await systems().Core.connect(user2).renouncePoolNomination(1);
           receipt = await tx.wait();
         });
 
         it('emits an event', async () => {
           await assertEvent(
             receipt,
-            `PoolOwnerNominationRenounced(1, "${await user2.getAddress()}")`,
+            `PoolNominationRenounced(1, "${await user2.getAddress()}")`,
             systems().Core
           );
         });
