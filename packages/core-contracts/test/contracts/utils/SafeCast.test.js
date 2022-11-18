@@ -59,6 +59,27 @@ describe.only('SafeCast', () => {
     });
   });
 
+  describe('uint128 to uint256', function () {
+    before('set the target cast function', async function () {
+      castFunction = 'toUint256(uint128)';
+    });
+
+    it('produces expected results', async function () {
+      await assertCast(42);
+      await assertCast(exp(1337, 18));
+    });
+
+    it('produces expected results on edge cases', async function () {
+      await assertCast(0);
+      await assertCast(MAX_UINT_128);
+    });
+
+    it('throws on overflows', async function () {
+      // Solidity does pick up overflows in parameters.
+      await assertRevert(SafeCast[castFunction](MAX_UINT_256.add(1)), 'out-of-bounds');
+    });
+  });
+
   describe('int256 to uint256', function () {
     before('set the target cast function', async function () {
       castFunction = 'toUint256(int256)';
