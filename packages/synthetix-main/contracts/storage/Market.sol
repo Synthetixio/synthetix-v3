@@ -2,7 +2,8 @@
 pragma solidity ^0.8.0;
 
 import "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
-
+import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
+import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import "@synthetixio/core-contracts/contracts/utils/HeapUtil.sol";
 
 import "./Distribution.sol";
@@ -21,6 +22,9 @@ library Market {
     using DecimalMath for uint256;
     using DecimalMath for int256;
     using DecimalMath for int128;
+    using SafeCast for uint128;
+    using SafeCast for uint256;
+    using SafeCast for int256;
 
     error MarketNotFound(uint128 marketId);
 
@@ -447,7 +451,7 @@ library Market {
             int128 poolMaxValuePerShare = -node.priority;
 
             // Distribute the market's debt to the limit, i.e. for that which exceeds the maximum value per share.
-            int256 debtToLimit = int256(int128(self.debtDist.totalShares)).mulDecimal(
+            int256 debtToLimit = self.debtDist.totalShares.toInt256().mulDecimal(
                 int256(poolMaxValuePerShare - self.debtDist.valuePerShare.toLowPrecisionInt128()) // Diff between current value and max value per share.
             );
             self.debtDist.distributeValue(debtToLimit);
@@ -463,7 +467,7 @@ library Market {
             // Detach the market from this pool by removing the pool's shares from the market.
             // The pool will remain "detached" until the pool manager specifies a new debtDist.
             int newPoolDebt = self.debtDist.updateActorShares(bytes32(poolId), 0);
-            self.poolPendingDebt[uint128(poolId)] += newPoolDebt;
+            self.poolPendingDebt[poolId.toUint128()] += newPoolDebt;
 
             // Note: We don't have to update the capacity because pool max share value - valuePerShare = 0, so no change, and conceptually it makes sense because this pools contribution to the capacity should have been used at this point.
 
@@ -471,7 +475,7 @@ library Market {
             // The last pool has been popped and the market's balance can't be moved any higher.
             if (self.debtDist.totalShares == 0) {
                 // we just popped the last pool, can't move the market balance any higher
-                self.lastDistributedMarketBalance = int128(distributedBalance);
+                self.lastDistributedMarketBalance = distributedBalance.toInt128();
                 return;
             }
 
