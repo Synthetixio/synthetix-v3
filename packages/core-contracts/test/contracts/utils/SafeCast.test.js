@@ -27,7 +27,8 @@ describe('SafeCast', () => {
   });
 
   before('define min and max values', async function () {
-    // Note: ethers.js has constants like `ethers.constants.MaxUint256`, but they are limited, so we use our own.
+    // Note: ethers.js has constants like `ethers.constants.MaxUint256`,
+    // but they are limited, so we use our own.
     MAX_UINT_128 = pow(2, 128).sub(1);
     MIN_INT_128 = pow(2, 128).div(2).mul(-1);
     MAX_INT_128 = pow(2, 128).div(2).sub(1);
@@ -53,9 +54,9 @@ describe('SafeCast', () => {
     it('throws on overflows', async function () {
       await assertRevert(
         SafeCast[castFunction](MAX_UINT_128.add(1)),
-        'Unable to cast uint256 to uint128'
+        'Failed cast uint256 to uint128'
       );
-      await assertRevert(SafeCast[castFunction](MAX_UINT_256), 'Unable to cast uint256 to uint128');
+      await assertRevert(SafeCast[castFunction](MAX_UINT_256), 'Failed cast uint256 to uint128');
     });
   });
 
@@ -96,7 +97,8 @@ describe('SafeCast', () => {
     });
 
     it('throws on overflows', async function () {
-      // Note: These should fail with CastError, but for some reason Solidity is not providing a revert reason.
+      // Note: These should fail with CastError,
+      // but for some reason Solidity is not providing a revert reason.
       // await assertRevert(SafeCast[castFunction](-1), 'CastError(int256, uint256)');
       // await assertRevert(SafeCast[castFunction](exp(-1337, 18)), 'CastError(int256, uint256)');
       await assertRevert(SafeCast[castFunction](-1));
@@ -125,7 +127,7 @@ describe('SafeCast', () => {
     it('throws on overflows', async function () {
       await assertRevert(
         SafeCast[castFunction](MAX_INT_128.add(1)),
-        'Unable to cast uint128 to int128'
+        'Failed cast uint128 to int128'
       );
     });
   });
@@ -148,7 +150,7 @@ describe('SafeCast', () => {
     it('throws on overflows', async function () {
       await assertRevert(
         SafeCast[castFunction](MAX_INT_256.add(1)),
-        'Unable to cast uint256 to int256'
+        'Failed cast uint256 to int256'
       );
     });
   });
@@ -171,7 +173,7 @@ describe('SafeCast', () => {
     it('throws on overflows', async function () {
       await assertRevert(
         SafeCast[castFunction](MAX_INT_128.add(1)),
-        'Unable to cast uint128 to int128'
+        'Failed cast uint128 to int128'
       );
     });
   });
@@ -195,14 +197,15 @@ describe('SafeCast', () => {
     });
 
     it('throws on overflows', async function () {
-      // Note: These should fail with CastError, but for some reason Solidity is not providing a revert reason.
+      // Note: These should fail with CastError,
+      // but for some reason Solidity is not providing a revert reason.
       // await assertRevert(
       //   SafeCast[castFunction](MIN_INT_128.sub(1)),
-      //   'Unable to cast int256 to int128'
+      //   'Failed cast int256 to int128'
       // );
       // await assertRevert(
       //   SafeCast[castFunction](MAX_INT_128.add(1)),
-      //   'Unable to cast int256 to int128'
+      //   'Failed cast int256 to int128'
       // );
       await assertRevert(SafeCast[castFunction](MIN_INT_128.sub(1)));
       await assertRevert(SafeCast[castFunction](MAX_INT_128.add(1)));

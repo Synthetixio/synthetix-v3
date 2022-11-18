@@ -15,7 +15,7 @@ library SafeCast {
 
     function uint256toUint128(uint256 x) internal pure returns (uint128) {
         if (x > type(uint128).max) {
-            revert("Unable to cast uint256 to uint128");
+            revert("Failed cast uint256 to uint128");
         }
 
         return uint128(x);
@@ -23,7 +23,7 @@ library SafeCast {
 
     function int256toUint256(int256 x) internal pure returns (uint256) {
         if (x < 0) {
-            revert("Unable to cast int256 to uint256");
+            revert("Failed cast int256 to uint256");
         }
 
         return uint256(x);
@@ -31,7 +31,7 @@ library SafeCast {
 
     function uint128toInt128(uint128 x) internal pure returns (int128) {
         if (x > uint128(type(int128).max)) {
-            revert("Unable to cast uint128 to int128");
+            revert("Failed cast uint128 to int128");
         }
 
         return int128(x);
@@ -45,7 +45,7 @@ library SafeCast {
 
     function int256toInt128(int256 x) internal pure returns (int128) {
         if (x > int256(type(int128).max)) {
-            revert("Unable to cast int256 to int128");
+            revert("Failed cast int256 to int128");
         }
 
         return int128(x);
@@ -65,7 +65,7 @@ library SafeCast {
 
     function uint256toInt256(uint256 x) internal pure returns (int256) {
         if (x > uint256(type(int256).max)) {
-            revert("Unable to cast uint256 to int256");
+            revert("Failed cast uint256 to int256");
         }
 
         return int256(x);
