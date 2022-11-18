@@ -73,7 +73,7 @@ contract PoolModule is IPoolModule {
 
         pool.nominatedOwner = address(0);
 
-        emit PoolOwnerNominationRenounced(poolId, msg.sender);
+        emit PoolOwnershipRenounced(poolId, msg.sender);
     }
 
     function getPoolOwner(uint128 poolId) external view override returns (address) {

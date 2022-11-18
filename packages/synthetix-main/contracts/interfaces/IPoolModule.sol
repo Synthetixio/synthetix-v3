@@ -5,12 +5,19 @@ import "../storage/MarketConfiguration.sol";
 
 /// @title Module for managing pool token and pools positions distribution
 interface IPoolModule {
+    /// @notice gets fired when pool will be created
     event PoolCreated(uint128 indexed poolId, address indexed owner);
+    /// @notice gets fired when pool owner proposes a new owner
     event NominatedPoolOwner(uint128 indexed poolId, address indexed owner);
+    /// @notice gets fired when pool nominee accepts nomination
     event PoolOwnershipAccepted(uint128 indexed poolId, address indexed owner);
+    /// @notice gets fired when pool owner revokes nonimation
     event PoolNominationRevoked(uint128 indexed poolId, address indexed owner);
-    event PoolOwnerNominationRenounced(uint128 indexed poolId, address indexed owner);
+    /// @notice gets fired when pool nominee renounces nomination
+    event PoolOwnershipRenounced(uint128 indexed poolId, address indexed owner);
+    /// @notice gets fired when pool name changes
     event PoolNameUpdated(uint128 indexed poolId, string indexed name, address indexed sender);
+    /// @notice gets fired when pool gets configured
     event PoolConfigurationSet(uint128 indexed poolId, MarketConfiguration.Data[] markets, address indexed sender);
 
     /// @notice creates a new pool
