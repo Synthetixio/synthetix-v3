@@ -47,7 +47,6 @@ contract VaultModule is IVaultModule {
         uint leverage
     ) external override {
         Pool.requireExists(poolId);
-        CollateralConfiguration.collateralEnabled(collateralType);
         Account.onlyWithPermission(accountId, AccountRBAC._DELEGATE_PERMISSION);
 
         if (collateralAmount > 0) {
@@ -69,8 +68,8 @@ contract VaultModule is IVaultModule {
         if (
             collateralAmount > oldCollateralAmount
         ) {
+            CollateralConfiguration.collateralEnabled(collateralType);
             Account.requireSufficientCollateral(accountId, collateralType, collateralAmount - oldCollateralAmount);
-
         }
 
         bytes32 actorId = bytes32(uint(accountId));

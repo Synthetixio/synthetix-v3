@@ -146,6 +146,66 @@ describe('VaultModule', function () {
       );
     });
 
+    it('fails when trying to delegate less than minDelegation amount', async () => {
+      await assertRevert(
+        systems()
+          .Core.connect(user1)
+          .delegateCollateral(
+            accountId,
+            0, // 0 pool is just easy way to test another pool
+            collateralAddress(),
+            depositAmount.div(51),
+            ethers.utils.parseEther('1')
+          ),
+        'InsufficientDelegation(20000000000000000000)',
+        systems().Core
+      );
+    });
+
+    it('fails when pool does not exist', async () => {
+      await assertRevert(
+        systems()
+          .Core.connect(user1)
+          .delegateCollateral(
+            accountId,
+            42,
+            collateralAddress(),
+            depositAmount.div(50),
+            ethers.utils.parseEther('1')
+          ),
+        'PoolNotFound(42)',
+        systems().Core
+      );
+    });
+
+    describe('when collateral is disabled', async () => {
+      const restore = snapshotCheckpoint(provider);
+      after(restore);
+
+      before('disable collatearal', async () => {
+        const beforeConfiguration = await systems().Core.getCollateralConfiguration(collateralAddress());
+
+        await systems().Core.connect(owner)
+          .configureCollateral({ ...beforeConfiguration, depositingEnabled: false });
+      });
+
+      it('fails when trying to open delegation position with disabled collateral', async () => {
+        await assertRevert(
+          systems()
+            .Core.connect(user1)
+            .delegateCollateral(
+              accountId,
+              0,
+              collateralAddress(),
+              depositAmount.div(50),
+              ethers.utils.parseEther('1')
+            ),
+          'CollateralDepositDisabled',
+          systems().Core
+        );
+      });
+    });
+
     it(
       'user1 has expected initial position',
       verifyAccountState(accountId, poolId, depositAmount, 0)
@@ -300,6 +360,34 @@ describe('VaultModule', function () {
             );
           });
 
+          describe('when collateral is disabled', async () => {
+            const restore = snapshotCheckpoint(provider);
+            after(restore);
+
+            before('disable collatearal', async () => {
+              const beforeConfiguration = await systems().Core.getCollateralConfiguration(collateralAddress());
+
+              await systems().Core.connect(owner)
+                .configureCollateral({ ...beforeConfiguration, depositingEnabled: false });
+            });
+
+            it('fails when trying to open delegation position with disabled collateral', async () => {
+              await assertRevert(
+                systems()
+                  .Core.connect(user2)
+                  .delegateCollateral(
+                    user2AccountId,
+                    0,
+                    collateralAddress(),
+                    depositAmount, // user1 50%, user2 50%
+                    ethers.utils.parseEther('1')    
+                  ),
+                'CollateralDepositDisabled',
+                systems().Core
+              );
+            });
+          });
+
           describe('success', () => {
             before('delegate', async () => {
               await systems().Core.connect(user2).delegateCollateral(
@@ -323,7 +411,7 @@ describe('VaultModule', function () {
         });
 
         describe('decrease collateral', async () => {
-          it.only('fails when insufficient c-ratio', async () => {
+          it('fails when insufficient c-ratio', async () => {
             await assertRevert(
               systems()
                 .Core.connect(user2)
@@ -335,6 +423,22 @@ describe('VaultModule', function () {
                   ethers.utils.parseEther('1')
                 ),
               'InsufficientCollateralRatio',
+              systems().Core
+            );
+          });
+
+          it('fails when reducing to below minDelegation amount', async () => {
+            await assertRevert(
+              systems()
+                .Core.connect(user2)
+                .delegateCollateral(
+                  user2AccountId,
+                  poolId,
+                  collateralAddress(),
+                  depositAmount.div(51),
+                  ethers.utils.parseEther('1')
+                ),
+              'InsufficientDelegation(20000000000000000000)',
               systems().Core
             );
           });
@@ -363,32 +467,44 @@ describe('VaultModule', function () {
             await MockMarket.setLocked(ethers.utils.parseEther('500'));
           });
 
-          describe('success', () => {
-            before('delegate', async () => {
-              await systems()
-                .Core.connect(user2)
-                .delegateCollateral(
-                  user2AccountId,
-                  poolId,
-                  collateralAddress(),
-                  depositAmount.div(10),
-                  ethers.utils.parseEther('1')
-                );
+          describe('when collateral is disabled', async () => {
+            const restore = snapshotCheckpoint(provider);
+            after(restore);
+
+            before('disable collatearal', async () => {
+              const beforeConfiguration = await systems().Core.getCollateralConfiguration(collateralAddress());
+
+              await systems().Core.connect(owner)
+                .configureCollateral({ ...beforeConfiguration, depositingEnabled: false });
             });
 
-            it(
-              'user1 still has correct position',
-              verifyAccountState(accountId, poolId, depositAmount, startingDebt)
-            );
-            it(
-              'user2 position is decreased',
-              verifyAccountState(
-                user2AccountId,
-                poolId,
-                depositAmount.div(10),
-                depositAmount.div(100)
-              )
-            );
+            describe('success', () => {
+              before('delegate', async () => {
+                await systems()
+                  .Core.connect(user2)
+                  .delegateCollateral(
+                    user2AccountId,
+                    poolId,
+                    collateralAddress(),
+                    depositAmount.div(10),
+                    ethers.utils.parseEther('1')
+                  );
+              });
+  
+              it(
+                'user1 still has correct position',
+                verifyAccountState(accountId, poolId, depositAmount, startingDebt)
+              );
+              it(
+                'user2 position is decreased',
+                verifyAccountState(
+                  user2AccountId,
+                  poolId,
+                  depositAmount.div(10),
+                  depositAmount.div(100)
+                )
+              );
+            });
           });
         });
 

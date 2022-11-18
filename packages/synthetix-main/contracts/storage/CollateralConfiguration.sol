@@ -11,7 +11,7 @@ library CollateralConfiguration {
     using MathUtil for uint256;
 
     error InvalidParameters(string incorrectParameter, string help);
-    error InvalidCollateral(address collateralType);
+    error CollateralDepositDisabled(address collateralType);
     error InsufficientCollateralRatio(uint collateralValue, uint debt, uint ratio, uint minRatio);
     error InsufficientDelegation(uint minDelegation);
 
@@ -73,7 +73,7 @@ library CollateralConfiguration {
 
     function collateralEnabled(address token) internal view {
         if (!load(token).depositingEnabled) {
-            revert InvalidCollateral(token);
+            revert CollateralDepositDisabled(token);
         }
     }
 
