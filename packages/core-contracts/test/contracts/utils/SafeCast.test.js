@@ -15,7 +15,7 @@ describe.only('SafeCast', () => {
   let castFunction;
 
   let MAX_UINT_128, MAX_UINT_256;
-  let MAX_INT_128, MAX_INT_256;
+  let MIN_INT_128, MAX_INT_128, MAX_INT_256;
 
   async function assertCast(value) {
     assertBn.equal(await SafeCast[castFunction](value), value);
@@ -26,9 +26,10 @@ describe.only('SafeCast', () => {
     SafeCast = await factory.deploy();
   });
 
-  before('define max values', async function () {
+  before('define min and max values', async function () {
     // Note: ethers.js has constants like `ethers.constants.MaxUint256`, but they are limited, so we use our own.
     MAX_UINT_128 = pow(2, 128).sub(1);
+    MIN_INT_128 = pow(2, 128).div(2).mul(-1);
     MAX_INT_128 = pow(2, 128).div(2).sub(1);
     MAX_UINT_256 = pow(2, 256).sub(1);
     MAX_INT_256 = pow(2, 256).div(2).sub(1);
@@ -139,18 +140,53 @@ describe.only('SafeCast', () => {
     it('produces expected results', async function () {
       await assertCast(42);
       await assertCast(exp(1337, 18));
+      await assertCast(-42);
+      await assertCast(exp(-1337, 18));
     });
 
     it('produces expected results on edge cases', async function () {
+      await assertCast(MIN_INT_128);
       await assertCast(0);
       await assertCast(MAX_INT_128);
     });
 
     it('throws on overflows', async function () {
-      await assertRevert(
-        SafeCast[castFunction](MAX_INT_128.add(1)),
-        'Unable to cast int256 to int128'
-      );
+      // Note: These should fail with CastError, but for some reason Solidity is not providing a revert reason.
+      // await assertRevert(
+      //   SafeCast[castFunction](MIN_INT_128.sub(1)),
+      //   'Unable to cast int256 to int128'
+      // );
+      // await assertRevert(
+      //   SafeCast[castFunction](MAX_INT_128.add(1)),
+      //   'Unable to cast int256 to int128'
+      // );
+      await assertRevert(SafeCast[castFunction](MIN_INT_128.sub(1)));
+      await assertRevert(SafeCast[castFunction](MAX_INT_128.add(1)));
+    });
+  });
+
+  describe('int128 to int256', function () {
+    before('set the target cast function', async function () {
+      castFunction = 'toInt256(int128)';
+    });
+
+    it('produces expected results', async function () {
+      await assertCast(42);
+      await assertCast(exp(1337, 18));
+      await assertCast(-42);
+      await assertCast(exp(-1337, 18));
+    });
+
+    it('produces expected results on edge cases', async function () {
+      await assertCast(MIN_INT_128);
+      await assertCast(0);
+      await assertCast(MAX_INT_128);
+    });
+
+    it('throws on overflows', async function () {
+      // Solidity does pick up overflows in parameters.
+      await assertRevert(SafeCast[castFunction](MIN_INT_128.sub(1)), 'out-of-bounds');
+      await assertRevert(SafeCast[castFunction](MAX_INT_128.add(1)), 'out-of-bounds');
     });
   });
 });

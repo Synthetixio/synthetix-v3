@@ -48,4 +48,10 @@ library SafeCast {
 
         return int128(x);
     }
+
+    function toInt256(int128 x) internal pure returns (int256) {
+        // Note: No checks are necessary here since the domain of int256 includes the domain of int128.
+
+        return int256(x);
+    }
 }
