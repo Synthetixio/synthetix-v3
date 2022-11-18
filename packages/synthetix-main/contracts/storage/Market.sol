@@ -390,8 +390,9 @@ library Market {
             self.inRangePools.insert(poolId, -newPoolMaxShareValue.int256toInt128());
         }
 
-        // TODO: Use SafeCast
-        debtChange = self.poolPendingDebt[poolId] + self.debtDist.updateActorShares(bytes32(uint(poolId)), newLiquidity);
+        debtChange =
+            self.poolPendingDebt[poolId] +
+            self.debtDist.updateActorShares(bytes32(poolId.uint128toUint256()), newLiquidity);
         self.poolPendingDebt[poolId] = 0;
 
         // recalculate market capacity
@@ -455,7 +456,7 @@ library Market {
 
             // Distribute the market's debt to the limit, i.e. for that which exceeds the maximum value per share.
             int256 debtToLimit = self.debtDist.totalShares.uint128toInt256().mulDecimal(
-                int256(poolMaxValuePerShare - self.debtDist.valuePerShare.toLowPrecisionInt128()) // Diff between current value and max value per share.
+                (poolMaxValuePerShare - self.debtDist.valuePerShare.toLowPrecisionInt128()).int128toInt256() // Diff between current value and max value per share.
             );
             self.debtDist.distributeValue(debtToLimit);
 
