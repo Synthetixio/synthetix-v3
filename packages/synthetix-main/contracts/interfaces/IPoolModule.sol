@@ -5,13 +5,19 @@ import "../storage/MarketConfiguration.sol";
 
 /// @title Module for managing pool token and pools positions distribution
 interface IPoolModule {
+    /// @notice gets fired when pool will be created
     event PoolCreated(uint128 indexed poolId, address indexed owner);
+    /// @notice gets fired when pool owner proposes a new owner
     event NominatedPoolOwner(uint128 indexed poolId, address indexed owner);
+    /// @notice gets fired when pool nominee accepts nomination
     event PoolOwnershipAccepted(uint128 indexed poolId, address indexed owner);
-    event PoolNominationRenounced(uint128 indexed poolId, address indexed owner);
+    /// @notice gets fired when pool owner revokes nonimation
     event PoolNominationRevoked(uint128 indexed poolId, address indexed owner);
-    event PoolOwnershipRenounced(uint128 indexed poolId, address indexed owner);
+    /// @notice gets fired when pool nominee renounces nomination
+    event PoolNominationRenounced(uint128 indexed poolId, address indexed owner);
+    /// @notice gets fired when pool name changes
     event PoolNameUpdated(uint128 indexed poolId, string indexed name, address indexed sender);
+    /// @notice gets fired when pool gets configured
     event PoolConfigurationSet(uint128 indexed poolId, MarketConfiguration.Data[] markets, address indexed sender);
 
     /// @notice creates a new pool
@@ -35,11 +41,11 @@ interface IPoolModule {
     /// @notice accepts ownership by nominated owner
     function acceptPoolOwnership(uint128 poolId) external;
 
-    /// @notice renounces nomination by nominated owner
-    function renouncePoolNomination(uint128 poolId) external;
+    /// @notice revokes nomination by pool owner
+    function revokePoolNomination(uint128 poolId) external;
 
-    /// @notice renounces ownership by owner
-    function renouncePoolOwnership(uint128 poolId) external;
+    /// @notice renounce nomination by nominee
+    function renouncePoolNomination(uint128 poolId) external;
 
     /// @notice gets owner of poolId
     function getPoolOwner(uint128 poolId) external view returns (address);
