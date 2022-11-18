@@ -20,7 +20,15 @@ contract ERC20 is IERC20 {
         string memory tokenSymbol,
         uint8 tokenDecimals
     ) internal virtual {
-        ERC20Storage.init(tokenName, tokenSymbol, tokenDecimals);
+        ERC20Storage.Data storage store = ERC20Storage.load();
+
+        if (bytes(store.name).length > 0 || bytes(store.symbol).length > 0 || store.decimals > 0) {
+            revert InitError.AlreadyInitialized();
+        }
+
+        store.name = tokenName;
+        store.symbol = tokenSymbol;
+        store.decimals = tokenDecimals;
     }
 
     function name() external view override returns (string memory) {
