@@ -293,7 +293,7 @@ library Market {
      * This liquidity is obtained by reading the amount of shares that the pool has in the market's debt distribution, which in turn represents the amount of USD denominated credit capacity that the pool has provided to the market.
      */
     function getPoolLiquidity(Data storage self, uint128 poolId) internal view returns (uint) {
-        return self.debtDist.getActorShares(bytes32(uint(poolId)));
+        return self.debtDist.getActorShares(bytes32(poolId.toUint256()));
     }
 
     /**
