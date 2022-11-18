@@ -140,7 +140,7 @@ function _generateTemplateInputs(
           fields.push({
             name: variableDeclaration.name,
             type:
-              (variableDeclaration.typeName! as ElementaryTypeName).name === 'string' ||
+              variableDeclaration.typeName.name === 'string' ||
               variableDeclaration.typeName.name === 'bytes'
                 ? `${variableDeclaration.typeName.name} memory`
                 : variableDeclaration.typeName.name,
@@ -158,7 +158,7 @@ function _generateTemplateInputs(
           loadParams = functionDefinition.parameters.parameters
             .map(
               (p) =>
-                `${_renderAstType(p.typeName!)}${
+                `${_renderAstType(contractName, p.typeName!)}${
                   p.storageLocation !== 'default' ? ' ' + p.storageLocation : ''
                 } _load_${p.name}`
             )
@@ -205,7 +205,7 @@ function _generateTemplateInputs(
             .filter((p) => p.storageLocation !== 'storage') // only non-storage values can be injected (storage values will be injected later)
             .map(
               (p) =>
-                `${_renderAstType(p.typeName!)}${
+                `${_renderAstType(contractName, p.typeName!)}${
                   p.storageLocation !== 'default' ? ' ' + p.storageLocation : ''
                 } ${p.name}`
             )
@@ -216,7 +216,7 @@ function _generateTemplateInputs(
           returns: functionDefinition.returnParameters.parameters
             .map(
               (p) =>
-                `${_renderAstType(p.typeName!)}${
+                `${_renderAstType(contractName, p.typeName!)}${
                   p.storageLocation !== 'default' ? ' ' + p.storageLocation : ''
                 }`
             )
@@ -241,14 +241,17 @@ function _generateTemplateInputs(
   return inputs;
 }
 
-function _renderAstType(t: TypeName): string {
+function _renderAstType(context: string, t: TypeName): string {
   if (t.nodeType === 'Mapping') {
-    return `mapping(${_renderAstType(t.keyType)} => ${_renderAstType(t.valueType)})`;
+    return `mapping(${_renderAstType(context, t.keyType)} => ${_renderAstType(context, t.valueType)})`;
   } else if (t.nodeType === 'ArrayTypeName') {
-    return `${_renderAstType(t.baseType)}[${t.length || ''}]`;
+    return `${_renderAstType(context, t.baseType)}[${t.length || ''}]`;
   } else if (t.nodeType === 'FunctionTypeName') {
     return 'function'; // dont know what to do with this
+  } else if (t.nodeType === 'UserDefinedTypeName') {
+    const n = t.pathNode?.name || t.name || '';
+    return n === 'Data' ? `${context}.${n}` : n;
   } else {
-    return t.name || '';
+    return t.name;
   }
 }

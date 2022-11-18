@@ -59,11 +59,6 @@ task(TASK_GENERATE_TESTABLE, 'Creates generated test contracts for all storage l
       ({ isStorageLibrary }) => isStorageLibrary
     );
 
-    console.log(
-      'storage libs',
-      storageLibs.map((lib) => lib.contractName)
-    );
-
     // scan for all storage interfaces
     for (const storageLibArtifact of storageLibs) {
       await hre.run(SUBTASK_GENERATE_TESTABLE_STORAGE, {
