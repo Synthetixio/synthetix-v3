@@ -11,7 +11,9 @@ pragma solidity ^0.8.0;
 library SafeCast {
     error CastError(bytes32 fromType, bytes32 toType);
 
-    function toUint128(uint256 x) internal pure returns (uint128) {
+    // Note: Overloading doesn't seem to work for similar types, i.e. int256 and int128, uint256 and uint128, etc, so explicitly naming the functions differently here.
+
+    function uint256toUint128(uint256 x) internal pure returns (uint128) {
         if (x > type(uint128).max) {
             revert("Unable to cast uint256 to uint128");
         }
@@ -19,7 +21,7 @@ library SafeCast {
         return uint128(x);
     }
 
-    function toUint256(int256 x) internal pure returns (uint256) {
+    function int256toUint256(int256 x) internal pure returns (uint256) {
         if (x < 0) {
             revert("Unable to cast int256 to uint256");
         }
@@ -27,7 +29,7 @@ library SafeCast {
         return uint256(x);
     }
 
-    function toInt128(uint128 x) internal pure returns (int128) {
+    function uint128toInt128(uint128 x) internal pure returns (int128) {
         if (x > uint128(type(int128).max)) {
             revert("Unable to cast uint128 to int128");
         }
@@ -35,13 +37,13 @@ library SafeCast {
         return int128(x);
     }
 
-    function toInt256(uint128 x) internal pure returns (int256) {
+    function uint128toInt256(uint128 x) internal pure returns (int256) {
         // Note: No checks are necessary here since the domain of int256 includes the domain of uint128.
 
-        return int256(SafeCast.toInt128(x));
+        return int256(SafeCast.uint128toInt128(x));
     }
 
-    function toInt128(int256 x) internal pure returns (int128) {
+    function int256toInt128(int256 x) internal pure returns (int128) {
         if (x > int256(type(int128).max)) {
             revert("Unable to cast int256 to int128");
         }
@@ -49,15 +51,23 @@ library SafeCast {
         return int128(x);
     }
 
-    function toInt256(int128 x) internal pure returns (int256) {
+    function int128toInt256(int128 x) internal pure returns (int256) {
         // Note: No checks are necessary here since the domain of int256 includes the domain of int128.
 
         return int256(x);
     }
 
-    function toUint256(uint128 x) internal pure returns (uint256) {
+    function uint128toUint256(uint128 x) internal pure returns (uint256) {
         // Note: No checks are necessary here since the domain of uint256 includes the domain of uint128.
 
         return uint256(x);
+    }
+
+    function uint256toInt256(uint256 x) internal pure returns (int256) {
+        if (x > uint256(type(int256).max)) {
+            revert("Unable to cast uint256 to int256");
+        }
+
+        return int256(x);
     }
 }

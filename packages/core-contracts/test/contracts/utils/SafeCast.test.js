@@ -37,7 +37,7 @@ describe.only('SafeCast', () => {
 
   describe('uint256 to uint128', function () {
     before('set the target cast function', async function () {
-      castFunction = 'toUint128(uint256)';
+      castFunction = 'uint256toUint128(uint256)';
     });
 
     it('produces expected results', async function () {
@@ -61,7 +61,7 @@ describe.only('SafeCast', () => {
 
   describe('uint128 to uint256', function () {
     before('set the target cast function', async function () {
-      castFunction = 'toUint256(uint128)';
+      castFunction = 'uint128toUint256(uint128)';
     });
 
     it('produces expected results', async function () {
@@ -82,7 +82,7 @@ describe.only('SafeCast', () => {
 
   describe('int256 to uint256', function () {
     before('set the target cast function', async function () {
-      castFunction = 'toUint256(int256)';
+      castFunction = 'int256toUint256(int256)';
     });
 
     it('produces expected results', async function () {
@@ -109,7 +109,7 @@ describe.only('SafeCast', () => {
 
   describe('uint128 to int128', function () {
     before('set the target cast function', async function () {
-      castFunction = 'toInt128(uint128)';
+      castFunction = 'uint128toInt128(uint128)';
     });
 
     it('produces expected results', async function () {
@@ -130,9 +130,32 @@ describe.only('SafeCast', () => {
     });
   });
 
+  describe('uint256 to int256', function () {
+    before('set the target cast function', async function () {
+      castFunction = 'uint256toInt256(uint256)';
+    });
+
+    it('produces expected results', async function () {
+      await assertCast(42);
+      await assertCast(exp(1337, 18));
+    });
+
+    it('produces expected results on edge cases', async function () {
+      await assertCast(0);
+      await assertCast(MAX_INT_256);
+    });
+
+    it('throws on overflows', async function () {
+      await assertRevert(
+        SafeCast[castFunction](MAX_INT_256.add(1)),
+        'Unable to cast uint256 to int256'
+      );
+    });
+  });
+
   describe('uint128 to int256 (through int128)', function () {
     before('set the target cast function', async function () {
-      castFunction = 'toInt256(uint128)';
+      castFunction = 'uint128toInt256(uint128)';
     });
 
     it('produces expected results', async function () {
@@ -155,7 +178,7 @@ describe.only('SafeCast', () => {
 
   describe('int256 to int128', function () {
     before('set the target cast function', async function () {
-      castFunction = 'toInt128(int256)';
+      castFunction = 'int256toInt128(int256)';
     });
 
     it('produces expected results', async function () {
@@ -188,7 +211,7 @@ describe.only('SafeCast', () => {
 
   describe('int128 to int256', function () {
     before('set the target cast function', async function () {
-      castFunction = 'toInt256(int128)';
+      castFunction = 'int128toInt256(int128)';
     });
 
     it('produces expected results', async function () {
