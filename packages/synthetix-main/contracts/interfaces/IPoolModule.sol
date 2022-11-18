@@ -14,7 +14,7 @@ interface IPoolModule {
     /// @notice gets fired when pool owner revokes nonimation
     event PoolNominationRevoked(uint128 indexed poolId, address indexed owner);
     /// @notice gets fired when pool nominee renounces nomination
-    event PoolOwnershipRenounced(uint128 indexed poolId, address indexed owner);
+    event PoolNominationRenounced(uint128 indexed poolId, address indexed owner);
     /// @notice gets fired when pool name changes
     event PoolNameUpdated(uint128 indexed poolId, string indexed name, address indexed sender);
     /// @notice gets fired when pool gets configured

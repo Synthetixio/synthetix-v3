@@ -64,7 +64,7 @@ contract PoolModule is IPoolModule {
         emit PoolNominationRevoked(poolId, msg.sender);
     }
 
-    function renouncePoolOwnership(uint128 poolId) external override {
+    function renouncePoolNomination(uint128 poolId) external override {
         Pool.Data storage pool = Pool.load(poolId);
 
         if (pool.nominatedOwner != msg.sender) {
@@ -73,7 +73,7 @@ contract PoolModule is IPoolModule {
 
         pool.nominatedOwner = address(0);
 
-        emit PoolOwnershipRenounced(poolId, msg.sender);
+        emit PoolNominationRenounced(poolId, msg.sender);
     }
 
     function getPoolOwner(uint128 poolId) external view override returns (address) {
