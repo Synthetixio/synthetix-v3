@@ -13,6 +13,7 @@ library Account {
     using SetUtil for SetUtil.UintSet;
 
     error PermissionDenied(uint128 accountId, bytes32 permission, address target);
+    error InsufficientAccountCollateral(uint requestedAmount);
 
     struct Data {
         uint128 id;
@@ -75,6 +76,15 @@ library Account {
     function onlyWithPermission(uint128 accountId, bytes32 permission) internal view {
         if (!Account.load(accountId).rbac.authorized(permission, msg.sender)) {
             revert PermissionDenied(accountId, permission, msg.sender);
+        }
+    }
+
+    /**
+     * Ensure that the account has the required amount of collateral funds remaining
+     */
+    function requireSufficientCollateral(uint128 accountId, address collateralType, uint amount) internal view {
+        if (Account.load(accountId).collaterals[collateralType].availableAmount < amount) {
+            revert InsufficientAccountCollateral(amount);
         }
     }
 }

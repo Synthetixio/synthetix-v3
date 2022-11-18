@@ -23,7 +23,15 @@ describe('CollateralModule', function () {
         await assertRevert(
           systems()
             .Core.connect(user1)
-            .configureCollateral(dummyAddress, dummyAddress, 400, 200, 0, false),
+            .configureCollateral({
+              tokenAddress: dummyAddress,
+              priceFeed: dummyAddress,
+              targetCRatio: 400,
+              minimumCRatio: 200,
+              liquidationReward: 0,
+              minDelegation: 0,
+              depositingEnabled: false
+            }),
           `Unauthorized("${await user1.getAddress()}")`,
           systems().Core
         );
@@ -77,14 +85,15 @@ describe('CollateralModule', function () {
             await assertRevert(
               systems()
                 .Core.connect(user1)
-                .configureCollateral(
-                  AnotherCollateral.address,
-                  AnotherCollateralPriceFeed.address,
-                  200,
-                  100,
-                  0,
-                  true
-                ),
+                .configureCollateral({
+                  tokenAddress: AnotherCollateral.address,
+                  priceFeed: AnotherCollateralPriceFeed.address,
+                  targetCRatio: 200,
+                  minimumCRatio: 100,
+                  liquidationReward: 0,
+                  minDelegation: 0,
+                  depositingEnabled: false
+                }),
               `Unauthorized("${await user1.getAddress()}")`,
               systems().Core
             );
@@ -95,14 +104,15 @@ describe('CollateralModule', function () {
           before('update the collateral', async () => {
             const tx = await systems()
               .Core.connect(systemOwner)
-              .configureCollateral(
-                AnotherCollateral.address,
-                AnotherCollateralPriceFeed.address,
-                300,
-                250,
-                0,
-                true
-              );
+              .configureCollateral({
+                tokenAddress: AnotherCollateral.address,
+                priceFeed: AnotherCollateralPriceFeed.address,
+                targetCRatio: 300,
+                minimumCRatio: 250,
+                liquidationReward: 0,
+                minDelegation: 0,
+                depositingEnabled: true
+              });
             await tx.wait();
           });
 
@@ -127,14 +137,15 @@ describe('CollateralModule', function () {
           before('disable the collateral', async () => {
             const tx = await systems()
               .Core.connect(systemOwner)
-              .configureCollateral(
-                AnotherCollateral.address,
-                AnotherCollateralPriceFeed.address,
-                300,
-                250,
-                0,
-                false
-              );
+              .configureCollateral({
+                tokenAddress: AnotherCollateral.address,
+                priceFeed: AnotherCollateralPriceFeed.address,
+                targetCRatio: 300,
+                minimumCRatio: 250,
+                liquidationReward: 0,
+                minDelegation: 0,
+                depositingEnabled: false
+              });
             await tx.wait();
           });
 

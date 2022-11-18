@@ -323,7 +323,7 @@ describe('VaultModule', function () {
         });
 
         describe('decrease collateral', async () => {
-          it('fails when insufficient c-ratio', async () => {
+          it.only('fails when insufficient c-ratio', async () => {
             await assertRevert(
               systems()
                 .Core.connect(user2)
@@ -331,7 +331,7 @@ describe('VaultModule', function () {
                   user2AccountId,
                   poolId,
                   collateralAddress(),
-                  depositAmount.div(100),
+                  depositAmount.div(50),
                   ethers.utils.parseEther('1')
                 ),
               'InsufficientCollateralRatio',

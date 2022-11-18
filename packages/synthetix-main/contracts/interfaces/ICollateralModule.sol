@@ -10,11 +10,7 @@ interface ICollateralModule {
      */
     event CollateralConfigured(
         address indexed collateralType,
-        address indexed priceFeed,
-        uint targetCollateralizationRatio,
-        uint minimumCollateralizationRatio,
-        uint liquidationReward,
-        bool indexed depositingEnabled
+        CollateralConfiguration.Data config
     );
 
     /**
@@ -38,12 +34,7 @@ interface ICollateralModule {
      *
      */
     function configureCollateral(
-        address collateralType,
-        address priceFeed,
-        uint targetCRatio,
-        uint minimumCRatio,
-        uint liquidationReward,
-        bool depositingEnabled
+        CollateralConfiguration.Data memory config
     ) external;
 
     /**

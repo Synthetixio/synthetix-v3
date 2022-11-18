@@ -26,14 +26,15 @@ export async function addCollateral(
   await (
     await core
       .connect(owner)
-      .configureCollateral(
-        Collateral.address,
-        CollateralPriceFeed.address,
-        targetCRatio,
-        minimumCRatio,
-        0,
-        true
-      )
+      .configureCollateral({
+        tokenAddress: Collateral.address,
+        priceFeed: CollateralPriceFeed.address,
+        targetCRatio: targetCRatio,
+        minimumCRatio: minimumCRatio,
+        liquidationReward: 0,
+        minDelegation: 0,
+        depositingEnabled: true
+      })
   ).wait();
 
   return { Collateral, CollateralPriceFeed };

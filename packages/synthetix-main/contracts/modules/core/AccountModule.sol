@@ -20,9 +20,7 @@ contract AccountModule is IAccountModule {
     using Account for Account.Data;
 
     error OnlyAccountTokenProxy(address origin);
-
     error PermissionNotGranted(uint128 accountId, bytes32 permission, address user);
-
     error InvalidPermission(bytes32 permission);
 
     modifier onlyAccountToken() {

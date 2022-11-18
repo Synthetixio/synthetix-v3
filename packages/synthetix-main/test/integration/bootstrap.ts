@@ -128,14 +128,16 @@ export function bootstrapWithStakedPool() {
       await r
         .systems()
         .Core.connect(owner)
-        .configureCollateral(
-          collateralAddress,
-          aggregator.address,
-          '5000000000000000000',
-          '1500000000000000000',
-          '20000000000000000000',
-          true
-        )
+        .configureCollateral({
+          tokenAddress: collateralAddress,
+          priceFeed: aggregator.address,
+          targetCRatio: "5000000000000000000",
+          minimumCRatio: "1500000000000000000",
+          liquidationReward: "20000000000000000000",
+          minDelegation: "20000000000000000000",
+          depositingEnabled: true
+        }
+      )
     ).wait();
 
     // create pool
