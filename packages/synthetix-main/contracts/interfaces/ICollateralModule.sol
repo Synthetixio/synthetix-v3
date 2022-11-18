@@ -10,7 +10,7 @@ interface ICollateralModule {
      */
     event CollateralConfigured(
         address indexed collateralType,
-        address indexed priceFeed,
+        bytes32 indexed oracleNodeId,
         uint targetCollateralizationRatio,
         uint minimumCollateralizationRatio,
         uint liquidationReward,
@@ -39,7 +39,7 @@ interface ICollateralModule {
      */
     function configureCollateral(
         address collateralType,
-        address priceFeed,
+        bytes32 oracleNodeId,
         uint targetCRatio,
         uint minimumCRatio,
         uint liquidationReward,
@@ -130,6 +130,8 @@ interface ICollateralModule {
         uint amount,
         uint64 expireTimestamp
     ) external;
+
+    function configureOracleManager(address oracleManagerAddress) external;
 
     /*
     /// @notice Returns the amount of collateral of type `collateralType` staked with account `accountId` that can be unstaked.

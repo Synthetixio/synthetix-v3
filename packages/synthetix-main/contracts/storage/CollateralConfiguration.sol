@@ -3,7 +3,10 @@ pragma solidity ^0.8.0;
 
 import "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
 import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
+import "@synthetixio/oracle-manager/contracts/interfaces/IOracleManagerModule.sol";
+import "@synthetixio/oracle-manager/contracts/storage/Node.sol";
 
+import "./OracleManager.sol";
 import "../interfaces/external/IAggregatorV3Interface.sol";
 
 library CollateralConfiguration {
@@ -22,8 +25,8 @@ library CollateralConfiguration {
         uint minimumCRatio;
         /// amount of token to award when an account is liquidated with this collateral type
         uint liquidationReward;
-        /// address which reports the current price of the collateral
-        address priceFeed;
+        /// oracle manager node id which reports the current price of the collateral
+        bytes32 oracleNodeId;
         /// address which should be used for transferring this collateral
         address tokenAddress;
     }
@@ -44,7 +47,7 @@ library CollateralConfiguration {
 
     function set(
         address collateralType,
-        address priceFeed,
+        bytes32 oracleNodeId,
         uint targetCRatio,
         uint minimumCRatio,
         uint liquidationReward,
@@ -62,7 +65,7 @@ library CollateralConfiguration {
         collateral.tokenAddress = collateralType;
         collateral.targetCRatio = targetCRatio;
         collateral.minimumCRatio = minimumCRatio;
-        collateral.priceFeed = priceFeed;
+        collateral.oracleNodeId = oracleNodeId;
         collateral.liquidationReward = liquidationReward;
         collateral.depositingEnabled = depositingEnabled;
     }
@@ -74,13 +77,14 @@ library CollateralConfiguration {
     }
 
     function getCollateralPrice(Data storage self) internal view returns (uint) {
-        (, int256 answer, , , ) = IAggregatorV3Interface(self.priceFeed).latestRoundData();
+        OracleManager.Data memory oracleManager = OracleManager.load();
+        Node.Data memory node = IOracleManagerModule(oracleManager.oracleManagerAddress).process(self.oracleNodeId);
 
         // sanity check
         // TODO: this will be removed when we get the oracle manager
-        require(answer > 0, "The collateral value is 0");
+        require(node.price > 0, "The collateral value is 0");
 
-        return uint(answer);
+        return uint(node.price);
     }
 
     function verifyCollateralRatio(

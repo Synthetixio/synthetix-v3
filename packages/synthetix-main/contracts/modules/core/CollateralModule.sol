@@ -8,6 +8,7 @@ import "../../interfaces/ICollateralModule.sol";
 import "../../storage/Account.sol";
 import "../../storage/CollateralConfiguration.sol";
 import "../../storage/CollateralLock.sol";
+import "../../storage/OracleManager.sol";
 import "@synthetixio/core-modules/contracts/storage/AssociatedSystem.sol";
 
 import "../../utils/ERC20Helper.sol";
@@ -35,12 +36,15 @@ contract CollateralModule is ICollateralModule {
 
     error InsufficientAccountCollateral(uint amount);
 
+    // set address oracle-managerr
+    //  set nodeId snx
+
     /**
      * @dev See {ICollateralModule-configureCollateral}.
      */
     function configureCollateral(
         address collateralType,
-        address priceFeed,
+        bytes32 oracleNodeId,
         uint targetCRatio,
         uint minimumCRatio,
         uint liquidationReward,
@@ -49,7 +53,7 @@ contract CollateralModule is ICollateralModule {
         OwnableStorage.onlyOwner();
         CollateralConfiguration.set(
             collateralType,
-            priceFeed,
+            oracleNodeId,
             targetCRatio,
             minimumCRatio,
             liquidationReward,
@@ -57,7 +61,7 @@ contract CollateralModule is ICollateralModule {
         );
         emit CollateralConfigured(
             collateralType,
-            priceFeed,
+            oracleNodeId,
             targetCRatio,
             minimumCRatio,
             liquidationReward,
@@ -246,6 +250,16 @@ contract CollateralModule is ICollateralModule {
         }
 
         account.collaterals[collateralType].locks.push(CollateralLock.Data(amount, expireTimestamp));
+    }
+
+    /**
+     * @dev Configure oracle manager address only by owner
+     */
+    function configureOracleManager(address oracleManagerAddress) external override {
+        OwnableStorage.onlyOwner();
+
+        OracleManager.Data storage oracle = OracleManager.load();
+        oracle.oracleManagerAddress = oracleManagerAddress;
     }
 
     /*function getAccountUnstakebleCollateral(uint accountId, address collateralType) public view override returns (uint) {
