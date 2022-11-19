@@ -454,22 +454,24 @@ describe('PoolModule Admin', function () {
 
         describe('and then the market reports 0 balance', () => {
           before('set market', async () => {
+            console.log('reported debt before', await MockMarket().reportedDebt(marketId()));
             await MockMarket().connect(user1).setReportedDebt(0);
             await systems().Core.connect(user1).getVaultDebt(poolId, collateralAddress());
           });
 
           it('has accurate amount withdrawable usd', async () => {
-            // should be exactly 201 (market1 99 + market2 2 + 100 deposit)
+            // should be exactly 102 (market2 2 + 100 deposit)
+            // (market1 assumes no new debt as a result of balance going down, but accounts/can pool can withdraw at a profit)
             assertBn.equal(
               await systems().Core.connect(owner).getWithdrawableUsd(marketId()),
-              Hundred.mul(2).add(One)
+              Hundred.add(One.mul(2))
             );
           });
 
-          it('vault isnt credited because it wasnt bumped early enough', async () => {
+          it('vault is credited', async () => {
             assertBn.equal(
               await systems().Core.callStatic.getVaultDebt(poolId, collateralAddress()),
-              0
+              One.mul(-99).div(2)
             );
           });
 
@@ -481,15 +483,14 @@ describe('PoolModule Admin', function () {
             it('has same amount of withdrawable usd', async () => {
               assertBn.equal(
                 await systems().Core.connect(owner).getWithdrawableUsd(marketId()),
-                Hundred.mul(2).add(One)
+                Hundred.add(One.mul(2))
               );
             });
 
             it('vault is debted', async () => {
-              // div 2 twice because the vault has half the debt of the pool
               assertBn.equal(
                 await systems().Core.callStatic.getVaultDebt(poolId, collateralAddress()),
-                Hundred.div(2).div(2)
+                One.mul(-49).div(2)
               );
             });
 
@@ -499,20 +500,20 @@ describe('PoolModule Admin', function () {
               before(restore);
               // testing the "soft" limit
               before('set market', async () => {
-                await MockMarket().connect(user1).setReportedDebt(Hundred.mul(2));
+                await MockMarket().connect(user1).setReportedDebt(Hundred.add(One));
               });
 
               it('has same amount withdrawable usd + the allowed amount by the vault', async () => {
                 assertBn.equal(
                   await systems().Core.connect(owner).getWithdrawableUsd(marketId()),
-                  Hundred.mul(2).add(One)
+                  Hundred.add(One.mul(2))
                 );
               });
 
-              it('vault assumes expected amount of debt', async () => {
+              it('vault no longer has a surplus', async () => {
                 assertBn.equal(
                   await systems().Core.callStatic.getVaultDebt(poolId, collateralAddress()),
-                  Hundred.sub(One)
+                  0
                 );
               });
 
@@ -550,14 +551,14 @@ describe('PoolModule Admin', function () {
               it('has same amount withdrawable usd + the allowed amount by the vault', async () => {
                 assertBn.equal(
                   await systems().Core.connect(owner).getWithdrawableUsd(marketId()),
-                  Hundred.mul(2).add(One)
+                  Hundred.add(One.mul(2))
                 );
               });
 
-              it('vault assumes expected amount of debt', async () => {
+              it('vault 1 assumes no debt', async () => {
                 assertBn.equal(
                   await systems().Core.callStatic.getVaultDebt(poolId, collateralAddress()),
-                  Hundred.sub(One)
+                  0
                 );
               });
 

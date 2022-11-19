@@ -103,6 +103,9 @@ artifact = "contracts/modules/test/TestableMarketModule.sol:TestableMarketModule
 [contract.TestableMarketConfigurationModule]
 artifact = "contracts/modules/test/TestableMarketConfigurationModule.sol:TestableMarketConfigurationModule"
 
+[contract.TestableMarketPoolInfoModule]
+artifact = "contracts/modules/test/TestableMarketPoolInfoModule.sol:TestableMarketPoolInfoModule"
+
 [contract.TestablePoolModule]
 artifact = "contracts/modules/test/TestablePoolModule.sol:TestablePoolModule"
 
@@ -166,6 +169,7 @@ depends = [
   "contract.TestableDistributionEntryModule",
   "contract.TestableMarketModule",
   "contract.TestableMarketConfigurationModule",
+  "contract.TestableMarketPoolInfoModule",
   "contract.TestablePoolModule",
   "contract.TestablePoolConfigurationModule",
   "contract.TestableRewardDistributionModule",
@@ -204,6 +208,7 @@ abiOf = [
   "TestableDistributionEntryModule",
   "TestableMarketModule",
   "TestableMarketConfigurationModule",
+  "TestableMarketPoolInfoModule",
   "TestablePoolModule",
   "TestablePoolConfigurationModule",
   "TestableRewardDistributionModule",
