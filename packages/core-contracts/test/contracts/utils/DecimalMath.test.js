@@ -200,6 +200,7 @@ describe.only('DecimalMath', () => {
       mulSignature = 'mulDecimal(int256,int256)';
       divSignature = 'divDecimal(int256,int256)';
       reducePrecisionSignature = 'reducePrecision(int256)';
+      toHighPrecisionSignature = 'toHighPrecisionDecimal(int256)';
     });
 
     describe('mulDecimal() int256', function () {
@@ -297,6 +298,27 @@ describe.only('DecimalMath', () => {
 
       it('fails on large numbers', async () => {
         await assertRevert(DecimalMath[reducePrecisionSignature](s(1, 78)), 'out-of-bounds');
+      });
+    });
+
+    describe('toHighPrecisionDecimal', function () {
+      it('produces expected results', async function () {
+        await assertToHighPrecisionDecimal({ x: s(250, 0) }, s(250, 27));
+        await assertToHighPrecisionDecimal({ x: s(10, 0) }, s(10, 27));
+
+        await assertToHighPrecisionDecimal({ x: s(-250, 0) }, s(-250, 27));
+        await assertToHighPrecisionDecimal({ x: s(-10, 0) }, s(-10, 27));
+      });
+
+      it('produces the expected results on edge cases', async function () {
+        await assertToHighPrecisionDecimal({ x: s(-1, 49) }, s(-1, 76));
+        await assertToHighPrecisionDecimal({ x: s(0, 0) }, s(0, 0));
+        await assertToHighPrecisionDecimal({ x: s(1, 49) }, s(1, 76));
+      });
+
+      it('fails on large numbers', async () => {
+        await assertRevert(DecimalMath[reducePrecisionSignature](s(-1, 77)), 'out-of-bounds');
+        await assertRevert(DecimalMath[reducePrecisionSignature](s(1, 77)), 'out-of-bounds');
       });
     });
   });

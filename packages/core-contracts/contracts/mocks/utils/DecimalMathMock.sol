@@ -56,6 +56,10 @@ contract DecimalMathMock {
         return DecimalMath.reducePrecision(x);
     }
 
+    function toHighPrecisionDecimal(int256 x) public pure returns (int256 z) {
+        return DecimalMath.toHighPrecisionDecimal(x);
+    }
+
     // -----------------
     // int128
     // -----------------

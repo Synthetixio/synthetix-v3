@@ -11,6 +11,9 @@ pragma solidity ^0.8.0;
  * then if A = 50, A represents the decimal 0.50
  * 2) Given UNIT = 1000000000000000000
  * then if A = 500000000000000000, A represents the decimal 0.500000000000000000
+ *
+ * TODO: Implement all functions for all types (including tests).
+ * So far, only the ones needed by the code have been implemented.
  */
 library DecimalMath {
     // Numbers representing 1.0 (low precision).
@@ -21,6 +24,7 @@ library DecimalMath {
 
     // Numbers representing 1.0 (high precision).
     uint256 public constant UNIT_PRECISE = 1e27;
+    int256 public constant UNIT_PRECISE_INT = int256(UNIT_PRECISE);
 
     // -----------------------------------------------------------------------
     // -----------------------------------------------------------------------
@@ -65,6 +69,9 @@ library DecimalMath {
         return x / 1e9; // 9 = 27 - 18
     }
 
+    /**
+     * @dev Converts a regular integer into a high precision decimal.
+     */
     function toHighPrecisionDecimal(uint256 x) internal pure returns (uint256 z) {
         return x * UNIT_PRECISE;
     }
@@ -119,6 +126,13 @@ library DecimalMath {
      */
     function reducePrecision(int256 x) internal pure returns (int256 z) {
         return x / 1e9;
+    }
+
+    /**
+     * @dev See toHighPrecisionDecimal for uint256.
+     */
+    function toHighPrecisionDecimal(int256 x) internal pure returns (int256 z) {
+        return x * UNIT_PRECISE_INT;
     }
 
     // -----------------
