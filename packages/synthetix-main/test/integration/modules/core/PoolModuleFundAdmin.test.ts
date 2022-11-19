@@ -461,7 +461,8 @@ describe('PoolModule Admin', function () {
 
           it('has accurate amount withdrawable usd', async () => {
             // should be exactly 102 (market2 2 + 100 deposit)
-            // (market1 assumes no new debt as a result of balance going down, but accounts/can pool can withdraw at a profit)
+            // (market1 assumes no new debt as a result of balance going down,
+            // but accounts/can pool can withdraw at a profit)
             assertBn.equal(
               await systems().Core.connect(owner).getWithdrawableUsd(marketId()),
               Hundred.add(One.mul(2))

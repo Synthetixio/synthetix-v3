@@ -10,14 +10,11 @@ library MarketPoolInfo {
          * @dev . Needed to re-add the pool to the distribution when going back in range
          */
         uint128 liquidityAmount;
-
-        uint128 _unused;
-
+        uint128 unused;
         /**
          * @dev The amount of debt the pool has which hasn't been passed down the debt distribution chain yet
          */
         uint128 pendingDebt;
-
-        uint128 _unused2;
+        uint128 unused2;
     }
 }

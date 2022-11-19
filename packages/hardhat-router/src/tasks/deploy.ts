@@ -82,7 +82,7 @@ task(TASK_DEPLOY, 'Deploys the given modules behind a Proxy + Router architectur
     const modulesData = await deployContracts(contracts, hre);
 
     await hre.run(SUBTASK_GENERATE_ROUTER, {
-      router: /*_contractName(*/router/*)*/,
+      router: /*_contractName(*/ router /*)*/,
       template: routerTemplate,
       contracts: modulesData,
     });
