@@ -125,6 +125,8 @@ library Distribution {
             revert EmptyDistribution();
         }
 
+        // TODO: Can we safely assume that amount will always be a regular integer,
+        // i.e. not a decimal?
         int amountHighPrecision = amount * 1e27;
         int deltaValuePerShare = amountHighPrecision / int(totalShares);
 

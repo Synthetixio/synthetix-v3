@@ -6,9 +6,9 @@ function s(base, exp) {
   return ethers.BigNumber.from(base).mul(ethers.BigNumber.from(10).pow(exp));
 }
 
-describe('DecimalMath', () => {
+describe.only('DecimalMath', () => {
   let DecimalMath;
-  let mulSignature, divSignature, lowPrecisionSignature;
+  let mulSignature, divSignature, reducePrecisionSignature, toHighPrecisionSignature;
 
   before('deploy the contract', async () => {
     const factory = await ethers.getContractFactory('DecimalMathMock');
@@ -29,9 +29,16 @@ describe('DecimalMath', () => {
     );
   }
 
-  async function assertToLowPrecision(data, expected) {
+  async function assertReducePrecision(data, expected) {
     assertBn.equal(
-      await DecimalMath[lowPrecisionSignature](ethers.BigNumber.from(data.x)),
+      await DecimalMath[reducePrecisionSignature](ethers.BigNumber.from(data.x)),
+      ethers.BigNumber.from(expected)
+    );
+  }
+
+  async function assertToHighPrecisionDecimal(data, expected) {
+    assertBn.equal(
+      await DecimalMath[toHighPrecisionSignature](ethers.BigNumber.from(data.x)),
       ethers.BigNumber.from(expected)
     );
   }
@@ -40,7 +47,8 @@ describe('DecimalMath', () => {
     before('assign signatures', async function () {
       mulSignature = 'mulDecimal(uint256,uint256)';
       divSignature = 'divDecimal(uint256,uint256)';
-      lowPrecisionSignature = 'toLowPrecision(uint256)';
+      reducePrecisionSignature = 'reducePrecision(uint256)';
+      toHighPrecisionSignature = 'toHighPrecisionDecimal(uint256)';
     });
 
     describe('mulDecimal()', () => {
@@ -87,19 +95,35 @@ describe('DecimalMath', () => {
       });
     });
 
-    describe('toLowPrecision()', function () {
+    describe('reducePrecision()', function () {
       it('produces the expected results', async function () {
-        await assertToLowPrecision({ x: s(250, 27) }, s(250, 18));
-        await assertToLowPrecision({ x: s(250, 30) }, s(250, 21));
+        await assertReducePrecision({ x: s(250, 27) }, s(250, 18));
+        await assertReducePrecision({ x: s(250, 30) }, s(250, 21));
       });
 
       it('produces the expected results on edge cases', async function () {
-        await assertToLowPrecision({ x: s(0, 27) }, s(0, 18));
-        await assertToLowPrecision({ x: s(1, 58) }, s(1, 49));
+        await assertReducePrecision({ x: s(0, 27) }, s(0, 18));
+        await assertReducePrecision({ x: s(1, 58) }, s(1, 49));
       });
 
       it('fails on large numbers', async () => {
-        await assertRevert(DecimalMath[lowPrecisionSignature](s(1, 78)), 'out-of-bounds');
+        await assertRevert(DecimalMath[reducePrecisionSignature](s(1, 78)), 'out-of-bounds');
+      });
+    });
+
+    describe('toHighPrecisionDecimal', function () {
+      it('produces expected results', async function () {
+        await assertToHighPrecisionDecimal({ x: s(250, 0) }, s(250, 27));
+        await assertToHighPrecisionDecimal({ x: s(10, 0) }, s(10, 27));
+      });
+
+      it('produces the expected results on edge cases', async function () {
+        await assertToHighPrecisionDecimal({ x: s(0, 0) }, s(0, 0));
+        await assertToHighPrecisionDecimal({ x: s(1, 50) }, s(1, 77));
+      });
+
+      it('fails on large numbers', async () => {
+        await assertRevert(DecimalMath[reducePrecisionSignature](s(1, 78)), 'out-of-bounds');
       });
     });
   });
@@ -108,7 +132,7 @@ describe('DecimalMath', () => {
     before('assign signatures', async function () {
       mulSignature = 'mulDecimalUint128(uint128,uint128)';
       divSignature = 'divDecimalUint128(uint128,uint128)';
-      lowPrecisionSignature = 'toLowPrecisionUint128(uint128)';
+      reducePrecisionSignature = 'reducePrecisionUint128(uint128)';
     });
 
     describe('mulDecimal()', () => {
@@ -154,19 +178,19 @@ describe('DecimalMath', () => {
       });
     });
 
-    describe('toLowPrecision()', function () {
+    describe('reducePrecision()', function () {
       it('produces the expected results', async function () {
-        await assertToLowPrecision({ x: s(250, 27) }, s(250, 18));
-        await assertToLowPrecision({ x: s(250, 30) }, s(250, 21));
+        await assertReducePrecision({ x: s(250, 27) }, s(250, 18));
+        await assertReducePrecision({ x: s(250, 30) }, s(250, 21));
       });
 
       it('produces the expected results on edge cases', async function () {
-        await assertToLowPrecision({ x: s(0, 27) }, s(0, 18));
-        await assertToLowPrecision({ x: s(1, 37) }, s(1, 28));
+        await assertReducePrecision({ x: s(0, 27) }, s(0, 18));
+        await assertReducePrecision({ x: s(1, 37) }, s(1, 28));
       });
 
       it('fails on large numbers', async () => {
-        await assertRevert(DecimalMath[lowPrecisionSignature](s(1, 78)), 'out-of-bounds');
+        await assertRevert(DecimalMath[reducePrecisionSignature](s(1, 78)), 'out-of-bounds');
       });
     });
   });
@@ -175,7 +199,7 @@ describe('DecimalMath', () => {
     before('assign signatures', async function () {
       mulSignature = 'mulDecimal(int256,int256)';
       divSignature = 'divDecimal(int256,int256)';
-      lowPrecisionSignature = 'toLowPrecision(int256)';
+      reducePrecisionSignature = 'reducePrecision(int256)';
     });
 
     describe('mulDecimal() int256', function () {
@@ -257,22 +281,22 @@ describe('DecimalMath', () => {
       });
     });
 
-    describe('toLowPrecision() int256', function () {
+    describe('reducePrecision() int256', function () {
       it('produces the expected results', async function () {
-        await assertToLowPrecision({ x: s(250, 27) }, s(250, 18));
-        await assertToLowPrecision({ x: s(250, 30) }, s(250, 21));
+        await assertReducePrecision({ x: s(250, 27) }, s(250, 18));
+        await assertReducePrecision({ x: s(250, 30) }, s(250, 21));
 
-        await assertToLowPrecision({ x: s(-250, 27) }, s(-250, 18));
-        await assertToLowPrecision({ x: s(-250, 30) }, s(-250, 21));
+        await assertReducePrecision({ x: s(-250, 27) }, s(-250, 18));
+        await assertReducePrecision({ x: s(-250, 30) }, s(-250, 21));
       });
 
       it('produces the expected results on edge cases', async function () {
-        await assertToLowPrecision({ x: s(0, 27) }, s(0, 18));
-        await assertToLowPrecision({ x: s(1, 58) }, s(1, 49));
+        await assertReducePrecision({ x: s(0, 27) }, s(0, 18));
+        await assertReducePrecision({ x: s(1, 58) }, s(1, 49));
       });
 
       it('fails on large numbers', async () => {
-        await assertRevert(DecimalMath[lowPrecisionSignature](s(1, 78)), 'out-of-bounds');
+        await assertRevert(DecimalMath[reducePrecisionSignature](s(1, 78)), 'out-of-bounds');
       });
     });
   });
@@ -281,7 +305,7 @@ describe('DecimalMath', () => {
     before('assign signatures', async function () {
       mulSignature = 'mulDecimalInt128(int128,int128)';
       divSignature = 'divDecimalInt128(int128,int128)';
-      lowPrecisionSignature = 'toLowPrecisionInt128(int128)';
+      reducePrecisionSignature = 'reducePrecisionInt128(int128)';
     });
 
     describe('mulDecimal() int128', function () {
@@ -357,22 +381,22 @@ describe('DecimalMath', () => {
       });
     });
 
-    describe('toLowPrecision() int128', function () {
+    describe('reducePrecision() int128', function () {
       it('produces the expected results', async function () {
-        await assertToLowPrecision({ x: s(25, 27) }, s(25, 18));
-        await assertToLowPrecision({ x: s(25, 30) }, s(25, 21));
+        await assertReducePrecision({ x: s(25, 27) }, s(25, 18));
+        await assertReducePrecision({ x: s(25, 30) }, s(25, 21));
 
-        await assertToLowPrecision({ x: s(-25, 27) }, s(-25, 18));
-        await assertToLowPrecision({ x: s(-25, 30) }, s(-25, 21));
+        await assertReducePrecision({ x: s(-25, 27) }, s(-25, 18));
+        await assertReducePrecision({ x: s(-25, 30) }, s(-25, 21));
       });
 
       it('produces the expected results on edge cases', async function () {
-        await assertToLowPrecision({ x: s(0, 27) }, s(0, 18));
-        await assertToLowPrecision({ x: s(1, 37) }, s(1, 28));
+        await assertReducePrecision({ x: s(0, 27) }, s(0, 18));
+        await assertReducePrecision({ x: s(1, 37) }, s(1, 28));
       });
 
       it('fails on large numbers', async () => {
-        await assertRevert(DecimalMath[lowPrecisionSignature](s(1, 78)), 'out-of-bounds');
+        await assertRevert(DecimalMath[reducePrecisionSignature](s(1, 78)), 'out-of-bounds');
       });
     });
   });

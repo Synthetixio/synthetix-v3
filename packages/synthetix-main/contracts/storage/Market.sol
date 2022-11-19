@@ -315,7 +315,7 @@ library Market {
         int maxDebtShareValue
     ) internal view returns (uint contribution) {
         // Determine how much the current value per share deviates from the maximum.
-        uint deltaValuePerShare = (maxDebtShareValue - self.debtDist.valuePerShare.toLowPrecisionInt128().int128toInt256())
+        uint deltaValuePerShare = (maxDebtShareValue - self.debtDist.valuePerShare.reducePrecisionInt128().int128toInt256())
             .int256toUint256();
 
         return deltaValuePerShare.mulDecimal(liquidityShares);
@@ -380,7 +380,7 @@ library Market {
         //require(oldPoolMaxShareValue == 0, "value is not 0");
         //require(newPoolMaxShareValue == 0, "new pool max share value is in fact set");
 
-        int128 lowPrecisionValuePerShare = self.debtDist.valuePerShare.toLowPrecisionInt128();
+        int128 lowPrecisionValuePerShare = self.debtDist.valuePerShare.reducePrecisionInt128();
 
         if (newPoolMaxShareValue <= lowPrecisionValuePerShare) {
             // this will ensure calculations below can correctly gauge shares changes
@@ -426,7 +426,7 @@ library Market {
         int256 outstandingBalance = targetBalance - distributedBalance;
 
         // Calculate the target value per share of the distribution if it assimilated the market's outstanding balance.
-        int256 targetValuePerShare = self.debtDist.valuePerShare.toLowPrecisionInt128() +
+        int256 targetValuePerShare = self.debtDist.valuePerShare.reducePrecisionInt128() +
             outstandingBalance.divDecimal(self.debtDist.totalShares.uint128toInt128());
 
         // Find pools for which this market's max value per share limit is exceeded.
@@ -456,7 +456,7 @@ library Market {
 
             // Distribute the market's debt to the limit, i.e. for that which exceeds the maximum value per share.
             int256 debtToLimit = self.debtDist.totalShares.uint128toInt256().mulDecimal(
-                (poolMaxValuePerShare - self.debtDist.valuePerShare.toLowPrecisionInt128()).int128toInt256() // Diff between current value and max value per share.
+                (poolMaxValuePerShare - self.debtDist.valuePerShare.reducePrecisionInt128()).int128toInt256() // Diff between current value and max value per share.
             );
             self.debtDist.distributeValue(debtToLimit);
 

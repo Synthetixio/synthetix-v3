@@ -16,8 +16,12 @@ contract DecimalMathMock {
         return DecimalMath.divDecimal(x, y);
     }
 
-    function toLowPrecision(uint256 x) public pure returns (uint256) {
-        return DecimalMath.toLowPrecision(x);
+    function reducePrecision(uint256 x) public pure returns (uint256) {
+        return DecimalMath.reducePrecision(x);
+    }
+
+    function toHighPrecisionDecimal(uint256 x) public pure returns (uint256 z) {
+        return DecimalMath.toHighPrecisionDecimal(x);
     }
 
     // -----------------
@@ -32,8 +36,8 @@ contract DecimalMathMock {
         return DecimalMath.divDecimalUint128(x, y);
     }
 
-    function toLowPrecisionUint128(uint128 x) public pure returns (uint128) {
-        return DecimalMath.toLowPrecisionUint128(x);
+    function reducePrecisionUint128(uint128 x) public pure returns (uint128) {
+        return DecimalMath.reducePrecisionUint128(x);
     }
 
     // -----------------
@@ -48,8 +52,8 @@ contract DecimalMathMock {
         return DecimalMath.divDecimal(x, y);
     }
 
-    function toLowPrecision(int256 x) public pure returns (int256) {
-        return DecimalMath.toLowPrecision(x);
+    function reducePrecision(int256 x) public pure returns (int256) {
+        return DecimalMath.reducePrecision(x);
     }
 
     // -----------------
@@ -64,7 +68,7 @@ contract DecimalMathMock {
         return DecimalMath.divDecimalInt128(x, y);
     }
 
-    function toLowPrecisionInt128(int128 x) public pure returns (int128) {
-        return DecimalMath.toLowPrecisionInt128(x);
+    function reducePrecisionInt128(int128 x) public pure returns (int128) {
+        return DecimalMath.reducePrecisionInt128(x);
     }
 }

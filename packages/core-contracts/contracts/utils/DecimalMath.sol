@@ -13,7 +13,7 @@ pragma solidity ^0.8.0;
  * then if A = 500000000000000000, A represents the decimal 0.500000000000000000
  */
 library DecimalMath {
-    // Numbers representing 1.0 (normal precision).
+    // Numbers representing 1.0 (low precision).
     uint256 public constant UNIT = 1e18;
     int256 public constant UNIT_INT = int256(UNIT);
     uint128 public constant UNIT_UINT128 = uint128(UNIT);
@@ -59,10 +59,14 @@ library DecimalMath {
     }
 
     /**
-     * @dev Reduces scaling for a high precision decimal into a low precision decimal.
+     * @dev Reduces scaling from a high precision decimal to a low precision decimal.
      */
-    function toLowPrecision(uint256 x) internal pure returns (uint256 z) {
+    function reducePrecision(uint256 x) internal pure returns (uint256 z) {
         return x / 1e9; // 9 = 27 - 18
+    }
+
+    function toHighPrecisionDecimal(uint256 x) internal pure returns (uint256 z) {
+        return x * UNIT_PRECISE;
     }
 
     // -----------------
@@ -86,9 +90,9 @@ library DecimalMath {
     }
 
     /**
-     * @dev See toLowPrecision for uint256.
+     * @dev See reducePrecision for uint256.
      */
-    function toLowPrecisionUint128(uint128 x) internal pure returns (uint128 z) {
+    function reducePrecisionUint128(uint128 x) internal pure returns (uint128 z) {
         return x / 1e9;
     }
 
@@ -111,9 +115,9 @@ library DecimalMath {
     }
 
     /**
-     * @dev See toLowPrecision for uint256.
+     * @dev See reducePrecision for uint256.
      */
-    function toLowPrecision(int256 x) internal pure returns (int256 z) {
+    function reducePrecision(int256 x) internal pure returns (int256 z) {
         return x / 1e9;
     }
 
@@ -136,9 +140,9 @@ library DecimalMath {
     }
 
     /**
-     * @dev See toLowPrecision for uint256.
+     * @dev See reducePrecision for uint256.
      */
-    function toLowPrecisionInt128(int128 x) internal pure returns (int128 z) {
+    function reducePrecisionInt128(int128 x) internal pure returns (int128 z) {
         return x / 1e9;
     }
 }
