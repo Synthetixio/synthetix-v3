@@ -69,6 +69,7 @@ import "../errors/ParameterError.sol";
  */
 library Distribution {
     using SafeCast for uint128;
+    using SafeCast for uint256;
     using DecimalMath for int256;
 
     /**
@@ -166,9 +167,10 @@ library Distribution {
         changedValue = changedValueHighPrecision.fromHighPrecisionDecimalToInteger();
 
         // Modify the total shares with the actor's change in shares.
-        dist.totalShares = uint128(dist.totalShares + shares - actor.shares);
+        uint128 sharesUint128 = shares.uint256toUint128();
+        dist.totalShares = dist.totalShares + sharesUint128 - actor.shares;
 
-        actor.shares = uint128(shares);
+        actor.shares = sharesUint128;
         actor.lastValuePerShare = shares == 0 ? int128(0) : dist.valuePerShare;
     }
 
