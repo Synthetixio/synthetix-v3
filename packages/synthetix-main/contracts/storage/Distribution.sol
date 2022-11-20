@@ -2,6 +2,7 @@
 pragma solidity ^0.8.0;
 
 import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
+import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 
 import "./DistributionActor.sol";
 import "../errors/ParameterError.sol";
@@ -67,6 +68,9 @@ import "../errors/ParameterError.sol";
  * - totalValue: 150 USD
  */
 library Distribution {
+    using SafeCast for uint128;
+    using DecimalMath for int256;
+
     /**
      * @dev Thrown when an attempt is made to distribute value to a distribution
      * with no shares.
@@ -127,7 +131,7 @@ library Distribution {
 
         // TODO: Can we safely assume that amount will always be a regular integer,
         // i.e. not a decimal?
-        int amountHighPrecision = amount * 1e27;
+        int amountHighPrecision = amount.toHighPrecisionDecimal();
         int deltaValuePerShare = amountHighPrecision / int(totalShares);
 
         dist.valuePerShare += int128(deltaValuePerShare);
@@ -158,8 +162,8 @@ library Distribution {
         int128 deltaValuePerShare = dist.valuePerShare - actor.lastValuePerShare;
 
         // Calculate the total change in the actor's value.
-        int changedValueHighPrecision = deltaValuePerShare * int(int128(actor.shares));
-        changedValue = changedValueHighPrecision / 1e27;
+        int changedValueHighPrecision = deltaValuePerShare * actor.shares.uint128toInt256();
+        changedValue = changedValueHighPrecision.fromHighPrecisionDecimalToInteger();
 
         // Modify the total shares with the actor's change in shares.
         dist.totalShares = uint128(dist.totalShares + shares - actor.shares);

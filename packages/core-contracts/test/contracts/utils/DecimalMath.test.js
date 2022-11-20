@@ -8,7 +8,11 @@ function s(base, exp) {
 
 describe.only('DecimalMath', () => {
   let DecimalMath;
-  let mulSignature, divSignature, reducePrecisionSignature, toHighPrecisionSignature;
+  let mulSignature,
+    divSignature,
+    reducePrecisionSignature,
+    toHighPrecisionSignature,
+    fromHighPrecisionSignature;
 
   before('deploy the contract', async () => {
     const factory = await ethers.getContractFactory('DecimalMathMock');
@@ -39,6 +43,13 @@ describe.only('DecimalMath', () => {
   async function assertToHighPrecisionDecimal(data, expected) {
     assertBn.equal(
       await DecimalMath[toHighPrecisionSignature](ethers.BigNumber.from(data.x)),
+      ethers.BigNumber.from(expected)
+    );
+  }
+
+  async function assertFromHighPrecisionDecimal(data, expected) {
+    assertBn.equal(
+      await DecimalMath[fromHighPrecisionSignature](ethers.BigNumber.from(data.x)),
       ethers.BigNumber.from(expected)
     );
   }
@@ -201,6 +212,7 @@ describe.only('DecimalMath', () => {
       divSignature = 'divDecimal(int256,int256)';
       reducePrecisionSignature = 'reducePrecision(int256)';
       toHighPrecisionSignature = 'toHighPrecisionDecimal(int256)';
+      fromHighPrecisionSignature = 'fromHighPrecisionDecimalToInteger(int256)';
     });
 
     describe('mulDecimal() int256', function () {
@@ -301,7 +313,7 @@ describe.only('DecimalMath', () => {
       });
     });
 
-    describe('toHighPrecisionDecimal', function () {
+    describe('toHighPrecisionDecimal() int256', function () {
       it('produces expected results', async function () {
         await assertToHighPrecisionDecimal({ x: s(250, 0) }, s(250, 27));
         await assertToHighPrecisionDecimal({ x: s(10, 0) }, s(10, 27));
@@ -319,6 +331,27 @@ describe.only('DecimalMath', () => {
       it('fails on large numbers', async () => {
         await assertRevert(DecimalMath[reducePrecisionSignature](s(-1, 77)), 'out-of-bounds');
         await assertRevert(DecimalMath[reducePrecisionSignature](s(1, 77)), 'out-of-bounds');
+      });
+    });
+
+    describe('fromHighPrecisionDecimalToInteger() int256', function () {
+      it('produces expected results', async function () {
+        await assertFromHighPrecisionDecimal({ x: s(250, 27) }, s(250, 0));
+        await assertFromHighPrecisionDecimal({ x: s(10, 30) }, s(10, 3));
+
+        await assertFromHighPrecisionDecimal({ x: s(-250, 27) }, s(-250, 0));
+        await assertFromHighPrecisionDecimal({ x: s(-10, 30) }, s(-10, 3));
+      });
+
+      it('produces the expected results on edge cases', async function () {
+        await assertFromHighPrecisionDecimal({ x: s(-1, 76) }, s(-1, 49));
+        await assertFromHighPrecisionDecimal({ x: s(0, 0) }, s(0, 0));
+        await assertFromHighPrecisionDecimal({ x: s(1, 76) }, s(1, 49));
+      });
+
+      it('fails on large numbers', async () => {
+        await assertRevert(DecimalMath[fromHighPrecisionSignature](s(-1, 77)), 'out-of-bounds');
+        await assertRevert(DecimalMath[fromHighPrecisionSignature](s(1, 77)), 'out-of-bounds');
       });
     });
   });

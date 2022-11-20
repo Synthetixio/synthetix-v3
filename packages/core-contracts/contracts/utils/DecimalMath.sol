@@ -135,6 +135,10 @@ library DecimalMath {
         return x * UNIT_PRECISE_INT;
     }
 
+    function fromHighPrecisionDecimalToInteger(int256 x) internal pure returns (int256 z) {
+        return x / UNIT_PRECISE_INT;
+    }
+
     // -----------------
     // int128
     // -----------------
