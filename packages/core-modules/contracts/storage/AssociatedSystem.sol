@@ -39,6 +39,17 @@ library AssociatedSystem {
         return INftModule(self.proxy);
     }
 
+    function set(
+        Data storage self,
+        address proxy,
+        address impl,
+        bytes32 kind
+    ) internal {
+        self.proxy = proxy;
+        self.impl = impl;
+        self.kind = kind;
+    }
+
     function expectKind(Data storage self, bytes32 kind) internal view {
         bytes32 actualKind = self.kind;
 
