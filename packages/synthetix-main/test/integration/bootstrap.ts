@@ -1,6 +1,7 @@
 import hre from 'hardhat';
 import { ChainBuilderContext } from '@usecannon/builder';
 import { ethers } from 'ethers';
+import NodeTypes from '@synthetixio/oracle-manager/test/integration/mixins/Node.types';
 
 import { snapshotCheckpoint } from '../utils';
 
@@ -60,6 +61,7 @@ before(async function () {
   const contracts = {
     ...(outputs.contracts ?? {}),
     ...(outputs.imports?.synthetix?.contracts ?? {}),
+    OracleManagerProxy: outputs.imports?.oracle_manager?.contracts.Proxy,
   };
   systems = await loadSystems(contracts, provider);
 
@@ -97,10 +99,12 @@ export function bootstrapWithStakedPool() {
 
   let aggregator: ethers.Contract;
 
+  let nodeId: string;
   const accountId = 1;
   const poolId = 1;
   let collateralAddress: string;
   const depositAmount = ethers.utils.parseEther('1000');
+  const abi = ethers.utils.defaultAbiCoder;
 
   before('deploy mock aggregator', async () => {
     const [owner] = r.signers();
@@ -109,6 +113,17 @@ export function bootstrapWithStakedPool() {
     aggregator = await factory.connect(owner).deploy();
 
     await aggregator.mockSetCurrentPrice(ethers.utils.parseEther('1'));
+  });
+
+  before('setup oracle manager node', async () => {
+    const [owner] = r.signers();
+
+    const params1 = abi.encode(['address'], [aggregator.address]);
+    await r.systems().OracleManager.connect(owner).registerNode([], NodeTypes.CHAINLINK, params1);
+    nodeId = await r
+      .systems()
+      .OracleManager.connect(owner)
+      .getNodeId([], NodeTypes.CHAINLINK, params1);
   });
 
   before('delegate collateral', async function () {
@@ -130,7 +145,7 @@ export function bootstrapWithStakedPool() {
         .Core.connect(owner)
         .configureCollateral(
           collateralAddress,
-          aggregator.address,
+          nodeId,
           '5000000000000000000',
           '1500000000000000000',
           '20000000000000000000',

@@ -2,6 +2,7 @@ import { ethers } from 'hardhat';
 import { ethers as Ethers } from 'ethers';
 import assert from 'assert/strict';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
+import NodeTypes from '@synthetixio/oracle-manager/test/integration/mixins/Node.types';
 
 export async function addCollateral(
   tokenName: string,
@@ -9,7 +10,8 @@ export async function addCollateral(
   targetCRatio: number,
   minimumCRatio: number,
   owner: Ethers.Signer,
-  core: Ethers.Contract
+  core: Ethers.Contract,
+  oracleManager: Ethers.Contract
 ) {
   let factory;
 
@@ -19,30 +21,29 @@ export async function addCollateral(
   await (await Collateral.connect(owner).initialize(tokenName, tokenSymbol, 18)).wait();
 
   factory = await ethers.getContractFactory('AggregatorV3Mock');
-  const CollateralPriceFeed = await factory.connect(owner).deploy();
+  const aggregator = await factory.connect(owner).deploy();
 
-  await (await CollateralPriceFeed.connect(owner).mockSetCurrentPrice(1)).wait();
+  await (await aggregator.connect(owner).mockSetCurrentPrice(1)).wait();
+
+  const params1 = ethers.utils.defaultAbiCoder.encode(['address'], [aggregator.address]);
+  await oracleManager.connect(owner).registerNode([], NodeTypes.CHAINLINK, params1);
+  const oracleNodeId = await oracleManager
+    .connect(owner)
+    .getNodeId([], NodeTypes.CHAINLINK, params1);
 
   await (
     await core
       .connect(owner)
-      .configureCollateral(
-        Collateral.address,
-        CollateralPriceFeed.address,
-        targetCRatio,
-        minimumCRatio,
-        0,
-        true
-      )
+      .configureCollateral(Collateral.address, oracleNodeId, targetCRatio, minimumCRatio, 0, true)
   ).wait();
 
-  return { Collateral, CollateralPriceFeed };
+  return { Collateral, CollateralPriceFeed: aggregator, oracleNodeId };
 }
 
 export async function verifyCollateral(
   collateralIdx: number,
   Collateral: Ethers.Contract,
-  CollateralPriceFeed: Ethers.Contract,
+  oracleNodeId: string,
   expectedCRatio: number,
   expectedMinimumCRatio: number,
   expectedToBeEnabled: boolean,
@@ -56,7 +57,7 @@ export async function verifyCollateral(
   const collateralType = await core.getCollateralConfiguration(Collateral.address);
 
   assert.equal(collateralType.tokenAddress, Collateral.address);
-  assert.equal(collateralType.priceFeed, CollateralPriceFeed.address);
+  assert.equal(collateralType.oracleNodeId, oracleNodeId);
   assertBn.equal(collateralType.targetCRatio, expectedCRatio);
   assertBn.equal(collateralType.minimumCRatio, expectedMinimumCRatio);
   assert.equal(collateralType.depositingEnabled, expectedToBeEnabled);

@@ -8,42 +8,29 @@ describe('CollateralModule', function () {
 
   let systemOwner: Ethers.Signer, user1: Ethers.Signer;
 
-  let Collateral: Ethers.Contract, CollateralPriceFeed: Ethers.Contract;
-  let AnotherCollateral: Ethers.Contract, AnotherCollateralPriceFeed: Ethers.Contract;
+  let Collateral: Ethers.Contract, AnotherCollateral: Ethers.Contract;
+  let oracleNodeId: string, oracleNodeId2: string;
 
   describe('CollateralModule - Collateral configuration', function () {
     before('identify signers', async () => {
       [systemOwner, user1] = signers();
     });
 
-    describe('when a regular user attempts to add a collateral', function () {
-      it('reverts', async () => {
-        const dummyAddress = await user1.getAddress();
-
-        await assertRevert(
-          systems()
-            .Core.connect(user1)
-            .configureCollateral(dummyAddress, dummyAddress, 400, 200, 0, false),
-          `Unauthorized("${await user1.getAddress()}")`,
-          systems().Core
-        );
-      });
-    });
-
     describe('when the first collateral is added', function () {
       before('add collateral', async () => {
-        ({ Collateral, CollateralPriceFeed } = await addCollateral(
+        ({ Collateral, oracleNodeId } = await addCollateral(
           'Synthetix Token',
           'SNX',
           400,
           200,
           systemOwner,
-          systems().Core
+          systems().Core,
+          systems().OracleManager
         ));
       });
 
       it('is well configured', async () => {
-        await verifyCollateral(0, Collateral, CollateralPriceFeed, 400, 200, true, systems().Core);
+        await verifyCollateral(0, Collateral, oracleNodeId, 400, 200, true, systems().Core);
       });
 
       it('shows in the collateral list', async function () {
@@ -52,15 +39,22 @@ describe('CollateralModule', function () {
 
       describe('when a second collateral is added', () => {
         before('add collateral', async () => {
-          ({ Collateral: AnotherCollateral, CollateralPriceFeed: AnotherCollateralPriceFeed } =
-            await addCollateral('Another Token', 'ANT', 400, 200, systemOwner, systems().Core));
+          ({ Collateral: AnotherCollateral, oracleNodeId: oracleNodeId2 } = await addCollateral(
+            'Another Token',
+            'ANT',
+            400,
+            200,
+            systemOwner,
+            systems().Core,
+            systems().OracleManager
+          ));
         });
 
         it('is well configured', async () => {
           await verifyCollateral(
             1,
             AnotherCollateral,
-            AnotherCollateralPriceFeed,
+            oracleNodeId2,
             400,
             200,
             true,
@@ -77,14 +71,7 @@ describe('CollateralModule', function () {
             await assertRevert(
               systems()
                 .Core.connect(user1)
-                .configureCollateral(
-                  AnotherCollateral.address,
-                  AnotherCollateralPriceFeed.address,
-                  200,
-                  100,
-                  0,
-                  true
-                ),
+                .configureCollateral(AnotherCollateral.address, oracleNodeId2, 200, 100, 0, true),
               `Unauthorized("${await user1.getAddress()}")`,
               systems().Core
             );
@@ -95,14 +82,7 @@ describe('CollateralModule', function () {
           before('update the collateral', async () => {
             const tx = await systems()
               .Core.connect(systemOwner)
-              .configureCollateral(
-                AnotherCollateral.address,
-                AnotherCollateralPriceFeed.address,
-                300,
-                250,
-                0,
-                true
-              );
+              .configureCollateral(AnotherCollateral.address, oracleNodeId2, 300, 250, 0, true);
             await tx.wait();
           });
 
@@ -110,7 +90,7 @@ describe('CollateralModule', function () {
             await verifyCollateral(
               1,
               AnotherCollateral,
-              AnotherCollateralPriceFeed,
+              oracleNodeId2,
               300,
               250,
               true,
@@ -127,14 +107,7 @@ describe('CollateralModule', function () {
           before('disable the collateral', async () => {
             const tx = await systems()
               .Core.connect(systemOwner)
-              .configureCollateral(
-                AnotherCollateral.address,
-                AnotherCollateralPriceFeed.address,
-                300,
-                250,
-                0,
-                false
-              );
+              .configureCollateral(AnotherCollateral.address, oracleNodeId2, 300, 250, 0, false);
             await tx.wait();
           });
 
@@ -142,7 +115,7 @@ describe('CollateralModule', function () {
             await verifyCollateral(
               1,
               AnotherCollateral,
-              AnotherCollateralPriceFeed,
+              oracleNodeId2,
               300,
               250,
               false,
@@ -155,6 +128,20 @@ describe('CollateralModule', function () {
             await verifyCollateralListed(AnotherCollateral, false, true, systems().Core);
           });
         });
+      });
+    });
+
+    describe('when a regular user attempts to add a collateral', function () {
+      it('reverts', async () => {
+        const dummyAddress = await user1.getAddress();
+
+        await assertRevert(
+          systems()
+            .Core.connect(user1)
+            .configureCollateral(dummyAddress, oracleNodeId2, 400, 200, 0, false),
+          `Unauthorized("${await user1.getAddress()}")`,
+          systems().Core
+        );
       });
     });
   });

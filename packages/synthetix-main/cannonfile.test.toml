@@ -128,6 +128,9 @@ artifact = "contracts/modules/test/TestableVaultEpochModule.sol:TestableVaultEpo
 [contract.TestableVaultModule]
 artifact = "contracts/modules/test/TestableVaultModule.sol:TestableVaultModule"
 
+[contract.TestableOracleManagerModule]
+artifact = "contracts/modules/test/TestableOracleManagerModule.sol:TestableOracleManagerModule"
+
 
 
 [contract.InitialModuleBundle]
@@ -179,6 +182,7 @@ depends = [
   "contract.TestableRewardDistributionStatusModule",
   "contract.TestableVaultEpochModule",
   "contract.TestableVaultModule",
+  "contract.TestableOracleManagerModule",
 ]
 
 [contract.CoreRouter]
@@ -217,6 +221,7 @@ abiOf = [
   "TestableRewardDistributionStatusModule",
   "TestableVaultEpochModule",
   "TestableVaultModule",
+  "TestableOracleManagerModule",
 ]
 depends = ["run.core_generate_router"]
 
