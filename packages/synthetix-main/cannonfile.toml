@@ -74,7 +74,25 @@ exec = "@synthetixio/core-router"
 func = "generate"
 args = [
   "contracts/routers/chain-<%= chainId %>/CoreRouter.sol:CoreRouter",
-  "<%= JSON.stringify(contracts) %>"
+  '''<%= JSON.stringify({
+    InitialModuleBundle: contracts.InitialModuleBundle,
+    AccountTokenModule: contracts.AccountTokenModule,
+    FeatureFlagModule: contracts.FeatureFlagModule,
+    AccountModule: contracts.AccountModule,
+    AssociateDebtModule: contracts.AssociateDebtModule,
+    AssociatedSystemsModule: contracts.AssociatedSystemsModule,
+    CollateralModule: contracts.CollateralModule,
+    IssueUSDModule: contracts.IssueUSDModule,
+    LiquidationModule: contracts.LiquidationModule,
+    MarketCollateralModule: contracts.MarketCollateralModule,
+    MarketManagerModule: contracts.MarketManagerModule,
+    MulticallModule: contracts.MulticallModule,
+    PoolConfigurationModule: contracts.PoolConfigurationModule,
+    PoolModule: contracts.PoolModule,
+    RewardsManagerModule: contracts.RewardsManagerModule,
+    UtilsModule: contracts.UtilsModule,
+    VaultModule: contracts.VaultModule,
+  }) %>'''
 ]
 modified = ["contracts/modules/core"]
 depends = [
@@ -153,7 +171,10 @@ exec = "@synthetixio/core-router"
 func = "generate"
 args = [
   "contracts/routers/chain-<%= chainId %>/AccountRouter.sol:AccountRouter",
-  "<%= JSON.stringify(contracts) %>"
+  '''<%= JSON.stringify({
+    InitialModuleBundle: contracts.InitialModuleBundle,
+    AccountTokenModule: contracts.AccountTokenModule,
+  }) %>'''
 ]
 modified = ["contracts/modules/common", "contracts/modules/account"]
 depends = [
@@ -175,7 +196,10 @@ exec = "@synthetixio/core-router"
 func = "generate"
 args = [
   "contracts/routers/chain-<%= chainId %>/SNXRouter.sol:SNXRouter",
-  "<%= JSON.stringify(contracts) %>"
+  '''<%= JSON.stringify({
+    InitialModuleBundle: contracts.InitialModuleBundle,
+    SNXTokenModule: contracts.SNXTokenModule,
+  }) %>'''
 ]
 modified = ["contracts/modules/snx"]
 depends = [
@@ -197,7 +221,11 @@ exec = "@synthetixio/core-router"
 func = "generate"
 args = [
   "contracts/routers/chain-<%= chainId %>/USDRouter.sol:USDRouter",
-  "<%= JSON.stringify(contracts) %>"
+  '''<%= JSON.stringify({
+    InitialModuleBundle: contracts.InitialModuleBundle,
+    AssociatedSystemsModule: contracts.AssociatedSystemsModule,
+    USDTokenModule: contracts.USDTokenModule,
+  }) %>'''
 ]
 modified = ["contracts/modules/associated-systems", "contracts/modules/usd"]
 depends = [
