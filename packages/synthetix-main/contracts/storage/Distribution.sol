@@ -70,6 +70,8 @@ import "../errors/ParameterError.sol";
 library Distribution {
     using SafeCast for uint128;
     using SafeCast for uint256;
+    using SafeCast for int128;
+    using SafeCast for int256;
     using DecimalMath for int256;
 
     /**
@@ -204,11 +206,11 @@ library Distribution {
         // Calculate the number of shares that the
         // change in value produces.
 
-        // If the distribution is empty, set valuePerShare to 1,
+        // If the distribution is empty, set valuePerShare to 1.0,
         // and the number of shares to the given value.
         if (dist.totalShares == 0) {
-            dist.valuePerShare = 1e27;
-            shares = uint(value > 0 ? value : -value); // Ensure value is positive
+            dist.valuePerShare = DecimalMath.UNIT_PRECISE_INT128;
+            shares = (value > 0 ? value : -value).int256toUint256(); // Ensure value is positive
         }
         // If the distribution is not empty, the number of shares
         // is determined by the valuePerShare.
@@ -219,9 +221,9 @@ library Distribution {
         }
 
         // Modify the total shares with the actor's change in shares.
-        dist.totalShares = uint128(dist.totalShares + shares - actor.shares);
+        dist.totalShares = (dist.totalShares + shares - actor.shares).uint256toUint128();
 
-        actor.shares = uint128(shares);
+        actor.shares = (shares).uint256toUint128();
         // Note: No need to update actor.lastValuePerShare
         // because they contributed value to the distribution.
     }
@@ -247,7 +249,7 @@ library Distribution {
      * i.e. actor.shares * valuePerShare
      */
     function getActorValue(Data storage dist, bytes32 actorId) internal view returns (int value) {
-        return (int(dist.valuePerShare) * int128(dist.actorInfo[actorId].shares)) / 1e27;
+        return (int(dist.valuePerShare) * int128(dist.actorInfo[actorId].shares)).fromHighPrecisionDecimalToInteger();
     }
 
     /**
@@ -258,7 +260,7 @@ library Distribution {
      * Requirement: this assumes that every user's lastValuePerShare is zero.
      */
     function totalValue(Data storage dist) internal view returns (int value) {
-        return (int(dist.valuePerShare) * int128(dist.totalShares)) / 1e27;
+        return (int(dist.valuePerShare) * int128(dist.totalShares)).fromHighPrecisionDecimalToInteger();
     }
 
     /**
@@ -270,8 +272,6 @@ library Distribution {
             revert ParameterError.InvalidParameter("value", "results in negative shares");
         }
 
-        int valueHighPrecision = value * 1e27;
-
-        return uint(valueHighPrecision / dist.valuePerShare);
+        return uint(value.toHighPrecisionDecimal() / dist.valuePerShare);
     }
 }

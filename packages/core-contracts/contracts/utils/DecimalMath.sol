@@ -25,6 +25,7 @@ library DecimalMath {
     // Numbers representing 1.0 (high precision).
     uint256 public constant UNIT_PRECISE = 1e27;
     int256 public constant UNIT_PRECISE_INT = int256(UNIT_PRECISE);
+    int128 public constant UNIT_PRECISE_INT128 = int128(UNIT_PRECISE_INT);
 
     // -----------------------------------------------------------------------
     // -----------------------------------------------------------------------
