@@ -199,7 +199,7 @@ args = [
   "contracts/routers/chain-<%= chainId %>/USDRouter.sol:USDRouter",
   "<%= JSON.stringify(contracts) %>"
 ]
-modified = ["contracts/modules/usd", "contracts/modules/associated-systems"]
+modified = ["contracts/modules/associated-systems", "contracts/modules/usd"]
 depends = [
   "contract.InitialModuleBundle",
   "contract.AssociatedSystemsModule",
