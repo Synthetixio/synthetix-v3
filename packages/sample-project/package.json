@@ -4,8 +4,7 @@
   "description": "Sample project implemeting Proxy architecture",
   "private": true,
   "scripts": {
-    "test": "hardhat test",
-    "build": "hardhat cannon:build"
+    "test": "hardhat test"
   },
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "2.1.1",
