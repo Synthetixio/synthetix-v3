@@ -293,7 +293,7 @@ library Market {
      * This liquidity is obtained by reading the amount of shares that the pool has in the market's debt distribution, which in turn represents the amount of USD denominated credit capacity that the pool has provided to the market.
      */
     function getPoolLiquidity(Data storage self, uint128 poolId) internal view returns (uint) {
-        return self.debtDist.getActorShares(bytes32(poolId.uint128toUint256()));
+        return self.debtDist.getActorShares(bytes32(poolId.toUint256()));
     }
 
     /**
@@ -392,7 +392,7 @@ library Market {
 
         debtChange =
             self.poolPendingDebt[poolId] +
-            self.debtDist.updateActorShares(bytes32(poolId.uint128toUint256()), newLiquidity);
+            self.debtDist.updateActorShares(bytes32(poolId.toUint256()), newLiquidity);
         self.poolPendingDebt[poolId] = 0;
 
         // recalculate market capacity
