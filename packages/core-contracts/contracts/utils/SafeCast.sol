@@ -11,8 +11,6 @@ pragma solidity ^0.8.0;
 library SafeCast {
     error CastError(bytes32 fromType, bytes32 toType);
 
-    // Note: Overloading doesn't seem to work for similar types, i.e. int256 and int128, uint256 and uint128, etc, so explicitly naming the functions differently here.
-
     function uint256toUint128(uint256 x) internal pure returns (uint128) {
         if (x > type(uint128).max) {
             revert("Failed cast uint256 to uint128");
@@ -37,7 +35,7 @@ library SafeCast {
         return int128(x);
     }
 
-    function uint128toInt256(uint128 x) internal pure returns (int256) {
+    function toInt256(uint128 x) internal pure returns (int256) {
         // Note: No checks are necessary here since the domain of int256 includes the domain of uint128.
 
         return int256(SafeCast.uint128toInt128(x));
@@ -51,7 +49,7 @@ library SafeCast {
         return int128(x);
     }
 
-    function int128toInt256(int128 x) internal pure returns (int256) {
+    function toInt256(int128 x) internal pure returns (int256) {
         // Note: No checks are necessary here since the domain of int256 includes the domain of int128.
 
         return int256(x);

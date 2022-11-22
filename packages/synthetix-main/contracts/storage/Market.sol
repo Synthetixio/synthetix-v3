@@ -315,7 +315,7 @@ library Market {
         int maxDebtShareValue
     ) internal view returns (uint contribution) {
         // Determine how much the current value per share deviates from the maximum.
-        uint deltaValuePerShare = (maxDebtShareValue - self.debtDist.valuePerShare.toLowPrecisionInt128().int128toInt256())
+        uint deltaValuePerShare = (maxDebtShareValue - self.debtDist.valuePerShare.toLowPrecisionInt128().toInt256())
             .int256toUint256();
 
         return deltaValuePerShare.mulDecimal(liquidityShares);
@@ -455,8 +455,8 @@ library Market {
             int128 poolMaxValuePerShare = -node.priority;
 
             // Distribute the market's debt to the limit, i.e. for that which exceeds the maximum value per share.
-            int256 debtToLimit = self.debtDist.totalShares.uint128toInt256().mulDecimal(
-                (poolMaxValuePerShare - self.debtDist.valuePerShare.toLowPrecisionInt128()).int128toInt256() // Diff between current value and max value per share.
+            int256 debtToLimit = self.debtDist.totalShares.toInt256().mulDecimal(
+                (poolMaxValuePerShare - self.debtDist.valuePerShare.toLowPrecisionInt128()).toInt256() // Diff between current value and max value per share.
             );
             self.debtDist.distributeValue(debtToLimit);
 
@@ -486,7 +486,7 @@ library Market {
             // Since shares left the market, the remaining value must be spread amongst the shares that remain in the market.
             targetValuePerShare =
                 self.debtDist.valuePerShare +
-                outstandingBalance.divDecimal(self.debtDist.totalShares.uint128toInt256());
+                outstandingBalance.divDecimal(self.debtDist.totalShares.toInt256());
         }
 
         outstandingBalance = targetBalance - distributedBalance;

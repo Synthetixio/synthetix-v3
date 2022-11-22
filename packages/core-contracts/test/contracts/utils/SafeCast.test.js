@@ -10,7 +10,7 @@ function pow(base, exp) {
   return ethers.BigNumber.from(base).pow(exp);
 }
 
-describe('SafeCast', () => {
+describe.only('SafeCast', () => {
   let SafeCast;
   let castFunction;
 
@@ -157,7 +157,7 @@ describe('SafeCast', () => {
 
   describe('uint128 to int256 (through int128)', function () {
     before('set the target cast function', async function () {
-      castFunction = 'uint128toInt256(uint128)';
+      castFunction = 'toInt256(uint128)';
     });
 
     it('produces expected results', async function () {
@@ -214,7 +214,7 @@ describe('SafeCast', () => {
 
   describe('int128 to int256', function () {
     before('set the target cast function', async function () {
-      castFunction = 'int128toInt256(int128)';
+      castFunction = 'toInt256(int128)';
     });
 
     it('produces expected results', async function () {
