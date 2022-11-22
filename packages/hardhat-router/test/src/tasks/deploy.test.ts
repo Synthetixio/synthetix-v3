@@ -1,22 +1,21 @@
 import { ok, equal, rejects } from 'assert/strict';
+import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { TASK_DEPLOY } from '../../../src/task-names';
 import { loadEnvironment } from '../../helpers/use-environment';
-import { HardhatRuntimeEnvironment } from 'hardhat/types';
 
 describe('tasks/deploy.ts', function () {
   let hre: HardhatRuntimeEnvironment;
 
   describe('when using a valid project', function () {
     before('prepare environment', async function () {
-      hre = loadEnvironment(this);
-      this.timeout;
+      hre = loadEnvironment(this, 'sample-deploy');
     });
 
     describe('when using default configuration', function () {
       it('correctly deploys the architecture', async function () {
         const { contracts } = await hre.run(TASK_DEPLOY, { quiet: true });
 
-        equal(Object.values(contracts).length, 8);
+        equal(Object.values(contracts).length, 3);
         ok(contracts.Router);
         ok(contracts.Proxy);
       });
@@ -26,7 +25,7 @@ describe('tasks/deploy.ts', function () {
       it('correctly finishes', async function () {
         const { contracts } = await hre.run(TASK_DEPLOY, { quiet: true, skipProxy: true });
 
-        equal(Object.values(contracts).length, 7);
+        equal(Object.values(contracts).length, 2);
         ok(contracts.Router);
         ok(!contracts.Proxy);
       });
