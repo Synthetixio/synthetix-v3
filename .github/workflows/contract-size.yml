@@ -10,6 +10,11 @@ jobs:
         package: [core-contracts, core-modules, synthetix-main]
 
     steps:
+      - name: Install Foundry (Cannon)
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: nightly
+      - run: anvil -V
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
