@@ -6,7 +6,7 @@ function s(base, exp) {
   return ethers.BigNumber.from(base).mul(ethers.BigNumber.from(10).pow(exp));
 }
 
-describe.only('DecimalMath', () => {
+describe('DecimalMath', () => {
   let DecimalMath;
   let mulSignature,
     divSignature,
