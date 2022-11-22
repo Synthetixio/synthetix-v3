@@ -14,7 +14,7 @@ interface Props {
   contracts: ContractData[];
 }
 
-interface ContractData {
+export interface ContractData {
   contractName: string;
   deployedAddress: string;
   abi: ReadonlyArray<JsonFragment>;

@@ -2,23 +2,26 @@ import hre from 'hardhat';
 import { ChainBuilderRuntime, ChainBuilderContext } from '@usecannon/builder/dist/src/types';
 import { SUBTASK_GENERATE_ROUTER } from '@synthetixio/hardhat-router/dist/task-names';
 
+type CannonContract = ChainBuilderContext['contracts'][keyof ChainBuilderContext['contracts']];
+
 /**
  * Generate the Router contract file. It also includes the local CoreModule.
  */
 exports.generate = async function generate(
   runtime: ChainBuilderRuntime,
   routerFqName: string,
-  CoreModuleJson: string,
-  contractsJson: string
+  contractsMapJson: string,
+  ...extraContractsJson: string[]
 ) {
-  const contracts = [
-    JSON.parse(CoreModuleJson),
-    ...Object.values(JSON.parse(contractsJson) as ChainBuilderContext['contracts']),
-  ].map((c) => ({
-    deployedAddress: c.address,
-    contractName: c.contractName,
-    abi: c.abi,
-  }));
+  const contracts = Object.values(
+    JSON.parse(contractsMapJson) as ChainBuilderContext['contracts']
+  ).map(_parseCannonContract);
+
+  if (extraContractsJson) {
+    contracts.push(
+      ...extraContractsJson.map((c) => JSON.parse(c) as CannonContract).map(_parseCannonContract)
+    );
+  }
 
   await hre.run(SUBTASK_GENERATE_ROUTER, {
     router: routerFqName,
@@ -30,3 +33,11 @@ exports.generate = async function generate(
 
   return { contracts: {} };
 };
+
+function _parseCannonContract(c: CannonContract) {
+  return {
+    deployedAddress: c.address,
+    contractName: c.contractName,
+    abi: c.abi,
+  };
+}
