@@ -11,8 +11,12 @@ defaultValue = "oracle-manager"
 description = "Admin user for the system"
 defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
 
+[setting.core_router_package]
+description = "Package version of @synthetixio/core-router to use"
+defaultValue = "core-router:1.0.0"
+
 [import.core_router]
-source = "core-router:1.0.0"
+source = "<%= settings.core_router_package %>"
 options.salt = "<%= settings.salt %>"
 options.owner = "<%= settings.owner %>"
 
