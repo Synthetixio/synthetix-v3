@@ -13,6 +13,7 @@ describe('tasks/deploy.ts', function () {
 
     describe('when using default configuration', function () {
       it('correctly deploys the architecture', async function () {
+        await hre.run('compile');
         const { contracts } = await hre.run(TASK_DEPLOY, { quiet: true });
 
         equal(Object.values(contracts).length, 3);
