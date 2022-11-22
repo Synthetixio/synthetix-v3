@@ -9,6 +9,7 @@ pragma solidity ^0.8.0;
  * 2) If int256 A = -1, casting A to uint256 returns type(uint256).max.
  */
 library SafeCast {
+    // TODO: CustomErrors not working? See SafeCast.test.js.
     error CastError(bytes32 fromType, bytes32 toType);
 
     // Note: Overloading doesn't seem to work for similar types, i.e. int256 and int128, uint256 and uint128, etc, so explicitly naming the functions differently here.
@@ -55,6 +56,14 @@ library SafeCast {
         // Note: No checks are necessary here since the domain of int256 includes the domain of int128.
 
         return int256(x);
+    }
+
+    function int128toUint128(int128 x) internal pure returns (uint128) {
+        if (x < 0) {
+            revert("Failed cast int128 to uint128");
+        }
+
+        return uint128(x);
     }
 
     function uint128toUint256(uint128 x) internal pure returns (uint256) {
