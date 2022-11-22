@@ -4,7 +4,7 @@ on:
   pull_request: {}
   push:
     branches:
-      - 'master'
+      - "main"
 
 jobs:
   publish:
@@ -15,7 +15,7 @@ jobs:
         with:
           version: nightly
       - run: anvil -V
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
           node-version: "16.16.0"
@@ -43,7 +43,7 @@ jobs:
           INFURA_IPFS_SECRET: ${{ secrets.INFURA_IPFS_SECRET }}
         # run the publish and extract the Qm... string
         run: |
-          export result=$(npx hardhat cannon:publish --skip-register synthetix:$(jq -r .version < package.json)) 
+          export result=$(npx hardhat cannon:publish --skip-register synthetix:$(jq -r .version < package.json))
           echo "$result" >> $GITHUB_STEP_SUMMARY
           echo "cannon_package=@ipfs:$(echo "$result" | sed -n 's/.* \(Qm[^ ]*\).*/\1/p')" >> $GITHUB_OUTPUT
         working-directory: ./packages/synthetix-main

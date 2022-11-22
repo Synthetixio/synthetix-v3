@@ -1,10 +1,9 @@
-import { writeFile } from 'node:fs/promises';
+import fs from 'node:fs/promises';
 import path from 'node:path';
 import { subtask } from 'hardhat/config';
 import { parseFullyQualifiedName } from 'hardhat/utils/contract-names';
 import logger from '@synthetixio/core-utils/utils/io/logger';
 import { renderRouter } from '../internal/render-router';
-import { routerFunctionFilter } from '../internal/router-function-filter';
 import { contractIsInSources } from '../internal/contract-helper';
 import { SUBTASK_GENERATE_ROUTER } from '../task-names';
 import { DeployedContractData } from '../types';
@@ -20,7 +19,7 @@ subtask(
   'Reads deployed modules from the deployment data file and generates the source for a new router contract.'
 ).setAction(
   async (
-    { router = 'contracts/Router.sol:Router', template = '', contracts = [] }: Params,
+    { router = 'contracts/Router.sol:Router', template = undefined, contracts = [] }: Params,
     hre
   ) => {
     const { sourceName, contractName } = parseFullyQualifiedName(router);
@@ -31,17 +30,20 @@ subtask(
 
     const routerPath = path.resolve(hre.config.paths.root, sourceName);
 
-    logger.debug(`generated: ${router} | modules: ${contracts.length}`);
+    logger.subtitle(`Generating Router: ${router}`);
+    logger.log(`Including ${contracts.length} modules:`);
+    for (const c of contracts) logger.info(`${c.contractName}: ${c.deployedAddress}`);
 
     const sourceCode = renderRouter({
       routerName: contractName,
       template,
       contracts,
-      functionFilter: routerFunctionFilter,
     });
 
-    await writeFile(routerPath, sourceCode);
-    logger.success(`Router code generated and written to ${sourceName}`);
+    await fs.mkdir(path.dirname(routerPath), { recursive: true });
+    await fs.writeFile(routerPath, sourceCode);
+
+    logger.success(`Router code written to ${routerPath}`);
 
     return {
       location: routerPath,
