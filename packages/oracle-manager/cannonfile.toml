@@ -28,8 +28,10 @@ exec = "@synthetixio/core-router"
 func = "generate"
 args = [
   "contracts/routers/chain-<%= chainId %>/Router.sol:Router",
-  "<%= JSON.stringify(contracts) %>",
-  "<%= JSON.stringify(imports.core_router.contracts.CoreModule) %>"
+  '''<%= JSON.stringify({
+    CoreModule: imports.core_router.contracts.CoreModule,
+    OracleManagerModule: contracts.OracleManagerModule,
+  }) %>'''
 ]
 modified = ["contracts"]
 depends = [
