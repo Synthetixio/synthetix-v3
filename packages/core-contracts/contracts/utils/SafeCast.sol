@@ -61,7 +61,7 @@ library SafeCast {
         return uint256(x);
     }
 
-    function uint256toInt256(uint256 x) internal pure returns (int256) {
+    function toInt256(uint256 x) internal pure returns (int256) {
         if (x > uint256(type(int256).max)) {
             revert("Failed cast uint256 to int256");
         }

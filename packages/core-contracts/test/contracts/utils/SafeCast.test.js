@@ -134,7 +134,7 @@ describe.only('SafeCast', () => {
 
   describe('uint256 to int256', function () {
     before('set the target cast function', async function () {
-      castFunction = 'uint256toInt256(uint256)';
+      castFunction = 'toInt256(uint256)';
     });
 
     it('produces expected results', async function () {

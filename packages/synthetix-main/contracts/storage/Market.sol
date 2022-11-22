@@ -261,7 +261,7 @@ library Market {
      * TODO: Consider renaming to totalDebt()? totalBalance is more correct, but totalDebt is easier to understand.
      */
     function totalBalance(Data storage self) internal view returns (int) {
-        return int(getReportedDebt(self)) + self.issuance - getDepositedCollateralValue(self).uint256toInt256();
+        return int(getReportedDebt(self)) + self.issuance - getDepositedCollateralValue(self).toInt256();
     }
 
     /**
