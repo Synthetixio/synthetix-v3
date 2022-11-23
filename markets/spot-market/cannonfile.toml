@@ -10,14 +10,13 @@ defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
 description = "spot market owner"
 defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
 
+[import.core_router]
+source = "core-router:1.0.0"
+options.salt = "<%= settings.salt %>"
+options.owner = "<%= settings.owner %>"
+
 [import.synthetix]
 source = "synthetix:3.0.0-alpha.2"
-
-[contract.OwnerModule]
-artifact = "contracts/modules/common/OwnerModule.sol:OwnerModule"
-
-[contract.UpgradeModule]
-artifact = "contracts/modules/common/UpgradeModule.sol:UpgradeModule"
 
 [contract.SpotMarketFactoryModule]
 artifact = "SpotMarketFactoryModule"
@@ -29,34 +28,44 @@ artifact = "SpotMarketModule"
 artifact = "WrapperModule"
 
 [run.generate_router]
-exec = "../../packages/hardhat-router/dist/cannon/router.js"
+exec = "@synthetixio/core-router"
 func = "generate"
-args = ["SpotMarketRouter", "contracts/modules/core", "contracts/modules/common"]
-modified = []
+args = [
+  "contracts/routers/chain-<%= chainId %>/Router.sol:Router",
+  '''<%= JSON.stringify({
+    CoreModule: imports.core_router.contracts.CoreModule,
+    SpotMarketFactoryModule: contracts.SpotMarketFactoryModule,
+    SpotMarketModule: contracts.SpotMarketModule,
+    WrapperModule: contracts.WrapperModule,
+  }) %>'''
+]
+modified = ["contracts"]
 depends = [
+  "import.core_router",
   "contract.SpotMarketFactoryModule",
   "contract.SpotMarketModule",
-  "contract.WrapperModule",
-  "contract.OwnerModule",
-  "contract.UpgradeModule"
+  "contract.WrapperModule"
 ]
 
-[contract.SpotMarketRouter]
-artifact = "contracts/routers/chain-<%= chainId %>/SpotMarketRouter.sol:SpotMarketRouter"
+[contract.Router]
+artifact = "contracts/routers/chain-<%= chainId %>/Router.sol:Router"
 abiOf = [
+  "core_router.CoreModule",
   "SpotMarketFactoryModule",
   "SpotMarketModule",
-  "WrapperModule",
-  "OwnerModule",
-  "UpgradeModule"
+  "WrapperModule"
 ]
 depends = ["run.generate_router"]
 
-[contract.SpotMarketProxy]
-artifact = "contracts/Proxy.sol:Proxy"
-args = ["<%= contracts.SpotMarketRouter.address %>"]
-abiOf = ["SpotMarketRouter"]
-depends = ["contract.SpotMarketRouter"]
+[invoke.upgrade_proxy]
+target = ["core_router.Proxy"]
+from = "<%= settings.owner %>"
+func = "upgradeTo"
+args = ["<%= contracts.Router.address %>"]
+factory.Proxy.abiOf = ["Router"]
+factory.Proxy.event = "Upgraded"
+factory.Proxy.arg = 0
+depends = ["contract.Router"]
 
 # add pool owner to feature flag allow list (owner must be pdao for this to be successful)
 [invoke.addSpotMarketToFeatureFlag]
@@ -65,10 +74,3 @@ func = "addToFeatureFlagAllowlist"
 from = "<%= settings.coreProxyOwner %>"
 args = ["0x72656769737465724d61726b6574000000000000000000000000000000000000", "<%= contracts.SpotMarketProxy.address %>"] # formatBytes32String("registerMarket")
 depends = ['import.synthetix', 'contract.SpotMarketProxy']
-
-[invoke.acquire_ownership]
-target = ["SpotMarketProxy"]
-from = "<%= settings.marketOwner %>"
-func = "initializeOwnerModule"
-args = ["<%= settings.marketOwner %>"]
-depends = ["contract.SpotMarketProxy"]
