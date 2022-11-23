@@ -132,6 +132,30 @@ describe('SafeCast', () => {
     });
   });
 
+  describe('int128 to uint128', function () {
+    before('set the target cast function', async function () {
+      castFunction = 'int128toUint128(int128)';
+    });
+
+    it('produces expected results', async function () {
+      await assertCast(42);
+      await assertCast(exp(1337, 18));
+    });
+
+    it('produces expected results on edge cases', async function () {
+      await assertCast(0);
+      await assertCast(MAX_INT_128);
+    });
+
+    it('throws on overflows', async function () {
+      await assertRevert(SafeCast[castFunction](MAX_INT_128.add(1)), 'out-of-bounds');
+      // Note: These should fail with CastError,
+      // but for some reason Solidity is not providing a revert reason.
+      // await assertRevert(SafeCast[castFunction](-1), 'out-of-bounds');
+      await assertRevert(SafeCast[castFunction](-1));
+    });
+  });
+
   describe('uint256 to int256', function () {
     before('set the target cast function', async function () {
       castFunction = 'uint256toInt256(uint256)';

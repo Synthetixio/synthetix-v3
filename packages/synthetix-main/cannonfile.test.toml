@@ -18,8 +18,8 @@ defaultValue = "1.0.0"
 source = "oracle-manager:<%= settings.oracle_manager_version %>"
 options.owner = "<%= settings.owner %>"
 
-[contract.OwnerModule]
-artifact = "contracts/modules/common/OwnerModule.sol:OwnerModule"
+[contract.InitialModuleBundle]
+artifact = "contracts/modules/InitialModuleBundle.sol:InitialModuleBundle"
 
 [contract.InitialModuleBundle]
 artifact = "contracts/modules/InitialModuleBundle.sol:InitialModuleBundle"
@@ -127,8 +127,6 @@ artifact = "contracts/modules/test/TestableVaultEpochModule.sol:TestableVaultEpo
 [contract.TestableVaultModule]
 artifact = "contracts/modules/test/TestableVaultModule.sol:TestableVaultModule"
 
-[contract.TestableOracleManagerModule]
-artifact = "contracts/modules/test/TestableOracleManagerModule.sol:TestableOracleManagerModule"
 
 # Core
 [run.core_generate_router]

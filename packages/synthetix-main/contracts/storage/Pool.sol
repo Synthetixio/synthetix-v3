@@ -223,7 +223,7 @@ library Pool {
             thing = int(creditCapacity.divDecimal(minLiquidityRatio).divDecimal(self.debtDist.totalShares));
         }
 
-        return int256(marketData.debtDist.valuePerShare.toLowPrecisionInt128()) + thing;
+        return int256(marketData.debtDist.valuePerShare.reducePrecisionInt128()) + thing;
     }
 
     /**
