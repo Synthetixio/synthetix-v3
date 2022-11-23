@@ -18,9 +18,6 @@ defaultValue = "1.0.0"
 source = "oracle-manager:<%= settings.oracle_manager_version %>"
 options.owner = "<%= settings.owner %>"
 
-[contract.OwnerModule]
-artifact = "contracts/modules/common/OwnerModule.sol:OwnerModule"
-
 [contract.InitialModuleBundle]
 artifact = "contracts/modules/InitialModuleBundle.sol:InitialModuleBundle"
 
@@ -161,7 +158,7 @@ depends = ["contract.InitialCoreProxy"]
 
 [invoke.upgrade_core_proxy]
 target = ["InitialCoreProxy"]
-abi = "UpgradeModule"
+abi = "InitialCoreProxy"
 from = "<%= settings.owner %>"
 func = "upgradeTo"
 args = ["<%= contracts.CoreRouter.address %>"]

@@ -21,9 +21,6 @@ options.owner = "<%= settings.owner %>"
 [contract.InitialModuleBundle]
 artifact = "contracts/modules/InitialModuleBundle.sol:InitialModuleBundle"
 
-[contract.InitialModuleBundle]
-artifact = "contracts/modules/InitialModuleBundle.sol:InitialModuleBundle"
-
 [contract.FeatureFlagModule]
 artifact = "contracts/modules/core/FeatureFlagModule.sol:FeatureFlagModule"
 
@@ -261,7 +258,7 @@ depends = ["contract.InitialCoreProxy"]
 
 [invoke.upgrade_core_proxy]
 target = ["InitialCoreProxy"]
-abi = "UpgradeModule"
+abi = "InitialCoreProxy"
 from = "<%= settings.owner %>"
 func = "upgradeTo"
 args = ["<%= contracts.CoreRouter.address %>"]
