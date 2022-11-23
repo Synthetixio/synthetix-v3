@@ -1,10 +1,9 @@
-import fs from 'fs';
 import hre from 'hardhat';
 import { ChainBuilderContext } from '@usecannon/builder';
 import { ethers } from 'ethers';
 
 import { snapshotCheckpoint } from '../utils';
-import { runTypeChain, glob } from 'typechain'
+import { runTypeChain, glob } from 'typechain';
 import { AccountProxy, CoreProxy, SNXProxy, USDProxy } from '../generated/typechain';
 
 const POOL_FEATURE_FLAG = ethers.utils.formatBytes32String('createPool');
@@ -33,10 +32,10 @@ let provider: ethers.providers.JsonRpcProvider;
 let signers: ethers.Signer[];
 
 let systems: {
-  Account: AccountProxy,
-  Core: CoreProxy,
-  USD: USDProxy,
-  SNX: SNXProxy,
+  Account: AccountProxy;
+  Core: CoreProxy;
+  USD: USDProxy;
+  SNX: SNXProxy;
 };
 
 let baseSystemSnapshot: unknown;
@@ -53,7 +52,7 @@ before(async function () {
     writeDeployments: cmd === 'deploy' ? false : 'test/generated/deployments', // deploy the cannon deployments
   });
 
-  const allFiles = glob(hre.config.paths.root, [`test/generated/deployments/*.json`])
+  const allFiles = glob(hre.config.paths.root, ['test/generated/deployments/*.json']);
 
   await runTypeChain({
     cwd: hre.config.paths.root,
@@ -80,7 +79,9 @@ before(async function () {
     ...(outputs.contracts ?? {}),
     ...(outputs.imports?.synthetix?.contracts ?? {}),
   };
-  systems = await loadSystems(contracts, provider) as any;
+
+  // after a lot of testing, we *really* need the any here in order to accomplish the typing we need
+  systems = (await loadSystems(contracts, provider)) as any; // eslint-disable-line @typescript-eslint/no-explicit-any
 
   console.log('completed initial bootstrap');
 });

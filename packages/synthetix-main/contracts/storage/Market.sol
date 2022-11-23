@@ -325,15 +325,13 @@ library Market {
         return self.capacity < getLockedLiquidity(self);
     }
 
-
     /**
      * @dev Gets any outstanding debt. Do not call this method except in tests
      *
      * TODO: Understand distributeDebt() first.
      */
     function getOutstandingDebt(Data storage self, uint128 poolId) internal returns (int debtChange) {
-        return int128(self.pools[poolId].pendingDebt) +
-            self.debtDist.updateActorShares(bytes32(uint(poolId)), 0);
+        return int128(self.pools[poolId].pendingDebt) + self.debtDist.updateActorShares(bytes32(uint(poolId)), 0);
     }
 
     function getDebtPerShare(Data storage self) internal view returns (int debtPerShare) {
@@ -442,7 +440,11 @@ library Market {
         }
     }
 
-    function bumpPoolsOut(Data storage self, int maxDistributed, uint maxIter) internal returns (int actuallyDistributed, bool exhausted) {
+    function bumpPoolsOut(
+        Data storage self,
+        int maxDistributed,
+        uint maxIter
+    ) internal returns (int actuallyDistributed, bool exhausted) {
         if (maxDistributed <= 0) {
             return (0, false);
         }
@@ -459,10 +461,9 @@ library Market {
                 break;
             }
 
-            int targetValuePerShare =
-                self.debtDist.valuePerShare.toLowPrecisionInt128() +
+            int targetValuePerShare = self.debtDist.valuePerShare.toLowPrecisionInt128() +
                 (maxDistributed - actuallyDistributed).divDecimal(int128(self.debtDist.totalShares));
-            
+
             console.log("target value per share", uint(targetValuePerShare));
             console.log("shares count", uint(self.debtDist.totalShares));
             console.log("max distributed", uint(self.debtDist.totalShares));
@@ -502,17 +503,20 @@ library Market {
         exhausted = iters == maxIter;
     }
 
-    function bumpPoolsIn(Data storage self, int maxDistributed, uint maxIter) internal returns (int actuallyDistributed, bool exhausted) {
+    function bumpPoolsIn(
+        Data storage self,
+        int maxDistributed,
+        uint maxIter
+    ) internal returns (int actuallyDistributed, bool exhausted) {
         if (maxDistributed >= 0 || self.debtDist.totalShares == 0) {
             return (0, false);
         }
 
         uint iters;
         for (iters = 0; iters < maxIter; iters++) {
-            int targetValuePerShare =
-                self.debtDist.valuePerShare.toLowPrecisionInt128() +
+            int targetValuePerShare = self.debtDist.valuePerShare.toLowPrecisionInt128() +
                 (maxDistributed - actuallyDistributed).divDecimal(int128(self.debtDist.totalShares));
-            
+
             // Exit if there are no out range pools
             if (self.outRangePools.size() == 0) {
                 break;
