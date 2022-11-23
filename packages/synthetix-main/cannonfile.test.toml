@@ -124,6 +124,9 @@ artifact = "contracts/modules/test/TestableVaultEpochModule.sol:TestableVaultEpo
 [contract.TestableVaultModule]
 artifact = "contracts/modules/test/TestableVaultModule.sol:TestableVaultModule"
 
+[contract.TestableOracleManagerModule]
+artifact = "contracts/modules/test/TestableOracleManagerModule.sol:TestableOracleManagerModule"
+
 
 # Core
 [run.core_generate_router]
@@ -165,6 +168,7 @@ args = [
     TestableRewardDistributionStatusModule: contracts.TestableRewardDistributionStatusModule,
     TestableVaultEpochModule: contracts.TestableVaultEpochModule,
     TestableVaultModule: contracts.TestableVaultModule,
+    TestableOracleManagerModule: contracts.TestableOracleManagerModule,
   }) %>'''
 ]
 modified = ["contracts/modules/core"]
