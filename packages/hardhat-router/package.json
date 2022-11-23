@@ -37,7 +37,7 @@
   },
   "dependencies": {
     "@synthetixio/core-utils": "*",
-    "axios": "0.27.2",
+    "axios": "1.2.0",
     "mustache": "4.2.0",
     "solidity-ast": "0.4.26"
   },
@@ -46,10 +46,8 @@
     "@types/jsonpath": "0.2.0",
     "@types/mustache": "4.2.1",
     "hardhat": "2.11.2",
-    "jsonpath": "1.1.1",
     "mocha": "9.1.1",
     "nyc": "15.1.0",
-    "solc-typed-ast": "10.3.0",
     "source-map-support": "0.5.21",
     "tsconfig-paths": "4.1.0"
   }

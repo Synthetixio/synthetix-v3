@@ -1,10 +1,6 @@
+import { deepEqual, equal, notEqual } from 'assert/strict';
 import path from 'path';
 import { ContractDefinition, SourceUnit, StructDefinition } from 'solidity-ast';
-import { deepEqual, equal, notEqual } from 'assert/strict';
-
-import asts from '../../fixtures/asts.json';
-import noContractAst from '../../fixtures/no-contract-ast.json';
-import parseContracts, { ParsedContracts } from '../../helpers/parse-contracts';
 import {
   findContractDefinitions,
   findContractDependencies,
@@ -15,39 +11,42 @@ import {
   findFunctionNodes,
   findFunctionSelectors,
   findImportedContractFullyQualifiedName,
-  findYulCaseValues,
   findYulStorageSlotAssignments,
 } from '../../../src/utils/ast/finders';
+import asts from '../../fixtures/asts.json';
+import noContractAst from '../../fixtures/no-contract-ast.json';
+import parseContracts from '../../helpers/parse-contracts';
 
-const astNodes = Object.values(asts) as SourceUnit[];
+const jsonAstNodes = Object.values(asts) as SourceUnit[];
 
 describe('utils/ast/finders.ts find AST artifacts', function () {
-  let sampleProject: ParsedContracts;
-  let sampleProjectAstNodes: SourceUnit[];
+  let astNodes: SourceUnit[];
+  let sources: { [sourceName: string]: SourceUnit };
 
   before('load sample-project artifacts', async function () {
-    const envPath = path.resolve(__dirname, '..', '..', 'fixtures', 'sample-project');
-    sampleProject = await parseContracts(envPath);
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    sampleProjectAstNodes = Object.values(sampleProject.asts!);
+    const contracts = await parseContracts(
+      path.resolve(__dirname, '..', '..', 'fixtures', 'sample-project')
+    );
+    astNodes = Object.values(contracts.asts!);
+    sources = contracts.asts!;
   });
 
   describe('find contract node', function () {
     it('finds a contract node by fully qualified name', function () {
       const fqName = 'contracts/TokenModule.sol:TokenModule';
-      const contractNode = findContractNode(fqName, sampleProjectAstNodes);
+      const contractNode = findContractNode(fqName, astNodes);
       equal(contractNode?.name, 'TokenModule');
     });
 
     it('returns undefined on invalid contract', function () {
       const fqName = 'contracts/TokenModule.sol:InvalidContract';
-      const contractNode = findContractNode(fqName, sampleProjectAstNodes);
+      const contractNode = findContractNode(fqName, astNodes);
       equal(contractNode, undefined);
     });
 
     it('returns undefined on invalid source', function () {
       const fqName = 'contracts/InvalidSource.sol:InvalidContract';
-      const contractNode = findContractNode(fqName, sampleProjectAstNodes);
+      const contractNode = findContractNode(fqName, astNodes);
       equal(contractNode, undefined);
     });
   });
@@ -56,7 +55,7 @@ describe('utils/ast/finders.ts find AST artifacts', function () {
     it('finds contract dependencies of a simple contract', function () {
       const fqName = 'contracts/MultipleInheritance.sol:MultipleInheritancce';
 
-      deepEqual(findContractDependencies(fqName, sampleProjectAstNodes), [
+      deepEqual(findContractDependencies(fqName, astNodes), [
         'contracts/MultipleInheritance.sol:MultipleInheritancce',
         'contracts/MultipleInheritance.sol:SomeModule',
         'contracts/AnotherModule.sol:AnotherModule',
@@ -67,7 +66,7 @@ describe('utils/ast/finders.ts find AST artifacts', function () {
     it('finds contract dependencies of a complex contract', function () {
       const dependencies = findContractDependencies(
         'contracts/modules/SettingsModule.sol:SettingsModule',
-        astNodes
+        jsonAstNodes
       );
       equal(dependencies.length, 5, 'SettingsModule should have 5 dependencies');
 
@@ -84,13 +83,13 @@ describe('utils/ast/finders.ts find AST artifacts', function () {
   describe('find function selectors', function () {
     it('finds selectors from a contract', function () {
       const AnotherModule = 'contracts/modules/AnotherModule.sol:AnotherModule';
-      const selectors = findFunctionSelectors(AnotherModule, astNodes);
+      const selectors = findFunctionSelectors(AnotherModule, jsonAstNodes);
       equal(selectors.length, 1, 'AnotherModule should have 1 selector');
       equal(selectors[0].selector, '0x45aa2181', 'AnotherModule selector should be 0x45aa2181');
     });
 
     it('doesnt find selectors from a contract that doesnt expose any', function () {
-      const selectors = findFunctionSelectors('contracts/Router.sol:Router', astNodes);
+      const selectors = findFunctionSelectors('contracts/Router.sol:Router', jsonAstNodes);
       equal(selectors.length, 0, 'Router should not have any selector');
     });
   });
@@ -99,7 +98,7 @@ describe('utils/ast/finders.ts find AST artifacts', function () {
     it('finds selectors from a contract', function () {
       const functions = findFunctionNodes(
         'contracts/modules/AnotherModule.sol:AnotherModule',
-        astNodes
+        jsonAstNodes
       );
 
       equal(functions.length, 3, 'AnotherModule should have 1 function');
@@ -116,7 +115,7 @@ describe('utils/ast/finders.ts find AST artifacts', function () {
     });
 
     it('doesnt find selectors from a contract that doesnt expose any', function () {
-      const selectors = findFunctionSelectors('contracts/Router.sol:Router', astNodes);
+      const selectors = findFunctionSelectors('contracts/Router.sol:Router', jsonAstNodes);
       equal(selectors.length, 0, 'Router should not have any selector');
     });
   });
@@ -167,43 +166,15 @@ describe('utils/ast/finders.ts find AST artifacts', function () {
 
   describe('find contract node state variables', function () {
     it('doesnt find a state variable', function () {
-      const contractNode = findContractNode(
-        'contracts/SampleModule.sol:SampleModule',
-        sampleProjectAstNodes
-      );
+      const contractNode = findContractNode('contracts/SampleModule.sol:SampleModule', astNodes);
       const node = findContractStateVariables(contractNode as unknown as StructDefinition); // TODO
       equal(node.length, 0);
     });
 
     it('should find a state variables', function () {
-      const contractNode = findContractNode(
-        'contracts/TokenModule.sol:TokenModule',
-        sampleProjectAstNodes
-      );
+      const contractNode = findContractNode('contracts/TokenModule.sol:TokenModule', astNodes);
       const node = findContractStateVariables(contractNode as unknown as StructDefinition); // TODO
       equal(node.length, 1);
-    });
-  });
-
-  describe('find case vaules (YUL)', function () {
-    it('finds case values from Router contract', function () {
-      const routerSelectors = findYulCaseValues(asts['Router'] as unknown as StructDefinition);
-      notEqual(routerSelectors, undefined);
-      equal(routerSelectors.length > 2, true);
-      equal(
-        routerSelectors.some(
-          (v) => v.selector === '0x45aa2181' && v.value!.name === '_ANOTHER_MODULE'
-        ),
-        true
-      );
-    });
-
-    it('doesnt find case values on not-case contract', function () {
-      const routerSelectors = findYulCaseValues(
-        asts['AnotherModule'] as unknown as StructDefinition
-      );
-      notEqual(routerSelectors, undefined);
-      equal(routerSelectors.length == 0, true);
     });
   });
 
@@ -231,8 +202,8 @@ describe('utils/ast/finders.ts find AST artifacts', function () {
       const result = findImportedContractFullyQualifiedName(
         'ERC20',
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        sampleProject.asts!['contracts/Token.sol'],
-        sampleProjectAstNodes
+        sources['contracts/Token.sol'],
+        astNodes
       );
 
       equal(result, '@synthetixio/core-contracts/contracts/token/ERC20.sol:ERC20');
@@ -242,8 +213,8 @@ describe('utils/ast/finders.ts find AST artifacts', function () {
       const result = findImportedContractFullyQualifiedName(
         'ERC721Base',
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        sampleProject.asts!['contracts/Token.sol'],
-        sampleProjectAstNodes
+        sources['contracts/Token.sol'],
+        astNodes
       );
 
       equal(result, '@synthetixio/core-contracts/contracts/token/ERC721.sol:ERC721');
@@ -253,8 +224,8 @@ describe('utils/ast/finders.ts find AST artifacts', function () {
       const result = findImportedContractFullyQualifiedName(
         'UnexistantContract',
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        sampleProject.asts!['contracts/Token.sol'],
-        sampleProjectAstNodes
+        sources['contracts/Token.sol'],
+        astNodes
       );
 
       equal(result, undefined);

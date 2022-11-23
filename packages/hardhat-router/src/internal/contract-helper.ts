@@ -2,6 +2,7 @@ import path from 'node:path';
 import { SourceUnit } from 'solidity-ast';
 import { HardhatRuntimeEnvironment } from 'hardhat/types';
 import { parseFullyQualifiedName } from 'hardhat/utils/contract-names';
+import { findImportedNodes } from '@synthetixio/core-utils/utils/ast/finders';
 import { getSelectors } from '@synthetixio/core-utils/utils/ethers/contracts';
 import { onlyRepeated } from '@synthetixio/core-utils/utils/misc/array-filters';
 import { DeploymentAbis } from '../types';
@@ -110,4 +111,42 @@ export async function getContractAst(
   }
 
   return buildInfo.output.sources[sourceName].ast as SourceUnit;
+}
+
+export async function getSourcesAsts(hre: HardhatRuntimeEnvironment, whitelist: string[]) {
+  const filtered = await getSourcesFullyQualifiedNames(hre, whitelist);
+  const astSources = await _getAllAsts(hre);
+  const astNodes = Object.values(astSources);
+
+  const result: { [sourceName: string]: SourceUnit } = {};
+
+  await Promise.all(
+    filtered.map(async (fqName) => {
+      const { sourceName } = parseFullyQualifiedName(fqName);
+      const sources = findImportedNodes(sourceName, astNodes);
+
+      for (const sourceName of sources) {
+        result[sourceName] = astSources[sourceName];
+      }
+    })
+  );
+
+  return Object.values(result).sort((a, b) =>
+    a.absolutePath > b.absolutePath ? 1 : a.absolutePath < b.absolutePath ? -1 : 0
+  );
+}
+
+async function _getAllAsts(hre: HardhatRuntimeEnvironment) {
+  const [dummyFqName] = await hre.artifacts.getAllFullyQualifiedNames();
+
+  const buildInfo = await hre.artifacts.getBuildInfo(dummyFqName);
+  if (!buildInfo) throw new Error('Build info missing');
+
+  const result: { [sourceName: string]: SourceUnit } = {};
+
+  for (const { ast } of Object.values(buildInfo.output.sources)) {
+    result[ast.absolutePath] = ast;
+  }
+
+  return result;
 }

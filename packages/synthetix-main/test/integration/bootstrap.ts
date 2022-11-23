@@ -1,10 +1,10 @@
 import hre from 'hardhat';
 import { ChainBuilderContext } from '@usecannon/builder';
 import { ethers } from 'ethers';
+import { glob, runTypeChain } from 'typechain';
 
-import { snapshotCheckpoint } from '../utils';
-import { runTypeChain, glob } from 'typechain';
 import { AccountProxy, CoreProxy, SNXProxy, USDProxy } from '../generated/typechain';
+import { snapshotCheckpoint } from '../utils/snapshot';
 
 import { MockMarket } from '../../typechain-types/contracts/mocks/MockMarket';
 

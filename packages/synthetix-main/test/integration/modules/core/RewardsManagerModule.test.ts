@@ -5,7 +5,7 @@ import { ethers } from 'ethers';
 import { fastForwardTo, getTime } from '@synthetixio/core-utils/utils/hardhat/rpc';
 
 import { bootstrapWithStakedPool } from '../../bootstrap';
-import { snapshotCheckpoint } from '../../../utils';
+import { snapshotCheckpoint } from '../../../utils/snapshot';
 
 // ---------------------------------------
 // If the tests are failing Make sure you run foundryup to update the anvil to latest version

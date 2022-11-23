@@ -3,7 +3,10 @@
   "version": "1.1.3",
   "description": "Common JS utils for Synthetix",
   "files": [
-    "utils"
+    "utils/**/*.js",
+    "utils/**/*.js.map",
+    "utils/**/*.d.ts",
+    "utils/**/*.d.ts.map"
   ],
   "scripts": {
     "build": "tsc --project src/tsconfig.json",
@@ -27,6 +30,8 @@
   },
   "dependencies": {
     "chalk": "4.1.2",
-    "prompts": "2.4.2"
+    "fast-glob": "3.2.12",
+    "prompts": "2.4.2",
+    "rfdc": "1.3.0"
   }
 }

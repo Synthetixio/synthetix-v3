@@ -4,7 +4,7 @@ import hre from 'hardhat';
 import { ethers } from 'ethers';
 import Permissions from '../../storage/AcccountRBACMixin.permissions';
 import { bootstrapWithStakedPool } from '../../bootstrap';
-import { snapshotCheckpoint } from '../../../utils';
+import { snapshotCheckpoint } from '../../../utils/snapshot';
 
 const MARKET_FEATURE_FLAG = ethers.utils.formatBytes32String('registerMarket');
 
