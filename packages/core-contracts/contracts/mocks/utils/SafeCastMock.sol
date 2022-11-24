@@ -28,7 +28,11 @@ contract SafeCastMock {
         return SafeCast.int128toInt256(x);
     }
 
-    function uint128toUint256(uint128 x) public returns (uint256) {
+    function int128toUint128(int128 x) public view returns (uint128) {
+        return SafeCast.int128toUint128(x);
+    }
+
+    function uint128toUint256(uint128 x) public view returns (uint256) {
         return SafeCast.uint128toUint256(x);
     }
 

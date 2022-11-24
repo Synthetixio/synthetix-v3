@@ -8,7 +8,8 @@
   },
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "2.1.1",
+    "@synthetixio/core-router": "*",
     "@synthetixio/hardhat-router": "*",
-    "hardhat-cannon": "1.1.16"
+    "hardhat-cannon": "1.1.18"
   }
 }

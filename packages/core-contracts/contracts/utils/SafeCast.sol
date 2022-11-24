@@ -79,6 +79,16 @@ library SafeCast {
         return int256(x);
     }
 
+    function int128toUint128(int128 x) internal pure returns (uint128) {
+        // ----------------<==============o==============>-----------------
+        // ----------------xxxxxxxxxxxxxxxo===============>----------------
+        if (x < 0) {
+            revert("Failed cast int128 to uint128");
+        }
+
+        return uint128(x);
+    }
+
     function uint128toUint256(uint128 x) internal pure returns (uint256) {
         // No checks are necessary here since the domain of uint256 includes the domain of uint128.
         // -------------------------------o===============>----------------
