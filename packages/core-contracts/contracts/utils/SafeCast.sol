@@ -15,7 +15,11 @@ pragma solidity ^0.8.0;
  * int128 [-2^127 - 1, 2^127 - 1]  ----------------<==============o==============>-----------------
  */
 library SafeCast {
-    error CastError(bytes32 fromType, bytes32 toType);
+    error OverflowUint256ToUint128();
+    error OverflowInt256ToUint256();
+    error OverflowUint128ToInt128();
+    error OverflowInt256ToInt128();
+    error OverflowUint256ToInt256();
 
     // Note: Overloading doesn't seem to work for similar types, i.e. int256 and int128, uint256 and uint128, etc, so explicitly naming the functions differently here.
 
@@ -23,7 +27,7 @@ library SafeCast {
         // -------------------------------o===============================>
         // -------------------------------o===============>xxxxxxxxxxxxxxxx
         if (x > type(uint128).max) {
-            revert CastError("uint256", "uint128");
+            revert OverflowUint256ToUint128();
         }
 
         return uint128(x);
@@ -33,7 +37,7 @@ library SafeCast {
         // ----<==========================o===========================>----
         // ----xxxxxxxxxxxxxxxxxxxxxxxxxxxo===============================>
         if (x < 0) {
-            revert CastError("int256", "uint256");
+            revert OverflowInt256ToUint256();
         }
 
         return uint256(x);
@@ -43,7 +47,7 @@ library SafeCast {
         // -------------------------------o===============>----------------
         // ----------------<==============o==============>x----------------
         if (x > uint128(type(int128).max)) {
-            revert CastError("uint128", "int128");
+            revert OverflowUint128ToInt128();
         }
 
         return int128(x);
@@ -61,7 +65,7 @@ library SafeCast {
         // ----<==========================o===========================>----
         // ----xxxxxxxxxxxx<==============o==============>xxxxxxxxxxxxx----
         if (x < int256(type(int128).min) || x > int256(type(int128).max)) {
-            revert CastError("int256", "int128");
+            revert OverflowInt256ToInt128();
         }
 
         return int128(x);
@@ -87,7 +91,7 @@ library SafeCast {
         // -------------------------------o===============================>
         // ----<==========================o===========================>xxxx
         if (x > uint256(type(int256).max)) {
-            revert CastError("uint256", "int256");
+            revert OverflowUint256ToInt256();
         }
 
         return int256(x);
