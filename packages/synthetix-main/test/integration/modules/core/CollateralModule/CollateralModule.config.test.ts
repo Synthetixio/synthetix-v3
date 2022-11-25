@@ -24,8 +24,8 @@ describe('CollateralModule', function () {
           systems().Core.connect(user1).configureCollateral({
             tokenAddress: dummyAddress,
             priceFeed: dummyAddress,
-            targetCRatio: 400,
-            minimumCRatio: 200,
+            issuanceRatio: 400,
+            liquidationRatio: 200,
             liquidationReward: 0,
             minDelegation: 0,
             depositingEnabled: false,
@@ -84,8 +84,8 @@ describe('CollateralModule', function () {
               systems().Core.connect(user1).configureCollateral({
                 tokenAddress: AnotherCollateral.address,
                 priceFeed: AnotherCollateralPriceFeed.address,
-                targetCRatio: 200,
-                minimumCRatio: 100,
+                issuanceRatio: 200,
+                liquidationRatio: 100,
                 liquidationReward: 0,
                 minDelegation: 0,
                 depositingEnabled: false,
@@ -101,8 +101,8 @@ describe('CollateralModule', function () {
             const tx = await systems().Core.connect(systemOwner).configureCollateral({
               tokenAddress: AnotherCollateral.address,
               priceFeed: AnotherCollateralPriceFeed.address,
-              targetCRatio: 300,
-              minimumCRatio: 250,
+              issuanceRatio: 300,
+              liquidationRatio: 250,
               liquidationReward: 0,
               minDelegation: 0,
               depositingEnabled: true,
@@ -132,8 +132,8 @@ describe('CollateralModule', function () {
             const tx = await systems().Core.connect(systemOwner).configureCollateral({
               tokenAddress: AnotherCollateral.address,
               priceFeed: AnotherCollateralPriceFeed.address,
-              targetCRatio: 300,
-              minimumCRatio: 250,
+              issuanceRatio: 300,
+              liquidationRatio: 250,
               liquidationReward: 0,
               minDelegation: 0,
               depositingEnabled: false,

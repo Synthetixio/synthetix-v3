@@ -6,8 +6,8 @@ import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber'
 export async function addCollateral(
   tokenName: string,
   tokenSymbol: string,
-  targetCRatio: number,
-  minimumCRatio: number,
+  issuanceRatio: number,
+  liquidationRatio: number,
   owner: Ethers.Signer,
   core: Ethers.Contract
 ) {
@@ -27,8 +27,8 @@ export async function addCollateral(
     await core.connect(owner).configureCollateral({
       tokenAddress: Collateral.address,
       priceFeed: CollateralPriceFeed.address,
-      targetCRatio: targetCRatio,
-      minimumCRatio: minimumCRatio,
+      issuanceRatio: issuanceRatio,
+      liquidationRatio: liquidationRatio,
       liquidationReward: 0,
       minDelegation: 0,
       depositingEnabled: true,
@@ -42,8 +42,8 @@ export async function verifyCollateral(
   collateralIdx: number,
   Collateral: Ethers.Contract,
   CollateralPriceFeed: Ethers.Contract,
-  expectedCRatio: number,
-  expectedMinimumCRatio: number,
+  expectedIssuanceRatio: number,
+  expectedLiquidationRatio: number,
   expectedToBeEnabled: boolean,
   core: Ethers.Contract
 ) {
@@ -56,8 +56,8 @@ export async function verifyCollateral(
 
   assert.equal(collateralType.tokenAddress, Collateral.address);
   assert.equal(collateralType.priceFeed, CollateralPriceFeed.address);
-  assertBn.equal(collateralType.targetCRatio, expectedCRatio);
-  assertBn.equal(collateralType.minimumCRatio, expectedMinimumCRatio);
+  assertBn.equal(collateralType.issuanceRatio, expectedIssuanceRatio);
+  assertBn.equal(collateralType.liquidationRatio, expectedLiquidationRatio);
   assert.equal(collateralType.depositingEnabled, expectedToBeEnabled);
 }
 
