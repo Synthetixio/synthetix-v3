@@ -49,10 +49,17 @@ before(async function () {
   const cannonInfo = await hre.run(`cannon:${cmd}`, {
     cannonfile: 'cannonfile.test.toml', // build option to override cannonfile
     overrideManifest: 'cannonfile.test.toml', // deploy option to override cannonfile
-    writeDeployments: cmd === 'deploy' ? false : 'test/generated/deployments', // deploy the cannon deployments
+    writeDeployments: cmd === 'deploy' ? true : 'test/generated/deployments', // deploy the cannon deployments
   });
 
-  const allFiles = glob(hre.config.paths.root, ['test/generated/deployments/*.json']);
+  let outDir = ['test/generated/deployments/*.json'];
+
+  // hack beacuse cannon does not support specifying write directory for deployment
+  if (cmd === 'deploy') {
+    outDir = ['deployments/*.json'];
+  }
+
+  const allFiles = glob(hre.config.paths.root, outDir);
 
   await runTypeChain({
     cwd: hre.config.paths.root,
