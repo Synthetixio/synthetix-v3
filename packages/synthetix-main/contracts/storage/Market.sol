@@ -11,8 +11,6 @@ import "./MarketPoolInfo.sol";
 
 import "../interfaces/external/IMarket.sol";
 
-import "hardhat/console.sol";
-
 /**
  * @title TODO The Market object connects external contracts that implement the `IMarket` interface to the system, thus providing them with liquidity, and exposing the system itself to the market's debt.
  *
@@ -463,10 +461,6 @@ library Market {
 
             int targetValuePerShare = self.debtDist.valuePerShare.toLowPrecisionInt128() +
                 (maxDistributed - actuallyDistributed).divDecimal(int128(self.debtDist.totalShares));
-
-            console.log("target value per share", uint(targetValuePerShare));
-            console.log("shares count", uint(self.debtDist.totalShares));
-            console.log("max distributed", uint(self.debtDist.totalShares));
 
             // Exit if the lowest max value per share does not hit the limit.
             HeapUtil.Node memory lowestLimitPool = self.inRangePools.getMax();
