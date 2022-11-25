@@ -424,7 +424,7 @@ library Pool {
     /**
      * @dev Reverts if the specified pool does not exist.
      */
-    function requireExists(uint128 poolId) internal {
+    function requireExists(uint128 poolId) internal view {
         if (!Pool.exists(poolId)) {
             revert PoolNotFound(poolId);
         }
@@ -433,7 +433,7 @@ library Pool {
     /**
      * @dev Reverts if the caller is not the owner of the specified pool.
      */
-    function onlyPoolOwner(uint128 poolId, address caller) internal {
+    function onlyPoolOwner(uint128 poolId, address caller) internal view {
         if (Pool.load(poolId).owner != caller) {
             revert AccessError.Unauthorized(caller);
         }

@@ -3,6 +3,8 @@ import { ChainBuilderContext } from '@usecannon/builder';
 import { ethers } from 'ethers';
 
 import { snapshotCheckpoint } from '../utils';
+import { runTypeChain, glob } from 'typechain';
+import { AccountProxy, CoreProxy, SNXProxy, USDProxy } from '../generated/typechain';
 
 const POOL_FEATURE_FLAG = ethers.utils.formatBytes32String('createPool');
 const MARKET_FEATURE_FLAG = ethers.utils.formatBytes32String('registerMarket');
@@ -29,7 +31,12 @@ let provider: ethers.providers.JsonRpcProvider;
 
 let signers: ethers.Signer[];
 
-let systems: Record<string, ethers.Contract>;
+let systems: {
+  Account: AccountProxy;
+  Core: CoreProxy;
+  USD: USDProxy;
+  SNX: SNXProxy;
+};
 
 let baseSystemSnapshot: unknown;
 
@@ -42,6 +49,24 @@ before(async function () {
   const cannonInfo = await hre.run(`cannon:${cmd}`, {
     cannonfile: 'cannonfile.test.toml', // build option to override cannonfile
     overrideManifest: 'cannonfile.test.toml', // deploy option to override cannonfile
+    writeDeployments: cmd === 'deploy' ? true : 'test/generated/deployments', // deploy the cannon deployments
+  });
+
+  let outDir = ['test/generated/deployments/*.json'];
+
+  // hack beacuse cannon does not support specifying write directory for deployment
+  if (cmd === 'deploy') {
+    outDir = ['deployments/*.json'];
+  }
+
+  const allFiles = glob(hre.config.paths.root, outDir);
+
+  await runTypeChain({
+    cwd: hre.config.paths.root,
+    filesToProcess: allFiles,
+    allFiles,
+    target: 'ethers-v5',
+    outDir: 'test/generated/typechain',
   });
 
   provider = cannonInfo.provider;
@@ -61,7 +86,9 @@ before(async function () {
     ...(outputs.contracts ?? {}),
     ...(outputs.imports?.synthetix?.contracts ?? {}),
   };
-  systems = await loadSystems(contracts, provider);
+
+  // after a lot of testing, we *really* need the any here in order to accomplish the typing we need
+  systems = (await loadSystems(contracts, provider)) as any; // eslint-disable-line @typescript-eslint/no-explicit-any
 
   console.log('completed initial bootstrap');
 });

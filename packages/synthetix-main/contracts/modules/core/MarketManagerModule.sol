@@ -60,7 +60,7 @@ contract MarketManagerModule is IMarketManagerModule {
 
         market.distributeDebt(999999999);
 
-        return market.debtDist.valuePerShare / 1e9;
+        return market.getDebtPerShare();
     }
 
     function isMarketCapacityLocked(uint128 marketId) external view override returns (bool) {

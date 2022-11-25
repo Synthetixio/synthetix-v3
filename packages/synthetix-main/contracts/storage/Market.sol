@@ -2,12 +2,12 @@
 pragma solidity ^0.8.0;
 
 import "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
-import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
-import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+
 import "@synthetixio/core-contracts/contracts/utils/HeapUtil.sol";
 
 import "./Distribution.sol";
 import "./CollateralConfiguration.sol";
+import "./MarketPoolInfo.sol";
 
 import "../interfaces/external/IMarket.sol";
 
@@ -20,10 +20,12 @@ library Market {
     using Distribution for Distribution.Data;
     using HeapUtil for HeapUtil.Data;
     using DecimalMath for uint256;
+    using DecimalMath for uint128;
     using DecimalMath for int256;
     using DecimalMath for int128;
-    using SafeCast for uint128;
+
     using SafeCast for uint256;
+    using SafeCast for uint128;
     using SafeCast for int256;
     using SafeCast for int128;
 
@@ -124,11 +126,9 @@ library Market {
          */
         Distribution.Data debtDist;
         /**
-         * @dev TODO
-         *
-         * TODO: Understand adjustVaultShares() first.
+         * @dev Additional info needed to remebmer pools when they are removed from the distribution (or subsequently re-added)
          */
-        mapping(uint128 => int) poolPendingDebt;
+        mapping(uint128 => MarketPoolInfo.Data) pools;
         /**
          * @dev TODO Array of entries of market provided collateral.
          *
@@ -261,7 +261,7 @@ library Market {
      * TODO: Consider renaming to totalDebt()? totalBalance is more correct, but totalDebt is easier to understand.
      */
     function totalBalance(Data storage self) internal view returns (int) {
-        return int(getReportedDebt(self)) + self.issuance - getDepositedCollateralValue(self).uint256toInt256();
+        return int(getReportedDebt(self)) + self.issuance - int(getDepositedCollateralValue(self));
     }
 
     /**
@@ -293,7 +293,7 @@ library Market {
      * This liquidity is obtained by reading the amount of shares that the pool has in the market's debt distribution, which in turn represents the amount of USD denominated credit capacity that the pool has provided to the market.
      */
     function getPoolLiquidity(Data storage self, uint128 poolId) internal view returns (uint) {
-        return self.debtDist.getActorShares(bytes32(poolId.uint128toUint256()));
+        return self.debtDist.getActorShares(bytes32(uint(poolId)));
     }
 
     /**
@@ -315,10 +315,9 @@ library Market {
         int maxDebtShareValue
     ) internal view returns (uint contribution) {
         // Determine how much the current value per share deviates from the maximum.
-        uint deltaValuePerShare = (maxDebtShareValue - self.debtDist.valuePerShare.reducePrecisionInt128().int128toInt256())
-            .int256toUint256();
+        uint deltaValuePerShare = uint(maxDebtShareValue - self.debtDist.valuePerShare.reducePrecision());
 
-        return deltaValuePerShare.mulDecimal(liquidityShares);
+        return uint(deltaValuePerShare).mulDecimal(liquidityShares);
     }
 
     /**
@@ -328,6 +327,19 @@ library Market {
      */
     function isCapacityLocked(Data storage self) internal view returns (bool) {
         return self.capacity < getLockedLiquidity(self);
+    }
+
+    /**
+     * @dev Gets any outstanding debt. Do not call this method except in tests
+     *
+     * TODO: Understand distributeDebt() first.
+     */
+    function getOutstandingDebt(Data storage self, uint128 poolId) internal returns (int debtChange) {
+        return self.pools[poolId].pendingDebt.uint128toInt128() + self.debtDist.updateActorShares(bytes32(uint(poolId)), 0);
+    }
+
+    function getDebtPerShare(Data storage self) internal view returns (int debtPerShare) {
+        return self.debtDist.valuePerShare.reducePrecision();
     }
 
     /**
@@ -380,20 +392,24 @@ library Market {
         //require(oldPoolMaxShareValue == 0, "value is not 0");
         //require(newPoolMaxShareValue == 0, "new pool max share value is in fact set");
 
+        self.pools[poolId].liquidityAmount = newLiquidity.uint256toUint128();
+
         int128 lowPrecisionValuePerShare = self.debtDist.valuePerShare.reducePrecisionInt128();
 
-        if (newPoolMaxShareValue <= lowPrecisionValuePerShare) {
+        if (newPoolMaxShareValue < lowPrecisionValuePerShare) {
             // this will ensure calculations below can correctly gauge shares changes
             newLiquidity = 0;
-            self.inRangePools.extractById(poolId);
+            self.inRangePools.extractById(poolId.uint256toUint128());
+            self.outRangePools.insert(poolId, newPoolMaxShareValue.int256toInt128());
         } else {
             self.inRangePools.insert(poolId, -newPoolMaxShareValue.int256toInt128());
+            self.outRangePools.extractById(poolId);
         }
 
         debtChange =
-            self.poolPendingDebt[poolId] +
-            self.debtDist.updateActorShares(bytes32(poolId.uint128toUint256()), newLiquidity);
-        self.poolPendingDebt[poolId] = 0;
+            self.pools[poolId].pendingDebt.uint128toInt128() +
+            self.debtDist.updateActorShares(bytes32(uint(poolId)), newLiquidity);
+        self.pools[poolId].pendingDebt = 0;
 
         // recalculate market capacity
         if (newPoolMaxShareValue > lowPrecisionValuePerShare) {
@@ -414,84 +430,138 @@ library Market {
      * NOTE: this function should be called before any pool alters its liquidity allocation (see `rebalance` above)
      */
     function distributeDebt(Data storage self, uint maxIter) internal {
-        // No debt to distribute if there is no liquidity.
-        if (self.debtDist.totalShares == 0) {
-            return;
-        }
-
         // Get the current and last distributed market balances.
         // Note: The last distributed balance will be cached within this function's execution.
         int256 targetBalance = totalBalance(self);
-        int256 distributedBalance = self.lastDistributedMarketBalance;
-        int256 outstandingBalance = targetBalance - distributedBalance;
+        int256 outstandingBalance = targetBalance - self.lastDistributedMarketBalance;
 
-        // Calculate the target value per share of the distribution if it assimilated the market's outstanding balance.
-        int256 targetValuePerShare = self.debtDist.valuePerShare.reducePrecisionInt128() +
-            outstandingBalance.divDecimal(self.debtDist.totalShares.uint128toInt128());
+        (, bool exhaustedUp) = bumpPoolsOut(self, outstandingBalance, maxIter);
+        (, bool exhaustedDown) = bumpPoolsIn(self, outstandingBalance, maxIter);
+
+        if (!exhaustedDown && !exhaustedUp && self.debtDist.totalShares > 0) {
+            // cannot use `outstandingBalance` here because `self.lastDistributedMarketBalance`
+            // may have changed after calling the bump functions above
+            self.debtDist.distributeValue(targetBalance - self.lastDistributedMarketBalance);
+            self.lastDistributedMarketBalance = targetBalance.int256toInt128();
+        }
+    }
+
+    function bumpPoolsOut(
+        Data storage self,
+        int maxDistributed,
+        uint maxIter
+    ) internal returns (int actuallyDistributed, bool exhausted) {
+        if (maxDistributed <= 0) {
+            return (0, false);
+        }
 
         // Find pools for which this market's max value per share limit is exceeded.
         // Remove them, and distribute their debt up to the limit that is hit.
         // TODO: Polish these comments.
         // Note: This loop should rarely execute the body. When it does, it only executes once for each pool that exceeds the limit since `distributeValue` is not run for most pools. Thus, market users are not hit with any overhead as a result of this.
-        for (uint i = 0; i < maxIter; i++) {
+        uint iters;
+        for (iters = 0; iters < maxIter; iters++) {
             // Exit if there are no in range pools.
             if (self.inRangePools.size() == 0) {
                 break;
             }
 
+            int targetValuePerShare = self.debtDist.valuePerShare.reducePrecision() +
+                (maxDistributed - actuallyDistributed).divDecimal(self.debtDist.totalShares.uint128toInt128());
+
             // Exit if the lowest max value per share does not hit the limit.
-            int lowestMaxValuePerShare = -self.inRangePools.getMax().priority;
-            if (lowestMaxValuePerShare >= targetValuePerShare) {
+            HeapUtil.Node memory lowestLimitPool = self.inRangePools.getMax();
+
+            // `-lowestLimitPool.priority` is actually the max value per share limit of the pool
+            if (-lowestLimitPool.priority >= targetValuePerShare) {
                 break;
             }
 
             // The pool has hit its maximum value per share and needs to be removed.
-            // Note: It is hard to extract this code into a separate sub-function because it does alter global target, distributed, and outstanding balances.
+            // Update the global distributed and outstanding balances with the debt that was just distributed.
+            togglePool(self.inRangePools, self.outRangePools);
 
-            // Identify the pool.
-            HeapUtil.Node memory node = self.inRangePools.extractMax();
-            uint poolId = node.id;
-            // TODO: Can reuse lowestMaxValuePerShare?
-            int128 poolMaxValuePerShare = -node.priority;
+            int128 poolMaxValuePerShare = -lowestLimitPool.priority;
 
             // Distribute the market's debt to the limit, i.e. for that which exceeds the maximum value per share.
-            int256 debtToLimit = self.debtDist.totalShares.uint128toInt256().mulDecimal(
-                (poolMaxValuePerShare - self.debtDist.valuePerShare.reducePrecisionInt128()).int128toInt256() // Diff between current value and max value per share.
+            int debtToLimit = self.debtDist.totalShares.uint128toInt256().mulDecimal(
+                poolMaxValuePerShare - self.debtDist.valuePerShare.reducePrecision() // Diff between current value and max value per share.
             );
             self.debtDist.distributeValue(debtToLimit);
+            actuallyDistributed += debtToLimit;
 
-            // Update the global distributed and outstanding balances with the debt that was just distributed.
-            distributedBalance += debtToLimit;
-            outstandingBalance = targetBalance - distributedBalance;
+            uint128 poolId = lowestLimitPool.id;
 
             // Sanity check: The pool should have shares in the market's debt distribution.
-            require(self.debtDist.getActorShares(bytes32(poolId)) > 0, "no shares on actor removal");
+            require(self.debtDist.getActorShares(bytes32(uint(poolId))) > 0, "no shares before actor removal");
 
-            // TODO: Polish these comments.
             // Detach the market from this pool by removing the pool's shares from the market.
             // The pool will remain "detached" until the pool manager specifies a new debtDist.
-            int newPoolDebt = self.debtDist.updateActorShares(bytes32(poolId), 0);
-            self.poolPendingDebt[poolId.uint256toUint128()] += newPoolDebt;
-
-            // Note: We don't have to update the capacity because pool max share value - valuePerShare = 0, so no change, and conceptually it makes sense because this pools contribution to the capacity should have been used at this point.
-
-            // Exit if there are no shares left.
-            // The last pool has been popped and the market's balance can't be moved any higher.
-            if (self.debtDist.totalShares == 0) {
-                // we just popped the last pool, can't move the market balance any higher
-                self.lastDistributedMarketBalance = distributedBalance.int256toInt128();
-                return;
-            }
-
-            // Since shares left the market, the remaining value must be spread amongst the shares that remain in the market.
-            targetValuePerShare =
-                self.debtDist.valuePerShare +
-                outstandingBalance.divDecimal(self.debtDist.totalShares.uint128toInt256());
+            uint newPoolDebt = uint(self.debtDist.updateActorShares(bytes32(uint(poolId)), 0));
+            self.pools[poolId].pendingDebt += newPoolDebt.uint256toUint128();
         }
 
-        outstandingBalance = targetBalance - distributedBalance;
-        self.debtDist.distributeValue(outstandingBalance);
+        self.lastDistributedMarketBalance += actuallyDistributed.int256toInt128();
 
-        self.lastDistributedMarketBalance = targetBalance.int256toInt128();
+        exhausted = iters == maxIter;
+    }
+
+    function bumpPoolsIn(
+        Data storage self,
+        int maxDistributed,
+        uint maxIter
+    ) internal returns (int actuallyDistributed, bool exhausted) {
+        if (maxDistributed >= 0 || self.debtDist.totalShares == 0) {
+            return (0, false);
+        }
+
+        uint iters;
+        for (iters = 0; iters < maxIter; iters++) {
+            int targetValuePerShare = self.debtDist.valuePerShare.reducePrecision() +
+                (maxDistributed - actuallyDistributed).divDecimal(self.debtDist.totalShares.uint128toInt256());
+
+            // Exit if there are no out range pools
+            if (self.outRangePools.size() == 0) {
+                break;
+            }
+
+            // Exit if the lowest max value per share does not hit the limit.
+            HeapUtil.Node memory highestLimitPool = self.outRangePools.getMax();
+
+            // highestLimitPool.priority` is actually the max value per share limit of the pool
+            if (highestLimitPool.priority < targetValuePerShare) {
+                break;
+            }
+
+            // The pool has hit its maximum value per share and needs to be removed.
+            // Update the global distributed and outstanding balances with the debt that was just distributed.
+            togglePool(self.outRangePools, self.inRangePools);
+
+            int128 poolMaxValuePerShare = highestLimitPool.priority;
+
+            // Distribute the market's debt to the limit, i.e. for that which exceeds the maximum value per share.
+            int debtToLimit = self.debtDist.totalShares.uint128toInt256().mulDecimal(
+                poolMaxValuePerShare - self.debtDist.valuePerShare.reducePrecision() // Diff between current value and max value per share.
+            );
+            self.debtDist.distributeValue(debtToLimit);
+            actuallyDistributed += debtToLimit;
+
+            uint128 poolId = highestLimitPool.id;
+
+            require(self.debtDist.getActorShares(bytes32(uint(poolId))) == 0, "actor has shares before add");
+
+            // Attach the market from this pool by setting the pool's shares to the value before exiting the market.
+            self.debtDist.updateActorShares(bytes32(uint(poolId)), self.pools[poolId].liquidityAmount);
+        }
+
+        self.lastDistributedMarketBalance += actuallyDistributed.int256toInt128();
+
+        exhausted = iters == maxIter;
+    }
+
+    function togglePool(HeapUtil.Data storage from, HeapUtil.Data storage to) internal {
+        HeapUtil.Node memory node = from.extractMax();
+        to.insert(node.id, -node.priority);
+        // Note: We don't have to update the capacity because pool max share value - valuePerShare = 0, so no change, and conceptually it makes sense because this pools contribution to the capacity should have been used at this point.
     }
 }
