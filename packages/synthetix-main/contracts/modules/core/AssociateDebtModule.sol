@@ -82,7 +82,7 @@ contract AssociateDebtModule is IAssociateDebtModule {
         uint debt,
         uint collateralValue
     ) internal view {
-        uint targetCratio = CollateralConfiguration.load(collateralType).targetCRatio;
+        uint targetCratio = CollateralConfiguration.load(collateralType).issuanceRatio;
 
         if (debt != 0 && collateralValue.divDecimal(debt) < targetCratio) {
             revert InsufficientCollateralRatio(collateralValue, debt, collateralValue.divDecimal(debt), targetCratio);

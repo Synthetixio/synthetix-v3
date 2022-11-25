@@ -594,7 +594,7 @@ Emitted when `amount` of collateral of type `collateralType` is withdrawn from a
 ### configureCollateral
 
 ```solidity
-function configureCollateral(address collateralType, address priceFeed, uint256 targetCRatio, uint256 minimumCRatio, uint256 liquidationReward, bool depositingEnabled) external
+function configureCollateral(address collateralType, address priceFeed, uint256 issuanceRatio, uint256 liquidationRatio, uint256 liquidationReward, bool depositingEnabled) external
 ```
 
 Creates or updates the configuration for given `collateralType`.
@@ -719,7 +719,7 @@ Emitted when `amount` of collateral of type `collateralType` is withdrawn from a
 ### configureCollateral
 
 ```solidity
-function configureCollateral(address collateralType, address priceFeed, uint256 targetCRatio, uint256 minimumCRatio, uint256 liquidationReward, bool depositingEnabled) external
+function configureCollateral(address collateralType, address priceFeed, uint256 issuanceRatio, uint256 liquidationRatio, uint256 liquidationReward, bool depositingEnabled) external
 ```
 
 Creates or updates the configuration for given `collateralType`.

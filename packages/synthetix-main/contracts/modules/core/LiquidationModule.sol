@@ -59,7 +59,7 @@ contract LiquidationModule is ILiquidationModule {
                 collateralValue,
                 debtLiquidated,
                 debtLiquidated == 0 ? 0 : collateralValue.divDecimal(debtLiquidated),
-                collateralConfig.minimumCRatio
+                collateralConfig.liquidationRatio
             );
         }
 
@@ -130,7 +130,7 @@ contract LiquidationModule is ILiquidationModule {
                 collateralValue,
                 vaultDebt,
                 vaultDebt > 0 ? collateralValue.divDecimal(vaultDebt) : 0,
-                collateralConfig.minimumCRatio
+                collateralConfig.liquidationRatio
             );
         }
 
@@ -175,7 +175,7 @@ contract LiquidationModule is ILiquidationModule {
             return false;
         }
 
-        return collateralValue.divDecimal(debt) < CollateralConfiguration.load(collateralType).minimumCRatio;
+        return collateralValue.divDecimal(debt) < CollateralConfiguration.load(collateralType).liquidationRatio;
     }
 
     function isLiquidatable(
