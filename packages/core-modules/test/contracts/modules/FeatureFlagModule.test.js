@@ -8,7 +8,7 @@ const initializer = require('@synthetixio/core-modules/test/helpers/initializer'
 
 describe('FeatureFlagModule', () => {
   const { proxyAddress } = bootstrap(initializer, {
-    modules: '.*(FeatureFlagModule|SampleFeatureFlagModule|Owner|Upgrade).*',
+    modules: ['OwnerModule', 'UpgradeModule', 'FeatureFlagModule', 'SampleFeatureFlagModule'],
   });
 
   let FeatureFlagModule, SampleFeatureFlagModule;

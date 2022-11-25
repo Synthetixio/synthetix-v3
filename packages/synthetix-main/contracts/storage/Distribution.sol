@@ -1,7 +1,8 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@synthetixio/core-contracts/contracts/utils/MathUtil.sol";
+import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
+import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 
 import "./DistributionActor.sol";
 import "../errors/ParameterError.sol";
@@ -67,6 +68,12 @@ import "../errors/ParameterError.sol";
  * - totalValue: 150 USD
  */
 library Distribution {
+    using SafeCast for uint128;
+    using SafeCast for uint256;
+    using SafeCast for int128;
+    using SafeCast for int256;
+    using DecimalMath for int256;
+
     /**
      * @dev Thrown when an attempt is made to distribute value to a distribution
      * with no shares.
@@ -98,6 +105,8 @@ library Distribution {
          * i.e:
          * - 1 ether = 1e18
          * - 1 preciseInteger = 1e27
+         *
+         * TODO: Consider renaming to valuePerShareHighPrecision in order to be completely explicit about this.
          */
         int128 valuePerShare;
         /**
@@ -105,6 +114,8 @@ library Distribution {
          */
         mapping(bytes32 => DistributionActor.Data) actorInfo;
     }
+
+    // TODO: Add function to retrieve a low precision value per share. This is done from multiple parts of the code and prone to errors.
 
     /**
      * @dev Adds or removes value to the distribution. The value is
@@ -121,7 +132,9 @@ library Distribution {
             revert EmptyDistribution();
         }
 
-        int amountHighPrecision = amount * 1e27;
+        // TODO: Can we safely assume that amount will always be a regular integer,
+        // i.e. not a decimal?
+        int amountHighPrecision = amount.toHighPrecisionDecimal();
         int deltaValuePerShare = amountHighPrecision / int(totalShares);
 
         dist.valuePerShare += int128(deltaValuePerShare);
@@ -152,13 +165,14 @@ library Distribution {
         int128 deltaValuePerShare = dist.valuePerShare - actor.lastValuePerShare;
 
         // Calculate the total change in the actor's value.
-        int changedValueHighPrecision = deltaValuePerShare * int(int128(actor.shares));
-        changedValue = changedValueHighPrecision / 1e27;
+        int changedValueHighPrecision = deltaValuePerShare * actor.shares.uint128toInt256();
+        changedValue = changedValueHighPrecision.fromHighPrecisionDecimalToInteger();
 
         // Modify the total shares with the actor's change in shares.
-        dist.totalShares = uint128(dist.totalShares + shares - actor.shares);
+        uint128 sharesUint128 = shares.uint256toUint128();
+        dist.totalShares = dist.totalShares + sharesUint128 - actor.shares;
 
-        actor.shares = uint128(shares);
+        actor.shares = sharesUint128;
         actor.lastValuePerShare = shares == 0 ? int128(0) : dist.valuePerShare;
     }
 
@@ -192,11 +206,11 @@ library Distribution {
         // Calculate the number of shares that the
         // change in value produces.
 
-        // If the distribution is empty, set valuePerShare to 1,
+        // If the distribution is empty, set valuePerShare to 1.0,
         // and the number of shares to the given value.
         if (dist.totalShares == 0) {
-            dist.valuePerShare = 1e27;
-            shares = uint(value > 0 ? value : -value); // Ensure value is positive
+            dist.valuePerShare = DecimalMath.UNIT_PRECISE_INT128;
+            shares = (value > 0 ? value : -value).int256toUint256(); // Ensure value is positive
         }
         // If the distribution is not empty, the number of shares
         // is determined by the valuePerShare.
@@ -207,9 +221,9 @@ library Distribution {
         }
 
         // Modify the total shares with the actor's change in shares.
-        dist.totalShares = uint128(dist.totalShares + shares - actor.shares);
+        dist.totalShares = (dist.totalShares + shares - actor.shares).uint256toUint128();
 
-        actor.shares = uint128(shares);
+        actor.shares = (shares).uint256toUint128();
         // Note: No need to update actor.lastValuePerShare
         // because they contributed value to the distribution.
     }
@@ -235,7 +249,7 @@ library Distribution {
      * i.e. actor.shares * valuePerShare
      */
     function getActorValue(Data storage dist, bytes32 actorId) internal view returns (int value) {
-        return (int(dist.valuePerShare) * int128(dist.actorInfo[actorId].shares)) / 1e27;
+        return (int(dist.valuePerShare) * int128(dist.actorInfo[actorId].shares)).fromHighPrecisionDecimalToInteger();
     }
 
     /**
@@ -246,7 +260,7 @@ library Distribution {
      * Requirement: this assumes that every user's lastValuePerShare is zero.
      */
     function totalValue(Data storage dist) internal view returns (int value) {
-        return (int(dist.valuePerShare) * int128(dist.totalShares)) / 1e27;
+        return (int(dist.valuePerShare) * int128(dist.totalShares)).fromHighPrecisionDecimalToInteger();
     }
 
     /**
@@ -258,8 +272,6 @@ library Distribution {
             revert ParameterError.InvalidParameter("value", "results in negative shares");
         }
 
-        int valueHighPrecision = value * 1e27;
-
-        return uint(valueHighPrecision / dist.valuePerShare);
+        return uint(value.toHighPrecisionDecimal() / dist.valuePerShare);
     }
 }

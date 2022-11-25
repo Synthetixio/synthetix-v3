@@ -21,7 +21,8 @@ library Pool {
     using Market for Market.Data;
     using Vault for Vault.Data;
     using Distribution for Distribution.Data;
-    using MathUtil for uint256;
+    using DecimalMath for uint256;
+    using DecimalMath for int128;
 
     error PoolNotFound(uint128 poolId);
     error PoolAlreadyExists(uint128 poolId);
@@ -70,12 +71,12 @@ library Pool {
          */
         MarketConfiguration.Data[] marketConfigurations;
         /**
-         * @dev A pool's debt distribution connects pools to the debt distribution chain, i.e. vaults and markets. Vaults are actors in the pool's debt distribution where the amount of shares they possess depends on the amount of collateral each vault delegates to the pool.
+         * @dev A pool's debt distribution connects pools to the debt distribution chain, i.e. vaults and markets. Vaults are actors in the pool's debt distribution, where the amount of shares they possess depends on the amount of collateral each vault delegates to the pool.
          *
          * The debt distribution chain will move debt from markets into this pools, and then from pools to vaults.
          *
          * Actors: Vaults.
-         * Shares: USD value, according to amount of collateral delegated.
+         * Shares: USD value, proportional to the amount of collateral that the vault delegates to the pool.
          * Value per share: Debt per dollar of collateral. Depends on aggregated debt of connected markets.
          *
          * TODO: Consider renaming accordingly when we have a better understanding of the debt distribution chain.
@@ -205,9 +206,6 @@ library Pool {
     ) internal view returns (int) {
         uint minLiquidityRatio = PoolConfiguration.load().minLiquidityRatio;
 
-        // Value per share is high precision (1e27), so downscale to 1e18.
-        int128 lowPrecisionMarketValuePerShare = marketData.debtDist.valuePerShare / 1e9;
-
         // TODO Explain the math in this block...
         // TODO Name `thing` variable accordingly once I understand the math.
         // thing = liquidity / minRatio / totalShares
@@ -219,13 +217,13 @@ library Pool {
         // if ratio > minRatio, thing > 1
         int thing;
         if (minLiquidityRatio == 0) {
-            thing = int(MathUtil.UNIT); // If minLiquidityRatio is zero, then TODO
+            thing = int(DecimalMath.UNIT); // If minLiquidityRatio is zero, then TODO
         } else {
             // maxShareValueIncrease?
             thing = int(creditCapacity.divDecimal(minLiquidityRatio).divDecimal(self.debtDist.totalShares));
         }
 
-        return lowPrecisionMarketValuePerShare + thing;
+        return int256(marketData.debtDist.valuePerShare.reducePrecisionInt128()) + thing;
     }
 
     /**

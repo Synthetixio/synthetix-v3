@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 import "@synthetixio/main/contracts/interfaces/external/IMarket.sol";
 
 contract SimpleSpotMarket is IMarket {
-    using MathUtil for uint256;
+    using DecimalMath for uint256;
 
     address public snxSystem;
     address public marketToInsure;

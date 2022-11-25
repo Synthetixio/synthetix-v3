@@ -1,14 +1,18 @@
 {
-  "spec": [
-    "test/unit/**/*.test.{j,t}s",
-    "test/integration/**/*.test.{j,t}s"
-  ],
+  "diff": true,
+  "recursive": true,
+  "sort": true,
   "timeout": 10000,
+  "extension": [
+    "ts"
+  ],
+  "spec": [
+    "test/src/**/*.test.ts"
+  ],
   "watch-files": [
-    "internal/**/*.{j,t}s",
-    "subtasks/**/*.{j,t}s",
-    "tasks/**/*.{j,t}s",
-    "test/src/**/*.{j,t}s",
-    "utils/**/*.{j,t}s"
+    "src/**/*.ts",
+    "test/**/*.ts",
+    "test/**/*.sol",
+    "templates/*.mustache"
   ]
 }

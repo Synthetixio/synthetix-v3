@@ -11,14 +11,11 @@ defaultValue = "main"
 description = "Admin user for the system"
 defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
 
-[contract.OwnerModule]
-artifact = "contracts/modules/common/OwnerModule.sol:OwnerModule"
+[contract.InitialModuleBundle]
+artifact = "contracts/modules/InitialModuleBundle.sol:InitialModuleBundle"
 
 [contract.FeatureFlagModule]
 artifact = "contracts/modules/core/FeatureFlagModule.sol:FeatureFlagModule"
-
-[contract.UpgradeModule]
-artifact = "contracts/modules/common/UpgradeModule.sol:UpgradeModule"
 
 [contract.AccountModule]
 artifact = "contracts/modules/core/AccountModule.sol:AccountModule"
@@ -71,18 +68,35 @@ artifact = "contracts/modules/snx/SNXTokenModule.sol:SNXTokenModule"
 [contract.USDTokenModule]
 artifact = "contracts/modules/usd/USDTokenModule.sol:USDTokenModule"
 
-[contract.InitialModuleBundle]
-artifact = "contracts/modules/InitialModuleBundle.sol:InitialModuleBundle"
-
 # Core
 [run.core_generate_router]
-exec = "../hardhat-router/dist/cannon/router.js"
+exec = "@synthetixio/core-router"
 func = "generate"
-args = ["CoreRouter", "contracts/modules/common", "contracts/modules/core", "contracts/modules/associated-systems"]
-modified = ["contracts/modules/common", "contracts/modules/core"]
+args = [
+  "contracts/routers/chain-<%= chainId %>/CoreRouter.sol:CoreRouter",
+  '''<%= JSON.stringify({
+    InitialModuleBundle: contracts.InitialModuleBundle,
+    AccountTokenModule: contracts.AccountTokenModule,
+    FeatureFlagModule: contracts.FeatureFlagModule,
+    AccountModule: contracts.AccountModule,
+    AssociateDebtModule: contracts.AssociateDebtModule,
+    AssociatedSystemsModule: contracts.AssociatedSystemsModule,
+    CollateralModule: contracts.CollateralModule,
+    IssueUSDModule: contracts.IssueUSDModule,
+    LiquidationModule: contracts.LiquidationModule,
+    MarketCollateralModule: contracts.MarketCollateralModule,
+    MarketManagerModule: contracts.MarketManagerModule,
+    MulticallModule: contracts.MulticallModule,
+    PoolConfigurationModule: contracts.PoolConfigurationModule,
+    PoolModule: contracts.PoolModule,
+    RewardsManagerModule: contracts.RewardsManagerModule,
+    UtilsModule: contracts.UtilsModule,
+    VaultModule: contracts.VaultModule,
+  }) %>'''
+]
+modified = ["contracts/modules/core"]
 depends = [
-  "contract.OwnerModule",
-  "contract.UpgradeModule",
+  "contract.InitialModuleBundle",
   "contract.FeatureFlagModule",
   "contract.AccountModule",
   "contract.AssociateDebtModule",
@@ -103,9 +117,8 @@ depends = [
 [contract.CoreRouter]
 artifact = "contracts/routers/chain-<%= chainId %>/CoreRouter.sol:CoreRouter"
 abiOf = [
-  "OwnerModule",
+  "InitialModuleBundle",
   "FeatureFlagModule",
-  "UpgradeModule",
   "AccountModule",
   "AssociateDebtModule",
   "AssociatedSystemsModule",
@@ -154,55 +167,69 @@ depends = [
 
 # Account
 [run.account_generate_router]
-exec = "../hardhat-router/dist/cannon/router.js"
+exec = "@synthetixio/core-router"
 func = "generate"
-args = ["AccountRouter", "contracts/modules/common", "contracts/modules/account"]
+args = [
+  "contracts/routers/chain-<%= chainId %>/AccountRouter.sol:AccountRouter",
+  '''<%= JSON.stringify({
+    InitialModuleBundle: contracts.InitialModuleBundle,
+    AccountTokenModule: contracts.AccountTokenModule,
+  }) %>'''
+]
 modified = ["contracts/modules/common", "contracts/modules/account"]
 depends = [
-  "contract.OwnerModule",
-  "contract.UpgradeModule",
+  "contract.InitialModuleBundle",
   "contract.AccountTokenModule"
 ]
 
 [contract.AccountRouter]
 artifact = "contracts/routers/chain-<%= chainId %>/AccountRouter.sol:AccountRouter"
 abiOf = [
-  "OwnerModule",
-  "UpgradeModule",
+  "InitialModuleBundle",
   "AccountTokenModule"
 ]
 depends = ["run.account_generate_router"]
 
 # SNX
 [run.snx_generate_router]
-exec = "../hardhat-router/dist/cannon/router.js"
+exec = "@synthetixio/core-router"
 func = "generate"
-args = ["SNXRouter", "contracts/modules/common", "contracts/modules/snx"]
-modified = ["contracts/modules/common", "contracts/modules/snx"]
+args = [
+  "contracts/routers/chain-<%= chainId %>/SNXRouter.sol:SNXRouter",
+  '''<%= JSON.stringify({
+    InitialModuleBundle: contracts.InitialModuleBundle,
+    SNXTokenModule: contracts.SNXTokenModule,
+  }) %>'''
+]
+modified = ["contracts/modules/snx"]
 depends = [
-  "contract.OwnerModule",
-  "contract.UpgradeModule",
+  "contract.InitialModuleBundle",
   "contract.SNXTokenModule"
 ]
 
 [contract.SNXRouter]
 artifact = "contracts/routers/chain-<%= chainId %>/SNXRouter.sol:SNXRouter"
 abiOf = [
-  "OwnerModule",
-  "UpgradeModule",
+  "InitialModuleBundle",
   "SNXTokenModule"
 ]
 depends = ["run.snx_generate_router"]
 
 # USD
 [run.usd_generate_router]
-exec = "../hardhat-router/dist/cannon/router.js"
+exec = "@synthetixio/core-router"
 func = "generate"
-args = ["USDRouter", "contracts/modules/common", "contracts/modules/usd", "contracts/modules/associated-systems"]
-modified = ["contracts/modules/common", "contracts/modules/usd"]
+args = [
+  "contracts/routers/chain-<%= chainId %>/USDRouter.sol:USDRouter",
+  '''<%= JSON.stringify({
+    InitialModuleBundle: contracts.InitialModuleBundle,
+    AssociatedSystemsModule: contracts.AssociatedSystemsModule,
+    USDTokenModule: contracts.USDTokenModule,
+  }) %>'''
+]
+modified = ["contracts/modules/associated-systems", "contracts/modules/usd"]
 depends = [
-  "contract.OwnerModule",
-  "contract.UpgradeModule",
+  "contract.InitialModuleBundle",
   "contract.AssociatedSystemsModule",
   "contract.USDTokenModule"
 ]
@@ -210,8 +237,7 @@ depends = [
 [contract.USDRouter]
 artifact = "contracts/routers/chain-<%= chainId %>/USDRouter.sol:USDRouter"
 abiOf = [
-  "OwnerModule",
-  "UpgradeModule",
+  "InitialModuleBundle",
   "AssociatedSystemsModule",
   "USDTokenModule"
 ]

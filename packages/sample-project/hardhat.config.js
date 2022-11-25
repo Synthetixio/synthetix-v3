@@ -12,10 +12,5 @@ module.exports = {
       },
     },
   },
-  networks: {
-    local: {
-      url: 'http://localhost:8545',
-    },
-  },
-  router: {},
+  defaultNetwork: 'cannon',
 };

@@ -12,6 +12,8 @@ library DistributionActor {
         uint128 shares;
         /**
          * @dev The valuePerShare at the time that their number of shares was last altered.
+         *
+         * TODO: Is this also high precision? If so, document.
          */
         int128 lastValuePerShare;
     }

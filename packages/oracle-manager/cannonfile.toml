@@ -5,21 +5,54 @@ description = "Core synthetix oracle manager"
 # `salt` here only affects proxy contract
 [setting.salt]
 description = "Change this to a unique string when deploying multiple instances of the system. Note that only the proxy contract will be unique."
-defaultValue = "main"
+defaultValue = "oracle-manager"
 
 [setting.owner]
 description = "Admin user for the system"
 defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
 
-[run.deploy]
-exec = "scripts/deploy.js"
-func = "deploy"
-args = ["Core", ".*/(core|common|mocks)/.*"]
-modified = ["contracts/modules/core", "contracts/utils", "scripts"]
+[setting.core_router_package]
+description = "Package version of @synthetixio/core-router to use"
+defaultValue = "core-router:1.0.0"
 
-[contract.Proxy]
-artifact = "Proxy"
-args = ["<%= contracts.CoreRouter.address %>"]
-abi = "CoreRouter"
+[import.core_router]
+source = "<%= settings.core_router_package %>"
+options.salt = "<%= settings.salt %>"
+options.owner = "<%= settings.owner %>"
 
-depends = ["run.deploy"]
+[contract.OracleManagerModule]
+artifact = "contracts/modules/OracleManagerModule.sol:OracleManagerModule"
+
+[run.generate_router]
+exec = "@synthetixio/core-router"
+func = "generate"
+args = [
+  "contracts/routers/chain-<%= chainId %>/Router.sol:Router",
+  '''<%= JSON.stringify({
+    CoreModule: imports.core_router.contracts.CoreModule,
+    OracleManagerModule: contracts.OracleManagerModule,
+  }) %>'''
+]
+modified = ["contracts"]
+depends = [
+  "import.core_router",
+  "contract.OracleManagerModule"
+]
+
+[contract.Router]
+artifact = "contracts/routers/chain-<%= chainId %>/Router.sol:Router"
+abiOf = [
+  "core_router.CoreModule",
+  "OracleManagerModule"
+]
+depends = ["run.generate_router"]
+
+[invoke.upgrade_proxy]
+target = ["core_router.Proxy"]
+from = "<%= settings.owner %>"
+func = "upgradeTo"
+args = ["<%= contracts.Router.address %>"]
+factory.Proxy.abiOf = ["Router"]
+factory.Proxy.event = "Upgraded"
+factory.Proxy.arg = 0
+depends = ["contract.Router"]
