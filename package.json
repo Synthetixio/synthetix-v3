@@ -1,0 +1,28 @@
+{
+  "name": "@snx-v3/subgraphs",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "codegen": "graph codegen && prettier --write ./generated",
+    "build": "yarn codegen && graph build",
+    "deploy": "graph deploy --node https://api.thegraph.com/deploy/ fritzschoff/subgraphs",
+    "create-local": "graph create --node http://localhost:8020/ fritzschoff/subgraphs",
+    "remove-local": "graph remove --node http://localhost:8020/ fritzschoff/subgraphs",
+    "deploy-local": "graph deploy --node http://localhost:8020/ --ipfs http://localhost:5001 fritzschoff/subgraphs",
+    "test": "graph test -- --coverage"
+  },
+  "devDependencies": {
+    "@graphprotocol/graph-cli": "^0.35.0",
+    "@graphprotocol/graph-ts": "^0.28.1",
+    "matchstick-as": "^0.5.0",
+    "prettier": "^2.7.1"
+  },
+  "depcheck": {
+    "ignorePatterns": [
+      "dist"
+    ],
+    "ignoreMatches": [
+      "webpack-dev-server"
+    ]
+  }
+}

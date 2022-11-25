@@ -1,0 +1,3 @@
+.bin/
+tests/.bin/
+tests/latest.json
