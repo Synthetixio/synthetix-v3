@@ -11,9 +11,12 @@ pragma solidity ^0.8.0;
  * then if A = 50, A represents the decimal 0.50
  * 2) Given UNIT = 1000000000000000000
  * then if A = 500000000000000000, A represents the decimal 0.500000000000000000
+ *
+ * TODO: Implement all functions for all types (including tests).
+ * So far, only the ones needed by the code have been implemented.
  */
 library DecimalMath {
-    // Numbers representing 1.0 (normal precision).
+    // Numbers representing 1.0 (low precision).
     uint256 public constant UNIT = 1e18;
     int256 public constant UNIT_INT = int256(UNIT);
     uint128 public constant UNIT_UINT128 = uint128(UNIT);
@@ -21,6 +24,8 @@ library DecimalMath {
 
     // Numbers representing 1.0 (high precision).
     uint256 public constant UNIT_PRECISE = 1e27;
+    int256 public constant UNIT_PRECISE_INT = int256(UNIT_PRECISE);
+    int128 public constant UNIT_PRECISE_INT128 = int128(UNIT_PRECISE_INT);
 
     // -----------------------------------------------------------------------
     // -----------------------------------------------------------------------
@@ -59,10 +64,17 @@ library DecimalMath {
     }
 
     /**
-     * @dev Reduces scaling for a high precision decimal into a low precision decimal.
+     * @dev Reduces scaling from a high precision decimal to a low precision decimal.
      */
-    function toLowPrecision(uint256 x) internal pure returns (uint256 z) {
+    function reducePrecision(uint256 x) internal pure returns (uint256 z) {
         return x / 1e9; // 9 = 27 - 18
+    }
+
+    /**
+     * @dev Converts a regular integer into a high precision decimal.
+     */
+    function toHighPrecisionDecimal(uint256 x) internal pure returns (uint256 z) {
+        return x * UNIT_PRECISE;
     }
 
     // -----------------
@@ -86,9 +98,9 @@ library DecimalMath {
     }
 
     /**
-     * @dev See toLowPrecision for uint256.
+     * @dev See reducePrecision for uint256.
      */
-    function toLowPrecisionUint128(uint128 x) internal pure returns (uint128 z) {
+    function reducePrecisionUint128(uint128 x) internal pure returns (uint128 z) {
         return x / 1e9;
     }
 
@@ -111,10 +123,21 @@ library DecimalMath {
     }
 
     /**
-     * @dev See toLowPrecision for uint256.
+     * @dev See reducePrecision for uint256.
      */
-    function toLowPrecision(int256 x) internal pure returns (int256 z) {
+    function reducePrecision(int256 x) internal pure returns (int256 z) {
         return x / 1e9;
+    }
+
+    /**
+     * @dev See toHighPrecisionDecimal for uint256.
+     */
+    function toHighPrecisionDecimal(int256 x) internal pure returns (int256 z) {
+        return x * UNIT_PRECISE_INT;
+    }
+
+    function fromHighPrecisionDecimalToInteger(int256 x) internal pure returns (int256 z) {
+        return x / UNIT_PRECISE_INT;
     }
 
     // -----------------
@@ -136,9 +159,9 @@ library DecimalMath {
     }
 
     /**
-     * @dev See toLowPrecision for uint256.
+     * @dev See reducePrecision for uint256.
      */
-    function toLowPrecisionInt128(int128 x) internal pure returns (int128 z) {
+    function reducePrecisionInt128(int128 x) internal pure returns (int128 z) {
         return x / 1e9;
     }
 }

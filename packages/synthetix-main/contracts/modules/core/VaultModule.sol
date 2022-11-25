@@ -28,7 +28,6 @@ contract VaultModule is IVaultModule {
     using Distribution for Distribution.Data;
     using CollateralConfiguration for CollateralConfiguration.Data;
 
-    error InsufficientAccountCollateral(uint requestedAmount);
     error PoolNotFound(uint128 poolId);
     error InvalidLeverage(uint leverage);
     error InvalidParameters(string incorrectParameter, string help);
@@ -48,8 +47,11 @@ contract VaultModule is IVaultModule {
         uint leverage
     ) external override {
         Pool.requireExists(poolId);
-        CollateralConfiguration.collateralEnabled(collateralType);
         Account.onlyWithPermission(accountId, AccountRBAC._DELEGATE_PERMISSION);
+
+        if (collateralAmount > 0) {
+            CollateralConfiguration.requireSufficientDelegation(collateralType, collateralAmount);
+        }
 
         // Fix leverage to 1 until it's enabled
         // TODO: we will probably at least want to test <1 leverage
@@ -61,45 +63,23 @@ contract VaultModule is IVaultModule {
 
         // get the current collateral situation
         uint oldCollateralAmount = vault.currentAccountCollateral(accountId);
-        uint collateralPrice;
 
         // if increasing collateral additionally check they have enough collateral
-        if (
-            collateralAmount > oldCollateralAmount &&
-            Account.load(accountId).collaterals[collateralType].availableAmount < collateralAmount - oldCollateralAmount
-        ) {
-            revert InsufficientAccountCollateral(collateralAmount);
+        if (collateralAmount > oldCollateralAmount) {
+            CollateralConfiguration.collateralEnabled(collateralType);
+            Account.requireSufficientCollateral(accountId, collateralType, collateralAmount - oldCollateralAmount);
         }
 
         bytes32 actorId = bytes32(uint(accountId));
 
-        // stack too deep after this
-        {
-            Pool.Data storage pool = Pool.load(poolId);
-
-            // the current user may have accumulated some debt which needs to be rolled in before changing shares
-            pool.updateAccountDebt(collateralType, accountId);
-
-            Collateral.Data storage collateral = Account.load(accountId).collaterals[collateralType];
-
-            // adjust the user's current account collateral to reflect the change in delegation
-            if (collateralAmount > oldCollateralAmount) {
-                collateral.deductCollateral(collateralAmount - oldCollateralAmount);
-            } else {
-                collateral.deposit(oldCollateralAmount - collateralAmount);
-            }
-
-            if (collateralAmount > 0 && !collateral.pools.contains(uint(poolId))) {
-                collateral.pools.add(poolId);
-            } else if (collateral.pools.contains((uint(poolId)))) {
-                collateral.pools.remove(poolId);
-            }
-
-            vault.currentEpoch().updateAccountPosition(accountId, collateralAmount, leverage);
-
-            // no update for usd because no usd issued
-            collateralPrice = pool.recalculateVaultCollateral(collateralType);
-        }
+        uint collateralPrice = _updatePosition(
+            accountId,
+            poolId,
+            collateralType,
+            collateralAmount,
+            oldCollateralAmount,
+            leverage
+        );
 
         _setDelegatePoolId(accountId, poolId, collateralType);
 
@@ -210,6 +190,40 @@ contract VaultModule is IVaultModule {
      */
     function getVaultDebt(uint128 poolId, address collateralType) public override returns (int) {
         return Pool.load(poolId).currentVaultDebt(collateralType);
+    }
+
+    function _updatePosition(
+        uint128 accountId,
+        uint128 poolId,
+        address collateralType,
+        uint collateralAmount,
+        uint oldCollateralAmount,
+        uint leverage
+    ) internal returns (uint collateralPrice) {
+        Pool.Data storage pool = Pool.load(poolId);
+
+        // the current user may have accumulated some debt which needs to be rolled in before changing shares
+        pool.updateAccountDebt(collateralType, accountId);
+
+        Collateral.Data storage collateral = Account.load(accountId).collaterals[collateralType];
+
+        // adjust the user's current account collateral to reflect the change in delegation
+        if (collateralAmount > oldCollateralAmount) {
+            collateral.deductCollateral(collateralAmount - oldCollateralAmount);
+        } else {
+            collateral.deposit(oldCollateralAmount - collateralAmount);
+        }
+
+        if (collateralAmount > 0 && !collateral.pools.contains(uint(poolId))) {
+            collateral.pools.add(poolId);
+        } else if (collateral.pools.contains((uint(poolId)))) {
+            collateral.pools.remove(poolId);
+        }
+
+        pool.vaults[collateralType].currentEpoch().updateAccountPosition(accountId, collateralAmount, leverage);
+
+        // no update for usd because no usd issued
+        collateralPrice = pool.recalculateVaultCollateral(collateralType);
     }
 
     function _verifyNotCapacityLocked(uint128 poolId) internal view {
