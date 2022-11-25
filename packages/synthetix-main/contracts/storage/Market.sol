@@ -439,7 +439,7 @@ library Market {
         (, bool exhaustedDown) = bumpPoolsIn(self, outstandingBalance, maxIter);
 
         if (!exhaustedDown && !exhaustedUp && self.debtDist.totalShares > 0) {
-            // cannot use `outstandingBalance` here because `self.lastDistributedMarketBalance` 
+            // cannot use `outstandingBalance` here because `self.lastDistributedMarketBalance`
             // may have changed after calling the bump functions above
             self.debtDist.distributeValue(targetBalance - self.lastDistributedMarketBalance);
             self.lastDistributedMarketBalance = targetBalance.int256toInt128();
