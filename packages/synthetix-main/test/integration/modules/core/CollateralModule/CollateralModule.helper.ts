@@ -42,8 +42,8 @@ export async function verifyCollateral(
   collateralIdx: number,
   Collateral: Ethers.Contract,
   CollateralPriceFeed: Ethers.Contract,
-  expectedCRatio: number,
-  expectedMinimumCRatio: number,
+  expectedIssuanceRatio: number,
+  expectedLiquidationRatio: number,
   expectedToBeEnabled: boolean,
   core: Ethers.Contract
 ) {
@@ -56,8 +56,8 @@ export async function verifyCollateral(
 
   assert.equal(collateralType.tokenAddress, Collateral.address);
   assert.equal(collateralType.priceFeed, CollateralPriceFeed.address);
-  assertBn.equal(collateralType.issuanceRatio, expectedCRatio);
-  assertBn.equal(collateralType.liquidationRatio, expectedMinimumCRatio);
+  assertBn.equal(collateralType.issuanceRatio, expectedIssuanceRatio);
+  assertBn.equal(collateralType.liquidationRatio, expectedLiquidationRatio);
   assert.equal(collateralType.depositingEnabled, expectedToBeEnabled);
 }
 
