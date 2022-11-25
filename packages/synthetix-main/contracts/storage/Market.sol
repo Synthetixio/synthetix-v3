@@ -439,6 +439,8 @@ library Market {
         (, bool exhaustedDown) = bumpPoolsIn(self, outstandingBalance, maxIter);
 
         if (!exhaustedDown && !exhaustedUp && self.debtDist.totalShares > 0) {
+            // cannot use `outstandingBalance` here because `self.lastDistributedMarketBalance` 
+            // may have changed after calling the bump functions above
             self.debtDist.distributeValue(targetBalance - self.lastDistributedMarketBalance);
             self.lastDistributedMarketBalance = targetBalance.int256toInt128();
         }
@@ -469,6 +471,8 @@ library Market {
 
             // Exit if the lowest max value per share does not hit the limit.
             HeapUtil.Node memory lowestLimitPool = self.inRangePools.getMax();
+
+            // `-lowestLimitPool.priority` is actually the max value per share limit of the pool
             if (-lowestLimitPool.priority >= targetValuePerShare) {
                 break;
             }
@@ -523,6 +527,8 @@ library Market {
 
             // Exit if the lowest max value per share does not hit the limit.
             HeapUtil.Node memory highestLimitPool = self.outRangePools.getMax();
+
+            // highestLimitPool.priority` is actually the max value per share limit of the pool
             if (highestLimitPool.priority < targetValuePerShare) {
                 break;
             }
