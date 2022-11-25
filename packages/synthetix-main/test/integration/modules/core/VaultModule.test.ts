@@ -148,15 +148,13 @@ describe('VaultModule', function () {
 
     it('fails when trying to delegate less than minDelegation amount', async () => {
       await assertRevert(
-        systems()
-          .Core.connect(user1)
-          .delegateCollateral(
-            accountId,
-            0, // 0 pool is just easy way to test another pool
-            collateralAddress(),
-            depositAmount.div(51),
-            ethers.utils.parseEther('1')
-          ),
+        systems().Core.connect(user1).delegateCollateral(
+          accountId,
+          0, // 0 pool is just easy way to test another pool
+          collateralAddress(),
+          depositAmount.div(51),
+          ethers.utils.parseEther('1')
+        ),
         'InsufficientDelegation(20000000000000000000)',
         systems().Core
       );
@@ -183,9 +181,12 @@ describe('VaultModule', function () {
       after(restore);
 
       before('disable collatearal', async () => {
-        const beforeConfiguration = await systems().Core.getCollateralConfiguration(collateralAddress());
+        const beforeConfiguration = await systems().Core.getCollateralConfiguration(
+          collateralAddress()
+        );
 
-        await systems().Core.connect(owner)
+        await systems()
+          .Core.connect(owner)
           .configureCollateral({ ...beforeConfiguration, depositingEnabled: false });
       });
 
@@ -365,23 +366,24 @@ describe('VaultModule', function () {
             after(restore);
 
             before('disable collatearal', async () => {
-              const beforeConfiguration = await systems().Core.getCollateralConfiguration(collateralAddress());
+              const beforeConfiguration = await systems().Core.getCollateralConfiguration(
+                collateralAddress()
+              );
 
-              await systems().Core.connect(owner)
+              await systems()
+                .Core.connect(owner)
                 .configureCollateral({ ...beforeConfiguration, depositingEnabled: false });
             });
 
             it('fails when trying to open delegation position with disabled collateral', async () => {
               await assertRevert(
-                systems()
-                  .Core.connect(user2)
-                  .delegateCollateral(
-                    user2AccountId,
-                    0,
-                    collateralAddress(),
-                    depositAmount, // user1 50%, user2 50%
-                    ethers.utils.parseEther('1')    
-                  ),
+                systems().Core.connect(user2).delegateCollateral(
+                  user2AccountId,
+                  0,
+                  collateralAddress(),
+                  depositAmount, // user1 50%, user2 50%
+                  ethers.utils.parseEther('1')
+                ),
                 'CollateralDepositDisabled',
                 systems().Core
               );
@@ -472,9 +474,12 @@ describe('VaultModule', function () {
             after(restore);
 
             before('disable collatearal', async () => {
-              const beforeConfiguration = await systems().Core.getCollateralConfiguration(collateralAddress());
+              const beforeConfiguration = await systems().Core.getCollateralConfiguration(
+                collateralAddress()
+              );
 
-              await systems().Core.connect(owner)
+              await systems()
+                .Core.connect(owner)
                 .configureCollateral({ ...beforeConfiguration, depositingEnabled: false });
             });
 
@@ -490,7 +495,7 @@ describe('VaultModule', function () {
                     ethers.utils.parseEther('1')
                   );
               });
-  
+
               it(
                 'user1 still has correct position',
                 verifyAccountState(accountId, poolId, depositAmount, startingDebt)

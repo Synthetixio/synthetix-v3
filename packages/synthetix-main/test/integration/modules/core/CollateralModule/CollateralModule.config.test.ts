@@ -21,17 +21,15 @@ describe('CollateralModule', function () {
         const dummyAddress = await user1.getAddress();
 
         await assertRevert(
-          systems()
-            .Core.connect(user1)
-            .configureCollateral({
-              tokenAddress: dummyAddress,
-              priceFeed: dummyAddress,
-              targetCRatio: 400,
-              minimumCRatio: 200,
-              liquidationReward: 0,
-              minDelegation: 0,
-              depositingEnabled: false
-            }),
+          systems().Core.connect(user1).configureCollateral({
+            tokenAddress: dummyAddress,
+            priceFeed: dummyAddress,
+            targetCRatio: 400,
+            minimumCRatio: 200,
+            liquidationReward: 0,
+            minDelegation: 0,
+            depositingEnabled: false,
+          }),
           `Unauthorized("${await user1.getAddress()}")`,
           systems().Core
         );
@@ -83,17 +81,15 @@ describe('CollateralModule', function () {
         describe('when a regular user attempts to update the second collateral', function () {
           it('reverts', async () => {
             await assertRevert(
-              systems()
-                .Core.connect(user1)
-                .configureCollateral({
-                  tokenAddress: AnotherCollateral.address,
-                  priceFeed: AnotherCollateralPriceFeed.address,
-                  targetCRatio: 200,
-                  minimumCRatio: 100,
-                  liquidationReward: 0,
-                  minDelegation: 0,
-                  depositingEnabled: false
-                }),
+              systems().Core.connect(user1).configureCollateral({
+                tokenAddress: AnotherCollateral.address,
+                priceFeed: AnotherCollateralPriceFeed.address,
+                targetCRatio: 200,
+                minimumCRatio: 100,
+                liquidationReward: 0,
+                minDelegation: 0,
+                depositingEnabled: false,
+              }),
               `Unauthorized("${await user1.getAddress()}")`,
               systems().Core
             );
@@ -102,17 +98,15 @@ describe('CollateralModule', function () {
 
         describe('when the second collateral is updated', () => {
           before('update the collateral', async () => {
-            const tx = await systems()
-              .Core.connect(systemOwner)
-              .configureCollateral({
-                tokenAddress: AnotherCollateral.address,
-                priceFeed: AnotherCollateralPriceFeed.address,
-                targetCRatio: 300,
-                minimumCRatio: 250,
-                liquidationReward: 0,
-                minDelegation: 0,
-                depositingEnabled: true
-              });
+            const tx = await systems().Core.connect(systemOwner).configureCollateral({
+              tokenAddress: AnotherCollateral.address,
+              priceFeed: AnotherCollateralPriceFeed.address,
+              targetCRatio: 300,
+              minimumCRatio: 250,
+              liquidationReward: 0,
+              minDelegation: 0,
+              depositingEnabled: true,
+            });
             await tx.wait();
           });
 
@@ -135,17 +129,15 @@ describe('CollateralModule', function () {
 
         describe('when the second collateral is disabled', () => {
           before('disable the collateral', async () => {
-            const tx = await systems()
-              .Core.connect(systemOwner)
-              .configureCollateral({
-                tokenAddress: AnotherCollateral.address,
-                priceFeed: AnotherCollateralPriceFeed.address,
-                targetCRatio: 300,
-                minimumCRatio: 250,
-                liquidationReward: 0,
-                minDelegation: 0,
-                depositingEnabled: false
-              });
+            const tx = await systems().Core.connect(systemOwner).configureCollateral({
+              tokenAddress: AnotherCollateral.address,
+              priceFeed: AnotherCollateralPriceFeed.address,
+              targetCRatio: 300,
+              minimumCRatio: 250,
+              liquidationReward: 0,
+              minDelegation: 0,
+              depositingEnabled: false,
+            });
             await tx.wait();
           });
 

@@ -24,17 +24,15 @@ export async function addCollateral(
   await (await CollateralPriceFeed.connect(owner).mockSetCurrentPrice(1)).wait();
 
   await (
-    await core
-      .connect(owner)
-      .configureCollateral({
-        tokenAddress: Collateral.address,
-        priceFeed: CollateralPriceFeed.address,
-        targetCRatio: targetCRatio,
-        minimumCRatio: minimumCRatio,
-        liquidationReward: 0,
-        minDelegation: 0,
-        depositingEnabled: true
-      })
+    await core.connect(owner).configureCollateral({
+      tokenAddress: Collateral.address,
+      priceFeed: CollateralPriceFeed.address,
+      targetCRatio: targetCRatio,
+      minimumCRatio: minimumCRatio,
+      liquidationReward: 0,
+      minDelegation: 0,
+      depositingEnabled: true,
+    })
   ).wait();
 
   return { Collateral, CollateralPriceFeed };
