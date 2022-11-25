@@ -65,16 +65,21 @@ contract VaultModule is IVaultModule {
         uint oldCollateralAmount = vault.currentAccountCollateral(accountId);
 
         // if increasing collateral additionally check they have enough collateral
-        if (
-            collateralAmount > oldCollateralAmount
-        ) {
+        if (collateralAmount > oldCollateralAmount) {
             CollateralConfiguration.collateralEnabled(collateralType);
             Account.requireSufficientCollateral(accountId, collateralType, collateralAmount - oldCollateralAmount);
         }
 
         bytes32 actorId = bytes32(uint(accountId));
 
-        (uint collateralPrice) = _updatePosition(accountId, poolId, collateralType, collateralAmount, oldCollateralAmount, leverage);
+        uint collateralPrice = _updatePosition(
+            accountId,
+            poolId,
+            collateralType,
+            collateralAmount,
+            oldCollateralAmount,
+            leverage
+        );
 
         _setDelegatePoolId(accountId, poolId, collateralType);
 
@@ -188,11 +193,11 @@ contract VaultModule is IVaultModule {
     }
 
     function _updatePosition(
-        uint128 accountId, 
-        uint128 poolId, 
-        address collateralType, 
-        uint collateralAmount, 
-        uint oldCollateralAmount, 
+        uint128 accountId,
+        uint128 poolId,
+        address collateralType,
+        uint collateralAmount,
+        uint oldCollateralAmount,
         uint leverage
     ) internal returns (uint collateralPrice) {
         Pool.Data storage pool = Pool.load(poolId);

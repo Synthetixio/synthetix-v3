@@ -82,7 +82,11 @@ library Account {
     /**
      * Ensure that the account has the required amount of collateral funds remaining
      */
-    function requireSufficientCollateral(uint128 accountId, address collateralType, uint amount) internal view {
+    function requireSufficientCollateral(
+        uint128 accountId,
+        address collateralType,
+        uint amount
+    ) internal view {
         if (Account.load(accountId).collaterals[collateralType].availableAmount < amount) {
             revert InsufficientAccountCollateral(amount);
         }

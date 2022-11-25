@@ -46,9 +46,7 @@ library CollateralConfiguration {
         }
     }
 
-    function set(
-        Data memory config
-    ) internal {
+    function set(Data memory config) internal {
         SetUtil.AddressSet storage collateralTypes = loadAvailableCollaterals();
 
         // TODO: should we be *removing* the collateralType if it is disabled here, or if it is set to nothing?

@@ -38,17 +38,10 @@ contract CollateralModule is ICollateralModule {
     /**
      * @dev See {ICollateralModule-configureCollateral}.
      */
-    function configureCollateral(
-        CollateralConfiguration.Data memory config
-    ) external override {
+    function configureCollateral(CollateralConfiguration.Data memory config) external override {
         OwnableStorage.onlyOwner();
-        CollateralConfiguration.set(
-            config
-        );
-        emit CollateralConfigured(
-            config.tokenAddress,
-            config
-        );
+        CollateralConfiguration.set(config);
+        emit CollateralConfigured(config.tokenAddress, config);
     }
 
     /**

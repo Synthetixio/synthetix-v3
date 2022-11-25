@@ -8,10 +8,7 @@ interface ICollateralModule {
     /**
      * @notice Emitted when a collateral type’s configuration is created or updated.
      */
-    event CollateralConfigured(
-        address indexed collateralType,
-        CollateralConfiguration.Data config
-    );
+    event CollateralConfigured(address indexed collateralType, CollateralConfiguration.Data config);
 
     /**
      * @notice Emitted when `amount` of collateral of type `collateralType` is deposited to account `accountId` by `sender`.
@@ -33,9 +30,7 @@ interface ICollateralModule {
      * Emits a {CollateralConfigured} event.
      *
      */
-    function configureCollateral(
-        CollateralConfiguration.Data memory config
-    ) external;
+    function configureCollateral(CollateralConfiguration.Data memory config) external;
 
     /**
      * @notice Returns a list of detailed information pertaining to all collateral types registered in the system.
