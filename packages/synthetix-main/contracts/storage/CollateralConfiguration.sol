@@ -10,8 +10,10 @@ library CollateralConfiguration {
     using SetUtil for SetUtil.AddressSet;
     using DecimalMath for uint256;
 
-    error InvalidCollateral(address collateralType);
+    error InvalidParameters(string incorrectParameter, string help);
+    error CollateralDepositDisabled(address collateralType);
     error InsufficientCollateralRatio(uint collateralValue, uint debt, uint ratio, uint minRatio);
+    error InsufficientDelegation(uint minDelegation);
 
     struct Data {
         /// must be true for staking or collateral delegation
@@ -26,6 +28,8 @@ library CollateralConfiguration {
         address priceFeed;
         /// address which should be used for transferring this collateral
         address tokenAddress;
+        /// minimum delegation amount (other than 0), to prevent sybil/attacks on the system due to new entries.
+        uint minDelegation;
     }
 
     function load(address token) internal pure returns (Data storage data) {
@@ -42,34 +46,46 @@ library CollateralConfiguration {
         }
     }
 
-    function set(
-        address collateralType,
-        address priceFeed,
-        uint targetCRatio,
-        uint minimumCRatio,
-        uint liquidationReward,
-        bool depositingEnabled
-    ) internal {
+    function set(Data memory config) internal {
         SetUtil.AddressSet storage collateralTypes = loadAvailableCollaterals();
 
         // TODO: should we be *removing* the collateralType if it is disabled here, or if it is set to nothing?
-        if (!collateralTypes.contains(collateralType)) {
-            collateralTypes.add(collateralType);
+        if (!collateralTypes.contains(config.tokenAddress)) {
+            collateralTypes.add(config.tokenAddress);
         }
 
-        Data storage collateral = load(collateralType);
+        if (config.minDelegation < config.liquidationReward) {
+            revert InvalidParameters("minDelegation", "must be greater than liquidationReward");
+        }
 
-        collateral.tokenAddress = collateralType;
-        collateral.targetCRatio = targetCRatio;
-        collateral.minimumCRatio = minimumCRatio;
-        collateral.priceFeed = priceFeed;
-        collateral.liquidationReward = liquidationReward;
-        collateral.depositingEnabled = depositingEnabled;
+        Data storage storedConfig = load(config.tokenAddress);
+
+        storedConfig.tokenAddress = config.tokenAddress;
+        storedConfig.targetCRatio = config.targetCRatio;
+        storedConfig.minimumCRatio = config.minimumCRatio;
+        storedConfig.priceFeed = config.priceFeed;
+        storedConfig.liquidationReward = config.liquidationReward;
+        storedConfig.minDelegation = config.minDelegation;
+        storedConfig.depositingEnabled = config.depositingEnabled;
     }
 
-    function collateralEnabled(address token) internal {
+    function collateralEnabled(address token) internal view {
         if (!load(token).depositingEnabled) {
-            revert InvalidCollateral(token);
+            revert CollateralDepositDisabled(token);
+        }
+    }
+
+    function requireSufficientDelegation(address token, uint amount) internal view {
+        CollateralConfiguration.Data storage config = load(token);
+
+        uint minDelegation = config.minDelegation;
+
+        if (minDelegation == 0) {
+            minDelegation = config.liquidationReward;
+        }
+
+        if (amount < minDelegation) {
+            revert InsufficientDelegation(minDelegation);
         }
     }
 

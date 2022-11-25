@@ -23,12 +23,15 @@ target = ["system.CoreProxy"]
 from = "<%= settings.owner %>"
 func = "configureCollateral"
 args = [
-    "<%= settings.snx_address %>",
-    "<%= settings.snx_aggregator_address %>",
-    "3000000",
-    "1500000",
-    "1000000000000000000",
-    true
+  {
+    tokenAddress = "<%= settings.snx_address %>"
+    priceFeed = "<%= settings.snx_aggregator_address %>"
+    targetCRatio = "300000000000000000000"
+    minimumCRatio = "150000000000000000000"
+    liquidationReward = "1000000000000000000"
+    minDelegation = "1000000000000000000"
+    depositingEnabled = true
+  }
 ]
 depends = [
   "import.system"

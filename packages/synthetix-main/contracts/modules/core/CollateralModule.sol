@@ -38,31 +38,10 @@ contract CollateralModule is ICollateralModule {
     /**
      * @dev See {ICollateralModule-configureCollateral}.
      */
-    function configureCollateral(
-        address collateralType,
-        address priceFeed,
-        uint targetCRatio,
-        uint minimumCRatio,
-        uint liquidationReward,
-        bool depositingEnabled
-    ) external override {
+    function configureCollateral(CollateralConfiguration.Data memory config) external override {
         OwnableStorage.onlyOwner();
-        CollateralConfiguration.set(
-            collateralType,
-            priceFeed,
-            targetCRatio,
-            minimumCRatio,
-            liquidationReward,
-            depositingEnabled
-        );
-        emit CollateralConfigured(
-            collateralType,
-            priceFeed,
-            targetCRatio,
-            minimumCRatio,
-            liquidationReward,
-            depositingEnabled
-        );
+        CollateralConfiguration.set(config);
+        emit CollateralConfigured(config.tokenAddress, config);
     }
 
     /**
