@@ -2,6 +2,7 @@
 pragma solidity ^0.8.0;
 
 import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
+import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 
 import "./DistributionActor.sol";
 import "../errors/ParameterError.sol";
@@ -67,6 +68,17 @@ import "../errors/ParameterError.sol";
  * - totalValue: 150 USD
  */
 library Distribution {
+    using DecimalMath for uint256;
+    using DecimalMath for int256;
+    using DecimalMath for int128;
+    using DecimalMath for int;
+
+    using SafeCast for int;
+    using SafeCast for uint128;
+    using SafeCast for uint256;
+    using SafeCast for int256;
+    using SafeCast for int128;
+
     /**
      * @dev Thrown when an attempt is made to distribute value to a distribution
      * with no shares.

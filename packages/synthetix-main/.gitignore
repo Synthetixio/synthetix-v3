@@ -3,6 +3,7 @@ deployments/hardhat
 
 cannon
 typechain-types
+generated
 
 # generated test modules
 contracts/modules/test

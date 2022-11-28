@@ -24,6 +24,12 @@ library Pool {
     using DecimalMath for uint256;
     using DecimalMath for int128;
 
+    using SafeCast for uint128;
+    using SafeCast for uint256;
+    using SafeCast for int;
+    using SafeCast for int256;
+    using SafeCast for int128;
+
     error PoolNotFound(uint128 poolId);
     error PoolAlreadyExists(uint128 poolId);
 
@@ -144,7 +150,7 @@ library Pool {
         // These values should not change while iterating through each market.
 
         // TODO Clarify
-        int totalCreditCapacity = int128(self.debtDist.totalShares);
+        int totalCreditCapacity = self.debtDist.totalShares.toInt128();
 
         // TODO Clarify
         uint128 unusedCreditCapacity = self.unusedCreditCapacity;
@@ -162,7 +168,9 @@ library Pool {
             // Note: the factor `(weight / totalWeights)` is not deduped in the operations below to maintain numeric precision.
 
             // TODO: Consider introducing a SafeCast library. Here, if we didn't check for negative numbers, a cast could result in an overflow (Solidity does not check for casting overflows). Thus, leaving casting free to the developer might introduce bugs. All instances of the code should use this util.
-            uint marketCreditCapacity = totalCreditCapacity > 0 ? (uint(totalCreditCapacity) * weight) / totalWeights : 0;
+            uint marketCreditCapacity = totalCreditCapacity > 0
+                ? (totalCreditCapacity.toUint256() * weight) / totalWeights
+                : 0;
             uint marketUnusedCreditCapacity = (unusedCreditCapacity * weight) / totalWeights;
 
             Market.Data storage marketData = Market.load(marketConfiguration.market);
@@ -217,13 +225,13 @@ library Pool {
         // if ratio > minRatio, thing > 1
         int thing;
         if (minLiquidityRatio == 0) {
-            thing = int(DecimalMath.UNIT); // If minLiquidityRatio is zero, then TODO
+            thing = DecimalMath.UNIT.toInt256(); // If minLiquidityRatio is zero, then TODO
         } else {
             // maxShareValueIncrease?
-            thing = int(creditCapacity.divDecimal(minLiquidityRatio).divDecimal(self.debtDist.totalShares));
+            thing = (creditCapacity.divDecimal(minLiquidityRatio).divDecimal(self.debtDist.totalShares)).toInt256();
         }
 
-        return int256(marketData.debtDist.valuePerShare.toLowPrecisionInt128()) + thing;
+        return (marketData.debtDist.valuePerShare.toLowPrecisionInt128()).toInt256() + thing;
     }
 
     /**

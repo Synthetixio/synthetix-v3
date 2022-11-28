@@ -1,9 +1,10 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+
 import "./VaultEpoch.sol";
 import "./RewardDistribution.sol";
-
 import "./CollateralConfiguration.sol";
 
 /**
@@ -20,9 +21,16 @@ library Vault {
     using VaultEpoch for VaultEpoch.Data;
     using Distribution for Distribution.Data;
     using DistributionEntry for DistributionEntry.Data;
+
+    using SetUtil for SetUtil.Bytes32Set;
+
     using DecimalMath for uint256;
     using DecimalMath for int128;
-    using SetUtil for SetUtil.Bytes32Set;
+    using SafeCast for uint128;
+    using SafeCast for uint256;
+    using SafeCast for int;
+    using SafeCast for int256;
+    using SafeCast for int128;
 
     struct Data {
         /**
@@ -80,15 +88,22 @@ library Vault {
     {
         VaultEpoch.Data storage epochData = currentEpoch(self);
 
-        usdWeight = uint(epochData.incomingDebtDist.totalShares).mulDecimal(collateralPrice);
+        usdWeight = epochData.incomingDebtDist.totalShares.toUint256().mulDecimal(collateralPrice);
 
-        int vaultDepositedValue = int(uint(epochData.collateralDist.totalValue()).mulDecimal(collateralPrice));
+        int vaultDepositedValue = epochData
+            .collateralDist
+            .totalValue()
+            .int256toUint256()
+            .mulDecimal(collateralPrice)
+            .toInt256();
         int vaultAccruedDebt = epochData.totalDebt();
-        remainingLiquidity = vaultDepositedValue > vaultAccruedDebt ? uint(vaultDepositedValue - vaultAccruedDebt) : 0;
+        remainingLiquidity = vaultDepositedValue > vaultAccruedDebt
+            ? (vaultDepositedValue - vaultAccruedDebt).int256toUint256()
+            : 0;
 
-        deltaRemainingLiquidity = int(remainingLiquidity) - int(int128(self.prevRemainingLiquidity));
+        deltaRemainingLiquidity = remainingLiquidity.toInt256() - self.prevRemainingLiquidity.uint128toInt128().toInt256();
 
-        self.prevRemainingLiquidity = uint128(remainingLiquidity);
+        self.prevRemainingLiquidity = remainingLiquidity.uint256toUint128();
     }
 
     /**
@@ -136,7 +151,7 @@ library Vault {
         bytes32 rewardId
     ) internal returns (uint) {
         uint totalShares = currentEpoch(self).incomingDebtDist.totalShares;
-        uint actorShares = currentEpoch(self).incomingDebtDist.getActorShares(bytes32(uint(accountId)));
+        uint actorShares = currentEpoch(self).incomingDebtDist.getActorShares(bytes32(accountId.toUint256()));
 
         RewardDistribution.Data storage dist = self.rewards[rewardId];
 
@@ -146,9 +161,9 @@ library Vault {
 
         dist.rewardPerShare += uint128(dist.entry.updateEntry(totalShares));
 
-        dist.actorInfo[accountId].pendingSend += uint128(
-            actorShares.mulDecimal(dist.rewardPerShare - dist.actorInfo[accountId].lastRewardPerShare)
-        );
+        dist.actorInfo[accountId].pendingSend += actorShares
+            .mulDecimal(dist.rewardPerShare - dist.actorInfo[accountId].lastRewardPerShare)
+            .uint256toUint128();
 
         dist.actorInfo[accountId].lastRewardPerShare = dist.rewardPerShare;
 
@@ -175,7 +190,7 @@ library Vault {
      * @dev Returns the total value in the Vault's collateral distribution, for the current epoch.
      */
     function currentCollateral(Data storage self) internal view returns (uint) {
-        return uint(currentEpoch(self).collateralDist.totalValue());
+        return currentEpoch(self).collateralDist.totalValue().int256toUint256();
     }
 
     /**
