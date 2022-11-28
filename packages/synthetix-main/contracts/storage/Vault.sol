@@ -26,6 +26,7 @@ library Vault {
 
     using DecimalMath for uint256;
     using DecimalMath for int128;
+    
     using SafeCast for uint128;
     using SafeCast for uint256;
     using SafeCast for int;

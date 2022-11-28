@@ -283,7 +283,9 @@ library Pool {
         int debtChange = self.debtDist.updateActorShares(actorId, usdWeight);
 
         // Accumulate the change in total liquidity, from the vault, into the pool.
-        self.unusedCreditCapacity = uint128(int128(self.unusedCreditCapacity) + int128(deltaLiquidity));
+        self.unusedCreditCapacity = (self.unusedCreditCapacity.toInt128() + deltaLiquidity.toInt128())
+            .toUint256()
+            .uint256toUint128();
 
         // Transfer the debt change from the pool into the vault.
         self.vaults[collateralType].distributeDebt(debtChange);
@@ -329,7 +331,7 @@ library Pool {
         int debt = self.vaults[collateralType].currentDebt();
         (, uint collateralValue) = currentVaultCollateral(self, collateralType);
 
-        return debt > 0 ? uint(debt).divDecimal(collateralValue) : 0;
+        return debt > 0 ? debt.toUint256().divDecimal(collateralValue) : 0;
     }
 
     // TODO: Document
@@ -426,7 +428,7 @@ library Pool {
         int getPositionDebt = updateAccountDebt(self, collateralType, accountId);
 
         // if they have a credit, just treat their debt as 0
-        return getPositionCollateralValue.divDecimal(getPositionDebt < 0 ? 0 : uint(getPositionDebt));
+        return getPositionCollateralValue.divDecimal(getPositionDebt < 0 ? 0 : getPositionDebt.toUint256());
     }
 
     /**
