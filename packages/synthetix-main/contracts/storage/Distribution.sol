@@ -186,6 +186,19 @@ library Distribution {
         dist.valuePerShare += int128(deltaValuePerShare);
     }
 
+    function getUpdatedActorValue(Data storage dist, bytes32 actorId) internal view returns (int changedValue) {
+        DistributionActor.Data storage actor = dist.actorInfo[actorId];
+
+        // ---------------------------------------------------------------
+        // Compare the current valuePerShare of the distribution to the value it had when the actor's shares were last updated.
+        int128 deltaValuePerShare = dist.valuePerShare - actor.lastValuePerShare;
+
+        // Calculate the total change in the actor's value.
+        // TODO: Why does this use the actor's previous number of shares and not the change in number of shares?
+        int changedValueHighPrecision = deltaValuePerShare * actor.shares.uint128toInt256();
+        changedValue = changedValueHighPrecision.fromHighPrecisionDecimalToInteger();
+    }
+
     /**
      * @dev Updates an actor's number of shares in the distribution to the specified amount.
      *
@@ -200,7 +213,7 @@ library Distribution {
         Data storage dist,
         bytes32 actorId,
         uint shares
-    ) internal returns (int changedValue) {
+    ) internal {
         DistributionActor.Data storage actor = dist.actorInfo[actorId];
 
         // ---------------------------------------------------------------
@@ -208,13 +221,13 @@ library Distribution {
         // Usage would change by calling that other function to read changedValue
         // and then this function to modify state.
         // ---------------------------------------------------------------
-        // Compare the current valuePerShare of the distribution to the value it had when the actor's shares were last updated.
-        int128 deltaValuePerShare = dist.valuePerShare - actor.lastValuePerShare;
+        // // Compare the current valuePerShare of the distribution to the value it had when the actor's shares were last updated.
+        // int128 deltaValuePerShare = dist.valuePerShare - actor.lastValuePerShare;
 
-        // Calculate the total change in the actor's value.
-        // TODO: Why does this use the actor's previous number of shares and not the change in number of shares?
-        int changedValueHighPrecision = deltaValuePerShare * actor.shares.uint128toInt256();
-        changedValue = changedValueHighPrecision.fromHighPrecisionDecimalToInteger();
+        // // Calculate the total change in the actor's value.
+        // // TODO: Why does this use the actor's previous number of shares and not the change in number of shares?
+        // int changedValueHighPrecision = deltaValuePerShare * actor.shares.uint128toInt256();
+        // changedValue = changedValueHighPrecision.fromHighPrecisionDecimalToInteger();
         // ---------------------------------------------------------------
 
         // Modify the total shares with the actor's change in shares.
@@ -282,7 +295,9 @@ library Distribution {
      * returns the change in value for the actor, since their last update.
      */
     function accumulateActor(Data storage dist, bytes32 actorId) internal returns (int changedValue) {
-        return updateActorShares(dist, actorId, getActorShares(dist, actorId));
+        changedValue = getUpdatedActorValue(dist, actorId);
+
+        updateActorShares(dist, actorId, getActorShares(dist, actorId));
     }
 
     /**

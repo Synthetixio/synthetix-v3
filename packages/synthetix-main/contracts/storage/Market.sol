@@ -333,9 +333,15 @@ library Market {
      * @dev Gets any outstanding debt. Do not call this method except in tests
      *
      * TODO: Understand distributeDebt() first.
+     * TODO: Enforce how this is only to be used in tests!
      */
     function getOutstandingDebt(Data storage self, uint128 poolId) internal returns (int debtChange) {
-        return self.pools[poolId].pendingDebt.uint128toInt128() + self.debtDist.updateActorShares(bytes32(uint(poolId)), 0);
+        int changedValue = self.debtDist.getUpdatedActorValue(bytes32(uint(poolId)));
+
+        // TODO: Is this necessary? Suspect tests use staticall.
+        // self.debtDist.updateActorShares(bytes32(uint(poolId)), 0);
+
+        return self.pools[poolId].pendingDebt.uint128toInt128() + changedValue;
     }
 
     function getDebtPerShare(Data storage self) internal view returns (int debtPerShare) {
@@ -406,9 +412,9 @@ library Market {
             self.outRangePools.extractById(poolId);
         }
 
-        debtChange =
-            self.pools[poolId].pendingDebt.uint128toInt128() +
-            self.debtDist.updateActorShares(bytes32(uint(poolId)), newLiquidity);
+        int changedValue = self.debtDist.getUpdatedActorValue(bytes32(uint(poolId)));
+        self.debtDist.updateActorShares(bytes32(uint(poolId)), newLiquidity);
+        debtChange = self.pools[poolId].pendingDebt.uint128toInt128() + changedValue;
         self.pools[poolId].pendingDebt = 0;
 
         // recalculate market capacity
@@ -497,7 +503,8 @@ library Market {
 
             // Detach the market from this pool by removing the pool's shares from the market.
             // The pool will remain "detached" until the pool manager specifies a new debtDist.
-            uint newPoolDebt = uint(self.debtDist.updateActorShares(bytes32(uint(poolId)), 0));
+            uint newPoolDebt = uint(self.debtDist.getUpdatedActorValue(bytes32(uint(poolId))));
+            self.debtDist.updateActorShares(bytes32(uint(poolId)), 0);
             self.pools[poolId].pendingDebt += newPoolDebt.uint256toUint128();
         }
 
