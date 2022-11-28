@@ -112,6 +112,8 @@ import "../errors/ParameterError.sol";
  * - totalShares: 3 (150 USD)
  * - valuePerShare: 50 USD
  * - totalValue: 150 USD
+ *
+ * TODO: Initialization of a distribution could be cleaned up, removed from semantically overloaded functions into a clear initializer function. This would clean up the Distribution's two main functions.
  */
 library Distribution {
     using SafeCast for uint128;
@@ -201,6 +203,11 @@ library Distribution {
     ) internal returns (int changedValue) {
         DistributionActor.Data storage actor = dist.actorInfo[actorId];
 
+        // ---------------------------------------------------------------
+        // TODO: This could be moved into another function
+        // Usage would change by calling that other function to read changedValue
+        // and then this function to modify state.
+        // ---------------------------------------------------------------
         // Compare the current valuePerShare of the distribution to the value it had when the actor's shares were last updated.
         int128 deltaValuePerShare = dist.valuePerShare - actor.lastValuePerShare;
 
@@ -208,6 +215,7 @@ library Distribution {
         // TODO: Why does this use the actor's previous number of shares and not the change in number of shares?
         int changedValueHighPrecision = deltaValuePerShare * actor.shares.uint128toInt256();
         changedValue = changedValueHighPrecision.fromHighPrecisionDecimalToInteger();
+        // ---------------------------------------------------------------
 
         // Modify the total shares with the actor's change in shares.
         uint128 sharesUint128 = shares.uint256toUint128();
@@ -222,9 +230,10 @@ library Distribution {
      *
      * The change in value is manifested in the distribution by changing the actor's number of shares in it, and thus the distribution's total number of shares.
      *
-     * Returns the amount by which the distribution's number of shares changed.
+     * Returns the resulting amount of shares that the actor has after this change in value.
      *
      * TODO: Consider renaming to updateActorValueTo(...) so that it is clear that "value" represents the target value and not a delta.
+     * TODO: Consider renaming returned shares to resultingShares.
      */
     function updateActorValue(
         Data storage dist,
@@ -237,8 +246,8 @@ library Distribution {
 
         DistributionActor.Data storage actor = dist.actorInfo[actorId];
 
-        // TODO: Comment on why this means that the distribution is "inconsistent", override
-        // why we assume that this function is being called after updateActorShares() was called.
+        // TODO: Comment on why or this means that the distribution is "inconsistent",
+        // or why we assume that this function is being called after updateActorShares() was called.
         if (actor.lastValuePerShare != 0) {
             revert InconsistentDistribution();
         }
@@ -255,7 +264,7 @@ library Distribution {
         // If the distribution is not empty, the number of shares
         // is determined by the valuePerShare.
         else {
-            // Calculate number of shares this way instead of value / valuePerShare,
+            // Calculate number of shares this way (not reusing helper below)
             // in order to avoid precision loss.
             shares = uint((value * int128(dist.totalShares)) / totalValue(dist));
         }
@@ -263,7 +272,7 @@ library Distribution {
         // Modify the total shares with the actor's change in shares.
         dist.totalShares = (dist.totalShares + shares - actor.shares).uint256toUint128();
 
-        actor.shares = (shares).uint256toUint128();
+        actor.shares = shares.uint256toUint128();
         // Note: No need to update actor.lastValuePerShare
         // because they contributed value to the distribution.
     }
