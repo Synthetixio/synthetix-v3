@@ -230,7 +230,7 @@ library Distribution {
             revert InconsistentDistribution();
         }
 
-        // Represent the actor's change in newActorValue by changing the actor's number of shares,
+        // Represent the actor's change in value by changing the actor's number of shares,
         // and keeping the distribution's valuePerShare constant.
 
         resultingShares = _getSharesForValue(dist, newActorValue);
