@@ -190,22 +190,20 @@ library Distribution {
      * @dev Updates an actor's number of shares in the distribution to the specified amount.
      *
      * Whenever an actor's shares are changed in this way, we record the distribution's current valuePerShare into the actor's lastValuePerShare record.
-     *
-     * TODO: Consider renaming to updateActorSharesTo(...) so that it is clear that "shares" represents the target amount and not a delta.
      */
     function updateActorSharesTo(
         Data storage dist,
         bytes32 actorId,
-        uint shares
+        uint newActorShares
     ) internal {
         DistributionActor.Data storage actor = dist.actorInfo[actorId];
 
-        uint128 sharesUint128 = shares.uint256toUint128();
+        uint128 sharesUint128 = newActorShares.uint256toUint128();
         dist.totalShares = dist.totalShares + sharesUint128 - actor.shares;
 
         actor.shares = sharesUint128;
 
-        actor.lastValuePerShare = shares == 0 ? int128(0) : dist.valuePerShare;
+        actor.lastValuePerShare = newActorShares == 0 ? int128(0) : dist.valuePerShare;
     }
 
     /**
@@ -214,15 +212,12 @@ library Distribution {
      * The change in value is manifested in the distribution by changing the actor's number of shares in it, and thus the distribution's total number of shares.
      *
      * Returns the resulting amount of shares that the actor has after this change in value.
-     *
-     * TODO: Consider renaming to updateActorValueTo(...) so that it is clear that "value" represents the target value and not a delta.
-     * TODO: Consider renaming returned shares to resultingShares.
      */
     function updateActorValueTo(
         Data storage dist,
         bytes32 actorId,
-        int value
-    ) internal returns (uint shares) {
+        int newActorValue
+    ) internal returns (uint actorShares) {
         if (dist.valuePerShare == 0 && dist.totalShares != 0) {
             revert ZeroValuePerShare();
         }
@@ -235,27 +230,27 @@ library Distribution {
             revert InconsistentDistribution();
         }
 
-        // Represent the actor's change in value by changing the actor's number of shares,
+        // Represent the actor's change in newActorValue by changing the actor's number of shares,
         // and keeping the distribution's valuePerShare constant.
 
         // If the distribution is empty, set valuePerShare to 1.0,
-        // and the number of shares to the given value.
+        // and the number of shares to the given newActorValue.
         if (dist.totalShares == 0) {
             dist.valuePerShare = DecimalMath.UNIT_PRECISE_INT128;
-            shares = (value > 0 ? value : -value).int256toUint256(); // Ensure value is positive
+            actorShares = (newActorValue > 0 ? newActorValue : -newActorValue).int256toUint256(); // Ensure newActorValue is positive
         }
         // If the distribution is not empty, the number of shares
         // is determined by the valuePerShare.
         else {
             // Calculate number of shares this way (not reusing helper below)
             // in order to avoid precision loss.
-            shares = uint((value * int128(dist.totalShares)) / totalValue(dist));
+            actorShares = uint((newActorValue * int128(dist.totalShares)) / totalValue(dist));
         }
 
         // Modify the total shares with the actor's change in shares.
-        dist.totalShares = (dist.totalShares + shares - actor.shares).uint256toUint128();
+        dist.totalShares = (dist.totalShares + actorShares - actor.shares).uint256toUint128();
 
-        actor.shares = shares.uint256toUint128();
+        actor.shares = actorShares.uint256toUint128();
         // Note: No need to update actor.lastValuePerShare
         // because they contributed value to the distribution.
     }
