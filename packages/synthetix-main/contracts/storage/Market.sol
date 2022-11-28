@@ -338,9 +338,6 @@ library Market {
     function getOutstandingDebt(Data storage self, uint128 poolId) internal returns (int debtChange) {
         int changedValue = self.debtDist.getActorValueChange(bytes32(uint(poolId)));
 
-        // TODO: Is this necessary? Suspect tests use staticall.
-        // self.debtDist.updateActorShares(bytes32(uint(poolId)), 0);
-
         return self.pools[poolId].pendingDebt.uint128toInt128() + changedValue;
     }
 
@@ -413,7 +410,7 @@ library Market {
         }
 
         int changedValue = self.debtDist.getActorValueChange(bytes32(uint(poolId)));
-        self.debtDist.updateActorShares(bytes32(uint(poolId)), newLiquidity);
+        self.debtDist.updateActorSharesTo(bytes32(uint(poolId)), newLiquidity);
         debtChange = self.pools[poolId].pendingDebt.uint128toInt128() + changedValue;
         self.pools[poolId].pendingDebt = 0;
 
@@ -504,7 +501,7 @@ library Market {
             // Detach the market from this pool by removing the pool's shares from the market.
             // The pool will remain "detached" until the pool manager specifies a new debtDist.
             uint newPoolDebt = uint(self.debtDist.getActorValueChange(bytes32(uint(poolId))));
-            self.debtDist.updateActorShares(bytes32(uint(poolId)), 0);
+            self.debtDist.updateActorSharesTo(bytes32(uint(poolId)), 0);
             self.pools[poolId].pendingDebt += newPoolDebt.uint256toUint128();
         }
 
@@ -558,7 +555,7 @@ library Market {
             require(self.debtDist.getActorShares(bytes32(uint(poolId))) == 0, "actor has shares before add");
 
             // Attach the market from this pool by setting the pool's shares to the value before exiting the market.
-            self.debtDist.updateActorShares(bytes32(uint(poolId)), self.pools[poolId].liquidityAmount);
+            self.debtDist.updateActorSharesTo(bytes32(uint(poolId)), self.pools[poolId].liquidityAmount);
         }
 
         self.lastDistributedMarketBalance += actuallyDistributed.int256toInt128();

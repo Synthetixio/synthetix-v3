@@ -54,8 +54,8 @@ import "../errors/ParameterError.sol";
  * TODO: This needs more clarification.
  *
  * This object is intended to be used in two different exclusive modes:
- * - Actors enter the distribution by adding value (see updateActorValue()),
- * - Actors enter the distribution without adding value (see updateActorShares()).
+ * - Actors enter the distribution by adding value (see updateActorValueTo()),
+ * - Actors enter the distribution without adding value (see updateActorSharesTo()).
  *
  * *********************
  * Numeric Examples
@@ -193,7 +193,7 @@ library Distribution {
      *
      * TODO: Consider renaming to updateActorSharesTo(...) so that it is clear that "shares" represents the target amount and not a delta.
      */
-    function updateActorShares(
+    function updateActorSharesTo(
         Data storage dist,
         bytes32 actorId,
         uint shares
@@ -218,7 +218,7 @@ library Distribution {
      * TODO: Consider renaming to updateActorValueTo(...) so that it is clear that "value" represents the target value and not a delta.
      * TODO: Consider renaming returned shares to resultingShares.
      */
-    function updateActorValue(
+    function updateActorValueTo(
         Data storage dist,
         bytes32 actorId,
         int value
@@ -230,7 +230,7 @@ library Distribution {
         DistributionActor.Data storage actor = dist.actorInfo[actorId];
 
         // TODO: Comment on why or this means that the distribution is "inconsistent",
-        // or why we assume that this function is being called after updateActorShares() was called.
+        // or why we assume that this function is being called after updateActorSharesTo() was called.
         if (actor.lastValuePerShare != 0) {
             revert InconsistentDistribution();
         }
@@ -267,7 +267,7 @@ library Distribution {
     function accumulateActor(Data storage dist, bytes32 actorId) internal returns (int valueChange) {
         valueChange = getActorValueChange(dist, actorId);
 
-        updateActorShares(dist, actorId, getActorShares(dist, actorId));
+        updateActorSharesTo(dist, actorId, getActorShares(dist, actorId));
     }
 
     /**

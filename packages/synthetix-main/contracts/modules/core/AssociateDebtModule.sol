@@ -71,7 +71,7 @@ contract AssociateDebtModule is IAssociateDebtModule {
             )
         );
 
-        epochData.consolidatedDebtDist.updateActorValue(actorId, updatedDebt);
+        epochData.consolidatedDebtDist.updateActorValueTo(actorId, updatedDebt);
 
         // done
         return updatedDebt;

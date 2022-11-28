@@ -46,7 +46,7 @@ contract IssueUSDModule is IIssueUSDModule {
 
         VaultEpoch.Data storage epoch = Pool.load(poolId).vaults[collateralType].currentEpoch();
 
-        epoch.consolidatedDebtDist.updateActorValue(bytes32(uint(accountId)), newDebt);
+        epoch.consolidatedDebtDist.updateActorValueTo(bytes32(uint(accountId)), newDebt);
         pool.recalculateVaultCollateral(collateralType);
         require(int(amount) == int128(int(amount)), "Incorrect amount specified");
         AssociatedSystem.load(_USD_TOKEN).asToken().mint(msg.sender, amount);
@@ -76,7 +76,7 @@ contract IssueUSDModule is IIssueUSDModule {
 
         VaultEpoch.Data storage epoch = Pool.load(poolId).vaults[collateralType].currentEpoch();
 
-        epoch.consolidatedDebtDist.updateActorValue(bytes32(uint(accountId)), debt - int(amount));
+        epoch.consolidatedDebtDist.updateActorValueTo(bytes32(uint(accountId)), debt - int(amount));
         pool.recalculateVaultCollateral(collateralType);
 
         emit UsdBurned(accountId, poolId, collateralType, amount, msg.sender);
