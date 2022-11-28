@@ -161,8 +161,9 @@ library Distribution {
     }
 
     /**
-     * @dev Adds or removes value to the distribution. The value is
-     * distributed into each individual share by altering the distribution's `valuePerShare`.
+     * @dev Inflates or deflates the total value of the distribution by the given value.
+     *
+     * The value being distributed ultimately modifies the distribution's valuePerShare.
      */
     function distributeValue(Data storage dist, int value) internal {
         if (value == 0) {
@@ -177,24 +178,21 @@ library Distribution {
 
         // TODO: Can we safely assume that amount will always be a regular integer,
         // i.e. not a decimal?
-        int amountHighPrecision = value.toHighPrecisionDecimal();
-        int deltaValuePerShare = amountHighPrecision / totalShares.uint256toInt256();
+        int valueHighPrecision = value.toHighPrecisionDecimal();
+        int deltaValuePerShare = valueHighPrecision / int(totalShares);
 
-        dist.valuePerShare += deltaValuePerShare.int256toInt128();
+        dist.valuePerShare += int128(deltaValuePerShare);
     }
 
     /**
      * @dev Updates an actor's number of shares in the distribution to the specified amount.
      *
-     * Modifies the distribution's totalValue, since the number of shares is changed.
+     * Whenever an actor's shares are changed in this way, we record the distribution's current valuePerShare into the actor's lastValuePerShare record.
      *
-     * Eg. if this is used to increase an actor's number of shares, the distribution's total value will increase
-     * by deltaShares * valuePerShare.
+     * The difference in valuePerShare between updates is used to calculate the actor's individual change in value. This value is calculated as the change in valuePerShare times the number of shares that the actor had before the update.
      *
-     * Returns the actor's individual change in value.
-     *
-     * Note: A distribution is intended to either use updateActorShares or updateActorValue, but not both
-     * during the distribution's lifetime.
+     * TODO: Consider renaming to updateActorSharesTo(...) so that it is clear that "shares" represents the target amount and not a delta.
+     * TODO: Resolve lingering question in the function's body.
      */
     function updateActorShares(
         Data storage dist,
@@ -203,11 +201,11 @@ library Distribution {
     ) internal returns (int changedValue) {
         DistributionActor.Data storage actor = dist.actorInfo[actorId];
 
-        // Compare the current valuePerShare to the valuePerShare at
-        // the last time the actor's shares were updated.
+        // Compare the current valuePerShare of the distribution to the value it had when the actor's shares were last updated.
         int128 deltaValuePerShare = dist.valuePerShare - actor.lastValuePerShare;
 
         // Calculate the total change in the actor's value.
+        // TODO: Why does this use the actor's previous number of shares and not the change in number of shares?
         int changedValueHighPrecision = deltaValuePerShare * actor.shares.uint128toInt256();
         changedValue = changedValueHighPrecision.fromHighPrecisionDecimalToInteger();
 
@@ -220,16 +218,13 @@ library Distribution {
     }
 
     /**
-     * @dev Updates an actor's value in the distribution to the specified amount.
+     * @dev Updates an actor's individual value in the distribution to the specified amount.
      *
-     * The incoming value is translated into a number of shares,
-     * which modify the total number of shares in the distribution, and thus
-     * the distribution's totalValue.
+     * The change in value is manifested in the distribution by changing the actor's number of shares in it, and thus the distribution's total number of shares.
      *
      * Returns the amount by which the distribution's number of shares changed.
      *
-     * Note: A distribution is intended to either use updateActorShares or updateActorValue, but not both
-     * during the distribution's lifetime.
+     * TODO: Consider renaming to updateActorValueTo(...) so that it is clear that "value" represents the target value and not a delta.
      */
     function updateActorValue(
         Data storage dist,
@@ -242,12 +237,14 @@ library Distribution {
 
         DistributionActor.Data storage actor = dist.actorInfo[actorId];
 
+        // TODO: Comment on why this means that the distribution is "inconsistent", override
+        // why we assume that this function is being called after updateActorShares() was called.
         if (actor.lastValuePerShare != 0) {
             revert InconsistentDistribution();
         }
 
-        // Calculate the number of shares that the
-        // change in value produces.
+        // Represent the actor's change in value by changing the actor's number of shares,
+        // and keeping the distribution's valuePerShare constant.
 
         // If the distribution is empty, set valuePerShare to 1.0,
         // and the number of shares to the given value.
