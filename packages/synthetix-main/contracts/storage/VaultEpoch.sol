@@ -96,7 +96,7 @@ library VaultEpoch {
 
         currentDebt += newDebt;
 
-        self.consolidatedDebtDist.updateActorValueTo(actorId, currentDebt);
+        self.consolidatedDebtDist.setActorValue(actorId, currentDebt);
         self.unconsolidatedDebt -= int128(newDebt);
     }
 
@@ -117,8 +117,8 @@ library VaultEpoch {
         // Ensure account debt is consolidated before we do next things.
         consolidateAccountDebt(self, accountId);
 
-        self.collateralDist.updateActorValueTo(actorId, int(collateralAmount));
-        self.incomingDebtDist.updateActorSharesTo(actorId, self.collateralDist.getActorShares(actorId).mulDecimal(leverage));
+        self.collateralDist.setActorValue(actorId, int(collateralAmount));
+        self.incomingDebtDist.setActorShares(actorId, self.collateralDist.getActorShares(actorId).mulDecimal(leverage));
     }
 
     /**

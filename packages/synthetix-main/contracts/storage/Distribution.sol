@@ -54,8 +54,8 @@ import "../errors/ParameterError.sol";
  * TODO: This needs more clarification.
  *
  * This object is intended to be used in two different exclusive modes:
- * - Actors enter the distribution by adding value (see updateActorValueTo()),
- * - Actors enter the distribution without adding value (see updateActorSharesTo()).
+ * - Actors enter the distribution by adding value (see setActorValue()),
+ * - Actors enter the distribution without adding value (see setActorShares()).
  *
  * *********************
  * Numeric Examples
@@ -191,7 +191,7 @@ library Distribution {
      *
      * Whenever an actor's shares are changed in this way, we record the distribution's current valuePerShare into the actor's lastValuePerShare record.
      */
-    function updateActorSharesTo(
+    function setActorShares(
         Data storage dist,
         bytes32 actorId,
         uint newActorShares
@@ -213,19 +213,19 @@ library Distribution {
      *
      * Returns the resulting amount of shares that the actor has after this change in value.
      */
-    function updateActorValueTo(
+    function setActorValue(
         Data storage dist,
         bytes32 actorId,
         int newActorValue
-    ) internal returns (uint actorShares) {
+    ) internal returns (uint resultingShares) {
+        // This functions requires that the distribution has a valuePerShare and totalShares to calculate the actor's number of shares with the incoming value.
         if (dist.valuePerShare == 0 && dist.totalShares != 0) {
             revert ZeroValuePerShare();
         }
 
         DistributionActor.Data storage actor = dist.actorInfo[actorId];
 
-        // TODO: Comment on why or this means that the distribution is "inconsistent",
-        // or why we assume that this function is being called after updateActorSharesTo() was called.
+        // TODO DBQuestion: why do we need that the actor was previously initialized (actor.share =/= 0)
         if (actor.lastValuePerShare != 0) {
             revert InconsistentDistribution();
         }
@@ -233,26 +233,18 @@ library Distribution {
         // Represent the actor's change in newActorValue by changing the actor's number of shares,
         // and keeping the distribution's valuePerShare constant.
 
-        // If the distribution is empty, set valuePerShare to 1.0,
-        // and the number of shares to the given newActorValue.
-        if (dist.totalShares == 0) {
-            dist.valuePerShare = DecimalMath.UNIT_PRECISE_INT128;
-            actorShares = (newActorValue > 0 ? newActorValue : -newActorValue).int256toUint256(); // Ensure newActorValue is positive
-        }
-        // If the distribution is not empty, the number of shares
-        // is determined by the valuePerShare.
-        else {
-            // Calculate number of shares this way (not reusing helper below)
-            // in order to avoid precision loss.
-            actorShares = uint((newActorValue * int128(dist.totalShares)) / totalValue(dist));
-        }
+        resultingShares = _getSharesForValue(dist, newActorValue);
 
         // Modify the total shares with the actor's change in shares.
-        dist.totalShares = (dist.totalShares + actorShares - actor.shares).uint256toUint128();
+        dist.totalShares = (dist.totalShares + resultingShares - actor.shares).uint256toUint128();
 
-        actor.shares = actorShares.uint256toUint128();
+        actor.shares = resultingShares.uint256toUint128();
         // Note: No need to update actor.lastValuePerShare
         // because they contributed value to the distribution.
+
+        // TODO DBQ: BIG WHY???? ^
+        // looks like this function doesn't work alone but in conjunction with prior, unrelated, function calls
+        // which would lead to code fragility if the developer does not enforce it (it should be enforced by code)
     }
 
     /**
@@ -262,7 +254,8 @@ library Distribution {
     function accumulateActor(Data storage dist, bytes32 actorId) internal returns (int valueChange) {
         valueChange = getActorValueChange(dist, actorId);
 
-        updateActorSharesTo(dist, actorId, getActorShares(dist, actorId));
+        // TODO only update lastValuePerShare since we got the valueChange in the line before
+        setActorShares(dist, actorId, getActorShares(dist, actorId));
     }
 
     /**
@@ -304,15 +297,31 @@ library Distribution {
         return (int(dist.valuePerShare) * int128(dist.totalShares)).fromHighPrecisionDecimalToInteger();
     }
 
-    /**
-     * @dev Calculates how many shares in this distribution are needed
-     * for holding the specified value.
-     */
-    function sharesForValue(Data storage dist, int value) internal view returns (uint shares) {
-        if (int(dist.valuePerShare) * value < 0) {
-            revert ParameterError.InvalidParameter("value", "results in negative shares");
-        }
+    // TODO: Not needed. Remove it
+    // /**
+    //  * @dev Calculates how many shares in this distribution are needed
+    //  * for holding the specified value.
+    //  */
+    // function sharesForValue(Data storage dist, int value) internal view returns (uint shares) {
+    //     if (int(dist.valuePerShare) * value < 0) {
+    //         revert ParameterError.InvalidParameter("value", "results in negative shares");
+    //     }
 
-        return uint(value.toHighPrecisionDecimal() / dist.valuePerShare);
+    //     return uint(value.toHighPrecisionDecimal() / dist.valuePerShare);
+    // }
+
+    function _getSharesForValue(Data storage dist, int value) private returns (uint shares) {
+        // If the distribution is empty, set valuePerShare to 1.0,
+        // and the number of shares to the given value.
+        if (dist.totalShares == 0) {
+            dist.valuePerShare = DecimalMath.UNIT_PRECISE_INT128;
+            shares = (value > 0 ? value : -value).int256toUint256(); // Ensure value is positive
+        }
+        // If the distribution is not empty, the number of shares
+        // is determined by the valuePerShare.
+        else {
+            // Calculate number of shares this way in order to avoid precision loss.
+            shares = uint((value * int128(dist.totalShares)) / totalValue(dist));
+        }
     }
 }
