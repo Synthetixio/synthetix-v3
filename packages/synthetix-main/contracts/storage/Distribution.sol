@@ -297,19 +297,6 @@ library Distribution {
         return (int(dist.valuePerShare) * int128(dist.totalShares)).fromHighPrecisionDecimalToInteger();
     }
 
-    // TODO: Not needed. Remove it
-    // /**
-    //  * @dev Calculates how many shares in this distribution are needed
-    //  * for holding the specified value.
-    //  */
-    // function sharesForValue(Data storage dist, int value) internal view returns (uint shares) {
-    //     if (int(dist.valuePerShare) * value < 0) {
-    //         revert ParameterError.InvalidParameter("value", "results in negative shares");
-    //     }
-
-    //     return uint(value.toHighPrecisionDecimal() / dist.valuePerShare);
-    // }
-
     function _getSharesForValue(Data storage dist, int value) private returns (uint shares) {
         // If the distribution is empty, set valuePerShare to 1.0,
         // and the number of shares to the given value.
