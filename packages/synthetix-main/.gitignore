@@ -9,3 +9,6 @@ contracts/modules/test
 
 # generated routers
 contracts/routers
+
+# generated contracty typings
+test/generated/typechain
