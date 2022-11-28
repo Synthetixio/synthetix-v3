@@ -11,9 +11,9 @@ library DistributionActor {
          */
         uint128 shares;
         /**
-         * @dev The valuePerShare at the time that their number of shares was last altered.
+         * @dev The value per share that the associated distribution had at the time that the actor's number of shares was last modified.
          *
-         * TODO: Is this also high precision? If so, document.
+         * Note: This is also a high precision decimal. See Distribution.valuePerShare.
          */
         int128 lastValuePerShare;
     }

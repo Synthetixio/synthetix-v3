@@ -135,44 +135,41 @@ library Distribution {
      */
     error InconsistentDistribution();
 
-    /**
-     * @dev The properties of a Distribution object.
-     */
     struct Data {
         /**
          * @dev The total number of shares in the distribution.
          */
         uint128 totalShares;
         /**
-         * @dev The value of each share of the distribution.
+         * @dev The value per share of the distribution.
          *
-         * This value is encoded internally as a "precise integer", which uses 27 digits of precision
-         * instead of the usual 1e18 digits of precision used by the "ether" unit and other tokens.
-         * i.e:
-         * - 1 ether = 1e18
-         * - 1 preciseInteger = 1e27
+         * This is a high precision "decimal" value with 27 decimals of precision. See DecimalMath.
          *
-         * TODO: Consider renaming to valuePerShareHighPrecision in order to be completely explicit about this.
+         * 1.0 = 1000000000000000000000000000 (27 zeroes)
+         *
+         * TODO: Consider using a nomenclature for integers vs decimals vs high precision decimals. E.g:
+         * integer => myValue
+         * decimal => pMyValue
+         * high precision decimal => ppMyValue
+         * Why? These representations are constructions on top of regular types (uint, uint128, int128, etc) and the code does not enforce their interoperability in any way, which could lead to mistakes and bugs. The nomenclature might help in this aspect.
          */
         int128 valuePerShare;
         /**
-         * @dev Tracks individual actor information, such as how many shares an actor has.
+         * @dev Tracks individual actor information, such as how many shares an actor has, their lastValuePerShare, etc.
          */
         mapping(bytes32 => DistributionActor.Data) actorInfo;
     }
-
-    // TODO: Add function to retrieve a low precision value per share. This is done from multiple parts of the code and prone to errors.
 
     /**
      * @dev Adds or removes value to the distribution. The value is
      * distributed into each individual share by altering the distribution's `valuePerShare`.
      */
-    function distributeValue(Data storage dist, int amount) internal {
-        if (amount == 0) {
+    function distributeValue(Data storage dist, int value) internal {
+        if (value == 0) {
             return;
         }
 
-        uint totalShares = dist.totalShares;
+        uint totalShares = dist.totalShares.uint128toUint256();
 
         if (totalShares == 0) {
             revert EmptyDistribution();
@@ -180,10 +177,10 @@ library Distribution {
 
         // TODO: Can we safely assume that amount will always be a regular integer,
         // i.e. not a decimal?
-        int amountHighPrecision = amount.toHighPrecisionDecimal();
-        int deltaValuePerShare = amountHighPrecision / int(totalShares);
+        int amountHighPrecision = value.toHighPrecisionDecimal();
+        int deltaValuePerShare = amountHighPrecision / totalShares.uint256toInt256();
 
-        dist.valuePerShare += int128(deltaValuePerShare);
+        dist.valuePerShare += deltaValuePerShare.int256toInt128();
     }
 
     /**
