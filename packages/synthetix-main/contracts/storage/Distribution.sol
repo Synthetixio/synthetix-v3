@@ -8,34 +8,77 @@ import "./DistributionActor.sol";
 import "../errors/ParameterError.sol";
 
 /**
- * @title Divides a quantity of value between a set of actors, proportional to the number of shares they have.
- * Most importantly, the total value can be updated in a way that doesn't require iterating or looping through all actors.
-
- * The total value is `totalShares * valuePerShare`, and can be derived or integrated in a single calculation.
+ * @title This is a central, if not _the_ central object of the system. It reduces the number of computations needed for modifying the balances of N users from O(n) to O(1).
  *
- * A share represents a unit in which the total value is divided, and thus the granularity of the distribution.
+ * *********************
+ * High Level Overview
+ * *********************
  *
- * Actors can be anything, not just addresses, and are thus bytes32. I.e. an accountId, a poolId, etc.
+ * Simply put, a distribution can be seen as an address to uint mapping that holds user balances, but with the added functionality of a global scalar that is able to inflate or deflate everyone's balances at once.
+ *
+ * Regular mapping:
+ * mapping(address => uint) balances;
+ * user_balance = balances[user_address];
+ *
+ * Distribution:
+ * mapping(bytes32 => uint) shares;
+ * uint valuePerShare; // <--- Scalar
+ * user_balance = shares[user_id] * valuePerShare;
+ *
+ * Note 1: Notice how users are tracked by a generic bytes32 id instead of an address. This allows the actors of a distribution not just be addresses. They can be anything, for example a pool id, an account id, etc.
+ *
+ * Note 2: This is not exactly the variable layout or types for a distribution, but it helps to illustrate its main purpose.
+ *
+ * *********************
+ * Conceptual Examples
+ * *********************
+ *
+ * 1) Socialization of collateral during a liquidation.
+ *
+ * Distributions are very useful for "socialization" of collateral, that is, the re-distribution of collateral when an account is liquidated. Suppose 1000 ETH are liquidated, and would need to be distributed amongst 1000 stakers. With a regular mapping, every staker's balance would have to be modified in a loop that iterates through every single one of them. With a distribution, the valuePerShare scalar would simply need to be incremented so that the total value of the distribution increases by 1000 ETH.
+ *
+ * 2) Socialization of debt during a liquidation.
+ *
+ * Similar to the socialization of collateral during a liquidation, the debt of the position that is being liquidated can be re-allocated using a distribution with a single action. Supposing a distribution tracks each user's debt in the system, and that 1000 sUSD has to be distributed amongst 1000 stakers, the debt distribution's valuePerShare would simply need to be incremented so that the total value or debt of the distribution increments by 1000 sUSD.
+ *
+ * **************************
+ * Actor's lastValuePerShare
+ * **************************
+ *
+ * TODO: Explain why lastValuePerShare needs to be stored for each actor.
+ *
+ * *********************
+ * Usage Modes
+ * *********************
+ *
+ * TODO: This needs more clarification.
  *
  * This object is intended to be used in two different exclusive modes:
  * - Actors enter the distribution by adding value (see updateActorValue()),
  * - Actors enter the distribution without adding value (see updateActorShares()).
  *
- * Example 1. Distribution in which actors enter by adding value (updateActorValue):
- * 1) The distribution is initialized with a single actor and a value of 100 USD
+ * *********************
+ * Numeric Examples
+ * *********************
+ *
+ * 1) Distribution in which actors enter by adding value (updateActorValue).
+ *
+ * 1.1) The distribution is initialized with a single actor and a value of 100 USD
  * - shares:
  *   - actor1: 1 (100 USD)
  * - totalShares: 1 (100 USD)
  * - valuePerShare: 100 USD
  * - totalValue: 100 USD
- * 2) Another actor enters the distribution with 50 USD of value
+ *
+ * 1.2) Another actor enters the distribution with 50 USD of value
  * - shares:
  *   - actor1: 1 (100 USD)
  *   - actor2: 0.5 (50 USD)
  * - totalShares: 1.5 (150 USD)
  * - valuePerShare: 100 USD
  * - totalValue: 150 USD
- * 3) 10 new actors enter the distribution with 10 USD value each
+ *
+ * 1.3) 10 new actors enter the distribution with 10 USD value each
  * - shares:
  *   - actor1: 1 (100 USD)
  *   - actor2: 0.5 (50 USD)
@@ -44,22 +87,25 @@ import "../errors/ParameterError.sol";
  * - valuePerShare: 100 USD
  * - totalValue: 250 USD
  *
- * Example 2. Distribution in which actors enter without adding value (updateActorShares):
- * 1) The distribution is initialized with two actors and no value
+ * 2) Distribution in which actors enter without adding value (updateActorShares).
+ *
+ * 2.1) The distribution is initialized with two actors and no value
  * - shares:
  *   - actor1: 1 (0 USD)
  *   - actor2: 1 (0 USD)
  * - totalShares: 2 (0 USD)
  * - valuePerShare: 0 USD
  * - totalValue: 0 USD
- * 2) 100 USD of value is distributed (see distributeValue())
+ *
+ * 2.2) 100 USD of value is distributed (see distributeValue())
  * - shares:
  *   - actor1: 1 (50 USD)
  *   - actor2: 1 (50 USD)
  * - totalShares: 2 (100 USD)
  * - valuePerShare: 50 USD
  * - totalValue: 100 USD
- * 3) Actor 1's shares are duplicated
+ *
+ * 2.3) Actor 1's shares are duplicated
  * - shares:
  *   - actor1: 2 (100 USD)
  *   - actor2: 1 (50 USD)
