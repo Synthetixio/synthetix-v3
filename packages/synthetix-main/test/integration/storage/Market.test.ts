@@ -147,7 +147,7 @@ describe('Market', function () {
 
       describe('another pool enters', () => {
         before('adjust 2', async () => {
-          await systems().Core.connect(owner).Market_distributeDebt(fakeMarketId, 9999999);
+          await systems().Core.connect(owner).Market_distributeDebtToPool(fakeMarketId, 9999999);
 
           await systems()
             .Core.connect(owner)
@@ -227,7 +227,7 @@ describe('Market', function () {
 
           describe('both pools leave', () => {
             before('adjusted to leave', async () => {
-              await systems().Core.connect(owner).Market_distributeDebt(fakeMarketId, 9999999);
+              await systems().Core.connect(owner).Market_distributeDebtToPool(fakeMarketId, 9999999);
               await systems()
                 .Core.connect(owner)
                 .Market_adjustVaultShares(fakeMarketId, fakePool1, 0, One.mul(1234));
@@ -274,7 +274,7 @@ describe('Market', function () {
     });
   });
 
-  describe('distributeDebt()', () => {
+  describe('distributeDebtToPool()', () => {
     const fakePool1 = 29386;
     const fakePool2 = 34572;
     const fakePool3 = 92386;
@@ -295,7 +295,7 @@ describe('Market', function () {
             .Market_adjustVaultShares(fakeMarketId, fakePool1, 20, One.mul(4));
 
           await FakeMarket.setReportedDebt(1000000000);
-          await systems().Core.connect(owner).Market_distributeDebt(fakeMarketId, 1);
+          await systems().Core.connect(owner).Market_distributeDebtToPool(fakeMarketId, 1);
 
           // sanity
           assertBn.equal(
@@ -330,7 +330,7 @@ describe('Market', function () {
 
         describe('call again', async () => {
           before('move out of range with three pools, limit 1', async () => {
-            await systems().Core.connect(owner).Market_distributeDebt(fakeMarketId, 1);
+            await systems().Core.connect(owner).Market_distributeDebtToPool(fakeMarketId, 1);
           });
 
           it('debt is moved further', async () => {
@@ -359,7 +359,7 @@ describe('Market', function () {
 
           describe('last pool removed', async () => {
             before('move out of range with three pools, limit 1', async () => {
-              await systems().Core.connect(owner).Market_distributeDebt(fakeMarketId, 1);
+              await systems().Core.connect(owner).Market_distributeDebtToPool(fakeMarketId, 1);
             });
 
             it('debt is moved to the end, and no further', async () => {
@@ -400,8 +400,8 @@ describe('Market', function () {
         });
 
         it('never distributes anything because there is no pool to absorb the gains', async () => {
-          await systems().Core.connect(owner).Market_distributeDebt(fakeMarketId, 999);
-          await systems().Core.connect(owner).Market_distributeDebt(fakeMarketId, 999);
+          await systems().Core.connect(owner).Market_distributeDebtToPool(fakeMarketId, 999);
+          await systems().Core.connect(owner).Market_distributeDebtToPool(fakeMarketId, 999);
 
           // none of the pools have received any debt allocation becuase there is
           // no pool to take on the exposure from 0 to -20
@@ -425,7 +425,7 @@ describe('Market', function () {
               .Core.connect(owner)
               .Market_adjustVaultShares(fakeMarketId, fakePool1 + 1, 1, 0);
 
-            await systems().Core.connect(owner).Market_distributeDebt(fakeMarketId, 1);
+            await systems().Core.connect(owner).Market_distributeDebtToPool(fakeMarketId, 1);
           });
 
           it('debt per share is at the point where the pool was added', async () => {
@@ -454,7 +454,7 @@ describe('Market', function () {
 
           describe('call again', async () => {
             before('move into range with limit 1', async () => {
-              await systems().Core.connect(owner).Market_distributeDebt(fakeMarketId, 1);
+              await systems().Core.connect(owner).Market_distributeDebtToPool(fakeMarketId, 1);
             });
 
             it('debt per share is at the point where the pool was added', async () => {
@@ -481,7 +481,7 @@ describe('Market', function () {
 
             describe('call again', async () => {
               before('move into range with limit 1', async () => {
-                await systems().Core.connect(owner).Market_distributeDebt(fakeMarketId, 1);
+                await systems().Core.connect(owner).Market_distributeDebtToPool(fakeMarketId, 1);
               });
 
               it('debt per share is at the point where the pool was added', async () => {
@@ -596,12 +596,12 @@ describe('Market', function () {
       before(restore);
 
       before('setup', async () => {
-        // add a extar pool to absorb liquidity
+        // add an extra pool to absorb liquidity
         await systems()
           .Core.connect(owner)
           .Market_adjustVaultShares(fakeMarketId, fakePool2 + 1, 20, One.mul(1000000));
         await systems().Core.connect(owner).Market_set_issuance(fakeMarketId, 1000);
-        await systems().Core.connect(owner).Market_distributeDebt(fakeMarketId, 99999);
+        await systems().Core.connect(owner).Market_distributeDebtToPool(fakeMarketId, 99999);
 
         // adding them here in a random order
         await systems()

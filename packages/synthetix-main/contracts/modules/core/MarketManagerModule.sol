@@ -58,7 +58,7 @@ contract MarketManagerModule is IMarketManagerModule {
     function getMarketDebtPerShare(uint128 marketId) external override returns (int) {
         Market.Data storage market = Market.load(marketId);
 
-        market.distributeDebt(999999999);
+        market.distributeDebtToPool(999999999);
 
         return market.getDebtPerShare();
     }
