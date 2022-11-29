@@ -7,6 +7,8 @@ import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import "./DistributionActor.sol";
 import "../errors/ParameterError.sol";
 
+import "hardhat/console.sol";
+
 /**
  * @title This is a central, if not _the_ central object of the system. It reduces the number of computations needed for modifying the balances of N users from O(n) to O(1).
  *
@@ -180,6 +182,7 @@ library Distribution {
      * The value being distributed ultimately modifies the distribution's valuePerShare.
      */
     function distributeValue(Data storage dist, int value) internal {
+        console.log("DISTRIBUTE VALUE", uint(value));
         if (value == 0) {
             return;
         }
@@ -222,50 +225,6 @@ library Distribution {
     }
 
     /**
-     * @dev Updates an actor's individual value in the distribution to the specified amount.
-     *
-     * The change in value is manifested in the distribution by changing the actor's number of shares in it, and thus the distribution's total number of shares.
-     *
-     * Returns the resulting amount of shares that the actor has after this change in value.
-     */
-    function setActorValue(
-        Data storage dist,
-        bytes32 actorId,
-        int newActorValue
-    ) internal returns (uint resultingShares) {
-        // This functions requires that the distribution has a valuePerShare and totalShares to calculate the actor's number of shares with the incoming value.
-        if (dist.valuePerShare == 0 && dist.totalShares != 0) {
-            revert ZeroValuePerShare();
-        }
-
-        DistributionActor.Data storage actor = dist.actorInfo[actorId];
-
-        // TODO
-        // You're not supposed to call this function if the other one was used ever.
-        // Same applies in the other direction but it is not enforced in any way like this.
-        if (actor.lastValuePerShare != 0) {
-            revert InconsistentDistribution();
-        }
-
-        // Represent the actor's change in value by changing the actor's number of shares,
-        // and keeping the distribution's valuePerShare constant.
-
-        resultingShares = _getSharesForValue(dist, newActorValue);
-
-        // Modify the total shares with the actor's change in shares.
-        dist.totalShares = (dist.totalShares + resultingShares - actor.shares).uint256toUint128();
-
-        actor.shares = resultingShares.uint256toUint128();
-
-        // TODO: Split this function in 3 files
-        // Note: No need to update actor.lastValuePerShare
-        // because they contributed value to the distribution.
-        // TODO DBQ: BIG WHY???? ^
-        // looks like this function doesn't work alone but in conjunction with prior, unrelated, function calls
-        // which would lead to code fragility if the developer does not enforce it (it should be enforced by code)
-    }
-
-    /**
      * @dev Updates an actor's lastValuePerShare to the distribution's current valuePerShare, and
      * returns the change in value for the actor, since their last update.
      */
@@ -283,7 +242,7 @@ library Distribution {
     function getActorValueChange(Data storage dist, bytes32 actorId) internal view returns (int valueChange) {
         DistributionActor.Data storage actor = dist.actorInfo[actorId];
 
-        int128 deltaValuePerShare = dist.valuePerShare - actor.lastValuePerShare;
+        int deltaValuePerShare = (dist.valuePerShare - actor.lastValuePerShare).int128toInt256();
 
         int changedValueHighPrecision = deltaValuePerShare * actor.shares.uint128toInt256();
         valueChange = changedValueHighPrecision.fromHighPrecisionDecimalToInteger();
@@ -294,40 +253,5 @@ library Distribution {
      */
     function getActorShares(Data storage dist, bytes32 actorId) internal view returns (uint shares) {
         return dist.actorInfo[actorId].shares;
-    }
-
-    /**
-     * @dev Returns the value owned by the actor in the distribution.
-     *
-     * i.e. actor.shares * valuePerShare
-     */
-    function getActorValue(Data storage dist, bytes32 actorId) internal view returns (int value) {
-        return (int(dist.valuePerShare) * int128(dist.actorInfo[actorId].shares)).fromHighPrecisionDecimalToInteger();
-    }
-
-    /**
-     * @dev Returns the total value held in the distribution.
-     *
-     * i.e. totalShares * valuePerShare
-     *
-     * Requirement: this assumes that every user's lastValuePerShare is zero.
-     */
-    function totalValue(Data storage dist) internal view returns (int value) {
-        return (int(dist.valuePerShare) * int128(dist.totalShares)).fromHighPrecisionDecimalToInteger();
-    }
-
-    function _getSharesForValue(Data storage dist, int value) private returns (uint shares) {
-        // If the distribution is empty, set valuePerShare to 1.0,
-        // and the number of shares to the given value.
-        if (dist.totalShares == 0) {
-            dist.valuePerShare = DecimalMath.UNIT_PRECISE_INT128;
-            shares = value.int256toUint256();
-        }
-        // If the distribution is not empty, the number of shares
-        // is determined by the valuePerShare.
-        else {
-            // Calculate number of shares this way in order to avoid precision loss.
-            shares = uint((value * int128(dist.totalShares)) / totalValue(dist));
-        }
     }
 }

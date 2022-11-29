@@ -18,7 +18,9 @@ contract AssociateDebtModule is IAssociateDebtModule {
     using Distribution for Distribution.Data;
     using Pool for Pool.Data;
     using Vault for Vault.Data;
+    using VaultEpoch for VaultEpoch.Data;
     using CollateralConfiguration for CollateralConfiguration.Data;
+    using ScalableMapping for ScalableMapping.Data;
 
     bytes32 private constant _USD_TOKEN = "USDToken";
 
@@ -60,18 +62,16 @@ contract AssociateDebtModule is IAssociateDebtModule {
         poolData.updateAccountDebt(collateralType, accountId);
 
         // increase account debt
-        int updatedDebt = epochData.consolidatedDebtDist.getActorValue(actorId) + int(amount);
+        int updatedDebt = epochData.assignDebtToAccount(accountId, int(amount));
 
         // verify the c ratio
         _verifyCollateralRatio(
             collateralType,
             uint(updatedDebt > 0 ? updatedDebt : int(0)),
             CollateralConfiguration.load(collateralType).getCollateralPrice().mulDecimal(
-                uint(epochData.collateralDist.getActorValue(actorId))
+                uint(epochData.collateralAmounts.get(actorId))
             )
         );
-
-        epochData.consolidatedDebtDist.setActorValue(actorId, updatedDebt);
 
         // done
         return updatedDebt;

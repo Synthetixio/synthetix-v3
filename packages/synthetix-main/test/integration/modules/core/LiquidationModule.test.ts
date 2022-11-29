@@ -123,7 +123,7 @@ describe('LiquidationModule', function () {
         });
 
         it('redistributes debt among remaining staker', async () => {
-          // vault should stilel have same amounts (minus collateral from reward)
+          // vault should still have same amounts (minus collateral from reward)
           assertBn.equal(
             (await systems().Core.callStatic.getVaultCollateral(poolId, collateralAddress()))[0],
             depositAmount.mul(11).sub(liquidationReward)
@@ -132,7 +132,9 @@ describe('LiquidationModule', function () {
             await systems().Core.callStatic.getVaultDebt(poolId, collateralAddress()),
             debtAmount
           );
+        });
 
+        it.only('since its last position in vault, should have same amount of debt as whole vault', async () => {
           assertBn.equal(
             await systems().Core.callStatic.getVaultDebt(poolId, collateralAddress()),
             await systems().Core.callStatic.getPositionDebt(accountId2, poolId, collateralAddress())

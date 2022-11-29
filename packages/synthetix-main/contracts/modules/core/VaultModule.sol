@@ -11,6 +11,9 @@ import "../../storage/Pool.sol";
 import "../../interfaces/IVaultModule.sol";
 import "../../interfaces/IUSDTokenModule.sol";
 
+
+import "hardhat/console.sol";
+
 /**
  * @title See {IVaultModule}
  */
@@ -27,6 +30,7 @@ contract VaultModule is IVaultModule {
     using AccountRBAC for AccountRBAC.Data;
     using Distribution for Distribution.Data;
     using CollateralConfiguration for CollateralConfiguration.Data;
+    using ScalableMapping for ScalableMapping.Data;
 
     error PoolNotFound(uint128 poolId);
     error InvalidLeverage(uint leverage);
@@ -83,10 +87,12 @@ contract VaultModule is IVaultModule {
 
         _setDelegatePoolId(accountId, poolId, collateralType);
 
+        console.log("position updated!");
+
         // this is the most efficient time to check the resulting collateralization ratio, since
         // user's debt and collateral price have been fully updated
         if (collateralAmount < oldCollateralAmount) {
-            int debt = vault.currentEpoch().consolidatedDebtDist.getActorValue(actorId);
+            int debt = vault.currentEpoch().consolidatedDebtAmounts[accountId];
             //(, uint collateralValue) = pool.currentAccountCollateral(collateralType, accountId);
 
             CollateralConfiguration.load(collateralType).verifyCollateralRatio(
@@ -220,10 +226,16 @@ contract VaultModule is IVaultModule {
             collateral.pools.remove(poolId);
         }
 
+        console.log("about to update account position");
+
         pool.vaults[collateralType].currentEpoch().updateAccountPosition(accountId, collateralAmount, leverage);
+
+        console.log("done updating account position");
 
         // no update for usd because no usd issued
         collateralPrice = pool.recalculateVaultCollateral(collateralType);
+
+        console.log("recalculated collateral");
     }
 
     function _verifyNotCapacityLocked(uint128 poolId) internal view {
