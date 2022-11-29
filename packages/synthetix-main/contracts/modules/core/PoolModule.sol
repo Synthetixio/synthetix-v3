@@ -95,7 +95,7 @@ contract PoolModule is IPoolModule {
 
         // TODO: this is not super efficient. we only call this to gather the debt accumulated from deployed pools
         // would be better if we could eliminate the call at the end somehow
-        pool.distributeDebt();
+        pool.distributeDebtToVault();
 
         (uint128[] memory postVerifyLocks, uint128[] memory removedMarkets) = _verifyPoolConfigurationChange(
             pool,
@@ -138,7 +138,7 @@ contract PoolModule is IPoolModule {
 
         pool.totalWeights = uint128(totalWeight);
 
-        pool.distributeDebt();
+        pool.distributeDebtToVault();
 
         for (i = 0; i < postVerifyLocks.length && postVerifyLocks[i] != 0; i++) {
             if (Market.load(postVerifyLocks[i]).isCapacityLocked()) {

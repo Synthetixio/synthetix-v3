@@ -130,9 +130,9 @@ library Pool {
      *
      * It updates the chain by performing these actions:
      * - Splits the pool's total liquidity of the pool into each market, pro-rata. The amount of shares that the pool has on each market depends on how much liquidity the pool provides to the market.
-     * - Accumulates the change in debt value from each market into the pools own debt distribution's value per share.
+     * - Accumulates the change in debt value from each market into the pools own vault debt distribution's value per share.
      */
-    function distributeDebt(Data storage self) internal {
+    function distributeDebtToVault(Data storage self) internal {
         uint totalWeights = self.totalWeights;
 
         if (totalWeights == 0) {
@@ -151,7 +151,7 @@ library Pool {
         int cumulativeDebtChange = 0;
 
         // Loop through the pool's markets, applying market weights, and tracking how this changes the amount of debt that this pool is responsible for.
-        // This debt extracted from markets is then applied to the pool's debt distribution, which thus exposes debt to the pool's vaults.
+        // This debt extracted from markets is then applied to the pool's vault debt distribution, which thus exposes debt to the pool's vaults.
         for (uint i = 0; i < self.marketConfigurations.length; i++) {
             MarketConfiguration.Data storage marketConfiguration = self.marketConfigurations[i];
 
@@ -257,11 +257,11 @@ library Pool {
      * - Updates the vaults shares in the pool's debt distribution, according to the collateral provided by the vault.
      * - Updates the value per share of the vault's debt distribution.
      *
-     * TODO: If possible, remove second call to distributeDebt.
+     * TODO: If possible, remove second call to distributeDebtToVault.
      */
     function recalculateVaultCollateral(Data storage self, address collateralType) internal returns (uint collateralPrice) {
         // Update each market's pro-rata liquidity and collect accumulated debt into the pool's debt distribution.
-        distributeDebt(self);
+        distributeDebtToVault(self);
 
         // Get the latest collateral price.
         collateralPrice = CollateralConfiguration.load(collateralType).getCollateralPrice();
@@ -280,7 +280,7 @@ library Pool {
         self.vaults[collateralType].distributeDebt(debtChange);
 
         // Distribute debt again because... TODO
-        distributeDebt(self);
+        distributeDebtToVault(self);
     }
 
     /**
