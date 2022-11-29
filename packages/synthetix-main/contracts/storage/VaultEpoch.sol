@@ -34,7 +34,7 @@ library VaultEpoch {
          * Also, when debt is socialized in a liquidation, it is done onto this distribution. As users
          * interact with the system, their independent debt is consolidated or rolled into consolidatedDebtDist.
          */
-        Distribution.Data incomingDebtDist;
+        Distribution.Data accountsDebtDistribution;
         /**
          * @dev Tracks collateral delegated to this vault, for each user.
          *
@@ -48,7 +48,7 @@ library VaultEpoch {
         /**
          * @dev Tracks consolidated debt for each user.
          *
-         * Updated when users interact with the system, consolidating changes from the fluctuating incomingDebtDist,
+         * Updated when users interact with the system, consolidating changes from the fluctuating accountsDebtDistribution,
          * and directly when users mint or burn USD, or repay debt.
          */
         Distribution.Data consolidatedDebtDist;
@@ -73,7 +73,7 @@ library VaultEpoch {
      * - Pool.recalculateVaultCollateral (ticker)
      */
     function distributeDebt(Data storage self, int debtChange) internal {
-        self.incomingDebtDist.distributeValue(debtChange);
+        self.accountsDebtDistribution.distributeValue(debtChange);
 
         // Cache total debt here.
         // Will roll over to individual users as they interact with the system.
@@ -92,7 +92,7 @@ library VaultEpoch {
         bytes32 actorId = accountToActor(accountId);
 
         currentDebt = self.consolidatedDebtDist.getActorValue(actorId);
-        int newDebt = self.incomingDebtDist.accumulateActor(actorId);
+        int newDebt = self.accountsDebtDistribution.accumulateActor(actorId);
 
         currentDebt += newDebt;
 
@@ -118,7 +118,7 @@ library VaultEpoch {
         consolidateAccountDebt(self, accountId);
 
         self.collateralDist.updateActorValue(actorId, int(collateralAmount));
-        self.incomingDebtDist.updateActorShares(actorId, self.collateralDist.getActorShares(actorId).mulDecimal(leverage));
+        self.accountsDebtDistribution.updateActorShares(actorId, self.collateralDist.getActorShares(actorId).mulDecimal(leverage));
     }
 
     /**
