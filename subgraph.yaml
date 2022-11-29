@@ -75,7 +75,7 @@ dataSources:
         - name: CollateralModule
           file: ./abis/CollateralModule.json
       eventHandlers:
-        - event: CollateralConfigured(indexed address,indexed address,uint256,uint256,uint256,indexed bool)
+        - event: CollateralConfigured(indexed address,(bool,uint256,uint256,uint256,address,address,uint256))
           handler: handleCollateralConfigured
         - event: Deposited(indexed uint128,indexed address,uint256,indexed address)
           handler: handleDeposited

@@ -27,24 +27,38 @@ export class CollateralConfigured__Params {
     return this._event.parameters[0].value.toAddress();
   }
 
-  get priceFeed(): Address {
-    return this._event.parameters[1].value.toAddress();
+  get config(): CollateralConfiguredConfigStruct {
+    return changetype<CollateralConfiguredConfigStruct>(this._event.parameters[1].value.toTuple());
+  }
+}
+
+export class CollateralConfiguredConfigStruct extends ethereum.Tuple {
+  get depositingEnabled(): boolean {
+    return this[0].toBoolean();
   }
 
-  get targetCollateralizationRatio(): BigInt {
-    return this._event.parameters[2].value.toBigInt();
+  get issuanceRatio(): BigInt {
+    return this[1].toBigInt();
   }
 
-  get minimumCollateralizationRatio(): BigInt {
-    return this._event.parameters[3].value.toBigInt();
+  get liquidationRatio(): BigInt {
+    return this[2].toBigInt();
   }
 
   get liquidationReward(): BigInt {
-    return this._event.parameters[4].value.toBigInt();
+    return this[3].toBigInt();
   }
 
-  get depositingEnabled(): boolean {
-    return this._event.parameters[5].value.toBoolean();
+  get priceFeed(): Address {
+    return this[4].toAddress();
+  }
+
+  get tokenAddress(): Address {
+    return this[5].toAddress();
+  }
+
+  get minDelegation(): BigInt {
+    return this[6].toBigInt();
   }
 }
 
@@ -145,11 +159,11 @@ export class CollateralModule__getCollateralConfigurationResultValue0Struct exte
     return this[0].toBoolean();
   }
 
-  get targetCRatio(): BigInt {
+  get issuanceRatio(): BigInt {
     return this[1].toBigInt();
   }
 
-  get minimumCRatio(): BigInt {
+  get liquidationRatio(): BigInt {
     return this[2].toBigInt();
   }
 
@@ -163,6 +177,10 @@ export class CollateralModule__getCollateralConfigurationResultValue0Struct exte
 
   get tokenAddress(): Address {
     return this[5].toAddress();
+  }
+
+  get minDelegation(): BigInt {
+    return this[6].toBigInt();
   }
 }
 
@@ -171,11 +189,11 @@ export class CollateralModule__getCollateralConfigurationsResultValue0Struct ext
     return this[0].toBoolean();
   }
 
-  get targetCRatio(): BigInt {
+  get issuanceRatio(): BigInt {
     return this[1].toBigInt();
   }
 
-  get minimumCRatio(): BigInt {
+  get liquidationRatio(): BigInt {
     return this[2].toBigInt();
   }
 
@@ -189,6 +207,10 @@ export class CollateralModule__getCollateralConfigurationsResultValue0Struct ext
 
   get tokenAddress(): Address {
     return this[5].toAddress();
+  }
+
+  get minDelegation(): BigInt {
+    return this[6].toBigInt();
   }
 }
 
@@ -267,7 +289,7 @@ export class CollateralModule extends ethereum.SmartContract {
   ): CollateralModule__getCollateralConfigurationResultValue0Struct {
     let result = super.call(
       'getCollateralConfiguration',
-      'getCollateralConfiguration(address):((bool,uint256,uint256,uint256,address,address))',
+      'getCollateralConfiguration(address):((bool,uint256,uint256,uint256,address,address,uint256))',
       [ethereum.Value.fromAddress(collateralType)]
     );
 
@@ -281,7 +303,7 @@ export class CollateralModule extends ethereum.SmartContract {
   ): ethereum.CallResult<CollateralModule__getCollateralConfigurationResultValue0Struct> {
     let result = super.tryCall(
       'getCollateralConfiguration',
-      'getCollateralConfiguration(address):((bool,uint256,uint256,uint256,address,address))',
+      'getCollateralConfiguration(address):((bool,uint256,uint256,uint256,address,address,uint256))',
       [ethereum.Value.fromAddress(collateralType)]
     );
     if (result.reverted) {
@@ -298,7 +320,7 @@ export class CollateralModule extends ethereum.SmartContract {
   ): Array<CollateralModule__getCollateralConfigurationsResultValue0Struct> {
     let result = super.call(
       'getCollateralConfigurations',
-      'getCollateralConfigurations(bool):((bool,uint256,uint256,uint256,address,address)[])',
+      'getCollateralConfigurations(bool):((bool,uint256,uint256,uint256,address,address,uint256)[])',
       [ethereum.Value.fromBoolean(hideDisabled)]
     );
 
@@ -310,7 +332,7 @@ export class CollateralModule extends ethereum.SmartContract {
   ): ethereum.CallResult<Array<CollateralModule__getCollateralConfigurationsResultValue0Struct>> {
     let result = super.tryCall(
       'getCollateralConfigurations',
-      'getCollateralConfigurations(bool):((bool,uint256,uint256,uint256,address,address)[])',
+      'getCollateralConfigurations(bool):((bool,uint256,uint256,uint256,address,address,uint256)[])',
       [ethereum.Value.fromBoolean(hideDisabled)]
     );
     if (result.reverted) {
@@ -401,28 +423,10 @@ export class ConfigureCollateralCall__Inputs {
     this._call = call;
   }
 
-  get collateralType(): Address {
-    return this._call.inputValues[0].value.toAddress();
-  }
-
-  get priceFeed(): Address {
-    return this._call.inputValues[1].value.toAddress();
-  }
-
-  get targetCRatio(): BigInt {
-    return this._call.inputValues[2].value.toBigInt();
-  }
-
-  get minimumCRatio(): BigInt {
-    return this._call.inputValues[3].value.toBigInt();
-  }
-
-  get liquidationReward(): BigInt {
-    return this._call.inputValues[4].value.toBigInt();
-  }
-
-  get depositingEnabled(): boolean {
-    return this._call.inputValues[5].value.toBoolean();
+  get config(): ConfigureCollateralCallConfigStruct {
+    return changetype<ConfigureCollateralCallConfigStruct>(
+      this._call.inputValues[0].value.toTuple()
+    );
   }
 }
 
@@ -431,6 +435,36 @@ export class ConfigureCollateralCall__Outputs {
 
   constructor(call: ConfigureCollateralCall) {
     this._call = call;
+  }
+}
+
+export class ConfigureCollateralCallConfigStruct extends ethereum.Tuple {
+  get depositingEnabled(): boolean {
+    return this[0].toBoolean();
+  }
+
+  get issuanceRatio(): BigInt {
+    return this[1].toBigInt();
+  }
+
+  get liquidationRatio(): BigInt {
+    return this[2].toBigInt();
+  }
+
+  get liquidationReward(): BigInt {
+    return this[3].toBigInt();
+  }
+
+  get priceFeed(): Address {
+    return this[4].toAddress();
+  }
+
+  get tokenAddress(): Address {
+    return this[5].toAddress();
+  }
+
+  get minDelegation(): BigInt {
+    return this[6].toBigInt();
   }
 }
 

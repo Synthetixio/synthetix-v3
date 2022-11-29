@@ -265,14 +265,14 @@ export function handleCollateralConfigured(event: CollateralConfigured): void {
     collateralType.created_at = event.block.timestamp;
     collateralType.created_at_block = event.block.number;
   }
-  collateralType.price_feed = event.params.priceFeed;
-  collateralType.token = event.params.collateralType;
+  collateralType.price_feed = event.params.config.priceFeed;
+  collateralType.liquidation_reward = event.params.config.liquidationReward.toBigDecimal();
+  collateralType.liquidation_ratio = event.params.config.liquidationRatio.toBigDecimal();
+  collateralType.depositing_enabled = event.params.config.depositingEnabled;
+  collateralType.issuance_ratio = event.params.config.issuanceRatio.toBigDecimal();
+  collateralType.min_delegation = event.params.config.minDelegation.toBigDecimal();
   collateralType.updated_at = event.block.timestamp;
   collateralType.updated_at_block = event.block.number;
-  collateralType.liquidation_reward = event.params.liquidationReward.toBigDecimal();
-  collateralType.minimum_c_ratio = event.params.minimumCollateralizationRatio.toBigDecimal();
-  collateralType.depositing_enabled = event.params.depositingEnabled;
-  collateralType.target_c_ratio = event.params.targetCollateralizationRatio.toBigDecimal();
   collateralType.save();
 }
 

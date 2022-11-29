@@ -496,22 +496,22 @@ export class CollateralType extends Entity {
     this.set('depositing_enabled', Value.fromBoolean(value));
   }
 
-  get target_c_ratio(): BigDecimal {
-    let value = this.get('target_c_ratio');
+  get issuance_ratio(): BigDecimal {
+    let value = this.get('issuance_ratio');
     return value!.toBigDecimal();
   }
 
-  set target_c_ratio(value: BigDecimal) {
-    this.set('target_c_ratio', Value.fromBigDecimal(value));
+  set issuance_ratio(value: BigDecimal) {
+    this.set('issuance_ratio', Value.fromBigDecimal(value));
   }
 
-  get minimum_c_ratio(): BigDecimal {
-    let value = this.get('minimum_c_ratio');
+  get liquidation_ratio(): BigDecimal {
+    let value = this.get('liquidation_ratio');
     return value!.toBigDecimal();
   }
 
-  set minimum_c_ratio(value: BigDecimal) {
-    this.set('minimum_c_ratio', Value.fromBigDecimal(value));
+  set liquidation_ratio(value: BigDecimal) {
+    this.set('liquidation_ratio', Value.fromBigDecimal(value));
   }
 
   get liquidation_reward(): BigDecimal {
@@ -521,6 +521,24 @@ export class CollateralType extends Entity {
 
   set liquidation_reward(value: BigDecimal) {
     this.set('liquidation_reward', Value.fromBigDecimal(value));
+  }
+
+  get send_to(): Bytes {
+    let value = this.get('send_to');
+    return value!.toBytes();
+  }
+
+  set send_to(value: Bytes) {
+    this.set('send_to', Value.fromBytes(value));
+  }
+
+  get min_delegation(): BigDecimal {
+    let value = this.get('min_delegation');
+    return value!.toBigDecimal();
+  }
+
+  set min_delegation(value: BigDecimal) {
+    this.set('min_delegation', Value.fromBigDecimal(value));
   }
 
   get created_at(): BigInt {

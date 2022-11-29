@@ -45,11 +45,11 @@ type CollateralType @entity {
   "address of an ERC20 contract"
   id: ID!
   price_feed: Bytes!
-  token: Bytes!
   depositing_enabled: Boolean!
-  target_c_ratio: BigDecimal!
-  minimum_c_ratio: BigDecimal!
+  issuance_ratio: BigDecimal!
+  liquidation_ratio: BigDecimal!
   liquidation_reward: BigDecimal!
+  min_delegation: BigDecimal!
   created_at: BigInt!
   created_at_block: BigInt!
   updated_at: BigInt!

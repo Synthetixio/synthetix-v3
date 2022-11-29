@@ -371,22 +371,24 @@ describe('core tests', () => {
     const now = new Date(1668448739566).getTime();
     const newCollateralConfiguredEvent = createCollateralConfiguredEvent(
       Address.fromString(address),
-      Address.fromString(address2),
-      BigInt.fromI32(23),
-      BigInt.fromI32(55),
-      BigInt.fromI32(11),
       true,
+      BigInt.fromI32(200),
+      BigInt.fromI32(50),
+      BigInt.fromI32(90),
+      Address.fromString(address2),
+      BigInt.fromI32(500),
       now,
       now - 1000
     );
     handleCollateralConfigured(newCollateralConfiguredEvent);
     const newCollateralConfiguredEvent2 = createCollateralConfiguredEvent(
       Address.fromString(address),
-      Address.fromString(address2),
-      BigInt.fromI32(23),
-      BigInt.fromI32(53),
-      BigInt.fromI32(11),
       true,
+      BigInt.fromI32(300),
+      BigInt.fromI32(60),
+      BigInt.fromI32(80),
+      Address.fromString(address2),
+      BigInt.fromI32(400),
       now + 1000,
       now
     );
@@ -396,10 +398,11 @@ describe('core tests', () => {
     assert.fieldEquals('CollateralType', address, 'created_at_block', (now - 1000).toString());
     assert.fieldEquals('CollateralType', address, 'updated_at', (now + 1000).toString());
     assert.fieldEquals('CollateralType', address, 'updated_at_block', now.toString());
-    assert.fieldEquals('CollateralType', address, 'liquidation_reward', '11');
-    assert.fieldEquals('CollateralType', address, 'minimum_c_ratio', '53');
+    assert.fieldEquals('CollateralType', address, 'liquidation_reward', '80');
+    assert.fieldEquals('CollateralType', address, 'liquidation_ratio', '60');
     assert.fieldEquals('CollateralType', address, 'depositing_enabled', 'true');
-    assert.fieldEquals('CollateralType', address, 'target_c_ratio', '23');
+    assert.fieldEquals('CollateralType', address, 'issuance_ratio', '300');
+    assert.fieldEquals('CollateralType', address, 'min_delegation', '400');
     assert.fieldEquals('CollateralType', address, 'price_feed', address2);
     assert.assertNull(store.get('CollateralType', address)!.get('total_amount_deposited'));
     assert.notInStore('CollateralType', address2);
@@ -410,11 +413,12 @@ describe('core tests', () => {
     const now = new Date(1668448739566).getTime();
     const newCollateralConfiguredEvent = createCollateralConfiguredEvent(
       Address.fromString(address),
-      Address.fromString(address2),
-      BigInt.fromI32(23),
-      BigInt.fromI32(55),
-      BigInt.fromI32(11),
       true,
+      BigInt.fromI32(200),
+      BigInt.fromI32(50),
+      BigInt.fromI32(90),
+      Address.fromString(address2),
+      BigInt.fromI32(500),
       now,
       now - 1000
     );
@@ -443,11 +447,12 @@ describe('core tests', () => {
     const now = new Date(1668448739566).getTime();
     const newCollateralConfiguredEvent = createCollateralConfiguredEvent(
       Address.fromString(address),
-      Address.fromString(address2),
-      BigInt.fromI32(23),
-      BigInt.fromI32(55),
-      BigInt.fromI32(11),
       true,
+      BigInt.fromI32(200),
+      BigInt.fromI32(50),
+      BigInt.fromI32(90),
+      Address.fromString(address2),
+      BigInt.fromI32(500),
       now,
       now - 1000
     );

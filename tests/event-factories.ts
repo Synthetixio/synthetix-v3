@@ -26,6 +26,7 @@ import {
   PoolOwnershipAccepted,
 } from '../generated/PoolModule/PoolModule';
 import { DelegationUpdated } from '../generated/VaultModule/VaultModule';
+import { address } from './constants';
 
 function createBlock(timestamp: i64, blockNumber: i64): Map<string, i64> {
   const newBlock = new Map<string, i64>();
@@ -254,11 +255,12 @@ export function createMarketUsdWithdrawnEvent(
 
 export function createCollateralConfiguredEvent(
   collateralType: Address,
-  priceFeed: Address,
-  targetCollateralizationRatio: BigInt,
-  minimumCollateralizationRatio: BigInt,
-  liquidationReward: BigInt,
   depositingEnabled: boolean,
+  issuanceRatio: BigInt,
+  liquidationRatio: BigInt,
+  liquidationReward: BigInt,
+  priceFeed: Address,
+  minDelegation: BigInt,
   timestamp: i64,
   blockNumber: i64
 ): CollateralConfigured {
@@ -268,30 +270,18 @@ export function createCollateralConfiguredEvent(
   newUsdWithdrawnEvent.parameters.push(
     new ethereum.EventParam('collateralType', ethereum.Value.fromAddress(collateralType))
   );
-  newUsdWithdrawnEvent.parameters.push(
-    new ethereum.EventParam('priceFeed', ethereum.Value.fromAddress(priceFeed))
-  );
-  newUsdWithdrawnEvent.parameters.push(
-    new ethereum.EventParam(
-      'targetCollateralizationRatio',
-      ethereum.Value.fromUnsignedBigInt(targetCollateralizationRatio)
-    )
-  );
-  newUsdWithdrawnEvent.parameters.push(
-    new ethereum.EventParam(
-      'minimumCollateralizationRatio',
-      ethereum.Value.fromUnsignedBigInt(minimumCollateralizationRatio)
-    )
-  );
-  newUsdWithdrawnEvent.parameters.push(
-    new ethereum.EventParam(
-      'liquidationReward',
-      ethereum.Value.fromUnsignedBigInt(liquidationReward)
-    )
-  );
-  newUsdWithdrawnEvent.parameters.push(
-    new ethereum.EventParam('depositingEnabled', ethereum.Value.fromBoolean(depositingEnabled))
-  );
+  const tupleArray = changetype<ethereum.Value>([
+    ethereum.Value.fromBoolean(depositingEnabled),
+    ethereum.Value.fromSignedBigInt(issuanceRatio),
+    ethereum.Value.fromSignedBigInt(liquidationRatio),
+    ethereum.Value.fromSignedBigInt(liquidationReward),
+    ethereum.Value.fromAddress(priceFeed),
+    ethereum.Value.fromAddress(Address.fromString(address)),
+    ethereum.Value.fromSignedBigInt(minDelegation),
+  ]);
+  const tuple = changetype<ethereum.Tuple>(tupleArray);
+  const tupleValue = ethereum.Value.fromTuple(tuple);
+  newUsdWithdrawnEvent.parameters.push(new ethereum.EventParam('config', tupleValue));
   newUsdWithdrawnEvent.block.timestamp = BigInt.fromI64(block['timestamp']);
   newUsdWithdrawnEvent.block.number = BigInt.fromI64(block['blockNumber']);
   return newUsdWithdrawnEvent;
