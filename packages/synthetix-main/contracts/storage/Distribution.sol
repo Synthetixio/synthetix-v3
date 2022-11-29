@@ -42,10 +42,22 @@ import "../errors/ParameterError.sol";
  * Similar to the socialization of collateral during a liquidation, the debt of the position that is being liquidated can be re-allocated using a distribution with a single action. Supposing a distribution tracks each user's debt in the system, and that 1000 sUSD has to be distributed amongst 1000 stakers, the debt distribution's valuePerShare would simply need to be incremented so that the total value or debt of the distribution increments by 1000 sUSD.
  *
  * **************************
- * Actor's lastValuePerShare
+ * Distributions Over Time
  * **************************
  *
- * TODO: Explain why lastValuePerShare needs to be stored for each actor.
+ * If we wanted to store a distribution over time, we would need to repeatedly store its valuePerShare for a given time interval, as well as an entry for every user of their shares at time t. This is of course not only expensive in terms of gas, but unrealizable because of the nature of smart contracts; they are not constantly running programs, but instead only react to user interaction.
+ *
+ * Even so, why would we want to store a distribution over time? A very common use case of distributions is asking the question of "how has user A's value changed in the distribution since A's last interaction with the system at time t, given that their number of shares has not changed".
+ *
+ * Some very simple math answers this question:
+ * Since `value = valuePerShare * shares`,
+ * then `delta_value = valuePerShare_now * shares - valuePerShare_then * shares`,
+ * which is `(valuePerShare_now - valuePerShare_then) * shares`,
+ * or just `delta_valuePerShare * shares`.
+ *
+ * To be able to do this programmatically, all we need to do is store a single variable `lastValuePerShare` for every user, and ensure it is written to every time they interact with the system, or their shares are updated in any way whatsoever.
+ *
+ * See `getActorValueChange()`, and `DistributionActor.lastValuePerShare`.
  *
  * *********************
  * Usage Modes
