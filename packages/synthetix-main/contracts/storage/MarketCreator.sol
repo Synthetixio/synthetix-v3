@@ -8,8 +8,8 @@ import "./Market.sol";
  */
 library MarketCreator {
     struct Data {
-        mapping(address => uint[]) marketIdsForAddress;
-        uint lastCreatedMarketId;
+        mapping(address => uint128[]) marketIdsForAddress;
+        uint128 lastCreatedMarketId;
     }
 
     function _loadMarketStore() private pure returns (Data storage data) {
@@ -46,7 +46,7 @@ library MarketCreator {
      *
      * Note: A contract implementing the `IMarket` interface may represent more than just one market, and thus several market ids could be associated to a single external contract address.
      */
-    function loadIdsByAddress(address marketAddress) internal pure returns (uint[] storage ids) {
+    function loadIdsByAddress(address marketAddress) internal view returns (uint128[] storage ids) {
         return _loadMarketStore().marketIdsForAddress[marketAddress];
     }
 
