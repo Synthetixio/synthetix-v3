@@ -204,6 +204,7 @@ library Distribution {
      * Whenever an actor's shares are changed in this way, we record the distribution's current valuePerShare into the actor's lastValuePerShare record.
      *
      * Note: Consider that calling this function wipes out historical value change data. So, make sure to call `getActorValueChange()` and use this data before calling this function.
+     * TODO: Consider reinserting this return value because almost always you NEED to use it.
      */
     function setActorShares(
         Data storage dist,
