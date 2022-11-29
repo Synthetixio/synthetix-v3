@@ -48,7 +48,7 @@ contract MarketManagerModule is IMarketManagerModule {
     }
 
     function getMarketCollateral(uint128 marketId) external view override returns (uint) {
-        return Market.load(marketId).debtDist.totalShares;
+        return Market.load(marketId).poolsDebtDistribution.totalShares;
     }
 
     function getMarketTotalBalance(uint128 marketId) external view override returns (int) {
