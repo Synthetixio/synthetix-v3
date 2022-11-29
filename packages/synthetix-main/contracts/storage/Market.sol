@@ -344,7 +344,7 @@ library Market {
     /**
      * @dev TODO
      *
-     * Just wraps distributeDebtToPool and adjustVaultShares
+     * Just wraps distributeDebtToPool and adjustPoolShares
      *
      * TODO: Understand distributeDebtToPool() first.
      */
@@ -365,7 +365,7 @@ library Market {
         // Iter avoids griefing - MarketManager can call this with user specified iters and thus clean up a grieved market.
         distributeDebtToPool(self, 9999999999);
 
-        return adjustVaultShares(self, poolId, amount, maxDebtShareValue);
+        return adjustPoolShares(self, poolId, amount, maxDebtShareValue);
     }
 
     /**
@@ -379,7 +379,7 @@ library Market {
      *
      * TODO: Understand distributeDebtToPool() first.
      */
-    function adjustVaultShares(
+    function adjustPoolShares(
         Data storage self,
         uint128 poolId,
         uint newLiquidity,
