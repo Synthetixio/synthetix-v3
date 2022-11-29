@@ -79,9 +79,8 @@ library Pool {
          * Shares: USD value, proportional to the amount of collateral that the vault delegates to the pool.
          * Value per share: Debt per dollar of collateral. Depends on aggregated debt of connected markets.
          *
-         * TODO: Consider renaming accordingly when we have a better understanding of the debt distribution chain.
          */
-        Distribution.Data debtDist;
+        Distribution.Data vaultsDebtDistribution;
         /**
          * @dev Collateral types that provide liquidity to this pool and hence to the markets connected to the pool.
          *
@@ -144,7 +143,7 @@ library Pool {
         // These values should not change while iterating through each market.
 
         // TODO Clarify
-        int totalCreditCapacity = int128(self.debtDist.totalShares);
+        int totalCreditCapacity = int128(self.vaultsDebtDistribution.totalShares);
 
         // TODO Clarify
         uint128 unusedCreditCapacity = self.unusedCreditCapacity;
@@ -187,7 +186,7 @@ library Pool {
         }
 
         // Passes on the accumulated debt changes from the markets, into the pool, so that vaults can later access this debt.
-        self.debtDist.distributeValue(cumulativeDebtChange);
+        self.vaultsDebtDistribution.distributeValue(cumulativeDebtChange);
     }
 
     /**
@@ -220,7 +219,7 @@ library Pool {
             thing = int(DecimalMath.UNIT); // If minLiquidityRatio is zero, then TODO
         } else {
             // maxShareValueIncrease?
-            thing = int(creditCapacity.divDecimal(minLiquidityRatio).divDecimal(self.debtDist.totalShares));
+            thing = int(creditCapacity.divDecimal(minLiquidityRatio).divDecimal(self.vaultsDebtDistribution.totalShares));
         }
 
         return int256(marketData.poolsDebtDistribution.valuePerShare.reducePrecisionInt128()) + thing;
@@ -272,7 +271,7 @@ library Pool {
 
         // Update the vault's shares in the pool's debt distribution, according to the value of its collateral.
         bytes32 actorId = bytes32(uint(uint160(collateralType)));
-        int debtChange = self.debtDist.updateActorShares(actorId, usdWeight);
+        int debtChange = self.vaultsDebtDistribution.updateActorShares(actorId, usdWeight);
 
         // Accumulate the change in total liquidity, from the vault, into the pool.
         self.unusedCreditCapacity = uint128(int128(self.unusedCreditCapacity) + int128(deltaLiquidity));
