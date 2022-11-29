@@ -277,7 +277,7 @@ library Pool {
         self.unusedCreditCapacity = uint128(int128(self.unusedCreditCapacity) + int128(deltaLiquidity));
 
         // Transfer the debt change from the pool into the vault.
-        self.vaults[collateralType].distributeDebt(debtChange);
+        self.vaults[collateralType].distributeDebtToAccount(debtChange);
 
         // Distribute debt again because... TODO
         distributeDebtToVault(self);
