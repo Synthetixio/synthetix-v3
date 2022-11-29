@@ -202,6 +202,8 @@ library Distribution {
      * @dev Updates an actor's number of shares in the distribution to the specified amount.
      *
      * Whenever an actor's shares are changed in this way, we record the distribution's current valuePerShare into the actor's lastValuePerShare record.
+     *
+     * Note: Consider that calling this function wipes out historical value change data. So, make sure to call `getActorValueChange()` and use this data before calling this function.
      */
     function setActorShares(
         Data storage dist,
@@ -237,7 +239,9 @@ library Distribution {
 
         DistributionActor.Data storage actor = dist.actorInfo[actorId];
 
-        // TODO DBQuestion: why do we need that the actor was previously initialized (actor.share =/= 0)
+        // TODO
+        // You're not supposed to call this function if the other one was used ever.
+        // Same applies in the other direction but it is not enforced in any way like this.
         if (actor.lastValuePerShare != 0) {
             revert InconsistentDistribution();
         }
@@ -251,9 +255,10 @@ library Distribution {
         dist.totalShares = (dist.totalShares + resultingShares - actor.shares).uint256toUint128();
 
         actor.shares = resultingShares.uint256toUint128();
+
+        // TODO: Split this function in 3 files
         // Note: No need to update actor.lastValuePerShare
         // because they contributed value to the distribution.
-
         // TODO DBQ: BIG WHY???? ^
         // looks like this function doesn't work alone but in conjunction with prior, unrelated, function calls
         // which would lead to code fragility if the developer does not enforce it (it should be enforced by code)
@@ -267,6 +272,7 @@ library Distribution {
         valueChange = getActorValueChange(dist, actorId);
 
         // TODO only update lastValuePerShare since we got the valueChange in the line before
+        // actor.lastValuePerShare = valuePerShare;
         setActorShares(dist, actorId, getActorShares(dist, actorId));
     }
 
@@ -314,7 +320,7 @@ library Distribution {
         // and the number of shares to the given value.
         if (dist.totalShares == 0) {
             dist.valuePerShare = DecimalMath.UNIT_PRECISE_INT128;
-            shares = (value > 0 ? value : -value).int256toUint256(); // Ensure value is positive
+            shares = value.int256toUint256();
         }
         // If the distribution is not empty, the number of shares
         // is determined by the valuePerShare.
