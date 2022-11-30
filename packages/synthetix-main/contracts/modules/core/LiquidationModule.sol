@@ -155,7 +155,7 @@ contract LiquidationModule is ILiquidationModule {
             // repay the debt
             // TODO: better data structures
             epoch.accountsDebtDistribution.distributeValue(-int(amountLiquidated));
-            epoch.unconsolidatedDebt -= int128(int(amountLiquidated));
+            epoch.unconsolidatedDebtD18 -= int128(int(amountLiquidated));
 
             // take away the collateral
             epoch.collateralAmounts.scale(-int(collateralRewarded));
