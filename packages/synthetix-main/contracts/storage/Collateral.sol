@@ -50,20 +50,20 @@ library Collateral {
     /**
      * @dev Increments the entry's availableCollateral.
      */
-    function deposit(Data storage self, uint amount) internal {
+    function deposit(Data storage self, uint amountD18) internal {
         if (!self.isSet) {
             self.isSet = true;
-            self.availableAmountD18 = amount;
+            self.availableAmountD18 = amountD18;
         } else {
-            self.availableAmountD18 += amount;
+            self.availableAmountD18 += amountD18;
         }
     }
 
     /**
      * @dev Decrements the entry's availableCollateral.
      */
-    function deductCollateral(Data storage self, uint amount) internal {
-        self.availableAmountD18 -= amount;
+    function deductCollateral(Data storage self, uint amountD18) internal {
+        self.availableAmountD18 -= amountD18;
     }
 
     /**
@@ -75,15 +75,15 @@ library Collateral {
     function getTotalLocked(Data storage self) internal view returns (uint) {
         uint64 currentTime = uint64(block.timestamp);
 
-        uint256 locked;
+        uint256 lockedD18;
         for (uint i = 0; i < self.locks.length; i++) {
             CollateralLock.Data storage lock = self.locks[i];
 
             if (lock.lockExpirationTime > currentTime) {
-                locked += lock.amountD18;
+                lockedD18 += lock.amountD18;
             }
         }
 
-        return locked;
+        return lockedD18;
     }
 }

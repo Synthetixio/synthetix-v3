@@ -71,32 +71,34 @@ library Vault {
      *
      * TODO: Consider renaming to updateCreditCapacity?
      */
-    function updateLiquidity(Data storage self, uint collateralPrice)
+    function updateLiquidity(Data storage self, uint collateralPriceD18)
         internal
         returns (
-            uint usdWeight,
-            uint remainingLiquidity,
-            int deltaRemainingLiquidity
+            uint usdWeightD18,
+            uint remainingLiquidityD18,
+            int deltaRemainingLiquidityD18
         )
     {
         VaultEpoch.Data storage epochData = currentEpoch(self);
 
-        usdWeight = uint(epochData.accountsDebtDistribution.totalSharesD18).mulDecimal(collateralPrice);
+        usdWeightD18 = uint(epochData.accountsDebtDistribution.totalSharesD18).mulDecimal(collateralPriceD18);
 
-        int vaultDepositedValue = int(uint(epochData.collateralAmounts.totalAmount()).mulDecimal(collateralPrice));
-        int vaultAccruedDebt = epochData.totalDebt();
-        remainingLiquidity = vaultDepositedValue > vaultAccruedDebt ? uint(vaultDepositedValue - vaultAccruedDebt) : 0;
+        int vaultDepositedValueD18 = int(uint(epochData.collateralAmounts.totalAmount()).mulDecimal(collateralPriceD18));
+        int vaultAccruedDebtD18 = epochData.totalDebt();
+        remainingLiquidityD18 = vaultDepositedValueD18 > vaultAccruedDebtD18
+            ? uint(vaultDepositedValueD18 - vaultAccruedDebtD18)
+            : 0;
 
-        deltaRemainingLiquidity = int(remainingLiquidity) - int(int128(self.prevRemainingLiquidityD18));
+        deltaRemainingLiquidityD18 = int(remainingLiquidityD18) - int(int128(self.prevRemainingLiquidityD18));
 
-        self.prevRemainingLiquidityD18 = uint128(remainingLiquidity);
+        self.prevRemainingLiquidityD18 = uint128(remainingLiquidityD18);
     }
 
     /**
      * @dev Updated the value per share of the current epoch's incoming debt distribution.
      */
-    function distributeDebtToAccounts(Data storage self, int debtChange) internal {
-        currentEpoch(self).distributeDebtToAccounts(debtChange);
+    function distributeDebtToAccounts(Data storage self, int debtChangeD18) internal {
+        currentEpoch(self).distributeDebtToAccounts(debtChangeD18);
     }
 
     /**
@@ -136,8 +138,8 @@ library Vault {
         uint128 accountId,
         bytes32 rewardId
     ) internal returns (uint) {
-        uint totalShares = currentEpoch(self).accountsDebtDistribution.totalSharesD18;
-        uint actorShares = currentEpoch(self).accountsDebtDistribution.getActorShares(bytes32(uint(accountId)));
+        uint totalSharesD18 = currentEpoch(self).accountsDebtDistribution.totalSharesD18;
+        uint actorSharesD18 = currentEpoch(self).accountsDebtDistribution.getActorShares(bytes32(uint(accountId)));
 
         RewardDistribution.Data storage dist = self.rewards[rewardId];
 
@@ -145,10 +147,10 @@ library Vault {
             revert("No distributor");
         }
 
-        dist.rewardPerShareD18 += uint128(dist.entry.updateEntry(totalShares));
+        dist.rewardPerShareD18 += uint128(dist.entry.updateEntry(totalSharesD18));
 
         dist.actorInfo[accountId].pendingSendD18 += uint128(
-            actorShares.mulDecimal(dist.rewardPerShareD18 - dist.actorInfo[accountId].lastRewardPerShareD18)
+            actorSharesD18.mulDecimal(dist.rewardPerShareD18 - dist.actorInfo[accountId].lastRewardPerShareD18)
         );
 
         dist.actorInfo[accountId].lastRewardPerShareD18 = dist.rewardPerShareD18;

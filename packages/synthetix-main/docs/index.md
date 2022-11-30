@@ -1,74 +1,24 @@
 # Solidity API
 
-## ParameterError
-
-### InvalidParameter
-
-```solidity
-error InvalidParameter(string incorrectParameter, string help)
-```
-
-Thrown when an invalid parameter is used in a function.
-
-### InvalidParameter
-
-```solidity
-error InvalidParameter(string incorrectParameter, string help)
-```
-
-Thrown when an invalid parameter is used in a function.
-
 ## Account Module
 
-### AccountCreated
+### Functions
 
-```solidity
-event AccountCreated(address sender, uint128 accountId)
-```
+#### getAccountPermissions
 
-Emitted when an account token with id `accountId` is minted to `sender`.
+  ```solidity
+  function getAccountPermissions(uint128 accountId) external view returns (struct IAccountModule.AccountPermissions[])
+  ```
 
-### PermissionGranted
+  Returns an array of `AccountPermission` for the provided `accountId`.
 
-```solidity
-event PermissionGranted(uint128 accountId, bytes32 permission, address user, address sender)
-```
+#### createAccount
 
-Emitted when `user` is granted `permission` by `sender` for account `accountId`.
+  ```solidity
+  function createAccount(uint128 requestedAccountId) external
+  ```
 
-### PermissionRevoked
-
-```solidity
-event PermissionRevoked(uint128 accountId, bytes32 permission, address user, address sender)
-```
-
-Emitted when `user` has `permission` renounced or revoked by `sender` for account `accountId`.
-
-### AccountPermissions
-
-```solidity
-struct AccountPermissions {
-  address user;
-  bytes32[] permissions;
-}
-
-```
-
-### getAccountPermissions
-
-```solidity
-function getAccountPermissions(uint128 accountId) external view returns (struct IAccountModule.AccountPermissions[])
-```
-
-Returns an array of `AccountPermission` for the provided `accountId`.
-
-### createAccount
-
-```solidity
-function createAccount(uint128 requestedAccountId) external
-```
-
-Mints an account token with id `requestedAccountId` to `msg.sender`.
+  Mints an account token with id `requestedAccountId` to `msg.sender`.
 
 Requirements:
 
@@ -76,25 +26,25 @@ Requirements:
 
 Emits a {AccountCreated} event.
 
-### notifyAccountTransfer
+#### notifyAccountTransfer
 
-```solidity
-function notifyAccountTransfer(address to, uint128 accountId) external
-```
+  ```solidity
+  function notifyAccountTransfer(address to, uint128 accountId) external
+  ```
 
-Grants `permission` to `user` for account `accountId`.
+  Grants `permission` to `user` for account `accountId`.
 
 Requirements:
 
 - `msg.sender` must be the account token.
 
-### grantPermission
+#### grantPermission
 
-```solidity
-function grantPermission(uint128 accountId, bytes32 permission, address user) external
-```
+  ```solidity
+  function grantPermission(uint128 accountId, bytes32 permission, address user) external
+  ```
 
-Grants `permission` to `user` for account `accountId`.
+  Grants `permission` to `user` for account `accountId`.
 
 Requirements:
 
@@ -102,151 +52,13 @@ Requirements:
 
 Emits a {PermissionGranted} event.
 
-### revokePermission
+#### revokePermission
 
-```solidity
-function revokePermission(uint128 accountId, bytes32 permission, address user) external
-```
+  ```solidity
+  function revokePermission(uint128 accountId, bytes32 permission, address user) external
+  ```
 
-Revokes `permission` from `user` for account `accountId`.
-
-Requirements:
-
-- `msg.sender` must own the account token with ID `accountId` or have the "admin" permission.
-
-Emits a {PermissionRevoked} event.
-
-### renouncePermission
-
-```solidity
-function renouncePermission(uint128 accountId, bytes32 permission) external
-```
-
-Revokes `permission` from `msg.sender` for account `accountId`.
-
-Emits a {PermissionRevoked} event.
-
-### hasPermission
-
-```solidity
-function hasPermission(uint128 accountId, bytes32 permission, address user) external view returns (bool)
-```
-
-Returns `true` if `user` has been granted `permission` for account `accountId`.
-
-### isAuthorized
-
-```solidity
-function isAuthorized(uint128 accountId, bytes32 permission, address target) external view returns (bool)
-```
-
-Returns `true` if `target` is authorized to `permission` for account `accountId`.
-
-### getAccountTokenAddress
-
-```solidity
-function getAccountTokenAddress() external view returns (address)
-```
-
-Returns the address for the account token used by the module.
-
-### getAccountOwner
-
-```solidity
-function getAccountOwner(uint128 accountId) external view returns (address)
-```
-
-Returns the address that owns a given account, as recorded by the system.
-
-### AccountCreated
-
-```solidity
-event AccountCreated(address sender, uint128 accountId)
-```
-
-Emitted when an account token with id `accountId` is minted to `sender`.
-
-### PermissionGranted
-
-```solidity
-event PermissionGranted(uint128 accountId, bytes32 permission, address user, address sender)
-```
-
-Emitted when `user` is granted `permission` by `sender` for account `accountId`.
-
-### PermissionRevoked
-
-```solidity
-event PermissionRevoked(uint128 accountId, bytes32 permission, address user, address sender)
-```
-
-Emitted when `user` has `permission` renounced or revoked by `sender` for account `accountId`.
-
-### AccountPermissions
-
-```solidity
-struct AccountPermissions {
-  address user;
-  bytes32[] permissions;
-}
-
-```
-
-### getAccountPermissions
-
-```solidity
-function getAccountPermissions(uint128 accountId) external view returns (struct IAccountModule.AccountPermissions[])
-```
-
-Returns an array of `AccountPermission` for the provided `accountId`.
-
-### createAccount
-
-```solidity
-function createAccount(uint128 requestedAccountId) external
-```
-
-Mints an account token with id `requestedAccountId` to `msg.sender`.
-
-Requirements:
-
-- `requestedAccountId` must not already be minted.
-
-Emits a {AccountCreated} event.
-
-### notifyAccountTransfer
-
-```solidity
-function notifyAccountTransfer(address to, uint128 accountId) external
-```
-
-Grants `permission` to `user` for account `accountId`.
-
-Requirements:
-
-- `msg.sender` must be the account token.
-
-### grantPermission
-
-```solidity
-function grantPermission(uint128 accountId, bytes32 permission, address user) external
-```
-
-Grants `permission` to `user` for account `accountId`.
-
-Requirements:
-
-- `msg.sender` must own the account token with ID `accountId` or have the "admin" permission.
-
-Emits a {PermissionGranted} event.
-
-### revokePermission
-
-```solidity
-function revokePermission(uint128 accountId, bytes32 permission, address user) external
-```
-
-Revokes `permission` from `user` for account `accountId`.
+  Revokes `permission` from `user` for account `accountId`.
 
 Requirements:
 
@@ -254,65 +66,85 @@ Requirements:
 
 Emits a {PermissionRevoked} event.
 
-### renouncePermission
+#### renouncePermission
 
-```solidity
-function renouncePermission(uint128 accountId, bytes32 permission) external
-```
+  ```solidity
+  function renouncePermission(uint128 accountId, bytes32 permission) external
+  ```
 
-Revokes `permission` from `msg.sender` for account `accountId`.
+  Revokes `permission` from `msg.sender` for account `accountId`.
 
 Emits a {PermissionRevoked} event.
 
-### hasPermission
+#### hasPermission
 
-```solidity
-function hasPermission(uint128 accountId, bytes32 permission, address user) external view returns (bool)
-```
+  ```solidity
+  function hasPermission(uint128 accountId, bytes32 permission, address user) external view returns (bool)
+  ```
 
-Returns `true` if `user` has been granted `permission` for account `accountId`.
+  Returns `true` if `user` has been granted `permission` for account `accountId`.
 
-### isAuthorized
+#### isAuthorized
 
-```solidity
-function isAuthorized(uint128 accountId, bytes32 permission, address target) external view returns (bool)
-```
+  ```solidity
+  function isAuthorized(uint128 accountId, bytes32 permission, address target) external view returns (bool)
+  ```
 
-Returns `true` if `target` is authorized to `permission` for account `accountId`.
+  Returns `true` if `target` is authorized to `permission` for account `accountId`.
 
-### getAccountTokenAddress
+#### getAccountTokenAddress
 
-```solidity
-function getAccountTokenAddress() external view returns (address)
-```
+  ```solidity
+  function getAccountTokenAddress() external view returns (address)
+  ```
 
-Returns the address for the account token used by the module.
+  Returns the address for the account token used by the module.
 
-### getAccountOwner
+#### getAccountOwner
 
-```solidity
-function getAccountOwner(uint128 accountId) external view returns (address)
-```
+  ```solidity
+  function getAccountOwner(uint128 accountId) external view returns (address)
+  ```
 
-Returns the address that owns a given account, as recorded by the system.
+  Returns the address that owns a given account, as recorded by the system.
+
+### Events
+
+#### AccountCreated
+
+  ```solidity
+  event AccountCreated(address sender, uint128 accountId)
+  ```
+
+  Emitted when an account token with id `accountId` is minted to `sender`.
+
+#### PermissionGranted
+
+  ```solidity
+  event PermissionGranted(uint128 accountId, bytes32 permission, address user, address sender)
+  ```
+
+  Emitted when `user` is granted `permission` by `sender` for account `accountId`.
+
+#### PermissionRevoked
+
+  ```solidity
+  event PermissionRevoked(uint128 accountId, bytes32 permission, address user, address sender)
+  ```
+
+  Emitted when `user` has `permission` renounced or revoked by `sender` for account `accountId`.
 
 ## Account Token Module
 
-### Mint
+### Functions
 
-```solidity
-event Mint(address owner, uint256 tokenId)
-```
+#### mint
 
-_Emitted when `tokenId` token is minted._
+  ```solidity
+  function mint(address owner, uint256 requestedAccountId) external
+  ```
 
-### mint
-
-```solidity
-function mint(address owner, uint256 requestedAccountId) external
-```
-
-\_Mints a new token with the `requestedAccountId` as the ID, owned by `owner`
+  Mints a new token with the `requestedAccountId` as the ID, owned by `owner`
 
 This function is only used internally by the system. See `createAccount` in the Account Module.
 
@@ -321,126 +153,77 @@ Requirements:
 - `msg.sender` must be the owner of the contract.
 - `requestedAccountId` must not already be minted.
 
-Emits a {Mint} event.\_
+Emits a {Mint} event.
 
-### Mint
+#### isInitialized
 
-```solidity
-event Mint(address owner, uint256 tokenId)
-```
+  ```solidity
+  function isInitialized() external returns (bool)
+  ```
 
-_Emitted when `tokenId` token is minted._
+  Returns if `initialize` has been called by the owner
 
-### mint
+#### initialize
 
-```solidity
-function mint(address owner, uint256 requestedAccountId) external
-```
+  ```solidity
+  function initialize(string tokenName, string tokenSymbol, string uri) external
+  ```
 
-\_Mints a new token with the `requestedAccountId` as the ID, owned by `owner`
+  Allows owner to initialize the token after attaching a proxy
 
-This function is only used internally by the system. See `createAccount` in the Account Module.
+#### totalSupply
 
-Requirements:
+  ```solidity
+  function totalSupply() external view returns (uint256)
+  ```
 
-- `msg.sender` must be the owner of the contract.
-- `requestedAccountId` must not already be minted.
+  Returns the total amount of tokens stored by the contract.
 
-Emits a {Mint} event.\_
+#### tokenOfOwnerByIndex
 
-### isInitialized
+  ```solidity
+  function tokenOfOwnerByIndex(address owner, uint256 index) external view returns (uint256)
+  ```
 
-```solidity
-function isInitialized() external returns (bool)
-```
+  Returns a token ID owned by `owner` at a given `index` of its token list.
+Use along with {balanceOf} to enumerate all of ``owner``'s tokens.
 
-Returns if `initialize` has been called by the owner
+#### tokenByIndex
 
-### initialize
+  ```solidity
+  function tokenByIndex(uint256 index) external view returns (uint256)
+  ```
 
-```solidity
-function initialize(string tokenName, string tokenSymbol, string uri) external
-```
+  Returns a token ID at a given `index` of all the tokens stored by the contract.
+Use along with {totalSupply} to enumerate all tokens.
 
-Allows owner to initialize the token after attaching a proxy
+#### balanceOf
 
-### totalSupply
+  ```solidity
+  function balanceOf(address owner) external view returns (uint256 balance)
+  ```
 
-```solidity
-function totalSupply() external view returns (uint256)
-```
+  Returns the number of tokens in ``owner``'s account.
 
-_Returns the total amount of tokens stored by the contract._
+#### ownerOf
 
-### tokenOfOwnerByIndex
+  ```solidity
+  function ownerOf(uint256 tokenId) external view returns (address owner)
+  ```
 
-```solidity
-function tokenOfOwnerByIndex(address owner, uint256 index) external view returns (uint256)
-```
-
-_Returns a token ID owned by `owner` at a given `index` of its token list.
-Use along with {balanceOf} to enumerate all of `owner`'s tokens._
-
-### tokenByIndex
-
-```solidity
-function tokenByIndex(uint256 index) external view returns (uint256)
-```
-
-_Returns a token ID at a given `index` of all the tokens stored by the contract.
-Use along with {totalSupply} to enumerate all tokens._
-
-### Transfer
-
-```solidity
-event Transfer(address from, address to, uint256 tokenId)
-```
-
-_Emitted when `tokenId` token is transferred from `from` to `to`._
-
-### Approval
-
-```solidity
-event Approval(address owner, address approved, uint256 tokenId)
-```
-
-_Emitted when `owner` enables `approved` to manage the `tokenId` token._
-
-### ApprovalForAll
-
-```solidity
-event ApprovalForAll(address owner, address operator, bool approved)
-```
-
-_Emitted when `owner` enables or disables (`approved`) `operator` to manage all of its assets._
-
-### balanceOf
-
-```solidity
-function balanceOf(address owner) external view returns (uint256 balance)
-```
-
-_Returns the number of tokens in `owner`'s account._
-
-### ownerOf
-
-```solidity
-function ownerOf(uint256 tokenId) external view returns (address owner)
-```
-
-\_Returns the owner of the `tokenId` token.
+  Returns the owner of the `tokenId` token.
 
 Requirements:
 
-- `tokenId` must exist.\_
+- `tokenId` must exist.
 
-### safeTransferFrom
+#### safeTransferFrom
 
-```solidity
-function safeTransferFrom(address from, address to, uint256 tokenId, bytes data) external
-```
+  ```solidity
+  function safeTransferFrom(address from, address to, uint256 tokenId, bytes data) external
+  ```
 
-\_Safely transfers `tokenId` token from `from` to `to`.
+  Safely transfers `tokenId` token from `from` to `to`.
 
 Requirements:
 
@@ -450,15 +233,15 @@ Requirements:
 - If the caller is not `from`, it must be approved to move this token by either {approve} or {setApprovalForAll}.
 - If `to` refers to a smart contract, it must implement {IERC721Receiver-onERC721Received}, which is called upon a safe transfer.
 
-Emits a {Transfer} event.\_
+Emits a {Transfer} event.
 
-### safeTransferFrom
+#### safeTransferFrom
 
-```solidity
-function safeTransferFrom(address from, address to, uint256 tokenId) external
-```
+  ```solidity
+  function safeTransferFrom(address from, address to, uint256 tokenId) external
+  ```
 
-\_Safely transfers `tokenId` token from `from` to `to`, checking first that contract recipients
+  Safely transfers `tokenId` token from `from` to `to`, checking first that contract recipients
 are aware of the ERC721 protocol to prevent tokens from being forever locked.
 
 Requirements:
@@ -469,15 +252,15 @@ Requirements:
 - If the caller is not `from`, it must have been allowed to move this token by either {approve} or {setApprovalForAll}.
 - If `to` refers to a smart contract, it must implement {IERC721Receiver-onERC721Received}, which is called upon a safe transfer.
 
-Emits a {Transfer} event.\_
+Emits a {Transfer} event.
 
-### transferFrom
+#### transferFrom
 
-```solidity
-function transferFrom(address from, address to, uint256 tokenId) external
-```
+  ```solidity
+  function transferFrom(address from, address to, uint256 tokenId) external
+  ```
 
-\_Transfers `tokenId` token from `from` to `to`.
+  Transfers `tokenId` token from `from` to `to`.
 
 WARNING: Usage of this method is discouraged, use {safeTransferFrom} whenever possible.
 
@@ -488,15 +271,15 @@ Requirements:
 - `tokenId` token must be owned by `from`.
 - If the caller is not `from`, it must be approved to move this token by either {approve} or {setApprovalForAll}.
 
-Emits a {Transfer} event.\_
+Emits a {Transfer} event.
 
-### approve
+#### approve
 
-```solidity
-function approve(address to, uint256 tokenId) external
-```
+  ```solidity
+  function approve(address to, uint256 tokenId) external
+  ```
 
-\_Gives permission to `to` to transfer `tokenId` token to another account.
+  Gives permission to `to` to transfer `tokenId` token to another account.
 The approval is cleared when the token is transferred.
 
 Only a single account can be approved at a time, so approving the zero address clears previous approvals.
@@ -506,98 +289,105 @@ Requirements:
 - The caller must own the token or be an approved operator.
 - `tokenId` must exist.
 
-Emits an {Approval} event.\_
+Emits an {Approval} event.
 
-### setApprovalForAll
+#### setApprovalForAll
 
-```solidity
-function setApprovalForAll(address operator, bool approved) external
-```
+  ```solidity
+  function setApprovalForAll(address operator, bool approved) external
+  ```
 
-\_Approve or remove `operator` as an operator for the caller.
+  Approve or remove `operator` as an operator for the caller.
 Operators can call {transferFrom} or {safeTransferFrom} for any token owned by the caller.
 
 Requirements:
 
 - The `operator` cannot be the caller.
 
-Emits an {ApprovalForAll} event.\_
+Emits an {ApprovalForAll} event.
 
-### getApproved
+#### getApproved
 
-```solidity
-function getApproved(uint256 tokenId) external view returns (address operator)
-```
+  ```solidity
+  function getApproved(uint256 tokenId) external view returns (address operator)
+  ```
 
-\_Returns the account approved for `tokenId` token.
+  Returns the account approved for `tokenId` token.
 
 Requirements:
 
-- `tokenId` must exist.\_
+- `tokenId` must exist.
 
-### isApprovedForAll
+#### isApprovedForAll
 
-```solidity
-function isApprovedForAll(address owner, address operator) external view returns (bool)
-```
+  ```solidity
+  function isApprovedForAll(address owner, address operator) external view returns (bool)
+  ```
 
-\_Returns if the `operator` is allowed to manage all of the assets of `owner`.
+  Returns if the `operator` is allowed to manage all of the assets of `owner`.
 
-See {setApprovalForAll}\_
+See {setApprovalForAll}
+
+### Events
+
+#### Mint
+
+  ```solidity
+  event Mint(address owner, uint256 tokenId)
+  ```
+
+  Emitted when `tokenId` token is minted.
+
+#### Transfer
+
+  ```solidity
+  event Transfer(address from, address to, uint256 tokenId)
+  ```
+
+  Emitted when `tokenId` token is transferred from `from` to `to`.
+
+#### Approval
+
+  ```solidity
+  event Approval(address owner, address approved, uint256 tokenId)
+  ```
+
+  Emitted when `owner` enables `approved` to manage the `tokenId` token.
+
+#### ApprovalForAll
+
+  ```solidity
+  event ApprovalForAll(address owner, address operator, bool approved)
+  ```
+
+  Emitted when `owner` enables or disables (`approved`) `operator` to manage all of its assets.
 
 ## Associate Debt Module
 
-### associateDebt
+### Functions
 
-```solidity
-function associateDebt(uint128 marketId, uint128 poolId, address collateralType, uint128 accountId, uint256 amount) external returns (int256)
-```
+#### associateDebt
 
-_Allows for a market, at its discression to allocate the assignment of recently accumulated debt in a
-market toward an individual_
+  ```solidity
+  function associateDebt(uint128 marketId, uint128 poolId, address collateralType, uint128 accountId, uint256 amount) external returns (int256)
+  ```
 
-### associateDebt
+  Allows for a market, at its discression to allocate the assignment of recently accumulated debt in a
+market toward an individual
 
-```solidity
-function associateDebt(uint128 marketId, uint128 poolId, address collateralType, uint128 accountId, uint256 amount) external returns (int256)
-```
-
-_Allows for a market, at its discression to allocate the assignment of recently accumulated debt in a
-market toward an individual_
+### Events
 
 ## Collateral Module
 
-### CollateralConfigured
+### Functions
 
-```solidity
-event CollateralConfigured(address collateralType, address priceFeed, uint256 targetCollateralizationRatio, uint256 minimumCollateralizationRatio, uint256 liquidationReward, bool depositingEnabled)
-```
+#### configureCollateral
 
-Emitted when a collateral type’s configuration is created or updated.
+  ```solidity
+  function configureCollateral(struct CollateralConfiguration.Data config) external
+  ```
 
-### CollateralDeposited
-
-```solidity
-event CollateralDeposited(uint128 accountId, address collateralType, uint256 amount, address sender)
-```
-
-Emitted when `amount` of collateral of type `collateralType` is deposited to account `accountId` by `sender`.
-
-### CollateralWithdrawn
-
-```solidity
-event CollateralWithdrawn(uint128 accountId, address collateralType, uint256 amount, address sender)
-```
-
-Emitted when `amount` of collateral of type `collateralType` is withdrawn from account `accountId` by `sender`.
-
-### configureCollateral
-
-```solidity
-function configureCollateral(address collateralType, address priceFeed, uint256 issuanceRatio, uint256 liquidationRatio, uint256 liquidationReward, bool depositingEnabled) external
-```
-
-Creates or updates the configuration for given `collateralType`.
+  Creates or updates the configuration for given `collateralType`.
 
 Requirements:
 
@@ -605,162 +395,37 @@ Requirements:
 
 Emits a {CollateralConfigured} event.
 
-### getCollateralConfigurations
+#### getCollateralConfigurations
 
-```solidity
-function getCollateralConfigurations(bool hideDisabled) external view returns (struct CollateralConfiguration.Data[] collaterals)
-```
+  ```solidity
+  function getCollateralConfigurations(bool hideDisabled) external view returns (struct CollateralConfiguration.Data[] collaterals)
+  ```
 
-Returns a list of detailed information pertaining to all collateral types registered in the system.
+  Returns a list of detailed information pertaining to all collateral types registered in the system.
 
-### getCollateralConfiguration
+#### getCollateralConfiguration
 
-```solidity
-function getCollateralConfiguration(address collateralType) external view returns (struct CollateralConfiguration.Data collateral)
-```
+  ```solidity
+  function getCollateralConfiguration(address collateralType) external view returns (struct CollateralConfiguration.Data collateral)
+  ```
 
-Returns detailed information pertaining the specified collateral type.
+  Returns detailed information pertaining the specified collateral type.
 
-### getCollateralPrice
+#### getCollateralPrice
 
-```solidity
-function getCollateralPrice(address collateralType) external view returns (uint256)
-```
+  ```solidity
+  function getCollateralPrice(address collateralType) external view returns (uint256)
+  ```
 
-Returns the current value of a specified collateral type
+  Returns the current value of a specified collateral type
 
-### depositCollateral
+#### deposit
 
-```solidity
-function depositCollateral(uint128 accountId, address collateralType, uint256 amount) external
-```
+  ```solidity
+  function deposit(uint128 accountId, address collateralType, uint256 amount) external
+  ```
 
-Deposits `amount` of collateral of type `collateralType` into account `accountId`.
-
-Requirements:
-
-- `msg.sender` must be the owner of the account, have the `ADMIN` permission, or have the `DEPOSIT` permission.
-
-Emits a {CollateralDeposited} event.
-
-### withdrawCollateral
-
-```solidity
-function withdrawCollateral(uint128 accountId, address collateralType, uint256 amount) external
-```
-
-Withdraws `amount` of collateral of type `collateralType` from account `accountId`.
-
-Requirements:
-
-- `msg.sender` must be the owner of the account, have the `ADMIN` permission, or have the `WITHDRAW` permission.
-
-Emits a {CollateralWithdrawn} event.
-
-### getAccountCollateral
-
-```solidity
-function getAccountCollateral(uint128 accountId, address collateralType) external view returns (uint256 totalDeposited, uint256 totalAssigned, uint256 totalLocked)
-```
-
-Returns the total values pertaining to account `accountId` for `collateralType`.
-
-### getAccountAvailableCollateral
-
-```solidity
-function getAccountAvailableCollateral(uint128 accountId, address collateralType) external view returns (uint256)
-```
-
-Returns the amount of collateral of type `collateralType` deposited with account `accountId` that can be withdrawn or delegated.
-
-### cleanExpiredLocks
-
-```solidity
-function cleanExpiredLocks(uint128 accountId, address collateralType, uint256 offset, uint256 items) external
-```
-
-Clean expired locks from locked collateral arrays for an account/collateral type. It includes offset and items to prevent gas exhaustion. If both, offset and items, are 0 it will traverse the whole array (unlimited)
-
-_DEPENDENT ON 305_
-
-### createLock
-
-```solidity
-function createLock(uint128 accountId, address collateralType, uint256 amount, uint64 expireTimestamp) external
-```
-
-Create a new lock on the given account. you must have `admin` permission on the specified account to create a lock.
-There is currently no benefit to calling this function. it is simply for allowing pre-created accounts to have locks on them if your protocol requires it.
-
-### CollateralConfigured
-
-```solidity
-event CollateralConfigured(address collateralType, address priceFeed, uint256 targetCollateralizationRatio, uint256 minimumCollateralizationRatio, uint256 liquidationReward, bool depositingEnabled)
-```
-
-Emitted when a collateral type’s configuration is created or updated.
-
-### CollateralDeposited
-
-```solidity
-event CollateralDeposited(uint128 accountId, address collateralType, uint256 amount, address sender)
-```
-
-Emitted when `amount` of collateral of type `collateralType` is deposited to account `accountId` by `sender`.
-
-### CollateralWithdrawn
-
-```solidity
-event CollateralWithdrawn(uint128 accountId, address collateralType, uint256 amount, address sender)
-```
-
-Emitted when `amount` of collateral of type `collateralType` is withdrawn from account `accountId` by `sender`.
-
-### configureCollateral
-
-```solidity
-function configureCollateral(address collateralType, address priceFeed, uint256 issuanceRatio, uint256 liquidationRatio, uint256 liquidationReward, bool depositingEnabled) external
-```
-
-Creates or updates the configuration for given `collateralType`.
-
-Requirements:
-
-- `msg.sender` must be the owner of the system.
-
-Emits a {CollateralConfigured} event.
-
-### getCollateralConfigurations
-
-```solidity
-function getCollateralConfigurations(bool hideDisabled) external view returns (struct CollateralConfiguration.Data[] collaterals)
-```
-
-Returns a list of detailed information pertaining to all collateral types registered in the system.
-
-### getCollateralConfiguration
-
-```solidity
-function getCollateralConfiguration(address collateralType) external view returns (struct CollateralConfiguration.Data collateral)
-```
-
-Returns detailed information pertaining the specified collateral type.
-
-### getCollateralPrice
-
-```solidity
-function getCollateralPrice(address collateralType) external view returns (uint256)
-```
-
-Returns the current value of a specified collateral type
-
-### depositCollateral
-
-```solidity
-function depositCollateral(uint128 accountId, address collateralType, uint256 amount) external
-```
-
-Deposits `amount` of collateral of type `collateralType` into account `accountId`.
+  Deposits `amount` of collateral of type `collateralType` into account `accountId`.
 
 Requirements:
 
@@ -768,13 +433,13 @@ Requirements:
 
 Emits a {CollateralDeposited} event.
 
-### withdrawCollateral
+#### withdraw
 
-```solidity
-function withdrawCollateral(uint128 accountId, address collateralType, uint256 amount) external
-```
+  ```solidity
+  function withdraw(uint128 accountId, address collateralType, uint256 amount) external
+  ```
 
-Withdraws `amount` of collateral of type `collateralType` from account `accountId`.
+  Withdraws `amount` of collateral of type `collateralType` from account `accountId`.
 
 Requirements:
 
@@ -782,66 +447,78 @@ Requirements:
 
 Emits a {CollateralWithdrawn} event.
 
-### getAccountCollateral
+#### getAccountCollateral
 
-```solidity
-function getAccountCollateral(uint128 accountId, address collateralType) external view returns (uint256 totalDeposited, uint256 totalAssigned, uint256 totalLocked)
-```
+  ```solidity
+  function getAccountCollateral(uint128 accountId, address collateralType) external view returns (uint256 totalDeposited, uint256 totalAssigned, uint256 totalLocked)
+  ```
 
-Returns the total values pertaining to account `accountId` for `collateralType`.
+  Returns the total values pertaining to account `accountId` for `collateralType`.
 
-### getAccountAvailableCollateral
+#### getAccountAvailableCollateral
 
-```solidity
-function getAccountAvailableCollateral(uint128 accountId, address collateralType) external view returns (uint256)
-```
+  ```solidity
+  function getAccountAvailableCollateral(uint128 accountId, address collateralType) external view returns (uint256)
+  ```
 
-Returns the amount of collateral of type `collateralType` deposited with account `accountId` that can be withdrawn or delegated.
+  Returns the amount of collateral of type `collateralType` deposited with account `accountId` that can be withdrawn or delegated.
 
-### cleanExpiredLocks
+#### cleanExpiredLocks
 
-```solidity
-function cleanExpiredLocks(uint128 accountId, address collateralType, uint256 offset, uint256 items) external
-```
+  ```solidity
+  function cleanExpiredLocks(uint128 accountId, address collateralType, uint256 offset, uint256 items) external
+  ```
 
-Clean expired locks from locked collateral arrays for an account/collateral type. It includes offset and items to prevent gas exhaustion. If both, offset and items, are 0 it will traverse the whole array (unlimited)
+  Clean expired locks from locked collateral arrays for an account/collateral type. It includes offset and items to prevent gas exhaustion. If both, offset and items, are 0 it will traverse the whole array (unlimited)
 
-_DEPENDENT ON 305_
+  DEPENDENT ON 305
 
-### createLock
+#### createLock
 
-```solidity
-function createLock(uint128 accountId, address collateralType, uint256 amount, uint64 expireTimestamp) external
-```
+  ```solidity
+  function createLock(uint128 accountId, address collateralType, uint256 amount, uint64 expireTimestamp) external
+  ```
 
-Create a new lock on the given account. you must have `admin` permission on the specified account to create a lock.
+  Create a new lock on the given account. you must have `admin` permission on the specified account to create a lock.
 There is currently no benefit to calling this function. it is simply for allowing pre-created accounts to have locks on them if your protocol requires it.
+
+### Events
+
+#### CollateralConfigured
+
+  ```solidity
+  event CollateralConfigured(address collateralType, struct CollateralConfiguration.Data config)
+  ```
+
+  Emitted when a collateral type’s configuration is created or updated.
+
+#### Deposited
+
+  ```solidity
+  event Deposited(uint128 accountId, address collateralType, uint256 amount, address sender)
+  ```
+
+  Emitted when `amount` of collateral of type `collateralType` is deposited to account `accountId` by `sender`.
+
+#### Withdrawn
+
+  ```solidity
+  event Withdrawn(uint128 accountId, address collateralType, uint256 amount, address sender)
+  ```
+
+  Emitted when `amount` of collateral of type `collateralType` is withdrawn from account `accountId` by `sender`.
 
 ## IssueUSD Module
 
-### UsdMinted
+### Functions
 
-```solidity
-event UsdMinted(uint128 accountId, uint128 poolId, address collateralType, uint256 amount, address sender)
-```
+#### mintUsd
 
-Emitted when {sender} mints {amount} of snxUSD with the specified staking position.
+  ```solidity
+  function mintUsd(uint128 accountId, uint128 poolId, address collateralType, uint256 amount) external
+  ```
 
-### UsdBurned
-
-```solidity
-event UsdBurned(uint128 accountId, uint128 poolId, address collateralType, uint256 amount, address sender)
-```
-
-Emitted when {sender} burns {amount} of snxUSD with the specified staking position.
-
-### mintUsd
-
-```solidity
-function mintUsd(uint128 accountId, uint128 poolId, address collateralType, uint256 amount) external
-```
-
-Mints {amount} of snxUSD with the specified staking position.
+  Mints {amount} of snxUSD with the specified staking position.
 
 Requirements:
 
@@ -850,1198 +527,691 @@ Requirements:
 
 Emits a {UsdMinted} event.
 
-### burnUsd
+#### burnUsd
 
-```solidity
-function burnUsd(uint128 accountId, uint128 poolId, address collateralType, uint256 amount) external
-```
+  ```solidity
+  function burnUsd(uint128 accountId, uint128 poolId, address collateralType, uint256 amount) external
+  ```
 
-Burns {amount} of snxUSD with the specified staking position.
-
-Requirements:
-
-- `msg.sender` must be the owner of the account, have the `ADMIN` permission, or have the `BURN` permission.
-
-Emits a {UsdMinted} event.
-
-### UsdMinted
-
-```solidity
-event UsdMinted(uint128 accountId, uint128 poolId, address collateralType, uint256 amount, address sender)
-```
-
-Emitted when {sender} mints {amount} of snxUSD with the specified staking position.
-
-### UsdBurned
-
-```solidity
-event UsdBurned(uint128 accountId, uint128 poolId, address collateralType, uint256 amount, address sender)
-```
-
-Emitted when {sender} burns {amount} of snxUSD with the specified staking position.
-
-### mintUsd
-
-```solidity
-function mintUsd(uint128 accountId, uint128 poolId, address collateralType, uint256 amount) external
-```
-
-Mints {amount} of snxUSD with the specified staking position.
-
-Requirements:
-
-- `msg.sender` must be the owner of the account, have the `ADMIN` permission, or have the `MINT` permission.
-- After minting, the collateralization ratio of the staking position must not be below the target collateralization ratio for the corresponding collateral type.
-
-Emits a {UsdMinted} event.
-
-### burnUsd
-
-```solidity
-function burnUsd(uint128 accountId, uint128 poolId, address collateralType, uint256 amount) external
-```
-
-Burns {amount} of snxUSD with the specified staking position.
+  Burns {amount} of snxUSD with the specified staking position.
 
 Requirements:
 
 - `msg.sender` must be the owner of the account, have the `ADMIN` permission, or have the `BURN` permission.
 
 Emits a {UsdMinted} event.
+
+### Events
+
+#### UsdMinted
+
+  ```solidity
+  event UsdMinted(uint128 accountId, uint128 poolId, address collateralType, uint256 amount, address sender)
+  ```
+
+  Emitted when {sender} mints {amount} of snxUSD with the specified staking position.
+
+#### UsdBurned
+
+  ```solidity
+  event UsdBurned(uint128 accountId, uint128 poolId, address collateralType, uint256 amount, address sender)
+  ```
+
+  Emitted when {sender} burns {amount} of snxUSD with the specified staking position.
 
 ## Liquidation Module
 
-### Liquidation
+### Functions
 
-```solidity
-event Liquidation(uint128 accountId, uint128 poolId, address collateralType, uint256 debtLiquidated, uint256 collateralLiquidated, uint256 amountRewarded)
-```
+#### liquidate
 
-### VaultLiquidation
+  ```solidity
+  function liquidate(uint128 accountId, uint128 poolId, address collateralType) external returns (uint256 amountRewarded, uint256 debtLiquidated, uint256 collateralLiquidated)
+  ```
 
-```solidity
-event VaultLiquidation(uint128 poolId, address collateralType, uint256 debtLiquidated, uint256 collateralLiquidated, uint256 amountRewarded)
-```
+  liquidates the required collateral of the account delegated to the poolId
 
-### LiquidationInformation
+#### liquidateVault
 
-```solidity
-struct LiquidationInformation {
-  struct CurvesLibrary.PolynomialCurve curve;
-  mapping(uint256 => uint256) initialAmount;
-  uint256 accumulated;
-}
-```
+  ```solidity
+  function liquidateVault(uint128 poolId, address collateralType, uint128 liquidateAsAccountId, uint256 maxUsd) external returns (uint256 amountRewarded, uint256 collateralLiquidated)
+  ```
 
-### liquidate
-
-```solidity
-function liquidate(uint128 accountId, uint128 poolId, address collateralType) external returns (uint256 amountRewarded, uint256 debtLiquidated, uint256 collateralLiquidated)
-```
-
-liquidates the required collateral of the account delegated to the poolId
-
-### liquidateVault
-
-```solidity
-function liquidateVault(uint128 poolId, address collateralType, uint128 liquidateAsAccountId, uint256 maxUsd) external returns (uint256 amountRewarded, uint256 collateralLiquidated)
-```
-
-liquidates an entire vault. can only be done if the vault itself is undercollateralized.
+  liquidates an entire vault. can only be done if the vault itself is undercollateralized.
 liquidateAsAccountId determines which account to deposit the siezed collateral into (this is necessary particularly if the collateral in the vault is vesting)
 Will only liquidate a portion of the debt for the vault if `maxUsd` is supplied
 
-### isLiquidatable
+#### isLiquidatable
 
-```solidity
-function isLiquidatable(uint128 accountId, uint128 poolId, address collateralType) external returns (bool)
-```
+  ```solidity
+  function isLiquidatable(uint128 accountId, uint128 poolId, address collateralType) external returns (bool)
+  ```
 
-returns if the account is liquidable on the poolId - collateralType pair
+  returns if the account is liquidable on the poolId - collateralType pair
 
-### Liquidation
+### Events
 
-```solidity
-event Liquidation(uint128 accountId, uint128 poolId, address collateralType, uint256 debtLiquidated, uint256 collateralLiquidated, uint256 amountRewarded)
-```
+#### Liquidation
 
-### VaultLiquidation
+  ```solidity
+  event Liquidation(uint128 accountId, uint128 poolId, address collateralType, uint256 debtLiquidated, uint256 collateralLiquidated, uint256 amountRewarded)
+  ```
 
-```solidity
-event VaultLiquidation(uint128 poolId, address collateralType, uint256 debtLiquidated, uint256 collateralLiquidated, uint256 amountRewarded)
-```
+#### VaultLiquidation
 
-### LiquidationInformation
-
-```solidity
-struct LiquidationInformation {
-  struct CurvesLibrary.PolynomialCurve curve;
-  mapping(uint256 => uint256) initialAmount;
-  uint256 accumulated;
-}
-```
-
-### liquidate
-
-```solidity
-function liquidate(uint128 accountId, uint128 poolId, address collateralType) external returns (uint256 amountRewarded, uint256 debtLiquidated, uint256 collateralLiquidated)
-```
-
-liquidates the required collateral of the account delegated to the poolId
-
-### liquidateVault
-
-```solidity
-function liquidateVault(uint128 poolId, address collateralType, uint128 liquidateAsAccountId, uint256 maxUsd) external returns (uint256 amountRewarded, uint256 collateralLiquidated)
-```
-
-liquidates an entire vault. can only be done if the vault itself is undercollateralized.
-liquidateAsAccountId determines which account to deposit the siezed collateral into (this is necessary particularly if the collateral in the vault is vesting)
-Will only liquidate a portion of the debt for the vault if `maxUsd` is supplied
-
-### isLiquidatable
-
-```solidity
-function isLiquidatable(uint128 accountId, uint128 poolId, address collateralType) external returns (bool)
-```
-
-returns if the account is liquidable on the poolId - collateralType pair
+  ```solidity
+  event VaultLiquidation(uint128 poolId, address collateralType, uint256 debtLiquidated, uint256 collateralLiquidated, uint256 amountRewarded)
+  ```
 
 ## Market Collateral Module
 
-### depositMarketCollateral
+### Functions
 
-```solidity
-function depositMarketCollateral(uint128 marketId, address collateralType, uint256 amount) external
-```
+#### depositMarketCollateral
 
-### withdrawMarketCollateral
+  ```solidity
+  function depositMarketCollateral(uint128 marketId, address collateralType, uint256 amount) external
+  ```
 
-```solidity
-function withdrawMarketCollateral(uint128 marketId, address collateralType, uint256 amount) external
-```
+#### withdrawMarketCollateral
 
-### configureMaximumMarketCollateral
+  ```solidity
+  function withdrawMarketCollateral(uint128 marketId, address collateralType, uint256 amount) external
+  ```
 
-```solidity
-function configureMaximumMarketCollateral(uint128 marketId, address collateralType, uint256 amount) external
-```
+#### configureMaximumMarketCollateral
 
-### getMaximumMarketCollateral
+  ```solidity
+  function configureMaximumMarketCollateral(uint128 marketId, address collateralType, uint256 amount) external
+  ```
 
-```solidity
-function getMaximumMarketCollateral(uint128 marketId, address collateralType) external returns (uint256)
-```
+#### getMaximumMarketCollateral
 
-### getMarketCollateralAmount
+  ```solidity
+  function getMaximumMarketCollateral(uint128 marketId, address collateralType) external returns (uint256)
+  ```
 
-```solidity
-function getMarketCollateralAmount(uint128 marketId, address collateralType) external returns (uint256)
-```
+#### getMarketCollateralAmount
 
-### MarketCollateralDeposited
+  ```solidity
+  function getMarketCollateralAmount(uint128 marketId, address collateralType) external returns (uint256)
+  ```
 
-```solidity
-event MarketCollateralDeposited(uint128 marketId, address collateralType, uint256 amount, address sender)
-```
+### Events
 
-Emitted when `amount` of collateral of type `collateralType` is deposited to market `marketId` by `sender`.
+#### MarketCollateralDeposited
 
-### MarketCollateralWithdrawn
+  ```solidity
+  event MarketCollateralDeposited(uint128 marketId, address collateralType, uint256 amount, address sender)
+  ```
 
-```solidity
-event MarketCollateralWithdrawn(uint128 marketId, address collateralType, uint256 amount, address sender)
-```
+  Emitted when `amount` of collateral of type `collateralType` is deposited to market `marketId` by `sender`.
 
-Emitted when `amount` of collateral of type `collateralType` is withdrawn from market `marketId` by `sender`.
+#### MarketCollateralWithdrawn
 
-### MaximumMarketCollateralConfigured
+  ```solidity
+  event MarketCollateralWithdrawn(uint128 marketId, address collateralType, uint256 amount, address sender)
+  ```
 
-```solidity
-event MaximumMarketCollateralConfigured(uint128 marketId, address collateralType, uint256 amount, address sender)
-```
+  Emitted when `amount` of collateral of type `collateralType` is withdrawn from market `marketId` by `sender`.
 
-### depositMarketCollateral
+#### MaximumMarketCollateralConfigured
 
-```solidity
-function depositMarketCollateral(uint128 marketId, address collateralType, uint256 amount) external
-```
-
-### withdrawMarketCollateral
-
-```solidity
-function withdrawMarketCollateral(uint128 marketId, address collateralType, uint256 amount) external
-```
-
-### configureMaximumMarketCollateral
-
-```solidity
-function configureMaximumMarketCollateral(uint128 marketId, address collateralType, uint256 amount) external
-```
-
-### getMaximumMarketCollateral
-
-```solidity
-function getMaximumMarketCollateral(uint128 marketId, address collateralType) external returns (uint256)
-```
-
-### getMarketCollateralAmount
-
-```solidity
-function getMarketCollateralAmount(uint128 marketId, address collateralType) external returns (uint256)
-```
-
-### MarketCollateralDeposited
-
-```solidity
-event MarketCollateralDeposited(uint128 marketId, address collateralType, uint256 amount, address sender)
-```
-
-Emitted when `amount` of collateral of type `collateralType` is deposited to market `marketId` by `sender`.
-
-### MarketCollateralWithdrawn
-
-```solidity
-event MarketCollateralWithdrawn(uint128 marketId, address collateralType, uint256 amount, address sender)
-```
-
-Emitted when `amount` of collateral of type `collateralType` is withdrawn from market `marketId` by `sender`.
-
-### MaximumMarketCollateralConfigured
-
-```solidity
-event MaximumMarketCollateralConfigured(uint128 marketId, address collateralType, uint256 amount, address sender)
-```
+  ```solidity
+  event MaximumMarketCollateralConfigured(uint128 marketId, address collateralType, uint256 amount, address sender)
+  ```
 
 ## Market Manager Module
 
-### MarketRegistered
+### Functions
 
-```solidity
-event MarketRegistered(address market, uint128 marketId)
-```
+#### registerMarket
 
-### UsdDeposited
+  ```solidity
+  function registerMarket(address market) external returns (uint128)
+  ```
 
-```solidity
-event UsdDeposited(uint128 marketId, address target, uint256 amount, address sender)
-```
+  registers a new market
 
-### UsdWithdrawn
+#### depositMarketUsd
 
-```solidity
-event UsdWithdrawn(uint128 marketId, address target, uint256 amount, address sender)
-```
+  ```solidity
+  function depositMarketUsd(uint128 marketId, address target, uint256 amount) external
+  ```
 
-### registerMarket
+  target deposits amount of synths to the marketId
 
-```solidity
-function registerMarket(address market) external returns (uint128)
-```
+#### withdrawMarketUsd
 
-registers a new market
+  ```solidity
+  function withdrawMarketUsd(uint128 marketId, address target, uint256 amount) external
+  ```
 
-### depositUsd
+  target withdraws amount of synths to the marketId
 
-```solidity
-function depositUsd(uint128 marketId, address target, uint256 amount) external
-```
+#### getWithdrawableUsd
 
-target deposits amount of synths to the marketId
+  ```solidity
+  function getWithdrawableUsd(uint128 marketId) external view returns (uint256)
+  ```
 
-### withdrawUsd
+  gets the liquidity of the market
 
-```solidity
-function withdrawUsd(uint128 marketId, address target, uint256 amount) external
-```
+#### getMarketIssuance
 
-target withdraws amount of synths to the marketId
+  ```solidity
+  function getMarketIssuance(uint128 marketId) external view returns (int128)
+  ```
 
-### getWithdrawableUsd
+  gets net snxUSD withdrawn - deposited by the market
 
-```solidity
-function getWithdrawableUsd(uint128 marketId) external view returns (uint256)
-```
+#### getMarketReportedDebt
 
-gets the liquidity of the market
+  ```solidity
+  function getMarketReportedDebt(uint128 marketId) external view returns (uint256)
+  ```
 
-### getMarketIssuance
+  gets the total balance of the market
 
-```solidity
-function getMarketIssuance(uint128 marketId) external view returns (int128)
-```
+#### getMarketTotalBalance
 
-gets net snxUSD withdrawn - deposited by the market
+  ```solidity
+  function getMarketTotalBalance(uint128 marketId) external view returns (int256)
+  ```
 
-### getMarketReportedDebt
+  gets the total balance of the market (marketIssuance + marketReportedDebt)
 
-```solidity
-function getMarketReportedDebt(uint128 marketId) external view returns (uint256)
-```
+#### getMarketCollateral
 
-gets the total balance of the market
+  ```solidity
+  function getMarketCollateral(uint128 marketId) external view returns (uint256)
+  ```
 
-### getMarketTotalBalance
+  gets the snxUSD value of the collateral backing this market.
 
-```solidity
-function getMarketTotalBalance(uint128 marketId) external view returns (int256)
-```
+#### getMarketDebtPerShare
 
-gets the total balance of the market (marketIssuance + marketReportedDebt)
+  ```solidity
+  function getMarketDebtPerShare(uint128 marketId) external returns (int256)
+  ```
 
-### getMarketCollateral
+#### isMarketCapacityLocked
 
-```solidity
-function getMarketCollateral(uint128 marketId) external view returns (uint256)
-```
+  ```solidity
+  function isMarketCapacityLocked(uint128 marketId) external view returns (bool)
+  ```
 
-gets the snxUSD value of the collateral backing this market.
+### Events
 
-### getMarketDebtPerShare
+#### MarketRegistered
 
-```solidity
-function getMarketDebtPerShare(uint128 marketId) external returns (int256)
-```
+  ```solidity
+  event MarketRegistered(address market, uint128 marketId)
+  ```
 
-### isMarketCapacityLocked
+#### MarketUsdDeposited
 
-```solidity
-function isMarketCapacityLocked(uint128 marketId) external view returns (bool)
-```
+  ```solidity
+  event MarketUsdDeposited(uint128 marketId, address target, uint256 amount, address sender)
+  ```
 
-### MarketRegistered
+#### MarketUsdWithdrawn
 
-```solidity
-event MarketRegistered(address market, uint128 marketId)
-```
-
-### UsdDeposited
-
-```solidity
-event UsdDeposited(uint128 marketId, address target, uint256 amount, address sender)
-```
-
-### UsdWithdrawn
-
-```solidity
-event UsdWithdrawn(uint128 marketId, address target, uint256 amount, address sender)
-```
-
-### registerMarket
-
-```solidity
-function registerMarket(address market) external returns (uint128)
-```
-
-registers a new market
-
-### depositUsd
-
-```solidity
-function depositUsd(uint128 marketId, address target, uint256 amount) external
-```
-
-target deposits amount of synths to the marketId
-
-### withdrawUsd
-
-```solidity
-function withdrawUsd(uint128 marketId, address target, uint256 amount) external
-```
-
-target withdraws amount of synths to the marketId
-
-### getWithdrawableUsd
-
-```solidity
-function getWithdrawableUsd(uint128 marketId) external view returns (uint256)
-```
-
-gets the liquidity of the market
-
-### getMarketIssuance
-
-```solidity
-function getMarketIssuance(uint128 marketId) external view returns (int128)
-```
-
-gets net snxUSD withdrawn - deposited by the market
-
-### getMarketReportedDebt
-
-```solidity
-function getMarketReportedDebt(uint128 marketId) external view returns (uint256)
-```
-
-gets the total balance of the market
-
-### getMarketTotalBalance
-
-```solidity
-function getMarketTotalBalance(uint128 marketId) external view returns (int256)
-```
-
-gets the total balance of the market (marketIssuance + marketReportedDebt)
-
-### getMarketCollateral
-
-```solidity
-function getMarketCollateral(uint128 marketId) external view returns (uint256)
-```
-
-gets the snxUSD value of the collateral backing this market.
-
-### getMarketDebtPerShare
-
-```solidity
-function getMarketDebtPerShare(uint128 marketId) external returns (int256)
-```
-
-### isMarketCapacityLocked
-
-```solidity
-function isMarketCapacityLocked(uint128 marketId) external view returns (bool)
-```
+  ```solidity
+  event MarketUsdWithdrawn(uint128 marketId, address target, uint256 amount, address sender)
+  ```
 
 ## Multicall Module
 
-### multicall
+### Functions
 
-```solidity
-function multicall(bytes[] data) external payable returns (bytes[] results)
-```
+#### multicall
 
-### multicall
+  ```solidity
+  function multicall(bytes[] data) external payable returns (bytes[] results)
+  ```
 
-```solidity
-function multicall(bytes[] data) external payable returns (bytes[] results)
-```
+### Events
 
 ## Pool Configuration Module
 
-### PreferredPoolSet
+### Functions
 
-```solidity
-event PreferredPoolSet(uint256 poolId)
-```
+#### setPreferredPool
 
-### PoolApprovedAdded
+  ```solidity
+  function setPreferredPool(uint128 poolId) external
+  ```
 
-```solidity
-event PoolApprovedAdded(uint256 poolId)
-```
+  SCCP sets the preferred pool
 
-### PoolApprovedRemoved
+#### addApprovedPool
 
-```solidity
-event PoolApprovedRemoved(uint256 poolId)
-```
+  ```solidity
+  function addApprovedPool(uint128 poolId) external
+  ```
 
-### setPreferredPool
+  SCCP adds a poolId to the approved list
 
-```solidity
-function setPreferredPool(uint128 poolId) external
-```
+#### removeApprovedPool
 
-SCCP sets the preferred pool
+  ```solidity
+  function removeApprovedPool(uint128 poolId) external
+  ```
 
-### addApprovedPool
+  SCCP removes a poolId to the approved list
 
-```solidity
-function addApprovedPool(uint128 poolId) external
-```
+#### getPreferredPool
 
-SCCP adds a poolId to the approved list
+  ```solidity
+  function getPreferredPool() external view returns (uint256)
+  ```
 
-### removeApprovedPool
+  gets the preferred pool
 
-```solidity
-function removeApprovedPool(uint128 poolId) external
-```
+#### getApprovedPools
 
-SCCP removes a poolId to the approved list
+  ```solidity
+  function getApprovedPools() external view returns (uint256[])
+  ```
 
-### getPreferredPool
+  gets the approved pools (list of poolIds)
 
-```solidity
-function getPreferredPool() external view returns (uint256)
-```
+### Events
 
-gets the preferred pool
+#### PreferredPoolSet
 
-### getApprovedPools
+  ```solidity
+  event PreferredPoolSet(uint256 poolId)
+  ```
 
-```solidity
-function getApprovedPools() external view returns (uint256[])
-```
+#### PoolApprovedAdded
 
-gets the approved pools (list of poolIds)
+  ```solidity
+  event PoolApprovedAdded(uint256 poolId)
+  ```
 
-### PreferredPoolSet
+#### PoolApprovedRemoved
 
-```solidity
-event PreferredPoolSet(uint256 poolId)
-```
-
-### PoolApprovedAdded
-
-```solidity
-event PoolApprovedAdded(uint256 poolId)
-```
-
-### PoolApprovedRemoved
-
-```solidity
-event PoolApprovedRemoved(uint256 poolId)
-```
-
-### setPreferredPool
-
-```solidity
-function setPreferredPool(uint128 poolId) external
-```
-
-SCCP sets the preferred pool
-
-### addApprovedPool
-
-```solidity
-function addApprovedPool(uint128 poolId) external
-```
-
-SCCP adds a poolId to the approved list
-
-### removeApprovedPool
-
-```solidity
-function removeApprovedPool(uint128 poolId) external
-```
-
-SCCP removes a poolId to the approved list
-
-### getPreferredPool
-
-```solidity
-function getPreferredPool() external view returns (uint256)
-```
-
-gets the preferred pool
-
-### getApprovedPools
-
-```solidity
-function getApprovedPools() external view returns (uint256[])
-```
-
-gets the approved pools (list of poolIds)
+  ```solidity
+  event PoolApprovedRemoved(uint256 poolId)
+  ```
 
 ## Pool Module
 
-### PoolCreated
+### Functions
 
-```solidity
-event PoolCreated(uint128 poolId, address owner)
-```
+#### createPool
 
-### NominatedPoolOwner
+  ```solidity
+  function createPool(uint128 requestedPoolId, address owner) external
+  ```
 
-```solidity
-event NominatedPoolOwner(uint128 poolId, address owner)
-```
+  creates a new pool
 
-### PoolOwnershipAccepted
+#### setPoolConfiguration
 
-```solidity
-event PoolOwnershipAccepted(uint128 poolId, address owner)
-```
+  ```solidity
+  function setPoolConfiguration(uint128 poolId, struct MarketConfiguration.Data[] marketDistribution) external
+  ```
 
-### PoolNominationRenounced
+  sets the pool positions (only poolToken owner)
 
-```solidity
-event PoolNominationRenounced(uint128 poolId, address owner)
-```
+#### getPoolConfiguration
 
-### PoolNominationRevoked
+  ```solidity
+  function getPoolConfiguration(uint128 poolId) external view returns (struct MarketConfiguration.Data[] markets)
+  ```
 
-```solidity
-event PoolNominationRevoked(uint128 poolId, address owner)
-```
+  gets the pool positions
 
-### PoolOwnershipRenounced
+#### setPoolName
 
-```solidity
-event PoolOwnershipRenounced(uint128 poolId, address owner)
-```
+  ```solidity
+  function setPoolName(uint128 poolId, string name) external
+  ```
 
-### PoolNameUpdated
+  sets the pool name
 
-```solidity
-event PoolNameUpdated(uint128 poolId, string name, address sender)
-```
+#### getPoolName
 
-### PoolConfigurationSet
+  ```solidity
+  function getPoolName(uint128 poolId) external view returns (string poolName)
+  ```
 
-```solidity
-event PoolConfigurationSet(uint128 poolId, struct MarketConfiguration.Data[] markets, address sender)
-```
+  gets the pool name
 
-### createPool
+#### nominatePoolOwner
 
-```solidity
-function createPool(uint128 requestedPoolId, address owner) external
-```
+  ```solidity
+  function nominatePoolOwner(address nominatedOwner, uint128 poolId) external
+  ```
 
-creates a new pool
+  nominates a new pool owner
 
-### setPoolConfiguration
+#### acceptPoolOwnership
 
-```solidity
-function setPoolConfiguration(uint128 poolId, struct MarketConfiguration.Data[] marketDistribution) external
-```
+  ```solidity
+  function acceptPoolOwnership(uint128 poolId) external
+  ```
 
-sets the pool positions (only poolToken owner)
+  accepts ownership by nominated owner
 
-### getPoolConfiguration
+#### revokePoolNomination
 
-```solidity
-function getPoolConfiguration(uint128 poolId) external view returns (struct MarketConfiguration.Data[] markets)
-```
+  ```solidity
+  function revokePoolNomination(uint128 poolId) external
+  ```
 
-gets the pool positions
+  revokes nomination by pool owner
 
-### setPoolName
+#### renouncePoolNomination
 
-```solidity
-function setPoolName(uint128 poolId, string name) external
-```
+  ```solidity
+  function renouncePoolNomination(uint128 poolId) external
+  ```
 
-sets the pool name
+  renounce nomination by nominee
 
-### getPoolName
+#### getPoolOwner
 
-```solidity
-function getPoolName(uint128 poolId) external view returns (string poolName)
-```
+  ```solidity
+  function getPoolOwner(uint128 poolId) external view returns (address)
+  ```
 
-gets the pool name
+  gets owner of poolId
 
-### nominatePoolOwner
+#### getNominatedPoolOwner
 
-```solidity
-function nominatePoolOwner(address nominatedOwner, uint128 poolId) external
-```
+  ```solidity
+  function getNominatedPoolOwner(uint128 poolId) external view returns (address)
+  ```
 
-nominates a new pool owner
+  gets nominatedOwner of poolId
 
-### acceptPoolOwnership
+#### setMinLiquidityRatio
 
-```solidity
-function acceptPoolOwnership(uint128 poolId) external
-```
+  ```solidity
+  function setMinLiquidityRatio(uint256 minLiquidityRatio) external
+  ```
 
-accepts ownership by nominated owner
+  places a cap on what proportion of free vault liquidity may be used towards a pool. only owner.
 
-### renouncePoolNomination
+#### getMinLiquidityRatio
 
-```solidity
-function renouncePoolNomination(uint128 poolId) external
-```
+  ```solidity
+  function getMinLiquidityRatio() external view returns (uint256)
+  ```
 
-renounces nomination by nominated owner
+  returns the liquidity ratio cap for delegation of liquidity by pools to markets
 
-### renouncePoolOwnership
+### Events
 
-```solidity
-function renouncePoolOwnership(uint128 poolId) external
-```
+#### PoolCreated
 
-renounces ownership by owner
+  ```solidity
+  event PoolCreated(uint128 poolId, address owner)
+  ```
 
-### getPoolOwner
+  gets fired when pool will be created
 
-```solidity
-function getPoolOwner(uint128 poolId) external view returns (address)
-```
+#### NominatedPoolOwner
 
-gets owner of poolId
+  ```solidity
+  event NominatedPoolOwner(uint128 poolId, address owner)
+  ```
 
-### getNominatedPoolOwner
+  gets fired when pool owner proposes a new owner
 
-```solidity
-function getNominatedPoolOwner(uint128 poolId) external view returns (address)
-```
+#### PoolOwnershipAccepted
 
-gets nominatedOwner of poolId
+  ```solidity
+  event PoolOwnershipAccepted(uint128 poolId, address owner)
+  ```
 
-### setMinLiquidityRatio
+  gets fired when pool nominee accepts nomination
 
-```solidity
-function setMinLiquidityRatio(uint256 minLiquidityRatio) external
-```
+#### PoolNominationRevoked
 
-places a cap on what proportion of free vault liquidity may be used towards a pool. only owner.
+  ```solidity
+  event PoolNominationRevoked(uint128 poolId, address owner)
+  ```
 
-### getMinLiquidityRatio
+  gets fired when pool owner revokes nonimation
 
-```solidity
-function getMinLiquidityRatio() external view returns (uint256)
-```
+#### PoolNominationRenounced
 
-returns the liquidity ratio cap for delegation of liquidity by pools to markets
+  ```solidity
+  event PoolNominationRenounced(uint128 poolId, address owner)
+  ```
 
-### PoolCreated
+  gets fired when pool nominee renounces nomination
 
-```solidity
-event PoolCreated(uint128 poolId, address owner)
-```
+#### PoolNameUpdated
 
-### NominatedPoolOwner
+  ```solidity
+  event PoolNameUpdated(uint128 poolId, string name, address sender)
+  ```
 
-```solidity
-event NominatedPoolOwner(uint128 poolId, address owner)
-```
+  gets fired when pool name changes
 
-### PoolOwnershipAccepted
+#### PoolConfigurationSet
 
-```solidity
-event PoolOwnershipAccepted(uint128 poolId, address owner)
-```
+  ```solidity
+  event PoolConfigurationSet(uint128 poolId, struct MarketConfiguration.Data[] markets, address sender)
+  ```
 
-### PoolNominationRenounced
-
-```solidity
-event PoolNominationRenounced(uint128 poolId, address owner)
-```
-
-### PoolNominationRevoked
-
-```solidity
-event PoolNominationRevoked(uint128 poolId, address owner)
-```
-
-### PoolOwnershipRenounced
-
-```solidity
-event PoolOwnershipRenounced(uint128 poolId, address owner)
-```
-
-### PoolNameUpdated
-
-```solidity
-event PoolNameUpdated(uint128 poolId, string name, address sender)
-```
-
-### PoolConfigurationSet
-
-```solidity
-event PoolConfigurationSet(uint128 poolId, struct MarketConfiguration.Data[] markets, address sender)
-```
-
-### createPool
-
-```solidity
-function createPool(uint128 requestedPoolId, address owner) external
-```
-
-creates a new pool
-
-### setPoolConfiguration
-
-```solidity
-function setPoolConfiguration(uint128 poolId, struct MarketConfiguration.Data[] marketDistribution) external
-```
-
-sets the pool positions (only poolToken owner)
-
-### getPoolConfiguration
-
-```solidity
-function getPoolConfiguration(uint128 poolId) external view returns (struct MarketConfiguration.Data[] markets)
-```
-
-gets the pool positions
-
-### setPoolName
-
-```solidity
-function setPoolName(uint128 poolId, string name) external
-```
-
-sets the pool name
-
-### getPoolName
-
-```solidity
-function getPoolName(uint128 poolId) external view returns (string poolName)
-```
-
-gets the pool name
-
-### nominatePoolOwner
-
-```solidity
-function nominatePoolOwner(address nominatedOwner, uint128 poolId) external
-```
-
-nominates a new pool owner
-
-### acceptPoolOwnership
-
-```solidity
-function acceptPoolOwnership(uint128 poolId) external
-```
-
-accepts ownership by nominated owner
-
-### renouncePoolNomination
-
-```solidity
-function renouncePoolNomination(uint128 poolId) external
-```
-
-renounces nomination by nominated owner
-
-### renouncePoolOwnership
-
-```solidity
-function renouncePoolOwnership(uint128 poolId) external
-```
-
-renounces ownership by owner
-
-### getPoolOwner
-
-```solidity
-function getPoolOwner(uint128 poolId) external view returns (address)
-```
-
-gets owner of poolId
-
-### getNominatedPoolOwner
-
-```solidity
-function getNominatedPoolOwner(uint128 poolId) external view returns (address)
-```
-
-gets nominatedOwner of poolId
-
-### setMinLiquidityRatio
-
-```solidity
-function setMinLiquidityRatio(uint256 minLiquidityRatio) external
-```
-
-places a cap on what proportion of free vault liquidity may be used towards a pool. only owner.
-
-### getMinLiquidityRatio
-
-```solidity
-function getMinLiquidityRatio() external view returns (uint256)
-```
-
-returns the liquidity ratio cap for delegation of liquidity by pools to markets
+  gets fired when pool gets configured
 
 ## Reward Distributor Module
 
-### name
+### Functions
 
-```solidity
-function name() external view returns (string)
-```
+#### name
 
-returns a human-readable name for a this rewards distributor
+  ```solidity
+  function name() external view returns (string)
+  ```
 
-### setRewardAllocation
+  returns a human-readable name for a this rewards distributor
 
-```solidity
-function setRewardAllocation(uint128 poolId, uint256 allocation) external
-```
+#### setRewardAllocation
 
-### getRewardAllocation
+  ```solidity
+  function setRewardAllocation(uint128 poolId, uint256 allocation) external
+  ```
 
-```solidity
-function getRewardAllocation(uint128 poolId) external view returns (uint256)
-```
+#### getRewardAllocation
 
-### name
+  ```solidity
+  function getRewardAllocation(uint128 poolId) external view returns (uint256)
+  ```
 
-```solidity
-function name() external view returns (string)
-```
-
-returns a human-readable name for a this rewards distributor
-
-### setRewardAllocation
-
-```solidity
-function setRewardAllocation(uint128 poolId, uint256 allocation) external
-```
-
-### getRewardAllocation
-
-```solidity
-function getRewardAllocation(uint128 poolId) external view returns (uint256)
-```
+### Events
 
 ## Rewards Manager Module
 
-### RewardsDistributed
+### Functions
 
-```solidity
-event RewardsDistributed(uint128 poolId, address collateralType, address distributor, uint256 amount, uint256 start, uint256 duration)
-```
+#### registerRewardsDistributor
 
-### RewardsClaimed
+  ```solidity
+  function registerRewardsDistributor(uint128 poolId, address collateralType, address distributor) external
+  ```
 
-```solidity
-event RewardsClaimed(uint128 accountId, uint128 poolId, address collateralType, address distributor, uint256 amount)
-```
+  called by pool owner or an existing distributor to register rewards for vault participants
 
-### registerRewardsDistributor
+#### distributeRewards
 
-```solidity
-function registerRewardsDistributor(uint128 poolId, address collateralType, address distributor) external
-```
+  ```solidity
+  function distributeRewards(uint128 poolId, address collateralType, uint256 amount, uint256 start, uint256 duration) external
+  ```
 
-called by pool owner or an existing distributor to register rewards for vault participants
+  called by pool owner or an existing distributor to set up rewards for vault participants
 
-### distributeRewards
+#### claimRewards
 
-```solidity
-function distributeRewards(uint128 poolId, address collateralType, uint256 amount, uint256 start, uint256 duration) external
-```
+  ```solidity
+  function claimRewards(uint128 poolId, address collateralType, uint128 accountId, address distributor) external returns (uint256)
+  ```
 
-called by pool owner or an existing distributor to set up rewards for vault participants
+  retrieves the amount of available reward, and claims them to the caller's account for a given distributor.
 
-### claimRewards
+#### getRewards
 
-```solidity
-function claimRewards(uint128 poolId, address collateralType, uint128 accountId, address distributor) external returns (uint256)
-```
+  ```solidity
+  function getRewards(uint128 poolId, address collateralType, uint128 accountId) external returns (uint256[], address[])
+  ```
 
-retrieves the amount of available reward, and claims them to the caller's account for a given distributor.
+  retrieves the amount of available rewards.
 
-### getRewards
+  this function should be called to get currently available rewards using `callStatic`
 
-```solidity
-function getRewards(uint128 poolId, address collateralType, uint128 accountId) external returns (uint256[], address[])
-```
+#### getRewardRate
 
-retrieves the amount of available rewards.
+  ```solidity
+  function getRewardRate(uint128 poolId, address collateralType, address distributor) external view returns (uint256)
+  ```
 
-_this function should be called to get currently available rewards using `callStatic`_
+  returns the number of individual units of amount emitted per second per share for the given poolId, collateralType, distributor vault
 
-### getRewardRate
+### Events
 
-```solidity
-function getRewardRate(uint128 poolId, address collateralType, address distributor) external view returns (uint256)
-```
+#### RewardsDistributed
 
-returns the number of individual units of amount emitted per second per share for the given poolId, collateralType, distributor vault
+  ```solidity
+  event RewardsDistributed(uint128 poolId, address collateralType, address distributor, uint256 amount, uint256 start, uint256 duration)
+  ```
 
-### RewardsDistributed
+#### RewardsClaimed
 
-```solidity
-event RewardsDistributed(uint128 poolId, address collateralType, address distributor, uint256 amount, uint256 start, uint256 duration)
-```
-
-### RewardsClaimed
-
-```solidity
-event RewardsClaimed(uint128 accountId, uint128 poolId, address collateralType, address distributor, uint256 amount)
-```
-
-### registerRewardsDistributor
-
-```solidity
-function registerRewardsDistributor(uint128 poolId, address collateralType, address distributor) external
-```
-
-called by pool owner or an existing distributor to register rewards for vault participants
-
-### distributeRewards
-
-```solidity
-function distributeRewards(uint128 poolId, address collateralType, uint256 amount, uint256 start, uint256 duration) external
-```
-
-called by pool owner or an existing distributor to set up rewards for vault participants
-
-### claimRewards
-
-```solidity
-function claimRewards(uint128 poolId, address collateralType, uint128 accountId, address distributor) external returns (uint256)
-```
-
-retrieves the amount of available reward, and claims them to the caller's account for a given distributor.
-
-### getRewards
-
-```solidity
-function getRewards(uint128 poolId, address collateralType, uint128 accountId) external returns (uint256[], address[])
-```
-
-retrieves the amount of available rewards.
-
-_this function should be called to get currently available rewards using `callStatic`_
-
-### getRewardRate
-
-```solidity
-function getRewardRate(uint128 poolId, address collateralType, address distributor) external view returns (uint256)
-```
-
-returns the number of individual units of amount emitted per second per share for the given poolId, collateralType, distributor vault
+  ```solidity
+  event RewardsClaimed(uint128 accountId, uint128 poolId, address collateralType, address distributor, uint256 amount)
+  ```
 
 ## USD Token Module
 
-### burnWithAllowance
+### Functions
 
-```solidity
-function burnWithAllowance(address from, address spender, uint256 amount) external
-```
+#### burnWithAllowance
 
-### transferCrossChain
+  ```solidity
+  function burnWithAllowance(address from, address spender, uint256 amount) external
+  ```
 
-```solidity
-function transferCrossChain(uint256 destChainId, address, uint256 amount) external returns (uint256 feesPaid)
-```
+#### transferCrossChain
 
-### burnWithAllowance
+  ```solidity
+  function transferCrossChain(uint256 destChainId, address, uint256 amount) external returns (uint256 feesPaid)
+  ```
 
-```solidity
-function burnWithAllowance(address from, address spender, uint256 amount) external
-```
+#### isInitialized
 
-### transferCrossChain
+  ```solidity
+  function isInitialized() external returns (bool)
+  ```
 
-```solidity
-function transferCrossChain(uint256 destChainId, address, uint256 amount) external returns (uint256 feesPaid)
-```
+  returns if `initialize` has been called by the owner
 
-### isInitialized
+#### initialize
 
-```solidity
-function isInitialized() external returns (bool)
-```
+  ```solidity
+  function initialize(string tokenName, string tokenSymbol, uint8 tokenDecimals) external
+  ```
 
-returns if `initialize` has been called by the owner
+  allows owner to initialize the token after attaching a proxy
 
-### initialize
+#### mint
 
-```solidity
-function initialize(string tokenName, string tokenSymbol, uint8 tokenDecimals) external
-```
+  ```solidity
+  function mint(address to, uint256 amount) external
+  ```
 
-allows owner to initialize the token after attaching a proxy
+  mints token amount to "to" address
 
-### mint
+#### burn
 
-```solidity
-function mint(address to, uint256 amount) external
-```
+  ```solidity
+  function burn(address to, uint256 amount) external
+  ```
 
-mints token amount to "to" address
+  burns token amount from "to" address
 
-### burn
+#### setAllowance
 
-```solidity
-function burn(address to, uint256 amount) external
-```
+  ```solidity
+  function setAllowance(address from, address spender, uint256 amount) external
+  ```
 
-burns token amount from "to" address
+  sets token amount allowance to spender by "from" address
 
-### setAllowance
+#### name
 
-```solidity
-function setAllowance(address from, address spender, uint256 amount) external
-```
+  ```solidity
+  function name() external view returns (string)
+  ```
 
-sets token amount allowance to spender by "from" address
+#### symbol
 
-### InsufficientAllowance
+  ```solidity
+  function symbol() external view returns (string)
+  ```
 
-```solidity
-error InsufficientAllowance(uint256 required, uint256 existing)
-```
+#### decimals
 
-### InsufficientBalance
+  ```solidity
+  function decimals() external view returns (uint8)
+  ```
 
-```solidity
-error InsufficientBalance(uint256 required, uint256 existing)
-```
+#### totalSupply
 
-### name
+  ```solidity
+  function totalSupply() external view returns (uint256)
+  ```
 
-```solidity
-function name() external view returns (string)
-```
+#### balanceOf
 
-### symbol
+  ```solidity
+  function balanceOf(address owner) external view returns (uint256)
+  ```
 
-```solidity
-function symbol() external view returns (string)
-```
+#### allowance
 
-### decimals
+  ```solidity
+  function allowance(address owner, address spender) external view returns (uint256)
+  ```
 
-```solidity
-function decimals() external view returns (uint8)
-```
+#### transfer
 
-### totalSupply
+  ```solidity
+  function transfer(address to, uint256 amount) external returns (bool)
+  ```
 
-```solidity
-function totalSupply() external view returns (uint256)
-```
+#### approve
 
-### balanceOf
+  ```solidity
+  function approve(address spender, uint256 amount) external returns (bool)
+  ```
 
-```solidity
-function balanceOf(address owner) external view returns (uint256)
-```
+#### transferFrom
 
-### allowance
+  ```solidity
+  function transferFrom(address from, address to, uint256 amount) external returns (bool)
+  ```
 
-```solidity
-function allowance(address owner, address spender) external view returns (uint256)
-```
-
-### transfer
-
-```solidity
-function transfer(address to, uint256 amount) external returns (bool)
-```
-
-### approve
-
-```solidity
-function approve(address spender, uint256 amount) external returns (bool)
-```
-
-### transferFrom
-
-```solidity
-function transferFrom(address from, address to, uint256 amount) external returns (bool)
-```
+### Events
 
 ## Vault Module
 
-### DelegationUpdated
+### Functions
 
-```solidity
-event DelegationUpdated(uint128 accountId, uint128 poolId, address collateralType, uint256 amount, uint256 leverage, address sender)
-```
+#### delegateCollateral
 
-Emitted when {sender} updates the delegation of collateral in the specified staking position.
+  ```solidity
+  function delegateCollateral(uint128 accountId, uint128 poolId, address collateralType, uint256 amount, uint256 leverage) external
+  ```
 
-### delegateCollateral
-
-```solidity
-function delegateCollateral(uint128 accountId, uint128 poolId, address collateralType, uint256 amount, uint256 leverage) external
-```
-
-Delegates (creates, adjust or remove a delegation) collateral from an account.
+  Delegates (creates, adjust or remove a delegation) collateral from an account.
 
 Requirements:
 
@@ -2051,702 +1221,89 @@ Requirements:
 
 Emits a {DelegationUpdated} event.
 
-### getPositionCollateralizationRatio
+#### getPositionCollateralizationRatio
 
-```solidity
-function getPositionCollateralizationRatio(uint128 accountId, uint128 poolId, address collateralType) external returns (uint256)
-```
+  ```solidity
+  function getPositionCollateralizationRatio(uint128 accountId, uint128 poolId, address collateralType) external returns (uint256)
+  ```
 
-Returns the collateralization ratio of the specified staking position. If debt is negative, this function will return 0.
+  Returns the collateralization ratio of the specified staking position. If debt is negative, this function will return 0.
 
-_Call this function using `callStatic` to treat it as a view function.
-The return value is a percentage with 18 decimals places._
+  Call this function using `callStatic` to treat it as a view function.
+The return value is a percentage with 18 decimals places.
 
-### getPositionDebt
+#### getPositionDebt
 
-```solidity
-function getPositionDebt(uint128 accountId, uint128 poolId, address collateralType) external returns (int256)
-```
+  ```solidity
+  function getPositionDebt(uint128 accountId, uint128 poolId, address collateralType) external returns (int256)
+  ```
 
-Returns the debt of the specified staking position. Credit is expressed as negative debt.
+  Returns the debt of the specified staking position. Credit is expressed as negative debt.
 
-_Call this function using `callStatic` to treat it as a view function.
-The return value is denominated in dollars with 18 decimal places._
+  Call this function using `callStatic` to treat it as a view function.
+The return value is denominated in dollars with 18 decimal places.
 
-### getPositionCollateral
+#### getPositionCollateral
 
-```solidity
-function getPositionCollateral(uint128 accountId, uint128 poolId, address collateralType) external view returns (uint256 collateralAmount, uint256 collateralValue)
-```
+  ```solidity
+  function getPositionCollateral(uint128 accountId, uint128 poolId, address collateralType) external view returns (uint256 collateralAmount, uint256 collateralValue)
+  ```
 
-Returns the amount and value of the collateral associated with the specified staking position.
+  Returns the amount and value of the collateral associated with the specified staking position.
 
-_Call this function using `callStatic` to treat it as a view function.
+  Call this function using `callStatic` to treat it as a view function.
 collateralAmount is represented as an integer with 18 decimals.
-collateralValue is represented as an integer with the number of decimals specified by the collateralType._
+collateralValue is represented as an integer with the number of decimals specified by the collateralType.
 
-### getPosition
+#### getPosition
 
-```solidity
-function getPosition(uint128 accountId, uint128 poolId, address collateralType) external returns (uint256 collateralAmount, uint256 collateralValue, int256 debt, uint256 collateralizationRatio)
-```
+  ```solidity
+  function getPosition(uint128 accountId, uint128 poolId, address collateralType) external returns (uint256 collateralAmount, uint256 collateralValue, int256 debt, uint256 collateralizationRatio)
+  ```
 
-Returns all information pertaining to a specified staking position in the vault module.
+  Returns all information pertaining to a specified staking position in the vault module.
 
-### getVaultDebt
+#### getVaultDebt
 
-```solidity
-function getVaultDebt(uint128 poolId, address collateralType) external returns (int256)
-```
+  ```solidity
+  function getVaultDebt(uint128 poolId, address collateralType) external returns (int256)
+  ```
 
-Returns the total debt (or credit) that the vault is responsible for. Credit is expressed as negative debt.
+  Returns the total debt (or credit) that the vault is responsible for. Credit is expressed as negative debt.
 
-_Call this function using `callStatic` to treat it as a view function.
-The return value is denominated in dollars with 18 decimal places._
+  Call this function using `callStatic` to treat it as a view function.
+The return value is denominated in dollars with 18 decimal places.
 
-### getVaultCollateral
+#### getVaultCollateral
 
-```solidity
-function getVaultCollateral(uint128 poolId, address collateralType) external returns (uint256 collateralAmount, uint256 collateralValue)
-```
+  ```solidity
+  function getVaultCollateral(uint128 poolId, address collateralType) external returns (uint256 collateralAmount, uint256 collateralValue)
+  ```
 
-Returns the amount and value of the collateral held by the vault.
+  Returns the amount and value of the collateral held by the vault.
 
-_Call this function using `callStatic` to treat it as a view function.
+  Call this function using `callStatic` to treat it as a view function.
 collateralAmount is represented as an integer with 18 decimals.
-collateralValue is represented as an integer with the number of decimals specified by the collateralType._
+collateralValue is represented as an integer with the number of decimals specified by the collateralType.
 
-### getVaultCollateralRatio
+#### getVaultCollateralRatio
 
-```solidity
-function getVaultCollateralRatio(uint128 poolId, address collateralType) external returns (uint256)
-```
+  ```solidity
+  function getVaultCollateralRatio(uint128 poolId, address collateralType) external returns (uint256)
+  ```
 
-Returns the collateralization ratio of the vault. If debt is negative, this function will return 0.
+  Returns the collateralization ratio of the vault. If debt is negative, this function will return 0.
 
-_Call this function using `callStatic` to treat it as a view function.
-The return value is a percentage with 18 decimals places._
+  Call this function using `callStatic` to treat it as a view function.
+The return value is a percentage with 18 decimals places.
 
-### DelegationUpdated
+### Events
 
-```solidity
-event DelegationUpdated(uint128 accountId, uint128 poolId, address collateralType, uint256 amount, uint256 leverage, address sender)
-```
+#### DelegationUpdated
 
-Emitted when {sender} updates the delegation of collateral in the specified staking position.
+  ```solidity
+  event DelegationUpdated(uint128 accountId, uint128 poolId, address collateralType, uint256 amount, uint256 leverage, address sender)
+  ```
 
-### delegateCollateral
+  Emitted when {sender} updates the delegation of collateral in the specified staking position.
 
-```solidity
-function delegateCollateral(uint128 accountId, uint128 poolId, address collateralType, uint256 amount, uint256 leverage) external
-```
-
-Delegates (creates, adjust or remove a delegation) collateral from an account.
-
-Requirements:
-
-- `msg.sender` must be the owner of the account, have the `ADMIN` permission, or have the `DELEGATE` permission.
-- If increasing the amount delegated, it must not exceed the available collateral (`getAccountAvailableCollateral`) associated with the account.
-- If decreasing the amount delegated, the staking position must have a collateralization ratio greater than the target collateralization ratio for the corresponding collateral type.
-
-Emits a {DelegationUpdated} event.
-
-### getPositionCollateralizationRatio
-
-```solidity
-function getPositionCollateralizationRatio(uint128 accountId, uint128 poolId, address collateralType) external returns (uint256)
-```
-
-Returns the collateralization ratio of the specified staking position. If debt is negative, this function will return 0.
-
-_Call this function using `callStatic` to treat it as a view function.
-The return value is a percentage with 18 decimals places._
-
-### getPositionDebt
-
-```solidity
-function getPositionDebt(uint128 accountId, uint128 poolId, address collateralType) external returns (int256)
-```
-
-Returns the debt of the specified staking position. Credit is expressed as negative debt.
-
-_Call this function using `callStatic` to treat it as a view function.
-The return value is denominated in dollars with 18 decimal places._
-
-### getPositionCollateral
-
-```solidity
-function getPositionCollateral(uint128 accountId, uint128 poolId, address collateralType) external view returns (uint256 collateralAmount, uint256 collateralValue)
-```
-
-Returns the amount and value of the collateral associated with the specified staking position.
-
-_Call this function using `callStatic` to treat it as a view function.
-collateralAmount is represented as an integer with 18 decimals.
-collateralValue is represented as an integer with the number of decimals specified by the collateralType._
-
-### getPosition
-
-```solidity
-function getPosition(uint128 accountId, uint128 poolId, address collateralType) external returns (uint256 collateralAmount, uint256 collateralValue, int256 debt, uint256 collateralizationRatio)
-```
-
-Returns all information pertaining to a specified staking position in the vault module.
-
-### getVaultDebt
-
-```solidity
-function getVaultDebt(uint128 poolId, address collateralType) external returns (int256)
-```
-
-Returns the total debt (or credit) that the vault is responsible for. Credit is expressed as negative debt.
-
-_Call this function using `callStatic` to treat it as a view function.
-The return value is denominated in dollars with 18 decimal places._
-
-### getVaultCollateral
-
-```solidity
-function getVaultCollateral(uint128 poolId, address collateralType) external returns (uint256 collateralAmount, uint256 collateralValue)
-```
-
-Returns the amount and value of the collateral held by the vault.
-
-_Call this function using `callStatic` to treat it as a view function.
-collateralAmount is represented as an integer with 18 decimals.
-collateralValue is represented as an integer with the number of decimals specified by the collateralType._
-
-### getVaultCollateralRatio
-
-```solidity
-function getVaultCollateralRatio(uint128 poolId, address collateralType) external returns (uint256)
-```
-
-Returns the collateralization ratio of the vault. If debt is negative, this function will return 0.
-
-_Call this function using `callStatic` to treat it as a view function.
-The return value is a percentage with 18 decimals places._
-
-## AccountRouter
-
-### UnknownSelector
-
-```solidity
-error UnknownSelector(bytes4 sel)
-```
-
-### \_ACCOUNT_TOKEN_MODULE
-
-```solidity
-address _ACCOUNT_TOKEN_MODULE
-```
-
-### \_OWNER_MODULE
-
-```solidity
-address _OWNER_MODULE
-```
-
-### \_UPGRADE_MODULE
-
-```solidity
-address _UPGRADE_MODULE
-```
-
-### fallback
-
-```solidity
-fallback() external payable
-```
-
-### receive
-
-```solidity
-receive() external payable
-```
-
-### \_forward
-
-```solidity
-function _forward() internal
-```
-
-### UnknownSelector
-
-```solidity
-error UnknownSelector(bytes4 sel)
-```
-
-### \_ACCOUNT_TOKEN_MODULE
-
-```solidity
-address _ACCOUNT_TOKEN_MODULE
-```
-
-### \_OWNER_MODULE
-
-```solidity
-address _OWNER_MODULE
-```
-
-### \_UPGRADE_MODULE
-
-```solidity
-address _UPGRADE_MODULE
-```
-
-### fallback
-
-```solidity
-fallback() external payable
-```
-
-### receive
-
-```solidity
-receive() external payable
-```
-
-### \_forward
-
-```solidity
-function _forward() internal
-```
-
-## CoreRouter
-
-### UnknownSelector
-
-```solidity
-error UnknownSelector(bytes4 sel)
-```
-
-### \_ASSOCIATED_SYSTEMS_MODULE
-
-```solidity
-address _ASSOCIATED_SYSTEMS_MODULE
-```
-
-### \_OWNER_MODULE
-
-```solidity
-address _OWNER_MODULE
-```
-
-### \_UPGRADE_MODULE
-
-```solidity
-address _UPGRADE_MODULE
-```
-
-### \_ACCOUNT_MODULE
-
-```solidity
-address _ACCOUNT_MODULE
-```
-
-### \_ASSOCIATE_DEBT_MODULE
-
-```solidity
-address _ASSOCIATE_DEBT_MODULE
-```
-
-### \_COLLATERAL_MODULE
-
-```solidity
-address _COLLATERAL_MODULE
-```
-
-### \_FEATURE_FLAG_MODULE
-
-```solidity
-address _FEATURE_FLAG_MODULE
-```
-
-### \_ISSUE_USDMODULE
-
-```solidity
-address _ISSUE_USDMODULE
-```
-
-### \_LIQUIDATION_MODULE
-
-```solidity
-address _LIQUIDATION_MODULE
-```
-
-### \_MARKET_COLLATERAL_MODULE
-
-```solidity
-address _MARKET_COLLATERAL_MODULE
-```
-
-### \_MARKET_MANAGER_MODULE
-
-```solidity
-address _MARKET_MANAGER_MODULE
-```
-
-### \_MULTICALL_MODULE
-
-```solidity
-address _MULTICALL_MODULE
-```
-
-### \_POOL_CONFIGURATION_MODULE
-
-```solidity
-address _POOL_CONFIGURATION_MODULE
-```
-
-### \_POOL_MODULE
-
-```solidity
-address _POOL_MODULE
-```
-
-### \_REWARDS_MANAGER_MODULE
-
-```solidity
-address _REWARDS_MANAGER_MODULE
-```
-
-### \_UTILS_MODULE
-
-```solidity
-address _UTILS_MODULE
-```
-
-### \_VAULT_MODULE
-
-```solidity
-address _VAULT_MODULE
-```
-
-### fallback
-
-```solidity
-fallback() external payable
-```
-
-### receive
-
-```solidity
-receive() external payable
-```
-
-### \_forward
-
-```solidity
-function _forward() internal
-```
-
-### UnknownSelector
-
-```solidity
-error UnknownSelector(bytes4 sel)
-```
-
-### \_ASSOCIATED_SYSTEMS_MODULE
-
-```solidity
-address _ASSOCIATED_SYSTEMS_MODULE
-```
-
-### \_OWNER_MODULE
-
-```solidity
-address _OWNER_MODULE
-```
-
-### \_UPGRADE_MODULE
-
-```solidity
-address _UPGRADE_MODULE
-```
-
-### \_ACCOUNT_MODULE
-
-```solidity
-address _ACCOUNT_MODULE
-```
-
-### \_ASSOCIATE_DEBT_MODULE
-
-```solidity
-address _ASSOCIATE_DEBT_MODULE
-```
-
-### \_COLLATERAL_MODULE
-
-```solidity
-address _COLLATERAL_MODULE
-```
-
-### \_FEATURE_FLAG_MODULE
-
-```solidity
-address _FEATURE_FLAG_MODULE
-```
-
-### \_ISSUE_USDMODULE
-
-```solidity
-address _ISSUE_USDMODULE
-```
-
-### \_LIQUIDATION_MODULE
-
-```solidity
-address _LIQUIDATION_MODULE
-```
-
-### \_MARKET_COLLATERAL_MODULE
-
-```solidity
-address _MARKET_COLLATERAL_MODULE
-```
-
-### \_MARKET_MANAGER_MODULE
-
-```solidity
-address _MARKET_MANAGER_MODULE
-```
-
-### \_MULTICALL_MODULE
-
-```solidity
-address _MULTICALL_MODULE
-```
-
-### \_POOL_CONFIGURATION_MODULE
-
-```solidity
-address _POOL_CONFIGURATION_MODULE
-```
-
-### \_POOL_MODULE
-
-```solidity
-address _POOL_MODULE
-```
-
-### \_REWARDS_MANAGER_MODULE
-
-```solidity
-address _REWARDS_MANAGER_MODULE
-```
-
-### \_UTILS_MODULE
-
-```solidity
-address _UTILS_MODULE
-```
-
-### \_VAULT_MODULE
-
-```solidity
-address _VAULT_MODULE
-```
-
-### fallback
-
-```solidity
-fallback() external payable
-```
-
-### receive
-
-```solidity
-receive() external payable
-```
-
-### \_forward
-
-```solidity
-function _forward() internal
-```
-
-## SNXRouter
-
-### UnknownSelector
-
-```solidity
-error UnknownSelector(bytes4 sel)
-```
-
-### \_OWNER_MODULE
-
-```solidity
-address _OWNER_MODULE
-```
-
-### \_UPGRADE_MODULE
-
-```solidity
-address _UPGRADE_MODULE
-```
-
-### \_SNXTOKEN_MODULE
-
-```solidity
-address _SNXTOKEN_MODULE
-```
-
-### fallback
-
-```solidity
-fallback() external payable
-```
-
-### receive
-
-```solidity
-receive() external payable
-```
-
-### \_forward
-
-```solidity
-function _forward() internal
-```
-
-### UnknownSelector
-
-```solidity
-error UnknownSelector(bytes4 sel)
-```
-
-### \_OWNER_MODULE
-
-```solidity
-address _OWNER_MODULE
-```
-
-### \_UPGRADE_MODULE
-
-```solidity
-address _UPGRADE_MODULE
-```
-
-### \_SNXTOKEN_MODULE
-
-```solidity
-address _SNXTOKEN_MODULE
-```
-
-### fallback
-
-```solidity
-fallback() external payable
-```
-
-### receive
-
-```solidity
-receive() external payable
-```
-
-### \_forward
-
-```solidity
-function _forward() internal
-```
-
-## USDRouter
-
-### UnknownSelector
-
-```solidity
-error UnknownSelector(bytes4 sel)
-```
-
-### \_ASSOCIATED_SYSTEMS_MODULE
-
-```solidity
-address _ASSOCIATED_SYSTEMS_MODULE
-```
-
-### \_OWNER_MODULE
-
-```solidity
-address _OWNER_MODULE
-```
-
-### \_UPGRADE_MODULE
-
-```solidity
-address _UPGRADE_MODULE
-```
-
-### \_USDTOKEN_MODULE
-
-```solidity
-address _USDTOKEN_MODULE
-```
-
-### fallback
-
-```solidity
-fallback() external payable
-```
-
-### receive
-
-```solidity
-receive() external payable
-```
-
-### \_forward
-
-```solidity
-function _forward() internal
-```
-
-### UnknownSelector
-
-```solidity
-error UnknownSelector(bytes4 sel)
-```
-
-### \_ASSOCIATED_SYSTEMS_MODULE
-
-```solidity
-address _ASSOCIATED_SYSTEMS_MODULE
-```
-
-### \_OWNER_MODULE
-
-```solidity
-address _OWNER_MODULE
-```
-
-### \_UPGRADE_MODULE
-
-```solidity
-address _UPGRADE_MODULE
-```
-
-### \_USDTOKEN_MODULE
-
-```solidity
-address _USDTOKEN_MODULE
-```
-
-### fallback
-
-```solidity
-fallback() external payable
-```
-
-### receive
-
-```solidity
-receive() external payable
-```
-
-### \_forward
-
-```solidity
-function _forward() internal
-```
