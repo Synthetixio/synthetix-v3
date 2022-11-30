@@ -27,6 +27,11 @@ library DecimalMath {
     int256 public constant UNIT_PRECISE_INT = int256(UNIT_PRECISE);
     int128 public constant UNIT_PRECISE_INT128 = int128(UNIT_PRECISE_INT);
 
+    // Precision scaling
+    uint256 public constant PRECISION_DOWN_SCALE = 1e9;
+    int256 public constant PRECISION_DOWN_SCALE_INT = int256(PRECISION_DOWN_SCALE);
+    int128 public constant PRECISION_DOWN_SCALE_INT128 = int128(PRECISION_DOWN_SCALE_INT);
+
     // -----------------------------------------------------------------------
     // -----------------------------------------------------------------------
     // Important!

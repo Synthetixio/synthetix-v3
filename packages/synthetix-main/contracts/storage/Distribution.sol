@@ -186,7 +186,7 @@ library Distribution {
 
         // TODO: Can we safely assume that amount will always be a regular integer,
         // i.e. not a decimal?
-        int valueHighPrecision = value.toHighPrecisionDecimal();
+        int valueHighPrecision = value * DecimalMath.UNIT_PRECISE_INT;
         int deltaValuePerShare = valueHighPrecision / int(totalShares);
 
         dist.valuePerShareD27 += int128(deltaValuePerShare);
@@ -235,7 +235,7 @@ library Distribution {
         int128 deltaValuePerShare = dist.valuePerShareD27 - actor.lastValuePerShareD27;
 
         int changedValueHighPrecision = deltaValuePerShare * actor.sharesD18.uint128toInt256();
-        valueChange = changedValueHighPrecision.fromHighPrecisionDecimalToInteger();
+        valueChange = changedValueHighPrecision / DecimalMath.UNIT_PRECISE_INT;
     }
 
     /**

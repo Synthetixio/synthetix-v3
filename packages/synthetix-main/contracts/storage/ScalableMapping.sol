@@ -37,7 +37,7 @@ library ScalableMapping {
 
         // TODO: Can we safely assume that amount will always be a regular integer,
         // i.e. not a decimal?
-        int valueHighPrecision = value.toHighPrecisionDecimal();
+        int valueHighPrecision = value * DecimalMath.UNIT_PRECISE_INT;
         int deltascaleModifier = valueHighPrecision / int(totalShares);
 
         self.scaleModifierD27 += int128(deltascaleModifier);
@@ -93,11 +93,11 @@ library ScalableMapping {
      */
     function totalAmount(Data storage self) internal view returns (int value) {
         return
-            int((self.scaleModifierD27 + DecimalMath.UNIT_PRECISE_INT) * self.totalSharesD18.uint128toInt256())
-                .fromHighPrecisionDecimalToInteger();
+            int((self.scaleModifierD27 + DecimalMath.UNIT_PRECISE_INT) * self.totalSharesD18.uint128toInt256()) /
+            DecimalMath.UNIT_PRECISE_INT;
     }
 
     function _getSharesForAmount(Data storage self, uint amount) private view returns (uint shares) {
-        shares = amount.toHighPrecisionDecimal() / uint(int(self.scaleModifierD27 + DecimalMath.UNIT_INT128)) / 1e9;
+        shares = (amount * DecimalMath.UNIT_PRECISE) / uint(int(self.scaleModifierD27 + DecimalMath.UNIT_INT128)) / 1e9;
     }
 }

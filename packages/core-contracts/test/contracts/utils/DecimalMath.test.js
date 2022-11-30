@@ -8,11 +8,7 @@ function s(base, exp) {
 
 describe('DecimalMath', () => {
   let DecimalMath;
-  let mulSignature,
-    divSignature,
-    reducePrecisionSignature,
-    toHighPrecisionSignature,
-    fromHighPrecisionSignature;
+  let mulSignature, divSignature;
 
   before('deploy the contract', async () => {
     const factory = await ethers.getContractFactory('DecimalMathMock');
@@ -37,8 +33,6 @@ describe('DecimalMath', () => {
     before('assign signatures', async function () {
       mulSignature = 'mulDecimal(uint256,uint256)';
       divSignature = 'divDecimal(uint256,uint256)';
-      reducePrecisionSignature = 'reducePrecision(uint256)';
-      toHighPrecisionSignature = 'toHighPrecisionDecimal(uint256)';
     });
 
     describe('mulDecimal()', () => {
@@ -89,7 +83,6 @@ describe('DecimalMath', () => {
       before('assign signatures', async function () {
         mulSignature = 'mulDecimalUint128(uint128,uint128)';
         divSignature = 'divDecimalUint128(uint128,uint128)';
-        reducePrecisionSignature = 'reducePrecisionUint128(uint128)';
       });
 
       describe('mulDecimal()', () => {
@@ -140,9 +133,6 @@ describe('DecimalMath', () => {
       before('assign signatures', async function () {
         mulSignature = 'mulDecimal(int256,int256)';
         divSignature = 'divDecimal(int256,int256)';
-        reducePrecisionSignature = 'reducePrecision(int256)';
-        toHighPrecisionSignature = 'toHighPrecisionDecimal(int256)';
-        fromHighPrecisionSignature = 'fromHighPrecisionDecimalToInteger(int256)';
       });
 
       describe('mulDecimal() int256', function () {
@@ -229,7 +219,6 @@ describe('DecimalMath', () => {
       before('assign signatures', async function () {
         mulSignature = 'mulDecimalInt128(int128,int128)';
         divSignature = 'divDecimalInt128(int128,int128)';
-        reducePrecisionSignature = 'reducePrecisionInt128(int128)';
       });
 
       describe('mulDecimal() int128', function () {
