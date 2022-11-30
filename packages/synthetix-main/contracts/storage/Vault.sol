@@ -39,7 +39,7 @@ library Vault {
         /**
          * @dev The previous liquidity of the vault (collateral - debt), when the system was last interacted with.
          */
-        uint128 prevRemainingLiquidity;
+        uint128 prevRemainingLiquidityD18;
         /**
          * @dev Vault data for all the liquidation cycles divided into epochs.
          */
@@ -81,15 +81,15 @@ library Vault {
     {
         VaultEpoch.Data storage epochData = currentEpoch(self);
 
-        usdWeight = uint(epochData.accountsDebtDistribution.totalShares).mulDecimal(collateralPrice);
+        usdWeight = uint(epochData.accountsDebtDistribution.totalSharesD18).mulDecimal(collateralPrice);
 
         int vaultDepositedValue = int(uint(epochData.collateralAmounts.totalAmount()).mulDecimal(collateralPrice));
         int vaultAccruedDebt = epochData.totalDebt();
         remainingLiquidity = vaultDepositedValue > vaultAccruedDebt ? uint(vaultDepositedValue - vaultAccruedDebt) : 0;
 
-        deltaRemainingLiquidity = int(remainingLiquidity) - int(int128(self.prevRemainingLiquidity));
+        deltaRemainingLiquidity = int(remainingLiquidity) - int(int128(self.prevRemainingLiquidityD18));
 
-        self.prevRemainingLiquidity = uint128(remainingLiquidity);
+        self.prevRemainingLiquidityD18 = uint128(remainingLiquidity);
     }
 
     /**
@@ -136,7 +136,7 @@ library Vault {
         uint128 accountId,
         bytes32 rewardId
     ) internal returns (uint) {
-        uint totalShares = currentEpoch(self).accountsDebtDistribution.totalShares;
+        uint totalShares = currentEpoch(self).accountsDebtDistribution.totalSharesD18;
         uint actorShares = currentEpoch(self).accountsDebtDistribution.getActorShares(bytes32(uint(accountId)));
 
         RewardDistribution.Data storage dist = self.rewards[rewardId];
@@ -145,15 +145,15 @@ library Vault {
             revert("No distributor");
         }
 
-        dist.rewardPerShare += uint128(dist.entry.updateEntry(totalShares));
+        dist.rewardPerShareD18 += uint128(dist.entry.updateEntry(totalShares));
 
-        dist.actorInfo[accountId].pendingSend += uint128(
-            actorShares.mulDecimal(dist.rewardPerShare - dist.actorInfo[accountId].lastRewardPerShare)
+        dist.actorInfo[accountId].pendingSendD18 += uint128(
+            actorShares.mulDecimal(dist.rewardPerShareD18 - dist.actorInfo[accountId].lastRewardPerShareD18)
         );
 
-        dist.actorInfo[accountId].lastRewardPerShare = dist.rewardPerShare;
+        dist.actorInfo[accountId].lastRewardPerShareD18 = dist.rewardPerShareD18;
 
-        return dist.actorInfo[accountId].pendingSend;
+        return dist.actorInfo[accountId].pendingSendD18;
     }
 
     /**

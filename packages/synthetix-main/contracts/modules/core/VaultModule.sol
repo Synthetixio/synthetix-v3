@@ -85,7 +85,7 @@ contract VaultModule is IVaultModule {
         // this is the most efficient time to check the resulting collateralization ratio, since
         // user's debt and collateral price have been fully updated
         if (collateralAmount < oldCollateralAmount) {
-            int debt = vault.currentEpoch().consolidatedDebtAmounts[accountId];
+            int debt = vault.currentEpoch().consolidatedDebtAmountsD18[accountId];
             //(, uint collateralValue) = pool.currentAccountCollateral(collateralType, accountId);
 
             CollateralConfiguration.load(collateralType).verifyCollateralRatio(

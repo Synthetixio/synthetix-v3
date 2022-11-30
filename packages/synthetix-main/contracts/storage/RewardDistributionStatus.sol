@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 library RewardDistributionStatus {
     struct Data {
-        uint128 lastRewardPerShare;
-        uint128 pendingSend;
+        uint128 lastRewardPerShareD18;
+        uint128 pendingSendD18;
     }
 }

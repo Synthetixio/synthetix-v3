@@ -11,7 +11,7 @@ library RewardDistribution {
         // 3rd party smart contract which holds/mints the pools
         IRewardDistributor distributor;
         DistributionEntry.Data entry;
-        uint128 rewardPerShare;
+        uint128 rewardPerShareD18;
         mapping(uint256 => RewardDistributionStatus.Data) actorInfo;
     }
 }

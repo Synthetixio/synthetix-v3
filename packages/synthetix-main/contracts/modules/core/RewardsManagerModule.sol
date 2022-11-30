@@ -75,7 +75,7 @@ contract RewardsManagerModule is IRewardsManagerModule {
 
         RewardDistribution.Data storage reward = pool.vaults[collateralType].rewards[rewardId];
 
-        reward.rewardPerShare += uint128(
+        reward.rewardPerShareD18 += uint128(
             uint(
                 reward.entry.distribute(
                     pool.vaults[collateralType].currentEpoch().accountsDebtDistribution,
@@ -124,7 +124,7 @@ contract RewardsManagerModule is IRewardsManagerModule {
         uint reward = vault.updateReward(accountId, rewardId);
 
         vault.rewards[rewardId].distributor.payout(accountId, poolId, collateralType, msg.sender, reward);
-        vault.rewards[rewardId].actorInfo[accountId].pendingSend = 0;
+        vault.rewards[rewardId].actorInfo[accountId].pendingSendD18 = 0;
         emit RewardsClaimed(accountId, poolId, collateralType, address(vault.rewards[rewardId].distributor), reward);
 
         return reward;
@@ -136,7 +136,7 @@ contract RewardsManagerModule is IRewardsManagerModule {
         address distributor
     ) internal view returns (uint) {
         Vault.Data storage vault = Pool.load(poolId).vaults[collateralType];
-        uint totalShares = vault.currentEpoch().accountsDebtDistribution.totalShares;
+        uint totalShares = vault.currentEpoch().accountsDebtDistribution.totalSharesD18;
         bytes32 rewardId = _getRewardId(poolId, collateralType, distributor);
 
         int curTime = int(block.timestamp);
@@ -150,7 +150,7 @@ contract RewardsManagerModule is IRewardsManagerModule {
         }
 
         return
-            uint(int(vault.rewards[rewardId].entry.scheduledValue)).divDecimal(
+            uint(int(vault.rewards[rewardId].entry.scheduledValueD18)).divDecimal(
                 uint(int(vault.rewards[rewardId].entry.duration)).divDecimal(totalShares)
             );
     }

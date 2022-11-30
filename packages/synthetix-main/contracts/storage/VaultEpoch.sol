@@ -27,8 +27,11 @@ library VaultEpoch {
          * E.g. when a given amount of debt is socialized during a liquidation, but it yet hasn't been rolled into
          * the consolidated debt distribution.
          */
-        int128 unconsolidatedDebt;
-        int128 totalConsolidatedDebt;
+        int128 unconsolidatedDebtD18;
+        /**
+         * @dev TODO
+         */
+        int128 totalConsolidatedDebtD18;
         /**
          * @dev Tracks incoming debt for each user.
          *
@@ -55,7 +58,7 @@ library VaultEpoch {
          * Updated when users interact with the system, consolidating changes from the fluctuating accountsDebtDistribution,
          * and directly when users mint or burn USD, or repay debt.
          */
-        mapping(uint => int) consolidatedDebtAmounts;
+        mapping(uint => int) consolidatedDebtAmountsD18;
     }
 
     /**
@@ -81,7 +84,7 @@ library VaultEpoch {
 
         // Cache total debt here.
         // Will roll over to individual users as they interact with the system.
-        self.unconsolidatedDebt += int128(debtChange);
+        self.unconsolidatedDebtD18 += int128(debtChange);
     }
 
     function assignDebtToAccount(
@@ -89,9 +92,9 @@ library VaultEpoch {
         uint128 accountId,
         int amount
     ) internal returns (int newDebt) {
-        int currentDebt = self.consolidatedDebtAmounts[accountId];
-        self.consolidatedDebtAmounts[accountId] += int128(amount);
-        self.totalConsolidatedDebt += int128(amount);
+        int currentDebt = self.consolidatedDebtAmountsD18[accountId];
+        self.consolidatedDebtAmountsD18[accountId] += int128(amount);
+        self.totalConsolidatedDebtD18 += int128(amount);
         return currentDebt + amount;
     }
 
@@ -109,7 +112,7 @@ library VaultEpoch {
         int newDebt = self.accountsDebtDistribution.accumulateActor(actorId);
 
         currentDebt = assignDebtToAccount(self, accountId, newDebt);
-        self.unconsolidatedDebt -= int128(newDebt);
+        self.unconsolidatedDebtD18 -= int128(newDebt);
     }
 
     /**
@@ -130,7 +133,10 @@ library VaultEpoch {
         consolidateAccountDebt(self, accountId);
 
         self.collateralAmounts.set(actorId, collateralAmount);
-        self.accountsDebtDistribution.setActorShares(actorId, self.collateralAmounts.shares[actorId].mulDecimal(leverage));
+        self.accountsDebtDistribution.setActorShares(
+            actorId,
+            self.collateralAmounts.sharesD18[actorId].mulDecimal(leverage)
+        );
     }
 
     /**
@@ -138,7 +144,7 @@ library VaultEpoch {
      * that hasn't yet been consolidated into individual accounts.
      */
     function totalDebt(Data storage self) internal view returns (int) {
-        return int(self.unconsolidatedDebt + self.totalConsolidatedDebt);
+        return int(self.unconsolidatedDebtD18 + self.totalConsolidatedDebtD18);
     }
 
     /**

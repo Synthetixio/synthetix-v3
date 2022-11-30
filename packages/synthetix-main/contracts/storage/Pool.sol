@@ -143,7 +143,7 @@ library Pool {
         // These values should not change while iterating through each market.
 
         // TODO Clarify
-        int totalCreditCapacity = int128(self.vaultsDebtDistribution.totalShares);
+        int totalCreditCapacity = int128(self.vaultsDebtDistribution.totalSharesD18);
 
         // TODO Clarify
         uint128 unusedCreditCapacity = self.unusedCreditCapacity;
@@ -219,10 +219,10 @@ library Pool {
             thing = int(DecimalMath.UNIT); // If minLiquidityRatio is zero, then TODO
         } else {
             // maxShareValueIncrease?
-            thing = int(creditCapacity.divDecimal(minLiquidityRatio).divDecimal(self.vaultsDebtDistribution.totalShares));
+            thing = int(creditCapacity.divDecimal(minLiquidityRatio).divDecimal(self.vaultsDebtDistribution.totalSharesD18));
         }
 
-        return int256(marketData.poolsDebtDistribution.valuePerShare.reducePrecisionInt128()) + thing;
+        return int256(marketData.poolsDebtDistribution.valuePerShareD27.reducePrecisionInt128()) + thing;
     }
 
     /**
