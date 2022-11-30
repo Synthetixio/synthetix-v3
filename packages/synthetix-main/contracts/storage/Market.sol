@@ -246,9 +246,7 @@ library Market {
         int maxDebtShareValueD18
     ) internal view returns (uint contributionD18) {
         // Determine how much the current value per share deviates from the maximum.
-        uint deltaValuePerShareD18 = uint(
-            maxDebtShareValueD18 - self.poolsDebtDistribution.getValuePerShare()
-        );
+        uint deltaValuePerShareD18 = uint(maxDebtShareValueD18 - self.poolsDebtDistribution.getValuePerShare());
 
         return uint(deltaValuePerShareD18).mulDecimal(liquiditySharesD18);
     }
@@ -441,9 +439,7 @@ library Market {
 
             // Distribute the market's debt to the limit, i.e. for that which exceeds the maximum value per share.
             int debtToLimitD18 = self.poolsDebtDistribution.totalSharesD18.toInt().mulDecimal(
-                -k *
-                    edgePool.priority -
-                    self.poolsDebtDistribution.getValuePerShare() // Diff between current value and max value per share.
+                -k * edgePool.priority - self.poolsDebtDistribution.getValuePerShare() // Diff between current value and max value per share.
             );
             self.poolsDebtDistribution.distributeValue(debtToLimitD18);
 

@@ -124,6 +124,8 @@ library ScalableMapping {
     }
 
     function _getSharesForAmount(Data storage self, uint amountD18) private view returns (uint sharesD18) {
-        sharesD18 = (amountD18 * DecimalMath.UNIT_PRECISE) / uint(int(self.scaleModifierD27 + DecimalMath.UNIT_PRECISE_INT128));
+        sharesD18 =
+            (amountD18 * DecimalMath.UNIT_PRECISE) /
+            uint(int(self.scaleModifierD27 + DecimalMath.UNIT_PRECISE_INT128));
     }
 }
