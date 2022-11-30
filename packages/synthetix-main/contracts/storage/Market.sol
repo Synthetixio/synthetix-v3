@@ -185,6 +185,8 @@ library Market {
      *
      * A market's total balance represents its debt plus its issuance, and thus represents the total outstanding debt of the market.
      *
+     * Note: it also takes into account the deposited collateral value. See note in  getDepositedCollateralValue()
+     *
      * Example:
      * (1 EUR = 1.11 USD)
      * If an Euro market has received 100 USD to mint 90 EUR, its reported debt is 90 EUR or 100 USD, and its issuance is -100 USD.
@@ -209,9 +211,11 @@ library Market {
         // Sweep all DepositedCollateral entries and aggregate their USD value.
         for (uint i = 0; i < self.depositedCollateral.length; i++) {
             DepositedCollateral memory entry = self.depositedCollateral[i];
-            CollateralConfiguration.Data storage config = CollateralConfiguration.load(entry.collateralType);
+            CollateralConfiguration.Data storage collateralConfiguration = CollateralConfiguration.load(
+                entry.collateralType
+            );
 
-            uint priceD18 = CollateralConfiguration.getCollateralPrice(config);
+            uint priceD18 = CollateralConfiguration.getCollateralPrice(collateralConfiguration);
 
             totalDepositedCollateralValueD18 += priceD18.mulDecimal(entry.amountD18);
         }
@@ -367,7 +371,7 @@ library Market {
         int256 targetBalanceD18 = totalBalance(self);
         int256 outstandingBalanceD18 = targetBalanceD18 - self.lastDistributedMarketBalanceD18;
 
-        (, bool exhausted) = bumpPools(self, outstandingBalanceD18, maxIter);
+        (, bool exhausted) = _bumpPools(self, outstandingBalanceD18, maxIter);
 
         if (!exhausted && self.poolsDebtDistribution.totalSharesD18 > 0) {
             // cannot use `outstandingBalance` here because `self.lastDistributedMarketBalance`
@@ -380,9 +384,8 @@ library Market {
     /**
      * @dev Determine the target valuePerShare of the poolsDebtDistribution, given the value that is yet to be distributed.
      */
-    // solhint-disable-next-line private-vars-leading-underscore
     function _getTargetValuePerShare(Market.Data storage self, int valueToDistributeD18)
-        internal
+        private
         view
         returns (int targetValuePerShareD18)
     {
@@ -397,11 +400,11 @@ library Market {
      *
      * The debt is distributed up to the limit of the max value per share that the pool tolerates on the market.
      */
-    function bumpPools(
+    function _bumpPools(
         Data storage self,
         int maxDistributedD18,
         uint maxIter
-    ) internal returns (int actuallyDistributedD18, bool exhausted) {
+    ) private returns (int actuallyDistributedD18, bool exhausted) {
         if (maxDistributedD18 == 0 || self.poolsDebtDistribution.totalSharesD18 == 0) {
             return (0, false);
         }
