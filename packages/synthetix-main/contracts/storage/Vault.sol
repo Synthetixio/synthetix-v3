@@ -20,6 +20,7 @@ library Vault {
     using VaultEpoch for VaultEpoch.Data;
     using Distribution for Distribution.Data;
     using DistributionEntry for DistributionEntry.Data;
+    using ScalableMapping for ScalableMapping.Data;
     using DecimalMath for uint256;
     using DecimalMath for int128;
     using SetUtil for SetUtil.Bytes32Set;
@@ -82,7 +83,7 @@ library Vault {
 
         usdWeight = uint(epochData.accountsDebtDistribution.totalShares).mulDecimal(collateralPrice);
 
-        int vaultDepositedValue = int(uint(epochData.collateralDist.totalValue()).mulDecimal(collateralPrice));
+        int vaultDepositedValue = int(uint(epochData.collateralAmounts.totalAmount()).mulDecimal(collateralPrice));
         int vaultAccruedDebt = epochData.totalDebt();
         remainingLiquidity = vaultDepositedValue > vaultAccruedDebt ? uint(vaultDepositedValue - vaultAccruedDebt) : 0;
 
@@ -175,7 +176,7 @@ library Vault {
      * @dev Returns the total value in the Vault's collateral distribution, for the current epoch.
      */
     function currentCollateral(Data storage self) internal view returns (uint) {
-        return uint(currentEpoch(self).collateralDist.totalValue());
+        return uint(currentEpoch(self).collateralAmounts.totalAmount());
     }
 
     /**

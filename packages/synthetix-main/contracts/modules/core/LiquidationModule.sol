@@ -21,6 +21,7 @@ contract LiquidationModule is ILiquidationModule {
     using Vault for Vault.Data;
     using VaultEpoch for VaultEpoch.Data;
     using Distribution for Distribution.Data;
+    using ScalableMapping for ScalableMapping.Data;
 
     error InvalidParameters(string incorrectParameter, string help);
 
@@ -72,7 +73,7 @@ contract LiquidationModule is ILiquidationModule {
 
         amountRewarded = collateralConfig.liquidationReward;
 
-        if (amountRewarded >= uint(epoch.collateralDist.totalValue())) {
+        if (amountRewarded >= uint(epoch.collateralAmounts.totalAmount())) {
             // vault is too small to be liquidated socialized
             revert MustBeVaultLiquidated();
         }
@@ -84,10 +85,10 @@ contract LiquidationModule is ILiquidationModule {
         // fed back into the vault proportionally to the amount of collateral you have
         // the vault might end up with less overall collateral if liquidation reward
         // is greater than the actual collateral in this user's account
-        epoch.collateralDist.distributeValue(int(collateralLiquidated) - int(amountRewarded));
+        epoch.collateralAmounts.scale(int(collateralLiquidated) - int(amountRewarded));
 
         // debt isn't cleared when someone unstakes by default, so we do it separately here
-        epoch.consolidatedDebtDist.updateActorShares(bytes32(uint(accountId)), 0);
+        epoch.assignDebtToAccount(accountId, -int(debtLiquidated));
 
         // now we feed the debt back in also
         epoch.distributeDebtToAccounts(int(debtLiquidated));
@@ -139,7 +140,7 @@ contract LiquidationModule is ILiquidationModule {
             AssociatedSystem.load(_USD_TOKEN).asToken().burn(msg.sender, vaultDebt);
 
             amountLiquidated = vaultDebt;
-            collateralRewarded = uint(vault.currentEpoch().collateralDist.totalValue());
+            collateralRewarded = uint(vault.currentEpoch().collateralAmounts.totalAmount());
 
             pool.resetVault(collateralType);
         } else {
@@ -149,7 +150,7 @@ contract LiquidationModule is ILiquidationModule {
             VaultEpoch.Data storage epoch = vault.currentEpoch();
 
             amountLiquidated = maxUsd;
-            collateralRewarded = (uint(epoch.collateralDist.totalValue()) * amountLiquidated) / vaultDebt;
+            collateralRewarded = (uint(epoch.collateralAmounts.totalAmount()) * amountLiquidated) / vaultDebt;
 
             // repay the debt
             // TODO: better data structures
@@ -157,7 +158,7 @@ contract LiquidationModule is ILiquidationModule {
             epoch.unconsolidatedDebt -= int128(int(amountLiquidated));
 
             // take away the collateral
-            epoch.collateralDist.distributeValue(-int(collateralRewarded));
+            epoch.collateralAmounts.scale(-int(collateralRewarded));
         }
 
         // award the collateral that was just taken to the specified account

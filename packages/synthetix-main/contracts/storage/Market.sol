@@ -331,12 +331,13 @@ library Market {
     /**
      * @dev Gets any outstanding debt. Do not call this method except in tests
      *
-     * TODO: Understand distributeDebtToPools() first.
+     * TODO: Understand distributeDebt() first.
+     * TODO: Enforce how this is only to be used in tests!
      */
     function getOutstandingDebt(Data storage self, uint128 poolId) internal returns (int debtChange) {
-        return
-            self.pools[poolId].pendingDebt.uint128toInt128() +
-            self.poolsDebtDistribution.updateActorShares(bytes32(uint(poolId)), 0);
+        int changedValue = self.poolsDebtDistribution.getActorValueChange(bytes32(uint(poolId)));
+
+        return self.pools[poolId].pendingDebt.uint128toInt128() + changedValue;
     }
 
     function getDebtPerShare(Data storage self) internal view returns (int debtPerShare) {
@@ -407,9 +408,9 @@ library Market {
             self.outRangePools.extractById(poolId);
         }
 
-        debtChange =
-            self.pools[poolId].pendingDebt.uint128toInt128() +
-            self.poolsDebtDistribution.updateActorShares(bytes32(uint(poolId)), newLiquidity);
+        int changedValue = self.poolsDebtDistribution.getActorValueChange(bytes32(uint(poolId)));
+        self.poolsDebtDistribution.setActorShares(bytes32(uint(poolId)), newLiquidity);
+        debtChange = self.pools[poolId].pendingDebt.uint128toInt128() + changedValue;
         self.pools[poolId].pendingDebt = 0;
 
         // recalculate market capacity
@@ -498,7 +499,8 @@ library Market {
 
             // Detach the market from this pool by removing the pool's shares from the market.
             // The pool will remain "detached" until the pool manager specifies a new poolsDebtDistribution.
-            uint newPoolDebt = uint(self.poolsDebtDistribution.updateActorShares(bytes32(uint(poolId)), 0));
+            uint newPoolDebt = uint(self.poolsDebtDistribution.getActorValueChange(bytes32(uint(poolId))));
+            self.poolsDebtDistribution.setActorShares(bytes32(uint(poolId)), 0);
             self.pools[poolId].pendingDebt += newPoolDebt.uint256toUint128();
         }
 
@@ -552,7 +554,7 @@ library Market {
             require(self.poolsDebtDistribution.getActorShares(bytes32(uint(poolId))) == 0, "actor has shares before add");
 
             // Attach the market from this pool by setting the pool's shares to the value before exiting the market.
-            self.poolsDebtDistribution.updateActorShares(bytes32(uint(poolId)), self.pools[poolId].liquidityAmount);
+            self.poolsDebtDistribution.setActorShares(bytes32(uint(poolId)), self.pools[poolId].liquidityAmount);
         }
 
         self.lastDistributedMarketBalance += actuallyDistributed.int256toInt128();
