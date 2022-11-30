@@ -454,7 +454,7 @@ describe('RewardsManagerModule', function () {
         await systems()
           .Core.connect(user1)
           .claimRewards(poolId, collateralAddress(), accountId, RewardDistributor.address);
-        });
+      });
 
       it('pays out', async () => {
         assertBn.equal(await Collateral.balanceOf(await user1.getAddress()), rewardAmount);

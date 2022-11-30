@@ -247,7 +247,7 @@ export function bootstrapWithMockMarketAndPool() {
           maxDebtShareValueD18: ethers.utils.parseEther('1'),
         },
       ]);
-    });
+  });
 
   const restore = snapshotCheckpoint(r.provider);
 
