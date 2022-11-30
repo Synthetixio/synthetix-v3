@@ -29,7 +29,7 @@ library DistributionEntry {
         uint start,
         uint duration
     ) internal returns (int diff) {
-        uint totalShares = dist.totalShares;
+        uint totalShares = dist.totalSharesD18;
 
         if (totalShares == 0) {
             revert InvalidParameters("amount", "can't distribute to empty distribution");
@@ -38,7 +38,7 @@ library DistributionEntry {
         int curTime = int128(int(block.timestamp));
 
         // ensure any previously active distribution has applied
-        diff += updateEntry(entry, dist.totalShares);
+        diff += updateEntry(entry, dist.totalSharesD18);
 
         if (start + duration <= uint(curTime)) {
             // update any rewards which may have accrued since last run
@@ -59,7 +59,7 @@ library DistributionEntry {
             // the amount is actually the amount distributed already *plus* whatever has been specified now
             entry.lastUpdate = 0;
 
-            diff += updateEntry(entry, dist.totalShares);
+            diff += updateEntry(entry, dist.totalSharesD18);
         }
     }
 

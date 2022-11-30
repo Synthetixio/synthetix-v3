@@ -153,7 +153,7 @@ library Distribution {
         /**
          * @dev The total number of shares in the distribution.
          */
-        uint128 totalShares;
+        uint128 totalSharesD18;
         /**
          * @dev The value per share of the distribution.
          *
@@ -178,7 +178,7 @@ library Distribution {
             return;
         }
 
-        uint totalShares = dist.totalShares.uint128toUint256();
+        uint totalShares = dist.totalSharesD18.uint128toUint256();
 
         if (totalShares == 0) {
             revert EmptyDistribution();
@@ -208,7 +208,7 @@ library Distribution {
         DistributionActor.Data storage actor = dist.actorInfo[actorId];
 
         uint128 sharesUint128 = newActorShares.uint256toUint128();
-        dist.totalShares = dist.totalShares + sharesUint128 - actor.shares;
+        dist.totalSharesD18 = dist.totalSharesD18 + sharesUint128 - actor.shares;
 
         actor.shares = sharesUint128;
 

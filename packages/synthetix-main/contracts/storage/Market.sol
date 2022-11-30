@@ -380,7 +380,7 @@ library Market {
         (, bool exhaustedUp) = bumpPoolsOut(self, outstandingBalance, maxIter);
         (, bool exhaustedDown) = bumpPoolsIn(self, outstandingBalance, maxIter);
 
-        if (!exhaustedDown && !exhaustedUp && self.poolsDebtDistribution.totalShares > 0) {
+        if (!exhaustedDown && !exhaustedUp && self.poolsDebtDistribution.totalSharesD18 > 0) {
             // cannot use `outstandingBalance` here because `self.lastDistributedMarketBalance`
             // may have changed after calling the bump functions above
             self.poolsDebtDistribution.distributeValue(targetBalance - self.lastDistributedMarketBalance);
@@ -409,7 +409,9 @@ library Market {
             }
 
             int targetValuePerShare = self.poolsDebtDistribution.valuePerShareD27.reducePrecision() +
-                (maxDistributed - actuallyDistributed).divDecimal(self.poolsDebtDistribution.totalShares.uint128toInt128());
+                (maxDistributed - actuallyDistributed).divDecimal(
+                    self.poolsDebtDistribution.totalSharesD18.uint128toInt128()
+                );
 
             // Exit if the lowest max value per share does not hit the limit.
             HeapUtil.Node memory lowestLimitPool = self.inRangePools.getMax();
@@ -426,7 +428,7 @@ library Market {
             int128 poolMaxValuePerShare = -lowestLimitPool.priority;
 
             // Distribute the market's debt to the limit, i.e. for that which exceeds the maximum value per share.
-            int debtToLimit = self.poolsDebtDistribution.totalShares.uint128toInt256().mulDecimal(
+            int debtToLimit = self.poolsDebtDistribution.totalSharesD18.uint128toInt256().mulDecimal(
                 poolMaxValuePerShare - self.poolsDebtDistribution.valuePerShareD27.reducePrecision() // Diff between current value and max value per share.
             );
             self.poolsDebtDistribution.distributeValue(debtToLimit);
@@ -454,14 +456,16 @@ library Market {
         int maxDistributed,
         uint maxIter
     ) internal returns (int actuallyDistributed, bool exhausted) {
-        if (maxDistributed >= 0 || self.poolsDebtDistribution.totalShares == 0) {
+        if (maxDistributed >= 0 || self.poolsDebtDistribution.totalSharesD18 == 0) {
             return (0, false);
         }
 
         uint iters;
         for (iters = 0; iters < maxIter; iters++) {
             int targetValuePerShare = self.poolsDebtDistribution.valuePerShareD27.reducePrecision() +
-                (maxDistributed - actuallyDistributed).divDecimal(self.poolsDebtDistribution.totalShares.uint128toInt256());
+                (maxDistributed - actuallyDistributed).divDecimal(
+                    self.poolsDebtDistribution.totalSharesD18.uint128toInt256()
+                );
 
             // Exit if there are no out range pools
             if (self.outRangePools.size() == 0) {
@@ -483,7 +487,7 @@ library Market {
             int128 poolMaxValuePerShare = highestLimitPool.priority;
 
             // Distribute the market's debt to the limit, i.e. for that which exceeds the maximum value per share.
-            int debtToLimit = self.poolsDebtDistribution.totalShares.uint128toInt256().mulDecimal(
+            int debtToLimit = self.poolsDebtDistribution.totalSharesD18.uint128toInt256().mulDecimal(
                 poolMaxValuePerShare - self.poolsDebtDistribution.valuePerShareD27.reducePrecision() // Diff between current value and max value per share.
             );
             self.poolsDebtDistribution.distributeValue(debtToLimit);

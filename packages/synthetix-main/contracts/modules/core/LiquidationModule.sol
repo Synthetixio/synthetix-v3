@@ -66,7 +66,7 @@ contract LiquidationModule is ILiquidationModule {
 
         uint oldShares = epoch.accountsDebtDistribution.getActorShares(bytes32(uint(uint128(accountId))));
 
-        if (epoch.accountsDebtDistribution.totalShares == oldShares) {
+        if (epoch.accountsDebtDistribution.totalSharesD18 == oldShares) {
             // will be left with 0 shares, which can't be socialized
             revert MustBeVaultLiquidated();
         }
