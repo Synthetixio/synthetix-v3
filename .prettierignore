@@ -4,6 +4,8 @@ packages/*/dist/
 build/
 **/coverage*
 packages/core-utils/utils
+packages/core-router/util
+packages/core-router/index.*
 packages/*/typechain-types
 packages/*/contracts/routers
 packages/*/contracts/modules/test
