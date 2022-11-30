@@ -17,7 +17,7 @@ library PoolConfiguration {
          *
          * TODO Has implications if set to zero.
          */
-        uint minLiquidityRatio;
+        uint minLiquidityRatioD18;
         /**
          * @dev Id of the main pool set by the system owner.
          */

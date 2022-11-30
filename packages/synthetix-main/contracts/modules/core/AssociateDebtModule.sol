@@ -56,7 +56,7 @@ contract AssociateDebtModule is IAssociateDebtModule {
 
         // subtract the requested amount of debt from the market
         // this debt should have been accumulated just now anyway so
-        marketData.issuance -= int128(int(amount));
+        marketData.issuanceD18 -= int128(int(amount));
 
         // register account debt
         poolData.updateAccountDebt(collateralType, accountId);
@@ -82,7 +82,7 @@ contract AssociateDebtModule is IAssociateDebtModule {
         uint debt,
         uint collateralValue
     ) internal view {
-        uint issuanceRatio = CollateralConfiguration.load(collateralType).issuanceRatio;
+        uint issuanceRatio = CollateralConfiguration.load(collateralType).issuanceRatioD18;
 
         if (debt != 0 && collateralValue.divDecimal(debt) < issuanceRatio) {
             revert InsufficientCollateralRatio(collateralValue, debt, collateralValue.divDecimal(debt), issuanceRatio);

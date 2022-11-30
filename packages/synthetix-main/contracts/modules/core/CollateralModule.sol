@@ -137,7 +137,7 @@ contract CollateralModule is ICollateralModule {
 
         Account.Data storage account = Account.load(accountId);
 
-        if (account.collaterals[collateralType].availableAmount < amount) {
+        if (account.collaterals[collateralType].availableAmountD18 < amount) {
             revert InsufficientAccountCollateral(amount);
         }
 
@@ -168,7 +168,7 @@ contract CollateralModule is ICollateralModule {
      * @dev See {ICollateralModule-getAccountAvailableCollateral}.
      */
     function getAccountAvailableCollateral(uint128 accountId, address collateralType) public view override returns (uint) {
-        return Account.load(accountId).collaterals[collateralType].availableAmount;
+        return Account.load(accountId).collaterals[collateralType].availableAmountD18;
     }
 
     /**

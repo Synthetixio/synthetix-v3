@@ -21,18 +21,18 @@ contract MarketCollateralModule is IMarketCollateralModule {
 
         if (msg.sender != marketData.marketAddress) revert AccessError.Unauthorized(msg.sender);
 
-        uint maxDepositable = marketData.maximumDepositable[collateralType];
+        uint maxDepositable = marketData.maximumDepositableD18[collateralType];
 
         uint collateralEntryIndex = _findOrCreatedepositEntry(marketData, collateralType);
 
         Market.DepositedCollateral storage collateralEntry = marketData.depositedCollateral[collateralEntryIndex];
 
-        if (collateralEntry.amount + amount > maxDepositable)
+        if (collateralEntry.amountD18 + amount > maxDepositable)
             revert InsufficientMarketCollateralDepositable(marketId, collateralType, amount);
 
         collateralType.safeTransferFrom(marketData.marketAddress, address(this), amount);
 
-        collateralEntry.amount += amount;
+        collateralEntry.amountD18 += amount;
 
         emit MarketCollateralDeposited(marketId, collateralType, amount, msg.sender);
     }
@@ -49,11 +49,11 @@ contract MarketCollateralModule is IMarketCollateralModule {
         uint collateralEntryIndex = _findOrCreatedepositEntry(marketData, collateralType);
         Market.DepositedCollateral storage collateralEntry = marketData.depositedCollateral[collateralEntryIndex];
 
-        if (amount > collateralEntry.amount) {
+        if (amount > collateralEntry.amountD18) {
             revert InsufficientMarketCollateralWithdrawable(marketId, collateralType, amount);
         }
 
-        collateralEntry.amount -= amount;
+        collateralEntry.amountD18 -= amount;
 
         collateralType.safeTransfer(marketData.marketAddress, amount);
 
@@ -83,7 +83,7 @@ contract MarketCollateralModule is IMarketCollateralModule {
         OwnableStorage.onlyOwner();
 
         Market.Data storage marketData = Market.load(marketId);
-        marketData.maximumDepositable[collateralType] = amount;
+        marketData.maximumDepositableD18[collateralType] = amount;
 
         emit MaximumMarketCollateralConfigured(marketId, collateralType, amount, msg.sender);
     }
@@ -94,13 +94,13 @@ contract MarketCollateralModule is IMarketCollateralModule {
         for (uint i = 0; i < depositedCollateral.length; i++) {
             Market.DepositedCollateral storage depositedCollateralEntry = depositedCollateral[i];
             if (depositedCollateralEntry.collateralType == collateralType) {
-                return depositedCollateralEntry.amount;
+                return depositedCollateralEntry.amountD18;
             }
         }
     }
 
     function getMaximumMarketCollateral(uint128 marketId, address collateralType) external view override returns (uint) {
         Market.Data storage marketData = Market.load(marketId);
-        return marketData.maximumDepositable[collateralType];
+        return marketData.maximumDepositableD18[collateralType];
     }
 }
