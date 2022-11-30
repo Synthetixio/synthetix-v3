@@ -92,6 +92,7 @@ library VaultEpoch {
         int currentDebt = self.consolidatedDebtAmounts[accountId];
         self.consolidatedDebtAmounts[accountId] += int128(amount);
         self.totalConsolidatedDebt += int128(amount);
+        console.log("ASSIGNED DEBT TO ACCOUNT IS", uint(currentDebt + amount));
         return currentDebt + amount;
     }
 

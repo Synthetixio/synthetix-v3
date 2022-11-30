@@ -241,8 +241,7 @@ library Distribution {
      */
     function getActorValueChange(Data storage dist, bytes32 actorId) internal view returns (int valueChange) {
         DistributionActor.Data storage actor = dist.actorInfo[actorId];
-
-        int deltaValuePerShare = (dist.valuePerShare - actor.lastValuePerShare).int128toInt256();
+        int128 deltaValuePerShare = dist.valuePerShare - actor.lastValuePerShare;
 
         int changedValueHighPrecision = deltaValuePerShare * actor.shares.uint128toInt256();
         valueChange = changedValueHighPrecision.fromHighPrecisionDecimalToInteger();

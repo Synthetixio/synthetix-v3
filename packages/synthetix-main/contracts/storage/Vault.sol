@@ -83,7 +83,7 @@ library Vault {
     {
         VaultEpoch.Data storage epochData = currentEpoch(self);
 
-        usdWeight = uint(epochData.incomingDebtDist.totalShares).mulDecimal(collateralPrice) / 1e9;
+        usdWeight = uint(epochData.incomingDebtDist.totalShares).mulDecimal(collateralPrice);
 
         int vaultDepositedValue = int(uint(epochData.collateralAmounts.totalAmount()).mulDecimal(collateralPrice));
         int vaultAccruedDebt = epochData.totalDebt();
