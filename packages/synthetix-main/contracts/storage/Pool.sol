@@ -222,7 +222,7 @@ library Pool {
             thing = int(creditCapacity.divDecimal(minLiquidityRatio).divDecimal(self.vaultsDebtDistribution.totalShares));
         }
 
-        return int256(marketData.poolsDebtDistribution.valuePerShare_d27.reducePrecisionInt128()) + thing;
+        return int256(marketData.poolsDebtDistribution.valuePerShareD27.reducePrecisionInt128()) + thing;
     }
 
     /**
