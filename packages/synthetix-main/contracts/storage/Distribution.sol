@@ -244,4 +244,8 @@ library Distribution {
     function getActorShares(Data storage dist, bytes32 actorId) internal view returns (uint shares) {
         return dist.actorInfo[actorId].sharesD18;
     }
+
+    function getValuePerShare(Data storage self) internal view returns (int) {
+        return int(self.valuePerShareD27).downscale(DecimalMath.PRECISION_FACTOR);
+    }
 }

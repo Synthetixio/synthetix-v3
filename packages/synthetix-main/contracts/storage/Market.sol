@@ -255,7 +255,7 @@ library Market {
     ) internal view returns (uint contribution) {
         // Determine how much the current value per share deviates from the maximum.
         uint deltaValuePerShare = uint(
-            maxDebtShareValue - self.poolsDebtDistribution.valuePerShareD27 / DecimalMath.PRECISION_DOWN_SCALE_INT128
+            maxDebtShareValue - self.poolsDebtDistribution.getValuePerShare()
         );
 
         return uint(deltaValuePerShare).mulDecimal(liquidityShares);
@@ -283,7 +283,7 @@ library Market {
     }
 
     function getDebtPerShare(Data storage self) internal view returns (int debtPerShare) {
-        return self.poolsDebtDistribution.valuePerShareD27 / DecimalMath.PRECISION_DOWN_SCALE_INT128;
+        return self.poolsDebtDistribution.getValuePerShare();
     }
 
     /**
@@ -338,8 +338,7 @@ library Market {
 
         self.pools[poolId].liquidityAmountD18 = newLiquidity.uint256toUint128();
 
-        int128 lowPrecisionValuePerShare = self.poolsDebtDistribution.valuePerShareD27 /
-            DecimalMath.PRECISION_DOWN_SCALE_INT128;
+        int128 lowPrecisionValuePerShare = self.poolsDebtDistribution.getValuePerShare().int256toInt128();
 
         if (newPoolMaxShareValue < lowPrecisionValuePerShare) {
             // this will ensure calculations below can correctly gauge shares changes
@@ -411,8 +410,7 @@ library Market {
                 break;
             }
 
-            int targetValuePerShare = self.poolsDebtDistribution.valuePerShareD27 /
-                DecimalMath.PRECISION_DOWN_SCALE_INT128 +
+            int targetValuePerShare = self.poolsDebtDistribution.getValuePerShare() +
                 (maxDistributed - actuallyDistributed).divDecimal(
                     self.poolsDebtDistribution.totalSharesD18.uint128toInt128()
                 );
@@ -433,7 +431,7 @@ library Market {
 
             // Distribute the market's debt to the limit, i.e. for that which exceeds the maximum value per share.
             int debtToLimit = self.poolsDebtDistribution.totalSharesD18.uint128toInt256().mulDecimal(
-                poolMaxValuePerShare - self.poolsDebtDistribution.valuePerShareD27 / DecimalMath.PRECISION_DOWN_SCALE_INT128 // Diff between current value and max value per share.
+                poolMaxValuePerShare - self.poolsDebtDistribution.getValuePerShare() // Diff between current value and max value per share.
             );
             self.poolsDebtDistribution.distributeValue(debtToLimit);
             actuallyDistributed += debtToLimit;
@@ -466,8 +464,7 @@ library Market {
 
         uint iters;
         for (iters = 0; iters < maxIter; iters++) {
-            int targetValuePerShare = self.poolsDebtDistribution.valuePerShareD27 /
-                DecimalMath.PRECISION_DOWN_SCALE_INT128 +
+            int targetValuePerShare = self.poolsDebtDistribution.getValuePerShare() +
                 (maxDistributed - actuallyDistributed).divDecimal(
                     self.poolsDebtDistribution.totalSharesD18.uint128toInt256()
                 );
@@ -493,7 +490,7 @@ library Market {
 
             // Distribute the market's debt to the limit, i.e. for that which exceeds the maximum value per share.
             int debtToLimit = self.poolsDebtDistribution.totalSharesD18.uint128toInt256().mulDecimal(
-                poolMaxValuePerShare - self.poolsDebtDistribution.valuePerShareD27 / DecimalMath.PRECISION_DOWN_SCALE_INT128 // Diff between current value and max value per share.
+                poolMaxValuePerShare - self.poolsDebtDistribution.getValuePerShare() // Diff between current value and max value per share.
             );
             self.poolsDebtDistribution.distributeValue(debtToLimit);
             actuallyDistributed += debtToLimit;

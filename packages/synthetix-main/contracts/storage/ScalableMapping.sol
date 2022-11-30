@@ -7,6 +7,8 @@ import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import "./DistributionActor.sol";
 import "../errors/ParameterError.sol";
 
+import "hardhat/console.sol";
+
 library ScalableMapping {
     using SafeCast for uint128;
     using SafeCast for uint256;
@@ -93,11 +95,13 @@ library ScalableMapping {
      */
     function totalAmount(Data storage self) internal view returns (int value) {
         return
-            int((self.scaleModifierD27 + DecimalMath.UNIT_PRECISE_INT) * self.totalSharesD18.uint128toInt256()) /
-            DecimalMath.UNIT_PRECISE_INT;
+            int((self.scaleModifierD27 + DecimalMath.UNIT_PRECISE_INT) * self.totalSharesD18.uint128toInt256()) / DecimalMath.UNIT_PRECISE_INT;
     }
 
     function _getSharesForAmount(Data storage self, uint amount) private view returns (uint shares) {
-        shares = (amount * DecimalMath.UNIT_PRECISE) / uint(int(self.scaleModifierD27 + DecimalMath.UNIT_INT128)) / 1e9;
+        console.log("GET SHARES FOR AMNT", uint(int(self.scaleModifierD27 + DecimalMath.UNIT_PRECISE_INT128)));
+        console.log("and the amnt", amount);
+        shares = amount * DecimalMath.UNIT_PRECISE / uint(int(self.scaleModifierD27 + DecimalMath.UNIT_PRECISE_INT128));
+        console.log("final answer", shares);
     }
 }
