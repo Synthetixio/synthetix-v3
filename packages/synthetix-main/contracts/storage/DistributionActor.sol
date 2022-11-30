@@ -15,6 +15,6 @@ library DistributionActor {
          *
          * Note: This is also a high precision decimal. See Distribution.valuePerShare.
          */
-        int128 lastValuePerShare;
+        int128 lastValuePerShare_d27;
     }
 }

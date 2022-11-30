@@ -160,14 +160,8 @@ library Distribution {
          * This is a high precision "decimal" value with 27 decimals of precision. See DecimalMath.
          *
          * 1.0 = 1000000000000000000000000000 (27 zeroes)
-         *
-         * TODO: Consider using a nomenclature for integers vs decimals vs high precision decimals. E.g:
-         * integer => myValue
-         * decimal => pMyValue
-         * high precision decimal => ppMyValue
-         * Why? These representations are constructions on top of regular types (uint, uint128, int128, etc) and the code does not enforce their interoperability in any way, which could lead to mistakes and bugs. The nomenclature might help in this aspect.
          */
-        int128 valuePerShare;
+        int128 valuePerShare_d27;
         /**
          * @dev Tracks individual actor information, such as how many shares an actor has, their lastValuePerShare, etc.
          */
@@ -195,7 +189,7 @@ library Distribution {
         int valueHighPrecision = value.toHighPrecisionDecimal();
         int deltaValuePerShare = valueHighPrecision / int(totalShares);
 
-        dist.valuePerShare += int128(deltaValuePerShare);
+        dist.valuePerShare_d27 += int128(deltaValuePerShare);
     }
 
     /**
@@ -218,7 +212,7 @@ library Distribution {
 
         actor.shares = sharesUint128;
 
-        actor.lastValuePerShare = newActorShares == 0 ? int128(0) : dist.valuePerShare;
+        actor.lastValuePerShare_d27 = newActorShares == 0 ? int128(0) : dist.valuePerShare_d27;
     }
 
     /**
@@ -238,7 +232,7 @@ library Distribution {
      */
     function getActorValueChange(Data storage dist, bytes32 actorId) internal view returns (int valueChange) {
         DistributionActor.Data storage actor = dist.actorInfo[actorId];
-        int128 deltaValuePerShare = dist.valuePerShare - actor.lastValuePerShare;
+        int128 deltaValuePerShare = dist.valuePerShare_d27 - actor.lastValuePerShare_d27;
 
         int changedValueHighPrecision = deltaValuePerShare * actor.shares.uint128toInt256();
         valueChange = changedValueHighPrecision.fromHighPrecisionDecimalToInteger();
