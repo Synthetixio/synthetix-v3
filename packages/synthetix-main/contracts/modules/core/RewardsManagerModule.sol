@@ -55,6 +55,8 @@ contract RewardsManagerModule is IRewardsManagerModule {
             revert InvalidParameters("distributor", "must be non-zero");
         }
         pool.vaults[collateralType].rewards[rewardId].distributor = IRewardDistributor(distributor);
+
+        emit RewardsDistributorRegistered(poolId, collateralType, distributor);
     }
 
     function distributeRewards(
