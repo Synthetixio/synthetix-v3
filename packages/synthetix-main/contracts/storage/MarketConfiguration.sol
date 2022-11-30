@@ -27,7 +27,7 @@ library MarketConfiguration {
          * @dev TODO
          */
         /// @dev weight sent to that market
-        uint128 weight;
+        uint128 weightD18;
         /**
          * @dev TODO
          *

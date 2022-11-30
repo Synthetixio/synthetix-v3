@@ -155,7 +155,7 @@ library Pool {
         for (uint i = 0; i < self.marketConfigurations.length; i++) {
             MarketConfiguration.Data storage marketConfiguration = self.marketConfigurations[i];
 
-            uint weight = marketConfiguration.weight;
+            uint weight = marketConfiguration.weightD18;
 
             // Calculate each market's pro-rata USD liquidity.
             // Note: the factor `(weight / totalWeights)` is not deduped in the operations below to maintain numeric precision.
