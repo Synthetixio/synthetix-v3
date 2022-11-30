@@ -63,7 +63,7 @@ library Market {
          *
          * TODO: Consider renaming this to netIssuance.
          */
-        int128 issuance;
+        int128 issuanceD18;
         /**
          * @dev TODO The total amount of USD that the market could withdraw if it were to immediately unwrap all its positions.
          *
@@ -76,13 +76,13 @@ library Market {
          * TODO: How does reported debt play with this definition?
          * TODO: Consider renaming to creditCapacity.
          */
-        uint128 capacity;
+        uint128 capacityD18;
         /**
          * @dev TODO The total balance that the market had the last time that its debt was distributed.
          *
          * A Market's debt is distributed when the reported debt of its associated external market is rolled into the pools that provide liquidity to it.
          */
-        int128 lastDistributedMarketBalance;
+        int128 lastDistributedMarketBalanceD18;
         /**
          * @dev A heap of pools for which the market has not yet hit its maximum credit capacity.
          *
@@ -139,7 +139,7 @@ library Market {
         /**
          * @dev TODO The maximum amount of market provided collateral, per type, that this market can deposit.
          */
-        mapping(address => uint) maximumDepositable;
+        mapping(address => uint) maximumDepositableD18;
     }
 
     /**
@@ -147,7 +147,7 @@ library Market {
      */
     struct DepositedCollateral {
         address collateralType;
-        uint amount;
+        uint amountD18;
     }
 
     /**
@@ -200,7 +200,7 @@ library Market {
      * TODO: Consider renaming to totalDebt()? totalBalance is more correct, but totalDebt is easier to understand.
      */
     function totalBalance(Data storage self) internal view returns (int) {
-        return int(getReportedDebt(self)) + self.issuance - int(getDepositedCollateralValue(self));
+        return int(getReportedDebt(self)) + self.issuanceD18 - int(getDepositedCollateralValue(self));
     }
 
     /**
@@ -220,7 +220,7 @@ library Market {
 
             uint price = CollateralConfiguration.getCollateralPrice(config);
 
-            totalDepositedCollateralValue += price.mulDecimal(entry.amount);
+            totalDepositedCollateralValue += price.mulDecimal(entry.amountD18);
         }
 
         return totalDepositedCollateralValue;
@@ -265,7 +265,7 @@ library Market {
      * TODO: Should this be <=?
      */
     function isCapacityLocked(Data storage self) internal view returns (bool) {
-        return self.capacity < getLockedLiquidity(self);
+        return self.capacityD18 < getLockedLiquidity(self);
     }
 
     /**
@@ -355,11 +355,11 @@ library Market {
 
         // recalculate market capacity
         if (newPoolMaxShareValue > lowPrecisionValuePerShare) {
-            self.capacity += getCapacityContribution(self, newLiquidity, newPoolMaxShareValue).uint256toUint128();
+            self.capacityD18 += getCapacityContribution(self, newLiquidity, newPoolMaxShareValue).uint256toUint128();
         }
 
         if (oldPoolMaxShareValue > lowPrecisionValuePerShare) {
-            self.capacity -= getCapacityContribution(self, oldLiquidity, oldPoolMaxShareValue).uint256toUint128();
+            self.capacityD18 -= getCapacityContribution(self, oldLiquidity, oldPoolMaxShareValue).uint256toUint128();
         }
     }
 
@@ -375,7 +375,7 @@ library Market {
         // Get the current and last distributed market balances.
         // Note: The last distributed balance will be cached within this function's execution.
         int256 targetBalance = totalBalance(self);
-        int256 outstandingBalance = targetBalance - self.lastDistributedMarketBalance;
+        int256 outstandingBalance = targetBalance - self.lastDistributedMarketBalanceD18;
 
         (, bool exhaustedUp) = bumpPoolsOut(self, outstandingBalance, maxIter);
         (, bool exhaustedDown) = bumpPoolsIn(self, outstandingBalance, maxIter);
@@ -383,8 +383,8 @@ library Market {
         if (!exhaustedDown && !exhaustedUp && self.poolsDebtDistribution.totalShares > 0) {
             // cannot use `outstandingBalance` here because `self.lastDistributedMarketBalance`
             // may have changed after calling the bump functions above
-            self.poolsDebtDistribution.distributeValue(targetBalance - self.lastDistributedMarketBalance);
-            self.lastDistributedMarketBalance = targetBalance.int256toInt128();
+            self.poolsDebtDistribution.distributeValue(targetBalance - self.lastDistributedMarketBalanceD18);
+            self.lastDistributedMarketBalanceD18 = targetBalance.int256toInt128();
         }
     }
 
@@ -444,7 +444,7 @@ library Market {
             self.pools[poolId].pendingDebt += newPoolDebt.uint256toUint128();
         }
 
-        self.lastDistributedMarketBalance += actuallyDistributed.int256toInt128();
+        self.lastDistributedMarketBalanceD18 += actuallyDistributed.int256toInt128();
 
         exhausted = iters == maxIter;
     }
@@ -497,7 +497,7 @@ library Market {
             self.poolsDebtDistribution.setActorShares(bytes32(uint(poolId)), self.pools[poolId].liquidityAmount);
         }
 
-        self.lastDistributedMarketBalance += actuallyDistributed.int256toInt128();
+        self.lastDistributedMarketBalanceD18 += actuallyDistributed.int256toInt128();
 
         exhausted = iters == maxIter;
     }

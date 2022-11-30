@@ -347,7 +347,7 @@ library Pool {
         for (uint i = 0; i < self.marketConfigurations.length; i++) {
             Market.Data storage market = Market.load(self.marketConfigurations[i].market);
 
-            uint unlocked = market.capacity - market.getLockedLiquidity();
+            uint unlocked = market.capacityD18 - market.getLockedLiquidity();
             uint contributedCapacity = market.getCapacityContribution(
                 market.getPoolLiquidity(self.id),
                 self.marketConfigurations[i].maxDebtShareValue

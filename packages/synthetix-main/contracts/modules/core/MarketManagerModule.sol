@@ -37,11 +37,11 @@ contract MarketManagerModule is IMarketManagerModule {
     }
 
     function getWithdrawableUsd(uint128 marketId) public view override returns (uint) {
-        return Market.load(marketId).capacity + Market.load(marketId).getDepositedCollateralValue();
+        return Market.load(marketId).capacityD18 + Market.load(marketId).getDepositedCollateralValue();
     }
 
     function getMarketIssuance(uint128 marketId) external view override returns (int128) {
-        return Market.load(marketId).issuance;
+        return Market.load(marketId).issuanceD18;
     }
 
     function getMarketReportedDebt(uint128 marketId) external view override returns (uint) {
@@ -81,8 +81,8 @@ contract MarketManagerModule is IMarketManagerModule {
         ITokenModule usdToken = AssociatedSystem.load(_USD_TOKEN).asToken();
 
         // Adjust accounting
-        market.capacity += uint128(amount);
-        market.issuance -= int128(int(amount));
+        market.capacityD18 += uint128(amount);
+        market.issuanceD18 -= int128(int(amount));
 
         // burn USD
         IUSDTokenModule(address(usdToken)).burnWithAllowance(target, msg.sender, amount);
@@ -102,8 +102,8 @@ contract MarketManagerModule is IMarketManagerModule {
         if (amount > getWithdrawableUsd(marketId)) revert NotEnoughLiquidity(marketId, amount);
 
         // Adjust accounting
-        marketData.capacity -= uint128(amount);
-        marketData.issuance += int128(int(amount));
+        marketData.capacityD18 -= uint128(amount);
+        marketData.issuanceD18 += int128(int(amount));
 
         // mint some USD
         AssociatedSystem.load(_USD_TOKEN).asToken().mint(target, amount);
