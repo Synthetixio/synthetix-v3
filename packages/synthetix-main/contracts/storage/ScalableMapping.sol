@@ -20,7 +20,7 @@ library ScalableMapping {
     struct Data {
         uint128 totalSharesD18;
         int128 scaleModifierD27;
-        mapping(bytes32 => uint) shares;
+        mapping(bytes32 => uint) sharesD18;
     }
 
     /**
@@ -65,9 +65,9 @@ library ScalableMapping {
         resultingShares = _getSharesForAmount(self, newActorValue);
 
         // Modify the total shares with the actor's change in shares.
-        self.totalSharesD18 = (self.totalSharesD18 + resultingShares - self.shares[actorId]).uint256toUint128();
+        self.totalSharesD18 = (self.totalSharesD18 + resultingShares - self.sharesD18[actorId]).uint256toUint128();
 
-        self.shares[actorId] = resultingShares.uint256toUint128();
+        self.sharesD18[actorId] = resultingShares.uint256toUint128();
     }
 
     /**
@@ -81,7 +81,7 @@ library ScalableMapping {
             return 0;
         }
 
-        return (self.shares[actorId] * totalAmount(self).int256toUint256()) / totalShares;
+        return (self.sharesD18[actorId] * totalAmount(self).int256toUint256()) / totalShares;
     }
 
     /**

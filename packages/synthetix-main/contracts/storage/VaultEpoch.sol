@@ -130,7 +130,10 @@ library VaultEpoch {
         consolidateAccountDebt(self, accountId);
 
         self.collateralAmounts.set(actorId, collateralAmount);
-        self.accountsDebtDistribution.setActorShares(actorId, self.collateralAmounts.shares[actorId].mulDecimal(leverage));
+        self.accountsDebtDistribution.setActorShares(
+            actorId,
+            self.collateralAmounts.sharesD18[actorId].mulDecimal(leverage)
+        );
     }
 
     /**
