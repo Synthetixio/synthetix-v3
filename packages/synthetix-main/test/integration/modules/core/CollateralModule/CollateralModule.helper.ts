@@ -27,8 +27,8 @@ export async function addCollateral(
     await core.connect(owner).configureCollateral({
       tokenAddress: Collateral.address,
       priceFeed: CollateralPriceFeed.address,
-      issuanceRatio: issuanceRatio,
-      liquidationRatio: liquidationRatio,
+      issuanceRatioD18: issuanceRatio,
+      liquidationRatioD18: liquidationRatio,
       liquidationReward: 0,
       minDelegation: 0,
       depositingEnabled: true,
@@ -56,8 +56,8 @@ export async function verifyCollateral(
 
   assert.equal(collateralType.tokenAddress, Collateral.address);
   assert.equal(collateralType.priceFeed, CollateralPriceFeed.address);
-  assertBn.equal(collateralType.issuanceRatio, expectedIssuanceRatio);
-  assertBn.equal(collateralType.liquidationRatio, expectedLiquidationRatio);
+  assertBn.equal(collateralType.issuanceRatioD18, expectedIssuanceRatio);
+  assertBn.equal(collateralType.liquidationRatioD18, expectedLiquidationRatio);
   assert.equal(collateralType.depositingEnabled, expectedToBeEnabled);
 }
 

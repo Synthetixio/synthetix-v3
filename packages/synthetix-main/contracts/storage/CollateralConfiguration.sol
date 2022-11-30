@@ -19,9 +19,9 @@ library CollateralConfiguration {
         /// must be true for staking or collateral delegation
         bool depositingEnabled;
         /// accounts cannot mint sUSD if their debt brings their cratio below this value
-        uint issuanceRatio;
+        uint issuanceRatioD18;
         /// accounts below the ratio specified here are immediately liquidated
-        uint liquidationRatio;
+        uint liquidationRatioD18;
         /// amount of token to award when an account is liquidated with this collateral type
         uint liquidationReward;
         /// address which reports the current price of the collateral
@@ -61,8 +61,8 @@ library CollateralConfiguration {
         Data storage storedConfig = load(config.tokenAddress);
 
         storedConfig.tokenAddress = config.tokenAddress;
-        storedConfig.issuanceRatio = config.issuanceRatio;
-        storedConfig.liquidationRatio = config.liquidationRatio;
+        storedConfig.issuanceRatioD18 = config.issuanceRatioD18;
+        storedConfig.liquidationRatioD18 = config.liquidationRatioD18;
         storedConfig.priceFeed = config.priceFeed;
         storedConfig.liquidationReward = config.liquidationReward;
         storedConfig.minDelegation = config.minDelegation;
@@ -104,8 +104,8 @@ library CollateralConfiguration {
         uint debt,
         uint collateralValue
     ) internal view {
-        if (debt != 0 && collateralValue.divDecimal(debt) < self.issuanceRatio) {
-            revert InsufficientCollateralRatio(collateralValue, debt, collateralValue.divDecimal(debt), self.issuanceRatio);
+        if (debt != 0 && collateralValue.divDecimal(debt) < self.issuanceRatioD18) {
+            revert InsufficientCollateralRatio(collateralValue, debt, collateralValue.divDecimal(debt), self.issuanceRatioD18);
         }
     }
 }

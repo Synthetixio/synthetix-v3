@@ -155,8 +155,8 @@ export function bootstrapWithStakedPool() {
       await r.systems().Core.connect(owner).configureCollateral({
         tokenAddress: collateralAddress,
         priceFeed: aggregator.address,
-        issuanceRatio: '5000000000000000000',
-        liquidationRatio: '1500000000000000000',
+        issuanceRatioD18: '5000000000000000000',
+        liquidationRatioD18: '1500000000000000000',
         liquidationReward: '20000000000000000000',
         minDelegation: '20000000000000000000',
         depositingEnabled: true,
