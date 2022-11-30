@@ -128,10 +128,10 @@ import "../errors/ParameterError.sol";
  * TODO: Initialization of a distribution could be cleaned up, removed from semantically overloaded functions into a clear initializer function. This would clean up the Distribution's two main functions.
  */
 library Distribution {
-    using SafeCast for uint128;
-    using SafeCast for uint256;
-    using SafeCast for int128;
-    using SafeCast for int256;
+    using SafeCastU128 for uint128;
+    using SafeCastU256 for uint256;
+    using SafeCastI128 for int128;
+    using SafeCastI256 for int256;
     using DecimalMath for int256;
 
     /**
@@ -178,7 +178,7 @@ library Distribution {
             return;
         }
 
-        uint totalShares = dist.totalSharesD18.uint128toUint256();
+        uint totalShares = dist.totalSharesD18;
 
         if (totalShares == 0) {
             revert EmptyDistribution();
@@ -207,7 +207,7 @@ library Distribution {
     ) internal {
         DistributionActor.Data storage actor = dist.actorInfo[actorId];
 
-        uint128 sharesUint128 = newActorShares.uint256toUint128();
+        uint128 sharesUint128 = newActorShares.to128();
         dist.totalSharesD18 = dist.totalSharesD18 + sharesUint128 - actor.sharesD18;
 
         actor.sharesD18 = sharesUint128;
@@ -232,9 +232,9 @@ library Distribution {
      */
     function getActorValueChange(Data storage dist, bytes32 actorId) internal view returns (int valueChange) {
         DistributionActor.Data storage actor = dist.actorInfo[actorId];
-        int128 deltaValuePerShare = dist.valuePerShareD27 - actor.lastValuePerShareD27;
+        int deltaValuePerShare = dist.valuePerShareD27 - actor.lastValuePerShareD27;
 
-        int changedValueHighPrecision = deltaValuePerShare * actor.sharesD18.uint128toInt256();
+        int changedValueHighPrecision = deltaValuePerShare * actor.sharesD18.toInt();
         valueChange = changedValueHighPrecision / DecimalMath.UNIT_PRECISE_INT;
     }
 
