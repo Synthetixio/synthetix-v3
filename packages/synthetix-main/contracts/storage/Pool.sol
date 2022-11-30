@@ -170,7 +170,7 @@ library Pool {
             // System-wide.
             int effectiveMaxShareValue = containMarketMaxShareValue(self, marketData, marketUnusedCreditCapacity);
             // Market-wide.
-            int configuredMaxShareValue = marketConfiguration.maxDebtShareValue;
+            int configuredMaxShareValue = marketConfiguration.maxDebtShareValueD18;
             effectiveMaxShareValue = effectiveMaxShareValue < configuredMaxShareValue
                 ? effectiveMaxShareValue
                 : configuredMaxShareValue;
@@ -350,7 +350,7 @@ library Pool {
             uint unlocked = market.capacityD18 - market.getLockedLiquidity();
             uint contributedCapacity = market.getCapacityContribution(
                 market.getPoolLiquidity(self.id),
-                self.marketConfigurations[i].maxDebtShareValue
+                self.marketConfigurations[i].maxDebtShareValueD18
             );
 
             if (unlocked < contributedCapacity) {

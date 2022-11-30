@@ -38,6 +38,6 @@ library MarketConfiguration {
          * TODO: Rename to maxDebtPerDollarOfCollateral?
          */
         /// @dev cap on debt exposure for the market
-        int128 maxDebtShareValue;
+        int128 maxDebtShareValueD18;
     }
 }

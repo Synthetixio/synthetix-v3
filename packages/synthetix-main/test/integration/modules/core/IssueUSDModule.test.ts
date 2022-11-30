@@ -46,7 +46,7 @@ describe('IssueUSDModule', function () {
         {
           market: marketId,
           weightD18: ethers.utils.parseEther('1'),
-          maxDebtShareValue: ethers.utils.parseEther('10000000000000000'),
+          maxDebtShareValueD18: ethers.utils.parseEther('10000000000000000'),
         },
       ]);
   });
