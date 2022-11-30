@@ -136,7 +136,7 @@ contract PoolModule is IPoolModule {
             Market.rebalance(removedMarkets[i], poolId, 0, 0);
         }
 
-        pool.totalWeights = uint128(totalWeight);
+        pool.totalWeightsD18 = uint128(totalWeight);
 
         pool.distributeDebtToVaults();
 
@@ -182,11 +182,11 @@ contract PoolModule is IPoolModule {
     function setMinLiquidityRatio(uint minLiquidityRatio) external override {
         OwnableStorage.onlyOwner();
 
-        PoolConfiguration.load().minLiquidityRatio = minLiquidityRatio;
+        PoolConfiguration.load().minLiquidityRatioD18 = minLiquidityRatio;
     }
 
     function getMinLiquidityRatio() external view override returns (uint) {
-        return PoolConfiguration.load().minLiquidityRatio;
+        return PoolConfiguration.load().minLiquidityRatioD18;
     }
 
     function _verifyPoolConfigurationChange(Pool.Data storage pool, MarketConfiguration.Data[] memory newDistributions)
@@ -242,7 +242,7 @@ contract PoolModule is IPoolModule {
                 if (
                     newDistributions[i].maxDebtShareValue < pool.marketConfigurations[oldIdx].maxDebtShareValue ||
                     uint(newDistributions[i].weight * 1e9).divDecimal(totalWeight) <
-                    uint(pool.marketConfigurations[oldIdx].weight * 1e9).divDecimal(pool.totalWeights)
+                    uint(pool.marketConfigurations[oldIdx].weight * 1e9).divDecimal(pool.totalWeightsD18)
                 ) {
                     postVerifyLocks[postVerifyLocksIdx++] = newDistributions[i].market;
                 }

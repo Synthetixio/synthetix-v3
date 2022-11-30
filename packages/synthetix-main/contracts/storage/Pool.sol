@@ -57,13 +57,13 @@ library Pool {
          *
          * Reciprocally, this pro-rata share also determines how much the pool is exposed to each market's debt.
          */
-        uint128 totalWeights;
+        uint128 totalWeightsD18;
         /**
          * @dev Accumulated cache value of all vault liquidities, i.e. their collateral value minus their debt.
          *
          * TODO: Liquidity as a term is a vague concept. Consider being more consistent all over the code with the use of capacity vs liquidity. i.e. `totalRemainingCreditCapacity`.
          */
-        uint128 unusedCreditCapacity;
+        uint128 unusedCreditCapacityD18;
         /**
          * @dev Array of markets connected to this pool, and their configurations. I.e. weight, etc.
          *
@@ -133,7 +133,7 @@ library Pool {
      * - Accumulates the change in debt value from each market into the pools own vault debt distribution's value per share.
      */
     function distributeDebtToVaults(Data storage self) internal {
-        uint totalWeights = self.totalWeights;
+        uint totalWeights = self.totalWeightsD18;
 
         if (totalWeights == 0) {
             return; // Nothing to rebalance.
@@ -146,7 +146,7 @@ library Pool {
         int totalCreditCapacity = int128(self.vaultsDebtDistribution.totalShares);
 
         // TODO Clarify
-        uint128 unusedCreditCapacity = self.unusedCreditCapacity;
+        uint128 unusedCreditCapacity = self.unusedCreditCapacityD18;
 
         int cumulativeDebtChange = 0;
 
@@ -203,7 +203,7 @@ library Pool {
         Market.Data storage marketData,
         uint creditCapacity
     ) internal view returns (int) {
-        uint minLiquidityRatio = PoolConfiguration.load().minLiquidityRatio;
+        uint minLiquidityRatio = PoolConfiguration.load().minLiquidityRatioD18;
 
         // TODO Explain the math in this block...
         // TODO Name `thing` variable accordingly once I understand the math.
@@ -275,7 +275,7 @@ library Pool {
         self.vaultsDebtDistribution.setActorShares(actorId, usdWeight);
 
         // Accumulate the change in total liquidity, from the vault, into the pool.
-        self.unusedCreditCapacity = uint128(int128(self.unusedCreditCapacity) + int128(deltaLiquidity));
+        self.unusedCreditCapacityD18 = uint128(int128(self.unusedCreditCapacityD18) + int128(deltaLiquidity));
 
         // Transfer the debt change from the pool into the vault.
         self.vaults[collateralType].distributeDebtToAccounts(debtChange);
