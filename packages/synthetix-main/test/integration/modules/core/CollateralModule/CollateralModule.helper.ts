@@ -29,8 +29,8 @@ export async function addCollateral(
       priceFeed: CollateralPriceFeed.address,
       issuanceRatioD18: issuanceRatio,
       liquidationRatioD18: liquidationRatio,
-      liquidationReward: 0,
-      minDelegation: 0,
+      liquidationRewardD18: 0,
+      minDelegationD18: 0,
       depositingEnabled: true,
     })
   ).wait();

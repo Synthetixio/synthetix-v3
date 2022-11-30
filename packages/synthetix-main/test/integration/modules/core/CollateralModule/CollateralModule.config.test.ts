@@ -26,8 +26,8 @@ describe('CollateralModule', function () {
             priceFeed: dummyAddress,
             issuanceRatioD18: 400,
             liquidationRatioD18: 200,
-            liquidationReward: 0,
-            minDelegation: 0,
+            liquidationRewardD18: 0,
+            minDelegationD18: 0,
             depositingEnabled: false,
           }),
           `Unauthorized("${await user1.getAddress()}")`,
@@ -86,8 +86,8 @@ describe('CollateralModule', function () {
                 priceFeed: AnotherCollateralPriceFeed.address,
                 issuanceRatioD18: 200,
                 liquidationRatioD18: 100,
-                liquidationReward: 0,
-                minDelegation: 0,
+                liquidationRewardD18: 0,
+                minDelegationD18: 0,
                 depositingEnabled: false,
               }),
               `Unauthorized("${await user1.getAddress()}")`,
@@ -103,8 +103,8 @@ describe('CollateralModule', function () {
               priceFeed: AnotherCollateralPriceFeed.address,
               issuanceRatioD18: 300,
               liquidationRatioD18: 250,
-              liquidationReward: 0,
-              minDelegation: 0,
+              liquidationRewardD18: 0,
+              minDelegationD18: 0,
               depositingEnabled: true,
             });
             await tx.wait();
@@ -134,8 +134,8 @@ describe('CollateralModule', function () {
               priceFeed: AnotherCollateralPriceFeed.address,
               issuanceRatioD18: 300,
               liquidationRatioD18: 250,
-              liquidationReward: 0,
-              minDelegation: 0,
+              liquidationRewardD18: 0,
+              minDelegationD18: 0,
               depositingEnabled: false,
             });
             await tx.wait();

@@ -157,8 +157,8 @@ export function bootstrapWithStakedPool() {
         priceFeed: aggregator.address,
         issuanceRatioD18: '5000000000000000000',
         liquidationRatioD18: '1500000000000000000',
-        liquidationReward: '20000000000000000000',
-        minDelegation: '20000000000000000000',
+        liquidationRewardD18: '20000000000000000000',
+        minDelegationD18: '20000000000000000000',
         depositingEnabled: true,
       })
     ).wait();

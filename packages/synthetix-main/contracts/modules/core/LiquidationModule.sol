@@ -71,7 +71,7 @@ contract LiquidationModule is ILiquidationModule {
             revert MustBeVaultLiquidated();
         }
 
-        amountRewarded = collateralConfig.liquidationReward;
+        amountRewarded = collateralConfig.liquidationRewardD18;
 
         if (amountRewarded >= uint(epoch.collateralAmounts.totalAmount())) {
             // vault is too small to be liquidated socialized
