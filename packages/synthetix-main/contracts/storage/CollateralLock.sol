@@ -11,7 +11,7 @@ library CollateralLock {
         /**
          * @dev The amount of collateral that has been locked.
          */
-        uint256 amount;
+        uint256 amountD18;
         /**
          * @dev The date when the locked amount becomes unlocked.
          */

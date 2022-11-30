@@ -80,7 +80,7 @@ library Collateral {
             CollateralLock.Data storage lock = self.locks[i];
 
             if (lock.lockExpirationTime > currentTime) {
-                locked += lock.amount;
+                locked += lock.amountD18;
             }
         }
 
