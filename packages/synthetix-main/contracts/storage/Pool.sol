@@ -161,7 +161,9 @@ library Pool {
             // Note: the factor `(weight / totalWeights)` is not deduped in the operations below to maintain numeric precision.
 
             // TODO: Consider introducing a SafeCast library. Here, if we didn't check for negative numbers, a cast could result in an overflow (Solidity does not check for casting overflows). Thus, leaving casting free to the developer might introduce bugs. All instances of the code should use this util.
-            uint marketCreditCapacityD18 = totalCreditCapacityD18 > 0 ? (uint(totalCreditCapacityD18) * weightD18) / totalWeightsD18 : 0;
+            uint marketCreditCapacityD18 = totalCreditCapacityD18 > 0
+                ? (uint(totalCreditCapacityD18) * weightD18) / totalWeightsD18
+                : 0;
             uint marketUnusedCreditCapacityD18 = (unusedCreditCapacityD18 * weightD18) / totalWeightsD18;
 
             Market.Data storage marketData = Market.load(marketConfiguration.market);
@@ -219,10 +221,13 @@ library Pool {
             thingD18 = int(DecimalMath.UNIT); // If minLiquidityRatioD18 is zero, then TODO
         } else {
             // maxShareValueIncrease?
-            thingD18 = int(creditCapacityD18.divDecimal(minLiquidityRatioD18).divDecimal(self.vaultsDebtDistribution.totalSharesD18));
+            thingD18 = int(
+                creditCapacityD18.divDecimal(minLiquidityRatioD18).divDecimal(self.vaultsDebtDistribution.totalSharesD18)
+            );
         }
 
-        return int256(marketData.poolsDebtDistribution.valuePerShareD27 / DecimalMath.PRECISION_DOWN_SCALE_INT128) + thingD18;
+        return
+            int256(marketData.poolsDebtDistribution.valuePerShareD27 / DecimalMath.PRECISION_DOWN_SCALE_INT128) + thingD18;
     }
 
     /**
@@ -259,7 +264,10 @@ library Pool {
      *
      * TODO: If possible, remove second call to distributeDebtToVaults.
      */
-    function recalculateVaultCollateral(Data storage self, address collateralType) internal returns (uint collateralPriceD18) {
+    function recalculateVaultCollateral(Data storage self, address collateralType)
+        internal
+        returns (uint collateralPriceD18)
+    {
         // Update each market's pro-rata liquidity and collect accumulated debt into the pool's debt distribution.
         distributeDebtToVaults(self);
 

@@ -338,8 +338,7 @@ library Market {
 
         self.pools[poolId].liquidityAmountD18 = newLiquidityD18.uint256toUint128();
 
-        int128 valuePerShareD18 = self.poolsDebtDistribution.valuePerShareD27 /
-            DecimalMath.PRECISION_DOWN_SCALE_INT128;
+        int128 valuePerShareD18 = self.poolsDebtDistribution.valuePerShareD27 / DecimalMath.PRECISION_DOWN_SCALE_INT128;
 
         if (newPoolMaxShareValueD18 < valuePerShareD18) {
             // this will ensure calculations below can correctly gauge shares changes
@@ -433,7 +432,9 @@ library Market {
 
             // Distribute the market's debt to the limit, i.e. for that which exceeds the maximum value per share.
             int debtToLimitD18 = self.poolsDebtDistribution.totalSharesD18.uint128toInt256().mulDecimal(
-                poolMaxValuePerShareD18 - self.poolsDebtDistribution.valuePerShareD27 / DecimalMath.PRECISION_DOWN_SCALE_INT128 // Diff between current value and max value per share.
+                poolMaxValuePerShareD18 -
+                    self.poolsDebtDistribution.valuePerShareD27 /
+                    DecimalMath.PRECISION_DOWN_SCALE_INT128 // Diff between current value and max value per share.
             );
             self.poolsDebtDistribution.distributeValue(debtToLimitD18);
             actuallyDistributedD18 += debtToLimitD18;
@@ -493,7 +494,9 @@ library Market {
 
             // Distribute the market's debt to the limit, i.e. for that which exceeds the maximum value per share.
             int debtToLimitD18 = self.poolsDebtDistribution.totalSharesD18.uint128toInt256().mulDecimal(
-                poolMaxValuePerShareD18 - self.poolsDebtDistribution.valuePerShareD27 / DecimalMath.PRECISION_DOWN_SCALE_INT128 // Diff between current value and max value per share.
+                poolMaxValuePerShareD18 -
+                    self.poolsDebtDistribution.valuePerShareD27 /
+                    DecimalMath.PRECISION_DOWN_SCALE_INT128 // Diff between current value and max value per share.
             );
             self.poolsDebtDistribution.distributeValue(debtToLimitD18);
             actuallyDistributedD18 += debtToLimitD18;

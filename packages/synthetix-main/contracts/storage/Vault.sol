@@ -85,7 +85,9 @@ library Vault {
 
         int vaultDepositedValueD18 = int(uint(epochData.collateralAmounts.totalAmount()).mulDecimal(collateralPriceD18));
         int vaultAccruedDebtD18 = epochData.totalDebt();
-        remainingLiquidityD18 = vaultDepositedValueD18 > vaultAccruedDebtD18 ? uint(vaultDepositedValueD18 - vaultAccruedDebtD18) : 0;
+        remainingLiquidityD18 = vaultDepositedValueD18 > vaultAccruedDebtD18
+            ? uint(vaultDepositedValueD18 - vaultAccruedDebtD18)
+            : 0;
 
         deltaRemainingLiquidityD18 = int(remainingLiquidityD18) - int(int128(self.prevRemainingLiquidityD18));
 
