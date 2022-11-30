@@ -208,11 +208,11 @@ library Distribution {
         DistributionActor.Data storage actor = dist.actorInfo[actorId];
 
         uint128 sharesUint128 = newActorShares.uint256toUint128();
-        dist.totalSharesD18 = dist.totalSharesD18 + sharesUint128 - actor.shares;
+        dist.totalSharesD18 = dist.totalSharesD18 + sharesUint128 - actor.sharesD18;
 
-        actor.shares = sharesUint128;
+        actor.sharesD18 = sharesUint128;
 
-        actor.lastValuePerShare_d27 = newActorShares == 0 ? int128(0) : dist.valuePerShareD27;
+        actor.lastValuePerShareD27 = newActorShares == 0 ? int128(0) : dist.valuePerShareD27;
     }
 
     /**
@@ -232,9 +232,9 @@ library Distribution {
      */
     function getActorValueChange(Data storage dist, bytes32 actorId) internal view returns (int valueChange) {
         DistributionActor.Data storage actor = dist.actorInfo[actorId];
-        int128 deltaValuePerShare = dist.valuePerShareD27 - actor.lastValuePerShare_d27;
+        int128 deltaValuePerShare = dist.valuePerShareD27 - actor.lastValuePerShareD27;
 
-        int changedValueHighPrecision = deltaValuePerShare * actor.shares.uint128toInt256();
+        int changedValueHighPrecision = deltaValuePerShare * actor.sharesD18.uint128toInt256();
         valueChange = changedValueHighPrecision.fromHighPrecisionDecimalToInteger();
     }
 
@@ -242,6 +242,6 @@ library Distribution {
      * @dev Returns the number of shares owned by an actor in the distribution.
      */
     function getActorShares(Data storage dist, bytes32 actorId) internal view returns (uint shares) {
-        return dist.actorInfo[actorId].shares;
+        return dist.actorInfo[actorId].sharesD18;
     }
 }
