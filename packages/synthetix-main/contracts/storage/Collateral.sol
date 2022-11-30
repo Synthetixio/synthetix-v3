@@ -75,15 +75,15 @@ library Collateral {
     function getTotalLocked(Data storage self) internal view returns (uint) {
         uint64 currentTime = uint64(block.timestamp);
 
-        uint256 locked;
+        uint256 lockedD18;
         for (uint i = 0; i < self.locks.length; i++) {
             CollateralLock.Data storage lock = self.locks[i];
 
             if (lock.lockExpirationTime > currentTime) {
-                locked += lock.amountD18;
+                lockedD18 += lock.amountD18;
             }
         }
 
-        return locked;
+        return lockedD18;
     }
 }

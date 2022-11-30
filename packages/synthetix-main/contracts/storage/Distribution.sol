@@ -178,18 +178,18 @@ library Distribution {
             return;
         }
 
-        uint totalShares = dist.totalSharesD18.uint128toUint256();
+        uint totalSharesD18 = dist.totalSharesD18.uint128toUint256();
 
-        if (totalShares == 0) {
+        if (totalSharesD18 == 0) {
             revert EmptyDistribution();
         }
 
         // TODO: Can we safely assume that amount will always be a regular integer,
         // i.e. not a decimal?
-        int valueHighPrecision = value * DecimalMath.UNIT_PRECISE_INT;
-        int deltaValuePerShare = valueHighPrecision / int(totalShares);
+        int valueD27 = value * DecimalMath.UNIT_PRECISE_INT;
+        int deltaValuePerShareD27 = valueD27 / int(totalSharesD18);
 
-        dist.valuePerShareD27 += int128(deltaValuePerShare);
+        dist.valuePerShareD27 += int128(deltaValuePerShareD27);
     }
 
     /**
@@ -207,10 +207,10 @@ library Distribution {
     ) internal {
         DistributionActor.Data storage actor = dist.actorInfo[actorId];
 
-        uint128 sharesUint128 = newActorShares.uint256toUint128();
-        dist.totalSharesD18 = dist.totalSharesD18 + sharesUint128 - actor.sharesD18;
+        uint128 sharesUint128D18 = newActorShares.uint256toUint128();
+        dist.totalSharesD18 = dist.totalSharesD18 + sharesUint128D18 - actor.sharesD18;
 
-        actor.sharesD18 = sharesUint128;
+        actor.sharesD18 = sharesUint128D18;
 
         actor.lastValuePerShareD27 = newActorShares == 0 ? int128(0) : dist.valuePerShareD27;
     }
@@ -232,10 +232,10 @@ library Distribution {
      */
     function getActorValueChange(Data storage dist, bytes32 actorId) internal view returns (int valueChange) {
         DistributionActor.Data storage actor = dist.actorInfo[actorId];
-        int128 deltaValuePerShare = dist.valuePerShareD27 - actor.lastValuePerShareD27;
+        int128 deltaValuePerShareD27 = dist.valuePerShareD27 - actor.lastValuePerShareD27;
 
-        int changedValueHighPrecision = deltaValuePerShare * actor.sharesD18.uint128toInt256();
-        valueChange = changedValueHighPrecision / DecimalMath.UNIT_PRECISE_INT;
+        int changedValueD27 = deltaValuePerShareD27 * actor.sharesD18.uint128toInt256();
+        valueChange = changedValueD27 / DecimalMath.UNIT_PRECISE_INT;
     }
 
     /**

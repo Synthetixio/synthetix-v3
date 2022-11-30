@@ -54,7 +54,7 @@ library Account {
     }
 
     function getAssignedCollateral(Data storage self, address collateralType) internal view returns (uint) {
-        uint totalAssigned = 0;
+        uint totalAssignedD18 = 0;
 
         SetUtil.UintSet storage pools = self.collaterals[collateralType].pools;
 
@@ -63,11 +63,11 @@ library Account {
 
             Pool.Data storage pool = Pool.load(poolIdx);
 
-            (uint collateralAmount, ) = pool.currentAccountCollateral(collateralType, self.id);
-            totalAssigned += collateralAmount;
+            (uint collateralAmountD18, ) = pool.currentAccountCollateral(collateralType, self.id);
+            totalAssignedD18 += collateralAmountD18;
         }
 
-        return totalAssigned;
+        return totalAssignedD18;
     }
 
     /**
