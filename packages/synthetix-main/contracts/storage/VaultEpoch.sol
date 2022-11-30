@@ -38,7 +38,7 @@ library VaultEpoch {
          * Also, when debt is socialized in a liquidation, it is done onto this distribution. As users
          * interact with the system, their independent debt is consolidated or rolled into consolidatedDebtDist.
          */
-        Distribution.Data incomingDebtDist;
+        Distribution.Data accountsDebtDistribution;
         /**
          * @dev Tracks collateral delegated to this vault, for each user.
          *
@@ -52,7 +52,7 @@ library VaultEpoch {
         /**
          * @dev Tracks consolidated debt for each user.
          *
-         * Updated when users interact with the system, consolidating changes from the fluctuating incomingDebtDist,
+         * Updated when users interact with the system, consolidating changes from the fluctuating accountsDebtDistribution,
          * and directly when users mint or burn USD, or repay debt.
          */
         mapping(uint => int) consolidatedDebtAmounts;
@@ -76,8 +76,8 @@ library VaultEpoch {
      * - LiquidationModule.liquidate
      * - Pool.recalculateVaultCollateral (ticker)
      */
-    function distributeDebt(Data storage self, int debtChange) internal {
-        self.incomingDebtDist.distributeValue(debtChange);
+    function distributeDebtToAccounts(Data storage self, int debtChange) internal {
+        self.accountsDebtDistribution.distributeValue(debtChange);
 
         // Cache total debt here.
         // Will roll over to individual users as they interact with the system.
@@ -106,7 +106,7 @@ library VaultEpoch {
     function consolidateAccountDebt(Data storage self, uint128 accountId) internal returns (int currentDebt) {
         bytes32 actorId = accountToActor(accountId);
 
-        int newDebt = self.incomingDebtDist.accumulateActor(actorId);
+        int newDebt = self.accountsDebtDistribution.accumulateActor(actorId);
 
         currentDebt = assignDebtToAccount(self, accountId, newDebt);
         self.unconsolidatedDebt -= int128(newDebt);
@@ -130,7 +130,7 @@ library VaultEpoch {
         consolidateAccountDebt(self, accountId);
 
         self.collateralAmounts.set(actorId, collateralAmount);
-        self.incomingDebtDist.setActorShares(actorId, self.collateralAmounts.shares[actorId].mulDecimal(leverage));
+        self.accountsDebtDistribution.setActorShares(actorId, self.collateralAmounts.shares[actorId].mulDecimal(leverage));
     }
 
     /**

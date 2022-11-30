@@ -64,9 +64,9 @@ contract LiquidationModule is ILiquidationModule {
             );
         }
 
-        uint oldShares = epoch.incomingDebtDist.getActorShares(bytes32(uint(uint128(accountId))));
+        uint oldShares = epoch.accountsDebtDistribution.getActorShares(bytes32(uint(uint128(accountId))));
 
-        if (epoch.incomingDebtDist.totalShares == oldShares) {
+        if (epoch.accountsDebtDistribution.totalShares == oldShares) {
             // will be left with 0 shares, which can't be socialized
             revert MustBeVaultLiquidated();
         }
@@ -91,7 +91,7 @@ contract LiquidationModule is ILiquidationModule {
         epoch.assignDebtToAccount(accountId, -int(debtLiquidated));
 
         // now we feed the debt back in also
-        epoch.distributeDebt(int(debtLiquidated));
+        epoch.distributeDebtToAccounts(int(debtLiquidated));
 
         // send reward
         collateralType.safeTransfer(msg.sender, amountRewarded);
@@ -154,7 +154,7 @@ contract LiquidationModule is ILiquidationModule {
 
             // repay the debt
             // TODO: better data structures
-            epoch.incomingDebtDist.distributeValue(-int(amountLiquidated));
+            epoch.accountsDebtDistribution.distributeValue(-int(amountLiquidated));
             epoch.unconsolidatedDebt -= int128(int(amountLiquidated));
 
             // take away the collateral

@@ -81,7 +81,7 @@ library Vault {
     {
         VaultEpoch.Data storage epochData = currentEpoch(self);
 
-        usdWeight = uint(epochData.incomingDebtDist.totalShares).mulDecimal(collateralPrice);
+        usdWeight = uint(epochData.accountsDebtDistribution.totalShares).mulDecimal(collateralPrice);
 
         int vaultDepositedValue = int(uint(epochData.collateralAmounts.totalAmount()).mulDecimal(collateralPrice));
         int vaultAccruedDebt = epochData.totalDebt();
@@ -95,8 +95,8 @@ library Vault {
     /**
      * @dev Updated the value per share of the current epoch's incoming debt distribution.
      */
-    function distributeDebt(Data storage self, int debtChange) internal {
-        currentEpoch(self).distributeDebt(debtChange);
+    function distributeDebtToAccounts(Data storage self, int debtChange) internal {
+        currentEpoch(self).distributeDebtToAccounts(debtChange);
     }
 
     /**
@@ -136,8 +136,8 @@ library Vault {
         uint128 accountId,
         bytes32 rewardId
     ) internal returns (uint) {
-        uint totalShares = currentEpoch(self).incomingDebtDist.totalShares;
-        uint actorShares = currentEpoch(self).incomingDebtDist.getActorShares(bytes32(uint(accountId)));
+        uint totalShares = currentEpoch(self).accountsDebtDistribution.totalShares;
+        uint actorShares = currentEpoch(self).accountsDebtDistribution.getActorShares(bytes32(uint(accountId)));
 
         RewardDistribution.Data storage dist = self.rewards[rewardId];
 
