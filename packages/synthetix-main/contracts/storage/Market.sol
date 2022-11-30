@@ -413,9 +413,7 @@ library Market {
 
             int targetValuePerShare = self.poolsDebtDistribution.valuePerShareD27 /
                 DecimalMath.PRECISION_DOWN_SCALE_INT128 +
-                (maxDistributed - actuallyDistributed).divDecimal(
-                    self.poolsDebtDistribution.totalSharesD18.toInt()
-                );
+                (maxDistributed - actuallyDistributed).divDecimal(self.poolsDebtDistribution.totalSharesD18.toInt());
 
             // Exit if the lowest max value per share does not hit the limit.
             HeapUtil.Node memory lowestLimitPool = self.inRangePools.getMax();
@@ -468,9 +466,7 @@ library Market {
         for (iters = 0; iters < maxIter; iters++) {
             int targetValuePerShare = self.poolsDebtDistribution.valuePerShareD27 /
                 DecimalMath.PRECISION_DOWN_SCALE_INT128 +
-                (maxDistributed - actuallyDistributed).divDecimal(
-                    self.poolsDebtDistribution.totalSharesD18.toInt()
-                );
+                (maxDistributed - actuallyDistributed).divDecimal(self.poolsDebtDistribution.totalSharesD18.toInt());
 
             // Exit if there are no out range pools
             if (self.outRangePools.size() == 0) {
