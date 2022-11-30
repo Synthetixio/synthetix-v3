@@ -14,7 +14,7 @@ const distUtils = {
 const bn = (n: number) => wei(n).toBN();
 const hp = wei(10).pow(27);
 
-describe('Distribution', async () => {
+describe.only('Distribution', async () => {
   const { systems, signers, provider } = bootstrap();
   const restore = snapshotCheckpoint(provider);
   let FakeDistributionModule: Contract;
@@ -339,7 +339,9 @@ describe('Distribution', async () => {
       });
 
       before('distribute large amount of value', async () => {
-        await FakeDistributionModule.Distribution_distributeValue(bn(100_000_000));
+        console.log(await FakeDistributionModule.Distribution_getActorValue(actor1));
+        console.log(await FakeDistributionModule.Distribution_getActorValue(actor2));
+        await FakeDistributionModule.Distribution_distributeValue(bn(1_00_00));
       });
 
       it('has correct actor values', async () => {
