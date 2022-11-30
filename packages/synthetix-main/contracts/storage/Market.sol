@@ -245,7 +245,7 @@ library Market {
         Data storage self,
         uint liquiditySharesD18,
         int maxDebtShareValueD18
-    ) internal view returns (uint contribution) {
+    ) internal view returns (uint contributionD18) {
         // Determine how much the current value per share deviates from the maximum.
         uint deltaValuePerShareD18 = uint(
             maxDebtShareValueD18 - self.poolsDebtDistribution.valuePerShareD27 / DecimalMath.PRECISION_DOWN_SCALE_INT128
@@ -348,11 +348,12 @@ library Market {
 
         // recalculate market capacity
         if (newPoolMaxShareValueD18 > valuePerShareD18) {
-            self.capacityD18 += getCapacityContribution(self, newCreditCapacityD18, newPoolMaxShareValueD18).uint256toUint128();
+            self.capacityD18 += getCapacityContribution(self, newCreditCapacityD18, newPoolMaxShareValueD18)
+                .uint256toUint128();
         }
 
-        if (oldPoolMaxShareValue > valuePerShareD18) {
-            self.capacityD18 -= getCapacityContribution(self, oldLiquidity, oldPoolMaxShareValue).uint256toUint128();
+        if (oldPoolMaxShareValueD18 > valuePerShareD18) {
+            self.capacityD18 -= getCapacityContribution(self, oldLiquidityD18, oldPoolMaxShareValueD18).uint256toUint128();
         }
     }
 
@@ -382,15 +383,16 @@ library Market {
     /**
      * @dev Determine the target valuePerShare of the poolsDebtDistribution, given the value that is yet to be distributed.
      */
-    function _getTargetValuePerShare(Market.Data storage self, int valueToDistribute)
+    // solhint-disable-next-line private-vars-leading-underscore
+    function _getTargetValuePerShare(Market.Data storage self, int valueToDistributeD18)
         internal
         view
-        returns (int targetValuePerShare)
+        returns (int targetValuePerShareD18)
     {
         return
             self.poolsDebtDistribution.valuePerShareD27 /
             DecimalMath.PRECISION_DOWN_SCALE_INT128 +
-            valueToDistribute.divDecimal(self.poolsDebtDistribution.totalSharesD18.uint128toInt128());
+            valueToDistributeD18.divDecimal(self.poolsDebtDistribution.totalSharesD18.uint128toInt128());
     }
 
     /**
@@ -411,7 +413,7 @@ library Market {
         int128 k;
         HeapUtil.Data storage fromHeap;
         HeapUtil.Data storage toHeap;
-        if (maxDistributed > 0) {
+        if (maxDistributedD18 > 0) {
             k = 1;
             fromHeap = self.inRangePools;
             toHeap = self.outRangePools;
@@ -462,7 +464,7 @@ library Market {
                     "no shares before actor removal"
                 );
 
-                uint newPoolDebt = self
+                uint newPoolDebtD18 = self
                     .poolsDebtDistribution
                     .setActorShares(bytes32(uint(edgePool.id)), 0)
                     .int256toUint256();
