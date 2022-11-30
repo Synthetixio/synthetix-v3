@@ -10,7 +10,7 @@ library DistributionEntry {
 
     struct Data {
         // amount which should be applied to valuePerShare at the given time below, or
-        int128 scheduledValue;
+        int128 scheduledValueD18;
         // set to <= block.timestamp to distribute immediately to currently staked users
         int64 start;
         int32 duration;
@@ -49,10 +49,10 @@ library DistributionEntry {
             entry.lastUpdate = 0;
             entry.start = 0;
             entry.duration = 0;
-            entry.scheduledValue = 0;
+            entry.scheduledValueD18 = 0;
         } else {
             // set distribution schedule
-            entry.scheduledValue = int128(amount);
+            entry.scheduledValueD18 = int128(amount);
             entry.start = int64(int(start));
             entry.duration = int32(int(duration));
 
@@ -67,7 +67,7 @@ library DistributionEntry {
      * call every time before `totalShares` changes
      */
     function updateEntry(Data storage entry, uint totalSharesAmount) internal returns (int128) {
-        if (entry.scheduledValue == 0 || totalSharesAmount == 0) {
+        if (entry.scheduledValueD18 == 0 || totalSharesAmount == 0) {
             // cannot process distributed rewards if a pool is empty.
             return 0;
         }
@@ -83,14 +83,14 @@ library DistributionEntry {
 
         // determine whether this is an instant distribution or a delayed distribution
         if (entry.duration == 0 && entry.lastUpdate < entry.start) {
-            valuePerShareChange = (int(entry.scheduledValue) * 1e18) / int(totalSharesAmount);
+            valuePerShareChange = (int(entry.scheduledValueD18) * 1e18) / int(totalSharesAmount);
         } else if (entry.lastUpdate < entry.start + entry.duration) {
             // find out what is "newly" distributed
             int lastUpdateDistributed = entry.lastUpdate < entry.start
                 ? int128(0)
-                : (int(entry.scheduledValue) * (entry.lastUpdate - entry.start)) / entry.duration;
+                : (int(entry.scheduledValueD18) * (entry.lastUpdate - entry.start)) / entry.duration;
 
-            int curUpdateDistributed = entry.scheduledValue;
+            int curUpdateDistributed = entry.scheduledValueD18;
             if (curTime < entry.start + entry.duration) {
                 curUpdateDistributed = (curUpdateDistributed * (curTime - entry.start)) / entry.duration;
             }

@@ -150,7 +150,7 @@ contract RewardsManagerModule is IRewardsManagerModule {
         }
 
         return
-            uint(int(vault.rewards[rewardId].entry.scheduledValue)).divDecimal(
+            uint(int(vault.rewards[rewardId].entry.scheduledValueD18)).divDecimal(
                 uint(int(vault.rewards[rewardId].entry.duration)).divDecimal(totalShares)
             );
     }
