@@ -18,6 +18,7 @@ interface IRewardsManagerModule {
         address distributor,
         uint amount
     );
+    event RewardsDistributorRegistered(uint128 indexed poolId, address indexed collateralType, address indexed distributor);
 
     /// @notice called by pool owner or an existing distributor to register rewards for vault participants
     function registerRewardsDistributor(
