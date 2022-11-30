@@ -94,8 +94,8 @@ library Vault {
     /**
      * @dev Updated the value per share of the current epoch's incoming debt distribution.
      */
-    function distributeDebtToAccount(Data storage self, int debtChange) internal {
-        currentEpoch(self).distributeDebtToAccount(debtChange);
+    function distributeDebtToAccounts(Data storage self, int debtChange) internal {
+        currentEpoch(self).distributeDebtToAccounts(debtChange);
     }
 
     /**

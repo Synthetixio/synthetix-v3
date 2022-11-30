@@ -72,7 +72,7 @@ library VaultEpoch {
      * - LiquidationModule.liquidate
      * - Pool.recalculateVaultCollateral (ticker)
      */
-    function distributeDebtToAccount(Data storage self, int debtChange) internal {
+    function distributeDebtToAccounts(Data storage self, int debtChange) internal {
         self.accountsDebtDistribution.distributeValue(debtChange);
 
         // Cache total debt here.

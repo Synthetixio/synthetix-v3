@@ -331,7 +331,7 @@ library Market {
     /**
      * @dev Gets any outstanding debt. Do not call this method except in tests
      *
-     * TODO: Understand distributeDebtToPool() first.
+     * TODO: Understand distributeDebtToPools() first.
      */
     function getOutstandingDebt(Data storage self, uint128 poolId) internal returns (int debtChange) {
         return self.pools[poolId].pendingDebt.uint128toInt128() + self.poolsDebtDistribution.updateActorShares(bytes32(uint(poolId)), 0);
@@ -344,9 +344,9 @@ library Market {
     /**
      * @dev TODO
      *
-     * Just wraps distributeDebtToPool and adjustPoolShares
+     * Just wraps distributeDebtToPools and adjustPoolShares
      *
-     * TODO: Understand distributeDebtToPool() first.
+     * TODO: Understand distributeDebtToPools() first.
      */
     function rebalance(
         uint128 marketId,
@@ -363,7 +363,7 @@ library Market {
         }
 
         // Iter avoids griefing - MarketManager can call this with user specified iters and thus clean up a grieved market.
-        distributeDebtToPool(self, 9999999999);
+        distributeDebtToPools(self, 9999999999);
 
         return adjustPoolShares(self, poolId, amount, maxDebtShareValue);
     }
@@ -377,7 +377,7 @@ library Market {
      * If a vault is reconfigured, if maxPerShareValue is above, it needs to be removed.
      * Updates the heap per changes in maxPerShareValue, not changes in the actual debt of the market.
      *
-     * TODO: Understand distributeDebtToPool() first.
+     * TODO: Understand distributeDebtToPools() first.
      */
     function adjustPoolShares(
         Data storage self,
@@ -428,7 +428,7 @@ library Market {
      * Rotates recorded allocation of debt to any connected pools.
      * NOTE: this function should be called before any pool alters its liquidity allocation (see `rebalance` above)
      */
-    function distributeDebtToPool(Data storage self, uint maxIter) internal {
+    function distributeDebtToPools(Data storage self, uint maxIter) internal {
         // Get the current and last distributed market balances.
         // Note: The last distributed balance will be cached within this function's execution.
         int256 targetBalance = totalBalance(self);

@@ -90,7 +90,7 @@ contract LiquidationModule is ILiquidationModule {
         epoch.consolidatedDebtDist.updateActorShares(bytes32(uint(accountId)), 0);
 
         // now we feed the debt back in also
-        epoch.distributeDebtToAccount(int(debtLiquidated));
+        epoch.distributeDebtToAccounts(int(debtLiquidated));
 
         // send reward
         collateralType.safeTransfer(msg.sender, amountRewarded);
