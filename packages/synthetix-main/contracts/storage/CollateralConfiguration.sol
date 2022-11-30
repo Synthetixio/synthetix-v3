@@ -75,7 +75,7 @@ library CollateralConfiguration {
         }
     }
 
-    function requireSufficientDelegation(address token, uint amount) internal view {
+    function requireSufficientDelegation(address token, uint amountD18) internal view {
         CollateralConfiguration.Data storage config = load(token);
 
         uint minDelegationD18 = config.minDelegationD18;
@@ -84,7 +84,7 @@ library CollateralConfiguration {
             minDelegationD18 = config.liquidationRewardD18;
         }
 
-        if (amount < minDelegationD18) {
+        if (amountD18 < minDelegationD18) {
             revert InsufficientDelegation(minDelegationD18);
         }
     }
@@ -101,14 +101,14 @@ library CollateralConfiguration {
 
     function verifyCollateralRatio(
         Data storage self,
-        uint debt,
-        uint collateralValue
+        uint debtD18,
+        uint collateralValueD18
     ) internal view {
-        if (debt != 0 && collateralValue.divDecimal(debt) < self.issuanceRatioD18) {
+        if (debtD18 != 0 && collateralValueD18.divDecimal(debtD18) < self.issuanceRatioD18) {
             revert InsufficientCollateralRatio(
-                collateralValue,
-                debt,
-                collateralValue.divDecimal(debt),
+                collateralValueD18,
+                debtD18,
+                collateralValueD18.divDecimal(debtD18),
                 self.issuanceRatioD18
             );
         }

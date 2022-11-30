@@ -173,8 +173,8 @@ library Distribution {
      *
      * The value being distributed ultimately modifies the distribution's valuePerShare.
      */
-    function distributeValue(Data storage dist, int value) internal {
-        if (value == 0) {
+    function distributeValue(Data storage dist, int valueD18) internal {
+        if (valueD18 == 0) {
             return;
         }
 
@@ -186,8 +186,8 @@ library Distribution {
 
         // TODO: Can we safely assume that amount will always be a regular integer,
         // i.e. not a decimal?
-        int valueD27 = value * DecimalMath.UNIT_PRECISE_INT;
-        int deltaValuePerShareD27 = valueD27 / int(totalSharesD18);
+        int valueD45 = valueD18 * DecimalMath.UNIT_PRECISE_INT;
+        int deltaValuePerShareD27 = valueD45 / int(totalSharesD18);
 
         dist.valuePerShareD27 += int128(deltaValuePerShareD27);
     }
@@ -203,24 +203,24 @@ library Distribution {
     function setActorShares(
         Data storage dist,
         bytes32 actorId,
-        uint newActorShares
+        uint newActorSharesD18
     ) internal {
         DistributionActor.Data storage actor = dist.actorInfo[actorId];
 
-        uint128 sharesUint128D18 = newActorShares.uint256toUint128();
+        uint128 sharesUint128D18 = newActorSharesD18.uint256toUint128();
         dist.totalSharesD18 = dist.totalSharesD18 + sharesUint128D18 - actor.sharesD18;
 
         actor.sharesD18 = sharesUint128D18;
 
-        actor.lastValuePerShareD27 = newActorShares == 0 ? int128(0) : dist.valuePerShareD27;
+        actor.lastValuePerShareD27 = newActorSharesD18 == 0 ? int128(0) : dist.valuePerShareD27;
     }
 
     /**
      * @dev Updates an actor's lastValuePerShare to the distribution's current valuePerShare, and
      * returns the change in value for the actor, since their last update.
      */
-    function accumulateActor(Data storage dist, bytes32 actorId) internal returns (int valueChange) {
-        valueChange = getActorValueChange(dist, actorId);
+    function accumulateActor(Data storage dist, bytes32 actorId) internal returns (int valueChangeD18) {
+        valueChangeD18 = getActorValueChange(dist, actorId);
 
         // TODO only update lastValuePerShare since we got the valueChange in the line before
         // actor.lastValuePerShare = valuePerShare;
@@ -230,18 +230,18 @@ library Distribution {
     /**
      * @dev Calculates the change in value of the actor's shares, according to the current valuePerShare of the distribution, and what this value was the last time the actor's shares were updated.
      */
-    function getActorValueChange(Data storage dist, bytes32 actorId) internal view returns (int valueChange) {
+    function getActorValueChange(Data storage dist, bytes32 actorId) internal view returns (int valueChangeD18) {
         DistributionActor.Data storage actor = dist.actorInfo[actorId];
         int128 deltaValuePerShareD27 = dist.valuePerShareD27 - actor.lastValuePerShareD27;
 
-        int changedValueD27 = deltaValuePerShareD27 * actor.sharesD18.uint128toInt256();
-        valueChange = changedValueD27 / DecimalMath.UNIT_PRECISE_INT;
+        int changedValueD45 = deltaValuePerShareD27 * actor.sharesD18.uint128toInt256();
+        valueChangeD18 = changedValueD45 / DecimalMath.UNIT_PRECISE_INT;
     }
 
     /**
      * @dev Returns the number of shares owned by an actor in the distribution.
      */
-    function getActorShares(Data storage dist, bytes32 actorId) internal view returns (uint shares) {
+    function getActorShares(Data storage dist, bytes32 actorId) internal view returns (uint sharesD18) {
         return dist.actorInfo[actorId].sharesD18;
     }
 }

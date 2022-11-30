@@ -50,20 +50,20 @@ library Collateral {
     /**
      * @dev Increments the entry's availableCollateral.
      */
-    function deposit(Data storage self, uint amount) internal {
+    function deposit(Data storage self, uint amountD18) internal {
         if (!self.isSet) {
             self.isSet = true;
-            self.availableAmountD18 = amount;
+            self.availableAmountD18 = amountD18;
         } else {
-            self.availableAmountD18 += amount;
+            self.availableAmountD18 += amountD18;
         }
     }
 
     /**
      * @dev Decrements the entry's availableCollateral.
      */
-    function deductCollateral(Data storage self, uint amount) internal {
-        self.availableAmountD18 -= amount;
+    function deductCollateral(Data storage self, uint amountD18) internal {
+        self.availableAmountD18 -= amountD18;
     }
 
     /**
