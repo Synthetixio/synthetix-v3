@@ -1,13 +1,21 @@
-{{>common}}
+{{h}}{{formatTitle name}}
 
-{{#each items}}
+{{#hsection}}
+{{h}}Functions
+
+{{#each (inheritedFunctions)}}
 {{#hsection}}
 {{>item}}
 {{/hsection}}
 {{/each}}
+{{/hsection}}
 
-{{#each (inheritedItems)}}
+{{#hsection}}
+{{h}}Events
+
+{{#each (inheritedEvents)}}
 {{#hsection}}
 {{>item}}
 {{/hsection}}
 {{/each}}
+{{/hsection}}

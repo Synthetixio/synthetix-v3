@@ -6,34 +6,26 @@
   ```
 {{/if}}
 
-{{{natspec.notice}}}
+{{#if natspec.notice}}
+  {{{natspec.notice}}}
+{{/if}}
 
 {{#if natspec.dev}}
-  _{{{natspec.dev}}}_
+  {{{natspec.dev}}}
 {{/if}}
 
 {{#if natspec.params}}
-  | Name | Type | Description | | ---- | ---- | ----------- |
+  | Name | Type | Description |
   {{#each params}}
-    |
-    {{name}}
-    |
-    {{type}}
-    |
-    {{{joinLines natspec}}}
-    |
+    |{{name}}|{{type}}|{{{joinLines natspec}}}|
   {{/each}}
 {{/if}}
 
 {{#if natspec.returns}}
-  | Name | Type | Description | | ---- | ---- | ----------- |
+  | Name | Type | Description |
   {{#each returns}}
-    |
-    {{#if name}}{{name}}{{else}}[{{@index}}]{{/if}}
-    |
-    {{type}}
-    |
-    {{{joinLines natspec}}}
-    |
+    |{{#if name}}{{name}}{{else}}[{{@index}}]{{/if}}|{{type}}|{{{joinLines
+      natspec
+    }}}|
   {{/each}}
 {{/if}}

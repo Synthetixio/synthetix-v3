@@ -1,5 +1,6 @@
 import { HelperOptions, Utils } from 'handlebars';
 import { DocItemWithContext } from 'solidity-docgen/dist/site';
+import { findAll } from 'solidity-ast/utils';
 
 /**
  * Returns a Markdown heading marker. An optional number increases the heading level.
@@ -77,14 +78,18 @@ export function formatTitle(text?: string) {
 }
 
 // Inspired by https://github.com/OpenZeppelin/solidity-docgen/issues/385
-export function inheritedItems(this: DocItemWithContext) {
+export function inheritedFunctions(this: DocItemWithContext) {
   if (this.nodeType === 'ContractDefinition') {
     const { deref } = this.__item_context.build;
     const parents = this.linearizedBaseContracts.map(deref('ContractDefinition'));
+    return parents.flatMap((p) => [...findAll('FunctionDefinition', p)]);
+  }
+}
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return parents.reduce((prev: any, curr: any) => {
-      return prev.concat(curr.nodes);
-    }, []);
+export function inheritedEvents(this: DocItemWithContext) {
+  if (this.nodeType === 'ContractDefinition') {
+    const { deref } = this.__item_context.build;
+    const parents = this.linearizedBaseContracts.map(deref('ContractDefinition'));
+    return parents.flatMap((p) => [...findAll('EventDefinition', p)]);
   }
 }
