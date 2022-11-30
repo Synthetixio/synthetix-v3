@@ -19,7 +19,7 @@ library ScalableMapping {
 
     struct Data {
         uint128 totalSharesD18;
-        int128 scaleModifier;
+        int128 scaleModifierD27;
         mapping(bytes32 => uint) shares;
     }
 
@@ -40,10 +40,10 @@ library ScalableMapping {
         int valueHighPrecision = value.toHighPrecisionDecimal();
         int deltascaleModifier = valueHighPrecision / int(totalShares);
 
-        self.scaleModifier += int128(deltascaleModifier);
+        self.scaleModifierD27 += int128(deltascaleModifier);
 
-        if (self.scaleModifier < -DecimalMath.UNIT_PRECISE_INT) {
-            revert InsufficientMappedAmount(-self.scaleModifier);
+        if (self.scaleModifierD27 < -DecimalMath.UNIT_PRECISE_INT) {
+            revert InsufficientMappedAmount(-self.scaleModifierD27);
         }
     }
 
@@ -93,11 +93,11 @@ library ScalableMapping {
      */
     function totalAmount(Data storage self) internal view returns (int value) {
         return
-            int((self.scaleModifier + DecimalMath.UNIT_PRECISE_INT) * self.totalSharesD18.uint128toInt256())
+            int((self.scaleModifierD27 + DecimalMath.UNIT_PRECISE_INT) * self.totalSharesD18.uint128toInt256())
                 .fromHighPrecisionDecimalToInteger();
     }
 
     function _getSharesForAmount(Data storage self, uint amount) private view returns (uint shares) {
-        shares = amount.toHighPrecisionDecimal() / uint(int(self.scaleModifier + DecimalMath.UNIT_INT128)) / 1e9;
+        shares = amount.toHighPrecisionDecimal() / uint(int(self.scaleModifierD27 + DecimalMath.UNIT_INT128)) / 1e9;
     }
 }
