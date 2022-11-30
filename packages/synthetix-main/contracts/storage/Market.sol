@@ -26,10 +26,10 @@ library Market {
     using DecimalMath for int256;
     using DecimalMath for int128;
 
-    using SafeCast for uint256;
-    using SafeCast for uint128;
-    using SafeCast for int256;
-    using SafeCast for int128;
+    using SafeCastU256 for uint256;
+    using SafeCastU128 for uint128;
+    using SafeCastI256 for int256;
+    using SafeCastI128 for int128;
 
     error MarketNotFound(uint128 marketId);
 
@@ -270,9 +270,7 @@ library Market {
      * TODO: Enforce how this is only to be used in tests!
      */
     function getOutstandingDebt(Data storage self, uint128 poolId) internal returns (int debtChangeD18) {
-        return
-            self.pools[poolId].pendingDebtD18.uint128toInt128() +
-            self.poolsDebtDistribution.accumulateActor(bytes32(uint(poolId)));
+        return self.pools[poolId].pendingDebtD18.toInt() + self.poolsDebtDistribution.accumulateActor(bytes32(uint(poolId)));
     }
 
     /**
@@ -328,32 +326,31 @@ library Market {
         // require(oldPoolMaxShareValue == 0, "value is not 0");
         // require(newPoolMaxShareValue == 0, "new pool max share value is in fact set");
 
-        self.pools[poolId].liquidityAmountD18 = newCreditCapacityD18.uint256toUint128();
+        self.pools[poolId].liquidityAmountD18 = newCreditCapacityD18.to128();
 
         int128 valuePerShareD18 = self.poolsDebtDistribution.valuePerShareD27 / DecimalMath.PRECISION_DOWN_SCALE_INT128;
 
         if (newPoolMaxShareValueD18 < valuePerShareD18) {
             // this will ensure calculations below can correctly gauge shares changes
             newCreditCapacityD18 = 0;
-            self.inRangePools.extractById(poolId.uint256toUint128());
-            self.outRangePools.insert(poolId, newPoolMaxShareValueD18.int256toInt128());
+            self.inRangePools.extractById(poolId);
+            self.outRangePools.insert(poolId, newPoolMaxShareValueD18.to128());
         } else {
-            self.inRangePools.insert(poolId, -newPoolMaxShareValueD18.int256toInt128());
+            self.inRangePools.insert(poolId, -newPoolMaxShareValueD18.to128());
             self.outRangePools.extractById(poolId);
         }
 
         int changedValueD18 = self.poolsDebtDistribution.setActorShares(bytes32(uint(poolId)), newCreditCapacityD18);
-        debtChangeD18 = self.pools[poolId].pendingDebtD18.uint128toInt128() + changedValueD18;
+        debtChangeD18 = self.pools[poolId].pendingDebtD18.toInt() + changedValueD18;
         self.pools[poolId].pendingDebtD18 = 0;
 
         // recalculate market capacity
         if (newPoolMaxShareValueD18 > valuePerShareD18) {
-            self.capacityD18 += getCapacityContribution(self, newCreditCapacityD18, newPoolMaxShareValueD18)
-                .uint256toUint128();
+            self.capacityD18 += getCapacityContribution(self, newCreditCapacityD18, newPoolMaxShareValueD18).to128();
         }
 
         if (oldPoolMaxShareValueD18 > valuePerShareD18) {
-            self.capacityD18 -= getCapacityContribution(self, oldLiquidityD18, oldPoolMaxShareValueD18).uint256toUint128();
+            self.capacityD18 -= getCapacityContribution(self, oldLiquidityD18, oldPoolMaxShareValueD18).to128();
         }
     }
 
@@ -376,7 +373,7 @@ library Market {
             // cannot use `outstandingBalance` here because `self.lastDistributedMarketBalance`
             // may have changed after calling the bump functions above
             self.poolsDebtDistribution.distributeValue(targetBalanceD18 - self.lastDistributedMarketBalanceD18);
-            self.lastDistributedMarketBalanceD18 = targetBalanceD18.int256toInt128();
+            self.lastDistributedMarketBalanceD18 = targetBalanceD18.to128();
         }
     }
 
@@ -392,7 +389,7 @@ library Market {
         return
             self.poolsDebtDistribution.valuePerShareD27 /
             DecimalMath.PRECISION_DOWN_SCALE_INT128 +
-            valueToDistributeD18.divDecimal(self.poolsDebtDistribution.totalSharesD18.uint128toInt128());
+            valueToDistributeD18.divDecimal(self.poolsDebtDistribution.totalSharesD18.to128());
     }
 
     /**
@@ -468,7 +465,7 @@ library Market {
                     .poolsDebtDistribution
                     .setActorShares(bytes32(uint(edgePool.id)), 0)
                     .int256toUint256();
-                self.pools[edgePool.id].pendingDebtD18 += newPoolDebtD18.uint256toUint128();
+                self.pools[edgePool.id].pendingDebtD18 += newPoolDebtD18.to128();
             } else {
                 require(
                     self.poolsDebtDistribution.getActorShares(bytes32(uint(edgePool.id))) == 0,
@@ -483,7 +480,7 @@ library Market {
         }
 
         // Record the accumulated distributed balance.
-        self.lastDistributedMarketBalanceD18 += actuallyDistributedD18.int256toInt128();
+        self.lastDistributedMarketBalanceD18 += actuallyDistributedD18.to128();
 
         exhausted = iters == maxIter;
     }
