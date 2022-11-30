@@ -334,7 +334,9 @@ library Market {
      * TODO: Understand distributeDebtToPools() first.
      */
     function getOutstandingDebt(Data storage self, uint128 poolId) internal returns (int debtChange) {
-        return self.pools[poolId].pendingDebt.uint128toInt128() + self.poolsDebtDistribution.updateActorShares(bytes32(uint(poolId)), 0);
+        return
+            self.pools[poolId].pendingDebt.uint128toInt128() +
+            self.poolsDebtDistribution.updateActorShares(bytes32(uint(poolId)), 0);
     }
 
     function getDebtPerShare(Data storage self) internal view returns (int debtPerShare) {

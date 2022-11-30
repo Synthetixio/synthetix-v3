@@ -227,7 +227,9 @@ describe('Market', function () {
 
           describe('both pools leave', () => {
             before('adjusted to leave', async () => {
-              await systems().Core.connect(owner).Market_distributeDebtToPools(fakeMarketId, 9999999);
+              await systems()
+                .Core.connect(owner)
+                .Market_distributeDebtToPools(fakeMarketId, 9999999);
               await systems()
                 .Core.connect(owner)
                 .Market_adjustPoolShares(fakeMarketId, fakePool1, 0, One.mul(1234));

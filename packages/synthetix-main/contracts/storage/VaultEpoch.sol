@@ -118,7 +118,10 @@ library VaultEpoch {
         consolidateAccountDebt(self, accountId);
 
         self.collateralDist.updateActorValue(actorId, int(collateralAmount));
-        self.accountsDebtDistribution.updateActorShares(actorId, self.collateralDist.getActorShares(actorId).mulDecimal(leverage));
+        self.accountsDebtDistribution.updateActorShares(
+            actorId,
+            self.collateralDist.getActorShares(actorId).mulDecimal(leverage)
+        );
     }
 
     /**
