@@ -1,3 +1,5 @@
+/* eslint-env mocha */
+
 import { ethers } from 'ethers';
 import hre from 'hardhat';
 import { CannonWrapperGenericProvider, ChainBuilderContext } from '@usecannon/builder';
