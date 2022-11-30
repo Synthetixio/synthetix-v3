@@ -8,6 +8,7 @@ import "../../interfaces/IMarketManagerModule.sol";
 import "../../interfaces/IUSDTokenModule.sol";
 
 import "../../storage/Market.sol";
+import "../../storage/MarketCreator.sol";
 import "../../storage/Account.sol";
 
 import "@synthetixio/core-modules/contracts/storage/AssociatedSystem.sol";
@@ -28,7 +29,7 @@ contract MarketManagerModule is IMarketManagerModule {
         FeatureFlag.ensureAccessToFeature(_MARKET_FEATURE_FLAG);
         // Can we verify that `market` conforms to the IMarket interface here? (i.e. has a `balance()` function?)
 
-        marketId = Market.create(market).id;
+        marketId = MarketCreator.create(market).id;
 
         emit MarketRegistered(market, marketId);
 
