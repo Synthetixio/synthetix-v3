@@ -81,7 +81,7 @@ library ScalableMapping {
             return 0;
         }
 
-        return self.shares[actorId] * totalAmount(self).int256toUint256() / totalShares;
+        return (self.shares[actorId] * totalAmount(self).int256toUint256()) / totalShares;
     }
 
     /**
@@ -92,7 +92,9 @@ library ScalableMapping {
      * Requirement: this assumes that every user's lastscaleModifier is zero.
      */
     function totalAmount(Data storage self) internal view returns (int value) {
-        return int((self.scaleModifier + DecimalMath.UNIT_PRECISE_INT) * self.totalShares.uint128toInt256()).fromHighPrecisionDecimalToInteger();
+        return
+            int((self.scaleModifier + DecimalMath.UNIT_PRECISE_INT) * self.totalShares.uint128toInt256())
+                .fromHighPrecisionDecimalToInteger();
     }
 
     function _getSharesForAmount(Data storage self, uint amount) private view returns (uint shares) {

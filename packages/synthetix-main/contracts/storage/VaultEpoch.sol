@@ -28,9 +28,7 @@ library VaultEpoch {
          * the consolidated debt distribution.
          */
         int128 unconsolidatedDebt;
-
         int128 totalConsolidatedDebt;
-
         /**
          * @dev Tracks incoming debt for each user.
          *
@@ -86,7 +84,11 @@ library VaultEpoch {
         self.unconsolidatedDebt += int128(debtChange);
     }
 
-    function assignDebtToAccount(Data storage self, uint128 accountId, int amount) internal returns (int newDebt) {
+    function assignDebtToAccount(
+        Data storage self,
+        uint128 accountId,
+        int amount
+    ) internal returns (int newDebt) {
         int currentDebt = self.consolidatedDebtAmounts[accountId];
         self.consolidatedDebtAmounts[accountId] += int128(amount);
         self.totalConsolidatedDebt += int128(amount);

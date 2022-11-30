@@ -71,8 +71,6 @@ contract VaultModule is IVaultModule {
             Account.requireSufficientCollateral(accountId, collateralType, collateralAmount - oldCollateralAmount);
         }
 
-        bytes32 actorId = bytes32(uint(accountId));
-
         uint collateralPrice = _updatePosition(
             accountId,
             poolId,
