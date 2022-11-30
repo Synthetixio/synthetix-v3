@@ -334,7 +334,7 @@ library Market {
         //require(oldPoolMaxShareValue == 0, "value is not 0");
         //require(newPoolMaxShareValue == 0, "new pool max share value is in fact set");
 
-        self.pools[poolId].liquidityAmount = newLiquidity.uint256toUint128();
+        self.pools[poolId].liquidityAmountD18 = newLiquidity.uint256toUint128();
 
         int128 lowPrecisionValuePerShare = self.poolsDebtDistribution.valuePerShare.reducePrecisionInt128();
 
@@ -494,7 +494,7 @@ library Market {
             require(self.poolsDebtDistribution.getActorShares(bytes32(uint(poolId))) == 0, "actor has shares before add");
 
             // Attach the market from this pool by setting the pool's shares to the value before exiting the market.
-            self.poolsDebtDistribution.setActorShares(bytes32(uint(poolId)), self.pools[poolId].liquidityAmount);
+            self.poolsDebtDistribution.setActorShares(bytes32(uint(poolId)), self.pools[poolId].liquidityAmountD18);
         }
 
         self.lastDistributedMarketBalanceD18 += actuallyDistributed.int256toInt128();
