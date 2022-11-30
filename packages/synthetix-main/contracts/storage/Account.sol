@@ -46,7 +46,7 @@ library Account {
         )
     {
         totalAssigned = getAssignedCollateral(self, collateralType);
-        totalDeposited = totalAssigned + self.collaterals[collateralType].availableAmount;
+        totalDeposited = totalAssigned + self.collaterals[collateralType].availableAmountD18;
         totalLocked = self.collaterals[collateralType].getTotalLocked();
         //totalEscrowed = _getLockedEscrow(stakedCollateral.escrow);
 
@@ -87,7 +87,7 @@ library Account {
         address collateralType,
         uint amount
     ) internal view {
-        if (Account.load(accountId).collaterals[collateralType].availableAmount < amount) {
+        if (Account.load(accountId).collaterals[collateralType].availableAmountD18 < amount) {
             revert InsufficientAccountCollateral(amount);
         }
     }

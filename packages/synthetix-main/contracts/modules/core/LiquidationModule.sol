@@ -60,7 +60,7 @@ contract LiquidationModule is ILiquidationModule {
                 collateralValue,
                 debtLiquidated,
                 debtLiquidated == 0 ? 0 : collateralValue.divDecimal(debtLiquidated),
-                collateralConfig.liquidationRatio
+                collateralConfig.liquidationRatioD18
             );
         }
 
@@ -71,7 +71,7 @@ contract LiquidationModule is ILiquidationModule {
             revert MustBeVaultLiquidated();
         }
 
-        amountRewarded = collateralConfig.liquidationReward;
+        amountRewarded = collateralConfig.liquidationRewardD18;
 
         if (amountRewarded >= uint(epoch.collateralAmounts.totalAmount())) {
             // vault is too small to be liquidated socialized
@@ -131,7 +131,7 @@ contract LiquidationModule is ILiquidationModule {
                 collateralValue,
                 vaultDebt,
                 vaultDebt > 0 ? collateralValue.divDecimal(vaultDebt) : 0,
-                collateralConfig.liquidationRatio
+                collateralConfig.liquidationRatioD18
             );
         }
 
@@ -176,7 +176,7 @@ contract LiquidationModule is ILiquidationModule {
             return false;
         }
 
-        return collateralValue.divDecimal(debt) < CollateralConfiguration.load(collateralType).liquidationRatio;
+        return collateralValue.divDecimal(debt) < CollateralConfiguration.load(collateralType).liquidationRatioD18;
     }
 
     function isLiquidatable(

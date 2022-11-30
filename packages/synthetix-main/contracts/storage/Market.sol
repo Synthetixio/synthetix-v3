@@ -63,7 +63,7 @@ library Market {
          *
          * TODO: Consider renaming this to netIssuance.
          */
-        int128 issuance;
+        int128 issuanceD18;
         /**
          * @dev TODO The total amount of USD that the market could withdraw if it were to immediately unwrap all its positions.
          *
@@ -76,13 +76,13 @@ library Market {
          * TODO: How does reported debt play with this definition?
          * TODO: Consider renaming to creditCapacity.
          */
-        uint128 capacity;
+        uint128 capacityD18;
         /**
          * @dev TODO The total balance that the market had the last time that its debt was distributed.
          *
          * A Market's debt is distributed when the reported debt of its associated external market is rolled into the pools that provide liquidity to it.
          */
-        int128 lastDistributedMarketBalance;
+        int128 lastDistributedMarketBalanceD18;
         /**
          * @dev A heap of pools for which the market has not yet hit its maximum credit capacity.
          *
@@ -139,7 +139,7 @@ library Market {
         /**
          * @dev TODO The maximum amount of market provided collateral, per type, that this market can deposit.
          */
-        mapping(address => uint) maximumDepositable;
+        mapping(address => uint) maximumDepositableD18;
     }
 
     /**
@@ -147,7 +147,7 @@ library Market {
      */
     struct DepositedCollateral {
         address collateralType;
-        uint amount;
+        uint amountD18;
     }
 
     /**
@@ -200,7 +200,7 @@ library Market {
      * TODO: Consider renaming to totalDebt()? totalBalance is more correct, but totalDebt is easier to understand.
      */
     function totalBalance(Data storage self) internal view returns (int) {
-        return int(getReportedDebt(self)) + self.issuance - int(getDepositedCollateralValue(self));
+        return int(getReportedDebt(self)) + self.issuanceD18 - int(getDepositedCollateralValue(self));
     }
 
     /**
@@ -220,7 +220,7 @@ library Market {
 
             uint price = CollateralConfiguration.getCollateralPrice(config);
 
-            totalDepositedCollateralValue += price.mulDecimal(entry.amount);
+            totalDepositedCollateralValue += price.mulDecimal(entry.amountD18);
         }
 
         return totalDepositedCollateralValue;
@@ -265,7 +265,7 @@ library Market {
      * TODO: Should this be <=?
      */
     function isCapacityLocked(Data storage self) internal view returns (bool) {
-        return self.capacity < getLockedLiquidity(self);
+        return self.capacityD18 < getLockedLiquidity(self);
     }
 
     /**
@@ -277,7 +277,7 @@ library Market {
     function getOutstandingDebt(Data storage self, uint128 poolId) internal returns (int debtChange) {
         int changedValue = self.poolsDebtDistribution.getActorValueChange(bytes32(uint(poolId)));
 
-        return self.pools[poolId].pendingDebt.uint128toInt128() + changedValue;
+        return self.pools[poolId].pendingDebtD18.uint128toInt128() + changedValue;
     }
 
     function getDebtPerShare(Data storage self) internal view returns (int debtPerShare) {
@@ -334,7 +334,7 @@ library Market {
         //require(oldPoolMaxShareValue == 0, "value is not 0");
         //require(newPoolMaxShareValue == 0, "new pool max share value is in fact set");
 
-        self.pools[poolId].liquidityAmount = newLiquidity.uint256toUint128();
+        self.pools[poolId].liquidityAmountD18 = newLiquidity.uint256toUint128();
 
         int128 lowPrecisionValuePerShare = self.poolsDebtDistribution.valuePerShareD27.reducePrecisionInt128();
 
@@ -350,16 +350,16 @@ library Market {
 
         int changedValue = self.poolsDebtDistribution.getActorValueChange(bytes32(uint(poolId)));
         self.poolsDebtDistribution.setActorShares(bytes32(uint(poolId)), newLiquidity);
-        debtChange = self.pools[poolId].pendingDebt.uint128toInt128() + changedValue;
-        self.pools[poolId].pendingDebt = 0;
+        debtChange = self.pools[poolId].pendingDebtD18.uint128toInt128() + changedValue;
+        self.pools[poolId].pendingDebtD18 = 0;
 
         // recalculate market capacity
         if (newPoolMaxShareValue > lowPrecisionValuePerShare) {
-            self.capacity += getCapacityContribution(self, newLiquidity, newPoolMaxShareValue).uint256toUint128();
+            self.capacityD18 += getCapacityContribution(self, newLiquidity, newPoolMaxShareValue).uint256toUint128();
         }
 
         if (oldPoolMaxShareValue > lowPrecisionValuePerShare) {
-            self.capacity -= getCapacityContribution(self, oldLiquidity, oldPoolMaxShareValue).uint256toUint128();
+            self.capacityD18 -= getCapacityContribution(self, oldLiquidity, oldPoolMaxShareValue).uint256toUint128();
         }
     }
 
@@ -375,7 +375,7 @@ library Market {
         // Get the current and last distributed market balances.
         // Note: The last distributed balance will be cached within this function's execution.
         int256 targetBalance = totalBalance(self);
-        int256 outstandingBalance = targetBalance - self.lastDistributedMarketBalance;
+        int256 outstandingBalance = targetBalance - self.lastDistributedMarketBalanceD18;
 
         (, bool exhaustedUp) = bumpPoolsOut(self, outstandingBalance, maxIter);
         (, bool exhaustedDown) = bumpPoolsIn(self, outstandingBalance, maxIter);
@@ -383,8 +383,8 @@ library Market {
         if (!exhaustedDown && !exhaustedUp && self.poolsDebtDistribution.totalSharesD18 > 0) {
             // cannot use `outstandingBalance` here because `self.lastDistributedMarketBalance`
             // may have changed after calling the bump functions above
-            self.poolsDebtDistribution.distributeValue(targetBalance - self.lastDistributedMarketBalance);
-            self.lastDistributedMarketBalance = targetBalance.int256toInt128();
+            self.poolsDebtDistribution.distributeValue(targetBalance - self.lastDistributedMarketBalanceD18);
+            self.lastDistributedMarketBalanceD18 = targetBalance.int256toInt128();
         }
     }
 
@@ -443,10 +443,10 @@ library Market {
             // The pool will remain "detached" until the pool manager specifies a new poolsDebtDistribution.
             uint newPoolDebt = uint(self.poolsDebtDistribution.getActorValueChange(bytes32(uint(poolId))));
             self.poolsDebtDistribution.setActorShares(bytes32(uint(poolId)), 0);
-            self.pools[poolId].pendingDebt += newPoolDebt.uint256toUint128();
+            self.pools[poolId].pendingDebtD18 += newPoolDebt.uint256toUint128();
         }
 
-        self.lastDistributedMarketBalance += actuallyDistributed.int256toInt128();
+        self.lastDistributedMarketBalanceD18 += actuallyDistributed.int256toInt128();
 
         exhausted = iters == maxIter;
     }
@@ -498,10 +498,10 @@ library Market {
             require(self.poolsDebtDistribution.getActorShares(bytes32(uint(poolId))) == 0, "actor has shares before add");
 
             // Attach the market from this pool by setting the pool's shares to the value before exiting the market.
-            self.poolsDebtDistribution.setActorShares(bytes32(uint(poolId)), self.pools[poolId].liquidityAmount);
+            self.poolsDebtDistribution.setActorShares(bytes32(uint(poolId)), self.pools[poolId].liquidityAmountD18);
         }
 
-        self.lastDistributedMarketBalance += actuallyDistributed.int256toInt128();
+        self.lastDistributedMarketBalanceD18 += actuallyDistributed.int256toInt128();
 
         exhausted = iters == maxIter;
     }
