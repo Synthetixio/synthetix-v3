@@ -4,8 +4,6 @@ pragma solidity ^0.8.0;
 import "./Distribution.sol";
 import "./ScalableMapping.sol";
 
-import "hardhat/console.sol";
-
 /**
  * @title Tracks collateral and debt distributions in a pool, for a specific collateral type, in a given epoch.
  *
@@ -92,7 +90,6 @@ library VaultEpoch {
         int currentDebt = self.consolidatedDebtAmounts[accountId];
         self.consolidatedDebtAmounts[accountId] += int128(amount);
         self.totalConsolidatedDebt += int128(amount);
-        console.log("ASSIGNED DEBT TO ACCOUNT IS", uint(currentDebt + amount));
         return currentDebt + amount;
     }
 
@@ -110,8 +107,6 @@ library VaultEpoch {
         int newDebt = self.incomingDebtDist.accumulateActor(actorId);
 
         currentDebt = assignDebtToAccount(self, accountId, newDebt);
-        console.log("THE CURR DEBT", uint(currentDebt));
-        console.log("THE NEW DEBT", uint(newDebt));
         self.unconsolidatedDebt -= int128(newDebt);
     }
 
@@ -141,8 +136,6 @@ library VaultEpoch {
      * that hasn't yet been consolidated into individual accounts.
      */
     function totalDebt(Data storage self) internal view returns (int) {
-        console.log("uncon", uint128(self.unconsolidatedDebt));
-        console.log("con", uint128(self.totalConsolidatedDebt));
         return int(self.unconsolidatedDebt + self.totalConsolidatedDebt);
     }
 

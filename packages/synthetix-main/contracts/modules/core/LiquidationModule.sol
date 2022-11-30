@@ -10,8 +10,6 @@ import "@synthetixio/core-modules/contracts/storage/AssociatedSystem.sol";
 
 import "../../utils/ERC20Helper.sol";
 
-import "hardhat/console.sol";
-
 contract LiquidationModule is ILiquidationModule {
     using DecimalMath for uint;
     using ERC20Helper for address;
@@ -56,8 +54,6 @@ contract LiquidationModule is ILiquidationModule {
         collateralLiquidated = collateralAmount;
 
         debtLiquidated = uint(rawDebt);
-
-        console.log("debt liquidated", debtLiquidated);
 
         if (rawDebt <= 0 || !_isLiquidatable(collateralType, uint(rawDebt), collateralValue)) {
             revert IneligibleForLiquidation(

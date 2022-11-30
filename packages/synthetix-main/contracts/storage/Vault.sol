@@ -6,8 +6,6 @@ import "./RewardDistribution.sol";
 
 import "./CollateralConfiguration.sol";
 
-import "hardhat/console.sol";
-
 /**
  * @title Tracks collateral and debt distributions in a pool, for a specific collateral type.
  *

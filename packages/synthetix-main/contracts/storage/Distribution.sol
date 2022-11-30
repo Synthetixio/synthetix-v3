@@ -7,8 +7,6 @@ import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import "./DistributionActor.sol";
 import "../errors/ParameterError.sol";
 
-import "hardhat/console.sol";
-
 /**
  * @title This is a central, if not _the_ central object of the system. It reduces the number of computations needed for modifying the balances of N users from O(n) to O(1).
  *
@@ -182,7 +180,6 @@ library Distribution {
      * The value being distributed ultimately modifies the distribution's valuePerShare.
      */
     function distributeValue(Data storage dist, int value) internal {
-        console.log("DISTRIBUTE VALUE", uint(value));
         if (value == 0) {
             return;
         }

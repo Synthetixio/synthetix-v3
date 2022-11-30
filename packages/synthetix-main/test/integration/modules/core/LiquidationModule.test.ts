@@ -134,7 +134,7 @@ describe('LiquidationModule', function () {
           );
         });
 
-        it.only('since its last position in vault, should have same amount of debt as whole vault', async () => {
+        it('since its last position in vault, should have same amount of debt as whole vault', async () => {
           assertBn.equal(
             await systems().Core.callStatic.getVaultDebt(poolId, collateralAddress()),
             await systems().Core.callStatic.getPositionDebt(accountId2, poolId, collateralAddress())

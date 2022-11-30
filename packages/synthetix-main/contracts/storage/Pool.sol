@@ -9,8 +9,6 @@ import "./PoolConfiguration.sol";
 
 import "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
 
-import "hardhat/console.sol";
-
 /**
  * @title Aggregates collateral from multiple users in order to provide liquidity to a configurable set of markets.
  *
@@ -268,12 +266,9 @@ library Pool {
 
         // Get the latest collateral price.
         collateralPrice = CollateralConfiguration.load(collateralType).getCollateralPrice();
-        console.log("pre liquidity updated");
 
         // Changes in price update the corresponding vault's total collateral value as well as its liquidity (collateral - debt).
         (uint usdWeight, , int deltaLiquidity) = self.vaults[collateralType].updateLiquidity(collateralPrice);
-
-        console.log("liquidity updated");
 
         // Update the vault's shares in the pool's debt distribution, according to the value of its collateral.
         bytes32 actorId = bytes32(uint(uint160(collateralType)));
