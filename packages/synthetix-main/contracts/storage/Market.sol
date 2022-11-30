@@ -389,7 +389,7 @@ library Market {
         return
             self.poolsDebtDistribution.valuePerShareD27 /
             DecimalMath.PRECISION_DOWN_SCALE_INT128 +
-            valueToDistributeD18.divDecimal(self.poolsDebtDistribution.totalSharesD18.to128());
+            valueToDistributeD18.divDecimal(self.poolsDebtDistribution.totalSharesD18.toInt());
     }
 
     /**
@@ -442,7 +442,7 @@ library Market {
             _togglePool(fromHeap, toHeap);
 
             // Distribute the market's debt to the limit, i.e. for that which exceeds the maximum value per share.
-            int debtToLimitD18 = self.poolsDebtDistribution.totalSharesD18.uint128toInt256().mulDecimal(
+            int debtToLimitD18 = self.poolsDebtDistribution.totalSharesD18.toInt().mulDecimal(
                 -k *
                     edgePool.priority -
                     self.poolsDebtDistribution.valuePerShareD27 /
@@ -461,10 +461,7 @@ library Market {
                     "no shares before actor removal"
                 );
 
-                uint newPoolDebtD18 = self
-                    .poolsDebtDistribution
-                    .setActorShares(bytes32(uint(edgePool.id)), 0)
-                    .int256toUint256();
+                uint newPoolDebtD18 = self.poolsDebtDistribution.setActorShares(bytes32(uint(edgePool.id)), 0).toUint();
                 self.pools[edgePool.id].pendingDebtD18 += newPoolDebtD18.to128();
             } else {
                 require(
