@@ -7,7 +7,15 @@ import commonConfig from '@synthetixio/common-config/hardhat.config';
 
 const config = {
   ...commonConfig,
-  solidity: '0.8.11',
+  solidity: {
+    version: '0.8.11',
+    settings: {
+      optimizer: {
+        enabled: true,
+        runs: 200,
+      },
+    },
+  },
   docgen: {
     exclude: [
       './interfaces/external',

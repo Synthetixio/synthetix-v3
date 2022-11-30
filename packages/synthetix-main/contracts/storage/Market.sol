@@ -333,9 +333,12 @@ library Market {
      * @dev Gets any outstanding debt. Do not call this method except in tests
      *
      * TODO: Understand distributeDebt() first.
+     * TODO: Enforce how this is only to be used in tests!
      */
     function getOutstandingDebt(Data storage self, uint128 poolId) internal returns (int debtChange) {
-        return self.pools[poolId].pendingDebt.uint128toInt128() + self.debtDist.updateActorShares(bytes32(uint(poolId)), 0);
+        int changedValue = self.debtDist.getActorValueChange(bytes32(uint(poolId)));
+
+        return self.pools[poolId].pendingDebt.uint128toInt128() + changedValue;
     }
 
     function getDebtPerShare(Data storage self) internal view returns (int debtPerShare) {
@@ -406,9 +409,9 @@ library Market {
             self.outRangePools.extractById(poolId);
         }
 
-        debtChange =
-            self.pools[poolId].pendingDebt.uint128toInt128() +
-            self.debtDist.updateActorShares(bytes32(uint(poolId)), newLiquidity);
+        int changedValue = self.debtDist.getActorValueChange(bytes32(uint(poolId)));
+        self.debtDist.setActorShares(bytes32(uint(poolId)), newLiquidity);
+        debtChange = self.pools[poolId].pendingDebt.uint128toInt128() + changedValue;
         self.pools[poolId].pendingDebt = 0;
 
         // recalculate market capacity
@@ -497,7 +500,8 @@ library Market {
 
             // Detach the market from this pool by removing the pool's shares from the market.
             // The pool will remain "detached" until the pool manager specifies a new debtDist.
-            uint newPoolDebt = uint(self.debtDist.updateActorShares(bytes32(uint(poolId)), 0));
+            uint newPoolDebt = uint(self.debtDist.getActorValueChange(bytes32(uint(poolId))));
+            self.debtDist.setActorShares(bytes32(uint(poolId)), 0);
             self.pools[poolId].pendingDebt += newPoolDebt.uint256toUint128();
         }
 
@@ -551,7 +555,7 @@ library Market {
             require(self.debtDist.getActorShares(bytes32(uint(poolId))) == 0, "actor has shares before add");
 
             // Attach the market from this pool by setting the pool's shares to the value before exiting the market.
-            self.debtDist.updateActorShares(bytes32(uint(poolId)), self.pools[poolId].liquidityAmount);
+            self.debtDist.setActorShares(bytes32(uint(poolId)), self.pools[poolId].liquidityAmount);
         }
 
         self.lastDistributedMarketBalance += actuallyDistributed.int256toInt128();

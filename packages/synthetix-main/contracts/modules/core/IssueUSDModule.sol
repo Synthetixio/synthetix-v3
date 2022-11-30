@@ -17,6 +17,7 @@ contract IssueUSDModule is IIssueUSDModule {
     using Vault for Vault.Data;
     using VaultEpoch for VaultEpoch.Data;
     using Distribution for Distribution.Data;
+    using ScalableMapping for ScalableMapping.Data;
 
     error InsufficientDebt(int currentDebt);
     error PermissionDenied(uint128 accountId, bytes32 permission, address target);
@@ -46,7 +47,7 @@ contract IssueUSDModule is IIssueUSDModule {
 
         VaultEpoch.Data storage epoch = Pool.load(poolId).vaults[collateralType].currentEpoch();
 
-        epoch.consolidatedDebtDist.updateActorValue(bytes32(uint(accountId)), newDebt);
+        epoch.assignDebtToAccount(accountId, int(amount));
         pool.recalculateVaultCollateral(collateralType);
         require(int(amount) == int128(int(amount)), "Incorrect amount specified");
         AssociatedSystem.load(_USD_TOKEN).asToken().mint(msg.sender, amount);
@@ -76,7 +77,7 @@ contract IssueUSDModule is IIssueUSDModule {
 
         VaultEpoch.Data storage epoch = Pool.load(poolId).vaults[collateralType].currentEpoch();
 
-        epoch.consolidatedDebtDist.updateActorValue(bytes32(uint(accountId)), debt - int(amount));
+        epoch.assignDebtToAccount(accountId, -int(amount));
         pool.recalculateVaultCollateral(collateralType);
 
         emit UsdBurned(accountId, poolId, collateralType, amount, msg.sender);

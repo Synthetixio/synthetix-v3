@@ -27,6 +27,7 @@ contract VaultModule is IVaultModule {
     using AccountRBAC for AccountRBAC.Data;
     using Distribution for Distribution.Data;
     using CollateralConfiguration for CollateralConfiguration.Data;
+    using ScalableMapping for ScalableMapping.Data;
 
     error PoolNotFound(uint128 poolId);
     error InvalidLeverage(uint leverage);
@@ -70,8 +71,6 @@ contract VaultModule is IVaultModule {
             Account.requireSufficientCollateral(accountId, collateralType, collateralAmount - oldCollateralAmount);
         }
 
-        bytes32 actorId = bytes32(uint(accountId));
-
         uint collateralPrice = _updatePosition(
             accountId,
             poolId,
@@ -86,7 +85,7 @@ contract VaultModule is IVaultModule {
         // this is the most efficient time to check the resulting collateralization ratio, since
         // user's debt and collateral price have been fully updated
         if (collateralAmount < oldCollateralAmount) {
-            int debt = vault.currentEpoch().consolidatedDebtDist.getActorValue(actorId);
+            int debt = vault.currentEpoch().consolidatedDebtAmounts[accountId];
             //(, uint collateralValue) = pool.currentAccountCollateral(collateralType, accountId);
 
             CollateralConfiguration.load(collateralType).verifyCollateralRatio(
