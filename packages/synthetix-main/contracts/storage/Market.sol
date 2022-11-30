@@ -277,9 +277,9 @@ library Market {
      * TODO: Enforce how this is only to be used in tests!
      */
     function getOutstandingDebt(Data storage self, uint128 poolId) internal returns (int debtChange) {
-        int changedValue = self.poolsDebtDistribution.getActorValueChange(bytes32(uint(poolId)));
-
-        return self.pools[poolId].pendingDebtD18.uint128toInt128() + changedValue;
+        return
+            self.pools[poolId].pendingDebtD18.uint128toInt128() +
+            self.poolsDebtDistribution.accumulateActor(bytes32(uint(poolId)));
     }
 
     function getDebtPerShare(Data storage self) internal view returns (int debtPerShare) {
@@ -351,8 +351,7 @@ library Market {
             self.outRangePools.extractById(poolId);
         }
 
-        int changedValue = self.poolsDebtDistribution.getActorValueChange(bytes32(uint(poolId)));
-        self.poolsDebtDistribution.setActorShares(bytes32(uint(poolId)), newLiquidity);
+        int changedValue = self.poolsDebtDistribution.setActorShares(bytes32(uint(poolId)), newLiquidity);
         debtChange = self.pools[poolId].pendingDebtD18.uint128toInt128() + changedValue;
         self.pools[poolId].pendingDebtD18 = 0;
 
@@ -445,8 +444,7 @@ library Market {
 
             // Detach the market from this pool by removing the pool's shares from the market.
             // The pool will remain "detached" until the pool manager specifies a new poolsDebtDistribution.
-            uint newPoolDebt = uint(self.poolsDebtDistribution.getActorValueChange(bytes32(uint(poolId))));
-            self.poolsDebtDistribution.setActorShares(bytes32(uint(poolId)), 0);
+            uint newPoolDebt = self.poolsDebtDistribution.setActorShares(bytes32(uint(poolId)), 0).int256toUint256();
             self.pools[poolId].pendingDebtD18 += newPoolDebt.uint256toUint128();
         }
 

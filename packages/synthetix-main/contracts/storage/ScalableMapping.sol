@@ -7,6 +7,34 @@ import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import "./DistributionActor.sol";
 import "../errors/ParameterError.sol";
 
+/**
+ * @title Data structure that wraps a mapping with a scalar multiplier.
+ *
+ * If you wanted to modify all the values in a mapping by the same amount, you would normally have to loop through each entry in the mapping. This object allows you to modify all of them at once, by simply modifying the scalar multiplier.
+ *
+ * I.e. a regular mapping represents values like this:
+ * value = mapping[id]
+ *
+ * And a scalable mapping represents values like this:
+ * value = mapping[id] * scalar
+ *
+ * This reduces the number of computations needed for modifying the balances of N users from O(n) to O(1).
+
+ * Note: Notice how users are tracked by a generic bytes32 id instead of an address. This allows the actors of the mapping not just to be addresses. They can be anything, for example a pool id, an account id, etc.
+ *
+ * *********************
+ * Conceptual Examples
+ * *********************
+ *
+ * 1) Socialization of collateral during a liquidation.
+ *
+ * Scalable mappings are very useful for "socialization" of collateral, that is, the re-distribution of collateral when an account is liquidated. Suppose 1000 ETH are liquidated, and would need to be distributed amongst 1000 stakers. With a regular mapping, every staker's balance would have to be modified in a loop that iterates through every single one of them. With a scalable mapping, the scalar would simply need to be incremented so that the total value of the mapping increases by 1000 ETH.
+ *
+ * 2) Socialization of debt during a liquidation.
+ *
+ * Similar to the socialization of collateral during a liquidation, the debt of the position that is being liquidated can be re-allocated using a scalable mapping with a single action. Supposing a scalable mapping tracks each user's debt in the system, and that 1000 sUSD has to be distributed amongst 1000 stakers, the debt data structure's scalar would simply need to be incremented so that the total value or debt of the distribution increments by 1000 sUSD.
+ *
+ */
 library ScalableMapping {
     using SafeCast for uint128;
     using SafeCast for uint256;

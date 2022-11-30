@@ -8,124 +8,15 @@ import "./DistributionActor.sol";
 import "../errors/ParameterError.sol";
 
 /**
- * @title This is a central, if not _the_ central object of the system. It reduces the number of computations needed for modifying the balances of N users from O(n) to O(1).
+ * @title Data structure that allows you to track some global value, distributed amongst a set of actors.
  *
- * *********************
- * High Level Overview
- * *********************
+ * The total value can be scaled with a valuePerShare multiplier, and individual actor shares can be calculated as their amount of shares times this multiplier.
  *
- * Simply put, a distribution can be seen as an address to uint mapping that holds user balances, but with the added functionality of a global scalar that is able to inflate or deflate everyone's balances at once.
+ * Furthermore, changes in the value of individual actors can be tracked since their last update, by keeping track of the value of the multiplier, per user, upin each interaction. See DistributionActor.lastValuePerShare.
  *
- * Regular mapping:
- * mapping(address => uint) balances;
- * user_balance = balances[user_address];
+ * A distribution is similar to a ScalableMapping, but it has the added functionality of being able to remember the previous value of the scalar multiplier for each actor.
  *
- * Distribution:
- * mapping(bytes32 => uint) shares;
- * uint valuePerShare; // <--- Scalar
- * user_balance = shares[user_id] * valuePerShare;
- *
- * Note 1: Notice how users are tracked by a generic bytes32 id instead of an address. This allows the actors of a distribution not just be addresses. They can be anything, for example a pool id, an account id, etc.
- *
- * Note 2: This is not exactly the variable layout or types for a distribution, but it helps to illustrate its main purpose.
- *
- * *********************
- * Conceptual Examples
- * *********************
- *
- * 1) Socialization of collateral during a liquidation.
- *
- * Distributions are very useful for "socialization" of collateral, that is, the re-distribution of collateral when an account is liquidated. Suppose 1000 ETH are liquidated, and would need to be distributed amongst 1000 stakers. With a regular mapping, every staker's balance would have to be modified in a loop that iterates through every single one of them. With a distribution, the valuePerShare scalar would simply need to be incremented so that the total value of the distribution increases by 1000 ETH.
- *
- * 2) Socialization of debt during a liquidation.
- *
- * Similar to the socialization of collateral during a liquidation, the debt of the position that is being liquidated can be re-allocated using a distribution with a single action. Supposing a distribution tracks each user's debt in the system, and that 1000 sUSD has to be distributed amongst 1000 stakers, the debt distribution's valuePerShare would simply need to be incremented so that the total value or debt of the distribution increments by 1000 sUSD.
- *
- * **************************
- * Distributions Over Time
- * **************************
- *
- * If we wanted to store a distribution over time, we would need to repeatedly store its valuePerShare for a given time interval, as well as an entry for every user of their shares at time t. This is of course not only expensive in terms of gas, but unrealizable because of the nature of smart contracts; they are not constantly running programs, but instead only react to user interaction.
- *
- * Even so, why would we want to store a distribution over time? A very common use case of distributions is asking the question of "how has user A's value changed in the distribution since A's last interaction with the system at time t, given that their number of shares has not changed".
- *
- * Some very simple math answers this question:
- * Since `value = valuePerShare * shares`,
- * then `delta_value = valuePerShare_now * shares - valuePerShare_then * shares`,
- * which is `(valuePerShare_now - valuePerShare_then) * shares`,
- * or just `delta_valuePerShare * shares`.
- *
- * To be able to do this programmatically, all we need to do is store a single variable `lastValuePerShare` for every user, and ensure it is written to every time they interact with the system, or their shares are updated in any way whatsoever.
- *
- * See `getActorValueChange()`, and `DistributionActor.lastValuePerShare`.
- *
- * *********************
- * Usage Modes
- * *********************
- *
- * TODO: This needs more clarification.
- *
- * This object is intended to be used in two different exclusive modes:
- * - Actors enter the distribution by adding value (see setActorValue()),
- * - Actors enter the distribution without adding value (see setActorShares()).
- *
- * *********************
- * Numeric Examples
- * *********************
- *
- * 1) Distribution in which actors enter by adding value (updateActorValue).
- *
- * 1.1) The distribution is initialized with a single actor and a value of 100 USD
- * - shares:
- *   - actor1: 1 (100 USD)
- * - totalShares: 1 (100 USD)
- * - valuePerShare: 100 USD
- * - totalValue: 100 USD
- *
- * 1.2) Another actor enters the distribution with 50 USD of value
- * - shares:
- *   - actor1: 1 (100 USD)
- *   - actor2: 0.5 (50 USD)
- * - totalShares: 1.5 (150 USD)
- * - valuePerShare: 100 USD
- * - totalValue: 150 USD
- *
- * 1.3) 10 new actors enter the distribution with 10 USD value each
- * - shares:
- *   - actor1: 1 (100 USD)
- *   - actor2: 0.5 (50 USD)
- *   - actor3-actor10: 0.1 (10 USD)
- * - totalShares: 2.5 (250 USD)
- * - valuePerShare: 100 USD
- * - totalValue: 250 USD
- *
- * 2) Distribution in which actors enter without adding value (updateActorShares).
- *
- * 2.1) The distribution is initialized with two actors and no value
- * - shares:
- *   - actor1: 1 (0 USD)
- *   - actor2: 1 (0 USD)
- * - totalShares: 2 (0 USD)
- * - valuePerShare: 0 USD
- * - totalValue: 0 USD
- *
- * 2.2) 100 USD of value is distributed (see distributeValue())
- * - shares:
- *   - actor1: 1 (50 USD)
- *   - actor2: 1 (50 USD)
- * - totalShares: 2 (100 USD)
- * - valuePerShare: 50 USD
- * - totalValue: 100 USD
- *
- * 2.3) Actor 1's shares are duplicated
- * - shares:
- *   - actor1: 2 (100 USD)
- *   - actor2: 1 (50 USD)
- * - totalShares: 3 (150 USD)
- * - valuePerShare: 50 USD
- * - totalValue: 150 USD
- *
- * TODO: Initialization of a distribution could be cleaned up, removed from semantically overloaded functions into a clear initializer function. This would clean up the Distribution's two main functions.
+ * Whenever the shares of an actor of the distribution is updated, you get information about how the actor's total value changed since it was last updated.
  */
 library Distribution {
     using SafeCast for uint128;
@@ -155,11 +46,7 @@ library Distribution {
          */
         uint128 totalSharesD18;
         /**
-         * @dev The value per share of the distribution.
-         *
-         * This is a high precision "decimal" value with 27 decimals of precision. See DecimalMath.
-         *
-         * 1.0 = 1000000000000000000000000000 (27 zeroes)
+         * @dev The value per share of the distribution, represented as a high precision decimal.
          */
         int128 valuePerShareD27;
         /**
@@ -197,14 +84,15 @@ library Distribution {
      *
      * Whenever an actor's shares are changed in this way, we record the distribution's current valuePerShare into the actor's lastValuePerShare record.
      *
-     * Note: Consider that calling this function wipes out historical value change data. So, make sure to call `getActorValueChange()` and use this data before calling this function.
-     * TODO: Consider reinserting this return value because almost always you NEED to use it.
+     * Returns the the amount by which the actors value changed since the last update.
      */
     function setActorShares(
         Data storage dist,
         bytes32 actorId,
         uint newActorShares
-    ) internal {
+    ) internal returns (int valueChange) {
+        valueChange = _getActorValueChange(dist, actorId);
+
         DistributionActor.Data storage actor = dist.actorInfo[actorId];
 
         uint128 sharesUint128 = newActorShares.uint256toUint128();
@@ -220,7 +108,7 @@ library Distribution {
      * returns the change in value for the actor, since their last update.
      */
     function accumulateActor(Data storage dist, bytes32 actorId) internal returns (int valueChange) {
-        valueChange = getActorValueChange(dist, actorId);
+        valueChange = _getActorValueChange(dist, actorId);
 
         // TODO only update lastValuePerShare since we got the valueChange in the line before
         // actor.lastValuePerShare = valuePerShare;
@@ -228,9 +116,15 @@ library Distribution {
     }
 
     /**
-     * @dev Calculates the change in value of the actor's shares, according to the current valuePerShare of the distribution, and what this value was the last time the actor's shares were updated.
+     * @dev Calculates how much an actor's value has changed since its shares were last updated.
+     *
+     * This change is calculated as:
+     * Since `value = valuePerShare * shares`,
+     * then `delta_value = valuePerShare_now * shares - valuePerShare_then * shares`,
+     * which is `(valuePerShare_now - valuePerShare_then) * shares`,
+     * or just `delta_valuePerShare * shares`.
      */
-    function getActorValueChange(Data storage dist, bytes32 actorId) internal view returns (int valueChange) {
+    function _getActorValueChange(Data storage dist, bytes32 actorId) private view returns (int valueChange) {
         DistributionActor.Data storage actor = dist.actorInfo[actorId];
         int128 deltaValuePerShare = dist.valuePerShareD27 - actor.lastValuePerShareD27;
 
