@@ -36,10 +36,10 @@ import "../errors/ParameterError.sol";
  *
  */
 library ScalableMapping {
-    using SafeCast for uint128;
-    using SafeCast for uint256;
-    using SafeCast for int128;
-    using SafeCast for int256;
+    using SafeCastU128 for uint128;
+    using SafeCastU256 for uint256;
+    using SafeCastI128 for int128;
+    using SafeCastI256 for int256;
     using DecimalMath for int256;
     using DecimalMath for uint256;
 
@@ -61,7 +61,7 @@ library ScalableMapping {
             return;
         }
 
-        uint totalSharesD18 = self.totalSharesD18.uint128toUint256();
+        uint totalSharesD18 = self.totalSharesD18;
 
         // TODO: Can we safely assume that amount will always be a regular integer,
         // i.e. not a decimal?
@@ -93,9 +93,9 @@ library ScalableMapping {
         resultingSharesD18 = _getSharesForAmount(self, newActorValueD18);
 
         // Modify the total shares with the actor's change in shares.
-        self.totalSharesD18 = (self.totalSharesD18 + resultingSharesD18 - self.sharesD18[actorId]).uint256toUint128();
+        self.totalSharesD18 = (self.totalSharesD18 + resultingSharesD18 - self.sharesD18[actorId]).to128();
 
-        self.sharesD18[actorId] = resultingSharesD18.uint256toUint128();
+        self.sharesD18[actorId] = resultingSharesD18.to128();
     }
 
     /**
@@ -109,7 +109,7 @@ library ScalableMapping {
             return 0;
         }
 
-        return (self.sharesD18[actorId] * totalAmount(self).int256toUint256()) / totalSharesD18;
+        return (self.sharesD18[actorId] * totalAmount(self).toUint()) / totalSharesD18;
     }
 
     /**
@@ -119,7 +119,7 @@ library ScalableMapping {
      */
     function totalAmount(Data storage self) internal view returns (int valueD18) {
         return
-            int((self.scaleModifierD27 + DecimalMath.UNIT_PRECISE_INT) * self.totalSharesD18.uint128toInt256()) /
+            int((self.scaleModifierD27 + DecimalMath.UNIT_PRECISE_INT) * self.totalSharesD18.toInt()) /
             DecimalMath.UNIT_PRECISE_INT;
     }
 

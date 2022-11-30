@@ -19,10 +19,10 @@ import "../errors/ParameterError.sol";
  * Whenever the shares of an actor of the distribution is updated, you get information about how the actor's total value changed since it was last updated.
  */
 library Distribution {
-    using SafeCast for uint128;
-    using SafeCast for uint256;
-    using SafeCast for int128;
-    using SafeCast for int256;
+    using SafeCastU128 for uint128;
+    using SafeCastU256 for uint256;
+    using SafeCastI128 for int128;
+    using SafeCastI256 for int256;
     using DecimalMath for int256;
 
     /**
@@ -65,7 +65,7 @@ library Distribution {
             return;
         }
 
-        uint totalSharesD18 = dist.totalSharesD18.uint128toUint256();
+        uint totalSharesD18 = dist.totalSharesD18;
 
         if (totalSharesD18 == 0) {
             revert EmptyDistribution();
@@ -95,7 +95,7 @@ library Distribution {
 
         DistributionActor.Data storage actor = dist.actorInfo[actorId];
 
-        uint128 sharesUint128D18 = newActorSharesD18.uint256toUint128();
+        uint128 sharesUint128D18 = newActorSharesD18.to128();
         dist.totalSharesD18 = dist.totalSharesD18 + sharesUint128D18 - actor.sharesD18;
 
         actor.sharesD18 = sharesUint128D18;
@@ -126,9 +126,9 @@ library Distribution {
      */
     function _getActorValueChange(Data storage dist, bytes32 actorId) private view returns (int valueChangeD18) {
         DistributionActor.Data storage actor = dist.actorInfo[actorId];
-        int128 deltaValuePerShareD27 = dist.valuePerShareD27 - actor.lastValuePerShareD27;
+        int deltaValuePerShareD27 = dist.valuePerShareD27 - actor.lastValuePerShareD27;
 
-        int changedValueD45 = deltaValuePerShareD27 * actor.sharesD18.uint128toInt256();
+        int changedValueD45 = deltaValuePerShareD27 * actor.sharesD18.toInt();
         valueChangeD18 = changedValueD45 / DecimalMath.UNIT_PRECISE_INT;
     }
 
