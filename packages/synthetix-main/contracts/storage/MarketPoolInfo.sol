@@ -14,7 +14,7 @@ library MarketPoolInfo {
         /**
          * @dev The amount of debt the pool has which hasn't been passed down the debt distribution chain yet
          */
-        uint128 pendingDebt;
+        uint128 pendingDebtD18;
         uint128 unused2;
     }
 }

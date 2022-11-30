@@ -277,7 +277,7 @@ library Market {
     function getOutstandingDebt(Data storage self, uint128 poolId) internal returns (int debtChange) {
         int changedValue = self.poolsDebtDistribution.getActorValueChange(bytes32(uint(poolId)));
 
-        return self.pools[poolId].pendingDebt.uint128toInt128() + changedValue;
+        return self.pools[poolId].pendingDebtD18.uint128toInt128() + changedValue;
     }
 
     function getDebtPerShare(Data storage self) internal view returns (int debtPerShare) {
@@ -350,8 +350,8 @@ library Market {
 
         int changedValue = self.poolsDebtDistribution.getActorValueChange(bytes32(uint(poolId)));
         self.poolsDebtDistribution.setActorShares(bytes32(uint(poolId)), newLiquidity);
-        debtChange = self.pools[poolId].pendingDebt.uint128toInt128() + changedValue;
-        self.pools[poolId].pendingDebt = 0;
+        debtChange = self.pools[poolId].pendingDebtD18.uint128toInt128() + changedValue;
+        self.pools[poolId].pendingDebtD18 = 0;
 
         // recalculate market capacity
         if (newPoolMaxShareValue > lowPrecisionValuePerShare) {
@@ -441,7 +441,7 @@ library Market {
             // The pool will remain "detached" until the pool manager specifies a new poolsDebtDistribution.
             uint newPoolDebt = uint(self.poolsDebtDistribution.getActorValueChange(bytes32(uint(poolId))));
             self.poolsDebtDistribution.setActorShares(bytes32(uint(poolId)), 0);
-            self.pools[poolId].pendingDebt += newPoolDebt.uint256toUint128();
+            self.pools[poolId].pendingDebtD18 += newPoolDebt.uint256toUint128();
         }
 
         self.lastDistributedMarketBalanceD18 += actuallyDistributed.int256toInt128();
