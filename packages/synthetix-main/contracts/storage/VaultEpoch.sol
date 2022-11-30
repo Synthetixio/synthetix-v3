@@ -58,7 +58,7 @@ library VaultEpoch {
          * Updated when users interact with the system, consolidating changes from the fluctuating accountsDebtDistribution,
          * and directly when users mint or burn USD, or repay debt.
          */
-        mapping(uint => int) consolidatedDebtAmounts;
+        mapping(uint => int) consolidatedDebtAmountsD18;
     }
 
     /**
@@ -92,8 +92,8 @@ library VaultEpoch {
         uint128 accountId,
         int amount
     ) internal returns (int newDebt) {
-        int currentDebt = self.consolidatedDebtAmounts[accountId];
-        self.consolidatedDebtAmounts[accountId] += int128(amount);
+        int currentDebt = self.consolidatedDebtAmountsD18[accountId];
+        self.consolidatedDebtAmountsD18[accountId] += int128(amount);
         self.totalConsolidatedDebtD18 += int128(amount);
         return currentDebt + amount;
     }
