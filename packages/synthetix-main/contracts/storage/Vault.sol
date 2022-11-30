@@ -145,13 +145,13 @@ library Vault {
             revert("No distributor");
         }
 
-        dist.rewardPerShare += uint128(dist.entry.updateEntry(totalShares));
+        dist.rewardPerShareD18 += uint128(dist.entry.updateEntry(totalShares));
 
         dist.actorInfo[accountId].pendingSend += uint128(
-            actorShares.mulDecimal(dist.rewardPerShare - dist.actorInfo[accountId].lastRewardPerShare)
+            actorShares.mulDecimal(dist.rewardPerShareD18 - dist.actorInfo[accountId].lastRewardPerShare)
         );
 
-        dist.actorInfo[accountId].lastRewardPerShare = dist.rewardPerShare;
+        dist.actorInfo[accountId].lastRewardPerShare = dist.rewardPerShareD18;
 
         return dist.actorInfo[accountId].pendingSend;
     }
