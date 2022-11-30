@@ -31,7 +31,7 @@ library VaultEpoch {
         /**
          * @dev TODO
          */
-        int128 totalConsolidatedDebt;
+        int128 totalConsolidatedDebtD18;
         /**
          * @dev Tracks incoming debt for each user.
          *
@@ -94,7 +94,7 @@ library VaultEpoch {
     ) internal returns (int newDebt) {
         int currentDebt = self.consolidatedDebtAmounts[accountId];
         self.consolidatedDebtAmounts[accountId] += int128(amount);
-        self.totalConsolidatedDebt += int128(amount);
+        self.totalConsolidatedDebtD18 += int128(amount);
         return currentDebt + amount;
     }
 
@@ -144,7 +144,7 @@ library VaultEpoch {
      * that hasn't yet been consolidated into individual accounts.
      */
     function totalDebt(Data storage self) internal view returns (int) {
-        return int(self.unconsolidatedDebtD18 + self.totalConsolidatedDebt);
+        return int(self.unconsolidatedDebtD18 + self.totalConsolidatedDebtD18);
     }
 
     /**
