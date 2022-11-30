@@ -66,9 +66,9 @@ library ScalableMapping {
         // TODO: Can we safely assume that amount will always be a regular integer,
         // i.e. not a decimal?
         int valueHighPrecision = value * DecimalMath.UNIT_PRECISE_INT;
-        int deltascaleModifier = valueHighPrecision / int(totalShares);
+        int deltaScaleModifier = valueHighPrecision / int(totalShares);
 
-        self.scaleModifierD27 += int128(deltascaleModifier);
+        self.scaleModifierD27 += int128(deltaScaleModifier);
 
         if (self.scaleModifierD27 < -DecimalMath.UNIT_PRECISE_INT) {
             revert InsufficientMappedAmount(-self.scaleModifierD27);
@@ -116,8 +116,6 @@ library ScalableMapping {
      * @dev Returns the total value held in the distribution.
      *
      * i.e. totalShares * scaleModifier
-     *
-     * Requirement: this assumes that every user's lastscaleModifier is zero.
      */
     function totalAmount(Data storage self) internal view returns (int value) {
         return
