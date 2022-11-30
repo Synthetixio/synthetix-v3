@@ -39,7 +39,7 @@ library Vault {
         /**
          * @dev The previous liquidity of the vault (collateral - debt), when the system was last interacted with.
          */
-        uint128 prevRemainingLiquidity;
+        uint128 prevRemainingLiquidityD18;
         /**
          * @dev Vault data for all the liquidation cycles divided into epochs.
          */
@@ -87,9 +87,9 @@ library Vault {
         int vaultAccruedDebt = epochData.totalDebt();
         remainingLiquidity = vaultDepositedValue > vaultAccruedDebt ? uint(vaultDepositedValue - vaultAccruedDebt) : 0;
 
-        deltaRemainingLiquidity = int(remainingLiquidity) - int(int128(self.prevRemainingLiquidity));
+        deltaRemainingLiquidity = int(remainingLiquidity) - int(int128(self.prevRemainingLiquidityD18));
 
-        self.prevRemainingLiquidity = uint128(remainingLiquidity);
+        self.prevRemainingLiquidityD18 = uint128(remainingLiquidity);
     }
 
     /**
