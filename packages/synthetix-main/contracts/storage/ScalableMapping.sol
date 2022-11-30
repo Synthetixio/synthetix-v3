@@ -18,7 +18,7 @@ library ScalableMapping {
     error InsufficientMappedAmount(int scaleModifier);
 
     struct Data {
-        uint128 totalShares;
+        uint128 totalSharesD18;
         int128 scaleModifier;
         mapping(bytes32 => uint) shares;
     }
@@ -33,7 +33,7 @@ library ScalableMapping {
             return;
         }
 
-        uint totalShares = self.totalShares.uint128toUint256();
+        uint totalShares = self.totalSharesD18.uint128toUint256();
 
         // TODO: Can we safely assume that amount will always be a regular integer,
         // i.e. not a decimal?
@@ -65,7 +65,7 @@ library ScalableMapping {
         resultingShares = _getSharesForAmount(self, newActorValue);
 
         // Modify the total shares with the actor's change in shares.
-        self.totalShares = (self.totalShares + resultingShares - self.shares[actorId]).uint256toUint128();
+        self.totalSharesD18 = (self.totalSharesD18 + resultingShares - self.shares[actorId]).uint256toUint128();
 
         self.shares[actorId] = resultingShares.uint256toUint128();
     }
@@ -76,8 +76,8 @@ library ScalableMapping {
      * i.e. actor.shares * scaleModifier
      */
     function get(Data storage self, bytes32 actorId) internal view returns (uint value) {
-        uint totalShares = self.totalShares;
-        if (self.totalShares == 0) {
+        uint totalShares = self.totalSharesD18;
+        if (self.totalSharesD18 == 0) {
             return 0;
         }
 
@@ -93,7 +93,7 @@ library ScalableMapping {
      */
     function totalAmount(Data storage self) internal view returns (int value) {
         return
-            int((self.scaleModifier + DecimalMath.UNIT_PRECISE_INT) * self.totalShares.uint128toInt256())
+            int((self.scaleModifier + DecimalMath.UNIT_PRECISE_INT) * self.totalSharesD18.uint128toInt256())
                 .fromHighPrecisionDecimalToInteger();
     }
 
