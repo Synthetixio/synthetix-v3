@@ -56,19 +56,19 @@ library ScalableMapping {
      *
      * The value being distributed ultimately modifies the distribution's scaleModifier.
      */
-    function scale(Data storage self, int value) internal {
-        if (value == 0) {
+    function scale(Data storage self, int valueD18) internal {
+        if (valueD18 == 0) {
             return;
         }
 
-        uint totalShares = self.totalSharesD18.uint128toUint256();
+        uint totalSharesD18 = self.totalSharesD18.uint128toUint256();
 
         // TODO: Can we safely assume that amount will always be a regular integer,
         // i.e. not a decimal?
-        int valueHighPrecision = value * DecimalMath.UNIT_PRECISE_INT;
-        int deltaScaleModifier = valueHighPrecision / int(totalShares);
+        int valueD45 = valueD18 * DecimalMath.UNIT_PRECISE_INT;
+        int deltascaleModifierD27 = valueD45 / int(totalSharesD18);
 
-        self.scaleModifierD27 += int128(deltaScaleModifier);
+        self.scaleModifierD27 += int128(deltascaleModifierD27);
 
         if (self.scaleModifierD27 < -DecimalMath.UNIT_PRECISE_INT) {
             revert InsufficientMappedAmount(-self.scaleModifierD27);
@@ -85,17 +85,17 @@ library ScalableMapping {
     function set(
         Data storage self,
         bytes32 actorId,
-        uint newActorValue
-    ) internal returns (uint resultingShares) {
+        uint newActorValueD18
+    ) internal returns (uint resultingSharesD18) {
         // Represent the actor's change in value by changing the actor's number of shares,
         // and keeping the distribution's scaleModifier constant.
 
-        resultingShares = _getSharesForAmount(self, newActorValue);
+        resultingSharesD18 = _getSharesForAmount(self, newActorValueD18);
 
         // Modify the total shares with the actor's change in shares.
-        self.totalSharesD18 = (self.totalSharesD18 + resultingShares - self.sharesD18[actorId]).uint256toUint128();
+        self.totalSharesD18 = (self.totalSharesD18 + resultingSharesD18 - self.sharesD18[actorId]).uint256toUint128();
 
-        self.sharesD18[actorId] = resultingShares.uint256toUint128();
+        self.sharesD18[actorId] = resultingSharesD18.uint256toUint128();
     }
 
     /**
@@ -103,13 +103,13 @@ library ScalableMapping {
      *
      * i.e. actor.shares * scaleModifier
      */
-    function get(Data storage self, bytes32 actorId) internal view returns (uint value) {
-        uint totalShares = self.totalSharesD18;
+    function get(Data storage self, bytes32 actorId) internal view returns (uint valueD18) {
+        uint totalSharesD18 = self.totalSharesD18;
         if (self.totalSharesD18 == 0) {
             return 0;
         }
 
-        return (self.sharesD18[actorId] * totalAmount(self).int256toUint256()) / totalShares;
+        return (self.sharesD18[actorId] * totalAmount(self).int256toUint256()) / totalSharesD18;
     }
 
     /**
@@ -117,13 +117,16 @@ library ScalableMapping {
      *
      * i.e. totalShares * scaleModifier
      */
-    function totalAmount(Data storage self) internal view returns (int value) {
+    function totalAmount(Data storage self) internal view returns (int valueD18) {
         return
             int((self.scaleModifierD27 + DecimalMath.UNIT_PRECISE_INT) * self.totalSharesD18.uint128toInt256()) /
             DecimalMath.UNIT_PRECISE_INT;
     }
 
-    function _getSharesForAmount(Data storage self, uint amount) private view returns (uint shares) {
-        shares = (amount * DecimalMath.UNIT_PRECISE) / uint(int(self.scaleModifierD27 + DecimalMath.UNIT_INT128)) / 1e9;
+    function _getSharesForAmount(Data storage self, uint amountD18) private view returns (uint sharesD18) {
+        sharesD18 =
+            (amountD18 * DecimalMath.UNIT_PRECISE) /
+            uint(int(self.scaleModifierD27 + DecimalMath.UNIT_INT128)) /
+            1e9;
     }
 }

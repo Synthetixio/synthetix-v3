@@ -20,6 +20,8 @@ const config = {
     exclude: [
       './interfaces/external',
       './interfaces/IUtilsModule.sol',
+      './errors',
+      './routers',
       './modules',
       './mixins',
       './mocks',
@@ -27,7 +29,6 @@ const config = {
       './submodules',
       './utils',
       './Proxy.sol',
-      './Router.sol',
     ],
     templates: './docs/theme',
   },

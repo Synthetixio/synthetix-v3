@@ -73,6 +73,8 @@ contract AssociateDebtModule is IAssociateDebtModule {
             )
         );
 
+        emit DebtAssociated(marketId, poolId, collateralType, accountId, amount, updatedDebt);
+
         // done
         return updatedDebt;
     }
