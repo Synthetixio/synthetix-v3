@@ -242,7 +242,9 @@ contract PoolModule is IPoolModule {
                 if (
                     newDistributions[i].maxDebtShareValueD18 < pool.marketConfigurations[oldIdx].maxDebtShareValueD18 ||
                     uint(newDistributions[i].weightD18).upscale(DecimalMath.PRECISION_FACTOR).divDecimal(totalWeight) <
-                    uint(pool.marketConfigurations[oldIdx].weightD18).upscale(DecimalMath.PRECISION_FACTOR).divDecimal(pool.totalWeightsD18)
+                    uint(pool.marketConfigurations[oldIdx].weightD18).upscale(DecimalMath.PRECISION_FACTOR).divDecimal(
+                        pool.totalWeightsD18
+                    )
                 ) {
                     postVerifyLocks[postVerifyLocksIdx++] = newDistributions[i].market;
                 }

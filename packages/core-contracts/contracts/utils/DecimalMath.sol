@@ -123,18 +123,18 @@ library DecimalMath {
     }
 
     function upscale(uint x, uint factor) internal pure returns (uint) {
-        return x * 10 ** factor;
+        return x * 10**factor;
     }
 
     function downscale(uint x, uint factor) internal pure returns (uint) {
-        return x / 10 ** factor;
+        return x / 10**factor;
     }
 
     function upscale(int x, uint factor) internal pure returns (int) {
-        return x * int(10 ** factor);
+        return x * int(10**factor);
     }
 
     function downscale(int x, uint factor) internal pure returns (int) {
-        return x / int(10 ** factor);
+        return x / int(10**factor);
     }
 }

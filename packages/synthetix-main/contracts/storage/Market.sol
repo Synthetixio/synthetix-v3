@@ -254,9 +254,7 @@ library Market {
         int maxDebtShareValue
     ) internal view returns (uint contribution) {
         // Determine how much the current value per share deviates from the maximum.
-        uint deltaValuePerShare = uint(
-            maxDebtShareValue - self.poolsDebtDistribution.getValuePerShare()
-        );
+        uint deltaValuePerShare = uint(maxDebtShareValue - self.poolsDebtDistribution.getValuePerShare());
 
         return uint(deltaValuePerShare).mulDecimal(liquidityShares);
     }
