@@ -40,21 +40,21 @@ library Account {
         internal
         view
         returns (
-            uint256 totalDeposited,
-            uint256 totalAssigned,
-            uint256 totalLocked
+            uint256 totalDepositedD18,
+            uint256 totalAssignedD18,
+            uint256 totalLockedD18
         )
     {
-        totalAssigned = getAssignedCollateral(self, collateralType);
-        totalDeposited = totalAssigned + self.collaterals[collateralType].availableAmountD18;
-        totalLocked = self.collaterals[collateralType].getTotalLocked();
+        totalAssignedD18 = getAssignedCollateral(self, collateralType);
+        totalDepositedD18 = totalAssignedD18 + self.collaterals[collateralType].availableAmountD18;
+        totalLockedD18 = self.collaterals[collateralType].getTotalLocked();
         //totalEscrowed = _getLockedEscrow(stakedCollateral.escrow);
 
-        return (totalDeposited, totalAssigned, totalLocked); //, totalEscrowed);
+        return (totalDepositedD18, totalAssignedD18, totalLockedD18); //, totalEscrowed);
     }
 
     function getAssignedCollateral(Data storage self, address collateralType) internal view returns (uint) {
-        uint totalAssigned = 0;
+        uint totalAssignedD18 = 0;
 
         SetUtil.UintSet storage pools = self.collaterals[collateralType].pools;
 
@@ -63,11 +63,11 @@ library Account {
 
             Pool.Data storage pool = Pool.load(poolIdx);
 
-            (uint collateralAmount, ) = pool.currentAccountCollateral(collateralType, self.id);
-            totalAssigned += collateralAmount;
+            (uint collateralAmountD18, ) = pool.currentAccountCollateral(collateralType, self.id);
+            totalAssignedD18 += collateralAmountD18;
         }
 
-        return totalAssigned;
+        return totalAssignedD18;
     }
 
     /**
@@ -85,10 +85,10 @@ library Account {
     function requireSufficientCollateral(
         uint128 accountId,
         address collateralType,
-        uint amount
+        uint amountD18
     ) internal view {
-        if (Account.load(accountId).collaterals[collateralType].availableAmountD18 < amount) {
-            revert InsufficientAccountCollateral(amount);
+        if (Account.load(accountId).collaterals[collateralType].availableAmountD18 < amountD18) {
+            revert InsufficientAccountCollateral(amountD18);
         }
     }
 }

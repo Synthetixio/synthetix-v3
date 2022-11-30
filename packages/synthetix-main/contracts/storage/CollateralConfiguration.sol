@@ -75,40 +75,40 @@ library CollateralConfiguration {
         }
     }
 
-    function requireSufficientDelegation(address token, uint amount) internal view {
+    function requireSufficientDelegation(address token, uint amountD18) internal view {
         CollateralConfiguration.Data storage config = load(token);
 
-        uint minDelegation = config.minDelegationD18;
+        uint minDelegationD18 = config.minDelegationD18;
 
-        if (minDelegation == 0) {
-            minDelegation = config.liquidationRewardD18;
+        if (minDelegationD18 == 0) {
+            minDelegationD18 = config.liquidationRewardD18;
         }
 
-        if (amount < minDelegation) {
-            revert InsufficientDelegation(minDelegation);
+        if (amountD18 < minDelegationD18) {
+            revert InsufficientDelegation(minDelegationD18);
         }
     }
 
     function getCollateralPrice(Data storage self) internal view returns (uint) {
-        (, int256 answer, , , ) = IAggregatorV3Interface(self.priceFeed).latestRoundData();
+        (, int256 answerD18, , , ) = IAggregatorV3Interface(self.priceFeed).latestRoundData();
 
         // sanity check
         // TODO: this will be removed when we get the oracle manager
-        require(answer > 0, "The collateral value is 0");
+        require(answerD18 > 0, "The collateral value is 0");
 
-        return uint(answer);
+        return uint(answerD18);
     }
 
     function verifyCollateralRatio(
         Data storage self,
-        uint debt,
-        uint collateralValue
+        uint debtD18,
+        uint collateralValueD18
     ) internal view {
-        if (debt != 0 && collateralValue.divDecimal(debt) < self.issuanceRatioD18) {
+        if (debtD18 != 0 && collateralValueD18.divDecimal(debtD18) < self.issuanceRatioD18) {
             revert InsufficientCollateralRatio(
-                collateralValue,
-                debt,
-                collateralValue.divDecimal(debt),
+                collateralValueD18,
+                debtD18,
+                collateralValueD18.divDecimal(debtD18),
                 self.issuanceRatioD18
             );
         }

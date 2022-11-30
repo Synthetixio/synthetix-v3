@@ -60,23 +60,23 @@ library Distribution {
      *
      * The value being distributed ultimately modifies the distribution's valuePerShare.
      */
-    function distributeValue(Data storage dist, int value) internal {
-        if (value == 0) {
+    function distributeValue(Data storage dist, int valueD18) internal {
+        if (valueD18 == 0) {
             return;
         }
 
-        uint totalShares = dist.totalSharesD18.uint128toUint256();
+        uint totalSharesD18 = dist.totalSharesD18.uint128toUint256();
 
-        if (totalShares == 0) {
+        if (totalSharesD18 == 0) {
             revert EmptyDistribution();
         }
 
         // TODO: Can we safely assume that amount will always be a regular integer,
         // i.e. not a decimal?
-        int valueHighPrecision = value * DecimalMath.UNIT_PRECISE_INT;
-        int deltaValuePerShare = valueHighPrecision / int(totalShares);
+        int valueD45 = valueD18 * DecimalMath.UNIT_PRECISE_INT;
+        int deltaValuePerShareD27 = valueD45 / int(totalSharesD18);
 
-        dist.valuePerShareD27 += int128(deltaValuePerShare);
+        dist.valuePerShareD27 += int128(deltaValuePerShareD27);
     }
 
     /**
@@ -89,26 +89,26 @@ library Distribution {
     function setActorShares(
         Data storage dist,
         bytes32 actorId,
-        uint newActorShares
-    ) internal returns (int valueChange) {
-        valueChange = _getActorValueChange(dist, actorId);
+        uint newActorSharesD18
+    ) internal returns (int valueChangeD18) {
+        valueChangeD18 = _getActorValueChange(dist, actorId);
 
         DistributionActor.Data storage actor = dist.actorInfo[actorId];
 
-        uint128 sharesUint128 = newActorShares.uint256toUint128();
-        dist.totalSharesD18 = dist.totalSharesD18 + sharesUint128 - actor.sharesD18;
+        uint128 sharesUint128D18 = newActorSharesD18.uint256toUint128();
+        dist.totalSharesD18 = dist.totalSharesD18 + sharesUint128D18 - actor.sharesD18;
 
-        actor.sharesD18 = sharesUint128;
+        actor.sharesD18 = sharesUint128D18;
 
-        actor.lastValuePerShareD27 = newActorShares == 0 ? int128(0) : dist.valuePerShareD27;
+        actor.lastValuePerShareD27 = newActorSharesD18 == 0 ? int128(0) : dist.valuePerShareD27;
     }
 
     /**
      * @dev Updates an actor's lastValuePerShare to the distribution's current valuePerShare, and
      * returns the change in value for the actor, since their last update.
      */
-    function accumulateActor(Data storage dist, bytes32 actorId) internal returns (int valueChange) {
-        valueChange = _getActorValueChange(dist, actorId);
+    function accumulateActor(Data storage dist, bytes32 actorId) internal returns (int valueChangeD18) {
+        valueChangeD18 = _getActorValueChange(dist, actorId);
 
         // TODO only update lastValuePerShare since we got the valueChange in the line before
         // actor.lastValuePerShare = valuePerShare;
@@ -124,18 +124,18 @@ library Distribution {
      * which is `(valuePerShare_now - valuePerShare_then) * shares`,
      * or just `delta_valuePerShare * shares`.
      */
-    function _getActorValueChange(Data storage dist, bytes32 actorId) private view returns (int valueChange) {
+    function _getActorValueChange(Data storage dist, bytes32 actorId) private view returns (int valueChangeD18) {
         DistributionActor.Data storage actor = dist.actorInfo[actorId];
-        int128 deltaValuePerShare = dist.valuePerShareD27 - actor.lastValuePerShareD27;
+        int128 deltaValuePerShareD27 = dist.valuePerShareD27 - actor.lastValuePerShareD27;
 
-        int changedValueHighPrecision = deltaValuePerShare * actor.sharesD18.uint128toInt256();
-        valueChange = changedValueHighPrecision / DecimalMath.UNIT_PRECISE_INT;
+        int changedValueD45 = deltaValuePerShareD27 * actor.sharesD18.uint128toInt256();
+        valueChangeD18 = changedValueD45 / DecimalMath.UNIT_PRECISE_INT;
     }
 
     /**
      * @dev Returns the number of shares owned by an actor in the distribution.
      */
-    function getActorShares(Data storage dist, bytes32 actorId) internal view returns (uint shares) {
+    function getActorShares(Data storage dist, bytes32 actorId) internal view returns (uint sharesD18) {
         return dist.actorInfo[actorId].sharesD18;
     }
 }
