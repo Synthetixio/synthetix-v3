@@ -28,9 +28,7 @@ library DecimalMath {
     int128 public constant UNIT_PRECISE_INT128 = int128(UNIT_PRECISE_INT);
 
     // Precision scaling
-    uint256 public constant PRECISION_DOWN_SCALE = 1e9;
-    int256 public constant PRECISION_DOWN_SCALE_INT = int256(PRECISION_DOWN_SCALE);
-    int128 public constant PRECISION_DOWN_SCALE_INT128 = int128(PRECISION_DOWN_SCALE_INT);
+    uint256 public constant PRECISION_FACTOR = 9;
 
     // -----------------------------------------------------------------------
     // -----------------------------------------------------------------------
@@ -122,5 +120,21 @@ library DecimalMath {
      */
     function divDecimalInt128(int128 x, int128 y) internal pure returns (int128) {
         return (x * UNIT_INT128) / y;
+    }
+
+    function upscale(uint x, uint factor) internal pure returns (uint) {
+        return x * 10**factor;
+    }
+
+    function downscale(uint x, uint factor) internal pure returns (uint) {
+        return x / 10**factor;
+    }
+
+    function upscale(int x, uint factor) internal pure returns (int) {
+        return x * int(10**factor);
+    }
+
+    function downscale(int x, uint factor) internal pure returns (int) {
+        return x / int(10**factor);
     }
 }

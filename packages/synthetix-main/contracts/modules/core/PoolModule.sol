@@ -238,11 +238,13 @@ contract PoolModule is IPoolModule {
                 // market has been updated
 
                 // any divestment requires verify of capacity lock
-                // multiply by 1e9 to make sure we have comparable precision in case of very small values
+                // upscale to precise int to make sure we have comparable precision in case of very small values
                 if (
                     newDistributions[i].maxDebtShareValueD18 < pool.marketConfigurations[oldIdx].maxDebtShareValueD18 ||
-                    uint(newDistributions[i].weightD18 * 1e9).divDecimal(totalWeight) <
-                    uint(pool.marketConfigurations[oldIdx].weightD18 * 1e9).divDecimal(pool.totalWeightsD18)
+                    uint(newDistributions[i].weightD18).upscale(DecimalMath.PRECISION_FACTOR).divDecimal(totalWeight) <
+                    uint(pool.marketConfigurations[oldIdx].weightD18).upscale(DecimalMath.PRECISION_FACTOR).divDecimal(
+                        pool.totalWeightsD18
+                    )
                 ) {
                     postVerifyLocks[postVerifyLocksIdx++] = newDistributions[i].market;
                 }

@@ -2,7 +2,6 @@
 pragma solidity ^0.8.0;
 
 import "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
-
 import "@synthetixio/core-contracts/contracts/utils/HeapUtil.sol";
 
 import "./Distribution.sol";
@@ -247,9 +246,7 @@ library Market {
         int maxDebtShareValueD18
     ) internal view returns (uint contributionD18) {
         // Determine how much the current value per share deviates from the maximum.
-        uint deltaValuePerShareD18 = uint(
-            maxDebtShareValueD18 - self.poolsDebtDistribution.valuePerShareD27 / DecimalMath.PRECISION_DOWN_SCALE_INT128
-        );
+        uint deltaValuePerShareD18 = uint(maxDebtShareValueD18 - self.poolsDebtDistribution.getValuePerShare());
 
         return uint(deltaValuePerShareD18).mulDecimal(liquiditySharesD18);
     }
@@ -277,7 +274,7 @@ library Market {
      * @dev TODO
      */
     function getDebtPerShare(Data storage self) internal view returns (int debtPerShareD18) {
-        return self.poolsDebtDistribution.valuePerShareD27 / DecimalMath.PRECISION_DOWN_SCALE_INT128;
+        return self.poolsDebtDistribution.getValuePerShare();
     }
 
     /**
@@ -328,7 +325,7 @@ library Market {
 
         self.pools[poolId].liquidityAmountD18 = newCreditCapacityD18.to128();
 
-        int128 valuePerShareD18 = self.poolsDebtDistribution.valuePerShareD27 / DecimalMath.PRECISION_DOWN_SCALE_INT128;
+        int128 valuePerShareD18 = self.poolsDebtDistribution.getValuePerShare().to128();
 
         if (newPoolMaxShareValueD18 < valuePerShareD18) {
             // this will ensure calculations below can correctly gauge shares changes
@@ -387,8 +384,7 @@ library Market {
         returns (int targetValuePerShareD18)
     {
         return
-            self.poolsDebtDistribution.valuePerShareD27 /
-            DecimalMath.PRECISION_DOWN_SCALE_INT128 +
+            self.poolsDebtDistribution.getValuePerShare() +
             valueToDistributeD18.divDecimal(self.poolsDebtDistribution.totalSharesD18.toInt());
     }
 
@@ -443,10 +439,7 @@ library Market {
 
             // Distribute the market's debt to the limit, i.e. for that which exceeds the maximum value per share.
             int debtToLimitD18 = self.poolsDebtDistribution.totalSharesD18.toInt().mulDecimal(
-                -k *
-                    edgePool.priority -
-                    self.poolsDebtDistribution.valuePerShareD27 /
-                    DecimalMath.PRECISION_DOWN_SCALE_INT128 // Diff between current value and max value per share.
+                -k * edgePool.priority - self.poolsDebtDistribution.getValuePerShare() // Diff between current value and max value per share.
             );
             self.poolsDebtDistribution.distributeValue(debtToLimitD18);
 

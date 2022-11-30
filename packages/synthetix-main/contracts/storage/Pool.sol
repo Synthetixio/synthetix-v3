@@ -226,8 +226,7 @@ library Pool {
             );
         }
 
-        return
-            int256(marketData.poolsDebtDistribution.valuePerShareD27 / DecimalMath.PRECISION_DOWN_SCALE_INT128) + thingD18;
+        return marketData.poolsDebtDistribution.getValuePerShare() + thingD18;
     }
 
     /**
