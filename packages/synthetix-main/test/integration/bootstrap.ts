@@ -243,11 +243,11 @@ export function bootstrapWithMockMarketAndPool() {
       .setPoolConfiguration(r.poolId, [
         {
           market: marketId,
-          weight: ethers.utils.parseEther('1'),
+          weightD18: ethers.utils.parseEther('1'),
           maxDebtShareValue: ethers.utils.parseEther('1'),
         },
       ]);
-  });
+    });
 
   const restore = snapshotCheckpoint(r.provider);
 
