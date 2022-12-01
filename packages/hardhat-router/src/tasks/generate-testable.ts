@@ -4,7 +4,6 @@ import logger from '@synthetixio/core-utils/utils/io/logger';
 import { task } from 'hardhat/config';
 import { parseFullyQualifiedName } from 'hardhat/utils/contract-names';
 import { getSourcesFullyQualifiedNames } from '../internal/contract-helper';
-import { quietCompile } from '../internal/quiet-compile';
 import { SUBTASK_GENERATE_TESTABLE_STORAGE, TASK_GENERATE_TESTABLE } from '../task-names';
 
 export interface DeployTaskParams {

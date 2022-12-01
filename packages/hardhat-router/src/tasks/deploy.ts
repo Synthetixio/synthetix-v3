@@ -7,7 +7,10 @@ import { getSourcesFullyQualifiedNames } from '../internal/contract-helper';
 import { deployContract, deployContracts } from '../internal/deploy-contract';
 import { quietCompile } from '../internal/quiet-compile';
 import {
-    SUBTASK_GENERATE_ROUTER, SUBTASK_VALIDATE_INTERFACES, SUBTASK_VALIDATE_SELECTORS, TASK_DEPLOY
+  SUBTASK_GENERATE_ROUTER,
+  SUBTASK_VALIDATE_INTERFACES,
+  SUBTASK_VALIDATE_SELECTORS,
+  TASK_DEPLOY
 } from '../task-names';
 import { DeployedContractData } from '../types';
 
