@@ -51,7 +51,7 @@ describe('Market', function () {
     });
   });
 
-  describe('totalBalance()', async () => {
+  describe('totalDebt()', async () => {
     before(restore);
 
     it('returns market debt when no issuance', async () => {

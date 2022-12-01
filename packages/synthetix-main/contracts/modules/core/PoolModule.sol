@@ -216,10 +216,10 @@ contract PoolModule is IPoolModule {
         }
 
         for (uint i = 0; i < newDistributions.length; i++) {
-            if (newDistributions[i].market <= lastMarketId) {
+            if (newDistributions[i].marketId <= lastMarketId) {
                 revert InvalidParameters("markets", "must be supplied in strictly ascending order");
             }
-            lastMarketId = newDistributions[i].market;
+            lastMarketId = newDistributions[i].marketId;
 
             if (newDistributions[i].weightD18 == 0) {
                 revert InvalidParameters("weights", "weight must be non-zero");
@@ -227,12 +227,12 @@ contract PoolModule is IPoolModule {
 
             while (
                 oldIdx < pool.marketConfigurations.length &&
-                pool.marketConfigurations[oldIdx].market < newDistributions[i].market
+                pool.marketConfigurations[oldIdx].marketId < newDistributions[i].marketId
             ) {
                 // market has been removed
 
                 // need to verify market is not capacity locked
-                postVerifyLocks[postVerifyLocksIdx++] = pool.marketConfigurations[oldIdx].market;
+                postVerifyLocks[postVerifyLocksIdx++] = pool.marketConfigurations[oldIdx].marketId;
                 removedMarkets[removedMarketsIdx++] = postVerifyLocks[postVerifyLocksIdx - 1];
 
                 oldIdx++;
@@ -240,7 +240,7 @@ contract PoolModule is IPoolModule {
 
             if (
                 oldIdx < pool.marketConfigurations.length &&
-                pool.marketConfigurations[oldIdx].market == newDistributions[i].market
+                pool.marketConfigurations[oldIdx].marketId == newDistributions[i].marketId
             ) {
                 // market has been updated
 
@@ -253,7 +253,7 @@ contract PoolModule is IPoolModule {
                         pool.totalWeightsD18
                     )
                 ) {
-                    postVerifyLocks[postVerifyLocksIdx++] = newDistributions[i].market;
+                    postVerifyLocks[postVerifyLocksIdx++] = newDistributions[i].marketId;
                 }
 
                 oldIdx++;
@@ -266,7 +266,7 @@ contract PoolModule is IPoolModule {
 
         while (oldIdx < pool.marketConfigurations.length) {
             // market has been removed
-            removedMarkets[removedMarketsIdx++] = pool.marketConfigurations[oldIdx].market;
+            removedMarkets[removedMarketsIdx++] = pool.marketConfigurations[oldIdx].marketId;
             oldIdx++;
         }
     }

@@ -44,7 +44,7 @@ describe('IssueUSDModule', function () {
       .Core.connect(owner)
       .setPoolConfiguration(poolId, [
         {
-          market: marketId,
+          marketId: marketId,
           weightD18: ethers.utils.parseEther('1'),
           maxDebtShareValueD18: ethers.utils.parseEther('10000000000000000'),
         },

@@ -80,7 +80,7 @@ describe('PoolModule Admin', function () {
       await assertRevert(
         systems()
           .Core.connect(user1)
-          .setPoolConfiguration(834693286, [{ market: 1, weightD18: 1, maxDebtShareValueD18: 0 }]),
+          .setPoolConfiguration(834693286, [{ marketId: 1, weightD18: 1, maxDebtShareValueD18: 0 }]),
         'PoolNotFound(834693286)',
         systems().Core
       );
@@ -90,7 +90,7 @@ describe('PoolModule Admin', function () {
       await assertRevert(
         systems()
           .Core.connect(user2)
-          .setPoolConfiguration(poolId, [{ market: 1, weightD18: 1, maxDebtShareValueD18: 0 }]),
+          .setPoolConfiguration(poolId, [{ marketId: 1, weightD18: 1, maxDebtShareValueD18: 0 }]),
         `Unauthorized("${await user2.getAddress()}")`,
         systems().Core
       );
@@ -103,9 +103,9 @@ describe('PoolModule Admin', function () {
         systems()
           .Core.connect(owner)
           .setPoolConfiguration(poolId, [
-            { market: 1, weightD18: 1, maxDebtShareValueD18: 0 },
-            { market: 2, weightD18: 1, maxDebtShareValueD18: 0 },
-            { market: 92197628, weightD18: 1, maxDebtShareValueD18: 0 },
+            { marketId: 1, weightD18: 1, maxDebtShareValueD18: 0 },
+            { marketId: 2, weightD18: 1, maxDebtShareValueD18: 0 },
+            { marketId: 92197628, weightD18: 1, maxDebtShareValueD18: 0 },
           ]),
         'MarketNotFound(92197628)',
         systems().Core
@@ -117,8 +117,8 @@ describe('PoolModule Admin', function () {
         systems()
           .Core.connect(owner)
           .setPoolConfiguration(poolId, [
-            { market: 1, weightD18: 1, maxDebtShareValueD18: 0 },
-            { market: 1, weightD18: 2, maxDebtShareValueD18: 0 },
+            { marketId: 1, weightD18: 1, maxDebtShareValueD18: 0 },
+            { marketId: 1, weightD18: 2, maxDebtShareValueD18: 0 },
           ]),
         'InvalidParameters("markets"',
         systems().Core
@@ -130,8 +130,8 @@ describe('PoolModule Admin', function () {
         systems()
           .Core.connect(owner)
           .setPoolConfiguration(poolId, [
-            { market: 1, weightD18: 1, maxDebtShareValueD18: 0 },
-            { market: 2, weightD18: 0, maxDebtShareValueD18: 0 },
+            { marketId: 1, weightD18: 1, maxDebtShareValueD18: 0 },
+            { marketId: 2, weightD18: 0, maxDebtShareValueD18: 0 },
           ]),
         'InvalidParameters("weights"',
         systems().Core
@@ -152,7 +152,7 @@ describe('PoolModule Admin', function () {
         await systems()
           .Core.connect(owner)
           .setPoolConfiguration(poolId, [
-            { market: marketId(), weightD18: 1, maxDebtShareValueD18: One },
+            { marketId: marketId(), weightD18: 1, maxDebtShareValueD18: One },
           ]);
       });
 
@@ -168,18 +168,18 @@ describe('PoolModule Admin', function () {
           await systems()
             .Core.connect(owner)
             .setPoolConfiguration(poolId, [
-              { market: marketId(), weightD18: 1, maxDebtShareValueD18: One },
-              { market: marketId2, weightD18: 3, maxDebtShareValueD18: One },
+              { marketId: marketId(), weightD18: 1, maxDebtShareValueD18: One },
+              { marketId: marketId2, weightD18: 3, maxDebtShareValueD18: One },
             ]);
         });
 
         it('returns pool position correctly', async () => {
           const distributions = await systems().Core.getPoolConfiguration(poolId);
 
-          assertBn.equal(distributions[0].market, marketId());
+          assertBn.equal(distributions[0].marketId, marketId());
           assertBn.equal(distributions[0].weightD18, 1);
           assertBn.equal(distributions[0].maxDebtShareValueD18, One);
-          assertBn.equal(distributions[1].market, marketId2);
+          assertBn.equal(distributions[1].marketId, marketId2);
           assertBn.equal(distributions[1].weightD18, 3);
           assertBn.equal(distributions[1].maxDebtShareValueD18, One);
         });
@@ -223,9 +223,9 @@ describe('PoolModule Admin', function () {
               systems()
                 .Core.connect(owner)
                 .setPoolConfiguration(poolId, [
-                  { market: marketId(), weightD18: 1, maxDebtShareValueD18: One },
+                  { marketId: marketId(), weightD18: 1, maxDebtShareValueD18: One },
                   // increase the weight of market2 to make the first market lower liquidity overall
-                  { market: marketId2, weightD18: 9, maxDebtShareValueD18: One },
+                  { marketId: marketId2, weightD18: 9, maxDebtShareValueD18: One },
                 ]),
               'CapacityLocked',
               systems().Core
@@ -238,8 +238,8 @@ describe('PoolModule Admin', function () {
             await systems()
               .Core.connect(owner)
               .callStatic.setPoolConfiguration(poolId, [
-                { market: marketId(), weightD18: 1, maxDebtShareValueD18: One },
-                { market: marketId2, weightD18: 9, maxDebtShareValueD18: One },
+                { marketId: marketId(), weightD18: 1, maxDebtShareValueD18: One },
+                { marketId: marketId2, weightD18: 9, maxDebtShareValueD18: One },
               ]);
 
             // but a full pull-out shouldn't work
@@ -248,7 +248,7 @@ describe('PoolModule Admin', function () {
                 .Core.connect(owner)
                 .setPoolConfiguration(poolId, [
                   // completely remove the first market
-                  { market: marketId2, weightD18: 9, maxDebtShareValueD18: One },
+                  { marketId: marketId2, weightD18: 9, maxDebtShareValueD18: One },
                 ]),
               'CapacityLocked'
               //systems().Core
@@ -265,14 +265,14 @@ describe('PoolModule Admin', function () {
               await systems()
                 .Core.connect(owner)
                 .setPoolConfiguration(poolId, [
-                  { market: marketId2, weightD18: 3, maxDebtShareValueD18: One },
+                  { marketId: marketId2, weightD18: 3, maxDebtShareValueD18: One },
                 ]);
             });
 
             it('returns pool position correctly', async () => {
               const distributions = await systems().Core.getPoolConfiguration(poolId);
 
-              assertBn.equal(distributions[0].market, marketId2);
+              assertBn.equal(distributions[0].marketId, marketId2);
               assertBn.equal(distributions[0].weightD18, 3);
               assertBn.equal(distributions[0].maxDebtShareValueD18, One);
             });
@@ -301,14 +301,14 @@ describe('PoolModule Admin', function () {
               await systems()
                 .Core.connect(owner)
                 .setPoolConfiguration(poolId, [
-                  { market: marketId(), weightD18: 2, maxDebtShareValueD18: One.mul(2) },
+                  { marketId: marketId(), weightD18: 2, maxDebtShareValueD18: One.mul(2) },
                 ]);
             });
 
             it('returns pool position correctly', async () => {
               const distributions = await systems().Core.getPoolConfiguration(poolId);
 
-              assertBn.equal(distributions[0].market, marketId());
+              assertBn.equal(distributions[0].marketId, marketId());
               assertBn.equal(distributions[0].weightD18, 2);
               assertBn.equal(distributions[0].maxDebtShareValueD18, One.mul(2));
             });
@@ -366,7 +366,7 @@ describe('PoolModule Admin', function () {
           .Core.connect(owner)
           .setPoolConfiguration(poolId, [
             {
-              market: marketId(),
+              marketId: marketId(),
               weightD18: 1,
               maxDebtShareValueD18: One.mul(One.mul(-1)).div(depositAmount),
             },
@@ -390,7 +390,7 @@ describe('PoolModule Admin', function () {
           .Core.connect(user1)
           .setPoolConfiguration(secondPoolId, [
             {
-              market: marketId(),
+              marketId: marketId(),
               weightD18: 1,
               maxDebtShareValueD18: One.mul(One).div(depositAmount).mul(2),
             },
@@ -595,7 +595,7 @@ describe('PoolModule Admin', function () {
         await systems()
           .Core.connect(owner)
           .setPoolConfiguration(poolId, [
-            { market: marketId(), weightD18: 1, maxDebtShareValueD18: One },
+            { marketId: marketId(), weightD18: 1, maxDebtShareValueD18: One },
           ]);
         await systems().Core.connect(user1).getVaultDebt(poolId, collateralAddress());
       });
