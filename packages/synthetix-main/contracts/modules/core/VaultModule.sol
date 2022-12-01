@@ -5,6 +5,8 @@ import "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
 import "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
 import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 
+import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+
 import "../../storage/Account.sol";
 import "../../storage/Pool.sol";
 
@@ -32,6 +34,11 @@ contract VaultModule is IVaultModule {
     error InvalidLeverage(uint leverage);
     error InvalidCollateral(address collateralType);
     error CapacityLocked(uint marketId);
+
+    using SafeCastU128 for uint128;
+    using SafeCastU256 for uint256;
+    using SafeCastI128 for int128;
+    using SafeCastI256 for int256;
 
     /**
      * @dev See {IVaultModule-delegateCollateral}.
@@ -87,7 +94,7 @@ contract VaultModule is IVaultModule {
             //(, uint collateralValue) = pool.currentAccountCollateral(collateralType, accountId);
 
             CollateralConfiguration.load(collateralType).verifyCollateralRatio(
-                debt < 0 ? 0 : uint(debt),
+                debt < 0 ? 0 : debt.toUint(),
                 collateralAmount.mulDecimal(collateralPrice)
             );
         }
@@ -211,9 +218,9 @@ contract VaultModule is IVaultModule {
             collateral.deposit(oldCollateralAmount - collateralAmount);
         }
 
-        if (collateralAmount > 0 && !collateral.pools.contains(uint(poolId))) {
+        if (collateralAmount > 0 && !collateral.pools.contains(poolId)) {
             collateral.pools.add(poolId);
-        } else if (collateral.pools.contains((uint(poolId)))) {
+        } else if (collateral.pools.contains((poolId))) {
             collateral.pools.remove(poolId);
         }
 

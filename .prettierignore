@@ -6,6 +6,7 @@ build/
 packages/core-utils/utils
 packages/core-router/util
 packages/core-router/index.*
+packages/synthetix-main/test/generated
 packages/*/typechain-types
 packages/*/contracts/routers
 packages/*/contracts/modules/test

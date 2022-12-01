@@ -1,10 +1,9 @@
 import path from 'node:path';
-import { task } from 'hardhat/config';
-import { default as logger } from '@synthetixio/core-utils/utils/io/logger';
 import * as types from '@synthetixio/core-utils/utils/hardhat/argument-types';
+import logger from '@synthetixio/core-utils/utils/io/logger';
+import { task } from 'hardhat/config';
 import { parseFullyQualifiedName } from 'hardhat/utils/contract-names';
 import { getSourcesFullyQualifiedNames } from '../internal/contract-helper';
-import { quietCompile } from '../internal/quiet-compile';
 import { SUBTASK_GENERATE_TESTABLE_STORAGE, TASK_GENERATE_TESTABLE } from '../task-names';
 
 export interface DeployTaskParams {
@@ -27,8 +26,6 @@ task(TASK_GENERATE_TESTABLE, 'Creates generated test contracts for all storage l
 
     logger.quiet = !!quiet;
     logger.debugging = !!debug;
-
-    await quietCompile(hre, !!quiet);
 
     const storageLibs = await getSourcesFullyQualifiedNames(hre, artifacts);
 

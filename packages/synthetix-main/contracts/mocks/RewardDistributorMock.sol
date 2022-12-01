@@ -49,8 +49,8 @@ contract RewardDistributorMock is IRewardDistributor {
         uint128 poolId,
         address collateralType,
         uint256 amount,
-        uint256 start,
-        uint256 duration
+        uint64 start,
+        uint32 duration
     ) public {
         IRewardsManagerModule(_rewardManager).distributeRewards(poolId, collateralType, amount, start, duration);
     }

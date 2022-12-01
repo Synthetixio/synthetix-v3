@@ -7,11 +7,18 @@ import "@synthetixio/core-contracts/contracts/errors/AddressError.sol";
 import "@synthetixio/core-contracts/contracts/errors/ParameterError.sol";
 import "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
 
+import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+
 import "../../interfaces/IPoolModule.sol";
 import "../../storage/Pool.sol";
 
 contract PoolModule is IPoolModule {
     error CapacityLocked(uint marketId);
+
+    using SafeCastU128 for uint128;
+    using SafeCastU256 for uint256;
+    using SafeCastI128 for int128;
+    using SafeCastI256 for int256;
 
     using DecimalMath for uint;
 
@@ -135,7 +142,7 @@ contract PoolModule is IPoolModule {
             Market.rebalance(removedMarkets[i], poolId, 0, 0);
         }
 
-        pool.totalWeightsD18 = uint128(totalWeight);
+        pool.totalWeightsD18 = totalWeight.to128();
 
         pool.distributeDebtToVaults();
 

@@ -74,9 +74,9 @@ library Distribution {
         // TODO: Can we safely assume that amount will always be a regular integer,
         // i.e. not a decimal?
         int valueD45 = valueD18 * DecimalMath.UNIT_PRECISE_INT;
-        int deltaValuePerShareD27 = valueD45 / int(totalSharesD18);
+        int deltaValuePerShareD27 = valueD45 / totalSharesD18.toInt();
 
-        dist.valuePerShareD27 += int128(deltaValuePerShareD27);
+        dist.valuePerShareD27 += deltaValuePerShareD27.to128();
     }
 
     /**
