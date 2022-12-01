@@ -45,9 +45,9 @@ library Vault {
         // solhint-disable-next-line private-vars-leading-underscore
         uint128 __unused;
         /**
-         * @dev The previous liquidity of the vault (collateral - debt), when the system was last interacted with.
+         * @dev The previous credit capacity of the vault (collateral - debt), when the system was last interacted with.
          */
-        uint128 prevRemainingLiquidityD18;
+        uint128 prevRemainingCreditCapacityD18;
         /**
          * @dev Vault data for all the liquidation cycles divided into epochs.
          */
@@ -70,21 +70,19 @@ library Vault {
     }
 
     /**
-     * @dev Updates the vault's liquidity as the value of its collateral minus its debt.
+     * @dev Updates the vault's credit capacity as the value of its collateral minus its debt.
      *
      * Called as a ticker when users interact with pools, allowing pools to set
-     * vaults' liquidity shares within the them.
+     * vaults' credit capacity shares within the them.
      *
      * Returns the amount of collateral that this vault is providing in net USD terms.
-     *
-     * TODO: Consider renaming to updateCreditCapacity?
      */
-    function updateLiquidity(Data storage self, uint collateralPriceD18)
+    function updateCreditCapacity(Data storage self, uint collateralPriceD18)
         internal
         returns (
             uint usdWeightD18,
-            uint remainingLiquidityD18,
-            int deltaRemainingLiquidityD18
+            uint remainingCreditCapacityD18,
+            int deltaRemainingCreditCapacityD18
         )
     {
         VaultEpoch.Data storage epochData = currentEpoch(self);
@@ -95,13 +93,13 @@ library Vault {
             collateralPriceD18.toInt()
         );
         int vaultAccruedDebtD18 = epochData.totalDebt();
-        remainingLiquidityD18 = vaultDepositedValueD18 > vaultAccruedDebtD18
+        remainingCreditCapacityD18 = vaultDepositedValueD18 > vaultAccruedDebtD18
             ? (vaultDepositedValueD18 - vaultAccruedDebtD18).toUint()
             : 0;
 
-        deltaRemainingLiquidityD18 = remainingLiquidityD18.toInt() - self.prevRemainingLiquidityD18.toInt();
+        deltaRemainingCreditCapacityD18 = remainingCreditCapacityD18.toInt() - self.prevRemainingCreditCapacityD18.toInt();
 
-        self.prevRemainingLiquidityD18 = remainingLiquidityD18.to128();
+        self.prevRemainingCreditCapacityD18 = remainingCreditCapacityD18.to128();
     }
 
     /**

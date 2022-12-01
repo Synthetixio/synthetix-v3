@@ -253,7 +253,7 @@ library Pool {
         collateralPriceD18 = CollateralConfiguration.load(collateralType).getCollateralPrice();
 
         // Changes in price update the corresponding vault's total collateral value as well as its liquidity (collateral - debt).
-        (uint usdWeightD18, , int deltaLiquidityD18) = self.vaults[collateralType].updateLiquidity(collateralPriceD18);
+        (uint usdWeightD18, , int deltaLiquidityD18) = self.vaults[collateralType].updateCreditCapacity(collateralPriceD18);
 
         // Update the vault's shares in the pool's debt distribution, according to the value of its collateral.
         bytes32 actorId = bytes32(uint(uint160(collateralType)));
