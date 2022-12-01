@@ -31,9 +31,7 @@ contract VaultModule is IVaultModule {
     using CollateralConfiguration for CollateralConfiguration.Data;
     using ScalableMapping for ScalableMapping.Data;
 
-    error PoolNotFound(uint128 poolId);
     error InvalidLeverage(uint leverage);
-    error InvalidParameters(string incorrectParameter, string help);
     error InvalidCollateral(address collateralType);
     error CapacityLocked(uint marketId);
 

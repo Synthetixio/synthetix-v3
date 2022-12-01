@@ -2,6 +2,7 @@
 pragma solidity ^0.8.0;
 
 import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
+import "@synthetixio/core-contracts/contracts/errors/ParameterError.sol";
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 
 import "./Distribution.sol";
@@ -12,7 +13,6 @@ library DistributionEntry {
     using SafeCastU256 for uint256;
     using SafeCastI128 for int128;
     using SafeCastI256 for int256;
-    error InvalidParameters(string incorrectParameter, string help);
 
     struct Data {
         // amount which should be applied at the given time below, or
@@ -26,7 +26,7 @@ library DistributionEntry {
     /**
      * this function allows for more special cases such as distributing at a future date or distributing over time.
      * if you want to apply the distribution to the pool, call `distribute` with the return value. Otherwise, you can
-     * record this independantly as well
+     * record this independently as well
      */
     function distribute(
         Data storage entry,
@@ -38,7 +38,7 @@ library DistributionEntry {
         uint totalSharesD18 = dist.totalSharesD18;
 
         if (totalSharesD18 == 0) {
-            revert InvalidParameters("amount", "can't distribute to empty distribution");
+            revert ParameterError.InvalidParameter("amount", "can't distribute to empty distribution");
         }
 
         int curTime = block.timestamp.toInt().to128();
@@ -50,7 +50,7 @@ library DistributionEntry {
             // update any rewards which may have accrued since last run
 
             // instant distribution--immediately disperse amount
-            diffD18 += (amountD18 * 1e18) / totalSharesD18.toInt();
+            diffD18 += amountD18.divDecimal(totalSharesD18.toInt());
 
             entry.lastUpdate = 0;
             entry.start = 0;
