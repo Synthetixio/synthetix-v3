@@ -27,8 +27,8 @@ library DecimalMath {
     int256 public constant UNIT_PRECISE_INT = int256(UNIT_PRECISE);
     int128 public constant UNIT_PRECISE_INT128 = int128(UNIT_PRECISE_INT);
 
-    // Precision scaling
-    uint256 public constant PRECISION_FACTOR = 9;
+    // Precision scaling, (used to scale down/up from one precision to the other).
+    uint256 public constant PRECISION_FACTOR = 9; // 27 - 18 = 9 :)
 
     // -----------------------------------------------------------------------
     // -----------------------------------------------------------------------
@@ -45,7 +45,7 @@ library DecimalMath {
     // -----------------
 
     /**
-     * @dev Multiplies two fixed point numbers.
+     * @dev Multiplies two low precision decimals.
      *
      * Since the two numbers are assumed to be fixed point numbers,
      * (x * UNIT) * (y * UNIT) = x * y * UNIT ^ 2,
@@ -56,7 +56,7 @@ library DecimalMath {
     }
 
     /**
-     * @dev Divides two fixed point numbers.
+     * @dev Divides two low precision decimals.
      *
      * Since the two numbers are assumed to be fixed point numbers,
      * (x * UNIT) / (y * UNIT) = x / y (Decimal representation is lost),
@@ -64,6 +64,28 @@ library DecimalMath {
      */
     function divDecimal(uint256 x, uint256 y) internal pure returns (uint256 z) {
         return (x * UNIT) / y;
+    }
+
+    /**
+     * @dev Scales up a value.
+     *
+     * E.g. if value is not a decimal, a scale up by 18 makes it a low precision decimal.
+     * If value is a low precision decimal, a scale up by 9 makes it a high precision decimal.
+     */
+    function upscale(uint x, uint factor) internal pure returns (uint) {
+        return x * 10**factor;
+    }
+
+    /**
+     * @dev Scales down a value.
+     *
+     * E.g. if value is a high precision decimal, a scale down by 9 makes it a low precision decimal.
+     * If value is a low precision decimal, a scale down by 9 makes it a regular integer.
+     *
+     * Scaling down a regular integer would not make sense.
+     */
+    function downscale(uint x, uint factor) internal pure returns (uint) {
+        return x / 10**factor;
     }
 
     // -----------------
@@ -104,6 +126,20 @@ library DecimalMath {
         return (x * UNIT_INT) / y;
     }
 
+    /**
+     * @dev See upscale for uint256.
+     */
+    function upscale(int x, uint factor) internal pure returns (int) {
+        return x * int(10**factor);
+    }
+
+    /**
+     * @dev See downscale for uint256.
+     */
+    function downscale(int x, uint factor) internal pure returns (int) {
+        return x / int(10**factor);
+    }
+
     // -----------------
     // int128
     // -----------------
@@ -120,21 +156,5 @@ library DecimalMath {
      */
     function divDecimalInt128(int128 x, int128 y) internal pure returns (int128) {
         return (x * UNIT_INT128) / y;
-    }
-
-    function upscale(uint x, uint factor) internal pure returns (uint) {
-        return x * 10**factor;
-    }
-
-    function downscale(uint x, uint factor) internal pure returns (uint) {
-        return x / 10**factor;
-    }
-
-    function upscale(int x, uint factor) internal pure returns (int) {
-        return x * int(10**factor);
-    }
-
-    function downscale(int x, uint factor) internal pure returns (int) {
-        return x / int(10**factor);
     }
 }
