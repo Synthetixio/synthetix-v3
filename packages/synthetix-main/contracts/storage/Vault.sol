@@ -91,7 +91,9 @@ library Vault {
 
         usdWeightD18 = uint(epochData.accountsDebtDistribution.totalSharesD18).mulDecimal(collateralPriceD18);
 
-        int vaultDepositedValueD18 = epochData.collateralAmounts.totalAmount().toInt().mulDecimal(collateralPriceD18.toInt());
+        int vaultDepositedValueD18 = epochData.collateralAmounts.totalAmount().toInt().mulDecimal(
+            collateralPriceD18.toInt()
+        );
         int vaultAccruedDebtD18 = epochData.totalDebt();
         remainingLiquidityD18 = vaultDepositedValueD18 > vaultAccruedDebtD18
             ? (vaultDepositedValueD18 - vaultAccruedDebtD18).toUint()
@@ -157,8 +159,9 @@ library Vault {
 
         dist.rewardPerShareD18 += dist.entry.updateEntry(totalSharesD18).toUint().to128();
 
-        dist.actorInfo[accountId].pendingSendD18 += 
-            actorSharesD18.mulDecimal(dist.rewardPerShareD18 - dist.actorInfo[accountId].lastRewardPerShareD18).to128();
+        dist.actorInfo[accountId].pendingSendD18 += actorSharesD18
+            .mulDecimal(dist.rewardPerShareD18 - dist.actorInfo[accountId].lastRewardPerShareD18)
+            .to128();
 
         dist.actorInfo[accountId].lastRewardPerShareD18 = dist.rewardPerShareD18;
 

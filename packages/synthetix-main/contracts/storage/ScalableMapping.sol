@@ -109,7 +109,7 @@ library ScalableMapping {
             return 0;
         }
 
-        return self.sharesD18[actorId] * totalAmount(self) / totalSharesD18;
+        return (self.sharesD18[actorId] * totalAmount(self)) / totalSharesD18;
     }
 
     /**

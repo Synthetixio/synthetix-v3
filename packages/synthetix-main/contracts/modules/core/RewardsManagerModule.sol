@@ -85,12 +85,11 @@ contract RewardsManagerModule is IRewardsManagerModule {
 
         RewardDistribution.Data storage reward = pool.vaults[collateralType].rewards[rewardId];
 
-        reward.rewardPerShareD18 += reward.entry.distribute(
-            pool.vaults[collateralType].currentEpoch().accountsDebtDistribution,
-            amount.toInt(),
-            start,
-            duration
-        ).toUint().to128();
+        reward.rewardPerShareD18 += reward
+            .entry
+            .distribute(pool.vaults[collateralType].currentEpoch().accountsDebtDistribution, amount.toInt(), start, duration)
+            .toUint()
+            .to128();
 
         emit RewardsDistributed(poolId, collateralType, msg.sender, amount, start, duration);
     }

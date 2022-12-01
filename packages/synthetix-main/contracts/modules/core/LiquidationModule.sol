@@ -17,7 +17,7 @@ contract LiquidationModule is ILiquidationModule {
     using SafeCastU256 for uint256;
     using SafeCastI128 for int128;
     using SafeCastI256 for int256;
-    
+
     using DecimalMath for uint;
     using ERC20Helper for address;
 

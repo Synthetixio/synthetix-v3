@@ -101,7 +101,9 @@ library DistributionEntry {
                 curUpdateDistributedD18 = (curUpdateDistributedD18 * (curTime - int64(entry.start))) / int32(entry.duration);
             }
 
-            valuePerShareChangeD18 = (curUpdateDistributedD18 - lastUpdateDistributedD18).divDecimal(totalSharesAmountD18.toInt());
+            valuePerShareChangeD18 = (curUpdateDistributedD18 - lastUpdateDistributedD18).divDecimal(
+                totalSharesAmountD18.toInt()
+            );
         }
 
         entry.lastUpdate = uint32(int32(curTime));
