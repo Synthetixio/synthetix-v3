@@ -99,6 +99,20 @@ library DecimalMath {
         return (x * UNIT_UINT128) / y;
     }
 
+    /**
+     * @dev See upscale for uint256.
+     */
+    function upscaleUint128(uint128 x, uint factor) internal pure returns (uint128) {
+        return x * uint128(10**factor);
+    }
+
+    /**
+     * @dev See downscale for uint256.
+     */
+    function downscaleUint128(uint128 x, uint factor) internal pure returns (uint128) {
+        return x / uint128(10**factor);
+    }
+
     // -----------------
     // int256
     // -----------------
@@ -147,5 +161,19 @@ library DecimalMath {
      */
     function divDecimalInt128(int128 x, int128 y) internal pure returns (int128) {
         return (x * UNIT_INT128) / y;
+    }
+
+    /**
+     * @dev See upscale for uint256.
+     */
+    function upscaleInt128(int128 x, uint factor) internal pure returns (int128) {
+        return x * int128(int(10**factor));
+    }
+
+    /**
+     * @dev See downscale for uint256.
+     */
+    function downscaleInt128(int128 x, uint factor) internal pure returns (int128) {
+        return x / int128(int(10**factor));
     }
 }
