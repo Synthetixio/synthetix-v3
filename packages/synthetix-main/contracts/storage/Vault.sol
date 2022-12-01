@@ -35,7 +35,8 @@ library Vault {
         /**
          * @dev Unused property, maintained for backwards compatibility in storage layout.
          */
-        uint128 unused_;
+        // solhint-disable-next-line private-vars-leading-underscore
+        uint128 __unused;
         /**
          * @dev The previous liquidity of the vault (collateral - debt), when the system was last interacted with.
          */

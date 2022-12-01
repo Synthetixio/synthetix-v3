@@ -10,11 +10,13 @@ library MarketPoolInfo {
          * @dev . Needed to re-add the pool to the distribution when going back in range
          */
         uint128 liquidityAmountD18;
-        uint128 unused;
+        // solhint-disable-next-line private-vars-leading-underscore
+        uint128 __unused;
         /**
          * @dev The amount of debt the pool has which hasn't been passed down the debt distribution chain yet
          */
         uint128 pendingDebtD18;
-        uint128 unused2;
+        // solhint-disable-next-line private-vars-leading-underscore
+        uint128 __unused2;
     }
 }
