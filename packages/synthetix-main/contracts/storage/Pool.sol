@@ -5,7 +5,7 @@ import "./Distribution.sol";
 import "./MarketConfiguration.sol";
 import "./Vault.sol";
 import "./Market.sol";
-import "./PoolConfiguration.sol";
+import "./SystemPoolConfiguration.sol";
 
 import "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
 
@@ -188,14 +188,14 @@ library Pool {
      *
      * Note: There is a non-system-wide fail safe for each market at `MarketConfiguration.maxDebtShareValue`.
      *
-     * See `PoolConfiguration.minLiquidityRatio`.
+     * See `SystemPoolConfiguration.minLiquidityRatio`.
      */
     function getSystemMaxValuePerShare(
         Data storage self,
         Market.Data storage marketData,
         uint unusedCreditCapacityD18
     ) internal view returns (int) {
-        uint minLiquidityRatioD18 = PoolConfiguration.load().minLiquidityRatioD18;
+        uint minLiquidityRatioD18 = SystemPoolConfiguration.load().minLiquidityRatioD18;
 
         // Calculate the margin of debt that the market could incur to hit the system wide limit.
         uint marginD18;
