@@ -12,8 +12,9 @@ pragma solidity ^0.8.0;
  * 2) Given UNIT = 1000000000000000000
  * then if A = 500000000000000000, A represents the decimal 0.500000000000000000
  *
- * TODO: Implement all functions for all types (including tests).
- * So far, only the ones needed by the code have been implemented.
+ * Note: An accompanying naming convention of the postfix "D<Precision>" is helpful with this utility. I.e. if a variable "myValue" represents a low resolution decimal, it should be named "myValueD18", and if it was a high resolution decimal "myValueD27". While scaling, intermediate precision decimals like "myValue45" could arise. Non-decimals should have no postfix, i.e. just "myValue".
+ *
+ * Important: Multiplication and division operations are currently not supported for high precision decimals. Using these operations on them will yield incorrect results and fail silently.
  */
 library DecimalMath {
     // Numbers representing 1.0 (low precision).
@@ -29,16 +30,6 @@ library DecimalMath {
 
     // Precision scaling, (used to scale down/up from one precision to the other).
     uint256 public constant PRECISION_FACTOR = 9; // 27 - 18 = 9 :)
-
-    // -----------------------------------------------------------------------
-    // -----------------------------------------------------------------------
-    // Important!
-    //
-    // Multiplication and division operations are currently not supported
-    // for high precision decimals. Using these operations on them will
-    // yield incorrect results and fail silently.
-    // -----------------------------------------------------------------------
-    // -----------------------------------------------------------------------
 
     // -----------------
     // uint256
