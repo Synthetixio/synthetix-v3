@@ -18,8 +18,7 @@ interface ILiquidationModule {
         uint128 indexed poolId,
         address indexed collateralType,
         uint debtLiquidated,
-        uint collateralLiquidated,
-        uint amountRewarded
+        uint collateralLiquidated
     );
 
     struct LiquidationInformation {
