@@ -7,7 +7,6 @@ import "../interfaces/IERC721Receiver.sol";
 import "../errors/AddressError.sol";
 import "../errors/AccessError.sol";
 import "../errors/InitError.sol";
-import "../errors/ParameterError.sol";
 import "./ERC721Storage.sol";
 import "../utils/AddressUtil.sol";
 import "../utils/StringUtil.sol";
@@ -34,7 +33,7 @@ contract ERC721 is IERC721, IERC721Metadata {
         }
 
         if (bytes(tokenName).length == 0 || bytes(tokenSymbol).length == 0) {
-            revert ParameterError.InvalidParameter("name/symbol", "must not be empty");
+            revert InitError.InvalidParameters();
         }
 
         store.name = tokenName;
@@ -175,7 +174,7 @@ contract ERC721 is IERC721, IERC721Metadata {
         }
 
         if (tokenId == 0) {
-            revert ParameterError.InvalidParameter("tokenId", "cannot be zero");
+            revert InitError.InvalidParameters();
         }
 
         if (_exists(tokenId)) {

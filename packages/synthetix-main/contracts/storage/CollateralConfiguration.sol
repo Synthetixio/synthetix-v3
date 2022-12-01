@@ -3,7 +3,6 @@ pragma solidity ^0.8.0;
 
 import "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
 import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
-import "@synthetixio/core-contracts/contracts/errors/ParameterError.sol";
 
 import "../interfaces/external/IAggregatorV3Interface.sol";
 
@@ -11,6 +10,7 @@ library CollateralConfiguration {
     using SetUtil for SetUtil.AddressSet;
     using DecimalMath for uint256;
 
+    error InvalidParameters(string incorrectParameter, string help);
     error CollateralDepositDisabled(address collateralType);
     error InsufficientCollateralRatio(uint collateralValue, uint debt, uint ratio, uint minRatio);
     error InsufficientDelegation(uint minDelegation);
@@ -55,7 +55,7 @@ library CollateralConfiguration {
         }
 
         if (config.minDelegationD18 < config.liquidationRewardD18) {
-            revert ParameterError.InvalidParameter("minDelegation", "must be greater than liquidationReward");
+            revert InvalidParameters("minDelegation", "must be greater than liquidationReward");
         }
 
         Data storage storedConfig = load(config.tokenAddress);

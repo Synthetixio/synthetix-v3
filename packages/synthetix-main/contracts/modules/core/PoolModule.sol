@@ -4,13 +4,14 @@ pragma solidity ^0.8.0;
 import "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
 import "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
 import "@synthetixio/core-contracts/contracts/errors/AddressError.sol";
-import "@synthetixio/core-contracts/contracts/errors/ParameterError.sol";
 import "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
 
 import "../../interfaces/IPoolModule.sol";
 import "../../storage/Pool.sol";
 
 contract PoolModule is IPoolModule {
+    error InvalidParameters(string incorrectParameter, string help);
+    error PoolNotFound(uint128 poolId);
     error CapacityLocked(uint marketId);
 
     using DecimalMath for uint;
@@ -209,12 +210,12 @@ contract PoolModule is IPoolModule {
 
         for (uint i = 0; i < newDistributions.length; i++) {
             if (newDistributions[i].market <= lastMarketId) {
-                revert ParameterError.InvalidParameter("markets", "must be supplied in strictly ascending order");
+                revert InvalidParameters("markets", "must be supplied in strictly ascending order");
             }
             lastMarketId = newDistributions[i].market;
 
             if (newDistributions[i].weightD18 == 0) {
-                revert ParameterError.InvalidParameter("weights", "weight must be non-zero");
+                revert InvalidParameters("weights", "weight must be non-zero");
             }
 
             while (

@@ -2,6 +2,7 @@
 pragma solidity ^0.8.0;
 
 import "@synthetixio/main/contracts/interfaces/external/IMarket.sol";
+
 import "synthetix/contracts/interfaces/IAddressResolver.sol";
 import "synthetix/contracts/interfaces/ILiquidatorRewards.sol";
 import "synthetix/contracts/interfaces/IIssuer.sol";
@@ -16,7 +17,6 @@ import "@synthetixio/core-contracts/contracts/interfaces/IERC20.sol";
 import "@synthetixio/core-contracts/contracts/interfaces/IERC721.sol";
 
 import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
-import "@synthetixio/core-contracts/contracts/errors/ParameterError.sol";
 
 import "hardhat/console.sol";
 
@@ -32,6 +32,7 @@ contract LegacyMarket is Ownable, IMarket {
 
     error NothingToMigrate();
     error InsufficientCollateralMigrated(uint amountRequested, uint amountAvailable);
+    error InvalidParameters(string param, string reason);
     error Paused();
 
     event AccountMigrated(address indexed account, uint indexed accountId, uint collateralAmount, uint debtAmount);
@@ -77,7 +78,7 @@ contract LegacyMarket is Ownable, IMarket {
         }
 
         if (amount == 0) {
-            revert ParameterError.InvalidParameter("amount", "Should be non-zero");
+            revert InvalidParameters("amount", "Should be non-zero");
         }
 
         if (amount > reportedDebt(marketId)) {

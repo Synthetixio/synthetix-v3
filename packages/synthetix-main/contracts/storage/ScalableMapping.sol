@@ -5,6 +5,7 @@ import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 
 import "./DistributionActor.sol";
+import "../errors/ParameterError.sol";
 
 /**
  * @title Data structure that wraps a mapping with a scalar multiplier.

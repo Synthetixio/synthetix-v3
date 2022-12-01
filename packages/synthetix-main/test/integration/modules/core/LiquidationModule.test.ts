@@ -160,7 +160,7 @@ describe('LiquidationModule', function () {
     it('does not allow liquidation with 0 max usd', async () => {
       await assertRevert(
         systems().Core.connect(user1).liquidateVault(poolId, collateralAddress(), accountId, 0),
-        'InvalidParameter',
+        'InvalidParameters("maxUsd',
         systems().Core
       );
     });
@@ -170,7 +170,7 @@ describe('LiquidationModule', function () {
         systems()
           .Core.connect(user1)
           .liquidateVault(poolId, collateralAddress(), 382387423936, ethers.utils.parseEther('1')),
-        'InvalidParameter',
+        'InvalidParameters("liquidateAsAccountId',
         systems().Core
       );
     });

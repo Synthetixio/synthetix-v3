@@ -120,7 +120,7 @@ describe('PoolModule Admin', function () {
             { market: 1, weightD18: 1, maxDebtShareValueD18: 0 },
             { market: 1, weightD18: 2, maxDebtShareValueD18: 0 },
           ]),
-        'InvalidParameter',
+        'InvalidParameters("markets"',
         systems().Core
       );
     });
@@ -133,7 +133,7 @@ describe('PoolModule Admin', function () {
             { market: 1, weightD18: 1, maxDebtShareValueD18: 0 },
             { market: 2, weightD18: 0, maxDebtShareValueD18: 0 },
           ]),
-        'InvalidParameter',
+        'InvalidParameters("weights"',
         systems().Core
       );
     });
@@ -454,6 +454,7 @@ describe('PoolModule Admin', function () {
 
         describe('and then the market reports 0 balance', () => {
           before('set market', async () => {
+            console.log('reported debt before', await MockMarket().reportedDebt(marketId()));
             await MockMarket().connect(user1).setReportedDebt(0);
             await systems().Core.connect(user1).getVaultDebt(poolId, collateralAddress());
           });

@@ -3,9 +3,9 @@ pragma solidity ^0.8.0;
 
 import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
-import "@synthetixio/core-contracts/contracts/errors/ParameterError.sol";
 
 import "./DistributionActor.sol";
+import "../errors/ParameterError.sol";
 
 /**
  * @title Data structure that allows you to track some global value, distributed amongst a set of actors.
