@@ -32,8 +32,8 @@ interface IRewardsManagerModule {
         uint128 poolId,
         address collateralType,
         uint amount,
-        uint start,
-        uint duration
+        uint64 start,
+        uint32 duration
     ) external;
 
     /// @notice retrieves the amount of available reward, and claims them to the caller's account for a given distributor.

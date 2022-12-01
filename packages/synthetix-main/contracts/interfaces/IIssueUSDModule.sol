@@ -1,8 +1,6 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "../utils/CurvesLibrary.sol";
-
 /// @title Liquidates the collateral for an account in a pool
 interface IIssueUSDModule {
     /**
