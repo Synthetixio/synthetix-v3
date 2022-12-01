@@ -6,6 +6,7 @@ import "../utils/ReducerNodeLibrary.sol";
 import "../utils/ExternalNodeLibrary.sol";
 import "../utils/PythNodeLibrary.sol";
 import "../utils/ChainlinkNodeLibrary.sol";
+import "../utils/UniswapNodeLibrary.sol";
 
 import "../storage/Node.sol";
 import "../storage/NodeDefinition.sol";
@@ -122,6 +123,8 @@ contract OracleManagerModule is IOracleManagerModule {
             return ChainlinkNodeLibrary.process(nodeDefinition.parameters);
         } else if (nodeDefinition.nodeType == NodeDefinition.NodeType.PYTH) {
             return PythNodeLibrary.process(nodeDefinition.parameters);
+        } else if (nodeDefinition.nodeType == NodeDefinition.NodeType.UNISWAP) {
+            return UniswapNodeLibrary.process(nodeDefinition.parameters);
         } else {
             revert UnsupportedNodeType(uint(nodeDefinition.nodeType));
         }
