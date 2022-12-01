@@ -4,9 +4,7 @@ pragma solidity ^0.8.0;
 import "./Market.sol";
 
 /**
- * @title TODO
- *
- * TODO: Rename to MarketIndexes
+ * @title Encapsulates market creation logic
  */
 library MarketCreator {
     struct Data {
