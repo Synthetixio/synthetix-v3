@@ -67,8 +67,6 @@ library Pool {
         uint128 totalWeightsD18;
         /**
          * @dev Accumulated cache value of all vault liquidities, i.e. their collateral value minus their debt.
-         *
-         * TODO: Liquidity as a term is a vague concept. Consider being more consistent all over the code with the use of capacity vs liquidity. i.e. `totalRemainingCreditCapacity`.
          */
         uint128 unusedCreditCapacityD18;
         /**
@@ -89,12 +87,6 @@ library Pool {
          */
         Distribution.Data vaultsDebtDistribution;
         /**
-         * @dev Collateral types that provide liquidity to this pool and hence to the markets connected to the pool.
-         *
-         * TODO: This variable doesn't seem to be accessed from anywhere in the code. Consider using it, or emptying the storage slot (not removing it).
-         */
-        SetUtil.AddressSet collateralTypes;
-        /**
          * @dev Reference to all the vaults that provide liquidity to this pool.
          *
          * Each collateral type will have its own vault, specific to this pool. I.e. if two pools both use SNX collateral, each will have its own SNX vault.
@@ -106,8 +98,6 @@ library Pool {
 
     /**
      * @dev Returns the pool stored at the specified pool id.
-     *
-     * TODO: Consider using a constant instead of a hardcoded string here, and likewise to all similar uses of storage access in the code.
      */
     function load(uint128 id) internal pure returns (Data storage data) {
         bytes32 s = keccak256(abi.encode("Pool", id));
@@ -148,11 +138,7 @@ library Pool {
 
         // Read from storage once, before entering the loop below.
         // These values should not change while iterating through each market.
-
-        // TODO Clarify
-        int totalCreditCapacityD18 = self.vaultsDebtDistribution.totalSharesD18.toInt();
-
-        // TODO Clarify
+        uint totalCreditCapacityD18 = self.vaultsDebtDistribution.totalSharesD18;
         uint128 unusedCreditCapacityD18 = self.unusedCreditCapacityD18;
 
         int cumulativeDebtChangeD18 = 0;
@@ -167,18 +153,15 @@ library Pool {
             // Calculate each market's pro-rata USD liquidity.
             // Note: the factor `(weight / totalWeights)` is not deduped in the operations below to maintain numeric precision.
 
-            // TODO: Consider introducing a SafeCast library. Here, if we didn't check for negative numbers, a cast could result in an overflow (Solidity does not check for casting overflows). Thus, leaving casting free to the developer might introduce bugs. All instances of the code should use this util.
-            uint marketCreditCapacityD18 = totalCreditCapacityD18 > 0
-                ? (totalCreditCapacityD18.toUint() * weightD18) / totalWeightsD18
-                : 0;
+            uint marketCreditCapacityD18 = (totalCreditCapacityD18 * weightD18) / totalWeightsD18;
             uint marketUnusedCreditCapacityD18 = (unusedCreditCapacityD18 * weightD18) / totalWeightsD18;
 
             Market.Data storage marketData = Market.load(marketConfiguration.market);
 
-            // Contain the market's maximum debt share value.
-            // System-wide.
-            int effectiveMaxShareValueD18 = containMarketMaxShareValue(self, marketData, marketUnusedCreditCapacityD18);
-            // Market-wide.
+            // Contain the pool imposed market's maximum debt share value.
+            // Imposed by system.
+            int effectiveMaxShareValueD18 = getSystemMaxValuePerShare(self, marketData, marketUnusedCreditCapacityD18);
+            // Imposed by pool.
             int configuredMaxShareValueD18 = marketConfiguration.maxDebtShareValueD18;
             effectiveMaxShareValueD18 = effectiveMaxShareValueD18 < configuredMaxShareValueD18
                 ? effectiveMaxShareValueD18
@@ -204,37 +187,27 @@ library Pool {
      * Note: There is a non-system-wide fail safe for each market at `MarketConfiguration.maxDebtShareValue`.
      *
      * See `PoolConfiguration.minLiquidityRatio`.
-     *
-     * TODO: Consider renaming these two fail safes in a more consistent manner. One is max<Something>, and the other is min<Something>. A common nomenclature might ease understanding how the two work.
      */
-    function containMarketMaxShareValue(
+    function getSystemMaxValuePerShare(
         Data storage self,
         Market.Data storage marketData,
-        uint creditCapacityD18
+        uint unusedCreditCapacityD18
     ) internal view returns (int) {
         uint minLiquidityRatioD18 = PoolConfiguration.load().minLiquidityRatioD18;
 
-        // TODO Explain the math in this block...
-        // TODO Name `thing` variable accordingly once I understand the math.
-        // thing = liquidity / minRatio / totalShares
-        // ratio = liquidity / totalShares
-        // then, thing = liquidity / totalShares / minRatio
-        // so, thing = ratio / minRatio
-        // if ratio == minRatio, thing = 1
-        // if ratio < minRatio, thing < 1
-        // if ratio > minRatio, thing > 1
-        int thingD18;
+        // Calculate the margin of debt that the market could incur to hit the system wide limit.
+        uint marginD18;
         if (minLiquidityRatioD18 == 0) {
-            thingD18 = DecimalMath.UNIT.toInt(); // If minLiquidityRatioD18 is zero, then TODO
+            // If minLiquidityRatioD18 is zero, then set limit to 100%.
+            marginD18 = DecimalMath.UNIT;
         } else {
-            // maxShareValueIncrease?
-            thingD18 = creditCapacityD18
-                .divDecimal(minLiquidityRatioD18)
-                .divDecimal(self.vaultsDebtDistribution.totalSharesD18)
-                .toInt();
+            // margin = unusedCredit / systemLimit, per share
+            marginD18 = unusedCreditCapacityD18.divDecimal(minLiquidityRatioD18).divDecimal(
+                self.vaultsDebtDistribution.totalSharesD18
+            );
         }
 
-        return marketData.poolsDebtDistribution.getValuePerShare() + thingD18;
+        return marketData.poolsDebtDistribution.getValuePerShare() + marginD18.toInt();
     }
 
     /**
