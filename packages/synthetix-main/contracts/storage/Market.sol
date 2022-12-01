@@ -279,9 +279,8 @@ library Market {
      *
      * Called by a pool when it distributes its debt.
      *
-     * TODO: Rename to rebalancePools
      */
-    function rebalance(
+    function rebalancePools(
         uint128 marketId,
         uint128 poolId,
         int maxDebtShareValueD18, // (in USD)

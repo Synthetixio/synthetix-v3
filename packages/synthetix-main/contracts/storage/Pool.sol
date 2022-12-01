@@ -186,7 +186,7 @@ library Pool {
 
             // Update each market's corresponding credit capacity.
             // The returned value represents how much the market's debt changed after changing the shares of this pool actor, which is aggregated to later be passed on the pools debt distribution.
-            cumulativeDebtChangeD18 += Market.rebalance(
+            cumulativeDebtChangeD18 += Market.rebalancePools(
                 marketConfiguration.marketId,
                 self.id,
                 effectiveMaxShareValueD18,

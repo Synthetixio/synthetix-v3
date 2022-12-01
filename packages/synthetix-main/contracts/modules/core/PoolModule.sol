@@ -140,7 +140,7 @@ contract PoolModule is IPoolModule {
 
         // edge case: removed markets (markets which should be implicitly set to `0` as a result of not being included)
         for (i = 0; i < removedMarkets.length && removedMarkets[i] != 0; i++) {
-            Market.rebalance(removedMarkets[i], poolId, 0, 0);
+            Market.rebalancePools(removedMarkets[i], poolId, 0, 0);
         }
 
         pool.totalWeightsD18 = totalWeight.to128();

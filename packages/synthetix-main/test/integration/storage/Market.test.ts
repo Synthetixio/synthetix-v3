@@ -85,7 +85,7 @@ describe('Market', function () {
     });
   });
 
-  describe('rebalance()', async () => {});
+  describe('rebalancePools()', async () => {});
 
   // TODO
   describe('adjustPoolShares()', async () => {
