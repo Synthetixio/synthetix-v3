@@ -228,7 +228,7 @@ library Market {
     /**
      * @dev Given an amount of shares that represent USD liquidity from a pool, and a maximum value per share, returns the potential contribution to debt that these shares could accrue, if their value per share was to hit the maximum.
      *
-     * The amount of liquidity provided by the pool * delta of maxValue per share.
+     * The amount of liquidity provided by the pool * delta of maxValue per share vs current value.
      *
      * TODO: Try to illustrate with an example why this could be useful...
      * 100 collateral, 50% coming to this market
@@ -260,15 +260,15 @@ library Market {
     /**
      * @dev Gets any outstanding debt. Do not call this method except in tests
      *
-     * TODO: Understand distributeDebt() first.
-     * TODO: Enforce how this is only to be used in tests!
+     * Note: This function should only be used in tests!
      */
-    function getOutstandingDebt(Data storage self, uint128 poolId) internal returns (int debtChangeD18) {
+    // solhint-disable-next-line private-vars-leading-underscore, func-name-mixedcase
+    function _testOnly_getOutstandingDebt(Data storage self, uint128 poolId) internal returns (int debtChangeD18) {
         return self.pools[poolId].pendingDebtD18.toInt() + self.poolsDebtDistribution.accumulateActor(bytes32(uint(poolId)));
     }
 
     /**
-     * @dev TODO
+     * @dev Returns the debt value per share
      */
     function getDebtPerShare(Data storage self) internal view returns (int debtPerShareD18) {
         return self.poolsDebtDistribution.getValuePerShare();

@@ -310,15 +310,24 @@ describe('Market', function () {
           // all fake pools should have received their proportional
           // amount up to 4 * share amount, but not more than that
           assertBn.equal(
-            await systems().Core.callStatic.Market_getOutstandingDebt(fakeMarketId, fakePool1),
+            await systems().Core.callStatic.Market__testOnly_getOutstandingDebt(
+              fakeMarketId,
+              fakePool1
+            ),
             80
           );
           assertBn.equal(
-            await systems().Core.callStatic.Market_getOutstandingDebt(fakeMarketId, fakePool2),
+            await systems().Core.callStatic.Market__testOnly_getOutstandingDebt(
+              fakeMarketId,
+              fakePool2
+            ),
             20
           );
           assertBn.equal(
-            await systems().Core.callStatic.Market_getOutstandingDebt(fakeMarketId, fakePool3),
+            await systems().Core.callStatic.Market__testOnly_getOutstandingDebt(
+              fakeMarketId,
+              fakePool3
+            ),
             60
           );
         });
@@ -339,15 +348,24 @@ describe('Market', function () {
             // all fake pools should have received their proportional
             // amount up to 40, but not more than that
             assertBn.equal(
-              await systems().Core.callStatic.Market_getOutstandingDebt(fakeMarketId, fakePool1),
+              await systems().Core.callStatic.Market__testOnly_getOutstandingDebt(
+                fakeMarketId,
+                fakePool1
+              ),
               80 // unchanged due to being kicked out
             );
             assertBn.equal(
-              await systems().Core.callStatic.Market_getOutstandingDebt(fakeMarketId, fakePool2),
+              await systems().Core.callStatic.Market__testOnly_getOutstandingDebt(
+                fakeMarketId,
+                fakePool2
+              ),
               40
             );
             assertBn.equal(
-              await systems().Core.callStatic.Market_getOutstandingDebt(fakeMarketId, fakePool3),
+              await systems().Core.callStatic.Market__testOnly_getOutstandingDebt(
+                fakeMarketId,
+                fakePool3
+              ),
               120
             );
           });
@@ -367,15 +385,24 @@ describe('Market', function () {
             it('debt is moved to the end, and no further', async () => {
               // all fake pools should have received their fully allocated debt amounts
               assertBn.equal(
-                await systems().Core.callStatic.Market_getOutstandingDebt(fakeMarketId, fakePool1),
+                await systems().Core.callStatic.Market__testOnly_getOutstandingDebt(
+                  fakeMarketId,
+                  fakePool1
+                ),
                 80
               );
               assertBn.equal(
-                await systems().Core.callStatic.Market_getOutstandingDebt(fakeMarketId, fakePool2),
+                await systems().Core.callStatic.Market__testOnly_getOutstandingDebt(
+                  fakeMarketId,
+                  fakePool2
+                ),
                 40
               );
               assertBn.equal(
-                await systems().Core.callStatic.Market_getOutstandingDebt(fakeMarketId, fakePool3),
+                await systems().Core.callStatic.Market__testOnly_getOutstandingDebt(
+                  fakeMarketId,
+                  fakePool3
+                ),
                 150
               );
             });
@@ -408,15 +435,24 @@ describe('Market', function () {
           // none of the pools have received any debt allocation becuase there is
           // no pool to take on the exposure from 0 to -20
           assertBn.equal(
-            await systems().Core.callStatic.Market_getOutstandingDebt(fakeMarketId, fakePool1),
+            await systems().Core.callStatic.Market__testOnly_getOutstandingDebt(
+              fakeMarketId,
+              fakePool1
+            ),
             0
           );
           assertBn.equal(
-            await systems().Core.callStatic.Market_getOutstandingDebt(fakeMarketId, fakePool2),
+            await systems().Core.callStatic.Market__testOnly_getOutstandingDebt(
+              fakeMarketId,
+              fakePool2
+            ),
             0
           );
           assertBn.equal(
-            await systems().Core.callStatic.Market_getOutstandingDebt(fakeMarketId, fakePool3),
+            await systems().Core.callStatic.Market__testOnly_getOutstandingDebt(
+              fakeMarketId,
+              fakePool3
+            ),
             0
           );
         });
@@ -441,15 +477,24 @@ describe('Market', function () {
             // none of the pools have received any debt allocation
             // becuase it only just now entered the range
             assertBn.equal(
-              await systems().Core.callStatic.Market_getOutstandingDebt(fakeMarketId, fakePool1),
+              await systems().Core.callStatic.Market__testOnly_getOutstandingDebt(
+                fakeMarketId,
+                fakePool1
+              ),
               0
             );
             assertBn.equal(
-              await systems().Core.callStatic.Market_getOutstandingDebt(fakeMarketId, fakePool2),
+              await systems().Core.callStatic.Market__testOnly_getOutstandingDebt(
+                fakeMarketId,
+                fakePool2
+              ),
               0
             );
             assertBn.equal(
-              await systems().Core.callStatic.Market_getOutstandingDebt(fakeMarketId, fakePool3),
+              await systems().Core.callStatic.Market__testOnly_getOutstandingDebt(
+                fakeMarketId,
+                fakePool3
+              ),
               0
             );
           });
@@ -468,15 +513,24 @@ describe('Market', function () {
 
             it('debt is moved as far as possible', async () => {
               assertBn.equal(
-                await systems().Core.callStatic.Market_getOutstandingDebt(fakeMarketId, fakePool1),
+                await systems().Core.callStatic.Market__testOnly_getOutstandingDebt(
+                  fakeMarketId,
+                  fakePool1
+                ),
                 0
               );
               assertBn.equal(
-                await systems().Core.callStatic.Market_getOutstandingDebt(fakeMarketId, fakePool2),
+                await systems().Core.callStatic.Market__testOnly_getOutstandingDebt(
+                  fakeMarketId,
+                  fakePool2
+                ),
                 0
               );
               assertBn.equal(
-                await systems().Core.callStatic.Market_getOutstandingDebt(fakeMarketId, fakePool3),
+                await systems().Core.callStatic.Market__testOnly_getOutstandingDebt(
+                  fakeMarketId,
+                  fakePool3
+                ),
                 -60
               );
             });
@@ -495,21 +549,21 @@ describe('Market', function () {
 
               it('debt is moved as far as possible', async () => {
                 assertBn.equal(
-                  await systems().Core.callStatic.Market_getOutstandingDebt(
+                  await systems().Core.callStatic.Market__testOnly_getOutstandingDebt(
                     fakeMarketId,
                     fakePool1
                   ),
                   0
                 );
                 assertBn.equal(
-                  await systems().Core.callStatic.Market_getOutstandingDebt(
+                  await systems().Core.callStatic.Market__testOnly_getOutstandingDebt(
                     fakeMarketId,
                     fakePool2
                   ),
                   -10
                 );
                 assertBn.equal(
-                  await systems().Core.callStatic.Market_getOutstandingDebt(
+                  await systems().Core.callStatic.Market__testOnly_getOutstandingDebt(
                     fakeMarketId,
                     fakePool3
                   ),
