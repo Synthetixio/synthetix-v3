@@ -1,4 +1,5 @@
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
+import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import { ethers } from 'ethers';
 
@@ -96,8 +97,11 @@ describe('LiquidationModule', function () {
             );
         });
 
+        let txn: ethers.providers.TransactionResponse;
         before('liquidate', async () => {
-          await systems().Core.connect(user2).liquidate(accountId, poolId, collateralAddress());
+          txn = await systems()
+            .Core.connect(user2)
+            .liquidate(accountId, poolId, collateralAddress());
         });
 
         it('erases the liquidated account', async () => {
@@ -141,15 +145,21 @@ describe('LiquidationModule', function () {
           );
         });
 
-        // TODO enable when market tests are passing
-        it.skip('has reduced amount of total liquidity registered to the market', async () => {
+        it('has reduced amount of total liquidity registered to the market', async () => {
+          console.log(liquidationReward);
           assertBn.equal(
             await systems().Core.callStatic.getMarketCollateral(marketId()),
             depositAmount.mul(11).sub(liquidationReward)
           );
         });
 
-        it('emits correct event', async () => {});
+        it('emits correct event', async () => {
+          await assertEvent(
+            txn,
+            `Liquidation(${accountId}, ${poolId}, "${collateralAddress()}", ${debtAmount}, ${depositAmount}, ${liquidationReward})`,
+            systems().Core
+          );
+        });
       });
     });
   });
@@ -252,8 +262,9 @@ describe('LiquidationModule', function () {
           );
         });
 
+        let txn: ethers.providers.TransactionResponse;
         before('liquidate', async () => {
-          await systems()
+          txn = await systems()
             .Core.connect(user2)
             .liquidateVault(poolId, collateralAddress(), liquidatorAccountId, debtAmount.div(4));
         });
@@ -290,11 +301,19 @@ describe('LiquidationModule', function () {
           );
         });
 
-        it('emits correct event', async () => {});
+        it('emits correct event', async () => {
+          await assertEvent(
+            txn,
+            `VaultLiquidation(${poolId}, "${collateralAddress()}", ${debtAmount}, ${depositAmount})`,
+            systems().Core
+          );
+        });
 
         describe('succesful full liquidation', () => {
+          let txn: ethers.providers.TransactionResponse;
+
           before('liquidate', async () => {
-            await systems()
+            txn = await systems()
               .Core.connect(user2)
               .liquidateVault(poolId, collateralAddress(), liquidatorAccountId, debtAmount);
           });
@@ -320,7 +339,13 @@ describe('LiquidationModule', function () {
             );
           });
 
-          it('emits correct event', async () => {});
+          it('emits correct event', async () => {
+            await assertEvent(
+              txn,
+              `VaultLiquidation(${poolId}, "${collateralAddress()}", ${debtAmount}, ${depositAmount})`,
+              systems().Core
+            );
+          });
         });
       });
     });
