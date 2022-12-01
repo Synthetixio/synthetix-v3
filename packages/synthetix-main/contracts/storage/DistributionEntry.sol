@@ -6,6 +6,9 @@ import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import "./Distribution.sol";
 
 library DistributionEntry {
+    using DecimalMath for int256;
+    using SafeCastU256 for uint256;
+
     error InvalidParameters(string incorrectParameter, string help);
 
     struct Data {
@@ -20,7 +23,7 @@ library DistributionEntry {
     /**
      * this function allows for more special cases such as distributing at a future date or distributing over time.
      * if you want to apply the distribution to the pool, call `distribute` with the return value. Otherwise, you can
-     * record this independantly as well
+     * record this independently as well
      */
     function distribute(
         Data storage entry,
@@ -44,7 +47,7 @@ library DistributionEntry {
             // update any rewards which may have accrued since last run
 
             // instant distribution--immediately disperse amount
-            diffD18 += (amountD18 * 1e18) / int(totalSharesD18);
+            diffD18 += amountD18.divDecimal(totalSharesD18.toInt());
 
             entry.lastUpdate = 0;
             entry.start = 0;
@@ -83,7 +86,7 @@ library DistributionEntry {
 
         // determine whether this is an instant distribution or a delayed distribution
         if (entry.duration == 0 && entry.lastUpdate < entry.start) {
-            valuePerShareChangeD18 = (int(entry.scheduledValueD18) * 1e18) / int(totalSharesAmountD18);
+            valuePerShareChangeD18 = int(entry.scheduledValueD18).divDecimal(totalSharesAmountD18.toInt());
         } else if (entry.lastUpdate < entry.start + entry.duration) {
             // find out what is "newly" distributed
             int lastUpdateDistributedD18 = entry.lastUpdate < entry.start
