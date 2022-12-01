@@ -14,7 +14,7 @@
   "license": "MIT",
   "homepage": "https://github.com/Synthetixio/synthetix-v3#readme",
   "scripts": {
-    "build": "npm run -w ./packages/core-utils -w ./packages/hardhat-router build && npm run --workspaces --if-present build",
+    "build": "npm run -w ./packages/core-utils -w ./packages/hardhat-router -w ./packages/core-router -w ./packages/synthetix-main build",
     "test": "npm run --workspaces --if-present test",
     "coverage": "npm run --workspaces --if-present coverage",
     "lint:js": "prettier --check '**/*.{t,j}s' && eslint --max-warnings=0 '**/*.{t,j}s'",
