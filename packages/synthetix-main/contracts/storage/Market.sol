@@ -254,7 +254,7 @@ library Market {
      *
      */
     function isCapacityLocked(Data storage self) internal view returns (bool) {
-        return self.creditCapacityD18 <= getLockedLiquidity(self);
+        return self.creditCapacityD18 < getLockedLiquidity(self);
     }
 
     /**
