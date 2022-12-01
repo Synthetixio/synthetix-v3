@@ -9,6 +9,8 @@ import "./PoolConfiguration.sol";
 
 import "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
 
+import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+
 /**
  * @title Aggregates collateral from multiple users in order to provide liquidity to a configurable set of markets.
  *
@@ -23,6 +25,11 @@ library Pool {
     using Distribution for Distribution.Data;
     using DecimalMath for uint256;
     using DecimalMath for int128;
+
+    using SafeCastU128 for uint128;
+    using SafeCastU256 for uint256;
+    using SafeCastI128 for int128;
+    using SafeCastI256 for int256;
 
     error PoolNotFound(uint128 poolId);
     error PoolAlreadyExists(uint128 poolId);
@@ -143,7 +150,7 @@ library Pool {
         // These values should not change while iterating through each market.
 
         // TODO Clarify
-        int totalCreditCapacityD18 = int128(self.vaultsDebtDistribution.totalSharesD18);
+        int totalCreditCapacityD18 = self.vaultsDebtDistribution.totalSharesD18.toInt();
 
         // TODO Clarify
         uint128 unusedCreditCapacityD18 = self.unusedCreditCapacityD18;
@@ -162,7 +169,7 @@ library Pool {
 
             // TODO: Consider introducing a SafeCast library. Here, if we didn't check for negative numbers, a cast could result in an overflow (Solidity does not check for casting overflows). Thus, leaving casting free to the developer might introduce bugs. All instances of the code should use this util.
             uint marketCreditCapacityD18 = totalCreditCapacityD18 > 0
-                ? (uint(totalCreditCapacityD18) * weightD18) / totalWeightsD18
+                ? (totalCreditCapacityD18.toUint() * weightD18) / totalWeightsD18
                 : 0;
             uint marketUnusedCreditCapacityD18 = (unusedCreditCapacityD18 * weightD18) / totalWeightsD18;
 
@@ -218,12 +225,13 @@ library Pool {
         // if ratio > minRatio, thing > 1
         int thingD18;
         if (minLiquidityRatioD18 == 0) {
-            thingD18 = int(DecimalMath.UNIT); // If minLiquidityRatioD18 is zero, then TODO
+            thingD18 = DecimalMath.UNIT.toInt(); // If minLiquidityRatioD18 is zero, then TODO
         } else {
             // maxShareValueIncrease?
-            thingD18 = int(
-                creditCapacityD18.divDecimal(minLiquidityRatioD18).divDecimal(self.vaultsDebtDistribution.totalSharesD18)
-            );
+            thingD18 = creditCapacityD18
+                .divDecimal(minLiquidityRatioD18)
+                .divDecimal(self.vaultsDebtDistribution.totalSharesD18)
+                .toInt();
         }
 
         return marketData.poolsDebtDistribution.getValuePerShare() + thingD18;
@@ -281,7 +289,7 @@ library Pool {
         int debtChangeD18 = self.vaultsDebtDistribution.setActorShares(actorId, usdWeightD18);
 
         // Accumulate the change in total liquidity, from the vault, into the pool.
-        self.unusedCreditCapacityD18 = uint128(int128(self.unusedCreditCapacityD18) + int128(deltaLiquidityD18));
+        self.unusedCreditCapacityD18 = (self.unusedCreditCapacityD18.toInt() + deltaLiquidityD18.to128()).toUint();
 
         // Transfer the debt change from the pool into the vault.
         self.vaults[collateralType].distributeDebtToAccounts(debtChangeD18);
@@ -327,7 +335,7 @@ library Pool {
         int debtD18 = self.vaults[collateralType].currentDebt();
         (, uint collateralValueD18) = currentVaultCollateral(self, collateralType);
 
-        return debtD18 > 0 ? uint(debtD18).divDecimal(collateralValueD18) : 0;
+        return debtD18 > 0 ? debtD18.toUint().divDecimal(collateralValueD18) : 0;
     }
 
     // TODO: Document
@@ -424,7 +432,7 @@ library Pool {
         int getPositionDebtD18 = updateAccountDebt(self, collateralType, accountId);
 
         // if they have a credit, just treat their debt as 0
-        return getPositionCollateralValueD18.divDecimal(getPositionDebtD18 < 0 ? 0 : uint(getPositionDebtD18));
+        return getPositionCollateralValueD18.divDecimal(getPositionDebtD18 < 0 ? 0 : getPositionDebtD18.toUint());
     }
 
     /**

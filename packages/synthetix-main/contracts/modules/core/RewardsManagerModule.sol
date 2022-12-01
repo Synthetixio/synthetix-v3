@@ -4,6 +4,8 @@ pragma solidity ^0.8.0;
 import "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
 import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 
+import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+
 import "../../storage/DistributionEntry.sol";
 
 import "../../storage/Account.sol";
@@ -15,6 +17,12 @@ import "../../interfaces/IRewardsManagerModule.sol";
 contract RewardsManagerModule is IRewardsManagerModule {
     using SetUtil for SetUtil.Bytes32Set;
     using DecimalMath for uint256;
+    using DecimalMath for int256;
+
+    using SafeCastU128 for uint128;
+    using SafeCastU256 for uint256;
+    using SafeCastI128 for int128;
+    using SafeCastI256 for int256;
 
     using Vault for Vault.Data;
     using Distribution for Distribution.Data;
@@ -63,8 +71,8 @@ contract RewardsManagerModule is IRewardsManagerModule {
         uint128 poolId,
         address collateralType,
         uint amount,
-        uint start,
-        uint duration
+        uint64 start,
+        uint32 duration
     ) external override {
         Pool.Data storage pool = Pool.load(poolId);
         SetUtil.Bytes32Set storage rewardIds = pool.vaults[collateralType].rewardIds;
@@ -77,16 +85,12 @@ contract RewardsManagerModule is IRewardsManagerModule {
 
         RewardDistribution.Data storage reward = pool.vaults[collateralType].rewards[rewardId];
 
-        reward.rewardPerShareD18 += uint128(
-            uint(
-                reward.entry.distribute(
-                    pool.vaults[collateralType].currentEpoch().accountsDebtDistribution,
-                    int(amount),
-                    start,
-                    duration
-                )
-            )
-        );
+        reward.rewardPerShareD18 += reward.entry.distribute(
+            pool.vaults[collateralType].currentEpoch().accountsDebtDistribution,
+            amount.toInt(),
+            start,
+            duration
+        ).toUint().to128();
 
         emit RewardsDistributed(poolId, collateralType, msg.sender, amount, start, duration);
     }
@@ -141,19 +145,19 @@ contract RewardsManagerModule is IRewardsManagerModule {
         uint totalShares = vault.currentEpoch().accountsDebtDistribution.totalSharesD18;
         bytes32 rewardId = _getRewardId(poolId, collateralType, distributor);
 
-        int curTime = int(block.timestamp);
+        int curTime = block.timestamp.toInt();
 
         if (
             address(vault.rewards[rewardId].distributor) == address(0) ||
-            vault.rewards[rewardId].entry.start > curTime ||
-            vault.rewards[rewardId].entry.start + vault.rewards[rewardId].entry.duration <= curTime
+            vault.rewards[rewardId].entry.start > curTime.toUint() ||
+            vault.rewards[rewardId].entry.start + vault.rewards[rewardId].entry.duration <= curTime.toUint()
         ) {
             return 0;
         }
 
         return
-            uint(int(vault.rewards[rewardId].entry.scheduledValueD18)).divDecimal(
-                uint(int(vault.rewards[rewardId].entry.duration)).divDecimal(totalShares)
+            int(vault.rewards[rewardId].entry.scheduledValueD18).toUint().divDecimal(
+                uint(vault.rewards[rewardId].entry.duration).divDecimal(totalShares)
             );
     }
 
