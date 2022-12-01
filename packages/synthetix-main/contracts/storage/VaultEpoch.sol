@@ -35,7 +35,7 @@ library VaultEpoch {
          */
         int128 unconsolidatedDebtD18;
         /**
-         * @dev TODO
+         * @dev Amount of debt in this Vault that has been consolidated.
          */
         int128 totalConsolidatedDebtD18;
         /**
