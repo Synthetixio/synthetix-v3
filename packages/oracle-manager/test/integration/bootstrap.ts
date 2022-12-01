@@ -33,9 +33,7 @@ export function bootstrapWithNodes() {
   });
 
   before('register leaf nodes', async function () {
-    const OracleManagerModule = await (
-      await hre.ethers.getContractFactory('OracleManagerModule')
-    ).deploy();
+    const OracleManagerModule = r.getContract('OracleManagerModule');
 
     const params1 = abi.encode(['address', 'uint256'], [aggregator.address, BigNumber.from(0)]);
     const params2 = abi.encode(['address', 'uint256'], [aggregator2.address, BigNumber.from(0)]);
