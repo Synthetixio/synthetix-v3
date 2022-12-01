@@ -2,6 +2,7 @@
 pragma solidity ^0.8.0;
 
 import "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
+import "@synthetixio/core-contracts/contracts/errors/ParameterError.sol";
 import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
@@ -28,8 +29,6 @@ contract RewardsManagerModule is IRewardsManagerModule {
     using Distribution for Distribution.Data;
     using DistributionEntry for DistributionEntry.Data;
 
-    error InvalidParameters(string incorrectParameter, string help);
-
     uint private constant _MAX_REWARD_DISTRIBUTIONS = 10;
 
     // ---------------------------------------
@@ -49,18 +48,18 @@ contract RewardsManagerModule is IRewardsManagerModule {
         }
 
         if (rewardIds.length() > _MAX_REWARD_DISTRIBUTIONS) {
-            revert InvalidParameters("index", "too large");
+            revert ParameterError.InvalidParameter("index", "too large");
         }
 
         bytes32 rewardId = _getRewardId(poolId, collateralType, distributor);
 
         if (rewardIds.contains(rewardId)) {
-            revert InvalidParameters("distributor", "is already registered");
+            revert ParameterError.InvalidParameter("distributor", "is already registered");
         }
 
         rewardIds.add(rewardId);
         if (distributor == address(0)) {
-            revert InvalidParameters("distributor", "must be non-zero");
+            revert ParameterError.InvalidParameter("distributor", "must be non-zero");
         }
         pool.vaults[collateralType].rewards[rewardId].distributor = IRewardDistributor(distributor);
 
@@ -80,7 +79,7 @@ contract RewardsManagerModule is IRewardsManagerModule {
         bytes32 rewardId = _getRewardId(poolId, collateralType, msg.sender);
 
         if (!rewardIds.contains(rewardId)) {
-            revert InvalidParameters("poolId-collateralType-distributor", "reward is not registered");
+            revert ParameterError.InvalidParameter("poolId-collateralType-distributor", "reward is not registered");
         }
 
         RewardDistribution.Data storage reward = pool.vaults[collateralType].rewards[rewardId];
@@ -123,7 +122,7 @@ contract RewardsManagerModule is IRewardsManagerModule {
         bytes32 rewardId = keccak256(abi.encode(poolId, collateralType, distributor));
 
         if (!vault.rewardIds.contains(rewardId)) {
-            revert InvalidParameters("invalid-params", "reward is not found");
+            revert ParameterError.InvalidParameter("invalid-params", "reward is not found");
         }
 
         uint reward = vault.updateReward(accountId, rewardId);

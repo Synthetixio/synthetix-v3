@@ -2,6 +2,7 @@
 pragma solidity ^0.8.0;
 
 import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
+import "@synthetixio/core-contracts/contracts/errors/ParameterError.sol";
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 
 import "./Distribution.sol";
@@ -12,8 +13,6 @@ library DistributionEntry {
     using SafeCastU256 for uint256;
     using SafeCastI128 for int128;
     using SafeCastI256 for int256;
-
-    error InvalidParameters(string incorrectParameter, string help);
 
     struct Data {
         // amount which should be applied at the given time below, or
@@ -39,7 +38,7 @@ library DistributionEntry {
         uint totalSharesD18 = dist.totalSharesD18;
 
         if (totalSharesD18 == 0) {
-            revert InvalidParameters("amount", "can't distribute to empty distribution");
+            revert ParameterError.InvalidParameter("amount", "can't distribute to empty distribution");
         }
 
         int curTime = block.timestamp.toInt().to128();
