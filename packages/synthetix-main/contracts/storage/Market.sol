@@ -196,7 +196,7 @@ library Market {
      * TODO: Consider renaming to totalDebt()? totalBalance is more correct, but totalDebt is easier to understand.
      */
     function totalBalance(Data storage self) internal view returns (int) {
-        return int(getReportedDebt(self)) + self.issuanceD18 - int(getDepositedCollateralValue(self));
+        return getReportedDebt(self).toInt() + self.issuanceD18 - getDepositedCollateralValue(self).toInt();
     }
 
     /**
@@ -250,9 +250,9 @@ library Market {
         int maxDebtShareValueD18
     ) internal view returns (uint contributionD18) {
         // Determine how much the current value per share deviates from the maximum.
-        uint deltaValuePerShareD18 = uint(maxDebtShareValueD18 - self.poolsDebtDistribution.getValuePerShare());
+        uint deltaValuePerShareD18 = (maxDebtShareValueD18 - self.poolsDebtDistribution.getValuePerShare()).toUint();
 
-        return uint(deltaValuePerShareD18).mulDecimal(liquiditySharesD18);
+        return deltaValuePerShareD18.mulDecimal(liquiditySharesD18);
     }
 
     /**

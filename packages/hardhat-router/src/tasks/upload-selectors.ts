@@ -1,10 +1,10 @@
-import { task } from 'hardhat/config';
-import { TASK_COMPILE } from 'hardhat/builtin-tasks/task-names';
 import { JsonFragment } from '@ethersproject/abi';
-import { default as logger } from '@synthetixio/core-utils/utils/io/logger';
 import * as types from '@synthetixio/core-utils/utils/hardhat/argument-types';
-import * as fourbytes from '../internal/fourbytes';
+import logger from '@synthetixio/core-utils/utils/io/logger';
+import { TASK_COMPILE } from 'hardhat/builtin-tasks/task-names';
+import { task } from 'hardhat/config';
 import { getSourcesAbis } from '../internal/contract-helper';
+import * as fourbytes from '../internal/fourbytes';
 import { TASK_UPLOAD_SELECTORS } from '../task-names';
 
 interface Params {

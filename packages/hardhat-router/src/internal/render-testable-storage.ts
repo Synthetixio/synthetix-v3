@@ -1,4 +1,5 @@
 import path from 'node:path';
+import logger from '@synthetixio/core-utils/utils/io/logger';
 import { parseFullyQualifiedName } from 'hardhat/utils/contract-names';
 import { ElementaryTypeName, SourceUnit, TypeName } from 'solidity-ast';
 import { findAll } from 'solidity-ast/utils';
@@ -63,7 +64,7 @@ function _generateTemplateInputs(sourceFile: string, contractName: string, astNo
   for (const variableDeclaration of dataStructDefinition.members) {
     if (variableDeclaration.typeName?.nodeType === 'Mapping') {
       if (variableDeclaration.typeName.valueType.nodeType !== 'ElementaryTypeName') {
-        console.log(
+        logger.info(
           `Skipping generated getter/setter for ${variableDeclaration.name} because it has a nested type`
         );
         continue;
@@ -77,7 +78,7 @@ function _generateTemplateInputs(sourceFile: string, contractName: string, astNo
       });
     } else if (variableDeclaration.typeName?.nodeType === 'ArrayTypeName') {
       if (variableDeclaration.typeName.baseType.nodeType !== 'ElementaryTypeName') {
-        console.log(
+        logger.info(
           `Skipping generated getter/setter for ${variableDeclaration.name} because it has a nested type`
         );
         continue;
@@ -108,7 +109,7 @@ function _generateTemplateInputs(sourceFile: string, contractName: string, astNo
 
   for (const functionDefinition of findAll('FunctionDefinition', contractDefinition)) {
     if (functionDefinition.visibility === 'private') {
-      console.log(`Skipping function ${functionDefinition.name} because its private`);
+      logger.info(`Skipping function ${functionDefinition.name} because its private`);
       continue;
     }
 
@@ -133,7 +134,7 @@ function _generateTemplateInputs(sourceFile: string, contractName: string, astNo
       functionDefinition.returnParameters.parameters.filter((p) => p.storageLocation === 'storage')
         .length
     ) {
-      console.log(
+      logger.info(
         `Skipping function ${functionDefinition.name} because it returns an unsupported storage input parameter`
       );
       continue; // cannot return non-storage
@@ -144,7 +145,7 @@ function _generateTemplateInputs(sourceFile: string, contractName: string, astNo
     );
 
     if (storageParams.length > 1) {
-      console.log(
+      logger.info(
         `Skipping function ${functionDefinition.name} because it contains unsupported storage input parameter type`
       );
       continue; // input parameter must be of the same type as the contract
