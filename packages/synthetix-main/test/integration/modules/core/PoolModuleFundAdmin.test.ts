@@ -80,7 +80,9 @@ describe('PoolModule Admin', function () {
       await assertRevert(
         systems()
           .Core.connect(user1)
-          .setPoolConfiguration(834693286, [{ marketId: 1, weightD18: 1, maxDebtShareValueD18: 0 }]),
+          .setPoolConfiguration(834693286, [
+            { marketId: 1, weightD18: 1, maxDebtShareValueD18: 0 },
+          ]),
         'PoolNotFound(834693286)',
         systems().Core
       );

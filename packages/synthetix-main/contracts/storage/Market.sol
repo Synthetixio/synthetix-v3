@@ -236,7 +236,7 @@ library Market {
      * Goes from debt shares to credit capacity and applying the maxDebtPerDollarOfCollateral to that value.
      *
      * TODO: Explain how this is used.
-     * 
+     *
      */
     function getCreditCapacityContribution(
         Data storage self,
@@ -339,7 +339,8 @@ library Market {
 
         // recalculate market capacity
         if (newPoolMaxShareValueD18 > valuePerShareD18) {
-            self.creditCapacityD18 += getCreditCapacityContribution(self, newCreditCapacityD18, newPoolMaxShareValueD18).to128();
+            self.creditCapacityD18 += getCreditCapacityContribution(self, newCreditCapacityD18, newPoolMaxShareValueD18)
+                .to128();
         }
 
         if (oldPoolMaxShareValueD18 > valuePerShareD18) {
