@@ -1,11 +1,11 @@
 {
   "name": "@synthetixio/main",
-  "version": "3.0.0-alpha.2",
+  "version": "3.0.0-alpha.3",
   "description": "Core Synthetix Protocol Contracts",
   "private": true,
   "scripts": {
-    "build": "hardhat generate-testable",
-    "test": "hardhat test",
+    "build": "rm -rf contracts/modules/test && hardhat generate-testable",
+    "test": "npm run build -- --quiet && hardhat test",
     "coverage": "npx hardhat cannon:build && hardhat --network hardhat coverage",
     "compile-contracts": "hardhat compile",
     "size-contracts": "hardhat size-contracts"
@@ -21,7 +21,7 @@
     "ethers": "5.6.9",
     "hardhat-contract-sizer": "2.1.1",
     "solidity-coverage": "0.7.17",
-    "solidity-docgen": "0.6.0-beta.22",
+    "solidity-docgen": "0.6.0-beta.31",
     "ts-node": "10.9.1",
     "typechain": "8.1.0",
     "typescript": "4.7.4"

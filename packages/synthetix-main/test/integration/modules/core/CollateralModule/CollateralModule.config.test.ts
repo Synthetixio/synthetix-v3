@@ -24,10 +24,10 @@ describe('CollateralModule', function () {
           systems().Core.connect(user1).configureCollateral({
             tokenAddress: dummyAddress,
             priceFeed: dummyAddress,
-            issuanceRatio: 400,
-            liquidationRatio: 200,
-            liquidationReward: 0,
-            minDelegation: 0,
+            issuanceRatioD18: 400,
+            liquidationRatioD18: 200,
+            liquidationRewardD18: 0,
+            minDelegationD18: 0,
             depositingEnabled: false,
           }),
           `Unauthorized("${await user1.getAddress()}")`,
@@ -84,10 +84,10 @@ describe('CollateralModule', function () {
               systems().Core.connect(user1).configureCollateral({
                 tokenAddress: AnotherCollateral.address,
                 priceFeed: AnotherCollateralPriceFeed.address,
-                issuanceRatio: 200,
-                liquidationRatio: 100,
-                liquidationReward: 0,
-                minDelegation: 0,
+                issuanceRatioD18: 200,
+                liquidationRatioD18: 100,
+                liquidationRewardD18: 0,
+                minDelegationD18: 0,
                 depositingEnabled: false,
               }),
               `Unauthorized("${await user1.getAddress()}")`,
@@ -101,10 +101,10 @@ describe('CollateralModule', function () {
             const tx = await systems().Core.connect(systemOwner).configureCollateral({
               tokenAddress: AnotherCollateral.address,
               priceFeed: AnotherCollateralPriceFeed.address,
-              issuanceRatio: 300,
-              liquidationRatio: 250,
-              liquidationReward: 0,
-              minDelegation: 0,
+              issuanceRatioD18: 300,
+              liquidationRatioD18: 250,
+              liquidationRewardD18: 0,
+              minDelegationD18: 0,
               depositingEnabled: true,
             });
             await tx.wait();
@@ -132,10 +132,10 @@ describe('CollateralModule', function () {
             const tx = await systems().Core.connect(systemOwner).configureCollateral({
               tokenAddress: AnotherCollateral.address,
               priceFeed: AnotherCollateralPriceFeed.address,
-              issuanceRatio: 300,
-              liquidationRatio: 250,
-              liquidationReward: 0,
-              minDelegation: 0,
+              issuanceRatioD18: 300,
+              liquidationRatioD18: 250,
+              liquidationRewardD18: 0,
+              minDelegationD18: 0,
               depositingEnabled: false,
             });
             await tx.wait();

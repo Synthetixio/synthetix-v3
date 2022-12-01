@@ -6,3 +6,6 @@ export const SUBTASK_VALIDATE_STORAGE = 'hardhat-router-validate-storage';
 export const TASK_DEPLOY = 'deploy';
 export const TASK_UPLOAD_SELECTORS = 'deploy:upload-selectors';
 export const TASK_GENERATE_TESTABLE = 'generate-testable';
+
+// We re-declare native compile so we can debug timing using extensions/timers.ts
+export const TASK_COMPILE = 'compile';

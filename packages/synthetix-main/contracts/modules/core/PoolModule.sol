@@ -6,6 +6,8 @@ import "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
 import "@synthetixio/core-contracts/contracts/errors/AddressError.sol";
 import "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
 
+import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+
 import "../../interfaces/IPoolModule.sol";
 import "../../storage/Pool.sol";
 
@@ -13,6 +15,11 @@ contract PoolModule is IPoolModule {
     error InvalidParameters(string incorrectParameter, string help);
     error PoolNotFound(uint128 poolId);
     error CapacityLocked(uint marketId);
+
+    using SafeCastU128 for uint128;
+    using SafeCastU256 for uint256;
+    using SafeCastI128 for int128;
+    using SafeCastI256 for int256;
 
     using DecimalMath for uint;
 
@@ -117,12 +124,12 @@ contract PoolModule is IPoolModule {
             i++
         ) {
             pool.marketConfigurations[i] = newDistributions[i];
-            totalWeight += newDistributions[i].weight;
+            totalWeight += newDistributions[i].weightD18;
         }
 
         for (; i < newDistributions.length; i++) {
             pool.marketConfigurations.push(newDistributions[i]);
-            totalWeight += newDistributions[i].weight;
+            totalWeight += newDistributions[i].weightD18;
         }
 
         // remove any excess
@@ -136,7 +143,7 @@ contract PoolModule is IPoolModule {
             Market.rebalance(removedMarkets[i], poolId, 0, 0);
         }
 
-        pool.totalWeights = uint128(totalWeight);
+        pool.totalWeightsD18 = totalWeight.to128();
 
         pool.distributeDebtToVaults();
 
@@ -182,11 +189,11 @@ contract PoolModule is IPoolModule {
     function setMinLiquidityRatio(uint minLiquidityRatio) external override {
         OwnableStorage.onlyOwner();
 
-        PoolConfiguration.load().minLiquidityRatio = minLiquidityRatio;
+        PoolConfiguration.load().minLiquidityRatioD18 = minLiquidityRatio;
     }
 
     function getMinLiquidityRatio() external view override returns (uint) {
-        return PoolConfiguration.load().minLiquidityRatio;
+        return PoolConfiguration.load().minLiquidityRatioD18;
     }
 
     function _verifyPoolConfigurationChange(Pool.Data storage pool, MarketConfiguration.Data[] memory newDistributions)
@@ -205,7 +212,7 @@ contract PoolModule is IPoolModule {
         // first we need the total weight of the new distribution
         uint totalWeight = 0;
         for (uint i = 0; i < newDistributions.length; i++) {
-            totalWeight += newDistributions[i].weight;
+            totalWeight += newDistributions[i].weightD18;
         }
 
         for (uint i = 0; i < newDistributions.length; i++) {
@@ -214,7 +221,7 @@ contract PoolModule is IPoolModule {
             }
             lastMarketId = newDistributions[i].market;
 
-            if (newDistributions[i].weight == 0) {
+            if (newDistributions[i].weightD18 == 0) {
                 revert InvalidParameters("weights", "weight must be non-zero");
             }
 
@@ -238,11 +245,13 @@ contract PoolModule is IPoolModule {
                 // market has been updated
 
                 // any divestment requires verify of capacity lock
-                // multiply by 1e9 to make sure we have comparable precision in case of very small values
+                // upscale to precise int to make sure we have comparable precision in case of very small values
                 if (
-                    newDistributions[i].maxDebtShareValue < pool.marketConfigurations[oldIdx].maxDebtShareValue ||
-                    uint(newDistributions[i].weight * 1e9).divDecimal(totalWeight) <
-                    uint(pool.marketConfigurations[oldIdx].weight * 1e9).divDecimal(pool.totalWeights)
+                    newDistributions[i].maxDebtShareValueD18 < pool.marketConfigurations[oldIdx].maxDebtShareValueD18 ||
+                    uint(newDistributions[i].weightD18).upscale(DecimalMath.PRECISION_FACTOR).divDecimal(totalWeight) <
+                    uint(pool.marketConfigurations[oldIdx].weightD18).upscale(DecimalMath.PRECISION_FACTOR).divDecimal(
+                        pool.totalWeightsD18
+                    )
                 ) {
                     postVerifyLocks[postVerifyLocksIdx++] = newDistributions[i].market;
                 }

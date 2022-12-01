@@ -27,7 +27,7 @@ library MarketConfiguration {
          * @dev TODO
          */
         /// @dev weight sent to that market
-        uint128 weight;
+        uint128 weightD18;
         /**
          * @dev TODO
          *
@@ -38,6 +38,6 @@ library MarketConfiguration {
          * TODO: Rename to maxDebtPerDollarOfCollateral?
          */
         /// @dev cap on debt exposure for the market
-        int128 maxDebtShareValue;
+        int128 maxDebtShareValueD18;
     }
 }

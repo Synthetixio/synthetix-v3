@@ -6,6 +6,7 @@ import "../../interfaces/IAssociateDebtModule.sol";
 import "../../utils/ERC20Helper.sol";
 
 import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
+import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 
 import "../../storage/Distribution.sol";
 import "../../storage/Pool.sol";
@@ -13,6 +14,12 @@ import "../../storage/Market.sol";
 
 contract AssociateDebtModule is IAssociateDebtModule {
     using DecimalMath for uint;
+
+    using SafeCastU128 for uint128;
+    using SafeCastU256 for uint256;
+    using SafeCastI128 for int128;
+    using SafeCastI256 for int256;
+
     using ERC20Helper for address;
 
     using Distribution for Distribution.Data;
@@ -56,22 +63,24 @@ contract AssociateDebtModule is IAssociateDebtModule {
 
         // subtract the requested amount of debt from the market
         // this debt should have been accumulated just now anyway so
-        marketData.issuance -= int128(int(amount));
+        marketData.issuanceD18 -= amount.toInt().to128();
 
         // register account debt
         poolData.updateAccountDebt(collateralType, accountId);
 
         // increase account debt
-        int updatedDebt = epochData.assignDebtToAccount(accountId, int(amount));
+        int updatedDebt = epochData.assignDebtToAccount(accountId, amount.toInt());
 
         // verify the c ratio
         _verifyCollateralRatio(
             collateralType,
-            uint(updatedDebt > 0 ? updatedDebt : int(0)),
+            updatedDebt > 0 ? updatedDebt.toUint() : 0,
             CollateralConfiguration.load(collateralType).getCollateralPrice().mulDecimal(
-                uint(epochData.collateralAmounts.get(actorId))
+                epochData.collateralAmounts.get(actorId)
             )
         );
+
+        emit DebtAssociated(marketId, poolId, collateralType, accountId, amount, updatedDebt);
 
         // done
         return updatedDebt;
@@ -82,7 +91,7 @@ contract AssociateDebtModule is IAssociateDebtModule {
         uint debt,
         uint collateralValue
     ) internal view {
-        uint issuanceRatio = CollateralConfiguration.load(collateralType).issuanceRatio;
+        uint issuanceRatio = CollateralConfiguration.load(collateralType).issuanceRatioD18;
 
         if (debt != 0 && collateralValue.divDecimal(debt) < issuanceRatio) {
             revert InsufficientCollateralRatio(collateralValue, debt, collateralValue.divDecimal(debt), issuanceRatio);

@@ -1,6 +1,8 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+
 import "../../interfaces/ILiquidationModule.sol";
 
 import "../../storage/Collateral.sol";
@@ -11,6 +13,11 @@ import "@synthetixio/core-modules/contracts/storage/AssociatedSystem.sol";
 import "../../utils/ERC20Helper.sol";
 
 contract LiquidationModule is ILiquidationModule {
+    using SafeCastU128 for uint128;
+    using SafeCastU256 for uint256;
+    using SafeCastI128 for int128;
+    using SafeCastI256 for int256;
+
     using DecimalMath for uint;
     using ERC20Helper for address;
 
@@ -53,27 +60,27 @@ contract LiquidationModule is ILiquidationModule {
         (uint collateralAmount, uint collateralValue) = pool.currentAccountCollateral(collateralType, accountId);
         collateralLiquidated = collateralAmount;
 
-        debtLiquidated = uint(rawDebt);
+        debtLiquidated = rawDebt.toUint();
 
-        if (rawDebt <= 0 || !_isLiquidatable(collateralType, uint(rawDebt), collateralValue)) {
+        if (rawDebt <= 0 || !_isLiquidatable(collateralType, rawDebt.toUint(), collateralValue)) {
             revert IneligibleForLiquidation(
                 collateralValue,
                 debtLiquidated,
                 debtLiquidated == 0 ? 0 : collateralValue.divDecimal(debtLiquidated),
-                collateralConfig.liquidationRatio
+                collateralConfig.liquidationRatioD18
             );
         }
 
-        uint oldShares = epoch.accountsDebtDistribution.getActorShares(bytes32(uint(uint128(accountId))));
+        uint oldShares = epoch.accountsDebtDistribution.getActorShares(bytes32(uint(accountId)));
 
-        if (epoch.accountsDebtDistribution.totalShares == oldShares) {
+        if (epoch.accountsDebtDistribution.totalSharesD18 == oldShares) {
             // will be left with 0 shares, which can't be socialized
             revert MustBeVaultLiquidated();
         }
 
-        amountRewarded = collateralConfig.liquidationReward;
+        amountRewarded = collateralConfig.liquidationRewardD18;
 
-        if (amountRewarded >= uint(epoch.collateralAmounts.totalAmount())) {
+        if (amountRewarded >= epoch.collateralAmounts.totalAmount()) {
             // vault is too small to be liquidated socialized
             revert MustBeVaultLiquidated();
         }
@@ -85,13 +92,13 @@ contract LiquidationModule is ILiquidationModule {
         // fed back into the vault proportionally to the amount of collateral you have
         // the vault might end up with less overall collateral if liquidation reward
         // is greater than the actual collateral in this user's account
-        epoch.collateralAmounts.scale(int(collateralLiquidated) - int(amountRewarded));
+        epoch.collateralAmounts.scale(collateralLiquidated.toInt() - amountRewarded.toInt());
 
         // debt isn't cleared when someone unstakes by default, so we do it separately here
-        epoch.assignDebtToAccount(accountId, -int(debtLiquidated));
+        epoch.assignDebtToAccount(accountId, -debtLiquidated.toInt());
 
         // now we feed the debt back in also
-        epoch.distributeDebtToAccounts(int(debtLiquidated));
+        epoch.distributeDebtToAccounts(debtLiquidated.toInt());
 
         // send reward
         collateralType.safeTransfer(msg.sender, amountRewarded);
@@ -122,7 +129,7 @@ contract LiquidationModule is ILiquidationModule {
 
         int rawVaultDebt = pool.currentVaultDebt(collateralType);
 
-        uint vaultDebt = rawVaultDebt < 0 ? 0 : uint(rawVaultDebt);
+        uint vaultDebt = rawVaultDebt < 0 ? 0 : rawVaultDebt.toUint();
 
         (, uint collateralValue) = pool.currentVaultCollateral(collateralType);
 
@@ -131,7 +138,7 @@ contract LiquidationModule is ILiquidationModule {
                 collateralValue,
                 vaultDebt,
                 vaultDebt > 0 ? collateralValue.divDecimal(vaultDebt) : 0,
-                collateralConfig.liquidationRatio
+                collateralConfig.liquidationRatioD18
             );
         }
 
@@ -140,7 +147,7 @@ contract LiquidationModule is ILiquidationModule {
             AssociatedSystem.load(_USD_TOKEN).asToken().burn(msg.sender, vaultDebt);
 
             amountLiquidated = vaultDebt;
-            collateralRewarded = uint(vault.currentEpoch().collateralAmounts.totalAmount());
+            collateralRewarded = vault.currentEpoch().collateralAmounts.totalAmount();
 
             pool.resetVault(collateralType);
         } else {
@@ -150,15 +157,15 @@ contract LiquidationModule is ILiquidationModule {
             VaultEpoch.Data storage epoch = vault.currentEpoch();
 
             amountLiquidated = maxUsd;
-            collateralRewarded = (uint(epoch.collateralAmounts.totalAmount()) * amountLiquidated) / vaultDebt;
+            collateralRewarded = (epoch.collateralAmounts.totalAmount() * amountLiquidated) / vaultDebt;
 
             // repay the debt
             // TODO: better data structures
-            epoch.accountsDebtDistribution.distributeValue(-int(amountLiquidated));
-            epoch.unconsolidatedDebt -= int128(int(amountLiquidated));
+            epoch.accountsDebtDistribution.distributeValue(-amountLiquidated.toInt());
+            epoch.unconsolidatedDebtD18 -= amountLiquidated.toInt().to128();
 
             // take away the collateral
-            epoch.collateralAmounts.scale(-int(collateralRewarded));
+            epoch.collateralAmounts.scale(-collateralRewarded.toInt());
         }
 
         // award the collateral that was just taken to the specified account
@@ -176,7 +183,7 @@ contract LiquidationModule is ILiquidationModule {
             return false;
         }
 
-        return collateralValue.divDecimal(debt) < CollateralConfiguration.load(collateralType).liquidationRatio;
+        return collateralValue.divDecimal(debt) < CollateralConfiguration.load(collateralType).liquidationRatioD18;
     }
 
     function isLiquidatable(
@@ -187,6 +194,6 @@ contract LiquidationModule is ILiquidationModule {
         Pool.Data storage pool = Pool.load(poolId);
         int rawDebt = pool.updateAccountDebt(collateralType, accountId);
         (, uint collateralValue) = pool.currentAccountCollateral(collateralType, accountId);
-        return rawDebt >= 0 && _isLiquidatable(collateralType, uint(rawDebt), collateralValue);
+        return rawDebt >= 0 && _isLiquidatable(collateralType, rawDebt.toUint(), collateralValue);
     }
 }

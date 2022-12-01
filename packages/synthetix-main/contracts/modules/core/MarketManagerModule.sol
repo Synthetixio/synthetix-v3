@@ -11,10 +11,17 @@ import "../../storage/Market.sol";
 import "../../storage/MarketCreator.sol";
 import "../../storage/Account.sol";
 
+import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+
 import "@synthetixio/core-modules/contracts/storage/AssociatedSystem.sol";
 import "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
 
 contract MarketManagerModule is IMarketManagerModule {
+    using SafeCastU128 for uint128;
+    using SafeCastU256 for uint256;
+    using SafeCastI128 for int128;
+    using SafeCastI256 for int256;
+
     using Market for Market.Data;
 
     using AssociatedSystem for AssociatedSystem.Data;
@@ -37,11 +44,11 @@ contract MarketManagerModule is IMarketManagerModule {
     }
 
     function getWithdrawableUsd(uint128 marketId) public view override returns (uint) {
-        return Market.load(marketId).capacity + Market.load(marketId).getDepositedCollateralValue();
+        return Market.load(marketId).capacityD18 + Market.load(marketId).getDepositedCollateralValue();
     }
 
     function getMarketIssuance(uint128 marketId) external view override returns (int128) {
-        return Market.load(marketId).issuance;
+        return Market.load(marketId).issuanceD18;
     }
 
     function getMarketReportedDebt(uint128 marketId) external view override returns (uint) {
@@ -49,7 +56,7 @@ contract MarketManagerModule is IMarketManagerModule {
     }
 
     function getMarketCollateral(uint128 marketId) external view override returns (uint) {
-        return Market.load(marketId).poolsDebtDistribution.totalShares;
+        return Market.load(marketId).poolsDebtDistribution.totalSharesD18;
     }
 
     function getMarketTotalBalance(uint128 marketId) external view override returns (int) {
@@ -81,8 +88,8 @@ contract MarketManagerModule is IMarketManagerModule {
         ITokenModule usdToken = AssociatedSystem.load(_USD_TOKEN).asToken();
 
         // Adjust accounting
-        market.capacity += uint128(amount);
-        market.issuance -= int128(int(amount));
+        market.capacityD18 += amount.to128();
+        market.issuanceD18 -= amount.toInt().to128();
 
         // burn USD
         IUSDTokenModule(address(usdToken)).burnWithAllowance(target, msg.sender, amount);
@@ -102,8 +109,8 @@ contract MarketManagerModule is IMarketManagerModule {
         if (amount > getWithdrawableUsd(marketId)) revert NotEnoughLiquidity(marketId, amount);
 
         // Adjust accounting
-        marketData.capacity -= uint128(amount);
-        marketData.issuance += int128(int(amount));
+        marketData.capacityD18 -= amount.to128();
+        marketData.issuanceD18 += amount.toInt().to128();
 
         // mint some USD
         AssociatedSystem.load(_USD_TOKEN).asToken().mint(target, amount);

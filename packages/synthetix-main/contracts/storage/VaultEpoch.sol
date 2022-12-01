@@ -4,6 +4,8 @@ pragma solidity ^0.8.0;
 import "./Distribution.sol";
 import "./ScalableMapping.sol";
 
+import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+
 /**
  * @title Tracks collateral and debt distributions in a pool, for a specific collateral type, in a given epoch.
  *
@@ -17,6 +19,10 @@ import "./ScalableMapping.sol";
 library VaultEpoch {
     using Distribution for Distribution.Data;
     using DecimalMath for uint256;
+    using SafeCastU128 for uint128;
+    using SafeCastU256 for uint256;
+    using SafeCastI128 for int128;
+    using SafeCastI256 for int256;
 
     using ScalableMapping for ScalableMapping.Data;
 
@@ -27,8 +33,11 @@ library VaultEpoch {
          * E.g. when a given amount of debt is socialized during a liquidation, but it yet hasn't been rolled into
          * the consolidated debt distribution.
          */
-        int128 unconsolidatedDebt;
-        int128 totalConsolidatedDebt;
+        int128 unconsolidatedDebtD18;
+        /**
+         * @dev TODO
+         */
+        int128 totalConsolidatedDebtD18;
         /**
          * @dev Tracks incoming debt for each user.
          *
@@ -55,7 +64,7 @@ library VaultEpoch {
          * Updated when users interact with the system, consolidating changes from the fluctuating accountsDebtDistribution,
          * and directly when users mint or burn USD, or repay debt.
          */
-        mapping(uint => int) consolidatedDebtAmounts;
+        mapping(uint => int) consolidatedDebtAmountsD18;
     }
 
     /**
@@ -76,23 +85,23 @@ library VaultEpoch {
      * - LiquidationModule.liquidate
      * - Pool.recalculateVaultCollateral (ticker)
      */
-    function distributeDebtToAccounts(Data storage self, int debtChange) internal {
-        self.accountsDebtDistribution.distributeValue(debtChange);
+    function distributeDebtToAccounts(Data storage self, int debtChangeD18) internal {
+        self.accountsDebtDistribution.distributeValue(debtChangeD18);
 
         // Cache total debt here.
         // Will roll over to individual users as they interact with the system.
-        self.unconsolidatedDebt += int128(debtChange);
+        self.unconsolidatedDebtD18 += debtChangeD18.to128();
     }
 
     function assignDebtToAccount(
         Data storage self,
         uint128 accountId,
-        int amount
-    ) internal returns (int newDebt) {
-        int currentDebt = self.consolidatedDebtAmounts[accountId];
-        self.consolidatedDebtAmounts[accountId] += int128(amount);
-        self.totalConsolidatedDebt += int128(amount);
-        return currentDebt + amount;
+        int amountD18
+    ) internal returns (int newDebtD18) {
+        int currentDebtD18 = self.consolidatedDebtAmountsD18[accountId];
+        self.consolidatedDebtAmountsD18[accountId] += amountD18.to128();
+        self.totalConsolidatedDebtD18 += amountD18.to128();
+        return currentDebtD18 + amountD18;
     }
 
     /**
@@ -103,13 +112,13 @@ library VaultEpoch {
      * Called as a ticker from various parts of the system, usually whenever the
      * real debt of a user needs to be known.
      */
-    function consolidateAccountDebt(Data storage self, uint128 accountId) internal returns (int currentDebt) {
+    function consolidateAccountDebt(Data storage self, uint128 accountId) internal returns (int currentDebtD18) {
         bytes32 actorId = accountToActor(accountId);
 
-        int newDebt = self.accountsDebtDistribution.accumulateActor(actorId);
+        int newDebtD18 = self.accountsDebtDistribution.accumulateActor(actorId);
 
-        currentDebt = assignDebtToAccount(self, accountId, newDebt);
-        self.unconsolidatedDebt -= int128(newDebt);
+        currentDebtD18 = assignDebtToAccount(self, accountId, newDebtD18);
+        self.unconsolidatedDebtD18 -= newDebtD18.to128();
     }
 
     /**
@@ -121,16 +130,19 @@ library VaultEpoch {
     function updateAccountPosition(
         Data storage self,
         uint128 accountId,
-        uint collateralAmount,
-        uint leverage
+        uint collateralAmountD18,
+        uint leverageD18
     ) internal {
         bytes32 actorId = accountToActor(accountId);
 
         // Ensure account debt is consolidated before we do next things.
         consolidateAccountDebt(self, accountId);
 
-        self.collateralAmounts.set(actorId, collateralAmount);
-        self.accountsDebtDistribution.setActorShares(actorId, self.collateralAmounts.shares[actorId].mulDecimal(leverage));
+        self.collateralAmounts.set(actorId, collateralAmountD18);
+        self.accountsDebtDistribution.setActorShares(
+            actorId,
+            self.collateralAmounts.sharesD18[actorId].mulDecimal(leverageD18)
+        );
     }
 
     /**
@@ -138,13 +150,13 @@ library VaultEpoch {
      * that hasn't yet been consolidated into individual accounts.
      */
     function totalDebt(Data storage self) internal view returns (int) {
-        return int(self.unconsolidatedDebt + self.totalConsolidatedDebt);
+        return self.unconsolidatedDebtD18 + self.totalConsolidatedDebtD18;
     }
 
     /**
      * @dev Returns an account's value in the Vault's collateral distribution.
      */
-    function getAccountCollateral(Data storage self, uint128 accountId) internal view returns (uint amount) {
-        return uint(self.collateralAmounts.get(accountToActor(accountId)));
+    function getAccountCollateral(Data storage self, uint128 accountId) internal view returns (uint amountD18) {
+        return self.collateralAmounts.get(accountToActor(accountId));
     }
 }
