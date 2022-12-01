@@ -41,13 +41,13 @@ describe('Market', function () {
     });
   });
 
-  describe('getLockedLiquidity()', async () => {
+  describe('getLockedCreditCapacity()', async () => {
     before(restore);
 
     it('returns whatever the market sends', async () => {
       await FakeMarket.setLocked(1234);
 
-      assertBn.equal(await systems().Core.Market_getLockedLiquidity(fakeMarketId), 1234);
+      assertBn.equal(await systems().Core.Market_getLockedCreditCapacity(fakeMarketId), 1234);
     });
   });
 
