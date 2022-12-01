@@ -163,7 +163,7 @@ describe('LegacyMarket', () => {
         let beforeMarketBalance: Wei;
 
         before('record priors', async () => {
-          beforeMarketBalance = wei(await v3System.getMarketIssuance(await market.marketId()));
+          beforeMarketBalance = wei(await v3System.getMarketNetIssuance(await market.marketId()));
         });
 
         before('when invoked', async () => {

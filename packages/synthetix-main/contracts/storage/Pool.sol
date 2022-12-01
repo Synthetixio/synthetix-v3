@@ -158,7 +158,7 @@ library Pool {
             uint marketCreditCapacityD18 = (totalCreditCapacityD18 * weightD18) / totalWeightsD18;
             uint marketUnusedCreditCapacityD18 = (unusedCreditCapacityD18 * weightD18) / totalWeightsD18;
 
-            Market.Data storage marketData = Market.load(marketConfiguration.market);
+            Market.Data storage marketData = Market.load(marketConfiguration.marketId);
 
             // Contain the pool imposed market's maximum debt share value.
             // Imposed by system.
@@ -171,8 +171,8 @@ library Pool {
 
             // Update each market's corresponding credit capacity.
             // The returned value represents how much the market's debt changed after changing the shares of this pool actor, which is aggregated to later be passed on the pools debt distribution.
-            cumulativeDebtChangeD18 += Market.rebalance(
-                marketConfiguration.market,
+            cumulativeDebtChangeD18 += Market.rebalancePools(
+                marketConfiguration.marketId,
                 self.id,
                 effectiveMaxShareValueD18,
                 marketCreditCapacityD18
@@ -226,7 +226,7 @@ library Pool {
      */
     function hasMarket(Data storage self, uint128 marketId) internal view returns (bool) {
         for (uint i = 0; i < self.marketConfigurations.length; i++) {
-            if (self.marketConfigurations[i].market == marketId) {
+            if (self.marketConfigurations[i].marketId == marketId) {
                 return true;
             }
         }
@@ -316,7 +316,7 @@ library Pool {
      */
     function findMarketWithCapacityLocked(Data storage self) internal view returns (Market.Data storage lockedMarketId) {
         for (uint i = 0; i < self.marketConfigurations.length; i++) {
-            Market.Data storage market = Market.load(self.marketConfigurations[i].market);
+            Market.Data storage market = Market.load(self.marketConfigurations[i].marketId);
 
             if (market.isCapacityLocked()) {
                 return market;

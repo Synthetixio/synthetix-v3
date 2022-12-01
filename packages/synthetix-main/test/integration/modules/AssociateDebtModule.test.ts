@@ -90,7 +90,7 @@ describe('AssociateDebtModule', function () {
         let prevMarketIssuance: ethers.BigNumber;
 
         before('record', async () => {
-          prevMarketIssuance = await systems().Core.getMarketIssuance(marketId());
+          prevMarketIssuance = await systems().Core.getMarketNetIssuance(marketId());
         });
 
         before('invoke', async () => {
@@ -113,7 +113,7 @@ describe('AssociateDebtModule', function () {
 
         it('reduces market issuance', async () => {
           assertBn.equal(
-            await systems().Core.getMarketIssuance(marketId()),
+            await systems().Core.getMarketNetIssuance(marketId()),
             prevMarketIssuance.sub(amount)
           );
         });

@@ -63,7 +63,7 @@ contract AssociateDebtModule is IAssociateDebtModule {
 
         // subtract the requested amount of debt from the market
         // this debt should have been accumulated just now anyway so
-        marketData.issuanceD18 -= amount.toInt().to128();
+        marketData.netIssuanceD18 -= amount.toInt().to128();
 
         // register account debt
         poolData.updateAccountDebt(collateralType, accountId);

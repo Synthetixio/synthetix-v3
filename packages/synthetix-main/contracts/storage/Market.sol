@@ -62,22 +62,20 @@ library Market {
          *
          * How much USD a market can mint depends on how much credit capacity is given to the market by the pools that support it, and reflected in `Market.capacity`.
          *
-         * TODO: Consider renaming this to netIssuance.
          */
-        int128 issuanceD18;
+        int128 netIssuanceD18;
         /**
          * @dev The total amount of USD that the market could withdraw if it were to immediately unwrap all its positions.
          *
-         * The Market's capacity increases when the market burns USD, i.e. when it deposits USD in the MarketManager.
+         * The Market's credit capacity increases when the market burns USD, i.e. when it deposits USD in the MarketManager.
          *
          * It decreases when the market mints USD, i.e. when it withdraws USD from the MarketManager.
          *
-         * The Market's capacity also depends on how much credit is given to it by the pools that support it.
+         * The Market's credit capacity also depends on how much credit is given to it by the pools that support it.
          *
          * TODO: How does reported debt play with this definition?
-         * TODO: Consider renaming to creditCapacity.
          */
-        uint128 capacityD18;
+        uint128 creditCapacityD18;
         /**
          * @dev The total balance that the market had the last time that its debt was distributed.
          *
@@ -100,12 +98,10 @@ library Market {
          * -4   -5
          *
          * TL;DR: This data structure allows us to easily find the pool with the lowest or "most vulnerable" max value per share and process it if its actual value per share goes beyond this limit.
-         *
-         * TODO: Check that the "max credit capacity" naming is consistent with what's actually on the code.
          */
         HeapUtil.Data inRangePools;
         /**
-         * @dev An array of pools for which the market has hit its maximum credit capacity.
+         * @dev A heap of pools for which the market has hit its maximum credit capacity.
          *
          * Used to reconnect pools to the market, when it falls back below its maximum credit capacity.
          *
@@ -132,7 +128,6 @@ library Market {
          *
          * Markets may obtain additional liquidity, beyond that coming from stakers, by providing their own collateral.
          *
-         * TODO: Rename to depositedCollaterals?
          */
         DepositedCollateral[] depositedCollateral;
         /**
@@ -191,12 +186,11 @@ library Market {
      * If an Euro market has received 100 USD to mint 90 EUR, its reported debt is 90 EUR or 100 USD, and its issuance is -100 USD.
      * Thus, its total balance is 100 USD of reported debt minus 100 USD of issuance, which is 0 USD.
      *
-     * Additionally, the market's totalBalance might be affected by price fluctuations via reportedDebt, or fees.
+     * Additionally, the market's totalDebt might be affected by price fluctuations via reportedDebt, or fees.
      *
-     * TODO: Consider renaming to totalDebt()? totalBalance is more correct, but totalDebt is easier to understand.
      */
-    function totalBalance(Data storage self) internal view returns (int) {
-        return getReportedDebt(self).toInt() + self.issuanceD18 - getDepositedCollateralValue(self).toInt();
+    function totalDebt(Data storage self) internal view returns (int) {
+        return getReportedDebt(self).toInt() + self.netIssuanceD18 - getDepositedCollateralValue(self).toInt();
     }
 
     /**
@@ -242,9 +236,9 @@ library Market {
      * Goes from debt shares to credit capacity and applying the maxDebtPerDollarOfCollateral to that value.
      *
      * TODO: Explain how this is used.
-     * TODO: If the term "capacity" refers to something other than `Market.capacity` then either this should use a different term, of the other one should.
+     *
      */
-    function getCapacityContribution(
+    function getCreditCapacityContribution(
         Data storage self,
         uint liquiditySharesD18,
         int maxDebtShareValueD18
@@ -258,10 +252,9 @@ library Market {
     /**
      * @dev Returns true if the market's current capacity is below the amount of locked liquidity.
      *
-     * TODO: Should this be <=?
      */
     function isCapacityLocked(Data storage self) internal view returns (bool) {
-        return self.capacityD18 < getLockedLiquidity(self);
+        return self.creditCapacityD18 < getLockedLiquidity(self);
     }
 
     /**
@@ -286,9 +279,8 @@ library Market {
      *
      * Called by a pool when it distributes its debt.
      *
-     * TODO: Rename to something more informative than just rebalance?
      */
-    function rebalance(
+    function rebalancePools(
         uint128 marketId,
         uint128 poolId,
         int maxDebtShareValueD18, // (in USD)
@@ -347,11 +339,12 @@ library Market {
 
         // recalculate market capacity
         if (newPoolMaxShareValueD18 > valuePerShareD18) {
-            self.capacityD18 += getCapacityContribution(self, newCreditCapacityD18, newPoolMaxShareValueD18).to128();
+            self.creditCapacityD18 += getCreditCapacityContribution(self, newCreditCapacityD18, newPoolMaxShareValueD18)
+                .to128();
         }
 
         if (oldPoolMaxShareValueD18 > valuePerShareD18) {
-            self.capacityD18 -= getCapacityContribution(self, oldLiquidityD18, oldPoolMaxShareValueD18).to128();
+            self.creditCapacityD18 -= getCreditCapacityContribution(self, oldLiquidityD18, oldPoolMaxShareValueD18).to128();
         }
     }
 
@@ -365,7 +358,7 @@ library Market {
     function distributeDebtToPools(Data storage self, uint maxIter) internal {
         // Get the current and last distributed market balances.
         // Note: The last distributed balance will be cached within this function's execution.
-        int256 targetBalanceD18 = totalBalance(self);
+        int256 targetBalanceD18 = totalDebt(self);
         int256 outstandingBalanceD18 = targetBalanceD18 - self.lastDistributedMarketBalanceD18;
 
         (, bool exhausted) = _bumpPools(self, outstandingBalanceD18, maxIter);
