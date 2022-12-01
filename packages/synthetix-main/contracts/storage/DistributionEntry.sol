@@ -26,7 +26,7 @@ library DistributionEntry {
     /**
      * this function allows for more special cases such as distributing at a future date or distributing over time.
      * if you want to apply the distribution to the pool, call `distribute` with the return value. Otherwise, you can
-     * record this independantly as well
+     * record this independently as well
      */
     function distribute(
         Data storage entry,
@@ -50,7 +50,7 @@ library DistributionEntry {
             // update any rewards which may have accrued since last run
 
             // instant distribution--immediately disperse amount
-            diffD18 += (amountD18 * 1e18) / totalSharesD18.toInt();
+            diffD18 += amountD18.divDecimal(totalSharesD18.toInt());
 
             entry.lastUpdate = 0;
             entry.start = 0;
