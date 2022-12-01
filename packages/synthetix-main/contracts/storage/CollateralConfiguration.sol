@@ -49,7 +49,6 @@ library CollateralConfiguration {
     function set(Data memory config) internal {
         SetUtil.AddressSet storage collateralTypes = loadAvailableCollaterals();
 
-        // TODO: should we be *removing* the collateralType if it is disabled here, or if it is set to nothing?
         if (!collateralTypes.contains(config.tokenAddress)) {
             collateralTypes.add(config.tokenAddress);
         }
@@ -93,7 +92,7 @@ library CollateralConfiguration {
         (, int256 answerD18, , , ) = IAggregatorV3Interface(self.priceFeed).latestRoundData();
 
         // sanity check
-        // TODO: this will be removed when we get the oracle manager
+        // Note: This should no longer be necessary once the oracle manager is connected to the system.
         require(answerD18 > 0, "The collateral value is 0");
 
         return uint(answerD18);
