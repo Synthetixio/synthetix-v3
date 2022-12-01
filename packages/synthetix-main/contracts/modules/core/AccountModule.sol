@@ -54,7 +54,7 @@ contract AccountModule is IAccountModule {
     }
 
     function notifyAccountTransfer(address to, uint128 accountId) external override {
-        onlyAccountToken();
+        _onlyAccountToken();
 
         Account.Data storage account = Account.load(accountId);
 
@@ -83,7 +83,7 @@ contract AccountModule is IAccountModule {
         bytes32 permission,
         address user
     ) external override {
-        isPermissionValid(permission);
+        _isPermissionValid(permission);
 
         Account.onlyWithPermission(accountId, AccountRBAC._ADMIN_PERMISSION);
 
@@ -118,13 +118,13 @@ contract AccountModule is IAccountModule {
         return Account.load(accountId).rbac.owner;
     }
 
-    function onlyAccountToken() internal {
+    function _onlyAccountToken() internal {
         if (msg.sender != address(getAccountTokenAddress())) {
             revert OnlyAccountTokenProxy(msg.sender);
         }
     }
 
-    function isPermissionValid(bytes32 permission) internal {
+    function _isPermissionValid(bytes32 permission) internal {
         if (
             permission != AccountRBAC._DEPOSIT_PERMISSION &&
             permission != AccountRBAC._WITHDRAW_PERMISSION &&

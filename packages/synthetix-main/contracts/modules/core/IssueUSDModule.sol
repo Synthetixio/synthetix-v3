@@ -30,7 +30,7 @@ contract IssueUSDModule is IIssueUSDModule {
         address collateralType,
         uint amount
     ) external override {
-        onlyWithPermission(accountId, AccountRBAC._MINT_PERMISSION);
+        _onlyWithPermission(accountId, AccountRBAC._MINT_PERMISSION);
 
         // check if they have sufficient c-ratio to mint that amount
         Pool.Data storage pool = Pool.load(poolId);
@@ -85,7 +85,7 @@ contract IssueUSDModule is IIssueUSDModule {
         emit UsdBurned(accountId, poolId, collateralType, amount, msg.sender);
     }
 
-    function onlyWithPermission(uint128 accountId, bytes32 permission) internal {
+    function _onlyWithPermission(uint128 accountId, bytes32 permission) internal {
         if (!Account.load(accountId).rbac.authorized(permission, msg.sender)) {
             revert PermissionDenied(accountId, permission, msg.sender);
         }
