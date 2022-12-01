@@ -39,6 +39,8 @@ library Pool {
          * @dev Numeric identifier for the pool.
          *
          * Must be unique.
+         *
+         * Note: poolId zero is reserved for the "ZeroPool", which allows users to mint by being exposed to no fluctuating market debt.
          */
         uint128 id;
         /**
@@ -213,7 +215,7 @@ library Pool {
     /**
      * @dev Returns true if a pool with the specified id exists.
      *
-     * TODO: Hidden logic: What is pool 0, and why does it always "exist"?
+     * Note: Pool zero always exists, see "Pool.id".
      */
     function exists(uint128 id) internal view returns (bool) {
         return id == 0 || load(id).id == id;
@@ -221,8 +223,6 @@ library Pool {
 
     /**
      * @dev Returns true if the pool is exposed to the specified market.
-     *
-     * TODO: Wouldn't it help to use a Set here?
      */
     function hasMarket(Data storage self, uint128 marketId) internal view returns (bool) {
         for (uint i = 0; i < self.marketConfigurations.length; i++) {
@@ -241,8 +241,6 @@ library Pool {
      * - Collects the latest price of the corresponding collateral and updates the vault's liquidity.
      * - Updates the vaults shares in the pool's debt distribution, according to the collateral provided by the vault.
      * - Updates the value per share of the vault's debt distribution.
-     *
-     * TODO: If possible, remove second call to distributeDebtToVaults.
      */
     function recalculateVaultCollateral(Data storage self, address collateralType)
         internal
@@ -267,7 +265,7 @@ library Pool {
         // Transfer the debt change from the pool into the vault.
         self.vaults[collateralType].distributeDebtToAccounts(debtChangeD18);
 
-        // Distribute debt again because... TODO
+        // Distribute debt again because the unused credit capacity has been updated, and this information needs to be propagated immediately.
         distributeDebtToVaults(self);
     }
 
@@ -311,8 +309,12 @@ library Pool {
         return debtD18 > 0 ? debtD18.toUint().divDecimal(collateralValueD18) : 0;
     }
 
-    // TODO: Document
-    function findMarketCapacityLocked(Data storage self) internal view returns (Market.Data storage lockedMarketId) {
+    /**
+     * @dev Finds a connected market whose credit capacity has reached its locked limit.
+     *
+     * Note: Returns market zero (null market) if none is found.
+     */
+    function findMarketWithCapacityLocked(Data storage self) internal view returns (Market.Data storage lockedMarketId) {
         for (uint i = 0; i < self.marketConfigurations.length; i++) {
             Market.Data storage market = Market.load(self.marketConfigurations[i].market);
 
@@ -321,6 +323,7 @@ library Pool {
             }
         }
 
+        // Market zero = null market.
         return Market.load(0);
     }
 

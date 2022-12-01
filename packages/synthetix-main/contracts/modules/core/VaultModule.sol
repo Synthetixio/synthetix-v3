@@ -235,7 +235,7 @@ contract VaultModule is IVaultModule {
     function _verifyNotCapacityLocked(uint128 poolId) internal view {
         Pool.Data storage pool = Pool.load(poolId);
 
-        Market.Data storage market = pool.findMarketCapacityLocked();
+        Market.Data storage market = pool.findMarketWithCapacityLocked();
 
         if (market.id > 0) {
             revert CapacityLocked(market.id);
