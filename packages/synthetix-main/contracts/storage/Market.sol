@@ -13,7 +13,7 @@ import "../interfaces/external/IMarket.sol";
 /**
  * @title Connects external contracts that implement the `IMarket` interface to the system.
  *
- * Pools provide credit capacity (collateral) to the markets, and are reciprocally exposing to the associated market's debt.
+ * Pools provide credit capacity (collateral) to the markets, and are reciprocally exposed to the associated market's debt.
  *
  * The Market object's main responsibility is to track collateral provided by the pools that support it, and to trace their debt back to such pools.
  */
