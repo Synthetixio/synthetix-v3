@@ -188,11 +188,11 @@ contract PoolModule is IPoolModule {
     function setMinLiquidityRatio(uint minLiquidityRatio) external override {
         OwnableStorage.onlyOwner();
 
-        PoolConfiguration.load().minLiquidityRatioD18 = minLiquidityRatio;
+        SystemPoolConfiguration.load().minLiquidityRatioD18 = minLiquidityRatio;
     }
 
     function getMinLiquidityRatio() external view override returns (uint) {
-        return PoolConfiguration.load().minLiquidityRatioD18;
+        return SystemPoolConfiguration.load().minLiquidityRatioD18;
     }
 
     function _verifyPoolConfigurationChange(Pool.Data storage pool, MarketConfiguration.Data[] memory newDistributions)

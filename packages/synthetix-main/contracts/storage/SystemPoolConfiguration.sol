@@ -12,7 +12,7 @@ import "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
  *
  * TODO: Rename to SystemsPoolConfiguration.
  */
-library PoolConfiguration {
+library SystemPoolConfiguration {
     struct Data {
         /**
          * @dev Owner specified system-wide limiting factor that prevents markets from minting too much debt, similar to the issuance ratio to a collateral type.
