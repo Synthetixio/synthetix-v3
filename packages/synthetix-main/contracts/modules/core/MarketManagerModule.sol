@@ -11,10 +11,17 @@ import "../../storage/Market.sol";
 import "../../storage/MarketCreator.sol";
 import "../../storage/Account.sol";
 
+import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+
 import "@synthetixio/core-modules/contracts/storage/AssociatedSystem.sol";
 import "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
 
 contract MarketManagerModule is IMarketManagerModule {
+    using SafeCastU128 for uint128;
+    using SafeCastU256 for uint256;
+    using SafeCastI128 for int128;
+    using SafeCastI256 for int256;
+
     using Market for Market.Data;
 
     using AssociatedSystem for AssociatedSystem.Data;
@@ -81,8 +88,8 @@ contract MarketManagerModule is IMarketManagerModule {
         ITokenModule usdToken = AssociatedSystem.load(_USD_TOKEN).asToken();
 
         // Adjust accounting
-        market.capacityD18 += uint128(amount);
-        market.issuanceD18 -= int128(int(amount));
+        market.capacityD18 += amount.to128();
+        market.issuanceD18 -= amount.toInt().to128();
 
         // burn USD
         IUSDTokenModule(address(usdToken)).burnWithAllowance(target, msg.sender, amount);
@@ -102,8 +109,8 @@ contract MarketManagerModule is IMarketManagerModule {
         if (amount > getWithdrawableUsd(marketId)) revert NotEnoughLiquidity(marketId, amount);
 
         // Adjust accounting
-        marketData.capacityD18 -= uint128(amount);
-        marketData.issuanceD18 += int128(int(amount));
+        marketData.capacityD18 -= amount.to128();
+        marketData.issuanceD18 += amount.toInt().to128();
 
         // mint some USD
         AssociatedSystem.load(_USD_TOKEN).asToken().mint(target, amount);

@@ -1,6 +1,6 @@
+import logger from '@synthetixio/core-utils/utils/io/logger';
 import { subtask } from 'hardhat/config';
-import { default as logger } from '@synthetixio/core-utils/utils/io/logger';
-import { getAllSelectors, findDuplicateSelectors } from '../internal/contract-helper';
+import { findDuplicateSelectors, getAllSelectors } from '../internal/contract-helper';
 import { ContractValidationError } from '../internal/errors';
 import { SUBTASK_VALIDATE_SELECTORS } from '../task-names';
 

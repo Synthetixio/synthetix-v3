@@ -1,8 +1,6 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "../utils/CurvesLibrary.sol";
-
 /// @title Liquidates the collateral for an account in a pool
 interface ILiquidationModule {
     event Liquidation(
@@ -23,7 +21,6 @@ interface ILiquidationModule {
     );
 
     struct LiquidationInformation {
-        CurvesLibrary.PolynomialCurve curve;
         mapping(uint => uint) initialAmount; // key is accountId, amount is accumulated when you entered the vault
         uint accumulated; // how much accumulation per debt share (updated before anyone enters/leaves the vaults)
     }

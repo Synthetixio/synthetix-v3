@@ -5,7 +5,14 @@ import "@synthetixio/core-modules/contracts/modules/NftModule.sol";
 import "../../../contracts/interfaces/IAccountTokenModule.sol";
 import "../../../contracts/interfaces/IAccountModule.sol";
 
+import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+
 contract AccountTokenModule is IAccountTokenModule, NftModule {
+    using SafeCastU128 for uint128;
+    using SafeCastU256 for uint256;
+    using SafeCastI128 for int128;
+    using SafeCastI256 for int256;
+
     function mint(address owner, uint256 nftId) external {
         OwnableStorage.onlyOwner();
         _mint(owner, nftId);
@@ -18,6 +25,6 @@ contract AccountTokenModule is IAccountTokenModule, NftModule {
         address to,
         uint256 tokenId
     ) internal virtual override {
-        IAccountModule(OwnableStorage.getOwner()).notifyAccountTransfer(to, uint128(tokenId));
+        IAccountModule(OwnableStorage.getOwner()).notifyAccountTransfer(to, tokenId.to128());
     }
 }
