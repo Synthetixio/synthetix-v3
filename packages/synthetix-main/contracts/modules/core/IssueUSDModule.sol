@@ -3,6 +3,8 @@ pragma solidity ^0.8.0;
 
 import "../../interfaces/IIssueUSDModule.sol";
 
+import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+
 import "@synthetixio/core-modules/contracts/storage/AssociatedSystem.sol";
 
 import "../../storage/Account.sol";
@@ -18,6 +20,11 @@ contract IssueUSDModule is IIssueUSDModule {
     using VaultEpoch for VaultEpoch.Data;
     using Distribution for Distribution.Data;
     using ScalableMapping for ScalableMapping.Data;
+
+    using SafeCastU128 for uint128;
+    using SafeCastU256 for uint256;
+    using SafeCastI128 for int128;
+    using SafeCastI256 for int256;
 
     error InsufficientDebt(int currentDebt);
     error PermissionDenied(uint128 accountId, bytes32 permission, address target);
@@ -39,19 +46,18 @@ contract IssueUSDModule is IIssueUSDModule {
 
         (, uint collateralValue) = pool.currentAccountCollateral(collateralType, accountId);
 
-        int newDebt = debt + int(amount);
+        int newDebt = debt + amount.toInt();
 
         require(newDebt > debt, "Incorrect new debt");
 
         if (newDebt > 0) {
-            CollateralConfiguration.load(collateralType).verifyCollateralRatio(uint(newDebt), collateralValue);
+            CollateralConfiguration.load(collateralType).verifyCollateralRatio(newDebt.toUint(), collateralValue);
         }
 
         VaultEpoch.Data storage epoch = Pool.load(poolId).vaults[collateralType].currentEpoch();
 
-        epoch.assignDebtToAccount(accountId, int(amount));
+        epoch.assignDebtToAccount(accountId, amount.toInt());
         pool.recalculateVaultCollateral(collateralType);
-        require(int(amount) == int128(int(amount)), "Incorrect amount specified");
         AssociatedSystem.load(_USD_TOKEN).asToken().mint(msg.sender, amount);
 
         emit UsdMinted(accountId, poolId, collateralType, amount, msg.sender);
@@ -71,15 +77,15 @@ contract IssueUSDModule is IIssueUSDModule {
             revert InsufficientDebt(debt);
         }
 
-        if (debt < int(amount)) {
-            amount = uint(debt);
+        if (debt < amount.toInt()) {
+            amount = debt.toUint();
         }
 
         AssociatedSystem.load(_USD_TOKEN).asToken().burn(msg.sender, amount);
 
         VaultEpoch.Data storage epoch = Pool.load(poolId).vaults[collateralType].currentEpoch();
 
-        epoch.assignDebtToAccount(accountId, -int(amount));
+        epoch.assignDebtToAccount(accountId, -amount.toInt());
         pool.recalculateVaultCollateral(collateralType);
 
         emit UsdBurned(accountId, poolId, collateralType, amount, msg.sender);

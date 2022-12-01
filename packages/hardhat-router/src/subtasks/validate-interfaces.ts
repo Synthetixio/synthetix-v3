@@ -1,9 +1,9 @@
+import logger from '@synthetixio/core-utils/utils/io/logger';
 import { subtask } from 'hardhat/config';
-import { default as logger } from '@synthetixio/core-utils/utils/io/logger';
+import { getContractAst } from '../internal/contract-helper';
 import { ContractValidationError } from '../internal/errors';
 import { routerFunctionFilter } from '../internal/router-function-filter';
 import { validateInterfaces } from '../internal/validate-interfaces';
-import { getContractAst } from '../internal/contract-helper';
 import { SUBTASK_VALIDATE_INTERFACES } from '../task-names';
 
 interface Params {

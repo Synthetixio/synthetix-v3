@@ -12,8 +12,6 @@ import path from 'node:path';
 
 // Load common .env file from root
 dotenv.config({ path: path.resolve(__dirname, '..', '..', '.env') });
-// Load common .env file at ./packages/config-common/.env
-dotenv.config({ path: path.resolve(__dirname, '.env') });
 
 const config = {
   solidity: {
@@ -73,6 +71,7 @@ const config = {
     apiKey: {
       mainnet: process.env.ETHERSCAN_API_KEY,
       rinkeby: process.env.ETHERSCAN_API_KEY,
+      goerli: process.env.ETHERSCAN_API_KEY,
       optimisticEthereum: process.env.OVM_ETHERSCAN_API_KEY,
       optimisticGoerli: process.env.OVM_ETHERSCAN_API_KEY,
       avalancheFujiTestnet: process.env.ETHERSCAN_API_KEY,

@@ -4,6 +4,8 @@ pragma solidity ^0.8.0;
 import "./Distribution.sol";
 import "./ScalableMapping.sol";
 
+import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+
 /**
  * @title Tracks collateral and debt distributions in a pool, for a specific collateral type, in a given epoch.
  *
@@ -17,6 +19,10 @@ import "./ScalableMapping.sol";
 library VaultEpoch {
     using Distribution for Distribution.Data;
     using DecimalMath for uint256;
+    using SafeCastU128 for uint128;
+    using SafeCastU256 for uint256;
+    using SafeCastI128 for int128;
+    using SafeCastI256 for int256;
 
     using ScalableMapping for ScalableMapping.Data;
 
@@ -84,7 +90,7 @@ library VaultEpoch {
 
         // Cache total debt here.
         // Will roll over to individual users as they interact with the system.
-        self.unconsolidatedDebtD18 += int128(debtChangeD18);
+        self.unconsolidatedDebtD18 += debtChangeD18.to128();
     }
 
     function assignDebtToAccount(
@@ -93,8 +99,8 @@ library VaultEpoch {
         int amountD18
     ) internal returns (int newDebtD18) {
         int currentDebtD18 = self.consolidatedDebtAmountsD18[accountId];
-        self.consolidatedDebtAmountsD18[accountId] += int128(amountD18);
-        self.totalConsolidatedDebtD18 += int128(amountD18);
+        self.consolidatedDebtAmountsD18[accountId] += amountD18.to128();
+        self.totalConsolidatedDebtD18 += amountD18.to128();
         return currentDebtD18 + amountD18;
     }
 
@@ -112,7 +118,7 @@ library VaultEpoch {
         int newDebtD18 = self.accountsDebtDistribution.accumulateActor(actorId);
 
         currentDebtD18 = assignDebtToAccount(self, accountId, newDebtD18);
-        self.unconsolidatedDebtD18 -= int128(newDebtD18);
+        self.unconsolidatedDebtD18 -= newDebtD18.to128();
     }
 
     /**
@@ -144,13 +150,13 @@ library VaultEpoch {
      * that hasn't yet been consolidated into individual accounts.
      */
     function totalDebt(Data storage self) internal view returns (int) {
-        return int(self.unconsolidatedDebtD18 + self.totalConsolidatedDebtD18);
+        return self.unconsolidatedDebtD18 + self.totalConsolidatedDebtD18;
     }
 
     /**
      * @dev Returns an account's value in the Vault's collateral distribution.
      */
     function getAccountCollateral(Data storage self, uint128 accountId) internal view returns (uint amountD18) {
-        return uint(self.collateralAmounts.get(accountToActor(accountId)));
+        return self.collateralAmounts.get(accountToActor(accountId));
     }
 }

@@ -1,11 +1,11 @@
 {
   "name": "@synthetixio/main",
-  "version": "3.0.0-alpha.2",
+  "version": "3.0.0-alpha.3",
   "description": "Core Synthetix Protocol Contracts",
   "private": true,
   "scripts": {
-    "build": "hardhat generate-testable",
-    "test": "hardhat test",
+    "build": "rm -rf contracts/modules/test && hardhat generate-testable",
+    "test": "npm run build -- --quiet && hardhat test",
     "coverage": "npx hardhat cannon:build && hardhat --network hardhat coverage",
     "compile-contracts": "hardhat compile",
     "size-contracts": "hardhat size-contracts"
