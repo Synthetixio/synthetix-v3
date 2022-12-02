@@ -54,7 +54,7 @@ jobs:
       env:
         NODE_ENV: development
       # options: --user root -v ${{github.workspace}}:/src/:rw
-      options: --user root -v "${{github.workspace}}":"/src":"rw" --privileged
+      options: --user root -v "${{github.workspace}}":"/src":"rw"
     steps:
       # - name: Install Foundry (Cannon)
       #   uses: foundry-rs/foundry-toolchain@v1
@@ -70,7 +70,7 @@ jobs:
       - run: ls -lah
       - run: whoami
       - run: id
-      - run: mkdir /src/packages/core-utils/utils
+      - run: mkdir /src/packages/core-utils/utils && chmod -R 777 /src
       - run: |
           cd /src
           npm ci
