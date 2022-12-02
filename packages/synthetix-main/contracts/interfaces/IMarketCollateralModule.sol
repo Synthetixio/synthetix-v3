@@ -31,7 +31,7 @@ interface IMarketCollateralModule {
     event MarketCollateralDeposited(
         uint128 indexed marketId,
         address indexed collateralType,
-        uint amount,
+        uint tokenAmount,
         address indexed sender
     );
 
@@ -41,14 +41,14 @@ interface IMarketCollateralModule {
     event MarketCollateralWithdrawn(
         uint128 indexed marketId,
         address indexed collateralType,
-        uint amount,
+        uint tokenAmount,
         address indexed sender
     );
 
     event MaximumMarketCollateralConfigured(
         uint128 indexed marketId,
         address indexed collateralType,
-        uint amount,
+        uint systemAmount,
         address indexed sender
     );
 }

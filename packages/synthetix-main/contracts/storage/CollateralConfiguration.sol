@@ -5,12 +5,15 @@ import "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
 import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import "@synthetixio/core-contracts/contracts/errors/ParameterError.sol";
 
+import "@synthetixio/core-contracts/contracts/interfaces/IERC20.sol";
+
 import "../interfaces/external/IAggregatorV3Interface.sol";
 
 library CollateralConfiguration {
     using SetUtil for SetUtil.AddressSet;
     using DecimalMath for uint256;
 
+    error CollateralNotFound();
     error CollateralDepositDisabled(address collateralType);
     error InsufficientCollateralRatio(uint collateralValue, uint debt, uint ratio, uint minRatio);
     error InsufficientDelegation(uint minDelegation);
@@ -111,5 +114,16 @@ library CollateralConfiguration {
                 self.issuanceRatioD18
             );
         }
+    }
+
+    function convertTokenToSystemAmount(Data storage self, uint tokenAmount) internal view returns (uint) {
+        // this extra condition is to prevent potentially malicious untrusted code from being executed on the next statement
+        if (self.tokenAddress == address(0)) {
+            revert CollateralNotFound();
+        }
+
+        return 
+            (tokenAmount * DecimalMath.UNIT) / 
+            (10 ** IERC20(self.tokenAddress).decimals());
     }
 }
