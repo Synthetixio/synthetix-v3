@@ -53,8 +53,6 @@ jobs:
       image: ghcr.io/synthetixio/synthetix-v3/node-foundry
       env:
         NODE_ENV: development
-      # options: --user root -v ${{github.workspace}}:/src/:rw
-      options: --user root -v "${{github.workspace}}":"/src":"rw"
     steps:
       # - name: Install Foundry (Cannon)
       #   uses: foundry-rs/foundry-toolchain@v1
@@ -66,9 +64,7 @@ jobs:
       #   with:
       #     node-version: "16.16.0"
       #     cache: "npm"
-      # - run: chmod -R 777 $GITHUB_WORKSPACE /github /__w/_temp
-      - run: |
-          cd /src
-          npm ci
-          npm run build
-          npm --workspace=./packages/sample-project test
+      - run: chmod -R 777 $GITHUB_WORKSPACE /github /__w/_temp
+      - run: npm ci
+      - run: npm run build
+      - run: npm --workspace=./packages/sample-project test
