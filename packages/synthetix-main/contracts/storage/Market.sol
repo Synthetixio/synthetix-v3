@@ -13,7 +13,7 @@ import "../interfaces/external/IMarket.sol";
 /**
  * @title Connects external contracts that implement the `IMarket` interface to the system.
  *
- * Pools provide liquidity to the markets, and are reciprocally exposing to the associated market's debt.
+ * Pools provide credit capacity (collateral) to the markets, and are reciprocally exposed to the associated market's debt.
  *
  * The Market object's main responsibility is to track collateral provided by the pools that support it, and to trace their debt back to such pools.
  */
@@ -73,19 +73,20 @@ library Market {
          *
          * The Market's credit capacity also depends on how much credit is given to it by the pools that support it.
          *
-         * TODO: How does reported debt play with this definition?
+         * The Market's credit capacity also has a dependency on the external market reported debt as it will respond to that debt (and hence change the credit capacity if it increases or decreases)
+         *
          */
         uint128 creditCapacityD18;
         /**
          * @dev The total balance that the market had the last time that its debt was distributed.
          *
-         * A Market's debt is distributed when the reported debt of its associated external market is rolled into the pools that provide liquidity to it.
+         * A Market's debt is distributed when the reported debt of its associated external market is rolled into the pools that provide credit capacity to it.
          */
         int128 lastDistributedMarketBalanceD18;
         /**
          * @dev A heap of pools for which the market has not yet hit its maximum credit capacity.
          *
-         * The heap is ordered according to this market's max value per share setting in the pools that provide liquidity to it. See `MarketConfiguration.maxDebtShareValue`.
+         * The heap is ordered according to this market's max value per share setting in the pools that provide credit capacity to it. See `MarketConfiguration.maxDebtShareValue`.
          *
          * The heap's getMax() and extractMax() functions allow us to retrieve the pool with the lowest `maxDebtShareValue`, since its elements are inserted and prioritized by negating their `maxDebtShareValue`.
          *
@@ -114,7 +115,7 @@ library Market {
          * The debt distribution chain will move debt from the market into its connected pools.
          *
          * Actors: Pools.
-         * Shares: (TODO is it 1:1 or proportional?) The USD denominated credit capacity that the pool provides to the market.
+         * Shares: The USD denominated credit capacity that the pool provides to the market.
          * Value per share: Debt per dollar of credit that the associated external market accrues.
          *
          */
@@ -170,14 +171,14 @@ library Market {
     /**
      * @dev Queries the market for the amount of collateral which should be prevented from withdrawal.
      */
-    function getLockedLiquidity(Data storage self) internal view returns (uint) {
+    function getLockedCreditCapacity(Data storage self) internal view returns (uint) {
         return IMarket(self.marketAddress).locked(self.id);
     }
 
     /**
-     * @dev Returns the total balance of the market.
+     * @dev Returns the total debt of the market.
      *
-     * A market's total balance represents its debt plus its issuance, and thus represents the total outstanding debt of the market.
+     * A market's total debt represents its debt plus its issuance, and thus represents the total outstanding debt of the market.
      *
      * Note: it also takes into account the deposited collateral value. See note in  getDepositedCollateralValue()
      *
@@ -196,7 +197,7 @@ library Market {
     /**
      * @dev Returns the USD value for the total amount of collateral provided by the market itself.
      *
-     * Note: This is not liquidity provided by stakers through pools.
+     * Note: This is not credit capacity provided by stakers through pools.
      */
     function getDepositedCollateralValue(Data storage self) internal view returns (uint) {
         uint totalDepositedCollateralValueD18 = 0;
@@ -217,58 +218,53 @@ library Market {
     }
 
     /**
-     * @dev Returns the amount of liquidity that a certain pool provides to the market.
+     * @dev Returns the amount of credit capacity that a certain pool provides to the market.
 
-     * This liquidity is obtained by reading the amount of shares that the pool has in the market's debt distribution, which in turn represents the amount of USD denominated credit capacity that the pool has provided to the market.
+     * This credit capacity is obtained by reading the amount of shares that the pool has in the market's debt distribution, which represents the amount of USD denominated credit capacity that the pool has provided to the market.
      */
-    function getPoolLiquidity(Data storage self, uint128 poolId) internal view returns (uint) {
+    function getPoolCreditCapacity(Data storage self, uint128 poolId) internal view returns (uint) {
         return self.poolsDebtDistribution.getActorShares(bytes32(uint(poolId)));
     }
 
     /**
-     * @dev Given an amount of shares that represent USD liquidity from a pool, and a maximum value per share, returns the potential contribution to debt that these shares could accrue, if their value per share was to hit the maximum.
+     * @dev Given an amount of shares that represent USD credit capacity from a pool, and a maximum value per share, returns the potential contribution to credit capacity that these shares could accrue, if their value per share was to hit the maximum.
      *
-     * The amount of liquidity provided by the pool * delta of maxValue per share.
+     * The resulting value is calculated multiplying the amount of creditCapacity provided by the pool by the delta between the maxValue per share vs current value.
      *
-     * TODO: Try to illustrate with an example why this could be useful...
-     * 100 collateral, 50% coming to this market
-     * In docs maxDebtPerDollarOfCollateral - here maxDebtPerShare
-     * Goes from debt shares to credit capacity and applying the maxDebtPerDollarOfCollateral to that value.
-     *
-     * TODO: Explain how this is used.
+     * This function is used when the Pools are rebalanced to adjust each pool credit capacity based on a change in the amount of shares provided and/or a new maxValue per share
      *
      */
     function getCreditCapacityContribution(
         Data storage self,
-        uint liquiditySharesD18,
-        int maxDebtShareValueD18
+        uint creditCapacitySharesD18,
+        int maxShareValueD18
     ) internal view returns (uint contributionD18) {
         // Determine how much the current value per share deviates from the maximum.
-        uint deltaValuePerShareD18 = (maxDebtShareValueD18 - self.poolsDebtDistribution.getValuePerShare()).toUint();
+        uint deltaValuePerShareD18 = (maxShareValueD18 - self.poolsDebtDistribution.getValuePerShare()).toUint();
 
-        return deltaValuePerShareD18.mulDecimal(liquiditySharesD18);
+        return deltaValuePerShareD18.mulDecimal(creditCapacitySharesD18);
     }
 
     /**
-     * @dev Returns true if the market's current capacity is below the amount of locked liquidity.
+     * @dev Returns true if the market's current capacity is below the amount of locked capacity.
      *
      */
     function isCapacityLocked(Data storage self) internal view returns (bool) {
-        return self.creditCapacityD18 < getLockedLiquidity(self);
+        return self.creditCapacityD18 < getLockedCreditCapacity(self);
     }
 
     /**
      * @dev Gets any outstanding debt. Do not call this method except in tests
      *
-     * TODO: Understand distributeDebt() first.
-     * TODO: Enforce how this is only to be used in tests!
+     * Note: This function should only be used in tests!
      */
-    function getOutstandingDebt(Data storage self, uint128 poolId) internal returns (int debtChangeD18) {
+    // solhint-disable-next-line private-vars-leading-underscore, func-name-mixedcase
+    function _testOnly_getOutstandingDebt(Data storage self, uint128 poolId) internal returns (int debtChangeD18) {
         return self.pools[poolId].pendingDebtD18.toInt() + self.poolsDebtDistribution.accumulateActor(bytes32(uint(poolId)));
     }
 
     /**
-     * @dev TODO
+     * @dev Returns the debt value per share
      */
     function getDebtPerShare(Data storage self) internal view returns (int debtPerShareD18) {
         return self.poolsDebtDistribution.getValuePerShare();
@@ -312,14 +308,14 @@ library Market {
         uint newCreditCapacityD18,
         int newPoolMaxShareValueD18
     ) internal returns (int debtChangeD18) {
-        uint oldLiquidityD18 = getPoolLiquidity(self, poolId);
+        uint oldCreditCapacityD18 = getPoolCreditCapacity(self, poolId);
         int oldPoolMaxShareValueD18 = -self.inRangePools.getById(poolId).priority;
 
         // Sanity checks
         // require(oldPoolMaxShareValue == 0, "value is not 0");
         // require(newPoolMaxShareValue == 0, "new pool max share value is in fact set");
 
-        self.pools[poolId].liquidityAmountD18 = newCreditCapacityD18.to128();
+        self.pools[poolId].creditCapacityAmountD18 = newCreditCapacityD18.to128();
 
         int128 valuePerShareD18 = self.poolsDebtDistribution.getValuePerShare().to128();
 
@@ -344,7 +340,8 @@ library Market {
         }
 
         if (oldPoolMaxShareValueD18 > valuePerShareD18) {
-            self.creditCapacityD18 -= getCreditCapacityContribution(self, oldLiquidityD18, oldPoolMaxShareValueD18).to128();
+            self.creditCapacityD18 -= getCreditCapacityContribution(self, oldCreditCapacityD18, oldPoolMaxShareValueD18)
+                .to128();
         }
     }
 
@@ -460,7 +457,7 @@ library Market {
 
                 self.poolsDebtDistribution.setActorShares(
                     bytes32(uint(edgePool.id)),
-                    self.pools[edgePool.id].liquidityAmountD18
+                    self.pools[edgePool.id].creditCapacityAmountD18
                 );
             }
         }
