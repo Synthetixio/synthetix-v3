@@ -11,8 +11,6 @@ import "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
 
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 
-import "hardhat/console.sol";
-
 /**
  * @title Aggregates collateral from multiple users in order to provide liquidity to a configurable set of markets.
  *
@@ -177,8 +175,6 @@ library Pool {
                 ? effectiveMaxShareValueD18
                 : configuredMaxShareValueD18;
 
-            console.log("EFFECTIVE msv", uint(effectiveMaxShareValueD18));
-
             // Update each market's corresponding credit capacity.
             // The returned value represents how much the market's debt changed after changing the shares of this pool actor, which is aggregated to later be passed on the pools debt distribution.
             cumulativeDebtChangeD18 += Market.rebalancePools(
@@ -222,18 +218,6 @@ library Pool {
             return valuePerShare;
         } else {
             uint marginD18 = creditCapacityD18.divDecimal(minLiquidityRatioD18).divDecimal(totalSharesD18);
-
-            console.log("vps", uint(marketData.poolsDebtDistribution.getValuePerShare()));
-            console.log("margin", marginD18);
-            console.log("debt", uint(debtD18));
-            console.log(
-                "final",
-                uint(
-                    marketData.poolsDebtDistribution.getValuePerShare() +
-                        marginD18.toInt() -
-                        debtD18.divDecimal(totalSharesD18.toInt())
-                )
-            );
 
             return
                 marketData.poolsDebtDistribution.getValuePerShare() +
@@ -288,11 +272,6 @@ library Pool {
 
         // Changes in price update the corresponding vault's total collateral value as well as its liquidity (collateral - debt).
         (uint usdWeightD18, , int deltaDebtD18) = self.vaults[collateralType].updateCreditCapacity(collateralPriceD18);
-        if (deltaDebtD18 >= 0) {
-            console.log("DELTA DEB", uint(deltaDebtD18));
-        } else {
-            console.log("DELTA DEB -", uint(-deltaDebtD18));
-        }
 
         // Update the vault's shares in the pool's debt distribution, according to the value of its collateral.
         self.vaultsDebtDistribution.setActorShares(actorId, usdWeightD18);
