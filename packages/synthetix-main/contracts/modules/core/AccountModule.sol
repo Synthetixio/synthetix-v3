@@ -63,7 +63,7 @@ contract AccountModule is IAccountModule {
     }
 
     /**
-     * @dev Updates storage with the new owner when the account token is transferred
+     * @dev Called by AccountTokenModule to update storage with the new owner when the account token is transferred
      */
     function notifyAccountTransfer(address to, uint128 accountId) external override {
         _onlyAccountToken();
