@@ -22,7 +22,7 @@ describe('CollateralModule', function () {
       await (await systems().Core.connect(user2).createAccount(2)).wait();
     });
 
-    describe('when a collateral is addded', function () {
+    describe('when a collateral is added', function () {
       before('add collateral type', async () => {
         ({ Collateral, CollateralPriceFeed } = await addCollateral(
           'Synthetix Token',
