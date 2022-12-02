@@ -15,7 +15,7 @@ import "../../storage/Pool.sol";
 /**
  * @title System module for the creation and management of pools.
  *
- * The pool owner can be specified during creation, can be transferred, and provides credentials for configuring the pool.
+ * The pool owner can be specified during creation, can be transferred, and has credentials for configuring the pool.
  */
 contract PoolModule is IPoolModule {
     error CapacityLocked(uint marketId);
@@ -86,10 +86,7 @@ contract PoolModule is IPoolModule {
     }
 
     /**
-     * @dev Allows the current owner to renounce ownership.
-     *
-     * Warning: This effectively leaves the pool owner-less.
-     * TODO: Are we sure we want this?
+     * @dev Allows the current nominated owner to renounce the nomination.
      */
     function renouncePoolNomination(uint128 poolId) external override {
         Pool.Data storage pool = Pool.load(poolId);
@@ -122,6 +119,8 @@ contract PoolModule is IPoolModule {
      *
      * The pool's configuration is composed of an array of MarketConfiguration objects,
      * which describe which markets the pool provides liquidity to, in what proportion, and to what extent.
+     *
+     * Note: Incoming market ids need to be provided in ascending order.
      */
     function setPoolConfiguration(uint128 poolId, MarketConfiguration.Data[] memory newMarketConfigurations)
         external
@@ -143,11 +142,11 @@ contract PoolModule is IPoolModule {
             newMarketConfigurations
         );
 
-        // Replace existing market configurations with new ones.
+        // Replace existing market configurations with the new ones.
         // (May leave old configurations at the end of the array if the new array is shorter).
         uint i = 0;
         uint totalWeight = 0;
-        // Iterate up to the shorter array's length.
+        // Iterate up to the shorter length.
         uint len = newMarketConfigurations.length < pool.marketConfigurations.length
             ? newMarketConfigurations.length
             : pool.marketConfigurations.length;
@@ -156,13 +155,13 @@ contract PoolModule is IPoolModule {
             totalWeight += newMarketConfigurations[i].weightD18;
         }
 
-        // If the new array was shorter, push the new elements in.
+        // If the old array was shorter, push the new elements in.
         for (; i < newMarketConfigurations.length; i++) {
             pool.marketConfigurations.push(newMarketConfigurations[i]);
             totalWeight += newMarketConfigurations[i].weightD18;
         }
 
-        // If the new array was longer, truncate the one in storage.
+        // If the old array was longer, truncate it.
         uint popped = pool.marketConfigurations.length - i;
         for (i = 0; i < popped; i++) {
             pool.marketConfigurations.pop();
@@ -178,8 +177,9 @@ contract PoolModule is IPoolModule {
         // Distribute debt again because the unused credit capacity has been updated, and this information needs to be propagated immediately.
         pool.distributeDebtToVaults();
 
-        // Prevent the removal of markets whose capacity is locked.
-        // TODO: Why?
+        // The credit delegation proportion of the pool can only stay the same, or increase,
+        // so prevent the removal of markets whose capacity is locked.
+        // Note: This check is done here because it needs to happen after removed markets are rebalanced.
         for (i = 0; i < potentiallyLockedMarkets.length && potentiallyLockedMarkets[i] != 0; i++) {
             if (Market.load(potentiallyLockedMarkets[i]).isCapacityLocked()) {
                 revert CapacityLocked(potentiallyLockedMarkets[i]);
@@ -263,9 +263,10 @@ contract PoolModule is IPoolModule {
             totalWeightD18 += newMarketConfigurations[i].weightD18;
         }
 
-        // Now, iterate through the incoming market configurations and compare with them with the existing configurations.
+        // Now, iterate through the incoming market configurations, and compare with them with the existing ones.
         for (uint newIdx = 0; newIdx < newMarketConfigurations.length; newIdx++) {
-            // Reject duplicate market ids, AND ensure they are provided in ascending order.
+            // Reject duplicate market ids,
+            // AND ensure that they are provided in ascending order.
             if (newMarketConfigurations[newIdx].marketId <= lastMarketId) {
                 revert ParameterError.InvalidParameter("markets", "must be supplied in strictly ascending order");
             }
@@ -298,7 +299,7 @@ contract PoolModule is IPoolModule {
                 pool.marketConfigurations[oldIdx].marketId == newMarketConfigurations[newIdx].marketId
             ) {
                 // Get weight ratios for comparison below.
-                // Upscale them to make sure we have compatible precision in case of very small values.
+                // Upscale them to make sure that we have compatible precision in case of very small values.
                 uint newWeightRatioD27 = uint(newMarketConfigurations[newIdx].weightD18)
                     .upscale(DecimalMath.PRECISION_FACTOR)
                     .divDecimal(totalWeightD18);
@@ -306,8 +307,8 @@ contract PoolModule is IPoolModule {
                     .upscale(DecimalMath.PRECISION_FACTOR)
                     .divDecimal(pool.totalWeightsD18);
 
-                // If the market's new maximum share value decreased, or its weight decreased compared to the total weights,
-                // mark it for post verification.
+                // If the market's new maximum share value or weight ratio decreased,
+                // mark it for later verification.
                 if (
                     newMarketConfigurations[newIdx].maxDebtShareValueD18 <
                     pool.marketConfigurations[oldIdx].maxDebtShareValueD18 ||
@@ -319,13 +320,12 @@ contract PoolModule is IPoolModule {
                 oldIdx++;
             }
 
-            // Note: processing or checks for new markets is not necessary.
+            // Note: processing or checks for added markets is not necessary.
         } // for end
 
-        // If any of the old markets was not processed, it means at this point
-        // that it is not present in the new array, so mark it for removal.
+        // If any of the old markets was not processed up to this point,
+        // it means that it is not present in the new array, so mark it for removal.
         while (oldIdx < pool.marketConfigurations.length) {
-            // market has been removed
             removedMarkets[removedMarketsIdx++] = pool.marketConfigurations[oldIdx].marketId;
             oldIdx++;
         }
