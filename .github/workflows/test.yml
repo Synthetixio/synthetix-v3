@@ -66,11 +66,7 @@ jobs:
       #   with:
       #     node-version: "16.16.0"
       #     cache: "npm"
-      - run: pwd
-      - run: ls -lah
-      - run: whoami
-      - run: id
-      - run: mkdir /src/packages/core-utils/utils && chmod -R 777 /src
+      - run: chmod -R 777 /src "$HOME"
       - run: |
           cd /src
           npm ci
