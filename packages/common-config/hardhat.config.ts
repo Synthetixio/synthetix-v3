@@ -88,6 +88,9 @@ const config = {
       process.env.INFURA_IPFS_ID + ':' + process.env.INFURA_IPFS_SECRET
     ).toString('base64')}`,
   },
+  warnings: {
+    '*': 'error',
+  },
 };
 
 export default config;
