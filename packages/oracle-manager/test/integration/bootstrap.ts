@@ -1,14 +1,13 @@
+import { coreBootstrap } from '@synthetixio/core-router/util/core-bootstrap';
+import { BigNumber, ethers } from 'ethers';
 import hre from 'hardhat';
-import { bootstrap } from '@synthetixio/core-router/util/bootstrap';
-import { ethers, BigNumber } from 'ethers';
-
 import { snapshotCheckpoint } from '../utils';
 import NodeTypes from './mixins/Node.types';
 
 const abi = ethers.utils.defaultAbiCoder;
 
 export function bootstrapWithNodes() {
-  const r = bootstrap();
+  const r = coreBootstrap();
 
   let aggregator: ethers.Contract;
   let aggregator2: ethers.Contract;

@@ -1,10 +1,10 @@
 /* eslint-env mocha */
 
+import { CannonWrapperGenericProvider, ChainBuilderContext } from '@usecannon/builder';
 import { ethers } from 'ethers';
 import hre from 'hardhat';
-import { CannonWrapperGenericProvider, ChainBuilderContext } from '@usecannon/builder';
 
-export function bootstrap() {
+export function coreBootstrap() {
   let baseSystemSnapshot: string;
 
   let outputs: ChainBuilderContext;

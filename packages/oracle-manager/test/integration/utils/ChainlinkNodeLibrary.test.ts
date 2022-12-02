@@ -1,20 +1,19 @@
-import hre from 'hardhat';
-import { ethers, utils, BigNumber } from 'ethers';
+import { coreBootstrap } from '@synthetixio/core-router/util/core-bootstrap';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
-
-import { bootstrap } from '@synthetixio/core-router/util/bootstrap';
+import { BigNumber, ethers, utils } from 'ethers';
+import hre from 'hardhat';
 
 describe('ChainlinkNodeLibrary', () => {
+  const { getSigners } = coreBootstrap();
+
   let aggregator: ethers.Contract;
   let node: ethers.Contract;
 
   const abi = utils.defaultAbiCoder;
 
-  bootstrap();
-
   let owner: ethers.Signer;
   before('identify owner', async () => {
-    [owner] = await hre.ethers.getSigners();
+    [owner] = await getSigners();
   });
 
   before('identify chainlink node', async () => {
