@@ -35,7 +35,7 @@ library VaultEpoch {
          */
         int128 unconsolidatedDebtD18;
         /**
-         * @dev TODO
+         * @dev Amount of debt in this Vault that has been consolidated.
          */
         int128 totalConsolidatedDebtD18;
         /**
@@ -65,16 +65,6 @@ library VaultEpoch {
          * and directly when users mint or burn USD, or repay debt.
          */
         mapping(uint => int) consolidatedDebtAmountsD18;
-    }
-
-    /**
-     * @dev Converts an account id to an actor id used in Distribution objects.
-     *
-     * TODO: Consider moving this into a Distribution helper, and use everywhere.
-     * Seeing multiple uses of bytes32(uint(uint | address)), in the code.
-     */
-    function accountToActor(uint128 accountId) internal pure returns (bytes32) {
-        return bytes32(uint(accountId));
     }
 
     /**
@@ -113,7 +103,7 @@ library VaultEpoch {
      * real debt of a user needs to be known.
      */
     function consolidateAccountDebt(Data storage self, uint128 accountId) internal returns (int currentDebtD18) {
-        bytes32 actorId = accountToActor(accountId);
+        bytes32 actorId = bytes32(uint(accountId));
 
         int newDebtD18 = self.accountsDebtDistribution.accumulateActor(actorId);
 
@@ -133,7 +123,7 @@ library VaultEpoch {
         uint collateralAmountD18,
         uint leverageD18
     ) internal {
-        bytes32 actorId = accountToActor(accountId);
+        bytes32 actorId = bytes32(uint(accountId));
 
         // Ensure account debt is consolidated before we do next things.
         consolidateAccountDebt(self, accountId);
@@ -157,6 +147,6 @@ library VaultEpoch {
      * @dev Returns an account's value in the Vault's collateral distribution.
      */
     function getAccountCollateral(Data storage self, uint128 accountId) internal view returns (uint amountD18) {
-        return self.collateralAmounts.get(accountToActor(accountId));
+        return self.collateralAmounts.get(bytes32(uint(accountId)));
     }
 }
