@@ -7,8 +7,6 @@ import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import "./DistributionActor.sol";
 import "../errors/ParameterError.sol";
 
-import "hardhat/console.sol";
-
 /**
  * @title Data structure that allows you to track some global value, distributed amongst a set of actors.
  *

@@ -12,7 +12,7 @@ const distUtils = {
 const bn = (n: number) => wei(n).toBN();
 const hp = wei(1, 27).toBN();
 
-describe.only('ScalableMapping', () => {
+describe('ScalableMapping', () => {
   const { systems, signers, provider } = bootstrap();
   const restore = snapshotCheckpoint(provider);
 
