@@ -54,7 +54,7 @@ jobs:
       env:
         NODE_ENV: development
       # options: --user root -v ${{github.workspace}}:/src/:rw
-      options: --user root -v "${{github.workspace}}":"/src":"rw" --workdir /src
+      options: --user root -v "${{github.workspace}}":"/src":"rw"
     steps:
       # - name: Install Foundry (Cannon)
       #   uses: foundry-rs/foundry-toolchain@v1
@@ -66,11 +66,12 @@ jobs:
       #   with:
       #     node-version: "16.16.0"
       #     cache: "npm"
-      - run: cd /src
       - run: pwd
       - run: ls -lah
       - run: whoami
       - run: id
-      - run: npm ci
-      - run: npm run build
-      - run: npm --workspace=./packages/sample-project test
+      - run: |
+          cd /src
+          npm ci
+          npm run build
+          npm --workspace=./packages/sample-project test
