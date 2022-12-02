@@ -14,7 +14,9 @@ import "../../storage/Market.sol";
 import "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
 
 /**
- * @title System module that allows a market to assign debt to specific positions
+ * @title System module that allows a market to associate debt to a user's position.
+ *
+ * E.g. when migrating a position from v2 into v3's legacy market, the market first scales up everyone's debt, and then associates it to a position using this module.
  */
 contract AssociateDebtModule is IAssociateDebtModule {
     using DecimalMath for uint;
