@@ -52,10 +52,14 @@ export async function compileSolidityContents(
     throw new Error('There was an error during compilation');
   }
 
-  return output as CompilerOutput;
+  const sourceUnits = Object.values((output as CompilerOutput).sources).map(({ ast }) => ast);
+
+  return sourceUnits.sort((a, b) =>
+    a.absolutePath > b.absolutePath ? 1 : a.absolutePath < b.absolutePath ? -1 : 0
+  );
 }
 
-export async function compileSolidity({
+export async function compileSolidityFolder({
   rootDir = process.cwd(),
   sources = '**/*.sol',
   version = CurrentSolcVersion,
