@@ -28,7 +28,7 @@ interface IMarketManagerModule {
     function getWithdrawableUsd(uint128 marketId) external view returns (uint);
 
     /// @notice gets net snxUSD withdrawn - deposited by the market
-    function getMarketIssuance(uint128 marketId) external view returns (int128);
+    function getMarketNetIssuance(uint128 marketId) external view returns (int128);
 
     /// @notice gets the total balance of the market
     function getMarketReportedDebt(uint128 marketId) external view returns (uint);

@@ -6,6 +6,8 @@ import { snapshotCheckpoint } from '../utils';
 import { runTypeChain, glob } from 'typechain';
 import { AccountProxy, CoreProxy, SNXProxy, USDProxy } from '../generated/typechain';
 
+import { MockMarket } from '../../typechain-types/contracts/mocks/MockMarket';
+
 const POOL_FEATURE_FLAG = ethers.utils.formatBytes32String('createPool');
 const MARKET_FEATURE_FLAG = ethers.utils.formatBytes32String('registerMarket');
 
@@ -211,7 +213,7 @@ export function bootstrapWithStakedPool() {
 export function bootstrapWithMockMarketAndPool() {
   const r = bootstrapWithStakedPool();
 
-  let MockMarket: ethers.Contract;
+  let MockMarket: MockMarket;
   let marketId: ethers.BigNumber;
 
   before('deploy and connect fake market', async () => {
@@ -242,7 +244,7 @@ export function bootstrapWithMockMarketAndPool() {
       .Core.connect(owner)
       .setPoolConfiguration(r.poolId, [
         {
-          market: marketId,
+          marketId: marketId,
           weightD18: ethers.utils.parseEther('1'),
           maxDebtShareValueD18: ethers.utils.parseEther('1'),
         },

@@ -6,6 +6,8 @@ import "./RewardDistribution.sol";
 
 import "./CollateralConfiguration.sol";
 
+import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+
 /**
  * @title Tracks collateral and debt distributions in a pool, for a specific collateral type.
  *
@@ -23,6 +25,11 @@ library Vault {
     using ScalableMapping for ScalableMapping.Data;
     using DecimalMath for uint256;
     using DecimalMath for int128;
+    using DecimalMath for int256;
+    using SafeCastU128 for uint128;
+    using SafeCastU256 for uint256;
+    using SafeCastI128 for int128;
+    using SafeCastI256 for int256;
     using SetUtil for SetUtil.Bytes32Set;
 
     struct Data {
@@ -38,9 +45,9 @@ library Vault {
         // solhint-disable-next-line private-vars-leading-underscore
         uint128 __unused;
         /**
-         * @dev The previous liquidity of the vault (collateral - debt), when the system was last interacted with.
+         * @dev The previous debt of the vault, when `updateCreditCapacity` was last called by the Pool.
          */
-        uint128 prevRemainingLiquidityD18;
+        int128 prevTotalDebtD18;
         /**
          * @dev Vault data for all the liquidation cycles divided into epochs.
          */
@@ -63,36 +70,30 @@ library Vault {
     }
 
     /**
-     * @dev Updates the vault's liquidity as the value of its collateral minus its debt.
+     * @dev Updates the vault's credit capacity as the value of its collateral minus its debt.
      *
      * Called as a ticker when users interact with pools, allowing pools to set
-     * vaults' liquidity shares within the them.
+     * vaults' credit capacity shares within the them.
      *
      * Returns the amount of collateral that this vault is providing in net USD terms.
-     *
-     * TODO: Consider renaming to updateCreditCapacity?
      */
-    function updateLiquidity(Data storage self, uint collateralPriceD18)
+    function updateCreditCapacity(Data storage self, uint collateralPriceD18)
         internal
         returns (
             uint usdWeightD18,
-            uint remainingLiquidityD18,
-            int deltaRemainingLiquidityD18
+            int totalDebtD18,
+            int deltaDebtD18
         )
     {
         VaultEpoch.Data storage epochData = currentEpoch(self);
 
         usdWeightD18 = uint(epochData.accountsDebtDistribution.totalSharesD18).mulDecimal(collateralPriceD18);
 
-        int vaultDepositedValueD18 = int(uint(epochData.collateralAmounts.totalAmount()).mulDecimal(collateralPriceD18));
-        int vaultAccruedDebtD18 = epochData.totalDebt();
-        remainingLiquidityD18 = vaultDepositedValueD18 > vaultAccruedDebtD18
-            ? uint(vaultDepositedValueD18 - vaultAccruedDebtD18)
-            : 0;
+        totalDebtD18 = epochData.totalDebt();
 
-        deltaRemainingLiquidityD18 = int(remainingLiquidityD18) - int(int128(self.prevRemainingLiquidityD18));
+        deltaDebtD18 = totalDebtD18 - self.prevTotalDebtD18;
 
-        self.prevRemainingLiquidityD18 = uint128(remainingLiquidityD18);
+        self.prevTotalDebtD18 = totalDebtD18.to128();
     }
 
     /**
@@ -148,11 +149,11 @@ library Vault {
             revert("No distributor");
         }
 
-        dist.rewardPerShareD18 += uint128(dist.entry.updateEntry(totalSharesD18));
+        dist.rewardPerShareD18 += dist.entry.updateEntry(totalSharesD18).toUint().to128();
 
-        dist.actorInfo[accountId].pendingSendD18 += uint128(
-            actorSharesD18.mulDecimal(dist.rewardPerShareD18 - dist.actorInfo[accountId].lastRewardPerShareD18)
-        );
+        dist.actorInfo[accountId].pendingSendD18 += actorSharesD18
+            .mulDecimal(dist.rewardPerShareD18 - dist.actorInfo[accountId].lastRewardPerShareD18)
+            .to128();
 
         dist.actorInfo[accountId].lastRewardPerShareD18 = dist.rewardPerShareD18;
 
@@ -179,7 +180,7 @@ library Vault {
      * @dev Returns the total value in the Vault's collateral distribution, for the current epoch.
      */
     function currentCollateral(Data storage self) internal view returns (uint) {
-        return uint(currentEpoch(self).collateralAmounts.totalAmount());
+        return currentEpoch(self).collateralAmounts.totalAmount();
     }
 
     /**

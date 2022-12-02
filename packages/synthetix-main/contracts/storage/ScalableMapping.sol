@@ -5,7 +5,6 @@ import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 
 import "./DistributionActor.sol";
-import "../errors/ParameterError.sol";
 
 /**
  * @title Data structure that wraps a mapping with a scalar multiplier.
@@ -63,12 +62,10 @@ library ScalableMapping {
 
         uint totalSharesD18 = self.totalSharesD18;
 
-        // TODO: Can we safely assume that amount will always be a regular integer,
-        // i.e. not a decimal?
         int valueD45 = valueD18 * DecimalMath.UNIT_PRECISE_INT;
-        int deltascaleModifierD27 = valueD45 / int(totalSharesD18);
+        int deltaScaleModifierD27 = valueD45 / totalSharesD18.toInt();
 
-        self.scaleModifierD27 += deltascaleModifierD27.to128();
+        self.scaleModifierD27 += deltaScaleModifierD27.to128();
 
         if (self.scaleModifierD27 < -DecimalMath.UNIT_PRECISE_INT) {
             revert InsufficientMappedAmount(-self.scaleModifierD27);
@@ -109,7 +106,7 @@ library ScalableMapping {
             return 0;
         }
 
-        return (self.sharesD18[actorId] * totalAmount(self).toUint()) / totalSharesD18;
+        return (self.sharesD18[actorId] * totalAmount(self)) / totalSharesD18;
     }
 
     /**
@@ -117,15 +114,15 @@ library ScalableMapping {
      *
      * i.e. totalShares * scaleModifier
      */
-    function totalAmount(Data storage self) internal view returns (int valueD18) {
+    function totalAmount(Data storage self) internal view returns (uint valueD18) {
         return
-            int((self.scaleModifierD27 + DecimalMath.UNIT_PRECISE_INT) * self.totalSharesD18.toInt()) /
-            DecimalMath.UNIT_PRECISE_INT;
+            ((self.scaleModifierD27 + DecimalMath.UNIT_PRECISE_INT).toUint() * self.totalSharesD18) /
+            DecimalMath.UNIT_PRECISE;
     }
 
     function _getSharesForAmount(Data storage self, uint amountD18) private view returns (uint sharesD18) {
         sharesD18 =
             (amountD18 * DecimalMath.UNIT_PRECISE) /
-            uint(int(self.scaleModifierD27 + DecimalMath.UNIT_PRECISE_INT128));
+            (self.scaleModifierD27 + DecimalMath.UNIT_PRECISE_INT128).toUint();
     }
 }

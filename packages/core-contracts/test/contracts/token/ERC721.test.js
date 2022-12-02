@@ -551,7 +551,7 @@ describe('ERC721', () => {
     it('reverts', async () => {
       const factory = await ethers.getContractFactory('ERC721Mock');
       let ERC721 = await factory.deploy();
-      await assertRevert(ERC721.initialize('', '', ''), 'InvalidParameters()');
+      await assertRevert(ERC721.initialize('', '', ''), 'InvalidParameter');
     });
   });
 });

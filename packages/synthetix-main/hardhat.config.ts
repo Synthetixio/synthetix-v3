@@ -32,6 +32,11 @@ const config = {
     ],
     templates: './docs/theme',
   },
+  warnings: {
+    'contracts/modules/test/**/*': {
+      default: 'off',
+    },
+  },
 };
 
 export default config;
