@@ -33,6 +33,9 @@ contract AccountModule is IAccountModule {
         return AssociatedSystem.load(_ACCOUNT_SYSTEM).proxy;
     }
 
+    /**
+     * @dev Returns the users and their corresponding permissions on the specified account
+     */
     function getAccountPermissions(uint128 accountId) external view returns (AccountPermissions[] memory permissions) {
         AccountRBAC.Data storage accountRbac = Account.load(accountId).rbac;
 
@@ -47,6 +50,9 @@ contract AccountModule is IAccountModule {
         }
     }
 
+    /**
+     * @dev Creates an account with the requestedAccountId, minting an account token to the sender
+     */
     function createAccount(uint128 requestedAccountId) external override {
         IAccountTokenModule accountTokenModule = IAccountTokenModule(getAccountTokenAddress());
         accountTokenModule.mint(msg.sender, requestedAccountId);
@@ -56,6 +62,9 @@ contract AccountModule is IAccountModule {
         emit AccountCreated(msg.sender, requestedAccountId);
     }
 
+    /**
+     * @dev Updates storage with the new owner when the account token is transferred
+     */
     function notifyAccountTransfer(address to, uint128 accountId) external override {
         _onlyAccountToken();
 
@@ -65,6 +74,9 @@ contract AccountModule is IAccountModule {
         account.rbac.setOwner(to);
     }
 
+    /**
+     * @dev Returns whether an account grants the specified user a particular permission
+     */
     function hasPermission(
         uint128 accountId,
         bytes32 permission,
@@ -73,6 +85,9 @@ contract AccountModule is IAccountModule {
         return Account.load(accountId).rbac.hasPermission(permission, user);
     }
 
+    /**
+     * @dev Returns whether a user is granted a specified permission, is an admin, or is the owner
+     */
     function isAuthorized(
         uint128 accountId,
         bytes32 permission,
@@ -81,6 +96,9 @@ contract AccountModule is IAccountModule {
         return Account.load(accountId).rbac.authorized(permission, user);
     }
 
+    /**
+     * @dev Allows an account admin to grant a specified permission to a user
+     */
     function grantPermission(
         uint128 accountId,
         bytes32 permission,
@@ -95,6 +113,9 @@ contract AccountModule is IAccountModule {
         emit PermissionGranted(accountId, permission, user, msg.sender);
     }
 
+    /**
+     * @dev Allows an account admin to revoke a specified permission to a user
+     */
     function revokePermission(
         uint128 accountId,
         bytes32 permission,
@@ -107,6 +128,9 @@ contract AccountModule is IAccountModule {
         emit PermissionRevoked(accountId, permission, user, msg.sender);
     }
 
+    /**
+     * @dev Allows a user to renounce a permission on a specified account
+     */
     function renouncePermission(uint128 accountId, bytes32 permission) external override {
         if (!Account.load(accountId).rbac.hasPermission(permission, msg.sender)) {
             revert PermissionNotGranted(accountId, permission, msg.sender);
@@ -117,6 +141,9 @@ contract AccountModule is IAccountModule {
         emit PermissionRevoked(accountId, permission, msg.sender, msg.sender);
     }
 
+    /**
+     * @dev Returns the owner of an account
+     */
     function getAccountOwner(uint128 accountId) public view returns (address) {
         return Account.load(accountId).rbac.owner;
     }

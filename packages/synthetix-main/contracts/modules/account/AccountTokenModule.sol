@@ -17,7 +17,7 @@ contract AccountTokenModule is IAccountTokenModule, NftModule {
     using SafeCastI256 for int256;
 
     /**
-     * @dev Allow anyone to mint an accout token with the specified ID
+     * @dev Allows the system's Account Module to mint an accout token with the specified ID
      */
     function mint(address owner, uint256 nftId) external {
         OwnableStorage.onlyOwner();
