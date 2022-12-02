@@ -49,7 +49,9 @@ jobs:
 
   test-sample:
     runs-on: ubuntu-latest
-    container: ghcr.io/synthetixio/synthetix-v3/node-foundry
+    container:
+      image: ghcr.io/synthetixio/synthetix-v3/node-foundry
+      options: --user root -v ${{github.workspace}}:/src/:rw
     steps:
       # - name: Install Foundry (Cannon)
       #   uses: foundry-rs/foundry-toolchain@v1
@@ -64,6 +66,7 @@ jobs:
       - run: ls -lah
       - run: whoami
       - run: id
+      - run: cd /src
       - run: npm ci
       - run: npm run build
       - run: npm --workspace=./packages/sample-project test
