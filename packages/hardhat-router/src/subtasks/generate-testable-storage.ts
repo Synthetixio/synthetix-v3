@@ -1,6 +1,7 @@
 import fs from 'node:fs/promises';
-import { dirname } from 'node:path';
+import path from 'node:path';
 import { subtask } from 'hardhat/config';
+import { parseFullyQualifiedName } from 'hardhat/utils/contract-names';
 import logger from '@synthetixio/core-utils/utils/io/logger';
 import { SUBTASK_GENERATE_TESTABLE_STORAGE } from '../task-names';
 import { getContractAst } from '../internal/contract-helper';
@@ -17,8 +18,18 @@ subtask(
 
     logger.subtitle(`Generating testable storage for ${artifact}`);
 
-    await fs.mkdir(dirname(output), { recursive: true });
-    const sourceCode = renderTestableStorage({ artifact, sourceAstNode });
+    const { sourceName } = parseFullyQualifiedName(artifact);
+    const relativeSourceName = path.join(
+      path.relative(path.dirname(output), path.dirname(sourceName)),
+      path.basename(sourceName)
+    );
+
+    const sourceCode = renderTestableStorage({
+      relativeSourceName,
+      artifact,
+      sourceAstNode,
+    });
+
     await fs.writeFile(output, sourceCode);
 
     logger.success(`Generated and written to ${output}`);

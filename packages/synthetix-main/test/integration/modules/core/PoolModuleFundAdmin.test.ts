@@ -5,7 +5,7 @@ import hre from 'hardhat';
 import { ethers } from 'ethers';
 
 import { bootstrapWithMockMarketAndPool } from '../../bootstrap';
-import { snapshotCheckpoint } from '../../../utils';
+import { snapshotCheckpoint } from '../../../utils/snapshot';
 
 describe('PoolModule Admin', function () {
   const {

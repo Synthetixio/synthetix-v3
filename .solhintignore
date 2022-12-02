@@ -1,5 +1,6 @@
-node_modules/
+*.dump.sol
 artifacts/
-packages/*/typechain-types
-packages/*/contracts/routers
+node_modules/
 packages/*/contracts/modules/test
+packages/*/contracts/routers
+packages/*/typechain-types

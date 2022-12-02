@@ -1,20 +1,54 @@
 import { ContractDefinition, SourceUnit, StructDefinition } from 'solidity-ast';
-import { Node } from 'solidity-ast/node';
-import { findAll } from 'solidity-ast/utils';
+import {
+  Node,
+  YulNode,
+  NodeType,
+  YulNodeType,
+  NodeTypeMap,
+  YulNodeTypeMap,
+} from 'solidity-ast/node';
+import { findAll as _findAll } from 'solidity-ast/utils';
 import { parseFullyQualifiedName } from 'hardhat/utils/contract-names';
 
 /**
  * Get all the contract definitions on the given node
  */
+export function findAll<T extends NodeType | YulNodeType>(
+  astNode: Node | YulNode,
+  nodeType: T | T[],
+  filterFn: (node: (NodeTypeMap & YulNodeTypeMap)[T]) => boolean = () => true
+) {
+  const result: (NodeTypeMap & YulNodeTypeMap)[T][] = [];
+
+  for (const node of _findAll(nodeType, astNode)) {
+    if (filterFn(node)) result.push(node);
+  }
+
+  return result;
+}
+
+export function findOne<T extends NodeType | YulNodeType>(
+  astNode: Node | YulNode,
+  nodeType: T | T[],
+  filterFn: (node: (NodeTypeMap & YulNodeTypeMap)[T]) => boolean = () => true
+) {
+  for (const node of _findAll(nodeType, astNode)) {
+    if (filterFn(node)) return node;
+  }
+}
+
+/**
+ * Get all the contract definitions on the given node
+ */
 export function findContractDefinitions(astNode: SourceUnit) {
-  return Array.from(findAll('ContractDefinition', astNode));
+  return findAll(astNode, 'ContractDefinition');
 }
 
 /**
  * Get the given contract by name on the given AST
  */
 function _findContractNodeWithName(contractName: string, astNode: SourceUnit) {
-  for (const contractDefiniton of findAll('ContractDefinition', astNode)) {
+  for (const contractDefiniton of findAll(astNode, 'ContractDefinition')) {
     if (contractDefiniton.name === contractName) {
       return contractDefiniton;
     }
@@ -25,14 +59,14 @@ function _findContractNodeWithName(contractName: string, astNode: SourceUnit) {
  * Get all the variable nodes defined on a contract node
  */
 export function findContractNodeVariables(contractNode: StructDefinition) {
-  return Array.from(findAll('VariableDeclaration', contractNode));
+  return findAll(contractNode, 'VariableDeclaration');
 }
 
 /**
  * Get all the structs definitions on a contract node
  */
 export function findContractNodeStructs(contractNode: ContractDefinition) {
-  return Array.from(findAll('StructDefinition', contractNode));
+  return findAll(contractNode, 'StructDefinition');
 }
 
 /**
@@ -46,38 +80,15 @@ export function findContractStateVariables(contractNode: StructDefinition) {
  * Find all the slot definitions on the given AST node
  */
 export function findYulStorageSlotAssignments(contractNode: ContractDefinition) {
-  return Array.from(findAll('YulAssignment', contractNode))
+  return findAll(contractNode, 'YulAssignment')
     .filter((assignment) => assignment.variableNames[0].name.endsWith('.slot'))
     .map((assignment) => (assignment.value as { value?: unknown }).value); // TODO
-}
-
-/**
- * Get all the case values from the given contract node
- */
-export function findYulCaseValues(contractNode: StructDefinition) {
-  const addressVariables = findContractNodeVariables(contractNode);
-
-  const items = [];
-  for (const caseSelector of findAll('YulCase', contractNode)) {
-    if (caseSelector.value === 'default') continue;
-    if (caseSelector.value.value === '0') continue;
-
-    const caseAssignment = findAll('YulAssignment', caseSelector);
-    const nextCaseAssignment = caseAssignment.next();
-
-    items.push({
-      selector: caseSelector.value.value,
-      value: addressVariables.find((v) => v.name === nextCaseAssignment.value.value.name),
-    });
-  }
-
-  return items;
 }
 
 function _findFunctionSelectors(contractNode: ContractDefinition) {
   const selectors = [];
 
-  for (const functionDefinition of findAll('FunctionDefinition', contractNode)) {
+  for (const functionDefinition of findAll(contractNode, 'FunctionDefinition')) {
     if (functionDefinition.functionSelector) {
       selectors.push({ selector: '0x' + functionDefinition.functionSelector });
     }
@@ -124,7 +135,7 @@ export function findContractDependencies(
 
 function _findSourceUnitByAbsolutePath(absolutePath: string, astNodes: SourceUnit[]) {
   for (const astNode of astNodes) {
-    for (const sourceUnitNode of findAll('SourceUnit', astNode)) {
+    for (const sourceUnitNode of findAll(astNode, 'SourceUnit')) {
       if (sourceUnitNode.absolutePath === absolutePath) {
         return sourceUnitNode;
       }
@@ -145,7 +156,7 @@ function _findContractSourceByFullyQualifiedName(
 }
 
 function _findInheritedContractsLocalNodeNames(contractNode: Node, sourceUnitNode: SourceUnit) {
-  return Array.from(findAll('InheritanceSpecifier', contractNode))
+  return findAll(contractNode, 'InheritanceSpecifier')
     .map((inheritNode) => inheritNode.baseName.referencedDeclaration)
     .map(
       (declarationId) =>
@@ -191,7 +202,7 @@ export function findImportedContractFullyQualifiedName(
   baseAstNode: SourceUnit,
   astNodes: SourceUnit[]
 ) {
-  for (const importNode of findAll('ImportDirective', baseAstNode)) {
+  for (const importNode of findAll(baseAstNode, 'ImportDirective')) {
     const contractSource = importNode.absolutePath;
 
     if (importNode.symbolAliases.length > 0) {
@@ -208,7 +219,7 @@ export function findImportedContractFullyQualifiedName(
       return null;
     }
 
-    const importedContractNodes = Array.from(findAll('ContractDefinition', importedSourceNode));
+    const importedContractNodes = findAll(importedSourceNode, 'ContractDefinition');
     const importedContract = importedContractNodes.find(({ name }) => name === localContractName);
 
     if (importedContract) {
@@ -256,7 +267,20 @@ export function findFunctionNodes(contractFullyQualifiedName: string, astNodes: 
         return [];
       }
 
-      return Array.from(findAll('FunctionDefinition', contractNode));
+      return findAll(contractNode, 'FunctionDefinition');
     }
   );
+}
+
+export function findImportedNodes(sourceName: string, allSourceUnits: SourceUnit[]): string[] {
+  const sourceUnit = allSourceUnits.find((s) => s.absolutePath === sourceName)!;
+
+  if (!sourceUnit) throw new Error(`Missing source unit for ${sourceName}`);
+
+  const importedSources = findAll(sourceUnit, 'ImportDirective').map((d) => d.absolutePath);
+
+  return [
+    sourceName,
+    ...importedSources.flatMap((s) => findImportedNodes(s, allSourceUnits)),
+  ].flat();
 }
