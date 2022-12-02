@@ -70,6 +70,7 @@ jobs:
       - run: ls -lah
       - run: whoami
       - run: id
+      - run: mkdir /src/packages/core-utils/utils
       - run: |
           cd /src
           npm ci
