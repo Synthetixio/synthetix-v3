@@ -14,10 +14,7 @@ import "../../storage/CollateralLock.sol";
 import "@synthetixio/core-modules/contracts/storage/AssociatedSystem.sol";
 
 /**
- * @title TODO
- *
- * TODO: Consider splitting this into CollateralConfigurationModule and CollateralModule.
- * The former is for owner only stuff, and the latter for users.
+ * @title Module that allows users to deposit and withdraw collateral from the system.
  */
 contract CollateralModule is ICollateralModule {
     using SetUtil for SetUtil.AddressSet;

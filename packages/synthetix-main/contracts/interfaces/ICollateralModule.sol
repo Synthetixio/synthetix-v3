@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 import "../storage/CollateralConfiguration.sol";
 
-/// @title Module for managing collateral
+/// @title Module for managing user collateral
 interface ICollateralModule {
     /**
      * @notice Emitted when `amount` of collateral of type `collateralType` is deposited to account `accountId` by `sender`.

@@ -7,10 +7,7 @@ import "../../interfaces/ICollateralConfigurationModule.sol";
 import "../../storage/CollateralConfiguration.sol";
 
 /**
- * @title TODO
- *
- * TODO: Consider splitting this into CollateralConfigurationModule and CollateralModule.
- * The former is for owner only stuff, and the latter for users.
+ * @title Module that allows the owner to configure system collateral.
  */
 contract CollateralConfigurationModule is ICollateralConfigurationModule {
     using SetUtil for SetUtil.AddressSet;
