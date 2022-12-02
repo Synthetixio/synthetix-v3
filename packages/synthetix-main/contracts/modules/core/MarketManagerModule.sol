@@ -17,7 +17,7 @@ import "@synthetixio/core-modules/contracts/storage/AssociatedSystem.sol";
 import "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
 
 /**
- * @title TODO
+ * @title System-wide entry point for the management of markets connected to the system.
  */
 contract MarketManagerModule is IMarketManagerModule {
     using SafeCastU128 for uint128;
@@ -85,6 +85,12 @@ contract MarketManagerModule is IMarketManagerModule {
         return Market.load(marketId).totalDebt();
     }
 
+    /**
+     * @dev Returns the value per share of the debt of the specified market.
+     *
+     * Note: This is not a view function, and actually updates the entire debt distribution chain.
+     * To call this externally as a view function, use `staticall`.
+     */
     function getMarketDebtPerShare(uint128 marketId) external override returns (int) {
         Market.Data storage market = Market.load(marketId);
 
@@ -93,10 +99,20 @@ contract MarketManagerModule is IMarketManagerModule {
         return market.getDebtPerShare();
     }
 
+    /**
+     * @dev Returns wether the capacity of the specified market is locked.
+     */
     function isMarketCapacityLocked(uint128 marketId) external view override returns (bool) {
         return Market.load(marketId).isCapacityLocked();
     }
 
+    /**
+     * @dev Allows an external market connected to the system to deposit USD in the system.
+     *
+     * The system burns the incoming USD, increases the market's credit capacity, and reduces its issuance.
+     *
+     * See `IMarket`.
+     */
     function depositMarketUsd(
         uint128 marketId,
         address target,
@@ -104,21 +120,33 @@ contract MarketManagerModule is IMarketManagerModule {
     ) external override {
         Market.Data storage market = Market.load(marketId);
 
+        // Call must come from the market itself.
         if (msg.sender != market.marketAddress) revert AccessError.Unauthorized(msg.sender);
 
         // verify if the market is authorized to burn the USD for the target
         ITokenModule usdToken = AssociatedSystem.load(_USD_TOKEN).asToken();
 
-        // Adjust accounting
+        // Adjust accounting.
         market.creditCapacityD18 += amount.to128();
         market.netIssuanceD18 -= amount.toInt().to128();
 
-        // burn USD
+        // Burn the incoming USD.
+        // Note: Instead of burning, we could transfer USD to and from the MarketManager,
+        // but minting and burning takes the USD out of circulation,
+        // which doesn't affect `totalSupply`, thus simplifying accounting.
         IUSDTokenModule(address(usdToken)).burnWithAllowance(target, msg.sender, amount);
 
         emit MarketUsdDeposited(marketId, target, amount, msg.sender);
     }
 
+    /**
+     * @dev Allows an external market connected to the system to withdraw USD from the system.
+     *
+     * The system mints the requested USD (provided that the market's USD balance allows it),
+     * reduces the market's credit capacity, and increases its issuance.
+     *
+     * See `IMarket`.
+     */
     function withdrawMarketUsd(
         uint128 marketId,
         address target,
@@ -126,15 +154,17 @@ contract MarketManagerModule is IMarketManagerModule {
     ) external override {
         Market.Data storage marketData = Market.load(marketId);
 
+        // Call must come from the market itself.
         if (msg.sender != marketData.marketAddress) revert AccessError.Unauthorized(msg.sender);
 
+        // Ensure that the market's balance allows for this withdrawal.
         if (amount > getWithdrawableUsd(marketId)) revert NotEnoughLiquidity(marketId, amount);
 
-        // Adjust accounting
+        // Adjust accounting.
         marketData.creditCapacityD18 -= amount.to128();
         marketData.netIssuanceD18 += amount.toInt().to128();
 
-        // mint some USD
+        // Mint the requested USD.
         AssociatedSystem.load(_USD_TOKEN).asToken().mint(target, amount);
 
         emit MarketUsdWithdrawn(marketId, target, amount, msg.sender);
