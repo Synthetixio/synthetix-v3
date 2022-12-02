@@ -69,7 +69,6 @@ jobs:
       - run: ls -lah
       - run: whoami
       - run: id
-      - run: cd /src
       - run: npm ci
       - run: npm run build
       - run: npm --workspace=./packages/sample-project test
