@@ -75,6 +75,8 @@ contract CollateralModule is ICollateralModule {
     /**
      * @dev See {ICollateralModule-getCollateralConfiguration}.
      */
+    // Note: Disabling Solidity warning, not sure why it suggests pure mutability.
+    // solc-ignore-next-line func-mutability
     function getCollateralConfiguration(address collateralType)
         external
         view
