@@ -170,6 +170,9 @@ contract VaultModule is IVaultModule {
 
     /**
      * @dev Returns the debt for the given account, pool, and collateral type.
+     *
+     * Note: This is not a view function, and actually updates the entire debt distribution chain.
+     * To call this externally as a view function, use `staticall`.
      */
     function getPositionDebt(
         uint128 accountId,
@@ -193,6 +196,9 @@ contract VaultModule is IVaultModule {
 
     /**
      * @dev Returns the total debt for the given pool, and collateral type.
+     *
+     * Note: This is not a view function, and actually updates the entire debt distribution chain.
+     * To call this externally as a view function, use `staticall`.
      */
     function getVaultDebt(uint128 poolId, address collateralType) public override returns (int) {
         return Pool.load(poolId).currentVaultDebt(collateralType);
