@@ -45,9 +45,9 @@ library Vault {
         // solhint-disable-next-line private-vars-leading-underscore
         uint128 __unused;
         /**
-         * @dev The previous credit capacity of the vault (collateral - debt), when the system was last interacted with.
+         * @dev The previous debt of the vault, when `updateCreditCapacity` was last called by the Pool.
          */
-        uint128 prevRemainingCreditCapacityD18;
+        int128 prevTotalDebtD18;
         /**
          * @dev Vault data for all the liquidation cycles divided into epochs.
          */
@@ -81,25 +81,19 @@ library Vault {
         internal
         returns (
             uint usdWeightD18,
-            uint remainingCreditCapacityD18,
-            int deltaRemainingCreditCapacityD18
+            int totalDebtD18,
+            int deltaDebtD18
         )
     {
         VaultEpoch.Data storage epochData = currentEpoch(self);
 
         usdWeightD18 = uint(epochData.accountsDebtDistribution.totalSharesD18).mulDecimal(collateralPriceD18);
 
-        int vaultDepositedValueD18 = epochData.collateralAmounts.totalAmount().toInt().mulDecimal(
-            collateralPriceD18.toInt()
-        );
-        int vaultAccruedDebtD18 = epochData.totalDebt();
-        remainingCreditCapacityD18 = vaultDepositedValueD18 > vaultAccruedDebtD18
-            ? (vaultDepositedValueD18 - vaultAccruedDebtD18).toUint()
-            : 0;
+        totalDebtD18 = epochData.totalDebt();
 
-        deltaRemainingCreditCapacityD18 = remainingCreditCapacityD18.toInt() - self.prevRemainingCreditCapacityD18.toInt();
+        deltaDebtD18 = totalDebtD18 - self.prevTotalDebtD18;
 
-        self.prevRemainingCreditCapacityD18 = remainingCreditCapacityD18.to128();
+        self.prevTotalDebtD18 = totalDebtD18.to128();
     }
 
     /**

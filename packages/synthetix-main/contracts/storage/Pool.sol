@@ -24,6 +24,7 @@ library Pool {
     using Vault for Vault.Data;
     using Distribution for Distribution.Data;
     using DecimalMath for uint256;
+    using DecimalMath for int256;
     using DecimalMath for int128;
 
     using SafeCastU128 for uint128;
@@ -68,9 +69,9 @@ library Pool {
          */
         uint128 totalWeightsD18;
         /**
-         * @dev Accumulated cache value of all vault liquidities, i.e. their collateral value minus their debt.
+         * @dev Accumulated cache value of all vault collateral debts
          */
-        uint128 unusedCreditCapacityD18;
+        int128 totalVaultDebtsD18;
         /**
          * @dev Array of markets connected to this pool, and their configurations. I.e. weight, etc.
          *
@@ -141,7 +142,7 @@ library Pool {
         // Read from storage once, before entering the loop below.
         // These values should not change while iterating through each market.
         uint totalCreditCapacityD18 = self.vaultsDebtDistribution.totalSharesD18;
-        uint128 unusedCreditCapacityD18 = self.unusedCreditCapacityD18;
+        int128 totalDebtD18 = self.totalVaultDebtsD18;
 
         int cumulativeDebtChangeD18 = 0;
 
@@ -156,13 +157,18 @@ library Pool {
             // Note: the factor `(weight / totalWeights)` is not deduped in the operations below to maintain numeric precision.
 
             uint marketCreditCapacityD18 = (totalCreditCapacityD18 * weightD18) / totalWeightsD18;
-            uint marketUnusedCreditCapacityD18 = (unusedCreditCapacityD18 * weightD18) / totalWeightsD18;
+            int marketDebtD18 = (totalDebtD18 * weightD18.toInt()) / totalWeightsD18.toInt();
 
             Market.Data storage marketData = Market.load(marketConfiguration.marketId);
 
             // Contain the pool imposed market's maximum debt share value.
             // Imposed by system.
-            int effectiveMaxShareValueD18 = getSystemMaxValuePerShare(self, marketData, marketUnusedCreditCapacityD18);
+            int effectiveMaxShareValueD18 = getSystemMaxValuePerShare(
+                self,
+                marketData.id,
+                marketCreditCapacityD18,
+                marketDebtD18
+            );
             // Imposed by pool.
             int configuredMaxShareValueD18 = marketConfiguration.maxDebtShareValueD18;
             effectiveMaxShareValueD18 = effectiveMaxShareValueD18 < configuredMaxShareValueD18
@@ -192,24 +198,31 @@ library Pool {
      */
     function getSystemMaxValuePerShare(
         Data storage self,
-        Market.Data storage marketData,
-        uint unusedCreditCapacityD18
+        uint128 marketId, // we are keeping this value as a uint128 for now for testability reasons
+        uint creditCapacityD18,
+        int debtD18
     ) internal view returns (int) {
+        Market.Data storage marketData = Market.load(marketId);
         uint minLiquidityRatioD18 = SystemPoolConfiguration.load().minLiquidityRatioD18;
 
         // Calculate the margin of debt that the market could incur to hit the system wide limit.
-        uint marginD18;
+        uint totalSharesD18 = self.vaultsDebtDistribution.totalSharesD18;
+        int valuePerShareD18 = marketData.poolsDebtDistribution.getValuePerShare();
+
         if (minLiquidityRatioD18 == 0) {
             // If minLiquidityRatioD18 is zero, then set limit to 100%.
-            marginD18 = DecimalMath.UNIT;
+            return valuePerShareD18 + int(DecimalMath.UNIT);
+        } else if (totalSharesD18 == 0) {
+            // margin = credit / systemLimit, per share
+            return valuePerShareD18;
         } else {
-            // margin = unusedCredit / systemLimit, per share
-            marginD18 = unusedCreditCapacityD18.divDecimal(minLiquidityRatioD18).divDecimal(
-                self.vaultsDebtDistribution.totalSharesD18
-            );
-        }
+            uint marginD18 = creditCapacityD18.divDecimal(minLiquidityRatioD18).divDecimal(totalSharesD18);
 
-        return marketData.poolsDebtDistribution.getValuePerShare() + marginD18.toInt();
+            return
+                marketData.poolsDebtDistribution.getValuePerShare() +
+                marginD18.toInt() -
+                debtD18.divDecimal(totalSharesD18.toInt());
+        }
     }
 
     /**
@@ -249,23 +262,23 @@ library Pool {
         // Update each market's pro-rata liquidity and collect accumulated debt into the pool's debt distribution.
         distributeDebtToVaults(self);
 
+        // Transfer the debt change from the pool into the vault.
+        bytes32 actorId = bytes32(uint(uint160(collateralType)));
+        self.vaults[collateralType].distributeDebtToAccounts(self.vaultsDebtDistribution.accumulateActor(actorId));
+
         // Get the latest collateral price.
         collateralPriceD18 = CollateralConfiguration.load(collateralType).getCollateralPrice();
 
         // Changes in price update the corresponding vault's total collateral value as well as its liquidity (collateral - debt).
-        (uint usdWeightD18, , int deltaLiquidityD18) = self.vaults[collateralType].updateCreditCapacity(collateralPriceD18);
+        (uint usdWeightD18, , int deltaDebtD18) = self.vaults[collateralType].updateCreditCapacity(collateralPriceD18);
 
         // Update the vault's shares in the pool's debt distribution, according to the value of its collateral.
-        bytes32 actorId = bytes32(uint(uint160(collateralType)));
-        int debtChangeD18 = self.vaultsDebtDistribution.setActorShares(actorId, usdWeightD18);
+        self.vaultsDebtDistribution.setActorShares(actorId, usdWeightD18);
 
         // Accumulate the change in total liquidity, from the vault, into the pool.
-        self.unusedCreditCapacityD18 = (self.unusedCreditCapacityD18.toInt() + deltaLiquidityD18.to128()).toUint();
+        self.totalVaultDebtsD18 = self.totalVaultDebtsD18 + deltaDebtD18.to128();
 
-        // Transfer the debt change from the pool into the vault.
-        self.vaults[collateralType].distributeDebtToAccounts(debtChangeD18);
-
-        // Distribute debt again because the unused credit capacity has been updated, and this information needs to be propagated immediately.
+        // Distribute debt again because the market credit capacity may have changed, so we should ensure the vaults have the most up to date capacities
         distributeDebtToVaults(self);
     }
 
