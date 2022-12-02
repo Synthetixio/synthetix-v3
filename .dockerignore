@@ -1,0 +1,12 @@
+.DS_Store
+.env
+.nyc_output
+.vscode
+**/coverage*
+**/deployments
+artifacts
+cache
+coverage
+dist
+node_modules
+typechain-types

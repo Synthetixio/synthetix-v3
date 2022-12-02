@@ -1,0 +1,20 @@
+name: Build and publish node-foundry
+
+on: [push]
+
+# on:
+#   push:
+#     branches:
+#       - "main"
+
+jobs:
+  build-and-publish-latest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Build and publish "latest" Docker image
+        uses: VaultVulp/gp-docker-action@1.5.0
+        with:
+          github-token: ${{secrets.GITHUB_TOKEN}}
+          image-name: synthetix-node-foundry
+          dockerfile: docker/node-foundry.Dockerfile
