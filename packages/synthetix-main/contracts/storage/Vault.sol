@@ -89,10 +89,6 @@ library Vault {
 
         usdWeightD18 = uint(epochData.accountsDebtDistribution.totalSharesD18).mulDecimal(collateralPriceD18);
 
-        int vaultDepositedValueD18 = epochData.collateralAmounts.totalAmount().toInt().mulDecimal(
-            collateralPriceD18.toInt()
-        );
-
         totalDebtD18 = epochData.totalDebt();
 
         deltaDebtD18 = totalDebtD18 - self.prevTotalDebtD18;

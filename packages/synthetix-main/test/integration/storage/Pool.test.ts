@@ -5,15 +5,15 @@ import { snapshotCheckpoint } from '../../utils';
 
 describe('Pool', function () {
   const {
-    systems, 
-    provider, 
-    signers, 
-    marketId, 
-    poolId, 
+    systems,
+    provider,
+    signers,
+    marketId,
+    poolId,
     accountId,
-    MockMarket, 
-    depositAmount, 
-    collateralAddress 
+    MockMarket,
+    depositAmount,
+    collateralAddress,
   } = bootstrapWithMockMarketAndPool();
 
   const One = ethers.utils.parseEther('1');
@@ -37,15 +37,19 @@ describe('Pool', function () {
     ]);*/
 
     // create a secondary pool for testing cases of having multiple pools for one market
-    await systems().Core.connect(owner).createPool(secondaryPoolId, await owner.getAddress());
+    await systems()
+      .Core.connect(owner)
+      .createPool(secondaryPoolId, await owner.getAddress());
 
-    await systems().Core.connect(owner).setPoolConfiguration(secondaryPoolId, [
-      {
-        marketId: marketId(),
-        weightD18: 1,
-        maxDebtShareValueD18: ethers.utils.parseEther('10000')
-      }
-    ]);
+    await systems()
+      .Core.connect(owner)
+      .setPoolConfiguration(secondaryPoolId, [
+        {
+          marketId: marketId(),
+          weightD18: 1,
+          maxDebtShareValueD18: ethers.utils.parseEther('10000'),
+        },
+      ]);
 
     await systems().Core.connect(owner).setMinLiquidityRatio(One.mul(2));
 
@@ -56,23 +60,21 @@ describe('Pool', function () {
   const restore = snapshotCheckpoint(provider);
 
   describe('getSystemMaxValuePerShare()', async () => {
-
     describe('when undelegated from pool', async () => {
       before(restore);
       before('undelegate', async () => {
-        await systems().Core.connect(user1).delegateCollateral(
-          accountId, 
-          poolId, 
-          collateralAddress(), 
-          0, 
-          ethers.utils.parseEther('1')
-        );
+        await systems()
+          .Core.connect(user1)
+          .delegateCollateral(
+            accountId,
+            poolId,
+            collateralAddress(),
+            0,
+            ethers.utils.parseEther('1')
+          );
 
         // sanity
-        assertBn.equal(
-          await systems().Core.Market_get_creditCapacityD18(marketId()),
-          0
-        );
+        assertBn.equal(await systems().Core.Market_get_creditCapacityD18(marketId()), 0);
       });
 
       it('returns 0 for a pool with nothing delegated', async () => {
@@ -88,7 +90,12 @@ describe('Pool', function () {
 
       it('returns 0 with 0 unused credit capacity even if there are shares', async () => {
         assertBn.equal(
-          await systems().Core.Pool_getSystemMaxValuePerShare(poolId, marketId(), depositAmount.div(2), 0),
+          await systems().Core.Pool_getSystemMaxValuePerShare(
+            poolId,
+            marketId(),
+            depositAmount.div(2),
+            0
+          ),
           ethers.utils.parseEther('0.25')
         );
       });
@@ -96,7 +103,12 @@ describe('Pool', function () {
       it('returns 50 with 100 unused credit capacity with shares multiplied', async () => {
         assertBn.equal(
           // multiply by deposit shares because we want 100 units of capacity per share
-          await systems().Core.Pool_getSystemMaxValuePerShare(poolId, marketId(), depositAmount.div(2), 0),
+          await systems().Core.Pool_getSystemMaxValuePerShare(
+            poolId,
+            marketId(),
+            depositAmount.div(2),
+            0
+          ),
           ethers.utils.parseEther('0.25')
         );
       });
@@ -109,7 +121,12 @@ describe('Pool', function () {
         it('returns even less available liquidity with same credit capacity query', async () => {
           assertBn.equal(
             // multiply by deposit shares because we want 100 units of capacity per share
-            await systems().Core.Pool_getSystemMaxValuePerShare(poolId, marketId(), depositAmount.div(2), 0),
+            await systems().Core.Pool_getSystemMaxValuePerShare(
+              poolId,
+              marketId(),
+              depositAmount.div(2),
+              0
+            ),
             ethers.utils.parseEther('0.125')
           );
         });
@@ -118,7 +135,6 @@ describe('Pool', function () {
   });
 
   describe('recalculateVaultCollateral()', async () => {
-
     before(restore);
 
     let initialMarketCapacity: ethers.BigNumber;
@@ -128,7 +144,9 @@ describe('Pool', function () {
     });
 
     it('recalculates nothing when vault is empty', async () => {
-      await systems().Core.connect(owner).Pool_recalculateVaultCollateral(poolId, collateralAddress());
+      await systems()
+        .Core.connect(owner)
+        .Pool_recalculateVaultCollateral(poolId, collateralAddress());
 
       // remaining in the test todo
     });
@@ -139,16 +157,17 @@ describe('Pool', function () {
 
         // call this function to trigger downstream debts
         assertBn.equal(
-          await systems().Core.connect(owner).callStatic.getPositionDebt(accountId, poolId, collateralAddress()),
+          await systems()
+            .Core.connect(owner)
+            .callStatic.getPositionDebt(accountId, poolId, collateralAddress()),
           depositAmount.div(10)
         );
 
         await systems().Core.connect(owner).getPositionDebt(accountId, poolId, collateralAddress());
-
       });
 
       it('system max value per share returns same as the market', async () => {
-        // debt per share should be increased because of the debt but the parameter 
+        // debt per share should be increased because of the debt but the parameter
         // still shows same amount of max value pre share
         assertBn.equal(
           await systems().Core.Pool_getSystemMaxValuePerShare(poolId, marketId(), 0, 0),
@@ -159,8 +178,8 @@ describe('Pool', function () {
       it('returns same credit capacity since limit has not been updated', async () => {
         assertBn.equal(
           await systems().Core.Pool_getSystemMaxValuePerShare(
-            poolId, 
-            marketId(), 
+            poolId,
+            marketId(),
             depositAmount,
             await systems().Core.Pool_get_totalVaultDebtsD18(poolId)
           ),
@@ -177,20 +196,22 @@ describe('Pool', function () {
 
       describe('when more collateral is added', async () => {
         before('increase collateral', async () => {
-          await systems().Core.connect(user1).delegateCollateral(
-            accountId, 
-            poolId, 
-            collateralAddress(), 
-            depositAmount.mul(2), 
-            ethers.utils.parseEther('1')
-          );
+          await systems()
+            .Core.connect(user1)
+            .delegateCollateral(
+              accountId,
+              poolId,
+              collateralAddress(),
+              depositAmount.mul(2),
+              ethers.utils.parseEther('1')
+            );
         });
 
         it('has more limit', async () => {
           assertBn.equal(
             await systems().Core.Pool_getSystemMaxValuePerShare(
-              poolId, 
-              marketId(), 
+              poolId,
+              marketId(),
               depositAmount.mul(2),
               await systems().Core.Pool_get_totalVaultDebtsD18(poolId)
             ),

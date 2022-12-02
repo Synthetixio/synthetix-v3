@@ -70,12 +70,10 @@ library Pool {
          * Reciprocally, this pro-rata share also determines how much the pool is exposed to each market's debt.
          */
         uint128 totalWeightsD18;
-
         /**
          * @dev Accumulated cache value of all vault collateral debts
          */
         int128 totalVaultDebtsD18;
-
         /**
          * @dev Array of markets connected to this pool, and their configurations. I.e. weight, etc.
          *
@@ -167,7 +165,12 @@ library Pool {
 
             // Contain the pool imposed market's maximum debt share value.
             // Imposed by system.
-            int effectiveMaxShareValueD18 = getSystemMaxValuePerShare(self, marketData.id, marketCreditCapacityD18, marketDebtD18);
+            int effectiveMaxShareValueD18 = getSystemMaxValuePerShare(
+                self,
+                marketData.id,
+                marketCreditCapacityD18,
+                marketDebtD18
+            );
             // Imposed by pool.
             int configuredMaxShareValueD18 = marketConfiguration.maxDebtShareValueD18;
             effectiveMaxShareValueD18 = effectiveMaxShareValueD18 < configuredMaxShareValueD18
@@ -218,20 +221,23 @@ library Pool {
             // margin = credit / systemLimit, per share
             return valuePerShare;
         } else {
-
-            uint marginD18 = creditCapacityD18.divDecimal(minLiquidityRatioD18).divDecimal(
-                totalSharesD18
-            );
+            uint marginD18 = creditCapacityD18.divDecimal(minLiquidityRatioD18).divDecimal(totalSharesD18);
 
             console.log("vps", uint(marketData.poolsDebtDistribution.getValuePerShare()));
             console.log("margin", marginD18);
             console.log("debt", uint(debtD18));
-            console.log("final", uint(marketData.poolsDebtDistribution.getValuePerShare() + 
-                marginD18.toInt() - 
-                debtD18.divDecimal(totalSharesD18.toInt())));
+            console.log(
+                "final",
+                uint(
+                    marketData.poolsDebtDistribution.getValuePerShare() +
+                        marginD18.toInt() -
+                        debtD18.divDecimal(totalSharesD18.toInt())
+                )
+            );
 
-            return marketData.poolsDebtDistribution.getValuePerShare() + 
-                marginD18.toInt() - 
+            return
+                marketData.poolsDebtDistribution.getValuePerShare() +
+                marginD18.toInt() -
                 debtD18.divDecimal(totalSharesD18.toInt());
         }
     }
@@ -284,8 +290,7 @@ library Pool {
         (uint usdWeightD18, , int deltaDebtD18) = self.vaults[collateralType].updateCreditCapacity(collateralPriceD18);
         if (deltaDebtD18 >= 0) {
             console.log("DELTA DEB", uint(deltaDebtD18));
-        }
-        else {
+        } else {
             console.log("DELTA DEB -", uint(-deltaDebtD18));
         }
 
