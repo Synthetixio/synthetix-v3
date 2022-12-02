@@ -1,15 +1,30 @@
 {
-  "extends": ["solhint:recommended"],
+  "extends": [
+    "solhint:recommended"
+  ],
   "plugins": [],
   "rules": {
     "not-rely-on-time": "off",
     "avoid-low-level-calls": "off",
-    "compiler-version": ["error", "^0.8.0"],
+    "compiler-version": [
+      "error",
+      "^0.8.0"
+    ],
     "contract-name-camelcase": "off",
-    "func-visibility": ["error", { "ignoreConstructors": true }],
+    "func-visibility": [
+      "error",
+      {
+        "ignoreConstructors": true
+      }
+    ],
     "no-complex-fallback": "off",
     "no-inline-assembly": "off",
-    "private-vars-leading-underscore": ["error", { "strict": true }],
-    "reason-string": ["error", { "maxLength": 32 }]
+    "private-vars-leading-underscore": "off",
+    "reason-string": [
+      "error",
+      {
+        "maxLength": 32
+      }
+    ]
   }
 }

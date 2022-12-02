@@ -113,10 +113,8 @@ library SetUtil {
     error ValueAlreadyInSet();
 
     struct Bytes32Set {
-        /* solhint-disable private-vars-leading-underscore */
         bytes32[] _values;
         mapping(bytes32 => uint) _positions; // Position zero is never used.
-        /* solhint-enable private-vars-leading-underscore */
     }
 
     function add(Bytes32Set storage set, bytes32 value) internal {
