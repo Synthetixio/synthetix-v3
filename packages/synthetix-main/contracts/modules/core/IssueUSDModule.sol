@@ -91,6 +91,8 @@ contract IssueUSDModule is IIssueUSDModule {
         emit UsdBurned(accountId, poolId, collateralType, amount, msg.sender);
     }
 
+    // Note: Disabling Solidity warning, not sure why it suggests pure mutability.
+    // solc-ignore-next-line func-mutability
     function _onlyWithPermission(uint128 accountId, bytes32 permission) internal {
         if (!Account.load(accountId).rbac.authorized(permission, msg.sender)) {
             revert PermissionDenied(accountId, permission, msg.sender);

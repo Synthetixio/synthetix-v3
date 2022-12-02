@@ -89,7 +89,12 @@ contract MarketCollateralModule is IMarketCollateralModule {
         emit MaximumMarketCollateralConfigured(marketId, collateralType, amount, msg.sender);
     }
 
-    function getMarketCollateralAmount(uint128 marketId, address collateralType) external view override returns (uint) {
+    function getMarketCollateralAmount(uint128 marketId, address collateralType)
+        external
+        view
+        override
+        returns (uint collateralAmountD18)
+    {
         Market.Data storage marketData = Market.load(marketId);
         Market.DepositedCollateral[] storage depositedCollateral = marketData.depositedCollateral;
         for (uint i = 0; i < depositedCollateral.length; i++) {

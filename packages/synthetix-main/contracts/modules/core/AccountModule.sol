@@ -118,12 +118,16 @@ contract AccountModule is IAccountModule {
         return Account.load(accountId).rbac.owner;
     }
 
+    // Note: Disabling Solidity warning, not sure why it suggests pure mutability.
+    // solc-ignore-next-line func-mutability
     function _onlyAccountToken() internal {
         if (msg.sender != address(getAccountTokenAddress())) {
             revert OnlyAccountTokenProxy(msg.sender);
         }
     }
 
+    // Note: Disabling Solidity warning, not sure why it suggests pure mutability.
+    // solc-ignore-next-line func-mutability
     function _isPermissionValid(bytes32 permission) internal {
         if (
             permission != AccountRBAC._DEPOSIT_PERMISSION &&
