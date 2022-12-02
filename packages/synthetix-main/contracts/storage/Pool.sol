@@ -5,9 +5,11 @@ import "./Distribution.sol";
 import "./MarketConfiguration.sol";
 import "./Vault.sol";
 import "./Market.sol";
-import "./PoolConfiguration.sol";
+import "./SystemPoolConfiguration.sol";
 
 import "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
+
+import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 
 /**
  * @title Aggregates collateral from multiple users in order to provide liquidity to a configurable set of markets.
@@ -22,7 +24,13 @@ library Pool {
     using Vault for Vault.Data;
     using Distribution for Distribution.Data;
     using DecimalMath for uint256;
+    using DecimalMath for int256;
     using DecimalMath for int128;
+
+    using SafeCastU128 for uint128;
+    using SafeCastU256 for uint256;
+    using SafeCastI128 for int128;
+    using SafeCastI256 for int256;
 
     error PoolNotFound(uint128 poolId);
     error PoolAlreadyExists(uint128 poolId);
@@ -32,6 +40,8 @@ library Pool {
          * @dev Numeric identifier for the pool.
          *
          * Must be unique.
+         *
+         * Note: poolId zero is reserved for the "ZeroPool", which allows users to mint by being exposed to no fluctuating market debt.
          */
         uint128 id;
         /**
@@ -59,11 +69,9 @@ library Pool {
          */
         uint128 totalWeightsD18;
         /**
-         * @dev Accumulated cache value of all vault liquidities, i.e. their collateral value minus their debt.
-         *
-         * TODO: Liquidity as a term is a vague concept. Consider being more consistent all over the code with the use of capacity vs liquidity. i.e. `totalRemainingCreditCapacity`.
+         * @dev Accumulated cache value of all vault collateral debts
          */
-        uint128 unusedCreditCapacityD18;
+        int128 totalVaultDebtsD18;
         /**
          * @dev Array of markets connected to this pool, and their configurations. I.e. weight, etc.
          *
@@ -82,12 +90,6 @@ library Pool {
          */
         Distribution.Data vaultsDebtDistribution;
         /**
-         * @dev Collateral types that provide liquidity to this pool and hence to the markets connected to the pool.
-         *
-         * TODO: This variable doesn't seem to be accessed from anywhere in the code. Consider using it, or emptying the storage slot (not removing it).
-         */
-        SetUtil.AddressSet collateralTypes;
-        /**
          * @dev Reference to all the vaults that provide liquidity to this pool.
          *
          * Each collateral type will have its own vault, specific to this pool. I.e. if two pools both use SNX collateral, each will have its own SNX vault.
@@ -99,8 +101,6 @@ library Pool {
 
     /**
      * @dev Returns the pool stored at the specified pool id.
-     *
-     * TODO: Consider using a constant instead of a hardcoded string here, and likewise to all similar uses of storage access in the code.
      */
     function load(uint128 id) internal pure returns (Data storage data) {
         bytes32 s = keccak256(abi.encode("Pool", id));
@@ -141,12 +141,8 @@ library Pool {
 
         // Read from storage once, before entering the loop below.
         // These values should not change while iterating through each market.
-
-        // TODO Clarify
-        int totalCreditCapacityD18 = int128(self.vaultsDebtDistribution.totalSharesD18);
-
-        // TODO Clarify
-        uint128 unusedCreditCapacityD18 = self.unusedCreditCapacityD18;
+        uint totalCreditCapacityD18 = self.vaultsDebtDistribution.totalSharesD18;
+        int128 totalDebtD18 = self.totalVaultDebtsD18;
 
         int cumulativeDebtChangeD18 = 0;
 
@@ -160,18 +156,20 @@ library Pool {
             // Calculate each market's pro-rata USD liquidity.
             // Note: the factor `(weight / totalWeights)` is not deduped in the operations below to maintain numeric precision.
 
-            // TODO: Consider introducing a SafeCast library. Here, if we didn't check for negative numbers, a cast could result in an overflow (Solidity does not check for casting overflows). Thus, leaving casting free to the developer might introduce bugs. All instances of the code should use this util.
-            uint marketCreditCapacityD18 = totalCreditCapacityD18 > 0
-                ? (uint(totalCreditCapacityD18) * weightD18) / totalWeightsD18
-                : 0;
-            uint marketUnusedCreditCapacityD18 = (unusedCreditCapacityD18 * weightD18) / totalWeightsD18;
+            uint marketCreditCapacityD18 = (totalCreditCapacityD18 * weightD18) / totalWeightsD18;
+            int marketDebtD18 = (totalDebtD18 * weightD18.toInt()) / totalWeightsD18.toInt();
 
-            Market.Data storage marketData = Market.load(marketConfiguration.market);
+            Market.Data storage marketData = Market.load(marketConfiguration.marketId);
 
-            // Contain the market's maximum debt share value.
-            // System-wide.
-            int effectiveMaxShareValueD18 = containMarketMaxShareValue(self, marketData, marketUnusedCreditCapacityD18);
-            // Market-wide.
+            // Contain the pool imposed market's maximum debt share value.
+            // Imposed by system.
+            int effectiveMaxShareValueD18 = getSystemMaxValuePerShare(
+                self,
+                marketData.id,
+                marketCreditCapacityD18,
+                marketDebtD18
+            );
+            // Imposed by pool.
             int configuredMaxShareValueD18 = marketConfiguration.maxDebtShareValueD18;
             effectiveMaxShareValueD18 = effectiveMaxShareValueD18 < configuredMaxShareValueD18
                 ? effectiveMaxShareValueD18
@@ -179,8 +177,8 @@ library Pool {
 
             // Update each market's corresponding credit capacity.
             // The returned value represents how much the market's debt changed after changing the shares of this pool actor, which is aggregated to later be passed on the pools debt distribution.
-            cumulativeDebtChangeD18 += Market.rebalance(
-                marketConfiguration.market,
+            cumulativeDebtChangeD18 += Market.rebalancePools(
+                marketConfiguration.marketId,
                 self.id,
                 effectiveMaxShareValueD18,
                 marketCreditCapacityD18
@@ -196,43 +194,41 @@ library Pool {
      *
      * Note: There is a non-system-wide fail safe for each market at `MarketConfiguration.maxDebtShareValue`.
      *
-     * See `PoolConfiguration.minLiquidityRatio`.
-     *
-     * TODO: Consider renaming these two fail safes in a more consistent manner. One is max<Something>, and the other is min<Something>. A common nomenclature might ease understanding how the two work.
+     * See `SystemPoolConfiguration.minLiquidityRatio`.
      */
-    function containMarketMaxShareValue(
+    function getSystemMaxValuePerShare(
         Data storage self,
-        Market.Data storage marketData,
-        uint creditCapacityD18
+        uint128 marketId, // we are keeping this value as a uint128 for now for testability reasons
+        uint creditCapacityD18,
+        int debtD18
     ) internal view returns (int) {
-        uint minLiquidityRatioD18 = PoolConfiguration.load().minLiquidityRatioD18;
+        Market.Data storage marketData = Market.load(marketId);
+        uint minLiquidityRatioD18 = SystemPoolConfiguration.load().minLiquidityRatioD18;
 
-        // TODO Explain the math in this block...
-        // TODO Name `thing` variable accordingly once I understand the math.
-        // thing = liquidity / minRatio / totalShares
-        // ratio = liquidity / totalShares
-        // then, thing = liquidity / totalShares / minRatio
-        // so, thing = ratio / minRatio
-        // if ratio == minRatio, thing = 1
-        // if ratio < minRatio, thing < 1
-        // if ratio > minRatio, thing > 1
-        int thingD18;
+        // Calculate the margin of debt that the market could incur to hit the system wide limit.
+        uint totalSharesD18 = self.vaultsDebtDistribution.totalSharesD18;
+        int valuePerShareD18 = marketData.poolsDebtDistribution.getValuePerShare();
+
         if (minLiquidityRatioD18 == 0) {
-            thingD18 = int(DecimalMath.UNIT); // If minLiquidityRatioD18 is zero, then TODO
+            // If minLiquidityRatioD18 is zero, then set limit to 100%.
+            return valuePerShareD18 + int(DecimalMath.UNIT);
+        } else if (totalSharesD18 == 0) {
+            // margin = credit / systemLimit, per share
+            return valuePerShareD18;
         } else {
-            // maxShareValueIncrease?
-            thingD18 = int(
-                creditCapacityD18.divDecimal(minLiquidityRatioD18).divDecimal(self.vaultsDebtDistribution.totalSharesD18)
-            );
-        }
+            uint marginD18 = creditCapacityD18.divDecimal(minLiquidityRatioD18).divDecimal(totalSharesD18);
 
-        return marketData.poolsDebtDistribution.getValuePerShare() + thingD18;
+            return
+                marketData.poolsDebtDistribution.getValuePerShare() +
+                marginD18.toInt() -
+                debtD18.divDecimal(totalSharesD18.toInt());
+        }
     }
 
     /**
      * @dev Returns true if a pool with the specified id exists.
      *
-     * TODO: Hidden logic: What is pool 0, and why does it always "exist"?
+     * Note: Pool zero always exists, see "Pool.id".
      */
     function exists(uint128 id) internal view returns (bool) {
         return id == 0 || load(id).id == id;
@@ -240,12 +236,10 @@ library Pool {
 
     /**
      * @dev Returns true if the pool is exposed to the specified market.
-     *
-     * TODO: Wouldn't it help to use a Set here?
      */
     function hasMarket(Data storage self, uint128 marketId) internal view returns (bool) {
         for (uint i = 0; i < self.marketConfigurations.length; i++) {
-            if (self.marketConfigurations[i].market == marketId) {
+            if (self.marketConfigurations[i].marketId == marketId) {
                 return true;
             }
         }
@@ -260,8 +254,6 @@ library Pool {
      * - Collects the latest price of the corresponding collateral and updates the vault's liquidity.
      * - Updates the vaults shares in the pool's debt distribution, according to the collateral provided by the vault.
      * - Updates the value per share of the vault's debt distribution.
-     *
-     * TODO: If possible, remove second call to distributeDebtToVaults.
      */
     function recalculateVaultCollateral(Data storage self, address collateralType)
         internal
@@ -270,23 +262,23 @@ library Pool {
         // Update each market's pro-rata liquidity and collect accumulated debt into the pool's debt distribution.
         distributeDebtToVaults(self);
 
+        // Transfer the debt change from the pool into the vault.
+        bytes32 actorId = bytes32(uint(uint160(collateralType)));
+        self.vaults[collateralType].distributeDebtToAccounts(self.vaultsDebtDistribution.accumulateActor(actorId));
+
         // Get the latest collateral price.
         collateralPriceD18 = CollateralConfiguration.load(collateralType).getCollateralPrice();
 
         // Changes in price update the corresponding vault's total collateral value as well as its liquidity (collateral - debt).
-        (uint usdWeightD18, , int deltaLiquidityD18) = self.vaults[collateralType].updateLiquidity(collateralPriceD18);
+        (uint usdWeightD18, , int deltaDebtD18) = self.vaults[collateralType].updateCreditCapacity(collateralPriceD18);
 
         // Update the vault's shares in the pool's debt distribution, according to the value of its collateral.
-        bytes32 actorId = bytes32(uint(uint160(collateralType)));
-        int debtChangeD18 = self.vaultsDebtDistribution.setActorShares(actorId, usdWeightD18);
+        self.vaultsDebtDistribution.setActorShares(actorId, usdWeightD18);
 
         // Accumulate the change in total liquidity, from the vault, into the pool.
-        self.unusedCreditCapacityD18 = uint128(int128(self.unusedCreditCapacityD18) + int128(deltaLiquidityD18));
+        self.totalVaultDebtsD18 = self.totalVaultDebtsD18 + deltaDebtD18.to128();
 
-        // Transfer the debt change from the pool into the vault.
-        self.vaults[collateralType].distributeDebtToAccounts(debtChangeD18);
-
-        // Distribute debt again because... TODO
+        // Distribute debt again because the market credit capacity may have changed, so we should ensure the vaults have the most up to date capacities
         distributeDebtToVaults(self);
     }
 
@@ -327,44 +319,25 @@ library Pool {
         int debtD18 = self.vaults[collateralType].currentDebt();
         (, uint collateralValueD18) = currentVaultCollateral(self, collateralType);
 
-        return debtD18 > 0 ? uint(debtD18).divDecimal(collateralValueD18) : 0;
+        return debtD18 > 0 ? debtD18.toUint().divDecimal(collateralValueD18) : 0;
     }
 
-    // TODO: Document
-    function findMarketCapacityLocked(Data storage self) internal view returns (Market.Data storage lockedMarketId) {
+    /**
+     * @dev Finds a connected market whose credit capacity has reached its locked limit.
+     *
+     * Note: Returns market zero (null market) if none is found.
+     */
+    function findMarketWithCapacityLocked(Data storage self) internal view returns (Market.Data storage lockedMarketId) {
         for (uint i = 0; i < self.marketConfigurations.length; i++) {
-            Market.Data storage market = Market.load(self.marketConfigurations[i].market);
+            Market.Data storage market = Market.load(self.marketConfigurations[i].marketId);
 
             if (market.isCapacityLocked()) {
                 return market;
             }
         }
 
+        // Market zero = null market.
         return Market.load(0);
-    }
-
-    /**
-     * @dev Returns if a portion of the liquidity in this pool cannot be withdrawn due to upstream market `locked`.
-     *
-     * TODO: Review documentation.
-     */
-    function getLockedLiquidityObligation(Data storage self) internal view returns (uint) {
-        uint lockedD18 = 0;
-        for (uint i = 0; i < self.marketConfigurations.length; i++) {
-            Market.Data storage market = Market.load(self.marketConfigurations[i].market);
-
-            uint unlockedD18 = market.capacityD18 - market.getLockedLiquidity();
-            uint contributedCapacityD18 = market.getCapacityContribution(
-                market.getPoolLiquidity(self.id),
-                self.marketConfigurations[i].maxDebtShareValueD18
-            );
-
-            if (unlockedD18 < contributedCapacityD18) {
-                lockedD18 += contributedCapacityD18 - unlockedD18;
-            }
-        }
-
-        return lockedD18;
     }
 
     /**
@@ -382,8 +355,6 @@ library Pool {
 
     /**
      * @dev Returns the total amount and value of the specified collateral delegated to this pool.
-     *
-     * TODO: Understand and document why mulDecimal is used here instead of *.
      */
     function currentVaultCollateral(Data storage self, address collateralType)
         internal
@@ -398,8 +369,6 @@ library Pool {
 
     /**
      * @dev Returns the amount and value of collateral that the specified account has delegated to this pool.
-     *
-     * TODO: Understand and document why mulDecimal is used here instead of *.
      */
     function currentAccountCollateral(
         Data storage self,
@@ -424,7 +393,7 @@ library Pool {
         int getPositionDebtD18 = updateAccountDebt(self, collateralType, accountId);
 
         // if they have a credit, just treat their debt as 0
-        return getPositionCollateralValueD18.divDecimal(getPositionDebtD18 < 0 ? 0 : uint(getPositionDebtD18));
+        return getPositionCollateralValueD18.divDecimal(getPositionDebtD18 < 0 ? 0 : getPositionDebtD18.toUint());
     }
 
     /**

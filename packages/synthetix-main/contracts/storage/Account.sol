@@ -6,11 +6,18 @@ import "./Collateral.sol";
 
 import "./Pool.sol";
 
+import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+
 library Account {
     using AccountRBAC for AccountRBAC.Data;
     using Pool for Pool.Data;
     using Collateral for Collateral.Data;
     using SetUtil for SetUtil.UintSet;
+
+    using SafeCastU128 for uint128;
+    using SafeCastU256 for uint256;
+    using SafeCastI128 for int128;
+    using SafeCastI256 for int256;
 
     error PermissionDenied(uint128 accountId, bytes32 permission, address target);
     error InsufficientAccountCollateral(uint requestedAmount);
@@ -59,7 +66,7 @@ library Account {
         SetUtil.UintSet storage pools = self.collaterals[collateralType].pools;
 
         for (uint i = 1; i <= pools.length(); i++) {
-            uint128 poolIdx = uint128(pools.valueAt(i));
+            uint128 poolIdx = pools.valueAt(i).to128();
 
             Pool.Data storage pool = Pool.load(poolIdx);
 

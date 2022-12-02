@@ -105,8 +105,8 @@ artifact = "contracts/modules/test/TestableMarketPoolInfoModule.sol:TestableMark
 [contract.TestablePoolModule]
 artifact = "contracts/modules/test/TestablePoolModule.sol:TestablePoolModule"
 
-[contract.TestablePoolConfigurationModule]
-artifact = "contracts/modules/test/TestablePoolConfigurationModule.sol:TestablePoolConfigurationModule"
+[contract.TestableSystemPoolConfigurationModule]
+artifact = "contracts/modules/test/TestableSystemPoolConfigurationModule.sol:TestableSystemPoolConfigurationModule"
 
 [contract.TestableRewardDistributionModule]
 artifact = "contracts/modules/test/TestableRewardDistributionModule.sol:TestableRewardDistributionModule"
@@ -158,7 +158,7 @@ args = [
     TestableMarketModule: contracts.TestableMarketModule,
     TestableMarketConfigurationModule: contracts.TestableMarketConfigurationModule,
     TestablePoolModule: contracts.TestablePoolModule,
-    TestablePoolConfigurationModule: contracts.TestablePoolConfigurationModule,
+    TestableSystemPoolConfigurationModule: contracts.TestableSystemPoolConfigurationModule,
     TestableRewardDistributionModule: contracts.TestableRewardDistributionModule,
     TestableRewardDistributionStatusModule: contracts.TestableRewardDistributionStatusModule,
     TestableScalableMappingModule: contracts.TestableScalableMappingModule,
@@ -196,7 +196,7 @@ depends = [
   "contract.TestableMarketConfigurationModule",
   "contract.TestableMarketPoolInfoModule",
   "contract.TestablePoolModule",
-  "contract.TestablePoolConfigurationModule",
+  "contract.TestableSystemPoolConfigurationModule",
   "contract.TestableRewardDistributionModule",
   "contract.TestableRewardDistributionStatusModule",
   "contract.TestableScalableMappingModule",
@@ -235,7 +235,7 @@ abiOf = [
   "TestableMarketConfigurationModule",
   "TestableMarketPoolInfoModule",
   "TestablePoolModule",
-  "TestablePoolConfigurationModule",
+  "TestableSystemPoolConfigurationModule",
   "TestableRewardDistributionModule",
   "TestableRewardDistributionStatusModule",
   "TestableScalableMappingModule",

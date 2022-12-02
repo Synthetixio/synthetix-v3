@@ -1,17 +1,17 @@
 import path from 'node:path';
+import * as types from '@synthetixio/core-utils/utils/hardhat/argument-types';
+import logger from '@synthetixio/core-utils/utils/io/logger';
 import { task } from 'hardhat/config';
 import { parseFullyQualifiedName } from 'hardhat/utils/contract-names';
-import { default as logger } from '@synthetixio/core-utils/utils/io/logger';
-import * as types from '@synthetixio/core-utils/utils/hardhat/argument-types';
 import { getSourcesFullyQualifiedNames } from '../internal/contract-helper';
 import { deployContract, deployContracts } from '../internal/deploy-contract';
+import { quietCompile } from '../internal/quiet-compile';
 import {
   SUBTASK_GENERATE_ROUTER,
   SUBTASK_VALIDATE_INTERFACES,
   SUBTASK_VALIDATE_SELECTORS,
   TASK_DEPLOY,
 } from '../task-names';
-import { quietCompile } from '../internal/quiet-compile';
 import { DeployedContractData } from '../types';
 
 export interface DeployTaskParams {

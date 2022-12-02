@@ -700,7 +700,7 @@ Will only liquidate a portion of the debt for the vault if `maxUsd` is supplied
 #### getMarketIssuance
 
   ```solidity
-  function getMarketIssuance(uint128 marketId) external view returns (int128)
+  function getMarketNetIssuance(uint128 marketId) external view returns (int128)
   ```
 
   gets net snxUSD withdrawn - deposited by the market

@@ -1,4 +1,6 @@
-// pragma solidity 0.4.24;
+//SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
+
 pragma experimental ABIEncoderV2;
 import "../../utils/HeapUtil.sol";
 
@@ -9,7 +11,7 @@ contract HeapUtilMock {
 
     HeapUtil.Data public data;
 
-    constructor() public {
+    constructor() {
         data.init();
     }
 

@@ -2,8 +2,9 @@
 pragma solidity ^0.8.0;
 
 import "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
+import "@synthetixio/core-contracts/contracts/token/ERC20Helper.sol";
+
 import "../../interfaces/IMarketCollateralModule.sol";
-import "../../utils/ERC20Helper.sol";
 import "../../storage/Market.sol";
 
 contract MarketCollateralModule is IMarketCollateralModule {
@@ -88,7 +89,12 @@ contract MarketCollateralModule is IMarketCollateralModule {
         emit MaximumMarketCollateralConfigured(marketId, collateralType, amount, msg.sender);
     }
 
-    function getMarketCollateralAmount(uint128 marketId, address collateralType) external view override returns (uint) {
+    function getMarketCollateralAmount(uint128 marketId, address collateralType)
+        external
+        view
+        override
+        returns (uint collateralAmountD18)
+    {
         Market.Data storage marketData = Market.load(marketId);
         Market.DepositedCollateral[] storage depositedCollateral = marketData.depositedCollateral;
         for (uint i = 0; i < depositedCollateral.length; i++) {

@@ -6,6 +6,7 @@ import 'solidity-coverage';
 import '@synthetixio/hardhat-router';
 import 'hardhat-gas-reporter';
 import 'hardhat-cannon';
+import 'hardhat-ignore-warnings';
 
 import dotenv from 'dotenv';
 import path from 'node:path';
