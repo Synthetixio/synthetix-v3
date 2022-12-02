@@ -13,7 +13,7 @@ jobs:
       - name: Install Foundry (Cannon)
         uses: foundry-rs/foundry-toolchain@v1
         with:
-          version: nightly-61749757a29a3c4a3a3790e718f303d95efeb509
+          version: nightly
       - run: anvil -V
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
