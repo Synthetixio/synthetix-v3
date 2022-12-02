@@ -89,6 +89,7 @@ contract PoolModule is IPoolModule {
      * @dev Allows the current owner to renounce ownership.
      *
      * Warning: This effectively leaves the pool owner-less.
+     * TODO: Are we sure we want this?
      */
     function renouncePoolNomination(uint128 poolId) external override {
         Pool.Data storage pool = Pool.load(poolId);
@@ -120,7 +121,7 @@ contract PoolModule is IPoolModule {
      * @dev Allows the pool owner to configure the pool.
      *
      * The pool's configuration is composed of an array of MarketConfiguration objects,
-     * which describe to which markets the pool provides liquidity to, in what proportion, and to what extent.
+     * which describe which markets the pool provides liquidity to, in what proportion, and to what extent.
      */
     function setPoolConfiguration(uint128 poolId, MarketConfiguration.Data[] memory newMarketConfigurations)
         external
@@ -131,11 +132,12 @@ contract PoolModule is IPoolModule {
 
         Pool.Data storage pool = Pool.load(poolId);
 
-        // This follows same pattern that Pool.recalculateVaultCollateral() where we need to distribute the debt, adjust the market configurations and distribute again.
         // Update each market's pro-rata liquidity and collect accumulated debt into the pool's debt distribution.
+        // Note: This follows the same pattern as Pool.recalculateVaultCollateral(),
+        // where we need to distribute the debt, adjust the market configurations and distribute again.
         pool.distributeDebtToVaults();
 
-        // Identify markets that need to be removed or verified later.
+        // Identify markets that need to be removed or verified later for being locked.
         (uint128[] memory potentiallyLockedMarkets, uint128[] memory removedMarkets) = _analyzePoolConfigurationChange(
             pool,
             newMarketConfigurations
@@ -145,6 +147,7 @@ contract PoolModule is IPoolModule {
         // (May leave old configurations at the end of the array if the new array is shorter).
         uint i = 0;
         uint totalWeight = 0;
+        // Iterate up to the shorter array's length.
         uint len = newMarketConfigurations.length < pool.marketConfigurations.length
             ? newMarketConfigurations.length
             : pool.marketConfigurations.length;
@@ -153,7 +156,7 @@ contract PoolModule is IPoolModule {
             totalWeight += newMarketConfigurations[i].weightD18;
         }
 
-        // If new array was shorter, push the new elements in.
+        // If the new array was shorter, push the new elements in.
         for (; i < newMarketConfigurations.length; i++) {
             pool.marketConfigurations.push(newMarketConfigurations[i]);
             totalWeight += newMarketConfigurations[i].weightD18;
@@ -240,7 +243,7 @@ contract PoolModule is IPoolModule {
 
     /**
      * @dev Compares a new pool configuration with the existing one,
-     * and returns information about markets that need to be removed, or capacity might be locked.
+     * and returns information about markets that need to be removed, or whose capacity might be locked.
      */
     function _analyzePoolConfigurationChange(
         Pool.Data storage pool,
@@ -260,7 +263,7 @@ contract PoolModule is IPoolModule {
             totalWeightD18 += newMarketConfigurations[i].weightD18;
         }
 
-        // Now, iterate through the incoming market configurations and compare with existing configurations.
+        // Now, iterate through the incoming market configurations and compare with them with the existing configurations.
         for (uint newIdx = 0; newIdx < newMarketConfigurations.length; newIdx++) {
             // Reject duplicate market ids, AND ensure they are provided in ascending order.
             if (newMarketConfigurations[newIdx].marketId <= lastMarketId) {
