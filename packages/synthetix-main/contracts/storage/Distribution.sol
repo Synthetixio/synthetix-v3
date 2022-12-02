@@ -135,13 +135,4 @@ library Distribution {
     function getValuePerShare(Data storage self) internal view returns (int) {
         return int(self.valuePerShareD27).downscale(DecimalMath.PRECISION_FACTOR);
     }
-
-    function getHPValuePerShare(Data storage self) internal view returns (int) {
-        return int(self.valuePerShareD27);
-    }
-
-    // TODO: Remove
-    function getTotalShares(Data storage self) internal view returns (uint) {
-        return self.totalSharesD18;
-    }
 }
