@@ -108,7 +108,7 @@ describe('AssociateDebtModule', function () {
             .callAssociateDebt(poolId, collateralAddress(), user2AccountId, amount);
 
           assertBn.equal(await MockMarket().reportedDebt(0), amount);
-          assertBn.equal(await systems().Core.callStatic.getMarketTotalBalance(marketId()), 0);
+          assertBn.equal(await systems().Core.callStatic.getMarketTotalDebt(marketId()), 0);
         });
 
         it('reduces market issuance', async () => {

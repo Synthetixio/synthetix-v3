@@ -16,24 +16,31 @@ import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import "@synthetixio/core-modules/contracts/storage/AssociatedSystem.sol";
 import "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
 
+/**
+ * @title TODO
+ */
 contract MarketManagerModule is IMarketManagerModule {
     using SafeCastU128 for uint128;
     using SafeCastU256 for uint256;
     using SafeCastI128 for int128;
     using SafeCastI256 for int256;
-
     using Market for Market.Data;
-
     using AssociatedSystem for AssociatedSystem.Data;
 
     bytes32 private constant _USD_TOKEN = "USDToken";
     bytes32 private constant _MARKET_FEATURE_FLAG = "registerMarket";
 
     error NotEnoughLiquidity(uint128 marketId, uint amount);
-    error MarketDepositNotApproved(address market, address from, uint requestedAmount, uint approvedAmount);
 
+    /**
+     * @dev Connects an external market to the system.
+     *
+     * Creates a Market object to track the external market, and returns the newly crated market id.
+     */
     function registerMarket(address market) external override returns (uint128 marketId) {
         FeatureFlag.ensureAccessToFeature(_MARKET_FEATURE_FLAG);
+
+        // TODO: Do we want to do this?
         // Can we verify that `market` conforms to the IMarket interface here? (i.e. has a `balance()` function?)
 
         marketId = MarketCreator.create(market).id;
@@ -43,23 +50,38 @@ contract MarketManagerModule is IMarketManagerModule {
         return marketId;
     }
 
+    /**
+     * @dev Returns the total withdrawable USD amount for the specified market.
+     */
     function getWithdrawableUsd(uint128 marketId) public view override returns (uint) {
         return Market.load(marketId).creditCapacityD18 + Market.load(marketId).getDepositedCollateralValue();
     }
 
+    /**
+     * @dev Returns the net issuance of the specified market.
+     */
     function getMarketNetIssuance(uint128 marketId) external view override returns (int128) {
         return Market.load(marketId).netIssuanceD18;
     }
 
+    /**
+     * @dev Returns the reported debt of the specified market.
+     */
     function getMarketReportedDebt(uint128 marketId) external view override returns (uint) {
         return Market.load(marketId).getReportedDebt();
     }
 
+    /**
+     * @dev Returns the total collateral for the specified market.
+     */
     function getMarketCollateral(uint128 marketId) external view override returns (uint) {
         return Market.load(marketId).poolsDebtDistribution.totalSharesD18;
     }
 
-    function getMarketTotalBalance(uint128 marketId) external view override returns (int) {
+    /**
+     * @dev Returns the total debt of the specified market.
+     */
+    function getMarketTotalDebt(uint128 marketId) external view override returns (int) {
         return Market.load(marketId).totalDebt();
     }
 
