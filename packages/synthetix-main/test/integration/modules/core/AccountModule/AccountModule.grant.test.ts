@@ -126,7 +126,9 @@ describe('AccountModule', function () {
         });
 
         before('renounce the permission', async () => {
-          const tx = await systems().Core.connect(user2).renouncePermission(1, Permissions.WITHDRAW);
+          const tx = await systems()
+            .Core.connect(user2)
+            .renouncePermission(1, Permissions.WITHDRAW);
           receipt = await tx.wait();
         });
 

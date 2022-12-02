@@ -169,6 +169,6 @@ contract CollateralModule is ICollateralModule {
     }
 
     function _convertTokenToSystemAmount(IERC20 token, uint tokenAmount) internal view returns (uint) {
-        return (tokenAmount * DecimalMath.UNIT) / (10 ** token.decimals());
+        return (tokenAmount * DecimalMath.UNIT) / (10**token.decimals());
     }
 }
