@@ -122,8 +122,6 @@ library CollateralConfiguration {
             revert CollateralNotFound();
         }
 
-        return 
-            (tokenAmount * DecimalMath.UNIT) / 
-            (10 ** IERC20(self.tokenAddress).decimals());
+        return (tokenAmount * DecimalMath.UNIT) / (10**IERC20(self.tokenAddress).decimals());
     }
 }
