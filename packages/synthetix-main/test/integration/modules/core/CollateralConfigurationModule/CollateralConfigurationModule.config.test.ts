@@ -1,7 +1,11 @@
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import { ethers as Ethers } from 'ethers';
 import { bootstrap } from '../../../bootstrap';
-import { addCollateral, verifyCollateral, verifyCollateralListed } from './CollateralModule.helper';
+import {
+  addCollateral,
+  verifyCollateral,
+  verifyCollateralListed,
+} from '../CollateralModule/CollateralModule.helper';
 
 describe('CollateralModule', function () {
   const { signers, systems } = bootstrap();
