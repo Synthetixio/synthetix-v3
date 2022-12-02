@@ -146,7 +146,6 @@ describe('LiquidationModule', function () {
         });
 
         it('has reduced amount of total liquidity registered to the market', async () => {
-          console.log(liquidationReward);
           assertBn.equal(
             await systems().Core.callStatic.getMarketCollateral(marketId()),
             depositAmount.mul(11).sub(liquidationReward)

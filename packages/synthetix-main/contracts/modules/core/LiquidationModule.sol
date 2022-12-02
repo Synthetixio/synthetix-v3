@@ -40,7 +40,8 @@ contract LiquidationModule is ILiquidationModule {
     function liquidate(
         uint128 accountId,
         uint128 poolId,
-        address collateralType
+        address collateralType,
+        uint128 liquidateAsAccountId
     )
         external
         override
@@ -50,6 +51,10 @@ contract LiquidationModule is ILiquidationModule {
             uint collateralLiquidated
         )
     {
+        if (Account.load(liquidateAsAccountId).rbac.owner == address(0)) {
+            revert ParameterError.InvalidParameter("liquidateAsAccountId", "account is not created");
+        }
+
         Pool.Data storage pool = Pool.load(poolId);
         CollateralConfiguration.Data storage collateralConfig = CollateralConfiguration.load(collateralType);
         VaultEpoch.Data storage epoch = pool.vaults[collateralType].currentEpoch();
@@ -99,12 +104,22 @@ contract LiquidationModule is ILiquidationModule {
         // now we feed the debt back in also
         epoch.distributeDebtToAccounts(debtLiquidated.toInt());
 
-        // send reward
-        collateralType.safeTransfer(msg.sender, amountRewarded);
+        // The collateral is reduced by `amountRewarded`, so we need to reduce the credit capacity available to the markets
+        pool.recalculateVaultCollateral(collateralType);
 
-        // TODO: send any remaining collateral to the liquidated account? need to have a liquidation penalty setting or something
+        // send amountRewarded to the specified account
+        Account.load(liquidateAsAccountId).collaterals[collateralType].deposit(amountRewarded);
 
-        emit Liquidation(accountId, poolId, collateralType, debtLiquidated, collateralLiquidated, amountRewarded);
+        emit Liquidation(
+            accountId,
+            poolId,
+            collateralType,
+            debtLiquidated,
+            collateralLiquidated,
+            amountRewarded,
+            liquidateAsAccountId,
+            msg.sender
+        );
     }
 
     function liquidateVault(
@@ -170,7 +185,14 @@ contract LiquidationModule is ILiquidationModule {
         // award the collateral that was just taken to the specified account
         Account.load(liquidateAsAccountId).collaterals[collateralType].deposit(collateralRewarded);
 
-        emit VaultLiquidation(poolId, collateralType, amountLiquidated, collateralRewarded);
+        emit VaultLiquidation(
+            poolId,
+            collateralType,
+            amountLiquidated,
+            collateralRewarded,
+            liquidateAsAccountId,
+            msg.sender
+        );
     }
 
     function _isLiquidatable(

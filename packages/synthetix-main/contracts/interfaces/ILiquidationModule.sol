@@ -9,14 +9,18 @@ interface ILiquidationModule {
         address indexed collateralType,
         uint debtLiquidated,
         uint collateralLiquidated,
-        uint amountRewarded
+        uint amountRewarded,
+        uint liquidateAsAccountId,
+        address sender
     );
 
     event VaultLiquidation(
         uint128 indexed poolId,
         address indexed collateralType,
         uint debtLiquidated,
-        uint collateralLiquidated
+        uint collateralLiquidated,
+        uint liquidateAsAccountId,
+        address sender
     );
 
     struct LiquidationInformation {
@@ -28,7 +32,8 @@ interface ILiquidationModule {
     function liquidate(
         uint128 accountId,
         uint128 poolId,
-        address collateralType
+        address collateralType,
+        uint128 liquidateAsAccountId
     )
         external
         returns (
