@@ -25,17 +25,6 @@ describe('Pool', function () {
   before('init', async () => {
     [owner, user1] = signers();
 
-    // create a basic pool
-    /*await systems().Core.connect(owner).createPool(poolId, await owner.getAddress());
-
-    await systems().Core.connect(owner).setPoolConfiguration(poolId, [
-      {
-        marketId: marketId(),
-        weightD18: 1,
-        maxDebtShareValueD18: ethers.utils.parseEther('10000')
-      }
-    ]);*/
-
     // create a secondary pool for testing cases of having multiple pools for one market
     await systems()
       .Core.connect(owner)
