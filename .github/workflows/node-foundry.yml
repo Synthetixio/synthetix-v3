@@ -1,11 +1,9 @@
 name: Build and publish node-foundry
 
-on: [push]
-
-# on:
-#   push:
-#     branches:
-#       - "main"
+on:
+  push:
+    branches:
+      - "main"
 
 jobs:
   build-and-publish-latest:
