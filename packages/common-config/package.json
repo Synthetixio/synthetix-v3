@@ -13,6 +13,7 @@
     "hardhat-cannon": "1.1.18",
     "hardhat-contract-sizer": "2.1.1",
     "hardhat-gas-reporter": "1.0.9",
+    "hardhat-ignore-warnings": "^0.2.5",
     "solidity-coverage": "0.7.17",
     "typechain": "8.1.0"
   }

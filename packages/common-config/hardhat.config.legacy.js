@@ -13,6 +13,7 @@ require('hardhat-contract-sizer');
 require('solidity-coverage');
 require('@synthetixio/hardhat-router');
 require('hardhat-gas-reporter');
+require('hardhat-ignore-warnings');
 
 require('hardhat-cannon');
 
