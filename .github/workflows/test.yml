@@ -61,6 +61,9 @@ jobs:
       #   with:
       #     node-version: "16.16.0"
       #     cache: "npm"
+      - run: ls -lah
+      - run: whoami
+      - run: id
       - run: npm ci
       - run: npm run build
       - run: npm --workspace=./packages/sample-project test
