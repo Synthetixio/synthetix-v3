@@ -100,31 +100,26 @@ contract CollateralModule is ICollateralModule {
     function deposit(
         uint128 accountId,
         address collateralType,
-        uint amount
+        uint tokenAmount
     ) public override {
         CollateralConfiguration.collateralEnabled(collateralType);
-        Account.onlyWithPermission(accountId, AccountRBAC._DEPOSIT_PERMISSION);
 
         Account.Data storage account = Account.load(accountId);
 
-        // TODO: Deposit/withdraw should be transferring from/to msg.sender,
-        // instead of the account's owner address.
-        // If msg.sender has permission for a deposit/withdraw operation,
-        // then it is most natural for the collateral to be pulled from msg.sender.
-        address user = account.rbac.owner;
+        address depositFrom = msg.sender;
 
         address self = address(this);
 
-        uint allowance = IERC20(collateralType).allowance(user, self);
+        uint allowance = IERC20(collateralType).allowance(depositFrom, self);
         if (allowance < amount) {
             revert IERC20.InsufficientAllowance(amount, allowance);
         }
 
-        collateralType.safeTransferFrom(user, self, amount);
+        collateralType.safeTransferFrom(depositFrom, self, amount);
 
-        account.collaterals[collateralType].deposit(amount);
+        account.collaterals[collateralType].deposit(_convertTokenToSystemAmount(tokenAddress));
 
-        emit Deposited(accountId, collateralType, amount, msg.sender);
+        emit Deposited(accountId, collateralType, tokenAmount, msg.sender);
     }
 
     /**
@@ -133,21 +128,28 @@ contract CollateralModule is ICollateralModule {
     function withdraw(
         uint128 accountId,
         address collateralType,
-        uint amount
+        uint tokenAmount
     ) public override {
         Account.onlyWithPermission(accountId, AccountRBAC._WITHDRAW_PERMISSION);
 
         Account.Data storage account = Account.load(accountId);
 
-        if (account.collaterals[collateralType].availableAmountD18 < amount) {
-            revert InsufficientAccountCollateral(amount);
+        // this extra condition is to prevent potentially malicious untrusted code from being executed on the next statement
+        if (account.collaterals[collateralType].availableAmountD18 == 0) {
+            revert InsufficientAccountCollateral(0);
         }
 
-        account.collaterals[collateralType].deductCollateral(amount);
+        uint systemAmount = _convertTokenToSystemAmount(collateralType, tokenAmount);
 
-        collateralType.safeTransfer(account.rbac.owner, amount);
+        if (account.collaterals[collateralType].availableAmountD18 < systemAmount) {
+            revert InsufficientAccountCollateral(systemAmount);
+        }
 
-        emit Withdrawn(accountId, collateralType, amount, msg.sender);
+        account.collaterals[collateralType].deductCollateral(systemAmount);
+
+        collateralType.safeTransfer(msg.sender, tokenAmount);
+
+        emit Withdrawn(accountId, collateralType, tokenAmount, msg.sender);
     }
 
     /**
@@ -229,63 +231,7 @@ contract CollateralModule is ICollateralModule {
         account.collaterals[collateralType].locks.push(CollateralLock.Data(amount, expireTimestamp));
     }
 
-    /*function getAccountUnstakebleCollateral(uint accountId, address collateralType) public view override returns (uint) {
-        (uint256 total, uint256 assigned, uint256 locked, ) = _getAccountCollateralTotals(accountId, collateralType);
-
-        if (locked > assigned) {
-            return total - locked;
-        }
-
-        return total - assigned;
+    function _convertTokenToSystemAmount(IERC20 token, uint tokenAmount) internal view {
+        return tokenAmount * DecimalMath.UNIT / 10 ** token.decimals();
     }
-
-    function redeemReward(
-        uint128 accountId,
-        uint amount,
-        uint duration
-    ) external override {
-        ITokenModule redeemableRewardsToken = _getToken(_REDEEMABLE_REWARDS_TOKEN);
-        ITokenModule rewardedToken = _getToken(_REWARDED_TOKEN);
-
-        if (!_collateralStore().collateralConfigurations[address(rewardedToken)].enabled) {
-            revert InvalidCollateral(address(rewardedToken));
-        }
-
-        CollateralData storage collateralData = _collateralStore().stakedCollateralsDataByAccountId[accountId][
-            address(rewardedToken)
-        ];
-        uint rewardTokenMinted = _calculateRewardTokenMinted(amount, duration);
-
-        redeemableRewardsToken.burn(msg.sender, amount);
-        rewardedToken.mint(address(this), amount);
-
-        // adjust the user reward curve
-        CurvesLibrary.PolynomialCurve memory oldCurve = collateralData.escrow;
-
-        CurvesLibrary.PolynomialCurve memory newCurve = CurvesLibrary.generateCurve(
-            CurvesLibrary.Point(block.timestamp, rewardTokenMinted),
-            CurvesLibrary.Point(block.timestamp / 2, rewardTokenMinted / 2),
-            CurvesLibrary.Point(block.timestamp + duration, 0)
-        );
-
-        collateralData.escrow = CurvesLibrary.combineCurves(oldCurve, newCurve);
-
-        if (!collateralData.isSet) {
-            // new collateral
-            collateralData.isSet = true;
-            collateralData.availableAmount = amount;
-        } else {
-            collateralData.availableAmount += amount;
-        }
-    }
-
-
-    /////////////////////////////////////////////////
-    // INTERNALS
-    /////////////////////////////////////////////////
-
-    /*
-    function _calculateRewardTokenMinted(uint amount, uint duration) internal pure returns (uint) {
-        return (amount * duration) / _SECONDS_PER_YEAR;
-    }*/
 }

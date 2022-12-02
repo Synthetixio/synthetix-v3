@@ -13,12 +13,12 @@ interface ICollateralModule {
     /**
      * @notice Emitted when `amount` of collateral of type `collateralType` is deposited to account `accountId` by `sender`.
      */
-    event Deposited(uint128 indexed accountId, address indexed collateralType, uint amount, address indexed sender);
+    event Deposited(uint128 indexed accountId, address indexed collateralType, uint tokenAmount, address indexed sender);
 
     /**
      * @notice Emitted when `amount` of collateral of type `collateralType` is withdrawn from account `accountId` by `sender`.
      */
-    event Withdrawn(uint128 indexed accountId, address indexed collateralType, uint amount, address indexed sender);
+    event Withdrawn(uint128 indexed accountId, address indexed collateralType, uint tokenAmount, address indexed sender);
 
     /**
      * @notice Creates or updates the configuration for given `collateralType`.
@@ -55,10 +55,7 @@ interface ICollateralModule {
 
     /**
      * @notice Deposits `amount` of collateral of type `collateralType` into account `accountId`.
-     *
-     * Requirements:
-     *
-     * - `msg.sender` must be the owner of the account, have the `ADMIN` permission, or have the `DEPOSIT` permission.
+     * Anyone can deposit into anyone's active account without restriction.
      *
      * Emits a {CollateralDeposited} event.
      *
@@ -66,7 +63,7 @@ interface ICollateralModule {
     function deposit(
         uint128 accountId,
         address collateralType,
-        uint amount
+        uint tokenAmount
     ) external;
 
     /**
@@ -82,7 +79,7 @@ interface ICollateralModule {
     function withdraw(
         uint128 accountId,
         address collateralType,
-        uint amount
+        uint tokenAmount
     ) external;
 
     /// @notice Returns the total values pertaining to account `accountId` for `collateralType`.
