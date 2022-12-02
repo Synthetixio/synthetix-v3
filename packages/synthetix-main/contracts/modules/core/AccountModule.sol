@@ -160,7 +160,6 @@ contract AccountModule is IAccountModule {
     // solc-ignore-next-line func-mutability
     function _isPermissionValid(bytes32 permission) internal {
         if (
-            permission != AccountRBAC._DEPOSIT_PERMISSION &&
             permission != AccountRBAC._WITHDRAW_PERMISSION &&
             permission != AccountRBAC._DELEGATE_PERMISSION &&
             permission != AccountRBAC._MINT_PERMISSION &&
