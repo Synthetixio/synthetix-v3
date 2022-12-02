@@ -17,14 +17,21 @@ describe('AssociateDebtModule', function () {
     depositAmount,
   } = bootstrapWithMockMarketAndPool();
 
+  let owner: ethers.Signer;
   let user1: ethers.Signer, user2: ethers.Signer;
 
   before('identify signers', async () => {
-    [, user1, user2] = signers();
+    [owner, user1, user2] = signers();
+  });
+
+  before('clear feature flags', async function () {
+    await systems()
+      .Core.connect(owner)
+      .setFeatureFlagAllowAll(ethers.utils.formatBytes32String('associateDebt'), true);
   });
 
   describe('associateDebt()', () => {
-    const amount = ethers.utils.parseEther('13');
+    const amount = ethers.utils.parseEther('100');
 
     it('only works from the configured market address', async () => {
       await assertRevert(
@@ -81,61 +88,84 @@ describe('AssociateDebtModule', function () {
           user2AccountId,
           poolId,
           collateralAddress(),
-          depositAmount.div(3), // user1 75%, user2 25%
+          depositAmount, // user1 50%, user2 50%
           ethers.utils.parseEther('1')
         );
       });
 
-      describe('when invoked', async () => {
-        let prevMarketIssuance: ethers.BigNumber;
-
-        before('record', async () => {
-          prevMarketIssuance = await systems().Core.getMarketNetIssuance(marketId());
+      describe('when the market reported debt is 100', function () {
+        before('set reported debt to 100', async function () {
+          await MockMarket().connect(owner).setReportedDebt(amount);
         });
 
-        before('invoke', async () => {
-          assertBn.equal(
-            await systems().Core.callStatic.getPositionDebt(
-              user2AccountId,
-              poolId,
-              collateralAddress()
-            ),
-            0
-          );
-
-          await MockMarket()
-            .connect(user2)
-            .callAssociateDebt(poolId, collateralAddress(), user2AccountId, amount);
-
-          assertBn.equal(await MockMarket().reportedDebt(0), amount);
-          assertBn.equal(await systems().Core.callStatic.getMarketTotalBalance(marketId()), 0);
-        });
-
-        it('reduces market issuance', async () => {
-          assertBn.equal(
-            await systems().Core.getMarketNetIssuance(marketId()),
-            prevMarketIssuance.sub(amount)
-          );
-        });
-
-        it('increases user debt', async () => {
-          assertBn.equal(
-            await systems().Core.callStatic.getPositionDebt(
-              user2AccountId,
-              poolId,
-              collateralAddress()
-            ),
-            amount
-          );
-        });
-
-        it('keeps other user debt the same', async () => {
-          // the mock market contract is programmed to not affect overall market debt during the
-          // operation, which is usually what we would expect
+        it('shows users have expected debt', async function () {
           assertBn.equal(
             await systems().Core.callStatic.getPositionDebt(accountId, poolId, collateralAddress()),
-            0
+            ethers.utils.parseEther('50')
           );
+          assertBn.equal(
+            await systems().Core.callStatic.getPositionDebt(
+              user2AccountId,
+              poolId,
+              collateralAddress()
+            ),
+            ethers.utils.parseEther('50')
+          );
+        });
+
+        describe('when the market reported debt is 200', function () {
+          before('set reported debt to 100', async function () {
+            await MockMarket().connect(owner).setReportedDebt(amount.mul(2));
+          });
+
+          it('shows users have expected debt', async function () {
+            assertBn.equal(
+              await systems().Core.callStatic.getPositionDebt(
+                accountId,
+                poolId,
+                collateralAddress()
+              ),
+              ethers.utils.parseEther('100')
+            );
+            assertBn.equal(
+              await systems().Core.callStatic.getPositionDebt(
+                user2AccountId,
+                poolId,
+                collateralAddress()
+              ),
+              ethers.utils.parseEther('100')
+            );
+          });
+
+          describe('when associateDebt is invoked', async () => {
+            before('invoke', async () => {
+              await MockMarket()
+                .connect(user2)
+                .callAssociateDebt(poolId, collateralAddress(), accountId, amount);
+            });
+
+            it('increases the debt of the user whose debt was associated', async () => {
+              assertBn.equal(
+                await systems().Core.callStatic.getPositionDebt(
+                  accountId,
+                  poolId,
+                  collateralAddress()
+                ),
+                ethers.utils.parseEther('150')
+              );
+            });
+
+            it('keeps other user debt the same', async () => {
+              assertBn.equal(
+                await systems().Core.callStatic.getPositionDebt(
+                  user2AccountId,
+                  poolId,
+                  collateralAddress()
+                ),
+                ethers.utils.parseEther('50')
+              );
+            });
+          });
         });
       });
     });
