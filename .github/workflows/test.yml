@@ -54,7 +54,7 @@ jobs:
       env:
         NODE_ENV: development
       # options: --user root -v ${{github.workspace}}:/src/:rw
-      options: --user root -v "/home/runner/work/synthetix-v3/synthetix-v3":"/__w/synthetix-v3/synthetix-v3":"rw"
+      options: --user root -v "${{github.workspace}}":"/src":"rw" --workdir /src
     steps:
       # - name: Install Foundry (Cannon)
       #   uses: foundry-rs/foundry-toolchain@v1
@@ -66,6 +66,7 @@ jobs:
       #   with:
       #     node-version: "16.16.0"
       #     cache: "npm"
+      - run: pwd
       - run: ls -lah
       - run: whoami
       - run: id
