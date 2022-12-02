@@ -34,7 +34,7 @@ interface IMarketManagerModule {
     function getMarketReportedDebt(uint128 marketId) external view returns (uint);
 
     /// @notice gets the total balance of the market (marketIssuance + marketReportedDebt)
-    function getMarketTotalBalance(uint128 marketId) external view returns (int);
+    function getMarketTotalDebt(uint128 marketId) external view returns (int);
 
     /// @notice gets the snxUSD value of the collateral backing this market.
     function getMarketCollateral(uint128 marketId) external view returns (uint);
