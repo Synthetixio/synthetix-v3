@@ -59,9 +59,6 @@ const config = {
     project: 'synthetix',
     username: 'synthetix-services',
   },
-  warnings: {
-    '*': 'error',
-  },
 };
 
 module.exports = config;
