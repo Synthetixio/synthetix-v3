@@ -164,7 +164,7 @@ export function bootstrapWithStakedPool() {
   before('setup oracle manager node', async () => {
     const [owner] = r.signers();
 
-    const params1 = abi.encode(['address'], [aggregator.address]);
+    const params1 = abi.encode(['address', 'uint256'], [aggregator.address, 0]);
     await r.systems().OracleManager.connect(owner).registerNode([], NodeTypes.CHAINLINK, params1);
     oracleNodeId = await r
       .systems()
