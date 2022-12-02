@@ -97,7 +97,7 @@ library CollateralConfiguration {
         return uint(node.price);
     }
 
-    function verifyCollateralRatio(
+    function verifyIssuanceRatio(
         Data storage self,
         uint debtD18,
         uint collateralValueD18
