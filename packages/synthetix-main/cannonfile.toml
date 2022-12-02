@@ -11,11 +11,11 @@ defaultValue = "main"
 description = "Admin user for the system"
 defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
 
-[setting.oracle_manager_version]
-defaultValue = "1.0.0"
+[setting.oracle_manager_source]
+defaultValue = "oracle-manager:1.0.0"
 
 [import.oracle_manager]
-source = "oracle-manager:<%= settings.oracle_manager_version %>"
+source = "<%= settings.oracle_manager_source %>"
 options.owner = "<%= settings.owner %>"
 
 [contract.InitialModuleBundle]

@@ -14,6 +14,7 @@ export async function addCollateral(
   oracleManager: Ethers.Contract
 ) {
   let factory;
+  const collateralPrice = 1;
 
   factory = await ethers.getContractFactory('CollateralMock');
   const Collateral = await factory.connect(owner).deploy();
@@ -22,7 +23,7 @@ export async function addCollateral(
 
   factory = await ethers.getContractFactory('AggregatorV3Mock');
   const aggregator = await factory.connect(owner).deploy();
-  await (await aggregator.connect(owner).mockSetCurrentPrice(1)).wait();
+  await (await aggregator.connect(owner).mockSetCurrentPrice(collateralPrice)).wait();
 
   const params1 = ethers.utils.defaultAbiCoder.encode(['address'], [aggregator.address]);
   await oracleManager.connect(owner).registerNode([], NodeTypes.CHAINLINK, params1);
@@ -42,7 +43,7 @@ export async function addCollateral(
     })
   ).wait();
 
-  return { Collateral, CollateralPriceFeed: aggregator, oracleNodeId };
+  return { Collateral, CollateralPriceFeed: aggregator, oracleNodeId, collateralPrice };
 }
 
 export async function verifyCollateral(

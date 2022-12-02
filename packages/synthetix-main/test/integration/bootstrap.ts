@@ -130,7 +130,7 @@ export function bootstrapWithStakedPool() {
 
   let aggregator: ethers.Contract;
 
-  let nodeId: string;
+  let oracleNodeId: string;
   const accountId = 1;
   const poolId = 1;
   let collateralAddress: string;
@@ -151,7 +151,7 @@ export function bootstrapWithStakedPool() {
 
     const params1 = abi.encode(['address'], [aggregator.address]);
     await r.systems().OracleManager.connect(owner).registerNode([], NodeTypes.CHAINLINK, params1);
-    nodeId = await r
+    oracleNodeId = await r
       .systems()
       .OracleManager.connect(owner)
       .getNodeId([], NodeTypes.CHAINLINK, params1);
@@ -173,7 +173,7 @@ export function bootstrapWithStakedPool() {
     await (
       await r.systems().Core.connect(owner).configureCollateral({
         tokenAddress: collateralAddress,
-        oracleNodeId: nodeId,
+        oracleNodeId,
         issuanceRatioD18: '5000000000000000000',
         liquidationRatioD18: '1500000000000000000',
         liquidationRewardD18: '20000000000000000000',

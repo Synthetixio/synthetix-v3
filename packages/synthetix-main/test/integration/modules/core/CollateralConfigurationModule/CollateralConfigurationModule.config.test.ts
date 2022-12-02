@@ -6,11 +6,12 @@ import {
   verifyCollateral,
   verifyCollateralListed,
 } from '../CollateralModule/CollateralModule.helper';
+import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 
-describe('CollateralModule', function () {
+describe.only('CollateralModule', function () {
   const { signers, systems } = bootstrap();
 
-  let systemOwner: Ethers.Signer, user1: Ethers.Signer;
+  let systemOwner: Ethers.Signer, user1: Ethers.Signer, collateralPrice: number;
 
   let Collateral: Ethers.Contract, AnotherCollateral: Ethers.Contract;
   let oracleNodeId: string, oracleNodeId2: string;
@@ -22,7 +23,7 @@ describe('CollateralModule', function () {
 
     describe('when the first collateral is added', function () {
       before('add collateral', async () => {
-        ({ Collateral, oracleNodeId } = await addCollateral(
+        ({ Collateral, oracleNodeId, collateralPrice } = await addCollateral(
           'Synthetix Token',
           'SNX',
           400,
@@ -150,6 +151,13 @@ describe('CollateralModule', function () {
             await verifyCollateralListed(AnotherCollateral, false, true, systems().Core);
           });
         });
+      });
+
+      it('collateral can successfully get its price once its configured', async () => {
+        assertBn.equal(
+          await systems().Core.getCollateralPrice(Collateral.address),
+          collateralPrice
+        );
       });
     });
 
