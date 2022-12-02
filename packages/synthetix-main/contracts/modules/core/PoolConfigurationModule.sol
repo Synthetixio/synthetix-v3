@@ -5,7 +5,7 @@ import "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
 import "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
 
 import "../../interfaces/IPoolConfigurationModule.sol";
-import "../../storage/PoolConfiguration.sol";
+import "../../storage/SystemPoolConfiguration.sol";
 
 import "../../storage/Pool.sol";
 
@@ -18,20 +18,20 @@ contract PoolConfigurationModule is IPoolConfigurationModule {
         OwnableStorage.onlyOwner();
         Pool.requireExists(poolId);
 
-        PoolConfiguration.load().preferredPool = poolId;
+        SystemPoolConfiguration.load().preferredPool = poolId;
 
         emit PreferredPoolSet(poolId);
     }
 
     function getPreferredPool() external view override returns (uint) {
-        return PoolConfiguration.load().preferredPool;
+        return SystemPoolConfiguration.load().preferredPool;
     }
 
     function addApprovedPool(uint128 poolId) external override {
         OwnableStorage.onlyOwner();
         Pool.requireExists(poolId);
 
-        PoolConfiguration.load().approvedPools.add(poolId);
+        SystemPoolConfiguration.load().approvedPools.add(poolId);
 
         emit PoolApprovedAdded(poolId);
     }
@@ -40,12 +40,12 @@ contract PoolConfigurationModule is IPoolConfigurationModule {
         OwnableStorage.onlyOwner();
         Pool.requireExists(poolId);
 
-        PoolConfiguration.load().approvedPools.remove(poolId);
+        SystemPoolConfiguration.load().approvedPools.remove(poolId);
 
         emit PoolApprovedRemoved(poolId);
     }
 
     function getApprovedPools() external view override returns (uint[] memory) {
-        return PoolConfiguration.load().approvedPools.values();
+        return SystemPoolConfiguration.load().approvedPools.values();
     }
 }

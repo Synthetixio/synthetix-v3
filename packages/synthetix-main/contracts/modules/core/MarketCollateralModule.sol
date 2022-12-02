@@ -2,8 +2,9 @@
 pragma solidity ^0.8.0;
 
 import "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
+import "@synthetixio/core-contracts/contracts/token/ERC20Helper.sol";
+
 import "../../interfaces/IMarketCollateralModule.sol";
-import "../../utils/ERC20Helper.sol";
 import "../../storage/Market.sol";
 
 contract MarketCollateralModule is IMarketCollateralModule {

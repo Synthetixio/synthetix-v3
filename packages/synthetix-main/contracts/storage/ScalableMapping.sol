@@ -62,12 +62,10 @@ library ScalableMapping {
 
         uint totalSharesD18 = self.totalSharesD18;
 
-        // TODO: Can we safely assume that amount will always be a regular integer,
-        // i.e. not a decimal?
         int valueD45 = valueD18 * DecimalMath.UNIT_PRECISE_INT;
-        int deltascaleModifierD27 = valueD45 / totalSharesD18.toInt();
+        int deltaScaleModifierD27 = valueD45 / totalSharesD18.toInt();
 
-        self.scaleModifierD27 += deltascaleModifierD27.to128();
+        self.scaleModifierD27 += deltaScaleModifierD27.to128();
 
         if (self.scaleModifierD27 < -DecimalMath.UNIT_PRECISE_INT) {
             revert InsufficientMappedAmount(-self.scaleModifierD27);

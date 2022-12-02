@@ -16,6 +16,14 @@ contract DecimalMathMock {
         return DecimalMath.divDecimal(x, y);
     }
 
+    function upscale(uint x, uint factor) public pure returns (uint) {
+        return DecimalMath.upscale(x, factor);
+    }
+
+    function downscale(uint x, uint factor) public pure returns (uint) {
+        return DecimalMath.downscale(x, factor);
+    }
+
     // -----------------
     // uint128
     // -----------------
@@ -26,6 +34,14 @@ contract DecimalMathMock {
 
     function divDecimalUint128(uint128 x, uint128 y) public pure returns (uint128) {
         return DecimalMath.divDecimalUint128(x, y);
+    }
+
+    function upscaleUint128(uint128 x, uint factor) public pure returns (uint128) {
+        return DecimalMath.upscaleUint128(x, factor);
+    }
+
+    function downscaleUint128(uint128 x, uint factor) public pure returns (uint128) {
+        return DecimalMath.downscaleUint128(x, factor);
     }
 
     // -----------------
@@ -40,6 +56,14 @@ contract DecimalMathMock {
         return DecimalMath.divDecimal(x, y);
     }
 
+    function upscale(int x, uint factor) public pure returns (int) {
+        return DecimalMath.upscale(x, factor);
+    }
+
+    function downscale(int x, uint factor) public pure returns (int) {
+        return DecimalMath.downscale(x, factor);
+    }
+
     // -----------------
     // int128
     // -----------------
@@ -50,5 +74,13 @@ contract DecimalMathMock {
 
     function divDecimalInt128(int128 x, int128 y) public pure returns (int128) {
         return DecimalMath.divDecimalInt128(x, y);
+    }
+
+    function upscale(int128 x, uint factor) public pure returns (int128) {
+        return DecimalMath.upscaleInt128(x, factor);
+    }
+
+    function downscale(int128 x, uint factor) public pure returns (int128) {
+        return DecimalMath.downscaleInt128(x, factor);
     }
 }
