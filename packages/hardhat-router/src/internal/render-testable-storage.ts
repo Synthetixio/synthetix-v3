@@ -6,7 +6,7 @@ import { findAll } from 'solidity-ast/utils';
 import { renderTemplate } from '../internal/render-template';
 
 interface TestableStorageTemplateInputs {
-  sourceFile: string;
+  relativeSourceName: string;
   libraryName: string;
 
   loadParams?: string;
@@ -36,19 +36,31 @@ interface TestableStorageTemplateInputs {
 
 export function renderTestableStorage({
   artifact,
+  relativeSourceName,
   sourceAstNode,
   template = path.resolve(__dirname, '..', '..', 'templates', 'TestableStorage.sol.mustache'),
 }: {
   artifact: string;
+  relativeSourceName: string;
   sourceAstNode: SourceUnit;
   template?: string;
 }) {
   const { sourceName, contractName } = parseFullyQualifiedName(artifact);
-  const input = _generateTemplateInputs(sourceName, contractName, sourceAstNode);
+  const input = _generateTemplateInputs(
+    relativeSourceName,
+    sourceName,
+    contractName,
+    sourceAstNode
+  );
   return renderTemplate(template, input as unknown as { [k: string]: unknown });
 }
 
-function _generateTemplateInputs(sourceFile: string, contractName: string, astNode: SourceUnit) {
+function _generateTemplateInputs(
+  relativeSourceName: string,
+  sourceFile: string,
+  contractName: string,
+  astNode: SourceUnit
+) {
   const contractDefinition = _findContractNode(contractName, astNode);
 
   const dataStructDefinition = Array.from(findAll('StructDefinition', contractDefinition)).find(
@@ -183,7 +195,7 @@ function _generateTemplateInputs(sourceFile: string, contractName: string, astNo
   }
 
   const input: TestableStorageTemplateInputs = {
-    sourceFile,
+    relativeSourceName,
     loadParams,
     loadInject,
     libraryName: contractDefinition.name,

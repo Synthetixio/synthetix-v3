@@ -1,7 +1,7 @@
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
-import { bootstrapWithMockMarketAndPool } from '../bootstrap';
 import { ethers } from 'ethers';
-import { snapshotCheckpoint } from '../../utils';
+import { snapshotCheckpoint } from '../../utils/snapshot';
+import { bootstrapWithMockMarketAndPool } from '../bootstrap';
 
 describe('Pool', function () {
   const {

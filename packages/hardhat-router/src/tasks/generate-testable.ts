@@ -1,3 +1,4 @@
+import fs from 'node:fs/promises';
 import path from 'node:path';
 import * as types from '@synthetixio/core-utils/utils/hardhat/argument-types';
 import logger from '@synthetixio/core-utils/utils/io/logger';
@@ -9,6 +10,7 @@ import { SUBTASK_GENERATE_TESTABLE_STORAGE, TASK_GENERATE_TESTABLE } from '../ta
 
 export interface DeployTaskParams {
   artifacts?: string[];
+  outputFolder?: string;
   debug?: boolean;
   quiet?: boolean;
 }
@@ -20,19 +22,34 @@ task(TASK_GENERATE_TESTABLE, 'Creates generated test contracts for all storage l
     ['contracts/storage/'],
     types.stringArray
   )
+  .addOptionalParam(
+    'outputFolder',
+    'Where to store all the testable contracts inside the sources folder',
+    'modules/test/'
+  )
   .addFlag('debug', 'Display debug logs')
   .addFlag('quiet', 'Silence all output')
   .setAction(async (taskArguments: DeployTaskParams, hre) => {
-    const { artifacts, debug, quiet } = taskArguments;
+    const { artifacts, outputFolder = 'modules/test/', debug, quiet } = taskArguments;
 
     logger.quiet = !!quiet;
     logger.debugging = !!debug;
 
     await quietCompile(hre, true);
 
+    const output = path.resolve(hre.config.paths.sources, outputFolder);
     const storageLibs = await getSourcesFullyQualifiedNames(hre, artifacts);
 
     logger.info(`Generating testable storage for ${storageLibs.length} contracts`);
+
+    await fs.mkdir(output, { recursive: true });
+
+    // Delete old testable contracts
+    for (const f of await fs.readdir(output)) {
+      if (f.startsWith('Testable') && f.endsWith('Module.sol')) {
+        await fs.unlink(path.join(output, f));
+      }
+    }
 
     // scan for all storage interfaces
     for (const contractFullyQualifiedName of storageLibs) {
@@ -40,10 +57,7 @@ task(TASK_GENERATE_TESTABLE, 'Creates generated test contracts for all storage l
 
       await hre.run(SUBTASK_GENERATE_TESTABLE_STORAGE, {
         artifact: contractFullyQualifiedName,
-        output: path.resolve(
-          hre.config.paths.sources,
-          `modules/test/Testable${contractName}Module.sol`
-        ),
+        output: path.join(output, `Testable${contractName}Module.sol`),
       });
     }
   });

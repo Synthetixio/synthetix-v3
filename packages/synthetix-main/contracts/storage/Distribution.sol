@@ -30,15 +30,6 @@ library Distribution {
      * with no shares.
      */
     error EmptyDistribution();
-    /**
-     * @dev Thrown when an attempt is made to add value to a distribution
-     * whose valuePerShare is zero.
-     */
-    error ZeroValuePerShare();
-    /**
-     * @dev Thrown when a single distribution is used in the two modes mentioned above.
-     */
-    error InconsistentDistribution();
 
     struct Data {
         /**

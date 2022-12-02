@@ -36,6 +36,9 @@ artifact = "contracts/modules/associated-systems/AssociatedSystemsModule.sol:Ass
 [contract.CollateralModule]
 artifact = "contracts/modules/core/CollateralModule.sol:CollateralModule"
 
+[contract.CollateralConfigurationModule]
+artifact = "contracts/modules/core/CollateralConfigurationModule.sol:CollateralConfigurationModule"
+
 [contract.IssueUSDModule]
 artifact = "contracts/modules/core/IssueUSDModule.sol:IssueUSDModule"
 
@@ -121,6 +124,9 @@ artifact = "contracts/modules/test/TestableRewardDistributionModule.sol:Testable
 [contract.TestableRewardDistributionStatusModule]
 artifact = "contracts/modules/test/TestableRewardDistributionStatusModule.sol:TestableRewardDistributionStatusModule"
 
+[contract.TestableScalableMappingModule]
+artifact = "contracts/modules/test/TestableScalableMappingModule.sol:TestableScalableMappingModule"
+
 [contract.TestableVaultEpochModule]
 artifact = "contracts/modules/test/TestableVaultEpochModule.sol:TestableVaultEpochModule"
 
@@ -141,6 +147,7 @@ args = [
     AssociateDebtModule: contracts.AssociateDebtModule,
     AssociatedSystemsModule: contracts.AssociatedSystemsModule,
     CollateralModule: contracts.CollateralModule,
+    CollateralConfigurationModule: contracts.CollateralConfigurationModule,
     IssueUSDModule: contracts.IssueUSDModule,
     LiquidationModule: contracts.LiquidationModule,
     MarketCollateralModule: contracts.MarketCollateralModule,
@@ -165,6 +172,7 @@ args = [
     TestableSystemPoolConfigurationModule: contracts.TestableSystemPoolConfigurationModule,
     TestableRewardDistributionModule: contracts.TestableRewardDistributionModule,
     TestableRewardDistributionStatusModule: contracts.TestableRewardDistributionStatusModule,
+    TestableScalableMappingModule: contracts.TestableScalableMappingModule,
     TestableVaultEpochModule: contracts.TestableVaultEpochModule,
     TestableVaultModule: contracts.TestableVaultModule,
   }) %>'''
@@ -177,6 +185,7 @@ depends = [
   "contract.AssociateDebtModule",
   "contract.AssociatedSystemsModule",
   "contract.CollateralModule",
+  "contract.CollateralConfigurationModule",
   "contract.IssueUSDModule",
   "contract.LiquidationModule",
   "contract.MarketCollateralModule",
@@ -202,6 +211,7 @@ depends = [
   "contract.TestableSystemPoolConfigurationModule",
   "contract.TestableRewardDistributionModule",
   "contract.TestableRewardDistributionStatusModule",
+  "contract.TestableScalableMappingModule",
   "contract.TestableVaultEpochModule",
   "contract.TestableVaultModule",
 ]
@@ -215,6 +225,7 @@ abiOf = [
   "AssociateDebtModule",
   "AssociatedSystemsModule",
   "CollateralModule",
+  "CollateralConfigurationModule",
   "IssueUSDModule",
   "LiquidationModule",
   "MarketCollateralModule",
@@ -240,6 +251,7 @@ abiOf = [
   "TestableSystemPoolConfigurationModule",
   "TestableRewardDistributionModule",
   "TestableRewardDistributionStatusModule",
+  "TestableScalableMappingModule",
   "TestableVaultEpochModule",
   "TestableVaultModule",
 ]

@@ -1,13 +1,10 @@
-import hre from 'hardhat';
-
-import assert from 'assert/strict';
-
-import { MockMarket } from '../../../typechain-types/contracts/mocks/MockMarket';
-
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
-import { bootstrap } from '../bootstrap';
+import assert from 'assert/strict';
 import { ethers } from 'ethers';
-import { snapshotCheckpoint } from '../../utils';
+import hre from 'hardhat';
+import { MockMarket } from '../../../typechain-types/contracts/mocks/MockMarket';
+import { snapshotCheckpoint } from '../../utils/snapshot';
+import { bootstrap } from '../bootstrap';
 
 describe('Market', function () {
   const { systems, provider, signers } = bootstrap();
