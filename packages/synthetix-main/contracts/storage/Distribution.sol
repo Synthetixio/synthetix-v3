@@ -7,6 +7,8 @@ import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import "./DistributionActor.sol";
 import "../errors/ParameterError.sol";
 
+import "hardhat/console.sol";
+
 /**
  * @title Data structure that allows you to track some global value, distributed amongst a set of actors.
  *
@@ -30,15 +32,6 @@ library Distribution {
      * with no shares.
      */
     error EmptyDistribution();
-    /**
-     * @dev Thrown when an attempt is made to add value to a distribution
-     * whose valuePerShare is zero.
-     */
-    error ZeroValuePerShare();
-    /**
-     * @dev Thrown when a single distribution is used in the two modes mentioned above.
-     */
-    error InconsistentDistribution();
 
     struct Data {
         /**
@@ -76,7 +69,7 @@ library Distribution {
         int valueD45 = valueD18 * DecimalMath.UNIT_PRECISE_INT;
         int deltaValuePerShareD27 = valueD45 / int(totalSharesD18);
 
-        dist.valuePerShareD27 += int128(deltaValuePerShareD27);
+        dist.valuePerShareD27 += deltaValuePerShareD27.to128();
     }
 
     /**
@@ -141,5 +134,14 @@ library Distribution {
 
     function getValuePerShare(Data storage self) internal view returns (int) {
         return int(self.valuePerShareD27).downscale(DecimalMath.PRECISION_FACTOR);
+    }
+
+    function getHPValuePerShare(Data storage self) internal view returns (int) {
+        return int(self.valuePerShareD27);
+    }
+
+    // TODO: Remove
+    function getTotalShares(Data storage self) internal view returns (uint) {
+        return self.totalSharesD18;
     }
 }

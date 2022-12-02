@@ -114,6 +114,9 @@ artifact = "contracts/modules/test/TestableRewardDistributionModule.sol:Testable
 [contract.TestableRewardDistributionStatusModule]
 artifact = "contracts/modules/test/TestableRewardDistributionStatusModule.sol:TestableRewardDistributionStatusModule"
 
+[contract.TestableScalableMappingModule]
+artifact = "contracts/modules/test/TestableScalableMappingModule.sol:TestableScalableMappingModule"
+
 [contract.TestableVaultEpochModule]
 artifact = "contracts/modules/test/TestableVaultEpochModule.sol:TestableVaultEpochModule"
 
@@ -158,6 +161,7 @@ args = [
     TestablePoolConfigurationModule: contracts.TestablePoolConfigurationModule,
     TestableRewardDistributionModule: contracts.TestableRewardDistributionModule,
     TestableRewardDistributionStatusModule: contracts.TestableRewardDistributionStatusModule,
+    TestableScalableMappingModule: contracts.TestableScalableMappingModule,
     TestableVaultEpochModule: contracts.TestableVaultEpochModule,
     TestableVaultModule: contracts.TestableVaultModule,
   }) %>'''
@@ -195,6 +199,7 @@ depends = [
   "contract.TestablePoolConfigurationModule",
   "contract.TestableRewardDistributionModule",
   "contract.TestableRewardDistributionStatusModule",
+  "contract.TestableScalableMappingModule",
   "contract.TestableVaultEpochModule",
   "contract.TestableVaultModule",
 ]
@@ -233,6 +238,7 @@ abiOf = [
   "TestablePoolConfigurationModule",
   "TestableRewardDistributionModule",
   "TestableRewardDistributionStatusModule",
+  "TestableScalableMappingModule",
   "TestableVaultEpochModule",
   "TestableVaultModule",
 ]

@@ -68,7 +68,7 @@ library ScalableMapping {
         int valueD45 = valueD18 * DecimalMath.UNIT_PRECISE_INT;
         int deltascaleModifierD27 = valueD45 / int(totalSharesD18);
 
-        self.scaleModifierD27 += int128(deltascaleModifierD27);
+        self.scaleModifierD27 += deltascaleModifierD27.to128();
 
         if (self.scaleModifierD27 < -DecimalMath.UNIT_PRECISE_INT) {
             revert InsufficientMappedAmount(-self.scaleModifierD27);
