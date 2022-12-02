@@ -1,17 +1,17 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
-
 import "../../interfaces/ILiquidationModule.sol";
 
 import "../../storage/Collateral.sol";
 import "../../storage/Pool.sol";
 import "../../storage/Account.sol";
-import "@synthetixio/core-modules/contracts/storage/AssociatedSystem.sol";
-import "@synthetixio/core-contracts/contracts/errors/ParameterError.sol";
 
-import "../../utils/ERC20Helper.sol";
+import "@synthetixio/core-modules/contracts/storage/AssociatedSystem.sol";
+
+import "@synthetixio/core-contracts/contracts/errors/ParameterError.sol";
+import "@synthetixio/core-contracts/contracts/token/ERC20Helper.sol";
+import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 
 contract LiquidationModule is ILiquidationModule {
     using SafeCastU128 for uint128;
