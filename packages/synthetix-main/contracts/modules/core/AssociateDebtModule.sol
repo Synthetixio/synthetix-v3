@@ -3,10 +3,9 @@ pragma solidity ^0.8.0;
 
 import "../../interfaces/IAssociateDebtModule.sol";
 
-import "../../utils/ERC20Helper.sol";
-
 import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+import "@synthetixio/core-contracts/contracts/token/ERC20Helper.sol";
 
 import "../../storage/Distribution.sol";
 import "../../storage/Pool.sol";
