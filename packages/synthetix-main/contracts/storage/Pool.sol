@@ -207,14 +207,14 @@ library Pool {
 
         // Calculate the margin of debt that the market could incur to hit the system wide limit.
         uint totalSharesD18 = self.vaultsDebtDistribution.totalSharesD18;
-        int valuePerShare = marketData.poolsDebtDistribution.getValuePerShare();
+        int valuePerShareD18 = marketData.poolsDebtDistribution.getValuePerShare();
 
         if (minLiquidityRatioD18 == 0) {
             // If minLiquidityRatioD18 is zero, then set limit to 100%.
-            return valuePerShare + int(DecimalMath.UNIT);
+            return valuePerShareD18 + int(DecimalMath.UNIT);
         } else if (totalSharesD18 == 0) {
             // margin = credit / systemLimit, per share
-            return valuePerShare;
+            return valuePerShareD18;
         } else {
             uint marginD18 = creditCapacityD18.divDecimal(minLiquidityRatioD18).divDecimal(totalSharesD18);
 

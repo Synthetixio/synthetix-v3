@@ -45,7 +45,7 @@ library Vault {
         // solhint-disable-next-line private-vars-leading-underscore
         uint128 __unused;
         /**
-         * @dev The previous credit capacity of the vault (collateral - debt), when the system was last interacted with.
+         * @dev The previous debt of the vault, when `updateCreditCapacity` was last called by the Pool.
          */
         int128 prevTotalDebtD18;
         /**
