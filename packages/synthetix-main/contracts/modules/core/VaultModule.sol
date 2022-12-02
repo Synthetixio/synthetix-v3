@@ -102,7 +102,7 @@ contract VaultModule is IVaultModule {
 
             // Minimum collateralization ratios are configured in the system per collateral type.abi
             // Ensure that the account's updated position satisfies this requirement.
-            CollateralConfiguration.load(collateralType).verifyCollateralRatio(
+            CollateralConfiguration.load(collateralType).verifyIssuanceRatio(
                 debt < 0 ? 0 : debt.toUint(),
                 newCollateralAmount.mulDecimal(collateralPrice)
             );

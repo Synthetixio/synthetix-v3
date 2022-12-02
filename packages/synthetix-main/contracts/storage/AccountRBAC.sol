@@ -9,7 +9,6 @@ library AccountRBAC {
     using SetUtil for SetUtil.AddressSet;
 
     bytes32 internal constant _ADMIN_PERMISSION = "ADMIN";
-    bytes32 internal constant _DEPOSIT_PERMISSION = "DEPOSIT";
     bytes32 internal constant _WITHDRAW_PERMISSION = "WITHDRAW";
     bytes32 internal constant _DELEGATE_PERMISSION = "DELEGATE";
     bytes32 internal constant _MINT_PERMISSION = "MINT";
