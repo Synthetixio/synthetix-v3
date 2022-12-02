@@ -10,39 +10,39 @@ import "../../utils/SafeCast/SafeCastI128.sol";
 // has a bug or something where it doesn't return the revert reason
 // in tests.
 contract SafeCastMock {
-    function uint256toUint128(uint256 x) public returns (uint128) {
+    function uint256toUint128(uint256 x) external view returns (uint128) {
         return SafeCastU256.to128(x);
     }
 
-    function int256toUint256(int256 x) public returns (uint256) {
+    function int256toUint256(int256 x) external view returns (uint256) {
         return SafeCastI256.toUint(x);
     }
 
-    function uint128toInt128(uint128 x) public returns (int128) {
+    function uint128toInt128(uint128 x) external view returns (int128) {
         return SafeCastU128.toInt(x);
     }
 
-    function uint128toInt256(uint128 x) public returns (int256) {
+    function uint128toInt256(uint128 x) external view returns (int256) {
         return SafeCastU128.toInt(x);
     }
 
-    function int256toInt128(int256 x) public returns (int128) {
+    function int256toInt128(int256 x) external view returns (int128) {
         return SafeCastI256.to128(x);
     }
 
-    function int128toInt256(int128 x) public returns (int256) {
+    function int128toInt256(int128 x) external view returns (int256) {
         return x;
     }
 
-    function int128toUint128(int128 x) public view returns (uint128) {
+    function int128toUint128(int128 x) external view returns (uint128) {
         return SafeCastI128.toUint(x);
     }
 
-    function uint128toUint256(uint128 x) public view returns (uint256) {
+    function uint128toUint256(uint128 x) external view returns (uint256) {
         return x;
     }
 
-    function uint256toInt256(uint256 x) public returns (int256) {
+    function uint256toInt256(uint256 x) external view returns (int256) {
         return SafeCastU256.toInt(x);
     }
 }
