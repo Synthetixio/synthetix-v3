@@ -117,6 +117,8 @@ interface ICollateralModule {
         uint64 expireTimestamp
     ) external;
 
+    function configureOracleManager(address oracleManagerAddress) external;
+
     /*
     /// @notice Returns the amount of collateral of type `collateralType` staked with account `accountId` that can be unstaked.
     /// @dev DEPENDENT ON 305 (Would be combined with `getAccountUnstakebleCollateral` into `getAccountAvailableCollateral`)

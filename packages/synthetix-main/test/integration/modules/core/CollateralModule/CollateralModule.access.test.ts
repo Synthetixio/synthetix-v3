@@ -8,7 +8,7 @@ import { bootstrap } from '../../../bootstrap';
 describe('CollateralModule', function () {
   const { signers, systems } = bootstrap();
 
-  let Collateral: Ethers.Contract, CollateralPriceFeed: Ethers.Contract;
+  let Collateral: Ethers.Contract, oracleNodeId: string;
 
   let owner: Ethers.Signer, user1: Ethers.Signer, user2: Ethers.Signer, user3: Ethers.Signer;
 
@@ -24,18 +24,19 @@ describe('CollateralModule', function () {
 
     describe('when a collateral is addded', function () {
       before('add collateral type', async () => {
-        ({ Collateral, CollateralPriceFeed } = await addCollateral(
+        ({ Collateral, oracleNodeId } = await addCollateral(
           'Synthetix Token',
           'SNX',
           400,
           200,
           owner,
-          systems().Core
+          systems().Core,
+          systems().OracleManager
         ));
       });
 
       it('is well configured', async () => {
-        await verifyCollateral(0, Collateral, CollateralPriceFeed, 400, 200, true, systems().Core);
+        await verifyCollateral(0, Collateral, oracleNodeId, 400, 200, true, systems().Core);
       });
 
       describe('when accounts have tokens', function () {
