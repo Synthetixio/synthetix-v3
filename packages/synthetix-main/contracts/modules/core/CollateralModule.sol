@@ -79,7 +79,7 @@ contract CollateralModule is ICollateralModule {
     // solc-ignore-next-line func-mutability
     function getCollateralConfiguration(address collateralType)
         external
-        view
+        pure
         override
         returns (CollateralConfiguration.Data memory)
     {
@@ -227,6 +227,16 @@ contract CollateralModule is ICollateralModule {
         }
 
         account.collaterals[collateralType].locks.push(CollateralLock.Data(amount, expireTimestamp));
+    }
+
+    /**
+     * @dev Configure oracle manager address only by owner
+     */
+    function configureOracleManager(address oracleManagerAddress) external override {
+        OwnableStorage.onlyOwner();
+
+        OracleManager.Data storage oracle = OracleManager.load();
+        oracle.oracleManagerAddress = oracleManagerAddress;
     }
 
     /*function getAccountUnstakebleCollateral(uint accountId, address collateralType) public view override returns (uint) {

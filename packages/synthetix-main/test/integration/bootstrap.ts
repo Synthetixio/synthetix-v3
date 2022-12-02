@@ -6,6 +6,8 @@ import { snapshotCheckpoint } from '../utils';
 import { runTypeChain, glob } from 'typechain';
 import { AccountProxy, CoreProxy, SNXProxy, USDProxy } from '../generated/typechain';
 
+import NodeTypes from '@synthetixio/oracle-manager/test/integration/mixins/Node.types';
+
 import { MockMarket } from '../../typechain-types/contracts/mocks/MockMarket';
 
 const POOL_FEATURE_FLAG = ethers.utils.formatBytes32String('createPool');
@@ -38,6 +40,7 @@ let systems: {
   Core: CoreProxy;
   USD: USDProxy;
   SNX: SNXProxy;
+  OracleManager: any;
 };
 
 let baseSystemSnapshot: unknown;
@@ -87,6 +90,7 @@ before(async function () {
   const contracts = {
     ...(outputs.contracts ?? {}),
     ...(outputs.imports?.synthetix?.contracts ?? {}),
+    OracleManagerProxy: outputs.imports?.oracle_manager?.contracts.Proxy,
   };
 
   // after a lot of testing, we *really* need the any here in order to accomplish the typing we need
@@ -126,10 +130,12 @@ export function bootstrapWithStakedPool() {
 
   let aggregator: ethers.Contract;
 
+  let nodeId: string;
   const accountId = 1;
   const poolId = 1;
   let collateralAddress: string;
   const depositAmount = ethers.utils.parseEther('1000');
+  const abi = ethers.utils.defaultAbiCoder;
 
   before('deploy mock aggregator', async () => {
     const [owner] = r.signers();
@@ -138,6 +144,17 @@ export function bootstrapWithStakedPool() {
     aggregator = await factory.connect(owner).deploy();
 
     await aggregator.mockSetCurrentPrice(ethers.utils.parseEther('1'));
+  });
+
+  before('setup oracle manager node', async () => {
+    const [owner] = r.signers();
+
+    const params1 = abi.encode(['address'], [aggregator.address]);
+    await r.systems().OracleManager.connect(owner).registerNode([], NodeTypes.CHAINLINK, params1);
+    nodeId = await r
+      .systems()
+      .OracleManager.connect(owner)
+      .getNodeId([], NodeTypes.CHAINLINK, params1);
   });
 
   before('delegate collateral', async function () {
@@ -156,7 +173,7 @@ export function bootstrapWithStakedPool() {
     await (
       await r.systems().Core.connect(owner).configureCollateral({
         tokenAddress: collateralAddress,
-        priceFeed: aggregator.address,
+        oracleNodeId: nodeId,
         issuanceRatioD18: '5000000000000000000',
         liquidationRatioD18: '1500000000000000000',
         liquidationRewardD18: '20000000000000000000',
