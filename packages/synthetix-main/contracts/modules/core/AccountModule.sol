@@ -10,6 +10,9 @@ import "../../storage/Account.sol";
 
 import "@synthetixio/core-modules/contracts/storage/AssociatedSystem.sol";
 
+/**
+ * @title System module for managing accounts
+ */
 contract AccountModule is IAccountModule {
     bytes32 private constant _ACCOUNT_SYSTEM = "accountNft";
 
@@ -23,6 +26,9 @@ contract AccountModule is IAccountModule {
     error PermissionNotGranted(uint128 accountId, bytes32 permission, address user);
     error InvalidPermission(bytes32 permission);
 
+    /**
+     * @dev Returns the address of the account token
+     */
     function getAccountTokenAddress() public view override returns (address) {
         return AssociatedSystem.load(_ACCOUNT_SYSTEM).proxy;
     }
@@ -41,9 +47,6 @@ contract AccountModule is IAccountModule {
         }
     }
 
-    // ---------------------------------------
-    // Business Logic
-    // ---------------------------------------
     function createAccount(uint128 requestedAccountId) external override {
         IAccountTokenModule accountTokenModule = IAccountTokenModule(getAccountTokenAddress());
         accountTokenModule.mint(msg.sender, requestedAccountId);

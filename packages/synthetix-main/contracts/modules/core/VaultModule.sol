@@ -93,7 +93,7 @@ contract VaultModule is IVaultModule {
             int debt = vault.currentEpoch().consolidatedDebtAmountsD18[accountId];
             //(, uint collateralValue) = pool.currentAccountCollateral(collateralType, accountId);
 
-            CollateralConfiguration.load(collateralType).verifyCollateralRatio(
+            CollateralConfiguration.load(collateralType).verifyIssuanceRatio(
                 debt < 0 ? 0 : debt.toUint(),
                 collateralAmount.mulDecimal(collateralPrice)
             );

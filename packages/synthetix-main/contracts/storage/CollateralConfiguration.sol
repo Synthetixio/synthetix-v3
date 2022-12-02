@@ -98,7 +98,7 @@ library CollateralConfiguration {
         return uint(answerD18);
     }
 
-    function verifyCollateralRatio(
+    function verifyIssuanceRatio(
         Data storage self,
         uint debtD18,
         uint collateralValueD18
