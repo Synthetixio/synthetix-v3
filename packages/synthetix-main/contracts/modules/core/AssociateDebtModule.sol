@@ -52,13 +52,14 @@ contract AssociateDebtModule is IAssociateDebtModule {
     ) external returns (int) {
         FeatureFlag.ensureAccessToFeature(_ASSOCIATE_DEBT_FEATURE_FLAG);
 
+        Pool.Data storage poolData = Pool.load(poolId);
+        VaultEpoch.Data storage epochData = poolData.vaults[collateralType].currentEpoch();
+        Market.Data storage marketData = Market.load(marketId);
+
         if (msg.sender != marketData.marketAddress) {
             revert Unauthorized(msg.sender);
         }
 
-        Pool.Data storage poolData = Pool.load(poolId);
-        VaultEpoch.Data storage epochData = poolData.vaults[collateralType].currentEpoch();
-        Market.Data storage marketData = Market.load(marketId);
         bytes32 actorId = bytes32(uint(accountId));
 
         // The market must appear in pool configuration of the specified position
