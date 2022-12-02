@@ -47,7 +47,7 @@ library Vault {
         /**
          * @dev The previous credit capacity of the vault (collateral - debt), when the system was last interacted with.
          */
-        uint128 prevRemainingCreditCapacityD18;
+        int128 prevTotalDebtD18;
         /**
          * @dev Vault data for all the liquidation cycles divided into epochs.
          */
@@ -81,8 +81,8 @@ library Vault {
         internal
         returns (
             uint usdWeightD18,
-            uint remainingCreditCapacityD18,
-            int deltaRemainingCreditCapacityD18
+            int totalDebtD18,
+            int deltaDebtD18
         )
     {
         VaultEpoch.Data storage epochData = currentEpoch(self);
@@ -92,14 +92,12 @@ library Vault {
         int vaultDepositedValueD18 = epochData.collateralAmounts.totalAmount().toInt().mulDecimal(
             collateralPriceD18.toInt()
         );
-        int vaultAccruedDebtD18 = epochData.totalDebt();
-        remainingCreditCapacityD18 = vaultDepositedValueD18 > vaultAccruedDebtD18
-            ? (vaultDepositedValueD18 - vaultAccruedDebtD18).toUint()
-            : 0;
 
-        deltaRemainingCreditCapacityD18 = remainingCreditCapacityD18.toInt() - self.prevRemainingCreditCapacityD18.toInt();
+        totalDebtD18 = epochData.totalDebt();
 
-        self.prevRemainingCreditCapacityD18 = remainingCreditCapacityD18.to128();
+        deltaDebtD18 = totalDebtD18 - self.prevTotalDebtD18;
+
+        self.prevTotalDebtD18 = totalDebtD18.to128();
     }
 
     /**
