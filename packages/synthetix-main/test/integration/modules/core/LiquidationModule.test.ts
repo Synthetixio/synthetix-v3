@@ -5,7 +5,7 @@ import { ethers } from 'ethers';
 
 import { bootstrapWithMockMarketAndPool } from '../../bootstrap';
 
-describe('LiquidationModule', function () {
+describe.only('LiquidationModule', function () {
   const {
     signers,
     systems,
@@ -27,10 +27,17 @@ describe('LiquidationModule', function () {
 
   describe('liquidate()', () => {
     before(restore);
+    const liquidatorAccountId = 384572397362836;
+
+    before('create liquidator account', async () => {
+      await systems().Core.connect(user2).createAccount(liquidatorAccountId);
+    });
 
     it('does not allow liquidation of account with healthy c-ratio', async () => {
       await assertRevert(
-        systems().Core.connect(user1).liquidate(accountId, poolId, collateralAddress()),
+        systems()
+          .Core.connect(user1)
+          .liquidate(accountId, poolId, collateralAddress(), liquidatorAccountId),
         'IneligibleForLiquidation(1000000000000000000000, 0, 0, 1500000000000000000)',
         systems().Core
       );
@@ -60,7 +67,9 @@ describe('LiquidationModule', function () {
 
       it('cannot liquidate when its the only account in the pool', async () => {
         await assertRevert(
-          systems().Core.connect(user2).liquidate(accountId, poolId, collateralAddress()),
+          systems()
+            .Core.connect(user2)
+            .liquidate(accountId, poolId, collateralAddress(), liquidatorAccountId),
           'MustBeVaultLiquidated()',
           systems().Core
         );
@@ -99,9 +108,35 @@ describe('LiquidationModule', function () {
 
         let txn: ethers.providers.TransactionResponse;
         before('liquidate', async () => {
+          /*
+          console.log(
+            await systems().Core.callStatic.getCollateralConfiguration(collateralAddress()), // reward 20000000000000000000
+            await systems().Core.callStatic.getCollateralPrice(collateralAddress()) // price 1000000000000000000
+          );
+          */
+
+          /*
+          console.log(
+            (await systems().Core.callStatic.getVaultCollateral(poolId, collateralAddress()))[0]
+          );
+          // 11000000000000000000000
+          */
+
+          console.log(await systems().Core.callStatic.getMarketCollateral(marketId()));
+          // 11000000000000000000000
+
           txn = await systems()
             .Core.connect(user2)
-            .liquidate(accountId, poolId, collateralAddress());
+            .liquidate(accountId, poolId, collateralAddress(), liquidatorAccountId);
+
+          /*
+          console.log(
+            (await systems().Core.callStatic.getVaultCollateral(poolId, collateralAddress()))[0]
+          );
+          // 10980000000000000000000
+          */
+
+          // it's dropping by $1,000 but we expect $20
         });
 
         it('erases the liquidated account', async () => {
@@ -120,10 +155,11 @@ describe('LiquidationModule', function () {
         });
 
         it('sends correct reward to liquidating address', async () => {
-          assertBn.equal(
-            await collateralContract().balanceOf(await user2.getAddress()),
-            liquidationReward
+          const liquidatorAccountCollateral = await systems().Core.getAccountCollateral(
+            liquidatorAccountId,
+            collateralAddress()
           );
+          assertBn.equal(liquidatorAccountCollateral.totalDeposited, liquidationReward);
         });
 
         it('redistributes debt among remaining staker', async () => {
@@ -146,6 +182,7 @@ describe('LiquidationModule', function () {
         });
 
         it('has reduced amount of total liquidity registered to the market', async () => {
+          console.log(await systems().Core.callStatic.getMarketCollateral(marketId()));
           assertBn.equal(
             await systems().Core.callStatic.getMarketCollateral(marketId()),
             depositAmount.mul(11).sub(liquidationReward)
@@ -179,7 +216,7 @@ describe('LiquidationModule', function () {
         systems()
           .Core.connect(user1)
           .liquidateVault(poolId, collateralAddress(), 382387423936, ethers.utils.parseEther('1')),
-        'InvalidParameter',
+        'AccountNotFound(382387423936)',
         systems().Core
       );
     });

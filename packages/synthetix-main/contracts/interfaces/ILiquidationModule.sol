@@ -9,9 +9,7 @@ interface ILiquidationModule {
         address indexed collateralType,
         uint debtLiquidated,
         uint collateralLiquidated,
-        uint amountRewarded,
-        uint liquidateAsAccountId,
-        address sender
+        uint amountRewarded
     );
 
     event VaultLiquidation(

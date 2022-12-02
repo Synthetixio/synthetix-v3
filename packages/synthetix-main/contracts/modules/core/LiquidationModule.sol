@@ -111,16 +111,7 @@ contract LiquidationModule is ILiquidationModule {
         // Send amountRewarded to the specified account
         Account.load(liquidateAsAccountId).collaterals[collateralType].deposit(amountRewarded);
 
-        emit Liquidation(
-            accountId,
-            poolId,
-            collateralType,
-            debtLiquidated,
-            collateralLiquidated,
-            amountRewarded,
-            liquidateAsAccountId,
-            msg.sender
-        );
+        emit Liquidation(accountId, poolId, collateralType, debtLiquidated, collateralLiquidated, amountRewarded);
     }
 
     /**
@@ -237,7 +228,6 @@ contract LiquidationModule is ILiquidationModule {
      */
     function isVaultLiquidatable(uint128 poolId, address collateralType) external override returns (bool) {
         Pool.Data storage pool = Pool.load(poolId);
-        CollateralConfiguration.Data storage collateralConfig = CollateralConfiguration.load(collateralType);
         int rawVaultDebt = pool.currentVaultDebt(collateralType);
         (, uint collateralValue) = pool.currentVaultCollateral(collateralType);
         return rawVaultDebt >= 0 && _isLiquidatable(collateralType, rawVaultDebt, collateralValue);
