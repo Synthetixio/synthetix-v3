@@ -8,7 +8,7 @@ import {
 } from '../CollateralModule/CollateralModule.helper';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 
-describe.only('CollateralModule', function () {
+describe('CollateralModule', function () {
   const { signers, systems } = bootstrap();
 
   let systemOwner: Ethers.Signer, user1: Ethers.Signer, collateralPrice: number;
