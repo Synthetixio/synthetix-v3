@@ -3,8 +3,9 @@ import { ethers } from 'ethers';
 import hre from 'hardhat';
 import { glob, runTypeChain } from 'typechain';
 import { MockMarket } from '../../typechain-types/contracts/mocks/MockMarket';
-import { AccountProxy, CoreProxy, factories, SNXProxy, USDProxy } from '../generated/typechain';
 import { snapshotCheckpoint } from '../utils/snapshot';
+
+import type { AccountProxy, CoreProxy, SNXProxy, USDProxy } from '../generated/typechain';
 
 const POOL_FEATURE_FLAG = ethers.utils.formatBytes32String('createPool');
 const MARKET_FEATURE_FLAG = ethers.utils.formatBytes32String('registerMarket');
@@ -29,10 +30,12 @@ let systems: {
 
 let baseSystemSnapshot: unknown;
 
-function loadSystems(
+async function loadSystems(
   contracts: ChainBuilderContext['contracts'],
   provider: ethers.providers.Provider
 ) {
+  const { factories } = await import('../generated/typechain');
+
   const getProxy = <T extends keyof Proxies>(contractName: T) => {
     if (!contracts[contractName]) throw new Error(`Proxy for "${contractName}" not found`);
     const { address } = contracts[contractName];
@@ -94,7 +97,7 @@ before(async function () {
     ...(outputs.imports?.synthetix?.contracts ?? {}),
   };
 
-  systems = loadSystems(contracts, provider);
+  systems = await loadSystems(contracts, provider);
 
   console.log('completed initial bootstrap');
 });
