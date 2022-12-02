@@ -66,6 +66,7 @@ jobs:
       #   with:
       #     node-version: "16.16.0"
       #     cache: "npm"
+      - run: cd /src
       - run: pwd
       - run: ls -lah
       - run: whoami
