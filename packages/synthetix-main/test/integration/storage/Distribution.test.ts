@@ -229,32 +229,4 @@ describe('Distribution', async () => {
       );
     });
   });
-
-  // stress tests
-  // describe('very high value per share');
-  // describe('very low # of shares');
-  // describe('very low amount distributed');
-
-  // describe('edge case scenarios', async () => {
-  //   // very high value per share
-  //   describe('high value per share', async () => {
-  //     before(restore);
-  //     before('add actors with small values', async () => {
-  //       await FakeDistributionModule.Distribution_updateActorValue(actor1, wei(1, 10).toBN());
-  //       await FakeDistributionModule.Distribution_updateActorValue(actor2, wei(2, 10).toBN());
-  //     });
-
-  //     before('distribute large amount of value', async () => {
-  //       console.log(await FakeDistributionModule.Distribution_getActorValue(actor1));
-  //       console.log(await FakeDistributionModule.Distribution_getActorValue(actor2));
-  //       await FakeDistributionModule.Distribution_distributeValue(bn(1_00_00));
-  //     });
-
-  //     it('has correct actor values', async () => {
-  //       // TODO
-  //       assertBn.equal(await FakeDistributionModule.Distribution_getActorValue(actor1), bn(10));
-  //       assertBn.equal(await FakeDistributionModule.Distribution_getActorValue(actor2), bn(20));
-  //     });
-  //   });
-  // });
 });
