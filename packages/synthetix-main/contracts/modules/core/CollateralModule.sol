@@ -111,13 +111,13 @@ contract CollateralModule is ICollateralModule {
         address self = address(this);
 
         uint allowance = IERC20(collateralType).allowance(depositFrom, self);
-        if (allowance < amount) {
-            revert IERC20.InsufficientAllowance(amount, allowance);
+        if (allowance < tokenAmount) {
+            revert IERC20.InsufficientAllowance(tokenAmount, allowance);
         }
 
-        collateralType.safeTransferFrom(depositFrom, self, amount);
+        collateralType.safeTransferFrom(depositFrom, self, tokenAmount);
 
-        account.collaterals[collateralType].deposit(_convertTokenToSystemAmount(tokenAddress));
+        account.collaterals[collateralType].deposit(_convertTokenToSystemAmount(IERC20(collateralType), tokenAmount));
 
         emit Deposited(accountId, collateralType, tokenAmount, msg.sender);
     }
@@ -139,7 +139,7 @@ contract CollateralModule is ICollateralModule {
             revert InsufficientAccountCollateral(0);
         }
 
-        uint systemAmount = _convertTokenToSystemAmount(collateralType, tokenAmount);
+        uint systemAmount = _convertTokenToSystemAmount(IERC20(collateralType), tokenAmount);
 
         if (account.collaterals[collateralType].availableAmountD18 < systemAmount) {
             revert InsufficientAccountCollateral(systemAmount);
@@ -231,7 +231,7 @@ contract CollateralModule is ICollateralModule {
         account.collaterals[collateralType].locks.push(CollateralLock.Data(amount, expireTimestamp));
     }
 
-    function _convertTokenToSystemAmount(IERC20 token, uint tokenAmount) internal view {
-        return tokenAmount * DecimalMath.UNIT / 10 ** token.decimals();
+    function _convertTokenToSystemAmount(IERC20 token, uint tokenAmount) internal view returns (uint) {
+        return (tokenAmount * DecimalMath.UNIT) / (10 ** token.decimals());
     }
 }

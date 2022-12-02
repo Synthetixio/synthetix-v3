@@ -22,7 +22,7 @@ describe('CollateralModule', function () {
       await (await systems().Core.connect(user2).createAccount(2)).wait();
     });
 
-    describe('when a collateral is addded', function () {
+    describe('when a collateral is added', function () {
       before('add collateral type', async () => {
         ({ Collateral, CollateralPriceFeed } = await addCollateral(
           'Synthetix Token',
@@ -66,16 +66,6 @@ describe('CollateralModule', function () {
             ).wait();
           });
 
-          describe('when an unauthorized account tries to deposit collateral', function () {
-            it('reverts', async () => {
-              await assertRevert(
-                systems().Core.connect(user2).deposit(1, Collateral.address, 100),
-                `PermissionDenied(1, "${Permissions.DEPOSIT}", "${await user2.getAddress()}")`,
-                systems().Core
-              );
-            });
-          });
-
           describe('when an unauthorized account tries to withdraw collateral', function () {
             it('reverts', async () => {
               await assertRevert(
@@ -87,16 +77,7 @@ describe('CollateralModule', function () {
           });
 
           describe('when an account authorizes other users to operate', function () {
-            before('grant DEPOSIT and WITHDRAW permissions', async () => {
-              await (
-                await systems()
-                  .Core.connect(user1)
-                  .grantPermission(
-                    1,
-                    ethers.utils.formatBytes32String('DEPOSIT'),
-                    await user2.getAddress()
-                  )
-              ).wait();
+            before('grant WITHDRAW permissions', async () => {
               await (
                 await systems()
                   .Core.connect(user1)
@@ -116,7 +97,7 @@ describe('CollateralModule', function () {
               });
 
               it('shows that tokens have moved', async function () {
-                assertBn.equal(await Collateral.balanceOf(await user1.getAddress()), 900);
+                assertBn.equal(await Collateral.balanceOf(await user2.getAddress()), 900);
                 assertBn.equal(await Collateral.balanceOf(systems().Core.address), 100);
               });
 
