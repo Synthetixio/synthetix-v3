@@ -9,7 +9,7 @@ library MarketPoolInfo {
         /**
          * @dev . Needed to re-add the pool to the distribution when going back in range
          */
-        uint128 liquidityAmountD18;
+        uint128 creditCapacityAmountD18;
         // solhint-disable-next-line private-vars-leading-underscore
         uint128 __unused;
         /**

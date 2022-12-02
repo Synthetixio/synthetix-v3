@@ -23,14 +23,6 @@ contract AccountModule is IAccountModule {
     error PermissionNotGranted(uint128 accountId, bytes32 permission, address user);
     error InvalidPermission(bytes32 permission);
 
-    modifier onlyAccountToken() {
-        if (msg.sender != address(getAccountTokenAddress())) {
-            revert OnlyAccountTokenProxy(msg.sender);
-        }
-
-        _;
-    }
-
     function getAccountTokenAddress() public view override returns (address) {
         return AssociatedSystem.load(_ACCOUNT_SYSTEM).proxy;
     }
@@ -61,7 +53,9 @@ contract AccountModule is IAccountModule {
         emit AccountCreated(msg.sender, requestedAccountId);
     }
 
-    function notifyAccountTransfer(address to, uint128 accountId) external override onlyAccountToken {
+    function notifyAccountTransfer(address to, uint128 accountId) external override {
+        _onlyAccountToken();
+
         Account.Data storage account = Account.load(accountId);
 
         account.rbac.revokeAllPermissions(account.rbac.owner);
@@ -88,7 +82,9 @@ contract AccountModule is IAccountModule {
         uint128 accountId,
         bytes32 permission,
         address user
-    ) external override isPermissionValid(permission) {
+    ) external override {
+        _isPermissionValid(permission);
+
         Account.onlyWithPermission(accountId, AccountRBAC._ADMIN_PERMISSION);
 
         Account.load(accountId).rbac.grantPermission(permission, user);
@@ -122,7 +118,13 @@ contract AccountModule is IAccountModule {
         return Account.load(accountId).rbac.owner;
     }
 
-    modifier isPermissionValid(bytes32 permission) {
+    function _onlyAccountToken() internal {
+        if (msg.sender != address(getAccountTokenAddress())) {
+            revert OnlyAccountTokenProxy(msg.sender);
+        }
+    }
+
+    function _isPermissionValid(bytes32 permission) internal {
         if (
             permission != AccountRBAC._DEPOSIT_PERMISSION &&
             permission != AccountRBAC._WITHDRAW_PERMISSION &&
@@ -132,7 +134,5 @@ contract AccountModule is IAccountModule {
         ) {
             revert InvalidPermission(permission);
         }
-
-        _;
     }
 }

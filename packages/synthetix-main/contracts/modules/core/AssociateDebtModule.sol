@@ -3,10 +3,9 @@ pragma solidity ^0.8.0;
 
 import "../../interfaces/IAssociateDebtModule.sol";
 
-import "../../utils/ERC20Helper.sol";
-
 import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+import "@synthetixio/core-contracts/contracts/token/ERC20Helper.sol";
 
 import "../../storage/Distribution.sol";
 import "../../storage/Pool.sol";
@@ -63,7 +62,7 @@ contract AssociateDebtModule is IAssociateDebtModule {
 
         // subtract the requested amount of debt from the market
         // this debt should have been accumulated just now anyway so
-        marketData.issuanceD18 -= amount.toInt().to128();
+        marketData.netIssuanceD18 -= amount.toInt().to128();
 
         // register account debt
         poolData.updateAccountDebt(collateralType, accountId);

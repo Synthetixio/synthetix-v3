@@ -9,42 +9,29 @@ import "./Pool.sol";
 /**
  * @title Stores information about a deposited asset for a given account.
  *
- * This is not a global data structure, but rather one that will have an entry for each account > asset pair.
- *
- * That is, accounts have one of these data structures for each type of collateral they utilize.
- *
- * TODO: Consider renaming to CollateralEntry to indicate that this is just an entry, rather than a global thing.
+ * Each account will have one of these objects for each type of collateral it deposited in the system.
  */
 library Collateral {
     struct Data {
         /**
-         * @dev Indicates if the collateral entry is set, i.e. not empty.
-         *
-         * TODO: This is currently not used in the code. Consider removing.
+         * @dev Indicates if the collateral is set, i.e. not empty.
          */
         bool isSet;
         /**
-         * @dev The amount that can be withdrawn or delegated in this collateral entry.
+         * @dev The amount that can be withdrawn or delegated in this collateral.
          */
         uint256 availableAmountD18;
         /**
-         * @dev The pools to which this collateral entry delegates to.
+         * @dev The pools to which this collateral delegates to.
          */
         SetUtil.UintSet pools;
         /**
          * @dev Marks portions of the collateral as locked,
          * until a given unlock date.
          *
-         * TODO: Is the implementation of this finished? Atm, it may seem that Collateral
-         * can be withdrawn, even if it has been locked. I.e. the calculation of how
-         * much collateral is available does not consider this at all. Withdrawing
-         * collateral does not modify locks either.
+         * Note: Locks apply to collateral delegation (see VaultModule), and not to withdrawing collateral.
          */
         CollateralLock.Data[] locks;
-        /**
-         * @dev TODO
-         */
-        // CurvesLibrary.PolynomialCurve escrow;
     }
 
     /**

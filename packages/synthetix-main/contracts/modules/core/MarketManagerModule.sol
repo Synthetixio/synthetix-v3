@@ -44,11 +44,11 @@ contract MarketManagerModule is IMarketManagerModule {
     }
 
     function getWithdrawableUsd(uint128 marketId) public view override returns (uint) {
-        return Market.load(marketId).capacityD18 + Market.load(marketId).getDepositedCollateralValue();
+        return Market.load(marketId).creditCapacityD18 + Market.load(marketId).getDepositedCollateralValue();
     }
 
-    function getMarketIssuance(uint128 marketId) external view override returns (int128) {
-        return Market.load(marketId).issuanceD18;
+    function getMarketNetIssuance(uint128 marketId) external view override returns (int128) {
+        return Market.load(marketId).netIssuanceD18;
     }
 
     function getMarketReportedDebt(uint128 marketId) external view override returns (uint) {
@@ -60,7 +60,7 @@ contract MarketManagerModule is IMarketManagerModule {
     }
 
     function getMarketTotalBalance(uint128 marketId) external view override returns (int) {
-        return Market.load(marketId).totalBalance();
+        return Market.load(marketId).totalDebt();
     }
 
     function getMarketDebtPerShare(uint128 marketId) external override returns (int) {
@@ -88,8 +88,8 @@ contract MarketManagerModule is IMarketManagerModule {
         ITokenModule usdToken = AssociatedSystem.load(_USD_TOKEN).asToken();
 
         // Adjust accounting
-        market.capacityD18 += amount.to128();
-        market.issuanceD18 -= amount.toInt().to128();
+        market.creditCapacityD18 += amount.to128();
+        market.netIssuanceD18 -= amount.toInt().to128();
 
         // burn USD
         IUSDTokenModule(address(usdToken)).burnWithAllowance(target, msg.sender, amount);
@@ -109,8 +109,8 @@ contract MarketManagerModule is IMarketManagerModule {
         if (amount > getWithdrawableUsd(marketId)) revert NotEnoughLiquidity(marketId, amount);
 
         // Adjust accounting
-        marketData.capacityD18 -= amount.to128();
-        marketData.issuanceD18 += amount.toInt().to128();
+        marketData.creditCapacityD18 -= amount.to128();
+        marketData.netIssuanceD18 += amount.toInt().to128();
 
         // mint some USD
         AssociatedSystem.load(_USD_TOKEN).asToken().mint(target, amount);

@@ -17,27 +17,22 @@ import "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
 library MarketConfiguration {
     struct Data {
         /**
-         * @dev TODO
+         * @dev Numeric identifier for the pool.
          *
-         * TODO: Rename to marketId?
+         * Must be unique.
          */
-        /// @dev market baked by this pool
-        uint128 market;
+        uint128 marketId;
         /**
-         * @dev TODO
+         * @dev The ratio of each market's `weight` to the pool's `totalWeights` determines the pro-rata share of the market to the pool's total liquidity.
          */
-        /// @dev weight sent to that market
         uint128 weightD18;
         /**
-         * @dev TODO
+         * @dev Maximum value per share that a pool will tolerate for this market.
          *
-         * Should be within [0, 1].
+         * If the the limit is met, the markets exceeding debt will be distributed, and it will be disconnected from the pool that no longer provides credit to it.
          *
-         * TODO: Confirm range above.
-         * TODO: Make sure whenever it is set to enforce this.
-         * TODO: Rename to maxDebtPerDollarOfCollateral?
+         * Note: This value will have no effect if the system wide limit is hit first. See `PoolConfiguration.minLiquidityRatioD18`.
          */
-        /// @dev cap on debt exposure for the market
         int128 maxDebtShareValueD18;
     }
 }

@@ -31,9 +31,7 @@ contract VaultModule is IVaultModule {
     using CollateralConfiguration for CollateralConfiguration.Data;
     using ScalableMapping for ScalableMapping.Data;
 
-    error PoolNotFound(uint128 poolId);
     error InvalidLeverage(uint leverage);
-    error InvalidParameters(string incorrectParameter, string help);
     error InvalidCollateral(address collateralType);
     error CapacityLocked(uint marketId);
 
@@ -235,7 +233,7 @@ contract VaultModule is IVaultModule {
     function _verifyNotCapacityLocked(uint128 poolId) internal view {
         Pool.Data storage pool = Pool.load(poolId);
 
-        Market.Data storage market = pool.findMarketCapacityLocked();
+        Market.Data storage market = pool.findMarketWithCapacityLocked();
 
         if (market.id > 0) {
             revert CapacityLocked(market.id);

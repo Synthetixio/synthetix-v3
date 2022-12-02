@@ -1,16 +1,17 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
-
 import "../../interfaces/ILiquidationModule.sol";
 
 import "../../storage/Collateral.sol";
 import "../../storage/Pool.sol";
 import "../../storage/Account.sol";
+
 import "@synthetixio/core-modules/contracts/storage/AssociatedSystem.sol";
 
-import "../../utils/ERC20Helper.sol";
+import "@synthetixio/core-contracts/contracts/errors/ParameterError.sol";
+import "@synthetixio/core-contracts/contracts/token/ERC20Helper.sol";
+import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 
 contract LiquidationModule is ILiquidationModule {
     using SafeCastU128 for uint128;
@@ -29,8 +30,6 @@ contract LiquidationModule is ILiquidationModule {
     using VaultEpoch for VaultEpoch.Data;
     using Distribution for Distribution.Data;
     using ScalableMapping for ScalableMapping.Data;
-
-    error InvalidParameters(string incorrectParameter, string help);
 
     error IneligibleForLiquidation(uint collateralValue, uint debt, uint currentCRatio, uint cratio);
 
@@ -115,11 +114,11 @@ contract LiquidationModule is ILiquidationModule {
         uint maxUsd
     ) external override returns (uint amountLiquidated, uint collateralRewarded) {
         if (Account.load(liquidateAsAccountId).rbac.owner == address(0)) {
-            revert InvalidParameters("liquidateAsAccountId", "account is not created");
+            revert ParameterError.InvalidParameter("liquidateAsAccountId", "account is not created");
         }
 
         if (maxUsd == 0) {
-            revert InvalidParameters("maxUsd", "must be higher than 0");
+            revert ParameterError.InvalidParameter("maxUsd", "must be higher than 0");
         }
 
         Pool.Data storage pool = Pool.load(poolId);

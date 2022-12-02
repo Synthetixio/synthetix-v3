@@ -3,6 +3,7 @@ pragma solidity ^0.8.0;
 
 import "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
 import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
+import "@synthetixio/core-contracts/contracts/errors/ParameterError.sol";
 
 import "../interfaces/external/IAggregatorV3Interface.sol";
 
@@ -10,7 +11,6 @@ library CollateralConfiguration {
     using SetUtil for SetUtil.AddressSet;
     using DecimalMath for uint256;
 
-    error InvalidParameters(string incorrectParameter, string help);
     error CollateralDepositDisabled(address collateralType);
     error InsufficientCollateralRatio(uint collateralValue, uint debt, uint ratio, uint minRatio);
     error InsufficientDelegation(uint minDelegation);
@@ -49,13 +49,12 @@ library CollateralConfiguration {
     function set(Data memory config) internal {
         SetUtil.AddressSet storage collateralTypes = loadAvailableCollaterals();
 
-        // TODO: should we be *removing* the collateralType if it is disabled here, or if it is set to nothing?
         if (!collateralTypes.contains(config.tokenAddress)) {
             collateralTypes.add(config.tokenAddress);
         }
 
         if (config.minDelegationD18 < config.liquidationRewardD18) {
-            revert InvalidParameters("minDelegation", "must be greater than liquidationReward");
+            revert ParameterError.InvalidParameter("minDelegation", "must be greater than liquidationReward");
         }
 
         Data storage storedConfig = load(config.tokenAddress);
@@ -93,7 +92,7 @@ library CollateralConfiguration {
         (, int256 answerD18, , , ) = IAggregatorV3Interface(self.priceFeed).latestRoundData();
 
         // sanity check
-        // TODO: this will be removed when we get the oracle manager
+        // Note: This should no longer be necessary once the oracle manager is connected to the system.
         require(answerD18 > 0, "The collateral value is 0");
 
         return uint(answerD18);

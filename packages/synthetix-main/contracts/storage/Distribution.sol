@@ -3,9 +3,9 @@ pragma solidity ^0.8.0;
 
 import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+import "@synthetixio/core-contracts/contracts/errors/ParameterError.sol";
 
 import "./DistributionActor.sol";
-import "../errors/ParameterError.sol";
 
 /**
  * @title Data structure that allows you to track some global value, distributed amongst a set of actors.
@@ -71,8 +71,6 @@ library Distribution {
             revert EmptyDistribution();
         }
 
-        // TODO: Can we safely assume that amount will always be a regular integer,
-        // i.e. not a decimal?
         int valueD45 = valueD18 * DecimalMath.UNIT_PRECISE_INT;
         int deltaValuePerShareD27 = valueD45 / totalSharesD18.toInt();
 
@@ -108,11 +106,7 @@ library Distribution {
      * returns the change in value for the actor, since their last update.
      */
     function accumulateActor(Data storage dist, bytes32 actorId) internal returns (int valueChangeD18) {
-        valueChangeD18 = _getActorValueChange(dist, actorId);
-
-        // TODO only update lastValuePerShare since we got the valueChange in the line before
-        // actor.lastValuePerShare = valuePerShare;
-        setActorShares(dist, actorId, getActorShares(dist, actorId));
+        return setActorShares(dist, actorId, getActorShares(dist, actorId));
     }
 
     /**
