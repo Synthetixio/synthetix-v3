@@ -22,13 +22,13 @@ jobs:
             "./protocol/oracle-manager",
           ]
         include:
-          - package: core-contracts
+          - package: "./utils/core-contracts"
             coverage-file: utils/core-contracts/coverage.json
-          - package: core-utils
+          - package: "./utils/core-utils"
             coverage-file: utils/core-utils/coverage/lcov.info
-          - package: core-modules
+          - package: "./utils/core-modules"
             coverage-file: utils/core-modules/coverage.json
-          - package: hardhat-router
+          - package: "./utils/hardhat-router"
             coverage-file: utils/hardhat-router/coverage/lcov.info
     steps:
       - name: Install Foundry (Cannon)
