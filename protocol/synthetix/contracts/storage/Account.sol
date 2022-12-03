@@ -63,7 +63,7 @@ library Account {
             uint256 totalLockedD18
         )
     {
-        totalAssignedD18 = getAssignedCollateral(self, collateralType);
+        totalAssignedD18 = _getAssignedCollateral(self, collateralType);
         totalDepositedD18 = totalAssignedD18 + self.collaterals[collateralType].availableAmountD18;
         totalLockedD18 = self.collaterals[collateralType].getTotalLocked();
         //totalEscrowed = _getLockedEscrow(stakedCollateral.escrow);
@@ -71,7 +71,7 @@ library Account {
         return (totalDepositedD18, totalAssignedD18, totalLockedD18); //, totalEscrowed);
     }
 
-    function getAssignedCollateral(Data storage self, address collateralType) internal view returns (uint) {
+    function _getAssignedCollateral(Data storage self, address collateralType) private view returns (uint) {
         uint totalAssignedD18 = 0;
 
         SetUtil.UintSet storage pools = self.collaterals[collateralType].pools;
