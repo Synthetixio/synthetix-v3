@@ -5,6 +5,7 @@
 **/coverage*
 **/deployments
 /markets/*/test/generated
+/protocol/*/test/generated
 /packages/*/test/generated
 artifacts
 cache
