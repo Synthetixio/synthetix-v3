@@ -8,7 +8,7 @@ import "../../interfaces/IMarketCollateralModule.sol";
 import "../../storage/Market.sol";
 
 /**
- * @title System module for allowing markets to provide collateral
+ * @title System module for allowing markets to directly increase their credit capacity by providing their own collateral.
  */
 contract MarketCollateralModule is IMarketCollateralModule {
     using ERC20Helper for address;

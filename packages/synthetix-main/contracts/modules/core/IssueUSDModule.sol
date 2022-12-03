@@ -12,7 +12,7 @@ import "../../storage/Pool.sol";
 import "../../storage/CollateralConfiguration.sol";
 
 /**
- * @title System module for the minting and burning stablecoins
+ * @title System module for the minting and burning of stablecoins.
  */
 contract IssueUSDModule is IIssueUSDModule {
     using AccountRBAC for AccountRBAC.Data;
@@ -112,6 +112,9 @@ contract IssueUSDModule is IIssueUSDModule {
         emit UsdBurned(accountId, poolId, collateralType, amount, msg.sender);
     }
 
+    /**
+     * @dev Reverts if the given account does not have the specified permission.
+     */
     // Note: Disabling Solidity warning, not sure why it suggests pure mutability.
     // solc-ignore-next-line func-mutability
     function _onlyWithPermission(uint128 accountId, bytes32 permission) internal {

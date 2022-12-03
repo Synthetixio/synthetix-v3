@@ -16,7 +16,7 @@ import "../../storage/Pool.sol";
 import "../../interfaces/IRewardsManagerModule.sol";
 
 /**
- * @title System module for connecting rewards distributors to vaults
+ * @title System module for connecting rewards distributors to vaults.
  */
 contract RewardsManagerModule is IRewardsManagerModule {
     using SetUtil for SetUtil.Bytes32Set;

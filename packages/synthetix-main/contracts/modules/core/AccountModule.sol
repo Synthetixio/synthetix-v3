@@ -11,7 +11,7 @@ import "../../storage/Account.sol";
 import "@synthetixio/core-modules/contracts/storage/AssociatedSystem.sol";
 
 /**
- * @title System module for managing accounts
+ * @title System module for managing accounts.
  */
 contract AccountModule is IAccountModule {
     bytes32 private constant _ACCOUNT_SYSTEM = "accountNft";
