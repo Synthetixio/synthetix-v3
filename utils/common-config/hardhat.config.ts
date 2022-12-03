@@ -2,6 +2,7 @@ import path from 'node:path';
 import dotenv from 'dotenv';
 import '@typechain/hardhat';
 import '@nomiclabs/hardhat-ethers';
+import '@nomiclabs/hardhat-etherscan';
 //import '@nomiclabs/hardhat-waffle';
 import 'hardhat-contract-sizer';
 import 'solidity-coverage';

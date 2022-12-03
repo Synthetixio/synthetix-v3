@@ -2,7 +2,7 @@ import path from 'node:path';
 import { compileSolidityFolder } from '@synthetixio/core-utils/utils/solidity/compiler';
 import { dumpStorage } from '../../../src/internal/dump';
 
-const version = '0.8.11';
+const version = '0.8.17';
 
 describe('internal/dump.ts', function () {
   jest.setTimeout(120000);
