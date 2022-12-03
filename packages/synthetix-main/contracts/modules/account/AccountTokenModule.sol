@@ -8,7 +8,8 @@ import "../../../contracts/interfaces/IAccountModule.sol";
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 
 /**
- * @title Module with custom NFT logic for the account token
+ * @title Module with custom NFT logic for the account token.
+ * @dev See IAccountTokenModule.
  */
 contract AccountTokenModule is IAccountTokenModule, NftModule {
     using SafeCastU128 for uint128;
@@ -17,7 +18,7 @@ contract AccountTokenModule is IAccountTokenModule, NftModule {
     using SafeCastI256 for int256;
 
     /**
-     * @dev Allows the system's Account Module to mint an accout token with the specified ID
+     * @inheritdoc IAccountTokenModule
      */
     function mint(address owner, uint256 nftId) external {
         OwnableStorage.onlyOwner();
@@ -27,7 +28,7 @@ contract AccountTokenModule is IAccountTokenModule, NftModule {
     }
 
     /**
-     * @dev Updates account RBAC storage to track the current owner of the token
+     * @inheritdoc IAccountTokenModule
      */
     function _postTransfer(
         address, // from (unused)

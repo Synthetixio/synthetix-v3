@@ -3,15 +3,17 @@ pragma solidity ^0.8.0;
 
 import "@synthetixio/core-modules/contracts/interfaces/INftModule.sol";
 
-/// @title Module for ERC721-compatible account tokens
+/**
+ * @title Module with custom NFT logic for the account token.
+ */
 interface IAccountTokenModule is INftModule {
     /**
-     * @dev Emitted when `tokenId` token is minted.
+     * @notice Emitted when `tokenId` token is minted.
      */
     event Mint(address indexed owner, uint256 indexed tokenId);
 
     /**
-     * @dev Mints a new token with the `requestedAccountId` as the ID, owned by `owner`
+     * @notice Mints a new token with the `requestedAccountId` as the ID, owned by `owner`
      *
      * This function is only used internally by the system. See `createAccount` in the Account Module.
      *
