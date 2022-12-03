@@ -15,6 +15,9 @@ import "../../storage/Pool.sol";
 
 import "../../interfaces/IRewardsManagerModule.sol";
 
+/**
+ * @title System module for connecting rewards distributors to vaults
+ */
 contract RewardsManagerModule is IRewardsManagerModule {
     using SetUtil for SetUtil.Bytes32Set;
     using DecimalMath for uint256;
@@ -31,10 +34,9 @@ contract RewardsManagerModule is IRewardsManagerModule {
 
     uint private constant _MAX_REWARD_DISTRIBUTIONS = 10;
 
-    // ---------------------------------------
-    // Associated Rewards
-    // ---------------------------------------
-
+    /**
+     * @dev Allows a pool owner to connect a rewards distributor to a vault
+     */
     function registerRewardsDistributor(
         uint128 poolId,
         address collateralType,
@@ -47,6 +49,7 @@ contract RewardsManagerModule is IRewardsManagerModule {
             revert AccessError.Unauthorized(msg.sender);
         }
 
+        // Limit the maximum amount of rewards distributors can be connected to each vault to prevent excessive gas usage on other calls
         if (rewardIds.length() > _MAX_REWARD_DISTRIBUTIONS) {
             revert ParameterError.InvalidParameter("index", "too large");
         }
@@ -66,6 +69,9 @@ contract RewardsManagerModule is IRewardsManagerModule {
         emit RewardsDistributorRegistered(poolId, collateralType, distributor);
     }
 
+    /**
+     * @dev Allows a rewards distributor to assign claimable rewards to participants in a vault, pro-rata
+     */
     function distributeRewards(
         uint128 poolId,
         address collateralType,
@@ -75,7 +81,7 @@ contract RewardsManagerModule is IRewardsManagerModule {
     ) external override {
         Pool.Data storage pool = Pool.load(poolId);
         SetUtil.Bytes32Set storage rewardIds = pool.vaults[collateralType].rewardIds;
-        // this function is called by the reward distributor
+
         bytes32 rewardId = _getRewardId(poolId, collateralType, msg.sender);
 
         if (!rewardIds.contains(rewardId)) {
@@ -93,7 +99,10 @@ contract RewardsManagerModule is IRewardsManagerModule {
         emit RewardsDistributed(poolId, collateralType, msg.sender, amount, start, duration);
     }
 
-    function getRewards(
+    /**
+     * @dev For a given position, return the rewards that can currently be claimed
+     */
+    function getClaimableRewards(
         uint128 poolId,
         address collateralType,
         uint128 accountId
@@ -102,6 +111,9 @@ contract RewardsManagerModule is IRewardsManagerModule {
         return vault.updateRewards(accountId);
     }
 
+    /**
+     * @dev Return the amount of rewards being distributed to a vault per second
+     */
     function getRewardRate(
         uint128 poolId,
         address collateralType,
@@ -110,6 +122,9 @@ contract RewardsManagerModule is IRewardsManagerModule {
         return _getRewardRate(poolId, collateralType, distributor);
     }
 
+    /**
+     * @dev Allows a user with appropriate permissions to claim rewards associated with a position
+     */
     function claimRewards(
         uint128 poolId,
         address collateralType,
@@ -134,6 +149,9 @@ contract RewardsManagerModule is IRewardsManagerModule {
         return reward;
     }
 
+    /**
+     * @dev Return the amount of rewards being distributed to a vault per second
+     */
     function _getRewardRate(
         uint128 poolId,
         address collateralType,
@@ -145,6 +163,7 @@ contract RewardsManagerModule is IRewardsManagerModule {
 
         int curTime = block.timestamp.toInt();
 
+        // No rewards are currently being distributed if the distributor doesn't exist, they are scheduled to be distributed in the future, or the distribution as already completed
         if (
             address(vault.rewards[rewardId].distributor) == address(0) ||
             vault.rewards[rewardId].entry.start > curTime.toUint() ||
@@ -159,6 +178,9 @@ contract RewardsManagerModule is IRewardsManagerModule {
             );
     }
 
+    /**
+     * @dev Generate an ID for a rewards distributor connection by hashing its address with the vault's collateral type address and pool id
+     */
     function _getRewardId(
         uint128 poolId,
         address collateralType,

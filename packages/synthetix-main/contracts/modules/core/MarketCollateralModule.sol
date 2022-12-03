@@ -12,9 +12,10 @@ import "../../storage/Market.sol";
  */
 contract MarketCollateralModule is IMarketCollateralModule {
     using ERC20Helper for address;
+    using CollateralConfiguration for CollateralConfiguration.Data;
 
-    error InsufficientMarketCollateralDepositable(uint128 marketId, address collateralType, uint amountToDeposit);
-    error InsufficientMarketCollateralWithdrawable(uint128 marketId, address collateralType, uint amountToWithdraw);
+    error InsufficientMarketCollateralDepositable(uint128 marketId, address collateralType, uint tokenAmountToDeposit);
+    error InsufficientMarketCollateralWithdrawable(uint128 marketId, address collateralType, uint tokenAmountToWithdraw);
 
     /**
      * @dev Allows a market to deposit collateral
@@ -22,9 +23,11 @@ contract MarketCollateralModule is IMarketCollateralModule {
     function depositMarketCollateral(
         uint128 marketId,
         address collateralType,
-        uint amount
+        uint tokenAmount
     ) public override {
         Market.Data storage marketData = Market.load(marketId);
+
+        uint systemAmount = CollateralConfiguration.load(collateralType).convertTokenToSystemAmount(tokenAmount);
 
         // Ensure the sender is the market address associated with the specified marketId
         if (msg.sender != marketData.marketAddress) revert AccessError.Unauthorized(msg.sender);
@@ -34,14 +37,14 @@ contract MarketCollateralModule is IMarketCollateralModule {
         Market.DepositedCollateral storage collateralEntry = marketData.depositedCollateral[depositedCollateralEntryIndex];
 
         // Ensure that depositing this amount will not exceed the maximum amount allowed for the market
-        if (collateralEntry.amountD18 + amount > maxDepositable)
-            revert InsufficientMarketCollateralDepositable(marketId, collateralType, amount);
+        if (collateralEntry.amountD18 + systemAmount > maxDepositable)
+            revert InsufficientMarketCollateralDepositable(marketId, collateralType, tokenAmount);
 
         // Transfer the collateral into the system and account for it
-        collateralType.safeTransferFrom(marketData.marketAddress, address(this), amount);
-        collateralEntry.amountD18 += amount;
+        collateralType.safeTransferFrom(marketData.marketAddress, address(this), tokenAmount);
+        collateralEntry.amountD18 += systemAmount;
 
-        emit MarketCollateralDeposited(marketId, collateralType, amount, msg.sender);
+        emit MarketCollateralDeposited(marketId, collateralType, tokenAmount, msg.sender);
     }
 
     /**
@@ -50,9 +53,11 @@ contract MarketCollateralModule is IMarketCollateralModule {
     function withdrawMarketCollateral(
         uint128 marketId,
         address collateralType,
-        uint amount
+        uint tokenAmount
     ) public override {
         Market.Data storage marketData = Market.load(marketId);
+
+        uint systemAmount = CollateralConfiguration.load(collateralType).convertTokenToSystemAmount(tokenAmount);
 
         // Ensure the sender is the market address associated with the specified marketId
         if (msg.sender != marketData.marketAddress) revert AccessError.Unauthorized(msg.sender);
@@ -61,15 +66,15 @@ contract MarketCollateralModule is IMarketCollateralModule {
         Market.DepositedCollateral storage collateralEntry = marketData.depositedCollateral[depositedCollateralEntryIndex];
 
         // Ensure that the market is not withdrawing more collateral than it has deposited
-        if (amount > collateralEntry.amountD18) {
-            revert InsufficientMarketCollateralWithdrawable(marketId, collateralType, amount);
+        if (systemAmount > collateralEntry.amountD18) {
+            revert InsufficientMarketCollateralWithdrawable(marketId, collateralType, tokenAmount);
         }
 
         // Transfer the collateral out of the system and account for it
-        collateralEntry.amountD18 -= amount;
-        collateralType.safeTransfer(marketData.marketAddress, amount);
+        collateralEntry.amountD18 -= systemAmount;
+        collateralType.safeTransfer(marketData.marketAddress, tokenAmount);
 
-        emit MarketCollateralWithdrawn(marketId, collateralType, amount, msg.sender);
+        emit MarketCollateralWithdrawn(marketId, collateralType, tokenAmount, msg.sender);
     }
 
     /**

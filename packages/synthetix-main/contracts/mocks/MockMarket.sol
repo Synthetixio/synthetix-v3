@@ -34,8 +34,6 @@ contract MockMarket is IMarket {
         uint128 accountId,
         uint amount
     ) external {
-        _reportedDebt += amount;
-
         IAssociateDebtModule(_proxy).associateDebt(_marketId, poolId, collateralType, accountId, amount);
     }
 

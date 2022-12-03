@@ -62,7 +62,7 @@ describe('MarketManagerModule', function () {
       });
 
       it('totalDebt is zero', async () => {
-        assertBn.isZero(await systems().Core.getMarketTotalBalance(expectedMarketId));
+        assertBn.isZero(await systems().Core.getMarketTotalDebt(expectedMarketId));
       });
     });
   });
@@ -109,7 +109,7 @@ describe('MarketManagerModule', function () {
       });
 
       it('leaves totalDebt the same', async () => {
-        assertBn.isZero(await systems().Core.connect(user1).getMarketTotalBalance(marketId()));
+        assertBn.isZero(await systems().Core.connect(user1).getMarketTotalDebt(marketId()));
       });
 
       it('accrues no debt', async () => {
@@ -157,7 +157,7 @@ describe('MarketManagerModule', function () {
         });
 
         it('leaves totalDebt the same', async () => {
-          assertBn.isZero(await systems().Core.connect(user1).getMarketTotalBalance(marketId()));
+          assertBn.isZero(await systems().Core.connect(user1).getMarketTotalDebt(marketId()));
         });
 
         it('makes USD', async () => {
@@ -175,7 +175,7 @@ describe('MarketManagerModule', function () {
           });
 
           it('leaves totalDebt the same', async () => {
-            assertBn.isZero(await systems().Core.connect(user1).getMarketTotalBalance(marketId()));
+            assertBn.isZero(await systems().Core.connect(user1).getMarketTotalDebt(marketId()));
           });
 
           it('makes USD', async () => {

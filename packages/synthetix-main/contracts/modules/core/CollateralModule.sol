@@ -2,7 +2,6 @@
 pragma solidity ^0.8.0;
 
 import "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
-import "@synthetixio/core-contracts/contracts/interfaces/IERC20.sol";
 import "@synthetixio/core-contracts/contracts/token/ERC20Helper.sol";
 
 import "../../interfaces/ICollateralModule.sol";
@@ -50,7 +49,9 @@ contract CollateralModule is ICollateralModule {
 
         collateralType.safeTransferFrom(depositFrom, self, tokenAmount);
 
-        account.collaterals[collateralType].deposit(_convertTokenToSystemAmount(IERC20(collateralType), tokenAmount));
+        account.collaterals[collateralType].deposit(
+            CollateralConfiguration.load(collateralType).convertTokenToSystemAmount(tokenAmount)
+        );
 
         emit Deposited(accountId, collateralType, tokenAmount, msg.sender);
     }
@@ -67,12 +68,7 @@ contract CollateralModule is ICollateralModule {
 
         Account.Data storage account = Account.load(accountId);
 
-        // this extra condition is to prevent potentially malicious untrusted code from being executed on the next statement
-        if (account.collaterals[collateralType].availableAmountD18 == 0) {
-            revert InsufficientAccountCollateral(0);
-        }
-
-        uint systemAmount = _convertTokenToSystemAmount(IERC20(collateralType), tokenAmount);
+        uint systemAmount = CollateralConfiguration.load(collateralType).convertTokenToSystemAmount(tokenAmount);
 
         if (account.collaterals[collateralType].availableAmountD18 < systemAmount) {
             revert InsufficientAccountCollateral(systemAmount);
