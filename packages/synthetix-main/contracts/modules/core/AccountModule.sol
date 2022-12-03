@@ -11,7 +11,7 @@ import "../../storage/Account.sol";
 import "@synthetixio/core-modules/contracts/storage/AssociatedSystem.sol";
 
 /**
- * @title System module for managing accounts.
+ * @inheritdoc IAccountModule
  */
 contract AccountModule is IAccountModule {
     bytes32 private constant _ACCOUNT_SYSTEM = "accountNft";
@@ -27,14 +27,14 @@ contract AccountModule is IAccountModule {
     error InvalidPermission(bytes32 permission);
 
     /**
-     * @dev Returns the address of the account token
+     * @inheritdoc IAccountModule
      */
     function getAccountTokenAddress() public view override returns (address) {
         return AssociatedSystem.load(_ACCOUNT_SYSTEM).proxy;
     }
 
     /**
-     * @dev Returns the users and their corresponding permissions on the specified account
+     * @inheritdoc IAccountModule
      */
     function getAccountPermissions(uint128 accountId) external view returns (AccountPermissions[] memory permissions) {
         AccountRBAC.Data storage accountRbac = Account.load(accountId).rbac;
@@ -51,7 +51,7 @@ contract AccountModule is IAccountModule {
     }
 
     /**
-     * @dev Creates an account with the requestedAccountId, minting an account token to the sender
+     * @inheritdoc IAccountModule
      */
     function createAccount(uint128 requestedAccountId) external override {
         IAccountTokenModule accountTokenModule = IAccountTokenModule(getAccountTokenAddress());
@@ -63,7 +63,7 @@ contract AccountModule is IAccountModule {
     }
 
     /**
-     * @dev Called by AccountTokenModule to update storage with the new owner when the account token is transferred
+     * @inheritdoc IAccountModule
      */
     function notifyAccountTransfer(address to, uint128 accountId) external override {
         _onlyAccountToken();
@@ -75,7 +75,7 @@ contract AccountModule is IAccountModule {
     }
 
     /**
-     * @dev Returns whether an account grants the specified user a particular permission
+     * @inheritdoc IAccountModule
      */
     function hasPermission(
         uint128 accountId,
@@ -86,7 +86,7 @@ contract AccountModule is IAccountModule {
     }
 
     /**
-     * @dev Returns whether a user is granted a specified permission, is an admin, or is the owner
+     * @inheritdoc IAccountModule
      */
     function isAuthorized(
         uint128 accountId,
@@ -97,7 +97,7 @@ contract AccountModule is IAccountModule {
     }
 
     /**
-     * @dev Allows an account admin to grant a specified permission to a user
+     * @inheritdoc IAccountModule
      */
     function grantPermission(
         uint128 accountId,
@@ -114,7 +114,7 @@ contract AccountModule is IAccountModule {
     }
 
     /**
-     * @dev Allows an account admin to revoke a specified permission to a user
+     * @inheritdoc IAccountModule
      */
     function revokePermission(
         uint128 accountId,
@@ -129,7 +129,7 @@ contract AccountModule is IAccountModule {
     }
 
     /**
-     * @dev Allows a user to renounce a permission on a specified account
+     * @inheritdoc IAccountModule
      */
     function renouncePermission(uint128 accountId, bytes32 permission) external override {
         if (!Account.load(accountId).rbac.hasPermission(permission, msg.sender)) {
@@ -142,12 +142,15 @@ contract AccountModule is IAccountModule {
     }
 
     /**
-     * @dev Returns the owner of an account
+     * @inheritdoc IAccountModule
      */
     function getAccountOwner(uint128 accountId) public view returns (address) {
         return Account.load(accountId).rbac.owner;
     }
 
+    /**
+     * @dev Reverts if the caller is not the account token managed by this module.
+     */
     // Note: Disabling Solidity warning, not sure why it suggests pure mutability.
     // solc-ignore-next-line func-mutability
     function _onlyAccountToken() internal {
@@ -156,6 +159,9 @@ contract AccountModule is IAccountModule {
         }
     }
 
+    /**
+     * @dev Reverts if the specified permission is unknown to the account RBAC system.
+     */
     // Note: Disabling Solidity warning, not sure why it suggests pure mutability.
     // solc-ignore-next-line func-mutability
     function _isPermissionValid(bytes32 permission) internal {
