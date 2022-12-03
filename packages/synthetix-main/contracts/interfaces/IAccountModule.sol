@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 /**
- * @title System module for managing accounts.
+ * @title Module for managing accounts.
  * @notice Manages the system's account token NFT. Every user will need to register an account before being able to interact with the system.
  */
 interface IAccountModule {

@@ -14,7 +14,8 @@ import "@synthetixio/core-contracts/contracts/token/ERC20Helper.sol";
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 
 /**
- * @inheritdoc ILiquidationModule
+ * @title Module for liquidated positions and vaults that are below the liquidation ratio.
+ * @dev See ILiquidationModule.
  */
 contract LiquidationModule is ILiquidationModule {
     using SafeCastU128 for uint128;

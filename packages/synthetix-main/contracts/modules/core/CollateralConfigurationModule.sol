@@ -7,7 +7,8 @@ import "../../interfaces/ICollateralConfigurationModule.sol";
 import "../../storage/CollateralConfiguration.sol";
 
 /**
- * @inheritdoc ICollateralConfigurationModule
+ * @title Module for configuring system wide collateral.
+ * @dev See ICollateralConfigurationModule.
  */
 contract CollateralConfigurationModule is ICollateralConfigurationModule {
     using SetUtil for SetUtil.AddressSet;

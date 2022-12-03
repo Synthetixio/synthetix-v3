@@ -4,9 +4,9 @@ pragma solidity ^0.8.0;
 import "../../interfaces/IMulticallModule.sol";
 
 /**
- * @inheritdoc IMulticallModule
- *
- * @dec Implementation adapted from https://github.com/Uniswap/v3-periphery/blob/main/contracts/base/Multicall.sol
+ * @title Module that enables calling multiple methods of the system in a single transaction.
+ * @dev See IMulticallModule.
+ * @dev Implementation adapted from https://github.com/Uniswap/v3-periphery/blob/main/contracts/base/Multicall.sol
  */
 contract MulticallModule is IMulticallModule {
     /**

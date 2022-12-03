@@ -2,8 +2,7 @@
 pragma solidity ^0.8.0;
 
 /**
- * @title LiquidationModule interface.
- * @notice System module for liquidated positions and vaults that are below the liquidation ratio.
+ * @title Module for liquidated positions and vaults that are below the liquidation ratio.
  */
 interface ILiquidationModule {
     event Liquidation(

@@ -10,7 +10,8 @@ import "../../storage/SystemPoolConfiguration.sol";
 import "../../storage/Pool.sol";
 
 /**
- * @inheritdoc IPoolConfigurationModule
+ * @title Module that allows the system owner to mark official pools.
+ * @dev See IPoolConfigurationModule.
  */
 contract PoolConfigurationModule is IPoolConfigurationModule {
     using SetUtil for SetUtil.UintSet;

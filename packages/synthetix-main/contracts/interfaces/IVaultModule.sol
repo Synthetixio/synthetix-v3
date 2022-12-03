@@ -2,7 +2,6 @@
 pragma solidity ^0.8.0;
 
 /**
- * @title VaultModule interface.
  * @title Allows accounts to delegate collateral to a pool.
  * @dev Delegation updates the account's position in the vault that corresponds to the associated pool and collateral type pair.
  * @dev A pool contains one vault for each collateral type it supports, and vaults are not shared between pools.

@@ -12,7 +12,8 @@ import "../../storage/Pool.sol";
 import "../../storage/CollateralConfiguration.sol";
 
 /**
- * @inheritdoc IIssueUSDModule
+ * @title Module for the minting and burning of stablecoins.
+ * @dev See IIssueUSDModule.
  */
 contract IssueUSDModule is IIssueUSDModule {
     using AccountRBAC for AccountRBAC.Data;

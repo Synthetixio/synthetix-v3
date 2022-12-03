@@ -14,7 +14,8 @@ import "../../interfaces/IVaultModule.sol";
 import "../../interfaces/IUSDTokenModule.sol";
 
 /**
- * @inheritdoc IVaultModule
+ * @title Allows accounts to delegate collateral to a pool.
+ * @dev See IVaultModule.
  */
 contract VaultModule is IVaultModule {
     using SetUtil for SetUtil.UintSet;

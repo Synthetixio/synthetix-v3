@@ -17,7 +17,8 @@ import "@synthetixio/core-modules/contracts/storage/AssociatedSystem.sol";
 import "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
 
 /**
- * @inheritdoc IMarketManagerModule
+ * @title System-wide entry point for the management of markets connected to the system.
+ * @dev See IMarketManagerModule.
  */
 contract MarketManagerModule is IMarketManagerModule {
     using SafeCastU128 for uint128;

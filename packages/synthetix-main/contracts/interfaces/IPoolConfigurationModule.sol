@@ -2,8 +2,7 @@
 pragma solidity ^0.8.0;
 
 /**
- * @title PoolConfigurationModule interface.
- * @noticeAllows the system owner to mark official pools.
+ * @title Module that allows the system owner to mark official pools.
  */
 interface IPoolConfigurationModule {
     event PreferredPoolSet(uint256 poolId);

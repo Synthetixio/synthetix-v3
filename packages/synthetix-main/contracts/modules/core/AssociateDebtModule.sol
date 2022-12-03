@@ -14,7 +14,8 @@ import "../../storage/Market.sol";
 import "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
 
 /**
- * @inheritdoc IAssociateDebtModule
+ * @title Module for associating debt with the system.
+ * @dev See IAssociateDebtModule.
  */
 contract AssociateDebtModule is IAssociateDebtModule {
     using DecimalMath for uint;

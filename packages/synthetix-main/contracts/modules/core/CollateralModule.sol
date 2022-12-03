@@ -13,7 +13,8 @@ import "../../storage/CollateralLock.sol";
 import "@synthetixio/core-modules/contracts/storage/AssociatedSystem.sol";
 
 /**
- * @inheritdoc ICollateralModule
+ * @title Module for managing user collateral.
+ * @dev See ICollateralModule.
  */
 contract CollateralModule is ICollateralModule {
     using SetUtil for SetUtil.AddressSet;

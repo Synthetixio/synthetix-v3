@@ -13,7 +13,8 @@ import "../../interfaces/IPoolModule.sol";
 import "../../storage/Pool.sol";
 
 /**
- * @inheritdoc IPoolModule
+ * @title Module for the creation and management of pools.
+ * @dev See IPoolModule.
  */
 contract PoolModule is IPoolModule {
     error CapacityLocked(uint marketId);

@@ -2,8 +2,7 @@
 pragma solidity ^0.8.0;
 
 /**
- * @title MarketManagerModule interface.
- * @notice System-wide entry point for the management of markets connected to the system.
+ * @title System-wide entry point for the management of markets connected to the system.
  */
 interface IMarketManagerModule {
     event MarketRegistered(address indexed market, uint128 indexed marketId);

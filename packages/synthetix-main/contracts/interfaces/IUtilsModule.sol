@@ -2,8 +2,7 @@
 pragma solidity ^0.8.0;
 
 /**
- * @title UtilsModule interface.
- * @notice System module with assorted utility functions.
+ * @title Module with assorted utility functions.
  */
 interface IUtilsModule {
     /**

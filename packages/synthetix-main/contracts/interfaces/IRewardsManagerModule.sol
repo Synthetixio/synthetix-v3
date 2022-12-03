@@ -2,8 +2,7 @@
 pragma solidity ^0.8.0;
 
 /**
- * @title RewardsManagerModule interface.
- * @notice System module for connecting rewards distributors to vaults.
+ * @title Module for connecting rewards distributors to vaults.
  */
 interface IRewardsManagerModule {
     event RewardsDistributed(

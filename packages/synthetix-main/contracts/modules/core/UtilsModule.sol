@@ -12,7 +12,8 @@ import "../../interfaces/IUtilsModule.sol";
 import "../../storage/OracleManager.sol";
 
 /**
- * @inheritdoc IUtilsModule
+ * @title Module with assorted utility functions.
+ * @dev See IUtilsModule.
  */
 contract UtilsModule is IUtilsModule {
     using AssociatedSystem for AssociatedSystem.Data;

@@ -2,8 +2,7 @@
 pragma solidity ^0.8.0;
 
 /**
- * @title MarketCollateralModule interface.
- * @notice System module for allowing markets to directly increase their credit capacity by providing their own collateral.
+ * @title Module for allowing markets to directly increase their credit capacity by providing their own collateral.
  */
 interface IMarketCollateralModule {
     /**

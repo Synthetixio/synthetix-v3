@@ -2,8 +2,7 @@
 pragma solidity ^0.8.0;
 
 /**
- * @title IssueUSDModule interface.
- * @notice System module for the minting and burning of stablecoins.
+ * @title Module for the minting and burning of stablecoins.
  */
 interface IIssueUSDModule {
     /**

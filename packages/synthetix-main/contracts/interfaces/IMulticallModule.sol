@@ -2,8 +2,7 @@
 pragma solidity ^0.8.0;
 
 /**
- * @title MulticallModule interface.
- * @notice Module that enables calling multiple methods of the system in a single transaction.
+ * @title Module that enables calling multiple methods of the system in a single transaction.
  */
 interface IMulticallModule {
     /**
