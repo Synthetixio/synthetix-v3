@@ -88,20 +88,27 @@ describe('CollateralModule', function () {
             const systemDepositAmount = ethers.utils.parseEther('1');
 
             before('deposit some collateral', async () => {
-              const tx = await systems().Core.connect(user1).deposit(1, Collateral.address, depositAmount);
+              const tx = await systems()
+                .Core.connect(user1)
+                .deposit(1, Collateral.address, depositAmount);
               receipt = await tx.wait();
             });
 
             it('emits an event', async () => {
               await assertEvent(
                 receipt,
-                `Deposited(1, "${Collateral.address}", ${depositAmount.toString()}, "${await user1.getAddress()}")`,
+                `Deposited(1, "${
+                  Collateral.address
+                }", ${depositAmount.toString()}, "${await user1.getAddress()}")`,
                 systems().Core
               );
             });
 
             it('shows that tokens have moved', async function () {
-              assertBn.equal(await Collateral.balanceOf(await user1.getAddress()), mintAmount.sub(depositAmount));
+              assertBn.equal(
+                await Collateral.balanceOf(await user1.getAddress()),
+                mintAmount.sub(depositAmount)
+              );
               assertBn.equal(await Collateral.balanceOf(systems().Core.address), depositAmount);
             });
 
@@ -123,7 +130,9 @@ describe('CollateralModule', function () {
             describe('when attempting to withdraw more than available collateral', () => {
               it('reverts', async () => {
                 await assertRevert(
-                  systems().Core.connect(user1).withdraw(1, Collateral.address, depositAmount.add('1')),
+                  systems()
+                    .Core.connect(user1)
+                    .withdraw(1, Collateral.address, depositAmount.add('1')),
                   'InsufficientAccountCollateral',
                   systems().Core
                 );
@@ -132,14 +141,18 @@ describe('CollateralModule', function () {
 
             describe('when withdrawing collateral', () => {
               before('withdraw some collateral', async () => {
-                const tx = await systems().Core.connect(user1).withdraw(1, Collateral.address, depositAmount);
+                const tx = await systems()
+                  .Core.connect(user1)
+                  .withdraw(1, Collateral.address, depositAmount);
                 receipt = await tx.wait();
               });
 
               it('emits an event', async () => {
                 await assertEvent(
                   receipt,
-                  `Withdrawn(1, "${Collateral.address}", ${depositAmount.toString()}, "${await user1.getAddress()}")`,
+                  `Withdrawn(1, "${
+                    Collateral.address
+                  }", ${depositAmount.toString()}, "${await user1.getAddress()}")`,
                   systems().Core
                 );
               });

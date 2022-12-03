@@ -103,7 +103,10 @@ describe('CollateralModule', function () {
               });
 
               it('shows that tokens have moved', async function () {
-                assertBn.equal(await Collateral.balanceOf(await user2.getAddress()), mintAmount.sub(depositAmount));
+                assertBn.equal(
+                  await Collateral.balanceOf(await user2.getAddress()),
+                  mintAmount.sub(depositAmount)
+                );
                 assertBn.equal(await Collateral.balanceOf(systems().Core.address), depositAmount);
               });
 
@@ -125,7 +128,9 @@ describe('CollateralModule', function () {
               describe('when the authorized account withdraws collateral', function () {
                 before('withdraw some collateral', async () => {
                   await (
-                    await systems().Core.connect(user3).withdraw(1, Collateral.address, depositAmount)
+                    await systems()
+                      .Core.connect(user3)
+                      .withdraw(1, Collateral.address, depositAmount)
                   ).wait();
                 });
 
