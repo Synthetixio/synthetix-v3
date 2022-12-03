@@ -1,10 +1,12 @@
-const { bootstrap } = require('@synthetixio/core-router/util/bootstrap');
+const { coreBootstrap } = require('@synthetixio/core-router/util/core-bootstrap');
 
-const result = bootstrap();
+const result = coreBootstrap();
+
+const restoreSnapshot = result.createSnapshot();
 
 module.exports = function sampleProjectBootstrap() {
   before(async function loadSnapshot() {
-    await result.restoreSnapshot();
+    await restoreSnapshot();
   });
 
   return result;
