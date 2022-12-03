@@ -14,16 +14,15 @@ interface ILiquidationModule {
         uint128 indexed poolId,
         address indexed collateralType,
         LiquidationData liquidationData,
-        uint liquidateAsAccountId,
+        uint128 liquidateAsAccountId,
         address sender
     );
 
     event VaultLiquidation(
         uint128 indexed poolId,
         address indexed collateralType,
-        uint debtLiquidated,
-        uint collateralLiquidated,
-        uint liquidateAsAccountId,
+        LiquidationData liquidationData,
+        uint128 liquidateAsAccountId,
         address sender
     );
 
@@ -43,7 +42,7 @@ interface ILiquidationModule {
         address collateralType,
         uint128 liquidateAsAccountId,
         uint maxUsd
-    ) external returns (uint amountRewarded, uint collateralLiquidated);
+    ) external returns (LiquidationData memory liquidationData);
 
     function isPositionLiquidatable(
         uint128 accountId,
