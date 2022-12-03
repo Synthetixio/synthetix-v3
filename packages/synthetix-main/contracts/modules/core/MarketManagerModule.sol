@@ -1,17 +1,16 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
-import "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
-
 import "../../interfaces/IMarketManagerModule.sol";
 import "../../interfaces/IUSDTokenModule.sol";
+
+import "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
+import "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
+import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 
 import "../../storage/Market.sol";
 import "../../storage/MarketCreator.sol";
 import "../../storage/Account.sol";
-
-import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 
 import "@synthetixio/core-modules/contracts/storage/AssociatedSystem.sol";
 import "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";

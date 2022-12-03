@@ -78,7 +78,13 @@ describe.skip('RewardDistributorModule', function () {
 
       it('has correct reward amount', async () => {
         assertBn.equal(
-          (await systems().Core.callStatic.getRewards(poolId, collateralAddress(), accountId))[0],
+          (
+            await systems().Core.callStatic.getClaimableRewards(
+              poolId,
+              collateralAddress(),
+              accountId
+            )
+          )[0],
           rewardAmount
         );
       });
