@@ -24,6 +24,10 @@ library Account {
     error InsufficientAccountCollateral(uint requestedAmount);
 
     struct Data {
+        /**
+         * @dev Numeric identifier for the account. Must be unique.
+         * @dev There cannot be an account with id zero (See ERC721._mint()).
+         */
         uint128 id;
         AccountRBAC.Data rbac;
         SetUtil.AddressSet activeCollaterals;
