@@ -24,7 +24,7 @@
     "lint:quick": "pretty-quick --check --staged --pattern '**/*.(js|ts|sol)'",
     "lint:fix": "npm run lint:js:fix && npm run lint:sol:fix",
     "lint": "npm run lint:js && npm run lint:sol",
-    "check-packages": "bin/check-packages"
+    "check-packages": ".github/check-packages"
   },
   "devDependencies": {
     "@types/node": "18.8.5",
