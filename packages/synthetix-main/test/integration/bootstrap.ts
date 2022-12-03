@@ -21,7 +21,7 @@ interface Proxies {
   CoreProxy: CoreProxy;
   SNXProxy: SNXProxy;
   USDProxy: USDProxy;
-  Oracle_managerProxy: Oracle_managerProxy;
+  ['oracle_manager.Proxy']: Oracle_managerProxy;
 }
 
 interface Systems {
@@ -46,7 +46,7 @@ before('load system proxies', function () {
     Core: getContract('CoreProxy'),
     SNX: getContract('SNXProxy'),
     USD: getContract('USDProxy'),
-    OracleManager: getContract('Oracle_managerProxy'),
+    OracleManager: getContract('oracle_manager.Proxy'),
   } as Systems;
 });
 
