@@ -28,7 +28,7 @@ contract AccountTokenModule is IAccountTokenModule, NftModule {
     }
 
     /**
-     * @inheritdoc IAccountTokenModule
+     * @dev Updates account RBAC storage to track the current owner of the token.
      */
     function _postTransfer(
         address, // from (unused)
