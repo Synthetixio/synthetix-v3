@@ -30,7 +30,7 @@ jobs:
       # start the base release
       - name: cannon:build
         run: npx hardhat cannon:build
-        working-directory: ./packages/synthetix-main
+        working-directory: ./protocol/synthetix
 
       # pull in all the active networks (TODO)
       # these are needed mostly for convenience but also becuase it most accurately represents the state of the chain if
@@ -50,7 +50,7 @@ jobs:
           export result=$(npx hardhat cannon:publish --skip-register synthetix:$(jq -r .version < package.json))
           echo "$result" >> $GITHUB_STEP_SUMMARY
           echo "cannon_package=@ipfs:$(echo "$result" | sed -n 's/.* \(Qm[^ ]*\).*/\1/p')" >> $GITHUB_OUTPUT
-        working-directory: ./packages/synthetix-main
+        working-directory: ./protocol/synthetix
 
       # put a note on any PRs that includes the IPFS download information
       - if: github.event.pull_request.base.ref == 'main'

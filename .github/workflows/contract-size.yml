@@ -7,7 +7,12 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        package: [core-contracts, core-modules, synthetix-main]
+        package:
+          [
+            "./utils/core-contracts",
+            "./utils/core-modules",
+            "./protocol/synthetix",
+          ]
     env:
       INFURA_API_KEY: ${{ secrets.INFURA_API_KEY }}
       INFURA_IPFS_ID: ${{ secrets.INFURA_IPFS_ID }}
@@ -26,6 +31,6 @@ jobs:
       - run: npm ci
       - run: npm run build
       - name: Compile contracts
-        run: npm run --workspace=./packages/${{ matrix.package }} compile-contracts
+        run: npm run --workspace=${{ matrix.package }} compile-contracts
       - name: Execute size command
-        run: npm run --workspace=./packages/${{ matrix.package }} size-contracts
+        run: npm run --workspace=${{ matrix.package }} size-contracts

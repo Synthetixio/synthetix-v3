@@ -14,13 +14,13 @@
   "license": "MIT",
   "homepage": "https://github.com/Synthetixio/synthetix-v3#readme",
   "scripts": {
-    "build": "npm run -w ./packages/core-utils -w ./packages/hardhat-router -w ./packages/hardhat-storage -w ./packages/core-router -w ./packages/oracle-manager -w ./packages/synthetix-main build",
+    "build": "npm run -w ./utils/core-utils -w ./utils/hardhat-router -w ./utils/hardhat-storage -w ./utils/core-router -w ./protocol/oracle-manager -w ./protocol/synthetix build",
     "test": "npm run --workspaces --if-present test",
     "coverage": "npm run --workspaces --if-present coverage",
     "lint:js": "prettier --check '**/*.{t,j}s' && eslint --max-warnings=0 '**/*.{t,j}s'",
     "lint:js:fix": "prettier --write '**/*.{t,j}s' && eslint --max-warnings=0 --fix '**/*.{t,j}s'",
-    "lint:sol": "prettier --check 'packages/**/*.sol' && solhint --max-warnings=0 'packages/**/*.sol'",
-    "lint:sol:fix": "prettier --write 'packages/**/*.sol' && solhint --max-warnings=0 --fix  'packages/**/*.sol'",
+    "lint:sol": "prettier --check '(protocol|utils)/**/*.sol' && solhint '(protocol|utils)/**/*.sol'",
+    "lint:sol:fix": "prettier --write '(protocol|utils)/**/*.sol' && solhint --fix  '(protocol|utils)/**/*.sol'",
     "lint:quick": "pretty-quick --check --staged --pattern '**/*.(js|ts|sol)'",
     "lint:fix": "npm run lint:js:fix && npm run lint:sol:fix",
     "lint": "npm run lint:js && npm run lint:sol",
@@ -47,7 +47,8 @@
     "check-packages"
   ],
   "workspaces": [
-    "packages/*",
+    "utils/*",
+    "protocol/*",
     "markets/*"
   ],
   "engines": {

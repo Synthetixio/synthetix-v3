@@ -1,6 +1,13 @@
 {
   "extends": "./tsconfig.json",
-  "include": ["./packages/**/*.ts", "./packages/**/*.js"],
+  "include": [
+    "./utils/**/*.ts",
+    "./utils/**/*.js",
+    "./protocol/**/*.ts",
+    "./protocol/**/*.js",
+    "./markets/**/*.ts",
+    "./markets/**/*.js"
+  ],
   "exclude": [],
   "compilerOptions": {
     "noEmit": true
