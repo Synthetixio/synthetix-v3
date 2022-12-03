@@ -47,7 +47,7 @@
     "check-packages"
   ],
   "workspaces": [
-    "packages/*",
+    "utils/*",
     "protocol/*",
     "markets/*"
   ],
