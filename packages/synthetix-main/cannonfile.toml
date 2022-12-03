@@ -83,7 +83,6 @@ args = [
   "contracts/routers/chain-<%= chainId %>/CoreRouter.sol:CoreRouter",
   '''<%= JSON.stringify({
     InitialModuleBundle: contracts.InitialModuleBundle,
-    AccountTokenModule: contracts.AccountTokenModule,
     FeatureFlagModule: contracts.FeatureFlagModule,
     AccountModule: contracts.AccountModule,
     AssociateDebtModule: contracts.AssociateDebtModule,
