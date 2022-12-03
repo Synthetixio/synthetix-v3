@@ -38,7 +38,10 @@ library DistributionEntry {
         uint totalSharesD18 = dist.totalSharesD18;
 
         if (totalSharesD18 == 0) {
-            revert ParameterError.InvalidParameter("amount", "can't distribute to empty distribution");
+            revert ParameterError.InvalidParameter(
+                "amount",
+                "can't distribute to empty distribution"
+            );
         }
 
         int curTime = block.timestamp.toInt().to128();
@@ -89,21 +92,25 @@ library DistributionEntry {
 
         // determine whether this is an instant distribution or a delayed distribution
         if (entry.duration == 0 && entry.lastUpdate < entry.start) {
-            valuePerShareChangeD18 = int(entry.scheduledValueD18).divDecimal(totalSharesAmountD18.toInt());
+            valuePerShareChangeD18 = int(entry.scheduledValueD18).divDecimal(
+                totalSharesAmountD18.toInt()
+            );
         } else if (entry.lastUpdate < entry.start + entry.duration) {
             // find out what is "newly" distributed
             int lastUpdateDistributedD18 = entry.lastUpdate < entry.start
                 ? int128(0)
-                : (entry.scheduledValueD18 * int64(entry.lastUpdate - entry.start)) / int32(entry.duration);
+                : (entry.scheduledValueD18 * int64(entry.lastUpdate - entry.start)) /
+                    int32(entry.duration);
 
             int curUpdateDistributedD18 = entry.scheduledValueD18;
             if (curTime < int64(entry.start + entry.duration)) {
-                curUpdateDistributedD18 = (curUpdateDistributedD18 * (curTime - int64(entry.start))) / int32(entry.duration);
+                curUpdateDistributedD18 =
+                    (curUpdateDistributedD18 * (curTime - int64(entry.start))) /
+                    int32(entry.duration);
             }
 
-            valuePerShareChangeD18 = (curUpdateDistributedD18 - lastUpdateDistributedD18).divDecimal(
-                totalSharesAmountD18.toInt()
-            );
+            valuePerShareChangeD18 = (curUpdateDistributedD18 - lastUpdateDistributedD18)
+                .divDecimal(totalSharesAmountD18.toInt());
         }
 
         entry.lastUpdate = uint32(int32(curTime));

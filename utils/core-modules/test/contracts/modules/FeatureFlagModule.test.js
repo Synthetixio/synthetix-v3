@@ -80,7 +80,7 @@ describe('FeatureFlagModule', () => {
         FEATURE_FLAG_NAME,
         permissionedUser.address
       ),
-      'FeatureUnavailable'
+      'Unauthorized'
     );
 
     await assertRevert(
@@ -88,7 +88,7 @@ describe('FeatureFlagModule', () => {
         FEATURE_FLAG_NAME,
         permissionedUser.address
       ),
-      'FeatureUnavailable'
+      'Unauthorized'
     );
   });
 

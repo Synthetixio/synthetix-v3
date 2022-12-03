@@ -29,7 +29,11 @@ contract ERC721 is IERC721, IERC721Metadata {
         string memory baseTokenURI
     ) internal virtual {
         ERC721Storage.Data storage store = ERC721Storage.load();
-        if (bytes(store.name).length > 0 || bytes(store.symbol).length > 0 || bytes(store.baseTokenURI).length > 0) {
+        if (
+            bytes(store.name).length > 0 ||
+            bytes(store.symbol).length > 0 ||
+            bytes(store.baseTokenURI).length > 0
+        ) {
             revert InitError.AlreadyInitialized();
         }
 
@@ -80,7 +84,10 @@ contract ERC721 is IERC721, IERC721Metadata {
 
         string memory baseURI = ERC721Storage.load().baseTokenURI;
 
-        return bytes(baseURI).length > 0 ? string(abi.encodePacked(baseURI, StringUtil.uintToString(tokenId))) : "";
+        return
+            bytes(baseURI).length > 0
+                ? string(abi.encodePacked(baseURI, StringUtil.uintToString(tokenId)))
+                : "";
     }
 
     function approve(address to, uint256 tokenId) public virtual override {
@@ -116,15 +123,14 @@ contract ERC721 is IERC721, IERC721Metadata {
         emit ApprovalForAll(msg.sender, operator, approved);
     }
 
-    function isApprovedForAll(address holder, address operator) public view virtual override returns (bool) {
+    function isApprovedForAll(
+        address holder,
+        address operator
+    ) public view virtual override returns (bool) {
         return ERC721Storage.load().operatorApprovals[holder][operator];
     }
 
-    function transferFrom(
-        address from,
-        address to,
-        uint256 tokenId
-    ) public virtual override {
+    function transferFrom(address from, address to, uint256 tokenId) public virtual override {
         if (!_isApprovedOrOwner(msg.sender, tokenId)) {
             revert AccessError.Unauthorized(msg.sender);
         }
@@ -132,11 +138,7 @@ contract ERC721 is IERC721, IERC721Metadata {
         _transfer(from, to, tokenId);
     }
 
-    function safeTransferFrom(
-        address from,
-        address to,
-        uint256 tokenId
-    ) public virtual override {
+    function safeTransferFrom(address from, address to, uint256 tokenId) public virtual override {
         safeTransferFrom(from, to, tokenId, "");
     }
 
@@ -160,12 +162,17 @@ contract ERC721 is IERC721, IERC721Metadata {
         return ERC721Storage.load().ownerOf[tokenId] != address(0);
     }
 
-    function _isApprovedOrOwner(address spender, uint256 tokenId) internal view virtual returns (bool) {
+    function _isApprovedOrOwner(
+        address spender,
+        uint256 tokenId
+    ) internal view virtual returns (bool) {
         address holder = ownerOf(tokenId);
 
         // Not checking tokenId existence since it is checked in ownerOf() and getApproved()
 
-        return (spender == holder || getApproved(tokenId) == spender || isApprovedForAll(holder, spender));
+        return (spender == holder ||
+            getApproved(tokenId) == spender ||
+            isApprovedForAll(holder, spender));
     }
 
     function _mint(address to, uint256 tokenId) internal virtual {
@@ -204,11 +211,7 @@ contract ERC721 is IERC721, IERC721Metadata {
         emit Transfer(holder, address(0), tokenId);
     }
 
-    function _transfer(
-        address from,
-        address to,
-        uint256 tokenId
-    ) internal virtual {
+    function _transfer(address from, address to, uint256 tokenId) internal virtual {
         ERC721Storage.Data storage store = ERC721Storage.load();
 
         if (ownerOf(tokenId) != from) {
@@ -245,7 +248,9 @@ contract ERC721 is IERC721, IERC721Metadata {
         bytes memory data
     ) internal returns (bool) {
         if (AddressUtil.isContract(to)) {
-            try IERC721Receiver(to).onERC721Received(msg.sender, from, tokenId, data) returns (bytes4 retval) {
+            try IERC721Receiver(to).onERC721Received(msg.sender, from, tokenId, data) returns (
+                bytes4 retval
+            ) {
                 return retval == IERC721Receiver.onERC721Received.selector;
             } catch {
                 return false;

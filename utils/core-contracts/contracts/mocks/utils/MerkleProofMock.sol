@@ -4,11 +4,7 @@ pragma solidity ^0.8.0;
 import "../../utils/MerkleProof.sol";
 
 contract MerkleProofMock {
-    function verify(
-        bytes32[] memory proof,
-        bytes32 root,
-        bytes32 leaf
-    ) public pure returns (bool) {
+    function verify(bytes32[] memory proof, bytes32 root, bytes32 leaf) public pure returns (bool) {
         return MerkleProof.verify(proof, root, leaf);
     }
 }

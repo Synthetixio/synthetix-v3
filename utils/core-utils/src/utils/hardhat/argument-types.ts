@@ -1,11 +1,11 @@
-import { ERRORS } from 'hardhat/internal/core/errors-list';
 import { HardhatError } from 'hardhat/internal/core/errors';
+import { ERRORS } from 'hardhat/internal/core/errors-list';
 
 export const alphanumeric = {
   name: 'word',
-  parse: (argName: string, value: unknown) =>
+  parse: (argName: string, value: string) =>
     typeof value === 'string' ? value.toLowerCase() : value,
-  validate: (argName: string, value: unknown) => {
+  validate: (argName: string, value: string) => {
     const valid = typeof value === 'string' && /^[a-z0-9]+$/.test(value);
     if (!valid) {
       throw new HardhatError(ERRORS.ARGUMENTS.INVALID_VALUE_FOR_TYPE, {
@@ -19,8 +19,8 @@ export const alphanumeric = {
 
 export const address = {
   name: 'address',
-  parse: (argName: string, value: unknown) => value,
-  validate: (argName: string, value: unknown) => {
+  parse: (argName: string, value: string) => value,
+  validate: (argName: string, value: string) => {
     const valid = typeof value === 'string' && /^0x[a-fA-F0-9]{40}$/.test(value);
     if (!valid) {
       throw new HardhatError(ERRORS.ARGUMENTS.INVALID_VALUE_FOR_TYPE, {
@@ -57,7 +57,7 @@ export const stringArray = {
   validate: (argName: string, value: string[]) => {
     if (!Array.isArray(value) || value.some((v) => typeof v !== 'string')) {
       throw new HardhatError(ERRORS.ARGUMENTS.INVALID_VALUE_FOR_TYPE, {
-        value,
+        value: `${Array.isArray(value) ? value.join(', ') : value}`,
         name: argName,
         type: stringArray.name,
       });

@@ -190,7 +190,10 @@ library Market {
      *
      */
     function totalDebt(Data storage self) internal view returns (int) {
-        return getReportedDebt(self).toInt() + self.netIssuanceD18 - getDepositedCollateralValue(self).toInt();
+        return
+            getReportedDebt(self).toInt() +
+            self.netIssuanceD18 -
+            getDepositedCollateralValue(self).toInt();
     }
 
     /**
@@ -204,9 +207,8 @@ library Market {
         // Sweep all DepositedCollateral entries and aggregate their USD value.
         for (uint i = 0; i < self.depositedCollateral.length; i++) {
             DepositedCollateral memory entry = self.depositedCollateral[i];
-            CollateralConfiguration.Data storage collateralConfiguration = CollateralConfiguration.load(
-                entry.collateralType
-            );
+            CollateralConfiguration.Data storage collateralConfiguration = CollateralConfiguration
+                .load(entry.collateralType);
 
             uint priceD18 = CollateralConfiguration.getCollateralPrice(collateralConfiguration);
 
@@ -239,7 +241,8 @@ library Market {
         int maxShareValueD18
     ) internal view returns (uint contributionD18) {
         // Determine how much the current value per share deviates from the maximum.
-        uint deltaValuePerShareD18 = (maxShareValueD18 - self.poolsDebtDistribution.getValuePerShare()).toUint();
+        uint deltaValuePerShareD18 = (maxShareValueD18 -
+            self.poolsDebtDistribution.getValuePerShare()).toUint();
 
         return deltaValuePerShareD18.mulDecimal(creditCapacitySharesD18);
     }
@@ -258,8 +261,13 @@ library Market {
      * Note: This function should only be used in tests!
      */
     // solhint-disable-next-line private-vars-leading-underscore, func-name-mixedcase
-    function _testOnly_getOutstandingDebt(Data storage self, uint128 poolId) internal returns (int debtChangeD18) {
-        return self.pools[poolId].pendingDebtD18.toInt() + self.poolsDebtDistribution.accumulateActor(bytes32(uint(poolId)));
+    function _testOnly_getOutstandingDebt(
+        Data storage self,
+        uint128 poolId
+    ) internal returns (int debtChangeD18) {
+        return
+            self.pools[poolId].pendingDebtD18.toInt() +
+            self.poolsDebtDistribution.accumulateActor(bytes32(uint(poolId)));
     }
 
     /**
@@ -328,19 +336,28 @@ library Market {
             self.outRangePools.extractById(poolId);
         }
 
-        int changedValueD18 = self.poolsDebtDistribution.setActorShares(bytes32(uint(poolId)), newCreditCapacityD18);
+        int changedValueD18 = self.poolsDebtDistribution.setActorShares(
+            bytes32(uint(poolId)),
+            newCreditCapacityD18
+        );
         debtChangeD18 = self.pools[poolId].pendingDebtD18.toInt() + changedValueD18;
         self.pools[poolId].pendingDebtD18 = 0;
 
         // recalculate market capacity
         if (newPoolMaxShareValueD18 > valuePerShareD18) {
-            self.creditCapacityD18 += getCreditCapacityContribution(self, newCreditCapacityD18, newPoolMaxShareValueD18)
-                .to128();
+            self.creditCapacityD18 += getCreditCapacityContribution(
+                self,
+                newCreditCapacityD18,
+                newPoolMaxShareValueD18
+            ).to128();
         }
 
         if (oldPoolMaxShareValueD18 > valuePerShareD18) {
-            self.creditCapacityD18 -= getCreditCapacityContribution(self, oldCreditCapacityD18, oldPoolMaxShareValueD18)
-                .to128();
+            self.creditCapacityD18 -= getCreditCapacityContribution(
+                self,
+                oldCreditCapacityD18,
+                oldPoolMaxShareValueD18
+            ).to128();
         }
     }
 
@@ -362,7 +379,9 @@ library Market {
         if (!exhausted && self.poolsDebtDistribution.totalSharesD18 > 0) {
             // cannot use `outstandingBalance` here because `self.lastDistributedMarketBalance`
             // may have changed after calling the bump functions above
-            self.poolsDebtDistribution.distributeValue(targetBalanceD18 - self.lastDistributedMarketBalanceD18);
+            self.poolsDebtDistribution.distributeValue(
+                targetBalanceD18 - self.lastDistributedMarketBalanceD18
+            );
             self.lastDistributedMarketBalanceD18 = targetBalanceD18.to128();
         }
     }
@@ -370,11 +389,10 @@ library Market {
     /**
      * @dev Determine the target valuePerShare of the poolsDebtDistribution, given the value that is yet to be distributed.
      */
-    function _getTargetValuePerShare(Market.Data storage self, int valueToDistributeD18)
-        private
-        view
-        returns (int targetValuePerShareD18)
-    {
+    function _getTargetValuePerShare(
+        Market.Data storage self,
+        int valueToDistributeD18
+    ) private view returns (int targetValuePerShareD18) {
         return
             self.poolsDebtDistribution.getValuePerShare() +
             valueToDistributeD18.divDecimal(self.poolsDebtDistribution.totalSharesD18.toInt());
@@ -421,7 +439,10 @@ library Market {
 
             // Exit if the lowest max value per share does not hit the limit.
             // Note: `-edgePool.priority` is actually the max value per share limit of the pool
-            if (-edgePool.priority >= k * _getTargetValuePerShare(self, (maxDistributedD18 - actuallyDistributedD18))) {
+            if (
+                -edgePool.priority >=
+                k * _getTargetValuePerShare(self, (maxDistributedD18 - actuallyDistributedD18))
+            ) {
                 break;
             }
 
@@ -446,7 +467,10 @@ library Market {
                     "no shares before actor removal"
                 );
 
-                uint newPoolDebtD18 = self.poolsDebtDistribution.setActorShares(bytes32(uint(edgePool.id)), 0).toUint();
+                uint newPoolDebtD18 = self
+                    .poolsDebtDistribution
+                    .setActorShares(bytes32(uint(edgePool.id)), 0)
+                    .toUint();
                 self.pools[edgePool.id].pendingDebtD18 += newPoolDebtD18.to128();
             } else {
                 require(

@@ -60,7 +60,10 @@ library CollateralConfiguration {
         }
 
         if (config.minDelegationD18 < config.liquidationRewardD18) {
-            revert ParameterError.InvalidParameter("minDelegation", "must be greater than liquidationReward");
+            revert ParameterError.InvalidParameter(
+                "minDelegation",
+                "must be greater than liquidationReward"
+            );
         }
 
         Data storage storedConfig = load(config.tokenAddress);
@@ -96,7 +99,9 @@ library CollateralConfiguration {
 
     function getCollateralPrice(Data storage self) internal view returns (uint) {
         OracleManager.Data memory oracleManager = OracleManager.load();
-        Node.Data memory node = IOracleManagerModule(oracleManager.oracleManagerAddress).process(self.oracleNodeId);
+        Node.Data memory node = IOracleManagerModule(oracleManager.oracleManagerAddress).process(
+            self.oracleNodeId
+        );
 
         return uint(node.price);
     }
@@ -116,12 +121,15 @@ library CollateralConfiguration {
         }
     }
 
-    function convertTokenToSystemAmount(Data storage self, uint tokenAmount) internal view returns (uint) {
+    function convertTokenToSystemAmount(
+        Data storage self,
+        uint tokenAmount
+    ) internal view returns (uint) {
         // this extra condition is to prevent potentially malicious untrusted code from being executed on the next statement
         if (self.tokenAddress == address(0)) {
             revert CollateralNotFound();
         }
 
-        return (tokenAmount * DecimalMath.UNIT) / (10**IERC20(self.tokenAddress).decimals());
+        return (tokenAmount * DecimalMath.UNIT) / (10 ** IERC20(self.tokenAddress).decimals());
     }
 }

@@ -18,11 +18,7 @@ contract MockMarket is IMarket {
     address private _proxy;
     uint128 private _marketId;
 
-    function initialize(
-        address proxy,
-        uint128 marketId,
-        uint initialPrice
-    ) external {
+    function initialize(address proxy, uint128 marketId, uint initialPrice) external {
         _proxy = proxy;
         _marketId = marketId;
         _price = initialPrice;
@@ -34,7 +30,13 @@ contract MockMarket is IMarket {
         uint128 accountId,
         uint amount
     ) external {
-        IAssociateDebtModule(_proxy).associateDebt(_marketId, poolId, collateralType, accountId, amount);
+        IAssociateDebtModule(_proxy).associateDebt(
+            _marketId,
+            poolId,
+            collateralType,
+            accountId,
+            amount
+        );
     }
 
     function buySynth(uint amount) external {
@@ -95,7 +97,11 @@ contract MockMarket is IMarket {
     /**
      * @dev See {IERC165-supportsInterface}.
      */
-    function supportsInterface(bytes4 interfaceId) public view virtual override(IERC165) returns (bool) {
-        return interfaceId == type(IMarket).interfaceId || interfaceId == this.supportsInterface.selector;
+    function supportsInterface(
+        bytes4 interfaceId
+    ) public view virtual override(IERC165) returns (bool) {
+        return
+            interfaceId == type(IMarket).interfaceId ||
+            interfaceId == this.supportsInterface.selector;
     }
 }

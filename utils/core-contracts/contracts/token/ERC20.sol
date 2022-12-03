@@ -69,11 +69,7 @@ contract ERC20 is IERC20 {
         return true;
     }
 
-    function transferFrom(
-        address from,
-        address to,
-        uint amount
-    ) external override returns (bool) {
+    function transferFrom(address from, address to, uint amount) external override returns (bool) {
         ERC20Storage.Data storage store = ERC20Storage.load();
 
         uint256 currentAllowance = store.allowance[from][msg.sender];
@@ -90,11 +86,7 @@ contract ERC20 is IERC20 {
         return true;
     }
 
-    function _transfer(
-        address from,
-        address to,
-        uint256 amount
-    ) internal virtual {
+    function _transfer(address from, address to, uint256 amount) internal virtual {
         ERC20Storage.Data storage store = ERC20Storage.load();
 
         uint256 accountBalance = store.balanceOf[from];

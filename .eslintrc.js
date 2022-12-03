@@ -20,6 +20,7 @@ module.exports = {
   },
   ignorePatterns: ['.eslintrc.js'],
   rules: {
+    indent: 'off',
     'no-only-tests/no-only-tests': 'error',
     indent: ['error', 2],
     'linebreak-style': 0,
@@ -36,6 +37,7 @@ module.exports = {
         project: ['./tsconfig.json'],
       },
       rules: {
+        indent: 'off', // Indentation is handled by Prettier
         '@typescript-eslint/no-floating-promises': 'error',
         '@typescript-eslint/no-var-requires': 0,
         '@typescript-eslint/no-non-null-assertion': 0,

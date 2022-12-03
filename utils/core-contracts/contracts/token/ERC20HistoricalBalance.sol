@@ -19,7 +19,11 @@ contract ERC20HistoricalBalance is ERC20, IERC20HistoricalBalance {
             revert BlockNumberNotYetMined(blockNumber);
         }
 
-        return _checkpointsLookup(ERC20HistoricalBalanceStorage.load().totalSupplyCheckpoints, blockNumber);
+        return
+            _checkpointsLookup(
+                ERC20HistoricalBalanceStorage.load().totalSupplyCheckpoints,
+                blockNumber
+            );
     }
 
     function balanceOfAt(address owner, uint blockNumber) public view override returns (uint) {
@@ -27,14 +31,17 @@ contract ERC20HistoricalBalance is ERC20, IERC20HistoricalBalance {
             revert BlockNumberNotYetMined(blockNumber);
         }
 
-        return _checkpointsLookup(ERC20HistoricalBalanceStorage.load().checkpoints[owner], blockNumber);
+        return
+            _checkpointsLookup(
+                ERC20HistoricalBalanceStorage.load().checkpoints[owner],
+                blockNumber
+            );
     }
 
-    function _checkpointsLookup(ERC20HistoricalBalanceStorage.Checkpoint[] storage ckpts, uint256 blockNumber)
-        private
-        view
-        returns (uint256)
-    {
+    function _checkpointsLookup(
+        ERC20HistoricalBalanceStorage.Checkpoint[] storage ckpts,
+        uint256 blockNumber
+    ) private view returns (uint256) {
         // We run a binary search to look for the earliest checkpoint taken after `blockNumber`.
         //
         // During the loop, the index of the wanted checkpoint remains in the range [low-1, high).
@@ -60,11 +67,7 @@ contract ERC20HistoricalBalance is ERC20, IERC20HistoricalBalance {
         return high == 0 ? 0 : ckpts[high - 1].balance;
     }
 
-    function _transfer(
-        address from,
-        address to,
-        uint256 amount
-    ) internal override {
+    function _transfer(address from, address to, uint256 amount) internal override {
         super._transfer(from, to, amount);
 
         _moveBalance(from, to, amount);
@@ -81,21 +84,29 @@ contract ERC20HistoricalBalance is ERC20, IERC20HistoricalBalance {
         super._burn(from, amount);
 
         _moveBalance(from, address(0), amount);
-        _writeCheckpoint(ERC20HistoricalBalanceStorage.load().totalSupplyCheckpoints, _subtract, amount);
+        _writeCheckpoint(
+            ERC20HistoricalBalanceStorage.load().totalSupplyCheckpoints,
+            _subtract,
+            amount
+        );
     }
 
-    function _moveBalance(
-        address src,
-        address dst,
-        uint256 amount
-    ) private {
+    function _moveBalance(address src, address dst, uint256 amount) private {
         if (src != dst && amount > 0) {
             if (src != address(0)) {
-                _writeCheckpoint(ERC20HistoricalBalanceStorage.load().checkpoints[src], _subtract, amount);
+                _writeCheckpoint(
+                    ERC20HistoricalBalanceStorage.load().checkpoints[src],
+                    _subtract,
+                    amount
+                );
             }
 
             if (dst != address(0)) {
-                _writeCheckpoint(ERC20HistoricalBalanceStorage.load().checkpoints[dst], _add, amount);
+                _writeCheckpoint(
+                    ERC20HistoricalBalanceStorage.load().checkpoints[dst],
+                    _add,
+                    amount
+                );
             }
         }
     }
@@ -113,7 +124,10 @@ contract ERC20HistoricalBalance is ERC20, IERC20HistoricalBalance {
             ckpts[pos - 1].balance = newWeight;
         } else {
             ckpts.push(
-                ERC20HistoricalBalanceStorage.Checkpoint({fromBlock: _safeCastToUint32(block.number), balance: newWeight})
+                ERC20HistoricalBalanceStorage.Checkpoint({
+                    fromBlock: _safeCastToUint32(block.number),
+                    balance: newWeight
+                })
             );
         }
     }

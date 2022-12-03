@@ -101,7 +101,12 @@ contract AssociateDebtModule is IAssociateDebtModule {
     ) internal view {
         uint liquidationRatio = CollateralConfiguration.load(collateralType).liquidationRatioD18;
         if (debt != 0 && collateralValue.divDecimal(debt) < liquidationRatio) {
-            revert InsufficientCollateralRatio(collateralValue, debt, collateralValue.divDecimal(debt), liquidationRatio);
+            revert InsufficientCollateralRatio(
+                collateralValue,
+                debt,
+                collateralValue.divDecimal(debt),
+                liquidationRatio
+            );
         }
     }
 }

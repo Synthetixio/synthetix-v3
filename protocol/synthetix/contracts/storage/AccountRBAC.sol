@@ -26,11 +26,7 @@ library AccountRBAC {
         self.owner = owner;
     }
 
-    function grantPermission(
-        Data storage self,
-        bytes32 permission,
-        address target
-    ) internal {
+    function grantPermission(Data storage self, bytes32 permission, address target) internal {
         if (target == address(0)) {
             revert AddressError.ZeroAddress();
         }
@@ -46,11 +42,7 @@ library AccountRBAC {
         self.permissions[target].add(permission);
     }
 
-    function revokePermission(
-        Data storage self,
-        bytes32 permission,
-        address target
-    ) internal {
+    function revokePermission(Data storage self, bytes32 permission, address target) internal {
         self.permissions[target].remove(permission);
 
         if (self.permissions[target].length() == 0) {

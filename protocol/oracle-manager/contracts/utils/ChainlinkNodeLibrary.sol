@@ -8,8 +8,12 @@ library ChainlinkNodeLibrary {
     function process(bytes memory parameters) internal view returns (Node.Data memory) {
         (address chainlinkAggr, uint twapTimeInterval) = abi.decode(parameters, (address, uint));
 
-        (uint80 roundId, int256 price, , uint256 updatedAt, ) = IAggregatorV3Interface(chainlinkAggr).latestRoundData();
-        int256 finalPrice = twapTimeInterval == 0 ? price : getTwapPrice(chainlinkAggr, roundId, price, twapTimeInterval);
+        (uint80 roundId, int256 price, , uint256 updatedAt, ) = IAggregatorV3Interface(
+            chainlinkAggr
+        ).latestRoundData();
+        int256 finalPrice = twapTimeInterval == 0
+            ? price
+            : getTwapPrice(chainlinkAggr, roundId, price, twapTimeInterval);
         return Node.Data(finalPrice, updatedAt, 0, 0);
     }
 

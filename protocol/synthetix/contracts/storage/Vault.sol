@@ -77,20 +77,16 @@ library Vault {
      *
      * Returns the amount of collateral that this vault is providing in net USD terms.
      */
-    function updateCreditCapacity(Data storage self, uint collateralPriceD18)
-        internal
-        returns (
-            uint usdWeightD18,
-            int totalDebtD18,
-            int deltaDebtD18
-        )
-    {
+    function updateCreditCapacity(
+        Data storage self,
+        uint collateralPriceD18
+    ) internal returns (uint usdWeightD18, int totalDebtD18, int deltaDebtD18) {
         VaultEpoch.Data storage epochData = currentEpoch(self);
 
-        uint scaleModifier = (epochData.collateralAmounts.scaleModifierD27 + int(DecimalMath.UNIT_PRECISE)).toUint();
-        usdWeightD18 = ((uint(epochData.accountsDebtDistribution.totalSharesD18) * scaleModifier) / 1e27).mulDecimal(
-            collateralPriceD18
-        );
+        uint scaleModifier = (epochData.collateralAmounts.scaleModifierD27 +
+            int(DecimalMath.UNIT_PRECISE)).toUint();
+        usdWeightD18 = ((uint(epochData.accountsDebtDistribution.totalSharesD18) * scaleModifier) /
+            1e27).mulDecimal(collateralPriceD18);
 
         totalDebtD18 = epochData.totalDebt();
 
@@ -117,7 +113,10 @@ library Vault {
      * @dev Traverses available rewards for this vault, and updates an accounts
      * claim on them according to the amount of debt shares they have.
      */
-    function updateRewards(Data storage self, uint128 accountId) internal returns (uint[] memory, address[] memory) {
+    function updateRewards(
+        Data storage self,
+        uint128 accountId
+    ) internal returns (uint[] memory, address[] memory) {
         uint[] memory rewards = new uint[](self.rewardIds.length());
         address[] memory distributors = new address[](self.rewardIds.length());
         for (uint i = 0; i < self.rewardIds.length(); i++) {
@@ -144,7 +143,9 @@ library Vault {
         bytes32 rewardId
     ) internal returns (uint) {
         uint totalSharesD18 = currentEpoch(self).accountsDebtDistribution.totalSharesD18;
-        uint actorSharesD18 = currentEpoch(self).accountsDebtDistribution.getActorShares(bytes32(uint(accountId)));
+        uint actorSharesD18 = currentEpoch(self).accountsDebtDistribution.getActorShares(
+            bytes32(uint(accountId))
+        );
 
         RewardDistribution.Data storage dist = self.rewards[rewardId];
 
@@ -189,7 +190,10 @@ library Vault {
     /**
      * @dev Returns an account's collateral value in this vault's current epoch.
      */
-    function currentAccountCollateral(Data storage self, uint128 accountId) internal view returns (uint) {
+    function currentAccountCollateral(
+        Data storage self,
+        uint128 accountId
+    ) internal view returns (uint) {
         return currentEpoch(self).getAccountCollateral(accountId);
     }
 }

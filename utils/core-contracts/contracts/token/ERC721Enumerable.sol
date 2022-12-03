@@ -28,7 +28,10 @@ abstract contract ERC721Enumerable is ERC721, IERC721Enumerable {
      * @dev Returns a token ID owned by `owner` at a given `index` of its token list.
      * Use along with {balanceOf} to enumerate all of ``owner``'s tokens.
      */
-    function tokenOfOwnerByIndex(address owner, uint256 index) public view virtual override returns (uint256) {
+    function tokenOfOwnerByIndex(
+        address owner,
+        uint256 index
+    ) public view virtual override returns (uint256) {
         if (ERC721.balanceOf(owner) <= index) {
             return 0;
         }
@@ -53,11 +56,7 @@ abstract contract ERC721Enumerable is ERC721, IERC721Enumerable {
         return ERC721EnumerableStorage.load().allTokens[index];
     }
 
-    function _beforeTransfer(
-        address from,
-        address to,
-        uint256 tokenId
-    ) internal virtual override {
+    function _beforeTransfer(address from, address to, uint256 tokenId) internal virtual override {
         if (from == address(0)) {
             _addTokenToAllTokensEnumeration(tokenId);
         } else if (from != to) {
@@ -81,7 +80,10 @@ abstract contract ERC721Enumerable is ERC721, IERC721Enumerable {
      * @param tokenId uint256 ID of the token to be added to the tokens list
      */
     function _addTokenToAllTokensEnumeration(uint256 tokenId) private {
-        ERC721EnumerableStorage.load().allTokensIndex[tokenId] = ERC721EnumerableStorage.load().allTokens.length;
+        ERC721EnumerableStorage.load().allTokensIndex[tokenId] = ERC721EnumerableStorage
+            .load()
+            .allTokens
+            .length;
         ERC721EnumerableStorage.load().allTokens.push(tokenId);
     }
 

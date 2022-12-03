@@ -28,22 +28,23 @@ contract CollateralConfigurationModule is ICollateralConfigurationModule {
     /**
      * @inheritdoc ICollateralConfigurationModule
      */
-    function getCollateralConfigurations(bool hideDisabled)
-        external
-        view
-        override
-        returns (CollateralConfiguration.Data[] memory)
-    {
-        SetUtil.AddressSet storage collateralTypes = CollateralConfiguration.loadAvailableCollaterals();
+    function getCollateralConfigurations(
+        bool hideDisabled
+    ) external view override returns (CollateralConfiguration.Data[] memory) {
+        SetUtil.AddressSet storage collateralTypes = CollateralConfiguration
+            .loadAvailableCollaterals();
 
         uint numCollaterals = collateralTypes.length();
-        CollateralConfiguration.Data[] memory filteredCollaterals = new CollateralConfiguration.Data[](numCollaterals);
+        CollateralConfiguration.Data[]
+            memory filteredCollaterals = new CollateralConfiguration.Data[](numCollaterals);
 
         uint collateralsIdx;
         for (uint i = 1; i <= numCollaterals; i++) {
             address collateralType = collateralTypes.valueAt(i);
 
-            CollateralConfiguration.Data storage collateral = CollateralConfiguration.load(collateralType);
+            CollateralConfiguration.Data storage collateral = CollateralConfiguration.load(
+                collateralType
+            );
 
             if (!hideDisabled || collateral.depositingEnabled) {
                 filteredCollaterals[collateralsIdx++] = collateral;
@@ -58,12 +59,9 @@ contract CollateralConfigurationModule is ICollateralConfigurationModule {
      */
     // Note: Disabling Solidity warning, not sure why it suggests pure mutability.
     // solc-ignore-next-line func-mutability
-    function getCollateralConfiguration(address collateralType)
-        external
-        view
-        override
-        returns (CollateralConfiguration.Data memory)
-    {
+    function getCollateralConfiguration(
+        address collateralType
+    ) external view override returns (CollateralConfiguration.Data memory) {
         return CollateralConfiguration.load(collateralType);
     }
 
@@ -71,6 +69,9 @@ contract CollateralConfigurationModule is ICollateralConfigurationModule {
      * @inheritdoc ICollateralConfigurationModule
      */
     function getCollateralPrice(address collateralType) external view override returns (uint) {
-        return CollateralConfiguration.getCollateralPrice(CollateralConfiguration.load(collateralType));
+        return
+            CollateralConfiguration.getCollateralPrice(
+                CollateralConfiguration.load(collateralType)
+            );
     }
 }

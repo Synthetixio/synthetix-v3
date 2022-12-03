@@ -1,5 +1,4 @@
-import { doesNotThrow, equal, notEqual, throws, deepEqual } from 'assert/strict';
-
+import { deepEqual, doesNotThrow, equal, notEqual, throws } from 'node:assert/strict';
 import {
   address,
   alphanumeric,
@@ -18,10 +17,16 @@ describe('utils/hardhat/argument-types.ts', function () {
     it('parses strings correctly', function () {
       equal(alphanumeric.parse('', 'WORD'), 'word');
       equal(alphanumeric.parse('', 'word'), 'word');
-      equal(alphanumeric.parse('', 5), 5);
+      equal(alphanumeric.parse('', '5'), '5');
     });
 
     it('validates correctly', function () {
+      doesNotThrow(() => {
+        address.validate('argName', '0x23618e81e3f5cdf7f54c3d65f7fbc0abf5b21e8f');
+      });
+      doesNotThrow(() => {
+        address.validate('argName', '0x23618e81e3f5cdf7f54c3d65f7fbc0abf5b21e8f');
+      });
       doesNotThrow(() => {
         alphanumeric.validate('argName', 'word1234');
       });
@@ -36,9 +41,6 @@ describe('utils/hardhat/argument-types.ts', function () {
       });
       throws(() => {
         alphanumeric.validate('argName', 'WORD 1234');
-      });
-      throws(() => {
-        alphanumeric.validate('argName', 1);
       });
     });
   });
@@ -62,12 +64,6 @@ describe('utils/hardhat/argument-types.ts', function () {
     });
 
     it('validates correctly', function () {
-      doesNotThrow(() => {
-        address.validate('argName', '0x23618e81e3f5cdf7f54c3d65f7fbc0abf5b21e8f');
-      });
-      doesNotThrow(() => {
-        address.validate('argName', '0x23618e81e3f5cdf7f54c3d65f7fbc0abf5b21e8f');
-      });
       throws(() => {
         address.validate('argName', 'word.1234');
       });
@@ -76,9 +72,6 @@ describe('utils/hardhat/argument-types.ts', function () {
       });
       throws(() => {
         address.validate('argName', 'WORD 1234');
-      });
-      throws(() => {
-        address.validate('argName', 1);
       });
     });
   });

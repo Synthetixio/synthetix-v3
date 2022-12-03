@@ -116,10 +116,10 @@ contract PoolModule is IPoolModule {
     /**
      * @inheritdoc IPoolModule
      */
-    function setPoolConfiguration(uint128 poolId, MarketConfiguration.Data[] memory newMarketConfigurations)
-        external
-        override
-    {
+    function setPoolConfiguration(
+        uint128 poolId,
+        MarketConfiguration.Data[] memory newMarketConfigurations
+    ) external override {
         Pool.requireExists(poolId);
         Pool.onlyPoolOwner(poolId, msg.sender);
 
@@ -131,10 +131,10 @@ contract PoolModule is IPoolModule {
         pool.distributeDebtToVaults();
 
         // Identify markets that need to be removed or verified later for being locked.
-        (uint128[] memory potentiallyLockedMarkets, uint128[] memory removedMarkets) = _analyzePoolConfigurationChange(
-            pool,
-            newMarketConfigurations
-        );
+        (
+            uint128[] memory potentiallyLockedMarkets,
+            uint128[] memory removedMarkets
+        ) = _analyzePoolConfigurationChange(pool, newMarketConfigurations);
 
         // Replace existing market configurations with the new ones.
         // (May leave old configurations at the end of the array if the new array is shorter).
@@ -186,7 +186,9 @@ contract PoolModule is IPoolModule {
     /**
      * @inheritdoc IPoolModule
      */
-    function getPoolConfiguration(uint128 poolId) external view override returns (MarketConfiguration.Data[] memory) {
+    function getPoolConfiguration(
+        uint128 poolId
+    ) external view override returns (MarketConfiguration.Data[] memory) {
         Pool.Data storage pool = Pool.load(poolId);
 
         MarketConfiguration.Data[] memory marketConfigurations = new MarketConfiguration.Data[](
@@ -242,7 +244,11 @@ contract PoolModule is IPoolModule {
     function _analyzePoolConfigurationChange(
         Pool.Data storage pool,
         MarketConfiguration.Data[] memory newMarketConfigurations
-    ) internal view returns (uint128[] memory potentiallyLockedMarkets, uint128[] memory removedMarkets) {
+    )
+        internal
+        view
+        returns (uint128[] memory potentiallyLockedMarkets, uint128[] memory removedMarkets)
+    {
         uint oldIdx = 0;
         uint potentiallyLockedMarketsIdx = 0;
         uint removedMarketsIdx = 0;
@@ -262,7 +268,10 @@ contract PoolModule is IPoolModule {
             // Reject duplicate market ids,
             // AND ensure that they are provided in ascending order.
             if (newMarketConfigurations[newIdx].marketId <= lastMarketId) {
-                revert ParameterError.InvalidParameter("markets", "must be supplied in strictly ascending order");
+                revert ParameterError.InvalidParameter(
+                    "markets",
+                    "must be supplied in strictly ascending order"
+                );
             }
             lastMarketId = newMarketConfigurations[newIdx].marketId;
 
@@ -278,10 +287,15 @@ contract PoolModule is IPoolModule {
             // consider all the old ones removed and mark them for post verification (increases oldIdx for each).
             while (
                 oldIdx < pool.marketConfigurations.length &&
-                pool.marketConfigurations[oldIdx].marketId < newMarketConfigurations[newIdx].marketId
+                pool.marketConfigurations[oldIdx].marketId <
+                newMarketConfigurations[newIdx].marketId
             ) {
-                potentiallyLockedMarkets[potentiallyLockedMarketsIdx++] = pool.marketConfigurations[oldIdx].marketId;
-                removedMarkets[removedMarketsIdx++] = potentiallyLockedMarkets[potentiallyLockedMarketsIdx - 1];
+                potentiallyLockedMarkets[potentiallyLockedMarketsIdx++] = pool
+                    .marketConfigurations[oldIdx]
+                    .marketId;
+                removedMarkets[removedMarketsIdx++] = potentiallyLockedMarkets[
+                    potentiallyLockedMarketsIdx - 1
+                ];
 
                 oldIdx++;
             }
@@ -290,7 +304,8 @@ contract PoolModule is IPoolModule {
             // consider it updated (increases oldIdx once).
             if (
                 oldIdx < pool.marketConfigurations.length &&
-                pool.marketConfigurations[oldIdx].marketId == newMarketConfigurations[newIdx].marketId
+                pool.marketConfigurations[oldIdx].marketId ==
+                newMarketConfigurations[newIdx].marketId
             ) {
                 // Get weight ratios for comparison below.
                 // Upscale them to make sure that we have compatible precision in case of very small values.
@@ -308,7 +323,9 @@ contract PoolModule is IPoolModule {
                     pool.marketConfigurations[oldIdx].maxDebtShareValueD18 ||
                     newWeightRatioD27 < oldWeightRatioD27
                 ) {
-                    potentiallyLockedMarkets[potentiallyLockedMarketsIdx++] = newMarketConfigurations[newIdx].marketId;
+                    potentiallyLockedMarkets[
+                        potentiallyLockedMarketsIdx++
+                    ] = newMarketConfigurations[newIdx].marketId;
                 }
 
                 oldIdx++;

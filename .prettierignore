@@ -10,5 +10,6 @@ node_modules/
 utils/core-router/index.*
 utils/core-router/util
 utils/core-utils/utils
+utils/*/test/generated
 protocol/*/test/generated
 Router.sol

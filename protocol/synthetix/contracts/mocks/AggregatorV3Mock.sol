@@ -29,7 +29,9 @@ contract AggregatorV3Mock is IAggregatorV3Interface {
     // getRoundData and latestRoundData should both raise "No data present"
     // if they do not have data to report, instead of returning unset values
     // which could be misinterpreted as actual reported values.
-    function getRoundData(uint80)
+    function getRoundData(
+        uint80
+    )
         external
         view
         override

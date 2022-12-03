@@ -16,7 +16,11 @@ interface IPoolModule {
     /**
      * @notice Gets fired when pool owner proposes a new owner.
      */
-    event PoolOwnerNominated(uint128 indexed poolId, address indexed nominatedOwner, address indexed owner);
+    event PoolOwnerNominated(
+        uint128 indexed poolId,
+        address indexed nominatedOwner,
+        address indexed owner
+    );
 
     /**
      * @notice Gets fired when pool nominee accepts nomination.
@@ -41,7 +45,11 @@ interface IPoolModule {
     /**
      * @notice Gets fired when pool gets configured.
      */
-    event PoolConfigurationSet(uint128 indexed poolId, MarketConfiguration.Data[] markets, address indexed sender);
+    event PoolConfigurationSet(
+        uint128 indexed poolId,
+        MarketConfiguration.Data[] markets,
+        address indexed sender
+    );
 
     /**
      * @notice Creates a pool with the requested pool id.
@@ -53,12 +61,17 @@ interface IPoolModule {
      * @dev The pool's configuration is composed of an array of MarketConfiguration objects, which describe which markets the pool provides liquidity to, in what proportion, and to what extent.
      * @dev Incoming market ids need to be provided in ascending order.
      */
-    function setPoolConfiguration(uint128 poolId, MarketConfiguration.Data[] memory marketDistribution) external;
+    function setPoolConfiguration(
+        uint128 poolId,
+        MarketConfiguration.Data[] memory marketDistribution
+    ) external;
 
     /**
      * @notice Retrieves the MarketConfiguration of the specified pool.
      */
-    function getPoolConfiguration(uint128 poolId) external view returns (MarketConfiguration.Data[] memory markets);
+    function getPoolConfiguration(
+        uint128 poolId
+    ) external view returns (MarketConfiguration.Data[] memory markets);
 
     /**
      * @notice Allows the owner of the pool to set the pool's name.

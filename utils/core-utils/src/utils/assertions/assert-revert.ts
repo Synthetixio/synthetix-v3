@@ -1,5 +1,5 @@
-import { AbiHelpers } from 'hardhat/internal/util/abi-helpers';
 import { ethers } from 'ethers';
+import { AbiHelpers } from 'hardhat/internal/util/abi-helpers';
 
 interface ErrorObject {
   data?: string;
@@ -27,6 +27,17 @@ const CUSTOM_ERROR_PREFIX =
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function getCustomError(error: any, contract?: ethers.Contract): string | null {
+  if (error?.errorSignature) {
+    return `${error.errorName}(${
+      Array.isArray(error.errorArgs) ? AbiHelpers.formatValues(error.errorArgs as unknown[]) : ''
+    })`;
+  }
+
+  if (error instanceof Error) {
+    const result = _parseCustomErrorString(error.message);
+    if (result) return result;
+  }
+
   const errorData = getErrorData(error);
 
   if (errorData && contract) {
@@ -36,8 +47,16 @@ function getCustomError(error: any, contract?: ethers.Contract): string | null {
     })`;
   }
 
-  if (typeof error?.reason === 'string' && error.reason.startsWith(CUSTOM_ERROR_PREFIX)) {
-    return error?.reason.slice(CUSTOM_ERROR_PREFIX.length + 1, -1);
+  if (typeof error?.reason === 'string') {
+    return _parseCustomErrorString(error!.reason!);
+  }
+
+  return null;
+}
+
+function _parseCustomErrorString(msg: string) {
+  if (msg && msg.startsWith(CUSTOM_ERROR_PREFIX)) {
+    return msg.slice(CUSTOM_ERROR_PREFIX.length + 1, -1);
   }
 
   return null;
@@ -46,7 +65,7 @@ function getCustomError(error: any, contract?: ethers.Contract): string | null {
 export default async function assertRevert(
   tx: Promise<ethers.providers.TransactionResponse>,
   expectedMessage?: string,
-  contract?: ethers.Contract
+  contract?: ethers.Contract | Promise<ethers.Contract>
 ) {
   let error: { [k: string]: unknown } | null = null;
 
@@ -60,7 +79,7 @@ export default async function assertRevert(
   if (!error) {
     throw new Error('Transaction was expected to revert, but it did not');
   } else if (expectedMessage) {
-    const receivedMessage = getCustomError(error, contract) ?? error.toString();
+    const receivedMessage = getCustomError(error, await contract) ?? error.toString();
 
     if (!receivedMessage.includes(expectedMessage)) {
       // ----------------------------------------------------------------------------

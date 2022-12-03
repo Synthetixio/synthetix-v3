@@ -86,14 +86,22 @@ contract RewardsManagerModule is IRewardsManagerModule {
         bytes32 rewardId = _getRewardId(poolId, collateralType, msg.sender);
 
         if (!rewardIds.contains(rewardId)) {
-            revert ParameterError.InvalidParameter("poolId-collateralType-distributor", "reward is not registered");
+            revert ParameterError.InvalidParameter(
+                "poolId-collateralType-distributor",
+                "reward is not registered"
+            );
         }
 
         RewardDistribution.Data storage reward = pool.vaults[collateralType].rewards[rewardId];
 
         reward.rewardPerShareD18 += reward
             .entry
-            .distribute(pool.vaults[collateralType].currentEpoch().accountsDebtDistribution, amount.toInt(), start, duration)
+            .distribute(
+                pool.vaults[collateralType].currentEpoch().accountsDebtDistribution,
+                amount.toInt(),
+                start,
+                duration
+            )
             .toUint()
             .to128();
 
@@ -143,9 +151,21 @@ contract RewardsManagerModule is IRewardsManagerModule {
 
         uint reward = vault.updateReward(accountId, rewardId);
 
-        vault.rewards[rewardId].distributor.payout(accountId, poolId, collateralType, msg.sender, reward);
+        vault.rewards[rewardId].distributor.payout(
+            accountId,
+            poolId,
+            collateralType,
+            msg.sender,
+            reward
+        );
         vault.rewards[rewardId].actorInfo[accountId].pendingSendD18 = 0;
-        emit RewardsClaimed(accountId, poolId, collateralType, address(vault.rewards[rewardId].distributor), reward);
+        emit RewardsClaimed(
+            accountId,
+            poolId,
+            collateralType,
+            address(vault.rewards[rewardId].distributor),
+            reward
+        );
 
         return reward;
     }
@@ -168,7 +188,8 @@ contract RewardsManagerModule is IRewardsManagerModule {
         if (
             address(vault.rewards[rewardId].distributor) == address(0) ||
             vault.rewards[rewardId].entry.start > curTime.toUint() ||
-            vault.rewards[rewardId].entry.start + vault.rewards[rewardId].entry.duration <= curTime.toUint()
+            vault.rewards[rewardId].entry.start + vault.rewards[rewardId].entry.duration <=
+            curTime.toUint()
         ) {
             return 0;
         }

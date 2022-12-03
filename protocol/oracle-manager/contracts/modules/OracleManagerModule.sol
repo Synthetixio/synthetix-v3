@@ -14,7 +14,12 @@ contract OracleManagerModule is IOracleManagerModule {
     error UnsupportedNodeType(uint nodeType);
     error NodeNotRegistered(bytes32 nodeId);
 
-    event NodeRegistered(bytes32 nodeId, bytes32[] parents, NodeDefinition.NodeType nodeType, bytes parameters);
+    event NodeRegistered(
+        bytes32 nodeId,
+        bytes32[] parents,
+        NodeDefinition.NodeType nodeType,
+        bytes parameters
+    );
 
     /// @notice registers a new node
     function registerNode(
@@ -79,11 +84,9 @@ contract OracleManagerModule is IOracleManagerModule {
         return NodeDefinition.getId(nodeDefinition);
     }
 
-    function _registerNode(NodeDefinition.Data memory nodeDefinition)
-        internal
-        onlyValidNodeType(nodeDefinition.nodeType)
-        returns (bytes32 nodeId)
-    {
+    function _registerNode(
+        NodeDefinition.Data memory nodeDefinition
+    ) internal onlyValidNodeType(nodeDefinition.nodeType) returns (bytes32 nodeId) {
         nodeId = _getNodeId(nodeDefinition);
         //checks if the node is already registered
         if (_isNodeRegistered(nodeId)) {
@@ -98,7 +101,12 @@ contract OracleManagerModule is IOracleManagerModule {
 
         (, nodeId) = NodeDefinition.create(nodeDefinition);
 
-        emit NodeRegistered(nodeId, nodeDefinition.parents, nodeDefinition.nodeType, nodeDefinition.parameters);
+        emit NodeRegistered(
+            nodeId,
+            nodeDefinition.parents,
+            nodeDefinition.nodeType,
+            nodeDefinition.parameters
+        );
     }
 
     function _isNodeRegistered(bytes32 nodeId) internal view returns (bool) {

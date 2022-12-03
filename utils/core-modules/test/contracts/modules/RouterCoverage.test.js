@@ -9,6 +9,12 @@ describe('RouterCoverage', () => {
     modules: ['OwnerModule', 'UpgradeModule'],
   });
 
+  let Router;
+
+  before('identify modules', async function () {
+    Router = await hre.ethers.getContractAt('Router', proxyAddress());
+  });
+
   describe('when attempting to reach an unexistent function in Router', () => {
     let WrongModuleMock;
 
@@ -17,7 +23,7 @@ describe('RouterCoverage', () => {
     });
 
     it('reverts', async () => {
-      await assertRevert(WrongModuleMock.getFortyTwo(), 'UnknownSelector(');
+      await assertRevert(WrongModuleMock.getFortyTwo(), 'UnknownSelector(', Router);
     });
   });
 

@@ -96,7 +96,10 @@ library Distribution {
      * @dev Updates an actor's lastValuePerShare to the distribution's current valuePerShare, and
      * returns the change in value for the actor, since their last update.
      */
-    function accumulateActor(Data storage dist, bytes32 actorId) internal returns (int valueChangeD18) {
+    function accumulateActor(
+        Data storage dist,
+        bytes32 actorId
+    ) internal returns (int valueChangeD18) {
         return setActorShares(dist, actorId, getActorShares(dist, actorId));
     }
 
@@ -109,7 +112,10 @@ library Distribution {
      * which is `(valuePerShare_now - valuePerShare_then) * shares`,
      * or just `delta_valuePerShare * shares`.
      */
-    function _getActorValueChange(Data storage dist, bytes32 actorId) private view returns (int valueChangeD18) {
+    function _getActorValueChange(
+        Data storage dist,
+        bytes32 actorId
+    ) private view returns (int valueChangeD18) {
         DistributionActor.Data storage actor = dist.actorInfo[actorId];
         int deltaValuePerShareD27 = dist.valuePerShareD27 - actor.lastValuePerShareD27;
 
@@ -120,7 +126,10 @@ library Distribution {
     /**
      * @dev Returns the number of shares owned by an actor in the distribution.
      */
-    function getActorShares(Data storage dist, bytes32 actorId) internal view returns (uint sharesD18) {
+    function getActorShares(
+        Data storage dist,
+        bytes32 actorId
+    ) internal view returns (uint sharesD18) {
         return dist.actorInfo[actorId].sharesD18;
     }
 

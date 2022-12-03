@@ -14,7 +14,10 @@ library ReducerNodeLibrary {
         RECENT
     }
 
-    function process(Node.Data[] memory prices, bytes memory parameters) internal pure returns (Node.Data memory) {
+    function process(
+        Node.Data[] memory prices,
+        bytes memory parameters
+    ) internal pure returns (Node.Data memory) {
         Operations operation = abi.decode(parameters, (Operations));
 
         if (operation == Operations.MAX) {
@@ -36,7 +39,9 @@ library ReducerNodeLibrary {
         revert UnsupportedOperation(uint(operation));
     }
 
-    function median(Node.Data[] memory prices) internal pure returns (Node.Data memory medianPrice) {
+    function median(
+        Node.Data[] memory prices
+    ) internal pure returns (Node.Data memory medianPrice) {
         quickSort(prices, int(0), int(prices.length - 1));
         return prices[uint(prices.length / 2)];
     }
@@ -51,7 +56,9 @@ library ReducerNodeLibrary {
         meanPrice.timestamp = meanPrice.timestamp / prices.length;
     }
 
-    function recent(Node.Data[] memory prices) internal pure returns (Node.Data memory recentPrice) {
+    function recent(
+        Node.Data[] memory prices
+    ) internal pure returns (Node.Data memory recentPrice) {
         for (uint256 i = 0; i < prices.length; i++) {
             if (prices[i].timestamp > recentPrice.timestamp) {
                 recentPrice = prices[i];
@@ -76,11 +83,7 @@ library ReducerNodeLibrary {
         }
     }
 
-    function quickSort(
-        Node.Data[] memory arr,
-        int left,
-        int right
-    ) internal pure {
+    function quickSort(Node.Data[] memory arr, int left, int right) internal pure {
         int i = left;
         int j = right;
         if (i == j) return;
