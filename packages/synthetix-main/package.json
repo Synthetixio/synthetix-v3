@@ -6,7 +6,7 @@
   "scripts": {
     "build": "rm -rf contracts/modules/test && hardhat generate-testable",
     "test": "npm run build -- --quiet && hardhat test",
-    "coverage": "npx hardhat cannon:build && hardhat --network hardhat coverage",
+    "coverage": "npx hardhat cannon:build && hardhat --network hardhat test",
     "compile-contracts": "hardhat compile",
     "size-contracts": "hardhat size-contracts"
   },

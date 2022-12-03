@@ -29,8 +29,6 @@ jobs:
             coverage-file: packages/core-modules/coverage.json
           - package: hardhat-router
             coverage-file: packages/hardhat-router/coverage/lcov.info
-          - package: synthetix-main
-            coverage-file: packages/synthetix-main/coverage.json
     steps:
       - name: Install Foundry (Cannon)
         uses: foundry-rs/foundry-toolchain@v1
@@ -45,7 +43,7 @@ jobs:
       - run: npm ci
       - run: npm run build
       - name: Execute tests
-        run: npm run --workspace=./packages/${{ matrix.package }} coverage
+        run: REPORT_GAS=true npm run --workspace=./packages/${{ matrix.package }} coverage
       - name: Upload ${{ matrix.package }} coverage to Codecov
         uses: codecov/codecov-action@v2
         with:
