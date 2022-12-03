@@ -1,3 +1,5 @@
+import path from 'node:path';
+import dotenv from 'dotenv';
 import '@typechain/hardhat';
 import '@nomiclabs/hardhat-ethers';
 //import '@nomiclabs/hardhat-waffle';
@@ -8,9 +10,6 @@ import '@synthetixio/hardhat-storage';
 import 'hardhat-gas-reporter';
 import 'hardhat-cannon';
 import 'hardhat-ignore-warnings';
-
-import dotenv from 'dotenv';
-import path from 'node:path';
 
 // Load common .env file from root
 dotenv.config({ path: path.resolve(__dirname, '..', '..', '.env') });
