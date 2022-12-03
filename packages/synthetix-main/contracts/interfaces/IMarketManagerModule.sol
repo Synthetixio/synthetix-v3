@@ -5,7 +5,7 @@ pragma solidity ^0.8.0;
  * @title System-wide entry point for the management of markets connected to the system.
  */
 interface IMarketManagerModule {
-    event MarketRegistered(address indexed market, uint128 indexed marketId);
+    event MarketRegistered(address indexed market, uint128 indexed marketId, address indexed sender);
     event MarketUsdDeposited(uint128 indexed marketId, address indexed target, uint amount, address indexed sender);
     event MarketUsdWithdrawn(uint128 indexed marketId, address indexed target, uint amount, address indexed sender);
 

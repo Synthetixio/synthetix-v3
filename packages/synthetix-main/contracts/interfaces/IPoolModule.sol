@@ -11,12 +11,12 @@ interface IPoolModule {
     /**
      * @notice Gets fired when pool will be created.
      */
-    event PoolCreated(uint128 indexed poolId, address indexed owner);
+    event PoolCreated(uint128 indexed poolId, address indexed owner, address indexed sender);
 
     /**
      * @notice Gets fired when pool owner proposes a new owner.
      */
-    event NominatedPoolOwner(uint128 indexed poolId, address indexed owner);
+    event PoolOwnerNominated(uint128 indexed poolId, address indexed nominatedOwner, address indexed owner);
 
     /**
      * @notice Gets fired when pool nominee accepts nomination.

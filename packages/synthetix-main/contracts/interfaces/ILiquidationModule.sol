@@ -5,28 +5,28 @@ pragma solidity ^0.8.0;
  * @title Module for liquidated positions and vaults that are below the liquidation ratio.
  */
 interface ILiquidationModule {
+    struct LiquidationData {
+        uint debtLiquidated;
+        uint collateralLiquidated;
+        uint amountRewarded;
+    }
+
     event Liquidation(
         uint128 indexed accountId,
         uint128 indexed poolId,
         address indexed collateralType,
-        uint debtLiquidated,
-        uint collateralLiquidated,
-        uint amountRewarded
+        LiquidationData liquidationData,
+        uint128 liquidateAsAccountId,
+        address sender
     );
 
     event VaultLiquidation(
         uint128 indexed poolId,
         address indexed collateralType,
-        uint debtLiquidated,
-        uint collateralLiquidated,
-        uint liquidateAsAccountId,
+        LiquidationData liquidationData,
+        uint128 liquidateAsAccountId,
         address sender
     );
-
-    struct LiquidationInformation {
-        mapping(uint => uint) initialAmount; // key is accountId, amount is accumulated when you entered the vault
-        uint accumulated; // how much accumulation per debt share (updated before anyone enters/leaves the vaults)
-    }
 
     /**
      * @notice Liquidates a position by distributing its debt and collateral among other positions in its vault.
@@ -36,13 +36,7 @@ interface ILiquidationModule {
         uint128 poolId,
         address collateralType,
         uint128 liquidateAsAccountId
-    )
-        external
-        returns (
-            uint amountRewarded,
-            uint debtLiquidated,
-            uint collateralLiquidated
-        );
+    ) external returns (LiquidationData memory);
 
     /**
      * @notice Liquidates an entire vault.
@@ -55,7 +49,7 @@ interface ILiquidationModule {
         address collateralType,
         uint128 liquidateAsAccountId,
         uint maxUsd
-    ) external returns (uint amountRewarded, uint collateralLiquidated);
+    ) external returns (LiquidationData memory liquidationData);
 
     /**
      * @notice Determines whether a specified position is liquidatable.

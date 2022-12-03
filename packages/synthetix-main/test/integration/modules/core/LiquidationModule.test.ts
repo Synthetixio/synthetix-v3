@@ -165,9 +165,9 @@ describe('LiquidationModule', function () {
         it('emits correct event', async () => {
           await assertEvent(
             txn,
-            `Liquidation(${accountId}, ${poolId}, "${collateralAddress()}", ${debtAmount.sub(
+            `Liquidation(${accountId}, ${poolId}, "${collateralAddress()}", [${debtAmount.sub(
               1 // precision loss
-            )}, ${depositAmount}, ${liquidationReward})`,
+            )}, ${depositAmount}, ${liquidationReward}], ${liquidatorAccountId}, "${await user2.getAddress()}")`,
             systems().Core
           );
         });
@@ -316,9 +316,11 @@ describe('LiquidationModule', function () {
         it('emits correct event', async () => {
           await assertEvent(
             txn,
-            `VaultLiquidation(${poolId}, "${collateralAddress()}", ${debtAmount.div(
+            `VaultLiquidation(${poolId}, "${collateralAddress()}", [${debtAmount.div(
               4
-            )}, ${sentAmount}, ${liquidatorAccountId}, "${await user2.getAddress()}")`,
+            )}, ${sentAmount}, ${debtAmount.div(
+              4
+            )}], ${liquidatorAccountId}, "${await user2.getAddress()}")`,
             systems().Core
           );
         });
@@ -356,9 +358,11 @@ describe('LiquidationModule', function () {
           it('emits correct event', async () => {
             await assertEvent(
               txn,
-              `VaultLiquidation(${poolId}, "${collateralAddress()}", ${
+              `VaultLiquidation(${poolId}, "${collateralAddress()}", [${
                 debtAmount.sub(debtAmount.div(4)).sub(1) // precious rounding
-              }, ${sentAmount.mul(3)}, ${liquidatorAccountId}, "${await user2.getAddress()}")`,
+              }, ${sentAmount.mul(3)}, ${
+                debtAmount.sub(debtAmount.div(4)).sub(1) // precious rounding
+              }], ${liquidatorAccountId}, "${await user2.getAddress()}")`,
               systems().Core
             );
           });

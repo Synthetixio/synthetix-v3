@@ -46,7 +46,7 @@ contract MarketManagerModule is IMarketManagerModule {
 
         marketId = MarketCreator.create(market).id;
 
-        emit MarketRegistered(market, marketId);
+        emit MarketRegistered(market, marketId, msg.sender);
 
         return marketId;
     }
