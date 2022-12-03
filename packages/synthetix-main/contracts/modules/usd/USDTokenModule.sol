@@ -8,6 +8,9 @@ import "../../interfaces/external/IEVM2AnySubscriptionOnRampRouterInterface.sol"
 
 import "@synthetixio/core-modules/contracts/storage/AssociatedSystem.sol";
 
+/**
+ * @title Module with custom token logic for the stablecoin
+ */
 contract USDTokenModule is ERC20, InitializableMixin, IUSDTokenModule {
     uint private constant _TRANSFER_GAS_LIMIT = 100000;
 
