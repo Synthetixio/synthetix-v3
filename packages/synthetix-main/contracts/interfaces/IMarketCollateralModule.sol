@@ -1,12 +1,12 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-@/**
+/**
  * @title MarketCollateralModule interface.
  * @notice System module for allowing markets to directly increase their credit capacity by providing their own collateral.
  */
 interface IMarketCollateralModule {
-    @/**
+    /**
      * @notice Allows a market to deposit collateral.
      */
     function depositMarketCollateral(
@@ -15,7 +15,7 @@ interface IMarketCollateralModule {
         uint amount
     ) external;
 
-    @/**
+    /**
      * @notice Allows a market to withdraw collateral that it has previously deposited.
      */
     function withdrawMarketCollateral(
@@ -24,7 +24,7 @@ interface IMarketCollateralModule {
         uint amount
     ) external;
 
-    @/**
+    /**
      * @notice Allow the system owner to configure the maximum amount of a given collateral type that a specified market is allowed to deposit.
      */
     function configureMaximumMarketCollateral(
@@ -33,12 +33,12 @@ interface IMarketCollateralModule {
         uint amount
     ) external;
 
-    @/**
+    /**
      * @notice Return the total maximum amount of a given collateral type that a specified market is allowed to deposit.
      */
     function getMaximumMarketCollateral(uint128 marketId, address collateralType) external returns (uint);
 
-    @/**
+    /**
      * @notice Return the total amount of a given collateral type that a specified market has deposited.
      */
     function getMarketCollateralAmount(uint128 marketId, address collateralType) external returns (uint);

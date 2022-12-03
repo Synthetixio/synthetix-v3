@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-@/**
+/**
  * @title MarketManagerModule interface.
  * @notice System-wide entry point for the management of markets connected to the system.
  */
@@ -45,7 +45,7 @@ interface IMarketManagerModule {
      */
     function getWithdrawableUsd(uint128 marketId) external view returns (uint);
 
-    @/**
+    /**
      * @notice Returns the net issuance of the specified market (USD withdrawn - USD deposited).
      */
     function getMarketNetIssuance(uint128 marketId) external view returns (int128);

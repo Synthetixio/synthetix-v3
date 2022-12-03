@@ -1,7 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-@/**
+/**
  * @title LiquidationModule interface.
  * @notice System module for liquidated positions and vaults that are below the liquidation ratio.
  */
@@ -29,7 +29,7 @@ interface ILiquidationModule {
         uint accumulated; // how much accumulation per debt share (updated before anyone enters/leaves the vaults)
     }
 
-    @/**
+    /**
      * @notice Liquidates a position by distributing its debt and collateral among other positions in its vault.
      */
     function liquidate(
@@ -45,7 +45,7 @@ interface ILiquidationModule {
             uint collateralLiquidated
         );
 
-    @/**
+    /**
      * @notice Liquidates an entire vault.
      * @dev Can only be done if the vault itself is under collateralized.
      * @dev LiquidateAsAccountId determines which account to deposit the seized collateral into (this is necessary particularly if the collateral in the vault is vesting).
@@ -58,7 +58,7 @@ interface ILiquidationModule {
         uint maxUsd
     ) external returns (uint amountRewarded, uint collateralLiquidated);
 
-    @/**
+    /**
      * @notice Determines whether a specified position is liquidatable.
      */
     function isPositionLiquidatable(
@@ -67,7 +67,7 @@ interface ILiquidationModule {
         address collateralType
     ) external returns (bool);
 
-    @/**
+    /**
      * @notice Determines whether a specified vault is liquidatable.
      */
     function isVaultLiquidatable(uint128 poolId, address collateralType) external returns (bool);
