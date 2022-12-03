@@ -12,14 +12,13 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        package:
-          [
+        package: [
             "./utils/core-contracts",
             "./utils/core-utils",
             "./utils/core-modules",
             "./utils/hardhat-router",
             "./protocol/synthetix",
-            "./protocol/oracle-manager",
+            # "./protocol/oracle-manager",
           ]
         include:
           - package: "./utils/core-contracts"
