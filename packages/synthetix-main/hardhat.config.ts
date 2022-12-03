@@ -8,7 +8,7 @@ import commonConfig from '@synthetixio/common-config/hardhat.config';
 const config = {
   ...commonConfig,
   solidity: {
-    version: '0.8.11',
+    version: '0.8.17',
     settings: {
       optimizer: {
         enabled: true,
