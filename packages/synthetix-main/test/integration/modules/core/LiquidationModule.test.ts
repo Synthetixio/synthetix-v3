@@ -165,9 +165,9 @@ describe('LiquidationModule', function () {
         it('emits correct event', async () => {
           await assertEvent(
             txn,
-            `Liquidation(${accountId}, ${poolId}, "${collateralAddress()}", ${debtAmount.sub(
+            `Liquidation(${accountId}, ${poolId}, "${collateralAddress()}", [${debtAmount.sub(
               1 // precision loss
-            )}, ${depositAmount}, ${liquidationReward})`,
+            )}, ${depositAmount}, ${liquidationReward}], ${liquidatorAccountId}, "${await user2.getAddress()}")`,
             systems().Core
           );
         });

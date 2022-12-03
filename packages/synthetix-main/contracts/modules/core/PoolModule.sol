@@ -44,7 +44,7 @@ contract PoolModule is IPoolModule {
 
         Pool.create(requestedPoolId, owner);
 
-        emit PoolCreated(requestedPoolId, owner);
+        emit PoolCreated(requestedPoolId, owner, msg.sender);
     }
 
     /**
@@ -55,7 +55,7 @@ contract PoolModule is IPoolModule {
 
         Pool.load(poolId).nominatedOwner = nominatedOwner;
 
-        emit NominatedPoolOwner(poolId, nominatedOwner);
+        emit PoolOwnerNominated(poolId, nominatedOwner, msg.sender);
     }
 
     /**

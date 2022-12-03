@@ -43,7 +43,11 @@ describe('PoolModule Create / Ownership', function () {
     });
 
     it('emitted an event', async () => {
-      await assertEvent(receipt, `PoolCreated(1, "${await user1.getAddress()}")`, systems().Core);
+      await assertEvent(
+        receipt,
+        `PoolCreated(1, "${await user1.getAddress()}", "${await user1.getAddress()}")`,
+        systems().Core
+      );
     });
 
     it('is created', async () => {
@@ -94,7 +98,7 @@ describe('PoolModule Create / Ownership', function () {
         it('emits an event', async () => {
           await assertEvent(
             receipt,
-            `NominatedPoolOwner(1, "${await user2.getAddress()}")`,
+            `PoolOwnerNominated(1, "${await user2.getAddress()}", "${await user1.getAddress()}")`,
             systems().Core
           );
         });
