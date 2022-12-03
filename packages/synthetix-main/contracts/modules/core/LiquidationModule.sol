@@ -14,7 +14,8 @@ import "@synthetixio/core-contracts/contracts/token/ERC20Helper.sol";
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 
 /**
- * @title System module for liquidated positions and vaults that are below the liquidation ratio
+ * @title Module for liquidated positions and vaults that are below the liquidation ratio.
+ * @dev See ILiquidationModule.
  */
 contract LiquidationModule is ILiquidationModule {
     using SafeCastU128 for uint128;
@@ -41,7 +42,7 @@ contract LiquidationModule is ILiquidationModule {
     bytes32 private constant _USD_TOKEN = "USDToken";
 
     /**
-     * @dev Liquidates a position by distributing its debt and collateral among other positions in its vault.
+     * @inheritdoc ILiquidationModule
      */
     function liquidate(
         uint128 accountId,
@@ -115,7 +116,7 @@ contract LiquidationModule is ILiquidationModule {
     }
 
     /**
-     * @dev Liquidates a vault by paying debt owed by the vault and receiving proportional collateral
+     * @inheritdoc ILiquidationModule
      */
     function liquidateVault(
         uint128 poolId,
@@ -210,7 +211,7 @@ contract LiquidationModule is ILiquidationModule {
     }
 
     /**
-     * @dev Determines whether a specified position is liquidatable
+     * @inheritdoc ILiquidationModule
      */
     function isPositionLiquidatable(
         uint128 accountId,
@@ -224,7 +225,7 @@ contract LiquidationModule is ILiquidationModule {
     }
 
     /**
-     * @dev Determines whether a specified vault is liquidatable
+     * @inheritdoc ILiquidationModule
      */
     function isVaultLiquidatable(uint128 poolId, address collateralType) external override returns (bool) {
         Pool.Data storage pool = Pool.load(poolId);

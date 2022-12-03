@@ -3,59 +3,110 @@ pragma solidity ^0.8.0;
 
 import "../storage/MarketConfiguration.sol";
 
-/// @title Module for managing pool token and pools positions distribution
+/**
+ * @title Module for the creation and management of pools.
+ * @dev The pool owner can be specified during creation, can be transferred, and has credentials for configuring the pool.
+ */
 interface IPoolModule {
-    /// @notice gets fired when pool will be created
+    /**
+     * @notice Gets fired when pool will be created.
+     */
     event PoolCreated(uint128 indexed poolId, address indexed owner);
-    /// @notice gets fired when pool owner proposes a new owner
+
+    /**
+     * @notice Gets fired when pool owner proposes a new owner.
+     */
     event NominatedPoolOwner(uint128 indexed poolId, address indexed owner);
-    /// @notice gets fired when pool nominee accepts nomination
+
+    /**
+     * @notice Gets fired when pool nominee accepts nomination.
+     */
     event PoolOwnershipAccepted(uint128 indexed poolId, address indexed owner);
-    /// @notice gets fired when pool owner revokes nonimation
+
+    /**
+     * @notice Gets fired when pool owner revokes nomination.
+     */
     event PoolNominationRevoked(uint128 indexed poolId, address indexed owner);
-    /// @notice gets fired when pool nominee renounces nomination
+
+    /**
+     * @notice Gets fired when pool nominee renounces nomination.
+     */
     event PoolNominationRenounced(uint128 indexed poolId, address indexed owner);
-    /// @notice gets fired when pool name changes
+
+    /**
+     * @notice Gets fired when pool name changes.
+     */
     event PoolNameUpdated(uint128 indexed poolId, string indexed name, address indexed sender);
-    /// @notice gets fired when pool gets configured
+
+    /**
+     * @notice Gets fired when pool gets configured.
+     */
     event PoolConfigurationSet(uint128 indexed poolId, MarketConfiguration.Data[] markets, address indexed sender);
 
-    /// @notice creates a new pool
+    /**
+     * @notice Creates a pool with the requested pool id.
+     */
     function createPool(uint128 requestedPoolId, address owner) external;
 
-    /// @notice sets the pool positions (only poolToken owner)
+    /**
+     * @notice Allows the pool owner to configure the pool.
+     * @dev The pool's configuration is composed of an array of MarketConfiguration objects, which describe which markets the pool provides liquidity to, in what proportion, and to what extent.
+     * @dev Incoming market ids need to be provided in ascending order.
+     */
     function setPoolConfiguration(uint128 poolId, MarketConfiguration.Data[] memory marketDistribution) external;
 
-    /// @notice gets the pool positions
+    /**
+     * @notice Retrieves the MarketConfiguration of the specified pool.
+     */
     function getPoolConfiguration(uint128 poolId) external view returns (MarketConfiguration.Data[] memory markets);
 
-    /// @notice sets the pool name
+    /**
+     * @notice Allows the owner of the pool to set the pool's name.
+     */
     function setPoolName(uint128 poolId, string memory name) external;
 
-    /// @notice gets the pool name
+    /**
+     * @notice Returns the pool's name.
+     */
     function getPoolName(uint128 poolId) external view returns (string memory poolName);
 
-    /// @notice nominates a new pool owner
+    /**
+     * @notice Allows the current pool owner to nominate a new owner.
+     */
     function nominatePoolOwner(address nominatedOwner, uint128 poolId) external;
 
-    /// @notice accepts ownership by nominated owner
+    /**
+     * @notice After a new pool owner has been nominated, allows it to accept the nomination and thus ownership of the pool.
+     */
     function acceptPoolOwnership(uint128 poolId) external;
 
-    /// @notice revokes nomination by pool owner
+    /**
+     * @notice After a new pool owner has been nominated, allows it to reject the nomination.
+     */
     function revokePoolNomination(uint128 poolId) external;
 
-    /// @notice renounce nomination by nominee
+    /**
+     * @notice Allows the current nominated owner to renounce the nomination.
+     */
     function renouncePoolNomination(uint128 poolId) external;
 
-    /// @notice gets owner of poolId
+    /**
+     * @notice Returns the current pool owner.
+     */
     function getPoolOwner(uint128 poolId) external view returns (address);
 
-    /// @notice gets nominatedOwner of poolId
+    /**
+     * @notice Returns the current nominated pool owner.
+     */
     function getNominatedPoolOwner(uint128 poolId) external view returns (address);
 
-    /// @notice places a cap on what proportion of free vault liquidity may be used towards a pool. only owner.
+    /**
+     * @notice Allows the system owner (not the pool owner) to set the system-wide minimum liquidity ratio.
+     */
     function setMinLiquidityRatio(uint minLiquidityRatio) external;
 
-    /// @notice returns the liquidity ratio cap for delegation of liquidity by pools to markets
+    /**
+     * @notice Retrieves the system-wide minimum liquidity ratio.
+     */
     function getMinLiquidityRatio() external view returns (uint);
 }

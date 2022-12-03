@@ -18,6 +18,7 @@ import "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
 
 /**
  * @title System-wide entry point for the management of markets connected to the system.
+ * @dev See IMarketManagerModule.
  */
 contract MarketManagerModule is IMarketManagerModule {
     using SafeCastU128 for uint128;
@@ -34,9 +35,7 @@ contract MarketManagerModule is IMarketManagerModule {
     error IncorrectMarketInterface(address market);
 
     /**
-     * @dev Connects an external market to the system.
-     *
-     * Creates a Market object to track the external market, and returns the newly crated market id.
+     * @inheritdoc IMarketManagerModule
      */
     function registerMarket(address market) external override returns (uint128 marketId) {
         FeatureFlag.ensureAccessToFeature(_MARKET_FEATURE_FLAG);
@@ -53,45 +52,42 @@ contract MarketManagerModule is IMarketManagerModule {
     }
 
     /**
-     * @dev Returns the total withdrawable USD amount for the specified market.
+     * @inheritdoc IMarketManagerModule
      */
     function getWithdrawableUsd(uint128 marketId) public view override returns (uint) {
         return Market.load(marketId).creditCapacityD18 + Market.load(marketId).getDepositedCollateralValue();
     }
 
     /**
-     * @dev Returns the net issuance of the specified market.
+     * @inheritdoc IMarketManagerModule
      */
     function getMarketNetIssuance(uint128 marketId) external view override returns (int128) {
         return Market.load(marketId).netIssuanceD18;
     }
 
     /**
-     * @dev Returns the reported debt of the specified market.
+     * @inheritdoc IMarketManagerModule
      */
     function getMarketReportedDebt(uint128 marketId) external view override returns (uint) {
         return Market.load(marketId).getReportedDebt();
     }
 
     /**
-     * @dev Returns the total collateral for the specified market.
+     * @inheritdoc IMarketManagerModule
      */
     function getMarketCollateral(uint128 marketId) external view override returns (uint) {
         return Market.load(marketId).poolsDebtDistribution.totalSharesD18;
     }
 
     /**
-     * @dev Returns the total debt of the specified market.
+     * @inheritdoc IMarketManagerModule
      */
     function getMarketTotalDebt(uint128 marketId) external view override returns (int) {
         return Market.load(marketId).totalDebt();
     }
 
     /**
-     * @dev Returns the value per share of the debt of the specified market.
-     *
-     * Note: This is not a view function, and actually updates the entire debt distribution chain.
-     * To call this externally as a view function, use `staticall`.
+     * @inheritdoc IMarketManagerModule
      */
     function getMarketDebtPerShare(uint128 marketId) external override returns (int) {
         Market.Data storage market = Market.load(marketId);
@@ -102,18 +98,14 @@ contract MarketManagerModule is IMarketManagerModule {
     }
 
     /**
-     * @dev Returns wether the capacity of the specified market is locked.
+     * @inheritdoc IMarketManagerModule
      */
     function isMarketCapacityLocked(uint128 marketId) external view override returns (bool) {
         return Market.load(marketId).isCapacityLocked();
     }
 
     /**
-     * @dev Allows an external market connected to the system to deposit USD in the system.
-     *
-     * The system burns the incoming USD, increases the market's credit capacity, and reduces its issuance.
-     *
-     * See `IMarket`.
+     * @inheritdoc IMarketManagerModule
      */
     function depositMarketUsd(
         uint128 marketId,
@@ -142,12 +134,7 @@ contract MarketManagerModule is IMarketManagerModule {
     }
 
     /**
-     * @dev Allows an external market connected to the system to withdraw USD from the system.
-     *
-     * The system mints the requested USD (provided that the market's USD balance allows it),
-     * reduces the market's credit capacity, and increases its issuance.
-     *
-     * See `IMarket`.
+     * @inheritdoc IMarketManagerModule
      */
     function withdrawMarketUsd(
         uint128 marketId,

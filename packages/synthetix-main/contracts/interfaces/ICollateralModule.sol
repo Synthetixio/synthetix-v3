@@ -3,7 +3,10 @@ pragma solidity ^0.8.0;
 
 import "../storage/CollateralConfiguration.sol";
 
-/// @title Module for managing user collateral
+/**
+ * @title Module for managing user collateral.
+ * @notice Allows users to deposit and withdraw collateral from the system.
+ */
 interface ICollateralModule {
     /**
      * @notice Emitted when `amount` of collateral of type `collateralType` is deposited to account `accountId` by `sender`.
@@ -17,10 +20,9 @@ interface ICollateralModule {
 
     /**
      * @notice Deposits `amount` of collateral of type `collateralType` into account `accountId`.
-     * Anyone can deposit into anyone's active account without restriction.
+     * @dev Anyone can deposit into anyone's active account without restriction.
      *
      * Emits a {CollateralDeposited} event.
-     *
      */
     function deposit(
         uint128 accountId,
@@ -44,7 +46,9 @@ interface ICollateralModule {
         uint tokenAmount
     ) external;
 
-    /// @notice Returns the total values pertaining to account `accountId` for `collateralType`.
+    /**
+     * @notice Returns the total values pertaining to account `accountId` for `collateralType`.
+     */
     function getAccountCollateral(uint128 accountId, address collateralType)
         external
         view
@@ -55,11 +59,14 @@ interface ICollateralModule {
             //uint totalEscrowed
         );
 
-    /// @notice Returns the amount of collateral of type `collateralType` deposited with account `accountId` that can be withdrawn or delegated.
+    /**
+     * @notice Returns the amount of collateral of type `collateralType` deposited with account `accountId` that can be withdrawn or delegated to pools.
+     */
     function getAccountAvailableCollateral(uint128 accountId, address collateralType) external view returns (uint);
 
-    /// @notice Clean expired locks from locked collateral arrays for an account/collateral type. It includes offset and items to prevent gas exhaustion. If both, offset and items, are 0 it will traverse the whole array (unlimited)
-    /// @dev DEPENDENT ON 305
+    /**
+     * @notice Clean expired locks from locked collateral arrays for an account/collateral type. It includes offset and items to prevent gas exhaustion. If both, offset and items, are 0 it will traverse the whole array (unlimited).
+     */
     function cleanExpiredLocks(
         uint128 accountId,
         address collateralType,
@@ -67,8 +74,11 @@ interface ICollateralModule {
         uint items
     ) external;
 
-    /// @notice Create a new lock on the given account. you must have `admin` permission on the specified account to create a lock.
-    /// There is currently no benefit to calling this function. it is simply for allowing pre-created accounts to have locks on them if your protocol requires it.
+    /**
+     * @notice Create a new lock on the given account. you must have `admin` permission on the specified account to create a lock.
+     * @dev A collateral lock does not affect withdrawals, but instead affects collateral delegation.
+     * @dev There is currently no benefit to calling this function. it is simply for allowing pre-created accounts to have locks on them if your protocol requires it.
+     */
     function createLock(
         uint128 accountId,
         address collateralType,

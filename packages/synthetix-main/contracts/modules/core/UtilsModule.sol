@@ -12,7 +12,8 @@ import "../../interfaces/IUtilsModule.sol";
 import "../../storage/OracleManager.sol";
 
 /**
- * @title System module with assorted utility functions
+ * @title Module with assorted utility functions.
+ * @dev See IUtilsModule.
  */
 contract UtilsModule is IUtilsModule {
     using AssociatedSystem for AssociatedSystem.Data;
@@ -24,7 +25,7 @@ contract UtilsModule is IUtilsModule {
     bytes32 private constant _CCIP_CHAINLINK_TOKEN_POOL = "ccipChainlinkTokenPool";
 
     /**
-     * @dev Configure CCIP addresses on the stablecoin
+     * @inheritdoc IUtilsModule
      */
     function registerCcip(
         address ccipSend,
@@ -41,7 +42,7 @@ contract UtilsModule is IUtilsModule {
     }
 
     /**
-     * @dev Configure oracle manager address
+     * @inheritdoc IUtilsModule
      */
     function configureOracleManager(address oracleManagerAddress) external override {
         OwnableStorage.onlyOwner();

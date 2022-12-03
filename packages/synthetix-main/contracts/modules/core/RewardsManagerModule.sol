@@ -16,7 +16,8 @@ import "../../storage/Pool.sol";
 import "../../interfaces/IRewardsManagerModule.sol";
 
 /**
- * @title System module for connecting rewards distributors to vaults.
+ * @title Module for connecting rewards distributors to vaults.
+ * @dev See IRewardsManagerModule.
  */
 contract RewardsManagerModule is IRewardsManagerModule {
     using SetUtil for SetUtil.Bytes32Set;
@@ -35,7 +36,7 @@ contract RewardsManagerModule is IRewardsManagerModule {
     uint private constant _MAX_REWARD_DISTRIBUTIONS = 10;
 
     /**
-     * @dev Allows a pool owner to connect a rewards distributor to a vault
+     * @inheritdoc IRewardsManagerModule
      */
     function registerRewardsDistributor(
         uint128 poolId,
@@ -70,7 +71,7 @@ contract RewardsManagerModule is IRewardsManagerModule {
     }
 
     /**
-     * @dev Allows a rewards distributor to assign claimable rewards to participants in a vault, pro-rata
+     * @inheritdoc IRewardsManagerModule
      */
     function distributeRewards(
         uint128 poolId,
@@ -100,7 +101,7 @@ contract RewardsManagerModule is IRewardsManagerModule {
     }
 
     /**
-     * @dev For a given position, return the rewards that can currently be claimed
+     * @inheritdoc IRewardsManagerModule
      */
     function getClaimableRewards(
         uint128 poolId,
@@ -112,7 +113,7 @@ contract RewardsManagerModule is IRewardsManagerModule {
     }
 
     /**
-     * @dev Return the amount of rewards being distributed to a vault per second
+     * @inheritdoc IRewardsManagerModule
      */
     function getRewardRate(
         uint128 poolId,
@@ -123,7 +124,7 @@ contract RewardsManagerModule is IRewardsManagerModule {
     }
 
     /**
-     * @dev Allows a user with appropriate permissions to claim rewards associated with a position
+     * @inheritdoc IRewardsManagerModule
      */
     function claimRewards(
         uint128 poolId,
