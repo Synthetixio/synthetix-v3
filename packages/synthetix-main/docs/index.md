@@ -716,7 +716,7 @@ Will only liquidate a portion of the debt for the vault if `maxUsd` is supplied
 #### getMarketTotalBalance
 
   ```solidity
-  function getMarketTotalBalance(uint128 marketId) external view returns (int256)
+  function getMarketTotalDebt(uint128 marketId) external view returns (int256)
   ```
 
   gets the total balance of the market (marketIssuance + marketReportedDebt)

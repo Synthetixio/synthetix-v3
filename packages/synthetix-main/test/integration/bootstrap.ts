@@ -1,32 +1,20 @@
-import hre from 'hardhat';
 import { ChainBuilderContext } from '@usecannon/builder';
 import { ethers } from 'ethers';
+import hre from 'hardhat';
 import { glob, runTypeChain } from 'typechain';
-
-import { AccountProxy, CoreProxy, SNXProxy, USDProxy } from '../generated/typechain';
+import { MockMarket } from '../../typechain-types/contracts/mocks/MockMarket';
 import { snapshotCheckpoint } from '../utils/snapshot';
 
-import { MockMarket } from '../../typechain-types/contracts/mocks/MockMarket';
+import type { AccountProxy, CoreProxy, SNXProxy, USDProxy } from '../generated/typechain';
 
 const POOL_FEATURE_FLAG = ethers.utils.formatBytes32String('createPool');
 const MARKET_FEATURE_FLAG = ethers.utils.formatBytes32String('registerMarket');
 
-async function loadSystems(
-  contracts: ChainBuilderContext['contracts'],
-  provider: ethers.providers.Provider
-) {
-  // todo typechain
-  const systems: { [name: string]: ethers.Contract } = {};
-
-  const proxies = Object.keys(contracts).filter((name) => name.endsWith('Proxy'));
-
-  for (const proxyName of proxies) {
-    const { address, abi } = contracts[proxyName];
-    const name = proxyName.slice(0, -5); // remove "Proxy" from the end
-    systems[name] = new ethers.Contract(address, abi, provider);
-  }
-
-  return systems;
+interface Proxies {
+  AccountProxy: AccountProxy;
+  CoreProxy: CoreProxy;
+  SNXProxy: SNXProxy;
+  USDProxy: USDProxy;
 }
 
 let provider: ethers.providers.JsonRpcProvider;
@@ -41,6 +29,26 @@ let systems: {
 };
 
 let baseSystemSnapshot: unknown;
+
+async function loadSystems(
+  contracts: ChainBuilderContext['contracts'],
+  provider: ethers.providers.Provider
+) {
+  const { factories } = await import('../generated/typechain');
+
+  const getProxy = <T extends keyof Proxies>(contractName: T) => {
+    if (!contracts[contractName]) throw new Error(`Proxy for "${contractName}" not found`);
+    const { address } = contracts[contractName];
+    return factories[`${contractName}__factory`].connect(address, provider) as Proxies[T];
+  };
+
+  return {
+    Account: getProxy('AccountProxy'),
+    Core: getProxy('CoreProxy'),
+    SNX: getProxy('SNXProxy'),
+    USD: getProxy('USDProxy'),
+  };
+}
 
 before(async function () {
   // allow extra time to build the cannon deployment if required
@@ -89,8 +97,7 @@ before(async function () {
     ...(outputs.imports?.synthetix?.contracts ?? {}),
   };
 
-  // after a lot of testing, we *really* need the any here in order to accomplish the typing we need
-  systems = (await loadSystems(contracts, provider)) as any; // eslint-disable-line @typescript-eslint/no-explicit-any
+  systems = await loadSystems(contracts, provider);
 
   console.log('completed initial bootstrap');
 });
