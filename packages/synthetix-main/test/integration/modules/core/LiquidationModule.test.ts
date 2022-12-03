@@ -108,35 +108,9 @@ describe.only('LiquidationModule', function () {
 
         let txn: ethers.providers.TransactionResponse;
         before('liquidate', async () => {
-          /*
-          console.log(
-            await systems().Core.callStatic.getCollateralConfiguration(collateralAddress()), // reward 20000000000000000000
-            await systems().Core.callStatic.getCollateralPrice(collateralAddress()) // price 1000000000000000000
-          );
-          */
-
-          /*
-          console.log(
-            (await systems().Core.callStatic.getVaultCollateral(poolId, collateralAddress()))[0]
-          );
-          // 11000000000000000000000
-          */
-
-          console.log(await systems().Core.callStatic.getMarketCollateral(marketId()));
-          // 11000000000000000000000
-
           txn = await systems()
             .Core.connect(user2)
             .liquidate(accountId, poolId, collateralAddress(), liquidatorAccountId);
-
-          /*
-          console.log(
-            (await systems().Core.callStatic.getVaultCollateral(poolId, collateralAddress()))[0]
-          );
-          // 10980000000000000000000
-          */
-
-          // it's dropping by $1,000 but we expect $20
         });
 
         it('erases the liquidated account', async () => {
@@ -182,7 +156,6 @@ describe.only('LiquidationModule', function () {
         });
 
         it('has reduced amount of total liquidity registered to the market', async () => {
-          console.log(await systems().Core.callStatic.getMarketCollateral(marketId()));
           assertBn.equal(
             await systems().Core.callStatic.getMarketCollateral(marketId()),
             depositAmount.mul(11).sub(liquidationReward)
@@ -192,7 +165,9 @@ describe.only('LiquidationModule', function () {
         it('emits correct event', async () => {
           await assertEvent(
             txn,
-            `Liquidation(${accountId}, ${poolId}, "${collateralAddress()}", ${debtAmount}, ${depositAmount}, ${liquidationReward})`,
+            `Liquidation(${accountId}, ${poolId}, "${collateralAddress()}", ${debtAmount.sub(
+              1 // precision loss
+            )}, ${depositAmount}, ${liquidationReward})`,
             systems().Core
           );
         });
@@ -312,8 +287,9 @@ describe.only('LiquidationModule', function () {
           );
         });
 
+        let sentAmount: ethers.BigNumber;
         it('transfers some of vault collateral amount', async () => {
-          const sentAmount = depositAmount.sub(
+          sentAmount = depositAmount.sub(
             (await systems().Core.getVaultCollateral(poolId, collateralAddress()))[0]
           );
 
@@ -340,7 +316,9 @@ describe.only('LiquidationModule', function () {
         it('emits correct event', async () => {
           await assertEvent(
             txn,
-            `VaultLiquidation(${poolId}, "${collateralAddress()}", ${debtAmount}, ${depositAmount})`,
+            `VaultLiquidation(${poolId}, "${collateralAddress()}", ${debtAmount.div(
+              4
+            )}, ${sentAmount}, ${liquidatorAccountId}, "${await user2.getAddress()}")`,
             systems().Core
           );
         });
@@ -378,7 +356,9 @@ describe.only('LiquidationModule', function () {
           it('emits correct event', async () => {
             await assertEvent(
               txn,
-              `VaultLiquidation(${poolId}, "${collateralAddress()}", ${debtAmount}, ${depositAmount})`,
+              `VaultLiquidation(${poolId}, "${collateralAddress()}", ${
+                debtAmount.sub(debtAmount.div(4)).sub(1) // precious rounding
+              }, ${sentAmount.mul(3)}, ${liquidatorAccountId}, "${await user2.getAddress()}")`,
               systems().Core
             );
           });

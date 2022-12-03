@@ -87,7 +87,10 @@ library Vault {
     {
         VaultEpoch.Data storage epochData = currentEpoch(self);
 
-        usdWeightD18 = uint(epochData.accountsDebtDistribution.totalSharesD18).mulDecimal(collateralPriceD18);
+        uint scaleModifier = (epochData.collateralAmounts.scaleModifierD27 + int(DecimalMath.UNIT_PRECISE)).toUint();
+        usdWeightD18 = ((uint(epochData.accountsDebtDistribution.totalSharesD18) * scaleModifier) / 1e27).mulDecimal(
+            collateralPriceD18
+        );
 
         totalDebtD18 = epochData.totalDebt();
 
