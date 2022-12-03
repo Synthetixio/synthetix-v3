@@ -14,9 +14,7 @@ import "../../storage/Market.sol";
 import "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
 
 /**
- * @title System module that allows a market to associate debt to a user's position.
- *
- * E.g. when migrating a position from v2 into v3's legacy market, the market first scales up everyone's debt, and then associates it to a position using this module.
+ * @inheritdoc IAssociateDebtModule
  */
 contract AssociateDebtModule is IAssociateDebtModule {
     using DecimalMath for uint;
@@ -43,7 +41,7 @@ contract AssociateDebtModule is IAssociateDebtModule {
     error InsufficientCollateralRatio(uint collateralValue, uint debt, uint ratio, uint minRatio);
 
     /**
-     * @dev Allows a market to associate debt with a specific position
+     * @inheritdoc IAssociateDebtModule
      */
     function associateDebt(
         uint128 marketId,
@@ -93,7 +91,7 @@ contract AssociateDebtModule is IAssociateDebtModule {
     }
 
     /**
-     * @dev Reverts if a collateral ratio would be liquidatable
+     * @dev Reverts if a collateral ratio would be liquidatable.
      */
     function _verifyCollateralRatio(
         address collateralType,

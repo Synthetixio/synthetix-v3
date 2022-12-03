@@ -3,7 +3,11 @@ pragma solidity ^0.8.0;
 
 import "@synthetixio/core-modules/contracts/interfaces/INftModule.sol";
 
-/// @title Module to allow for the migration of debt from another system to Synthetix
+/**
+ * @title System module for associating debt with the system.
+ * @notice Allows a market to associate debt to a user's existing position.
+ * E.g. when migrating a position from v2 into v3's legacy market, the market first scales up everyone's debt, and then associates it to a position using this module.
+ */
 interface IAssociateDebtModule {
     /**
      * @notice Emitted when `associateDebt` is called.
@@ -18,8 +22,7 @@ interface IAssociateDebtModule {
     );
 
     /**
-     * @dev Allows for a market, at its discression to allocate the assignment of recently accumulated debt in a
-     * market toward an individual
+     * @notice Allows a market to associate debt with a specific position.
      */
     function associateDebt(
         uint128 marketId,
