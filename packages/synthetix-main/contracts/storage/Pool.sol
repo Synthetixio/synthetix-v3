@@ -37,11 +37,8 @@ library Pool {
 
     struct Data {
         /**
-         * @dev Numeric identifier for the pool.
-         *
-         * Must be unique.
-         *
-         * Note: poolId zero is reserved for the "ZeroPool", which allows users to mint by being exposed to no fluctuating market debt.
+         * @dev Numeric identifier for the pool. Must be unique.
+         * @dev A pool with id zero exists! (See Pool.exists()). Users can delegate to this pool to be able to mint USD without being exposed to fluctuating debt.
          */
         uint128 id;
         /**
