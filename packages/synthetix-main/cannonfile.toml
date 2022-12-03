@@ -72,9 +72,6 @@ artifact = "contracts/modules/core/VaultModule.sol:VaultModule"
 [contract.AccountTokenModule]
 artifact = "contracts/modules/account/AccountTokenModule.sol:AccountTokenModule"
 
-[contract.SNXTokenModule]
-artifact = "contracts/modules/snx/SNXTokenModule.sol:SNXTokenModule"
-
 [contract.USDTokenModule]
 artifact = "contracts/modules/usd/USDTokenModule.sol:USDTokenModule"
 
@@ -203,31 +200,6 @@ abiOf = [
 ]
 depends = ["run.account_generate_router"]
 
-# SNX
-[run.snx_generate_router]
-exec = "@synthetixio/core-router"
-func = "generate"
-args = [
-  "contracts/routers/chain-<%= chainId %>/SNXRouter.sol:SNXRouter",
-  '''<%= JSON.stringify({
-    InitialModuleBundle: contracts.InitialModuleBundle,
-    SNXTokenModule: contracts.SNXTokenModule,
-  }) %>'''
-]
-modified = ["contracts/modules/snx"]
-depends = [
-  "contract.InitialModuleBundle",
-  "contract.SNXTokenModule"
-]
-
-[contract.SNXRouter]
-artifact = "contracts/routers/chain-<%= chainId %>/SNXRouter.sol:SNXRouter"
-abiOf = [
-  "InitialModuleBundle",
-  "SNXTokenModule"
-]
-depends = ["run.snx_generate_router"]
-
 # USD
 [run.usd_generate_router]
 exec = "@synthetixio/core-router"
@@ -276,25 +248,6 @@ depends = [
 factory.AccountProxy.abiOf = ["AccountRouter"]
 factory.AccountProxy.event = "AssociatedSystemSet"
 factory.AccountProxy.arg = 2
-
-[invoke.init_snx]
-target = ["CoreProxy"]
-from = "<%= settings.owner %>"
-func = "initOrUpgradeToken"
-args = [
-  "0x534e58546f6b656e000000000000000000000000000000000000000000000000",
-  "Synthetix System Token",
-  "SNX",
-  18,
-  "<%= contracts.SNXRouter.address %>"
-]
-depends = [
-  "invoke.upgrade_core_proxy",
-  "contract.SNXRouter"
-]
-factory.SNXProxy.abiOf = ["SNXRouter"]
-factory.SNXProxy.event = "AssociatedSystemSet"
-factory.SNXProxy.arg = 2
 
 [invoke.init_usd]
 target = ["CoreProxy"]

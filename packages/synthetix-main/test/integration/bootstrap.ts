@@ -8,8 +8,8 @@ import { snapshotCheckpoint } from '../utils/snapshot';
 import type {
   AccountProxy,
   CoreProxy,
-  SNXProxy,
   USDProxy,
+  CollateralMock,
   Oracle_managerProxy,
 } from '../generated/typechain';
 
@@ -19,8 +19,8 @@ const MARKET_FEATURE_FLAG = ethers.utils.formatBytes32String('registerMarket');
 interface Proxies {
   AccountProxy: AccountProxy;
   CoreProxy: CoreProxy;
-  SNXProxy: SNXProxy;
   USDProxy: USDProxy;
+  CollateralMock: CollateralMock;
   ['oracle_manager.Proxy']: Oracle_managerProxy;
 }
 
@@ -28,7 +28,7 @@ interface Systems {
   Account: AccountProxy;
   Core: CoreProxy;
   USD: USDProxy;
-  SNX: SNXProxy;
+  CollateralMock: CollateralMock;
   OracleManager: Oracle_managerProxy;
 }
 
@@ -44,9 +44,9 @@ before('load system proxies', function () {
   systems = {
     Account: getContract('AccountProxy'),
     Core: getContract('CoreProxy'),
-    SNX: getContract('SNXProxy'),
     USD: getContract('USDProxy'),
     OracleManager: getContract('oracle_manager.Proxy'),
+    CollateralMock: getContract('CollateralMock'),
   } as Systems;
 });
 
@@ -102,16 +102,13 @@ export function bootstrapWithStakedPool() {
   before('delegate collateral', async function () {
     const [owner, user1] = r.signers();
 
-    // mint initial snx
-    await r
-      .systems()
-      .Core.connect(owner)
-      .mintInitialSystemToken(await user1.getAddress(), depositAmount.mul(1000));
+    // mint initial collateral
+    await r.systems().CollateralMock.mint(await user1.getAddress(), depositAmount.mul(1000));
 
     // deploy an aggregator
-    collateralAddress = r.systems().SNX.address;
+    collateralAddress = r.systems().CollateralMock.address;
 
-    // add snx as collateral,
+    // add collateral,
     await (
       await r.systems().Core.connect(owner).configureCollateral({
         tokenAddress: collateralAddress,
@@ -134,7 +131,10 @@ export function bootstrapWithStakedPool() {
     await r.systems().Core.connect(user1).createAccount(accountId);
 
     // approve
-    await r.systems().SNX.connect(user1).approve(r.systems().Core.address, depositAmount.mul(10));
+    await r
+      .systems()
+      .CollateralMock.connect(user1)
+      .approve(r.systems().Core.address, depositAmount.mul(10));
 
     // stake collateral
     await r
@@ -162,7 +162,7 @@ export function bootstrapWithStakedPool() {
     aggregator: () => aggregator,
     accountId,
     poolId,
-    collateralContract: () => r.systems().SNX,
+    collateralContract: () => r.systems().CollateralMock,
     collateralAddress: () => collateralAddress,
     depositAmount,
     restore,
