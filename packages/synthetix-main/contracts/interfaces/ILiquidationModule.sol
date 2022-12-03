@@ -17,7 +17,8 @@ interface ILiquidationModule {
         address indexed collateralType,
         uint debtLiquidated,
         uint collateralLiquidated,
-        uint amountRewarded
+        uint liquidateAsAccountId,
+        address sender
     );
 
     struct LiquidationInformation {
@@ -29,7 +30,8 @@ interface ILiquidationModule {
     function liquidate(
         uint128 accountId,
         uint128 poolId,
-        address collateralType
+        address collateralType,
+        uint128 liquidateAsAccountId
     )
         external
         returns (
@@ -48,10 +50,11 @@ interface ILiquidationModule {
         uint maxUsd
     ) external returns (uint amountRewarded, uint collateralLiquidated);
 
-    /// @notice returns if the account is liquidable on the poolId - collateralType pair
-    function isLiquidatable(
+    function isPositionLiquidatable(
         uint128 accountId,
         uint128 poolId,
         address collateralType
     ) external returns (bool);
+
+    function isVaultLiquidatable(uint128 poolId, address collateralType) external returns (bool);
 }

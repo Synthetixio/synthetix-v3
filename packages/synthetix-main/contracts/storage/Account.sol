@@ -20,6 +20,7 @@ library Account {
     using SafeCastI256 for int256;
 
     error PermissionDenied(uint128 accountId, bytes32 permission, address target);
+    error AccountNotFound(uint128 accountId);
     error InsufficientAccountCollateral(uint requestedAmount);
 
     struct Data {
@@ -41,6 +42,12 @@ library Account {
 
         self.id = id;
         self.rbac.owner = owner;
+    }
+
+    function exists(uint128 id) internal view {
+        if (load(id).rbac.owner == address(0)) {
+            revert AccountNotFound(id);
+        }
     }
 
     function getCollateralTotals(Data storage self, address collateralType)

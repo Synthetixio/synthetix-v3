@@ -1,4 +1,5 @@
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
+import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import { ethers } from 'ethers';
 
@@ -26,10 +27,17 @@ describe('LiquidationModule', function () {
 
   describe('liquidate()', () => {
     before(restore);
+    const liquidatorAccountId = 384572397362836;
+
+    before('create liquidator account', async () => {
+      await systems().Core.connect(user2).createAccount(liquidatorAccountId);
+    });
 
     it('does not allow liquidation of account with healthy c-ratio', async () => {
       await assertRevert(
-        systems().Core.connect(user1).liquidate(accountId, poolId, collateralAddress()),
+        systems()
+          .Core.connect(user1)
+          .liquidate(accountId, poolId, collateralAddress(), liquidatorAccountId),
         'IneligibleForLiquidation(1000000000000000000000, 0, 0, 1500000000000000000)',
         systems().Core
       );
@@ -59,7 +67,9 @@ describe('LiquidationModule', function () {
 
       it('cannot liquidate when its the only account in the pool', async () => {
         await assertRevert(
-          systems().Core.connect(user2).liquidate(accountId, poolId, collateralAddress()),
+          systems()
+            .Core.connect(user2)
+            .liquidate(accountId, poolId, collateralAddress(), liquidatorAccountId),
           'MustBeVaultLiquidated()',
           systems().Core
         );
@@ -96,8 +106,11 @@ describe('LiquidationModule', function () {
             );
         });
 
+        let txn: ethers.providers.TransactionResponse;
         before('liquidate', async () => {
-          await systems().Core.connect(user2).liquidate(accountId, poolId, collateralAddress());
+          txn = await systems()
+            .Core.connect(user2)
+            .liquidate(accountId, poolId, collateralAddress(), liquidatorAccountId);
         });
 
         it('erases the liquidated account', async () => {
@@ -116,10 +129,11 @@ describe('LiquidationModule', function () {
         });
 
         it('sends correct reward to liquidating address', async () => {
-          assertBn.equal(
-            await collateralContract().balanceOf(await user2.getAddress()),
-            liquidationReward
+          const liquidatorAccountCollateral = await systems().Core.getAccountCollateral(
+            liquidatorAccountId,
+            collateralAddress()
           );
+          assertBn.equal(liquidatorAccountCollateral.totalDeposited, liquidationReward);
         });
 
         it('redistributes debt among remaining staker', async () => {
@@ -141,15 +155,22 @@ describe('LiquidationModule', function () {
           );
         });
 
-        // TODO enable when market tests are passing
-        it.skip('has reduced amount of total liquidity registered to the market', async () => {
+        it('has reduced amount of total liquidity registered to the market', async () => {
           assertBn.equal(
             await systems().Core.callStatic.getMarketCollateral(marketId()),
             depositAmount.mul(11).sub(liquidationReward)
           );
         });
 
-        it('emits correct event', async () => {});
+        it('emits correct event', async () => {
+          await assertEvent(
+            txn,
+            `Liquidation(${accountId}, ${poolId}, "${collateralAddress()}", ${debtAmount.sub(
+              1 // precision loss
+            )}, ${depositAmount}, ${liquidationReward})`,
+            systems().Core
+          );
+        });
       });
     });
   });
@@ -170,7 +191,7 @@ describe('LiquidationModule', function () {
         systems()
           .Core.connect(user1)
           .liquidateVault(poolId, collateralAddress(), 382387423936, ethers.utils.parseEther('1')),
-        'InvalidParameter',
+        'AccountNotFound(382387423936)',
         systems().Core
       );
     });
@@ -252,8 +273,9 @@ describe('LiquidationModule', function () {
           );
         });
 
+        let txn: ethers.providers.TransactionResponse;
         before('liquidate', async () => {
-          await systems()
+          txn = await systems()
             .Core.connect(user2)
             .liquidateVault(poolId, collateralAddress(), liquidatorAccountId, debtAmount.div(4));
         });
@@ -265,8 +287,9 @@ describe('LiquidationModule', function () {
           );
         });
 
+        let sentAmount: ethers.BigNumber;
         it('transfers some of vault collateral amount', async () => {
-          const sentAmount = depositAmount.sub(
+          sentAmount = depositAmount.sub(
             (await systems().Core.getVaultCollateral(poolId, collateralAddress()))[0]
           );
 
@@ -290,11 +313,21 @@ describe('LiquidationModule', function () {
           );
         });
 
-        it('emits correct event', async () => {});
+        it('emits correct event', async () => {
+          await assertEvent(
+            txn,
+            `VaultLiquidation(${poolId}, "${collateralAddress()}", ${debtAmount.div(
+              4
+            )}, ${sentAmount}, ${liquidatorAccountId}, "${await user2.getAddress()}")`,
+            systems().Core
+          );
+        });
 
         describe('succesful full liquidation', () => {
+          let txn: ethers.providers.TransactionResponse;
+
           before('liquidate', async () => {
-            await systems()
+            txn = await systems()
               .Core.connect(user2)
               .liquidateVault(poolId, collateralAddress(), liquidatorAccountId, debtAmount);
           });
@@ -320,7 +353,15 @@ describe('LiquidationModule', function () {
             );
           });
 
-          it('emits correct event', async () => {});
+          it('emits correct event', async () => {
+            await assertEvent(
+              txn,
+              `VaultLiquidation(${poolId}, "${collateralAddress()}", ${
+                debtAmount.sub(debtAmount.div(4)).sub(1) // precious rounding
+              }, ${sentAmount.mul(3)}, ${liquidatorAccountId}, "${await user2.getAddress()}")`,
+              systems().Core
+            );
+          });
         });
       });
     });
