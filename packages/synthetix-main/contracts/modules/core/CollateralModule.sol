@@ -164,13 +164,7 @@ contract CollateralModule is ICollateralModule {
         account.collaterals[collateralType].locks.push(CollateralLock.Data(amount, expireTimestamp));
     }
 
-    /**
-     * @dev Configure oracle manager address only by owner
-     */
-    function configureOracleManager(address oracleManagerAddress) external override {
-        OwnableStorage.onlyOwner();
-
-        OracleManager.Data storage oracle = OracleManager.load();
-        oracle.oracleManagerAddress = oracleManagerAddress;
+    function _convertTokenToSystemAmount(IERC20 token, uint tokenAmount) internal view returns (uint) {
+        return (tokenAmount * DecimalMath.UNIT) / (10**token.decimals());
     }
 }
