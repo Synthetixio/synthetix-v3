@@ -5,7 +5,15 @@ import { glob, runTypeChain } from 'typechain';
 import { MockMarket } from '../../typechain-types/contracts/mocks/MockMarket';
 import { snapshotCheckpoint } from '../utils/snapshot';
 
-import type { AccountProxy, CoreProxy, SNXProxy, USDProxy } from '../generated/typechain';
+import NodeTypes from '@synthetixio/oracle-manager/test/integration/mixins/Node.types';
+
+import type {
+  AccountProxy,
+  CoreProxy,
+  SNXProxy,
+  USDProxy,
+  Oracle_managerProxy,
+} from '../generated/typechain';
 
 const POOL_FEATURE_FLAG = ethers.utils.formatBytes32String('createPool');
 const MARKET_FEATURE_FLAG = ethers.utils.formatBytes32String('registerMarket');
@@ -15,6 +23,7 @@ interface Proxies {
   CoreProxy: CoreProxy;
   SNXProxy: SNXProxy;
   USDProxy: USDProxy;
+  Oracle_managerProxy: Oracle_managerProxy;
 }
 
 let provider: ethers.providers.JsonRpcProvider;
@@ -26,6 +35,7 @@ let systems: {
   Core: CoreProxy;
   USD: USDProxy;
   SNX: SNXProxy;
+  OracleManager: Oracle_managerProxy;
 };
 
 let baseSystemSnapshot: unknown;
@@ -47,6 +57,7 @@ async function loadSystems(
     Core: getProxy('CoreProxy'),
     SNX: getProxy('SNXProxy'),
     USD: getProxy('USDProxy'),
+    OracleManager: getProxy('Oracle_managerProxy'),
   };
 }
 
@@ -95,6 +106,7 @@ before(async function () {
   const contracts = {
     ...(outputs.contracts ?? {}),
     ...(outputs.imports?.synthetix?.contracts ?? {}),
+    Oracle_managerProxy: outputs.imports?.oracle_manager?.contracts.Proxy,
   };
 
   systems = await loadSystems(contracts, provider);
@@ -133,10 +145,12 @@ export function bootstrapWithStakedPool() {
 
   let aggregator: ethers.Contract;
 
+  let oracleNodeId: string;
   const accountId = 1;
   const poolId = 1;
   let collateralAddress: string;
   const depositAmount = ethers.utils.parseEther('1000');
+  const abi = ethers.utils.defaultAbiCoder;
 
   before('deploy mock aggregator', async () => {
     const [owner] = r.signers();
@@ -145,6 +159,17 @@ export function bootstrapWithStakedPool() {
     aggregator = await factory.connect(owner).deploy();
 
     await aggregator.mockSetCurrentPrice(ethers.utils.parseEther('1'));
+  });
+
+  before('setup oracle manager node', async () => {
+    const [owner] = r.signers();
+
+    const params1 = abi.encode(['address', 'uint256'], [aggregator.address, 0]);
+    await r.systems().OracleManager.connect(owner).registerNode([], NodeTypes.CHAINLINK, params1);
+    oracleNodeId = await r
+      .systems()
+      .OracleManager.connect(owner)
+      .getNodeId([], NodeTypes.CHAINLINK, params1);
   });
 
   before('delegate collateral', async function () {
@@ -163,7 +188,7 @@ export function bootstrapWithStakedPool() {
     await (
       await r.systems().Core.connect(owner).configureCollateral({
         tokenAddress: collateralAddress,
-        priceFeed: aggregator.address,
+        oracleNodeId,
         issuanceRatioD18: '5000000000000000000',
         liquidationRatioD18: '1500000000000000000',
         liquidationRewardD18: '20000000000000000000',

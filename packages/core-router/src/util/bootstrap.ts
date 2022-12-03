@@ -14,8 +14,8 @@ export function bootstrap() {
   before(async function prepareNode() {
     this.timeout(90000);
 
-    if (hre.network.name !== 'cannon') {
-      throw new Error('Tests can only be ran using the "cannon" network');
+    if (hre.network.name !== 'cannon' && hre.network.name !== 'hardhat') {
+      throw new Error('Tests can only be ran using the "cannon" or "hardhat" networks');
     }
 
     const cannonBuild = await hre.run('cannon:build');
@@ -28,7 +28,11 @@ export function bootstrap() {
       throw new Error('Missing Proxy contract on build');
     }
 
-    await provider.send('anvil_setBlockTimestampInterval', [1]);
+    try {
+      await provider.send('anvil_setBlockTimestampInterval', [1]);
+    } catch (err) {
+      console.warn('failed when setting block timestamp interval', err);
+    }
 
     baseSystemSnapshot = await provider.send('evm_snapshot', []);
   });

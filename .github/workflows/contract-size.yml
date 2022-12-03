@@ -8,7 +8,10 @@ jobs:
     strategy:
       matrix:
         package: [core-contracts, core-modules, synthetix-main]
-
+    env:
+      INFURA_API_KEY: ${{ secrets.INFURA_API_KEY }}
+      INFURA_IPFS_ID: ${{ secrets.INFURA_IPFS_ID }}
+      INFURA_IPFS_SECRET: ${{ secrets.INFURA_IPFS_SECRET }}
     steps:
       - name: Install Foundry (Cannon)
         uses: foundry-rs/foundry-toolchain@v1

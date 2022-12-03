@@ -75,4 +75,6 @@ interface ICollateralModule {
         uint amount,
         uint64 expireTimestamp
     ) external;
+
+    function configureOracleManager(address oracleManagerAddress) external;
 }
