@@ -43,7 +43,7 @@ module.exports = {
       },
     },
     {
-      files: ['./packages/*/test/**/*.{j,t}s'],
+      files: ['./utils/*/test/**/*.{j,t}s', './markets/*/test/**/*.{j,t}s', './protocol/*/test/**/*.{j,t}s'],
       env: {
         mocha: true,
       },

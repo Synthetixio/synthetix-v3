@@ -14,21 +14,22 @@ jobs:
       matrix:
         package:
           [
-            core-contracts,
-            core-utils,
-            core-modules,
-            hardhat-router,
-            synthetix-main,
+            ./utils/core-contracts,
+            ./utils/core-utils,
+            ./utils/core-modules,
+            ./utils/hardhat-router,
+            ./protocol/synthetix,
+            ./protocol/oracle-manager,
           ]
         include:
           - package: core-contracts
-            coverage-file: packages/core-contracts/coverage.json
+            coverage-file: utils/core-contracts/coverage.json
           - package: core-utils
-            coverage-file: packages/core-utils/coverage/lcov.info
+            coverage-file: utils/core-utils/coverage/lcov.info
           - package: core-modules
-            coverage-file: packages/core-modules/coverage.json
+            coverage-file: utils/core-modules/coverage.json
           - package: hardhat-router
-            coverage-file: packages/hardhat-router/coverage/lcov.info
+            coverage-file: utils/hardhat-router/coverage/lcov.info
     steps:
       - name: Install Foundry (Cannon)
         uses: foundry-rs/foundry-toolchain@v1
@@ -43,7 +44,7 @@ jobs:
       - run: npm ci
       - run: npm run build
       - name: Execute tests
-        run: REPORT_GAS=true npm run --workspace=./packages/${{ matrix.package }} coverage
+        run: REPORT_GAS=true npm run --workspace=${{ matrix.package }} coverage
       - name: Upload ${{ matrix.package }} coverage to Codecov
         uses: codecov/codecov-action@v2
         with:
@@ -65,4 +66,4 @@ jobs:
           cache: "npm"
       - run: npm ci
       - run: npm run build
-      - run: npm --workspace=./packages/sample-project test
+      - run: npm --workspace=./utils/sample-project test

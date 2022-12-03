@@ -6,7 +6,7 @@
 **/deployments
 /markets/*/test/generated
 /protocol/*/test/generated
-/packages/*/test/generated
+/utils/*/test/generated
 artifacts
 cache
 coverage

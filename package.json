@@ -14,7 +14,7 @@
   "license": "MIT",
   "homepage": "https://github.com/Synthetixio/synthetix-v3#readme",
   "scripts": {
-    "build": "npm run -w ./packages/core-utils -w ./packages/hardhat-router -w ./packages/hardhat-storage -w ./packages/core-router -w ./packages/oracle-manager -w ./packages/synthetix-main build",
+    "build": "npm run -w ./utils/core-utils -w ./utils/hardhat-router -w ./utils/hardhat-storage -w ./utils/core-router -w ./protocol/oracle-manager -w ./protocol/synthetix build",
     "test": "npm run --workspaces --if-present test",
     "coverage": "npm run --workspaces --if-present coverage",
     "lint:js": "prettier --check '**/*.{t,j}s' && eslint --max-warnings=0 '**/*.{t,j}s'",
