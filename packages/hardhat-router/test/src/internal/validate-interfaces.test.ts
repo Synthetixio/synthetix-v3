@@ -1,6 +1,6 @@
 import { deepEqual } from 'node:assert/strict';
 import path from 'node:path';
-import { parseAsts } from '@synthetixio/core-utils/utils/ast/parse';
+import { compileSolidityFolder } from '@synthetixio/core-utils/utils/solidity/compiler';
 import { SourceUnit } from 'solidity-ast';
 import { routerFunctionFilter } from '../../../src/internal/router-function-filter';
 import { validateInterfaces } from '../../../src/internal/validate-interfaces';
@@ -9,7 +9,7 @@ describe('internal/validate-interfaces.ts', function () {
   let astNodes: SourceUnit[];
 
   before('load asts', async function () {
-    astNodes = await parseAsts({
+    astNodes = await compileSolidityFolder({
       version: '0.8.11',
       rootDir: path.resolve(__dirname, '..', '..', 'fixtures'),
       sources: ['contracts/InterfacedModules.sol'],

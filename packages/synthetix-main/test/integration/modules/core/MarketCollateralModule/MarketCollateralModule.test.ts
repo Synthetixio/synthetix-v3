@@ -133,7 +133,7 @@ describe('MarketCollateralModule', function () {
 
         it('reduces total balance', async () => {
           assertBn.equal(
-            await systems().Core.connect(user1).getMarketTotalBalance(marketId()),
+            await systems().Core.connect(user1).getMarketTotalDebt(marketId()),
             configuredMaxAmount.sub(configuredMaxAmount.mul(2))
           );
         });
@@ -224,7 +224,7 @@ describe('MarketCollateralModule', function () {
 
         it('increases total balance', async () => {
           assertBn.equal(
-            await systems().Core.connect(user1).getMarketTotalBalance(marketId()),
+            await systems().Core.connect(user1).getMarketTotalDebt(marketId()),
             ethers.BigNumber.from(0).sub(
               configuredMaxAmount.div(2).sub(configuredMaxAmount.div(2).div(4))
             )

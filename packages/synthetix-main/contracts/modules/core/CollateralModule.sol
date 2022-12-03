@@ -2,7 +2,6 @@
 pragma solidity ^0.8.0;
 
 import "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
-import "@synthetixio/core-contracts/contracts/interfaces/IERC20.sol";
 import "@synthetixio/core-contracts/contracts/token/ERC20Helper.sol";
 
 import "../../interfaces/ICollateralModule.sol";
@@ -33,31 +32,28 @@ contract CollateralModule is ICollateralModule {
     function deposit(
         uint128 accountId,
         address collateralType,
-        uint amount
+        uint tokenAmount
     ) public override {
         CollateralConfiguration.collateralEnabled(collateralType);
-        Account.onlyWithPermission(accountId, AccountRBAC._DEPOSIT_PERMISSION);
 
         Account.Data storage account = Account.load(accountId);
 
-        // TODO: Deposit/withdraw should be transferring from/to msg.sender,
-        // instead of the account's owner address.
-        // If msg.sender has permission for a deposit/withdraw operation,
-        // then it is most natural for the collateral to be pulled from msg.sender.
-        address user = account.rbac.owner;
+        address depositFrom = msg.sender;
 
         address self = address(this);
 
-        uint allowance = IERC20(collateralType).allowance(user, self);
-        if (allowance < amount) {
-            revert IERC20.InsufficientAllowance(amount, allowance);
+        uint allowance = IERC20(collateralType).allowance(depositFrom, self);
+        if (allowance < tokenAmount) {
+            revert IERC20.InsufficientAllowance(tokenAmount, allowance);
         }
 
-        collateralType.safeTransferFrom(user, self, amount);
+        collateralType.safeTransferFrom(depositFrom, self, tokenAmount);
 
-        account.collaterals[collateralType].deposit(amount);
+        account.collaterals[collateralType].deposit(
+            CollateralConfiguration.load(collateralType).convertTokenToSystemAmount(tokenAmount)
+        );
 
-        emit Deposited(accountId, collateralType, amount, msg.sender);
+        emit Deposited(accountId, collateralType, tokenAmount, msg.sender);
     }
 
     /**
@@ -66,21 +62,23 @@ contract CollateralModule is ICollateralModule {
     function withdraw(
         uint128 accountId,
         address collateralType,
-        uint amount
+        uint tokenAmount
     ) public override {
         Account.onlyWithPermission(accountId, AccountRBAC._WITHDRAW_PERMISSION);
 
         Account.Data storage account = Account.load(accountId);
 
-        if (account.collaterals[collateralType].availableAmountD18 < amount) {
-            revert InsufficientAccountCollateral(amount);
+        uint systemAmount = CollateralConfiguration.load(collateralType).convertTokenToSystemAmount(tokenAmount);
+
+        if (account.collaterals[collateralType].availableAmountD18 < systemAmount) {
+            revert InsufficientAccountCollateral(systemAmount);
         }
 
-        account.collaterals[collateralType].deductCollateral(amount);
+        account.collaterals[collateralType].deductCollateral(systemAmount);
 
-        collateralType.safeTransfer(account.rbac.owner, amount);
+        collateralType.safeTransfer(msg.sender, tokenAmount);
 
-        emit Withdrawn(accountId, collateralType, amount, msg.sender);
+        emit Withdrawn(accountId, collateralType, tokenAmount, msg.sender);
     }
 
     /**
@@ -164,5 +162,9 @@ contract CollateralModule is ICollateralModule {
         }
 
         account.collaterals[collateralType].locks.push(CollateralLock.Data(amount, expireTimestamp));
+    }
+
+    function _convertTokenToSystemAmount(IERC20 token, uint tokenAmount) internal view returns (uint) {
+        return (tokenAmount * DecimalMath.UNIT) / (10**token.decimals());
     }
 }

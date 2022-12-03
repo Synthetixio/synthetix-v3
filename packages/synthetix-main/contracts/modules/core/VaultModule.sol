@@ -14,7 +14,11 @@ import "../../interfaces/IVaultModule.sol";
 import "../../interfaces/IUSDTokenModule.sol";
 
 /**
- * @title See {IVaultModule}
+ * @title Allows accounts to delegate collateral to a pool.
+ *
+ * Delegation updates the account's position in the vault that corresponds to the associated pool and collateral type pair.
+ *
+ * A pool contains one vault for each collateral type it supports, and vaults are not shared between pools.
  */
 contract VaultModule is IVaultModule {
     using SetUtil for SetUtil.UintSet;
@@ -30,91 +34,89 @@ contract VaultModule is IVaultModule {
     using Distribution for Distribution.Data;
     using CollateralConfiguration for CollateralConfiguration.Data;
     using ScalableMapping for ScalableMapping.Data;
-
-    error InvalidLeverage(uint leverage);
-    error InvalidCollateral(address collateralType);
-    error CapacityLocked(uint marketId);
-
     using SafeCastU128 for uint128;
     using SafeCastU256 for uint256;
     using SafeCastI128 for int128;
     using SafeCastI256 for int256;
 
+    error InvalidLeverage(uint leverage);
+    error CapacityLocked(uint marketId);
+
     /**
-     * @dev See {IVaultModule-delegateCollateral}.
-     *
-     * TODO: This function is too long, does too many things, needs to be split into sub-functions.
+     * @dev Updates an account's delegated collateral amount for the specified pool and collateral type pair.
      */
     function delegateCollateral(
         uint128 accountId,
         uint128 poolId,
         address collateralType,
-        uint collateralAmount,
+        uint newCollateralAmount,
         uint leverage
     ) external override {
         Pool.requireExists(poolId);
         Account.onlyWithPermission(accountId, AccountRBAC._DELEGATE_PERMISSION);
 
-        if (collateralAmount > 0) {
-            CollateralConfiguration.requireSufficientDelegation(collateralType, collateralAmount);
+        // Each collateral type may specify a minimum collateral amount that can be delegated.
+        // See CollateralConfiguration.minDelegationD18.
+        if (newCollateralAmount > 0) {
+            CollateralConfiguration.requireSufficientDelegation(collateralType, newCollateralAmount);
         }
 
-        // Fix leverage to 1 until it's enabled
-        // TODO: we will probably at least want to test <1 leverage
+        // System only supports leverage of 1.0 for now.
         if (leverage != DecimalMath.UNIT) revert InvalidLeverage(leverage);
 
+        // Identify the vault that corresponds to this collateral type and pool id.
         Vault.Data storage vault = Pool.load(poolId).vaults[collateralType];
 
+        // Use account interaction to update its rewards.
         vault.updateRewards(accountId);
 
-        // get the current collateral situation
-        uint oldCollateralAmount = vault.currentAccountCollateral(accountId);
+        uint currentCollateralAmount = vault.currentAccountCollateral(accountId);
 
-        // if increasing collateral additionally check they have enough collateral
-        if (collateralAmount > oldCollateralAmount) {
+        // If increasing delegated collateral amount,
+        // Check that the account has sufficient collateral.
+        if (newCollateralAmount > currentCollateralAmount) {
+            // Check if the collateral is enabled here because we still want to allow reducing delegation for disabled collaterals.
             CollateralConfiguration.collateralEnabled(collateralType);
-            Account.requireSufficientCollateral(accountId, collateralType, collateralAmount - oldCollateralAmount);
+
+            Account.requireSufficientCollateral(accountId, collateralType, newCollateralAmount - currentCollateralAmount);
         }
 
+        // Update the account's position for the given pool and collateral type,
+        // Note: This will trigger an update in the entire debt distribution chain.
         uint collateralPrice = _updatePosition(
             accountId,
             poolId,
             collateralType,
-            collateralAmount,
-            oldCollateralAmount,
+            newCollateralAmount,
+            currentCollateralAmount,
             leverage
         );
 
-        _setDelegatePoolId(accountId, poolId, collateralType);
+        _ensureAccountCollateralsContainsPool(accountId, poolId, collateralType);
 
-        // this is the most efficient time to check the resulting collateralization ratio, since
-        // user's debt and collateral price have been fully updated
-        if (collateralAmount < oldCollateralAmount) {
+        // If decreasing the delegated collateral amount,
+        // check the account's collateralization ration.
+        // Note: This is the best time to do so since the user's debt and the collateral's price have both been updated.
+        if (newCollateralAmount < currentCollateralAmount) {
             int debt = vault.currentEpoch().consolidatedDebtAmountsD18[accountId];
-            //(, uint collateralValue) = pool.currentAccountCollateral(collateralType, accountId);
 
-            CollateralConfiguration.load(collateralType).verifyCollateralRatio(
+            // Minimum collateralization ratios are configured in the system per collateral type.abi
+            // Ensure that the account's updated position satisfies this requirement.
+            CollateralConfiguration.load(collateralType).verifyIssuanceRatio(
                 debt < 0 ? 0 : debt.toUint(),
-                collateralAmount.mulDecimal(collateralPrice)
+                newCollateralAmount.mulDecimal(collateralPrice)
             );
-        }
 
-        if (
-            collateralAmount < oldCollateralAmount /* || leverage < oldLeverage */
-        ) {
-            // if pool contains any capacity-locked markets, account cannot reduce their position
+            // Accounts cannot reduce collateral if any of the pool's
+            // connected market has its capacity locked.
             _verifyNotCapacityLocked(poolId);
         }
 
-        emit DelegationUpdated(accountId, poolId, collateralType, collateralAmount, leverage, msg.sender);
+        emit DelegationUpdated(accountId, poolId, collateralType, newCollateralAmount, leverage, msg.sender);
     }
 
-    // ---------------------------------------
-    // Collateralization Ratio and Debt Queries
-    // ---------------------------------------
-
     /**
-     * @dev See {IVaultModule-getPositionCollateralizationRatio}.
+     * @dev Returns the account's current collateralization ratio in the given pool, and collateral type.
      */
     function getPositionCollateralizationRatio(
         uint128 accountId,
@@ -125,14 +127,14 @@ contract VaultModule is IVaultModule {
     }
 
     /**
-     * @dev See {IVaultModule-getVaultCollateralRatio}.
+     * @dev Returns the current collateralization ratio of the vault associated to the given pool and collateral type.
      */
     function getVaultCollateralRatio(uint128 poolId, address collateralType) external override returns (uint) {
         return Pool.load(poolId).currentVaultCollateralRatio(collateralType);
     }
 
     /**
-     * @dev See {IVaultModule-getPositionCollateral}.
+     * @dev Returns the current collateral amount and value for the given account and pool.
      */
     function getPositionCollateral(
         uint128 accountId,
@@ -143,7 +145,7 @@ contract VaultModule is IVaultModule {
     }
 
     /**
-     * @dev See {IVaultModule-getPosition}.
+     * @dev Returns general information about the position of the given account, pool, and collateral type.
      */
     function getPosition(
         uint128 accountId,
@@ -167,7 +169,10 @@ contract VaultModule is IVaultModule {
     }
 
     /**
-     * @dev See {IVaultModule-getPositionDebt}.
+     * @dev Returns the debt for the given account, pool, and collateral type.
+     *
+     * Note: This is not a view function, and actually updates the entire debt distribution chain.
+     * To call this externally as a view function, use `staticall`.
      */
     function getPositionDebt(
         uint128 accountId,
@@ -178,7 +183,7 @@ contract VaultModule is IVaultModule {
     }
 
     /**
-     * @dev See {IVaultModule-getVaultCollateral}.
+     * @dev Returns the total collateral for the given pool, and collateral type.
      */
     function getVaultCollateral(uint128 poolId, address collateralType)
         public
@@ -190,43 +195,59 @@ contract VaultModule is IVaultModule {
     }
 
     /**
-     * @dev See {IVaultModule-getVaultDebt}.
+     * @dev Returns the total debt for the given pool, and collateral type.
+     *
+     * Note: This is not a view function, and actually updates the entire debt distribution chain.
+     * To call this externally as a view function, use `staticall`.
      */
     function getVaultDebt(uint128 poolId, address collateralType) public override returns (int) {
         return Pool.load(poolId).currentVaultDebt(collateralType);
     }
 
+    /**
+     * @dev Updates the given account's position regarding the given pool and collateral type,
+     * with the new amount of delegated collateral.
+     *
+     * The update will be reflected in the registered delegated collateral amount,
+     * but it will also trigger updates to the entire debt distribution chain.
+     */
     function _updatePosition(
         uint128 accountId,
         uint128 poolId,
         address collateralType,
-        uint collateralAmount,
+        uint newCollateralAmount,
         uint oldCollateralAmount,
         uint leverage
     ) internal returns (uint collateralPrice) {
         Pool.Data storage pool = Pool.load(poolId);
 
-        // the current user may have accumulated some debt which needs to be rolled in before changing shares
+        // Trigger an update in the debt distribution chain to make sure that
+        // the user's debt is up to date.
         pool.updateAccountDebt(collateralType, accountId);
 
+        // Get the collateral entry for the given account and collateral type.
         Collateral.Data storage collateral = Account.load(accountId).collaterals[collateralType];
 
-        // adjust the user's current account collateral to reflect the change in delegation
-        if (collateralAmount > oldCollateralAmount) {
-            collateral.deductCollateral(collateralAmount - oldCollateralAmount);
+        // Adjust collateral depending on increase/decrease of amount.
+        if (newCollateralAmount > oldCollateralAmount) {
+            collateral.deductCollateral(newCollateralAmount - oldCollateralAmount);
         } else {
-            collateral.deposit(oldCollateralAmount - collateralAmount);
+            collateral.deposit(oldCollateralAmount - newCollateralAmount);
         }
 
-        if (collateralAmount > 0 && !collateral.pools.contains(poolId)) {
+        // If the collateral amount is positive, make sure that the pool exists
+        // in the collateral entry's pool array. Otherwise remove it.
+        if (newCollateralAmount > 0 && !collateral.pools.contains(poolId)) {
             collateral.pools.add(poolId);
         } else if (collateral.pools.contains((poolId))) {
             collateral.pools.remove(poolId);
         }
 
-        pool.vaults[collateralType].currentEpoch().updateAccountPosition(accountId, collateralAmount, leverage);
+        // Update the account's position in the vault data structure.
+        pool.vaults[collateralType].currentEpoch().updateAccountPosition(accountId, newCollateralAmount, leverage);
 
-        // no update for usd because no usd issued
+        // Trigger another update in the debt distribution chain,
+        // and surface the latest price for the given collateral type (which is retrieved in the update).
         collateralPrice = pool.recalculateVaultCollateral(collateralType);
     }
 
@@ -241,9 +262,9 @@ contract VaultModule is IVaultModule {
     }
 
     /**
-     * @dev Registers the pool to which users delegates collateral to.
+     * @dev Registers the pool in the given account's collaterals array.
      */
-    function _setDelegatePoolId(
+    function _ensureAccountCollateralsContainsPool(
         uint128 accountId,
         uint128 poolId,
         address collateralType

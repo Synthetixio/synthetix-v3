@@ -1,11 +1,23 @@
+import { coreBootstrap } from '@synthetixio/core-router/util/core-bootstrap';
+import { BigNumber, ethers } from 'ethers';
 import hre from 'hardhat';
-import { bootstrap } from '@synthetixio/core-router/util/bootstrap';
-import { ethers, BigNumber } from 'ethers';
-
-import { snapshotCheckpoint } from '../utils';
+import { OracleManagerModule } from '../generated/typechain';
 import NodeTypes from './mixins/Node.types';
 
 const abi = ethers.utils.defaultAbiCoder;
+
+interface Contracts {
+  OracleManagerModule: OracleManagerModule;
+}
+
+const r = coreBootstrap<Contracts>();
+
+const restoreSnapshot = r.createSnapshot();
+
+export function bootstrap() {
+  before(restoreSnapshot);
+  return r;
+}
 
 export function bootstrapWithNodes() {
   const r = bootstrap();
@@ -51,13 +63,8 @@ export function bootstrapWithNodes() {
     nodeId3 = await registerNode(params3);
   });
 
-  const restoreSnapshot = snapshotCheckpoint(
-    r.getProvider as unknown as () => ethers.providers.JsonRpcProvider
-  );
-
   return {
     ...r,
-    restoreSnapshot,
     nodeId1: () => nodeId1,
     nodeId2: () => nodeId2,
     nodeId3: () => nodeId3,

@@ -6,24 +6,24 @@ const bootstrap = require('../bootstrap');
 describe('SomeModule', function () {
   const { getContract, getSigners } = bootstrap();
 
-  let SomeModule;
+  let Proxy;
   let owner;
 
   let receipt;
 
   before('init', function () {
     [owner] = getSigners();
-    SomeModule = getContract('SomeModule');
+    Proxy = getContract('Proxy');
   });
 
   describe('when value is set', function () {
     before('set value', async function () {
-      const tx = await SomeModule.connect(owner).setValue(42);
+      const tx = await Proxy.connect(owner).setValue(42);
       receipt = await tx.wait();
     });
 
     it('shows that the value was set', async function () {
-      assertBn.equal(await SomeModule.getValue(), 42);
+      assertBn.equal(await Proxy.getValue(), 42);
     });
 
     it('emitted a ValueSet event', async function () {
@@ -36,12 +36,12 @@ describe('SomeModule', function () {
 
   describe('when someValue is set', function () {
     before('set some value', async function () {
-      const tx = await SomeModule.connect(owner).setSomeValue(1337);
+      const tx = await Proxy.connect(owner).setSomeValue(1337);
       receipt = await tx.wait();
     });
 
     it('shows that the value was set', async function () {
-      assertBn.equal(await SomeModule.getSomeValue(), 1337);
+      assertBn.equal(await Proxy.getSomeValue(), 1337);
     });
 
     it('emitted a ValueSet event', async function () {

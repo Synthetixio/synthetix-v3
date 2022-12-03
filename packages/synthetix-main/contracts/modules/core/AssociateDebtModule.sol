@@ -11,6 +11,13 @@ import "../../storage/Distribution.sol";
 import "../../storage/Pool.sol";
 import "../../storage/Market.sol";
 
+import "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
+
+/**
+ * @title System module that allows a market to associate debt to a user's position.
+ *
+ * E.g. when migrating a position from v2 into v3's legacy market, the market first scales up everyone's debt, and then associates it to a position using this module.
+ */
 contract AssociateDebtModule is IAssociateDebtModule {
     using DecimalMath for uint;
 
@@ -29,11 +36,15 @@ contract AssociateDebtModule is IAssociateDebtModule {
     using ScalableMapping for ScalableMapping.Data;
 
     bytes32 private constant _USD_TOKEN = "USDToken";
+    bytes32 private constant _ASSOCIATE_DEBT_FEATURE_FLAG = "associateDebt";
 
     error Unauthorized(address actual);
     error NotFundedByPool(uint marketId, uint poolId);
     error InsufficientCollateralRatio(uint collateralValue, uint debt, uint ratio, uint minRatio);
 
+    /**
+     * @dev Allows a market to associate debt with a specific position
+     */
     function associateDebt(
         uint128 marketId,
         uint128 poolId,
@@ -41,36 +52,33 @@ contract AssociateDebtModule is IAssociateDebtModule {
         uint128 accountId,
         uint amount
     ) external returns (int) {
-        // load up the vault
+        FeatureFlag.ensureAccessToFeature(_ASSOCIATE_DEBT_FEATURE_FLAG);
+
         Pool.Data storage poolData = Pool.load(poolId);
         VaultEpoch.Data storage epochData = poolData.vaults[collateralType].currentEpoch();
-
         Market.Data storage marketData = Market.load(marketId);
 
-        // market must match up
         if (msg.sender != marketData.marketAddress) {
             revert Unauthorized(msg.sender);
         }
 
-        // market must appear in pool configuration
+        bytes32 actorId = bytes32(uint(accountId));
+
+        // The market must appear in pool configuration of the specified position
         if (!poolData.hasMarket(marketId)) {
             revert NotFundedByPool(marketId, poolId);
         }
 
-        // verify the requested account actually has collateral to cover the new debt
-        bytes32 actorId = bytes32(uint(accountId));
-
-        // subtract the requested amount of debt from the market
-        // this debt should have been accumulated just now anyway so
-        marketData.netIssuanceD18 -= amount.toInt().to128();
-
-        // register account debt
+        // Refresh latest account debt
         poolData.updateAccountDebt(collateralType, accountId);
 
-        // increase account debt
+        // Remove the debt we're about to assign to a specific position, pro-rata
+        epochData.distributeDebtToAccounts(-amount.toInt());
+
+        // Assign this debt to the specified position
         int updatedDebt = epochData.assignDebtToAccount(accountId, amount.toInt());
 
-        // verify the c ratio
+        // Reverts if this debt increase would make the position liquidatable
         _verifyCollateralRatio(
             collateralType,
             updatedDebt > 0 ? updatedDebt.toUint() : 0,
@@ -81,19 +89,20 @@ contract AssociateDebtModule is IAssociateDebtModule {
 
         emit DebtAssociated(marketId, poolId, collateralType, accountId, amount, updatedDebt);
 
-        // done
         return updatedDebt;
     }
 
+    /**
+     * @dev Reverts if a collateral ratio would be liquidatable
+     */
     function _verifyCollateralRatio(
         address collateralType,
         uint debt,
         uint collateralValue
     ) internal view {
-        uint issuanceRatio = CollateralConfiguration.load(collateralType).issuanceRatioD18;
-
-        if (debt != 0 && collateralValue.divDecimal(debt) < issuanceRatio) {
-            revert InsufficientCollateralRatio(collateralValue, debt, collateralValue.divDecimal(debt), issuanceRatio);
+        uint liquidationRatio = CollateralConfiguration.load(collateralType).liquidationRatioD18;
+        if (debt != 0 && collateralValue.divDecimal(debt) < liquidationRatio) {
+            revert InsufficientCollateralRatio(collateralValue, debt, collateralValue.divDecimal(debt), liquidationRatio);
         }
     }
 }

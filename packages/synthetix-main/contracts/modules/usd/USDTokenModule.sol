@@ -8,21 +8,35 @@ import "../../interfaces/external/IEVM2AnySubscriptionOnRampRouterInterface.sol"
 
 import "@synthetixio/core-modules/contracts/storage/AssociatedSystem.sol";
 
+/**
+ * @title Module with custom token logic for the stablecoin
+ */
 contract USDTokenModule is ERC20, InitializableMixin, IUSDTokenModule {
+    using AssociatedSystem for AssociatedSystem.Data;
+
     uint private constant _TRANSFER_GAS_LIMIT = 100000;
 
     bytes32 private constant _CCIP_CHAINLINK_SEND = "ccipChainlinkSend";
     bytes32 private constant _CCIP_CHAINLINK_RECV = "ccipChainlinkRecv";
     bytes32 private constant _CCIP_CHAINLINK_TOKEN_POOL = "ccipChainlinkTokenPool";
 
+    /**
+     * @dev For use as an associated system
+     */
     function _isInitialized() internal view override returns (bool) {
         return ERC20Storage.load().decimals != 0;
     }
 
+    /**
+     * @dev For use as an associated system
+     */
     function isInitialized() external view returns (bool) {
         return _isInitialized();
     }
 
+    /**
+     * @dev For use as an associated system
+     */
     function initialize(
         string memory tokenName,
         string memory tokenSymbol,
@@ -32,15 +46,9 @@ contract USDTokenModule is ERC20, InitializableMixin, IUSDTokenModule {
         _initialize(tokenName, tokenSymbol, tokenDecimals);
     }
 
-    function setAllowance(
-        address from,
-        address spender,
-        uint amount
-    ) external override {
-        OwnableStorage.onlyOwner();
-        ERC20Storage.load().allowance[from][spender] = amount;
-    }
-
+    /**
+     * @dev Allows the core system and CCIP to mint tokens
+     */
     function mint(address target, uint amount) external override {
         if (
             msg.sender != OwnableStorage.getOwner() && msg.sender != AssociatedSystem.load(_CCIP_CHAINLINK_TOKEN_POOL).proxy
@@ -51,6 +59,9 @@ contract USDTokenModule is ERC20, InitializableMixin, IUSDTokenModule {
         _mint(target, amount);
     }
 
+    /**
+     * @dev Allows the core system and CCIP to burn tokens
+     */
     function burn(address target, uint amount) external override {
         if (
             msg.sender != OwnableStorage.getOwner() && msg.sender != AssociatedSystem.load(_CCIP_CHAINLINK_TOKEN_POOL).proxy
@@ -61,6 +72,9 @@ contract USDTokenModule is ERC20, InitializableMixin, IUSDTokenModule {
         _burn(target, amount);
     }
 
+    /**
+     * @dev Allows the core system to burn stablecoins with transfer allowance
+     */
     function burnWithAllowance(
         address from,
         address spender,
@@ -77,13 +91,15 @@ contract USDTokenModule is ERC20, InitializableMixin, IUSDTokenModule {
         _burn(from, amount);
     }
 
+    /**
+     * @dev Allows users to transfer tokens cross-chain using CCIP. This is disabled until _CCIP_CHAINLINK_SEND is set in UtilsModule. This is currently included for testing purposes. Functionality will change, including fee collection, as CCIP continues development.
+     */
     function transferCrossChain(
         uint destChainId,
         address to,
         uint amount
     ) external returns (uint feesPaid) {
-        // TODO: collect fees
-        // TODO: emit appropriate event
+        AssociatedSystem.load(_CCIP_CHAINLINK_SEND).expectKind(AssociatedSystem.KIND_UNMANAGED);
 
         IERC20[] memory tokens = new IERC20[](1);
         tokens[0] = IERC20(address(this));
@@ -103,5 +119,17 @@ contract USDTokenModule is ERC20, InitializableMixin, IUSDTokenModule {
         );
 
         return (0);
+    }
+
+    /**
+     * @dev Included to satisfy ITokenModule inheritance.
+     */
+    function setAllowance(
+        address from,
+        address spender,
+        uint amount
+    ) external override {
+        OwnableStorage.onlyOwner();
+        ERC20Storage.load().allowance[from][spender] = amount;
     }
 }

@@ -11,6 +11,9 @@ import "../../storage/Account.sol";
 import "../../storage/Pool.sol";
 import "../../storage/CollateralConfiguration.sol";
 
+/**
+ * @title System module for the minting and burning of stablecoins.
+ */
 contract IssueUSDModule is IIssueUSDModule {
     using AccountRBAC for AccountRBAC.Data;
     using AssociatedSystem for AssociatedSystem.Data;
@@ -31,38 +34,49 @@ contract IssueUSDModule is IIssueUSDModule {
 
     bytes32 private constant _USD_TOKEN = "USDToken";
 
+    /**
+     * @dev Mints stablecoins, increasing a position's debt
+     */
     function mintUsd(
         uint128 accountId,
         uint128 poolId,
         address collateralType,
         uint amount
     ) external override {
+        // Ensure the caller is allowed to mint
         _onlyWithPermission(accountId, AccountRBAC._MINT_PERMISSION);
 
-        // check if they have sufficient c-ratio to mint that amount
         Pool.Data storage pool = Pool.load(poolId);
 
         int debt = pool.updateAccountDebt(collateralType, accountId);
-
-        (, uint collateralValue) = pool.currentAccountCollateral(collateralType, accountId);
-
         int newDebt = debt + amount.toInt();
 
+        // Ensure minting stablecoins is increasing the debt of the position
         require(newDebt > debt, "Incorrect new debt");
 
+        // If the resulting debt of the account is greater than zero, ensure that the resulting c-ratio is sufficient
+        (, uint collateralValue) = pool.currentAccountCollateral(collateralType, accountId);
         if (newDebt > 0) {
-            CollateralConfiguration.load(collateralType).verifyCollateralRatio(newDebt.toUint(), collateralValue);
+            CollateralConfiguration.load(collateralType).verifyIssuanceRatio(newDebt.toUint(), collateralValue);
         }
 
         VaultEpoch.Data storage epoch = Pool.load(poolId).vaults[collateralType].currentEpoch();
 
+        // Increase the debt of the position
         epoch.assignDebtToAccount(accountId, amount.toInt());
+
+        // Decrease the credit available in the vault
         pool.recalculateVaultCollateral(collateralType);
+
+        // Mint stablecoins to the sender
         AssociatedSystem.load(_USD_TOKEN).asToken().mint(msg.sender, amount);
 
         emit UsdMinted(accountId, poolId, collateralType, amount, msg.sender);
     }
 
+    /**
+     * @dev Burns stablecoins, decreasing a position's debt
+     */
     function burnUsd(
         uint128 accountId,
         uint128 poolId,
@@ -70,27 +84,37 @@ contract IssueUSDModule is IIssueUSDModule {
         uint amount
     ) external override {
         Pool.Data storage pool = Pool.load(poolId);
+
+        // Retrieve current position debt
         int debt = pool.updateAccountDebt(collateralType, accountId);
 
-        if (debt < 0) {
-            // user shouldn't be able to burn more usd if they already have negative debt
+        // Ensure the position can't burn if it already has no debt
+        if (debt <= 0) {
             revert InsufficientDebt(debt);
         }
 
+        // Only allow burning the total debt of the position
         if (debt < amount.toInt()) {
             amount = debt.toUint();
         }
 
+        // Burn the stablecoins
         AssociatedSystem.load(_USD_TOKEN).asToken().burn(msg.sender, amount);
 
         VaultEpoch.Data storage epoch = Pool.load(poolId).vaults[collateralType].currentEpoch();
 
+        // Decrease the debt of the position
         epoch.assignDebtToAccount(accountId, -amount.toInt());
+
+        // Increase the credit available in the vault
         pool.recalculateVaultCollateral(collateralType);
 
         emit UsdBurned(accountId, poolId, collateralType, amount, msg.sender);
     }
 
+    /**
+     * @dev Reverts if the given account does not have the specified permission.
+     */
     // Note: Disabling Solidity warning, not sure why it suggests pure mutability.
     // solc-ignore-next-line func-mutability
     function _onlyWithPermission(uint128 accountId, bytes32 permission) internal {

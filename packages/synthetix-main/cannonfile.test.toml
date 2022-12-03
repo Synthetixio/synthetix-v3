@@ -11,6 +11,13 @@ defaultValue = "main"
 description = "Admin user for the system"
 defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
 
+[setting.oracle_manager_source]
+defaultValue = "oracle-manager:1.0.0"
+
+[import.oracle_manager]
+source = "<%= settings.oracle_manager_source %>"
+options.owner = "<%= settings.owner %>"
+
 [contract.InitialModuleBundle]
 artifact = "contracts/modules/InitialModuleBundle.sol:InitialModuleBundle"
 
@@ -65,11 +72,17 @@ artifact = "contracts/modules/core/VaultModule.sol:VaultModule"
 [contract.AccountTokenModule]
 artifact = "contracts/modules/account/AccountTokenModule.sol:AccountTokenModule"
 
-[contract.SNXTokenModule]
-artifact = "contracts/modules/snx/SNXTokenModule.sol:SNXTokenModule"
-
 [contract.USDTokenModule]
 artifact = "contracts/modules/usd/USDTokenModule.sol:USDTokenModule"
+
+[contract.CollateralMock]
+artifact = "contracts/mocks/token/CollateralMock.sol:CollateralMock"
+
+[invoke.intializeCollateralMock]
+target = ["CollateralMock"]
+func = "initialize"
+args = ["SampleToken","TKN","18"]
+depends = ["contract.CollateralMock"]
 
 # Test Modules
 [contract.TestableAccountModule]
@@ -117,6 +130,9 @@ artifact = "contracts/modules/test/TestableRewardDistributionModule.sol:Testable
 [contract.TestableRewardDistributionStatusModule]
 artifact = "contracts/modules/test/TestableRewardDistributionStatusModule.sol:TestableRewardDistributionStatusModule"
 
+[contract.TestableScalableMappingModule]
+artifact = "contracts/modules/test/TestableScalableMappingModule.sol:TestableScalableMappingModule"
+
 [contract.TestableVaultEpochModule]
 artifact = "contracts/modules/test/TestableVaultEpochModule.sol:TestableVaultEpochModule"
 
@@ -162,6 +178,7 @@ args = [
     TestableSystemPoolConfigurationModule: contracts.TestableSystemPoolConfigurationModule,
     TestableRewardDistributionModule: contracts.TestableRewardDistributionModule,
     TestableRewardDistributionStatusModule: contracts.TestableRewardDistributionStatusModule,
+    TestableScalableMappingModule: contracts.TestableScalableMappingModule,
     TestableVaultEpochModule: contracts.TestableVaultEpochModule,
     TestableVaultModule: contracts.TestableVaultModule,
   }) %>'''
@@ -200,6 +217,7 @@ depends = [
   "contract.TestableSystemPoolConfigurationModule",
   "contract.TestableRewardDistributionModule",
   "contract.TestableRewardDistributionStatusModule",
+  "contract.TestableScalableMappingModule",
   "contract.TestableVaultEpochModule",
   "contract.TestableVaultModule",
 ]
@@ -239,6 +257,7 @@ abiOf = [
   "TestableSystemPoolConfigurationModule",
   "TestableRewardDistributionModule",
   "TestableRewardDistributionStatusModule",
+  "TestableScalableMappingModule",
   "TestableVaultEpochModule",
   "TestableVaultModule",
 ]
@@ -298,31 +317,6 @@ abiOf = [
 ]
 depends = ["run.account_generate_router"]
 
-# SNX
-[run.snx_generate_router]
-exec = "@synthetixio/core-router"
-func = "generate"
-args = [
-  "contracts/routers/chain-<%= chainId %>/SNXRouter.sol:SNXRouter",
-  '''<%= JSON.stringify({
-    InitialModuleBundle: contracts.InitialModuleBundle,
-    SNXTokenModule: contracts.SNXTokenModule,
-  }) %>'''
-]
-modified = ["contracts/modules/snx"]
-depends = [
-  "contract.InitialModuleBundle",
-  "contract.SNXTokenModule"
-]
-
-[contract.SNXRouter]
-artifact = "contracts/routers/chain-<%= chainId %>/SNXRouter.sol:SNXRouter"
-abiOf = [
-  "InitialModuleBundle",
-  "SNXTokenModule"
-]
-depends = ["run.snx_generate_router"]
-
 # USD
 [run.usd_generate_router]
 exec = "@synthetixio/core-router"
@@ -372,25 +366,6 @@ factory.AccountProxy.abiOf = ["AccountRouter"]
 factory.AccountProxy.event = "AssociatedSystemSet"
 factory.AccountProxy.arg = 2
 
-[invoke.init_snx]
-target = ["CoreProxy"]
-from = "<%= settings.owner %>"
-func = "initOrUpgradeToken"
-args = [
-  "0x534e58546f6b656e000000000000000000000000000000000000000000000000",
-  "Synthetix System Token",
-  "SNX",
-  18,
-  "<%= contracts.SNXRouter.address %>"
-]
-depends = [
-  "invoke.upgrade_core_proxy",
-  "contract.SNXRouter"
-]
-factory.SNXProxy.abiOf = ["SNXRouter"]
-factory.SNXProxy.event = "AssociatedSystemSet"
-factory.SNXProxy.arg = 2
-
 [invoke.init_usd]
 target = ["CoreProxy"]
 from = "<%= settings.owner %>"
@@ -409,3 +384,12 @@ depends = [
 factory.USDProxy.abiOf = ["USDRouter"]
 factory.USDProxy.event = "AssociatedSystemSet"
 factory.USDProxy.arg = 2
+
+[invoke.set_oracle_manager]
+target = ["CoreProxy"]
+from = "<%= settings.owner %>"
+func = "configureOracleManager"
+args = [
+  "<%= imports.oracle_manager.contracts.Proxy.address %>",
+]
+depends = ["invoke.upgrade_core_proxy", "import.oracle_manager"]

@@ -46,7 +46,7 @@ interface IRewardsManagerModule {
 
     /// @notice retrieves the amount of available rewards.
     /// @dev this function should be called to get currently available rewards using `callStatic`
-    function getRewards(
+    function getClaimableRewards(
         uint128 poolId,
         address collateralType,
         uint128 accountId

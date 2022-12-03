@@ -444,7 +444,7 @@ describe('PoolModule Admin', function () {
           );
 
           // market hasn't reported any reduction in balance
-          assertBn.equal(await systems().Core.connect(owner).getMarketTotalBalance(marketId()), 0);
+          assertBn.equal(await systems().Core.connect(owner).getMarketTotalDebt(marketId()), 0);
         });
 
         it('did not change debt for connected vault', async () => {

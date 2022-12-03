@@ -10,7 +10,7 @@ import { bootstrap } from '../../../bootstrap';
 describe('CollateralModule', function () {
   const { signers, systems } = bootstrap();
 
-  let Collateral: Ethers.Contract, CollateralPriceFeed: Ethers.Contract;
+  let Collateral: Ethers.Contract, oracleNodeId: string;
 
   let owner: Ethers.Signer, user1: Ethers.Signer, user2: Ethers.Signer;
 
@@ -28,29 +28,32 @@ describe('CollateralModule', function () {
 
     describe('when a collateral is addded', function () {
       before('add collateral type', async () => {
-        ({ Collateral, CollateralPriceFeed } = await addCollateral(
+        ({ Collateral, oracleNodeId } = await addCollateral(
           'Synthetix Token',
           'SNX',
           400,
           200,
           owner,
-          systems().Core
+          systems().Core,
+          systems().OracleManager
         ));
       });
 
       it('is well configured', async () => {
-        await verifyCollateral(0, Collateral, CollateralPriceFeed, 400, 200, true, systems().Core);
+        await verifyCollateral(0, Collateral, oracleNodeId, 400, 200, true, systems().Core);
       });
 
       describe('when accounts have tokens', function () {
+        const mintAmount = ethers.utils.parseUnits('1000', 6);
+
         before('mint some tokens', async () => {
-          await (await Collateral.mint(await user1.getAddress(), 1000)).wait();
-          await (await Collateral.mint(await user2.getAddress(), 1000)).wait();
+          await (await Collateral.mint(await user1.getAddress(), mintAmount)).wait();
+          await (await Collateral.mint(await user2.getAddress(), mintAmount)).wait();
         });
 
         it('shows correct balances', async () => {
-          assertBn.equal(await Collateral.balanceOf(await user1.getAddress()), 1000);
-          assertBn.equal(await Collateral.balanceOf(await user2.getAddress()), 1000);
+          assertBn.equal(await Collateral.balanceOf(await user1.getAddress()), mintAmount);
+          assertBn.equal(await Collateral.balanceOf(await user2.getAddress()), mintAmount);
           assertBn.equal(await Collateral.balanceOf(systems().Core.address), 0);
         });
 
@@ -73,7 +76,7 @@ describe('CollateralModule', function () {
           describe('when attempting to deposit more tokens than the user has', () => {
             it('reverts', async () => {
               await assertRevert(
-                systems().Core.connect(user1).deposit(1, Collateral.address, 10000),
+                systems().Core.connect(user1).deposit(1, Collateral.address, mintAmount.add(1)),
                 'FailedTransfer',
                 systems().Core
               );
@@ -81,22 +84,32 @@ describe('CollateralModule', function () {
           });
 
           describe('when depositing collateral', () => {
+            const depositAmount = ethers.utils.parseUnits('1', 6);
+            const systemDepositAmount = ethers.utils.parseEther('1');
+
             before('deposit some collateral', async () => {
-              const tx = await systems().Core.connect(user1).deposit(1, Collateral.address, 100);
+              const tx = await systems()
+                .Core.connect(user1)
+                .deposit(1, Collateral.address, depositAmount);
               receipt = await tx.wait();
             });
 
             it('emits an event', async () => {
               await assertEvent(
                 receipt,
-                `Deposited(1, "${Collateral.address}", 100, "${await user1.getAddress()}")`,
+                `Deposited(1, "${
+                  Collateral.address
+                }", ${depositAmount.toString()}, "${await user1.getAddress()}")`,
                 systems().Core
               );
             });
 
             it('shows that tokens have moved', async function () {
-              assertBn.equal(await Collateral.balanceOf(await user1.getAddress()), 900);
-              assertBn.equal(await Collateral.balanceOf(systems().Core.address), 100);
+              assertBn.equal(
+                await Collateral.balanceOf(await user1.getAddress()),
+                mintAmount.sub(depositAmount)
+              );
+              assertBn.equal(await Collateral.balanceOf(systems().Core.address), depositAmount);
             });
 
             it('shows that the collateral has been registered', async function () {
@@ -109,15 +122,17 @@ describe('CollateralModule', function () {
                 Collateral.address
               );
 
-              assertBn.equal(totalStaked, 100);
+              assertBn.equal(totalStaked, systemDepositAmount);
               assertBn.equal(totalAssigned, 0);
-              assertBn.equal(totalAvailable, 100);
+              assertBn.equal(totalAvailable, systemDepositAmount);
             });
 
             describe('when attempting to withdraw more than available collateral', () => {
               it('reverts', async () => {
                 await assertRevert(
-                  systems().Core.connect(user1).withdraw(1, Collateral.address, 101),
+                  systems()
+                    .Core.connect(user1)
+                    .withdraw(1, Collateral.address, depositAmount.add('1')),
                   'InsufficientAccountCollateral',
                   systems().Core
                 );
@@ -126,20 +141,24 @@ describe('CollateralModule', function () {
 
             describe('when withdrawing collateral', () => {
               before('withdraw some collateral', async () => {
-                const tx = await systems().Core.connect(user1).withdraw(1, Collateral.address, 100);
+                const tx = await systems()
+                  .Core.connect(user1)
+                  .withdraw(1, Collateral.address, depositAmount);
                 receipt = await tx.wait();
               });
 
               it('emits an event', async () => {
                 await assertEvent(
                   receipt,
-                  `Withdrawn(1, "${Collateral.address}", 100, "${await user1.getAddress()}")`,
+                  `Withdrawn(1, "${
+                    Collateral.address
+                  }", ${depositAmount.toString()}, "${await user1.getAddress()}")`,
                   systems().Core
                 );
               });
 
               it('shows that the tokens have moved', async function () {
-                assertBn.equal(await Collateral.balanceOf(await user1.getAddress()), 1000);
+                assertBn.equal(await Collateral.balanceOf(await user1.getAddress()), mintAmount);
                 assertBn.equal(await Collateral.balanceOf(systems().Account.address), 0);
               });
 
@@ -161,8 +180,8 @@ describe('CollateralModule', function () {
 
             describe('after deposits and withdrawals occurred', async () => {
               it('all balances are correct', async () => {
-                assertBn.equal(await Collateral.balanceOf(await user1.getAddress()), 1000);
-                assertBn.equal(await Collateral.balanceOf(await user2.getAddress()), 1000);
+                assertBn.equal(await Collateral.balanceOf(await user1.getAddress()), mintAmount);
+                assertBn.equal(await Collateral.balanceOf(await user2.getAddress()), mintAmount);
                 assertBn.equal(await Collateral.balanceOf(systems().Account.address), 0);
               });
             });

@@ -6,54 +6,36 @@ import {
   verifyCollateral,
   verifyCollateralListed,
 } from '../CollateralModule/CollateralModule.helper';
+import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 
 describe('CollateralModule', function () {
   const { signers, systems } = bootstrap();
 
-  let systemOwner: Ethers.Signer, user1: Ethers.Signer;
+  let systemOwner: Ethers.Signer, user1: Ethers.Signer, collateralPrice: number;
 
-  let Collateral: Ethers.Contract, CollateralPriceFeed: Ethers.Contract;
-  let AnotherCollateral: Ethers.Contract, AnotherCollateralPriceFeed: Ethers.Contract;
+  let Collateral: Ethers.Contract, AnotherCollateral: Ethers.Contract;
+  let oracleNodeId: string, oracleNodeId2: string;
 
   describe('CollateralModule - Collateral configuration', function () {
     before('identify signers', async () => {
       [systemOwner, user1] = signers();
     });
 
-    describe('when a regular user attempts to add a collateral', function () {
-      it('reverts', async () => {
-        const dummyAddress = await user1.getAddress();
-
-        await assertRevert(
-          systems().Core.connect(user1).configureCollateral({
-            tokenAddress: dummyAddress,
-            priceFeed: dummyAddress,
-            issuanceRatioD18: 400,
-            liquidationRatioD18: 200,
-            liquidationRewardD18: 0,
-            minDelegationD18: 0,
-            depositingEnabled: false,
-          }),
-          `Unauthorized("${await user1.getAddress()}")`,
-          systems().Core
-        );
-      });
-    });
-
     describe('when the first collateral is added', function () {
       before('add collateral', async () => {
-        ({ Collateral, CollateralPriceFeed } = await addCollateral(
+        ({ Collateral, oracleNodeId, collateralPrice } = await addCollateral(
           'Synthetix Token',
           'SNX',
           400,
           200,
           systemOwner,
-          systems().Core
+          systems().Core,
+          systems().OracleManager
         ));
       });
 
       it('is well configured', async () => {
-        await verifyCollateral(0, Collateral, CollateralPriceFeed, 400, 200, true, systems().Core);
+        await verifyCollateral(0, Collateral, oracleNodeId, 400, 200, true, systems().Core);
       });
 
       it('shows in the collateral list', async function () {
@@ -62,15 +44,22 @@ describe('CollateralModule', function () {
 
       describe('when a second collateral is added', () => {
         before('add collateral', async () => {
-          ({ Collateral: AnotherCollateral, CollateralPriceFeed: AnotherCollateralPriceFeed } =
-            await addCollateral('Another Token', 'ANT', 400, 200, systemOwner, systems().Core));
+          ({ Collateral: AnotherCollateral, oracleNodeId: oracleNodeId2 } = await addCollateral(
+            'Another Token',
+            'ANT',
+            400,
+            200,
+            systemOwner,
+            systems().Core,
+            systems().OracleManager
+          ));
         });
 
         it('is well configured', async () => {
           await verifyCollateral(
             1,
             AnotherCollateral,
-            AnotherCollateralPriceFeed,
+            oracleNodeId2,
             400,
             200,
             true,
@@ -87,7 +76,7 @@ describe('CollateralModule', function () {
             await assertRevert(
               systems().Core.connect(user1).configureCollateral({
                 tokenAddress: AnotherCollateral.address,
-                priceFeed: AnotherCollateralPriceFeed.address,
+                oracleNodeId: oracleNodeId2,
                 issuanceRatioD18: 200,
                 liquidationRatioD18: 100,
                 liquidationRewardD18: 0,
@@ -104,7 +93,7 @@ describe('CollateralModule', function () {
           before('update the collateral', async () => {
             const tx = await systems().Core.connect(systemOwner).configureCollateral({
               tokenAddress: AnotherCollateral.address,
-              priceFeed: AnotherCollateralPriceFeed.address,
+              oracleNodeId: oracleNodeId2,
               issuanceRatioD18: 300,
               liquidationRatioD18: 250,
               liquidationRewardD18: 0,
@@ -118,7 +107,7 @@ describe('CollateralModule', function () {
             await verifyCollateral(
               1,
               AnotherCollateral,
-              AnotherCollateralPriceFeed,
+              oracleNodeId2,
               300,
               250,
               true,
@@ -135,7 +124,7 @@ describe('CollateralModule', function () {
           before('disable the collateral', async () => {
             const tx = await systems().Core.connect(systemOwner).configureCollateral({
               tokenAddress: AnotherCollateral.address,
-              priceFeed: AnotherCollateralPriceFeed.address,
+              oracleNodeId: oracleNodeId2,
               issuanceRatioD18: 300,
               liquidationRatioD18: 250,
               liquidationRewardD18: 0,
@@ -149,7 +138,7 @@ describe('CollateralModule', function () {
             await verifyCollateral(
               1,
               AnotherCollateral,
-              AnotherCollateralPriceFeed,
+              oracleNodeId2,
               300,
               250,
               false,
@@ -162,6 +151,33 @@ describe('CollateralModule', function () {
             await verifyCollateralListed(AnotherCollateral, false, true, systems().Core);
           });
         });
+      });
+
+      it('collateral can successfully get its price once its configured', async () => {
+        assertBn.equal(
+          await systems().Core.getCollateralPrice(Collateral.address),
+          collateralPrice
+        );
+      });
+    });
+
+    describe('when a regular user attempts to add a collateral', function () {
+      it('reverts', async () => {
+        const dummyAddress = await user1.getAddress();
+
+        await assertRevert(
+          systems().Core.connect(user1).configureCollateral({
+            tokenAddress: dummyAddress,
+            oracleNodeId: oracleNodeId2,
+            issuanceRatioD18: 400,
+            liquidationRatioD18: 200,
+            liquidationRewardD18: 0,
+            minDelegationD18: 0,
+            depositingEnabled: false,
+          }),
+          `Unauthorized("${await user1.getAddress()}")`,
+          systems().Core
+        );
       });
     });
   });
