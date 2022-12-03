@@ -86,8 +86,9 @@ export function coreBootstrap<Contracts>({ cannonfile = 'cannonfile.toml' }: Par
       snapshotId = await provider.send('evm_snapshot', []);
     });
 
-    return async function restoreBaseSnapshot() {
+    return async function restoreSnapshot() {
       await provider.send('evm_revert', [snapshotId]);
+      snapshotId = await provider.send('evm_snapshot', []);
     };
   }
 

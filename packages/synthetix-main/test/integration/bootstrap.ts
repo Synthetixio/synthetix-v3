@@ -36,7 +36,7 @@ const { getProvider, getSigners, getContract, createSnapshot } = coreBootstrap<P
   cannonfile: 'cannonfile.test.toml',
 });
 
-let restoreSnapshot = createSnapshot();
+const restoreSnapshot = createSnapshot();
 
 let systems: Systems;
 
@@ -52,7 +52,6 @@ before('load system proxies', function () {
 
 export function bootstrap() {
   before(restoreSnapshot);
-  restoreSnapshot = createSnapshot();
 
   before('give owner permission to create pools and markets', async () => {
     const [owner] = getSigners();

@@ -12,7 +12,16 @@ interface Contracts {
 
 const r = coreBootstrap<Contracts>();
 
+const restoreSnapshot = r.createSnapshot();
+
+export function bootstrap() {
+  before(restoreSnapshot);
+  return r;
+}
+
 export function bootstrapWithNodes() {
+  const r = bootstrap();
+
   let aggregator: ethers.Contract;
   let aggregator2: ethers.Contract;
   let aggregator3: ethers.Contract;

@@ -1,10 +1,10 @@
-import { coreBootstrap } from '@synthetixio/core-router/util/core-bootstrap';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
 import { BigNumber, ethers, utils } from 'ethers';
 import hre from 'hardhat';
+import { bootstrap } from '../bootstrap';
 
 describe('ChainlinkNodeLibrary', () => {
-  const { getSigners } = coreBootstrap();
+  const { getSigners } = bootstrap();
 
   let aggregator: ethers.Contract;
   let node: ethers.Contract;
