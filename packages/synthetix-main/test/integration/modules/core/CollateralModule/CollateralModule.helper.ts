@@ -19,7 +19,7 @@ export async function addCollateral(
   factory = await ethers.getContractFactory('CollateralMock');
   const Collateral = await factory.connect(owner).deploy();
 
-  await (await Collateral.connect(owner).initialize(tokenName, tokenSymbol, 18)).wait();
+  await (await Collateral.connect(owner).initialize(tokenName, tokenSymbol, 6)).wait();
 
   factory = await ethers.getContractFactory('AggregatorV3Mock');
   const aggregator = await factory.connect(owner).deploy();
