@@ -1,11 +1,9 @@
-import { ChainBuilderContext } from '@usecannon/builder';
+import { coreBootstrap } from '@synthetixio/core-router/util/core-bootstrap';
+import NodeTypes from '@synthetixio/oracle-manager/test/integration/mixins/Node.types';
 import { ethers } from 'ethers';
 import hre from 'hardhat';
-import { glob, runTypeChain } from 'typechain';
 import { MockMarket } from '../../typechain-types/contracts/mocks/MockMarket';
 import { snapshotCheckpoint } from '../utils/snapshot';
-
-import NodeTypes from '@synthetixio/oracle-manager/test/integration/mixins/Node.types';
 
 import type {
   AccountProxy,
@@ -26,116 +24,46 @@ interface Proxies {
   Oracle_managerProxy: Oracle_managerProxy;
 }
 
-let provider: ethers.providers.JsonRpcProvider;
-
-let signers: ethers.Signer[];
-
-let systems: {
+interface Systems {
   Account: AccountProxy;
   Core: CoreProxy;
   USD: USDProxy;
   SNX: SNXProxy;
   OracleManager: Oracle_managerProxy;
-};
-
-let baseSystemSnapshot: unknown;
-
-async function loadSystems(
-  contracts: ChainBuilderContext['contracts'],
-  provider: ethers.providers.Provider
-) {
-  const { factories } = await import('../generated/typechain');
-
-  const getProxy = <T extends keyof Proxies>(contractName: T) => {
-    if (!contracts[contractName]) throw new Error(`Proxy for "${contractName}" not found`);
-    const { address } = contracts[contractName];
-    return factories[`${contractName}__factory`].connect(address, provider) as Proxies[T];
-  };
-
-  return {
-    Account: getProxy('AccountProxy'),
-    Core: getProxy('CoreProxy'),
-    SNX: getProxy('SNXProxy'),
-    USD: getProxy('USDProxy'),
-    OracleManager: getProxy('Oracle_managerProxy'),
-  };
 }
 
-before(async function () {
-  // allow extra time to build the cannon deployment if required
-  this.timeout(300000);
+const { getProvider, getSigners, getContract, createSnapshot } = coreBootstrap<Proxies>({
+  cannonfile: 'cannonfile.test.toml',
+});
 
-  const cmd = hre.network.name === 'cannon' ? 'build' : 'deploy';
+let restoreSnapshot = createSnapshot();
 
-  const cannonInfo = await hre.run(`cannon:${cmd}`, {
-    cannonfile: 'cannonfile.test.toml', // build option to override cannonfile
-    overrideManifest: 'cannonfile.test.toml', // deploy option to override cannonfile
-    writeDeployments: cmd === 'deploy' ? true : 'test/generated/deployments', // deploy the cannon deployments
-  });
+let systems: Systems;
 
-  let outDir = ['test/generated/deployments/*.json'];
-
-  // hack beacuse cannon does not support specifying write directory for deployment
-  if (cmd === 'deploy') {
-    outDir = ['deployments/*.json'];
-  }
-
-  const allFiles = glob(hre.config.paths.root, outDir);
-
-  await runTypeChain({
-    cwd: hre.config.paths.root,
-    filesToProcess: allFiles,
-    allFiles,
-    target: 'ethers-v5',
-    outDir: 'test/generated/typechain',
-  });
-
-  provider = cannonInfo.provider;
-  signers = cannonInfo.signers;
-
-  try {
-    await provider.send('anvil_setBlockTimestampInterval', [1]);
-  } catch (err) {
-    console.warn('failed when setting block timestamp interval', err);
-  }
-
-  baseSystemSnapshot = await provider.send('evm_snapshot', []);
-  const { outputs } = cannonInfo;
-
-  // load local and imported contracts
-  const contracts = {
-    ...(outputs.contracts ?? {}),
-    ...(outputs.imports?.synthetix?.contracts ?? {}),
-    Oracle_managerProxy: outputs.imports?.oracle_manager?.contracts.Proxy,
-  };
-
-  systems = await loadSystems(contracts, provider);
-
-  console.log('completed initial bootstrap');
+before('load system proxies', function () {
+  systems = {
+    Account: getContract('AccountProxy'),
+    Core: getContract('CoreProxy'),
+    SNX: getContract('SNXProxy'),
+    USD: getContract('USDProxy'),
+    OracleManager: getContract('Oracle_managerProxy'),
+  } as Systems;
 });
 
 export function bootstrap() {
-  before(async () => {
-    await provider.send('evm_revert', [baseSystemSnapshot]);
-    baseSystemSnapshot = await provider.send('evm_snapshot', []);
-  });
+  before(restoreSnapshot);
+  restoreSnapshot = createSnapshot();
 
   before('give owner permission to create pools and markets', async () => {
-    const owner = signers[0];
-    await systems.Core.connect(owner).addToFeatureFlagAllowlist(
-      POOL_FEATURE_FLAG,
-      await owner.getAddress()
-    );
-    await systems.Core.connect(owner).addToFeatureFlagAllowlist(
-      MARKET_FEATURE_FLAG,
-      await owner.getAddress()
-    );
+    const [owner] = getSigners();
+    await systems.Core.addToFeatureFlagAllowlist(POOL_FEATURE_FLAG, await owner.getAddress());
+    await systems.Core.addToFeatureFlagAllowlist(MARKET_FEATURE_FLAG, await owner.getAddress());
   });
 
   return {
-    provider: () => provider,
-    signers: () => signers,
-    owner: () => signers[0],
+    provider: () => getProvider(),
+    signers: () => getSigners(),
+    owner: () => getSigners()[0],
     systems: () => systems,
   };
 }

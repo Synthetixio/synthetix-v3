@@ -1,12 +1,23 @@
 /* eslint-env mocha */
 
+import path from 'node:path';
 import { CannonWrapperGenericProvider, ChainBuilderContext } from '@usecannon/builder';
 import { ethers } from 'ethers';
 import hre from 'hardhat';
+import { glob, runTypeChain } from 'typechain';
 
-export function coreBootstrap() {
-  let baseSystemSnapshot: string;
+interface Params {
+  cannonfile?: string;
+}
 
+// Deployments path added by hardhat-cannon
+declare module 'hardhat/types/config' {
+  export interface ProjectPathsConfig {
+    deployments: string;
+  }
+}
+
+export function coreBootstrap<Contracts>({ cannonfile = 'cannonfile.toml' }: Params = {}) {
   let outputs: ChainBuilderContext;
   let provider: CannonWrapperGenericProvider;
   let signers: ethers.Signer[];
@@ -14,34 +25,41 @@ export function coreBootstrap() {
   before(async function prepareNode() {
     this.timeout(90000);
 
-    if (hre.network.name !== 'cannon' && hre.network.name !== 'hardhat') {
-      throw new Error('Tests can only be ran using the "cannon" or "hardhat" networks');
-    }
+    const cmd = hre.network.name === 'cannon' ? 'build' : 'deploy';
 
-    const cannonBuild = await hre.run('cannon:build');
+    const generatedPath = path.resolve(hre.config.paths.tests, 'generated');
+    const deploymentsFolder = path.resolve(generatedPath, 'deployments');
+    const typechainFolder = path.resolve(generatedPath, 'typechain');
 
-    outputs = cannonBuild.outputs;
-    provider = cannonBuild.provider;
-    signers = cannonBuild.signers;
+    // Set deployments folder for "deploy" command
+    hre.config.paths.deployments = deploymentsFolder;
 
-    if (!outputs.contracts.Proxy) {
-      throw new Error('Missing Proxy contract on build');
-    }
+    const cannonInfo = await hre.run(`cannon:${cmd}`, {
+      cannonfile, // build option to override cannonfile
+      overrideManifest: cannonfile, // deploy option to override cannonfile
+      writeDeployments: cmd === 'deploy' ? true : hre.config.paths.deployments, // deploy the cannon deployments
+    });
+
+    const allFiles = glob(hre.config.paths.root, [`${deploymentsFolder}/*.json`]);
+
+    await runTypeChain({
+      cwd: hre.config.paths.root,
+      filesToProcess: allFiles,
+      allFiles,
+      target: 'ethers-v5',
+      outDir: typechainFolder,
+    });
+
+    outputs = cannonInfo.outputs;
+    provider = cannonInfo.provider;
+    signers = cannonInfo.signers;
 
     try {
       await provider.send('anvil_setBlockTimestampInterval', [1]);
     } catch (err) {
       console.warn('failed when setting block timestamp interval', err);
     }
-
-    baseSystemSnapshot = await provider.send('evm_snapshot', []);
   });
-
-  function getContract(contractName: string) {
-    if (!outputs) throw new Error('Node not initialized yet');
-    const contract = _getContractFromOutputs(contractName, outputs, provider);
-    return Array.isArray(signers) && signers[0] ? contract.connect(signers[0]) : contract;
-  }
 
   function getSigners() {
     if (!Array.isArray(signers)) throw new Error('Node not initialized yet');
@@ -53,15 +71,31 @@ export function coreBootstrap() {
     return provider;
   }
 
-  async function restoreSnapshot() {
-    await provider.send('evm_revert', [baseSystemSnapshot]);
+  function getContract(contractName: keyof Contracts) {
+    if (!outputs) throw new Error('Node not initialized yet');
+    const contract = _getContractFromOutputs(contractName as string, outputs, provider);
+    const [owner] = Array.isArray(signers) ? signers : [];
+    const Contract = owner ? contract.connect(owner) : contract;
+    return Contract as unknown as Contracts[typeof contractName];
+  }
+
+  function createSnapshot() {
+    let snapshotId: string;
+
+    before('create snapshot', async function () {
+      snapshotId = await provider.send('evm_snapshot', []);
+    });
+
+    return async function restoreBaseSnapshot() {
+      await provider.send('evm_revert', [snapshotId]);
+    };
   }
 
   return {
     getContract,
     getSigners,
     getProvider,
-    restoreSnapshot,
+    createSnapshot,
   };
 }
 
@@ -88,9 +122,5 @@ function _getContractFromOutputs(
     throw new Error(`Contract "${contractName}" not found on cannon build`);
   }
 
-  return new ethers.Contract(
-    outputs.contracts.Proxy.address,
-    contract.abi,
-    provider
-  ) as ethers.Contract;
+  return new ethers.Contract(contract.address, contract.abi, provider) as ethers.Contract;
 }
