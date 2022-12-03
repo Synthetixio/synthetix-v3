@@ -78,6 +78,12 @@ artifact = "contracts/modules/usd/USDTokenModule.sol:USDTokenModule"
 [contract.CollateralMock]
 artifact = "contracts/mocks/token/CollateralMock.sol:CollateralMock"
 
+[invoke.intializeCollateralMock]
+target = ["CollateralMock"]
+func = "initialize"
+args = ["SampleToken","TKN","18"]
+depends = ["contract.CollateralMock"]
+
 # Test Modules
 [contract.TestableAccountModule]
 artifact = "contracts/modules/test/TestableAccountModule.sol:TestableAccountModule"
