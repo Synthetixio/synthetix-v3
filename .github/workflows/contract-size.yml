@@ -8,7 +8,11 @@ jobs:
     strategy:
       matrix:
         package:
-          [./utils/core-contracts, ./utils/core-modules, ./protocol/synthetix]
+          [
+            "./utils/core-contracts",
+            "./utils/core-modules",
+            "./protocol/synthetix",
+          ]
     env:
       INFURA_API_KEY: ${{ secrets.INFURA_API_KEY }}
       INFURA_IPFS_ID: ${{ secrets.INFURA_IPFS_ID }}

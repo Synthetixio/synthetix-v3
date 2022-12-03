@@ -14,12 +14,12 @@ jobs:
       matrix:
         package:
           [
-            ./utils/core-contracts,
-            ./utils/core-utils,
-            ./utils/core-modules,
-            ./utils/hardhat-router,
-            ./protocol/synthetix,
-            ./protocol/oracle-manager,
+            "./utils/core-contracts",
+            "./utils/core-utils",
+            "./utils/core-modules",
+            "./utils/hardhat-router",
+            "./protocol/synthetix",
+            "./protocol/oracle-manager",
           ]
         include:
           - package: core-contracts
