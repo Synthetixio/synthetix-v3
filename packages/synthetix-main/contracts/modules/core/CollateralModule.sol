@@ -173,8 +173,4 @@ contract CollateralModule is ICollateralModule {
         OracleManager.Data storage oracle = OracleManager.load();
         oracle.oracleManagerAddress = oracleManagerAddress;
     }
-
-    function _convertTokenToSystemAmount(IERC20 token, uint tokenAmount) internal view returns (uint) {
-        return (tokenAmount * DecimalMath.UNIT) / (10**token.decimals());
-    }
 }
