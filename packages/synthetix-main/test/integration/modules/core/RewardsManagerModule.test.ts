@@ -33,7 +33,7 @@ describe('RewardsManagerModule', function () {
     const factory = await hre.ethers.getContractFactory('CollateralMock');
     Collateral = await factory.connect(owner).deploy();
 
-    await (await Collateral.connect(owner).initialize('Fake Reward', 'FAKE', 18)).wait();
+    await (await Collateral.connect(owner).initialize('Fake Reward', 'FAKE', 6)).wait();
   });
 
   before('deploy fake reward distributor', async () => {
