@@ -5,7 +5,7 @@ import { ethers } from 'ethers';
 
 import { bootstrapWithMockMarketAndPool } from '../../bootstrap';
 
-describe.only('LiquidationModule', function () {
+describe('LiquidationModule', function () {
   const {
     signers,
     systems,
