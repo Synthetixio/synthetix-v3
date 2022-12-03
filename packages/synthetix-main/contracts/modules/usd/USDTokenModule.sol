@@ -9,7 +9,8 @@ import "../../interfaces/external/IEVM2AnySubscriptionOnRampRouterInterface.sol"
 import "@synthetixio/core-modules/contracts/storage/AssociatedSystem.sol";
 
 /**
- * @title Module with custom token logic for the stablecoin
+ * @title Module for managing the snxUSD token as an associated system.
+ * @dev See IUSDTokenModule.
  */
 contract USDTokenModule is ERC20, InitializableMixin, IUSDTokenModule {
     using AssociatedSystem for AssociatedSystem.Data;
@@ -21,21 +22,21 @@ contract USDTokenModule is ERC20, InitializableMixin, IUSDTokenModule {
     bytes32 private constant _CCIP_CHAINLINK_TOKEN_POOL = "ccipChainlinkTokenPool";
 
     /**
-     * @dev For use as an associated system
+     * @dev For use as an associated system.
      */
     function _isInitialized() internal view override returns (bool) {
         return ERC20Storage.load().decimals != 0;
     }
 
     /**
-     * @dev For use as an associated system
+     * @dev For use as an associated system.
      */
     function isInitialized() external view returns (bool) {
         return _isInitialized();
     }
 
     /**
-     * @dev For use as an associated system
+     * @dev For use as an associated system.
      */
     function initialize(
         string memory tokenName,
@@ -47,7 +48,7 @@ contract USDTokenModule is ERC20, InitializableMixin, IUSDTokenModule {
     }
 
     /**
-     * @dev Allows the core system and CCIP to mint tokens
+     * @dev Allows the core system and CCIP to mint tokens.
      */
     function mint(address target, uint amount) external override {
         if (
@@ -60,7 +61,7 @@ contract USDTokenModule is ERC20, InitializableMixin, IUSDTokenModule {
     }
 
     /**
-     * @dev Allows the core system and CCIP to burn tokens
+     * @dev Allows the core system and CCIP to burn tokens.
      */
     function burn(address target, uint amount) external override {
         if (
@@ -73,7 +74,7 @@ contract USDTokenModule is ERC20, InitializableMixin, IUSDTokenModule {
     }
 
     /**
-     * @dev Allows the core system to burn stablecoins with transfer allowance
+     * @inheritdoc IUSDTokenModule
      */
     function burnWithAllowance(
         address from,
@@ -92,7 +93,7 @@ contract USDTokenModule is ERC20, InitializableMixin, IUSDTokenModule {
     }
 
     /**
-     * @dev Allows users to transfer tokens cross-chain using CCIP. This is disabled until _CCIP_CHAINLINK_SEND is set in UtilsModule. This is currently included for testing purposes. Functionality will change, including fee collection, as CCIP continues development.
+     * @inheritdoc IUSDTokenModule
      */
     function transferCrossChain(
         uint destChainId,
