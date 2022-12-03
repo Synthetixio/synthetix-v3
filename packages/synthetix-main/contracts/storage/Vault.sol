@@ -43,7 +43,7 @@ library Vault {
          * @dev Unused property, maintained for backwards compatibility in storage layout.
          */
         // solhint-disable-next-line private-vars-leading-underscore
-        uint128 __unused;
+        uint128 __slotAvailableForFutureUse;
         /**
          * @dev The previous debt of the vault, when `updateCreditCapacity` was last called by the Pool.
          */

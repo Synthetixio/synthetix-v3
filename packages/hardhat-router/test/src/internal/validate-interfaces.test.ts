@@ -10,7 +10,7 @@ describe('internal/validate-interfaces.ts', function () {
 
   before('load asts', async function () {
     astNodes = await compileSolidityFolder({
-      version: '0.8.11',
+      version: '0.8.17',
       rootDir: path.resolve(__dirname, '..', '..', 'fixtures'),
       sources: ['contracts/InterfacedModules.sol'],
     });

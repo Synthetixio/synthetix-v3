@@ -7,14 +7,15 @@ import "../../interfaces/ICollateralConfigurationModule.sol";
 import "../../storage/CollateralConfiguration.sol";
 
 /**
- * @title Module that allows the owner to configure system collateral.
+ * @title Module for configuring system wide collateral.
+ * @dev See ICollateralConfigurationModule.
  */
 contract CollateralConfigurationModule is ICollateralConfigurationModule {
     using SetUtil for SetUtil.AddressSet;
     using CollateralConfiguration for CollateralConfiguration.Data;
 
     /**
-     * @dev Configures the given collateral type.
+     * @inheritdoc ICollateralConfigurationModule
      */
     function configureCollateral(CollateralConfiguration.Data memory config) external override {
         OwnableStorage.onlyOwner();
@@ -25,9 +26,7 @@ contract CollateralConfigurationModule is ICollateralConfigurationModule {
     }
 
     /**
-     * @dev Returns the configurations for all the collateral types in the system.
-     *
-     * Note: Optionally returns only those that are currently enabled.
+     * @inheritdoc ICollateralConfigurationModule
      */
     function getCollateralConfigurations(bool hideDisabled)
         external
@@ -55,7 +54,7 @@ contract CollateralConfigurationModule is ICollateralConfigurationModule {
     }
 
     /**
-     * @dev Returns the collateral configuration of the specified collateral type.
+     * @inheritdoc ICollateralConfigurationModule
      */
     // Note: Disabling Solidity warning, not sure why it suggests pure mutability.
     // solc-ignore-next-line func-mutability
@@ -69,7 +68,7 @@ contract CollateralConfigurationModule is ICollateralConfigurationModule {
     }
 
     /**
-     * @dev Returns the latest known price for the given collateral type.
+     * @inheritdoc ICollateralConfigurationModule
      */
     function getCollateralPrice(address collateralType) external view override returns (uint) {
         return CollateralConfiguration.getCollateralPrice(CollateralConfiguration.load(collateralType));

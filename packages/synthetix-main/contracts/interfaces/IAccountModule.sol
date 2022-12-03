@@ -1,7 +1,10 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-/// @title Module for managing account token (NFT) and accounts, each account is represented by an NFT
+/**
+ * @title Module for managing accounts.
+ * @notice Manages the system's account token NFT. Every user will need to register an account before being able to interact with the system.
+ */
 interface IAccountModule {
     /**
      * @notice Emitted when an account token with id `accountId` is minted to `sender`.
@@ -18,6 +21,9 @@ interface IAccountModule {
      */
     event PermissionRevoked(uint128 indexed accountId, bytes32 indexed permission, address indexed user, address sender);
 
+    /**
+     * @dev Data structure for tracking each user's permissions.
+     */
     struct AccountPermissions {
         address user;
         bytes32[] permissions;
@@ -40,7 +46,8 @@ interface IAccountModule {
     function createAccount(uint128 requestedAccountId) external;
 
     /**
-     * @notice Grants `permission` to `user` for account `accountId`.
+     * @notice Called by AccountTokenModule to notify the system when the account token is transferred.
+     * @dev Resets user permissions and assigns ownership of the account token to the new holder.
      *
      * Requirements:
      *

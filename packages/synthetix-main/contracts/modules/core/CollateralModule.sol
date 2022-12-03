@@ -13,7 +13,8 @@ import "../../storage/CollateralLock.sol";
 import "@synthetixio/core-modules/contracts/storage/AssociatedSystem.sol";
 
 /**
- * @title Module that allows users to deposit and withdraw collateral from the system.
+ * @title Module for managing user collateral.
+ * @dev See ICollateralModule.
  */
 contract CollateralModule is ICollateralModule {
     using SetUtil for SetUtil.AddressSet;
@@ -27,7 +28,7 @@ contract CollateralModule is ICollateralModule {
     error InsufficientAccountCollateral(uint amount);
 
     /**
-     * @dev Allows an account to deposit collateral in the system.
+     * @inheritdoc ICollateralModule
      */
     function deposit(
         uint128 accountId,
@@ -57,7 +58,7 @@ contract CollateralModule is ICollateralModule {
     }
 
     /**
-     * @dev Allows an account to withdraw collateral from the system.
+     * @inheritdoc ICollateralModule
      */
     function withdraw(
         uint128 accountId,
@@ -82,7 +83,7 @@ contract CollateralModule is ICollateralModule {
     }
 
     /**
-     * @dev Returns an accounts total deposited collateral for a given type.
+     * @inheritdoc ICollateralModule
      */
     function getAccountCollateral(uint128 accountId, address collateralType)
         external
@@ -98,18 +99,14 @@ contract CollateralModule is ICollateralModule {
     }
 
     /**
-     * @dev Returns an account's collateral that can be withdrawn or delegated to pools.
+     * @inheritdoc ICollateralModule
      */
     function getAccountAvailableCollateral(uint128 accountId, address collateralType) public view override returns (uint) {
         return Account.load(accountId).collaterals[collateralType].availableAmountD18;
     }
 
     /**
-     * @dev Unlocks collateral locks that have expired.
-     *
-     * See `CollateralModule.createLock()`.
-     *
-     * Note: If offset and items are not specified, assume all locks.
+     * @inheritdoc ICollateralModule
      */
     function cleanExpiredLocks(
         uint128 accountId,
@@ -141,9 +138,7 @@ contract CollateralModule is ICollateralModule {
     }
 
     /**
-     * @dev Create a collateral lock for the given account.
-     *
-     * Note: A collateral lock does not affect withdrawals, but instead affects collateral delegation.
+     * @inheritdoc ICollateralModule
      */
     function createLock(
         uint128 accountId,
@@ -162,9 +157,5 @@ contract CollateralModule is ICollateralModule {
         }
 
         account.collaterals[collateralType].locks.push(CollateralLock.Data(amount, expireTimestamp));
-    }
-
-    function _convertTokenToSystemAmount(IERC20 token, uint tokenAmount) internal view returns (uint) {
-        return (tokenAmount * DecimalMath.UNIT) / (10**token.decimals());
     }
 }

@@ -34,9 +34,8 @@ library Market {
 
     struct Data {
         /**
-         * @dev Numeric identifier for the market.
-         *
-         * Must be unique.
+         * @dev Numeric identifier for the market. Must be unique.
+         * @dev There cannot be a market with id zero (See MarketCreator.create()). Id zero is used as a null market reference.
          */
         uint128 id;
         /**

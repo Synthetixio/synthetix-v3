@@ -10,7 +10,8 @@ import "../../storage/SystemPoolConfiguration.sol";
 import "../../storage/Pool.sol";
 
 /**
- * @dev Allows the system owner to mark official pools.
+ * @title Module that allows the system owner to mark official pools.
+ * @dev See IPoolConfigurationModule.
  */
 contract PoolConfigurationModule is IPoolConfigurationModule {
     using SetUtil for SetUtil.UintSet;
@@ -18,9 +19,7 @@ contract PoolConfigurationModule is IPoolConfigurationModule {
     using Pool for Pool.Data;
 
     /**
-     * @dev Sets the unique system preferred pool.
-     *
-     * Note: The preferred pool does not receive any special treatment. It is only signaled as preferred here.
+     * @inheritdoc IPoolConfigurationModule
      */
     function setPreferredPool(uint128 poolId) external override {
         OwnableStorage.onlyOwner();
@@ -32,16 +31,14 @@ contract PoolConfigurationModule is IPoolConfigurationModule {
     }
 
     /**
-     * @dev Retrieves the unique system preferred pool.
+     * @inheritdoc IPoolConfigurationModule
      */
     function getPreferredPool() external view override returns (uint) {
         return SystemPoolConfiguration.load().preferredPool;
     }
 
     /**
-     * @dev Marks a pool as approved by the system owner.
-     *
-     * Note: Approved pools do not receive any special treatment. They are only signaled as approved here.
+     * @inheritdoc IPoolConfigurationModule
      */
     function addApprovedPool(uint128 poolId) external override {
         OwnableStorage.onlyOwner();
@@ -53,7 +50,7 @@ contract PoolConfigurationModule is IPoolConfigurationModule {
     }
 
     /**
-     * @dev Un-marks a pool as preferred by the system owner.
+     * @inheritdoc IPoolConfigurationModule
      */
     function removeApprovedPool(uint128 poolId) external override {
         OwnableStorage.onlyOwner();
@@ -65,7 +62,7 @@ contract PoolConfigurationModule is IPoolConfigurationModule {
     }
 
     /**
-     * @dev Retrieves the pool that are approved by the system owner.
+     * @inheritdoc IPoolConfigurationModule
      */
     function getApprovedPools() external view override returns (uint[] memory) {
         return SystemPoolConfiguration.load().approvedPools.values();
