@@ -3,6 +3,7 @@ pragma solidity ^0.8.0;
 
 import "../../interfaces/IMarketManagerModule.sol";
 import "../../interfaces/IUSDTokenModule.sol";
+import "../../interfaces/external/IMarket.sol";
 
 import "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
 import "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
@@ -30,6 +31,7 @@ contract MarketManagerModule is IMarketManagerModule {
     bytes32 private constant _MARKET_FEATURE_FLAG = "registerMarket";
 
     error NotEnoughLiquidity(uint128 marketId, uint amount);
+    error IncorrectMarketInterface(address market);
 
     /**
      * @dev Connects an external market to the system.
@@ -39,8 +41,9 @@ contract MarketManagerModule is IMarketManagerModule {
     function registerMarket(address market) external override returns (uint128 marketId) {
         FeatureFlag.ensureAccessToFeature(_MARKET_FEATURE_FLAG);
 
-        // TODO: Do we want to do this?
-        // Can we verify that `market` conforms to the IMarket interface here? (i.e. has a `balance()` function?)
+        if (!IMarket(market).supportsInterface(type(IMarket).interfaceId)) {
+            revert IncorrectMarketInterface(market);
+        }
 
         marketId = MarketCreator.create(market).id;
 

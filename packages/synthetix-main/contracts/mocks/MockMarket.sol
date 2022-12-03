@@ -91,4 +91,11 @@ contract MockMarket is IMarket {
     function name(uint) external pure returns (string memory) {
         return "Mock Market";
     }
+
+    /**
+     * @dev See {IERC165-supportsInterface}.
+     */
+    function supportsInterface(bytes4 interfaceId) public view virtual override(IERC165) returns (bool) {
+        return interfaceId == type(IMarket).interfaceId || interfaceId == this.supportsInterface.selector;
+    }
 }
