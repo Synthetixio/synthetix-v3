@@ -8,7 +8,7 @@ import "../../interfaces/IMarketCollateralModule.sol";
 import "../../storage/Market.sol";
 
 /**
- * @title System module for allowing markets to directly increase their credit capacity by providing their own collateral.
+ * @inheritdoc IMarketCollateralModule
  */
 contract MarketCollateralModule is IMarketCollateralModule {
     using ERC20Helper for address;
@@ -18,7 +18,7 @@ contract MarketCollateralModule is IMarketCollateralModule {
     error InsufficientMarketCollateralWithdrawable(uint128 marketId, address collateralType, uint tokenAmountToWithdraw);
 
     /**
-     * @dev Allows a market to deposit collateral
+     * @inheritdoc IMarketCollateralModule
      */
     function depositMarketCollateral(
         uint128 marketId,
@@ -48,7 +48,7 @@ contract MarketCollateralModule is IMarketCollateralModule {
     }
 
     /**
-     * @dev Allows a market to withdraw collateral that it has previously deposited
+     * @inheritdoc IMarketCollateralModule
      */
     function withdrawMarketCollateral(
         uint128 marketId,
@@ -98,7 +98,7 @@ contract MarketCollateralModule is IMarketCollateralModule {
     }
 
     /**
-     * @dev Allow the system owner to configure the maximum amount of a given collateral type that a specified market is allowed to deposit.
+     * @inheritdoc IMarketCollateralModule
      */
     function configureMaximumMarketCollateral(
         uint128 marketId,
@@ -114,7 +114,7 @@ contract MarketCollateralModule is IMarketCollateralModule {
     }
 
     /**
-     * @dev Return the total amount of a given collateral type that a specified market has deposited
+     * @inheritdoc IMarketCollateralModule
      */
     function getMarketCollateralAmount(uint128 marketId, address collateralType)
         external
@@ -133,7 +133,7 @@ contract MarketCollateralModule is IMarketCollateralModule {
     }
 
     /**
-     * @dev Return the total maximum amount of a given collateral type that a specified market is allowed to deposit
+     * @inheritdoc IMarketCollateralModule
      */
     function getMaximumMarketCollateral(uint128 marketId, address collateralType) external view override returns (uint) {
         Market.Data storage marketData = Market.load(marketId);

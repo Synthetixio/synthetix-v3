@@ -12,7 +12,7 @@ import "../../storage/Pool.sol";
 import "../../storage/CollateralConfiguration.sol";
 
 /**
- * @title System module for the minting and burning of stablecoins.
+ * @inheritdoc IIssueUSDModule
  */
 contract IssueUSDModule is IIssueUSDModule {
     using AccountRBAC for AccountRBAC.Data;
@@ -35,7 +35,7 @@ contract IssueUSDModule is IIssueUSDModule {
     bytes32 private constant _USD_TOKEN = "USDToken";
 
     /**
-     * @dev Mints stablecoins, increasing a position's debt
+     * @inheritdoc IIssueUSDModule
      */
     function mintUsd(
         uint128 accountId,
@@ -75,7 +75,7 @@ contract IssueUSDModule is IIssueUSDModule {
     }
 
     /**
-     * @dev Burns stablecoins, decreasing a position's debt
+     * @inheritdoc IIssueUSDModule
      */
     function burnUsd(
         uint128 accountId,

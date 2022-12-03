@@ -1,7 +1,10 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-/// @title Liquidates the collateral for an account in a pool
+/**
+ * @title IssueUSDModule interface.
+ * @notice System module for the minting and burning of stablecoins.
+ */
 interface IIssueUSDModule {
     /**
      * @notice Emitted when {sender} mints {amount} of snxUSD with the specified staking position.
