@@ -13,9 +13,7 @@ import "../../interfaces/IPoolModule.sol";
 import "../../storage/Pool.sol";
 
 /**
- * @title System module for the creation and management of pools.
- *
- * The pool owner can be specified during creation, can be transferred, and has credentials for configuring the pool.
+ * @inheritdoc IPoolModule
  */
 contract PoolModule is IPoolModule {
     error CapacityLocked(uint marketId);
@@ -33,7 +31,7 @@ contract PoolModule is IPoolModule {
     bytes32 private constant _POOL_FEATURE_FLAG = "createPool";
 
     /**
-     * @dev Creates a pool with the requested pool id.
+     * @inheritdoc IPoolModule
      */
     function createPool(uint128 requestedPoolId, address owner) external override {
         FeatureFlag.ensureAccessToFeature(_POOL_FEATURE_FLAG);
@@ -48,7 +46,7 @@ contract PoolModule is IPoolModule {
     }
 
     /**
-     * @dev Allows the current pool owner to nominate a new owner.
+     * @inheritdoc IPoolModule
      */
     function nominatePoolOwner(address nominatedOwner, uint128 poolId) external override {
         Pool.onlyPoolOwner(poolId, msg.sender);
@@ -59,7 +57,7 @@ contract PoolModule is IPoolModule {
     }
 
     /**
-     * @dev After a new pool owner has been nominated, allows it to accept the nomination and thus ownership of the pool.
+     * @inheritdoc IPoolModule
      */
     function acceptPoolOwnership(uint128 poolId) external override {
         Pool.Data storage pool = Pool.load(poolId);
@@ -75,7 +73,7 @@ contract PoolModule is IPoolModule {
     }
 
     /**
-     * @dev After a new pool owner has been nominated, allows it to reject the nomination.
+     * @inheritdoc IPoolModule
      */
     function revokePoolNomination(uint128 poolId) external override {
         Pool.onlyPoolOwner(poolId, msg.sender);
@@ -86,7 +84,7 @@ contract PoolModule is IPoolModule {
     }
 
     /**
-     * @dev Allows the current nominated owner to renounce the nomination.
+     * @inheritdoc IPoolModule
      */
     function renouncePoolNomination(uint128 poolId) external override {
         Pool.Data storage pool = Pool.load(poolId);
@@ -101,26 +99,21 @@ contract PoolModule is IPoolModule {
     }
 
     /**
-     * @dev Returns the current pool owner.
+     * @inheritdoc IPoolModule
      */
     function getPoolOwner(uint128 poolId) external view override returns (address) {
         return Pool.load(poolId).owner;
     }
 
     /**
-     * @dev Returns the current nominated pool owner.
+     * @inheritdoc IPoolModule
      */
     function getNominatedPoolOwner(uint128 poolId) external view override returns (address) {
         return Pool.load(poolId).nominatedOwner;
     }
 
     /**
-     * @dev Allows the pool owner to configure the pool.
-     *
-     * The pool's configuration is composed of an array of MarketConfiguration objects,
-     * which describe which markets the pool provides liquidity to, in what proportion, and to what extent.
-     *
-     * Note: Incoming market ids need to be provided in ascending order.
+     * @inheritdoc IPoolModule
      */
     function setPoolConfiguration(uint128 poolId, MarketConfiguration.Data[] memory newMarketConfigurations)
         external
@@ -190,7 +183,7 @@ contract PoolModule is IPoolModule {
     }
 
     /**
-     * @dev Retrieves the MarketConfiguration of the specified pool.
+     * @inheritdoc IPoolModule
      */
     function getPoolConfiguration(uint128 poolId) external view override returns (MarketConfiguration.Data[] memory) {
         Pool.Data storage pool = Pool.load(poolId);
@@ -207,7 +200,7 @@ contract PoolModule is IPoolModule {
     }
 
     /**
-     * @dev Allows the owner of the pool to set the pool's name.
+     * @inheritdoc IPoolModule
      */
     function setPoolName(uint128 poolId, string memory name) external override {
         Pool.requireExists(poolId);
@@ -219,14 +212,14 @@ contract PoolModule is IPoolModule {
     }
 
     /**
-     * @dev Returns the pool's name.
+     * @inheritdoc IPoolModule
      */
     function getPoolName(uint128 poolId) external view override returns (string memory poolName) {
         return Pool.load(poolId).name;
     }
 
     /**
-     * @dev Allows the system owner (not the pool owner) to set the system-wide minimum liquidity ratio.
+     * @inheritdoc IPoolModule
      */
     function setMinLiquidityRatio(uint minLiquidityRatio) external override {
         OwnableStorage.onlyOwner();
@@ -235,7 +228,7 @@ contract PoolModule is IPoolModule {
     }
 
     /**
-     * @dev Retrieves the system-wide minimum liquidity ratio.
+     * @inheritdoc IPoolModule
      */
     function getMinLiquidityRatio() external view override returns (uint) {
         return SystemPoolConfiguration.load().minLiquidityRatioD18;

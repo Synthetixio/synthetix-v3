@@ -1,24 +1,39 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-/// @title Module for managing preferred and approved pools via SCCPs
+/**
+ * @title PoolConfigurationModule interface.
+ * @noticeAllows the system owner to mark official pools.
+ */
 interface IPoolConfigurationModule {
     event PreferredPoolSet(uint256 poolId);
     event PoolApprovedAdded(uint256 poolId);
     event PoolApprovedRemoved(uint256 poolId);
 
-    /// @notice SCCP sets the preferred pool
+    /**
+     * @notice Sets the unique system preferred pool.
+     * @dev Note: The preferred pool does not receive any special treatment. It is only signaled as preferred here.
+     */
     function setPreferredPool(uint128 poolId) external;
 
-    /// @notice SCCP adds a poolId to the approved list
+    /**
+     * @notice Marks a pool as approved by the system owner.
+     * @dev Approved pools do not receive any special treatment. They are only signaled as approved here.
+     */
     function addApprovedPool(uint128 poolId) external;
 
-    /// @notice SCCP removes a poolId to the approved list
+    /**
+     * @notice Un-marks a pool as preferred by the system owner.
+     */
     function removeApprovedPool(uint128 poolId) external;
 
-    /// @notice gets the preferred pool
+    /**
+     * @notice Retrieves the unique system preferred pool.
+     */
     function getPreferredPool() external view returns (uint);
 
-    /// @notice gets the approved pools (list of poolIds)
+    /**
+     * @notice Retrieves the pool that are approved by the system owner.
+     */
     function getApprovedPools() external view returns (uint[] calldata);
 }

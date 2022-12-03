@@ -4,11 +4,14 @@ pragma solidity ^0.8.0;
 import "../../interfaces/IMulticallModule.sol";
 
 /**
- * @title Module that enables calling multiple methods of the system in a single transaction.
+ * @inheritdoc IMulticallModule
  *
- * Adapted from https://github.com/Uniswap/v3-periphery/blob/main/contracts/base/Multicall.sol
+ * @dec Implementation adapted from https://github.com/Uniswap/v3-periphery/blob/main/contracts/base/Multicall.sol
  */
 contract MulticallModule is IMulticallModule {
+    /**
+     * @inheritdoc IMulticallModule
+     */
     function multicall(bytes[] calldata data) public payable override returns (bytes[] memory results) {
         results = new bytes[](data.length);
         for (uint256 i = 0; i < data.length; i++) {

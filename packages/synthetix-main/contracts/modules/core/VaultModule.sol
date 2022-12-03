@@ -14,11 +14,7 @@ import "../../interfaces/IVaultModule.sol";
 import "../../interfaces/IUSDTokenModule.sol";
 
 /**
- * @title Allows accounts to delegate collateral to a pool.
- *
- * Delegation updates the account's position in the vault that corresponds to the associated pool and collateral type pair.
- *
- * A pool contains one vault for each collateral type it supports, and vaults are not shared between pools.
+ * @inheritdoc IVaultModule
  */
 contract VaultModule is IVaultModule {
     using SetUtil for SetUtil.UintSet;
@@ -43,7 +39,7 @@ contract VaultModule is IVaultModule {
     error CapacityLocked(uint marketId);
 
     /**
-     * @dev Updates an account's delegated collateral amount for the specified pool and collateral type pair.
+     * @inheritdoc IVaultModule
      */
     function delegateCollateral(
         uint128 accountId,
@@ -116,7 +112,7 @@ contract VaultModule is IVaultModule {
     }
 
     /**
-     * @dev Returns the account's current collateralization ratio in the given pool, and collateral type.
+     * @inheritdoc IVaultModule
      */
     function getPositionCollateralizationRatio(
         uint128 accountId,
@@ -127,14 +123,14 @@ contract VaultModule is IVaultModule {
     }
 
     /**
-     * @dev Returns the current collateralization ratio of the vault associated to the given pool and collateral type.
+     * @inheritdoc IVaultModule
      */
     function getVaultCollateralRatio(uint128 poolId, address collateralType) external override returns (uint) {
         return Pool.load(poolId).currentVaultCollateralRatio(collateralType);
     }
 
     /**
-     * @dev Returns the current collateral amount and value for the given account and pool.
+     * @inheritdoc IVaultModule
      */
     function getPositionCollateral(
         uint128 accountId,
@@ -145,7 +141,7 @@ contract VaultModule is IVaultModule {
     }
 
     /**
-     * @dev Returns general information about the position of the given account, pool, and collateral type.
+     * @inheritdoc IVaultModule
      */
     function getPosition(
         uint128 accountId,
@@ -169,10 +165,7 @@ contract VaultModule is IVaultModule {
     }
 
     /**
-     * @dev Returns the debt for the given account, pool, and collateral type.
-     *
-     * Note: This is not a view function, and actually updates the entire debt distribution chain.
-     * To call this externally as a view function, use `staticall`.
+     * @inheritdoc IVaultModule
      */
     function getPositionDebt(
         uint128 accountId,
@@ -183,7 +176,7 @@ contract VaultModule is IVaultModule {
     }
 
     /**
-     * @dev Returns the total collateral for the given pool, and collateral type.
+     * @inheritdoc IVaultModule
      */
     function getVaultCollateral(uint128 poolId, address collateralType)
         public
@@ -195,10 +188,7 @@ contract VaultModule is IVaultModule {
     }
 
     /**
-     * @dev Returns the total debt for the given pool, and collateral type.
-     *
-     * Note: This is not a view function, and actually updates the entire debt distribution chain.
-     * To call this externally as a view function, use `staticall`.
+     * @inheritdoc IVaultModule
      */
     function getVaultDebt(uint128 poolId, address collateralType) public override returns (int) {
         return Pool.load(poolId).currentVaultDebt(collateralType);

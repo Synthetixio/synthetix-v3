@@ -1,7 +1,12 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-/// @title Module for staking positions in vaults
+/**
+ * @title VaultModule interface.
+ * @title Allows accounts to delegate collateral to a pool.
+ * @dev Delegation updates the account's position in the vault that corresponds to the associated pool and collateral type pair.
+ * @dev A pool contains one vault for each collateral type it supports, and vaults are not shared between pools.
+ */
 interface IVaultModule {
     /**
      * @notice Emitted when {sender} updates the delegation of collateral in the specified staking position.
@@ -16,7 +21,7 @@ interface IVaultModule {
     );
 
     /**
-     * @notice Delegates (creates, adjust or remove a delegation) collateral from an account.
+     * @notice Updates an account's delegated collateral amount for the specified pool and collateral type pair.
      *
      * Requirements:
      *
@@ -47,8 +52,8 @@ interface IVaultModule {
 
     /**
      * @notice Returns the debt of the specified staking position. Credit is expressed as negative debt.
-     * @dev Call this function using `callStatic` to treat it as a view function.
-     * @dev The return value is denominated in dollars with 18 decimal places.
+     * @dev This is not a view function, and actually updates the entire debt distribution chain.
+     * @dev To call this externally as a view function, use `staticall`.
      */
     function getPositionDebt(
         uint128 accountId,
@@ -86,8 +91,8 @@ interface IVaultModule {
 
     /**
      * @notice Returns the total debt (or credit) that the vault is responsible for. Credit is expressed as negative debt.
-     * @dev Call this function using `callStatic` to treat it as a view function.
-     * @dev The return value is denominated in dollars with 18 decimal places.
+     * @dev This is not a view function, and actually updates the entire debt distribution chain.
+     * @dev To call this externally as a view function, use `staticall`.
      **/
     function getVaultDebt(uint128 poolId, address collateralType) external returns (int);
 
