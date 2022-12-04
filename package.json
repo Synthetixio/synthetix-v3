@@ -24,7 +24,7 @@
     "lint:quick": "pretty-quick --check --staged --pattern '**/*.(js|ts|sol)'",
     "lint:fix": "npm run lint:js:fix && npm run lint:sol:fix",
     "lint": "npm run lint:js && npm run lint:sol",
-    "check-packages": ".github/check-packages"
+    "check-packages": "node .github/check-packages.js"
   },
   "devDependencies": {
     "@types/mocha": "10.0.1",
