@@ -153,17 +153,38 @@ describe('AssociatedSystemsModule', () => {
         assert.equal(await TokenModule.isInitialized(), false);
       });
 
-      it('fails with wrong kind when attempting to register a different kind', async () => {
-        await assertRevert(
-          AssociatedSystemsModule.connect(user).initOrUpgradeNft(
+      describe('when attempting to register a different kind', function () {
+        const { routerAddress: nftRouterAddress } = bootstrap(() => {}, {
+          modules: ['OwnerModule', 'UpgradeModule', 'NftModule'],
+        });
+
+        let InvalidTokenModule;
+
+        before('prepare modules', async () => {
+          const factory = await ethers.getContractFactory('TokenModule');
+          InvalidTokenModule = await factory.deploy();
+
+          await AssociatedSystemsModule.connect(owner).initOrUpgradeNft(
             toBytes32('hello'),
             'A Token',
             'TOK',
-            'arst',
-            owner.address
-          ),
-          'MismatchAssociatedSystemKind'
-        );
+            42,
+            nftRouterAddress()
+          );
+        });
+
+        it('fails with wrong kind error', async () => {
+          await assertRevert(
+            AssociatedSystemsModule.connect(owner).initOrUpgradeToken(
+              toBytes32('hello'),
+              'A Token',
+              'TOK',
+              42,
+              InvalidTokenModule.address
+            ),
+            'MismatchAssociatedSystemKind'
+          );
+        });
       });
 
       describe('when new impl for TokenModule associated system', () => {
@@ -281,17 +302,38 @@ describe('AssociatedSystemsModule', () => {
         assert.equal(await NftModule.isInitialized(), false);
       });
 
-      it('fails with wrong kind when attempting to register a different kind', async () => {
-        await assertRevert(
-          AssociatedSystemsModule.connect(user).initOrUpgradeToken(
+      describe('when attempting to register a different kind', function () {
+        const { routerAddress: tokenRouterAddress } = bootstrap(() => {}, {
+          modules: ['OwnerModule', 'UpgradeModule', 'TokenModule'],
+        });
+
+        let InvalidTokenModule;
+
+        before('prepare modules', async () => {
+          const factory = await ethers.getContractFactory('TokenModule');
+          InvalidTokenModule = await factory.deploy();
+
+          await AssociatedSystemsModule.connect(owner).initOrUpgradeToken(
             toBytes32('hello'),
             'A Token',
             'TOK',
-            18,
-            owner.address
-          ),
-          'MismatchAssociatedSystemKind'
-        );
+            42,
+            tokenRouterAddress()
+          );
+        });
+
+        it('fails with wrong kind error', async () => {
+          await assertRevert(
+            AssociatedSystemsModule.connect(owner).initOrUpgradeNft(
+              toBytes32('hello'),
+              'A Token',
+              'TOK',
+              42,
+              InvalidTokenModule.address
+            ),
+            'MismatchAssociatedSystemKind'
+          );
+        });
       });
 
       describe('when new impl for NftModule associated system', () => {

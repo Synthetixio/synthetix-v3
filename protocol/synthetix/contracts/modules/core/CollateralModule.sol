@@ -30,11 +30,7 @@ contract CollateralModule is ICollateralModule {
     /**
      * @inheritdoc ICollateralModule
      */
-    function deposit(
-        uint128 accountId,
-        address collateralType,
-        uint tokenAmount
-    ) public override {
+    function deposit(uint128 accountId, address collateralType, uint tokenAmount) public override {
         CollateralConfiguration.collateralEnabled(collateralType);
 
         Account.Data storage account = Account.load(accountId);
@@ -60,16 +56,14 @@ contract CollateralModule is ICollateralModule {
     /**
      * @inheritdoc ICollateralModule
      */
-    function withdraw(
-        uint128 accountId,
-        address collateralType,
-        uint tokenAmount
-    ) public override {
+    function withdraw(uint128 accountId, address collateralType, uint tokenAmount) public override {
         Account.onlyWithPermission(accountId, AccountRBAC._WITHDRAW_PERMISSION);
 
         Account.Data storage account = Account.load(accountId);
 
-        uint systemAmount = CollateralConfiguration.load(collateralType).convertTokenToSystemAmount(tokenAmount);
+        uint systemAmount = CollateralConfiguration.load(collateralType).convertTokenToSystemAmount(
+            tokenAmount
+        );
 
         if (account.collaterals[collateralType].availableAmountD18 < systemAmount) {
             revert InsufficientAccountCollateral(systemAmount);
@@ -85,15 +79,14 @@ contract CollateralModule is ICollateralModule {
     /**
      * @inheritdoc ICollateralModule
      */
-    function getAccountCollateral(uint128 accountId, address collateralType)
+    function getAccountCollateral(
+        uint128 accountId,
+        address collateralType
+    )
         external
         view
         override
-        returns (
-            uint256 totalDeposited,
-            uint256 totalAssigned,
-            uint256 totalLocked
-        )
+        returns (uint256 totalDeposited, uint256 totalAssigned, uint256 totalLocked)
     {
         return Account.load(accountId).getCollateralTotals(collateralType);
     }
@@ -101,7 +94,10 @@ contract CollateralModule is ICollateralModule {
     /**
      * @inheritdoc ICollateralModule
      */
-    function getAccountAvailableCollateral(uint128 accountId, address collateralType) public view override returns (uint) {
+    function getAccountAvailableCollateral(
+        uint128 accountId,
+        address collateralType
+    ) public view override returns (uint) {
         return Account.load(accountId).collaterals[collateralType].availableAmountD18;
     }
 
@@ -114,7 +110,10 @@ contract CollateralModule is ICollateralModule {
         uint offset,
         uint items
     ) external override {
-        CollateralLock.Data[] storage locks = Account.load(accountId).collaterals[collateralType].locks;
+        CollateralLock.Data[] storage locks = Account
+            .load(accountId)
+            .collaterals[collateralType]
+            .locks;
 
         if (offset > locks.length || items > locks.length) {
             revert OutOfBounds();
@@ -156,6 +155,8 @@ contract CollateralModule is ICollateralModule {
             revert InsufficientAccountCollateral(amount);
         }
 
-        account.collaterals[collateralType].locks.push(CollateralLock.Data(amount, expireTimestamp));
+        account.collaterals[collateralType].locks.push(
+            CollateralLock.Data(amount, expireTimestamp)
+        );
     }
 }

@@ -64,7 +64,7 @@ library DecimalMath {
      * If value is a low precision decimal, a scale up by 9 makes it a high precision decimal.
      */
     function upscale(uint x, uint factor) internal pure returns (uint) {
-        return x * 10**factor;
+        return x * 10 ** factor;
     }
 
     /**
@@ -76,7 +76,7 @@ library DecimalMath {
      * Scaling down a regular integer would not make sense.
      */
     function downscale(uint x, uint factor) internal pure returns (uint) {
-        return x / 10**factor;
+        return x / 10 ** factor;
     }
 
     // -----------------
@@ -103,14 +103,14 @@ library DecimalMath {
      * @dev See upscale for uint256.
      */
     function upscaleUint128(uint128 x, uint factor) internal pure returns (uint128) {
-        return x * uint128(10**factor);
+        return x * uint128(10 ** factor);
     }
 
     /**
      * @dev See downscale for uint256.
      */
     function downscaleUint128(uint128 x, uint factor) internal pure returns (uint128) {
-        return x / uint128(10**factor);
+        return x / uint128(10 ** factor);
     }
 
     // -----------------
@@ -135,14 +135,14 @@ library DecimalMath {
      * @dev See upscale for uint256.
      */
     function upscale(int x, uint factor) internal pure returns (int) {
-        return x * int(10**factor);
+        return x * int(10 ** factor);
     }
 
     /**
      * @dev See downscale for uint256.
      */
     function downscale(int x, uint factor) internal pure returns (int) {
-        return x / int(10**factor);
+        return x / int(10 ** factor);
     }
 
     // -----------------
@@ -167,13 +167,13 @@ library DecimalMath {
      * @dev See upscale for uint256.
      */
     function upscaleInt128(int128 x, uint factor) internal pure returns (int128) {
-        return x * int128(int(10**factor));
+        return x * int128(int(10 ** factor));
     }
 
     /**
      * @dev See downscale for uint256.
      */
     function downscaleInt128(int128 x, uint factor) internal pure returns (int128) {
-        return x / int128(int(10**factor));
+        return x / int128(int(10 ** factor));
     }
 }

@@ -34,7 +34,9 @@ contract UtilsModule is IUtilsModule {
     ) external override {
         OwnableStorage.onlyOwner();
 
-        IAssociatedSystemsModule usdToken = IAssociatedSystemsModule(AssociatedSystem.load(_USD_TOKEN).proxy);
+        IAssociatedSystemsModule usdToken = IAssociatedSystemsModule(
+            AssociatedSystem.load(_USD_TOKEN).proxy
+        );
 
         usdToken.registerUnmanagedSystem(_CCIP_CHAINLINK_SEND, ccipSend);
         usdToken.registerUnmanagedSystem(_CCIP_CHAINLINK_RECV, ccipReceive);

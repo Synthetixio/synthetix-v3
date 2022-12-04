@@ -23,7 +23,9 @@ library NodeDefinition {
         }
     }
 
-    function create(Data memory nodeDefinition) internal returns (NodeDefinition.Data storage self, bytes32 id) {
+    function create(
+        Data memory nodeDefinition
+    ) internal returns (NodeDefinition.Data storage self, bytes32 id) {
         id = getId(nodeDefinition);
 
         self = load(id);
@@ -34,6 +36,13 @@ library NodeDefinition {
     }
 
     function getId(Data memory nodeDefinition) internal pure returns (bytes32) {
-        return keccak256(abi.encode(nodeDefinition.parents, nodeDefinition.nodeType, nodeDefinition.parameters));
+        return
+            keccak256(
+                abi.encode(
+                    nodeDefinition.parents,
+                    nodeDefinition.nodeType,
+                    nodeDefinition.parameters
+                )
+            );
     }
 }

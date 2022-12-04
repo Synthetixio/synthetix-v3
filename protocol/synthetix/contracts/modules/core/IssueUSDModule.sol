@@ -58,7 +58,10 @@ contract IssueUSDModule is IIssueUSDModule {
         // If the resulting debt of the account is greater than zero, ensure that the resulting c-ratio is sufficient
         (, uint collateralValue) = pool.currentAccountCollateral(collateralType, accountId);
         if (newDebt > 0) {
-            CollateralConfiguration.load(collateralType).verifyIssuanceRatio(newDebt.toUint(), collateralValue);
+            CollateralConfiguration.load(collateralType).verifyIssuanceRatio(
+                newDebt.toUint(),
+                collateralValue
+            );
         }
 
         VaultEpoch.Data storage epoch = Pool.load(poolId).vaults[collateralType].currentEpoch();

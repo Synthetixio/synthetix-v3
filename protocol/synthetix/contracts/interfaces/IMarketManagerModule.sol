@@ -5,9 +5,23 @@ pragma solidity ^0.8.0;
  * @title System-wide entry point for the management of markets connected to the system.
  */
 interface IMarketManagerModule {
-    event MarketRegistered(address indexed market, uint128 indexed marketId, address indexed sender);
-    event MarketUsdDeposited(uint128 indexed marketId, address indexed target, uint amount, address indexed sender);
-    event MarketUsdWithdrawn(uint128 indexed marketId, address indexed target, uint amount, address indexed sender);
+    event MarketRegistered(
+        address indexed market,
+        uint128 indexed marketId,
+        address indexed sender
+    );
+    event MarketUsdDeposited(
+        uint128 indexed marketId,
+        address indexed target,
+        uint amount,
+        address indexed sender
+    );
+    event MarketUsdWithdrawn(
+        uint128 indexed marketId,
+        address indexed target,
+        uint amount,
+        address indexed sender
+    );
 
     /**
      * @dev Connects an external market to the system.
@@ -21,11 +35,7 @@ interface IMarketManagerModule {
      * @dev See `IMarket`.
      */
     /// @notice target deposits amount of synths to the marketId
-    function depositMarketUsd(
-        uint128 marketId,
-        address target,
-        uint amount
-    ) external;
+    function depositMarketUsd(uint128 marketId, address target, uint amount) external;
 
     /**
      * @notice Allows an external market connected to the system to withdraw USD from the system.
@@ -33,11 +43,7 @@ interface IMarketManagerModule {
      * @dev See `IMarket`.
      */
     /// @notice target withdraws amount of synths to the marketId
-    function withdrawMarketUsd(
-        uint128 marketId,
-        address target,
-        uint amount
-    ) external;
+    function withdrawMarketUsd(uint128 marketId, address target, uint amount) external;
 
     /**
      * @notice Returns the total withdrawable USD amount for the specified market.

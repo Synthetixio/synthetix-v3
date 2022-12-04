@@ -15,8 +15,16 @@ contract MarketCollateralModule is IMarketCollateralModule {
     using ERC20Helper for address;
     using CollateralConfiguration for CollateralConfiguration.Data;
 
-    error InsufficientMarketCollateralDepositable(uint128 marketId, address collateralType, uint tokenAmountToDeposit);
-    error InsufficientMarketCollateralWithdrawable(uint128 marketId, address collateralType, uint tokenAmountToWithdraw);
+    error InsufficientMarketCollateralDepositable(
+        uint128 marketId,
+        address collateralType,
+        uint tokenAmountToDeposit
+    );
+    error InsufficientMarketCollateralWithdrawable(
+        uint128 marketId,
+        address collateralType,
+        uint tokenAmountToWithdraw
+    );
 
     /**
      * @inheritdoc IMarketCollateralModule
@@ -28,14 +36,21 @@ contract MarketCollateralModule is IMarketCollateralModule {
     ) public override {
         Market.Data storage marketData = Market.load(marketId);
 
-        uint systemAmount = CollateralConfiguration.load(collateralType).convertTokenToSystemAmount(tokenAmount);
+        uint systemAmount = CollateralConfiguration.load(collateralType).convertTokenToSystemAmount(
+            tokenAmount
+        );
 
         // Ensure the sender is the market address associated with the specified marketId
         if (msg.sender != marketData.marketAddress) revert AccessError.Unauthorized(msg.sender);
 
         uint maxDepositable = marketData.maximumDepositableD18[collateralType];
-        uint depositedCollateralEntryIndex = _findOrCreateDepositEntryIndex(marketData, collateralType);
-        Market.DepositedCollateral storage collateralEntry = marketData.depositedCollateral[depositedCollateralEntryIndex];
+        uint depositedCollateralEntryIndex = _findOrCreateDepositEntryIndex(
+            marketData,
+            collateralType
+        );
+        Market.DepositedCollateral storage collateralEntry = marketData.depositedCollateral[
+            depositedCollateralEntryIndex
+        ];
 
         // Ensure that depositing this amount will not exceed the maximum amount allowed for the market
         if (collateralEntry.amountD18 + systemAmount > maxDepositable)
@@ -58,13 +73,20 @@ contract MarketCollateralModule is IMarketCollateralModule {
     ) public override {
         Market.Data storage marketData = Market.load(marketId);
 
-        uint systemAmount = CollateralConfiguration.load(collateralType).convertTokenToSystemAmount(tokenAmount);
+        uint systemAmount = CollateralConfiguration.load(collateralType).convertTokenToSystemAmount(
+            tokenAmount
+        );
 
         // Ensure the sender is the market address associated with the specified marketId
         if (msg.sender != marketData.marketAddress) revert AccessError.Unauthorized(msg.sender);
 
-        uint depositedCollateralEntryIndex = _findOrCreateDepositEntryIndex(marketData, collateralType);
-        Market.DepositedCollateral storage collateralEntry = marketData.depositedCollateral[depositedCollateralEntryIndex];
+        uint depositedCollateralEntryIndex = _findOrCreateDepositEntryIndex(
+            marketData,
+            collateralType
+        );
+        Market.DepositedCollateral storage collateralEntry = marketData.depositedCollateral[
+            depositedCollateralEntryIndex
+        ];
 
         // Ensure that the market is not withdrawing more collateral than it has deposited
         if (systemAmount > collateralEntry.amountD18) {
@@ -81,10 +103,10 @@ contract MarketCollateralModule is IMarketCollateralModule {
     /**
      * @dev Returns the index of the relevant deposited collateral entry for the given market and collateral type.
      */
-    function _findOrCreateDepositEntryIndex(Market.Data storage marketData, address collateralType)
-        internal
-        returns (uint depositedCollateralEntryIndex)
-    {
+    function _findOrCreateDepositEntryIndex(
+        Market.Data storage marketData,
+        address collateralType
+    ) internal returns (uint depositedCollateralEntryIndex) {
         Market.DepositedCollateral[] storage depositedCollateral = marketData.depositedCollateral;
         for (uint i = 0; i < depositedCollateral.length; i++) {
             Market.DepositedCollateral storage depositedCollateralEntry = depositedCollateral[i];
@@ -117,12 +139,10 @@ contract MarketCollateralModule is IMarketCollateralModule {
     /**
      * @inheritdoc IMarketCollateralModule
      */
-    function getMarketCollateralAmount(uint128 marketId, address collateralType)
-        external
-        view
-        override
-        returns (uint collateralAmountD18)
-    {
+    function getMarketCollateralAmount(
+        uint128 marketId,
+        address collateralType
+    ) external view override returns (uint collateralAmountD18) {
         Market.Data storage marketData = Market.load(marketId);
         Market.DepositedCollateral[] storage depositedCollateral = marketData.depositedCollateral;
         for (uint i = 0; i < depositedCollateral.length; i++) {
@@ -136,7 +156,10 @@ contract MarketCollateralModule is IMarketCollateralModule {
     /**
      * @inheritdoc IMarketCollateralModule
      */
-    function getMaximumMarketCollateral(uint128 marketId, address collateralType) external view override returns (uint) {
+    function getMaximumMarketCollateral(
+        uint128 marketId,
+        address collateralType
+    ) external view override returns (uint) {
         Market.Data storage marketData = Market.load(marketId);
         return marketData.maximumDepositableD18[collateralType];
     }

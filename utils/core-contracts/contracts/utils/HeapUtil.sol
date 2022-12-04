@@ -25,11 +25,7 @@ library HeapUtil {
         if (self.nodes.length == 0) self.nodes.push(Node(0, 0));
     }
 
-    function insert(
-        Data storage self,
-        uint128 id,
-        int128 priority
-    ) internal returns (Node memory) {
+    function insert(Data storage self, uint128 id, int128 priority) internal returns (Node memory) {
         //√
         if (self.nodes.length == 0) {
             init(self);
@@ -105,11 +101,7 @@ library HeapUtil {
         return extractedNode;
     }
 
-    function _bubbleUp(
-        Data storage self,
-        Node memory n,
-        uint i
-    ) private {
+    function _bubbleUp(Data storage self, Node memory n, uint i) private {
         //√
         if (i == _ROOT_INDEX || n.priority <= self.nodes[i / 2].priority) {
             _insert(self, n, i);
@@ -119,11 +111,7 @@ library HeapUtil {
         }
     }
 
-    function _bubbleDown(
-        Data storage self,
-        Node memory n,
-        uint i
-    ) private {
+    function _bubbleDown(Data storage self, Node memory n, uint i) private {
         //
         uint length = self.nodes.length;
         uint cIndex = i * 2; // left child index
@@ -147,11 +135,7 @@ library HeapUtil {
         }
     }
 
-    function _insert(
-        Data storage self,
-        Node memory n,
-        uint i
-    ) private {
+    function _insert(Data storage self, Node memory n, uint i) private {
         //√
         self.nodes[i] = n;
         self.indices[n.id] = i;

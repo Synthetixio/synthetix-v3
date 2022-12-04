@@ -55,7 +55,9 @@ contract MarketManagerModule is IMarketManagerModule {
      * @inheritdoc IMarketManagerModule
      */
     function getWithdrawableUsd(uint128 marketId) public view override returns (uint) {
-        return Market.load(marketId).creditCapacityD18 + Market.load(marketId).getDepositedCollateralValue();
+        return
+            Market.load(marketId).creditCapacityD18 +
+            Market.load(marketId).getDepositedCollateralValue();
     }
 
     /**
@@ -107,11 +109,7 @@ contract MarketManagerModule is IMarketManagerModule {
     /**
      * @inheritdoc IMarketManagerModule
      */
-    function depositMarketUsd(
-        uint128 marketId,
-        address target,
-        uint amount
-    ) external override {
+    function depositMarketUsd(uint128 marketId, address target, uint amount) external override {
         Market.Data storage market = Market.load(marketId);
 
         // Call must come from the market itself.
@@ -136,11 +134,7 @@ contract MarketManagerModule is IMarketManagerModule {
     /**
      * @inheritdoc IMarketManagerModule
      */
-    function withdrawMarketUsd(
-        uint128 marketId,
-        address target,
-        uint amount
-    ) external override {
+    function withdrawMarketUsd(uint128 marketId, address target, uint amount) external override {
         Market.Data storage marketData = Market.load(marketId);
 
         // Call must come from the market itself.

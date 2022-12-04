@@ -12,11 +12,7 @@ contract RewardDistributorMock is IRewardDistributor {
 
     error Unauthorized(address sender);
 
-    function initialize(
-        address rewardManager,
-        address token_,
-        string memory name_
-    ) public {
+    function initialize(address rewardManager, address token_, string memory name_) public {
         _rewardManager = rewardManager;
         _token = token_;
         _name = name_;
@@ -52,6 +48,12 @@ contract RewardDistributorMock is IRewardDistributor {
         uint64 start,
         uint32 duration
     ) public {
-        IRewardsManagerModule(_rewardManager).distributeRewards(poolId, collateralType, amount, start, duration);
+        IRewardsManagerModule(_rewardManager).distributeRewards(
+            poolId,
+            collateralType,
+            amount,
+            start,
+            duration
+        );
     }
 }

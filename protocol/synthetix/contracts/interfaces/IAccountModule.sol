@@ -14,12 +14,22 @@ interface IAccountModule {
     /**
      * @notice Emitted when `user` is granted `permission` by `sender` for account `accountId`.
      */
-    event PermissionGranted(uint128 indexed accountId, bytes32 indexed permission, address indexed user, address sender);
+    event PermissionGranted(
+        uint128 indexed accountId,
+        bytes32 indexed permission,
+        address indexed user,
+        address sender
+    );
 
     /**
      * @notice Emitted when `user` has `permission` renounced or revoked by `sender` for account `accountId`.
      */
-    event PermissionRevoked(uint128 indexed accountId, bytes32 indexed permission, address indexed user, address sender);
+    event PermissionRevoked(
+        uint128 indexed accountId,
+        bytes32 indexed permission,
+        address indexed user,
+        address sender
+    );
 
     /**
      * @dev Data structure for tracking each user's permissions.
@@ -32,7 +42,9 @@ interface IAccountModule {
     /**
      * @notice Returns an array of `AccountPermission` for the provided `accountId`.
      */
-    function getAccountPermissions(uint128 accountId) external view returns (AccountPermissions[] memory);
+    function getAccountPermissions(
+        uint128 accountId
+    ) external view returns (AccountPermissions[] memory);
 
     /**
      * @notice Mints an account token with id `requestedAccountId` to `msg.sender`.
@@ -64,11 +76,7 @@ interface IAccountModule {
      *
      * Emits a {PermissionGranted} event.
      */
-    function grantPermission(
-        uint128 accountId,
-        bytes32 permission,
-        address user
-    ) external;
+    function grantPermission(uint128 accountId, bytes32 permission, address user) external;
 
     /**
      * @notice Revokes `permission` from `user` for account `accountId`.
@@ -79,11 +87,7 @@ interface IAccountModule {
      *
      * Emits a {PermissionRevoked} event.
      */
-    function revokePermission(
-        uint128 accountId,
-        bytes32 permission,
-        address user
-    ) external;
+    function revokePermission(uint128 accountId, bytes32 permission, address user) external;
 
     /**
      * @notice Revokes `permission` from `msg.sender` for account `accountId`.

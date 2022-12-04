@@ -57,7 +57,6 @@ describe('UUPSProxy', () => {
     before('deploy the proxy', async () => {
       const factory = await ethers.getContractFactory('UUPSProxy');
       UUPSProxy = await factory.deploy(Implementation.address);
-
       Instance = await ethers.getContractAt('ImplementationMockA', UUPSProxy.address);
     });
 
@@ -110,29 +109,21 @@ describe('UUPSProxy', () => {
         await assertRevert(
           Instance.upgradeTo(user.address),
           `NotAContract("${user.address}")`,
-          ethers.getContractAt('UUPSProxy', ethers.constants.ZeroAddress)
+          UUPSProxy
         );
       });
     });
 
     describe('when trying to upgrade to the current implementation', () => {
       it('reverts', async () => {
-        await assertRevert(
-          Instance.upgradeTo(Implementation.address),
-          'NoChange()',
-          ethers.getContractAt('UUPSProxy', ethers.constants.ZeroAddress)
-        );
+        await assertRevert(Instance.upgradeTo(Implementation.address), 'NoChange()', UUPSProxy);
       });
     });
 
     describe('when trying to upgrade to the zero address', () => {
       it('reverts', async () => {
         const zeroAddress = '0x0000000000000000000000000000000000000000';
-        await assertRevert(
-          Instance.upgradeTo(zeroAddress),
-          'ZeroAddress',
-          ethers.getContractAt('UUPSProxy', ethers.constants.ZeroAddress)
-        );
+        await assertRevert(Instance.upgradeTo(zeroAddress), 'ZeroAddress', UUPSProxy);
       });
     });
 

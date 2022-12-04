@@ -90,7 +90,8 @@ library ScalableMapping {
         resultingSharesD18 = _getSharesForAmount(self, newActorValueD18);
 
         // Modify the total shares with the actor's change in shares.
-        self.totalSharesD18 = (self.totalSharesD18 + resultingSharesD18 - self.sharesD18[actorId]).to128();
+        self.totalSharesD18 = (self.totalSharesD18 + resultingSharesD18 - self.sharesD18[actorId])
+            .to128();
 
         self.sharesD18[actorId] = resultingSharesD18.to128();
     }
@@ -116,11 +117,14 @@ library ScalableMapping {
      */
     function totalAmount(Data storage self) internal view returns (uint valueD18) {
         return
-            ((self.scaleModifierD27 + DecimalMath.UNIT_PRECISE_INT).toUint() * self.totalSharesD18) /
-            DecimalMath.UNIT_PRECISE;
+            ((self.scaleModifierD27 + DecimalMath.UNIT_PRECISE_INT).toUint() *
+                self.totalSharesD18) / DecimalMath.UNIT_PRECISE;
     }
 
-    function _getSharesForAmount(Data storage self, uint amountD18) private view returns (uint sharesD18) {
+    function _getSharesForAmount(
+        Data storage self,
+        uint amountD18
+    ) private view returns (uint sharesD18) {
         sharesD18 =
             (amountD18 * DecimalMath.UNIT_PRECISE) /
             (self.scaleModifierD27 + DecimalMath.UNIT_PRECISE_INT128).toUint();

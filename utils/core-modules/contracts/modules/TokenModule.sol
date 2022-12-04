@@ -35,11 +35,7 @@ contract TokenModule is ITokenModule, ERC20, InitializableMixin {
         _mint(to, amount);
     }
 
-    function setAllowance(
-        address from,
-        address spender,
-        uint amount
-    ) external override {
+    function setAllowance(address from, address spender, uint amount) external override {
         OwnableStorage.onlyOwner();
         ERC20Storage.load().allowance[from][spender] = amount;
     }

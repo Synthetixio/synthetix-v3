@@ -8,11 +8,7 @@ interface IUtilsModule {
     /**
      * @notice Configure CCIP addresses on the stablecoin.
      */
-    function registerCcip(
-        address ccipSend,
-        address ccipReceive,
-        address ccipTokenPool
-    ) external;
+    function registerCcip(address ccipSend, address ccipReceive, address ccipTokenPool) external;
 
     /**
      * @notice Configure the system's single oracle manager address.

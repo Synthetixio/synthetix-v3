@@ -14,11 +14,7 @@ contract ERC721ReceiverMock is IERC721Receiver {
         return this.onERC721Received.selector;
     }
 
-    function transferToken(
-        address nftAddress,
-        address to,
-        uint256 tokenId
-    ) public {
+    function transferToken(address nftAddress, address to, uint256 tokenId) public {
         IERC721(nftAddress).transferFrom(address(this), to, tokenId);
     }
 }

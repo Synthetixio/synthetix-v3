@@ -22,9 +22,5 @@ interface ITokenModule is IERC20 {
     function burn(address to, uint amount) external;
 
     /// @notice sets token amount allowance to spender by "from" address
-    function setAllowance(
-        address from,
-        address spender,
-        uint amount
-    ) external;
+    function setAllowance(address from, address spender, uint amount) external;
 }

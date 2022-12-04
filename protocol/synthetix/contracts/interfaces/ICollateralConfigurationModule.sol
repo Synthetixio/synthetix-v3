@@ -29,18 +29,16 @@ interface ICollateralConfigurationModule {
      * @notice Returns a list of detailed information pertaining to all collateral types registered in the system.
      * @dev Optionally returns only those that are currently enabled.
      */
-    function getCollateralConfigurations(bool hideDisabled)
-        external
-        view
-        returns (CollateralConfiguration.Data[] memory collaterals);
+    function getCollateralConfigurations(
+        bool hideDisabled
+    ) external view returns (CollateralConfiguration.Data[] memory collaterals);
 
     /**
      * @notice Returns detailed information pertaining the specified collateral type.
      */
-    function getCollateralConfiguration(address collateralType)
-        external
-        view
-        returns (CollateralConfiguration.Data memory collateral);
+    function getCollateralConfiguration(
+        address collateralType
+    ) external view returns (CollateralConfiguration.Data memory collateral);
 
     /**
      * @notice Returns the current value of a specified collateral type.

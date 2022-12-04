@@ -72,17 +72,14 @@ contract AssociatedSystemsModule is IAssociatedSystemsModule {
         _setAssociatedSystem(id, AssociatedSystem.KIND_UNMANAGED, endpoint, endpoint);
     }
 
-    function _setAssociatedSystem(
-        bytes32 id,
-        bytes32 kind,
-        address proxy,
-        address impl
-    ) internal {
+    function _setAssociatedSystem(bytes32 id, bytes32 kind, address proxy, address impl) internal {
         AssociatedSystem.load(id).set(proxy, impl, kind);
         emit AssociatedSystemSet(kind, id, proxy, impl);
     }
 
-    function getAssociatedSystem(bytes32 id) external view override returns (address proxy, bytes32 kind) {
+    function getAssociatedSystem(
+        bytes32 id
+    ) external view override returns (address proxy, bytes32 kind) {
         proxy = AssociatedSystem.load(id).proxy;
         kind = AssociatedSystem.load(id).kind;
     }
@@ -131,5 +128,10 @@ contract AssociatedSystemsModule is IAssociatedSystemsModule {
         _setAssociatedSystem(id, AssociatedSystem.KIND_ERC20, proxy, impl);
     }
 
-    event AssociatedSystemSet(bytes32 indexed kind, bytes32 indexed id, address proxy, address impl);
+    event AssociatedSystemSet(
+        bytes32 indexed kind,
+        bytes32 indexed id,
+        address proxy,
+        address impl
+    );
 }

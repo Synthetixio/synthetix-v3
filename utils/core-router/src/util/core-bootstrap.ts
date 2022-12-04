@@ -1,7 +1,7 @@
 /* eslint-env mocha */
 
 import path from 'node:path';
-import { CannonWrapperGenericProvider, ChainBuilderContext } from '@usecannon/builder';
+import { ChainBuilderContext } from '@usecannon/builder';
 import { ethers } from 'ethers';
 import hre from 'hardhat';
 import { glob, runTypeChain } from 'typechain';
@@ -19,7 +19,7 @@ declare module 'hardhat/types/config' {
 
 export function coreBootstrap<Contracts>({ cannonfile = 'cannonfile.toml' }: Params = {}) {
   let outputs: ChainBuilderContext;
-  let provider: CannonWrapperGenericProvider;
+  let provider: ethers.providers.JsonRpcProvider;
   let signers: ethers.Signer[];
 
   before(async function prepareNode() {
@@ -51,8 +51,8 @@ export function coreBootstrap<Contracts>({ cannonfile = 'cannonfile.toml' }: Par
     });
 
     outputs = cannonInfo.outputs;
-    provider = cannonInfo.provider;
-    signers = cannonInfo.signers;
+    provider = cannonInfo.provider as ethers.providers.JsonRpcProvider;
+    signers = cannonInfo.signers as ethers.Signer[];
 
     try {
       await provider.send('anvil_setBlockTimestampInterval', [1]);
@@ -75,7 +75,8 @@ export function coreBootstrap<Contracts>({ cannonfile = 'cannonfile.toml' }: Par
     if (!outputs) throw new Error('Node not initialized yet');
     const contract = _getContractFromOutputs(contractName as string, outputs, provider);
     const [owner] = Array.isArray(signers) ? signers : [];
-    const Contract = owner ? contract.connect(owner) : contract;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const Contract = owner ? contract.connect(owner as unknown as any) : contract;
     return Contract as unknown as Contracts[typeof contractName];
   }
 
@@ -103,7 +104,7 @@ export function coreBootstrap<Contracts>({ cannonfile = 'cannonfile.toml' }: Par
 function _getContractFromOutputs(
   contractName: string,
   outputs: ChainBuilderContext,
-  provider: CannonWrapperGenericProvider
+  provider: ethers.providers.JsonRpcProvider
 ) {
   let contract;
 
@@ -123,5 +124,6 @@ function _getContractFromOutputs(
     throw new Error(`Contract "${contractName}" not found on cannon build`);
   }
 
-  return new ethers.Contract(contract.address, contract.abi, provider) as ethers.Contract;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return new ethers.Contract(contract.address, contract.abi, provider as unknown as any);
 }

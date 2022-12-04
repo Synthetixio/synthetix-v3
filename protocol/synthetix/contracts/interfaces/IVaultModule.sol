@@ -101,14 +101,18 @@ interface IVaultModule {
      * @dev collateralAmount is represented as an integer with 18 decimals.
      * @dev collateralValue is represented as an integer with the number of decimals specified by the collateralType.
      */
-    function getVaultCollateral(uint128 poolId, address collateralType)
-        external
-        returns (uint collateralAmount, uint collateralValue);
+    function getVaultCollateral(
+        uint128 poolId,
+        address collateralType
+    ) external returns (uint collateralAmount, uint collateralValue);
 
     /**
      * @notice Returns the collateralization ratio of the vault. If debt is negative, this function will return 0.
      * @dev Call this function using `callStatic` to treat it as a view function.
      * @dev The return value is a percentage with 18 decimals places.
      */
-    function getVaultCollateralRatio(uint128 poolId, address collateralType) external returns (uint);
+    function getVaultCollateralRatio(
+        uint128 poolId,
+        address collateralType
+    ) external returns (uint);
 }

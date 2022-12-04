@@ -20,11 +20,7 @@ contract ERC721EnumerableMock is ERC721Enumerable {
         _burn(tokenId);
     }
 
-    function transfer(
-        address from,
-        address to,
-        uint256 tokenId
-    ) external {
+    function transfer(address from, address to, uint256 tokenId) external {
         _transfer(from, to, tokenId);
     }
 }

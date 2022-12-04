@@ -102,7 +102,10 @@ library VaultEpoch {
      * Called as a ticker from various parts of the system, usually whenever the
      * real debt of a user needs to be known.
      */
-    function consolidateAccountDebt(Data storage self, uint128 accountId) internal returns (int currentDebtD18) {
+    function consolidateAccountDebt(
+        Data storage self,
+        uint128 accountId
+    ) internal returns (int currentDebtD18) {
         bytes32 actorId = bytes32(uint(accountId));
 
         int newDebtD18 = self.accountsDebtDistribution.accumulateActor(actorId);
@@ -146,7 +149,10 @@ library VaultEpoch {
     /**
      * @dev Returns an account's value in the Vault's collateral distribution.
      */
-    function getAccountCollateral(Data storage self, uint128 accountId) internal view returns (uint amountD18) {
+    function getAccountCollateral(
+        Data storage self,
+        uint128 accountId
+    ) internal view returns (uint amountD18) {
         return self.collateralAmounts.get(bytes32(uint(accountId)));
     }
 }

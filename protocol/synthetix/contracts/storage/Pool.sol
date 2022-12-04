@@ -213,7 +213,9 @@ library Pool {
             // margin = credit / systemLimit, per share
             return valuePerShareD18;
         } else {
-            uint marginD18 = creditCapacityD18.divDecimal(minLiquidityRatioD18).divDecimal(totalSharesD18);
+            uint marginD18 = creditCapacityD18.divDecimal(minLiquidityRatioD18).divDecimal(
+                totalSharesD18
+            );
 
             return
                 marketData.poolsDebtDistribution.getValuePerShare() +
@@ -252,22 +254,26 @@ library Pool {
      * - Updates the vaults shares in the pool's debt distribution, according to the collateral provided by the vault.
      * - Updates the value per share of the vault's debt distribution.
      */
-    function recalculateVaultCollateral(Data storage self, address collateralType)
-        internal
-        returns (uint collateralPriceD18)
-    {
+    function recalculateVaultCollateral(
+        Data storage self,
+        address collateralType
+    ) internal returns (uint collateralPriceD18) {
         // Update each market's pro-rata liquidity and collect accumulated debt into the pool's debt distribution.
         distributeDebtToVaults(self);
 
         // Transfer the debt change from the pool into the vault.
         bytes32 actorId = bytes32(uint(uint160(collateralType)));
-        self.vaults[collateralType].distributeDebtToAccounts(self.vaultsDebtDistribution.accumulateActor(actorId));
+        self.vaults[collateralType].distributeDebtToAccounts(
+            self.vaultsDebtDistribution.accumulateActor(actorId)
+        );
 
         // Get the latest collateral price.
         collateralPriceD18 = CollateralConfiguration.load(collateralType).getCollateralPrice();
 
         // Changes in price update the corresponding vault's total collateral value as well as its liquidity (collateral - debt).
-        (uint usdWeightD18, , int deltaDebtD18) = self.vaults[collateralType].updateCreditCapacity(collateralPriceD18);
+        (uint usdWeightD18, , int deltaDebtD18) = self.vaults[collateralType].updateCreditCapacity(
+            collateralPriceD18
+        );
 
         // Update the vault's shares in the pool's debt distribution, according to the value of its collateral.
         self.vaultsDebtDistribution.setActorShares(actorId, usdWeightD18);
@@ -310,7 +316,10 @@ library Pool {
      *
      * Note: This is not a view function. It updates the debt distribution chain before performing any calculations.
      */
-    function currentVaultCollateralRatio(Data storage self, address collateralType) internal returns (uint) {
+    function currentVaultCollateralRatio(
+        Data storage self,
+        address collateralType
+    ) internal returns (uint) {
         recalculateVaultCollateral(self, collateralType);
 
         int debtD18 = self.vaults[collateralType].currentDebt();
@@ -324,7 +333,9 @@ library Pool {
      *
      * Note: Returns market zero (null market) if none is found.
      */
-    function findMarketWithCapacityLocked(Data storage self) internal view returns (Market.Data storage lockedMarketId) {
+    function findMarketWithCapacityLocked(
+        Data storage self
+    ) internal view returns (Market.Data storage lockedMarketId) {
         for (uint i = 0; i < self.marketConfigurations.length; i++) {
             Market.Data storage market = Market.load(self.marketConfigurations[i].marketId);
 
@@ -353,11 +364,10 @@ library Pool {
     /**
      * @dev Returns the total amount and value of the specified collateral delegated to this pool.
      */
-    function currentVaultCollateral(Data storage self, address collateralType)
-        internal
-        view
-        returns (uint collateralAmountD18, uint collateralValueD18)
-    {
+    function currentVaultCollateral(
+        Data storage self,
+        address collateralType
+    ) internal view returns (uint collateralAmountD18, uint collateralValueD18) {
         uint collateralPriceD18 = CollateralConfiguration.load(collateralType).getCollateralPrice();
 
         collateralAmountD18 = self.vaults[collateralType].currentCollateral();
@@ -386,11 +396,18 @@ library Pool {
         address collateralType,
         uint128 accountId
     ) internal returns (uint) {
-        (, uint getPositionCollateralValueD18) = currentAccountCollateral(self, collateralType, accountId);
+        (, uint getPositionCollateralValueD18) = currentAccountCollateral(
+            self,
+            collateralType,
+            accountId
+        );
         int getPositionDebtD18 = updateAccountDebt(self, collateralType, accountId);
 
         // if they have a credit, just treat their debt as 0
-        return getPositionCollateralValueD18.divDecimal(getPositionDebtD18 < 0 ? 0 : getPositionDebtD18.toUint());
+        return
+            getPositionCollateralValueD18.divDecimal(
+                getPositionDebtD18 < 0 ? 0 : getPositionDebtD18.toUint()
+            );
     }
 
     /**

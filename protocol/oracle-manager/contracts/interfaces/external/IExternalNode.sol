@@ -5,5 +5,8 @@ import "../../storage/Node.sol";
 
 /// @title interface for external node
 interface IExternalNode {
-    function process(Node.Data[] memory prices, bytes memory parameters) external view returns (Node.Data memory);
+    function process(
+        Node.Data[] memory prices,
+        bytes memory parameters
+    ) external view returns (Node.Data memory);
 }

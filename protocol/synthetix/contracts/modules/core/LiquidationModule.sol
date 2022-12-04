@@ -54,11 +54,16 @@ contract LiquidationModule is ILiquidationModule {
         Account.exists(liquidateAsAccountId);
 
         Pool.Data storage pool = Pool.load(poolId);
-        CollateralConfiguration.Data storage collateralConfig = CollateralConfiguration.load(collateralType);
+        CollateralConfiguration.Data storage collateralConfig = CollateralConfiguration.load(
+            collateralType
+        );
         VaultEpoch.Data storage epoch = pool.vaults[collateralType].currentEpoch();
 
         int rawDebt = pool.updateAccountDebt(collateralType, accountId);
-        (uint collateralAmount, uint collateralValue) = pool.currentAccountCollateral(collateralType, accountId);
+        (uint collateralAmount, uint collateralValue) = pool.currentAccountCollateral(
+            collateralType,
+            accountId
+        );
         liquidationData.collateralLiquidated = collateralAmount;
 
         // Verify whether the position is eligible for liquidation
@@ -73,7 +78,9 @@ contract LiquidationModule is ILiquidationModule {
 
         liquidationData.debtLiquidated = rawDebt.toUint();
 
-        uint liquidatedAccountShares = epoch.accountsDebtDistribution.getActorShares(bytes32(uint(accountId)));
+        uint liquidatedAccountShares = epoch.accountsDebtDistribution.getActorShares(
+            bytes32(uint(accountId))
+        );
         if (epoch.accountsDebtDistribution.totalSharesD18 == liquidatedAccountShares) {
             // will be left with 0 shares, which can't be socialized
             revert MustBeVaultLiquidated();
@@ -90,7 +97,9 @@ contract LiquidationModule is ILiquidationModule {
         epoch.updateAccountPosition(accountId, 0, 0);
 
         // Distribute the liquidated collateral among other positions in the vault, minus the reward amount
-        epoch.collateralAmounts.scale(liquidationData.collateralLiquidated.toInt() - liquidationData.amountRewarded.toInt());
+        epoch.collateralAmounts.scale(
+            liquidationData.collateralLiquidated.toInt() - liquidationData.amountRewarded.toInt()
+        );
 
         // Remove the debt assigned to the liquidated account
         epoch.assignDebtToAccount(accountId, -liquidationData.debtLiquidated.toInt());
@@ -102,9 +111,18 @@ contract LiquidationModule is ILiquidationModule {
         pool.recalculateVaultCollateral(collateralType);
 
         // Send amountRewarded to the specified account
-        Account.load(liquidateAsAccountId).collaterals[collateralType].deposit(liquidationData.amountRewarded);
+        Account.load(liquidateAsAccountId).collaterals[collateralType].deposit(
+            liquidationData.amountRewarded
+        );
 
-        emit Liquidation(accountId, poolId, collateralType, liquidationData, liquidateAsAccountId, msg.sender);
+        emit Liquidation(
+            accountId,
+            poolId,
+            collateralType,
+            liquidationData,
+            liquidateAsAccountId,
+            msg.sender
+        );
     }
 
     /**
@@ -125,7 +143,9 @@ contract LiquidationModule is ILiquidationModule {
         }
 
         Pool.Data storage pool = Pool.load(poolId);
-        CollateralConfiguration.Data storage collateralConfig = CollateralConfiguration.load(collateralType);
+        CollateralConfiguration.Data storage collateralConfig = CollateralConfiguration.load(
+            collateralType
+        );
         Vault.Data storage vault = pool.vaults[collateralType];
 
         // Retrieve the collateral and the debt of the vault
@@ -152,7 +172,10 @@ contract LiquidationModule is ILiquidationModule {
             AssociatedSystem.load(_USD_TOKEN).asToken().burn(msg.sender, vaultDebt);
 
             // Provide all of the collateral to the liquidator
-            liquidationData.collateralLiquidated = vault.currentEpoch().collateralAmounts.totalAmount();
+            liquidationData.collateralLiquidated = vault
+                .currentEpoch()
+                .collateralAmounts
+                .totalAmount();
 
             // Increment the epoch counter
             pool.resetVault(collateralType);
@@ -178,10 +201,18 @@ contract LiquidationModule is ILiquidationModule {
         }
 
         // Send liquidationData.collateralLiquidated to the specified account
-        Account.load(liquidateAsAccountId).collaterals[collateralType].deposit(liquidationData.collateralLiquidated);
+        Account.load(liquidateAsAccountId).collaterals[collateralType].deposit(
+            liquidationData.collateralLiquidated
+        );
         liquidationData.amountRewarded = liquidationData.debtLiquidated;
 
-        emit VaultLiquidation(poolId, collateralType, liquidationData, liquidateAsAccountId, msg.sender);
+        emit VaultLiquidation(
+            poolId,
+            collateralType,
+            liquidationData,
+            liquidateAsAccountId,
+            msg.sender
+        );
     }
 
     /**
@@ -195,7 +226,9 @@ contract LiquidationModule is ILiquidationModule {
         if (debt <= 0) {
             return false;
         }
-        return collateralValue.divDecimal(debt.toUint()) < CollateralConfiguration.load(collateralType).liquidationRatioD18;
+        return
+            collateralValue.divDecimal(debt.toUint()) <
+            CollateralConfiguration.load(collateralType).liquidationRatioD18;
     }
 
     /**
@@ -215,7 +248,10 @@ contract LiquidationModule is ILiquidationModule {
     /**
      * @inheritdoc ILiquidationModule
      */
-    function isVaultLiquidatable(uint128 poolId, address collateralType) external override returns (bool) {
+    function isVaultLiquidatable(
+        uint128 poolId,
+        address collateralType
+    ) external override returns (bool) {
         Pool.Data storage pool = Pool.load(poolId);
         int rawVaultDebt = pool.currentVaultDebt(collateralType);
         (, uint collateralValue) = pool.currentVaultCollateral(collateralType);

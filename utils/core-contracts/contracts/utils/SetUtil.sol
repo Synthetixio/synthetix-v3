@@ -18,11 +18,7 @@ library SetUtil {
         remove(set.raw, bytes32(value));
     }
 
-    function replace(
-        UintSet storage set,
-        uint value,
-        uint newValue
-    ) internal {
+    function replace(UintSet storage set, uint value, uint newValue) internal {
         replace(set.raw, bytes32(value), bytes32(newValue));
     }
 
@@ -69,11 +65,7 @@ library SetUtil {
         remove(set.raw, bytes32(uint256(uint160(value))));
     }
 
-    function replace(
-        AddressSet storage set,
-        address value,
-        address newValue
-    ) internal {
+    function replace(AddressSet storage set, address value, address newValue) internal {
         replace(set.raw, bytes32(uint256(uint160(value))), bytes32(uint256(uint160(newValue))));
     }
 
@@ -149,11 +141,7 @@ library SetUtil {
         delete set._positions[value];
     }
 
-    function replace(
-        Bytes32Set storage set,
-        bytes32 value,
-        bytes32 newValue
-    ) internal {
+    function replace(Bytes32Set storage set, bytes32 value, bytes32 newValue) internal {
         if (!contains(set, value)) {
             revert ValueNotInSet();
         }
