@@ -10,15 +10,13 @@ const workspaces = Object.keys(packageLock.packages).filter(
 );
 
 for (const workspace of workspaces) {
-  console.log(require.resolve(`../${workspace}/package.json`));
+  try {
+    console.log(require.resolve(`../${workspace}/package-lock.json`));
+    throw new Error(
+      "The file $lockfile was found, please delete it and install dependencies using npm's Workspaces functionality\n - More info 👉 https://docs.npmjs.com/cli/v7/using-npm/workspaces"
+    );
+  } catch (err) {
+    // If package-lock.json file is not found is ok!
+    if (err.code !== 'MODULE_NOT_FOUND') throw err;
+  }
 }
-
-// for workspace in $(find packages/* -type d -maxdepth 0)
-// do
-//   lockfile="$workspace/package-lock.json"
-//   if [ -f "$lockfile" ]; then
-//     echo "The file $lockfile was found, please delete it and install dependencies using npm's Workspaces functionality"
-//     echo ' - More info 👉 https://docs.npmjs.com/cli/v7/using-npm/workspaces'
-//     exit 1
-//   fi
-// done
