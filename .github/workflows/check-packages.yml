@@ -16,7 +16,7 @@ jobs:
       # dependencies using npm workspaces, e.g.: npm i -w packages/core-utils some-dependency
       # More info: https://docs.npmjs.com/cli/v7/using-npm/workspaces
       - name: Check package-lock.json files are not present on packages/*
-        run: .github/check-packages
+        run: node .github/check-packages.js
 
       # The following steps are for checking the validity of the package-lock.json edits.
       # This will make sure that the file has not been tempered with, nor the developer
