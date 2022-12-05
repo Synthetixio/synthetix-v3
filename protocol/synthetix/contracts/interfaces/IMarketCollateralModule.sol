@@ -6,55 +6,12 @@ pragma solidity ^0.8.0;
  */
 interface IMarketCollateralModule {
     /**
-     * @notice Allows a market to deposit collateral.
-     */
-    function depositMarketCollateral(
-        uint128 marketId,
-        address collateralType,
-        uint amount
-    ) external;
-
-    /**
-     * @notice Allows a market to withdraw collateral that it has previously deposited.
-     */
-    function withdrawMarketCollateral(
-        uint128 marketId,
-        address collateralType,
-        uint amount
-    ) external;
-
-    /**
-     * @notice Allow the system owner to configure the maximum amount of a given collateral type that a specified market is allowed to deposit.
-     */
-    function configureMaximumMarketCollateral(
-        uint128 marketId,
-        address collateralType,
-        uint amount
-    ) external;
-
-    /**
-     * @notice Return the total maximum amount of a given collateral type that a specified market is allowed to deposit.
-     */
-    function getMaximumMarketCollateral(
-        uint128 marketId,
-        address collateralType
-    ) external returns (uint);
-
-    /**
-     * @notice Return the total amount of a given collateral type that a specified market has deposited.
-     */
-    function getMarketCollateralAmount(
-        uint128 marketId,
-        address collateralType
-    ) external returns (uint);
-
-    /**
      * @notice Emitted when `amount` of collateral of type `collateralType` is deposited to market `marketId` by `sender`.
      */
     event MarketCollateralDeposited(
         uint128 indexed marketId,
         address indexed collateralType,
-        uint tokenAmount,
+        uint256 tokenAmount,
         address indexed sender
     );
 
@@ -64,14 +21,57 @@ interface IMarketCollateralModule {
     event MarketCollateralWithdrawn(
         uint128 indexed marketId,
         address indexed collateralType,
-        uint tokenAmount,
+        uint256 tokenAmount,
         address indexed sender
     );
 
     event MaximumMarketCollateralConfigured(
         uint128 indexed marketId,
         address indexed collateralType,
-        uint systemAmount,
+        uint256 systemAmount,
         address indexed sender
     );
+
+    /**
+     * @notice Allows a market to deposit collateral.
+     */
+    function depositMarketCollateral(
+        uint128 marketId,
+        address collateralType,
+        uint256 amount
+    ) external;
+
+    /**
+     * @notice Allows a market to withdraw collateral that it has previously deposited.
+     */
+    function withdrawMarketCollateral(
+        uint128 marketId,
+        address collateralType,
+        uint256 amount
+    ) external;
+
+    /**
+     * @notice Allow the system owner to configure the maximum amount of a given collateral type that a specified market is allowed to deposit.
+     */
+    function configureMaximumMarketCollateral(
+        uint128 marketId,
+        address collateralType,
+        uint256 amount
+    ) external;
+
+    /**
+     * @notice Return the total maximum amount of a given collateral type that a specified market is allowed to deposit.
+     */
+    function getMaximumMarketCollateral(
+        uint128 marketId,
+        address collateralType
+    ) external returns (uint256);
+
+    /**
+     * @notice Return the total amount of a given collateral type that a specified market has deposited.
+     */
+    function getMarketCollateralAmount(
+        uint128 marketId,
+        address collateralType
+    ) external returns (uint256);
 }

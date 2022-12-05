@@ -3,25 +3,25 @@ pragma solidity ^0.8.0;
 
 import "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
 import "@synthetixio/core-contracts/contracts/proxy/UUPSProxy.sol";
+
 import "@synthetixio/core-modules/contracts/interfaces/INftModule.sol";
+import "@synthetixio/core-modules/contracts/storage/AssociatedSystem.sol";
+
 import "../../interfaces/IAccountModule.sol";
 import "../../interfaces/IAccountTokenModule.sol";
 import "../../storage/Account.sol";
-
-import "@synthetixio/core-modules/contracts/storage/AssociatedSystem.sol";
 
 /**
  * @title Module for managing accounts.
  * @dev See IAccountModule.
  */
 contract AccountModule is IAccountModule {
-    bytes32 private constant _ACCOUNT_SYSTEM = "accountNft";
-
     using SetUtil for SetUtil.AddressSet;
     using SetUtil for SetUtil.Bytes32Set;
-
     using AccountRBAC for AccountRBAC.Data;
     using Account for Account.Data;
+
+    bytes32 private constant _ACCOUNT_SYSTEM = "accountNft";
 
     error OnlyAccountTokenProxy(address origin);
     error PermissionNotGranted(uint128 accountId, bytes32 permission, address user);
@@ -42,9 +42,9 @@ contract AccountModule is IAccountModule {
     ) external view returns (AccountPermissions[] memory permissions) {
         AccountRBAC.Data storage accountRbac = Account.load(accountId).rbac;
 
-        uint allPermissionsLength = accountRbac.permissionAddresses.length();
+        uint256 allPermissionsLength = accountRbac.permissionAddresses.length();
         permissions = new AccountPermissions[](allPermissionsLength);
-        for (uint i = 1; i <= allPermissionsLength; i++) {
+        for (uint256 i = 1; i <= allPermissionsLength; i++) {
             address permissionAddress = accountRbac.permissionAddresses.valueAt(i);
             permissions[i - 1] = AccountPermissions({
                 user: permissionAddress,

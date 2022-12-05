@@ -7,11 +7,11 @@ import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import "@synthetixio/core-contracts/contracts/token/ERC20Helper.sol";
 
+import "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
+
 import "../../storage/Distribution.sol";
 import "../../storage/Pool.sol";
 import "../../storage/Market.sol";
-
-import "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
 
 /**
  * @title Module for associating debt with the system.
@@ -19,14 +19,11 @@ import "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
  */
 contract AssociateDebtModule is IAssociateDebtModule {
     using DecimalMath for uint;
-
     using SafeCastU128 for uint128;
     using SafeCastU256 for uint256;
     using SafeCastI128 for int128;
     using SafeCastI256 for int256;
-
     using ERC20Helper for address;
-
     using Distribution for Distribution.Data;
     using Pool for Pool.Data;
     using Vault for Vault.Data;

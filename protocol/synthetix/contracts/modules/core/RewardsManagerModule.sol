@@ -4,11 +4,9 @@ pragma solidity ^0.8.0;
 import "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
 import "@synthetixio/core-contracts/contracts/errors/ParameterError.sol";
 import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
-
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 
 import "../../storage/RewardDistributionEntry.sol";
-
 import "../../storage/Account.sol";
 import "../../storage/AccountRBAC.sol";
 import "../../storage/Pool.sol";

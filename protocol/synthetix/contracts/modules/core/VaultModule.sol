@@ -4,7 +4,6 @@ pragma solidity ^0.8.0;
 import "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
 import "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
 import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
-
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 
 import "../../storage/Account.sol";
@@ -36,8 +35,8 @@ contract VaultModule is IVaultModule {
     using SafeCastI128 for int128;
     using SafeCastI256 for int256;
 
-    error InvalidLeverage(uint leverage);
-    error CapacityLocked(uint marketId);
+    error InvalidLeverage(uint256 leverage);
+    error CapacityLocked(uint256 marketId);
 
     /**
      * @inheritdoc IVaultModule
@@ -46,8 +45,8 @@ contract VaultModule is IVaultModule {
         uint128 accountId,
         uint128 poolId,
         address collateralType,
-        uint newCollateralAmount,
-        uint leverage
+        uint256 newCollateralAmount,
+        uint256 leverage
     ) external override {
         Pool.requireExists(poolId);
         Account.onlyWithPermission(accountId, AccountRBAC._DELEGATE_PERMISSION);
@@ -70,7 +69,7 @@ contract VaultModule is IVaultModule {
         // Use account interaction to update its rewards.
         vault.updateRewards(accountId);
 
-        uint currentCollateralAmount = vault.currentAccountCollateral(accountId);
+        uint256 currentCollateralAmount = vault.currentAccountCollateral(accountId);
 
         // If increasing delegated collateral amount,
         // Check that the account has sufficient collateral.
@@ -87,7 +86,7 @@ contract VaultModule is IVaultModule {
 
         // Update the account's position for the given pool and collateral type,
         // Note: This will trigger an update in the entire debt distribution chain.
-        uint collateralPrice = _updatePosition(
+        uint256 collateralPrice = _updatePosition(
             accountId,
             poolId,
             collateralType,
@@ -102,7 +101,7 @@ contract VaultModule is IVaultModule {
         // check the account's collateralization ration.
         // Note: This is the best time to do so since the user's debt and the collateral's price have both been updated.
         if (newCollateralAmount < currentCollateralAmount) {
-            int debt = vault.currentEpoch().consolidatedDebtAmountsD18[accountId];
+            int256 debt = vault.currentEpoch().consolidatedDebtAmountsD18[accountId];
 
             // Minimum collateralization ratios are configured in the system per collateral type.abi
             // Ensure that the account's updated position satisfies this requirement.
@@ -133,7 +132,7 @@ contract VaultModule is IVaultModule {
         uint128 accountId,
         uint128 poolId,
         address collateralType
-    ) external override returns (uint) {
+    ) external override returns (uint256) {
         return Pool.load(poolId).currentAccountCollateralizationRatio(collateralType, accountId);
     }
 
@@ -143,7 +142,7 @@ contract VaultModule is IVaultModule {
     function getVaultCollateralRatio(
         uint128 poolId,
         address collateralType
-    ) external override returns (uint) {
+    ) external override returns (uint256) {
         return Pool.load(poolId).currentVaultCollateralRatio(collateralType);
     }
 
@@ -154,7 +153,7 @@ contract VaultModule is IVaultModule {
         uint128 accountId,
         uint128 poolId,
         address collateralType
-    ) external view override returns (uint amount, uint value) {
+    ) external view override returns (uint256 amount, uint256 value) {
         (amount, value) = Pool.load(poolId).currentAccountCollateral(collateralType, accountId);
     }
 
@@ -168,7 +167,12 @@ contract VaultModule is IVaultModule {
     )
         external
         override
-        returns (uint collateralAmount, uint collateralValue, int debt, uint collateralizationRatio)
+        returns (
+            uint256 collateralAmount,
+            uint256 collateralValue,
+            int256 debt,
+            uint256 collateralizationRatio
+        )
     {
         Pool.Data storage pool = Pool.load(poolId);
 
@@ -190,7 +194,7 @@ contract VaultModule is IVaultModule {
         uint128 accountId,
         uint128 poolId,
         address collateralType
-    ) external override returns (int) {
+    ) external override returns (int256) {
         return Pool.load(poolId).updateAccountDebt(collateralType, accountId);
     }
 
@@ -200,14 +204,14 @@ contract VaultModule is IVaultModule {
     function getVaultCollateral(
         uint128 poolId,
         address collateralType
-    ) public view override returns (uint amount, uint value) {
+    ) public view override returns (uint256 amount, uint256 value) {
         return Pool.load(poolId).currentVaultCollateral(collateralType);
     }
 
     /**
      * @inheritdoc IVaultModule
      */
-    function getVaultDebt(uint128 poolId, address collateralType) public override returns (int) {
+    function getVaultDebt(uint128 poolId, address collateralType) public override returns (int256) {
         return Pool.load(poolId).currentVaultDebt(collateralType);
     }
 
@@ -222,10 +226,10 @@ contract VaultModule is IVaultModule {
         uint128 accountId,
         uint128 poolId,
         address collateralType,
-        uint newCollateralAmount,
-        uint oldCollateralAmount,
-        uint leverage
-    ) internal returns (uint collateralPrice) {
+        uint256 newCollateralAmount,
+        uint256 oldCollateralAmount,
+        uint256 leverage
+    ) internal returns (uint256 collateralPrice) {
         Pool.Data storage pool = Pool.load(poolId);
 
         // Trigger an update in the debt distribution chain to make sure that

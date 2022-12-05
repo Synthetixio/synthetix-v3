@@ -4,13 +4,13 @@ pragma solidity ^0.8.0;
 import "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
 import "@synthetixio/core-contracts/contracts/token/ERC20Helper.sol";
 
+import "@synthetixio/core-modules/contracts/storage/AssociatedSystem.sol";
+
 import "../../interfaces/ICollateralModule.sol";
 
 import "../../storage/Account.sol";
 import "../../storage/CollateralConfiguration.sol";
 import "../../storage/CollateralLock.sol";
-
-import "@synthetixio/core-modules/contracts/storage/AssociatedSystem.sol";
 
 /**
  * @title Module for managing user collateral.

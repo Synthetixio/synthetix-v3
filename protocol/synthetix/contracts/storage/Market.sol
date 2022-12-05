@@ -24,7 +24,6 @@ library Market {
     using DecimalMath for uint128;
     using DecimalMath for int256;
     using DecimalMath for int128;
-
     using SafeCastU256 for uint256;
     using SafeCastU128 for uint128;
     using SafeCastI256 for int256;

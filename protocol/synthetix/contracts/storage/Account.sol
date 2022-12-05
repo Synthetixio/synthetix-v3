@@ -3,7 +3,6 @@ pragma solidity ^0.8.0;
 
 import "./AccountRBAC.sol";
 import "./Collateral.sol";
-
 import "./Pool.sol";
 
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
@@ -13,7 +12,6 @@ library Account {
     using Pool for Pool.Data;
     using Collateral for Collateral.Data;
     using SetUtil for SetUtil.UintSet;
-
     using SafeCastU128 for uint128;
     using SafeCastU256 for uint256;
     using SafeCastI128 for int128;

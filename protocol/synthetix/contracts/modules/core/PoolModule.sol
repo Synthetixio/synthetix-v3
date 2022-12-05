@@ -5,9 +5,9 @@ import "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
 import "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
 import "@synthetixio/core-contracts/contracts/errors/AddressError.sol";
 import "@synthetixio/core-contracts/contracts/errors/ParameterError.sol";
-import "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
-
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+
+import "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
 
 import "../../interfaces/IPoolModule.sol";
 import "../../storage/Pool.sol";
@@ -17,14 +17,14 @@ import "../../storage/Pool.sol";
  * @dev See IPoolModule.
  */
 contract PoolModule is IPoolModule {
-    error CapacityLocked(uint marketId);
+    error CapacityLocked(uint256 marketId);
 
     using SafeCastU128 for uint128;
     using SafeCastU256 for uint256;
     using SafeCastI128 for int128;
     using SafeCastI256 for int256;
 
-    using DecimalMath for uint;
+    using DecimalMath for uint256;
 
     using Pool for Pool.Data;
     using Market for Market.Data;
@@ -138,10 +138,10 @@ contract PoolModule is IPoolModule {
 
         // Replace existing market configurations with the new ones.
         // (May leave old configurations at the end of the array if the new array is shorter).
-        uint i = 0;
-        uint totalWeight = 0;
+        uint256 i = 0;
+        uint256 totalWeight = 0;
         // Iterate up to the shorter length.
-        uint len = newMarketConfigurations.length < pool.marketConfigurations.length
+        uint256 len = newMarketConfigurations.length < pool.marketConfigurations.length
             ? newMarketConfigurations.length
             : pool.marketConfigurations.length;
         for (; i < len; i++) {
@@ -156,7 +156,7 @@ contract PoolModule is IPoolModule {
         }
 
         // If the old array was longer, truncate it.
-        uint popped = pool.marketConfigurations.length - i;
+        uint256 popped = pool.marketConfigurations.length - i;
         for (i = 0; i < popped; i++) {
             pool.marketConfigurations.pop();
         }
@@ -195,7 +195,7 @@ contract PoolModule is IPoolModule {
             pool.marketConfigurations.length
         );
 
-        for (uint i = 0; i < pool.marketConfigurations.length; i++) {
+        for (uint256 i = 0; i < pool.marketConfigurations.length; i++) {
             marketConfigurations[i] = pool.marketConfigurations[i];
         }
 
@@ -224,7 +224,7 @@ contract PoolModule is IPoolModule {
     /**
      * @inheritdoc IPoolModule
      */
-    function setMinLiquidityRatio(uint minLiquidityRatio) external override {
+    function setMinLiquidityRatio(uint256 minLiquidityRatio) external override {
         OwnableStorage.onlyOwner();
 
         SystemPoolConfiguration.load().minLiquidityRatioD18 = minLiquidityRatio;
@@ -233,7 +233,7 @@ contract PoolModule is IPoolModule {
     /**
      * @inheritdoc IPoolModule
      */
-    function getMinLiquidityRatio() external view override returns (uint) {
+    function getMinLiquidityRatio() external view override returns (uint256) {
         return SystemPoolConfiguration.load().minLiquidityRatioD18;
     }
 
@@ -249,22 +249,22 @@ contract PoolModule is IPoolModule {
         view
         returns (uint128[] memory potentiallyLockedMarkets, uint128[] memory removedMarkets)
     {
-        uint oldIdx = 0;
-        uint potentiallyLockedMarketsIdx = 0;
-        uint removedMarketsIdx = 0;
+        uint256 oldIdx = 0;
+        uint256 potentiallyLockedMarketsIdx = 0;
+        uint256 removedMarketsIdx = 0;
         uint128 lastMarketId = 0;
 
         potentiallyLockedMarkets = new uint128[](pool.marketConfigurations.length);
         removedMarkets = new uint128[](pool.marketConfigurations.length);
 
         // First we need the total weight of the new distribution.
-        uint totalWeightD18 = 0;
-        for (uint i = 0; i < newMarketConfigurations.length; i++) {
+        uint256 totalWeightD18 = 0;
+        for (uint256 i = 0; i < newMarketConfigurations.length; i++) {
             totalWeightD18 += newMarketConfigurations[i].weightD18;
         }
 
         // Now, iterate through the incoming market configurations, and compare with them with the existing ones.
-        for (uint newIdx = 0; newIdx < newMarketConfigurations.length; newIdx++) {
+        for (uint256 newIdx = 0; newIdx < newMarketConfigurations.length; newIdx++) {
             // Reject duplicate market ids,
             // AND ensure that they are provided in ascending order.
             if (newMarketConfigurations[newIdx].marketId <= lastMarketId) {
@@ -309,10 +309,10 @@ contract PoolModule is IPoolModule {
             ) {
                 // Get weight ratios for comparison below.
                 // Upscale them to make sure that we have compatible precision in case of very small values.
-                uint newWeightRatioD27 = uint(newMarketConfigurations[newIdx].weightD18)
+                uint256 newWeightRatioD27 = uint256(newMarketConfigurations[newIdx].weightD18)
                     .upscale(DecimalMath.PRECISION_FACTOR)
                     .divDecimal(totalWeightD18);
-                uint oldWeightRatioD27 = uint(pool.marketConfigurations[oldIdx].weightD18)
+                uint256 oldWeightRatioD27 = uint256(pool.marketConfigurations[oldIdx].weightD18)
                     .upscale(DecimalMath.PRECISION_FACTOR)
                     .divDecimal(pool.totalWeightsD18);
 
