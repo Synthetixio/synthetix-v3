@@ -4,6 +4,9 @@ pragma solidity ^0.8.0;
 import "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
 import "@synthetixio/core-contracts/contracts/errors/AddressError.sol";
 
+/**
+ * @title Object for tracking an accounts permissions (role based access control).
+ */
 library AccountRBAC {
     using SetUtil for SetUtil.Bytes32Set;
     using SetUtil for SetUtil.AddressSet;
@@ -17,16 +20,35 @@ library AccountRBAC {
     error InvalidPermission();
 
     struct Data {
+        /**
+         * @dev The owner of the account and admin of all permissions.
+         */
         address owner;
+        /**
+         * @dev Set of permissions for each address enabled by the account.
+         */
         mapping(address => SetUtil.Bytes32Set) permissions;
+        /**
+         * @dev Array of addresses that this account has given permissions to.
+         */
         SetUtil.AddressSet permissionAddresses;
     }
 
+    /**
+     * @dev Sets the owner of the account.
+     */
     function setOwner(Data storage self, address owner) internal {
         self.owner = owner;
     }
 
-    function grantPermission(Data storage self, bytes32 permission, address target) internal {
+    /**
+     * @dev Grants a particular permission to the specified target address.
+     */
+    function grantPermission(
+        Data storage self,
+        bytes32 permission,
+        address target
+    ) internal {
         if (target == address(0)) {
             revert AddressError.ZeroAddress();
         }
@@ -42,7 +64,14 @@ library AccountRBAC {
         self.permissions[target].add(permission);
     }
 
-    function revokePermission(Data storage self, bytes32 permission, address target) internal {
+    /**
+     * @dev Revokes a particular permission from the specified target address.
+     */
+    function revokePermission(
+        Data storage self,
+        bytes32 permission,
+        address target
+    ) internal {
         self.permissions[target].remove(permission);
 
         if (self.permissions[target].length() == 0) {
@@ -50,14 +79,20 @@ library AccountRBAC {
         }
     }
 
-    function revokeAllPermissions(Data storage self, address user) internal {
-        bytes32[] memory permissions = self.permissions[user].values();
+    /**
+     * @dev Revokes all permissions for the specified target address.
+     */
+    function revokeAllPermissions(Data storage self, address target) internal {
+        bytes32[] memory permissions = self.permissions[target].values();
 
-        for (uint i = 1; i <= permissions.length; i++) {
-            revokePermission(self, permissions[i - 1], user);
+        for (uint256 i = 1; i <= permissions.length; i++) {
+            revokePermission(self, permissions[i - 1], target);
         }
     }
 
+    /**
+     * @dev Returns wether the specified address has the given permission.
+     */
     function hasPermission(
         Data storage self,
         bytes32 permission,
@@ -66,6 +101,9 @@ library AccountRBAC {
         return target != address(0) && self.permissions[target].contains(permission);
     }
 
+    /**
+     * @dev Returns wether the specified target address has the given permission, or has the high level admin permission.
+     */
     function authorized(
         Data storage self,
         bytes32 permission,
