@@ -6,7 +6,7 @@ import "@synthetixio/core-contracts/contracts/errors/ParameterError.sol";
 import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 
-import "../../storage/DistributionEntry.sol";
+import "../../storage/RewardDistributionEntry.sol";
 import "../../storage/Account.sol";
 import "../../storage/AccountRBAC.sol";
 import "../../storage/Pool.sol";
@@ -29,9 +29,9 @@ contract RewardsManagerModule is IRewardsManagerModule {
 
     using Vault for Vault.Data;
     using Distribution for Distribution.Data;
-    using DistributionEntry for DistributionEntry.Data;
+    using RewardDistributionEntry for RewardDistributionEntry.Data;
 
-    uint private constant _MAX_REWARD_DISTRIBUTIONS = 10;
+    uint256 private constant _MAX_REWARD_DISTRIBUTIONS = 10;
 
     /**
      * @inheritdoc IRewardsManagerModule
@@ -74,7 +74,7 @@ contract RewardsManagerModule is IRewardsManagerModule {
     function distributeRewards(
         uint128 poolId,
         address collateralType,
-        uint amount,
+        uint256 amount,
         uint64 start,
         uint32 duration
     ) external override {
@@ -113,7 +113,7 @@ contract RewardsManagerModule is IRewardsManagerModule {
         uint128 poolId,
         address collateralType,
         uint128 accountId
-    ) external override returns (uint[] memory, address[] memory) {
+    ) external override returns (uint256[] memory, address[] memory) {
         Vault.Data storage vault = Pool.load(poolId).vaults[collateralType];
         return vault.updateRewards(accountId);
     }
@@ -125,7 +125,7 @@ contract RewardsManagerModule is IRewardsManagerModule {
         uint128 poolId,
         address collateralType,
         address distributor
-    ) external view override returns (uint) {
+    ) external view override returns (uint256) {
         return _getRewardRate(poolId, collateralType, distributor);
     }
 
@@ -137,7 +137,7 @@ contract RewardsManagerModule is IRewardsManagerModule {
         address collateralType,
         uint128 accountId,
         address distributor
-    ) external override returns (uint) {
+    ) external override returns (uint256) {
         Account.onlyWithPermission(accountId, AccountRBAC._REWARDS_PERMISSION);
 
         Vault.Data storage vault = Pool.load(poolId).vaults[collateralType];
@@ -147,7 +147,7 @@ contract RewardsManagerModule is IRewardsManagerModule {
             revert ParameterError.InvalidParameter("invalid-params", "reward is not found");
         }
 
-        uint reward = vault.updateReward(accountId, rewardId);
+        uint256 reward = vault.updateReward(accountId, rewardId);
 
         vault.rewards[rewardId].distributor.payout(
             accountId,
@@ -175,12 +175,12 @@ contract RewardsManagerModule is IRewardsManagerModule {
         uint128 poolId,
         address collateralType,
         address distributor
-    ) internal view returns (uint) {
+    ) internal view returns (uint256) {
         Vault.Data storage vault = Pool.load(poolId).vaults[collateralType];
-        uint totalShares = vault.currentEpoch().accountsDebtDistribution.totalSharesD18;
+        uint256 totalShares = vault.currentEpoch().accountsDebtDistribution.totalSharesD18;
         bytes32 rewardId = _getRewardId(poolId, collateralType, distributor);
 
-        int curTime = block.timestamp.toInt();
+        int256 curTime = block.timestamp.toInt();
 
         // No rewards are currently being distributed if the distributor doesn't exist, they are scheduled to be distributed in the future, or the distribution as already completed
         if (
@@ -193,8 +193,8 @@ contract RewardsManagerModule is IRewardsManagerModule {
         }
 
         return
-            int(vault.rewards[rewardId].entry.scheduledValueD18).toUint().divDecimal(
-                uint(vault.rewards[rewardId].entry.duration).divDecimal(totalShares)
+            int256(vault.rewards[rewardId].entry.scheduledValueD18).toUint().divDecimal(
+                uint256(vault.rewards[rewardId].entry.duration).divDecimal(totalShares)
             );
     }
 

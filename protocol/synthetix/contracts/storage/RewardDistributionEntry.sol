@@ -7,7 +7,7 @@ import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 
 import "./Distribution.sol";
 
-library DistributionEntry {
+library RewardDistributionEntry {
     using DecimalMath for int256;
     using SafeCastU128 for uint128;
     using SafeCastU256 for uint256;
@@ -31,11 +31,11 @@ library DistributionEntry {
     function distribute(
         Data storage entry,
         Distribution.Data storage dist,
-        int amountD18,
+        int256 amountD18,
         uint64 start,
         uint32 duration
-    ) internal returns (int diffD18) {
-        uint totalSharesD18 = dist.totalSharesD18;
+    ) internal returns (int256 diffD18) {
+        uint256 totalSharesD18 = dist.totalSharesD18;
 
         if (totalSharesD18 == 0) {
             revert ParameterError.InvalidParameter(
@@ -44,7 +44,7 @@ library DistributionEntry {
             );
         }
 
-        int curTime = block.timestamp.toInt().to128();
+        int256 curTime = block.timestamp.toInt().to128();
 
         // ensure any previously active distribution has applied
         diffD18 += updateEntry(entry, dist.totalSharesD18);
@@ -76,7 +76,10 @@ library DistributionEntry {
     /**
      * call every time before `totalShares` changes
      */
-    function updateEntry(Data storage entry, uint totalSharesAmountD18) internal returns (int) {
+    function updateEntry(
+        Data storage entry,
+        uint256 totalSharesAmountD18
+    ) internal returns (int256) {
         if (entry.scheduledValueD18 == 0 || totalSharesAmountD18 == 0) {
             // cannot process distributed rewards if a pool is empty.
             return 0;
@@ -84,7 +87,7 @@ library DistributionEntry {
 
         int128 curTime = block.timestamp.toInt().to128();
 
-        int valuePerShareChangeD18 = 0;
+        int256 valuePerShareChangeD18 = 0;
 
         if (curTime < int64(entry.start)) {
             return 0;
@@ -92,17 +95,17 @@ library DistributionEntry {
 
         // determine whether this is an instant distribution or a delayed distribution
         if (entry.duration == 0 && entry.lastUpdate < entry.start) {
-            valuePerShareChangeD18 = int(entry.scheduledValueD18).divDecimal(
+            valuePerShareChangeD18 = int256(entry.scheduledValueD18).divDecimal(
                 totalSharesAmountD18.toInt()
             );
         } else if (entry.lastUpdate < entry.start + entry.duration) {
             // find out what is "newly" distributed
-            int lastUpdateDistributedD18 = entry.lastUpdate < entry.start
+            int256 lastUpdateDistributedD18 = entry.lastUpdate < entry.start
                 ? int128(0)
                 : (entry.scheduledValueD18 * int64(entry.lastUpdate - entry.start)) /
                     int32(entry.duration);
 
-            int curUpdateDistributedD18 = entry.scheduledValueD18;
+            int256 curUpdateDistributedD18 = entry.scheduledValueD18;
             if (curTime < int64(entry.start + entry.duration)) {
                 curUpdateDistributedD18 =
                     (curUpdateDistributedD18 * (curTime - int64(entry.start))) /

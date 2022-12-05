@@ -12,7 +12,7 @@ library MarketCreator {
         uint128 lastCreatedMarketId;
     }
 
-    function _getStore() private pure returns (Data storage data) {
+    function getMarketStore() internal pure returns (Data storage data) {
         bytes32 s = keccak256("MarketStore");
         assembly {
             data.slot := s
@@ -27,7 +27,7 @@ library MarketCreator {
      * Note: If an external `IMarket` contract tracks several market ids, this function should be called for each market it tracks, resulting in multiple ids for the same address.
      */
     function create(address marketAddress) internal returns (Market.Data storage market) {
-        Data storage store = _getStore();
+        Data storage store = getMarketStore();
 
         uint128 id = store.lastCreatedMarketId;
         id++;
@@ -48,6 +48,6 @@ library MarketCreator {
      * Note: A contract implementing the `IMarket` interface may represent more than just one market, and thus several market ids could be associated to a single external contract address.
      */
     function loadIdsByAddress(address marketAddress) internal view returns (uint128[] storage ids) {
-        return _getStore().marketIdsForAddress[marketAddress];
+        return getMarketStore().marketIdsForAddress[marketAddress];
     }
 }

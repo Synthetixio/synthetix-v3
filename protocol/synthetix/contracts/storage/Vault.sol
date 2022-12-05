@@ -20,7 +20,7 @@ import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 library Vault {
     using VaultEpoch for VaultEpoch.Data;
     using Distribution for Distribution.Data;
-    using DistributionEntry for DistributionEntry.Data;
+    using RewardDistributionEntry for RewardDistributionEntry.Data;
     using ScalableMapping for ScalableMapping.Data;
     using DecimalMath for uint256;
     using DecimalMath for int128;

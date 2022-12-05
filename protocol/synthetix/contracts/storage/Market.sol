@@ -373,7 +373,7 @@ library Market {
         int256 targetBalanceD18 = totalDebt(self);
         int256 outstandingBalanceD18 = targetBalanceD18 - self.lastDistributedMarketBalanceD18;
 
-        (, bool exhausted) = _bumpPools(self, outstandingBalanceD18, maxIter);
+        (, bool exhausted) = bumpPools(self, outstandingBalanceD18, maxIter);
 
         if (!exhausted && self.poolsDebtDistribution.totalSharesD18 > 0) {
             // cannot use `outstandingBalance` here because `self.lastDistributedMarketBalance`
@@ -388,10 +388,10 @@ library Market {
     /**
      * @dev Determine the target valuePerShare of the poolsDebtDistribution, given the value that is yet to be distributed.
      */
-    function _getTargetValuePerShare(
+    function getTargetValuePerShare(
         Market.Data storage self,
         int valueToDistributeD18
-    ) private view returns (int targetValuePerShareD18) {
+    ) internal view returns (int targetValuePerShareD18) {
         return
             self.poolsDebtDistribution.getValuePerShare() +
             valueToDistributeD18.divDecimal(self.poolsDebtDistribution.totalSharesD18.toInt());
@@ -402,11 +402,11 @@ library Market {
      *
      * The debt is distributed up to the limit of the max value per share that the pool tolerates on the market.
      */
-    function _bumpPools(
+    function bumpPools(
         Data storage self,
         int maxDistributedD18,
         uint maxIter
-    ) private returns (int actuallyDistributedD18, bool exhausted) {
+    ) internal returns (int actuallyDistributedD18, bool exhausted) {
         if (maxDistributedD18 == 0 || self.poolsDebtDistribution.totalSharesD18 == 0) {
             return (0, false);
         }
@@ -440,14 +440,14 @@ library Market {
             // Note: `-edgePool.priority` is actually the max value per share limit of the pool
             if (
                 -edgePool.priority >=
-                k * _getTargetValuePerShare(self, (maxDistributedD18 - actuallyDistributedD18))
+                k * getTargetValuePerShare(self, (maxDistributedD18 - actuallyDistributedD18))
             ) {
                 break;
             }
 
             // The pool has hit its maximum value per share and needs to be removed.
             // Note: No need to update capacity because pool max share value = valuePerShare when this happens.
-            _togglePool(fromHeap, toHeap);
+            togglePool(fromHeap, toHeap);
 
             // Distribute the market's debt to the limit, i.e. for that which exceeds the maximum value per share.
             int debtToLimitD18 = self.poolsDebtDistribution.totalSharesD18.toInt().mulDecimal(
@@ -493,7 +493,7 @@ library Market {
     /**
      * @dev Moves a pool from one heap into another.
      */
-    function _togglePool(HeapUtil.Data storage from, HeapUtil.Data storage to) private {
+    function togglePool(HeapUtil.Data storage from, HeapUtil.Data storage to) internal {
         HeapUtil.Node memory node = from.extractMax();
         to.insert(node.id, -node.priority);
     }
