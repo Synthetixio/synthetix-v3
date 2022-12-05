@@ -1,6 +1,8 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import "./Account.sol";
+
 import "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
 import "@synthetixio/core-contracts/contracts/errors/AddressError.sol";
 
@@ -16,8 +18,6 @@ library AccountRBAC {
     bytes32 internal constant _DELEGATE_PERMISSION = "DELEGATE";
     bytes32 internal constant _MINT_PERMISSION = "MINT";
     bytes32 internal constant _REWARDS_PERMISSION = "REWARDS";
-
-    error InvalidPermission();
 
     struct Data {
         /**
@@ -54,7 +54,7 @@ library AccountRBAC {
         }
 
         if (permission == "") {
-            revert InvalidPermission();
+            revert Account.InvalidPermission("");
         }
 
         if (!self.permissionAddresses.contains(target)) {

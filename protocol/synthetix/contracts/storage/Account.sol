@@ -20,9 +20,25 @@ library Account {
     using SafeCastI128 for int128;
     using SafeCastI256 for int256;
 
+    /**
+     * @dev Thrown when the given target address does not have the given permission with the given account.
+     */
     error PermissionDenied(uint128 accountId, bytes32 permission, address target);
+
+    /**
+     * @dev Thrown when an account cannot be found.
+     */
     error AccountNotFound(uint128 accountId);
+
+    /**
+     * @dev Thrown when an account does not have sufficient collateral for a particular operation in the system.
+     */
     error InsufficientAccountCollateral(uint256 requestedAmount);
+
+    /**
+     * @dev Thrown when a permission specified by a user does not exist or is invalid.
+     */
+    error InvalidPermission(bytes32 permission);
 
     struct Data {
         /**

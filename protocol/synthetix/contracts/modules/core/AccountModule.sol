@@ -34,11 +34,6 @@ contract AccountModule is IAccountModule {
     error PermissionNotGranted(uint128 accountId, bytes32 permission, address user);
 
     /**
-     * @dev Thrown when a permission specified by a user does not exist or is invalid.
-     */
-    error InvalidPermission(bytes32 permission);
-
-    /**
      * @inheritdoc IAccountModule
      */
     function getAccountTokenAddress() public view override returns (address) {
@@ -187,7 +182,7 @@ contract AccountModule is IAccountModule {
             permission != AccountRBAC._MINT_PERMISSION &&
             permission != AccountRBAC._ADMIN_PERMISSION
         ) {
-            revert InvalidPermission(permission);
+            revert Account.InvalidPermission(permission);
         }
     }
 }
