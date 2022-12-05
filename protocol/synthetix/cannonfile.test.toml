@@ -106,8 +106,8 @@ artifact = "contracts/modules/test/TestableDistributionModule.sol:TestableDistri
 [contract.TestableDistributionActorModule]
 artifact = "contracts/modules/test/TestableDistributionActorModule.sol:TestableDistributionActorModule"
 
-[contract.TestableDistributionEntryModule]
-artifact = "contracts/modules/test/TestableDistributionEntryModule.sol:TestableDistributionEntryModule"
+[contract.TestableRewardDistributionEntryModule]
+artifact = "contracts/modules/test/TestableRewardDistributionEntryModule.sol:TestableRewardDistributionEntryModule"
 
 [contract.TestableMarketModule]
 artifact = "contracts/modules/test/TestableMarketModule.sol:TestableMarketModule"
@@ -170,7 +170,7 @@ args = [
     TestableCollateralLockModule: contracts.TestableCollateralLockModule,
     TestableDistributionModule: contracts.TestableDistributionModule,
     TestableDistributionActorModule: contracts.TestableDistributionActorModule,
-    TestableDistributionEntryModule: contracts.TestableDistributionEntryModule,
+    TestableRewardDistributionEntryModule: contracts.TestableDistributionEntryModule,
     TestableMarketModule: contracts.TestableMarketModule,
     TestableMarketConfigurationModule: contracts.TestableMarketConfigurationModule,
     TestablePoolModule: contracts.TestablePoolModule,
@@ -208,7 +208,7 @@ depends = [
   "contract.TestableCollateralLockModule",
   "contract.TestableDistributionModule",
   "contract.TestableDistributionActorModule",
-  "contract.TestableDistributionEntryModule",
+  "contract.TestableRewardDistributionEntryModule",
   "contract.TestableMarketModule",
   "contract.TestableMarketConfigurationModule",
   "contract.TestableMarketPoolInfoModule",
@@ -248,7 +248,7 @@ abiOf = [
   "TestableCollateralLockModule",
   "TestableDistributionModule",
   "TestableDistributionActorModule",
-  "TestableDistributionEntryModule",
+  "TestableRewardDistributionEntryModule",
   "TestableMarketModule",
   "TestableMarketConfigurationModule",
   "TestableMarketPoolInfoModule",
