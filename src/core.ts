@@ -5,7 +5,7 @@ import {
   PoolConfigurationSet,
   PoolNominationRenounced,
   PoolNominationRevoked,
-  NominatedPoolOwner,
+  PoolOwnerNominated,
 } from '../generated/PoolModule/PoolModule';
 import {
   MarketRegistered,
@@ -13,16 +13,19 @@ import {
   MarketUsdDeposited,
   MarketUsdWithdrawn,
 } from '../generated/MarketManagerModule/MarketManagerModule';
-import {
-  CollateralConfigured,
-  Deposited,
-  Withdrawn,
-} from '../generated/CollateralModule/CollateralModule';
+import { Deposited, Withdrawn } from '../generated/CollateralModule/CollateralModule';
+import { CollateralConfigured } from '../generated/CollateralConfigurationModule/CollateralConfigurationModule';
 import {
   AccountCreated,
   PermissionGranted,
   PermissionRevoked,
 } from '../generated/AccountModule/AccountModule';
+import {
+  RewardsClaimed as RewardsClaimedEvent,
+  RewardsDistributed,
+  RewardsDistributorRegistered,
+} from '../generated/RewardsManagerModule/RewardsManagerModule';
+import { Liquidation, VaultLiquidation } from '../generated/LiquidationModule/LiquidationModule';
 import { DelegationUpdated, VaultModule } from '../generated/VaultModule/VaultModule';
 import { UsdMinted, UsdBurned } from '../generated/IssueUSDModule/IssueUSDModule';
 import {
@@ -34,6 +37,12 @@ import {
   Vault,
   Position,
   MarketConfiguration,
+  RewardsDistribution,
+  AccountRewardsDistributor,
+  RewardsClaimed,
+  RewardsDistributor,
+  Liquidation as LiquidationEntity,
+  VaultLiquidation as VaultLiquidationEntity,
 } from '../generated/schema';
 import { BigDecimal, BigInt, Bytes, store } from '@graphprotocol/graph-ts';
 
@@ -55,10 +64,10 @@ export function handlePoolCreated(event: PoolCreated): void {
   newPool.save();
 }
 
-export function handleNominatedPoolOwner(event: NominatedPoolOwner): void {
+export function handlePoolOwnerNominated(event: PoolOwnerNominated): void {
   const pool = Pool.load(event.params.poolId.toString());
   if (pool !== null) {
-    pool.nominated_owner = event.params.owner;
+    pool.nominated_owner = event.params.nominatedOwner;
     pool.updated_at = event.block.timestamp;
     pool.updated_at_block = event.block.number;
     pool.save();
@@ -134,7 +143,7 @@ export function handlePoolConfigurationSet(event: PoolConfigurationSet): void {
     // Reset the state because the new configuration from the event is the only source of truth
     pool.configurations = [];
     for (let i = 0; i < event.params.markets.length; ++i) {
-      const market = Market.load(event.params.markets.at(i).market.toString());
+      const market = Market.load(event.params.markets.at(i).marketId.toString());
       if (market) {
         let marketConfiguration = MarketConfiguration.load(pool.id.concat('-').concat(market.id));
         if (marketConfiguration === null) {
@@ -142,12 +151,12 @@ export function handlePoolConfigurationSet(event: PoolConfigurationSet): void {
           marketConfiguration.created_at = event.block.timestamp;
           marketConfiguration.created_at_block = event.block.number;
         }
-        marketConfiguration.weight = event.params.markets.at(i).weight;
+        marketConfiguration.weight = event.params.markets.at(i).weightD18;
         marketConfiguration.market = market.id;
         marketConfiguration.pool = event.params.poolId.toString();
         marketConfiguration.max_debt_share_value = event.params.markets
           .at(i)
-          .maxDebtShareValue.toBigDecimal();
+          .maxDebtShareValueD18.toBigDecimal();
         marketConfiguration.updated_at = event.block.timestamp;
         marketConfiguration.updated_at_block = event.block.number;
         // If the market doesn't have configurations array, create an array with the current configurations id
@@ -179,7 +188,7 @@ export function handlePoolConfigurationSet(event: PoolConfigurationSet): void {
             }
           }
         }
-        totalWeight.push(event.params.markets.at(i).weight);
+        totalWeight.push(event.params.markets.at(i).weightD18);
         market.updated_at = event.block.timestamp;
         market.updated_at_block = event.block.number;
         market.save();
@@ -265,12 +274,12 @@ export function handleCollateralConfigured(event: CollateralConfigured): void {
     collateralType.created_at = event.block.timestamp;
     collateralType.created_at_block = event.block.number;
   }
-  collateralType.price_feed = event.params.config.priceFeed;
-  collateralType.liquidation_reward = event.params.config.liquidationReward.toBigDecimal();
-  collateralType.liquidation_ratio = event.params.config.liquidationRatio.toBigDecimal();
+  collateralType.oracle_node_id = BigInt.fromSignedBytes(event.params.config.oracleNodeId);
+  collateralType.liquidation_reward = event.params.config.liquidationRewardD18.toBigDecimal();
+  collateralType.liquidation_ratio = event.params.config.liquidationRatioD18.toBigDecimal();
   collateralType.depositing_enabled = event.params.config.depositingEnabled;
-  collateralType.issuance_ratio = event.params.config.issuanceRatio.toBigDecimal();
-  collateralType.min_delegation = event.params.config.minDelegation.toBigDecimal();
+  collateralType.issuance_ratio = event.params.config.issuanceRatioD18.toBigDecimal();
+  collateralType.min_delegation = event.params.config.minDelegationD18.toBigDecimal();
   collateralType.updated_at = event.block.timestamp;
   collateralType.updated_at_block = event.block.number;
   collateralType.save();
@@ -284,10 +293,10 @@ export function handleDeposited(event: Deposited): void {
     if (collateralType.total_amount_deposited !== null) {
       // @dev we could also account for every account how much they deposited and withdrawn
       collateralType.total_amount_deposited = collateralType.total_amount_deposited!.plus(
-        event.params.amount.toBigDecimal()
+        event.params.tokenAmount.toBigDecimal()
       );
     } else {
-      collateralType.total_amount_deposited = event.params.amount.toBigDecimal();
+      collateralType.total_amount_deposited = event.params.tokenAmount.toBigDecimal();
     }
     collateralType.save();
   }
@@ -301,7 +310,7 @@ export function handleWithdrawn(event: Withdrawn): void {
     if (collateralType.total_amount_deposited !== null) {
       // @dev we could also account for every account how much they deposited and withdrawn
       collateralType.total_amount_deposited = collateralType.total_amount_deposited!.minus(
-        event.params.amount.toBigDecimal()
+        event.params.tokenAmount.toBigDecimal()
       );
     }
     collateralType.save();
@@ -498,4 +507,182 @@ export function handleUSDBurned(event: UsdBurned): void {
     position.updated_at_block = event.block.number;
     position.save();
   }
+}
+
+//////////////
+// Rewards //
+/////////////
+
+export function handleRewardsDistributorRegistered(event: RewardsDistributorRegistered): void {
+  const distributor = new RewardsDistributor(event.params.distributor.toHex());
+  distributor.created_at = event.block.timestamp;
+  distributor.created_at_block = event.block.number;
+  distributor.updated_at = event.block.number;
+  distributor.updated_at_block = event.block.timestamp;
+  distributor.total_claimed = BigDecimal.fromString('0');
+  distributor.total_distributed = BigDecimal.fromString('0');
+  distributor.save();
+}
+
+export function handleRewardsDistributed(event: RewardsDistributed): void {
+  const rewardsDistribution = new RewardsDistribution(
+    event.params.distributor
+      .toHex()
+      .concat('-')
+      .concat(event.block.timestamp.toString())
+      .concat('-')
+      .concat(event.logIndex.toString())
+  );
+  let accountRewardsDistributor = AccountRewardsDistributor.load(
+    event.params.poolId
+      .toString()
+      .concat('-')
+      .concat(event.params.collateralType.toHex())
+      .concat('-')
+      .concat(event.params.distributor.toHex())
+  );
+  let rewardsDistributor = RewardsDistributor.load(event.params.distributor.toHex());
+  if (rewardsDistributor !== null) {
+    rewardsDistributor.total_distributed = rewardsDistributor.total_distributed.plus(
+      event.params.amount.toBigDecimal()
+    );
+    rewardsDistributor.updated_at = event.block.timestamp;
+    rewardsDistributor.updated_at_block = event.block.number;
+    rewardsDistributor.save();
+  }
+  if (accountRewardsDistributor === null) {
+    accountRewardsDistributor = new AccountRewardsDistributor(
+      event.params.poolId
+        .toString()
+        .concat('-')
+        .concat(event.params.collateralType.toHex())
+        .concat('-')
+        .concat(event.params.distributor.toHex())
+    );
+    accountRewardsDistributor.created_at = event.block.timestamp;
+    accountRewardsDistributor.created_at_block = event.block.number;
+  }
+  accountRewardsDistributor.distributor = event.params.distributor.toHex();
+  accountRewardsDistributor.updated_at = event.block.timestamp;
+  accountRewardsDistributor.updated_at_block = event.block.number;
+  rewardsDistribution.distributor = event.params.distributor.toHex();
+  rewardsDistribution.pool = event.params.poolId.toString();
+  rewardsDistribution.collateral_type = event.params.collateralType;
+  rewardsDistribution.amount = event.params.amount.toBigDecimal();
+  rewardsDistribution.start = event.params.start;
+  rewardsDistribution.duration = event.params.duration;
+  rewardsDistribution.created_at = event.block.timestamp;
+  rewardsDistribution.created_at_block = event.block.number;
+  rewardsDistribution.updated_at = event.block.timestamp;
+  rewardsDistribution.updated_at_block = event.block.number;
+  accountRewardsDistributor.save();
+  rewardsDistribution.save();
+}
+
+export function handleRewardsClaimed(event: RewardsClaimedEvent): void {
+  const accountRewardsDistributor = AccountRewardsDistributor.load(
+    event.params.poolId
+      .toString()
+      .concat('-')
+      .concat(event.params.collateralType.toHex())
+      .concat('-')
+      .concat(event.params.distributor.toHex())
+  );
+  const rewardsClaimed = new RewardsClaimed(
+    event.params.distributor
+      .toHex()
+      .concat('-')
+      .concat(event.block.timestamp.toString())
+      .concat('-')
+      .concat(event.logIndex.toString())
+  );
+  let rewardsDistributor = RewardsDistributor.load(event.params.distributor.toHex());
+  if (rewardsDistributor !== null) {
+    rewardsDistributor.total_claimed = rewardsDistributor.total_claimed.plus(
+      event.params.amount.toBigDecimal()
+    );
+    rewardsDistributor.updated_at = event.block.timestamp;
+    rewardsDistributor.updated_at_block = event.block.number;
+    rewardsDistributor.save();
+  }
+  if (accountRewardsDistributor !== null) {
+    if (accountRewardsDistributor.total_claimed !== null) {
+      accountRewardsDistributor.total_claimed = accountRewardsDistributor.total_claimed!.plus(
+        event.params.amount.toBigDecimal()
+      );
+    } else {
+      accountRewardsDistributor.total_claimed = event.params.amount.toBigDecimal();
+    }
+    accountRewardsDistributor.updated_at = event.block.timestamp;
+    accountRewardsDistributor.updated_at_block = event.block.number;
+    accountRewardsDistributor.distributor = event.params.distributor.toHex();
+    accountRewardsDistributor.save();
+  }
+  rewardsClaimed.distributor = event.params.distributor.toHex();
+  rewardsClaimed.created_at = event.block.timestamp;
+  rewardsClaimed.created_at_block = event.block.number;
+  rewardsClaimed.account = event.params.accountId.toString();
+  rewardsClaimed.pool = event.params.poolId.toString();
+  rewardsClaimed.collateral_type = event.params.collateralType;
+  rewardsClaimed.amount = event.params.amount.toBigDecimal();
+  rewardsClaimed.updated_at = event.block.timestamp;
+  rewardsClaimed.updated_at_block = event.block.number;
+  rewardsClaimed.save();
+}
+
+//////////////////
+// Liquidation //
+/////////////////
+
+export function handleLiquidation(event: Liquidation): void {
+  const newLiquidation = new LiquidationEntity(
+    event.params.accountId
+      .toString()
+      .concat('-')
+      .concat(event.params.poolId.toString())
+      .concat('-')
+      .concat(event.params.collateralType.toHex())
+      .concat('-')
+      .concat(event.logIndex.toString())
+  );
+  newLiquidation.created_at = event.block.timestamp;
+  newLiquidation.created_at_block = event.block.number;
+  newLiquidation.updated_at = event.block.timestamp;
+  newLiquidation.updated_at_block = event.block.number;
+  newLiquidation.account = event.params.accountId.toString();
+  newLiquidation.pool = event.params.poolId.toString();
+  newLiquidation.collateral_type = event.params.collateralType;
+  newLiquidation.debt_liquidated = event.params.liquidationData.debtLiquidated.toBigDecimal();
+  newLiquidation.collateral_liquidated =
+    event.params.liquidationData.collateralLiquidated.toBigDecimal();
+  newLiquidation.amount_rewarded = event.params.liquidationData.amountRewarded.toBigDecimal();
+  newLiquidation.sender = event.params.sender;
+  newLiquidation.liquidate_as_account_id = event.params.liquidateAsAccountId.toString();
+  newLiquidation.save();
+}
+
+export function handleVaultLiquidation(event: VaultLiquidation): void {
+  const newVaultLiquidation = new VaultLiquidationEntity(
+    event.params.poolId
+      .toString()
+      .concat('-')
+      .concat(event.params.collateralType.toHex())
+      .concat('-')
+      .concat(event.logIndex.toString())
+  );
+  newVaultLiquidation.created_at = event.block.timestamp;
+  newVaultLiquidation.created_at_block = event.block.number;
+  newVaultLiquidation.updated_at = event.block.timestamp;
+  newVaultLiquidation.updated_at_block = event.block.number;
+  newVaultLiquidation.pool = event.params.poolId.toString();
+  newVaultLiquidation.collateral_type = event.params.collateralType;
+  newVaultLiquidation.amount_rewarded = event.params.liquidationData.amountRewarded.toBigDecimal();
+  newVaultLiquidation.amount_liquidated =
+    event.params.liquidationData.debtLiquidated.toBigDecimal();
+  newVaultLiquidation.collateral_liquidated =
+    event.params.liquidationData.collateralLiquidated.toBigDecimal();
+  newVaultLiquidation.amount_rewarded = event.params.liquidationData.amountRewarded.toBigDecimal();
+  newVaultLiquidation.liquidate_as_account_id = event.params.liquidateAsAccountId.toString();
+  newVaultLiquidation.sender = event.params.sender;
+  newVaultLiquidation.save();
 }

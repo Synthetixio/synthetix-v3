@@ -416,7 +416,7 @@ export class DelegateCollateralCall__Inputs {
     return this._call.inputValues[2].value.toAddress();
   }
 
-  get collateralAmount(): BigInt {
+  get newCollateralAmount(): BigInt {
     return this._call.inputValues[3].value.toBigInt();
   }
 

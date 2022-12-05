@@ -469,22 +469,13 @@ export class CollateralType extends Entity {
     this.set('id', Value.fromString(value));
   }
 
-  get price_feed(): Bytes {
-    let value = this.get('price_feed');
-    return value!.toBytes();
+  get oracle_node_id(): BigInt {
+    let value = this.get('oracle_node_id');
+    return value!.toBigInt();
   }
 
-  set price_feed(value: Bytes) {
-    this.set('price_feed', Value.fromBytes(value));
-  }
-
-  get token(): Bytes {
-    let value = this.get('token');
-    return value!.toBytes();
-  }
-
-  set token(value: Bytes) {
-    this.set('token', Value.fromBytes(value));
+  set oracle_node_id(value: BigInt) {
+    this.set('oracle_node_id', Value.fromBigInt(value));
   }
 
   get depositing_enabled(): boolean {
@@ -521,15 +512,6 @@ export class CollateralType extends Entity {
 
   set liquidation_reward(value: BigDecimal) {
     this.set('liquidation_reward', Value.fromBigDecimal(value));
-  }
-
-  get send_to(): Bytes {
-    let value = this.get('send_to');
-    return value!.toBytes();
-  }
-
-  set send_to(value: Bytes) {
-    this.set('send_to', Value.fromBytes(value));
   }
 
   get min_delegation(): BigDecimal {
@@ -1013,6 +995,692 @@ export class Vault extends Entity {
 
   set pool(value: string) {
     this.set('pool', Value.fromString(value));
+  }
+
+  get created_at(): BigInt {
+    let value = this.get('created_at');
+    return value!.toBigInt();
+  }
+
+  set created_at(value: BigInt) {
+    this.set('created_at', Value.fromBigInt(value));
+  }
+
+  get created_at_block(): BigInt {
+    let value = this.get('created_at_block');
+    return value!.toBigInt();
+  }
+
+  set created_at_block(value: BigInt) {
+    this.set('created_at_block', Value.fromBigInt(value));
+  }
+
+  get updated_at(): BigInt {
+    let value = this.get('updated_at');
+    return value!.toBigInt();
+  }
+
+  set updated_at(value: BigInt) {
+    this.set('updated_at', Value.fromBigInt(value));
+  }
+
+  get updated_at_block(): BigInt {
+    let value = this.get('updated_at_block');
+    return value!.toBigInt();
+  }
+
+  set updated_at_block(value: BigInt) {
+    this.set('updated_at_block', Value.fromBigInt(value));
+  }
+}
+
+export class RewardsDistributor extends Entity {
+  constructor(id: string) {
+    super();
+    this.set('id', Value.fromString(id));
+  }
+
+  save(): void {
+    let id = this.get('id');
+    assert(id != null, 'Cannot save RewardsDistributor entity without an ID');
+    if (id) {
+      assert(
+        id.kind == ValueKind.STRING,
+        `Entities of type RewardsDistributor must have an ID of type String but the id '${id.displayData()}' is of type ${id.displayKind()}`
+      );
+      store.set('RewardsDistributor', id.toString(), this);
+    }
+  }
+
+  static load(id: string): RewardsDistributor | null {
+    return changetype<RewardsDistributor | null>(store.get('RewardsDistributor', id));
+  }
+
+  get id(): string {
+    let value = this.get('id');
+    return value!.toString();
+  }
+
+  set id(value: string) {
+    this.set('id', Value.fromString(value));
+  }
+
+  get total_distributed(): BigDecimal {
+    let value = this.get('total_distributed');
+    return value!.toBigDecimal();
+  }
+
+  set total_distributed(value: BigDecimal) {
+    this.set('total_distributed', Value.fromBigDecimal(value));
+  }
+
+  get total_claimed(): BigDecimal {
+    let value = this.get('total_claimed');
+    return value!.toBigDecimal();
+  }
+
+  set total_claimed(value: BigDecimal) {
+    this.set('total_claimed', Value.fromBigDecimal(value));
+  }
+
+  get created_at(): BigInt {
+    let value = this.get('created_at');
+    return value!.toBigInt();
+  }
+
+  set created_at(value: BigInt) {
+    this.set('created_at', Value.fromBigInt(value));
+  }
+
+  get created_at_block(): BigInt {
+    let value = this.get('created_at_block');
+    return value!.toBigInt();
+  }
+
+  set created_at_block(value: BigInt) {
+    this.set('created_at_block', Value.fromBigInt(value));
+  }
+
+  get updated_at(): BigInt {
+    let value = this.get('updated_at');
+    return value!.toBigInt();
+  }
+
+  set updated_at(value: BigInt) {
+    this.set('updated_at', Value.fromBigInt(value));
+  }
+
+  get updated_at_block(): BigInt {
+    let value = this.get('updated_at_block');
+    return value!.toBigInt();
+  }
+
+  set updated_at_block(value: BigInt) {
+    this.set('updated_at_block', Value.fromBigInt(value));
+  }
+}
+
+export class RewardsDistribution extends Entity {
+  constructor(id: string) {
+    super();
+    this.set('id', Value.fromString(id));
+  }
+
+  save(): void {
+    let id = this.get('id');
+    assert(id != null, 'Cannot save RewardsDistribution entity without an ID');
+    if (id) {
+      assert(
+        id.kind == ValueKind.STRING,
+        `Entities of type RewardsDistribution must have an ID of type String but the id '${id.displayData()}' is of type ${id.displayKind()}`
+      );
+      store.set('RewardsDistribution', id.toString(), this);
+    }
+  }
+
+  static load(id: string): RewardsDistribution | null {
+    return changetype<RewardsDistribution | null>(store.get('RewardsDistribution', id));
+  }
+
+  get id(): string {
+    let value = this.get('id');
+    return value!.toString();
+  }
+
+  set id(value: string) {
+    this.set('id', Value.fromString(value));
+  }
+
+  get collateral_type(): Bytes {
+    let value = this.get('collateral_type');
+    return value!.toBytes();
+  }
+
+  set collateral_type(value: Bytes) {
+    this.set('collateral_type', Value.fromBytes(value));
+  }
+
+  get pool(): string {
+    let value = this.get('pool');
+    return value!.toString();
+  }
+
+  set pool(value: string) {
+    this.set('pool', Value.fromString(value));
+  }
+
+  get amount(): BigDecimal {
+    let value = this.get('amount');
+    return value!.toBigDecimal();
+  }
+
+  set amount(value: BigDecimal) {
+    this.set('amount', Value.fromBigDecimal(value));
+  }
+
+  get start(): BigInt {
+    let value = this.get('start');
+    return value!.toBigInt();
+  }
+
+  set start(value: BigInt) {
+    this.set('start', Value.fromBigInt(value));
+  }
+
+  get duration(): BigInt {
+    let value = this.get('duration');
+    return value!.toBigInt();
+  }
+
+  set duration(value: BigInt) {
+    this.set('duration', Value.fromBigInt(value));
+  }
+
+  get distributor(): string {
+    let value = this.get('distributor');
+    return value!.toString();
+  }
+
+  set distributor(value: string) {
+    this.set('distributor', Value.fromString(value));
+  }
+
+  get created_at(): BigInt {
+    let value = this.get('created_at');
+    return value!.toBigInt();
+  }
+
+  set created_at(value: BigInt) {
+    this.set('created_at', Value.fromBigInt(value));
+  }
+
+  get created_at_block(): BigInt {
+    let value = this.get('created_at_block');
+    return value!.toBigInt();
+  }
+
+  set created_at_block(value: BigInt) {
+    this.set('created_at_block', Value.fromBigInt(value));
+  }
+
+  get updated_at(): BigInt {
+    let value = this.get('updated_at');
+    return value!.toBigInt();
+  }
+
+  set updated_at(value: BigInt) {
+    this.set('updated_at', Value.fromBigInt(value));
+  }
+
+  get updated_at_block(): BigInt {
+    let value = this.get('updated_at_block');
+    return value!.toBigInt();
+  }
+
+  set updated_at_block(value: BigInt) {
+    this.set('updated_at_block', Value.fromBigInt(value));
+  }
+}
+
+export class AccountRewardsDistributor extends Entity {
+  constructor(id: string) {
+    super();
+    this.set('id', Value.fromString(id));
+  }
+
+  save(): void {
+    let id = this.get('id');
+    assert(id != null, 'Cannot save AccountRewardsDistributor entity without an ID');
+    if (id) {
+      assert(
+        id.kind == ValueKind.STRING,
+        `Entities of type AccountRewardsDistributor must have an ID of type String but the id '${id.displayData()}' is of type ${id.displayKind()}`
+      );
+      store.set('AccountRewardsDistributor', id.toString(), this);
+    }
+  }
+
+  static load(id: string): AccountRewardsDistributor | null {
+    return changetype<AccountRewardsDistributor | null>(store.get('AccountRewardsDistributor', id));
+  }
+
+  get id(): string {
+    let value = this.get('id');
+    return value!.toString();
+  }
+
+  set id(value: string) {
+    this.set('id', Value.fromString(value));
+  }
+
+  get distributor(): string {
+    let value = this.get('distributor');
+    return value!.toString();
+  }
+
+  set distributor(value: string) {
+    this.set('distributor', Value.fromString(value));
+  }
+
+  get created_at(): BigInt {
+    let value = this.get('created_at');
+    return value!.toBigInt();
+  }
+
+  set created_at(value: BigInt) {
+    this.set('created_at', Value.fromBigInt(value));
+  }
+
+  get created_at_block(): BigInt {
+    let value = this.get('created_at_block');
+    return value!.toBigInt();
+  }
+
+  set created_at_block(value: BigInt) {
+    this.set('created_at_block', Value.fromBigInt(value));
+  }
+
+  get updated_at(): BigInt {
+    let value = this.get('updated_at');
+    return value!.toBigInt();
+  }
+
+  set updated_at(value: BigInt) {
+    this.set('updated_at', Value.fromBigInt(value));
+  }
+
+  get updated_at_block(): BigInt {
+    let value = this.get('updated_at_block');
+    return value!.toBigInt();
+  }
+
+  set updated_at_block(value: BigInt) {
+    this.set('updated_at_block', Value.fromBigInt(value));
+  }
+
+  get total_claimed(): BigDecimal | null {
+    let value = this.get('total_claimed');
+    if (!value || value.kind == ValueKind.NULL) {
+      return null;
+    } else {
+      return value.toBigDecimal();
+    }
+  }
+
+  set total_claimed(value: BigDecimal | null) {
+    if (!value) {
+      this.unset('total_claimed');
+    } else {
+      this.set('total_claimed', Value.fromBigDecimal(<BigDecimal>value));
+    }
+  }
+}
+
+export class RewardsClaimed extends Entity {
+  constructor(id: string) {
+    super();
+    this.set('id', Value.fromString(id));
+  }
+
+  save(): void {
+    let id = this.get('id');
+    assert(id != null, 'Cannot save RewardsClaimed entity without an ID');
+    if (id) {
+      assert(
+        id.kind == ValueKind.STRING,
+        `Entities of type RewardsClaimed must have an ID of type String but the id '${id.displayData()}' is of type ${id.displayKind()}`
+      );
+      store.set('RewardsClaimed', id.toString(), this);
+    }
+  }
+
+  static load(id: string): RewardsClaimed | null {
+    return changetype<RewardsClaimed | null>(store.get('RewardsClaimed', id));
+  }
+
+  get id(): string {
+    let value = this.get('id');
+    return value!.toString();
+  }
+
+  set id(value: string) {
+    this.set('id', Value.fromString(value));
+  }
+
+  get account(): string {
+    let value = this.get('account');
+    return value!.toString();
+  }
+
+  set account(value: string) {
+    this.set('account', Value.fromString(value));
+  }
+
+  get pool(): string {
+    let value = this.get('pool');
+    return value!.toString();
+  }
+
+  set pool(value: string) {
+    this.set('pool', Value.fromString(value));
+  }
+
+  get collateral_type(): Bytes {
+    let value = this.get('collateral_type');
+    return value!.toBytes();
+  }
+
+  set collateral_type(value: Bytes) {
+    this.set('collateral_type', Value.fromBytes(value));
+  }
+
+  get distributor(): string {
+    let value = this.get('distributor');
+    return value!.toString();
+  }
+
+  set distributor(value: string) {
+    this.set('distributor', Value.fromString(value));
+  }
+
+  get amount(): BigDecimal {
+    let value = this.get('amount');
+    return value!.toBigDecimal();
+  }
+
+  set amount(value: BigDecimal) {
+    this.set('amount', Value.fromBigDecimal(value));
+  }
+
+  get created_at(): BigInt {
+    let value = this.get('created_at');
+    return value!.toBigInt();
+  }
+
+  set created_at(value: BigInt) {
+    this.set('created_at', Value.fromBigInt(value));
+  }
+
+  get created_at_block(): BigInt {
+    let value = this.get('created_at_block');
+    return value!.toBigInt();
+  }
+
+  set created_at_block(value: BigInt) {
+    this.set('created_at_block', Value.fromBigInt(value));
+  }
+
+  get updated_at(): BigInt {
+    let value = this.get('updated_at');
+    return value!.toBigInt();
+  }
+
+  set updated_at(value: BigInt) {
+    this.set('updated_at', Value.fromBigInt(value));
+  }
+
+  get updated_at_block(): BigInt {
+    let value = this.get('updated_at_block');
+    return value!.toBigInt();
+  }
+
+  set updated_at_block(value: BigInt) {
+    this.set('updated_at_block', Value.fromBigInt(value));
+  }
+}
+
+export class Liquidation extends Entity {
+  constructor(id: string) {
+    super();
+    this.set('id', Value.fromString(id));
+  }
+
+  save(): void {
+    let id = this.get('id');
+    assert(id != null, 'Cannot save Liquidation entity without an ID');
+    if (id) {
+      assert(
+        id.kind == ValueKind.STRING,
+        `Entities of type Liquidation must have an ID of type String but the id '${id.displayData()}' is of type ${id.displayKind()}`
+      );
+      store.set('Liquidation', id.toString(), this);
+    }
+  }
+
+  static load(id: string): Liquidation | null {
+    return changetype<Liquidation | null>(store.get('Liquidation', id));
+  }
+
+  get id(): string {
+    let value = this.get('id');
+    return value!.toString();
+  }
+
+  set id(value: string) {
+    this.set('id', Value.fromString(value));
+  }
+
+  get account(): string {
+    let value = this.get('account');
+    return value!.toString();
+  }
+
+  set account(value: string) {
+    this.set('account', Value.fromString(value));
+  }
+
+  get pool(): string {
+    let value = this.get('pool');
+    return value!.toString();
+  }
+
+  set pool(value: string) {
+    this.set('pool', Value.fromString(value));
+  }
+
+  get collateral_type(): Bytes {
+    let value = this.get('collateral_type');
+    return value!.toBytes();
+  }
+
+  set collateral_type(value: Bytes) {
+    this.set('collateral_type', Value.fromBytes(value));
+  }
+
+  get debt_liquidated(): BigDecimal {
+    let value = this.get('debt_liquidated');
+    return value!.toBigDecimal();
+  }
+
+  set debt_liquidated(value: BigDecimal) {
+    this.set('debt_liquidated', Value.fromBigDecimal(value));
+  }
+
+  get collateral_liquidated(): BigDecimal {
+    let value = this.get('collateral_liquidated');
+    return value!.toBigDecimal();
+  }
+
+  set collateral_liquidated(value: BigDecimal) {
+    this.set('collateral_liquidated', Value.fromBigDecimal(value));
+  }
+
+  get amount_rewarded(): BigDecimal {
+    let value = this.get('amount_rewarded');
+    return value!.toBigDecimal();
+  }
+
+  set amount_rewarded(value: BigDecimal) {
+    this.set('amount_rewarded', Value.fromBigDecimal(value));
+  }
+
+  get liquidate_as_account_id(): string {
+    let value = this.get('liquidate_as_account_id');
+    return value!.toString();
+  }
+
+  set liquidate_as_account_id(value: string) {
+    this.set('liquidate_as_account_id', Value.fromString(value));
+  }
+
+  get sender(): Bytes {
+    let value = this.get('sender');
+    return value!.toBytes();
+  }
+
+  set sender(value: Bytes) {
+    this.set('sender', Value.fromBytes(value));
+  }
+
+  get created_at(): BigInt {
+    let value = this.get('created_at');
+    return value!.toBigInt();
+  }
+
+  set created_at(value: BigInt) {
+    this.set('created_at', Value.fromBigInt(value));
+  }
+
+  get created_at_block(): BigInt {
+    let value = this.get('created_at_block');
+    return value!.toBigInt();
+  }
+
+  set created_at_block(value: BigInt) {
+    this.set('created_at_block', Value.fromBigInt(value));
+  }
+
+  get updated_at(): BigInt {
+    let value = this.get('updated_at');
+    return value!.toBigInt();
+  }
+
+  set updated_at(value: BigInt) {
+    this.set('updated_at', Value.fromBigInt(value));
+  }
+
+  get updated_at_block(): BigInt {
+    let value = this.get('updated_at_block');
+    return value!.toBigInt();
+  }
+
+  set updated_at_block(value: BigInt) {
+    this.set('updated_at_block', Value.fromBigInt(value));
+  }
+}
+
+export class VaultLiquidation extends Entity {
+  constructor(id: string) {
+    super();
+    this.set('id', Value.fromString(id));
+  }
+
+  save(): void {
+    let id = this.get('id');
+    assert(id != null, 'Cannot save VaultLiquidation entity without an ID');
+    if (id) {
+      assert(
+        id.kind == ValueKind.STRING,
+        `Entities of type VaultLiquidation must have an ID of type String but the id '${id.displayData()}' is of type ${id.displayKind()}`
+      );
+      store.set('VaultLiquidation', id.toString(), this);
+    }
+  }
+
+  static load(id: string): VaultLiquidation | null {
+    return changetype<VaultLiquidation | null>(store.get('VaultLiquidation', id));
+  }
+
+  get id(): string {
+    let value = this.get('id');
+    return value!.toString();
+  }
+
+  set id(value: string) {
+    this.set('id', Value.fromString(value));
+  }
+
+  get pool(): string {
+    let value = this.get('pool');
+    return value!.toString();
+  }
+
+  set pool(value: string) {
+    this.set('pool', Value.fromString(value));
+  }
+
+  get collateral_type(): Bytes {
+    let value = this.get('collateral_type');
+    return value!.toBytes();
+  }
+
+  set collateral_type(value: Bytes) {
+    this.set('collateral_type', Value.fromBytes(value));
+  }
+
+  get amount_rewarded(): BigDecimal {
+    let value = this.get('amount_rewarded');
+    return value!.toBigDecimal();
+  }
+
+  set amount_rewarded(value: BigDecimal) {
+    this.set('amount_rewarded', Value.fromBigDecimal(value));
+  }
+
+  get amount_liquidated(): BigDecimal {
+    let value = this.get('amount_liquidated');
+    return value!.toBigDecimal();
+  }
+
+  set amount_liquidated(value: BigDecimal) {
+    this.set('amount_liquidated', Value.fromBigDecimal(value));
+  }
+
+  get collateral_liquidated(): BigDecimal {
+    let value = this.get('collateral_liquidated');
+    return value!.toBigDecimal();
+  }
+
+  set collateral_liquidated(value: BigDecimal) {
+    this.set('collateral_liquidated', Value.fromBigDecimal(value));
+  }
+
+  get liquidate_as_account_id(): string {
+    let value = this.get('liquidate_as_account_id');
+    return value!.toString();
+  }
+
+  set liquidate_as_account_id(value: string) {
+    this.set('liquidate_as_account_id', Value.fromString(value));
+  }
+
+  get sender(): Bytes {
+    let value = this.get('sender');
+    return value!.toBytes();
+  }
+
+  set sender(value: Bytes) {
+    this.set('sender', Value.fromBytes(value));
   }
 
   get created_at(): BigInt {

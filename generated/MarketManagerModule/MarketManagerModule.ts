@@ -30,6 +30,10 @@ export class MarketRegistered__Params {
   get marketId(): BigInt {
     return this._event.parameters[1].value.toBigInt();
   }
+
+  get sender(): Address {
+    return this._event.parameters[2].value.toAddress();
+  }
 }
 
 export class MarketUsdDeposited extends ethereum.Event {
@@ -135,16 +139,16 @@ export class MarketManagerModule extends ethereum.SmartContract {
     return ethereum.CallResult.fromValue(value[0].toBigInt());
   }
 
-  getMarketIssuance(marketId: BigInt): BigInt {
-    let result = super.call('getMarketIssuance', 'getMarketIssuance(uint128):(int128)', [
+  getMarketNetIssuance(marketId: BigInt): BigInt {
+    let result = super.call('getMarketNetIssuance', 'getMarketNetIssuance(uint128):(int128)', [
       ethereum.Value.fromUnsignedBigInt(marketId),
     ]);
 
     return result[0].toBigInt();
   }
 
-  try_getMarketIssuance(marketId: BigInt): ethereum.CallResult<BigInt> {
-    let result = super.tryCall('getMarketIssuance', 'getMarketIssuance(uint128):(int128)', [
+  try_getMarketNetIssuance(marketId: BigInt): ethereum.CallResult<BigInt> {
+    let result = super.tryCall('getMarketNetIssuance', 'getMarketNetIssuance(uint128):(int128)', [
       ethereum.Value.fromUnsignedBigInt(marketId),
     ]);
     if (result.reverted) {
@@ -175,16 +179,16 @@ export class MarketManagerModule extends ethereum.SmartContract {
     return ethereum.CallResult.fromValue(value[0].toBigInt());
   }
 
-  getMarketTotalBalance(marketId: BigInt): BigInt {
-    let result = super.call('getMarketTotalBalance', 'getMarketTotalBalance(uint128):(int256)', [
+  getMarketTotalDebt(marketId: BigInt): BigInt {
+    let result = super.call('getMarketTotalDebt', 'getMarketTotalDebt(uint128):(int256)', [
       ethereum.Value.fromUnsignedBigInt(marketId),
     ]);
 
     return result[0].toBigInt();
   }
 
-  try_getMarketTotalBalance(marketId: BigInt): ethereum.CallResult<BigInt> {
-    let result = super.tryCall('getMarketTotalBalance', 'getMarketTotalBalance(uint128):(int256)', [
+  try_getMarketTotalDebt(marketId: BigInt): ethereum.CallResult<BigInt> {
+    let result = super.tryCall('getMarketTotalDebt', 'getMarketTotalDebt(uint128):(int256)', [
       ethereum.Value.fromUnsignedBigInt(marketId),
     ]);
     if (result.reverted) {

@@ -10,28 +10,6 @@ import {
   BigInt,
 } from '@graphprotocol/graph-ts';
 
-export class NominatedPoolOwner extends ethereum.Event {
-  get params(): NominatedPoolOwner__Params {
-    return new NominatedPoolOwner__Params(this);
-  }
-}
-
-export class NominatedPoolOwner__Params {
-  _event: NominatedPoolOwner;
-
-  constructor(event: NominatedPoolOwner) {
-    this._event = event;
-  }
-
-  get poolId(): BigInt {
-    return this._event.parameters[0].value.toBigInt();
-  }
-
-  get owner(): Address {
-    return this._event.parameters[1].value.toAddress();
-  }
-}
-
 export class PoolConfigurationSet extends ethereum.Event {
   get params(): PoolConfigurationSet__Params {
     return new PoolConfigurationSet__Params(this);
@@ -59,15 +37,15 @@ export class PoolConfigurationSet__Params {
 }
 
 export class PoolConfigurationSetMarketsStruct extends ethereum.Tuple {
-  get market(): BigInt {
+  get marketId(): BigInt {
     return this[0].toBigInt();
   }
 
-  get weight(): BigInt {
+  get weightD18(): BigInt {
     return this[1].toBigInt();
   }
 
-  get maxDebtShareValue(): BigInt {
+  get maxDebtShareValueD18(): BigInt {
     return this[2].toBigInt();
   }
 }
@@ -91,6 +69,10 @@ export class PoolCreated__Params {
 
   get owner(): Address {
     return this._event.parameters[1].value.toAddress();
+  }
+
+  get sender(): Address {
+    return this._event.parameters[2].value.toAddress();
   }
 }
 
@@ -164,6 +146,32 @@ export class PoolNominationRevoked__Params {
   }
 }
 
+export class PoolOwnerNominated extends ethereum.Event {
+  get params(): PoolOwnerNominated__Params {
+    return new PoolOwnerNominated__Params(this);
+  }
+}
+
+export class PoolOwnerNominated__Params {
+  _event: PoolOwnerNominated;
+
+  constructor(event: PoolOwnerNominated) {
+    this._event = event;
+  }
+
+  get poolId(): BigInt {
+    return this._event.parameters[0].value.toBigInt();
+  }
+
+  get nominatedOwner(): Address {
+    return this._event.parameters[1].value.toAddress();
+  }
+
+  get owner(): Address {
+    return this._event.parameters[2].value.toAddress();
+  }
+}
+
 export class PoolOwnershipAccepted extends ethereum.Event {
   get params(): PoolOwnershipAccepted__Params {
     return new PoolOwnershipAccepted__Params(this);
@@ -187,15 +195,15 @@ export class PoolOwnershipAccepted__Params {
 }
 
 export class PoolModule__getPoolConfigurationResultValue0Struct extends ethereum.Tuple {
-  get market(): BigInt {
+  get marketId(): BigInt {
     return this[0].toBigInt();
   }
 
-  get weight(): BigInt {
+  get weightD18(): BigInt {
     return this[1].toBigInt();
   }
 
-  get maxDebtShareValue(): BigInt {
+  get maxDebtShareValueD18(): BigInt {
     return this[2].toBigInt();
   }
 }
@@ -516,8 +524,8 @@ export class SetPoolConfigurationCall__Inputs {
     return this._call.inputValues[0].value.toBigInt();
   }
 
-  get newDistributions(): Array<SetPoolConfigurationCallNewDistributionsStruct> {
-    return this._call.inputValues[1].value.toTupleArray<SetPoolConfigurationCallNewDistributionsStruct>();
+  get newMarketConfigurations(): Array<SetPoolConfigurationCallNewMarketConfigurationsStruct> {
+    return this._call.inputValues[1].value.toTupleArray<SetPoolConfigurationCallNewMarketConfigurationsStruct>();
   }
 }
 
@@ -529,16 +537,16 @@ export class SetPoolConfigurationCall__Outputs {
   }
 }
 
-export class SetPoolConfigurationCallNewDistributionsStruct extends ethereum.Tuple {
-  get market(): BigInt {
+export class SetPoolConfigurationCallNewMarketConfigurationsStruct extends ethereum.Tuple {
+  get marketId(): BigInt {
     return this[0].toBigInt();
   }
 
-  get weight(): BigInt {
+  get weightD18(): BigInt {
     return this[1].toBigInt();
   }
 
-  get maxDebtShareValue(): BigInt {
+  get maxDebtShareValueD18(): BigInt {
     return this[2].toBigInt();
   }
 }
