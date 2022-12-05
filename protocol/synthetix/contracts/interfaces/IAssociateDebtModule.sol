@@ -16,7 +16,7 @@ interface IAssociateDebtModule {
      * @param collateralType The address of the collateral type that acts as collateral in the corresponding pool.
      * @param accountId The id of the account whose debt is being associated.
      * @param amount The amount of debt being associated with the specified account.
-     * @param updateDebt The total updated debt of the account.
+     * @param updatedDebt The total updated debt of the account.
      */
     event DebtAssociated(
         uint128 indexed marketId,
