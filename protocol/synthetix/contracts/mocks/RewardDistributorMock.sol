@@ -2,6 +2,8 @@
 pragma solidity ^0.8.0;
 
 import "@synthetixio/core-contracts/contracts/interfaces/IERC20.sol";
+import "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
+
 import "../interfaces/IRewardsManagerModule.sol";
 import "../interfaces/external/IRewardDistributor.sol";
 
@@ -10,9 +12,11 @@ contract RewardDistributorMock is IRewardDistributor {
     address private _token;
     string private _name;
 
-    error Unauthorized(address sender);
-
-    function initialize(address rewardManager, address token_, string memory name_) public {
+    function initialize(
+        address rewardManager,
+        address token_,
+        string memory name_
+    ) public {
         _rewardManager = rewardManager;
         _token = token_;
         _name = name_;
@@ -35,7 +39,7 @@ contract RewardDistributorMock is IRewardDistributor {
     ) external returns (bool) {
         // IMPORTANT: In production, this function should revert if msg.sender is not the Synthetix CoreProxy address.
         if (msg.sender != _rewardManager) {
-            revert Unauthorized(msg.sender);
+            revert AccessError.Unauthorized(msg.sender);
         }
         IERC20(_token).transfer(sender, amount);
         return true;

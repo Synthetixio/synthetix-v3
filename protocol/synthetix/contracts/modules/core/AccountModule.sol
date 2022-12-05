@@ -23,8 +23,19 @@ contract AccountModule is IAccountModule {
 
     bytes32 private constant _ACCOUNT_SYSTEM = "accountNft";
 
+    /**
+     * @dev Thrown when the account interacting with the system is expected to be the associated account token, but is not.
+     */
     error OnlyAccountTokenProxy(address origin);
+
+    /**
+     * @dev Thrown when an account attempts to renounce a permission that it didn't have.
+     */
     error PermissionNotGranted(uint128 accountId, bytes32 permission, address user);
+
+    /**
+     * @dev Thrown when a permission specified by a user does not exist or is invalid.
+     */
     error InvalidPermission(bytes32 permission);
 
     /**
@@ -37,9 +48,11 @@ contract AccountModule is IAccountModule {
     /**
      * @inheritdoc IAccountModule
      */
-    function getAccountPermissions(
-        uint128 accountId
-    ) external view returns (AccountPermissions[] memory permissions) {
+    function getAccountPermissions(uint128 accountId)
+        external
+        view
+        returns (AccountPermissions[] memory permissions)
+    {
         AccountRBAC.Data storage accountRbac = Account.load(accountId).rbac;
 
         uint256 allPermissionsLength = accountRbac.permissionAddresses.length();
