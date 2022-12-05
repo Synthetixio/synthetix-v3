@@ -5,12 +5,6 @@ pragma solidity ^0.8.0;
  * @title Module for liquidated positions and vaults that are below the liquidation ratio.
  */
 interface ILiquidationModule {
-    struct LiquidationData {
-        uint debtLiquidated;
-        uint collateralLiquidated;
-        uint amountRewarded;
-    }
-
     event Liquidation(
         uint128 indexed accountId,
         uint128 indexed poolId,
@@ -27,6 +21,12 @@ interface ILiquidationModule {
         uint128 liquidateAsAccountId,
         address sender
     );
+
+    struct LiquidationData {
+        uint debtLiquidated;
+        uint collateralLiquidated;
+        uint amountRewarded;
+    }
 
     /**
      * @notice Liquidates a position by distributing its debt and collateral among other positions in its vault.

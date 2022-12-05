@@ -8,7 +8,6 @@ import "./Market.sol";
 import "./SystemPoolConfiguration.sol";
 
 import "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
-
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 
 /**

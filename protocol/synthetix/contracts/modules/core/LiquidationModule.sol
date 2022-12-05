@@ -22,10 +22,8 @@ contract LiquidationModule is ILiquidationModule {
     using SafeCastU256 for uint256;
     using SafeCastI128 for int128;
     using SafeCastI256 for int256;
-
     using DecimalMath for uint;
     using ERC20Helper for address;
-
     using AssociatedSystem for AssociatedSystem.Data;
     using CollateralConfiguration for CollateralConfiguration.Data;
     using Collateral for Collateral.Data;
@@ -36,7 +34,6 @@ contract LiquidationModule is ILiquidationModule {
     using ScalableMapping for ScalableMapping.Data;
 
     error IneligibleForLiquidation(uint collateralValue, int debt, uint currentCRatio, uint cratio);
-
     error MustBeVaultLiquidated();
 
     bytes32 private constant _USD_TOKEN = "USDToken";

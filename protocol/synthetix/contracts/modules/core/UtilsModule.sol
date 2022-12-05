@@ -19,7 +19,6 @@ contract UtilsModule is IUtilsModule {
     using AssociatedSystem for AssociatedSystem.Data;
 
     bytes32 private constant _USD_TOKEN = "USDToken";
-
     bytes32 private constant _CCIP_CHAINLINK_SEND = "ccipChainlinkSend";
     bytes32 private constant _CCIP_CHAINLINK_RECV = "ccipChainlinkRecv";
     bytes32 private constant _CCIP_CHAINLINK_TOKEN_POOL = "ccipChainlinkTokenPool";
