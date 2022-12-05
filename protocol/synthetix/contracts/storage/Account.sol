@@ -92,14 +92,13 @@ library Account {
     /**
      * @dev Returns information about the total collateral assigned, deposited, and locked by the account, and the given collateral type.
      */
-    function getCollateralTotals(Data storage self, address collateralType)
+    function getCollateralTotals(
+        Data storage self,
+        address collateralType
+    )
         internal
         view
-        returns (
-            uint256 totalDepositedD18,
-            uint256 totalAssignedD18,
-            uint256 totalLockedD18
-        )
+        returns (uint256 totalDepositedD18, uint256 totalAssignedD18, uint256 totalLockedD18)
     {
         totalAssignedD18 = getAssignedCollateral(self, collateralType);
         totalDepositedD18 = totalAssignedD18 + self.collaterals[collateralType].availableAmountD18;
@@ -111,11 +110,10 @@ library Account {
     /**
      * @dev Returns the total amount of collateral that has been delegated to pools by the account, for the given collateral type.
      */
-    function getAssignedCollateral(Data storage self, address collateralType)
-        internal
-        view
-        returns (uint256)
-    {
+    function getAssignedCollateral(
+        Data storage self,
+        address collateralType
+    ) internal view returns (uint256) {
         uint256 totalAssignedD18 = 0;
 
         SetUtil.UintSet storage pools = self.collaterals[collateralType].pools;

@@ -116,11 +116,7 @@ contract MarketManagerModule is IMarketManagerModule {
     /**
      * @inheritdoc IMarketManagerModule
      */
-    function depositMarketUsd(
-        uint128 marketId,
-        address target,
-        uint256 amount
-    ) external override {
+    function depositMarketUsd(uint128 marketId, address target, uint256 amount) external override {
         Market.Data storage market = Market.load(marketId);
 
         // Call must come from the market itself.
@@ -145,11 +141,7 @@ contract MarketManagerModule is IMarketManagerModule {
     /**
      * @inheritdoc IMarketManagerModule
      */
-    function withdrawMarketUsd(
-        uint128 marketId,
-        address target,
-        uint256 amount
-    ) external override {
+    function withdrawMarketUsd(uint128 marketId, address target, uint256 amount) external override {
         Market.Data storage marketData = Market.load(marketId);
 
         // Call must come from the market itself.

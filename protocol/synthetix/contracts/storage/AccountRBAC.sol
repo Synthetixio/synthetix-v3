@@ -44,11 +44,7 @@ library AccountRBAC {
     /**
      * @dev Grants a particular permission to the specified target address.
      */
-    function grantPermission(
-        Data storage self,
-        bytes32 permission,
-        address target
-    ) internal {
+    function grantPermission(Data storage self, bytes32 permission, address target) internal {
         if (target == address(0)) {
             revert AddressError.ZeroAddress();
         }
@@ -67,11 +63,7 @@ library AccountRBAC {
     /**
      * @dev Revokes a particular permission from the specified target address.
      */
-    function revokePermission(
-        Data storage self,
-        bytes32 permission,
-        address target
-    ) internal {
+    function revokePermission(Data storage self, bytes32 permission, address target) internal {
         self.permissions[target].remove(permission);
 
         if (self.permissions[target].length() == 0) {

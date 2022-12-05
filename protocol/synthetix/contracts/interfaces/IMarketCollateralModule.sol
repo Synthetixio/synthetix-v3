@@ -65,14 +65,16 @@ interface IMarketCollateralModule {
     /**
      * @notice Return the total maximum amount of a given collateral type that a specified market is allowed to deposit.
      */
-    function getMaximumMarketCollateral(uint128 marketId, address collateralType)
-        external
-        returns (uint256);
+    function getMaximumMarketCollateral(
+        uint128 marketId,
+        address collateralType
+    ) external returns (uint256);
 
     /**
      * @notice Return the total amount of a given collateral type that a specified market has deposited.
      */
-    function getMarketCollateralAmount(uint128 marketId, address collateralType)
-        external
-        returns (uint256);
+    function getMarketCollateralAmount(
+        uint128 marketId,
+        address collateralType
+    ) external returns (uint256);
 }

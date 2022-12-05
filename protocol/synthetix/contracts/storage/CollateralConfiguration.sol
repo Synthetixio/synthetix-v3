@@ -141,16 +141,15 @@ library CollateralConfiguration {
         }
     }
 
-    function convertTokenToSystemAmount(Data storage self, uint256 tokenAmount)
-        internal
-        view
-        returns (uint256)
-    {
+    function convertTokenToSystemAmount(
+        Data storage self,
+        uint256 tokenAmount
+    ) internal view returns (uint256) {
         // this extra condition is to prevent potentially malicious untrusted code from being executed on the next statement
         if (self.tokenAddress == address(0)) {
             revert CollateralNotFound();
         }
 
-        return (tokenAmount * DecimalMath.UNIT) / (10**IERC20(self.tokenAddress).decimals());
+        return (tokenAmount * DecimalMath.UNIT) / (10 ** IERC20(self.tokenAddress).decimals());
     }
 }

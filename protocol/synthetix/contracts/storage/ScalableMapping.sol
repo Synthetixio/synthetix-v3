@@ -124,11 +124,10 @@ library ScalableMapping {
                 self.totalSharesD18) / DecimalMath.UNIT_PRECISE;
     }
 
-    function getSharesForAmount(Data storage self, uint256 amountD18)
-        internal
-        view
-        returns (uint256 sharesD18)
-    {
+    function getSharesForAmount(
+        Data storage self,
+        uint256 amountD18
+    ) internal view returns (uint256 sharesD18) {
         sharesD18 =
             (amountD18 * DecimalMath.UNIT_PRECISE) /
             (self.scaleModifierD27 + DecimalMath.UNIT_PRECISE_INT128).toUint();

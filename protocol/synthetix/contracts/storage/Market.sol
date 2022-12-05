@@ -225,11 +225,10 @@ library Market {
 
      * This credit capacity is obtained by reading the amount of shares that the pool has in the market's debt distribution, which represents the amount of USD denominated credit capacity that the pool has provided to the market.
      */
-    function getPoolCreditCapacity(Data storage self, uint128 poolId)
-        internal
-        view
-        returns (uint256)
-    {
+    function getPoolCreditCapacity(
+        Data storage self,
+        uint128 poolId
+    ) internal view returns (uint256) {
         return self.poolsDebtDistribution.getActorShares(bytes32(uint256(poolId)));
     }
 
@@ -267,10 +266,10 @@ library Market {
      * Note: This function should only be used in tests!
      */
     // solhint-disable-next-line private-vars-leading-underscore, func-name-mixedcase
-    function _testOnly_getOutstandingDebt(Data storage self, uint128 poolId)
-        internal
-        returns (int256 debtChangeD18)
-    {
+    function _testOnly_getOutstandingDebt(
+        Data storage self,
+        uint128 poolId
+    ) internal returns (int256 debtChangeD18) {
         return
             self.pools[poolId].pendingDebtD18.toInt() +
             self.poolsDebtDistribution.accumulateActor(bytes32(uint256(poolId)));
@@ -395,11 +394,10 @@ library Market {
     /**
      * @dev Determine the target valuePerShare of the poolsDebtDistribution, given the value that is yet to be distributed.
      */
-    function getTargetValuePerShare(Market.Data storage self, int256 valueToDistributeD18)
-        internal
-        view
-        returns (int256 targetValuePerShareD18)
-    {
+    function getTargetValuePerShare(
+        Market.Data storage self,
+        int256 valueToDistributeD18
+    ) internal view returns (int256 targetValuePerShareD18) {
         return
             self.poolsDebtDistribution.getValuePerShare() +
             valueToDistributeD18.divDecimal(self.poolsDebtDistribution.totalSharesD18.toInt());

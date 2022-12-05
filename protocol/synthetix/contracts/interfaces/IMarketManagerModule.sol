@@ -45,22 +45,14 @@ interface IMarketManagerModule {
      * @dev The system burns the incoming USD, increases the market's credit capacity, and reduces its issuance.
      * @dev See `IMarket`.
      */
-    function depositMarketUsd(
-        uint128 marketId,
-        address target,
-        uint256 amount
-    ) external;
+    function depositMarketUsd(uint128 marketId, address target, uint256 amount) external;
 
     /**
      * @notice Allows an external market connected to the system to withdraw USD from the system.
      * @dev The system mints the requested USD (provided that the market's USD balance allows it), reduces the market's credit capacity, and increases its issuance.
      * @dev See `IMarket`.
      */
-    function withdrawMarketUsd(
-        uint128 marketId,
-        address target,
-        uint256 amount
-    ) external;
+    function withdrawMarketUsd(uint128 marketId, address target, uint256 amount) external;
 
     /**
      * @notice Returns the total withdrawable USD amount for the specified market.

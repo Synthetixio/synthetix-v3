@@ -261,10 +261,10 @@ library Pool {
      * - Updates the vaults shares in the pool's debt distribution, according to the collateral provided by the vault.
      * - Updates the value per share of the vault's debt distribution.
      */
-    function recalculateVaultCollateral(Data storage self, address collateralType)
-        internal
-        returns (uint256 collateralPriceD18)
-    {
+    function recalculateVaultCollateral(
+        Data storage self,
+        address collateralType
+    ) internal returns (uint256 collateralPriceD18) {
         // Update each market's pro-rata liquidity and collect accumulated debt into the pool's debt distribution.
         distributeDebtToVaults(self);
 
@@ -323,10 +323,10 @@ library Pool {
      *
      * Note: This is not a view function. It updates the debt distribution chain before performing any calculations.
      */
-    function currentVaultCollateralRatio(Data storage self, address collateralType)
-        internal
-        returns (uint256)
-    {
+    function currentVaultCollateralRatio(
+        Data storage self,
+        address collateralType
+    ) internal returns (uint256) {
         recalculateVaultCollateral(self, collateralType);
 
         int256 debtD18 = self.vaults[collateralType].currentDebt();
@@ -340,11 +340,9 @@ library Pool {
      *
      * Note: Returns market zero (null market) if none is found.
      */
-    function findMarketWithCapacityLocked(Data storage self)
-        internal
-        view
-        returns (Market.Data storage lockedMarketId)
-    {
+    function findMarketWithCapacityLocked(
+        Data storage self
+    ) internal view returns (Market.Data storage lockedMarketId) {
         for (uint256 i = 0; i < self.marketConfigurations.length; i++) {
             Market.Data storage market = Market.load(self.marketConfigurations[i].marketId);
 
@@ -373,11 +371,10 @@ library Pool {
     /**
      * @dev Returns the total amount and value of the specified collateral delegated to this pool.
      */
-    function currentVaultCollateral(Data storage self, address collateralType)
-        internal
-        view
-        returns (uint256 collateralAmountD18, uint256 collateralValueD18)
-    {
+    function currentVaultCollateral(
+        Data storage self,
+        address collateralType
+    ) internal view returns (uint256 collateralAmountD18, uint256 collateralValueD18) {
         uint256 collateralPriceD18 = CollateralConfiguration
             .load(collateralType)
             .getCollateralPrice();

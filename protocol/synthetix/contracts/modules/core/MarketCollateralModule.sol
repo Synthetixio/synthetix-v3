@@ -110,10 +110,10 @@ contract MarketCollateralModule is IMarketCollateralModule {
     /**
      * @dev Returns the index of the relevant deposited collateral entry for the given market and collateral type.
      */
-    function _findOrCreateDepositEntryIndex(Market.Data storage marketData, address collateralType)
-        internal
-        returns (uint256 depositedCollateralEntryIndex)
-    {
+    function _findOrCreateDepositEntryIndex(
+        Market.Data storage marketData,
+        address collateralType
+    ) internal returns (uint256 depositedCollateralEntryIndex) {
         Market.DepositedCollateral[] storage depositedCollateral = marketData.depositedCollateral;
         for (uint256 i = 0; i < depositedCollateral.length; i++) {
             Market.DepositedCollateral storage depositedCollateralEntry = depositedCollateral[i];
@@ -146,12 +146,10 @@ contract MarketCollateralModule is IMarketCollateralModule {
     /**
      * @inheritdoc IMarketCollateralModule
      */
-    function getMarketCollateralAmount(uint128 marketId, address collateralType)
-        external
-        view
-        override
-        returns (uint256 collateralAmountD18)
-    {
+    function getMarketCollateralAmount(
+        uint128 marketId,
+        address collateralType
+    ) external view override returns (uint256 collateralAmountD18) {
         Market.Data storage marketData = Market.load(marketId);
         Market.DepositedCollateral[] storage depositedCollateral = marketData.depositedCollateral;
         for (uint256 i = 0; i < depositedCollateral.length; i++) {
@@ -165,12 +163,10 @@ contract MarketCollateralModule is IMarketCollateralModule {
     /**
      * @inheritdoc IMarketCollateralModule
      */
-    function getMaximumMarketCollateral(uint128 marketId, address collateralType)
-        external
-        view
-        override
-        returns (uint256)
-    {
+    function getMaximumMarketCollateral(
+        uint128 marketId,
+        address collateralType
+    ) external view override returns (uint256) {
         Market.Data storage marketData = Market.load(marketId);
         return marketData.maximumDepositableD18[collateralType];
     }

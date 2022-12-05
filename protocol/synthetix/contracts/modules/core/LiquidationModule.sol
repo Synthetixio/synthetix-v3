@@ -257,11 +257,10 @@ contract LiquidationModule is ILiquidationModule {
     /**
      * @inheritdoc ILiquidationModule
      */
-    function isVaultLiquidatable(uint128 poolId, address collateralType)
-        external
-        override
-        returns (bool)
-    {
+    function isVaultLiquidatable(
+        uint128 poolId,
+        address collateralType
+    ) external override returns (bool) {
         Pool.Data storage pool = Pool.load(poolId);
         int256 rawVaultDebt = pool.currentVaultDebt(collateralType);
         (, uint256 collateralValue) = pool.currentVaultCollateral(collateralType);

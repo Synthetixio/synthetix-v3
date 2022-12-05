@@ -187,12 +187,9 @@ contract PoolModule is IPoolModule {
     /**
      * @inheritdoc IPoolModule
      */
-    function getPoolConfiguration(uint128 poolId)
-        external
-        view
-        override
-        returns (MarketConfiguration.Data[] memory)
-    {
+    function getPoolConfiguration(
+        uint128 poolId
+    ) external view override returns (MarketConfiguration.Data[] memory) {
         Pool.Data storage pool = Pool.load(poolId);
 
         MarketConfiguration.Data[] memory marketConfigurations = new MarketConfiguration.Data[](

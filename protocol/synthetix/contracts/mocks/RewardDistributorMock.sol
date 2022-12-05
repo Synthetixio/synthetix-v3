@@ -12,11 +12,7 @@ contract RewardDistributorMock is IRewardDistributor {
     address private _token;
     string private _name;
 
-    function initialize(
-        address rewardManager,
-        address token_,
-        string memory name_
-    ) public {
+    function initialize(address rewardManager, address token_, string memory name_) public {
         _rewardManager = rewardManager;
         _token = token_;
         _name = name_;
