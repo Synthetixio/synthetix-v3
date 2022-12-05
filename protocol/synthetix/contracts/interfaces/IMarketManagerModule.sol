@@ -61,11 +61,7 @@ interface IMarketManagerModule {
      * @param target The address of the account on who's behalf the deposit will be made.
      * @param amount The amount of USD to be deposited.
      */
-    function depositMarketUsd(
-        uint128 marketId,
-        address target,
-        uint256 amount
-    ) external;
+    function depositMarketUsd(uint128 marketId, address target, uint256 amount) external;
 
     /**
      * @notice Allows an external market connected to the system to withdraw USD from the system.
@@ -75,11 +71,7 @@ interface IMarketManagerModule {
      * @param target The address of the account that will receive the withdrawn USD.
      * @param amount The amount of USD to be withdraw.
      */
-    function withdrawMarketUsd(
-        uint128 marketId,
-        address target,
-        uint256 amount
-    ) external;
+    function withdrawMarketUsd(uint128 marketId, address target, uint256 amount) external;
 
     /**
      * @notice Returns the total withdrawable USD amount for the specified market.
