@@ -8,11 +8,17 @@ pragma solidity ^0.8.0;
 interface IAccountModule {
     /**
      * @notice Emitted when an account token with id `accountId` is minted to `sender`.
+     * @param sender The address that created the account.
+     * @param accountId The id of the account.
      */
     event AccountCreated(address indexed sender, uint128 indexed accountId);
 
     /**
      * @notice Emitted when `user` is granted `permission` by `sender` for account `accountId`.
+     * @param The Id of the account that granted the permission.
+     * @param permission The bytes32 identifier of the permission.
+     * @param user The target address to whom the permission was granted.
+     * @param sender The Address that granted the permission.
      */
     event PermissionGranted(
         uint128 indexed accountId,
@@ -23,6 +29,10 @@ interface IAccountModule {
 
     /**
      * @notice Emitted when `user` has `permission` renounced or revoked by `sender` for account `accountId`.
+     * @param The Id of the account that granted the permission.
+     * @param permission The bytes32 identifier of the permission.
+     * @param user The target address to whom the permission was granted.
+     * @param sender The Address that granted the permission.
      */
     event PermissionRevoked(
         uint128 indexed accountId,
@@ -35,19 +45,29 @@ interface IAccountModule {
      * @dev Data structure for tracking each user's permissions.
      */
     struct AccountPermissions {
+        /**
+         * @dev The address for which all the permissions are granted.
+         */
         address user;
+        /**
+         * @dev The array of permissions given to the associated address.
+         */
         bytes32[] permissions;
     }
 
     /**
      * @notice Returns an array of `AccountPermission` for the provided `accountId`.
+     * @param accountId The id of the account whose permissions are being retrieved.
+     * @returns An array of AccountPermission objects describing the permissions granted to the account.
      */
-    function getAccountPermissions(
-        uint128 accountId
-    ) external view returns (AccountPermissions[] memory);
+    function getAccountPermissions(uint128 accountId)
+        external
+        view
+        returns (AccountPermissions[] memory);
 
     /**
      * @notice Mints an account token with id `requestedAccountId` to `msg.sender`.
+     * @param requestedAccountId The id requested for the account being created. Reverts if id already exists.
      *
      * Requirements:
      *
@@ -60,6 +80,8 @@ interface IAccountModule {
     /**
      * @notice Called by AccountTokenModule to notify the system when the account token is transferred.
      * @dev Resets user permissions and assigns ownership of the account token to the new holder.
+     * @param to The new holder of the account NFT.
+     * @param accountId The id of the account that was just transferred.
      *
      * Requirements:
      *
@@ -69,6 +91,9 @@ interface IAccountModule {
 
     /**
      * @notice Grants `permission` to `user` for account `accountId`.
+     * @param accountId The id of the account that granted the permission.
+     * @param permission The bytes32 identifier of the permission.
+     * @param user The target address that received the permission.
      *
      * Requirements:
      *
@@ -76,10 +101,17 @@ interface IAccountModule {
      *
      * Emits a {PermissionGranted} event.
      */
-    function grantPermission(uint128 accountId, bytes32 permission, address user) external;
+    function grantPermission(
+        uint128 accountId,
+        bytes32 permission,
+        address user
+    ) external;
 
     /**
      * @notice Revokes `permission` from `user` for account `accountId`.
+     * @param accountId The id of the account that revoked the permission.
+     * @param permission The bytes32 identifier of the permission.
+     * @param user The target address that no longer has the permission.
      *
      * Requirements:
      *
@@ -87,10 +119,16 @@ interface IAccountModule {
      *
      * Emits a {PermissionRevoked} event.
      */
-    function revokePermission(uint128 accountId, bytes32 permission, address user) external;
+    function revokePermission(
+        uint128 accountId,
+        bytes32 permission,
+        address user
+    ) external;
 
     /**
      * @notice Revokes `permission` from `msg.sender` for account `accountId`.
+     * @param accountId The id of the account whose permission was renounced.
+     * @param permission The bytes32 identifier of the permission.
      *
      * Emits a {PermissionRevoked} event.
      */
@@ -98,6 +136,10 @@ interface IAccountModule {
 
     /**
      * @notice Returns `true` if `user` has been granted `permission` for account `accountId`.
+     * @param accountId The id of the account whose permission is being queried.
+     * @param permission The bytes32 identifier of the permission.
+     * @param user The target address whose permission is being queried.
+     * @returns A boolean with the response of the query.
      */
     function hasPermission(
         uint128 accountId,
@@ -107,6 +149,10 @@ interface IAccountModule {
 
     /**
      * @notice Returns `true` if `target` is authorized to `permission` for account `accountId`.
+     * @param accountId The id of the account whose permission is being queried.
+     * @param permission The bytes32 identifier of the permission.
+     * @param target The target address whose permission is being queried.
+     * @returns A boolean with the response of the query.
      */
     function isAuthorized(
         uint128 accountId,
@@ -116,11 +162,14 @@ interface IAccountModule {
 
     /**
      * @notice Returns the address for the account token used by the module.
+     * @returns The address of the account token.
      */
     function getAccountTokenAddress() external view returns (address);
 
     /**
      * @notice Returns the address that owns a given account, as recorded by the system.
+     * @param The account id whose owner is being retrieved.
+     * @returns The owner of the given account id.
      */
     function getAccountOwner(uint128 accountId) external view returns (address);
 }
