@@ -80,7 +80,7 @@ library Distribution {
         bytes32 actorId,
         uint newActorSharesD18
     ) internal returns (int valueChangeD18) {
-        valueChangeD18 = _getActorValueChange(dist, actorId);
+        valueChangeD18 = getActorValueChange(dist, actorId);
 
         DistributionActor.Data storage actor = dist.actorInfo[actorId];
 
@@ -112,10 +112,10 @@ library Distribution {
      * which is `(valuePerShare_now - valuePerShare_then) * shares`,
      * or just `delta_valuePerShare * shares`.
      */
-    function _getActorValueChange(
+    function getActorValueChange(
         Data storage dist,
         bytes32 actorId
-    ) private view returns (int valueChangeD18) {
+    ) internal view returns (int valueChangeD18) {
         DistributionActor.Data storage actor = dist.actorInfo[actorId];
         int deltaValuePerShareD27 = dist.valuePerShareD27 - actor.lastValuePerShareD27;
 
