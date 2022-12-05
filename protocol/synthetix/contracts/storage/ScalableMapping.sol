@@ -87,7 +87,7 @@ library ScalableMapping {
         // Represent the actor's change in value by changing the actor's number of shares,
         // and keeping the distribution's scaleModifier constant.
 
-        resultingSharesD18 = _getSharesForAmount(self, newActorValueD18);
+        resultingSharesD18 = getSharesForAmount(self, newActorValueD18);
 
         // Modify the total shares with the actor's change in shares.
         self.totalSharesD18 = (self.totalSharesD18 + resultingSharesD18 - self.sharesD18[actorId])
@@ -121,10 +121,10 @@ library ScalableMapping {
                 self.totalSharesD18) / DecimalMath.UNIT_PRECISE;
     }
 
-    function _getSharesForAmount(
+    function getSharesForAmount(
         Data storage self,
         uint amountD18
-    ) private view returns (uint sharesD18) {
+    ) internal view returns (uint sharesD18) {
         sharesD18 =
             (amountD18 * DecimalMath.UNIT_PRECISE) /
             (self.scaleModifierD27 + DecimalMath.UNIT_PRECISE_INT128).toUint();
