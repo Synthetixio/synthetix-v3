@@ -5,8 +5,19 @@ pragma solidity ^0.8.0;
  * @title Module that allows the system owner to mark official pools.
  */
 interface IPoolConfigurationModule {
+    /**
+     * @notice Emitted when the system owner sets the preferred pool.
+     */
     event PreferredPoolSet(uint256 poolId);
+
+    /**
+     * @notice Emitted when the system owner adds an approved pool.
+     */
     event PoolApprovedAdded(uint256 poolId);
+
+    /**
+     * @notice Emitted when the system owner removes an approved pool.
+     */
     event PoolApprovedRemoved(uint256 poolId);
 
     /**
@@ -29,10 +40,10 @@ interface IPoolConfigurationModule {
     /**
      * @notice Retrieves the unique system preferred pool.
      */
-    function getPreferredPool() external view returns (uint);
+    function getPreferredPool() external view returns (uint256);
 
     /**
      * @notice Retrieves the pool that are approved by the system owner.
      */
-    function getApprovedPools() external view returns (uint[] calldata);
+    function getApprovedPools() external view returns (uint256[] calldata);
 }

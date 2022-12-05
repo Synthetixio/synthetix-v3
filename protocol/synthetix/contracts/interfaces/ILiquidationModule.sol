@@ -5,6 +5,9 @@ pragma solidity ^0.8.0;
  * @title Module for liquidated positions and vaults that are below the liquidation ratio.
  */
 interface ILiquidationModule {
+    /**
+     * @notice Emitted when an account is liquidated.
+     */
     event Liquidation(
         uint128 indexed accountId,
         uint128 indexed poolId,
@@ -14,6 +17,9 @@ interface ILiquidationModule {
         address sender
     );
 
+    /**
+     * @notice Emitted when a vault is liquidated.
+     */
     event VaultLiquidation(
         uint128 indexed poolId,
         address indexed collateralType,
@@ -22,10 +28,13 @@ interface ILiquidationModule {
         address sender
     );
 
+    /**
+     * @notice Data structure that holds liquidation information, used in events and in return statements.
+     */
     struct LiquidationData {
-        uint debtLiquidated;
-        uint collateralLiquidated;
-        uint amountRewarded;
+        uint256 debtLiquidated;
+        uint256 collateralLiquidated;
+        uint256 amountRewarded;
     }
 
     /**
@@ -48,7 +57,7 @@ interface ILiquidationModule {
         uint128 poolId,
         address collateralType,
         uint128 liquidateAsAccountId,
-        uint maxUsd
+        uint256 maxUsd
     ) external returns (LiquidationData memory liquidationData);
 
     /**
