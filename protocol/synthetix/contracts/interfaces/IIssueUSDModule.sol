@@ -23,7 +23,7 @@ interface IIssueUSDModule {
 
     /**
      * @notice Emitted when {sender} burns {amount} of snxUSD with the specified staking position.
-     * @param accountId The id of the account for which USD was burnt.
+     * @param accountId The id of the account for which snxUSD was burned.
      * @param poolId The id of the pool whose collateral was used to emit the USD.
      * @param collateralType The address of the collateral that was backing up the emitted USD.
      * @param amount The amount of USD burnt, denominated with 18 decimals of precision.
