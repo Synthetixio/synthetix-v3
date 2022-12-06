@@ -85,7 +85,7 @@ interface IRewardsManagerModule {
      * @param poolId The id of the pool to claim rewards on.
      * @param collateralType The address of the collateral used in the pool's rewards.
      * @param distributor The address of the rewards distributor associated with the rewards being claimed.
-     * @return The amount of rewards that were available for the account and thus claimed, denominated with 18 decimals of precision.
+     * @return The amount of rewards that were available for the account and thus claimed.
      */
     function claimRewards(
         uint128 accountId,
