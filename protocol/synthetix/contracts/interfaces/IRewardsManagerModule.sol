@@ -10,7 +10,7 @@ interface IRewardsManagerModule {
      * @param poolId The id of the pool on which rewards were distributed.
      * @param collateralType The collateral type of the pool on which rewards were distributed.
      * @param distributor The reward distributor associated to the rewards that were distributed.
-     * @param amount The amount of rewards that were distributed, denominated with 18 decimals of precision.
+     * @param amount The amount of rewards that were distributed.
      * @param start The date one which the rewards will begin to be claimable.
      * @param duration The time in which all of the distributed rewards will be claimable.
      */
