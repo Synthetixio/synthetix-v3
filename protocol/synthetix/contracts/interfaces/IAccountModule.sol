@@ -11,7 +11,7 @@ interface IAccountModule {
      * @param sender The address that created the account.
      * @param accountId The id of the account.
      */
-    event AccountCreated(address indexed sender, uint128 indexed accountId);
+    event AccountCreated(address indexed owner, uint128 indexed accountId);
 
     /**
      * @notice Emitted when `user` is granted `permission` by `sender` for account `accountId`.
