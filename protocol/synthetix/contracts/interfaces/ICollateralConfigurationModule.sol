@@ -32,7 +32,7 @@ interface ICollateralConfigurationModule {
      * @notice Returns a list of detailed information pertaining to all collateral types registered in the system.
      * @dev Optionally returns only those that are currently enabled.
      * @param hideDisabled Wether to hide disabled collaterals or just return the full list of collaterals in the system.
-     * @returns The list of collateral configuration objects set in the system.
+     * @return collaterals The list of collateral configuration objects set in the system.
      */
     function getCollateralConfigurations(
         bool hideDisabled
@@ -41,7 +41,7 @@ interface ICollateralConfigurationModule {
     /**
      * @notice Returns detailed information pertaining the specified collateral type.
      * @param collateralType The address for the collateral whose configuration is being queried.
-     * @returns collateral The configuration object describing the given collateral.
+     * @return collateral The configuration object describing the given collateral.
      */
     function getCollateralConfiguration(
         address collateralType
@@ -50,7 +50,7 @@ interface ICollateralConfigurationModule {
     /**
      * @notice Returns the current value of a specified collateral type.
      * @param collateralType The address for the collateral whose price is being queried.
-     * @returns The price of the given collateral, denominated with 18 decimals of precision.
+     * @return The price of the given collateral, denominated with 18 decimals of precision.
      */
     function getCollateralPrice(address collateralType) external view returns (uint256);
 }

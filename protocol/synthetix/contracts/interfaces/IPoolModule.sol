@@ -91,7 +91,7 @@ interface IPoolModule {
     /**
      * @notice Retrieves the MarketConfiguration of the specified pool.
      * @param poolId The id of the pool whose configuration is being queried.
-     * @returns markets The array of MarketConfiguration objects that describe the pool's configuration.
+     * @return markets The array of MarketConfiguration objects that describe the pool's configuration.
      */
     function getPoolConfiguration(
         uint128 poolId
@@ -107,7 +107,7 @@ interface IPoolModule {
     /**
      * @notice Returns the pool's name.
      * @param poolId The id of the pool whose name is being queried.
-     * @returns The current name of the pool.
+     * @return poolName The current name of the pool.
      */
     function getPoolName(uint128 poolId) external view returns (string memory poolName);
 
@@ -139,14 +139,14 @@ interface IPoolModule {
     /**
      * @notice Returns the current pool owner.
      * @param poolId The id of the pool whose ownership is being queried.
-     * @returns The current owner of the pool.
+     * @return The current owner of the pool.
      */
     function getPoolOwner(uint128 poolId) external view returns (address);
 
     /**
      * @notice Returns the current nominated pool owner.
      * @param poolId The id of the pool whose nominated owner is being queried.
-     * @returns The current nominated owner of the pool.
+     * @return The current nominated owner of the pool.
      */
     function getNominatedPoolOwner(uint128 poolId) external view returns (address);
 
@@ -158,7 +158,7 @@ interface IPoolModule {
 
     /**
      * @notice Retrieves the system-wide minimum liquidity ratio.
-     * @returns The current system-wide minimum liquidity ratio, denominated with 18 decimals of precision.
+     * @return The current system-wide minimum liquidity ratio, denominated with 18 decimals of precision.
      */
     function getMinLiquidityRatio() external view returns (uint256);
 }

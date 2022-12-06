@@ -11,7 +11,7 @@ interface ILiquidationModule {
      * @param poolId The pool id of the position that was liquidated.
      * @param collateralType The collateral type used in the position that was liquidated.
      * @param liquidationData Information about the position that was liquidated.
-     * @param liquidateAsAccountID Account id that will receive the rewards from the liquidation.
+     * @param liquidateAsAccountId Account id that will receive the rewards from the liquidation.
      * @param sender The address of the account that is triggering the liquidation.
      */
     event Liquidation(
@@ -28,7 +28,7 @@ interface ILiquidationModule {
      * @param poolId The id of the pool whose vault was liquidated.
      * @param collateralType The collateral address of the vault that was liquidated.
      * @param liquidationData Information about the vault that was liquidated.
-     * @param liquidateAsAccountID Account id that will receive the rewards from the liquidation.
+     * @param liquidateAsAccountId Account id that will receive the rewards from the liquidation.
      * @param sender The address of the account that is triggering the liquidation.
      */
     event VaultLiquidation(
@@ -62,8 +62,8 @@ interface ILiquidationModule {
      * @param accountId The id of the account whose position is to be liquidated.
      * @param poolId The id of the pool which holds the position that is to be liquidated.
      * @param collateralType The address of the collateral being used in the position that is to be liquidated.
-     * @param liquidateAsAccountID Account id that will receive the rewards from the liquidation.
-     * @returns Information about the position that was liquidated.
+     * @param liquidateAsAccountId Account id that will receive the rewards from the liquidation.
+     * @return Information about the position that was liquidated.
      */
     function liquidate(
         uint128 accountId,
@@ -80,7 +80,7 @@ interface ILiquidationModule {
      * @param poolId The id of the pool whose vault is being liquidated.
      * @param collateralType The address of the collateral whose vault is being liquidated.
      * @param maxUsd The maximum amount of USD that the liquidator is willing to provide for the liquidation, denominated with 18 decimals of precision.
-     * @returns liquidationData Information about the vault that was liquidated.
+     * @return liquidationData Information about the vault that was liquidated.
      */
     function liquidateVault(
         uint128 poolId,
@@ -94,7 +94,7 @@ interface ILiquidationModule {
      * @param accountId The id of the account whose position is being queried for liquidation.
      * @param poolId The id of the pool whose position is being queried for liquidation.
      * @param collateralType The address of the collateral backing up the position being queried for liquidation.
-     * @returns A boolean with the response to the query.
+     * @return A boolean with the response to the query.
      */
     function isPositionLiquidatable(
         uint128 accountId,
@@ -106,7 +106,7 @@ interface ILiquidationModule {
      * @notice Determines whether a specified vault is liquidatable.
      * @param poolId The id of the pool that owns the vault that is being queried for liquidation.
      * @param collateralType The address of the collateral being held at the vault that is being queried for liquidation.
-     * @returns A boolean with the response to the query.
+     * @return A boolean with the response to the query.
      */
     function isVaultLiquidatable(uint128 poolId, address collateralType) external returns (bool);
 }

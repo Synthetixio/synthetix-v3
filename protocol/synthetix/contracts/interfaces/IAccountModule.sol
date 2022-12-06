@@ -58,7 +58,7 @@ interface IAccountModule {
     /**
      * @notice Returns an array of `AccountPermission` for the provided `accountId`.
      * @param accountId The id of the account whose permissions are being retrieved.
-     * @returns An array of AccountPermission objects describing the permissions granted to the account.
+     * @return An array of AccountPermission objects describing the permissions granted to the account.
      */
     function getAccountPermissions(
         uint128 accountId
@@ -130,7 +130,7 @@ interface IAccountModule {
      * @param accountId The id of the account whose permission is being queried.
      * @param permission The bytes32 identifier of the permission.
      * @param user The target address whose permission is being queried.
-     * @returns A boolean with the response of the query.
+     * @return A boolean with the response of the query.
      */
     function hasPermission(
         uint128 accountId,
@@ -143,7 +143,7 @@ interface IAccountModule {
      * @param accountId The id of the account whose permission is being queried.
      * @param permission The bytes32 identifier of the permission.
      * @param target The target address whose permission is being queried.
-     * @returns A boolean with the response of the query.
+     * @return A boolean with the response of the query.
      */
     function isAuthorized(
         uint128 accountId,
@@ -153,14 +153,14 @@ interface IAccountModule {
 
     /**
      * @notice Returns the address for the account token used by the module.
-     * @returns The address of the account token.
+     * @return The address of the account token.
      */
     function getAccountTokenAddress() external view returns (address);
 
     /**
      * @notice Returns the address that owns a given account, as recorded by the system.
      * @param accountId The account id whose owner is being retrieved.
-     * @returns The owner of the given account id.
+     * @return The owner of the given account id.
      */
     function getAccountOwner(uint128 accountId) external view returns (address);
 }

@@ -85,7 +85,7 @@ interface IRewardsManagerModule {
      * @param collateralType The address of the collateral used in the pool's rewards.
      * @param accountId The id of the account that is to claim the rewards.
      * @param distributor The address of the rewards distributor associated with the rewards being claimed.
-     * @returns The amount of rewards that were available for the account and thus claimed, denominated with 18 decimals of precision.
+     * @return The amount of rewards that were available for the account and thus claimed, denominated with 18 decimals of precision.
      */
     function claimRewards(
         uint128 poolId,
@@ -99,8 +99,8 @@ interface IRewardsManagerModule {
      * @param poolId The id of the pool being queried.
      * @param collateralType The address of the collateral used in the pool's rewards.
      * @param accountId The id of the account whose available rewards are being queried.
-     * @returns An array of ids of the reward entries that are claimable by the position.
-     * @returns An array with the addresses of the reward distributors associated with the claimable rewards.
+     * @return An array of ids of the reward entries that are claimable by the position.
+     * @return An array with the addresses of the reward distributors associated with the claimable rewards.
      */
     function getClaimableRewards(
         uint128 poolId,
@@ -113,7 +113,7 @@ interface IRewardsManagerModule {
      * @param poolId The id of the pool being queried.
      * @param collateralType The address of the collateral used in the pool's rewards.
      * @param distributor The address of the rewards distributor associated with the rewards in question.
-     * @returns The queried rewards rate.
+     * @return The queried rewards rate.
      */
     function getRewardRate(
         uint128 poolId,

@@ -34,7 +34,7 @@ interface IAssociateDebtModule {
      * @param collateralType The address of the collateral type that acts as collateral in the corresponding pool.
      * @param accountId The id of the account whose debt is being associated.
      * @param amount The amount of debt being associated with the specified account, denominated with 18 decimals of precision.
-     * @returns The updated debt of the position, denominated with 18 decimals of precision.
+     * @return The updated debt of the position, denominated with 18 decimals of precision.
      */
     function associateDebt(
         uint128 marketId,

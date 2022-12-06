@@ -66,9 +66,9 @@ interface ICollateralModule {
      * @notice Returns the total values pertaining to account `accountId` for `collateralType`.
      * @param accountId The id of the account whose collateral is being queried.
      * @param collateralType The address of the collateral type whose amount is being queried.
-     * @returns totalDeposited The total collateral deposited in the account, denominated with 18 decimals of precision.
-     * @returns totalAssigned The amount of collateral in the account that is delegated to pools, denominated with 18 decimals of precision.
-     * @returns totalLocked THe amount of collateral in the account that cannot currently be un-delegated from a pool, denominated with 18 decimals of precision.
+     * @return totalDeposited The total collateral deposited in the account, denominated with 18 decimals of precision.
+     * @return totalAssigned The amount of collateral in the account that is delegated to pools, denominated with 18 decimals of precision.
+     * @return totalLocked THe amount of collateral in the account that cannot currently be un-delegated from a pool, denominated with 18 decimals of precision.
      */
     function getAccountCollateral(
         uint128 accountId,
@@ -79,7 +79,7 @@ interface ICollateralModule {
      * @notice Returns the amount of collateral of type `collateralType` deposited with account `accountId` that can be withdrawn or delegated to pools.
      * @param accountId The id of the account whose collateral is being queried.
      * @param collateralType The address of the collateral type whose amount is being queried.
-     * @returns The amount of collateral that is available for withdrawal or delegation, denominated with 18 decimals of precision.
+     * @return The amount of collateral that is available for withdrawal or delegation, denominated with 18 decimals of precision.
      */
     function getAccountAvailableCollateral(
         uint128 accountId,

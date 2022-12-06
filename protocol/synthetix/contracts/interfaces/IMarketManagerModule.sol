@@ -49,7 +49,7 @@ interface IMarketManagerModule {
      * @notice Connects an external market to the system.
      * @dev Creates a Market object to track the external market, and returns the newly crated market id.
      * @param market The address of the external market that is to be registered in the system.
-     * @returns The id with which the market will be registered in the system.
+     * @return The id with which the market will be registered in the system.
      */
     function registerMarket(address market) external returns (uint128);
 
@@ -76,35 +76,35 @@ interface IMarketManagerModule {
     /**
      * @notice Returns the total withdrawable USD amount for the specified market.
      * @param marketId The id of the market whose withdrawable USD amount is being queried.
-     * @returns The total amount of USD that the market could withdraw at the time of the query, denominated with 18 decimals of precision.
+     * @return The total amount of USD that the market could withdraw at the time of the query, denominated with 18 decimals of precision.
      */
     function getWithdrawableUsd(uint128 marketId) external view returns (uint256);
 
     /**
      * @notice Returns the net issuance of the specified market (USD withdrawn - USD deposited).
      * @param marketId The id of the market whose net issuance is being queried.
-     * @returns The net issuance of the market, denominated with 18 decimals of precision.
+     * @return The net issuance of the market, denominated with 18 decimals of precision.
      */
     function getMarketNetIssuance(uint128 marketId) external view returns (int128);
 
     /**
      * @notice Returns the reported debt of the specified market.
      * @param marketId The if of the market whose reported debt is being queried.
-     * @returns The market's reported debt, denominated with 18 decimals of precision.
+     * @return The market's reported debt, denominated with 18 decimals of precision.
      */
     function getMarketReportedDebt(uint128 marketId) external view returns (uint256);
 
     /**
      * @notice Returns the total debt of the specified market.
      * @param marketId The id of the market whose debt is being queried.
-     * @returns The total debt of the market, denominated with 18 decimals of precision.
+     * @return The total debt of the market, denominated with 18 decimals of precision.
      */
     function getMarketTotalDebt(uint128 marketId) external view returns (int256);
 
     /**
      * @notice Returns the total collateral for the specified market.
      * @param marketId The id of the market whose collateral is being queried.
-     * @returns The market's total collateral, denominated with 18 decimals of precision.
+     * @return The market's total collateral, denominated with 18 decimals of precision.
      */
     function getMarketCollateral(uint128 marketId) external view returns (uint256);
 
@@ -112,14 +112,14 @@ interface IMarketManagerModule {
      * @notice Returns the value per share of the debt of the specified market.
      * @dev This is not a view function, and actually updates the entire debt distribution chain.
      * @param marketId The id of the market whose debt per share is being queried.
-     * @returns The market's debt per share value, denominated with 18 decimals of precision.
+     * @return The market's debt per share value, denominated with 18 decimals of precision.
      */
     function getMarketDebtPerShare(uint128 marketId) external returns (int256);
 
     /**
      * @notice Returns wether the capacity of the specified market is locked.
      * @param marketId The id of the market whose capacity is being queried.
-     * @returns A boolean that is true if the market's capacity is locked at the time of the query.
+     * @return A boolean that is true if the market's capacity is locked at the time of the query.
      */
     function isMarketCapacityLocked(uint128 marketId) external view returns (bool);
 }
