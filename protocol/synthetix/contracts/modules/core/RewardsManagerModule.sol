@@ -133,9 +133,9 @@ contract RewardsManagerModule is IRewardsManagerModule {
      * @inheritdoc IRewardsManagerModule
      */
     function claimRewards(
+        uint128 accountId,
         uint128 poolId,
         address collateralType,
-        uint128 accountId,
         address distributor
     ) external override returns (uint256) {
         Account.onlyWithPermission(accountId, AccountRBAC._REWARDS_PERMISSION);
@@ -157,6 +157,7 @@ contract RewardsManagerModule is IRewardsManagerModule {
             reward
         );
         vault.rewards[rewardId].actorInfo[accountId].pendingSendD18 = 0;
+
         emit RewardsClaimed(
             accountId,
             poolId,

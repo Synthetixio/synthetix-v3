@@ -30,8 +30,10 @@ contract IssueUSDModule is IIssueUSDModule {
     using SafeCastI128 for int128;
     using SafeCastI256 for int256;
 
-    error InsufficientDebt(int currentDebt);
-    error PermissionDenied(uint128 accountId, bytes32 permission, address target);
+    /**
+     * @dev Thrown when an account does not have sufficient debt to burn USD.
+     */
+    error InsufficientDebt(int256 currentDebt);
 
     bytes32 private constant _USD_TOKEN = "USDToken";
 
@@ -42,21 +44,21 @@ contract IssueUSDModule is IIssueUSDModule {
         uint128 accountId,
         uint128 poolId,
         address collateralType,
-        uint amount
+        uint256 amount
     ) external override {
         // Ensure the caller is allowed to mint
         _onlyWithPermission(accountId, AccountRBAC._MINT_PERMISSION);
 
         Pool.Data storage pool = Pool.load(poolId);
 
-        int debt = pool.updateAccountDebt(collateralType, accountId);
-        int newDebt = debt + amount.toInt();
+        int256 debt = pool.updateAccountDebt(collateralType, accountId);
+        int256 newDebt = debt + amount.toInt();
 
         // Ensure minting stablecoins is increasing the debt of the position
         require(newDebt > debt, "Incorrect new debt");
 
         // If the resulting debt of the account is greater than zero, ensure that the resulting c-ratio is sufficient
-        (, uint collateralValue) = pool.currentAccountCollateral(collateralType, accountId);
+        (, uint256 collateralValue) = pool.currentAccountCollateral(collateralType, accountId);
         if (newDebt > 0) {
             CollateralConfiguration.load(collateralType).verifyIssuanceRatio(
                 newDebt.toUint(),
@@ -85,12 +87,12 @@ contract IssueUSDModule is IIssueUSDModule {
         uint128 accountId,
         uint128 poolId,
         address collateralType,
-        uint amount
+        uint256 amount
     ) external override {
         Pool.Data storage pool = Pool.load(poolId);
 
         // Retrieve current position debt
-        int debt = pool.updateAccountDebt(collateralType, accountId);
+        int256 debt = pool.updateAccountDebt(collateralType, accountId);
 
         // Ensure the position can't burn if it already has no debt
         if (debt <= 0) {
@@ -123,7 +125,7 @@ contract IssueUSDModule is IIssueUSDModule {
     // solc-ignore-next-line func-mutability
     function _onlyWithPermission(uint128 accountId, bytes32 permission) internal {
         if (!Account.load(accountId).rbac.authorized(permission, msg.sender)) {
-            revert PermissionDenied(accountId, permission, msg.sender);
+            revert Account.PermissionDenied(accountId, permission, msg.sender);
         }
     }
 }

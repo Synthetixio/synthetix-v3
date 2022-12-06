@@ -8,11 +8,17 @@ pragma solidity ^0.8.0;
 interface IAccountModule {
     /**
      * @notice Emitted when an account token with id `accountId` is minted to `sender`.
+     * @param accountId The id of the account.
+     * @param owner The address that owns the created account.
      */
-    event AccountCreated(address indexed sender, uint128 indexed accountId);
+    event AccountCreated(uint128 indexed accountId, address indexed owner);
 
     /**
      * @notice Emitted when `user` is granted `permission` by `sender` for account `accountId`.
+     * @param accountId The id of the account that granted the permission.
+     * @param permission The bytes32 identifier of the permission.
+     * @param user The target address to whom the permission was granted.
+     * @param sender The Address that granted the permission.
      */
     event PermissionGranted(
         uint128 indexed accountId,
@@ -23,6 +29,10 @@ interface IAccountModule {
 
     /**
      * @notice Emitted when `user` has `permission` renounced or revoked by `sender` for account `accountId`.
+     * @param accountId The Id of the account that granted the permission.
+     * @param permission The bytes32 identifier of the permission.
+     * @param user The target address to whom the permission was granted.
+     * @param sender The address that granted the permission.
      */
     event PermissionRevoked(
         uint128 indexed accountId,
@@ -35,12 +45,20 @@ interface IAccountModule {
      * @dev Data structure for tracking each user's permissions.
      */
     struct AccountPermissions {
+        /**
+         * @dev The address for which all the permissions are granted.
+         */
         address user;
+        /**
+         * @dev The array of permissions given to the associated address.
+         */
         bytes32[] permissions;
     }
 
     /**
      * @notice Returns an array of `AccountPermission` for the provided `accountId`.
+     * @param accountId The id of the account whose permissions are being retrieved.
+     * @return An array of AccountPermission objects describing the permissions granted to the account.
      */
     function getAccountPermissions(
         uint128 accountId
@@ -48,6 +66,7 @@ interface IAccountModule {
 
     /**
      * @notice Mints an account token with id `requestedAccountId` to `msg.sender`.
+     * @param requestedAccountId The id requested for the account being created. Reverts if id already exists.
      *
      * Requirements:
      *
@@ -60,6 +79,8 @@ interface IAccountModule {
     /**
      * @notice Called by AccountTokenModule to notify the system when the account token is transferred.
      * @dev Resets user permissions and assigns ownership of the account token to the new holder.
+     * @param to The new holder of the account NFT.
+     * @param accountId The id of the account that was just transferred.
      *
      * Requirements:
      *
@@ -69,6 +90,9 @@ interface IAccountModule {
 
     /**
      * @notice Grants `permission` to `user` for account `accountId`.
+     * @param accountId The id of the account that granted the permission.
+     * @param permission The bytes32 identifier of the permission.
+     * @param user The target address that received the permission.
      *
      * Requirements:
      *
@@ -80,6 +104,9 @@ interface IAccountModule {
 
     /**
      * @notice Revokes `permission` from `user` for account `accountId`.
+     * @param accountId The id of the account that revoked the permission.
+     * @param permission The bytes32 identifier of the permission.
+     * @param user The target address that no longer has the permission.
      *
      * Requirements:
      *
@@ -91,6 +118,8 @@ interface IAccountModule {
 
     /**
      * @notice Revokes `permission` from `msg.sender` for account `accountId`.
+     * @param accountId The id of the account whose permission was renounced.
+     * @param permission The bytes32 identifier of the permission.
      *
      * Emits a {PermissionRevoked} event.
      */
@@ -98,6 +127,10 @@ interface IAccountModule {
 
     /**
      * @notice Returns `true` if `user` has been granted `permission` for account `accountId`.
+     * @param accountId The id of the account whose permission is being queried.
+     * @param permission The bytes32 identifier of the permission.
+     * @param user The target address whose permission is being queried.
+     * @return A boolean with the response of the query.
      */
     function hasPermission(
         uint128 accountId,
@@ -107,6 +140,10 @@ interface IAccountModule {
 
     /**
      * @notice Returns `true` if `target` is authorized to `permission` for account `accountId`.
+     * @param accountId The id of the account whose permission is being queried.
+     * @param permission The bytes32 identifier of the permission.
+     * @param target The target address whose permission is being queried.
+     * @return A boolean with the response of the query.
      */
     function isAuthorized(
         uint128 accountId,
@@ -116,11 +153,14 @@ interface IAccountModule {
 
     /**
      * @notice Returns the address for the account token used by the module.
+     * @return The address of the account token.
      */
     function getAccountTokenAddress() external view returns (address);
 
     /**
      * @notice Returns the address that owns a given account, as recorded by the system.
+     * @param accountId The account id whose owner is being retrieved.
+     * @return The owner of the given account id.
      */
     function getAccountOwner(uint128 accountId) external view returns (address);
 }

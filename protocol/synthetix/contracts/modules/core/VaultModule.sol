@@ -35,7 +35,14 @@ contract VaultModule is IVaultModule {
     using SafeCastI128 for int128;
     using SafeCastI256 for int256;
 
+    /**
+     * @dev Thrown when attempting to delegate collateral to a vault with a leverage amount that is not supported by the system.
+     */
     error InvalidLeverage(uint256 leverage);
+
+    /**
+     * @dev Thrown when attempting to delegate collateral to a market whose capacity is locked.
+     */
     error CapacityLocked(uint256 marketId);
 
     /**

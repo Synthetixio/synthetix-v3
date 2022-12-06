@@ -3,6 +3,7 @@ pragma solidity ^0.8.0;
 
 import "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
 import "@synthetixio/core-contracts/contracts/token/ERC20Helper.sol";
+import "@synthetixio/core-contracts/contracts/errors/ArrayError.sol";
 
 import "@synthetixio/core-modules/contracts/storage/AssociatedSystem.sol";
 
@@ -24,13 +25,19 @@ contract CollateralModule is ICollateralModule {
     using AccountRBAC for AccountRBAC.Data;
     using Collateral for Collateral.Data;
 
-    error OutOfBounds();
-    error InsufficientAccountCollateral(uint amount);
+    /**
+     * @dev Thrown when an interacting account does not have sufficient collateral for an operation (withdrawal, lock, etc).
+     */
+    error InsufficientAccountCollateral(uint256 amount);
 
     /**
      * @inheritdoc ICollateralModule
      */
-    function deposit(uint128 accountId, address collateralType, uint tokenAmount) public override {
+    function deposit(
+        uint128 accountId,
+        address collateralType,
+        uint256 tokenAmount
+    ) public override {
         CollateralConfiguration.collateralEnabled(collateralType);
 
         Account.Data storage account = Account.load(accountId);
@@ -39,7 +46,7 @@ contract CollateralModule is ICollateralModule {
 
         address self = address(this);
 
-        uint allowance = IERC20(collateralType).allowance(depositFrom, self);
+        uint256 allowance = IERC20(collateralType).allowance(depositFrom, self);
         if (allowance < tokenAmount) {
             revert IERC20.InsufficientAllowance(tokenAmount, allowance);
         }
@@ -56,14 +63,18 @@ contract CollateralModule is ICollateralModule {
     /**
      * @inheritdoc ICollateralModule
      */
-    function withdraw(uint128 accountId, address collateralType, uint tokenAmount) public override {
+    function withdraw(
+        uint128 accountId,
+        address collateralType,
+        uint256 tokenAmount
+    ) public override {
         Account.onlyWithPermission(accountId, AccountRBAC._WITHDRAW_PERMISSION);
 
         Account.Data storage account = Account.load(accountId);
 
-        uint systemAmount = CollateralConfiguration.load(collateralType).convertTokenToSystemAmount(
-            tokenAmount
-        );
+        uint256 systemAmount = CollateralConfiguration
+            .load(collateralType)
+            .convertTokenToSystemAmount(tokenAmount);
 
         if (account.collaterals[collateralType].availableAmountD18 < systemAmount) {
             revert InsufficientAccountCollateral(systemAmount);
@@ -97,7 +108,7 @@ contract CollateralModule is ICollateralModule {
     function getAccountAvailableCollateral(
         uint128 accountId,
         address collateralType
-    ) public view override returns (uint) {
+    ) public view override returns (uint256) {
         return Account.load(accountId).collaterals[collateralType].availableAmountD18;
     }
 
@@ -107,8 +118,8 @@ contract CollateralModule is ICollateralModule {
     function cleanExpiredLocks(
         uint128 accountId,
         address collateralType,
-        uint offset,
-        uint items
+        uint256 offset,
+        uint256 items
     ) external override {
         CollateralLock.Data[] storage locks = Account
             .load(accountId)
@@ -116,7 +127,7 @@ contract CollateralModule is ICollateralModule {
             .locks;
 
         if (offset > locks.length || items > locks.length) {
-            revert OutOfBounds();
+            revert ArrayError.OutOfBounds();
         }
 
         uint64 currentTime = uint64(block.timestamp);
@@ -125,7 +136,7 @@ contract CollateralModule is ICollateralModule {
             items = locks.length;
         }
 
-        uint index = offset;
+        uint256 index = offset;
         while (index < locks.length) {
             if (locks[index].lockExpirationTime <= currentTime) {
                 locks[index] = locks[locks.length - 1];
@@ -142,14 +153,14 @@ contract CollateralModule is ICollateralModule {
     function createLock(
         uint128 accountId,
         address collateralType,
-        uint amount,
+        uint256 amount,
         uint64 expireTimestamp
     ) external override {
         Account.onlyWithPermission(accountId, AccountRBAC._ADMIN_PERMISSION);
 
         Account.Data storage account = Account.load(accountId);
 
-        (uint totalDeposited, , uint totalLocked) = account.getCollateralTotals(collateralType);
+        (uint totalDeposited, , uint256 totalLocked) = account.getCollateralTotals(collateralType);
 
         if (totalDeposited - totalLocked < amount) {
             revert InsufficientAccountCollateral(amount);
