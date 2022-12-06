@@ -73,6 +73,14 @@ describe('RewardsManagerModule', function () {
       );
     });
 
+    it('reverts with invalid reward distributer', async () => {
+      await assertRevert(
+        systems()
+          .Core.connect(owner)
+          .registerRewardsDistributor(poolId, collateralAddress(), await owner.getAddress())
+      );
+    });
+
     describe('distributeRewards', () => {
       describe('only rewards distributor can call distributeRewards', () => {
         before(restore);
@@ -86,8 +94,7 @@ describe('RewardsManagerModule', function () {
               0, // timestamp
               0
             ),
-            'InvalidParameter("poolId-collateralType-distributor", "reward is not registered")',
-            systems().Core
+            'InvalidParameter("poolId-collateralType-distributor", "reward is not registered")'
           );
         });
 

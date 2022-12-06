@@ -53,6 +53,12 @@ contract RewardsManagerModule is IRewardsManagerModule {
             revert ParameterError.InvalidParameter("index", "too large");
         }
 
+        if (
+            !IRewardDistributor(distributor).supportsInterface(type(IRewardDistributor).interfaceId)
+        ) {
+            revert ParameterError.InvalidParameter("distributor", "invalid interface");
+        }
+
         bytes32 rewardId = _getRewardId(poolId, collateralType, distributor);
 
         if (rewardIds.contains(rewardId)) {
