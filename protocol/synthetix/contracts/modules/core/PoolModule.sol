@@ -17,19 +17,20 @@ import "../../storage/Pool.sol";
  * @dev See IPoolModule.
  */
 contract PoolModule is IPoolModule {
-    error CapacityLocked(uint256 marketId);
-
     using SafeCastU128 for uint128;
     using SafeCastU256 for uint256;
     using SafeCastI128 for int128;
     using SafeCastI256 for int256;
-
     using DecimalMath for uint256;
-
     using Pool for Pool.Data;
     using Market for Market.Data;
 
     bytes32 private constant _POOL_FEATURE_FLAG = "createPool";
+
+    /**
+     * @dev Thrown when attempting to disconnect a market whose capacity is locked, and whose removal would cause a decrease in its associated pool's credit delegation proportion.
+     */
+    error CapacityLocked(uint256 marketId);
 
     /**
      * @inheritdoc IPoolModule

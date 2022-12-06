@@ -28,7 +28,7 @@ describe('AccountModule', function () {
       it('emitted an AccountCreated event', async function () {
         await assertEvent(
           receipt,
-          `AccountCreated("${await user1.getAddress()}", 1)`,
+          `AccountCreated(1, "${await user1.getAddress()}")`,
           systems().Core
         );
       });

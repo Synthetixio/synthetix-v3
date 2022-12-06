@@ -22,7 +22,7 @@ contract LiquidationModule is ILiquidationModule {
     using SafeCastU256 for uint256;
     using SafeCastI128 for int128;
     using SafeCastI256 for int256;
-    using DecimalMath for uint;
+    using DecimalMath for uint256;
     using ERC20Helper for address;
     using AssociatedSystem for AssociatedSystem.Data;
     using CollateralConfiguration for CollateralConfiguration.Data;
@@ -33,7 +33,19 @@ contract LiquidationModule is ILiquidationModule {
     using Distribution for Distribution.Data;
     using ScalableMapping for ScalableMapping.Data;
 
-    error IneligibleForLiquidation(uint collateralValue, int debt, uint currentCRatio, uint cratio);
+    /**
+     * @dev Thrown when attempting to liquidate an account that is not eligible for liquidation.
+     */
+    error IneligibleForLiquidation(
+        uint256 collateralValue,
+        int256 debt,
+        uint256 currentCRatio,
+        uint256 cratio
+    );
+
+    /**
+     * @dev Thrown when an entire vault instead of a single account should be liquidated.
+     */
     error MustBeVaultLiquidated();
 
     bytes32 private constant _USD_TOKEN = "USDToken";
@@ -56,8 +68,8 @@ contract LiquidationModule is ILiquidationModule {
         );
         VaultEpoch.Data storage epoch = pool.vaults[collateralType].currentEpoch();
 
-        int rawDebt = pool.updateAccountDebt(collateralType, accountId);
-        (uint collateralAmount, uint collateralValue) = pool.currentAccountCollateral(
+        int256 rawDebt = pool.updateAccountDebt(collateralType, accountId);
+        (uint256 collateralAmount, uint256 collateralValue) = pool.currentAccountCollateral(
             collateralType,
             accountId
         );
@@ -75,8 +87,8 @@ contract LiquidationModule is ILiquidationModule {
 
         liquidationData.debtLiquidated = rawDebt.toUint();
 
-        uint liquidatedAccountShares = epoch.accountsDebtDistribution.getActorShares(
-            bytes32(uint(accountId))
+        uint256 liquidatedAccountShares = epoch.accountsDebtDistribution.getActorShares(
+            bytes32(uint256(accountId))
         );
         if (epoch.accountsDebtDistribution.totalSharesD18 == liquidatedAccountShares) {
             // will be left with 0 shares, which can't be socialized
@@ -129,7 +141,7 @@ contract LiquidationModule is ILiquidationModule {
         uint128 poolId,
         address collateralType,
         uint128 liquidateAsAccountId,
-        uint maxUsd
+        uint256 maxUsd
     ) external override returns (LiquidationData memory liquidationData) {
         // Ensure the account receiving collateral exists
         Account.exists(liquidateAsAccountId);
@@ -146,8 +158,8 @@ contract LiquidationModule is ILiquidationModule {
         Vault.Data storage vault = pool.vaults[collateralType];
 
         // Retrieve the collateral and the debt of the vault
-        int rawVaultDebt = pool.currentVaultDebt(collateralType);
-        (, uint collateralValue) = pool.currentVaultCollateral(collateralType);
+        int256 rawVaultDebt = pool.currentVaultDebt(collateralType);
+        (, uint256 collateralValue) = pool.currentVaultCollateral(collateralType);
 
         // Verify whether the vault is eligible for liquidation
         if (!_isLiquidatable(collateralType, rawVaultDebt, collateralValue)) {
@@ -159,7 +171,7 @@ contract LiquidationModule is ILiquidationModule {
             );
         }
 
-        uint vaultDebt = rawVaultDebt < 0 ? 0 : rawVaultDebt.toUint();
+        uint256 vaultDebt = rawVaultDebt < 0 ? 0 : rawVaultDebt.toUint();
 
         if (vaultDebt <= maxUsd) {
             // Conduct a full vault liquidation
@@ -217,8 +229,8 @@ contract LiquidationModule is ILiquidationModule {
      */
     function _isLiquidatable(
         address collateralType,
-        int debt,
-        uint collateralValue
+        int256 debt,
+        uint256 collateralValue
     ) internal view returns (bool) {
         if (debt <= 0) {
             return false;
@@ -237,8 +249,8 @@ contract LiquidationModule is ILiquidationModule {
         address collateralType
     ) external override returns (bool) {
         Pool.Data storage pool = Pool.load(poolId);
-        int rawDebt = pool.updateAccountDebt(collateralType, accountId);
-        (, uint collateralValue) = pool.currentAccountCollateral(collateralType, accountId);
+        int256 rawDebt = pool.updateAccountDebt(collateralType, accountId);
+        (, uint256 collateralValue) = pool.currentAccountCollateral(collateralType, accountId);
         return rawDebt >= 0 && _isLiquidatable(collateralType, rawDebt, collateralValue);
     }
 
@@ -250,8 +262,8 @@ contract LiquidationModule is ILiquidationModule {
         address collateralType
     ) external override returns (bool) {
         Pool.Data storage pool = Pool.load(poolId);
-        int rawVaultDebt = pool.currentVaultDebt(collateralType);
-        (, uint collateralValue) = pool.currentVaultCollateral(collateralType);
+        int256 rawVaultDebt = pool.currentVaultDebt(collateralType);
+        (, uint256 collateralValue) = pool.currentVaultCollateral(collateralType);
         return rawVaultDebt >= 0 && _isLiquidatable(collateralType, rawVaultDebt, collateralValue);
     }
 }

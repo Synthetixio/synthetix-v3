@@ -478,7 +478,7 @@ describe('RewardsManagerModule', function () {
       await assertRevert(
         systems()
           .Core.connect(user2)
-          .claimRewards(poolId, collateralAddress(), accountId, RewardDistributor.address),
+          .claimRewards(accountId, poolId, collateralAddress(), RewardDistributor.address),
         'PermissionDenied',
         systems().Core
       );
@@ -488,7 +488,7 @@ describe('RewardsManagerModule', function () {
       before('claim', async () => {
         await systems()
           .Core.connect(user1)
-          .claimRewards(poolId, collateralAddress(), accountId, RewardDistributor.address);
+          .claimRewards(accountId, poolId, collateralAddress(), RewardDistributor.address);
       });
 
       it('pays out', async () => {
@@ -510,7 +510,7 @@ describe('RewardsManagerModule', function () {
       it('doesnt get any rewards on subsequent claim', async () => {
         await systems()
           .Core.connect(user1)
-          .claimRewards(poolId, collateralAddress(), accountId, RewardDistributor.address);
+          .claimRewards(accountId, poolId, collateralAddress(), RewardDistributor.address);
 
         assertBn.equal(await Collateral.balanceOf(await user1.getAddress()), rewardAmount);
       });
@@ -529,7 +529,7 @@ describe('RewardsManagerModule', function () {
         before('claim', async () => {
           await systems()
             .Core.connect(user1)
-            .claimRewards(poolId, collateralAddress(), accountId, RewardDistributor.address);
+            .claimRewards(accountId, poolId, collateralAddress(), RewardDistributor.address);
         });
 
         it('pays out', async () => {
@@ -554,7 +554,7 @@ describe('RewardsManagerModule', function () {
         it('does not get any rewards on subsequent claim', async () => {
           await systems()
             .Core.connect(user1)
-            .claimRewards(poolId, collateralAddress(), accountId, RewardDistributor.address);
+            .claimRewards(accountId, poolId, collateralAddress(), RewardDistributor.address);
 
           assertBn.equal(
             await Collateral.balanceOf(await user1.getAddress()),

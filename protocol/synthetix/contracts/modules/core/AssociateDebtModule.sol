@@ -6,6 +6,7 @@ import "../../interfaces/IAssociateDebtModule.sol";
 import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import "@synthetixio/core-contracts/contracts/token/ERC20Helper.sol";
+import "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
 
 import "@synthetixio/core-modules/contracts/storage/FeatureFlag.sol";
 
@@ -18,7 +19,7 @@ import "../../storage/Market.sol";
  * @dev See IAssociateDebtModule.
  */
 contract AssociateDebtModule is IAssociateDebtModule {
-    using DecimalMath for uint;
+    using DecimalMath for uint256;
     using SafeCastU128 for uint128;
     using SafeCastU256 for uint256;
     using SafeCastI128 for int128;
@@ -34,9 +35,20 @@ contract AssociateDebtModule is IAssociateDebtModule {
     bytes32 private constant _USD_TOKEN = "USDToken";
     bytes32 private constant _ASSOCIATE_DEBT_FEATURE_FLAG = "associateDebt";
 
-    error Unauthorized(address actual);
-    error NotFundedByPool(uint marketId, uint poolId);
-    error InsufficientCollateralRatio(uint collateralValue, uint debt, uint ratio, uint minRatio);
+    /**
+     * @dev Thrown when the specified market is not connected to the specified pool in debt association.
+     */
+    error NotFundedByPool(uint256 marketId, uint256 poolId);
+
+    /**
+     * @dev Thrown when a debt association would shift a position below the liquidation ratio.
+     */
+    error InsufficientCollateralRatio(
+        uint256 collateralValue,
+        uint256 debt,
+        uint256 ratio,
+        uint256 minRatio
+    );
 
     /**
      * @inheritdoc IAssociateDebtModule
@@ -46,8 +58,8 @@ contract AssociateDebtModule is IAssociateDebtModule {
         uint128 poolId,
         address collateralType,
         uint128 accountId,
-        uint amount
-    ) external returns (int) {
+        uint256 amount
+    ) external returns (int256) {
         FeatureFlag.ensureAccessToFeature(_ASSOCIATE_DEBT_FEATURE_FLAG);
 
         Pool.Data storage poolData = Pool.load(poolId);
@@ -55,10 +67,10 @@ contract AssociateDebtModule is IAssociateDebtModule {
         Market.Data storage marketData = Market.load(marketId);
 
         if (msg.sender != marketData.marketAddress) {
-            revert Unauthorized(msg.sender);
+            revert AccessError.Unauthorized(msg.sender);
         }
 
-        bytes32 actorId = bytes32(uint(accountId));
+        bytes32 actorId = bytes32(uint256(accountId));
 
         // The market must appear in pool configuration of the specified position
         if (!poolData.hasMarket(marketId)) {
@@ -72,7 +84,7 @@ contract AssociateDebtModule is IAssociateDebtModule {
         epochData.distributeDebtToAccounts(-amount.toInt());
 
         // Assign this debt to the specified position
-        int updatedDebt = epochData.assignDebtToAccount(accountId, amount.toInt());
+        int256 updatedDebt = epochData.assignDebtToAccount(accountId, amount.toInt());
 
         // Reverts if this debt increase would make the position liquidatable
         _verifyCollateralRatio(
@@ -93,10 +105,10 @@ contract AssociateDebtModule is IAssociateDebtModule {
      */
     function _verifyCollateralRatio(
         address collateralType,
-        uint debt,
-        uint collateralValue
+        uint256 debt,
+        uint256 collateralValue
     ) internal view {
-        uint liquidationRatio = CollateralConfiguration.load(collateralType).liquidationRatioD18;
+        uint256 liquidationRatio = CollateralConfiguration.load(collateralType).liquidationRatioD18;
         if (debt != 0 && collateralValue.divDecimal(debt) < liquidationRatio) {
             revert InsufficientCollateralRatio(
                 collateralValue,

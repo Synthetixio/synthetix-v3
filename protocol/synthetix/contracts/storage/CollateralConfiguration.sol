@@ -16,26 +16,46 @@ library CollateralConfiguration {
     using SetUtil for SetUtil.AddressSet;
     using DecimalMath for uint256;
 
+    /**
+     * @dev Thrown when the token address of a collateral cannot be found.
+     */
     error CollateralNotFound();
+
+    /**
+     * @dev Thrown when deposits are disabled for the given collateral type.
+     */
     error CollateralDepositDisabled(address collateralType);
-    error InsufficientCollateralRatio(uint collateralValue, uint debt, uint ratio, uint minRatio);
-    error InsufficientDelegation(uint minDelegation);
+
+    /**
+     * @dev Thrown when collateral ratio is not sufficient in a given operation in the system.
+     */
+    error InsufficientCollateralRatio(
+        uint256 collateralValue,
+        uint256 debt,
+        uint256 ratio,
+        uint256 minRatio
+    );
+
+    /**
+     * @dev Thrown when the amount being delegated is less than the minimum expected amount.
+     */
+    error InsufficientDelegation(uint256 minDelegation);
 
     struct Data {
         /// must be true for staking or collateral delegation
         bool depositingEnabled;
         /// accounts cannot mint sUSD if their debt brings their cratio below this value
-        uint issuanceRatioD18;
+        uint256 issuanceRatioD18;
         /// accounts below the ratio specified here are immediately liquidated
-        uint liquidationRatioD18;
+        uint256 liquidationRatioD18;
         /// amount of token to award when an account is liquidated with this collateral type
-        uint liquidationRewardD18;
+        uint256 liquidationRewardD18;
         /// address which reports the current price of the collateral
         bytes32 oracleNodeId;
         /// address which should be used for transferring this collateral
         address tokenAddress;
         /// minimum delegation amount (other than 0), to prevent sybil/attacks on the system due to new entries.
-        uint minDelegationD18;
+        uint256 minDelegationD18;
     }
 
     function load(address token) internal pure returns (Data storage data) {
@@ -83,10 +103,10 @@ library CollateralConfiguration {
         }
     }
 
-    function requireSufficientDelegation(address token, uint amountD18) internal view {
+    function requireSufficientDelegation(address token, uint256 amountD18) internal view {
         CollateralConfiguration.Data storage config = load(token);
 
-        uint minDelegationD18 = config.minDelegationD18;
+        uint256 minDelegationD18 = config.minDelegationD18;
 
         if (minDelegationD18 == 0) {
             minDelegationD18 = config.liquidationRewardD18;
@@ -97,19 +117,19 @@ library CollateralConfiguration {
         }
     }
 
-    function getCollateralPrice(Data storage self) internal view returns (uint) {
+    function getCollateralPrice(Data storage self) internal view returns (uint256) {
         OracleManager.Data memory oracleManager = OracleManager.load();
         Node.Data memory node = IOracleManagerModule(oracleManager.oracleManagerAddress).process(
             self.oracleNodeId
         );
 
-        return uint(node.price);
+        return uint256(node.price);
     }
 
     function verifyIssuanceRatio(
         Data storage self,
-        uint debtD18,
-        uint collateralValueD18
+        uint256 debtD18,
+        uint256 collateralValueD18
     ) internal view {
         if (debtD18 != 0 && collateralValueD18.divDecimal(debtD18) < self.issuanceRatioD18) {
             revert InsufficientCollateralRatio(
@@ -123,8 +143,8 @@ library CollateralConfiguration {
 
     function convertTokenToSystemAmount(
         Data storage self,
-        uint tokenAmount
-    ) internal view returns (uint) {
+        uint256 tokenAmount
+    ) internal view returns (uint256) {
         // this extra condition is to prevent potentially malicious untrusted code from being executed on the next statement
         if (self.tokenAddress == address(0)) {
             revert CollateralNotFound();
