@@ -95,10 +95,10 @@ library RewardDistributionEntry {
      *
      * Note: call every time before `totalShares` changes.
      */
-    function updateEntry(Data storage entry, uint256 totalSharesAmountD18)
-        internal
-        returns (int256)
-    {
+    function updateEntry(
+        Data storage entry,
+        uint256 totalSharesAmountD18
+    ) internal returns (int256) {
         // Cannot process distributed rewards if a pool is empty or if it has no rewards.
         if (entry.scheduledValueD18 == 0 || totalSharesAmountD18 == 0) {
             return 0;
