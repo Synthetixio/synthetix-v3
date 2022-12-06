@@ -79,7 +79,7 @@ interface ILiquidationModule {
      * @dev Will only liquidate a portion of the debt for the vault if `maxUsd` is supplied.
      * @param poolId The id of the pool whose vault is being liquidated.
      * @param collateralType The address of the collateral whose vault is being liquidated.
-     * @param maxUsd The maximum amount of USD that the liquidator is willing to provide for the liquidation.
+     * @param maxUsd The maximum amount of USD that the liquidator is willing to provide for the liquidation, denominated with 18 decimals of precision.
      * @returns liquidationData Information about the vault that was liquidated.
      */
     function liquidateVault(

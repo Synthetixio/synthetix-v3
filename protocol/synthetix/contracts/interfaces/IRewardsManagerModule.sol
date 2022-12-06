@@ -10,7 +10,7 @@ interface IRewardsManagerModule {
      * @param poolId The id of the pool on which rewards were distributed.
      * @param collateralType The collateral type of the pool on which rewards were distributed.
      * @param distributor The reward distributor associated to the rewards that were distributed.
-     * @param amount The amount of rewards that were distributed.
+     * @param amount The amount of rewards that were distributed, denominated with 18 decimals of precision.
      * @param start The date one which the rewards will begin to be claimable.
      * @param duration The time in which all of the distributed rewards will be claimable.
      */
@@ -29,7 +29,7 @@ interface IRewardsManagerModule {
      * @param poolId The id of the pool where the rewards were claimed.
      * @param collateralType The address of the collateral used in the pool's rewards.
      * @param distributor The address of the rewards distributor associated with these rewards.
-     * @param amount The amount of rewards that were claimed.
+     * @param amount The amount of rewards that were claimed, denominated with 18 decimals of precision.
      */
     event RewardsClaimed(
         uint128 indexed accountId,
@@ -67,7 +67,7 @@ interface IRewardsManagerModule {
      * @notice Called by pool owner or an existing distributor to set up rewards for vault participants.
      * @param poolId The id of the pool to distribute rewards to.
      * @param collateralType The address of the collateral used in the pool's rewards.
-     * @param amount The amount of rewards to be distributed.
+     * @param amount The amount of rewards to be distributed, denominated with 18 decimals of precision.
      * @param start The date at which the rewards will begin to be claimable.
      * @param duration The period after which all distributed rewards will be claimable.
      */
@@ -85,7 +85,7 @@ interface IRewardsManagerModule {
      * @param collateralType The address of the collateral used in the pool's rewards.
      * @param accountId The id of the account that is to claim the rewards.
      * @param distributor The address of the rewards distributor associated with the rewards being claimed.
-     * @returns The amount of rewards that were available for the account and thus claimed.
+     * @returns The amount of rewards that were available for the account and thus claimed, denominated with 18 decimals of precision.
      */
     function claimRewards(
         uint128 poolId,
@@ -99,7 +99,8 @@ interface IRewardsManagerModule {
      * @param poolId The id of the pool being queried.
      * @param collateralType The address of the collateral used in the pool's rewards.
      * @param accountId The id of the account whose available rewards are being queried.
-     * @returns The amount of rewards that are presently claimable by the account.
+     * @returns An array of ids of the reward entries that are claimable by the position.
+     * @returns An array with the addresses of the reward distributors associated with the claimable rewards.
      */
     function getClaimableRewards(
         uint128 poolId,

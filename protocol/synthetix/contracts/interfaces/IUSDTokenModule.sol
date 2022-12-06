@@ -11,7 +11,7 @@ interface IUSDTokenModule is ITokenModule {
      * @notice Allows the core system to burn stablecoins held by the `from` address, provided that it has given allowance to `spender`.
      * @param from The address that holds the tokens to be burnt.
      * @param spender The address to which the holder has given allowance to.
-     * @param amount The amount of tokens to be burnt.
+     * @param amount The amount of tokens to be burnt, denominated with 18 decimals of precision.
      */
     function burnWithAllowance(
         address from,
@@ -23,8 +23,8 @@ interface IUSDTokenModule is ITokenModule {
      * @notice Allows users to transfer tokens cross-chain using CCIP. This is disabled until _CCIP_CHAINLINK_SEND is set in UtilsModule. This is currently included for testing purposes. Functionality will change, including fee collection, as CCIP continues development.
      * @param destChainId The id of the chain where tokens are to be transferred to.
      * @param to The destination address in the target chain.
-     * @param amount The amount of tokens to be transferred.
-     * @returns The amount of feesPaid in the cross-chain transfer.
+     * @param amount The amount of tokens to be transferred, denominated with 18 decimals of precision.
+     * @returns The amount of feesPaid in the cross-chain transfer, denominated with 18 decimals of precision.
      */
     function transferCrossChain(
         uint256 destChainId,

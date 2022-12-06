@@ -15,8 +15,8 @@ interface IAssociateDebtModule {
      * @param poolId The id of the pool associated to the target market.
      * @param collateralType The address of the collateral type that acts as collateral in the corresponding pool.
      * @param accountId The id of the account whose debt is being associated.
-     * @param amount The amount of debt being associated with the specified account.
-     * @param updatedDebt The total updated debt of the account.
+     * @param amount The amount of debt being associated with the specified account, denominated with 18 decimals of precision.
+     * @param updatedDebt The total updated debt of the account, denominated with 18 decimals of precision
      */
     event DebtAssociated(
         uint128 indexed marketId,
@@ -33,8 +33,8 @@ interface IAssociateDebtModule {
      * @param poolId The id of the pool associated to the target market.
      * @param collateralType The address of the collateral type that acts as collateral in the corresponding pool.
      * @param accountId The id of the account whose debt is being associated.
-     * @param amount The amount of debt being associated with the specified account.
-     * @returns The updated debt of the position.
+     * @param amount The amount of debt being associated with the specified account, denominated with 18 decimals of precision.
+     * @returns The updated debt of the position, denominated with 18 decimals of precision.
      */
     function associateDebt(
         uint128 marketId,

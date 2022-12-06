@@ -157,6 +157,7 @@ contract RewardsManagerModule is IRewardsManagerModule {
             reward
         );
         vault.rewards[rewardId].actorInfo[accountId].pendingSendD18 = 0;
+
         emit RewardsClaimed(
             accountId,
             poolId,

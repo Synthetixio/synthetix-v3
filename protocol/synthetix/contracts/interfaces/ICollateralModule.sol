@@ -74,9 +74,9 @@ interface ICollateralModule {
      * @notice Returns the total values pertaining to account `accountId` for `collateralType`.
      * @param accountId The id of the account whose collateral is being queried.
      * @param collateralType The address of the collateral type whose amount is being queried.
-     * @returns totalDeposited The total collateral deposited in the account.
-     * @returns totalAssigned The amount of collateral in the account that is delegated to pools.
-     * @returns totalLocked THe amount of collateral in the account that cannot currently be un-delegated from a pool.
+     * @returns totalDeposited The total collateral deposited in the account, denominated with 18 decimals of precision.
+     * @returns totalAssigned The amount of collateral in the account that is delegated to pools, denominated with 18 decimals of precision.
+     * @returns totalLocked THe amount of collateral in the account that cannot currently be un-delegated from a pool, denominated with 18 decimals of precision.
      */
     function getAccountCollateral(uint128 accountId, address collateralType)
         external
@@ -91,7 +91,7 @@ interface ICollateralModule {
      * @notice Returns the amount of collateral of type `collateralType` deposited with account `accountId` that can be withdrawn or delegated to pools.
      * @param accountId The id of the account whose collateral is being queried.
      * @param collateralType The address of the collateral type whose amount is being queried.
-     * @returns The amount of collateral that is available for withdrawal or delegation.
+     * @returns The amount of collateral that is available for withdrawal or delegation, denominated with 18 decimals of precision.
      */
     function getAccountAvailableCollateral(uint128 accountId, address collateralType)
         external
@@ -118,7 +118,7 @@ interface ICollateralModule {
      * @dev There is currently no benefit to calling this function. it is simply for allowing pre-created accounts to have locks on them if your protocol requires it.
      * @param accountId The id of the account for which a lock is to be created.
      * @param collateralType The address of the collateral type for which the lock will be created.
-     * @param amount The amount of collateral tokens to wrap in the lock being created.
+     * @param amount The amount of collateral tokens to wrap in the lock being created, denominated with 18 decimals of precision.
      * @param expireTimestamp The date in which the lock will become clearable.
      */
     function createLock(

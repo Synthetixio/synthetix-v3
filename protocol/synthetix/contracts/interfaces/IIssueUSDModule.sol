@@ -10,7 +10,7 @@ interface IIssueUSDModule {
      * @param accountId The id of the account for which USD was emitted.
      * @param poolId The id of the pool whose collateral was used to emit the USD.
      * @param collateralType The address of the collateral that is backing up the emitted USD.
-     * @param amount The amount of USD emitted.
+     * @param amount The amount of USD emitted, denominated with 18 decimals of precision.
      * @param sender The address that triggered the operation.
      */
     event UsdMinted(
@@ -26,7 +26,7 @@ interface IIssueUSDModule {
      * @param accountId The id of the account for which USD was burnt.
      * @param poolId The id of the pool whose collateral was used to emit the USD.
      * @param collateralType The address of the collateral that was backing up the emitted USD.
-     * @param amount The amount of USD burnt.
+     * @param amount The amount of USD burnt, denominated with 18 decimals of precision.
      * @param sender The address that triggered the operation.
      */
     event UsdBurned(
@@ -42,7 +42,7 @@ interface IIssueUSDModule {
      * @param accountId The id of the account that is minting USD.
      * @param poolId The id of the pool whose collateral will be used to back up the mint.
      * @param collateralType The address of the collateral that will be used to back up the mint.
-     * @param amount The amount of USD to be minted.
+     * @param amount The amount of USD to be minted, denominated with 18 decimals of precision.
      *
      * Requirements:
      *
@@ -63,7 +63,7 @@ interface IIssueUSDModule {
      * @param accountId The id of the account that is burning USD.
      * @param poolId The id of the pool whose collateral was used to back up the USD.
      * @param collateralType The address of the collateral that was used to back up the USD.
-     * @param amount The amount of USD to be burnt.
+     * @param amount The amount of USD to be burnt, denominated with 18 decimals of precision.
      *
      * Requirements:
      *

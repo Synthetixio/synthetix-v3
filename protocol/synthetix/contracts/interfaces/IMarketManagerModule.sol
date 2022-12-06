@@ -21,7 +21,7 @@ interface IMarketManagerModule {
      * @notice Emitted when a market deposits USD in the system.
      * @param marketId The id of the market that deposited USD in the system.
      * @param target The address of the account that provided the USD in the deposit.
-     * @param amount The amount of USD deposited in the system.
+     * @param amount The amount of USD deposited in the system, denominated with 18 decimals of precision.
      * @param sender The address of the account that triggered the deposit.
      */
     event MarketUsdDeposited(
@@ -35,7 +35,7 @@ interface IMarketManagerModule {
      * @notice Emitted when a market withdraws USD from the system.
      * @param marketId The id of the market that withdrew USD from the system.
      * @param target The address of the account that received the USD in the withdrawal.
-     * @param amount The amount of USD withdrew from the system.
+     * @param amount The amount of USD withdrew from the system, denominated with 18 decimals of precision.
      * @param sender The address of the account that triggered the withdrawal.
      */
     event MarketUsdWithdrawn(
@@ -59,9 +59,13 @@ interface IMarketManagerModule {
      * @dev See `IMarket`.
      * @param marketId The id of the market in which USD will be deposited.
      * @param target The address of the account on who's behalf the deposit will be made.
-     * @param amount The amount of USD to be deposited.
+     * @param amount The amount of USD to be deposited, denominated with 18 decimals of precision.
      */
-    function depositMarketUsd(uint128 marketId, address target, uint256 amount) external;
+    function depositMarketUsd(
+        uint128 marketId,
+        address target,
+        uint256 amount
+    ) external;
 
     /**
      * @notice Allows an external market connected to the system to withdraw USD from the system.
@@ -69,42 +73,46 @@ interface IMarketManagerModule {
      * @dev See `IMarket`.
      * @param marketId The id of the market from which USD will be withdrawn.
      * @param target The address of the account that will receive the withdrawn USD.
-     * @param amount The amount of USD to be withdraw.
+     * @param amount The amount of USD to be withdraw, denominated with 18 decimals of precision.
      */
-    function withdrawMarketUsd(uint128 marketId, address target, uint256 amount) external;
+    function withdrawMarketUsd(
+        uint128 marketId,
+        address target,
+        uint256 amount
+    ) external;
 
     /**
      * @notice Returns the total withdrawable USD amount for the specified market.
      * @param marketId The id of the market whose withdrawable USD amount is being queried.
-     * @returns The total amount of USD that the market could withdraw at the time of the query.
+     * @returns The total amount of USD that the market could withdraw at the time of the query, denominated with 18 decimals of precision.
      */
     function getWithdrawableUsd(uint128 marketId) external view returns (uint256);
 
     /**
      * @notice Returns the net issuance of the specified market (USD withdrawn - USD deposited).
      * @param marketId The id of the market whose net issuance is being queried.
-     * @returns The net issuance of the market.
+     * @returns The net issuance of the market, denominated with 18 decimals of precision.
      */
     function getMarketNetIssuance(uint128 marketId) external view returns (int128);
 
     /**
      * @notice Returns the reported debt of the specified market.
      * @param marketId The if of the market whose reported debt is being queried.
-     * @returns The market's reported debt.
+     * @returns The market's reported debt, denominated with 18 decimals of precision.
      */
     function getMarketReportedDebt(uint128 marketId) external view returns (uint256);
 
     /**
      * @notice Returns the total debt of the specified market.
      * @param marketId The id of the market whose debt is being queried.
-     * @returns The total debt of the market.
+     * @returns The total debt of the market, denominated with 18 decimals of precision.
      */
     function getMarketTotalDebt(uint128 marketId) external view returns (int256);
 
     /**
      * @notice Returns the total collateral for the specified market.
      * @param marketId The id of the market whose collateral is being queried.
-     * @returns The market's total collateral.
+     * @returns The market's total collateral, denominated with 18 decimals of precision.
      */
     function getMarketCollateral(uint128 marketId) external view returns (uint256);
 
@@ -112,7 +120,7 @@ interface IMarketManagerModule {
      * @notice Returns the value per share of the debt of the specified market.
      * @dev This is not a view function, and actually updates the entire debt distribution chain.
      * @param marketId The id of the market whose debt per share is being queried.
-     * @returns The market's debt per share value.
+     * @returns The market's debt per share value, denominated with 18 decimals of precision.
      */
     function getMarketDebtPerShare(uint128 marketId) external returns (int256);
 
