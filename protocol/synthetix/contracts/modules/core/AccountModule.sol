@@ -23,9 +23,15 @@ contract AccountModule is IAccountModule {
 
     bytes32 private constant _ACCOUNT_SYSTEM = "accountNft";
 
+    /**
+     * @dev Thrown when the account interacting with the system is expected to be the associated account token, but is not.
+     */
     error OnlyAccountTokenProxy(address origin);
+
+    /**
+     * @dev Thrown when an account attempts to renounce a permission that it didn't have.
+     */
     error PermissionNotGranted(uint128 accountId, bytes32 permission, address user);
-    error InvalidPermission(bytes32 permission);
 
     /**
      * @inheritdoc IAccountModule
@@ -62,7 +68,7 @@ contract AccountModule is IAccountModule {
 
         Account.create(requestedAccountId, msg.sender);
 
-        emit AccountCreated(msg.sender, requestedAccountId);
+        emit AccountCreated(requestedAccountId, msg.sender);
     }
 
     /**
@@ -174,7 +180,7 @@ contract AccountModule is IAccountModule {
             permission != AccountRBAC._MINT_PERMISSION &&
             permission != AccountRBAC._ADMIN_PERMISSION
         ) {
-            revert InvalidPermission(permission);
+            revert Account.InvalidPermission(permission);
         }
     }
 }

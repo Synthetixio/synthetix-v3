@@ -31,7 +31,14 @@ contract MarketManagerModule is IMarketManagerModule {
     bytes32 private constant _USD_TOKEN = "USDToken";
     bytes32 private constant _MARKET_FEATURE_FLAG = "registerMarket";
 
-    error NotEnoughLiquidity(uint128 marketId, uint amount);
+    /**
+     * @dev Thrown when a market does not have enough liquidity for a withdrawal.
+     */
+    error NotEnoughLiquidity(uint128 marketId, uint256 amount);
+
+    /**
+     * @dev Thrown when an attempt to register a market that does not conform to the IMarket interface is made.
+     */
     error IncorrectMarketInterface(address market);
 
     /**
@@ -54,7 +61,7 @@ contract MarketManagerModule is IMarketManagerModule {
     /**
      * @inheritdoc IMarketManagerModule
      */
-    function getWithdrawableUsd(uint128 marketId) public view override returns (uint) {
+    function getWithdrawableUsd(uint128 marketId) public view override returns (uint256) {
         return
             Market.load(marketId).creditCapacityD18 +
             Market.load(marketId).getDepositedCollateralValue();
@@ -70,28 +77,28 @@ contract MarketManagerModule is IMarketManagerModule {
     /**
      * @inheritdoc IMarketManagerModule
      */
-    function getMarketReportedDebt(uint128 marketId) external view override returns (uint) {
+    function getMarketReportedDebt(uint128 marketId) external view override returns (uint256) {
         return Market.load(marketId).getReportedDebt();
     }
 
     /**
      * @inheritdoc IMarketManagerModule
      */
-    function getMarketCollateral(uint128 marketId) external view override returns (uint) {
+    function getMarketCollateral(uint128 marketId) external view override returns (uint256) {
         return Market.load(marketId).poolsDebtDistribution.totalSharesD18;
     }
 
     /**
      * @inheritdoc IMarketManagerModule
      */
-    function getMarketTotalDebt(uint128 marketId) external view override returns (int) {
+    function getMarketTotalDebt(uint128 marketId) external view override returns (int256) {
         return Market.load(marketId).totalDebt();
     }
 
     /**
      * @inheritdoc IMarketManagerModule
      */
-    function getMarketDebtPerShare(uint128 marketId) external override returns (int) {
+    function getMarketDebtPerShare(uint128 marketId) external override returns (int256) {
         Market.Data storage market = Market.load(marketId);
 
         market.distributeDebtToPools(999999999);
@@ -109,7 +116,7 @@ contract MarketManagerModule is IMarketManagerModule {
     /**
      * @inheritdoc IMarketManagerModule
      */
-    function depositMarketUsd(uint128 marketId, address target, uint amount) external override {
+    function depositMarketUsd(uint128 marketId, address target, uint256 amount) external override {
         Market.Data storage market = Market.load(marketId);
 
         // Call must come from the market itself.
@@ -134,7 +141,7 @@ contract MarketManagerModule is IMarketManagerModule {
     /**
      * @inheritdoc IMarketManagerModule
      */
-    function withdrawMarketUsd(uint128 marketId, address target, uint amount) external override {
+    function withdrawMarketUsd(uint128 marketId, address target, uint256 amount) external override {
         Market.Data storage marketData = Market.load(marketId);
 
         // Call must come from the market itself.
