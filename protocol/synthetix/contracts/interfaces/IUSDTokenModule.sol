@@ -8,16 +8,26 @@ import "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
  */
 interface IUSDTokenModule is ITokenModule {
     /**
-     * @notice Allows the core system to burn stablecoins with transfer allowance.
+     * @notice Allows the core system to burn stablecoins held by the `from` address, provided that it has given allowance to `spender`.
+     * @param from The address that holds the tokens to be burnt.
+     * @param spender The address to which the holder has given allowance to.
+     * @param amount The amount of tokens to be burnt.
      */
-    function burnWithAllowance(address from, address spender, uint amount) external;
+    function burnWithAllowance(
+        address from,
+        address spender,
+        uint256 amount
+    ) external;
 
     /**
      * @notice Allows users to transfer tokens cross-chain using CCIP. This is disabled until _CCIP_CHAINLINK_SEND is set in UtilsModule. This is currently included for testing purposes. Functionality will change, including fee collection, as CCIP continues development.
+     * @param destChainId The id of the chain where tokens are to be transferred to.
+     * @param to The destination address in the target chain.
+     * @param amount The amount of tokens to be transferred.
      */
     function transferCrossChain(
-        uint destChainId,
-        address,
-        uint amount
-    ) external returns (uint feesPaid);
+        uint256 destChainId,
+        address to,
+        uint256 amount
+    ) external returns (uint256 feesPaid);
 }

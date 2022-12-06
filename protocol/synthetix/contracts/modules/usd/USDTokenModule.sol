@@ -15,7 +15,7 @@ import "@synthetixio/core-modules/contracts/storage/AssociatedSystem.sol";
 contract USDTokenModule is ERC20, InitializableMixin, IUSDTokenModule {
     using AssociatedSystem for AssociatedSystem.Data;
 
-    uint private constant _TRANSFER_GAS_LIMIT = 100000;
+    uint256 private constant _TRANSFER_GAS_LIMIT = 100000;
 
     bytes32 private constant _CCIP_CHAINLINK_SEND = "ccipChainlinkSend";
     bytes32 private constant _CCIP_CHAINLINK_RECV = "ccipChainlinkRecv";
@@ -50,7 +50,7 @@ contract USDTokenModule is ERC20, InitializableMixin, IUSDTokenModule {
     /**
      * @dev Allows the core system and CCIP to mint tokens.
      */
-    function mint(address target, uint amount) external override {
+    function mint(address target, uint256 amount) external override {
         if (
             msg.sender != OwnableStorage.getOwner() &&
             msg.sender != AssociatedSystem.load(_CCIP_CHAINLINK_TOKEN_POOL).proxy
@@ -64,7 +64,7 @@ contract USDTokenModule is ERC20, InitializableMixin, IUSDTokenModule {
     /**
      * @dev Allows the core system and CCIP to burn tokens.
      */
-    function burn(address target, uint amount) external override {
+    function burn(address target, uint256 amount) external override {
         if (
             msg.sender != OwnableStorage.getOwner() &&
             msg.sender != AssociatedSystem.load(_CCIP_CHAINLINK_TOKEN_POOL).proxy
@@ -78,7 +78,11 @@ contract USDTokenModule is ERC20, InitializableMixin, IUSDTokenModule {
     /**
      * @inheritdoc IUSDTokenModule
      */
-    function burnWithAllowance(address from, address spender, uint amount) external {
+    function burnWithAllowance(
+        address from,
+        address spender,
+        uint256 amount
+    ) external {
         OwnableStorage.onlyOwner();
 
         ERC20Storage.Data storage store = ERC20Storage.load();
@@ -86,7 +90,9 @@ contract USDTokenModule is ERC20, InitializableMixin, IUSDTokenModule {
         if (amount < store.allowance[from][spender]) {
             revert InsufficientAllowance(amount, store.allowance[from][spender]);
         }
+
         store.allowance[from][spender] -= amount;
+
         _burn(from, amount);
     }
 
@@ -94,16 +100,16 @@ contract USDTokenModule is ERC20, InitializableMixin, IUSDTokenModule {
      * @inheritdoc IUSDTokenModule
      */
     function transferCrossChain(
-        uint destChainId,
+        uint256 destChainId,
         address to,
-        uint amount
-    ) external returns (uint feesPaid) {
+        uint256 amount
+    ) external returns (uint256 feesPaid) {
         AssociatedSystem.load(_CCIP_CHAINLINK_SEND).expectKind(AssociatedSystem.KIND_UNMANAGED);
 
         IERC20[] memory tokens = new IERC20[](1);
         tokens[0] = IERC20(address(this));
 
-        uint[] memory amounts = new uint[](1);
+        uint256[] memory amounts = new uint256[](1);
         amounts[0] = amount;
 
         IEVM2AnySubscriptionOnRampRouterInterface(AssociatedSystem.load(_CCIP_CHAINLINK_SEND).proxy)
@@ -124,7 +130,11 @@ contract USDTokenModule is ERC20, InitializableMixin, IUSDTokenModule {
     /**
      * @dev Included to satisfy ITokenModule inheritance.
      */
-    function setAllowance(address from, address spender, uint amount) external override {
+    function setAllowance(
+        address from,
+        address spender,
+        uint256 amount
+    ) external override {
         OwnableStorage.onlyOwner();
         ERC20Storage.load().allowance[from][spender] = amount;
     }
