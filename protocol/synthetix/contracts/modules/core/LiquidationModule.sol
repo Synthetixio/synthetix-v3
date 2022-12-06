@@ -90,7 +90,7 @@ contract LiquidationModule is ILiquidationModule {
             revert MustBeVaultLiquidated();
         }
 
-        // This will clear the user's account the same way as if they had unstaked normally
+        // This will clear the user's account the same way as if they had withdrawn normally
         epoch.updateAccountPosition(accountId, 0, 0);
 
         // Distribute the liquidated collateral among other positions in the vault, minus the reward amount

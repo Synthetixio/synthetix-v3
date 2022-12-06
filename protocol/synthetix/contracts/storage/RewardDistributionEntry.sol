@@ -25,7 +25,7 @@ library RewardDistributionEntry {
         /**
          * @dev Date at which the entry's rewards will begin to be claimable.
          *
-         * Note: Set to <= block.timestamp to distribute immediately to currently staked users.
+         * Note: Set to <= block.timestamp to distribute immediately to currently participating users.
          */
         uint64 start;
         /**

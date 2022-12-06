@@ -125,7 +125,7 @@ library Market {
         /**
          * @dev Array of entries of market provided collateral.
          *
-         * Markets may obtain additional liquidity, beyond that coming from stakers, by providing their own collateral.
+         * Markets may obtain additional liquidity, beyond that coming from depositors, by providing their own collateral.
          *
          */
         DepositedCollateral[] depositedCollateral;
@@ -198,7 +198,7 @@ library Market {
     /**
      * @dev Returns the USD value for the total amount of collateral provided by the market itself.
      *
-     * Note: This is not credit capacity provided by stakers through pools.
+     * Note: This is not credit capacity provided by depositors through pools.
      */
     function getDepositedCollateralValue(Data storage self) internal view returns (uint) {
         uint totalDepositedCollateralValueD18 = 0;

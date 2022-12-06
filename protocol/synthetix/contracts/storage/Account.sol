@@ -63,7 +63,7 @@ library Account {
         totalAssignedD18 = getAssignedCollateral(self, collateralType);
         totalDepositedD18 = totalAssignedD18 + self.collaterals[collateralType].availableAmountD18;
         totalLockedD18 = self.collaterals[collateralType].getTotalLocked();
-        //totalEscrowed = _getLockedEscrow(stakedCollateral.escrow);
+        //totalEscrowed = _getLockedEscrow(depositedCollateral.escrow);
 
         return (totalDepositedD18, totalAssignedD18, totalLockedD18); //, totalEscrowed);
     }
