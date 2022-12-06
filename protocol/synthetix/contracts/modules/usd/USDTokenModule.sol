@@ -78,11 +78,7 @@ contract USDTokenModule is ERC20, InitializableMixin, IUSDTokenModule {
     /**
      * @inheritdoc IUSDTokenModule
      */
-    function burnWithAllowance(
-        address from,
-        address spender,
-        uint256 amount
-    ) external {
+    function burnWithAllowance(address from, address spender, uint256 amount) external {
         OwnableStorage.onlyOwner();
 
         ERC20Storage.Data storage store = ERC20Storage.load();
@@ -130,11 +126,7 @@ contract USDTokenModule is ERC20, InitializableMixin, IUSDTokenModule {
     /**
      * @dev Included to satisfy ITokenModule inheritance.
      */
-    function setAllowance(
-        address from,
-        address spender,
-        uint256 amount
-    ) external override {
+    function setAllowance(address from, address spender, uint256 amount) external override {
         OwnableStorage.onlyOwner();
         ERC20Storage.load().allowance[from][spender] = amount;
     }

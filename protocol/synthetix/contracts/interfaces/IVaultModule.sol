@@ -138,9 +138,10 @@ interface IVaultModule {
      * @param collateralType The address of the collateral of the associated vault.
      * @returns The collateral of the vault, denominated with 18 decimals of precision.
      */
-    function getVaultCollateral(uint128 poolId, address collateralType)
-        external
-        returns (uint256 collateralAmount, uint256 collateralValue);
+    function getVaultCollateral(
+        uint128 poolId,
+        address collateralType
+    ) external returns (uint256 collateralAmount, uint256 collateralValue);
 
     /**
      * @notice Returns the collateralization ratio of the vault. If debt is negative, this function will return 0.
@@ -150,7 +151,8 @@ interface IVaultModule {
      * @param collateralType The address of the collateral of the associated vault.
      * @returns The collateralization ratio of the vault, denominated with 18 decimals of precision.
      */
-    function getVaultCollateralRatio(uint128 poolId, address collateralType)
-        external
-        returns (uint256);
+    function getVaultCollateralRatio(
+        uint128 poolId,
+        address collateralType
+    ) external returns (uint256);
 }

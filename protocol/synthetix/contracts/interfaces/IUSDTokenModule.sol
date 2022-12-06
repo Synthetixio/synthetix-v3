@@ -13,11 +13,7 @@ interface IUSDTokenModule is ITokenModule {
      * @param spender The address to which the holder has given allowance to.
      * @param amount The amount of tokens to be burnt, denominated with 18 decimals of precision.
      */
-    function burnWithAllowance(
-        address from,
-        address spender,
-        uint256 amount
-    ) external;
+    function burnWithAllowance(address from, address spender, uint256 amount) external;
 
     /**
      * @notice Allows users to transfer tokens cross-chain using CCIP. This is disabled until _CCIP_CHAINLINK_SEND is set in UtilsModule. This is currently included for testing purposes. Functionality will change, including fee collection, as CCIP continues development.
