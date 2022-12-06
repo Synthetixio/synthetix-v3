@@ -60,10 +60,9 @@ interface IAccountModule {
      * @param accountId The id of the account whose permissions are being retrieved.
      * @return An array of AccountPermission objects describing the permissions granted to the account.
      */
-    function getAccountPermissions(uint128 accountId)
-        external
-        view
-        returns (AccountPermissions[] memory);
+    function getAccountPermissions(
+        uint128 accountId
+    ) external view returns (AccountPermissions[] memory);
 
     /**
      * @notice Mints an account token with id `requestedAccountId` to `msg.sender`.
@@ -101,11 +100,7 @@ interface IAccountModule {
      *
      * Emits a {PermissionGranted} event.
      */
-    function grantPermission(
-        uint128 accountId,
-        bytes32 permission,
-        address user
-    ) external;
+    function grantPermission(uint128 accountId, bytes32 permission, address user) external;
 
     /**
      * @notice Revokes `permission` from `user` for account `accountId`.
@@ -119,11 +114,7 @@ interface IAccountModule {
      *
      * Emits a {PermissionRevoked} event.
      */
-    function revokePermission(
-        uint128 accountId,
-        bytes32 permission,
-        address user
-    ) external;
+    function revokePermission(uint128 accountId, bytes32 permission, address user) external;
 
     /**
      * @notice Revokes `permission` from `msg.sender` for account `accountId`.
