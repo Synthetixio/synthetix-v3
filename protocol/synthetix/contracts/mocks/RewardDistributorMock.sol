@@ -12,11 +12,7 @@ contract RewardDistributorMock is IRewardDistributor {
     address private _token;
     string private _name;
 
-    function initialize(
-        address rewardManager,
-        address token_,
-        string memory name_
-    ) public {
+    function initialize(address rewardManager, address token_, string memory name_) public {
         _rewardManager = rewardManager;
         _token = token_;
         _name = name_;
@@ -64,13 +60,9 @@ contract RewardDistributorMock is IRewardDistributor {
     /**
      * @dev See {IERC165-supportsInterface}.
      */
-    function supportsInterface(bytes4 interfaceId)
-        public
-        view
-        virtual
-        override(IERC165)
-        returns (bool)
-    {
+    function supportsInterface(
+        bytes4 interfaceId
+    ) public view virtual override(IERC165) returns (bool) {
         return
             interfaceId == type(IRewardDistributor).interfaceId ||
             interfaceId == this.supportsInterface.selector;
