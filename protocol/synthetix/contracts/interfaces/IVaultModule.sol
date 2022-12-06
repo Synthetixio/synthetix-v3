@@ -71,7 +71,7 @@ interface IVaultModule {
      * @param accountId The id of the account being queried.
      * @param poolId The id of the pool in which the account's position is held.
      * @param collateralType The address of the collateral used in the queried position.
-     * @return The amount of USD debt held by the position, denominated with 18 decimals of precision.
+     * @return The amount of debt held by the position, denominated with 18 decimals of precision.
      */
     function getPositionDebt(
         uint128 accountId,
