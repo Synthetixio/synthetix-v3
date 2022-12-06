@@ -67,7 +67,7 @@ interface IVaultModule {
     /**
      * @notice Returns the debt of the specified staking position. Credit is expressed as negative debt.
      * @dev This is not a view function, and actually updates the entire debt distribution chain.
-     * @dev To call this externally as a view function, use `staticall`.
+     * @dev Call this function using `callStatic` to treat it as a view function.
      * @param accountId The id of the account being queried.
      * @param poolId The id of the pool in which the account's position is held.
      * @param collateralType The address of the collateral used in the queried position.
