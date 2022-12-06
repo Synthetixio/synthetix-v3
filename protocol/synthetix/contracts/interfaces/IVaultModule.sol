@@ -122,7 +122,7 @@ interface IVaultModule {
     /**
      * @notice Returns the total debt (or credit) that the vault is responsible for. Credit is expressed as negative debt.
      * @dev This is not a view function, and actually updates the entire debt distribution chain.
-     * @dev To call this externally as a view function, use `staticall`.
+     * @dev Call this function using `callStatic` to treat it as a view function.
      * @param poolId The id of the pool that owns the vault whose debt is being queried.
      * @param collateralType The address of the collateral of the associated vault.
      * @return The overall debt of the vault, denominated with 18 decimals of precision.
