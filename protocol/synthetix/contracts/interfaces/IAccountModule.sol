@@ -15,7 +15,7 @@ interface IAccountModule {
 
     /**
      * @notice Emitted when `user` is granted `permission` by `sender` for account `accountId`.
-     * @param accountId The Id of the account that granted the permission.
+     * @param accountId The id of the account that granted the permission.
      * @param permission The bytes32 identifier of the permission.
      * @param user The target address to whom the permission was granted.
      * @param sender The Address that granted the permission.
