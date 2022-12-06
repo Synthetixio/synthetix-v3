@@ -9,7 +9,7 @@ import "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
 interface IUSDTokenModule is ITokenModule {
     /**
      * @notice Allows the core system to burn stablecoins held by the `from` address, provided that it has given allowance to `spender`.
-     * @param from The address that holds the tokens to be burnt.
+     * @param from The address that holds the snxUSD to be burned.
      * @param spender The address to which the holder has given allowance to.
      * @param amount The amount of snxUSD to be burned, denominated with 18 decimals of precision.
      */
