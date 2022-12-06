@@ -56,4 +56,15 @@ contract RewardDistributorMock is IRewardDistributor {
             duration
         );
     }
+
+    /**
+     * @dev See {IERC165-supportsInterface}.
+     */
+    function supportsInterface(
+        bytes4 interfaceId
+    ) public view virtual override(IERC165) returns (bool) {
+        return
+            interfaceId == type(IRewardDistributor).interfaceId ||
+            interfaceId == this.supportsInterface.selector;
+    }
 }

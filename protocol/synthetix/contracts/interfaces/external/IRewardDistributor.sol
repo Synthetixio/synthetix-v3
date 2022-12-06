@@ -1,8 +1,10 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import "@synthetixio/core-contracts/contracts/interfaces/IERC165.sol";
+
 /// @title Interface a reward distributor.
-interface IRewardDistributor {
+interface IRewardDistributor is IERC165 {
     /// @notice Returns a human-readable name for the reward distributor
     function name() external returns (string memory);
 

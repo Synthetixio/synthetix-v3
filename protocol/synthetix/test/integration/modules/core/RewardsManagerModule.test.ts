@@ -73,131 +73,141 @@ describe('RewardsManagerModule', function () {
       );
     });
 
-    describe('instantaneous', () => {
-      describe('in the past', () => {
+    it('reverts with invalid reward distributer', async () => {
+      await assertRevert(
+        systems()
+          .Core.connect(owner)
+          .registerRewardsDistributor(poolId, collateralAddress(), await owner.getAddress())
+      );
+    });
+
+    describe('distributeRewards', () => {
+      describe('only rewards distributor can call distributeRewards', () => {
         before(restore);
-        before(async () => {
-          startTime = await getTime(provider());
 
-          // distribute rewards multiple times to see what happens
-          // if many distributions happen in the past
-          await RewardDistributor.connect(owner).distributeRewards(
-            poolId,
-            collateralAddress(),
-            rewardAmount,
-            0, // timestamp
-            0
-          );
-
-          startTime = await getTime(provider());
-
-          await RewardDistributor.connect(owner).distributeRewards(
-            poolId,
-            collateralAddress(),
-            rewardAmount,
-            1, // timestamp
-            0
-          );
-
-          startTime = await getTime(provider());
-
-          await RewardDistributor.connect(owner).distributeRewards(
-            poolId,
-            collateralAddress(),
-            rewardAmount,
-            1, // timestamp
-            0
-          );
-
-          // one distribution in the future to ensure switching
-          // from past to future works as expected
-          await RewardDistributor.connect(owner).distributeRewards(
-            poolId,
-            collateralAddress(),
-            rewardAmount,
-            startTime + 10000000, // timestamp
-            0
+        it('system distributeRewards reverts if is called from other than the distributor', async () => {
+          await assertRevert(
+            systems().Core.connect(owner).distributeRewards(
+              poolId,
+              collateralAddress(),
+              rewardAmount,
+              0, // timestamp
+              0
+            ),
+            'InvalidParameter("poolId-collateralType-distributor", "reward is not registered")'
           );
         });
 
-        it('is distributed', async () => {
+        it('reward is not distributed', async () => {
           const [rewards] = await systems().Core.callStatic.getClaimableRewards(
             poolId,
             collateralAddress(),
             accountId
           );
-          // should have received all 3 past rewards
-          assertBn.equal(rewards[0], rewardAmount.mul(3));
+          assertBn.equal(rewards[0], 0);
         });
       });
 
-      describe('in the future', () => {
-        before(restore);
-        before(async () => {
-          startTime = await getTime(provider());
-
-          await RewardDistributor.connect(owner).distributeRewards(
-            poolId,
-            collateralAddress(),
-            rewardAmount,
-            startTime + 10, // timestamp
-            0
-          );
-
-          startTime = await getTime(provider());
-
-          // distribute one in the past to ensure switching from past to future works
-          await RewardDistributor.connect(owner).distributeRewards(
-            poolId,
-            collateralAddress(),
-            rewardAmount,
-            startTime - 10, // timestamp
-            0
-          );
-
-          await RewardDistributor.connect(owner).distributeRewards(
-            poolId,
-            collateralAddress(),
-            rewardAmount,
-            startTime + 30, // timestamp
-            0
-          );
-        });
-
-        it('is not distributed future yet', async () => {
-          const [rewards] = await systems().Core.callStatic.getClaimableRewards(
-            poolId,
-            collateralAddress(),
-            accountId
-          );
-
-          // only one reward should have been distributed
-          assertBn.equal(rewards[0], rewardAmount);
-        });
-
-        it('has no rate', async () => {
-          const rate = await systems().Core.getRewardRate(
-            poolId,
-            collateralAddress(),
-            RewardDistributor.address
-          );
-
-          assertBn.equal(rate, 0);
-        });
-
-        describe('after time passes', () => {
+      describe('instantaneous', () => {
+        describe('in the past', () => {
+          before(restore);
           before(async () => {
-            await fastForwardTo(startTime + 30, provider());
+            startTime = await getTime(provider());
+
+            // distribute rewards multiple times to see what happens
+            // if many distributions happen in the past
+            await RewardDistributor.connect(owner).distributeRewards(
+              poolId,
+              collateralAddress(),
+              rewardAmount,
+              0, // timestamp
+              0
+            );
+
+            startTime = await getTime(provider());
+
+            await RewardDistributor.connect(owner).distributeRewards(
+              poolId,
+              collateralAddress(),
+              rewardAmount,
+              1, // timestamp
+              0
+            );
+
+            startTime = await getTime(provider());
+
+            await RewardDistributor.connect(owner).distributeRewards(
+              poolId,
+              collateralAddress(),
+              rewardAmount,
+              1, // timestamp
+              0
+            );
+
+            // one distribution in the future to ensure switching
+            // from past to future works as expected
+            await RewardDistributor.connect(owner).distributeRewards(
+              poolId,
+              collateralAddress(),
+              rewardAmount,
+              startTime + 10000000, // timestamp
+              0
+            );
           });
 
           it('is distributed', async () => {
-            // should have received 2 distributions
             const [rewards] = await systems().Core.callStatic.getClaimableRewards(
               poolId,
               collateralAddress(),
               accountId
             );
-            assertBn.equal(rewards[0], rewardAmount.mul(2));
+            // should have received all 3 past rewards
+            assertBn.equal(rewards[0], rewardAmount.mul(3));
+          });
+        });
+
+        describe('in the future', () => {
+          before(restore);
+          before(async () => {
+            startTime = await getTime(provider());
+
+            await RewardDistributor.connect(owner).distributeRewards(
+              poolId,
+              collateralAddress(),
+              rewardAmount,
+              startTime + 10, // timestamp
+              0
+            );
+
+            startTime = await getTime(provider());
+
+            // distribute one in the past to ensure switching from past to future works
+            await RewardDistributor.connect(owner).distributeRewards(
+              poolId,
+              collateralAddress(),
+              rewardAmount,
+              startTime - 10, // timestamp
+              0
+            );
+
+            await RewardDistributor.connect(owner).distributeRewards(
+              poolId,
+              collateralAddress(),
+              rewardAmount,
+              startTime + 30, // timestamp
+              0
+            );
+          });
+
+          it('is not distributed future yet', async () => {
+            const [rewards] = await systems().Core.callStatic.getClaimableRewards(
+              poolId,
+              collateralAddress(),
+              accountId
+            );
+
+            // only one reward should have been distributed
+            assertBn.equal(rewards[0], rewardAmount);
           });
 
           it('has no rate', async () => {
@@ -209,101 +219,63 @@ describe('RewardsManagerModule', function () {
 
             assertBn.equal(rate, 0);
           });
-        });
-      });
-    });
 
-    describe('over time', () => {
-      describe('in the past', () => {
-        before(restore);
-        before(async () => {
-          await RewardDistributor.connect(owner).distributeRewards(
-            poolId,
-            collateralAddress(),
-            rewardAmount,
-            startTime - 100, // timestamp
-            100
-          );
+          describe('after time passes', () => {
+            before(async () => {
+              await fastForwardTo(startTime + 30, provider());
+            });
 
-          await RewardDistributor.connect(owner).distributeRewards(
-            poolId,
-            collateralAddress(),
-            rewardAmount,
-            startTime - 50, // timestamp
-            50
-          );
+            it('is distributed', async () => {
+              // should have received 2 distributions
+              const [rewards] = await systems().Core.callStatic.getClaimableRewards(
+                poolId,
+                collateralAddress(),
+                accountId
+              );
+              assertBn.equal(rewards[0], rewardAmount.mul(2));
+            });
 
-          // add one after to test behavior of future distribution
-          await RewardDistributor.connect(owner).distributeRewards(
-            poolId,
-            collateralAddress(),
-            rewardAmount,
-            startTime + 50, // timestamp
-            50
-          );
-        });
+            it('has no rate', async () => {
+              const rate = await systems().Core.getRewardRate(
+                poolId,
+                collateralAddress(),
+                RewardDistributor.address
+              );
 
-        it('is fully distributed', async () => {
-          const [rewards] = await systems().Core.callStatic.getClaimableRewards(
-            poolId,
-            collateralAddress(),
-            accountId
-          );
-          // should have received all 3 past rewards
-          assertBn.equal(rewards[0], rewardAmount.mul(2));
+              assertBn.equal(rate, 0);
+            });
+          });
         });
       });
 
-      describe('in the future', () => {
-        before(restore);
-        before(async () => {
-          startTime = await getTime(provider());
-
-          // this first one should never be received
-          await RewardDistributor.connect(owner).distributeRewards(
-            poolId,
-            collateralAddress(),
-            rewardAmount,
-            startTime + 200, // timestamp
-            200
-          );
-
-          startTime = await getTime(provider());
-
-          // should b e received immediately
-          await RewardDistributor.connect(owner).distributeRewards(
-            poolId,
-            collateralAddress(),
-            rewardAmount,
-            startTime - 50, // timestamp
-            10
-          );
-
-          startTime = await getTime(provider());
-
-          // add one after to test behavior of future distribution
-          await RewardDistributor.connect(owner).distributeRewards(
-            poolId,
-            collateralAddress(),
-            rewardAmount,
-            startTime + 100, // timestamp
-            100
-          );
-        });
-
-        it('does not distribute future', async () => {
-          const [rewards] = await systems().Core.callStatic.getClaimableRewards(
-            poolId,
-            collateralAddress(),
-            accountId
-          );
-          // should have received only the one past reward
-          assertBn.equal(rewards[0], rewardAmount);
-        });
-
-        describe('after time passes', () => {
+      describe('over time', () => {
+        describe('in the past', () => {
+          before(restore);
           before(async () => {
-            await fastForwardTo(startTime + 200, provider());
+            await RewardDistributor.connect(owner).distributeRewards(
+              poolId,
+              collateralAddress(),
+              rewardAmount,
+              startTime - 100, // timestamp
+              100
+            );
+
+            await RewardDistributor.connect(owner).distributeRewards(
+              poolId,
+              collateralAddress(),
+              rewardAmount,
+              startTime - 50, // timestamp
+              50
+            );
+
+            // add one after to test behavior of future distribution
+            await RewardDistributor.connect(owner).distributeRewards(
+              poolId,
+              collateralAddress(),
+              rewardAmount,
+              startTime + 50, // timestamp
+              50
+            );
           });
 
           it('is fully distributed', async () => {
@@ -312,117 +284,180 @@ describe('RewardsManagerModule', function () {
               collateralAddress(),
               accountId
             );
-            // should have received 2 of 3 past rewards
+            // should have received all 3 past rewards
             assertBn.equal(rewards[0], rewardAmount.mul(2));
           });
         });
-      });
 
-      describe('within duration', () => {
-        before(restore);
-        before(async () => {
-          startTime = await getTime(provider());
-
-          await RewardDistributor.connect(owner).distributeRewards(
-            poolId,
-            collateralAddress(),
-            rewardAmount,
-            startTime - 50, // timestamp
-            0
-          );
-
-          startTime = await getTime(provider());
-
-          await RewardDistributor.connect(owner).distributeRewards(
-            poolId,
-            collateralAddress(),
-            rewardAmount,
-            startTime - 50, // timestamp (time advances exactly 1 second due to block being mined)
-            100
-          );
-        });
-
-        it('distributes portion of rewards immediately', async () => {
-          const [rewards] = await systems().Core.callStatic.getClaimableRewards(
-            poolId,
-            collateralAddress(),
-            accountId
-          );
-          // should have received only the one past reward
-          // 51 because block advances by exactly 1 second due to mine
-          assertBn.equal(rewards[0], rewardAmount.add(rewardAmount.mul(51).div(100)));
-        });
-
-        describe('after time passes', () => {
+        describe('in the future', () => {
+          before(restore);
           before(async () => {
-            await fastForwardTo(startTime + 25, provider());
+            startTime = await getTime(provider());
+
+            // this first one should never be received
+            await RewardDistributor.connect(owner).distributeRewards(
+              poolId,
+              collateralAddress(),
+              rewardAmount,
+              startTime + 200, // timestamp
+              200
+            );
+
+            startTime = await getTime(provider());
+
+            // should b e received immediately
+            await RewardDistributor.connect(owner).distributeRewards(
+              poolId,
+              collateralAddress(),
+              rewardAmount,
+              startTime - 50, // timestamp
+              10
+            );
+
+            startTime = await getTime(provider());
+
+            // add one after to test behavior of future distribution
+            await RewardDistributor.connect(owner).distributeRewards(
+              poolId,
+              collateralAddress(),
+              rewardAmount,
+              startTime + 100, // timestamp
+              100
+            );
           });
 
-          it('distributes more portion of rewards', async () => {
+          it('does not distribute future', async () => {
             const [rewards] = await systems().Core.callStatic.getClaimableRewards(
               poolId,
               collateralAddress(),
               accountId
             );
-            // should have received only the one past reward + 1 second for simulate
-            assertBn.equal(rewards[0], rewardAmount.add(rewardAmount.mul(75).div(100)));
+            // should have received only the one past reward
+            assertBn.equal(rewards[0], rewardAmount);
           });
 
-          describe('new distribution', () => {
+          describe('after time passes', () => {
             before(async () => {
-              startTime = await getTime(provider());
-
-              await RewardDistributor.connect(owner).distributeRewards(
-                poolId,
-                collateralAddress(),
-                rewardAmount.mul(1000),
-                startTime - 110, // timestamp
-                200
-              );
+              await fastForwardTo(startTime + 200, provider());
             });
 
-            // this test is skipped for now because, among all
-            // the other tests, it does not behave as expected
-            it('distributes portion of rewards immediately', async () => {
+            it('is fully distributed', async () => {
               const [rewards] = await systems().Core.callStatic.getClaimableRewards(
                 poolId,
                 collateralAddress(),
                 accountId
               );
-              // should have received only the one past reward
-              assertBn.equal(
-                rewards[0],
-                rewardAmount
-                  .add(rewardAmount.mul(76).div(100))
-                  .add(rewardAmount.mul(1000).mul(111).div(200))
-              );
+              // should have received 2 of 3 past rewards
+              assertBn.equal(rewards[0], rewardAmount.mul(2));
+            });
+          });
+        });
+
+        describe('within duration', () => {
+          before(restore);
+          before(async () => {
+            startTime = await getTime(provider());
+
+            await RewardDistributor.connect(owner).distributeRewards(
+              poolId,
+              collateralAddress(),
+              rewardAmount,
+              startTime - 50, // timestamp
+              0
+            );
+
+            startTime = await getTime(provider());
+
+            await RewardDistributor.connect(owner).distributeRewards(
+              poolId,
+              collateralAddress(),
+              rewardAmount,
+              startTime - 50, // timestamp (time advances exactly 1 second due to block being mined)
+              100
+            );
+          });
+
+          it('distributes portion of rewards immediately', async () => {
+            const [rewards] = await systems().Core.callStatic.getClaimableRewards(
+              poolId,
+              collateralAddress(),
+              accountId
+            );
+            // should have received only the one past reward
+            // 51 because block advances by exactly 1 second due to mine
+            assertBn.equal(rewards[0], rewardAmount.add(rewardAmount.mul(51).div(100)));
+          });
+
+          describe('after time passes', () => {
+            before(async () => {
+              await fastForwardTo(startTime + 25, provider());
             });
 
-            describe('after more time', () => {
+            it('distributes more portion of rewards', async () => {
+              const [rewards] = await systems().Core.callStatic.getClaimableRewards(
+                poolId,
+                collateralAddress(),
+                accountId
+              );
+              // should have received only the one past reward + 1 second for simulate
+              assertBn.equal(rewards[0], rewardAmount.add(rewardAmount.mul(75).div(100)));
+            });
+
+            describe('new distribution', () => {
               before(async () => {
-                await fastForwardTo(startTime + 100, provider());
+                startTime = await getTime(provider());
+
+                await RewardDistributor.connect(owner).distributeRewards(
+                  poolId,
+                  collateralAddress(),
+                  rewardAmount.mul(1000),
+                  startTime - 110, // timestamp
+                  200
+                );
               });
 
-              it('distributes more portion of rewards', async () => {
+              // this test is skipped for now because, among all
+              // the other tests, it does not behave as expected
+              it('distributes portion of rewards immediately', async () => {
                 const [rewards] = await systems().Core.callStatic.getClaimableRewards(
                   poolId,
                   collateralAddress(),
                   accountId
                 );
                 // should have received only the one past reward
-                // +1 because block being mined by earlier txn
-                // +1 because the simulation adds an additional second
                 assertBn.equal(
                   rewards[0],
-                  rewardAmount.mul(1001).add(rewardAmount.mul(76).div(100))
+                  rewardAmount
+                    .add(rewardAmount.mul(76).div(100))
+                    .add(rewardAmount.mul(1000).mul(111).div(200))
                 );
+              });
+
+              describe('after more time', () => {
+                before(async () => {
+                  await fastForwardTo(startTime + 100, provider());
+                });
+
+                it('distributes more portion of rewards', async () => {
+                  const [rewards] = await systems().Core.callStatic.getClaimableRewards(
+                    poolId,
+                    collateralAddress(),
+                    accountId
+                  );
+                  // should have received only the one past reward
+                  // +1 because block being mined by earlier txn
+                  // +1 because the simulation adds an additional second
+                  assertBn.equal(
+                    rewards[0],
+                    rewardAmount.mul(1001).add(rewardAmount.mul(76).div(100))
+                  );
+                });
               });
             });
           });
         });
       });
     });
-
     describe('wallets joining and leaving', () => {});
   });
 
