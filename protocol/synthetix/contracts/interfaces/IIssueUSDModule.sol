@@ -7,7 +7,7 @@ pragma solidity ^0.8.0;
 interface IIssueUSDModule {
     /**
      * @notice Emitted when {sender} mints {amount} of snxUSD with the specified staking position.
-     * @param accountId The id of the account for which USD was emitted.
+     * @param accountId The id of the account for which snxUSD was emitted.
      * @param poolId The id of the pool whose collateral was used to emit the USD.
      * @param collateralType The address of the collateral that is backing up the emitted USD.
      * @param amount The amount of USD emitted, denominated with 18 decimals of precision.
