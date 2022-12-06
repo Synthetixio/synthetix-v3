@@ -45,7 +45,11 @@ interface ICollateralModule {
      *
      * Emits a {CollateralDeposited} event.
      */
-    function deposit(uint128 accountId, address collateralType, uint256 tokenAmount) external;
+    function deposit(
+        uint128 accountId,
+        address collateralType,
+        uint256 tokenAmount
+    ) external;
 
     /**
      * @notice Withdraws `amount` of collateral of type `collateralType` from account `accountId`.
@@ -60,7 +64,11 @@ interface ICollateralModule {
      * Emits a {CollateralWithdrawn} event.
      *
      */
-    function withdraw(uint128 accountId, address collateralType, uint256 tokenAmount) external;
+    function withdraw(
+        uint128 accountId,
+        address collateralType,
+        uint256 tokenAmount
+    ) external;
 
     /**
      * @notice Returns the total values pertaining to account `accountId` for `collateralType`.
@@ -70,17 +78,13 @@ interface ICollateralModule {
      * @returns totalAssigned The amount of collateral in the account that is delegated to pools.
      * @returns totalLocked THe amount of collateral in the account that cannot currently be un-delegated from a pool.
      */
-    function getAccountCollateral(
-        uint128 accountId,
-        address collateralType
-    )
+    function getAccountCollateral(uint128 accountId, address collateralType)
         external
         view
         returns (
             uint256 totalDeposited,
             uint256 totalAssigned,
             uint256 totalLocked
-            //uint totalEscrowed
         );
 
     /**
@@ -89,10 +93,10 @@ interface ICollateralModule {
      * @param collateralType The address of the collateral type whose amount is being queried.
      * @returns The amount of collateral that is available for withdrawal or delegation.
      */
-    function getAccountAvailableCollateral(
-        uint128 accountId,
-        address collateralType
-    ) external view returns (uint256);
+    function getAccountAvailableCollateral(uint128 accountId, address collateralType)
+        external
+        view
+        returns (uint256);
 
     /**
      * @notice Clean expired locks from locked collateral arrays for an account/collateral type. It includes offset and items to prevent gas exhaustion. If both, offset and items, are 0 it will traverse the whole array (unlimited).

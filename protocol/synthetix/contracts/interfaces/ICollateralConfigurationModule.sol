@@ -34,18 +34,20 @@ interface ICollateralConfigurationModule {
      * @param hideDisabled Wether to hide disabled collaterals or just return the full list of collaterals in the system.
      * @returns The list of collateral configuration objects set in the system.
      */
-    function getCollateralConfigurations(
-        bool hideDisabled
-    ) external view returns (CollateralConfiguration.Data[] memory collaterals);
+    function getCollateralConfigurations(bool hideDisabled)
+        external
+        view
+        returns (CollateralConfiguration.Data[] memory collaterals);
 
     /**
      * @notice Returns detailed information pertaining the specified collateral type.
      * @param collateralType The address for the collateral whose configuration is being queried.
-     * @returns The configuration object describing the given collateral.
+     * @returns collateral The configuration object describing the given collateral.
      */
-    function getCollateralConfiguration(
-        address collateralType
-    ) external view returns (CollateralConfiguration.Data memory collateral);
+    function getCollateralConfiguration(address collateralType)
+        external
+        view
+        returns (CollateralConfiguration.Data memory collateral);
 
     /**
      * @notice Returns the current value of a specified collateral type.

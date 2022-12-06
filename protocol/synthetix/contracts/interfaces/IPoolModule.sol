@@ -91,10 +91,12 @@ interface IPoolModule {
     /**
      * @notice Retrieves the MarketConfiguration of the specified pool.
      * @param poolId The id of the pool whose configuration is being queried.
+     * @returns markets The array of MarketConfiguration objects that describe the pool's configuration.
      */
-    function getPoolConfiguration(
-        uint128 poolId
-    ) external view returns (MarketConfiguration.Data[] memory markets);
+    function getPoolConfiguration(uint128 poolId)
+        external
+        view
+        returns (MarketConfiguration.Data[] memory markets);
 
     /**
      * @notice Allows the owner of the pool to set the pool's name.
