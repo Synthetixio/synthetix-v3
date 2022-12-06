@@ -2,13 +2,21 @@
 
 exports[`internal/dump.ts single contract with state variables, contracts and structs 1`] = `
 "// SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.11;
+pragma solidity 0.8.17;
 
 // @custom:artifact ExampleContract.sol:ExampleContract
 contract ExampleContract {
+    enum NodeType {
+        NONE,
+        REDUCER,
+        EXTERNAL,
+        CHAINLINK,
+        PYTH
+    }
     struct Data {
         address owner;
         mapping(address => uint128) permissions;
+        NodeType nodeType;
     }
     function load() internal pure returns (Data storage store) {
         bytes32 s = keccak256(abi.encode("ExampleContract"));
@@ -22,7 +30,7 @@ contract ExampleContract {
 
 exports[`internal/dump.ts smple-project contract with storage and interface 1`] = `
 "// SPDX-License-Identifier: UNLICENSED
-pragma solidity 0.8.11;
+pragma solidity 0.8.17;
 
 // @custom:artifact contracts/storage/GlobalStorage.sol:GlobalStorage
 contract GlobalStorage {

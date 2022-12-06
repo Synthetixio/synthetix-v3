@@ -9,7 +9,3 @@ export interface DeployedContractData {
   sourceName: string;
   contractFullyQualifiedName: string;
 }
-
-export interface DeploymentAbis {
-  [contractFullyQualifiedName: string]: ReadonlyArray<JsonFragment>;
-}

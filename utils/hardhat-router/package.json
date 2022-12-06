@@ -33,11 +33,13 @@
   },
   "peerDependencies": {
     "@nomiclabs/hardhat-ethers": "^2.0.0",
+    "@synthetixio/hardhat-storage": "*",
     "hardhat": "^2.9.0"
   },
   "dependencies": {
     "@synthetixio/core-utils": "*",
     "axios": "1.2.0",
+    "multimatch": "6.0.0",
     "mustache": "4.2.0",
     "solidity-ast": "0.4.26"
   },

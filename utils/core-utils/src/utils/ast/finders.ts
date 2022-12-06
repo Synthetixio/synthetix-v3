@@ -1,14 +1,14 @@
+import { parseFullyQualifiedName } from 'hardhat/utils/contract-names';
 import { ContractDefinition, SourceUnit, StructDefinition } from 'solidity-ast';
 import {
   Node,
-  YulNode,
   NodeType,
-  YulNodeType,
   NodeTypeMap,
+  YulNode,
+  YulNodeType,
   YulNodeTypeMap,
 } from 'solidity-ast/node';
 import { findAll as _findAll } from 'solidity-ast/utils';
-import { parseFullyQualifiedName } from 'hardhat/utils/contract-names';
 
 /**
  * Get all the contract definitions on the given node
@@ -35,6 +35,19 @@ export function findOne<T extends NodeType | YulNodeType>(
   for (const node of _findAll(nodeType, astNode)) {
     if (filterFn(node)) return node;
   }
+}
+
+// Helper function to find nodes as direct children in a SourceUnit,
+// Using this function you can avoid having to loop the whole tree when you know
+// where are you looking for stuff
+export function findChildren<T extends SourceUnit['nodes'][number]['nodeType']>(
+  sourceUnit: SourceUnit,
+  nodeType: T,
+  filterFn: (node: SourceUnit['nodes'][number]) => boolean = () => true
+) {
+  return sourceUnit.nodes.filter(
+    (node) => node.nodeType === nodeType && filterFn(node)
+  ) as NodeTypeMap[T][];
 }
 
 /**
@@ -272,15 +285,29 @@ export function findFunctionNodes(contractFullyQualifiedName: string, astNodes: 
   );
 }
 
-export function findImportedNodes(sourceName: string, allSourceUnits: SourceUnit[]): string[] {
+export function findImportsRecursive(sourceName: string, allSourceUnits: SourceUnit[]) {
+  const result = new Set<string>();
+  _addImportsRecursive(result, sourceName, allSourceUnits);
+  return Array.from(result);
+}
+
+// Find imports, but infinite recursion safe
+function _addImportsRecursive(
+  result: Set<string>,
+  sourceName: string,
+  allSourceUnits: SourceUnit[]
+) {
+  if (result.has(sourceName)) return;
+
+  result.add(sourceName);
+
   const sourceUnit = allSourceUnits.find((s) => s.absolutePath === sourceName)!;
 
   if (!sourceUnit) throw new Error(`Missing source unit for ${sourceName}`);
 
-  const importedSources = findAll(sourceUnit, 'ImportDirective').map((d) => d.absolutePath);
+  const importedSources = findChildren(sourceUnit, 'ImportDirective').map((d) => d.absolutePath);
 
-  return [
-    sourceName,
-    ...importedSources.flatMap((s) => findImportedNodes(s, allSourceUnits)),
-  ].flat();
+  for (const s of importedSources) {
+    _addImportsRecursive(result, s, allSourceUnits);
+  }
 }

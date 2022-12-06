@@ -30,13 +30,14 @@ export async function dumpStorage(
 
     const resultNode = clone(contractNode);
 
+    const enumDefinitions = findAll(contractNode, 'EnumDefinition');
     const structDefinitions = findAll(contractNode, 'StructDefinition');
     const slotAssignments = [...iterateSlotAssignments([sourceUnit])].map(
       ([, , functionNode]) => functionNode
     );
 
     // Filter all the contract nodes to only include Structs and Storage Slot Definitions
-    resultNode.nodes = [...structDefinitions, ...slotAssignments];
+    resultNode.nodes = [...enumDefinitions, ...structDefinitions, ...slotAssignments];
 
     if (!resultNode.nodes.length) continue;
 

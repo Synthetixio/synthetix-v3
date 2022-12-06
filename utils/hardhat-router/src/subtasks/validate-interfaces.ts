@@ -1,6 +1,6 @@
+import { getContractsAsts } from '@synthetixio/core-utils/utils/hardhat/contracts';
 import logger from '@synthetixio/core-utils/utils/io/logger';
 import { subtask } from 'hardhat/config';
-import { getContractAst } from '../internal/contract-helper';
 import { ContractValidationError } from '../internal/errors';
 import { routerFunctionFilter } from '../internal/router-function-filter';
 import { validateInterfaces } from '../internal/validate-interfaces';
@@ -11,10 +11,7 @@ interface Params {
 }
 
 subtask(SUBTASK_VALIDATE_INTERFACES).setAction(async ({ contracts = [] }: Params, hre) => {
-  const contractFullyQualifiedNames = await hre.artifacts.getAllFullyQualifiedNames();
-  const astNodes = await Promise.all(
-    contractFullyQualifiedNames.map((fqName) => getContractAst(fqName, hre))
-  );
+  const astNodes = await getContractsAsts(hre, contracts);
 
   const errorsFound = validateInterfaces(contracts, astNodes, routerFunctionFilter);
 

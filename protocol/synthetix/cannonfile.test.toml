@@ -180,7 +180,8 @@ args = [
     TestableScalableMappingModule: contracts.TestableScalableMappingModule,
     TestableVaultEpochModule: contracts.TestableVaultEpochModule,
     TestableVaultModule: contracts.TestableVaultModule,
-  }) %>'''
+  }) %>''',
+  "validateInterfaces=false"
 ]
 modified = ["contracts/modules/core"]
 depends = [

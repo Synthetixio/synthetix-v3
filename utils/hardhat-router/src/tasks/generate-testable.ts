@@ -1,10 +1,10 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import * as types from '@synthetixio/core-utils/utils/hardhat/argument-types';
+import { getContractsFullyQualifiedNames } from '@synthetixio/core-utils/utils/hardhat/contracts';
 import logger from '@synthetixio/core-utils/utils/io/logger';
 import { task } from 'hardhat/config';
 import { parseFullyQualifiedName } from 'hardhat/utils/contract-names';
-import { getSourcesFullyQualifiedNames } from '../internal/contract-helper';
 import { quietCompile } from '../internal/quiet-compile';
 import { SUBTASK_GENERATE_TESTABLE_STORAGE, TASK_GENERATE_TESTABLE } from '../task-names';
 
@@ -19,7 +19,7 @@ task(TASK_GENERATE_TESTABLE, 'Creates generated test contracts for all storage l
   .addOptionalPositionalParam(
     'artifacts',
     'Contract files, names, fully qualified names or folder of contracts to include',
-    ['contracts/storage/'],
+    ['contracts/storage/*'],
     types.stringArray
   )
   .addOptionalParam(
@@ -38,7 +38,7 @@ task(TASK_GENERATE_TESTABLE, 'Creates generated test contracts for all storage l
     await quietCompile(hre, true);
 
     const output = path.resolve(hre.config.paths.sources, outputFolder);
-    const storageLibs = await getSourcesFullyQualifiedNames(hre, artifacts);
+    const storageLibs = await getContractsFullyQualifiedNames(hre, artifacts);
 
     logger.info(`Generating testable storage for ${storageLibs.length} contracts`);
 

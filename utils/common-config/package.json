@@ -7,7 +7,7 @@
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "2.1.1",
     "@nomiclabs/hardhat-etherscan": "3.1.3",
-    "@synthetixio/hardhat-storage": "*",
+    "@synthetixio/hardhat-router": "*",
     "@typechain/ethers-v5": "10.1.0",
     "@typechain/hardhat": "6.1.3",
     "dotenv": "16.0.1",

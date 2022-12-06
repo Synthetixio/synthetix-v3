@@ -165,6 +165,38 @@ library Initialized {
     }
 }
 
+// @custom:artifact @synthetixio/oracle-manager/contracts/storage/Node.sol:Node
+library Node {
+    struct Data {
+        int256 price;
+        uint timestamp;
+        uint volatilityScore;
+        uint liquidityScore;
+    }
+}
+
+// @custom:artifact @synthetixio/oracle-manager/contracts/storage/NodeDefinition.sol:NodeDefinition
+library NodeDefinition {
+    enum NodeType {
+        NONE,
+        REDUCER,
+        EXTERNAL,
+        CHAINLINK,
+        PYTH
+    }
+    struct Data {
+        bytes32[] parents;
+        NodeType nodeType;
+        bytes parameters;
+    }
+    function load(bytes32 id) internal pure returns (Data storage data) {
+        bytes32 s = keccak256(abi.encode("Node", id));
+        assembly {
+            data.slot := s
+        }
+    }
+}
+
 // @custom:artifact contracts/interfaces/IAccountModule.sol:IAccountModule
 interface IAccountModule {
     struct AccountPermissions {
@@ -175,10 +207,10 @@ interface IAccountModule {
 
 // @custom:artifact contracts/interfaces/ILiquidationModule.sol:ILiquidationModule
 interface ILiquidationModule {
-    struct LiquidationInformation {
-        CurvesLibrary.PolynomialCurve curve;
-        mapping(uint => uint) initialAmount;
-        uint accumulated;
+    struct LiquidationData {
+        uint256 debtLiquidated;
+        uint256 collateralLiquidated;
+        uint256 amountRewarded;
     }
 }
 
@@ -193,132 +225,12 @@ interface IEVM2AnySubscriptionOnRampRouterInterface {
     }
 }
 
-// @custom:artifact contracts/modules/test/TestableAccountRBACModule.sol:TestableAccountRBACModule
-contract TestableAccountRBACModule {
-    function _getInstanceStore() internal pure returns (AccountRBAC.Data storage data) {
-        bytes32 s = keccak256(abi.encode("TestableAccountRBAC"));
-        assembly {
-            data.slot := s
-        }
-    }
-}
-
-// @custom:artifact contracts/modules/test/TestableCollateralLockModule.sol:TestableCollateralLockModule
-contract TestableCollateralLockModule {
-    function _getInstanceStore() internal pure returns (CollateralLock.Data storage data) {
-        bytes32 s = keccak256(abi.encode("TestableCollateralLock"));
-        assembly {
-            data.slot := s
-        }
-    }
-}
-
-// @custom:artifact contracts/modules/test/TestableCollateralModule.sol:TestableCollateralModule
-contract TestableCollateralModule {
-    function _getInstanceStore() internal pure returns (Collateral.Data storage data) {
-        bytes32 s = keccak256(abi.encode("TestableCollateral"));
-        assembly {
-            data.slot := s
-        }
-    }
-}
-
-// @custom:artifact contracts/modules/test/TestableDistributionActorModule.sol:TestableDistributionActorModule
-contract TestableDistributionActorModule {
-    function _getInstanceStore() internal pure returns (DistributionActor.Data storage data) {
-        bytes32 s = keccak256(abi.encode("TestableDistributionActor"));
-        assembly {
-            data.slot := s
-        }
-    }
-}
-
-// @custom:artifact contracts/modules/test/TestableDistributionEntryModule.sol:TestableDistributionEntryModule
-contract TestableDistributionEntryModule {
-    function _getInstanceStore() internal pure returns (DistributionEntry.Data storage data) {
-        bytes32 s = keccak256(abi.encode("TestableDistributionEntry"));
-        assembly {
-            data.slot := s
-        }
-    }
-}
-
-// @custom:artifact contracts/modules/test/TestableDistributionModule.sol:TestableDistributionModule
-contract TestableDistributionModule {
-    function _getInstanceStore() internal pure returns (Distribution.Data storage data) {
-        bytes32 s = keccak256(abi.encode("TestableDistribution"));
-        assembly {
-            data.slot := s
-        }
-    }
-}
-
-// @custom:artifact contracts/modules/test/TestableMarketConfigurationModule.sol:TestableMarketConfigurationModule
-contract TestableMarketConfigurationModule {
-    function _getInstanceStore() internal pure returns (MarketConfiguration.Data storage data) {
-        bytes32 s = keccak256(abi.encode("TestableMarketConfiguration"));
-        assembly {
-            data.slot := s
-        }
-    }
-}
-
-// @custom:artifact contracts/modules/test/TestablePoolConfigurationModule.sol:TestablePoolConfigurationModule
-contract TestablePoolConfigurationModule {
-    function _getInstanceStore() internal pure returns (PoolConfiguration.Data storage data) {
-        bytes32 s = keccak256(abi.encode("TestablePoolConfiguration"));
-        assembly {
-            data.slot := s
-        }
-    }
-}
-
-// @custom:artifact contracts/modules/test/TestableRewardDistributionModule.sol:TestableRewardDistributionModule
-contract TestableRewardDistributionModule {
-    function _getInstanceStore() internal pure returns (RewardDistribution.Data storage data) {
-        bytes32 s = keccak256(abi.encode("TestableRewardDistribution"));
-        assembly {
-            data.slot := s
-        }
-    }
-}
-
-// @custom:artifact contracts/modules/test/TestableRewardDistributionStatusModule.sol:TestableRewardDistributionStatusModule
-contract TestableRewardDistributionStatusModule {
-    function _getInstanceStore() internal pure returns (RewardDistributionStatus.Data storage data) {
-        bytes32 s = keccak256(abi.encode("TestableRewardDistributionStatus"));
-        assembly {
-            data.slot := s
-        }
-    }
-}
-
-// @custom:artifact contracts/modules/test/TestableVaultEpochModule.sol:TestableVaultEpochModule
-contract TestableVaultEpochModule {
-    function _getInstanceStore() internal pure returns (VaultEpoch.Data storage data) {
-        bytes32 s = keccak256(abi.encode("TestableVaultEpoch"));
-        assembly {
-            data.slot := s
-        }
-    }
-}
-
-// @custom:artifact contracts/modules/test/TestableVaultModule.sol:TestableVaultModule
-contract TestableVaultModule {
-    function _getInstanceStore() internal pure returns (Vault.Data storage data) {
-        bytes32 s = keccak256(abi.encode("TestableVault"));
-        assembly {
-            data.slot := s
-        }
-    }
-}
-
 // @custom:artifact contracts/storage/Account.sol:Account
 library Account {
     struct Data {
         uint128 id;
         AccountRBAC.Data rbac;
-        SetUtil.AddressSet activeCollaterals;
+        bytes32 __slotAvailableForFutureUse;
         mapping(address => Collateral.Data) collaterals;
     }
     function load(uint128 id) internal pure returns (Data storage data) {
@@ -342,7 +254,7 @@ library AccountRBAC {
 library Collateral {
     struct Data {
         bool isSet;
-        uint256 availableAmount;
+        uint256 availableAmountD18;
         SetUtil.UintSet pools;
         CollateralLock.Data[] locks;
     }
@@ -352,11 +264,12 @@ library Collateral {
 library CollateralConfiguration {
     struct Data {
         bool depositingEnabled;
-        uint targetCRatio;
-        uint minimumCRatio;
-        uint liquidationReward;
-        address priceFeed;
+        uint256 issuanceRatioD18;
+        uint256 liquidationRatioD18;
+        uint256 liquidationRewardD18;
+        bytes32 oracleNodeId;
         address tokenAddress;
+        uint256 minDelegationD18;
     }
     function load(address token) internal pure returns (Data storage data) {
         bytes32 s = keccak256(abi.encode("CollateralConfiguration", token));
@@ -375,7 +288,7 @@ library CollateralConfiguration {
 // @custom:artifact contracts/storage/CollateralLock.sol:CollateralLock
 library CollateralLock {
     struct Data {
-        uint256 amount;
+        uint256 amountD18;
         uint64 lockExpirationTime;
     }
 }
@@ -383,8 +296,8 @@ library CollateralLock {
 // @custom:artifact contracts/storage/Distribution.sol:Distribution
 library Distribution {
     struct Data {
-        uint128 totalShares;
-        int128 valuePerShare;
+        uint128 totalSharesD18;
+        int128 valuePerShareD27;
         mapping(bytes32 => DistributionActor.Data) actorInfo;
     }
 }
@@ -392,18 +305,8 @@ library Distribution {
 // @custom:artifact contracts/storage/DistributionActor.sol:DistributionActor
 library DistributionActor {
     struct Data {
-        uint128 shares;
-        int128 lastValuePerShare;
-    }
-}
-
-// @custom:artifact contracts/storage/DistributionEntry.sol:DistributionEntry
-library DistributionEntry {
-    struct Data {
-        int128 scheduledValue;
-        int64 start;
-        int32 duration;
-        int32 lastUpdate;
+        uint128 sharesD18;
+        int128 lastValuePerShareD27;
     }
 }
 
@@ -412,28 +315,22 @@ library Market {
     struct Data {
         uint128 id;
         address marketAddress;
-        int128 issuance;
-        uint128 capacity;
-        int128 lastDistributedMarketBalance;
+        int128 netIssuanceD18;
+        uint128 creditCapacityD18;
+        int128 lastDistributedMarketBalanceD18;
         HeapUtil.Data inRangePools;
         HeapUtil.Data outRangePools;
-        Distribution.Data debtDist;
-        mapping(uint128 => int) poolPendingDebt;
+        Distribution.Data poolsDebtDistribution;
+        mapping(uint128 => MarketPoolInfo.Data) pools;
         DepositedCollateral[] depositedCollateral;
-        mapping(address => uint) maximumDepositable;
+        mapping(address => uint256) maximumDepositableD18;
     }
     struct DepositedCollateral {
         address collateralType;
-        uint amount;
+        uint256 amountD18;
     }
     function load(uint128 id) internal pure returns (Data storage data) {
         bytes32 s = keccak256(abi.encode("Market", id));
-        assembly {
-            data.slot := s
-        }
-    }
-    function loadIdsByAddress(address addr) internal pure returns (uint[] storage data) {
-        bytes32 s = keccak256(abi.encode("Market_idsByAddress", addr));
         assembly {
             data.slot := s
         }
@@ -443,9 +340,44 @@ library Market {
 // @custom:artifact contracts/storage/MarketConfiguration.sol:MarketConfiguration
 library MarketConfiguration {
     struct Data {
-        uint128 market;
-        uint128 weight;
-        int128 maxDebtShareValue;
+        uint128 marketId;
+        uint128 weightD18;
+        int128 maxDebtShareValueD18;
+    }
+}
+
+// @custom:artifact contracts/storage/MarketCreator.sol:MarketCreator
+library MarketCreator {
+    struct Data {
+        mapping(address => uint128[]) marketIdsForAddress;
+        uint128 lastCreatedMarketId;
+    }
+    function getMarketStore() internal pure returns (Data storage data) {
+        bytes32 s = keccak256("MarketStore");
+        assembly {
+            data.slot := s
+        }
+    }
+}
+
+// @custom:artifact contracts/storage/MarketPoolInfo.sol:MarketPoolInfo
+library MarketPoolInfo {
+    struct Data {
+        uint128 creditCapacityAmountD18;
+        uint128 pendingDebtD18;
+    }
+}
+
+// @custom:artifact contracts/storage/OracleManager.sol:OracleManager
+library OracleManager {
+    struct Data {
+        address oracleManagerAddress;
+    }
+    function load() internal pure returns (Data storage data) {
+        bytes32 s = keccak256(abi.encode("OracleManager"));
+        assembly {
+            data.slot := s
+        }
     }
 }
 
@@ -456,11 +388,10 @@ library Pool {
         string name;
         address owner;
         address nominatedOwner;
-        uint128 totalWeights;
-        uint128 unusedCreditCapacity;
+        uint128 totalWeightsD18;
+        int128 totalVaultDebtsD18;
         MarketConfiguration.Data[] marketConfigurations;
-        Distribution.Data debtDist;
-        SetUtil.AddressSet collateralTypes;
+        Distribution.Data vaultsDebtDistribution;
         mapping(address => Vault.Data) vaults;
     }
     function load(uint128 id) internal pure returns (Data storage data) {
@@ -471,10 +402,47 @@ library Pool {
     }
 }
 
-// @custom:artifact contracts/storage/PoolConfiguration.sol:PoolConfiguration
-library PoolConfiguration {
+// @custom:artifact contracts/storage/RewardDistribution.sol:RewardDistribution
+library RewardDistribution {
     struct Data {
-        uint minLiquidityRatio;
+        address distributor;
+        RewardDistributionEntry.Data entry;
+        uint128 rewardPerShareD18;
+        mapping(uint256 => RewardDistributionStatus.Data) actorInfo;
+    }
+}
+
+// @custom:artifact contracts/storage/RewardDistributionEntry.sol:RewardDistributionEntry
+library RewardDistributionEntry {
+    struct Data {
+        int128 scheduledValueD18;
+        uint64 start;
+        uint32 duration;
+        uint32 lastUpdate;
+    }
+}
+
+// @custom:artifact contracts/storage/RewardDistributionStatus.sol:RewardDistributionStatus
+library RewardDistributionStatus {
+    struct Data {
+        uint128 lastRewardPerShareD18;
+        uint128 pendingSendD18;
+    }
+}
+
+// @custom:artifact contracts/storage/ScalableMapping.sol:ScalableMapping
+library ScalableMapping {
+    struct Data {
+        uint128 totalSharesD18;
+        int128 scaleModifierD27;
+        mapping(bytes32 => uint256) sharesD18;
+    }
+}
+
+// @custom:artifact contracts/storage/SystemPoolConfiguration.sol:SystemPoolConfiguration
+library SystemPoolConfiguration {
+    struct Data {
+        uint minLiquidityRatioD18;
         uint preferredPool;
         SetUtil.UintSet approvedPools;
     }
@@ -486,31 +454,13 @@ library PoolConfiguration {
     }
 }
 
-// @custom:artifact contracts/storage/RewardDistribution.sol:RewardDistribution
-library RewardDistribution {
-    struct Data {
-        address distributor;
-        DistributionEntry.Data entry;
-        uint128 rewardPerShare;
-        mapping(uint256 => RewardDistributionStatus.Data) actorInfo;
-    }
-}
-
-// @custom:artifact contracts/storage/RewardDistributionStatus.sol:RewardDistributionStatus
-library RewardDistributionStatus {
-    struct Data {
-        uint128 lastRewardPerShare;
-        uint128 pendingSend;
-    }
-}
-
 // @custom:artifact contracts/storage/Vault.sol:Vault
 library Vault {
     struct Data {
-        uint epoch;
-        uint128 unused_;
-        uint128 prevRemainingLiquidity;
-        mapping(uint => VaultEpoch.Data) epochData;
+        uint256 epoch;
+        bytes32 __slotAvailableForFutureUse;
+        int128 prevTotalDebtD18;
+        mapping(uint256 => VaultEpoch.Data) epochData;
         mapping(bytes32 => RewardDistribution.Data) rewards;
         SetUtil.Bytes32Set rewardIds;
     }
@@ -519,24 +469,10 @@ library Vault {
 // @custom:artifact contracts/storage/VaultEpoch.sol:VaultEpoch
 library VaultEpoch {
     struct Data {
-        int128 unconsolidatedDebt;
-        Distribution.Data incomingDebtDist;
-        Distribution.Data collateralDist;
-        Distribution.Data consolidatedDebtDist;
-    }
-}
-
-// @custom:artifact contracts/utils/CurvesLibrary.sol:CurvesLibrary
-library CurvesLibrary {
-    struct PolynomialCurve {
-        uint start;
-        uint end;
-        int a;
-        int b;
-        int c;
-    }
-    struct Point {
-        uint x;
-        uint y;
+        int128 unconsolidatedDebtD18;
+        int128 totalConsolidatedDebtD18;
+        Distribution.Data accountsDebtDistribution;
+        ScalableMapping.Data collateralAmounts;
+        mapping(uint256 => int256) consolidatedDebtAmountsD18;
     }
 }
