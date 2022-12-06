@@ -10,7 +10,7 @@ interface ILiquidationModule {
      * @param accountId The id of the account that was liquidated.
      * @param poolId The pool id of the position that was liquidated.
      * @param collateralType The collateral type used in the position that was liquidated.
-     * @param liquidationData Information about the position that was liquidated.
+     * @param liquidationData The amount of collateral liquidated, debt liquidated, and collateral awarded to the liquidator.
      * @param liquidateAsAccountId Account id that will receive the rewards from the liquidation.
      * @param sender The address of the account that is triggering the liquidation.
      */
@@ -27,7 +27,7 @@ interface ILiquidationModule {
      * @notice Emitted when a vault is liquidated.
      * @param poolId The id of the pool whose vault was liquidated.
      * @param collateralType The collateral address of the vault that was liquidated.
-     * @param liquidationData Information about the vault that was liquidated.
+     * @param liquidationData The amount of collateral liquidated, debt liquidated, and collateral awarded to the liquidator.
      * @param liquidateAsAccountId Account id that will receive the rewards from the liquidation.
      * @param sender The address of the account that is triggering the liquidation.
      */

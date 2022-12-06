@@ -9,7 +9,7 @@ interface IMarketCollateralModule {
      * @notice Emitted when `amount` of collateral of type `collateralType` is deposited to market `marketId` by `sender`.
      * @param marketId The id of the market in which collateral was deposited.
      * @param collateralType The address of the collateral that was directly deposited in the market.
-     * @param tokenAmount The amount of tokens that were deposited, denominated with 18 decimals of precision.
+     * @param tokenAmount The amount of tokens that were deposited, denominated in the token's native decimal representation.
      * @param sender The address that triggered the deposit.
      */
     event MarketCollateralDeposited(
@@ -23,7 +23,7 @@ interface IMarketCollateralModule {
      * @notice Emitted when `amount` of collateral of type `collateralType` is withdrawn from market `marketId` by `sender`.
      * @param marketId The id of the market from which collateral was withdrawn.
      * @param collateralType The address of the collateral that was withdrawn from the market.
-     * @param tokenAmount The amount of tokens that were withdrawn, denominated with 18 decimals of precision.
+     * @param tokenAmount The amount of tokens that were withdrawn, denominated in the token's native decimal representation.
      * @param sender The address that triggered the withdrawal.
      */
     event MarketCollateralWithdrawn(
@@ -51,7 +51,7 @@ interface IMarketCollateralModule {
      * @notice Allows a market to deposit collateral.
      * @param marketId The id of the market in which the collateral was directly deposited.
      * @param collateralType The address of the collateral that was deposited in the market.
-     * @param amount The amount of collateral that was deposited, denominated with 18 decimals of precision.
+     * @param amount The amount of collateral that was deposited, denominated in the token's native decimal representation.
      */
     function depositMarketCollateral(
         uint128 marketId,
@@ -63,7 +63,7 @@ interface IMarketCollateralModule {
      * @notice Allows a market to withdraw collateral that it has previously deposited.
      * @param marketId The id of the market from which the collateral was withdrawn.
      * @param collateralType The address of the collateral that was withdrawn from the market.
-     * @param amount The amount of collateral that was withdrawn, denominated with 18 decimals of precision.
+     * @param amount The amount of collateral that was withdrawn, denominated in the token's native decimal representation.
      */
     function withdrawMarketCollateral(
         uint128 marketId,

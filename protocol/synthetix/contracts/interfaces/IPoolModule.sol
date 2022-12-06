@@ -37,7 +37,7 @@ interface IPoolModule {
 
     /**
      * @notice Gets fired when pool owner revokes nomination.
-     * @param poolId The if of the pool in which the nomination was revoked.
+     * @param poolId The id of the pool in which the nomination was revoked.
      * @param owner The current owner of the pool.
      */
     event PoolNominationRevoked(uint128 indexed poolId, address indexed owner);
