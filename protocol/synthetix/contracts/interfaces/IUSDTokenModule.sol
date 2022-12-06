@@ -11,7 +11,7 @@ interface IUSDTokenModule is ITokenModule {
      * @notice Allows the core system to burn stablecoins held by the `from` address, provided that it has given allowance to `spender`.
      * @param from The address that holds the tokens to be burnt.
      * @param spender The address to which the holder has given allowance to.
-     * @param amount The amount of tokens to be burnt, denominated with 18 decimals of precision.
+     * @param amount The amount of snxUSD to be burned, denominated with 18 decimals of precision.
      */
     function burnWithAllowance(address from, address spender, uint256 amount) external;
 
