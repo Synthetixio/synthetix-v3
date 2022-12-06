@@ -67,7 +67,7 @@ interface IRewardsManagerModule {
      * @notice Called by pool owner or an existing distributor to set up rewards for vault participants.
      * @param poolId The id of the pool to distribute rewards to.
      * @param collateralType The address of the collateral used in the pool's rewards.
-     * @param amount The amount of rewards to be distributed, denominated with 18 decimals of precision.
+     * @param amount The amount of rewards to be distributed.
      * @param start The date at which the rewards will begin to be claimable.
      * @param duration The period after which all distributed rewards will be claimable.
      */
