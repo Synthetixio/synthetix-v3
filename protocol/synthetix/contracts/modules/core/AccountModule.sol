@@ -43,9 +43,11 @@ contract AccountModule is IAccountModule {
     /**
      * @inheritdoc IAccountModule
      */
-    function getAccountPermissions(
-        uint128 accountId
-    ) external view returns (AccountPermissions[] memory permissions) {
+    function getAccountPermissions(uint128 accountId)
+        external
+        view
+        returns (AccountPermissions[] memory permissions)
+    {
         AccountRBAC.Data storage accountRbac = Account.load(accountId).rbac;
 
         uint256 allPermissionsLength = accountRbac.permissionAddresses.length();
@@ -68,7 +70,7 @@ contract AccountModule is IAccountModule {
 
         Account.create(requestedAccountId, msg.sender);
 
-        emit AccountCreated(msg.sender, requestedAccountId);
+        emit AccountCreated(requestedAccountId, msg.sender);
     }
 
     /**

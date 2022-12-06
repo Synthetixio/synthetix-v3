@@ -8,10 +8,10 @@ pragma solidity ^0.8.0;
 interface IAccountModule {
     /**
      * @notice Emitted when an account token with id `accountId` is minted to `sender`.
-     * @param sender The address that created the account.
      * @param accountId The id of the account.
+     * @param owner The address that owns the created account.
      */
-    event AccountCreated(address indexed owner, uint128 indexed accountId);
+    event AccountCreated(uint128 indexed accountId, address indexed owner);
 
     /**
      * @notice Emitted when `user` is granted `permission` by `sender` for account `accountId`.
@@ -60,9 +60,10 @@ interface IAccountModule {
      * @param accountId The id of the account whose permissions are being retrieved.
      * @return An array of AccountPermission objects describing the permissions granted to the account.
      */
-    function getAccountPermissions(
-        uint128 accountId
-    ) external view returns (AccountPermissions[] memory);
+    function getAccountPermissions(uint128 accountId)
+        external
+        view
+        returns (AccountPermissions[] memory);
 
     /**
      * @notice Mints an account token with id `requestedAccountId` to `msg.sender`.
@@ -100,7 +101,11 @@ interface IAccountModule {
      *
      * Emits a {PermissionGranted} event.
      */
-    function grantPermission(uint128 accountId, bytes32 permission, address user) external;
+    function grantPermission(
+        uint128 accountId,
+        bytes32 permission,
+        address user
+    ) external;
 
     /**
      * @notice Revokes `permission` from `user` for account `accountId`.
@@ -114,7 +119,11 @@ interface IAccountModule {
      *
      * Emits a {PermissionRevoked} event.
      */
-    function revokePermission(uint128 accountId, bytes32 permission, address user) external;
+    function revokePermission(
+        uint128 accountId,
+        bytes32 permission,
+        address user
+    ) external;
 
     /**
      * @notice Revokes `permission` from `msg.sender` for account `accountId`.
