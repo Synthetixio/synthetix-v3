@@ -68,7 +68,7 @@ interface ICollateralModule {
      * @param collateralType The address of the collateral type whose amount is being queried.
      * @return totalDeposited The total collateral deposited in the account, denominated with 18 decimals of precision.
      * @return totalAssigned The amount of collateral in the account that is delegated to pools, denominated with 18 decimals of precision.
-     * @return totalLocked THe amount of collateral in the account that cannot currently be un-delegated from a pool, denominated with 18 decimals of precision.
+     * @return totalLocked The amount of collateral in the account that cannot currently be undelegated from a pool, denominated with 18 decimals of precision.
      */
     function getAccountCollateral(
         uint128 accountId,
