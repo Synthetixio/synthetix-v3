@@ -29,7 +29,7 @@ interface IRewardsManagerModule {
      * @param poolId The id of the pool where the rewards were claimed.
      * @param collateralType The address of the collateral used in the pool's rewards.
      * @param distributor The address of the rewards distributor associated with these rewards.
-     * @param amount The amount of rewards that were claimed, denominated with 18 decimals of precision.
+     * @param amount The amount of rewards that were claimed.
      */
     event RewardsClaimed(
         uint128 indexed accountId,
