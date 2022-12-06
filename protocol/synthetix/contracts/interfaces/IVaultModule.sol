@@ -103,7 +103,7 @@ interface IVaultModule {
      * @param collateralType The address of the collateral used in the queried position.
      * @return collateralAmount The amount of collateral used in the position, denominated with 18 decimals of precision.
      * @return collateralValue The value of the collateral used in the position, denominated with 18 decimals of precision.
-     * @return debt The amount of USD debt held in the position, denominated with 18 decimals of precision.
+     * @return debt The amount of debt held in the position, denominated with 18 decimals of precision.
      * @return collateralizationRatio The collateralization ratio of the position (collateral / debt), denominated with 18 decimals of precision.
      **/
     function getPosition(
