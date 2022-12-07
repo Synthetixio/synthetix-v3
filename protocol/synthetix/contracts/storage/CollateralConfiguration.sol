@@ -42,7 +42,7 @@ library CollateralConfiguration {
     error InsufficientDelegation(uint256 minDelegation);
 
     struct Data {
-        /// must be true for staking or collateral delegation
+        /// must be true for depositing or collateral delegation
         bool depositingEnabled;
         /// accounts cannot mint sUSD if their debt brings their cratio below this value
         uint256 issuanceRatioD18;

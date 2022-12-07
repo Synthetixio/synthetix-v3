@@ -32,7 +32,9 @@ Emits a {AccountCreated} event.
   function notifyAccountTransfer(address to, uint128 accountId) external
   ```
 
-  Grants `permission` to `user` for account `accountId`.
+  Called by AccountTokenModule to notify the system when the account token is transferred.
+
+  Resets user permissions and assigns ownership of the account token to the new holder.
 
 Requirements:
 
@@ -372,12 +374,19 @@ See {setApprovalForAll}
   function associateDebt(uint128 marketId, uint128 poolId, address collateralType, uint128 accountId, uint256 amount) external returns (int256)
   ```
 
-  Allows for a market, at its discression to allocate the assignment of recently accumulated debt in a
-market toward an individual
+  Allows a market to associate debt with a specific position.
 
 ### Events
 
-## Collateral Module
+#### DebtAssociated
+
+  ```solidity
+  event DebtAssociated(uint128 marketId, uint128 poolId, address collateralType, uint128 accountId, uint256 amount, int256 updatedDebt)
+  ```
+
+  Emitted when `associateDebt` is called.
+
+## Collateral Configuration Module
 
 ### Functions
 
@@ -387,7 +396,7 @@ market toward an individual
   function configureCollateral(struct CollateralConfiguration.Data config) external
   ```
 
-  Creates or updates the configuration for given `collateralType`.
+  Creates or updates the configuration for the given `collateralType`.
 
 Requirements:
 
@@ -403,6 +412,8 @@ Emits a {CollateralConfigured} event.
 
   Returns a list of detailed information pertaining to all collateral types registered in the system.
 
+  Optionally returns only those that are currently enabled.
+
 #### getCollateralConfiguration
 
   ```solidity
@@ -417,26 +428,38 @@ Emits a {CollateralConfigured} event.
   function getCollateralPrice(address collateralType) external view returns (uint256)
   ```
 
-  Returns the current value of a specified collateral type
+  Returns the current value of a specified collateral type.
+
+### Events
+
+#### CollateralConfigured
+
+  ```solidity
+  event CollateralConfigured(address collateralType, struct CollateralConfiguration.Data config)
+  ```
+
+  Emitted when a collateral type’s configuration is created or updated.
+
+## Collateral Module
+
+### Functions
 
 #### deposit
 
   ```solidity
-  function deposit(uint128 accountId, address collateralType, uint256 amount) external
+  function deposit(uint128 accountId, address collateralType, uint256 tokenAmount) external
   ```
 
   Deposits `amount` of collateral of type `collateralType` into account `accountId`.
 
-Requirements:
-
-- `msg.sender` must be the owner of the account, have the `ADMIN` permission, or have the `DEPOSIT` permission.
+  Anyone can deposit into anyone's active account without restriction.
 
 Emits a {CollateralDeposited} event.
 
 #### withdraw
 
   ```solidity
-  function withdraw(uint128 accountId, address collateralType, uint256 amount) external
+  function withdraw(uint128 accountId, address collateralType, uint256 tokenAmount) external
   ```
 
   Withdraws `amount` of collateral of type `collateralType` from account `accountId`.
@@ -461,7 +484,7 @@ Emits a {CollateralWithdrawn} event.
   function getAccountAvailableCollateral(uint128 accountId, address collateralType) external view returns (uint256)
   ```
 
-  Returns the amount of collateral of type `collateralType` deposited with account `accountId` that can be withdrawn or delegated.
+  Returns the amount of collateral of type `collateralType` deposited with account `accountId` that can be withdrawn or delegated to pools.
 
 #### cleanExpiredLocks
 
@@ -469,9 +492,7 @@ Emits a {CollateralWithdrawn} event.
   function cleanExpiredLocks(uint128 accountId, address collateralType, uint256 offset, uint256 items) external
   ```
 
-  Clean expired locks from locked collateral arrays for an account/collateral type. It includes offset and items to prevent gas exhaustion. If both, offset and items, are 0 it will traverse the whole array (unlimited)
-
-  DEPENDENT ON 305
+  Clean expired locks from locked collateral arrays for an account/collateral type. It includes offset and items to prevent gas exhaustion. If both, offset and items, are 0 it will traverse the whole array (unlimited).
 
 #### createLock
 
@@ -480,22 +501,16 @@ Emits a {CollateralWithdrawn} event.
   ```
 
   Create a new lock on the given account. you must have `admin` permission on the specified account to create a lock.
+
+  A collateral lock does not affect withdrawals, but instead affects collateral delegation.
 There is currently no benefit to calling this function. it is simply for allowing pre-created accounts to have locks on them if your protocol requires it.
 
 ### Events
 
-#### CollateralConfigured
-
-  ```solidity
-  event CollateralConfigured(address collateralType, struct CollateralConfiguration.Data config)
-  ```
-
-  Emitted when a collateral type’s configuration is created or updated.
-
 #### Deposited
 
   ```solidity
-  event Deposited(uint128 accountId, address collateralType, uint256 amount, address sender)
+  event Deposited(uint128 accountId, address collateralType, uint256 tokenAmount, address sender)
   ```
 
   Emitted when `amount` of collateral of type `collateralType` is deposited to account `accountId` by `sender`.
@@ -503,7 +518,7 @@ There is currently no benefit to calling this function. it is simply for allowin
 #### Withdrawn
 
   ```solidity
-  event Withdrawn(uint128 accountId, address collateralType, uint256 amount, address sender)
+  event Withdrawn(uint128 accountId, address collateralType, uint256 tokenAmount, address sender)
   ```
 
   Emitted when `amount` of collateral of type `collateralType` is withdrawn from account `accountId` by `sender`.
@@ -566,41 +581,51 @@ Emits a {UsdMinted} event.
 #### liquidate
 
   ```solidity
-  function liquidate(uint128 accountId, uint128 poolId, address collateralType) external returns (uint256 amountRewarded, uint256 debtLiquidated, uint256 collateralLiquidated)
+  function liquidate(uint128 accountId, uint128 poolId, address collateralType, uint128 liquidateAsAccountId) external returns (struct ILiquidationModule.LiquidationData)
   ```
 
-  liquidates the required collateral of the account delegated to the poolId
+  Liquidates a position by distributing its debt and collateral among other positions in its vault.
 
 #### liquidateVault
 
   ```solidity
-  function liquidateVault(uint128 poolId, address collateralType, uint128 liquidateAsAccountId, uint256 maxUsd) external returns (uint256 amountRewarded, uint256 collateralLiquidated)
+  function liquidateVault(uint128 poolId, address collateralType, uint128 liquidateAsAccountId, uint256 maxUsd) external returns (struct ILiquidationModule.LiquidationData liquidationData)
   ```
 
-  liquidates an entire vault. can only be done if the vault itself is undercollateralized.
-liquidateAsAccountId determines which account to deposit the siezed collateral into (this is necessary particularly if the collateral in the vault is vesting)
-Will only liquidate a portion of the debt for the vault if `maxUsd` is supplied
+  Liquidates an entire vault.
 
-#### isLiquidatable
+  Can only be done if the vault itself is under collateralized.
+LiquidateAsAccountId determines which account to deposit the seized collateral into (this is necessary particularly if the collateral in the vault is vesting).
+Will only liquidate a portion of the debt for the vault if `maxUsd` is supplied.
+
+#### isPositionLiquidatable
 
   ```solidity
-  function isLiquidatable(uint128 accountId, uint128 poolId, address collateralType) external returns (bool)
+  function isPositionLiquidatable(uint128 accountId, uint128 poolId, address collateralType) external returns (bool)
   ```
 
-  returns if the account is liquidable on the poolId - collateralType pair
+  Determines whether a specified position is liquidatable.
+
+#### isVaultLiquidatable
+
+  ```solidity
+  function isVaultLiquidatable(uint128 poolId, address collateralType) external returns (bool)
+  ```
+
+  Determines whether a specified vault is liquidatable.
 
 ### Events
 
 #### Liquidation
 
   ```solidity
-  event Liquidation(uint128 accountId, uint128 poolId, address collateralType, uint256 debtLiquidated, uint256 collateralLiquidated, uint256 amountRewarded)
+  event Liquidation(uint128 accountId, uint128 poolId, address collateralType, struct ILiquidationModule.LiquidationData liquidationData, uint128 liquidateAsAccountId, address sender)
   ```
 
 #### VaultLiquidation
 
   ```solidity
-  event VaultLiquidation(uint128 poolId, address collateralType, uint256 debtLiquidated, uint256 collateralLiquidated, uint256 amountRewarded)
+  event VaultLiquidation(uint128 poolId, address collateralType, struct ILiquidationModule.LiquidationData liquidationData, uint128 liquidateAsAccountId, address sender)
   ```
 
 ## Market Collateral Module
@@ -613,11 +638,15 @@ Will only liquidate a portion of the debt for the vault if `maxUsd` is supplied
   function depositMarketCollateral(uint128 marketId, address collateralType, uint256 amount) external
   ```
 
+  Allows a market to deposit collateral.
+
 #### withdrawMarketCollateral
 
   ```solidity
   function withdrawMarketCollateral(uint128 marketId, address collateralType, uint256 amount) external
   ```
+
+  Allows a market to withdraw collateral that it has previously deposited.
 
 #### configureMaximumMarketCollateral
 
@@ -625,11 +654,15 @@ Will only liquidate a portion of the debt for the vault if `maxUsd` is supplied
   function configureMaximumMarketCollateral(uint128 marketId, address collateralType, uint256 amount) external
   ```
 
+  Allow the system owner to configure the maximum amount of a given collateral type that a specified market is allowed to deposit.
+
 #### getMaximumMarketCollateral
 
   ```solidity
   function getMaximumMarketCollateral(uint128 marketId, address collateralType) external returns (uint256)
   ```
+
+  Return the total maximum amount of a given collateral type that a specified market is allowed to deposit.
 
 #### getMarketCollateralAmount
 
@@ -637,12 +670,14 @@ Will only liquidate a portion of the debt for the vault if `maxUsd` is supplied
   function getMarketCollateralAmount(uint128 marketId, address collateralType) external returns (uint256)
   ```
 
+  Return the total amount of a given collateral type that a specified market has deposited.
+
 ### Events
 
 #### MarketCollateralDeposited
 
   ```solidity
-  event MarketCollateralDeposited(uint128 marketId, address collateralType, uint256 amount, address sender)
+  event MarketCollateralDeposited(uint128 marketId, address collateralType, uint256 tokenAmount, address sender)
   ```
 
   Emitted when `amount` of collateral of type `collateralType` is deposited to market `marketId` by `sender`.
@@ -650,7 +685,7 @@ Will only liquidate a portion of the debt for the vault if `maxUsd` is supplied
 #### MarketCollateralWithdrawn
 
   ```solidity
-  event MarketCollateralWithdrawn(uint128 marketId, address collateralType, uint256 amount, address sender)
+  event MarketCollateralWithdrawn(uint128 marketId, address collateralType, uint256 tokenAmount, address sender)
   ```
 
   Emitted when `amount` of collateral of type `collateralType` is withdrawn from market `marketId` by `sender`.
@@ -658,7 +693,7 @@ Will only liquidate a portion of the debt for the vault if `maxUsd` is supplied
 #### MaximumMarketCollateralConfigured
 
   ```solidity
-  event MaximumMarketCollateralConfigured(uint128 marketId, address collateralType, uint256 amount, address sender)
+  event MaximumMarketCollateralConfigured(uint128 marketId, address collateralType, uint256 systemAmount, address sender)
   ```
 
 ## Market Manager Module
@@ -671,7 +706,8 @@ Will only liquidate a portion of the debt for the vault if `maxUsd` is supplied
   function registerMarket(address market) external returns (uint128)
   ```
 
-  registers a new market
+  Connects an external market to the system.
+Creates a Market object to track the external market, and returns the newly crated market id.
 
 #### depositMarketUsd
 
@@ -695,15 +731,15 @@ Will only liquidate a portion of the debt for the vault if `maxUsd` is supplied
   function getWithdrawableUsd(uint128 marketId) external view returns (uint256)
   ```
 
-  gets the liquidity of the market
+  Returns the total withdrawable USD amount for the specified market.
 
-#### getMarketIssuance
+#### getMarketNetIssuance
 
   ```solidity
   function getMarketNetIssuance(uint128 marketId) external view returns (int128)
   ```
 
-  gets net snxUSD withdrawn - deposited by the market
+  Returns the net issuance of the specified market (USD withdrawn - USD deposited).
 
 #### getMarketReportedDebt
 
@@ -713,7 +749,7 @@ Will only liquidate a portion of the debt for the vault if `maxUsd` is supplied
 
   gets the total balance of the market
 
-#### getMarketTotalBalance
+#### getMarketTotalDebt
 
   ```solidity
   function getMarketTotalDebt(uint128 marketId) external view returns (int256)
@@ -735,18 +771,24 @@ Will only liquidate a portion of the debt for the vault if `maxUsd` is supplied
   function getMarketDebtPerShare(uint128 marketId) external returns (int256)
   ```
 
+  Returns the value per share of the debt of the specified market.
+
+  This is not a view function, and actually updates the entire debt distribution chain.
+
 #### isMarketCapacityLocked
 
   ```solidity
   function isMarketCapacityLocked(uint128 marketId) external view returns (bool)
   ```
 
+  Returns wether the capacity of the specified market is locked.
+
 ### Events
 
 #### MarketRegistered
 
   ```solidity
-  event MarketRegistered(address market, uint128 marketId)
+  event MarketRegistered(address market, uint128 marketId, address sender)
   ```
 
 #### MarketUsdDeposited
@@ -771,6 +813,10 @@ Will only liquidate a portion of the debt for the vault if `maxUsd` is supplied
   function multicall(bytes[] data) external payable returns (bytes[] results)
   ```
 
+  Executes multiple transaction payloads in a single transaction.
+
+  Each transaction is executed using `delegatecall`, and targets the system address.
+
 ### Events
 
 ## Pool Configuration Module
@@ -783,7 +829,9 @@ Will only liquidate a portion of the debt for the vault if `maxUsd` is supplied
   function setPreferredPool(uint128 poolId) external
   ```
 
-  SCCP sets the preferred pool
+  Sets the unique system preferred pool.
+
+  Note: The preferred pool does not receive any special treatment. It is only signaled as preferred here.
 
 #### addApprovedPool
 
@@ -791,7 +839,9 @@ Will only liquidate a portion of the debt for the vault if `maxUsd` is supplied
   function addApprovedPool(uint128 poolId) external
   ```
 
-  SCCP adds a poolId to the approved list
+  Marks a pool as approved by the system owner.
+
+  Approved pools do not receive any special treatment. They are only signaled as approved here.
 
 #### removeApprovedPool
 
@@ -799,7 +849,7 @@ Will only liquidate a portion of the debt for the vault if `maxUsd` is supplied
   function removeApprovedPool(uint128 poolId) external
   ```
 
-  SCCP removes a poolId to the approved list
+  Un-marks a pool as preferred by the system owner.
 
 #### getPreferredPool
 
@@ -807,7 +857,7 @@ Will only liquidate a portion of the debt for the vault if `maxUsd` is supplied
   function getPreferredPool() external view returns (uint256)
   ```
 
-  gets the preferred pool
+  Retrieves the unique system preferred pool.
 
 #### getApprovedPools
 
@@ -815,7 +865,7 @@ Will only liquidate a portion of the debt for the vault if `maxUsd` is supplied
   function getApprovedPools() external view returns (uint256[])
   ```
 
-  gets the approved pools (list of poolIds)
+  Retrieves the pool that are approved by the system owner.
 
 ### Events
 
@@ -847,7 +897,7 @@ Will only liquidate a portion of the debt for the vault if `maxUsd` is supplied
   function createPool(uint128 requestedPoolId, address owner) external
   ```
 
-  creates a new pool
+  Creates a pool with the requested pool id.
 
 #### setPoolConfiguration
 
@@ -855,7 +905,10 @@ Will only liquidate a portion of the debt for the vault if `maxUsd` is supplied
   function setPoolConfiguration(uint128 poolId, struct MarketConfiguration.Data[] marketDistribution) external
   ```
 
-  sets the pool positions (only poolToken owner)
+  Allows the pool owner to configure the pool.
+
+  The pool's configuration is composed of an array of MarketConfiguration objects, which describe which markets the pool provides liquidity to, in what proportion, and to what extent.
+Incoming market ids need to be provided in ascending order.
 
 #### getPoolConfiguration
 
@@ -863,7 +916,7 @@ Will only liquidate a portion of the debt for the vault if `maxUsd` is supplied
   function getPoolConfiguration(uint128 poolId) external view returns (struct MarketConfiguration.Data[] markets)
   ```
 
-  gets the pool positions
+  Retrieves the MarketConfiguration of the specified pool.
 
 #### setPoolName
 
@@ -871,7 +924,7 @@ Will only liquidate a portion of the debt for the vault if `maxUsd` is supplied
   function setPoolName(uint128 poolId, string name) external
   ```
 
-  sets the pool name
+  Allows the owner of the pool to set the pool's name.
 
 #### getPoolName
 
@@ -879,7 +932,7 @@ Will only liquidate a portion of the debt for the vault if `maxUsd` is supplied
   function getPoolName(uint128 poolId) external view returns (string poolName)
   ```
 
-  gets the pool name
+  Returns the pool's name.
 
 #### nominatePoolOwner
 
@@ -887,7 +940,7 @@ Will only liquidate a portion of the debt for the vault if `maxUsd` is supplied
   function nominatePoolOwner(address nominatedOwner, uint128 poolId) external
   ```
 
-  nominates a new pool owner
+  Allows the current pool owner to nominate a new owner.
 
 #### acceptPoolOwnership
 
@@ -895,7 +948,7 @@ Will only liquidate a portion of the debt for the vault if `maxUsd` is supplied
   function acceptPoolOwnership(uint128 poolId) external
   ```
 
-  accepts ownership by nominated owner
+  After a new pool owner has been nominated, allows it to accept the nomination and thus ownership of the pool.
 
 #### revokePoolNomination
 
@@ -903,7 +956,7 @@ Will only liquidate a portion of the debt for the vault if `maxUsd` is supplied
   function revokePoolNomination(uint128 poolId) external
   ```
 
-  revokes nomination by pool owner
+  After a new pool owner has been nominated, allows it to reject the nomination.
 
 #### renouncePoolNomination
 
@@ -911,7 +964,7 @@ Will only liquidate a portion of the debt for the vault if `maxUsd` is supplied
   function renouncePoolNomination(uint128 poolId) external
   ```
 
-  renounce nomination by nominee
+  Allows the current nominated owner to renounce the nomination.
 
 #### getPoolOwner
 
@@ -919,7 +972,7 @@ Will only liquidate a portion of the debt for the vault if `maxUsd` is supplied
   function getPoolOwner(uint128 poolId) external view returns (address)
   ```
 
-  gets owner of poolId
+  Returns the current pool owner.
 
 #### getNominatedPoolOwner
 
@@ -927,7 +980,7 @@ Will only liquidate a portion of the debt for the vault if `maxUsd` is supplied
   function getNominatedPoolOwner(uint128 poolId) external view returns (address)
   ```
 
-  gets nominatedOwner of poolId
+  Returns the current nominated pool owner.
 
 #### setMinLiquidityRatio
 
@@ -935,7 +988,7 @@ Will only liquidate a portion of the debt for the vault if `maxUsd` is supplied
   function setMinLiquidityRatio(uint256 minLiquidityRatio) external
   ```
 
-  places a cap on what proportion of free vault liquidity may be used towards a pool. only owner.
+  Allows the system owner (not the pool owner) to set the system-wide minimum liquidity ratio.
 
 #### getMinLiquidityRatio
 
@@ -943,25 +996,25 @@ Will only liquidate a portion of the debt for the vault if `maxUsd` is supplied
   function getMinLiquidityRatio() external view returns (uint256)
   ```
 
-  returns the liquidity ratio cap for delegation of liquidity by pools to markets
+  Retrieves the system-wide minimum liquidity ratio.
 
 ### Events
 
 #### PoolCreated
 
   ```solidity
-  event PoolCreated(uint128 poolId, address owner)
+  event PoolCreated(uint128 poolId, address owner, address sender)
   ```
 
-  gets fired when pool will be created
+  Gets fired when pool will be created.
 
-#### NominatedPoolOwner
+#### PoolOwnerNominated
 
   ```solidity
-  event NominatedPoolOwner(uint128 poolId, address owner)
+  event PoolOwnerNominated(uint128 poolId, address nominatedOwner, address owner)
   ```
 
-  gets fired when pool owner proposes a new owner
+  Gets fired when pool owner proposes a new owner.
 
 #### PoolOwnershipAccepted
 
@@ -969,7 +1022,7 @@ Will only liquidate a portion of the debt for the vault if `maxUsd` is supplied
   event PoolOwnershipAccepted(uint128 poolId, address owner)
   ```
 
-  gets fired when pool nominee accepts nomination
+  Gets fired when pool nominee accepts nomination.
 
 #### PoolNominationRevoked
 
@@ -977,7 +1030,7 @@ Will only liquidate a portion of the debt for the vault if `maxUsd` is supplied
   event PoolNominationRevoked(uint128 poolId, address owner)
   ```
 
-  gets fired when pool owner revokes nonimation
+  Gets fired when pool owner revokes nomination.
 
 #### PoolNominationRenounced
 
@@ -985,7 +1038,7 @@ Will only liquidate a portion of the debt for the vault if `maxUsd` is supplied
   event PoolNominationRenounced(uint128 poolId, address owner)
   ```
 
-  gets fired when pool nominee renounces nomination
+  Gets fired when pool nominee renounces nomination.
 
 #### PoolNameUpdated
 
@@ -993,7 +1046,7 @@ Will only liquidate a portion of the debt for the vault if `maxUsd` is supplied
   event PoolNameUpdated(uint128 poolId, string name, address sender)
   ```
 
-  gets fired when pool name changes
+  Gets fired when pool name changes.
 
 #### PoolConfigurationSet
 
@@ -1001,33 +1054,7 @@ Will only liquidate a portion of the debt for the vault if `maxUsd` is supplied
   event PoolConfigurationSet(uint128 poolId, struct MarketConfiguration.Data[] markets, address sender)
   ```
 
-  gets fired when pool gets configured
-
-## Reward Distributor Module
-
-### Functions
-
-#### name
-
-  ```solidity
-  function name() external view returns (string)
-  ```
-
-  returns a human-readable name for a this rewards distributor
-
-#### setRewardAllocation
-
-  ```solidity
-  function setRewardAllocation(uint128 poolId, uint256 allocation) external
-  ```
-
-#### getRewardAllocation
-
-  ```solidity
-  function getRewardAllocation(uint128 poolId) external view returns (uint256)
-  ```
-
-### Events
+  Gets fired when pool gets configured.
 
 ## Rewards Manager Module
 
@@ -1039,15 +1066,15 @@ Will only liquidate a portion of the debt for the vault if `maxUsd` is supplied
   function registerRewardsDistributor(uint128 poolId, address collateralType, address distributor) external
   ```
 
-  called by pool owner or an existing distributor to register rewards for vault participants
+  Called by pool owner or an existing distributor to register rewards for vault participants.
 
 #### distributeRewards
 
   ```solidity
-  function distributeRewards(uint128 poolId, address collateralType, uint256 amount, uint256 start, uint256 duration) external
+  function distributeRewards(uint128 poolId, address collateralType, uint256 amount, uint64 start, uint32 duration) external
   ```
 
-  called by pool owner or an existing distributor to set up rewards for vault participants
+  Called by pool owner or an existing distributor to set up rewards for vault participants.
 
 #### claimRewards
 
@@ -1055,17 +1082,15 @@ Will only liquidate a portion of the debt for the vault if `maxUsd` is supplied
   function claimRewards(uint128 poolId, address collateralType, uint128 accountId, address distributor) external returns (uint256)
   ```
 
-  retrieves the amount of available reward, and claims them to the caller's account for a given distributor.
+  Allows a user with appropriate permissions to claim rewards associated with a position.
 
-#### getRewards
+#### getClaimableRewards
 
   ```solidity
-  function getRewards(uint128 poolId, address collateralType, uint128 accountId) external returns (uint256[], address[])
+  function getClaimableRewards(uint128 poolId, address collateralType, uint128 accountId) external returns (uint256[], address[])
   ```
 
-  retrieves the amount of available rewards.
-
-  this function should be called to get currently available rewards using `callStatic`
+  For a given position, return the rewards that can currently be claimed
 
 #### getRewardRate
 
@@ -1073,7 +1098,7 @@ Will only liquidate a portion of the debt for the vault if `maxUsd` is supplied
   function getRewardRate(uint128 poolId, address collateralType, address distributor) external view returns (uint256)
   ```
 
-  returns the number of individual units of amount emitted per second per share for the given poolId, collateralType, distributor vault
+  Returns the number of individual units of amount emitted per second per share for the given poolId, collateralType, distributor vault.
 
 ### Events
 
@@ -1089,6 +1114,12 @@ Will only liquidate a portion of the debt for the vault if `maxUsd` is supplied
   event RewardsClaimed(uint128 accountId, uint128 poolId, address collateralType, address distributor, uint256 amount)
   ```
 
+#### RewardsDistributorRegistered
+
+  ```solidity
+  event RewardsDistributorRegistered(uint128 poolId, address collateralType, address distributor)
+  ```
+
 ## USD Token Module
 
 ### Functions
@@ -1099,11 +1130,15 @@ Will only liquidate a portion of the debt for the vault if `maxUsd` is supplied
   function burnWithAllowance(address from, address spender, uint256 amount) external
   ```
 
+  Allows the core system to burn stablecoins with transfer allowance.
+
 #### transferCrossChain
 
   ```solidity
   function transferCrossChain(uint256 destChainId, address, uint256 amount) external returns (uint256 feesPaid)
   ```
+
+  Allows users to transfer tokens cross-chain using CCIP. This is disabled until _CCIP_CHAINLINK_SEND is set in UtilsModule. This is currently included for testing purposes. Functionality will change, including fee collection, as CCIP continues development.
 
 #### isInitialized
 
@@ -1211,7 +1246,7 @@ Will only liquidate a portion of the debt for the vault if `maxUsd` is supplied
   function delegateCollateral(uint128 accountId, uint128 poolId, address collateralType, uint256 amount, uint256 leverage) external
   ```
 
-  Delegates (creates, adjust or remove a delegation) collateral from an account.
+  Updates an account's delegated collateral amount for the specified pool and collateral type pair.
 
 Requirements:
 
@@ -1240,8 +1275,8 @@ The return value is a percentage with 18 decimals places.
 
   Returns the debt of the specified staking position. Credit is expressed as negative debt.
 
-  Call this function using `callStatic` to treat it as a view function.
-The return value is denominated in dollars with 18 decimal places.
+  This is not a view function, and actually updates the entire debt distribution chain.
+To call this externally as a view function, use `staticall`.
 
 #### getPositionCollateral
 
@@ -1271,8 +1306,8 @@ collateralValue is represented as an integer with the number of decimals specifi
 
   Returns the total debt (or credit) that the vault is responsible for. Credit is expressed as negative debt.
 
-  Call this function using `callStatic` to treat it as a view function.
-The return value is denominated in dollars with 18 decimal places.
+  This is not a view function, and actually updates the entire debt distribution chain.
+To call this externally as a view function, use `staticall`.
 
 #### getVaultCollateral
 

@@ -160,9 +160,9 @@ contract CollateralModule is ICollateralModule {
 
         Account.Data storage account = Account.load(accountId);
 
-        (uint256 totalStaked, , uint256 totalLocked) = account.getCollateralTotals(collateralType);
+        (uint totalDeposited, , uint256 totalLocked) = account.getCollateralTotals(collateralType);
 
-        if (totalStaked - totalLocked < amount) {
+        if (totalDeposited - totalLocked < amount) {
             revert InsufficientAccountCollateral(amount);
         }
 

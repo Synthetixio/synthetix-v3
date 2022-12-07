@@ -291,12 +291,12 @@ contract VaultModule is IVaultModule {
         uint128 poolId,
         address collateralType
     ) internal {
-        Collateral.Data storage stakedCollateral = Account.load(accountId).collaterals[
+        Collateral.Data storage depositedCollateral = Account.load(accountId).collaterals[
             collateralType
         ];
 
-        if (!stakedCollateral.pools.contains(poolId)) {
-            stakedCollateral.pools.add(poolId);
+        if (!depositedCollateral.pools.contains(poolId)) {
+            depositedCollateral.pools.add(poolId);
         }
     }
 }

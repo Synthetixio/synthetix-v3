@@ -6,7 +6,7 @@ pragma solidity ^0.8.0;
  */
 interface IIssueUSDModule {
     /**
-     * @notice Emitted when {sender} mints {amount} of snxUSD with the specified staking position.
+     * @notice Emitted when {sender} mints {amount} of snxUSD with the specified liquidity position.
      * @param accountId The id of the account for which snxUSD was emitted.
      * @param poolId The id of the pool whose collateral was used to emit the snxUSD.
      * @param collateralType The address of the collateral that is backing up the emitted snxUSD.
@@ -22,7 +22,7 @@ interface IIssueUSDModule {
     );
 
     /**
-     * @notice Emitted when {sender} burns {amount} of snxUSD with the specified staking position.
+     * @notice Emitted when {sender} burns {amount} of snxUSD with the specified liquidity position.
      * @param accountId The id of the account for which snxUSD was burned.
      * @param poolId The id of the pool whose collateral was used to emit the snxUSD.
      * @param collateralType The address of the collateral that was backing up the emitted snxUSD.
@@ -38,7 +38,7 @@ interface IIssueUSDModule {
     );
 
     /**
-     * @notice Mints {amount} of snxUSD with the specified staking position.
+     * @notice Mints {amount} of snxUSD with the specified liquidity position.
      * @param accountId The id of the account that is minting snxUSD.
      * @param poolId The id of the pool whose collateral will be used to back up the mint.
      * @param collateralType The address of the collateral that will be used to back up the mint.
@@ -47,7 +47,7 @@ interface IIssueUSDModule {
      * Requirements:
      *
      * - `msg.sender` must be the owner of the account, have the `ADMIN` permission, or have the `MINT` permission.
-     * - After minting, the collateralization ratio of the staking position must not be below the target collateralization ratio for the corresponding collateral type.
+     * - After minting, the collateralization ratio of the liquidity position must not be below the target collateralization ratio for the corresponding collateral type.
      *
      * Emits a {UsdMinted} event.
      */
@@ -59,7 +59,7 @@ interface IIssueUSDModule {
     ) external;
 
     /**
-     * @notice Burns {amount} of snxUSD with the specified staking position.
+     * @notice Burns {amount} of snxUSD with the specified liquidity position.
      * @param accountId The id of the account that is burning snxUSD.
      * @param poolId The id of the pool whose collateral was used to back up the snxUSD.
      * @param collateralType The address of the collateral that was used to back up the snxUSD.
