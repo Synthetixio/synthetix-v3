@@ -3,14 +3,17 @@ pragma solidity ^0.8.0;
 
 /**
  * @title Module for connecting a system with other associated systems.
+
+ * Associated systems become available to all system modules for communication and interaction, but as opposed to inter-modular communications, interactions with associated systems will require the use of `CALL`.
  *
  * Associated systems can be managed or unmanaged.
+ * - Managed systems are connected via a proxy, which means that their implementation can be updated, and the system controls the execution context of the associated system. Example, an snxUSD token connected to the system, and controlled by the system.
+ * - Unmanaged systems are just addresses tracked by the system, for which it has no control whatsoever. Example, Uniswap v3, Curve, etc.
  *
- * Managed systems are connected via a proxy, which means that their implementation can be updated, and the system controls the execution context of the associated system. Example, an snxUSD token connected to the system, and controlled by the system.
- *
- * Unmanaged systems are just addresses tracked by the system, for which it has no control whatsoever. Example, Uniswap v3, Curve, etc.
- *
- * Associated systems, managed or unmanaged, become available to all system modules for communication and interaction, but as opposed to inter-modular communications, associated system interactions will require the use of `CALL`.
+ * Furthermore, associated systems are typed in the AssociatedSystem utility library (See AssociatedSystem.sol):
+ * - KIND_ERC20: A managed associated system specifically wrapping an ERC20 implementation.
+ * - KIND_ERC721: A managed associated system specifically wrapping an ERC20 implementation.
+ * - KIND_UNMANAGED: Any unmanaged associated system.
  */
 interface IAssociatedSystemsModule {
     /**
@@ -29,13 +32,11 @@ interface IAssociatedSystemsModule {
 
     /**
      * @notice Creates or initializes a managed associated ERC20 token.
-     * @param id The bytes32 identifier of the associated system.
+     * @param id The bytes32 identifier of the associated system. If the id is new to the system, it will create a new proxy for the associated system.
      * @param name The token name that will be used to initialize the proxy.
      * @param symbol The token symbol that will be used to initialize the proxy.
      * @param decimals The token decimals that will be used to initialize the proxy.
-     * @param impl The first/new ERC20 implementation of the proxy.
-     *
-     * Note: If the id is new, it will create a new proxy and set its first implementation. Otherwise, it will upgrade the implementation of the existing proxy.
+     * @param impl The ERC20 implementation of the proxy.
      */
     function initOrUpgradeToken(
         bytes32 id,
@@ -47,13 +48,11 @@ interface IAssociatedSystemsModule {
 
     /**
      * @notice Creates or initializes a managed associated ERC721 token.
-     * @param id The bytes32 identifier of the associated system.
+     * @param id The bytes32 identifier of the associated system. If the id is new to the system, it will create a new proxy for the associated system.
      * @param name The token name that will be used to initialize the proxy.
      * @param symbol The token symbol that will be used to initialize the proxy.
      * @param uri The token uri that will be used to initialize the proxy.
-     * @param impl The first/new ERC721 implementation of the proxy.
-     *
-     * Note: If the id is new, it will create a new proxy and set its first implementation. Otherwise, it will upgrade the implementation of the existing proxy.
+     * @param impl The ERC721 implementation of the proxy.
      */
     function initOrUpgradeNft(
         bytes32 id,
