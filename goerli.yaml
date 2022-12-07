@@ -33,7 +33,8 @@ dataSources:
           handler: handlePoolOwnerNominated
         - event: PoolConfigurationSet(indexed uint128,(uint128,uint128,int128)[],indexed address)
           handler: handlePoolConfigurationSet
-      file: ./src/core.ts
+      file: ./src/goerli/core.ts
+
   - kind: ethereum
     name: MarketManagerModule
     network: goerli
@@ -57,7 +58,8 @@ dataSources:
           handler: handleMarketUsdDeposited
         - event: MarketUsdWithdrawn(indexed uint128,indexed address,uint256,indexed address)
           handler: handleMarketUsdWithdrawn
-      file: ./src/core.ts
+      file: ./src/goerli/core.ts
+
   - kind: ethereum
     name: CollateralModule
     network: goerli
@@ -79,7 +81,8 @@ dataSources:
           handler: handleDeposited
         - event: Withdrawn(indexed uint128,indexed address,uint256,indexed address)
           handler: handleWithdrawn
-      file: ./src/core.ts
+      file: ./src/goerli/core.ts
+
   - kind: ethereum
     name: AccountModule
     network: goerli
@@ -104,7 +107,7 @@ dataSources:
           handler: handlePermissionGranted
         - event: PermissionRevoked(indexed uint128,indexed bytes32,indexed address,address)
           handler: handlePermissionRevoked
-      file: ./src/core.ts
+      file: ./src/goerli/core.ts
   - kind: ethereum
     name: VaultModule
     network: goerli
@@ -125,7 +128,8 @@ dataSources:
       eventHandlers:
         - event: DelegationUpdated(indexed uint128,indexed uint128,address,uint256,uint256,indexed address)
           handler: handleDelegationUpdated
-      file: ./src/core.ts
+      file: ./src/goerli/core.ts
+
   - kind: ethereum
     name: IssueUSDModule
     network: goerli
@@ -147,7 +151,8 @@ dataSources:
           handler: handleUSDMinted
         - event: UsdBurned(indexed uint128,indexed uint128,address,uint256,indexed address)
           handler: handleUSDBurned
-      file: ./src/core.ts
+      file: ./src/goerli/core.ts
+
   - kind: ethereum
     name: RewardsManagerModule
     network: goerli
@@ -174,7 +179,8 @@ dataSources:
           handler: handleRewardsClaimed
         - event: RewardsDistributorRegistered(indexed uint128,indexed address,indexed address)
           handler: handleRewardsDistributorRegistered
-      file: ./src/core.ts
+      file: ./src/goerli/core.ts
+
   - kind: ethereum
     name: LiquidationModule
     network: goerli
@@ -197,7 +203,8 @@ dataSources:
           handler: handleLiquidation
         - event: VaultLiquidation(indexed uint128,indexed address,(uint256,uint256,uint256),uint128,address)
           handler: handleVaultLiquidation
-      file: ./src/core.ts
+      file: ./src/goerli/core.ts
+
   - kind: ethereum
     name: CollateralConfigurationModule
     network: goerli
@@ -217,4 +224,4 @@ dataSources:
       eventHandlers:
         - event: CollateralConfigured(indexed address,(bool,uint256,uint256,uint256,bytes32,address,uint256))
           handler: handleCollateralConfigured
-      file: ./src/core.ts
+      file: ./src/goerli/core.ts

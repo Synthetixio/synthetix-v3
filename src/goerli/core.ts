@@ -6,28 +6,28 @@ import {
   PoolNominationRenounced,
   PoolNominationRevoked,
   PoolOwnerNominated,
-} from '../generated/PoolModule/PoolModule';
+} from './PoolModule/PoolModule';
 import {
   MarketRegistered,
   MarketManagerModule,
   MarketUsdDeposited,
   MarketUsdWithdrawn,
-} from '../generated/MarketManagerModule/MarketManagerModule';
-import { Deposited, Withdrawn } from '../generated/CollateralModule/CollateralModule';
-import { CollateralConfigured } from '../generated/CollateralConfigurationModule/CollateralConfigurationModule';
+} from './MarketManagerModule/MarketManagerModule';
+import { Deposited, Withdrawn } from './CollateralModule/CollateralModule';
+import { CollateralConfigured } from './CollateralConfigurationModule/CollateralConfigurationModule';
 import {
   AccountCreated,
   PermissionGranted,
   PermissionRevoked,
-} from '../generated/AccountModule/AccountModule';
+} from './AccountModule/AccountModule';
 import {
   RewardsClaimed as RewardsClaimedEvent,
   RewardsDistributed,
   RewardsDistributorRegistered,
-} from '../generated/RewardsManagerModule/RewardsManagerModule';
-import { Liquidation, VaultLiquidation } from '../generated/LiquidationModule/LiquidationModule';
-import { DelegationUpdated, VaultModule } from '../generated/VaultModule/VaultModule';
-import { UsdMinted, UsdBurned } from '../generated/IssueUSDModule/IssueUSDModule';
+} from './RewardsManagerModule/RewardsManagerModule';
+import { Liquidation, VaultLiquidation } from './LiquidationModule/LiquidationModule';
+import { DelegationUpdated, VaultModule } from './VaultModule/VaultModule';
+import { UsdMinted, UsdBurned } from './IssueUSDModule/IssueUSDModule';
 import {
   Pool,
   Market,
@@ -43,7 +43,7 @@ import {
   RewardsDistributor,
   Liquidation as LiquidationEntity,
   VaultLiquidation as VaultLiquidationEntity,
-} from '../generated/schema';
+} from './schema';
 import { BigDecimal, BigInt, Bytes, store } from '@graphprotocol/graph-ts';
 
 ////////////////////
