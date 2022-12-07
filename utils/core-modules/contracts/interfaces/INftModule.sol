@@ -8,7 +8,7 @@ import "@synthetixio/core-contracts/contracts/interfaces/IERC721Enumerable.sol";
  */
 interface INftModule is IERC721Enumerable {
     /**
-     * @notice Returns wether the module has been initialized.
+     * @notice Returns wether the token has been initialized.
      * @return A boolean with the result of the query.
      */
     function isInitialized() external returns (bool);

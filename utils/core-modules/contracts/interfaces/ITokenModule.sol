@@ -3,24 +3,44 @@ pragma solidity ^0.8.0;
 
 import "@synthetixio/core-contracts/contracts/interfaces/IERC20.sol";
 
-/// @title ERC20 token for snxUSD
+/**
+ * @title Module wrapping an ERC20 token implementation.
+ */
 interface ITokenModule is IERC20 {
-    /// @notice returns if `initialize` has been called by the owner
+    /**
+     * @notice Returns wether the token has been initialized.
+     * @return A boolean with the result of the query.
+     */
     function isInitialized() external returns (bool);
 
-    /// @notice allows owner to initialize the token after attaching a proxy
+    /**
+     * @notice Initializes the token with name, symbol, and decimals.
+     */
     function initialize(
         string memory tokenName,
         string memory tokenSymbol,
         uint8 tokenDecimals
     ) external;
 
-    /// @notice mints token amount to "to" address
+    /**
+     * @notice Allows the owner to mint tokens.
+     * @param to The address to receive the newly minted tokens.
+     * @param amount The amount of tokens to mint.
+     */
     function mint(address to, uint amount) external;
 
-    /// @notice burns token amount from "to" address
+    /**
+     * @notice Allows the owner to burn tokens.
+     * @param to The address whose tokens will be burnt.
+     * @param amount The amount of tokens to burn.
+     */
     function burn(address to, uint amount) external;
 
-    /// @notice sets token amount allowance to spender by "from" address
+    /**
+     * @notice Allows an address that holds tokens to provide allowance to another.
+     * @param from The address that is providing allowance.
+     * @param spender The address that is given allowance.
+     * @param amount The amount of allowance being given.
+     */
     function setAllowance(address from, address spender, uint amount) external;
 }
