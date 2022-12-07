@@ -6,9 +6,9 @@
     "nominationPeriodStartDate": "2022-09-10",
     "votingPeriodStartDate": "2022-09-17",
     "epochEndDate": "2022-10-01",
-    "nextEpochSeatCount": "3",
+    "nextEpochSeatCount": "5",
     "epochIndex": "1",
-    "currentPeriod": "0",
+    "currentPeriod": "1",
     "councilMembers": [
       "0x585639fBf797c1258eBA8875c080Eb63C833d252",
       "0x98Ab20307fdABa1ce8b16d69d22461c6dbe85459",
@@ -27,7 +27,7 @@
     "epochEndDate": "2022-10-01",
     "nextEpochSeatCount": "5",
     "epochIndex": "1",
-    "currentPeriod": "0",
+    "currentPeriod": "1",
     "councilMembers": [
       "0xE1f02F7E90ea5F21D0AC6F12c659C3484c143B03",
       "0x1a207bEefC754735871CEEb4C506686F044B1c41",
@@ -48,7 +48,7 @@
     "epochEndDate": "2022-10-01",
     "nextEpochSeatCount": "8",
     "epochIndex": "1",
-    "currentPeriod": "0",
+    "currentPeriod": "1",
     "councilMembers": [
       "0x45a10F35BeFa4aB841c77860204b133118B7CcAE",
       "0x42f9134E9d3Bf7eEE1f8A5Ac2a4328B059E7468c",
@@ -72,7 +72,7 @@
     "epochEndDate": "2022-10-01",
     "nextEpochSeatCount": "4",
     "epochIndex": "1",
-    "currentPeriod": "0",
+    "currentPeriod": "1",
     "councilMembers": [
       "0x604F127145CAC2467389124f0871227D3fD6F628",
       "0xD09583bBf77D0Da34Cd02612Fe41aF4AE37ebC95",
