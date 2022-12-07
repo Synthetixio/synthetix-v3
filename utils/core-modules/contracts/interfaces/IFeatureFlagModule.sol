@@ -15,7 +15,7 @@ interface IFeatureFlagModule {
     /**
      * @notice Emitted when general access has been given or removed for a feature.
      * @param feature The bytes32 id of the feature.
-     * @param allowAll True if the feature was allowed for everyone and false if it was disallowed for everyone.
+     * @param allowAll True if the feature was allowed for everyone and false if it is only allowed for those included in the allowlist.
      */
     event FeatureFlagAllowAllSet(bytes32 feature, bool allowAll);
 
