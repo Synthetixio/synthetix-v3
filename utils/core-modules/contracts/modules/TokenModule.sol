@@ -7,15 +7,21 @@ import "@synthetixio/core-contracts/contracts/token/ERC20.sol";
 import "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
 import "../interfaces/ITokenModule.sol";
 
+/**
+ * @title Module wrapping an ERC20 token implementation.
+ * See ITokenModule.
+ */
 contract TokenModule is ITokenModule, ERC20, InitializableMixin {
-    function _isInitialized() internal view override returns (bool) {
-        return ERC20Storage.load().decimals != 0;
-    }
-
+    /**
+     * @inheritdoc ITokenModule
+     */
     function isInitialized() external view returns (bool) {
         return _isInitialized();
     }
 
+    /**
+     * @inheritdoc ITokenModule
+     */
     function initialize(
         string memory tokenName,
         string memory tokenSymbol,
@@ -25,18 +31,31 @@ contract TokenModule is ITokenModule, ERC20, InitializableMixin {
         _initialize(tokenName, tokenSymbol, tokenDecimals);
     }
 
+    /**
+     * @inheritdoc ITokenModule
+     */
     function burn(address from, uint256 amount) external override {
         OwnableStorage.onlyOwner();
         _burn(from, amount);
     }
 
+    /**
+     * @inheritdoc ITokenModule
+     */
     function mint(address to, uint256 amount) external override {
         OwnableStorage.onlyOwner();
         _mint(to, amount);
     }
 
+    /**
+     * @inheritdoc ITokenModule
+     */
     function setAllowance(address from, address spender, uint amount) external override {
         OwnableStorage.onlyOwner();
         ERC20Storage.load().allowance[from][spender] = amount;
+    }
+
+    function _isInitialized() internal view override returns (bool) {
+        return ERC20Storage.load().decimals != 0;
     }
 }

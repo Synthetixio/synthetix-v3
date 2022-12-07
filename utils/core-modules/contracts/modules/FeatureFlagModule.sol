@@ -6,13 +6,16 @@ import "../storage/FeatureFlag.sol";
 
 import "../interfaces/IFeatureFlagModule.sol";
 
+/**
+ * @title Module for granular enabling and disabling of system features and functions.
+ * See IFeatureFlagModule.
+ */
 contract FeatureFlagModule is IFeatureFlagModule {
     using SetUtil for SetUtil.AddressSet;
 
-    event FeatureFlagAllowAllSet(bytes32 feature, bool value);
-    event FeatureFlagAllowlistAdded(bytes32 feature, address account);
-    event FeatureFlagAllowlistRemoved(bytes32 feature, address account);
-
+    /**
+     * @inheritdoc IFeatureFlagModule
+     */
     function setFeatureFlagAllowAll(bytes32 feature, bool allowAll) external override {
         OwnableStorage.onlyOwner();
         FeatureFlag.load(feature).allowAll = allowAll;
@@ -20,37 +23,49 @@ contract FeatureFlagModule is IFeatureFlagModule {
         emit FeatureFlagAllowAllSet(feature, allowAll);
     }
 
-    function addToFeatureFlagAllowlist(bytes32 feature, address permissioned) external override {
+    /**
+     * @inheritdoc IFeatureFlagModule
+     */
+    function addToFeatureFlagAllowlist(bytes32 feature, address account) external override {
         OwnableStorage.onlyOwner();
-        FeatureFlag.load(feature).permissionedAddresses.add(permissioned);
+        FeatureFlag.load(feature).permissionedAddresses.add(account);
 
-        emit FeatureFlagAllowlistAdded(feature, permissioned);
+        emit FeatureFlagAllowlistAdded(feature, account);
     }
 
-    function removeFromFeatureFlagAllowlist(
-        bytes32 feature,
-        address permissioned
-    ) external override {
+    /**
+     * @inheritdoc IFeatureFlagModule
+     */
+    function removeFromFeatureFlagAllowlist(bytes32 feature, address account) external override {
         OwnableStorage.onlyOwner();
-        FeatureFlag.load(feature).permissionedAddresses.remove(permissioned);
+        FeatureFlag.load(feature).permissionedAddresses.remove(account);
 
-        emit FeatureFlagAllowlistRemoved(feature, permissioned);
+        emit FeatureFlagAllowlistRemoved(feature, account);
     }
 
+    /**
+     * @inheritdoc IFeatureFlagModule
+     */
     function getFeatureFlagAllowAll(bytes32 feature) external view override returns (bool) {
         return FeatureFlag.load(feature).allowAll;
     }
 
+    /**
+     * @inheritdoc IFeatureFlagModule
+     */
     function getFeatureFlagAllowlist(
         bytes32 feature
     ) external view override returns (address[] memory) {
         return FeatureFlag.load(feature).permissionedAddresses.values();
     }
 
+    /**
+     * @inheritdoc IFeatureFlagModule
+     */
     function isFeatureAllowed(
         bytes32 feature,
-        address addressToCheck
+        address account
     ) external view override returns (bool) {
-        return FeatureFlag.hasAccess(feature, addressToCheck);
+        return FeatureFlag.hasAccess(feature, account);
     }
 }

@@ -13,9 +13,16 @@ import "../interfaces/INftModule.sol";
 
 import "../storage/AssociatedSystem.sol";
 
+/**
+ * @title Module for connecting a system with other associated systems.
+ * @dev See IAssociatedSystemsModule.
+ */
 contract AssociatedSystemsModule is IAssociatedSystemsModule {
     using AssociatedSystem for AssociatedSystem.Data;
 
+    /**
+     * @inheritdoc IAssociatedSystemsModule
+     */
     function initOrUpgradeToken(
         bytes32 id,
         string memory name,
@@ -27,6 +34,9 @@ contract AssociatedSystemsModule is IAssociatedSystemsModule {
         _initOrUpgradeToken(id, name, symbol, decimals, impl);
     }
 
+    /**
+     * @inheritdoc IAssociatedSystemsModule
+     */
     function initOrUpgradeNft(
         bytes32 id,
         string memory name,
@@ -58,11 +68,7 @@ contract AssociatedSystemsModule is IAssociatedSystemsModule {
     }
 
     /**
-     * sets a token implementation without the corresponding upgrade functionality
-     * useful for adaptation of ex. old SNX token. The connected system does not need to be
-     *
-     * *NOTE:* the contract you are connecting should still be owned by your dao. The
-     * system is not expected to be able to do upgrades for you.
+     * @inheritdoc IAssociatedSystemsModule
      */
     function registerUnmanagedSystem(bytes32 id, address endpoint) external override {
         OwnableStorage.onlyOwner();
@@ -72,15 +78,13 @@ contract AssociatedSystemsModule is IAssociatedSystemsModule {
         _setAssociatedSystem(id, AssociatedSystem.KIND_UNMANAGED, endpoint, endpoint);
     }
 
-    function _setAssociatedSystem(bytes32 id, bytes32 kind, address proxy, address impl) internal {
-        AssociatedSystem.load(id).set(proxy, impl, kind);
-        emit AssociatedSystemSet(kind, id, proxy, impl);
-    }
-
+    /**
+     * @inheritdoc IAssociatedSystemsModule
+     */
     function getAssociatedSystem(
         bytes32 id
-    ) external view override returns (address proxy, bytes32 kind) {
-        proxy = AssociatedSystem.load(id).proxy;
+    ) external view override returns (address addr, bytes32 kind) {
+        addr = AssociatedSystem.load(id).proxy;
         kind = AssociatedSystem.load(id).kind;
     }
 
@@ -90,6 +94,25 @@ contract AssociatedSystemsModule is IAssociatedSystemsModule {
         }
 
         _;
+    }
+
+    function _setAssociatedSystem(bytes32 id, bytes32 kind, address proxy, address impl) internal {
+        AssociatedSystem.load(id).set(proxy, impl, kind);
+        emit AssociatedSystemSet(kind, id, proxy, impl);
+    }
+
+    function _upgradeToken(bytes32 id, address impl) internal {
+        AssociatedSystem.Data storage store = AssociatedSystem.load(id);
+        store.expectKind(AssociatedSystem.KIND_ERC20);
+
+        store.impl = impl;
+
+        address proxy = store.proxy;
+
+        // tell the associated proxy to upgrade to the new implementation
+        IUUPSImplementation(proxy).upgradeTo(impl);
+
+        _setAssociatedSystem(id, AssociatedSystem.KIND_ERC20, proxy, impl);
     }
 
     function _initOrUpgradeToken(
@@ -113,25 +136,4 @@ contract AssociatedSystemsModule is IAssociatedSystemsModule {
             _setAssociatedSystem(id, AssociatedSystem.KIND_ERC20, proxy, impl);
         }
     }
-
-    function _upgradeToken(bytes32 id, address impl) internal {
-        AssociatedSystem.Data storage store = AssociatedSystem.load(id);
-        store.expectKind(AssociatedSystem.KIND_ERC20);
-
-        store.impl = impl;
-
-        address proxy = store.proxy;
-
-        // tell the associated proxy to upgrade to the new implementation
-        IUUPSImplementation(proxy).upgradeTo(impl);
-
-        _setAssociatedSystem(id, AssociatedSystem.KIND_ERC20, proxy, impl);
-    }
-
-    event AssociatedSystemSet(
-        bytes32 indexed kind,
-        bytes32 indexed id,
-        address proxy,
-        address impl
-    );
 }

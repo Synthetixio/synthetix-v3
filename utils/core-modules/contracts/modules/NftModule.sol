@@ -11,17 +11,23 @@ import "../storage/Initialized.sol";
 
 import "../interfaces/INftModule.sol";
 
+/**
+ * @title Module wrapping an ERC721 token implementation.
+ * See INftModule.
+ */
 contract NftModule is INftModule, ERC721Enumerable, InitializableMixin {
     bytes32 internal constant _INITIALIZED_NAME = "NftModule";
 
-    function _isInitialized() internal view override returns (bool) {
-        return Initialized.load(_INITIALIZED_NAME).initialized;
-    }
-
+    /**
+     * @inheritdoc INftModule
+     */
     function isInitialized() external view returns (bool) {
         return _isInitialized();
     }
 
+    /**
+     * @inheritdoc INftModule
+     */
     function initialize(
         string memory tokenName,
         string memory tokenSymbol,
@@ -31,5 +37,9 @@ contract NftModule is INftModule, ERC721Enumerable, InitializableMixin {
 
         _initialize(tokenName, tokenSymbol, uri);
         Initialized.load(_INITIALIZED_NAME).initialized = true;
+    }
+
+    function _isInitialized() internal view override returns (bool) {
+        return Initialized.load(_INITIALIZED_NAME).initialized;
     }
 }
