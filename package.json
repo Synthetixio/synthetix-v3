@@ -5,10 +5,10 @@
   "scripts": {
     "codegen": "graph codegen && prettier --write ./generated",
     "build": "yarn codegen && graph build",
-    "deploy": "graph deploy --node https://api.thegraph.com/deploy/ fritzschoff/subgraphs",
-    "create-local": "graph create --node http://localhost:8020/ fritzschoff/subgraphs",
-    "remove-local": "graph remove --node http://localhost:8020/ fritzschoff/subgraphs",
-    "deploy-local": "graph deploy --node http://localhost:8020/ --ipfs http://localhost:5001 fritzschoff/subgraphs",
+    "deploy": "graph deploy --node https://api.thegraph.com/deploy/ fritzschoff/snx-v3",
+    "create-local": "graph create --node http://localhost:8020/ fritzschoff/snx-v3",
+    "remove-local": "graph remove --node http://localhost:8020/ fritzschoff/snx-v3",
+    "deploy-local": "graph deploy --node http://localhost:8020/ --ipfs http://localhost:5001 fritzschoff/snx-v3",
     "test": "graph test",
     "test-coverage": "graph test -- --coverage"
   },

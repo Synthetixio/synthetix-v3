@@ -427,13 +427,13 @@ export function handleDelegationUpdated(event: DelegationUpdated): void {
   position.collateral_amount = event.params.amount.toBigDecimal();
   position.updated_at = event.block.timestamp;
   position.updated_at_block = event.block.number;
-  position.c_ratio = VaultModule.bind(event.address)
-    .getPositionCollateralizationRatio(
-      event.params.accountId,
-      event.params.poolId,
-      event.params.collateralType
-    )
-    .toBigDecimal();
+  // position.c_ratio = VaultModule.bind(event.address)
+  //   .getPositionCollateralizationRatio(
+  //     event.params.accountId,
+  //     event.params.poolId,
+  //     event.params.collateralType
+  //   )
+  //   .toBigDecimal();
   position.leverage = event.params.leverage.toBigDecimal();
   let vault = Vault.load(
     event.params.poolId.toString().concat('-').concat(event.params.collateralType.toHex())

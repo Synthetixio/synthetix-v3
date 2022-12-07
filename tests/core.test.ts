@@ -691,7 +691,7 @@ describe('core tests', () => {
     assert.fieldEquals('Position', `1-1-${address}`, 'collateral_amount', '2323');
     assert.fieldEquals('Position', `1-1-${address}`, 'updated_at', now.toString());
     assert.fieldEquals('Position', `1-1-${address}`, 'updated_at_block', (now - 1000).toString());
-    assert.fieldEquals('Position', `1-1-${address}`, 'c_ratio', '200');
+    // assert.fieldEquals('Position', `1-1-${address}`, 'c_ratio', '200');
     assert.fieldEquals('Position', `1-1-${address}`, 'leverage', '10');
     assert.fieldEquals('Position', `1-1-${address}`, 'pool', '1');
     assert.fieldEquals('Position', `1-1-${address}`, 'collateral_type', address);
@@ -760,7 +760,7 @@ describe('core tests', () => {
     assert.fieldEquals('Position', `1-1-${address}`, 'collateral_amount', '2323');
     assert.fieldEquals('Position', `1-1-${address}`, 'updated_at', (now + 1000).toString());
     assert.fieldEquals('Position', `1-1-${address}`, 'updated_at_block', now.toString());
-    assert.fieldEquals('Position', `1-1-${address}`, 'c_ratio', '200');
+    // assert.fieldEquals('Position', `1-1-${address}`, 'c_ratio', '200');
     assert.fieldEquals('Position', `1-1-${address}`, 'leverage', '10');
     assert.fieldEquals('Position', `1-1-${address}`, 'total_minted', '2000');
     handleUSDMinted(newUSDMintedEvent);
@@ -815,7 +815,7 @@ describe('core tests', () => {
     assert.fieldEquals('Position', `1-1-${address}`, 'collateral_amount', '2323');
     assert.fieldEquals('Position', `1-1-${address}`, 'updated_at', (now + 1000).toString());
     assert.fieldEquals('Position', `1-1-${address}`, 'updated_at_block', now.toString());
-    assert.fieldEquals('Position', `1-1-${address}`, 'c_ratio', '200');
+    // assert.fieldEquals('Position', `1-1-${address}`, 'c_ratio', '200');
     assert.fieldEquals('Position', `1-1-${address}`, 'leverage', '10');
     assert.fieldEquals('Position', `1-1-${address}`, 'total_burned', '2000');
     handleUSDBurned(newUSDBurnedEvent);

@@ -815,15 +815,6 @@ export class Position extends Entity {
     this.set('leverage', Value.fromBigDecimal(value));
   }
 
-  get c_ratio(): BigDecimal {
-    let value = this.get('c_ratio');
-    return value!.toBigDecimal();
-  }
-
-  set c_ratio(value: BigDecimal) {
-    this.set('c_ratio', Value.fromBigDecimal(value));
-  }
-
   get created_at(): BigInt {
     let value = this.get('created_at');
     return value!.toBigInt();

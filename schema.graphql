@@ -85,7 +85,8 @@ type Position @entity {
   id: ID!
   collateral_amount: BigDecimal!
   leverage: BigDecimal!
-  c_ratio: BigDecimal!
+  # TODO @dev find a way to calculate that without a contract call
+  # c_ratio: BigDecimal!
   created_at: BigInt!
   created_at_block: BigInt!
   updated_at: BigInt!
