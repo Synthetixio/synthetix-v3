@@ -564,4 +564,36 @@ describe('RewardsManagerModule', function () {
       });
     });
   });
+
+  describe('removeRewardsDistributor()', async () => {
+    before(restore);
+
+    it('only works with owner', async () => {
+      await assertRevert(
+        systems()
+          .Core.connect(user2)
+          .removeRewardsDistributor(poolId, collateralAddress(), RewardDistributor.address),
+        `Unauthorized("${await user2.getAddress()}")`,
+        systems().Core
+      );
+    });
+
+    it('pool owner can remove reward distributor', async () => {
+      await systems()
+        .Core.connect(owner)
+        .removeRewardsDistributor(poolId, collateralAddress(), RewardDistributor.address);
+    });
+
+    it('make sure distributor is removed', async () => {
+      await assertRevert(
+        await RewardDistributor.connect(owner).distributeRewards(
+          poolId,
+          collateralAddress(),
+          rewardAmount,
+          0, // timestamp
+          0
+        )
+      );
+    });
+  });
 });

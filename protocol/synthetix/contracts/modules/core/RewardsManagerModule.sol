@@ -215,4 +215,35 @@ contract RewardsManagerModule is IRewardsManagerModule {
     ) internal pure returns (bytes32) {
         return keccak256(abi.encode(poolId, collateralType, distributor));
     }
+
+    /**
+     * @inheritdoc IRewardsManagerModule
+     */
+    function removeRewardsDistributor(
+        uint128 poolId,
+        address collateralType,
+        address distributor
+    ) external override {
+        Pool.Data storage pool = Pool.load(poolId);
+        SetUtil.Bytes32Set storage rewardIds = pool.vaults[collateralType].rewardIds;
+
+        if (pool.owner != msg.sender) {
+            revert AccessError.Unauthorized(msg.sender);
+        }
+
+        bytes32 rewardId = _getRewardId(poolId, collateralType, distributor);
+
+        if (!rewardIds.contains(rewardId)) {
+            revert ParameterError.InvalidParameter("distributor", "is not registered");
+        }
+
+        rewardIds.remove(rewardId);
+
+        if (distributor == address(0)) {
+            revert ParameterError.InvalidParameter("distributor", "must be non-zero");
+        }
+        pool.vaults[collateralType].rewards[rewardId].distributor = IRewardDistributor(address(0));
+
+        emit RewardsDistributorRemoved(poolId, collateralType, distributor);
+    }
 }

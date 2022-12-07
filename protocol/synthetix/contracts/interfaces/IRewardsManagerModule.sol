@@ -52,12 +52,36 @@ interface IRewardsManagerModule {
     );
 
     /**
-     * @notice Called by pool owner or an existing distributor to register rewards for vault participants.
+     * @notice Emitted when an already registered rewards distributor is removed.
+     * @param poolId The id of the pool whose reward distributor was registered.
+     * @param collateralType The address of the collateral used in the pool's rewards.
+     * @param distributor The address of the registered reward distributor.
+     */
+    event RewardsDistributorRemoved(
+        uint128 indexed poolId,
+        address indexed collateralType,
+        address indexed distributor
+    );
+
+    /**
+     * @notice Called by pool owner to register rewards for vault participants.
      * @param poolId The id of the pool whose rewards are to be managed by the specified distributor.
      * @param collateralType The address of the collateral used in the pool's rewards.
      * @param distributor The address of the reward distributor to be registered.
      */
     function registerRewardsDistributor(
+        uint128 poolId,
+        address collateralType,
+        address distributor
+    ) external;
+
+    /**
+     * @notice Called by pool owner to remove a registered rewards distributor for vault participants.
+     * @param poolId The id of the pool whose rewards are to be managed by the specified distributor.
+     * @param collateralType The address of the collateral used in the pool's rewards.
+     * @param distributor The address of the reward distributor to be registered.
+     */
+    function removeRewardsDistributor(
         uint128 poolId,
         address collateralType,
         address distributor
