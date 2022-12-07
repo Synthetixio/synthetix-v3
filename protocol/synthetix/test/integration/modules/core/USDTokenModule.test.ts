@@ -9,7 +9,7 @@ describe('USDTokenModule', function () {
     const info = await systems().Core.getAssociatedSystem(
       ethers.utils.formatBytes32String('USDToken')
     );
-    assert.equal(info.proxy, systems().USD.address);
+    assert.equal(info.addr, systems().USD.address);
   });
 
   it('applied the USD parameters', async () => {
