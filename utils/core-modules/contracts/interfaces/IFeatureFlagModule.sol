@@ -24,14 +24,14 @@ interface IFeatureFlagModule {
      * @param feature The bytes32 id of the feature.
      * @param account The address that was given access to the feature.
      */
-    event FeatureFlagAllowListAdded(bytes32 feature, address account);
+    event FeatureFlagAllowlistAdded(bytes32 feature, address account);
 
     /**
      * @notice Emitted when access to a feature has been removed from an address.
      * @param feature The bytes32 id of the feature.
      * @param account The address that no longer has access to the feature.
      */
-    event FeatureFlagAllowListRemoved(bytes32 feature, address account);
+    event FeatureFlagAllowlistRemoved(bytes32 feature, address account);
 
     /**
      * @notice Allows or disallows anyone to use the specified feature.
@@ -45,14 +45,14 @@ interface IFeatureFlagModule {
      * @param feature The bytes32 id of the feature.
      * @param account The address that is allowed to use the feature.
      */
-    function addToFeatureFlagAllowList(bytes32 feature, address account) external;
+    function addToFeatureFlagAllowlist(bytes32 feature, address account) external;
 
     /**
      * @notice Disallows an address from using a feature.
      * @param feature The bytes32 id of the feature.
      * @param account The address that is disallowed from using the feature.
      */
-    function removeFromFeatureFlagAllowList(bytes32 feature, address account) external;
+    function removeFromFeatureFlagAllowlist(bytes32 feature, address account) external;
 
     /**
      * @notice Determines if the given feature is allowed or disallowed to all users.
@@ -66,7 +66,7 @@ interface IFeatureFlagModule {
      * @param feature The bytes32 id of the feature.
      * @return The queried list of addresses.
      */
-    function getFeatureFlagAllowList(bytes32 feature) external view returns (address[] memory);
+    function getFeatureFlagAllowlist(bytes32 feature) external view returns (address[] memory);
 
     /**
      * @notice Determines if an address can use the specified feature.

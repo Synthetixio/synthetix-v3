@@ -26,21 +26,21 @@ contract FeatureFlagModule is IFeatureFlagModule {
     /**
      * @inheritdoc IFeatureFlagModule
      */
-    function addToFeatureFlagAllowList(bytes32 feature, address account) external override {
+    function addToFeatureFlagAllowlist(bytes32 feature, address account) external override {
         OwnableStorage.onlyOwner();
         FeatureFlag.load(feature).permissionedAddresses.add(account);
 
-        emit FeatureFlagAllowListAdded(feature, account);
+        emit FeatureFlagAllowlistAdded(feature, account);
     }
 
     /**
      * @inheritdoc IFeatureFlagModule
      */
-    function removeFromFeatureFlagAllowList(bytes32 feature, address account) external override {
+    function removeFromFeatureFlagAllowlist(bytes32 feature, address account) external override {
         OwnableStorage.onlyOwner();
         FeatureFlag.load(feature).permissionedAddresses.remove(account);
 
-        emit FeatureFlagAllowListRemoved(feature, account);
+        emit FeatureFlagAllowlistRemoved(feature, account);
     }
 
     /**
@@ -53,7 +53,7 @@ contract FeatureFlagModule is IFeatureFlagModule {
     /**
      * @inheritdoc IFeatureFlagModule
      */
-    function getFeatureFlagAllowList(
+    function getFeatureFlagAllowlist(
         bytes32 feature
     ) external view override returns (address[] memory) {
         return FeatureFlag.load(feature).permissionedAddresses.values();
