@@ -57,7 +57,7 @@ interface IFeatureFlagModule {
     /**
      * @notice Determines if the given feature is freely allowed to all users.
      * @param feature The bytes32 id of the feature.
-     * @param True if anyone is allowed to use the feature, false if per-user control is used.
+     * @return True if anyone is allowed to use the feature, false if per-user control is used.
      */
     function getFeatureFlagAllowAll(bytes32 feature) external view returns (bool);
 
