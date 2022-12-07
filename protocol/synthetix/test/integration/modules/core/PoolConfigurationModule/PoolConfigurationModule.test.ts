@@ -30,7 +30,7 @@ describe('PoolConfigurationModule', function () {
       before('give user1 permission to create pools', async () => {
         await systems()
           .Core.connect(owner)
-          .addToFeatureFlagAllowlist(
+          .addToFeatureFlagAllowList(
             Ethers.utils.formatBytes32String('createPool'),
             user1.getAddress()
           );

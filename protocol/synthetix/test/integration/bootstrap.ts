@@ -55,8 +55,8 @@ export function bootstrap() {
 
   before('give owner permission to create pools and markets', async () => {
     const [owner] = getSigners();
-    await systems.Core.addToFeatureFlagAllowlist(POOL_FEATURE_FLAG, await owner.getAddress());
-    await systems.Core.addToFeatureFlagAllowlist(MARKET_FEATURE_FLAG, await owner.getAddress());
+    await systems.Core.addToFeatureFlagAllowList(POOL_FEATURE_FLAG, await owner.getAddress());
+    await systems.Core.addToFeatureFlagAllowList(MARKET_FEATURE_FLAG, await owner.getAddress());
   });
 
   return {
@@ -186,7 +186,7 @@ export function bootstrapWithMockMarketAndPool() {
     await r
       .systems()
       .Core.connect(owner)
-      .addToFeatureFlagAllowlist(MARKET_FEATURE_FLAG, user1.getAddress());
+      .addToFeatureFlagAllowList(MARKET_FEATURE_FLAG, user1.getAddress());
 
     marketId = await r.systems().Core.connect(user1).callStatic.registerMarket(MockMarket.address);
 

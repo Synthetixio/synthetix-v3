@@ -28,7 +28,7 @@ describe('IssueUSDModule', function () {
 
     await systems()
       .Core.connect(owner)
-      .addToFeatureFlagAllowlist(MARKET_FEATURE_FLAG, user1.getAddress());
+      .addToFeatureFlagAllowList(MARKET_FEATURE_FLAG, user1.getAddress());
 
     marketId = await systems().Core.connect(user1).callStatic.registerMarket(MockMarket.address);
 

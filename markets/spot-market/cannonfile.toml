@@ -70,7 +70,7 @@ depends = ["contract.Router"]
 # add pool owner to feature flag allow list (owner must be pdao for this to be successful)
 [invoke.addSpotMarketToFeatureFlag]
 target = ["synthetix.CoreProxy"]
-func = "addToFeatureFlagAllowlist"
+func = "addToFeatureFlagAllowList"
 from = "<%= settings.coreProxyOwner %>"
 args = ["0x72656769737465724d61726b6574000000000000000000000000000000000000", "<%= contracts.SpotMarketProxy.address %>"] # formatBytes32String("registerMarket")
 depends = ['import.synthetix', 'contract.SpotMarketProxy']
