@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 /**
  * @title Module for connecting a system with other associated systems.
  *
- * Associated systems can me managed or unmanaged.
+ * Associated systems can be managed or unmanaged.
  *
  * Managed systems are connected via a proxy, which means that their implementation can be updated, and the system controls the execution context of the associated system. Example, an snxUSD token connected to the system, and controlled by the system.
  *
