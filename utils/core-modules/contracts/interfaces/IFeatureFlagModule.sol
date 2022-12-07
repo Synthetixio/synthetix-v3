@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 /**
  * @title Module for granular enabling and disabling of system features and functions.
  *
- * Interface functions that are controlled by a feature flat simply need to add a line to their body:
+ * Interface functions that are controlled by a feature flag simply need to add this line to their body:
  * `FeatureFlag.ensureAccessToFeature(FLAG_ID);`
  *
  * If such a line is not present in a function, then it is not controlled by a feature flag.
@@ -34,9 +34,9 @@ interface IFeatureFlagModule {
     event FeatureFlagAllowlistRemoved(bytes32 feature, address account);
 
     /**
-     * @notice Allows or disallows anyone to use the specified feature.
+     * @notice Enables or disables free access to a feature.
      * @param feature The bytes32 id of the feature.
-     * @param allowAll True to allow, false to disallow.
+     * @param allowAll True to allow anyone to use the feature, false to fallback to the allowlist.
      */
     function setFeatureFlagAllowAll(bytes32 feature, bool allowAll) external;
 
@@ -55,9 +55,9 @@ interface IFeatureFlagModule {
     function removeFromFeatureFlagAllowlist(bytes32 feature, address account) external;
 
     /**
-     * @notice Determines if the given feature is allowed or disallowed to all users.
+     * @notice Determines if the given feature is freely allowed to all users.
      * @param feature The bytes32 id of the feature.
-     * @return A boolean with the response to the query.
+     * @param True if anyone is allowed to use the feature, false if per-user control is used.
      */
     function getFeatureFlagAllowAll(bytes32 feature) external view returns (bool);
 
