@@ -83,7 +83,7 @@ contract USDTokenModule is ERC20, InitializableMixin, IUSDTokenModule {
 
         ERC20Storage.Data storage store = ERC20Storage.load();
 
-        if (amount < store.allowance[from][spender]) {
+        if (amount > store.allowance[from][spender]) {
             revert InsufficientAllowance(amount, store.allowance[from][spender]);
         }
 

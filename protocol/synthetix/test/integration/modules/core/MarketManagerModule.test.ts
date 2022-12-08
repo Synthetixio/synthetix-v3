@@ -74,21 +74,22 @@ describe('MarketManagerModule', function () {
       await systems().Core.connect(user1).mintUsd(accountId, poolId, collateralAddress(), One);
     });
 
-    // TODO: Atm Anvil seems to fail to parse errors when the
-    // entry point (MockMarket) is not the contract that
-    // emits the event (System via MarketManagerModule).
     it('should not work if user has not approved', async () => {
+      // TODO (Anvil Custom Errors)
+      // Anvil is failing to detect custom errors when the error is emitted
+      // from a contract which is not the one that the user is interacting with.
+      // We can see the error when running tests with `DEBUG=cannon:cli:rpc npm t`,
+      // but we cannot detect it in these tests.
+      // Error debugged: 'Custom Error 2a1b2dd8:(0x0000000000000000000000000de0b6B3a7640000, false)'
+      // 0x2a1b2dd8 = keccak256("InsufficientAllowance(uint256,uint256)")
+      // Replace this with the commented check above when fixed.
+      // For now we check that it simply reverts.
+      await assertRevert(MockMarket().connect(user1).buySynth(One));
       // await assertRevert(
       //   MockMarket().connect(user1).buySynth(One),
-      //   `MarketDepositNotApproved("${await user1.getAddress()}", "${
-      //     MockMarket().address
-      //   }", ${One.toString()}, 0)`,
+      //   `InsufficientAllowance(${One.toString()}, 0)`,
       //   systems().Core
       // );
-
-      // TODO: Replace this with the commented check above
-      // when fixed. For now we check that it simply reverts.
-      await assertRevert(MockMarket().connect(user1).buySynth(One));
     });
 
     describe('success', async () => {
