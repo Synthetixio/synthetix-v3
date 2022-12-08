@@ -38,13 +38,13 @@ interface IMarketCollateralModule {
      * @param marketId The id of the market for which the maximum was configured.
      * @param collateralType The address of the collateral for which the maximum was configured.
      * @param systemAmount The amount to which the maximum was set, denominated with 18 decimals of precision.
-     * @param sender The address that triggered the configuration change.
+     * @param owner The owner of the system, which triggered the configuration change.
      */
     event MaximumMarketCollateralConfigured(
         uint128 indexed marketId,
         address indexed collateralType,
         uint256 systemAmount,
-        address indexed sender
+        address indexed owner
     );
 
     /**
