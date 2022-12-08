@@ -76,7 +76,7 @@ artifact = "contracts/modules/account/AccountTokenModule.sol:AccountTokenModule"
 artifact = "contracts/modules/usd/USDTokenModule.sol:USDTokenModule"
 
 [contract.CollateralMock]
-artifact = "contracts/mocks/token/CollateralMock.sol:CollateralMock"
+artifact = "contracts/mocks/CollateralMock.sol:CollateralMock"
 
 [invoke.intializeCollateralMock]
 target = ["CollateralMock"]
