@@ -6,12 +6,16 @@ import "../interfaces/IOwnable.sol";
 import "../errors/AddressError.sol";
 import "../errors/ChangeError.sol";
 
+/**
+ * @title Contract for facilitating ownership by a single address.
+ * See IOwnable.
+ */
 contract Ownable is IOwnable {
-    event OwnerNominated(address newOwner);
-    event OwnerChanged(address oldOwner, address newOwner);
-
     error NotNominated(address addr);
 
+    /**
+     * @inheritdoc IOwnable
+     */
     function acceptOwnership() public override {
         OwnableStorage.Data storage store = OwnableStorage.load();
 
@@ -26,6 +30,9 @@ contract Ownable is IOwnable {
         store.nominatedOwner = address(0);
     }
 
+    /**
+     * @inheritdoc IOwnable
+     */
     function nominateNewOwner(address newNominatedOwner) public override onlyOwnerIfSet {
         OwnableStorage.Data storage store = OwnableStorage.load();
 
@@ -41,6 +48,9 @@ contract Ownable is IOwnable {
         emit OwnerNominated(newNominatedOwner);
     }
 
+    /**
+     * @inheritdoc IOwnable
+     */
     function renounceNomination() external override {
         OwnableStorage.Data storage store = OwnableStorage.load();
 
@@ -51,20 +61,32 @@ contract Ownable is IOwnable {
         store.nominatedOwner = address(0);
     }
 
+    /**
+     * @inheritdoc IOwnable
+     */
     function owner() external view override returns (address) {
         return OwnableStorage.load().owner;
     }
 
+    /**
+     * @inheritdoc IOwnable
+     */
     function nominatedOwner() external view override returns (address) {
         return OwnableStorage.load().nominatedOwner;
     }
 
+    /**
+     * @dev Reverts if the caller is not the owner.
+     */
     modifier onlyOwner() {
         OwnableStorage.onlyOwner();
 
         _;
     }
 
+    /**
+     * @dev Reverts if the caller is not the owner, except if it is not set yet.
+     */
     modifier onlyOwnerIfSet() {
         address theOwner = OwnableStorage.getOwner();
 

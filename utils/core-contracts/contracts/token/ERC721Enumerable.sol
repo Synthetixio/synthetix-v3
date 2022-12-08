@@ -6,27 +6,17 @@ import "./ERC721EnumerableStorage.sol";
 import "../interfaces/IERC721Enumerable.sol";
 
 /*
-    Reference implementations:
-    * OpenZeppelin - https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC721/extensions/ERC721EnumerableStorage.sol
-*/
-
+ * @title ERC721 extension with helper functions that allow the enumeration of NFT tokens.
+ * See IERC721Enumerable
+ *
+ * Reference implementations:
+ * - OpenZeppelin - https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC721/extensions/ERC721EnumerableStorage.sol
+ */
 abstract contract ERC721Enumerable is ERC721, IERC721Enumerable {
     error IndexOutOfBounds();
 
-    function _initialize(
-        string memory tokenName,
-        string memory tokenSymbol,
-        string memory baseTokenURI
-    ) internal virtual override {
-        super._initialize(tokenName, tokenSymbol, baseTokenURI);
-        if (ERC721EnumerableStorage.load().allTokens.length > 0) {
-            revert InitError.AlreadyInitialized();
-        }
-    }
-
     /**
-     * @dev Returns a token ID owned by `owner` at a given `index` of its token list.
-     * Use along with {balanceOf} to enumerate all of ``owner``'s tokens.
+     * @inheritdoc IERC721Enumerable
      */
     function tokenOfOwnerByIndex(
         address owner,
@@ -39,15 +29,14 @@ abstract contract ERC721Enumerable is ERC721, IERC721Enumerable {
     }
 
     /**
-     * @dev Returns the total amount of tokens stored by the contract.
+     * @inheritdoc IERC721Enumerable
      */
     function totalSupply() public view virtual override returns (uint256) {
         return ERC721EnumerableStorage.load().allTokens.length;
     }
 
     /**
-     * @dev Returns a token ID at a given `index` of all the tokens stored by the contract.
-     * Use along with {totalSupply} to enumerate all tokens.
+     * @dev Returns the total amount of tokens stored by the contract.
      */
     function tokenByIndex(uint256 index) public view virtual override returns (uint256) {
         if (index >= ERC721Enumerable.totalSupply()) {
@@ -138,5 +127,16 @@ abstract contract ERC721Enumerable is ERC721, IERC721Enumerable {
         // This also deletes the contents at the last position of the array
         delete ERC721EnumerableStorage.load().allTokensIndex[tokenId];
         ERC721EnumerableStorage.load().allTokens.pop();
+    }
+
+    function _initialize(
+        string memory tokenName,
+        string memory tokenSymbol,
+        string memory baseTokenURI
+    ) internal virtual override {
+        super._initialize(tokenName, tokenSymbol, baseTokenURI);
+        if (ERC721EnumerableStorage.load().allTokens.length > 0) {
+            revert InitError.AlreadyInitialized();
+        }
     }
 }

@@ -8,10 +8,47 @@ import "../utils/AddressUtil.sol";
 import "./ProxyStorage.sol";
 
 abstract contract UUPSImplementation is IUUPSImplementation, ProxyStorage {
-    event Upgraded(address indexed self, address implementation);
-
+    /**
+     * @dev Thrown when an incoming implementation will not be able to receive future upgrades.
+     */
     error ImplementationIsSterile(address implementation);
+
+    /**
+     * @dev Thrown intentionally when testing future upgradeability of an implementation.
+     */
     error UpgradeSimulationFailed();
+
+    /**
+     * @inheritdoc IUUPSImplementation
+     */
+    function simulateUpgradeTo(address newImplementation) public override {
+        ProxyStore storage store = _proxyStore();
+
+        store.simulatingUpgrade = true;
+
+        address currentImplementation = store.implementation;
+        store.implementation = newImplementation;
+
+        (bool rollbackSuccessful, ) = newImplementation.delegatecall(
+            abi.encodeCall(this.upgradeTo, (currentImplementation))
+        );
+
+        if (!rollbackSuccessful || _proxyStore().implementation != currentImplementation) {
+            revert UpgradeSimulationFailed();
+        }
+
+        store.simulatingUpgrade = false;
+
+        // solhint-disable-next-line reason-string
+        revert();
+    }
+
+    /**
+     * @inheritdoc IUUPSImplementation
+     */
+    function getImplementation() external view override returns (address) {
+        return _proxyStore().implementation;
+    }
 
     function _upgradeTo(address newImplementation) internal virtual {
         if (newImplementation == address(0)) {
@@ -48,31 +85,5 @@ abstract contract UUPSImplementation is IUUPSImplementation, ProxyStorage {
             !simulationReverted &&
             keccak256(abi.encodePacked(simulationResponse)) ==
             keccak256(abi.encodePacked(UpgradeSimulationFailed.selector));
-    }
-
-    function simulateUpgradeTo(address newImplementation) public override {
-        ProxyStore storage store = _proxyStore();
-
-        store.simulatingUpgrade = true;
-
-        address currentImplementation = store.implementation;
-        store.implementation = newImplementation;
-
-        (bool rollbackSuccessful, ) = newImplementation.delegatecall(
-            abi.encodeCall(this.upgradeTo, (currentImplementation))
-        );
-
-        if (!rollbackSuccessful || _proxyStore().implementation != currentImplementation) {
-            revert UpgradeSimulationFailed();
-        }
-
-        store.simulatingUpgrade = false;
-
-        // solhint-disable-next-line reason-string
-        revert();
-    }
-
-    function getImplementation() external view override returns (address) {
-        return _proxyStore().implementation;
     }
 }

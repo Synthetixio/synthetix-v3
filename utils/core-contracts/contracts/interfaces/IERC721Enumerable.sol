@@ -3,6 +3,9 @@ pragma solidity ^0.8.0;
 
 import "./IERC721.sol";
 
+/**
+ * @title ERC721 extension with helper functions that allow the enumeration of NFT tokens.
+ */
 interface IERC721Enumerable is IERC721 {
     /**
      * @dev Returns the total amount of tokens stored by the contract.
