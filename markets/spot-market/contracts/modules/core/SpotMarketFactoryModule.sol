@@ -9,12 +9,17 @@ import "@synthetixio/core-contracts/contracts/initializable/InitializableMixin.s
 import "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
 import "@synthetixio/core-modules/contracts/interfaces/IOwnerModule.sol";
 import "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
+import "@synthetixio/oracle-manager/contracts/interfaces/IOracleManagerModule.sol";
 import "../../utils/SynthUtil.sol";
 import "../../storage/SpotMarketFactory.sol";
 import "../../storage/Price.sol";
 import "../../interfaces/ISpotMarketFactoryModule.sol";
 
-contract SpotMarketFactoryModule is ISpotMarketFactoryModule, AssociatedSystemsModule, InitializableMixin {
+contract SpotMarketFactoryModule is
+    ISpotMarketFactoryModule,
+    AssociatedSystemsModule,
+    InitializableMixin
+{
     using MathUtil for uint256;
     using SpotMarketFactory for SpotMarketFactory.Data;
     using AssociatedSystem for AssociatedSystem.Data;
@@ -28,36 +33,47 @@ contract SpotMarketFactoryModule is ISpotMarketFactoryModule, AssociatedSystemsM
         return _isInitialized();
     }
 
-    function initialize(address snxAddress, address usdTokenAddress) external override {
+    // specify oracle manager address
+    function initialize(
+        address snxAddress,
+        address usdTokenAddress,
+        address oracleManager
+    ) external override {
         OwnableStorage.onlyOwner();
         SpotMarketFactory.Data storage store = SpotMarketFactory.load();
 
         store.synthetix = snxAddress;
         store.usdToken = ITokenModule(usdTokenAddress);
+        store.oracle = IOracleManagerModule(oracleManager);
     }
 
     function registerSynth(
         string memory tokenName,
         string memory tokenSymbol,
-        uint8 tokenDecimals,
+        // required for adding upgrade/owner modules and creating proxy for synth
         address initialTokenImpl,
         address synthOwner,
-        bytes memory buyFeedId,
-        bytes memory sellFeedId,
-        uint interestRate,
-        uint fixedFee,
-        bool enableWrapping,
-        address wrappingCollateralType
+        Price.Data memory priceData,
+        Fee.Data memory feeData,
+        Wrapper.Data memory wrapperData
     ) external override returns (uint128) {
         SpotMarketFactory.Data storage factory = SpotMarketFactory.load();
-        uint128 synthMarketId = IMarketManagerModule(factory.synthetix).registerMarket(address(this));
+        uint128 synthMarketId = IMarketManagerModule(factory.synthetix).registerMarket(
+            address(this)
+        );
 
-        _initOrUpgradeToken(SynthUtil.getSystemId(synthMarketId), tokenName, tokenSymbol, tokenDecimals, initialTokenImpl);
+        _initOrUpgradeToken(
+            SynthUtil.getSystemId(synthMarketId),
+            tokenName,
+            tokenSymbol,
+            18,
+            initialTokenImpl
+        );
 
         factory.synthConfigs[synthMarketId] = SynthConfig.Data({
-            priceData: Price.Data({buyFeedId: buyFeedId, sellFeedId: sellFeedId}),
-            feeData: Fee.Data({interestRate: interestRate, fixedFee: fixedFee}),
-            wrapperData: Wrapper.Data({collateralType: wrappingCollateralType, wrappingEnabled: enableWrapping}),
+            priceData: priceData,
+            feeData: feeData,
+            wrapperData: wrapperData,
             owner: synthOwner,
             marketId: synthMarketId
         });
@@ -71,15 +87,15 @@ contract SpotMarketFactoryModule is ISpotMarketFactoryModule, AssociatedSystemsM
         return "Spot Market";
     }
 
-    function reportedDebt(uint128 marketId) external view override returns (uint) {
+    function reportedDebt(uint128 marketId) external view override returns (uint256) {
         SpotMarketFactory.Data storage factory = SpotMarketFactory.load();
 
-        uint price = factory.getCurrentPrice(marketId);
+        uint256 price = factory.getCurrentPrice(marketId);
 
         return SynthUtil.getToken(marketId).totalSupply().mulDecimal(price);
     }
 
-    function locked(uint128 marketId) external view returns (uint) {
+    function locked(uint128 marketId) external view returns (uint256) {
         return 0;
     }
 
@@ -92,13 +108,16 @@ contract SpotMarketFactoryModule is ISpotMarketFactoryModule, AssociatedSystemsM
 
     function updateFeeData(
         uint128 synthMarketId,
-        uint interestRate,
-        uint fixedFee
+        uint256 interestRate,
+        uint256 fixedFee
     ) external override {
         SpotMarketFactory.Data storage factory = SpotMarketFactory.load();
         factory.onlyMarketOwner(synthMarketId);
 
-        factory.synthConfigs[synthMarketId].feeData = Fee.Data({interestRate: interestRate, fixedFee: fixedFee});
+        factory.synthConfigs[synthMarketId].feeData = Fee.Data({
+            interestRate: interestRate,
+            fixedFee: fixedFee
+        });
 
         emit SynthFeeDataUpdated(synthMarketId, interestRate, fixedFee);
     }
@@ -111,7 +130,10 @@ contract SpotMarketFactoryModule is ISpotMarketFactoryModule, AssociatedSystemsM
         SpotMarketFactory.Data storage factory = SpotMarketFactory.load();
         factory.onlyMarketOwner(synthMarketId);
 
-        factory.synthConfigs[synthMarketId].priceData = Price.Data({buyFeedId: buyFeedId, sellFeedId: sellFeedId});
+        factory.synthConfigs[synthMarketId].priceData = Price.Data({
+            buyFeedId: buyFeedId,
+            sellFeedId: sellFeedId
+        });
 
         emit SynthPriceDataUpdated(synthMarketId, buyFeedId, sellFeedId);
     }

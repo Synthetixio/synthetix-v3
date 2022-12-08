@@ -32,7 +32,10 @@ contract WrapperModule is IWrapper {
         emit WrapperInitialized(marketId, collateralType);
     }
 
-    function wrap(uint128 marketId, uint wrapAmount) external override returns (uint amountToMint) {
+    function wrap(
+        uint128 marketId,
+        uint256 wrapAmount
+    ) external override returns (uint256 amountToMint) {
         SpotMarketFactory.Data storage store = SpotMarketFactory.load();
         Wrapper.Data storage wrapperStore = store.getWrapperData(marketId);
         wrapperStore.onlyEnabledWrapper();
@@ -51,8 +54,8 @@ contract WrapperModule is IWrapper {
 
         Price.Data storage priceStore = store.getPriceData(marketId);
 
-        uint wrapAmountInUsd = priceStore.synthUsdExchangeRate(wrapAmount);
-        (uint returnAmount, uint feesCollected) = store.getFeeData(marketId).calculateFees(
+        uint256 wrapAmountInUsd = priceStore.synthUsdExchangeRate(wrapAmount);
+        (uint256 returnAmount, uint256 feesCollected) = store.getFeeData(marketId).calculateFees(
             msg.sender,
             wrapAmountInUsd,
             Fee.TradeType.WRAP
@@ -85,13 +88,13 @@ contract WrapperModule is IWrapper {
         ITokenModule synth = SynthUtil.getToken(marketId);
 
         if (synth.balanceOf(msg.sender) < unwrapAmount) revert InsufficientFunds();
-        uint allowance = synth.allowance(msg.sender, address(this));
+        uint256 allowance = synth.allowance(msg.sender, address(this));
         if (allowance < unwrapAmount) revert InsufficientAllowance(unwrapAmount, allowance);
 
         Price.Data storage priceStore = store.getPriceData(marketId);
 
-        uint unwrapAmountInUsd = priceStore.synthUsdExchangeRate(unwrapAmount);
-        (uint returnAmount, uint feesCollected) = store.getFeeData(marketId).calculateFees(
+        uint256 unwrapAmountInUsd = priceStore.synthUsdExchangeRate(unwrapAmount);
+        (uint256 returnAmount, uint256 feesCollected) = store.getFeeData(marketId).calculateFees(
             msg.sender,
             unwrapAmountInUsd,
             Fee.TradeType.UNWRAP
@@ -110,26 +113,5 @@ contract WrapperModule is IWrapper {
         synth.burn(msg.sender, unwrapAmount);
 
         emit SynthUnwrapped(marketId, amountToWithdraw, feesCollected);
-    }
-
-    function getWrapQuote(uint128 marketId, uint wrapAmount) external view returns (uint, uint) {
-        return
-            SpotMarketFactory.load().getFeeData(marketId).calculateFees(
-                msg.sender,
-                wrapAmount,
-                Fee.TradeType.WRAP
-            );
-    }
-
-    function getUnwrapQuote(
-        uint128 marketId,
-        uint unwrapAmount
-    ) external view returns (uint, uint) {
-        return
-            SpotMarketFactory.load().getFeeData(marketId).calculateFees(
-                msg.sender,
-                unwrapAmount,
-                Fee.TradeType.UNWRAP
-            );
     }
 }

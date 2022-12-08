@@ -136,10 +136,11 @@ contract VaultModule is IVaultModule {
     /**
      * @inheritdoc IVaultModule
      */
-    function getVaultCollateralRatio(
-        uint128 poolId,
-        address collateralType
-    ) external override returns (uint256) {
+    function getVaultCollateralRatio(uint128 poolId, address collateralType)
+        external
+        override
+        returns (uint256)
+    {
         return Pool.load(poolId).currentVaultCollateralRatio(collateralType);
     }
 
@@ -198,10 +199,12 @@ contract VaultModule is IVaultModule {
     /**
      * @inheritdoc IVaultModule
      */
-    function getVaultCollateral(
-        uint128 poolId,
-        address collateralType
-    ) public view override returns (uint256 amount, uint256 value) {
+    function getVaultCollateral(uint128 poolId, address collateralType)
+        public
+        view
+        override
+        returns (uint256 amount, uint256 value)
+    {
         return Pool.load(poolId).currentVaultCollateral(collateralType);
     }
 

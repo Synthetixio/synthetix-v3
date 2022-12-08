@@ -2,6 +2,7 @@
 pragma solidity ^0.8.0;
 
 import "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
+import "@synthetixio/oracle-manager/contracts/interfaces/IOracleManagerModule.sol";
 import "./SynthConfig.sol";
 import "./Price.sol";
 import "./Fee.sol";
@@ -17,9 +18,10 @@ library SpotMarketFactory {
 
     struct Data {
         ITokenModule usdToken;
+        IOracleManagerModule oracle;
         address synthetix;
         mapping(uint128 => SynthConfig.Data) synthConfigs;
-        mapping(uint128 => uint) synthFeesCollected;
+        mapping(uint128 => uint256) synthFeesCollected;
     }
 
     function load() internal pure returns (Data storage store) {

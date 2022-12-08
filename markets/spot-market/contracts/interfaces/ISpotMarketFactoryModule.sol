@@ -6,10 +6,14 @@ import "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
 
 /// @title Spot Market Interface
 interface ISpotMarketFactoryModule is IMarket {
-    event SynthRegistered(uint indexed synthMarketId);
-    event SynthImplementationUpgraded(uint indexed synthMarketId);
-    event SynthFeeDataUpdated(uint indexed synthMarketId, uint interestRate, uint fixedFee);
-    event SynthPriceDataUpdated(uint indexed synthMarketId, bytes buyFeedId, bytes sellFeedId);
+    event SynthRegistered(uint256 indexed synthMarketId);
+    event SynthImplementationUpgraded(uint256 indexed synthMarketId);
+    event SynthFeeDataUpdated(
+        uint256 indexed synthMarketId,
+        uint256 interestRate,
+        uint256 fixedFee
+    );
+    event SynthPriceDataUpdated(uint256 indexed synthMarketId, bytes buyFeedId, bytes sellFeedId);
 
     function registerSynth(
         string memory name,
@@ -19,18 +23,22 @@ interface ISpotMarketFactoryModule is IMarket {
         address synthOwner,
         bytes memory buyFeedId,
         bytes memory sellFeedId,
-        uint interestRate,
-        uint fixedFee,
+        uint256 interestRate,
+        uint256 fixedFee,
         bool enableWrapping,
         address wrappingCollateralType
     ) external returns (uint128 synthMarketId);
 
-    function initialize(address snxAddress, address usdTokenAddress) external;
+    function initialize(
+        address snxAddress,
+        address usdTokenAddress,
+        address oracleManager
+    ) external;
 
     function updateFeeData(
         uint128 synthMarketId,
-        uint interestRate,
-        uint fixedFee
+        uint256 interestRate,
+        uint256 fixedFee
     ) external;
 
     function updatePriceData(
