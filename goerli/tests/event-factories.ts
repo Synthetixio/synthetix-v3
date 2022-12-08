@@ -4,15 +4,15 @@ import {
   AccountCreated,
   PermissionGranted,
   PermissionRevoked,
-} from '../src/goerli/AccountModule/AccountModule';
-import { Deposited, Withdrawn } from '../src/goerli/CollateralModule/CollateralModule';
-import { CollateralConfigured } from '../src/goerli/CollateralConfigurationModule/CollateralConfigurationModule';
-import { UsdBurned, UsdMinted } from '../src/goerli/IssueUSDModule/IssueUSDModule';
+} from '../generated/AccountModule/AccountModule';
+import { Deposited, Withdrawn } from '../generated/CollateralModule/CollateralModule';
+import { CollateralConfigured } from '../generated/CollateralConfigurationModule/CollateralConfigurationModule';
+import { UsdBurned, UsdMinted } from '../generated/IssueUSDModule/IssueUSDModule';
 import {
   MarketRegistered,
   MarketUsdDeposited,
   MarketUsdWithdrawn,
-} from '../src/goerli/MarketManagerModule/MarketManagerModule';
+} from '../generated/MarketManagerModule/MarketManagerModule';
 import {
   PoolConfigurationSet,
   PoolCreated,
@@ -21,14 +21,14 @@ import {
   PoolNominationRevoked,
   PoolOwnerNominated,
   PoolOwnershipAccepted,
-} from '../src/goerli/PoolModule/PoolModule';
-import { Liquidation, VaultLiquidation } from '../src/goerli/LiquidationModule/LiquidationModule';
+} from '../generated/PoolModule/PoolModule';
+import { Liquidation, VaultLiquidation } from '../generated/LiquidationModule/LiquidationModule';
 import {
   RewardsDistributed,
   RewardsClaimed,
   RewardsDistributorRegistered,
-} from '../src/goerli/RewardsManagerModule/RewardsManagerModule';
-import { DelegationUpdated } from '../src/goerli/VaultModule/VaultModule';
+} from '../generated/RewardsManagerModule/RewardsManagerModule';
+import { DelegationUpdated } from '../generated/VaultModule/VaultModule';
 import { address } from './constants';
 
 function createBlock(timestamp: i64, blockNumber: i64): Map<string, i64> {

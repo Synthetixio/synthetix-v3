@@ -33,7 +33,7 @@ import {
   handleRewardsDistributorRegistered,
   handleLiquidation,
   handleVaultLiquidation,
-} from '../src/goerli/core';
+} from '../src/core';
 import {
   createAccountCreatedEvent,
   createCollateralConfiguredEvent,

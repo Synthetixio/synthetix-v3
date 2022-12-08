@@ -17,7 +17,7 @@ dataSources:
         - PoolModule
       abis:
         - name: PoolModule
-          file: ./abis/PoolModule.json
+          file: ../../../node_modules/@synthetixio/v3-contracts/deployments/goerli/synthetix.PoolModule.json
       eventHandlers:
         - event: PoolCreated(indexed uint128,indexed address,indexed address)
           handler: handlePoolCreated
@@ -33,7 +33,7 @@ dataSources:
           handler: handlePoolOwnerNominated
         - event: PoolConfigurationSet(indexed uint128,(uint128,uint128,int128)[],indexed address)
           handler: handlePoolConfigurationSet
-      file: ./src/goerli/core.ts
+      file: ./src/core.ts
 
   - kind: ethereum
     name: MarketManagerModule
@@ -50,7 +50,7 @@ dataSources:
         - MarketManagerModule
       abis:
         - name: MarketManagerModule
-          file: ./abis/MarketManagerModule.json
+          file: ../../../node_modules/@synthetixio/v3-contracts/deployments/goerli/synthetix.MarketManagerModule.json
       eventHandlers:
         - event: MarketRegistered(indexed address,indexed uint128,indexed address)
           handler: handleMarketCreated
@@ -58,7 +58,7 @@ dataSources:
           handler: handleMarketUsdDeposited
         - event: MarketUsdWithdrawn(indexed uint128,indexed address,uint256,indexed address)
           handler: handleMarketUsdWithdrawn
-      file: ./src/goerli/core.ts
+      file: ./src/core.ts
 
   - kind: ethereum
     name: CollateralModule
@@ -75,13 +75,13 @@ dataSources:
         - CollateralType
       abis:
         - name: CollateralModule
-          file: ./abis/CollateralModule.json
+          file: ../../../node_modules/@synthetixio/v3-contracts/deployments/goerli/synthetix.CollateralModule.json
       eventHandlers:
         - event: Deposited(indexed uint128,indexed address,uint256,indexed address)
           handler: handleDeposited
         - event: Withdrawn(indexed uint128,indexed address,uint256,indexed address)
           handler: handleWithdrawn
-      file: ./src/goerli/core.ts
+      file: ./src/core.ts
 
   - kind: ethereum
     name: AccountModule
@@ -99,7 +99,7 @@ dataSources:
         - AccountPermissionUsers
       abis:
         - name: AccountModule
-          file: ./abis/AccountModule.json
+          file: ../../../node_modules/@synthetixio/v3-contracts/deployments/goerli/synthetix.AccountModule.json
       eventHandlers:
         - event: AccountCreated(indexed address,indexed uint128)
           handler: handleAccountCreated
@@ -107,7 +107,7 @@ dataSources:
           handler: handlePermissionGranted
         - event: PermissionRevoked(indexed uint128,indexed bytes32,indexed address,address)
           handler: handlePermissionRevoked
-      file: ./src/goerli/core.ts
+      file: ./src/core.ts
   - kind: ethereum
     name: VaultModule
     network: goerli
@@ -124,11 +124,11 @@ dataSources:
         - Position
       abis:
         - name: VaultModule
-          file: ./abis/VaultModule.json
+          file: ../../../node_modules/@synthetixio/v3-contracts/deployments/goerli/synthetix.VaultModule.json
       eventHandlers:
         - event: DelegationUpdated(indexed uint128,indexed uint128,address,uint256,uint256,indexed address)
           handler: handleDelegationUpdated
-      file: ./src/goerli/core.ts
+      file: ./src/core.ts
 
   - kind: ethereum
     name: IssueUSDModule
@@ -145,13 +145,13 @@ dataSources:
         - IssueUSDModule
       abis:
         - name: IssueUSDModule
-          file: ./abis/IssueUSDModule.json
+          file: ../../../node_modules/@synthetixio/v3-contracts/deployments/goerli/synthetix.IssueUSDModule.json
       eventHandlers:
         - event: UsdMinted(indexed uint128,indexed uint128,address,uint256,indexed address)
           handler: handleUSDMinted
         - event: UsdBurned(indexed uint128,indexed uint128,address,uint256,indexed address)
           handler: handleUSDBurned
-      file: ./src/goerli/core.ts
+      file: ./src/core.ts
 
   - kind: ethereum
     name: RewardsManagerModule
@@ -171,7 +171,7 @@ dataSources:
         - RewardsDistributor
       abis:
         - name: RewardsManagerModule
-          file: ./abis/RewardsManagerModule.json
+          file: ../../../node_modules/@synthetixio/v3-contracts/deployments/goerli/synthetix.RewardsManagerModule.json
       eventHandlers:
         - event: RewardsDistributed(indexed uint128,indexed address,address,uint256,uint256,uint256)
           handler: handleRewardsDistributed
@@ -179,7 +179,7 @@ dataSources:
           handler: handleRewardsClaimed
         - event: RewardsDistributorRegistered(indexed uint128,indexed address,indexed address)
           handler: handleRewardsDistributorRegistered
-      file: ./src/goerli/core.ts
+      file: ./src/core.ts
 
   - kind: ethereum
     name: LiquidationModule
@@ -197,13 +197,13 @@ dataSources:
         - VaultLiquidation
       abis:
         - name: LiquidationModule
-          file: ./abis/LiquidationModule.json
+          file: ../../../node_modules/@synthetixio/v3-contracts/deployments/goerli/synthetix.LiquidationModule.json
       eventHandlers:
         - event: Liquidation(indexed uint128,indexed uint128,indexed address,(uint256,uint256,uint256),uint128,address)
           handler: handleLiquidation
         - event: VaultLiquidation(indexed uint128,indexed address,(uint256,uint256,uint256),uint128,address)
           handler: handleVaultLiquidation
-      file: ./src/goerli/core.ts
+      file: ./src/core.ts
 
   - kind: ethereum
     name: CollateralConfigurationModule
@@ -220,8 +220,8 @@ dataSources:
         - CollateralType
       abis:
         - name: CollateralConfigurationModule
-          file: ./abis/CollateralConfigurationModule.json
+          file: ../../../node_modules/@synthetixio/v3-contracts/deployments/goerli/synthetix.CollateralConfigurationModule.json
       eventHandlers:
         - event: CollateralConfigured(indexed address,(bool,uint256,uint256,uint256,bytes32,address,uint256))
           handler: handleCollateralConfigured
-      file: ./src/goerli/core.ts
+      file: ./src/core.ts

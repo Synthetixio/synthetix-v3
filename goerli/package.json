@@ -1,0 +1,32 @@
+{
+  "name": "@snx-v3/subgraph-goerli",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "auth": "graph auth --product hosted-service $V3_GRAPH_KEY",
+    "codegen": "graph codegen && prettier --write .",
+    "build": "yarn codegen && graph build",
+    "deploy": "graph deploy --product hosted-service snx-v3/goerli",
+    "test": "graph test",
+    "create-local": "graph create --node http://localhost:8020/ snx-v3/goerli",
+    "remove-local": "graph remove --node http://localhost:8020/ snx-v3/goerli",
+    "deploy-local": "graph deploy --node http://localhost:8020/ --ipfs http://localhost:5001 snx-v3/goerli"
+  },
+  "dependencies": {
+    "@synthetixio/v3-contracts": "workspace:*"
+  },
+  "devDependencies": {
+    "@graphprotocol/graph-cli": "^0.35.0",
+    "@graphprotocol/graph-ts": "^0.28.1",
+    "matchstick-as": "^0.5.0",
+    "prettier": "^2.7.1"
+  },
+  "depcheck": {
+    "ignorePatterns": [
+      "build"
+    ],
+    "ignoreMatches": [
+      "@synthetixio/v3-contracts"
+    ]
+  }
+}
