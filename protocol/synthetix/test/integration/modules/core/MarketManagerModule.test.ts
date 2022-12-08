@@ -76,10 +76,14 @@ describe('MarketManagerModule', function () {
 
     it('should not work if user has not approved', async () => {
       // TODO (Anvil Custom Errors)
-      // Anvil is failing to detect custom errors when the error is emitted from a contract which is not the one that the user is interacting with. We can see the error when running tests with `DEBUG=cannon:cli:rpc npm t`, but we cannot detect it in these tests.
-      // Error debugged: `Error: reverted with 'Custom Error 2a1b2dd8:(0x0000000000000000000000000de0b6B3a7640000, false)'`
+      // Anvil is failing to detect custom errors when the error is emitted
+      // from a contract which is not the one that the user is interacting with.
+      // We can see the error when running tests with `DEBUG=cannon:cli:rpc npm t`,
+      // but we cannot detect it in these tests.
+      // Error debugged: 'Custom Error 2a1b2dd8:(0x0000000000000000000000000de0b6B3a7640000, false)'
       // 0x2a1b2dd8 = keccak256("InsufficientAllowance(uint256,uint256)")
-      // Replace this with the commented check above when fixed. For now we check that it simply reverts.
+      // Replace this with the commented check above when fixed.
+      // For now we check that it simply reverts.
       await assertRevert(MockMarket().connect(user1).buySynth(One));
       // await assertRevert(
       //   MockMarket().connect(user1).buySynth(One),
