@@ -58,21 +58,21 @@ contract ERC721 is IERC721, IERC721Metadata {
     }
 
     /**
-     * @inheritdoc IERC721
+     * @inheritdoc IERC721Metadata
      */
     function name() external view virtual override returns (string memory) {
         return ERC721Storage.load().name;
     }
 
     /**
-     * @inheritdoc IERC721
+     * @inheritdoc IERC721Metadata
      */
     function symbol() external view virtual override returns (string memory) {
         return ERC721Storage.load().symbol;
     }
 
     /**
-     * @inheritdoc IERC721
+     * @inheritdoc IERC721Metadata
      */
     function tokenURI(uint256 tokenId) external view virtual override returns (string memory) {
         if (!_exists(tokenId)) {
