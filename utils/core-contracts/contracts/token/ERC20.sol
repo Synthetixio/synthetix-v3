@@ -6,55 +6,59 @@ import "../errors/InitError.sol";
 import "./ERC20Storage.sol";
 
 /*
-    Reference implementations:
-    * OpenZeppelin - https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC20/ERC20.sol
-    * Rari-Capital - https://github.com/Rari-Capital/solmate/blob/main/src/tokens/ERC20.sol
-*/
-
+ * @title ERC20 token implementation.
+ * See IERC20.
+ *
+ * Reference implementations:
+ * - OpenZeppelin - https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC20/ERC20.sol
+ * - Rari-Capital - https://github.com/Rari-Capital/solmate/blob/main/src/tokens/ERC20.sol
+ */
 contract ERC20 is IERC20 {
-    event Transfer(address indexed from, address indexed to, uint amount);
-    event Approval(address indexed owner, address indexed spender, uint amount);
-
-    function _initialize(
-        string memory tokenName,
-        string memory tokenSymbol,
-        uint8 tokenDecimals
-    ) internal virtual {
-        ERC20Storage.Data storage store = ERC20Storage.load();
-
-        if (bytes(store.name).length > 0 || bytes(store.symbol).length > 0 || store.decimals > 0) {
-            revert InitError.AlreadyInitialized();
-        }
-
-        store.name = tokenName;
-        store.symbol = tokenSymbol;
-        store.decimals = tokenDecimals;
-    }
-
+    /**
+     * @inheritdoc IERC20
+     */
     function name() external view override returns (string memory) {
         return ERC20Storage.load().name;
     }
 
+    /**
+     * @inheritdoc IERC20
+     */
     function symbol() external view override returns (string memory) {
         return ERC20Storage.load().symbol;
     }
 
+    /**
+     * @inheritdoc IERC20
+     */
     function decimals() external view override returns (uint8) {
         return ERC20Storage.load().decimals;
     }
 
+    /**
+     * @inheritdoc IERC20
+     */
     function totalSupply() external view override returns (uint) {
         return ERC20Storage.load().totalSupply;
     }
 
+    /**
+     * @inheritdoc IERC20
+     */
     function allowance(address owner, address spender) public view override returns (uint) {
         return ERC20Storage.load().allowance[owner][spender];
     }
 
+    /**
+     * @inheritdoc IERC20
+     */
     function balanceOf(address owner) public view override returns (uint) {
         return ERC20Storage.load().balanceOf[owner];
     }
 
+    /**
+     * @inheritdoc IERC20
+     */
     function approve(address spender, uint256 amount) public override returns (bool) {
         ERC20Storage.load().allowance[msg.sender][spender] = amount;
 
@@ -63,12 +67,18 @@ contract ERC20 is IERC20 {
         return true;
     }
 
+    /**
+     * @inheritdoc IERC20
+     */
     function transfer(address to, uint256 amount) public override returns (bool) {
         _transfer(msg.sender, to, amount);
 
         return true;
     }
 
+    /**
+     * @inheritdoc IERC20
+     */
     function transferFrom(address from, address to, uint amount) external override returns (bool) {
         ERC20Storage.Data storage store = ERC20Storage.load();
 
@@ -134,5 +144,21 @@ contract ERC20 is IERC20 {
         }
 
         emit Transfer(from, address(0), amount);
+    }
+
+    function _initialize(
+        string memory tokenName,
+        string memory tokenSymbol,
+        uint8 tokenDecimals
+    ) internal virtual {
+        ERC20Storage.Data storage store = ERC20Storage.load();
+
+        if (bytes(store.name).length > 0 || bytes(store.symbol).length > 0 || store.decimals > 0) {
+            revert InitError.AlreadyInitialized();
+        }
+
+        store.name = tokenName;
+        store.symbol = tokenSymbol;
+        store.decimals = tokenDecimals;
     }
 }

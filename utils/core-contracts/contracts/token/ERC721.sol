@@ -13,39 +13,21 @@ import "../utils/AddressUtil.sol";
 import "../utils/StringUtil.sol";
 
 /*
-    Reference implementations:
-    * OpenZeppelin - https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC721/ERC721.sol
-*/
-
+ * @title ERC721 non-fungible token (NFT) contract.
+ * See IERC721.
+ *
+ * Reference implementations:
+ * - OpenZeppelin - https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC721/ERC721.sol
+ */
 contract ERC721 is IERC721, IERC721Metadata {
     error CannotSelfApprove(address);
     error InvalidTransferRecipient(address);
     error TokenDoesNotExist(uint256);
     error TokenAlreadyMinted(uint256);
 
-    function _initialize(
-        string memory tokenName,
-        string memory tokenSymbol,
-        string memory baseTokenURI
-    ) internal virtual {
-        ERC721Storage.Data storage store = ERC721Storage.load();
-        if (
-            bytes(store.name).length > 0 ||
-            bytes(store.symbol).length > 0 ||
-            bytes(store.baseTokenURI).length > 0
-        ) {
-            revert InitError.AlreadyInitialized();
-        }
-
-        if (bytes(tokenName).length == 0 || bytes(tokenSymbol).length == 0) {
-            revert ParameterError.InvalidParameter("name/symbol", "must not be empty");
-        }
-
-        store.name = tokenName;
-        store.symbol = tokenSymbol;
-        store.baseTokenURI = baseTokenURI;
-    }
-
+    /**
+     * @inheritdoc IERC165
+     */
     function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
         return
             interfaceId == this.supportsInterface.selector || // ERC165
@@ -53,6 +35,9 @@ contract ERC721 is IERC721, IERC721Metadata {
             interfaceId == type(IERC721Metadata).interfaceId;
     }
 
+    /**
+     * @inheritdoc IERC721
+     */
     function balanceOf(address holder) public view virtual override returns (uint) {
         if (holder == address(0)) {
             return 0;
@@ -61,6 +46,9 @@ contract ERC721 is IERC721, IERC721Metadata {
         return ERC721Storage.load().balanceOf[holder];
     }
 
+    /**
+     * @inheritdoc IERC721
+     */
     function ownerOf(uint256 tokenId) public view virtual override returns (address) {
         if (!_exists(tokenId)) {
             return address(0);
@@ -69,14 +57,23 @@ contract ERC721 is IERC721, IERC721Metadata {
         return ERC721Storage.load().ownerOf[tokenId];
     }
 
+    /**
+     * @inheritdoc IERC721
+     */
     function name() external view virtual override returns (string memory) {
         return ERC721Storage.load().name;
     }
 
+    /**
+     * @inheritdoc IERC721
+     */
     function symbol() external view virtual override returns (string memory) {
         return ERC721Storage.load().symbol;
     }
 
+    /**
+     * @inheritdoc IERC721
+     */
     function tokenURI(uint256 tokenId) external view virtual override returns (string memory) {
         if (!_exists(tokenId)) {
             return "";
@@ -90,6 +87,9 @@ contract ERC721 is IERC721, IERC721Metadata {
                 : "";
     }
 
+    /**
+     * @inheritdoc IERC721
+     */
     function approve(address to, uint256 tokenId) public virtual override {
         ERC721Storage.Data storage store = ERC721Storage.load();
         address holder = store.ownerOf[tokenId];
@@ -105,6 +105,9 @@ contract ERC721 is IERC721, IERC721Metadata {
         _approve(to, tokenId);
     }
 
+    /**
+     * @inheritdoc IERC721
+     */
     function getApproved(uint256 tokenId) public view virtual override returns (address) {
         if (!_exists(tokenId)) {
             revert TokenDoesNotExist(tokenId);
@@ -113,6 +116,9 @@ contract ERC721 is IERC721, IERC721Metadata {
         return ERC721Storage.load().tokenApprovals[tokenId];
     }
 
+    /**
+     * @inheritdoc IERC721
+     */
     function setApprovalForAll(address operator, bool approved) public virtual override {
         if (msg.sender == operator) {
             revert CannotSelfApprove(operator);
@@ -123,6 +129,9 @@ contract ERC721 is IERC721, IERC721Metadata {
         emit ApprovalForAll(msg.sender, operator, approved);
     }
 
+    /**
+     * @inheritdoc IERC721
+     */
     function isApprovedForAll(
         address holder,
         address operator
@@ -130,6 +139,9 @@ contract ERC721 is IERC721, IERC721Metadata {
         return ERC721Storage.load().operatorApprovals[holder][operator];
     }
 
+    /**
+     * @inheritdoc IERC721
+     */
     function transferFrom(address from, address to, uint256 tokenId) public virtual override {
         if (!_isApprovedOrOwner(msg.sender, tokenId)) {
             revert AccessError.Unauthorized(msg.sender);
@@ -138,10 +150,16 @@ contract ERC721 is IERC721, IERC721Metadata {
         _transfer(from, to, tokenId);
     }
 
+    /**
+     * @inheritdoc IERC721
+     */
     function safeTransferFrom(address from, address to, uint256 tokenId) public virtual override {
         safeTransferFrom(from, to, tokenId, "");
     }
 
+    /**
+     * @inheritdoc IERC721
+     */
     function safeTransferFrom(
         address from,
         address to,
@@ -271,4 +289,27 @@ contract ERC721 is IERC721, IERC721Metadata {
         address to,
         uint256 tokenId // solhint-disable-next-line no-empty-blocks
     ) internal virtual {}
+
+    function _initialize(
+        string memory tokenName,
+        string memory tokenSymbol,
+        string memory baseTokenURI
+    ) internal virtual {
+        ERC721Storage.Data storage store = ERC721Storage.load();
+        if (
+            bytes(store.name).length > 0 ||
+            bytes(store.symbol).length > 0 ||
+            bytes(store.baseTokenURI).length > 0
+        ) {
+            revert InitError.AlreadyInitialized();
+        }
+
+        if (bytes(tokenName).length == 0 || bytes(tokenSymbol).length == 0) {
+            revert ParameterError.InvalidParameter("name/symbol", "must not be empty");
+        }
+
+        store.name = tokenName;
+        store.symbol = tokenSymbol;
+        store.baseTokenURI = baseTokenURI;
+    }
 }

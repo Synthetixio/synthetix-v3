@@ -8,7 +8,7 @@ import "../errors/AddressError.sol";
 import "../errors/ChangeError.sol";
 
 contract Authorizable is Ownable, IAuthorizable {
-    event AuthorizedChanged(address oldAuthorizad, address newAuthorized);
+    event AuthorizedChanged(address oldAuthorized, address newAuthorized);
 
     function setNewAuthorized(address newAuthorized) public override onlyOwner {
         AuthorizableStorage.Data storage store = AuthorizableStorage.load();
