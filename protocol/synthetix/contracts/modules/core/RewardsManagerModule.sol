@@ -87,8 +87,8 @@ contract RewardsManagerModule is IRewardsManagerModule {
         Pool.Data storage pool = Pool.load(poolId);
         SetUtil.Bytes32Set storage rewardIds = pool.vaults[collateralType].rewardIds;
 
+        // Identify the reward id for the caller, and revert if it is not a registered reward distributor.
         bytes32 rewardId = _getRewardId(poolId, collateralType, msg.sender);
-
         if (!rewardIds.contains(rewardId)) {
             revert ParameterError.InvalidParameter(
                 "poolId-collateralType-distributor",

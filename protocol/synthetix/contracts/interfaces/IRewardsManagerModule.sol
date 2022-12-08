@@ -88,7 +88,8 @@ interface IRewardsManagerModule {
     ) external;
 
     /**
-     * @notice Called by pool owner or an existing distributor to set up rewards for vault participants.
+     * @notice Called by a registered distributor to set up rewards for vault participants.
+     * @dev Will revert if the caller is not a registered distributor.
      * @param poolId The id of the pool to distribute rewards to.
      * @param collateralType The address of the collateral used in the pool's rewards.
      * @param amount The amount of rewards to be distributed.

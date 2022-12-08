@@ -56,7 +56,7 @@ library Vault {
          */
         mapping(bytes32 => RewardDistribution.Data) rewards;
         /**
-         * @dev Tracks reward, ids, for this vault.
+         * @dev Tracks reward ids, for this vault.
          */
         SetUtil.Bytes32Set rewardIds;
     }
