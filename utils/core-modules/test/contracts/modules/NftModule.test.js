@@ -4,9 +4,7 @@ const { default: assertRevert } = require('@synthetixio/core-utils/utils/asserti
 const { bootstrap } = require('@synthetixio/hardhat-router/dist/utils/tests');
 const initializer = require('@synthetixio/core-modules/test/helpers/initializer');
 
-// TODO: We can probably delete NftModule at this point.
-// It no longer has a mint function, and is thus pretty much a direct wrapper of ERC721Enumerable
-describe.skip('NftModule', () => {
+describe('NftModule', () => {
   const { proxyAddress } = bootstrap(initializer, {
     modules: ['OwnerModule', 'UpgradeModule', 'NftModule'],
   });
@@ -22,14 +20,17 @@ describe.skip('NftModule', () => {
     NftModule = await ethers.getContractAt('NftModule', proxyAddress());
   });
 
-  describe('mint()', () => {
+  describe('initialize()', () => {
     it('reverts when not owner', async () => {
-      await assertRevert(NftModule.connect(user).mint(user.address, 42), 'Unauthorized');
+      await assertRevert(
+        NftModule.connect(user).initialize('Temp Token', 'TMP', 18),
+        'Unauthorized'
+      );
     });
 
-    it('mints', async () => {
-      await NftModule.connect(owner).mint(user.address, 42);
-      assert.equal(await NftModule.ownerOf(42), user.address);
+    it('works with owner', async () => {
+      await NftModule.connect(owner).initialize('Temp Token', 'TMP', 18);
+      assert.equal(await NftModule.isInitialized(), true);
     });
   });
 });

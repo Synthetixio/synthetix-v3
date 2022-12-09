@@ -542,12 +542,6 @@ describe('PoolModule Admin', function () {
               // testing the "soft" limit
               before('set market', async () => {
                 await MockMarket().connect(user1).setReportedDebt(Hundred.mul(1234));
-
-                // TODO: if the following line is removed/reordered an unusual error
-                // appears where `secondPoolId` assumes the full amount of debt
-                // we have to investigate this
-                await systems().Core.connect(user1).getVaultDebt(poolId, collateralAddress());
-                await systems().Core.connect(user1).getVaultDebt(secondPoolId, collateralAddress());
               });
 
               it('has same amount withdrawable usd + the allowed amount by the vault', async () => {

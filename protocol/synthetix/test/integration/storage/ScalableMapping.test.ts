@@ -63,7 +63,7 @@ describe('ScalableMapping', () => {
 
       it('has correct total amount', async () => {
         totalAmount = await FakeScalableMapping.ScalableMapping_totalAmount();
-        assertBn.near(totalAmount, bn(1450), 1); // TODO: some missing precision?
+        assertBn.near(totalAmount, bn(1450), 1); // precision off by 1; just dust
       });
 
       it('has correct actor values', async () => {

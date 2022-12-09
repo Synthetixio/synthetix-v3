@@ -82,9 +82,6 @@ describe('Market', function () {
     });
   });
 
-  describe('rebalancePools()', async () => {});
-
-  // TODO
   describe('adjustPoolShares()', async () => {
     before(restore);
 
