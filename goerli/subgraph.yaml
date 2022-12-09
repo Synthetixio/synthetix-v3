@@ -6,7 +6,7 @@ dataSources:
     name: PoolModule
     network: goerli
     source:
-      address: '0x8589Cf382d82fdDa237eFd75CEb493C4fe79A5ED'
+      address: '0x0E9628026e53f4c805073d85554A87dBd2011268'
       abi: PoolModule
       startBlock: 7833258
     mapping:
@@ -39,7 +39,7 @@ dataSources:
     name: MarketManagerModule
     network: goerli
     source:
-      address: '0x8589Cf382d82fdDa237eFd75CEb493C4fe79A5ED'
+      address: '0x0E9628026e53f4c805073d85554A87dBd2011268'
       abi: MarketManagerModule
       startBlock: 7833258
     mapping:
@@ -64,7 +64,7 @@ dataSources:
     name: CollateralModule
     network: goerli
     source:
-      address: '0x8589Cf382d82fdDa237eFd75CEb493C4fe79A5ED'
+      address: '0x0E9628026e53f4c805073d85554A87dBd2011268'
       abi: CollateralModule
       startBlock: 7833258
     mapping:
@@ -87,7 +87,7 @@ dataSources:
     name: AccountModule
     network: goerli
     source:
-      address: '0x8589Cf382d82fdDa237eFd75CEb493C4fe79A5ED'
+      address: '0x0E9628026e53f4c805073d85554A87dBd2011268'
       abi: AccountModule
       startBlock: 7833258
     mapping:
@@ -112,7 +112,7 @@ dataSources:
     name: VaultModule
     network: goerli
     source:
-      address: '0x8589Cf382d82fdDa237eFd75CEb493C4fe79A5ED'
+      address: '0x0E9628026e53f4c805073d85554A87dBd2011268'
       abi: VaultModule
       startBlock: 7833258
     mapping:
@@ -134,7 +134,7 @@ dataSources:
     name: IssueUSDModule
     network: goerli
     source:
-      address: '0x8589Cf382d82fdDa237eFd75CEb493C4fe79A5ED'
+      address: '0x0E9628026e53f4c805073d85554A87dBd2011268'
       abi: IssueUSDModule
       startBlock: 7833258
     mapping:
@@ -157,7 +157,7 @@ dataSources:
     name: RewardsManagerModule
     network: goerli
     source:
-      address: '0x8589Cf382d82fdDa237eFd75CEb493C4fe79A5ED'
+      address: '0x0E9628026e53f4c805073d85554A87dBd2011268'
       abi: RewardsManagerModule
       startBlock: 7833258
     mapping:
@@ -185,7 +185,7 @@ dataSources:
     name: LiquidationModule
     network: goerli
     source:
-      address: '0x8589Cf382d82fdDa237eFd75CEb493C4fe79A5ED'
+      address: '0x0E9628026e53f4c805073d85554A87dBd2011268'
       abi: LiquidationModule
       startBlock: 7833258
     mapping:
@@ -209,7 +209,7 @@ dataSources:
     name: CollateralConfigurationModule
     network: goerli
     source:
-      address: '0x8589Cf382d82fdDa237eFd75CEb493C4fe79A5ED'
+      address: '0x0E9628026e53f4c805073d85554A87dBd2011268'
       abi: CollateralConfigurationModule
       startBlock: 7833258
     mapping:
