@@ -77,6 +77,7 @@ describe('MarketManagerModule', function () {
 
     it('should not work if user has not approved', async () => {
       // TODO (Anvil Custom Errors)
+      // Last confirmed: 2022/12/09, Ale
       customErrorNotice('InsufficientAllowance(uint256,uint256)');
       await assertRevert(MockMarket().connect(user1).buySynth(One));
       // await assertRevert(
@@ -132,6 +133,7 @@ describe('MarketManagerModule', function () {
         await MockMarket().connect(user1).setReportedDebt(Hundred.mul(100000));
 
         // TODO (Anvil Custom Errors)
+        // Last confirmed: 2022/12/09, Ale
         customErrorNotice('NotEnoughLiquidity(uint128,uint256)');
         await assertRevert(MockMarket().connect(user1).sellSynth(Hundred.mul(100000)));
         // await assertRevert(
