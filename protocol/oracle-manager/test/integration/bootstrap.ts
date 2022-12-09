@@ -1,5 +1,5 @@
 import { coreBootstrap } from '@synthetixio/core-router/util/core-bootstrap';
-import { BigNumber, ethers } from 'ethers';
+import { ethers } from 'ethers';
 import hre from 'hardhat';
 import { OracleManagerModule } from '../generated/typechain';
 import NodeTypes from './mixins/Node.types';
