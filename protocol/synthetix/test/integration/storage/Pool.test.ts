@@ -136,8 +136,6 @@ describe('Pool', function () {
       await systems()
         .Core.connect(owner)
         .Pool_recalculateVaultCollateral(poolId, collateralAddress());
-
-      // remaining in the test todo
     });
 
     describe('market debt goes up', async () => {

@@ -12,7 +12,7 @@ const distUtils = {
 const bn = (n: number) => wei(n).toBN();
 const hp = wei(1, 27).toBN();
 
-describe.only('ScalableMapping', () => {
+describe('ScalableMapping', () => {
   const { systems, signers, provider } = bootstrap();
   const restore = snapshotCheckpoint(provider);
 
@@ -63,8 +63,7 @@ describe.only('ScalableMapping', () => {
 
       it('has correct total amount', async () => {
         totalAmount = await FakeScalableMapping.ScalableMapping_totalAmount();
-        console.log('TOTAL AMOUNT', totalAmount);
-        assertBn.near(totalAmount, bn(1450), 1);
+        assertBn.near(totalAmount, bn(1450), 1); // precision off by 1; just dust
       });
 
       it('has correct actor values', async () => {
