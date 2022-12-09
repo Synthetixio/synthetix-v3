@@ -4,6 +4,7 @@ import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import { ethers } from 'ethers';
 
 import { bootstrapWithMockMarketAndPool } from '../../bootstrap';
+import { customErrorNotice } from '../../../utils/custom-error';
 
 describe('MarketManagerModule', function () {
   const {
@@ -76,14 +77,7 @@ describe('MarketManagerModule', function () {
 
     it('should not work if user has not approved', async () => {
       // TODO (Anvil Custom Errors)
-      // Anvil is failing to detect custom errors when the error is emitted
-      // from a contract which is not the one that the user is interacting with.
-      // We can see the error when running tests with `DEBUG=cannon:cli:rpc npm t`,
-      // but we cannot detect it in these tests.
-      // Error debugged: 'Custom Error 2a1b2dd8:(0x0000000000000000000000000de0b6B3a7640000, false)'
-      // 0x2a1b2dd8 = keccak256("InsufficientAllowance(uint256,uint256)")
-      // Replace this with the commented check above when fixed.
-      // For now we check that it simply reverts.
+      customErrorNotice('InsufficientAllowance(uint256,uint256)');
       await assertRevert(MockMarket().connect(user1).buySynth(One));
       // await assertRevert(
       //   MockMarket().connect(user1).buySynth(One),
@@ -133,18 +127,20 @@ describe('MarketManagerModule', function () {
         txn = await MockMarket().connect(user1).buySynth(One);
       });
 
-      // TODO: this test is tempermental and fails with unusual errors, though
-      // I know it is passinga s of writing through other means
-      it.skip('reverts if not enough liquidity', async () => {
+      it('reverts if not enough liquidity', async () => {
+        const reportedDebtBefore = await MockMarket().connect(user1).reportedDebt(0);
         await MockMarket().connect(user1).setReportedDebt(Hundred.mul(100000));
 
-        await assertRevert(
-          MockMarket().connect(user1).callStatic.sellSynth(Hundred.mul(100000)),
-          `NotEnoughLiquidity("${marketId()}", "${Hundred.mul(100000).toString()}")`,
-          systems().Core
-        );
+        // TODO (Anvil Custom Errors)
+        customErrorNotice('NotEnoughLiquidity(uint128,uint256)');
+        await assertRevert(MockMarket().connect(user1).sellSynth(Hundred.mul(100000)));
+        // await assertRevert(
+        //   MockMarket().connect(user1).sellSynth(Hundred.mul(100000)),
+        //   `NotEnoughLiquidity("${marketId()}", "${Hundred.mul(100000).toString()}")`,
+        //   systems().Core
+        // );
 
-        await MockMarket().connect(user1).setReportedDebt(0);
+        await MockMarket().connect(user1).setReportedDebt(reportedDebtBefore);
       });
 
       describe('withdraw some from the market', async () => {
