@@ -2,7 +2,11 @@ const path = require('path');
 const assert = require('assert/strict');
 const { task } = require('hardhat/config');
 const logger = require('@synthetixio/core-js/utils/io/logger');
-const { formatDate, fromUnixTimestamp } = require('@synthetixio/core-js/utils/misc/dates');
+const {
+  formatDate,
+  fromUnixTimestamp,
+  toUnixTimestamp,
+} = require('@synthetixio/core-js/utils/misc/dates');
 const types = require('@synthetixio/core-js/utils/hardhat/argument-types');
 const { getDeployment, getDeploymentAbis } = require('@synthetixio/deployer/utils/deployments');
 const getPackageProxy = require('../internal/get-package-proxy');
@@ -156,12 +160,12 @@ async function validateCouncil({ Council, council }) {
     expectedResult: council.nominationPeriodStartDate,
     validation: (result, expectedResult) => readableDate(result) === expectedResult,
     successFn: (result) =>
-      logger.success(`Nomination period start date is: ${readableDate(result)}`),
+      logger.success(`Nomination period start date is: ${readableDate(result)} - (${result})`),
     errorFn: (result, expected) =>
       logger.error(
-        `Was expecting nomination period start date to be ${expected}, but received ${readableDate(
-          result
-        )}`
+        `Was expecting nomination period start date to be ${expected} - (${toUnixTimestamp(
+          new Date(expected)
+        )}), but received ${readableDate(result)} - (${result})`
       ),
   });
 
@@ -169,12 +173,13 @@ async function validateCouncil({ Council, council }) {
     action: Council.getVotingPeriodStartDate(),
     expectedResult: council.votingPeriodStartDate,
     validation: (result, expectedResult) => readableDate(result) === expectedResult,
-    successFn: (result) => logger.success(`Voting period start date is: ${readableDate(result)}`),
+    successFn: (result) =>
+      logger.success(`Voting period start date is: ${readableDate(result)} - (${result})`),
     errorFn: (result, expected) =>
       logger.error(
-        `Was expecting voting period start date to be ${expected}, but received ${readableDate(
-          result
-        )}`
+        `Was expecting voting period start date to be ${expected} - (${toUnixTimestamp(
+          new Date(expected)
+        )}), but received ${readableDate(result)} - (${result})`
       ),
   });
 
@@ -182,10 +187,13 @@ async function validateCouncil({ Council, council }) {
     action: Council.getEpochEndDate(),
     expectedResult: council.epochEndDate,
     validation: (result, expectedResult) => readableDate(result) === expectedResult,
-    successFn: (result) => logger.success(`Epoch end date is: ${readableDate(result)}`),
+    successFn: (result) =>
+      logger.success(`Epoch end date is: ${readableDate(result)} - (${result})`),
     errorFn: (result, expected) =>
       logger.error(
-        `Was expecting epoch end date to be ${expected}, but received ${readableDate(result)}`
+        `Was expecting epoch end date to be ${expected} - (${toUnixTimestamp(
+          new Date(expected)
+        )}), but received ${readableDate(result)} - (${result})`
       ),
   });
 }
