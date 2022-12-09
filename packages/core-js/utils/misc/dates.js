@@ -8,7 +8,7 @@ function formatDate(date = new Date()) {
     throw new Error('Invalid date given');
   }
 
-  return date.toISOString().slice(0, 10);
+  return date.toISOString();
 }
 
 function getUnixTimestamp(date = new Date()) {
