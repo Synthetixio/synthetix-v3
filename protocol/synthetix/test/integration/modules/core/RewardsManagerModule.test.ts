@@ -11,8 +11,6 @@ import { snapshotCheckpoint } from '../../../utils/snapshot';
 // If the tests are failing Make sure you run foundryup to update the anvil to latest version
 // ---------------------------------------
 
-// TODO: These tests fail inconsistently on CI because of time discrepancies.
-// They need to be reworked. Disabling them on the meantime until SIP 305 is official.
 describe('RewardsManagerModule', function () {
   const { provider, signers, systems, poolId, collateralAddress, accountId } =
     bootstrapWithStakedPool();
@@ -416,8 +414,6 @@ describe('RewardsManagerModule', function () {
                 );
               });
 
-              // this test is skipped for now because, among all
-              // the other tests, it does not behave as expected
               it('distributes portion of rewards immediately', async () => {
                 const [rewards] = await systems().Core.callStatic.getClaimableRewards(
                   poolId,
