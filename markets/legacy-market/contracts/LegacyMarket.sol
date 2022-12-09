@@ -27,6 +27,9 @@ contract LegacyMarket is Ownable, IMarket {
     bool public pauseStablecoinConversion;
     bool public pauseMigration;
 
+    // used by _migrate to temporarily set reportedDebt to another value before
+    uint tmpLockedDebt;
+
     IAddressResolver public v2xResolver;
     IV3CoreProxy public v3System;
 
@@ -45,14 +48,23 @@ contract LegacyMarket is Ownable, IMarket {
         v2xResolver = v2xResolverAddress;
         v3System = v3SystemAddress;
 
-        marketId = v3System.registerMarket(address(this));
         IERC20(v2xResolverAddress.getAddress("ProxySynthetix")).approve(address(v3SystemAddress), type(uint).max);
 
-        _ownableStore().owner = owner;
+        OwnableStorage.load().owner = owner;
+    }
+
+    function registerMarket() external onlyOwner returns (uint128 newMarketId) {
+        require(marketId == 0, "Market already registered");
+        newMarketId = v3System.registerMarket(address(this));
+        marketId = newMarketId;
     }
 
     function reportedDebt(uint128 requestedMarketId) public view returns (uint) {
         if (marketId == requestedMarketId) {
+            if (tmpLockedDebt != 0) {
+                return tmpLockedDebt;
+            }
+
             IIssuer iss = IIssuer(v2xResolver.getAddress("Issuer"));
 
             return iss.debtBalanceOf(address(this), "sUSD");
@@ -66,7 +78,7 @@ contract LegacyMarket is Ownable, IMarket {
     }
 
     function locked(
-        uint /* requestedMarketId*/
+        uint128 /* requestedMarketId*/
     ) external pure returns (uint) {
         return 0;
     }
@@ -90,7 +102,7 @@ contract LegacyMarket is Ownable, IMarket {
         oldUSD.transferFrom(msg.sender, address(this), amount);
         oldSynthetix.burnSynths(amount);
 
-        v3System.withdrawMarketUsd(uint(marketId), msg.sender, amount);
+        v3System.withdrawMarketUsd(marketId, msg.sender, amount);
 
         emit ConvertedUSD(msg.sender, amount);
     }
@@ -108,7 +120,12 @@ contract LegacyMarket is Ownable, IMarket {
     }
 
     function _migrate(address staker, uint128 accountId) internal {
+        tmpLockedDebt = reportedDebt(marketId);
+
         ISynthetix oldSynthetix = ISynthetix(v2xResolver.getAddress("ProxySynthetix"));
+
+        // ensure liquidator rewards are collected (have to do it here so escrow is up to date)
+        ILiquidatorRewards(v2xResolver.getAddress("LiquidatorRewards")).getReward(staker);
 
         VestingEntries.VestingEntryWithID[] memory oldEscrows = IRewardEscrowV2(v2xResolver.getAddress("RewardEscrowV2"))
             .getVestingSchedules(staker, 0, 1000);
@@ -131,6 +148,8 @@ contract LegacyMarket is Ownable, IMarket {
 
         v3System.delegateCollateral(accountId, preferredPoolId, address(oldSynthetix), collateralMigrated, DecimalMath.UNIT);
 
+        tmpLockedDebt = 0;
+
         v3System.associateDebt(marketId, preferredPoolId, address(oldSynthetix), accountId, debtValueMigrated);
 
         IERC721(v3System.getAccountTokenAddress()).safeTransferFrom(address(this), staker, accountId);
@@ -141,9 +160,6 @@ contract LegacyMarket is Ownable, IMarket {
     function _gatherFromV2x(address staker) internal returns (uint totalCollateralAmount, uint totalDebtAmount) {
         ISynthetix oldSynthetix = ISynthetix(v2xResolver.getAddress("ProxySynthetix"));
         ISynthetixDebtShare oldDebtShares = ISynthetixDebtShare(v2xResolver.getAddress("SynthetixDebtShare"));
-
-        // ensure liquidator rewards are collected
-        ILiquidatorRewards(v2xResolver.getAddress("LiquidatorRewards")).getReward(staker);
 
         uint unlockedSnx = IERC20(address(oldSynthetix)).balanceOf(staker);
         totalCollateralAmount = ISynthetix(v2xResolver.getAddress("Synthetix")).collateral(staker);
@@ -178,5 +194,16 @@ contract LegacyMarket is Ownable, IMarket {
         (uint totalSystemDebt, uint totalDebtShares, ) = IIssuer(v2xResolver.getAddress("Issuer")).allNetworksDebtInfo();
 
         return (debtSharesMigrated * totalSystemDebt) / totalDebtShares;
+    }
+
+    /**
+     * @dev See {IERC165-supportsInterface}.
+     */
+    function supportsInterface(
+        bytes4 interfaceId
+    ) public view virtual override(IERC165) returns (bool) {
+        return
+            interfaceId == type(IMarket).interfaceId ||
+            interfaceId == this.supportsInterface.selector;
     }
 }

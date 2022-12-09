@@ -2,46 +2,38 @@
 pragma solidity ^0.8.0;
 
 interface IV3CoreProxy {
-    function registerMarket(address marketAddress) external returns (uint128);
+    function registerMarket(address market) external returns (uint128);
 
-    function withdrawMarketUsd(
-        uint marketId,
-        address target,
-        uint amount
-    ) external;
+    function withdrawMarketUsd(uint128 marketId, address target, uint256 amount) external;
 
-    function createAccount(uint256 requestedAccountId) external;
+    function createAccount(uint128 requestedAccountId) external;
 
-    function deposit(
-        uint accountId,
-        address collateralType,
-        uint amount
-    ) external;
+    function deposit(uint128 accountId, address collateralType, uint256 tokenAmount) external;
 
     function delegateCollateral(
-        uint accountId,
-        uint poolId,
+        uint128 accountId,
+        uint128 poolId,
         address collateralType,
-        uint amount,
-        uint leverage
+        uint256 amount,
+        uint256 leverage
     ) external;
 
     function associateDebt(
-        uint marketId,
-        uint poolId,
+        uint128 marketId,
+        uint128 poolId,
         address collateralType,
-        uint accountId,
-        uint amount
-    ) external returns (int);
+        uint128 accountId,
+        uint256 amount
+    ) external returns (int256);
 
-    function getAccountTokenAddress() external returns (address);
+    function getAccountTokenAddress() external view returns (address);
 
     function getPreferredPool() external returns (uint128);
 
     function createLock(
-        uint accountId,
+        uint128 accountId,
         address collateralType,
-        uint amount,
+        uint256 amount,
         uint64 expireTimestamp
     ) external;
 }
