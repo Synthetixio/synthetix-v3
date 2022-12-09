@@ -26,8 +26,8 @@ export async function addCollateral(
   await (await aggregator.connect(owner).mockSetCurrentPrice(collateralPrice)).wait();
 
   const params1 = ethers.utils.defaultAbiCoder.encode(
-    ['address', 'uint256'],
-    [aggregator.address, 0]
+    ['address', 'uint256', 'uint8'],
+    [aggregator.address, 0, 18]
   );
   await oracleManager.connect(owner).registerNode([], NodeTypes.CHAINLINK, params1);
   const oracleNodeId = await oracleManager
