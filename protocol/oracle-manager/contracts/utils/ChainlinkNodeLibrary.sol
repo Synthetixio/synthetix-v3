@@ -54,6 +54,6 @@ library ChainlinkNodeLibrary {
     }
 
     function upscale(int256 x, uint256 factor) internal pure returns (int256) {
-        return x * int256(10**factor);
+        return x * int256(10 ** factor);
     }
 }
