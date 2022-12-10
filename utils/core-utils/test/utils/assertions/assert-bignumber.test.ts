@@ -63,6 +63,5 @@ describe('utils/assertions/assert-bignumber.ts', function () {
 
   it('#isZero', function () {
     bn.isZero(0);
-    // TODO
   });
 });
