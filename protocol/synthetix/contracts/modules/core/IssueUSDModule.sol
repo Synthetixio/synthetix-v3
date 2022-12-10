@@ -30,11 +30,6 @@ contract IssueUSDModule is IIssueUSDModule {
     using SafeCastI128 for int128;
     using SafeCastI256 for int256;
 
-    /**
-     * @dev Thrown when an account does not have sufficient debt to burn USD.
-     */
-    error InsufficientDebt(int256 currentDebt);
-
     bytes32 private constant _USD_TOKEN = "USDToken";
 
     /**

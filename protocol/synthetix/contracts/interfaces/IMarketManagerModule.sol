@@ -6,6 +6,16 @@ pragma solidity ^0.8.0;
  */
 interface IMarketManagerModule {
     /**
+     * @notice Thrown when a market does not have enough liquidity for a withdrawal.
+     */
+    error NotEnoughLiquidity(uint128 marketId, uint256 amount);
+
+    /**
+     * @notice Thrown when an attempt to register a market that does not conform to the IMarket interface is made.
+     */
+    error IncorrectMarketInterface(address market);
+
+    /**
      * @notice Emitted when a new market is registered in the system.
      * @param market The address of the external market that was registered in the system.
      * @param marketId The id with which the market was registered in the system.

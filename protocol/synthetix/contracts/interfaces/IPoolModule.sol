@@ -9,6 +9,11 @@ import "../storage/MarketConfiguration.sol";
  */
 interface IPoolModule {
     /**
+     * @notice Thrown when attempting to disconnect a market whose capacity is locked, and whose removal would cause a decrease in its associated pool's credit delegation proportion.
+     */
+    error CapacityLocked(uint256 marketId);
+
+    /**
      * @notice Gets fired when pool will be created.
      * @param poolId The id of the newly created pool.
      * @param owner The owner of the newly created pool.

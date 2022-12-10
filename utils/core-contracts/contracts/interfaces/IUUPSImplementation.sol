@@ -8,6 +8,16 @@ pragma solidity ^0.8.0;
  */
 interface IUUPSImplementation {
     /**
+     * @notice Thrown when an incoming implementation will not be able to receive future upgrades.
+     */
+    error ImplementationIsSterile(address implementation);
+
+    /**
+     * @notice Thrown intentionally when testing future upgradeability of an implementation.
+     */
+    error UpgradeSimulationFailed();
+
+    /**
      * @notice Emitted when the implementation of the proxy has been upgraded.
      * @param self The address of the proxy whose implementation was upgraded.
      * @param implementation The address of the proxy's new implementation.

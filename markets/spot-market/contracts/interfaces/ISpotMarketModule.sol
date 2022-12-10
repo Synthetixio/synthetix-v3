@@ -5,6 +5,9 @@ import "@synthetixio/main/contracts/interfaces/external/IMarket.sol";
 
 /// @title Spot Market Interface
 interface ISpotMarketModule {
+    error InsufficientFunds();
+    error InsufficientAllowance(uint expected, uint current);
+
     event SynthBought(uint indexed synthMarketId, uint synthReturned, uint feesCollected);
     event SynthSold(uint indexed synthMarketId, uint amountReturned, uint feesCollected);
 
@@ -14,5 +17,8 @@ interface ISpotMarketModule {
 
     function getBuyQuote(uint128 synthMarketId, uint amountUsd) external view returns (uint, uint);
 
-    function getSellQuote(uint128 synthMarketId, uint amountSynth) external view returns (uint, uint);
+    function getSellQuote(
+        uint128 synthMarketId,
+        uint amountSynth
+    ) external view returns (uint, uint);
 }

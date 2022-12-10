@@ -9,16 +9,6 @@ import "./ProxyStorage.sol";
 
 abstract contract UUPSImplementation is IUUPSImplementation, ProxyStorage {
     /**
-     * @dev Thrown when an incoming implementation will not be able to receive future upgrades.
-     */
-    error ImplementationIsSterile(address implementation);
-
-    /**
-     * @dev Thrown intentionally when testing future upgradeability of an implementation.
-     */
-    error UpgradeSimulationFailed();
-
-    /**
      * @inheritdoc IUUPSImplementation
      */
     function simulateUpgradeTo(address newImplementation) public override {

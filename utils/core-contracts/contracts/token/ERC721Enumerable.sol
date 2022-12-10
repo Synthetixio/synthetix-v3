@@ -13,8 +13,6 @@ import "../interfaces/IERC721Enumerable.sol";
  * - OpenZeppelin - https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC721/extensions/ERC721EnumerableStorage.sol
  */
 abstract contract ERC721Enumerable is ERC721, IERC721Enumerable {
-    error IndexOutOfBounds();
-
     /**
      * @inheritdoc IERC721Enumerable
      */

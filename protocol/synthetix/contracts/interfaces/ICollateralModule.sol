@@ -9,6 +9,11 @@ import "../storage/CollateralConfiguration.sol";
  */
 interface ICollateralModule {
     /**
+     * @notice Thrown when an interacting account does not have sufficient collateral for an operation (withdrawal, lock, etc).
+     */
+    error InsufficientAccountCollateral(uint256 amount);
+
+    /**
      * @notice Emitted when `amount` of collateral of type `collateralType` is deposited to account `accountId` by `sender`.
      * @param accountId The if of the account that deposited collateral.
      * @param collateralType The address of the collateral that was deposited.

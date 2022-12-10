@@ -6,6 +6,12 @@ pragma solidity ^0.8.0;
  */
 interface IOwnable {
     /**
+     * @notice Thrown when an address tries to accept ownership but has not been nominated.
+     * @param addr The address that is trying to accept ownership.
+     */
+    error NotNominated(address addr);
+
+    /**
      * @notice Emitted when an address has been nominated.
      * @param newOwner The address that has been nominated.
      */

@@ -7,6 +7,16 @@ pragma solidity ^0.8.0;
  */
 interface IAccountModule {
     /**
+     * @notice Thrown when the account interacting with the system is expected to be the associated account token, but is not.
+     */
+    error OnlyAccountTokenProxy(address origin);
+
+    /**
+     * @notice Thrown when an account attempts to renounce a permission that it didn't have.
+     */
+    error PermissionNotGranted(uint128 accountId, bytes32 permission, address user);
+
+    /**
      * @notice Emitted when an account token with id `accountId` is minted to `sender`.
      * @param accountId The id of the account.
      * @param owner The address that owns the created account.
