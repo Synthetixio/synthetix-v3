@@ -265,72 +265,40 @@ export class Market extends Entity {
     this.set('updated_at_block', Value.fromBigInt(value));
   }
 
-  get usd_deposited(): BigDecimal | null {
+  get usd_deposited(): BigDecimal {
     let value = this.get('usd_deposited');
-    if (!value || value.kind == ValueKind.NULL) {
-      return null;
-    } else {
-      return value.toBigDecimal();
-    }
+    return value!.toBigDecimal();
   }
 
-  set usd_deposited(value: BigDecimal | null) {
-    if (!value) {
-      this.unset('usd_deposited');
-    } else {
-      this.set('usd_deposited', Value.fromBigDecimal(<BigDecimal>value));
-    }
+  set usd_deposited(value: BigDecimal) {
+    this.set('usd_deposited', Value.fromBigDecimal(value));
   }
 
-  get usd_withdrawn(): BigDecimal | null {
+  get usd_withdrawn(): BigDecimal {
     let value = this.get('usd_withdrawn');
-    if (!value || value.kind == ValueKind.NULL) {
-      return null;
-    } else {
-      return value.toBigDecimal();
-    }
+    return value!.toBigDecimal();
   }
 
-  set usd_withdrawn(value: BigDecimal | null) {
-    if (!value) {
-      this.unset('usd_withdrawn');
-    } else {
-      this.set('usd_withdrawn', Value.fromBigDecimal(<BigDecimal>value));
-    }
+  set usd_withdrawn(value: BigDecimal) {
+    this.set('usd_withdrawn', Value.fromBigDecimal(value));
   }
 
-  get net_issuance(): BigDecimal | null {
+  get net_issuance(): BigDecimal {
     let value = this.get('net_issuance');
-    if (!value || value.kind == ValueKind.NULL) {
-      return null;
-    } else {
-      return value.toBigDecimal();
-    }
+    return value!.toBigDecimal();
   }
 
-  set net_issuance(value: BigDecimal | null) {
-    if (!value) {
-      this.unset('net_issuance');
-    } else {
-      this.set('net_issuance', Value.fromBigDecimal(<BigDecimal>value));
-    }
+  set net_issuance(value: BigDecimal) {
+    this.set('net_issuance', Value.fromBigDecimal(value));
   }
 
-  get reported_debt(): BigDecimal | null {
+  get reported_debt(): BigDecimal {
     let value = this.get('reported_debt');
-    if (!value || value.kind == ValueKind.NULL) {
-      return null;
-    } else {
-      return value.toBigDecimal();
-    }
+    return value!.toBigDecimal();
   }
 
-  set reported_debt(value: BigDecimal | null) {
-    if (!value) {
-      this.unset('reported_debt');
-    } else {
-      this.set('reported_debt', Value.fromBigDecimal(<BigDecimal>value));
-    }
+  set reported_debt(value: BigDecimal) {
+    this.set('reported_debt', Value.fromBigDecimal(value));
   }
 }
 

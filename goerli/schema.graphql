@@ -21,11 +21,11 @@ type Market @entity {
   configurations: [MarketConfiguration!] @derivedFrom(field: "market")
   updated_at: BigInt!
   updated_at_block: BigInt!
-  usd_deposited: BigDecimal
-  usd_withdrawn: BigDecimal
+  usd_deposited: BigDecimal!
+  usd_withdrawn: BigDecimal!
   "withdrawn - deposited"
-  net_issuance: BigDecimal
-  reported_debt: BigDecimal
+  net_issuance: BigDecimal!
+  reported_debt: BigDecimal!
 }
 
 type MarketConfiguration @entity {

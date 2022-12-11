@@ -44,7 +44,7 @@ import {
   Liquidation as LiquidationEntity,
   VaultLiquidation as VaultLiquidationEntity,
 } from '../generated/schema';
-import { BigDecimal, BigInt, Bytes, store } from '@graphprotocol/graph-ts';
+import { BigDecimal, BigInt, Bytes, store, log } from '@graphprotocol/graph-ts';
 
 ////////////////////
 // Event handlers //
@@ -126,6 +126,10 @@ export function handleMarketCreated(event: MarketRegistered): void {
   newMarket.created_at_block = event.block.number;
   newMarket.updated_at = event.block.timestamp;
   newMarket.updated_at_block = event.block.number;
+  newMarket.usd_deposited = BigDecimal.fromString('0');
+  newMarket.usd_withdrawn = BigDecimal.fromString('0');
+  newMarket.net_issuance = BigDecimal.fromString('0');
+  newMarket.reported_debt = BigDecimal.fromString('0');
   newMarket.save();
 }
 
@@ -207,45 +211,49 @@ export function handlePoolConfigurationSet(event: PoolConfigurationSet): void {
 
 export function handleMarketUsdDeposited(event: MarketUsdDeposited): void {
   const market = Market.load(event.params.marketId.toString());
-  if (market !== null) {
-    const contract = MarketManagerModule.bind(event.address);
-    market.reported_debt = contract.getMarketReportedDebt(event.params.marketId).toBigDecimal();
-    if (market.usd_deposited === null) {
-      market.usd_deposited = event.params.amount.toBigDecimal();
-    } else {
-      market.usd_deposited = market.usd_deposited!.plus(event.params.amount.toBigDecimal());
-    }
-    market.updated_at = event.block.timestamp;
-    market.updated_at_block = event.block.number;
-    if (!market.net_issuance) {
-      market.net_issuance = BigDecimal.fromString('0');
-    }
-    market.net_issuance = market.net_issuance!.minus(event.params.amount.toBigDecimal());
-    market.save();
+  if (market == null) {
+    log.error(
+      'Something went wrong, got a MarketUsdDeposited event for a market that doesnt exists ' +
+        event.params.marketId.toString(),
+      []
+    );
+    return;
   }
+  const contract = MarketManagerModule.bind(event.address);
+  const reported_debt = contract.getMarketReportedDebt(event.params.marketId).toBigDecimal();
+  const usd_deposited = market.usd_deposited.plus(event.params.amount.toBigDecimal());
+  const net_issuance = market.net_issuance.minus(event.params.amount.toBigDecimal());
+
+  market.reported_debt = reported_debt;
+  market.updated_at = event.block.timestamp;
+  market.updated_at_block = event.block.number;
+  market.net_issuance = net_issuance;
+  market.usd_deposited = usd_deposited;
+  market.save();
 }
 
 export function handleMarketUsdWithdrawn(event: MarketUsdWithdrawn): void {
   const market = Market.load(event.params.marketId.toString());
-  if (market !== null) {
-    const contract = MarketManagerModule.bind(event.address);
-    market.reported_debt = contract.getMarketReportedDebt(event.params.marketId).toBigDecimal();
-    if (market.usd_withdrawn === null) {
-      market.usd_withdrawn = event.params.amount.toBigDecimal();
-    } else {
-      market.usd_withdrawn = market.usd_withdrawn!.plus(event.params.amount.toBigDecimal());
-    }
-    market.usd_withdrawn = event.params.amount.toBigDecimal();
-    market.updated_at = event.block.timestamp;
-    market.updated_at_block = event.block.number;
-    if (!market.net_issuance) {
-      market.net_issuance = BigDecimal.fromString('0');
-    }
-    market.net_issuance = changetype<BigDecimal>(market.net_issuance).plus(
-      event.params.amount.toBigDecimal()
+  if (market == null) {
+    log.error(
+      'Something went wrong, got a MarketUsdWithdrawn event for a market that doesnt exists ' +
+        event.params.marketId.toString(),
+      []
     );
-    market.save();
+    return;
   }
+
+  const contract = MarketManagerModule.bind(event.address);
+  const reported_debt = contract.getMarketReportedDebt(event.params.marketId).toBigDecimal();
+  const usd_withdrawn = market.usd_withdrawn.plus(event.params.amount.toBigDecimal());
+  const net_issuance = market.net_issuance.plus(event.params.amount.toBigDecimal());
+
+  market.reported_debt = reported_debt;
+  market.updated_at = event.block.timestamp;
+  market.updated_at_block = event.block.number;
+  market.net_issuance = net_issuance;
+  market.usd_withdrawn = usd_withdrawn;
+  market.save();
 }
 
 //////////////
