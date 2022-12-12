@@ -2,33 +2,33 @@ name: Test
 
 on: [push]
 
-env:
-  INFURA_API_KEY: ${{ secrets.INFURA_API_KEY }}
-  INFURA_IPFS_ID: ${{ secrets.INFURA_IPFS_ID }}
-  INFURA_IPFS_SECRET: ${{ secrets.INFURA_IPFS_SECRET }}
-
 jobs:
   test:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        package: [
-            "./utils/core-contracts",
-            "./utils/core-utils",
-            "./utils/core-modules",
-            "./utils/hardhat-router",
-            "./protocol/synthetix",
-            # "./protocol/oracle-manager",
+        package:
+          [
+            "@synthetixio/core-contracts",
+            "@synthetixio/core-utils",
+            "@synthetixio/core-modules",
+            "@synthetixio/hardhat-router",
+            "@synthetixio/sample-project",
+            "@synthetixio/main",
           ]
         include:
-          - package: "./utils/core-contracts"
+          - package: "@synthetixio/core-contracts"
             coverage-file: utils/core-contracts/coverage.json
-          - package: "./utils/core-utils"
+            size-contracts: true
+          - package: "@synthetixio/core-utils"
             coverage-file: utils/core-utils/coverage/lcov.info
-          - package: "./utils/core-modules"
+          - package: "@synthetixio/core-modules"
             coverage-file: utils/core-modules/coverage.json
-          - package: "./utils/hardhat-router"
+            size-contracts: true
+          - package: "@synthetixio/hardhat-router"
             coverage-file: utils/hardhat-router/coverage/lcov.info
+          - package: "@synthetixio/main"
+            size-contracts: true
     steps:
       - name: Install Foundry (Cannon)
         uses: foundry-rs/foundry-toolchain@v1
@@ -44,25 +44,12 @@ jobs:
       - run: npm run build
       - name: Execute tests
         run: REPORT_GAS=true npm run --workspace=${{ matrix.package }} coverage
-      - name: Upload ${{ matrix.package }} coverage to Codecov
+      - if: ${{ matrix.coverage-file }}
+        name: Upload ${{ matrix.package }} coverage to Codecov
         uses: codecov/codecov-action@v2
         with:
           files: ${{ matrix.coverage-file }}
           flags: ${{ matrix.package }}
-
-  test-sample:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Install Foundry (Cannon)
-        uses: foundry-rs/foundry-toolchain@v1
-        with:
-          version: nightly
-      - run: anvil -V
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
-        with:
-          node-version: "16.16.0"
-          cache: "npm"
-      - run: npm ci
-      - run: npm run build
-      - run: npm --workspace=./utils/sample-project test
+      - if: ${{ matrix.size-contracts }}
+        name: Execute size command
+        run: npm run --workspace=${{ matrix.package }} size-contracts

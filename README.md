@@ -2,13 +2,17 @@
 
 [![codecov](https://codecov.io/gh/Synthetixio/synthetix-v3/branch/main/graph/badge.svg)](https://codecov.io/gh/Synthetixio/synthetix-v3)
 
-| Package        | Coverage                                                                                                                                                     |
-| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| core-utils     | [![codecov](https://codecov.io/gh/Synthetixio/synthetix-v3/branch/main/graph/badge.svg?flag=core-utils)](https://codecov.io/gh/Synthetixio/synthetix-v3)     |
-| core-contracts | [![codecov](https://codecov.io/gh/Synthetixio/synthetix-v3/branch/main/graph/badge.svg?flag=core-contracts)](https://codecov.io/gh/Synthetixio/synthetix-v3) |
-| core-modules   | [![codecov](https://codecov.io/gh/Synthetixio/synthetix-v3/branch/main/graph/badge.svg?flag=core-modules)](https://codecov.io/gh/Synthetixio/synthetix-v3)   |
-| hardhat-router | [![codecov](https://codecov.io/gh/Synthetixio/synthetix-v3/branch/main/graph/badge.svg?flag=hardhat-router)](https://codecov.io/gh/Synthetixio/synthetix-v3) |
-| synthetix-main | [![codecov](https://codecov.io/gh/Synthetixio/synthetix-v3/branch/main/graph/badge.svg?flag=synthetix-main)](https://codecov.io/gh/Synthetixio/synthetix-v3) |
+| Package                     | Coverage                                                                                                                                                                  |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| @synthetixio/core-utils     | [![codecov](https://codecov.io/gh/Synthetixio/synthetix-v3/branch/main/graph/badge.svg?flag=@synthetixio/core-utils)](https://codecov.io/gh/Synthetixio/synthetix-v3)     |
+| @synthetixio/core-contracts | [![codecov](https://codecov.io/gh/Synthetixio/synthetix-v3/branch/main/graph/badge.svg?flag=@synthetixio/core-contracts)](https://codecov.io/gh/Synthetixio/synthetix-v3) |
+| @synthetixio/core-modules   | [![codecov](https://codecov.io/gh/Synthetixio/synthetix-v3/branch/main/graph/badge.svg?flag=@synthetixio/core-modules)](https://codecov.io/gh/Synthetixio/synthetix-v3)   |
+| @synthetixio/hardhat-router | [![codecov](https://codecov.io/gh/Synthetixio/synthetix-v3/branch/main/graph/badge.svg?flag=@synthetixio/hardhat-router)](https://codecov.io/gh/Synthetixio/synthetix-v3) |
+| @synthetixio/synthetix      | [![codecov](https://codecov.io/gh/Synthetixio/synthetix-v3/branch/main/graph/badge.svg?flag=@synthetixio/synthetix)](https://codecov.io/gh/Synthetixio/synthetix-v3)      |
+
+## Documentation
+
+Please refer to the [Official Documentation](https://snx-v3-docs.vercel.app/) for high level concepts of the Synthetix v3 protocol, as well as auto generated docs from natspec.
 
 ## Package structure
 
