@@ -58,7 +58,7 @@ describe('AssociateDebtModule', function () {
         MockMarket()
           .connect(user2)
           .callAssociateDebt(poolId, collateralAddress(), accountId, amount.mul(100000000)),
-        `InsufficientCollateralRatio`,
+        'InsufficientCollateralRatio',
         systems().Core
       );
     });

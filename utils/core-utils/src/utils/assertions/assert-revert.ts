@@ -1,6 +1,4 @@
-import { ErrorFragment } from '@ethersproject/abi';
 import { ethers } from 'ethers';
-import { Result } from 'ethers/lib/utils';
 import { AbiHelpers } from 'hardhat/internal/util/abi-helpers';
 
 export default async function assertRevert(
@@ -8,13 +6,13 @@ export default async function assertRevert(
   expectedMessage?: string,
   contract?: ethers.Contract
 ) {
-  let errorMessage: string = '';
+  let errorMessage = '';
 
   try {
     const txResponse = await txResponsePromise;
     await txResponse.wait(); // txReceipt.
-  } catch (error: any) {
-    errorMessage = _formatError(error);
+  } catch (error) {
+    errorMessage = _formatError(error as { [k: string]: unknown });
   }
 
   if (errorMessage === '') {
@@ -46,17 +44,17 @@ export default async function assertRevert(
   );
 }
 
-function _formatError(error: any): string {
+function _formatError(error: { [k: string]: unknown }): string {
   // Format text encoded custom error.
   if (error.errorName) {
     const formattedErrorArgs =
       error.errorArgs && Array.isArray(error.errorArgs)
-        ? AbiHelpers.formatValues(error.errorArgs as any[])
+        ? AbiHelpers.formatValues(error.errorArgs as unknown[])
         : '';
     return `${error.errorName}(${formattedErrorArgs})`;
   }
 
-  return error.reason || error.message || error.toString();
+  return (error.reason as string) || (error.message as string) || error.toString();
 }
 
 async function _getCustomErrorFromLatestTransaction(contract: ethers.Contract) {
@@ -78,8 +76,10 @@ async function _getCustomErrorFromLatestTransaction(contract: ethers.Contract) {
       // This line will throw if the code is not decodable with this error fragment.
       const values = contract.interface.decodeErrorResult(fragment, code);
 
-      return `${fragment.name}(${AbiHelpers.formatValues(values as any[])})`;
-    } catch (err) {}
+      return `${fragment.name}(${AbiHelpers.formatValues(values as unknown[])})`;
+    } catch (err) {
+      // Decoding failed, try another decoder.
+    }
   }
 }
 
