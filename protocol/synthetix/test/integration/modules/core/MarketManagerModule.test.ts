@@ -75,16 +75,16 @@ describe('MarketManagerModule', function () {
       await systems().Core.connect(user1).mintUsd(accountId, poolId, collateralAddress(), One);
     });
 
-    it('should not work if user has not approved', async () => {
+    it.only('should not work if user has not approved', async () => {
       // TODO (Anvil Custom Errors)
       // Last confirmed: 2022/12/09, Ale
-      customErrorNotice('InsufficientAllowance(uint256,uint256)');
-      await assertRevert(MockMarket().connect(user1).buySynth(One));
-      // await assertRevert(
-      //   MockMarket().connect(user1).buySynth(One),
-      //   `InsufficientAllowance(${One.toString()}, 0)`,
-      //   systems().Core
-      // );
+      // customErrorNotice('InsufficientAllowance(uint256,uint256)');
+      // await assertRevert(MockMarket().connect(user1).buySynth(One));
+      await assertRevert(
+        MockMarket().connect(user1).buySynth(One),
+        `InsufficientAllowance(${One.toString()}, 0)`,
+        systems().Core
+      );
     });
 
     describe('success', async () => {
@@ -134,13 +134,13 @@ describe('MarketManagerModule', function () {
 
         // TODO (Anvil Custom Errors)
         // Last confirmed: 2022/12/09, Ale
-        customErrorNotice('NotEnoughLiquidity(uint128,uint256)');
-        await assertRevert(MockMarket().connect(user1).sellSynth(Hundred.mul(100000)));
-        // await assertRevert(
-        //   MockMarket().connect(user1).sellSynth(Hundred.mul(100000)),
-        //   `NotEnoughLiquidity("${marketId()}", "${Hundred.mul(100000).toString()}")`,
-        //   systems().Core
-        // );
+        // customErrorNotice('NotEnoughLiquidity(uint128,uint256)');
+        // await assertRevert(MockMarket().connect(user1).sellSynth(Hundred.mul(100000)));
+        await assertRevert(
+          MockMarket().connect(user1).sellSynth(Hundred.mul(100000)),
+          `NotEnoughLiquidity("${marketId()}", "${Hundred.mul(100000).toString()}")`,
+          systems().Core
+        );
 
         await MockMarket().connect(user1).setReportedDebt(reportedDebtBefore);
       });

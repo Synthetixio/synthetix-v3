@@ -30,6 +30,7 @@ const config = {
   networks: {
     local: {
       url: 'http://localhost:8545',
+      gas: 12000000, // Prevent gas estimation for better error results in tests
     },
     ['optimistic-kovan']: {
       url: process.env.NETWORK_ENDPOINT || 'https://kovan.optimism.io',

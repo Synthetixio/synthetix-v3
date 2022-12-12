@@ -10,25 +10,25 @@ describe('SetUtil', () => {
   // Specific type tests
   // -----------------------------------------
 
-  // describe('Bytes32Set', function () {
-  //   const randomBytes32 = () => ethers.Wallet.createRandom().privateKey;
+  describe('Bytes32Set', function () {
+    const randomBytes32 = () => ethers.Wallet.createRandom().privateKey;
 
-  //   itSupportsType(
-  //     'Bytes32Set',
-  //     repeater.map(() => randomBytes32()),
-  //     randomBytes32()
-  //   );
-  // });
+    itSupportsType(
+      'Bytes32Set',
+      repeater.map(() => randomBytes32()),
+      randomBytes32()
+    );
+  });
 
-  // describe('AddressSet', function () {
-  //   const randomAddress = () => ethers.Wallet.createRandom().address;
+  describe('AddressSet', function () {
+    const randomAddress = () => ethers.Wallet.createRandom().address;
 
-  //   itSupportsType(
-  //     'AddressSet',
-  //     repeater.map(() => randomAddress()),
-  //     randomAddress()
-  //   );
-  // });
+    itSupportsType(
+      'AddressSet',
+      repeater.map(() => randomAddress()),
+      randomAddress()
+    );
+  });
 
   describe('UintSet', function () {
     const randomUint = () => ethers.utils.parseEther(`${Math.floor(1000000000 * Math.random())}`);
@@ -113,11 +113,11 @@ describe('SetUtil', () => {
         await assertRevert(SampleSet.positionOf(notContainedValue), 'ValueNotInSet', SampleSet);
       });
 
-      it.only('reverts when trying to remove a value not in the set', async function () {
+      it('reverts when trying to remove a value not in the set', async function () {
         await assertRevert(SampleSet.remove(notContainedValue), 'ValueNotInSet', SampleSet);
       });
 
-      it('reverts when trying to append a value already exsiting in set', async function () {
+      it('reverts when trying to append a value already existing in set', async function () {
         if (expectedValues.length > 0) {
           await assertRevert(SampleSet.add(expectedValues[0]), 'ValueAlreadyInSet', SampleSet);
         }
