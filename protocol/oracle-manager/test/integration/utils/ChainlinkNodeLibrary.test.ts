@@ -58,5 +58,16 @@ describe('ChainlinkNodeLibrary', () => {
         assertBn.equal(price, BigNumber.from(300)); // 500 + 400 + 300 + 200 + 100 / 5
       });
     });
+
+    describe('when price downscale is needed', async () => {
+      it('returns price with 18 decimlas', async () => {
+        const encodedParams = abi.encode(
+          ['address', 'uint256', 'uint8'],
+          [aggregator.address, BigNumber.from(0), 20]
+        );
+        const [price] = await node.process(encodedParams);
+        assertBn.equal(price, 5);
+      });
+    });
   });
 });

@@ -5,6 +5,8 @@ import "../storage/Node.sol";
 import "../interfaces/external/IAggregatorV3Interface.sol";
 
 library ChainlinkNodeLibrary {
+    uint256 public constant PRECISION = 18;
+
     function process(bytes memory parameters) internal view returns (Node.Data memory) {
         (address chainlinkAggr, uint256 twapTimeInterval, uint8 decimals) = abi.decode(
             parameters,
@@ -18,7 +20,11 @@ library ChainlinkNodeLibrary {
             ? price
             : getTwapPrice(chainlinkAggr, roundId, price, twapTimeInterval);
 
-        return Node.Data(upscale(finalPrice, 18 - decimals), updatedAt, 0, 0);
+        finalPrice = decimals > PRECISION
+            ? int256(downscale(uint256(finalPrice), decimals - PRECISION))
+            : upscale(finalPrice, PRECISION - decimals);
+
+        return Node.Data(finalPrice, updatedAt, 0, 0);
     }
 
     function getTwapPrice(
@@ -55,5 +61,9 @@ library ChainlinkNodeLibrary {
 
     function upscale(int256 x, uint256 factor) internal pure returns (int256) {
         return x * int256(10 ** factor);
+    }
+
+    function downscale(uint256 x, uint256 factor) internal pure returns (uint256) {
+        return x / 10 ** factor;
     }
 }
