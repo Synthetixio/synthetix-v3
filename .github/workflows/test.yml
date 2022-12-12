@@ -19,12 +19,16 @@ jobs:
         include:
           - package: "@synthetixio/core-contracts"
             coverage-file: utils/core-contracts/coverage.json
+            size-contracts: true
           - package: "@synthetixio/core-utils"
             coverage-file: utils/core-utils/coverage/lcov.info
           - package: "@synthetixio/core-modules"
             coverage-file: utils/core-modules/coverage.json
+            size-contracts: true
           - package: "@synthetixio/hardhat-router"
             coverage-file: utils/hardhat-router/coverage/lcov.info
+          - package: "@synthetixio/main"
+            size-contracts: true
     steps:
       - name: Install Foundry (Cannon)
         uses: foundry-rs/foundry-toolchain@v1
@@ -46,3 +50,6 @@ jobs:
         with:
           files: ${{ matrix.coverage-file }}
           flags: ${{ matrix.package }}
+      - if: ${{ matrix.size-contracts }}
+        name: Execute size command
+        run: npm run --workspace=${{ matrix.package }} size-contracts
