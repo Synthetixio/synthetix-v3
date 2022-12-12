@@ -24,7 +24,7 @@ describe('UUPSProxy', () => {
       const factory = await ethers.getContractFactory('ImplementationMockA');
       UUPSProxyFactory = await ethers.getContractFactory('UUPSProxy');
       Implementation = await factory.deploy();
-      UUPSProxy = UUPSProxyFactory.deploy(Implementation.address);
+      UUPSProxy = await UUPSProxyFactory.deploy(Implementation.address);
     });
 
     describe('when setting an EOA as the first implementation', () => {

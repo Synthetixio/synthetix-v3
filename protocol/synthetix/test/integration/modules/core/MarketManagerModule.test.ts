@@ -4,7 +4,6 @@ import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import { ethers } from 'ethers';
 
 import { bootstrapWithMockMarketAndPool } from '../../bootstrap';
-import { customErrorNotice } from '../../../utils/custom-error';
 
 describe('MarketManagerModule', function () {
   const {
@@ -75,11 +74,7 @@ describe('MarketManagerModule', function () {
       await systems().Core.connect(user1).mintUsd(accountId, poolId, collateralAddress(), One);
     });
 
-    it.only('should not work if user has not approved', async () => {
-      // TODO (Anvil Custom Errors)
-      // Last confirmed: 2022/12/09, Ale
-      // customErrorNotice('InsufficientAllowance(uint256,uint256)');
-      // await assertRevert(MockMarket().connect(user1).buySynth(One));
+    it('should not work if user has not approved', async () => {
       await assertRevert(
         MockMarket().connect(user1).buySynth(One),
         `InsufficientAllowance(${One.toString()}, 0)`,
@@ -128,14 +123,10 @@ describe('MarketManagerModule', function () {
         txn = await MockMarket().connect(user1).buySynth(One);
       });
 
-      it.only('reverts if not enough liquidity', async () => {
+      it('reverts if not enough liquidity', async () => {
         const reportedDebtBefore = await MockMarket().connect(user1).reportedDebt(0);
         await MockMarket().connect(user1).setReportedDebt(Hundred.mul(100000));
 
-        // TODO (Anvil Custom Errors)
-        // Last confirmed: 2022/12/09, Ale
-        // customErrorNotice('NotEnoughLiquidity(uint128,uint256)');
-        // await assertRevert(MockMarket().connect(user1).sellSynth(Hundred.mul(100000)));
         await assertRevert(
           MockMarket().connect(user1).sellSynth(Hundred.mul(100000)),
           `NotEnoughLiquidity(${marketId()}, ${Hundred.mul(100000).toString()})`,

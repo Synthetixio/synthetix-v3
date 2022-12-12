@@ -3,7 +3,6 @@ import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert
 import { ethers } from 'ethers';
 
 import { bootstrapWithMockMarketAndPool } from '../bootstrap';
-import { customErrorNotice } from '../../utils/custom-error';
 
 describe('AssociateDebtModule', function () {
   const {
@@ -45,39 +44,23 @@ describe('AssociateDebtModule', function () {
     });
 
     it('only works when the market is actually included in the pool', async () => {
-      // TODO (Anvil Custom Errors)
-      // Last confirmed: 2022/12/09, Ale
-      customErrorNotice('NotFundedByPool(uint256,uint256)');
       await assertRevert(
         MockMarket()
           .connect(user2)
-          .callAssociateDebt(828374, collateralAddress(), accountId, amount)
+          .callAssociateDebt(828374, collateralAddress(), accountId, amount),
+        `NotFundedByPool(${marketId()}, 828374)`,
+        systems().Core
       );
-      // await assertRevert(
-      //   MockMarket()
-      //     .connect(user2)
-      //     .callAssociateDebt(828374, collateralAddress(), accountId, amount),
-      //     `NotFundedByPool("${marketId()}", "828374")`,
-      //     systems().Core
-      // );
     });
 
     it('only works when the target account has enough collateral', async () => {
-      // TODO (Anvil Custom Errors)
-      // Last confirmed: 2022/12/09, Ale
-      customErrorNotice('InsufficientCollateralRatio(uint256,uint256,uint256,uint256)');
       await assertRevert(
         MockMarket()
           .connect(user2)
-          .callAssociateDebt(poolId, collateralAddress(), accountId, amount.mul(100000000))
+          .callAssociateDebt(poolId, collateralAddress(), accountId, amount.mul(100000000)),
+        `InsufficientCollateralRatio`,
+        systems().Core
       );
-      // await assertRevert(
-      //   MockMarket()
-      //     .connect(user2)
-      //     .callAssociateDebt(poolId, collateralAddress(), accountId, amount.mul(100000000)),
-      //     `InsufficientCollateralRatio`,
-      //     systems().Core
-      // );
     });
 
     describe('with a second staker', async () => {

@@ -1,81 +1,94 @@
+import { ErrorFragment } from '@ethersproject/abi';
 import { ethers } from 'ethers';
+import { Result } from 'ethers/lib/utils';
+import { AbiHelpers } from 'hardhat/internal/util/abi-helpers';
 
 export default async function assertRevert(
   txResponsePromise: Promise<ethers.providers.TransactionResponse>,
   expectedMessage?: string,
   contract?: ethers.Contract
 ) {
-  let error: { [k: string]: unknown } | null = null;
-  let txResponse, txReceipt;
+  let errorMessage: string = '';
 
-  // Try to trigger the reversion.
   try {
-    txResponse = await txResponsePromise;
-    txReceipt = await txResponse.wait(); // txReceipt
-  } catch (err) {
-    error = err as { [k: string]: unknown };
+    const txResponse = await txResponsePromise;
+    await txResponse.wait(); // txReceipt.
+  } catch (error: any) {
+    errorMessage = _formatError(error);
   }
 
-  // Compare the error with the expected error message.
-  if (error) {
-    if (expectedMessage) {
-      let msg = error.toString();
+  if (errorMessage === '') {
+    throw new Error('Transaction was expected to revert, but it did not');
+  }
 
-      // If no match,
-      if (!msg.includes(expectedMessage)) {
-        // Try decoding error message manually before throwing.
-        if (contract) {
-          txResponse = await _getLatestTransactionWithContract(contract);
-          const txRequest = txResponse as ethers.providers.TransactionRequest;
-          const customError = await _getCustomError(txRequest, contract);
+  if (!expectedMessage) {
+    return; // No expected message to check against.
+  }
 
-          // If match,
-          if (customError && customError.includes(expectedMessage)) {
-            // Revert reason decoded manually and a match was found.
-            return;
-          }
+  if (errorMessage.includes(expectedMessage)) {
+    return; // Expected message seen in error.
+  }
 
-          // Replace the uninformative message with the retrieved custom error, if possible.
-          msg = customError || msg;
-        }
+  // Before giving up, try to extract the custom error from the latest transaction manually.
+  if (contract) {
+    const customError = await _getCustomErrorFromLatestTransaction(contract);
 
-        throw new Error(
-          `Transaction was expected to revert with "${expectedMessage}", but reverted with "${msg}"`
-        );
-      }
-
-      // Transaction reverted, and a match was found.
-      return;
+    if (customError && customError.includes(expectedMessage)) {
+      return; // Expected message seen in custom error.
     }
 
-    // Transaction reverted, but assertion does not need a revert reason.
-    return;
+    // Replace the uninformative message with the retrieved custom error, if possible.
+    errorMessage = customError || errorMessage;
   }
 
-  throw new Error('Transaction was expected to revert, but it did not');
+  throw new Error(
+    `Transaction was expected to revert with "${expectedMessage}", but reverted with "${errorMessage}"`
+  );
 }
 
-async function _getLatestTransactionWithContract(
+function _formatError(error: any): string {
+  // Format text encoded custom error.
+  if (error.errorName) {
+    const formattedErrorArgs =
+      error.errorArgs && Array.isArray(error.errorArgs)
+        ? AbiHelpers.formatValues(error.errorArgs as any[])
+        : '';
+    return `${error.errorName}(${formattedErrorArgs})`;
+  }
+
+  return error.reason || error.message || error.toString();
+}
+
+async function _getCustomErrorFromLatestTransaction(contract: ethers.Contract) {
+  const txResponse = await _getLatestTransaction(contract);
+  const txRequest: ethers.providers.TransactionRequest = {
+    from: txResponse.from,
+    to: txResponse.to,
+    data: txResponse.data,
+  };
+
+  // Retrieve the error code of the transaction.
+  const provider = contract.provider;
+  const code = await provider.call(txRequest);
+
+  // Try decoding the returned code of the call with all the errors
+  // defined in the contract's interface.
+  for (const fragment of Object.values(contract.interface.errors)) {
+    try {
+      // This line will throw if the code is not decodable with this error fragment.
+      const values = contract.interface.decodeErrorResult(fragment, code);
+
+      return `${fragment.name}(${AbiHelpers.formatValues(values as any[])})`;
+    } catch (err) {}
+  }
+}
+
+async function _getLatestTransaction(
   contract: ethers.Contract
-): Promise<ethers.providers.TransactionResponse | null> {
+): Promise<ethers.providers.TransactionResponse> {
   const provider = contract.provider;
 
   const latestBlock = await provider.getBlockWithTransactions('latest');
 
   return latestBlock.transactions[0];
-}
-
-async function _getCustomError(
-  txRequest: ethers.providers.TransactionRequest,
-  contract: ethers.Contract
-) {
-  const provider = contract.provider;
-  const code = await provider.call(txRequest);
-
-  for (const fragment of Object.values(contract.interface.errors)) {
-    try {
-      const errorValues = contract.interface.decodeErrorResult(fragment, code);
-      return `${fragment.name}(${errorValues.join(', ')})`;
-    } catch (err) {}
-  }
 }

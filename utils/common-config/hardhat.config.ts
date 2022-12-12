@@ -32,6 +32,9 @@ const config = {
       chainId: 31337,
       gas: 12000000, // Prevent gas estimation for better error results in tests
     },
+    hardhat: {
+      gas: 12000000, // Prevent gas estimation for better error results in tests
+    },
     mainnet: {
       url:
         process.env.NETWORK_ENDPOINT ||
