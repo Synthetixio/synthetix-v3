@@ -1,14 +1,14 @@
 # Synthetix v3
 
-[![codecov](https://codecov.io/gh/Synthetixio/synthetix-v3/branch/main/graph/badge.svg)](https://codecov.io/gh/Synthetixio/synthetix-v3)
+[![codecov](https://codecov.io/gh/Synthetixio/synthetix-v3/branch/main/graph/badge.svg?token=B9BK0U5KAT)](https://codecov.io/gh/Synthetixio/synthetix-v3)
 
-| Package                     | Coverage                                                                                                                                                                  |
-| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| @synthetixio/core-utils     | [![codecov](https://codecov.io/gh/Synthetixio/synthetix-v3/branch/main/graph/badge.svg?flag=@synthetixio/core-utils)](https://codecov.io/gh/Synthetixio/synthetix-v3)     |
-| @synthetixio/core-contracts | [![codecov](https://codecov.io/gh/Synthetixio/synthetix-v3/branch/main/graph/badge.svg?flag=@synthetixio/core-contracts)](https://codecov.io/gh/Synthetixio/synthetix-v3) |
-| @synthetixio/core-modules   | [![codecov](https://codecov.io/gh/Synthetixio/synthetix-v3/branch/main/graph/badge.svg?flag=@synthetixio/core-modules)](https://codecov.io/gh/Synthetixio/synthetix-v3)   |
-| @synthetixio/hardhat-router | [![codecov](https://codecov.io/gh/Synthetixio/synthetix-v3/branch/main/graph/badge.svg?flag=@synthetixio/hardhat-router)](https://codecov.io/gh/Synthetixio/synthetix-v3) |
-| @synthetixio/synthetix      | [![codecov](https://codecov.io/gh/Synthetixio/synthetix-v3/branch/main/graph/badge.svg?flag=@synthetixio/synthetix)](https://codecov.io/gh/Synthetixio/synthetix-v3)      |
+| Package                     | Coverage                                                                                                                                                                                   |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| @synthetixio/core-utils     | [![codecov](https://codecov.io/gh/Synthetixio/synthetix-v3/branch/main/graph/badge.svg?token=B9BK0U5KAT&flag=@synthetixio/core-utils)](https://codecov.io/gh/Synthetixio/synthetix-v3)     |
+| @synthetixio/core-contracts | [![codecov](https://codecov.io/gh/Synthetixio/synthetix-v3/branch/main/graph/badge.svg?token=B9BK0U5KAT&flag=@synthetixio/core-contracts)](https://codecov.io/gh/Synthetixio/synthetix-v3) |
+| @synthetixio/core-modules   | [![codecov](https://codecov.io/gh/Synthetixio/synthetix-v3/branch/main/graph/badge.svg?token=B9BK0U5KAT&flag=@synthetixio/core-modules)](https://codecov.io/gh/Synthetixio/synthetix-v3)   |
+| @synthetixio/hardhat-router | [![codecov](https://codecov.io/gh/Synthetixio/synthetix-v3/branch/main/graph/badge.svg?token=B9BK0U5KAT&flag=@synthetixio/hardhat-router)](https://codecov.io/gh/Synthetixio/synthetix-v3) |
+| @synthetixio/synthetix      | [![codecov](https://codecov.io/gh/Synthetixio/synthetix-v3/branch/main/graph/badge.svg?token=B9BK0U5KAT&flag=@synthetixio/synthetix)](https://codecov.io/gh/Synthetixio/synthetix-v3)      |
 
 ## Documentation
 
