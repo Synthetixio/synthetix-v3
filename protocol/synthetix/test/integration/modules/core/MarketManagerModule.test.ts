@@ -128,7 +128,7 @@ describe('MarketManagerModule', function () {
         txn = await MockMarket().connect(user1).buySynth(One);
       });
 
-      it('reverts if not enough liquidity', async () => {
+      it.only('reverts if not enough liquidity', async () => {
         const reportedDebtBefore = await MockMarket().connect(user1).reportedDebt(0);
         await MockMarket().connect(user1).setReportedDebt(Hundred.mul(100000));
 
