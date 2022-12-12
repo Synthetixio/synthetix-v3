@@ -1,11 +1,11 @@
-import assert from 'assert/strict';
+import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
+import assert from 'assert/strict';
 import { ethers } from 'ethers';
 
 import { bootstrapWithNodes } from '../../bootstrap';
 import NodeTypes from '../../mixins/Node.types';
 import NodeOperations from '../../mixins/Node.operations';
-import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import { findSingleEvent } from '@synthetixio/core-utils/utils/ethers/events';
 
 const abi = ethers.utils.defaultAbiCoder;
@@ -61,5 +61,13 @@ describe('OracleManagerModule', function () {
     assert.equal(event.args.nodeId, nodeId);
     assert.equal(event.args.nodeType, NodeTypes.REDUCER);
     assert.equal(event.args.parameters, params);
+  });
+
+  it('register an inactive node', async () => {
+    await OracleManagerModule.registerNode([], NodeTypes.INACTIVE, []);
+
+    const nodeId = await OracleManagerModule.getNodeId([], NodeTypes.INACTIVE, []);
+
+    await assertRevert(OracleManagerModule.process(nodeId), 'InActiveNode');
   });
 });

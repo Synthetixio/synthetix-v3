@@ -11,8 +11,9 @@ import "../storage/Node.sol";
 import "../storage/NodeDefinition.sol";
 
 contract OracleManagerModule is IOracleManagerModule {
-    error UnsupportedNodeType(uint nodeType);
+    error UnsupportedNodeType(uint256 nodeType);
     error NodeNotRegistered(bytes32 nodeId);
+    error InActiveNode(bytes32 nodeId);
 
     event NodeRegistered(
         bytes32 nodeId,
@@ -67,7 +68,7 @@ contract OracleManagerModule is IOracleManagerModule {
 
     modifier onlyValidNodeType(NodeDefinition.NodeType nodeType) {
         if (!_validateNodeType(nodeType)) {
-            revert UnsupportedNodeType(uint(nodeType));
+            revert UnsupportedNodeType(uint256(nodeType));
         }
 
         _;
@@ -77,7 +78,8 @@ contract OracleManagerModule is IOracleManagerModule {
         return (NodeDefinition.NodeType.REDUCER == nodeType ||
             NodeDefinition.NodeType.EXTERNAL == nodeType ||
             NodeDefinition.NodeType.CHAINLINK == nodeType ||
-            NodeDefinition.NodeType.PYTH == nodeType);
+            NodeDefinition.NodeType.PYTH == nodeType ||
+            NodeDefinition.NodeType.INACTIVE == nodeType);
     }
 
     function _getNodeId(NodeDefinition.Data memory nodeDefinition) internal pure returns (bytes32) {
@@ -117,6 +119,10 @@ contract OracleManagerModule is IOracleManagerModule {
     function _process(bytes32 nodeId) internal view returns (Node.Data memory price) {
         NodeDefinition.Data storage nodeDefinition = NodeDefinition.load(nodeId);
 
+        if (nodeDefinition.nodeType == NodeDefinition.NodeType.INACTIVE) {
+            revert InActiveNode(nodeId);
+        }
+
         Node.Data[] memory prices = new Node.Data[](nodeDefinition.parents.length);
         for (uint256 i = 0; i < nodeDefinition.parents.length; i++) {
             prices[i] = this.process(nodeDefinition.parents[i]);
@@ -131,7 +137,7 @@ contract OracleManagerModule is IOracleManagerModule {
         } else if (nodeDefinition.nodeType == NodeDefinition.NodeType.PYTH) {
             return PythNodeLibrary.process(nodeDefinition.parameters);
         } else {
-            revert UnsupportedNodeType(uint(nodeDefinition.nodeType));
+            revert UnsupportedNodeType(uint256(nodeDefinition.nodeType));
         }
     }
 }

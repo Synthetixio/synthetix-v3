@@ -7,7 +7,8 @@ library NodeDefinition {
         REDUCER,
         EXTERNAL,
         CHAINLINK,
-        PYTH
+        PYTH,
+        INACTIVE
     }
 
     struct Data {
