@@ -1,5 +1,5 @@
 {
-  "name": "@synthetixio/synthetix",
+  "name": "@synthetixio/main",
   "version": "3.0.0-alpha.4",
   "description": "Core Synthetix Protocol Contracts",
   "private": true,
