@@ -138,7 +138,7 @@ describe('MarketManagerModule', function () {
         // await assertRevert(MockMarket().connect(user1).sellSynth(Hundred.mul(100000)));
         await assertRevert(
           MockMarket().connect(user1).sellSynth(Hundred.mul(100000)),
-          `NotEnoughLiquidity("${marketId()}", "${Hundred.mul(100000).toString()}")`,
+          `NotEnoughLiquidity(${marketId()}, ${Hundred.mul(100000).toString()})`,
           systems().Core
         );
 
