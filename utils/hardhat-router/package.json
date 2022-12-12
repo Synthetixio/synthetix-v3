@@ -33,7 +33,6 @@
   },
   "peerDependencies": {
     "@nomiclabs/hardhat-ethers": "^2.0.0",
-    "@synthetixio/hardhat-storage": "*",
     "hardhat": "^2.9.0"
   },
   "dependencies": {
