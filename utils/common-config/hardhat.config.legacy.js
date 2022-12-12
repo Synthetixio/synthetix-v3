@@ -12,6 +12,7 @@ require('@nomiclabs/hardhat-ethers');
 require('hardhat-contract-sizer');
 require('solidity-coverage');
 require('@synthetixio/hardhat-router');
+require('@synthetixio/hardhat-storage');
 require('hardhat-gas-reporter');
 require('hardhat-ignore-warnings');
 
