@@ -38,7 +38,7 @@ describe('utils/assertions/assert-revert.ts', function () {
 
       await rejects(async () => {
         await assertRevert(mockRevertingTx(message), expectedMessage);
-      }, new Error(`Transaction was expected to revert with "${expectedMessage}", but reverted with "Error: ${message}"`));
+      }, new Error(`Transaction was expected to revert with "${expectedMessage}", but reverted with "${message}"`));
     });
   });
 });
