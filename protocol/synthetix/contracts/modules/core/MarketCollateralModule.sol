@@ -16,24 +16,6 @@ contract MarketCollateralModule is IMarketCollateralModule {
     using CollateralConfiguration for CollateralConfiguration.Data;
 
     /**
-     * @dev Thrown when a user attempts to deposit more collateral than that allowed by a market.
-     */
-    error InsufficientMarketCollateralDepositable(
-        uint128 marketId,
-        address collateralType,
-        uint256 tokenAmountToDeposit
-    );
-
-    /**
-     * @dev Thrown when a user attempts to withdraw more collateral from the market than what it has provided.
-     */
-    error InsufficientMarketCollateralWithdrawable(
-        uint128 marketId,
-        address collateralType,
-        uint256 tokenAmountToWithdraw
-    );
-
-    /**
      * @inheritdoc IMarketCollateralModule
      */
     function depositMarketCollateral(

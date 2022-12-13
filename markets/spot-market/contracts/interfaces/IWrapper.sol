@@ -3,6 +3,9 @@ pragma solidity ^0.8.0;
 
 /// @title Spot Market Wrapper Interface
 interface IWrapper {
+    error InsufficientFunds();
+    error InsufficientAllowance(uint expected, uint current);
+
     event WrapperInitialized(uint indexed synthMarketId, address collateralType);
     event SynthWrapped(uint indexed synthMarketId, uint amountWrapped, uint feesCollected);
     event SynthUnwrapped(uint indexed synthMarketId, uint amountUnwrapped, uint feesCollected);

@@ -10,6 +10,21 @@ import "@synthetixio/core-modules/contracts/interfaces/INftModule.sol";
  */
 interface IAssociateDebtModule {
     /**
+     * @notice Thrown when the specified market is not connected to the specified pool in debt association.
+     */
+    error NotFundedByPool(uint256 marketId, uint256 poolId);
+
+    /**
+     * @notice Thrown when a debt association would shift a position below the liquidation ratio.
+     */
+    error InsufficientCollateralRatio(
+        uint256 collateralValue,
+        uint256 debt,
+        uint256 ratio,
+        uint256 minRatio
+    );
+
+    /**
      * @notice Emitted when `associateDebt` is called.
      * @param marketId The id of the market to which debt was associated.
      * @param poolId The id of the pool associated to the target market.

@@ -8,6 +8,16 @@ pragma solidity ^0.8.0;
  */
 interface IVaultModule {
     /**
+     * @notice Thrown when attempting to delegate collateral to a vault with a leverage amount that is not supported by the system.
+     */
+    error InvalidLeverage(uint256 leverage);
+
+    /**
+     * @notice Thrown when attempting to delegate collateral to a market whose capacity is locked.
+     */
+    error CapacityLocked(uint256 marketId);
+
+    /**
      * @notice Emitted when {sender} updates the delegation of collateral in the specified liquidity position.
      * @param accountId The id of the account whose position was updated.
      * @param poolId The id of the pool in which the position was updated.

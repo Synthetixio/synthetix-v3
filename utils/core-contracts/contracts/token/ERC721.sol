@@ -20,11 +20,6 @@ import "../utils/StringUtil.sol";
  * - OpenZeppelin - https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC721/ERC721.sol
  */
 contract ERC721 is IERC721, IERC721Metadata {
-    error CannotSelfApprove(address);
-    error InvalidTransferRecipient(address);
-    error TokenDoesNotExist(uint256);
-    error TokenAlreadyMinted(uint256);
-
     /**
      * @inheritdoc IERC165
      */

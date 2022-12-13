@@ -11,9 +11,6 @@ import "../storage/Node.sol";
 import "../storage/NodeDefinition.sol";
 
 contract OracleManagerModule is IOracleManagerModule {
-    error UnsupportedNodeType(uint nodeType);
-    error NodeNotRegistered(bytes32 nodeId);
-
     event NodeRegistered(
         bytes32 nodeId,
         bytes32[] parents,

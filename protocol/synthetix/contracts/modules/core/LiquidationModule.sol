@@ -33,21 +33,6 @@ contract LiquidationModule is ILiquidationModule {
     using Distribution for Distribution.Data;
     using ScalableMapping for ScalableMapping.Data;
 
-    /**
-     * @dev Thrown when attempting to liquidate an account that is not eligible for liquidation.
-     */
-    error IneligibleForLiquidation(
-        uint256 collateralValue,
-        int256 debt,
-        uint256 currentCRatio,
-        uint256 cratio
-    );
-
-    /**
-     * @dev Thrown when an entire vault instead of a single account should be liquidated.
-     */
-    error MustBeVaultLiquidated();
-
     bytes32 private constant _USD_TOKEN = "USDToken";
 
     /**

@@ -26,11 +26,6 @@ contract CollateralModule is ICollateralModule {
     using Collateral for Collateral.Data;
 
     /**
-     * @dev Thrown when an interacting account does not have sufficient collateral for an operation (withdrawal, lock, etc).
-     */
-    error InsufficientAccountCollateral(uint256 amount);
-
-    /**
      * @inheritdoc ICollateralModule
      */
     function deposit(

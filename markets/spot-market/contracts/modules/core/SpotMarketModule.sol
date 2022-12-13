@@ -14,9 +14,6 @@ contract SpotMarketModule is ISpotMarketModule {
     using Price for Price.Data;
     using Fee for Fee.Data;
 
-    error InsufficientFunds();
-    error InsufficientAllowance(uint expected, uint current);
-
     function buy(uint128 marketId, uint amountUsd) external override returns (uint) {
         SpotMarketFactory.Data storage store = SpotMarketFactory.load();
 
@@ -43,7 +40,11 @@ contract SpotMarketModule is ISpotMarketModule {
         store.synthFeesCollected[marketId] += feesCollected;
 
         store.usdToken.approve(address(this), amountUsable);
-        IMarketManagerModule(store.synthetix).depositMarketUsd(marketId, address(this), amountUsable);
+        IMarketManagerModule(store.synthetix).depositMarketUsd(
+            marketId,
+            address(this),
+            amountUsable
+        );
 
         emit SynthBought(marketId, amountToMint, feesCollected);
 
@@ -56,7 +57,11 @@ contract SpotMarketModule is ISpotMarketModule {
         uint amountToWithdraw = store.getPriceData(marketId).synthUsdExchangeRate(sellAmount);
         SynthUtil.getToken(marketId).burn(msg.sender, sellAmount);
 
-        IMarketManagerModule(store.synthetix).withdrawMarketUsd(marketId, address(this), amountToWithdraw);
+        IMarketManagerModule(store.synthetix).withdrawMarketUsd(
+            marketId,
+            address(this),
+            amountToWithdraw
+        );
 
         (uint returnAmount, uint feesCollected) = store.getFeeData(marketId).calculateFees(
             msg.sender,
@@ -72,11 +77,27 @@ contract SpotMarketModule is ISpotMarketModule {
         return returnAmount;
     }
 
-    function getBuyQuote(uint128 marketId, uint amountUsd) external view override returns (uint, uint) {
-        return SpotMarketFactory.load().getFeeData(marketId).calculateFees(msg.sender, amountUsd, Fee.TradeType.BUY);
+    function getBuyQuote(
+        uint128 marketId,
+        uint amountUsd
+    ) external view override returns (uint, uint) {
+        return
+            SpotMarketFactory.load().getFeeData(marketId).calculateFees(
+                msg.sender,
+                amountUsd,
+                Fee.TradeType.BUY
+            );
     }
 
-    function getSellQuote(uint128 marketId, uint amountSynth) external view override returns (uint, uint) {
-        return SpotMarketFactory.load().getFeeData(marketId).calculateFees(msg.sender, amountSynth, Fee.TradeType.SELL);
+    function getSellQuote(
+        uint128 marketId,
+        uint amountSynth
+    ) external view override returns (uint, uint) {
+        return
+            SpotMarketFactory.load().getFeeData(marketId).calculateFees(
+                msg.sender,
+                amountSynth,
+                Fee.TradeType.SELL
+            );
     }
 }

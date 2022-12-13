@@ -36,21 +36,6 @@ contract AssociateDebtModule is IAssociateDebtModule {
     bytes32 private constant _ASSOCIATE_DEBT_FEATURE_FLAG = "associateDebt";
 
     /**
-     * @dev Thrown when the specified market is not connected to the specified pool in debt association.
-     */
-    error NotFundedByPool(uint256 marketId, uint256 poolId);
-
-    /**
-     * @dev Thrown when a debt association would shift a position below the liquidation ratio.
-     */
-    error InsufficientCollateralRatio(
-        uint256 collateralValue,
-        uint256 debt,
-        uint256 ratio,
-        uint256 minRatio
-    );
-
-    /**
      * @inheritdoc IAssociateDebtModule
      */
     function associateDebt(

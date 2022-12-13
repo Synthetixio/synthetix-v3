@@ -6,6 +6,24 @@ pragma solidity ^0.8.0;
  */
 interface IMarketCollateralModule {
     /**
+     * @notice Thrown when a user attempts to deposit more collateral than that allowed by a market.
+     */
+    error InsufficientMarketCollateralDepositable(
+        uint128 marketId,
+        address collateralType,
+        uint256 tokenAmountToDeposit
+    );
+
+    /**
+     * @notice Thrown when a user attempts to withdraw more collateral from the market than what it has provided.
+     */
+    error InsufficientMarketCollateralWithdrawable(
+        uint128 marketId,
+        address collateralType,
+        uint256 tokenAmountToWithdraw
+    );
+
+    /**
      * @notice Emitted when `amount` of collateral of type `collateralType` is deposited to market `marketId` by `sender`.
      * @param marketId The id of the market in which collateral was deposited.
      * @param collateralType The address of the collateral that was directly deposited in the market.

@@ -11,8 +11,6 @@ import "../errors/ChangeError.sol";
  * See IOwnable.
  */
 contract Ownable is IOwnable {
-    error NotNominated(address addr);
-
     /**
      * @inheritdoc IOwnable
      */

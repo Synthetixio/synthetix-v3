@@ -18,9 +18,6 @@ contract WrapperModule is IWrapper {
     using Fee for Fee.Data;
     using Wrapper for Wrapper.Data;
 
-    error InsufficientFunds();
-    error InsufficientAllowance(uint expected, uint current);
-
     function initializeWrapper(uint128 marketId, address collateralType) external override {
         OwnableStorage.onlyOwner();
         SpotMarketFactory.Data storage store = SpotMarketFactory.load();
@@ -44,7 +41,10 @@ contract WrapperModule is IWrapper {
 
         if (wrappingCollateral.balanceOf(msg.sender) < wrapAmount) revert InsufficientFunds();
         if (wrappingCollateral.allowance(msg.sender, address(this)) < wrapAmount)
-            revert InsufficientAllowance(wrapAmount, store.usdToken.allowance(msg.sender, address(this)));
+            revert InsufficientAllowance(
+                wrapAmount,
+                store.usdToken.allowance(msg.sender, address(this))
+            );
 
         // safe transfer?
         wrappingCollateral.transferFrom(msg.sender, address(this), wrapAmount);
@@ -63,14 +63,21 @@ contract WrapperModule is IWrapper {
         amountToMint = priceStore.usdSynthExchangeRate(returnAmount);
 
         store.usdToken.approve(store.synthetix, amountToMint);
-        IMarketCollateralModule(store.synthetix).depositMarketCollateral(marketId, address(this), amountToMint);
+        IMarketCollateralModule(store.synthetix).depositMarketCollateral(
+            marketId,
+            address(this),
+            amountToMint
+        );
 
         SynthUtil.getToken(marketId).mint(msg.sender, amountToMint);
 
         emit SynthWrapped(marketId, amountToMint, feesCollected);
     }
 
-    function unwrap(uint128 marketId, uint unwrapAmount) external override returns (uint amountToWithdraw) {
+    function unwrap(
+        uint128 marketId,
+        uint unwrapAmount
+    ) external override returns (uint amountToWithdraw) {
         SpotMarketFactory.Data storage store = SpotMarketFactory.load();
         Wrapper.Data storage wrapperStore = store.getWrapperData(marketId);
         wrapperStore.onlyEnabledWrapper();
@@ -106,10 +113,23 @@ contract WrapperModule is IWrapper {
     }
 
     function getWrapQuote(uint128 marketId, uint wrapAmount) external view returns (uint, uint) {
-        return SpotMarketFactory.load().getFeeData(marketId).calculateFees(msg.sender, wrapAmount, Fee.TradeType.WRAP);
+        return
+            SpotMarketFactory.load().getFeeData(marketId).calculateFees(
+                msg.sender,
+                wrapAmount,
+                Fee.TradeType.WRAP
+            );
     }
 
-    function getUnwrapQuote(uint128 marketId, uint unwrapAmount) external view returns (uint, uint) {
-        return SpotMarketFactory.load().getFeeData(marketId).calculateFees(msg.sender, unwrapAmount, Fee.TradeType.UNWRAP);
+    function getUnwrapQuote(
+        uint128 marketId,
+        uint unwrapAmount
+    ) external view returns (uint, uint) {
+        return
+            SpotMarketFactory.load().getFeeData(marketId).calculateFees(
+                msg.sender,
+                unwrapAmount,
+                Fee.TradeType.UNWRAP
+            );
     }
 }

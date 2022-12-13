@@ -6,6 +6,30 @@ pragma solidity ^0.8.0;
  */
 interface IERC721 {
     /**
+     * @notice Thrown when an address attempts to provide allowance to itself.
+     * @param addr The address attempting to provide allowance.
+     */
+    error CannotSelfApprove(address addr);
+
+    /**
+     * @notice Thrown when attempting to transfer a token to an address that does not satisfy IERC721Receiver requirements.
+     * @param addr The address that cannot receive the tokens.
+     */
+    error InvalidTransferRecipient(address addr);
+
+    /**
+     * @notice Thrown when attempting to operate on a token id that does not exist.
+     * @param id The token id that does not exist.
+     */
+    error TokenDoesNotExist(uint256 id);
+
+    /**
+     * @notice Thrown when attempting to mint a token that already exists.
+     * @param id The token id that already exists.
+     */
+    error TokenAlreadyMinted(uint256 id);
+
+    /**
      * @notice Emitted when `tokenId` token is transferred from `from` to `to`.
      */
     event Transfer(address indexed from, address indexed to, uint256 indexed tokenId);

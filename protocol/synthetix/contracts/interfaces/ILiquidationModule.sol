@@ -6,6 +6,21 @@ pragma solidity ^0.8.0;
  */
 interface ILiquidationModule {
     /**
+     * @notice Thrown when attempting to liquidate an account that is not eligible for liquidation.
+     */
+    error IneligibleForLiquidation(
+        uint256 collateralValue,
+        int256 debt,
+        uint256 currentCRatio,
+        uint256 cratio
+    );
+
+    /**
+     * @notice Thrown when an entire vault instead of a single account should be liquidated.
+     */
+    error MustBeVaultLiquidated();
+
+    /**
      * @notice Emitted when an account is liquidated.
      * @param accountId The id of the account that was liquidated.
      * @param poolId The pool id of the position that was liquidated.

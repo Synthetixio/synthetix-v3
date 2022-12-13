@@ -6,6 +6,11 @@ pragma solidity ^0.8.0;
  */
 interface IIssueUSDModule {
     /**
+     * @notice Thrown when an account does not have sufficient debt to burn USD.
+     */
+    error InsufficientDebt(int256 currentDebt);
+
+    /**
      * @notice Emitted when {sender} mints {amount} of snxUSD with the specified liquidity position.
      * @param accountId The id of the account for which snxUSD was emitted.
      * @param poolId The id of the pool whose collateral was used to emit the snxUSD.
