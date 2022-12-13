@@ -93,7 +93,7 @@ describe('ERC721', () => {
 
     describe('when attempting to mint again an existent Token', async () => {
       it('reverts', async () => {
-        await assertRevert(ERC721.connect(user1).mint(token42), 'TokenAlreadyMinted(42)');
+        await assertRevert(ERC721.connect(user1).mint(token42), 'TokenAlreadyMinted("42")');
       });
     });
 
@@ -156,16 +156,16 @@ describe('ERC721', () => {
         user2Balance = await ERC721.balanceOf(user2.address);
       });
 
-      describe('when attempting to transfer an unexistent tokenId', () => {
+      describe('when attempting to transfer a tokenId that does not exist', () => {
         it('reverts ', async () => {
           await assertRevert(
             ERC721.connect(user1).transferFrom(user1.address, user2.address, 24),
-            'TokenDoesNotExist(24)'
+            'TokenDoesNotExist("24")'
           );
         });
       });
 
-      describe('when transfering an existent tokenId', () => {
+      describe('when transferring an existent tokenId', () => {
         before('transfer', async () => {
           const tx = await ERC721.connect(user1).transferFrom(
             user1.address,
@@ -418,7 +418,7 @@ describe('ERC721', () => {
           await tx.wait();
         });
 
-        it('is transfered', async () => {
+        it('is transferred', async () => {
           assert.equal(await ERC721.ownerOf(token42), user2.address);
         });
 
@@ -438,7 +438,7 @@ describe('ERC721', () => {
 
       describe('when attempting to check the aproval on a non existent tokenId', () => {
         it('reverts ', async () => {
-          await assertRevert(ERC721.connect(user1).getApproved(1337), 'TokenDoesNotExist(1337)');
+          await assertRevert(ERC721.connect(user1).getApproved(1337), 'TokenDoesNotExist("1337")');
         });
       });
 

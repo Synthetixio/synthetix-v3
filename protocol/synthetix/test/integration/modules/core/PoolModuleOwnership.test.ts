@@ -69,7 +69,7 @@ describe('PoolModule Create / Ownership', function () {
           systems()
             .Core.connect(user2)
             .createPool(1, await user1.getAddress()),
-          'PoolAlreadyExists(1)',
+          'PoolAlreadyExists("1")',
           systems().Core
         );
       });

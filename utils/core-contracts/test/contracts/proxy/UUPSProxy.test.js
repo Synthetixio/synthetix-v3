@@ -72,7 +72,7 @@ describe('UUPSProxy', () => {
       });
 
       it('reverts', async () => {
-        await assertRevert(BadInstance.getB());
+        await assertRevert(BadInstance.getB(), 'call revert exception');
       });
     });
 

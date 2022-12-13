@@ -5,7 +5,7 @@ import { ethers } from 'ethers';
 import { findSingleEvent } from '@synthetixio/core-utils/utils/ethers/events';
 import { restoreSnapshot, takeSnapshot } from '@synthetixio/core-utils/utils/hardhat/rpc';
 
-import Permissions from '../../../storage/AcccountRBACMixin.permissions';
+import Permissions from '../../../mixins/AccountRBACMixin.permissions';
 import { bootstrap } from '../../../bootstrap';
 
 describe('AccountModule', function () {
@@ -64,7 +64,7 @@ describe('AccountModule', function () {
           systems()
             .Core.connect(user2)
             .grantPermission(1, Permissions.WITHDRAW, await user2.getAddress()),
-          `PermissionDenied(1, "${Permissions.ADMIN}", "${await user2.getAddress()}")`,
+          `PermissionDenied("1", "${Permissions.ADMIN}", "${await user2.getAddress()}")`,
           systems().Core
         );
       });
@@ -114,7 +114,7 @@ describe('AccountModule', function () {
         it('reverts', async () => {
           await assertRevert(
             systems().Core.connect(user2).renouncePermission(1, Permissions.ADMIN),
-            `PermissionNotGranted(1, "${Permissions.ADMIN}", "${await user2.getAddress()}")`,
+            `PermissionNotGranted("1", "${Permissions.ADMIN}", "${await user2.getAddress()}")`,
             systems().Core
           );
         });

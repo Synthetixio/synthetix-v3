@@ -41,7 +41,7 @@ describe('ERC20', () => {
     });
 
     it('reverts when trying to burn', async () => {
-      await assertRevert(ERC20.connect(user1).burn(1), 'InsufficientBalance(1, 0)');
+      await assertRevert(ERC20.connect(user1).burn(1), 'InsufficientBalance("1", "0")');
     });
   });
 
@@ -112,7 +112,7 @@ describe('ERC20', () => {
 
           await assertRevert(
             ERC20.connect(user1).transfer(user2.address, amount),
-            `InsufficientBalance(${amount.toString()}, ${user1Balance.toString()})`
+            `InsufficientBalance("${amount.toString()}", "${user1Balance.toString()}")`
           );
         });
       });
@@ -174,7 +174,7 @@ describe('ERC20', () => {
 
           await assertRevert(
             ERC20.connect(user2).transferFrom(user1.address, user2.address, amount),
-            `InsufficientAllowance(${amount.toString()}, ${approvalAmount.toString()})`
+            `InsufficientAllowance("${amount.toString()}", "${approvalAmount.toString()}")`
           );
         });
       });

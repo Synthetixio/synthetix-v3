@@ -77,7 +77,7 @@ describe('MarketManagerModule', function () {
     it('should not work if user has not approved', async () => {
       await assertRevert(
         MockMarket().connect(user1).buySynth(One),
-        `InsufficientAllowance(${One.toString()}, 0)`,
+        `InsufficientAllowance("${One.toString()}", "0")`,
         systems().Core
       );
     });
@@ -129,7 +129,7 @@ describe('MarketManagerModule', function () {
 
         await assertRevert(
           MockMarket().connect(user1).sellSynth(Hundred.mul(100000)),
-          `NotEnoughLiquidity(${marketId()}, ${Hundred.mul(100000).toString()})`,
+          `NotEnoughLiquidity("${marketId()}", "${Hundred.mul(100000).toString()}")`,
           systems().Core
         );
 

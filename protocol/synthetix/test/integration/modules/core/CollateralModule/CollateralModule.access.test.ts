@@ -2,7 +2,7 @@ import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber'
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import { ethers as Ethers } from 'ethers';
 import { addCollateral, verifyCollateral } from './CollateralModule.helper';
-import Permissions from '../../../storage/AcccountRBACMixin.permissions';
+import Permissions from '../../../mixins/AccountRBACMixin.permissions';
 import { bootstrap } from '../../../bootstrap';
 
 describe('CollateralModule', function () {
@@ -73,7 +73,7 @@ describe('CollateralModule', function () {
             it('reverts', async () => {
               await assertRevert(
                 systems().Core.connect(user2).withdraw(1, Collateral.address, 100),
-                `PermissionDenied(1, "${Permissions.WITHDRAW}", "${await user2.getAddress()}")`,
+                `PermissionDenied("1", "${Permissions.WITHDRAW}", "${await user2.getAddress()}")`,
                 systems().Core
               );
             });

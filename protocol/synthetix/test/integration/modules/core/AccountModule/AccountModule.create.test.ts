@@ -50,11 +50,11 @@ describe('AccountModule', function () {
         assert.equal(await systems().Core.getAccountOwner(1), await user1.getAddress());
       });
 
-      describe('when a user tries to create an acccount with an accountId that already exists', () => {
+      describe('when a user tries to create an account with an accountId that already exists', () => {
         it('reverts', async () => {
           await assertRevert(
             systems().Core.connect(user2).createAccount(1),
-            'TokenAlreadyMinted(1)',
+            'TokenAlreadyMinted("1")',
             systems().Account
           );
         });

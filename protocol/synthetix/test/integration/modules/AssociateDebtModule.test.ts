@@ -48,7 +48,7 @@ describe('AssociateDebtModule', function () {
         MockMarket()
           .connect(user2)
           .callAssociateDebt(828374, collateralAddress(), accountId, amount),
-        `NotFundedByPool(${marketId()}, 828374)`,
+        `NotFundedByPool("${marketId()}", "828374")`,
         systems().Core
       );
     });
