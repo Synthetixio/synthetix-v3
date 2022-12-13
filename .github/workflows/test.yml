@@ -9,25 +9,32 @@ jobs:
       matrix:
         package:
           [
-            "@synthetixio/core-contracts",
-            "@synthetixio/core-utils",
-            "@synthetixio/core-modules",
-            "@synthetixio/hardhat-router",
-            "@synthetixio/sample-project",
-            "@synthetixio/main",
+            core-contracts,
+            core-utils,
+            core-modules,
+            hardhat-router,
+            sample-project,
+            main,
           ]
         include:
-          - package: "@synthetixio/core-contracts"
+          - package: core-contracts
+            workspace: "@synthetixio/core-contracts"
             coverage-file: utils/core-contracts/coverage.json
             size-contracts: true
-          - package: "@synthetixio/core-utils"
+          - package: core-utils
+            workspace: "@synthetixio/core-utils"
             coverage-file: utils/core-utils/coverage/lcov.info
-          - package: "@synthetixio/core-modules"
+          - package: core-modules
+            workspace: "@synthetixio/core-modules"
             coverage-file: utils/core-modules/coverage.json
             size-contracts: true
-          - package: "@synthetixio/hardhat-router"
+          - package: hardhat-router
+            workspace: "@synthetixio/hardhat-router"
             coverage-file: utils/hardhat-router/coverage/lcov.info
-          - package: "@synthetixio/main"
+          - package: sample-project
+            workspace: "@synthetixio/sample-project"
+          - package: main
+            workspace: "@synthetixio/main"
             size-contracts: true
     steps:
       - name: Install Foundry (Cannon)
@@ -43,13 +50,13 @@ jobs:
       - run: npm ci
       - run: npm run build
       - name: Execute tests
-        run: REPORT_GAS=true npm run --workspace=${{ matrix.package }} coverage
+        run: REPORT_GAS=true npm run --workspace=${{ matrix.workspace }} coverage
       - if: ${{ matrix.coverage-file }}
-        name: Upload ${{ matrix.package }} coverage to Codecov
+        name: Upload ${{ matrix.workspace }} coverage to Codecov
         uses: codecov/codecov-action@v2
         with:
           files: ${{ matrix.coverage-file }}
           flags: ${{ matrix.package }}
       - if: ${{ matrix.size-contracts }}
         name: Execute size command
-        run: npm run --workspace=${{ matrix.package }} size-contracts
+        run: npm run --workspace=${{ matrix.workspace }} size-contracts
