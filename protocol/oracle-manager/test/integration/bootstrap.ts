@@ -1,4 +1,4 @@
-import { coreBootstrap } from '@synthetixio/core-router/util/core-bootstrap';
+import { coreBootstrap } from '@synthetixio/hardhat-router/utils/tests';
 import { ethers } from 'ethers';
 import hre from 'hardhat';
 import { OracleManagerModule } from '../generated/typechain';

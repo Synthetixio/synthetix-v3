@@ -11,15 +11,9 @@
     "solidity"
   ],
   "files": [
-    "extensions",
-    "internal",
-    "subtasks",
-    "tasks",
+    "dist",
     "templates",
-    "utils",
-    "utils/tests.js",
-    "utils/deployments.js",
-    "task-names.js"
+    "utils"
   ],
   "author": "Synthetix",
   "license": "MIT",
@@ -49,6 +43,7 @@
     "mocha": "9.1.1",
     "nyc": "15.1.0",
     "source-map-support": "0.5.21",
-    "tsconfig-paths": "4.1.0"
+    "tsconfig-paths": "4.1.0",
+    "typechain": "8.1.1"
   }
 }

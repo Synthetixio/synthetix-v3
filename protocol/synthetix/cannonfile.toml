@@ -77,7 +77,7 @@ artifact = "contracts/modules/usd/USDTokenModule.sol:USDTokenModule"
 
 # Core
 [run.core_generate_router]
-exec = "@synthetixio/core-router"
+exec = "@synthetixio/hardhat-router/utils/cannon"
 func = "generate"
 args = [
   "contracts/routers/chain-<%= chainId %>/CoreRouter.sol:CoreRouter",
@@ -176,7 +176,7 @@ depends = [
 
 # Account
 [run.account_generate_router]
-exec = "@synthetixio/core-router"
+exec = "@synthetixio/hardhat-router/utils/cannon"
 func = "generate"
 args = [
   "contracts/routers/chain-<%= chainId %>/AccountRouter.sol:AccountRouter",
@@ -201,7 +201,7 @@ depends = ["run.account_generate_router"]
 
 # USD
 [run.usd_generate_router]
-exec = "@synthetixio/core-router"
+exec = "@synthetixio/hardhat-router/utils/cannon"
 func = "generate"
 args = [
   "contracts/routers/chain-<%= chainId %>/USDRouter.sol:USDRouter",

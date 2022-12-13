@@ -1,4 +1,4 @@
-import { coreBootstrap } from '@synthetixio/core-router/util/core-bootstrap';
+import { coreBootstrap } from '@synthetixio/hardhat-router/utils/tests';
 import NodeTypes from '@synthetixio/oracle-manager/test/integration/mixins/Node.types';
 import { ethers } from 'ethers';
 import hre from 'hardhat';

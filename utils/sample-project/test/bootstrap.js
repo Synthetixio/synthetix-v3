@@ -1,4 +1,4 @@
-const { coreBootstrap } = require('@synthetixio/core-router/util/core-bootstrap');
+const { coreBootstrap } = require('@synthetixio/hardhat-router/utils/tests');
 
 const result = coreBootstrap();
 

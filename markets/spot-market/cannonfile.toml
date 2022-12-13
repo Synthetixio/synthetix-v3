@@ -28,7 +28,7 @@ artifact = "SpotMarketModule"
 artifact = "WrapperModule"
 
 [run.generate_router]
-exec = "@synthetixio/core-router"
+exec = "@synthetixio/hardhat-router/utils/cannon"
 func = "generate"
 args = [
   "contracts/routers/chain-<%= chainId %>/Router.sol:Router",

@@ -1,11 +1,11 @@
+import { TASK_STORAGE_VERIFY } from '@synthetixio/hardhat-storage/dist/task-names';
+import { ChainBuilderContext, ChainBuilderRuntime } from '@usecannon/builder/dist/src/types';
+import hre from 'hardhat';
 import {
   SUBTASK_GENERATE_ROUTER,
   SUBTASK_VALIDATE_INTERFACES,
   SUBTASK_VALIDATE_SELECTORS,
-} from '@synthetixio/hardhat-router/dist/task-names';
-import { TASK_STORAGE_VERIFY } from '@synthetixio/hardhat-storage/dist/task-names';
-import { ChainBuilderContext, ChainBuilderRuntime } from '@usecannon/builder/dist/src/types';
-import hre from 'hardhat';
+} from '../task-names';
 
 type CannonContract = ChainBuilderContext['contracts'][keyof ChainBuilderContext['contracts']];
 

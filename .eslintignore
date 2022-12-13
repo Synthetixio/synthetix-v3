@@ -1,8 +1,6 @@
 **/coverage
 **/dist
-utils/core-utils/utils
-utils/core-router/util
-utils/core-router/index.*
+utils/*/utils
 **/typechain-types
 **/contracts/routers
 **/contracts/modules/test
