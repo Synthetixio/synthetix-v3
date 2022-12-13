@@ -20,6 +20,9 @@ source = "<%= settings.core_router_package %>"
 options.salt = "<%= settings.salt %>"
 options.owner = "<%= settings.owner %>"
 
+[contract.CoreModule]
+artifact = "contracts/modules/CoreModule.sol:CoreModule"
+
 [contract.OracleManagerModule]
 artifact = "contracts/modules/OracleManagerModule.sol:OracleManagerModule"
 
@@ -29,20 +32,20 @@ func = "generate"
 args = [
   "contracts/routers/chain-<%= chainId %>/Router.sol:Router",
   '''<%= JSON.stringify({
-    CoreModule: imports.core_router.contracts.CoreModule,
+    CoreModule: contracts.CoreModule,
     OracleManagerModule: contracts.OracleManagerModule,
   }) %>'''
 ]
 modified = ["contracts"]
 depends = [
-  "import.core_router",
+  "contract.CoreModule",
   "contract.OracleManagerModule"
 ]
 
 [contract.Router]
 artifact = "contracts/routers/chain-<%= chainId %>/Router.sol:Router"
 abiOf = [
-  "core_router.CoreModule",
+  "CoreModule",
   "OracleManagerModule"
 ]
 depends = ["run.generate_router"]
@@ -55,4 +58,4 @@ args = ["<%= contracts.Router.address %>"]
 factory.Proxy.abiOf = ["Router"]
 factory.Proxy.event = "Upgraded"
 factory.Proxy.arg = 0
-depends = ["contract.Router"]
+depends = ["import.core_router", "contract.Router"]

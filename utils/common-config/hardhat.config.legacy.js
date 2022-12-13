@@ -3,8 +3,6 @@ const dotenv = require('dotenv');
 
 // Load common .env file from root
 dotenv.config({ path: path.resolve(__dirname, '..', '..', '.env') });
-// Load common .env file at ./utils/config-common/.env
-dotenv.config({ path: path.resolve(__dirname, '.env') });
 
 require('@typechain/hardhat');
 require('@nomiclabs/hardhat-ethers');
@@ -12,6 +10,7 @@ require('@nomiclabs/hardhat-ethers');
 require('hardhat-contract-sizer');
 require('solidity-coverage');
 require('@synthetixio/hardhat-router');
+require('@synthetixio/hardhat-storage');
 require('hardhat-gas-reporter');
 require('hardhat-ignore-warnings');
 

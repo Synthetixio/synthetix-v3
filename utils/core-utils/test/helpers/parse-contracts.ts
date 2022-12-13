@@ -1,7 +1,7 @@
-import path from 'path';
-import { SourceUnit } from 'solidity-ast';
 import { TASK_COMPILE } from 'hardhat/builtin-tasks/task-names';
 import { resetHardhatContext } from 'hardhat/plugins-testing';
+import path from 'path';
+import { SourceUnit } from 'solidity-ast';
 
 const cache: { [path: string]: { asts?: { [key: string]: SourceUnit } } } = {};
 
@@ -24,7 +24,7 @@ export default async function parseContracts(envPath: string) {
   const originalChdir = process.cwd();
   process.chdir(envPath);
 
-  const hre = await import('hardhat');
+  const { default: hre } = await import('hardhat');
 
   await hre.run(TASK_COMPILE, { force: true, quiet: true });
 

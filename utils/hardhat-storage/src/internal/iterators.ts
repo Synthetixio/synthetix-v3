@@ -47,6 +47,9 @@ export function* iterateSlotAssignments(
     sourceUnits,
     _isPureInternal
   )) {
+    // Do not include slot assignments from coverage
+    if (functionNode.name.startsWith('c_')) continue;
+
     const yulAssignments = findAll(functionNode, 'YulAssignment', (node) => {
       return node.variableNames[0].name.endsWith('.slot');
     });

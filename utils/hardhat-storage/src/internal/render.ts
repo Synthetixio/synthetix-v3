@@ -5,6 +5,8 @@ import {
   ContractDefinition,
   ElementaryTypeName,
   ElementaryTypeNameExpression,
+  EnumDefinition,
+  EnumValue,
   FunctionCall,
   FunctionDefinition,
   Identifier,
@@ -109,6 +111,16 @@ const _render = {
   },
 
   ElementaryTypeName(node: ElementaryTypeName) {
+    return node.name;
+  },
+
+  EnumDefinition(node: EnumDefinition) {
+    if (!Array.isArray(node.members) || !node.members.length) return 'enum {}';
+    const members: string[] = node.members.map(render).map(_indent());
+    return [`enum ${node.name} {`, members.join(',\n'), '}'].join('\n');
+  },
+
+  EnumValue(node: EnumValue) {
     return node.name;
   },
 

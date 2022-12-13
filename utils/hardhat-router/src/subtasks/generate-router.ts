@@ -1,10 +1,10 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import { contractIsInSources } from '@synthetixio/core-utils/utils/hardhat/contracts';
+import logger from '@synthetixio/core-utils/utils/io/logger';
 import { subtask } from 'hardhat/config';
 import { parseFullyQualifiedName } from 'hardhat/utils/contract-names';
-import logger from '@synthetixio/core-utils/utils/io/logger';
 import { renderRouter } from '../internal/render-router';
-import { contractIsInSources } from '../internal/contract-helper';
 import { SUBTASK_GENERATE_ROUTER } from '../task-names';
 import { DeployedContractData } from '../types';
 

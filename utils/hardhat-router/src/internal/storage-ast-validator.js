@@ -5,10 +5,9 @@ const {
   findContractStateVariables,
   findContractNode,
 } = require('@synthetixio/core-utils/utils/ast/finders');
-const { onlyUnique } = require('@synthetixio/core-utils/utils/misc/array-filters');
 const { buildContractsStructMap } = require('@synthetixio/core-utils/utils/ast/storage-struct');
 const { compareStorageStructs } = require('@synthetixio/core-utils/utils/ast/comparator');
-const { onlyRepeated } = require('@synthetixio/core-utils/utils/misc/array-filters');
+const { onlyRepeated, onlyUnique } = require('@synthetixio/core-utils/utils/misc/array');
 
 class ModuleStorageASTValidator {
   constructor(moduleFullyQualifiedNames, astNodes, previousAstNodes = {}) {

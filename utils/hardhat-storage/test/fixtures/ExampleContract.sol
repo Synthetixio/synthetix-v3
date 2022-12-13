@@ -2,9 +2,18 @@
 pragma solidity ^0.8.0;
 
 contract ExampleContract {
+    enum NodeType {
+        NONE,
+        REDUCER,
+        EXTERNAL,
+        CHAINLINK,
+        PYTH
+    }
+
     struct Data {
         address owner;
         mapping(address => uint128) permissions;
+        NodeType nodeType;
     }
 
     uint128 public constant SOME_CONSTANT = 445;

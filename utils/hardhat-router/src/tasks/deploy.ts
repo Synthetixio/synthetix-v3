@@ -1,9 +1,10 @@
 import path from 'node:path';
 import * as types from '@synthetixio/core-utils/utils/hardhat/argument-types';
+import { getContractsFullyQualifiedNames } from '@synthetixio/core-utils/utils/hardhat/contracts';
 import logger from '@synthetixio/core-utils/utils/io/logger';
+import { TASK_STORAGE_VERIFY } from '@synthetixio/hardhat-storage/dist/task-names';
 import { task } from 'hardhat/config';
 import { parseFullyQualifiedName } from 'hardhat/utils/contract-names';
-import { getSourcesFullyQualifiedNames } from '../internal/contract-helper';
 import { deployContract, deployContracts } from '../internal/deploy-contract';
 import { quietCompile } from '../internal/quiet-compile';
 import {
@@ -35,11 +36,11 @@ task(TASK_DEPLOY, 'Deploys the given modules behind a Proxy + Router architectur
     'modules',
     `Contract files, names, fully qualified names or folder of contracts to include
        e.g.:
-         * All the contracts in a folder: contracts/modules/
+         * All the contracts in a folder: contracts/modules/**
          * Contracts by contractName: UpgradeModule,OwnerModule
          * By fullyQualifiedName: contracts/modules/UpgradeModule.sol:UpgradeModule
     `,
-    ['contracts/modules/'],
+    ['contracts/modules/**'],
     types.stringArray
   )
   .addOptionalParam(
@@ -72,15 +73,15 @@ task(TASK_DEPLOY, 'Deploys the given modules behind a Proxy + Router architectur
 
     await quietCompile(hre, !!quiet);
 
-    const contracts = await getSourcesFullyQualifiedNames(hre, modules);
+    const contracts = await getContractsFullyQualifiedNames(hre, modules);
 
-    // note: temporarily disabled due to library storage refactor
-    //await hre.run(SUBTASK_VALIDATE_STORAGE);
     await hre.run(SUBTASK_VALIDATE_SELECTORS, { contracts });
     await hre.run(SUBTASK_VALIDATE_INTERFACES, { contracts });
+    await hre.run(TASK_STORAGE_VERIFY, { contracts: modules });
 
     const modulesData = await deployContracts(contracts, hre);
 
+    // await hre.run(SUBTASK_VALIDATE_STORAGE);
     await hre.run(SUBTASK_GENERATE_ROUTER, {
       router,
       template: routerTemplate,

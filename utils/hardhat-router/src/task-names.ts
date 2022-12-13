@@ -2,7 +2,6 @@ export const SUBTASK_GENERATE_TESTABLE_STORAGE = 'hardhat-router-generate-testab
 export const SUBTASK_GENERATE_ROUTER = 'hardhat-router-generate-router';
 export const SUBTASK_VALIDATE_INTERFACES = 'hardhat-router-validate-interfaces';
 export const SUBTASK_VALIDATE_SELECTORS = 'hardhat-router-validate-selectors';
-export const SUBTASK_VALIDATE_STORAGE = 'hardhat-router-validate-storage';
 export const TASK_DEPLOY = 'deploy';
 export const TASK_UPLOAD_SELECTORS = 'deploy:upload-selectors';
 export const TASK_GENERATE_TESTABLE = 'generate-testable';

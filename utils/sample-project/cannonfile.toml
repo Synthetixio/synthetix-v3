@@ -19,6 +19,9 @@ source = "<%= settings.core_router_package %>"
 options.salt = "<%= settings.salt %>"
 options.owner = "<%= settings.owner %>"
 
+[contract.CoreModule]
+artifact = "contracts/modules/CoreModule.sol:CoreModule"
+
 [contract.InitializableModule]
 artifact = "InitializableModule"
 
@@ -36,12 +39,17 @@ exec = "@synthetixio/core-router"
 func = "generate"
 args = [
   "contracts/routers/chain-<%= chainId %>/Router.sol:Router",
-  "<%= JSON.stringify(contracts) %>",
-  "<%= JSON.stringify(imports.core_router.contracts.CoreModule) %>",
+  '''<%= JSON.stringify({
+    CoreModule: contracts.CoreModule,
+    InitializableModule: contracts.InitializableModule,
+    SettingsModule: contracts.SettingsModule,
+    SomeModule: contracts.SomeModule,
+    AnotherModule: contracts.AnotherModule,
+  }) %>'''
 ]
 modified = ["contracts"]
 depends = [
-  "import.core_router",
+  "contract.CoreModule",
   "contract.InitializableModule",
   "contract.SettingsModule",
   "contract.SomeModule",
@@ -51,7 +59,7 @@ depends = [
 [contract.Router]
 artifact = "contracts/routers/chain-<%= chainId %>/Router.sol:Router"
 abiOf = [
-  "core_router.CoreModule",
+  "CoreModule",
   "InitializableModule",
   "SettingsModule",
   "SomeModule",
@@ -67,4 +75,4 @@ args = ["<%= contracts.Router.address %>"]
 factory.Proxy.abiOf = ["Router"]
 factory.Proxy.event = "Upgraded"
 factory.Proxy.arg = 0
-depends = ["contract.Router"]
+depends = ["import.core_router", "contract.Router"]

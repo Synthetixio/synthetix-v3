@@ -1,9 +1,9 @@
 import { JsonFragment } from '@ethersproject/abi';
 import * as types from '@synthetixio/core-utils/utils/hardhat/argument-types';
+import { getContractsAbis } from '@synthetixio/core-utils/utils/hardhat/contracts';
 import logger from '@synthetixio/core-utils/utils/io/logger';
 import { TASK_COMPILE } from 'hardhat/builtin-tasks/task-names';
 import { task } from 'hardhat/config';
-import { getSourcesAbis } from '../internal/contract-helper';
 import * as fourbytes from '../internal/fourbytes';
 import { TASK_UPLOAD_SELECTORS } from '../task-names';
 
@@ -17,7 +17,7 @@ task(TASK_UPLOAD_SELECTORS, 'Upload selectors from all local contracts to 4byte.
   .addOptionalPositionalParam(
     'modules',
     'Contract files, names, fully qualified names or folder of contracts to include',
-    ['contracts/modules/'],
+    ['contracts/modules/**'],
     types.stringArray
   )
   .addFlag('debug', 'Display debug logs')
@@ -28,7 +28,7 @@ task(TASK_UPLOAD_SELECTORS, 'Upload selectors from all local contracts to 4byte.
     logger.quiet = !!quiet;
     logger.debugging = !!debug;
 
-    const abis = await getSourcesAbis(hre, modules);
+    const abis = await getContractsAbis(hre, modules);
     const abiValues = Object.values(abis);
 
     if (!abiValues.length) {

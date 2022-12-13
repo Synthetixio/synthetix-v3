@@ -11,6 +11,7 @@
     "@nomiclabs/hardhat-ethers": "2.1.1",
     "@synthetixio/core-router": "*",
     "@synthetixio/hardhat-router": "*",
+    "@synthetixio/hardhat-storage": "*",
     "hardhat-cannon": "1.1.18"
   }
 }

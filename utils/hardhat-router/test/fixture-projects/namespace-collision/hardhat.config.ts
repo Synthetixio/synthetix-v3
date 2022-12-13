@@ -1,4 +1,5 @@
 import '@nomiclabs/hardhat-ethers';
+import '@synthetixio/hardhat-storage';
 import '../../../src';
 
 export default {

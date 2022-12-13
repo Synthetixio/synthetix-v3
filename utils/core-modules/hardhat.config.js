@@ -5,6 +5,7 @@ const config = require('@synthetixio/common-config/hardhat.config.legacy');
  */
 module.exports = {
   ...config,
+  defaultNetwork: 'hardhat',
   mocha: {
     timeout: 120000,
   },
