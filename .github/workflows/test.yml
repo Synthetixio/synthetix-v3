@@ -31,6 +31,8 @@ jobs:
           - package: hardhat-router
             workspace: "@synthetixio/hardhat-router"
             coverage-file: utils/hardhat-router/coverage/lcov.info
+          - package: sample-project
+            workspace: "@synthetixio/sample-project"
           - package: main
             workspace: "@synthetixio/main"
             size-contracts: true
