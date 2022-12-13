@@ -2,7 +2,7 @@ import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber'
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import hre from 'hardhat';
 import { ethers } from 'ethers';
-import Permissions from '../../storage/AcccountRBACMixin.permissions';
+import Permissions from '../../mixins/AccountRBACMixin.permissions';
 import { bootstrapWithStakedPool } from '../../bootstrap';
 import { snapshotCheckpoint } from '../../../utils/snapshot';
 
@@ -79,7 +79,7 @@ describe('IssueUSDModule', function () {
         systems()
           .Core.connect(user2)
           .mintUsd(accountId, poolId, collateralAddress(), depositAmount.mul(10)),
-        `PermissionDenied(1, "${Permissions.MINT}", "${await user2.getAddress()}")`,
+        `PermissionDenied("1", "${Permissions.MINT}", "${await user2.getAddress()}")`,
         systems().Core
       );
     });

@@ -105,21 +105,21 @@ describe('SetUtil', () => {
       });
 
       it('reverts when trying to access a value not in the set', async function () {
-        await assertRevert(SampleSet.valueAt(0), 'PositionOutOfBounds');
-        await assertRevert(SampleSet.valueAt(1337), 'PositionOutOfBounds');
+        await assertRevert(SampleSet.valueAt(0), 'PositionOutOfBounds', SampleSet);
+        await assertRevert(SampleSet.valueAt(1337), 'PositionOutOfBounds', SampleSet);
       });
 
       it('reverts when trying to get the position of a value not in the set', async function () {
-        await assertRevert(SampleSet.positionOf(notContainedValue), 'ValueNotInSet');
+        await assertRevert(SampleSet.positionOf(notContainedValue), 'ValueNotInSet', SampleSet);
       });
 
       it('reverts when trying to remove a value not in the set', async function () {
-        await assertRevert(SampleSet.remove(notContainedValue), 'ValueNotInSet');
+        await assertRevert(SampleSet.remove(notContainedValue), 'ValueNotInSet', SampleSet);
       });
 
-      it('reverts when trying to append a value already exsiting in set', async function () {
+      it('reverts when trying to append a value already existing in set', async function () {
         if (expectedValues.length > 0) {
-          await assertRevert(SampleSet.add(expectedValues[0]), 'ValueAlreadyInSet');
+          await assertRevert(SampleSet.add(expectedValues[0]), 'ValueAlreadyInSet', SampleSet);
         }
       });
 
@@ -127,7 +127,8 @@ describe('SetUtil', () => {
         if (expectedValues.length > 1) {
           await assertRevert(
             SampleSet.replace(await SampleSet.valueAt(1), await SampleSet.valueAt(2)),
-            'ValueAlreadyInSet'
+            'ValueAlreadyInSet',
+            SampleSet
           );
         }
       });

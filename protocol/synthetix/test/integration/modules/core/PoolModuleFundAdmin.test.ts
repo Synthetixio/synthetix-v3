@@ -83,7 +83,7 @@ describe('PoolModule Admin', function () {
           .setPoolConfiguration(834693286, [
             { marketId: 1, weightD18: 1, maxDebtShareValueD18: 0 },
           ]),
-        'PoolNotFound(834693286)',
+        'PoolNotFound("834693286")',
         systems().Core
       );
     });
@@ -109,7 +109,7 @@ describe('PoolModule Admin', function () {
             { marketId: 2, weightD18: 1, maxDebtShareValueD18: 0 },
             { marketId: 92197628, weightD18: 1, maxDebtShareValueD18: 0 },
           ]),
-        'MarketNotFound(92197628)',
+        'MarketNotFound("92197628")',
         systems().Core
       );
     });

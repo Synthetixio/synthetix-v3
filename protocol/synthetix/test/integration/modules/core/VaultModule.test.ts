@@ -3,7 +3,7 @@ import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber'
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import hre from 'hardhat';
 import { ethers } from 'ethers';
-import Permissions from '../../storage/AcccountRBACMixin.permissions';
+import Permissions from '../../mixins/AccountRBACMixin.permissions';
 import { bootstrapWithStakedPool } from '../../bootstrap';
 import { snapshotCheckpoint } from '../../../utils/snapshot';
 
@@ -125,7 +125,7 @@ describe('VaultModule', function () {
             depositAmount.mul(2),
             ethers.utils.parseEther('1')
           ),
-        `PermissionDenied(1, "${Permissions.DELEGATE}", "${await user2.getAddress()}")`,
+        `PermissionDenied("1", "${Permissions.DELEGATE}", "${await user2.getAddress()}")`,
         systems().Core
       );
     });
@@ -155,7 +155,7 @@ describe('VaultModule', function () {
           depositAmount.div(51),
           ethers.utils.parseEther('1')
         ),
-        'InsufficientDelegation(20000000000000000000)',
+        'InsufficientDelegation("20000000000000000000")',
         systems().Core
       );
     });
@@ -171,7 +171,7 @@ describe('VaultModule', function () {
             depositAmount.div(50),
             ethers.utils.parseEther('1')
           ),
-        'PoolNotFound(42)',
+        'PoolNotFound("42")',
         systems().Core
       );
     });
@@ -440,7 +440,7 @@ describe('VaultModule', function () {
                   depositAmount.div(51),
                   ethers.utils.parseEther('1')
                 ),
-              'InsufficientDelegation(20000000000000000000)',
+              'InsufficientDelegation("20000000000000000000")',
               systems().Core
             );
           });
@@ -461,7 +461,7 @@ describe('VaultModule', function () {
                   depositAmount.div(10),
                   ethers.utils.parseEther('1')
                 ),
-              `CapacityLocked(${marketId})`,
+              `CapacityLocked("${marketId}")`,
               systems().Core
             );
 
@@ -473,7 +473,7 @@ describe('VaultModule', function () {
             const restore = snapshotCheckpoint(provider);
             after(restore);
 
-            before('disable collatearal', async () => {
+            before('disable collateral', async () => {
               const beforeConfiguration = await systems().Core.getCollateralConfiguration(
                 collateralAddress()
               );

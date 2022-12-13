@@ -92,7 +92,7 @@ describe('PoolConfigurationModule', function () {
           it('reverts', async () => {
             await assertRevert(
               systems().Core.connect(owner).setPreferredPool(5),
-              'PoolNotFound(5)',
+              'PoolNotFound("5")',
               systems().Core
             );
           });
@@ -117,7 +117,7 @@ describe('PoolConfigurationModule', function () {
           it('reverts', async () => {
             await assertRevert(
               systems().Core.connect(owner).addApprovedPool(5),
-              'PoolNotFound(5)',
+              'PoolNotFound("5")',
               systems().Core
             );
           });
@@ -156,7 +156,7 @@ describe('PoolConfigurationModule', function () {
             it('reverts', async () => {
               await assertRevert(
                 systems().Core.connect(owner).addApprovedPool(5),
-                'PoolNotFound(5)',
+                'PoolNotFound("5")',
                 systems().Core
               );
             });

@@ -4,7 +4,6 @@ import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import { ethers } from 'ethers';
 
 import { bootstrapWithMockMarketAndPool } from '../../bootstrap';
-import { customErrorNotice } from '../../../utils/custom-error';
 
 describe('MarketManagerModule', function () {
   const {
@@ -76,15 +75,11 @@ describe('MarketManagerModule', function () {
     });
 
     it('should not work if user has not approved', async () => {
-      // TODO (Anvil Custom Errors)
-      // Last confirmed: 2022/12/09, Ale
-      customErrorNotice('InsufficientAllowance(uint256,uint256)');
-      await assertRevert(MockMarket().connect(user1).buySynth(One));
-      // await assertRevert(
-      //   MockMarket().connect(user1).buySynth(One),
-      //   `InsufficientAllowance(${One.toString()}, 0)`,
-      //   systems().Core
-      // );
+      await assertRevert(
+        MockMarket().connect(user1).buySynth(One),
+        `InsufficientAllowance("${One.toString()}", "0")`,
+        systems().Core
+      );
     });
 
     describe('success', async () => {
@@ -132,15 +127,11 @@ describe('MarketManagerModule', function () {
         const reportedDebtBefore = await MockMarket().connect(user1).reportedDebt(0);
         await MockMarket().connect(user1).setReportedDebt(Hundred.mul(100000));
 
-        // TODO (Anvil Custom Errors)
-        // Last confirmed: 2022/12/09, Ale
-        customErrorNotice('NotEnoughLiquidity(uint128,uint256)');
-        await assertRevert(MockMarket().connect(user1).sellSynth(Hundred.mul(100000)));
-        // await assertRevert(
-        //   MockMarket().connect(user1).sellSynth(Hundred.mul(100000)),
-        //   `NotEnoughLiquidity("${marketId()}", "${Hundred.mul(100000).toString()}")`,
-        //   systems().Core
-        // );
+        await assertRevert(
+          MockMarket().connect(user1).sellSynth(Hundred.mul(100000)),
+          `NotEnoughLiquidity("${marketId()}", "${Hundred.mul(100000).toString()}")`,
+          systems().Core
+        );
 
         await MockMarket().connect(user1).setReportedDebt(reportedDebtBefore);
       });

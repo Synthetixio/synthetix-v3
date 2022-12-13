@@ -86,7 +86,7 @@ describe('DecimalMath', () => {
       });
 
       it('fails on divide by zero', async () => {
-        await assertRevert(DecimalMath[divSignature](1, 0));
+        await assertRevert(DecimalMath[divSignature](1, 0), 'Panic');
       });
     });
 
@@ -150,7 +150,7 @@ describe('DecimalMath', () => {
       });
 
       it('fails on divide by zero', async () => {
-        await assertRevert(DecimalMath[divSignature](1, 0));
+        await assertRevert(DecimalMath[divSignature](1, 0), 'Panic');
       });
     });
 
@@ -244,13 +244,11 @@ describe('DecimalMath', () => {
       });
 
       it('fails on large numbers', async () => {
-        // Note: The Solidity compiler doesn't seem to fail with 'out-of-bounds' for int128,
-        // so we're just looking for a revert here, with no reason string.
-        await assertRevert(DecimalMath[divSignature](s(1, 59), 1));
+        await assertRevert(DecimalMath[divSignature](s(1, 59), 1), 'Panic');
       });
 
       it('fails on divide by zero', async () => {
-        await assertRevert(DecimalMath[divSignature](1, 0));
+        await assertRevert(DecimalMath[divSignature](1, 0), 'Panic');
       });
     });
 
@@ -344,7 +342,7 @@ describe('DecimalMath', () => {
       });
 
       it('fails on divide by zero', async () => {
-        await assertRevert(DecimalMath[divSignature](1, 0));
+        await assertRevert(DecimalMath[divSignature](1, 0), 'Panic');
       });
     });
 

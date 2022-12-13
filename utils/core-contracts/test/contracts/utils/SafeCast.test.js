@@ -85,7 +85,6 @@ describe('SafeCast', () => {
     });
 
     it('throws on overflows', async function () {
-      // Solidity does pick up overflows in parameters with out-of-bounds errors.
       await assertRevert(SafeCast[castFunction](MAX_UINT_256.add(1)), 'out-of-bounds');
     });
   });
@@ -150,10 +149,7 @@ describe('SafeCast', () => {
 
     it('throws on overflows', async function () {
       await assertRevert(SafeCast[castFunction](MAX_INT_128.add(1)), 'out-of-bounds');
-      // Note: These should fail with CastError,
-      // but for some reason Solidity is not providing a revert reason.
-      // await assertRevert(SafeCast[castFunction](-1), 'out-of-bounds');
-      await assertRevert(SafeCast[castFunction](-1));
+      await assertRevert(SafeCast[castFunction](-1), 'OverflowInt128ToUint128');
     });
   });
 
