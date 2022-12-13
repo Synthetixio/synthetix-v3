@@ -1,7 +1,7 @@
 const { ethers } = hre;
 const assert = require('assert/strict');
 const { default: assertRevert } = require('@synthetixio/core-utils/utils/assertions/assert-revert');
-const { bootstrap } = require('@synthetixio/hardhat-router/dist/utils/tests');
+const { bootstrap } = require('../../helpers/bootstrap.js');
 const initializer = require('@synthetixio/core-modules/test/helpers/initializer');
 
 describe('UpgradeModule', () => {
