@@ -10,14 +10,21 @@ import Wei, { wei } from '@synthetixio/wei';
 import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
 import { snapshotCheckpoint } from '../utils';
 
-async function getImpersonatedSigner(provider: ethers.providers.JsonRpcProvider, addr: string): Promise<ethers.Signer> {
+async function getImpersonatedSigner(
+  provider: ethers.providers.JsonRpcProvider,
+  addr: string
+): Promise<ethers.Signer> {
   await provider.send('hardhat_impersonateAccount', [addr]);
 
   return provider.getSigner(addr);
 }
 
 async function doForkDeploy() {
-    return await hre.run('cannon:deploy', { dryRun: true, impersonate: '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266', fundSigners: true });
+  return await hre.run('cannon:deploy', {
+    dryRun: true,
+    impersonate: '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266',
+    fundSigners: true,
+  });
 }
 
 describe('LegacyMarket', () => {
@@ -41,9 +48,8 @@ describe('LegacyMarket', () => {
   let cannonProvider: ethers.providers.JsonRpcProvider;
 
   before('deploy', async () => {
-    const { provider, signers, outputs } = hre.network.name === 'cannon' ?
-      await hre.run('cannon:build') :
-      await doForkDeploy();
+    const { provider, signers, outputs } =
+      hre.network.name === 'cannon' ? await hre.run('cannon:build') : await doForkDeploy();
 
     [owner] = signers as ethers.Signer[];
 
@@ -127,20 +133,23 @@ describe('LegacyMarket', () => {
       const convertedAmount = wei(1);
 
       before('do migration', async () => {
-        console.log("prep", wei(await snxToken.balanceOf(snxStakerAddress)).toString());
+        console.log('prep', wei(await snxToken.balanceOf(snxStakerAddress)).toString());
         await snxToken.connect(snxStaker).approve(market.address, ethers.constants.MaxUint256);
         await market.connect(snxStaker).migrate(migratedAccountId);
-        console.log("post", wei(await snxToken.balanceOf(snxStakerAddress)).toString());
+        console.log('post', wei(await snxToken.balanceOf(snxStakerAddress)).toString());
 
         // sanity
-        console.log("coll",
-          wei((
-            await v3System.getPositionCollateral(
-              migratedAccountId,
-              await v3System.getPreferredPool(),
-              snxToken.address
-            )
-          ).value).toString()
+        console.log(
+          'coll',
+          wei(
+            (
+              await v3System.getPositionCollateral(
+                migratedAccountId,
+                await v3System.getPreferredPool(),
+                snxToken.address
+              )
+            ).value
+          ).toString()
         );
         assertBn.gte(
           await v3System.getWithdrawableUsd(await market.marketId()),
@@ -149,18 +158,13 @@ describe('LegacyMarket', () => {
       });
 
       it('fails when convertUSD is 0', async () => {
-        await assertRevert(
-          market.connect(snxStaker).convertUSD(0),
-          'InvalidParameter("amount"'
-        );
+        await assertRevert(market.connect(snxStaker).convertUSD(0), 'InvalidParameter("amount"');
       });
 
       it('fails when insufficient source balance', async () => {
         // transfer away some of the sUSD so that we can see what happens when there is not balance
         await susdToken.connect(snxStaker).transfer(await owner.getAddress(), wei(500).toBN());
-        await assertRevert(
-          market.connect(snxStaker).convertUSD(wei(501).toBN())
-        );
+        await assertRevert(market.connect(snxStaker).convertUSD(wei(501).toBN()));
       });
 
       describe('when invoked', async () => {
@@ -181,7 +185,10 @@ describe('LegacyMarket', () => {
         });
 
         it('mints v3 USD', async () => {
-          assertBn.equal(await v3Usd.balanceOf(await snxStaker.getAddress()), convertedAmount.toBN());
+          assertBn.equal(
+            await v3Usd.balanceOf(await snxStaker.getAddress()),
+            convertedAmount.toBN()
+          );
         });
 
         it('reduced market balance', async () => {
@@ -293,15 +300,9 @@ describe('LegacyMarket', () => {
             snxToken.address
           );
 
-          assertBn.gte(
-            debt,
-            beforeDebt.toBN().sub(100)
-          );
+          assertBn.gte(debt, beforeDebt.toBN().sub(100));
 
-          assertBn.lte(
-            debt,
-            beforeDebt.toBN().add(100)
-          );
+          assertBn.lte(debt, beforeDebt.toBN().add(100));
         });
 
         it('undertook debt shares from user account', async () => {
@@ -333,13 +334,12 @@ describe('LegacyMarket', () => {
     // the below tests are fork only
     if (hre.network.name === 'cannon') {
       describe('when all accounts migrate to v3', function () {
-  
         before('get list of all staking accounts', async () => {});
-  
+
         before('call migrate for all accounts', async () => {});
-  
+
         it('assigned all snx debt to legacy market', async () => {});
-  
+
         it('can withdraw v2 USD for v3 USD', async () => {});
       });
     }
