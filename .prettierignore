@@ -7,9 +7,7 @@ node_modules/
 **/dist/
 **/node_modules/
 **/typechain-types
-utils/core-router/index.*
-utils/core-router/util
-utils/core-utils/utils
+utils/*/utils
 utils/*/test/generated
 protocol/*/test/generated
 Router.sol

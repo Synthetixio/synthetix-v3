@@ -10,32 +10,37 @@ defaultValue = "sample-project"
 description = "Admin user for the system"
 defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
 
-[setting.core_router_package]
-description = "Package version of @synthetixio/core-router to use"
-defaultValue = "core-router:1.0.0"
-
-[import.core_router]
-source = "<%= settings.core_router_package %>"
-options.salt = "<%= settings.salt %>"
-options.owner = "<%= settings.owner %>"
-
 [contract.CoreModule]
 artifact = "contracts/modules/CoreModule.sol:CoreModule"
 
 [contract.InitializableModule]
-artifact = "InitializableModule"
+artifact = "contracts/modules/InitializableModule.sol:InitializableModule"
 
 [contract.SettingsModule]
-artifact = "SettingsModule"
+artifact = "contracts/modules/SettingsModule.sol:SettingsModule"
 
 [contract.SomeModule]
-artifact = "SomeModule"
+artifact = "contracts/modules/SomeModule.sol:SomeModule"
 
 [contract.AnotherModule]
-artifact = "AnotherModule"
+artifact = "contracts/modules/AnotherModule.sol:AnotherModule"
+
+[contract.InitialProxy]
+artifact = "contracts/Proxy.sol:Proxy"
+args = ["<%= contracts.CoreModule.address %>"]
+abiOf = ["CoreModule"]
+salt = "<%= settings.salt %>"
+depends = ["contract.CoreModule"]
+
+[invoke.acquire_ownership]
+target = ["InitialProxy"]
+from = "<%= settings.owner %>"
+func = "initializeOwnerModule"
+args = ["<%= settings.owner %>"]
+depends = ["contract.InitialProxy"]
 
 [run.generate_router]
-exec = "@synthetixio/core-router"
+exec = "@synthetixio/hardhat-router/utils/cannon"
 func = "generate"
 args = [
   "contracts/routers/chain-<%= chainId %>/Router.sol:Router",
@@ -68,11 +73,11 @@ abiOf = [
 depends = ["run.generate_router"]
 
 [invoke.upgrade_proxy]
-target = ["core_router.Proxy"]
+target = ["InitialProxy"]
 from = "<%= settings.owner %>"
 func = "upgradeTo"
 args = ["<%= contracts.Router.address %>"]
 factory.Proxy.abiOf = ["Router"]
 factory.Proxy.event = "Upgraded"
 factory.Proxy.arg = 0
-depends = ["import.core_router", "contract.Router"]
+depends = ["invoke.acquire_ownership", "contract.Router"]

@@ -18,6 +18,6 @@
     "hardhat-gas-reporter": "1.0.9",
     "hardhat-ignore-warnings": "0.2.5",
     "solidity-coverage": "0.8.2",
-    "typechain": "8.1.0"
+    "typechain": "8.1.1"
   }
 }

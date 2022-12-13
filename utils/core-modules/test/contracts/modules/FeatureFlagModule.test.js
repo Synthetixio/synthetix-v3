@@ -3,7 +3,7 @@ const { ethers: Ethers } = require('ethers');
 const assertBn = require('@synthetixio/core-utils/utils/assertions/assert-bignumber');
 const { default: assertEvent } = require('@synthetixio/core-utils/utils/assertions/assert-event');
 const { default: assertRevert } = require('@synthetixio/core-utils/utils/assertions/assert-revert');
-const { bootstrap } = require('@synthetixio/hardhat-router/dist/utils/tests');
+const { bootstrap } = require('../../helpers/bootstrap.js');
 const initializer = require('@synthetixio/core-modules/test/helpers/initializer');
 
 describe('FeatureFlagModule', () => {
