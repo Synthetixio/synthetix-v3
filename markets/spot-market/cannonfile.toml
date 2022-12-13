@@ -10,11 +10,6 @@ defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
 description = "spot market owner"
 defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
 
-[import.core_router]
-source = "core-router:1.0.0"
-options.salt = "<%= settings.salt %>"
-options.owner = "<%= settings.owner %>"
-
 [import.synthetix]
 source = "synthetix:3.0.0-alpha.2"
 
@@ -27,13 +22,30 @@ artifact = "SpotMarketModule"
 [contract.WrapperModule]
 artifact = "WrapperModule"
 
+[contract.CoreModule]
+artifact = "contracts/modules/CoreModule.sol:CoreModule"
+
+[contract.InitialProxy]
+artifact = "contracts/Proxy.sol:Proxy"
+args = ["<%= contracts.CoreModule.address %>"]
+abiOf = ["CoreModule"]
+salt = "<%= settings.salt %>"
+depends = ["contract.CoreModule"]
+
+[invoke.acquire_ownership]
+target = ["InitialProxy"]
+from = "<%= settings.owner %>"
+func = "initializeOwnerModule"
+args = ["<%= settings.owner %>"]
+depends = ["contract.InitialProxy"]
+
 [run.generate_router]
 exec = "@synthetixio/hardhat-router/utils/cannon"
 func = "generate"
 args = [
   "contracts/routers/chain-<%= chainId %>/Router.sol:Router",
   '''<%= JSON.stringify({
-    CoreModule: imports.core_router.contracts.CoreModule,
+    CoreModule: contracts.CoreModule,
     SpotMarketFactoryModule: contracts.SpotMarketFactoryModule,
     SpotMarketModule: contracts.SpotMarketModule,
     WrapperModule: contracts.WrapperModule,
@@ -41,7 +53,7 @@ args = [
 ]
 modified = ["contracts"]
 depends = [
-  "import.core_router",
+  "contract.CoreModule",
   "contract.SpotMarketFactoryModule",
   "contract.SpotMarketModule",
   "contract.WrapperModule"
@@ -50,7 +62,7 @@ depends = [
 [contract.Router]
 artifact = "contracts/routers/chain-<%= chainId %>/Router.sol:Router"
 abiOf = [
-  "core_router.CoreModule",
+  "CoreModule",
   "SpotMarketFactoryModule",
   "SpotMarketModule",
   "WrapperModule"
@@ -58,7 +70,7 @@ abiOf = [
 depends = ["run.generate_router"]
 
 [invoke.upgrade_proxy]
-target = ["core_router.Proxy"]
+target = ["InitialProxy"]
 from = "<%= settings.owner %>"
 func = "upgradeTo"
 args = ["<%= contracts.Router.address %>"]

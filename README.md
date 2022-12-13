@@ -33,7 +33,6 @@ This is a monorepo with the following folder structure and packages:
     ├── common-config     // Common npm and hardhat configuration for multiple packages in the monorepo.
     ├── core-contracts    // Standard contract implementations like ERC20, adapted for custom router storage.
     ├── core-modules      // Modules intended to be reused between multiple router based projects.
-    ├── core-router       // TODO: Remove
     ├── core-utils        // Simple Javascript/Typescript utilities that are used in other packages (e.g. test utils, etc).
     ├── hardhat-router    // Hardhat plugin that merges multiple modules into a router contract.
     ├── hardhat-storage   // Hardhat plugin used to detect storage collisions between proxy implementations.

@@ -9,7 +9,8 @@
   },
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "2.1.1",
-    "@synthetixio/core-router": "*",
+    "@synthetixio/core-contracts": "*",
+    "@synthetixio/core-modules": "*",
     "@synthetixio/hardhat-router": "*",
     "@synthetixio/hardhat-storage": "*",
     "hardhat-cannon": "1.1.18"
