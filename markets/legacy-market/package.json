@@ -13,6 +13,7 @@
   "author": "",
   "license": "MIT",
   "devDependencies": {
+    "@nomiclabs/hardhat-ethers": "2.2.1",
     "@synthetixio/common-config": "*",
     "@synthetixio/main": "*",
     "@synthetixio/wei": "2.74.4",

@@ -14,46 +14,26 @@ defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
 [setting.pool_owner]
 defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
 
+[setting.v2x_package]
+defaultValue = "synthetix:2.79.1"
+
+[setting.v3_package]
+defaultValue = "synthetix:3.0.0-alpha.4"
+
+[setting.oracle_package]
+defaultValue = "chainlink:0.7-mock"
+
 [import.v2x]
-source = "synthetix:2.99.0"
+source = "<%= settings.v2x_package %>"
 
 [import.v3]
-source = "synthetix:3.0.0-lm"
+source = "<%= settings.v3_package %>"
 
-[invoke.configureSnxCollateral]
-target = ["v3.CoreProxy"]
-func = "configureCollateral"
-args = [
-    "<%= imports.v2x.contracts.ProxySynthetix.address %>",
-    "<%= imports.v2x.imports.aggregator_snx.contracts.aggregator.address %>",
-    "3000000000000000000", # target c-ratio
-    "2000000000000000000", # liquidation c-ratio
-    "1000000000000000000", # liquidation reward (in wei)
-    true
-]
-
-fromCall.func = "owner"
-
-depends = ["import.v2x", "import.v3"]
-
-# add pool owner to pool feature flag allow list
-[invoke.addPoolOwnerToPoolFeatureFlag]
-target = ["v3.CoreProxy"]
-func = "addToFeatureFlag"
-args = ["0x637265617465506f6f6c00000000000000000000000000000000000000000000", "<%= settings.pool_owner %>"] # formatBytes32String("createPool")
-fromCall.func = "owner"
-depends = ["import.v3"]
-
-# add pool owner to market feature flag allow list
-[invoke.addPoolOwnerToMarketFeatureFlag]
-target = ["v3.CoreProxy"]
-func = "addToFeatureFlag"
-args = ["0x72656769737465724d61726b6574000000000000000000000000000000000000", "<%= settings.pool_owner %>"] # formatBytes32String("registerMarket")
-fromCall.func = "owner"
-depends = ["import.v3"]
+[import.fakeOracle]
+source = "<%= settings.oracle_package %>"
 
 # deploy the legacy market
-[contract.market]
+[contract.Market]
 artifact = "LegacyMarket"
 
 args = [
@@ -64,6 +44,62 @@ args = [
 
 depends = ["import.v2x", "import.v3"]
 
+# add pool owner to pool feature flag allow list
+[invoke.setFeatureFlagPool]
+target = ["v3.CoreProxy"]
+func = "addToFeatureFlagAllowlist"
+args = ["0x637265617465506f6f6c00000000000000000000000000000000000000000000", "<%= settings.pool_owner %>"] # formatBytes32String("createPool")
+fromCall.func = "owner"
+depends = ["import.v3"]
+
+[invoke.setFeatureFlagMarket]
+target = ["v3.CoreProxy"]
+func = "addToFeatureFlagAllowlist"
+args = ["0x72656769737465724d61726b6574000000000000000000000000000000000000", "<%= contracts.Market.address %>"] # formatBytes32String("registerMarket")
+fromCall.func = "owner"
+depends = ["contract.Market"]
+
+[invoke.setFeatureFlagAssociateDebt]
+target = ["v3.CoreProxy"]
+func = "addToFeatureFlagAllowlist"
+args = ["0x6173736f63696174654465627400000000000000000000000000000000000000", "<%= contracts.Market.address %>"] # formatBytes32String("associateDebt")
+fromCall.func = "owner"
+depends = ["contract.Market"]
+
+[invoke.registerMarket]
+target = ["Market"]
+from = "<%= settings.owner %>"
+func = "registerMarket"
+args = []
+
+depends = ["invoke.setFeatureFlagMarket"]
+
+[invoke.registerOracleManager]
+target = ["v3.oracle_manager.Proxy"]
+func = "registerNode"
+args = [
+    [],
+    3,
+    "0x000000000000000000000000<%= imports.fakeOracle.contracts.aggregator.address.slice(2) %>0000000000000000000000000000000000000000000000000000000000000000"
+]
+
+extra.snx_oracle_id.event = "NodeRegistered"
+extra.snx_oracle_id.arg = 0
+
+depends = ["import.v3", "import.fakeOracle"]
+
+[invoke.configureSnxCollateral]
+target = ["v3.CoreProxy"]
+func = "configureCollateral"
+
+args = [
+    { tokenAddress = "<%= imports.v2x.contracts.ProxySynthetix.address %>", oracleNodeId = "<%= extras.snx_oracle_id %>", issuanceRatioD18 = "3000000000000000000", liquidationRatioD18 = "2000000000000000000", liquidationRewardD18 = "1000000000000000000", minDelegationD18 = "1000000000000000000", depositingEnabled = true }
+]
+
+fromCall.func = "owner"
+
+depends = ["import.v2x", "invoke.registerOracleManager"]
+
 # set up on v2x
 [invoke.associate]
 target = ["v2x.AddressResolver"]
@@ -71,44 +107,44 @@ func = "importAddresses"
 args = [
     ["0x4c65676163794d61726b65740000000000000000000000000000000000000000"],
     # TODO nested interpolation
-    ["<%= contracts.market.address %>"]
+    ["<%= contracts.Market.address %>"]
     #["0x7dA35c7eE680A1e81eFCb2e9edD0c8D039D5211e"]
 ]
 
 fromCall.func = "owner"
 
-depends = ["contract.market"]
+depends = ["contract.Market"]
 
 [invoke.authorizedBroker]
 target = ["v2x.SynthetixDebtShare"]
 func = "addAuthorizedBroker"
-args = ["<%= contracts.market.address %>"]
+args = ["<%= contracts.Market.address %>"]
 
 fromCall.func = "owner"
 
-depends = ["contract.market"]
+depends = ["contract.Market"]
 
 # create spartan council pool
 [invoke.createPool]
 target = ["v3.CoreProxy"]
+from = "<%= settings.pool_owner %>"
 func = "createPool"
 args = ["<%= settings.sc_pool_id %>", "<%= settings.pool_owner %>"]
 
-depends = ["invoke.addPoolOwnerToPoolFeatureFlag", "contract.market"]
+depends = ["invoke.setFeatureFlagPool"]
 
 [invoke.configurePool]
 target = ["v3.CoreProxy"]
 func = "setPoolConfiguration"
+from = "<%= settings.pool_owner %>"
 args = [
     "<%= settings.sc_pool_id %>",
-    ["1"],
-    [1],
-    [1]
+    [
+        { marketId = "1", weightD18 = "1", maxDebtShareValueD18 = "1000000000000000000" },
+    ]
 ]
 
-from = "<%= settings.pool_owner %>"
-
-depends = ["invoke.createPool"]
+depends = ["invoke.createPool", "invoke.registerMarket"]
 
 [invoke.preferPool]
 target = ["v3.CoreProxy"]
