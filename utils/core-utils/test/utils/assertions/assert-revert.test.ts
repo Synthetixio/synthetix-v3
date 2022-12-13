@@ -18,7 +18,7 @@ function mockRevertingTx(errorMsg = '') {
 describe('utils/assertions/assert-revert.ts', function () {
   describe('#assertRevert', function () {
     it('resolves when correctly reverting', async function () {
-      await assertRevert(mockRevertingTx(), '');
+      await assertRevert(mockRevertingTx(), 'Error');
     });
 
     it('resolves when correctly reverting with a message', async function () {
@@ -38,7 +38,7 @@ describe('utils/assertions/assert-revert.ts', function () {
 
       await rejects(async () => {
         await assertRevert(mockRevertingTx(message), expectedMessage);
-      }, new Error(`Transaction was expected to revert with "${expectedMessage}", but reverted with "${message}"`));
+      }, new Error(`Transaction was expected to revert with "${expectedMessage}", but reverted with "Error: ${message}"\nError: Unknown transaction error`));
     });
   });
 });
