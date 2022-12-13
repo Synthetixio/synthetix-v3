@@ -29,8 +29,8 @@ describe('ChainlinkNodeLibrary', () => {
     describe('when twapInterval is zero', async () => {
       it('returns latest price', async () => {
         const encodedParams = abi.encode(
-          ['address', 'uint256'],
-          [aggregator.address, BigNumber.from(0)]
+          ['address', 'uint256', 'uint8'],
+          [aggregator.address, BigNumber.from(0), 18]
         );
         const [price] = await node.process(encodedParams);
         assertBn.equal(price, BigNumber.from(500));
@@ -40,8 +40,8 @@ describe('ChainlinkNodeLibrary', () => {
     describe('when twapInterval is 25 minutes', async () => {
       it('returns avg price correctly', async () => {
         const encodedParams = abi.encode(
-          ['address', 'uint256'],
-          [aggregator.address, BigNumber.from(35 * 60)] // 25 minutes in seconds
+          ['address', 'uint256', 'uint8'],
+          [aggregator.address, BigNumber.from(35 * 60), 18] // 25 minutes in seconds
         );
         const [price] = await node.process(encodedParams);
         assertBn.equal(price, BigNumber.from(400)); // 500 + 400 + 300 / 3
@@ -51,11 +51,22 @@ describe('ChainlinkNodeLibrary', () => {
     describe('when twapInterval is 80 minutes', async () => {
       it('returns avg price correctly', async () => {
         const encodedParams = abi.encode(
-          ['address', 'uint256'],
-          [aggregator.address, BigNumber.from(80 * 60)] // 25 minutes in seconds
+          ['address', 'uint256', 'uint8'],
+          [aggregator.address, BigNumber.from(80 * 60), 18] // 25 minutes in seconds
         );
         const [price] = await node.process(encodedParams);
         assertBn.equal(price, BigNumber.from(300)); // 500 + 400 + 300 + 200 + 100 / 5
+      });
+    });
+
+    describe('when price downscale is needed', async () => {
+      it('returns price with 18 decimlas', async () => {
+        const encodedParams = abi.encode(
+          ['address', 'uint256', 'uint8'],
+          [aggregator.address, BigNumber.from(0), 20]
+        );
+        const [price] = await node.process(encodedParams);
+        assertBn.equal(price, 5);
       });
     });
   });

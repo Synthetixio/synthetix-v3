@@ -2,11 +2,11 @@
 pragma solidity ^0.8.0;
 
 contract MockChainlinkAggregator {
-    int[5] private _prices;
-    uint[5] private _updatedAt;
+    int256[5] private _prices;
+    uint256[5] private _updatedAt;
 
-    constructor(int[5] memory prices) {
-        uint currentTimestamp = block.timestamp;
+    constructor(int256[5] memory prices) {
+        uint256 currentTimestamp = block.timestamp;
         _updatedAt = [
             currentTimestamp - 75 minutes,
             currentTimestamp - 50 minutes,
@@ -26,5 +26,9 @@ contract MockChainlinkAggregator {
         uint80 roundId
     ) external view returns (uint80, int256, uint256, uint256, uint80) {
         return (roundId, _prices[roundId - 1], 0, _updatedAt[roundId - 1], roundId);
+    }
+
+    function decimals() external pure returns (uint8) {
+        return 6;
     }
 }

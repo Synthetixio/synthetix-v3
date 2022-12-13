@@ -1,5 +1,5 @@
 import { coreBootstrap } from '@synthetixio/core-router/util/core-bootstrap';
-import { BigNumber, ethers } from 'ethers';
+import { ethers } from 'ethers';
 import hre from 'hardhat';
 import { OracleManagerModule } from '../generated/typechain';
 import NodeTypes from './mixins/Node.types';
@@ -35,21 +35,21 @@ export function bootstrapWithNodes() {
     const factory = await hre.ethers.getContractFactory('AggregatorV3Mock');
 
     aggregator = await factory.connect(owner).deploy();
-    await aggregator.mockSetCurrentPrice(ethers.utils.parseEther('1'));
+    await aggregator.mockSetCurrentPrice(ethers.utils.parseUnits('1', 6));
 
     aggregator3 = await factory.connect(owner).deploy();
-    await aggregator3.mockSetCurrentPrice(ethers.utils.parseEther('0.5'));
+    await aggregator3.mockSetCurrentPrice(ethers.utils.parseUnits('0.5', 6));
 
     aggregator2 = await factory.connect(owner).deploy();
-    await aggregator2.mockSetCurrentPrice(ethers.utils.parseEther('0.9'));
+    await aggregator2.mockSetCurrentPrice(ethers.utils.parseUnits('0.9', 6));
   });
 
   before('register leaf nodes', async function () {
     const OracleManagerModule = r.getContract('OracleManagerModule');
 
-    const params1 = abi.encode(['address', 'uint256'], [aggregator.address, BigNumber.from(0)]);
-    const params2 = abi.encode(['address', 'uint256'], [aggregator2.address, BigNumber.from(0)]);
-    const params3 = abi.encode(['address', 'uint256'], [aggregator3.address, BigNumber.from(0)]);
+    const params1 = abi.encode(['address', 'uint256', 'uint8'], [aggregator.address, 0, 6]);
+    const params2 = abi.encode(['address', 'uint256', 'uint8'], [aggregator2.address, 0, 6]);
+    const params3 = abi.encode(['address', 'uint256', 'uint8'], [aggregator3.address, 0, 6]);
 
     const registerNode = async (params: string) => {
       const tx = await OracleManagerModule.registerNode([], NodeTypes.CHAINLINK, params);
