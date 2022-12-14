@@ -2,7 +2,6 @@
 pragma solidity ^0.8.0;
 
 import "@synthetixio/main/contracts/interfaces/IMarketManagerModule.sol";
-import "@synthetixio/core-contracts/contracts/utils/MathUtil.sol";
 import "@synthetixio/core-modules/contracts/modules/AssociatedSystemsModule.sol";
 import "@synthetixio/core-contracts/contracts/proxy/UUPSProxy.sol";
 import "@synthetixio/core-contracts/contracts/initializable/InitializableMixin.sol";
@@ -10,17 +9,17 @@ import "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
 import "@synthetixio/core-modules/contracts/interfaces/IOwnerModule.sol";
 import "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
 import "@synthetixio/oracle-manager/contracts/interfaces/IOracleManagerModule.sol";
-import "../../utils/SynthUtil.sol";
-import "../../storage/SpotMarketFactory.sol";
-import "../../storage/Price.sol";
-import "../../interfaces/ISpotMarketFactoryModule.sol";
+import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
+import "../utils/SynthUtil.sol";
+import "../storage/SpotMarketFactory.sol";
+import "../interfaces/ISpotMarketFactoryModule.sol";
 
 contract SpotMarketFactoryModule is
     ISpotMarketFactoryModule,
     AssociatedSystemsModule,
     InitializableMixin
 {
-    using MathUtil for uint256;
+    using DecimalMath for uint256;
     using SpotMarketFactory for SpotMarketFactory.Data;
     using AssociatedSystem for AssociatedSystem.Data;
 
@@ -37,12 +36,14 @@ contract SpotMarketFactoryModule is
     function initialize(
         address snxAddress,
         address usdTokenAddress,
-        address oracleManager
+        address oracleManager,
+        address initialSynthImplementation
     ) external override {
         OwnableStorage.onlyOwner();
         SpotMarketFactory.Data storage store = SpotMarketFactory.load();
 
         store.synthetix = snxAddress;
+        store.initialSynthImplementation = initialSynthImplementation;
         store.usdToken = ITokenModule(usdTokenAddress);
         store.oracle = IOracleManagerModule(oracleManager);
     }
@@ -50,8 +51,6 @@ contract SpotMarketFactoryModule is
     function registerSynth(
         string memory tokenName,
         string memory tokenSymbol,
-        // required for adding upgrade/owner modules and creating proxy for synth
-        address initialTokenImpl,
         address synthOwner,
         Price.Data memory priceData,
         Fee.Data memory feeData,
@@ -67,7 +66,7 @@ contract SpotMarketFactoryModule is
             tokenName,
             tokenSymbol,
             18,
-            initialTokenImpl
+            factory.initialSynthImplementation
         );
 
         factory.synthConfigs[synthMarketId] = SynthConfig.Data({
@@ -106,35 +105,32 @@ contract SpotMarketFactoryModule is
         _upgradeToken(synthId, synthImpl);
     }
 
-    function updateFeeData(
-        uint128 synthMarketId,
-        uint256 interestRate,
-        uint256 fixedFee
-    ) external override {
+    function updateFeeData(uint128 synthMarketId, Fee.Data memory feeData) external override {
         SpotMarketFactory.Data storage factory = SpotMarketFactory.load();
         factory.onlyMarketOwner(synthMarketId);
 
-        factory.synthConfigs[synthMarketId].feeData = Fee.Data({
-            interestRate: interestRate,
-            fixedFee: fixedFee
-        });
+        factory.synthConfigs[synthMarketId].feeData = feeData;
 
-        emit SynthFeeDataUpdated(synthMarketId, interestRate, fixedFee);
+        emit SynthFeeDataUpdated(synthMarketId, feeData);
     }
 
-    function updatePriceData(
-        uint128 synthMarketId,
-        bytes memory buyFeedId,
-        bytes memory sellFeedId
-    ) external override {
+    function updatePriceData(uint128 synthMarketId, Price.Data memory priceData) external override {
         SpotMarketFactory.Data storage factory = SpotMarketFactory.load();
         factory.onlyMarketOwner(synthMarketId);
 
-        factory.synthConfigs[synthMarketId].priceData = Price.Data({
-            buyFeedId: buyFeedId,
-            sellFeedId: sellFeedId
-        });
+        factory.synthConfigs[synthMarketId].priceData = priceData;
 
-        emit SynthPriceDataUpdated(synthMarketId, buyFeedId, sellFeedId);
+        emit SynthPriceDataUpdated(synthMarketId, priceData);
+    }
+
+    /**
+     * @dev See {IERC165-supportsInterface}.
+     */
+    function supportsInterface(
+        bytes4 interfaceId
+    ) public view virtual override(IERC165) returns (bool) {
+        return
+            interfaceId == type(IMarket).interfaceId ||
+            interfaceId == this.supportsInterface.selector;
     }
 }

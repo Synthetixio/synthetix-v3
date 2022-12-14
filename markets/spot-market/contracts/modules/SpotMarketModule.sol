@@ -4,9 +4,9 @@ pragma solidity ^0.8.0;
 import "@synthetixio/main/contracts/interfaces/IMarketManagerModule.sol";
 import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
-import "../../storage/SpotMarketFactory.sol";
-import "../../interfaces/ISpotMarketModule.sol";
-import "../../utils/SynthUtil.sol";
+import "../storage/SpotMarketFactory.sol";
+import "../interfaces/ISpotMarketModule.sol";
+import "../utils/SynthUtil.sol";
 
 contract SpotMarketModule is ISpotMarketModule {
     using DecimalMath for uint256;

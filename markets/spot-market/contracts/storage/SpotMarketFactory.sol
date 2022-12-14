@@ -20,6 +20,7 @@ library SpotMarketFactory {
         ITokenModule usdToken;
         IOracleManagerModule oracle;
         address synthetix;
+        address initialSynthImplementation;
         mapping(uint128 => SynthConfig.Data) synthConfigs;
         mapping(uint128 => uint256) synthFeesCollected;
     }

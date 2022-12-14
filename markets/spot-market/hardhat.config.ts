@@ -1,16 +1,26 @@
 //import '@typechain/hardhat'
 
+import '@synthetixio/hardhat-router';
 import '@nomiclabs/hardhat-ethers';
 import 'solidity-docgen';
 
 import commonConfig from '@synthetixio/common-config/hardhat.config';
 
-// eslint-disable-next-line
-const { cannon, ...commonConfigWithCannon } = commonConfig;
-
 const config = {
-  ...commonConfigWithCannon,
-  solidity: '0.8.11',
+  ...commonConfig,
+  solidity: '0.8.17',
+  docgen: {
+    exclude: [
+      './interfaces/external',
+      './modules',
+      './mixins',
+      './mocks',
+      './utils',
+      './storage',
+      './Proxy.sol',
+      './Router.sol',
+    ],
+  },
 };
 
 export default config;

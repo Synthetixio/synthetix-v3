@@ -15,8 +15,4 @@ interface IWrapper {
     function wrap(uint128 marketId, uint wrapAmount) external returns (uint);
 
     function unwrap(uint128 marketId, uint unwrapAmount) external returns (uint);
-
-    function getWrapQuote(uint128 marketId, uint wrapAmount) external view returns (uint, uint);
-
-    function getUnwrapQuote(uint128 marketId, uint unwrapAmount) external view returns (uint, uint);
 }

@@ -14,11 +14,4 @@ interface ISpotMarketModule {
     function buy(uint128 synthMarketId, uint amountUsd) external returns (uint);
 
     function sell(uint128 synthMarketId, uint sellAmount) external returns (uint);
-
-    function getBuyQuote(uint128 synthMarketId, uint amountUsd) external view returns (uint, uint);
-
-    function getSellQuote(
-        uint128 synthMarketId,
-        uint amountSynth
-    ) external view returns (uint, uint);
 }

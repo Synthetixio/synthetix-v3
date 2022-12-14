@@ -1,18 +1,18 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@synthetixio/core-contracts/contracts/utils/MathUtil.sol";
+import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import "@synthetixio/core-contracts/contracts/interfaces/IERC20.sol";
 import "@synthetixio/main/contracts/interfaces/IMarketCollateralModule.sol";
 import "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
-import "../../storage/SpotMarketFactory.sol";
-import "../../interfaces/IWrapper.sol";
-import "../../storage/Wrapper.sol";
-import "../../storage/Price.sol";
-import "../../utils/SynthUtil.sol";
+import "../storage/SpotMarketFactory.sol";
+import "../interfaces/IWrapper.sol";
+import "../storage/Wrapper.sol";
+import "../storage/Price.sol";
+import "../utils/SynthUtil.sol";
 
 contract WrapperModule is IWrapper {
-    using MathUtil for uint256;
+    using DecimalMath for uint256;
     using SpotMarketFactory for SpotMarketFactory.Data;
     using Price for Price.Data;
     using Fee for Fee.Data;
@@ -79,8 +79,8 @@ contract WrapperModule is IWrapper {
 
     function unwrap(
         uint128 marketId,
-        uint unwrapAmount
-    ) external override returns (uint amountToWithdraw) {
+        uint256 unwrapAmount
+    ) external override returns (uint256 amountToWithdraw) {
         SpotMarketFactory.Data storage store = SpotMarketFactory.load();
         Wrapper.Data storage wrapperStore = store.getWrapperData(marketId);
         wrapperStore.onlyEnabledWrapper();

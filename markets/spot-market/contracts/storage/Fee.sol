@@ -1,10 +1,10 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@synthetixio/core-contracts/contracts/utils/MathUtil.sol";
+import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 
 library Fee {
-    using MathUtil for uint256;
+    using DecimalMath for uint256;
 
     enum TradeType {
         BUY,
@@ -16,6 +16,10 @@ library Fee {
     struct Data {
         uint interestRate;
         uint fixedFee;
+        uint skewScale;
+        uint skewFeePercentage; // in bips
+        uint[] utilizationThresholds;
+        uint[] utilizationFeeRate; // in bips
     }
 
     function calculateFees(

@@ -1,10 +1,10 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@synthetixio/core-contracts/contracts/utils/MathUtil.sol";
+import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 
 library Price {
-    using MathUtil for uint256;
+    using DecimalMath for uint256;
 
     struct Data {
         bytes buyFeedId;
@@ -17,12 +17,18 @@ library Price {
         return 1;
     }
 
-    function usdSynthExchangeRate(Data storage self, uint amountUsd) internal pure returns (uint synthAmount) {
+    function usdSynthExchangeRate(
+        Data storage self,
+        uint amountUsd
+    ) internal pure returns (uint synthAmount) {
         uint currentPrice = getCurrentPrice(self);
         synthAmount = amountUsd.divDecimal(currentPrice);
     }
 
-    function synthUsdExchangeRate(Data storage self, uint sellAmount) internal pure returns (uint amountUsd) {
+    function synthUsdExchangeRate(
+        Data storage self,
+        uint sellAmount
+    ) internal pure returns (uint amountUsd) {
         uint currentPrice = getCurrentPrice(self);
         amountUsd = sellAmount.mulDecimal(currentPrice);
     }
