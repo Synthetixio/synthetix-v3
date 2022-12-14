@@ -10,6 +10,7 @@ import "@synthetixio/core-modules/contracts/interfaces/IOwnerModule.sol";
 import "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
 import "@synthetixio/oracle-manager/contracts/interfaces/IOracleManagerModule.sol";
 import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
+import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import "../utils/SynthUtil.sol";
 import "../storage/SpotMarketFactory.sol";
 import "../interfaces/ISpotMarketFactoryModule.sol";
@@ -20,6 +21,7 @@ contract SpotMarketFactoryModule is
     InitializableMixin
 {
     using DecimalMath for uint256;
+    using SafeCastI256 for int256;
     using SpotMarketFactory for SpotMarketFactory.Data;
     using AssociatedSystem for AssociatedSystem.Data;
     using Price for Price.Data;
@@ -79,13 +81,21 @@ contract SpotMarketFactoryModule is
     }
 
     function reportedDebt(uint128 marketId) external view override returns (uint256) {
-        uint256 price = Price.load(marketId).getCurrentPrice();
+        // TODO: default to buy price?
+        int256 price = Price.load(marketId).getCurrentPrice(Fee.TradeType.BUY);
 
-        return SynthUtil.getToken(marketId).totalSupply().mulDecimal(price);
+        return SynthUtil.getToken(marketId).totalSupply().mulDecimal(price.toUint());
     }
 
     function locked(uint128 marketId) external view returns (uint256) {
-        return 0;
+        uint delegatedCollateral = IMarketManagerModule(SpotMarketFactory.load().synthetix)
+            .getMarketCollateral(marketId);
+
+        uint totalBalance = SynthUtil.getToken(marketId).totalSupply();
+        uint totalValue = totalBalance.mulDecimal(
+            Price.load(marketId).getCurrentPrice(Fee.TradeType.BUY).toUint()
+        );
+        return delegatedCollateral > totalValue ? 0 : delegatedCollateral;
     }
 
     function upgradeSynthImpl(uint128 marketId, address synthImpl) external override {
