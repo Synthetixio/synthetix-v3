@@ -3,7 +3,6 @@ pragma solidity ^0.8.0;
 
 import "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
 import "@synthetixio/oracle-manager/contracts/interfaces/IOracleManagerModule.sol";
-import "./SynthConfig.sol";
 import "./Price.sol";
 import "./Fee.sol";
 import "./Wrapper.sol";
@@ -21,7 +20,7 @@ library SpotMarketFactory {
         IOracleManagerModule oracle;
         address synthetix;
         address initialSynthImplementation;
-        mapping(uint128 => SynthConfig.Data) synthConfigs;
+        mapping(uint128 => address) synthOwners;
         mapping(uint128 => uint256) synthFeesCollected;
     }
 
@@ -33,42 +32,10 @@ library SpotMarketFactory {
     }
 
     function onlyMarketOwner(Data storage self, uint128 marketId) internal view {
-        address marketOwner = self.synthConfigs[marketId].owner;
+        address marketOwner = self.synthOwners[marketId];
 
         if (marketOwner != msg.sender) {
             revert OnlyMarketOwner(marketOwner, msg.sender);
         }
-    }
-
-    function loadSynth(uint128 marketId) internal view returns (SynthConfig.Data storage store) {
-        return load().synthConfigs[marketId];
-    }
-
-    function getPriceData(
-        SpotMarketFactory.Data storage self,
-        uint128 marketId
-    ) internal view returns (Price.Data storage) {
-        return self.synthConfigs[marketId].priceData;
-    }
-
-    function getFeeData(
-        SpotMarketFactory.Data storage self,
-        uint128 marketId
-    ) internal view returns (Fee.Data storage) {
-        return self.synthConfigs[marketId].feeData;
-    }
-
-    function getWrapperData(
-        SpotMarketFactory.Data storage self,
-        uint128 marketId
-    ) internal view returns (Wrapper.Data storage) {
-        return self.synthConfigs[marketId].wrapperData;
-    }
-
-    function getCurrentPrice(
-        SpotMarketFactory.Data storage self,
-        uint128 marketId
-    ) internal view returns (uint) {
-        return getPriceData(self, marketId).getCurrentPrice();
     }
 }

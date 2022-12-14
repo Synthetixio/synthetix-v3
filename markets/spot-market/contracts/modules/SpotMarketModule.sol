@@ -26,13 +26,13 @@ contract SpotMarketModule is ISpotMarketModule {
         }
 
         store.usdToken.transferFrom(msg.sender, address(this), amountUsd);
-        (uint256 amountUsable, uint256 feesCollected) = store.getFeeData(marketId).calculateFees(
+        (uint256 amountUsable, uint256 feesCollected) = Fee.load(marketId).calculateFees(
             msg.sender,
             amountUsd,
             Fee.TradeType.BUY
         );
 
-        uint256 amountToMint = store.getPriceData(marketId).usdSynthExchangeRate(amountUsable);
+        uint256 amountToMint = Price.load(marketId).usdSynthExchangeRate(amountUsable);
         SynthUtil.getToken(marketId).mint(msg.sender, amountToMint);
 
         // track fees
@@ -54,7 +54,7 @@ contract SpotMarketModule is ISpotMarketModule {
     function sell(uint128 marketId, uint256 sellAmount) external override returns (uint256) {
         SpotMarketFactory.Data storage store = SpotMarketFactory.load();
 
-        uint256 amountToWithdraw = store.getPriceData(marketId).synthUsdExchangeRate(sellAmount);
+        uint256 amountToWithdraw = Price.load(marketId).synthUsdExchangeRate(sellAmount);
         SynthUtil.getToken(marketId).burn(msg.sender, sellAmount);
 
         IMarketManagerModule(store.synthetix).withdrawMarketUsd(
@@ -63,7 +63,7 @@ contract SpotMarketModule is ISpotMarketModule {
             amountToWithdraw
         );
 
-        (uint256 returnAmount, uint256 feesCollected) = store.getFeeData(marketId).calculateFees(
+        (uint256 returnAmount, uint256 feesCollected) = Fee.load(marketId).calculateFees(
             msg.sender,
             amountToWithdraw,
             Fee.TradeType.SELL

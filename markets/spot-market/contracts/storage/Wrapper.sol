@@ -11,6 +11,22 @@ library Wrapper {
         bool wrappingEnabled;
     }
 
+    function load(uint128 marketId) internal pure returns (Data storage store) {
+        bytes32 s = keccak256(abi.encode("Wrapper", marketId));
+        assembly {
+            store.slot := s
+        }
+    }
+
+    function create(uint128 marketId, address collateralType) internal {
+        update(load(marketId), true, collateralType);
+    }
+
+    function update(Data storage self, bool wrappingEnabled, address collateralType) internal {
+        self.collateralType = collateralType;
+        self.wrappingEnabled = wrappingEnabled;
+    }
+
     function onlyEnabledWrapper(Wrapper.Data storage self) internal view {
         if (self.wrappingEnabled) {
             revert WrappingNotInitialized();

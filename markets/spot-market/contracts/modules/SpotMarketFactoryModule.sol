@@ -22,6 +22,7 @@ contract SpotMarketFactoryModule is
     using DecimalMath for uint256;
     using SpotMarketFactory for SpotMarketFactory.Data;
     using AssociatedSystem for AssociatedSystem.Data;
+    using Price for Price.Data;
 
     function _isInitialized() internal view override returns (bool) {
         SpotMarketFactory.Data storage store = SpotMarketFactory.load();
@@ -51,11 +52,8 @@ contract SpotMarketFactoryModule is
     function registerSynth(
         string memory tokenName,
         string memory tokenSymbol,
-        address synthOwner,
-        Price.Data memory priceData,
-        Fee.Data memory feeData,
-        Wrapper.Data memory wrapperData
-    ) external override returns (uint128) {
+        address synthOwner
+    ) external override onlyIfInitialized returns (uint128) {
         SpotMarketFactory.Data storage factory = SpotMarketFactory.load();
         uint128 synthMarketId = IMarketManagerModule(factory.synthetix).registerMarket(
             address(this)
@@ -69,13 +67,7 @@ contract SpotMarketFactoryModule is
             factory.initialSynthImplementation
         );
 
-        factory.synthConfigs[synthMarketId] = SynthConfig.Data({
-            priceData: priceData,
-            feeData: feeData,
-            wrapperData: wrapperData,
-            owner: synthOwner,
-            marketId: synthMarketId
-        });
+        factory.synthOwners[synthMarketId] = synthOwner;
 
         emit SynthRegistered(synthMarketId);
 
@@ -87,9 +79,7 @@ contract SpotMarketFactoryModule is
     }
 
     function reportedDebt(uint128 marketId) external view override returns (uint256) {
-        SpotMarketFactory.Data storage factory = SpotMarketFactory.load();
-
-        uint256 price = factory.getCurrentPrice(marketId);
+        uint256 price = Price.load(marketId).getCurrentPrice();
 
         return SynthUtil.getToken(marketId).totalSupply().mulDecimal(price);
     }
@@ -105,22 +95,16 @@ contract SpotMarketFactoryModule is
         _upgradeToken(synthId, synthImpl);
     }
 
-    function updateFeeData(uint128 synthMarketId, Fee.Data memory feeData) external override {
-        SpotMarketFactory.Data storage factory = SpotMarketFactory.load();
-        factory.onlyMarketOwner(synthMarketId);
+    function updatePriceData(
+        uint128 synthMarketId,
+        bytes32 buyFeedId,
+        bytes32 sellFeedId
+    ) external override {
+        SpotMarketFactory.load().onlyMarketOwner(synthMarketId);
 
-        factory.synthConfigs[synthMarketId].feeData = feeData;
+        Price.load(synthMarketId).update(buyFeedId, sellFeedId);
 
-        emit SynthFeeDataUpdated(synthMarketId, feeData);
-    }
-
-    function updatePriceData(uint128 synthMarketId, Price.Data memory priceData) external override {
-        SpotMarketFactory.Data storage factory = SpotMarketFactory.load();
-        factory.onlyMarketOwner(synthMarketId);
-
-        factory.synthConfigs[synthMarketId].priceData = priceData;
-
-        emit SynthPriceDataUpdated(synthMarketId, priceData);
+        emit SynthPriceDataUpdated(synthMarketId, buyFeedId, sellFeedId);
     }
 
     /**

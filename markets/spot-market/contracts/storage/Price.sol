@@ -7,14 +7,26 @@ library Price {
     using DecimalMath for uint256;
 
     struct Data {
-        bytes buyFeedId;
-        bytes sellFeedId;
+        bytes32 buyFeedId;
+        bytes32 sellFeedId;
+    }
+
+    function load(uint128 marketId) internal pure returns (Data storage store) {
+        bytes32 s = keccak256(abi.encode("Price", marketId));
+        assembly {
+            store.slot := s
+        }
     }
 
     // TODO: interact with OracleManager to get price for market synth
     function getCurrentPrice(Data storage self) internal pure returns (uint) {
         /* get from oracleManager / aggregator chainlink based on synth id */
         return 1;
+    }
+
+    function update(Data storage self, bytes32 buyFeedId, bytes32 sellFeedId) internal {
+        self.buyFeedId = buyFeedId;
+        self.sellFeedId = sellFeedId;
     }
 
     function usdSynthExchangeRate(

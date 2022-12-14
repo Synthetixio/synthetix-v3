@@ -13,6 +13,13 @@ defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
 [import.synthetix]
 source = "synthetix:3.0.0-alpha.4"
 
+[setting.oracle_manager_version]
+defaultValue = "1.0.0"
+
+[import.oracle_manager]
+source = "oracle-manager:<%= settings.oracle_manager_version %>"
+options.owner = "<%= settings.owner %>"
+
 [contract.SpotMarketFactoryModule]
 artifact = "SpotMarketFactoryModule"
 
@@ -21,6 +28,9 @@ artifact = "SpotMarketModule"
 
 [contract.WrapperModule]
 artifact = "WrapperModule"
+
+[contract.Synth]
+artifact = "Synth"
 
 [contract.CoreModule]
 artifact = "contracts/modules/CoreModule.sol:CoreModule"
@@ -34,9 +44,9 @@ depends = ["contract.CoreModule"]
 
 [invoke.acquire_ownership]
 target = ["InitialProxy"]
-from = "<%= settings.owner %>"
+from = "<%= settings.coreProxyOwner %>"
 func = "initializeOwnerModule"
-args = ["<%= settings.owner %>"]
+args = ["<%= settings.coreProxyOwner %>"]
 depends = ["contract.InitialProxy"]
 
 [run.generate_router]
@@ -71,7 +81,7 @@ depends = ["run.generate_router"]
 
 [invoke.upgrade_proxy]
 target = ["InitialProxy"]
-from = "<%= settings.owner %>"
+from = "<%= settings.coreProxyOwner %>"
 func = "upgradeTo"
 args = ["<%= contracts.Router.address %>"]
 factory.Proxy.abiOf = ["Router"]
@@ -79,41 +89,61 @@ factory.Proxy.event = "Upgraded"
 factory.Proxy.arg = 0
 depends = ["contract.Router"]
 
-# # create synth router
+# create synth router
 
-# [run.generate_synth_router]
-# exec = "@synthetixio/core-router"
-# func = "generate"
-# args = [
-#   "contracts/routers/chain-<%= chainId %>/SynthRouter.sol:SynthRouter",
-#   '''<%= JSON.stringify({
-#     CoreModule: imports.core_router.contracts.CoreModule,
-#     SpotMarketFactoryModule: contracts.Synth
-#   }) %>'''
-# ]
-# modified = ["contracts"]
-# depends = [
-#   "import.core_router",
-#   "contract.Synth"
-# ]
+[run.generate_synth_router]
+exec = "@synthetixio/hardhat-router/utils/cannon"
+func = "generate"
+args = [
+  "contracts/routers/chain-<%= chainId %>/SynthRouter.sol:SynthRouter",
+  '''<%= JSON.stringify({
+    CoreModule: contracts.CoreModule,
+    Synth: contracts.Synth
+  }) %>'''
+]
+modified = ["contracts"]
+depends = [
+  "contract.CoreModule",
+  "contract.Synth"
+]
 
-# # add pool owner to feature flag allow list (owner must be pdao for this to be successful)
-# [invoke.addSpotMarketToFeatureFlag]
-# target = ["synthetix.CoreProxy"]
-# func = "addToFeatureFlagAllowlist"
-# from = "<%= settings.coreProxyOwner %>"
-# args = ["0x72656769737465724d61726b6574000000000000000000000000000000000000", "<%= contracts.Proxy.address %>"] # formatBytes32String("registerMarket")
-# depends = ['import.synthetix', 'invoke.upgrade_proxy']
+[contract.SynthRouter]
+artifact = "contracts/routers/chain-<%= chainId %>/SynthRouter.sol:SynthRouter"
+abiOf = [
+  "CoreModule",
+  "Synth"
+]
+depends = ["run.generate_synth_router"]
 
-# # post invokes
+[invoke.initialize_spot_market_factory]
+target = ["Proxy"]
+from = "<%= settings.coreProxyOwner %>"
+func = "initialize"
+args = [
+  "<%= imports.synthetix.contracts.CoreProxy.address %>",
+  "<%= imports.synthetix.contracts.USDProxy.address %>",
+  "<%= imports.oracle_manager.contracts.Proxy.address %>",
+  "<%= contracts.SynthRouter.address %>",
+]
+depends = ["invoke.upgrade_proxy", "import.synthetix", "import.oracle_manager", "run.generate_synth_router"]
 
-# [invoke.register_snxETH_market]
-# target = ["Proxy"]
-# from = "<%= settings.owner %>"
-# func = "registerSynth"
-# args = [
-#   "Synthetic Ether",
-#   "snxETH",
-#   "<%= settings.owner %>"
-# ]
-# depends = ["invoke.addSpotMarketToFeatureFlag"]
+# add pool owner to feature flag allow list (owner must be pdao for this to be successful)
+[invoke.addSpotMarketToFeatureFlag]
+target = ["synthetix.CoreProxy"]
+func = "addToFeatureFlagAllowlist"
+from = "<%= settings.coreProxyOwner %>"
+args = ["0x72656769737465724d61726b6574000000000000000000000000000000000000", "<%= contracts.Proxy.address %>"] # formatBytes32String("registerMarket")
+depends = ['import.synthetix', 'invoke.upgrade_proxy']
+
+# post invokes
+
+[invoke.register_snxETH_market]
+target = ["Proxy"]
+from = "<%= settings.coreProxyOwner %>"
+func = "registerSynth"
+args = [
+  "Synthetic Ether",
+  "snxETH",
+  "<%= settings.coreProxyOwner %>"
+]
+depends = ["invoke.addSpotMarketToFeatureFlag"]

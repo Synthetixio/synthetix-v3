@@ -9,8 +9,17 @@ import "../storage/SpotMarketFactory.sol";
 interface ISpotMarketFactoryModule is IMarket {
     event SynthRegistered(uint256 indexed synthMarketId);
     event SynthImplementationUpgraded(uint256 indexed synthMarketId);
-    event SynthFeeDataUpdated(uint256 indexed synthMarketId, Fee.Data feeData);
-    event SynthPriceDataUpdated(uint256 indexed synthMarketId, Price.Data feeData);
+    event SynthPriceDataUpdated(
+        uint256 indexed synthMarketId,
+        bytes32 buyFeedId,
+        bytes32 sellFeedId
+    );
+
+    /**
+     * @notice Returns wether the token has been initialized.
+     * @return A boolean with the result of the query.
+     */
+    function isInitialized() external returns (bool);
 
     function initialize(
         address snxAddress,
@@ -22,15 +31,10 @@ interface ISpotMarketFactoryModule is IMarket {
     function registerSynth(
         string memory tokenName,
         string memory tokenSymbol,
-        address synthOwner,
-        Price.Data memory priceData,
-        Fee.Data memory feeData,
-        Wrapper.Data memory wrapperData
+        address synthOwner
     ) external returns (uint128 synthMarketId);
 
-    function updateFeeData(uint128 synthMarketId, Fee.Data memory) external;
-
-    function updatePriceData(uint128 synthMarketId, Price.Data memory) external;
+    function updatePriceData(uint128 synthMarketId, bytes32 buyFeedId, bytes32 sellFeedId) external;
 
     function upgradeSynthImpl(uint128 marketId, address synthImpl) external;
 }

@@ -19,7 +19,14 @@ library Fee {
         uint skewScale;
         uint skewFeePercentage; // in bips
         uint[] utilizationThresholds;
-        uint[] utilizationFeeRate; // in bips
+        uint utilizationFeeRate; // in bips
+    }
+
+    function load(uint128 marketId) internal pure returns (Data storage store) {
+        bytes32 s = keccak256(abi.encode("Fee", marketId));
+        assembly {
+            store.slot := s
+        }
     }
 
     function calculateFees(
