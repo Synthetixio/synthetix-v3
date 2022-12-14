@@ -5,7 +5,7 @@ import "../storage/Node.sol";
 
 library PriceDeviationCircuitBreaker {
     error InvalidPrice();
-    error DeviationToleranceExceed(int256 deviation);
+    error DeviationToleranceExceeded(int256 deviation);
 
     function process(
         Node.Data[] memory prices,
@@ -23,7 +23,7 @@ library PriceDeviationCircuitBreaker {
         if (price1 != price2) {
             int256 difference = abs(price1 - price2);
             if (int256(deviationTolerance) < ((difference * 100) / price1)) {
-                revert DeviationToleranceExceed(difference / price1);
+                revert DeviationToleranceExceeded(difference / price1);
             }
         }
 

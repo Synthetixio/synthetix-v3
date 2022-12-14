@@ -51,7 +51,7 @@ describe('PriceDeviationCircuitBreaker', function () {
     it('expect process to revert for prices = [1, 0.5]', async () => {
       await assertRevert(
         OracleManagerModule.process(node1),
-        'DeviationToleranceExceed',
+        'DeviationToleranceExceeded',
         OracleManagerModule
       );
     });
@@ -59,7 +59,7 @@ describe('PriceDeviationCircuitBreaker', function () {
     it('expect process to revert for prices = [1, 1.5]', async () => {
       await assertRevert(
         OracleManagerModule.process(node2),
-        'DeviationToleranceExceed',
+        'DeviationToleranceExceeded',
         OracleManagerModule
       );
     });
