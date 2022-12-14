@@ -2,6 +2,9 @@
 pragma solidity ^0.8.0;
 
 library ERC721Storage {
+    bytes32 private constant _slotERC721Storage =
+        keccak256(abi.encode("io.synthetix.core-contracts.ERC721Storage"));
+
     struct Data {
         string name;
         string symbol;
@@ -13,7 +16,7 @@ library ERC721Storage {
     }
 
     function load() internal pure returns (Data storage store) {
-        bytes32 s = keccak256(abi.encode("ERC721"));
+        bytes32 s = _slotERC721Storage;
         assembly {
             store.slot := s
         }

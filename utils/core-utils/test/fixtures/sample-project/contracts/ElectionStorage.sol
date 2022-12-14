@@ -4,6 +4,9 @@ pragma solidity ^0.8.0;
 import "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
 
 contract ElectionStorage {
+    bytes32 private constant _slotElectionStorage =
+        keccak256(abi.encode("io.synthetix.core-utils.Election"));
+
     struct ElectionStore {
         // True if initializeElectionModule was called
         bool initialized;
@@ -85,9 +88,9 @@ contract ElectionStorage {
     }
 
     function _electionStore() internal pure returns (ElectionStore storage store) {
+        bytes32 s = _slotElectionStorage;
         assembly {
-            // bytes32(uint(keccak256("io.synthetix.election")) - 1)
-            store.slot := 0x4a7bae7406c7467d50a80c6842d6ba8287c729469098e48fc594351749ba4b22
+            store.slot := s
         }
     }
 }

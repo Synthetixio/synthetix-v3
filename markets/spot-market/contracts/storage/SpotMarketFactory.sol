@@ -8,6 +8,9 @@ import "./Fee.sol";
 import "./Wrapper.sol";
 
 library SpotMarketFactory {
+    bytes32 private constant _slotSpotMarketFactory =
+        keccak256(abi.encode("io.synthetix.spot-market.SpotMarketFactory"));
+
     using Price for Price.Data;
 
     error OnlyMarketOwner(address marketOwner, address sender);
@@ -20,7 +23,7 @@ library SpotMarketFactory {
     }
 
     function load() internal pure returns (Data storage store) {
-        bytes32 s = keccak256(abi.encode("SpotMarketFactory"));
+        bytes32 s = _slotSpotMarketFactory;
         assembly {
             store.slot := s
         }
@@ -38,23 +41,31 @@ library SpotMarketFactory {
         return load().synthConfigs[marketId];
     }
 
-    function getPriceData(SpotMarketFactory.Data storage self, uint128 marketId) internal view returns (Price.Data storage) {
+    function getPriceData(
+        SpotMarketFactory.Data storage self,
+        uint128 marketId
+    ) internal view returns (Price.Data storage) {
         return self.synthConfigs[marketId].priceData;
     }
 
-    function getFeeData(SpotMarketFactory.Data storage self, uint128 marketId) internal view returns (Fee.Data storage) {
+    function getFeeData(
+        SpotMarketFactory.Data storage self,
+        uint128 marketId
+    ) internal view returns (Fee.Data storage) {
         return self.synthConfigs[marketId].feeData;
     }
 
-    function getWrapperData(SpotMarketFactory.Data storage self, uint128 marketId)
-        internal
-        view
-        returns (Wrapper.Data storage)
-    {
+    function getWrapperData(
+        SpotMarketFactory.Data storage self,
+        uint128 marketId
+    ) internal view returns (Wrapper.Data storage) {
         return self.synthConfigs[marketId].wrapperData;
     }
 
-    function getCurrentPrice(SpotMarketFactory.Data storage self, uint128 marketId) internal view returns (uint) {
+    function getCurrentPrice(
+        SpotMarketFactory.Data storage self,
+        uint128 marketId
+    ) internal view returns (uint) {
         return getPriceData(self, marketId).getCurrentPrice();
     }
 }

@@ -15,7 +15,7 @@ library FeatureFlag {
     }
 
     function load(bytes32 featureName) internal pure returns (Data storage store) {
-        bytes32 s = keccak256(abi.encode("FeatureFlag", featureName));
+        bytes32 s = keccak256(abi.encode("io.synthetix.core-modules.FeatureFlag", featureName));
         assembly {
             store.slot := s
         }

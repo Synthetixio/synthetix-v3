@@ -150,7 +150,7 @@ library Market {
      * @dev Returns the market stored at the specified market id.
      */
     function load(uint128 id) internal pure returns (Data storage data) {
-        bytes32 s = keccak256(abi.encode("Market", id));
+        bytes32 s = keccak256(abi.encode("io.synthetix.synthetix.Market", id));
         assembly {
             data.slot := s
         }
