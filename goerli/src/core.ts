@@ -1,41 +1,40 @@
 import {
+  AccountCreated,
+  CollateralConfigured,
+  DelegationUpdated,
+  Deposited,
+  Liquidation,
+  PermissionGranted,
+  PermissionRevoked,
+  PoolConfigurationSet,
   PoolCreated,
   PoolNameUpdated,
-  PoolOwnershipAccepted,
-  PoolConfigurationSet,
   PoolNominationRenounced,
   PoolNominationRevoked,
   PoolOwnerNominated,
-} from '../generated/PoolModule/PoolModule';
-import { Deposited, Withdrawn } from '../generated/CollateralModule/CollateralModule';
-import { CollateralConfigured } from '../generated/CollateralConfigurationModule/CollateralConfigurationModule';
-import {
-  AccountCreated,
-  PermissionGranted,
-  PermissionRevoked,
-} from '../generated/AccountModule/AccountModule';
-import {
+  PoolOwnershipAccepted,
   RewardsClaimed as RewardsClaimedEvent,
   RewardsDistributed,
   RewardsDistributorRegistered,
-} from '../generated/RewardsManagerModule/RewardsManagerModule';
-import { Liquidation, VaultLiquidation } from '../generated/LiquidationModule/LiquidationModule';
-import { DelegationUpdated } from '../generated/VaultModule/VaultModule';
-import { UsdMinted, UsdBurned } from '../generated/IssueUSDModule/IssueUSDModule';
+  UsdBurned,
+  UsdMinted,
+  VaultLiquidation,
+  Withdrawn,
+} from '../generated/CoreProxy/CoreProxy';
 import {
-  Pool,
-  Market,
-  CollateralType,
   Account,
   AccountPermissionUsers,
-  Vault,
-  Position,
-  MarketConfiguration,
-  RewardsDistribution,
   AccountRewardsDistributor,
-  RewardsClaimed,
-  RewardsDistributor,
+  CollateralType,
   Liquidation as LiquidationEntity,
+  Market,
+  MarketConfiguration,
+  Pool,
+  Position,
+  RewardsClaimed,
+  RewardsDistribution,
+  RewardsDistributor,
+  Vault,
   VaultLiquidation as VaultLiquidationEntity,
 } from '../generated/schema';
 import { BigDecimal, BigInt, Bytes, store } from '@graphprotocol/graph-ts';
@@ -43,6 +42,12 @@ import { BigDecimal, BigInt, Bytes, store } from '@graphprotocol/graph-ts';
 ////////////////////
 // Event handlers //
 ////////////////////
+
+/////////////
+// Markets //
+/////////////
+
+export * from './market';
 
 ///////////
 // Pool //

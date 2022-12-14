@@ -1,9 +1,9 @@
 import {
+  CoreProxy,
   MarketRegistered,
-  MarketManagerModule,
   MarketUsdDeposited,
   MarketUsdWithdrawn,
-} from '../generated/MarketManagerModule/MarketManagerModule';
+} from '../generated/CoreProxy/CoreProxy';
 import { Market } from '../generated/schema';
 import { BigDecimal, log } from '@graphprotocol/graph-ts';
 import { createMarketSnapshotByDay } from './marketSnapshotByDay';
@@ -36,7 +36,7 @@ export function handleMarketUsdDeposited(event: MarketUsdDeposited): void {
   }
 
   const usdDeposited = market.usd_deposited.plus(event.params.amount.toBigDecimal());
-  const contract = MarketManagerModule.bind(event.address);
+  const contract = CoreProxy.bind(event.address);
   const reportedDebt = contract.getMarketReportedDebt(event.params.marketId).toBigDecimal();
   const netIssuance = market.net_issuance.minus(event.params.amount.toBigDecimal());
   market.reported_debt = reportedDebt;
@@ -66,7 +66,7 @@ export function handleMarketUsdWithdrawn(event: MarketUsdWithdrawn): void {
   const timestamp = event.block.timestamp;
   const blockNumber = event.block.number;
   const usdWithdrawn = market.usd_withdrawn.plus(event.params.amount.toBigDecimal());
-  const contract = MarketManagerModule.bind(event.address);
+  const contract = CoreProxy.bind(event.address);
   const reportedDebt = contract.getMarketReportedDebt(event.params.marketId).toBigDecimal();
   const netIssuance = market.net_issuance.plus(event.params.amount.toBigDecimal());
   market.reported_debt = reportedDebt;

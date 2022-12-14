@@ -1,23 +1,52 @@
 specVersion: 0.0.4
+
 schema:
   file: ./schema.graphql
+
 dataSources:
   - kind: ethereum
-    name: PoolModule
+    name: CoreProxy
     network: goerli
+
     source:
       address: '0x0E9628026e53f4c805073d85554A87dBd2011268'
-      abi: PoolModule
+      abi: CoreProxy
       startBlock: 7833258
+
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.6
       language: wasm/assemblyscript
+
+      abis:
+        - name: CoreProxy
+          file: ../../../node_modules/@synthetixio/v3-contracts/deployments/goerli/CoreProxy.json
+
       entities:
         - PoolModule
-      abis:
-        - name: PoolModule
-          file: ../../../node_modules/@synthetixio/v3-contracts/deployments/goerli/PoolModule.json
+
+        - MarketManagerModule
+
+        - CollateralType
+
+        - AccountModule
+        - AccountPermissionUsers
+
+        - VaultModule
+        - Position
+
+        - IssueUSDModule
+
+        - RewardsClaimed
+        - RewardsDistribution
+        - AccountRewardsDistributor
+        - RewardsDistributor
+
+        - Liquidation
+        - VaultLiquidation
+
+        - CollateralType
+
       eventHandlers:
         - event: PoolCreated(indexed uint128,indexed address,indexed address)
           handler: handlePoolCreated
@@ -33,195 +62,47 @@ dataSources:
           handler: handlePoolOwnerNominated
         - event: PoolConfigurationSet(indexed uint128,(uint128,uint128,int128)[],indexed address)
           handler: handlePoolConfigurationSet
-      file: ./src/core.ts
 
-  - kind: ethereum
-    name: MarketManagerModule
-    network: goerli
-    source:
-      address: '0x0E9628026e53f4c805073d85554A87dBd2011268'
-      abi: MarketManagerModule
-      startBlock: 7833258
-    mapping:
-      kind: ethereum/events
-      apiVersion: 0.0.6
-      language: wasm/assemblyscript
-      entities:
-        - MarketManagerModule
-      abis:
-        - name: MarketManagerModule
-          file: ../../../node_modules/@synthetixio/v3-contracts/deployments/goerli/MarketManagerModule.json
-      eventHandlers:
         - event: MarketRegistered(indexed address,indexed uint128,indexed address)
           handler: handleMarketCreated
         - event: MarketUsdDeposited(indexed uint128,indexed address,uint256,indexed address)
           handler: handleMarketUsdDeposited
         - event: MarketUsdWithdrawn(indexed uint128,indexed address,uint256,indexed address)
           handler: handleMarketUsdWithdrawn
-      file: ./src/market.ts
 
-  - kind: ethereum
-    name: CollateralModule
-    network: goerli
-    source:
-      address: '0x0E9628026e53f4c805073d85554A87dBd2011268'
-      abi: CollateralModule
-      startBlock: 7833258
-    mapping:
-      kind: ethereum/events
-      apiVersion: 0.0.6
-      language: wasm/assemblyscript
-      entities:
-        - CollateralType
-      abis:
-        - name: CollateralModule
-          file: ../../../node_modules/@synthetixio/v3-contracts/deployments/goerli/CollateralModule.json
-      eventHandlers:
         - event: Deposited(indexed uint128,indexed address,uint256,indexed address)
           handler: handleDeposited
         - event: Withdrawn(indexed uint128,indexed address,uint256,indexed address)
           handler: handleWithdrawn
-      file: ./src/core.ts
 
-  - kind: ethereum
-    name: AccountModule
-    network: goerli
-    source:
-      address: '0x0E9628026e53f4c805073d85554A87dBd2011268'
-      abi: AccountModule
-      startBlock: 7833258
-    mapping:
-      kind: ethereum/events
-      apiVersion: 0.0.6
-      language: wasm/assemblyscript
-      entities:
-        - AccountModule
-        - AccountPermissionUsers
-      abis:
-        - name: AccountModule
-          file: ../../../node_modules/@synthetixio/v3-contracts/deployments/goerli/AccountModule.json
-      eventHandlers:
         - event: AccountCreated(indexed address,indexed uint128)
           handler: handleAccountCreated
         - event: PermissionGranted(indexed uint128,indexed bytes32,indexed address,address)
           handler: handlePermissionGranted
         - event: PermissionRevoked(indexed uint128,indexed bytes32,indexed address,address)
           handler: handlePermissionRevoked
-      file: ./src/core.ts
-  - kind: ethereum
-    name: VaultModule
-    network: goerli
-    source:
-      address: '0x0E9628026e53f4c805073d85554A87dBd2011268'
-      abi: VaultModule
-      startBlock: 7833258
-    mapping:
-      kind: ethereum/events
-      apiVersion: 0.0.6
-      language: wasm/assemblyscript
-      entities:
-        - VaultModule
-        - Position
-      abis:
-        - name: VaultModule
-          file: ../../../node_modules/@synthetixio/v3-contracts/deployments/goerli/VaultModule.json
-      eventHandlers:
+
         - event: DelegationUpdated(indexed uint128,indexed uint128,address,uint256,uint256,indexed address)
           handler: handleDelegationUpdated
-      file: ./src/core.ts
 
-  - kind: ethereum
-    name: IssueUSDModule
-    network: goerli
-    source:
-      address: '0x0E9628026e53f4c805073d85554A87dBd2011268'
-      abi: IssueUSDModule
-      startBlock: 7833258
-    mapping:
-      kind: ethereum/events
-      apiVersion: 0.0.6
-      language: wasm/assemblyscript
-      entities:
-        - IssueUSDModule
-      abis:
-        - name: IssueUSDModule
-          file: ../../../node_modules/@synthetixio/v3-contracts/deployments/goerli/IssueUSDModule.json
-      eventHandlers:
         - event: UsdMinted(indexed uint128,indexed uint128,address,uint256,indexed address)
           handler: handleUSDMinted
         - event: UsdBurned(indexed uint128,indexed uint128,address,uint256,indexed address)
           handler: handleUSDBurned
-      file: ./src/core.ts
 
-  - kind: ethereum
-    name: RewardsManagerModule
-    network: goerli
-    source:
-      address: '0x0E9628026e53f4c805073d85554A87dBd2011268'
-      abi: RewardsManagerModule
-      startBlock: 7833258
-    mapping:
-      kind: ethereum/events
-      apiVersion: 0.0.6
-      language: wasm/assemblyscript
-      entities:
-        - RewardsClaimed
-        - RewardsDistribution
-        - AccountRewardsDistributor
-        - RewardsDistributor
-      abis:
-        - name: RewardsManagerModule
-          file: ../../../node_modules/@synthetixio/v3-contracts/deployments/goerli/RewardsManagerModule.json
-      eventHandlers:
         - event: RewardsDistributed(indexed uint128,indexed address,address,uint256,uint256,uint256)
           handler: handleRewardsDistributed
         - event: RewardsClaimed(indexed uint128,indexed uint128,indexed address,address,uint256)
           handler: handleRewardsClaimed
         - event: RewardsDistributorRegistered(indexed uint128,indexed address,indexed address)
           handler: handleRewardsDistributorRegistered
-      file: ./src/core.ts
 
-  - kind: ethereum
-    name: LiquidationModule
-    network: goerli
-    source:
-      address: '0x0E9628026e53f4c805073d85554A87dBd2011268'
-      abi: LiquidationModule
-      startBlock: 7833258
-    mapping:
-      kind: ethereum/events
-      apiVersion: 0.0.6
-      language: wasm/assemblyscript
-      entities:
-        - Liquidation
-        - VaultLiquidation
-      abis:
-        - name: LiquidationModule
-          file: ../../../node_modules/@synthetixio/v3-contracts/deployments/goerli/LiquidationModule.json
-      eventHandlers:
         - event: Liquidation(indexed uint128,indexed uint128,indexed address,(uint256,uint256,uint256),uint128,address)
           handler: handleLiquidation
         - event: VaultLiquidation(indexed uint128,indexed address,(uint256,uint256,uint256),uint128,address)
           handler: handleVaultLiquidation
-      file: ./src/core.ts
 
-  - kind: ethereum
-    name: CollateralConfigurationModule
-    network: goerli
-    source:
-      address: '0x0E9628026e53f4c805073d85554A87dBd2011268'
-      abi: CollateralConfigurationModule
-      startBlock: 7833258
-    mapping:
-      kind: ethereum/events
-      apiVersion: 0.0.6
-      language: wasm/assemblyscript
-      entities:
-        - CollateralType
-      abis:
-        - name: CollateralConfigurationModule
-          file: ../../../node_modules/@synthetixio/v3-contracts/deployments/goerli/CollateralConfigurationModule.json
-      eventHandlers:
         - event: CollateralConfigured(indexed address,(bool,uint256,uint256,uint256,bytes32,address,uint256))
           handler: handleCollateralConfigured
+
       file: ./src/core.ts
