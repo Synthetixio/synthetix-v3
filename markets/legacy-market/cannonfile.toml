@@ -15,10 +15,10 @@ defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
 defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
 
 [setting.v2x_package]
-defaultValue = "synthetix:2.79.1"
+defaultValue = "synthetix:2.79.0-alpha"
 
 [setting.v3_package]
-defaultValue = "synthetix:3.0.0-alpha.4"
+defaultValue = "synthetix:3.0.0-alpha.5"
 
 [setting.oracle_package]
 defaultValue = "chainlink:0.7-mock"
