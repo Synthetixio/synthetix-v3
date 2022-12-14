@@ -72,16 +72,11 @@ describe('RewardsManagerModule', function () {
     });
 
     it('reverts with invalid reward distributor (does not support IRewardDistributor interface)', async () => {
-      // TODO try supportsInterface
-      // RewardsManagerModule probably needs a helper to try/catch
-      // the call to IERC165 supports interface,
-      // otherwise it will revert when trying to call that function.
       await assertRevert(
         systems()
           .Core.connect(owner)
           .registerRewardsDistributor(poolId, collateralAddress(), await owner.getAddress()),
-        'transaction reverted'
-        // 'InvalidParameter("distributor", "invalid interface")'
+        'InvalidParameter("distributor", "invalid interface")'
       );
     });
 
