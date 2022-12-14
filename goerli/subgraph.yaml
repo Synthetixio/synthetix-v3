@@ -58,7 +58,7 @@ dataSources:
           handler: handleMarketUsdDeposited
         - event: MarketUsdWithdrawn(indexed uint128,indexed address,uint256,indexed address)
           handler: handleMarketUsdWithdrawn
-      file: ./src/core.ts
+      file: ./src/market.ts
 
   - kind: ethereum
     name: CollateralModule

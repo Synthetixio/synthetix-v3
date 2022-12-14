@@ -13,9 +13,6 @@ import {
   handleCollateralConfigured,
   handleDelegationUpdated,
   handleDeposited,
-  handleMarketCreated,
-  handleMarketUsdDeposited,
-  handleMarketUsdWithdrawn,
   handleNewPoolOwner,
   handlePoolOwnerNominated,
   handlePermissionGranted,
@@ -41,8 +38,6 @@ import {
   createDepositEvent,
   createLiquidationEvent,
   createMarketCreatedEvent,
-  createMarketUsdDepositedEvent,
-  createMarketUsdWithdrawnEvent,
   createPoolOwnerNominatedEvent,
   createPermissionGrantedEvent,
   createPermissionRevokedEvent,
@@ -60,33 +55,7 @@ import {
   createVaultLiquidationEvent,
   createWithdrawnEvent,
 } from './event-factories';
-
-export {
-  handleAccountCreated,
-  handleCollateralConfigured,
-  handleDelegationUpdated,
-  handleDeposited,
-  handleMarketCreated,
-  handleMarketUsdDeposited,
-  handleMarketUsdWithdrawn,
-  handleNewPoolOwner,
-  handlePoolOwnerNominated,
-  handlePermissionGranted,
-  handlePermissionRevoked,
-  handlePoolConfigurationSet,
-  handlePoolCreated,
-  handlePoolNameUpdated,
-  handlePoolNominationRenounced,
-  handlePoolNominationRevoked,
-  handleUSDBurned,
-  handleUSDMinted,
-  handleWithdrawn,
-  handleRewardsDistributed,
-  handleRewardsClaimed,
-  handleRewardsDistributorRegistered,
-  handleLiquidation,
-  handleVaultLiquidation,
-};
+import { handleMarketCreated } from '../src/market';
 
 describe('core tests', () => {
   beforeEach(() => {
@@ -240,25 +209,6 @@ describe('core tests', () => {
     assert.notInStore('Pool', '2');
   });
 
-  test('handleMarketCreated', () => {
-    // Needs to be here because of Closures
-    const now = new Date(1668448739566).getTime();
-    const newMarketRegisteredEvent = createMarketCreatedEvent(1, address, now, now - 1000);
-    handleMarketCreated(newMarketRegisteredEvent);
-    assert.fieldEquals('Market', '1', 'id', '1');
-    assert.fieldEquals('Market', '1', 'address', address);
-    assert.fieldEquals('Market', '1', 'created_at', now.toString());
-    assert.fieldEquals('Market', '1', 'created_at_block', (now - 1000).toString());
-    assert.fieldEquals('Market', '1', 'updated_at', now.toString());
-    assert.fieldEquals('Market', '1', 'updated_at_block', (now - 1000).toString());
-    assert.fieldEquals('Market', '1', 'usd_deposited', '0');
-    assert.fieldEquals('Market', '1', 'usd_withdrawn', '0');
-    assert.fieldEquals('Market', '1', 'net_issuance', '0');
-    assert.fieldEquals('Market', '1', 'reported_debt', '0');
-    assert.assertNull(store.get('Market', '1')!.get('configurations'));
-    assert.notInStore('Market', '2');
-  });
-
   test('handleAccountCreated', () => {
     // Needs to be here because of Closures
     const now = new Date(1668448739566).getTime();
@@ -361,56 +311,6 @@ describe('core tests', () => {
     assert.fieldEquals('MarketConfiguration', '1-2', 'updated_at', (now + 4000).toString());
     assert.fieldEquals('MarketConfiguration', '1-2', 'updated_at_block', (now + 3000).toString());
     assert.notInStore('Pool', '2');
-  });
-
-  test('calculate net issuance', () => {
-    // Needs to be here because of Closures
-    const now = new Date(1668448739566).getTime();
-    const newMarketRegisteredEvent = createMarketCreatedEvent(1, address, now, now - 1000);
-    const arg = ethereum.Value.fromUnsignedBigInt(BigInt.fromU64(1));
-    createMockedFunction(
-      Address.fromString(defaultGraphContractAddress),
-      'getMarketReportedDebt',
-      'getMarketReportedDebt(uint128):(uint256)'
-    )
-      .withArgs([arg])
-      .returns([ethereum.Value.fromI32(23)]);
-    const newUsdDepositedEvent = createMarketUsdDepositedEvent(
-      1,
-      Address.fromString(address2),
-      BigInt.fromU64(200),
-      now + 1000,
-      now
-    );
-    const newUsdWithdrawnEvent = createMarketUsdWithdrawnEvent(
-      1,
-      Address.fromString(address2),
-      BigInt.fromU64(300),
-      now + 2000,
-      now + 1000
-    );
-    const newUsdWithdrawnEvent1 = createMarketUsdWithdrawnEvent(
-      1,
-      Address.fromString(address2),
-      BigInt.fromU64(100),
-      now + 2000,
-      now + 1000
-    );
-    handleMarketCreated(newMarketRegisteredEvent);
-    handleMarketUsdDeposited(newUsdDepositedEvent);
-    handleMarketUsdWithdrawn(newUsdWithdrawnEvent);
-    handleMarketUsdWithdrawn(newUsdWithdrawnEvent1);
-    assert.fieldEquals('Market', '1', 'address', address);
-    assert.assertNull(store.get('Market', '1')!.get('configurations'));
-    assert.fieldEquals('Market', '1', 'reported_debt', '23');
-    assert.fieldEquals('Market', '1', 'usd_deposited', '200');
-    assert.fieldEquals('Market', '1', 'usd_withdrawn', '400');
-    assert.fieldEquals('Market', '1', 'net_issuance', '200');
-    assert.fieldEquals('Market', '1', 'created_at', now.toString());
-    assert.fieldEquals('Market', '1', 'created_at_block', (now - 1000).toString());
-    assert.fieldEquals('Market', '1', 'updated_at', (now + 2000).toString());
-    assert.fieldEquals('Market', '1', 'updated_at_block', (now + 1000).toString());
-    assert.notInStore('Market', '2');
   });
 
   test('handleCollateralConfigured', () => {
