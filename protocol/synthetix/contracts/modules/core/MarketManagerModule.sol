@@ -8,6 +8,7 @@ import "../../interfaces/external/IMarket.sol";
 import "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
 import "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+import "@synthetixio/core-contracts/contracts/utils/ERC165Helper.sol";
 
 import "../../storage/Market.sol";
 import "../../storage/MarketCreator.sol";
@@ -37,7 +38,7 @@ contract MarketManagerModule is IMarketManagerModule {
     function registerMarket(address market) external override returns (uint128 marketId) {
         FeatureFlag.ensureAccessToFeature(_MARKET_FEATURE_FLAG);
 
-        if (!IMarket(market).supportsInterface(type(IMarket).interfaceId)) {
+        if (!ERC165Helper.safeSupportsInterface(market, type(IMarket).interfaceId)) {
             revert IncorrectMarketInterface(market);
         }
 

@@ -39,6 +39,15 @@ describe('MarketManagerModule', function () {
       );
     });
 
+    it('reverts when trying to register a market that does not support the IMarket interface', async function () {
+      await assertRevert(
+        systems()
+          .Core.connect(owner)
+          .registerMarket(await owner.getAddress()),
+        `IncorrectMarketInterface("${await owner.getAddress()}")`
+      );
+    });
+
     describe('successful', async () => {
       const expectedMarketId = marketId().add(1);
 
