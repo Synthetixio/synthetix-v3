@@ -8,7 +8,7 @@ import "./Market.sol";
  */
 library MarketCreator {
     bytes32 private constant _slotMarketCreator =
-        keccak256(abi.encode("io.synthetix.synthetix.MarketStore"));
+        keccak256(abi.encode("io.synthetix.synthetix.Markets"));
 
     struct Data {
         mapping(address => uint128[]) marketIdsForAddress;

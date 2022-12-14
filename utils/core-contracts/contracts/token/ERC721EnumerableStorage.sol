@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 library ERC721EnumerableStorage {
     bytes32 private constant _slotERC721EnumerableStorage =
-        keccak256(abi.encode("io.synthetix.core-contracts.ERC721EnumerableStorage"));
+        keccak256(abi.encode("io.synthetix.core-contracts.ERC721Enumerable"));
 
     struct Data {
         mapping(uint256 => uint256) ownedTokensIndex;

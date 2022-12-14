@@ -6,7 +6,7 @@ pragma solidity ^0.8.0;
  */
 library OracleManager {
     bytes32 private constant _slotOracleManager =
-        keccak256(abi.encode("io.synthetix.oracle-manager.OracleManager"));
+        keccak256(abi.encode("io.synthetix.synthetix.OracleManager"));
 
     struct Data {
         /**

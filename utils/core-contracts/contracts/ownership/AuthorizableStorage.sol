@@ -5,7 +5,7 @@ import "../errors/AccessError.sol";
 
 library AuthorizableStorage {
     bytes32 private constant _slotAuthorizableStorage =
-        keccak256(abi.encode("io.synthetix.synthetix.SystemPoolConfiguration"));
+        keccak256(abi.encode("io.synthetix.synthetix.Authorizable"));
 
     struct Data {
         address authorized;

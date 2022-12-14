@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 library ERC721Storage {
     bytes32 private constant _slotERC721Storage =
-        keccak256(abi.encode("io.synthetix.core-contracts.ERC721Storage"));
+        keccak256(abi.encode("io.synthetix.core-contracts.ERC721"));
 
     struct Data {
         string name;
