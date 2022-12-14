@@ -6,7 +6,7 @@ import { bootstrapWithNodes } from '../../bootstrap';
 import NodeTypes from '../../mixins/Node.types';
 
 describe('PriceDeviationCircuitBreaker', function () {
-  const { getContract, nodeId1, nodeId3 } = bootstrapWithNodes();
+  const { getContract, nodeId1, nodeId3, nodeId4 } = bootstrapWithNodes();
 
   const abi = ethers.utils.defaultAbiCoder;
   let OracleManagerModule: ethers.Contract;
@@ -14,11 +14,12 @@ describe('PriceDeviationCircuitBreaker', function () {
 
   before('prepare environment', async () => {
     OracleManagerModule = getContract('OracleManagerModule');
+    //price = [1, 0.5]
     parents = [nodeId1(), nodeId3()];
   });
 
   describe('register a circuit breaker with 40% tolerance', async () => {
-    let nodeId;
+    let node1, node2;
     before(async () => {
       // 40% Deviation Tolerance
       const deviationTolerance = 40;
@@ -29,16 +30,35 @@ describe('PriceDeviationCircuitBreaker', function () {
         NodeTypes.PriceDeviationCircuitBreaker,
         params
       );
-      nodeId = await OracleManagerModule.getNodeId(
+      node1 = await OracleManagerModule.getNodeId(
         parents,
+        NodeTypes.PriceDeviationCircuitBreaker,
+        params
+      );
+
+      await OracleManagerModule.registerNode(
+        [nodeId1(), nodeId4()],
+        NodeTypes.PriceDeviationCircuitBreaker,
+        params
+      );
+      node2 = await OracleManagerModule.getNodeId(
+        [nodeId1(), nodeId4()],
         NodeTypes.PriceDeviationCircuitBreaker,
         params
       );
     });
 
-    it('expect process to revert since prices are 50% different', async () => {
+    it('expect process to revert for prices = [1, 0.5]', async () => {
       await assertRevert(
-        OracleManagerModule.process(nodeId),
+        OracleManagerModule.process(node1),
+        'DeviationToleranceExceed',
+        OracleManagerModule
+      );
+    });
+
+    it('expect process to revert for prices = [1, 1.5]', async () => {
+      await assertRevert(
+        OracleManagerModule.process(node2),
         'DeviationToleranceExceed',
         OracleManagerModule
       );
