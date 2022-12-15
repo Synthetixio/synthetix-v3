@@ -4,6 +4,7 @@ import hre from 'hardhat';
 import { ethers } from 'ethers';
 import { fastForwardTo, getTime } from '@synthetixio/core-utils/utils/hardhat/rpc';
 
+import Permissions from '../../mixins/AccountRBACMixin.permissions';
 import { bootstrapWithStakedPool } from '../../bootstrap';
 import { snapshotCheckpoint } from '../../../utils/snapshot';
 
@@ -66,7 +67,7 @@ describe('RewardsManagerModule', function () {
         systems()
           .Core.connect(user1)
           .registerRewardsDistributor(poolId, collateralAddress(), RewardDistributor.address),
-        'Unauthorized',
+        `Unauthorized("${await user1.getAddress()}")`,
         systems().Core
       );
     });
@@ -476,7 +477,7 @@ describe('RewardsManagerModule', function () {
         systems()
           .Core.connect(user2)
           .claimRewards(accountId, poolId, collateralAddress(), RewardDistributor.address),
-        'PermissionDenied',
+        `PermissionDenied("${accountId}", "${Permissions.REWARDS}", "${await user2.getAddress()}")`,
         systems().Core
       );
     });
