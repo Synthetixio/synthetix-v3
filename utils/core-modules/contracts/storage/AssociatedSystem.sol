@@ -15,7 +15,7 @@ library AssociatedSystem {
     error MismatchAssociatedSystemKind(bytes32 expected, bytes32 actual);
 
     function load(bytes32 id) internal pure returns (Data storage store) {
-        bytes32 s = keccak256(abi.encode("AssociatedSystem", id));
+        bytes32 s = keccak256(abi.encode("io.synthetix.core-modules.AssociatedSystem", id));
         assembly {
             store.slot := s
         }

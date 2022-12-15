@@ -7,13 +7,16 @@ import "./Market.sol";
  * @title Encapsulates market creation logic
  */
 library MarketCreator {
+    bytes32 private constant _slotMarketCreator =
+        keccak256(abi.encode("io.synthetix.synthetix.Markets"));
+
     struct Data {
         mapping(address => uint128[]) marketIdsForAddress;
         uint128 lastCreatedMarketId;
     }
 
     function getMarketStore() internal pure returns (Data storage data) {
-        bytes32 s = keccak256("MarketStore");
+        bytes32 s = _slotMarketCreator;
         assembly {
             data.slot := s
         }

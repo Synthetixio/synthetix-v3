@@ -7,7 +7,8 @@ library NodeDefinition {
         REDUCER,
         EXTERNAL,
         CHAINLINK,
-        PYTH
+        PYTH,
+        PriceDeviationCircuitBreaker
     }
 
     struct Data {
@@ -17,7 +18,7 @@ library NodeDefinition {
     }
 
     function load(bytes32 id) internal pure returns (Data storage data) {
-        bytes32 s = keccak256(abi.encode("Node", id));
+        bytes32 s = keccak256(abi.encode("io.synthetix.oracle-manager.Node", id));
         assembly {
             data.slot := s
         }

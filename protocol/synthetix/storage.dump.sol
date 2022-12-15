@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.0;
+pragma solidity >=0.4.22<0.9.0;
 
 // @custom:artifact @synthetixio/core-contracts/contracts/ownership/AuthorizableStorage.sol:AuthorizableStorage
 library AuthorizableStorage {
@@ -95,8 +95,21 @@ library ERC721Storage {
     }
 }
 
+// @custom:artifact @synthetixio/core-contracts/contracts/utils/DecimalMath.sol:DecimalMath
+library DecimalMath {
+    uint256 public constant UNIT = 1e18;
+    int256 public constant UNIT_INT = int256(UNIT);
+    uint128 public constant UNIT_UINT128 = uint128(UNIT);
+    int128 public constant UNIT_INT128 = int128(UNIT_INT);
+    uint256 public constant UNIT_PRECISE = 1e27;
+    int256 public constant UNIT_PRECISE_INT = int256(UNIT_PRECISE);
+    int128 public constant UNIT_PRECISE_INT128 = int128(UNIT_PRECISE_INT);
+    uint256 public constant PRECISION_FACTOR = 9;
+}
+
 // @custom:artifact @synthetixio/core-contracts/contracts/utils/HeapUtil.sol:HeapUtil
 library HeapUtil {
+    uint private constant _ROOT_INDEX = 1;
     struct Data {
         uint128 idCount;
         Node[] nodes;
@@ -122,8 +135,16 @@ library SetUtil {
     }
 }
 
+// @custom:artifact @synthetixio/core-modules/contracts/modules/NftModule.sol:NftModule
+contract NftModule {
+    bytes32 internal constant _INITIALIZED_NAME = "NftModule";
+}
+
 // @custom:artifact @synthetixio/core-modules/contracts/storage/AssociatedSystem.sol:AssociatedSystem
 library AssociatedSystem {
+    bytes32 public constant KIND_ERC20 = "erc20";
+    bytes32 public constant KIND_ERC721 = "erc721";
+    bytes32 public constant KIND_UNMANAGED = "unmanaged";
     struct Data {
         address proxy;
         address impl;
@@ -225,6 +246,59 @@ interface IEVM2AnySubscriptionOnRampRouterInterface {
     }
 }
 
+// @custom:artifact contracts/modules/core/AccountModule.sol:AccountModule
+contract AccountModule {
+    bytes32 private constant _ACCOUNT_SYSTEM = "accountNft";
+}
+
+// @custom:artifact contracts/modules/core/AssociateDebtModule.sol:AssociateDebtModule
+contract AssociateDebtModule {
+    bytes32 private constant _USD_TOKEN = "USDToken";
+    bytes32 private constant _ASSOCIATE_DEBT_FEATURE_FLAG = "associateDebt";
+}
+
+// @custom:artifact contracts/modules/core/IssueUSDModule.sol:IssueUSDModule
+contract IssueUSDModule {
+    bytes32 private constant _USD_TOKEN = "USDToken";
+}
+
+// @custom:artifact contracts/modules/core/LiquidationModule.sol:LiquidationModule
+contract LiquidationModule {
+    bytes32 private constant _USD_TOKEN = "USDToken";
+}
+
+// @custom:artifact contracts/modules/core/MarketManagerModule.sol:MarketManagerModule
+contract MarketManagerModule {
+    bytes32 private constant _USD_TOKEN = "USDToken";
+    bytes32 private constant _MARKET_FEATURE_FLAG = "registerMarket";
+}
+
+// @custom:artifact contracts/modules/core/PoolModule.sol:PoolModule
+contract PoolModule {
+    bytes32 private constant _POOL_FEATURE_FLAG = "createPool";
+}
+
+// @custom:artifact contracts/modules/core/RewardsManagerModule.sol:RewardsManagerModule
+contract RewardsManagerModule {
+    uint256 private constant _MAX_REWARD_DISTRIBUTIONS = 10;
+}
+
+// @custom:artifact contracts/modules/core/UtilsModule.sol:UtilsModule
+contract UtilsModule {
+    bytes32 private constant _USD_TOKEN = "USDToken";
+    bytes32 private constant _CCIP_CHAINLINK_SEND = "ccipChainlinkSend";
+    bytes32 private constant _CCIP_CHAINLINK_RECV = "ccipChainlinkRecv";
+    bytes32 private constant _CCIP_CHAINLINK_TOKEN_POOL = "ccipChainlinkTokenPool";
+}
+
+// @custom:artifact contracts/modules/usd/USDTokenModule.sol:USDTokenModule
+contract USDTokenModule {
+    uint256 private constant _TRANSFER_GAS_LIMIT = 100000;
+    bytes32 private constant _CCIP_CHAINLINK_SEND = "ccipChainlinkSend";
+    bytes32 private constant _CCIP_CHAINLINK_RECV = "ccipChainlinkRecv";
+    bytes32 private constant _CCIP_CHAINLINK_TOKEN_POOL = "ccipChainlinkTokenPool";
+}
+
 // @custom:artifact contracts/storage/Account.sol:Account
 library Account {
     struct Data {
@@ -243,6 +317,11 @@ library Account {
 
 // @custom:artifact contracts/storage/AccountRBAC.sol:AccountRBAC
 library AccountRBAC {
+    bytes32 internal constant _ADMIN_PERMISSION = "ADMIN";
+    bytes32 internal constant _WITHDRAW_PERMISSION = "WITHDRAW";
+    bytes32 internal constant _DELEGATE_PERMISSION = "DELEGATE";
+    bytes32 internal constant _MINT_PERMISSION = "MINT";
+    bytes32 internal constant _REWARDS_PERMISSION = "REWARDS";
     struct Data {
         address owner;
         mapping(address => SetUtil.Bytes32Set) permissions;
@@ -475,4 +554,9 @@ library VaultEpoch {
         ScalableMapping.Data collateralAmounts;
         mapping(uint256 => int256) consolidatedDebtAmountsD18;
     }
+}
+
+// @custom:artifact hardhat/console.sol:console
+library console {
+    address internal constant CONSOLE_ADDRESS = address(0x000000000000000000636F6e736F6c652e6c6f67);
 }

@@ -6,6 +6,7 @@ import "../utils/ReducerNodeLibrary.sol";
 import "../utils/ExternalNodeLibrary.sol";
 import "../utils/PythNodeLibrary.sol";
 import "../utils/ChainlinkNodeLibrary.sol";
+import "../utils/PriceDeviationCircuitBreaker.sol";
 
 import "../storage/Node.sol";
 import "../storage/NodeDefinition.sol";
@@ -64,7 +65,7 @@ contract OracleManagerModule is IOracleManagerModule {
 
     modifier onlyValidNodeType(NodeDefinition.NodeType nodeType) {
         if (!_validateNodeType(nodeType)) {
-            revert UnsupportedNodeType(uint(nodeType));
+            revert UnsupportedNodeType(uint256(nodeType));
         }
 
         _;
@@ -74,7 +75,8 @@ contract OracleManagerModule is IOracleManagerModule {
         return (NodeDefinition.NodeType.REDUCER == nodeType ||
             NodeDefinition.NodeType.EXTERNAL == nodeType ||
             NodeDefinition.NodeType.CHAINLINK == nodeType ||
-            NodeDefinition.NodeType.PYTH == nodeType);
+            NodeDefinition.NodeType.PYTH == nodeType ||
+            NodeDefinition.NodeType.PriceDeviationCircuitBreaker == nodeType);
     }
 
     function _getNodeId(NodeDefinition.Data memory nodeDefinition) internal pure returns (bytes32) {
@@ -127,8 +129,12 @@ contract OracleManagerModule is IOracleManagerModule {
             return ChainlinkNodeLibrary.process(nodeDefinition.parameters);
         } else if (nodeDefinition.nodeType == NodeDefinition.NodeType.PYTH) {
             return PythNodeLibrary.process(nodeDefinition.parameters);
+        } else if (
+            nodeDefinition.nodeType == NodeDefinition.NodeType.PriceDeviationCircuitBreaker
+        ) {
+            return PriceDeviationCircuitBreaker.process(prices, nodeDefinition.parameters);
         } else {
-            revert UnsupportedNodeType(uint(nodeDefinition.nodeType));
+            revert UnsupportedNodeType(uint256(nodeDefinition.nodeType));
         }
     }
 }

@@ -59,14 +59,16 @@ library CollateralConfiguration {
     }
 
     function load(address token) internal pure returns (Data storage data) {
-        bytes32 s = keccak256(abi.encode("CollateralConfiguration", token));
+        bytes32 s = keccak256(abi.encode("io.synthetix.synthetix.CollateralConfiguration", token));
         assembly {
             data.slot := s
         }
     }
 
     function loadAvailableCollaterals() internal pure returns (SetUtil.AddressSet storage data) {
-        bytes32 s = keccak256(abi.encode("CollateralConfiguration_availableCollaterals"));
+        bytes32 s = keccak256(
+            abi.encode("io.synthetix.synthetix.CollateralConfiguration_availableCollaterals")
+        );
         assembly {
             data.slot := s
         }
