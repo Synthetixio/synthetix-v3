@@ -24,7 +24,7 @@ describe('NftModule', () => {
     it('reverts when not owner', async () => {
       await assertRevert(
         NftModule.connect(user).initialize('Temp Token', 'TMP', 18),
-        'Unauthorized'
+        `Unauthorized("${await user.getAddress()}")`
       );
     });
 
