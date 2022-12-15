@@ -85,11 +85,16 @@ describe('IssueUSDModule', function () {
     });
 
     it('verifies sufficient c-ratio', async () => {
+      const { issuanceRatioD18 } = await systems().Core.getCollateralConfiguration(
+        collateralAddress()
+      );
+      const price = await systems().Core.getCollateralPrice(collateralAddress());
+
       await assertRevert(
         systems()
           .Core.connect(user1)
           .mintUsd(accountId, poolId, collateralAddress(), depositAmount),
-        'InsufficientCollateralRatio',
+        `InsufficientCollateralRatio("${depositAmount}", "${depositAmount}", "${price}", "${issuanceRatioD18}")`,
         systems().Core
       );
     });
