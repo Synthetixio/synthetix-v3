@@ -35,7 +35,7 @@ describe('MarketManagerModule', function () {
     it('does not allow non-permissioned user to register market', async () => {
       await assertRevert(
         systems().Core.connect(user2).registerMarket(user1.getAddress()),
-        'FeatureUnavailable'
+        'FeatureUnavailable()'
       );
     });
 
