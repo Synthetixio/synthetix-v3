@@ -131,6 +131,7 @@ describe('VaultModule', function () {
     });
 
     it('verifies leverage', async () => {
+      const leverage = ethers.utils.parseEther('1.1');
       await assertRevert(
         systems()
           .Core.connect(user1)
@@ -139,9 +140,9 @@ describe('VaultModule', function () {
             poolId,
             collateralAddress(),
             depositAmount.mul(2),
-            ethers.utils.parseEther('1.1')
+            leverage
           ),
-        'InvalidLeverage',
+        `InvalidLeverage("${leverage}")`,
         systems().Core
       );
     });
@@ -201,7 +202,7 @@ describe('VaultModule', function () {
               depositAmount.div(50),
               ethers.utils.parseEther('1')
             ),
-          'CollateralDepositDisabled',
+          `CollateralDepositDisabled("${collateralAddress()}")`,
           systems().Core
         );
       });
@@ -337,7 +338,7 @@ describe('VaultModule', function () {
             await systems().Core.connect(user2).delegateCollateral(
               user2AccountId,
               poolId,
-              collateralAddress,
+              collateralAddress(),
               depositAmount.div(3), // user1 50%, user2 50%
               ethers.utils.parseEther('1')
             );
@@ -346,6 +347,9 @@ describe('VaultModule', function () {
 
         describe('increase collateral', async () => {
           it('fails when not enough available collateral in account', async () => {
+            const wanted = depositAmount.mul(3);
+            const missing = wanted.sub(depositAmount.div(3));
+
             await assertRevert(
               systems()
                 .Core.connect(user2)
@@ -353,10 +357,10 @@ describe('VaultModule', function () {
                   user2AccountId,
                   poolId,
                   collateralAddress(),
-                  depositAmount.mul(3),
+                  wanted,
                   ethers.utils.parseEther('1')
                 ),
-              'InsufficientAccountCollateral',
+              `InsufficientAccountCollateral("${missing}")`,
               systems().Core
             );
           });
@@ -384,7 +388,7 @@ describe('VaultModule', function () {
                   depositAmount, // user1 50%, user2 50%
                   ethers.utils.parseEther('1')
                 ),
-                'CollateralDepositDisabled',
+                `CollateralDepositDisabled("${collateralAddress()}")`,
                 systems().Core
               );
             });
@@ -414,6 +418,13 @@ describe('VaultModule', function () {
 
         describe('decrease collateral', async () => {
           it('fails when insufficient c-ratio', async () => {
+            const { issuanceRatioD18 } = await systems().Core.getCollateralConfiguration(
+              collateralAddress()
+            );
+            const price = await systems().Core.getCollateralPrice(collateralAddress());
+            const deposit = depositAmount.div(50);
+            const debt = depositAmount.div(100);
+
             await assertRevert(
               systems()
                 .Core.connect(user2)
@@ -424,7 +435,9 @@ describe('VaultModule', function () {
                   depositAmount.div(50),
                   ethers.utils.parseEther('1')
                 ),
-              'InsufficientCollateralRatio',
+              `InsufficientCollateralRatio("${deposit}", "${debt}", "${deposit
+                .mul(price)
+                .div(debt)}", "${issuanceRatioD18}")`,
               systems().Core
             );
           });
