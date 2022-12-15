@@ -154,6 +154,23 @@ export class Pool extends Entity {
     }
   }
 
+  get market_ids(): Array<string> | null {
+    let value = this.get('market_ids');
+    if (!value || value.kind == ValueKind.NULL) {
+      return null;
+    } else {
+      return value.toStringArray();
+    }
+  }
+
+  set market_ids(value: Array<string> | null) {
+    if (!value) {
+      this.unset('market_ids');
+    } else {
+      this.set('market_ids', Value.fromStringArray(<Array<string>>value));
+    }
+  }
+
   get configurations(): Array<string> | null {
     let value = this.get('configurations');
     if (!value || value.kind == ValueKind.NULL) {

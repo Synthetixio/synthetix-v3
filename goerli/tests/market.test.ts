@@ -39,7 +39,6 @@ describe('Market tests', () => {
     assert.fieldEquals('Market', '1', 'usd_withdrawn', '0');
     assert.fieldEquals('Market', '1', 'net_issuance', '0');
     assert.fieldEquals('Market', '1', 'reported_debt', '0');
-    assert.assertNull(store.get('Market', '1')!.get('configurations'));
     assert.notInStore('Market', '2');
   });
 
@@ -124,7 +123,6 @@ describe('Market tests', () => {
 
     /* Assert that the market has the most recent values */
     assert.fieldEquals('Market', '1', 'address', address);
-    assert.assertNull(store.get('Market', '1')!.get('configurations'));
     assert.fieldEquals('Market', '1', 'reported_debt', '23');
     assert.fieldEquals('Market', '1', 'usd_deposited', '400');
     assert.fieldEquals('Market', '1', 'usd_withdrawn', '400');

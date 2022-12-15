@@ -10,6 +10,8 @@ type Pool @entity {
   "Only set when name of the pool got updated"
   name: String
   total_weight: BigInt
+  "This is an internal field, needed to keep configurations in sync. The reason for this is due to derived fields are no readable from event handlers. Consumers should look up markets by the configurations field"
+  market_ids: [String!]
   configurations: [MarketConfiguration!] @derivedFrom(field: "pool")
 }
 

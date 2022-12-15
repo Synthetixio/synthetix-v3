@@ -6,7 +6,6 @@ import {
   Liquidation,
   PermissionGranted,
   PermissionRevoked,
-  PoolConfigurationSet,
   PoolCreated,
   PoolNameUpdated,
   PoolNominationRenounced,
@@ -27,8 +26,6 @@ import {
   AccountRewardsDistributor,
   CollateralType,
   Liquidation as LiquidationEntity,
-  Market,
-  MarketConfiguration,
   Pool,
   Position,
   RewardsClaimed,
@@ -48,6 +45,7 @@ import { BigDecimal, BigInt, Bytes, store } from '@graphprotocol/graph-ts';
 /////////////
 
 export * from './market';
+export * from './marketConfigurations';
 
 ///////////
 // Pool //
@@ -110,81 +108,6 @@ export function handleNewPoolOwner(event: PoolOwnershipAccepted): void {
     pool.updated_at = event.block.timestamp;
     pool.owner = event.params.owner;
     pool.nominated_owner = Bytes.empty();
-    pool.save();
-  }
-}
-export function handlePoolConfigurationSet(event: PoolConfigurationSet): void {
-  const pool = Pool.load(event.params.poolId.toString());
-  // Pool will be never undefined, though for safety reasons we are checking for that
-  if (pool !== null) {
-    // Creating a temporarily variable for figuring out which MarketConfiguration entity to delete
-    const oldPoolMarketConfigurationState = new Map<string, string[]>();
-    if (pool.configurations !== null) {
-      oldPoolMarketConfigurationState.set(pool.id, pool.configurations!);
-    }
-    // Creating a temporarily variable for the pool.total_weight key
-    const totalWeight: BigInt[] = [];
-    // Reset the state because the new configuration from the event is the only source of truth
-    pool.configurations = [];
-    for (let i = 0; i < event.params.markets.length; ++i) {
-      const market = Market.load(event.params.markets.at(i).marketId.toString());
-      if (market) {
-        let marketConfiguration = MarketConfiguration.load(pool.id.concat('-').concat(market.id));
-        if (marketConfiguration === null) {
-          marketConfiguration = new MarketConfiguration(pool.id.concat('-').concat(market.id));
-          marketConfiguration.created_at = event.block.timestamp;
-          marketConfiguration.created_at_block = event.block.number;
-        }
-        marketConfiguration.weight = event.params.markets.at(i).weightD18;
-        marketConfiguration.market = market.id;
-        marketConfiguration.pool = event.params.poolId.toString();
-        marketConfiguration.max_debt_share_value = event.params.markets
-          .at(i)
-          .maxDebtShareValueD18.toBigDecimal();
-        marketConfiguration.updated_at = event.block.timestamp;
-        marketConfiguration.updated_at_block = event.block.number;
-        // If the market doesn't have configurations array, create an array with the current configurations id
-        if (market.configurations === null) {
-          market.configurations = [marketConfiguration.id];
-          // Otherwise check if this configuration id is not included, if so, add it
-        } else if (!market.configurations!.includes(marketConfiguration.id)) {
-          // Set the new state to the current one, to add up the previously added entities
-          const newState = market.configurations!;
-          newState.push(marketConfiguration.id);
-          market.configurations = newState;
-        }
-        // Same as for the market, if empty initialize it
-        if (pool.configurations === null) {
-          pool.configurations = [marketConfiguration.id];
-        } else if (!pool.configurations!.includes(marketConfiguration.id)) {
-          // Set the new state to the current one, to add up the previously added entities
-          const newState = pool.configurations!;
-          newState.push(marketConfiguration.id);
-          pool.configurations = newState;
-        }
-        // If the new MarketConfiguration is not part of the old state, remove it from the store
-        if (oldPoolMarketConfigurationState.has(pool.id)) {
-          const oldMarketConfigs = oldPoolMarketConfigurationState.get(pool.id);
-          for (let j = 0; j < oldMarketConfigs.length; ++j) {
-            const currentOldState = oldPoolMarketConfigurationState.get(pool.id).at(j);
-            if (!pool.configurations!.includes(currentOldState)) {
-              store.remove('MarketConfiguration', currentOldState);
-            }
-          }
-        }
-        totalWeight.push(event.params.markets.at(i).weightD18);
-        market.updated_at = event.block.timestamp;
-        market.updated_at_block = event.block.number;
-        market.save();
-        marketConfiguration.save();
-      }
-    }
-    pool.total_weight = totalWeight.reduce((prev, next) => {
-      prev = prev.plus(next);
-      return prev;
-    }, BigInt.fromU64(0));
-    pool.updated_at = event.block.timestamp;
-    pool.updated_at_block = event.block.number;
     pool.save();
   }
 }
