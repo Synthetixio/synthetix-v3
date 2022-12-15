@@ -2,15 +2,18 @@
 pragma solidity ^0.8.0;
 
 contract ProxyStorage {
+    bytes32 private constant _slotProxyStorage =
+        keccak256(abi.encode("io.synthetix.core-contracts.Proxy"));
+
     struct ProxyStore {
         address implementation;
         bool simulatingUpgrade;
     }
 
     function _proxyStore() internal pure returns (ProxyStore storage store) {
+        bytes32 s = _slotProxyStorage;
         assembly {
-            // bytes32(uint(keccak256("io.synthetix.v3.proxy")) - 1)
-            store.slot := 0x32402780481dd8149e50baad867f01da72e2f7d02639a6fe378dbd80b6bb446e
+            store.slot := s
         }
     }
 }

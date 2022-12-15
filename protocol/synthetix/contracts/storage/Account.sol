@@ -62,7 +62,7 @@ library Account {
      * @dev Returns the account stored at the specified account id.
      */
     function load(uint128 id) internal pure returns (Data storage data) {
-        bytes32 s = keccak256(abi.encode("Account", id));
+        bytes32 s = keccak256(abi.encode("io.synthetix.synthetix.Account", id));
         assembly {
             data.slot := s
         }

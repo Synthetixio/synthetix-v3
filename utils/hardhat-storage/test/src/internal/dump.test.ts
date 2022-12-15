@@ -18,7 +18,7 @@ describe('internal/dump.ts', function () {
     expect(result).toMatchSnapshot();
   });
 
-  it('smple-project contract with storage and interface', async function () {
+  it('sample-project contract with storage and interface', async function () {
     const astNodes = await compileSolidityFolder({
       version,
       rootDir: path.resolve(__dirname, '..', '..', '..', '..', 'sample-project'),

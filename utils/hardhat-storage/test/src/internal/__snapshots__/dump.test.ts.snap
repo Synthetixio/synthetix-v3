@@ -1,5 +1,26 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`internal/dump.ts sample-project contract with storage and interface 1`] = `
+"// SPDX-License-Identifier: UNLICENSED
+pragma solidity 0.8.17;
+
+// @custom:artifact contracts/storage/GlobalStorage.sol:GlobalStorage
+contract GlobalStorage {
+    bytes32 private constant _slotGlobalStorage = keccak256(abi.encode("io.synthetix.sample-project.Global"));
+    struct GlobalStore {
+        uint value;
+        uint someValue;
+    }
+    function _globalStore() internal pure returns (GlobalStore storage store) {
+        bytes32 s = _slotGlobalStorage;
+        assembly {
+            store.slot := s
+        }
+    }
+}
+"
+`;
+
 exports[`internal/dump.ts single contract with state variables, contracts and structs 1`] = `
 "// SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.17;
