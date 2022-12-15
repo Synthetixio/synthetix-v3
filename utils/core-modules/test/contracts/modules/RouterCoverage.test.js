@@ -23,7 +23,11 @@ describe('RouterCoverage', () => {
     });
 
     it('reverts', async () => {
-      await assertRevert(WrongModuleMock.getFortyTwo(), 'UnknownSelector', Router);
+      await assertRevert(
+        WrongModuleMock.getFortyTwo(),
+        `UnknownSelector("${ethers.utils.id('getFortyTwo()').slice(0, 10)}")`,
+        Router
+      );
     });
   });
 
