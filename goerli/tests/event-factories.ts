@@ -180,11 +180,12 @@ export function createAccountCreatedEvent(
   const newMarketRegisteredEvent = changetype<AccountCreated>(newMockEvent());
   const block = createBlock(timestamp, blockNumber);
   newMarketRegisteredEvent.parameters = new Array();
-  newMarketRegisteredEvent.parameters.push(
-    new ethereum.EventParam('owner', ethereum.Value.fromAddress(Address.fromString(owner)))
-  );
+
   newMarketRegisteredEvent.parameters.push(
     new ethereum.EventParam('accountId', ethereum.Value.fromI32(id))
+  );
+  newMarketRegisteredEvent.parameters.push(
+    new ethereum.EventParam('owner', ethereum.Value.fromAddress(Address.fromString(owner)))
   );
   newMarketRegisteredEvent.block.timestamp = BigInt.fromI64(block['timestamp']);
   newMarketRegisteredEvent.block.number = BigInt.fromI64(block['blockNumber']);

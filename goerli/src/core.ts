@@ -195,7 +195,7 @@ export function handlePoolConfigurationSet(event: PoolConfigurationSet): void {
 
 export function handleAccountCreated(event: AccountCreated): void {
   const account = new Account(event.params.accountId.toString());
-  account.owner = event.params.sender;
+  account.owner = event.params.owner;
   account.created_at = event.block.timestamp;
   account.created_at_block = event.block.number;
   account.updated_at = event.block.timestamp;

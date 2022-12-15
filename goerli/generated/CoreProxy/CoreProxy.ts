@@ -89,7 +89,7 @@ export class FeatureFlagAllowAllSet__Params {
     return this._event.parameters[0].value.toBytes();
   }
 
-  get value(): boolean {
+  get allowAll(): boolean {
     return this._event.parameters[1].value.toBoolean();
   }
 }
@@ -151,12 +151,12 @@ export class AccountCreated__Params {
     this._event = event;
   }
 
-  get sender(): Address {
-    return this._event.parameters[0].value.toAddress();
+  get accountId(): BigInt {
+    return this._event.parameters[0].value.toBigInt();
   }
 
-  get accountId(): BigInt {
-    return this._event.parameters[1].value.toBigInt();
+  get owner(): Address {
+    return this._event.parameters[1].value.toAddress();
   }
 }
 
@@ -655,7 +655,7 @@ export class MaximumMarketCollateralConfigured__Params {
     return this._event.parameters[2].value.toBigInt();
   }
 
-  get sender(): Address {
+  get owner(): Address {
     return this._event.parameters[3].value.toAddress();
   }
 }
@@ -711,7 +711,7 @@ export class MarketUsdDeposited__Params {
     return this._event.parameters[2].value.toBigInt();
   }
 
-  get sender(): Address {
+  get market(): Address {
     return this._event.parameters[3].value.toAddress();
   }
 }
@@ -741,7 +741,7 @@ export class MarketUsdWithdrawn__Params {
     return this._event.parameters[2].value.toBigInt();
   }
 
-  get sender(): Address {
+  get market(): Address {
     return this._event.parameters[3].value.toAddress();
   }
 }
@@ -1082,6 +1082,32 @@ export class RewardsDistributorRegistered__Params {
   }
 }
 
+export class RewardsDistributorRemoved extends ethereum.Event {
+  get params(): RewardsDistributorRemoved__Params {
+    return new RewardsDistributorRemoved__Params(this);
+  }
+}
+
+export class RewardsDistributorRemoved__Params {
+  _event: RewardsDistributorRemoved;
+
+  constructor(event: RewardsDistributorRemoved) {
+    this._event = event;
+  }
+
+  get poolId(): BigInt {
+    return this._event.parameters[0].value.toBigInt();
+  }
+
+  get collateralType(): Address {
+    return this._event.parameters[1].value.toAddress();
+  }
+
+  get distributor(): Address {
+    return this._event.parameters[2].value.toAddress();
+  }
+}
+
 export class DelegationUpdated extends ethereum.Event {
   get params(): DelegationUpdated__Params {
     return new DelegationUpdated__Params(this);
@@ -1146,7 +1172,7 @@ export class CoreProxy__getAssociatedSystemResult {
     return map;
   }
 
-  getProxy(): Address {
+  getAddr(): Address {
     return this.value0;
   }
 
@@ -1510,19 +1536,19 @@ export class CoreProxy extends ethereum.SmartContract {
     return ethereum.CallResult.fromValue(value[0].toAddressArray());
   }
 
-  isFeatureAllowed(feature: Bytes, addressToCheck: Address): boolean {
+  isFeatureAllowed(feature: Bytes, account: Address): boolean {
     let result = super.call('isFeatureAllowed', 'isFeatureAllowed(bytes32,address):(bool)', [
       ethereum.Value.fromFixedBytes(feature),
-      ethereum.Value.fromAddress(addressToCheck),
+      ethereum.Value.fromAddress(account),
     ]);
 
     return result[0].toBoolean();
   }
 
-  try_isFeatureAllowed(feature: Bytes, addressToCheck: Address): ethereum.CallResult<boolean> {
+  try_isFeatureAllowed(feature: Bytes, account: Address): ethereum.CallResult<boolean> {
     let result = super.tryCall('isFeatureAllowed', 'isFeatureAllowed(bytes32,address):(bool)', [
       ethereum.Value.fromFixedBytes(feature),
-      ethereum.Value.fromAddress(addressToCheck),
+      ethereum.Value.fromAddress(account),
     ]);
     if (result.reverted) {
       return new ethereum.CallResult();
@@ -2347,18 +2373,18 @@ export class CoreProxy extends ethereum.SmartContract {
   }
 
   claimRewards(
+    accountId: BigInt,
     poolId: BigInt,
     collateralType: Address,
-    accountId: BigInt,
     distributor: Address
   ): BigInt {
     let result = super.call(
       'claimRewards',
-      'claimRewards(uint128,address,uint128,address):(uint256)',
+      'claimRewards(uint128,uint128,address,address):(uint256)',
       [
+        ethereum.Value.fromUnsignedBigInt(accountId),
         ethereum.Value.fromUnsignedBigInt(poolId),
         ethereum.Value.fromAddress(collateralType),
-        ethereum.Value.fromUnsignedBigInt(accountId),
         ethereum.Value.fromAddress(distributor),
       ]
     );
@@ -2367,18 +2393,18 @@ export class CoreProxy extends ethereum.SmartContract {
   }
 
   try_claimRewards(
+    accountId: BigInt,
     poolId: BigInt,
     collateralType: Address,
-    accountId: BigInt,
     distributor: Address
   ): ethereum.CallResult<BigInt> {
     let result = super.tryCall(
       'claimRewards',
-      'claimRewards(uint128,address,uint128,address):(uint256)',
+      'claimRewards(uint128,uint128,address,address):(uint256)',
       [
+        ethereum.Value.fromUnsignedBigInt(accountId),
         ethereum.Value.fromUnsignedBigInt(poolId),
         ethereum.Value.fromAddress(collateralType),
-        ethereum.Value.fromUnsignedBigInt(accountId),
         ethereum.Value.fromAddress(distributor),
       ]
     );
@@ -2899,7 +2925,7 @@ export class AddToFeatureFlagAllowlistCall__Inputs {
     return this._call.inputValues[0].value.toBytes();
   }
 
-  get permissioned(): Address {
+  get account(): Address {
     return this._call.inputValues[1].value.toAddress();
   }
 }
@@ -2933,7 +2959,7 @@ export class RemoveFromFeatureFlagAllowlistCall__Inputs {
     return this._call.inputValues[0].value.toBytes();
   }
 
-  get permissioned(): Address {
+  get account(): Address {
     return this._call.inputValues[1].value.toAddress();
   }
 }
@@ -4509,16 +4535,16 @@ export class ClaimRewardsCall__Inputs {
     this._call = call;
   }
 
-  get poolId(): BigInt {
+  get accountId(): BigInt {
     return this._call.inputValues[0].value.toBigInt();
   }
 
-  get collateralType(): Address {
-    return this._call.inputValues[1].value.toAddress();
+  get poolId(): BigInt {
+    return this._call.inputValues[1].value.toBigInt();
   }
 
-  get accountId(): BigInt {
-    return this._call.inputValues[2].value.toBigInt();
+  get collateralType(): Address {
+    return this._call.inputValues[2].value.toAddress();
   }
 
   get distributor(): Address {
@@ -4664,6 +4690,44 @@ export class RegisterRewardsDistributorCall__Outputs {
   _call: RegisterRewardsDistributorCall;
 
   constructor(call: RegisterRewardsDistributorCall) {
+    this._call = call;
+  }
+}
+
+export class RemoveRewardsDistributorCall extends ethereum.Call {
+  get inputs(): RemoveRewardsDistributorCall__Inputs {
+    return new RemoveRewardsDistributorCall__Inputs(this);
+  }
+
+  get outputs(): RemoveRewardsDistributorCall__Outputs {
+    return new RemoveRewardsDistributorCall__Outputs(this);
+  }
+}
+
+export class RemoveRewardsDistributorCall__Inputs {
+  _call: RemoveRewardsDistributorCall;
+
+  constructor(call: RemoveRewardsDistributorCall) {
+    this._call = call;
+  }
+
+  get poolId(): BigInt {
+    return this._call.inputValues[0].value.toBigInt();
+  }
+
+  get collateralType(): Address {
+    return this._call.inputValues[1].value.toAddress();
+  }
+
+  get distributor(): Address {
+    return this._call.inputValues[2].value.toAddress();
+  }
+}
+
+export class RemoveRewardsDistributorCall__Outputs {
+  _call: RemoveRewardsDistributorCall;
+
+  constructor(call: RemoveRewardsDistributorCall) {
     this._call = call;
   }
 }

@@ -75,7 +75,7 @@ dataSources:
         - event: Withdrawn(indexed uint128,indexed address,uint256,indexed address)
           handler: handleWithdrawn
 
-        - event: AccountCreated(indexed address,indexed uint128)
+        - event: AccountCreated(indexed uint128,indexed address)
           handler: handleAccountCreated
         - event: PermissionGranted(indexed uint128,indexed bytes32,indexed address,address)
           handler: handlePermissionGranted
