@@ -112,7 +112,7 @@ describe('ERC721Owned', () => {
         it('reverts ', async () => {
           await assertRevert(
             ERC721.connect(user1).transferFrom(user1.address, user2.address, token2),
-            'Unauthorized'
+            `Unauthorized("${await user1.getAddress()}")`
           );
         });
       });
@@ -180,7 +180,7 @@ describe('ERC721Owned', () => {
               token2,
               '0x'
             ),
-            'Unauthorized'
+            `Unauthorized("${await user1.getAddress()}")`
           );
         });
       });
@@ -255,7 +255,7 @@ describe('ERC721Owned', () => {
               user2.address,
               token2
             ),
-            'Unauthorized'
+            `Unauthorized("${await user1.getAddress()}")`
           );
         });
       });
