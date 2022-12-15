@@ -45,7 +45,7 @@ library ScalableMapping {
     /**
      * @dev Thrown when attempting to scale a mapping with an amount that is lower than its resolution.
      */
-    error InsufficientMappedAmount(int256 scaleModifier);
+    error InsufficientMappedAmount();
 
     struct Data {
         uint128 totalSharesD18;
@@ -71,7 +71,7 @@ library ScalableMapping {
         self.scaleModifierD27 += deltaScaleModifierD27.to128();
 
         if (self.scaleModifierD27 < -DecimalMath.UNIT_PRECISE_INT) {
-            revert InsufficientMappedAmount(-self.scaleModifierD27);
+            revert InsufficientMappedAmount();
         }
     }
 
