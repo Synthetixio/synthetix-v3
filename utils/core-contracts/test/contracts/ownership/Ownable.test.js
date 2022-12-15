@@ -42,7 +42,7 @@ describe('Ownable', () => {
         it('reverts', async () => {
           await assertRevert(
             Ownable.connect(newOwner).nominateNewOwner(newOwner.address),
-            'Unauthorized'
+            `Unauthorized("${await newOwner.getAddress()}")`
           );
         });
       });
@@ -123,7 +123,10 @@ describe('Ownable', () => {
       describe('Renouncing nomination', () => {
         describe('when there is no nomination', () => {
           it('reverts', async () => {
-            await assertRevert(Ownable.connect(newOwner).renounceNomination(), 'NotNominated');
+            await assertRevert(
+              Ownable.connect(newOwner).renounceNomination(),
+              `NotNominated("${await newOwner.getAddress()}")`
+            );
           });
         });
 
@@ -139,7 +142,10 @@ describe('Ownable', () => {
 
           describe('when a non nominated user tries to renounce', () => {
             it('reverts', async () => {
-              await assertRevert(Ownable.connect(user).renounceNomination(), 'NotNominated');
+              await assertRevert(
+                Ownable.connect(user).renounceNomination(),
+                `NotNominated("${await user.getAddress()}")`
+              );
             });
           });
 
