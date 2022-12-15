@@ -6,7 +6,7 @@
   "scripts": {
     "test": "hardhat test",
     "coverage": "npx hardhat cannon:build && hardhat --network hardhat coverage",
-    "build": "hardhat cannon:build",
+    "cannon-build": "hardhat cannon:build",
     "compile-contracts": "hardhat compile",
     "size-contracts": "hardhat size-contracts",
     "lint:fix": "npm run lint:js:fix && npm run lint:sol:fix",
