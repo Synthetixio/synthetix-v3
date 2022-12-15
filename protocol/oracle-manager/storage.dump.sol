@@ -64,7 +64,8 @@ library NodeDefinition {
         REDUCER,
         EXTERNAL,
         CHAINLINK,
-        PYTH
+        PYTH,
+        PriceDeviationCircuitBreaker
     }
     struct Data {
         bytes32[] parents;
@@ -72,11 +73,16 @@ library NodeDefinition {
         bytes parameters;
     }
     function load(bytes32 id) internal pure returns (Data storage data) {
-        bytes32 s = keccak256(abi.encode("Node", id));
+        bytes32 s = keccak256(abi.encode("io.synthetix.oracle-manager.Node", id));
         assembly {
             data.slot := s
         }
     }
+}
+
+// @custom:artifact contracts/utils/ChainlinkNodeLibrary.sol:ChainlinkNodeLibrary
+library ChainlinkNodeLibrary {
+    uint256 public constant PRECISION = 18;
 }
 
 // @custom:artifact contracts/utils/ReducerNodeLibrary.sol:ReducerNodeLibrary
