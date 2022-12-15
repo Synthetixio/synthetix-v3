@@ -122,7 +122,7 @@ describe('PoolModule Admin', function () {
             { marketId: 1, weightD18: 1, maxDebtShareValueD18: 0 },
             { marketId: 1, weightD18: 2, maxDebtShareValueD18: 0 },
           ]),
-        'InvalidParameter',
+        'InvalidParameter("markets", "must be supplied in strictly ascending order")',
         systems().Core
       );
     });
@@ -135,7 +135,7 @@ describe('PoolModule Admin', function () {
             { marketId: 1, weightD18: 1, maxDebtShareValueD18: 0 },
             { marketId: 2, weightD18: 0, maxDebtShareValueD18: 0 },
           ]),
-        'InvalidParameter',
+        'InvalidParameter("weights", "weight must be non-zero")',
         systems().Core
       );
     });
@@ -229,7 +229,7 @@ describe('PoolModule Admin', function () {
                   // increase the weight of market2 to make the first market lower liquidity overall
                   { marketId: marketId2, weightD18: 9, maxDebtShareValueD18: One },
                 ]),
-              'CapacityLocked',
+              `CapacityLocked("${marketId()}")`,
               systems().Core
             );
 
@@ -252,7 +252,7 @@ describe('PoolModule Admin', function () {
                   // completely remove the first market
                   { marketId: marketId2, weightD18: 9, maxDebtShareValueD18: One },
                 ]),
-              'CapacityLocked'
+              `CapacityLocked("${marketId()}")`
               //systems().Core
             );
 
@@ -624,7 +624,7 @@ describe('PoolModule Admin', function () {
     it('only works for owner', async () => {
       await assertRevert(
         systems().Core.connect(user1).setMinLiquidityRatio(ethers.utils.parseEther('2')),
-        'Unauthorized',
+        `Unauthorized("${await user1.getAddress()}")`,
         systems().Core
       );
     });
