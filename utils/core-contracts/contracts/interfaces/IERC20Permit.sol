@@ -4,8 +4,8 @@ pragma solidity ^0.8.0;
 import "./IERC20.sol";
 
 /**
- * @dev Interface of the ERC20 Permit extension allowing approvals to be made via signatures, as defined in
- * https://eips.ethereum.org/EIPS/eip-2612[EIP-2612].
+ * @title Interface of the ERC20 Permit extension allowing approvals to be made via signatures, as defined in
+ * https://eips.ethereum.org/EIPS/eip-2612.
  *
  * Adds the {permit} method, which can be used to change an account's ERC20 allowance (see {IERC20-allowance}) by
  * presenting a message signed by the account. By not relying on {IERC20-approve}, the token holder account doesn't
@@ -13,7 +13,18 @@ import "./IERC20.sol";
  */
 interface IERC20Permit is IERC20 {
     /**
-     * @dev Sets `value` as the allowance of `spender` over ``owner``'s tokens,
+     * @notice Thrown when permit is called with a signiture not signed by the caller
+     * @param recoveredAddress The signiture address
+     */
+    error InvalidSigner(address recoveredAddress);
+
+    /**
+     * @notice Thrown when permit is called with a deadline less than block timestamp
+     */
+    error PermitDeadlineExpired();
+
+    /**
+     * @notice Sets `value` as the allowance of `spender` over ``owner``'s tokens,
      * given ``owner``'s signed approval.
      *
      * IMPORTANT: The same issues {IERC20-approve} has related to transaction
@@ -44,7 +55,7 @@ interface IERC20Permit is IERC20 {
     ) external;
 
     /**
-     * @dev Returns the current nonce for `owner`. This value must be
+     * @notice Returns the current nonce for `owner`. This value must be
      * included whenever a signature is generated for {permit}.
      *
      * Every successful call to {permit} increases ``owner``'s nonce by one. This
@@ -53,7 +64,7 @@ interface IERC20Permit is IERC20 {
     function nonces(address owner) external view returns (uint256);
 
     /**
-     * @dev Returns the domain separator used in the encoding of the signature for {permit}, as defined by {EIP712}.
+     * @notice Returns the domain separator used in the encoding of the signature for {permit}, as defined by {EIP712}.
      */
     // solhint-disable-next-line func-name-mixedcase
     function DOMAIN_SEPARATOR() external view returns (bytes32);

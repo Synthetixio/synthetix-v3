@@ -4,6 +4,7 @@ pragma solidity ^0.8.0;
 import "./ERC20.sol";
 import "./ERC20PermitStorage.sol";
 import "./ERC20Storage.sol";
+import "../interfaces/IERC20Permit.sol";
 
 /*
  * @title ERC20Permit token implementation.
@@ -12,7 +13,7 @@ import "./ERC20Storage.sol";
  * Reference implementations:
  * - Rari-Capital - https://github.com/Rari-Capital/solmate/blob/main/src/tokens/ERC20.sol
  */
-contract ERC20Permit is ERC20 {
+contract ERC20Permit is ERC20, IERC20Permit {
     function _initialize(
         string memory tokenName,
         string memory tokenSymbol,
@@ -22,9 +23,12 @@ contract ERC20Permit is ERC20 {
 
         ERC20PermitStorage.Data storage store = ERC20PermitStorage.load();
         store.initialChainId = block.chainid;
-        store.initialDomainSeprator = computeDomainSeparator();
+        store.initialDomainSeprator = _computeDomainSeparator();
     }
 
+    /**
+     * @inheritdoc IERC20Permit
+     */
     function permit(
         address owner,
         address spender,
@@ -34,12 +38,14 @@ contract ERC20Permit is ERC20 {
         bytes32 r,
         bytes32 s
     ) public virtual {
-        require(deadline >= block.timestamp, "PERMIT_DEADLINE_EXPIRED");
+        if (deadline < block.timestamp) {
+            revert PermitDeadlineExpired();
+        }
 
         ERC20PermitStorage.Data storage store = ERC20PermitStorage.load();
         ERC20Storage.Data storage erc20Store = ERC20Storage.load();
 
-        uint256 nounce = store.nonces[owner];
+        uint256 nonce = store.nonces[owner];
 
         unchecked {
             address recoveredAddress = ecrecover(
@@ -55,7 +61,7 @@ contract ERC20Permit is ERC20 {
                                 owner,
                                 spender,
                                 value,
-                                nounce,
+                                nonce,
                                 deadline
                             )
                         )
@@ -66,9 +72,11 @@ contract ERC20Permit is ERC20 {
                 s
             );
 
-            store.nonces[owner] = nounce + 1;
+            store.nonces[owner] = nonce + 1;
 
-            require(recoveredAddress != address(0) && recoveredAddress == owner, "INVALID_SIGNER");
+            if (recoveredAddress == address(0) || recoveredAddress != owner) {
+                revert InvalidSigner(recoveredAddress);
+            }
 
             erc20Store.allowance[recoveredAddress][spender] = value;
         }
@@ -77,7 +85,15 @@ contract ERC20Permit is ERC20 {
     }
 
     /**
-     * @dev See {IERC20Permit-DOMAIN_SEPARATOR}.
+     * @inheritdoc IERC20Permit
+     */
+    function nonces(address owner) public view virtual returns (uint256) {
+        ERC20PermitStorage.Data storage store = ERC20PermitStorage.load();
+        return store.nonces[owner];
+    }
+
+    /**
+     * @inheritdoc IERC20Permit
      */
     // solhint-disable-next-line func-name-mixedcase
     function DOMAIN_SEPARATOR() public view virtual returns (bytes32) {
@@ -85,10 +101,10 @@ contract ERC20Permit is ERC20 {
         return
             block.chainid == store.initialChainId
                 ? store.initialDomainSeprator
-                : computeDomainSeparator();
+                : _computeDomainSeparator();
     }
 
-    function computeDomainSeparator() internal view virtual returns (bytes32) {
+    function _computeDomainSeparator() internal view virtual returns (bytes32) {
         ERC20Storage.Data storage store = ERC20Storage.load();
         return
             keccak256(
@@ -102,13 +118,5 @@ contract ERC20Permit is ERC20 {
                     address(this)
                 )
             );
-    }
-
-    /**
-     * @dev See {IERC20Permit-nonces}.
-     */
-    function nonces(address owner) public view virtual returns (uint256) {
-        ERC20PermitStorage.Data storage store = ERC20PermitStorage.load();
-        return store.nonces[owner];
     }
 }
