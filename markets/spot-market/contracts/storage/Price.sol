@@ -17,7 +17,7 @@ library Price {
     }
 
     function load(uint128 marketId) internal pure returns (Data storage store) {
-        bytes32 s = keccak256(abi.encode("Price", marketId));
+        bytes32 s = keccak256(abi.encode("io.synthetix.spot-market.Price", marketId));
         assembly {
             store.slot := s
         }

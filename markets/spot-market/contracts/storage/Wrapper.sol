@@ -12,7 +12,7 @@ library Wrapper {
     }
 
     function load(uint128 marketId) internal pure returns (Data storage store) {
-        bytes32 s = keccak256(abi.encode("Wrapper", marketId));
+        bytes32 s = keccak256(abi.encode("io.synthetix.spot-market.Wrapper", marketId));
         assembly {
             store.slot := s
         }
