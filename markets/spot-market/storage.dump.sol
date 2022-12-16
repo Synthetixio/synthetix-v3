@@ -47,6 +47,41 @@ library ERC20Storage {
     }
 }
 
+// @custom:artifact @synthetixio/core-contracts/contracts/token/ERC721EnumerableStorage.sol:ERC721EnumerableStorage
+library ERC721EnumerableStorage {
+    struct Data {
+        mapping(uint256 => uint256) ownedTokensIndex;
+        mapping(uint256 => uint256) allTokensIndex;
+        mapping(address => mapping(uint256 => uint256)) ownedTokens;
+        uint256[] allTokens;
+    }
+    function load() internal pure returns (Data storage store) {
+        bytes32 s = keccak256(abi.encode("ERC721Enumerable"));
+        assembly {
+            store.slot := s
+        }
+    }
+}
+
+// @custom:artifact @synthetixio/core-contracts/contracts/token/ERC721Storage.sol:ERC721Storage
+library ERC721Storage {
+    struct Data {
+        string name;
+        string symbol;
+        string baseTokenURI;
+        mapping(uint256 => address) ownerOf;
+        mapping(address => uint256) balanceOf;
+        mapping(uint256 => address) tokenApprovals;
+        mapping(address => mapping(address => bool)) operatorApprovals;
+    }
+    function load() internal pure returns (Data storage store) {
+        bytes32 s = keccak256(abi.encode("ERC721"));
+        assembly {
+            store.slot := s
+        }
+    }
+}
+
 // @custom:artifact @synthetixio/core-modules/contracts/storage/AssociatedSystem.sol:AssociatedSystem
 library AssociatedSystem {
     struct Data {
@@ -56,6 +91,19 @@ library AssociatedSystem {
     }
     function load(bytes32 id) internal pure returns (Data storage store) {
         bytes32 s = keccak256(abi.encode("AssociatedSystem", id));
+        assembly {
+            store.slot := s
+        }
+    }
+}
+
+// @custom:artifact @synthetixio/core-modules/contracts/storage/Initialized.sol:Initialized
+library Initialized {
+    struct Data {
+        bool initialized;
+    }
+    function load(bytes32 id) internal pure returns (Data storage store) {
+        bytes32 s = keccak256(abi.encode("Initialized", id));
         assembly {
             store.slot := s
         }

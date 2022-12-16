@@ -5,10 +5,10 @@ import "@synthetixio/main/contracts/interfaces/IMarketManagerModule.sol";
 import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
 import "../storage/SpotMarketFactory.sol";
-import "../interfaces/ISpotMarketModule.sol";
+import "../interfaces/IAtomicOrderModule.sol";
 import "../utils/SynthUtil.sol";
 
-contract SpotMarketModule is ISpotMarketModule {
+contract AtomicOrderModule is IAtomicOrderModule {
     using DecimalMath for uint256;
     using SpotMarketFactory for SpotMarketFactory.Data;
     using Price for Price.Data;

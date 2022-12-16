@@ -23,11 +23,11 @@ options.owner = "<%= settings.owner %>"
 [contract.SpotMarketFactoryModule]
 artifact = "SpotMarketFactoryModule"
 
-[contract.SpotMarketModule]
-artifact = "SpotMarketModule"
+[contract.AtomicOrderModule]
+artifact = "AtomicOrderModule"
 
-[contract.WrapperModule]
-artifact = "WrapperModule"
+[contract.WrapOrderModule]
+artifact = "WrapOrderModule"
 
 [contract.Synth]
 artifact = "Synth"
@@ -57,16 +57,16 @@ args = [
   '''<%= JSON.stringify({
     CoreModule: contracts.CoreModule,
     SpotMarketFactoryModule: contracts.SpotMarketFactoryModule,
-    SpotMarketModule: contracts.SpotMarketModule,
-    WrapperModule: contracts.WrapperModule,
+    AtomicOrderModule: contracts.AtomicOrderModule,
+    WrapOrderModule: contracts.WrapOrderModule,
   }) %>'''
 ]
 modified = ["contracts"]
 depends = [
   "contract.CoreModule",
   "contract.SpotMarketFactoryModule",
-  "contract.SpotMarketModule",
-  "contract.WrapperModule"
+  "contract.AtomicOrderModule",
+  "contract.WrapOrderModule"
 ]
 
 [contract.Router]
@@ -74,8 +74,8 @@ artifact = "contracts/routers/chain-<%= chainId %>/Router.sol:Router"
 abiOf = [
   "CoreModule",
   "SpotMarketFactoryModule",
-  "SpotMarketModule",
-  "WrapperModule"
+  "AtomicOrderModule",
+  "WrapOrderModule"
 ]
 depends = ["run.generate_router"]
 

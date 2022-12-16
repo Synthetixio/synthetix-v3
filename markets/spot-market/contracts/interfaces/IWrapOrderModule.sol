@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 /// @title Spot Market Wrapper Interface
-interface IWrapper {
+interface IWrapOrderModule {
     error InsufficientFunds();
     error InsufficientAllowance(uint expected, uint current);
 

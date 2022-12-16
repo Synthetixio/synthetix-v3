@@ -7,12 +7,12 @@ import "@synthetixio/main/contracts/interfaces/IMarketCollateralModule.sol";
 import "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import "../storage/SpotMarketFactory.sol";
-import "../interfaces/IWrapper.sol";
+import "../interfaces/IWrapOrderModule.sol";
 import "../storage/Wrapper.sol";
 import "../storage/Price.sol";
 import "../utils/SynthUtil.sol";
 
-contract WrapperModule is IWrapper {
+contract WrapOrderModule is IWrapOrderModule {
     using DecimalMath for uint256;
     using SpotMarketFactory for SpotMarketFactory.Data;
     using Price for Price.Data;

@@ -12,4 +12,6 @@ interface IFeeConfigurationModule {
     function setMarketSkewFees(uint128 synthMarketId, uint skewScale) external;
 
     function setMarketUtilizationFees(uint128 synthMarketId, uint utilizationFeeRate) external;
+
+    function setCustomTransactorFees() external;
 }

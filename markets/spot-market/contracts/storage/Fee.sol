@@ -18,10 +18,8 @@ library Fee {
     using SafeCastI256 for int256;
 
     enum TradeType {
-        ATOMIC_BUY,
-        ATOMIC_SELL,
-        ASYNC_BUY,
-        ASYNC_SELL,
+        BUY,
+        SELL,
         WRAP,
         UNWRAP
     }
@@ -49,7 +47,7 @@ library Fee {
     ) internal returns (uint amountUsable, int feesCollected) {
         Data storage self = load(marketId);
 
-        getCustomTransactorFees(marketId, transactor, tradeType);
+        // getCustomTransactorFees(marketId, transactor, tradeType);
         // pass normal fee data if no custom exists in below functions
 
         // TODO: only buy trades have fees currently; how to handle for other trade types?
@@ -123,7 +121,9 @@ library Fee {
             return 0;
         }
 
-        uint totalBalance = SynthUtil.getToken(marketId).totalSupply();
+        uint totalBalance = SynthUtil.getToken(marketId).totalSupply().mulDecimal(
+            Price.load(marketId).getCurrentPrice(tradeType)
+        );
         uint wrappedMarketCollateral = 0;
 
         Wrapper.Data storage wrapper = Wrapper.load(marketId);

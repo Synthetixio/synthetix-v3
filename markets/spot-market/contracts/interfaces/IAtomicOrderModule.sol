@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 import "@synthetixio/main/contracts/interfaces/external/IMarket.sol";
 
 /// @title Spot Market Interface
-interface ISpotMarketModule {
+interface IAtomicOrderModule {
     error InsufficientFunds();
     error InsufficientAllowance(uint expected, uint current);
 
