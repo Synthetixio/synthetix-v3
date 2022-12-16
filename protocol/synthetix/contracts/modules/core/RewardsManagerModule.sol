@@ -7,7 +7,6 @@ import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import "@synthetixio/core-contracts/contracts/utils/ERC165Helper.sol";
 
-import "../../storage/RewardDistributionEntry.sol";
 import "../../storage/Account.sol";
 import "../../storage/AccountRBAC.sol";
 import "../../storage/Pool.sol";
@@ -30,7 +29,7 @@ contract RewardsManagerModule is IRewardsManagerModule {
 
     using Vault for Vault.Data;
     using Distribution for Distribution.Data;
-    using RewardDistributionEntry for RewardDistributionEntry.Data;
+    using RewardDistribution for RewardDistribution.Data;
 
     uint256 private constant _MAX_REWARD_DISTRIBUTIONS = 10;
 
@@ -100,7 +99,6 @@ contract RewardsManagerModule is IRewardsManagerModule {
         RewardDistribution.Data storage reward = pool.vaults[collateralType].rewards[rewardId];
 
         reward.rewardPerShareD18 += reward
-            .entry
             .distribute(
                 pool.vaults[collateralType].currentEpoch().accountsDebtDistribution,
                 amount.toInt(),
@@ -193,16 +191,15 @@ contract RewardsManagerModule is IRewardsManagerModule {
         // No rewards are currently being distributed if the distributor doesn't exist, they are scheduled to be distributed in the future, or the distribution as already completed
         if (
             address(vault.rewards[rewardId].distributor) == address(0) ||
-            vault.rewards[rewardId].entry.start > curTime.toUint() ||
-            vault.rewards[rewardId].entry.start + vault.rewards[rewardId].entry.duration <=
-            curTime.toUint()
+            vault.rewards[rewardId].start > curTime.toUint() ||
+            vault.rewards[rewardId].start + vault.rewards[rewardId].duration <= curTime.toUint()
         ) {
             return 0;
         }
 
         return
-            int256(vault.rewards[rewardId].entry.scheduledValueD18).toUint().divDecimal(
-                uint256(vault.rewards[rewardId].entry.duration).divDecimal(totalShares)
+            int256(vault.rewards[rewardId].scheduledValueD18).toUint().divDecimal(
+                uint256(vault.rewards[rewardId].duration).divDecimal(totalShares)
             );
     }
 

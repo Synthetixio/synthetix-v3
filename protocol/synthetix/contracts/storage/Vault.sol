@@ -20,7 +20,7 @@ import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 library Vault {
     using VaultEpoch for VaultEpoch.Data;
     using Distribution for Distribution.Data;
-    using RewardDistributionEntry for RewardDistributionEntry.Data;
+    using RewardDistribution for RewardDistribution.Data;
     using ScalableMapping for ScalableMapping.Data;
     using DecimalMath for uint256;
     using DecimalMath for int128;
@@ -156,7 +156,7 @@ library Vault {
             revert("No distributor");
         }
 
-        dist.rewardPerShareD18 += dist.entry.updateEntry(totalSharesD18).toUint().to128();
+        dist.rewardPerShareD18 += dist.updateEntry(totalSharesD18).toUint().to128();
 
         dist.actorInfo[accountId].pendingSendD18 += actorSharesD18
             .mulDecimal(dist.rewardPerShareD18 - dist.actorInfo[accountId].lastRewardPerShareD18)
