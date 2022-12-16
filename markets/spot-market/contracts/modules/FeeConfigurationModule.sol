@@ -36,4 +36,13 @@ contract FeeConfigurationModule is IFeeConfigurationModule {
 
         emit MarketUtilizationFeesSet(synthMarketId, utilizationFeeRate);
     }
+
+    function setCustomTransactorFees() external override {
+        // TODO
+        /*
+        Direct integrations:
+            fixed fee override
+            buy and sell feed node id override
+        */
+    }
 }

@@ -79,7 +79,7 @@ contract SpotMarketFactoryModule is
     }
 
     function reportedDebt(uint128 marketId) external view override returns (uint256) {
-        // TODO: default to buy price?
+        // TODO: Allow a different one to be set, maybe fallback to buy
         uint256 price = Price.load(marketId).getCurrentPrice(Fee.TradeType.BUY);
 
         return SynthUtil.getToken(marketId).totalSupply().mulDecimal(price);
@@ -91,7 +91,7 @@ contract SpotMarketFactoryModule is
 
         uint totalBalance = SynthUtil.getToken(marketId).totalSupply();
         uint totalValue = totalBalance.mulDecimal(
-            Price.load(marketId).getCurrentPrice(Fee.TradeType.BUY)
+            Price.load(marketId).getCurrentPrice(Fee.TradeType.BUY) // TODO: use the same price as reported debt
         );
         return delegatedCollateral > totalValue ? 0 : delegatedCollateral;
     }

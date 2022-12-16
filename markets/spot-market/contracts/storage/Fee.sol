@@ -18,8 +18,10 @@ library Fee {
     using SafeCastI256 for int256;
 
     enum TradeType {
-        BUY,
-        SELL,
+        ATOMIC_BUY,
+        ATOMIC_SELL,
+        ASYNC_BUY,
+        ASYNC_SELL,
         WRAP,
         UNWRAP
     }
@@ -28,7 +30,8 @@ library Fee {
         uint fixedFee;
         uint skewScale;
         uint utilizationFeeRate; // in bips
-        uint wrapperFee;
+        uint wrapFee;
+        uint unwrapFee;
     }
 
     function load(uint128 marketId) internal pure returns (Data storage store) {
@@ -41,33 +44,49 @@ library Fee {
     function calculateFees(
         uint128 marketId,
         address transactor,
-        uint256 amount,
+        uint256 usdAmount,
         TradeType tradeType
     ) internal returns (uint amountUsable, int feesCollected) {
         Data storage self = load(marketId);
 
+        getCustomTransactorFees(marketId, transactor, tradeType);
+        // pass normal fee data if no custom exists in below functions
+
         // TODO: only buy trades have fees currently; how to handle for other trade types?
         if (tradeType == TradeType.BUY) {
-            (amountUsable, feesCollected) = calculateBuyFees(self, marketId, amount);
+            (amountUsable, feesCollected) = calculateAtomicBuyFees(self, marketId, usdAmount);
         } else if (tradeType == TradeType.SELL) {
-            (amountUsable, feesCollected) = calculateSellFees(self, marketId, amount);
-        } else if (tradeType == TradeType.WRAP || tradeType == TradeType.UNWRAP) {
-            (amountUsable, feesCollected) = calculateWrapFees(self, amount);
+            (amountUsable, feesCollected) = calculateAtomicSellFees(self, marketId, usdAmount);
+        } else if (tradeType == TradeType.WRAP) {
+            (amountUsable, feesCollected) = calculateWrapFees(self, usdAmount);
+        } else if (tradeType == TradeType.UNWRAP) {
+            (amountUsable, feesCollected) = calculateUnwrapFees(self, usdAmount);
+            // Add for ASYNC orders as well
         } else {
-            amountUsable = amount;
+            amountUsable = usdAmount;
             feesCollected = 0;
         }
+
+        // sanity check? revert unless usdAmount =  amountUsable + feesCollected
     }
 
     function calculateWrapFees(
         Data storage self,
         uint256 amount
     ) internal view returns (uint amountUsable, int feesCollected) {
-        feesCollected = self.wrapperFee.mulDecimal(amount).divDecimal(10000).toInt();
+        feesCollected = self.wrapFee.mulDecimal(amount).divDecimal(10000).toInt();
         amountUsable = (amount.toInt() - feesCollected).toUint();
     }
 
-    function calculateBuyFees(
+    function calculateUnwrapFees(
+        Data storage self,
+        uint256 amount
+    ) internal view returns (uint amountUsable, int feesCollected) {
+        feesCollected = self.unwrapFee.mulDecimal(amount).divDecimal(10000).toInt();
+        amountUsable = (amount.toInt() - feesCollected).toUint();
+    }
+
+    function calculateAtomicBuyFees(
         Data storage self,
         uint128 marketId,
         uint256 amount
@@ -81,7 +100,7 @@ library Fee {
         amountUsable = (amount.toInt() - feesCollected).toUint();
     }
 
-    function calculateSellFees(
+    function calculateAtomicSellFees(
         Data storage self,
         uint128 marketId,
         uint256 amount
@@ -108,10 +127,8 @@ library Fee {
         uint wrappedMarketCollateral = 0;
 
         Wrapper.Data storage wrapper = Wrapper.load(marketId);
-        if (wrapper.wrappingEnabled) {
-            wrappedMarketCollateral = IMarketCollateralModule(SpotMarketFactory.load().synthetix)
-                .getMarketCollateralAmount(marketId, wrapper.collateralType);
-        }
+        wrappedMarketCollateral = IMarketCollateralModule(SpotMarketFactory.load().synthetix)
+            .getMarketCollateralAmount(marketId, wrapper.collateralType);
 
         uint initialSkew = totalBalance - wrappedMarketCollateral;
         uint initialSkewFee = initialSkew.divDecimal(self.skewScale);
@@ -125,8 +142,10 @@ library Fee {
         }
         uint skewAfterFillFee = skewAfterFill.divDecimal(self.skewScale);
 
-        int skewDiff = skewAfterFillFee.toInt() - initialSkewFee.toInt();
-        skewFee = skewDiff.divDecimal(2);
+        skewFee = (skewAfterFillFee.toInt() + initialSkewFee.toInt()).divDecimal(2);
+        if (tradeType == TradeType.SELL) {
+            skewFee = skewFee * -1;
+        }
     }
 
     function calculateUtilizationRateFee(
