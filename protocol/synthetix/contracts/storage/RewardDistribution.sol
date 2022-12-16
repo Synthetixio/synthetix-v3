@@ -7,7 +7,7 @@ import "./RewardDistributionEntry.sol";
 import "./RewardDistributionStatus.sol";
 
 /**
- * @title Used by vaults to track rewards for its participants. There will be one of these for each time a rewards distributor distributes rewards to a vault.
+ * @title Used by vaults to track rewards for its participants. There will be one of these for each pool, collateral type, and distributor combination.
  */
 library RewardDistribution {
     struct Data {
