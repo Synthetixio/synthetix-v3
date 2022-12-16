@@ -5,6 +5,7 @@ import "@synthetixio/core-contracts/contracts/errors/AccessError.sol";
 import "@synthetixio/core-contracts/contracts/errors/ParameterError.sol";
 import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+import "@synthetixio/core-contracts/contracts/utils/ERC165Helper.sol";
 
 import "../../storage/RewardDistributionEntry.sol";
 import "../../storage/Account.sol";
@@ -54,7 +55,7 @@ contract RewardsManagerModule is IRewardsManagerModule {
         }
 
         if (
-            !IRewardDistributor(distributor).supportsInterface(type(IRewardDistributor).interfaceId)
+            !ERC165Helper.safeSupportsInterface(distributor, type(IRewardDistributor).interfaceId)
         ) {
             revert ParameterError.InvalidParameter("distributor", "invalid interface");
         }

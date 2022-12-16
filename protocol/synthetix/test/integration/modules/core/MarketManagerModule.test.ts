@@ -35,7 +35,16 @@ describe('MarketManagerModule', function () {
     it('does not allow non-permissioned user to register market', async () => {
       await assertRevert(
         systems().Core.connect(user2).registerMarket(user1.getAddress()),
-        'FeatureUnavailable'
+        'FeatureUnavailable()'
+      );
+    });
+
+    it('reverts when trying to register a market that does not support the IMarket interface', async function () {
+      await assertRevert(
+        systems()
+          .Core.connect(owner)
+          .registerMarket(await owner.getAddress()),
+        `IncorrectMarketInterface("${await owner.getAddress()}")`
       );
     });
 

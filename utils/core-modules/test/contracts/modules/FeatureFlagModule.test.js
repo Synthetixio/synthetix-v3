@@ -37,7 +37,7 @@ describe('FeatureFlagModule', () => {
     it('does not allow non-owners to set feature flags', async () => {
       await assertRevert(
         FeatureFlagModule.connect(user).setFeatureFlagAllowAll(FEATURE_FLAG_NAME, true),
-        'Unauthorized'
+        `Unauthorized("${await user.getAddress()}")`
       );
     });
 
@@ -47,7 +47,7 @@ describe('FeatureFlagModule', () => {
           FEATURE_FLAG_NAME,
           permissionedUser.address
         ),
-        'Unauthorized'
+        `Unauthorized("${await user.getAddress()}")`
       );
     });
 
@@ -80,7 +80,7 @@ describe('FeatureFlagModule', () => {
         FEATURE_FLAG_NAME,
         permissionedUser.address
       ),
-      'Unauthorized'
+      `Unauthorized("${await user.getAddress()}")`
     );
 
     await assertRevert(
@@ -88,7 +88,7 @@ describe('FeatureFlagModule', () => {
         FEATURE_FLAG_NAME,
         permissionedUser.address
       ),
-      'Unauthorized'
+      `Unauthorized("${await permissionedUser.getAddress()}")`
     );
   });
 

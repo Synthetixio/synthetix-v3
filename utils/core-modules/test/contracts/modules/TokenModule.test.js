@@ -22,7 +22,10 @@ describe('TokenModule', () => {
 
   describe('mint()', () => {
     it('reverts when not owner', async () => {
-      await assertRevert(TokenModule.connect(userMint).mint(userMint.address, 42), 'Unauthorized');
+      await assertRevert(
+        TokenModule.connect(userMint).mint(userMint.address, 42),
+        `Unauthorized("${await userMint.getAddress()}")`
+      );
     });
 
     it('mints', async () => {
@@ -37,7 +40,10 @@ describe('TokenModule', () => {
     });
 
     it('reverts when not owner', async () => {
-      await assertRevert(TokenModule.connect(userBurn).burn(userBurn.address, 21), 'Unauthorized');
+      await assertRevert(
+        TokenModule.connect(userBurn).burn(userBurn.address, 21),
+        `Unauthorized("${await userBurn.getAddress()}")`
+      );
     });
 
     it('burns', async () => {

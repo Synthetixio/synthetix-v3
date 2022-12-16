@@ -4,6 +4,7 @@ import hre from 'hardhat';
 import { ethers } from 'ethers';
 import { fastForwardTo, getTime } from '@synthetixio/core-utils/utils/hardhat/rpc';
 
+import Permissions from '../../mixins/AccountRBACMixin.permissions';
 import { bootstrapWithStakedPool } from '../../bootstrap';
 import { snapshotCheckpoint } from '../../../utils/snapshot';
 
@@ -66,22 +67,17 @@ describe('RewardsManagerModule', function () {
         systems()
           .Core.connect(user1)
           .registerRewardsDistributor(poolId, collateralAddress(), RewardDistributor.address),
-        'Unauthorized',
+        `Unauthorized("${await user1.getAddress()}")`,
         systems().Core
       );
     });
 
     it('reverts with invalid reward distributor (does not support IRewardDistributor interface)', async () => {
-      // TODO try supportsInterface
-      // RewardsManagerModule probably needs a helper to try/catch
-      // the call to IERC165 supports interface,
-      // otherwise it will revert when trying to call that function.
       await assertRevert(
         systems()
           .Core.connect(owner)
           .registerRewardsDistributor(poolId, collateralAddress(), await owner.getAddress()),
-        'transaction reverted'
-        // 'InvalidParameter("distributor", "invalid interface")'
+        'InvalidParameter("distributor", "invalid interface")'
       );
     });
 
@@ -481,7 +477,7 @@ describe('RewardsManagerModule', function () {
         systems()
           .Core.connect(user2)
           .claimRewards(accountId, poolId, collateralAddress(), RewardDistributor.address),
-        'PermissionDenied',
+        `PermissionDenied("${accountId}", "${Permissions.REWARDS}", "${await user2.getAddress()}")`,
         systems().Core
       );
     });

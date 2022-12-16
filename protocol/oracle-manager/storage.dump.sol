@@ -3,13 +3,14 @@ pragma solidity ^0.8.0;
 
 // @custom:artifact @synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol:OwnableStorage
 library OwnableStorage {
+    bytes32 private constant _slotOwnableStorage = keccak256(abi.encode("io.synthetix.core-contracts.Ownable"));
     struct Data {
         bool initialized;
         address owner;
         address nominatedOwner;
     }
     function load() internal pure returns (Data storage store) {
-        bytes32 s = keccak256(abi.encode("Ownable"));
+        bytes32 s = _slotOwnableStorage;
         assembly {
             store.slot := s
         }
@@ -18,13 +19,15 @@ library OwnableStorage {
 
 // @custom:artifact @synthetixio/core-contracts/contracts/proxy/ProxyStorage.sol:ProxyStorage
 contract ProxyStorage {
+    bytes32 private constant _slotProxyStorage = keccak256(abi.encode("io.synthetix.core-contracts.Proxy"));
     struct ProxyStore {
         address implementation;
         bool simulatingUpgrade;
     }
     function _proxyStore() internal pure returns (ProxyStore storage store) {
+        bytes32 s = _slotProxyStorage;
         assembly {
-            store.slot := 0x32402780481dd8149e50baad867f01da72e2f7d02639a6fe378dbd80b6bb446e
+            store.slot := s
         }
     }
 }
@@ -61,7 +64,8 @@ library NodeDefinition {
         REDUCER,
         EXTERNAL,
         CHAINLINK,
-        PYTH
+        PYTH,
+        PriceDeviationCircuitBreaker
     }
     struct Data {
         bytes32[] parents;
@@ -69,11 +73,16 @@ library NodeDefinition {
         bytes parameters;
     }
     function load(bytes32 id) internal pure returns (Data storage data) {
-        bytes32 s = keccak256(abi.encode("Node", id));
+        bytes32 s = keccak256(abi.encode("io.synthetix.oracle-manager.Node", id));
         assembly {
             data.slot := s
         }
     }
+}
+
+// @custom:artifact contracts/utils/ChainlinkNodeLibrary.sol:ChainlinkNodeLibrary
+library ChainlinkNodeLibrary {
+    uint256 public constant PRECISION = 18;
 }
 
 // @custom:artifact contracts/utils/ReducerNodeLibrary.sol:ReducerNodeLibrary

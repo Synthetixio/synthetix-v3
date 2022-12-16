@@ -7,7 +7,7 @@ library Initialized {
     }
 
     function load(bytes32 id) internal pure returns (Data storage store) {
-        bytes32 s = keccak256(abi.encode("Initialized", id));
+        bytes32 s = keccak256(abi.encode("io.synthetix.code-modules.Initialized", id));
         assembly {
             store.slot := s
         }

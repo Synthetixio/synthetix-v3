@@ -4,4 +4,5 @@ export default {
   EXTERNAL: 2,
   CHAINLINK: 3,
   PYTH: 4,
+  PriceDeviationCircuitBreaker: 5,
 };

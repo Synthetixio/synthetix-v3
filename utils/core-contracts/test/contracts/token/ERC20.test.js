@@ -179,7 +179,7 @@ describe('ERC20', () => {
         });
       });
 
-      describe('when transfering less or equal than the approval amount', () => {
+      describe('when transferring less or equal than the approval amount', () => {
         const transferFromAmount = approvalAmount.sub(1);
         before('transferFrom to itself', async () => {
           let tx = await ERC20.connect(user2).transferFrom(

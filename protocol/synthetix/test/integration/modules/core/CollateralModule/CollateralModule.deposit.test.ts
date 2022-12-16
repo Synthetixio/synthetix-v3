@@ -75,9 +75,13 @@ describe('CollateralModule', function () {
 
           describe('when attempting to deposit more tokens than the user has', () => {
             it('reverts', async () => {
+              const amount = mintAmount.add(1);
+
               await assertRevert(
-                systems().Core.connect(user1).deposit(1, Collateral.address, mintAmount.add(1)),
-                'FailedTransfer',
+                systems().Core.connect(user1).deposit(1, Collateral.address, amount),
+                `FailedTransfer("${await user1.getAddress()}", "${
+                  systems().Core.address
+                }", "${amount}")`,
                 systems().Core
               );
             });
@@ -129,11 +133,15 @@ describe('CollateralModule', function () {
 
             describe('when attempting to withdraw more than available collateral', () => {
               it('reverts', async () => {
+                const amount = depositAmount.add('1');
+
+                // Collateral uses 6 decimals and system operates with 18,
+                // so scale up the expected amount.
+                const errorAmount = amount.mul(ethers.BigNumber.from(10).pow(12));
+
                 await assertRevert(
-                  systems()
-                    .Core.connect(user1)
-                    .withdraw(1, Collateral.address, depositAmount.add('1')),
-                  'InsufficientAccountCollateral',
+                  systems().Core.connect(user1).withdraw(1, Collateral.address, amount),
+                  `InsufficientAccountCollateral("${errorAmount}")`,
                   systems().Core
                 );
               });

@@ -110,7 +110,7 @@ describe('ScalableMapping', () => {
       it('reverts', async () => {
         await assertRevert(
           FakeScalableMapping.ScalableMapping_scale(wei(-1, 27).toBN()),
-          'InsufficientMappedAmount'
+          'InsufficientMappedAmount()'
         );
       });
     });
