@@ -167,7 +167,6 @@ library Fee {
         if (delegatedCollateral > totalValue) {
             return 0;
         } else {
-            // TODO: do we need thresholds for utilization rate? can just use average rate
             uint utilization = delegatedCollateral.divDecimal(totalValue);
 
             utilFee = utilization.mulDecimal(self.utilizationFeeRate);
