@@ -34,6 +34,7 @@
     "eslint": "8.29.0",
     "eslint-config-prettier": "8.5.0",
     "eslint-plugin-no-only-tests": "3.1.0",
+    "@synthetixio/solhint-plugin-numcast": "*",
     "pre-commit": "1.2.2",
     "prettier": "2.8.0",
     "prettier-plugin-solidity": "1.0.0",
