@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 import "../interfaces/external/IRewardDistributor.sol";
 
 import "./RewardDistributionEntry.sol";
-import "./RewardDistributionStatus.sol";
+import "./RewardDistributionClaimStatus.sol";
 
 /**
  * @title Used by vaults to track rewards for its participants. There will be one of these for each pool, collateral type, and distributor combination.
@@ -26,6 +26,6 @@ library RewardDistribution {
         /**
          * @dev The status for each actor, regarding this distribution's entry.
          */
-        mapping(uint256 => RewardDistributionStatus.Data) actorInfo;
+        mapping(uint256 => RewardDistributionClaimStatus.Data) actorInfo;
     }
 }

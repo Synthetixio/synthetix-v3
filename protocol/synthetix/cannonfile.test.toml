@@ -127,8 +127,8 @@ artifact = "contracts/modules/test/TestableSystemPoolConfigurationModule.sol:Tes
 [contract.TestableRewardDistributionModule]
 artifact = "contracts/modules/test/TestableRewardDistributionModule.sol:TestableRewardDistributionModule"
 
-[contract.TestableRewardDistributionStatusModule]
-artifact = "contracts/modules/test/TestableRewardDistributionStatusModule.sol:TestableRewardDistributionStatusModule"
+[contract.TestableRewardDistributionClaimStatusModule]
+artifact = "contracts/modules/test/TestableRewardDistributionClaimStatusModule.sol:TestableRewardDistributionClaimStatusModule"
 
 [contract.TestableScalableMappingModule]
 artifact = "contracts/modules/test/TestableScalableMappingModule.sol:TestableScalableMappingModule"
@@ -176,7 +176,7 @@ args = [
     TestablePoolModule: contracts.TestablePoolModule,
     TestableSystemPoolConfigurationModule: contracts.TestableSystemPoolConfigurationModule,
     TestableRewardDistributionModule: contracts.TestableRewardDistributionModule,
-    TestableRewardDistributionStatusModule: contracts.TestableRewardDistributionStatusModule,
+    TestableRewardDistributionClaimStatusModule: contracts.TestableRewardDistributionClaimStatusModule,
     TestableScalableMappingModule: contracts.TestableScalableMappingModule,
     TestableVaultEpochModule: contracts.TestableVaultEpochModule,
     TestableVaultModule: contracts.TestableVaultModule,
@@ -216,7 +216,7 @@ depends = [
   "contract.TestablePoolModule",
   "contract.TestableSystemPoolConfigurationModule",
   "contract.TestableRewardDistributionModule",
-  "contract.TestableRewardDistributionStatusModule",
+  "contract.TestableRewardDistributionClaimStatusModule",
   "contract.TestableScalableMappingModule",
   "contract.TestableVaultEpochModule",
   "contract.TestableVaultModule",
@@ -256,7 +256,7 @@ abiOf = [
   "TestablePoolModule",
   "TestableSystemPoolConfigurationModule",
   "TestableRewardDistributionModule",
-  "TestableRewardDistributionStatusModule",
+  "TestableRewardDistributionClaimStatusModule",
   "TestableScalableMappingModule",
   "TestableVaultEpochModule",
   "TestableVaultModule",

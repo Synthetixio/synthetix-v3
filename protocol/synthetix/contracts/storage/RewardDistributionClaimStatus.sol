@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 /**
  * @title Tracks information per actor within a RewardDistribution.
  */
-library RewardDistributionStatus {
+library RewardDistributionClaimStatus {
     struct Data {
         /**
          * @dev The last known reward per share for this actor.

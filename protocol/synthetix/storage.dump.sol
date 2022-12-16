@@ -497,7 +497,15 @@ library RewardDistribution {
         address distributor;
         RewardDistributionEntry.Data entry;
         uint128 rewardPerShareD18;
-        mapping(uint256 => RewardDistributionStatus.Data) actorInfo;
+        mapping(uint256 => RewardDistributionClaimStatus.Data) actorInfo;
+    }
+}
+
+// @custom:artifact contracts/storage/RewardDistributionClaimStatus.sol:RewardDistributionClaimStatus
+library RewardDistributionClaimStatus {
+    struct Data {
+        uint128 lastRewardPerShareD18;
+        uint128 pendingSendD18;
     }
 }
 
@@ -508,14 +516,6 @@ library RewardDistributionEntry {
         uint64 start;
         uint32 duration;
         uint32 lastUpdate;
-    }
-}
-
-// @custom:artifact contracts/storage/RewardDistributionStatus.sol:RewardDistributionStatus
-library RewardDistributionStatus {
-    struct Data {
-        uint128 lastRewardPerShareD18;
-        uint128 pendingSendD18;
     }
 }
 
