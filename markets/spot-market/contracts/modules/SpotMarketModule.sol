@@ -4,7 +4,6 @@ pragma solidity ^0.8.0;
 import "@synthetixio/main/contracts/interfaces/IMarketManagerModule.sol";
 import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
-import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import "../storage/SpotMarketFactory.sol";
 import "../interfaces/ISpotMarketModule.sol";
 import "../utils/SynthUtil.sol";
@@ -12,12 +11,10 @@ import "../utils/SynthUtil.sol";
 contract SpotMarketModule is ISpotMarketModule {
     using DecimalMath for uint256;
     using SpotMarketFactory for SpotMarketFactory.Data;
-    using SafeCastU256 for uint256;
-    using SafeCastI256 for int256;
     using Price for Price.Data;
     using Fee for Fee.Data;
 
-    function buy(uint128 marketId, uint amountUsd) external override returns (int) {
+    function buy(uint128 marketId, uint amountUsd) external override returns (uint) {
         SpotMarketFactory.Data storage store = SpotMarketFactory.load();
 
         uint256 allowance = store.usdToken.allowance(msg.sender, address(this));
@@ -29,28 +26,28 @@ contract SpotMarketModule is ISpotMarketModule {
         }
 
         store.usdToken.transferFrom(msg.sender, address(this), amountUsd);
-        (int256 amountUsable, uint256 feesCollected) = Fee.calculateFees(
+        (uint256 amountUsable, int256 feesCollected) = Fee.calculateFees(
             marketId,
             msg.sender,
-            amountUsd.toInt(),
+            amountUsd,
             Fee.TradeType.BUY
         );
 
-        int256 amountToMint = Price.load(marketId).usdSynthExchangeRate(
+        uint256 amountToMint = Price.load(marketId).usdSynthExchangeRate(
             amountUsable,
             Fee.TradeType.BUY
         );
-        SynthUtil.getToken(marketId).mint(msg.sender, amountToMint.toUint());
+        SynthUtil.getToken(marketId).mint(msg.sender, amountToMint);
 
         // track fees
         // could burn fees/deposit into market manager...
         store.synthFeesCollected[marketId] += feesCollected;
 
-        store.usdToken.approve(address(this), amountUsable.toUint());
+        store.usdToken.approve(address(this), amountUsable);
         IMarketManagerModule(store.synthetix).depositMarketUsd(
             marketId,
             address(this),
-            amountUsable.toUint()
+            amountUsable
         );
 
         emit SynthBought(marketId, amountToMint, feesCollected);
@@ -58,12 +55,12 @@ contract SpotMarketModule is ISpotMarketModule {
         return amountToMint;
     }
 
-    function sell(uint128 marketId, uint256 sellAmount) external override returns (int256) {
+    function sell(uint128 marketId, uint256 sellAmount) external override returns (uint256) {
         SpotMarketFactory.Data storage store = SpotMarketFactory.load();
 
         // TODO: check int256
-        int256 amountToWithdraw = Price.load(marketId).synthUsdExchangeRate(
-            sellAmount.toInt(),
+        uint256 amountToWithdraw = Price.load(marketId).synthUsdExchangeRate(
+            sellAmount,
             Fee.TradeType.SELL
         );
         SynthUtil.getToken(marketId).burn(msg.sender, sellAmount);
@@ -71,10 +68,10 @@ contract SpotMarketModule is ISpotMarketModule {
         IMarketManagerModule(store.synthetix).withdrawMarketUsd(
             marketId,
             address(this),
-            amountToWithdraw.toUint()
+            amountToWithdraw
         );
 
-        (int256 returnAmount, uint256 feesCollected) = Fee.calculateFees(
+        (uint256 returnAmount, int256 feesCollected) = Fee.calculateFees(
             marketId,
             msg.sender,
             amountToWithdraw,
@@ -83,7 +80,7 @@ contract SpotMarketModule is ISpotMarketModule {
 
         store.synthFeesCollected[marketId] += feesCollected;
 
-        store.usdToken.transfer(msg.sender, returnAmount.toUint());
+        store.usdToken.transfer(msg.sender, returnAmount);
         emit SynthSold(marketId, returnAmount, feesCollected);
 
         return returnAmount;

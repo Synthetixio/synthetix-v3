@@ -13,9 +13,9 @@ import "./Wrapper.sol";
 library Fee {
     using DecimalMath for uint256;
     using DecimalMath for int256;
-    using SafeCastI256 for int256;
-    using SafeCastU256 for uint256;
     using Price for Price.Data;
+    using SafeCastU256 for uint256;
+    using SafeCastI256 for int256;
 
     enum TradeType {
         BUY,
@@ -25,12 +25,10 @@ library Fee {
     }
 
     struct Data {
-        uint interestRate;
         uint fixedFee;
         uint skewScale;
-        uint skewFeePercentage; // in bips
-        uint[] utilizationThresholds;
         uint utilizationFeeRate; // in bips
+        uint wrapperFee;
     }
 
     function load(uint128 marketId) internal pure returns (Data storage store) {
@@ -43,39 +41,66 @@ library Fee {
     function calculateFees(
         uint128 marketId,
         address transactor,
-        int256 amount,
+        uint256 amount,
         TradeType tradeType
-    ) internal returns (int amountUsable, uint feesCollected) {
+    ) internal returns (uint amountUsable, int feesCollected) {
         Data storage self = load(marketId);
 
         // TODO: only buy trades have fees currently; how to handle for other trade types?
         if (tradeType == TradeType.BUY) {
             (amountUsable, feesCollected) = calculateBuyFees(self, marketId, amount);
+        } else if (tradeType == TradeType.SELL) {
+            (amountUsable, feesCollected) = calculateSellFees(self, marketId, amount);
+        } else if (tradeType == TradeType.WRAP || tradeType == TradeType.UNWRAP) {
+            (amountUsable, feesCollected) = calculateWrapFees(self, amount);
         } else {
             amountUsable = amount;
             feesCollected = 0;
         }
     }
 
+    function calculateWrapFees(
+        Data storage self,
+        uint256 amount
+    ) internal view returns (uint amountUsable, int feesCollected) {
+        feesCollected = self.wrapperFee.mulDecimal(amount).divDecimal(10000).toInt();
+        amountUsable = (amount.toInt() - feesCollected).toUint();
+    }
+
     function calculateBuyFees(
         Data storage self,
         uint128 marketId,
-        int256 amount
-    ) internal returns (int amountUsable, uint feesCollected) {
-        // generally, only one of these will be non-zero
-        uint skewFee = calculateSkewFee(self, marketId);
+        uint256 amount
+    ) internal returns (uint amountUsable, int feesCollected) {
+        int skewFee = calculateSkewFee(self, marketId, amount, TradeType.BUY);
         uint utilizationFee = calculateUtilizationRateFee(self, marketId, TradeType.BUY);
 
-        // TODO: fixed fee?
+        int totalFees = skewFee + utilizationFee.toInt() + self.fixedFee.toInt();
 
-        uint totalFees = skewFee + utilizationFee;
-
-        feesCollected = totalFees.mulDecimal(amount.toUint()).divDecimal(10000);
-        amountUsable = amount - feesCollected.toInt();
+        feesCollected = totalFees.mulDecimal(amount.toInt()).divDecimal(10000);
+        amountUsable = (amount.toInt() - feesCollected).toUint();
     }
 
-    function calculateSkewFee(Data storage self, uint128 marketId) internal returns (uint skewFee) {
-        if (self.skewScale == 0 || self.skewFeePercentage == 0) {
+    function calculateSellFees(
+        Data storage self,
+        uint128 marketId,
+        uint256 amount
+    ) internal returns (uint amountUsable, int feesCollected) {
+        int skewFee = calculateSkewFee(self, marketId, amount, TradeType.SELL);
+
+        int totalFees = self.fixedFee.toInt() + skewFee;
+
+        feesCollected = totalFees.mulDecimal(amount.toInt()).divDecimal(10000);
+        amountUsable = (amount.toInt() - feesCollected).toUint();
+    }
+
+    function calculateSkewFee(
+        Data storage self,
+        uint128 marketId,
+        uint amount,
+        TradeType tradeType
+    ) internal returns (int skewFee) {
+        if (self.skewScale == 0) {
             return 0;
         }
 
@@ -88,9 +113,20 @@ library Fee {
                 .getMarketCollateralAmount(marketId, wrapper.collateralType);
         }
 
-        uint skew = totalBalance - wrappedMarketCollateral;
-        uint skewThreshold = skew.divDecimal(self.skewScale);
-        skewFee = skewThreshold.mulDecimal(self.skewFeePercentage);
+        uint initialSkew = totalBalance - wrappedMarketCollateral;
+        uint initialSkewFee = initialSkew.divDecimal(self.skewScale);
+
+        uint skewAfterFill = initialSkew;
+        // TODO: when the fee after fill is calculated, does it take into account the fees collected for the trade?
+        if (tradeType == TradeType.BUY) {
+            skewAfterFill += amount;
+        } else if (tradeType == TradeType.SELL) {
+            skewAfterFill -= amount;
+        }
+        uint skewAfterFillFee = skewAfterFill.divDecimal(self.skewScale);
+
+        int skewDiff = skewAfterFillFee.toInt() - initialSkewFee.toInt();
+        skewFee = skewDiff.divDecimal(2);
     }
 
     function calculateUtilizationRateFee(
@@ -98,7 +134,7 @@ library Fee {
         uint128 marketId,
         TradeType tradeType
     ) internal view returns (uint utilFee) {
-        if (self.utilizationThresholds.length == 0 || self.utilizationFeeRate == 0) {
+        if (self.utilizationFeeRate == 0) {
             return 0;
         }
 
@@ -106,9 +142,7 @@ library Fee {
             .getMarketCollateral(marketId);
 
         uint totalBalance = SynthUtil.getToken(marketId).totalSupply();
-        uint totalValue = totalBalance.mulDecimal(
-            Price.load(marketId).getCurrentPrice(tradeType).toUint()
-        );
+        uint totalValue = totalBalance.mulDecimal(Price.load(marketId).getCurrentPrice(tradeType));
 
         // utilization is below 100%
         if (delegatedCollateral > totalValue) {

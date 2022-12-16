@@ -16,31 +16,24 @@ contract FeeConfigurationModule is IFeeConfigurationModule {
         emit FixedFeeSet(synthMarketId, fixedFee);
     }
 
-    function setMarketSkewFees(
-        uint128 synthMarketId,
-        uint skewScale,
-        uint skewFeePercentage
-    ) external override {
+    function setMarketSkewFees(uint128 synthMarketId, uint skewScale) external override {
         SpotMarketFactory.load().onlyMarketOwner(synthMarketId);
 
         Fee.Data storage fee = Fee.load(synthMarketId);
         fee.skewScale = skewScale;
-        fee.skewFeePercentage = skewFeePercentage;
 
-        emit MarketSkewFeesSet(synthMarketId, skewScale, skewFeePercentage);
+        emit MarketSkewFeesSet(synthMarketId, skewScale);
     }
 
     function setMarketUtilizationFees(
         uint128 synthMarketId,
-        uint[] calldata utilizationThresholds,
         uint utilizationFeeRate
     ) external override {
         SpotMarketFactory.load().onlyMarketOwner(synthMarketId);
 
         Fee.Data storage fee = Fee.load(synthMarketId);
-        fee.utilizationThresholds = utilizationThresholds;
         fee.utilizationFeeRate = utilizationFeeRate;
 
-        emit MarketUtilizationFeesSet(synthMarketId, utilizationThresholds);
+        emit MarketUtilizationFeesSet(synthMarketId, utilizationFeeRate);
     }
 }

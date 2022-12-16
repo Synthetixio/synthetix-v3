@@ -3,12 +3,13 @@ pragma solidity ^0.8.0;
 
 import "@synthetixio/oracle-manager/contracts/interfaces/IOracleManagerModule.sol";
 import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
+import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import "./SpotMarketFactory.sol";
 import "./Fee.sol";
 
 library Price {
     using DecimalMath for uint256;
-    using DecimalMath for int256;
+    using SafeCastI256 for int256;
 
     struct Data {
         bytes32 buyFeedId;
@@ -22,16 +23,15 @@ library Price {
         }
     }
 
-    // TODO: interact with OracleManager to get price for market synth
     function getCurrentPrice(
         Data storage self,
         Fee.TradeType tradeType
-    ) internal view returns (int256 price) {
+    ) internal view returns (uint256 price) {
         SpotMarketFactory.Data storage factory = SpotMarketFactory.load();
         if (tradeType == Fee.TradeType.BUY) {
-            price = IOracleManagerModule(factory.oracle).process(self.buyFeedId).price;
+            price = IOracleManagerModule(factory.oracle).process(self.buyFeedId).price.toUint();
         } else {
-            price = IOracleManagerModule(factory.oracle).process(self.sellFeedId).price;
+            price = IOracleManagerModule(factory.oracle).process(self.sellFeedId).price.toUint();
         }
     }
 
@@ -42,19 +42,19 @@ library Price {
 
     function usdSynthExchangeRate(
         Data storage self,
-        int amountUsd,
+        uint amountUsd,
         Fee.TradeType tradeType
-    ) internal view returns (int256 synthAmount) {
-        int256 currentPrice = getCurrentPrice(self, tradeType);
-        synthAmount = int256(amountUsd).divDecimal(currentPrice);
+    ) internal view returns (uint256 synthAmount) {
+        uint256 currentPrice = getCurrentPrice(self, tradeType);
+        synthAmount = amountUsd.divDecimal(currentPrice);
     }
 
     function synthUsdExchangeRate(
         Data storage self,
-        int sellAmount,
+        uint sellAmount,
         Fee.TradeType tradeType
-    ) internal view returns (int256 amountUsd) {
-        int256 currentPrice = getCurrentPrice(self, tradeType);
-        amountUsd = int256(sellAmount).mulDecimal(currentPrice);
+    ) internal view returns (uint256 amountUsd) {
+        uint256 currentPrice = getCurrentPrice(self, tradeType);
+        amountUsd = sellAmount.mulDecimal(currentPrice);
     }
 }

@@ -103,12 +103,10 @@ library Fee {
         UNWRAP
     }
     struct Data {
-        uint interestRate;
         uint fixedFee;
         uint skewScale;
-        uint skewFeePercentage;
-        uint[] utilizationThresholds;
         uint utilizationFeeRate;
+        uint wrapperFee;
     }
     function load(uint128 marketId) internal pure returns (Data storage store) {
         bytes32 s = keccak256(abi.encode("Fee", marketId));
