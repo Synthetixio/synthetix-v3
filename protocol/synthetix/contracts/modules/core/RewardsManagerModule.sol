@@ -161,7 +161,7 @@ contract RewardsManagerModule is IRewardsManagerModule {
             msg.sender,
             reward
         );
-        vault.rewards[rewardId].actorInfo[accountId].pendingSendD18 = 0;
+        vault.rewards[rewardId].claimStatus[accountId].pendingSendD18 = 0;
 
         emit RewardsClaimed(
             accountId,

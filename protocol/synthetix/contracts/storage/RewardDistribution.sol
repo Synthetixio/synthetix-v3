@@ -36,7 +36,7 @@ library RewardDistribution {
         /**
          * @dev The status for each actor, regarding this distribution's entry.
          */
-        mapping(uint256 => RewardDistributionClaimStatus.Data) actorInfo;
+        mapping(uint256 => RewardDistributionClaimStatus.Data) claimStatus;
         /**
          * @dev Value to be distributed as rewards in a scheduled form.
          */

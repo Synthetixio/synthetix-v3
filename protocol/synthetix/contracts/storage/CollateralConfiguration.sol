@@ -61,8 +61,8 @@ library CollateralConfiguration {
          */
         uint256 issuanceRatioD18;
         /**
-         * @dev System-wide collateralization ratio for liquidations.
-         * Accounts below this c-ratio can will be immediately liquidated.
+         * @dev System-wide collateralization ratio for liquidations of this collateral type.
+         * Accounts below this c-ratio can be immediately liquidated.
          */
         uint256 liquidationRatioD18;
         /**
@@ -80,7 +80,7 @@ library CollateralConfiguration {
         /**
          * @dev Minimum amount that accounts can delegate to pools.
          * Helps prevent spamming on the system.
-         * Note: If zero, no minimum amount will be used.
+         * Note: If zero, liquidationRewardD18 will be used.
          */
         uint256 minDelegationD18;
     }
@@ -151,7 +151,6 @@ library CollateralConfiguration {
 
     /**
      * @dev Reverts if the amount being delegated is sufficient for the system.
-     * Note: If the configuration's `minDelegationD18` for this collateral type is zero, no minimum is required.
      * @param token The address of the collateral type.
      * @param amountD18 The amount being checked for sufficient delegation.
      */
@@ -172,7 +171,7 @@ library CollateralConfiguration {
     /**
      * @dev Returns the price of this collateral configuration object.
      * @param self The CollateralConfiguration object.
-     * @return The price of the collateral.
+     * @return The price of the collateral with 18 decimals of precision.
      */
     function getCollateralPrice(Data storage self) internal view returns (uint256) {
         OracleManager.Data memory oracleManager = OracleManager.load();

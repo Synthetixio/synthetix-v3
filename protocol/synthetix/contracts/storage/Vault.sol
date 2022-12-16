@@ -158,13 +158,13 @@ library Vault {
 
         dist.rewardPerShareD18 += dist.updateEntry(totalSharesD18).toUint().to128();
 
-        dist.actorInfo[accountId].pendingSendD18 += actorSharesD18
-            .mulDecimal(dist.rewardPerShareD18 - dist.actorInfo[accountId].lastRewardPerShareD18)
+        dist.claimStatus[accountId].pendingSendD18 += actorSharesD18
+            .mulDecimal(dist.rewardPerShareD18 - dist.claimStatus[accountId].lastRewardPerShareD18)
             .to128();
 
-        dist.actorInfo[accountId].lastRewardPerShareD18 = dist.rewardPerShareD18;
+        dist.claimStatus[accountId].lastRewardPerShareD18 = dist.rewardPerShareD18;
 
-        return dist.actorInfo[accountId].pendingSendD18;
+        return dist.claimStatus[accountId].pendingSendD18;
     }
 
     /**

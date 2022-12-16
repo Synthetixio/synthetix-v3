@@ -497,7 +497,7 @@ library RewardDistribution {
         address distributor;
         uint128 __slotAvailableForFutureUse;
         uint128 rewardPerShareD18;
-        mapping(uint256 => RewardDistributionClaimStatus.Data) actorInfo;
+        mapping(uint256 => RewardDistributionClaimStatus.Data) claimStatus;
         int128 scheduledValueD18;
         uint64 start;
         uint32 duration;
