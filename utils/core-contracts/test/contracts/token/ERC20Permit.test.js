@@ -1,7 +1,7 @@
 const { ethers } = hre;
 const assertBn = require('@synthetixio/core-utils/utils/assertions/assert-bignumber');
 
-describe.only('ERC20Permit', () => {
+describe('ERC20Permit', () => {
   const totalSupply = ethers.BigNumber.from('1000000');
 
   let token, vault;
