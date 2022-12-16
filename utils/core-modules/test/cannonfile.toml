@@ -1,0 +1,98 @@
+name = "core-modules"
+version = "<%= package.version %>"
+description = "Test Deployment for Synthetix's Core Modules project"
+
+# `salt` here only affects proxy contract
+[setting.salt]
+description = "Change this to a unique string when deploying multiple instances of the system. Note that only the proxy contract will be unique."
+defaultValue = "core-modules"
+
+[setting.owner]
+description = "Admin user for the system"
+defaultValue = "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266"
+
+# Core Modules
+
+[contract.OwnerModule]
+artifact = "contracts/modules/OwnerModule.sol:OwnerModule"
+
+[contract.UpgradeModule]
+artifact = "contracts/modules/UpgradeModule.sol:UpgradeModule"
+
+[contract.AssociatedSystemsModule]
+artifact = "contracts/modules/AssociatedSystemsModule.sol:AssociatedSystemsModule"
+
+[contract.FeatureFlagModule]
+artifact = "contracts/modules/FeatureFlagModule.sol:FeatureFlagModule"
+
+# Mocks
+
+[contract.SampleFeatureFlagModule]
+artifact = "contracts/modules/SampleFeatureFlagModule.sol:SampleFeatureFlagModule"
+
+[contract.SampleModuleA]
+artifact = "contracts/modules/SampleModuleA.sol:SampleModuleA"
+
+[contract.SampleModuleB]
+artifact = "contracts/modules/SampleModuleB.sol:SampleModuleB"
+
+[contract.SampleOwnedModule]
+artifact = "contracts/modules/SampleOwnedModule.sol:SampleOwnedModule"
+
+# Setup Architecture
+
+[run.generate_router]
+exec = "@synthetixio/hardhat-router/utils/cannon"
+func = "generate"
+args = [
+  "contracts/routers/chain-<%= chainId %>/Router.sol:Router",
+  '''<%= JSON.stringify({
+    OwnerModule: contracts.OwnerModule,
+    UpgradeModule: contracts.UpgradeModule,
+    AssociatedSystemsModule: contracts.AssociatedSystemsModule,
+    FeatureFlagModule: contracts.FeatureFlagModule,
+    SampleFeatureFlagModule: contracts.SampleFeatureFlagModule,
+    SampleModuleA: contracts.SampleModuleA,
+    SampleModuleB: contracts.SampleModuleB,
+    SampleOwnedModule: contracts.SampleOwnedModule,
+  }) %>'''
+]
+modified = ["contracts"]
+depends = [
+  "contract.OwnerModule",
+  "contract.UpgradeModule",
+  "contract.AssociatedSystemsModule",
+  "contract.FeatureFlagModule",
+  "contract.SampleFeatureFlagModule",
+  "contract.SampleModuleA",
+  "contract.SampleModuleB",
+  "contract.SampleOwnedModule"
+]
+
+[contract.Router]
+artifact = "contracts/routers/chain-<%= chainId %>/Router.sol:Router"
+abiOf = [
+  "OwnerModule",
+  "UpgradeModule",
+  "AssociatedSystemsModule",
+  "FeatureFlagModule",
+  "SampleFeatureFlagModule",
+  "SampleModuleA",
+  "SampleModuleB",
+  "SampleOwnedModule",
+]
+depends = ["run.generate_router"]
+
+[contract.Proxy]
+artifact = "contracts/Proxy.sol:Proxy"
+args = ["<%= contracts.Router.address %>"]
+abiOf = ["Router"]
+salt = "<%= settings.salt %>"
+depends = ["contract.Router"]
+
+[invoke.acquire_ownership]
+target = ["Proxy"]
+from = "<%= settings.owner %>"
+func = "initializeOwnerModule"
+args = ["<%= settings.owner %>"]
+depends = ["contract.Proxy"]

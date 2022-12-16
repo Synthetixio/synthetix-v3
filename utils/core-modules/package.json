@@ -13,5 +13,11 @@
     "coverage": "hardhat coverage",
     "compile-contracts": "hardhat compile",
     "size-contracts": "hardhat size-contracts"
+  },
+  "keywords": [],
+  "author": "Synthetix",
+  "license": "MIT",
+  "devDependencies": {
+    "@synthetixio/common-config": "*"
   }
 }
