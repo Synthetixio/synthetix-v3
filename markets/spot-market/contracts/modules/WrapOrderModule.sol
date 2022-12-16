@@ -1,27 +1,31 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@synthetixio/core-contracts/contracts/utils/MathUtil.sol";
+import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import "@synthetixio/core-contracts/contracts/interfaces/IERC20.sol";
 import "@synthetixio/main/contracts/interfaces/IMarketCollateralModule.sol";
 import "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
-import "../../storage/SpotMarketFactory.sol";
-import "../../interfaces/IWrapper.sol";
-import "../../storage/Wrapper.sol";
-import "../../storage/Price.sol";
-import "../../utils/SynthUtil.sol";
+import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+import "../storage/SpotMarketFactory.sol";
+import "../interfaces/IWrapOrderModule.sol";
+import "../storage/Wrapper.sol";
+import "../storage/Price.sol";
+import "../utils/SynthUtil.sol";
 
-contract WrapperModule is IWrapper {
-    using MathUtil for uint256;
+contract WrapOrderModule is IWrapOrderModule {
+    using DecimalMath for uint256;
     using SpotMarketFactory for SpotMarketFactory.Data;
     using Price for Price.Data;
     using Fee for Fee.Data;
     using Wrapper for Wrapper.Data;
+    using SafeCastU256 for uint256;
+    using SafeCastI256 for int256;
 
     function initializeWrapper(uint128 marketId, address collateralType) external override {
-        OwnableStorage.onlyOwner();
         SpotMarketFactory.Data storage store = SpotMarketFactory.load();
-        store.synthConfigs[marketId].wrapperData = Wrapper.Data(collateralType, true);
+        store.onlyMarketOwner(marketId);
+
+        Wrapper.create(marketId, collateralType);
 
         IMarketCollateralModule(store.synthetix).configureMaximumMarketCollateral(
             marketId,
@@ -32,9 +36,12 @@ contract WrapperModule is IWrapper {
         emit WrapperInitialized(marketId, collateralType);
     }
 
-    function wrap(uint128 marketId, uint wrapAmount) external override returns (uint amountToMint) {
+    function wrap(
+        uint128 marketId,
+        uint256 wrapAmount
+    ) external override returns (uint256 amountToMint) {
         SpotMarketFactory.Data storage store = SpotMarketFactory.load();
-        Wrapper.Data storage wrapperStore = store.getWrapperData(marketId);
+        Wrapper.Data storage wrapperStore = Wrapper.load(marketId);
         wrapperStore.onlyEnabledWrapper();
 
         IERC20 wrappingCollateral = IERC20(wrapperStore.collateralType);
@@ -49,10 +56,11 @@ contract WrapperModule is IWrapper {
         // safe transfer?
         wrappingCollateral.transferFrom(msg.sender, address(this), wrapAmount);
 
-        Price.Data storage priceStore = store.getPriceData(marketId);
+        Price.Data storage priceStore = Price.load(marketId);
 
-        uint wrapAmountInUsd = priceStore.synthUsdExchangeRate(wrapAmount);
-        (uint returnAmount, uint feesCollected) = store.getFeeData(marketId).calculateFees(
+        uint256 wrapAmountInUsd = priceStore.synthUsdExchangeRate(wrapAmount, Fee.TradeType.WRAP);
+        (uint256 returnAmount, int256 feesCollected) = Fee.calculateFees(
+            marketId,
             msg.sender,
             wrapAmountInUsd,
             Fee.TradeType.WRAP
@@ -60,7 +68,8 @@ contract WrapperModule is IWrapper {
 
         store.synthFeesCollected[marketId] += feesCollected;
 
-        amountToMint = priceStore.usdSynthExchangeRate(returnAmount);
+        // TODO: check int256
+        amountToMint = priceStore.usdSynthExchangeRate(returnAmount, Fee.TradeType.WRAP);
 
         store.usdToken.approve(store.synthetix, amountToMint);
         IMarketCollateralModule(store.synthetix).depositMarketCollateral(
@@ -76,22 +85,26 @@ contract WrapperModule is IWrapper {
 
     function unwrap(
         uint128 marketId,
-        uint unwrapAmount
-    ) external override returns (uint amountToWithdraw) {
+        uint256 unwrapAmount
+    ) external override returns (uint256 amountToWithdraw) {
         SpotMarketFactory.Data storage store = SpotMarketFactory.load();
-        Wrapper.Data storage wrapperStore = store.getWrapperData(marketId);
+        Wrapper.Data storage wrapperStore = Wrapper.load(marketId);
         wrapperStore.onlyEnabledWrapper();
 
         ITokenModule synth = SynthUtil.getToken(marketId);
 
         if (synth.balanceOf(msg.sender) < unwrapAmount) revert InsufficientFunds();
-        uint allowance = synth.allowance(msg.sender, address(this));
+        uint256 allowance = synth.allowance(msg.sender, address(this));
         if (allowance < unwrapAmount) revert InsufficientAllowance(unwrapAmount, allowance);
 
-        Price.Data storage priceStore = store.getPriceData(marketId);
+        Price.Data storage priceStore = Price.load(marketId);
 
-        uint unwrapAmountInUsd = priceStore.synthUsdExchangeRate(unwrapAmount);
-        (uint returnAmount, uint feesCollected) = store.getFeeData(marketId).calculateFees(
+        uint256 unwrapAmountInUsd = priceStore.synthUsdExchangeRate(
+            unwrapAmount,
+            Fee.TradeType.UNWRAP
+        );
+        (uint256 returnAmount, int256 feesCollected) = Fee.calculateFees(
+            marketId,
             msg.sender,
             unwrapAmountInUsd,
             Fee.TradeType.UNWRAP
@@ -99,7 +112,8 @@ contract WrapperModule is IWrapper {
 
         store.synthFeesCollected[marketId] += feesCollected;
 
-        amountToWithdraw = priceStore.usdSynthExchangeRate(returnAmount);
+        // TODO: check int256
+        amountToWithdraw = priceStore.usdSynthExchangeRate(returnAmount, Fee.TradeType.UNWRAP);
 
         IMarketCollateralModule(store.synthetix).withdrawMarketCollateral(
             marketId,
@@ -110,26 +124,5 @@ contract WrapperModule is IWrapper {
         synth.burn(msg.sender, unwrapAmount);
 
         emit SynthUnwrapped(marketId, amountToWithdraw, feesCollected);
-    }
-
-    function getWrapQuote(uint128 marketId, uint wrapAmount) external view returns (uint, uint) {
-        return
-            SpotMarketFactory.load().getFeeData(marketId).calculateFees(
-                msg.sender,
-                wrapAmount,
-                Fee.TradeType.WRAP
-            );
-    }
-
-    function getUnwrapQuote(
-        uint128 marketId,
-        uint unwrapAmount
-    ) external view returns (uint, uint) {
-        return
-            SpotMarketFactory.load().getFeeData(marketId).calculateFees(
-                msg.sender,
-                unwrapAmount,
-                Fee.TradeType.UNWRAP
-            );
     }
 }

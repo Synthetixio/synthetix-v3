@@ -5,5 +5,5 @@ import "@synthetixio/core-modules/contracts/modules/TokenModule.sol";
 
 // solhint-disable-next-line no-empty-blocks
 contract Synth is TokenModule {
-
+    // Rebase tokens logic goes here
 }
