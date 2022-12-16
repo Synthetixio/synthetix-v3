@@ -13,6 +13,10 @@ library AccountRBAC {
     using SetUtil for SetUtil.Bytes32Set;
     using SetUtil for SetUtil.AddressSet;
 
+    /**
+     * @dev All permissions used by the system
+     * need to be hardcoded here.
+     */
     bytes32 internal constant _ADMIN_PERMISSION = "ADMIN";
     bytes32 internal constant _WITHDRAW_PERMISSION = "WITHDRAW";
     bytes32 internal constant _DELEGATE_PERMISSION = "DELEGATE";

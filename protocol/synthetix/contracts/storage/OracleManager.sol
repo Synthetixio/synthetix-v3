@@ -15,6 +15,9 @@ library OracleManager {
         address oracleManagerAddress;
     }
 
+    /**
+     * @dev Loads the singleton storage info about the oracle manager.
+     */
     function load() internal pure returns (Data storage data) {
         bytes32 s = _slotOracleManager;
         assembly {
