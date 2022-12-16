@@ -12,6 +12,9 @@ import "./OracleManager.sol";
 
 import "../interfaces/external/IAggregatorV3Interface.sol";
 
+/**
+ * @title Tracks system-wide settings for each collateral type, as well as helper functions for it, such as retrieving its current price from the oracle manager.
+ */
 library CollateralConfiguration {
     using SetUtil for SetUtil.AddressSet;
     using DecimalMath for uint256;
@@ -23,11 +26,16 @@ library CollateralConfiguration {
 
     /**
      * @dev Thrown when deposits are disabled for the given collateral type.
+     * @param collateralType The address of the collateral type for which depositing was disabled.
      */
     error CollateralDepositDisabled(address collateralType);
 
     /**
      * @dev Thrown when collateral ratio is not sufficient in a given operation in the system.
+     * @param collateralValue The net USD value of the position.
+     * @param debt The net USD debt of the position.
+     * @param ratio The collateralization ratio of the position.
+     * @param minRatio The minimum c-ratio which was not met. Could be issuance ratio or liquidation ratio, depending on the case.
      */
     error InsufficientCollateralRatio(
         uint256 collateralValue,
@@ -38,26 +46,50 @@ library CollateralConfiguration {
 
     /**
      * @dev Thrown when the amount being delegated is less than the minimum expected amount.
+     * @param minDelegation The current minimum for deposits and delegation set to this collateral type.
      */
     error InsufficientDelegation(uint256 minDelegation);
 
     struct Data {
-        /// must be true for depositing or collateral delegation
+        /**
+         * @dev Allows the owner to control deposits and delegation of collateral types.
+         */
         bool depositingEnabled;
-        /// accounts cannot mint sUSD if their debt brings their cratio below this value
+        /**
+         * @dev System-wide collateralization ratio for issuance of snxUSD.
+         * Accounts will not be able to mint snxUSD if they are below this issuance c-ratio.
+         */
         uint256 issuanceRatioD18;
-        /// accounts below the ratio specified here are immediately liquidated
+        /**
+         * @dev System-wide collateralization ratio for liquidations of this collateral type.
+         * Accounts below this c-ratio can be immediately liquidated.
+         */
         uint256 liquidationRatioD18;
-        /// amount of token to award when an account is liquidated with this collateral type
+        /**
+         * @dev Amount of tokens to award when an account is liquidated.
+         */
         uint256 liquidationRewardD18;
-        /// address which reports the current price of the collateral
+        /**
+         * @dev The oracle manager node id which reports the current price for this collateral type.
+         */
         bytes32 oracleNodeId;
-        /// address which should be used for transferring this collateral
+        /**
+         * @dev The token address for this collateral type.
+         */
         address tokenAddress;
-        /// minimum delegation amount (other than 0), to prevent sybil/attacks on the system due to new entries.
+        /**
+         * @dev Minimum amount that accounts can delegate to pools.
+         * Helps prevent spamming on the system.
+         * Note: If zero, liquidationRewardD18 will be used.
+         */
         uint256 minDelegationD18;
     }
 
+    /**
+     * @dev Loads the CollateralConfiguration object for the given collateral type.
+     * @param token The address of the collateral type.
+     * @return data The CollateralConfiguration object.
+     */
     function load(address token) internal pure returns (Data storage data) {
         bytes32 s = keccak256(abi.encode("io.synthetix.synthetix.CollateralConfiguration", token));
         assembly {
@@ -65,6 +97,10 @@ library CollateralConfiguration {
         }
     }
 
+    /**
+     * @dev Loads all available collateral types configured in the system.
+     * @return data An array of addresses, one for each collateral type supported by the system.
+     */
     function loadAvailableCollaterals() internal pure returns (SetUtil.AddressSet storage data) {
         bytes32 s = keccak256(
             abi.encode("io.synthetix.synthetix.CollateralConfiguration_availableCollaterals")
@@ -74,6 +110,10 @@ library CollateralConfiguration {
         }
     }
 
+    /**
+     * @dev Configures a collateral type.
+     * @param config The CollateralConfiguration object with all the settings for the collateral type being configured.
+     */
     function set(Data memory config) internal {
         SetUtil.AddressSet storage collateralTypes = loadAvailableCollaterals();
 
@@ -99,12 +139,21 @@ library CollateralConfiguration {
         storedConfig.depositingEnabled = config.depositingEnabled;
     }
 
+    /**
+     * @dev Shows if a given collateral type is enabled for deposits and delegation.
+     * @param token The address of the collateral being queried.
+     */
     function collateralEnabled(address token) internal view {
         if (!load(token).depositingEnabled) {
             revert CollateralDepositDisabled(token);
         }
     }
 
+    /**
+     * @dev Reverts if the amount being delegated is sufficient for the system.
+     * @param token The address of the collateral type.
+     * @param amountD18 The amount being checked for sufficient delegation.
+     */
     function requireSufficientDelegation(address token, uint256 amountD18) internal view {
         CollateralConfiguration.Data storage config = load(token);
 
@@ -119,6 +168,11 @@ library CollateralConfiguration {
         }
     }
 
+    /**
+     * @dev Returns the price of this collateral configuration object.
+     * @param self The CollateralConfiguration object.
+     * @return The price of the collateral with 18 decimals of precision.
+     */
     function getCollateralPrice(Data storage self) internal view returns (uint256) {
         OracleManager.Data memory oracleManager = OracleManager.load();
         Node.Data memory node = IOracleManagerModule(oracleManager.oracleManagerAddress).process(
@@ -128,6 +182,12 @@ library CollateralConfiguration {
         return uint256(node.price);
     }
 
+    /**
+     * @dev Reverts if the specified collateral and debt values produce a collateralization ratio which is below the amount required for new issuance of snxUSD.
+     * @param self The CollateralConfiguration object whose collateral and settings are being queried.
+     * @param debtD18 The debt component of the ratio.
+     * @param collateralValueD18 The collateral component of the ratio.
+     */
     function verifyIssuanceRatio(
         Data storage self,
         uint256 debtD18,
@@ -143,6 +203,13 @@ library CollateralConfiguration {
         }
     }
 
+    /**
+     * @dev Converts token amounts with non-system decimal precisions, to 18 decimals of precision.
+     * E.g: USDC uses 6 decimals of precision, so this would upscale it by 12 decimals.
+     * @param self The CollateralConfiguration object corresponding to the collateral type being converted.
+     * @param tokenAmount The token amount, denominated in its native decimal precision.
+     * @return The converted amount, denominated in the system's 18 decimal precision.
+     */
     function convertTokenToSystemAmount(
         Data storage self,
         uint256 tokenAmount

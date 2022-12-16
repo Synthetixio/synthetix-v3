@@ -11,10 +11,20 @@ library MarketCreator {
         keccak256(abi.encode("io.synthetix.synthetix.Markets"));
 
     struct Data {
+        /**
+         * @dev Tracks an array of market ids for each external IMarket address.
+         */
         mapping(address => uint128[]) marketIdsForAddress;
+        /**
+         * @dev Keeps track of the last market id created.
+         * Used for easily creating new markets.
+         */
         uint128 lastCreatedMarketId;
     }
 
+    /**
+     * @dev Returns the singleton market store of the system.
+     */
     function getMarketStore() internal pure returns (Data storage data) {
         bytes32 s = _slotMarketCreator;
         assembly {

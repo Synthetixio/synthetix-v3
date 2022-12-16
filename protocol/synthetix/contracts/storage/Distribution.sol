@@ -133,6 +133,11 @@ library Distribution {
         return dist.actorInfo[actorId].sharesD18;
     }
 
+    /**
+     * @dev Returns the distribution's value per share in normal precision (18 decimals).
+     * @param self The distribution whose value per share is being queried.
+     * @return The value per share in 18 decimal precision.
+     */
     function getValuePerShare(Data storage self) internal view returns (int) {
         return int(self.valuePerShareD27).downscale(DecimalMath.PRECISION_FACTOR);
     }

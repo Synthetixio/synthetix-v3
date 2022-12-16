@@ -495,15 +495,9 @@ library Pool {
 library RewardDistribution {
     struct Data {
         address distributor;
-        RewardDistributionEntry.Data entry;
+        uint128 __slotAvailableForFutureUse;
         uint128 rewardPerShareD18;
-        mapping(uint256 => RewardDistributionStatus.Data) actorInfo;
-    }
-}
-
-// @custom:artifact contracts/storage/RewardDistributionEntry.sol:RewardDistributionEntry
-library RewardDistributionEntry {
-    struct Data {
+        mapping(uint256 => RewardDistributionClaimStatus.Data) claimStatus;
         int128 scheduledValueD18;
         uint64 start;
         uint32 duration;
@@ -511,8 +505,8 @@ library RewardDistributionEntry {
     }
 }
 
-// @custom:artifact contracts/storage/RewardDistributionStatus.sol:RewardDistributionStatus
-library RewardDistributionStatus {
+// @custom:artifact contracts/storage/RewardDistributionClaimStatus.sol:RewardDistributionClaimStatus
+library RewardDistributionClaimStatus {
     struct Data {
         uint128 lastRewardPerShareD18;
         uint128 pendingSendD18;

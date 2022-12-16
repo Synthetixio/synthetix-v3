@@ -106,9 +106,6 @@ artifact = "contracts/modules/test/TestableDistributionModule.sol:TestableDistri
 [contract.TestableDistributionActorModule]
 artifact = "contracts/modules/test/TestableDistributionActorModule.sol:TestableDistributionActorModule"
 
-[contract.TestableRewardDistributionEntryModule]
-artifact = "contracts/modules/test/TestableRewardDistributionEntryModule.sol:TestableRewardDistributionEntryModule"
-
 [contract.TestableMarketModule]
 artifact = "contracts/modules/test/TestableMarketModule.sol:TestableMarketModule"
 
@@ -127,8 +124,8 @@ artifact = "contracts/modules/test/TestableSystemPoolConfigurationModule.sol:Tes
 [contract.TestableRewardDistributionModule]
 artifact = "contracts/modules/test/TestableRewardDistributionModule.sol:TestableRewardDistributionModule"
 
-[contract.TestableRewardDistributionStatusModule]
-artifact = "contracts/modules/test/TestableRewardDistributionStatusModule.sol:TestableRewardDistributionStatusModule"
+[contract.TestableRewardDistributionClaimStatusModule]
+artifact = "contracts/modules/test/TestableRewardDistributionClaimStatusModule.sol:TestableRewardDistributionClaimStatusModule"
 
 [contract.TestableScalableMappingModule]
 artifact = "contracts/modules/test/TestableScalableMappingModule.sol:TestableScalableMappingModule"
@@ -170,13 +167,12 @@ args = [
     TestableCollateralLockModule: contracts.TestableCollateralLockModule,
     TestableDistributionModule: contracts.TestableDistributionModule,
     TestableDistributionActorModule: contracts.TestableDistributionActorModule,
-    TestableRewardDistributionEntryModule: contracts.TestableDistributionEntryModule,
     TestableMarketModule: contracts.TestableMarketModule,
     TestableMarketConfigurationModule: contracts.TestableMarketConfigurationModule,
     TestablePoolModule: contracts.TestablePoolModule,
     TestableSystemPoolConfigurationModule: contracts.TestableSystemPoolConfigurationModule,
     TestableRewardDistributionModule: contracts.TestableRewardDistributionModule,
-    TestableRewardDistributionStatusModule: contracts.TestableRewardDistributionStatusModule,
+    TestableRewardDistributionClaimStatusModule: contracts.TestableRewardDistributionClaimStatusModule,
     TestableScalableMappingModule: contracts.TestableScalableMappingModule,
     TestableVaultEpochModule: contracts.TestableVaultEpochModule,
     TestableVaultModule: contracts.TestableVaultModule,
@@ -209,14 +205,13 @@ depends = [
   "contract.TestableCollateralLockModule",
   "contract.TestableDistributionModule",
   "contract.TestableDistributionActorModule",
-  "contract.TestableRewardDistributionEntryModule",
   "contract.TestableMarketModule",
   "contract.TestableMarketConfigurationModule",
   "contract.TestableMarketPoolInfoModule",
   "contract.TestablePoolModule",
   "contract.TestableSystemPoolConfigurationModule",
   "contract.TestableRewardDistributionModule",
-  "contract.TestableRewardDistributionStatusModule",
+  "contract.TestableRewardDistributionClaimStatusModule",
   "contract.TestableScalableMappingModule",
   "contract.TestableVaultEpochModule",
   "contract.TestableVaultModule",
@@ -249,14 +244,13 @@ abiOf = [
   "TestableCollateralLockModule",
   "TestableDistributionModule",
   "TestableDistributionActorModule",
-  "TestableRewardDistributionEntryModule",
   "TestableMarketModule",
   "TestableMarketConfigurationModule",
   "TestableMarketPoolInfoModule",
   "TestablePoolModule",
   "TestableSystemPoolConfigurationModule",
   "TestableRewardDistributionModule",
-  "TestableRewardDistributionStatusModule",
+  "TestableRewardDistributionClaimStatusModule",
   "TestableScalableMappingModule",
   "TestableVaultEpochModule",
   "TestableVaultModule",
