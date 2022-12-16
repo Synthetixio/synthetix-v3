@@ -46,7 +46,7 @@ task(TASK_GENERATE_TESTABLE, 'Creates generated test contracts for all storage l
 
     // Delete old testable contracts
     for (const f of await fs.readdir(output)) {
-      if (f.startsWith('Testable') && f.endsWith('Module.sol')) {
+      if (f.startsWith('Testable')) {
         await fs.unlink(path.join(output, f));
       }
     }
@@ -57,7 +57,7 @@ task(TASK_GENERATE_TESTABLE, 'Creates generated test contracts for all storage l
 
       await hre.run(SUBTASK_GENERATE_TESTABLE_STORAGE, {
         artifact: contractFullyQualifiedName,
-        output: path.join(output, `Testable${contractName}Module.sol`),
+        output: path.join(output, `Testable${contractName}Storage.sol`),
       });
     }
   });

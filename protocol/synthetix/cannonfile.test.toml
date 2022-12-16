@@ -85,56 +85,56 @@ args = ["SampleToken","TKN","18"]
 depends = ["contract.CollateralMock"]
 
 # Test Modules
-[contract.TestableAccountModule]
-artifact = "contracts/modules/test/TestableAccountModule.sol:TestableAccountModule"
+[contract.TestableAccountStorage]
+artifact = "contracts/modules/test/TestableAccountStorage.sol:TestableAccountStorage"
 
-[contract.TestableAccountRBACModule]
-artifact = "contracts/modules/test/TestableAccountRBACModule.sol:TestableAccountRBACModule"
+[contract.TestableAccountRBACStorage]
+artifact = "contracts/modules/test/TestableAccountRBACStorage.sol:TestableAccountRBACStorage"
 
-[contract.TestableCollateralModule]
-artifact = "contracts/modules/test/TestableCollateralModule.sol:TestableCollateralModule"
+[contract.TestableCollateralStorage]
+artifact = "contracts/modules/test/TestableCollateralStorage.sol:TestableCollateralStorage"
 
-[contract.TestableCollateralConfigurationModule]
-artifact = "contracts/modules/test/TestableCollateralConfigurationModule.sol:TestableCollateralConfigurationModule"
+[contract.TestableCollateralConfigurationStorage]
+artifact = "contracts/modules/test/TestableCollateralConfigurationStorage.sol:TestableCollateralConfigurationStorage"
 
-[contract.TestableCollateralLockModule]
-artifact = "contracts/modules/test/TestableCollateralLockModule.sol:TestableCollateralLockModule"
+[contract.TestableCollateralLockStorage]
+artifact = "contracts/modules/test/TestableCollateralLockStorage.sol:TestableCollateralLockStorage"
 
-[contract.TestableDistributionModule]
-artifact = "contracts/modules/test/TestableDistributionModule.sol:TestableDistributionModule"
+[contract.TestableDistributionStorage]
+artifact = "contracts/modules/test/TestableDistributionStorage.sol:TestableDistributionStorage"
 
-[contract.TestableDistributionActorModule]
-artifact = "contracts/modules/test/TestableDistributionActorModule.sol:TestableDistributionActorModule"
+[contract.TestableDistributionActorStorage]
+artifact = "contracts/modules/test/TestableDistributionActorStorage.sol:TestableDistributionActorStorage"
 
-[contract.TestableMarketModule]
-artifact = "contracts/modules/test/TestableMarketModule.sol:TestableMarketModule"
+[contract.TestableMarketStorage]
+artifact = "contracts/modules/test/TestableMarketStorage.sol:TestableMarketStorage"
 
-[contract.TestableMarketConfigurationModule]
-artifact = "contracts/modules/test/TestableMarketConfigurationModule.sol:TestableMarketConfigurationModule"
+[contract.TestableMarketConfigurationStorage]
+artifact = "contracts/modules/test/TestableMarketConfigurationStorage.sol:TestableMarketConfigurationStorage"
 
-[contract.TestableMarketPoolInfoModule]
-artifact = "contracts/modules/test/TestableMarketPoolInfoModule.sol:TestableMarketPoolInfoModule"
+[contract.TestableMarketPoolInfoStorage]
+artifact = "contracts/modules/test/TestableMarketPoolInfoStorage.sol:TestableMarketPoolInfoStorage"
 
-[contract.TestablePoolModule]
-artifact = "contracts/modules/test/TestablePoolModule.sol:TestablePoolModule"
+[contract.TestablePoolStorage]
+artifact = "contracts/modules/test/TestablePoolStorage.sol:TestablePoolStorage"
 
-[contract.TestableSystemPoolConfigurationModule]
-artifact = "contracts/modules/test/TestableSystemPoolConfigurationModule.sol:TestableSystemPoolConfigurationModule"
+[contract.TestableSystemPoolConfigurationStorage]
+artifact = "contracts/modules/test/TestableSystemPoolConfigurationStorage.sol:TestableSystemPoolConfigurationStorage"
 
-[contract.TestableRewardDistributionModule]
-artifact = "contracts/modules/test/TestableRewardDistributionModule.sol:TestableRewardDistributionModule"
+[contract.TestableRewardDistributionStorage]
+artifact = "contracts/modules/test/TestableRewardDistributionStorage.sol:TestableRewardDistributionStorage"
 
-[contract.TestableRewardDistributionClaimStatusModule]
-artifact = "contracts/modules/test/TestableRewardDistributionClaimStatusModule.sol:TestableRewardDistributionClaimStatusModule"
+[contract.TestableRewardDistributionClaimStatusStorage]
+artifact = "contracts/modules/test/TestableRewardDistributionClaimStatusStorage.sol:TestableRewardDistributionClaimStatusStorage"
 
-[contract.TestableScalableMappingModule]
-artifact = "contracts/modules/test/TestableScalableMappingModule.sol:TestableScalableMappingModule"
+[contract.TestableScalableMappingStorage]
+artifact = "contracts/modules/test/TestableScalableMappingStorage.sol:TestableScalableMappingStorage"
 
-[contract.TestableVaultEpochModule]
-artifact = "contracts/modules/test/TestableVaultEpochModule.sol:TestableVaultEpochModule"
+[contract.TestableVaultEpochStorage]
+artifact = "contracts/modules/test/TestableVaultEpochStorage.sol:TestableVaultEpochStorage"
 
-[contract.TestableVaultModule]
-artifact = "contracts/modules/test/TestableVaultModule.sol:TestableVaultModule"
+[contract.TestableVaultStorage]
+artifact = "contracts/modules/test/TestableVaultStorage.sol:TestableVaultStorage"
 
 # Core
 [run.core_generate_router]
@@ -160,22 +160,22 @@ args = [
     RewardsManagerModule: contracts.RewardsManagerModule,
     UtilsModule: contracts.UtilsModule,
     VaultModule: contracts.VaultModule,
-    TestableAccountModule: contracts.TestableAccountModule,
-    TestableAccountRBACModule: contracts.TestableAccountRBACModule,
-    TestableCollateralModule: contracts.TestableCollateralModule,
-    TestableCollateralConfigurationModule: contracts.TestableCollateralConfigurationModule,
-    TestableCollateralLockModule: contracts.TestableCollateralLockModule,
-    TestableDistributionModule: contracts.TestableDistributionModule,
-    TestableDistributionActorModule: contracts.TestableDistributionActorModule,
-    TestableMarketModule: contracts.TestableMarketModule,
-    TestableMarketConfigurationModule: contracts.TestableMarketConfigurationModule,
-    TestablePoolModule: contracts.TestablePoolModule,
-    TestableSystemPoolConfigurationModule: contracts.TestableSystemPoolConfigurationModule,
-    TestableRewardDistributionModule: contracts.TestableRewardDistributionModule,
-    TestableRewardDistributionClaimStatusModule: contracts.TestableRewardDistributionClaimStatusModule,
-    TestableScalableMappingModule: contracts.TestableScalableMappingModule,
-    TestableVaultEpochModule: contracts.TestableVaultEpochModule,
-    TestableVaultModule: contracts.TestableVaultModule,
+    TestableAccountStorage: contracts.TestableAccountStorage,
+    TestableAccountRBACStorage: contracts.TestableAccountRBACStorage,
+    TestableCollateralStorage: contracts.TestableCollateralStorage,
+    TestableCollateralConfigurationStorage: contracts.TestableCollateralConfigurationStorage,
+    TestableCollateralLockStorage: contracts.TestableCollateralLockStorage,
+    TestableDistributionStorage: contracts.TestableDistributionStorage,
+    TestableDistributionActorStorage: contracts.TestableDistributionActorStorage,
+    TestableMarketStorage: contracts.TestableMarketStorage,
+    TestableMarketConfigurationStorage: contracts.TestableMarketConfigurationStorage,
+    TestablePoolStorage: contracts.TestablePoolStorage,
+    TestableSystemPoolConfigurationStorage: contracts.TestableSystemPoolConfigurationStorage,
+    TestableRewardDistributionStorage: contracts.TestableRewardDistributionStorage,
+    TestableRewardDistributionClaimStatusStorage: contracts.TestableRewardDistributionClaimStatusStorage,
+    TestableScalableMappingStorage: contracts.TestableScalableMappingStorage,
+    TestableVaultEpochStorage: contracts.TestableVaultEpochStorage,
+    TestableVaultStorage: contracts.TestableVaultStorage,
   }) %>''',
   "validateInterfaces=false"
 ]
@@ -198,23 +198,23 @@ depends = [
   "contract.RewardsManagerModule",
   "contract.UtilsModule",
   "contract.VaultModule",
-  "contract.TestableAccountModule",
-  "contract.TestableAccountRBACModule",
-  "contract.TestableCollateralModule",
-  "contract.TestableCollateralConfigurationModule",
-  "contract.TestableCollateralLockModule",
-  "contract.TestableDistributionModule",
-  "contract.TestableDistributionActorModule",
-  "contract.TestableMarketModule",
-  "contract.TestableMarketConfigurationModule",
-  "contract.TestableMarketPoolInfoModule",
-  "contract.TestablePoolModule",
-  "contract.TestableSystemPoolConfigurationModule",
-  "contract.TestableRewardDistributionModule",
-  "contract.TestableRewardDistributionClaimStatusModule",
-  "contract.TestableScalableMappingModule",
-  "contract.TestableVaultEpochModule",
-  "contract.TestableVaultModule",
+  "contract.TestableAccountStorage",
+  "contract.TestableAccountRBACStorage",
+  "contract.TestableCollateralStorage",
+  "contract.TestableCollateralConfigurationStorage",
+  "contract.TestableCollateralLockStorage",
+  "contract.TestableDistributionStorage",
+  "contract.TestableDistributionActorStorage",
+  "contract.TestableMarketStorage",
+  "contract.TestableMarketConfigurationStorage",
+  "contract.TestableMarketPoolInfoStorage",
+  "contract.TestablePoolStorage",
+  "contract.TestableSystemPoolConfigurationStorage",
+  "contract.TestableRewardDistributionStorage",
+  "contract.TestableRewardDistributionClaimStatusStorage",
+  "contract.TestableScalableMappingStorage",
+  "contract.TestableVaultEpochStorage",
+  "contract.TestableVaultStorage",
 ]
 
 [contract.CoreRouter]
@@ -237,23 +237,23 @@ abiOf = [
   "RewardsManagerModule",
   "UtilsModule",
   "VaultModule",
-  "TestableAccountModule",
-  "TestableAccountRBACModule",
-  "TestableCollateralModule",
-  "TestableCollateralConfigurationModule",
-  "TestableCollateralLockModule",
-  "TestableDistributionModule",
-  "TestableDistributionActorModule",
-  "TestableMarketModule",
-  "TestableMarketConfigurationModule",
-  "TestableMarketPoolInfoModule",
-  "TestablePoolModule",
-  "TestableSystemPoolConfigurationModule",
-  "TestableRewardDistributionModule",
-  "TestableRewardDistributionClaimStatusModule",
-  "TestableScalableMappingModule",
-  "TestableVaultEpochModule",
-  "TestableVaultModule",
+  "TestableAccountStorage",
+  "TestableAccountRBACStorage",
+  "TestableCollateralStorage",
+  "TestableCollateralConfigurationStorage",
+  "TestableCollateralLockStorage",
+  "TestableDistributionStorage",
+  "TestableDistributionActorStorage",
+  "TestableMarketStorage",
+  "TestableMarketConfigurationStorage",
+  "TestableMarketPoolInfoStorage",
+  "TestablePoolStorage",
+  "TestableSystemPoolConfigurationStorage",
+  "TestableRewardDistributionStorage",
+  "TestableRewardDistributionClaimStatusStorage",
+  "TestableScalableMappingStorage",
+  "TestableVaultEpochStorage",
+  "TestableVaultStorage",
 ]
 depends = ["run.core_generate_router"]
 
