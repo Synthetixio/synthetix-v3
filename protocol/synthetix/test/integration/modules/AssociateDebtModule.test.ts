@@ -38,7 +38,7 @@ describe('AssociateDebtModule', function () {
         systems()
           .Core.connect(user2)
           .associateDebt(marketId(), poolId, collateralAddress(), accountId, amount),
-        'Unauthorized',
+        `Unauthorized("${await user2.getAddress()}")`,
         systems().Core
       );
     });
@@ -54,11 +54,17 @@ describe('AssociateDebtModule', function () {
     });
 
     it('only works when the target account has enough collateral', async () => {
+      const debt = amount.mul(100000000);
+      const { liquidationRatioD18 } = await systems().Core.getCollateralConfiguration(
+        collateralAddress()
+      );
+      const price = await systems().Core.getCollateralPrice(collateralAddress());
+
       await assertRevert(
-        MockMarket()
-          .connect(user2)
-          .callAssociateDebt(poolId, collateralAddress(), accountId, amount.mul(100000000)),
-        'InsufficientCollateralRatio',
+        MockMarket().connect(user2).callAssociateDebt(poolId, collateralAddress(), accountId, debt),
+        `InsufficientCollateralRatio("${depositAmount}", "${debt}", "${depositAmount
+          .mul(price)
+          .div(debt)}", "${liquidationRatioD18}")`,
         systems().Core
       );
     });

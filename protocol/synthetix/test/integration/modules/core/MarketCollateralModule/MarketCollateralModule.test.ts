@@ -30,7 +30,7 @@ describe('MarketCollateralModule', function () {
           systems()
             .Core.connect(user1)
             .configureMaximumMarketCollateral(marketId(), collateralAddress(), 1000),
-          'Unauthorized',
+          `Unauthorized("${await user1.getAddress()}")`,
           systems().Core
         );
       });

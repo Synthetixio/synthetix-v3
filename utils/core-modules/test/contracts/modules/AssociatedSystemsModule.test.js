@@ -30,7 +30,7 @@ describe('AssociatedSystemsModule', () => {
           toBytes32('wohoo'),
           owner.address
         ),
-        'Unauthorized'
+        `Unauthorized("${await user.getAddress()}")`
       );
     });
 
@@ -54,7 +54,7 @@ describe('AssociatedSystemsModule', () => {
       assert.equal(event.args.proxy, owner.address);
     });
 
-    it('reregisters unmanaged', async () => {
+    it('re-registers unmanaged', async () => {
       await AssociatedSystemsModule.connect(owner).registerUnmanagedSystem(
         toBytes32('wohoo'),
         owner.address
@@ -89,7 +89,7 @@ describe('AssociatedSystemsModule', () => {
           18,
           owner.address
         ),
-        'Unauthorized'
+        `Unauthorized("${await user.getAddress()}")`
       );
     });
 
@@ -182,7 +182,7 @@ describe('AssociatedSystemsModule', () => {
               42,
               InvalidTokenModule.address
             ),
-            'MismatchAssociatedSystemKind'
+            `MismatchAssociatedSystemKind("${toBytes32('erc20')}", "${toBytes32('erc721')}")`
           );
         });
       });
@@ -235,7 +235,7 @@ describe('AssociatedSystemsModule', () => {
           18,
           owner.address
         ),
-        'Unauthorized'
+        `Unauthorized("${await user.getAddress()}")`
       );
     });
 
@@ -331,7 +331,7 @@ describe('AssociatedSystemsModule', () => {
               42,
               InvalidTokenModule.address
             ),
-            'MismatchAssociatedSystemKind'
+            `MismatchAssociatedSystemKind("${toBytes32('erc721')}", "${toBytes32('erc20')}")`
           );
         });
       });

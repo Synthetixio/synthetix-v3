@@ -213,7 +213,7 @@ describe('UUPSProxy', () => {
         it('reverts', async () => {
           await assertRevert(
             Implementation.upgradeTo(Destroyer.address),
-            'ImplementationIsSterile'
+            `ImplementationIsSterile("${Destroyer.address}")`
           );
         });
       });
@@ -225,7 +225,10 @@ describe('UUPSProxy', () => {
         });
 
         it('reverts', async () => {
-          await assertRevert(Instance.upgradeTo(Implementation.address), 'ImplementationIsSterile');
+          await assertRevert(
+            Instance.upgradeTo(Implementation.address),
+            `ImplementationIsSterile("${Implementation.address}")`
+          );
         });
       });
     });

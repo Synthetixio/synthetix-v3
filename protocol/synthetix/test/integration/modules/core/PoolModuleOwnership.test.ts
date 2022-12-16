@@ -19,7 +19,7 @@ describe('PoolModule Create / Ownership', function () {
       systems()
         .Core.connect(user1)
         .createPool(1, await user1.getAddress()),
-      'FeatureUnavailable'
+      'FeatureUnavailable()'
     );
   });
 

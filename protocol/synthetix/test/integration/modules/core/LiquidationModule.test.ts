@@ -181,7 +181,7 @@ describe('LiquidationModule', function () {
     it('does not allow liquidation with 0 max usd', async () => {
       await assertRevert(
         systems().Core.connect(user1).liquidateVault(poolId, collateralAddress(), accountId, 0),
-        'InvalidParameter',
+        'InvalidParameter("maxUsd", "must be higher than 0")',
         systems().Core
       );
     });

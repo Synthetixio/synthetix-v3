@@ -65,7 +65,7 @@ describe('SafeCast', () => {
 
     it('throws on overflows', async function () {
       await assertRevert(SafeCast[castFunction](MAX_UINT_128.add(1)), 'OverflowUint256ToUint128()');
-      await assertRevert(SafeCast[castFunction](MAX_UINT_256), 'OverflowUint256ToUint128');
+      await assertRevert(SafeCast[castFunction](MAX_UINT_256), 'OverflowUint256ToUint128()');
     });
   });
 
@@ -105,8 +105,8 @@ describe('SafeCast', () => {
     });
 
     it('throws on overflows', async function () {
-      await assertRevert(SafeCast[castFunction](-1), 'OverflowInt256ToUint256');
-      await assertRevert(SafeCast[castFunction](exp(-1337, 18)), 'OverflowInt256ToUint256');
+      await assertRevert(SafeCast[castFunction](-1), 'OverflowInt256ToUint256()');
+      await assertRevert(SafeCast[castFunction](exp(-1337, 18)), 'OverflowInt256ToUint256()');
 
       await assertRevert(SafeCast[castFunction](MAX_INT_256.add(1)), 'out-of-bounds');
     });
@@ -128,7 +128,7 @@ describe('SafeCast', () => {
     });
 
     it('throws on overflows', async function () {
-      await assertRevert(SafeCast[castFunction](MAX_INT_128.add(1)), 'OverflowUint128ToInt128');
+      await assertRevert(SafeCast[castFunction](MAX_INT_128.add(1)), 'OverflowUint128ToInt128()');
     });
   });
 
@@ -149,7 +149,7 @@ describe('SafeCast', () => {
 
     it('throws on overflows', async function () {
       await assertRevert(SafeCast[castFunction](MAX_INT_128.add(1)), 'out-of-bounds');
-      await assertRevert(SafeCast[castFunction](-1), 'OverflowInt128ToUint128');
+      await assertRevert(SafeCast[castFunction](-1), 'OverflowInt128ToUint128()');
     });
   });
 
@@ -169,7 +169,7 @@ describe('SafeCast', () => {
     });
 
     it('throws on overflows', async function () {
-      await assertRevert(SafeCast[castFunction](MAX_INT_256.add(1)), 'OverflowUint256ToInt256');
+      await assertRevert(SafeCast[castFunction](MAX_INT_256.add(1)), 'OverflowUint256ToInt256()');
     });
   });
 
@@ -189,7 +189,7 @@ describe('SafeCast', () => {
     });
 
     it('throws on overflows', async function () {
-      await assertRevert(SafeCast[castFunction](MAX_INT_128.add(1)), 'OverflowUint128ToInt128');
+      await assertRevert(SafeCast[castFunction](MAX_INT_128.add(1)), 'OverflowUint128ToInt128()');
     });
   });
 
@@ -212,8 +212,8 @@ describe('SafeCast', () => {
     });
 
     it('throws on overflows', async function () {
-      await assertRevert(SafeCast[castFunction](MIN_INT_128.sub(1)), 'OverflowInt256ToInt128');
-      await assertRevert(SafeCast[castFunction](MAX_INT_128.add(1)), 'OverflowInt256ToInt128');
+      await assertRevert(SafeCast[castFunction](MIN_INT_128.sub(1)), 'OverflowInt256ToInt128()');
+      await assertRevert(SafeCast[castFunction](MAX_INT_128.add(1)), 'OverflowInt256ToInt128()');
     });
   });
 

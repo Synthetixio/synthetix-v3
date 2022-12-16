@@ -15,7 +15,10 @@ describe('SettingsModule', () => {
 
   describe('when a regular user tries to set a value', function () {
     it('reverts', async function () {
-      await assertRevert(Proxy.connect(user).setASettingValue(1), 'Unauthorized');
+      await assertRevert(
+        Proxy.connect(user).setASettingValue(1),
+        `Unauthorized("${await user.getAddress()}")`
+      );
     });
   });
 
