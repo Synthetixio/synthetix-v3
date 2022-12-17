@@ -1,5 +1,4 @@
 const BaseChecker = require('solhint/lib/rules/base-checker');
-const { findPropertyInParents } = require('solhint/lib/common/tree-traversing');
 
 const ruleId = 'safe-cast';
 const meta = {
@@ -23,12 +22,8 @@ class NumericCastChecker extends BaseChecker {
   }
 
   ElementaryTypeName(node) {
-    if (node.name.includes('int')) {
-      const args = findPropertyInParents(node, 'arguments');
-
-      if (args && args.length > 0) {
-        this.warn(node, 'Avoid low level numeric casts.');
-      }
+    if (node.name.includes('int') && node.parent.type === 'FunctionCall') {
+      this.warn(node, 'Avoid low level numeric casts.');
     }
   }
 }
