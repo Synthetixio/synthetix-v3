@@ -21,7 +21,9 @@ library Fee {
         BUY,
         SELL,
         WRAP,
-        UNWRAP
+        UNWRAP,
+        ASYNC_BUY,
+        ASYNC_SELL
     }
 
     struct Data {
