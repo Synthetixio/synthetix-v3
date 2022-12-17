@@ -1,5 +1,5 @@
 {
-  "name": "@synthetixio/solhint-plugin-numcast",
+  "name": "solhint-plugin-numcast",
   "version": "0.0.1",
   "description": "Solhint plugin for detecting overflows in numeric (uint/int) casts",
   "main": "index.js",
@@ -12,5 +12,8 @@
     "solhint"
   ],
   "author": "Synthetix CCs",
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "solhint": "3.3.7"
+  }
 }

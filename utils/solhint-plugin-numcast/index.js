@@ -1,24 +1,35 @@
-class NumericCastChecker {
-  constructor(reporter, config, inputSrc, fileName) {
-    console.log('> Constructor');
-    this.ruleId = 'numcast';
+const BaseChecker = require('solhint/lib/rules/base-checker');
+const { findPropertyInParents } = require('solhint/lib/common/tree-traversing');
 
-    this.reporter = reporter;
-    this.config = config;
-    this.inputSrc = inputSrc;
-    this.fileName = fileName;
+const ruleId = 'safe-cast';
+const meta = {
+  type: 'security',
+
+  docs: {
+    description: `Avoid low level numeric casts.`,
+    category: 'Security Rules',
+  },
+
+  isDefault: false,
+  recommended: true,
+  defaultSetup: 'warn',
+
+  schema: null,
+};
+
+class NumericCastChecker extends BaseChecker {
+  constructor(reporter) {
+    super(reporter, ruleId, meta);
   }
 
-  enterSourceUnit() {
-    this.SourceUnit();
-  }
+  ElementaryTypeName(node) {
+    if (node.name.includes('int')) {
+      const args = findPropertyInParents(node, 'arguments');
 
-  SourceUnit() {
-    console.log('SourceUnit');
-  }
-
-  errorAt(line, column, message) {
-    this.reporter.errorAt(line, column, this.ruleId, message);
+      if (args && args.length > 0) {
+        this.warn(node, 'Avoid low level numeric casts.');
+      }
+    }
   }
 }
 

@@ -21,6 +21,6 @@
         "maxLength": 32
       }
     ],
-    "numcast": "error"
+    "numcast/safe-cast": "error"
   }
 }
