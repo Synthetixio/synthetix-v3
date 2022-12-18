@@ -5,12 +5,14 @@ import "@synthetixio/core-modules/contracts/interfaces/INftModule.sol";
 import "@synthetixio/core-modules/contracts/storage/AssociatedSystem.sol";
 import "@synthetixio/core-contracts/contracts/proxy/UUPSProxy.sol";
 
-library AsyncOrderClaimUtil {
+import "../../contracts/interfaces/IAsyncOrderClaimToken.sol";
+
+library AsyncOrderClaimTokenUtil {
     using AssociatedSystem for AssociatedSystem.Data;
 
-    function getNft(uint128 marketId) internal view returns (INftModule) {
+    function getNft(uint128 marketId) internal view returns (IAsyncOrderClaimToken) {
         bytes32 synthId = getSystemId(marketId);
-        return AssociatedSystem.load(synthId).asNft();
+        return IAsyncOrderClaimToken(address(AssociatedSystem.load(synthId).asNft()));
     }
 
     function getSystemId(uint128 marketId) internal pure returns (bytes32) {
