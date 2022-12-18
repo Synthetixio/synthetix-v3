@@ -164,16 +164,6 @@ contract AsyncOrderModule is IAsyncOrderModule {
             );
         }
 
-        if (
-            AsyncOrderClaimTokenUtil.getNft(marketId).ownerOf(asyncOrderId) != msg.sender &&
-            block.timestamp <
-            asyncOrderClaim.timestamp +
-                AsyncOrder.load(marketId).minimumOrderAge +
-                AsyncOrder.load(marketId).confirmationWindowDuration
-        ) {
-            revert InsufficientCancellationTimeElapsed();
-        }
-
         // Finalize the order using the provided price data
         if (asyncOrderClaim.orderType == Fee.TradeType.ASYNC_BUY) {
             finalOrderAmount = _disburseBuyOrderEscrow(
@@ -324,7 +314,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
             .load(marketId)
             .asyncOrderClaims[asyncOrderId];
 
-        // Prevent cancellation if this is invoked by someone other than the claimant and the minimum order time plus the external cancellation buffer time hasn't elapsed
+        // Prevent cancellation if this is invoked by someone other than the claimant and the confirmation window hasn't passed
         if (
             AsyncOrderClaimTokenUtil.getNft(marketId).ownerOf(asyncOrderId) != msg.sender &&
             block.timestamp <
