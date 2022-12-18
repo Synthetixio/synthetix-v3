@@ -13,7 +13,7 @@
   ],
   "author": "Synthetix CCs",
   "license": "MIT",
-  "devDependencies": {
-    "solhint": "3.3.7"
+  "peerDependencies": {
+    "solhint": "^3.0.0"
   }
 }

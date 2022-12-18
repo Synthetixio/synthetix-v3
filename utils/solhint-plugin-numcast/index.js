@@ -1,11 +1,12 @@
 const BaseChecker = require('solhint/lib/rules/base-checker');
 
 const ruleId = 'safe-cast';
+
 const meta = {
   type: 'security',
 
   docs: {
-    description: `Avoid low level numeric casts.`,
+    description: 'Avoid low level numeric casts.',
     category: 'Security Rules',
   },
 
