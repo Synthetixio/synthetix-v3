@@ -3,19 +3,18 @@ pragma solidity ^0.8.0;
 
 library AsyncOrder {
     struct Data {
-        mapping(uint => AsyncOrderData) asyncOrders;
+        mapping(uint => AsyncOrderClaim) asyncOrderClaims;
         uint minimumOrderAge;
         uint externalCancellationBufferTime;
     }
 
-    struct AsyncOrderData {
+    struct AsyncOrderClaim {
         uint orderType; //change this?
         uint amountProvided; // maybe this is traderAmountEscrowed
         uint amountStaged; // maybe this is systemAmountEscrowed
         uint feesQuoted;
         uint blockNumber;
         uint timestamp;
-        address orderer;
     }
 
     function load(uint128 marketId) internal pure returns (Data storage store) {
