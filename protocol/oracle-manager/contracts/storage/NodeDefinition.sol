@@ -25,10 +25,9 @@ library NodeDefinition {
         }
     }
 
-    function create(Data memory nodeDefinition)
-        internal
-        returns (NodeDefinition.Data storage self, bytes32 id)
-    {
+    function create(
+        Data memory nodeDefinition
+    ) internal returns (NodeDefinition.Data storage self, bytes32 id) {
         id = getId(nodeDefinition);
 
         self = load(id);

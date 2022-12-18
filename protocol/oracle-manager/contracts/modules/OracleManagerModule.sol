@@ -85,11 +85,9 @@ contract OracleManagerModule is IOracleManagerModule {
         return NodeDefinition.getId(nodeDefinition);
     }
 
-    function _registerNode(NodeDefinition.Data memory nodeDefinition)
-        internal
-        onlyValidNodeType(nodeDefinition.nodeType)
-        returns (bytes32 nodeId)
-    {
+    function _registerNode(
+        NodeDefinition.Data memory nodeDefinition
+    ) internal onlyValidNodeType(nodeDefinition.nodeType) returns (bytes32 nodeId) {
         nodeId = _getNodeId(nodeDefinition);
         //checks if the node is already registered
         if (_isNodeRegistered(nodeId)) {
