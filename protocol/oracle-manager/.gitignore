@@ -5,4 +5,4 @@ contracts/Router.sol
 cannon
 typechain-types
 
-contracts/modules/test
+contracts/generated

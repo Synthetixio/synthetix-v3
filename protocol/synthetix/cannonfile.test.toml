@@ -86,55 +86,55 @@ depends = ["contract.CollateralMock"]
 
 # Test Modules
 [contract.TestableAccountStorage]
-artifact = "contracts/modules/test/TestableAccountStorage.sol:TestableAccountStorage"
+artifact = "contracts/generated/test/TestableAccountStorage.sol:TestableAccountStorage"
 
 [contract.TestableAccountRBACStorage]
-artifact = "contracts/modules/test/TestableAccountRBACStorage.sol:TestableAccountRBACStorage"
+artifact = "contracts/generated/test/TestableAccountRBACStorage.sol:TestableAccountRBACStorage"
 
 [contract.TestableCollateralStorage]
-artifact = "contracts/modules/test/TestableCollateralStorage.sol:TestableCollateralStorage"
+artifact = "contracts/generated/test/TestableCollateralStorage.sol:TestableCollateralStorage"
 
 [contract.TestableCollateralConfigurationStorage]
-artifact = "contracts/modules/test/TestableCollateralConfigurationStorage.sol:TestableCollateralConfigurationStorage"
+artifact = "contracts/generated/test/TestableCollateralConfigurationStorage.sol:TestableCollateralConfigurationStorage"
 
 [contract.TestableCollateralLockStorage]
-artifact = "contracts/modules/test/TestableCollateralLockStorage.sol:TestableCollateralLockStorage"
+artifact = "contracts/generated/test/TestableCollateralLockStorage.sol:TestableCollateralLockStorage"
 
 [contract.TestableDistributionStorage]
-artifact = "contracts/modules/test/TestableDistributionStorage.sol:TestableDistributionStorage"
+artifact = "contracts/generated/test/TestableDistributionStorage.sol:TestableDistributionStorage"
 
 [contract.TestableDistributionActorStorage]
-artifact = "contracts/modules/test/TestableDistributionActorStorage.sol:TestableDistributionActorStorage"
+artifact = "contracts/generated/test/TestableDistributionActorStorage.sol:TestableDistributionActorStorage"
 
 [contract.TestableMarketStorage]
-artifact = "contracts/modules/test/TestableMarketStorage.sol:TestableMarketStorage"
+artifact = "contracts/generated/test/TestableMarketStorage.sol:TestableMarketStorage"
 
 [contract.TestableMarketConfigurationStorage]
-artifact = "contracts/modules/test/TestableMarketConfigurationStorage.sol:TestableMarketConfigurationStorage"
+artifact = "contracts/generated/test/TestableMarketConfigurationStorage.sol:TestableMarketConfigurationStorage"
 
 [contract.TestableMarketPoolInfoStorage]
-artifact = "contracts/modules/test/TestableMarketPoolInfoStorage.sol:TestableMarketPoolInfoStorage"
+artifact = "contracts/generated/test/TestableMarketPoolInfoStorage.sol:TestableMarketPoolInfoStorage"
 
 [contract.TestablePoolStorage]
-artifact = "contracts/modules/test/TestablePoolStorage.sol:TestablePoolStorage"
+artifact = "contracts/generated/test/TestablePoolStorage.sol:TestablePoolStorage"
 
 [contract.TestableSystemPoolConfigurationStorage]
-artifact = "contracts/modules/test/TestableSystemPoolConfigurationStorage.sol:TestableSystemPoolConfigurationStorage"
+artifact = "contracts/generated/test/TestableSystemPoolConfigurationStorage.sol:TestableSystemPoolConfigurationStorage"
 
 [contract.TestableRewardDistributionStorage]
-artifact = "contracts/modules/test/TestableRewardDistributionStorage.sol:TestableRewardDistributionStorage"
+artifact = "contracts/generated/test/TestableRewardDistributionStorage.sol:TestableRewardDistributionStorage"
 
 [contract.TestableRewardDistributionClaimStatusStorage]
-artifact = "contracts/modules/test/TestableRewardDistributionClaimStatusStorage.sol:TestableRewardDistributionClaimStatusStorage"
+artifact = "contracts/generated/test/TestableRewardDistributionClaimStatusStorage.sol:TestableRewardDistributionClaimStatusStorage"
 
 [contract.TestableScalableMappingStorage]
-artifact = "contracts/modules/test/TestableScalableMappingStorage.sol:TestableScalableMappingStorage"
+artifact = "contracts/generated/test/TestableScalableMappingStorage.sol:TestableScalableMappingStorage"
 
 [contract.TestableVaultEpochStorage]
-artifact = "contracts/modules/test/TestableVaultEpochStorage.sol:TestableVaultEpochStorage"
+artifact = "contracts/generated/test/TestableVaultEpochStorage.sol:TestableVaultEpochStorage"
 
 [contract.TestableVaultStorage]
-artifact = "contracts/modules/test/TestableVaultStorage.sol:TestableVaultStorage"
+artifact = "contracts/generated/test/TestableVaultStorage.sol:TestableVaultStorage"
 
 # Core
 [run.core_generate_router]

@@ -2,7 +2,7 @@
 **/coverage*
 build/
 node_modules/
-**/contracts/modules/test
+**/contracts/generated
 **/contracts/routers
 **/dist/
 **/node_modules/
