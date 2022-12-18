@@ -10,7 +10,7 @@ pragma solidity ^0.8.0;
 
 import { {{libraryName}} } from "{{{relativeSourceName}}}";
 
-contract Testable{{{libraryName}}}Module {
+contract Testable{{{libraryName}}}Storage {
     {{#loadParams}}
     function _getInstanceStore({{{loadParams}}}) internal pure returns ({{{libraryName}}}.Data storage) {
         return {{{libraryName}}}.load({{{loadInject}}});

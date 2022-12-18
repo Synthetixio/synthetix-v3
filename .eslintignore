@@ -3,4 +3,4 @@
 utils/*/utils
 **/typechain-types
 **/contracts/routers
-**/contracts/modules/test
+**/contracts/generated

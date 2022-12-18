@@ -33,7 +33,7 @@ const config = {
     templates: './docs/theme',
   },
   warnings: {
-    'contracts/modules/test/**/*': {
+    'contracts/generated/**/*': {
       default: 'off',
     },
   },
