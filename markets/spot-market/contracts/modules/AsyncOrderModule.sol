@@ -10,7 +10,11 @@ import "../storage/AsyncOrder.sol";
 import "../interfaces/IAsyncOrderModule.sol";
 import "../utils/AsyncOrderClaimTokenUtil.sol";
 
-// TODO: Natspec
+/**
+ * @title Module with custom NFT logic for the async order claim token
+ * @notice TODO
+ * @dev See IAsyncOrderModule.
+ */
 contract AsyncOrderModule is IAsyncOrderModule {
     using DecimalMath for uint256;
     using SpotMarketFactory for SpotMarketFactory.Data;
@@ -18,9 +22,12 @@ contract AsyncOrderModule is IAsyncOrderModule {
     using Fee for Fee.Data;
     using AsyncOrder for AsyncOrder.Data;
 
+    /**
+     * @inheritdoc IAsyncOrderModule
+     */
     function commitBuyOrder(
         uint128 marketId,
-        uint usdAmount // TODO: add optional priceData to params. How is this handled during settlement?
+        uint256 usdAmount
     )
         external
         override
@@ -38,7 +45,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
         }
         store.usdToken.transferFrom(msg.sender, address(this), usdAmount);
 
-        // Apply fees
+        // Calculate fees
         (uint256 amountUsable, int256 feesQuoted) = Fee.calculateFees(
             marketId,
             msg.sender,
@@ -73,6 +80,9 @@ contract AsyncOrderModule is IAsyncOrderModule {
         emit AsyncOrderCommitted(marketId, asyncOrderId, asyncOrderClaim, msg.sender);
     }
 
+    /**
+     * @inheritdoc IAsyncOrderModule
+     */
     function commitSellOrder(
         uint128 marketId,
         uint256 synthAmount
@@ -81,9 +91,60 @@ contract AsyncOrderModule is IAsyncOrderModule {
         override
         returns (uint128 asyncOrderId, AsyncOrder.AsyncOrderClaim memory asyncOrderClaim)
     {
-        // TODO: Sort this out after buy, settle, and cancel all compile
+        SpotMarketFactory.Data storage store = SpotMarketFactory.load();
+
+        // Accept Synths
+        uint256 allowance = SynthUtil.getToken(marketId).allowance(msg.sender, address(this));
+        if (store.usdToken.balanceOf(msg.sender) < synthAmount) {
+            revert InsufficientFunds();
+        }
+        if (allowance < synthAmount) {
+            revert InsufficientAllowance(synthAmount, allowance);
+        }
+        SynthUtil.getToken(marketId).transferFrom(msg.sender, address(this), synthAmount);
+
+        // Get estimated exchange amount
+        uint256 amountProvidedUsd = Price.load(marketId).usdSynthExchangeRate(
+            synthAmount,
+            Fee.TradeType.ASYNC_SELL
+        );
+
+        // Calculate fees
+        (, int256 feesQuoted) = Fee.calculateFees(
+            marketId,
+            msg.sender,
+            amountProvidedUsd,
+            Fee.TradeType.ASYNC_SELL
+        );
+
+        // Withdraw USD and hold in this contract as escrow
+        IMarketManagerModule(store.synthetix).withdrawMarketUsd(
+            marketId,
+            address(this),
+            amountProvidedUsd
+        );
+
+        // Issue an async order claim NFT
+        asyncOrderId = uint128(AsyncOrderClaimTokenUtil.getNft(marketId).mint(msg.sender));
+
+        // Set up order data
+        asyncOrderClaim.orderType = Fee.TradeType.ASYNC_BUY;
+        asyncOrderClaim.blockNumber = block.number;
+        asyncOrderClaim.timestamp = block.timestamp;
+        asyncOrderClaim.amountProvided = synthAmount;
+        asyncOrderClaim.amountStaged = amountProvidedUsd;
+        asyncOrderClaim.feesQuoted = feesQuoted;
+
+        // Store order data
+        AsyncOrder.create(marketId, asyncOrderId, asyncOrderClaim);
+
+        // Emit event
+        emit AsyncOrderCommitted(marketId, asyncOrderId, asyncOrderClaim, msg.sender);
     }
 
+    /**
+     * @inheritdoc IAsyncOrderModule
+     */
     function settleOrder(
         uint128 marketId,
         uint128 asyncOrderId,
@@ -135,6 +196,9 @@ contract AsyncOrderModule is IAsyncOrderModule {
         );
     }
 
+    /**
+     * @inheritdoc IAsyncOrderModule
+     */
     function _disburseBuyOrderEscrow(
         uint128 marketId,
         uint128 asyncOrderId,
@@ -143,7 +207,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
     ) private returns (uint finalSynthAmount) {
         SpotMarketFactory.Data storage store = SpotMarketFactory.load();
 
-        // Apply fees (Recalculate in case amount changed? Note that NFT holder can change as well.)
+        // Calculate fees
         (uint256 amountUsable, int256 feesQuoted) = Fee.calculateFees(
             marketId,
             AsyncOrderClaimTokenUtil.getNft(marketId).ownerOf(asyncOrderId),
@@ -182,7 +246,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
             );
         }
 
-        // Transfer final synth amount to orderer
+        // Transfer final synth amount to claimant
         SynthUtil.getToken(marketId).transferFrom(
             address(this),
             AsyncOrderClaimTokenUtil.getNft(marketId).ownerOf(asyncOrderId),
@@ -190,22 +254,72 @@ contract AsyncOrderModule is IAsyncOrderModule {
         );
     }
 
+    /**
+     * @inheritdoc IAsyncOrderModule
+     */
     function _disburseSellOrderEscrow(
         uint128 marketId,
         uint128 asyncOrderId,
         AsyncOrder.AsyncOrderClaim memory asyncOrderClaim,
         bytes memory priceData
-    ) private returns (uint finalSynthAmount) {
-        // Follow pattern in _disburseBuyOrderEscrow
-        //TODO: note amountWithdrawable might be insufficient
+    ) private returns (uint finalUsdAmount) {
+        SpotMarketFactory.Data storage store = SpotMarketFactory.load();
+
+        // Get the amount of usd worth the amount of synths provided
+        uint256 amountProvidedUsd = Price.load(marketId).usdSynthExchangeRate(
+            asyncOrderClaim.amountProvided,
+            Fee.TradeType.ASYNC_SELL
+            //priceData // TODO: gotta figure out how this will work
+        );
+
+        // Calculate fees
+        (finalUsdAmount, ) = Fee.calculateFees(
+            marketId,
+            AsyncOrderClaimTokenUtil.getNft(marketId).ownerOf(asyncOrderId),
+            amountProvidedUsd,
+            Fee.TradeType.ASYNC_SELL
+        );
+
+        // Burn Synths
+        SynthUtil.getToken(marketId).burn(address(this), asyncOrderClaim.amountProvided);
+
+        // Withdraw more USD if necessary
+        // TODO: Check if amountWithdrawable is insufficient
+        if (finalUsdAmount > asyncOrderClaim.amountProvided) {
+            IMarketManagerModule(store.synthetix).withdrawMarketUsd(
+                marketId,
+                address(this),
+                finalUsdAmount - asyncOrderClaim.amountProvided
+            );
+        }
+
+        // Deposit extra USD in escrow if necessary
+        if (finalUsdAmount < asyncOrderClaim.amountProvided) {
+            store.usdToken.approve(address(this), asyncOrderClaim.amountProvided - finalUsdAmount);
+            IMarketManagerModule(store.synthetix).depositMarketUsd(
+                marketId,
+                address(this),
+                asyncOrderClaim.amountProvided - finalUsdAmount
+            );
+        }
+
+        // Transfer final USD amount to claimant
+        store.usdToken.transferFrom(
+            address(this),
+            AsyncOrderClaimTokenUtil.getNft(marketId).ownerOf(asyncOrderId),
+            finalUsdAmount
+        );
     }
 
+    /**
+     * @inheritdoc IAsyncOrderModule
+     */
     function cancelOrder(uint128 marketId, uint128 asyncOrderId) external override {
         AsyncOrder.AsyncOrderClaim memory asyncOrderClaim = AsyncOrder
             .load(marketId)
             .asyncOrderClaims[asyncOrderId];
 
-        // Prevent cancellation if this is invoked by someone other than the orderer and the minimum order time plus the external cancellation buffer time hasn't elapsed
+        // Prevent cancellation if this is invoked by someone other than the claimant and the minimum order time plus the external cancellation buffer time hasn't elapsed
         if (
             AsyncOrderClaimTokenUtil.getNft(marketId).ownerOf(asyncOrderId) != msg.sender &&
             block.timestamp <
@@ -230,6 +344,9 @@ contract AsyncOrderModule is IAsyncOrderModule {
         emit AsyncOrderCancelled(marketId, asyncOrderId, asyncOrderClaim, msg.sender);
     }
 
+    /**
+     * @inheritdoc IAsyncOrderModule
+     */
     function _returnBuyOrderEscrow(
         uint128 marketId,
         uint128 asyncOrderId,
@@ -256,6 +373,9 @@ contract AsyncOrderModule is IAsyncOrderModule {
         );
     }
 
+    /**
+     * @inheritdoc IAsyncOrderModule
+     */
     function _returnSellOrderEscrow(
         uint128 marketId,
         uint128 asyncOrderId,
