@@ -3,21 +3,19 @@ import assert from 'assert/strict';
 import { ethers } from 'ethers';
 import hre from 'hardhat';
 import { UpgradeModule } from '../../../typechain-types';
-import { bootstrap } from '../../bootstrap.js';
+import { bootstrap } from '../../bootstrap';
 
 describe('UpgradeModule', function () {
   const { getContract, getSigners } = bootstrap();
 
   let UpgradeModule: UpgradeModule;
-  let owner: ethers.Signer;
   let user: ethers.Signer;
 
-  before('initialize', function () {
-    [owner, user] = getSigners();
+  before('initialize', async function () {
+    [, user] = getSigners();
+
     UpgradeModule = getContract('UpgradeModule') as UpgradeModule;
   });
-
-  before('deploy the module mocking the first owner', async function () {});
 
   describe('when attempting to set the implementation with a non owner signer', async function () {
     it('reverts', async function () {
@@ -29,18 +27,20 @@ describe('UpgradeModule', function () {
   });
 
   describe('when upgrading the implementation', function () {
-    let NewRouter: ethers.Contract;
+    let NewImplementation: ethers.Contract;
+
+    before('initialize new Router', async function () {
+      const factory = await hre.ethers.getContractFactory('Router');
+      NewImplementation = await factory.deploy();
+    });
 
     before('set a new implementation using the owner address', async function () {
-      const factory = await hre.ethers.getContractFactory('Router');
-      NewRouter = await factory.deploy();
-
-      const tx = await UpgradeModule.connect(owner).upgradeTo(NewRouter.address);
+      const tx = await UpgradeModule.upgradeTo(NewImplementation.address);
       await tx.wait();
     });
 
-    it('shows that the implementation is set', async function () {
-      assert.equal(await UpgradeModule.connect(owner).getImplementation(), NewRouter.address);
+    it('sets a new implementation using the owner address', async function () {
+      assert.equal(await UpgradeModule.getImplementation(), NewImplementation.address);
     });
   });
 });

@@ -28,16 +28,16 @@ artifact = "contracts/modules/FeatureFlagModule.sol:FeatureFlagModule"
 # Mocks
 
 [contract.SampleFeatureFlagModule]
-artifact = "contracts/modules/SampleFeatureFlagModule.sol:SampleFeatureFlagModule"
+artifact = "contracts/modules/mocks/SampleFeatureFlagModule.sol:SampleFeatureFlagModule"
 
 [contract.SampleModuleA]
-artifact = "contracts/modules/SampleModuleA.sol:SampleModuleA"
+artifact = "contracts/modules/mocks/SampleModuleA.sol:SampleModuleA"
 
 [contract.SampleModuleB]
-artifact = "contracts/modules/SampleModuleB.sol:SampleModuleB"
+artifact = "contracts/modules/mocks/SampleModuleB.sol:SampleModuleB"
 
 [contract.SampleOwnedModule]
-artifact = "contracts/modules/SampleOwnedModule.sol:SampleOwnedModule"
+artifact = "contracts/modules/mocks/SampleOwnedModule.sol:SampleOwnedModule"
 
 # Setup Architecture
 
