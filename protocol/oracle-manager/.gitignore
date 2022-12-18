@@ -1,8 +1,7 @@
-deployments/local
-deployments/hardhat
-contracts/Router.sol
-
 cannon
-typechain-types
-
 contracts/generated
+contracts/modules/test
+contracts/Router.sol
+deployments/hardhat
+deployments/local
+typechain-types
