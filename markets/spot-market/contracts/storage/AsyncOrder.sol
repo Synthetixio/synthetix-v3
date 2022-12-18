@@ -10,7 +10,7 @@ library AsyncOrder {
     struct Data {
         mapping(uint => AsyncOrderClaim) asyncOrderClaims;
         uint256 minimumOrderAge;
-        uint256 forcedCancellationDelay;
+        uint256 confirmationWindowDuration;
     }
 
     struct AsyncOrderClaim {

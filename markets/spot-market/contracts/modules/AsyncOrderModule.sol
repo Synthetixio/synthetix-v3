@@ -147,15 +147,31 @@ contract AsyncOrderModule is IAsyncOrderModule {
             .load(marketId)
             .asyncOrderClaims[asyncOrderId];
 
-        // Ensure delay has occured
+        // Ensure we are in the confirmation window
         if (
-            block.timestamp < asyncOrderClaim.timestamp + AsyncOrder.load(marketId).minimumOrderAge
+            block.timestamp <
+            asyncOrderClaim.timestamp + AsyncOrder.load(marketId).minimumOrderAge &&
+            asyncOrderClaim.timestamp +
+                AsyncOrder.load(marketId).minimumOrderAge +
+                AsyncOrder.load(marketId).confirmationWindowDuration <
+            block.timestamp
         ) {
-            revert InsufficientSettlementTimeElapsed(
+            revert OutsideOfConfirmationWindow(
                 block.timestamp,
                 asyncOrderClaim.timestamp,
-                AsyncOrder.load(marketId).minimumOrderAge
+                AsyncOrder.load(marketId).minimumOrderAge,
+                AsyncOrder.load(marketId).confirmationWindowDuration
             );
+        }
+
+        if (
+            AsyncOrderClaimTokenUtil.getNft(marketId).ownerOf(asyncOrderId) != msg.sender &&
+            block.timestamp <
+            asyncOrderClaim.timestamp +
+                AsyncOrder.load(marketId).minimumOrderAge +
+                AsyncOrder.load(marketId).confirmationWindowDuration
+        ) {
+            revert InsufficientCancellationTimeElapsed();
         }
 
         // Finalize the order using the provided price data
@@ -314,7 +330,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
             block.timestamp <
             asyncOrderClaim.timestamp +
                 AsyncOrder.load(marketId).minimumOrderAge +
-                AsyncOrder.load(marketId).forcedCancellationDelay
+                AsyncOrder.load(marketId).confirmationWindowDuration
         ) {
             revert InsufficientCancellationTimeElapsed();
         }

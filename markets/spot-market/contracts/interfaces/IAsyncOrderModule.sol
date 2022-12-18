@@ -30,10 +30,11 @@ interface IAsyncOrderModule {
 
     error InsufficientAllowance(uint256 expected, uint256 current);
 
-    error InsufficientSettlementTimeElapsed(
+    error OutsideOfConfirmationWindow(
         uint256 currentTime,
         uint256 commitmentTime,
-        uint256 minimumOrderAge
+        uint256 minimumOrderAge,
+        uint256 confirmationWindowDuration
     );
 
     error InsufficientCancellationTimeElapsed(); // TODO: add params
