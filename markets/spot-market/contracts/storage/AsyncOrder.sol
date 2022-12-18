@@ -15,9 +15,9 @@ library AsyncOrder {
 
     struct AsyncOrderClaim {
         Fee.TradeType orderType;
-        uint256 amountProvided; // maybe this is traderAmountEscrowed
-        uint256 amountStaged; // maybe this is systemAmountEscrowed
-        int256 feesQuoted;
+        uint256 traderAmountEscrowed;
+        uint256 systemAmountEscrowed;
+        uint256 feesQuoted;
         uint256 blockNumber;
         uint256 timestamp;
     }

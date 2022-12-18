@@ -21,7 +21,7 @@ library SpotMarketFactory {
         address synthetix;
         address initialSynthImplementation;
         mapping(uint128 => address) synthOwners;
-        mapping(uint128 => int256) synthFeesCollected;
+        mapping(uint128 => uint256) synthFeesCollected;
     }
 
     function load() internal pure returns (Data storage store) {

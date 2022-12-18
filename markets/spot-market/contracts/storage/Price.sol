@@ -4,16 +4,22 @@ pragma solidity ^0.8.0;
 import "@synthetixio/oracle-manager/contracts/interfaces/IOracleManagerModule.sol";
 import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+import "@synthetixio/main/contracts/interfaces/IMarketCollateralModule.sol";
 import "./SpotMarketFactory.sol";
+import "../utils/SynthUtil.sol";
 import "./Fee.sol";
+import "./Wrapper.sol";
 
 library Price {
+    using DecimalMath for int256;
     using DecimalMath for uint256;
     using SafeCastI256 for int256;
+    using SafeCastU256 for uint256;
 
     struct Data {
         bytes32 buyFeedId;
         bytes32 sellFeedId;
+        uint skewScale;
     }
 
     function load(uint128 marketId) internal pure returns (Data storage store) {
@@ -42,19 +48,65 @@ library Price {
 
     function usdSynthExchangeRate(
         Data storage self,
+        uint128 marketId,
         uint amountUsd,
         Fee.TradeType tradeType
-    ) internal view returns (uint256 synthAmount) {
+    ) internal returns (uint256 synthAmount) {
         uint256 currentPrice = getCurrentPrice(self, tradeType);
+        amountUsd = uint(
+            amountUsd.toInt() + calculateSkewAdjustment(self, marketId, amountUsd, tradeType)
+        );
         synthAmount = amountUsd.divDecimal(currentPrice);
     }
 
     function synthUsdExchangeRate(
         Data storage self,
+        uint128 marketId,
         uint sellAmount,
         Fee.TradeType tradeType
-    ) internal view returns (uint256 amountUsd) {
+    ) internal returns (uint256 amountUsd) {
         uint256 currentPrice = getCurrentPrice(self, tradeType);
         amountUsd = sellAmount.mulDecimal(currentPrice);
+        amountUsd = uint(
+            amountUsd.toInt() + calculateSkewAdjustment(self, marketId, amountUsd, tradeType)
+        );
+    }
+
+    function calculateSkewAdjustment(
+        Data storage self,
+        uint128 marketId,
+        uint amount,
+        Fee.TradeType tradeType
+    ) internal returns (int skewAdjustment) {
+        if (self.skewScale == 0) {
+            return 0;
+        }
+
+        uint totalBalance = SynthUtil.getToken(marketId).totalSupply().mulDecimal(
+            getCurrentPrice(self, tradeType)
+        );
+        uint wrappedMarketCollateral = 0;
+
+        Wrapper.Data storage wrapper = Wrapper.load(marketId);
+        wrappedMarketCollateral = IMarketCollateralModule(SpotMarketFactory.load().synthetix)
+            .getMarketCollateralAmount(marketId, wrapper.collateralType);
+
+        uint initialSkew = totalBalance - wrappedMarketCollateral;
+        uint initialSkewAdjustment = initialSkew.divDecimal(self.skewScale);
+
+        uint skewAfterFill = initialSkew;
+        // TODO: when the Adjustment after fill is calculated, does it take into account the Adjustments collected for the trade?
+        if (tradeType == Fee.TradeType.BUY || tradeType == Fee.TradeType.ASYNC_BUY) {
+            skewAfterFill += amount;
+        } else if (tradeType == Fee.TradeType.SELL || tradeType == Fee.TradeType.ASYNC_SELL) {
+            skewAfterFill -= amount;
+        }
+        uint skewAfterFillAdjustment = skewAfterFill.divDecimal(self.skewScale);
+
+        skewAdjustment = (skewAfterFillAdjustment.toInt() + initialSkewAdjustment.toInt())
+            .divDecimal(2);
+        if (tradeType == Fee.TradeType.SELL) {
+            skewAdjustment = skewAdjustment * -1;
+        }
     }
 }

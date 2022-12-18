@@ -151,7 +151,7 @@ library Fee {
         UNWRAP
     }
     struct Data {
-        uint fixedFee;
+        uint atomicFixedFee;
         uint skewScale;
         uint utilizationFeeRate;
         uint wrapperFee;

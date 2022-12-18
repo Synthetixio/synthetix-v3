@@ -26,7 +26,7 @@ contract AtomicOrderModule is IAtomicOrderModule {
         }
 
         store.usdToken.transferFrom(msg.sender, address(this), amountUsd);
-        (uint256 amountUsable, int256 feesCollected) = Fee.calculateFees(
+        (uint256 amountUsable, uint256 feesCollected) = Fee.calculateFees(
             marketId,
             msg.sender,
             amountUsd,
@@ -34,6 +34,7 @@ contract AtomicOrderModule is IAtomicOrderModule {
         );
 
         uint256 amountToMint = Price.load(marketId).usdSynthExchangeRate(
+            marketId,
             amountUsable,
             Fee.TradeType.BUY
         );
@@ -60,6 +61,7 @@ contract AtomicOrderModule is IAtomicOrderModule {
 
         // TODO: check int256
         uint256 amountToWithdraw = Price.load(marketId).synthUsdExchangeRate(
+            marketId,
             sellAmount,
             Fee.TradeType.SELL
         );
@@ -71,7 +73,7 @@ contract AtomicOrderModule is IAtomicOrderModule {
             amountToWithdraw
         );
 
-        (uint256 returnAmount, int256 feesCollected) = Fee.calculateFees(
+        (uint256 returnAmount, uint256 feesCollected) = Fee.calculateFees(
             marketId,
             msg.sender,
             amountToWithdraw,
