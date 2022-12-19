@@ -77,7 +77,7 @@ describe('SafeCast', () => {
     });
   });
 
-  describe.only('uint128 to bytes32', function () {
+  describe('uint128 to bytes32', function () {
     before('set the target cast function', async function () {
       castFunction = 'uint128toBytes32(uint128)';
     });
