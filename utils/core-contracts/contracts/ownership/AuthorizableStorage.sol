@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 import "../errors/AccessError.sol";
 
 library AuthorizableStorage {
-    bytes32 private constant _SLOT_AUTHORIZABLE_STORAGE =
+    bytes32 private constant _slotAuthorizableStorage =
         keccak256(abi.encode("io.synthetix.synthetix.Authorizable"));
 
     struct Data {
@@ -12,7 +12,7 @@ library AuthorizableStorage {
     }
 
     function load() internal pure returns (Data storage store) {
-        bytes32 s = _SLOT_AUTHORIZABLE_STORAGE;
+        bytes32 s = _slotAuthorizableStorage;
         assembly {
             store.slot := s
         }

@@ -7,7 +7,7 @@ import "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
  * @title System wide configuration for pools.
  */
 library SystemPoolConfiguration {
-    bytes32 private constant _SLOT_SYSTEM_POOL_CONFIGURATION =
+    bytes32 private constant _slotSystemPoolConfiguration =
         keccak256(abi.encode("io.synthetix.synthetix.SystemPoolConfiguration"));
 
     struct Data {
@@ -31,7 +31,7 @@ library SystemPoolConfiguration {
      * @dev Returns the configuration singleton.
      */
     function load() internal pure returns (Data storage data) {
-        bytes32 s = _SLOT_SYSTEM_POOL_CONFIGURATION;
+        bytes32 s = _slotSystemPoolConfiguration;
         assembly {
             data.slot := s
         }

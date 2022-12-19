@@ -5,7 +5,7 @@ pragma solidity ^0.8.0;
  * @title Represents Oracle Manager
  */
 library OracleManager {
-    bytes32 private constant _SLOT_ORACLE_MANAGER =
+    bytes32 private constant _slotOracleManager =
         keccak256(abi.encode("io.synthetix.synthetix.OracleManager"));
 
     struct Data {
@@ -19,7 +19,7 @@ library OracleManager {
      * @dev Loads the singleton storage info about the oracle manager.
      */
     function load() internal pure returns (Data storage data) {
-        bytes32 s = _SLOT_ORACLE_MANAGER;
+        bytes32 s = _slotOracleManager;
         assembly {
             data.slot := s
         }

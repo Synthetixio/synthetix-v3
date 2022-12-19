@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 contract GlobalStorage {
-    bytes32 private constant _SLOT_GLOBAL_STORAGE =
+    bytes32 private constant _slotGlobalStorage =
         keccak256(abi.encode("io.synthetix.sample-project.Global"));
 
     struct GlobalStore {
@@ -11,7 +11,7 @@ contract GlobalStorage {
     }
 
     function _globalStore() internal pure returns (GlobalStore storage store) {
-        bytes32 s = _SLOT_GLOBAL_STORAGE;
+        bytes32 s = _slotGlobalStorage;
         assembly {
             store.slot := s
         }

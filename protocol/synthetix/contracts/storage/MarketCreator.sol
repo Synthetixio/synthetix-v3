@@ -7,7 +7,7 @@ import "./Market.sol";
  * @title Encapsulates market creation logic
  */
 library MarketCreator {
-    bytes32 private constant _SLOT_MARKET_CREATOR =
+    bytes32 private constant _slotMarketCreator =
         keccak256(abi.encode("io.synthetix.synthetix.Markets"));
 
     struct Data {
@@ -26,7 +26,7 @@ library MarketCreator {
      * @dev Returns the singleton market store of the system.
      */
     function getMarketStore() internal pure returns (Data storage data) {
-        bytes32 s = _SLOT_MARKET_CREATOR;
+        bytes32 s = _slotMarketCreator;
         assembly {
             data.slot := s
         }

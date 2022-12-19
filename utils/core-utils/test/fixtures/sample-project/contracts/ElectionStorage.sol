@@ -4,7 +4,7 @@ pragma solidity ^0.8.0;
 import "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
 
 contract ElectionStorage {
-    bytes32 private constant _SLOT_ELECTION_STORAGE =
+    bytes32 private constant _slotElectionStorage =
         keccak256(abi.encode("io.synthetix.core-utils.Election"));
 
     struct ElectionStore {
@@ -88,7 +88,7 @@ contract ElectionStorage {
     }
 
     function _electionStore() internal pure returns (ElectionStore storage store) {
-        bytes32 s = _SLOT_ELECTION_STORAGE;
+        bytes32 s = _slotElectionStorage;
         assembly {
             store.slot := s
         }

@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 library ERC20PermitStorage {
-    bytes32 private constant _SLOT_ERC20_PERMIT =
+    bytes32 private constant _slotERC20Permit =
         keccak256(abi.encode("io.synthetix.core-contracts.ERC20Permit"));
 
     struct Data {
@@ -12,7 +12,7 @@ library ERC20PermitStorage {
     }
 
     function load() internal pure returns (Data storage store) {
-        bytes32 s = _SLOT_ERC20_PERMIT;
+        bytes32 s = _slotERC20Permit;
         assembly {
             store.slot := s
         }
