@@ -54,4 +54,9 @@ contract SafeCastMock {
     function uint256toInt256(uint256 x) external view returns (int256) {
         return SafeCastU256.toInt(x);
     }
+
+    // solc-ignore-next-line func-mutability
+    function uint128toBytes32(uint128 x) external view returns (bytes32) {
+        return SafeCastU128.toBytes32(x);
+    }
 }

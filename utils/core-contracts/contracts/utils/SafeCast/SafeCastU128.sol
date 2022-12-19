@@ -17,4 +17,8 @@ library SafeCastU128 {
 
         return int128(x);
     }
+
+    function toBytes32(uint128 x) internal pure returns (bytes32) {
+        return bytes32(uint256(x));
+    }
 }

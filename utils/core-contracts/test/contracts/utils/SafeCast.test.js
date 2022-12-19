@@ -1,4 +1,5 @@
 const { ethers } = hre;
+const assert = require('assert/strict');
 const assertBn = require('@synthetixio/core-utils/utils/assertions/assert-bignumber');
 const { default: assertRevert } = require('@synthetixio/core-utils/utils/assertions/assert-revert');
 
@@ -27,6 +28,13 @@ describe('SafeCast', () => {
     // The solution is to use callStatic, which forces ethers to both retrieve the
     // returned value, and parse revert errors.
     assertBn.equal(await SafeCast.callStatic[castFunction](value), value);
+  }
+
+  async function assertCastBytes(value) {
+    assert.equal(
+      await SafeCast.callStatic[castFunction](value),
+      ethers.utils.hexZeroPad(ethers.BigNumber.from(value).toHexString(), 32)
+    );
   }
 
   before('deploy the contract', async () => {
@@ -66,6 +74,22 @@ describe('SafeCast', () => {
     it('throws on overflows', async function () {
       await assertRevert(SafeCast[castFunction](MAX_UINT_128.add(1)), 'OverflowUint256ToUint128()');
       await assertRevert(SafeCast[castFunction](MAX_UINT_256), 'OverflowUint256ToUint128()');
+    });
+  });
+
+  describe.only('uint128 to bytes32', function () {
+    before('set the target cast function', async function () {
+      castFunction = 'uint128toBytes32(uint128)';
+    });
+
+    it('produces expected results', async function () {
+      await assertCastBytes(42);
+      await assertCastBytes(exp(1337, 18));
+    });
+
+    it('produces expected results on edge cases', async function () {
+      await assertCastBytes(0);
+      await assertCastBytes(MAX_UINT_128);
     });
   });
 
