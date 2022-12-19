@@ -9,7 +9,8 @@ library NodeDefinition {
         CHAINLINK,
         PYTH,
         PriceDeviationCircuitBreaker,
-        UNISWAP
+        UNISWAP,
+        StalenessFallbackReducer
     }
 
     struct Data {
