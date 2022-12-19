@@ -85,8 +85,8 @@ library Vault {
         uint256 scaleModifierD27 = (epochData.collateralAmounts.scaleModifierD27 +
             DecimalMath.UNIT_PRECISE_INT).toUint();
 
-        usdWeightD18 = ((epochData.accountsDebtDistribution.totalSharesD18 *
-            scaleModifierD27) / 1e27).mulDecimal(collateralPriceD18);
+        usdWeightD18 = ((epochData.accountsDebtDistribution.totalSharesD18 * scaleModifierD27) /
+            1e27).mulDecimal(collateralPriceD18);
 
         totalDebtD18 = epochData.totalDebt();
 

@@ -89,7 +89,9 @@ library Distribution {
 
         actor.sharesD18 = sharesUint128D18;
 
-        actor.lastValuePerShareD27 = newActorSharesD18 == 0 ? SafeCastI128.zero() : dist.valuePerShareD27;
+        actor.lastValuePerShareD27 = newActorSharesD18 == 0
+            ? SafeCastI128.zero()
+            : dist.valuePerShareD27;
     }
 
     /**
