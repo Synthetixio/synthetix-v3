@@ -143,7 +143,7 @@ library Account {
     }
 
     /**
-     * Ensure that the account has the required amount of collateral funds remaining
+     * @dev Ensure that the account has the required amount of collateral funds remaining
      */
     function requireSufficientCollateral(
         uint128 accountId,
