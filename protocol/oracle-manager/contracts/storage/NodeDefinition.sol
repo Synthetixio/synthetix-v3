@@ -8,7 +8,8 @@ library NodeDefinition {
         EXTERNAL,
         CHAINLINK,
         PYTH,
-        PriceDeviationCircuitBreaker
+        PriceDeviationCircuitBreaker,
+        UNISWAP
     }
 
     struct Data {

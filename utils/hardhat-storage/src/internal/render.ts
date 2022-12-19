@@ -17,6 +17,7 @@ import {
   ParameterList,
   PragmaDirective,
   StructDefinition,
+  UnaryOperation,
   UserDefinedTypeName,
   VariableDeclaration,
   VariableDeclarationStatement,
@@ -237,6 +238,10 @@ const _render = {
 
   MemberAccess(node: MemberAccess): string {
     return `${render(node.expression)}.${node.memberName}`;
+  },
+
+  UnaryOperation(node: UnaryOperation): string {
+    return `${node.operator}${render(node.subExpression)}`;
   },
 };
 
