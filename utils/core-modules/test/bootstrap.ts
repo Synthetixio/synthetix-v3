@@ -12,6 +12,7 @@ import {
   SampleModuleA,
   SampleModuleB,
   SampleOwnedModule,
+  SampleRouter,
   TokenModule,
   TokenModuleRouter,
   UpgradeModule,
@@ -29,6 +30,7 @@ interface Contracts {
   SampleModuleA: SampleModuleA;
   SampleModuleB: SampleModuleB;
   SampleOwnedModule: SampleOwnedModule;
+  SampleRouter: SampleRouter;
   TokenModule: TokenModule;
   TokenModuleRouter: TokenModuleRouter;
   UpgradeModule: UpgradeModule;

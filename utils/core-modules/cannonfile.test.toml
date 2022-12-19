@@ -104,46 +104,25 @@ artifact = "contracts/routers/chain-<%= chainId %>/TokenModuleRouter.sol:TokenMo
 abiOf = ["CoreModule", "TokenModule"]
 depends = ["run.generate_token_module_router"]
 
-# Create Router Implementations
+# Sample Router
 
-# [run.generate_router]
-# exec = "@synthetixio/hardhat-router/utils/cannon"
-# func = "generate"
-# args = [
-#   "contracts/routers/chain-<%= chainId %>/Router.sol:Router",
-#   '''<%= JSON.stringify({
-#     OwnerModule: contracts.OwnerModule,
-#     UpgradeModule: contracts.UpgradeModule,
-#     AssociatedSystemsModule: contracts.AssociatedSystemsModule,
-#     FeatureFlagModule: contracts.FeatureFlagModule,
-#     SampleFeatureFlagModule: contracts.SampleFeatureFlagModule,
-#     SampleModuleA: contracts.SampleModuleA,
-#     SampleModuleB: contracts.SampleModuleB,
-#     SampleOwnedModule: contracts.SampleOwnedModule,
-#   }) %>'''
-# ]
-# modified = ["contracts"]
-# depends = [
-#   "contract.OwnerModule",
-#   "contract.UpgradeModule",
-#   "contract.AssociatedSystemsModule",
-#   "contract.FeatureFlagModule",
-#   "contract.SampleFeatureFlagModule",
-#   "contract.SampleModuleA",
-#   "contract.SampleModuleB",
-#   "contract.SampleOwnedModule"
-# ]
+[run.generate_sample_router]
+exec = "@synthetixio/hardhat-router/utils/cannon"
+func = "generate"
+args = [
+  "contracts/routers/chain-<%= chainId %>/SampleRouter.sol:SampleRouter",
+  '''<%= JSON.stringify({
+    CoreModule: contracts.CoreModule,
+    SampleOwnedModule: contracts.SampleOwnedModule,
+  }) %>'''
+]
+modified = ["contracts"]
+depends = [
+  "contract.CoreModule",
+  "contract.SampleOwnedModule"
+]
 
-# [contract.Router]
-# artifact = "contracts/routers/chain-<%= chainId %>/Router.sol:Router"
-# abiOf = [
-#   "OwnerModule",
-#   "UpgradeModule",
-#   "AssociatedSystemsModule",
-#   "FeatureFlagModule",
-#   "SampleFeatureFlagModule",
-#   "SampleModuleA",
-#   "SampleModuleB",
-#   "SampleOwnedModule",
-# ]
-# depends = ["run.generate_router"]
+[contract.SampleRouter]
+artifact = "contracts/routers/chain-<%= chainId %>/SampleRouter.sol:SampleRouter"
+abiOf = ["CoreModule", "TokenModule"]
+depends = ["run.generate_token_module_router"]
