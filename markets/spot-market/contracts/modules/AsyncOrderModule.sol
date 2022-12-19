@@ -142,12 +142,15 @@ contract AsyncOrderModule is IAsyncOrderModule {
         uint128 marketId,
         uint128 asyncOrderId
     ) external override returns (uint finalOrderAmount) {
-        AsyncOrder.Data memory marketAsyncOrderData = AsyncOrder.load(marketId);
+        AsyncOrder.Data storage marketAsyncOrderData = AsyncOrder.load(marketId);
         AsyncOrder.AsyncOrderClaim memory asyncOrderClaim = marketAsyncOrderData.asyncOrderClaims[
             asyncOrderId
         ];
 
-        uint priceTimestamp = Fee.getCurrentPrice(asyncOrderClaim.orderType).timestamp;
+        uint priceTimestamp = Price
+            .load(marketId)
+            .getCurrentPriceData(asyncOrderClaim.orderType)
+            .timestamp;
         bool minimumOrderAgeHasElapsed = asyncOrderClaim.timestamp +
             marketAsyncOrderData.minimumOrderAge <
             priceTimestamp;
@@ -161,7 +164,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
             asyncOrderClaim.timestamp +
                 marketAsyncOrderData.minimumOrderAge +
                 marketAsyncOrderData.settlementWindowDuration -
-                marketAsyncOrderData.livePriceSettlement;
+                marketAsyncOrderData.livePriceSettlementWindowDuration;
 
         bool canSettle = livePriceSettlement ||
             (minimumOrderAgeHasElapsed && !confirmationWindowHasElapsed);

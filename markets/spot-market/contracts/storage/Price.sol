@@ -2,6 +2,7 @@
 pragma solidity ^0.8.0;
 
 import "@synthetixio/oracle-manager/contracts/interfaces/IOracleManagerModule.sol";
+import "@synthetixio/oracle-manager/contracts/storage/Node.sol";
 import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import "@synthetixio/main/contracts/interfaces/IMarketCollateralModule.sol";
@@ -29,16 +30,23 @@ library Price {
         }
     }
 
-    function getCurrentPrice(
+    function getCurrentPriceData(
         Data storage self,
         Fee.TradeType tradeType
-    ) internal view returns (uint256 price) {
+    ) internal view returns (Node.Data memory price) {
         SpotMarketFactory.Data storage factory = SpotMarketFactory.load();
         if (tradeType == Fee.TradeType.BUY) {
             price = IOracleManagerModule(factory.oracle).process(self.buyFeedId);
         } else {
             price = IOracleManagerModule(factory.oracle).process(self.sellFeedId);
         }
+    }
+
+    function getCurrentPrice(
+        Data storage self,
+        Fee.TradeType tradeType
+    ) internal view returns (uint price) {
+        return getCurrentPriceData(self, tradeType).price.toUint();
     }
 
     function update(Data storage self, bytes32 buyFeedId, bytes32 sellFeedId) internal {
@@ -52,7 +60,7 @@ library Price {
         uint amountUsd,
         Fee.TradeType tradeType
     ) internal returns (uint256 synthAmount) {
-        uint256 currentPrice = getCurrentPrice(self, tradeType).price.toUint();
+        uint256 currentPrice = getCurrentPrice(self, tradeType);
         amountUsd = uint(
             amountUsd.toInt() + calculateSkewAdjustment(self, marketId, amountUsd, tradeType)
         );
@@ -65,7 +73,7 @@ library Price {
         uint sellAmount,
         Fee.TradeType tradeType
     ) internal returns (uint256 amountUsd) {
-        uint256 currentPrice = getCurrentPrice(self, tradeType).price.toUint();;
+        uint256 currentPrice = getCurrentPrice(self, tradeType);
         amountUsd = sellAmount.mulDecimal(currentPrice);
         amountUsd = uint(
             amountUsd.toInt() + calculateSkewAdjustment(self, marketId, amountUsd, tradeType)
@@ -91,7 +99,7 @@ library Price {
         }
 
         uint totalBalance = SynthUtil.getToken(marketId).totalSupply().mulDecimal(
-            getCurrentPrice(self, tradeType).price.toUint()
+            getCurrentPrice(self, tradeType)
         );
 
         Wrapper.Data storage wrapper = Wrapper.load(marketId);

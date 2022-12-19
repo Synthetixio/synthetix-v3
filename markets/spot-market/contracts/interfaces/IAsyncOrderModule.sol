@@ -26,7 +26,7 @@ interface IAsyncOrderModule {
         address indexed sender
     );
 
-    error InsufficientFunds(uint256 expected, uint256 current);
+    error InsufficientFunds();
 
     error InsufficientAllowance(uint256 expected, uint256 current);
 

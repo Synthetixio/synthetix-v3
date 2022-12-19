@@ -13,5 +13,9 @@ interface IFeeConfigurationModule {
 
     function setMarketUtilizationFees(uint128 synthMarketId, uint utilizationFeeRate) external;
 
-    function setCustomTransactorFees() external;
+    function setCustomTransactorFees(
+        uint128 synthMarketId,
+        address transactor,
+        uint fixedFeeAmount
+    ) external;
 }
