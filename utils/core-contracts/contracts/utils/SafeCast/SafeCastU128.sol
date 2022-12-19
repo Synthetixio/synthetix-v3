@@ -7,6 +7,10 @@ pragma solidity ^0.8.0;
 library SafeCastU128 {
     error OverflowUint128ToInt128();
 
+    function to256(uint128 x) internal pure returns (uint256) {
+        return uint256(x);
+    }
+
     function toInt(uint128 x) internal pure returns (int128) {
         // -------------------------------o===============>----------------
         // ----------------<==============o==============>x----------------
