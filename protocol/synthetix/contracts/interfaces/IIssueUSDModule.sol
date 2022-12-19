@@ -70,10 +70,6 @@ interface IIssueUSDModule {
      * @param collateralType The address of the collateral that was used to back up the snxUSD.
      * @param amount The amount of snxUSD to be burnt, denominated with 18 decimals of precision.
      *
-     * Requirements:
-     *
-     * - `msg.sender` must be the owner of the account, have the `ADMIN` permission, or have the `BURN` permission.
-     *
      * Emits a {UsdMinted} event.
      */
     function burnUsd(
