@@ -313,12 +313,16 @@ contract PoolModule is IPoolModule {
                     newMarketConfigurations[newIdx].maxDebtShareValueD18 <
                     pool.marketConfigurations[oldIdx].maxDebtShareValueD18 ||
                     newMarketConfigurations[newIdx]
-                    .weightD18
-                    .to256().upscale(DecimalMath.PRECISION_FACTOR).divDecimal(totalWeightD18) < // newWeightRatioD27
+                        .weightD18
+                        .to256()
+                        .upscale(DecimalMath.PRECISION_FACTOR)
+                        .divDecimal(totalWeightD18) < // newWeightRatioD27
                     pool
-                    .marketConfigurations[oldIdx]
-                    .weightD18
-                    .to256().upscale(DecimalMath.PRECISION_FACTOR).divDecimal(pool.totalWeightsD18) // oldWeightRatioD27
+                        .marketConfigurations[oldIdx]
+                        .weightD18
+                        .to256()
+                        .upscale(DecimalMath.PRECISION_FACTOR)
+                        .divDecimal(pool.totalWeightsD18) // oldWeightRatioD27
                 ) {
                     potentiallyLockedMarkets[
                         potentiallyLockedMarketsIdx++
