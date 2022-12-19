@@ -70,13 +70,13 @@ export function coreBootstrap<Contracts>({ cannonfile = 'cannonfile.toml' }: Par
     return provider;
   }
 
-  function getContract(contractName: keyof Contracts, address?: string) {
+  function getContract<T extends keyof Contracts>(contractName: T, address?: string) {
     if (!outputs) throw new Error('Node not initialized yet');
     const contract = _getContractFromOutputs(contractName as string, outputs, provider, address);
     const [owner] = Array.isArray(signers) ? signers : [];
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const Contract = owner ? contract.connect(owner as unknown as any) : contract;
-    return Contract as unknown as Contracts[typeof contractName];
+    return Contract as unknown as Contracts[T];
   }
 
   function createSnapshot() {

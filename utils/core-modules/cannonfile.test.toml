@@ -19,6 +19,9 @@ artifact = "contracts/modules/OwnerModule.sol:OwnerModule"
 [contract.UpgradeModule]
 artifact = "contracts/modules/UpgradeModule.sol:UpgradeModule"
 
+[contract.CoreModule]
+artifact = "contracts/modules/CoreModule.sol:CoreModule"
+
 [contract.AssociatedSystemsModule]
 artifact = "contracts/modules/AssociatedSystemsModule.sol:AssociatedSystemsModule"
 
@@ -42,56 +45,17 @@ artifact = "contracts/modules/mocks/SampleModuleB.sol:SampleModuleB"
 [contract.SampleOwnedModule]
 artifact = "contracts/modules/mocks/SampleOwnedModule.sol:SampleOwnedModule"
 
-# Setup Architecture
+[contract.GenericModule]
+artifact = "contracts/modules/mocks/GenericModule.sol:GenericModule"
 
-[run.generate_router]
-exec = "@synthetixio/hardhat-router/utils/cannon"
-func = "generate"
-args = [
-  "contracts/routers/chain-<%= chainId %>/Router.sol:Router",
-  '''<%= JSON.stringify({
-    OwnerModule: contracts.OwnerModule,
-    UpgradeModule: contracts.UpgradeModule,
-    AssociatedSystemsModule: contracts.AssociatedSystemsModule,
-    FeatureFlagModule: contracts.FeatureFlagModule,
-    SampleFeatureFlagModule: contracts.SampleFeatureFlagModule,
-    SampleModuleA: contracts.SampleModuleA,
-    SampleModuleB: contracts.SampleModuleB,
-    SampleOwnedModule: contracts.SampleOwnedModule,
-  }) %>'''
-]
-modified = ["contracts"]
-depends = [
-  "contract.OwnerModule",
-  "contract.UpgradeModule",
-  "contract.AssociatedSystemsModule",
-  "contract.FeatureFlagModule",
-  "contract.SampleFeatureFlagModule",
-  "contract.SampleModuleA",
-  "contract.SampleModuleB",
-  "contract.SampleOwnedModule"
-]
-
-[contract.Router]
-artifact = "contracts/routers/chain-<%= chainId %>/Router.sol:Router"
-abiOf = [
-  "OwnerModule",
-  "UpgradeModule",
-  "AssociatedSystemsModule",
-  "FeatureFlagModule",
-  "SampleFeatureFlagModule",
-  "SampleModuleA",
-  "SampleModuleB",
-  "SampleOwnedModule",
-]
-depends = ["run.generate_router"]
+# Setup Initial Proxy
 
 [contract.Proxy]
 artifact = "contracts/Proxy.sol:Proxy"
-args = ["<%= contracts.Router.address %>"]
-abiOf = ["Router"]
+args = ["<%= contracts.CoreRouter.address %>"]
+abiOf = ["CoreRouter"]
 salt = "<%= settings.salt %>"
-depends = ["contract.Router"]
+depends = ["contract.CoreRouter"]
 
 [invoke.acquire_ownership]
 target = ["Proxy"]
@@ -100,39 +64,86 @@ func = "initializeOwnerModule"
 args = ["<%= settings.owner %>"]
 depends = ["contract.Proxy"]
 
-[run.token_module_generate_router]
+# Core Router
+
+[run.generate_core_router]
+exec = "@synthetixio/hardhat-router/utils/cannon"
+func = "generate"
+args = [
+  "contracts/routers/chain-<%= chainId %>/CoreRouter.sol:CoreRouter",
+  '''<%= JSON.stringify({ CoreModule: contracts.CoreModule }) %>'''
+]
+modified = ["contracts"]
+depends = ["contract.CoreModule"]
+
+[contract.CoreRouter]
+artifact = "contracts/routers/chain-<%= chainId %>/CoreRouter.sol:CoreRouter"
+abiOf = ["CoreModule"]
+depends = ["run.generate_core_router"]
+
+# TokenModule Router
+
+[run.generate_token_module_router]
 exec = "@synthetixio/hardhat-router/utils/cannon"
 func = "generate"
 args = [
   "contracts/routers/chain-<%= chainId %>/TokenModuleRouter.sol:TokenModuleRouter",
   '''<%= JSON.stringify({
-    OwnerModule: contracts.OwnerModule,
-    UpgradeModule: contracts.UpgradeModule,
+    CoreModule: contracts.CoreModule,
     TokenModule: contracts.TokenModule,
   }) %>'''
 ]
 modified = ["contracts"]
 depends = [
-  "contract.OwnerModule",
-  "contract.UpgradeModule",
+  "contract.CoreModule",
   "contract.TokenModule"
 ]
 
 [contract.TokenModuleRouter]
 artifact = "contracts/routers/chain-<%= chainId %>/TokenModuleRouter.sol:TokenModuleRouter"
-abiOf = ["OwnerModule", "UpgradeModule", "TokenModule"]
-depends = ["run.token_module_generate_router"]
+abiOf = ["CoreModule", "TokenModule"]
+depends = ["run.generate_token_module_router"]
 
-[contract.TokenModuleProxy]
-artifact = "contracts/Proxy.sol:Proxy"
-args = ["<%= contracts.TokenModuleRouter.address %>"]
-abiOf = ["TokenModuleRouter"]
-salt = "<%= settings.salt %>"
-depends = ["contract.TokenModuleRouter"]
+# Create Router Implementations
 
-[invoke.token_module_acquire_ownership]
-target = ["TokenModuleProxy"]
-from = "<%= settings.owner %>"
-func = "initializeOwnerModule"
-args = ["<%= settings.owner %>"]
-depends = ["contract.TokenModuleProxy"]
+# [run.generate_router]
+# exec = "@synthetixio/hardhat-router/utils/cannon"
+# func = "generate"
+# args = [
+#   "contracts/routers/chain-<%= chainId %>/Router.sol:Router",
+#   '''<%= JSON.stringify({
+#     OwnerModule: contracts.OwnerModule,
+#     UpgradeModule: contracts.UpgradeModule,
+#     AssociatedSystemsModule: contracts.AssociatedSystemsModule,
+#     FeatureFlagModule: contracts.FeatureFlagModule,
+#     SampleFeatureFlagModule: contracts.SampleFeatureFlagModule,
+#     SampleModuleA: contracts.SampleModuleA,
+#     SampleModuleB: contracts.SampleModuleB,
+#     SampleOwnedModule: contracts.SampleOwnedModule,
+#   }) %>'''
+# ]
+# modified = ["contracts"]
+# depends = [
+#   "contract.OwnerModule",
+#   "contract.UpgradeModule",
+#   "contract.AssociatedSystemsModule",
+#   "contract.FeatureFlagModule",
+#   "contract.SampleFeatureFlagModule",
+#   "contract.SampleModuleA",
+#   "contract.SampleModuleB",
+#   "contract.SampleOwnedModule"
+# ]
+
+# [contract.Router]
+# artifact = "contracts/routers/chain-<%= chainId %>/Router.sol:Router"
+# abiOf = [
+#   "OwnerModule",
+#   "UpgradeModule",
+#   "AssociatedSystemsModule",
+#   "FeatureFlagModule",
+#   "SampleFeatureFlagModule",
+#   "SampleModuleA",
+#   "SampleModuleB",
+#   "SampleOwnedModule",
+# ]
+# depends = ["run.generate_router"]

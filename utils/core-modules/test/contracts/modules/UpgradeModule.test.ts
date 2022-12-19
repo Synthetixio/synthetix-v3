@@ -6,14 +6,14 @@ import { UpgradeModule } from '../../../typechain-types';
 import { bootstrap } from '../../bootstrap';
 
 describe('UpgradeModule', function () {
-  const { getContract, getSigners } = bootstrap();
+  const { getContract, getSigners } = bootstrap({ implementation: 'CoreRouter' });
 
   let UpgradeModule: UpgradeModule;
   let user: ethers.Signer;
 
   before('initialize', async function () {
     [, user] = getSigners();
-    UpgradeModule = getContract('UpgradeModule') as UpgradeModule;
+    UpgradeModule = getContract('UpgradeModule');
   });
 
   describe('when attempting to set the implementation with a non owner signer', async function () {
