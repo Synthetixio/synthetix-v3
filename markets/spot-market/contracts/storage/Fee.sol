@@ -29,9 +29,9 @@ library Fee {
     struct Data {
         uint atomicFixedFee;
         uint asyncFixedFee;
-        uint utilizationFeeRate; // in bips
-        uint wrapFee;
-        uint unwrapFee;
+        uint utilizationFeeRate; // in bips, applied on buy and async buy
+        uint wrapFixedFee;
+        uint unwrapFixedFee;
     }
 
     function load(uint128 marketId) internal pure returns (Data storage store) {

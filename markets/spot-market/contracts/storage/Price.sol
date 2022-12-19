@@ -72,6 +72,7 @@ library Price {
         );
     }
 
+    // TODO: Applied in all cases except reportedDebt, wrapping
     function calculateSkewAdjustment(
         Data storage self,
         uint128 marketId,

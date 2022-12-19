@@ -24,8 +24,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
 
     function commitBuyOrder(
         uint128 marketId,
-        uint256 usdAmount,
-        bytes[] calldata priceUpdateData
+        uint256 usdAmount
     )
         external
         override
@@ -65,7 +64,6 @@ contract AsyncOrderModule is IAsyncOrderModule {
         asyncOrderId = uint128(AsyncOrderClaimTokenUtil.getNft(marketId).mint(msg.sender));
 
         // Set up order data
-        // TODO: Override minimumOrderAge and confirmationWindowDuration if priceUpdataData is provided
         asyncOrderClaim.orderType = Fee.TradeType.ASYNC_BUY;
         asyncOrderClaim.blockNumber = block.number;
         asyncOrderClaim.timestamp = block.timestamp;
@@ -77,14 +75,12 @@ contract AsyncOrderModule is IAsyncOrderModule {
         AsyncOrder.create(marketId, asyncOrderId, asyncOrderClaim);
 
         // Emit event
-        // TODO: Include priceUpdateData
         emit AsyncOrderCommitted(marketId, asyncOrderId, asyncOrderClaim, msg.sender);
     }
 
     function commitSellOrder(
         uint128 marketId,
-        uint256 synthAmount,
-        bytes[] calldata priceUpdateData
+        uint256 synthAmount
     )
         external
         override
@@ -139,33 +135,31 @@ contract AsyncOrderModule is IAsyncOrderModule {
         AsyncOrder.create(marketId, asyncOrderId, asyncOrderClaim);
 
         // Emit event
-        // TODO: Include priceUpdateData
         emit AsyncOrderCommitted(marketId, asyncOrderId, asyncOrderClaim, msg.sender);
     }
 
     function settleOrder(
         uint128 marketId,
-        uint128 asyncOrderId,
-        bytes[] calldata priceUpdateData
+        uint128 asyncOrderId
     ) external override returns (uint finalOrderAmount) {
-        AsyncOrder.AsyncOrderClaim memory asyncOrderClaim = AsyncOrder
-            .load(marketId)
-            .asyncOrderClaims[asyncOrderId];
+        AsyncOrder.Data memory marketAsyncOrderData = AsyncOrder.load(marketId);
+        AsyncOrder.AsyncOrderClaim memory asyncOrderClaim = marketAsyncOrderData.asyncOrderClaims[
+            asyncOrderId
+        ];
 
         // Ensure we are in the confirmation window
         if (
-            block.timestamp <
-            asyncOrderClaim.timestamp + AsyncOrder.load(marketId).minimumOrderAge &&
+            block.timestamp < asyncOrderClaim.timestamp + marketAsyncOrderData.minimumOrderAge &&
             asyncOrderClaim.timestamp +
-                AsyncOrder.load(marketId).minimumOrderAge +
-                AsyncOrder.load(marketId).confirmationWindowDuration <
+                marketAsyncOrderData.minimumOrderAge +
+                marketAsyncOrderData.settlementWindowDuration <
             block.timestamp
         ) {
             revert OutsideOfConfirmationWindow(
                 block.timestamp,
                 asyncOrderClaim.timestamp,
-                AsyncOrder.load(marketId).minimumOrderAge,
-                AsyncOrder.load(marketId).confirmationWindowDuration
+                marketAsyncOrderData.minimumOrderAge,
+                marketAsyncOrderData.settlementWindowDuration
             );
         }
 
@@ -180,7 +174,6 @@ contract AsyncOrderModule is IAsyncOrderModule {
         AsyncOrderClaimTokenUtil.getNft(marketId).burn(asyncOrderId);
 
         // Emit event
-        // TODO: Include priceUpdateData
         emit AsyncOrderSettled(
             marketId,
             asyncOrderId,
@@ -311,9 +304,14 @@ contract AsyncOrderModule is IAsyncOrderModule {
             block.timestamp <
             asyncOrderClaim.timestamp +
                 AsyncOrder.load(marketId).minimumOrderAge +
-                AsyncOrder.load(marketId).confirmationWindowDuration
+                AsyncOrder.load(marketId).settlementWindowDuration
         ) {
-            revert InsufficientCancellationTimeElapsed();
+            revert InsufficientCancellationTimeElapsed(
+                block.timestamp,
+                asyncOrderClaim.timestamp,
+                AsyncOrder.load(marketId).minimumOrderAge,
+                AsyncOrder.load(marketId).settlementWindowDuration
+            );
         }
 
         // Return escrowed funds

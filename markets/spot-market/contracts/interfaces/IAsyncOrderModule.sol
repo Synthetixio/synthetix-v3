@@ -26,7 +26,7 @@ interface IAsyncOrderModule {
         address indexed sender
     );
 
-    error InsufficientFunds(); // TODO: add params
+    error InsufficientFunds(uint256 expected, uint256 current);
 
     error InsufficientAllowance(uint256 expected, uint256 current);
 
@@ -34,27 +34,29 @@ interface IAsyncOrderModule {
         uint256 currentTime,
         uint256 commitmentTime,
         uint256 minimumOrderAge,
-        uint256 confirmationWindowDuration
+        uint256 settlementWindowDuration
     );
 
-    error InsufficientCancellationTimeElapsed(); // TODO: add params
+    error InsufficientCancellationTimeElapsed(
+        uint256 currentTime,
+        uint256 commitmentTime,
+        uint256 minimumOrderAge,
+        uint256 settlementWindowDuration
+    );
 
     function commitBuyOrder(
         uint128 marketId,
-        uint usdAmount,
-        bytes[] calldata priceUpdateData
+        uint usdAmount
     ) external returns (uint128 asyncOrderId, AsyncOrder.AsyncOrderClaim memory asyncOrderClaim);
 
     function commitSellOrder(
         uint128 marketId,
-        uint256 synthAmount,
-        bytes[] calldata priceUpdateData
+        uint256 synthAmount
     ) external returns (uint128 asyncOrderId, AsyncOrder.AsyncOrderClaim memory asyncOrderClaim);
 
     function settleOrder(
         uint128 marketId,
-        uint128 asyncOrderId,
-        bytes[] calldata priceUpdateData
+        uint128 asyncOrderId
     ) external returns (uint finalOrderAmount);
 
     function cancelOrder(uint128 marketId, uint128 asyncOrderId) external;
