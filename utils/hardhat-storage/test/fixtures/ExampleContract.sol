@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 contract ExampleContract {
-    bytes32 private constant _slotExampleContract =
+    bytes32 private constant _SLOT_EXAMPLE_CONTRACT =
         keccak256(abi.encode("io.synthetix.hardhat-storage.Example"));
 
     enum NodeType {
@@ -31,7 +31,7 @@ contract ExampleContract {
     }
 
     function load() internal pure returns (Data storage store) {
-        bytes32 s = _slotExampleContract;
+        bytes32 s = _SLOT_EXAMPLE_CONTRACT;
         assembly {
             store.slot := s
         }
