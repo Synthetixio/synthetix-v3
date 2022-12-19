@@ -83,13 +83,19 @@ library Price {
             return 0;
         }
 
+        bool isBuyTrade = tradeType == Fee.TradeType.BUY || tradeType == Fee.TradeType.ASYNC_BUY;
+        bool isSellTrade = tradeType == Fee.TradeType.SELL || tradeType == Fee.TradeType.ASYNC_SELL;
+
+        if (!isBuyTrade && !isSellTrade) {
+            return 0;
+        }
+
         uint totalBalance = SynthUtil.getToken(marketId).totalSupply().mulDecimal(
             getCurrentPrice(self, tradeType)
         );
-        uint wrappedMarketCollateral = 0;
 
         Wrapper.Data storage wrapper = Wrapper.load(marketId);
-        wrappedMarketCollateral = IMarketCollateralModule(SpotMarketFactory.load().synthetix)
+        uint wrappedMarketCollateral = IMarketCollateralModule(SpotMarketFactory.load().synthetix)
             .getMarketCollateralAmount(marketId, wrapper.collateralType);
 
         uint initialSkew = totalBalance - wrappedMarketCollateral;
@@ -97,17 +103,16 @@ library Price {
 
         uint skewAfterFill = initialSkew;
         // TODO: when the Adjustment after fill is calculated, does it take into account the Adjustments collected for the trade?
-        if (tradeType == Fee.TradeType.BUY || tradeType == Fee.TradeType.ASYNC_BUY) {
+        if (isBuyTrade) {
             skewAfterFill += amount;
-        } else if (tradeType == Fee.TradeType.SELL || tradeType == Fee.TradeType.ASYNC_SELL) {
+        } else if (isSellTrade) {
             skewAfterFill -= amount;
         }
         uint skewAfterFillAdjustment = skewAfterFill.divDecimal(self.skewScale);
 
-        skewAdjustment = (skewAfterFillAdjustment.toInt() + initialSkewAdjustment.toInt())
-            .divDecimal(2);
-        if (tradeType == Fee.TradeType.SELL) {
-            skewAdjustment = skewAdjustment * -1;
-        }
+        int skewAdjustmentAverage = (skewAfterFillAdjustment.toInt() +
+            initialSkewAdjustment.toInt()).divDecimal(2);
+
+        skewAdjustment = isSellTrade ? skewAdjustmentAverage * -1 : skewAdjustmentAverage;
     }
 }

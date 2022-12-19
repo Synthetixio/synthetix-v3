@@ -5,8 +5,6 @@ import "./Fee.sol";
 
 // Not sure this is the correct name for this, more like AsyncOrderManager
 library AsyncOrder {
-    using Fee for Fee.Data;
-
     struct Data {
         mapping(uint => AsyncOrderClaim) asyncOrderClaims;
         uint256 minimumOrderAge;
