@@ -29,6 +29,10 @@ library SafeCastU256 {
         return uint64(x);
     }
 
+    function toBytes32(uint256 x) internal pure returns (bytes32) {
+        return bytes32(x);
+    }
+
     function toInt(uint256 x) internal pure returns (int256) {
         // -------------------------------o===============================>
         // ----<==========================o===========================>xxxx

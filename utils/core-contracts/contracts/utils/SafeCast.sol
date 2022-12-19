@@ -12,3 +12,4 @@ import "./SafeCast/SafeCastI256.sol";
 import "./SafeCast/SafeCastU128.sol";
 import "./SafeCast/SafeCastU256.sol";
 import "./SafeCast/SafeCastAddress.sol";
+import "./SafeCast/SafeCastBytes32.sol";

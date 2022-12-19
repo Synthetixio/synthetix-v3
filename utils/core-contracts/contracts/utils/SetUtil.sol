@@ -1,7 +1,13 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import "./SafeCast.sol";
+
 library SetUtil {
+    using SafeCastAddress for address;
+    using SafeCastBytes32 for bytes32;
+    using SafeCastU256 for uint256;
+
     // ----------------------------------------
     // Uint support
     // ----------------------------------------
@@ -11,19 +17,19 @@ library SetUtil {
     }
 
     function add(UintSet storage set, uint value) internal {
-        add(set.raw, bytes32(value));
+        add(set.raw, value.toBytes32());
     }
 
     function remove(UintSet storage set, uint value) internal {
-        remove(set.raw, bytes32(value));
+        remove(set.raw, value.toBytes32());
     }
 
     function replace(UintSet storage set, uint value, uint newValue) internal {
-        replace(set.raw, bytes32(value), bytes32(newValue));
+        replace(set.raw, value.toBytes32(), newValue.toBytes32());
     }
 
     function contains(UintSet storage set, uint value) internal view returns (bool) {
-        return contains(set.raw, bytes32(value));
+        return contains(set.raw, value.toBytes32());
     }
 
     function length(UintSet storage set) internal view returns (uint) {
@@ -31,11 +37,11 @@ library SetUtil {
     }
 
     function valueAt(UintSet storage set, uint position) internal view returns (uint) {
-        return uint(valueAt(set.raw, position));
+        return valueAt(set.raw, position).toUint();
     }
 
     function positionOf(UintSet storage set, uint value) internal view returns (uint) {
-        return positionOf(set.raw, bytes32(value));
+        return positionOf(set.raw, value.toBytes32());
     }
 
     function values(UintSet storage set) internal view returns (uint[] memory) {
@@ -58,19 +64,19 @@ library SetUtil {
     }
 
     function add(AddressSet storage set, address value) internal {
-        add(set.raw, bytes32(uint256(uint160(value))));
+        add(set.raw, value.toBytes32());
     }
 
     function remove(AddressSet storage set, address value) internal {
-        remove(set.raw, bytes32(uint256(uint160(value))));
+        remove(set.raw, value.toBytes32());
     }
 
     function replace(AddressSet storage set, address value, address newValue) internal {
-        replace(set.raw, bytes32(uint256(uint160(value))), bytes32(uint256(uint160(newValue))));
+        replace(set.raw, value.toBytes32(), newValue.toBytes32());
     }
 
     function contains(AddressSet storage set, address value) internal view returns (bool) {
-        return contains(set.raw, bytes32(uint256(uint160(value))));
+        return contains(set.raw, value.toBytes32());
     }
 
     function length(AddressSet storage set) internal view returns (uint) {
@@ -78,11 +84,11 @@ library SetUtil {
     }
 
     function valueAt(AddressSet storage set, uint position) internal view returns (address) {
-        return address(uint160(uint256(valueAt(set.raw, position))));
+        return valueAt(set.raw, position).toAddress();
     }
 
     function positionOf(AddressSet storage set, address value) internal view returns (uint) {
-        return positionOf(set.raw, bytes32(uint256(uint160(value))));
+        return positionOf(set.raw, value.toBytes32());
     }
 
     function values(AddressSet storage set) internal view returns (address[] memory) {
