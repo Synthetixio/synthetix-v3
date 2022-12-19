@@ -2,14 +2,11 @@
 pragma solidity ^0.8.0;
 
 /**
- * @title Utility that avoids silent overflow errors.
- *
+ * @title See SafeCast.sol.
  */
 library SafeCastU256 {
     error OverflowUint256ToUint128();
     error OverflowUint256ToInt256();
-
-    // Note: Overloading doesn't seem to work for similar types, i.e. int256 and int128, uint256 and uint128, etc, so explicitly naming the functions differently here.
 
     function to128(uint256 x) internal pure returns (uint128) {
         // -------------------------------o===============================>
