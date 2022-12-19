@@ -24,7 +24,8 @@ contract AsyncOrderModule is IAsyncOrderModule {
 
     function commitBuyOrder(
         uint128 marketId,
-        uint256 usdAmount
+        uint256 usdAmount,
+        bytes[] calldata priceUpdateData
     )
         external
         override
@@ -64,6 +65,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
         asyncOrderId = uint128(AsyncOrderClaimTokenUtil.getNft(marketId).mint(msg.sender));
 
         // Set up order data
+        // TODO: Override minimumOrderAge and confirmationWindowDuration if priceUpdataData is provided
         asyncOrderClaim.orderType = Fee.TradeType.ASYNC_BUY;
         asyncOrderClaim.blockNumber = block.number;
         asyncOrderClaim.timestamp = block.timestamp;
@@ -75,12 +77,14 @@ contract AsyncOrderModule is IAsyncOrderModule {
         AsyncOrder.create(marketId, asyncOrderId, asyncOrderClaim);
 
         // Emit event
+        // TODO: Include priceUpdateData
         emit AsyncOrderCommitted(marketId, asyncOrderId, asyncOrderClaim, msg.sender);
     }
 
     function commitSellOrder(
         uint128 marketId,
-        uint256 synthAmount
+        uint256 synthAmount,
+        bytes[] calldata priceUpdateData
     )
         external
         override
@@ -135,13 +139,14 @@ contract AsyncOrderModule is IAsyncOrderModule {
         AsyncOrder.create(marketId, asyncOrderId, asyncOrderClaim);
 
         // Emit event
+        // TODO: Include priceUpdateData
         emit AsyncOrderCommitted(marketId, asyncOrderId, asyncOrderClaim, msg.sender);
     }
 
     function settleOrder(
         uint128 marketId,
         uint128 asyncOrderId,
-        bytes memory priceData
+        bytes[] calldata priceUpdateData
     ) external override returns (uint finalOrderAmount) {
         AsyncOrder.AsyncOrderClaim memory asyncOrderClaim = AsyncOrder
             .load(marketId)
@@ -166,26 +171,16 @@ contract AsyncOrderModule is IAsyncOrderModule {
 
         // Finalize the order using the provided price data
         if (asyncOrderClaim.orderType == Fee.TradeType.ASYNC_BUY) {
-            finalOrderAmount = _disburseBuyOrderEscrow(
-                marketId,
-                asyncOrderId,
-                asyncOrderClaim,
-                priceData
-            );
+            finalOrderAmount = _disburseBuyOrderEscrow(marketId, asyncOrderId, asyncOrderClaim);
         } else if (asyncOrderClaim.orderType == Fee.TradeType.ASYNC_SELL) {
-            finalOrderAmount = _disburseSellOrderEscrow(
-                marketId,
-                asyncOrderId,
-                asyncOrderClaim,
-                priceData
-            );
+            finalOrderAmount = _disburseSellOrderEscrow(marketId, asyncOrderId, asyncOrderClaim);
         }
 
         // Burn NFT
         AsyncOrderClaimTokenUtil.getNft(marketId).burn(asyncOrderId);
 
         // Emit event
-        // TODO: pricedata in here? Or identifying the source, node id?
+        // TODO: Include priceUpdateData
         emit AsyncOrderSettled(
             marketId,
             asyncOrderId,
@@ -198,8 +193,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
     function _disburseBuyOrderEscrow(
         uint128 marketId,
         uint128 asyncOrderId,
-        AsyncOrder.AsyncOrderClaim memory asyncOrderClaim,
-        bytes memory priceData
+        AsyncOrder.AsyncOrderClaim memory asyncOrderClaim
     ) private returns (uint finalSynthAmount) {
         SpotMarketFactory.Data storage store = SpotMarketFactory.load();
 
@@ -216,7 +210,6 @@ contract AsyncOrderModule is IAsyncOrderModule {
             marketId,
             amountUsable,
             Fee.TradeType.ASYNC_BUY
-            //priceData // TODO: gotta figure out how this will work
         );
 
         // Deposit USD
@@ -254,8 +247,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
     function _disburseSellOrderEscrow(
         uint128 marketId,
         uint128 asyncOrderId,
-        AsyncOrder.AsyncOrderClaim memory asyncOrderClaim,
-        bytes memory priceData
+        AsyncOrder.AsyncOrderClaim memory asyncOrderClaim
     ) private returns (uint finalUsdAmount) {
         SpotMarketFactory.Data storage store = SpotMarketFactory.load();
 
@@ -264,7 +256,6 @@ contract AsyncOrderModule is IAsyncOrderModule {
             marketId,
             asyncOrderClaim.traderAmountEscrowed,
             Fee.TradeType.ASYNC_SELL
-            //priceData // TODO: gotta figure out how this will work
         );
 
         // Calculate fees

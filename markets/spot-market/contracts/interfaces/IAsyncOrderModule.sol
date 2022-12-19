@@ -41,18 +41,20 @@ interface IAsyncOrderModule {
 
     function commitBuyOrder(
         uint128 marketId,
-        uint usdAmount
+        uint usdAmount,
+        bytes[] calldata priceUpdateData
     ) external returns (uint128 asyncOrderId, AsyncOrder.AsyncOrderClaim memory asyncOrderClaim);
 
     function commitSellOrder(
         uint128 marketId,
-        uint256 synthAmount
+        uint256 synthAmount,
+        bytes[] calldata priceUpdateData
     ) external returns (uint128 asyncOrderId, AsyncOrder.AsyncOrderClaim memory asyncOrderClaim);
 
     function settleOrder(
         uint128 marketId,
         uint128 asyncOrderId,
-        bytes memory priceData
+        bytes[] calldata priceUpdateData
     ) external returns (uint finalOrderAmount);
 
     function cancelOrder(uint128 marketId, uint128 asyncOrderId) external;
