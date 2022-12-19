@@ -35,9 +35,9 @@ library Price {
     ) internal view returns (uint256 price) {
         SpotMarketFactory.Data storage factory = SpotMarketFactory.load();
         if (tradeType == Fee.TradeType.BUY) {
-            price = IOracleManagerModule(factory.oracle).process(self.buyFeedId).price.toUint();
+            price = IOracleManagerModule(factory.oracle).process(self.buyFeedId);
         } else {
-            price = IOracleManagerModule(factory.oracle).process(self.sellFeedId).price.toUint();
+            price = IOracleManagerModule(factory.oracle).process(self.sellFeedId);
         }
     }
 
@@ -52,7 +52,7 @@ library Price {
         uint amountUsd,
         Fee.TradeType tradeType
     ) internal returns (uint256 synthAmount) {
-        uint256 currentPrice = getCurrentPrice(self, tradeType);
+        uint256 currentPrice = getCurrentPrice(self, tradeType).price.toUint();
         amountUsd = uint(
             amountUsd.toInt() + calculateSkewAdjustment(self, marketId, amountUsd, tradeType)
         );
@@ -65,7 +65,7 @@ library Price {
         uint sellAmount,
         Fee.TradeType tradeType
     ) internal returns (uint256 amountUsd) {
-        uint256 currentPrice = getCurrentPrice(self, tradeType);
+        uint256 currentPrice = getCurrentPrice(self, tradeType).price.toUint();;
         amountUsd = sellAmount.mulDecimal(currentPrice);
         amountUsd = uint(
             amountUsd.toInt() + calculateSkewAdjustment(self, marketId, amountUsd, tradeType)
@@ -84,7 +84,7 @@ library Price {
         }
 
         uint totalBalance = SynthUtil.getToken(marketId).totalSupply().mulDecimal(
-            getCurrentPrice(self, tradeType)
+            getCurrentPrice(self, tradeType).price.toUint()
         );
         uint wrappedMarketCollateral = 0;
 

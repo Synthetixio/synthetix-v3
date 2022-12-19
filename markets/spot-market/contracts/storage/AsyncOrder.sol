@@ -11,6 +11,7 @@ library AsyncOrder {
         mapping(uint => AsyncOrderClaim) asyncOrderClaims;
         uint256 minimumOrderAge;
         uint256 settlementWindowDuration;
+        uint256 livePriceSettlementWindowDuration; // This is an options duration at the end fo the settleWindowDuration where a price with timestamp == 0 will be accepted
     }
 
     struct AsyncOrderClaim {

@@ -147,16 +147,29 @@ contract AsyncOrderModule is IAsyncOrderModule {
             asyncOrderId
         ];
 
-        // Ensure we are in the confirmation window
-        if (
-            block.timestamp < asyncOrderClaim.timestamp + marketAsyncOrderData.minimumOrderAge &&
+        uint priceTimestamp = Fee.getCurrentPrice(asyncOrderClaim.orderType).timestamp;
+        bool minimumOrderAgeHasElapsed = asyncOrderClaim.timestamp +
+            marketAsyncOrderData.minimumOrderAge <
+            priceTimestamp;
+        bool confirmationWindowHasElapsed = asyncOrderClaim.timestamp +
+            marketAsyncOrderData.minimumOrderAge +
+            marketAsyncOrderData.settlementWindowDuration <
+            priceTimestamp;
+        bool livePriceSettlement = priceTimestamp == 0 &&
+            asyncOrderClaim.timestamp + marketAsyncOrderData.minimumOrderAge < block.timestamp &&
+            block.timestamp <
             asyncOrderClaim.timestamp +
                 marketAsyncOrderData.minimumOrderAge +
-                marketAsyncOrderData.settlementWindowDuration <
-            block.timestamp
-        ) {
+                marketAsyncOrderData.settlementWindowDuration -
+                marketAsyncOrderData.livePriceSettlement;
+
+        bool canSettle = livePriceSettlement ||
+            (minimumOrderAgeHasElapsed && !confirmationWindowHasElapsed);
+
+        // Ensure we are in the confirmation window
+        if (!canSettle) {
             revert OutsideOfConfirmationWindow(
-                block.timestamp,
+                priceTimestamp,
                 asyncOrderClaim.timestamp,
                 marketAsyncOrderData.minimumOrderAge,
                 marketAsyncOrderData.settlementWindowDuration
