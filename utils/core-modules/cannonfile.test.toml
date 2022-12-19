@@ -117,14 +117,26 @@ args = [
   '''<%= JSON.stringify({
     CoreModule: contracts.CoreModule,
     SampleOwnedModule: contracts.SampleOwnedModule,
+    SampleModuleA: contracts.SampleModuleA,
+    SampleModuleB: contracts.SampleModuleB,
   }) %>'''
 ]
 modified = ["contracts"]
-depends = ["contract.CoreModule", "contract.SampleOwnedModule"]
+depends = [
+  "contract.CoreModule",
+  "contract.SampleOwnedModule",
+  "contract.SampleModuleA",
+  "contract.SampleModuleB"
+]
 
 [contract.SampleRouter]
 artifact = "contracts/routers/chain-<%= chainId %>/SampleRouter.sol:SampleRouter"
-abiOf = ["CoreModule", "SampleOwnedModule"]
+abiOf = [
+  "CoreModule",
+  "SampleOwnedModule",
+  "SampleModuleA",
+  "SampleModuleB"
+]
 depends = ["run.generate_sample_router"]
 
 # NftModule Router
