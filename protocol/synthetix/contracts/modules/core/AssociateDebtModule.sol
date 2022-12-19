@@ -55,7 +55,7 @@ contract AssociateDebtModule is IAssociateDebtModule {
             revert AccessError.Unauthorized(msg.sender);
         }
 
-        bytes32 actorId = bytes32(uint256(accountId));
+        bytes32 actorId = accountId.toBytes32();
 
         // The market must appear in pool configuration of the specified position
         if (!poolData.hasMarket(marketId)) {

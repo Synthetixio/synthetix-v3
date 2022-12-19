@@ -58,6 +58,7 @@ contract AggregatorV3Mock is IAggregatorV3Interface {
             uint80 answeredInRound
         )
     {
+        // solhint-disable-next-line numcast/safe-cast
         return (_roundId, int(_price), _timestamp, _timestamp, _roundId);
     }
 
