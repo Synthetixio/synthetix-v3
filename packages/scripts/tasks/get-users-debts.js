@@ -117,7 +117,7 @@ async function getAccounts(Contract, fromBlock, toBlock) {
   const batchCount = Math.ceil((toBlock - fromBlock) / batchSize);
 
   const queue = createQueue.promise(async function (i) {
-    const from = fromBlock + (batchSize * i);
+    const from = fromBlock + batchSize * i;
     const to = from + batchSize - 1 > toBlock ? toBlock : from + batchSize - 1;
 
     logger.info(`Fetching blocks from ${from} to ${to} (${i + 1}/${batchCount})`);
