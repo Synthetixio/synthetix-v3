@@ -243,11 +243,14 @@ task(
   }
 
   const evt = events[events.length - 1];
+  const block = await evt.getBlock();
+  const blockDate = new Date(block.timestamp * 1000).toUTCString();
 
   logger.info('==== FeePeriodClosed ====');
   logger.info(`eventSignature: ${evt.eventSignature}`);
   logger.info(`contractAddress: ${evt.address}`);
-  logger.info(`blockNumber: ${evt.blockNumber}`);
+  logger.info(`blockTimestamp: ${block.timestamp} (${blockDate})`);
+  logger.info(`blockNumber: ${chalk.bold(evt.blockNumber)}`);
   logger.info('=========================');
 
   return evt.blockNumber;
