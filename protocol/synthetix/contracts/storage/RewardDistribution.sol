@@ -157,7 +157,7 @@ library RewardDistribution {
             int256 curUpdateDistributedD18 = entry.scheduledValueD18;
             if (curTime < (entry.start + entry.duration).toInt()) {
                 curUpdateDistributedD18 =
-                    (curUpdateDistributedD18 * (curTime - int64(entry.start))) /
+                    (curUpdateDistributedD18 * (curTime - entry.start.toInt())) /
                     entry.duration.toInt();
             }
 
