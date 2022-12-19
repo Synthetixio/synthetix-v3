@@ -1,15 +1,16 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity >=0.4.22<0.9.0;
+pragma solidity ^0.8.0;
 
 // @custom:artifact @synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol:OwnableStorage
 library OwnableStorage {
+    bytes32 private constant _slotOwnableStorage = keccak256(abi.encode("io.synthetix.core-contracts.Ownable"));
     struct Data {
         bool initialized;
         address owner;
         address nominatedOwner;
     }
     function load() internal pure returns (Data storage store) {
-        bytes32 s = keccak256(abi.encode("Ownable"));
+        bytes32 s = _slotOwnableStorage;
         assembly {
             store.slot := s
         }
@@ -18,19 +19,22 @@ library OwnableStorage {
 
 // @custom:artifact @synthetixio/core-contracts/contracts/proxy/ProxyStorage.sol:ProxyStorage
 contract ProxyStorage {
+    bytes32 private constant _slotProxyStorage = keccak256(abi.encode("io.synthetix.core-contracts.Proxy"));
     struct ProxyStore {
         address implementation;
         bool simulatingUpgrade;
     }
     function _proxyStore() internal pure returns (ProxyStore storage store) {
+        bytes32 s = _slotProxyStorage;
         assembly {
-            store.slot := 0x32402780481dd8149e50baad867f01da72e2f7d02639a6fe378dbd80b6bb446e
+            store.slot := s
         }
     }
 }
 
 // @custom:artifact @synthetixio/core-contracts/contracts/token/ERC20Storage.sol:ERC20Storage
 library ERC20Storage {
+    bytes32 private constant _slotERC20Storage = keccak256(abi.encode("io.synthetix.core-contracts.ERC20"));
     struct Data {
         string name;
         string symbol;
@@ -40,7 +44,7 @@ library ERC20Storage {
         uint256 totalSupply;
     }
     function load() internal pure returns (Data storage store) {
-        bytes32 s = keccak256(abi.encode("ERC20"));
+        bytes32 s = _slotERC20Storage;
         assembly {
             store.slot := s
         }
@@ -49,6 +53,7 @@ library ERC20Storage {
 
 // @custom:artifact @synthetixio/core-contracts/contracts/token/ERC721EnumerableStorage.sol:ERC721EnumerableStorage
 library ERC721EnumerableStorage {
+    bytes32 private constant _slotERC721EnumerableStorage = keccak256(abi.encode("io.synthetix.core-contracts.ERC721Enumerable"));
     struct Data {
         mapping(uint256 => uint256) ownedTokensIndex;
         mapping(uint256 => uint256) allTokensIndex;
@@ -56,7 +61,7 @@ library ERC721EnumerableStorage {
         uint256[] allTokens;
     }
     function load() internal pure returns (Data storage store) {
-        bytes32 s = keccak256(abi.encode("ERC721Enumerable"));
+        bytes32 s = _slotERC721EnumerableStorage;
         assembly {
             store.slot := s
         }
@@ -65,6 +70,7 @@ library ERC721EnumerableStorage {
 
 // @custom:artifact @synthetixio/core-contracts/contracts/token/ERC721Storage.sol:ERC721Storage
 library ERC721Storage {
+    bytes32 private constant _slotERC721Storage = keccak256(abi.encode("io.synthetix.core-contracts.ERC721"));
     struct Data {
         string name;
         string symbol;
@@ -75,7 +81,7 @@ library ERC721Storage {
         mapping(address => mapping(address => bool)) operatorApprovals;
     }
     function load() internal pure returns (Data storage store) {
-        bytes32 s = keccak256(abi.encode("ERC721"));
+        bytes32 s = _slotERC721Storage;
         assembly {
             store.slot := s
         }
@@ -112,7 +118,7 @@ library AssociatedSystem {
         bytes32 kind;
     }
     function load(bytes32 id) internal pure returns (Data storage store) {
-        bytes32 s = keccak256(abi.encode("AssociatedSystem", id));
+        bytes32 s = keccak256(abi.encode("io.synthetix.core-modules.AssociatedSystem", id));
         assembly {
             store.slot := s
         }
@@ -127,7 +133,7 @@ library FeatureFlag {
         SetUtil.AddressSet permissionedAddresses;
     }
     function load(bytes32 featureName) internal pure returns (Data storage store) {
-        bytes32 s = keccak256(abi.encode("FeatureFlag", featureName));
+        bytes32 s = keccak256(abi.encode("io.synthetix.core-modules.FeatureFlag", featureName));
         assembly {
             store.slot := s
         }
@@ -140,7 +146,7 @@ library Initialized {
         bool initialized;
     }
     function load(bytes32 id) internal pure returns (Data storage store) {
-        bytes32 s = keccak256(abi.encode("Initialized", id));
+        bytes32 s = keccak256(abi.encode("io.synthetix.code-modules.Initialized", id));
         assembly {
             store.slot := s
         }
@@ -149,19 +155,15 @@ library Initialized {
 
 // @custom:artifact contracts/storage/SampleStorage.sol:SampleStorage
 library SampleStorage {
+    bytes32 private constant _slotSampleStorage = keccak256(abi.encode("io.synthetix.core-modules.Sample"));
     struct Data {
         uint someValue;
         uint protectedValue;
     }
     function load() internal pure returns (Data storage store) {
-        bytes32 s = keccak256(abi.encode("Sample"));
+        bytes32 s = _slotSampleStorage;
         assembly {
             store.slot := s
         }
     }
-}
-
-// @custom:artifact hardhat/console.sol:console
-library console {
-    address internal constant CONSOLE_ADDRESS = address(0x000000000000000000636F6e736F6c652e6c6f67);
 }

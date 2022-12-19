@@ -146,3 +146,32 @@ depends = ["contract.CoreModule", "contract.NftModule"]
 artifact = "contracts/routers/chain-<%= chainId %>/NftModuleRouter.sol:NftModuleRouter"
 abiOf = ["CoreModule", "NftModule"]
 depends = ["run.generate_nft_module_router"]
+
+# FeatureFlagModule Router
+
+[run.generate_feature_flag_module_router]
+exec = "@synthetixio/hardhat-router/utils/cannon"
+func = "generate"
+args = [
+  "contracts/routers/chain-<%= chainId %>/FeatureFlagModuleRouter.sol:FeatureFlagModuleRouter",
+  '''<%= JSON.stringify({
+    CoreModule: contracts.CoreModule,
+    FeatureFlagModule: contracts.FeatureFlagModule,
+    SampleFeatureFlagModule: contracts.SampleFeatureFlagModule,
+  }) %>'''
+]
+modified = ["contracts"]
+depends = [
+  "contract.CoreModule",
+  "contract.FeatureFlagModule",
+  "contract.SampleFeatureFlagModule"
+]
+
+[contract.FeatureFlagModuleRouter]
+artifact = "contracts/routers/chain-<%= chainId %>/FeatureFlagModuleRouter.sol:FeatureFlagModuleRouter"
+abiOf = [
+  "CoreModule",
+  "FeatureFlagModule",
+  "SampleFeatureFlagModule"
+]
+depends = ["run.generate_feature_flag_module_router"]

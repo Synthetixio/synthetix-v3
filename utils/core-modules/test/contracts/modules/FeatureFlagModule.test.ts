@@ -1,36 +1,36 @@
-const { ethers } = hre;
-const { ethers: Ethers } = require('ethers');
-const assertBn = require('@synthetixio/core-utils/utils/assertions/assert-bignumber');
-const { default: assertEvent } = require('@synthetixio/core-utils/utils/assertions/assert-event');
-const { default: assertRevert } = require('@synthetixio/core-utils/utils/assertions/assert-revert');
-const { bootstrap } = require('../../helpers/bootstrap.js');
-const initializer = require('@synthetixio/core-modules/test/helpers/initializer');
+import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
+import assertEvent from '@synthetixio/core-utils/utils/assertions/assert-event';
+import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
+import { ethers } from 'ethers';
+import { FeatureFlagModule, SampleFeatureFlagModule } from '../../../typechain-types';
+import { bootstrap } from '../../bootstrap';
 
 describe('FeatureFlagModule', () => {
-  const { proxyAddress } = bootstrap(initializer, {
-    modules: ['OwnerModule', 'UpgradeModule', 'FeatureFlagModule', 'SampleFeatureFlagModule'],
+  const { getContract, getSigners } = bootstrap({ implementation: 'FeatureFlagModuleRouter' });
+
+  let FeatureFlagModule: FeatureFlagModule;
+  let SampleFeatureFlagModule: SampleFeatureFlagModule;
+  let permissionedUser: ethers.Signer;
+  let user: ethers.Signer;
+
+  const FEATURE_FLAG_NAME = ethers.utils.formatBytes32String('SAMPLE_FEATURE');
+
+  before('identify signers', () => {
+    [, permissionedUser, user] = getSigners();
   });
 
-  let FeatureFlagModule, SampleFeatureFlagModule;
-  let owner, permissionedUser, user;
-
-  const FEATURE_FLAG_NAME = Ethers.utils.formatBytes32String('SAMPLE_FEATURE');
-
-  before('identify signers', async () => {
-    [owner, permissionedUser, user] = await ethers.getSigners();
-  });
-
-  before('identify modules', async () => {
-    FeatureFlagModule = await ethers.getContractAt('FeatureFlagModule', proxyAddress());
-    SampleFeatureFlagModule = await ethers.getContractAt('SampleFeatureFlagModule', proxyAddress());
+  before('identify modules', () => {
+    FeatureFlagModule = getContract('FeatureFlagModule');
+    SampleFeatureFlagModule = getContract('SampleFeatureFlagModule');
   });
 
   describe('when a feature flag is enabled', async () => {
-    let addAddressTx;
+    let addAddressTx: ethers.ContractTransaction;
+
     before('setup permissioned user for feature flag', async () => {
-      addAddressTx = await FeatureFlagModule.connect(owner).addToFeatureFlagAllowlist(
+      addAddressTx = await FeatureFlagModule.addToFeatureFlagAllowlist(
         FEATURE_FLAG_NAME,
-        permissionedUser.address
+        await permissionedUser.getAddress()
       );
     });
 
@@ -45,7 +45,7 @@ describe('FeatureFlagModule', () => {
       await assertRevert(
         FeatureFlagModule.connect(user).addToFeatureFlagAllowlist(
           FEATURE_FLAG_NAME,
-          permissionedUser.address
+          await permissionedUser.getAddress()
         ),
         `Unauthorized("${await user.getAddress()}")`
       );
@@ -54,7 +54,7 @@ describe('FeatureFlagModule', () => {
     it('emits event for adding address', async () => {
       await assertEvent(
         addAddressTx,
-        `FeatureFlagAllowlistAdded("${FEATURE_FLAG_NAME}", "${permissionedUser.address}")`,
+        `FeatureFlagAllowlistAdded("${FEATURE_FLAG_NAME}", "${await permissionedUser.getAddress()}")`,
         FeatureFlagModule
       );
     });
@@ -78,7 +78,7 @@ describe('FeatureFlagModule', () => {
     await assertRevert(
       FeatureFlagModule.connect(user).removeFromFeatureFlagAllowlist(
         FEATURE_FLAG_NAME,
-        permissionedUser.address
+        await permissionedUser.getAddress()
       ),
       `Unauthorized("${await user.getAddress()}")`
     );
@@ -86,26 +86,26 @@ describe('FeatureFlagModule', () => {
     await assertRevert(
       FeatureFlagModule.connect(permissionedUser).removeFromFeatureFlagAllowlist(
         FEATURE_FLAG_NAME,
-        permissionedUser.address
+        await permissionedUser.getAddress()
       ),
       `Unauthorized("${await permissionedUser.getAddress()}")`
     );
   });
 
   describe('remove permissioned user from feature flag', async () => {
-    let removeAddressTx;
+    let removeAddressTx: ethers.ContractTransaction;
 
     before('remove user', async () => {
-      removeAddressTx = await FeatureFlagModule.connect(owner).removeFromFeatureFlagAllowlist(
+      removeAddressTx = await FeatureFlagModule.removeFromFeatureFlagAllowlist(
         FEATURE_FLAG_NAME,
-        permissionedUser.address
+        await permissionedUser.getAddress()
       );
     });
 
     it('emits event', async () => {
       await assertEvent(
         removeAddressTx,
-        `FeatureFlagAllowlistRemoved("${FEATURE_FLAG_NAME}", "${permissionedUser.address}")`,
+        `FeatureFlagAllowlistRemoved("${FEATURE_FLAG_NAME}", "${await permissionedUser.getAddress()}")`,
         FeatureFlagModule
       );
     });
@@ -119,12 +119,10 @@ describe('FeatureFlagModule', () => {
   });
 
   describe('enable feature for all', async () => {
-    let setupTx;
+    let setupTx: ethers.ContractTransaction;
+
     before('allow all', async () => {
-      setupTx = await FeatureFlagModule.connect(owner).setFeatureFlagAllowAll(
-        FEATURE_FLAG_NAME,
-        true
-      );
+      setupTx = await FeatureFlagModule.setFeatureFlagAllowAll(FEATURE_FLAG_NAME, true);
     });
 
     it('emits event', async () => {

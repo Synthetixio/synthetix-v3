@@ -6,6 +6,7 @@ import {
   CoreModule,
   CoreRouter,
   FeatureFlagModule,
+  FeatureFlagModuleRouter,
   GenericModule,
   NftModule,
   NftModuleRouter,
@@ -25,6 +26,7 @@ interface Contracts {
   CoreModule: CoreModule;
   CoreRouter: CoreRouter;
   FeatureFlagModule: FeatureFlagModule;
+  FeatureFlagModuleRouter: FeatureFlagModuleRouter;
   GenericModule: GenericModule;
   NftModule: NftModule;
   NftModuleRouter: NftModuleRouter;
