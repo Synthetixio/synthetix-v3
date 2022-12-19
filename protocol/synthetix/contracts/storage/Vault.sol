@@ -83,9 +83,9 @@ library Vault {
         VaultEpoch.Data storage epochData = currentEpoch(self);
 
         uint256 scaleModifierD27 = (epochData.collateralAmounts.scaleModifierD27 +
-            int256(DecimalMath.UNIT_PRECISE)).toUint();
+            DecimalMath.UNIT_PRECISE_INT).toUint();
 
-        usdWeightD18 = ((uint256(epochData.accountsDebtDistribution.totalSharesD18) *
+        usdWeightD18 = ((epochData.accountsDebtDistribution.totalSharesD18 *
             scaleModifierD27) / 1e27).mulDecimal(collateralPriceD18);
 
         totalDebtD18 = epochData.totalDebt();
@@ -147,7 +147,7 @@ library Vault {
     ) internal returns (uint256) {
         uint256 totalSharesD18 = currentEpoch(self).accountsDebtDistribution.totalSharesD18;
         uint256 actorSharesD18 = currentEpoch(self).accountsDebtDistribution.getActorShares(
-            bytes32(uint256(accountId))
+            accountId.toBytes32()
         );
 
         RewardDistribution.Data storage dist = self.rewards[rewardId];
