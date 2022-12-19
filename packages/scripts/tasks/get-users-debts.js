@@ -44,6 +44,7 @@ task(
 
     const filename = path.resolve(__dirname, '..', 'data', `${untilBlock}-users-debts.json`);
 
+    logger.subtitle('Users Debts');
     logger.boxStart();
     logger.log(chalk.gray(`      Provider URL: ${hre.network.config.url}`));
     logger.log(chalk.gray(`  Deployed Address: ${address}`));
@@ -106,15 +107,35 @@ async function downloadDebts({ Contract, fromBlock, untilBlock, filename }) {
 }
 
 async function getAccounts(Contract, fromBlock, toBlock) {
-  const filter = Contract.filters.Transfer(null, null, null);
-  const events = await Contract.queryFilter(filter, fromBlock, toBlock);
+  logger.subtitle('Looking for all the addresses that interacted with Synthetix');
 
   // Use a Set to have implicitily unique values
   const addresses = new Set();
-  for (const event of events) {
-    addresses.add(event.args.to);
-    addresses.add(event.args.from);
+
+  // Alchemy limits the amount of blocks we can fetch per request, so, we batch them.
+  const batchSize = 50000;
+  const batchCount = Math.ceil((toBlock - fromBlock) / batchSize);
+
+  const queue = createQueue.promise(async function (i) {
+    const from = fromBlock + batchSize * i;
+    const to = from + batchSize - 1 > toBlock ? toBlock : from + batchSize - 1;
+
+    logger.info(`Fetching blocks from ${from} to ${to} (${i + 1}/${batchCount})`);
+
+    const filter = Contract.filters.Transfer(null, null, null);
+    const events = await Contract.queryFilter(filter, from, to);
+
+    for (const event of events) {
+      addresses.add(event.args.to);
+      addresses.add(event.args.from);
+    }
+  }, 5);
+
+  for (let i = 0; i < batchCount; i++) {
+    queue.push(i);
   }
+
+  await queue.drained();
 
   addresses.delete('0x0000000000000000000000000000000000000000');
 

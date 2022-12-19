@@ -246,12 +246,13 @@ task(
   const block = await evt.getBlock();
   const blockDate = new Date(block.timestamp * 1000).toUTCString();
 
-  logger.info('==== FeePeriodClosed ====');
-  logger.info(`eventSignature: ${evt.eventSignature}`);
-  logger.info(`contractAddress: ${evt.address}`);
-  logger.info(`blockTimestamp: ${block.timestamp} (${blockDate})`);
-  logger.info(`blockNumber: ${chalk.bold(evt.blockNumber)}`);
-  logger.info('=========================');
+  logger.subtitle('Last Fee Period Closed');
+  logger.boxStart();
+  logger.log(chalk.gray(` eventSignature: ${evt.eventSignature}`));
+  logger.log(chalk.gray(`contractAddress: ${evt.address}`));
+  logger.log(chalk.gray(` blockTimestamp: ${block.timestamp} (${blockDate})`));
+  logger.log(chalk.gray(`    blockNumber: ${chalk.bold(evt.blockNumber)}`));
+  logger.boxEnd();
 
   return evt.blockNumber;
 });
