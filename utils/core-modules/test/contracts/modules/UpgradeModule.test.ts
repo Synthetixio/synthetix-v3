@@ -13,7 +13,6 @@ describe('UpgradeModule', function () {
 
   before('initialize', async function () {
     [, user] = getSigners();
-
     UpgradeModule = getContract('UpgradeModule') as UpgradeModule;
   });
 

@@ -25,6 +25,9 @@ artifact = "contracts/modules/AssociatedSystemsModule.sol:AssociatedSystemsModul
 [contract.FeatureFlagModule]
 artifact = "contracts/modules/FeatureFlagModule.sol:FeatureFlagModule"
 
+[contract.TokenModule]
+artifact = "contracts/modules/TokenModule.sol:TokenModule"
+
 # Mocks
 
 [contract.SampleFeatureFlagModule]
@@ -96,3 +99,40 @@ from = "<%= settings.owner %>"
 func = "initializeOwnerModule"
 args = ["<%= settings.owner %>"]
 depends = ["contract.Proxy"]
+
+[run.token_module_generate_router]
+exec = "@synthetixio/hardhat-router/utils/cannon"
+func = "generate"
+args = [
+  "contracts/routers/chain-<%= chainId %>/TokenModuleRouter.sol:TokenModuleRouter",
+  '''<%= JSON.stringify({
+    OwnerModule: contracts.OwnerModule,
+    UpgradeModule: contracts.UpgradeModule,
+    TokenModule: contracts.TokenModule,
+  }) %>'''
+]
+modified = ["contracts"]
+depends = [
+  "contract.OwnerModule",
+  "contract.UpgradeModule",
+  "contract.TokenModule"
+]
+
+[contract.TokenModuleRouter]
+artifact = "contracts/routers/chain-<%= chainId %>/TokenModuleRouter.sol:TokenModuleRouter"
+abiOf = ["OwnerModule", "UpgradeModule", "TokenModule"]
+depends = ["run.token_module_generate_router"]
+
+[contract.TokenModuleProxy]
+artifact = "contracts/Proxy.sol:Proxy"
+args = ["<%= contracts.TokenModuleRouter.address %>"]
+abiOf = ["TokenModuleRouter"]
+salt = "<%= settings.salt %>"
+depends = ["contract.TokenModuleRouter"]
+
+[invoke.token_module_acquire_ownership]
+target = ["TokenModuleProxy"]
+from = "<%= settings.owner %>"
+func = "initializeOwnerModule"
+args = ["<%= settings.owner %>"]
+depends = ["contract.TokenModuleProxy"]

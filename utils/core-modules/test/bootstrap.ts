@@ -10,6 +10,7 @@ import {
   SampleModuleA,
   SampleModuleB,
   SampleOwnedModule,
+  TokenModule,
   UpgradeModule,
 } from '../typechain-types';
 
@@ -22,6 +23,8 @@ interface Contracts {
   SampleModuleA: SampleModuleA;
   SampleModuleB: SampleModuleB;
   SampleOwnedModule: SampleOwnedModule;
+  TokenModule: TokenModule;
+  TokenModuleProxy: Proxy;
   UpgradeModule: UpgradeModule;
 }
 
@@ -33,10 +36,15 @@ const restoreSnapshot = r.createSnapshot();
 
 export function bootstrap() {
   before(restoreSnapshot);
+
   return {
     ...r,
+    // getContract() override using as the Proxy address by default
     getContract(contractName: keyof Contracts, address?: string) {
-      if (!address) address = r.getContract('Proxy').address;
+      if (address === undefined && !contractName.endsWith('Proxy')) {
+        address = r.getContract('Proxy').address;
+      }
+
       return r.getContract(contractName, address);
     },
   };
