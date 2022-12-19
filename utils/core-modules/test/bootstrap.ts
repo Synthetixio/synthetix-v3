@@ -7,6 +7,8 @@ import {
   CoreRouter,
   FeatureFlagModule,
   GenericModule,
+  NftModule,
+  NftModuleRouter,
   OwnerModule,
   SampleFeatureFlagModule,
   SampleModuleA,
@@ -24,6 +26,8 @@ interface Contracts {
   CoreRouter: CoreRouter;
   FeatureFlagModule: FeatureFlagModule;
   GenericModule: GenericModule;
+  NftModule: NftModule;
+  NftModuleRouter: NftModuleRouter;
   OwnerModule: OwnerModule;
   Proxy: CoreModule;
   SampleFeatureFlagModule: SampleFeatureFlagModule;
