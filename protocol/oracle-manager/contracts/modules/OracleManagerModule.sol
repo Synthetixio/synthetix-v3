@@ -7,6 +7,7 @@ import "../utils/ExternalNodeLibrary.sol";
 import "../utils/PythNodeLibrary.sol";
 import "../utils/ChainlinkNodeLibrary.sol";
 import "../utils/PriceDeviationCircuitBreaker.sol";
+import "../utils/StalenessFallbackReducer.sol";
 import "../utils/UniswapNodeLibrary.sol";
 
 import "../storage/Node.sol";
@@ -136,6 +137,8 @@ contract OracleManagerModule is IOracleManagerModule {
         } else if (
             nodeDefinition.nodeType == NodeDefinition.NodeType.PriceDeviationCircuitBreaker
         ) {
+            return PriceDeviationCircuitBreaker.process(prices, nodeDefinition.parameters);
+        } else if (nodeDefinition.nodeType == NodeDefinition.NodeType.StalenessFallbackReducer) {
             return PriceDeviationCircuitBreaker.process(prices, nodeDefinition.parameters);
         } else {
             revert UnsupportedNodeType(uint256(nodeDefinition.nodeType));
