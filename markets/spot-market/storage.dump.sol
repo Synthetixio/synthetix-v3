@@ -144,7 +144,7 @@ library NodeDefinition {
 
 // @custom:artifact contracts/storage/Fee.sol:Fee
 library Fee {
-    enum TradeType {
+    enum TransactionType {
         BUY,
         SELL,
         WRAP,

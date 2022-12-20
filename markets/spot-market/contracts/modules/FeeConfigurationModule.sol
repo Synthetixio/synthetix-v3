@@ -43,6 +43,6 @@ contract FeeConfigurationModule is IFeeConfigurationModule {
         uint fixedFeeAmount
     ) external override {
         SpotMarketFactory.load().onlyMarketOwner(synthMarketId);
-        Fee.setFeeForTransactor(synthMarketId, transactor, fixedFeeAmount);
+        Fee.setAtomicFixedFeeOverride(synthMarketId, transactor, fixedFeeAmount);
     }
 }

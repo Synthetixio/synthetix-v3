@@ -30,12 +30,13 @@ library Price {
         }
     }
 
+    // TODO: Let's just make this a mapping of overrides for transaction types
     function getCurrentPriceData(
         Data storage self,
-        Fee.TradeType tradeType
+        SpotMarketFactory.TransactionType transactionType
     ) internal view returns (Node.Data memory price) {
         SpotMarketFactory.Data storage factory = SpotMarketFactory.load();
-        if (tradeType == Fee.TradeType.BUY) {
+        if (transactionType == SpotMarketFactory.TransactionType.BUY) {
             price = IOracleManagerModule(factory.oracle).process(self.buyFeedId);
         } else {
             price = IOracleManagerModule(factory.oracle).process(self.sellFeedId);
@@ -44,9 +45,9 @@ library Price {
 
     function getCurrentPrice(
         Data storage self,
-        Fee.TradeType tradeType
+        SpotMarketFactory.TransactionType transactionType
     ) internal view returns (uint price) {
-        return getCurrentPriceData(self, tradeType).price.toUint();
+        return getCurrentPriceData(self, transactionType).price.toUint();
     }
 
     function update(Data storage self, bytes32 buyFeedId, bytes32 sellFeedId) internal {
@@ -58,12 +59,21 @@ library Price {
         Data storage self,
         uint128 marketId,
         uint amountUsd,
-        Fee.TradeType tradeType
+        SpotMarketFactory.TransactionType transactionType
     ) internal returns (uint256 synthAmount) {
-        uint256 currentPrice = getCurrentPrice(self, tradeType);
-        amountUsd = uint(
-            amountUsd.toInt() + calculateSkewAdjustment(self, marketId, amountUsd, tradeType)
-        );
+        uint256 currentPrice = getCurrentPrice(self, transactionType);
+
+        if (
+            transactionType != SpotMarketFactory.TransactionType.REPORTED_DEBT &&
+            transactionType != SpotMarketFactory.TransactionType.WRAP &&
+            transactionType != SpotMarketFactory.TransactionType.UNWRAP
+        ) {
+            amountUsd = uint(
+                amountUsd.toInt() +
+                    calculateSkewAdjustment(self, marketId, amountUsd, transactionType)
+            );
+        }
+
         synthAmount = amountUsd.divDecimal(currentPrice);
     }
 
@@ -71,35 +81,44 @@ library Price {
         Data storage self,
         uint128 marketId,
         uint sellAmount,
-        Fee.TradeType tradeType
+        SpotMarketFactory.TransactionType transactionType
     ) internal returns (uint256 amountUsd) {
-        uint256 currentPrice = getCurrentPrice(self, tradeType);
+        uint256 currentPrice = getCurrentPrice(self, transactionType);
         amountUsd = sellAmount.mulDecimal(currentPrice);
-        amountUsd = uint(
-            amountUsd.toInt() + calculateSkewAdjustment(self, marketId, amountUsd, tradeType)
-        );
+
+        if (
+            transactionType != SpotMarketFactory.TransactionType.REPORTED_DEBT &&
+            transactionType != SpotMarketFactory.TransactionType.WRAP &&
+            transactionType != SpotMarketFactory.TransactionType.UNWRAP
+        ) {
+            amountUsd = uint(
+                amountUsd.toInt() +
+                    calculateSkewAdjustment(self, marketId, amountUsd, transactionType)
+            );
+        }
     }
 
-    // TODO: Applied in all cases except reportedDebt, wrapping
     function calculateSkewAdjustment(
         Data storage self,
         uint128 marketId,
         uint amount,
-        Fee.TradeType tradeType
+        SpotMarketFactory.TransactionType transactionType
     ) internal returns (int skewAdjustment) {
         if (self.skewScale == 0) {
             return 0;
         }
 
-        bool isBuyTrade = tradeType == Fee.TradeType.BUY || tradeType == Fee.TradeType.ASYNC_BUY;
-        bool isSellTrade = tradeType == Fee.TradeType.SELL || tradeType == Fee.TradeType.ASYNC_SELL;
+        bool isBuyTrade = transactionType == SpotMarketFactory.TransactionType.BUY ||
+            transactionType == SpotMarketFactory.TransactionType.ASYNC_BUY;
+        bool isSellTrade = transactionType == SpotMarketFactory.TransactionType.SELL ||
+            transactionType == SpotMarketFactory.TransactionType.ASYNC_SELL;
 
         if (!isBuyTrade && !isSellTrade) {
             return 0;
         }
 
         uint totalBalance = SynthUtil.getToken(marketId).totalSupply().mulDecimal(
-            getCurrentPrice(self, tradeType)
+            getCurrentPrice(self, transactionType)
         );
 
         Wrapper.Data storage wrapper = Wrapper.load(marketId);

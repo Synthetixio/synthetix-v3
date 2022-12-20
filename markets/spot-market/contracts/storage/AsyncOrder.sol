@@ -13,7 +13,7 @@ library AsyncOrder {
     }
 
     struct AsyncOrderClaim {
-        Fee.TradeType orderType;
+        SpotMarketFactory.TransactionType orderType;
         uint256 traderAmountEscrowed;
         uint256 systemAmountEscrowed;
         uint256 feesQuoted;

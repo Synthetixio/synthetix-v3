@@ -61,19 +61,21 @@ contract WrapperModule is IWrapperModule {
         uint256 wrapAmountInUsd = priceStore.synthUsdExchangeRate(
             marketId,
             wrapAmount,
-            Fee.TradeType.WRAP
+            SpotMarketFactory.TransactionType.WRAP
         );
         (uint256 returnAmount, uint256 feesCollected) = Fee.calculateFees(
             marketId,
             msg.sender,
             wrapAmountInUsd,
-            Fee.TradeType.WRAP
+            SpotMarketFactory.TransactionType.WRAP
         );
 
-        store.synthFeesCollected[marketId] += feesCollected;
-
         // TODO: check int256
-        amountToMint = priceStore.usdSynthExchangeRate(marketId, returnAmount, Fee.TradeType.WRAP);
+        amountToMint = priceStore.usdSynthExchangeRate(
+            marketId,
+            returnAmount,
+            SpotMarketFactory.TransactionType.WRAP
+        );
 
         store.usdToken.approve(store.synthetix, amountToMint);
         IMarketCollateralModule(store.synthetix).depositMarketCollateral(
@@ -106,22 +108,20 @@ contract WrapperModule is IWrapperModule {
         uint256 unwrapAmountInUsd = priceStore.synthUsdExchangeRate(
             marketId,
             unwrapAmount,
-            Fee.TradeType.UNWRAP
+            SpotMarketFactory.TransactionType.UNWRAP
         );
         (uint256 returnAmount, uint256 feesCollected) = Fee.calculateFees(
             marketId,
             msg.sender,
             unwrapAmountInUsd,
-            Fee.TradeType.UNWRAP
+            SpotMarketFactory.TransactionType.UNWRAP
         );
-
-        store.synthFeesCollected[marketId] += feesCollected;
 
         // TODO: check int256
         amountToWithdraw = priceStore.usdSynthExchangeRate(
             marketId,
             returnAmount,
-            Fee.TradeType.UNWRAP
+            SpotMarketFactory.TransactionType.UNWRAP
         );
 
         IMarketCollateralModule(store.synthetix).withdrawMarketCollateral(
