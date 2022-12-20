@@ -1,20 +1,21 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "../initializable/InitializableMixin.sol";
-import "../ownership/OwnableStorage.sol";
-import "./ERC20.sol";
+import "@synthetixio/core-contracts/contracts/token/ERC20.sol";
+import "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
+import "@synthetixio/core-contracts/contracts/initializable/InitializableMixin.sol";
 
-import "./DecayTokenStorage.sol";
+import "../interfaces/IDecayTokenModule.sol";
+import "../storage/DecayToken.sol";
 
-contract DecayToken is ERC20, InitializableMixin {
+contract DecayTokenModule is ERC20, InitializableMixin {
     // TODO: Use SafeMath
 
     // DOCS: use existing super.totalSupply() for total shares, super.balanceOf() for account share balance, etc.
 
     modifier advanceEpoch() {
         _;
-        DecayTokenStorage.Data storage store = DecayTokenStorage.load();
+        DecayToken.Data storage store = DecayToken.load();
         store.epochStart = block.timestamp;
         store.totalSupplyAtEpochStart = totalSupply();
     }
@@ -30,20 +31,20 @@ contract DecayToken is ERC20, InitializableMixin {
     ) internal virtual override {
         super._initialize(tokenName, tokenSymbol, tokenDecimals);
 
-        DecayTokenStorage.Data storage store = DecayTokenStorage.load();
+        DecayToken.Data storage store = DecayToken.load();
         store.epochStart = block.timestamp;
     }
 
     function interestRate() public view virtual returns (uint256) {
-        return DecayTokenStorage.load().interestRate;
+        return DecayToken.load().interestRate;
     }
 
     function epochStart() public view virtual returns (uint256) {
-        return DecayTokenStorage.load().epochStart;
+        return DecayToken.load().epochStart;
     }
 
     function totalSupplyAtEpochStart() public view virtual returns (uint256) {
-        return DecayTokenStorage.load().totalSupplyAtEpochStart;
+        return DecayToken.load().totalSupplyAtEpochStart;
     }
 
     function ratePerSecond() public view virtual returns (uint256) {
@@ -71,13 +72,12 @@ contract DecayToken is ERC20, InitializableMixin {
 
     // DOCS: e.g. Interest Rate: 4%, 1 year has passed, this returns 0.96;
     function tokensPerShare() public view returns (uint256) {
-        return
-            (1 * 10**18) -
-            (totalSupplyAtEpochStart() - (block.timestamp - epochStart()) * ratePerSecond());
+        return (totalSupplyAtEpochStart() *
+            ((1 * 10**18) - (block.timestamp - epochStart() * ratePerSecond())));
     }
 
     function _setInterestRate(uint256 _interestRate) public advanceEpoch {
-        DecayTokenStorage.Data storage store = DecayTokenStorage.load();
+        DecayToken.Data storage store = DecayToken.load();
         store.interestRate = _interestRate;
     }
 
