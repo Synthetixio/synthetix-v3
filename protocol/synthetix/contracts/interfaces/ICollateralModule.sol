@@ -107,7 +107,7 @@ interface ICollateralModule {
 
     /**
      * @notice Create a new lock on the given account. you must have `admin` permission on the specified account to create a lock.
-     * @dev A collateral lock does not affect withdrawals, but instead affects collateral delegation.
+     * @dev A collateral lock does not affect delegation. It only prevents withdrawals.
      * @dev There is currently no benefit to calling this function. it is simply for allowing pre-created accounts to have locks on them if your protocol requires it.
      * @param accountId The id of the account for which a lock is to be created.
      * @param collateralType The address of the collateral type for which the lock will be created.

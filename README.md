@@ -44,7 +44,7 @@ This is a monorepo with the following folder structure and packages:
 
 All projects in this monorepo that involve contracts use a proxy architecture developed by Synthetix referred to as the "Router Proxy". It is basically a way to merge several contracts, which we call "modules", into a single implementation contract which is the router itself. This router is used as the implementation of the main proxy of the system.
 
-See the [Router README](https://github.com/Synthetixio/synthetix-v3/blob/main/utils/hardhat-router/README.md) for more details.
+See the [Router README](utils/hardhat-router/README.md) for more details.
 
 ## Deployments with Cannon
 
