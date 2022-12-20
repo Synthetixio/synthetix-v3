@@ -58,7 +58,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
         );
 
         // Mint synths and hold them in this contract as escrow
-        SynthUtil.getToken(marketId).mint(address(this), amountSynth);
+        SynthUtil.mintToEscrow(marketId, amountSynth);
 
         // Issue an async order claim NFT
         asyncOrderId = uint128(AsyncOrderClaimTokenUtil.getNft(marketId).mint(msg.sender));
@@ -96,7 +96,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
         if (allowance < synthAmount) {
             revert InsufficientAllowance(synthAmount, allowance);
         }
-        SynthUtil.getToken(marketId).transferFrom(msg.sender, address(this), synthAmount);
+        SynthUtil.transferIntoEscrow(marketId, msg.sender, synthAmount);
 
         // Get estimated exchange amount
         uint256 traderAmountEscrowedUsd = Price.load(marketId).usdSynthExchangeRate(
