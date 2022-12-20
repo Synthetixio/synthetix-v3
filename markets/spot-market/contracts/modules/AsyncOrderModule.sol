@@ -47,14 +47,14 @@ contract AsyncOrderModule is IAsyncOrderModule {
             marketId,
             msg.sender,
             usdAmount,
-            Fee.TradeType.ASYNC_BUY
+            SpotMarketFactory.TransactionType.ASYNC_BUY
         );
 
         // Get estimated exchange amount
         uint256 amountSynth = Price.load(marketId).usdSynthExchangeRate(
             marketId,
             amountUsable,
-            Fee.TradeType.ASYNC_BUY
+            SpotMarketFactory.TransactionType.ASYNC_BUY
         );
 
         // Mint synths and hold them in this contract as escrow
@@ -64,7 +64,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
         asyncOrderId = uint128(AsyncOrderClaimTokenUtil.getNft(marketId).mint(msg.sender));
 
         // Set up order data
-        asyncOrderClaim.orderType = Fee.TradeType.ASYNC_BUY;
+        asyncOrderClaim.orderType = SpotMarketFactory.TransactionType.ASYNC_BUY;
         asyncOrderClaim.blockNumber = block.number;
         asyncOrderClaim.timestamp = block.timestamp;
         asyncOrderClaim.traderAmountEscrowed = usdAmount;
@@ -102,7 +102,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
         uint256 traderAmountEscrowedUsd = Price.load(marketId).usdSynthExchangeRate(
             marketId,
             synthAmount,
-            Fee.TradeType.ASYNC_SELL
+            SpotMarketFactory.TransactionType.ASYNC_SELL
         );
 
         // Calculate fees
@@ -110,7 +110,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
             marketId,
             msg.sender,
             traderAmountEscrowedUsd,
-            Fee.TradeType.ASYNC_SELL
+            SpotMarketFactory.TransactionType.ASYNC_SELL
         );
 
         // Withdraw USD and hold in this contract as escrow
@@ -124,7 +124,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
         asyncOrderId = uint128(AsyncOrderClaimTokenUtil.getNft(marketId).mint(msg.sender));
 
         // Set up order data
-        asyncOrderClaim.orderType = Fee.TradeType.ASYNC_BUY;
+        asyncOrderClaim.orderType = SpotMarketFactory.TransactionType.ASYNC_BUY;
         asyncOrderClaim.blockNumber = block.number;
         asyncOrderClaim.timestamp = block.timestamp;
         asyncOrderClaim.traderAmountEscrowed = synthAmount;
@@ -180,9 +180,9 @@ contract AsyncOrderModule is IAsyncOrderModule {
         }
 
         // Finalize the order using the provided price data
-        if (asyncOrderClaim.orderType == Fee.TradeType.ASYNC_BUY) {
+        if (asyncOrderClaim.orderType == SpotMarketFactory.TransactionType.ASYNC_BUY) {
             finalOrderAmount = _disburseBuyOrderEscrow(marketId, asyncOrderId, asyncOrderClaim);
-        } else if (asyncOrderClaim.orderType == Fee.TradeType.ASYNC_SELL) {
+        } else if (asyncOrderClaim.orderType == SpotMarketFactory.TransactionType.ASYNC_SELL) {
             finalOrderAmount = _disburseSellOrderEscrow(marketId, asyncOrderId, asyncOrderClaim);
         }
 
@@ -211,14 +211,14 @@ contract AsyncOrderModule is IAsyncOrderModule {
             marketId,
             AsyncOrderClaimTokenUtil.getNft(marketId).ownerOf(asyncOrderId),
             asyncOrderClaim.traderAmountEscrowed,
-            Fee.TradeType.ASYNC_BUY
+            SpotMarketFactory.TransactionType.ASYNC_BUY
         );
 
         // Get the final synth amount
         finalSynthAmount = Price.load(marketId).usdSynthExchangeRate(
             marketId,
             amountUsable,
-            Fee.TradeType.ASYNC_BUY
+            SpotMarketFactory.TransactionType.ASYNC_BUY
         );
 
         // Deposit USD
@@ -264,7 +264,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
         uint256 traderAmountEscrowedUsd = Price.load(marketId).usdSynthExchangeRate(
             marketId,
             asyncOrderClaim.traderAmountEscrowed,
-            Fee.TradeType.ASYNC_SELL
+            SpotMarketFactory.TransactionType.ASYNC_SELL
         );
 
         // Calculate fees
@@ -272,7 +272,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
             marketId,
             AsyncOrderClaimTokenUtil.getNft(marketId).ownerOf(asyncOrderId),
             traderAmountEscrowedUsd,
-            Fee.TradeType.ASYNC_SELL
+            SpotMarketFactory.TransactionType.ASYNC_SELL
         );
 
         // Burn Synths
@@ -331,9 +331,9 @@ contract AsyncOrderModule is IAsyncOrderModule {
         }
 
         // Return escrowed funds
-        if (asyncOrderClaim.orderType == Fee.TradeType.ASYNC_BUY) {
+        if (asyncOrderClaim.orderType == SpotMarketFactory.TransactionType.ASYNC_BUY) {
             _returnBuyOrderEscrow(marketId, asyncOrderId, asyncOrderClaim);
-        } else if (asyncOrderClaim.orderType == Fee.TradeType.ASYNC_SELL) {
+        } else if (asyncOrderClaim.orderType == SpotMarketFactory.TransactionType.ASYNC_SELL) {
             _returnSellOrderEscrow(marketId, asyncOrderId, asyncOrderClaim);
         }
 
