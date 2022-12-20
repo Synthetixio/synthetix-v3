@@ -357,212 +357,36 @@ describe('SafeCast', () => {
     });
   });
 
-  // describe('uint256 to uint128', function () {
-  //   before('set the target cast function', async function () {
-  //     castFunction = 'uint256toUint128(uint256)';
-  //   });
+  describe('SafeCastAddress', function () {
+    describe('toBytes32()', function () {
+      it('returns the expected results', async function () {
+        assert.equal(
+          await SafeCast.addressToBytes32(SafeCast.address),
+          ethers.utils.hexZeroPad(SafeCast.address, 32).toLowerCase()
+        );
+      });
+    });
+  });
 
-  //   it('produces expected results', async function () {
-  //     await assertCast(42);
-  //     await assertCast(exp(1337, 18));
-  //   });
+  describe('SafeCastBytes32', function () {
+    describe('toAddress()', function () {
+      it('returns the expected results', async function () {
+        assert.equal(
+          await SafeCast.bytes32toAddress(
+            ethers.utils.hexZeroPad(SafeCast.address, 32).toLowerCase()
+          ),
+          SafeCast.address
+        );
+      });
+    });
 
-  //   it('produces expected results on edge cases', async function () {
-  //     await assertCast(0);
-  //     await assertCast(MAX_UINT_128);
-  //   });
-
-  //   it('throws on overflows', async function () {
-  //     await assertRevert(SafeCast[castFunction](MAX_UINT_128.add(1)), 'OverflowUint256ToUint128()');
-  //     await assertRevert(SafeCast[castFunction](MAX_UINT_256), 'OverflowUint256ToUint128()');
-  //   });
-  // });
-
-  // describe('uint128 to bytes32', function () {
-  //   before('set the target cast function', async function () {
-  //     castFunction = 'uint128toBytes32(uint128)';
-  //   });
-
-  //   it('produces expected results', async function () {
-  //     await assertCastBytes(42);
-  //     await assertCastBytes(exp(1337, 18));
-  //   });
-
-  //   it('produces expected results on edge cases', async function () {
-  //     await assertCastBytes(0);
-  //     await assertCastBytes(MAX_UINT_128);
-  //   });
-  // });
-
-  // describe('uint128 to uint256', function () {
-  //   before('set the target cast function', async function () {
-  //     castFunction = 'uint128toUint256(uint128)';
-  //   });
-
-  //   it('produces expected results', async function () {
-  //     await assertCast(42);
-  //     await assertCast(exp(1337, 18));
-  //   });
-
-  //   it('produces expected results on edge cases', async function () {
-  //     await assertCast(0);
-  //     await assertCast(MAX_UINT_128);
-  //   });
-
-  //   it('throws on overflows', async function () {
-  //     await assertRevert(SafeCast[castFunction](MAX_UINT_256.add(1)), 'out-of-bounds');
-  //   });
-  // });
-
-  // describe('int256 to uint256', function () {
-  //   before('set the target cast function', async function () {
-  //     castFunction = 'int256toUint256(int256)';
-  //   });
-
-  //   it('produces expected results', async function () {
-  //     await assertCast(42);
-  //     await assertCast(exp(1337, 18));
-  //   });
-
-  //   it('produces expected results on edge cases', async function () {
-  //     await assertCast(0);
-  //     await assertCast(MAX_INT_256);
-  //   });
-
-  //   it('throws on overflows', async function () {
-  //     await assertRevert(SafeCast[castFunction](-1), 'OverflowInt256ToUint256()');
-  //     await assertRevert(SafeCast[castFunction](exp(-1337, 18)), 'OverflowInt256ToUint256()');
-
-  //     await assertRevert(SafeCast[castFunction](MAX_INT_256.add(1)), 'out-of-bounds');
-  //   });
-  // });
-
-  // describe('uint128 to int128', function () {
-  //   before('set the target cast function', async function () {
-  //     castFunction = 'uint128toInt128(uint128)';
-  //   });
-
-  //   it('produces expected results', async function () {
-  //     await assertCast(42);
-  //     await assertCast(exp(1337, 18));
-  //   });
-
-  //   it('produces expected results on edge cases', async function () {
-  //     await assertCast(0);
-  //     await assertCast(MAX_INT_128);
-  //   });
-
-  //   it('throws on overflows', async function () {
-  //     await assertRevert(SafeCast[castFunction](MAX_INT_128.add(1)), 'OverflowUint128ToInt128()');
-  //   });
-  // });
-
-  // describe('int128 to uint128', function () {
-  //   before('set the target cast function', async function () {
-  //     castFunction = 'int128toUint128(int128)';
-  //   });
-
-  //   it('produces expected results', async function () {
-  //     await assertCast(42);
-  //     await assertCast(exp(1337, 18));
-  //   });
-
-  //   it('produces expected results on edge cases', async function () {
-  //     await assertCast(0);
-  //     await assertCast(MAX_INT_128);
-  //   });
-
-  //   it('throws on overflows', async function () {
-  //     await assertRevert(SafeCast[castFunction](MAX_INT_128.add(1)), 'out-of-bounds');
-  //     await assertRevert(SafeCast[castFunction](-1), 'OverflowInt128ToUint128()');
-  //   });
-  // });
-
-  // describe('uint256 to int256', function () {
-  //   before('set the target cast function', async function () {
-  //     castFunction = 'uint256toInt256(uint256)';
-  //   });
-
-  //   it('produces expected results', async function () {
-  //     await assertCast(42);
-  //     await assertCast(exp(1337, 18));
-  //   });
-
-  //   it('produces expected results on edge cases', async function () {
-  //     await assertCast(0);
-  //     await assertCast(MAX_INT_256);
-  //   });
-
-  //   it('throws on overflows', async function () {
-  //     await assertRevert(SafeCast[castFunction](MAX_INT_256.add(1)), 'OverflowUint256ToInt256()');
-  //   });
-  // });
-
-  // describe('uint128 to int256 (through int128)', function () {
-  //   before('set the target cast function', async function () {
-  //     castFunction = 'uint128toInt256(uint128)';
-  //   });
-
-  //   it('produces expected results', async function () {
-  //     await assertCast(42);
-  //     await assertCast(exp(1337, 18));
-  //   });
-
-  //   it('produces expected results on edge cases', async function () {
-  //     await assertCast(0);
-  //     await assertCast(MAX_INT_128);
-  //   });
-
-  //   it('throws on overflows', async function () {
-  //     await assertRevert(SafeCast[castFunction](MAX_INT_128.add(1)), 'OverflowUint128ToInt128()');
-  //   });
-  // });
-
-  // describe('int256 to int128', function () {
-  //   before('set the target cast function', async function () {
-  //     castFunction = 'int256toInt128(int256)';
-  //   });
-
-  //   it('produces expected results', async function () {
-  //     await assertCast(42);
-  //     await assertCast(exp(1337, 18));
-  //     await assertCast(-42);
-  //     await assertCast(exp(-1337, 18));
-  //   });
-
-  //   it('produces expected results on edge cases', async function () {
-  //     await assertCast(MIN_INT_128);
-  //     await assertCast(0);
-  //     await assertCast(MAX_INT_128);
-  //   });
-
-  //   it('throws on overflows', async function () {
-  //     await assertRevert(SafeCast[castFunction](MIN_INT_128.sub(1)), 'OverflowInt256ToInt128()');
-  //     await assertRevert(SafeCast[castFunction](MAX_INT_128.add(1)), 'OverflowInt256ToInt128()');
-  //   });
-  // });
-
-  // describe('int128 to int256', function () {
-  //   before('set the target cast function', async function () {
-  //     castFunction = 'int128toInt256(int128)';
-  //   });
-
-  //   it('produces expected results', async function () {
-  //     await assertCast(42);
-  //     await assertCast(exp(1337, 18));
-  //     await assertCast(-42);
-  //     await assertCast(exp(-1337, 18));
-  //   });
-
-  //   it('produces expected results on edge cases', async function () {
-  //     await assertCast(MIN_INT_128);
-  //     await assertCast(0);
-  //     await assertCast(MAX_INT_128);
-  //   });
-
-  //   it('throws on overflows', async function () {
-  //     await assertRevert(SafeCast[castFunction](MIN_INT_128.sub(1)), 'out-of-bounds');
-  //     await assertRevert(SafeCast[castFunction](MAX_INT_128.add(1)), 'out-of-bounds');
-  //   });
-  // });
+    describe('toUint()', function () {
+      it('returns the expected results', async function () {
+        assertBn.equal(
+          await SafeCast.bytes32toUint(ethers.utils.hexZeroPad('0x2a', 32).toLowerCase()),
+          pow(42, 1)
+        );
+      });
+    });
+  });
 });
