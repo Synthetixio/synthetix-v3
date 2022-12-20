@@ -1,0 +1,19 @@
+{
+  "name": "solhint-plugin-numcast",
+  "version": "0.0.1",
+  "description": "Solhint plugin for detecting overflows in numeric (uint/int) casts",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "solidity",
+    "casting",
+    "solhint"
+  ],
+  "author": "Synthetix CCs",
+  "license": "MIT",
+  "peerDependencies": {
+    "solhint": "^3.0.0"
+  }
+}

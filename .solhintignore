@@ -4,3 +4,4 @@ node_modules/
 **/contracts/generated
 **/contracts/routers
 **/typechain-types
+utils/core-contracts/contracts/utils/SafeCast

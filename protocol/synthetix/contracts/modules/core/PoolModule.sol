@@ -236,6 +236,8 @@ contract PoolModule is IPoolModule {
     /**
      * @dev Compares a new pool configuration with the existing one,
      * and returns information about markets that need to be removed, or whose capacity might be locked.
+     *
+     * Note: Stack too deep errors prevent the use of local variables to improve code readability here.
      */
     function _analyzePoolConfigurationChange(
         Pool.Data storage pool,
@@ -305,19 +307,22 @@ contract PoolModule is IPoolModule {
             ) {
                 // Get weight ratios for comparison below.
                 // Upscale them to make sure that we have compatible precision in case of very small values.
-                uint256 newWeightRatioD27 = uint256(newMarketConfigurations[newIdx].weightD18)
-                    .upscale(DecimalMath.PRECISION_FACTOR)
-                    .divDecimal(totalWeightD18);
-                uint256 oldWeightRatioD27 = uint256(pool.marketConfigurations[oldIdx].weightD18)
-                    .upscale(DecimalMath.PRECISION_FACTOR)
-                    .divDecimal(pool.totalWeightsD18);
-
                 // If the market's new maximum share value or weight ratio decreased,
                 // mark it for later verification.
                 if (
                     newMarketConfigurations[newIdx].maxDebtShareValueD18 <
                     pool.marketConfigurations[oldIdx].maxDebtShareValueD18 ||
-                    newWeightRatioD27 < oldWeightRatioD27
+                    newMarketConfigurations[newIdx]
+                        .weightD18
+                        .to256()
+                        .upscale(DecimalMath.PRECISION_FACTOR)
+                        .divDecimal(totalWeightD18) < // newWeightRatioD27
+                    pool
+                        .marketConfigurations[oldIdx]
+                        .weightD18
+                        .to256()
+                        .upscale(DecimalMath.PRECISION_FACTOR)
+                        .divDecimal(pool.totalWeightsD18) // oldWeightRatioD27
                 ) {
                     potentiallyLockedMarkets[
                         potentiallyLockedMarketsIdx++

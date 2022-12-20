@@ -22,6 +22,7 @@ library StringUtil {
         bytes memory buffer = new bytes(digits);
         while (value != 0) {
             digits -= 1;
+            // solhint-disable-next-line numcast/safe-cast
             buffer[digits] = bytes1(uint8(48 + uint256(value % 10)));
             value /= 10;
         }

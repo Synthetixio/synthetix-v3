@@ -73,7 +73,7 @@ contract LiquidationModule is ILiquidationModule {
         liquidationData.debtLiquidated = rawDebt.toUint();
 
         uint256 liquidatedAccountShares = epoch.accountsDebtDistribution.getActorShares(
-            bytes32(uint256(accountId))
+            accountId.toBytes32()
         );
         if (epoch.accountsDebtDistribution.totalSharesD18 == liquidatedAccountShares) {
             // will be left with 0 shares, which can't be socialized

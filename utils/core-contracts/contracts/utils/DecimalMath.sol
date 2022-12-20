@@ -1,6 +1,8 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import "./SafeCast.sol";
+
 /**
  * @title Utility library used to represent "decimals" (fixed point numbers) with integers, with two different levels of precision.
  *
@@ -17,6 +19,11 @@ pragma solidity ^0.8.0;
  * Important: Multiplication and division operations are currently not supported for high precision decimals. Using these operations on them will yield incorrect results and fail silently.
  */
 library DecimalMath {
+    using SafeCastU256 for uint256;
+    using SafeCastI256 for int256;
+
+    // solhint-disable numcast/safe-cast
+
     // Numbers representing 1.0 (low precision).
     uint256 public constant UNIT = 1e18;
     int256 public constant UNIT_INT = int256(UNIT);
@@ -30,6 +37,8 @@ library DecimalMath {
 
     // Precision scaling, (used to scale down/up from one precision to the other).
     uint256 public constant PRECISION_FACTOR = 9; // 27 - 18 = 9 :)
+
+    // solhint-enable numcast/safe-cast
 
     // -----------------
     // uint256
@@ -103,14 +112,14 @@ library DecimalMath {
      * @dev See upscale for uint256.
      */
     function upscaleUint128(uint128 x, uint factor) internal pure returns (uint128) {
-        return x * uint128(10 ** factor);
+        return x * (10 ** factor).to128();
     }
 
     /**
      * @dev See downscale for uint256.
      */
     function downscaleUint128(uint128 x, uint factor) internal pure returns (uint128) {
-        return x / uint128(10 ** factor);
+        return x / (10 ** factor).to128();
     }
 
     // -----------------
@@ -135,14 +144,14 @@ library DecimalMath {
      * @dev See upscale for uint256.
      */
     function upscale(int x, uint factor) internal pure returns (int) {
-        return x * int(10 ** factor);
+        return x * (10 ** factor).toInt();
     }
 
     /**
      * @dev See downscale for uint256.
      */
     function downscale(int x, uint factor) internal pure returns (int) {
-        return x / int(10 ** factor);
+        return x / (10 ** factor).toInt();
     }
 
     // -----------------
@@ -167,13 +176,13 @@ library DecimalMath {
      * @dev See upscale for uint256.
      */
     function upscaleInt128(int128 x, uint factor) internal pure returns (int128) {
-        return x * int128(int(10 ** factor));
+        return x * ((10 ** factor).toInt()).to128();
     }
 
     /**
      * @dev See downscale for uint256.
      */
     function downscaleInt128(int128 x, uint factor) internal pure returns (int128) {
-        return x / int128(int(10 ** factor));
+        return x / ((10 ** factor).toInt().to128());
     }
 }

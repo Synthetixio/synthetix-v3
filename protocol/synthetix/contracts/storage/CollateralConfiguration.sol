@@ -7,6 +7,7 @@ import "@synthetixio/core-contracts/contracts/errors/ParameterError.sol";
 import "@synthetixio/oracle-manager/contracts/interfaces/IOracleManagerModule.sol";
 import "@synthetixio/oracle-manager/contracts/storage/Node.sol";
 import "@synthetixio/core-contracts/contracts/interfaces/IERC20.sol";
+import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 
 import "./OracleManager.sol";
 
@@ -18,6 +19,7 @@ import "../interfaces/external/IAggregatorV3Interface.sol";
 library CollateralConfiguration {
     using SetUtil for SetUtil.AddressSet;
     using DecimalMath for uint256;
+    using SafeCastI256 for int256;
 
     /**
      * @dev Thrown when the token address of a collateral cannot be found.
@@ -179,7 +181,7 @@ library CollateralConfiguration {
             self.oracleNodeId
         );
 
-        return uint256(node.price);
+        return node.price.toUint();
     }
 
     /**

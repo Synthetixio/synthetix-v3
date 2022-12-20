@@ -89,7 +89,9 @@ library Distribution {
 
         actor.sharesD18 = sharesUint128D18;
 
-        actor.lastValuePerShareD27 = newActorSharesD18 == 0 ? int128(0) : dist.valuePerShareD27;
+        actor.lastValuePerShareD27 = newActorSharesD18 == 0
+            ? SafeCastI128.zero()
+            : dist.valuePerShareD27;
     }
 
     /**
@@ -139,6 +141,6 @@ library Distribution {
      * @return The value per share in 18 decimal precision.
      */
     function getValuePerShare(Data storage self) internal view returns (int) {
-        return int(self.valuePerShareD27).downscale(DecimalMath.PRECISION_FACTOR);
+        return self.valuePerShareD27.to256().downscale(DecimalMath.PRECISION_FACTOR);
     }
 }

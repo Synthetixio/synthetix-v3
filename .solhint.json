@@ -1,15 +1,10 @@
 {
-  "extends": [
-    "solhint:recommended"
-  ],
-  "plugins": [],
+  "extends": ["solhint:recommended"],
+  "plugins": ["numcast"],
   "rules": {
     "not-rely-on-time": "off",
     "avoid-low-level-calls": "off",
-    "compiler-version": [
-      "error",
-      "^0.8.0"
-    ],
+    "compiler-version": ["error", "^0.8.0"],
     "contract-name-camelcase": "off",
     "func-visibility": [
       "error",
@@ -25,6 +20,7 @@
       {
         "maxLength": 32
       }
-    ]
+    ],
+    "numcast/safe-cast": "error"
   }
 }
