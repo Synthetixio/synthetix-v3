@@ -24,8 +24,8 @@ library Fee {
         uint atomicFixedFee;
         uint asyncFixedFee;
         uint utilizationFeeRate; // in bips, applied on buy and async buy
-        uint wrapFixedFee;
-        uint unwrapFixedFee;
+        int wrapFixedFee;
+        int unwrapFixedFee;
         uint skewScale;
     }
 
@@ -49,7 +49,7 @@ library Fee {
         address transactor,
         uint256 usdAmount,
         SpotMarketFactory.TransactionType transactionType
-    ) internal view returns (uint256 amountUsable, int256 feesCollected) {
+    ) internal returns (uint256 amountUsable, int256 feesCollected) {
         Data storage self = load(marketId);
 
         if (
@@ -87,14 +87,14 @@ library Fee {
         Data storage self,
         uint256 amount
     ) internal view returns (uint amountUsable, int feesCollected) {
-        (amountUsable, feesCollected) = _applyFees(amount, self.wrapFixedFee.toInt());
+        (amountUsable, feesCollected) = _applyFees(amount, self.wrapFixedFee);
     }
 
     function calculateUnwrapFees(
         Data storage self,
         uint256 amount
     ) internal view returns (uint amountUsable, int feesCollected) {
-        (amountUsable, feesCollected) = _applyFees(amount, self.unwrapFixedFee.toInt());
+        (amountUsable, feesCollected) = _applyFees(amount, self.unwrapFixedFee);
     }
 
     function calculateBuyFees(
@@ -103,7 +103,7 @@ library Fee {
         uint128 marketId,
         uint256 amount,
         bool async
-    ) internal view returns (uint amountUsable, int feesCollected) {
+    ) internal returns (uint amountUsable, int feesCollected) {
         uint utilizationFee = calculateUtilizationRateFee(
             self,
             marketId,
@@ -129,7 +129,7 @@ library Fee {
         uint128 marketId,
         uint256 amount,
         bool async
-    ) internal view returns (uint amountUsable, int feesCollected) {
+    ) internal returns (uint amountUsable, int feesCollected) {
         int skewFee = calculateSkewFee(
             self,
             marketId,
@@ -215,7 +215,7 @@ library Fee {
 
     function _applyFees(
         uint amount,
-        int fees
+        int fees // bips
     ) private view returns (uint amountUsable, int feesCollected) {
         feesCollected = fees.mulDecimal(amount.toInt()).divDecimal(10000);
         amountUsable = (amount.toInt() - feesCollected).toUint();

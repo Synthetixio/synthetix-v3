@@ -31,9 +31,10 @@ library Price {
 
     // TODO: Let's just make this a mapping of overrides for transaction types
     function getCurrentPriceData(
-        Data storage self,
+        uint128 marketId,
         SpotMarketFactory.TransactionType transactionType
     ) internal view returns (Node.Data memory price) {
+        Data storage self = load(marketId);
         SpotMarketFactory.Data storage factory = SpotMarketFactory.load();
         if (transactionType == SpotMarketFactory.TransactionType.BUY) {
             price = IOracleManagerModule(factory.oracle).process(self.buyFeedId);
@@ -46,7 +47,7 @@ library Price {
         uint128 marketId,
         SpotMarketFactory.TransactionType transactionType
     ) internal view returns (uint price) {
-        return getCurrentPriceData(load(marketId), transactionType).price.toUint();
+        return getCurrentPriceData(marketId, transactionType).price.toUint();
     }
 
     function update(Data storage self, bytes32 buyFeedId, bytes32 sellFeedId) internal {
@@ -55,21 +56,21 @@ library Price {
     }
 
     function usdSynthExchangeRate(
-        Data storage self,
+        uint128 marketId,
         uint amountUsd,
         SpotMarketFactory.TransactionType transactionType
-    ) internal returns (uint256 synthAmount) {
-        uint256 currentPrice = getCurrentPriceData(self, transactionType).price.toUint();
+    ) internal view returns (uint256 synthAmount) {
+        uint256 currentPrice = getCurrentPriceData(marketId, transactionType).price.toUint();
 
         synthAmount = amountUsd.divDecimal(currentPrice);
     }
 
     function synthUsdExchangeRate(
-        Data storage self,
+        uint128 marketId,
         uint sellAmount,
         SpotMarketFactory.TransactionType transactionType
-    ) internal returns (uint256 amountUsd) {
-        uint256 currentPrice = getCurrentPrice(self, transactionType);
+    ) internal view returns (uint256 amountUsd) {
+        uint256 currentPrice = getCurrentPrice(marketId, transactionType);
         amountUsd = sellAmount.mulDecimal(currentPrice);
     }
 }

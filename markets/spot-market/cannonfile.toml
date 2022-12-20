@@ -26,8 +26,8 @@ artifact = "SpotMarketFactoryModule"
 [contract.AtomicOrderModule]
 artifact = "AtomicOrderModule"
 
-[contract.WrapOrderModule]
-artifact = "WrapOrderModule"
+[contract.WrapperModule]
+artifact = "WrapperModule"
 
 [contract.Synth]
 artifact = "Synth"
@@ -58,7 +58,7 @@ args = [
     CoreModule: contracts.CoreModule,
     SpotMarketFactoryModule: contracts.SpotMarketFactoryModule,
     AtomicOrderModule: contracts.AtomicOrderModule,
-    WrapOrderModule: contracts.WrapOrderModule,
+    WrapperModule: contracts.WrapperModule,
   }) %>'''
 ]
 modified = ["contracts"]
@@ -66,7 +66,7 @@ depends = [
   "contract.CoreModule",
   "contract.SpotMarketFactoryModule",
   "contract.AtomicOrderModule",
-  "contract.WrapOrderModule"
+  "contract.WrapperModule"
 ]
 
 [contract.Router]
@@ -75,7 +75,7 @@ abiOf = [
   "CoreModule",
   "SpotMarketFactoryModule",
   "AtomicOrderModule",
-  "WrapOrderModule"
+  "WrapperModule"
 ]
 depends = ["run.generate_router"]
 
