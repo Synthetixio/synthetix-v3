@@ -1,10 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import "../storage/Node.sol";
 import "../interfaces/external/IAggregatorV3Interface.sol";
 
 library ChainlinkNodeLibrary {
+    using SafeCastU256 for uint256;
+    using SafeCastI256 for int256;
+
     uint256 public constant PRECISION = 18;
 
     function process(bytes memory parameters) internal view returns (Node.Data memory) {
@@ -21,7 +25,7 @@ library ChainlinkNodeLibrary {
             : getTwapPrice(chainlinkAggr, roundId, price, twapTimeInterval);
 
         finalPrice = decimals > PRECISION
-            ? int256(downscale(uint256(finalPrice), decimals - PRECISION))
+            ? (downscale(finalPrice.toUint(), decimals - PRECISION)).toInt()
             : upscale(finalPrice, PRECISION - decimals);
 
         return Node.Data(finalPrice, updatedAt, 0, 0);
@@ -56,11 +60,11 @@ library ChainlinkNodeLibrary {
             }
         }
 
-        return priceSum / int256(priceCount);
+        return priceSum / priceCount.toInt();
     }
 
     function upscale(int256 x, uint256 factor) internal pure returns (int256) {
-        return x * int256(10 ** factor);
+        return x * (10 ** factor).toInt();
     }
 
     function downscale(uint256 x, uint256 factor) internal pure returns (uint256) {

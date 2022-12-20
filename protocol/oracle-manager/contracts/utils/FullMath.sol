@@ -1,10 +1,15 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0;
 
+import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+
 /// @title Contains 512-bit math functions
 /// @notice Facilitates multiplication and division that can have overflow of an intermediate value without any loss of precision
 /// @dev Handles "phantom overflow" i.e., allows multiplication and division where an intermediate value overflows 256 bits
 library FullMath {
+    using SafeCastU256 for uint256;
+    using SafeCastI256 for int256;
+
     /// @notice Calculates floor(a×b÷denominator) with full precision. Throws if result overflows a uint256 or denominator == 0
     /// @param a The multiplicand
     /// @param b The multiplier
@@ -61,7 +66,7 @@ library FullMath {
         // Factor powers of two out of denominator
         // Compute largest power of two divisor of denominator.
         // Always >= 1.
-        uint256 twos = uint256(-(int256(denominator)) & int256(denominator));
+        uint256 twos = (-(denominator.toInt()) & denominator.toInt()).toUint();
         // Divide denominator by power of two
         assembly {
             denominator := div(denominator, twos)

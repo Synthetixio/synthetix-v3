@@ -1,10 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import "../storage/Node.sol";
 
 library ReducerNodeLibrary {
-    error UnsupportedOperation(uint operation);
+    using SafeCastU256 for uint256;
+    using SafeCastI256 for int256;
+
+    error UnsupportedOperation(uint256 operation);
 
     enum Operations {
         MAX,
@@ -36,14 +40,14 @@ library ReducerNodeLibrary {
             return recent(prices);
         }
 
-        revert UnsupportedOperation(uint(operation));
+        revert UnsupportedOperation(uint256(operation));
     }
 
     function median(
         Node.Data[] memory prices
     ) internal pure returns (Node.Data memory medianPrice) {
-        quickSort(prices, int(0), int(prices.length - 1));
-        return prices[uint(prices.length / 2)];
+        quickSort(prices, 0, (prices.length - 1).toInt());
+        return prices[(prices.length / 2)];
     }
 
     function mean(Node.Data[] memory prices) internal pure returns (Node.Data memory meanPrice) {
@@ -52,7 +56,7 @@ library ReducerNodeLibrary {
             meanPrice.timestamp += prices[i].timestamp;
         }
 
-        meanPrice.price = meanPrice.price / int(prices.length);
+        meanPrice.price = meanPrice.price / prices.length.toInt();
         meanPrice.timestamp = meanPrice.timestamp / prices.length;
     }
 
@@ -83,16 +87,16 @@ library ReducerNodeLibrary {
         }
     }
 
-    function quickSort(Node.Data[] memory arr, int left, int right) internal pure {
-        int i = left;
-        int j = right;
+    function quickSort(Node.Data[] memory arr, int256 left, int256 right) internal pure {
+        int256 i = left;
+        int256 j = right;
         if (i == j) return;
-        int pivot = arr[uint(left + (right - left) / 2)].price;
+        int256 pivot = arr[(left + (right - left) / 2).toUint()].price;
         while (i <= j) {
-            while (arr[uint(i)].price < pivot) i++;
-            while (pivot < arr[uint(j)].price) j--;
+            while (arr[i.toUint()].price < pivot) i++;
+            while (pivot < arr[j.toUint()].price) j--;
             if (i <= j) {
-                (arr[uint(i)], arr[uint(j)]) = (arr[uint(j)], arr[uint(i)]);
+                (arr[i.toUint()], arr[j.toUint()]) = (arr[j.toUint()], arr[i.toUint()]);
                 i++;
                 j--;
             }
