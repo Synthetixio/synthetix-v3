@@ -6,10 +6,12 @@ import "./Fee.sol";
 // Not sure this is the correct name for this, more like AsyncOrderManager
 library AsyncOrder {
     struct Data {
-        mapping(uint => AsyncOrderClaim) asyncOrderClaims;
+        mapping(uint256 => AsyncOrderClaim) asyncOrderClaims;
         uint256 minimumOrderAge;
         uint256 settlementWindowDuration;
         uint256 livePriceSettlementWindowDuration; // This is an options duration at the end fo the settleWindowDuration where a price with timestamp == 0 will be accepted
+        mapping(address => uint256) escrowedSynthShares;
+        uint256 totalEscrowedSynthShares;
     }
 
     struct AsyncOrderClaim {
