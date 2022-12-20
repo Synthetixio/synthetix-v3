@@ -18,7 +18,7 @@ library AsyncOrder {
         SpotMarketFactory.TransactionType orderType;
         uint256 traderAmountEscrowed;
         uint256 systemAmountEscrowed;
-        uint256 feesQuoted;
+        int256 feesQuoted;
         uint256 blockNumber;
         uint256 timestamp;
     }

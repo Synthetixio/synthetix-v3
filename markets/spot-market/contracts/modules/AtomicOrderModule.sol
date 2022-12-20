@@ -31,7 +31,6 @@ contract AtomicOrderModule is IAtomicOrderModule {
 
         // Exchange amount after fees into synths to buyer
         uint256 synthAmount = Price.load(marketId).usdSynthExchangeRate(
-            marketId,
             amountUsable,
             SpotMarketFactory.TransactionType.BUY
         );

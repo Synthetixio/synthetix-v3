@@ -43,7 +43,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
         store.usdToken.transferFrom(msg.sender, address(this), usdAmount);
 
         // Calculate fees
-        (uint256 amountUsable, uint256 feesQuoted) = Fee.calculateFees(
+        (uint256 amountUsable, int256 feesQuoted) = Fee.calculateFees(
             marketId,
             msg.sender,
             usdAmount,
@@ -52,7 +52,6 @@ contract AsyncOrderModule is IAsyncOrderModule {
 
         // Get estimated exchange amount
         uint256 amountSynth = Price.load(marketId).usdSynthExchangeRate(
-            marketId,
             amountUsable,
             SpotMarketFactory.TransactionType.ASYNC_BUY
         );
@@ -100,13 +99,12 @@ contract AsyncOrderModule is IAsyncOrderModule {
 
         // Get estimated exchange amount
         uint256 traderAmountEscrowedUsd = Price.load(marketId).usdSynthExchangeRate(
-            marketId,
             synthAmount,
             SpotMarketFactory.TransactionType.ASYNC_SELL
         );
 
         // Calculate fees
-        (, uint256 feesQuoted) = Fee.calculateFees(
+        (, int256 feesQuoted) = Fee.calculateFees(
             marketId,
             msg.sender,
             traderAmountEscrowedUsd,
@@ -216,7 +214,6 @@ contract AsyncOrderModule is IAsyncOrderModule {
 
         // Get the final synth amount
         finalSynthAmount = Price.load(marketId).usdSynthExchangeRate(
-            marketId,
             amountUsable,
             SpotMarketFactory.TransactionType.ASYNC_BUY
         );
@@ -262,7 +259,6 @@ contract AsyncOrderModule is IAsyncOrderModule {
 
         // Get the amount of usd worth the amount of synths provided
         uint256 traderAmountEscrowedUsd = Price.load(marketId).usdSynthExchangeRate(
-            marketId,
             asyncOrderClaim.traderAmountEscrowed,
             SpotMarketFactory.TransactionType.ASYNC_SELL
         );

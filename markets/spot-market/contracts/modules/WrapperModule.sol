@@ -72,7 +72,6 @@ contract WrapperModule is IWrapperModule {
 
         // TODO: check int256
         amountToMint = priceStore.usdSynthExchangeRate(
-            marketId,
             returnAmount,
             SpotMarketFactory.TransactionType.WRAP
         );
@@ -119,7 +118,6 @@ contract WrapperModule is IWrapperModule {
 
         // TODO: check int256
         amountToWithdraw = priceStore.usdSynthExchangeRate(
-            marketId,
             returnAmount,
             SpotMarketFactory.TransactionType.UNWRAP
         );
