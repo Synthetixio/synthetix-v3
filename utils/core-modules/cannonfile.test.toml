@@ -84,6 +84,29 @@ artifact = "contracts/routers/chain-<%= chainId %>/CoreRouter.sol:CoreRouter"
 abiOf = ["CoreModule"]
 depends = ["run.generate_core_router"]
 
+# AssociatedSystemsModule Router
+
+[run.generate_token_module_router]
+exec = "@synthetixio/hardhat-router/utils/cannon"
+func = "generate"
+args = [
+  "contracts/routers/chain-<%= chainId %>/AssociatedSystemsModuleRouter.sol:AssociatedSystemsModuleRouter",
+  '''<%= JSON.stringify({
+    CoreModule: contracts.CoreModule,
+    AssociatedSystemsModule: contracts.AssociatedSystemsModule,
+  }) %>'''
+]
+modified = ["contracts"]
+depends = [
+  "contract.CoreModule",
+  "contract.AssociatedSystemsModule"
+]
+
+[contract.AssociatedSystemsModuleRouter]
+artifact = "contracts/routers/chain-<%= chainId %>/AssociatedSystemsModuleRouter.sol:AssociatedSystemsModuleRouter"
+abiOf = ["CoreModule", "AssociatedSystemsModule"]
+depends = ["run.generate_token_module_router"]
+
 # TokenModule Router
 
 [run.generate_token_module_router]
