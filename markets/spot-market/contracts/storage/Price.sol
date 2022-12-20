@@ -1,29 +1,60 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "@synthetixio/core-contracts/contracts/utils/MathUtil.sol";
+import "@synthetixio/oracle-manager/contracts/interfaces/IOracleManagerModule.sol";
+import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
+import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+import "./SpotMarketFactory.sol";
+import "./Fee.sol";
 
 library Price {
-    using MathUtil for uint256;
+    using DecimalMath for uint256;
+    using SafeCastI256 for int256;
 
     struct Data {
-        bytes buyFeedId;
-        bytes sellFeedId;
+        bytes32 buyFeedId;
+        bytes32 sellFeedId;
     }
 
-    // TODO: interact with OracleManager to get price for market synth
-    function getCurrentPrice(Data storage self) internal pure returns (uint) {
-        /* get from oracleManager / aggregator chainlink based on synth id */
-        return 1;
+    function load(uint128 marketId) internal pure returns (Data storage store) {
+        bytes32 s = keccak256(abi.encode("io.synthetix.spot-market.Price", marketId));
+        assembly {
+            store.slot := s
+        }
     }
 
-    function usdSynthExchangeRate(Data storage self, uint amountUsd) internal pure returns (uint synthAmount) {
-        uint currentPrice = getCurrentPrice(self);
+    function getCurrentPrice(
+        Data storage self,
+        Fee.TradeType tradeType
+    ) internal view returns (uint256 price) {
+        SpotMarketFactory.Data storage factory = SpotMarketFactory.load();
+        if (tradeType == Fee.TradeType.BUY) {
+            price = IOracleManagerModule(factory.oracle).process(self.buyFeedId).price.toUint();
+        } else {
+            price = IOracleManagerModule(factory.oracle).process(self.sellFeedId).price.toUint();
+        }
+    }
+
+    function update(Data storage self, bytes32 buyFeedId, bytes32 sellFeedId) internal {
+        self.buyFeedId = buyFeedId;
+        self.sellFeedId = sellFeedId;
+    }
+
+    function usdSynthExchangeRate(
+        Data storage self,
+        uint amountUsd,
+        Fee.TradeType tradeType
+    ) internal view returns (uint256 synthAmount) {
+        uint256 currentPrice = getCurrentPrice(self, tradeType);
         synthAmount = amountUsd.divDecimal(currentPrice);
     }
 
-    function synthUsdExchangeRate(Data storage self, uint sellAmount) internal pure returns (uint amountUsd) {
-        uint currentPrice = getCurrentPrice(self);
+    function synthUsdExchangeRate(
+        Data storage self,
+        uint sellAmount,
+        Fee.TradeType tradeType
+    ) internal view returns (uint256 amountUsd) {
+        uint256 currentPrice = getCurrentPrice(self, tradeType);
         amountUsd = sellAmount.mulDecimal(currentPrice);
     }
 }

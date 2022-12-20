@@ -15,6 +15,8 @@ export interface DeployTaskParams {
   quiet?: boolean;
 }
 
+const DEFAULT_OUTPUT_FOLDER = 'generated/test/';
+
 task(TASK_GENERATE_TESTABLE, 'Creates generated test contracts for all storage libraries')
   .addOptionalPositionalParam(
     'artifacts',
@@ -25,12 +27,12 @@ task(TASK_GENERATE_TESTABLE, 'Creates generated test contracts for all storage l
   .addOptionalParam(
     'outputFolder',
     'Where to store all the testable contracts inside the sources folder',
-    'modules/test/'
+    DEFAULT_OUTPUT_FOLDER
   )
   .addFlag('debug', 'Display debug logs')
   .addFlag('quiet', 'Silence all output')
   .setAction(async (taskArguments: DeployTaskParams, hre) => {
-    const { artifacts, outputFolder = 'modules/test/', debug, quiet } = taskArguments;
+    const { artifacts, outputFolder = DEFAULT_OUTPUT_FOLDER, debug, quiet } = taskArguments;
 
     logger.quiet = !!quiet;
     logger.debugging = !!debug;
@@ -46,7 +48,7 @@ task(TASK_GENERATE_TESTABLE, 'Creates generated test contracts for all storage l
 
     // Delete old testable contracts
     for (const f of await fs.readdir(output)) {
-      if (f.startsWith('Testable') && f.endsWith('Module.sol')) {
+      if (f.startsWith('Testable')) {
         await fs.unlink(path.join(output, f));
       }
     }
@@ -57,7 +59,7 @@ task(TASK_GENERATE_TESTABLE, 'Creates generated test contracts for all storage l
 
       await hre.run(SUBTASK_GENERATE_TESTABLE_STORAGE, {
         artifact: contractFullyQualifiedName,
-        output: path.join(output, `Testable${contractName}Module.sol`),
+        output: path.join(output, `Testable${contractName}Storage.sol`),
       });
     }
   });

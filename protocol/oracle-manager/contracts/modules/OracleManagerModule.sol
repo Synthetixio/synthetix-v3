@@ -7,6 +7,7 @@ import "../utils/ExternalNodeLibrary.sol";
 import "../utils/PythNodeLibrary.sol";
 import "../utils/ChainlinkNodeLibrary.sol";
 import "../utils/PriceDeviationCircuitBreaker.sol";
+import "../utils/UniswapNodeLibrary.sol";
 
 import "../storage/Node.sol";
 import "../storage/NodeDefinition.sol";
@@ -76,7 +77,8 @@ contract OracleManagerModule is IOracleManagerModule {
             NodeDefinition.NodeType.EXTERNAL == nodeType ||
             NodeDefinition.NodeType.CHAINLINK == nodeType ||
             NodeDefinition.NodeType.PYTH == nodeType ||
-            NodeDefinition.NodeType.PriceDeviationCircuitBreaker == nodeType);
+            NodeDefinition.NodeType.PriceDeviationCircuitBreaker == nodeType ||
+            NodeDefinition.NodeType.UNISWAP == nodeType);
     }
 
     function _getNodeId(NodeDefinition.Data memory nodeDefinition) internal pure returns (bytes32) {
@@ -129,6 +131,8 @@ contract OracleManagerModule is IOracleManagerModule {
             return ChainlinkNodeLibrary.process(nodeDefinition.parameters);
         } else if (nodeDefinition.nodeType == NodeDefinition.NodeType.PYTH) {
             return PythNodeLibrary.process(nodeDefinition.parameters);
+        } else if (nodeDefinition.nodeType == NodeDefinition.NodeType.UNISWAP) {
+            return UniswapNodeLibrary.process(nodeDefinition.parameters);
         } else if (
             nodeDefinition.nodeType == NodeDefinition.NodeType.PriceDeviationCircuitBreaker
         ) {
