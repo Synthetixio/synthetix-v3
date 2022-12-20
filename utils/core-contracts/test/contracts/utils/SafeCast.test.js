@@ -41,7 +41,7 @@ describe('SafeCast', () => {
   }
 
   function minInt(type) {
-    return pow(2, type).div(2).mul(-11);
+    return pow(2, type).div(2).mul(-1);
   }
 
   before('deploy the contract', async () => {
@@ -68,21 +68,65 @@ describe('SafeCast', () => {
       it('throws on overflows', async function () {
         await assertRevert(SafeCast[castFunction](maxInt(32).add(1)), 'OverflowUint32ToInt32()');
       });
+    });
 
-      describe('to256()', function () {
-        before('set the target cast function', async function () {
-          castFunction = 'uint32toUint256(uint32)';
-        });
+    describe('to256()', function () {
+      before('set the target cast function', async function () {
+        castFunction = 'uint32toUint256(uint32)';
+      });
 
-        it('produces expected results', async function () {
-          await assertCast(42);
-          await assertCast(exp(42, 8));
-        });
+      it('produces expected results', async function () {
+        await assertCast(42);
+        await assertCast(exp(42, 8));
+      });
 
-        it('produces expected results on edge cases', async function () {
-          await assertCast(0);
-          await assertCast(maxUint(32));
-        });
+      it('produces expected results on edge cases', async function () {
+        await assertCast(0);
+        await assertCast(maxUint(32));
+      });
+    });
+  });
+
+  describe('SafeCastI32', function () {
+    describe('toUint()', function () {
+      before('set the target cast function', async function () {
+        castFunction = 'int32toUint32(int32)';
+      });
+
+      it('produces expected results', async function () {
+        await assertCast(42);
+        await assertCast(exp(42, 4));
+      });
+
+      it('produces expected results on edge cases', async function () {
+        await assertCast(0);
+        await assertCast(maxInt(32));
+      });
+
+      it('throws on overflows', async function () {
+        await assertRevert(SafeCast[castFunction](pow(-1, 1)), 'OverflowInt32ToUint32()');
+      });
+    });
+  });
+
+  describe('SafeCastU64', function () {
+    describe('toInt()', function () {
+      before('set the target cast function', async function () {
+        castFunction = 'uint64toInt64(uint64)';
+      });
+
+      it('produces expected results', async function () {
+        await assertCast(42);
+        await assertCast(exp(42, 8));
+      });
+
+      it('produces expected results on edge cases', async function () {
+        await assertCast(0);
+        await assertCast(maxInt(64));
+      });
+
+      it('throws on overflows', async function () {
+        await assertRevert(SafeCast[castFunction](maxInt(64).add(1)), 'OverflowUint64ToInt64()');
       });
     });
   });
