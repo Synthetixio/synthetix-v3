@@ -8,6 +8,71 @@ import "../../utils/SafeCast.sol";
 // are not retrieved if the functions are pure.
 contract SafeCastMock {
     // solc-ignore-next-line func-mutability
+    function uint256toInt256(uint256 x) external view returns (int256) {
+        return SafeCastU256.toInt(x);
+    }
+
+    // solc-ignore-next-line func-mutability
+    function uint256toBytes32(uint256 x) external view returns (bytes32) {
+        return SafeCastU256.toBytes32(x);
+    }
+
+    // solc-ignore-next-line func-mutability
+    function uint256toUint64(uint256 x) external view returns (uint64) {
+        return SafeCastU256.to64(x);
+    }
+
+    // solc-ignore-next-line func-mutability
+    function uint256toUint128(uint256 x) external view returns (uint128) {
+        return SafeCastU256.to128(x);
+    }
+
+    // solc-ignore-next-line func-mutability
+    function uint128toBytes32(uint128 x) external view returns (bytes32) {
+        return SafeCastU128.toBytes32(x);
+    }
+
+    // solc-ignore-next-line func-mutability
+    function uint128toInt128(uint128 x) external view returns (int128) {
+        return SafeCastU128.toInt(x);
+    }
+
+    // solc-ignore-next-line func-mutability
+    function uint128toUint256(uint128 x) external view returns (uint256) {
+        return SafeCastU128.to256(x);
+    }
+
+    // solc-ignore-next-line func-mutability
+    function int256toUint256(int256 x) external view returns (uint256) {
+        return SafeCastI256.toUint(x);
+    }
+
+    // solc-ignore-next-line func-mutability
+    function int256toInt128(int256 x) external view returns (int128) {
+        return SafeCastI256.to128(x);
+    }
+
+    // solc-ignore-next-line func-mutability
+    function int128toInt32(int128 x) external view returns (int32) {
+        return SafeCastI128.to32(x);
+    }
+
+    // solc-ignore-next-line func-mutability
+    function int128toInt256(int128 x) external view returns (int256) {
+        return SafeCastI128.to256(x);
+    }
+
+    // solc-ignore-next-line func-mutability
+    function int128toUint128(int128 x) external view returns (uint128) {
+        return SafeCastI128.toUint(x);
+    }
+
+    // solc-ignore-next-line func-mutability
+    function zeroI128() external view returns (int128) {
+        return SafeCastI128.zero();
+    }
+
+    // solc-ignore-next-line func-mutability
     function uint64toInt64(uint64 x) external view returns (int64) {
         return SafeCastU64.toInt(x);
     }
@@ -27,53 +92,48 @@ contract SafeCastMock {
         return SafeCastU32.to256(x);
     }
 
-    // solc-ignore-next-line func-mutability
-    function uint256toUint128(uint256 x) external view returns (uint128) {
-        return SafeCastU256.to128(x);
-    }
+    // // solc-ignore-next-line func-mutability
+    // function uint256toUint128(uint256 x) external view returns (uint128) {
+    //     return SafeCastU256.to128(x);
+    // }
 
-    // solc-ignore-next-line func-mutability
-    function int256toUint256(int256 x) external view returns (uint256) {
-        return SafeCastI256.toUint(x);
-    }
+    // // solc-ignore-next-line func-mutability
+    // function int256toUint256(int256 x) external view returns (uint256) {
+    //     return SafeCastI256.toUint(x);
+    // }
 
-    // solc-ignore-next-line func-mutability
-    function uint128toInt128(uint128 x) external view returns (int128) {
-        return SafeCastU128.toInt(x);
-    }
+    // // solc-ignore-next-line func-mutability
+    // function uint128toInt128(uint128 x) external view returns (int128) {
+    //     return SafeCastU128.toInt(x);
+    // }
 
-    // solc-ignore-next-line func-mutability
-    function uint128toInt256(uint128 x) external view returns (int256) {
-        return SafeCastU128.toInt(x);
-    }
+    // // solc-ignore-next-line func-mutability
+    // function uint128toInt256(uint128 x) external view returns (int256) {
+    //     return SafeCastU128.toInt(x);
+    // }
 
-    // solc-ignore-next-line func-mutability
-    function int256toInt128(int256 x) external view returns (int128) {
-        return SafeCastI256.to128(x);
-    }
+    // // solc-ignore-next-line func-mutability
+    // function int256toInt128(int256 x) external view returns (int128) {
+    //     return SafeCastI256.to128(x);
+    // }
 
-    // solc-ignore-next-line func-mutability
-    function int128toInt256(int128 x) external view returns (int256) {
-        return x;
-    }
+    // // solc-ignore-next-line func-mutability
+    // function int128toInt256(int128 x) external view returns (int256) {
+    //     return x;
+    // }
 
-    // solc-ignore-next-line func-mutability
-    function int128toUint128(int128 x) external view returns (uint128) {
-        return SafeCastI128.toUint(x);
-    }
+    // // solc-ignore-next-line func-mutability
+    // function uint128toUint256(uint128 x) external view returns (uint256) {
+    //     return x;
+    // }
 
-    // solc-ignore-next-line func-mutability
-    function uint128toUint256(uint128 x) external view returns (uint256) {
-        return x;
-    }
+    // // solc-ignore-next-line func-mutability
+    // function uint256toInt256(uint256 x) external view returns (int256) {
+    //     return SafeCastU256.toInt(x);
+    // }
 
-    // solc-ignore-next-line func-mutability
-    function uint256toInt256(uint256 x) external view returns (int256) {
-        return SafeCastU256.toInt(x);
-    }
-
-    // solc-ignore-next-line func-mutability
-    function uint128toBytes32(uint128 x) external view returns (bytes32) {
-        return SafeCastU128.toBytes32(x);
-    }
+    // // solc-ignore-next-line func-mutability
+    // function uint128toBytes32(uint128 x) external view returns (bytes32) {
+    //     return SafeCastU128.toBytes32(x);
+    // }
 }
