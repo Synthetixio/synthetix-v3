@@ -1,15 +1,22 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "../../utils/SafeCast/SafeCastU256.sol";
-import "../../utils/SafeCast/SafeCastU128.sol";
-import "../../utils/SafeCast/SafeCastI256.sol";
-import "../../utils/SafeCast/SafeCastI128.sol";
+import "../../utils/SafeCast.sol";
 
 // Note: The functions below are not pure because of an apparent
 // bug in the test pipeline (Solidity? Ethers?) where revert reasons
 // are not retrieved if the functions are pure.
 contract SafeCastMock {
+    // solc-ignore-next-line func-mutability
+    function uint32toInt32(uint32 x) external view returns (int32) {
+        return SafeCastU32.toInt(x);
+    }
+
+    // solc-ignore-next-line func-mutability
+    function uint32toUint256(uint32 x) external view returns (uint256) {
+        return SafeCastU32.to256(x);
+    }
+
     // solc-ignore-next-line func-mutability
     function uint256toUint128(uint256 x) external view returns (uint128) {
         return SafeCastU256.to128(x);
