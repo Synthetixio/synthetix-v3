@@ -8,7 +8,7 @@ import "./Fee.sol";
 import "./Wrapper.sol";
 
 library SpotMarketFactory {
-    bytes32 private constant _slotSpotMarketFactory =
+    bytes32 private constant _SLOT_SPOT_MARKET_FACTORY =
         keccak256(abi.encode("io.synthetix.spot-market.SpotMarketFactory"));
 
     using Price for Price.Data;
@@ -25,7 +25,7 @@ library SpotMarketFactory {
     }
 
     function load() internal pure returns (Data storage store) {
-        bytes32 s = _slotSpotMarketFactory;
+        bytes32 s = _SLOT_SPOT_MARKET_FACTORY;
         assembly {
             store.slot := s
         }
