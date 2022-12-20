@@ -7,22 +7,22 @@ import "../storage/SpotMarketFactory.sol";
 contract FeeConfigurationModule is IFeeConfigurationModule {
     using SpotMarketFactory for SpotMarketFactory.Data;
 
-    function setFixedFee(uint128 synthMarketId, uint fixedFee) external override {
+    function setAtomicFixedFee(uint128 synthMarketId, uint atomicFixedFee) external override {
         SpotMarketFactory.load().onlyMarketOwner(synthMarketId);
 
         Fee.Data storage fee = Fee.load(synthMarketId);
-        fee.fixedFee = fixedFee;
+        fee.atomicFixedFee = atomicFixedFee;
 
-        emit FixedFeeSet(synthMarketId, fixedFee);
+        emit AtomicFixedFeeSet(synthMarketId, atomicFixedFee);
     }
 
-    function setMarketSkewFees(uint128 synthMarketId, uint skewScale) external override {
-        SpotMarketFactory.load().onlyMarketOwner(synthMarketId);
+    function setMarketSkewScale(uint128 marketId, uint skewScale) external override {
+        SpotMarketFactory.load().onlyMarketOwner(marketId);
 
-        Fee.Data storage fee = Fee.load(synthMarketId);
-        fee.skewScale = skewScale;
+        Price.Data storage price = Price.load(marketId);
+        price.skewScale = skewScale;
 
-        emit MarketSkewFeesSet(synthMarketId, skewScale);
+        emit MarketSkewScaleSet(marketId, skewScale);
     }
 
     function setMarketUtilizationFees(
@@ -37,12 +37,12 @@ contract FeeConfigurationModule is IFeeConfigurationModule {
         emit MarketUtilizationFeesSet(synthMarketId, utilizationFeeRate);
     }
 
-    function setCustomTransactorFees() external override {
-        // TODO
-        /*
-        Direct integrations:
-            fixed fee override
-            buy and sell feed node id override
-        */
+    function setCustomTransactorFees(
+        uint128 synthMarketId,
+        address transactor,
+        uint fixedFeeAmount
+    ) external override {
+        SpotMarketFactory.load().onlyMarketOwner(synthMarketId);
+        Fee.setAtomicFixedFeeOverride(synthMarketId, transactor, fixedFeeAmount);
     }
 }

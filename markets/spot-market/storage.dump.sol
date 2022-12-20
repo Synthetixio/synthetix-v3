@@ -144,14 +144,14 @@ library NodeDefinition {
 
 // @custom:artifact contracts/storage/Fee.sol:Fee
 library Fee {
-    enum TradeType {
+    enum TransactionType {
         BUY,
         SELL,
         WRAP,
         UNWRAP
     }
     struct Data {
-        uint fixedFee;
+        uint atomicFixedFee;
         uint skewScale;
         uint utilizationFeeRate;
         uint wrapperFee;

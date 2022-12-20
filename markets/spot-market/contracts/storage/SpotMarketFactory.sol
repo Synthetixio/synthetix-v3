@@ -21,7 +21,16 @@ library SpotMarketFactory {
         address synthetix;
         address initialSynthImplementation;
         mapping(uint128 => address) synthOwners;
-        mapping(uint128 => int256) synthFeesCollected;
+    }
+
+    enum TransactionType {
+        BUY,
+        SELL,
+        WRAP,
+        UNWRAP,
+        ASYNC_BUY,
+        ASYNC_SELL,
+        REPORTED_DEBT
     }
 
     function load() internal pure returns (Data storage store) {

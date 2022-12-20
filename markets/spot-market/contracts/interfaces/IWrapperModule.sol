@@ -2,13 +2,13 @@
 pragma solidity ^0.8.0;
 
 /// @title Spot Market Wrapper Interface
-interface IWrapOrderModule {
+interface IWrapperModule {
     error InsufficientFunds();
     error InsufficientAllowance(uint expected, uint current);
 
     event WrapperInitialized(uint indexed synthMarketId, address collateralType);
-    event SynthWrapped(uint indexed synthMarketId, uint amountWrapped, int feesCollected);
-    event SynthUnwrapped(uint indexed synthMarketId, uint amountUnwrapped, int feesCollected);
+    event SynthWrapped(uint indexed synthMarketId, uint amountWrapped, uint feesCollected);
+    event SynthUnwrapped(uint indexed synthMarketId, uint amountUnwrapped, uint feesCollected);
 
     function initializeWrapper(uint128 marketId, address collateralType) external;
 

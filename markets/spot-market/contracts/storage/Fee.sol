@@ -17,19 +17,15 @@ library Fee {
     using SafeCastU256 for uint256;
     using SafeCastI256 for int256;
 
-    enum TradeType {
-        BUY,
-        SELL,
-        WRAP,
-        UNWRAP
-    }
-
     struct Data {
-        uint fixedFee;
-        uint skewScale;
-        uint utilizationFeeRate; // in bips
-        uint wrapFee;
-        uint unwrapFee;
+        // used for direct integrations
+        mapping(address => uint) atomicFixedFeeOverrides;
+        // defaults
+        uint atomicFixedFee;
+        uint asyncFixedFee;
+        uint utilizationFeeRate; // in bips, applied on buy and async buy
+        uint wrapFixedFee;
+        uint unwrapFixedFee;
     }
 
     function load(uint128 marketId) internal pure returns (Data storage store) {
@@ -39,119 +35,117 @@ library Fee {
         }
     }
 
+    function setAtomicFixedFeeOverride(
+        uint128 marketId,
+        address transactor,
+        uint fixedFee
+    ) internal {
+        load(marketId).atomicFixedFeeOverrides[transactor] = fixedFee;
+    }
+
     function calculateFees(
         uint128 marketId,
         address transactor,
         uint256 usdAmount,
-        TradeType tradeType
-    ) internal returns (uint amountUsable, int feesCollected) {
+        SpotMarketFactory.TransactionType TransactionType
+    ) internal view returns (uint256 amountUsable, uint256 feesCollected) {
         Data storage self = load(marketId);
 
-        // getCustomTransactorFees(marketId, transactor, tradeType);
-        // pass normal fee data if no custom exists in below functions
-
-        // TODO: only buy trades have fees currently; how to handle for other trade types?
-        if (tradeType == TradeType.BUY) {
-            (amountUsable, feesCollected) = calculateAtomicBuyFees(self, marketId, usdAmount);
-        } else if (tradeType == TradeType.SELL) {
-            (amountUsable, feesCollected) = calculateAtomicSellFees(self, marketId, usdAmount);
-        } else if (tradeType == TradeType.WRAP) {
+        if (TransactionType == SpotMarketFactory.TransactionType.BUY) {
+            (amountUsable, feesCollected) = calculateAtomicBuyFees(
+                self,
+                transactor,
+                marketId,
+                usdAmount
+            );
+        } else if (TransactionType == SpotMarketFactory.TransactionType.SELL) {
+            (amountUsable, feesCollected) = calculateAtomicSellFees(self, transactor, usdAmount);
+        } else if (TransactionType == SpotMarketFactory.TransactionType.WRAP) {
             (amountUsable, feesCollected) = calculateWrapFees(self, usdAmount);
-        } else if (tradeType == TradeType.UNWRAP) {
+        } else if (TransactionType == SpotMarketFactory.TransactionType.UNWRAP) {
             (amountUsable, feesCollected) = calculateUnwrapFees(self, usdAmount);
-            // Add for ASYNC orders as well
+        } else if (TransactionType == SpotMarketFactory.TransactionType.ASYNC_BUY) {
+            (amountUsable, feesCollected) = calculateAsyncBuyFees(self, marketId, usdAmount);
+        } else if (TransactionType == SpotMarketFactory.TransactionType.ASYNC_SELL) {
+            (amountUsable, feesCollected) = calculateAsyncSellFees(self, usdAmount);
         } else {
             amountUsable = usdAmount;
             feesCollected = 0;
         }
-
-        // sanity check? revert unless usdAmount =  amountUsable + feesCollected
     }
 
     function calculateWrapFees(
         Data storage self,
         uint256 amount
-    ) internal view returns (uint amountUsable, int feesCollected) {
-        feesCollected = self.wrapFee.mulDecimal(amount).divDecimal(10000).toInt();
-        amountUsable = (amount.toInt() - feesCollected).toUint();
+    ) internal view returns (uint amountUsable, uint feesCollected) {
+        feesCollected = self.wrapFixedFee.mulDecimal(amount).divDecimal(10000);
+        amountUsable = amount - feesCollected;
     }
 
     function calculateUnwrapFees(
         Data storage self,
         uint256 amount
-    ) internal view returns (uint amountUsable, int feesCollected) {
-        feesCollected = self.unwrapFee.mulDecimal(amount).divDecimal(10000).toInt();
-        amountUsable = (amount.toInt() - feesCollected).toUint();
+    ) internal view returns (uint amountUsable, uint feesCollected) {
+        feesCollected = self.unwrapFixedFee.mulDecimal(amount).divDecimal(10000);
+        amountUsable = amount - feesCollected;
     }
 
     function calculateAtomicBuyFees(
         Data storage self,
+        address transactor,
         uint128 marketId,
         uint256 amount
-    ) internal returns (uint amountUsable, int feesCollected) {
-        int skewFee = calculateSkewFee(self, marketId, amount, TradeType.BUY);
-        uint utilizationFee = calculateUtilizationRateFee(self, marketId, TradeType.BUY);
+    ) internal view returns (uint amountUsable, uint feesCollected) {
+        uint utilizationFee = calculateUtilizationRateFee(
+            self,
+            marketId,
+            SpotMarketFactory.TransactionType.BUY
+        );
 
-        int totalFees = skewFee + utilizationFee.toInt() + self.fixedFee.toInt();
+        uint totalFees = utilizationFee + _getAtomicFixedFee(self, transactor);
 
-        feesCollected = totalFees.mulDecimal(amount.toInt()).divDecimal(10000);
-        amountUsable = (amount.toInt() - feesCollected).toUint();
+        feesCollected = totalFees.mulDecimal(amount).divDecimal(10000);
+        amountUsable = amount - feesCollected;
     }
 
     function calculateAtomicSellFees(
         Data storage self,
-        uint128 marketId,
+        address transactor,
         uint256 amount
-    ) internal returns (uint amountUsable, int feesCollected) {
-        int skewFee = calculateSkewFee(self, marketId, amount, TradeType.SELL);
-
-        int totalFees = self.fixedFee.toInt() + skewFee;
-
-        feesCollected = totalFees.mulDecimal(amount.toInt()).divDecimal(10000);
-        amountUsable = (amount.toInt() - feesCollected).toUint();
+    ) internal view returns (uint amountUsable, uint feesCollected) {
+        feesCollected = _getAtomicFixedFee(self, transactor).mulDecimal(amount).divDecimal(10000);
+        amountUsable = amount - feesCollected;
     }
 
-    function calculateSkewFee(
+    function calculateAsyncBuyFees(
         Data storage self,
         uint128 marketId,
-        uint amount,
-        TradeType tradeType
-    ) internal returns (int skewFee) {
-        if (self.skewScale == 0) {
-            return 0;
-        }
-
-        uint totalBalance = SynthUtil.getToken(marketId).totalSupply().mulDecimal(
-            Price.load(marketId).getCurrentPrice(tradeType)
+        uint256 amount
+    ) internal view returns (uint amountUsable, uint feesCollected) {
+        uint utilizationFee = calculateUtilizationRateFee(
+            self,
+            marketId,
+            SpotMarketFactory.TransactionType.ASYNC_BUY
         );
-        uint wrappedMarketCollateral = 0;
 
-        Wrapper.Data storage wrapper = Wrapper.load(marketId);
-        wrappedMarketCollateral = IMarketCollateralModule(SpotMarketFactory.load().synthetix)
-            .getMarketCollateralAmount(marketId, wrapper.collateralType);
+        uint totalFees = utilizationFee + self.asyncFixedFee;
 
-        uint initialSkew = totalBalance - wrappedMarketCollateral;
-        uint initialSkewFee = initialSkew.divDecimal(self.skewScale);
+        feesCollected = totalFees.mulDecimal(amount).divDecimal(10000);
+        amountUsable = amount - feesCollected;
+    }
 
-        uint skewAfterFill = initialSkew;
-        // TODO: when the fee after fill is calculated, does it take into account the fees collected for the trade?
-        if (tradeType == TradeType.BUY) {
-            skewAfterFill += amount;
-        } else if (tradeType == TradeType.SELL) {
-            skewAfterFill -= amount;
-        }
-        uint skewAfterFillFee = skewAfterFill.divDecimal(self.skewScale);
-
-        skewFee = (skewAfterFillFee.toInt() + initialSkewFee.toInt()).divDecimal(2);
-        if (tradeType == TradeType.SELL) {
-            skewFee = skewFee * -1;
-        }
+    function calculateAsyncSellFees(
+        Data storage self,
+        uint256 amount
+    ) internal view returns (uint amountUsable, uint feesCollected) {
+        feesCollected = self.asyncFixedFee.mulDecimal(amount).divDecimal(10000);
+        amountUsable = amount - feesCollected;
     }
 
     function calculateUtilizationRateFee(
         Data storage self,
         uint128 marketId,
-        TradeType tradeType
+        SpotMarketFactory.TransactionType TransactionType
     ) internal view returns (uint utilFee) {
         if (self.utilizationFeeRate == 0) {
             return 0;
@@ -161,7 +155,9 @@ library Fee {
             .getMarketCollateral(marketId);
 
         uint totalBalance = SynthUtil.getToken(marketId).totalSupply();
-        uint totalValue = totalBalance.mulDecimal(Price.load(marketId).getCurrentPrice(tradeType));
+        uint totalValue = totalBalance.mulDecimal(
+            Price.load(marketId).getCurrentPrice(TransactionType)
+        );
 
         // utilization is below 100%
         if (delegatedCollateral > totalValue) {
@@ -171,5 +167,12 @@ library Fee {
 
             utilFee = utilization.mulDecimal(self.utilizationFeeRate);
         }
+    }
+
+    function _getAtomicFixedFee(Data storage self, address transactor) private view returns (uint) {
+        return
+            self.atomicFixedFeeOverrides[transactor] > 0
+                ? self.atomicFixedFeeOverrides[transactor]
+                : self.atomicFixedFee;
     }
 }

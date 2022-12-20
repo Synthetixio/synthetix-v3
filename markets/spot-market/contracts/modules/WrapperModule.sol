@@ -7,12 +7,12 @@ import "@synthetixio/main/contracts/interfaces/IMarketCollateralModule.sol";
 import "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import "../storage/SpotMarketFactory.sol";
-import "../interfaces/IWrapOrderModule.sol";
+import "../interfaces/IWrapperModule.sol";
 import "../storage/Wrapper.sol";
 import "../storage/Price.sol";
 import "../utils/SynthUtil.sol";
 
-contract WrapOrderModule is IWrapOrderModule {
+contract WrapperModule is IWrapperModule {
     using DecimalMath for uint256;
     using SpotMarketFactory for SpotMarketFactory.Data;
     using Price for Price.Data;
@@ -58,18 +58,24 @@ contract WrapOrderModule is IWrapOrderModule {
 
         Price.Data storage priceStore = Price.load(marketId);
 
-        uint256 wrapAmountInUsd = priceStore.synthUsdExchangeRate(wrapAmount, Fee.TradeType.WRAP);
-        (uint256 returnAmount, int256 feesCollected) = Fee.calculateFees(
+        uint256 wrapAmountInUsd = priceStore.synthUsdExchangeRate(
+            marketId,
+            wrapAmount,
+            SpotMarketFactory.TransactionType.WRAP
+        );
+        (uint256 returnAmount, uint256 feesCollected) = Fee.calculateFees(
             marketId,
             msg.sender,
             wrapAmountInUsd,
-            Fee.TradeType.WRAP
+            SpotMarketFactory.TransactionType.WRAP
         );
 
-        store.synthFeesCollected[marketId] += feesCollected;
-
         // TODO: check int256
-        amountToMint = priceStore.usdSynthExchangeRate(returnAmount, Fee.TradeType.WRAP);
+        amountToMint = priceStore.usdSynthExchangeRate(
+            marketId,
+            returnAmount,
+            SpotMarketFactory.TransactionType.WRAP
+        );
 
         store.usdToken.approve(store.synthetix, amountToMint);
         IMarketCollateralModule(store.synthetix).depositMarketCollateral(
@@ -100,20 +106,23 @@ contract WrapOrderModule is IWrapOrderModule {
         Price.Data storage priceStore = Price.load(marketId);
 
         uint256 unwrapAmountInUsd = priceStore.synthUsdExchangeRate(
+            marketId,
             unwrapAmount,
-            Fee.TradeType.UNWRAP
+            SpotMarketFactory.TransactionType.UNWRAP
         );
-        (uint256 returnAmount, int256 feesCollected) = Fee.calculateFees(
+        (uint256 returnAmount, uint256 feesCollected) = Fee.calculateFees(
             marketId,
             msg.sender,
             unwrapAmountInUsd,
-            Fee.TradeType.UNWRAP
+            SpotMarketFactory.TransactionType.UNWRAP
         );
 
-        store.synthFeesCollected[marketId] += feesCollected;
-
         // TODO: check int256
-        amountToWithdraw = priceStore.usdSynthExchangeRate(returnAmount, Fee.TradeType.UNWRAP);
+        amountToWithdraw = priceStore.usdSynthExchangeRate(
+            marketId,
+            returnAmount,
+            SpotMarketFactory.TransactionType.UNWRAP
+        );
 
         IMarketCollateralModule(store.synthetix).withdrawMarketCollateral(
             marketId,
