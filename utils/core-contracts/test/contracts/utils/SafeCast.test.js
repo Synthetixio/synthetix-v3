@@ -251,6 +251,19 @@ describe('SafeCast', () => {
     });
   });
 
+  describe('SafeCastU160', function () {
+    describe('to256()', function () {
+      before('set the target cast function', async function () {
+        castFunction = 'uint160toUint256(uint160)';
+      });
+
+      it('produces expected results', async function () {
+        await assertCast(42);
+        await assertCast(exp(42, 16));
+      });
+    });
+  });
+
   describe('SafeCastI256', function () {
     describe('to128()', function () {
       before('set the target cast function', async function () {
