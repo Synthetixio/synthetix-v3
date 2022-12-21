@@ -20,94 +20,116 @@ contract DecayTokenModule is IDecayTokenModule, ERC20, InitializableMixin {
         store.totalSupplyAtEpochStart = totalSupply();
     }
 
-    function isInitialized() external view returns (bool) {
-        return _isInitialized();
-    }
-
-    function _initialize(
+    function initialize(
         string memory tokenName,
         string memory tokenSymbol,
         uint8 tokenDecimals
-    ) internal virtual override {
+    ) public {
+        OwnableStorage.onlyOwner();
         super._initialize(tokenName, tokenSymbol, tokenDecimals);
 
         DecayToken.Data storage store = DecayToken.load();
         store.epochStart = block.timestamp;
     }
 
-    function interestRate() public view virtual returns (uint256) {
-        return DecayToken.load().interestRate;
+    function isInitialized() external view returns (bool) {
+        return _isInitialized();
     }
 
-    function epochStart() public view virtual returns (uint256) {
-        return DecayToken.load().epochStart;
-    }
-
-    function totalSupplyAtEpochStart() public view virtual returns (uint256) {
-        return DecayToken.load().totalSupplyAtEpochStart;
-    }
-
-    function ratePerSecond() public view virtual returns (uint256) {
-        return interestRate() / 3153600000;
-    }
-
-    function totalSupply() public view virtual override returns (uint256) {
-        uint256 totalShares = ERC20Storage.load().totalSupply;
-        return totalShares * tokensPerShare();
-    }
-
-    function balanceOf(address owner) public view override returns (uint256) {
-        return super.balanceOf(owner) / tokensPerShare();
-    }
-
-    function _burn(address from, uint256 amount) internal override advanceEpoch {
-        uint256 shareAmount = amount / tokensPerShare();
+    function burn(address from, uint256 amount) external override advanceEpoch {
+        OwnableStorage.onlyOwner();
+        uint256 shareAmount = amount / _tokensPerShare();
         super._burn(from, shareAmount);
     }
 
-    function _mint(address to, uint256 amount) internal override advanceEpoch {
-        uint256 shareAmount = amount / tokensPerShare();
+    function mint(address to, uint256 amount) external override advanceEpoch {
+        OwnableStorage.onlyOwner();
+        uint256 shareAmount = amount / _tokensPerShare();
         super._mint(to, shareAmount);
     }
 
-    // DOCS: e.g. Interest Rate: 4%, 1 year has passed, this returns 0.96;
-    function tokensPerShare() public view returns (uint256) {
-        return (totalSupplyAtEpochStart() *
-            ((1 * 10 ** 18) - (block.timestamp - epochStart() * ratePerSecond())));
-    }
-
-    function _setInterestRate(uint256 _interestRate) internal advanceEpoch {
+    function setInterestRate(uint256 _rate) public advanceEpoch {
+        OwnableStorage.onlyOwner();
         DecayToken.Data storage store = DecayToken.load();
-        store.interestRate = _interestRate;
+        store.interestRate = _rate;
     }
 
-    function _isInitialized() internal view override returns (bool) {
-        return ERC20Storage.load().decimals != 0;
+    function totalSupply() public view virtual override(ERC20, IERC20) returns (uint256) {
+        uint256 totalShares = ERC20Storage.load().totalSupply;
+        return totalShares * _tokensPerShare();
     }
 
-    function allowance(
-        address owner,
-        address spender
-    ) public view virtual override returns (uint256) {
-        return tokensPerShare() / super.allowance(owner, spender);
+    function balanceOf(address owner) public view override(ERC20, IERC20) returns (uint256) {
+        return super.balanceOf(owner) / _tokensPerShare();
     }
 
-    function approve(address spender, uint256 amount) public virtual override returns (bool) {
-        uint256 amount = amount / tokensPerShare();
-        return super.approve(spender, amount);
+    function allowance(address owner, address spender)
+        public
+        view
+        virtual
+        override(ERC20, IERC20)
+        returns (uint256)
+    {
+        return _tokensPerShare() / super.allowance(owner, spender);
     }
 
-    function transfer(address to, uint256 amount) public virtual override returns (bool) {
-        uint256 amount = amount / tokensPerShare();
-        return super.transfer(to, amount);
+    function approve(address spender, uint256 amount)
+        public
+        virtual
+        override(ERC20, IERC20)
+        returns (bool)
+    {
+        return super.approve(spender, amount / _tokensPerShare());
+    }
+
+    function transfer(address to, uint256 amount)
+        public
+        virtual
+        override(ERC20, IERC20)
+        returns (bool)
+    {
+        return super.transfer(to, amount / _tokensPerShare());
     }
 
     function transferFrom(
         address from,
         address to,
         uint256 amount
-    ) external virtual override returns (bool) {
-        uint256 amount = amount / tokensPerShare();
-        return super.transferFrom(from, to, amount);
+    ) external virtual override(ERC20, IERC20) returns (bool) {
+        return super._transferFrom(from, to, amount / _tokensPerShare());
+    }
+
+    function setAllowance(
+        address from,
+        address spender,
+        uint256 amount
+    ) external override {
+        uint256 shareAmount = amount / _tokensPerShare();
+        ERC20Storage.load().allowance[from][spender] = shareAmount;
+    }
+
+    function interestRate() public view returns (uint256) {
+        return DecayToken.load().interestRate;
+    }
+
+    function _isInitialized() internal view override returns (bool) {
+        return ERC20Storage.load().decimals != 0;
+    }
+
+    function _epochStart() internal view returns (uint256) {
+        return DecayToken.load().epochStart;
+    }
+
+    function _totalSupplyAtEpochStart() internal view returns (uint256) {
+        return DecayToken.load().totalSupplyAtEpochStart;
+    }
+
+    function _ratePerSecond() internal view returns (uint256) {
+        return interestRate() / 3153600000;
+    }
+
+    function _tokensPerShare() internal view returns (uint256) {
+        return (_totalSupplyAtEpochStart() *
+            ((1 * 10**18) - (block.timestamp - _epochStart() * _ratePerSecond())));
     }
 }

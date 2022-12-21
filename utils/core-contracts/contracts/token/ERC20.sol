@@ -45,7 +45,10 @@ contract ERC20 is IERC20 {
     /**
      * @inheritdoc IERC20
      */
-    function allowance(address owner, address spender) public view override returns (uint256) {
+    function allowance(
+        address owner,
+        address spender
+    ) public view virtual override returns (uint256) {
         return ERC20Storage.load().allowance[owner][spender];
     }
 
@@ -59,7 +62,7 @@ contract ERC20 is IERC20 {
     /**
      * @inheritdoc IERC20
      */
-    function approve(address spender, uint256 amount) public override returns (bool) {
+    function approve(address spender, uint256 amount) public override virtual returns (bool) {
         ERC20Storage.load().allowance[msg.sender][spender] = amount;
 
         emit Approval(msg.sender, spender, amount);
@@ -70,7 +73,7 @@ contract ERC20 is IERC20 {
     /**
      * @inheritdoc IERC20
      */
-    function transfer(address to, uint256 amount) public override returns (bool) {
+    function transfer(address to, uint256 amount) public override virtual returns (bool) {
         _transfer(msg.sender, to, amount);
 
         return true;
@@ -83,7 +86,15 @@ contract ERC20 is IERC20 {
         address from,
         address to,
         uint256 amount
-    ) external override returns (bool) {
+    ) external override virtual returns (bool) {
+        return _transferFrom(from, to, amount);
+    }
+
+    function _transferFrom(
+        address from,
+        address to,
+        uint256 amount
+    ) internal virtual returns (bool) {
         ERC20Storage.Data storage store = ERC20Storage.load();
 
         uint256 currentAllowance = store.allowance[from][msg.sender];
@@ -100,11 +111,7 @@ contract ERC20 is IERC20 {
         return true;
     }
 
-    function _transfer(
-        address from,
-        address to,
-        uint256 amount
-    ) internal virtual {
+    function _transfer(address from, address to, uint256 amount) internal virtual {
         ERC20Storage.Data storage store = ERC20Storage.load();
 
         uint256 accountBalance = store.balanceOf[from];

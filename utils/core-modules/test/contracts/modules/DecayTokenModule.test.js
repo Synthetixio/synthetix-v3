@@ -12,19 +12,20 @@ describe.only('DecayTokenModule', () => {
 
   let TokenModule;
 
-  let user1, user2;
+  let owner, user1;
 
   before('identify signers', async () => {
-    [user1, user2] = await ethers.getSigners();
+    [owner, user1] = await ethers.getSigners();
   });
 
   before('identify modules', async () => {
-    TokenModule = await ethers.getContractAt('TokenModule', proxyAddress());
+    TokenModule = await ethers.getContractAt('DecayTokenModule', proxyAddress());
   });
 
   before('set interest rate', async () => {
     //1% decay per year
-    const tx = await TokenModule.setInterestRate(1);
+    const tx = await TokenModule.connect(owner).setInterestRate(1);
+    await TokenModule.connect(owner).initialize('Synthetix Network Token', 'snx', 18);
     await tx.wait();
   });
 
