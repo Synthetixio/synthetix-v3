@@ -406,6 +406,29 @@ describe('SafeCast', () => {
       });
     });
 
+    describe('to160()', function () {
+      before('set the target cast function', async function () {
+        castFunction = 'uint256toUint160(uint256)';
+      });
+
+      it('produces expected results', async function () {
+        await assertCast(42);
+        await assertCast(exp(42, 16));
+      });
+
+      it('produces expected results on edge cases', async function () {
+        await assertCast(0);
+        await assertCast(maxUint(160));
+      });
+
+      it('throws on overflows', async function () {
+        await assertRevert(
+          SafeCast[castFunction](maxUint(160).add(1)),
+          'OverflowUint256ToUint160()'
+        );
+      });
+    });
+
     describe('to64()', function () {
       before('set the target cast function', async function () {
         castFunction = 'uint256toUint64(uint256)';
