@@ -1,6 +1,8 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import "@synthetixio/core-contracts/contracts/utils/ERC165Helper.sol";
+import "../interfaces/external/ICustomFeeCalculator.sol";
 import "../interfaces/IFeeConfigurationModule.sol";
 import "../storage/SpotMarketFactory.sol";
 
@@ -44,5 +46,28 @@ contract FeeConfigurationModule is IFeeConfigurationModule {
     ) external override {
         SpotMarketFactory.load().onlyMarketOwner(synthMarketId);
         Fee.setAtomicFixedFeeOverride(synthMarketId, transactor, fixedFeeAmount);
+    }
+
+    function setCustomFeeCalculator(
+        uint128 synthMarketId,
+        address customFeeCalculator
+    ) external override {
+        SpotMarketFactory.load().onlyMarketOwner(synthMarketId);
+
+        if (customFeeCalculator != address(0)) {
+            if (
+                !ERC165Helper.safeSupportsInterface(
+                    customFeeCalculator,
+                    type(ICustomFeeCalculator).interfaceId
+                )
+            ) {
+                revert IncorrectCustomFeeCalculatorInterface(customFeeCalculator);
+            }
+        }
+
+        Fee.Data storage fee = Fee.load(synthMarketId);
+        fee.customFeeCalculator = customFeeCalculator;
+
+        emit MarketCustomFeeCalculatorSet(synthMarketId, customFeeCalculator);
     }
 }

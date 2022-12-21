@@ -5,6 +5,7 @@ import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import "@synthetixio/main/contracts/interfaces/IMarketCollateralModule.sol";
 import "@synthetixio/main/contracts/interfaces/IMarketManagerModule.sol";
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+import "../interfaces/external/ICustomFeeCalculator.sol";
 import "../utils/SynthUtil.sol";
 import "../storage/SpotMarketFactory.sol";
 import "./Price.sol";
@@ -26,6 +27,7 @@ library Fee {
         uint utilizationFeeRate; // in bips, applied on buy and async buy
         uint wrapFixedFee;
         uint unwrapFixedFee;
+        address customFeeCalcuator;
     }
 
     function load(uint128 marketId) internal pure returns (Data storage store) {
@@ -40,6 +42,7 @@ library Fee {
         address transactor,
         uint fixedFee
     ) internal {
+        SpotMarketFactory.load().onlyMarketOwner(marketId);
         load(marketId).atomicFixedFeeOverrides[transactor] = fixedFee;
     }
 
@@ -47,26 +50,29 @@ library Fee {
         uint128 marketId,
         address transactor,
         uint256 usdAmount,
-        SpotMarketFactory.TransactionType TransactionType
+        SpotMarketFactory.TransactionType transactionType
     ) internal view returns (uint256 amountUsable, uint256 feesCollected) {
         Data storage self = load(marketId);
 
-        if (TransactionType == SpotMarketFactory.TransactionType.BUY) {
+        if (self.customFeeCalcuator != address(0)) {
+            (amountUsable, feesCollected) = ICustomFeeCalculator(self.customFeeCalcuator)
+                .calculateFees(marketId, transactionType, usdAmount, transactor);
+        } else if (transactionType == SpotMarketFactory.TransactionType.BUY) {
             (amountUsable, feesCollected) = calculateAtomicBuyFees(
                 self,
                 transactor,
                 marketId,
                 usdAmount
             );
-        } else if (TransactionType == SpotMarketFactory.TransactionType.SELL) {
+        } else if (transactionType == SpotMarketFactory.TransactionType.SELL) {
             (amountUsable, feesCollected) = calculateAtomicSellFees(self, transactor, usdAmount);
-        } else if (TransactionType == SpotMarketFactory.TransactionType.WRAP) {
+        } else if (transactionType == SpotMarketFactory.TransactionType.WRAP) {
             (amountUsable, feesCollected) = calculateWrapFees(self, usdAmount);
-        } else if (TransactionType == SpotMarketFactory.TransactionType.UNWRAP) {
+        } else if (transactionType == SpotMarketFactory.TransactionType.UNWRAP) {
             (amountUsable, feesCollected) = calculateUnwrapFees(self, usdAmount);
-        } else if (TransactionType == SpotMarketFactory.TransactionType.ASYNC_BUY) {
+        } else if (transactionType == SpotMarketFactory.TransactionType.ASYNC_BUY) {
             (amountUsable, feesCollected) = calculateAsyncBuyFees(self, marketId, usdAmount);
-        } else if (TransactionType == SpotMarketFactory.TransactionType.ASYNC_SELL) {
+        } else if (transactionType == SpotMarketFactory.TransactionType.ASYNC_SELL) {
             (amountUsable, feesCollected) = calculateAsyncSellFees(self, usdAmount);
         } else {
             amountUsable = usdAmount;

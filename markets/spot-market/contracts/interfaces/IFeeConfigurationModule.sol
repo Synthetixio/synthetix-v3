@@ -6,6 +6,9 @@ interface IFeeConfigurationModule {
     event MarketUtilizationFeesSet(uint indexed synthMarketId, uint utilizationFeeRate);
     event MarketSkewScaleSet(uint indexed marketId, uint skewScale);
     event AtomicFixedFeeSet(uint indexed synthMarketId, uint atomicFixedFee);
+    event MarketCustomFeeCalculatorSet(uint indexed synthMarketId, address customFeeCalculator);
+
+    error IncorrectCustomFeeCalculatorInterface(address customFeeCalculator);
 
     function setAtomicFixedFee(uint128 synthMarketId, uint atomicFixedFee) external;
 
