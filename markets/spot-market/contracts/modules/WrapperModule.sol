@@ -56,14 +56,12 @@ contract WrapperModule is IWrapperModule {
         // safe transfer?
         wrappingCollateral.transferFrom(msg.sender, address(this), wrapAmount);
 
-        Price.Data storage priceStore = Price.load(marketId);
-
-        uint256 wrapAmountInUsd = priceStore.synthUsdExchangeRate(
+        uint256 wrapAmountInUsd = Price.synthUsdExchangeRate(
             marketId,
             wrapAmount,
             SpotMarketFactory.TransactionType.WRAP
         );
-        (uint256 returnAmount, uint256 feesCollected) = Fee.calculateFees(
+        (uint256 returnAmount, int256 feesCollected) = Fee.calculateFees(
             marketId,
             msg.sender,
             wrapAmountInUsd,
@@ -71,7 +69,7 @@ contract WrapperModule is IWrapperModule {
         );
 
         // TODO: check int256
-        amountToMint = priceStore.usdSynthExchangeRate(
+        amountToMint = Price.usdSynthExchangeRate(
             marketId,
             returnAmount,
             SpotMarketFactory.TransactionType.WRAP
@@ -103,14 +101,12 @@ contract WrapperModule is IWrapperModule {
         uint256 allowance = synth.allowance(msg.sender, address(this));
         if (allowance < unwrapAmount) revert InsufficientAllowance(unwrapAmount, allowance);
 
-        Price.Data storage priceStore = Price.load(marketId);
-
-        uint256 unwrapAmountInUsd = priceStore.synthUsdExchangeRate(
+        uint256 unwrapAmountInUsd = Price.synthUsdExchangeRate(
             marketId,
             unwrapAmount,
             SpotMarketFactory.TransactionType.UNWRAP
         );
-        (uint256 returnAmount, uint256 feesCollected) = Fee.calculateFees(
+        (uint256 returnAmount, int256 feesCollected) = Fee.calculateFees(
             marketId,
             msg.sender,
             unwrapAmountInUsd,
@@ -118,7 +114,7 @@ contract WrapperModule is IWrapperModule {
         );
 
         // TODO: check int256
-        amountToWithdraw = priceStore.usdSynthExchangeRate(
+        amountToWithdraw = Price.usdSynthExchangeRate(
             marketId,
             returnAmount,
             SpotMarketFactory.TransactionType.UNWRAP

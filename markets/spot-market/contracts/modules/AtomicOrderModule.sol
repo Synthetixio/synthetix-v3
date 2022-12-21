@@ -22,7 +22,7 @@ contract AtomicOrderModule is IAtomicOrderModule {
         IMarketManagerModule(store.synthetix).depositMarketUsd(marketId, msg.sender, usdAmount);
 
         // Calculate fees
-        (uint256 amountUsable, uint256 feesCollected) = Fee.calculateFees(
+        (uint256 amountUsable, int256 feesCollected) = Fee.calculateFees(
             marketId,
             msg.sender,
             usdAmount,
@@ -30,7 +30,7 @@ contract AtomicOrderModule is IAtomicOrderModule {
         );
 
         // Exchange amount after fees into synths to buyer
-        uint256 synthAmount = Price.load(marketId).usdSynthExchangeRate(
+        uint256 synthAmount = Price.usdSynthExchangeRate(
             marketId,
             amountUsable,
             SpotMarketFactory.TransactionType.BUY
@@ -49,14 +49,14 @@ contract AtomicOrderModule is IAtomicOrderModule {
         SynthUtil.getToken(marketId).burn(msg.sender, synthAmount);
 
         // Exchange synths provided into dollar amount
-        uint256 usdAmount = Price.load(marketId).synthUsdExchangeRate(
+        uint256 usdAmount = Price.synthUsdExchangeRate(
             marketId,
             synthAmount,
             SpotMarketFactory.TransactionType.SELL
         );
 
         // Calculate fees
-        (uint256 returnAmount, uint256 feesCollected) = Fee.calculateFees(
+        (uint256 returnAmount, int256 feesCollected) = Fee.calculateFees(
             marketId,
             msg.sender,
             usdAmount,
