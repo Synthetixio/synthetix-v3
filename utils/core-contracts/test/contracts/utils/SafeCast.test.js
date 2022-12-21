@@ -85,6 +85,22 @@ describe('SafeCast', () => {
         await assertCast(maxUint(32));
       });
     });
+
+    describe('to56()', function () {
+      before('set the target cast function', async function () {
+        castFunction = 'uint32toUint56(uint32)';
+      });
+
+      it('produces expected results', async function () {
+        await assertCast(42);
+        await assertCast(exp(42, 8));
+      });
+
+      it('produces expected results on edge cases', async function () {
+        await assertCast(0);
+        await assertCast(maxUint(32));
+      });
+    });
   });
 
   describe('SafeCastI32', function () {
@@ -105,6 +121,53 @@ describe('SafeCast', () => {
 
       it('throws on overflows', async function () {
         await assertRevert(SafeCast[castFunction](pow(-1, 1)), 'OverflowInt32ToUint32()');
+      });
+    });
+  });
+
+  describe('SafeCastU56', function () {
+    describe('toInt()', function () {
+      before('set the target cast function', async function () {
+        castFunction = 'uint56toInt56(uint56)';
+      });
+
+      it('produces expected results', async function () {
+        await assertCast(42);
+        await assertCast(exp(42, 8));
+      });
+
+      it('produces expected results on edge cases', async function () {
+        await assertCast(0);
+        await assertCast(maxInt(56));
+      });
+
+      it('throws on overflows', async function () {
+        await assertRevert(SafeCast[castFunction](maxInt(56).add(1)), 'OverflowUint56ToInt56()');
+      });
+    });
+  });
+
+  describe('SafeCastI56', function () {
+    describe('to24()', function () {
+      before('set the target cast function', async function () {
+        castFunction = 'int56toInt24(int56)';
+      });
+
+      it('produces expected results', async function () {
+        await assertCast(42);
+        await assertCast(exp(42, 2));
+        await assertCast(exp(-42, 2));
+      });
+
+      it('produces expected results on edge cases', async function () {
+        await assertCast(0);
+        await assertCast(maxInt(24));
+        await assertCast(minInt(24));
+      });
+
+      it('throws on overflows', async function () {
+        await assertRevert(SafeCast[castFunction](minInt(24).sub(1)), 'OverflowInt56ToInt24()');
+        await assertRevert(SafeCast[castFunction](maxInt(24).add(1)), 'OverflowInt56ToInt24()');
       });
     });
   });

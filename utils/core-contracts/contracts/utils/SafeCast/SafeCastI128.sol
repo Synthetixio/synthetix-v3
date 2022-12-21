@@ -25,8 +25,7 @@ library SafeCastI128 {
     function to32(int128 x) internal pure returns (int32) {
         // ----------------<==============o==============>-----------------
         // ----------------xxxxxxxxxxxx<==o==>xxxxxxxxxxxx-----------------
-        uint max = uint32(type(int32).max);
-        if (x < -int(max) || x > int(max)) {
+        if (x < int(type(int32).min) || x > int(type(int32).max)) {
             revert OverflowInt128ToInt32();
         }
 
