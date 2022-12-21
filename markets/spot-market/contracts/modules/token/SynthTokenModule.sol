@@ -7,9 +7,6 @@ import "@synthetixio/core-modules/contracts/modules/DecayTokenModule.sol";
 import "../../interfaces/ISynthTokenModule.sol";
 
 // solhint-disable-next-line no-empty-blocks
-contract SynthTokenModule is ISynthTokenModule, DecayTokenModule {
-    function setInterestRate(uint256 newInterestRate) external {
-        OwnableStorage.onlyOwner();
-        _setInterestRate(newInterestRate);
-    }
+contract SynthTokenModule is DecayTokenModule {
+
 }
