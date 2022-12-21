@@ -6,6 +6,7 @@ pragma solidity ^0.8.0;
  */
 import "./SafeCast/SafeCastU32.sol";
 import "./SafeCast/SafeCastI32.sol";
+import "./SafeCast/SafeCastI24.sol";
 import "./SafeCast/SafeCastU56.sol";
 import "./SafeCast/SafeCastI56.sol";
 import "./SafeCast/SafeCastU64.sol";

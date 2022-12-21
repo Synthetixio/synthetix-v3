@@ -103,6 +103,24 @@ describe('SafeCast', () => {
     });
   });
 
+  describe('SafeCastI24', function () {
+    describe('to256()', function () {
+      before('set the target cast function', async function () {
+        castFunction = 'int24toInt256(int24)';
+      });
+
+      it('produces expected results', async function () {
+        await assertCast(42);
+        await assertCast(exp(42, 4));
+      });
+
+      it('produces expected results on edge cases', async function () {
+        await assertCast(0);
+        await assertCast(maxInt(24));
+      });
+    });
+  });
+
   describe('SafeCastI32', function () {
     describe('toUint()', function () {
       before('set the target cast function', async function () {
