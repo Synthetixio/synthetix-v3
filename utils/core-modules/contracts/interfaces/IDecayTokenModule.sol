@@ -42,9 +42,16 @@ interface IDecayTokenModule is IERC20 {
      * @param spender The address that is given allowance.
      * @param amount The amount of allowance being given.
      */
-    function setAllowance(
-        address from,
-        address spender,
-        uint256 amount
-    ) external;
+    function setAllowance(address from, address spender, uint256 amount) external;
+
+    function interestRate() external returns (uint256);
+
+    function epochStart() external returns (uint256);
+
+    function totalSupplyAtEpochStart() external returns (uint256);
+
+    function ratePerSecond() external returns (uint256);
+
+    // DOCS: e.g. Interest Rate: 4%, 1 year has passed, this returns 0.96;
+    function tokensPerShare() external returns (uint256);
 }
