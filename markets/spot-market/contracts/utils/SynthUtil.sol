@@ -16,4 +16,8 @@ library SynthUtil {
     function getSystemId(uint128 marketId) internal pure returns (bytes32) {
         return keccak256(abi.encodePacked(marketId));
     }
+
+    function getSynthTokenAddress(uint128 marketId) internal view returns (address) {
+        return AssociatedSystem.load(SynthUtil.getSystemId(marketId)).proxy;
+    }
 }
