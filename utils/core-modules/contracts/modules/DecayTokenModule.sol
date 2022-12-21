@@ -50,7 +50,7 @@ contract DecayTokenModule is IDecayTokenModule, ERC20, InitializableMixin {
         super._mint(to, amount);
     }
 
-    function setInterestRate(uint256 _rate) public advanceEpoch {
+    function setInterestRate(uint256 _rate) external advanceEpoch {
         OwnableStorage.onlyOwner();
         DecayToken.Data storage store = DecayToken.load();
         store.interestRate = _rate;
@@ -70,31 +70,24 @@ contract DecayTokenModule is IDecayTokenModule, ERC20, InitializableMixin {
         return super.balanceOf(owner) / _tokensPerShare();
     }
 
-    function allowance(address owner, address spender)
-        public
-        view
-        virtual
-        override(ERC20, IERC20)
-        returns (uint256)
-    {
+    function allowance(
+        address owner,
+        address spender
+    ) public view virtual override(ERC20, IERC20) returns (uint256) {
         return _tokensPerShare() / super.allowance(owner, spender);
     }
 
-    function approve(address spender, uint256 amount)
-        public
-        virtual
-        override(ERC20, IERC20)
-        returns (bool)
-    {
+    function approve(
+        address spender,
+        uint256 amount
+    ) public virtual override(ERC20, IERC20) returns (bool) {
         return super.approve(spender, _tokenToShare(amount));
     }
 
-    function transfer(address to, uint256 amount)
-        public
-        virtual
-        override(ERC20, IERC20)
-        returns (bool)
-    {
+    function transfer(
+        address to,
+        uint256 amount
+    ) public virtual override(ERC20, IERC20) returns (bool) {
         return super.transfer(to, _tokenToShare(amount));
     }
 
@@ -106,11 +99,7 @@ contract DecayTokenModule is IDecayTokenModule, ERC20, InitializableMixin {
         return super._transferFrom(from, to, _tokenToShare(amount));
     }
 
-    function setAllowance(
-        address from,
-        address spender,
-        uint256 amount
-    ) external override {
+    function setAllowance(address from, address spender, uint256 amount) external override {
         uint256 shareAmount = _tokenToShare(amount);
         ERC20Storage.load().allowance[from][spender] = shareAmount;
     }
