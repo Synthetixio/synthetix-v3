@@ -5,6 +5,8 @@ import "@synthetixio/core-contracts/contracts/token/ERC20.sol";
 import "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
 import "@synthetixio/core-contracts/contracts/initializable/InitializableMixin.sol";
 
+import "hardhat/console.sol";
+
 import "../interfaces/IDecayTokenModule.sol";
 import "../storage/DecayToken.sol";
 
@@ -38,14 +40,14 @@ contract DecayTokenModule is IDecayTokenModule, ERC20, InitializableMixin {
 
     function burn(address from, uint256 amount) external override advanceEpoch {
         OwnableStorage.onlyOwner();
-        uint256 shareAmount = amount / _tokensPerShare();
+        uint256 shareAmount = _tokenToShare(amount);
         super._burn(from, shareAmount);
     }
 
     function mint(address to, uint256 amount) external override advanceEpoch {
         OwnableStorage.onlyOwner();
-        uint256 shareAmount = amount / _tokensPerShare();
-        super._mint(to, shareAmount);
+        // uint256 shareAmount = _tokenToShare(amount);
+        super._mint(to, amount);
     }
 
     function setInterestRate(uint256 _rate) public advanceEpoch {
@@ -56,7 +58,12 @@ contract DecayTokenModule is IDecayTokenModule, ERC20, InitializableMixin {
 
     function totalSupply() public view virtual override(ERC20, IERC20) returns (uint256) {
         uint256 totalShares = ERC20Storage.load().totalSupply;
-        return totalShares * _tokensPerShare();
+        if (_totalSupplyAtEpochStart() == 0) {
+            return totalShares;
+        }
+        return
+            (_totalSupplyAtEpochStart() *
+                (100 - ((block.timestamp - _epochStart()) * _ratePerSecond()))) / 100;
     }
 
     function balanceOf(address owner) public view override(ERC20, IERC20) returns (uint256) {
@@ -79,7 +86,7 @@ contract DecayTokenModule is IDecayTokenModule, ERC20, InitializableMixin {
         override(ERC20, IERC20)
         returns (bool)
     {
-        return super.approve(spender, amount / _tokensPerShare());
+        return super.approve(spender, _tokenToShare(amount));
     }
 
     function transfer(address to, uint256 amount)
@@ -88,7 +95,7 @@ contract DecayTokenModule is IDecayTokenModule, ERC20, InitializableMixin {
         override(ERC20, IERC20)
         returns (bool)
     {
-        return super.transfer(to, amount / _tokensPerShare());
+        return super.transfer(to, _tokenToShare(amount));
     }
 
     function transferFrom(
@@ -96,7 +103,7 @@ contract DecayTokenModule is IDecayTokenModule, ERC20, InitializableMixin {
         address to,
         uint256 amount
     ) external virtual override(ERC20, IERC20) returns (bool) {
-        return super._transferFrom(from, to, amount / _tokensPerShare());
+        return super._transferFrom(from, to, _tokenToShare(amount));
     }
 
     function setAllowance(
@@ -104,12 +111,20 @@ contract DecayTokenModule is IDecayTokenModule, ERC20, InitializableMixin {
         address spender,
         uint256 amount
     ) external override {
-        uint256 shareAmount = amount / _tokensPerShare();
+        uint256 shareAmount = _tokenToShare(amount);
         ERC20Storage.load().allowance[from][spender] = shareAmount;
+    }
+
+    function tokensPerShare() public view virtual returns (uint256) {
+        return _tokensPerShare();
     }
 
     function interestRate() public view returns (uint256) {
         return DecayToken.load().interestRate;
+    }
+
+    function totalSupplyAtEpochStart() public view returns (uint256) {
+        return _totalSupplyAtEpochStart();
     }
 
     function _isInitialized() internal view override returns (bool) {
@@ -125,11 +140,20 @@ contract DecayTokenModule is IDecayTokenModule, ERC20, InitializableMixin {
     }
 
     function _ratePerSecond() internal view returns (uint256) {
-        return interestRate() / 3153600000;
+        return interestRate() / 31536000;
     }
 
     function _tokensPerShare() internal view returns (uint256) {
-        return (_totalSupplyAtEpochStart() *
-            ((1 * 10**18) - (block.timestamp - _epochStart() * _ratePerSecond())));
+        if (_totalSupplyAtEpochStart() == 0) {
+            return 1;
+        }
+
+        uint256 totalShares = ERC20Storage.load().totalSupply;
+        return totalSupply() / totalShares;
+    }
+
+    function _tokenToShare(uint256 amount) internal view returns (uint256) {
+        uint256 tokenPerShare = _tokensPerShare();
+        return (tokenPerShare > 0 ? amount / tokenPerShare : amount);
     }
 }

@@ -36,5 +36,5 @@ exports.bootstrap = function bootstrap(initializer = () => {}, customDeployOptio
   const proxyAddress = () => result.contracts.Proxy.deployedAddress;
   const routerAddress = () => result.contracts.Router.deployedAddress;
 
-  return { proxyAddress, routerAddress };
+  return { proxyAddress, routerAddress, provider: () => hre.ethers.provider };
 };

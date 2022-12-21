@@ -51,4 +51,8 @@ interface IDecayTokenModule is IERC20 {
     function setInterestRate(uint256 _rate) external;
 
     function interestRate() external returns (uint256);
+
+    function tokensPerShare() external returns (uint256);
+
+    function totalSupplyAtEpochStart() external returns (uint256);
 }
