@@ -66,7 +66,8 @@ library NodeDefinition {
         CHAINLINK,
         PYTH,
         PriceDeviationCircuitBreaker,
-        UNISWAP
+        UNISWAP,
+        StalenessFallbackReducer
     }
     struct Data {
         bytes32[] parents;
