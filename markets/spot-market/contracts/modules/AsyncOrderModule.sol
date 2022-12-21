@@ -30,7 +30,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
     )
         external
         override
-        returns (uint128 asyncOrderId, AsyncOrder.AsyncOrderClaim memory asyncOrderClaim)
+        returns (uint128 asyncOrderId, AsyncOrderClaim.Data memory asyncOrderClaim)
     {
         SpotMarketFactory.Data storage store = SpotMarketFactory.load();
 
@@ -45,7 +45,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
         store.usdToken.transferFrom(msg.sender, address(this), usdAmount);
 
         // Calculate fees
-        (uint256 amountUsable, int256 feesQuoted) = Fee.calculateFees(
+        (uint256 amountUsable, ) = Fee.calculateFees(
             marketId,
             msg.sender,
             usdAmount,
@@ -69,9 +69,8 @@ contract AsyncOrderModule is IAsyncOrderModule {
         asyncOrderClaim.orderType = SpotMarketFactory.TransactionType.ASYNC_BUY;
         asyncOrderClaim.blockNumber = block.number;
         asyncOrderClaim.timestamp = block.timestamp;
-        asyncOrderClaim.traderAmountEscrowed = usdAmount;
-        asyncOrderClaim.systemAmountEscrowed = amountSynth;
-        asyncOrderClaim.feesQuoted = feesQuoted;
+        asyncOrderClaim.synthAmountEscrowed = amountSynth;
+        asyncOrderClaim.usdAmountEscrowed = usdAmount;
 
         // Store order data
         AsyncOrder.create(marketId, asyncOrderId, asyncOrderClaim);
@@ -86,7 +85,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
     )
         external
         override
-        returns (uint128 asyncOrderId, AsyncOrder.AsyncOrderClaim memory asyncOrderClaim)
+        returns (uint128 asyncOrderId, AsyncOrderClaim.Data memory asyncOrderClaim)
     {
         SpotMarketFactory.Data storage store = SpotMarketFactory.load();
 
@@ -101,18 +100,18 @@ contract AsyncOrderModule is IAsyncOrderModule {
         SynthUtil.transferIntoEscrow(marketId, msg.sender, synthAmount);
 
         // Get estimated exchange amount
-        uint256 traderAmountEscrowedUsd = Price.usdSynthExchangeRate(
+        uint256 synthAmountEscrowedUsd = Price.usdSynthExchangeRate(
             marketId,
             synthAmount,
             SpotMarketFactory.TransactionType.ASYNC_SELL
         );
 
         // Calculate fees
-        // TODO: use `amountUsable` instead of `traderAmountEscrowedUsd`?
+        // TODO: use `amountUsable` instead of `synthAmountEscrowedUsd`?
         (, int256 feesQuoted) = Fee.calculateFees(
             marketId,
             msg.sender,
-            traderAmountEscrowedUsd,
+            synthAmountEscrowedUsd,
             SpotMarketFactory.TransactionType.ASYNC_SELL
         );
 
@@ -120,7 +119,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
         IMarketManagerModule(store.synthetix).withdrawMarketUsd(
             marketId,
             address(this),
-            traderAmountEscrowedUsd
+            synthAmountEscrowedUsd
         );
 
         // Issue an async order claim NFT
@@ -130,9 +129,8 @@ contract AsyncOrderModule is IAsyncOrderModule {
         asyncOrderClaim.orderType = SpotMarketFactory.TransactionType.ASYNC_BUY;
         asyncOrderClaim.blockNumber = block.number;
         asyncOrderClaim.timestamp = block.timestamp;
-        asyncOrderClaim.traderAmountEscrowed = synthAmount;
-        asyncOrderClaim.systemAmountEscrowed = traderAmountEscrowedUsd;
-        asyncOrderClaim.feesQuoted = feesQuoted;
+        asyncOrderClaim.synthAmountEscrowed = synthAmount;
+        asyncOrderClaim.usdAmountEscrowed = synthAmountEscrowedUsd;
 
         // Store order data
         AsyncOrder.create(marketId, asyncOrderId, asyncOrderClaim);
@@ -146,7 +144,7 @@ contract AsyncOrderModule is IAsyncOrderModule {
         uint128 asyncOrderId
     ) external override returns (uint finalOrderAmount) {
         AsyncOrder.Data storage marketAsyncOrderData = AsyncOrder.load(marketId);
-        AsyncOrder.AsyncOrderClaim memory asyncOrderClaim = marketAsyncOrderData.asyncOrderClaims[
+        AsyncOrderClaim.Data memory asyncOrderClaim = marketAsyncOrderData.asyncOrderClaims[
             asyncOrderId
         ];
 
@@ -204,15 +202,15 @@ contract AsyncOrderModule is IAsyncOrderModule {
     function _disburseBuyOrderEscrow(
         uint128 marketId,
         uint128 asyncOrderId,
-        AsyncOrder.AsyncOrderClaim memory asyncOrderClaim
+        AsyncOrderClaim.Data memory asyncOrderClaim
     ) private returns (uint finalSynthAmount) {
         SpotMarketFactory.Data storage store = SpotMarketFactory.load();
 
         // Calculate fees
-        (uint256 amountUsable, int256 feesQuoted) = Fee.calculateFees(
+        (uint256 amountUsable, ) = Fee.calculateFees(
             marketId,
             AsyncOrderClaimTokenUtil.getNft(marketId).ownerOf(asyncOrderId),
-            asyncOrderClaim.traderAmountEscrowed,
+            asyncOrderClaim.usdAmountEscrowed,
             SpotMarketFactory.TransactionType.ASYNC_BUY
         );
 
@@ -224,26 +222,26 @@ contract AsyncOrderModule is IAsyncOrderModule {
         );
 
         // Deposit USD
-        store.usdToken.approve(address(this), asyncOrderClaim.traderAmountEscrowed);
+        store.usdToken.approve(address(this), asyncOrderClaim.usdAmountEscrowed);
         IMarketManagerModule(store.synthetix).depositMarketUsd(
             marketId,
             address(this),
-            asyncOrderClaim.traderAmountEscrowed
+            asyncOrderClaim.usdAmountEscrowed
         );
 
         // Mint additional synths into escrow if necessary
-        if (finalSynthAmount > asyncOrderClaim.traderAmountEscrowed) {
+        if (finalSynthAmount > asyncOrderClaim.synthAmountEscrowed) {
             SynthUtil.mintToEscrow(
                 marketId,
-                finalSynthAmount - asyncOrderClaim.traderAmountEscrowed
+                finalSynthAmount - asyncOrderClaim.synthAmountEscrowed
             );
         }
 
         // Burn additional synths in escrow if necessary
-        if (finalSynthAmount < asyncOrderClaim.traderAmountEscrowed) {
+        if (finalSynthAmount < asyncOrderClaim.synthAmountEscrowed) {
             SynthUtil.burnFromEscrow(
                 marketId,
-                asyncOrderClaim.traderAmountEscrowed - finalSynthAmount
+                asyncOrderClaim.synthAmountEscrowed - finalSynthAmount
             );
         }
 
@@ -258,14 +256,14 @@ contract AsyncOrderModule is IAsyncOrderModule {
     function _disburseSellOrderEscrow(
         uint128 marketId,
         uint128 asyncOrderId,
-        AsyncOrder.AsyncOrderClaim memory asyncOrderClaim
+        AsyncOrderClaim.Data memory asyncOrderClaim
     ) private returns (uint finalUsdAmount) {
         SpotMarketFactory.Data storage store = SpotMarketFactory.load();
 
         // Get the amount of usd worth the amount of synths provided
-        uint256 traderAmountEscrowedUsd = Price.usdSynthExchangeRate(
+        uint256 synthAmountEscrowedUsd = Price.usdSynthExchangeRate(
             marketId,
-            asyncOrderClaim.traderAmountEscrowed,
+            asyncOrderClaim.synthAmountEscrowed,
             SpotMarketFactory.TransactionType.ASYNC_SELL
         );
 
@@ -273,33 +271,33 @@ contract AsyncOrderModule is IAsyncOrderModule {
         (finalUsdAmount, ) = Fee.calculateFees(
             marketId,
             AsyncOrderClaimTokenUtil.getNft(marketId).ownerOf(asyncOrderId),
-            traderAmountEscrowedUsd,
+            synthAmountEscrowedUsd,
             SpotMarketFactory.TransactionType.ASYNC_SELL
         );
 
         // Burn Synths
-        SynthUtil.burnFromEscrow(marketId, asyncOrderClaim.traderAmountEscrowed);
+        SynthUtil.burnFromEscrow(marketId, asyncOrderClaim.synthAmountEscrowed);
 
         // Withdraw more USD if necessary
         // TODO: Special revert if withdrawMarketUsd will revert due to insufficient credit?
-        if (finalUsdAmount > asyncOrderClaim.traderAmountEscrowed) {
+        if (finalUsdAmount > asyncOrderClaim.synthAmountEscrowed) {
             IMarketManagerModule(store.synthetix).withdrawMarketUsd(
                 marketId,
                 address(this),
-                finalUsdAmount - asyncOrderClaim.traderAmountEscrowed
+                finalUsdAmount - asyncOrderClaim.synthAmountEscrowed
             );
         }
 
         // Deposit extra USD in escrow if necessary
-        if (finalUsdAmount < asyncOrderClaim.traderAmountEscrowed) {
+        if (finalUsdAmount < asyncOrderClaim.synthAmountEscrowed) {
             store.usdToken.approve(
                 address(this),
-                asyncOrderClaim.traderAmountEscrowed - finalUsdAmount
+                asyncOrderClaim.synthAmountEscrowed - finalUsdAmount
             );
             IMarketManagerModule(store.synthetix).depositMarketUsd(
                 marketId,
                 address(this),
-                asyncOrderClaim.traderAmountEscrowed - finalUsdAmount
+                asyncOrderClaim.synthAmountEscrowed - finalUsdAmount
             );
         }
 
@@ -312,9 +310,9 @@ contract AsyncOrderModule is IAsyncOrderModule {
     }
 
     function cancelOrder(uint128 marketId, uint128 asyncOrderId) external override {
-        AsyncOrder.AsyncOrderClaim memory asyncOrderClaim = AsyncOrder
-            .load(marketId)
-            .asyncOrderClaims[asyncOrderId];
+        AsyncOrderClaim.Data memory asyncOrderClaim = AsyncOrder.load(marketId).asyncOrderClaims[
+            asyncOrderId
+        ];
 
         // Prevent cancellation if this is invoked by someone other than the claimant and the confirmation window hasn't passed
         if (
@@ -349,45 +347,62 @@ contract AsyncOrderModule is IAsyncOrderModule {
     function _returnBuyOrderEscrow(
         uint128 marketId,
         uint128 asyncOrderId,
-        AsyncOrder.AsyncOrderClaim memory asyncOrderClaim
+        AsyncOrderClaim.Data memory asyncOrderClaim
     ) private {
         SpotMarketFactory.Data storage store = SpotMarketFactory.load();
 
-        // fees should not be negative when buying
-        uint feesQuotedUint = asyncOrderClaim.feesQuoted.toUint();
-        // return amount is amount minus the fees
-        uint returnAmount = asyncOrderClaim.traderAmountEscrowed - feesQuotedUint;
+        (uint returnAmountUsd, int finalFees) = Fee.calculateFees(
+            marketId,
+            AsyncOrderClaimTokenUtil.getNft(marketId).ownerOf(asyncOrderId),
+            asyncOrderClaim.usdAmountEscrowed,
+            SpotMarketFactory.TransactionType.ASYNC_BUY
+        );
 
         // Return the USD provided, minus the quoted fees
         store.usdToken.transferFrom(
             address(this),
             AsyncOrderClaimTokenUtil.getNft(marketId).ownerOf(asyncOrderId),
-            returnAmount
+            returnAmountUsd
         );
 
         // Burn the synths escrowed
-        SynthUtil.burnFromEscrow(marketId, asyncOrderClaim.systemAmountEscrowed);
+        SynthUtil.burnFromEscrow(marketId, asyncOrderClaim.synthAmountEscrowed);
 
+        // fees should not be negative when buying
+        uint finalFeesUint = finalFees.toUint();
         // Deposit the quoted fees
-        store.usdToken.approve(address(this), feesQuotedUint);
+        store.usdToken.approve(address(this), finalFeesUint);
         IMarketManagerModule(store.synthetix).depositMarketUsd(
             marketId,
             address(this),
-            feesQuotedUint
+            finalFeesUint
         );
     }
 
     function _returnSellOrderEscrow(
         uint128 marketId,
         uint128 asyncOrderId,
-        AsyncOrder.AsyncOrderClaim memory asyncOrderClaim
+        AsyncOrderClaim.Data memory asyncOrderClaim
     ) private {
         SpotMarketFactory.Data storage store = SpotMarketFactory.load();
 
-        uint feesQuotedUint = asyncOrderClaim.feesQuoted > 0
-            ? asyncOrderClaim.feesQuoted.toUint()
-            : 0;
-        uint transferableAmount = asyncOrderClaim.traderAmountEscrowed - feesQuotedUint;
+        (, int finalFees) = Fee.calculateFees(
+            marketId,
+            AsyncOrderClaimTokenUtil.getNft(marketId).ownerOf(asyncOrderId),
+            asyncOrderClaim.usdAmountEscrowed,
+            SpotMarketFactory.TransactionType.ASYNC_BUY
+        );
+
+        // TODO: should there be additional fees applied if the fee amount is negative so seller
+        // isn't getting free call option?
+        uint finalFeesUint = finalFees > 0 ? finalFees.toUint() : 0;
+
+        uint finalFeesSynths = Price.usdSynthExchangeRate(
+            marketId,
+            finalFeesUint,
+            SpotMarketFactory.TransactionType.ASYNC_SELL
+        );
+        uint transferableAmount = asyncOrderClaim.usdAmountEscrowed - finalFeesSynths;
 
         // Return the synths provided, minus the quoted fees
         SynthUtil.transferOutOfEscrow(
@@ -397,16 +412,16 @@ contract AsyncOrderModule is IAsyncOrderModule {
         );
 
         // Deposit the escrowed USD
-        store.usdToken.approve(address(this), asyncOrderClaim.systemAmountEscrowed);
+        store.usdToken.approve(address(this), asyncOrderClaim.usdAmountEscrowed);
         IMarketManagerModule(store.synthetix).depositMarketUsd(
             marketId,
             address(this),
-            asyncOrderClaim.systemAmountEscrowed
+            asyncOrderClaim.usdAmountEscrowed
         );
 
-        if (feesQuotedUint > 0) {
+        if (finalFeesSynths > 0) {
             // Burn quoted fees of synths
-            SynthUtil.burnFromEscrow(marketId, feesQuotedUint);
+            SynthUtil.burnFromEscrow(marketId, finalFeesSynths);
         }
     }
 }
