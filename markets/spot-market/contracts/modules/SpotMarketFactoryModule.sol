@@ -11,6 +11,7 @@ import "@synthetixio/core-modules/contracts/interfaces/ITokenModule.sol";
 import "@synthetixio/oracle-manager/contracts/interfaces/IOracleManagerModule.sol";
 import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import "../utils/SynthUtil.sol";
+import "../utils/AsyncOrderClaimTokenUtil.sol";
 import "../storage/SpotMarketFactory.sol";
 import "../interfaces/ISpotMarketFactoryModule.sol";
 
@@ -65,6 +66,14 @@ contract SpotMarketFactoryModule is
             tokenSymbol,
             18,
             factory.initialSynthImplementation
+        );
+
+        _initOrUpgradeNft(
+            AsyncOrderClaimTokenUtil.getSystemId(synthMarketId),
+            tokenName,
+            tokenSymbol,
+            "",
+            factory.initialAsyncOrderClaimImplementation
         );
 
         factory.synthOwners[synthMarketId] = synthOwner;
