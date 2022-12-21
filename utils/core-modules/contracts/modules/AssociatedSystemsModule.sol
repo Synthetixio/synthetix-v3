@@ -96,6 +96,20 @@ contract AssociatedSystemsModule is IAssociatedSystemsModule {
         _setAssociatedSystem(id, AssociatedSystem.KIND_ERC20, proxy, impl);
     }
 
+    function _upgradeNft(bytes32 id, address impl) internal {
+        AssociatedSystem.Data storage store = AssociatedSystem.load(id);
+        store.expectKind(AssociatedSystem.KIND_ERC721);
+
+        store.impl = impl;
+
+        address proxy = store.proxy;
+
+        // tell the associated proxy to upgrade to the new implementation
+        IUUPSImplementation(proxy).upgradeTo(impl);
+
+        _setAssociatedSystem(id, AssociatedSystem.KIND_ERC721, proxy, impl);
+    }
+
     function _initOrUpgradeToken(
         bytes32 id,
         string memory name,
@@ -129,14 +143,7 @@ contract AssociatedSystemsModule is IAssociatedSystemsModule {
         AssociatedSystem.Data storage store = AssociatedSystem.load(id);
 
         if (store.proxy != address(0)) {
-            store.expectKind(AssociatedSystem.KIND_ERC721);
-
-            address proxy = store.proxy;
-
-            // tell the associated proxy to upgrade to the new implementation
-            IUUPSImplementation(proxy).upgradeTo(impl);
-
-            _setAssociatedSystem(id, AssociatedSystem.KIND_ERC721, proxy, impl);
+            _upgradeNft(id, impl);
         } else {
             // create a new proxy and own it
             address proxy = address(new UUPSProxy(impl));

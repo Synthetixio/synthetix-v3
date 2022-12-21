@@ -25,7 +25,8 @@ interface ISpotMarketFactoryModule is IMarket {
         address snxAddress,
         address usdTokenAddress,
         address oracleManager,
-        address initialSynthImplementation
+        address initialSynthImplementation,
+        address initialAsyncOrderClaimImplementation
     ) external;
 
     function registerSynth(
@@ -37,4 +38,6 @@ interface ISpotMarketFactoryModule is IMarket {
     function updatePriceData(uint128 synthMarketId, bytes32 buyFeedId, bytes32 sellFeedId) external;
 
     function upgradeSynthImpl(uint128 marketId, address synthImpl) external;
+
+    function upgradeAsyncOrderTokenImpl(uint128 marketId, address asyncOrderImpl) external;
 }
