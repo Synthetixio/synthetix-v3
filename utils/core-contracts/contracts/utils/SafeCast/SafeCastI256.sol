@@ -7,6 +7,7 @@ pragma solidity ^0.8.0;
 library SafeCastI256 {
     error OverflowInt256ToUint256();
     error OverflowInt256ToInt128();
+    error OverflowInt256ToInt24();
 
     function to128(int256 x) internal pure returns (int128) {
         // ----<==========================o===========================>----
@@ -16,6 +17,16 @@ library SafeCastI256 {
         }
 
         return int128(x);
+    }
+
+    function to24(int256 x) internal pure returns (int24) {
+        // ----<==========================o===========================>----
+        // ----xxxxxxxxxxxxxxxxxxxx<======o=======>xxxxxxxxxxxxxxxxxxxx----
+        if (x < int256(type(int24).min) || x > int256(type(int24).max)) {
+            revert OverflowInt256ToInt24();
+        }
+
+        return int24(x);
     }
 
     function toUint(int256 x) internal pure returns (uint256) {

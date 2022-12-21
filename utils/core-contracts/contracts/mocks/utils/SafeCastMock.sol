@@ -8,6 +8,11 @@ import "../../utils/SafeCast.sol";
 // are not retrieved if the functions are pure.
 contract SafeCastMock {
     // solc-ignore-next-line func-mutability
+    function int256toInt24(int256 x) external view returns (int24) {
+        return SafeCastI256.to24(x);
+    }
+
+    // solc-ignore-next-line func-mutability
     function uint160toUint256(uint160 x) external view returns (uint256) {
         return SafeCastU160.to256(x);
     }

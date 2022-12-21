@@ -44,8 +44,6 @@ class NumericCastChecker extends BaseChecker {
     if (!src.match(/int.*\(/g)) {
       return;
     }
-    console.log(src);
-    console.log(node.parent);
 
     this.warn(node, `Avoid low level numeric casts: ${src}`);
   }

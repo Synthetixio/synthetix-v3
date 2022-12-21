@@ -289,6 +289,30 @@ describe('SafeCast', () => {
       });
     });
 
+    describe('to24()', function () {
+      before('set the target cast function', async function () {
+        castFunction = 'int256toInt24(int256)';
+      });
+
+      it('produces expected results', async function () {
+        await assertCast(42);
+        await assertCast(exp(42, 4));
+        await assertCast(-42);
+        await assertCast(exp(-42, 4));
+      });
+
+      it('produces expected results on edge cases', async function () {
+        await assertCast(0);
+        await assertCast(maxInt(24));
+        await assertCast(minInt(24));
+      });
+
+      it('throws Vjon overflows', async function () {
+        await assertRevert(SafeCast[castFunction](minInt(24).sub(1)), 'OverflowInt256ToInt24()');
+        await assertRevert(SafeCast[castFunction](maxInt(24).add(1)), 'OverflowInt256ToInt24()');
+      });
+    });
+
     describe('toUint()', function () {
       before('set the target cast function', async function () {
         castFunction = 'int256toUint256(int256)';
