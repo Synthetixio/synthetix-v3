@@ -350,6 +350,12 @@ describe('SafeCast', () => {
         await assertRevert(SafeCast[castFunction](pow(-1, 1)), 'OverflowInt256ToUint256()');
       });
     });
+
+    describe('zero()', function () {
+      it('returns the expected result', async function () {
+        assertBn.equal(await SafeCast.zeroI256(), 0);
+      });
+    });
   });
 
   describe('SafeCastU128', function () {

@@ -38,4 +38,8 @@ library SafeCastI256 {
 
         return uint256(x);
     }
+
+    function zero() internal pure returns (int256) {
+        return int256(0);
+    }
 }
