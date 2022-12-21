@@ -24,6 +24,7 @@ contract CollateralModule is ICollateralModule {
     using Account for Account.Data;
     using AccountRBAC for AccountRBAC.Data;
     using Collateral for Collateral.Data;
+    using SafeCastU256 for uint256;
 
     /**
      * @inheritdoc ICollateralModule
@@ -125,7 +126,7 @@ contract CollateralModule is ICollateralModule {
             revert ArrayError.OutOfBounds();
         }
 
-        uint64 currentTime = uint64(block.timestamp);
+        uint64 currentTime = block.timestamp.to64();
 
         if (offset == 0 && items == 0) {
             items = locks.length;

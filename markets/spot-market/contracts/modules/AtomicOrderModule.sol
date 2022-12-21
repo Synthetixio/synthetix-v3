@@ -14,73 +14,58 @@ contract AtomicOrderModule is IAtomicOrderModule {
     using Price for Price.Data;
     using Fee for Fee.Data;
 
-    function buy(uint128 marketId, uint amountUsd) external override returns (uint) {
+    function buy(uint128 marketId, uint usdAmount) external override returns (uint) {
         SpotMarketFactory.Data storage store = SpotMarketFactory.load();
 
-        uint256 allowance = store.usdToken.allowance(msg.sender, address(this));
-        if (store.usdToken.balanceOf(msg.sender) < amountUsd) {
-            revert InsufficientFunds();
-        }
-        if (allowance < amountUsd) {
-            revert InsufficientAllowance(amountUsd, allowance);
-        }
+        // Deposit USD from buyer
+        store.usdToken.approve(address(this), usdAmount);
+        IMarketManagerModule(store.synthetix).depositMarketUsd(marketId, msg.sender, usdAmount);
 
-        store.usdToken.transferFrom(msg.sender, address(this), amountUsd);
-        (uint256 amountUsable, int256 feesCollected) = Fee.calculateFees(
+        // Calculate fees
+        (uint256 amountUsable, uint256 feesCollected) = Fee.calculateFees(
             marketId,
             msg.sender,
-            amountUsd,
-            Fee.TradeType.BUY
+            usdAmount,
+            SpotMarketFactory.TransactionType.BUY
         );
 
-        uint256 amountToMint = Price.load(marketId).usdSynthExchangeRate(
-            amountUsable,
-            Fee.TradeType.BUY
-        );
-        SynthUtil.getToken(marketId).mint(msg.sender, amountToMint);
-
-        // track fees
-        // could burn fees/deposit into market manager...
-        store.synthFeesCollected[marketId] += feesCollected;
-
-        store.usdToken.approve(address(this), amountUsable);
-        IMarketManagerModule(store.synthetix).depositMarketUsd(
+        // Exchange amount after fees into synths to buyer
+        uint256 synthAmount = Price.load(marketId).usdSynthExchangeRate(
             marketId,
-            address(this),
-            amountUsable
+            amountUsable,
+            SpotMarketFactory.TransactionType.BUY
         );
+        SynthUtil.getToken(marketId).mint(msg.sender, synthAmount);
 
-        emit SynthBought(marketId, amountToMint, feesCollected);
+        emit SynthBought(marketId, synthAmount, feesCollected);
 
-        return amountToMint;
+        return synthAmount;
     }
 
-    function sell(uint128 marketId, uint256 sellAmount) external override returns (uint256) {
+    function sell(uint128 marketId, uint256 synthAmount) external override returns (uint256) {
         SpotMarketFactory.Data storage store = SpotMarketFactory.load();
 
-        // TODO: check int256
-        uint256 amountToWithdraw = Price.load(marketId).synthUsdExchangeRate(
-            sellAmount,
-            Fee.TradeType.SELL
-        );
-        SynthUtil.getToken(marketId).burn(msg.sender, sellAmount);
+        // Burn synths provided
+        SynthUtil.getToken(marketId).burn(msg.sender, synthAmount);
 
-        IMarketManagerModule(store.synthetix).withdrawMarketUsd(
+        // Exchange synths provided into dollar amount
+        uint256 usdAmount = Price.load(marketId).synthUsdExchangeRate(
             marketId,
-            address(this),
-            amountToWithdraw
+            synthAmount,
+            SpotMarketFactory.TransactionType.SELL
         );
 
-        (uint256 returnAmount, int256 feesCollected) = Fee.calculateFees(
+        // Calculate fees
+        (uint256 returnAmount, uint256 feesCollected) = Fee.calculateFees(
             marketId,
             msg.sender,
-            amountToWithdraw,
-            Fee.TradeType.SELL
+            usdAmount,
+            SpotMarketFactory.TransactionType.SELL
         );
 
-        store.synthFeesCollected[marketId] += feesCollected;
+        // Withdraw USD amount after fees to seller
+        IMarketManagerModule(store.synthetix).withdrawMarketUsd(marketId, msg.sender, returnAmount);
 
-        store.usdToken.transfer(msg.sender, returnAmount);
         emit SynthSold(marketId, returnAmount, feesCollected);
 
         return returnAmount;

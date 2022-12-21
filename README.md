@@ -20,30 +20,31 @@ This is a monorepo with the following folder structure and packages:
 
 ```
 .
-├── markets               // Standalone projects that extend the core Synthetix protocol with markets.
-│   ├── legacy-market     // Market that connects Synthetix's v2 and v3 versions.
-│   ├── sample-markets    // Example market extensions.
-│   └── spot-market       // Market extension for spot synths.
+├── markets                      // Standalone projects that extend the core Synthetix protocol with markets.
+│   ├── legacy-market            // Market that connects Synthetix's v2 and v3 versions.
+│   ├── sample-markets           // Example market extensions.
+│   └── spot-market              // Market extension for spot synths.
 │
-├── protocol              // Core Synthetix protocol projects.
-│   ├── oracle-manager    // Composable oracle and price provider for teh core protocol.
-│   └── synthetix         // Core protocol (to be extended by markets).
+├── protocol                     // Core Synthetix protocol projects.
+│   ├── oracle-manager           // Composable oracle and price provider for teh core protocol.
+│   └── synthetix                // Core protocol (to be extended by markets).
 │
-└── utils                 // Utilities, plugins, tooling.
-    ├── common-config     // Common npm and hardhat configuration for multiple packages in the monorepo.
-    ├── core-contracts    // Standard contract implementations like ERC20, adapted for custom router storage.
-    ├── core-modules      // Modules intended to be reused between multiple router based projects.
-    ├── core-utils        // Simple Javascript/Typescript utilities that are used in other packages (e.g. test utils, etc).
-    ├── hardhat-router    // Hardhat plugin that merges multiple modules into a router contract.
-    ├── hardhat-storage   // Hardhat plugin used to detect storage collisions between proxy implementations.
-    └── sample-project    // Sample project based on hardhat-router and cannon.
+└── utils                        // Utilities, plugins, tooling.
+    ├── common-config            // Common npm and hardhat configuration for multiple packages in the monorepo.
+    ├── core-contracts           // Standard contract implementations like ERC20, adapted for custom router storage.
+    ├── core-modules             // Modules intended to be reused between multiple router based projects.
+    ├── core-utils               // Simple Javascript/Typescript utilities that are used in other packages (e.g. test utils, etc).
+    ├── hardhat-router           // Hardhat plugin that merges multiple modules into a router contract.
+    ├── hardhat-storage          // Hardhat plugin used to detect storage collisions between proxy implementations.
+    ├── sample-project           // Sample project based on hardhat-router and cannon.
+    └── solhint-plugin-numcast   // Solidity linter plugin to avoid low level numeric casts which can lead to silent overflows.
 ```
 
 ## Router Proxy
 
 All projects in this monorepo that involve contracts use a proxy architecture developed by Synthetix referred to as the "Router Proxy". It is basically a way to merge several contracts, which we call "modules", into a single implementation contract which is the router itself. This router is used as the implementation of the main proxy of the system.
 
-See the [Router README](https://github.com/Synthetixio/synthetix-v3/blob/main/utils/hardhat-router/README.md) for more details.
+See the [Router README](utils/hardhat-router/README.md) for more details.
 
 ## Deployments with Cannon
 

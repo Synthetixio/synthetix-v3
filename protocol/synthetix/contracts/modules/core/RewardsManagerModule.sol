@@ -21,7 +21,7 @@ contract RewardsManagerModule is IRewardsManagerModule {
     using SetUtil for SetUtil.Bytes32Set;
     using DecimalMath for uint256;
     using DecimalMath for int256;
-
+    using SafeCastU32 for uint32;
     using SafeCastU128 for uint128;
     using SafeCastU256 for uint256;
     using SafeCastI128 for int128;
@@ -198,8 +198,8 @@ contract RewardsManagerModule is IRewardsManagerModule {
         }
 
         return
-            int256(vault.rewards[rewardId].scheduledValueD18).toUint().divDecimal(
-                uint256(vault.rewards[rewardId].duration).divDecimal(totalShares)
+            vault.rewards[rewardId].scheduledValueD18.to256().toUint().divDecimal(
+                vault.rewards[rewardId].duration.to256().divDecimal(totalShares)
             );
     }
 

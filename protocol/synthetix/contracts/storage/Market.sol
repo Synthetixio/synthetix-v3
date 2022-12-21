@@ -229,7 +229,7 @@ library Market {
         Data storage self,
         uint128 poolId
     ) internal view returns (uint256) {
-        return self.poolsDebtDistribution.getActorShares(bytes32(uint256(poolId)));
+        return self.poolsDebtDistribution.getActorShares(poolId.toBytes32());
     }
 
     /**
@@ -272,7 +272,7 @@ library Market {
     ) internal returns (int256 debtChangeD18) {
         return
             self.pools[poolId].pendingDebtD18.toInt() +
-            self.poolsDebtDistribution.accumulateActor(bytes32(uint256(poolId)));
+            self.poolsDebtDistribution.accumulateActor(poolId.toBytes32());
     }
 
     /**
@@ -342,7 +342,7 @@ library Market {
         }
 
         int256 changedValueD18 = self.poolsDebtDistribution.setActorShares(
-            bytes32(uint256(poolId)),
+            poolId.toBytes32(),
             newCreditCapacityD18
         );
         debtChangeD18 = self.pools[poolId].pendingDebtD18.toInt() + changedValueD18;
@@ -468,23 +468,23 @@ library Market {
             // The pool will remain "detached" until the pool manager specifies a new poolsDebtDistribution.
             if (maxDistributedD18 > 0) {
                 require(
-                    self.poolsDebtDistribution.getActorShares(bytes32(uint256(edgePool.id))) > 0,
+                    self.poolsDebtDistribution.getActorShares(edgePool.id.toBytes32()) > 0,
                     "no shares before actor removal"
                 );
 
                 uint256 newPoolDebtD18 = self
                     .poolsDebtDistribution
-                    .setActorShares(bytes32(uint256(edgePool.id)), 0)
+                    .setActorShares(edgePool.id.toBytes32(), 0)
                     .toUint();
                 self.pools[edgePool.id].pendingDebtD18 += newPoolDebtD18.to128();
             } else {
                 require(
-                    self.poolsDebtDistribution.getActorShares(bytes32(uint256(edgePool.id))) == 0,
+                    self.poolsDebtDistribution.getActorShares(edgePool.id.toBytes32()) == 0,
                     "actor has shares before add"
                 );
 
                 self.poolsDebtDistribution.setActorShares(
-                    bytes32(uint256(edgePool.id)),
+                    edgePool.id.toBytes32(),
                     self.pools[edgePool.id].creditCapacityAmountD18
                 );
             }

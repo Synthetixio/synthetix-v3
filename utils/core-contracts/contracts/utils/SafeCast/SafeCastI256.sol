@@ -2,8 +2,7 @@
 pragma solidity ^0.8.0;
 
 /**
- * @title Utility that avoids silent overflow errors.
- *
+ * @title See SafeCast.sol.
  */
 library SafeCastI256 {
     error OverflowInt256ToUint256();

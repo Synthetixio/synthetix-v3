@@ -19,6 +19,9 @@ library RewardDistribution {
     using SafeCastU256 for uint256;
     using SafeCastI128 for int128;
     using SafeCastI256 for int256;
+    using SafeCastU64 for uint64;
+    using SafeCastU32 for uint32;
+    using SafeCastI32 for int32;
 
     struct Data {
         /**
@@ -128,7 +131,7 @@ library RewardDistribution {
         int256 valuePerShareChangeD18 = 0;
 
         // Cannot update an entry whose start date has not being reached.
-        if (curTime < int64(entry.start)) {
+        if (curTime < entry.start.toInt()) {
             return 0;
         }
 
@@ -136,7 +139,7 @@ library RewardDistribution {
         // consider the entry to be an instant distribution.
         if (entry.duration == 0 && entry.lastUpdate < entry.start) {
             // Simply update the value per share to the total value divided by the total shares.
-            valuePerShareChangeD18 = int256(entry.scheduledValueD18).divDecimal(
+            valuePerShareChangeD18 = entry.scheduledValueD18.to256().divDecimal(
                 totalSharesAmountD18.toInt()
             );
             // Else, if the last update was before the end of the duration.
@@ -145,17 +148,17 @@ library RewardDistribution {
             // If the last update is zero, then nothing was distributed,
             // otherwise the amount is proportional to the time elapsed since the start.
             int256 lastUpdateDistributedD18 = entry.lastUpdate < entry.start
-                ? int128(0)
-                : (entry.scheduledValueD18 * int64(entry.lastUpdate - entry.start)) /
-                    int32(entry.duration);
+                ? SafeCastI128.zero()
+                : (entry.scheduledValueD18 * (entry.lastUpdate - entry.start).toInt()) /
+                    entry.duration.toInt();
 
             // If the current time is beyond the duration, then consider all scheduled value to be distributed.
             // Else, the amount distributed is proportional to the elapsed time.
             int256 curUpdateDistributedD18 = entry.scheduledValueD18;
-            if (curTime < int64(entry.start + entry.duration)) {
+            if (curTime < (entry.start + entry.duration).toInt()) {
                 curUpdateDistributedD18 =
-                    (curUpdateDistributedD18 * (curTime - int64(entry.start))) /
-                    int32(entry.duration);
+                    (curUpdateDistributedD18 * (curTime - entry.start.toInt())) /
+                    entry.duration.toInt();
             }
 
             // The final value per share change is the difference between what is to be distributed and what was distributed.
@@ -163,7 +166,7 @@ library RewardDistribution {
                 .divDecimal(totalSharesAmountD18.toInt());
         }
 
-        entry.lastUpdate = uint32(int32(curTime));
+        entry.lastUpdate = curTime.to32().toUint();
 
         return valuePerShareChangeD18;
     }

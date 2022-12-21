@@ -105,9 +105,7 @@ library VaultEpoch {
         Data storage self,
         uint128 accountId
     ) internal returns (int256 currentDebtD18) {
-        bytes32 actorId = bytes32(uint256(accountId));
-
-        int256 newDebtD18 = self.accountsDebtDistribution.accumulateActor(actorId);
+        int256 newDebtD18 = self.accountsDebtDistribution.accumulateActor(accountId.toBytes32());
 
         currentDebtD18 = assignDebtToAccount(self, accountId, newDebtD18);
         self.unconsolidatedDebtD18 -= newDebtD18.to128();
@@ -125,7 +123,7 @@ library VaultEpoch {
         uint256 collateralAmountD18,
         uint256 leverageD18
     ) internal {
-        bytes32 actorId = bytes32(uint256(accountId));
+        bytes32 actorId = accountId.toBytes32();
 
         // Ensure account debt is consolidated before we do next things.
         consolidateAccountDebt(self, accountId);
@@ -152,6 +150,6 @@ library VaultEpoch {
         Data storage self,
         uint128 accountId
     ) internal view returns (uint256 amountD18) {
-        return self.collateralAmounts.get(bytes32(uint256(accountId)));
+        return self.collateralAmounts.get(accountId.toBytes32());
     }
 }

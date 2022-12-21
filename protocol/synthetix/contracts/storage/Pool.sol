@@ -25,7 +25,7 @@ library Pool {
     using DecimalMath for uint256;
     using DecimalMath for int256;
     using DecimalMath for int128;
-
+    using SafeCastAddress for address;
     using SafeCastU128 for uint128;
     using SafeCastU256 for uint256;
     using SafeCastI128 for int128;
@@ -215,7 +215,7 @@ library Pool {
 
         if (minLiquidityRatioD18 == 0) {
             // If minLiquidityRatioD18 is zero, then set limit to 100%.
-            return valuePerShareD18 + int256(DecimalMath.UNIT);
+            return valuePerShareD18 + DecimalMath.UNIT_INT;
         } else if (totalSharesD18 == 0) {
             // margin = credit / systemLimit, per share
             return valuePerShareD18;
@@ -269,7 +269,7 @@ library Pool {
         distributeDebtToVaults(self);
 
         // Transfer the debt change from the pool into the vault.
-        bytes32 actorId = bytes32(uint256(uint160(collateralType)));
+        bytes32 actorId = collateralType.toBytes32();
         self.vaults[collateralType].distributeDebtToAccounts(
             self.vaultsDebtDistribution.accumulateActor(actorId)
         );

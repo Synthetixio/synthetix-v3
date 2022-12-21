@@ -2,6 +2,7 @@
 pragma solidity ^0.8.0;
 
 import "@synthetixio/core-contracts/contracts/utils/SetUtil.sol";
+import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 
 import "./CollateralLock.sol";
 import "./Pool.sol";
@@ -12,6 +13,8 @@ import "./Pool.sol";
  * Each account will have one of these objects for each type of collateral it deposited in the system.
  */
 library Collateral {
+    using SafeCastU256 for uint256;
+
     struct Data {
         /**
          * @dev Indicates if the collateral is set, i.e. not empty.
@@ -60,7 +63,7 @@ library Collateral {
      * if their unlock date is in the future.
      */
     function getTotalLocked(Data storage self) internal view returns (uint) {
-        uint64 currentTime = uint64(block.timestamp);
+        uint64 currentTime = block.timestamp.to64();
 
         uint256 lockedD18;
         for (uint i = 0; i < self.locks.length; i++) {

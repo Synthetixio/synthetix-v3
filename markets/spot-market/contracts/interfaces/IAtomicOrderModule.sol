@@ -8,8 +8,8 @@ interface IAtomicOrderModule {
     error InsufficientFunds();
     error InsufficientAllowance(uint expected, uint current);
 
-    event SynthBought(uint indexed synthMarketId, uint synthReturned, int feesCollected);
-    event SynthSold(uint indexed synthMarketId, uint amountReturned, int feesCollected);
+    event SynthBought(uint indexed synthMarketId, uint synthReturned, uint feesCollected);
+    event SynthSold(uint indexed synthMarketId, uint amountReturned, uint feesCollected);
 
     function buy(uint128 synthMarketId, uint amountUsd) external returns (uint);
 
