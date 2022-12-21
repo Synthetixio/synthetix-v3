@@ -8,6 +8,7 @@ import "../interfaces/external/IAggregatorV3Interface.sol";
 
 library ChainlinkNodeLibrary {
     using SafeCastU256 for uint256;
+    using SafeCastI256 for int256;
 
     uint256 public constant PRECISION = 18;
 
