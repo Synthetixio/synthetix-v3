@@ -10,8 +10,8 @@ pragma solidity ^0.8.0;
 contract TokenModuleRouter {
     error UnknownSelector(bytes4 sel);
 
-    address private constant _CORE_MODULE = 0xD2a01a5FB7e635fc9C49F0b35261DB8429Ff6dA0;
-    address private constant _TOKEN_MODULE = 0xE4F6dcbDCbD7cC500C2eb8669477b4d4F7Cf34EF;
+    address private constant _CORE_MODULE = 0xE5E1f61d38e32a5BD663038bf669fACC66adF715;
+    address private constant _TOKEN_MODULE = 0x470fC56e8bDde2718d8525118c8a86636E82a4D9;
 
     fallback() external payable {
         _forward();

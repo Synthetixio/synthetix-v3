@@ -10,8 +10,8 @@ pragma solidity ^0.8.0;
 contract AssociatedSystemsModuleRouter {
     error UnknownSelector(bytes4 sel);
 
-    address private constant _CORE_MODULE = 0xD2a01a5FB7e635fc9C49F0b35261DB8429Ff6dA0;
-    address private constant _ASSOCIATED_SYSTEMS_MODULE = 0x66fF8BB2319cb637FCB60E0b3f1326f83Cfe0461;
+    address private constant _CORE_MODULE = 0xE5E1f61d38e32a5BD663038bf669fACC66adF715;
+    address private constant _ASSOCIATED_SYSTEMS_MODULE = 0x88140b2b7ebc54b2c8d356E65Ae515166645f13f;
 
     fallback() external payable {
         _forward();

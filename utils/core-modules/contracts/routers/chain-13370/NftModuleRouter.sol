@@ -10,8 +10,8 @@ pragma solidity ^0.8.0;
 contract NftModuleRouter {
     error UnknownSelector(bytes4 sel);
 
-    address private constant _CORE_MODULE = 0xD2a01a5FB7e635fc9C49F0b35261DB8429Ff6dA0;
-    address private constant _NFT_MODULE = 0x03b548207EE7A2DB3cE245A9360ae36E068AE54c;
+    address private constant _CORE_MODULE = 0xE5E1f61d38e32a5BD663038bf669fACC66adF715;
+    address private constant _NFT_MODULE = 0x3D2717f3c7C2b92c3AD8908bf6AfF5a2DEe6c057;
 
     fallback() external payable {
         _forward();

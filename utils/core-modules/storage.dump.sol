@@ -3,14 +3,14 @@ pragma solidity ^0.8.0;
 
 // @custom:artifact @synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol:OwnableStorage
 library OwnableStorage {
-    bytes32 private constant _slotOwnableStorage = keccak256(abi.encode("io.synthetix.core-contracts.Ownable"));
+    bytes32 private constant _SLOT_OWNABLE_STORAGE = keccak256(abi.encode("io.synthetix.core-contracts.Ownable"));
     struct Data {
         bool initialized;
         address owner;
         address nominatedOwner;
     }
     function load() internal pure returns (Data storage store) {
-        bytes32 s = _slotOwnableStorage;
+        bytes32 s = _SLOT_OWNABLE_STORAGE;
         assembly {
             store.slot := s
         }
@@ -19,13 +19,13 @@ library OwnableStorage {
 
 // @custom:artifact @synthetixio/core-contracts/contracts/proxy/ProxyStorage.sol:ProxyStorage
 contract ProxyStorage {
-    bytes32 private constant _slotProxyStorage = keccak256(abi.encode("io.synthetix.core-contracts.Proxy"));
+    bytes32 private constant _SLOT_PROXY_STORAGE = keccak256(abi.encode("io.synthetix.core-contracts.Proxy"));
     struct ProxyStore {
         address implementation;
         bool simulatingUpgrade;
     }
     function _proxyStore() internal pure returns (ProxyStore storage store) {
-        bytes32 s = _slotProxyStorage;
+        bytes32 s = _SLOT_PROXY_STORAGE;
         assembly {
             store.slot := s
         }
@@ -34,7 +34,7 @@ contract ProxyStorage {
 
 // @custom:artifact @synthetixio/core-contracts/contracts/token/ERC20Storage.sol:ERC20Storage
 library ERC20Storage {
-    bytes32 private constant _slotERC20Storage = keccak256(abi.encode("io.synthetix.core-contracts.ERC20"));
+    bytes32 private constant _SLOT_ERC20_STORAGE = keccak256(abi.encode("io.synthetix.core-contracts.ERC20"));
     struct Data {
         string name;
         string symbol;
@@ -44,7 +44,7 @@ library ERC20Storage {
         uint256 totalSupply;
     }
     function load() internal pure returns (Data storage store) {
-        bytes32 s = _slotERC20Storage;
+        bytes32 s = _SLOT_ERC20_STORAGE;
         assembly {
             store.slot := s
         }
@@ -53,7 +53,7 @@ library ERC20Storage {
 
 // @custom:artifact @synthetixio/core-contracts/contracts/token/ERC721EnumerableStorage.sol:ERC721EnumerableStorage
 library ERC721EnumerableStorage {
-    bytes32 private constant _slotERC721EnumerableStorage = keccak256(abi.encode("io.synthetix.core-contracts.ERC721Enumerable"));
+    bytes32 private constant _SLOT_ERC721_ENUMERABLE_STORAGE = keccak256(abi.encode("io.synthetix.core-contracts.ERC721Enumerable"));
     struct Data {
         mapping(uint256 => uint256) ownedTokensIndex;
         mapping(uint256 => uint256) allTokensIndex;
@@ -61,7 +61,7 @@ library ERC721EnumerableStorage {
         uint256[] allTokens;
     }
     function load() internal pure returns (Data storage store) {
-        bytes32 s = _slotERC721EnumerableStorage;
+        bytes32 s = _SLOT_ERC721_ENUMERABLE_STORAGE;
         assembly {
             store.slot := s
         }
@@ -70,7 +70,7 @@ library ERC721EnumerableStorage {
 
 // @custom:artifact @synthetixio/core-contracts/contracts/token/ERC721Storage.sol:ERC721Storage
 library ERC721Storage {
-    bytes32 private constant _slotERC721Storage = keccak256(abi.encode("io.synthetix.core-contracts.ERC721"));
+    bytes32 private constant _SLOT_ERC721_STORAGE = keccak256(abi.encode("io.synthetix.core-contracts.ERC721"));
     struct Data {
         string name;
         string symbol;
@@ -81,7 +81,7 @@ library ERC721Storage {
         mapping(address => mapping(address => bool)) operatorApprovals;
     }
     function load() internal pure returns (Data storage store) {
-        bytes32 s = _slotERC721Storage;
+        bytes32 s = _SLOT_ERC721_STORAGE;
         assembly {
             store.slot := s
         }
@@ -155,13 +155,13 @@ library Initialized {
 
 // @custom:artifact contracts/storage/SampleStorage.sol:SampleStorage
 library SampleStorage {
-    bytes32 private constant _slotSampleStorage = keccak256(abi.encode("io.synthetix.core-modules.Sample"));
+    bytes32 private constant _SLOT_SAMPLE_STORAGE = keccak256(abi.encode("io.synthetix.core-modules.Sample"));
     struct Data {
         uint someValue;
         uint protectedValue;
     }
     function load() internal pure returns (Data storage store) {
-        bytes32 s = _slotSampleStorage;
+        bytes32 s = _SLOT_SAMPLE_STORAGE;
         assembly {
             store.slot := s
         }

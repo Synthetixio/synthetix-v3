@@ -10,10 +10,10 @@ pragma solidity ^0.8.0;
 contract SampleRouter {
     error UnknownSelector(bytes4 sel);
 
-    address private constant _CORE_MODULE = 0xD2a01a5FB7e635fc9C49F0b35261DB8429Ff6dA0;
-    address private constant _SAMPLE_OWNED_MODULE = 0xcc5f8fC0EEC9C0aa720237E98A139902D169Ca76;
-    address private constant _SAMPLE_MODULE_A = 0x58a6708105a8bd1e5faB4627f2bE18d8896d7cfE;
-    address private constant _SAMPLE_MODULE_B = 0x50Fb8Cb9Ffa9d582B99658A6b60E594A855C98E8;
+    address private constant _CORE_MODULE = 0xE5E1f61d38e32a5BD663038bf669fACC66adF715;
+    address private constant _SAMPLE_OWNED_MODULE = 0x544e2284B08A3ecc0Cc377A4BB747a9FA9F03CBe;
+    address private constant _SAMPLE_MODULE_A = 0xA54E713A7FF6422F2320c081d058928462739fFB;
+    address private constant _SAMPLE_MODULE_B = 0x43fC92D732B88f32185E97B0B459eA9a31E3Ec6E;
 
     fallback() external payable {
         _forward();

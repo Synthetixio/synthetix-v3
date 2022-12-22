@@ -10,9 +10,9 @@ pragma solidity ^0.8.0;
 contract FeatureFlagModuleRouter {
     error UnknownSelector(bytes4 sel);
 
-    address private constant _CORE_MODULE = 0xD2a01a5FB7e635fc9C49F0b35261DB8429Ff6dA0;
-    address private constant _FEATURE_FLAG_MODULE = 0x3496468E60C7FEA7E0dDCC56A8d04b7E9AB988B0;
-    address private constant _SAMPLE_FEATURE_FLAG_MODULE = 0x9C43D40B31977e90f330262F17A506FfDb83F34A;
+    address private constant _CORE_MODULE = 0xE5E1f61d38e32a5BD663038bf669fACC66adF715;
+    address private constant _FEATURE_FLAG_MODULE = 0x5BFae26B7942e7A8eB0C3A0c00A872Eff3E65Ad1;
+    address private constant _SAMPLE_FEATURE_FLAG_MODULE = 0x6B4bA95DaF2C346799A07E7C91E0139d2ae49Ddd;
 
     fallback() external payable {
         _forward();
