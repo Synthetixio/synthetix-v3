@@ -6,6 +6,8 @@ const { bootstrap } = require('../../helpers/bootstrap.js');
 const initializer = require('@synthetixio/core-modules/test/helpers/initializer');
 const { fastForwardTo, getTime } = require('@synthetixio/core-utils/utils/hardhat/rpc');
 
+const parseEther = ethers.utils.parseEther;
+
 describe.only('DecayTokenModule', () => {
   const { proxyAddress, provider } = bootstrap(initializer, {
     modules: ['OwnerModule', 'UpgradeModule', 'DecayTokenModule'],
@@ -13,13 +15,15 @@ describe.only('DecayTokenModule', () => {
 
   let TokenModule;
 
-  let owner, user1, startTime;
+  let owner, user1, user2, startTime;
+  const decimal = 18;
 
   //1% decay per second
-  let interestRate = 31536000;
+  const interestRate = parseEther('315360');
+  const amount = parseEther('100');
 
   before('identify signers', async () => {
-    [owner, user1] = await ethers.getSigners();
+    [owner, user1, user2] = await ethers.getSigners();
   });
 
   before('identify modules', async () => {
@@ -28,14 +32,14 @@ describe.only('DecayTokenModule', () => {
 
   before('set interest rate', async () => {
     const tx = await TokenModule.connect(owner).setInterestRate(interestRate);
-    await TokenModule.connect(owner).initialize('Synthetix Network Token', 'snx', 18);
+    await TokenModule.connect(owner).initialize('Synthetix Network Token', 'snx', decimal);
     await tx.wait();
   });
 
   describe('When attempting to initialize it again', () => {
     it('reverts', async () => {
       await assertRevert(
-        TokenModule.initialize('Synthetix Network Token Updated', 'snx', 18),
+        TokenModule.initialize('Synthetix Network Token Updated', 'snx', decimal),
         'AlreadyInitialized()'
       );
     });
@@ -49,7 +53,7 @@ describe.only('DecayTokenModule', () => {
     it('the constructor arguments are set correctly', async () => {
       assert.equal(await TokenModule.name(), 'Synthetix Network Token');
       assert.equal(await TokenModule.symbol(), 'snx');
-      assertBn.equal(await TokenModule.decimals(), 18);
+      assertBn.equal(await TokenModule.decimals(), decimal);
       assertBn.equal(await TokenModule.interestRate(), interestRate);
     });
   });
@@ -58,21 +62,41 @@ describe.only('DecayTokenModule', () => {
     before(async () => {
       startTime = await getTime(provider());
     });
-    it('user 1 mints 100 token', async () => {
-      await TokenModule.connect(owner).mint(await user1.getAddress(), 100);
+    before('100 tokens is minted to user1', async () => {
+      await TokenModule.connect(owner).mint(await user1.getAddress(), amount);
     });
 
-    it('balanceOf1', async () => {
-      assertBn.equal(await TokenModule.balanceOf(await user1.getAddress()), 100);
+    describe('check values at timestamp 0', () => {
+      it('total supply is 100', async () => {
+        assertBn.equal(await TokenModule.totalSupply(), amount);
+      });
+
+      it('token per share is 100 / 100 = 1', async () => {
+        assertBn.equal(await TokenModule.tokensPerShare(), parseEther('1'));
+      });
+
+      it('user1 balance is 100 * 1 = 100', async () => {
+        assertBn.equal(await TokenModule.balanceOf(await user1.getAddress()), amount);
+      });
     });
 
-    it('totalSupply', async () => {
-      await fastForwardTo(startTime + 3, provider());
-      assertBn.equal(await TokenModule.totalSupply(), 98);
-    });
+    describe('check values at timestamp 2', () => {
+      before('100 tokens is minted to user1', async () => {
+        //sets next block timestamp
+        await fastForwardTo(startTime + 3, provider());
+      });
 
-    it('tokensPerShare', async () => {
-      assertBn.equal(await TokenModule.tokensPerShare(), 98);
+      it('totalSupply is 100 * (1 - (2 - 0) * 0.01) = 98', async () => {
+        assertBn.equal(await TokenModule.totalSupply(), parseEther('98'));
+      });
+
+      it('token per share is (98 / 100) = 0.98 ', async () => {
+        assertBn.equal(await TokenModule.tokensPerShare(), parseEther('0.98'));
+      });
+
+      it('user 1 balance is 100 * 0.98 = 98', async () => {
+        assertBn.equal(await TokenModule.balanceOf(await user1.getAddress()), parseEther('98'));
+      });
     });
   });
 });

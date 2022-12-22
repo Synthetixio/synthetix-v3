@@ -1,6 +1,7 @@
 //SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import "@synthetixio/core-contracts/contracts/utils/DecimalMath.sol";
 import "@synthetixio/core-contracts/contracts/token/ERC20.sol";
 import "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
 import "@synthetixio/core-contracts/contracts/initializable/InitializableMixin.sol";
@@ -11,6 +12,7 @@ import "../interfaces/IDecayTokenModule.sol";
 import "../storage/DecayToken.sol";
 
 contract DecayTokenModule is IDecayTokenModule, ERC20, InitializableMixin {
+    using DecimalMath for uint256;
     // TODO: Use SafeMath
 
     // DOCS: use existing super.totalSupply() for total shares, super.balanceOf() for account share balance, etc.
@@ -61,13 +63,15 @@ contract DecayTokenModule is IDecayTokenModule, ERC20, InitializableMixin {
         if (_totalSupplyAtEpochStart() == 0) {
             return totalShares;
         }
-        return
-            (_totalSupplyAtEpochStart() *
-                (100 - ((block.timestamp - _epochStart()) * _ratePerSecond()))) / 100;
+        return (
+            _totalSupplyAtEpochStart().mulDecimal(
+                ((10 ** 18) - ((block.timestamp - _epochStart()) * _ratePerSecond()))
+            )
+        );
     }
 
     function balanceOf(address owner) public view override(ERC20, IERC20) returns (uint256) {
-        return super.balanceOf(owner) / _tokensPerShare();
+        return super.balanceOf(owner).mulDecimal(_tokensPerShare());
     }
 
     function allowance(
@@ -134,15 +138,15 @@ contract DecayTokenModule is IDecayTokenModule, ERC20, InitializableMixin {
 
     function _tokensPerShare() internal view returns (uint256) {
         if (_totalSupplyAtEpochStart() == 0) {
-            return 1;
+            return DecimalMath.UNIT;
         }
 
         uint256 totalShares = ERC20Storage.load().totalSupply;
-        return totalSupply() / totalShares;
+        return totalSupply().divDecimal(totalShares);
     }
 
     function _tokenToShare(uint256 amount) internal view returns (uint256) {
         uint256 tokenPerShare = _tokensPerShare();
-        return (tokenPerShare > 0 ? amount / tokenPerShare : amount);
+        return (tokenPerShare > 0 ? amount.divDecimal(tokenPerShare) : amount);
     }
 }
