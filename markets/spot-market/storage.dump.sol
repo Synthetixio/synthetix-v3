@@ -174,26 +174,29 @@ library NodeDefinition {
 // @custom:artifact contracts/storage/AsyncOrder.sol:AsyncOrder
 library AsyncOrder {
     struct Data {
-        mapping(uint256 => AsyncOrderClaim) asyncOrderClaims;
+        mapping(uint256 => AsyncOrderClaim.Data) asyncOrderClaims;
         uint256 minimumOrderAge;
         uint256 settlementWindowDuration;
         uint256 livePriceSettlementWindowDuration;
         mapping(address => uint256) escrowedSynthShares;
         uint256 totalEscrowedSynthShares;
     }
-    struct AsyncOrderClaim {
-        SpotMarketFactory.TransactionType orderType;
-        uint256 traderAmountEscrowed;
-        uint256 systemAmountEscrowed;
-        uint256 feesQuoted;
-        uint256 blockNumber;
-        uint256 timestamp;
-    }
     function load(uint128 marketId) internal pure returns (Data storage store) {
         bytes32 s = keccak256(abi.encode("io.synthetix.spot-market.AsyncOrder", marketId));
         assembly {
             store.slot := s
         }
+    }
+}
+
+// @custom:artifact contracts/storage/AsyncOrderClaim.sol:AsyncOrderClaim
+library AsyncOrderClaim {
+    struct Data {
+        SpotMarketFactory.TransactionType orderType;
+        uint256 synthAmountEscrowed;
+        uint256 usdAmountEscrowed;
+        uint256 blockNumber;
+        uint256 timestamp;
     }
 }
 
@@ -204,8 +207,9 @@ library Fee {
         uint atomicFixedFee;
         uint asyncFixedFee;
         uint utilizationFeeRate;
-        uint wrapFixedFee;
-        uint unwrapFixedFee;
+        int wrapFixedFee;
+        int unwrapFixedFee;
+        uint skewScale;
     }
     function load(uint128 marketId) internal pure returns (Data storage store) {
         bytes32 s = keccak256(abi.encode("io.synthetix.spot-market.Fee", marketId));
@@ -236,11 +240,10 @@ library SpotMarketFactory {
     enum TransactionType {
         BUY,
         SELL,
-        WRAP,
-        UNWRAP,
         ASYNC_BUY,
         ASYNC_SELL,
-        REPORTED_DEBT
+        WRAP,
+        UNWRAP
     }
     struct Data {
         address usdToken;

@@ -90,9 +90,7 @@ contract SpotMarketFactoryModule is
     }
 
     function reportedDebt(uint128 marketId) external view override returns (uint256) {
-        uint256 price = Price.load(marketId).getCurrentPrice(
-            SpotMarketFactory.TransactionType.REPORTED_DEBT
-        );
+        uint256 price = Price.getCurrentPrice(marketId, SpotMarketFactory.TransactionType.BUY);
 
         return SynthUtil.getToken(marketId).totalSupply().mulDecimal(price);
     }
@@ -103,7 +101,7 @@ contract SpotMarketFactoryModule is
 
         uint totalBalance = SynthUtil.getToken(marketId).totalSupply();
         uint totalValue = totalBalance.mulDecimal(
-            Price.load(marketId).getCurrentPrice(SpotMarketFactory.TransactionType.REPORTED_DEBT)
+            Price.getCurrentPrice(marketId, SpotMarketFactory.TransactionType.BUY)
         );
         return delegatedCollateral > totalValue ? 0 : delegatedCollateral;
     }

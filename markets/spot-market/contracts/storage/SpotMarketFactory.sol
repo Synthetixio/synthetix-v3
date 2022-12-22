@@ -27,11 +27,10 @@ library SpotMarketFactory {
     enum TransactionType {
         BUY,
         SELL,
-        WRAP,
-        UNWRAP,
         ASYNC_BUY,
         ASYNC_SELL,
-        REPORTED_DEBT
+        WRAP,
+        UNWRAP
     }
 
     function load() internal pure returns (Data storage store) {
