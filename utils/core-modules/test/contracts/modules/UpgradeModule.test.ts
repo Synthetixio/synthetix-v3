@@ -1,20 +1,19 @@
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import assert from 'assert/strict';
 import { ethers } from 'ethers';
-import { CoreRouter__factory, UpgradeModule } from '../../../typechain-types';
+import { UpgradeModule } from '../../../typechain-types';
 import { bootstrap } from '../../bootstrap';
 
 describe('UpgradeModule', function () {
-  const { getContractBehindProxy, getSigners } = bootstrap({
+  const { getContractBehindProxy, getSigners, getContract } = bootstrap({
     implementation: 'CoreRouter',
   });
 
   let UpgradeModule: UpgradeModule;
-  let owner: ethers.Signer;
   let user: ethers.Signer;
 
   before('initialize', async function () {
-    [owner, user] = getSigners();
+    [, user] = getSigners();
     UpgradeModule = getContractBehindProxy('UpgradeModule');
   });
 
@@ -31,8 +30,7 @@ describe('UpgradeModule', function () {
     let NewImplementation: ethers.Contract;
 
     before('initialize new Router', async function () {
-      const factory = new CoreRouter__factory(owner);
-      NewImplementation = await factory.deploy();
+      NewImplementation = getContract('SampleRouter');
     });
 
     before('set a new implementation using the owner address', async function () {

@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import { findEvent } from '@synthetixio/core-utils/utils/ethers/events';
 import { ethers } from 'ethers';
+import hre from 'hardhat';
 import {
   AssociatedSystemsModule,
   NftModule,
@@ -23,15 +24,20 @@ describe('AssociatedSystemsModule', function () {
   let owner: ethers.Signer;
   let user: ethers.Signer;
 
+  const deployRouter = async (contractName: string) => {
+    const { chainId } = hre.network.config;
+    const fqName = `contracts/routers/chain-${chainId}/${contractName}.sol:${contractName}`;
+    const Factory = await hre.ethers.getContractFactory(fqName);
+    return Factory.deploy();
+  };
+
   const deployNftModule = async () => {
-    const Factory = new NftModuleRouter__factory(owner);
-    const Router = await Factory.deploy();
+    const Router = await deployRouter('NftModuleRouter');
     return getContract('NftModule', Router.address);
   };
 
   const deployTokenModule = async () => {
-    const Factory = new TokenModuleRouter__factory(owner);
-    const Router = await Factory.deploy();
+    const Router = await deployRouter('TokenModuleRouter');
     return getContract('TokenModule', Router.address);
   };
 

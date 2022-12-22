@@ -4,8 +4,7 @@
   "description": "Commmon contracts for Synthetix",
   "files": [
     "contracts",
-    "!contracts/Router.sol",
-    "!contracts/mocks",
+    "!contracts/routers",
     "!contracts/modules/mocks"
   ],
   "scripts": {
