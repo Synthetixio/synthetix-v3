@@ -9,7 +9,7 @@ const { snapshotCheckpoint } = require('../../utils/snapshot.js');
 
 const parseEther = ethers.utils.parseEther;
 
-describe.only('DecayTokenModule', () => {
+describe('DecayTokenModule', () => {
   const { proxyAddress, provider } = bootstrap(initializer, {
     modules: ['OwnerModule', 'UpgradeModule', 'DecayTokenModule'],
   });
@@ -207,6 +207,60 @@ describe.only('DecayTokenModule', () => {
       it('user 1 balance is 100 * 0.9702 = 97.02', async () => {
         assertBn.equal(await TokenModule.balanceOf(await user1.getAddress()), parseEther('97.02'));
       });
+    });
+  });
+
+  describe('transfer', async () => {
+    before(restore);
+    before(async () => {
+      startTime = await getTime(provider());
+    });
+    before('1000 tokens is minted to user1', async () => {
+      await TokenModule.connect(owner).mint(await user1.getAddress(), parseEther('1000'));
+    });
+
+    it('transfer 99 token from user1 to the owner at timestamp 10', async () => {
+      await fastForwardTo(startTime + 10, provider());
+      //advance 1 block
+      await TokenModule.connect(user1).transfer(await owner.getAddress(), parseEther('99'));
+    });
+
+    it('check owner balance', async () => {
+      assertBn.equal(await TokenModule.balanceOf(await owner.getAddress()), parseEther('99'));
+    });
+
+    it('check owner balance at timestamp 20', async () => {
+      await fastForwardTo(startTime + 21, provider());
+      assertBn.equal(await TokenModule.balanceOf(await owner.getAddress()), parseEther('98'));
+    });
+  });
+
+  describe('transferFrom', async () => {
+    before(restore);
+    before(async () => {
+      startTime = await getTime(provider());
+    });
+    before('1000 tokens is minted to user1', async () => {
+      await TokenModule.connect(owner).mint(await user1.getAddress(), parseEther('1000'));
+    });
+
+    it('user1 approves 100 tokens to be spent by the owner', async () => {
+      await TokenModule.connect(user1).approve(await owner.getAddress(), parseEther('100'));
+    });
+
+    it('check owner allowance for user1', async () => {
+      assertBn.equal(
+        await TokenModule.allowance(await user1.getAddress(), await owner.getAddress()),
+        parseEther('100')
+      );
+    });
+
+    it('owner transfer 100 tokens from user1', async () => {
+      await TokenModule.connect(owner).transferFrom(
+        await user1.getAddress(),
+        await owner.getAddress(),
+        parseEther('100')
+      );
     });
   });
 });

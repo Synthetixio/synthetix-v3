@@ -6,8 +6,6 @@ import "@synthetixio/core-contracts/contracts/token/ERC20.sol";
 import "@synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol";
 import "@synthetixio/core-contracts/contracts/initializable/InitializableMixin.sol";
 
-import "hardhat/console.sol";
-
 import "../interfaces/IDecayTokenModule.sol";
 import "../storage/DecayToken.sol";
 
@@ -85,21 +83,14 @@ contract DecayTokenModule is IDecayTokenModule, ERC20, InitializableMixin {
         address owner,
         address spender
     ) public view virtual override(ERC20, IERC20) returns (uint256) {
-        return _tokensPerShare() / super.allowance(owner, spender);
+        return super.allowance(owner, spender);
     }
 
     function approve(
         address spender,
         uint256 amount
     ) public virtual override(ERC20, IERC20) returns (bool) {
-        return super.approve(spender, _tokenToShare(amount));
-    }
-
-    function transfer(
-        address to,
-        uint256 amount
-    ) public virtual override(ERC20, IERC20) returns (bool) {
-        return super.transfer(to, _tokenToShare(amount));
+        return super.approve(spender, amount);
     }
 
     function transferFrom(
@@ -107,12 +98,18 @@ contract DecayTokenModule is IDecayTokenModule, ERC20, InitializableMixin {
         address to,
         uint256 amount
     ) external virtual override(ERC20, IERC20) returns (bool) {
-        return super._transferFrom(from, to, _tokenToShare(amount));
+        return super._transferFrom(from, to, _tokensPerShare().mulDecimal(amount));
     }
 
     function setAllowance(address from, address spender, uint256 amount) external override {
-        uint256 shareAmount = _tokenToShare(amount);
-        ERC20Storage.load().allowance[from][spender] = shareAmount;
+        ERC20Storage.load().allowance[from][spender] = amount;
+    }
+
+    function transfer(
+        address to,
+        uint256 amount
+    ) public virtual override(ERC20, IERC20) returns (bool) {
+        return super.transfer(to, _tokenToShare(amount));
     }
 
     function tokensPerShare() public view virtual returns (uint256) {
