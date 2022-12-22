@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.0;
+pragma solidity >=0.8.0;
 
 // @custom:artifact @synthetixio/core-contracts/contracts/ownership/OwnableStorage.sol:OwnableStorage
 library OwnableStorage {
@@ -64,7 +64,10 @@ library NodeDefinition {
         REDUCER,
         EXTERNAL,
         CHAINLINK,
-        PYTH
+        PYTH,
+        PriceDeviationCircuitBreaker,
+        UNISWAP,
+        StalenessFallbackReducer
     }
     struct Data {
         bytes32[] parents;
@@ -72,7 +75,7 @@ library NodeDefinition {
         bytes parameters;
     }
     function load(bytes32 id) internal pure returns (Data storage data) {
-        bytes32 s = keccak256(abi.encode("Node", id));
+        bytes32 s = keccak256(abi.encode("io.synthetix.oracle-manager.Node", id));
         assembly {
             data.slot := s
         }
@@ -93,4 +96,12 @@ library ReducerNodeLibrary {
         MEDIAN,
         RECENT
     }
+}
+
+// @custom:artifact contracts/utils/TickMath.sol:TickMath
+library TickMath {
+    int24 internal constant MIN_TICK = -887272;
+    int24 internal constant MAX_TICK = -MIN_TICK;
+    uint160 internal constant MIN_SQRT_RATIO = 4295128739;
+    uint160 internal constant MAX_SQRT_RATIO = 1461446703485210103287273052203988822378723970342;
 }

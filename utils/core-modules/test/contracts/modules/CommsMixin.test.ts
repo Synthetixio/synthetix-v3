@@ -1,20 +1,18 @@
-const { ethers } = hre;
-const assertBn = require('@synthetixio/core-utils/utils/assertions/assert-bignumber');
-const { default: assertRevert } = require('@synthetixio/core-utils/utils/assertions/assert-revert');
-const { printGasUsed } = require('@synthetixio/core-utils/utils/mocha/mocha-helpers');
-const { bootstrap } = require('../../helpers/bootstrap.js');
-const initializer = require('@synthetixio/core-modules/test/helpers/initializer');
+import assertBn from '@synthetixio/core-utils/utils/assertions/assert-bignumber';
+import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
+import { printGasUsed } from '@synthetixio/core-utils/utils/mocha/mocha-helpers';
+import { SampleModuleA, SampleModuleB } from '../../../typechain-types';
+import { bootstrap } from '../../bootstrap';
 
 describe('CommsMixin', () => {
-  const { proxyAddress } = bootstrap(initializer, {
-    modules: ['OwnerModule', 'UpgradeModule', 'SampleModuleA', 'SampleModuleB'],
-  });
+  const { getContractBehindProxy } = bootstrap({ implementation: 'SampleRouter' });
 
-  let SampleModuleA, SampleModuleB;
+  let SampleModuleA: SampleModuleA;
+  let SampleModuleB: SampleModuleB;
 
-  before('identify modules', async () => {
-    SampleModuleA = await ethers.getContractAt('SampleModuleA', proxyAddress());
-    SampleModuleB = await ethers.getContractAt('SampleModuleB', proxyAddress());
+  before('identify modules', () => {
+    SampleModuleA = getContractBehindProxy('SampleModuleA');
+    SampleModuleB = getContractBehindProxy('SampleModuleB');
   });
 
   describe('when writting to SampleNamespace.someValue', () => {
@@ -27,7 +25,7 @@ describe('CommsMixin', () => {
       const tx = await SampleModuleA.setSomeValue(42);
       const receipt = await tx.wait();
 
-      printGasUsed({ test: this, gasUsed: receipt.cumulativeGasUsed });
+      printGasUsed({ test: this, gasUsed: receipt.cumulativeGasUsed.toNumber() });
 
       assertBn.equal(await SampleModuleA.getSomeValue(), 42);
     });
@@ -36,7 +34,7 @@ describe('CommsMixin', () => {
       const tx = await SampleModuleB.setSomeValueOnSampleModuleA(1337);
       const receipt = await tx.wait();
 
-      printGasUsed({ test: this, gasUsed: receipt.cumulativeGasUsed });
+      printGasUsed({ test: this, gasUsed: receipt.cumulativeGasUsed.toNumber() });
 
       assertBn.equal(await SampleModuleA.getSomeValue(), 1337);
     });

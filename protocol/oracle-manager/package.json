@@ -16,11 +16,9 @@
   "author": "",
   "license": "MIT",
   "devDependencies": {
-    "@nomiclabs/hardhat-ethers": "2.1.1",
     "@synthetixio/common-config": "*",
     "@synthetixio/core-contracts": "*",
     "@synthetixio/core-modules": "*",
-    "@types/mocha": "9.1.1",
     "solidity-docgen": "0.6.0-beta.22"
   }
 }

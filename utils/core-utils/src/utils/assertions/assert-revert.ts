@@ -54,6 +54,9 @@ export default async function assertRevert(
   );
 }
 
+const HARDHAT_CUSTOM_PREFIX =
+  'VM Exception while processing transaction: reverted with custom error ';
+
 // Converts an error into a string, and handles edge cases.
 function _formatErrorMessage(error: { [k: string]: unknown }): string {
   // Custom error is found in the error message as
@@ -65,9 +68,14 @@ function _formatErrorMessage(error: { [k: string]: unknown }): string {
     return `${error.errorName}(${formattedErrorArgs})`;
   }
 
+  // Custom errors when using network Hardhat, no need to parse them.
+  if (error.error instanceof Error && error.error.message.startsWith(HARDHAT_CUSTOM_PREFIX)) {
+    return error.error.message.slice(HARDHAT_CUSTOM_PREFIX.length + 1, -1);
+  }
+
   // Custom error is found in the error message as
   // 'reverted with custom error ErrorName(1, "0xabc")' - no quotes in numeric values.
-  if (error.message && (error.message as string).includes('custom error')) {
+  if (typeof error.message === 'string' && error.message.includes('custom error')) {
     let msg = error.message as string;
 
     const regex = /\((.*?)\)/; // Match stuff within quotes.

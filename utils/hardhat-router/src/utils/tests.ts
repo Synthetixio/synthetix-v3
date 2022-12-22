@@ -28,19 +28,18 @@ export function coreBootstrap<Contracts>({ cannonfile = 'cannonfile.toml' }: Par
     const cmd = hre.network.name === 'cannon' ? 'build' : 'deploy';
 
     const generatedPath = path.resolve(hre.config.paths.tests, 'generated');
-    const deploymentsFolder = path.resolve(generatedPath, 'deployments');
     const typechainFolder = path.resolve(generatedPath, 'typechain');
+    const writeDeployments = path.resolve(generatedPath, 'deployments');
 
-    // Set deployments folder for "deploy" command
-    hre.config.paths.deployments = deploymentsFolder;
+    const cannonOpts =
+      cmd === 'build' ? { cannonfile } : { noVerify: true, overrideManifest: cannonfile };
 
     const cannonInfo = await hre.run(`cannon:${cmd}`, {
-      cannonfile, // build option to override cannonfile
-      overrideManifest: cannonfile, // deploy option to override cannonfile
-      writeDeployments: cmd === 'deploy' ? true : hre.config.paths.deployments, // deploy the cannon deployments
+      writeDeployments,
+      ...cannonOpts,
     });
 
-    const allFiles = glob(hre.config.paths.root, [`${deploymentsFolder}/*.json`]);
+    const allFiles = glob(hre.config.paths.root, [`${writeDeployments}/*.json`]);
 
     await runTypeChain({
       cwd: hre.config.paths.root,
@@ -71,13 +70,13 @@ export function coreBootstrap<Contracts>({ cannonfile = 'cannonfile.toml' }: Par
     return provider;
   }
 
-  function getContract(contractName: keyof Contracts) {
+  function getContract<T extends keyof Contracts>(contractName: T, address?: string) {
     if (!outputs) throw new Error('Node not initialized yet');
-    const contract = _getContractFromOutputs(contractName as string, outputs, provider);
+    const contract = _getContractFromOutputs(contractName as string, outputs, provider, address);
     const [owner] = Array.isArray(signers) ? signers : [];
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const Contract = owner ? contract.connect(owner as unknown as any) : contract;
-    return Contract as unknown as Contracts[typeof contractName];
+    return Contract as unknown as Contracts[T];
   }
 
   function createSnapshot() {
@@ -104,7 +103,8 @@ export function coreBootstrap<Contracts>({ cannonfile = 'cannonfile.toml' }: Par
 function _getContractFromOutputs(
   contractName: string,
   outputs: ChainBuilderContext,
-  provider: ethers.providers.JsonRpcProvider
+  provider: ethers.providers.JsonRpcProvider,
+  address?: string
 ) {
   let contract;
 
@@ -125,5 +125,5 @@ function _getContractFromOutputs(
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return new ethers.Contract(contract.address, contract.abi, provider as unknown as any);
+  return new ethers.Contract(address || contract.address, contract.abi, provider as unknown as any);
 }

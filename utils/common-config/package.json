@@ -5,19 +5,19 @@
   "private": true,
   "scripts": {},
   "devDependencies": {
-    "@nomiclabs/hardhat-ethers": "2.1.1",
+    "@nomiclabs/hardhat-ethers": "2.2.1",
     "@nomiclabs/hardhat-etherscan": "3.1.3",
     "@synthetixio/hardhat-router": "*",
     "@synthetixio/hardhat-storage": "*",
-    "solhint-plugin-numcast": "*",
     "@typechain/ethers-v5": "10.1.0",
     "@typechain/hardhat": "6.1.3",
     "dotenv": "16.0.1",
     "hardhat": "2.12.3",
-    "hardhat-cannon": "1.1.23",
+    "hardhat-cannon": "1.1.24",
     "hardhat-contract-sizer": "2.1.1",
     "hardhat-gas-reporter": "1.0.9",
     "hardhat-ignore-warnings": "0.2.5",
+    "solhint-plugin-numcast": "*",
     "solidity-coverage": "0.8.2",
     "typechain": "8.1.1"
   }

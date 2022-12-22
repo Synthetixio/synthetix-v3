@@ -4,14 +4,19 @@
   "description": "Commmon contracts for Synthetix",
   "files": [
     "contracts",
-    "!contracts/Router.sol",
-    "!contracts/mocks",
+    "!contracts/routers",
     "!contracts/modules/mocks"
   ],
   "scripts": {
     "test": "hardhat test",
-    "coverage": "hardhat coverage",
+    "coverage": "hardhat --network hardhat coverage",
     "compile-contracts": "hardhat compile",
     "size-contracts": "hardhat size-contracts"
+  },
+  "keywords": [],
+  "author": "Synthetix",
+  "license": "MIT",
+  "devDependencies": {
+    "@synthetixio/common-config": "*"
   }
 }
