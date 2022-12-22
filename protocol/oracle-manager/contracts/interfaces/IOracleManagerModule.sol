@@ -6,7 +6,6 @@ import "../storage/NodeDefinition.sol";
 
 /// @title Module for managing nodes
 interface IOracleManagerModule {
-    error UnsupportedNodeType(uint nodeType);
     error NodeNotRegistered(bytes32 nodeId);
 
     function registerNode(

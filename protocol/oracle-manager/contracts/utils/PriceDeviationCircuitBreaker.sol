@@ -1,9 +1,13 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
+import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+
 import "../storage/Node.sol";
 
 library PriceDeviationCircuitBreaker {
+    using SafeCastU256 for uint256;
+
     error InvalidPrice();
     error DeviationToleranceExceeded(int256 deviation);
 
@@ -22,7 +26,7 @@ library PriceDeviationCircuitBreaker {
 
         if (price1 != price2) {
             int256 difference = abs(price1 - price2);
-            if (int256(deviationTolerance) < ((difference * 100) / price1)) {
+            if (deviationTolerance.toInt() < ((difference * 100) / price1)) {
                 revert DeviationToleranceExceeded(difference / price1);
             }
         }

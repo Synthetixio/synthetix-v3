@@ -1,10 +1,17 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.8.0;
 
+import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
+
 /// @title Math library for computing sqrt prices from ticks and vice versa
 /// @notice Computes sqrt price for ticks of size 1.0001, i.e. sqrt(1.0001^tick) as fixed point Q64.96 numbers. Supports
 /// prices between 2**-128 and 2**128
 library TickMath {
+    using SafeCastU256 for uint256;
+    using SafeCastI256 for int256;
+    using SafeCastI24 for int24;
+    using SafeCastU160 for uint160;
+
     /// @dev The minimum tick that may be passed to #getSqrtRatioAtTick computed from log base 1.0001 of 2**-128
     int24 internal constant MIN_TICK = -887272;
     /// @dev The maximum tick that may be passed to #getSqrtRatioAtTick computed from log base 1.0001 of 2**128
@@ -21,8 +28,8 @@ library TickMath {
     /// @return sqrtPriceX96 A Fixed point Q64.96 number representing the sqrt of the ratio of the two assets (token1/token0)
     /// at the given tick
     function getSqrtRatioAtTick(int24 tick) internal pure returns (uint160 sqrtPriceX96) {
-        uint256 absTick = tick < 0 ? uint256(-int256(tick)) : uint256(int256(tick));
-        require(absTick <= uint256(int256(MAX_TICK)), "T");
+        uint256 absTick = tick < 0 ? (-tick.to256()).toUint() : tick.to256().toUint();
+        require(absTick <= MAX_TICK.to256().toUint(), "T");
 
         uint256 ratio = absTick & 0x1 != 0
             ? 0xfffcb933bd6fad37aa2d162d1a594001
@@ -52,7 +59,7 @@ library TickMath {
         // this divides by 1<<32 rounding up to go from a Q128.128 to a Q128.96.
         // we then downcast because we know the result always fits within 160 bits due to our tick input constraint
         // we round up in the division so getTickAtSqrtRatio of the output price is always consistent
-        sqrtPriceX96 = uint160((ratio >> 32) + (ratio % (1 << 32) == 0 ? 0 : 1));
+        sqrtPriceX96 = ((ratio >> 32) + (ratio % (1 << 32) == 0 ? 0 : 1)).to160();
     }
 
     /// @notice Calculates the greatest tick value such that getRatioAtTick(tick) <= ratio
@@ -63,7 +70,7 @@ library TickMath {
     function getTickAtSqrtRatio(uint160 sqrtPriceX96) internal pure returns (int24 tick) {
         // second inequality must be < because the price can never reach the price at the max tick
         require(sqrtPriceX96 >= MIN_SQRT_RATIO && sqrtPriceX96 < MAX_SQRT_RATIO, "R");
-        uint256 ratio = uint256(sqrtPriceX96) << 32;
+        uint256 ratio = sqrtPriceX96.to256() << 32;
 
         uint256 r = ratio;
         uint256 msb = 0;
@@ -111,96 +118,96 @@ library TickMath {
         if (msb >= 128) r = ratio >> (msb - 127);
         else r = ratio << (127 - msb);
 
-        int256 log_2 = (int256(msb) - 128) << 64;
+        int256 _log2 = (msb.toInt() - 128) << 64;
 
         assembly {
             r := shr(127, mul(r, r))
             let f := shr(128, r)
-            log_2 := or(log_2, shl(63, f))
+            _log2 := or(_log2, shl(63, f))
             r := shr(f, r)
         }
         assembly {
             r := shr(127, mul(r, r))
             let f := shr(128, r)
-            log_2 := or(log_2, shl(62, f))
+            _log2 := or(_log2, shl(62, f))
             r := shr(f, r)
         }
         assembly {
             r := shr(127, mul(r, r))
             let f := shr(128, r)
-            log_2 := or(log_2, shl(61, f))
+            _log2 := or(_log2, shl(61, f))
             r := shr(f, r)
         }
         assembly {
             r := shr(127, mul(r, r))
             let f := shr(128, r)
-            log_2 := or(log_2, shl(60, f))
+            _log2 := or(_log2, shl(60, f))
             r := shr(f, r)
         }
         assembly {
             r := shr(127, mul(r, r))
             let f := shr(128, r)
-            log_2 := or(log_2, shl(59, f))
+            _log2 := or(_log2, shl(59, f))
             r := shr(f, r)
         }
         assembly {
             r := shr(127, mul(r, r))
             let f := shr(128, r)
-            log_2 := or(log_2, shl(58, f))
+            _log2 := or(_log2, shl(58, f))
             r := shr(f, r)
         }
         assembly {
             r := shr(127, mul(r, r))
             let f := shr(128, r)
-            log_2 := or(log_2, shl(57, f))
+            _log2 := or(_log2, shl(57, f))
             r := shr(f, r)
         }
         assembly {
             r := shr(127, mul(r, r))
             let f := shr(128, r)
-            log_2 := or(log_2, shl(56, f))
+            _log2 := or(_log2, shl(56, f))
             r := shr(f, r)
         }
         assembly {
             r := shr(127, mul(r, r))
             let f := shr(128, r)
-            log_2 := or(log_2, shl(55, f))
+            _log2 := or(_log2, shl(55, f))
             r := shr(f, r)
         }
         assembly {
             r := shr(127, mul(r, r))
             let f := shr(128, r)
-            log_2 := or(log_2, shl(54, f))
+            _log2 := or(_log2, shl(54, f))
             r := shr(f, r)
         }
         assembly {
             r := shr(127, mul(r, r))
             let f := shr(128, r)
-            log_2 := or(log_2, shl(53, f))
+            _log2 := or(_log2, shl(53, f))
             r := shr(f, r)
         }
         assembly {
             r := shr(127, mul(r, r))
             let f := shr(128, r)
-            log_2 := or(log_2, shl(52, f))
+            _log2 := or(_log2, shl(52, f))
             r := shr(f, r)
         }
         assembly {
             r := shr(127, mul(r, r))
             let f := shr(128, r)
-            log_2 := or(log_2, shl(51, f))
+            _log2 := or(_log2, shl(51, f))
             r := shr(f, r)
         }
         assembly {
             r := shr(127, mul(r, r))
             let f := shr(128, r)
-            log_2 := or(log_2, shl(50, f))
+            _log2 := or(_log2, shl(50, f))
         }
 
-        int256 log_sqrt10001 = log_2 * 255738958999603826347141; // 128.128 number
+        int256 logSqrt10001 = _log2 * 255738958999603826347141; // 128.128 number
 
-        int24 tickLow = int24((log_sqrt10001 - 3402992956809132418596140100660247210) >> 128);
-        int24 tickHi = int24((log_sqrt10001 + 291339464771989622907027621153398088495) >> 128);
+        int24 tickLow = (logSqrt10001 - 3402992956809132418596140100660247210).to24() >> 128;
+        int24 tickHi = (logSqrt10001 + 291339464771989622907027621153398088495).to24() >> 128;
 
         tick = tickLow == tickHi ? tickLow : getSqrtRatioAtTick(tickHi) <= sqrtPriceX96
             ? tickHi

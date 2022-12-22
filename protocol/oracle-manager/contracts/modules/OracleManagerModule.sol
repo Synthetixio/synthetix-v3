@@ -14,6 +14,8 @@ import "../storage/Node.sol";
 import "../storage/NodeDefinition.sol";
 
 contract OracleManagerModule is IOracleManagerModule {
+    error UnsupportedNodeType(NodeDefinition.NodeType nodeType);
+
     event NodeRegistered(
         bytes32 nodeId,
         bytes32[] parents,
@@ -67,7 +69,7 @@ contract OracleManagerModule is IOracleManagerModule {
 
     modifier onlyValidNodeType(NodeDefinition.NodeType nodeType) {
         if (!_validateNodeType(nodeType)) {
-            revert UnsupportedNodeType(uint256(nodeType));
+            revert UnsupportedNodeType(nodeType);
         }
 
         _;
@@ -141,7 +143,7 @@ contract OracleManagerModule is IOracleManagerModule {
         } else if (nodeDefinition.nodeType == NodeDefinition.NodeType.StalenessFallbackReducer) {
             return PriceDeviationCircuitBreaker.process(prices, nodeDefinition.parameters);
         } else {
-            revert UnsupportedNodeType(uint256(nodeDefinition.nodeType));
+            revert UnsupportedNodeType(nodeDefinition.nodeType);
         }
     }
 }
