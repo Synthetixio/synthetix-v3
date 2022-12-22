@@ -6,10 +6,8 @@ import hre from 'hardhat';
 import {
   AssociatedSystemsModule,
   NftModule,
-  NftModuleRouter__factory,
   OwnerModule,
   TokenModule,
-  TokenModuleRouter__factory,
 } from '../../../typechain-types';
 import { bootstrap } from '../../bootstrap';
 
@@ -123,7 +121,7 @@ describe('AssociatedSystemsModule', function () {
       let TokenModuleAssociated: TokenModule;
       let OwnerModuleAssociated: OwnerModule;
 
-      let receipt;
+      let receipt: ethers.ContractReceipt;
 
       const registeredName = toBytes32('Token');
 
@@ -133,15 +131,15 @@ describe('AssociatedSystemsModule', function () {
       });
 
       before('registration', async function () {
-        receipt = await (
-          await AssociatedSystemsModule.initOrUpgradeToken(
-            registeredName,
-            'A Token',
-            'TOK',
-            18,
-            TokenModule.address
-          )
-        ).wait();
+        const tx = await AssociatedSystemsModule.initOrUpgradeToken(
+          registeredName,
+          'A Token',
+          'TOK',
+          18,
+          TokenModule.address
+        );
+
+        receipt = await tx.wait();
 
         const [proxyAddress] = await AssociatedSystemsModule.getAssociatedSystem(registeredName);
 
@@ -258,7 +256,7 @@ describe('AssociatedSystemsModule', function () {
       let NftModuleAssociated: NftModule;
       let OwnerModuleAssociated: OwnerModule;
 
-      let receipt;
+      let receipt: ethers.ContractReceipt;
 
       const registeredName = toBytes32('NftToken');
 
