@@ -86,7 +86,7 @@ depends = ["run.generate_core_router"]
 
 # AssociatedSystemsModule Router
 
-[run.generate_token_module_router]
+[run.generate_associated_systems_module_router]
 exec = "@synthetixio/hardhat-router/utils/cannon"
 func = "generate"
 args = [
@@ -105,7 +105,7 @@ depends = [
 [contract.AssociatedSystemsModuleRouter]
 artifact = "contracts/routers/chain-<%= chainId %>/AssociatedSystemsModuleRouter.sol:AssociatedSystemsModuleRouter"
 abiOf = ["CoreModule", "AssociatedSystemsModule"]
-depends = ["run.generate_token_module_router"]
+depends = ["run.generate_associated_systems_module_router"]
 
 # TokenModule Router
 

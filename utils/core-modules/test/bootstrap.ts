@@ -9,27 +9,27 @@ import {
   FeatureFlagModuleRouter,
   GenericModule,
   NftModule,
-  NftModuleRouter,
   OwnerModule,
+  Proxy__factory,
   SampleFeatureFlagModule,
   SampleModuleA,
   SampleModuleB,
   SampleOwnedModule,
   SampleRouter,
   TokenModule,
-  TokenModuleRouter,
   UpgradeModule,
 } from '../typechain-types';
 
 interface Contracts {
   AssociatedSystemsModule: AssociatedSystemsModule;
+  AssociatedSystemsModuleRouter: AssociatedSystemsModule;
   CoreModule: CoreModule;
   CoreRouter: CoreRouter;
   FeatureFlagModule: FeatureFlagModule;
   FeatureFlagModuleRouter: FeatureFlagModuleRouter;
   GenericModule: GenericModule;
   NftModule: NftModule;
-  NftModuleRouter: NftModuleRouter;
+  NftModuleRouter: NftModule;
   OwnerModule: OwnerModule;
   Proxy: CoreModule;
   SampleFeatureFlagModule: SampleFeatureFlagModule;
@@ -38,7 +38,7 @@ interface Contracts {
   SampleOwnedModule: SampleOwnedModule;
   SampleRouter: SampleRouter;
   TokenModule: TokenModule;
-  TokenModuleRouter: TokenModuleRouter;
+  TokenModuleRouter: TokenModule;
   UpgradeModule: UpgradeModule;
 }
 
@@ -61,15 +61,40 @@ export function bootstrap({ implementation }: { implementation: keyof Contracts 
     }
   });
 
+  /**
+   * Override of coreBootstrap().getContract() function to use the current Proxy
+   * address by default
+   */
+  function getContract<T extends keyof Contracts>(contractName: T, address?: string) {
+    if (address === undefined && !contractName.endsWith('Proxy')) {
+      address = r.getContract('Proxy').address;
+    }
+
+    return r.getContract(contractName, address) as Contracts[T];
+  }
+
+  async function deployContract<T extends keyof Contracts>(contractName: T, ...args: unknown[]) {
+    const factories = await import('../typechain-types');
+    const [owner] = r.getSigners();
+    const Factory = factories[`${contractName}__factory`];
+    const factory = new Factory(owner);
+    const Contract = await factory.deploy(...args);
+    await Contract.deployed();
+    return Contract as Contracts[T];
+  }
+
+  /**
+   * Deploy a new Proxy contracts using the given implementation
+   */
+  async function deployProxy<T extends keyof Contracts>(implementation: T) {
+    const Implementation = getContract(implementation);
+    return await deployContract('Proxy', Implementation.address);
+  }
+
   return {
     ...r,
-    // getContract() override using as the Proxy address by default
-    getContract<T extends keyof Contracts>(contractName: T, address?: string) {
-      if (address === undefined && !contractName.endsWith('Proxy')) {
-        address = r.getContract('Proxy').address;
-      }
-
-      return r.getContract(contractName, address) as Contracts[T];
-    },
+    getContract,
+    deployContract,
+    deployProxy,
   };
 }

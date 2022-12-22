@@ -2,209 +2,216 @@ import assert from 'node:assert/strict';
 import assertRevert from '@synthetixio/core-utils/utils/assertions/assert-revert';
 import { findEvent } from '@synthetixio/core-utils/utils/ethers/events';
 import { ethers } from 'ethers';
-import { AssociatedSystemsModule } from '../../../typechain-types';
+import {
+  AssociatedSystemsModule,
+  NftModule,
+  NftModuleRouter__factory,
+  OwnerModule,
+  TokenModule,
+  TokenModuleRouter__factory,
+} from '../../../typechain-types';
 import { bootstrap } from '../../bootstrap';
 
 const toBytes32 = ethers.utils.formatBytes32String;
 
-describe('AssociatedSystemsModule', () => {
-  const { proxyAddress } = bootstrap(initializer, {
-    modules: ['OwnerModule', 'UpgradeModule', 'AssociatedSystemsModule'],
+describe('AssociatedSystemsModule', function () {
+  const { getContract, getSigners } = bootstrap({
+    implementation: 'AssociatedSystemsModuleRouter',
   });
 
-  let AssociatedSystemsModule;
-  let owner, user;
+  let AssociatedSystemsModule: AssociatedSystemsModule;
+  let owner: ethers.Signer;
+  let user: ethers.Signer;
 
-  before('identify signers', async () => {
-    [owner, user] = await ethers.getSigners();
+  const deployNftModule = async () => {
+    const Factory = new NftModuleRouter__factory(owner);
+    const Router = await Factory.deploy();
+    return getContract('NftModule', Router.address);
+  };
+
+  const deployTokenModule = async () => {
+    const Factory = new TokenModuleRouter__factory(owner);
+    const Router = await Factory.deploy();
+    return getContract('TokenModule', Router.address);
+  };
+
+  before('initialize', function () {
+    [owner, user] = getSigners();
+    AssociatedSystemsModule = getContract('AssociatedSystemsModule');
   });
 
-  before('identify modules', async () => {
-    AssociatedSystemsModule = await ethers.getContractAt('AssociatedSystemsModule', proxyAddress());
-  });
-
-  describe('registerUnmanagedSystem()', async () => {
-    it('only callable by owner', async () => {
+  describe('registerUnmanagedSystem()', async function () {
+    it('only callable by owner', async function () {
       await assertRevert(
         AssociatedSystemsModule.connect(user).registerUnmanagedSystem(
           toBytes32('wohoo'),
-          owner.address
+          await owner.getAddress()
         ),
         `Unauthorized("${await user.getAddress()}")`
       );
     });
 
-    it('registers unmanaged', async () => {
+    it('registers unmanaged', async function () {
       const receipt = await (
-        await AssociatedSystemsModule.connect(owner).registerUnmanagedSystem(
+        await AssociatedSystemsModule.registerUnmanagedSystem(
           toBytes32('wohoo'),
-          owner.address
+          await owner.getAddress()
         )
       ).wait();
 
       const [addr, kind] = await AssociatedSystemsModule.getAssociatedSystem(toBytes32('wohoo'));
-      assert.equal(addr, owner.address);
+      assert.equal(addr, await owner.getAddress());
       assert.equal(kind, toBytes32('unmanaged'));
 
-      const event = findEvent({ receipt, eventName: 'AssociatedSystemSet' });
+      const evt = findEvent({ receipt, eventName: 'AssociatedSystemSet' });
 
-      assert.ok(event);
-      assert.equal(event.args.kind, toBytes32('unmanaged'));
-      assert.equal(event.args.id, toBytes32('wohoo'));
-      assert.equal(event.args.proxy, owner.address);
+      assert.ok(evt && !Array.isArray(evt) && evt.args);
+      assert.equal(evt.args.kind, toBytes32('unmanaged'));
+      assert.equal(evt.args.id, toBytes32('wohoo'));
+      assert.equal(evt.args.proxy, await owner.getAddress());
     });
 
-    it('re-registers unmanaged', async () => {
-      await AssociatedSystemsModule.connect(owner).registerUnmanagedSystem(
+    it('re-registers unmanaged', async function () {
+      await AssociatedSystemsModule.registerUnmanagedSystem(
         toBytes32('wohoo'),
-        owner.address
+        await owner.getAddress()
       );
       const receipt = await (
-        await AssociatedSystemsModule.connect(owner).registerUnmanagedSystem(
+        await AssociatedSystemsModule.registerUnmanagedSystem(
           toBytes32('wohoo'),
-          user.address
+          await user.getAddress()
         )
       ).wait();
 
       const [addr, kind] = await AssociatedSystemsModule.getAssociatedSystem(toBytes32('wohoo'));
-      assert.equal(addr, user.address);
+      assert.equal(addr, await user.getAddress());
       assert.equal(kind, toBytes32('unmanaged'));
 
-      const event = findEvent({ receipt, eventName: 'AssociatedSystemSet' });
+      const evt = findEvent({ receipt, eventName: 'AssociatedSystemSet' });
 
-      assert.ok(event);
-      assert.equal(event.args.kind, toBytes32('unmanaged'));
-      assert.equal(event.args.id, toBytes32('wohoo'));
-      assert.equal(event.args.proxy, user.address);
+      assert.ok(evt && !Array.isArray(evt) && evt.args);
+      assert.equal(evt.args.kind, toBytes32('unmanaged'));
+      assert.equal(evt.args.id, toBytes32('wohoo'));
+      assert.equal(evt.args.proxy, await user.getAddress());
     });
   });
 
-  describe('initOrUpgradeToken()', async () => {
-    it('only callable by owner', async () => {
+  describe('initOrUpgradeToken()', async function () {
+    it('only callable by owner', async function () {
       await assertRevert(
         AssociatedSystemsModule.connect(user).initOrUpgradeToken(
           toBytes32('hello'),
           'A Token',
           'TOK',
           18,
-          owner.address
+          await owner.getAddress()
         ),
         `Unauthorized("${await user.getAddress()}")`
       );
     });
 
-    describe('when adding TokenModule associated system', () => {
-      const { proxyAddress: tokenProxyAddress, routerAddress: tokenRouterAddress } = bootstrap(
-        initializer,
-        {
-          modules: ['OwnerModule', 'UpgradeModule', 'TokenModule'],
-        }
-      );
+    describe('when adding TokenModule associated system', function () {
+      let TokenModule: TokenModule;
+      let NftModule: NftModule;
+
+      let TokenModuleAssociated: TokenModule;
+      let OwnerModuleAssociated: OwnerModule;
 
       let receipt;
 
-      let TokenModule, TokenModuleAssociated, OwnerModuleAssociated;
-
       const registeredName = toBytes32('Token');
 
-      before('identify modules', async () => {
-        TokenModule = await ethers.getContractAt('TokenModule', tokenProxyAddress());
+      before('identify modules', async function () {
+        NftModule = await deployNftModule();
+        TokenModule = await deployTokenModule();
       });
 
-      before('registration', async () => {
+      before('registration', async function () {
         receipt = await (
-          await AssociatedSystemsModule.connect(owner).initOrUpgradeToken(
+          await AssociatedSystemsModule.initOrUpgradeToken(
             registeredName,
             'A Token',
             'TOK',
             18,
-            tokenRouterAddress()
+            TokenModule.address
           )
         ).wait();
 
         const [proxyAddress] = await AssociatedSystemsModule.getAssociatedSystem(registeredName);
 
-        TokenModuleAssociated = await ethers.getContractAt('TokenModule', proxyAddress);
-        OwnerModuleAssociated = await ethers.getContractAt('OwnerModule', proxyAddress);
+        TokenModuleAssociated = getContract('TokenModule', proxyAddress);
+        OwnerModuleAssociated = getContract('OwnerModule', proxyAddress);
       });
 
-      it('emitted event', async () => {
-        const event = findEvent({ receipt, eventName: 'AssociatedSystemSet' });
+      it('emitted event', async function () {
+        const evt = findEvent({ receipt, eventName: 'AssociatedSystemSet' });
 
-        assert.ok(event);
-        assert.equal(event.args.kind, toBytes32('erc20'));
-        assert.equal(event.args.id, registeredName);
-        assert.equal(event.args.proxy, TokenModuleAssociated.address);
-        assert.equal(event.args.impl, tokenRouterAddress());
+        assert.ok(evt && !Array.isArray(evt) && evt.args);
+        assert.equal(evt.args.kind, toBytes32('erc20'));
+        assert.equal(evt.args.id, registeredName);
+        assert.equal(evt.args.proxy, TokenModuleAssociated.address);
+        assert.equal(evt.args.impl, TokenModule.address);
       });
 
-      it('has initialized the token', async () => {
+      it('has initialized the token', async function () {
         assert.equal(await TokenModuleAssociated.isInitialized(), true);
         assert.equal(await TokenModuleAssociated.name(), 'A Token');
         assert.equal(await TokenModuleAssociated.symbol(), 'TOK');
         assert.equal(await TokenModuleAssociated.decimals(), 18);
       });
 
-      it('is owner of the token', async () => {
-        assert.equal(await OwnerModuleAssociated.owner(), proxyAddress());
+      it('is owner of the token', async function () {
+        const CoreProxy = getContract('Proxy');
+        assert.equal(await OwnerModuleAssociated.owner(), CoreProxy.address);
       });
 
-      it('should not affect existing proxy', async () => {
+      it('should not affect existing proxy', async function () {
         assert.equal(await TokenModule.isInitialized(), false);
       });
 
       describe('when attempting to register a different kind', function () {
-        const { routerAddress: nftRouterAddress } = bootstrap(() => {}, {
-          modules: ['OwnerModule', 'UpgradeModule', 'NftModule'],
-        });
-
-        let InvalidTokenModule;
-
-        before('prepare modules', async () => {
-          const factory = await ethers.getContractFactory('TokenModule');
-          InvalidTokenModule = await factory.deploy();
-
-          await AssociatedSystemsModule.connect(owner).initOrUpgradeNft(
+        before('prepare modules', async function () {
+          await AssociatedSystemsModule.initOrUpgradeNft(
             toBytes32('hello'),
             'A Token',
             'TOK',
-            42,
-            nftRouterAddress()
+            'ipfs://some-uri',
+            NftModule.address
           );
         });
 
-        it('fails with wrong kind error', async () => {
+        it('fails with wrong kind error', async function () {
           await assertRevert(
-            AssociatedSystemsModule.connect(owner).initOrUpgradeToken(
+            AssociatedSystemsModule.initOrUpgradeToken(
               toBytes32('hello'),
               'A Token',
               'TOK',
               42,
-              InvalidTokenModule.address
+              TokenModule.address
             ),
             `MismatchAssociatedSystemKind("${toBytes32('erc20')}", "${toBytes32('erc721')}")`
           );
         });
       });
 
-      describe('when new impl for TokenModule associated system', () => {
-        const { routerAddress: newRouterAddress } = bootstrap(initializer, {
-          modules: ['OwnerModule', 'UpgradeModule', 'NftModule'],
-        });
+      describe('when new impl for TokenModule associated system', function () {
+        let NewTokenModule: TokenModule;
 
-        before('reinit', async () => {
+        before('reinit', async function () {
+          NewTokenModule = await deployTokenModule();
+
           receipt = await (
-            await AssociatedSystemsModule.connect(owner).initOrUpgradeToken(
+            await AssociatedSystemsModule.initOrUpgradeToken(
               registeredName,
               'A Token',
               'TOK',
               18,
-              newRouterAddress()
+              NewTokenModule.address
             )
           ).wait();
         });
 
-        it('works when reinitialized with the same impl', async () => {
+        it('works when reinitialized with the same impl', async function () {
           const [newProxyAddress] = await AssociatedSystemsModule.getAssociatedSystem(
             registeredName
           );
@@ -212,148 +219,138 @@ describe('AssociatedSystemsModule', () => {
           assert.equal(newProxyAddress, TokenModuleAssociated.address);
         });
 
-        it('emitted event', async () => {
-          const event = findEvent({ receipt, eventName: 'AssociatedSystemSet' });
+        it('emitted event', async function () {
+          const evt = findEvent({ receipt, eventName: 'AssociatedSystemSet' });
 
-          assert.ok(event);
-          assert.equal(event.args.kind, toBytes32('erc20'));
-          assert.equal(event.args.id, registeredName);
-          assert.equal(event.args.proxy, TokenModuleAssociated.address);
-          assert.equal(event.args.impl, newRouterAddress());
+          assert.ok(evt && !Array.isArray(evt) && evt.args);
+          assert.equal(evt.args.kind, toBytes32('erc20'));
+          assert.equal(evt.args.id, registeredName);
+          assert.equal(evt.args.proxy, TokenModuleAssociated.address);
+          assert.equal(evt.args.impl, NewTokenModule.address);
         });
       });
     });
   });
 
-  describe('initOrUpgradeNft()', () => {
-    it('only callable by owner', async () => {
+  describe('initOrUpgradeNft()', function () {
+    it('is only callable by owner', async function () {
       await assertRevert(
         AssociatedSystemsModule.connect(user).initOrUpgradeNft(
           toBytes32('hello'),
           'A Token',
           'TOK',
-          18,
-          owner.address
+          'ipfs://some-uri',
+          await owner.getAddress()
         ),
         `Unauthorized("${await user.getAddress()}")`
       );
     });
 
-    describe('when adding NftModule associated system', () => {
-      const { proxyAddress: nftProxyAddress, routerAddress: nftRouterAddress } = bootstrap(
-        initializer,
-        {
-          modules: ['OwnerModule', 'UpgradeModule', 'NftModule'],
-        }
-      );
+    describe('when adding NftModule associated system', function () {
+      let NftModule: NftModule;
+
+      let NftModuleAssociated: NftModule;
+      let OwnerModuleAssociated: OwnerModule;
 
       let receipt;
 
-      let NftModule, NftModuleAssociated, OwnerModuleAssociated;
+      const registeredName = toBytes32('NftToken');
 
-      const registeredName = toBytes32('Token');
-
-      before('identify modules', async () => {
-        NftModule = await ethers.getContractAt('NftModule', nftProxyAddress());
+      before('identify modules', async function () {
+        NftModule = await deployNftModule();
       });
 
-      before('registration', async () => {
-        receipt = await (
-          await AssociatedSystemsModule.connect(owner).initOrUpgradeNft(
-            registeredName,
-            'A Token',
-            'TOK',
-            'https://vitalik.ca',
-            nftRouterAddress()
-          )
-        ).wait();
+      before('registration', async function () {
+        const tx = await AssociatedSystemsModule.initOrUpgradeNft(
+          registeredName,
+          'A Token',
+          'TOK',
+          'https://vitalik.ca',
+          NftModule.address
+        );
+
+        receipt = await tx.wait();
 
         const [proxyAddress] = await AssociatedSystemsModule.getAssociatedSystem(registeredName);
 
-        NftModuleAssociated = await ethers.getContractAt('NftModule', proxyAddress);
-        OwnerModuleAssociated = await ethers.getContractAt('OwnerModule', proxyAddress);
+        NftModuleAssociated = getContract('NftModule', proxyAddress);
+        OwnerModuleAssociated = getContract('OwnerModule', proxyAddress);
       });
 
-      it('emitted event', async () => {
-        const event = findEvent({ receipt, eventName: 'AssociatedSystemSet' });
+      it('emitted event', async function () {
+        const evt = findEvent({ receipt, eventName: 'AssociatedSystemSet' });
 
-        assert.ok(event);
-        assert.equal(event.args.kind, toBytes32('erc721'));
-        assert.equal(event.args.id, registeredName);
-        assert.equal(event.args.proxy, NftModuleAssociated.address);
-        assert.equal(event.args.impl, nftRouterAddress());
+        assert.ok(evt && !Array.isArray(evt) && evt.args);
+        assert.equal(evt.args.kind, toBytes32('erc721'));
+        assert.equal(evt.args.id, registeredName);
+        assert.equal(evt.args.proxy, NftModuleAssociated.address);
+        assert.equal(evt.args.impl, NftModule.address);
       });
 
-      it('has initialized the token', async () => {
+      it('has initialized the token', async function () {
         assert.equal(await NftModuleAssociated.isInitialized(), true);
         assert.equal(await NftModuleAssociated.name(), 'A Token');
         assert.equal(await NftModuleAssociated.symbol(), 'TOK');
-
-        // it is very difficult to check the token uri without actually creating a token, which
-        // we currently cannot do easily
-        //assert.equal(await NftModuleAssociated.tokenURI(), 'https://vitalik.ca');
       });
 
-      it('is owner of the token', async () => {
-        assert.equal(await OwnerModuleAssociated.owner(), proxyAddress());
+      it('is owner of the token', async function () {
+        const CoreProxy = getContract('Proxy');
+        assert.equal(await OwnerModuleAssociated.owner(), CoreProxy.address);
       });
 
-      it('should not affect existing proxy', async () => {
+      it('should not affect existing proxy', async function () {
         assert.equal(await NftModule.isInitialized(), false);
       });
 
       describe('when attempting to register a different kind', function () {
-        const { routerAddress: tokenRouterAddress } = bootstrap(() => {}, {
-          modules: ['OwnerModule', 'UpgradeModule', 'TokenModule'],
-        });
+        let NewTokenModule: TokenModule;
 
-        let InvalidTokenModule;
+        const invalidRegisteredName = toBytes32('InvalidKind');
 
-        before('prepare modules', async () => {
-          const factory = await ethers.getContractFactory('TokenModule');
-          InvalidTokenModule = await factory.deploy();
+        before('prepare modules', async function () {
+          NewTokenModule = await deployTokenModule();
 
-          await AssociatedSystemsModule.connect(owner).initOrUpgradeToken(
-            toBytes32('hello'),
+          await AssociatedSystemsModule.initOrUpgradeToken(
+            invalidRegisteredName,
             'A Token',
             'TOK',
             42,
-            tokenRouterAddress()
+            NewTokenModule.address
           );
         });
 
-        it('fails with wrong kind error', async () => {
+        it('fails with wrong kind error', async function () {
           await assertRevert(
-            AssociatedSystemsModule.connect(owner).initOrUpgradeNft(
-              toBytes32('hello'),
+            AssociatedSystemsModule.initOrUpgradeNft(
+              invalidRegisteredName,
               'A Token',
               'TOK',
-              42,
-              InvalidTokenModule.address
+              'ipfs://some-uri',
+              NewTokenModule.address
             ),
             `MismatchAssociatedSystemKind("${toBytes32('erc721')}", "${toBytes32('erc20')}")`
           );
         });
       });
 
-      describe('when new impl for NftModule associated system', () => {
-        const { routerAddress: newRouterAddress } = bootstrap(initializer, {
-          modules: ['OwnerModule', 'UpgradeModule', 'NftModule'],
-        });
+      describe('when new impl for NftModule associated system', function () {
+        let NewNftModule: NftModule;
 
-        before('reinit', async () => {
+        before('reinit', async function () {
+          NewNftModule = await deployNftModule();
+
           receipt = await (
-            await AssociatedSystemsModule.connect(owner).initOrUpgradeNft(
+            await AssociatedSystemsModule.initOrUpgradeNft(
               registeredName,
               'A Token',
               'TOK',
               'https://vitalik.ca',
-              newRouterAddress()
+              NewNftModule.address
             )
           ).wait();
         });
 
-        it('works when reinitialized with the same impl', async () => {
+        it('works when reinitialized with the same impl', async function () {
           const [newProxyAddress] = await AssociatedSystemsModule.getAssociatedSystem(
             registeredName
           );
@@ -361,14 +358,14 @@ describe('AssociatedSystemsModule', () => {
           assert.equal(newProxyAddress, NftModuleAssociated.address);
         });
 
-        it('emitted event', async () => {
-          const event = findEvent({ receipt, eventName: 'AssociatedSystemSet' });
+        it('emitted event', async function () {
+          const evt = findEvent({ receipt, eventName: 'AssociatedSystemSet' });
 
-          assert.ok(event);
-          assert.equal(event.args.kind, toBytes32('erc721'));
-          assert.equal(event.args.id, registeredName);
-          assert.equal(event.args.proxy, NftModuleAssociated.address);
-          assert.equal(event.args.impl, newRouterAddress());
+          assert.ok(evt && !Array.isArray(evt) && evt.args);
+          assert.equal(evt.args.kind, toBytes32('erc721'));
+          assert.equal(evt.args.id, registeredName);
+          assert.equal(evt.args.proxy, NftModuleAssociated.address);
+          assert.equal(evt.args.impl, NewNftModule.address);
         });
       });
     });
