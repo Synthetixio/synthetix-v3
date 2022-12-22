@@ -5,7 +5,9 @@ import { TokenModule } from '../../../typechain-types';
 import { bootstrap } from '../../bootstrap';
 
 describe('TokenModule', function () {
-  const { getContract, getSigners } = bootstrap({ implementation: 'TokenModuleRouter' });
+  const { getContractBehindProxy, getSigners } = bootstrap({
+    implementation: 'TokenModuleRouter',
+  });
 
   let TokenModule: TokenModule;
   let userMint: ethers.Signer;
@@ -16,7 +18,7 @@ describe('TokenModule', function () {
   });
 
   before('identify modules', async function () {
-    TokenModule = getContract('TokenModule');
+    TokenModule = getContractBehindProxy('TokenModule');
   });
 
   describe('mint()', function () {

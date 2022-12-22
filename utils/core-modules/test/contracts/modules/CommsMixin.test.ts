@@ -5,14 +5,14 @@ import { SampleModuleA, SampleModuleB } from '../../../typechain-types';
 import { bootstrap } from '../../bootstrap';
 
 describe('CommsMixin', () => {
-  const { getContract } = bootstrap({ implementation: 'SampleRouter' });
+  const { getContractBehindProxy } = bootstrap({ implementation: 'SampleRouter' });
 
   let SampleModuleA: SampleModuleA;
   let SampleModuleB: SampleModuleB;
 
   before('identify modules', () => {
-    SampleModuleA = getContract('SampleModuleA');
-    SampleModuleB = getContract('SampleModuleB');
+    SampleModuleA = getContractBehindProxy('SampleModuleA');
+    SampleModuleB = getContractBehindProxy('SampleModuleB');
   });
 
   describe('when writting to SampleNamespace.someValue', () => {

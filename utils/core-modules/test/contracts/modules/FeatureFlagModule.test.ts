@@ -6,7 +6,9 @@ import { FeatureFlagModule, SampleFeatureFlagModule } from '../../../typechain-t
 import { bootstrap } from '../../bootstrap';
 
 describe('FeatureFlagModule', function () {
-  const { getContract, getSigners } = bootstrap({ implementation: 'FeatureFlagModuleRouter' });
+  const { getContractBehindProxy, getSigners } = bootstrap({
+    implementation: 'FeatureFlagModuleRouter',
+  });
 
   let FeatureFlagModule: FeatureFlagModule;
   let SampleFeatureFlagModule: SampleFeatureFlagModule;
@@ -20,8 +22,8 @@ describe('FeatureFlagModule', function () {
   });
 
   before('identify modules', function () {
-    FeatureFlagModule = getContract('FeatureFlagModule');
-    SampleFeatureFlagModule = getContract('SampleFeatureFlagModule');
+    FeatureFlagModule = getContractBehindProxy('FeatureFlagModule');
+    SampleFeatureFlagModule = getContractBehindProxy('SampleFeatureFlagModule');
   });
 
   describe('when a feature flag is enabled', async function () {

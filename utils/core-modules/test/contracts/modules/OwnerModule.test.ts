@@ -6,7 +6,9 @@ import { OwnerModule, SampleOwnedModule } from '../../../typechain-types';
 import { bootstrap } from '../../bootstrap';
 
 describe('OwnerModule', function () {
-  const { getContract, getSigners } = bootstrap({ implementation: 'SampleRouter' });
+  const { getContractBehindProxy, getSigners } = bootstrap({
+    implementation: 'SampleRouter',
+  });
 
   let OwnerModule: OwnerModule;
   let SampleOwnedModule: SampleOwnedModule;
@@ -15,8 +17,8 @@ describe('OwnerModule', function () {
 
   before('identify dependencies', function () {
     [owner, user] = getSigners();
-    OwnerModule = getContract('OwnerModule');
-    SampleOwnedModule = getContract('SampleOwnedModule');
+    OwnerModule = getContractBehindProxy('OwnerModule');
+    SampleOwnedModule = getContractBehindProxy('SampleOwnedModule');
   });
 
   it('shows that the owner is set', async function () {

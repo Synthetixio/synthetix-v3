@@ -5,7 +5,9 @@ import { NftModule } from '../../../typechain-types';
 import { bootstrap } from '../../bootstrap';
 
 describe('NftModule', function () {
-  const { getContract, getSigners } = bootstrap({ implementation: 'NftModuleRouter' });
+  const { getContractBehindProxy, getSigners } = bootstrap({
+    implementation: 'NftModuleRouter',
+  });
 
   let NftModule: NftModule;
   let owner: ethers.Signer;
@@ -13,7 +15,7 @@ describe('NftModule', function () {
 
   before('identify dependencies', function () {
     [owner, user] = getSigners();
-    NftModule = getContract('NftModule');
+    NftModule = getContractBehindProxy('NftModule');
   });
 
   describe('initialize()', function () {

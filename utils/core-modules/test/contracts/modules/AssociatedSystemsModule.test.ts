@@ -15,7 +15,7 @@ import { bootstrap } from '../../bootstrap';
 const toBytes32 = ethers.utils.formatBytes32String;
 
 describe('AssociatedSystemsModule', function () {
-  const { getContract, getSigners } = bootstrap({
+  const { getContractBehindProxy, getContract, getSigners } = bootstrap({
     implementation: 'AssociatedSystemsModuleRouter',
   });
 
@@ -37,7 +37,7 @@ describe('AssociatedSystemsModule', function () {
 
   before('initialize', function () {
     [owner, user] = getSigners();
-    AssociatedSystemsModule = getContract('AssociatedSystemsModule');
+    AssociatedSystemsModule = getContractBehindProxy('AssociatedSystemsModule');
   });
 
   describe('registerUnmanagedSystem()', async function () {
@@ -161,7 +161,7 @@ describe('AssociatedSystemsModule', function () {
       });
 
       it('is owner of the token', async function () {
-        const CoreProxy = getContract('Proxy');
+        const CoreProxy = getContractBehindProxy('Proxy');
         assert.equal(await OwnerModuleAssociated.owner(), CoreProxy.address);
       });
 
@@ -294,7 +294,7 @@ describe('AssociatedSystemsModule', function () {
       });
 
       it('is owner of the token', async function () {
-        const CoreProxy = getContract('Proxy');
+        const CoreProxy = getContractBehindProxy('Proxy');
         assert.equal(await OwnerModuleAssociated.owner(), CoreProxy.address);
       });
 

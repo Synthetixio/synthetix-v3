@@ -1,46 +1,55 @@
 import { coreBootstrap } from '@synthetixio/hardhat-router/utils/tests';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-import { ethers } from 'ethers';
+import { ethers } from 'ethers'; // This is needed because of types
 import {
   AssociatedSystemsModule,
-  CoreModule,
+  AssociatedSystemsModuleRouter,
   CoreRouter,
   FeatureFlagModule,
   FeatureFlagModuleRouter,
   GenericModule,
   NftModule,
+  NftModuleRouter,
   OwnerModule,
-  Proxy__factory,
+  Proxy,
   SampleFeatureFlagModule,
   SampleModuleA,
   SampleModuleB,
   SampleOwnedModule,
   SampleRouter,
   TokenModule,
+  TokenModuleRouter,
   UpgradeModule,
 } from '../typechain-types';
 
 interface Contracts {
   AssociatedSystemsModule: AssociatedSystemsModule;
-  AssociatedSystemsModuleRouter: AssociatedSystemsModule;
-  CoreModule: CoreModule;
+  AssociatedSystemsModuleRouter: AssociatedSystemsModuleRouter;
   CoreRouter: CoreRouter;
   FeatureFlagModule: FeatureFlagModule;
   FeatureFlagModuleRouter: FeatureFlagModuleRouter;
   GenericModule: GenericModule;
   NftModule: NftModule;
-  NftModuleRouter: NftModule;
+  NftModuleRouter: NftModuleRouter;
   OwnerModule: OwnerModule;
-  Proxy: CoreModule;
+  Proxy: Proxy;
   SampleFeatureFlagModule: SampleFeatureFlagModule;
   SampleModuleA: SampleModuleA;
   SampleModuleB: SampleModuleB;
   SampleOwnedModule: SampleOwnedModule;
   SampleRouter: SampleRouter;
   TokenModule: TokenModule;
-  TokenModuleRouter: TokenModule;
+  TokenModuleRouter: TokenModuleRouter;
   UpgradeModule: UpgradeModule;
 }
+
+type Implementation =
+  | 'CoreRouter'
+  | 'AssociatedSystemsModuleRouter'
+  | 'TokenModuleRouter'
+  | 'NftModuleRouter'
+  | 'SampleRouter'
+  | 'FeatureFlagModuleRouter';
 
 const r = coreBootstrap<Contracts>({
   cannonfile: 'cannonfile.test.toml',
@@ -48,53 +57,31 @@ const r = coreBootstrap<Contracts>({
 
 const restoreSnapshot = r.createSnapshot();
 
-export function bootstrap({ implementation }: { implementation: keyof Contracts }) {
+export function bootstrap({ implementation }: { implementation: Implementation }) {
   before(restoreSnapshot);
 
   before('setup implementation', async function () {
-    const Proxy = r.getContract('Proxy');
     const Implementation = r.getContract(implementation);
-    const currentImplementation = await Proxy.getImplementation();
 
+    const UpgradeModule = getContractBehindProxy('UpgradeModule');
+    const currentImplementation = await UpgradeModule.getImplementation();
+
+    // Upgrade the Proxy to the desired implemenatation
     if (currentImplementation !== Implementation.address) {
-      await Proxy.upgradeTo(Implementation.address);
+      await UpgradeModule.upgradeTo(Implementation.address);
     }
   });
 
   /**
-   * Override of coreBootstrap().getContract() function to use the current Proxy
-   * address by default
+   * Get the given contract using the current Proxy address
    */
-  function getContract<T extends keyof Contracts>(contractName: T, address?: string) {
-    if (address === undefined && !contractName.endsWith('Proxy')) {
-      address = r.getContract('Proxy').address;
-    }
-
-    return r.getContract(contractName, address) as Contracts[T];
-  }
-
-  async function deployContract<T extends keyof Contracts>(contractName: T, ...args: unknown[]) {
-    const factories = await import('../typechain-types');
-    const [owner] = r.getSigners();
-    const Factory = factories[`${contractName}__factory`];
-    const factory = new Factory(owner);
-    const Contract = await factory.deploy(...args);
-    await Contract.deployed();
-    return Contract as Contracts[T];
-  }
-
-  /**
-   * Deploy a new Proxy contracts using the given implementation
-   */
-  async function deployProxy<T extends keyof Contracts>(implementation: T) {
-    const Implementation = getContract(implementation);
-    return await deployContract('Proxy', Implementation.address);
+  function getContractBehindProxy<T extends keyof Contracts>(contractName: T) {
+    const proxyAddress = r.getContract('Proxy').address;
+    return r.getContract(contractName, proxyAddress) as Contracts[T];
   }
 
   return {
     ...r,
-    getContract,
-    deployContract,
-    deployProxy,
+    getContractBehindProxy,
   };
 }
