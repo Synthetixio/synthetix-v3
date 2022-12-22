@@ -13,7 +13,6 @@ import "../storage/DecayToken.sol";
 
 contract DecayTokenModule is IDecayTokenModule, ERC20, InitializableMixin {
     using DecimalMath for uint256;
-    // TODO: Use SafeMath
 
     // DOCS: use existing super.totalSupply() for total shares, super.balanceOf() for account share balance, etc.
 
@@ -21,7 +20,6 @@ contract DecayTokenModule is IDecayTokenModule, ERC20, InitializableMixin {
         _;
         DecayToken.Data storage store = DecayToken.load();
         store.epochStart = block.timestamp;
-        store.totalSupplyAtEpochStart = totalSupply();
     }
 
     function initialize(
@@ -42,19 +40,28 @@ contract DecayTokenModule is IDecayTokenModule, ERC20, InitializableMixin {
 
     function burn(address from, uint256 amount) external override advanceEpoch {
         OwnableStorage.onlyOwner();
+
         uint256 shareAmount = _tokenToShare(amount);
+        DecayToken.Data storage store = DecayToken.load();
+        store.totalSupplyAtEpochStart = totalSupply() - amount;
+
         super._burn(from, shareAmount);
     }
 
     function mint(address to, uint256 amount) external override advanceEpoch {
         OwnableStorage.onlyOwner();
-        // uint256 shareAmount = _tokenToShare(amount);
-        super._mint(to, amount);
+
+        uint256 shareAmount = _tokenToShare(amount);
+        DecayToken.Data storage store = DecayToken.load();
+        store.totalSupplyAtEpochStart = totalSupply() + amount;
+
+        super._mint(to, shareAmount);
     }
 
     function setInterestRate(uint256 _rate) external advanceEpoch {
         OwnableStorage.onlyOwner();
         DecayToken.Data storage store = DecayToken.load();
+        store.totalSupplyAtEpochStart = totalSupply();
         store.interestRate = _rate;
     }
 
@@ -137,16 +144,18 @@ contract DecayTokenModule is IDecayTokenModule, ERC20, InitializableMixin {
     }
 
     function _tokensPerShare() internal view returns (uint256) {
-        if (_totalSupplyAtEpochStart() == 0) {
+        uint256 totalShares = ERC20Storage.load().totalSupply;
+
+        if (_totalSupplyAtEpochStart() == 0 || totalShares == 0) {
             return DecimalMath.UNIT;
         }
 
-        uint256 totalShares = ERC20Storage.load().totalSupply;
         return totalSupply().divDecimal(totalShares);
     }
 
     function _tokenToShare(uint256 amount) internal view returns (uint256) {
         uint256 tokenPerShare = _tokensPerShare();
+
         return (tokenPerShare > 0 ? amount.divDecimal(tokenPerShare) : amount);
     }
 }
