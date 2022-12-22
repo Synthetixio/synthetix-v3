@@ -2,15 +2,15 @@
 pragma solidity ^0.8.0;
 
 import "@synthetixio/core-modules/contracts/modules/NftModule.sol";
-import "../../../contracts/interfaces/IAsyncOrderClaimToken.sol";
+import "../../../contracts/interfaces/IAsyncOrderClaimTokenModule.sol";
 
 /**
  * @title Module with custom NFT logic for the async order claim token
  * @dev See IAsyncOrderClaimToken.
  */
-contract AsyncOrderClaimToken is IAsyncOrderClaimToken, NftModule {
+contract AsyncOrderClaimTokenModule is IAsyncOrderClaimTokenModule, NftModule {
     /**
-     * @inheritdoc IAsyncOrderClaimToken
+     * @inheritdoc IAsyncOrderClaimTokenModule
      */
     function mint(address owner) external returns (uint256 id) {
         OwnableStorage.onlyOwner();
@@ -22,7 +22,7 @@ contract AsyncOrderClaimToken is IAsyncOrderClaimToken, NftModule {
     }
 
     /**
-     * @inheritdoc IAsyncOrderClaimToken
+     * @inheritdoc IAsyncOrderClaimTokenModule
      */
     function burn(uint256 id) external {
         OwnableStorage.onlyOwner();

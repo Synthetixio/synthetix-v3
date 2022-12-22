@@ -34,6 +34,7 @@ contract ProxyStorage {
 
 // @custom:artifact @synthetixio/core-contracts/contracts/token/ERC20Storage.sol:ERC20Storage
 library ERC20Storage {
+    bytes32 private constant _SLOT_ERC20_STORAGE = keccak256(abi.encode("io.synthetix.core-contracts.ERC20"));
     struct Data {
         string name;
         string symbol;
@@ -43,7 +44,7 @@ library ERC20Storage {
         uint256 totalSupply;
     }
     function load() internal pure returns (Data storage store) {
-        bytes32 s = keccak256(abi.encode("ERC20"));
+        bytes32 s = _SLOT_ERC20_STORAGE;
         assembly {
             store.slot := s
         }
@@ -223,6 +224,7 @@ library Price {
     struct Data {
         bytes32 buyFeedId;
         bytes32 sellFeedId;
+        uint skewScale;
     }
     function load(uint128 marketId) internal pure returns (Data storage store) {
         bytes32 s = keccak256(abi.encode("io.synthetix.spot-market.Price", marketId));

@@ -20,6 +20,7 @@ library SpotMarketFactory {
         IOracleManagerModule oracle;
         address synthetix;
         address initialSynthImplementation;
+        address initialAsyncOrderClaimImplementation;
         mapping(uint128 => address) synthOwners;
     }
 
