@@ -47,4 +47,14 @@ library SpotMarketFactory {
             revert OnlyMarketOwner(marketOwner, msg.sender);
         }
     }
+
+    function depositToMarketManager(
+        Data storage self,
+        uint128 marketId,
+        address target,
+        uint256 amount
+    ) internal {
+        self.usdToken.approve(address(this), amount);
+        IMarketManagerModule(self.synthetix).depositMarketUsd(marketId, target, amount);
+    }
 }

@@ -9,6 +9,12 @@ interface IFeeConfigurationModule {
     event InterestRateSet(uint indexed synthMarketId, uint interestRate);
     event MarketSkewScaleSet(uint indexed marketId, uint skewScale);
     event AtomicFixedFeeSet(uint indexed synthMarketId, uint atomicFixedFee);
+    event AtomicTransactorFixedFeeSet(
+        uint indexed synthMarketId,
+        address transactor,
+        uint fixedFeeAmount
+    );
+    event FeeCollectorSet(uint indexed synthMarketId, address feeCollector);
 
     function setAtomicFixedFee(uint128 synthMarketId, uint atomicFixedFee) external;
 
@@ -21,4 +27,6 @@ interface IFeeConfigurationModule {
         address transactor,
         uint fixedFeeAmount
     ) external;
+
+    function setFeeCollector(uint128 synthMarketId, address feeCollector) external;
 }

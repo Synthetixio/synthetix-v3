@@ -106,15 +106,6 @@ contract AsyncOrderModule is IAsyncOrderModule {
             SpotMarketFactory.TransactionType.ASYNC_SELL
         );
 
-        // Calculate fees
-        // TODO: use `amountUsable` instead of `synthAmountEscrowedUsd`?
-        (, int256 feesQuoted) = Fee.calculateFees(
-            marketId,
-            msg.sender,
-            synthAmountEscrowedUsd,
-            SpotMarketFactory.TransactionType.ASYNC_SELL
-        );
-
         // Withdraw USD and hold in this contract as escrow
         IMarketManagerModule(store.synthetix).withdrawMarketUsd(
             marketId,
@@ -368,15 +359,9 @@ contract AsyncOrderModule is IAsyncOrderModule {
         // Burn the synths escrowed
         SynthUtil.burnFromEscrow(marketId, asyncOrderClaim.synthAmountEscrowed);
 
-        // fees should not be negative when buying
-        uint finalFeesUint = finalFees.toUint();
-        // Deposit the quoted fees
-        store.usdToken.approve(address(this), finalFeesUint);
-        IMarketManagerModule(store.synthetix).depositMarketUsd(
-            marketId,
-            address(this),
-            finalFeesUint
-        );
+        if (finalFees > 0) {
+            Fee.collectFees(marketId, finalFees.toUint());
+        }
     }
 
     function _returnSellOrderEscrow(

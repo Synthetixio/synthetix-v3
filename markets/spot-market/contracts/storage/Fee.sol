@@ -7,6 +7,7 @@ import "@synthetixio/main/contracts/interfaces/IMarketManagerModule.sol";
 import "@synthetixio/core-contracts/contracts/utils/SafeCast.sol";
 import "../utils/SynthUtil.sol";
 import "../storage/SpotMarketFactory.sol";
+import "../../interfaces/external/IFeeCollector.sol";
 import "./Price.sol";
 import "./Wrapper.sol";
 
@@ -27,6 +28,7 @@ library Fee {
         int wrapFixedFee;
         int unwrapFixedFee;
         uint skewScale;
+        IFeeCollector feeCollector;
     }
 
     function load(uint128 marketId) internal pure returns (Data storage store) {
@@ -213,10 +215,23 @@ library Fee {
         }
     }
 
+    function collectFees(uint128 marketId, uint totalFees) internal {
+        IFeeCollector feeCollector = load(marketId).feeCollector;
+        if (feeCollector != address(0)) {
+            SpotMarketFactory.Data storage store = SpotMarketFactory.load();
+
+            store.usdToken.approve(feeCollector, totalFees);
+            feesCollected = feeCollector.collectFees(totalFees);
+            store.usdToken.approve(feeCollector, 0);
+
+            store.depositToMarketManager(marketId, msg.sender, totalFees - feesCollected);
+        }
+    }
+
     function _applyFees(
         uint amount,
         int fees // bips
-    ) private view returns (uint amountUsable, int feesCollected) {
+    ) private pure returns (uint amountUsable, int feesCollected) {
         feesCollected = fees.mulDecimal(amount.toInt()).divDecimal(10000);
         amountUsable = (amount.toInt() - feesCollected).toUint();
     }

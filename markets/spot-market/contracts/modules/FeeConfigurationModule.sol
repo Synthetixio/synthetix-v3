@@ -59,5 +59,16 @@ contract FeeConfigurationModule is IFeeConfigurationModule {
     ) external override {
         SpotMarketFactory.load().onlyMarketOwner(synthMarketId);
         Fee.setAtomicFixedFeeOverride(synthMarketId, transactor, fixedFeeAmount);
+
+        emit AtomicTransactorFixedFeeSet(synthMarketId, transactor, fixedFeeAmount);
+    }
+
+    function setFeeCollector(uint128 synthMarketId, address feeCollector) external override {
+        SpotMarketFactory.load().onlyMarketOwner(synthMarketId);
+
+        Fee.Data storage fee = Fee.load(synthMarketId);
+        fee.feeCollector = feeCollector;
+
+        emit FeeCollectorSet(synthMarketId, feeCollector);
     }
 }
