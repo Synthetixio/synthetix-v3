@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 library DecayToken {
     bytes32 private constant _SLOT_DECAY_TOKEN_STORAGE =
-        keccak256(abi.encode("io.synthetix.core-contracts.DecayToken"));
+        keccak256(abi.encode("io.synthetix.core-modules.DecayToken"));
 
     struct Data {
         uint256 interestRate;

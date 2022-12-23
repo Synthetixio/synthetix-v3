@@ -31,6 +31,9 @@ artifact = "contracts/modules/FeatureFlagModule.sol:FeatureFlagModule"
 [contract.TokenModule]
 artifact = "contracts/modules/TokenModule.sol:TokenModule"
 
+[contract.DecayTokenModule]
+artifact = "contracts/modules/DecayTokenModule.sol:DecayTokenModule"
+
 [contract.NftModule]
 artifact = "contracts/modules/NftModule.sol:NftModule"
 
@@ -129,6 +132,29 @@ depends = [
 artifact = "contracts/routers/chain-<%= chainId %>/TokenModuleRouter.sol:TokenModuleRouter"
 abiOf = ["CoreModule", "TokenModule"]
 depends = ["run.generate_token_module_router"]
+
+# DecayTokenModule Router
+
+[run.generate_decay_token_module_router]
+exec = "@synthetixio/hardhat-router/utils/cannon"
+func = "generate"
+args = [
+  "contracts/routers/chain-<%= chainId %>/DecayTokenModuleRouter.sol:DecayTokenModuleRouter",
+  '''<%= JSON.stringify({
+    CoreModule: contracts.CoreModule,
+    DecayTokenModule: contracts.DecayTokenModule,
+  }) %>'''
+]
+modified = ["contracts"]
+depends = [
+  "contract.CoreModule",
+  "contract.DecayTokenModule"
+]
+
+[contract.DecayTokenModuleRouter]
+artifact = "contracts/routers/chain-<%= chainId %>/DecayTokenModuleRouter.sol:DecayTokenModuleRouter"
+abiOf = ["CoreModule", "DecayTokenModule"]
+depends = ["run.generate_decay_token_module_router"]
 
 # Sample Router
 
