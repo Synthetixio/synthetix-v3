@@ -62,7 +62,7 @@ contract ERC20 is IERC20 {
     /**
      * @inheritdoc IERC20
      */
-    function approve(address spender, uint256 amount) public override virtual returns (bool) {
+    function approve(address spender, uint256 amount) public virtual override returns (bool) {
         ERC20Storage.load().allowance[msg.sender][spender] = amount;
 
         emit Approval(msg.sender, spender, amount);
@@ -73,7 +73,7 @@ contract ERC20 is IERC20 {
     /**
      * @inheritdoc IERC20
      */
-    function transfer(address to, uint256 amount) public override virtual returns (bool) {
+    function transfer(address to, uint256 amount) public virtual override returns (bool) {
         _transfer(msg.sender, to, amount);
 
         return true;
@@ -86,7 +86,7 @@ contract ERC20 is IERC20 {
         address from,
         address to,
         uint256 amount
-    ) external override virtual returns (bool) {
+    ) external virtual override returns (bool) {
         return _transferFrom(from, to, amount);
     }
 
